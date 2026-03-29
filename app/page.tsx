@@ -1187,7 +1187,7 @@ function ClassroomCard({
       <div className="mt-2.5 px-1 flex items-center gap-2">
         {isDemo && (
           <span className="shrink-0 inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
-            D\u00e9mo
+            Démo
           </span>
         )}
         <span className="shrink-0 inline-flex items-center rounded-full bg-violet-100 dark:bg-violet-900/30 px-2 py-0.5 text-[11px] font-medium text-violet-600 dark:text-violet-400">
