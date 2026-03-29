@@ -1,10 +1,10 @@
 import { defaultLocale, type Locale } from './types';
 export { type Locale, defaultLocale } from './types';
-import { commonZhCN, commonEnUS } from './common';
-import { stageZhCN, stageEnUS } from './stage';
-import { chatZhCN, chatEnUS } from './chat';
-import { generationZhCN, generationEnUS } from './generation';
-import { settingsZhCN, settingsEnUS } from './settings';
+import { commonZhCN, commonEnUS, commonFrFR, commonArMA } from './common';
+import { stageZhCN, stageEnUS, stageFrFR, stageArMA } from './stage';
+import { chatZhCN, chatEnUS, chatFrFR, chatArMA } from './chat';
+import { generationZhCN, generationEnUS, generationFrFR, generationArMA } from './generation';
+import { settingsZhCN, settingsEnUS, settingsFrFR, settingsArMA } from './settings';
 
 export const translations = {
   'zh-CN': {
@@ -20,6 +20,20 @@ export const translations = {
     ...chatEnUS,
     ...generationEnUS,
     ...settingsEnUS,
+  },
+  'fr-FR': {
+    ...commonFrFR,
+    ...stageFrFR,
+    ...chatFrFR,
+    ...generationFrFR,
+    ...settingsFrFR,
+  },
+  'ar-MA': {
+    ...commonArMA,
+    ...stageArMA,
+    ...chatArMA,
+    ...generationArMA,
+    ...settingsArMA,
   },
 } as const;
 
@@ -40,7 +54,12 @@ export function getClientTranslation(key: string): string {
   if (typeof window !== 'undefined') {
     try {
       const storedLocale = localStorage.getItem('locale');
-      if (storedLocale === 'zh-CN' || storedLocale === 'en-US') {
+      if (
+        storedLocale === 'zh-CN' ||
+        storedLocale === 'en-US' ||
+        storedLocale === 'fr-FR' ||
+        storedLocale === 'ar-MA'
+      ) {
         locale = storedLocale;
       }
     } catch {

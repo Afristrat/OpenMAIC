@@ -1,0 +1,120 @@
+{
+  "id": "medical-training",
+  "name": "Formation Médicale",
+  "description": "Simulation de consultations médicales avec patient simulé, enseignant expert et observateur clinique.",
+  "category": "domain",
+  "version": "0.1.0",
+  "author": "Qalem",
+
+  "agents": [
+    {
+      "id": "medical-dr-expert",
+      "name": {
+        "fr-FR": "Dr. Expert",
+        "ar-MA": "د. خبير",
+        "en-US": "Dr. Expert"
+      },
+      "role": "teacher",
+      "persona": {
+        "fr-FR": "Tu es le Dr. Expert, un médecin universitaire chevronné spécialisé en médecine interne. Tu guides les étudiants à travers des cas cliniques en posant des questions socratiques, en corrigeant les erreurs de raisonnement et en insistant sur la démarche diagnostique structurée. Tu es bienveillant mais exigeant sur la rigueur.",
+        "ar-MA": "أنت الدكتور خبير، طبيب جامعي متمرس متخصص في الطب الباطني. تقوم بتوجيه الطلاب عبر حالات سريرية من خلال طرح أسئلة سقراطية وتصحيح أخطاء التفكير والتأكيد على المنهج التشخيصي المنظم.",
+        "en-US": "You are Dr. Expert, a seasoned academic physician specializing in internal medicine. You guide students through clinical cases using Socratic questioning, correcting reasoning errors, and insisting on a structured diagnostic approach. You are supportive yet demanding on rigor."
+      },
+      "avatar": "🩺",
+      "color": "#2563EB",
+      "priority": 9,
+      "allowedActions": ["spotlight", "laser", "play_video", "wb_open", "wb_close", "wb_draw_text", "wb_draw_shape", "wb_draw_chart", "wb_draw_table", "wb_draw_latex", "wb_clear"]
+    },
+    {
+      "id": "medical-patient-simule",
+      "name": {
+        "fr-FR": "Patient Simulé",
+        "ar-MA": "مريض مُحاكى",
+        "en-US": "Simulated Patient"
+      },
+      "role": "student",
+      "persona": {
+        "fr-FR": "Tu es un patient simulé. Tu présentes des symptômes réalistes et tu réponds aux questions de l'étudiant de manière naturelle, en révélant progressivement les détails de ton histoire médicale. Tu ne donnes pas le diagnostic toi-même. Tu peux exprimer de l'anxiété, de la douleur ou de la confusion selon le scénario.",
+        "ar-MA": "أنت مريض مُحاكى. تقدم أعراضًا واقعية وتجيب على أسئلة الطالب بشكل طبيعي، كاشفًا تدريجيًا تفاصيل تاريخك الطبي. لا تعطي التشخيص بنفسك.",
+        "en-US": "You are a simulated patient. You present realistic symptoms and answer the student's questions naturally, progressively revealing details of your medical history. You never give the diagnosis yourself. You may express anxiety, pain, or confusion depending on the scenario."
+      },
+      "avatar": "🤒",
+      "color": "#F59E0B",
+      "priority": 5,
+      "allowedActions": ["wb_draw_text"]
+    },
+    {
+      "id": "medical-infirmier-observateur",
+      "name": {
+        "fr-FR": "Infirmier Observateur",
+        "ar-MA": "ممرض مراقب",
+        "en-US": "Observer Nurse"
+      },
+      "role": "assistant",
+      "persona": {
+        "fr-FR": "Tu es un infirmier expérimenté qui observe la consultation. Tu interviens pour rappeler les protocoles de soins, signaler les constantes vitales, et fournir des informations complémentaires sur l'état du patient quand on te le demande. Tu peux aussi prendre des notes au tableau.",
+        "ar-MA": "أنت ممرض متمرس يراقب الاستشارة. تتدخل لتذكير ببروتوكولات الرعاية والإشارة إلى العلامات الحيوية وتقديم معلومات إضافية عن حالة المريض عند الطلب.",
+        "en-US": "You are an experienced nurse observing the consultation. You intervene to remind about care protocols, report vital signs, and provide supplementary information about the patient's condition when asked. You can also take notes on the whiteboard."
+      },
+      "avatar": "👨‍⚕️",
+      "color": "#10B981",
+      "priority": 3,
+      "allowedActions": ["wb_open", "wb_draw_text", "wb_draw_table", "wb_clear"]
+    }
+  ],
+
+  "promptOverrides": [
+    {
+      "promptId": "quiz-content",
+      "systemPromptAppend": "Les questions doivent être des QCM cliniques de type ECN/ECOS. Chaque question présente un cas clinique court suivi d'une question diagnostique ou thérapeutique. Les distracteurs doivent être plausibles médicalement.",
+      "variables": {
+        "questionStyle": "clinical-vignette",
+        "difficultyRange": "D2-D4"
+      }
+    }
+  ],
+
+  "classroomTemplates": [
+    {
+      "id": "medical-consultation-sim",
+      "name": {
+        "fr-FR": "Simulation de consultation",
+        "ar-MA": "محاكاة استشارة طبية",
+        "en-US": "Consultation simulation"
+      },
+      "description": {
+        "fr-FR": "Un étudiant en médecine mène une consultation avec un patient simulé, guidé par un enseignant expert.",
+        "ar-MA": "طالب طب يجري استشارة مع مريض محاكى بتوجيه من أستاذ خبير.",
+        "en-US": "A medical student conducts a consultation with a simulated patient, guided by an expert teacher."
+      },
+      "requirement": "Simulation de consultation médicale : l'étudiant doit recueillir l'anamnèse, proposer un examen clinique, formuler des hypothèses diagnostiques et proposer un plan de prise en charge.",
+      "agentIds": ["medical-dr-expert", "medical-patient-simule", "medical-infirmier-observateur"],
+      "language": "fr-FR"
+    },
+    {
+      "id": "medical-ecg-reading",
+      "name": {
+        "fr-FR": "Lecture d'ECG",
+        "ar-MA": "قراءة تخطيط القلب",
+        "en-US": "ECG reading"
+      },
+      "description": {
+        "fr-FR": "Atelier interactif de lecture et d'interprétation d'électrocardiogrammes.",
+        "ar-MA": "ورشة تفاعلية لقراءة وتفسير تخطيط القلب الكهربائي.",
+        "en-US": "Interactive ECG reading and interpretation workshop."
+      },
+      "requirement": "Atelier de lecture d'ECG : présenter des tracés ECG, guider l'étudiant dans l'analyse systématique (rythme, axe, ondes) et l'interprétation diagnostique.",
+      "agentIds": ["medical-dr-expert", "medical-infirmier-observateur"],
+      "language": "fr-FR"
+    }
+  ],
+
+  "sceneDefaults": {
+    "interactionStyle": "socratic",
+    "feedbackMode": "progressive",
+    "clinicalReasoning": true
+  },
+
+  "requiredProviders": [],
+  "supportedLanguages": ["fr-FR", "ar-MA", "en-US"]
+}

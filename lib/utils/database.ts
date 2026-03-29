@@ -167,6 +167,27 @@ export interface GeneratedAgentRecord {
   createdAt: number;
 }
 
+/**
+ * ReviewCard table - Spaced repetition review cards (guest / offline mode)
+ */
+export interface ReviewCardRecord {
+  id: string; // PK: card ID (e.g. "review-stageId-sceneId-questionId")
+  question: string;
+  correctAnswer: string;
+  userAnswer: string;
+  difficulty: number; // 0.0 – 1.0
+  stability: number;
+  dueDate: number; // timestamp
+  lastReview: number | null; // timestamp
+  reps: number;
+  lapses: number;
+  tags: string[];
+  sourceStageId: string;
+  sourceSceneId: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 /** Build the compound primary key for mediaFiles: `${stageId}:${elementId}` */
 export function mediaFileKey(stageId: string, elementId: string): string {
   return `${stageId}:${elementId}`;
@@ -175,7 +196,7 @@ export function mediaFileKey(stageId: string, elementId: string): string {
 // ==================== Database Definition ====================
 
 const DATABASE_NAME = 'MAIC-Database';
-const _DATABASE_VERSION = 8;
+const _DATABASE_VERSION = 9;
 
 /**
  * MAIC Database Instance
@@ -191,6 +212,7 @@ class MAICDatabase extends Dexie {
   playbackState!: EntityTable<PlaybackStateRecord, 'stageId'>;
   stageOutlines!: EntityTable<StageOutlinesRecord, 'stageId'>;
   mediaFiles!: EntityTable<MediaFileRecord, 'id'>;
+  reviewCards!: EntityTable<ReviewCardRecord, 'id'>;
   generatedAgents!: EntityTable<GeneratedAgentRecord, 'id'>;
 
   constructor() {
@@ -308,6 +330,21 @@ class MAICDatabase extends Dexie {
       stageOutlines: 'stageId',
       mediaFiles: 'id, stageId, [stageId+type]',
       generatedAgents: 'id, stageId',
+    });
+
+    // Version 9: Add reviewCards table for spaced repetition (guest / offline)
+    this.version(9).stores({
+      stages: 'id, updatedAt',
+      scenes: 'id, stageId, order, [stageId+order]',
+      audioFiles: 'id, createdAt',
+      imageFiles: 'id, createdAt',
+      snapshots: '++id',
+      chatSessions: 'id, stageId, [stageId+createdAt]',
+      playbackState: 'stageId',
+      stageOutlines: 'stageId',
+      mediaFiles: 'id, stageId, [stageId+type]',
+      generatedAgents: 'id, stageId',
+      reviewCards: 'id, dueDate, sourceStageId',
     });
   }
 }

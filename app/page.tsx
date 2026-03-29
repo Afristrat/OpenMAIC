@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   ArrowUp,
+  BookOpen,
   Check,
   ChevronDown,
   Clock,
@@ -46,6 +48,10 @@ import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useDraftCache } from '@/lib/hooks/use-draft-cache';
 import { SpeechButton } from '@/components/audio/speech-button';
+import { useAuth } from '@/lib/hooks/use-auth';
+import { TemplateSelector } from '@/components/org/template-selector';
+import { createClient } from '@/lib/supabase/client';
+import { db } from '@/lib/utils/database';
 
 const log = createLogger('Home');
 
@@ -56,14 +62,14 @@ const RECENT_OPEN_STORAGE_KEY = 'recentClassroomsOpen';
 interface FormState {
   pdfFile: File | null;
   requirement: string;
-  language: 'zh-CN' | 'en-US';
+  language: 'zh-CN' | 'en-US' | 'fr-FR' | 'ar-MA';
   webSearch: boolean;
 }
 
 const initialFormState: FormState = {
   pdfFile: null,
   requirement: '',
-  language: 'zh-CN',
+  language: 'fr-FR',
   webSearch: false,
 };
 
@@ -76,6 +82,50 @@ function HomePage() {
   const [settingsSection, setSettingsSection] = useState<
     import('@/lib/types/settings').SettingsSection | undefined
   >(undefined);
+
+  // Auth + due review count
+  const { user, isGuest } = useAuth();
+  const [dueReviewCount, setDueReviewCount] = useState(0);
+
+  const loadDueReviewCount = useCallback(async () => {
+    const now = new Date();
+    let count = 0;
+
+    // Supabase (authenticated users)
+    if (user) {
+      try {
+        const supabase = createClient();
+        const { count: sbCount, error } = await supabase
+          .from('review_cards')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .lte('due_date', now.toISOString());
+        if (!error && sbCount !== null) count += sbCount;
+      } catch {
+        // Supabase unavailable
+      }
+    }
+
+    // IndexedDB (guest / offline)
+    if (isGuest || !user) {
+      try {
+        const localCount = await db.reviewCards
+          .where('dueDate')
+          .belowOrEqual(now.getTime())
+          .count();
+        count += localCount;
+      } catch {
+        // IndexedDB unavailable
+      }
+    }
+
+    setDueReviewCount(count);
+  }, [user, isGuest]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Async hydration: count loaded on mount
+    loadDueReviewCount();
+  }, [loadDueReviewCount]);
 
   // Draft cache for requirement text
   const { cachedValue: cachedRequirement, updateCache: updateRequirementCache } =
@@ -99,10 +149,22 @@ function HomePage() {
       const savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY);
       const updates: Partial<FormState> = {};
       if (savedWebSearch === 'true') updates.webSearch = true;
-      if (savedLanguage === 'zh-CN' || savedLanguage === 'en-US') {
-        updates.language = savedLanguage;
+      if (
+        savedLanguage === 'zh-CN' ||
+        savedLanguage === 'en-US' ||
+        savedLanguage === 'fr-FR' ||
+        savedLanguage === 'ar-MA'
+      ) {
+        updates.language = savedLanguage as FormState['language'];
       } else {
-        const detected = navigator.language?.startsWith('zh') ? 'zh-CN' : 'en-US';
+        const navLang = navigator.language ?? '';
+        const detected: FormState['language'] = navLang.startsWith('fr')
+          ? 'fr-FR'
+          : navLang.startsWith('ar')
+            ? 'ar-MA'
+            : navLang.startsWith('zh')
+              ? 'zh-CN'
+              : 'en-US';
         updates.language = detected;
       }
       if (Object.keys(updates).length > 0) {
@@ -335,36 +397,31 @@ function HomePage() {
             }}
             className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 hover:shadow-sm transition-all"
           >
-            {locale === 'zh-CN' ? 'CN' : 'EN'}
+            {{ 'fr-FR': 'FR', 'ar-MA': 'AR', 'en-US': 'EN', 'zh-CN': 'CN' }[locale]}
           </button>
           {languageOpen && (
             <div className="absolute top-full mt-2 right-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden z-50 min-w-[120px]">
-              <button
-                onClick={() => {
-                  setLocale('zh-CN');
-                  setLanguageOpen(false);
-                }}
-                className={cn(
-                  'w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors',
-                  locale === 'zh-CN' &&
-                    'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
-                )}
-              >
-                简体中文
-              </button>
-              <button
-                onClick={() => {
-                  setLocale('en-US');
-                  setLanguageOpen(false);
-                }}
-                className={cn(
-                  'w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors',
-                  locale === 'en-US' &&
-                    'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
-                )}
-              >
-                English
-              </button>
+              {([
+                { code: 'fr-FR' as const, label: 'Français' },
+                { code: 'ar-MA' as const, label: 'العربية' },
+                { code: 'en-US' as const, label: 'English' },
+              ] as const).map(({ code, label }) => (
+                <button
+                  key={code}
+                  onClick={() => {
+                    setLocale(code);
+                    setLanguageOpen(false);
+                  }}
+                  className={cn(
+                    'w-full px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors',
+                    code === 'ar-MA' ? 'text-right' : 'text-left',
+                    locale === code &&
+                      'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
           )}
         </div>
@@ -478,7 +535,7 @@ function HomePage() {
         {/* ── Logo ── */}
         <motion.img
           src="/logo-horizontal.png"
-          alt="OpenMAIC"
+          alt="Qalem"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{
@@ -545,6 +602,18 @@ function HomePage() {
                 />
               </div>
 
+              {/* Template selector */}
+              <TemplateSelector
+                onSelect={(requirement, language) => {
+                  setForm((prev) => ({
+                    ...prev,
+                    requirement,
+                    language: (language as FormState['language']) ?? prev.language,
+                  }));
+                  updateRequirementCache(requirement);
+                }}
+              />
+
               {/* Voice input */}
               <SpeechButton
                 size="md"
@@ -589,6 +658,31 @@ function HomePage() {
           )}
         </AnimatePresence>
       </motion.div>
+
+      {/* ═══ Review badge ═══ */}
+      {dueReviewCount > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45 }}
+          className="relative z-10 mt-6 w-full max-w-[800px]"
+        >
+          <Link
+            href="/review"
+            className="flex items-center gap-3 px-4 py-3 rounded-xl bg-violet-50/80 dark:bg-violet-950/30 border border-violet-200/60 dark:border-violet-800/40 hover:bg-violet-100/80 dark:hover:bg-violet-950/50 transition-colors group"
+          >
+            <div className="size-8 rounded-lg bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center ring-1 ring-violet-200/50 dark:ring-violet-800/30">
+              <BookOpen className="size-4 text-violet-600 dark:text-violet-400" />
+            </div>
+            <span className="text-sm font-medium text-violet-700 dark:text-violet-300">
+              {t('review.dueCards').replace('{n}', String(dueReviewCount))}
+            </span>
+            <span className="ml-auto text-xs text-violet-500 dark:text-violet-400 group-hover:translate-x-0.5 transition-transform">
+              &rarr;
+            </span>
+          </Link>
+        </motion.div>
+      )}
 
       {/* ═══ Recent classrooms — collapsible ═══ */}
       {classrooms.length > 0 && (
@@ -669,7 +763,7 @@ function HomePage() {
 
       {/* Footer — flows with content, at the very end */}
       <div className="mt-auto pt-12 pb-4 text-center text-xs text-muted-foreground/40">
-        OpenMAIC Open Source Project
+        Qalem — Open Source Project
       </div>
     </div>
   );

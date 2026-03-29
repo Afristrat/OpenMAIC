@@ -133,3 +133,141 @@ export const generationEnUS = {
     webSearchFailed: 'Web search failed',
   },
 } as const;
+
+export const generationFrFR = {
+  classroom: {
+    recentClassrooms: 'Récents',
+    today: "Aujourd\u2019hui",
+    yesterday: 'Hier',
+    daysAgo: 'jours',
+    slides: 'diapos',
+    nameCopied: 'Nom copié',
+    deleteConfirmTitle: 'Supprimer',
+    delete: 'Supprimer',
+  },
+  upload: {
+    pdfSizeLimit: 'PDF jusqu\u2019à 50 Mo acceptés',
+    generateFailed: 'La création de la classe a échoué, veuillez réessayer',
+    requirementPlaceholder:
+      'Décrivez ce que vous voulez apprendre, par exemple :\n« Apprends-moi Python de zéro en 30 minutes »\n« Explique-moi la transformée de Fourier au tableau »\n« Comment jouer au jeu de société Avalon ? »',
+    requirementRequired: 'Décrivez le sujet que vous souhaitez étudier',
+    fileTooLarge: 'Fichier trop volumineux. Choisissez un PDF de moins de 50 Mo',
+  },
+  generation: {
+    // Étapes de progression (utilisées dynamiquement via activeStep)
+    analyzingPdf: 'Analyse du PDF',
+    analyzingPdfDesc: 'Extraction de la structure et du contenu...',
+    pdfLoadFailed: 'Impossible de charger le PDF, veuillez réessayer',
+    pdfParseFailed: 'Échec de la lecture du PDF',
+    streamNotReadable: 'Flux de génération illisible',
+    generatingOutlines: 'Élaboration du plan de cours',
+    generatingOutlinesDesc: 'Construction du parcours d\u2019apprentissage...',
+    generatingSlideContent: 'Création du contenu des pages',
+    generatingSlideContentDesc: 'Préparation des diapos, quiz et contenus interactifs...',
+    generatingActions: 'Mise en place des actions pédagogiques',
+    generatingActionsDesc: 'Orchestration du récit, des focus et des interactions...',
+    generationComplete: 'Génération terminée !',
+    generationFailed: 'Échec de la génération',
+    generatingCourse: 'Cours en préparation',
+    openingClassroom: 'Ouverture de la classe...',
+    outlineReady: 'Plan de cours prêt',
+    generatingFirstPage: 'Première page en cours de création...',
+    firstPageReady: 'Première page prête ! Ouverture de la classe...',
+    speechFailed: 'Échec de la synthèse vocale',
+    retryScene: 'Réessayer',
+    retryingScene: 'Régénération en cours...',
+    backToHome: 'Retour à l\u2019accueil',
+    sessionNotFound: 'Session introuvable',
+    sessionNotFoundDesc: 'Décrivez d\u2019abord le cours souhaité pour lancer la génération.',
+    goBackAndRetry: 'Retour et nouvel essai',
+    classroomReady: 'Votre classe IA personnalisée est prête.',
+    aiWorking: 'Les agents IA travaillent...',
+    textTruncated: 'Document volumineux : seuls les {n} premiers caractères seront utilisés',
+    imageTruncated:
+      '{total} images détectées (limite : {max}). Les images excédentaires seront décrites en texte uniquement',
+    // Génération des agents
+    agentGeneration: 'Création des rôles de la classe',
+    agentGenerationDesc: 'Attribution des rôles d\u2019après le contenu du cours...',
+    agentRevealTitle: 'Vos rôles de classe',
+    viewAgents: 'Voir les rôles',
+    continue: 'Continuer',
+    // Erreurs de plan
+    outlineRetrying: 'Souci lors de la génération du plan, nouvelle tentative...',
+    outlineEmptyResponse:
+      'Le modèle n\u2019a renvoyé aucun plan valide. Vérifiez la configuration du modèle et réessayez',
+    outlineGenerateFailed: 'Impossible de générer le plan, réessayez plus tard',
+    // Recherche web
+    webSearching: 'Recherche sur le web',
+    webSearchingDesc: 'Recherche d\u2019informations récentes sur le web...',
+    webSearchFailed: 'La recherche web a échoué',
+  },
+} as const;
+
+export const generationArMA = {
+  classroom: {
+    recentClassrooms: 'الأخيرة',
+    today: 'اليوم',
+    yesterday: 'أمس',
+    daysAgo: 'أيام',
+    slides: 'شرائح',
+    nameCopied: 'تم نسخ الاسم',
+    deleteConfirmTitle: 'حذف',
+    delete: 'حذف',
+  },
+  upload: {
+    pdfSizeLimit: 'ملفات PDF حتى 50 ميغابايت',
+    generateFailed: 'تعذّر إنشاء الفصل، يرجى إعادة المحاولة',
+    requirementPlaceholder:
+      'صِف ما تودّ تعلّمه، مثلًا:\n"علّمني Python من الصفر في 30 دقيقة"\n"اشرح لي تحويل فورييه على السبورة"\n"كيف أتعلّم لعبة أفالون؟"',
+    requirementRequired: 'صِف الموضوع الذي تودّ دراسته',
+    fileTooLarge: 'الملف كبير جدًا، اختر ملف PDF لا يتجاوز 50 ميغابايت',
+  },
+  generation: {
+    // خطوات التقدّم (تُستخدم ديناميكيًا عبر activeStep)
+    analyzingPdf: 'تحليل ملف PDF',
+    analyzingPdfDesc: 'استخراج بنية المستند ومحتواه...',
+    pdfLoadFailed: 'تعذّر تحميل ملف PDF، يرجى إعادة المحاولة',
+    pdfParseFailed: 'تعذّرت قراءة ملف PDF',
+    streamNotReadable: 'تعذّرت قراءة تدفّق البيانات',
+    generatingOutlines: 'إعداد خطة الدرس',
+    generatingOutlinesDesc: 'بناء مسار التعلّم...',
+    generatingSlideContent: 'إنشاء محتوى الصفحات',
+    generatingSlideContentDesc: 'تحضير الشرائح والاختبارات والمحتوى التفاعلي...',
+    generatingActions: 'تجهيز الإجراءات التعليمية',
+    generatingActionsDesc: 'تنسيق الشرح والتركيز والتفاعل...',
+    generationComplete: 'تمّ الإنشاء بنجاح!',
+    generationFailed: 'فشل الإنشاء',
+    generatingCourse: 'الدرس قيد التحضير',
+    openingClassroom: 'جارٍ فتح الفصل...',
+    outlineReady: 'خطة الدرس جاهزة',
+    generatingFirstPage: 'الصفحة الأولى قيد الإنشاء...',
+    firstPageReady: 'الصفحة الأولى جاهزة! جارٍ فتح الفصل...',
+    speechFailed: 'فشل التوليد الصوتي',
+    retryScene: 'إعادة المحاولة',
+    retryingScene: 'جارٍ إعادة الإنشاء...',
+    backToHome: 'الرجوع للرئيسية',
+    sessionNotFound: 'الجلسة غير موجودة',
+    sessionNotFoundDesc: 'صِف الدرس المطلوب أولًا لبدء عملية الإنشاء.',
+    goBackAndRetry: 'رجوع وإعادة المحاولة',
+    classroomReady: 'فصلك الذكي المخصّص جاهز للاستخدام.',
+    aiWorking: 'الذكاء الاصطناعي يعمل...',
+    textTruncated: 'المستند طويل، سيُستخدم أول {n} حرف فقط',
+    imageTruncated:
+      'وُجدت {total} صورة (الحد الأقصى {max}). الصور الزائدة ستُوصف نصيًا فقط',
+    // إنشاء الشخصيات
+    agentGeneration: 'إنشاء أدوار الفصل',
+    agentGenerationDesc: 'توزيع الأدوار وفقًا لمحتوى الدرس...',
+    agentRevealTitle: 'أدوار فصلك',
+    viewAgents: 'عرض الأدوار',
+    continue: 'متابعة',
+    // أخطاء الخطة
+    outlineRetrying: 'خلل في إنشاء الخطة، جارٍ إعادة المحاولة...',
+    outlineEmptyResponse:
+      'لم يُنتج النموذج أي خطة صالحة. تحقّق من إعدادات النموذج وأعِد المحاولة',
+    outlineGenerateFailed: 'تعذّر إنشاء الخطة، حاول لاحقًا',
+    // البحث في الويب
+    webSearching: 'بحث على الويب',
+    webSearchingDesc: 'جارٍ البحث عن معلومات حديثة...',
+    webSearchFailed: 'فشل البحث على الويب',
+  },
+} as const;

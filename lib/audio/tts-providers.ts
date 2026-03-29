@@ -11,6 +11,7 @@
  * - Qwen TTS: https://bailian.console.aliyun.com/
  * - Doubao TTS: https://www.volcengine.com/docs/6561/1257543
  * - ElevenLabs TTS: https://elevenlabs.io/docs/api-reference/text-to-speech/convert
+ * - Fish Audio: https://fish.audio/docs (S2 model)
  * - Browser Native: Web Speech API (client-side only)
  *
  * HOW TO ADD A NEW PROVIDER:
@@ -155,6 +156,12 @@ export async function generateTTS(
     case 'elevenlabs-tts':
       return await generateElevenLabsTTS(config, text);
 
+    case 'fish-audio':
+      return await generateFishAudioTTS(config, text);
+
+    case 'cartesia':
+      return await generateCartesiaTTS(config, text);
+
     case 'browser-native-tts':
       throw new Error(
         'Browser Native TTS must be handled client-side using Web Speech API. This provider cannot be used on the server.',
@@ -210,11 +217,16 @@ async function generateAzureTTS(
 ): Promise<TTSGenerationResult> {
   const baseUrl = config.baseUrl || TTS_PROVIDERS['azure-tts'].defaultBaseUrl;
 
+  // Derive locale from the voice ID (e.g. "zh-CN-XiaoxiaoNeural" → "zh-CN")
+  // or fall back to looking it up in the provider's voice list.
+  const voiceEntry = TTS_PROVIDERS['azure-tts'].voices.find((v) => v.id === config.voice);
+  const locale = voiceEntry?.language || config.voice.split('-').slice(0, 2).join('-') || 'en-US';
+
   // Build SSML
   const rate = config.speed ? `${((config.speed - 1) * 100).toFixed(0)}%` : '0%';
   const ssml = `
-    <speak version='1.0' xml:lang='zh-CN'>
-      <voice xml:lang='zh-CN' name='${config.voice}'>
+    <speak version='1.0' xml:lang='${locale}'>
+      <voice xml:lang='${locale}' name='${config.voice}'>
         <prosody rate='${rate}'>${escapeXml(text)}</prosody>
       </voice>
     </speak>
@@ -384,6 +396,108 @@ async function generateElevenLabsTTS(
   if (!response.ok) {
     const errorText = await response.text().catch(() => response.statusText);
     throw new Error(`ElevenLabs TTS API error: ${errorText || response.statusText}`);
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  return {
+    audio: new Uint8Array(arrayBuffer),
+    format: requestedFormat,
+  };
+}
+
+/**
+ * Fish Audio S2 TTS implementation (direct API call)
+ *
+ * API docs: https://fish.audio/docs
+ * Endpoint: POST https://api.fish.audio/v1/tts
+ * Response: audio binary (mp3/wav/opus)
+ */
+async function generateFishAudioTTS(
+  config: TTSModelConfig,
+  text: string,
+): Promise<TTSGenerationResult> {
+  const baseUrl = config.baseUrl || TTS_PROVIDERS['fish-audio'].defaultBaseUrl;
+  const requestedFormat = config.format || 'mp3';
+
+  const body: Record<string, unknown> = {
+    text,
+    reference_id: config.voice,
+    format: requestedFormat,
+    streaming: false,
+  };
+
+  // Add format-specific bitrate
+  if (requestedFormat === 'mp3') {
+    body.mp3_bitrate = 128;
+  }
+
+  const response = await fetch(`${baseUrl}/v1/tts`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${config.apiKey}`,
+      'Content-Type': 'application/json; charset=utf-8',
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => response.statusText);
+    throw new Error(`Fish Audio TTS API error (${response.status}): ${errorText}`);
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  return {
+    audio: new Uint8Array(arrayBuffer),
+    format: requestedFormat,
+  };
+}
+
+/**
+ * Cartesia Sonic 3 TTS implementation (direct API call)
+ *
+ * API docs: https://docs.cartesia.ai/api-reference/tts/bytes
+ * Endpoint: POST https://api.cartesia.ai/tts/bytes
+ */
+async function generateCartesiaTTS(
+  config: TTSModelConfig,
+  text: string,
+): Promise<TTSGenerationResult> {
+  const baseUrl = config.baseUrl || TTS_PROVIDERS.cartesia.defaultBaseUrl;
+  const requestedFormat = config.format || 'mp3';
+
+  // Map simple format names to Cartesia output_format config
+  const formatConfig: Record<string, { container: string; bit_rate?: number; sample_rate: number }> =
+    {
+      mp3: { container: 'mp3', bit_rate: 128000, sample_rate: 44100 },
+      wav: { container: 'wav', sample_rate: 44100 },
+      pcm: { container: 'raw', sample_rate: 44100 },
+    };
+
+  const outputFormat = formatConfig[requestedFormat] || formatConfig.mp3;
+
+  // Detect language from voice config or default to 'en'
+  const voiceInfo = TTS_PROVIDERS.cartesia.voices.find((v) => v.id === config.voice);
+  const language = voiceInfo?.language || 'en';
+
+  const response = await fetch(`${baseUrl}/tts/bytes`, {
+    method: 'POST',
+    headers: {
+      'X-API-Key': config.apiKey!,
+      'Cartesia-Version': '2024-06-10',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model_id: 'sonic-3',
+      transcript: text,
+      voice: { mode: 'id', id: config.voice },
+      output_format: outputFormat,
+      language,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => response.statusText);
+    throw new Error(`Cartesia TTS API error (${response.status}): ${errorText || response.statusText}`);
   }
 
   const arrayBuffer = await response.arrayBuffer();

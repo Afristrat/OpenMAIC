@@ -1,3 +1,3 @@
-export type Locale = 'zh-CN' | 'en-US';
+export type Locale = 'zh-CN' | 'en-US' | 'fr-FR' | 'ar-MA';
 
-export const defaultLocale: Locale = 'zh-CN';
+export const defaultLocale: Locale = 'fr-FR';

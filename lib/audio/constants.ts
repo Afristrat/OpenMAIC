@@ -183,6 +183,32 @@ export const TTS_PROVIDERS: Record<TTSProviderId, TTSProviderConfig> = {
         gender: 'female',
       },
       { id: 'en-US-GuyNeural', name: 'Guy', language: 'en-US', gender: 'male' },
+      // French voices
+      {
+        id: 'fr-FR-DeniseNeural',
+        name: 'Denise',
+        language: 'fr-FR',
+        gender: 'female',
+      },
+      {
+        id: 'fr-FR-HenriNeural',
+        name: 'Henri',
+        language: 'fr-FR',
+        gender: 'male',
+      },
+      // Arabic voices
+      {
+        id: 'ar-MA-MounaNeural',
+        name: 'Mouna (المغرب)',
+        language: 'ar-MA',
+        gender: 'female',
+      },
+      {
+        id: 'ar-SA-ZariyahNeural',
+        name: 'Zariyah (السعودية)',
+        language: 'ar-SA',
+        gender: 'female',
+      },
     ],
     supportedFormats: ['mp3', 'wav', 'ogg'],
     speedRange: { min: 0.5, max: 2.0, default: 1.0 },
@@ -762,9 +788,157 @@ export const TTS_PROVIDERS: Record<TTSProviderId, TTSProviderConfig> = {
         gender: 'neutral',
         description: 'Relaxed and informative neutral voice for general narration',
       },
+      // French voices
+      {
+        id: 'IKne3meq5aSn9XLyUdCD',
+        name: 'Antoine',
+        language: 'fr-FR',
+        gender: 'male',
+        description: 'Warm and articulate French male voice for narration',
+      },
+      {
+        id: 'XB0fDUnXU5powFXDhCwa',
+        name: 'Charlotte',
+        language: 'fr-FR',
+        gender: 'female',
+        description: 'Elegant and expressive French female voice',
+      },
+      {
+        id: 'TX3LPaxmHKxFdv7VOQHJ',
+        name: 'Arnaud',
+        language: 'fr-FR',
+        gender: 'male',
+        description: 'Clear and professional French male voice for education',
+      },
+      {
+        id: 'XrExE9yKIg1WjnnlVkGX',
+        name: 'Émilie',
+        language: 'fr-FR',
+        gender: 'female',
+        description: 'Friendly and engaging French female voice for e-learning',
+      },
+      // Arabic voices
+      {
+        id: 'OfGMGmhShO8iL9jCkXy8',
+        name: 'Ghizlane (دارجة)',
+        language: 'ar-MA',
+        gender: 'female',
+        description: 'Moroccan Darija female voice for natural Arabic dialogue',
+      },
+      {
+        id: 'g5CIjZEefAph4nQFvHAz',
+        name: 'Fatima',
+        language: 'ar-SA',
+        gender: 'female',
+        description: 'Warm and clear Arabic female voice for standard Arabic',
+      },
+      {
+        id: 'pFZP5JQG7iQjIQuC4Bku',
+        name: 'Youssef',
+        language: 'ar-EG',
+        gender: 'male',
+        description: 'Authoritative Arabic male voice for educational content',
+      },
     ],
     supportedFormats: ['mp3', 'opus', 'pcm', 'wav', 'ulaw', 'alaw'],
     speedRange: { min: 0.7, max: 1.2, default: 1.0 },
+  },
+
+  'fish-audio': {
+    id: 'fish-audio',
+    name: 'Fish Audio',
+    requiresApiKey: true,
+    defaultBaseUrl: 'https://api.fish.audio',
+    icon: '/logos/fish-audio.svg',
+    voices: [
+      // French voices
+      {
+        id: 'fish-fr-male-1',
+        name: 'Pierre (FR)',
+        language: 'fr',
+        gender: 'male',
+        description: 'fishVoicePierre',
+      },
+      {
+        id: 'fish-fr-female-1',
+        name: 'Claire (FR)',
+        language: 'fr',
+        gender: 'female',
+        description: 'fishVoiceClaire',
+      },
+      // Arabic voices
+      {
+        id: 'fish-ar-male-1',
+        name: 'Youssef (AR)',
+        language: 'ar',
+        gender: 'male',
+        description: 'fishVoiceYoussef',
+      },
+      {
+        id: 'fish-ar-female-1',
+        name: 'Amina (AR)',
+        language: 'ar',
+        gender: 'female',
+        description: 'fishVoiceAmina',
+      },
+      // English voices
+      {
+        id: 'fish-en-male-1',
+        name: 'James (EN)',
+        language: 'en',
+        gender: 'male',
+        description: 'fishVoiceJames',
+      },
+      {
+        id: 'fish-en-female-1',
+        name: 'Emma (EN)',
+        language: 'en',
+        gender: 'female',
+        description: 'fishVoiceEmma',
+      },
+    ],
+    supportedFormats: ['mp3', 'wav', 'opus'],
+    speedRange: { min: 0.5, max: 2.0, default: 1.0 },
+  },
+
+  cartesia: {
+    id: 'cartesia',
+    name: 'Cartesia',
+    requiresApiKey: true,
+    defaultBaseUrl: 'https://api.cartesia.ai',
+    icon: '/logos/cartesia.svg',
+    voices: [
+      {
+        id: 'a0e99841-438c-4a64-b679-ae501e7d6091',
+        name: 'Classy British Man',
+        language: 'en',
+        gender: 'male',
+        description: 'Refined British male voice for narration',
+      },
+      {
+        id: '79a125e8-cd45-4c13-8a67-188112f4dd22',
+        name: 'British Lady',
+        language: 'en',
+        gender: 'female',
+        description: 'Clear and warm British female voice',
+      },
+      {
+        id: 'ab7c61f5-3daa-47dd-a23b-4ac0aac5f5c3',
+        name: 'French Narrator',
+        language: 'fr',
+        gender: 'male',
+        description: 'Voix masculine française pour la narration',
+      },
+      {
+        id: 'b7d50908-b179-4d23-8183-6c93ecb95e71',
+        name: 'Arabic Teacher',
+        language: 'ar',
+        gender: 'female',
+        description: 'Clear Arabic female voice for educational content',
+      },
+    ],
+    supportedFormats: ['mp3', 'wav', 'pcm'],
+    speedRange: { min: 0.5, max: 2.0, default: 1.0 },
   },
 
   'browser-native-tts': {
@@ -996,6 +1170,8 @@ export const DEFAULT_TTS_VOICES: Record<TTSProviderId, string> = {
   'qwen-tts': 'Cherry',
   'doubao-tts': 'zh_female_vv_uranus_bigtts',
   'elevenlabs-tts': 'EXAVITQu4vr4xnSDxMaL',
+  'fish-audio': 'fish-fr-male-1',
+  cartesia: 'a0e99841-438c-4a64-b679-ae501e7d6091',
   'browser-native-tts': 'default',
 };
 

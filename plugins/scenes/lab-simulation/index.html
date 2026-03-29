@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lab Simulation 3D — Qalem Plugin</title>
+
+  <style>
+    :root {
+      --bg: #ffffff;
+      --bg-secondary: #f5f5f7;
+      --bg-tertiary: #e8e8ed;
+      --text: #1d1d1f;
+      --text-secondary: #6e6e73;
+      --border: #d2d2d7;
+      --accent: #0071e3;
+      --accent-hover: #0077ed;
+      --success: #34c759;
+      --error: #ff3b30;
+      --warning: #ff9500;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+      --radius: 10px;
+    }
+    .dark {
+      --bg: #1c1c1e;
+      --bg-secondary: #2c2c2e;
+      --bg-tertiary: #3a3a3c;
+      --text: #f5f5f7;
+      --text-secondary: #98989d;
+      --border: #48484a;
+      --accent: #0a84ff;
+      --accent-hover: #409cff;
+      --success: #30d158;
+      --error: #ff453a;
+      --warning: #ff9f0a;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100%; height: 100%;
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    .layout {
+      display: flex;
+      width: 100%; height: 100%;
+    }
+
+    /* ---- 3D viewport ---- */
+    .viewport {
+      flex: 2;
+      position: relative;
+      min-width: 0;
+      background: #0a0a14;
+    }
+    #three-canvas {
+      display: block;
+      width: 100%; height: 100%;
+    }
+
+    /* Overlay: force arrows legend */
+    .viewport-overlay {
+      position: absolute;
+      top: 10px; left: 10px;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: var(--radius);
+      font-size: 11px;
+      line-height: 1.5;
+      pointer-events: none;
+    }
+    .viewport-overlay .legend-item {
+      display: flex; align-items: center; gap: 6px;
+    }
+    .legend-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+    }
+
+    /* ---- Side panel ---- */
+    .side-panel {
+      flex: 1;
+      min-width: 260px;
+      max-width: 360px;
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid var(--border);
+      background: var(--bg);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 16px;
+    }
+
+    /* Controls */
+    .control-group {
+      margin-bottom: 14px;
+    }
+    .control-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .control-value {
+      font-family: var(--font-mono);
+      color: var(--accent);
+    }
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    /* Buttons */
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .btn {
+      flex: 1;
+      padding: 8px 12px;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-start { background: var(--accent); color: #fff; }
+    .btn-start:hover { background: var(--accent-hover); }
+    .btn-pause { background: var(--warning); color: #fff; }
+    .btn-reset { background: var(--bg-tertiary); color: var(--text); }
+    .btn-reset:hover { background: var(--border); }
+
+    /* Graph */
+    .graph-container {
+      border-top: 1px solid var(--border);
+      padding: 12px 16px;
+      flex-shrink: 0;
+    }
+    .graph-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 6px;
+    }
+    #graph-canvas {
+      width: 100%;
+      height: 120px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius);
+    }
+
+    /* Instructions */
+    .instructions {
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+    .instructions h3 { color: var(--text); margin: 8px 0 4px; font-size: 13px; }
+
+    @media (max-width: 700px) {
+      .layout { flex-direction: column; }
+      .viewport { flex: none; height: 50%; }
+      .side-panel { flex: none; height: 50%; max-width: none; border-left: none; border-top: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <!-- 3D Viewport -->
+    <div class="viewport">
+      <canvas id="three-canvas"></canvas>
+      <div class="viewport-overlay">
+        <div class="legend-item"><div class="legend-dot" style="background:#ff4444"></div> Gravity</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#44ff44"></div> Velocity</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ffaa00"></div> Trajectory</div>
+      </div>
+    </div>
+
+    <!-- Side Panel -->
+    <div class="side-panel">
+      <div class="panel-header" id="experiment-title">Lab Simulation</div>
+      <div class="panel-body">
+        <div class="instructions" id="instructions-area"></div>
+
+        <div class="btn-row">
+          <button class="btn btn-start" id="btn-start">Start</button>
+          <button class="btn btn-pause" id="btn-pause" disabled>Pause</button>
+          <button class="btn btn-reset" id="btn-reset">Reset</button>
+        </div>
+
+        <div id="controls-container"></div>
+      </div>
+
+      <div class="graph-container">
+        <div class="graph-title">Position / Velocity over time</div>
+        <canvas id="graph-canvas"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Three.js from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.min.js"></script>
+  <!-- cannon-es for physics -->
+  <script src="https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.cjs.js"></script>
+
+  <script>
+    /*
+     * Lab Simulation 3D Plugin for Qalem
+     *
+     * Self-contained physics simulation using Three.js (rendering)
+     * and cannon-es (physics). Communicates with parent via postMessage.
+     */
+
+    // ====================================================================
+    // State
+    // ====================================================================
+    var config = null;
+    var params = {};
+    var running = false;
+    var paused = false;
+    var simTime = 0;
+    var graphData = { time: [], position: [], velocity: [] };
+
+    // Three.js
+    var scene, camera, renderer, clock;
+    var simObject = null; // The main physics-driven mesh
+    var groundMesh = null;
+    var arrowGravity = null;
+    var arrowVelocity = null;
+    var trajectoryLine = null;
+    var trajectoryPoints = [];
+
+    // cannon-es
+    var world = null;
+    var simBody = null;
+    var groundBody = null;
+
+    // Graph
+    var graphCtx = null;
+
+    // ====================================================================
+    // PostMessage protocol
+    // ====================================================================
+    window.addEventListener('message', function(event) {
+      var msg = event.data;
+      if (!msg || msg.source !== 'qalem-host') return;
+
+      if (msg.type === 'init') {
+        config = msg.payload.data;
+        applyTheme(msg.payload.theme);
+        initSimulation();
+      } else if (msg.type === 'update') {
+        config = msg.payload.data;
+        initSimulation();
+      } else if (msg.type === 'theme') {
+        applyTheme(msg.payload.theme);
+      }
+    });
+
+    function notifyParent(type, payload) {
+      window.parent.postMessage({ source: 'qalem-plugin', type: type, payload: payload }, '*');
+    }
+
+    function applyTheme(theme) {
+      document.documentElement.classList.toggle('dark', theme === 'dark');
+    }
+
+    // ====================================================================
+    // Three.js setup
+    // ====================================================================
+    function initThree() {
+      var canvas = document.getElementById('three-canvas');
+      var rect = canvas.parentElement.getBoundingClientRect();
+
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0a0a14);
+      scene.fog = new THREE.Fog(0x0a0a14, 30, 80);
+
+      camera = new THREE.PerspectiveCamera(50, rect.width / rect.height, 0.1, 200);
+      camera.position.set(8, 6, 12);
+      camera.lookAt(0, 2, 0);
+
+      renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+      renderer.setSize(rect.width, rect.height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+      // Lights
+      var ambient = new THREE.AmbientLight(0x404060, 0.6);
+      scene.add(ambient);
+
+      var dir = new THREE.DirectionalLight(0xffffff, 1.0);
+      dir.position.set(10, 15, 10);
+      dir.castShadow = true;
+      dir.shadow.mapSize.width = 1024;
+      dir.shadow.mapSize.height = 1024;
+      scene.add(dir);
+
+      var hemi = new THREE.HemisphereLight(0x8888ff, 0x444422, 0.4);
+      scene.add(hemi);
+
+      // Ground
+      var groundGeo = new THREE.PlaneGeometry(60, 60);
+      var groundMat = new THREE.MeshStandardMaterial({ color: 0x2a2a3a, roughness: 0.8 });
+      groundMesh = new THREE.Mesh(groundGeo, groundMat);
+      groundMesh.rotation.x = -Math.PI / 2;
+      groundMesh.receiveShadow = true;
+      scene.add(groundMesh);
+
+      // Grid
+      var grid = new THREE.GridHelper(60, 30, 0x444466, 0x333355);
+      grid.position.y = 0.01;
+      scene.add(grid);
+
+      clock = new THREE.Clock();
+
+      // Resize
+      window.addEventListener('resize', function() {
+        var r = canvas.parentElement.getBoundingClientRect();
+        camera.aspect = r.width / r.height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(r.width, r.height);
+      });
+    }
+
+    // ====================================================================
+    // Physics (cannon-es)
+    // ====================================================================
+    function initPhysics() {
+      // cannon-es is loaded as CJS, accessible via CANNON global
+      world = new CANNON.World();
+      world.gravity.set(0, -(params.gravity || 9.81), 0);
+
+      // Ground plane
+      groundBody = new CANNON.Body({ mass: 0, shape: new CANNON.Plane() });
+      groundBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
+      world.addBody(groundBody);
+    }
+
+    // ====================================================================
+    // Experiments
+    // ====================================================================
+    function clearSimObjects() {
+      if (simObject) { scene.remove(simObject); simObject = null; }
+      if (arrowGravity) { scene.remove(arrowGravity); arrowGravity = null; }
+      if (arrowVelocity) { scene.remove(arrowVelocity); arrowVelocity = null; }
+      if (trajectoryLine) { scene.remove(trajectoryLine); trajectoryLine = null; }
+      trajectoryPoints = [];
+      if (simBody && world) { world.removeBody(simBody); simBody = null; }
+    }
+
+    function setupProjectile() {
+      var g = params.gravity || 9.81;
+      var v0 = params.initialVelocity || 10;
+      var angleDeg = params.angle || 45;
+      var mass = params.mass || 1;
+      var angleRad = angleDeg * Math.PI / 180;
+
+      world.gravity.set(0, -g, 0);
+
+      // Sphere
+      var radius = 0.3;
+      var geo = new THREE.SphereGeometry(radius, 24, 24);
+      var mat = new THREE.MeshStandardMaterial({ color: 0x4488ff, metalness: 0.3, roughness: 0.4 });
+      simObject = new THREE.Mesh(geo, mat);
+      simObject.castShadow = true;
+      simObject.position.set(-8, radius, 0);
+      scene.add(simObject);
+
+      // Physics body
+      simBody = new CANNON.Body({ mass: mass, shape: new CANNON.Sphere(radius) });
+      simBody.position.set(-8, radius, 0);
+      simBody.velocity.set(v0 * Math.cos(angleRad), v0 * Math.sin(angleRad), 0);
+      world.addBody(simBody);
+
+      camera.position.set(0, 8, 20);
+      camera.lookAt(0, 3, 0);
+    }
+
+    function setupPendulum() {
+      var g = params.gravity || 9.81;
+      var length = params.length || 2;
+      var mass = params.mass || 1;
+      var damping = params.damping || 0.1;
+
+      world.gravity.set(0, -g, 0);
+
+      var pivotY = 8;
+      var radius = 0.3;
+
+      // Pivot point marker
+      var pivotGeo = new THREE.SphereGeometry(0.1, 12, 12);
+      var pivotMat = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
+      var pivotMesh = new THREE.Mesh(pivotGeo, pivotMat);
+      pivotMesh.position.set(0, pivotY, 0);
+      scene.add(pivotMesh);
+
+      // Bob
+      var geo = new THREE.SphereGeometry(radius, 24, 24);
+      var mat = new THREE.MeshStandardMaterial({ color: 0xff6644, metalness: 0.3, roughness: 0.4 });
+      simObject = new THREE.Mesh(geo, mat);
+      simObject.castShadow = true;
+      // Start displaced at 45 degrees
+      simObject.position.set(length * Math.sin(Math.PI / 4), pivotY - length * Math.cos(Math.PI / 4), 0);
+      scene.add(simObject);
+
+      // Physics: use a constraint approach via custom integration
+      simBody = new CANNON.Body({ mass: mass, shape: new CANNON.Sphere(radius) });
+      simBody.position.copy(simObject.position);
+      simBody.linearDamping = damping;
+      world.addBody(simBody);
+
+      // Distance constraint to pivot
+      var pivotBody = new CANNON.Body({ mass: 0 });
+      pivotBody.position.set(0, pivotY, 0);
+      world.addBody(pivotBody);
+
+      var constraint = new CANNON.DistanceConstraint(pivotBody, simBody, length);
+      world.addConstraint(constraint);
+
+      // Store pivot for line drawing
+      simBody._pivotY = pivotY;
+
+      camera.position.set(6, 7, 10);
+      camera.lookAt(0, 5, 0);
+    }
+
+    function setupSpring() {
+      var g = params.gravity || 9.81;
+      var k = params.springConstant || 10;
+      var mass = params.mass || 1;
+      var damping = params.damping || 0.1;
+
+      world.gravity.set(0, -g, 0);
+
+      var anchorY = 8;
+      var restLength = 2;
+      var radius = 0.3;
+
+      // Anchor marker
+      var anchorGeo = new THREE.BoxGeometry(1, 0.2, 1);
+      var anchorMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
+      var anchorMesh = new THREE.Mesh(anchorGeo, anchorMat);
+      anchorMesh.position.set(0, anchorY, 0);
+      scene.add(anchorMesh);
+
+      // Bob
+      var geo = new THREE.SphereGeometry(radius, 24, 24);
+      var mat = new THREE.MeshStandardMaterial({ color: 0x44cc88, metalness: 0.3, roughness: 0.4 });
+      simObject = new THREE.Mesh(geo, mat);
+      simObject.castShadow = true;
+      // Start stretched
+      simObject.position.set(0, anchorY - restLength - 1.5, 0);
+      scene.add(simObject);
+
+      // Physics body
+      simBody = new CANNON.Body({ mass: mass, shape: new CANNON.Sphere(radius) });
+      simBody.position.copy(simObject.position);
+      simBody.linearDamping = damping;
+      world.addBody(simBody);
+
+      // Anchor body
+      var anchorBody = new CANNON.Body({ mass: 0 });
+      anchorBody.position.set(0, anchorY, 0);
+      world.addBody(anchorBody);
+
+      // Spring
+      var spring = new CANNON.Spring(anchorBody, simBody, {
+        restLength: restLength,
+        stiffness: k,
+        damping: damping * 5,
+      });
+
+      // Apply spring force each step
+      world.addEventListener('preStep', function() {
+        spring.applyForce();
+      });
+
+      simBody._anchorY = anchorY;
+
+      camera.position.set(5, 6, 8);
+      camera.lookAt(0, 5, 0);
+    }
+
+    // ====================================================================
+    // Controls UI
+    // ====================================================================
+    function buildControls() {
+      var container = document.getElementById('controls-container');
+      while (container.firstChild) container.removeChild(container.firstChild);
+
+      var experiment = config.experiment || 'projectile';
+      var sliders = [];
+
+      // Common
+      sliders.push({ key: 'gravity', label: 'Gravity (m/s\u00B2)', min: 0.5, max: 25, step: 0.1, default: 9.81 });
+      sliders.push({ key: 'mass', label: 'Mass (kg)', min: 0.1, max: 20, step: 0.1, default: 1.0 });
+
+      if (experiment === 'projectile') {
+        sliders.push({ key: 'initialVelocity', label: 'Initial Velocity (m/s)', min: 1, max: 40, step: 0.5, default: 10 });
+        sliders.push({ key: 'angle', label: 'Angle (\u00B0)', min: 5, max: 85, step: 1, default: 45 });
+      } else if (experiment === 'pendulum') {
+        sliders.push({ key: 'length', label: 'Length (m)', min: 0.5, max: 6, step: 0.1, default: 2 });
+        sliders.push({ key: 'damping', label: 'Damping', min: 0, max: 1, step: 0.01, default: 0.1 });
+      } else if (experiment === 'spring') {
+        sliders.push({ key: 'springConstant', label: 'Spring Constant (N/m)', min: 1, max: 50, step: 0.5, default: 10 });
+        sliders.push({ key: 'damping', label: 'Damping', min: 0, max: 1, step: 0.01, default: 0.1 });
+      }
+
+      sliders.forEach(function(s) {
+        var val = params[s.key] !== undefined ? params[s.key] : s.default;
+        params[s.key] = val;
+
+        var group = document.createElement('div');
+        group.className = 'control-group';
+
+        var labelRow = document.createElement('div');
+        labelRow.className = 'control-label';
+
+        var labelText = document.createElement('span');
+        labelText.textContent = s.label;
+        labelRow.appendChild(labelText);
+
+        var valueSpan = document.createElement('span');
+        valueSpan.className = 'control-value';
+        valueSpan.textContent = val;
+        labelRow.appendChild(valueSpan);
+
+        group.appendChild(labelRow);
+
+        var input = document.createElement('input');
+        input.type = 'range';
+        input.min = s.min;
+        input.max = s.max;
+        input.step = s.step;
+        input.value = val;
+        input.addEventListener('input', function() {
+          var v = parseFloat(input.value);
+          params[s.key] = v;
+          valueSpan.textContent = v;
+        });
+
+        group.appendChild(input);
+        container.appendChild(group);
+      });
+    }
+
+    // ====================================================================
+    // Graph
+    // ====================================================================
+    function initGraph() {
+      var canvas = document.getElementById('graph-canvas');
+      var rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width - 32;
+      canvas.height = 120;
+      graphCtx = canvas.getContext('2d');
+    }
+
+    function drawGraph() {
+      if (!graphCtx || graphData.time.length < 2) return;
+
+      var canvas = graphCtx.canvas;
+      var w = canvas.width;
+      var h = canvas.height;
+      graphCtx.clearRect(0, 0, w, h);
+
+      // Background
+      var isDark = document.documentElement.classList.contains('dark');
+      graphCtx.fillStyle = isDark ? '#2c2c2e' : '#f5f5f7';
+      graphCtx.fillRect(0, 0, w, h);
+
+      // Find ranges
+      var maxT = Math.max.apply(null, graphData.time) || 1;
+      var allPos = graphData.position;
+      var allVel = graphData.velocity;
+      var maxPos = Math.max.apply(null, allPos.map(Math.abs)) || 1;
+      var maxVel = Math.max.apply(null, allVel.map(Math.abs)) || 1;
+
+      // Draw position line (blue)
+      graphCtx.strokeStyle = '#4488ff';
+      graphCtx.lineWidth = 1.5;
+      graphCtx.beginPath();
+      for (var i = 0; i < graphData.time.length; i++) {
+        var x = (graphData.time[i] / maxT) * w;
+        var y = h / 2 - (allPos[i] / maxPos) * (h / 2 - 5);
+        if (i === 0) graphCtx.moveTo(x, y);
+        else graphCtx.lineTo(x, y);
+      }
+      graphCtx.stroke();
+
+      // Draw velocity line (green)
+      graphCtx.strokeStyle = '#44ff44';
+      graphCtx.lineWidth = 1.5;
+      graphCtx.beginPath();
+      for (var j = 0; j < graphData.time.length; j++) {
+        var x2 = (graphData.time[j] / maxT) * w;
+        var y2 = h / 2 - (allVel[j] / maxVel) * (h / 2 - 5);
+        if (j === 0) graphCtx.moveTo(x2, y2);
+        else graphCtx.lineTo(x2, y2);
+      }
+      graphCtx.stroke();
+
+      // Labels
+      graphCtx.font = '9px sans-serif';
+      graphCtx.fillStyle = '#4488ff';
+      graphCtx.fillText('Position', 4, 12);
+      graphCtx.fillStyle = '#44ff44';
+      graphCtx.fillText('Velocity', 50, 12);
+
+      // Center line
+      graphCtx.strokeStyle = isDark ? '#48484a' : '#d2d2d7';
+      graphCtx.lineWidth = 0.5;
+      graphCtx.beginPath();
+      graphCtx.moveTo(0, h / 2);
+      graphCtx.lineTo(w, h / 2);
+      graphCtx.stroke();
+    }
+
+    // ====================================================================
+    // Instructions rendering
+    // ====================================================================
+    function renderInstructions(md) {
+      var el = document.getElementById('instructions-area');
+      while (el.firstChild) el.removeChild(el.firstChild);
+
+      if (!md) return;
+
+      var lines = md.split('\n');
+      var i = 0;
+      while (i < lines.length) {
+        var line = lines[i];
+        if (line.startsWith('### ')) {
+          var h = document.createElement('h3');
+          h.textContent = line.slice(4);
+          el.appendChild(h);
+        } else if (line.startsWith('- ')) {
+          var ul = document.createElement('ul');
+          ul.style.paddingLeft = '16px';
+          while (i < lines.length && lines[i].startsWith('- ')) {
+            var li = document.createElement('li');
+            li.textContent = lines[i].slice(2);
+            ul.appendChild(li);
+            i++;
+          }
+          el.appendChild(ul);
+          continue;
+        } else if (line.trim() !== '') {
+          var p = document.createElement('p');
+          p.textContent = line;
+          p.style.marginBottom = '6px';
+          el.appendChild(p);
+        }
+        i++;
+      }
+    }
+
+    // ====================================================================
+    // Simulation loop
+    // ====================================================================
+    function initSimulation() {
+      if (!config) return;
+
+      running = false;
+      paused = false;
+      simTime = 0;
+      graphData = { time: [], position: [], velocity: [] };
+
+      // Merge config params with defaults
+      var p = config.parameters || {};
+      params = {
+        gravity: p.gravity !== undefined ? p.gravity : 9.81,
+        mass: p.mass !== undefined ? p.mass : 1.0,
+        initialVelocity: p.initialVelocity !== undefined ? p.initialVelocity : 10,
+        angle: p.angle !== undefined ? p.angle : 45,
+        length: p.length !== undefined ? p.length : 2,
+        springConstant: p.springConstant !== undefined ? p.springConstant : 10,
+        damping: p.damping !== undefined ? p.damping : 0.1,
+      };
+
+      document.getElementById('experiment-title').textContent = config.title || 'Lab Simulation';
+
+      renderInstructions(config.instructions || '');
+
+      // Init Three.js if not done
+      if (!renderer) {
+        initThree();
+        initGraph();
+      }
+
+      // Clear previous
+      clearSimObjects();
+
+      // Init physics
+      initPhysics();
+
+      // Build controls
+      buildControls();
+
+      // Setup experiment
+      var experiment = config.experiment || 'projectile';
+      if (experiment === 'projectile') setupProjectile();
+      else if (experiment === 'pendulum') setupPendulum();
+      else if (experiment === 'spring') setupSpring();
+
+      // Create force arrows
+      arrowGravity = new THREE.ArrowHelper(
+        new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, 0, 0), 1, 0xff4444, 0.15, 0.1
+      );
+      scene.add(arrowGravity);
+
+      arrowVelocity = new THREE.ArrowHelper(
+        new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, 0), 1, 0x44ff44, 0.15, 0.1
+      );
+      scene.add(arrowVelocity);
+
+      // Trajectory line
+      var trajGeo = new THREE.BufferGeometry();
+      var trajMat = new THREE.LineBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.6 });
+      trajectoryLine = new THREE.Line(trajGeo, trajMat);
+      scene.add(trajectoryLine);
+
+      updateButtons();
+    }
+
+    function startSim() {
+      if (running && !paused) return;
+
+      if (!running) {
+        // Reinit physics with current slider values
+        clearSimObjects();
+        initPhysics();
+        graphData = { time: [], position: [], velocity: [] };
+        trajectoryPoints = [];
+        simTime = 0;
+
+        var experiment = config.experiment || 'projectile';
+        if (experiment === 'projectile') setupProjectile();
+        else if (experiment === 'pendulum') setupPendulum();
+        else if (experiment === 'spring') setupSpring();
+
+        // Re-create arrows and trajectory
+        if (!arrowGravity) {
+          arrowGravity = new THREE.ArrowHelper(new THREE.Vector3(0,-1,0), new THREE.Vector3(), 1, 0xff4444, 0.15, 0.1);
+          scene.add(arrowGravity);
+        }
+        if (!arrowVelocity) {
+          arrowVelocity = new THREE.ArrowHelper(new THREE.Vector3(1,0,0), new THREE.Vector3(), 1, 0x44ff44, 0.15, 0.1);
+          scene.add(arrowVelocity);
+        }
+        if (!trajectoryLine) {
+          var tGeo = new THREE.BufferGeometry();
+          var tMat = new THREE.LineBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.6 });
+          trajectoryLine = new THREE.Line(tGeo, tMat);
+          scene.add(trajectoryLine);
+        }
+      }
+
+      running = true;
+      paused = false;
+      updateButtons();
+    }
+
+    function pauseSim() {
+      paused = !paused;
+      updateButtons();
+    }
+
+    function resetSim() {
+      running = false;
+      paused = false;
+      initSimulation();
+    }
+
+    function updateButtons() {
+      document.getElementById('btn-start').disabled = running && !paused;
+      document.getElementById('btn-pause').disabled = !running;
+      document.getElementById('btn-pause').textContent = paused ? 'Resume' : 'Pause';
+    }
+
+    document.getElementById('btn-start').addEventListener('click', startSim);
+    document.getElementById('btn-pause').addEventListener('click', pauseSim);
+    document.getElementById('btn-reset').addEventListener('click', resetSim);
+
+    // ====================================================================
+    // Animation loop
+    // ====================================================================
+    function animate() {
+      requestAnimationFrame(animate);
+
+      if (!renderer || !scene || !camera) return;
+
+      if (running && !paused && world && simBody) {
+        var dt = 1 / 60;
+        world.step(dt);
+        simTime += dt;
+
+        // Sync mesh with physics
+        if (simObject) {
+          simObject.position.copy(simBody.position);
+          simObject.quaternion.copy(simBody.quaternion);
+        }
+
+        // Stop if object falls below ground
+        if (simBody.position.y < -1) {
+          running = false;
+          updateButtons();
+          notifyParent('complete', { simTime: simTime });
+        }
+
+        // Update arrows
+        if (arrowGravity && simObject) {
+          arrowGravity.position.copy(simObject.position);
+          var gMag = params.gravity || 9.81;
+          arrowGravity.setLength(Math.min(gMag * 0.2, 3), 0.15, 0.1);
+        }
+
+        if (arrowVelocity && simObject) {
+          arrowVelocity.position.copy(simObject.position);
+          var vel = simBody.velocity;
+          var speed = Math.sqrt(vel.x * vel.x + vel.y * vel.y + vel.z * vel.z);
+          if (speed > 0.01) {
+            arrowVelocity.setDirection(new THREE.Vector3(vel.x, vel.y, vel.z).normalize());
+            arrowVelocity.setLength(Math.min(speed * 0.3, 4), 0.15, 0.1);
+            arrowVelocity.visible = true;
+          } else {
+            arrowVelocity.visible = false;
+          }
+        }
+
+        // Trajectory trail
+        if (simObject) {
+          trajectoryPoints.push(simObject.position.clone());
+          if (trajectoryPoints.length > 2) {
+            var positions = new Float32Array(trajectoryPoints.length * 3);
+            for (var i = 0; i < trajectoryPoints.length; i++) {
+              positions[i * 3] = trajectoryPoints[i].x;
+              positions[i * 3 + 1] = trajectoryPoints[i].y;
+              positions[i * 3 + 2] = trajectoryPoints[i].z;
+            }
+            trajectoryLine.geometry.dispose();
+            var geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            trajectoryLine.geometry = geo;
+          }
+        }
+
+        // Record graph data
+        var posY = simBody.position.y;
+        var velY = simBody.velocity.y;
+        graphData.time.push(simTime);
+        graphData.position.push(posY);
+        graphData.velocity.push(velY);
+
+        // Draw graph every 3 frames
+        if (graphData.time.length % 3 === 0) {
+          drawGraph();
+        }
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    // ====================================================================
+    // Bootstrap
+    // ====================================================================
+    animate();
+
+    // Signal readiness
+    notifyParent('ready', {});
+  </script>
+</body>
+</html>

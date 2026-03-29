@@ -185,6 +185,28 @@
   scrollbar-width: none;
 }
 
+/* ── RTL Support ── */
+[dir='rtl'] {
+  /* Mirror sidebar and chat panel positions */
+  direction: rtl;
+}
+[dir='rtl'] .prosemirror-editor {
+  direction: rtl;
+  text-align: right;
+}
+/* Ensure LTR for code, numbers, and technical content */
+[dir='rtl'] pre,
+[dir='rtl'] code,
+[dir='rtl'] .font-mono,
+[dir='rtl'] .katex {
+  direction: ltr;
+  text-align: left;
+}
+/* Flip icons that have directional meaning */
+[dir='rtl'] .rtl-flip {
+  transform: scaleX(-1);
+}
+
 /* Shimmer sweep for skeleton loading */
 @keyframes shimmer {
   0% {

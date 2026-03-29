@@ -10,11 +10,15 @@ import {
   Download,
   FileDown,
   Package,
+  LogOut,
+  User,
 } from 'lucide-react';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useTheme } from '@/lib/hooks/use-theme';
+import { useAuth } from '@/lib/hooks/use-auth';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { SettingsDialog } from './settings';
 import { cn } from '@/lib/utils';
 import { useStageStore } from '@/lib/store/stage';
@@ -28,8 +32,11 @@ interface HeaderProps {
 export function Header({ currentSceneTitle }: HeaderProps) {
   const { t, locale, setLocale } = useI18n();
   const { theme, setTheme } = useTheme();
+  const { user, isGuest, signOut } = useAuth();
   const router = useRouter();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const [languageOpen, setLanguageOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
 
@@ -63,16 +70,19 @@ export function Header({ currentSceneTitle }: HeaderProps) {
       if (exportMenuOpen && exportRef.current && !exportRef.current.contains(e.target as Node)) {
         setExportMenuOpen(false);
       }
+      if (userMenuOpen && userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
     },
-    [languageOpen, themeOpen, exportMenuOpen],
+    [languageOpen, themeOpen, exportMenuOpen, userMenuOpen],
   );
 
   useEffect(() => {
-    if (languageOpen || themeOpen || exportMenuOpen) {
+    if (languageOpen || themeOpen || exportMenuOpen || userMenuOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [languageOpen, themeOpen, exportMenuOpen, handleClickOutside]);
+  }, [languageOpen, themeOpen, exportMenuOpen, userMenuOpen, handleClickOutside]);
 
   return (
     <>
@@ -108,36 +118,31 @@ export function Header({ currentSceneTitle }: HeaderProps) {
               }}
               className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 hover:shadow-sm transition-all"
             >
-              {locale === 'zh-CN' ? 'CN' : 'EN'}
+              {{ 'fr-FR': 'FR', 'ar-MA': 'AR', 'en-US': 'EN', 'zh-CN': 'CN' }[locale]}
             </button>
             {languageOpen && (
               <div className="absolute top-full mt-2 right-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden z-50 min-w-[120px]">
-                <button
-                  onClick={() => {
-                    setLocale('zh-CN');
-                    setLanguageOpen(false);
-                  }}
-                  className={cn(
-                    'w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors',
-                    locale === 'zh-CN' &&
-                      'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
-                  )}
-                >
-                  简体中文
-                </button>
-                <button
-                  onClick={() => {
-                    setLocale('en-US');
-                    setLanguageOpen(false);
-                  }}
-                  className={cn(
-                    'w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors',
-                    locale === 'en-US' &&
-                      'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
-                  )}
-                >
-                  English
-                </button>
+                {([
+                  { code: 'fr-FR' as const, label: 'Français' },
+                  { code: 'ar-MA' as const, label: 'العربية' },
+                  { code: 'en-US' as const, label: 'English' },
+                ] as const).map(({ code, label }) => (
+                  <button
+                    key={code}
+                    onClick={() => {
+                      setLocale(code);
+                      setLanguageOpen(false);
+                    }}
+                    className={cn(
+                      'w-full px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors',
+                      code === 'ar-MA' ? 'text-right' : 'text-left',
+                      locale === code &&
+                        'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
             )}
           </div>
@@ -216,6 +221,51 @@ export function Header({ currentSceneTitle }: HeaderProps) {
               <Settings className="w-4 h-4 group-hover:rotate-90 transition-transform duration-500" />
             </button>
           </div>
+
+          <div className="w-[1px] h-4 bg-gray-200 dark:bg-gray-700" />
+
+          {/* Auth / User */}
+          {user ? (
+            <div className="relative" ref={userMenuRef}>
+              <button
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="flex items-center gap-2 px-2 py-1.5 rounded-full text-xs font-medium text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 hover:shadow-sm transition-all"
+              >
+                <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold uppercase">
+                  {user.email?.charAt(0) ?? <User className="w-3 h-3" />}
+                </div>
+                <span className="max-w-[80px] truncate hidden sm:inline">
+                  {user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? ''}
+                </span>
+              </button>
+              {userMenuOpen && (
+                <div className="absolute top-full mt-2 right-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden z-50 min-w-[160px]">
+                  <div className="px-4 py-2 text-xs text-gray-400 dark:text-gray-500 truncate border-b border-gray-100 dark:border-gray-700">
+                    {user.email}
+                  </div>
+                  <button
+                    onClick={async () => {
+                      setUserMenuOpen(false);
+                      await signOut();
+                      router.push('/auth');
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 text-destructive"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    {t('auth.signOut')}
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link
+              href="/auth"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-primary hover:bg-primary/10 transition-all"
+            >
+              <User className="w-3.5 h-3.5" />
+              {t('auth.login')}
+            </Link>
+          )}
         </div>
 
         {/* Export Dropdown */}

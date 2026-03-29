@@ -20,6 +20,7 @@ import {
   buildVisionUserContent,
   uniquifyMediaElementIds,
   formatTeacherPersonaForPrompt,
+  getLanguageName,
 } from '@/lib/generation/generation-pipeline';
 import type { AgentInfo } from '@/lib/generation/generation-pipeline';
 import { MAX_PDF_CONTENT_CHARS, MAX_VISION_IMAGES } from '@/lib/constants/generation';
@@ -175,6 +176,7 @@ export async function POST(req: NextRequest) {
     const prompts = buildPrompt(PROMPT_IDS.REQUIREMENTS_TO_OUTLINES, {
       requirement: requirements.requirement,
       language: requirements.language,
+      language_name: getLanguageName(requirements.language),
       pdfContent: pdfText
         ? pdfText.substring(0, MAX_PDF_CONTENT_CHARS)
         : requirements.language === 'zh-CN'

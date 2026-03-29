@@ -11,6 +11,7 @@ import {
   Globe,
   AlertCircle,
   RefreshCw,
+  Puzzle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThumbnailSlide } from '@/components/slide-renderer/components/ThumbnailSlide';
@@ -89,13 +90,14 @@ export function SceneSidebar({
   );
 
   const getSceneTypeIcon = (type: SceneType) => {
-    const icons = {
+    const icons: Record<string, typeof BookOpen> = {
       slide: BookOpen,
       quiz: PieChart,
       interactive: MousePointer2,
       pbl: Cpu,
+      plugin: Puzzle,
     };
-    return icons[type] || BookOpen;
+    return icons[type] || Puzzle;
   };
 
   const displayWidth = collapsed ? 0 : sidebarWidth;
@@ -126,7 +128,7 @@ export function SceneSidebar({
             className="flex items-center gap-2 cursor-pointer rounded-lg px-1.5 -mx-1.5 py-1 -my-1 hover:bg-gray-100/80 dark:hover:bg-gray-800/60 active:scale-[0.97] transition-all duration-150"
             title={t('generation.backToHome')}
           >
-            <img src="/logo-horizontal.png" alt="OpenMAIC" className="h-6" />
+            <img src="/logo-horizontal.png" alt="Qalem" className="h-6" />
           </button>
           <button
             onClick={() => onCollapseChange(true)}

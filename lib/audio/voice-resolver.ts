@@ -10,12 +10,14 @@ export interface ResolvedVoice {
 /**
  * Resolve the TTS provider + voice for an agent.
  * 1. If agent has voiceConfig and the voice is still valid, use it
- * 2. Otherwise, use the first available provider + deterministic voice by index
+ * 2. Otherwise, find voices matching the current locale, then assign deterministically
+ * 3. If no locale-matching voices found, fall back to any available voice
  */
 export function resolveAgentVoice(
   agent: AgentConfig,
   agentIndex: number,
   availableProviders: ProviderWithVoices[],
+  locale?: string,
 ): ResolvedVoice {
   // Agent-specific config
   if (agent.voiceConfig) {
@@ -29,7 +31,24 @@ export function resolveAgentVoice(
     }
   }
 
-  // Fallback: first available provider, deterministic voice
+  // Locale-aware voice selection: filter voices matching the user's language
+  if (locale && availableProviders.length > 0) {
+    const langPrefix = locale.split('-')[0]; // 'fr' from 'fr-FR', 'ar' from 'ar-MA'
+    for (const provider of availableProviders) {
+      const localeVoices = provider.voices.filter((v) => {
+        const vLang = v.language?.split('-')[0];
+        return vLang === langPrefix;
+      });
+      if (localeVoices.length > 0) {
+        return {
+          providerId: provider.providerId,
+          voiceId: localeVoices[agentIndex % localeVoices.length].id,
+        };
+      }
+    }
+  }
+
+  // Fallback: first available provider, deterministic voice (no locale filter)
   if (availableProviders.length > 0) {
     const first = availableProviders[0];
     return {
@@ -55,7 +74,7 @@ export function getServerVoiceList(providerId: TTSProviderId): string[] {
 export interface ProviderWithVoices {
   providerId: TTSProviderId;
   providerName: string;
-  voices: Array<{ id: string; name: string }>;
+  voices: Array<{ id: string; name: string; language?: string }>;
 }
 
 /**
@@ -84,7 +103,7 @@ export function getAvailableProvidersWithVoices(
       result.push({
         providerId,
         providerName: config.name,
-        voices: config.voices.map((v) => ({ id: v.id, name: v.name })),
+        voices: config.voices.map((v) => ({ id: v.id, name: v.name, language: v.language })),
       });
     }
   }

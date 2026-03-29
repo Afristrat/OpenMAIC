@@ -51,6 +51,9 @@ yarn-error.log*
 server-providers.yml
 server-providers-*.yml
 
+# MCP server config (may contain API keys)
+mcp-servers.yml
+
 # vercel
 .vercel
 

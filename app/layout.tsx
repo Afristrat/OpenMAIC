@@ -9,6 +9,7 @@ import { ThemeProvider } from '@/lib/hooks/use-theme';
 import { I18nProvider } from '@/lib/hooks/use-i18n';
 import { Toaster } from '@/components/ui/sonner';
 import { ServerProvidersInit } from '@/components/server-providers-init';
+import { HtmlDirectionManager } from '@/components/html-direction-manager';
 
 const inter = localFont({
   src: '../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2',
@@ -17,7 +18,7 @@ const inter = localFont({
 });
 
 export const metadata: Metadata = {
-  title: 'OpenMAIC',
+  title: 'Qalem',
   description:
     'The open-source AI interactive classroom. Upload a PDF to instantly generate an immersive, multi-agent learning experience.',
 };
@@ -35,6 +36,7 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <I18nProvider>
+            <HtmlDirectionManager />
             <ServerProvidersInit />
             {children}
             <Toaster position="top-center" />

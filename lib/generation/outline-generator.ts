@@ -12,7 +12,7 @@ import type {
   ImageMapping,
 } from '@/lib/types/generation';
 import { buildPrompt, PROMPT_IDS } from './prompts';
-import { formatImageDescription, formatImagePlaceholder } from './prompt-formatters';
+import { formatImageDescription, formatImagePlaceholder, getLanguageName } from './prompt-formatters';
 import { parseJsonResponse } from './json-repair';
 import { uniquifyMediaElementIds } from './scene-builder';
 import type { AICallFn, GenerationResult, GenerationCallbacks } from './pipeline-types';
@@ -99,6 +99,7 @@ export async function generateSceneOutlinesFromRequirements(
     // New simplified variables
     requirement: requirements.requirement,
     language: requirements.language,
+    language_name: getLanguageName(requirements.language),
     pdfContent: pdfText
       ? pdfText.substring(0, MAX_PDF_CONTENT_CHARS)
       : requirements.language === 'zh-CN'

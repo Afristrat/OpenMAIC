@@ -1,5 +1,5 @@
 {
-  "name": "openmaic",
+  "name": "qalem",
   "version": "0.1.0",
   "private": true,
   "license": "AGPL-3.0",
@@ -36,6 +36,8 @@
     "@radix-ui/react-slider": "^1.3.6",
     "@radix-ui/react-switch": "^1.2.6",
     "@radix-ui/react-use-controllable-state": "^1.2.2",
+    "@supabase/ssr": "^0.9.0",
+    "@supabase/supabase-js": "^2.100.1",
     "@types/js-yaml": "^4.0.9",
     "@xyflow/react": "^12.10.0",
     "ai": "^6.0.42",
@@ -50,6 +52,7 @@
     "file-saver": "^2.0.5",
     "geist": "^1.7.0",
     "immer": "^11.1.3",
+    "jose": "^6.2.2",
     "js-yaml": "^4.1.1",
     "jsonrepair": "^3.13.2",
     "jszip": "^3.10.1",

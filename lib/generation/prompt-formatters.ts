@@ -5,6 +5,18 @@
 import type { PdfImage } from '@/lib/types/generation';
 import type { AgentInfo, SceneGenerationContext } from './pipeline-types';
 
+/** Map a language code to its human-readable name for prompt injection */
+const LANGUAGE_NAME_MAP: Record<string, string> = {
+  'fr-FR': 'French',
+  'ar-MA': 'Arabic',
+  'en-US': 'English',
+  'zh-CN': 'Chinese',
+};
+
+export function getLanguageName(languageCode: string): string {
+  return LANGUAGE_NAME_MAP[languageCode] || 'English';
+}
+
 /** Build a course context string for injection into action prompts */
 export function buildCourseContext(ctx?: SceneGenerationContext): string {
   if (!ctx) return '';

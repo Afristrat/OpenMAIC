@@ -1,0 +1,927 @@
+{
+  "project": "Qalem",
+  "version": "0.1.0",
+  "description": "Fork OpenMAIC → Qalem. Plateforme éducative multi-agent FR/AR/EN avec moats structurels.",
+  "qualityGates": "npx tsc --noEmit && pnpm lint && pnpm test && pnpm test:e2e",
+  "stories": [
+    {
+      "id": "S-001",
+      "title": "Renommer le projet OpenMAIC → Qalem",
+      "epic": "Rebranding",
+      "phase": 1,
+      "passes": true,
+      "completedAt": "2026-03-29T02:47:00Z",
+      "dependencies": [],
+      "acceptance": [
+        "package.json name changé en qalem",
+        "Titre app dans layout.tsx changé en Qalem",
+        "Favicon et apple-icon remplacés",
+        "Meta tags mis à jour",
+        "README.md mis à jour",
+        "Build et dev server fonctionnent"
+      ]
+    },
+    {
+      "id": "S-002",
+      "title": "Ajouter les locales fr-FR et ar-MA au système i18n",
+      "epic": "i18n FR/AR/EN",
+      "phase": 1,
+      "passes": true,
+      "dependencies": [
+        "S-001"
+      ],
+      "acceptance": [
+        "lib/i18n/types.ts : Locale étendu avec fr-FR | ar-MA",
+        "use-i18n.tsx : auto-détection FR et AR",
+        "Sélecteur de langue affiche FR/AR/EN, ZH-CN retiré de l'UI",
+        "ZH-CN reste comme fallback dans le code",
+        "localStorage persiste le choix"
+      ],
+      "completedAt": "2026-03-29T08:35:43.996Z"
+    },
+    {
+      "id": "S-003",
+      "title": "Traduire le module common en FR et AR",
+      "epic": "i18n FR/AR/EN",
+      "phase": 1,
+      "passes": true,
+      "dependencies": [
+        "S-002"
+      ],
+      "acceptance": [
+        "Clés common.*, home.*, toolbar.*, export.* traduites en fr-FR",
+        "Mêmes clés traduites en ar-MA",
+        "Accents sur majuscules en français",
+        "Arabe standard moderne (pas de Darija dans l'UI)"
+      ],
+      "completedAt": "2026-03-29T08:35:43.996Z"
+    },
+    {
+      "id": "S-004",
+      "title": "Traduire le module chat en FR et AR",
+      "epic": "i18n FR/AR/EN",
+      "phase": 1,
+      "passes": true,
+      "dependencies": [
+        "S-002"
+      ],
+      "acceptance": [
+        "Clés chat.*, actions.*, agentBar.*, proactiveCard.*, voice.* traduites en fr-FR et ar-MA",
+        "Noms d'actions (spotlight, laser, whiteboard) traduits naturellement"
+      ],
+      "completedAt": "2026-03-29T08:35:43.996Z"
+    },
+    {
+      "id": "S-005",
+      "title": "Traduire le module generation en FR et AR",
+      "epic": "i18n FR/AR/EN",
+      "phase": 1,
+      "passes": true,
+      "dependencies": [
+        "S-002"
+      ],
+      "acceptance": [
+        "Clés classroom.*, upload.*, generation.* traduites en fr-FR et ar-MA",
+        "Messages de progression traduits naturellement"
+      ],
+      "completedAt": "2026-03-29T08:35:43.996Z"
+    },
+    {
+      "id": "S-006",
+      "title": "Traduire le module settings en FR et AR",
+      "epic": "i18n FR/AR/EN",
+      "phase": 1,
+      "passes": true,
+      "dependencies": [
+        "S-002"
+      ],
+      "acceptance": [
+        "500+ lignes de clés settings traduites en fr-FR et ar-MA",
+        "Noms de providers restent en anglais",
+        "Descriptions de voix TTS traduites",
+        "Noms de langues traduits"
+      ],
+      "completedAt": "2026-03-29T08:35:43.996Z"
+    },
+    {
+      "id": "S-007",
+      "title": "Traduire le module stage en FR et AR",
+      "epic": "i18n FR/AR/EN",
+      "phase": 1,
+      "passes": true,
+      "dependencies": [
+        "S-002"
+      ],
+      "acceptance": [
+        "Clés stage.*, whiteboard.*, quiz.*, roundtable.*, pbl.*, share.* traduites en fr-FR et ar-MA"
+      ],
+      "completedAt": "2026-03-29T08:35:43.996Z"
+    },
+    {
+      "id": "S-008",
+      "title": "Traduire les agents par défaut en FR et AR",
+      "epic": "i18n FR/AR/EN",
+      "phase": 1,
+      "passes": true,
+      "dependencies": [
+        "S-002"
+      ],
+      "acceptance": [
+        "6 agents par défaut traduits selon la locale active",
+        "AI teacher → Professeur IA / أستاذ الذكاء الاصطناعي",
+        "AI助教 → Assistant pédagogique / المساعد التعليمي",
+        "显眼包 → Le Rigolo / المرح",
+        "好奇宝宝 → Le Curieux / الفضولي",
+        "笔记员 → Le Secrétaire / المدوّن",
+        "思考者 → Le Penseur / المفكّر"
+      ],
+      "completedAt": "2026-03-29T08:50:08.992Z"
+    },
+    {
+      "id": "S-009",
+      "title": "Support RTL (right-to-left) pour l'arabe",
+      "epic": "i18n FR/AR/EN",
+      "phase": 1,
+      "passes": true,
+      "dependencies": [
+        "S-002"
+      ],
+      "acceptance": [
+        "layout.tsx : dir dynamique (rtl pour ar-MA, ltr sinon)",
+        "globals.css : styles RTL pour sidebar, chat, navigation",
+        "Slide renderer fonctionne en RTL",
+        "Chat panel s'affiche correctement en RTL",
+        "Whiteboard fonctionne en RTL",
+        "Vérification visuelle : aucun élément cassé"
+      ],
+      "completedAt": "2026-03-29T08:59:02.994Z"
+    },
+    {
+      "id": "S-010",
+      "title": "Adapter les prompts de génération pour FR/AR",
+      "epic": "i18n FR/AR/EN",
+      "phase": 1,
+      "passes": true,
+      "dependencies": [
+        "S-002"
+      ],
+      "acceptance": [
+        "Tous les prompts system.md ont instruction de langue",
+        "Variable {{language}} injectée via interpolateVariables()",
+        "Langue extraite de UserRequirements.language",
+        "Test : classroom FR a du contenu en français"
+      ],
+      "completedAt": "2026-03-29T09:22:14.993Z"
+    },
+    {
+      "id": "S-011",
+      "title": "Ajouter des voix FR et AR à ElevenLabs",
+      "epic": "TTS Voix naturelles",
+      "phase": 1,
+      "passes": true,
+      "dependencies": [
+        "S-002"
+      ],
+      "acceptance": [
+        "constants.ts : 4+ voix FR (2H, 2F) ajoutées à ElevenLabs",
+        "constants.ts : 3+ voix AR (dont Ghizlane Darija) ajoutées",
+        "Chaque voix a label traduit et language tag",
+        "Voice picker filtre par langue de locale",
+        "Speech FR ElevenLabs sonne naturel"
+      ],
+      "completedAt": "2026-03-29T09:02:01.318Z"
+    },
+    {
+      "id": "S-012",
+      "title": "Rendre Azure TTS dynamique (supprimer hardcode zh-CN)",
+      "epic": "TTS Voix naturelles",
+      "phase": 1,
+      "passes": true,
+      "dependencies": [],
+      "acceptance": [
+        "tts-providers.ts : SSML Azure utilise xml:lang dynamique",
+        "constants.ts : voix Azure FR (DeniseNeural, HenriNeural) ajoutées",
+        "constants.ts : voix Azure AR (MounaNeural, ZariyahNeural) ajoutées",
+        "Chaque voix Azure a un tag locale"
+      ],
+      "completedAt": "2026-03-29T09:02:01.318Z"
+    },
+    {
+      "id": "S-013",
+      "title": "Intégrer Fish Audio S2 comme provider TTS",
+      "epic": "TTS Voix naturelles",
+      "phase": 1,
+      "passes": true,
+      "dependencies": [],
+      "acceptance": [
+        "Nouveau provider fish-audio dans constants.ts",
+        "generateFishAudioTTS() dans tts-providers.ts",
+        "Support streaming API",
+        "6+ voix par défaut (2 FR, 2 AR, 2 EN)",
+        "Support tags d'émotions",
+        "TTSProviderId étendu avec fish-audio",
+        "Env vars TTS_FISH_AUDIO_API_KEY et BASE_URL"
+      ],
+      "completedAt": "2026-03-29T09:02:01.318Z"
+    },
+    {
+      "id": "S-014",
+      "title": "Intégrer Cartesia Sonic 3 comme provider TTS",
+      "epic": "TTS Voix naturelles",
+      "phase": 1,
+      "passes": true,
+      "dependencies": [],
+      "acceptance": [
+        "Nouveau provider cartesia dans constants.ts",
+        "generateCartesiaTTS() dans tts-providers.ts",
+        "Support streaming WebSocket",
+        "4+ voix (FR + AR + EN)",
+        "TTSProviderId étendu avec cartesia",
+        "Env vars TTS_CARTESIA_API_KEY et BASE_URL"
+      ],
+      "completedAt": "2026-03-29T09:02:01.318Z"
+    },
+    {
+      "id": "S-015",
+      "title": "Rendre le voice-resolver conscient de la locale",
+      "epic": "TTS Voix naturelles",
+      "phase": 1,
+      "passes": true,
+      "dependencies": [
+        "S-011",
+        "S-012"
+      ],
+      "acceptance": [
+        "resolveAgentVoice() prend en compte la locale",
+        "Voix filtrées par tag de langue avant assignation",
+        "Fallback sur voix EN si pas de voix locale",
+        "Enseignants = voix adultes, étudiants = voix jeunes",
+        "Test : en fr-FR, agents reçoivent voix FR"
+      ],
+      "completedAt": "2026-03-29T08:59:02.994Z"
+    },
+    {
+      "id": "S-016",
+      "title": "TTS hybride — clé serveur + clé utilisateur",
+      "epic": "TTS Voix naturelles",
+      "phase": 1,
+      "passes": true,
+      "dependencies": [],
+      "acceptance": [
+        "Résolution clé TTS : client > serveur > vide",
+        "UI : affiche 'Clé serveur configurée' si clé serveur détectée",
+        "L'utilisateur peut override avec sa propre clé",
+        "Aucune clé API exposée côté client"
+      ],
+      "completedAt": "2026-03-29T08:59:02.994Z"
+    },
+    {
+      "id": "S-017",
+      "title": "Exposer Qalem comme MCP Server",
+      "epic": "MCP Octopus",
+      "phase": 1,
+      "passes": true,
+      "dependencies": [
+        "S-001"
+      ],
+      "acceptance": [
+        "lib/mcp/server.ts : MCP Server via @modelcontextprotocol/sdk",
+        "Tool generate_classroom (topic, level, language → classroom ID + URL)",
+        "Tool get_quiz (topic, difficulté → quiz structuré)",
+        "Tool get_slide_content (topic → contenu slide)",
+        "Transport SSE via app/api/mcp/route.ts",
+        "Auth par API key",
+        "Documentation MCP standard"
+      ],
+      "completedAt": "2026-03-29T09:22:14.993Z"
+    },
+    {
+      "id": "S-018",
+      "title": "Implémenter le MCP Client pour serveurs externes",
+      "epic": "MCP Octopus",
+      "phase": 1,
+      "passes": true,
+      "dependencies": [
+        "S-017"
+      ],
+      "acceptance": [
+        "lib/mcp/client.ts : MCP Client via SDK",
+        "Config serveurs via mcp-servers.yml",
+        "Tools MCP injectables dans PBL agentic loop",
+        "Tools MCP injectables dans Director Graph",
+        "Gestion erreurs connexion/timeout",
+        "Registry avec health check"
+      ],
+      "completedAt": "2026-03-29T09:22:14.993Z"
+    },
+    {
+      "id": "S-019",
+      "title": "Connecter NotebookLM via MCP",
+      "epic": "MCP Octopus",
+      "phase": 1,
+      "passes": true,
+      "dependencies": [
+        "S-018"
+      ],
+      "acceptance": [
+        "Config serveur MCP NotebookLM dans mcp-servers.yml",
+        "Agents peuvent appeler search_notebook(query)",
+        "Agents peuvent appeler get_source_content(sourceId)",
+        "Pipeline de génération utilise sources NotebookLM comme input",
+        "Documentation utilisateur"
+      ],
+      "completedAt": "2026-03-29T09:23:59.947Z"
+    },
+    {
+      "id": "S-020",
+      "title": "Connecter Notion via MCP",
+      "epic": "MCP Octopus",
+      "phase": 1,
+      "passes": true,
+      "dependencies": [
+        "S-018"
+      ],
+      "acceptance": [
+        "Config serveur MCP Notion dans mcp-servers.yml",
+        "search_notion(query) disponible",
+        "get_page_content(pageId) disponible",
+        "Pipeline accepte source Notion comme input",
+        "Cours généré depuis Notion est cohérent"
+      ],
+      "completedAt": "2026-03-29T09:23:59.947Z"
+    },
+    {
+      "id": "S-021",
+      "title": "Connecter Google Drive via MCP",
+      "epic": "MCP Octopus",
+      "phase": 1,
+      "passes": true,
+      "dependencies": [
+        "S-018"
+      ],
+      "acceptance": [
+        "Config serveur MCP Google Drive dans mcp-servers.yml",
+        "search_drive(query) disponible",
+        "get_document(docId) disponible",
+        "Support Google Docs, Slides, PDF dans Drive",
+        "Pipeline accepte source Drive comme input"
+      ],
+      "completedAt": "2026-03-29T09:23:59.947Z"
+    },
+    {
+      "id": "S-022",
+      "title": "Setup Supabase (schema + auth + RLS)",
+      "epic": "Backend Supabase",
+      "phase": 2,
+      "passes": true,
+      "dependencies": [
+        "S-001"
+      ],
+      "acceptance": [
+        "supabase init",
+        "Migration SQL : users, organizations, org_members, stages, scenes, quiz_results, agent_configs",
+        "Auth : email + OAuth Google + OAuth GitHub",
+        "RLS activé sur TOUTES les tables",
+        "Policies RLS isolation user + org",
+        "RBAC via org_members (admin, manager, formateur, apprenant)",
+        "Env vars Supabase configurées"
+      ],
+      "completedAt": "2026-03-29T10:21:44.134Z"
+    },
+    {
+      "id": "S-023",
+      "title": "Migration IndexedDB → Supabase (sync hybride)",
+      "epic": "Backend Supabase",
+      "phase": 2,
+      "passes": true,
+      "dependencies": [
+        "S-022"
+      ],
+      "acceptance": [
+        "supabase-provider.ts : StorageProvider pour Supabase",
+        "Sync bidirectionnelle IndexedDB ↔ Supabase",
+        "Mode non-connecté = IndexedDB pur",
+        "Mode connecté = write-through local + sync background",
+        "Conflit : last-write-wins avec timestamp",
+        "Audio/images uploadés sur MinIO"
+      ],
+      "completedAt": "2026-03-29T10:33:12.008Z"
+    },
+    {
+      "id": "S-024",
+      "title": "Écran de connexion / inscription",
+      "epic": "Backend Supabase",
+      "phase": 2,
+      "passes": true,
+      "dependencies": [
+        "S-022"
+      ],
+      "acceptance": [
+        "app/auth/page.tsx : page connexion/inscription",
+        "Email + mot de passe",
+        "OAuth Google",
+        "OAuth GitHub",
+        "Redirect vers home après connexion",
+        "Mode invité sans connexion (IndexedDB only)",
+        "Header affiche profil ou bouton Connexion"
+      ],
+      "completedAt": "2026-03-29T10:33:12.008Z"
+    },
+    {
+      "id": "S-025",
+      "title": "Extraire les items de révision depuis les quiz",
+      "epic": "Forgetting Curve Killer",
+      "phase": 2,
+      "passes": true,
+      "dependencies": [
+        "S-022"
+      ],
+      "acceptance": [
+        "lib/spaced-repetition/extractor.ts",
+        "Items ratés/hésitants extraits après chaque quiz",
+        "Format carte : question, correctAnswer, userAnswer, difficulty, tags, sourceIds",
+        "Cartes stockées dans Supabase + IndexedDB"
+      ],
+      "completedAt": "2026-03-29T10:33:12.008Z"
+    },
+    {
+      "id": "S-026",
+      "title": "Implémenter l'algorithme FSRS",
+      "epic": "Forgetting Curve Killer",
+      "phase": 2,
+      "passes": true,
+      "dependencies": [
+        "S-025"
+      ],
+      "acceptance": [
+        "lib/spaced-repetition/fsrs.ts : algorithme FSRS",
+        "Paramètres FSRS personnalisés par utilisateur",
+        "getNextReviewDate(card, rating) → date",
+        "getDueCards(userId) → cartes à réviser",
+        "Tests unitaires cas limites"
+      ],
+      "completedAt": "2026-03-29T10:33:12.008Z"
+    },
+    {
+      "id": "S-027",
+      "title": "Interface de révision espacée",
+      "epic": "Forgetting Curve Killer",
+      "phase": 2,
+      "passes": true,
+      "dependencies": [
+        "S-026"
+      ],
+      "acceptance": [
+        "app/review/page.tsx",
+        "Cartes dues avec compteur total",
+        "Question → reveal → self-rating (Again, Hard, Good, Easy)",
+        "Progression visible X/Y",
+        "Ratings envoyés à FSRS",
+        "Lien vers classroom source",
+        "Badge cartes dues sur la home"
+      ],
+      "completedAt": "2026-03-29T10:58:25.323Z"
+    },
+    {
+      "id": "S-028",
+      "title": "Notifications de révision (email + push + WhatsApp)",
+      "epic": "Forgetting Curve Killer",
+      "phase": 2,
+      "passes": true,
+      "dependencies": [
+        "S-027"
+      ],
+      "acceptance": [
+        "lib/notifications/ : module multi-canal",
+        "Email via Supabase Edge Functions (templates FR/AR/EN)",
+        "PWA push via service worker",
+        "WhatsApp via Evolution API (opt-in)",
+        "Préférences dans settings utilisateur",
+        "1 notification par batch (pas par carte)",
+        "Cron job pour check cartes dues"
+      ],
+      "completedAt": "2026-03-29T10:58:25.323Z"
+    },
+    {
+      "id": "S-029",
+      "title": "Définir l'architecture du Skills Registry",
+      "epic": "Skills System",
+      "phase": 2,
+      "passes": true,
+      "dependencies": [
+        "S-001"
+      ],
+      "acceptance": [
+        "lib/skills/types.ts : interface Skill",
+        "lib/skills/registry.ts : registry CRUD",
+        "lib/skills/loader.ts : chargement depuis skills/ directory",
+        "Skills = dossiers avec manifest.json + prompts + configs",
+        "Skills built-in livrés avec la plateforme"
+      ],
+      "completedAt": "2026-03-29T10:33:12.008Z"
+    },
+    {
+      "id": "S-030",
+      "title": "Créer le skill Medical Training",
+      "epic": "Skills System",
+      "phase": 2,
+      "passes": true,
+      "dependencies": [
+        "S-029"
+      ],
+      "acceptance": [
+        "skills/medical-training/manifest.json",
+        "Agents : Dr. Expert, Patient Simulé, Infirmier Observateur",
+        "Prompts spécialisés terminologie médicale (FR/AR/EN)",
+        "Templates Diagnostic différentiel et Protocole d'urgence",
+        "Quiz avec grading spécialisé médical"
+      ],
+      "completedAt": "2026-03-29T10:33:12.008Z"
+    },
+    {
+      "id": "S-031",
+      "title": "Créer le skill Legal Moot Court",
+      "epic": "Skills System",
+      "phase": 2,
+      "passes": true,
+      "dependencies": [
+        "S-029"
+      ],
+      "acceptance": [
+        "skills/legal-moot-court/manifest.json",
+        "Agents : Juge, Avocat défense, Procureur, Greffier",
+        "Prompts droit configurable par juridiction",
+        "Mode adversarial automatique",
+        "Templates Droit du travail et Droit commercial"
+      ],
+      "completedAt": "2026-03-29T10:33:12.008Z"
+    },
+    {
+      "id": "S-032",
+      "title": "Créer le skill Coding Workshop",
+      "epic": "Skills System",
+      "phase": 2,
+      "passes": true,
+      "dependencies": [
+        "S-029"
+      ],
+      "acceptance": [
+        "skills/coding-workshop/manifest.json",
+        "Agents : Senior Dev, Code Reviewer, Junior Curieux",
+        "Scène interactive Monaco Editor (sandbox)",
+        "Code Reviewer analyse en temps réel",
+        "Templates par stack : Python, Node.js, React"
+      ],
+      "completedAt": "2026-03-29T10:33:12.008Z"
+    },
+    {
+      "id": "S-033",
+      "title": "Implémenter LTI 1.3 Tool Provider",
+      "epic": "LTI Trojan Horse",
+      "phase": 3,
+      "passes": true,
+      "dependencies": [
+        "S-022"
+      ],
+      "acceptance": [
+        "app/api/lti/launch/route.ts",
+        "app/api/lti/jwks/route.ts",
+        "app/api/lti/config/route.ts",
+        "OAuth 2.0 flow complet",
+        "Extraction contexte LTI",
+        "Lancement ouvre la classroom",
+        "Table lti_registrations"
+      ],
+      "completedAt": "2026-03-29T11:34:06.346Z"
+    },
+    {
+      "id": "S-034",
+      "title": "LTI Assignment and Grade Services (AGS)",
+      "epic": "LTI Trojan Horse",
+      "phase": 3,
+      "passes": true,
+      "dependencies": [
+        "S-033"
+      ],
+      "acceptance": [
+        "lib/lti/grade-service.ts : client LTI AGS",
+        "Score envoyé au LMS après chaque quiz",
+        "Support scores 0-100 et statuts",
+        "Retry avec backoff",
+        "Log grades dans Supabase"
+      ],
+      "completedAt": "2026-03-29T11:34:06.346Z"
+    },
+    {
+      "id": "S-035",
+      "title": "Télémétrie xAPI",
+      "epic": "LTI Trojan Horse",
+      "phase": 3,
+      "passes": true,
+      "dependencies": [
+        "S-022"
+      ],
+      "acceptance": [
+        "lib/telemetry/xapi.ts : client xAPI ADL conformant",
+        "Statements : quiz tenté/réussi, slide vue, PBL résolu, discussion",
+        "Config LRS via env vars ou settings",
+        "Contexte : classroom ID, scene type, durée, score",
+        "Opt-in, désactivé par défaut"
+      ],
+      "completedAt": "2026-03-29T11:28:49.856Z"
+    },
+    {
+      "id": "S-036",
+      "title": "Pipeline de collecte de données pédagogiques",
+      "epic": "Pedagogy Genome",
+      "phase": 3,
+      "passes": true,
+      "dependencies": [
+        "S-022"
+      ],
+      "acceptance": [
+        "lib/telemetry/pedagogy-collector.ts",
+        "Collecte opt-in : séquences scènes, scores, temps, actions, complétion",
+        "Anonymisation : IDs hashés, aucune PII",
+        "Table pedagogy_telemetry",
+        "Consentement RGPD/CNDP",
+        "Dashboard admin données agrégées"
+      ],
+      "completedAt": "2026-03-29T11:28:49.856Z"
+    },
+    {
+      "id": "S-037",
+      "title": "Optimisation pipeline de génération par les données",
+      "epic": "Pedagogy Genome",
+      "phase": 3,
+      "passes": true,
+      "dependencies": [
+        "S-036"
+      ],
+      "acceptance": [
+        "lib/generation/data-optimizer.ts",
+        "Ordonnancement optimal basé sur données historiques",
+        "Difficulté quiz calibrée par performances passées",
+        "Fallback si pas assez de données",
+        "Seuil minimum 100 sessions/sujet"
+      ],
+      "completedAt": "2026-03-29T11:28:49.856Z"
+    },
+    {
+      "id": "S-038",
+      "title": "Modèle de données organisations",
+      "epic": "Organisations Multi-Tenant",
+      "phase": 3,
+      "passes": true,
+      "dependencies": [
+        "S-022"
+      ],
+      "acceptance": [
+        "Tables : organizations, org_members",
+        "Rôles : admin, manager, formateur, apprenant",
+        "RLS isolation par organisation",
+        "Multi-org par utilisateur",
+        "API routes CRUD organisations"
+      ],
+      "completedAt": "2026-03-29T11:34:06.346Z"
+    },
+    {
+      "id": "S-039",
+      "title": "Interface d'administration d'organisation",
+      "epic": "Organisations Multi-Tenant",
+      "phase": 3,
+      "passes": true,
+      "dependencies": [
+        "S-038"
+      ],
+      "acceptance": [
+        "app/org/[orgId]/admin/page.tsx",
+        "Gestion membres : inviter, supprimer, changer rôle",
+        "Invitation par email",
+        "Paramètres org : nom, logo, secteur, locale, skills",
+        "Quotas par rôle"
+      ],
+      "completedAt": "2026-03-29T11:34:06.346Z"
+    },
+    {
+      "id": "S-040",
+      "title": "Bibliothèque partagée d'organisation",
+      "epic": "Organisations Multi-Tenant",
+      "phase": 3,
+      "passes": true,
+      "dependencies": [
+        "S-038"
+      ],
+      "acceptance": [
+        "Table shared_classrooms",
+        "Visibilité : privé, organisation, public",
+        "app/org/[orgId]/library/page.tsx",
+        "Recherche et filtrage",
+        "Clone d'un classroom partagé"
+      ],
+      "completedAt": "2026-03-29T11:34:06.346Z"
+    },
+    {
+      "id": "S-041",
+      "title": "Templates de classroom par secteur",
+      "epic": "Organisations Multi-Tenant",
+      "phase": 3,
+      "passes": true,
+      "dependencies": [
+        "S-038",
+        "S-029"
+      ],
+      "acceptance": [
+        "Table classroom_templates",
+        "Templates par secteur : santé, juridique, tech, finance, éducation, industrie",
+        "Chaque template : requirements, agents, skills",
+        "UI sélection template à la création",
+        "Templates custom par organisation"
+      ],
+      "completedAt": "2026-03-29T11:34:06.346Z"
+    },
+    {
+      "id": "S-042",
+      "title": "Marketplace d'agents pédagogiques",
+      "epic": "Agent Bazaar",
+      "phase": 4,
+      "passes": true,
+      "dependencies": [
+        "S-022",
+        "S-038"
+      ],
+      "acceptance": [
+        "Table published_agents",
+        "app/marketplace/agents/page.tsx",
+        "Filtres : matière, niveau, langue, style, note",
+        "Publication depuis registry local",
+        "Import en 1 clic",
+        "Notation 1-5 étoiles + commentaires"
+      ],
+      "completedAt": "2026-03-29T11:47:41.917Z"
+    },
+    {
+      "id": "S-043",
+      "title": "Ranking d'agents par performance",
+      "epic": "Agent Bazaar",
+      "phase": 4,
+      "passes": true,
+      "dependencies": [
+        "S-042",
+        "S-036"
+      ],
+      "acceptance": [
+        "Quiz scores agrégés par agent",
+        "Score composite : quiz × complétion × utilisations",
+        "Classement visible par agent",
+        "Badge Top Agent top 10%",
+        "Minimum 50 sessions avant ranking"
+      ],
+      "completedAt": "2026-03-29T11:47:41.917Z"
+    },
+    {
+      "id": "S-044",
+      "title": "SDK de plugins de scènes",
+      "epic": "Scene Genome Protocol",
+      "phase": 4,
+      "passes": true,
+      "dependencies": [],
+      "acceptance": [
+        "lib/plugins/scene-sdk.ts : interface ScenePlugin",
+        "Documentation SDK avec exemples",
+        "Sandboxing iframe isolé",
+        "Pipeline détecte plugins installés",
+        "Prompts étendus dynamiquement"
+      ],
+      "completedAt": "2026-03-29T11:54:26.296Z"
+    },
+    {
+      "id": "S-045",
+      "title": "Plugin Code Sandbox",
+      "epic": "Scene Genome Protocol",
+      "phase": 4,
+      "passes": true,
+      "dependencies": [
+        "S-044"
+      ],
+      "acceptance": [
+        "Plugin scène type code-sandbox",
+        "Monaco Editor dans iframe",
+        "Exécution JS/Python (Pyodide) côté client",
+        "Agent injecte code template + tests",
+        "Auto-grading par exécution tests"
+      ],
+      "completedAt": "2026-03-29T11:54:26.296Z"
+    },
+    {
+      "id": "S-046",
+      "title": "Plugin Lab Simulation 3D",
+      "epic": "Scene Genome Protocol",
+      "phase": 4,
+      "passes": true,
+      "dependencies": [
+        "S-044"
+      ],
+      "acceptance": [
+        "Plugin scène type lab-simulation",
+        "Three.js + Cannon.js physique 3D",
+        "Agent configure paramètres simulation",
+        "Apprenant interagit (déplace, change paramètres)",
+        "Visualisation forces, trajectoires, graphiques"
+      ],
+      "completedAt": "2026-03-29T11:54:26.296Z"
+    },
+    {
+      "id": "S-047",
+      "title": "Collecte des patterns de discussion multi-agent",
+      "epic": "Discussion Fingerprint",
+      "phase": 4,
+      "passes": true,
+      "dependencies": [
+        "S-036"
+      ],
+      "acceptance": [
+        "lib/telemetry/discussion-collector.ts",
+        "Données : séquence agents, type intervention, durée, quiz score post-discussion",
+        "Stockage anonymisé Supabase",
+        "Pipeline agrégation séquence ↔ performance"
+      ],
+      "completedAt": "2026-03-29T11:47:17.413Z"
+    },
+    {
+      "id": "S-048",
+      "title": "Director data-driven",
+      "epic": "Discussion Fingerprint",
+      "phase": 4,
+      "passes": true,
+      "dependencies": [
+        "S-047"
+      ],
+      "acceptance": [
+        "lib/orchestration/data-driven-director.ts",
+        "Director consomme patterns agrégés",
+        "A/B testing 50/50 classique vs data-driven",
+        "Fallback sur Director classique si pas assez données",
+        "Seuil minimum 1000 sessions discussions"
+      ],
+      "completedAt": "2026-03-29T11:47:17.413Z"
+    },
+    {
+      "id": "S-049",
+      "title": "Graphe de curriculum",
+      "epic": "Institutional Memory",
+      "phase": 4,
+      "passes": true,
+      "dependencies": [
+        "S-038"
+      ],
+      "acceptance": [
+        "Table curriculum_graph",
+        "Relations : prerequisite, follows, deepens, reviews",
+        "app/org/[orgId]/curriculum/page.tsx : vue graphe React Flow",
+        "Suggestion auto liens par embedding similarity",
+        "Parcours recommandé pour l'apprenant"
+      ],
+      "completedAt": "2026-03-29T11:47:41.917Z"
+    },
+    {
+      "id": "S-050",
+      "title": "Reporting institutionnel pour accréditations",
+      "epic": "Institutional Memory",
+      "phase": 4,
+      "passes": true,
+      "dependencies": [
+        "S-038",
+        "S-036"
+      ],
+      "acceptance": [
+        "app/org/[orgId]/reports/page.tsx",
+        "Métriques par apprenant : complétion, scores, temps, progression SR",
+        "Métriques par formation : apprenants, score moyen, abandon",
+        "Export PDF et CSV",
+        "Filtrage par période, formation, groupe"
+      ],
+      "completedAt": "2026-03-29T11:47:41.917Z"
+    },
+    {
+      "id": "S-051",
+      "title": "Docker Compose avec services séparés",
+      "epic": "Docker Self-Hosted",
+      "phase": 3,
+      "passes": true,
+      "dependencies": [
+        "S-022"
+      ],
+      "acceptance": [
+        "docker-compose.yml : qalem-app, supabase-db, supabase-auth, supabase-realtime, redis, minio",
+        "Dockerfile multi-stage Next.js",
+        ".env.docker.example documenté",
+        "Volumes persistants MinIO, PostgreSQL, Redis",
+        "Health checks tous services",
+        "docs/self-hosted.md",
+        "scripts/setup.sh pour init"
+      ],
+      "completedAt": "2026-03-29T11:34:06.346Z"
+    }
+  ]
+}

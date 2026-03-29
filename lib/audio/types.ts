@@ -10,6 +10,7 @@
  * - GLM TTS (https://docs.bigmodel.cn/cn/guide/models/sound-and-video/glm-tts)
  * - Qwen TTS (https://bailian.console.aliyun.com/)
  * - Doubao TTS (https://www.volcengine.com/docs/6561/1257543)
+ * - Fish Audio (https://fish.audio/docs)
  * - Browser Native TTS (Web Speech API, client-side only)
  *
  * Currently Supported ASR Providers:
@@ -19,7 +20,6 @@
  *
  * Future Provider Support (extensible):
  * - ElevenLabs TTS/ASR (https://elevenlabs.io/docs)
- * - Fish Audio TTS (https://fish.audio/docs)
  * - Cartesia TTS (https://cartesia.ai/docs)
  * - PlayHT TTS (https://docs.play.ht/)
  * - AssemblyAI ASR (https://www.assemblyai.com/docs)
@@ -85,10 +85,10 @@ export type TTSProviderId =
   | 'qwen-tts'
   | 'doubao-tts'
   | 'elevenlabs-tts'
+  | 'fish-audio'
+  | 'cartesia'
   | 'browser-native-tts';
 // Add new TTS providers below (uncomment and modify):
-// | 'fish-audio-tts'
-// | 'cartesia-tts'
 // | 'playht-tts'
 
 /**

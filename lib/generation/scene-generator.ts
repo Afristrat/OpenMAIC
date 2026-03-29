@@ -32,6 +32,7 @@ import {
   formatTeacherPersonaForPrompt,
   formatImageDescription,
   formatImagePlaceholder,
+  getLanguageName,
 } from './prompt-formatters';
 import type { PPTElement, Slide, SlideBackground, SlideTheme } from '@/lib/types/slides';
 import type { QuizQuestion } from '@/lib/types/stage';
@@ -544,6 +545,8 @@ async function generateSlideContent(
     canvas_width: canvasWidth,
     canvas_height: canvasHeight,
     teacherContext,
+    language: lang,
+    language_name: getLanguageName(lang),
   });
 
   if (!prompts) {
@@ -639,6 +642,7 @@ async function generateQuizContent(
     questionTypes: ['single'],
   };
 
+  const lang = outline.language || 'zh-CN';
   const prompts = buildPrompt(PROMPT_IDS.QUIZ_CONTENT, {
     title: outline.title,
     description: outline.description,
@@ -646,6 +650,8 @@ async function generateQuizContent(
     questionCount: quizConfig.questionCount,
     difficulty: quizConfig.difficulty,
     questionTypes: quizConfig.questionTypes.join(', '),
+    language: lang,
+    language_name: getLanguageName(lang),
   });
 
   if (!prompts) {
@@ -735,7 +741,7 @@ function normalizeQuizAnswer(question: Record<string, unknown>): string[] | unde
 async function generateInteractiveContent(
   outline: SceneOutline,
   aiCall: AICallFn,
-  language: 'zh-CN' | 'en-US' = 'zh-CN',
+  language: 'zh-CN' | 'en-US' | 'fr-FR' | 'ar-MA' = 'fr-FR',
 ): Promise<GeneratedInteractiveContent | null> {
   const config = outline.interactiveConfig!;
 
@@ -748,6 +754,8 @@ async function generateInteractiveContent(
       conceptOverview: config.conceptOverview,
       keyPoints: (outline.keyPoints || []).map((p, i) => `${i + 1}. ${p}`).join('\n'),
       designIdea: config.designIdea,
+      language,
+      language_name: getLanguageName(language),
     });
 
     if (modelPrompts) {
@@ -793,6 +801,7 @@ async function generateInteractiveContent(
     scientificConstraints,
     designIdea: config.designIdea,
     language,
+    language_name: getLanguageName(language),
   });
 
   if (!htmlPrompts) {
@@ -923,6 +932,7 @@ export async function generateSceneActions(
     // Format element list for AI to select from
     const elementsText = formatElementsForPrompt(content.elements);
 
+    const actionLang = outline.language || 'zh-CN';
     const prompts = buildPrompt(PROMPT_IDS.SLIDE_ACTIONS, {
       title: outline.title,
       keyPoints: (outline.keyPoints || []).map((p, i) => `${i + 1}. ${p}`).join('\n'),
@@ -931,6 +941,8 @@ export async function generateSceneActions(
       courseContext: buildCourseContext(ctx),
       agents: agentsText,
       userProfile: userProfile || '',
+      language: actionLang,
+      language_name: getLanguageName(actionLang),
     });
 
     if (!prompts) {
@@ -952,6 +964,7 @@ export async function generateSceneActions(
     // Format question list for AI reference
     const questionsText = formatQuestionsForPrompt(content.questions);
 
+    const quizActionLang = outline.language || 'zh-CN';
     const prompts = buildPrompt(PROMPT_IDS.QUIZ_ACTIONS, {
       title: outline.title,
       keyPoints: (outline.keyPoints || []).map((p, i) => `${i + 1}. ${p}`).join('\n'),
@@ -959,6 +972,8 @@ export async function generateSceneActions(
       questions: questionsText,
       courseContext: buildCourseContext(ctx),
       agents: agentsText,
+      language: quizActionLang,
+      language_name: getLanguageName(quizActionLang),
     });
 
     if (!prompts) {
@@ -978,6 +993,7 @@ export async function generateSceneActions(
   if (outline.type === 'interactive' && 'html' in content) {
     const config = outline.interactiveConfig;
     const agentsText = formatAgentsForPrompt(agents);
+    const interactiveLang = outline.language || 'zh-CN';
     const prompts = buildPrompt(PROMPT_IDS.INTERACTIVE_ACTIONS, {
       title: outline.title,
       keyPoints: (outline.keyPoints || []).map((p, i) => `${i + 1}. ${p}`).join('\n'),
@@ -986,6 +1002,8 @@ export async function generateSceneActions(
       designIdea: config?.designIdea || '',
       courseContext: buildCourseContext(ctx),
       agents: agentsText,
+      language: interactiveLang,
+      language_name: getLanguageName(interactiveLang),
     });
 
     if (!prompts) {
@@ -1005,6 +1023,7 @@ export async function generateSceneActions(
   if (outline.type === 'pbl' && 'projectConfig' in content) {
     const pblConfig = outline.pblConfig;
     const agentsText = formatAgentsForPrompt(agents);
+    const pblLang = outline.language || 'zh-CN';
     const prompts = buildPrompt(PROMPT_IDS.PBL_ACTIONS, {
       title: outline.title,
       keyPoints: (outline.keyPoints || []).map((p, i) => `${i + 1}. ${p}`).join('\n'),
@@ -1013,6 +1032,8 @@ export async function generateSceneActions(
       projectDescription: pblConfig?.projectDescription || outline.description,
       courseContext: buildCourseContext(ctx),
       agents: agentsText,
+      language: pblLang,
+      language_name: getLanguageName(pblLang),
     });
 
     if (!prompts) {
