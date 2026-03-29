@@ -66,7 +66,7 @@ export function savePreferences(prefs: NotificationPreferences): void {
 
 // ────────────────────────── Push notifications ──────────────────────────
 
-const SW_PATH = '/sw-notifications.js';
+const SW_PATH = '/sw.js';
 
 /**
  * Register the push notification service worker and request permission.

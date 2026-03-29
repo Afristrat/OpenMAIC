@@ -1,8 +1,8 @@
 /**
- * Qalem — Push notification service worker.
+ * @deprecated Replaced by sw.js which includes push notifications + PWA offline caching.
+ * Kept temporarily so existing registrations continue to work until sw.js takes over.
  *
- * Handles incoming push events and displays notifications
- * for spaced-repetition review reminders.
+ * Qalem — Push notification service worker (legacy).
  */
 
 /* global self */

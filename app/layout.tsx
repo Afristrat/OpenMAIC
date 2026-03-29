@@ -10,6 +10,8 @@ import { I18nProvider } from '@/lib/hooks/use-i18n';
 import { Toaster } from '@/components/ui/sonner';
 import { ServerProvidersInit } from '@/components/server-providers-init';
 import { HtmlDirectionManager } from '@/components/html-direction-manager';
+import { OfflineIndicator } from '@/components/offline-indicator';
+import { ServiceWorkerRegistrar } from '@/components/service-worker-registrar';
 
 const inter = localFont({
   src: '../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2',
@@ -30,6 +32,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#722ed1" />
+      </head>
       <body
         className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}
         suppressHydrationWarning
@@ -38,6 +44,8 @@ export default function RootLayout({
           <I18nProvider>
             <HtmlDirectionManager />
             <ServerProvidersInit />
+            <OfflineIndicator />
+            <ServiceWorkerRegistrar />
             {children}
             <Toaster position="top-center" />
           </I18nProvider>

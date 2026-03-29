@@ -168,6 +168,17 @@ export interface GeneratedAgentRecord {
 }
 
 /**
+ * SyncQueue table - Queued operations for offline sync
+ */
+export interface SyncQueueRecord {
+  id: string; // PK: unique operation ID
+  type: 'quiz_result' | 'review_rating' | 'stage_sync';
+  payload: unknown;
+  createdAt: number;
+  retries: number;
+}
+
+/**
  * ReviewCard table - Spaced repetition review cards (guest / offline mode)
  */
 export interface ReviewCardRecord {
@@ -196,7 +207,7 @@ export function mediaFileKey(stageId: string, elementId: string): string {
 // ==================== Database Definition ====================
 
 const DATABASE_NAME = 'MAIC-Database';
-const _DATABASE_VERSION = 9;
+const _DATABASE_VERSION = 10;
 
 /**
  * MAIC Database Instance
@@ -213,6 +224,7 @@ class MAICDatabase extends Dexie {
   stageOutlines!: EntityTable<StageOutlinesRecord, 'stageId'>;
   mediaFiles!: EntityTable<MediaFileRecord, 'id'>;
   reviewCards!: EntityTable<ReviewCardRecord, 'id'>;
+  syncQueue!: EntityTable<SyncQueueRecord, 'id'>;
   generatedAgents!: EntityTable<GeneratedAgentRecord, 'id'>;
 
   constructor() {
@@ -345,6 +357,22 @@ class MAICDatabase extends Dexie {
       mediaFiles: 'id, stageId, [stageId+type]',
       generatedAgents: 'id, stageId',
       reviewCards: 'id, dueDate, sourceStageId',
+    });
+
+    // Version 10: Add syncQueue table for PWA offline sync
+    this.version(10).stores({
+      stages: 'id, updatedAt',
+      scenes: 'id, stageId, order, [stageId+order]',
+      audioFiles: 'id, createdAt',
+      imageFiles: 'id, createdAt',
+      snapshots: '++id',
+      chatSessions: 'id, stageId, [stageId+createdAt]',
+      playbackState: 'stageId',
+      stageOutlines: 'stageId',
+      mediaFiles: 'id, stageId, [stageId+type]',
+      generatedAgents: 'id, stageId',
+      reviewCards: 'id, dueDate, sourceStageId',
+      syncQueue: 'id, type, createdAt',
     });
   }
 }
@@ -479,5 +507,6 @@ export async function getDatabaseStats() {
     stageOutlines: await db.stageOutlines.count(),
     mediaFiles: await db.mediaFiles.count(),
     generatedAgents: await db.generatedAgents.count(),
+    syncQueue: await db.syncQueue.count(),
   };
 }

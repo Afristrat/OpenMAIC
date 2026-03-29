@@ -381,6 +381,30 @@ export type LtiGradeSubmissionInsert = Omit<
 >
 
 // ---------------------------------------------------------------------------
+// Certificates
+// ---------------------------------------------------------------------------
+
+export interface CertificateDbRow {
+  id: string
+  user_id: string
+  stage_id: string
+  course_name: string
+  learner_name: string
+  completion_date: string
+  score: number
+  skills: string[] | null
+  verification_code: string
+  issued_by: string
+  org_id: string | null
+  created_at: string
+}
+
+export type CertificateInsert = Omit<
+  CertificateDbRow,
+  'id' | 'completion_date' | 'created_at'
+> & Partial<Pick<CertificateDbRow, 'completion_date'>>
+
+// ---------------------------------------------------------------------------
 // Supabase Database type (for createClient<Database>)
 // ---------------------------------------------------------------------------
 
@@ -476,6 +500,11 @@ export interface Database {
         Row: ClassroomTemplate
         Insert: ClassroomTemplateInsert
         Update: ClassroomTemplateUpdate
+      }
+      certificates: {
+        Row: CertificateDbRow
+        Insert: CertificateInsert
+        Update: Record<string, never>
       }
     }
     Views: Record<string, never>
