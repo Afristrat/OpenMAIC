@@ -52,6 +52,7 @@ import { useAuth } from '@/lib/hooks/use-auth';
 import { TemplateSelector } from '@/components/org/template-selector';
 import { createClient } from '@/lib/supabase/client';
 import { db } from '@/lib/utils/database';
+import { useDemoSeed, isDemoStage } from '@/lib/demo/use-demo-seed';
 
 const log = createLogger('Home');
 
@@ -220,6 +221,12 @@ function HomePage() {
       log.error('Failed to load classrooms:', err);
     }
   };
+
+  // Seed demo classrooms on first load (no-ops if already seeded)
+  useDemoSeed(() => {
+    // Refresh classroom list after demos are freshly inserted
+    loadClassrooms();
+  });
 
   useEffect(() => {
     // Clear stale media store to prevent cross-course thumbnail contamination.
@@ -744,6 +751,7 @@ function HomePage() {
                     >
                       <ClassroomCard
                         classroom={classroom}
+                        isDemo={isDemoStage(classroom.id)}
                         slide={thumbnails[classroom.id]}
                         formatDate={formatDate}
                         onDelete={handleDelete}
@@ -1062,6 +1070,7 @@ function GreetingBar() {
 // ─── Classroom Card — clean, minimal style ──────────────────────
 function ClassroomCard({
   classroom,
+  isDemo,
   slide,
   formatDate,
   onDelete,
@@ -1071,6 +1080,7 @@ function ClassroomCard({
   onClick,
 }: {
   classroom: StageListItem;
+  isDemo?: boolean;
   slide?: Slide;
   formatDate: (ts: number) => string;
   onDelete: (id: string, e: React.MouseEvent) => void;
@@ -1174,6 +1184,11 @@ function ClassroomCard({
 
       {/* Info — outside the thumbnail */}
       <div className="mt-2.5 px-1 flex items-center gap-2">
+        {isDemo && (
+          <span className="shrink-0 inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+            D\u00e9mo
+          </span>
+        )}
         <span className="shrink-0 inline-flex items-center rounded-full bg-violet-100 dark:bg-violet-900/30 px-2 py-0.5 text-[11px] font-medium text-violet-600 dark:text-violet-400">
           {classroom.sceneCount} {t('classroom.slides')} · {formatDate(classroom.updatedAt)}
         </span>
