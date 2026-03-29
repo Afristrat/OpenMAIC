@@ -5,7 +5,7 @@
  * user ratings, and usage popularity.
  */
 
-import { createClient } from '@/lib/supabase/client';
+import { tryCreateClient } from '@/lib/supabase/client';
 
 export interface RankedAgent {
   id: string;
@@ -58,7 +58,8 @@ export async function getTopAgents(
   category: string,
   limit: number,
 ): Promise<RankedAgent[]> {
-  const supabase = createClient();
+  const supabase = tryCreateClient();
+  if (!supabase) return [];
 
   let query = supabase
     .from('agent_configs')
@@ -100,6 +101,7 @@ export async function getTopAgents(
 
   // Determine top-agent badges using the full population of published agents,
   // not just the limited result set, to avoid incorrect percentile thresholds.
+  // Note: supabase is guaranteed non-null here (early return above).
   let allPublishedQuery = supabase
     .from('agent_configs')
     .select('avg_rating, usage_count')

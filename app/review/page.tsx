@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, RotateCcw, ExternalLink, Check, Sparkles } from 'lucide-react';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useAuth } from '@/lib/hooks/use-auth';
-import { createClient } from '@/lib/supabase/client';
+import { tryCreateClient } from '@/lib/supabase/client';
 import { db } from '@/lib/utils/database';
 import type { ReviewCardRecord } from '@/lib/utils/database';
 import {
@@ -125,7 +125,8 @@ function ReviewPage() {
     // Load from Supabase if authenticated
     if (user) {
       try {
-        const supabase = createClient();
+        const supabase = tryCreateClient();
+        if (!supabase) throw new Error('Supabase unavailable');
         const { data, error } = await supabase
           .from('review_cards')
           .select('*')
@@ -163,7 +164,8 @@ function ReviewPage() {
         const localOnlyCards = cards.filter((c) => c.source === 'indexeddb');
         if (localOnlyCards.length > 0) {
           try {
-            const supabase = createClient();
+            const supabase = tryCreateClient();
+            if (!supabase) throw new Error('Supabase unavailable');
             for (const { card } of localOnlyCards) {
               await supabase.from('review_cards').upsert(
                 {
@@ -218,7 +220,8 @@ function ReviewPage() {
       // Persist the updated card
       if (currentCard.source === 'supabase' && user) {
         try {
-          const supabase = createClient();
+          const supabase = tryCreateClient();
+          if (!supabase) throw new Error('Supabase unavailable');
           await supabase
             .from('review_cards')
             .update({

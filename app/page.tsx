@@ -50,7 +50,7 @@ import { useDraftCache } from '@/lib/hooks/use-draft-cache';
 import { SpeechButton } from '@/components/audio/speech-button';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { TemplateSelector } from '@/components/org/template-selector';
-import { createClient } from '@/lib/supabase/client';
+import { tryCreateClient } from '@/lib/supabase/client';
 import { db } from '@/lib/utils/database';
 import { useDemoSeed, isDemoStage } from '@/lib/demo/use-demo-seed';
 
@@ -95,7 +95,8 @@ function HomePage() {
     // Supabase (authenticated users)
     if (user) {
       try {
-        const supabase = createClient();
+        const supabase = tryCreateClient();
+        if (!supabase) throw new Error('no supabase');
         const { count: sbCount, error } = await supabase
           .from('review_cards')
           .select('*', { count: 'exact', head: true })

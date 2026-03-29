@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { tryCreateClient } from '@/lib/supabase/client';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -54,13 +54,16 @@ export default function AuthPage(): React.ReactElement {
 
   const isRTL = locale === 'ar-MA';
 
+  const supabaseAvailable = tryCreateClient() !== null;
+
   async function handleEmailAuth(e: FormEvent): Promise<void> {
     e.preventDefault();
     setError('');
     setIsSubmitting(true);
 
     try {
-      const supabase = createClient();
+      const supabase = tryCreateClient();
+      if (!supabase) return;
 
       if (activeTab === 'login') {
         const { error: authError } = await supabase.auth.signInWithPassword({
@@ -91,7 +94,8 @@ export default function AuthPage(): React.ReactElement {
   }
 
   async function handleOAuth(provider: 'google' | 'github'): Promise<void> {
-    const supabase = createClient();
+    const supabase = tryCreateClient();
+    if (!supabase) return;
     await supabase.auth.signInWithOAuth({
       provider,
       options: {
@@ -126,6 +130,18 @@ export default function AuthPage(): React.ReactElement {
         </div>
 
         {/* Auth Card */}
+        {!supabaseAvailable ? (
+          <div className="rounded-xl border border-border bg-card p-6 shadow-sm text-center space-y-4">
+            <p className="text-muted-foreground">Supabase non configuré</p>
+            <button
+              type="button"
+              onClick={handleGuestMode}
+              className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors"
+            >
+              {t('auth.guestMode')}
+            </button>
+          </div>
+        ) : (
         <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-6">
           <Tabs
             value={activeTab}
@@ -253,6 +269,7 @@ export default function AuthPage(): React.ReactElement {
             </Button>
           </div>
         </div>
+        )}
 
         {/* Guest Mode */}
         <div className="text-center">

@@ -11,7 +11,7 @@
  * Conflict resolution: last-write-wins based on `updated_at` timestamps.
  */
 
-import { createClient } from '@/lib/supabase/client';
+import { tryCreateClient } from '@/lib/supabase/client';
 import { db } from '@/lib/utils/database';
 import type { StageRecord, SceneRecord } from '@/lib/utils/database';
 import type { Stage, Scene, StageInsert, SceneInsert } from '@/lib/supabase/types';
@@ -102,7 +102,11 @@ export class SupabaseSyncProvider implements SyncableStorageProvider {
   /** Refresh the cached userId from Supabase auth */
   async refreshAuth(): Promise<void> {
     try {
-      const supabase = createClient();
+      const supabase = tryCreateClient();
+      if (!supabase) {
+        this.userId = null;
+        return;
+      }
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -123,7 +127,8 @@ export class SupabaseSyncProvider implements SyncableStorageProvider {
   async syncStage(stageId: string): Promise<void> {
     if (!this.userId) return;
 
-    const supabase = createClient();
+    const supabase = tryCreateClient();
+    if (!supabase) return;
 
     // 1. Read local data
     const localStage = await db.stages.get(stageId);
@@ -163,7 +168,8 @@ export class SupabaseSyncProvider implements SyncableStorageProvider {
   async loadRemoteStages(): Promise<StageRecord[]> {
     if (!this.userId) return [];
 
-    const supabase = createClient();
+    const supabase = tryCreateClient();
+    if (!supabase) return [];
 
     const { data, error } = await supabase
       .from('stages')
@@ -189,7 +195,8 @@ export class SupabaseSyncProvider implements SyncableStorageProvider {
     let synced = 0;
     let conflicts = 0;
 
-    const supabase = createClient();
+    const supabase = tryCreateClient();
+    if (!supabase) return { synced: 0, conflicts: 0 };
 
     // ---- 1. Fetch all remote stages + scenes for this user ----
     const { data: remoteStages, error: stagesErr } = await supabase
@@ -292,7 +299,8 @@ export class SupabaseSyncProvider implements SyncableStorageProvider {
   ): Promise<void> {
     if (!this.userId) return;
 
-    const supabase = createClient();
+    const supabase = tryCreateClient();
+    if (!supabase) return;
 
     const localScenes = await db.scenes.where('stageId').equals(stageId).toArray();
     const localMap = new Map<string, SceneRecord>();

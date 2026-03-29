@@ -48,11 +48,21 @@ export function useAuth(): AuthState {
       return;
     }
 
-    // Get initial user (server-side verified)
-    supabase.auth.getUser().then(({ data: { user: currentUser } }) => {
-      setUser(currentUser);
-      setIsLoading(false);
-    });
+    // Get initial user with timeout — don't block the app if Supabase is slow
+    const timeout = setTimeout(() => {
+      setIsLoading(false); // Unblock UI after 5s even if Supabase hasn't responded
+    }, 5000);
+
+    supabase.auth.getUser()
+      .then(({ data: { user: currentUser } }) => {
+        clearTimeout(timeout);
+        setUser(currentUser);
+        setIsLoading(false);
+      })
+      .catch(() => {
+        clearTimeout(timeout);
+        setIsLoading(false); // Supabase unreachable — proceed as guest
+      });
 
     // Listen for auth state changes
     const {

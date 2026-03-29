@@ -7,7 +7,7 @@
  * - WhatsApp via Evolution API (placeholder — config structure only)
  */
 
-import { createClient } from '@/lib/supabase/client';
+import { tryCreateClient } from '@/lib/supabase/client';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('Notifications');
@@ -120,7 +120,8 @@ export async function checkAndNotifyDueCards(userId: string): Promise<void> {
   }
 
   // Verify auth state
-  const supabaseAuth = createClient();
+  const supabaseAuth = tryCreateClient();
+  if (!supabaseAuth) return;
   const { data: { user } } = await supabaseAuth.auth.getUser();
   if (!user || user.id !== userId) {
     log.warn('Auth mismatch in notification check');
@@ -132,7 +133,8 @@ export async function checkAndNotifyDueCards(userId: string): Promise<void> {
   // Count due cards from Supabase
   let dueCount = 0;
   try {
-    const supabase = createClient();
+    const supabase = tryCreateClient();
+    if (!supabase) return;
     const { count, error } = await supabase
       .from('review_cards')
       .select('*', { count: 'exact', head: true })

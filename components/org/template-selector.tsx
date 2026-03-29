@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { tryCreateClient } from '@/lib/supabase/client';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -57,7 +57,11 @@ export function TemplateSelector({ onSelect, sectorFilter }: TemplateSelectorPro
   const [open, setOpen] = useState(false);
 
   const fetchTemplates = useCallback(async () => {
-    const supabase = createClient();
+    const supabase = tryCreateClient();
+    if (!supabase) {
+      setIsLoading(false);
+      return;
+    }
     let query = supabase.from('classroom_templates').select('*').order('sector').order('name');
 
     if (sectorFilter) {
