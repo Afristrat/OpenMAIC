@@ -772,7 +772,7 @@ function HomePage() {
 
       {/* Footer — flows with content, at the very end */}
       <div className="mt-auto pt-12 pb-4 text-center text-xs text-muted-foreground/40">
-        Qalem — Open Source Project
+        Qalem
       </div>
     </div>
   );

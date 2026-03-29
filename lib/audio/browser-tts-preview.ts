@@ -18,9 +18,19 @@ function createAbortError(): Error {
 }
 
 function inferPreviewLang(text: string): string {
+  // Arabic detection (Arabic script block)
+  const arabicCount = (text.match(/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/g) || []).length;
+  if (text.length > 0 && arabicCount / text.length > 0.3) return 'ar-MA';
+
+  // CJK detection
   const cjkCount = (text.match(/[\u4e00-\u9fff\u3400-\u4dbf]/g) || []).length;
-  const ratio = text.length > 0 ? cjkCount / text.length : 0;
-  return ratio > CJK_LANG_THRESHOLD ? 'zh-CN' : 'en-US';
+  if (text.length > 0 && cjkCount / text.length > CJK_LANG_THRESHOLD) return 'zh-CN';
+
+  // French detection (accented characters common in French)
+  const frenchChars = (text.match(/[àâäéèêëïîôùûüÿçœæÀÂÄÉÈÊËÏÎÔÙÛÜŸÇŒÆ]/g) || []).length;
+  if (frenchChars >= 2) return 'fr-FR';
+
+  return 'en-US';
 }
 
 export function isBrowserTTSAbortError(error: unknown): boolean {

@@ -1283,9 +1283,9 @@ export const settingsFrFR = {
       'default-6': 'Penseur profond',
     },
     agentRoles: {
-      teacher: 'Enseignant',
+      teacher: 'Formateur',
       assistant: 'Assistant',
-      student: 'Élève',
+      student: 'Apprenant',
     },
     agentDescriptions: {
       'default-1': 'Enseignant principal, explications claires et structurées',
@@ -1428,7 +1428,7 @@ export const settingsFrFR = {
     ttsVoiceConfigHint:
       'La voix de chaque agent se configure dans « Rôles de la classe » sur la page d\'accueil',
     enableASR: 'Activer la reconnaissance vocale',
-    asrEnabledDescription: 'Les élèves pourront utiliser le micro pour dicter leurs interventions',
+    asrEnabledDescription: 'Les apprenants pourront utiliser le micro pour dicter leurs interventions',
     ttsProvider: 'Fournisseur TTS',
     ttsLanguageFilter: 'Filtre de langue',
     allLanguages: 'Toutes les langues',
@@ -1792,10 +1792,10 @@ export const settingsFrFR = {
   },
   profile: {
     title: 'Profil',
-    defaultNickname: 'Élève',
+    defaultNickname: 'Apprenant',
     chooseAvatar: 'Choisir un avatar',
     uploadAvatar: 'Téléverser',
-    bioPlaceholder: 'Présentez-vous — l\'enseignant IA adaptera ses cours à votre profil…',
+    bioPlaceholder: 'Présentez-vous — le formateur IA adaptera le contenu à votre profil…',
     avatarHint: 'Votre avatar apparaîtra dans les discussions et les conversations en classe',
     fileTooLarge: 'Image trop volumineuse — choisissez-en une de moins de 5 Mo',
     invalidFileType: 'Veuillez sélectionner un fichier image',
