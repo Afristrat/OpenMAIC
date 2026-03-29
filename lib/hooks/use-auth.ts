@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { tryCreateClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
 
 const GUEST_MODE_KEY = 'qalem-guest-mode';
@@ -29,7 +29,7 @@ export function useAuth(): AuthState {
 
   /* eslint-disable react-hooks/set-state-in-effect -- Hydration from localStorage + auth listener must happen in effect */
   useEffect(() => {
-    const supabase = createClient();
+    const supabase = tryCreateClient();
 
     // Check guest mode from localStorage
     try {
@@ -39,6 +39,13 @@ export function useAuth(): AuthState {
       }
     } catch {
       // localStorage unavailable
+    }
+
+    // No Supabase configured — run in guest/local-only mode
+    if (!supabase) {
+      setIsGuest(true);
+      setIsLoading(false);
+      return;
     }
 
     // Get initial user (server-side verified)
@@ -71,8 +78,8 @@ export function useAuth(): AuthState {
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const signOut = useCallback(async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    const supabase = tryCreateClient();
+    await supabase?.auth.signOut();
     setUser(null);
     try {
       localStorage.removeItem(GUEST_MODE_KEY);
