@@ -223,7 +223,7 @@ export function Header({ currentSceneTitle }: HeaderProps) {
           )}
         </div>
       </header>
-      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} initialSection="tts" />
     </>
   );
 }

@@ -28,7 +28,9 @@ import {
   ChevronLeft,
   ChevronRight,
   MessageSquare,
+  ExternalLink,
 } from 'lucide-react';
+import Link from 'next/link';
 import type { RankedAgent } from '@/lib/marketplace/ranking';
 
 interface PaginationInfo {
@@ -398,6 +400,12 @@ export default function MarketplacePage() {
                   <Download className="h-3.5 w-3.5" />
                   {importedIds.has(agent.id) ? t('marketplace.imported') : t('marketplace.import')}
                 </Button>
+                <Link href={`/marketplace/agents/${agent.id}`}>
+                  <Button variant="outline" size="sm" className="gap-1">
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    {t('marketplace.detail')}
+                  </Button>
+                </Link>
                 <Button
                   variant="outline"
                   size="sm"

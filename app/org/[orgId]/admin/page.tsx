@@ -26,6 +26,9 @@ import {
   Settings,
   Users,
   Building2,
+  Link2,
+  BarChart3,
+  CheckCircle2,
 } from 'lucide-react';
 import type { Organization, OrgMemberRole, OrgSector } from '@/lib/supabase/types';
 
@@ -83,6 +86,15 @@ export default function OrgAdminPage() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<OrgMemberRole>('apprenant');
   const [inviting, setInviting] = useState(false);
+  const [copyingLink, setCopyingLink] = useState(false);
+
+  // Dashboard metrics
+  const [metrics, setMetrics] = useState<{
+    membersCount: number;
+    stagesCount: number;
+    avgScore: number | null;
+    completionRate: number | null;
+  }>({ membersCount: 0, stagesCount: 0, avgScore: null, completionRate: null });
 
   const isAdmin = org?.userRole === 'admin';
 
@@ -115,10 +127,26 @@ export default function OrgAdminPage() {
     }
   }, [orgId]);
 
+  const fetchMetrics = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/organizations/${orgId}/reports?dateFrom=2000-01-01&dateTo=2099-12-31`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setMetrics({
+        membersCount: data.totalLearners ?? 0,
+        stagesCount: data.activeClassrooms ?? 0,
+        avgScore: data.avgScore ?? null,
+        completionRate: data.completionRate ?? null,
+      });
+    } catch {
+      // Metrics are optional — fail silently
+    }
+  }, [orgId]);
+
   /* eslint-disable react-hooks/set-state-in-effect -- Async data loading on mount */
   useEffect(() => {
-    Promise.all([fetchOrg(), fetchMembers()]).then(() => setIsLoading(false));
-  }, [fetchOrg, fetchMembers]);
+    Promise.all([fetchOrg(), fetchMembers(), fetchMetrics()]).then(() => setIsLoading(false));
+  }, [fetchOrg, fetchMembers, fetchMetrics]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleSaveSettings = async () => {
@@ -153,13 +181,13 @@ export default function OrgAdminPage() {
     if (!inviteEmail.trim()) return;
     setInviting(true);
     try {
-      const res = await fetch(`/api/organizations/${orgId}/members`, {
+      const res = await fetch(`/api/organizations/${orgId}/invite`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
       });
       if (res.ok) {
-        toast.success(t('org.invite'));
+        toast.success(t('org.inviteSent'));
         setInviteEmail('');
         await fetchMembers();
       } else {
@@ -170,6 +198,29 @@ export default function OrgAdminPage() {
       toast.error('Network error');
     } finally {
       setInviting(false);
+    }
+  };
+
+  const handleCopyInviteLink = async () => {
+    setCopyingLink(true);
+    try {
+      const res = await fetch(`/api/organizations/${orgId}/invite`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: inviteRole }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        await navigator.clipboard.writeText(data.inviteUrl);
+        toast.success(t('org.inviteLinkCopied'));
+      } else {
+        const err = await res.json();
+        toast.error(err.error ?? 'Error');
+      }
+    } catch {
+      toast.error('Network error');
+    } finally {
+      setCopyingLink(false);
     }
   };
 
@@ -251,6 +302,42 @@ export default function OrgAdminPage() {
           )}
         </div>
       </div>
+
+      {/* Dashboard Metrics */}
+      <section className="mb-10 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="rounded-lg border bg-blue-50/50 p-4 dark:bg-blue-950/20">
+          <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+            <Users className="h-5 w-5" />
+          </div>
+          <p className="mt-2 text-2xl font-bold">{members.length}</p>
+          <p className="text-xs text-muted-foreground">{t('org.dashboardMembers')}</p>
+        </div>
+        <div className="rounded-lg border bg-green-50/50 p-4 dark:bg-green-950/20">
+          <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+            <BookOpen className="h-5 w-5" />
+          </div>
+          <p className="mt-2 text-2xl font-bold">{metrics.stagesCount}</p>
+          <p className="text-xs text-muted-foreground">{t('org.dashboardStages')}</p>
+        </div>
+        <div className="rounded-lg border bg-amber-50/50 p-4 dark:bg-amber-950/20">
+          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+            <BarChart3 className="h-5 w-5" />
+          </div>
+          <p className="mt-2 text-2xl font-bold">
+            {metrics.avgScore !== null ? `${Math.round(metrics.avgScore)}%` : '—'}
+          </p>
+          <p className="text-xs text-muted-foreground">{t('org.dashboardAvgScore')}</p>
+        </div>
+        <div className="rounded-lg border bg-purple-50/50 p-4 dark:bg-purple-950/20">
+          <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400">
+            <CheckCircle2 className="h-5 w-5" />
+          </div>
+          <p className="mt-2 text-2xl font-bold">
+            {metrics.completionRate !== null ? `${Math.round(metrics.completionRate)}%` : '—'}
+          </p>
+          <p className="text-xs text-muted-foreground">{t('org.dashboardCompletion')}</p>
+        </div>
+      </section>
 
       {/* Settings Section */}
       {isAdmin && (
@@ -351,6 +438,15 @@ export default function OrgAdminPage() {
               </Select>
               <Button onClick={handleInvite} disabled={inviting || !inviteEmail.trim()}>
                 {inviting ? t('common.loading') : t('org.invite')}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleCopyInviteLink}
+                disabled={copyingLink}
+                className="gap-1.5"
+              >
+                <Link2 className="h-4 w-4" />
+                {copyingLink ? t('common.loading') : t('org.copyInviteLink')}
               </Button>
             </div>
           </div>

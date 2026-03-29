@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { PlusIcon, Trash2Icon, EditIcon } from 'lucide-react';
+import { PublishAgentDialog } from './publish-agent-dialog';
 
 export function AgentConfigPanel() {
   const { listAgents, deleteAgent } = useAgentRegistry();
@@ -117,6 +118,11 @@ export function AgentConfigPanel() {
                         <EditIcon className="w-3 h-3 mr-1" />
                         编辑
                       </Button>
+                      {!agent.isGenerated && (
+                        <span onClick={(e) => e.stopPropagation()}>
+                          <PublishAgentDialog agent={agent} />
+                        </span>
+                      )}
                       <Button
                         size="sm"
                         variant="destructive"

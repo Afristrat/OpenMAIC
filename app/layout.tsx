@@ -11,6 +11,8 @@ import { Toaster } from '@/components/ui/sonner';
 import { ServerProvidersInit } from '@/components/server-providers-init';
 import { HtmlDirectionManager } from '@/components/html-direction-manager';
 import { OfflineIndicator } from '@/components/offline-indicator';
+import { PwaInstallBanner } from '@/components/pwa-install-banner';
+import { TelemetryConsentBanner } from '@/components/telemetry-consent-banner';
 import { ServiceWorkerRegistrar } from '@/components/service-worker-registrar';
 import { SidebarLayout } from '@/components/sidebar-layout';
 
@@ -46,6 +48,8 @@ export default function RootLayout({
             <HtmlDirectionManager />
             <ServerProvidersInit />
             <OfflineIndicator />
+            <PwaInstallBanner />
+            <TelemetryConsentBanner />
             <ServiceWorkerRegistrar />
             <SidebarLayout>{children}</SidebarLayout>
             <Toaster position="top-center" />

@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { AlertTriangle } from 'lucide-react';
 import { VisuallyHidden } from 'radix-ui';
+import { CertificatePrompt } from '@/components/certificate-prompt';
 
 /**
  * Stage Component
@@ -46,7 +47,7 @@ export function Stage({
   onRetryOutline?: (outlineId: string) => Promise<void>;
 }) {
   const { t } = useI18n();
-  const { mode, getCurrentScene, scenes, currentSceneId, setCurrentSceneId, generatingOutlines } =
+  const { mode, getCurrentScene, scenes, currentSceneId, setCurrentSceneId, generatingOutlines, stage } =
     useStageStore();
   const failedOutlines = useStageStore.use.failedOutlines();
 
@@ -940,6 +941,20 @@ export function Stage({
       <div className="flex-1 flex flex-col overflow-hidden min-w-0 relative">
         {/* Header */}
         {!isPresenting && <Header currentSceneTitle={currentScene?.title || ''} />}
+
+        {/* Certificate prompt — shown when all scenes are generated and user completed the last scene */}
+        {!isPresenting &&
+          stage?.id &&
+          generatingOutlines.length === 0 &&
+          scenes.length > 0 &&
+          currentSceneIndex === scenes.length - 1 &&
+          playbackCompleted && (
+            <CertificatePrompt
+              stageId={stage.id}
+              allScenesCompleted
+              quizScores={[]} // Server-side validation handles score check
+            />
+          )}
 
         {/* Canvas Area */}
         <div

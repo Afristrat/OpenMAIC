@@ -7,7 +7,10 @@ import {
   Home,
   BookOpen,
   Brain,
+  Award,
   Store,
+  Puzzle,
+  CreditCard,
   User,
   Building2,
   Library,
@@ -25,12 +28,17 @@ import {
   Sun,
   Moon,
   Monitor,
+  Check,
+  Clock,
+  Loader2,
 } from 'lucide-react';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useTheme } from '@/lib/hooks/use-theme';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useOrganizations } from '@/lib/hooks/use-organizations';
 import { useIsSuperAdmin } from '@/lib/hooks/use-super-admin';
+import { useSync } from '@/lib/hooks/use-sync';
+import { CreateOrgDialog } from '@/components/create-org-dialog';
 import { cn } from '@/lib/utils';
 
 const SIDEBAR_COLLAPSED_KEY = 'qalem-sidebar-collapsed';
@@ -46,14 +54,39 @@ export function NavigationSidebar(): React.ReactElement {
   const { t, locale, setLocale } = useI18n();
   const { theme, setTheme } = useTheme();
   const { user, isGuest, signOut } = useAuth();
-  const { currentOrg } = useOrganizations();
+  const { currentOrg, organizations } = useOrganizations();
   const { isSuperAdmin } = useIsSuperAdmin();
+  const { isSyncing, lastSyncAt, isAuthenticated: isSyncAuthenticated, syncNow } = useSync();
   const pathname = usePathname();
   const router = useRouter();
 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [queueSize, setQueueSize] = useState(0);
   const isRtl = locale === 'ar-MA';
+
+  // Poll sync queue size
+  useEffect(() => {
+    if (!isSyncAuthenticated) return;
+    let cancelled = false;
+
+    const poll = async (): Promise<void> => {
+      try {
+        const { getQueueSize } = await import('@/lib/offline/sync-queue');
+        const size = await getQueueSize();
+        if (!cancelled) setQueueSize(size);
+      } catch {
+        // sync-queue not available
+      }
+    };
+
+    void poll();
+    const interval = setInterval(() => void poll(), 10_000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [isSyncAuthenticated, isSyncing]);
 
   // Hydrate collapsed state from localStorage
   /* eslint-disable react-hooks/set-state-in-effect -- Hydration from localStorage must happen in effect */
@@ -92,9 +125,27 @@ export function NavigationSidebar(): React.ReactElement {
     { href: '/', labelKey: 'nav.home', icon: <Home className="size-5" />, show: true },
     { href: '/review', labelKey: 'nav.review', icon: <Brain className="size-5" />, show: true },
     {
+      href: '/certificates',
+      labelKey: 'nav.myCertificates',
+      icon: <Award className="size-5" />,
+      show: true,
+    },
+    {
       href: '/marketplace/agents',
       labelKey: 'nav.marketplace',
       icon: <Store className="size-5" />,
+      show: true,
+    },
+    {
+      href: '/skills',
+      labelKey: 'nav.skills',
+      icon: <BookOpen className="size-5" />,
+      show: true,
+    },
+    {
+      href: '/plugins',
+      labelKey: 'nav.plugins',
+      icon: <Puzzle className="size-5" />,
       show: true,
     },
   ];
@@ -130,13 +181,13 @@ export function NavigationSidebar(): React.ReactElement {
 
   const adminItems: NavItem[] = [
     {
-      href: '/settings?tab=providers',
+      href: '/admin',
       labelKey: 'nav.admin',
       icon: <Shield className="size-5" />,
       show: isSuperAdmin,
     },
     {
-      href: '/settings?tab=providers',
+      href: '/admin?tab=providers',
       labelKey: 'nav.apiKeys',
       icon: <KeyRound className="size-5" />,
       show: isSuperAdmin,
@@ -145,7 +196,8 @@ export function NavigationSidebar(): React.ReactElement {
 
   const isActive = (href: string): boolean => {
     if (href === '/') return pathname === '/';
-    return pathname.startsWith(href.split('?')[0]);
+    const basePath = href.split('?')[0];
+    return pathname === basePath || pathname.startsWith(basePath + '/');
   };
 
   const themeIcon =
@@ -239,6 +291,19 @@ export function NavigationSidebar(): React.ReactElement {
           </>
         )}
 
+        {/* Create org — shown only when authenticated and no org */}
+        {isAuthenticated && organizations.length === 0 && (
+          <>
+            <div className="my-3 mx-2 h-px bg-border/40" />
+            {!collapsed && (
+              <p className="px-3 mb-1 text-[10px] uppercase tracking-widest font-bold text-muted-foreground/50">
+                {t('nav.organization')}
+              </p>
+            )}
+            <CreateOrgDialog collapsed={collapsed} />
+          </>
+        )}
+
         {/* Admin section */}
         {adminItems.filter((i) => i.show).length > 0 && (
           <>
@@ -305,6 +370,65 @@ export function NavigationSidebar(): React.ReactElement {
             {localeLabel}
           </button>
         </div>
+
+        {/* Pricing link — visible to all */}
+        <Link
+          href="/pricing"
+          title={collapsed ? t('nav.pricing') : undefined}
+          className={cn(
+            'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+            pathname === '/pricing'
+              ? 'bg-primary/10 text-primary dark:bg-primary/20'
+              : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+            collapsed && 'justify-center px-2',
+          )}
+        >
+          <CreditCard className="size-5 shrink-0" />
+          {!collapsed && <span className="truncate">{t('nav.pricing')}</span>}
+        </Link>
+
+        {/* Sync indicator */}
+        {isSyncAuthenticated && (
+          <button
+            onClick={() => void syncNow()}
+            title={collapsed ? t('nav.syncNow') : undefined}
+            className={cn(
+              'flex items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium transition-colors w-full',
+              'text-muted-foreground hover:bg-muted hover:text-foreground',
+              collapsed && 'justify-center px-2',
+            )}
+          >
+            {isSyncing ? (
+              <>
+                <Loader2 className="size-4 shrink-0 animate-spin text-blue-500" />
+                {!collapsed && <span className="truncate text-blue-600 dark:text-blue-400">{t('nav.syncing')}</span>}
+              </>
+            ) : queueSize > 0 ? (
+              <>
+                <span className="relative shrink-0">
+                  <Clock className="size-4 text-amber-500" />
+                  <span className="absolute -top-1 -right-1 flex items-center justify-center size-3.5 rounded-full bg-amber-500 text-[9px] font-bold text-white">
+                    {queueSize}
+                  </span>
+                </span>
+                {!collapsed && (
+                  <span className="truncate text-amber-600 dark:text-amber-400">
+                    {t('nav.pendingSync').replace('{count}', String(queueSize))}
+                  </span>
+                )}
+              </>
+            ) : lastSyncAt ? (
+              <>
+                <Check className="size-4 shrink-0 text-emerald-500" />
+                {!collapsed && (
+                  <span className="truncate text-emerald-600 dark:text-emerald-400">
+                    {t('nav.synced')}
+                  </span>
+                )}
+              </>
+            ) : null}
+          </button>
+        )}
 
         {/* Auth button */}
         {isAuthenticated ? (

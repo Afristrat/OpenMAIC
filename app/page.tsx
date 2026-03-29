@@ -23,7 +23,6 @@ import { createLogger } from '@/lib/logger';
 import { Button } from '@/components/ui/button';
 import { Textarea as UITextarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { SettingsDialog } from '@/components/settings';
 import { GenerationToolbar } from '@/components/generation/generation-toolbar';
 import { AgentBar } from '@/components/agent/agent-bar';
 import { nanoid } from 'nanoid';
@@ -74,10 +73,16 @@ function HomePage() {
   const { t } = useI18n();
   const router = useRouter();
   const [form, setForm] = useState<FormState>(initialFormState);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [settingsSection, setSettingsSection] = useState<
-    import('@/lib/types/settings').SettingsSection | undefined
-  >(undefined);
+  const openSettings = useCallback(
+    (section?: string) => {
+      if (section && ['providers', 'image', 'video', 'pdf', 'web-search', 'tts', 'asr'].includes(section)) {
+        router.push(`/admin?tab=${section}`);
+      } else {
+        router.push('/settings');
+      }
+    },
+    [router],
+  );
 
   // Auth + due review count
   const { user, isGuest } = useAuth();
@@ -254,7 +259,7 @@ function HomePage() {
           className="w-[356px] rounded-xl border border-amber-200/60 dark:border-amber-800/40 bg-gradient-to-r from-amber-50 via-white to-amber-50 dark:from-amber-950/60 dark:via-slate-900 dark:to-amber-950/60 shadow-lg shadow-amber-500/8 dark:shadow-amber-900/20 p-4 flex items-start gap-3 cursor-pointer"
           onClick={() => {
             toast.dismiss(id);
-            setSettingsOpen(true);
+            openSettings();
           }}
         >
           <div className="shrink-0 mt-0.5 size-9 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center ring-1 ring-amber-200/50 dark:ring-amber-800/30">
@@ -285,7 +290,7 @@ function HomePage() {
         t('settings.modelNotConfigured'),
         t('settings.setupNeeded'),
       );
-      setSettingsOpen(true);
+      openSettings();
       return;
     }
 
@@ -379,7 +384,7 @@ function HomePage() {
         {/* Settings Button */}
         <div className="relative">
           <button
-            onClick={() => setSettingsOpen(true)}
+            onClick={() => openSettings()}
             className="p-2 rounded-full text-gray-400 dark:text-gray-500 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 hover:shadow-sm transition-all group"
           >
             <Settings className="w-4 h-4 group-hover:rotate-90 transition-transform duration-500" />
@@ -401,15 +406,6 @@ function HomePage() {
           </>
         )}
       </div>
-      <SettingsDialog
-        open={settingsOpen}
-        onOpenChange={(open) => {
-          setSettingsOpen(open);
-          if (!open) setSettingsSection(undefined);
-        }}
-        initialSection={settingsSection}
-      />
-
       {/* ═══ Background Decor ═══ */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div
@@ -493,8 +489,7 @@ function HomePage() {
                   webSearch={form.webSearch}
                   onWebSearchChange={(v) => updateForm('webSearch', v)}
                   onSettingsOpen={(section) => {
-                    setSettingsSection(section);
-                    setSettingsOpen(true);
+                    openSettings(section);
                   }}
                   pdfFile={form.pdfFile}
                   onPdfFileChange={(f) => updateForm('pdfFile', f)}

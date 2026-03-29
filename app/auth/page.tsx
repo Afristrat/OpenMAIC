@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { tryCreateClient } from '@/lib/supabase/client';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { Button } from '@/components/ui/button';
@@ -46,6 +46,8 @@ function GitHubIcon({ className }: { className?: string }) {
 export default function AuthPage(): React.ReactElement {
   const { t, locale } = useI18n();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const inviteToken = searchParams.get('invite');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -55,6 +57,22 @@ export default function AuthPage(): React.ReactElement {
   const isRTL = locale === 'ar-MA';
 
   const supabaseAvailable = tryCreateClient() !== null;
+
+  async function consumeInvitation(token: string): Promise<void> {
+    try {
+      const res = await fetch('/api/invitations/consume', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      });
+      if (!res.ok) {
+        // Non-critical: log but don't block navigation
+        console.warn('Failed to consume invitation');
+      }
+    } catch {
+      console.warn('Failed to consume invitation');
+    }
+  }
 
   async function handleEmailAuth(e: FormEvent): Promise<void> {
     e.preventDefault();
@@ -85,6 +103,10 @@ export default function AuthPage(): React.ReactElement {
         }
       }
 
+      if (inviteToken) {
+        await consumeInvitation(inviteToken);
+      }
+
       router.push('/');
     } catch {
       setError('An unexpected error occurred');
@@ -96,11 +118,12 @@ export default function AuthPage(): React.ReactElement {
   async function handleOAuth(provider: 'google' | 'github'): Promise<void> {
     const supabase = tryCreateClient();
     if (!supabase) return;
+    const redirectTo = inviteToken
+      ? `${window.location.origin}/?invite=${inviteToken}`
+      : `${window.location.origin}/`;
     await supabase.auth.signInWithOAuth({
       provider,
-      options: {
-        redirectTo: `${window.location.origin}/`,
-      },
+      options: { redirectTo },
     });
   }
 

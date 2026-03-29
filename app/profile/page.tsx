@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useAuth } from '@/lib/hooks/use-auth';
@@ -20,7 +20,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
-import { KeyRound, Trash2, Loader2, Mail, User } from 'lucide-react';
+import { KeyRound, Trash2, Loader2, Mail, User, Save, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function ProfilePage(): React.ReactElement {
@@ -28,12 +28,61 @@ export default function ProfilePage(): React.ReactElement {
   const { user, signOut } = useAuth();
   const router = useRouter();
 
-  const avatar = useUserProfileStore((s) => s.avatar);
-  const nickname = useUserProfileStore((s) => s.nickname);
-  const bio = useUserProfileStore((s) => s.bio);
-  const setAvatar = useUserProfileStore((s) => s.setAvatar);
-  const setNickname = useUserProfileStore((s) => s.setNickname);
-  const setBio = useUserProfileStore((s) => s.setBio);
+  const storeAvatar = useUserProfileStore((s) => s.avatar);
+  const storeNickname = useUserProfileStore((s) => s.nickname);
+  const storeBio = useUserProfileStore((s) => s.bio);
+  const setStoreAvatar = useUserProfileStore((s) => s.setAvatar);
+  const setStoreNickname = useUserProfileStore((s) => s.setNickname);
+  const setStoreBio = useUserProfileStore((s) => s.setBio);
+
+  // Local form state (edits stay local until explicit save)
+  const [avatar, setAvatar] = useState(storeAvatar);
+  const [nickname, setNickname] = useState(storeNickname);
+  const [bio, setBio] = useState(storeBio);
+  const [saving, setSaving] = useState(false);
+
+  // Sync local state when store changes externally (e.g. hydration)
+  useEffect(() => { setAvatar(storeAvatar); }, [storeAvatar]);
+  useEffect(() => { setNickname(storeNickname); }, [storeNickname]);
+  useEffect(() => { setBio(storeBio); }, [storeBio]);
+
+  // Dirty tracking
+  const isDirty = useMemo(
+    () => avatar !== storeAvatar || nickname !== storeNickname || bio !== storeBio,
+    [avatar, storeAvatar, nickname, storeNickname, bio, storeBio],
+  );
+
+  const handleSave = useCallback(async () => {
+    if (!isDirty) return;
+    setSaving(true);
+    try {
+      // Persist to Zustand (and localStorage)
+      setStoreAvatar(avatar);
+      setStoreNickname(nickname);
+      setStoreBio(bio);
+
+      // If authenticated, persist to Supabase profiles table
+      if (user) {
+        const supabase = tryCreateClient();
+        if (supabase) {
+          const { error } = await supabase
+            .from('profiles')
+            .upsert(
+              { id: user.id, avatar, nickname, bio, updated_at: new Date().toISOString() },
+              { onConflict: 'id' },
+            );
+          if (error) throw error;
+        }
+      }
+
+      toast.success(t('profile.saved'));
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Error';
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
+  }, [isDirty, avatar, nickname, bio, user, t, setStoreAvatar, setStoreNickname, setStoreBio]);
 
   // Password change
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
@@ -164,6 +213,29 @@ export default function ProfilePage(): React.ReactElement {
           </Label>
           <Input value={user.email ?? ''} readOnly className="max-w-sm bg-muted" />
         </section>
+
+        {/* Save button */}
+        <div className="pt-2">
+          <Button
+            onClick={handleSave}
+            disabled={!isDirty || saving}
+            className={cn(
+              'gap-2 min-w-[160px] transition-colors',
+              isDirty
+                ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                : 'bg-muted text-muted-foreground cursor-not-allowed',
+            )}
+          >
+            {saving ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : isDirty ? (
+              <Save className="size-4" />
+            ) : (
+              <Check className="size-4" />
+            )}
+            {isDirty ? t('profile.save') : t('profile.noChanges')}
+          </Button>
+        </div>
 
         {/* Actions */}
         <div className="flex flex-wrap gap-3 pt-4 border-t border-border">

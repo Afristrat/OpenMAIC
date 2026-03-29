@@ -15,6 +15,7 @@ interface UseOrganizationsReturn {
   isAdmin: boolean;
   isMember: boolean;
   refresh: () => Promise<void>;
+  createOrganization: (name: string, sector: string | null) => Promise<OrganizationWithRole>;
 }
 
 const CURRENT_ORG_KEY = 'qalem-current-org-id';
@@ -81,6 +82,30 @@ export function useOrganizations(): UseOrganizationsReturn {
     }
   }, []);
 
+  const createOrganization = useCallback(
+    async (name: string, sector: string | null): Promise<OrganizationWithRole> => {
+      const res = await fetch('/api/organizations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, sector }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(err.error ?? 'Failed to create organization');
+      }
+
+      const data = await res.json();
+      const newOrg: OrganizationWithRole = data.organization;
+
+      // Refresh the full list so sidebar updates immediately
+      await fetchOrganizations();
+
+      return newOrg;
+    },
+    [fetchOrganizations],
+  );
+
   const isAdmin = currentOrg?.userRole === 'admin';
   const isMember = currentOrg !== null;
 
@@ -92,5 +117,6 @@ export function useOrganizations(): UseOrganizationsReturn {
     isAdmin,
     isMember,
     refresh: fetchOrganizations,
+    createOrganization,
   };
 }
