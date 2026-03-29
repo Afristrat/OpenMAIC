@@ -941,6 +941,106 @@ export const TTS_PROVIDERS: Record<TTSProviderId, TTSProviderConfig> = {
     speedRange: { min: 0.5, max: 2.0, default: 1.0 },
   },
 
+  'edge-tts': {
+    id: 'edge-tts',
+    name: 'Edge TTS (Gratuit)',
+    requiresApiKey: false,
+    icon: '/logos/edge.svg',
+    voices: [
+      // French voices
+      {
+        id: 'fr-FR-DeniseNeural',
+        name: 'Denise',
+        language: 'fr-FR',
+        gender: 'female',
+        description: 'Voix féminine chaleureuse et professionnelle',
+      },
+      {
+        id: 'fr-FR-HenriNeural',
+        name: 'Henri',
+        language: 'fr-FR',
+        gender: 'male',
+        description: 'Voix masculine claire',
+      },
+      {
+        id: 'fr-FR-EloiseNeural',
+        name: 'Eloise',
+        language: 'fr-FR',
+        gender: 'female',
+        description: 'Voix féminine jeune',
+      },
+      {
+        id: 'fr-FR-RemyMultilingualNeural',
+        name: 'Remy (Multilingue)',
+        language: 'fr-FR',
+        gender: 'male',
+        description: 'Voix masculine multilingue',
+      },
+      // Arabic voices — Moroccan
+      {
+        id: 'ar-MA-MounaNeural',
+        name: 'Mouna (المغرب)',
+        language: 'ar-MA',
+        gender: 'female',
+        description: 'Voix féminine arabe marocain',
+      },
+      {
+        id: 'ar-MA-JamalNeural',
+        name: 'Jamal (المغرب)',
+        language: 'ar-MA',
+        gender: 'male',
+        description: 'Voix masculine arabe marocain',
+      },
+      // Arabic voices — Saudi / MSA
+      {
+        id: 'ar-SA-ZariyahNeural',
+        name: 'Zariyah (السعودية)',
+        language: 'ar-SA',
+        gender: 'female',
+        description: 'Voix féminine arabe standard',
+      },
+      {
+        id: 'ar-SA-HamedNeural',
+        name: 'Hamed (السعودية)',
+        language: 'ar-SA',
+        gender: 'male',
+        description: 'Voix masculine arabe standard',
+      },
+      // Arabic voices — Egyptian
+      {
+        id: 'ar-EG-SalmaNeural',
+        name: 'Salma (مصر)',
+        language: 'ar-EG',
+        gender: 'female',
+        description: 'Voix féminine arabe égyptien',
+      },
+      // English voices
+      {
+        id: 'en-US-JennyNeural',
+        name: 'Jenny',
+        language: 'en-US',
+        gender: 'female',
+        description: 'Natural female American English',
+      },
+      {
+        id: 'en-US-GuyNeural',
+        name: 'Guy',
+        language: 'en-US',
+        gender: 'male',
+        description: 'Natural male American English',
+      },
+      {
+        id: 'en-GB-SoniaNeural',
+        name: 'Sonia',
+        language: 'en-GB',
+        gender: 'female',
+        description: 'Natural female British English',
+      },
+    ],
+    supportedFormats: ['mp3'],
+    speedRange: { min: 0.5, max: 2.0, default: 1.0 },
+  },
+
   'browser-native-tts': {
     id: 'browser-native-tts',
     name: '浏览器原生 (Web Speech API)',
@@ -1172,6 +1272,7 @@ export const DEFAULT_TTS_VOICES: Record<TTSProviderId, string> = {
   'elevenlabs-tts': 'EXAVITQu4vr4xnSDxMaL',
   'fish-audio': 'fish-fr-male-1',
   cartesia: 'a0e99841-438c-4a64-b679-ae501e7d6091',
+  'edge-tts': 'fr-FR-DeniseNeural',
   'browser-native-tts': 'default',
 };
 

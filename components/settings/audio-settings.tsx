@@ -41,6 +41,7 @@ function getTTSProviderName(providerId: TTSProviderId, t: (key: string) => strin
     'elevenlabs-tts': t('settings.providerElevenLabsTTS'),
     'fish-audio': t('settings.providerFishAudioTTS'),
     cartesia: t('settings.providerCartesiaTTS'),
+    'edge-tts': t('settings.providerEdgeTTS'),
     'browser-native-tts': t('settings.providerBrowserNativeTTS'),
   };
   return names[providerId];

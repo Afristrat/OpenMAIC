@@ -162,6 +162,9 @@ export async function generateTTS(
     case 'cartesia':
       return await generateCartesiaTTS(config, text);
 
+    case 'edge-tts':
+      return await generateEdgeTTS(config, text);
+
     case 'browser-native-tts':
       throw new Error(
         'Browser Native TTS must be handled client-side using Web Speech API. This provider cannot be used on the server.',
@@ -627,6 +630,34 @@ async function generateDoubaoTTS(
   }
 
   return { audio: combined, format: 'mp3' };
+}
+
+/**
+ * Edge TTS implementation (free Microsoft neural voices via WebSocket)
+ *
+ * Uses the same endpoint that Microsoft Edge browser uses for its Read Aloud feature.
+ * No API key required. Connects to wss://speech.platform.bing.com via the edge-tts npm package.
+ */
+async function generateEdgeTTS(
+  config: TTSModelConfig,
+  text: string,
+): Promise<TTSGenerationResult> {
+  // Dynamic import — edge-tts ships TypeScript source, handled by Next.js bundler
+  const { tts } = await import('edge-tts');
+
+  // Convert speed (1.0 = normal) to Edge TTS rate format ("+0%", "+50%", "-25%")
+  const speedPercent = Math.round(((config.speed || 1.0) - 1.0) * 100);
+  const rate = `${speedPercent >= 0 ? '+' : ''}${speedPercent}%`;
+
+  const audioBuffer = await tts(escapeXml(text), {
+    voice: config.voice,
+    rate,
+  });
+
+  return {
+    audio: new Uint8Array(audioBuffer),
+    format: 'mp3',
+  };
 }
 
 /**

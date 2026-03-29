@@ -257,8 +257,8 @@ const getDefaultProvidersConfig = (): ProvidersConfig => {
 
 // Initialize default audio config
 const getDefaultAudioConfig = () => ({
-  ttsProviderId: 'browser-native-tts' as TTSProviderId,
-  ttsVoice: 'default',
+  ttsProviderId: 'edge-tts' as TTSProviderId,
+  ttsVoice: 'fr-FR-DeniseNeural',
   ttsSpeed: 1.0,
   asrProviderId: 'browser-native' as ASRProviderId,
   asrLanguage: 'zh',
@@ -269,6 +269,7 @@ const getDefaultAudioConfig = () => ({
     'qwen-tts': { apiKey: '', baseUrl: '', enabled: false },
     'doubao-tts': { apiKey: '', baseUrl: '', enabled: false },
     'elevenlabs-tts': { apiKey: '', baseUrl: '', enabled: false },
+    'edge-tts': { apiKey: '', baseUrl: '', enabled: true },
     'browser-native-tts': { apiKey: '', baseUrl: '', enabled: true },
   } as Record<TTSProviderId, { apiKey: string; baseUrl: string; enabled: boolean }>,
   asrProvidersConfig: {

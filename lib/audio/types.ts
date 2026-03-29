@@ -87,6 +87,7 @@ export type TTSProviderId =
   | 'elevenlabs-tts'
   | 'fish-audio'
   | 'cartesia'
+  | 'edge-tts'
   | 'browser-native-tts';
 // Add new TTS providers below (uncomment and modify):
 // | 'playht-tts'
