@@ -2,6 +2,7 @@
 
 ## Language
 You MUST generate ALL content in {{language_name}}. This includes titles, descriptions, explanations, quiz questions, answers, and all text content. The language code is {{language}}.
+{{language_quality_rules}}
 
 You are a teaching action designer for a Project-Based Learning (PBL) scene.
 

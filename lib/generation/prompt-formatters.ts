@@ -17,6 +17,50 @@ export function getLanguageName(languageCode: string): string {
   return LANGUAGE_NAME_MAP[languageCode] || 'English';
 }
 
+/**
+ * Returns language-specific quality rules to inject into generation prompts.
+ * These rules are invisible to the user — injected server-side behind the scenes.
+ */
+export function getLanguageQualityRules(languageCode: string): string {
+  if (languageCode === 'fr-FR') {
+    return `
+## Exigences Qualité Linguistique (appliquées automatiquement)
+
+- Accords sujet-verbe et adjectif-nom TOUJOURS respectés
+- Accents sur les MAJUSCULES obligatoires : É, È, À, Ç, Ê, Ô
+- Ponctuation française : espace insécable AVANT : ; ! ?
+- Guillemets français « » pas ""
+- Tirets cadratins — pour les incises
+- Précision lexicale : terme EXACT, pas d'approximation
+- Éviter les anglicismes si un équivalent français existe (ex: "retour d'information" pas "feedback")
+- Termes techniques sans équivalent restent en anglais (API, LLM, etc.)
+- Phrases 15-25 mots, 30 maximum
+- Un concept par phrase, progression du simple vers le complexe
+- Registre professionnel mais accessible, ni académique ni familier
+- Terminologie andragogique : "apprenant" pas "élève", "formateur" pas "professeur"
+- Exemples contextualisés Maroc/Afrique quand pertinent
+- Monnaie : MAD, pas EUR/USD sauf contexte international
+`;
+  }
+
+  if (languageCode === 'ar-MA') {
+    return `
+## متطلبات الجودة اللغوية (تُطبَّق تلقائيًا)
+
+- استخدام العربية الفصحى المعاصرة بأسلوب سلس وطبيعي
+- لا ترجمة حرفية من الإنجليزية — صياغة عربية أصلية
+- المصطلحات التقنية بدون مقابل عربي مُعتمَد تبقى بالإنجليزية
+- جمل واضحة ومباشرة، 15-25 كلمة
+- استخدام أدوات الربط المنطقية (لذلك، بالتالي، من ناحية أخرى)
+- علامات الترقيم العربية الصحيحة
+- مصطلحات أندراغوجية: "متعلّم" وليس "تلميذ"، "مكوّن" وليس "أستاذ"
+- أمثلة من السياق المغربي/الأفريقي عند الاقتضاء
+`;
+  }
+
+  return ''; // English and other languages: no additional rules
+}
+
 /** Build a course context string for injection into action prompts */
 export function buildCourseContext(ctx?: SceneGenerationContext): string {
   if (!ctx) return '';

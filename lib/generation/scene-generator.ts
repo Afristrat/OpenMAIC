@@ -33,6 +33,7 @@ import {
   formatImageDescription,
   formatImagePlaceholder,
   getLanguageName,
+  getLanguageQualityRules,
 } from './prompt-formatters';
 import type { PPTElement, Slide, SlideBackground, SlideTheme } from '@/lib/types/slides';
 import type { QuizQuestion } from '@/lib/types/stage';
@@ -547,6 +548,7 @@ async function generateSlideContent(
     teacherContext,
     language: lang,
     language_name: getLanguageName(lang),
+    language_quality_rules: getLanguageQualityRules(lang),
   });
 
   if (!prompts) {
@@ -652,6 +654,7 @@ async function generateQuizContent(
     questionTypes: quizConfig.questionTypes.join(', '),
     language: lang,
     language_name: getLanguageName(lang),
+    language_quality_rules: getLanguageQualityRules(lang),
   });
 
   if (!prompts) {
@@ -756,6 +759,7 @@ async function generateInteractiveContent(
       designIdea: config.designIdea,
       language,
       language_name: getLanguageName(language),
+    language_quality_rules: getLanguageQualityRules(language),
     });
 
     if (modelPrompts) {
@@ -802,6 +806,7 @@ async function generateInteractiveContent(
     designIdea: config.designIdea,
     language,
     language_name: getLanguageName(language),
+    language_quality_rules: getLanguageQualityRules(language),
   });
 
   if (!htmlPrompts) {
@@ -943,6 +948,7 @@ export async function generateSceneActions(
       userProfile: userProfile || '',
       language: actionLang,
       language_name: getLanguageName(actionLang),
+    language_quality_rules: getLanguageQualityRules(actionLang),
     });
 
     if (!prompts) {
@@ -974,6 +980,7 @@ export async function generateSceneActions(
       agents: agentsText,
       language: quizActionLang,
       language_name: getLanguageName(quizActionLang),
+    language_quality_rules: getLanguageQualityRules(quizActionLang),
     });
 
     if (!prompts) {
@@ -1004,6 +1011,7 @@ export async function generateSceneActions(
       agents: agentsText,
       language: interactiveLang,
       language_name: getLanguageName(interactiveLang),
+    language_quality_rules: getLanguageQualityRules(interactiveLang),
     });
 
     if (!prompts) {
@@ -1034,6 +1042,7 @@ export async function generateSceneActions(
       agents: agentsText,
       language: pblLang,
       language_name: getLanguageName(pblLang),
+    language_quality_rules: getLanguageQualityRules(pblLang),
     });
 
     if (!prompts) {

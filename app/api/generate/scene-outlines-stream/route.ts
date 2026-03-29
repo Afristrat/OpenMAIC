@@ -21,6 +21,7 @@ import {
   uniquifyMediaElementIds,
   formatTeacherPersonaForPrompt,
   getLanguageName,
+  getLanguageQualityRules,
 } from '@/lib/generation/generation-pipeline';
 import type { AgentInfo } from '@/lib/generation/generation-pipeline';
 import { MAX_PDF_CONTENT_CHARS, MAX_VISION_IMAGES } from '@/lib/constants/generation';
@@ -177,6 +178,7 @@ export async function POST(req: NextRequest) {
       requirement: requirements.requirement,
       language: requirements.language,
       language_name: getLanguageName(requirements.language),
+      language_quality_rules: getLanguageQualityRules(requirements.language),
       pdfContent: pdfText
         ? pdfText.substring(0, MAX_PDF_CONTENT_CHARS)
         : requirements.language === 'zh-CN'
