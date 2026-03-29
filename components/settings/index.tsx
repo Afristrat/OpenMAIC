@@ -210,11 +210,21 @@ export function SettingsDialog({ open, onOpenChange, initialSection }: SettingsD
   const setASRProvider = useSettingsStore((state) => state.setASRProvider);
 
   // Navigation
-  const [activeSection, setActiveSection] = useState<SettingsSection>(
+  const defaultSection: SettingsSection = isSuperAdmin ? 'providers' : 'general';
+  const [activeSection, setActiveSectionRaw] = useState<SettingsSection>(
     initialSection && (!ADMIN_ONLY_SECTIONS.includes(initialSection) || isSuperAdmin)
       ? initialSection
-      : isSuperAdmin ? 'providers' : 'general',
+      : defaultSection,
   );
+
+  // Guard: redirect non-admins away from admin sections
+  const setActiveSection = useCallback((section: SettingsSection) => {
+    if (ADMIN_ONLY_SECTIONS.includes(section) && !isSuperAdmin) {
+      setActiveSectionRaw('general');
+      return;
+    }
+    setActiveSectionRaw(section);
+  }, [isSuperAdmin]);
   const [selectedProviderId, setSelectedProviderId] = useState<ProviderId>(providerId);
   const [selectedPdfProviderId, setSelectedPdfProviderId] = useState<PDFProviderId>(pdfProviderId);
   const [selectedWebSearchProviderId, setSelectedWebSearchProviderId] =
@@ -798,8 +808,8 @@ export function SettingsDialog({ open, onOpenChange, initialSection }: SettingsD
             <div className="w-px h-full bg-border group-hover:bg-primary/50 transition-colors" />
           </div>
 
-          {/* Middle - Provider List (only shown for provider-based sections) */}
-          {activeSection === 'providers' && (
+          {/* Middle - Provider List (only shown for provider-based sections, admin only) */}
+          {activeSection === 'providers' && isSuperAdmin && (
             <>
               <ProviderList
                 providers={allProviders}
