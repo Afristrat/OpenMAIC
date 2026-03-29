@@ -15,9 +15,6 @@ import {
   Pencil,
   Trash2,
   Settings,
-  Sun,
-  Moon,
-  Monitor,
   BotOff,
   ChevronUp,
 } from 'lucide-react';
@@ -29,7 +26,6 @@ import { cn } from '@/lib/utils';
 import { SettingsDialog } from '@/components/settings';
 import { GenerationToolbar } from '@/components/generation/generation-toolbar';
 import { AgentBar } from '@/components/agent/agent-bar';
-import { useTheme } from '@/lib/hooks/use-theme';
 import { nanoid } from 'nanoid';
 import { storePdfBlob } from '@/lib/utils/image-storage';
 import type { UserRequirements } from '@/lib/types/generation';
@@ -75,8 +71,7 @@ const initialFormState: FormState = {
 };
 
 function HomePage() {
-  const { t, locale, setLocale } = useI18n();
-  const { theme, setTheme } = useTheme();
+  const { t } = useI18n();
   const router = useRouter();
   const [form, setForm] = useState<FormState>(initialFormState);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -187,27 +182,12 @@ function HomePage() {
     }
   }
 
-  const [languageOpen, setLanguageOpen] = useState(false);
-  const [themeOpen, setThemeOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [classrooms, setClassrooms] = useState<StageListItem[]>([]);
   const [thumbnails, setThumbnails] = useState<Record<string, Slide>>({});
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  // Close dropdowns when clicking outside
-  useEffect(() => {
-    if (!languageOpen && !themeOpen) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node)) {
-        setLanguageOpen(false);
-        setThemeOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [languageOpen, themeOpen]);
 
   const loadClassrooms = async () => {
     try {
@@ -391,114 +371,11 @@ function HomePage() {
 
   return (
     <div className="min-h-[100dvh] w-full bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 flex flex-col items-center p-4 pt-16 md:p-8 md:pt-16 overflow-x-hidden">
-      {/* ═══ Top-right pill (unchanged) ═══ */}
+      {/* ═══ Top-right settings pill ═══ */}
       <div
         ref={toolbarRef}
-        className="fixed top-4 right-4 z-50 flex items-center gap-1 bg-white/60 dark:bg-gray-800/60 backdrop-blur-md px-2 py-1.5 rounded-full border border-gray-100/50 dark:border-gray-700/50 shadow-sm"
+        className="fixed top-4 right-4 z-40 flex items-center gap-1 bg-white/60 dark:bg-gray-800/60 backdrop-blur-md px-2 py-1.5 rounded-full border border-gray-100/50 dark:border-gray-700/50 shadow-sm"
       >
-        {/* Language Selector */}
-        <div className="relative">
-          <button
-            onClick={() => {
-              setLanguageOpen(!languageOpen);
-              setThemeOpen(false);
-            }}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 hover:shadow-sm transition-all"
-          >
-            {{ 'fr-FR': 'FR', 'ar-MA': 'AR', 'en-US': 'EN', 'zh-CN': 'CN' }[locale]}
-          </button>
-          {languageOpen && (
-            <div className="absolute top-full mt-2 right-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden z-50 min-w-[120px]">
-              {([
-                { code: 'fr-FR' as const, label: 'Français' },
-                { code: 'ar-MA' as const, label: 'العربية' },
-                { code: 'en-US' as const, label: 'English' },
-              ] as const).map(({ code, label }) => (
-                <button
-                  key={code}
-                  onClick={() => {
-                    setLocale(code);
-                    setLanguageOpen(false);
-                  }}
-                  className={cn(
-                    'w-full px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors',
-                    code === 'ar-MA' ? 'text-right' : 'text-left',
-                    locale === code &&
-                      'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
-                  )}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="w-[1px] h-4 bg-gray-200 dark:bg-gray-700" />
-
-        {/* Theme Selector */}
-        <div className="relative">
-          <button
-            onClick={() => {
-              setThemeOpen(!themeOpen);
-              setLanguageOpen(false);
-            }}
-            className="p-2 rounded-full text-gray-400 dark:text-gray-500 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 hover:shadow-sm transition-all"
-          >
-            {theme === 'light' && <Sun className="w-4 h-4" />}
-            {theme === 'dark' && <Moon className="w-4 h-4" />}
-            {theme === 'system' && <Monitor className="w-4 h-4" />}
-          </button>
-          {themeOpen && (
-            <div className="absolute top-full mt-2 right-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden z-50 min-w-[140px]">
-              <button
-                onClick={() => {
-                  setTheme('light');
-                  setThemeOpen(false);
-                }}
-                className={cn(
-                  'w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2',
-                  theme === 'light' &&
-                    'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
-                )}
-              >
-                <Sun className="w-4 h-4" />
-                {t('settings.themeOptions.light')}
-              </button>
-              <button
-                onClick={() => {
-                  setTheme('dark');
-                  setThemeOpen(false);
-                }}
-                className={cn(
-                  'w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2',
-                  theme === 'dark' &&
-                    'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
-                )}
-              >
-                <Moon className="w-4 h-4" />
-                {t('settings.themeOptions.dark')}
-              </button>
-              <button
-                onClick={() => {
-                  setTheme('system');
-                  setThemeOpen(false);
-                }}
-                className={cn(
-                  'w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2',
-                  theme === 'system' &&
-                    'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
-                )}
-              >
-                <Monitor className="w-4 h-4" />
-                {t('settings.themeOptions.system')}
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="w-[1px] h-4 bg-gray-200 dark:bg-gray-700" />
-
         {/* Settings Button */}
         <div className="relative">
           <button
@@ -508,6 +385,21 @@ function HomePage() {
             <Settings className="w-4 h-4 group-hover:rotate-90 transition-transform duration-500" />
           </button>
         </div>
+
+        {/* User avatar */}
+        {user && (
+          <>
+            <div className="w-[1px] h-4 bg-gray-200 dark:bg-gray-700" />
+            <Link
+              href="/profile"
+              className="flex items-center gap-1.5 px-2 py-1.5 rounded-full text-xs font-medium text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 hover:shadow-sm transition-all"
+            >
+              <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold uppercase">
+                {user.email?.charAt(0) ?? 'U'}
+              </div>
+            </Link>
+          </>
+        )}
       </div>
       <SettingsDialog
         open={settingsOpen}
@@ -771,9 +663,7 @@ function HomePage() {
       )}
 
       {/* Footer — flows with content, at the very end */}
-      <div className="mt-auto pt-12 pb-4 text-center text-xs text-muted-foreground/40">
-        Qalem
-      </div>
+      <div className="mt-auto pt-12 pb-4 text-center text-xs text-muted-foreground/40">Qalem</div>
     </div>
   );
 }

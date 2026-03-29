@@ -12,6 +12,7 @@ import { ServerProvidersInit } from '@/components/server-providers-init';
 import { HtmlDirectionManager } from '@/components/html-direction-manager';
 import { OfflineIndicator } from '@/components/offline-indicator';
 import { ServiceWorkerRegistrar } from '@/components/service-worker-registrar';
+import { SidebarLayout } from '@/components/sidebar-layout';
 
 const inter = localFont({
   src: '../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2',
@@ -46,7 +47,7 @@ export default function RootLayout({
             <ServerProvidersInit />
             <OfflineIndicator />
             <ServiceWorkerRegistrar />
-            {children}
+            <SidebarLayout>{children}</SidebarLayout>
             <Toaster position="top-center" />
           </I18nProvider>
         </ThemeProvider>
