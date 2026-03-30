@@ -120,6 +120,27 @@ export class SupabaseSyncProvider implements SyncableStorageProvider {
     return this.userId !== null;
   }
 
+  /** Ensure the user has a row in the profiles table (FK requirement for stages.owner_id) */
+  private profileEnsured = false;
+  private async ensureProfile(supabase: NonNullable<ReturnType<typeof tryCreateClient>>): Promise<void> {
+    if (this.profileEnsured || !this.userId) return;
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', this.userId)
+        .single();
+      if (!data) {
+        // Profile doesn't exist yet — create it
+        await supabase.from('profiles').insert({ id: this.userId });
+      }
+      this.profileEnsured = true;
+    } catch {
+      // Non-critical — sync will fail with FK error but won't crash the app
+      log.warn('ensureProfile: could not verify/create profile');
+    }
+  }
+
   // ------------------------------------------------------------------
   // Single-stage sync (write-through)
   // ------------------------------------------------------------------
@@ -127,11 +148,11 @@ export class SupabaseSyncProvider implements SyncableStorageProvider {
   async syncStage(stageId: string): Promise<void> {
     if (!this.userId) return;
 
-    // Skip demo classrooms — they are local-only, not meant for Supabase
-    if (stageId.startsWith('demo-')) return;
-
     const supabase = tryCreateClient();
     if (!supabase) return;
+
+    // Ensure user profile exists before syncing (foreign key requirement)
+    await this.ensureProfile(supabase);
 
     // 1. Read local data
     const localStage = await db.stages.get(stageId);
