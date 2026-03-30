@@ -127,6 +127,9 @@ export class SupabaseSyncProvider implements SyncableStorageProvider {
   async syncStage(stageId: string): Promise<void> {
     if (!this.userId) return;
 
+    // Skip demo classrooms — they are local-only, not meant for Supabase
+    if (stageId.startsWith('demo-')) return;
+
     const supabase = tryCreateClient();
     if (!supabase) return;
 
