@@ -17,7 +17,7 @@
  * API docs: https://docs.klingai.com/api
  */
 
-import crypto from 'crypto';
+// Use Web Crypto API (works in both browser and Node.js 18+) instead of Node's crypto module
 import type {
   VideoGenerationConfig,
   VideoGenerationOptions,
@@ -39,7 +39,7 @@ function base64url(data: Buffer | string): string {
   return buf.toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
 }
 
-function generateJWT(accessKey: string, secretKey: string): string {
+async function generateJWT(accessKey: string, secretKey: string): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
 
   const header = base64url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
@@ -52,9 +52,17 @@ function generateJWT(accessKey: string, secretKey: string): string {
     }),
   );
 
-  const signature = base64url(
-    crypto.createHmac('sha256', secretKey).update(`${header}.${payload}`).digest(),
+  // HMAC-SHA256 via Web Crypto API (browser + Node.js 18+ compatible)
+  const encoder = new TextEncoder();
+  const key = await globalThis.crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secretKey),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
   );
+  const sig = await globalThis.crypto.subtle.sign('HMAC', key, encoder.encode(`${header}.${payload}`));
+  const signature = base64url(Buffer.from(sig));
 
   return `${header}.${payload}.${signature}`;
 }
@@ -130,7 +138,7 @@ export async function testKlingConnectivity(
   const baseUrl = config.baseUrl || DEFAULT_BASE_URL;
   try {
     const { accessKey, secretKey } = parseApiKey(config.apiKey);
-    const token = generateJWT(accessKey, secretKey);
+    const token = await generateJWT(accessKey, secretKey);
     // Use a GET to a non-existent task to validate auth
     const response = await fetch(`${baseUrl}/v1/videos/text2video/connectivity-test`, {
       method: 'GET',
@@ -232,7 +240,7 @@ export async function generateWithKling(
   const model = config.model || DEFAULT_MODEL;
   const baseUrl = config.baseUrl || DEFAULT_BASE_URL;
   const { accessKey, secretKey } = parseApiKey(config.apiKey);
-  const token = generateJWT(accessKey, secretKey);
+  const token = await generateJWT(accessKey, secretKey);
 
   // 1. Submit
   const taskId = await submitTask(baseUrl, token, model, options);
