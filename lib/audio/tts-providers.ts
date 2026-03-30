@@ -94,6 +94,8 @@
 
 import type { TTSModelConfig } from './types';
 import { TTS_PROVIDERS } from './constants';
+import { trackUsage } from '@/lib/usage/tracker';
+import { getCachedAudio, cacheAudio } from './tts-cache';
 
 /**
  * Result of TTS generation
@@ -137,33 +139,52 @@ export async function generateTTS(
     throw new Error(`API key required for TTS provider: ${config.providerId}`);
   }
 
+  // --- TTS cache: check for a cached result before hitting the provider ---
+  const speed = config.speed ?? 1.0;
+  const expectedFormat = config.format ?? 'mp3';
+  const cached = await getCachedAudio(config.voice, text, speed, expectedFormat);
+  if (cached) {
+    return { audio: cached, format: expectedFormat };
+  }
+
+  let result: TTSGenerationResult;
+
   switch (config.providerId) {
     case 'openai-tts':
-      return await generateOpenAITTS(config, text);
+      result = await generateOpenAITTS(config, text);
+      break;
 
     case 'azure-tts':
-      return await generateAzureTTS(config, text);
+      result = await generateAzureTTS(config, text);
+      break;
 
     case 'glm-tts':
-      return await generateGLMTTS(config, text);
+      result = await generateGLMTTS(config, text);
+      break;
 
     case 'qwen-tts':
-      return await generateQwenTTS(config, text);
+      result = await generateQwenTTS(config, text);
+      break;
 
     case 'doubao-tts':
-      return await generateDoubaoTTS(config, text);
+      result = await generateDoubaoTTS(config, text);
+      break;
 
     case 'elevenlabs-tts':
-      return await generateElevenLabsTTS(config, text);
+      result = await generateElevenLabsTTS(config, text);
+      break;
 
     case 'fish-audio':
-      return await generateFishAudioTTS(config, text);
+      result = await generateFishAudioTTS(config, text);
+      break;
 
     case 'cartesia':
-      return await generateCartesiaTTS(config, text);
+      result = await generateCartesiaTTS(config, text);
+      break;
 
     case 'edge-tts':
-      return await generateEdgeTTS(config, text);
+      result = await generateEdgeTTS(config, text);
+      break;
 
     case 'browser-native-tts':
       throw new Error(
@@ -173,6 +194,27 @@ export async function generateTTS(
     default:
       throw new Error(`Unsupported TTS provider: ${config.providerId}`);
   }
+
+  // Track TTS usage — estimate duration from audio size.
+  // Rough heuristic: MP3 ≈ 16 KB/s, WAV ≈ 32 KB/s at typical TTS bitrates.
+  const bytesPerSecond = result.format === 'wav' ? 32_000 : 16_000;
+  const estimatedSeconds = result.audio.length / bytesPerSecond;
+  const estimatedMinutes = estimatedSeconds / 60;
+
+  // Fire-and-forget: never block TTS response on usage tracking
+  trackUsage({
+    metric: 'tts_minutes',
+    quantity: estimatedMinutes,
+  }).catch(() => {
+    // Swallowed — trackUsage already logs internally
+  });
+
+  // Fire-and-forget: persist to cache for future requests
+  cacheAudio(config.voice, text, speed, result.audio, result.format).catch(() => {
+    // Cache write failure is non-critical — log silently
+  });
+
+  return result;
 }
 
 /**

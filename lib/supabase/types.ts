@@ -405,6 +405,37 @@ export type CertificateInsert = Omit<
 > & Partial<Pick<CertificateDbRow, 'completion_date'>>
 
 // ---------------------------------------------------------------------------
+// Usage Tracking
+// ---------------------------------------------------------------------------
+
+export type UsageMetricType = 'tts_minutes' | 'api_calls' | 'ai_tokens' | 'storage_mb'
+
+export interface UsageRecord {
+  id: string // UUID
+  org_id: string | null // FK → organizations.id
+  user_id: string | null // FK → profiles.id
+  metric: UsageMetricType
+  quantity: number
+  billing_period: string // e.g. '2026-03'
+  recorded_at: string // ISO 8601
+}
+
+export type UsageRecordInsert = Pick<UsageRecord, 'metric' | 'quantity' | 'billing_period'> & {
+  org_id?: string | null
+  user_id?: string | null
+}
+
+export interface UsageSummaryRow {
+  org_id: string | null
+  user_id: string | null
+  billing_period: string
+  tts_minutes: number
+  api_calls: number
+  ai_tokens: number
+  storage_mb: number
+}
+
+// ---------------------------------------------------------------------------
 // Supabase Database type (for createClient<Database>)
 // ---------------------------------------------------------------------------
 
@@ -506,8 +537,17 @@ export interface Database {
         Insert: CertificateInsert
         Update: Record<string, never>
       }
+      usage_records: {
+        Row: UsageRecord
+        Insert: UsageRecordInsert
+        Update: Record<string, never>
+      }
     }
-    Views: Record<string, never>
+    Views: {
+      usage_summary: {
+        Row: UsageSummaryRow
+      }
+    }
     Functions: Record<string, never>
     Enums: Record<string, never>
   }
