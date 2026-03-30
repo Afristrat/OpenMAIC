@@ -102,7 +102,7 @@ export default function OrgAdminPage() {
     try {
       const res = await fetch(`/api/organizations/${orgId}`);
       if (!res.ok) {
-        router.push('/');
+        router.push('/app');
         return;
       }
       const data = await res.json();
@@ -112,7 +112,7 @@ export default function OrgAdminPage() {
       setEditSector(orgData.sector ?? '');
       setEditLocale(orgData.default_locale);
     } catch {
-      router.push('/');
+      router.push('/app');
     }
   }, [orgId, router]);
 
@@ -267,7 +267,7 @@ export default function OrgAdminPage() {
     try {
       const res = await fetch(`/api/organizations/${orgId}`, { method: 'DELETE' });
       if (res.ok) {
-        router.push('/');
+        router.push('/app');
       } else {
         const err = await res.json();
         toast.error(err.error ?? 'Error');
@@ -291,7 +291,7 @@ export default function OrgAdminPage() {
     <div className="mx-auto max-w-4xl px-4 py-8">
       {/* Header */}
       <div className="mb-8 flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => router.push('/')}>
+        <Button variant="ghost" size="icon" onClick={() => router.push('/app')}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex items-center gap-3">

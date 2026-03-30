@@ -122,7 +122,7 @@ export function NavigationSidebar(): React.ReactElement {
 
   // --- Navigation items ---
   const mainItems: NavItem[] = [
-    { href: '/', labelKey: 'nav.home', icon: <Home className="size-5" />, show: true },
+    { href: '/app', labelKey: 'nav.home', icon: <Home className="size-5" />, show: true },
     { href: '/review', labelKey: 'nav.review', icon: <Brain className="size-5" />, show: true },
     {
       href: '/certificates',
@@ -195,7 +195,7 @@ export function NavigationSidebar(): React.ReactElement {
   ];
 
   const isActive = (href: string): boolean => {
-    if (href === '/') return pathname === '/';
+    if (href === '/app') return pathname === '/app';
     const basePath = href.split('?')[0];
     return pathname === basePath || pathname.startsWith(basePath + '/');
   };
@@ -240,8 +240,8 @@ export function NavigationSidebar(): React.ReactElement {
         className={cn(
           'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
           active
-            ? 'bg-primary/10 text-primary dark:bg-primary/20'
-            : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+            ? 'surface-3 text-primary'
+            : 'text-muted-foreground hover:surface-2 hover:text-foreground',
           collapsed && 'justify-center px-2',
         )}
       >
@@ -254,14 +254,14 @@ export function NavigationSidebar(): React.ReactElement {
   const sidebarContent = (
     <div className={cn('flex flex-col h-full', isRtl && 'text-right')}>
       {/* Logo + collapse */}
-      <div className="flex items-center justify-between px-3 py-4 border-b border-border/40">
+      <div className="flex items-center justify-between px-3 py-4 border-b border-border/10">
         {!collapsed && (
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/app" className="flex items-center gap-2">
             <img src="/logo-horizontal.png" alt="Qalem" className="h-7" />
           </Link>
         )}
         {collapsed && (
-          <Link href="/" className="mx-auto">
+          <Link href="/app" className="mx-auto">
             <img src="/logo-horizontal.png" alt="Qalem" className="h-6 w-auto" />
           </Link>
         )}
@@ -281,7 +281,7 @@ export function NavigationSidebar(): React.ReactElement {
         {/* Org section */}
         {orgItems.filter((i) => i.show).length > 0 && (
           <>
-            <div className="my-3 mx-2 h-px bg-border/40" />
+            <div className="my-3 mx-2 h-px bg-border/10" />
             {!collapsed && (
               <p className="px-3 mb-1 text-[10px] uppercase tracking-widest font-bold text-muted-foreground/50">
                 {t('nav.organization')}
@@ -294,7 +294,7 @@ export function NavigationSidebar(): React.ReactElement {
         {/* Create org — shown only when authenticated and no org */}
         {isAuthenticated && organizations.length === 0 && (
           <>
-            <div className="my-3 mx-2 h-px bg-border/40" />
+            <div className="my-3 mx-2 h-px bg-border/10" />
             {!collapsed && (
               <p className="px-3 mb-1 text-[10px] uppercase tracking-widest font-bold text-muted-foreground/50">
                 {t('nav.organization')}
@@ -307,7 +307,7 @@ export function NavigationSidebar(): React.ReactElement {
         {/* Admin section */}
         {adminItems.filter((i) => i.show).length > 0 && (
           <>
-            <div className="my-3 mx-2 h-px bg-border/40" />
+            <div className="my-3 mx-2 h-px bg-border/10" />
             {!collapsed && (
               <p className="px-3 mb-1 text-[10px] uppercase tracking-widest font-bold text-muted-foreground/50">
                 {t('nav.admin')}
@@ -319,7 +319,7 @@ export function NavigationSidebar(): React.ReactElement {
       </nav>
 
       {/* Bottom section */}
-      <div className="border-t border-border/40 px-2 py-3 space-y-1">
+      <div className="border-t border-border/10 px-2 py-3 space-y-1">
         {/* Profile link for authenticated users */}
         {isAuthenticated && (
           <Link
@@ -328,8 +328,8 @@ export function NavigationSidebar(): React.ReactElement {
             className={cn(
               'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
               pathname === '/profile'
-                ? 'bg-primary/10 text-primary dark:bg-primary/20'
-                : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                ? 'surface-3 text-primary'
+                : 'text-muted-foreground hover:surface-2 hover:text-foreground',
               collapsed && 'justify-center px-2',
             )}
           >
@@ -345,8 +345,8 @@ export function NavigationSidebar(): React.ReactElement {
           className={cn(
             'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
             pathname === '/settings'
-              ? 'bg-primary/10 text-primary dark:bg-primary/20'
-              : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+              ? 'surface-3 text-primary'
+              : 'text-muted-foreground hover:surface-2 hover:text-foreground',
             collapsed && 'justify-center px-2',
           )}
         >
@@ -378,8 +378,8 @@ export function NavigationSidebar(): React.ReactElement {
           className={cn(
             'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
             pathname === '/pricing'
-              ? 'bg-primary/10 text-primary dark:bg-primary/20'
-              : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+              ? 'surface-3 text-primary'
+              : 'text-muted-foreground hover:surface-2 hover:text-foreground',
             collapsed && 'justify-center px-2',
           )}
         >
@@ -465,7 +465,7 @@ export function NavigationSidebar(): React.ReactElement {
       {/* Mobile hamburger button */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="fixed top-4 left-4 z-50 lg:hidden p-2 rounded-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-border/40 shadow-sm text-muted-foreground hover:text-foreground transition-colors"
+        className="fixed top-4 left-4 z-50 lg:hidden p-2 rounded-lg glass-nav border border-border/20 shadow-sm text-muted-foreground hover:text-foreground transition-colors"
         aria-label="Open menu"
       >
         <Menu className="size-5" />
@@ -474,7 +474,7 @@ export function NavigationSidebar(): React.ReactElement {
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
@@ -482,8 +482,8 @@ export function NavigationSidebar(): React.ReactElement {
       {/* Mobile sidebar */}
       <aside
         className={cn(
-          'fixed top-0 z-50 h-full w-[260px] bg-background border-border/60 shadow-xl transition-transform duration-300 lg:hidden',
-          isRtl ? 'right-0 border-l' : 'left-0 border-r',
+          'fixed top-0 z-50 h-full w-[260px] surface-1 shadow-xl transition-transform duration-300 lg:hidden',
+          isRtl ? 'right-0 border-l border-border/10' : 'left-0 border-r border-border/10',
           mobileOpen ? 'translate-x-0' : isRtl ? 'translate-x-full' : '-translate-x-full',
         )}
       >
@@ -502,8 +502,8 @@ export function NavigationSidebar(): React.ReactElement {
       {/* Desktop sidebar */}
       <aside
         className={cn(
-          'hidden lg:flex fixed top-0 h-full bg-background border-border/60 transition-all duration-300 z-30',
-          isRtl ? 'right-0 border-l' : 'left-0 border-r',
+          'hidden lg:flex fixed top-0 h-full surface-1 transition-all duration-300 z-30',
+          isRtl ? 'right-0 border-l border-border/10' : 'left-0 border-r border-border/10',
           collapsed ? 'w-16' : 'w-60',
         )}
       >

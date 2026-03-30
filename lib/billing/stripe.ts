@@ -145,11 +145,14 @@ export async function handleStripeWebhook(
           ? session.subscription
           : session.subscription?.id;
 
-      // Fetch subscription details for period end
+      // Fetch subscription details for period end (v21: period is on items)
       let periodEnd: string | null = null;
       if (subscriptionId) {
         const sub = await stripe.subscriptions.retrieve(subscriptionId);
-        periodEnd = new Date((sub as any).current_period_end * 1000).toISOString();
+        const firstItem = sub.items?.data?.[0];
+        if (firstItem) {
+          periodEnd = new Date(firstItem.current_period_end * 1000).toISOString();
+        }
       }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Untyped service-role client
@@ -169,21 +172,22 @@ export async function handleStripeWebhook(
 
     case 'invoice.paid': {
       const invoice = event.data.object;
+      // Stripe SDK v21: subscription ref is in parent.subscription_details
+      const subRef = invoice.parent?.subscription_details?.subscription;
       const subscriptionId =
-        typeof (invoice as any).subscription === 'string'
-          ? (invoice as any).subscription
-          : (invoice as any).subscription?.id;
+        typeof subRef === 'string' ? subRef : subRef?.id;
 
       if (subscriptionId) {
         const sub = await stripe.subscriptions.retrieve(subscriptionId);
         const orgId = sub.metadata?.org_id;
-        if (orgId) {
+        const firstItem = sub.items?.data?.[0];
+        if (orgId && firstItem) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Untyped service-role client
           await (supabase as any)
             .from('organizations')
             .update({
               subscription_status: 'active',
-              current_period_end: new Date((sub as any).current_period_end * 1000).toISOString(),
+              current_period_end: new Date(firstItem.current_period_end * 1000).toISOString(),
             })
             .eq('id', orgId);
         }

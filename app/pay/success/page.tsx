@@ -25,7 +25,7 @@ export default function PaySuccessPage() {
       <h1 className="mb-2 text-2xl font-bold">{t('payment.successTitle')}</h1>
       <p className="mb-8 text-muted-foreground">{t('payment.successMessage')}</p>
 
-      <Link href="/">
+      <Link href="/app">
         <Button size="lg" className="gap-2">
           <Home className="h-4 w-4" />
           {t('payment.backToHome')}

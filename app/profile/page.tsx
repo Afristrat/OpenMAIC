@@ -123,7 +123,7 @@ export default function ProfilePage(): React.ReactElement {
       });
       toast.success(t('profile.accountDeleted'));
       await signOut();
-      router.push('/');
+      router.push('/app');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Error';
       toast.error(message);

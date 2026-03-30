@@ -10,6 +10,7 @@ const SIDEBAR_COLLAPSED_KEY = 'qalem-sidebar-collapsed';
 
 /** Pages where the sidebar should be completely hidden */
 const HIDDEN_SIDEBAR_PATTERNS = [
+  /^\/$/,
   /^\/classroom\//,
   /^\/generation-preview/,
   /^\/verify\//,

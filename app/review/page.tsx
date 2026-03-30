@@ -280,7 +280,7 @@ function ReviewPage() {
       {/* ── Header ── */}
       <div className="w-full max-w-2xl flex items-center gap-3 mb-8">
         <button
-          onClick={() => router.push('/')}
+          onClick={() => router.push('/app')}
           className="p-2 rounded-full hover:bg-white/80 dark:hover:bg-slate-800/80 transition-colors"
           aria-label={t('review.backToHome')}
         >
@@ -340,7 +340,7 @@ function ReviewPage() {
               </div>
               <p className="text-lg font-medium text-foreground">{t('review.noCards')}</p>
               <button
-                onClick={() => router.push('/')}
+                onClick={() => router.push('/app')}
                 className="px-6 py-2.5 rounded-full bg-violet-500 hover:bg-violet-600 text-white text-sm font-medium transition-colors"
               >
                 {t('review.backToHome')}
@@ -474,7 +474,7 @@ function ReviewPage() {
                 </p>
               </div>
               <button
-                onClick={() => router.push('/')}
+                onClick={() => router.push('/app')}
                 className="px-6 py-2.5 rounded-full bg-violet-500 hover:bg-violet-600 text-white text-sm font-medium transition-colors"
               >
                 {t('review.backToHome')}

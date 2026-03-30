@@ -230,11 +230,13 @@ function AdminPageContent(): React.ReactElement {
     useState<VideoProviderId>(videoProviderId);
 
   // Sync tab from URL
+  /* eslint-disable react-hooks/set-state-in-effect -- URL param sync requires effect-based setState */
   useEffect(() => {
     if (tabParam) {
       setActiveSection(tabParam);
     }
   }, [tabParam]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Model editing state
   const [editingModel, setEditingModel] = useState<EditingModel | null>(null);
@@ -691,7 +693,7 @@ function AdminPageContent(): React.ReactElement {
       <div className="flex flex-col items-center justify-center min-h-[100dvh] bg-background gap-4">
         <Shield className="h-12 w-12 text-muted-foreground" />
         <p className="text-muted-foreground">{t('admin.unauthorized')}</p>
-        <Button variant="outline" onClick={() => router.push('/')}>
+        <Button variant="outline" onClick={() => router.push('/app')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           {t('nav.home')}
         </Button>

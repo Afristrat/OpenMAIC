@@ -107,7 +107,7 @@ function AuthPageContent(): React.ReactElement {
         await consumeInvitation(inviteToken);
       }
 
-      router.push('/');
+      router.push('/app');
     } catch {
       setError('An unexpected error occurred');
     } finally {
@@ -133,7 +133,7 @@ function AuthPageContent(): React.ReactElement {
     } catch {
       // localStorage unavailable
     }
-    router.push('/');
+    router.push('/app');
   }
 
   return (
