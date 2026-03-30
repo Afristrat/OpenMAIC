@@ -252,6 +252,19 @@ export const commonZhCN = {
     successTitle: '支付成功',
     successMessage: '您的付款已确认 ✓',
     backToHome: '返回首页',
+    stripe: '国际信用卡',
+  },
+  billing: {
+    upgrade: '升级',
+    currentPlan: '当前套餐',
+    quotaExceeded: '配额已用完',
+    upgradePrompt: '请升级套餐以继续使用此功能',
+  },
+  account: {
+    deleteAccount: '删除账户',
+    deleteConfirm: '确定要永久删除账户和所有数据吗？此操作不可撤销。',
+    exportData: '导出我的数据',
+    dataExported: '数据导出成功',
   },
   certificate: {
     title: '结业证书',
@@ -679,6 +692,19 @@ export const commonEnUS = {
     successTitle: 'Payment received',
     successMessage: 'Your payment has been confirmed ✓',
     backToHome: 'Back to home',
+    stripe: 'International card',
+  },
+  billing: {
+    upgrade: 'Upgrade',
+    currentPlan: 'Current plan',
+    quotaExceeded: 'Quota exceeded',
+    upgradePrompt: 'Please upgrade your plan to continue using this feature',
+  },
+  account: {
+    deleteAccount: 'Delete account',
+    deleteConfirm: 'Are you sure you want to permanently delete your account and all data? This cannot be undone.',
+    exportData: 'Export my data',
+    dataExported: 'Data exported successfully',
   },
   certificate: {
     title: 'Certificate of Completion',
@@ -1107,6 +1133,19 @@ export const commonFrFR = {
     successTitle: 'Paiement reçu',
     successMessage: 'Votre paiement a été confirmé ✓',
     backToHome: 'Retour à l\'accueil',
+    stripe: 'Carte internationale',
+  },
+  billing: {
+    upgrade: 'Passer au plan supérieur',
+    currentPlan: 'Plan actuel',
+    quotaExceeded: 'Quota dépassé',
+    upgradePrompt: 'Veuillez mettre à niveau votre plan pour continuer à utiliser cette fonctionnalité',
+  },
+  account: {
+    deleteAccount: 'Supprimer le compte',
+    deleteConfirm: 'Voulez-vous vraiment supprimer définitivement votre compte et toutes vos données ? Cette action est irréversible.',
+    exportData: 'Exporter mes données',
+    dataExported: 'Données exportées avec succès',
   },
   certificate: {
     title: 'Certificat de Complétion',
@@ -1480,6 +1519,19 @@ export const commonArMA = {
     successTitle: 'تم استلام الدفع',
     successMessage: 'تم تأكيد دفعك ✓',
     backToHome: 'العودة إلى الرئيسية',
+    stripe: 'بطاقة دولية',
+  },
+  billing: {
+    upgrade: 'ترقية الباقة',
+    currentPlan: 'الباقة الحالية',
+    quotaExceeded: 'تم تجاوز الحصة',
+    upgradePrompt: 'يُرجى ترقية باقتك لمتابعة استخدام هذه الميزة',
+  },
+  account: {
+    deleteAccount: 'حذف الحساب',
+    deleteConfirm: 'هل تريد حقًا حذف حسابك وجميع بياناتك نهائيًا ؟ لا يمكن التراجع عن هذا الإجراء.',
+    exportData: 'تصدير بياناتي',
+    dataExported: 'تم تصدير البيانات بنجاح',
   },
   certificate: {
     title: 'شهادة إتمام',

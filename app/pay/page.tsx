@@ -19,7 +19,7 @@ import { toast } from 'sonner';
 import { CreditCard, Phone, Loader2, CheckCircle2 } from 'lucide-react';
 
 type BillingPeriod = 'monthly' | 'annual';
-type Provider = 'orange-money' | 'wave' | 'cinetpay';
+type Provider = 'orange-money' | 'wave' | 'cinetpay' | 'stripe';
 
 const PLANS: Record<BillingPeriod, { priceXOF: number; labelKey: string }> = {
   monthly: { priceXOF: 9900, labelKey: 'payment.monthly' },
@@ -27,6 +27,7 @@ const PLANS: Record<BillingPeriod, { priceXOF: number; labelKey: string }> = {
 };
 
 const PROVIDERS: { id: Provider; labelKey: string; needsPhone: boolean; color: string }[] = [
+  { id: 'stripe', labelKey: 'payment.stripe', needsPhone: false, color: '#635bff' },
   { id: 'orange-money', labelKey: 'payment.orangeMoney', needsPhone: true, color: '#ff6600' },
   { id: 'wave', labelKey: 'payment.wave', needsPhone: true, color: '#1dc1ec' },
   { id: 'cinetpay', labelKey: 'payment.cinetpay', needsPhone: false, color: '#00a651' },
@@ -69,6 +70,27 @@ export default function PayPage() {
 
     setIsLoading(true);
     try {
+      // Stripe: redirect via billing checkout session
+      if (provider === 'stripe') {
+        const res = await fetch('/api/billing/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orgId: 'default', // TODO: use actual org ID from session
+            plan: 'pro',
+            interval: billing === 'monthly' ? 'month' : 'year',
+          }),
+        });
+        const json = await res.json();
+        if (json.url) {
+          window.location.href = json.url;
+        } else if (json.error) {
+          toast.error(json.error);
+        }
+        return;
+      }
+
+      // Mobile money / CinetPay: use existing payments flow
       const res = await fetch('/api/payments/initiate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -198,7 +220,7 @@ export default function PayPage() {
                   className="flex h-12 w-12 items-center justify-center rounded-full text-white text-lg font-bold"
                   style={{ backgroundColor: prov.color }}
                 >
-                  {prov.id === 'orange-money' ? 'OM' : prov.id === 'wave' ? 'W' : 'CP'}
+                  {prov.id === 'stripe' ? '💳' : prov.id === 'orange-money' ? 'OM' : prov.id === 'wave' ? 'W' : 'CP'}
                 </div>
                 <span className="text-sm font-medium">{t(prov.labelKey)}</span>
               </button>

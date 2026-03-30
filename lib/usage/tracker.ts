@@ -9,7 +9,7 @@
 // =============================================================================
 
 import { createClient } from '@supabase/supabase-js';
-import type { Database, UsageSummaryRow } from '@/lib/supabase/types';
+import type { UsageSummaryRow } from '@/lib/supabase/types';
 
 // ---------------------------------------------------------------------------
 // Service-role Supabase client (server-side only, never exposed to the browser)
@@ -25,7 +25,9 @@ function getServiceClient() {
     );
   }
 
-  return createClient<Database>(url, serviceKey, {
+  // No Database generic — consistent with other service-role clients in the codebase
+  // (e.g. lib/lti/grade-service.ts, lib/telemetry/pedagogy-collector.ts)
+  return createClient(url, serviceKey, {
     auth: { persistSession: false },
   });
 }
@@ -76,8 +78,7 @@ export async function trackUsage(params: TrackUsageParams): Promise<void> {
     const supabase = getServiceClient();
     const billingPeriod = currentBillingPeriod();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Untyped service-role client for usage_records
-    const { error } = await (supabase as any).from('usage_records').insert({
+    const { error } = await supabase.from('usage_records').insert({
       org_id: params.orgId ?? null,
       user_id: params.userId ?? null,
       metric: params.metric,
@@ -106,17 +107,13 @@ export async function getUsageSummary(
   const supabase = getServiceClient();
   const billingPeriod = period ?? currentBillingPeriod();
 
-  // Query the usage_summary view. We use a type assertion because Supabase
-  // client generics for views can be finicky depending on the version.
-  const { data, error } = await supabase
-    .from('usage_summary' as 'usage_records')
+  // Query the usage_summary view (untyped client — cast the result)
+  const { data, error } = (await supabase
+    .from('usage_summary')
     .select('*')
     .eq('org_id', orgId)
     .eq('billing_period', billingPeriod)
-    .maybeSingle() as unknown as {
-      data: UsageSummaryRow | null;
-      error: { message: string } | null;
-    };
+    .maybeSingle()) as { data: UsageSummaryRow | null; error: { message: string } | null };
 
   if (error) {
     console.error('[usage-tracker] Failed to fetch usage summary:', error.message);
