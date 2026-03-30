@@ -3,16 +3,17 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Menu, X } from 'lucide-react';
-
-const navLinks = [
-  { label: 'Solutions', href: '#classroom' },
-  { label: 'Fonctionnalit\u00e9s', href: '#features' },
-  { label: 'Voix', href: '#voices' },
-  { label: 'Pricing', href: '#pricing' },
-];
+import { useI18n } from '@/lib/hooks/use-i18n';
 
 export function LandingNav(): React.ReactElement {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { t } = useI18n();
+
+  const navLinks = [
+    { label: t('landing.nav.features'), href: '/#features' },
+    { label: t('landing.nav.institutions'), href: '/#institutions' },
+    { label: t('landing.nav.pricing'), href: '/#pricing' },
+  ];
 
   return (
     <nav className="fixed top-0 w-full z-50 glass-nav shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
@@ -28,13 +29,13 @@ export function LandingNav(): React.ReactElement {
         {/* Desktop Links */}
         <div className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => (
-            <a
-              key={link.label}
+            <Link
+              key={link.href}
               href={link.href}
               className="text-slate-400 hover:text-[#d5baff] transition-colors font-[family-name:var(--font-display)] tracking-tight font-bold text-sm"
             >
               {link.label}
-            </a>
+            </Link>
           ))}
         </div>
 
@@ -47,13 +48,13 @@ export function LandingNav(): React.ReactElement {
             href="/auth"
             className="hidden lg:block text-slate-400 hover:text-[#d5baff] font-[family-name:var(--font-display)] font-medium text-sm tracking-tight hover:bg-white/5 px-4 py-2 rounded-lg transition-all"
           >
-            Connexion
+            {t('landing.nav.login')}
           </Link>
           <Link
             href="/app"
             className="bg-[#722ed1] text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow-md hover:scale-95 active:scale-90 transition-transform"
           >
-            Essayer la D&eacute;mo
+            {t('landing.nav.tryFree')}
           </Link>
 
           {/* Mobile hamburger */}
@@ -70,21 +71,21 @@ export function LandingNav(): React.ReactElement {
       {mobileOpen && (
         <div className="md:hidden bg-[#0b1326] border-t border-[#4b4454]/20 px-8 py-6 space-y-4">
           {navLinks.map((link) => (
-            <a
-              key={link.label}
+            <Link
+              key={link.href}
               href={link.href}
               onClick={() => setMobileOpen(false)}
               className="block text-slate-300 hover:text-[#d5baff] font-[family-name:var(--font-display)] font-bold text-lg transition-colors"
             >
               {link.label}
-            </a>
+            </Link>
           ))}
           <Link
             href="/auth"
             className="block text-[#d5baff] font-bold mt-4"
             onClick={() => setMobileOpen(false)}
           >
-            Connexion
+            {t('landing.nav.login')}
           </Link>
         </div>
       )}

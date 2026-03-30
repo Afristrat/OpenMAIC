@@ -2,8 +2,11 @@
 
 import Link from 'next/link';
 import { Play } from 'lucide-react';
+import { useI18n } from '@/lib/hooks/use-i18n';
 
 export function HeroSection(): React.ReactElement {
+  const { t } = useI18n();
+
   return (
     <>
       {/* Hero Section */}
@@ -26,19 +29,19 @@ export function HeroSection(): React.ReactElement {
             {/* Eyebrow Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-white text-xs font-semibold tracking-wide backdrop-blur-sm">
               <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_#82f5c1]" />
-              Open Source &bull; AGPL-3.0
+              {t('landing.hero.badge')}
             </div>
 
             {/* Main Headline */}
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white font-[family-name:var(--font-display)] leading-[1.1] tracking-tight">
-              Cr&eacute;ez un cours complet en{' '}
+              {t('landing.hero.title').split('5 minutes')[0]}
               <span className="text-emerald-300">5 minutes</span>
+              {t('landing.hero.title').split('5 minutes')[1] ?? ''}
             </h1>
 
             {/* Subheadline */}
             <p className="text-xl text-white/80 max-w-2xl leading-relaxed">
-              Qalem transforme n&apos;importe quel sujet en classe interactive avec des
-              professeurs et camarades IA — en fran&ccedil;ais, arabe ou anglais.
+              {t('landing.hero.subtitle')}
             </p>
 
             {/* CTAs */}
@@ -47,11 +50,11 @@ export function HeroSection(): React.ReactElement {
                 href="/app"
                 className="bg-white text-[#722ed1] px-8 py-4 rounded-lg font-bold text-lg shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1"
               >
-                Essayer la D&eacute;mo
+                {t('landing.hero.cta1')}
               </Link>
               <button className="flex items-center gap-2 text-white font-semibold group hover:bg-white/10 px-6 py-4 rounded-lg transition-all">
                 <Play className="size-6 text-white" />
-                Voir en action
+                {t('landing.hero.cta2')}
               </button>
             </div>
 
@@ -71,7 +74,7 @@ export function HeroSection(): React.ReactElement {
                 </div>
               </div>
               <p className="text-white/70 text-sm font-medium">
-                Utilis&eacute; par 50+ formateurs au Maroc
+                {t('landing.hero.socialProof')}
               </p>
             </div>
           </div>
@@ -161,12 +164,12 @@ export function HeroSection(): React.ReactElement {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               {
-                title: '15 jours \u2192 5 minutes',
-                label: 'Temps de cr\u00e9ation',
+                title: t('landing.hero.stat1Title'),
+                label: t('landing.hero.stat1Label'),
                 icon: '\u23F3',
               },
-              { title: '9 voix naturelles', label: 'Providers TTS', icon: '\uD83C\uDFA4' },
-              { title: '3 langues', label: 'FR \u2022 AR \u2022 EN', icon: '\uD83C\uDF10' },
+              { title: t('landing.hero.stat2Title'), label: t('landing.hero.stat2Label'), icon: '\uD83C\uDFA4' },
+              { title: t('landing.hero.stat3Title'), label: t('landing.hero.stat3Label'), icon: '\uD83C\uDF10' },
             ].map((stat) => (
               <div
                 key={stat.label}

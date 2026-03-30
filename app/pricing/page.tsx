@@ -184,6 +184,19 @@ export default function PricingPage(): React.ReactElement {
             );
           })}
         </div>
+
+        {/* Legal link */}
+        <p className="text-center mt-12 text-sm text-muted-foreground">
+          En souscrivant, vous acceptez nos{' '}
+          <Link href="/legal/terms" className="text-primary hover:underline">
+            Conditions G&eacute;n&eacute;rales d&apos;Utilisation
+          </Link>{' '}
+          et notre{' '}
+          <Link href="/legal/privacy" className="text-primary hover:underline">
+            Politique de Confidentialit&eacute;
+          </Link>
+          .
+        </p>
       </div>
     </div>
   );

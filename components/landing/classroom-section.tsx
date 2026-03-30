@@ -8,85 +8,111 @@ import {
   FileText,
   Brain,
   Quote,
+  BarChart3,
+  Heart,
+  Swords,
+  Lightbulb,
 } from 'lucide-react';
-
-const agents = [
-  {
-    name: 'Professeur IA',
-    role: '\u00C9nseignant',
-    description:
-      'Structure le cours, explique les concepts complexes et assure la progression p\u00e9dagogique globale.',
-    icon: GraduationCap,
-    color: 'blue',
-    borderColor: 'border-blue-500',
-    iconColor: 'text-blue-500',
-  },
-  {
-    name: 'Assistant P\u00e9dagogique',
-    role: 'Assistant',
-    description:
-      'R\u00e9pond instantan\u00e9ment \u00e0 vos questions priv\u00e9es sans interrompre le flux principal du cours.',
-    icon: Headphones,
-    color: 'green',
-    borderColor: 'border-green-500',
-    iconColor: 'text-green-500',
-  },
-  {
-    name: 'Le Rigolo',
-    role: '\u00C9tudiant',
-    description:
-      "D\u00e9tend l'atmosph\u00e8re avec des anecdotes et de l'humour, rendant l'apprentissage m\u00e9morable.",
-    icon: Smile,
-    color: 'amber',
-    borderColor: 'border-amber-500',
-    iconColor: 'text-amber-500',
-  },
-  {
-    name: 'Le Curieux',
-    role: '\u00C9tudiant',
-    description:
-      "Pose les questions que tout le monde n'ose pas formuler pour approfondir chaque sujet.",
-    icon: Search,
-    color: 'pink',
-    borderColor: 'border-pink-500',
-    iconColor: 'text-pink-500',
-  },
-  {
-    name: 'Le Secr\u00e9taire',
-    role: 'Assistant',
-    description:
-      'Synth\u00e9tise le cours en temps r\u00e9el et pr\u00e9pare vos fiches de r\u00e9vision automatiquement.',
-    icon: FileText,
-    color: 'cyan',
-    borderColor: 'border-cyan-500',
-    iconColor: 'text-cyan-500',
-  },
-  {
-    name: 'Le Penseur',
-    role: 'Enseignant',
-    description:
-      'Apporte une perspective philosophique et critique pour stimuler votre propre r\u00e9flexion.',
-    icon: Brain,
-    color: 'purple',
-    borderColor: 'border-purple-500',
-    iconColor: 'text-purple-500',
-  },
-];
+import { useI18n } from '@/lib/hooks/use-i18n';
 
 export function ClassroomSection(): React.ReactElement {
+  const { t } = useI18n();
+
+  const agents = [
+    {
+      name: t('landing.classroom.agent1Name'),
+      role: 'Enseignant',
+      description: t('landing.classroom.agent1Desc'),
+      icon: GraduationCap,
+      borderColor: 'border-blue-500',
+      iconColor: 'text-blue-500',
+    },
+    {
+      name: t('landing.classroom.agent2Name'),
+      role: 'Assistant',
+      description: t('landing.classroom.agent2Desc'),
+      icon: Headphones,
+      borderColor: 'border-green-500',
+      iconColor: 'text-green-500',
+    },
+    {
+      name: t('landing.classroom.agent3Name'),
+      role: 'Étudiant',
+      description: t('landing.classroom.agent3Desc'),
+      icon: Smile,
+      borderColor: 'border-amber-500',
+      iconColor: 'text-amber-500',
+    },
+    {
+      name: t('landing.classroom.agent4Name'),
+      role: 'Étudiant',
+      description: t('landing.classroom.agent4Desc'),
+      icon: Search,
+      borderColor: 'border-pink-500',
+      iconColor: 'text-pink-500',
+    },
+    {
+      name: t('landing.classroom.agent5Name'),
+      role: 'Assistant',
+      description: t('landing.classroom.agent5Desc'),
+      icon: FileText,
+      borderColor: 'border-cyan-500',
+      iconColor: 'text-cyan-500',
+    },
+    {
+      name: t('landing.classroom.agent6Name'),
+      role: 'Enseignant',
+      description: t('landing.classroom.agent6Desc'),
+      icon: Brain,
+      borderColor: 'border-purple-500',
+      iconColor: 'text-purple-500',
+    },
+    {
+      name: t('landing.classroom.agent7Name'),
+      role: 'Enseignant',
+      description: t('landing.classroom.agent7Desc'),
+      icon: BarChart3,
+      borderColor: 'border-indigo-500',
+      iconColor: 'text-indigo-500',
+    },
+    {
+      name: t('landing.classroom.agent8Name'),
+      role: 'Assistant',
+      description: t('landing.classroom.agent8Desc'),
+      icon: Heart,
+      borderColor: 'border-rose-500',
+      iconColor: 'text-rose-500',
+    },
+    {
+      name: t('landing.classroom.agent9Name'),
+      role: 'Étudiant',
+      description: t('landing.classroom.agent9Desc'),
+      icon: Swords,
+      borderColor: 'border-red-500',
+      iconColor: 'text-red-500',
+    },
+    {
+      name: t('landing.classroom.agent10Name'),
+      role: 'Étudiant',
+      description: t('landing.classroom.agent10Desc'),
+      icon: Lightbulb,
+      borderColor: 'border-yellow-500',
+      iconColor: 'text-yellow-500',
+    },
+  ];
+
   return (
     <section className="py-24 px-6 max-w-7xl mx-auto">
       {/* Section Header */}
       <div className="text-center mb-20">
         <span className="inline-block px-4 py-1.5 rounded-full bg-[#722ed1]/10 text-[#d5baff] text-xs font-bold tracking-widest uppercase mb-6 border border-[#722ed1]/20">
-          L&apos;EXP&Eacute;RIENCE QALEM
+          {t('landing.classroom.eyebrow')}
         </span>
         <h2 className="text-4xl md:text-5xl font-extrabold text-foreground mb-6 leading-tight font-[family-name:var(--font-display)]">
-          Une vraie classe, pas un monologue
+          {t('landing.classroom.title')}
         </h2>
         <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          6 agents IA avec des personnalit&eacute;s distinctes qui enseignent, questionnent,
-          plaisantent et prennent des notes — exactement comme dans une salle de cours vivante.
+          {t('landing.classroom.subtitle')}
         </p>
       </div>
 
@@ -134,7 +160,7 @@ export function ClassroomSection(): React.ReactElement {
             </div>
             {/* Bottom Row: Avatars */}
             <div className="bg-secondary px-8 py-6 flex items-center justify-center gap-4 md:gap-6 border-t border-border/10">
-              {['Prof', 'Asst', 'Rig', 'Moi', 'Cur', 'Sec', 'Pen'].map((name, i) => (
+              {['Prof', 'Asst', 'Rig', 'Moi', 'Cur', 'Sec', 'Pen', 'Ana', 'Coa', 'Cré'].map((name, i) => (
                 <div
                   key={name}
                   className={`w-12 h-12 rounded-full border-2 p-0.5 flex items-center justify-center text-xs font-bold ${
@@ -156,7 +182,7 @@ export function ClassroomSection(): React.ReactElement {
       </div>
 
       {/* Agent Cards Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-32">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-32">
         {agents.map((agent) => {
           const Icon = agent.icon;
           return (
@@ -189,11 +215,10 @@ export function ClassroomSection(): React.ReactElement {
         </div>
         <div className="pl-8 border-l-2 border-[#722ed1]/20 text-left">
           <blockquote className="text-2xl font-medium text-foreground italic leading-relaxed mb-4">
-            &laquo; Je me suis surpris &agrave; rire pendant un cours en ligne. C&apos;est la
-            premi&egrave;re fois. &raquo;
+            &laquo; {t('landing.classroom.quote')} &raquo;
           </blockquote>
           <cite className="not-italic text-[#722ed1] font-bold tracking-tight">
-            — Beta testeur, Casablanca
+            — {t('landing.classroom.quoteAuthor')}
           </cite>
         </div>
       </div>

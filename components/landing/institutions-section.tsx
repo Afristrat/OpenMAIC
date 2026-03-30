@@ -1,22 +1,24 @@
 'use client';
 
 import { Puzzle, Wrench, BarChart3, Shield, CheckCircle } from 'lucide-react';
+import { useI18n } from '@/lib/hooks/use-i18n';
 
 export function InstitutionsSection(): React.ReactElement {
+  const { t } = useI18n();
+
   return (
-    <section className="py-24 bg-card">
+    <section id="institutions" className="py-24 bg-card">
       <div className="max-w-7xl mx-auto px-8">
         {/* Header */}
         <div className="mb-16">
           <span className="inline-block px-4 py-1.5 rounded-full bg-blue-500/10 text-blue-400 text-xs font-bold tracking-widest uppercase mb-6 font-[family-name:var(--font-display)]">
-            POUR LES INSTITUTIONS
+            {t('landing.institutions.eyebrow')}
           </span>
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-[family-name:var(--font-display)] font-extrabold text-foreground tracking-tight leading-tight max-w-4xl mb-6">
-            Con&ccedil;u pour les centres de formation et universit&eacute;s
+            {t('landing.institutions.title')}
           </h2>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed">
-            LTI 1.3, organisations multi-tenant, reporting pour les accr&eacute;ditations, et
-            souverainet&eacute; des donn&eacute;es — tout ce dont votre institution a besoin.
+            {t('landing.institutions.subtitle')}
           </p>
         </div>
 
@@ -179,12 +181,12 @@ export function InstitutionsSection(): React.ReactElement {
             {/* Center: Text */}
             <div className="flex-1 text-center lg:text-left">
               <h2 className="text-3xl md:text-4xl font-[family-name:var(--font-display)] font-extrabold mb-4 tracking-tight">
-                Vos donn&eacute;es restent chez vous
+                Vos donn&eacute;es restent prot&eacute;g&eacute;es
               </h2>
               <p className="text-slate-400 text-lg max-w-2xl leading-relaxed">
-                100% auto-h&eacute;berg&eacute; via Docker. Conforme CNDP et RGPD.
-                D&eacute;ploy&eacute; en 15 minutes sur vos serveurs priv&eacute;s ou cloud
-                souverain.
+                Infrastructure s&eacute;curis&eacute;e, conforme CNDP et RGPD.
+                Vos donn&eacute;es p&eacute;dagogiques sont h&eacute;berg&eacute;es dans un
+                environnement souverain.
               </p>
             </div>
 
@@ -203,7 +205,7 @@ export function InstitutionsSection(): React.ReactElement {
                   {[
                     { name: 'Coursera', status: 'Cloud US', bad: true },
                     { name: 'Khan Academy', status: 'Cloud US', bad: true },
-                    { name: 'Qalem', status: 'Vos serveurs', bad: false },
+                    { name: 'Qalem', status: 'Cloud souverain', bad: false },
                   ].map((item, i) => (
                     <div
                       key={item.name}

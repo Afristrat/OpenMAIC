@@ -1,45 +1,48 @@
 'use client';
 
 import { Play } from 'lucide-react';
-
-const voiceCards = [
-  {
-    lang: 'Fran\u00e7ais',
-    name: 'Charlotte \u2014 ElevenLabs',
-    desc: 'Voix professionnelle, claire et chaleureuse',
-    badge: '9/10 Naturalit\u00e9',
-    flag: 'FR',
-    barColor: 'bg-[#d5baff]',
-    badgeBg: 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20',
-    hoverShadow: 'hover:shadow-[0_20px_50px_rgba(114,46,209,0.15)]',
-    hoverBorder: 'hover:border-[#722ed1]/40',
-  },
-  {
-    lang: '\u0627\u0644\u0639\u0631\u0628\u064A\u0629',
-    name: '\u063A\u0632\u0644\u0627\u0646 \u2014 Darija',
-    desc: '\u0635\u0648\u062A \u0637\u0628\u064A\u0639\u064A \u0628\u0627\u0644\u062F\u0627\u0631\u062C\u0629 \u0627\u0644\u0645\u063A\u0631\u0628\u064A\u0629',
-    badge: '\uD83C\uDDF2\uD83C\uDDE6 Darija',
-    flag: 'AR',
-    barColor: 'bg-emerald-400',
-    badgeBg: 'bg-amber-400/10 text-amber-400 border-amber-400/20',
-    hoverShadow: 'hover:shadow-[0_20px_50px_rgba(37,164,117,0.15)]',
-    hoverBorder: 'hover:border-emerald-400/40',
-    rtl: true,
-  },
-  {
-    lang: 'English',
-    name: 'James \u2014 Fish Audio S2',
-    desc: 'Professional, warm, conversational',
-    badge: '9/10 Naturalit\u00e9',
-    flag: 'EN',
-    barColor: 'bg-blue-400',
-    badgeBg: 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20',
-    hoverShadow: 'hover:shadow-[0_20px_50px_rgba(59,130,246,0.15)]',
-    hoverBorder: 'hover:border-blue-400/30',
-  },
-];
+import { useI18n } from '@/lib/hooks/use-i18n';
 
 export function VoicesSection(): React.ReactElement {
+  const { t } = useI18n();
+
+  const voiceCards = [
+    {
+      lang: 'Français',
+      name: t('landing.voices.frName'),
+      desc: t('landing.voices.frDesc'),
+      badge: '9/10',
+      flag: 'FR',
+      barColor: 'bg-[#d5baff]',
+      badgeBg: 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20',
+      hoverShadow: 'hover:shadow-[0_20px_50px_rgba(114,46,209,0.15)]',
+      hoverBorder: 'hover:border-[#722ed1]/40',
+    },
+    {
+      lang: '\u0627\u0644\u0639\u0631\u0628\u064A\u0629',
+      name: t('landing.voices.arName'),
+      desc: t('landing.voices.arDesc'),
+      badge: '\uD83C\uDDF2\uD83C\uDDE6 Darija',
+      flag: 'AR',
+      barColor: 'bg-emerald-400',
+      badgeBg: 'bg-amber-400/10 text-amber-400 border-amber-400/20',
+      hoverShadow: 'hover:shadow-[0_20px_50px_rgba(37,164,117,0.15)]',
+      hoverBorder: 'hover:border-emerald-400/40',
+      rtl: true,
+    },
+    {
+      lang: 'English',
+      name: t('landing.voices.enName'),
+      desc: t('landing.voices.enDesc'),
+      badge: '9/10',
+      flag: 'EN',
+      barColor: 'bg-blue-400',
+      badgeBg: 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20',
+      hoverShadow: 'hover:shadow-[0_20px_50px_rgba(59,130,246,0.15)]',
+      hoverBorder: 'hover:border-blue-400/30',
+    },
+  ];
+
   return (
     <section className="py-24 overflow-hidden bg-background">
       <div className="max-w-7xl mx-auto px-8">
@@ -47,16 +50,14 @@ export function VoicesSection(): React.ReactElement {
         <div className="text-center mb-20 space-y-6">
           <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full border border-[#722ed1]/30 bg-[#722ed1]/10 text-[#722ed1] dark:text-[#d5baff] text-xs font-bold tracking-widest uppercase shadow-[0_0_15px_rgba(114,46,209,0.2)]">
             <span className="w-1.5 h-1.5 rounded-full bg-[#722ed1] animate-pulse" />
-            VOTRE LANGUE, VOTRE VOIX
+            {t('landing.voices.eyebrow')}
           </div>
           <h2 className="text-5xl md:text-6xl font-black font-[family-name:var(--font-display)] text-foreground tracking-tighter max-w-3xl mx-auto leading-tight">
-            Pas de robot.{' '}
-            <span className="text-primary purple-glow-text">De vraies voix.</span>
+            {t('landing.voices.title').split('.')[0]}.{' '}
+            <span className="text-primary purple-glow-text">{t('landing.voices.title').split('.')[1]?.trim() ?? ''}</span>
           </h2>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto font-medium">
-            9 providers TTS avec des voix qui sonnent humaines — en fran&ccedil;ais, en arabe,
-            et m&ecirc;me en{' '}
-            <span className="text-amber-400">darija marocaine</span>.
+            {t('landing.voices.subtitle')}
           </p>
         </div>
 
@@ -119,7 +120,7 @@ export function VoicesSection(): React.ReactElement {
           </div>
           <div className="flex items-center gap-2 text-muted-foreground font-bold tracking-wide uppercase text-xs">
             <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            Latence Cartesia Sonic 3 — conversation en temps r&eacute;el
+            {t('landing.voices.latency')}
           </div>
         </div>
 
@@ -127,7 +128,7 @@ export function VoicesSection(): React.ReactElement {
         <div className="pt-16 border-t border-border/10">
           <div className="text-center mb-8">
             <span className="text-muted-foreground uppercase tracking-widest text-[10px] font-black">
-              Propuls&eacute; par
+              Powered by
             </span>
           </div>
           <div className="flex flex-wrap justify-center items-center gap-10 md:gap-16 opacity-50 hover:opacity-100 transition-opacity duration-500">

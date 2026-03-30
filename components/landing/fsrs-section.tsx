@@ -1,21 +1,23 @@
 'use client';
 
 import { Brain, Clock, Bell, RotateCcw, TrendingUp, Check, Zap } from 'lucide-react';
+import { useI18n } from '@/lib/hooks/use-i18n';
 
 export function FSRSSection(): React.ReactElement {
+  const { t } = useI18n();
+
   return (
     <section className="py-24 px-6 max-w-7xl mx-auto">
       {/* Section Header */}
       <header className="text-center mb-20 max-w-3xl mx-auto">
         <span className="text-primary font-bold tracking-[0.1em] text-sm uppercase block mb-4">
-          R&Eacute;TENTION INTELLIGENTE
+          {t('landing.fsrs.eyebrow')}
         </span>
         <h2 className="font-[family-name:var(--font-display)] text-4xl md:text-5xl font-extrabold text-foreground tracking-tight mb-6">
-          Vous n&apos;oublierez plus jamais
+          {t('landing.fsrs.title')}
         </h2>
         <p className="text-lg text-muted-foreground leading-relaxed">
-          L&apos;algorithme FSRS-5 calcule le moment optimal pour chaque r&eacute;vision. 3
-          minutes par jour suffisent pour une r&eacute;tention de 90%.
+          {t('landing.fsrs.subtitle')}
         </p>
       </header>
 

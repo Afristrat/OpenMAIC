@@ -1,9 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { Github, Users, Briefcase, Megaphone, ExternalLink } from 'lucide-react';
+import { Users, Briefcase, Megaphone } from 'lucide-react';
+import { useI18n } from '@/lib/hooks/use-i18n';
 
 export function Footer(): React.ReactElement {
+  const { t } = useI18n();
+
   return (
     <footer className="bg-[#0b1326] relative pt-24 pb-12 overflow-hidden">
       {/* Subtle Ambient Glow Line */}
@@ -17,15 +20,13 @@ export function Footer(): React.ReactElement {
               Qalem
             </span>
             <p className="text-sm text-slate-400 leading-relaxed max-w-[240px]">
-              Classe interactive IA — Open Source. Red&eacute;finir la transmission du savoir
-              &agrave; l&apos;&egrave;re num&eacute;rique.
+              {t('landing.footer.brand')}
             </p>
           </div>
 
           {/* Social Icons */}
           <div className="flex items-center gap-4">
             {[
-              { icon: Github, label: 'GitHub' },
               { icon: Users, label: 'Community' },
               { icon: Briefcase, label: 'LinkedIn' },
               { icon: Megaphone, label: 'Twitter' },
@@ -61,77 +62,71 @@ export function Footer(): React.ReactElement {
         {/* Column 2: Produit */}
         <div className="flex flex-col gap-6">
           <h4 className="text-lg font-bold font-[family-name:var(--font-display)] tracking-tight text-[#d5baff]">
-            Produit
+            {t('landing.footer.product')}
           </h4>
           <nav className="flex flex-col gap-4">
             <Link
-              href="#features"
+              href="/#features"
               className="text-sm text-slate-400 hover:text-[#d5baff] transition-colors duration-300"
             >
-              Fonctionnalit&eacute;s
+              {t('landing.nav.features')}
             </Link>
             <Link
-              href="#pricing"
+              href="/#pricing"
               className="text-sm text-slate-400 hover:text-[#d5baff] transition-colors duration-300"
             >
-              Pricing
+              {t('landing.nav.pricing')}
             </Link>
             <Link
               href="/app"
               className="text-sm text-slate-400 hover:text-[#d5baff] transition-colors duration-300 flex items-center gap-2"
             >
-              D&eacute;mo Live
+              {t('landing.nav.demo')}
               <span className="px-1.5 py-0.5 rounded bg-[#722ed1]/10 text-[10px] text-[#d5baff] font-bold uppercase tracking-widest">
                 Alpha
               </span>
             </Link>
-            <a
-              href="#"
+            <Link
+              href="/auth"
               className="text-sm text-slate-400 hover:text-[#d5baff] transition-colors duration-300"
             >
-              Guide d&apos;Installation
-            </a>
-            <a
-              href="#"
-              className="text-sm text-slate-400 hover:text-[#d5baff] transition-colors duration-300"
-            >
-              Documentation API
-            </a>
+              {t('landing.nav.login')}
+            </Link>
           </nav>
         </div>
 
         {/* Column 3: Institutions */}
         <div className="flex flex-col gap-6">
           <h4 className="text-lg font-bold font-[family-name:var(--font-display)] tracking-tight text-[#d5baff]">
-            Institutions
+            {t('landing.footer.institutions')}
           </h4>
           <nav className="flex flex-col gap-4">
-            <a
-              href="#"
+            <Link
+              href="/#institutions"
               className="text-sm text-slate-400 hover:text-[#d5baff] transition-colors duration-300"
             >
               Int&eacute;gration LMS
-            </a>
-            <a
-              href="#"
+            </Link>
+            <Link
+              href="/#institutions"
               className="text-sm text-slate-400 hover:text-[#d5baff] transition-colors duration-300"
             >
               Organisations
-            </a>
-            <a
-              href="#"
+            </Link>
+            <Link
+              href="/#institutions"
               className="text-sm text-slate-400 hover:text-[#d5baff] transition-colors duration-300"
             >
               Reporting
-            </a>
+            </Link>
             <a
-              href="#"
+              href="mailto:contact@qalem.ai"
               className="text-sm text-slate-400 hover:text-[#d5baff] transition-colors duration-300"
             >
               Contacter l&apos;&Eacute;quipe
             </a>
             <a
-              href="#"
+              href="mailto:contact@qalem.ai"
               className="text-sm text-amber-400 hover:text-[#d5baff] transition-colors duration-300 font-semibold"
             >
               Pilote Gratuit
@@ -142,16 +137,9 @@ export function Footer(): React.ReactElement {
         {/* Column 4: Ressources */}
         <div className="flex flex-col gap-6">
           <h4 className="text-lg font-bold font-[family-name:var(--font-display)] tracking-tight text-[#d5baff]">
-            Ressources
+            {t('landing.footer.resources')}
           </h4>
           <nav className="flex flex-col gap-4">
-            <a
-              href="#"
-              className="text-sm text-slate-400 hover:text-[#d5baff] transition-colors duration-300 flex items-center gap-2"
-            >
-              GitHub (Open Source)
-              <ExternalLink className="size-3" />
-            </a>
             <a
               href="#"
               className="text-sm text-slate-400 hover:text-[#d5baff] transition-colors duration-300"
@@ -185,24 +173,22 @@ export function Footer(): React.ReactElement {
         <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col md:flex-row justify-between items-center gap-6">
           {/* Left: Copyright */}
           <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4 text-xs text-slate-500">
-            <span>&copy; 2026 Qalem. Licence AGPL-3.0</span>
-            <span className="hidden md:block w-1 h-1 rounded-full bg-[#4b4454]" />
-            <span className="text-[#d5baff]/70">Crafted for the Digital Madrasa</span>
+            <span>&copy; 2026 Qalem. {t('landing.footer.copyright')}</span>
           </div>
 
           {/* Center: Geo-context */}
           <div className="text-xs font-bold font-[family-name:var(--font-display)] tracking-wide text-slate-400 bg-[#131b2e] px-4 py-2 rounded-full border border-[#4b4454]/10">
-            Con&ccedil;u pour le Maroc et l&apos;Afrique
+            {t('landing.footer.madeFor')}
           </div>
 
           {/* Right: Legal Links */}
           <nav className="flex items-center gap-6 text-xs text-slate-500">
-            <a href="#" className="hover:text-[#d5baff] transition-colors">
+            <Link href="/legal/privacy" className="hover:text-[#d5baff] transition-colors">
               Politique de confidentialit&eacute;
-            </a>
-            <a href="#" className="hover:text-[#d5baff] transition-colors">
+            </Link>
+            <Link href="/legal/terms" className="hover:text-[#d5baff] transition-colors">
               Conditions d&apos;utilisation
-            </a>
+            </Link>
             <a
               href="#"
               className="hover:text-[#d5baff] transition-colors uppercase tracking-widest font-bold"

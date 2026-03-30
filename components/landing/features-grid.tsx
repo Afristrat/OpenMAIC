@@ -10,6 +10,7 @@ import {
   Bot,
   Sparkles,
 } from 'lucide-react';
+import { useI18n } from '@/lib/hooks/use-i18n';
 
 const features = [
   {
@@ -70,16 +71,18 @@ const skills = [
 ];
 
 export function FeaturesGrid(): React.ReactElement {
+  const { t } = useI18n();
+
   return (
     <section className="py-24 bg-background">
       <div className="max-w-7xl mx-auto px-8">
         {/* Header */}
         <div className="text-center mb-16 space-y-4">
           <span className="inline-block px-4 py-1.5 rounded-full bg-[#722ed1]/20 text-primary font-bold text-xs tracking-widest uppercase border border-primary/20">
-            ET BIEN PLUS ENCORE
+            {t('landing.features.eyebrow')}
           </span>
           <h2 className="text-4xl md:text-5xl font-black text-foreground font-[family-name:var(--font-display)] tracking-tight">
-            Chaque d&eacute;tail compte
+            {t('landing.features.title')}
           </h2>
           <div className="w-24 h-1 bg-gradient-to-r from-primary to-emerald-400 mx-auto rounded-full mt-6" />
         </div>
