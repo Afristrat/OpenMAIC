@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState, Suspense, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { tryCreateClient } from '@/lib/supabase/client';
 import { useI18n } from '@/lib/hooks/use-i18n';
@@ -43,7 +43,7 @@ function GitHubIcon({ className }: { className?: string }) {
   );
 }
 
-export default function AuthPage(): React.ReactElement {
+function AuthPageContent(): React.ReactElement {
   const { t, locale } = useI18n();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -306,5 +306,13 @@ export default function AuthPage(): React.ReactElement {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AuthPage(): React.ReactElement {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" /></div>}>
+      <AuthPageContent />
+    </Suspense>
   );
 }

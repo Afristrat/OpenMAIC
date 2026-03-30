@@ -7,6 +7,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { initPayment } from '@/lib/payments';
 import type { PaymentConfig, PaymentProvider, Currency } from '@/lib/payments';
+import { validateBody } from '@/lib/api/validate';
+import { paymentInitiateSchema } from '@/lib/api/schemas';
 
 /**
  * Build a PaymentConfig from environment variables for the given provider.
@@ -49,34 +51,18 @@ const VALID_CURRENCIES = new Set<string>(['MAD', 'XOF', 'TND', 'DZD', 'USD', 'EU
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const body = (await request.json()) as Record<string, unknown>;
+    const rawBody = await request.json();
+    const validation = validateBody(paymentInitiateSchema, rawBody);
+    if (!validation.success) return validation.response;
+    const body = validation.data;
 
-    const provider = String(body['provider'] ?? '');
-    const amount = Number(body['amount'] ?? 0);
-    const currency = String(body['currency'] ?? '');
-    const description = String(body['description'] ?? '');
-    const customerEmail = body['customerEmail'] ? String(body['customerEmail']) : undefined;
-    const customerPhone = body['customerPhone'] ? String(body['customerPhone']) : undefined;
-    const metadata = (body['metadata'] as Record<string, string> | undefined) ?? undefined;
+    const { provider, amount, currency } = body;
+    const description = body.description ?? '';
+    const customerEmail = body.customerEmail;
+    const customerPhone = body.customerPhone;
+    const metadata = body.metadata;
 
-    // --- Validation ---
-    if (!VALID_PROVIDERS.has(provider)) {
-      return NextResponse.json(
-        { error: `Invalid provider. Must be one of: ${[...VALID_PROVIDERS].join(', ')}` },
-        { status: 400 },
-      );
-    }
-    if (!amount || amount <= 0) {
-      return NextResponse.json({ error: 'amount must be a positive number' }, { status: 400 });
-    }
-    if (!VALID_CURRENCIES.has(currency)) {
-      return NextResponse.json(
-        { error: `Invalid currency. Must be one of: ${[...VALID_CURRENCIES].join(', ')}` },
-        { status: 400 },
-      );
-    }
-
-    const config = buildConfig(provider as PaymentProvider);
+    const config = buildConfig(provider);
 
     const result = await initPayment(config, {
       amount,

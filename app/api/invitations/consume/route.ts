@@ -8,6 +8,8 @@
 import { NextRequest } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
+import { validateBody } from '@/lib/api/validate';
+import { invitationConsumeSchema } from '@/lib/api/schemas';
 
 export async function POST(request: NextRequest): Promise<Response> {
   try {
@@ -20,10 +22,10 @@ export async function POST(request: NextRequest): Promise<Response> {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 401, 'Not authenticated');
     }
 
-    const body = (await request.json()) as { token?: string };
-    if (!body.token) {
-      return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, 'Missing token');
-    }
+    const rawBody = await request.json();
+    const bodyValidation = validateBody(invitationConsumeSchema, rawBody);
+    if (!bodyValidation.success) return bodyValidation.response;
+    const body = bodyValidation.data;
 
     // Find the invitation
     const { data: invitation, error: findError } = await supabase

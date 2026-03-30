@@ -8,6 +8,8 @@
 import { NextRequest } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
+import { validateBody } from '@/lib/api/validate';
+import { marketplaceReviewSchema } from '@/lib/api/schemas';
 
 interface RouteParams {
   params: Promise<{ agentId: string }>;
@@ -113,19 +115,19 @@ export async function POST(
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 401, 'Authentication required');
   }
 
-  let body: Record<string, unknown>;
+  let rawBody: unknown;
   try {
-    body = await request.json();
+    rawBody = await request.json();
   } catch {
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid JSON body');
   }
 
-  const rating = typeof body.rating === 'number' ? body.rating : NaN;
-  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-    return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Rating must be an integer between 1 and 5');
-  }
+  const validation = validateBody(marketplaceReviewSchema, rawBody);
+  if (!validation.success) return validation.response;
+  const body = validation.data;
 
-  const comment = typeof body.comment === 'string' ? body.comment.trim() : null;
+  const rating = body.rating;
+  const comment = body.comment?.trim() ?? null;
 
   // Verify agent exists and is published
   const { data: agent, error: agentErr } = await supabase

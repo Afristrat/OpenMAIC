@@ -416,6 +416,11 @@ export const commonZhCN = {
     detail2: '您的身份经过不可逆的哈希处理，确保完全匿名。',
     detail3: '您可以随时在设置中更改此选择。',
   },
+  errorBoundary: {
+    title: '出现错误',
+    message: '加载此页面时出现意外错误。',
+    retry: '重试',
+  },
 } as const;
 
 export const commonEnUS = {
@@ -839,6 +844,11 @@ export const commonEnUS = {
     detail2: 'Your identity is irreversibly hashed for full anonymity.',
     detail3: 'You can change this choice at any time in Settings.',
   },
+  errorBoundary: {
+    title: 'Something went wrong',
+    message: 'An unexpected error occurred while loading this page.',
+    retry: 'Try again',
+  },
 } as const;
 
 export const commonFrFR = {
@@ -1209,6 +1219,11 @@ export const commonFrFR = {
   pricing: { title: 'Tarifs', subtitle: 'Choisissez la formule adaptée à vos besoins', free: { title: 'Gratuit', price: '0 MAD / mois', subtitle: 'Pour les formateurs indépendants', f1: 'Auto-hébergé Docker', f2: 'Cours illimités', f3: '3 langues FR/AR/EN', f4: 'Edge-TTS gratuit', f5: 'Répétition espacée FSRS', f6: 'Export PPTX', cta: 'Commencer' }, pro: { title: 'Professionnel', badge: 'Recommandé', price: '3 000 MAD / mois', subtitle: 'Pour les centres de formation', f1: 'Tout du Gratuit +', f2: '5 formateurs', f3: '100 apprenants', f4: 'Support e-mail', f5: 'Mises à jour prioritaires', f6: 'Templates sectoriels', cta: 'Essai 30 jours' }, institution: { title: 'Institution', price: 'Sur devis', subtitle: "Pour les universités et l\u2019OFPPT", f1: 'Tout du Pro +', f2: 'Formateurs illimités', f3: 'LTI 1.3 + SSO', f4: 'Reporting accréditations', f5: 'Support WhatsApp dédié', f6: 'Formation sur site', f7: 'SLA 99,5 %', cta: 'Nous contacter' } },
   pwa: { banner: 'Installez Qalem sur votre appareil pour un accès rapide', install: 'Installer' },
   telemetry: { banner: "Qalem peut collecter des données anonymisées sur votre apprentissage pour améliorer les formations. Aucune donnée personnelle n\u2019est partagée.", accept: 'Accepter', refuse: 'Refuser', learnMore: 'En savoir plus', hidDetails: 'Masquer les détails', detail1: 'Données collectées : taux de complétion des cours, scores aux quiz, ordre de navigation dans les scènes.', detail2: 'Votre identité est hachée de manière irréversible pour garantir un anonymat total.', detail3: 'Vous pouvez modifier ce choix à tout moment dans les Paramètres.' },
+  errorBoundary: {
+    title: 'Une erreur est survenue',
+    message: 'Une erreur inattendue s\u2019est produite lors du chargement de cette page.',
+    retry: 'Rafra\u00EEchir la page',
+  },
 } as const;
 
 export const commonArMA = {
@@ -1577,4 +1592,9 @@ export const commonArMA = {
   pricing: { title: 'الأسعار', subtitle: 'اختاروا الصيغة المناسبة لاحتياجاتكم', free: { title: 'مجاني', price: '0 درهم / شهر', subtitle: 'للمكوّنين المستقلّين', f1: 'استضافة ذاتية Docker', f2: 'دورات غير محدودة', f3: '3 لغات FR/AR/EN', f4: 'Edge-TTS مجاني', f5: 'تكرار متباعد FSRS', f6: 'تصدير PPTX', cta: 'ابدأ الآن' }, pro: { title: 'احترافي', badge: 'موصى به', price: '3 000 درهم / شهر', subtitle: 'لمراكز التكوين', f1: 'كل ميزات المجاني +', f2: '5 مكوّنين', f3: '100 متعلّم', f4: 'دعم عبر البريد', f5: 'تحديثات ذات أولوية', f6: 'قوالب قطاعية', cta: 'تجربة 30 يومًا' }, institution: { title: 'مؤسسة', price: 'حسب الطلب', subtitle: 'للجامعات و OFPPT', f1: 'كل ميزات الاحترافي +', f2: 'مكوّنون بلا حدود', f3: 'LTI 1.3 + SSO', f4: 'تقارير الاعتماد', f5: 'دعم WhatsApp مخصّص', f6: 'تكوين في الموقع', f7: 'SLA 99.5%', cta: 'تواصلوا معنا' } },
   pwa: { banner: 'ثبّتوا Qalem على جهازكم للوصول السريع', install: 'تثبيت' },
   telemetry: { banner: 'يمكن لـ Qalem جمع بيانات مجهولة الهوية حول تعلّمكم لتحسين التكوينات. لا تتم مشاركة أي بيانات شخصية.', accept: 'قبول', refuse: 'رفض', learnMore: 'معرفة المزيد', hidDetails: 'إخفاء التفاصيل', detail1: 'البيانات المجمّعة : معدلات إتمام الدورات، درجات الاختبارات، ترتيب تصفّح المشاهد.', detail2: 'يتم تشفير هويتكم بشكل لا رجعة فيه لضمان إخفاء الهوية التام.', detail3: 'يمكنكم تغيير هذا الاختيار في أي وقت من الإعدادات.' },
+  errorBoundary: {
+    title: 'حدث خطأ',
+    message: 'حدث خطأ غير متوقّع أثناء تحميل هذه الصفحة.',
+    retry: 'إعادة المحاولة',
+  },
 } as const;

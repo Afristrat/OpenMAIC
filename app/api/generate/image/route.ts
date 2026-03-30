@@ -22,18 +22,23 @@ import type { ImageProviderId, ImageGenerationOptions } from '@/lib/media/types'
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
+import { requireAuth } from '@/lib/api/auth';
+import { validateBody } from '@/lib/api/validate';
+import { generateImageSchema } from '@/lib/api/schemas';
 
 const log = createLogger('ImageGeneration API');
 
 export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
-  try {
-    const body = (await request.json()) as ImageGenerationOptions;
+  const auth = await requireAuth(request);
+  if (auth.response) return auth.response;
 
-    if (!body.prompt) {
-      return apiError('MISSING_REQUIRED_FIELD', 400, 'Missing prompt');
-    }
+  try {
+    const rawBody = await request.json();
+    const validation = validateBody(generateImageSchema, rawBody);
+    if (!validation.success) return validation.response;
+    const body = rawBody as ImageGenerationOptions;
 
     const providerId = (request.headers.get('x-image-provider') || 'seedream') as ImageProviderId;
     const clientApiKey = request.headers.get('x-api-key') || undefined;

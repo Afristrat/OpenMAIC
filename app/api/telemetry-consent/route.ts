@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { hasConsent, setConsent } from '@/lib/telemetry/pedagogy-collector';
+import { validateBody } from '@/lib/api/validate';
+import { telemetryConsentSchema } from '@/lib/api/schemas';
 
 /**
  * GET /api/telemetry-consent?userId=...
@@ -26,12 +28,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
  * Body: { userId: string, consent: boolean }
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const body = (await request.json()) as { userId?: string; consent?: boolean };
-  const { userId, consent } = body;
-
-  if (!userId || typeof consent !== 'boolean') {
-    return NextResponse.json({ error: 'Missing userId or consent' }, { status: 400 });
-  }
+  const rawBody = await request.json();
+  const validation = validateBody(telemetryConsentSchema, rawBody);
+  if (!validation.success) return validation.response;
+  const { userId, consent } = validation.data;
 
   try {
     await setConsent(userId, consent);

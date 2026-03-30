@@ -15,6 +15,7 @@ import { PwaInstallBanner } from '@/components/pwa-install-banner';
 import { TelemetryConsentBanner } from '@/components/telemetry-consent-banner';
 import { ServiceWorkerRegistrar } from '@/components/service-worker-registrar';
 import { SidebarLayout } from '@/components/sidebar-layout';
+import { ErrorBoundary } from '@/components/error-boundary';
 
 const inter = localFont({
   src: '../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2',
@@ -43,18 +44,20 @@ export default function RootLayout({
         className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <ThemeProvider>
-          <I18nProvider>
-            <HtmlDirectionManager />
-            <ServerProvidersInit />
-            <OfflineIndicator />
-            <PwaInstallBanner />
-            <TelemetryConsentBanner />
-            <ServiceWorkerRegistrar />
-            <SidebarLayout>{children}</SidebarLayout>
-            <Toaster position="top-center" />
-          </I18nProvider>
-        </ThemeProvider>
+        <ErrorBoundary>
+          <ThemeProvider>
+            <I18nProvider>
+              <HtmlDirectionManager />
+              <ServerProvidersInit />
+              <OfflineIndicator />
+              <PwaInstallBanner />
+              <TelemetryConsentBanner />
+              <ServiceWorkerRegistrar />
+              <SidebarLayout>{children}</SidebarLayout>
+              <Toaster position="top-center" />
+            </I18nProvider>
+          </ThemeProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

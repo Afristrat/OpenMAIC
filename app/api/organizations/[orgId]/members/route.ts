@@ -11,6 +11,8 @@ import { NextRequest } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 import type { OrgMemberRole } from '@/lib/supabase/types';
+import { validateBody } from '@/lib/api/validate';
+import { orgMembersInviteSchema, orgMembersPatchSchema, orgMembersDeleteSchema } from '@/lib/api/schemas';
 
 const VALID_ROLES: OrgMemberRole[] = ['admin', 'manager', 'formateur', 'apprenant'];
 
@@ -94,44 +96,29 @@ export async function POST(
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Admin or manager access required');
   }
 
-  let body: Record<string, unknown>;
+  let rawBody: unknown;
   try {
-    body = await request.json();
+    rawBody = await request.json();
   } catch {
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid JSON body');
   }
 
-  const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
-  if (!email) {
-    return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, 'Email is required');
-  }
+  const bodyValidation = validateBody(orgMembersInviteSchema, rawBody);
+  if (!bodyValidation.success) return bodyValidation.response;
+  const body = bodyValidation.data;
 
-  const role: OrgMemberRole =
-    typeof body.role === 'string' && VALID_ROLES.includes(body.role as OrgMemberRole)
-      ? (body.role as OrgMemberRole)
-      : 'apprenant';
+  const email = body.email.trim().toLowerCase();
+
+  const role: OrgMemberRole = body.role ?? 'apprenant';
 
   // Managers cannot invite admins
   if (membership.role === 'manager' && role === 'admin') {
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Managers cannot invite admin members');
   }
 
-  // Look up user by email via profiles + auth
-  // We need to find the user ID from the email
-  // Supabase client-side cannot query auth.users, so we query profiles
-  // For now, we use a workaround: look up by email in auth admin (server-side only)
-  // Since we use the anon key, we look up profiles that match
-  // A proper implementation would use Supabase admin client or invitations table
-  // Here we search profiles by looking at existing auth users via a different approach
-
-  // Simplified approach: look for a profile whose auth.users email matches
-  // We use the RPC or a direct query. Since we can't query auth.users from client,
-  // we'll check if a profile exists by querying org_members + profiles.
-  // For the MVP, we accept a user_id directly as fallback.
-
   let targetUserId: string | null = null;
 
-  if (typeof body.user_id === 'string') {
+  if (body.user_id) {
     targetUserId = body.user_id;
   } else {
     // Try to find user by email - requires service role or a custom RPC
@@ -189,24 +176,19 @@ export async function PATCH(
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Admin access required');
   }
 
-  let body: Record<string, unknown>;
+  let rawPatchBody: unknown;
   try {
-    body = await request.json();
+    rawPatchBody = await request.json();
   } catch {
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid JSON body');
   }
 
-  const memberId = typeof body.member_id === 'string' ? body.member_id : '';
-  const newRole = typeof body.role === 'string' && VALID_ROLES.includes(body.role as OrgMemberRole)
-    ? (body.role as OrgMemberRole)
-    : null;
+  const patchValidation = validateBody(orgMembersPatchSchema, rawPatchBody);
+  if (!patchValidation.success) return patchValidation.response;
+  const patchData = patchValidation.data;
 
-  if (!memberId) {
-    return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, 'member_id is required');
-  }
-  if (!newRole) {
-    return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, 'Valid role is required');
-  }
+  const memberId = patchData.member_id;
+  const newRole = patchData.role;
 
   // Prevent admin from changing their own role
   const { data: targetMember } = await supabase
@@ -259,17 +241,18 @@ export async function DELETE(
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Admin access required');
   }
 
-  let body: Record<string, unknown>;
+  let rawDeleteBody: unknown;
   try {
-    body = await request.json();
+    rawDeleteBody = await request.json();
   } catch {
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid JSON body');
   }
 
-  const memberId = typeof body.member_id === 'string' ? body.member_id : '';
-  if (!memberId) {
-    return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, 'member_id is required');
-  }
+  const deleteValidation = validateBody(orgMembersDeleteSchema, rawDeleteBody);
+  if (!deleteValidation.success) return deleteValidation.response;
+  const deleteData = deleteValidation.data;
+
+  const memberId = deleteData.member_id;
 
   // Prevent admin from removing themselves
   const { data: targetMember } = await supabase

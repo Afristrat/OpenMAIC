@@ -7,6 +7,8 @@ import {
   meetsScoreThreshold,
   type CertificateRow,
 } from '@/lib/certificates';
+import { validateBody } from '@/lib/api/validate';
+import { certificateGenerateSchema } from '@/lib/api/schemas';
 
 /**
  * POST /api/certificates/generate
@@ -35,12 +37,10 @@ export async function POST(request: NextRequest) {
     }
 
     // --- Body -----------------------------------------------------------
-    const body = (await request.json()) as { stageId?: string };
-    const { stageId } = body;
-
-    if (!stageId) {
-      return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, 'Missing required field: stageId');
-    }
+    const rawBody = await request.json();
+    const validation = validateBody(certificateGenerateSchema, rawBody);
+    if (!validation.success) return validation.response;
+    const { stageId } = validation.data;
 
     // --- Check if certificate already exists ----------------------------
     const { data: existing } = await supabase

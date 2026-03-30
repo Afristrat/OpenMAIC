@@ -5,10 +5,14 @@ import {
   readClassroomGenerationJob,
 } from '@/lib/server/classroom-job-store';
 import { buildRequestOrigin } from '@/lib/server/classroom-storage';
+import { requireAuth } from '@/lib/api/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest, context: { params: Promise<{ jobId: string }> }) {
+  const auth = await requireAuth(req);
+  if (auth.response) return auth.response;
+
   try {
     const { jobId } = await context.params;
 

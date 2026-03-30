@@ -10,6 +10,8 @@ import { callLLM } from '@/lib/ai/llm';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { resolveModelFromHeaders } from '@/lib/server/resolve-model';
+import { validateBody } from '@/lib/api/validate';
+import { quizGradeSchema } from '@/lib/api/schemas';
 const log = createLogger('Quiz Grade');
 
 interface GradeRequest {
@@ -27,12 +29,10 @@ interface GradeResponse {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json()) as GradeRequest;
-    const { question, userAnswer, points, commentPrompt, language } = body;
-
-    if (!question || !userAnswer) {
-      return apiError('MISSING_REQUIRED_FIELD', 400, 'question and userAnswer are required');
-    }
+    const rawBody = await req.json();
+    const validation = validateBody(quizGradeSchema, rawBody);
+    if (!validation.success) return validation.response;
+    const { question, userAnswer, points, commentPrompt, language } = validation.data;
 
     // Resolve model from request headers
     const { model: languageModel } = resolveModelFromHeaders(req);

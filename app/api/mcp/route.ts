@@ -9,6 +9,8 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 import { TOOLS, callTool } from '@/lib/mcp/server';
+import { validateBody } from '@/lib/api/validate';
+import { mcpCallSchema } from '@/lib/api/schemas';
 
 export const maxDuration = 300;
 
@@ -43,11 +45,10 @@ export async function POST(req: NextRequest): Promise<Response> {
   if (authError) return authError;
 
   try {
-    const body = (await req.json()) as {
-      method: string;
-      params?: { name: string; arguments?: Record<string, unknown> };
-      id?: number;
-    };
+    const rawBody = await req.json();
+    const validation = validateBody(mcpCallSchema, rawBody);
+    if (!validation.success) return validation.response;
+    const body = validation.data;
 
     if (body.method === 'tools/list') {
       return NextResponse.json({ jsonrpc: '2.0', result: { tools: TOOLS }, id: body.id ?? 1 });

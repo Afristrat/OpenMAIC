@@ -2,6 +2,7 @@ import { promises as fs, createReadStream } from 'fs';
 import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 import { CLASSROOMS_DIR, isValidClassroomId } from '@/lib/server/classroom-storage';
+import { requireAuth } from '@/lib/api/auth';
 
 const MIME_TYPES: Record<string, string> = {
   '.png': 'image/png',
@@ -21,6 +22,9 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ classroomId: string; path: string[] }> },
 ) {
+  const auth = await requireAuth(_req);
+  if (auth.response) return auth.response;
+
   const { classroomId, path: pathSegments } = await params;
 
   // Validate classroomId

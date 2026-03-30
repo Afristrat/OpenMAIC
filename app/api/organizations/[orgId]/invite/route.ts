@@ -8,6 +8,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 import type { OrgMemberRole } from '@/lib/supabase/types';
+import { validateBody } from '@/lib/api/validate';
+import { orgInviteSchema } from '@/lib/api/schemas';
 
 const VALID_ROLES: OrgMemberRole[] = ['admin', 'manager', 'formateur', 'apprenant'];
 
@@ -38,7 +40,11 @@ export async function POST(
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Insufficient permissions');
     }
 
-    const body = (await request.json()) as { email?: string; role?: string };
+    const rawBody = await request.json();
+    const validation = validateBody(orgInviteSchema, rawBody);
+    if (!validation.success) return validation.response;
+    const body = validation.data;
+
     const role = body.role && VALID_ROLES.includes(body.role as OrgMemberRole)
       ? body.role
       : 'apprenant';

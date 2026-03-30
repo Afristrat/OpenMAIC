@@ -10,6 +10,8 @@ import { NextRequest } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 import type { OrgSector, OrgMemberRole } from '@/lib/supabase/types';
+import { validateBody } from '@/lib/api/validate';
+import { organizationPatchSchema } from '@/lib/api/schemas';
 
 const VALID_SECTORS: OrgSector[] = [
   'healthcare',
@@ -87,28 +89,32 @@ export async function PATCH(
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Admin access required');
   }
 
-  let body: Record<string, unknown>;
+  let rawBody: unknown;
   try {
-    body = await request.json();
+    rawBody = await request.json();
   } catch {
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid JSON body');
   }
 
+  const validation = validateBody(organizationPatchSchema, rawBody);
+  if (!validation.success) return validation.response;
+  const body = validation.data;
+
   const updates: Record<string, unknown> = {};
 
-  if (typeof body.name === 'string' && body.name.trim()) {
+  if (body.name !== undefined && body.name.trim()) {
     updates.name = body.name.trim();
   }
-  if (typeof body.sector === 'string') {
-    updates.sector = VALID_SECTORS.includes(body.sector as OrgSector) ? body.sector : null;
+  if (body.sector !== undefined) {
+    updates.sector = body.sector;
   }
-  if (typeof body.default_locale === 'string') {
+  if (body.default_locale !== undefined) {
     updates.default_locale = body.default_locale;
   }
-  if (typeof body.settings === 'object' && body.settings !== null) {
+  if (body.settings !== undefined) {
     updates.settings = body.settings;
   }
-  if (typeof body.logo === 'string') {
+  if (body.logo !== undefined) {
     updates.logo = body.logo;
   }
 

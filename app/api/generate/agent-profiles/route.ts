@@ -11,6 +11,9 @@ import { callLLM } from '@/lib/ai/llm';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { resolveModelFromHeaders } from '@/lib/server/resolve-model';
+import { requireAuth } from '@/lib/api/auth';
+import { validateBody } from '@/lib/api/validate';
+import { generateAgentProfilesSchema } from '@/lib/api/schemas';
 
 const log = createLogger('Agent Profiles API');
 
@@ -50,8 +53,15 @@ function stripCodeFences(text: string): string {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (auth.response) return auth.response;
+
   try {
-    const body = (await req.json()) as RequestBody;
+    const rawBody = await req.json();
+    const validation = validateBody(generateAgentProfilesSchema, rawBody);
+    if (!validation.success) return validation.response;
+    const body = validation.data;
+
     const {
       stageInfo,
       sceneOutlines,
@@ -60,21 +70,6 @@ export async function POST(req: NextRequest) {
       avatarDescriptions,
       availableVoices,
     } = body;
-
-    // ── Validate required fields ──
-    if (!stageInfo?.name) {
-      return apiError('MISSING_REQUIRED_FIELD', 400, 'stageInfo.name is required');
-    }
-    if (!language) {
-      return apiError('MISSING_REQUIRED_FIELD', 400, 'language is required');
-    }
-    if (!availableAvatars || availableAvatars.length === 0) {
-      return apiError(
-        'MISSING_REQUIRED_FIELD',
-        400,
-        'availableAvatars is required and must not be empty',
-      );
-    }
 
     // ── Model resolution from request headers ──
     const { model: languageModel, modelString } = resolveModelFromHeaders(req);

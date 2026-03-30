@@ -19,6 +19,9 @@ import type { ThinkingConfig } from '@/lib/types/provider';
 import { apiError } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
 import { resolveModel } from '@/lib/server/resolve-model';
+import { requireAuth } from '@/lib/api/auth';
+import { validateBody } from '@/lib/api/validate';
+import { chatSchema } from '@/lib/api/schemas';
 const log = createLogger('Chat API');
 
 // Allow streaming responses up to 60 seconds
@@ -41,23 +44,16 @@ export const maxDuration = 60;
  * Response: SSE stream of StatelessEvent
  */
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (auth.response) return auth.response;
+
   const encoder = new TextEncoder();
 
   try {
-    const body: StatelessChatRequest = await req.json();
-
-    // Validate required fields
-    if (!body.messages || !Array.isArray(body.messages)) {
-      return apiError('MISSING_REQUIRED_FIELD', 400, 'Missing required field: messages');
-    }
-
-    if (!body.storeState) {
-      return apiError('MISSING_REQUIRED_FIELD', 400, 'Missing required field: storeState');
-    }
-
-    if (!body.config || !body.config.agentIds || body.config.agentIds.length === 0) {
-      return apiError('MISSING_REQUIRED_FIELD', 400, 'Missing required field: config.agentIds');
-    }
+    const rawBody = await req.json();
+    const validation = validateBody(chatSchema, rawBody);
+    if (!validation.success) return validation.response;
+    const body = rawBody as StatelessChatRequest;
 
     const { model: languageModel, apiKey: resolvedApiKey } = resolveModel({
       modelString: body.model,

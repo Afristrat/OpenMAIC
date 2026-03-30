@@ -26,12 +26,16 @@ import type { SpeechAction } from '@/lib/types/action';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { resolveModelFromHeaders } from '@/lib/server/resolve-model';
+import { requireAuth } from '@/lib/api/auth';
 
 const log = createLogger('Scene Actions API');
 
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (auth.response) return auth.response;
+
   try {
     const body = await req.json();
     const {

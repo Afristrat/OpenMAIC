@@ -9,6 +9,8 @@ import { NextRequest } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 import type { OrganizationInsert, OrgSector } from '@/lib/supabase/types';
+import { validateBody } from '@/lib/api/validate';
+import { organizationsCreateSchema } from '@/lib/api/schemas';
 
 const VALID_SECTORS: OrgSector[] = [
   'healthcare',
@@ -75,23 +77,24 @@ export async function POST(request: NextRequest): Promise<Response> {
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 401, 'Authentication required');
   }
 
-  let body: Record<string, unknown>;
+  let rawBody: unknown;
   try {
-    body = await request.json();
+    rawBody = await request.json();
   } catch {
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid JSON body');
   }
 
-  const name = typeof body.name === 'string' ? body.name.trim() : '';
+  const validation = validateBody(organizationsCreateSchema, rawBody);
+  if (!validation.success) return validation.response;
+  const { data } = validation;
+
+  const name = data.name.trim();
   if (!name) {
     return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, 'Organization name is required');
   }
 
-  const sector = typeof body.sector === 'string' && VALID_SECTORS.includes(body.sector as OrgSector)
-    ? (body.sector as OrgSector)
-    : null;
-
-  const defaultLocale = typeof body.default_locale === 'string' ? body.default_locale : 'fr-FR';
+  const sector: OrgSector | null = data.sector ?? null;
+  const defaultLocale = data.default_locale ?? 'fr-FR';
 
   const orgInsert: OrganizationInsert = {
     name,

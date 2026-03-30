@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
@@ -181,7 +181,7 @@ const VIDEO_PROVIDER_ICONS: Record<VideoProviderId, string> = {
   'grok-video': '/logos/grok.svg',
 };
 
-export default function AdminPage(): React.ReactElement {
+function AdminPageContent(): React.ReactElement {
   const { t } = useI18n();
   const { isSuperAdmin, isLoading } = useIsSuperAdmin();
   const router = useRouter();
@@ -1131,5 +1131,13 @@ export default function AdminPage(): React.ReactElement {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+export default function AdminPage(): React.ReactElement {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" /></div>}>
+      <AdminPageContent />
+    </Suspense>
   );
 }

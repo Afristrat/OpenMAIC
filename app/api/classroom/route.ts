@@ -7,8 +7,12 @@ import {
   persistClassroom,
   readClassroom,
 } from '@/lib/server/classroom-storage';
+import { requireAuth } from '@/lib/api/auth';
 
 export async function POST(request: NextRequest) {
+  const auth = await requireAuth(request);
+  if (auth.response) return auth.response;
+
   try {
     const body = await request.json();
     const { stage, scenes } = body;
@@ -38,6 +42,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  const authGet = await requireAuth(request);
+  if (authGet.response) return authGet.response;
+
   try {
     const id = request.nextUrl.searchParams.get('id');
 

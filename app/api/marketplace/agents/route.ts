@@ -9,6 +9,8 @@ import { NextRequest } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 import { computeAgentScore, isTopAgent } from '@/lib/marketplace/ranking';
+import { validateBody } from '@/lib/api/validate';
+import { marketplacePublishSchema } from '@/lib/api/schemas';
 
 export async function GET(request: NextRequest): Promise<Response> {
   const supabase = await createServerSupabaseClient();
@@ -137,17 +139,18 @@ export async function POST(request: NextRequest): Promise<Response> {
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 401, 'Authentication required');
   }
 
-  let body: Record<string, unknown>;
+  let rawBody: unknown;
   try {
-    body = await request.json();
+    rawBody = await request.json();
   } catch {
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid JSON body');
   }
 
-  const agentId = typeof body.agentId === 'string' ? body.agentId.trim() : '';
-  if (!agentId) {
-    return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, 'agentId is required');
-  }
+  const validation = validateBody(marketplacePublishSchema, rawBody);
+  if (!validation.success) return validation.response;
+  const body = validation.data;
+
+  const agentId = body.agentId.trim();
 
   // Verify ownership
   const { data: agent, error: fetchErr } = await supabase
@@ -166,8 +169,8 @@ export async function POST(request: NextRequest): Promise<Response> {
 
   // Optional metadata updates
   const updates: Record<string, unknown> = { is_published: true };
-  if (typeof body.description === 'string') updates.description = body.description;
-  if (Array.isArray(body.tags)) updates.tags = body.tags;
+  if (body.description !== undefined) updates.description = body.description;
+  if (body.tags !== undefined) updates.tags = body.tags;
 
   const { error: updateErr } = await supabase
     .from('agent_configs')

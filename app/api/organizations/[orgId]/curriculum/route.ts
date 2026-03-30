@@ -10,6 +10,8 @@ import { NextRequest } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 import type { OrgMemberRole, CurriculumRelationType } from '@/lib/supabase/types';
+import { validateBody } from '@/lib/api/validate';
+import { curriculumCreateSchema, curriculumDeleteSchema } from '@/lib/api/schemas';
 
 const VALID_RELATION_TYPES: CurriculumRelationType[] = [
   'prerequisite',
@@ -110,27 +112,17 @@ export async function POST(
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Insufficient permissions');
   }
 
-  let body: Record<string, unknown>;
+  let rawBody: unknown;
   try {
-    body = await request.json();
+    rawBody = await request.json();
   } catch {
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid JSON body');
   }
 
-  const { from_stage_id, to_stage_id, relation_type } = body;
+  const validation = validateBody(curriculumCreateSchema, rawBody);
+  if (!validation.success) return validation.response;
+  const { from_stage_id, to_stage_id, relation_type } = validation.data;
 
-  if (typeof from_stage_id !== 'string' || !from_stage_id) {
-    return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, 'from_stage_id is required');
-  }
-  if (typeof to_stage_id !== 'string' || !to_stage_id) {
-    return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, 'to_stage_id is required');
-  }
-  if (
-    typeof relation_type !== 'string' ||
-    !VALID_RELATION_TYPES.includes(relation_type as CurriculumRelationType)
-  ) {
-    return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid relation_type');
-  }
   if (from_stage_id === to_stage_id) {
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Cannot link a stage to itself');
   }
@@ -180,17 +172,16 @@ export async function DELETE(
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Insufficient permissions');
   }
 
-  let body: Record<string, unknown>;
+  let rawDeleteBody: unknown;
   try {
-    body = await request.json();
+    rawDeleteBody = await request.json();
   } catch {
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid JSON body');
   }
 
-  const { id } = body;
-  if (typeof id !== 'string' || !id) {
-    return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, 'id is required');
-  }
+  const deleteValidation = validateBody(curriculumDeleteSchema, rawDeleteBody);
+  if (!deleteValidation.success) return deleteValidation.response;
+  const { id } = deleteValidation.data;
 
   const { error } = await supabase
     .from('curriculum_links')
