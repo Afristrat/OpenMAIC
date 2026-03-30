@@ -34,9 +34,16 @@ const JWT_EXPIRY_SECS = 1800; // 30 minutes
 // JWT helper (HS256, no external deps)
 // ---------------------------------------------------------------------------
 
-function base64url(data: Buffer | string): string {
-  const buf = Buffer.isBuffer(data) ? data : Buffer.from(data, 'utf-8');
-  return buf.toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+function base64url(data: ArrayBuffer | string): string {
+  let bytes: Uint8Array;
+  if (typeof data === 'string') {
+    bytes = new TextEncoder().encode(data);
+  } else {
+    bytes = new Uint8Array(data);
+  }
+  // btoa works in both browser and Node.js 18+
+  const base64 = btoa(String.fromCharCode(...bytes));
+  return base64.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
 }
 
 async function generateJWT(accessKey: string, secretKey: string): Promise<string> {
@@ -62,7 +69,7 @@ async function generateJWT(accessKey: string, secretKey: string): Promise<string
     ['sign'],
   );
   const sig = await globalThis.crypto.subtle.sign('HMAC', key, encoder.encode(`${header}.${payload}`));
-  const signature = base64url(Buffer.from(sig));
+  const signature = base64url(sig);
 
   return `${header}.${payload}.${signature}`;
 }
