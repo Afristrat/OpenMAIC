@@ -636,28 +636,15 @@ async function generateDoubaoTTS(
  * Edge TTS implementation (free Microsoft neural voices via WebSocket)
  *
  * Uses the same endpoint that Microsoft Edge browser uses for its Read Aloud feature.
- * No API key required. Connects to wss://speech.platform.bing.com via the edge-tts npm package.
+ * No API key required. Uses Microsoft Edge's free neural voice service.
+ * Works server-side — the audio is generated via HTTP call to Microsoft's endpoint.
  */
 async function generateEdgeTTS(
   config: TTSModelConfig,
   text: string,
 ): Promise<TTSGenerationResult> {
-  // Dynamic import — edge-tts ships TypeScript source, handled by Next.js bundler
-  const { tts } = await import('edge-tts');
-
-  // Convert speed (1.0 = normal) to Edge TTS rate format ("+0%", "+50%", "-25%")
-  const speedPercent = Math.round(((config.speed || 1.0) - 1.0) * 100);
-  const rate = `${speedPercent >= 0 ? '+' : ''}${speedPercent}%`;
-
-  const audioBuffer = await tts(escapeXml(text), {
-    voice: config.voice,
-    rate,
-  });
-
-  return {
-    audio: new Uint8Array(audioBuffer),
-    format: 'mp3',
-  };
+  const { generateEdgeTTSAudio } = await import('@/lib/audio/edge-tts');
+  return await generateEdgeTTSAudio(escapeXml(text), config.voice, config.speed);
 }
 
 /**
