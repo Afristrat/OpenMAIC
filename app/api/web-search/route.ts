@@ -5,24 +5,26 @@
  * Simple JSON request/response using Tavily search.
  */
 
+import { type NextRequest } from 'next/server';
 import { searchWithTavily, formatSearchResultsAsContext } from '@/lib/web-search/tavily';
 import { resolveWebSearchApiKey } from '@/lib/server/provider-config';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { requireAuth } from '@/lib/api/auth';
+import { validateBody } from '@/lib/api/validate';
+import { webSearchSchema } from '@/lib/api/schemas';
 
 const log = createLogger('WebSearch');
 
-export async function POST(req: Request) {
-  try {
-    const body = await req.json();
-    const { query, apiKey: clientApiKey } = body as {
-      query?: string;
-      apiKey?: string;
-    };
+export async function POST(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (auth.response) return auth.response;
 
-    if (!query || !query.trim()) {
-      return apiError('MISSING_REQUIRED_FIELD', 400, 'query is required');
-    }
+  try {
+    const rawBody = await req.json();
+    const validation = validateBody(webSearchSchema, rawBody);
+    if (!validation.success) return validation.response;
+    const { query, apiKey: clientApiKey } = validation.data;
 
     const apiKey = resolveWebSearchApiKey(clientApiKey);
     if (!apiKey) {
@@ -33,7 +35,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const result = await searchWithTavily({ query: query.trim(), apiKey });
+    const result = await searchWithTavily({ query: query, apiKey });
     const context = formatSearchResultsAsContext(result);
 
     return apiSuccess({

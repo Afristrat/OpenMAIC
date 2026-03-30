@@ -19,6 +19,8 @@ import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { resolveModelFromHeaders } from '@/lib/server/resolve-model';
 import { requireAuth } from '@/lib/api/auth';
+import { validateBody } from '@/lib/api/validate';
+import { generateSceneContentSchema } from '@/lib/api/schemas';
 
 const log = createLogger('Scene Content API');
 
@@ -29,7 +31,10 @@ export async function POST(req: NextRequest) {
   if (auth.response) return auth.response;
 
   try {
-    const body = await req.json();
+    const rawBody = await req.json();
+    const validation = validateBody(generateSceneContentSchema, rawBody);
+    if (!validation.success) return validation.response;
+
     const {
       outline: rawOutline,
       allOutlines,
@@ -38,7 +43,7 @@ export async function POST(req: NextRequest) {
       stageInfo,
       stageId,
       agents,
-    } = body as {
+    } = rawBody as {
       outline: SceneOutline;
       allOutlines: SceneOutline[];
       pdfImages?: PdfImage[];
@@ -52,21 +57,6 @@ export async function POST(req: NextRequest) {
       stageId: string;
       agents?: AgentInfo[];
     };
-
-    // Validate required fields
-    if (!rawOutline) {
-      return apiError('MISSING_REQUIRED_FIELD', 400, 'outline is required');
-    }
-    if (!allOutlines || allOutlines.length === 0) {
-      return apiError(
-        'MISSING_REQUIRED_FIELD',
-        400,
-        'allOutlines is required and must not be empty',
-      );
-    }
-    if (!stageId) {
-      return apiError('MISSING_REQUIRED_FIELD', 400, 'stageId is required');
-    }
 
     // Ensure outline has language from stageInfo (fallback for older outlines)
     const outline: SceneOutline = {

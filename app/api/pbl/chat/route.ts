@@ -11,6 +11,9 @@ import type { PBLAgent, PBLIssue } from '@/lib/pbl/types';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { resolveModelFromHeaders } from '@/lib/server/resolve-model';
+import { requireAuth } from '@/lib/api/auth';
+import { validateBody } from '@/lib/api/validate';
+import { pblChatSchema } from '@/lib/api/schemas';
 const log = createLogger('PBL Chat');
 
 interface PBLChatRequest {
@@ -23,13 +26,15 @@ interface PBLChatRequest {
 }
 
 export async function POST(req: NextRequest) {
-  try {
-    const body = (await req.json()) as PBLChatRequest;
-    const { message, agent, currentIssue, recentMessages, userRole, agentType } = body;
+  const auth = await requireAuth(req);
+  if (auth.response) return auth.response;
 
-    if (!message || !agent) {
-      return apiError('MISSING_REQUIRED_FIELD', 400, 'Message and agent are required');
-    }
+  try {
+    const rawBody = await req.json();
+    const validation = validateBody(pblChatSchema, rawBody);
+    if (!validation.success) return validation.response;
+    const body = rawBody as PBLChatRequest;
+    const { message, agent, currentIssue, recentMessages, userRole, agentType } = body;
 
     // Get model config from headers
     const { model } = resolveModelFromHeaders(req);

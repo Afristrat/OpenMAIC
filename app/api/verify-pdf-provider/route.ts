@@ -3,16 +3,21 @@ import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { resolvePDFApiKey, resolvePDFBaseUrl } from '@/lib/server/provider-config';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
+import { requireAuth } from '@/lib/api/auth';
+import { validateBody } from '@/lib/api/validate';
+import { verifyPdfProviderSchema } from '@/lib/api/schemas';
 
 const log = createLogger('Verify PDF Provider');
 
 export async function POST(req: NextRequest) {
-  try {
-    const { providerId, apiKey, baseUrl } = await req.json();
+  const auth = await requireAuth(req);
+  if (auth.response) return auth.response;
 
-    if (!providerId) {
-      return apiError('MISSING_REQUIRED_FIELD', 400, 'Provider ID is required');
-    }
+  try {
+    const rawBody = await req.json();
+    const validation = validateBody(verifyPdfProviderSchema, rawBody);
+    if (!validation.success) return validation.response;
+    const { providerId, apiKey, baseUrl } = validation.data;
 
     const clientBaseUrl = (baseUrl as string | undefined) || undefined;
     if (clientBaseUrl && process.env.NODE_ENV === 'production') {

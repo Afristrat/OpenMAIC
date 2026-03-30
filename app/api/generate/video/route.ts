@@ -24,6 +24,8 @@ import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { requireAuth } from '@/lib/api/auth';
+import { validateBody } from '@/lib/api/validate';
+import { generateVideoSchema } from '@/lib/api/schemas';
 
 const log = createLogger('VideoGeneration API');
 
@@ -34,11 +36,10 @@ export async function POST(request: NextRequest) {
   if (auth.response) return auth.response;
 
   try {
-    const body = (await request.json()) as VideoGenerationOptions;
-
-    if (!body.prompt) {
-      return apiError('MISSING_REQUIRED_FIELD', 400, 'Missing prompt');
-    }
+    const rawBody = await request.json();
+    const validation = validateBody(generateVideoSchema, rawBody);
+    if (!validation.success) return validation.response;
+    const body = rawBody as VideoGenerationOptions;
 
     const providerId = (request.headers.get('x-video-provider') || 'seedance') as VideoProviderId;
     const clientApiKey = request.headers.get('x-api-key') || undefined;

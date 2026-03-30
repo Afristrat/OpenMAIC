@@ -289,13 +289,16 @@ export const generateVideoSchema = z.object({
 
 export const generateClassroomSchema = z.object({
   requirement: z.string().min(1, 'requirement is required'),
-  pdfContent: z.string().optional(),
+  pdfContent: z.object({
+    text: z.string(),
+    images: z.array(z.string()),
+  }).optional(),
   language: z.string().optional(),
   enableWebSearch: z.boolean().optional(),
   enableImageGeneration: z.boolean().optional(),
   enableVideoGeneration: z.boolean().optional(),
   enableTTS: z.boolean().optional(),
-  agentMode: z.string().optional(),
+  agentMode: z.enum(['default', 'generate']).optional(),
 });
 
 // ---------------------------------------------------------------------------

@@ -5,11 +5,15 @@ import type { ASRProviderId } from '@/lib/audio/types';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
+import { requireAuth } from '@/lib/api/auth';
 const log = createLogger('Transcription');
 
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (auth.response) return auth.response;
+
   try {
     const formData = await req.formData();
     const audioFile = formData.get('audio') as File;

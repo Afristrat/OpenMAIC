@@ -12,6 +12,7 @@ import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { resolveModelFromHeaders } from '@/lib/server/resolve-model';
 import { validateBody } from '@/lib/api/validate';
 import { quizGradeSchema } from '@/lib/api/schemas';
+import { requireAuth } from '@/lib/api/auth';
 const log = createLogger('Quiz Grade');
 
 interface GradeRequest {
@@ -28,6 +29,9 @@ interface GradeResponse {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (auth.response) return auth.response;
+
   try {
     const rawBody = await req.json();
     const validation = validateBody(quizGradeSchema, rawBody);

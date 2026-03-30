@@ -27,6 +27,8 @@ import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { resolveModelFromHeaders } from '@/lib/server/resolve-model';
 import { requireAuth } from '@/lib/api/auth';
+import { validateBody } from '@/lib/api/validate';
+import { generateSceneActionsSchema } from '@/lib/api/schemas';
 
 const log = createLogger('Scene Actions API');
 
@@ -37,7 +39,10 @@ export async function POST(req: NextRequest) {
   if (auth.response) return auth.response;
 
   try {
-    const body = await req.json();
+    const rawBody = await req.json();
+    const validation = validateBody(generateSceneActionsSchema, rawBody);
+    if (!validation.success) return validation.response;
+
     const {
       outline,
       allOutlines,
@@ -46,7 +51,7 @@ export async function POST(req: NextRequest) {
       agents,
       previousSpeeches: incomingPreviousSpeeches,
       userProfile,
-    } = body as {
+    } = rawBody as {
       outline: SceneOutline;
       allOutlines: SceneOutline[];
       content:
@@ -59,24 +64,6 @@ export async function POST(req: NextRequest) {
       previousSpeeches?: string[];
       userProfile?: string;
     };
-
-    // Validate required fields
-    if (!outline) {
-      return apiError('MISSING_REQUIRED_FIELD', 400, 'outline is required');
-    }
-    if (!allOutlines || allOutlines.length === 0) {
-      return apiError(
-        'MISSING_REQUIRED_FIELD',
-        400,
-        'allOutlines is required and must not be empty',
-      );
-    }
-    if (!content) {
-      return apiError('MISSING_REQUIRED_FIELD', 400, 'content is required');
-    }
-    if (!stageId) {
-      return apiError('MISSING_REQUIRED_FIELD', 400, 'stageId is required');
-    }
 
     // ── Model resolution from request headers ──
     const { model: languageModel, modelInfo, modelString } = resolveModelFromHeaders(req);

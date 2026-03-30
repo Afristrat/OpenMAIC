@@ -9,6 +9,7 @@ import { initPayment } from '@/lib/payments';
 import type { PaymentConfig, PaymentProvider, Currency } from '@/lib/payments';
 import { validateBody } from '@/lib/api/validate';
 import { paymentInitiateSchema } from '@/lib/api/schemas';
+import { requireAuth } from '@/lib/api/auth';
 
 /**
  * Build a PaymentConfig from environment variables for the given provider.
@@ -50,6 +51,9 @@ const VALID_PROVIDERS = new Set<string>(['cinetpay', 'orange-money', 'wave', 'pa
 const VALID_CURRENCIES = new Set<string>(['MAD', 'XOF', 'TND', 'DZD', 'USD', 'EUR']);
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const auth = await requireAuth(request);
+  if (auth.response) return auth.response;
+
   try {
     const rawBody = await request.json();
     const validation = validateBody(paymentInitiateSchema, rawBody);

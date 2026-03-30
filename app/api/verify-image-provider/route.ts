@@ -21,10 +21,14 @@ import type { ImageProviderId } from '@/lib/media/types';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
+import { requireAuth } from '@/lib/api/auth';
 
 const log = createLogger('VerifyImageProvider');
 
 export async function POST(request: NextRequest) {
+  const auth = await requireAuth(request);
+  if (auth.response) return auth.response;
+
   try {
     const providerId = (request.headers.get('x-image-provider') || 'seedream') as ImageProviderId;
     const model = request.headers.get('x-image-model') || undefined;

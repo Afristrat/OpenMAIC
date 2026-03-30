@@ -1,6 +1,7 @@
 import { type NextRequest } from 'next/server';
 import { randomUUID } from 'crypto';
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
+import type { Scene, Stage } from '@/lib/types/stage';
 import {
   buildRequestOrigin,
   isValidClassroomId,
@@ -8,22 +9,19 @@ import {
   readClassroom,
 } from '@/lib/server/classroom-storage';
 import { requireAuth } from '@/lib/api/auth';
+import { validateBody } from '@/lib/api/validate';
+import { classroomPersistSchema } from '@/lib/api/schemas';
 
 export async function POST(request: NextRequest) {
   const auth = await requireAuth(request);
   if (auth.response) return auth.response;
 
   try {
-    const body = await request.json();
-    const { stage, scenes } = body;
-
-    if (!stage || !scenes) {
-      return apiError(
-        API_ERROR_CODES.MISSING_REQUIRED_FIELD,
-        400,
-        'Missing required fields: stage, scenes',
-      );
-    }
+    const rawBody = await request.json();
+    const validation = validateBody(classroomPersistSchema, rawBody);
+    if (!validation.success) return validation.response;
+    // After Zod validates structure, use typed cast for Supabase interop
+    const { stage, scenes } = rawBody as { stage: Stage & { id?: string }; scenes: Scene[] };
 
     const id = stage.id || randomUUID();
     const baseUrl = buildRequestOrigin(request);

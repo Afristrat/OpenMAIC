@@ -36,6 +36,8 @@ import { apiError } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
 import { resolveModelFromHeaders } from '@/lib/server/resolve-model';
 import { requireAuth } from '@/lib/api/auth';
+import { validateBody } from '@/lib/api/validate';
+import { generateSceneOutlinesStreamSchema } from '@/lib/api/schemas';
 const log = createLogger('Outlines Stream');
 
 export const maxDuration = 300;
@@ -104,16 +106,14 @@ export async function POST(req: NextRequest) {
   if (auth.response) return auth.response;
 
   try {
-    const body = await req.json();
+    const rawBody = await req.json();
+    const validation = validateBody(generateSceneOutlinesStreamSchema, rawBody);
+    if (!validation.success) return validation.response;
 
     // Get API configuration from request headers
     const { model: languageModel, modelInfo, modelString } = resolveModelFromHeaders(req);
 
-    if (!body.requirements) {
-      return apiError('MISSING_REQUIRED_FIELD', 400, 'Requirements are required');
-    }
-
-    const { requirements, pdfText, pdfImages, imageMapping, researchContext, agents } = body as {
+    const { requirements, pdfText, pdfImages, imageMapping, researchContext, agents } = rawBody as {
       requirements: UserRequirements;
       pdfText?: string;
       pdfImages?: PdfImage[];

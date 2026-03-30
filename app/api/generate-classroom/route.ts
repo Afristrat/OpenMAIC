@@ -6,6 +6,8 @@ import { runClassroomGenerationJob } from '@/lib/server/classroom-job-runner';
 import { createClassroomGenerationJob } from '@/lib/server/classroom-job-store';
 import { buildRequestOrigin } from '@/lib/server/classroom-storage';
 import { requireAuth } from '@/lib/api/auth';
+import { validateBody } from '@/lib/api/validate';
+import { generateClassroomSchema } from '@/lib/api/schemas';
 
 export const maxDuration = 30;
 
@@ -14,26 +16,24 @@ export async function POST(req: NextRequest) {
   if (auth.response) return auth.response;
 
   try {
-    const rawBody = (await req.json()) as Partial<GenerateClassroomInput>;
-    const body: GenerateClassroomInput = {
-      requirement: rawBody.requirement || '',
-      ...(rawBody.pdfContent ? { pdfContent: rawBody.pdfContent } : {}),
-      ...(rawBody.language ? { language: rawBody.language } : {}),
-      ...(rawBody.enableWebSearch != null ? { enableWebSearch: rawBody.enableWebSearch } : {}),
-      ...(rawBody.enableImageGeneration != null
-        ? { enableImageGeneration: rawBody.enableImageGeneration }
-        : {}),
-      ...(rawBody.enableVideoGeneration != null
-        ? { enableVideoGeneration: rawBody.enableVideoGeneration }
-        : {}),
-      ...(rawBody.enableTTS != null ? { enableTTS: rawBody.enableTTS } : {}),
-      ...(rawBody.agentMode ? { agentMode: rawBody.agentMode } : {}),
-    };
-    const { requirement } = body;
+    const rawInput = await req.json();
+    const validation = validateBody(generateClassroomSchema, rawInput);
+    if (!validation.success) return validation.response;
 
-    if (!requirement) {
-      return apiError('MISSING_REQUIRED_FIELD', 400, 'Missing required field: requirement');
-    }
+    const body: GenerateClassroomInput = {
+      requirement: validation.data.requirement,
+      ...(validation.data.pdfContent ? { pdfContent: validation.data.pdfContent } : {}),
+      ...(validation.data.language ? { language: validation.data.language } : {}),
+      ...(validation.data.enableWebSearch != null ? { enableWebSearch: validation.data.enableWebSearch } : {}),
+      ...(validation.data.enableImageGeneration != null
+        ? { enableImageGeneration: validation.data.enableImageGeneration }
+        : {}),
+      ...(validation.data.enableVideoGeneration != null
+        ? { enableVideoGeneration: validation.data.enableVideoGeneration }
+        : {}),
+      ...(validation.data.enableTTS != null ? { enableTTS: validation.data.enableTTS } : {}),
+      ...(validation.data.agentMode ? { agentMode: validation.data.agentMode } : {}),
+    };
 
     const baseUrl = buildRequestOrigin(req);
     const jobId = nanoid(10);

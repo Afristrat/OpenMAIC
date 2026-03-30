@@ -15,12 +15,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { apiError } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
+import { requireAuth } from '@/lib/api/auth';
 
 const log = createLogger('ProxyMedia');
 
 export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
+  const auth = await requireAuth(request);
+  if (auth.response) return auth.response;
+
   try {
     const { url } = await request.json();
 
