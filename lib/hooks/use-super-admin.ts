@@ -1,19 +1,7 @@
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from './use-auth';
-
-/**
- * SUPER_ADMIN_EMAILS is set server-side via env var.
- * We expose it to the client via a Next.js public env var.
- * Format: comma-separated emails.
- * Example: NEXT_PUBLIC_SUPER_ADMIN_EMAILS=admin@qalem.ma,amine@qalem.ma
- *
- * If not set, the first authenticated user is considered super admin (dev mode).
- */
-const SUPER_ADMIN_EMAILS = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAILS || '')
-  .split(',')
-  .map((e) => e.trim().toLowerCase())
-  .filter(Boolean);
 
 /**
  * Check if the current user is a super admin.
@@ -25,23 +13,51 @@ const SUPER_ADMIN_EMAILS = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAILS || '')
  * - Use the platform with server-configured providers
  * - Cannot see or modify API keys
  * - See only the "general" settings (theme, language, audio voice selection)
+ *
+ * The super admin email list is kept server-side (SUPER_ADMIN_EMAILS env var,
+ * without NEXT_PUBLIC_ prefix) to avoid leaking it to the client bundle.
  */
 export function useIsSuperAdmin(): { isSuperAdmin: boolean; isLoading: boolean } {
-  const { user, isLoading, isGuest } = useAuth();
+  const { user, isLoading: authLoading, isGuest } = useAuth();
+  const [state, setState] = useState<{ isAdmin: boolean; checked: boolean }>({
+    isAdmin: false,
+    checked: false,
+  });
+  const cancelledRef = useRef(false);
 
-  if (isLoading) return { isSuperAdmin: false, isLoading: true };
+  useEffect(() => {
+    cancelledRef.current = false;
 
-  // Guests are never super admin
-  if (isGuest || !user) return { isSuperAdmin: false, isLoading: false };
+    // Only fetch when we have a valid, non-guest user
+    if (authLoading || isGuest || !user) return;
 
-  // If no super admin emails configured, first user is admin (dev mode)
-  if (SUPER_ADMIN_EMAILS.length === 0) {
-    return { isSuperAdmin: true, isLoading: false };
-  }
+    const check = async () => {
+      try {
+        const res = await fetch('/api/account/is-admin');
+        const data: { isAdmin: boolean } = await res.json();
+        if (!cancelledRef.current) {
+          setState({ isAdmin: data.isAdmin, checked: true });
+        }
+      } catch {
+        if (!cancelledRef.current) {
+          setState({ isAdmin: false, checked: true });
+        }
+      }
+    };
 
-  const userEmail = user.email?.toLowerCase() || '';
+    check();
+
+    return () => {
+      cancelledRef.current = true;
+    };
+  }, [user, authLoading, isGuest]);
+
+  // When there's no user / guest, always false
+  const effectiveAdmin = (!authLoading && (isGuest || !user)) ? false : state.isAdmin;
+  const isLoading = authLoading || (!state.checked && !isGuest && !!user);
+
   return {
-    isSuperAdmin: SUPER_ADMIN_EMAILS.includes(userEmail),
-    isLoading: false,
+    isSuperAdmin: effectiveAdmin,
+    isLoading,
   };
 }

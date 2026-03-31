@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 // ---------------------------------------------------------------------------
 // Simple in-memory Prometheus metrics (no prom-client dependency)
@@ -119,7 +119,16 @@ if (!gauges.has('qalem_active_users')) gauges.set('qalem_active_users', 0);
 // GET /api/metrics
 // ---------------------------------------------------------------------------
 
-export function GET(): NextResponse {
+export function GET(req: NextRequest): NextResponse {
+  const apiKey = process.env.MCP_API_KEY;
+  if (apiKey) {
+    const authHeader = req.headers.get('authorization');
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+    if (token !== apiKey) {
+      return new NextResponse('Unauthorized', { status: 401 });
+    }
+  }
+
   return new NextResponse(serialize(), {
     status: 200,
     headers: { 'Content-Type': 'text/plain; version=0.0.4; charset=utf-8' },

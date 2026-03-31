@@ -10,64 +10,37 @@ import {
   Bot,
   Sparkles,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useI18n } from '@/lib/hooks/use-i18n';
 
-const features = [
-  {
-    icon: Workflow,
-    title: 'Hub MCP',
-    desc: 'Connectez NotebookLM, Notion, Google Drive. Vos sources enrichissent le cours.',
-    iconColor: 'text-primary bg-primary/10',
-  },
-  {
-    icon: FlaskConical,
-    title: 'Lab Simulation 3D',
-    desc: "Physique interactive avec Three.js. L'apprenant manipule les param\u00e8tres en temps r\u00e9el.",
-    iconColor: 'text-emerald-400 bg-emerald-400/10',
-  },
-  {
-    icon: Terminal,
-    title: 'Code Sandbox',
-    desc: '\u00C9diteur Monaco + ex\u00e9cution Python/JS dans le navigateur. Tests automatiques.',
-    iconColor: 'text-amber-400 bg-amber-400/10',
-  },
-  {
-    icon: BadgeCheck,
-    title: 'Certificats V\u00e9rifiables',
-    desc: 'QR code unique, v\u00e9rifiable publiquement. Partageable sur LinkedIn.',
-    iconColor: 'text-primary bg-primary/10',
-  },
-  {
-    icon: WifiOff,
-    title: 'Mode Hors-Ligne',
-    desc: 'PWA avec sync automatique. R\u00e9visez dans le bus sans internet.',
-    iconColor: 'text-emerald-400 bg-emerald-400/10',
-  },
-  {
-    icon: Wallet,
-    title: 'Paiement Mobile',
-    desc: 'Orange Money, Wave, CinetPay. Pas de carte bancaire requise.',
-    iconColor: 'text-amber-400 bg-amber-400/10',
-  },
-  {
-    icon: Bot,
-    title: 'Agent Bazaar',
-    desc: "Marketplace d'agents p\u00e9dagogiques. Importez les mieux not\u00e9s en 1 clic.",
-    iconColor: 'text-primary bg-primary/10',
-  },
-  {
-    icon: Sparkles,
-    title: 'Pedagogy Genome',
-    desc: "L'IA apprend \u00e0 enseigner. Plus vous l'utilisez, meilleur il devient.",
-    iconColor: 'text-emerald-400 bg-emerald-400/10',
-  },
+interface FeatureItem {
+  icon: LucideIcon;
+  titleKey: string;
+  descKey: string;
+  iconColor: string;
+}
+
+const FEATURE_DEFS: FeatureItem[] = [
+  { icon: Workflow,     titleKey: 'landing.features.hub_mcp',         descKey: 'landing.features.hub_mcp_desc',         iconColor: 'text-primary bg-primary/10' },
+  { icon: FlaskConical, titleKey: 'landing.features.lab_sim',         descKey: 'landing.features.lab_sim_desc',         iconColor: 'text-emerald-400 bg-emerald-400/10' },
+  { icon: Terminal,     titleKey: 'landing.features.code_sandbox',    descKey: 'landing.features.code_sandbox_desc',    iconColor: 'text-amber-400 bg-amber-400/10' },
+  { icon: BadgeCheck,   titleKey: 'landing.features.certificates',    descKey: 'landing.features.certificates_desc',    iconColor: 'text-primary bg-primary/10' },
+  { icon: WifiOff,      titleKey: 'landing.features.offline',         descKey: 'landing.features.offline_desc',         iconColor: 'text-emerald-400 bg-emerald-400/10' },
+  { icon: Wallet,       titleKey: 'landing.features.mobile_pay',      descKey: 'landing.features.mobile_pay_desc',      iconColor: 'text-amber-400 bg-amber-400/10' },
+  { icon: Bot,          titleKey: 'landing.features.agent_bazaar',    descKey: 'landing.features.agent_bazaar_desc',    iconColor: 'text-primary bg-primary/10' },
+  { icon: Sparkles,     titleKey: 'landing.features.pedagogy_genome', descKey: 'landing.features.pedagogy_genome_desc', iconColor: 'text-emerald-400 bg-emerald-400/10' },
 ];
 
-const skills = [
-  { emoji: '\uD83C\uDFE5', label: 'Formation M\u00e9dicale' },
-  { emoji: '\u2696\uFE0F', label: 'Moot Court Juridique' },
-  { emoji: '\uD83D\uDCBB', label: 'Coding Workshop' },
-  { emoji: '\uD83D\uDCD0', label: 'Formation Design Pro' },
+interface SkillItem {
+  emoji: string;
+  labelKey: string;
+}
+
+const SKILL_DEFS: SkillItem[] = [
+  { emoji: '\uD83C\uDFE5', labelKey: 'landing.features.skill_medical' },
+  { emoji: '\u2696\uFE0F', labelKey: 'landing.features.skill_legal' },
+  { emoji: '\uD83D\uDCBB', labelKey: 'landing.features.skill_coding' },
+  { emoji: '\uD83D\uDCD0', labelKey: 'landing.features.skill_design' },
 ];
 
 export function FeaturesGrid(): React.ReactElement {
@@ -89,11 +62,12 @@ export function FeaturesGrid(): React.ReactElement {
 
         {/* Feature Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
-          {features.map((feature) => {
+          {FEATURE_DEFS.map((feature) => {
             const Icon = feature.icon;
+            const title = t(feature.titleKey);
             return (
               <div
-                key={feature.title}
+                key={feature.titleKey}
                 className="group relative bg-secondary p-6 rounded-[16px] transition-all duration-300 hover:bg-gradient-to-br hover:from-accent hover:to-muted border border-border/10"
               >
                 <div
@@ -102,9 +76,9 @@ export function FeaturesGrid(): React.ReactElement {
                   <Icon className="size-7" />
                 </div>
                 <h3 className="text-xl font-bold mb-2 text-foreground font-[family-name:var(--font-display)]">
-                  {feature.title}
+                  {title}
                 </h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">{feature.desc}</p>
+                <p className="text-muted-foreground text-sm leading-relaxed">{t(feature.descKey)}</p>
               </div>
             );
           })}
@@ -113,16 +87,16 @@ export function FeaturesGrid(): React.ReactElement {
         {/* Skills Showcase */}
         <div className="flex flex-col items-center">
           <span className="text-muted-foreground font-semibold uppercase tracking-[0.2em] text-xs mb-8">
-            Skills sp&eacute;cialis&eacute;s inclus
+            {t('landing.features.skills_label')}
           </span>
           <div className="flex flex-wrap justify-center gap-4">
-            {skills.map((skill) => (
+            {SKILL_DEFS.map((skill) => (
               <div
-                key={skill.label}
+                key={skill.labelKey}
                 className="px-6 py-3 rounded-full bg-accent border border-border/20 flex items-center gap-3 transition-transform hover:-translate-y-1"
               >
                 <span className="text-xl">{skill.emoji}</span>
-                <span className="font-semibold text-foreground tracking-wide">{skill.label}</span>
+                <span className="font-semibold text-foreground tracking-wide">{t(skill.labelKey)}</span>
               </div>
             ))}
           </div>

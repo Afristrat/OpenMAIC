@@ -10,6 +10,9 @@ import type { PaymentConfig, PaymentProvider, Currency } from '@/lib/payments';
 import { validateBody } from '@/lib/api/validate';
 import { paymentInitiateSchema } from '@/lib/api/schemas';
 import { requireAuth } from '@/lib/api/auth';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('PaymentInitiate');
 
 /**
  * Build a PaymentConfig from environment variables for the given provider.
@@ -85,7 +88,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[payments/initiate]', message);
+    log.error(message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

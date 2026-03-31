@@ -62,6 +62,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
+    // Validate id_token format before decoding / verifying
+    const tokenParts = idToken.split('.');
+    if (tokenParts.length !== 3) {
+      log.warn('Malformed id_token: expected 3 parts, got ' + tokenParts.length);
+      return NextResponse.json(
+        { success: false, error: 'Malformed id_token' },
+        { status: 400 },
+      );
+    }
+
     // Verify the JWT signature and extract claims
     let launchContext;
     try {
@@ -72,16 +82,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       return NextResponse.json(
         { success: false, error: `Token verification failed: ${message}` },
         { status: 401 },
-      );
-    }
-
-    // Validate id_token format before decoding
-    const tokenParts = idToken.split('.');
-    if (tokenParts.length !== 3) {
-      log.warn('Malformed id_token: expected 3 parts, got ' + tokenParts.length);
-      return NextResponse.json(
-        { success: false, error: 'Malformed id_token' },
-        { status: 400 },
       );
     }
 

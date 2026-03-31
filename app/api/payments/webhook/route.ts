@@ -8,6 +8,9 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { handlePaymentWebhook } from '@/lib/payments';
 import type { PaymentProvider } from '@/lib/payments';
 import { createClient } from '@supabase/supabase-js';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('PaymentWebhook');
 
 /**
  * Create a Supabase admin client (service role) for server-side writes.
@@ -35,7 +38,7 @@ function verifyWebhookSignature(
   _body: string,
 ): boolean {
   // Skeleton — always returns true. MUST be implemented before production.
-  console.warn('[payments/webhook] Signature verification not yet implemented');
+  log.warn('Signature verification not yet implemented');
   return true;
 }
 
@@ -86,7 +89,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         .eq('transaction_id', result.transactionId);
 
       if (updateError) {
-        console.error('[payments/webhook] Supabase update error:', updateError.message);
+        log.error('Supabase update error:', updateError.message);
       }
     }
 
@@ -94,7 +97,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ received: true, status: result.status });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[payments/webhook]', message);
+    log.error(message);
     // Still return 200 to avoid retries from most providers
     return NextResponse.json({ received: true, error: message }, { status: 200 });
   }

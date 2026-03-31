@@ -8,6 +8,8 @@
 // rate limiting (limits reset naturally).
 // =============================================================================
 
+import { getUsageSummary } from '@/lib/usage/tracker';
+
 // ---------------------------------------------------------------------------
 // Plan-based rate limits
 // ---------------------------------------------------------------------------
@@ -109,7 +111,7 @@ export async function checkRateLimit(
 }
 
 // ---------------------------------------------------------------------------
-// TTS quota (monthly)
+// TTS quota (monthly) — backed by Supabase usage_records
 // ---------------------------------------------------------------------------
 
 export interface TTSQuotaResult {
@@ -119,42 +121,27 @@ export interface TTSQuotaResult {
 }
 
 /**
- * In-memory TTS usage tracking per org per billing period.
- *
- * TODO: Replace with Supabase usage_records query for persistence across restarts.
- */
-const ttsUsageStore = new Map<string, number>();
-
-function ttsBillingKey(orgId: string): string {
-  const now = new Date();
-  const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  return `tts:${orgId}:${period}`;
-}
-
-/**
  * Check whether an organisation has remaining TTS quota for the current month.
+ * Queries the usage_records table via getUsageSummary for persistence across restarts.
  */
 export async function checkTTSQuota(
   orgId: string,
   plan: string,
 ): Promise<TTSQuotaResult> {
   const limitConfig = TTS_LIMITS[plan] ?? TTS_LIMITS.free;
-  const key = ttsBillingKey(orgId);
-  const usedMinutes = ttsUsageStore.get(key) ?? 0;
+
+  let usedMinutes = 0;
+  try {
+    const summary = await getUsageSummary(orgId);
+    usedMinutes = summary.ttsMinutes;
+  } catch {
+    // If Supabase is unavailable, fail open (allow the request)
+    // to avoid blocking the primary path.
+  }
 
   return {
     allowed: usedMinutes < limitConfig.maxMinutes,
     usedMinutes,
     limitMinutes: limitConfig.maxMinutes,
   };
-}
-
-/**
- * Record TTS usage (in minutes) for an organisation.
- * Called after successful TTS generation.
- */
-export function recordTTSUsage(orgId: string, minutes: number): void {
-  const key = ttsBillingKey(orgId);
-  const current = ttsUsageStore.get(key) ?? 0;
-  ttsUsageStore.set(key, current + minutes);
 }

@@ -84,10 +84,16 @@ export async function GET(
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Not a member of this organization');
   }
 
+  if (!['admin', 'manager', 'formateur'].includes(membership.role)) {
+    return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Insufficient role');
+  }
+
   const url = new URL(request.url);
   const dateFrom = url.searchParams.get('dateFrom');
   const dateTo = url.searchParams.get('dateTo');
   const format = url.searchParams.get('format') ?? 'json';
+  const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1', 10));
+  const perPage = Math.min(500, Math.max(1, parseInt(url.searchParams.get('perPage') ?? '100', 10)));
 
   // 1. Get org members (apprenants)
   const { data: members } = await supabase
@@ -142,7 +148,7 @@ export async function GET(
     quizQuery = quizQuery.lte('completed_at', dateTo);
   }
 
-  const { data: quizResults } = await quizQuery;
+  const { data: quizResults } = await quizQuery.limit(10000);
 
   // 5. Fetch telemetry data
   let telemetryQuery = supabase
@@ -159,7 +165,7 @@ export async function GET(
     telemetryQuery = telemetryQuery.lte('created_at', dateTo);
   }
 
-  const { data: telemetry } = await telemetryQuery;
+  const { data: telemetry } = await telemetryQuery.limit(10000);
 
   // 6. Get profiles for names
   let profileMap: Record<string, string> = {};
@@ -265,8 +271,13 @@ export async function GET(
     };
   });
 
+  // Paginate learnerStats
+  const totalLearnerRows = learnerStats.length;
+  const startIdx = (page - 1) * perPage;
+  const paginatedLearners = learnerStats.slice(startIdx, startIdx + perPage);
+
   if (format === 'csv') {
-    const csvContent = toCsv(learnerStats, formationStats);
+    const csvContent = toCsv(paginatedLearners, formationStats);
     return new Response(csvContent, {
       status: 200,
       headers: {
@@ -283,7 +294,13 @@ export async function GET(
       avgScore: Math.round(avgScore * 10) / 10,
       completionRate: Math.round(overallCompletionRate * 10) / 10,
     },
-    learners: learnerStats,
+    learners: paginatedLearners,
     formations: formationStats,
+    pagination: {
+      page,
+      perPage,
+      total: totalLearnerRows,
+      totalPages: Math.ceil(totalLearnerRows / perPage),
+    },
   });
 }

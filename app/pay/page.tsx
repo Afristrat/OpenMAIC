@@ -11,6 +11,7 @@
 
 import { useState, useCallback } from 'react';
 import { useI18n } from '@/lib/hooks/use-i18n';
+import { useOrganizations } from '@/lib/hooks/use-organizations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,6 +36,7 @@ const PROVIDERS: { id: Provider; labelKey: string; needsPhone: boolean; color: s
 
 export default function PayPage() {
   const { t } = useI18n();
+  const { currentOrg, isLoading: isOrgLoading } = useOrganizations();
 
   const [step, setStep] = useState(1);
   const [billing, setBilling] = useState<BillingPeriod>('monthly');
@@ -76,7 +78,7 @@ export default function PayPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            orgId: 'default', // TODO: use actual org ID from session
+            orgId: currentOrg?.id ?? '',
             plan: 'pro',
             interval: billing === 'monthly' ? 'month' : 'year',
           }),
@@ -120,6 +122,25 @@ export default function PayPage() {
       setIsLoading(false);
     }
   }, [provider, selectedProvider, phone, plan, billing, t]);
+
+  if (isOrgLoading) {
+    return (
+      <div className="mx-auto max-w-xl px-4 py-12 text-center">
+        <Loader2 className="mx-auto h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!currentOrg) {
+    return (
+      <div className="mx-auto max-w-xl px-4 py-12 text-center">
+        <CreditCard className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
+        <p className="text-lg text-muted-foreground">
+          {t('payment.noOrg')}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-xl px-4 py-12">
