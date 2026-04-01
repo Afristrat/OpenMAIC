@@ -67,7 +67,7 @@ function getClientKey(request: NextRequest): { key: string; plan: string } {
 // Middleware
 // ---------------------------------------------------------------------------
 
-export async function middleware(request: NextRequest): Promise<NextResponse> {
+export default async function proxy(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
   if (shouldSkipRateLimit(pathname)) {
