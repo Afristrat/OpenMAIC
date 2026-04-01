@@ -53,8 +53,12 @@ function pruneExpiredEntries(): void {
 }
 
 // Start the pruning interval (only in non-test environments)
+// Note: .unref() is not available in Edge Runtime (middleware), so we skip it
 if (typeof globalThis !== 'undefined' && process.env.NODE_ENV !== 'test') {
-  setInterval(pruneExpiredEntries, PRUNE_INTERVAL_MS).unref();
+  const timer = setInterval(pruneExpiredEntries, PRUNE_INTERVAL_MS);
+  if (typeof timer === 'object' && 'unref' in timer) {
+    timer.unref();
+  }
 }
 
 // ---------------------------------------------------------------------------
