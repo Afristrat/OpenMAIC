@@ -106,7 +106,7 @@ interface DueCardWithSource {
 
 function ReviewPage() {
   const { t, locale } = useI18n();
-  const { user, isGuest, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
 
   const [phase, setPhase] = useState<ReviewPhase>('loading');
@@ -207,7 +207,6 @@ function ReviewPage() {
       loadDueCards();
     }
   }, [authLoading, loadDueCards]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   // ── Handle rating ──
   const handleRate = useCallback(
