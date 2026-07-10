@@ -43,7 +43,12 @@ export type AgentVoiceOverrides = Record<string, AgentVoiceOverride>;
  *    getEnabledProvidersWithVoices excludes it, getSelectableProvidersWithVoices
  *    appends it LAST, so it is only the index target when it is the sole enabled
  *    provider (i.e. the user opted into browser-native only).
- * 3. If the list is empty, return null — the caller must skip TTS rather than
+ * 3. Locale-aware fallback (Qalem): when nothing above matched and a `locale`
+ *    is given (e.g. 'fr-FR', 'ar-MA'), prefer a voice whose language matches
+ *    the user's locale over the plain deterministic first-provider pick — so
+ *    an Arabic-speaking user doesn't get assigned an English/Chinese voice by
+ *    default.
+ * 4. If the list is empty, return null — the caller must skip TTS rather than
  *    silently falling back to browser-native (#665 symptom 4).
  */
 export function resolveAgentVoice(
@@ -51,6 +56,7 @@ export function resolveAgentVoice(
   agentIndex: number,
   enabledProviders: ProviderWithVoices[],
   overrides?: AgentVoiceOverrides,
+  locale?: string,
 ): ResolvedVoice | null {
   // Candidates in priority order: the user's persisted per-agent override
   // (settings store — survives reloads; registry records for default/generated
@@ -73,6 +79,22 @@ export function resolveAgentVoice(
     const allVoiceIds = new Set([...list, ...fromEnabled.voices.map((v) => v.id)]);
     if (allVoiceIds.has(choice.voiceId)) {
       return { providerId: choice.providerId, modelId: choice.modelId, voiceId: choice.voiceId };
+    }
+  }
+
+  // Locale-aware fallback: among enabled providers, prefer voices matching
+  // the user's language (e.g. 'fr' from 'fr-FR', 'ar' from 'ar-MA') before
+  // falling back to a locale-blind deterministic pick.
+  if (locale && enabledProviders.length > 0) {
+    const langPrefix = locale.split('-')[0];
+    for (const provider of enabledProviders) {
+      const localeVoices = provider.voices.filter((v) => v.language?.split('-')[0] === langPrefix);
+      if (localeVoices.length > 0) {
+        return {
+          providerId: provider.providerId,
+          voiceId: localeVoices[agentIndex % localeVoices.length].id,
+        };
+      }
     }
   }
 

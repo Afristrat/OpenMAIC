@@ -80,7 +80,13 @@ function AgentVoicePill({
   const ttsProvidersConfig = useSettingsStore((s) => s.ttsProvidersConfig);
   const agentVoiceOverrides = useSettingsStore((s) => s.agentVoiceOverrides);
   const setAgentVoiceOverride = useSettingsStore((s) => s.setAgentVoiceOverride);
-  const resolved = resolveAgentVoice(agent, agentIndex, availableProviders, agentVoiceOverrides);
+  const resolved = resolveAgentVoice(
+    agent,
+    agentIndex,
+    availableProviders,
+    agentVoiceOverrides,
+    locale,
+  );
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [voiceQuery, setVoiceQuery] = useState('');
   const [previewingId, setPreviewingId] = useState<string | null>(null);

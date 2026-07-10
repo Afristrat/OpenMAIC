@@ -10,6 +10,9 @@
  * - GLM TTS (https://docs.bigmodel.cn/cn/guide/models/sound-and-video/glm-tts)
  * - Qwen TTS (https://bailian.console.aliyun.com/)
  * - Doubao TTS (https://www.volcengine.com/docs/6561/1257543)
+ * - Fish Audio (https://fish.audio/docs)
+ * - Edge TTS (Microsoft Edge free neural voices, no API key)
+ * - Cartesia (https://cartesia.ai/docs)
  * - Browser Native TTS (Web Speech API, client-side only)
  *
  * Currently Supported ASR Providers:
@@ -20,8 +23,6 @@
  *
  * Future Provider Support (extensible):
  * - ElevenLabs TTS/ASR (https://elevenlabs.io/docs)
- * - Fish Audio TTS (https://fish.audio/docs)
- * - Cartesia TTS (https://cartesia.ai/docs)
  * - PlayHT TTS (https://docs.play.ht/)
  * - AssemblyAI ASR (https://www.assemblyai.com/docs)
  * - Deepgram ASR (https://developers.deepgram.com/docs)
@@ -87,6 +88,9 @@ export type BuiltInTTSProviderId =
   | 'voxcpm-tts'
   | 'doubao-tts'
   | 'elevenlabs-tts'
+  | 'fish-audio'
+  | 'cartesia'
+  | 'edge-tts'
   | 'minimax-tts'
   | 'lemonade-tts'
   | 'browser-native-tts';

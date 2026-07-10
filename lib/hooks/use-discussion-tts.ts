@@ -142,7 +142,7 @@ export function useDiscussionTTS({ enabled, agents, onAudioStateChange }: Discus
       }
 
       const index = agentIndexMap.current.get(agentId!) ?? 0;
-      return resolveAgentVoice(agent, index, providers, agentVoiceOverrides);
+      return resolveAgentVoice(agent, index, providers, agentVoiceOverrides, locale);
     },
     [
       agents,
@@ -152,6 +152,7 @@ export function useDiscussionTTS({ enabled, agents, onAudioStateChange }: Discus
       globalTtsProviderId,
       globalTtsVoice,
       agentVoiceOverrides,
+      locale,
     ],
   );
 
