@@ -76,6 +76,8 @@ const TTS_ENV_MAP: Record<string, string> = {
   TTS_ELEVENLABS: 'elevenlabs-tts',
   TTS_MINIMAX: 'minimax-tts',
   TTS_LEMONADE: 'lemonade-tts',
+  TTS_FISH_AUDIO: 'fish-audio',
+  TTS_CARTESIA: 'cartesia',
 };
 
 /**
