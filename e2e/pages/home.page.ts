@@ -10,9 +10,11 @@ export class HomePage {
     this.page = page;
     this.logo = page.locator('img[alt="Qalem"]');
     this.textarea = page.locator('textarea');
-    this.enterButton = page
-      .getByRole('button', { name: /enter/i })
-      .or(page.locator('button:has-text("进入课堂")'));
+    // Matches the submit button's label across all supported locales
+    // (t('toolbar.enterClassroom')): en, zh, fr-FR, ar-MA.
+    this.enterButton = page.getByRole('button', {
+      name: /enter classroom|进入课堂|entrer en classe|دخول الفصل/i,
+    });
   }
 
   async goto() {
