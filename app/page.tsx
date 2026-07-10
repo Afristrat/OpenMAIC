@@ -38,6 +38,7 @@ import { useTheme } from '@/lib/hooks/use-theme';
 import { nanoid } from 'nanoid';
 import { storePdfBlob } from '@/lib/utils/image-storage';
 import type { UserRequirements } from '@/lib/types/generation';
+import { buildLanguageDirective } from '@/lib/constants/generation';
 import { useSettingsStore } from '@/lib/store/settings';
 import { hasUsableLLMProvider } from '@/lib/store/settings-validation';
 import { useUserProfileStore, AVATAR_OPTIONS } from '@/lib/store/user-profile';
@@ -89,7 +90,7 @@ const initialFormState: FormState = {
 };
 
 function HomePage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { theme, setTheme } = useTheme();
   const router = useRouter();
   const showVocationalTestUi = shouldShowVocationalTestUi();
@@ -296,8 +297,13 @@ function HomePage() {
 
     try {
       const userProfile = useUserProfileStore.getState();
+      // UserRequirements has no `language` field (upstream v0.3.0 infers the
+      // target language from the free-form requirement text) — this page has
+      // no separate language selector, so ground that inference in the
+      // current UI locale (also switchable via LanguageSwitcher) rather than
+      // leaving it to guesswork.
       const requirements: UserRequirements = {
-        requirement: form.requirement,
+        requirement: `${buildLanguageDirective(locale)}\n\n${form.requirement}`,
         userNickname: userProfile.nickname || undefined,
         userBio: userProfile.bio || undefined,
         webSearch: form.webSearch || undefined,

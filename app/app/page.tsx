@@ -202,7 +202,13 @@ function HomePage() {
       // Load first slide thumbnails
       if (list.length > 0) {
         const slides = await getFirstSlideByStages(list.map((c) => c.id));
-        setThumbnails(slides);
+        // getFirstSlideByStages returns the @openmaic/dsl Slide shape (upstream
+        // extracted slide types into that package); this legacy page and
+        // ThumbnailSlide still use the pre-extraction @/lib/types/slides Slide.
+        // Both describe the same canvas-slide runtime shape — S0-004 deliberately
+        // left the ~80 files on the old path untouched rather than force a
+        // wide migration, so this boundary cast documents that known split.
+        setThumbnails(slides as unknown as Record<string, Slide>);
       }
     } catch (err) {
       log.error('Failed to load classrooms:', err);

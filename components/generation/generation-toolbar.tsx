@@ -43,8 +43,12 @@ const MAX_PDF_SIZE_BYTES = MAX_PDF_SIZE_MB * 1024 * 1024;
 
 // ─── Types ───────────────────────────────────────────────────
 export interface GenerationToolbarProps {
-  language: 'zh-CN' | 'en-US' | 'fr-FR' | 'ar-MA';
-  onLanguageChange: (lang: 'zh-CN' | 'en-US' | 'fr-FR' | 'ar-MA') => void;
+  // Optional: some hosts (app/page.tsx) derive the generation language
+  // straight from the current UI locale via useI18n() and don't need a
+  // separate override pill. When provided (app/app/page.tsx), the pill
+  // renders and lets the user pick a language independent of the UI locale.
+  language?: 'zh-CN' | 'en-US' | 'fr-FR' | 'ar-MA';
+  onLanguageChange?: (lang: 'zh-CN' | 'en-US' | 'fr-FR' | 'ar-MA') => void;
   webSearch: boolean;
   onWebSearchChange: (v: boolean) => void;
   onSettingsOpen: (section?: SettingsSection) => void;
@@ -399,27 +403,31 @@ export function GenerationToolbar({
           </Tooltip>
         )}
 
-        {/* ── Language pill ── */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={() => {
-                const cycle = {
-                  'fr-FR': 'ar-MA',
-                  'ar-MA': 'en-US',
-                  'en-US': 'fr-FR',
-                  'zh-CN': 'fr-FR',
-                } as const;
-                onLanguageChange(cycle[language] ?? 'fr-FR');
-              }}
-              className={pillMuted}
-            >
-              <Globe className="size-3.5" />
-              <span>{{ 'fr-FR': 'FR', 'ar-MA': 'AR', 'en-US': 'EN', 'zh-CN': 'CN' }[language]}</span>
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>{t('toolbar.languageHint')}</TooltipContent>
-        </Tooltip>
+        {/* ── Language pill (only when the host opts in) ── */}
+        {language && onLanguageChange && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => {
+                  const cycle = {
+                    'fr-FR': 'ar-MA',
+                    'ar-MA': 'en-US',
+                    'en-US': 'fr-FR',
+                    'zh-CN': 'fr-FR',
+                  } as const;
+                  onLanguageChange(cycle[language] ?? 'fr-FR');
+                }}
+                className={pillMuted}
+              >
+                <Globe className="size-3.5" />
+                <span>
+                  {{ 'fr-FR': 'FR', 'ar-MA': 'AR', 'en-US': 'EN', 'zh-CN': 'CN' }[language]}
+                </span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>{t('toolbar.languageHint')}</TooltipContent>
+          </Tooltip>
+        )}
 
         {/* ── Separator ── */}
         <div className="w-px h-4 bg-border/60 mx-1" />
