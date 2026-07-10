@@ -1,5 +1,15 @@
 # AGENTS.md — Qalem
 
+## RÈGLE CARRIÈRE — `main` est figée, lecture seule (depuis S0-010, 2026-07-11)
+
+**`main` (`C:\projets\Qalem\OpenMAIC`) est la carrière v0.1.0. Elle est GELÉE définitivement.**
+
+- Tag annoté `legacy-v010-final` posé et poussé sur `origin/main`, sur le commit `a4c8421695820e63be585e166d7ed35829d13369` (« fix: rename middleware export to proxy (Next.js 16) »). Ce tag matérialise le gel : c'est la dernière trace de vérité de l'ancienne base.
+- **Aucun commit, aucun merge, aucun push de branche ne doit plus jamais toucher `main`** — la SEULE exception jamais tolérée est l'ajout d'un futur tag (jamais un commit, jamais un changement de contenu).
+- `main` reste consultable en lecture (source de portage via `git show main:<path>`, cf. FR-1) mais plus jamais modifiable. Toute divergence entre `main` et `origin/main` détectée par un agent doit être signalée à Amine, jamais corrigée silencieusement.
+- Les fichiers non commités pré-existants sur `main` (hérités d'avant ce Ralph loop) ne doivent JAMAIS être touchés, commités ou stashés par un agent — ils font partie de l'état gelé constaté, pas du travail en cours.
+- Toute évolution future du produit vit exclusivement sur `refork-v030` (ce worktree) puis, une fois S0-008 débloqué, sur les branches des chantiers 1-3 qui en dépendent.
+
 ## Agent principal
 
 - **Rôle** : Implémente les user stories du PRD Qalem selon le Ralph Loop
