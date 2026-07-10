@@ -436,6 +436,27 @@ export interface UsageSummaryRow {
 }
 
 // ---------------------------------------------------------------------------
+// Feature Flags (chantier 0 — SOCLE, docs/foundation/0-socle/02-data-dictionary.md)
+// ---------------------------------------------------------------------------
+
+export type FeatureFlagScope = 'global' | 'org' | 'user'
+
+export interface FeatureFlagRow {
+  id: string // UUID
+  flag_name: string
+  enabled: boolean
+  scope: FeatureFlagScope
+  description: string
+  created_at: string // ISO 8601
+  updated_at: string // ISO 8601
+}
+
+export type FeatureFlagInsert = Pick<FeatureFlagRow, 'flag_name' | 'description'> &
+  Partial<Pick<FeatureFlagRow, 'enabled' | 'scope'>>
+
+export type FeatureFlagUpdate = Partial<Pick<FeatureFlagRow, 'enabled' | 'scope' | 'description'>>
+
+// ---------------------------------------------------------------------------
 // Supabase Database type (for createClient<Database>)
 // ---------------------------------------------------------------------------
 
@@ -541,6 +562,11 @@ export interface Database {
         Row: UsageRecord
         Insert: UsageRecordInsert
         Update: Record<string, never>
+      }
+      feature_flags: {
+        Row: FeatureFlagRow
+        Insert: FeatureFlagInsert
+        Update: FeatureFlagUpdate
       }
     }
     Views: {
