@@ -86,7 +86,50 @@ test.describe('Generation flow — locale coverage (S0-008)', () => {
       }, locale);
 
       await mockApi.mockSceneOutlinesStream(outlines);
-      await mockApi.mockSceneContent();
+      // Custom (not MockApi's static default): the classroom sidebar reads
+      // scene.title from the scene-content response's `effectiveOutline`
+      // (see lib/hooks/use-scene-generator.ts: `contentResult.effectiveOutline
+      // || outline`), not from the outline-stream data directly — so the
+      // mock must echo back whichever locale outline was actually requested
+      // for the title to reflect fr-FR/ar-MA content in the sidebar.
+      await page.route('**/api/generate/scene-content', (route) => {
+        const requestedOutline = route.request().postDataJSON()?.outline as
+          | SceneOutline
+          | undefined;
+        route.fulfill({
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            success: true,
+            content: {
+              type: 'slide',
+              canvas: {
+                id: 'slide-0',
+                viewportSize: 1000,
+                viewportRatio: 0.5625,
+                theme: {
+                  backgroundColor: '#ffffff',
+                  themeColors: ['#5b9bd5', '#ed7d31', '#a5a5a5', '#ffc000', '#4472c4'],
+                  fontColor: '#333333',
+                  fontName: 'Microsoft Yahei',
+                },
+                elements: [
+                  {
+                    type: 'text',
+                    id: 'title-el',
+                    content: requestedOutline?.title ?? outlines[0].title,
+                    left: 50,
+                    top: 50,
+                    width: 900,
+                    height: 100,
+                  },
+                ],
+              },
+            },
+            effectiveOutline: requestedOutline ?? outlines[0],
+          }),
+        });
+      });
       await mockApi.mockSceneActions();
 
       // ── Phase 1: Home page, locale-aware UI ──────────────────────────
