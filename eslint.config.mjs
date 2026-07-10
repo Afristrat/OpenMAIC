@@ -14,6 +14,10 @@ const eslintConfig = defineConfig([
     'next-env.d.ts',
     // Vendored/generated code:
     'packages/**',
+    // Synced build output of packages/@openmaic/importer (see
+    // scripts/sync-maic-importer.mjs, run at postinstall) — same generated
+    // bundle as packages/**, just re-copied under public/ for static serving.
+    'public/vendor/**',
     // Claude Code local files:
     '.claude/**',
     '.superpowers/**',
