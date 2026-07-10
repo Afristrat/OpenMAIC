@@ -13,7 +13,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import {
@@ -26,7 +25,7 @@ import {
   Share2,
   User,
 } from 'lucide-react';
-import type { OrgMemberRole, SceneType } from '@/lib/supabase/types';
+import type { OrgMemberRole } from '@/lib/supabase/types';
 
 interface SharedClassroom {
   id: string;
@@ -60,7 +59,8 @@ export default function LibraryPage() {
   const [classrooms, setClassrooms] = useState<SharedClassroom[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState<string>('all');
+  // Reserved for future scene-type filtering (see comment below) — not wired yet.
+  const [_filterType, _setFilterType] = useState<string>('all');
   const [userRole, setUserRole] = useState<OrgMemberRole | null>(null);
 
   const canShare = userRole === 'admin' || userRole === 'manager' || userRole === 'formateur';

@@ -5,7 +5,6 @@ import {
   getDueCards,
   getReviewStats,
   retrievability,
-  type Rating,
 } from '@/lib/spaced-repetition/fsrs';
 import { extractReviewCards, type ReviewCard } from '@/lib/spaced-repetition/extractor';
 import type { QuizQuestion } from '@/lib/types/stage';

@@ -208,7 +208,6 @@ export function CertificatePrompt({
   const shouldShow = allScenesCompleted && meetsThreshold;
 
   // Check for existing guest certificate
-  /* eslint-disable react-hooks/set-state-in-effect -- Load cached guest certificate on mount */
   useEffect(() => {
     if (isGuest && stageId) {
       const existing = findGuestCertificate(stageId);
@@ -222,7 +221,6 @@ export function CertificatePrompt({
       }
     }
   }, [isGuest, stageId]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleGenerate = useCallback(async () => {
     setLoading(true);

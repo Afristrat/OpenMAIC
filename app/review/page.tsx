@@ -200,9 +200,8 @@ function ReviewPage() {
     setTotalCount(cards.length);
     setCurrentIndex(0);
     setPhase(cards.length > 0 ? 'question' : 'empty');
-  }, [user, isGuest]);
+  }, [user]);
 
-  /* eslint-disable react-hooks/set-state-in-effect -- Cards loaded async after auth resolves */
   useEffect(() => {
     if (!authLoading) {
       loadDueCards();

@@ -86,11 +86,9 @@ export default function SkillsPage(): React.ReactElement {
     }
   }, [locale]);
 
-  /* eslint-disable react-hooks/set-state-in-effect -- Async data loading on locale change */
   useEffect(() => {
     void fetchSkills();
   }, [fetchSkills]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   const toggleDetails = (skillId: string): void => {
     setExpandedSkill((prev) => (prev === skillId ? null : skillId));
@@ -204,7 +202,6 @@ export default function SkillsPage(): React.ReactElement {
                                 style={{ backgroundColor: agent.color, color: '#fff' }}
                               >
                                 {agent.avatar.startsWith('/') || agent.avatar.startsWith('http') ? (
-                                  /* eslint-disable-next-line @next/next/no-img-element */
                                   <img
                                     src={agent.avatar}
                                     alt={agent.name}

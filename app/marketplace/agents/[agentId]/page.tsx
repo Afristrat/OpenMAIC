@@ -243,7 +243,6 @@ export default function AgentDetailPage() {
         >
           {agent.avatar ? (
             agent.avatar.startsWith('/') || agent.avatar.startsWith('http') ? (
-              /* eslint-disable-next-line @next/next/no-img-element */
               <img src={agent.avatar} alt={agent.name} className="h-full w-full rounded-full object-cover" />
             ) : (
               <span>{agent.avatar}</span>

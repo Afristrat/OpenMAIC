@@ -121,7 +121,7 @@ export default function PayPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [provider, selectedProvider, phone, plan, billing, t]);
+  }, [provider, selectedProvider, phone, plan, billing, t, currentOrg?.id]);
 
   if (isOrgLoading) {
     return (

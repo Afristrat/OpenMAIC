@@ -4,7 +4,7 @@
  * POST /api/organizations/[orgId]/invite — create invitation (email + role), return { token, inviteUrl }
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 import type { OrgMemberRole } from '@/lib/supabase/types';

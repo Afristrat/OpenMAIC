@@ -105,7 +105,8 @@ export default function ReportsPage() {
   const [datePreset, setDatePreset] = useState<DatePreset>('30d');
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
-  const [userRole, setUserRole] = useState<OrgMemberRole | null>(null);
+  // Fetched for future admin/manager-gated report actions — not yet wired.
+  const [_userRole, setUserRole] = useState<OrgMemberRole | null>(null);
 
   const fetchReport = useCallback(
     async (preset: DatePreset) => {

@@ -9,7 +9,7 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import { tool, jsonSchema } from 'ai';
+import { jsonSchema } from 'ai';
 import { createLogger } from '@/lib/logger';
 
 import type { Tool } from 'ai';
@@ -252,7 +252,6 @@ export function getExternalTools(): Record<string, Tool> {
     for (const mcpTool of server.tools) {
       const qualifiedName = `${serverId}__${mcpTool.name}`;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- MCP tool schemas are dynamic
       tools[qualifiedName] = {
         description: mcpTool.description ?? `Tool "${mcpTool.name}" from MCP server "${server.config.name}"`,
         parameters: jsonSchema(mcpTool.inputSchema),

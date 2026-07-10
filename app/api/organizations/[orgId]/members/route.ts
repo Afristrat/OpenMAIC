@@ -14,8 +14,6 @@ import type { OrgMemberRole } from '@/lib/supabase/types';
 import { validateBody } from '@/lib/api/validate';
 import { orgMembersInviteSchema, orgMembersPatchSchema, orgMembersDeleteSchema } from '@/lib/api/schemas';
 
-const VALID_ROLES: OrgMemberRole[] = ['admin', 'manager', 'formateur', 'apprenant'];
-
 async function getUserMembership(
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
   orgId: string,
@@ -106,8 +104,6 @@ export async function POST(
   const bodyValidation = validateBody(orgMembersInviteSchema, rawBody);
   if (!bodyValidation.success) return bodyValidation.response;
   const body = bodyValidation.data;
-
-  const email = body.email.trim().toLowerCase();
 
   const role: OrgMemberRole = body.role ?? 'apprenant';
 

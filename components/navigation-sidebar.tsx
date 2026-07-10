@@ -89,7 +89,6 @@ export function NavigationSidebar(): React.ReactElement {
   }, [isSyncAuthenticated, isSyncing]);
 
   // Hydrate collapsed state from localStorage
-  /* eslint-disable react-hooks/set-state-in-effect -- Hydration from localStorage must happen in effect */
   useEffect(() => {
     try {
       const stored = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
@@ -103,7 +102,6 @@ export function NavigationSidebar(): React.ReactElement {
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   const toggleCollapsed = useCallback(() => {
     setCollapsed((prev) => {

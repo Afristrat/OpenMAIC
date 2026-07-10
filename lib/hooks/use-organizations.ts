@@ -63,11 +63,9 @@ export function useOrganizations(): UseOrganizationsReturn {
     }
   }, []);
 
-  /* eslint-disable react-hooks/set-state-in-effect -- Async hydration on mount */
   useEffect(() => {
     fetchOrganizations();
   }, [fetchOrganizations]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   const setCurrentOrg = useCallback((org: OrganizationWithRole | null) => {
     setCurrentOrgState(org);

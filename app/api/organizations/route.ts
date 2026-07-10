@@ -12,15 +12,6 @@ import type { OrganizationInsert, OrgSector } from '@/lib/supabase/types';
 import { validateBody } from '@/lib/api/validate';
 import { organizationsCreateSchema } from '@/lib/api/schemas';
 
-const VALID_SECTORS: OrgSector[] = [
-  'healthcare',
-  'legal',
-  'tech',
-  'finance',
-  'education',
-  'industry',
-];
-
 export async function GET(): Promise<Response> {
   const supabase = await createServerSupabaseClient();
   const {

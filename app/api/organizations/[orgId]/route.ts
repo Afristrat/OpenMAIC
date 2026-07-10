@@ -9,18 +9,9 @@
 import { NextRequest } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
-import type { OrgSector, OrgMemberRole } from '@/lib/supabase/types';
+import type { OrgMemberRole } from '@/lib/supabase/types';
 import { validateBody } from '@/lib/api/validate';
 import { organizationPatchSchema } from '@/lib/api/schemas';
-
-const VALID_SECTORS: OrgSector[] = [
-  'healthcare',
-  'legal',
-  'tech',
-  'finance',
-  'education',
-  'industry',
-];
 
 async function getUserMembership(
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,

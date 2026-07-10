@@ -56,11 +56,9 @@ export default function PluginsPage(): React.ReactElement {
     }
   }, [locale]);
 
-  /* eslint-disable react-hooks/set-state-in-effect -- Async data loading on locale change */
   useEffect(() => {
     void fetchPlugins();
   }, [fetchPlugins]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   const openPlugin = (plugin: PluginData): void => {
     setActivePlugin(plugin);

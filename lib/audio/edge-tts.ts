@@ -12,9 +12,6 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('EdgeTTS');
 
-const EDGE_WS_URL =
-  'wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=6A5AA1D4EAFF4E9FB37E23D68491D6F4';
-
 const EDGE_ORIGIN = 'chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold';
 
 /**
@@ -37,8 +34,6 @@ export async function generateEdgeTTSAudio(
 
   // Use the REST-like approach via fetch to the Edge cognitive services endpoint
   // This avoids WebSocket complexity and works in server-side Node.js
-  const audioChunks: Uint8Array[] = [];
-
   try {
     // The Bing speech synthesis endpoint accepts POST with SSML
     const response = await fetch(

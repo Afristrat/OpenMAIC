@@ -125,11 +125,9 @@ export default function MarketplacePage() {
     }
   }, [debouncedSearch, filterTag, filterLevel, filterLanguage, sortBy]);
 
-  /* eslint-disable react-hooks/set-state-in-effect -- Async data loading on filter change */
   useEffect(() => {
     fetchAgents(1);
   }, [fetchAgents]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleImport = useCallback(async (agent: RankedAgent) => {
     // Fetch full agent details to get persona
@@ -333,7 +331,6 @@ export default function MarketplacePage() {
                 >
                   {agent.avatar ? (
                     agent.avatar.startsWith('/') || agent.avatar.startsWith('http') ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
                       <img src={agent.avatar} alt={agent.name} className="h-full w-full rounded-full object-cover" />
                     ) : (
                       <span>{agent.avatar}</span>

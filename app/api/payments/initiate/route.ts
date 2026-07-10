@@ -50,9 +50,6 @@ function buildConfig(provider: PaymentProvider): PaymentConfig {
   }
 }
 
-const VALID_PROVIDERS = new Set<string>(['cinetpay', 'orange-money', 'wave', 'paypal']);
-const VALID_CURRENCIES = new Set<string>(['MAD', 'XOF', 'TND', 'DZD', 'USD', 'EUR']);
-
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const auth = await requireAuth(request);
   if (auth.response) return auth.response;

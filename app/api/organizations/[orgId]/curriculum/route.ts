@@ -9,16 +9,9 @@
 import { NextRequest } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
-import type { OrgMemberRole, CurriculumRelationType } from '@/lib/supabase/types';
+import type { OrgMemberRole } from '@/lib/supabase/types';
 import { validateBody } from '@/lib/api/validate';
 import { curriculumCreateSchema, curriculumDeleteSchema } from '@/lib/api/schemas';
-
-const VALID_RELATION_TYPES: CurriculumRelationType[] = [
-  'prerequisite',
-  'follows',
-  'deepens',
-  'reviews',
-];
 
 async function getUserMembership(
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,

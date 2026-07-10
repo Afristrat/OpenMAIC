@@ -143,11 +143,9 @@ export default function OrgAdminPage() {
     }
   }, [orgId]);
 
-  /* eslint-disable react-hooks/set-state-in-effect -- Async data loading on mount */
   useEffect(() => {
     Promise.all([fetchOrg(), fetchMembers(), fetchMetrics()]).then(() => setIsLoading(false));
   }, [fetchOrg, fetchMembers, fetchMetrics]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleSaveSettings = async () => {
     if (!isAdmin) return;
