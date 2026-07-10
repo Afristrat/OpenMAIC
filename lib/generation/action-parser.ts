@@ -109,11 +109,19 @@ export function parseActionsFromStructuredOutput(
           string,
           unknown
         >;
-        actions.push({
+        const action = {
           id: (typedItem.action_id || typedItem.tool_id || `action_${nanoid(8)}`) as string,
           type: actionName as Action['type'],
           ...actionParams,
-        } as Action);
+        } as Action;
+        // `widget_setState.state` is required by the type, but the LLM may omit it.
+        // The former TeacherAction→Action converter always defaulted it to `{}`;
+        // restore that guard so a missing `state` can't reach the iframe as
+        // `state: undefined` (SET_WIDGET_STATE handlers dereference it).
+        if (action.type === 'widget_setState' && action.state == null) {
+          action.state = {};
+        }
+        actions.push(action);
       } catch (_e) {
         log.warn('Invalid action item, skipping:', JSON.stringify(typedItem).slice(0, 100));
       }
@@ -127,28 +135,27 @@ export function parseActionsFromStructuredOutput(
   }
 
   // Step 6: Filter out slide-only actions for non-slide scenes (defense in depth)
+  let result = actions;
   if (sceneType && sceneType !== 'slide') {
-    const before = actions.length;
-    const filtered = actions.filter((a) => !SLIDE_ONLY_ACTIONS.includes(a.type as ActionType));
-    if (filtered.length < before) {
-      log.info(`Stripped ${before - filtered.length} slide-only action(s) from ${sceneType} scene`);
+    const before = result.length;
+    result = result.filter((a) => !SLIDE_ONLY_ACTIONS.includes(a.type as ActionType));
+    if (result.length < before) {
+      log.info(`Stripped ${before - result.length} slide-only action(s) from ${sceneType} scene`);
     }
-    return filtered;
   }
 
   // Step 7: Filter by allowedActions whitelist (defense in depth for role-based isolation)
   // Catches hallucinated actions not in the agent's permitted set, e.g. a student agent
-  // mimicking spotlight/laser after seeing teacher actions in chat history.
+  // mimicking spotlight/laser after seeing widget actions in chat history.
   if (allowedActions && allowedActions.length > 0) {
-    const before = actions.length;
-    const filtered = actions.filter((a) => a.type === 'speech' || allowedActions.includes(a.type));
-    if (filtered.length < before) {
+    const before = result.length;
+    result = result.filter((a) => a.type === 'speech' || allowedActions.includes(a.type));
+    if (result.length < before) {
       log.info(
-        `Stripped ${before - filtered.length} disallowed action(s) by allowedActions whitelist`,
+        `Stripped ${before - result.length} disallowed action(s) by allowedActions whitelist`,
       );
     }
-    return filtered;
   }
 
-  return actions;
+  return result;
 }

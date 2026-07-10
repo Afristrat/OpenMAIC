@@ -1,4 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
+import { ASR_PROVIDERS } from '@/lib/audio/constants';
+import { normalizeASRUploadAudio } from '@/lib/audio/wav-utils';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('AudioRecorder');
@@ -6,20 +8,23 @@ const log = createLogger('AudioRecorder');
 // TypeScript declarations for Web Speech API
 declare global {
   interface Window {
+    // optional `?` to match @assistant-ui/core's global Window augmentation (identical modifiers)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Web Speech API not typed in lib.dom
-    SpeechRecognition: any;
+    SpeechRecognition?: any;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Web Speech API not typed in lib.dom
-    webkitSpeechRecognition: any;
+    webkitSpeechRecognition?: any;
   }
 }
 
 export interface UseAudioRecorderOptions {
   onTranscription?: (text: string) => void;
   onError?: (error: string) => void;
+  /** When true and using browser-native ASR, recognition stays active until explicitly stopped. */
+  continuous?: boolean;
 }
 
 export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
-  const { onTranscription, onError } = options;
+  const { onTranscription, onError, continuous = false } = options;
 
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -40,15 +45,22 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
 
       try {
         const formData = new FormData();
-        formData.append('audio', audioBlob, 'recording.webm');
 
         // Get current ASR configuration from settings store
         // Note: This requires importing useSettingsStore in browser context
         if (typeof window !== 'undefined') {
           const { useSettingsStore } = await import('@/lib/store/settings');
           const { asrProviderId, asrLanguage, asrProvidersConfig } = useSettingsStore.getState();
+          const uploadAudio = await normalizeASRUploadAudio(asrProviderId, audioBlob);
+          formData.append('audio', uploadAudio.blob, uploadAudio.fileName);
 
           formData.append('providerId', asrProviderId);
+          formData.append(
+            'modelId',
+            asrProvidersConfig?.[asrProviderId]?.modelId ||
+              ASR_PROVIDERS[asrProviderId as keyof typeof ASR_PROVIDERS]?.defaultModelId ||
+              '',
+          );
           formData.append('language', asrLanguage);
 
           // Append API key and base URL if configured
@@ -56,9 +68,13 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
           if (providerConfig?.apiKey?.trim()) {
             formData.append('apiKey', providerConfig.apiKey);
           }
-          if (providerConfig?.baseUrl?.trim()) {
-            formData.append('baseUrl', providerConfig.baseUrl);
+          const effectiveBaseUrl =
+            providerConfig?.baseUrl?.trim() || providerConfig?.customDefaultBaseUrl || '';
+          if (effectiveBaseUrl) {
+            formData.append('baseUrl', effectiveBaseUrl);
           }
+        } else {
+          formData.append('audio', audioBlob, 'recording.webm');
         }
 
         const response = await fetch('/api/transcription', {
@@ -107,7 +123,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
           const recognition = new SpeechRecognition();
 
           recognition.lang = asrLanguage || 'zh-CN';
-          recognition.continuous = false;
+          recognition.continuous = continuous;
           recognition.interimResults = false;
 
           recognition.onstart = () => {
@@ -121,12 +137,25 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
           };
 
           recognition.onresult = (event: {
+            resultIndex: number;
             results: {
-              [index: number]: { [index: number]: { transcript: string } };
+              [index: number]: {
+                isFinal: boolean;
+                [index: number]: { transcript: string };
+              };
+              length: number;
             };
           }) => {
-            const transcript = event.results[0][0].transcript;
-            onTranscription?.(transcript);
+            let transcript = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+              const result = event.results[i];
+              if (result.isFinal && result[0]?.transcript) {
+                transcript += result[0].transcript;
+              }
+            }
+            if (transcript) {
+              onTranscription?.(transcript);
+            }
           };
 
           recognition.onerror = (event: { error: string }) => {
@@ -232,7 +261,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
       log.error('Failed to start recording:', error);
       onError?.('无法访问麦克风，请检查权限设置');
     }
-  }, [onTranscription, onError, transcribeAudio]);
+  }, [onTranscription, onError, transcribeAudio, continuous]);
 
   // Stop recording
   const stopRecording = useCallback(() => {

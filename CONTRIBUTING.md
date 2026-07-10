@@ -8,11 +8,11 @@ Thank you for your interest in contributing to OpenMAIC! This guide will help yo
 | --- | --- |
 | **Bug fix** | Open a PR directly (link the issue if one exists) |
 | **Extending existing features** (e.g. adding a new model provider, new TTS engine) | Open a PR directly |
-| **New feature or architecture change** | Start a [GitHub Discussion](https://github.com/THU-MAIC/OpenMAIC/discussions) or ask in [Discord](https://discord.gg/PtZaaTbH) **before** opening a PR |
+| **New feature or architecture change** | Start a [GitHub Discussion](https://github.com/THU-MAIC/OpenMAIC/discussions) or ask in [Discord](https://discord.gg/p8Pf2r3SaG) **before** opening a PR |
 | **Design / UI change** | Discuss in a GitHub Discussion or Discord first — include mockups or screenshots |
 | **Refactor-only PR** | Not accepted unless a maintainer explicitly requests it |
 | **Documentation** | Open a PR directly |
-| **Question** | Ask in [Discord](https://discord.gg/PtZaaTbH) |
+| **Question** | Ask in [Discord](https://discord.gg/p8Pf2r3SaG) |
 
 ## Claiming Issues
 
@@ -134,10 +134,9 @@ AI-assisted PRs are held to the same quality standard as any other PR. Community
 OpenMAIC/
 ├── app/              # Next.js app router pages and API routes
 ├── components/       # React components
-├── lib/              # Shared utilities and core logic
+├── lib/              # Shared utilities and core logic (i18n in lib/i18n/locales/)
 ├── packages/         # Internal packages (mathml2omml, pptxgenjs)
 ├── public/           # Static assets
-├── messages/         # i18n translation files
 └── .github/          # Issue templates, PR template, CI workflows
 ```
 
@@ -160,4 +159,4 @@ Please report security vulnerabilities through [GitHub Security Advisories](http
 
 ## License
 
-By contributing to OpenMAIC, you agree that your contributions will be licensed under the [AGPL-3.0 License](LICENSE).
+By contributing to OpenMAIC, you agree that your contributions will be licensed under the [MIT License](LICENSE).

@@ -5,35 +5,39 @@ import { type GenerateClassroomInput } from '@/lib/server/classroom-generation';
 import { runClassroomGenerationJob } from '@/lib/server/classroom-job-runner';
 import { createClassroomGenerationJob } from '@/lib/server/classroom-job-store';
 import { buildRequestOrigin } from '@/lib/server/classroom-storage';
-import { requireAuth } from '@/lib/api/auth';
-import { validateBody } from '@/lib/api/validate';
-import { generateClassroomSchema } from '@/lib/api/schemas';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('GenerateClassroom API');
 
 export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAuth(req);
-  if (auth.response) return auth.response;
-
+  let requirementSnippet: string | undefined;
   try {
-    const rawInput = await req.json();
-    const validation = validateBody(generateClassroomSchema, rawInput);
-    if (!validation.success) return validation.response;
-
+    const rawBody = (await req.json()) as Partial<GenerateClassroomInput>;
+    requirementSnippet = rawBody.requirement?.substring(0, 60);
     const body: GenerateClassroomInput = {
-      requirement: validation.data.requirement,
-      ...(validation.data.pdfContent ? { pdfContent: validation.data.pdfContent } : {}),
-      ...(validation.data.language ? { language: validation.data.language } : {}),
-      ...(validation.data.enableWebSearch != null ? { enableWebSearch: validation.data.enableWebSearch } : {}),
-      ...(validation.data.enableImageGeneration != null
-        ? { enableImageGeneration: validation.data.enableImageGeneration }
+      requirement: rawBody.requirement || '',
+      ...(rawBody.pdfContent ? { pdfContent: rawBody.pdfContent } : {}),
+
+      ...(rawBody.enableWebSearch != null ? { enableWebSearch: rawBody.enableWebSearch } : {}),
+      ...(rawBody.webSearchProviderId ? { webSearchProviderId: rawBody.webSearchProviderId } : {}),
+      ...(rawBody.webSearchApiKey ? { webSearchApiKey: rawBody.webSearchApiKey } : {}),
+      ...(rawBody.baiduSubSources ? { baiduSubSources: rawBody.baiduSubSources } : {}),
+      ...(rawBody.enableImageGeneration != null
+        ? { enableImageGeneration: rawBody.enableImageGeneration }
         : {}),
-      ...(validation.data.enableVideoGeneration != null
-        ? { enableVideoGeneration: validation.data.enableVideoGeneration }
+      ...(rawBody.enableVideoGeneration != null
+        ? { enableVideoGeneration: rawBody.enableVideoGeneration }
         : {}),
-      ...(validation.data.enableTTS != null ? { enableTTS: validation.data.enableTTS } : {}),
-      ...(validation.data.agentMode ? { agentMode: validation.data.agentMode } : {}),
+      ...(rawBody.enableTTS != null ? { enableTTS: rawBody.enableTTS } : {}),
+      ...(rawBody.agentMode ? { agentMode: rawBody.agentMode } : {}),
     };
+    const { requirement } = body;
+
+    if (!requirement) {
+      return apiError('MISSING_REQUIRED_FIELD', 400, 'Missing required field: requirement');
+    }
 
     const baseUrl = buildRequestOrigin(req);
     const jobId = nanoid(10);
@@ -54,6 +58,10 @@ export async function POST(req: NextRequest) {
       202,
     );
   } catch (error) {
+    log.error(
+      `Classroom generation job creation failed [requirement="${requirementSnippet ?? 'unknown'}..."]:`,
+      error,
+    );
     return apiError(
       'INTERNAL_ERROR',
       500,

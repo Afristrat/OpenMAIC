@@ -14,36 +14,38 @@ import {
   buildVisionUserContent,
 } from '@/lib/generation/generation-pipeline';
 import type { AgentInfo } from '@/lib/generation/generation-pipeline';
-import type { SceneOutline, PdfImage, ImageMapping } from '@/lib/types/generation';
+import type {
+  SceneOutline,
+  PdfImage,
+  ImageMapping,
+  UserRequirements,
+} from '@/lib/types/generation';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
-import { resolveModelFromHeaders } from '@/lib/server/resolve-model';
-import { requireAuth } from '@/lib/api/auth';
-import { validateBody } from '@/lib/api/validate';
-import { generateSceneContentSchema } from '@/lib/api/schemas';
+import { llmApiError } from '@/lib/server/llm-error-response';
+import { resolveModelFromRequest } from '@/lib/server/resolve-model';
+import { resolveVocationalActive } from '@/lib/config/feature-flags';
 
 const log = createLogger('Scene Content API');
 
 export const maxDuration = 300;
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAuth(req);
-  if (auth.response) return auth.response;
-
+  let outlineTitle: string | undefined;
+  let resolvedModelString: string | undefined;
   try {
-    const rawBody = await req.json();
-    const validation = validateBody(generateSceneContentSchema, rawBody);
-    if (!validation.success) return validation.response;
-
+    const body = await req.json();
     const {
       outline: rawOutline,
       allOutlines,
       pdfImages,
       imageMapping,
-      stageInfo,
+      stageInfo: _stageInfo,
       stageId,
       agents,
-    } = rawBody as {
+      languageDirective,
+      requirements,
+    } = body as {
       outline: SceneOutline;
       allOutlines: SceneOutline[];
       pdfImages?: PdfImage[];
@@ -51,21 +53,43 @@ export async function POST(req: NextRequest) {
       stageInfo: {
         name: string;
         description?: string;
-        language?: string;
         style?: string;
       };
       stageId: string;
       agents?: AgentInfo[];
+      languageDirective?: string;
+      requirements?: UserRequirements;
     };
 
-    // Ensure outline has language from stageInfo (fallback for older outlines)
-    const outline: SceneOutline = {
-      ...rawOutline,
-      language: rawOutline.language || (stageInfo?.language as SceneOutline['language']) || 'fr-FR',
-    };
+    // Validate required fields
+    if (!rawOutline) {
+      return apiError('MISSING_REQUIRED_FIELD', 400, 'outline is required');
+    }
+    if (!allOutlines || allOutlines.length === 0) {
+      return apiError(
+        'MISSING_REQUIRED_FIELD',
+        400,
+        'allOutlines is required and must not be empty',
+      );
+    }
+    if (!stageId) {
+      return apiError('MISSING_REQUIRED_FIELD', 400, 'stageId is required');
+    }
 
-    // ── Model resolution from request headers ──
-    const { model: languageModel, modelInfo, modelString } = resolveModelFromHeaders(req);
+    const outline: SceneOutline = { ...rawOutline };
+
+    // ── Model resolution from request headers/body ──
+    // Route per scene-content type (e.g. `scene-content:quiz`); getStageModel
+    // falls back to the base `scene-content` route when the type is unrouted.
+    const stage = outline.type ? (`scene-content:${outline.type}` as const) : 'scene-content';
+    const {
+      model: languageModel,
+      modelInfo,
+      modelString,
+      thinkingConfig,
+    } = await resolveModelFromRequest(req, body, stage);
+    outlineTitle = rawOutline?.title;
+    resolvedModelString = modelString;
 
     // Detect vision capability
     const hasVision = !!modelInfo?.capabilities?.vision;
@@ -88,8 +112,11 @@ export async function POST(req: NextRequest) {
               },
             ],
             maxOutputTokens: modelInfo?.outputWindow,
+            maxRetries: 0,
           },
           'scene-content',
+          undefined,
+          thinkingConfig,
         );
         return result.text;
       }
@@ -99,14 +126,20 @@ export async function POST(req: NextRequest) {
           system: systemPrompt,
           prompt: userPrompt,
           maxOutputTokens: modelInfo?.outputWindow,
+          maxRetries: 0,
         },
         'scene-content',
+        undefined,
+        thinkingConfig,
       );
       return result.text;
     };
 
     // ── Apply fallbacks ──
-    const effectiveOutline = applyOutlineFallbacks(outline, !!languageModel);
+    const vocationalActive = resolveVocationalActive(requirements);
+    const effectiveOutline = applyOutlineFallbacks(outline, !!languageModel, {
+      allowProceduralSkill: vocationalActive,
+    });
 
     // ── Filter images assigned to this outline ──
     let assignedImages: PdfImage[] | undefined;
@@ -130,16 +163,21 @@ export async function POST(req: NextRequest) {
       `Generating content: "${effectiveOutline.title}" (${effectiveOutline.type}) [model=${modelString}]`,
     );
 
-    const content = await generateSceneContent(
-      effectiveOutline,
-      aiCall,
+    const userLocale = req.headers?.get('x-user-locale') ?? '';
+
+    const content = await generateSceneContent(effectiveOutline, aiCall, {
       assignedImages,
       imageMapping,
-      effectiveOutline.type === 'pbl' ? languageModel : undefined,
-      hasVision,
+      languageModel: effectiveOutline.type === 'pbl' ? languageModel : undefined,
+      visionEnabled: hasVision,
       generatedMediaMapping,
       agents,
-    );
+      languageDirective,
+      thinkingConfig,
+      targetLanguage: userLocale || undefined,
+      userRequirements: requirements,
+      allowProceduralSkill: vocationalActive,
+    });
 
     if (!content) {
       log.error(`Failed to generate content for: "${effectiveOutline.title}"`);
@@ -155,7 +193,10 @@ export async function POST(req: NextRequest) {
 
     return apiSuccess({ content, effectiveOutline });
   } catch (error) {
-    log.error('Scene content generation error:', error);
-    return apiError('INTERNAL_ERROR', 500, error instanceof Error ? error.message : String(error));
+    log.error(
+      `Scene content generation failed [scene="${outlineTitle ?? 'unknown'}", model=${resolvedModelString ?? 'unknown'}]:`,
+      error,
+    );
+    return llmApiError(error);
   }
 }

@@ -1,4 +1,4 @@
-import type { PPTElement } from '@/lib/types/slides';
+import type { PPTElement } from '@openmaic/dsl';
 
 export function useOrderElement() {
   /**
@@ -35,6 +35,8 @@ export function useOrderElement() {
       const { minLevel, maxLevel } = getCombineElementLevelRange(elementList, combineElementList);
 
       // Already at the top level, cannot move further
+      if (maxLevel >= elementList.length - 1) return;
+
       const nextElement = copyOfElementList[maxLevel + 1];
       const movedElementList = copyOfElementList.splice(minLevel, combineElementList.length);
 

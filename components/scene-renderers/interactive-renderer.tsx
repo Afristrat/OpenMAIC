@@ -1,72 +1,69 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useId, useMemo, useRef, useEffect } from 'react';
 import type { InteractiveContent } from '@/lib/types/stage';
+import { useInteractiveIframePool } from '@/lib/store/interactive-iframe-pool';
+import { patchHtmlForIframe } from '@/lib/utils/iframe';
 
 interface InteractiveRendererProps {
   readonly content: InteractiveContent;
-  readonly mode: 'autonomous' | 'playback';
   readonly sceneId: string;
 }
 
-export function InteractiveRenderer({ content, mode: _mode, sceneId }: InteractiveRendererProps) {
+/**
+ * Placeholder for an interactive scene. The actual iframe lives in the stable
+ * `InteractiveIframeHost` (keyed by sceneId) so it survives remounts (#619);
+ * this component only (1) registers the scene's content in the keep-alive pool,
+ * (2) marks it active/visible while mounted, and (3) reports its on-screen rect
+ * so the host can position the iframe over this slot. On unmount it hides the
+ * iframe but never evicts it — that preserves the document for a zero-reload
+ * return on the next mount.
+ */
+export function InteractiveRenderer({ content, sceneId }: InteractiveRendererProps) {
+  const slotRef = useRef<HTMLDivElement>(null);
+  // Unique per mounted placeholder instance — its visibility ownership token, so
+  // a stale unmount during the mode cross-fade can't hide a newer instance.
+  const owner = useId();
+  const mount = useInteractiveIframePool((s) => s.mount);
+  const setRect = useInteractiveIframePool((s) => s.setRect);
+  const claim = useInteractiveIframePool((s) => s.claim);
+  const release = useInteractiveIframePool((s) => s.release);
+  const setActive = useInteractiveIframePool((s) => s.setActive);
+
   const patchedHtml = useMemo(
     () => (content.html ? patchHtmlForIframe(content.html) : undefined),
     [content.html],
   );
 
-  return (
-    <div className="w-full h-full relative">
-      <iframe
-        srcDoc={patchedHtml}
-        src={patchedHtml ? undefined : content.url}
-        className="absolute inset-0 w-full h-full border-0"
-        title={`Interactive Scene ${sceneId}`}
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-      />
-    </div>
-  );
-}
+  // Register / activate / claim visibility while mounted; release (keep-alive) on
+  // unmount. A content change re-runs this and rebuilds the iframe — the only
+  // intended reload path.
+  useEffect(() => {
+    mount(sceneId, {
+      srcDoc: patchedHtml,
+      src: patchedHtml ? undefined : content.url,
+    });
+    setActive(sceneId);
+    claim(sceneId, owner);
+    return () => release(sceneId, owner);
+  }, [sceneId, owner, patchedHtml, content.url, mount, setActive, claim, release]);
 
-/**
- * Patch embedded HTML to display correctly inside an iframe.
- *
- * Fixes:
- * - min-h-screen / h-screen → use 100% of iframe viewport
- * - Ensure html/body fill the iframe with no overflow issues
- * - Canvas elements use container sizing instead of viewport
- */
-function patchHtmlForIframe(html: string): string {
-  const iframeCss = `<style data-iframe-patch>
-  html, body {
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    overflow-x: hidden;
-    overflow-y: auto;
-  }
-  /* Fix min-h-screen: in iframes 100vh is the iframe height, which is correct,
-     but ensure body actually fills it */
-  body { min-height: 100vh; }
-</style>`;
+  // Track this slot's screen rect for the host. rAF loop mirrors useTrackedRect:
+  // one getBoundingClientRect read resolves canvas scale, viewport offset and
+  // scroll, following the box through every resize / layout change.
+  useEffect(() => {
+    let raf = 0;
+    const measure = () => {
+      const node = slotRef.current;
+      if (node) {
+        const r = node.getBoundingClientRect();
+        setRect(sceneId, { left: r.left, top: r.top, width: r.width, height: r.height });
+      }
+      raf = requestAnimationFrame(measure);
+    };
+    raf = requestAnimationFrame(measure);
+    return () => cancelAnimationFrame(raf);
+  }, [sceneId, setRect]);
 
-  // Insert right after <head> or at the start of the document
-  const headIdx = html.indexOf('<head>');
-  if (headIdx !== -1) {
-    const insertPos = headIdx + 6; // after <head>
-    return html.substring(0, insertPos) + '\n' + iframeCss + html.substring(insertPos);
-  }
-
-  const headWithAttrs = html.indexOf('<head ');
-  if (headWithAttrs !== -1) {
-    const closeAngle = html.indexOf('>', headWithAttrs);
-    if (closeAngle !== -1) {
-      const insertPos = closeAngle + 1;
-      return html.substring(0, insertPos) + '\n' + iframeCss + html.substring(insertPos);
-    }
-  }
-
-  // Fallback: prepend
-  return iframeCss + html;
+  return <div ref={slotRef} className="w-full h-full" aria-hidden />;
 }

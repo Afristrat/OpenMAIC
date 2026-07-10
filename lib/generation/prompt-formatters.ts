@@ -5,62 +5,6 @@
 import type { PdfImage } from '@/lib/types/generation';
 import type { AgentInfo, SceneGenerationContext } from './pipeline-types';
 
-/** Map a language code to its human-readable name for prompt injection */
-const LANGUAGE_NAME_MAP: Record<string, string> = {
-  'fr-FR': 'French',
-  'ar-MA': 'Arabic',
-  'en-US': 'English',
-  'zh-CN': 'Chinese',
-};
-
-export function getLanguageName(languageCode: string): string {
-  return LANGUAGE_NAME_MAP[languageCode] || 'English';
-}
-
-/**
- * Returns language-specific quality rules to inject into generation prompts.
- * These rules are invisible to the user — injected server-side behind the scenes.
- */
-export function getLanguageQualityRules(languageCode: string): string {
-  if (languageCode === 'fr-FR') {
-    return `
-## Exigences Qualité Linguistique (appliquées automatiquement)
-
-- Accords sujet-verbe et adjectif-nom TOUJOURS respectés
-- Accents sur les MAJUSCULES obligatoires : É, È, À, Ç, Ê, Ô
-- Ponctuation française : espace insécable AVANT : ; ! ?
-- Guillemets français « » pas ""
-- Tirets cadratins — pour les incises
-- Précision lexicale : terme EXACT, pas d'approximation
-- Éviter les anglicismes si un équivalent français existe (ex: "retour d'information" pas "feedback")
-- Termes techniques sans équivalent restent en anglais (API, LLM, etc.)
-- Phrases 15-25 mots, 30 maximum
-- Un concept par phrase, progression du simple vers le complexe
-- Registre professionnel mais accessible, ni académique ni familier
-- Terminologie andragogique : "apprenant" pas "élève", "formateur" pas "professeur"
-- Exemples contextualisés Maroc/Afrique quand pertinent
-- Monnaie : MAD, pas EUR/USD sauf contexte international
-`;
-  }
-
-  if (languageCode === 'ar-MA') {
-    return `
-## متطلبات الجودة اللغوية (تُطبَّق تلقائيًا)
-
-- استخدام العربية الفصحى المعاصرة بأسلوب سلس وطبيعي
-- لا ترجمة حرفية من الإنجليزية — صياغة عربية أصلية
-- المصطلحات التقنية بدون مقابل عربي مُعتمَد تبقى بالإنجليزية
-- جمل واضحة ومباشرة، 15-25 كلمة
-- استخدام أدوات الربط المنطقية (لذلك، بالتالي، من ناحية أخرى)
-- علامات الترقيم العربية الصحيحة
-- مصطلحات أندراغوجية: "متعلّم" وليس "تلميذ"، "مكوّن" وليس "أستاذ"
-- أمثلة من السياق المغربي/الأفريقي عند الاقتضاء
-`;
-  }
-
-  return ''; // English and other languages: no additional rules
-}
-
 /** Build a course context string for injection into action prompts */
 export function buildCourseContext(ctx?: SceneGenerationContext): string {
   if (!ctx) return '';
@@ -131,31 +75,27 @@ export function formatTeacherPersonaForPrompt(agents?: AgentInfo[]): string {
  * Format a single PdfImage description for prompt inclusion.
  * Includes dimension/aspect-ratio info when available.
  */
-export function formatImageDescription(img: PdfImage, language: string): string {
+export function formatImageDescription(img: PdfImage): string {
   let dimInfo = '';
   if (img.width && img.height) {
     const ratio = (img.width / img.height).toFixed(2);
-    dimInfo = ` | 尺寸: ${img.width}×${img.height} (宽高比${ratio})`;
+    dimInfo = ` | size: ${img.width}×${img.height} (aspect ratio ${ratio})`;
   }
   const desc = img.description ? ` | ${img.description}` : '';
-  return language === 'zh-CN'
-    ? `- **${img.id}**: 来自PDF第${img.pageNumber}页${dimInfo}${desc}`
-    : `- **${img.id}**: from PDF page ${img.pageNumber}${dimInfo}${desc}`;
+  return `- **${img.id}**: from PDF page ${img.pageNumber}${dimInfo}${desc}`;
 }
 
 /**
  * Format a short image placeholder for vision mode.
  * Only ID + page + dimensions + aspect ratio (no description), since the model can see the actual image.
  */
-export function formatImagePlaceholder(img: PdfImage, language: string): string {
+export function formatImagePlaceholder(img: PdfImage): string {
   let dimInfo = '';
   if (img.width && img.height) {
     const ratio = (img.width / img.height).toFixed(2);
-    dimInfo = ` | 尺寸: ${img.width}×${img.height} (宽高比${ratio})`;
+    dimInfo = ` | size: ${img.width}×${img.height} (aspect ratio ${ratio})`;
   }
-  return language === 'zh-CN'
-    ? `- **${img.id}**: PDF第${img.pageNumber}页的图片${dimInfo} [参见附图]`
-    : `- **${img.id}**: image from PDF page ${img.pageNumber}${dimInfo} [see attached]`;
+  return `- **${img.id}**: image from PDF page ${img.pageNumber}${dimInfo} [see attached]`;
 }
 
 /**
@@ -177,7 +117,7 @@ export function buildVisionUserContent(
       let dimInfo = '';
       if (img.width && img.height) {
         const ratio = (img.width / img.height).toFixed(2);
-        dimInfo = ` (${img.width}×${img.height}, 宽高比${ratio})`;
+        dimInfo = ` (${img.width}×${img.height}, aspect ratio ${ratio})`;
       }
       parts.push({ type: 'text', text: `\n**${img.id}**${dimInfo}:` });
       // Strip data URI prefix — AI SDK only accepts http(s) URLs or raw base64
@@ -194,4 +134,17 @@ export function buildVisionUserContent(
     }
   }
   return parts;
+}
+
+/**
+ * Build language instruction text from course-level directive and optional per-scene note.
+ * Used by scene content and action generators to inject into prompt templates.
+ */
+export function buildLanguageText(directive?: string, sceneNote?: string): string {
+  if (!directive && !sceneNote) return '';
+  let text = directive || '';
+  if (sceneNote) {
+    text += (text ? '\n\n' : '') + `Additional language note for this scene: ${sceneNote}`;
+  }
+  return text;
 }

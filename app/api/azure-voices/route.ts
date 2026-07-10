@@ -2,7 +2,6 @@ import { NextRequest } from 'next/server';
 import { createLogger } from '@/lib/logger';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
-import { requireAuth } from '@/lib/api/auth';
 const log = createLogger('Azure Voices');
 
 export const maxDuration = 30;
@@ -12,11 +11,11 @@ export const maxDuration = 30;
  * Fetches available voices from Azure Speech Services
  */
 export async function POST(req: NextRequest) {
-  const auth = await requireAuth(req);
-  if (auth.response) return auth.response;
-
+  let baseUrl: string | undefined;
   try {
-    const { apiKey, baseUrl } = await req.json();
+    const body = await req.json();
+    const { apiKey } = body;
+    baseUrl = body.baseUrl;
 
     if (!apiKey) {
       return apiError('MISSING_API_KEY', 400, 'API Key is required');
@@ -27,7 +26,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate baseUrl against SSRF
-    const ssrfError = validateUrlForSSRF(baseUrl);
+    const ssrfError = await validateUrlForSSRF(baseUrl);
     if (ssrfError) {
       return apiError('INVALID_URL', 403, ssrfError);
     }
@@ -59,7 +58,7 @@ export async function POST(req: NextRequest) {
 
     return apiSuccess({ voices });
   } catch (error) {
-    log.error('API error:', error);
+    log.error(`Azure voices fetch failed [baseUrl="${baseUrl ?? 'unknown'}"]:`, error);
     return apiError(
       'INTERNAL_ERROR',
       500,

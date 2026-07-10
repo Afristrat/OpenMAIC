@@ -1,40 +1,90 @@
 import { NextRequest } from 'next/server';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
-import { resolvePDFApiKey, resolvePDFBaseUrl } from '@/lib/server/provider-config';
+import {
+  isServerConfiguredProvider,
+  resolvePDFApiKey,
+  resolvePDFBaseUrl,
+} from '@/lib/server/provider-config';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
-import { requireAuth } from '@/lib/api/auth';
-import { validateBody } from '@/lib/api/validate';
-import { verifyPdfProviderSchema } from '@/lib/api/schemas';
+import { MINERU_CLOUD_DEFAULT_BASE } from '@/lib/pdf/constants';
 
 const log = createLogger('Verify PDF Provider');
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAuth(req);
-  if (auth.response) return auth.response;
-
+  let providerId: string | undefined;
   try {
-    const rawBody = await req.json();
-    const validation = validateBody(verifyPdfProviderSchema, rawBody);
-    if (!validation.success) return validation.response;
-    const { providerId, apiKey, baseUrl } = validation.data;
+    const body = await req.json();
+    providerId = body.providerId;
+    const { apiKey, baseUrl } = body;
 
-    const clientBaseUrl = (baseUrl as string | undefined) || undefined;
+    if (!providerId) {
+      return apiError('MISSING_REQUIRED_FIELD', 400, 'Provider ID is required');
+    }
+
+    // Managed providers are admin-owned: ignore any client-sent key/baseUrl.
+    const managed = isServerConfiguredProvider('pdf', providerId);
+
+    // MinerU Cloud: verify by calling the cloud API with the token
+    if (providerId === 'mineru-cloud') {
+      const clientCloudBase = managed ? undefined : (baseUrl as string | undefined) || undefined;
+      if (clientCloudBase && process.env.NODE_ENV === 'production') {
+        const ssrfError = await validateUrlForSSRF(clientCloudBase);
+        if (ssrfError) {
+          return apiError('INVALID_URL', 403, ssrfError);
+        }
+      }
+
+      const resolvedApiKey = resolvePDFApiKey(providerId, managed ? undefined : apiKey);
+      if (!resolvedApiKey) {
+        return apiError('MISSING_REQUIRED_FIELD', 400, 'API Key is required for MinerU Cloud');
+      }
+
+      const cloudBase = (
+        resolvePDFBaseUrl(providerId, clientCloudBase) || MINERU_CLOUD_DEFAULT_BASE
+      ).replace(/\/+$/, '');
+
+      // Probe the batch endpoint with an empty body to verify auth
+      const response = await fetch(`${cloudBase}/extract-results/batch/test-connection`, {
+        headers: {
+          Authorization: `Bearer ${resolvedApiKey}`,
+          Accept: 'application/json',
+        },
+        signal: AbortSignal.timeout(10000),
+      });
+
+      // Any response (including 4xx for "batch not found") means auth + connectivity works
+      // Only network errors or 401/403 indicate a problem
+      if (response.status === 401 || response.status === 403) {
+        const text = await response.text().catch(() => '');
+        return apiError(
+          'INTERNAL_ERROR',
+          500,
+          `Authentication failed: ${text || response.statusText}`,
+        );
+      }
+
+      return apiSuccess({
+        message: 'Connection successful',
+        status: response.status,
+      });
+    }
+
+    // Self-hosted providers: verify by connecting to the base URL
+    const clientBaseUrl = managed ? undefined : (baseUrl as string | undefined) || undefined;
     if (clientBaseUrl && process.env.NODE_ENV === 'production') {
-      const ssrfError = validateUrlForSSRF(clientBaseUrl);
+      const ssrfError = await validateUrlForSSRF(clientBaseUrl);
       if (ssrfError) {
         return apiError('INVALID_URL', 403, ssrfError);
       }
     }
 
-    const resolvedBaseUrl = clientBaseUrl ? clientBaseUrl : resolvePDFBaseUrl(providerId, baseUrl);
+    const resolvedBaseUrl = resolvePDFBaseUrl(providerId, clientBaseUrl);
     if (!resolvedBaseUrl) {
       return apiError('MISSING_REQUIRED_FIELD', 400, 'Base URL is required');
     }
 
-    const resolvedApiKey = clientBaseUrl
-      ? (apiKey as string | undefined) || ''
-      : resolvePDFApiKey(providerId, apiKey);
+    const resolvedApiKey = resolvePDFApiKey(providerId, managed ? undefined : apiKey);
 
     const headers: Record<string, string> = {};
     if (resolvedApiKey) {
@@ -58,7 +108,7 @@ export async function POST(req: NextRequest) {
       status: response.status,
     });
   } catch (error) {
-    log.error('PDF provider test error:', error);
+    log.error(`PDF provider verification failed [provider=${providerId ?? 'unknown'}]:`, error);
 
     let errorMessage = 'Connection failed';
     if (error instanceof Error) {

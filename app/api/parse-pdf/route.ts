@@ -1,18 +1,20 @@
 import { NextRequest } from 'next/server';
-import { parsePDF } from '@/lib/pdf/pdf-providers';
-import { resolvePDFApiKey, resolvePDFBaseUrl } from '@/lib/server/provider-config';
+import {
+  isServerConfiguredProvider,
+  resolvePDFApiKey,
+  resolvePDFBaseUrl,
+} from '@/lib/server/provider-config';
 import type { PDFProviderId } from '@/lib/pdf/types';
 import type { ParsedPdfContent } from '@/lib/types/pdf';
+import { documentArtifactToParsedPdfContent, extractDocument } from '@/lib/document';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
-import { requireAuth } from '@/lib/api/auth';
 const log = createLogger('Parse PDF');
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAuth(req);
-  if (auth.response) return auth.response;
-
+  let pdfFileName: string | undefined;
+  let resolvedProviderId: string | undefined;
   try {
     const contentType = req.headers.get('content-type') || '';
     if (!contentType.includes('multipart/form-data')) {
@@ -36,10 +38,14 @@ export async function POST(req: NextRequest) {
 
     // providerId is required from the client — no server-side store to fall back to
     const effectiveProviderId = providerId || ('unpdf' as PDFProviderId);
+    pdfFileName = pdfFile?.name;
+    resolvedProviderId = effectiveProviderId;
 
-    const clientBaseUrl = baseUrl || undefined;
+    // Managed providers are admin-owned: ignore any client-sent key/baseUrl.
+    const managed = isServerConfiguredProvider('pdf', effectiveProviderId);
+    const clientBaseUrl = managed ? undefined : baseUrl || undefined;
     if (clientBaseUrl && process.env.NODE_ENV === 'production') {
-      const ssrfError = validateUrlForSSRF(clientBaseUrl);
+      const ssrfError = await validateUrlForSSRF(clientBaseUrl);
       if (ssrfError) {
         return apiError('INVALID_URL', 403, ssrfError);
       }
@@ -47,27 +53,30 @@ export async function POST(req: NextRequest) {
 
     const config = {
       providerId: effectiveProviderId,
-      apiKey: clientBaseUrl
-        ? apiKey || ''
-        : resolvePDFApiKey(effectiveProviderId, apiKey || undefined),
-      baseUrl: clientBaseUrl
-        ? clientBaseUrl
-        : resolvePDFBaseUrl(effectiveProviderId, baseUrl || undefined),
+      apiKey: resolvePDFApiKey(effectiveProviderId, managed ? undefined : apiKey || undefined),
+      baseUrl: resolvePDFBaseUrl(effectiveProviderId, clientBaseUrl),
     };
 
     // Convert PDF to buffer
     const arrayBuffer = await pdfFile.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Parse PDF using the provider system
-    const result = await parsePDF(config, buffer);
+    // Route the existing PDF API through the document extraction boundary.
+    const artifact = await extractDocument({
+      buffer,
+      fileName: pdfFile.name,
+      fileSize: pdfFile.size,
+      mimeType: 'application/pdf',
+      config,
+    });
+    const result = documentArtifactToParsedPdfContent(artifact);
 
     // Add file metadata
     const resultWithMetadata: ParsedPdfContent = {
       ...result,
       metadata: {
-        pageCount: result.metadata?.pageCount || 0, // Ensure pageCount is always a number
         ...result.metadata,
+        pageCount: result.metadata?.pageCount ?? 0, // Ensure pageCount is always a number
         fileName: pdfFile.name,
         fileSize: pdfFile.size,
       },
@@ -75,7 +84,10 @@ export async function POST(req: NextRequest) {
 
     return apiSuccess({ data: resultWithMetadata });
   } catch (error) {
-    log.error('Error parsing PDF:', error);
+    log.error(
+      `PDF parsing failed [provider=${resolvedProviderId ?? 'unknown'}, file="${pdfFileName ?? 'unknown'}"]:`,
+      error,
+    );
     return apiError('PARSE_FAILED', 500, error instanceof Error ? error.message : 'Unknown error');
   }
 }

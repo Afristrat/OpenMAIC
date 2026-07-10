@@ -12,13 +12,14 @@
 
 <p align="center">
   <a href="https://jcst.ict.ac.cn/en/article/doi/10.1007/s11390-025-6000-0"><img src="https://img.shields.io/badge/Paper-JCST'26-blue?style=flat-square" alt="Paper"/></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL--3.0-blue.svg?style=flat-square" alt="License: AGPL-3.0"/></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg?style=flat-square" alt="License: MIT"/></a>
   <a href="https://open.maic.chat/"><img src="https://img.shields.io/badge/Demo-Live-brightgreen?style=flat-square" alt="Live Demo"/></a>
   <a href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FTHU-MAIC%2FOpenMAIC&envDescription=Configure%20at%20least%20one%20LLM%20provider%20API%20key%20(e.g.%20OPENAI_API_KEY%2C%20ANTHROPIC_API_KEY).%20All%20providers%20are%20optional.&envLink=https%3A%2F%2Fgithub.com%2FTHU-MAIC%2FOpenMAIC%2Fblob%2Fmain%2F.env.example&project-name=openmaic&framework=nextjs"><img src="https://vercel.com/button" alt="Deploy with Vercel" height="20"/></a>
   <a href="#-openclaw-integration"><img src="https://img.shields.io/badge/OpenClaw-Integration-F4511E?style=flat-square" alt="OpenClaw Integration"/></a>
+  <a href="#lemonade-local-ai"><img src="https://img.shields.io/badge/Lemonade-Local_AI-FFD43B?style=flat-square" alt="Lemonade Local AI"/></a>
   <a href="https://github.com/THU-MAIC/OpenMAIC/stargazers"><img src="https://img.shields.io/github/stars/THU-MAIC/OpenMAIC?style=flat-square" alt="Stars"/></a>
   <br/>
-  <a href="https://discord.gg/PtZaaTbH"><img src="https://img.shields.io/badge/Discord-Join_Community-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"/></a>
+  <a href="https://discord.gg/p8Pf2r3SaG"><img src="https://img.shields.io/badge/Discord-Join_Community-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"/></a>
   &nbsp;
   <a href="community/feishu.md"><img src="https://img.shields.io/badge/Feishu-飞书交流群-00D6B9?style=for-the-badge&logo=bytedance&logoColor=white" alt="Feishu"/></a>
   <br/>
@@ -32,12 +33,17 @@
 <p align="center">
   <a href="./README.md">English</a> | <a href="./README-zh.md">简体中文</a>
   <br/>
-  <a href="https://open.maic.chat/">Live Demo</a> · <a href="#-quick-start">Quick Start</a> · <a href="#-features">Features</a> · <a href="#-use-cases">Use Cases</a> · <a href="#-openclaw-integration">OpenClaw</a>
+  <a href="https://open.maic.chat/">Live Demo</a> · <a href="#-quick-start">Quick Start</a> · <a href="#lemonade-local-ai">Lemonade</a> · <a href="#-features">Features</a> · <a href="#-use-cases">Use Cases</a> · <a href="#-openclaw-integration">OpenClaw</a>
 </p>
 
 
 ## 🗞️ News
 
+- **2026-06-28** — [v0.3.0 released!](https://github.com/THU-MAIC/OpenMAIC/releases/tag/v0.3.0) Project-Based Learning (PBL) v2 with classroom UI; "Edit with AI" Pro-mode editor agent; the `@openmaic/*` SDK family (DSL/renderer/importer) published to npm; optional per-stage model routing; new models (GLM-5.2, Kimi K2.7 Code, Qwen3.7 Plus/Max); a vocational-learning task engine; Korean (ko-KR) locale; and relicensing from AGPL-3.0 to MIT. See [changelog](CHANGELOG.md).
+- **2026-06-02** — [v0.2.2 released!](https://github.com/THU-MAIC/OpenMAIC/releases/tag/v0.2.2) MAIC Editor (v0) Pro Mode for editing generated slides; editable outline before generation; offline-ready classroom export; new search providers (Brave/Baidu/Bocha/MiniMax) and Azure STT; new models (Claude Opus 4.8, MiniMax M3, Gemini 3.5 Flash); Traditional Chinese (zh-TW) and Brazilian Portuguese (pt-BR) locales. See [changelog](CHANGELOG.md).
+- **2026-04-26** — [v0.2.1 released!](https://github.com/THU-MAIC/OpenMAIC/releases/tag/v0.2.1) Integrated [VoxCPM2](https://github.com/OpenBMB/VoxCPM) TTS with voice cloning and on-the-fly auto-generated voices; added per-model thinking config; added end-of-course completion page with persistent quiz state; added latest released models including DeepSeek-V4 / GPT-5.5 / GPT-Image-2 / Xiaomi MiMo / Hy3. See [changelog](CHANGELOG.md).
+- **2026-04-20** — **v0.2.0 released!** Deep Interactive Mode — 3D visualization, simulations, games, mind maps, and online programming for hands-on learning. See [features](#-features) for details.
+- **2026-04-14** — [v0.1.1 released!](https://github.com/THU-MAIC/OpenMAIC/releases/tag/v0.1.1) Automatic language inference, ACCESS_CODE authentication, classroom ZIP export/import, custom TTS/ASR providers, Ollama support, and more. See [changelog](CHANGELOG.md).
 - **2026-03-26** — [v0.1.0 released!](https://github.com/THU-MAIC/OpenMAIC/releases/tag/v0.1.0) Discussion TTS, immersive mode, keyboard shortcuts, whiteboard enhancements, new providers, and more. See [changelog](CHANGELOG.md).
 
 ## 📖 Overview
@@ -102,6 +108,9 @@ OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
 GOOGLE_API_KEY=...
 GROK_API_KEY=xai-...
+OPENROUTER_API_KEY=sk-or-...
+TENCENT_API_KEY=sk-...
+XIAOMI_API_KEY=...
 ```
 
 You can also configure providers via `server-providers.yml`:
@@ -114,11 +123,79 @@ providers:
     apiKey: sk-ant-...
 ```
 
-Supported providers: **OpenAI**, **Anthropic**, **Google Gemini**, **DeepSeek**, **Grok (xAI)**, and any OpenAI-compatible API.
+Supported providers: **OpenAI**, **Anthropic**, **Google Gemini**, **DeepSeek**, **Qwen**, **Kimi**, **MiniMax**, **Grok (xAI)**, **OpenRouter**, **Doubao**, **Tencent Hunyuan/TokenHub**, **Xiaomi MiMo**, **GLM (Zhipu)**, **Ollama** (local), **Lemonade** (local LLM / image / TTS / ASR), and any OpenAI-compatible API.
+
+<a id="lemonade-local-ai"></a>
+
+### Optional: Lemonade (Local AI Provider)
+
+OpenMAIC supports Lemonade as a local, OpenAI-compatible provider for LLMs, image generation, TTS, and ASR. No API key is required.
+
+Run Lemonade locally, then point OpenMAIC to it:
+
+```env
+LEMONADE_BASE_URL=http://localhost:13305/v1
+TTS_LEMONADE_BASE_URL=http://localhost:13305/v1
+ASR_LEMONADE_BASE_URL=http://localhost:13305/v1
+IMAGE_LEMONADE_BASE_URL=http://localhost:13305/v1
+```
+
+OpenAI quick example:
+
+```env
+OPENAI_API_KEY=sk-...
+DEFAULT_MODEL=openai:gpt-5.5
+```
+
+MiniMax quick examples:
+
+```env
+MINIMAX_API_KEY=...
+MINIMAX_BASE_URL=https://api.minimaxi.com/anthropic/v1
+DEFAULT_MODEL=minimax:MiniMax-M2.7-highspeed
+
+TTS_MINIMAX_API_KEY=...
+TTS_MINIMAX_BASE_URL=https://api.minimaxi.com
+
+IMAGE_MINIMAX_API_KEY=...
+IMAGE_MINIMAX_BASE_URL=https://api.minimaxi.com
+
+IMAGE_OPENAI_API_KEY=...
+IMAGE_OPENAI_BASE_URL=https://api.openai.com/v1
+
+VIDEO_MINIMAX_API_KEY=...
+VIDEO_MINIMAX_BASE_URL=https://api.minimaxi.com
+```
+
+Xiaomi MiMo Token Plan quick example:
+
+```env
+MIMO_API_KEY=tp-...
+MIMO_BASE_URL=https://token-plan-cn.xiaomimimo.com/v1
+DEFAULT_MODEL=xiaomi:mimo-v2.5-pro
+```
+
+Use `https://token-plan-sgp.xiaomimimo.com/v1` or `https://token-plan-ams.xiaomimimo.com/v1` for the Singapore or Europe Token Plan clusters.
+
+GLM (Zhipu) quick examples:
+
+```env
+# China (default)
+GLM_API_KEY=...
+GLM_BASE_URL=https://open.bigmodel.cn/api/paas/v4
+
+# International (z.ai)
+GLM_API_KEY=...
+GLM_BASE_URL=https://api.z.ai/api/paas/v4
+
+DEFAULT_MODEL=glm:glm-5.1
+```
 
 > **Recommended model:** **Gemini 3 Flash** — best balance of quality and speed. For highest quality (at slower speed), try **Gemini 3.1 Pro**.
 >
 > If you want OpenMAIC server APIs to use Gemini by default, also set `DEFAULT_MODEL=google:gemini-3-flash-preview`.
+>
+> If you want to use MiniMax as the default server model, set `DEFAULT_MODEL=minimax:MiniMax-M2.7-highspeed`.
 
 ### 3. Run
 
@@ -133,6 +210,16 @@ Open **http://localhost:3000** and start learning!
 ```bash
 pnpm build && pnpm start
 ```
+
+### Optional: ACCESS_CODE (Shared Deployments)
+
+To protect your deployment with a site-level password, set `ACCESS_CODE` in `.env.local`:
+
+```env
+ACCESS_CODE=your-secret-code
+```
+
+When set, visitors see a password prompt before accessing the app. All API routes are also protected. If not set, the app works as before.
 
 ### Vercel Deployment
 
@@ -159,9 +246,149 @@ docker compose up --build
 
 Set `PDF_MINERU_BASE_URL` (and `PDF_MINERU_API_KEY` if needed) in `.env.local`.
 
+### Optional: VoxCPM2 (Self-Hosted TTS with Voice Cloning)
+
+[VoxCPM2](https://github.com/OpenBMB/VoxCPM) is an open-source TTS model from OpenBMB with voice cloning. OpenMAIC ships an adapter; run VoxCPM on your own hardware and OpenMAIC will talk to it.
+
+**1. Run a VoxCPM backend.** Three deployment styles, all behind the same OpenMAIC adapter. You toggle which one in Settings.
+
+| Backend | Endpoint | When to use |
+| --- | --- | --- |
+| **vLLM-Omni** | `/v1/audio/speech` | OpenAI-compatible speech endpoint, ideal for GPU servers |
+| **Python API** | `/tts/upload` | Official VoxCPM Python runtime via FastAPI |
+| **Nano-vLLM** | `/generate` | Lightweight Nano-vLLM FastAPI deployment |
+
+See the [VoxCPM repo](https://github.com/OpenBMB/VoxCPM) for backend setup.
+
+**2. Point OpenMAIC at it.** Open Settings → **Text-to-Speech** → **VoxCPM2**, pick the backend, and paste your Base URL. The Request URL preview confirms OpenMAIC will hit the right endpoint.
+
+<img src="assets/voxcpm/voxcpm-connection.png" width="85%" alt="VoxCPM2 connection settings: backend selector, Base URL, model" />
+
+Or pre-configure it via env var (no API key required):
+
+```env
+TTS_VOXCPM_BASE_URL=http://localhost:8000/v1
+```
+
+**3. Manage voices.** Three voice modes, all under **Settings → Text-to-Speech → VoxCPM2 → VoxCPM Voices**.
+
+<img src="assets/voxcpm/voxcpm-voice-manager.png" width="85%" alt="VoxCPM2 VoxCPM Voices section with Auto, Prompt and Clone modes" />
+
+- **Auto Voice** (default): OpenMAIC generates a voice prompt from each agent's persona at synthesis time. No setup required.
+- **Prompt voice**: describe the voice in natural language, e.g. *"warm female teacher voice, calm and encouraging, mid-pitch"*.
+- **Clone voice**: upload a short reference audio clip or record one in the browser. The clip is stored in IndexedDB and sent to your VoxCPM backend on each synthesis.
+
 ---
 
 ## ✨ Features
+
+### Deep Interactive Mode (New!)
+
+**Passive listening? ❌  Hands-on exploration! ✅**
+
+As Einstein said: *"Play is the highest form of research."*
+
+While **Standard Mode** focuses on quickly generating classroom content, **Deep Interactive Mode** goes further — creating interactive, explorable, hands-on learning experiences. Students don't just watch knowledge; they adjust experiments, observe simulations, and actively explore how things work.
+
+#### Five Types of Interactive UI
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+**🌐 3D Visualization**
+
+Three-dimensional visual representations that make abstract structures more intuitive.
+
+<img src="assets/interactive_mode/3D_interactive.gif" width="100%"/>
+
+</td>
+<td width="50%" valign="top">
+
+**⚙️ Simulation**
+
+Process simulations and experimental environments for observing dynamic changes and outcomes.
+
+<img src="assets/interactive_mode/simulation_interactive.gif" width="100%"/>
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+**🎮 Game**
+
+Knowledge-based mini-games that reinforce understanding and memory through interactive challenges.
+
+<img src="assets/interactive_mode/game_interactive.gif" width="100%"/>
+
+</td>
+<td width="50%" valign="top">
+
+**🧭 Mind Map**
+
+Structured knowledge organization to help learners build an overall conceptual framework.
+
+<img src="assets/interactive_mode/mindmap_interactive.gif" width="100%"/>
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+**💻 Online Programming**
+
+In-browser coding and instant execution for learning by writing, testing, and iterating.
+
+<img src="assets/interactive_mode/code_interactive.gif" width="100%"/>
+
+</td>
+<td width="50%" valign="top">
+
+</td>
+</tr>
+</table>
+
+#### AI Teacher Guidance
+
+The AI teacher can actively operate the UI to guide students — highlighting key areas, setting conditions, providing hints, and directing attention at the right moments.
+
+<img src="assets/interactive_mode/teacher_action_interative.gif" width="100%"/>
+
+#### Available on Any Device
+
+All generated interactive UI is fully responsive — desktop, tablet, or mobile.
+
+<table>
+<tr>
+<td width="50%" align="center">
+
+**Desktop**
+
+<img src="assets/interactive_mode/desktop_interactive.png" width="90%"/>
+
+</td>
+<td width="50%" align="center" rowspan="2">
+
+**Mobile**
+
+<img src="assets/interactive_mode/phone_interactive.png" width="45%"/>
+
+</td>
+</tr>
+<tr>
+<td width="50%" align="center">
+
+**iPad**
+
+<img src="assets/interactive_mode/ipad_interactive.png" width="90%"/>
+
+</td>
+</tr>
+</table>
+
+#### Need a More Complete and Professional UI Generation Experience?
+If you are looking for a version with richer functionality, stronger interactivity, and deeper optimization for high-quality educational UI production, please visit [MAIC-UI](https://github.com/THU-MAIC/MAIC-UI).
 
 ### Lesson Generation
 
@@ -174,6 +401,8 @@ Describe what you want to learn or attach reference materials. OpenMAIC's two-st
 
 <!-- PLACEHOLDER: generation pipeline GIF -->
 <!-- <img src="assets/generation-pipeline.gif" width="100%"/> -->
+
+
 
 ### Classroom Components
 
@@ -320,13 +549,16 @@ Optional config in `~/.openclaw/openclaw.json`:
 |--------|-------------|
 | **PowerPoint (.pptx)** | Fully editable slides with images, charts, and LaTeX formulas |
 | **Interactive HTML** | Self-contained web pages with interactive simulations |
+| **Classroom ZIP** | Full classroom export (course structure + media) for backup or sharing |
+
+**Offline / intranet classrooms:** When you export a classroom (`.maic.zip`) or a Resource Pack, OpenMAIC inlines the external assets referenced by interactive scenes (KaTeX, Three.js incl. `three/addons`, Tailwind CDN, Google Fonts, images) into the exported HTML as `data:` URIs. The exported course then plays fully offline after import into an air-gapped/intranet instance — no public CDN is contacted at playback time. Assets that can't be fetched at export time (e.g. CORS-restricted image hosts) are reported and left as URLs. Classrooms exported *before* this feature still reference CDNs and must be re-exported to gain offline support.
 
 ### And More
 
 - **Text-to-Speech** — Multiple voice providers with customizable voices
 - **Speech Recognition** — Talk to your AI teacher using your microphone
 - **Web Search** — Agents search the web for up-to-date information during class
-- **i18n** — Interface supports Chinese and English
+- **i18n** — Interface supports 7 languages: Chinese (Simplified & Traditional), English, Japanese, Russian, Arabic, and Portuguese (Brazil)
 - **Dark Mode** — Easy on the eyes for late-night study sessions
 
 ---
@@ -401,7 +633,7 @@ OpenMAIC/
 │   ├── media/                  #   Image & video generation providers
 │   ├── export/                 #   PPTX & HTML export
 │   ├── hooks/                  #   React custom hooks (55+)
-│   ├── i18n/                   #   Internationalization (zh-CN, en-US)
+│   ├── i18n/                   #   Internationalization (zh-CN, zh-TW, en-US, ja-JP, ru-RU, ar-SA, pt-BR)
 │   └── ...                     #   prosemirror, storage, pdf, web-search, utils
 │
 ├── components/                 # React UI components
@@ -447,9 +679,9 @@ OpenMAIC/
 
 ---
 
-## 💼 Commercial Licensing
+## 💼 Partnerships
 
-This project is licensed under AGPL-3.0. For commercial licensing inquiries, please contact: **thu_maic@tsinghua.edu.cn**
+This project is licensed under the MIT License, so commercial use is permitted free of charge. For partnership or collaboration inquiries, please contact: **thu_maic@mail.tsinghua.edu.cn**
 
 ---
 
@@ -482,4 +714,13 @@ If you find OpenMAIC useful in your research, please consider citing:
 
 ## 📄 License
 
-This project is licensed under the [GNU Affero General Public License v3.0](LICENSE).
+This project is licensed under the [MIT License](LICENSE).
+
+### Third-Party Components
+
+The repository bundles workspace packages that are **not** covered by the root MIT license and keep their own terms:
+
+- `packages/mathml2omml` — [LGPL-3.0-or-later](packages/mathml2omml/LICENSE)
+- `packages/pptxgenjs` — [MIT](packages/pptxgenjs/package.json) (third-party)
+
+When redistributing the repository as a whole, the terms of each bundled package above apply to that package's files.

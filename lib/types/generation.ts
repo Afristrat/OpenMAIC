@@ -30,22 +30,6 @@ export type ImageMapping = Record<string, string>;
 
 // ==================== Stage 1 Input ====================
 
-export interface AudienceProfile {
-  gradeLevel: string; // "K-12", "University", "Professional"
-  ageRange?: string; // "6-12", "18-25"
-  prerequisites?: string[]; // Required prior knowledge
-  learningStyles?: ('visual' | 'auditory' | 'kinesthetic' | 'reading')[];
-}
-
-export interface StylePreferences {
-  tone: 'formal' | 'casual' | 'engaging' | 'academic';
-  visualStyle: 'minimalist' | 'colorful' | 'professional' | 'playful';
-  interactivityLevel: 'low' | 'medium' | 'high';
-  includeExamples: boolean;
-  includePractice: boolean;
-  language: string; // 'zh-CN', 'en-US'
-}
-
 export interface UploadedDocument {
   id: string;
   name: string; // Original filename
@@ -64,28 +48,42 @@ export interface UploadedDocument {
  */
 export interface UserRequirements {
   requirement: string; // Single free-form text for all user input
-  language: 'zh-CN' | 'en-US' | 'fr-FR' | 'ar-MA'; // Course language - critical for generation
   userNickname?: string; // Student nickname for personalization
   userBio?: string; // Student background for personalization
   webSearch?: boolean; // Enable web search for richer context
-}
-
-/**
- * @deprecated Use UserRequirements instead
- * Legacy structured requirements - kept for backward compatibility
- */
-export interface LegacyUserRequirements {
-  topic: string;
-  description?: string;
-  learningObjectives: string[];
-  audience: AudienceProfile;
-  durationMinutes: number;
-  style: StylePreferences;
-  documents?: UploadedDocument[];
-  additionalNotes?: string;
+  interactiveMode?: boolean; // Enable Interactive Mode for interactive-first generation
+  taskEngineMode?: boolean; // Enable vocational task-engine generation path
 }
 
 // ==================== Stage 1 Output: Scene Outlines (Simplified) ====================
+
+/**
+ * Widget outline configuration for interactive scenes
+ * Unified for both normal and ultra modes
+ */
+export interface WidgetOutline {
+  // Common field
+  concept?: string;
+
+  // Type-specific fields
+  keyVariables?: string[]; // simulation
+  diagramType?: 'flowchart' | 'mindmap' | 'hierarchy' | 'system'; // diagram
+  language?: 'python' | 'javascript' | 'typescript' | 'java' | 'cpp'; // code
+  gameType?: 'quiz' | 'puzzle' | 'strategy' | 'card' | 'action'; // game
+  visualizationType?: 'molecular' | 'solar' | 'anatomy' | 'geometry' | 'physics' | 'custom'; // visualization3d
+  objects?: string[]; // visualization3d
+  interactions?: string[]; // visualization3d
+  procedureType?: 'repair' | 'assembly' | 'inspection' | 'operation' | 'custom'; // procedural-skill
+  task?: string; // procedural-skill - task to perform
+  tools?: string[]; // procedural-skill - tools or materials involved
+  steps?: string[]; // procedural-skill - ordered procedure steps
+  successCriteria?: string[]; // procedural-skill - checks for completion
+  errorConsequences?: string[]; // procedural-skill - consequences for unsafe or incorrect actions
+  challenge?: string; // game - description of what player does
+  playerControls?: string[]; // game - what player controls
+  nodeCount?: number; // diagram - approximate node count
+  challengeType?: string; // code - type of coding challenge
+}
 
 /**
  * Simplified scene outline
@@ -100,7 +98,7 @@ export interface SceneOutline {
   teachingObjective?: string;
   estimatedDuration?: number; // seconds
   order: number;
-  language?: 'zh-CN' | 'en-US' | 'fr-FR' | 'ar-MA'; // Generation language (inherited from requirements)
+  languageNote?: string; // LLM-inferred language note for this scene
   // Suggested image IDs (from PDF-extracted images)
   suggestedImageIds?: string[]; // e.g., ["img_1", "img_3"]
   // AI-generated media requests (when PDF images are insufficient)
@@ -111,7 +109,10 @@ export interface SceneOutline {
     difficulty: 'easy' | 'medium' | 'hard';
     questionTypes: ('single' | 'multiple' | 'text')[];
   };
-  // Interactive-specific config
+  /**
+   * @deprecated Use widgetType + widgetOutline instead
+   * Legacy interactive config - kept for backward compatibility only
+   */
   interactiveConfig?: {
     conceptName: string;
     conceptOverview: string;
@@ -124,13 +125,19 @@ export interface SceneOutline {
     projectDescription: string;
     targetSkills: string[];
     issueCount?: number;
-    language: 'zh-CN' | 'en-US' | 'fr-FR' | 'ar-MA';
+    /** Opt into role-play scenario planning on top of the standard PBL v2 structure. */
+    scenarioRoleplay?: boolean;
+    /** Optional scenario brief used only when scenarioRoleplay is true. */
+    scenarioBrief?: string;
   };
+  // Widget fields (required for type === 'interactive' in unified mode)
+  widgetType?: WidgetType;
+  widgetOutline?: WidgetOutline;
 }
 
 // ==================== Stage 3 Output: Generated Content ====================
 
-import type { PPTElement, SlideBackground } from './slides';
+import type { PPTElement, SlideBackground } from '@openmaic/dsl';
 import type { QuizQuestion } from './stage';
 
 /**
@@ -152,15 +159,22 @@ export interface GeneratedQuizContent {
 // ==================== PBL Generation Types ====================
 
 import type { PBLProjectConfig } from '@/lib/pbl/types';
+import type { PBLProjectV2 } from '@/lib/pbl/v2/types';
 
 /**
- * AI-generated PBL content
+ * AI-generated PBL content.
+ *
+ * PBL v2 generation returns a legacy-compatible `projectConfig` plus the full
+ * v2 payload so existing storage/rendering paths can migrate incrementally.
  */
 export interface GeneratedPBLContent {
   projectConfig: PBLProjectConfig;
+  projectV2?: PBLProjectV2;
 }
 
 // ==================== Interactive Generation Types ====================
+
+import type { WidgetConfig, WidgetType } from './widgets';
 
 /**
  * Scientific model output from scientific modeling stage
@@ -178,6 +192,8 @@ export interface ScientificModel {
 export interface GeneratedInteractiveContent {
   html: string;
   scientificModel?: ScientificModel;
+  widgetType?: WidgetType;
+  widgetConfig?: WidgetConfig;
 }
 
 // ==================== Legacy Types (for compatibility) ====================

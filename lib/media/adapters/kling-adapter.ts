@@ -17,7 +17,7 @@
  * API docs: https://docs.klingai.com/api
  */
 
-// Use Web Crypto API (works in both browser and Node.js 18+) instead of Node's crypto module
+import crypto from 'crypto';
 import type {
   VideoGenerationConfig,
   VideoGenerationOptions,
@@ -34,19 +34,12 @@ const JWT_EXPIRY_SECS = 1800; // 30 minutes
 // JWT helper (HS256, no external deps)
 // ---------------------------------------------------------------------------
 
-function base64url(data: ArrayBuffer | string): string {
-  let bytes: Uint8Array;
-  if (typeof data === 'string') {
-    bytes = new TextEncoder().encode(data);
-  } else {
-    bytes = new Uint8Array(data);
-  }
-  // btoa works in both browser and Node.js 18+
-  const base64 = btoa(String.fromCharCode(...bytes));
-  return base64.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+function base64url(data: Buffer | string): string {
+  const buf = Buffer.isBuffer(data) ? data : Buffer.from(data, 'utf-8');
+  return buf.toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
 }
 
-async function generateJWT(accessKey: string, secretKey: string): Promise<string> {
+function generateJWT(accessKey: string, secretKey: string): string {
   const now = Math.floor(Date.now() / 1000);
 
   const header = base64url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
@@ -59,17 +52,9 @@ async function generateJWT(accessKey: string, secretKey: string): Promise<string
     }),
   );
 
-  // HMAC-SHA256 via Web Crypto API (browser + Node.js 18+ compatible)
-  const encoder = new TextEncoder();
-  const key = await globalThis.crypto.subtle.importKey(
-    'raw',
-    encoder.encode(secretKey),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
+  const signature = base64url(
+    crypto.createHmac('sha256', secretKey).update(`${header}.${payload}`).digest(),
   );
-  const sig = await globalThis.crypto.subtle.sign('HMAC', key, encoder.encode(`${header}.${payload}`));
-  const signature = base64url(sig);
 
   return `${header}.${payload}.${signature}`;
 }
@@ -145,7 +130,7 @@ export async function testKlingConnectivity(
   const baseUrl = config.baseUrl || DEFAULT_BASE_URL;
   try {
     const { accessKey, secretKey } = parseApiKey(config.apiKey);
-    const token = await generateJWT(accessKey, secretKey);
+    const token = generateJWT(accessKey, secretKey);
     // Use a GET to a non-existent task to validate auth
     const response = await fetch(`${baseUrl}/v1/videos/text2video/connectivity-test`, {
       method: 'GET',
@@ -247,7 +232,7 @@ export async function generateWithKling(
   const model = config.model || DEFAULT_MODEL;
   const baseUrl = config.baseUrl || DEFAULT_BASE_URL;
   const { accessKey, secretKey } = parseApiKey(config.apiKey);
-  const token = await generateJWT(accessKey, secretKey);
+  const token = generateJWT(accessKey, secretKey);
 
   // 1. Submit
   const taskId = await submitTask(baseUrl, token, model, options);

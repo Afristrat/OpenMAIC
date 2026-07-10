@@ -4,6 +4,7 @@
  */
 
 import type { TTSProviderId } from '@/lib/audio/types';
+import type { VoiceDesign } from '@/lib/audio/voice-design';
 
 export interface AgentConfig {
   id: string; // Unique agent ID
@@ -14,7 +15,8 @@ export interface AgentConfig {
   color: string; // UI theme color (hex)
   allowedActions: string[]; // Action types this agent can use
   priority: number; // Priority for director selection (1-10)
-  voiceConfig?: { providerId: TTSProviderId; voiceId: string }; // Per-agent TTS voice selection
+  voiceConfig?: { providerId: TTSProviderId; modelId?: string; voiceId: string }; // Per-agent TTS voice selection
+  voiceDesign?: VoiceDesign; // 3-layer vocal descriptor for auto voice (provider-neutral)
 
   // Metadata
   createdAt: Date;
@@ -35,7 +37,8 @@ export interface AgentTemplate {
   color: string;
   allowedActions: string[];
   priority: number;
-  voiceConfig?: { providerId: TTSProviderId; voiceId: string }; // Per-agent TTS voice selection
+  voiceConfig?: { providerId: TTSProviderId; modelId?: string; voiceId: string }; // Per-agent TTS voice selection
+  voiceDesign?: VoiceDesign; // 3-layer vocal descriptor for auto voice (provider-neutral)
 
   // LLM-generated agent fields
   isGenerated?: boolean; // true for LLM-generated agents
@@ -65,6 +68,8 @@ export const WHITEBOARD_ACTIONS = [
   'wb_draw_latex',
   'wb_draw_table',
   'wb_draw_line',
+  'wb_draw_code',
+  'wb_edit_code',
   'wb_clear',
   'wb_delete',
 ];

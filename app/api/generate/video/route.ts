@@ -18,44 +18,43 @@
 
 import { NextRequest } from 'next/server';
 import { generateVideo, normalizeVideoOptions } from '@/lib/media/video-providers';
-import { resolveVideoApiKey, resolveVideoBaseUrl } from '@/lib/server/provider-config';
+import {
+  isServerConfiguredProvider,
+  resolveVideoApiKey,
+  resolveVideoBaseUrl,
+} from '@/lib/server/provider-config';
 import type { VideoProviderId, VideoGenerationOptions } from '@/lib/media/types';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
-import { requireAuth } from '@/lib/api/auth';
-import { validateBody } from '@/lib/api/validate';
-import { generateVideoSchema } from '@/lib/api/schemas';
 
 const log = createLogger('VideoGeneration API');
 
 export const maxDuration = 300;
 
 export async function POST(request: NextRequest) {
-  const auth = await requireAuth(request);
-  if (auth.response) return auth.response;
-
   try {
-    const rawBody = await request.json();
-    const validation = validateBody(generateVideoSchema, rawBody);
-    if (!validation.success) return validation.response;
-    const body = rawBody as VideoGenerationOptions;
+    const body = (await request.json()) as VideoGenerationOptions;
+
+    if (!body.prompt) {
+      return apiError('MISSING_REQUIRED_FIELD', 400, 'Missing prompt');
+    }
 
     const providerId = (request.headers.get('x-video-provider') || 'seedance') as VideoProviderId;
-    const clientApiKey = request.headers.get('x-api-key') || undefined;
-    const clientBaseUrl = request.headers.get('x-base-url') || undefined;
+    // Managed providers are admin-owned: ignore any client-sent key/baseUrl.
+    const managed = isServerConfiguredProvider('video', providerId);
+    const clientApiKey = managed ? undefined : request.headers.get('x-api-key') || undefined;
+    const clientBaseUrl = managed ? undefined : request.headers.get('x-base-url') || undefined;
     const clientModel = request.headers.get('x-video-model') || undefined;
 
     if (clientBaseUrl && process.env.NODE_ENV === 'production') {
-      const ssrfError = validateUrlForSSRF(clientBaseUrl);
+      const ssrfError = await validateUrlForSSRF(clientBaseUrl);
       if (ssrfError) {
         return apiError('INVALID_URL', 403, ssrfError);
       }
     }
 
-    const apiKey = clientBaseUrl
-      ? clientApiKey || ''
-      : resolveVideoApiKey(providerId, clientApiKey);
+    const apiKey = resolveVideoApiKey(providerId, clientApiKey);
     if (!apiKey) {
       return apiError(
         'MISSING_API_KEY',
@@ -64,7 +63,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const baseUrl = clientBaseUrl ? clientBaseUrl : resolveVideoBaseUrl(providerId, clientBaseUrl);
+    const baseUrl = resolveVideoBaseUrl(providerId, clientBaseUrl);
 
     // Normalize options against provider capabilities
     const options = normalizeVideoOptions(providerId, body);
@@ -92,7 +91,10 @@ export async function POST(request: NextRequest) {
       log.warn(`Video blocked by content safety filter: ${message}`);
       return apiError('CONTENT_SENSITIVE', 400, message);
     }
-    log.error('Video generation error:', error);
+    log.error(
+      `Video generation failed [provider=${request.headers.get('x-video-provider') ?? 'kling'}, model=${request.headers.get('x-video-model') ?? 'default'}]:`,
+      error,
+    );
     return apiError('INTERNAL_ERROR', 500, message);
   }
 }

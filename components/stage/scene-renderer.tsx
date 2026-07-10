@@ -6,13 +6,17 @@ import { SlideEditor as SlideRenderer } from '../slide-renderer/Editor';
 import { QuizView } from '../scene-renderers/quiz-view';
 import { InteractiveRenderer } from '../scene-renderers/interactive-renderer';
 import { PBLRenderer } from '../scene-renderers/pbl-renderer';
-import { PluginRenderer } from '../scene-renderers/plugin-renderer';
 
 interface SceneRendererProps {
   readonly scene: Scene;
   readonly mode: StageMode;
 }
 
+/**
+ * Playback scene dispatcher. In Pro (edit) mode, Stage renders EditShell
+ * directly as a top-level takeover — SceneRenderer is only on the playback
+ * path, so it does not branch on `mode === 'edit'`.
+ */
 export function SceneRenderer({ scene, mode }: SceneRendererProps) {
   const renderer = useMemo(() => {
     switch (scene.type) {
@@ -24,18 +28,11 @@ export function SceneRenderer({ scene, mode }: SceneRendererProps) {
         return <QuizView key={scene.id} questions={scene.content.questions} sceneId={scene.id} />;
       case 'interactive':
         if (scene.content.type !== 'interactive') return <div>Invalid interactive content</div>;
-        return <InteractiveRenderer content={scene.content} mode={mode} sceneId={scene.id} />;
+        return <InteractiveRenderer content={scene.content} sceneId={scene.id} />;
       case 'pbl':
         if (scene.content.type !== 'pbl') return <div>Invalid PBL content</div>;
         return <PBLRenderer content={scene.content} mode={mode} sceneId={scene.id} />;
-      case 'plugin':
-        if (scene.content.type !== 'plugin') return <div>Invalid plugin content</div>;
-        return <PluginRenderer content={scene.content} mode={mode} sceneId={scene.id} />;
       default:
-        // Fallback: check if this might be a plugin scene type stored directly
-        if (scene.content.type === 'plugin') {
-          return <PluginRenderer content={scene.content} mode={mode} sceneId={scene.id} />;
-        }
         return <div>Unknown scene type</div>;
     }
   }, [scene, mode]);

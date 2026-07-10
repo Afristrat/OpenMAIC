@@ -1,32 +1,29 @@
 import { NextRequest } from 'next/server';
-import { generateText } from 'ai';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { resolveModel } from '@/lib/server/resolve-model';
-import { requireAuth } from '@/lib/api/auth';
-import { validateBody } from '@/lib/api/validate';
-import { verifyModelSchema } from '@/lib/api/schemas';
+import { callLLM } from '@/lib/ai/llm';
 const log = createLogger('Verify Model');
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAuth(req);
-  if (auth.response) return auth.response;
-
+  let model: string | undefined;
   try {
-    const rawBody = await req.json();
-    const validation = validateBody(verifyModelSchema, rawBody);
-    if (!validation.success) return validation.response;
-    const { apiKey, baseUrl, model, providerType, requiresApiKey } = validation.data;
+    const body = await req.json();
+    const { apiKey, baseUrl, providerType } = body;
+    model = body.model;
+
+    if (!model) {
+      return apiError('MISSING_REQUIRED_FIELD', 400, 'Model name is required');
+    }
 
     // Parse model string and resolve server-side fallback
     let languageModel;
     try {
-      const result = resolveModel({
+      const result = await resolveModel({
         modelString: model,
         apiKey: apiKey || '',
         baseUrl: baseUrl || undefined,
         providerType,
-        requiresApiKey,
       });
       languageModel = result.model;
     } catch (error) {
@@ -37,18 +34,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Send a minimal test message
-    const { text } = await generateText({
-      model: languageModel,
-      prompt: 'Say "OK" if you can hear me.',
-    });
+    // Send a minimal test message. Use the unified wrapper so compatible
+    // providers can receive provider-specific request options.
+    const { text } = await callLLM(
+      {
+        model: languageModel,
+        prompt: 'Say "OK" if you can hear me.',
+        maxOutputTokens: 64,
+      },
+      'verify-model',
+      undefined,
+      { mode: 'disabled', enabled: false },
+    );
 
     return apiSuccess({
       message: 'Connection successful',
       response: text,
     });
   } catch (error) {
-    log.error('API test error:', error);
+    log.error(`Model verification failed [model="${model ?? 'unknown'}"]:`, error);
 
     let errorMessage = 'Connection failed';
     if (error instanceof Error) {

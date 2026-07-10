@@ -1,7 +1,6 @@
 'use client';
 
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertCircle, User, Users, Sparkles, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -20,20 +19,16 @@ interface Agent {
 interface AgentSettingsProps {
   agents: Agent[];
   selectedAgentIds: string[];
-  maxTurns: string;
   agentMode: 'preset' | 'auto';
   onToggleAgent: (agentId: string) => void;
-  onMaxTurnsChange: (value: string) => void;
   onAgentModeChange: (mode: 'preset' | 'auto') => void;
 }
 
 export function AgentSettings({
   agents,
   selectedAgentIds,
-  maxTurns,
   agentMode,
   onToggleAgent,
-  onMaxTurnsChange,
   onAgentModeChange,
 }: AgentSettingsProps) {
   const { t } = useI18n();
@@ -159,29 +154,12 @@ export function AgentSettings({
                 <span className="flex items-center gap-1.5">
                   <Users className="h-4 w-4" />
                   <strong>{t('settings.multiAgentMode')}</strong> -{' '}
-                  {t('settings.agentsCollaboratingCount').replace(
-                    '{count}',
-                    String(selectedAgentIds.length),
-                  )}
+                  {t('settings.agentsCollaboratingCount', {
+                    count: selectedAgentIds.length,
+                  })}
                 </span>
               )}
             </div>
-
-            {/* Max turns config - only show for multi-agent */}
-            {selectedAgentIds.length > 1 && (
-              <div className="space-y-2 border-l-4 border-purple-500 pl-4">
-                <Label>{t('settings.maxTurns')}</Label>
-                <p className="text-xs text-muted-foreground">{t('settings.maxTurnsDesc')}</p>
-                <Input
-                  type="number"
-                  min="1"
-                  max="20"
-                  value={maxTurns}
-                  onChange={(e) => onMaxTurnsChange(e.target.value)}
-                  className="w-24"
-                />
-              </div>
-            )}
           </>
         ) : (
           <>

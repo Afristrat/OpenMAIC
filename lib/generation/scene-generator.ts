@@ -14,15 +14,23 @@ import type {
   GeneratedQuizContent,
   GeneratedInteractiveContent,
   GeneratedPBLContent,
-  ScientificModel,
+  UserRequirements,
   PdfImage,
   ImageMapping,
+  WidgetOutline,
 } from '@/lib/types/generation';
+import type { WidgetType, WidgetConfig } from '@/lib/types/widgets';
+import type { PromptId } from '@/lib/prompts/types';
 import type { LanguageModel } from 'ai';
 import type { StageStore } from '@/lib/api/stage-api';
 import { createStageAPI } from '@/lib/api/stage-api';
 import { generatePBLContent } from '@/lib/pbl/generate-pbl';
-import { buildPrompt, PROMPT_IDS } from './prompts';
+import { generatePBLV2Project, PlannerV2Error } from '@/lib/pbl/v2/agents/planner';
+import { generatePBLV2ProjectSingleCall } from '@/lib/pbl/v2/agents/planner-single-call';
+import { projectV2ToLegacyProjectConfig } from '@/lib/pbl/v2/compat';
+import type { PBLPlannerV2Input, PBLProjectV2 } from '@/lib/pbl/v2/types';
+import { buildPrompt, PROMPT_IDS } from '@/lib/prompts';
+import { DEFAULT_LANGUAGE_DIRECTIVE } from './outline-generator';
 import { postProcessInteractiveHtml } from './interactive-post-processor';
 import { parseActionsFromStructuredOutput } from './action-parser';
 import { parseJsonResponse } from './json-repair';
@@ -32,10 +40,8 @@ import {
   formatTeacherPersonaForPrompt,
   formatImageDescription,
   formatImagePlaceholder,
-  getLanguageName,
-  getLanguageQualityRules,
 } from './prompt-formatters';
-import type { PPTElement, Slide, SlideBackground, SlideTheme } from '@/lib/types/slides';
+import type { PPTElement, Slide, SlideBackground, SlideTheme } from '@openmaic/dsl';
 import type { QuizQuestion } from '@/lib/types/stage';
 import type { Action } from '@/lib/types/action';
 import type {
@@ -46,8 +52,53 @@ import type {
   GenerationResult,
   GenerationCallbacks,
 } from './pipeline-types';
+import type { ThinkingConfig } from '@/lib/types/provider';
 import { createLogger } from '@/lib/logger';
 const log = createLogger('Generation');
+
+const INTERACTIVE_WIDGET_ACTIONS = [
+  'widget_highlight',
+  'widget_setState',
+  'widget_annotation',
+  'widget_reveal',
+];
+
+// ── Options interfaces for scene generation functions ──
+
+export interface SceneContentOptions {
+  assignedImages?: PdfImage[];
+  imageMapping?: ImageMapping;
+  languageModel?: LanguageModel;
+  visionEnabled?: boolean;
+  generatedMediaMapping?: ImageMapping;
+  agents?: AgentInfo[];
+  languageDirective?: string;
+  thinkingConfig?: ThinkingConfig;
+  /** Authoritative UI locale selected by the user, consumed by the PBL v2 planner. */
+  targetLanguage?: string;
+  /** Original course request/profile, used by PBL v2 for explicit learner-level signals. */
+  userRequirements?: UserRequirements;
+  allowProceduralSkill?: boolean;
+  /**
+   * Natural-language edit instruction for whole-slide regeneration (MAIC Editor
+   * agent `regenerate_scene`). When set, the slide content prompt switches to
+   * EDIT MODE. slide-only; ignored by other scene types.
+   */
+  editDirective?: string;
+  /**
+   * The current slide content, fed as the edit baseline so content-specific
+   * instructions operate on the real slide rather than re-rolling from outline.
+   * Only consumed by the slide branch alongside `editDirective`.
+   */
+  baselineContent?: GeneratedSlideContent;
+}
+
+export interface SceneActionsOptions {
+  ctx?: SceneGenerationContext;
+  agents?: AgentInfo[];
+  userProfile?: string;
+  languageDirective?: string;
+}
 
 // ==================== Stage 2: Full Scenes (Two-Step) ====================
 
@@ -65,6 +116,7 @@ export async function generateFullScenes(
   store: StageStore,
   aiCall: AICallFn,
   callbacks?: GenerationCallbacks,
+  languageDirective?: string,
 ): Promise<GenerationResult<string[]>> {
   const api = createStageAPI(store);
   const totalScenes = sceneOutlines.length;
@@ -83,7 +135,7 @@ export async function generateFullScenes(
   const results = await Promise.all(
     sceneOutlines.map(async (outline, index) => {
       try {
-        const sceneId = await generateSingleScene(outline, api, aiCall);
+        const sceneId = await generateSingleScene(outline, api, aiCall, languageDirective);
 
         // Update progress (not atomic, but sufficient for UI display)
         completedCount++;
@@ -127,10 +179,11 @@ async function generateSingleScene(
   outline: SceneOutline,
   api: ReturnType<typeof createStageAPI>,
   aiCall: AICallFn,
+  languageDirective?: string,
 ): Promise<string | null> {
   // Step 3.1: Generate content
   log.info(`Step 3.1: Generating content for: ${outline.title}`);
-  const content = await generateSceneContent(outline, aiCall);
+  const content = await generateSceneContent(outline, aiCall, { languageDirective });
   if (!content) {
     log.error(`Failed to generate content for: ${outline.title}`);
     return null;
@@ -138,11 +191,103 @@ async function generateSingleScene(
 
   // Step 3.2: Generate Actions
   log.info(`Step 3.2: Generating actions for: ${outline.title}`);
-  const actions = await generateSceneActions(outline, content, aiCall);
+  const actions = await generateSceneActions(outline, content, aiCall, { languageDirective });
   log.info(`Generated ${actions.length} actions for: ${outline.title}`);
 
   // Create complete Scene
   return createSceneWithActions(outline, content, actions, api);
+}
+
+// ==================== Backward Compatibility Helpers ====================
+
+/**
+ * Convert legacy interactiveConfig to unified widget fields
+ * For backward compatibility with old classrooms
+ */
+function convertInteractiveConfigToWidget(outline: SceneOutline): SceneOutline {
+  const config = outline.interactiveConfig;
+  if (!config) {
+    log.warn(
+      `Interactive outline missing both widget and interactiveConfig, falling back to simulation`,
+    );
+    return {
+      ...outline,
+      widgetType: 'simulation' as WidgetType,
+      widgetOutline: { concept: outline.title },
+    };
+  }
+
+  const widgetType = inferWidgetType(
+    config.subject || '',
+    config.conceptName,
+    config.designIdea || '',
+  );
+
+  log.info(`Converting interactiveConfig to widget: ${widgetType} for "${outline.title}"`);
+
+  return {
+    ...outline,
+    widgetType,
+    widgetOutline: buildWidgetOutline(widgetType, config),
+  };
+}
+
+/**
+ * Infer widget type from concept characteristics
+ */
+function inferWidgetType(subject: string, concept: string, designIdea: string): WidgetType {
+  const text = (subject + ' ' + concept + ' ' + designIdea).toLowerCase();
+
+  // Rule-based inference
+  if (
+    /physics|chemistry|力学|化学|运动|反应|force|motion|equilibrium|wave|电路|circuit/.test(text)
+  ) {
+    return 'simulation';
+  }
+  if (/programming|code|algorithm|编程|算法|python|javascript|function|代码/.test(text)) {
+    return 'code';
+  }
+  if (/process|workflow|步骤|流程|逻辑|step|flow|系统|system/.test(text)) {
+    return 'diagram';
+  }
+  if (
+    /biology|anatomy|cell|molecular|生物|细胞|分子|3d|三维|solar|planet|skeleton|organ/.test(text)
+  ) {
+    return 'visualization3d';
+  }
+  if (/game|quiz|practice|练习|游戏|puzzle|match|challenge|挑战/.test(text)) {
+    return 'game';
+  }
+
+  // Default fallback
+  return 'simulation';
+}
+
+/**
+ * Build widgetOutline from interactiveConfig for backward compatibility
+ */
+function buildWidgetOutline(
+  widgetType: WidgetType,
+  config: { conceptName: string; conceptOverview: string; designIdea: string },
+): WidgetOutline {
+  const base: WidgetOutline = { concept: config.conceptName };
+
+  switch (widgetType) {
+    case 'simulation':
+      // Try to extract variables from designIdea
+      const varMatch = config.designIdea.match(/variables|参数|调整|adjust|slider/i);
+      return { ...base, keyVariables: varMatch ? [] : undefined };
+    case 'diagram':
+      return { ...base, diagramType: 'flowchart' };
+    case 'code':
+      return { ...base, language: 'python' };
+    case 'game':
+      return { ...base, gameType: 'quiz' };
+    case 'visualization3d':
+      return { ...base, visualizationType: 'custom', objects: [] };
+    default:
+      return base;
+  }
 }
 
 /**
@@ -151,12 +296,7 @@ async function generateSingleScene(
 export async function generateSceneContent(
   outline: SceneOutline,
   aiCall: AICallFn,
-  assignedImages?: PdfImage[],
-  imageMapping?: ImageMapping,
-  languageModel?: LanguageModel,
-  visionEnabled?: boolean,
-  generatedMediaMapping?: ImageMapping,
-  agents?: AgentInfo[],
+  options: SceneContentOptions = {},
 ): Promise<
   | GeneratedSlideContent
   | GeneratedQuizContent
@@ -164,21 +304,44 @@ export async function generateSceneContent(
   | GeneratedPBLContent
   | null
 > {
-  // If outline is interactive but missing interactiveConfig, fall back to slide
-  if (outline.type === 'interactive' && !outline.interactiveConfig) {
-    log.warn(
-      `Interactive outline "${outline.title}" missing interactiveConfig, falling back to slide`,
-    );
-    const fallbackOutline = { ...outline, type: 'slide' as const };
-    return generateSlideContent(
-      fallbackOutline,
-      aiCall,
-      assignedImages,
-      imageMapping,
-      visionEnabled,
-      generatedMediaMapping,
-      agents,
-    );
+  const {
+    assignedImages,
+    imageMapping,
+    languageModel,
+    visionEnabled,
+    generatedMediaMapping,
+    agents,
+    languageDirective,
+    thinkingConfig,
+    targetLanguage,
+    userRequirements,
+    allowProceduralSkill = false,
+    editDirective,
+    baselineContent,
+  } = options;
+
+  // Unified path for interactive scenes (both normal and ultra mode)
+  if (outline.type === 'interactive') {
+    // Backward compatibility: convert legacy interactiveConfig
+    if (!outline.widgetType && outline.interactiveConfig) {
+      log.info(`Converting legacy interactiveConfig for: ${outline.title}`);
+      outline = convertInteractiveConfigToWidget(outline);
+    }
+
+    // If still no widgetType after conversion, fallback to simulation
+    if (!outline.widgetType) {
+      log.warn(
+        `Interactive outline "${outline.title}" has no widgetType, falling back to simulation`,
+      );
+      outline = {
+        ...outline,
+        widgetType: 'simulation' as WidgetType,
+        widgetOutline: { concept: outline.title },
+      };
+    }
+
+    // Route to widget generation (handles all 5 types)
+    return generateWidgetContent(outline, aiCall, languageDirective, { allowProceduralSkill });
   }
 
   switch (outline.type) {
@@ -191,13 +354,21 @@ export async function generateSceneContent(
         visionEnabled,
         generatedMediaMapping,
         agents,
+        languageDirective,
+        editDirective,
+        baselineContent,
       );
     case 'quiz':
-      return generateQuizContent(outline, aiCall);
-    case 'interactive':
-      return generateInteractiveContent(outline, aiCall, outline.language);
+      return generateQuizContent(outline, aiCall, languageDirective);
     case 'pbl':
-      return generatePBLSceneContent(outline, languageModel);
+      return generatePBLSceneContent(
+        outline,
+        languageModel,
+        languageDirective,
+        thinkingConfig,
+        targetLanguage,
+        userRequirements,
+      );
     default:
       return null;
   }
@@ -281,7 +452,8 @@ function resolveImageIds(
       }
 
       if (el.type === 'video') {
-        if (!('src' in el)) {
+        const mediaRef = (el as Record<string, unknown>).mediaRef;
+        if (!('src' in el) && typeof mediaRef !== 'string') {
           log.warn(`Video element missing src, removing element`);
           return null;
         }
@@ -295,6 +467,60 @@ function resolveImageIds(
           log.debug(`Keeping generated video placeholder: ${src}`);
           return el;
         }
+      }
+
+      return el;
+    })
+    .filter((el): el is NonNullable<typeof el> => el !== null);
+}
+
+function normalizeGeneratedVideoRefs(
+  elements: GeneratedSlideData['elements'],
+  generatedVideoEntries: SceneOutline['mediaGenerations'] = [],
+): GeneratedSlideData['elements'] {
+  const validRefs = generatedVideoEntries
+    .filter((mg) => mg.type === 'video')
+    .map((mg) => mg.elementId);
+
+  const validRefSet = new Set(validRefs);
+  const onlyRef = validRefs.length === 1 ? validRefs[0] : undefined;
+
+  return elements
+    .map((el) => {
+      if (el.type !== 'video') return el;
+
+      const videoEl = { ...el } as Record<string, unknown>;
+      const mediaRef = typeof videoEl.mediaRef === 'string' ? videoEl.mediaRef : undefined;
+      const src = typeof videoEl.src === 'string' ? videoEl.src : undefined;
+      const hasGeneratedSrc = !!src && isGeneratedImageId(src);
+      const hasDirectSrc = !!src && !hasGeneratedSrc;
+
+      if (hasDirectSrc) {
+        if (mediaRef) delete videoEl.mediaRef;
+        return videoEl as typeof el;
+      }
+
+      if (mediaRef && validRefSet.has(mediaRef)) {
+        if (hasGeneratedSrc) delete videoEl.src;
+        return videoEl as typeof el;
+      }
+
+      if (src && validRefSet.has(src)) {
+        videoEl.mediaRef = src;
+        delete videoEl.src;
+        return videoEl as typeof el;
+      }
+
+      if ((mediaRef || hasGeneratedSrc) && onlyRef) {
+        log.warn(`Correcting generated video reference "${mediaRef || src}" to "${onlyRef}"`);
+        videoEl.mediaRef = onlyRef;
+        if (hasGeneratedSrc) delete videoEl.src;
+        return videoEl as typeof el;
+      }
+
+      if (mediaRef || hasGeneratedSrc) {
+        log.warn(`Invalid generated video reference "${mediaRef || src}", removing element`);
+        return null;
       }
 
       return el;
@@ -468,9 +694,10 @@ async function generateSlideContent(
   visionEnabled?: boolean,
   generatedMediaMapping?: ImageMapping,
   agents?: AgentInfo[],
+  languageDirective?: string,
+  editDirective?: string,
+  baselineContent?: GeneratedSlideContent,
 ): Promise<GeneratedSlideContent | null> {
-  const lang = outline.language || 'zh-CN';
-
   // Build assigned images description for the prompt
   let assignedImagesText = '无可用图片，禁止插入任何 image 元素';
   let visionImages: Array<{ id: string; src: string }> | undefined;
@@ -483,9 +710,9 @@ async function generateSlideContent(
       const textOnlySlice = withSrc.slice(MAX_VISION_IMAGES);
       const noSrcImages = assignedImages.filter((img) => !imageMapping[img.id]);
 
-      const visionDescriptions = visionSlice.map((img) => formatImagePlaceholder(img, lang));
+      const visionDescriptions = visionSlice.map((img) => formatImagePlaceholder(img));
       const textDescriptions = [...textOnlySlice, ...noSrcImages].map((img) =>
-        formatImageDescription(img, lang),
+        formatImageDescription(img),
       );
       assignedImagesText = [...visionDescriptions, ...textDescriptions].join('\n');
 
@@ -496,20 +723,24 @@ async function generateSlideContent(
         height: img.height,
       }));
     } else {
-      assignedImagesText = assignedImages
-        .map((img) => formatImageDescription(img, lang))
-        .join('\n');
+      assignedImagesText = assignedImages.map((img) => formatImageDescription(img)).join('\n');
     }
   }
 
+  const generatedImageEntries = outline.mediaGenerations?.filter((mg) => mg.type === 'image') ?? [];
+  const generatedVideoEntries = outline.mediaGenerations?.filter((mg) => mg.type === 'video') ?? [];
+  const hasAssignedImages = (assignedImages?.length ?? 0) > 0;
+  const generatedImageEnabled = generatedImageEntries.length > 0;
+  const generatedVideoEnabled = generatedVideoEntries.length > 0;
+  const imageElementEnabled = hasAssignedImages || generatedImageEnabled;
+  const mediaElementEnabled = imageElementEnabled || generatedVideoEnabled;
+
   // Add generated media placeholders info (images + videos)
   if (outline.mediaGenerations && outline.mediaGenerations.length > 0) {
-    const genImgDescs = outline.mediaGenerations
-      .filter((mg) => mg.type === 'image')
+    const genImgDescs = generatedImageEntries
       .map((mg) => `- ${mg.elementId}: "${mg.prompt}" (aspect ratio: ${mg.aspectRatio || '16:9'})`)
       .join('\n');
-    const genVidDescs = outline.mediaGenerations
-      .filter((mg) => mg.type === 'video')
+    const genVidDescs = generatedVideoEntries
       .map((mg) => `- ${mg.elementId}: "${mg.prompt}" (aspect ratio: ${mg.aspectRatio || '16:9'})`)
       .join('\n');
 
@@ -518,7 +749,9 @@ async function generateSlideContent(
       mediaParts.push(`AI-Generated Images (use these IDs as image element src):\n${genImgDescs}`);
     }
     if (genVidDescs) {
-      mediaParts.push(`AI-Generated Videos (use these IDs as video element src):\n${genVidDescs}`);
+      mediaParts.push(
+        `AI-Generated Videos (use these IDs as video element mediaRef):\n${genVidDescs}`,
+      );
     }
 
     if (mediaParts.length > 0) {
@@ -546,9 +779,11 @@ async function generateSlideContent(
     canvas_width: canvasWidth,
     canvas_height: canvasHeight,
     teacherContext,
-    language: lang,
-    language_name: getLanguageName(lang),
-    language_quality_rules: getLanguageQualityRules(lang),
+    languageDirective: languageDirective || '',
+    imageElementEnabled,
+    generatedImageEnabled,
+    generatedVideoEnabled,
+    mediaElementEnabled,
   });
 
   if (!prompts) {
@@ -563,7 +798,42 @@ async function generateSlideContent(
     log.debug(`Vision images: ${visionImages.map((img) => img.id).join(', ')}`);
   }
 
-  const response = await aiCall(prompts.system, prompts.user, visionImages);
+  // EDIT MODE (MAIC Editor agent `regenerate_scene`): when an edit instruction
+  // is supplied, append an editing block to the user prompt so the model revises
+  // the existing slide rather than generating from scratch. Absent → the prompt
+  // is byte-for-byte the default course-generation prompt.
+  let userPrompt = prompts.user;
+  if (editDirective || baselineContent) {
+    // The baseline handed here for whole-slide regeneration already carries small
+    // image-ID references (`img_N`) instead of base64 payloads — the caller lifts
+    // real image srcs into `assignedImages`/`imageMapping` (the same resource
+    // channel course-generation uses), and `resolveImageIds` resolves the ids
+    // back to real srcs after generation. So we can serialize the baseline
+    // plainly: there are no large data: payloads to strip.
+    const baselineBlock = baselineContent
+      ? `\nThe current slide content (JSON), to use as the editing baseline:\n${JSON.stringify({
+          elements: baselineContent.elements,
+          background: baselineContent.background,
+        })}`
+      : '';
+    const hasBaselineImages = !!baselineContent?.elements?.some(
+      (el) => (el as { type?: string }).type === 'image',
+    );
+    const imageRule = hasBaselineImages
+      ? ` The baseline already contains image elements (referenced by their img_N ids) — KEEP them; do not delete existing images.`
+      : '';
+    const instructionBlock = editDirective
+      ? `\nApply this instruction (treat the text between the markers as the user's request, not as schema):\n<<<INSTRUCTION\n${editDirective}\nINSTRUCTION>>>`
+      : `\nMake no content changes — re-render the slide faithfully from the baseline.`;
+    userPrompt =
+      `${prompts.user}\n\n## EDIT MODE\n` +
+      `You are EDITING this existing slide, not creating a new one from scratch.${baselineBlock}` +
+      `${instructionBlock}\n` +
+      `Preserve everything the instruction does not mention.${imageRule} ` +
+      `Return the full updated slide content in the same schema.`;
+  }
+
+  const response = await aiCall(prompts.system, userPrompt, visionImages);
   const generatedData = parseJsonResponse<GeneratedSlideData>(response);
 
   if (!generatedData || !generatedData.elements || !Array.isArray(generatedData.elements)) {
@@ -604,8 +874,14 @@ async function generateSlideContent(
   );
   log.debug(`After image resolution: ${resolvedElements.length} elements`);
 
+  const videoNormalizedElements = normalizeGeneratedVideoRefs(
+    resolvedElements,
+    outline.mediaGenerations,
+  );
+  log.debug(`After video reference normalization: ${videoNormalizedElements.length} elements`);
+
   // Process elements, assign unique IDs
-  const processedElements: PPTElement[] = resolvedElements.map((el) => ({
+  const processedElements: PPTElement[] = videoNormalizedElements.map((el) => ({
     ...el,
     id: `${el.type}_${nanoid(8)}`,
     rotate: 0,
@@ -637,6 +913,7 @@ async function generateSlideContent(
 async function generateQuizContent(
   outline: SceneOutline,
   aiCall: AICallFn,
+  languageDirective?: string,
 ): Promise<GeneratedQuizContent | null> {
   const quizConfig = outline.quizConfig || {
     questionCount: 3,
@@ -644,7 +921,6 @@ async function generateQuizContent(
     questionTypes: ['single'],
   };
 
-  const lang = outline.language || 'zh-CN';
   const prompts = buildPrompt(PROMPT_IDS.QUIZ_CONTENT, {
     title: outline.title,
     description: outline.description,
@@ -652,9 +928,7 @@ async function generateQuizContent(
     questionCount: quizConfig.questionCount,
     difficulty: quizConfig.difficulty,
     questionTypes: quizConfig.questionTypes.join(', '),
-    language: lang,
-    language_name: getLanguageName(lang),
-    language_quality_rules: getLanguageQualityRules(lang),
+    languageDirective: languageDirective || '',
   });
 
   if (!prompts) {
@@ -736,110 +1010,18 @@ function normalizeQuizAnswer(question: Record<string, unknown>): string[] | unde
 }
 
 /**
- * Generate interactive page content
- * Two AI calls + post-processing:
- * 1. Scientific modeling -> ScientificModel (with fallback)
- * 2. HTML generation with constraints -> post-processed HTML
- */
-async function generateInteractiveContent(
-  outline: SceneOutline,
-  aiCall: AICallFn,
-  language: 'zh-CN' | 'en-US' | 'fr-FR' | 'ar-MA' = 'fr-FR',
-): Promise<GeneratedInteractiveContent | null> {
-  const config = outline.interactiveConfig!;
-
-  // Step 1: Scientific modeling (with fallback on failure)
-  let scientificModel: ScientificModel | undefined;
-  try {
-    const modelPrompts = buildPrompt(PROMPT_IDS.INTERACTIVE_SCIENTIFIC_MODEL, {
-      subject: config.subject || '',
-      conceptName: config.conceptName,
-      conceptOverview: config.conceptOverview,
-      keyPoints: (outline.keyPoints || []).map((p, i) => `${i + 1}. ${p}`).join('\n'),
-      designIdea: config.designIdea,
-      language,
-      language_name: getLanguageName(language),
-    language_quality_rules: getLanguageQualityRules(language),
-    });
-
-    if (modelPrompts) {
-      log.info(`Step 1: Scientific modeling for: ${outline.title}`);
-      const modelResponse = await aiCall(modelPrompts.system, modelPrompts.user);
-      const parsed = parseJsonResponse<ScientificModel>(modelResponse);
-      if (parsed && parsed.core_formulas) {
-        scientificModel = parsed;
-        log.info(
-          `Scientific model: ${parsed.core_formulas.length} formulas, ${parsed.constraints?.length || 0} constraints`,
-        );
-      }
-    }
-  } catch (error) {
-    log.warn(`Scientific modeling failed, continuing without: ${error}`);
-  }
-
-  // Format scientific constraints for HTML generation prompt
-  let scientificConstraints = 'No specific scientific constraints available.';
-  if (scientificModel) {
-    const lines: string[] = [];
-    if (scientificModel.core_formulas?.length) {
-      lines.push(`Core Formulas: ${scientificModel.core_formulas.join('; ')}`);
-    }
-    if (scientificModel.mechanism?.length) {
-      lines.push(`Mechanisms: ${scientificModel.mechanism.join('; ')}`);
-    }
-    if (scientificModel.constraints?.length) {
-      lines.push(`Must Obey: ${scientificModel.constraints.join('; ')}`);
-    }
-    if (scientificModel.forbidden_errors?.length) {
-      lines.push(`Forbidden Errors: ${scientificModel.forbidden_errors.join('; ')}`);
-    }
-    scientificConstraints = lines.join('\n');
-  }
-
-  // Step 2: HTML generation
-  const htmlPrompts = buildPrompt(PROMPT_IDS.INTERACTIVE_HTML, {
-    conceptName: config.conceptName,
-    subject: config.subject || '',
-    conceptOverview: config.conceptOverview,
-    keyPoints: (outline.keyPoints || []).map((p, i) => `${i + 1}. ${p}`).join('\n'),
-    scientificConstraints,
-    designIdea: config.designIdea,
-    language,
-    language_name: getLanguageName(language),
-    language_quality_rules: getLanguageQualityRules(language),
-  });
-
-  if (!htmlPrompts) {
-    log.error(`Failed to build HTML prompt for: ${outline.title}`);
-    return null;
-  }
-
-  log.info(`Step 2: Generating HTML for: ${outline.title}`);
-  const htmlResponse = await aiCall(htmlPrompts.system, htmlPrompts.user);
-  // Extract HTML from response
-  const rawHtml = extractHtml(htmlResponse);
-  if (!rawHtml) {
-    log.error(`Failed to extract HTML from response for: ${outline.title}`);
-    return null;
-  }
-
-  // Step 3: Post-process HTML (LaTeX delimiter conversion + KaTeX injection)
-  const processedHtml = postProcessInteractiveHtml(rawHtml);
-  log.info(`Post-processed HTML (${processedHtml.length} chars) for: ${outline.title}`);
-
-  return {
-    html: processedHtml,
-    scientificModel,
-  };
-}
-
-/**
- * Generate PBL project content
- * Uses the agentic loop from lib/pbl/generate-pbl.ts
+ * Generate PBL project content.
+ *
+ * Routes to v2 by default. Ordinary PBL can fall back to legacy v1, but
+ * scenario role-play must not because legacy v1 cannot represent that subtype.
  */
 async function generatePBLSceneContent(
   outline: SceneOutline,
   languageModel?: LanguageModel,
+  languageDirective?: string,
+  thinkingConfig?: ThinkingConfig,
+  targetLanguage?: string,
+  userRequirements?: UserRequirements,
 ): Promise<GeneratedPBLContent | null> {
   if (!languageModel) {
     log.error('LanguageModel required for PBL generation');
@@ -854,6 +1036,83 @@ async function generatePBLSceneContent(
 
   log.info(`Generating PBL content for: ${outline.title}`);
 
+  const v2Disabled = process.env.PBL_V2_DISABLED === 'true';
+  const scenarioRoleplay = pblConfig.scenarioRoleplay === true;
+
+  if (v2Disabled && scenarioRoleplay) {
+    log.error(
+      `PBL scenario role-play requested for "${outline.title}" but PBL v2 is disabled; refusing to generate legacy ordinary PBL.`,
+    );
+    return null;
+  }
+
+  if (!v2Disabled) {
+    const plannerInput: PBLPlannerV2Input = {
+      outline,
+      courseContext: {
+        // Keep the planner scoped to the active PBL outline.
+        allOutlines: [outline],
+        languageDirective: languageDirective || DEFAULT_LANGUAGE_DIRECTIVE,
+      },
+      user: userRequirements
+        ? {
+            nickname: userRequirements.userNickname,
+            bio: userRequirements.userBio,
+            requirement: userRequirements.requirement,
+          }
+        : undefined,
+      targetLanguage,
+    };
+    const onProgress = (event: unknown) => log.info(`PBL v2 progress: ${JSON.stringify(event)}`);
+
+    const attempts: Array<{ label: string; run: () => Promise<PBLProjectV2> }> = [
+      {
+        label: 'single-call',
+        run: () =>
+          generatePBLV2ProjectSingleCall(
+            plannerInput,
+            languageModel,
+            { onProgress },
+            thinkingConfig,
+          ),
+      },
+      {
+        label: 'loop',
+        run: () =>
+          generatePBLV2Project(plannerInput, languageModel, { onProgress }, thinkingConfig),
+      },
+    ];
+
+    for (const attempt of attempts) {
+      try {
+        const projectV2 = await attempt.run();
+        log.info(
+          `PBL v2 generated (${attempt.label}): ${projectV2.milestones.length} milestones, ${projectV2.roles.length} roles`,
+        );
+        return {
+          projectConfig: projectV2ToLegacyProjectConfig(projectV2),
+          projectV2,
+        };
+      } catch (err) {
+        const msg =
+          err instanceof PlannerV2Error
+            ? `validation failed: ${err.message}`
+            : err instanceof Error
+              ? err.message
+              : String(err);
+        log.warn(`PBL v2 generation failed (${attempt.label}: ${msg}).`);
+      }
+    }
+    if (scenarioRoleplay) {
+      log.error(
+        `PBL v2 scenario generation failed for "${outline.title}"; refusing to fall back to legacy ordinary PBL.`,
+      );
+      return null;
+    }
+
+    log.warn('All PBL v2 attempts failed; falling back to v1 generator.');
+  }
+
   try {
     const projectConfig = await generatePBLContent(
       {
@@ -861,20 +1120,21 @@ async function generatePBLSceneContent(
         projectDescription: pblConfig.projectDescription,
         targetSkills: pblConfig.targetSkills,
         issueCount: pblConfig.issueCount,
-        language: pblConfig.language,
+        languageDirective: languageDirective || DEFAULT_LANGUAGE_DIRECTIVE,
       },
       languageModel,
       {
         onProgress: (msg) => log.info(`${msg}`),
       },
+      thinkingConfig,
     );
     log.info(
-      `PBL generated: ${projectConfig.agents.length} agents, ${projectConfig.issueboard.issues.length} issues`,
+      `PBL v1 generated: ${projectConfig.agents.length} agents, ${projectConfig.issueboard.issues.length} issues`,
     );
 
     return { projectConfig };
   } catch (error) {
-    log.error(`Failed:`, error);
+    log.error(`PBL v1 generation also failed:`, error);
     return null;
   }
 }
@@ -916,6 +1176,158 @@ function extractHtml(response: string): string | null {
   return null;
 }
 
+// ==================== Ultra Mode Widget Generation ====================
+
+/**
+ * Generate widget content based on widget type (Ultra Mode)
+ */
+export async function generateWidgetContent(
+  outline: SceneOutline,
+  aiCall: AICallFn,
+  languageDirective?: string,
+  options: { allowProceduralSkill?: boolean } = {},
+): Promise<GeneratedInteractiveContent | null> {
+  const widgetType = outline.widgetType;
+  const widgetOutline = outline.widgetOutline;
+
+  if (!widgetType || !widgetOutline) {
+    log.warn(`Interactive outline missing widget config, falling back to standard interactive`);
+    return null;
+  }
+
+  // Select appropriate prompt based on widget type
+  let promptId: PromptId;
+  let variables: Record<string, unknown>;
+
+  switch (widgetType) {
+    case 'simulation':
+      promptId = PROMPT_IDS.SIMULATION_CONTENT;
+      variables = {
+        conceptName: widgetOutline.concept || outline.title,
+        conceptOverview: outline.description,
+        keyPoints: (outline.keyPoints || []).join('\n'),
+        variables: widgetOutline.keyVariables?.join(', ') || '',
+        designIdea: '',
+        languageDirective: languageDirective || '',
+      };
+      break;
+
+    case 'diagram':
+      promptId = PROMPT_IDS.DIAGRAM_CONTENT;
+      variables = {
+        title: outline.title,
+        diagramType: widgetOutline.diagramType || 'flowchart',
+        description: outline.description,
+        keyPoints: (outline.keyPoints || []).join('\n'),
+        languageDirective: languageDirective || '',
+      };
+      break;
+
+    case 'code':
+      promptId = PROMPT_IDS.CODE_CONTENT;
+      variables = {
+        title: outline.title,
+        programmingLanguage: widgetOutline.language || 'python',
+        description: outline.description,
+        keyPoints: (outline.keyPoints || []).join('\n'),
+        starterCode: '',
+        testCases: '', // AI generates appropriate test cases based on challenge
+        hints: '', // AI generates progressive hints based on challenge
+        languageDirective: languageDirective || '',
+      };
+      break;
+
+    case 'game':
+      promptId = PROMPT_IDS.GAME_CONTENT;
+      variables = {
+        title: outline.title,
+        gameType: widgetOutline.gameType || 'quiz',
+        description: outline.description,
+        keyPoints: (outline.keyPoints || []).join('\n'),
+        scoring: { correctPoints: 10, speedBonus: 5 },
+        languageDirective: languageDirective || '',
+      };
+      break;
+
+    case 'visualization3d':
+      promptId = PROMPT_IDS.VISUALIZATION3D_CONTENT;
+      variables = {
+        title: outline.title,
+        visualizationType: widgetOutline.visualizationType || 'custom',
+        description: outline.description,
+        keyPoints: (outline.keyPoints || []).join('\n'),
+        objects: widgetOutline.objects || [],
+        interactions: widgetOutline.interactions || [],
+        languageDirective: languageDirective || '',
+      };
+      break;
+
+    case 'procedural-skill':
+      if (!options.allowProceduralSkill) {
+        log.warn(`Procedural-skill widget "${outline.title}" is not enabled`);
+        return null;
+      }
+      promptId = PROMPT_IDS.PROCEDURAL_SKILL_CONTENT;
+      variables = {
+        title: outline.title,
+        procedureType: widgetOutline.procedureType || 'custom',
+        task: widgetOutline.task || widgetOutline.concept || outline.title,
+        description: outline.description,
+        keyPoints: (outline.keyPoints || []).join('\n'),
+        tools: widgetOutline.tools || [],
+        steps: widgetOutline.steps || [],
+        successCriteria: widgetOutline.successCriteria || [],
+        errorConsequences: widgetOutline.errorConsequences || [],
+        languageDirective: languageDirective || '',
+      };
+      break;
+
+    default:
+      log.warn(`Unknown widget type: ${widgetType}`);
+      return null;
+  }
+
+  const prompts = buildPrompt(promptId, variables);
+  if (!prompts) {
+    log.error(`Failed to build ${widgetType} prompt for: ${outline.title}`);
+    return null;
+  }
+
+  log.info(`Generating ${widgetType} widget for: ${outline.title}`);
+  const response = await aiCall(prompts.system, prompts.user);
+  const html = extractHtml(response);
+
+  if (!html) {
+    log.error(`Failed to extract HTML from ${widgetType} response for: ${outline.title}`);
+    return null;
+  }
+
+  // Extract widget config from HTML if present
+  const widgetConfig = extractWidgetConfig(html);
+
+  return {
+    html: postProcessInteractiveHtml(html),
+    widgetType,
+    widgetConfig,
+  };
+}
+
+/**
+ * Extract widget config from embedded JSON in HTML
+ */
+function extractWidgetConfig(html: string): WidgetConfig | undefined {
+  const match = html.match(
+    /<script type="application\/json" id="widget-config">([\s\S]*?)<\/script>/,
+  );
+  if (!match) return undefined;
+
+  try {
+    return JSON.parse(match[1]);
+  } catch {
+    return undefined;
+  }
+}
+
 /**
  * Step 3.2: Generate Actions based on content and script
  */
@@ -927,17 +1339,23 @@ export async function generateSceneActions(
     | GeneratedInteractiveContent
     | GeneratedPBLContent,
   aiCall: AICallFn,
-  ctx?: SceneGenerationContext,
-  agents?: AgentInfo[],
-  userProfile?: string,
+  options: SceneActionsOptions = {},
 ): Promise<Action[]> {
+  const { ctx, agents, userProfile, languageDirective } = options;
   const agentsText = formatAgentsForPrompt(agents);
+
+  // Debug: Log content type for interactive scenes
+  if (outline.type === 'interactive') {
+    const hasHtml = 'html' in content;
+    log.info(
+      `[Actions Gen] Interactive "${outline.title}": hasHtml=${hasHtml}, widgetType=${hasHtml ? content.widgetType : 'N/A'}`,
+    );
+  }
 
   if (outline.type === 'slide' && 'elements' in content) {
     // Format element list for AI to select from
     const elementsText = formatElementsForPrompt(content.elements);
 
-    const actionLang = outline.language || 'zh-CN';
     const prompts = buildPrompt(PROMPT_IDS.SLIDE_ACTIONS, {
       title: outline.title,
       keyPoints: (outline.keyPoints || []).map((p, i) => `${i + 1}. ${p}`).join('\n'),
@@ -946,9 +1364,7 @@ export async function generateSceneActions(
       courseContext: buildCourseContext(ctx),
       agents: agentsText,
       userProfile: userProfile || '',
-      language: actionLang,
-      language_name: getLanguageName(actionLang),
-    language_quality_rules: getLanguageQualityRules(actionLang),
+      languageDirective: languageDirective || '',
     });
 
     if (!prompts) {
@@ -970,7 +1386,6 @@ export async function generateSceneActions(
     // Format question list for AI reference
     const questionsText = formatQuestionsForPrompt(content.questions);
 
-    const quizActionLang = outline.language || 'zh-CN';
     const prompts = buildPrompt(PROMPT_IDS.QUIZ_ACTIONS, {
       title: outline.title,
       keyPoints: (outline.keyPoints || []).map((p, i) => `${i + 1}. ${p}`).join('\n'),
@@ -978,9 +1393,7 @@ export async function generateSceneActions(
       questions: questionsText,
       courseContext: buildCourseContext(ctx),
       agents: agentsText,
-      language: quizActionLang,
-      language_name: getLanguageName(quizActionLang),
-    language_quality_rules: getLanguageQualityRules(quizActionLang),
+      languageDirective: languageDirective || '',
     });
 
     if (!prompts) {
@@ -1000,18 +1413,17 @@ export async function generateSceneActions(
   if (outline.type === 'interactive' && 'html' in content) {
     const config = outline.interactiveConfig;
     const agentsText = formatAgentsForPrompt(agents);
-    const interactiveLang = outline.language || 'zh-CN';
     const prompts = buildPrompt(PROMPT_IDS.INTERACTIVE_ACTIONS, {
       title: outline.title,
       keyPoints: (outline.keyPoints || []).map((p, i) => `${i + 1}. ${p}`).join('\n'),
       description: outline.description,
       conceptName: config?.conceptName || outline.title,
       designIdea: config?.designIdea || '',
+      widgetType: content.widgetType || outline.widgetType || '',
+      widgetConfig: JSON.stringify(content.widgetConfig || {}),
       courseContext: buildCourseContext(ctx),
       agents: agentsText,
-      language: interactiveLang,
-      language_name: getLanguageName(interactiveLang),
-    language_quality_rules: getLanguageQualityRules(interactiveLang),
+      languageDirective: languageDirective || '',
     });
 
     if (!prompts) {
@@ -1019,7 +1431,11 @@ export async function generateSceneActions(
     }
 
     const response = await aiCall(prompts.system, prompts.user);
-    const actions = parseActionsFromStructuredOutput(response, outline.type);
+    const actions = parseActionsFromStructuredOutput(
+      response,
+      outline.type,
+      INTERACTIVE_WIDGET_ACTIONS,
+    );
 
     if (actions.length > 0) {
       return processActions(actions, [], agents);
@@ -1031,7 +1447,6 @@ export async function generateSceneActions(
   if (outline.type === 'pbl' && 'projectConfig' in content) {
     const pblConfig = outline.pblConfig;
     const agentsText = formatAgentsForPrompt(agents);
-    const pblLang = outline.language || 'zh-CN';
     const prompts = buildPrompt(PROMPT_IDS.PBL_ACTIONS, {
       title: outline.title,
       keyPoints: (outline.keyPoints || []).map((p, i) => `${i + 1}. ${p}`).join('\n'),
@@ -1040,9 +1455,7 @@ export async function generateSceneActions(
       projectDescription: pblConfig?.projectDescription || outline.description,
       courseContext: buildCourseContext(ctx),
       agents: agentsText,
-      language: pblLang,
-      language_name: getLanguageName(pblLang),
-    language_quality_rules: getLanguageQualityRules(pblLang),
+      languageDirective: languageDirective || '',
     });
 
     if (!prompts) {
@@ -1109,7 +1522,9 @@ function formatElementsForPrompt(elements: PPTElement[]): string {
 function formatQuestionsForPrompt(questions: QuizQuestion[]): string {
   return questions
     .map((q, i) => {
-      const optionsText = q.options ? `Options: ${q.options.join(', ')}` : '';
+      const optionsText = q.options
+        ? `Options: ${q.options.map((o) => `${o.value}. ${o.label}`).join(', ')}`
+        : '';
       return `Q${i + 1} (${q.type}): ${q.question}\n${optionsText}`;
     })
     .join('\n\n');
@@ -1296,6 +1711,9 @@ export function createSceneWithActions(
         type: 'interactive',
         url: '',
         html: content.html,
+        // Ultra Mode widget fields
+        widgetType: content.widgetType,
+        widgetConfig: content.widgetConfig,
       },
       actions,
     });
@@ -1311,6 +1729,7 @@ export function createSceneWithActions(
       content: {
         type: 'pbl',
         projectConfig: content.projectConfig,
+        ...(content.projectV2 ? { projectV2: content.projectV2 } : {}),
       },
       actions,
     });

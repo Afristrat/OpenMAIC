@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie';
-import type { Scene, SceneType, SceneContent, Whiteboard } from '@/lib/types/stage';
+import type { Scene, SceneType, SceneContent, Whiteboard, VideoManifest } from '@/lib/types/stage';
 import type { Action } from '@/lib/types/action';
 import type {
   SessionType,
@@ -9,6 +9,7 @@ import type {
   ToolCallRequest,
 } from '@/lib/types/chat';
 import type { SceneOutline } from '@/lib/types/generation';
+import type { VoiceDesign } from '@/lib/audio/voice-design';
 import type { UIMessage } from 'ai';
 import { createLogger } from '@/lib/logger';
 
@@ -44,10 +45,13 @@ export interface StageRecord {
   description?: string;
   createdAt: number; // timestamp
   updatedAt: number; // timestamp
-  language?: string;
+  languageDirective?: string;
   style?: string;
   currentSceneId?: string;
   agentIds?: string[]; // Agent IDs selected at creation time
+  videoManifest?: VideoManifest; // Generated video request manifest; non-indexed
+  interactiveMode?: boolean; // Interactive Mode flag; non-indexed
+  taskEngineMode?: boolean; // Vocational Task Engine flag; non-indexed
 }
 
 /**
@@ -128,6 +132,10 @@ export interface PlaybackStateRecord {
 export interface StageOutlinesRecord {
   stageId: string; // Primary key (FK -> stages.id)
   outlines: SceneOutline[];
+  // True once generation finished for this stage. Gates resume-on-mount so an
+  // edited (e.g. slide-deleted) finished deck is not treated as "interrupted"
+  // and regenerated. Optional for backward compat with pre-existing records.
+  generationComplete?: boolean;
   createdAt: number;
   updatedAt: number;
 }
@@ -164,38 +172,36 @@ export interface GeneratedAgentRecord {
   avatar: string;
   color: string;
   priority: number;
+  voiceDesign?: VoiceDesign; // 3-layer vocal descriptor for auto voice
   createdAt: number;
 }
 
 /**
- * SyncQueue table - Queued operations for offline sync
+ * VoiceProfile table - Browser-local TTS voice profiles
  */
-export interface SyncQueueRecord {
-  id: string; // PK: unique operation ID
-  type: 'quiz_result' | 'review_rating' | 'stage_sync';
-  payload: unknown;
+export interface VoiceProfileRecord {
+  id: string;
+  providerId: string;
+  kind: 'prompt' | 'clone';
+  name: string;
+  voicePrompt?: string;
+  promptText?: string;
+  referenceAudio?: Blob;
+  referenceAudioName?: string;
+  referenceAudioMimeType?: string;
   createdAt: number;
-  retries: number;
+  updatedAt: number;
 }
 
 /**
- * ReviewCard table - Spaced repetition review cards (guest / offline mode)
+ * Cached reference clip for a registered auto voice (any TTS provider). The
+ * clip is the source of truth; the deterministic `voiceId` is its key, enabling
+ * register-on-invalid re-registration after backend GC/restart.
  */
-export interface ReviewCardRecord {
-  id: string; // PK: card ID (e.g. "review-stageId-sceneId-questionId")
-  question: string;
-  correctAnswer: string;
-  userAnswer: string;
-  difficulty: number; // 0.0 – 1.0
-  stability: number;
-  dueDate: number; // timestamp
-  lastReview: number | null; // timestamp
-  reps: number;
-  lapses: number;
-  tags: string[];
-  sourceStageId: string;
-  sourceSceneId: string;
-  createdAt: number;
+export interface AutoVoiceCacheRecord {
+  voiceId: string;
+  referenceAudio: Blob;
+  mimeType: string;
   updatedAt: number;
 }
 
@@ -207,7 +213,7 @@ export function mediaFileKey(stageId: string, elementId: string): string {
 // ==================== Database Definition ====================
 
 const DATABASE_NAME = 'MAIC-Database';
-const _DATABASE_VERSION = 10;
+const _DATABASE_VERSION = 11;
 
 /**
  * MAIC Database Instance
@@ -223,9 +229,9 @@ class MAICDatabase extends Dexie {
   playbackState!: EntityTable<PlaybackStateRecord, 'stageId'>;
   stageOutlines!: EntityTable<StageOutlinesRecord, 'stageId'>;
   mediaFiles!: EntityTable<MediaFileRecord, 'id'>;
-  reviewCards!: EntityTable<ReviewCardRecord, 'id'>;
-  syncQueue!: EntityTable<SyncQueueRecord, 'id'>;
   generatedAgents!: EntityTable<GeneratedAgentRecord, 'id'>;
+  voiceProfiles!: EntityTable<VoiceProfileRecord, 'id'>;
+  autoVoiceCache!: EntityTable<AutoVoiceCacheRecord, 'voiceId'>;
 
   constructor() {
     super(DATABASE_NAME);
@@ -344,22 +350,41 @@ class MAICDatabase extends Dexie {
       generatedAgents: 'id, stageId',
     });
 
-    // Version 9: Add reviewCards table for spaced repetition (guest / offline)
-    this.version(9).stores({
-      stages: 'id, updatedAt',
-      scenes: 'id, stageId, order, [stageId+order]',
-      audioFiles: 'id, createdAt',
-      imageFiles: 'id, createdAt',
-      snapshots: '++id',
-      chatSessions: 'id, stageId, [stageId+createdAt]',
-      playbackState: 'stageId',
-      stageOutlines: 'stageId',
-      mediaFiles: 'id, stageId, [stageId+type]',
-      generatedAgents: 'id, stageId',
-      reviewCards: 'id, dueDate, sourceStageId',
-    });
+    // Version 9: Migrate legacy `language` field to `languageDirective`
+    // Old stages stored a BCP-47 locale code (e.g. "zh-CN"); new code expects a
+    // natural-language directive. Convert known locales and drop the old field.
+    const LOCALE_TO_DIRECTIVE: Record<string, string> = {
+      'zh-CN': 'Deliver the entire course in Chinese (Simplified, zh-CN).',
+      'en-US': 'Deliver the entire course in English (en-US).',
+      'ja-JP': 'Deliver the entire course in Japanese (ja-JP).',
+      'ru-RU': 'Deliver the entire course in Russian (ru-RU).',
+    };
+    this.version(9)
+      .stores({
+        stages: 'id, updatedAt',
+        scenes: 'id, stageId, order, [stageId+order]',
+        audioFiles: 'id, createdAt',
+        imageFiles: 'id, createdAt',
+        snapshots: '++id',
+        chatSessions: 'id, stageId, [stageId+createdAt]',
+        playbackState: 'stageId',
+        stageOutlines: 'stageId',
+        mediaFiles: 'id, stageId, [stageId+type]',
+        generatedAgents: 'id, stageId',
+      })
+      .upgrade(async (tx) => {
+        const table = tx.table('stages');
+        await table.toCollection().modify((stage: Record<string, unknown>) => {
+          const lang = stage.language as string | undefined;
+          if (lang && !stage.languageDirective) {
+            stage.languageDirective =
+              LOCALE_TO_DIRECTIVE[lang] || `Deliver the entire course in ${lang}.`;
+          }
+          delete stage.language;
+        });
+      });
 
-    // Version 10: Add syncQueue table for PWA offline sync
+    // Version 10: Add browser-local voice profiles for serverless TTS voice storage.
     this.version(10).stores({
       stages: 'id, updatedAt',
       scenes: 'id, stageId, order, [stageId+order]',
@@ -371,8 +396,23 @@ class MAICDatabase extends Dexie {
       stageOutlines: 'stageId',
       mediaFiles: 'id, stageId, [stageId+type]',
       generatedAgents: 'id, stageId',
-      reviewCards: 'id, dueDate, sourceStageId',
-      syncQueue: 'id, type, createdAt',
+      voiceProfiles: 'id, providerId, kind, updatedAt',
+    });
+
+    // Version 11: Add auto-voice reference-clip cache (provider-neutral register-by-id).
+    this.version(11).stores({
+      stages: 'id, updatedAt',
+      scenes: 'id, stageId, order, [stageId+order]',
+      audioFiles: 'id, createdAt',
+      imageFiles: 'id, createdAt',
+      snapshots: '++id',
+      chatSessions: 'id, stageId, [stageId+createdAt]',
+      playbackState: 'stageId',
+      stageOutlines: 'stageId',
+      mediaFiles: 'id, stageId, [stageId+type]',
+      generatedAgents: 'id, stageId',
+      voiceProfiles: 'id, providerId, kind, updatedAt',
+      autoVoiceCache: 'voiceId, updatedAt',
     });
   }
 }
@@ -507,6 +547,5 @@ export async function getDatabaseStats() {
     stageOutlines: await db.stageOutlines.count(),
     mediaFiles: await db.mediaFiles.count(),
     generatedAgents: await db.generatedAgents.count(),
-    syncQueue: await db.syncQueue.count(),
   };
 }

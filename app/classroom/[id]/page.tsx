@@ -12,6 +12,8 @@ import { useWhiteboardHistoryStore } from '@/lib/store/whiteboard-history';
 import { createLogger } from '@/lib/logger';
 import { MediaStageProvider } from '@/lib/contexts/media-stage-context';
 import { generateMediaForOutlines } from '@/lib/media/media-orchestrator';
+import { migrateScene } from '@/lib/edit/slide-schema';
+import type { Scene } from '@/lib/types/stage';
 
 const log = createLogger('Classroom');
 
@@ -46,11 +48,29 @@ export default function ClassroomDetailPage() {
             if (json.success && json.classroom) {
               const { stage, scenes } = json.classroom;
               useStageStore.getState().setStage(stage);
+              // Normalize legacy slide content (missing schemaVersion) on the
+              // way in, same as the store's setScenes/loadFromStorage paths —
+              // server snapshots predate the schema field.
+              const migrated = (scenes as Scene[]).map(migrateScene);
               useStageStore.setState({
-                scenes,
-                currentSceneId: scenes[0]?.id ?? null,
+                scenes: migrated,
+                currentSceneId: migrated[0]?.id ?? null,
+                // Match `loadFromStorage` semantics: mode is transient UI
+                // state, not persisted with the stage. Reset on every
+                // classroom load so SPA navigation doesn't carry Pro
+                // mode across.
+                mode: 'playback',
               });
               log.info('Loaded from server-side storage:', classroomId);
+
+              // Hydrate server-generated agents into IndexedDB + registry.
+              // Don't set selectedAgentIds here — the general agent
+              // restoration logic below (Path 2) handles it uniformly.
+              if (stage.generatedAgentConfigs?.length) {
+                const { saveGeneratedAgents } = await import('@/lib/orchestration/registry/store');
+                await saveGeneratedAgents(stage.id, stage.generatedAgentConfigs);
+                log.info('Hydrated server-generated agents for stage:', stage.id);
+              }
             }
           }
         } catch (fetchErr) {
@@ -65,27 +85,36 @@ export default function ClassroomDetailPage() {
         await import('@/lib/orchestration/registry/store');
       const generatedAgentIds = await loadGeneratedAgentsForStage(classroomId);
       const { useSettingsStore } = await import('@/lib/store/settings');
-      if (generatedAgentIds.length > 0) {
-        // Auto mode — use generated agents from IndexedDB
-        useSettingsStore.getState().setAgentMode('auto');
-        useSettingsStore.getState().setSelectedAgentIds(generatedAgentIds);
-      } else {
-        // Preset mode — restore agent IDs saved in the stage at creation time.
-        // Filter out any stale generated IDs that may have been persisted before
-        // the bleed-fix, so they don't resolve against a leftover registry entry.
-        const stage = useStageStore.getState().stage;
-        const stageAgentIds = stage?.agentIds;
-        const registry = useAgentRegistry.getState();
-        const cleanIds = stageAgentIds?.filter((id) => {
+      const { restoreAgentSelection } =
+        await import('@/lib/orchestration/registry/agent-selection');
+      // Keep the user's explicit AgentBar mode/selection when still valid for
+      // this stage instead of unconditionally forcing auto mode (which
+      // clobbered it on every classroom visit); fall back to the stage-derived
+      // defaults otherwise, marking them as NOT user-set so the next classroom
+      // never mistakes them for a choice. Stale generated IDs (from another
+      // stage / pre-bleed-fix) never validate, so they don't resolve against a
+      // leftover registry entry.
+      const settings = useSettingsStore.getState();
+      const registry = useAgentRegistry.getState();
+      const stage = useStageStore.getState().stage;
+      const { selection: next, isUserSet } = restoreAgentSelection({
+        persisted: { mode: settings.agentMode, selectedAgentIds: settings.selectedAgentIds },
+        persistedIsUserSet: settings.agentSelectionIsUserSet,
+        generatedAgentIds,
+        stageAgentIds: stage?.agentIds,
+        isPresetAgent: (id) => {
           const a = registry.getAgent(id);
-          return a && !a.isGenerated;
-        });
-        useSettingsStore.getState().setAgentMode('preset');
-        useSettingsStore
-          .getState()
-          .setSelectedAgentIds(
-            cleanIds && cleanIds.length > 0 ? cleanIds : ['default-1', 'default-2', 'default-3'],
-          );
+          return !!a && !a.isGenerated;
+        },
+      });
+      // restoreAgentSelection returns the persisted object as-is when keeping
+      // it, so reference checks skip redundant store writes.
+      if (next.mode !== settings.agentMode) settings.setAgentMode(next.mode);
+      if (next.selectedAgentIds !== settings.selectedAgentIds) {
+        settings.setSelectedAgentIds(next.selectedAgentIds);
+      }
+      if (isUserSet !== settings.agentSelectionIsUserSet) {
+        settings.setAgentSelectionIsUserSet(isUserSet);
       }
     } catch (error) {
       log.error('Failed to load classroom:', error);
@@ -125,11 +154,14 @@ export default function ClassroomDetailPage() {
     if (loading || error || generationStartedRef.current) return;
 
     const state = useStageStore.getState();
-    const { outlines, scenes, stage } = state;
+    const { outlines, scenes, stage, generationComplete } = state;
 
-    // Check if there are pending outlines
+    // Check if there are pending outlines. A finished deck is frozen for
+    // editing: deleting a slide leaves its outline orphaned, but that must not
+    // be treated as an interrupted generation and regenerated. Only resume
+    // when generation has not completed.
     const completedOrders = new Set(scenes.map((s) => s.order));
-    const hasPending = outlines.some((o) => !completedOrders.has(o.order));
+    const hasPending = !generationComplete && outlines.some((o) => !completedOrders.has(o.order));
 
     if (hasPending && stage) {
       generationStartedRef.current = true;
@@ -150,11 +182,11 @@ export default function ClassroomDetailPage() {
           stageInfo: {
             name: stage.name || '',
             description: stage.description,
-            language: stage.language,
             style: stage.style,
           },
           agents: params.agents,
           userProfile: params.userProfile,
+          languageDirective: params.languageDirective || stage.languageDirective,
         });
       });
     } else if (outlines.length > 0 && stage) {
@@ -162,7 +194,19 @@ export default function ClassroomDetailPage() {
       // Resume media generation for any tasks not yet in IndexedDB.
       // generateMediaForOutlines skips already-completed tasks automatically.
       generationStartedRef.current = true;
-      generateMediaForOutlines(outlines, stage.id).catch((err) => {
+      // The deck reached the classroom already fully materialized (e.g. a
+      // single-slide course, or a deck whose last slide finished in
+      // generation-preview), so generateRemaining's completion path never
+      // ran. Record completion now so a later edit/delete is not treated as
+      // an interrupted generation. No-op if already complete or not all
+      // outlines have scenes.
+      useStageStore.getState().markGenerationCompleteIfDone();
+      // Resume media only for outlines that still have a scene. On a finished
+      // deck the user may have deleted a slide, leaving an orphaned outline;
+      // generating its media would waste API calls on a slide that is gone.
+      const materializedOrders = new Set(scenes.map((s) => s.order));
+      const materializedOutlines = outlines.filter((o) => materializedOrders.has(o.order));
+      generateMediaForOutlines(materializedOutlines, stage.id).catch((err) => {
         log.warn('[Classroom] Media generation resume error:', err);
       });
     }

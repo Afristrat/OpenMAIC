@@ -1,27 +1,32 @@
 import { type NextRequest } from 'next/server';
 import { randomUUID } from 'crypto';
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
-import type { Scene, Stage } from '@/lib/types/stage';
 import {
   buildRequestOrigin,
   isValidClassroomId,
   persistClassroom,
   readClassroom,
 } from '@/lib/server/classroom-storage';
-import { requireAuth } from '@/lib/api/auth';
-import { validateBody } from '@/lib/api/validate';
-import { classroomPersistSchema } from '@/lib/api/schemas';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('Classroom API');
 
 export async function POST(request: NextRequest) {
-  const auth = await requireAuth(request);
-  if (auth.response) return auth.response;
-
+  let stageId: string | undefined;
+  let sceneCount: number | undefined;
   try {
-    const rawBody = await request.json();
-    const validation = validateBody(classroomPersistSchema, rawBody);
-    if (!validation.success) return validation.response;
-    // After Zod validates structure, use typed cast for Supabase interop
-    const { stage, scenes } = rawBody as { stage: Stage & { id?: string }; scenes: Scene[] };
+    const body = await request.json();
+    const { stage, scenes } = body;
+    stageId = stage?.id;
+    sceneCount = scenes?.length;
+
+    if (!stage || !scenes) {
+      return apiError(
+        API_ERROR_CODES.MISSING_REQUIRED_FIELD,
+        400,
+        'Missing required fields: stage, scenes',
+      );
+    }
 
     const id = stage.id || randomUUID();
     const baseUrl = buildRequestOrigin(request);
@@ -30,6 +35,10 @@ export async function POST(request: NextRequest) {
 
     return apiSuccess({ id: persisted.id, url: persisted.url }, 201);
   } catch (error) {
+    log.error(
+      `Classroom storage failed [stageId=${stageId ?? 'unknown'}, scenes=${sceneCount ?? 0}]:`,
+      error,
+    );
     return apiError(
       API_ERROR_CODES.INTERNAL_ERROR,
       500,
@@ -40,9 +49,6 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const authGet = await requireAuth(request);
-  if (authGet.response) return authGet.response;
-
   try {
     const id = request.nextUrl.searchParams.get('id');
 
@@ -65,6 +71,10 @@ export async function GET(request: NextRequest) {
 
     return apiSuccess({ classroom });
   } catch (error) {
+    log.error(
+      `Classroom retrieval failed [id=${request.nextUrl.searchParams.get('id') ?? 'unknown'}]:`,
+      error,
+    );
     return apiError(
       API_ERROR_CODES.INTERNAL_ERROR,
       500,

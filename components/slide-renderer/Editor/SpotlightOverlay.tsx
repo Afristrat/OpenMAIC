@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useSceneSelector } from '@/lib/contexts/scene-context';
 import { useCanvasStore } from '@/lib/store/canvas';
 import type { SlideContent } from '@/lib/types/stage';
-import type { PPTElement } from '@/lib/types/slides';
+import type { PPTElement } from '@openmaic/dsl';
 
 interface SpotlightRect {
   x: number;
@@ -20,7 +20,17 @@ interface SpotlightRect {
  * Uses DOM measurement (getBoundingClientRect) to compute spotlight position,
  * avoiding alignment offsets from percentage coordinate conversion.
  */
-export function SpotlightOverlay() {
+interface SpotlightOverlayProps {
+  /**
+   * DOM id prefix used to locate the target element. Playback screens render
+   * elements as `screen-element-<id>` (default); the editor canvas renders
+   * them as `editable-element-<id>` and passes that prefix so the exact same
+   * spotlight effect plays in Pro mode.
+   */
+  domIdPrefix?: string;
+}
+
+export function SpotlightOverlay({ domIdPrefix = 'screen-element-' }: SpotlightOverlayProps = {}) {
   const spotlightElementId = useCanvasStore.use.spotlightElementId();
   const spotlightOptions = useCanvasStore.use.spotlightOptions();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -37,7 +47,7 @@ export function SpotlightOverlay() {
       return;
     }
 
-    const domElement = document.getElementById(`screen-element-${spotlightElementId}`);
+    const domElement = document.getElementById(`${domIdPrefix}${spotlightElementId}`);
     if (!domElement) {
       setRect(null);
       return;
@@ -62,7 +72,7 @@ export function SpotlightOverlay() {
       w: (targetRect.width / containerRect.width) * 100,
       h: (targetRect.height / containerRect.height) * 100,
     });
-  }, [spotlightElementId]);
+  }, [spotlightElementId, domIdPrefix]);
 
   useLayoutEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- DOM measurement requires effect
@@ -122,13 +132,17 @@ export function SpotlightOverlay() {
                 </mask>
               </defs>
 
-              {/* Dimmed Background */}
+              {/* Dimmed Background. No backdrop-filter: combined with SVG <mask>
+                 it breaks compositing (backdrop bypasses the mask cutout) in some
+                 browsers, leaving the focused area dimmed despite the cutout.
+                 Tailwind 3 silently dropped `backdrop-blur-[1.5px]` on SVG via
+                 --tw-* variables; Tailwind 4 emits the property directly and
+                 surfaced the bug. */}
               <rect
                 width="100"
                 height="100"
                 fill={`rgba(0,0,0,${dimness})`}
                 mask={`url(#mask-${spotlightElementId})`}
-                className="backdrop-blur-[1.5px]"
               />
 
               {/* THE ONE BORDER - white border */}

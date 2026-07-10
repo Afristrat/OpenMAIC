@@ -148,6 +148,7 @@
 import { createOpenAI } from '@ai-sdk/openai';
 import { experimental_transcribe as transcribe } from 'ai';
 import type { ASRModelConfig } from './types';
+import { isCustomASRProvider } from './types';
 import { ASR_PROVIDERS } from './constants';
 
 /**
@@ -164,13 +165,10 @@ export async function transcribeAudio(
   config: ASRModelConfig,
   audioBuffer: Buffer | Blob,
 ): Promise<ASRTranscriptionResult> {
-  const provider = ASR_PROVIDERS[config.providerId];
-  if (!provider) {
-    throw new Error(`Unknown ASR provider: ${config.providerId}`);
-  }
+  const provider = ASR_PROVIDERS[config.providerId as keyof typeof ASR_PROVIDERS];
 
-  // Validate API key if required
-  if (provider.requiresApiKey && !config.apiKey) {
+  // Validate API key if required (only for built-in providers with known config)
+  if (provider?.requiresApiKey && !config.apiKey) {
     throw new Error(`API key required for ASR provider: ${config.providerId}`);
   }
 
@@ -184,9 +182,113 @@ export async function transcribeAudio(
     case 'qwen-asr':
       return await transcribeQwenASR(config, audioBuffer);
 
+    case 'azure-asr':
+      return await transcribeAzureASR(config, audioBuffer);
+
+    case 'lemonade-asr':
+      return await transcribeLemonadeASR(config, audioBuffer);
+
     default:
+      if (isCustomASRProvider(config.providerId)) {
+        return await transcribeOpenAIWhisper(config, audioBuffer);
+      }
       throw new Error(`Unsupported ASR provider: ${config.providerId}`);
   }
+}
+
+/**
+ * Lemonade ASR implementation (OpenAI-compatible multipart transcription).
+ *
+ * Lemonade currently supports WAV input and JSON response format.
+ */
+async function transcribeLemonadeASR(
+  config: ASRModelConfig,
+  audioBuffer: Buffer | Blob,
+): Promise<ASRTranscriptionResult> {
+  const baseUrl = (config.baseUrl || ASR_PROVIDERS['lemonade-asr'].defaultBaseUrl || '').replace(
+    /\/$/,
+    '',
+  );
+
+  const audioBlob = await toAudioBlob(audioBuffer);
+  if (!(await isWavAudio(audioBlob))) {
+    throw new Error(
+      'Lemonade ASR currently supports WAV input only. Recordings should be converted to WAV before upload.',
+    );
+  }
+
+  const formData = new FormData();
+  formData.set('file', audioBlob, 'audio.wav');
+  formData.set('model', config.modelId || ASR_PROVIDERS['lemonade-asr'].defaultModelId);
+  formData.set('response_format', 'json');
+  if (config.language && config.language !== 'auto') {
+    formData.set('language', config.language);
+  }
+
+  const response = await fetch(`${baseUrl}/audio/transcriptions`, {
+    method: 'POST',
+    headers: getOptionalBearerAuthHeaders(config.apiKey),
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => response.statusText);
+    if (errorText.includes('audio is empty') || errorText.includes('too short')) {
+      return { text: '' };
+    }
+    throw new Error(`Lemonade ASR API error: ${errorText || response.statusText}`);
+  }
+
+  const data = await response.json();
+  return { text: typeof data.text === 'string' ? data.text : '' };
+}
+
+async function toAudioBlob(audioBuffer: Buffer | Blob): Promise<Blob> {
+  if (audioBuffer instanceof Blob) {
+    return audioBuffer;
+  }
+  if (audioBuffer instanceof Buffer) {
+    const arrayBuffer = audioBuffer.buffer.slice(
+      audioBuffer.byteOffset,
+      audioBuffer.byteOffset + audioBuffer.byteLength,
+    ) as ArrayBuffer;
+    return new Blob([arrayBuffer], { type: detectWavBuffer(audioBuffer) ? 'audio/wav' : '' });
+  }
+  throw new Error('Invalid audio buffer type');
+}
+
+async function isWavAudio(blob: Blob): Promise<boolean> {
+  if (blob.type.includes('audio/wav') || blob.type.includes('audio/x-wav')) {
+    return true;
+  }
+
+  if (blob instanceof File && /\.wav$/i.test(blob.name)) {
+    return true;
+  }
+
+  const header = await blob.slice(0, 12).arrayBuffer();
+  return detectWavBytes(new Uint8Array(header));
+}
+
+function detectWavBuffer(buffer: Buffer): boolean {
+  return (
+    buffer.byteLength >= 12 &&
+    buffer.toString('ascii', 0, 4) === 'RIFF' &&
+    buffer.toString('ascii', 8, 12) === 'WAVE'
+  );
+}
+
+function detectWavBytes(bytes: Uint8Array): boolean {
+  return (
+    bytes.byteLength >= 12 &&
+    String.fromCharCode(...bytes.slice(0, 4)) === 'RIFF' &&
+    String.fromCharCode(...bytes.slice(8, 12)) === 'WAVE'
+  );
+}
+
+function getOptionalBearerAuthHeaders(apiKey?: string): Record<string, string> {
+  const key = apiKey?.trim();
+  return key ? { Authorization: `Bearer ${key}` } : {};
 }
 
 /**
@@ -214,7 +316,7 @@ async function transcribeOpenAIWhisper(
 
   try {
     const result = await transcribe({
-      model: openai.transcription('gpt-4o-mini-transcribe'),
+      model: openai.transcription(config.modelId || 'gpt-4o-mini-transcribe'),
       audio: audioData,
       providerOptions: {
         openai: {
@@ -256,7 +358,7 @@ async function transcribeQwenASR(
 
   // Build request body
   const requestBody: Record<string, unknown> = {
-    model: 'qwen3-asr-flash',
+    model: config.modelId || 'qwen3-asr-flash',
     input: {
       messages: [
         {
@@ -327,6 +429,90 @@ async function transcribeQwenASR(
 }
 
 /**
+ * Azure STT implementation (Fast Transcription REST API)
+ * https://learn.microsoft.com/azure/ai-services/speech-service/fast-transcription-create
+ */
+async function transcribeAzureASR(
+  config: ASRModelConfig,
+  audioBuffer: Buffer | Blob,
+): Promise<ASRTranscriptionResult> {
+  const rawBaseUrl = config.baseUrl || ASR_PROVIDERS['azure-asr'].defaultBaseUrl!;
+
+  if (!rawBaseUrl || rawBaseUrl.includes('{region}')) {
+    throw new Error('Azure STT base URL must include a real region');
+  }
+
+  let endpoint = rawBaseUrl.replace(/\/+$/, '');
+  if (/\.stt\.speech\.microsoft\.com$/i.test(endpoint)) {
+    endpoint = endpoint.replace(/\.stt\.speech\.microsoft\.com$/i, '.api.cognitive.microsoft.com');
+  }
+  if (!/\/speechtotext\/transcriptions:transcribe/i.test(endpoint)) {
+    endpoint = `${endpoint}/speechtotext/transcriptions:transcribe`;
+  }
+  const url = new URL(endpoint);
+  if (!url.searchParams.get('api-version')) {
+    url.searchParams.set('api-version', '2025-10-15');
+  }
+
+  let audioBlob: Blob;
+  if (audioBuffer instanceof Blob) {
+    audioBlob = audioBuffer;
+  } else {
+    audioBlob = new Blob([audioBuffer as unknown as BlobPart], { type: 'audio/webm' });
+  }
+
+  const formData = new FormData();
+  formData.append('audio', audioBlob, 'recording.webm');
+
+  const localeMap: Record<string, string> = {
+    en: 'en-US',
+    zh: 'zh-CN',
+    ja: 'ja-JP',
+    ko: 'ko-KR',
+    de: 'de-DE',
+    fr: 'fr-FR',
+    es: 'es-ES',
+    it: 'it-IT',
+    pt: 'pt-BR',
+    ru: 'ru-RU',
+    ar: 'ar-SA',
+    hi: 'hi-IN',
+  };
+
+  if (config.language && config.language !== 'auto') {
+    const locale = localeMap[config.language] || config.language;
+    formData.append('definition', JSON.stringify({ locales: [locale] }));
+  }
+
+  const response = await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Ocp-Apim-Subscription-Key': config.apiKey! },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => response.statusText);
+    throw new Error(`Azure STT error (${response.status}): ${errorText}`);
+  }
+
+  const data = (await response.json()) as {
+    combinedPhrases?: Array<{ text?: string }>;
+    phrases?: Array<{ text?: string }>;
+  };
+
+  const combinedText = data.combinedPhrases
+    ?.map((p) => p.text || '')
+    .filter(Boolean)
+    .join(' ');
+  const phraseText = data.phrases
+    ?.map((p) => p.text || '')
+    .filter(Boolean)
+    .join(' ');
+
+  return { text: combinedText || phraseText || '' };
+}
+
+/**
  * Get current ASR configuration from settings store
  * Note: This function should only be called in browser context
  */
@@ -343,8 +529,12 @@ export async function getCurrentASRConfig(): Promise<ASRModelConfig> {
 
   return {
     providerId: asrProviderId,
+    modelId:
+      providerConfig?.modelId ||
+      ASR_PROVIDERS[asrProviderId as keyof typeof ASR_PROVIDERS]?.defaultModelId ||
+      '',
     apiKey: providerConfig?.apiKey,
-    baseUrl: providerConfig?.baseUrl,
+    baseUrl: providerConfig?.baseUrl || providerConfig?.customDefaultBaseUrl,
     language: asrLanguage,
   };
 }

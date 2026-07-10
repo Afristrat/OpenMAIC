@@ -24,7 +24,7 @@ import {
   type HighlightOverlayOptions,
 } from '@/lib/store/canvas';
 import type { SlideContent } from '@/lib/types/stage';
-import type { PPTElement, Slide } from '@/lib/types/slides';
+import type { PPTElement, Slide } from '@openmaic/dsl';
 import { useCallback, useMemo } from 'react';
 import { useHistorySnapshot } from '@/lib/hooks/use-history-snapshot';
 import { toast } from 'sonner';
@@ -370,9 +370,7 @@ export function useCanvasOperations() {
     const firstGroupId = activeElementList[0].groupId;
     if (!firstGroupId) return true;
 
-    const inSameGroup = activeElementList.every(
-      (el) => (el.groupId && el.groupId) === firstGroupId,
-    );
+    const inSameGroup = activeElementList.every((el) => el.groupId && el.groupId === firstGroupId);
     return !inSameGroup;
   }, [activeElementList]);
 

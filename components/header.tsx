@@ -1,229 +1,59 @@
 'use client';
 
-import {
-  Settings,
-  ArrowLeft,
-  Loader2,
-  Download,
-  FileDown,
-  Package,
-  LogOut,
-  User,
-} from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useI18n } from '@/lib/hooks/use-i18n';
-import { useAuth } from '@/lib/hooks/use-auth';
-import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { SettingsDialog } from './settings';
-import { cn } from '@/lib/utils';
-import { useStageStore } from '@/lib/store/stage';
-import { useMediaGenerationStore } from '@/lib/store/media-generation';
-import { useExportPPTX } from '@/lib/export/use-export-pptx';
+import type { StageMode } from '@/lib/types/stage';
+import { HeaderControls } from './stage/header-controls';
 
 interface HeaderProps {
   readonly currentSceneTitle: string;
+  readonly mode?: StageMode;
+  readonly canEdit?: boolean;
+  readonly onToggleEditMode?: () => void;
 }
 
-export function Header({ currentSceneTitle }: HeaderProps) {
+export function Header({ currentSceneTitle, mode, canEdit, onToggleEditMode }: HeaderProps) {
   const { t } = useI18n();
-  const { user, signOut } = useAuth();
   const router = useRouter();
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const userMenuRef = useRef<HTMLDivElement>(null);
-
-  // Export
-  const { exporting: isExporting, exportPPTX, exportResourcePack } = useExportPPTX();
-  const [exportMenuOpen, setExportMenuOpen] = useState(false);
-  const exportRef = useRef<HTMLDivElement>(null);
-  const scenes = useStageStore((s) => s.scenes);
-  const generatingOutlines = useStageStore((s) => s.generatingOutlines);
-  const failedOutlines = useStageStore((s) => s.failedOutlines);
-  const mediaTasks = useMediaGenerationStore((s) => s.tasks);
-
-  const canExport =
-    scenes.length > 0 &&
-    generatingOutlines.length === 0 &&
-    failedOutlines.length === 0 &&
-    Object.values(mediaTasks).every((task) => task.status === 'done' || task.status === 'failed');
-
-  // Close dropdown when clicking outside
-  const handleClickOutside = useCallback(
-    (e: MouseEvent) => {
-      if (exportMenuOpen && exportRef.current && !exportRef.current.contains(e.target as Node)) {
-        setExportMenuOpen(false);
-      }
-      if (userMenuOpen && userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
-        setUserMenuOpen(false);
-      }
-    },
-    [exportMenuOpen, userMenuOpen],
-  );
-
-  useEffect(() => {
-    if (exportMenuOpen || userMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [exportMenuOpen, userMenuOpen, handleClickOutside]);
 
   return (
     <>
       <header className="h-20 px-8 flex items-center justify-between z-10 bg-transparent gap-4">
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <button
-            onClick={() => router.push('/app')}
+            onClick={() => router.push('/')}
             className="shrink-0 p-2 rounded-lg text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
             title={t('generation.backToHome')}
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <div className="flex flex-col min-w-0">
-            <span className="text-[10px] uppercase tracking-widest font-bold text-gray-400 dark:text-gray-500 mb-0.5">
-              {t('stage.currentScene')}
-            </span>
-            <h1
-              className="text-xl font-bold text-gray-800 dark:text-gray-200 tracking-tight truncate"
-              suppressHydrationWarning
-            >
-              {currentSceneTitle || t('common.loading')}
-            </h1>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4 bg-white/60 dark:bg-gray-800/60 backdrop-blur-md px-2 py-1.5 rounded-full border border-gray-100/50 dark:border-gray-700/50 shadow-sm shrink-0">
-          {/* Settings Button */}
-          <div className="relative">
-            <button
-              onClick={() => setSettingsOpen(true)}
-              className="p-2 rounded-full text-gray-400 dark:text-gray-500 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 hover:shadow-sm transition-all group"
-            >
-              <Settings className="w-4 h-4 group-hover:rotate-90 transition-transform duration-500" />
-            </button>
-          </div>
-
-          <div className="w-[1px] h-4 bg-gray-200 dark:bg-gray-700" />
-
-          {/* Auth / User */}
-          {user ? (
-            <div className="relative" ref={userMenuRef}>
-              <button
-                onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-2 px-2 py-1.5 rounded-full text-xs font-medium text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 hover:shadow-sm transition-all"
+          {/* Title block — hidden when `mode === 'edit'`. Header lives
+              inside `PlaybackChromeRoot`, which is unmounted by `Stage`
+              once mode flips to 'edit', so in steady state this branch
+              is always taken. The guard exists for the ~280ms
+              AnimatePresence exit window where the playback chrome
+              is still rendering its exit animation while `mode` has
+              already flipped — without the guard, this title would
+              briefly stack on top of the incoming EditChromeRoot's
+              CommandBar title during the cross-fade. */}
+          {mode !== 'edit' && (
+            <div className="flex flex-col min-w-0">
+              <span className="text-[10px] uppercase tracking-widest font-bold text-gray-400 dark:text-gray-500 mb-0.5">
+                {t('stage.currentScene')}
+              </span>
+              <h1
+                className="text-xl font-bold text-gray-800 dark:text-gray-200 tracking-tight truncate"
+                suppressHydrationWarning
               >
-                <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold uppercase">
-                  {user.email?.charAt(0) ?? <User className="w-3 h-3" />}
-                </div>
-                <span className="max-w-[80px] truncate hidden sm:inline">
-                  {user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? ''}
-                </span>
-              </button>
-              {userMenuOpen && (
-                <div className="absolute top-full mt-2 right-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden z-50 min-w-[160px]">
-                  <div className="px-4 py-2 text-xs text-gray-400 dark:text-gray-500 truncate border-b border-gray-100 dark:border-gray-700">
-                    {user.email}
-                  </div>
-                  <Link
-                    href="/profile"
-                    onClick={() => setUserMenuOpen(false)}
-                    className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
-                  >
-                    <User className="w-4 h-4" />
-                    {t('nav.profile')}
-                  </Link>
-                  <Link
-                    href="/settings"
-                    onClick={() => setUserMenuOpen(false)}
-                    className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
-                  >
-                    <Settings className="w-4 h-4" />
-                    {t('nav.settings')}
-                  </Link>
-                  <button
-                    onClick={async () => {
-                      setUserMenuOpen(false);
-                      await signOut();
-                      router.push('/auth');
-                    }}
-                    className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 text-destructive"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    {t('auth.signOut')}
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <Link
-              href="/auth"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-primary hover:bg-primary/10 transition-all"
-            >
-              <User className="w-3.5 h-3.5" />
-              {t('auth.login')}
-            </Link>
-          )}
-        </div>
-
-        {/* Export Dropdown */}
-        <div className="relative" ref={exportRef}>
-          <button
-            onClick={() => {
-              if (canExport && !isExporting) setExportMenuOpen(!exportMenuOpen);
-            }}
-            disabled={!canExport || isExporting}
-            title={
-              canExport
-                ? isExporting
-                  ? t('export.exporting')
-                  : t('export.pptx')
-                : t('share.notReady')
-            }
-            className={cn(
-              'shrink-0 p-2 rounded-full transition-all',
-              canExport && !isExporting
-                ? 'text-gray-400 dark:text-gray-500 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 hover:shadow-sm'
-                : 'text-gray-300 dark:text-gray-600 cursor-not-allowed opacity-50',
-            )}
-          >
-            {isExporting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Download className="w-4 h-4" />
-            )}
-          </button>
-          {exportMenuOpen && (
-            <div className="absolute top-full mt-2 right-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden z-50 min-w-[200px]">
-              <button
-                onClick={() => {
-                  setExportMenuOpen(false);
-                  exportPPTX();
-                }}
-                className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2.5"
-              >
-                <FileDown className="w-4 h-4 text-gray-400 shrink-0" />
-                <span>{t('export.pptx')}</span>
-              </button>
-              <button
-                onClick={() => {
-                  setExportMenuOpen(false);
-                  exportResourcePack();
-                }}
-                className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2.5"
-              >
-                <Package className="w-4 h-4 text-gray-400 shrink-0" />
-                <div>
-                  <div>{t('export.resourcePack')}</div>
-                  <div className="text-[11px] text-gray-400 dark:text-gray-500">
-                    {t('export.resourcePackDesc')}
-                  </div>
-                </div>
-              </button>
+                {currentSceneTitle || t('common.loading')}
+              </h1>
             </div>
           )}
         </div>
+
+        <HeaderControls mode={mode} canEdit={canEdit} onToggleEditMode={onToggleEditMode} />
       </header>
-      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} initialSection="tts" />
     </>
   );
 }

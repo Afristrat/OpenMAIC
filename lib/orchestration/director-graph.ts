@@ -1,17 +1,21 @@
 /**
  * Director Graph — LangGraph StateGraph for Multi-Agent Orchestration
  *
- * Unified graph topology (same for single and multi-agent):
+ * Unified single-round graph topology:
  *
  *   START → director ──(end)──→ END
  *              │
- *              └─(next)→ agent_generate ──→ director (loop)
+ *              └─(next)→ agent_generate ──→ END
+ *
+ * Each request runs at most one director→agent cycle. The client serializes
+ * multiple requests to drive multi-agent discussions. There is no maxTurns
+ * cap — the topology is the bound.
  *
  * The director node adapts its strategy based on agent count:
  *   - Single agent: pure code logic (no LLM). Dispatches the agent on
  *     turn 0, then cues the user on subsequent turns.
- *   - Multi agent: LLM-based decision (with code fast-paths for turn 0
- *     trigger agent and turn limits).
+ *   - Multi agent: LLM-based decision (with code fast-path for turn 0
+ *     trigger agent).
  *
  * Uses LangGraph's custom stream mode: each node pushes StatelessEvent
  * chunks via config.writer() for real-time SSE delivery.
@@ -28,14 +32,12 @@ import type { StatelessChatRequest } from '@/lib/types/chat';
 import type { ThinkingConfig } from '@/lib/types/provider';
 import type { AgentConfig } from '@/lib/orchestration/registry/types';
 import { useAgentRegistry } from '@/lib/orchestration/registry/store';
-import {
-  buildStructuredPrompt,
-  summarizeConversation,
-  convertMessagesToOpenAI,
-} from './prompt-builder';
+import { buildStructuredPrompt } from './prompt-builder';
+import { summarizeConversation } from './summarizers/conversation-summary';
+import { convertMessagesToOpenAI } from './summarizers/message-converter';
 import { buildDirectorPrompt, parseDirectorDecision } from './director-prompt';
 import { getEffectiveActions } from './tool-schemas';
-import type { AgentTurnSummary, WhiteboardActionRecord } from './director-prompt';
+import type { AgentTurnSummary, WhiteboardActionRecord } from './types';
 import { parseStructuredChunk, createParserState, finalizeParser } from './stateless-generate';
 import { createLogger } from '@/lib/logger';
 
@@ -51,7 +53,6 @@ const OrchestratorState = Annotation.Root({
   messages: Annotation<StatelessChatRequest['messages']>,
   storeState: Annotation<StatelessChatRequest['storeState']>,
   availableAgentIds: Annotation<string[]>,
-  maxTurns: Annotation<number>,
   languageModel: Annotation<LanguageModel>,
   thinkingConfig: Annotation<ThinkingConfig | null>,
   discussionContext: Annotation<{ topic: string; prompt?: string } | null>,
@@ -112,12 +113,6 @@ async function directorNode(
     }
   };
   const isSingleAgent = state.availableAgentIds.length <= 1;
-
-  // ── Turn limit check (applies to both single & multi) ──
-  if (state.turnCount >= state.maxTurns) {
-    log.info(`[Director] Turn limit reached (${state.turnCount}/${state.maxTurns}), ending`);
-    return { shouldEnd: true };
-  }
 
   // ── Single agent: code-only director ──
   if (isSingleAgent) {
@@ -479,7 +474,12 @@ async function agentGenerateNode(
  * Topology:
  *   START → director ──(end)──→ END
  *              │
- *              └─(next)→ agent_generate ──→ director (loop)
+ *              └─(next)→ agent_generate ──→ END
+ *
+ * Single-round contract: each request runs at most one director→agent cycle.
+ * Multi-agent discussions arise from the client serializing requests; the
+ * server graph does not loop. There is no `maxTurns` — the topology itself
+ * is the bound.
  */
 export function createOrchestrationGraph() {
   const graph = new StateGraph(OrchestratorState)
@@ -490,7 +490,7 @@ export function createOrchestrationGraph() {
       agent_generate: 'agent_generate',
       [END]: END,
     })
-    .addEdge('agent_generate', 'director');
+    .addEdge('agent_generate', END);
 
   return graph.compile();
 }
@@ -532,7 +532,6 @@ export function buildInitialState(
     messages: request.messages,
     storeState: request.storeState,
     availableAgentIds: request.config.agentIds,
-    maxTurns: turnCount + 1, // Allow exactly one more director→agent cycle
     languageModel,
     thinkingConfig: thinkingConfig ?? null,
     discussionContext,
