@@ -52,10 +52,10 @@ import { VIDEO_PROVIDERS } from '@/lib/media/video-providers';
 import type { VideoProviderId } from '@/lib/media/types';
 import { TTSSettings } from '@/components/settings/tts-settings';
 import { TTS_PROVIDERS } from '@/lib/audio/constants';
-import type { TTSProviderId } from '@/lib/audio/types';
+import type { BuiltInTTSProviderId, TTSProviderId } from '@/lib/audio/types';
 import { ASRSettings } from '@/components/settings/asr-settings';
 import { ASR_PROVIDERS } from '@/lib/audio/constants';
-import type { ASRProviderId } from '@/lib/audio/types';
+import type { BuiltInASRProviderId, ASRProviderId } from '@/lib/audio/types';
 import { WebSearchSettings } from '@/components/settings/web-search-settings';
 import { WEB_SEARCH_PROVIDERS } from '@/lib/web-search/constants';
 import type { WebSearchProviderId } from '@/lib/web-search/types';
@@ -137,6 +137,9 @@ function getTTSProviderName(providerId: TTSProviderId, t: (key: string) => strin
     cartesia: t('settings.providerCartesiaTTS'),
     'edge-tts': t('settings.providerEdgeTTS'),
     'browser-native-tts': t('settings.providerBrowserNativeTTS'),
+    'voxcpm-tts': t('settings.providerVoxcpmTTS'),
+    'minimax-tts': t('settings.providerMinimaxTTS'),
+    'lemonade-tts': t('settings.providerLemonadeTTS'),
   };
   return names[providerId];
 }
@@ -146,6 +149,8 @@ function getASRProviderName(providerId: ASRProviderId, t: (key: string) => strin
     'openai-whisper': t('settings.providerOpenAIWhisper'),
     'browser-native': t('settings.providerBrowserNative'),
     'qwen-asr': t('settings.providerQwenASR'),
+    'lemonade-asr': t('settings.providerLemonadeASR'),
+    'azure-asr': t('settings.providerAzureASR'),
   };
   return names[providerId];
 }
@@ -156,6 +161,9 @@ const IMAGE_PROVIDER_NAMES: Record<ImageProviderId, string> = {
   'qwen-image': 'providerQwenImage',
   'nano-banana': 'providerNanoBanana',
   'grok-image': 'providerGrokImage',
+  'openai-image': 'providerOpenAIImage',
+  'minimax-image': 'providerMinimaxImage',
+  lemonade: 'providerLemonadeImage',
 };
 
 const IMAGE_PROVIDER_ICONS: Record<ImageProviderId, string> = {
@@ -163,6 +171,9 @@ const IMAGE_PROVIDER_ICONS: Record<ImageProviderId, string> = {
   'qwen-image': '/logos/bailian.svg',
   'nano-banana': '/logos/gemini.svg',
   'grok-image': '/logos/grok.svg',
+  'openai-image': '/logos/openai.svg',
+  'minimax-image': '/logos/doubao.svg',
+  lemonade: '/logos/doubao.svg',
 };
 
 const VIDEO_PROVIDER_NAMES: Record<VideoProviderId, string> = {
@@ -171,6 +182,8 @@ const VIDEO_PROVIDER_NAMES: Record<VideoProviderId, string> = {
   veo: 'providerVeo',
   sora: 'providerSora',
   'grok-video': 'providerGrokVideo',
+  'minimax-video': 'providerMinimaxVideo',
+  happyhorse: 'providerHappyhorse',
 };
 
 const VIDEO_PROVIDER_ICONS: Record<VideoProviderId, string> = {
@@ -179,6 +192,8 @@ const VIDEO_PROVIDER_ICONS: Record<VideoProviderId, string> = {
   veo: '/logos/gemini.svg',
   sora: '/logos/openai.svg',
   'grok-video': '/logos/grok.svg',
+  'minimax-video': '/logos/doubao.svg',
+  happyhorse: '/logos/doubao.svg',
 };
 
 function AdminPageContent(): React.ReactElement {
@@ -607,7 +622,10 @@ function AdminPageContent(): React.ReactElement {
         );
       }
       case 'tts': {
-        const ttsIcon = TTS_PROVIDERS[ttsProviderId]?.icon;
+        const ttsIcon =
+          ttsProviderId in TTS_PROVIDERS
+            ? TTS_PROVIDERS[ttsProviderId as BuiltInTTSProviderId].icon
+            : undefined;
         return (
           <>
             {ttsIcon ? (
@@ -627,7 +645,10 @@ function AdminPageContent(): React.ReactElement {
         );
       }
       case 'asr': {
-        const asrIcon = ASR_PROVIDERS[asrProviderId]?.icon;
+        const asrIcon =
+          asrProviderId in ASR_PROVIDERS
+            ? ASR_PROVIDERS[asrProviderId as BuiltInASRProviderId].icon
+            : undefined;
         return (
           <>
             {asrIcon ? (

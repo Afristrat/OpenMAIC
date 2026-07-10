@@ -28,6 +28,7 @@ import { AgentBar } from '@/components/agent/agent-bar';
 import { nanoid } from 'nanoid';
 import { storePdfBlob } from '@/lib/utils/image-storage';
 import type { UserRequirements } from '@/lib/types/generation';
+import { buildLanguageDirective } from '@/lib/constants/generation';
 import { useSettingsStore } from '@/lib/store/settings';
 import { useUserProfileStore, AVATAR_OPTIONS } from '@/lib/store/user-profile';
 import {
@@ -303,9 +304,12 @@ function HomePage() {
 
     try {
       const userProfile = useUserProfileStore.getState();
+      // UserRequirements no longer has a `language` field (upstream v0.3.0
+      // infers the target language from the free-form requirement text) —
+      // fold the user's explicit toolbar selection in as an unambiguous
+      // directive so generation is deterministic rather than LLM-guessed.
       const requirements: UserRequirements = {
-        requirement: form.requirement,
-        language: form.language,
+        requirement: `${buildLanguageDirective(form.language)}\n\n${form.requirement}`,
         userNickname: userProfile.nickname || undefined,
         userBio: userProfile.bio || undefined,
         webSearch: form.webSearch || undefined,

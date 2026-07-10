@@ -9,6 +9,7 @@ import type {
   ToolCallRequest,
 } from '@/lib/types/chat';
 import type { SceneOutline } from '@/lib/types/generation';
+import { buildLanguageDirective } from '@/lib/constants/generation';
 import type { VoiceDesign } from '@/lib/audio/voice-design';
 import type { UIMessage } from 'ai';
 import { createLogger } from '@/lib/logger';
@@ -45,6 +46,11 @@ export interface StageRecord {
   description?: string;
   createdAt: number; // timestamp
   updatedAt: number; // timestamp
+  // BCP-47 locale code (e.g. "fr-FR"), used for Supabase sync/filtering
+  // (org curriculum/library listings). Distinct from `languageDirective`
+  // below, which is a free-text prompt directive for the generation
+  // pipeline — the two serve different consumers and are not interchangeable.
+  language?: string;
   languageDirective?: string;
   style?: string;
   currentSceneId?: string;
@@ -205,6 +211,34 @@ export interface AutoVoiceCacheRecord {
   updatedAt: number;
 }
 
+/** ReviewCard table - Spaced repetition review cards (guest / offline mode) */
+export interface ReviewCardRecord {
+  id: string;
+  question: string;
+  correctAnswer: string;
+  userAnswer: string;
+  difficulty: number; // 0.0 – 1.0
+  stability: number;
+  dueDate: number;
+  lastReview: number | null;
+  reps: number;
+  lapses: number;
+  tags: string[];
+  sourceStageId: string;
+  sourceSceneId: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+/** SyncQueue table - PWA offline sync outbox */
+export interface SyncQueueRecord {
+  id: string; // PK: unique operation ID
+  type: 'quiz_result' | 'review_rating' | 'stage_sync';
+  payload: unknown;
+  createdAt: number;
+  retries: number;
+}
+
 /** Build the compound primary key for mediaFiles: `${stageId}:${elementId}` */
 export function mediaFileKey(stageId: string, elementId: string): string {
   return `${stageId}:${elementId}`;
@@ -213,7 +247,7 @@ export function mediaFileKey(stageId: string, elementId: string): string {
 // ==================== Database Definition ====================
 
 const DATABASE_NAME = 'MAIC-Database';
-const _DATABASE_VERSION = 11;
+const _DATABASE_VERSION = 12;
 
 /**
  * MAIC Database Instance
@@ -232,6 +266,8 @@ class MAICDatabase extends Dexie {
   generatedAgents!: EntityTable<GeneratedAgentRecord, 'id'>;
   voiceProfiles!: EntityTable<VoiceProfileRecord, 'id'>;
   autoVoiceCache!: EntityTable<AutoVoiceCacheRecord, 'voiceId'>;
+  reviewCards!: EntityTable<ReviewCardRecord, 'id'>;
+  syncQueue!: EntityTable<SyncQueueRecord, 'id'>;
 
   constructor() {
     super(DATABASE_NAME);
@@ -353,12 +389,9 @@ class MAICDatabase extends Dexie {
     // Version 9: Migrate legacy `language` field to `languageDirective`
     // Old stages stored a BCP-47 locale code (e.g. "zh-CN"); new code expects a
     // natural-language directive. Convert known locales and drop the old field.
-    const LOCALE_TO_DIRECTIVE: Record<string, string> = {
-      'zh-CN': 'Deliver the entire course in Chinese (Simplified, zh-CN).',
-      'en-US': 'Deliver the entire course in English (en-US).',
-      'ja-JP': 'Deliver the entire course in Japanese (ja-JP).',
-      'ru-RU': 'Deliver the entire course in Russian (ru-RU).',
-    };
+    // NOTE: `language` itself is restored as a field on StageRecord below (v12)
+    // for Supabase sync/filtering — this migration only backfills the
+    // generation-prompt directive, it does not delete the code going forward.
     this.version(9)
       .stores({
         stages: 'id, updatedAt',
@@ -377,10 +410,10 @@ class MAICDatabase extends Dexie {
         await table.toCollection().modify((stage: Record<string, unknown>) => {
           const lang = stage.language as string | undefined;
           if (lang && !stage.languageDirective) {
-            stage.languageDirective =
-              LOCALE_TO_DIRECTIVE[lang] || `Deliver the entire course in ${lang}.`;
+            stage.languageDirective = buildLanguageDirective(lang);
           }
-          delete stage.language;
+          // `language` (the BCP-47 code) is kept — it is a first-class
+          // StageRecord field again (v12) for Supabase sync/filtering.
         });
       });
 
@@ -413,6 +446,25 @@ class MAICDatabase extends Dexie {
       generatedAgents: 'id, stageId',
       voiceProfiles: 'id, providerId, kind, updatedAt',
       autoVoiceCache: 'voiceId, updatedAt',
+    });
+
+    // Version 12: Add reviewCards (spaced-repetition, guest/offline mode) and
+    // syncQueue (PWA offline sync outbox) tables — carrière parity (main).
+    this.version(12).stores({
+      stages: 'id, updatedAt',
+      scenes: 'id, stageId, order, [stageId+order]',
+      audioFiles: 'id, createdAt',
+      imageFiles: 'id, createdAt',
+      snapshots: '++id',
+      chatSessions: 'id, stageId, [stageId+createdAt]',
+      playbackState: 'stageId',
+      stageOutlines: 'stageId',
+      mediaFiles: 'id, stageId, [stageId+type]',
+      generatedAgents: 'id, stageId',
+      voiceProfiles: 'id, providerId, kind, updatedAt',
+      autoVoiceCache: 'voiceId, updatedAt',
+      reviewCards: 'id, dueDate, sourceStageId',
+      syncQueue: 'id, type, createdAt',
     });
   }
 }

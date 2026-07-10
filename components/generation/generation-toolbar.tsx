@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useMemo } from 'react';
-import { Bot, Brain, Check, Paperclip, FileText, X, Globe2, Search } from 'lucide-react';
+import { Bot, Brain, Check, Paperclip, FileText, X, Globe, Globe2, Search } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Select,
@@ -43,6 +43,8 @@ const MAX_PDF_SIZE_BYTES = MAX_PDF_SIZE_MB * 1024 * 1024;
 
 // ─── Types ───────────────────────────────────────────────────
 export interface GenerationToolbarProps {
+  language: 'zh-CN' | 'en-US' | 'fr-FR' | 'ar-MA';
+  onLanguageChange: (lang: 'zh-CN' | 'en-US' | 'fr-FR' | 'ar-MA') => void;
   webSearch: boolean;
   onWebSearchChange: (v: boolean) => void;
   onSettingsOpen: (section?: SettingsSection) => void;
@@ -54,6 +56,8 @@ export interface GenerationToolbarProps {
 
 // ─── Component ───────────────────────────────────────────────
 export function GenerationToolbar({
+  language,
+  onLanguageChange,
   webSearch,
   onWebSearchChange,
   onSettingsOpen,
@@ -394,6 +398,28 @@ export function GenerationToolbar({
             <TooltipContent>{t('toolbar.webSearchNoProvider')}</TooltipContent>
           </Tooltip>
         )}
+
+        {/* ── Language pill ── */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => {
+                const cycle = {
+                  'fr-FR': 'ar-MA',
+                  'ar-MA': 'en-US',
+                  'en-US': 'fr-FR',
+                  'zh-CN': 'fr-FR',
+                } as const;
+                onLanguageChange(cycle[language] ?? 'fr-FR');
+              }}
+              className={pillMuted}
+            >
+              <Globe className="size-3.5" />
+              <span>{{ 'fr-FR': 'FR', 'ar-MA': 'AR', 'en-US': 'EN', 'zh-CN': 'CN' }[language]}</span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>{t('toolbar.languageHint')}</TooltipContent>
+        </Tooltip>
 
         {/* ── Separator ── */}
         <div className="w-px h-4 bg-border/60 mx-1" />

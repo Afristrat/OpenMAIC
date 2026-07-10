@@ -114,7 +114,7 @@ async function handleGetQuiz(args: Record<string, unknown>) {
 
   const { callLLM } = await import('@/lib/ai/llm');
   const { resolveModel } = await import('@/lib/server/resolve-model');
-  const { model: languageModel, modelInfo } = resolveModel({});
+  const { model: languageModel, modelInfo } = await resolveModel({});
 
   const result = await callLLM(
     {
@@ -147,7 +147,7 @@ async function handleGetSlideContent(args: Record<string, unknown>) {
 
   const { callLLM } = await import('@/lib/ai/llm');
   const { resolveModel } = await import('@/lib/server/resolve-model');
-  const { model: languageModel, modelInfo } = resolveModel({});
+  const { model: languageModel, modelInfo } = await resolveModel({});
 
   const result = await callLLM(
     {

@@ -20,7 +20,12 @@ import {
   ASR_PROVIDERS,
   getASRSupportedLanguages,
 } from '@/lib/audio/constants';
-import type { TTSProviderId, ASRProviderId } from '@/lib/audio/types';
+import type {
+  TTSProviderId,
+  ASRProviderId,
+  BuiltInTTSProviderId,
+  BuiltInASRProviderId,
+} from '@/lib/audio/types';
 import { Volume2, Mic, MicOff, CheckCircle2, XCircle, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import azureVoicesData from '@/lib/audio/azure.json';
@@ -43,6 +48,9 @@ function getTTSProviderName(providerId: TTSProviderId, t: (key: string) => strin
     cartesia: t('settings.providerCartesiaTTS'),
     'edge-tts': t('settings.providerEdgeTTS'),
     'browser-native-tts': t('settings.providerBrowserNativeTTS'),
+    'voxcpm-tts': t('settings.providerVoxcpmTTS'),
+    'minimax-tts': t('settings.providerMinimaxTTS'),
+    'lemonade-tts': t('settings.providerLemonadeTTS'),
   };
   return names[providerId];
 }
@@ -52,6 +60,8 @@ function getASRProviderName(providerId: ASRProviderId, t: (key: string) => strin
     'openai-whisper': t('settings.providerOpenAIWhisper'),
     'browser-native': t('settings.providerBrowserNative'),
     'qwen-asr': t('settings.providerQwenASR'),
+    'lemonade-asr': t('settings.providerLemonadeASR'),
+    'azure-asr': t('settings.providerAzureASR'),
   };
   return names[providerId];
 }
@@ -91,7 +101,10 @@ export function AudioSettings({ onSave }: AudioSettingsProps = {}) {
   const setTTSEnabled = useSettingsStore((state) => state.setTTSEnabled);
   const setASREnabled = useSettingsStore((state) => state.setASREnabled);
 
-  const ttsProvider = TTS_PROVIDERS[ttsProviderId] ?? TTS_PROVIDERS['openai-tts'];
+  const ttsProvider =
+    (ttsProviderId in TTS_PROVIDERS
+      ? TTS_PROVIDERS[ttsProviderId as BuiltInTTSProviderId]
+      : undefined) ?? TTS_PROVIDERS['openai-tts'];
 
   // Azure voices - load from static JSON
   const azureVoices = useMemo(() => azureVoicesData.voices, []);
@@ -148,7 +161,10 @@ export function AudioSettings({ onSave }: AudioSettingsProps = {}) {
   const ttsTestRequestIdRef = useRef(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 
-  const asrProvider = ASR_PROVIDERS[asrProviderId] ?? ASR_PROVIDERS['openai-whisper'];
+  const asrProvider =
+    (asrProviderId in ASR_PROVIDERS
+      ? ASR_PROVIDERS[asrProviderId as BuiltInASRProviderId]
+      : undefined) ?? ASR_PROVIDERS['openai-whisper'];
 
   // Reset locale filter when provider changes (derived state pattern)
   const [prevTTSProviderId, setPrevTTSProviderId] = useState(ttsProviderId);

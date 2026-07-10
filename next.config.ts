@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import { withSentryConfig } from '@sentry/nextjs';
 
 const nextConfig: NextConfig = {
   output: process.env.VERCEL ? undefined : 'standalone',
@@ -23,8 +24,14 @@ const nextConfig: NextConfig = {
         source: '/(.*)',
         headers: [
           // X-Frame-Options only supports SAMEORIGIN (no allow-list),
-          // so we omit it when custom ancestors are configured.
+          // so we omit it when custom ancestors are configured (LTI embedding).
           ...(!extraAncestors ? [{ key: 'X-Frame-Options', value: 'SAMEORIGIN' }] : []),
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(self), geolocation=()',
+          },
           {
             key: 'Content-Security-Policy',
             value: `frame-ancestors ${frameAncestors}`,
@@ -35,4 +42,11 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  // Suppress source map upload warnings when no auth token is set
+  silent: true,
+  // Disable source map upload (self-hosted GlitchTip, not Sentry SaaS)
+  sourcemaps: {
+    disable: true,
+  },
+});

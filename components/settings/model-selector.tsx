@@ -73,7 +73,7 @@ export function ModelSelector({
       ([, config]) =>
         (!config.requiresApiKey || config.apiKey || config.isServerConfigured) &&
         config.models.length >= 1 &&
-        (config.baseUrl || config.defaultBaseUrl || config.serverBaseUrl),
+        (config.baseUrl || config.defaultBaseUrl || config.isServerConfigured),
     )
     .map(([id, config]) => ({
       id: id as ProviderId,
