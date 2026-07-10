@@ -1,0 +1,63 @@
+{
+  "id": "lab-simulation",
+  "type": "lab-simulation",
+  "name": {
+    "fr": "Simulation de laboratoire 3D",
+    "ar": "\u0645\u062d\u0627\u0643\u0627\u0629 \u0645\u062e\u062a\u0628\u0631 \u062b\u0644\u0627\u062b\u064a\u0629 \u0627\u0644\u0623\u0628\u0639\u0627\u062f",
+    "en": "3D Lab Simulation"
+  },
+  "description": {
+    "fr": "Simulation physique 3D interactive avec Three.js et cannon-es",
+    "ar": "\u0645\u062d\u0627\u0643\u0627\u0629 \u0641\u064a\u0632\u064a\u0627\u0626\u064a\u0629 \u062b\u0644\u0627\u062b\u064a\u0629 \u0627\u0644\u0623\u0628\u0639\u0627\u062f \u062a\u0641\u0627\u0639\u0644\u064a\u0629 \u0628\u0627\u0633\u062a\u062e\u062f\u0627\u0645 Three.js \u0648 cannon-es",
+    "en": "Interactive 3D physics simulation with Three.js and cannon-es"
+  },
+  "version": "1.0.0",
+  "author": "Qalem",
+  "renderUrl": "index.html",
+  "icon": "FlaskConical",
+  "systemPrompt": "",
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "experiment": {
+        "type": "string",
+        "enum": ["projectile", "pendulum", "spring"],
+        "description": "Pre-built experiment type"
+      },
+      "title": {
+        "type": "string",
+        "description": "Experiment title"
+      },
+      "instructions": {
+        "type": "string",
+        "description": "Markdown instructions for the student"
+      },
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "gravity": { "type": "number", "description": "Gravity (m/s^2), default 9.81" },
+          "mass": { "type": "number", "description": "Object mass (kg), default 1.0" },
+          "initialVelocity": { "type": "number", "description": "Initial velocity (m/s), default 10" },
+          "angle": { "type": "number", "description": "Launch angle (degrees), default 45" },
+          "length": { "type": "number", "description": "Pendulum length (m), default 2" },
+          "springConstant": { "type": "number", "description": "Spring constant (N/m), default 10" },
+          "damping": { "type": "number", "description": "Damping coefficient, default 0.1" }
+        }
+      },
+      "questions": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "question": { "type": "string" },
+            "hint": { "type": "string" }
+          },
+          "required": ["question"]
+        },
+        "description": "Guided questions for the student to answer after running the simulation"
+      }
+    },
+    "required": ["experiment", "title", "instructions", "parameters"]
+  },
+  "supportedActions": ["start-simulation", "pause", "reset", "set-parameter"]
+}

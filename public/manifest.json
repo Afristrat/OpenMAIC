@@ -1,0 +1,16 @@
+{
+  "name": "Qalem",
+  "short_name": "Qalem",
+  "description": "Classe interactive IA — Formation professionnelle",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#722ed1",
+  "icons": [
+    { "src": "/favicon.ico", "sizes": "48x48", "type": "image/x-icon" },
+    { "src": "/apple-icon.png", "sizes": "180x180", "type": "image/png" }
+  ],
+  "lang": "fr",
+  "dir": "auto",
+  "categories": ["education"]
+}

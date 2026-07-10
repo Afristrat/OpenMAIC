@@ -1,0 +1,42 @@
+# MCP External Server Configuration
+#
+# Copy this file to mcp-servers.yml and enable the servers you want to use.
+# API keys can be set here or via environment variables:
+#   MCP_{SERVER_ID_UPPER}_API_KEY  (e.g. MCP_NOTION_API_KEY)
+#
+# Supported transports:
+#   - streamable-http (default, recommended)
+#   - sse (legacy, used as automatic fallback)
+#
+# Each server exposes tools that Qalem agents can call during PBL sessions
+# and classroom generation. Tools are auto-discovered via MCP protocol.
+
+servers:
+  # ── NotebookLM ──
+  # Source: https://github.com/PleasePrompto/notebooklm-mcp
+  # Tools: search_notebook, get_source_content, create_audio_overview
+  # Setup: npx @notebooklm-mcp/server --port 3001
+  - id: notebooklm
+    name: NotebookLM
+    url: http://localhost:3001/mcp
+    enabled: false
+
+  # ── Notion ──
+  # Source: https://github.com/makenotion/notion-mcp-server
+  # Tools: search_pages, get_page_content, query_database
+  # Setup: npx @notionhq/mcp-server --port 3002
+  # Requires: MCP_NOTION_API_KEY (Notion integration token)
+  - id: notion
+    name: Notion
+    url: http://localhost:3002/mcp
+    enabled: false
+
+  # ── Google Drive ──
+  # Source: https://github.com/anthropics/anthropic-quickstarts (gdrive MCP)
+  # Tools: search_drive, get_document, list_files
+  # Setup: npx @anthropic/mcp-server-gdrive --port 3003
+  # Requires: OAuth2 credentials configured
+  - id: google-drive
+    name: Google Drive
+    url: http://localhost:3003/mcp
+    enabled: false

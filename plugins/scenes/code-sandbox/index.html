@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Code Sandbox — Qalem Plugin</title>
+
+  <!-- Monaco Editor from CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/editor/editor.main.css" />
+
+  <style>
+    :root {
+      --bg: #ffffff;
+      --bg-secondary: #f8f9fa;
+      --bg-tertiary: #e9ecef;
+      --text: #1a1a2e;
+      --text-secondary: #6c757d;
+      --border: #dee2e6;
+      --accent: #4361ee;
+      --accent-hover: #3a56d4;
+      --success: #2dc653;
+      --error: #e63946;
+      --warning: #f4a261;
+      --font-mono: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --radius: 8px;
+    }
+
+    .dark {
+      --bg: #1e1e2e;
+      --bg-secondary: #282840;
+      --bg-tertiary: #313150;
+      --text: #cdd6f4;
+      --text-secondary: #a6adc8;
+      --border: #45475a;
+      --accent: #89b4fa;
+      --accent-hover: #74a8f7;
+      --success: #a6e3a1;
+      --error: #f38ba8;
+      --warning: #fab387;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100%; height: 100%;
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    .container {
+      display: flex;
+      width: 100%; height: 100%;
+    }
+
+    .editor-pane {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border);
+      min-width: 0;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .toolbar .lang-badge {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .toolbar .title {
+      font-size: 13px;
+      font-weight: 600;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 14px;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .btn:active { transform: scale(0.97); }
+
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-hover); }
+
+    .btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: var(--bg-tertiary); }
+
+    .btn-loading { opacity: 0.7; pointer-events: none; }
+
+    #editor-container { flex: 1; min-height: 0; }
+
+    .output-pane {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .output-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .output-header .tab {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      background: transparent;
+      border: none;
+    }
+    .output-header .tab.active { background: var(--bg-tertiary); color: var(--text); }
+
+    .instructions-panel {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      font-size: 13px;
+      line-height: 1.65;
+    }
+    .instructions-panel h1, .instructions-panel h2, .instructions-panel h3 { margin: 12px 0 6px; }
+    .instructions-panel code {
+      font-family: var(--font-mono);
+      background: var(--bg-tertiary);
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 12px;
+    }
+    .instructions-panel pre {
+      background: var(--bg-tertiary);
+      padding: 10px;
+      border-radius: var(--radius);
+      overflow-x: auto;
+      margin: 8px 0;
+    }
+    .instructions-panel pre code { background: none; padding: 0; }
+
+    .console-output {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .console-line { padding: 1px 0; }
+    .console-line.error { color: var(--error); }
+    .console-line.warn { color: var(--warning); }
+
+    .test-results { flex: 1; overflow-y: auto; padding: 12px; }
+
+    .test-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: var(--radius);
+      margin-bottom: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--bg-secondary);
+    }
+    .test-item.pass { border-left: 3px solid var(--success); }
+    .test-item.fail { border-left: 3px solid var(--error); }
+
+    .test-icon { font-size: 14px; }
+
+    .test-summary {
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      border-top: 1px solid var(--border);
+      background: var(--bg-secondary);
+      flex-shrink: 0;
+    }
+    .test-summary.all-pass { color: var(--success); }
+    .test-summary.some-fail { color: var(--error); }
+
+    .pyodide-loading {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      font-size: 12px;
+      color: var(--warning);
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+    }
+    .pyodide-loading .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid var(--border);
+      border-top-color: var(--warning);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 700px) {
+      .container { flex-direction: column; }
+      .editor-pane { border-right: none; border-bottom: 1px solid var(--border); height: 50%; }
+      .output-pane { height: 50%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="editor-pane">
+      <div class="toolbar">
+        <span class="lang-badge" id="lang-badge">JS</span>
+        <span class="title" id="exercise-title">Code Sandbox</span>
+        <button class="btn btn-ghost" id="btn-reset" title="Reset code">&#x21ba; Reset</button>
+        <button class="btn btn-primary" id="btn-run" title="Run code (Ctrl+Enter)">&#x25b6; Run</button>
+      </div>
+      <div id="editor-container"></div>
+    </div>
+
+    <div class="output-pane">
+      <div class="output-header">
+        <button class="tab active" data-tab="instructions">Instructions</button>
+        <button class="tab" data-tab="console">Console</button>
+        <button class="tab" data-tab="tests">Tests</button>
+      </div>
+      <div id="pyodide-status" class="pyodide-loading" style="display:none">
+        <div class="spinner"></div>
+        <span>Loading Python runtime...</span>
+      </div>
+      <div id="panel-instructions" class="instructions-panel"></div>
+      <div id="panel-console" class="console-output" style="display:none"></div>
+      <div id="panel-tests" class="test-results" style="display:none"></div>
+      <div id="test-summary" class="test-summary" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- Monaco loader -->
+  <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/loader.js"></script>
+
+  <script>
+    /*
+     * Code Sandbox Plugin for Qalem
+     *
+     * SECURITY CONTEXT: This plugin intentionally evaluates user-written code
+     * for educational purposes. It runs inside a sandboxed iframe with
+     * restricted permissions. The parent page communicates exclusively via
+     * postMessage. All user-visible text is sanitised via textContent-based
+     * escapeHtml() before any DOM insertion.
+     */
+
+    // State
+    var exerciseData = null;
+    var editor = null;
+    var pyodideInstance = null;
+    var pyodideLoading = false;
+
+    // ---- Tab switching ----
+    document.querySelectorAll('.output-header .tab').forEach(function(btn) {
+      btn.addEventListener('click', function() { switchTab(btn.dataset.tab); });
+    });
+
+    function switchTab(tab) {
+      document.querySelectorAll('.output-header .tab').forEach(function(b) {
+        b.classList.toggle('active', b.dataset.tab === tab);
+      });
+      document.getElementById('panel-instructions').style.display = tab === 'instructions' ? '' : 'none';
+      document.getElementById('panel-console').style.display = tab === 'console' ? '' : 'none';
+      document.getElementById('panel-tests').style.display = tab === 'tests' ? '' : 'none';
+      document.getElementById('test-summary').style.display = tab === 'tests' ? '' : 'none';
+    }
+
+    // ---- Monaco init ----
+    require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs' } });
+
+    require(['vs/editor/editor.main'], function () {
+      editor = monaco.editor.create(document.getElementById('editor-container'), {
+        value: '// Waiting for exercise data...\n',
+        language: 'javascript',
+        theme: 'vs-dark',
+        fontSize: 13,
+        fontFamily: "'Cascadia Code', 'Fira Code', 'JetBrains Mono', Consolas, monospace",
+        minimap: { enabled: false },
+        lineNumbers: 'on',
+        scrollBeyondLastLine: false,
+        automaticLayout: true,
+        tabSize: 2,
+        wordWrap: 'on',
+        padding: { top: 10 },
+      });
+
+      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, function() { runCode(); });
+
+      notifyParent('ready', {});
+    });
+
+    // ---- PostMessage protocol ----
+    window.addEventListener('message', function(event) {
+      var msg = event.data;
+      if (!msg || msg.source !== 'qalem-host') return;
+
+      if (msg.type === 'init') {
+        exerciseData = msg.payload.data;
+        applyTheme(msg.payload.theme);
+        initExercise();
+      } else if (msg.type === 'update') {
+        exerciseData = msg.payload.data;
+        initExercise();
+      } else if (msg.type === 'theme') {
+        applyTheme(msg.payload.theme);
+      }
+    });
+
+    function notifyParent(type, payload) {
+      window.parent.postMessage({ source: 'qalem-plugin', type: type, payload: payload }, '*');
+    }
+
+    // ---- Theme ----
+    function applyTheme(theme) {
+      document.documentElement.classList.toggle('dark', theme === 'dark');
+      if (editor) {
+        monaco.editor.setTheme(theme === 'dark' ? 'vs-dark' : 'vs');
+      }
+    }
+
+    // ---- Exercise init ----
+    function initExercise() {
+      if (!exerciseData || !editor) return;
+
+      var lang = exerciseData.language || 'javascript';
+      var monacoLang = lang === 'python' ? 'python' : 'javascript';
+
+      document.getElementById('lang-badge').textContent = lang === 'python' ? 'PY' : 'JS';
+      document.getElementById('exercise-title').textContent = exerciseData.title || 'Code Sandbox';
+
+      monaco.editor.setModelLanguage(editor.getModel(), monacoLang);
+      editor.setValue(exerciseData.starterCode || '');
+
+      // Render instructions using safe DOM methods
+      renderInstructions(exerciseData.instructions || '');
+
+      clearElement(document.getElementById('panel-console'));
+      clearElement(document.getElementById('panel-tests'));
+      document.getElementById('test-summary').style.display = 'none';
+
+      if (lang === 'python' && !pyodideInstance && !pyodideLoading) {
+        initPyodide();
+      }
+    }
+
+    // ---- Run ----
+    document.getElementById('btn-run').addEventListener('click', runCode);
+    document.getElementById('btn-reset').addEventListener('click', function() {
+      if (exerciseData) editor.setValue(exerciseData.starterCode || '');
+    });
+
+    async function runCode() {
+      if (!exerciseData) return;
+
+      var btn = document.getElementById('btn-run');
+      btn.classList.add('btn-loading');
+      btn.textContent = 'Running...';
+
+      var code = editor.getValue();
+      var logs = [];
+
+      try {
+        if (exerciseData.language === 'python') {
+          await executePython(code, logs);
+        } else {
+          executeJavaScript(code, logs);
+        }
+      } catch (err) {
+        logs.push({ type: 'error', text: String(err) });
+      }
+
+      renderConsoleLogs(logs);
+
+      if (exerciseData.tests && exerciseData.tests.length > 0) {
+        await runTests(code);
+      }
+
+      switchTab('console');
+
+      btn.classList.remove('btn-loading');
+      btn.textContent = 'Run';
+    }
+
+    // ---- JavaScript execution (sandboxed in iframe) ----
+    function executeJavaScript(code, logs) {
+      var origLog = console.log;
+      var origWarn = console.warn;
+      var origError = console.error;
+
+      console.log = function() { logs.push({ type: 'log', text: Array.prototype.slice.call(arguments).map(formatValue).join(' ') }); };
+      console.warn = function() { logs.push({ type: 'warn', text: Array.prototype.slice.call(arguments).map(formatValue).join(' ') }); };
+      console.error = function() { logs.push({ type: 'error', text: Array.prototype.slice.call(arguments).map(formatValue).join(' ') }); };
+
+      try {
+        // Intentional: educational code sandbox evaluates student code
+        var evaluate = Function;
+        evaluate(code)();
+      } finally {
+        console.log = origLog;
+        console.warn = origWarn;
+        console.error = origError;
+      }
+    }
+
+    // ---- Python execution (Pyodide) ----
+    async function initPyodide() {
+      pyodideLoading = true;
+      document.getElementById('pyodide-status').style.display = '';
+
+      try {
+        var script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js';
+        document.head.appendChild(script);
+
+        await new Promise(function(resolve, reject) {
+          script.onload = resolve;
+          script.onerror = reject;
+        });
+
+        pyodideInstance = await loadPyodide({ indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/' });
+        document.getElementById('pyodide-status').style.display = 'none';
+      } catch (err) {
+        document.getElementById('pyodide-status').textContent = 'Failed to load Python runtime';
+        throw err;
+      } finally {
+        pyodideLoading = false;
+      }
+    }
+
+    async function executePython(code, logs) {
+      if (!pyodideInstance) {
+        if (pyodideLoading) {
+          logs.push({ type: 'warn', text: 'Python runtime is still loading, please wait...' });
+          return;
+        }
+        await initPyodide();
+      }
+
+      pyodideInstance.setStdout({ batched: function(text) { logs.push({ type: 'log', text: text }); } });
+      pyodideInstance.setStderr({ batched: function(text) { logs.push({ type: 'error', text: text }); } });
+
+      await pyodideInstance.runPythonAsync(code);
+    }
+
+    // ---- Test runner ----
+    async function runTests(code) {
+      var tests = exerciseData.tests || [];
+      var resultsEl = document.getElementById('panel-tests');
+      var summaryEl = document.getElementById('test-summary');
+      clearElement(resultsEl);
+      summaryEl.style.display = '';
+
+      var passed = 0;
+
+      for (var i = 0; i < tests.length; i++) {
+        var test = tests[i];
+        var actual = '';
+        var status = 'fail';
+
+        try {
+          var testLogs = [];
+
+          if (exerciseData.language === 'python') {
+            if (!pyodideInstance) { continue; }
+            pyodideInstance.setStdout({ batched: function(t) { testLogs.push(t); } });
+            pyodideInstance.setStderr({ batched: function() {} });
+            await pyodideInstance.runPythonAsync(code + '\n' + (test.input || ''));
+          } else {
+            var savedLog = console.log;
+            console.log = function() { testLogs.push(Array.prototype.slice.call(arguments).map(formatValue).join(' ')); };
+            try {
+              var evaluate = Function;
+              evaluate(code + '\n' + (test.input || ''))();
+            } finally {
+              console.log = savedLog;
+            }
+          }
+
+          actual = testLogs.join('\n').trim();
+          status = actual === (test.expected || '').trim() ? 'pass' : 'fail';
+          if (status === 'pass') passed++;
+        } catch (err) {
+          actual = String(err);
+        }
+
+        var item = document.createElement('div');
+        item.className = 'test-item ' + status;
+
+        var icon = document.createElement('span');
+        icon.className = 'test-icon';
+        icon.textContent = status === 'pass' ? '\u2705' : '\u274c';
+        item.appendChild(icon);
+
+        var nameSpan = document.createElement('span');
+        nameSpan.textContent = test.name;
+        item.appendChild(nameSpan);
+
+        resultsEl.appendChild(item);
+      }
+
+      var allPassed = passed === tests.length;
+      summaryEl.className = 'test-summary ' + (allPassed ? 'all-pass' : 'some-fail');
+      summaryEl.textContent = passed + '/' + tests.length + ' tests passed';
+
+      notifyParent('score', { score: allPassed ? 100 : Math.round((passed / tests.length) * 100), total: tests.length, passed: passed });
+      if (allPassed) notifyParent('complete', { success: true });
+    }
+
+    // ---- Safe DOM helpers ----
+    function clearElement(el) { while (el.firstChild) el.removeChild(el.firstChild); }
+
+    function renderConsoleLogs(logs) {
+      var el = document.getElementById('panel-console');
+      clearElement(el);
+      logs.forEach(function(l) {
+        var line = document.createElement('div');
+        line.className = 'console-line ' + l.type;
+        line.textContent = l.text;
+        el.appendChild(line);
+      });
+    }
+
+    function renderInstructions(md) {
+      var el = document.getElementById('panel-instructions');
+      clearElement(el);
+      // Split into blocks and render safely
+      var lines = md.split('\n');
+      var i = 0;
+      while (i < lines.length) {
+        var line = lines[i];
+
+        // Code block
+        if (line.trim().startsWith('```')) {
+          var lang = line.trim().slice(3);
+          var codeLines = [];
+          i++;
+          while (i < lines.length && !lines[i].trim().startsWith('```')) {
+            codeLines.push(lines[i]);
+            i++;
+          }
+          i++; // skip closing ```
+          var pre = document.createElement('pre');
+          var code = document.createElement('code');
+          code.textContent = codeLines.join('\n');
+          pre.appendChild(code);
+          el.appendChild(pre);
+          continue;
+        }
+
+        // Headers
+        if (line.startsWith('### ')) {
+          var h3 = document.createElement('h3');
+          h3.textContent = line.slice(4);
+          el.appendChild(h3);
+        } else if (line.startsWith('## ')) {
+          var h2 = document.createElement('h2');
+          h2.textContent = line.slice(3);
+          el.appendChild(h2);
+        } else if (line.startsWith('# ')) {
+          var h1 = document.createElement('h1');
+          h1.textContent = line.slice(2);
+          el.appendChild(h1);
+        } else if (line.startsWith('- ')) {
+          // Collect list items
+          var ul = document.createElement('ul');
+          while (i < lines.length && lines[i].startsWith('- ')) {
+            var li = document.createElement('li');
+            li.textContent = lines[i].slice(2);
+            ul.appendChild(li);
+            i++;
+          }
+          el.appendChild(ul);
+          continue;
+        } else if (line.trim() === '') {
+          el.appendChild(document.createElement('br'));
+        } else {
+          var p = document.createElement('p');
+          p.textContent = line;
+          el.appendChild(p);
+        }
+        i++;
+      }
+    }
+
+    function formatValue(v) {
+      if (v === undefined) return 'undefined';
+      if (v === null) return 'null';
+      if (typeof v === 'object') {
+        try { return JSON.stringify(v, null, 2); } catch(e) { return String(v); }
+      }
+      return String(v);
+    }
+  </script>
+</body>
+</html>

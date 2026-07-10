@@ -1,0 +1,34 @@
+name: Deploy Staging
+
+on:
+  push:
+    branches: [develop]
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Build & Deploy to Staging
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t qalem:staging .
+
+      - name: Push to registry
+        run: echo "TODO: Push to GHCR or your registry"
+        # Example:
+        # docker tag qalem:staging ghcr.io/OWNER/REPO:staging
+        # echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+        # docker push ghcr.io/OWNER/REPO:staging
+        # env:
+        #   GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+        #   GITHUB_ACTOR: ${{ github.actor }}
+
+      - name: Deploy to staging
+        run: echo "TODO: Deploy via Coolify/SSH"
+        # Example with SSH:
+        # ssh deploy@staging.example.com "cd /app && docker compose pull && docker compose up -d"
