@@ -130,7 +130,63 @@ test.describe('Generation flow — locale coverage (S0-008)', () => {
           }),
         });
       });
-      await mockApi.mockSceneActions();
+      // Also custom: the FINAL assembled scene (and its sidebar-displayed
+      // .title) comes from the scene-actions response's `scene` object,
+      // completely independent of the outline/content mocks above —
+      // MockApi's static default (createMockSceneActionsResponse) always
+      // returns a fixed Chinese title regardless of the request, which was
+      // masking the fr-FR/ar-MA content entirely. Echo the requested
+      // outline/stageId back instead.
+      await page.route('**/api/generate/scene-actions', (route) => {
+        const body = route.request().postDataJSON() as
+          | { outline?: SceneOutline; stageId?: string }
+          | undefined;
+        const requestedOutline = body?.outline ?? outlines[0];
+        const stageId = body?.stageId ?? 'test-stage';
+        route.fulfill({
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            success: true,
+            scene: {
+              id: `scene-${requestedOutline.order}`,
+              stageId,
+              type: 'slide',
+              title: requestedOutline.title,
+              order: requestedOutline.order,
+              content: {
+                type: 'slide',
+                canvas: {
+                  id: `slide-${requestedOutline.order}`,
+                  viewportSize: 1000,
+                  viewportRatio: 0.5625,
+                  theme: {
+                    backgroundColor: '#ffffff',
+                    themeColors: ['#5b9bd5', '#ed7d31', '#a5a5a5', '#ffc000', '#4472c4'],
+                    fontColor: '#333333',
+                    fontName: 'Microsoft Yahei',
+                  },
+                  elements: [
+                    {
+                      type: 'text',
+                      id: 'title-el',
+                      content: requestedOutline.title,
+                      left: 50,
+                      top: 50,
+                      width: 900,
+                      height: 100,
+                    },
+                  ],
+                },
+              },
+              actions: [
+                { id: 'action-0', type: 'speech', agent: 'teacher', text: requestedOutline.title },
+              ],
+            },
+            previousSpeeches: [],
+          }),
+        });
+      });
 
       // ── Phase 1: Home page, locale-aware UI ──────────────────────────
       const home = new HomePage(page);
