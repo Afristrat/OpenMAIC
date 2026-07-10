@@ -419,6 +419,9 @@ const getDefaultAudioConfig = () => ({
     },
     'doubao-tts': { apiKey: '', baseUrl: '', enabled: true },
     'elevenlabs-tts': { apiKey: '', baseUrl: '', enabled: true },
+    'fish-audio': { apiKey: '', baseUrl: '', enabled: true },
+    cartesia: { apiKey: '', baseUrl: '', enabled: true },
+    'edge-tts': { apiKey: '', baseUrl: '', enabled: true },
     'minimax-tts': { apiKey: '', baseUrl: '', modelId: 'speech-2.8-hd', enabled: true },
     'lemonade-tts': {
       apiKey: '',
