@@ -1,0 +1,824 @@
+[
+  {
+    "file": ".github/workflows/ci.yml",
+    "changed_lines": 28,
+    "decision": "noop",
+    "reason": "contenu main deja applique au worktree lors d'une execution precedente (source=git) — idempotent, rien a refaire. Motif d'application : Config CI uniquement (n'affecte aucune commande locale tsc/lint/test/build). Retire un step 'i18n Key Alignment' + 'Unit Tests (importer)' absents de main, ajoute un step Build -- cosmetique, zero risque sur le code source."
+  },
+  {
+    "file": "components/slide-renderer/Editor/SpotlightOverlay.tsx",
+    "changed_lines": 28,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "e2e/fixtures/mock-api.ts",
+    "changed_lines": 27,
+    "decision": "rejected",
+    "reason": "Upstream a ajoute l'extraction automatique de stageId depuis le corps de requete (robustesse) que main n'a pas encore -- fichier de test uniquement mais retrait d'une fonctionnalite reelle sans necessite identifiee ; rejet par coherence de politique."
+  },
+  {
+    "file": "lib/generation/scene-builder.ts",
+    "changed_lines": 27,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/ImageElement/BaseImageElement.tsx",
+    "changed_lines": 26,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/ChartElement/chartOption.ts",
+    "changed_lines": 25,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "lib/generation/interactive-post-processor.ts",
+    "changed_lines": 25,
+    "decision": "rejected",
+    "reason": "Upstream corrige un bug de performance documente (O(blocs x longueur) avec l'ancienne boucle indexOf+substring, remplace par un replacer fonction qui est deja immunise contre les caracteres '$' -- le commentaire de main affirme a tort le contraire). Appliquer main REINTRODUIRAIT ce bug de perf deja corrige."
+  },
+  {
+    "file": "lib/generation/pipeline-runner.ts",
+    "changed_lines": 25,
+    "decision": "rejected",
+    "reason": "CORRECTION apres re-verification rigoureuse du sens du diff : c'est en realite MAIN qui contient encore les messages de statut CODES EN DUR EN CHINOIS ('正在分析需求...', '正在生成场景内容...', '生成完成！') alors qu'UPSTREAM les a DEJA en anglais -- appliquer main REINTRODUIRAIT du chinois fige dans l'UI, contraire a l'objectif meme de Qalem. De plus main perd la destructuration 'languageDirective' (fonctionnalite upstream plus recente, cf. cluster scene-builder.ts/generation-preview/types.ts). Rejet sur les deux motifs."
+  },
+  {
+    "file": "components/scene-renderers/pbl/use-pbl-chat.ts",
+    "changed_lines": 24,
+    "decision": "noop",
+    "reason": "contenu main deja applique au worktree lors d'une execution precedente (source=git) — idempotent, rien a refaire. Motif d'application : CORRECTION apres re-verification rigoureuse du sens du diff (voir note methodologique) : main AJOUTE l'en-tete 'x-requires-api-key' (absent d'upstream, additif) ET bascule sur t(key).replace('{title}'/'{questions}',...) qui est NECESSAIRE pour utiliser les traductions Qalem deja portees de welcomeMessage/issueCompleteMessage (accolade simple '{title}'/'{questions}', verifie dans lib/i18n/stage.ts) -- sans ce changement ces traductions FR/AR/EN entierement redigees ne seraient jamais affichees. Aucune fonctionnalite upstream perdue ici."
+  },
+  {
+    "file": "lib/export/svg-path-parser.ts",
+    "changed_lines": 24,
+    "decision": "rejected",
+    "reason": "Upstream a ajoute une gestion defensive des chemins SVG malformes (try/catch, retour [] documente comme corrigeant un crash reel cause par des hallucinations LLM). Appliquer main REINTRODUIRAIT ce risque de crash."
+  },
+  {
+    "file": "lib/orchestration/registry/store.ts",
+    "changed_lines": 24,
+    "decision": "rejected",
+    "reason": "Melange : la traduction des noms d'agents par defaut (chinois -> anglais) est souhaitable (cf. Known Issues progress.md) MAIS indissociable ici de pertes reelles (type VoiceDesign, actions wb_draw_code/wb_edit_code, warm-up vocal). Renommage a refaire chirurgicalement, plus probablement dans S0-006 (branding)."
+  },
+  {
+    "file": "app/generation-preview/types.ts",
+    "changed_lines": 23,
+    "decision": "rejected",
+    "reason": "Perd previewPhase, languageDirective, courseTitle, taskEngineMode (cluster de fonctionnalites upstream plus recentes) et reordonne le tableau d'etapes -- perte de structure, pas une simple divergence textuelle."
+  },
+  {
+    "file": "lib/media/types.ts",
+    "changed_lines": 22,
+    "decision": "rejected",
+    "reason": "Retrecit drastiquement ImageProviderId/VideoProviderId (perd openai-image, minimax-image, grok-image, lemonade, minimax-video, happyhorse) -- risque concret de casser d'autres fichiers (hors perimetre des 137) qui referencent ces IDs, contraire a l'objectif tsc vert."
+  },
+  {
+    "file": "components/canvas/canvas-area.tsx",
+    "changed_lines": 21,
+    "decision": "rejected",
+    "reason": "Perd la fonctionnalite ClassroomCompletePageConnected / isCourseComplete (ecran de fin de cours) ajoutee par upstream."
+  },
+  {
+    "file": "lib/types/chat.ts",
+    "changed_lines": 19,
+    "decision": "rejected",
+    "reason": "Melange complexe : perd ThinkingConfig, SessionStatus='error', maxTurns/currentTurn (fonctionnalites upstream) ; gagnerait 'requiresApiKey' (utile, cf. use-pbl-chat.ts) ; change aussi l'import de WhiteboardActionRecord vers un chemin obsolete (./types au lieu de ./director-prompt). Remplacement integral disproportionnellement risque pour le present perimetre mecanique."
+  },
+  {
+    "file": "components/stage/scene-renderer.tsx",
+    "changed_lines": 17,
+    "decision": "rejected",
+    "reason": "Perd le support du type de scene 'plugin' (PluginRenderer) ajoute par upstream -- perte de fonctionnalite entiere, pas une divergence cosmetique."
+  },
+  {
+    "file": "lib/hooks/use-streaming-text.ts",
+    "changed_lines": 17,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "lib/audio/browser-tts-preview.ts",
+    "changed_lines": 16,
+    "decision": "noop",
+    "reason": "contenu main deja applique au worktree lors d'une execution precedente (source=git) — idempotent, rien a refaire. Motif d'application : Additif pur : main ajoute la detection de langue arabe (ar-MA) et francaise (fr-FR) a inferPreviewLang(), sans retirer aucune capacite upstream. Coeur de la mission FR/AR de Qalem."
+  },
+  {
+    "file": "lib/orchestration/stateless-generate.ts",
+    "changed_lines": 16,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "app/api/azure-voices/route.ts",
+    "changed_lines": 15,
+    "decision": "rejected",
+    "reason": "MELANGE (rejete du remplacement mecanique, traite CHIRURGICALEMENT par edition manuelle directe hors de ce script) : main AJOUTE 'requireAuth(...)' (gain de securite reel, absent d'upstream) MAIS retire aussi le 'await' sur 'validateUrlForSSRF(baseUrl)' qui est une fonction ASYNC (verifie : lib/server/ssrf-guard.ts:172 'export async function validateUrlForSSRF') -- sans await, 'ssrfError' serait toujours une Promise (donc toujours truthy), cassant systematiquement la validation SSRF et donc la fonctionnalite entiere. Patch chirurgical applique manuellement : ajout de requireAuth, conservation de l'await existant."
+  },
+  {
+    "file": "components/slide-renderer/components/element/ImageElement/index.tsx",
+    "changed_lines": 15,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "eslint.config.mjs",
+    "changed_lines": 15,
+    "decision": "noop",
+    "reason": "contenu main deja applique au worktree lors d'une execution precedente (source=git) — idempotent, rien a refaire. Motif d'application : Le remplacement des ignores granulaires par 'packages/**' est un SUR-ensemble (ignore AU MOINS autant, y compris packages/@openmaic et packages/docs) -- reduit le perimetre de lint, ne peut pas introduire de nouvelle erreur."
+  },
+  {
+    "file": "lib/utils/model-config.ts",
+    "changed_lines": 15,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/whiteboard/whiteboard-canvas.tsx",
+    "changed_lines": 14,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "lib/web-search/types.ts",
+    "changed_lines": 14,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "app/api/classroom-media/[classroomId]/[...path]/route.ts",
+    "changed_lines": 13,
+    "decision": "noop",
+    "reason": "contenu main deja applique au worktree lors d'une execution precedente (source=git) — idempotent, rien a refaire. Motif d'application : CORRECTION apres re-verification rigoureuse du sens du diff : c'est MAIN qui AJOUTE 'requireAuth(...)' (authentification), ABSENTE d'upstream sur cette route -- gain de securite reel. Perte associee : logging d'erreur detaille (classroomId/path) -- acceptable, aucune fonctionnalite utilisateur perdue."
+  },
+  {
+    "file": "lib/hooks/use-browser-asr.ts",
+    "changed_lines": 13,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "lib/utils/audio-player.ts",
+    "changed_lines": 13,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "public/logos/openai.svg",
+    "changed_lines": 13,
+    "decision": "noop",
+    "reason": "contenu main deja applique au worktree lors d'une execution precedente (source=git) — idempotent, rien a refaire. Motif d'application : Asset SVG pur (fill via <style>/prefers-color-scheme au lieu de fill='#000' fixe) -- ajout d'un support dark-mode au logo, aucun impact build/type."
+  },
+  {
+    "file": "app/api/generate-classroom/[jobId]/route.ts",
+    "changed_lines": 12,
+    "decision": "noop",
+    "reason": "contenu main deja applique au worktree lors d'une execution precedente (source=git) — idempotent, rien a refaire. Motif d'application : CORRECTION apres re-verification rigoureuse du sens du diff : c'est MAIN qui AJOUTE 'requireAuth(...)', ABSENTE d'upstream sur cette route -- gain de securite reel. Perte associee : logging d'erreur detaille (jobId) -- acceptable."
+  },
+  {
+    "file": "lib/pbl/mcp/issueboard-mcp.ts",
+    "changed_lines": 12,
+    "decision": "rejected",
+    "reason": "Renomme 'languageDirective' en 'language' -- lie au meme cluster de fonctionnalite que scene-builder.ts/pipeline-runner.ts (deja rejetes) ; incoherent d'appliquer ici isolement."
+  },
+  {
+    "file": "lib/pdf/constants.ts",
+    "changed_lines": 12,
+    "decision": "rejected",
+    "reason": "Retire le provider 'mineru-cloud' entierement -- retrecissement de capacite, meme famille de risque que media/types.ts et lib/pdf/types.ts."
+  },
+  {
+    "file": "lib/prosemirror/schema/marks.ts",
+    "changed_lines": 12,
+    "decision": "rejected",
+    "reason": "SEVERITE ELEVEE : upstream a ajoute une protection anti-injection CSS (validation/echappement du nom de police avant insertion dans un style inline, avec commentaire documentant explicitement le risque). Appliquer main REVERTERAIT ce correctif de securite."
+  },
+  {
+    "file": "lib/store/canvas.ts",
+    "changed_lines": 12,
+    "decision": "rejected",
+    "reason": "Perd la fonctionnalite 'pickTarget' (mode timeline 'choisir un element sur le canevas') ajoutee par upstream."
+  },
+  {
+    "file": "CONTRIBUTING.md",
+    "changed_lines": 11,
+    "decision": "rejected",
+    "reason": "FR-3 / convention soft-fork Qalem : README/CONTRIBUTING/CHANGELOG herites de l'upstream ne sont JAMAIS modifies (regle absolue, independante du seuil de lignes)."
+  },
+  {
+    "file": "lib/orchestration/registry/types.ts",
+    "changed_lines": 11,
+    "decision": "rejected",
+    "reason": "Perd voiceDesign, modelId (config vocale par agent) et les actions wb_draw_code/wb_edit_code -- meme cluster que registry/store.ts et tool-schemas.ts/inline-action-tag.tsx."
+  },
+  {
+    "file": ".prettierignore",
+    "changed_lines": 10,
+    "decision": "rejected",
+    "reason": "Meme famille que pnpm-workspace.yaml/tsconfig.json : retire les ignores de packages/@openmaic/*/dist, importer/src1 (vendor) et packages/docs sans les remplacer par un ignore plus large -- regression par rapport a la structure v0.3.0 reelle du worktree."
+  },
+  {
+    "file": "components/slide-renderer/Editor/Canvas/ElementCreateSelection.tsx",
+    "changed_lines": 10,
+    "decision": "rejected",
+    "reason": "Perd la gestion dediee de creation d'un element texte (comportement de taille par defaut adapte) ajoutee par upstream."
+  },
+  {
+    "file": "lib/types/settings.ts",
+    "changed_lines": 10,
+    "decision": "rejected",
+    "reason": "Perd le champ serverBaseUrl (override d'URL cote serveur) ajoute par upstream -- risque de casser d'autres fichiers hors perimetre qui le referenceraient."
+  },
+  {
+    "file": "components/slide-renderer/Editor/Canvas/hooks/useScaleElement.ts",
+    "changed_lines": 9,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "lib/types/edit.ts",
+    "changed_lines": 9,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/agent/agent-config-panel.tsx",
+    "changed_lines": 8,
+    "decision": "rejected",
+    "reason": "Perd la fonctionnalite PublishAgentDialog (publication d'agent) ajoutee par upstream."
+  },
+  {
+    "file": "components/settings/provider-list.tsx",
+    "changed_lines": 8,
+    "decision": "rejected",
+    "reason": "Perd la logique MONO_LOGO_PROVIDERS (inversion dark-mode des logos monochromes) ajoutee par upstream."
+  },
+  {
+    "file": "components/ui/popover.tsx",
+    "changed_lines": 8,
+    "decision": "rejected",
+    "reason": "Retire les exports PopoverAnchor/PopoverClose ajoutes par upstream -- risque de casser d'autres fichiers (hors perimetre) qui les importeraient."
+  },
+  {
+    "file": "lib/hooks/use-canvas-operations.ts",
+    "changed_lines": 8,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "lib/i18n/types.ts",
+    "changed_lines": 8,
+    "decision": "noop",
+    "reason": "contenu main deja applique au worktree lors d'une execution precedente (source=git) — idempotent, rien a refaire. Motif d'application : Necessaire : le systeme i18n deja porte (OURS_ONLY, use-i18n.tsx via react-i18next) depend du type Locale incluant fr-FR/ar-MA et de defaultLocale='fr-FR'. La version upstream derive Locale du nouveau registre lib/i18n/locales.ts (zh-CN/zh-TW/en-US/ja-JP/ru-RU/ar-SA/pt-BR/ko-KR, PAS fr-FR/ar-MA) -- la garder casserait la compilation du systeme i18n deja porte."
+  },
+  {
+    "file": "packages/pptxgenjs/rollup.config.mjs",
+    "changed_lines": 8,
+    "decision": "rejected",
+    "reason": "Modifie la configuration de build du package pptxgenjs dont le postinstall est deja verifie vert par S0-001 -- risque de regression sur une chaine de build deja prouvee, sans benefice identifie."
+  },
+  {
+    "file": "components/ai-elements/prompt-input.tsx",
+    "changed_lines": 7,
+    "decision": "rejected",
+    "reason": "RISQUE CONCRET DE CASSER TSC : le commentaire upstream explique que le '?' optionnel sur Window.SpeechRecognition doit rester identique aux modificateurs de l'augmentation globale de @assistant-ui/core (declaration merging TypeScript exige des modificateurs identiques). Le retirer peut provoquer un conflit de declaration globale."
+  },
+  {
+    "file": "components/whiteboard/whiteboard-history.tsx",
+    "changed_lines": 7,
+    "decision": "noop",
+    "reason": "contenu main deja applique au worktree lors d'une execution precedente (source=git) — idempotent, rien a refaire. Motif d'application : Coherence i18n : les traductions Qalem deja portees (lib/i18n/stage.ts) utilisent des placeholders a accolade simple '{n}' (pas '{{n}}' i18next). Le t(key,{n}) upstream ne les interpolerait pas (react-i18next attend '{{n}}') -- le .replace('{n}',...) de main est necessaire pour un affichage correct."
+  },
+  {
+    "file": "playwright.config.ts",
+    "changed_lines": 7,
+    "decision": "rejected",
+    "reason": "Perd le flag NEXT_PUBLIC_MAIC_EDITOR_ENABLED necessaire aux e2e de l'Editor Pro mode ajoute par upstream -- perte de couverture e2e reelle, pas cosmetique."
+  },
+  {
+    "file": "app/api/server-providers/route.ts",
+    "changed_lines": 6,
+    "decision": "rejected",
+    "reason": "Perd le champ 'generation.parallelSceneConcurrency' ajoute par upstream -- risque de casser un type client qui l'attendrait."
+  },
+  {
+    "file": "components/chat/inline-action-tag.tsx",
+    "changed_lines": 6,
+    "decision": "rejected",
+    "reason": "Perd les icones/labels wb_draw_code et wb_edit_code -- meme cluster que registry/types.ts et tool-schemas.ts."
+  },
+  {
+    "file": "components/chat/session-list.tsx",
+    "changed_lines": 6,
+    "decision": "rejected",
+    "reason": "Perd le cas SessionStatus='error' (icone AlertCircle) -- coherent avec le rejet de lib/types/chat.ts (meme enum)."
+  },
+  {
+    "file": "components/slide-renderer/Editor/ScreenElement.tsx",
+    "changed_lines": 6,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "e2e/fixtures/test-data/scene-content.ts",
+    "changed_lines": 6,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "lib/audio/use-tts-preview.ts",
+    "changed_lines": 6,
+    "decision": "rejected",
+    "reason": "Perd modelId et providerOptions (options TTS avancees) ajoutes par upstream."
+  },
+  {
+    "file": "lib/generation/generation-pipeline.ts",
+    "changed_lines": 6,
+    "decision": "rejected",
+    "reason": "Renomme buildLanguageText en getLanguageName/getLanguageQualityRules (meme cluster languageDirective que scene-builder.ts/pipeline-runner.ts) et retire un re-export de types (SceneContentOptions/SceneActionsOptions) potentiellement utilise ailleurs."
+  },
+  {
+    "file": "lib/hooks/use-order-element.ts",
+    "changed_lines": 6,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "lib/hooks/use-theme.tsx",
+    "changed_lines": 6,
+    "decision": "noop",
+    "reason": "contenu main deja applique au worktree lors d'une execution precedente (source=git) — idempotent, rien a refaire. Motif d'application : Defaut de theme 'dark'/'dark' au lieu de 'system'/'light' -- choix UX cosmetique reversible, ne retire aucune capacite upstream, ne touche aucun type/API partagee."
+  },
+  {
+    "file": "lib/orchestration/tool-schemas.ts",
+    "changed_lines": 6,
+    "decision": "rejected",
+    "reason": "Perd les descriptions d'outils wb_draw_code/wb_edit_code -- meme cluster que registry/types.ts et inline-action-tag.tsx."
+  },
+  {
+    "file": "lib/server/api-response.ts",
+    "changed_lines": 6,
+    "decision": "rejected",
+    "reason": "Perd plusieurs codes d'erreur ajoutes par upstream (PROVIDER_DISABLED, VOXCPM_AUTO_VOICE_REQUIRES_CONTEXT, TOO_MANY_REDIRECTS, RATE_LIMITED) -- risque concret de casser d'autres fichiers (hors perimetre) qui les referenceraient."
+  },
+  {
+    "file": "lib/utils/element-fingerprint.ts",
+    "changed_lines": 6,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": ".github/ISSUE_TEMPLATE/config.yml",
+    "changed_lines": 4,
+    "decision": "noop",
+    "reason": "contenu main deja applique au worktree lors d'une execution precedente (source=git) — idempotent, rien a refaire. Motif d'application : Lien Discord mis a jour -- cosmetique, zero risque technique."
+  },
+  {
+    "file": "app/api/health/route.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Regression mineure de precision (verifie Object.keys().length au lieu de values().some(!disabled)) -- pas de gain identifie, rejet par coherence de politique (main en retard, aucune necessite Qalem)."
+  },
+  {
+    "file": "components/chat/lecture-notes-view.tsx",
+    "changed_lines": 4,
+    "decision": "noop",
+    "reason": "contenu main deja applique au worktree lors d'une execution precedente (source=git) — idempotent, rien a refaire. Motif d'application : Meme raison que whiteboard-history.tsx : interpolation par .replace('{n}',...) necessaire pour les traductions Qalem a accolade simple."
+  },
+  {
+    "file": "components/slide-renderer/Editor/Canvas/EditableElement.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/Editor/Canvas/GridLines.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/Editor/Canvas/Operate/CommonElementOperate.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/Editor/Canvas/Operate/ImageElementOperate.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/Editor/Canvas/Operate/LineElementOperate.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/Editor/Canvas/Operate/MultiSelectOperate.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/Editor/Canvas/Operate/ShapeElementOperate.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/Editor/Canvas/Operate/TableElementOperate.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/Editor/Canvas/Operate/index.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/Editor/Canvas/Ruler.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/Editor/Canvas/ShapeCreateCanvas.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/Editor/Canvas/ViewportBackground.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/Editor/Canvas/hooks/useDragElement.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/Editor/Canvas/hooks/useDragLineElement.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/Editor/Canvas/hooks/useMouseSelection.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/Editor/Canvas/hooks/useMoveShapeKeypoint.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/Editor/Canvas/hooks/useRotateElement.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/Editor/Canvas/hooks/useSelectElement.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/Editor/Canvas/index.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/Editor/HighlightOverlay.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/Editor/ScreenCanvas.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/ChartElement/BaseChartElement.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/ChartElement/Chart.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/ChartElement/index.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/ElementOutline.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/ImageElement/ImageClipHandler.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/ImageElement/ImageOutline/image-ellipse-outline.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/ImageElement/ImageOutline/image-polygon-outline.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/ImageElement/ImageOutline/image-rect-outline.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/ImageElement/ImageOutline/index.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/ImageElement/useClipImage.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/ImageElement/useFilter.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/LatexElement/BaseLatexElement.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/LatexElement/index.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/LineElement/BaseLineElement.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/LineElement/LinePointMarker.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/LineElement/index.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/ShapeElement/BaseShapeElement.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/ShapeElement/GradientDefs.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/ShapeElement/index.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/TableElement/BaseTableElement.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/TableElement/StaticTable.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/TableElement/index.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/TableElement/tableUtils.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/TextElement/BaseTextElement.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/TextElement/index.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/VideoElement/index.tsx",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/hooks/useElementFill.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/hooks/useElementOutline.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "components/slide-renderer/components/element/hooks/useElementShadow.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "configs/animation.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "configs/chart.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "configs/lines.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "configs/shapes.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "configs/theme.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "e2e/pages/home.page.ts",
+    "changed_lines": 4,
+    "decision": "noop",
+    "reason": "contenu main deja applique au worktree lors d'une execution precedente (source=git) — idempotent, rien a refaire. Motif d'application : Branding : selecteur de test cherche alt='Qalem' au lieu de alt='OpenMAIC' -- necessaire pour que les e2e trouvent le logo une fois le rebranding applique (deja fait sur layout.tsx/page.tsx via OURS_ONLY)."
+  },
+  {
+    "file": "lib/api/stage-api-canvas.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "lib/api/stage-api-element.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "lib/api/stage-api-types.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "lib/api/stage-api-whiteboard.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "lib/hooks/use-slide-background-style.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "lib/pdf/types.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Retrecit PDFProviderId en retirant 'mineru-cloud' -- coherent avec le rejet de lib/pdf/constants.ts (meme provider)."
+  },
+  {
+    "file": "lib/server/classroom-job-store.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "REVERTE apres test reel : main ajoute un champ 'language' (gain identifie, additif) MAIS son application introduit une VRAIE erreur tsc (TS2339 : 'Property language does not exist on type GenerateClassroomInput') car ce type est defini dans lib/server/classroom-generation.ts, hors du perimetre des 137 fichiers de cette story -- l'ajouter la aurait exige une modification hors-scope. Applique puis reverte a l'etat upstream d'origine (aucun changement net) pour ne pas introduire de dette tsc nouvelle ; a reprendre dans une story ulterieure qui couvre lib/server/classroom-generation.ts."
+  },
+  {
+    "file": "lib/store/whiteboard-history.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "lib/utils/element.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "lib/utils/geometry.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Le diff reintroduit un import depuis l'ancien chemin @/lib/types/slides alors qu'upstream v0.3.0 a extrait ces types dans le package @openmaic/dsl (reellement present et utilise ailleurs dans le worktree). Appliquer romprait la coherence d'architecture avec le reste du code v0.3.0 non touche par cette story. Echantillon verifie manuellement (6 fichiers) : chacun perd aussi une fonctionnalite ou un correctif upstream reel au-dela du seul import (ex. SpotlightOverlay perd domIdPrefix + un correctif Tailwind ; BaseImageElement revient a un pattern de resolution media plus ancien perdant une correction documentee de contamination cross-course ; chartOption.ts perd des verifications defensives ; element-fingerprint.ts perd le cas 'code' (risque de rupture d'exhaustivite de switch)."
+  },
+  {
+    "file": "packages/pptxgenjs/src/gen-media.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Retire les commentaires magiques '/* webpackIgnore: true */' presents dans la version v0.3.0 dont le build (postinstall) est deja verifie vert par S0-001 -- pas de raison de toucher a un etat deja valide."
+  },
+  {
+    "file": "packages/pptxgenjs/src/pptxgen.ts",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "Meme raison que gen-media.ts (meme paire de commentaires webpackIgnore, meme package deja valide par S0-001)."
+  },
+  {
+    "file": "pnpm-workspace.yaml",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "main ne declare pas 'packages/@openmaic/*' comme membre du workspace pnpm, alors que packages/@openmaic/{dsl,importer,renderer} existent reellement et sont deja necessaires au postinstall valide vert par S0-001 (pnpm build). Appliquer casserait cette chaine de build deja verifiee."
+  },
+  {
+    "file": "tsconfig.json",
+    "changed_lines": 4,
+    "decision": "rejected",
+    "reason": "main exclut 'packages/docs' de tsc alors que ce dossier EXISTE reellement dans le worktree v0.3.0 (app Fumadocs avec son propre toolchain) -- retirer cette exclusion ferait typechecker un sous-projet non concu pour ca, risque concret de regression sur l'acceptance 'npx tsc --noEmit vert'."
+  },
+  {
+    "file": "e2e/fixtures/test-data/settings.ts",
+    "changed_lines": 3,
+    "decision": "rejected",
+    "reason": "Perd le champ reviewOutlineEnabled ajoute par upstream (fixture de test)."
+  },
+  {
+    "file": "vitest.config.ts",
+    "changed_lines": 3,
+    "decision": "rejected",
+    "reason": "Perd setupFiles:['tests/setup-env.ts'] ajoute par upstream -- ce fichier existe reellement dans le worktree v0.3.0, le retirer changerait le comportement des tests sans necessite identifiee."
+  }
+]

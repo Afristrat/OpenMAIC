@@ -1,5 +1,3 @@
-import { supportedLocales } from './locales';
+export type Locale = 'zh-CN' | 'en-US' | 'fr-FR' | 'ar-MA';
 
-export type Locale = (typeof supportedLocales)[number]['code'];
-
-export const defaultLocale: Locale = 'zh-CN';
+export const defaultLocale: Locale = 'fr-FR';
