@@ -139,13 +139,15 @@
       "title": "Figer la carrière (tag legacy-v010-final) + CI verte",
       "epic": "0-SOCLE",
       "phase": 0,
-      "passes": false,
+      "passes": true,
+      "completedAt": "2026-07-11",
       "dependencies": ["S0-008"],
       "acceptance": [
         "Tag posé et poussé sur main",
         "CI GitHub Actions verte sur refork-v030",
         "Règle carrière lecture seule dans .ralph/AGENTS.md"
-      ]
+      ],
+      "acceptanceNote": "Tag annoté legacy-v010-final posé sur main (a4c8421695820e63be585e166d7ed35829d13369) et poussé sur origin (objet tag 9c594ca0) — zéro commit sur main, uniquement le tag, diff vide vs origin/main vérifié avant et après. Workflow ci.yml jamais déclenché sur refork-v030 en 9 stories précédentes (push:[main, develop] uniquement, refork-v030 absent du trigger) : ajouté au déclencheur push+pull_request (commit c26bcf0). Run vert obtenu en 4 itérations, chacune révélant une cause racine mécanique distincte, aucune contournée : (1) pnpm-lock.yaml désynchronisé depuis S0-008 (6 dépendances jamais répercutées dans le lockfile, toutes les validations ayant tourné via docker exec sur serveuria sans jamais rapatrier le lockfile régénéré) — régénéré via pnpm install --no-frozen-lockfile sur serveuria, rapatrié par scp (commit dbe1c07) ; (2) 111 fichiers en dérive de formatage Prettier, jamais couverts par les 4 quality gates du Ralph Loop (qualityGates = tsc+lint+test+e2e, sans pnpm check) — le dernier run CI historique de main lui-même échouait déjà à cette étape (run 23873536613, avant ce Ralph loop), confirmant une dette héritée et non une régression introduite par une story S0-* — corrigé via pnpm format sur serveuria, re-vérifié tsc 0/lint 0/test 1783/1783 avant commit (dc1df02) ; (3) job Supabase Migration Check (3e job de ci.yml, jamais dans le périmètre des 4 gates) : supabase/setup-cli@v1 sans version épinglée retombe sur un défaut obsolète (2.20.3) incapable de parser les sections récentes de supabase/config.toml (auth, stockage, réseau db) — épinglé version: latest (commit 975856b) ; (4) une fois le parsing résolu, échec sur la connexion Postgres : supabase db lint requiert une base locale déjà démarrée — ajout de l'étape supabase db start avant le lint, pattern officiel documenté par Supabase pour CI (commit 8136dc0). Run final 29133454803 (commit 8136dc0) : success, 3/3 jobs verts (Typecheck/Lint/Unit Tests, E2E Tests, Supabase Migration Check) — vérifié indépendamment via gh run view --json conclusion et gh api .../jobs (pas seulement l'annonce du run). deploy-staging.yml reste rouge (échec instantané 0s, 0 job, sur push refork-v030 alors que son trigger déclaré est push:[develop] uniquement — GitHub Actions crée quand même une entrée d'échec pour ce mismatch, artefact indépendant de S0-010) : hors scope, explicitement rattaché à S0-013 (Déploiement préprod Coolify), non touché. Règle carrière lecture seule renforcée dans .ralph/AGENTS.md (nouvelle section dédiée en tête de fichier, référence explicite au tag et au commit gelé)."
     },
     {
       "id": "S0-011",
