@@ -22,14 +22,14 @@ const log = createLogger('ScormExport');
 // pre-existing, codebase-wide convention — see workers.ts::videoCapsuleWorker
 // casting `capsule.brief as HyperframesBrief` at the same JSONB boundary), so
 // rows are narrowed with `as` right after the read rather than left as `any`.
-interface StageRow {
+export interface StageRow {
   id: string;
   name: string;
   description: string | null;
   language: string | null;
 }
 
-interface SceneRow {
+export interface SceneRow {
   id: string;
   type: string;
   title: string | null;
@@ -155,6 +155,46 @@ ${sections}
 `;
 }
 
+/**
+ * Pure package assembly — no I/O. Split out from `buildScormPackage` so the
+ * zip/manifest/runtime logic is testable (and reusable, e.g. for a manual
+ * Moodle-import smoke test) without a live Supabase connection.
+ */
+export async function buildScormPackageFromData(
+  stage: StageRow,
+  scenes: SceneRow[],
+): Promise<ScormPackageResult> {
+  if (scenes.length === 0) {
+    throw new Error('Le cours ne contient aucune scène à exporter');
+  }
+
+  const runtime = resolveScormRuntime();
+  const indexHtml = buildIndexHtml(stage, scenes, runtime.filename);
+  const manifest = buildScorm12Manifest({
+    identifier: `com.qalem.export.${stage.id}`,
+    title: stage.name,
+    launchUrl: 'index.html',
+    resourceFiles: ['index.html', runtime.filename],
+  });
+
+  const zip = new JSZip();
+  zip.file('imsmanifest.xml', manifest);
+  zip.file('index.html', indexHtml);
+  zip.file(runtime.filename, runtime.source);
+  zip.file(
+    'THIRD-PARTY-NOTICES.txt',
+    'scorm-again — MIT License\nhttps://www.npmjs.com/package/scorm-again\n' +
+      'Bundled unmodified as the SCORM 1.2 JavaScript runtime for this package.\n',
+  );
+
+  const buffer = await zip.generateAsync({ type: 'nodebuffer' });
+  log.info(
+    `Built SCORM 1.2 package for stage=${stage.id}: ${scenes.length} scenes, ${buffer.length} bytes`,
+  );
+
+  return { zip: buffer, sceneCount: scenes.length };
+}
+
 export async function buildScormPackage(stageId: string): Promise<ScormPackageResult> {
   const supabase = createServiceSupabaseClient();
 
@@ -179,31 +219,6 @@ export async function buildScormPackage(stageId: string): Promise<ScormPackageRe
   if (!scenesData || scenesData.length === 0) {
     throw new Error('Le cours ne contient aucune scène à exporter');
   }
-  const scenes = scenesData as SceneRow[];
 
-  const runtime = resolveScormRuntime();
-  const indexHtml = buildIndexHtml(stage, scenes, runtime.filename);
-  const manifest = buildScorm12Manifest({
-    identifier: `com.qalem.export.${stageId}`,
-    title: stage.name,
-    launchUrl: 'index.html',
-    resourceFiles: ['index.html', runtime.filename],
-  });
-
-  const zip = new JSZip();
-  zip.file('imsmanifest.xml', manifest);
-  zip.file('index.html', indexHtml);
-  zip.file(runtime.filename, runtime.source);
-  zip.file(
-    'THIRD-PARTY-NOTICES.txt',
-    'scorm-again — MIT License\nhttps://www.npmjs.com/package/scorm-again\n' +
-      'Bundled unmodified as the SCORM 1.2 JavaScript runtime for this package.\n',
-  );
-
-  const buffer = await zip.generateAsync({ type: 'nodebuffer' });
-  log.info(
-    `Built SCORM 1.2 package for stage=${stageId}: ${scenes.length} scenes, ${buffer.length} bytes`,
-  );
-
-  return { zip: buffer, sceneCount: scenes.length };
+  return buildScormPackageFromData(stage, scenesData as SceneRow[]);
 }
