@@ -77,6 +77,52 @@ export class MockApi {
     });
   }
 
+  /** Mock POST /api/video-capsules — creation succeeds, returns a queued capsule id */
+  async mockVideoCapsuleCreate(id = 'e2e-capsule-1') {
+    await this.page.route('**/api/video-capsules', (route) => {
+      route.fulfill({
+        status: 202,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: true, id, status: 'queued' }),
+      });
+    });
+  }
+
+  /** Mock POST /api/video-capsules — creation forbidden (feature flag disabled) */
+  async mockVideoCapsuleCreateForbidden() {
+    await this.page.route('**/api/video-capsules', (route) => {
+      route.fulfill({
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          success: false,
+          error: 'La génération de capsules vidéo est désactivée',
+        }),
+      });
+    });
+  }
+
+  /** Mock GET /api/video-capsules/:id — resolves immediately as done, with a playable mp4 variant */
+  async mockVideoCapsuleStatusDone(id = 'e2e-capsule-1') {
+    await this.page.route(`**/api/video-capsules/${id}`, (route) => {
+      route.fulfill({
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          success: true,
+          id,
+          status: 'done',
+          variants: [
+            { lang: 'fr', format: 'mp4', gatePassed: true, url: `https://example.com/${id}.mp4` },
+          ],
+          error: null,
+          done: true,
+          pollIntervalMs: 5000,
+        }),
+      });
+    });
+  }
+
   /** Set up API mocks for the generation flow. Note: server-providers is already mocked by the base fixture. */
   async setupGenerationMocks(stageId?: string) {
     await this.mockSceneOutlinesStream();

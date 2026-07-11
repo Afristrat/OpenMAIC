@@ -201,6 +201,7 @@ export function SceneSidebar({
                   </div>
                   {stage?.id && (
                     <button
+                      data-testid="video-capsule-button"
                       onClick={(e) => {
                         e.stopPropagation();
                         setVideoCapsuleSceneId(scene.id);
