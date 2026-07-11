@@ -145,6 +145,20 @@ export const stageZhCN = {
   share: {
     notReady: '生成完成后可分享',
   },
+  videoCapsule: {
+    title: '视频片段（Hyperframes）',
+    audience: '受众',
+    tone: '语气',
+    objective: '目标',
+    duration: '时长（秒）',
+    generate: '生成视频',
+    noVariants: '没有可播放的视频',
+    status: {
+      queued: '排队中...',
+      generating: '生成中...',
+      rendering: '渲染中...',
+    },
+  },
 } as const;
 
 export const stageEnUS = {
@@ -294,6 +308,20 @@ export const stageEnUS = {
   },
   share: {
     notReady: 'Available after generation completes',
+  },
+  videoCapsule: {
+    title: 'Video Capsule (Hyperframes)',
+    audience: 'Audience',
+    tone: 'Tone',
+    objective: 'Objective',
+    duration: 'Duration (seconds)',
+    generate: 'Generate video',
+    noVariants: 'No video available yet',
+    status: {
+      queued: 'Queued...',
+      generating: 'Generating...',
+      rendering: 'Rendering...',
+    },
   },
 } as const;
 
@@ -446,6 +474,20 @@ export const stageFrFR = {
   share: {
     notReady: 'Partage disponible après la génération',
   },
+  videoCapsule: {
+    title: 'Capsule vidéo (Hyperframes)',
+    audience: 'Audience',
+    tone: 'Ton',
+    objective: 'Objectif',
+    duration: 'Durée (secondes)',
+    generate: 'Générer la vidéo',
+    noVariants: 'Aucune vidéo disponible pour le moment',
+    status: {
+      queued: 'En file d\'attente...',
+      generating: 'Génération en cours...',
+      rendering: 'Rendu en cours...',
+    },
+  },
 } as const;
 
 export const stageArMA = {
@@ -595,5 +637,19 @@ export const stageArMA = {
   },
   share: {
     notReady: 'يتوفر المشاركة بعد انتهاء الإنشاء',
+  },
+  videoCapsule: {
+    title: 'كبسولة فيديو (Hyperframes)',
+    audience: 'الجمهور المستهدف',
+    tone: 'النبرة',
+    objective: 'الهدف',
+    duration: 'المدة (بالثواني)',
+    generate: 'إنشاء الفيديو',
+    noVariants: 'لا يوجد فيديو متاح بعد',
+    status: {
+      queued: 'في قائمة الانتظار...',
+      generating: 'جارٍ الإنشاء...',
+      rendering: 'جارٍ المعالجة...',
+    },
   },
 } as const;

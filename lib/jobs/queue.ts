@@ -45,7 +45,8 @@ export type JobType =
   | 'tts-batch'
   | 'email-notification'
   | 'xapi-statement'
-  | 'pedagogy-collect';
+  | 'pedagogy-collect'
+  | 'video-capsule';
 
 // ---------------------------------------------------------------------------
 // Queues
@@ -55,6 +56,7 @@ export const classroomQueue = new Queue('classroom-generation', { connection });
 export const ttsQueue = new Queue('tts-batch', { connection });
 export const notificationQueue = new Queue('notifications', { connection });
 export const telemetryQueue = new Queue('telemetry', { connection });
+export const videoCapsuleQueue = new Queue('video-capsule', { connection });
 
 // ---------------------------------------------------------------------------
 // Enqueue helpers
@@ -93,4 +95,9 @@ export async function enqueueTelemetry(data: {
   payload: unknown;
 }): Promise<void> {
   await telemetryQueue.add('collect', data, { removeOnComplete: true });
+}
+
+export async function enqueueVideoCapsule(data: { capsuleId: string }): Promise<string> {
+  const job = await videoCapsuleQueue.add('render', data, { attempts: 1 });
+  return job.id!;
 }

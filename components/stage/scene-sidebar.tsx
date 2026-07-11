@@ -12,6 +12,7 @@ import {
   AlertCircle,
   RefreshCw,
   Trophy,
+  Video,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SlideThumbnail } from '@/components/slide-renderer/SlideThumbnail';
@@ -20,6 +21,7 @@ import { useStageStore, useCanvasStore } from '@/lib/store';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import type { SceneType, SlideContent, InteractiveContent } from '@/lib/types/stage';
 import { PENDING_SCENE_ID } from '@/lib/store/stage';
+import { VideoCapsuleModal } from './video-capsule-modal';
 
 interface SceneSidebarProps {
   readonly collapsed: boolean;
@@ -42,13 +44,14 @@ export function SceneSidebar({
 }: SceneSidebarProps) {
   const { t } = useI18n();
   const router = useRouter();
-  const { scenes, currentSceneId, setCurrentSceneId, generatingOutlines, generationStatus } =
+  const { scenes, currentSceneId, setCurrentSceneId, generatingOutlines, generationStatus, stage } =
     useStageStore();
   const failedOutlines = useStageStore.use.failedOutlines();
   const viewportSize = useCanvasStore.use.viewportSize();
   const viewportRatio = useCanvasStore.use.viewportRatio();
 
   const [retryingOutlineId, setRetryingOutlineId] = useState<string | null>(null);
+  const [videoCapsuleSceneId, setVideoCapsuleSceneId] = useState<string | null>(null);
 
   const handleRetryOutline = async (outlineId: string) => {
     if (!onRetryOutline) return;
@@ -196,6 +199,19 @@ export function SceneSidebar({
                       {scene.title}
                     </span>
                   </div>
+                  {stage?.id && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setVideoCapsuleSceneId(scene.id);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 shrink-0 p-1 -mr-0.5 rounded text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-purple-600 dark:hover:text-purple-400 transition-all"
+                      title={t('stage.videoCapsule.title')}
+                      aria-label={t('stage.videoCapsule.title')}
+                    >
+                      <Video className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
 
                 {/* Thumbnail */}
@@ -554,6 +570,15 @@ export function SceneSidebar({
         {/* Spacer to push toggle button area */}
         <div className="mt-auto" />
       </div>
+
+      {videoCapsuleSceneId && stage?.id && (
+        <VideoCapsuleModal
+          stageId={stage.id}
+          sceneId={videoCapsuleSceneId}
+          sceneTitle={scenes.find((s) => s.id === videoCapsuleSceneId)?.title ?? ''}
+          onClose={() => setVideoCapsuleSceneId(null)}
+        />
+      )}
     </div>
   );
 }

@@ -418,6 +418,40 @@ export type FeatureFlagInsert = Pick<FeatureFlagRow, 'flag_name' | 'description'
 export type FeatureFlagUpdate = Partial<Pick<FeatureFlagRow, 'enabled' | 'scope' | 'description'>>;
 
 // ---------------------------------------------------------------------------
+// Video Capsules (chantier 1 — CRÉER, S1-006, capsules Hyperframes)
+// ---------------------------------------------------------------------------
+
+export type VideoCapsuleStatus = 'queued' | 'generating' | 'rendering' | 'done' | 'error';
+
+export interface VideoCapsuleVariant {
+  lang: string;
+  format: string;
+  gatePassed: boolean;
+  url: string;
+}
+
+export interface VideoCapsuleRow {
+  id: string; // UUID
+  stage_id: string;
+  scene_id: string;
+  owner_id: string | null;
+  status: VideoCapsuleStatus;
+  brief: Record<string, unknown>;
+  mishkat_production_id: string | null;
+  variants: VideoCapsuleVariant[] | null;
+  error: string | null;
+  created_at: string; // ISO 8601
+  updated_at: string; // ISO 8601
+}
+
+export type VideoCapsuleInsert = Pick<VideoCapsuleRow, 'stage_id' | 'scene_id' | 'brief'> &
+  Partial<Pick<VideoCapsuleRow, 'owner_id' | 'status' | 'mishkat_production_id'>>;
+
+export type VideoCapsuleUpdate = Partial<
+  Pick<VideoCapsuleRow, 'status' | 'mishkat_production_id' | 'variants' | 'error'>
+>;
+
+// ---------------------------------------------------------------------------
 // Supabase Database type (for createClient<Database>)
 // ---------------------------------------------------------------------------
 
@@ -528,6 +562,11 @@ export interface Database {
         Row: FeatureFlagRow;
         Insert: FeatureFlagInsert;
         Update: FeatureFlagUpdate;
+      };
+      video_capsules: {
+        Row: VideoCapsuleRow;
+        Insert: VideoCapsuleInsert;
+        Update: VideoCapsuleUpdate;
       };
     };
     Views: {
