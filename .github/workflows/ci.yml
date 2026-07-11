@@ -81,5 +81,8 @@ jobs:
         with:
           version: latest
 
+      - name: Start local database
+        run: supabase db start
+
       - name: Lint migrations
         run: supabase db lint --level warning
