@@ -3,7 +3,7 @@
  *
  * POST /api/video-capsules — génère une capsule vidéo à partir d'une scène.
  * Construit le brief JSON (contrat P1-B), l'enregistre, et enfile un job
- * BullMQ qui pilote le studio Mishkāt de bout en bout (voir lib/jobs/video-capsule-worker.ts).
+ * BullMQ qui pilote le studio Mishkāt de bout en bout (voir lib/jobs/workers.ts).
  *
  * Body: { stageId, sceneId, audience, tone, objective, durationS, notes? }
  * Response: { success: boolean, id?: string, status?: string, error?: string }
@@ -17,7 +17,7 @@ import { isHyperframesConfigured } from '@/lib/video/hyperframes-client';
 import { buildHyperframesBrief } from '@/lib/video/hyperframes-brief';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
-import { enqueueVideoCapsule } from '@/lib/jobs/video-capsule-queue';
+import { enqueueVideoCapsule } from '@/lib/jobs/queue';
 import { createLogger } from '@/lib/logger';
 import type { Locale } from '@/lib/i18n/types';
 

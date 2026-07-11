@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NextRequest } from 'next/server';
 
 const mocks = vi.hoisted(() => ({
@@ -16,7 +16,7 @@ vi.mock('@/lib/flags', () => ({ isFeatureEnabled: mocks.isFeatureEnabled }));
 vi.mock('@/lib/video/hyperframes-client', () => ({
   isHyperframesConfigured: mocks.isHyperframesConfigured,
 }));
-vi.mock('@/lib/jobs/video-capsule-queue', () => ({ enqueueVideoCapsule: mocks.enqueueVideoCapsule }));
+vi.mock('@/lib/jobs/queue', () => ({ enqueueVideoCapsule: mocks.enqueueVideoCapsule }));
 vi.mock('@/lib/logger', () => ({
   createLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }),
 }));
@@ -64,8 +64,15 @@ const validBody = {
 };
 
 describe('POST /api/video-capsules', () => {
+  const originalBrandId = process.env.MISHKAT_BRAND_ID;
+
+  afterEach(() => {
+    process.env.MISHKAT_BRAND_ID = originalBrandId;
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.MISHKAT_BRAND_ID = 'qalem-test-brand';
     mocks.requireAuth.mockResolvedValue({ user: { id: 'user_1', email: 'a@b.com' } });
     mocks.isFeatureEnabled.mockResolvedValue(true);
     mocks.isHyperframesConfigured.mockReturnValue(true);
