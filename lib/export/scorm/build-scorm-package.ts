@@ -46,7 +46,11 @@ const nodeRequire = createRequire(import.meta.url);
 
 function resolveScormRuntime(): { source: string; filename: string } {
   const filename = 'scorm12.min.js';
-  const path = nodeRequire.resolve(`scorm-again/dist/${filename}`);
+  // `scorm-again` restricts importable subpaths via package.json "exports":
+  // the public entry for the minified SCORM 1.2 runtime is `scorm-again/scorm12/min`
+  // (resolves internally to dist/scorm12.min.js) — `scorm-again/dist/...` is not
+  // an exported subpath and throws ERR_PACKAGE_PATH_NOT_EXPORTED.
+  const path = nodeRequire.resolve('scorm-again/scorm12/min');
   return { source: readFileSync(path, 'utf-8'), filename };
 }
 
