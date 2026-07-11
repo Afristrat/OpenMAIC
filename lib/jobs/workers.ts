@@ -20,6 +20,7 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { createHyperframesProduction, getHyperframesProduction } from '@/lib/video/hyperframes-client';
 import type { HyperframesBrief } from '@/lib/video/hyperframes-types';
 import type { VideoCapsuleStatus, VideoCapsuleVariant } from '@/lib/supabase/types';
+import { buildScormPackage } from '@/lib/export/scorm/build-scorm-package';
 
 const log = createLogger('Workers');
 
@@ -223,7 +224,60 @@ export function startAllWorkers(): void {
     { connection, concurrency: 2 },
   );
 
-  workers = [classroomWorker, ttsWorker, notificationWorker, telemetryWorker, videoCapsuleWorker];
+  // ---- Export job worker (SCORM couche 1, S1-007) ----
+  const exportJobWorker = new Worker(
+    'export-job',
+    async (job: Job) => {
+      const { exportJobId } = job.data as { exportJobId: string };
+      const supabase = createServiceSupabaseClient();
+
+      const { data: exportJob, error: readError } = await supabase
+        .from('export_jobs')
+        .select('id, stage_id, format')
+        .eq('id', exportJobId)
+        .single();
+
+      if (readError || !exportJob) {
+        throw new Error(`Export job ${exportJobId} not found: ${readError?.message ?? 'no row'}`);
+      }
+
+      try {
+        await supabase.from('export_jobs').update({ status: 'generating' }).eq('id', exportJobId);
+
+        const { zip, sceneCount } = await buildScormPackage(exportJob.stage_id as string);
+
+        const storagePath = `${exportJob.stage_id}/${exportJobId}.scorm12.zip`;
+        const { error: uploadError } = await supabase.storage
+          .from('exports')
+          .upload(storagePath, zip, { contentType: 'application/zip', upsert: true });
+        if (uploadError) {
+          throw new Error(`Échec du dépôt du package SCORM: ${uploadError.message}`);
+        }
+
+        await supabase
+          .from('export_jobs')
+          .update({ status: 'done', storage_path: storagePath, scene_count: sceneCount })
+          .eq('id', exportJobId);
+
+        incrementCounter('qalem_jobs_processed_total', { queue: 'export-job' });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        await supabase.from('export_jobs').update({ status: 'error', error: message }).eq('id', exportJobId);
+        incrementCounter('qalem_jobs_failed_total', { queue: 'export-job' });
+        throw err;
+      }
+    },
+    { connection, concurrency: 2 },
+  );
+
+  workers = [
+    classroomWorker,
+    ttsWorker,
+    notificationWorker,
+    telemetryWorker,
+    videoCapsuleWorker,
+    exportJobWorker,
+  ];
 
   // Attach default error handlers to all workers so unhandled failures
   // get logged (and counted) rather than silently swallowed.

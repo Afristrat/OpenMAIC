@@ -452,6 +452,34 @@ export type VideoCapsuleUpdate = Partial<
 >;
 
 // ---------------------------------------------------------------------------
+// Export Jobs (chantier 1 — CRÉER, S1-007, packages SCORM/cmi5)
+// ---------------------------------------------------------------------------
+
+export type ExportJobFormat = 'scorm12';
+
+export type ExportJobStatus = 'queued' | 'generating' | 'done' | 'error';
+
+export interface ExportJobRow {
+  id: string; // UUID
+  stage_id: string;
+  owner_id: string | null;
+  format: ExportJobFormat;
+  status: ExportJobStatus;
+  storage_path: string | null;
+  scene_count: number | null;
+  error: string | null;
+  created_at: string; // ISO 8601
+  updated_at: string; // ISO 8601
+}
+
+export type ExportJobInsert = Pick<ExportJobRow, 'stage_id' | 'format'> &
+  Partial<Pick<ExportJobRow, 'owner_id' | 'status'>>;
+
+export type ExportJobUpdate = Partial<
+  Pick<ExportJobRow, 'status' | 'storage_path' | 'scene_count' | 'error'>
+>;
+
+// ---------------------------------------------------------------------------
 // Supabase Database type (for createClient<Database>)
 // ---------------------------------------------------------------------------
 
@@ -567,6 +595,11 @@ export interface Database {
         Row: VideoCapsuleRow;
         Insert: VideoCapsuleInsert;
         Update: VideoCapsuleUpdate;
+      };
+      export_jobs: {
+        Row: ExportJobRow;
+        Insert: ExportJobInsert;
+        Update: ExportJobUpdate;
       };
     };
     Views: {
