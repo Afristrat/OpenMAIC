@@ -72,8 +72,10 @@ next-env.d.ts
 /data
 /logs
 
-# docs
-/docs
+# docs (working notes, not versioned) — except docs/foundation, which is
+# tracked product source (CLAUDE.md: "Source produit : docs/foundation/<chantier>/")
+/docs/*
+!/docs/foundation
 # Eval results
 eval/whiteboard-layout/results/
 eval/outline-language/results/
