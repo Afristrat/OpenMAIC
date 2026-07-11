@@ -23,7 +23,19 @@
       "avatar": "👨‍💻",
       "color": "#2563EB",
       "priority": 9,
-      "allowedActions": ["spotlight", "laser", "play_video", "wb_open", "wb_close", "wb_draw_text", "wb_draw_shape", "wb_draw_chart", "wb_draw_table", "wb_draw_latex", "wb_clear"]
+      "allowedActions": [
+        "spotlight",
+        "laser",
+        "play_video",
+        "wb_open",
+        "wb_close",
+        "wb_draw_text",
+        "wb_draw_shape",
+        "wb_draw_chart",
+        "wb_draw_table",
+        "wb_draw_latex",
+        "wb_clear"
+      ]
     },
     {
       "id": "coding-code-reviewer",

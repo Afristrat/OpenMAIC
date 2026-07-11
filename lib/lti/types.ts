@@ -43,18 +43,8 @@ export interface LTIGradePayload {
   userId: string;
   scoreGiven: number; // 0-100
   scoreMaximum: number; // typically 100
-  activityProgress:
-    | 'Initialized'
-    | 'Started'
-    | 'InProgress'
-    | 'Submitted'
-    | 'Completed';
-  gradingProgress:
-    | 'FullyGraded'
-    | 'Pending'
-    | 'PendingManual'
-    | 'Failed'
-    | 'NotReady';
+  activityProgress: 'Initialized' | 'Started' | 'InProgress' | 'Submitted' | 'Completed';
+  gradingProgress: 'FullyGraded' | 'Pending' | 'PendingManual' | 'Failed' | 'NotReady';
 }
 
 /**
@@ -68,8 +58,7 @@ export const LTI_CLAIMS = {
   RESOURCE_LINK: 'https://purl.imsglobal.org/spec/lti/claim/resource_link',
   ROLES: 'https://purl.imsglobal.org/spec/lti/claim/roles',
   CONTEXT: 'https://purl.imsglobal.org/spec/lti/claim/context',
-  LAUNCH_PRESENTATION:
-    'https://purl.imsglobal.org/spec/lti/claim/launch_presentation',
+  LAUNCH_PRESENTATION: 'https://purl.imsglobal.org/spec/lti/claim/launch_presentation',
   AGS: 'https://purl.imsglobal.org/spec/lti-ags/claim/endpoint',
 } as const;
 
@@ -77,11 +66,8 @@ export const LTI_CLAIMS = {
  * LTI 1.3 role URIs mapped to simplified Qalem roles.
  */
 export const LTI_ROLE_MAPPINGS = {
-  INSTRUCTOR:
-    'http://purl.imsglobal.org/vocab/lis/v2/membership#Instructor',
+  INSTRUCTOR: 'http://purl.imsglobal.org/vocab/lis/v2/membership#Instructor',
   LEARNER: 'http://purl.imsglobal.org/vocab/lis/v2/membership#Learner',
-  ADMIN:
-    'http://purl.imsglobal.org/vocab/lis/v2/institution/person#Administrator',
-  CONTENT_DEVELOPER:
-    'http://purl.imsglobal.org/vocab/lis/v2/membership#ContentDeveloper',
+  ADMIN: 'http://purl.imsglobal.org/vocab/lis/v2/institution/person#Administrator',
+  CONTENT_DEVELOPER: 'http://purl.imsglobal.org/vocab/lis/v2/membership#ContentDeveloper',
 } as const;

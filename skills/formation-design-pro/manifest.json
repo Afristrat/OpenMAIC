@@ -32,7 +32,21 @@
       "avatar": "/avatars/teacher.png",
       "color": "#2563eb",
       "priority": 10,
-      "allowedActions": ["spotlight", "laser", "play_video", "wb_open", "wb_close", "wb_draw_text", "wb_draw_shape", "wb_draw_chart", "wb_draw_latex", "wb_draw_table", "wb_draw_line", "wb_clear", "wb_delete"]
+      "allowedActions": [
+        "spotlight",
+        "laser",
+        "play_video",
+        "wb_open",
+        "wb_close",
+        "wb_draw_text",
+        "wb_draw_shape",
+        "wb_draw_chart",
+        "wb_draw_latex",
+        "wb_draw_table",
+        "wb_draw_line",
+        "wb_clear",
+        "wb_delete"
+      ]
     },
     {
       "id": "fdp-andragogy-advisor",
@@ -50,7 +64,15 @@
       "avatar": "/avatars/assist.png",
       "color": "#059669",
       "priority": 8,
-      "allowedActions": ["wb_open", "wb_close", "wb_draw_text", "wb_draw_shape", "wb_draw_chart", "wb_clear", "wb_delete"]
+      "allowedActions": [
+        "wb_open",
+        "wb_close",
+        "wb_draw_text",
+        "wb_draw_shape",
+        "wb_draw_chart",
+        "wb_clear",
+        "wb_delete"
+      ]
     },
     {
       "id": "fdp-kirkpatrick-evaluator",
@@ -68,7 +90,15 @@
       "avatar": "/avatars/thinker.png",
       "color": "#7c3aed",
       "priority": 7,
-      "allowedActions": ["wb_open", "wb_close", "wb_draw_text", "wb_draw_chart", "wb_draw_table", "wb_clear", "wb_delete"]
+      "allowedActions": [
+        "wb_open",
+        "wb_close",
+        "wb_draw_text",
+        "wb_draw_chart",
+        "wb_draw_table",
+        "wb_clear",
+        "wb_delete"
+      ]
     }
   ],
   "promptOverrides": [
@@ -91,34 +121,74 @@
   "classroomTemplates": [
     {
       "id": "fdp-module-express",
-      "name": { "fr-FR": "Module Express 3h", "ar-MA": "وحدة سريعة 3 ساعات", "en-US": "Express Module 3h" },
-      "description": { "fr-FR": "Module andragogique court avec cas pratique et livrable immédiat", "ar-MA": "وحدة أندراغوجية قصيرة مع حالة تطبيقية ومُخرَج فوري", "en-US": "Short andragogical module with practical case and immediate deliverable" },
+      "name": {
+        "fr-FR": "Module Express 3h",
+        "ar-MA": "وحدة سريعة 3 ساعات",
+        "en-US": "Express Module 3h"
+      },
+      "description": {
+        "fr-FR": "Module andragogique court avec cas pratique et livrable immédiat",
+        "ar-MA": "وحدة أندراغوجية قصيرة مع حالة تطبيقية ومُخرَج فوري",
+        "en-US": "Short andragogical module with practical case and immediate deliverable"
+      },
       "requirement": "Créer un module de formation de 3 heures avec approche 100% andragogique : démarrer par un problème réel, 30% théorie / 70% pratique, évaluation par livrable utilisable, 60%+ cas contextualisés Maroc/Afrique.",
       "agentIds": ["fdp-instructional-designer", "fdp-andragogy-advisor"],
       "language": "fr-FR"
     },
     {
       "id": "fdp-programme-complet",
-      "name": { "fr-FR": "Formation Complète 30h", "ar-MA": "تكوين متكامل 30 ساعة", "en-US": "Complete Training 30h" },
-      "description": { "fr-FR": "Programme complet ADDIE avec syllabus, modules séquencés, évaluations Kirkpatrick et adaptation culturelle", "ar-MA": "برنامج متكامل ADDIE مع منهج ووحدات متسلسلة وتقييمات كيركباتريك", "en-US": "Complete ADDIE program with syllabus, sequenced modules, Kirkpatrick assessments and cultural adaptation" },
+      "name": {
+        "fr-FR": "Formation Complète 30h",
+        "ar-MA": "تكوين متكامل 30 ساعة",
+        "en-US": "Complete Training 30h"
+      },
+      "description": {
+        "fr-FR": "Programme complet ADDIE avec syllabus, modules séquencés, évaluations Kirkpatrick et adaptation culturelle",
+        "ar-MA": "برنامج متكامل ADDIE مع منهج ووحدات متسلسلة وتقييمات كيركباتريك",
+        "en-US": "Complete ADDIE program with syllabus, sequenced modules, Kirkpatrick assessments and cultural adaptation"
+      },
       "requirement": "Concevoir un programme de formation complet de 30 heures selon le modèle ADDIE. Inclure : analyse des besoins, objectifs Bloom, 8-10 modules séquencés par charge cognitive, évaluations aux 4 niveaux Kirkpatrick, 50%+ cas Maroc/Afrique, peer learning dans chaque module.",
-      "agentIds": ["fdp-instructional-designer", "fdp-andragogy-advisor", "fdp-kirkpatrick-evaluator"],
+      "agentIds": [
+        "fdp-instructional-designer",
+        "fdp-andragogy-advisor",
+        "fdp-kirkpatrick-evaluator"
+      ],
       "language": "fr-FR"
     },
     {
       "id": "fdp-atelier-cas",
-      "name": { "fr-FR": "Atelier Cas d'Usage", "ar-MA": "ورشة دراسات الحالة", "en-US": "Case Study Workshop" },
-      "description": { "fr-FR": "Atelier immersif basé sur des cas d'entreprises réelles nord-africaines", "ar-MA": "ورشة غامرة قائمة على حالات شركات حقيقية من شمال أفريقيا", "en-US": "Immersive workshop based on real North African business cases" },
+      "name": {
+        "fr-FR": "Atelier Cas d'Usage",
+        "ar-MA": "ورشة دراسات الحالة",
+        "en-US": "Case Study Workshop"
+      },
+      "description": {
+        "fr-FR": "Atelier immersif basé sur des cas d'entreprises réelles nord-africaines",
+        "ar-MA": "ورشة غامرة قائمة على حالات شركات حقيقية من شمال أفريقيا",
+        "en-US": "Immersive workshop based on real North African business cases"
+      },
       "requirement": "Créer un atelier de 4 heures entièrement basé sur des cas d'entreprises réelles d'Afrique du Nord (Chari, Yassir, InstaDeep, Expensya, DabaDoc). Chaque cas : contexte, défi, décision à prendre, analyse en groupe, débriefing. 100% pratique, peer learning.",
       "agentIds": ["fdp-instructional-designer", "fdp-andragogy-advisor"],
       "language": "fr-FR"
     },
     {
       "id": "fdp-bootcamp",
-      "name": { "fr-FR": "Bootcamp Intensif", "ar-MA": "معسكر تدريبي مكثف", "en-US": "Intensive Bootcamp" },
-      "description": { "fr-FR": "Format bootcamp 2-5 jours avec sprint, livrable quotidien et pitch final", "ar-MA": "تنسيق معسكر تدريبي من 2 إلى 5 أيام مع سبرينت ومُخرَج يومي وعرض نهائي", "en-US": "2-5 day bootcamp format with sprints, daily deliverables and final pitch" },
+      "name": {
+        "fr-FR": "Bootcamp Intensif",
+        "ar-MA": "معسكر تدريبي مكثف",
+        "en-US": "Intensive Bootcamp"
+      },
+      "description": {
+        "fr-FR": "Format bootcamp 2-5 jours avec sprint, livrable quotidien et pitch final",
+        "ar-MA": "تنسيق معسكر تدريبي من 2 إلى 5 أيام مع سبرينت ومُخرَج يومي وعرض نهائي",
+        "en-US": "2-5 day bootcamp format with sprints, daily deliverables and final pitch"
+      },
       "requirement": "Concevoir un bootcamp intensif de 3 jours (24h) avec : sprint quotidien, livrable à la fin de chaque journée, pitch final devant jury. Approche 100% projet, pas de cours magistral. Chaque jour = un défi entrepreneurial croissant. Contexte Afrique du Nord.",
-      "agentIds": ["fdp-instructional-designer", "fdp-andragogy-advisor", "fdp-kirkpatrick-evaluator"],
+      "agentIds": [
+        "fdp-instructional-designer",
+        "fdp-andragogy-advisor",
+        "fdp-kirkpatrick-evaluator"
+      ],
       "language": "fr-FR"
     }
   ],

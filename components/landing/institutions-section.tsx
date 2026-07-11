@@ -67,8 +67,8 @@ export function InstitutionsSection(): React.ReactElement {
               S&apos;int&egrave;gre dans Moodle en 10 minutes
             </h4>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              LTI 1.3 compatible avec tous les LMS. Les notes remontent automatiquement au carnet
-              de notes. Z&eacute;ro changement de workflow.
+              LTI 1.3 compatible avec tous les LMS. Les notes remontent automatiquement au carnet de
+              notes. Z&eacute;ro changement de workflow.
             </p>
           </div>
 
@@ -184,9 +184,8 @@ export function InstitutionsSection(): React.ReactElement {
                 Vos donn&eacute;es restent prot&eacute;g&eacute;es
               </h2>
               <p className="text-slate-400 text-lg max-w-2xl leading-relaxed">
-                Infrastructure s&eacute;curis&eacute;e, conforme CNDP et RGPD.
-                Vos donn&eacute;es p&eacute;dagogiques sont h&eacute;berg&eacute;es dans un
-                environnement souverain.
+                Infrastructure s&eacute;curis&eacute;e, conforme CNDP et RGPD. Vos donn&eacute;es
+                p&eacute;dagogiques sont h&eacute;berg&eacute;es dans un environnement souverain.
               </p>
             </div>
 
@@ -218,9 +217,7 @@ export function InstitutionsSection(): React.ReactElement {
                       </span>
                       <span
                         className={
-                          item.bad
-                            ? 'text-red-400 font-semibold'
-                            : 'text-emerald-400 font-bold'
+                          item.bad ? 'text-red-400 font-semibold' : 'text-emerald-400 font-bold'
                         }
                       >
                         {item.bad ? '\u274C' : '\u2705'} {item.status}

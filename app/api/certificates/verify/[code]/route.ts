@@ -25,7 +25,9 @@ export async function GET(
 
     const { data: cert, error } = await supabase
       .from('certificates')
-      .select('id, course_name, learner_name, completion_date, score, skills, verification_code, issued_by')
+      .select(
+        'id, course_name, learner_name, completion_date, score, skills, verification_code, issued_by',
+      )
       .eq('verification_code', code)
       .maybeSingle();
 
@@ -37,10 +39,7 @@ export async function GET(
     }
 
     if (!cert) {
-      return NextResponse.json(
-        { success: false, error: 'Certificate not found' },
-        { status: 404 },
-      );
+      return NextResponse.json({ success: false, error: 'Certificate not found' }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -58,7 +57,11 @@ export async function GET(
     });
   } catch (error) {
     return NextResponse.json(
-      { success: false, error: 'Internal error', details: error instanceof Error ? error.message : String(error) },
+      {
+        success: false,
+        error: 'Internal error',
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 },
     );
   }

@@ -19,12 +19,7 @@ import { useI18n } from '@/lib/hooks/use-i18n';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
@@ -34,11 +29,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { ArrowLeft, GitBranch, Route } from 'lucide-react';
-import type {
-  OrgMemberRole,
-  CurriculumRelationType,
-  CurriculumLink,
-} from '@/lib/supabase/types';
+import type { OrgMemberRole, CurriculumRelationType, CurriculumLink } from '@/lib/supabase/types';
 
 // --- Constants ---
 
@@ -79,10 +70,7 @@ function topologicalSort(stageIds: string[], links: EnrichedLink[]): string[] {
 
   for (const link of orderingLinks) {
     adjacency.get(link.from_stage_id)?.push(link.to_stage_id);
-    inDegree.set(
-      link.to_stage_id,
-      (inDegree.get(link.to_stage_id) ?? 0) + 1,
-    );
+    inDegree.set(link.to_stage_id, (inDegree.get(link.to_stage_id) ?? 0) + 1);
   }
 
   const queue: string[] = [];
@@ -124,18 +112,13 @@ export default function CurriculumPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [userRole, setUserRole] = useState<OrgMemberRole | null>(null);
   const [showLinkDialog, setShowLinkDialog] = useState(false);
-  const [pendingConnection, setPendingConnection] = useState<Connection | null>(
-    null,
-  );
+  const [pendingConnection, setPendingConnection] = useState<Connection | null>(null);
   const [selectedRelationType, setSelectedRelationType] =
     useState<CurriculumRelationType>('follows');
   const [showRecommendedPath, setShowRecommendedPath] = useState(false);
   const [recommendedPath, setRecommendedPath] = useState<string[]>([]);
 
-  const canManage =
-    userRole === 'admin' ||
-    userRole === 'manager' ||
-    userRole === 'formateur';
+  const canManage = userRole === 'admin' || userRole === 'manager' || userRole === 'formateur';
 
   const stageNameMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -167,10 +150,7 @@ export default function CurriculumPage() {
       .select('stage_id')
       .eq('org_id', orgId);
 
-    const { data: ownedStages } = await supabase
-      .from('stages')
-      .select('id')
-      .eq('org_id', orgId);
+    const { data: ownedStages } = await supabase.from('stages').select('id').eq('org_id', orgId);
 
     const stageIds = [
       ...new Set([
@@ -199,10 +179,7 @@ export default function CurriculumPage() {
     const sceneCounts = new Map<string, number>();
     const sceneTypes = new Map<string, Set<string>>();
     for (const scene of scenes ?? []) {
-      sceneCounts.set(
-        scene.stage_id,
-        (sceneCounts.get(scene.stage_id) ?? 0) + 1,
-      );
+      sceneCounts.set(scene.stage_id, (sceneCounts.get(scene.stage_id) ?? 0) + 1);
       if (!sceneTypes.has(scene.stage_id)) {
         sceneTypes.set(scene.stage_id, new Set());
       }
@@ -266,8 +243,7 @@ export default function CurriculumPage() {
       },
       markerEnd: {
         type: MarkerType.ArrowClosed,
-        color:
-          RELATION_COLORS[link.relation_type as CurriculumRelationType],
+        color: RELATION_COLORS[link.relation_type as CurriculumRelationType],
       },
       labelStyle: {
         fontSize: 11,
@@ -317,23 +293,15 @@ export default function CurriculumPage() {
     const { link } = await res.json();
     const enrichedLink: EnrichedLink = {
       ...link,
-      from_stage_name:
-        stageNameMap.get(link.from_stage_id) ?? link.from_stage_id,
-      to_stage_name:
-        stageNameMap.get(link.to_stage_id) ?? link.to_stage_id,
+      from_stage_name: stageNameMap.get(link.from_stage_id) ?? link.from_stage_id,
+      to_stage_name: stageNameMap.get(link.to_stage_id) ?? link.to_stage_id,
     };
 
     setLinks((prev) => [enrichedLink, ...prev]);
     toast.success(t('curriculum.addLink'));
     setShowLinkDialog(false);
     setPendingConnection(null);
-  }, [
-    pendingConnection,
-    orgId,
-    selectedRelationType,
-    stageNameMap,
-    t,
-  ]);
+  }, [pendingConnection, orgId, selectedRelationType, stageNameMap, t]);
 
   const onEdgeContextMenu: EdgeMouseHandler = useCallback(
     async (event, edge) => {
@@ -379,11 +347,7 @@ export default function CurriculumPage() {
     return (
       <div className="mx-auto max-w-5xl px-4 py-8">
         <div className="mb-8 flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => router.push(`/org/${orgId}/admin`)}
-          >
+          <Button variant="ghost" size="icon" onClick={() => router.push(`/org/${orgId}/admin`)}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex items-center gap-3">
@@ -402,11 +366,7 @@ export default function CurriculumPage() {
     <div className="flex h-screen flex-col">
       {/* Header */}
       <div className="flex items-center gap-4 border-b px-4 py-3">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.push(`/org/${orgId}/admin`)}
-        >
+        <Button variant="ghost" size="icon" onClick={() => router.push(`/org/${orgId}/admin`)}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex items-center gap-3">
@@ -424,22 +384,20 @@ export default function CurriculumPage() {
       {/* Legend */}
       <div className="flex flex-wrap items-center gap-4 border-b px-4 py-2 text-xs">
         {canManage && (
-          <span className="text-muted-foreground italic">
-            {t('curriculum.dragToLink')}
-          </span>
+          <span className="text-muted-foreground italic">{t('curriculum.dragToLink')}</span>
         )}
         <div className="ml-auto flex items-center gap-3">
-          {(
-            Object.entries(RELATION_COLORS) as [CurriculumRelationType, string][]
-          ).map(([rel, color]) => (
-            <span key={rel} className="flex items-center gap-1">
-              <span
-                className="inline-block h-2.5 w-5 rounded-sm"
-                style={{ backgroundColor: color }}
-              />
-              {t(`curriculum.${rel}`)}
-            </span>
-          ))}
+          {(Object.entries(RELATION_COLORS) as [CurriculumRelationType, string][]).map(
+            ([rel, color]) => (
+              <span key={rel} className="flex items-center gap-1">
+                <span
+                  className="inline-block h-2.5 w-5 rounded-sm"
+                  style={{ backgroundColor: color }}
+                />
+                {t(`curriculum.${rel}`)}
+              </span>
+            ),
+          )}
         </div>
       </div>
 
@@ -468,25 +426,18 @@ export default function CurriculumPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="text-sm text-muted-foreground">
-              {pendingConnection?.source &&
-                stageNameMap.get(pendingConnection.source)}{' '}
-              →{' '}
-              {pendingConnection?.target &&
-                stageNameMap.get(pendingConnection.target)}
+              {pendingConnection?.source && stageNameMap.get(pendingConnection.source)} →{' '}
+              {pendingConnection?.target && stageNameMap.get(pendingConnection.target)}
             </div>
             <Select
               value={selectedRelationType}
-              onValueChange={(v) =>
-                setSelectedRelationType(v as CurriculumRelationType)
-              }
+              onValueChange={(v) => setSelectedRelationType(v as CurriculumRelationType)}
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {(
-                  ['prerequisite', 'follows', 'deepens', 'reviews'] as const
-                ).map((rel) => (
+                {(['prerequisite', 'follows', 'deepens', 'reviews'] as const).map((rel) => (
                   <SelectItem key={rel} value={rel}>
                     <span className="flex items-center gap-2">
                       <span
@@ -509,9 +460,7 @@ export default function CurriculumPage() {
               >
                 {t('common.cancel')}
               </Button>
-              <Button onClick={handleCreateLink}>
-                {t('common.confirm')}
-              </Button>
+              <Button onClick={handleCreateLink}>{t('common.confirm')}</Button>
             </div>
           </div>
         </DialogContent>
@@ -525,16 +474,11 @@ export default function CurriculumPage() {
           </DialogHeader>
           <div className="space-y-3 py-4">
             {recommendedPath.map((stageId, i) => (
-              <div
-                key={stageId}
-                className="flex items-center gap-3 rounded-md border p-3"
-              >
+              <div key={stageId} className="flex items-center gap-3 rounded-md border p-3">
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
                   {i + 1}
                 </span>
-                <span className="text-sm font-medium">
-                  {stageNameMap.get(stageId) ?? stageId}
-                </span>
+                <span className="text-sm font-medium">{stageNameMap.get(stageId) ?? stageId}</span>
               </div>
             ))}
           </div>

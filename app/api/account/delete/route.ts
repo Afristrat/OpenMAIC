@@ -42,10 +42,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
   const supabase = getSupabaseAdmin();
 
   if (!supabase) {
-    return NextResponse.json(
-      { error: 'Database not configured' },
-      { status: 503 },
-    );
+    return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
   }
 
   try {
@@ -54,10 +51,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
 
     for (const [table, column] of TABLES_TO_PURGE) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Untyped service-role client for dynamic table access
-      const { error } = await (supabase as any)
-        .from(table)
-        .delete()
-        .eq(column, userId);
+      const { error } = await (supabase as any).from(table).delete().eq(column, userId);
 
       if (error) {
         // Log but continue — some tables may not exist yet

@@ -55,20 +55,20 @@ export async function GET(
     .order('created_at', { ascending: false });
 
   if (error) {
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to fetch curriculum links', error.message);
+    return apiError(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      500,
+      'Failed to fetch curriculum links',
+      error.message,
+    );
   }
 
   // Fetch stage names for all referenced stages
-  const stageIds = [
-    ...new Set((links ?? []).flatMap((l) => [l.from_stage_id, l.to_stage_id])),
-  ];
+  const stageIds = [...new Set((links ?? []).flatMap((l) => [l.from_stage_id, l.to_stage_id]))];
 
   let stageMap: Record<string, string> = {};
   if (stageIds.length > 0) {
-    const { data: stages } = await supabase
-      .from('stages')
-      .select('id, name')
-      .in('id', stageIds);
+    const { data: stages } = await supabase.from('stages').select('id, name').in('id', stageIds);
 
     stageMap = Object.fromEntries((stages ?? []).map((s) => [s.id, s.name]));
   }
@@ -98,10 +98,7 @@ export async function POST(
   }
 
   const membership = await getUserMembership(supabase, orgId, user.id);
-  if (
-    !membership ||
-    !['admin', 'manager', 'formateur'].includes(membership.role)
-  ) {
+  if (!membership || !['admin', 'manager', 'formateur'].includes(membership.role)) {
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Insufficient permissions');
   }
 
@@ -136,7 +133,12 @@ export async function POST(
     if (error.code === '23505') {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 409, 'This link already exists');
     }
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to create curriculum link', error.message);
+    return apiError(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      500,
+      'Failed to create curriculum link',
+      error.message,
+    );
   }
 
   return apiSuccess({ link }, 201);
@@ -158,10 +160,7 @@ export async function DELETE(
   }
 
   const membership = await getUserMembership(supabase, orgId, user.id);
-  if (
-    !membership ||
-    !['admin', 'manager', 'formateur'].includes(membership.role)
-  ) {
+  if (!membership || !['admin', 'manager', 'formateur'].includes(membership.role)) {
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Insufficient permissions');
   }
 
@@ -183,7 +182,12 @@ export async function DELETE(
     .eq('org_id', orgId);
 
   if (error) {
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to delete curriculum link', error.message);
+    return apiError(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      500,
+      'Failed to delete curriculum link',
+      error.message,
+    );
   }
 
   return apiSuccess({ deleted: true });

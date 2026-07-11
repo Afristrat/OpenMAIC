@@ -24,9 +24,7 @@ interface AccessTokenResponse {
  * Obtain an OAuth2 access token from the platform's token endpoint
  * using the client_credentials grant with a signed JWT assertion.
  */
-async function getAccessToken(
-  platform: LTIPlatformConfig,
-): Promise<string> {
+async function getAccessToken(platform: LTIPlatformConfig): Promise<string> {
   const { privateKey, kid } = await getKeyPair();
 
   // Build the client assertion JWT (RFC 7523)
@@ -42,8 +40,7 @@ async function getAccessToken(
 
   const body = new URLSearchParams({
     grant_type: 'client_credentials',
-    client_assertion_type:
-      'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
+    client_assertion_type: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
     client_assertion: clientAssertion,
     scope: [
       'https://purl.imsglobal.org/spec/lti-ags/scope/lineitem',
@@ -60,9 +57,7 @@ async function getAccessToken(
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(
-      `Token request failed (${response.status}): ${errorText}`,
-    );
+    throw new Error(`Token request failed (${response.status}): ${errorText}`);
   }
 
   const tokenData = (await response.json()) as AccessTokenResponse;
@@ -92,9 +87,7 @@ export async function submitGrade(
       const accessToken = await getAccessToken(platformConfig);
 
       // AGS score endpoint is lineItemUrl + "/scores"
-      const scoreUrl = lineItemUrl.endsWith('/')
-        ? `${lineItemUrl}scores`
-        : `${lineItemUrl}/scores`;
+      const scoreUrl = lineItemUrl.endsWith('/') ? `${lineItemUrl}scores` : `${lineItemUrl}/scores`;
 
       const scorePayload = {
         userId: grade.userId,
@@ -121,12 +114,7 @@ export async function submitGrade(
             `score=${grade.scoreGiven}/${grade.scoreMaximum}`,
         );
 
-        await logGradeSubmission(
-          platformConfig.clientId,
-          grade,
-          lineItemUrl,
-          true,
-        );
+        await logGradeSubmission(platformConfig.clientId, grade, lineItemUrl, true);
 
         return true;
       }
@@ -142,15 +130,10 @@ export async function submitGrade(
       // Retryable error
       const errorText = await response.text();
       lastError = `HTTP ${response.status}: ${errorText}`;
-      log.warn(
-        `Grade submission attempt ${attempt}/${maxRetries} failed: ${lastError}`,
-      );
+      log.warn(`Grade submission attempt ${attempt}/${maxRetries} failed: ${lastError}`);
     } catch (err) {
-      lastError =
-        err instanceof Error ? err.message : 'Unknown error';
-      log.warn(
-        `Grade submission attempt ${attempt}/${maxRetries} error: ${lastError}`,
-      );
+      lastError = err instanceof Error ? err.message : 'Unknown error';
+      log.warn(`Grade submission attempt ${attempt}/${maxRetries} error: ${lastError}`);
     }
 
     // Exponential backoff: 1s, 2s, 4s
@@ -165,13 +148,7 @@ export async function submitGrade(
     `Grade submission failed after ${maxRetries} attempts for user=${grade.userId}: ${lastError}`,
   );
 
-  await logGradeSubmission(
-    platformConfig.clientId,
-    grade,
-    lineItemUrl,
-    false,
-    lastError,
-  );
+  await logGradeSubmission(platformConfig.clientId, grade, lineItemUrl, false, lastError);
 
   return false;
 }
@@ -220,9 +197,6 @@ async function logGradeSubmission(
       log.warn('Failed to log grade submission:', error.message);
     }
   } catch (err) {
-    log.warn(
-      'Exception logging grade submission:',
-      err instanceof Error ? err.message : 'unknown',
-    );
+    log.warn('Exception logging grade submission:', err instanceof Error ? err.message : 'unknown');
   }
 }

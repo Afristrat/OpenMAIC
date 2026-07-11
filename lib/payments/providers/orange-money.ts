@@ -107,11 +107,7 @@ export const orangeMoneyAdapter: PaymentProviderAdapter = {
 
     const rawStatus = data.status ?? '';
     const status =
-      rawStatus === 'SUCCESS'
-        ? 'completed'
-        : rawStatus === 'FAILED'
-          ? 'failed'
-          : 'pending';
+      rawStatus === 'SUCCESS' ? 'completed' : rawStatus === 'FAILED' ? 'failed' : 'pending';
 
     return {
       id: transactionId,
@@ -132,18 +128,14 @@ export const orangeMoneyAdapter: PaymentProviderAdapter = {
     const rawStatus = String(data['status'] ?? '');
 
     const status =
-      rawStatus === 'SUCCESS'
-        ? 'completed'
-        : rawStatus === 'FAILED'
-          ? 'failed'
-          : 'pending';
+      rawStatus === 'SUCCESS' ? 'completed' : rawStatus === 'FAILED' ? 'failed' : 'pending';
 
     return {
       id: String(data['order_id'] ?? ''),
       provider: 'orange-money',
       status,
       amount: Number(data['amount'] ?? 0),
-      currency: (String(data['currency'] ?? 'MAD')) as PaymentResult['currency'],
+      currency: String(data['currency'] ?? 'MAD') as PaymentResult['currency'],
       transactionId: String(data['order_id'] ?? ''),
       createdAt: new Date(),
     };

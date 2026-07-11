@@ -77,7 +77,12 @@ export default function MarketplacePage() {
   const addAgent = useAgentRegistry((s) => s.addAgent);
 
   const [agents, setAgents] = useState<RankedAgent[]>([]);
-  const [pagination, setPagination] = useState<PaginationInfo>({ page: 1, limit: 20, total: 0, totalPages: 0 });
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    page: 1,
+    limit: 20,
+    total: 0,
+    totalPages: 0,
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -100,74 +105,82 @@ export default function MarketplacePage() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const fetchAgents = useCallback(async (page = 1) => {
-    setIsLoading(true);
-    const params = new URLSearchParams();
-    params.set('page', String(page));
-    params.set('limit', '20');
-    params.set('sort', sortBy);
-    if (debouncedSearch) params.set('search', debouncedSearch);
-    if (filterTag !== 'all') params.set('tag', filterTag);
-    if (filterLevel !== 'all') params.set('level', filterLevel);
-    if (filterLanguage !== 'all') params.set('language', filterLanguage);
+  const fetchAgents = useCallback(
+    async (page = 1) => {
+      setIsLoading(true);
+      const params = new URLSearchParams();
+      params.set('page', String(page));
+      params.set('limit', '20');
+      params.set('sort', sortBy);
+      if (debouncedSearch) params.set('search', debouncedSearch);
+      if (filterTag !== 'all') params.set('tag', filterTag);
+      if (filterLevel !== 'all') params.set('level', filterLevel);
+      if (filterLanguage !== 'all') params.set('language', filterLanguage);
 
-    try {
-      const res = await fetch(`/api/marketplace/agents?${params.toString()}`);
-      const json = await res.json();
-      if (json.success) {
-        setAgents(json.agents);
-        setPagination(json.pagination);
+      try {
+        const res = await fetch(`/api/marketplace/agents?${params.toString()}`);
+        const json = await res.json();
+        if (json.success) {
+          setAgents(json.agents);
+          setPagination(json.pagination);
+        }
+      } catch {
+        toast.error('Failed to load marketplace');
+      } finally {
+        setIsLoading(false);
       }
-    } catch {
-      toast.error('Failed to load marketplace');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [debouncedSearch, filterTag, filterLevel, filterLanguage, sortBy]);
+    },
+    [debouncedSearch, filterTag, filterLevel, filterLanguage, sortBy],
+  );
 
   useEffect(() => {
     fetchAgents(1);
   }, [fetchAgents]);
 
-  const handleImport = useCallback(async (agent: RankedAgent) => {
-    // Fetch full agent details to get persona
-    try {
-      const res = await fetch(`/api/marketplace/agents/${agent.id}`);
-      const json = await res.json();
-      if (!json.success) {
+  const handleImport = useCallback(
+    async (agent: RankedAgent) => {
+      // Fetch full agent details to get persona
+      try {
+        const res = await fetch(`/api/marketplace/agents/${agent.id}`);
+        const json = await res.json();
+        if (!json.success) {
+          toast.error('Failed to import agent');
+          return;
+        }
+
+        const detail = json.agent;
+        const importedId = `imported-${agent.id}-${Date.now()}`;
+        const newAgent = createAgentFromTemplate(
+          {
+            name: detail.name,
+            role: detail.role,
+            persona: detail.persona ?? '',
+            avatar: detail.avatar ?? '/avatars/teacher.png',
+            color: detail.color ?? '#6366f1',
+            allowedActions: [],
+            priority: 5,
+          },
+          importedId,
+        );
+        addAgent(newAgent);
+
+        // Increment usage count (fire-and-forget)
+        fetch(`/api/marketplace/agents/${agent.id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rating: undefined, _incrementUsage: true }),
+        }).catch(() => {
+          /* best effort */
+        });
+
+        setImportedIds((prev) => new Set(prev).add(agent.id));
+        toast.success(t('marketplace.imported'));
+      } catch {
         toast.error('Failed to import agent');
-        return;
       }
-
-      const detail = json.agent;
-      const importedId = `imported-${agent.id}-${Date.now()}`;
-      const newAgent = createAgentFromTemplate(
-        {
-          name: detail.name,
-          role: detail.role,
-          persona: detail.persona ?? '',
-          avatar: detail.avatar ?? '/avatars/teacher.png',
-          color: detail.color ?? '#6366f1',
-          allowedActions: [],
-          priority: 5,
-        },
-        importedId,
-      );
-      addAgent(newAgent);
-
-      // Increment usage count (fire-and-forget)
-      fetch(`/api/marketplace/agents/${agent.id}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rating: undefined, _incrementUsage: true }),
-      }).catch(() => { /* best effort */ });
-
-      setImportedIds((prev) => new Set(prev).add(agent.id));
-      toast.success(t('marketplace.imported'));
-    } catch {
-      toast.error('Failed to import agent');
-    }
-  }, [addAgent, t]);
+    },
+    [addAgent, t],
+  );
 
   const openReviews = useCallback(async (agentId: string) => {
     setReviewAgentId(agentId);
@@ -209,9 +222,10 @@ export default function MarketplacePage() {
     }
   }, [reviewAgentId, reviewRating, reviewComment, user, t, fetchAgents, pagination.page]);
 
-  const TAGS = useMemo(() => [
-    'all', 'math', 'science', 'languages', 'history', 'programming', 'arts',
-  ], []);
+  const TAGS = useMemo(
+    () => ['all', 'math', 'science', 'languages', 'history', 'programming', 'arts'],
+    [],
+  );
   const LEVELS = useMemo(() => ['all', 'beginner', 'intermediate', 'advanced'], []);
   const LANGUAGES = useMemo(() => ['all', 'fr', 'ar', 'en', 'zh'], []);
 
@@ -331,7 +345,11 @@ export default function MarketplacePage() {
                 >
                   {agent.avatar ? (
                     agent.avatar.startsWith('/') || agent.avatar.startsWith('http') ? (
-                      <img src={agent.avatar} alt={agent.name} className="h-full w-full rounded-full object-cover" />
+                      <img
+                        src={agent.avatar}
+                        alt={agent.name}
+                        className="h-full w-full rounded-full object-cover"
+                      />
                     ) : (
                       <span>{agent.avatar}</span>
                     )
@@ -462,9 +480,7 @@ export default function MarketplacePage() {
                       {review.authorNickname ?? '???'}
                     </span>
                   </div>
-                  {review.comment && (
-                    <p className="text-sm">{review.comment}</p>
-                  )}
+                  {review.comment && <p className="text-sm">{review.comment}</p>}
                 </div>
               ))}
             </div>
@@ -499,18 +515,10 @@ export default function MarketplacePage() {
                   onChange={(e) => setReviewComment(e.target.value)}
                 />
                 <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    onClick={submitReview}
-                    disabled={isSubmittingReview}
-                  >
+                  <Button size="sm" onClick={submitReview} disabled={isSubmittingReview}>
                     {t('common.confirm')}
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setReviewAgentId(null)}
-                  >
+                  <Button variant="outline" size="sm" onClick={() => setReviewAgentId(null)}>
                     {t('common.cancel')}
                   </Button>
                 </div>

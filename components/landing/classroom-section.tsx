@@ -160,18 +160,20 @@ export function ClassroomSection(): React.ReactElement {
             </div>
             {/* Bottom Row: Avatars */}
             <div className="bg-secondary px-8 py-6 flex items-center justify-center gap-4 md:gap-6 border-t border-border/10">
-              {['Prof', 'Asst', 'Rig', 'Moi', 'Cur', 'Sec', 'Pen', 'Ana', 'Coa', 'Cré'].map((name, i) => (
-                <div
-                  key={name}
-                  className={`w-12 h-12 rounded-full border-2 p-0.5 flex items-center justify-center text-xs font-bold ${
-                    i === 3
-                      ? 'border-[#722ed1] w-14 h-14 -mt-4 shadow-lg bg-card z-10'
-                      : 'border-muted-foreground/30 bg-muted'
-                  } text-foreground`}
-                >
-                  {name[0]}
-                </div>
-              ))}
+              {['Prof', 'Asst', 'Rig', 'Moi', 'Cur', 'Sec', 'Pen', 'Ana', 'Coa', 'Cré'].map(
+                (name, i) => (
+                  <div
+                    key={name}
+                    className={`w-12 h-12 rounded-full border-2 p-0.5 flex items-center justify-center text-xs font-bold ${
+                      i === 3
+                        ? 'border-[#722ed1] w-14 h-14 -mt-4 shadow-lg bg-card z-10'
+                        : 'border-muted-foreground/30 bg-muted'
+                    } text-foreground`}
+                  >
+                    {name[0]}
+                  </div>
+                ),
+              )}
             </div>
           </div>
         </div>

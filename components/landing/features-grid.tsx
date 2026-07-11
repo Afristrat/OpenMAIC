@@ -21,14 +21,54 @@ interface FeatureItem {
 }
 
 const FEATURE_DEFS: FeatureItem[] = [
-  { icon: Workflow,     titleKey: 'landing.features.hub_mcp',         descKey: 'landing.features.hub_mcp_desc',         iconColor: 'text-primary bg-primary/10' },
-  { icon: FlaskConical, titleKey: 'landing.features.lab_sim',         descKey: 'landing.features.lab_sim_desc',         iconColor: 'text-emerald-400 bg-emerald-400/10' },
-  { icon: Terminal,     titleKey: 'landing.features.code_sandbox',    descKey: 'landing.features.code_sandbox_desc',    iconColor: 'text-amber-400 bg-amber-400/10' },
-  { icon: BadgeCheck,   titleKey: 'landing.features.certificates',    descKey: 'landing.features.certificates_desc',    iconColor: 'text-primary bg-primary/10' },
-  { icon: WifiOff,      titleKey: 'landing.features.offline',         descKey: 'landing.features.offline_desc',         iconColor: 'text-emerald-400 bg-emerald-400/10' },
-  { icon: Wallet,       titleKey: 'landing.features.mobile_pay',      descKey: 'landing.features.mobile_pay_desc',      iconColor: 'text-amber-400 bg-amber-400/10' },
-  { icon: Bot,          titleKey: 'landing.features.agent_bazaar',    descKey: 'landing.features.agent_bazaar_desc',    iconColor: 'text-primary bg-primary/10' },
-  { icon: Sparkles,     titleKey: 'landing.features.pedagogy_genome', descKey: 'landing.features.pedagogy_genome_desc', iconColor: 'text-emerald-400 bg-emerald-400/10' },
+  {
+    icon: Workflow,
+    titleKey: 'landing.features.hub_mcp',
+    descKey: 'landing.features.hub_mcp_desc',
+    iconColor: 'text-primary bg-primary/10',
+  },
+  {
+    icon: FlaskConical,
+    titleKey: 'landing.features.lab_sim',
+    descKey: 'landing.features.lab_sim_desc',
+    iconColor: 'text-emerald-400 bg-emerald-400/10',
+  },
+  {
+    icon: Terminal,
+    titleKey: 'landing.features.code_sandbox',
+    descKey: 'landing.features.code_sandbox_desc',
+    iconColor: 'text-amber-400 bg-amber-400/10',
+  },
+  {
+    icon: BadgeCheck,
+    titleKey: 'landing.features.certificates',
+    descKey: 'landing.features.certificates_desc',
+    iconColor: 'text-primary bg-primary/10',
+  },
+  {
+    icon: WifiOff,
+    titleKey: 'landing.features.offline',
+    descKey: 'landing.features.offline_desc',
+    iconColor: 'text-emerald-400 bg-emerald-400/10',
+  },
+  {
+    icon: Wallet,
+    titleKey: 'landing.features.mobile_pay',
+    descKey: 'landing.features.mobile_pay_desc',
+    iconColor: 'text-amber-400 bg-amber-400/10',
+  },
+  {
+    icon: Bot,
+    titleKey: 'landing.features.agent_bazaar',
+    descKey: 'landing.features.agent_bazaar_desc',
+    iconColor: 'text-primary bg-primary/10',
+  },
+  {
+    icon: Sparkles,
+    titleKey: 'landing.features.pedagogy_genome',
+    descKey: 'landing.features.pedagogy_genome_desc',
+    iconColor: 'text-emerald-400 bg-emerald-400/10',
+  },
 ];
 
 interface SkillItem {
@@ -78,7 +118,9 @@ export function FeaturesGrid(): React.ReactElement {
                 <h3 className="text-xl font-bold mb-2 text-foreground font-[family-name:var(--font-display)]">
                   {title}
                 </h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">{t(feature.descKey)}</p>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  {t(feature.descKey)}
+                </p>
               </div>
             );
           })}
@@ -96,7 +138,9 @@ export function FeaturesGrid(): React.ReactElement {
                 className="px-6 py-3 rounded-full bg-accent border border-border/20 flex items-center gap-3 transition-transform hover:-translate-y-1"
               >
                 <span className="text-xl">{skill.emoji}</span>
-                <span className="font-semibold text-foreground tracking-wide">{t(skill.labelKey)}</span>
+                <span className="font-semibold text-foreground tracking-wide">
+                  {t(skill.labelKey)}
+                </span>
               </div>
             ))}
           </div>

@@ -5,12 +5,7 @@ import { checkRateLimit } from '@/lib/rate-limit';
 // Routes that bypass rate limiting
 // ---------------------------------------------------------------------------
 
-const SKIP_RATE_LIMIT_PREFIXES = [
-  '/api/health',
-  '/api/metrics',
-  '/_next/',
-  '/favicon.ico',
-];
+const SKIP_RATE_LIMIT_PREFIXES = ['/api/health', '/api/metrics', '/_next/', '/favicon.ico'];
 
 function shouldSkipRateLimit(pathname: string): boolean {
   // Only rate-limit /api/ routes (except health & metrics)

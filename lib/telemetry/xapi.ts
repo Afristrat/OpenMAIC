@@ -202,11 +202,7 @@ export function trackSlideViewed(
 /**
  * Build an xAPI statement for completing a PBL scene.
  */
-export function trackPBLCompleted(
-  userId: string,
-  stageId: string,
-  sceneId: string,
-): XAPIStatement {
+export function trackPBLCompleted(userId: string, stageId: string, sceneId: string): XAPIStatement {
   return {
     actor: { mbox: userMbox(userId), objectType: 'Agent' },
     verb: VERBS.completed,

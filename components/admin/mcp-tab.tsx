@@ -41,7 +41,13 @@ interface MCPServer {
   status: ServerStatus;
 }
 
-function StatusBadge({ status, t }: { status: ServerStatus; t: (key: string) => string }): React.ReactElement {
+function StatusBadge({
+  status,
+  t,
+}: {
+  status: ServerStatus;
+  t: (key: string) => string;
+}): React.ReactElement {
   const variants: Record<ServerStatus, { className: string; label: string }> = {
     connected: {
       className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
@@ -59,7 +65,9 @@ function StatusBadge({ status, t }: { status: ServerStatus; t: (key: string) => 
 
   const v = variants[status];
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${v.className}`}>
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${v.className}`}
+    >
       {status === 'connected' && <Wifi className="size-3" />}
       {status === 'error' && <WifiOff className="size-3" />}
       {v.label}
@@ -114,9 +122,7 @@ export function MCPTab(): React.ReactElement {
               className="grid grid-cols-[1fr_1.5fr_auto_auto] gap-4 px-4 py-3 items-center"
             >
               <span className="font-medium text-sm">{server.name}</span>
-              <code className="text-xs text-muted-foreground font-mono truncate">
-                {server.url}
-              </code>
+              <code className="text-xs text-muted-foreground font-mono truncate">{server.url}</code>
               <StatusBadge status={server.status} t={t} />
               <div className="w-32 flex justify-end">
                 <Button

@@ -34,10 +34,7 @@ async function ensureCacheDir(): Promise<void> {
 // ---------------------------------------------------------------------------
 
 function getCacheKey(voice: string, text: string, speed: number): string {
-  return crypto
-    .createHash('sha256')
-    .update(`${voice}:${text}:${speed}`)
-    .digest('hex');
+  return crypto.createHash('sha256').update(`${voice}:${text}:${speed}`).digest('hex');
 }
 
 function getCachePath(voice: string, text: string, speed: number, format: string): string {

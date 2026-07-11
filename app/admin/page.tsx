@@ -67,7 +67,18 @@ import { PedagogyTab } from '@/components/admin/pedagogy-tab';
 import { XAPITab } from '@/components/admin/xapi-tab';
 import type { EditingModel } from '@/lib/types/settings';
 
-type AdminSection = 'providers' | 'image' | 'video' | 'tts' | 'asr' | 'pdf' | 'web-search' | 'mcp' | 'lti' | 'pedagogy' | 'xapi';
+type AdminSection =
+  | 'providers'
+  | 'image'
+  | 'video'
+  | 'tts'
+  | 'asr'
+  | 'pdf'
+  | 'web-search'
+  | 'mcp'
+  | 'lti'
+  | 'pedagogy'
+  | 'xapi';
 
 // ─── Provider List Column (reusable) ───
 function ProviderListColumn<T extends string>({
@@ -726,7 +737,10 @@ function AdminPageContent(): React.ReactElement {
     <div className="min-h-[100dvh] bg-background">
       <div className="flex h-[100dvh] overflow-hidden">
         {/* Left Sidebar - Navigation */}
-        <div className="flex-shrink-0 bg-muted/30 p-3 space-y-1 border-r border-border/40" style={{ width: sidebarWidth }}>
+        <div
+          className="flex-shrink-0 bg-muted/30 p-3 space-y-1 border-r border-border/40"
+          style={{ width: sidebarWidth }}
+        >
           <div className="flex items-center gap-2 px-3 py-2 mb-3">
             <Shield className="h-5 w-5 text-primary" />
             <h1 className="text-sm font-semibold truncate">{t('admin.title')}</h1>
@@ -775,9 +789,7 @@ function AdminPageContent(): React.ReactElement {
             onClick={() => setActiveSection('tts')}
             className={cn(
               'w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors text-left min-w-0',
-              activeSection === 'tts'
-                ? 'bg-primary/10 text-primary font-medium'
-                : 'hover:bg-muted',
+              activeSection === 'tts' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted',
             )}
           >
             <Volume2 className="h-4 w-4 shrink-0" />
@@ -788,9 +800,7 @@ function AdminPageContent(): React.ReactElement {
             onClick={() => setActiveSection('asr')}
             className={cn(
               'w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors text-left min-w-0',
-              activeSection === 'asr'
-                ? 'bg-primary/10 text-primary font-medium'
-                : 'hover:bg-muted',
+              activeSection === 'asr' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted',
             )}
           >
             <Mic className="h-4 w-4 shrink-0" />
@@ -801,9 +811,7 @@ function AdminPageContent(): React.ReactElement {
             onClick={() => setActiveSection('pdf')}
             className={cn(
               'w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors text-left min-w-0',
-              activeSection === 'pdf'
-                ? 'bg-primary/10 text-primary font-medium'
-                : 'hover:bg-muted',
+              activeSection === 'pdf' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted',
             )}
           >
             <FileText className="h-4 w-4 shrink-0" />
@@ -830,9 +838,7 @@ function AdminPageContent(): React.ReactElement {
             onClick={() => setActiveSection('mcp')}
             className={cn(
               'w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors text-left min-w-0',
-              activeSection === 'mcp'
-                ? 'bg-primary/10 text-primary font-medium'
-                : 'hover:bg-muted',
+              activeSection === 'mcp' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted',
             )}
           >
             <Server className="h-4 w-4 shrink-0" />
@@ -843,9 +849,7 @@ function AdminPageContent(): React.ReactElement {
             onClick={() => setActiveSection('lti')}
             className={cn(
               'w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors text-left min-w-0',
-              activeSection === 'lti'
-                ? 'bg-primary/10 text-primary font-medium'
-                : 'hover:bg-muted',
+              activeSection === 'lti' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted',
             )}
           >
             <KeyRound className="h-4 w-4 shrink-0" />
@@ -1042,17 +1046,16 @@ function AdminPageContent(): React.ReactElement {
           <div className="flex items-center justify-between p-5 border-b">
             <div className="flex items-center gap-3">{getHeaderContent()}</div>
             <div className="flex items-center gap-2">
-              {activeSection === 'providers' &&
-                !providersConfig[selectedProviderId]?.isBuiltIn && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 px-2 text-destructive hover:text-destructive"
-                    onClick={() => handleDeleteProvider(selectedProviderId)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
+              {activeSection === 'providers' && !providersConfig[selectedProviderId]?.isBuiltIn && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-destructive hover:text-destructive"
+                  onClick={() => handleDeleteProvider(selectedProviderId)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
               {saveStatus === 'saved' && (
                 <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                   <CheckCircle2 className="h-4 w-4" />
@@ -1075,9 +1078,7 @@ function AdminPageContent(): React.ReactElement {
                 provider={selectedProvider}
                 initialApiKey={providersConfig[selectedProviderId]?.apiKey || ''}
                 initialBaseUrl={providersConfig[selectedProviderId]?.baseUrl || ''}
-                initialRequiresApiKey={
-                  providersConfig[selectedProviderId]?.requiresApiKey ?? true
-                }
+                initialRequiresApiKey={providersConfig[selectedProviderId]?.requiresApiKey ?? true}
                 providersConfig={providersConfig}
                 onConfigChange={(apiKey, baseUrl, requiresApiKey) =>
                   handleProviderConfigChange(selectedProviderId, apiKey, baseUrl, requiresApiKey)
@@ -1091,9 +1092,7 @@ function AdminPageContent(): React.ReactElement {
               />
             )}
 
-            {activeSection === 'pdf' && (
-              <PDFSettings selectedProviderId={selectedPdfProviderId} />
-            )}
+            {activeSection === 'pdf' && <PDFSettings selectedProviderId={selectedPdfProviderId} />}
             {activeSection === 'web-search' && (
               <WebSearchSettings selectedProviderId={selectedWebSearchProviderId} />
             )}
@@ -1159,7 +1158,13 @@ function AdminPageContent(): React.ReactElement {
 
 export default function AdminPage(): React.ReactElement {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" /></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
+        </div>
+      }
+    >
       <AdminPageContent />
     </Suspense>
   );

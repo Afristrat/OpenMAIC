@@ -9,10 +9,7 @@ import { useAuth } from '@/lib/hooks/use-auth';
 import { tryCreateClient } from '@/lib/supabase/client';
 import { db } from '@/lib/utils/database';
 import type { ReviewCardRecord } from '@/lib/utils/database';
-import {
-  getNextReviewDate,
-  type Rating,
-} from '@/lib/spaced-repetition/fsrs';
+import { getNextReviewDate, type Rating } from '@/lib/spaced-repetition/fsrs';
 import type { ReviewCard } from '@/lib/spaced-repetition/extractor';
 import { cn } from '@/lib/utils';
 
@@ -91,7 +88,12 @@ interface RatingOption {
 const RATING_OPTIONS: RatingOption[] = [
   { rating: 1, i18nKey: 'review.again', color: 'bg-red-500', hoverColor: 'hover:bg-red-600' },
   { rating: 2, i18nKey: 'review.hard', color: 'bg-orange-500', hoverColor: 'hover:bg-orange-600' },
-  { rating: 3, i18nKey: 'review.good', color: 'bg-emerald-500', hoverColor: 'hover:bg-emerald-600' },
+  {
+    rating: 3,
+    i18nKey: 'review.good',
+    color: 'bg-emerald-500',
+    hoverColor: 'hover:bg-emerald-600',
+  },
   { rating: 4, i18nKey: 'review.easy', color: 'bg-blue-500', hoverColor: 'hover:bg-blue-600' },
 ];
 
@@ -146,10 +148,7 @@ function ReviewPage() {
 
     // Load from IndexedDB (guest mode, or as supplement for authenticated users)
     try {
-      const records = await db.reviewCards
-        .where('dueDate')
-        .belowOrEqual(now.getTime())
-        .toArray();
+      const records = await db.reviewCards.where('dueDate').belowOrEqual(now.getTime()).toArray();
 
       for (const rec of records) {
         // Deduplicate: Supabase takes precedence over IndexedDB

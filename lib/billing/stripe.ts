@@ -118,10 +118,7 @@ export async function createCheckoutSession(params: {
 // Handle Webhook Events
 // ---------------------------------------------------------------------------
 
-export async function handleStripeWebhook(
-  payload: string,
-  signature: string,
-): Promise<void> {
+export async function handleStripeWebhook(payload: string, signature: string): Promise<void> {
   const stripe = getStripe();
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!secret) throw new Error('STRIPE_WEBHOOK_SECRET is not configured');
@@ -141,9 +138,7 @@ export async function handleStripeWebhook(
       if (!orgId || !plan) break;
 
       const subscriptionId =
-        typeof session.subscription === 'string'
-          ? session.subscription
-          : session.subscription?.id;
+        typeof session.subscription === 'string' ? session.subscription : session.subscription?.id;
 
       // Fetch subscription details for period end (v21: period is on items)
       let periodEnd: string | null = null;
@@ -174,8 +169,7 @@ export async function handleStripeWebhook(
       const invoice = event.data.object;
       // Stripe SDK v21: subscription ref is in parent.subscription_details
       const subRef = invoice.parent?.subscription_details?.subscription;
-      const subscriptionId =
-        typeof subRef === 'string' ? subRef : subRef?.id;
+      const subscriptionId = typeof subRef === 'string' ? subRef : subRef?.id;
 
       if (subscriptionId) {
         const sub = await stripe.subscriptions.retrieve(subscriptionId);
@@ -243,9 +237,7 @@ export async function getSubscriptionStatus(orgId: string): Promise<{
   return {
     plan: org.plan,
     status: org.subscription_status ?? 'active',
-    currentPeriodEnd: org.current_period_end
-      ? new Date(org.current_period_end)
-      : new Date(),
+    currentPeriodEnd: org.current_period_end ? new Date(org.current_period_end) : new Date(),
   };
 }
 

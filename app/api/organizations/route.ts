@@ -30,7 +30,12 @@ export async function GET(): Promise<Response> {
     .eq('user_id', user.id);
 
   if (error) {
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to fetch memberships', error.message);
+    return apiError(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      500,
+      'Failed to fetch memberships',
+      error.message,
+    );
   }
 
   if (!memberships || memberships.length === 0) {
@@ -44,7 +49,12 @@ export async function GET(): Promise<Response> {
     .in('id', orgIds);
 
   if (orgError) {
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to fetch organizations', orgError.message);
+    return apiError(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      500,
+      'Failed to fetch organizations',
+      orgError.message,
+    );
   }
 
   // Merge role info into each organization
@@ -102,7 +112,12 @@ export async function POST(request: NextRequest): Promise<Response> {
     .single();
 
   if (orgError || !org) {
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to create organization', orgError?.message);
+    return apiError(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      500,
+      'Failed to create organization',
+      orgError?.message,
+    );
   }
 
   // Add creator as admin
@@ -113,7 +128,12 @@ export async function POST(request: NextRequest): Promise<Response> {
   if (memberError) {
     // Rollback: delete the org if membership creation failed
     await supabase.from('organizations').delete().eq('id', org.id);
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to add creator as admin', memberError.message);
+    return apiError(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      500,
+      'Failed to add creator as admin',
+      memberError.message,
+    );
   }
 
   return apiSuccess({ organization: { ...org, userRole: 'admin' } }, 201);

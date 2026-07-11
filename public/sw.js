@@ -17,27 +17,38 @@ const DATA_CACHE = 'qalem-data-v1';
 const STATIC_CACHE = 'qalem-static-v1';
 
 /** Pages to pre-cache on install for offline shell */
-const SHELL_URLS = [
-  '/',
-  '/manifest.json',
-];
+const SHELL_URLS = ['/', '/manifest.json'];
 
 /** Static asset extensions that use cache-first */
 const STATIC_EXTENSIONS = [
-  '.js', '.css', '.woff', '.woff2', '.ttf', '.eot',
-  '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.webp',
+  '.js',
+  '.css',
+  '.woff',
+  '.woff2',
+  '.ttf',
+  '.eot',
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.gif',
+  '.svg',
+  '.ico',
+  '.webp',
 ];
 
 // ────────────────────────── Install ──────────────────────────
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(APP_SHELL_CACHE).then((cache) => {
-      return cache.addAll(SHELL_URLS);
-    }).then(() => {
-      // Activate immediately, don't wait for old SW to finish
-      return self.skipWaiting();
-    })
+    caches
+      .open(APP_SHELL_CACHE)
+      .then((cache) => {
+        return cache.addAll(SHELL_URLS);
+      })
+      .then(() => {
+        // Activate immediately, don't wait for old SW to finish
+        return self.skipWaiting();
+      }),
   );
 });
 
@@ -47,16 +58,19 @@ self.addEventListener('activate', (event) => {
   const CURRENT_CACHES = [APP_SHELL_CACHE, DATA_CACHE, STATIC_CACHE];
 
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((name) => !CURRENT_CACHES.includes(name))
-          .map((name) => caches.delete(name))
-      );
-    }).then(() => {
-      // Take control of all open tabs immediately
-      return self.clients.claim();
-    })
+    caches
+      .keys()
+      .then((cacheNames) => {
+        return Promise.all(
+          cacheNames
+            .filter((name) => !CURRENT_CACHES.includes(name))
+            .map((name) => caches.delete(name)),
+        );
+      })
+      .then(() => {
+        // Take control of all open tabs immediately
+        return self.clients.claim();
+      }),
   );
 });
 
@@ -116,7 +130,7 @@ async function networkFirst(request, cacheName) {
     // Return a basic offline JSON for API requests
     return new Response(
       JSON.stringify({ error: 'offline', message: 'You are currently offline' }),
-      { status: 503, headers: { 'Content-Type': 'application/json' } }
+      { status: 503, headers: { 'Content-Type': 'application/json' } },
     );
   }
 }
@@ -229,12 +243,16 @@ async function processSyncQueue() {
           // Remove from queue on success
           const delTx = db.transaction('syncQueue', 'readwrite');
           delTx.objectStore('syncQueue').delete(item.id);
-          await new Promise((resolve) => { delTx.oncomplete = resolve; });
+          await new Promise((resolve) => {
+            delTx.oncomplete = resolve;
+          });
         } else if (item.retries < 3) {
           // Increment retry count
           const retryTx = db.transaction('syncQueue', 'readwrite');
           retryTx.objectStore('syncQueue').put({ ...item, retries: item.retries + 1 });
-          await new Promise((resolve) => { retryTx.oncomplete = resolve; });
+          await new Promise((resolve) => {
+            retryTx.oncomplete = resolve;
+          });
         }
       } catch {
         // Network still down — leave in queue for next sync

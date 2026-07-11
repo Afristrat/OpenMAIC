@@ -41,9 +41,7 @@ export default function TermsPage(): React.ReactElement {
         <h1 className="text-4xl md:text-5xl font-extrabold text-white font-[family-name:var(--font-display)] tracking-tight mb-4">
           Conditions G&eacute;n&eacute;rales d&apos;Utilisation
         </h1>
-        <p className="text-slate-400 text-sm">
-          Derni&egrave;re mise &agrave; jour : 31 mars 2026
-        </p>
+        <p className="text-slate-400 text-sm">Derni&egrave;re mise &agrave; jour : 31 mars 2026</p>
         <div className="w-24 h-1 bg-gradient-to-r from-[#722ed1] to-emerald-400 rounded-full mt-6" />
       </div>
 
@@ -52,8 +50,8 @@ export default function TermsPage(): React.ReactElement {
       <Paragraph>
         Les pr&eacute;sentes Conditions G&eacute;n&eacute;rales d&apos;Utilisation (ci-apr&egrave;s
         &laquo; CGU &raquo;) r&eacute;gissent l&apos;acc&egrave;s et l&apos;utilisation de la
-        plateforme Qalem, &eacute;dit&eacute;e par AI-Mpower LLC (ci-apr&egrave;s
-        &laquo; l&apos;&Eacute;diteur &raquo;).
+        plateforme Qalem, &eacute;dit&eacute;e par AI-Mpower LLC (ci-apr&egrave;s &laquo;
+        l&apos;&Eacute;diteur &raquo;).
       </Paragraph>
       <Paragraph>
         Qalem est une plateforme de formation interactive qui utilise l&apos;intelligence
@@ -71,8 +69,7 @@ export default function TermsPage(): React.ReactElement {
       <SectionTitle>2. Inscription et compte utilisateur</SectionTitle>
       <Paragraph>
         L&apos;acc&egrave;s &agrave; la plateforme n&eacute;cessite la cr&eacute;ation d&apos;un
-        compte via une adresse e-mail valide ou un fournisseur d&apos;authentification
-        tiers.
+        compte via une adresse e-mail valide ou un fournisseur d&apos;authentification tiers.
       </Paragraph>
       <List
         items={[
@@ -110,18 +107,22 @@ export default function TermsPage(): React.ReactElement {
 
       {/* 4. Propri&eacute;t&eacute; intellectuelle */}
       <SectionTitle>4. Propri&eacute;t&eacute; intellectuelle</SectionTitle>
-      <h3 className="text-lg font-semibold text-slate-100 mb-2">Contenu g&eacute;n&eacute;r&eacute; par l&apos;IA</h3>
+      <h3 className="text-lg font-semibold text-slate-100 mb-2">
+        Contenu g&eacute;n&eacute;r&eacute; par l&apos;IA
+      </h3>
       <Paragraph>
         Les contenus p&eacute;dagogiques g&eacute;n&eacute;r&eacute;s par les agents IA de Qalem
         (slides, quiz, scripts) sont mis &agrave; la disposition de l&apos;utilisateur pour un usage
         dans le cadre de ses activit&eacute;s de formation. L&apos;utilisateur peut les modifier,
         exporter et partager librement dans ce contexte.
       </Paragraph>
-      <h3 className="text-lg font-semibold text-slate-100 mb-2">Documents t&eacute;l&eacute;vers&eacute;s</h3>
+      <h3 className="text-lg font-semibold text-slate-100 mb-2">
+        Documents t&eacute;l&eacute;vers&eacute;s
+      </h3>
       <Paragraph>
         L&apos;utilisateur conserve l&apos;int&eacute;gralit&eacute; des droits sur les documents
-        qu&apos;il t&eacute;l&eacute;verse. En les soumettant &agrave; Qalem, il accorde une
-        licence limit&eacute;e, non exclusive et r&eacute;vocable, strictement n&eacute;cessaire au
+        qu&apos;il t&eacute;l&eacute;verse. En les soumettant &agrave; Qalem, il accorde une licence
+        limit&eacute;e, non exclusive et r&eacute;vocable, strictement n&eacute;cessaire au
         traitement technique (analyse, g&eacute;n&eacute;ration de contenu).
       </Paragraph>
       <h3 className="text-lg font-semibold text-slate-100 mb-2">Plateforme et code source</h3>
@@ -208,8 +209,8 @@ export default function TermsPage(): React.ReactElement {
       {/* 9. Loi applicable */}
       <SectionTitle>9. Loi applicable et juridiction</SectionTitle>
       <Paragraph>
-        Les pr&eacute;sentes CGU sont r&eacute;gies par le droit marocain. En cas de litige
-        relatif &agrave; l&apos;interpr&eacute;tation ou &agrave; l&apos;ex&eacute;cution des
+        Les pr&eacute;sentes CGU sont r&eacute;gies par le droit marocain. En cas de litige relatif
+        &agrave; l&apos;interpr&eacute;tation ou &agrave; l&apos;ex&eacute;cution des
         pr&eacute;sentes, les parties s&apos;engagent &agrave; rechercher une solution amiable dans
         un d&eacute;lai de 30 jours.
       </Paragraph>

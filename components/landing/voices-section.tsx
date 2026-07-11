@@ -54,7 +54,9 @@ export function VoicesSection(): React.ReactElement {
           </div>
           <h2 className="text-5xl md:text-6xl font-black font-[family-name:var(--font-display)] text-foreground tracking-tighter max-w-3xl mx-auto leading-tight">
             {t('landing.voices.title').split('.')[0]}.{' '}
-            <span className="text-primary purple-glow-text">{t('landing.voices.title').split('.')[1]?.trim() ?? ''}</span>
+            <span className="text-primary purple-glow-text">
+              {t('landing.voices.title').split('.')[1]?.trim() ?? ''}
+            </span>
           </h2>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto font-medium">
             {t('landing.voices.subtitle')}

@@ -122,14 +122,12 @@ export class SupabaseSyncProvider implements SyncableStorageProvider {
 
   /** Ensure the user has a row in the profiles table (FK requirement for stages.owner_id) */
   private profileEnsured = false;
-  private async ensureProfile(supabase: NonNullable<ReturnType<typeof tryCreateClient>>): Promise<void> {
+  private async ensureProfile(
+    supabase: NonNullable<ReturnType<typeof tryCreateClient>>,
+  ): Promise<void> {
     if (this.profileEnsured || !this.userId) return;
     try {
-      const { data } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', this.userId)
-        .single();
+      const { data } = await supabase.from('profiles').select('id').eq('id', this.userId).single();
       if (!data) {
         // Profile doesn't exist yet — create it
         await supabase.from('profiles').insert({ id: this.userId });
@@ -173,9 +171,7 @@ export class SupabaseSyncProvider implements SyncableStorageProvider {
     // 3. Upsert scenes
     if (localScenes.length > 0) {
       const rows = localScenes.map((s) => sceneRecordToRow(s));
-      const { error: scenesErr } = await supabase
-        .from('scenes')
-        .upsert(rows, { onConflict: 'id' });
+      const { error: scenesErr } = await supabase.from('scenes').upsert(rows, { onConflict: 'id' });
 
       if (scenesErr) {
         log.error(`Failed to upsert scenes for stage ${stageId}:`, scenesErr.message);
@@ -281,9 +277,7 @@ export class SupabaseSyncProvider implements SyncableStorageProvider {
         await db.stages.put(record);
 
         // Pull scenes too
-        const scenesForStage = [...remoteSceneMap.values()].filter(
-          (s) => s.stage_id === stageId,
-        );
+        const scenesForStage = [...remoteSceneMap.values()].filter((s) => s.stage_id === stageId);
         for (const rs of scenesForStage) {
           await db.scenes.put(sceneRowToRecord(rs));
         }
@@ -317,10 +311,7 @@ export class SupabaseSyncProvider implements SyncableStorageProvider {
   // Internal: merge scenes for a given stage
   // ------------------------------------------------------------------
 
-  private async syncScenes(
-    stageId: string,
-    remoteSceneMap: Map<string, Scene>,
-  ): Promise<void> {
+  private async syncScenes(stageId: string, remoteSceneMap: Map<string, Scene>): Promise<void> {
     if (!this.userId) return;
 
     const supabase = tryCreateClient();
@@ -332,9 +323,7 @@ export class SupabaseSyncProvider implements SyncableStorageProvider {
       localMap.set(ls.id, ls);
     }
 
-    const remoteForStage = [...remoteSceneMap.values()].filter(
-      (s) => s.stage_id === stageId,
-    );
+    const remoteForStage = [...remoteSceneMap.values()].filter((s) => s.stage_id === stageId);
     const remoteMap = new Map<string, Scene>();
     for (const rs of remoteForStage) {
       remoteMap.set(rs.id, rs);
@@ -365,9 +354,7 @@ export class SupabaseSyncProvider implements SyncableStorageProvider {
 
     // Batch upsert to Supabase
     if (toUpsertRemote.length > 0) {
-      const { error } = await supabase
-        .from('scenes')
-        .upsert(toUpsertRemote, { onConflict: 'id' });
+      const { error } = await supabase.from('scenes').upsert(toUpsertRemote, { onConflict: 'id' });
       if (error) {
         log.error(`syncScenes: upsert failed for stage ${stageId}:`, error.message);
       }

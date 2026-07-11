@@ -28,11 +28,8 @@ export function withErrorHandler(
         );
       }
 
-      const message =
-        error instanceof Error ? error.message : 'Internal server error';
-      log.error(
-        `Unhandled error in ${req.method} ${req.nextUrl.pathname}: ${message}`,
-      );
+      const message = error instanceof Error ? error.message : 'Internal server error';
+      log.error(`Unhandled error in ${req.method} ${req.nextUrl.pathname}: ${message}`);
 
       return NextResponse.json(
         { error: 'Internal server error', code: 'INTERNAL_ERROR', status: 500 },

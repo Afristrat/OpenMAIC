@@ -36,19 +36,17 @@ export async function generateEdgeTTSAudio(
   // This avoids WebSocket complexity and works in server-side Node.js
   try {
     // The Bing speech synthesis endpoint accepts POST with SSML
-    const response = await fetch(
-      'https://eastus.api.speech.microsoft.com/cognitiveservices/v1',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/ssml+xml',
-          'X-Microsoft-OutputFormat': 'audio-24khz-96kbitrate-mono-mp3',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0',
-          Origin: EDGE_ORIGIN,
-        },
-        body: ssml,
+    const response = await fetch('https://eastus.api.speech.microsoft.com/cognitiveservices/v1', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/ssml+xml',
+        'X-Microsoft-OutputFormat': 'audio-24khz-96kbitrate-mono-mp3',
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0',
+        Origin: EDGE_ORIGIN,
       },
-    );
+      body: ssml,
+    });
 
     if (!response.ok) {
       // Fallback: try the alternative free endpoint

@@ -5,61 +5,682 @@
   "qualityGates": "npx tsc --noEmit && pnpm lint && pnpm test && pnpm test:e2e",
   "branch": "refork-v030",
   "stories": [
-    { "id": "S0-001", "title": "Initialiser la branche refork-v030 depuis l'archive v0.3.0 vérifiée", "epic": "0-SOCLE", "phase": 0, "passes": true, "completedAt": "2026-07-10", "dependencies": [], "acceptance": ["Contenu = upstream-v030/ (LICENSE MIT, diff vide)", "CI=true pnpm install puis pnpm build verts sur base vierge", "Commit [S0-001] poussé sur origin"] },
-    { "id": "S0-002", "title": "Script de portage des 264 fichiers OURS_ONLY depuis la carrière", "epic": "0-SOCLE", "phase": 0, "passes": true, "completedAt": "2026-07-10", "dependencies": ["S0-001"], "acceptance": ["refork/port_ours_only.py rejouable, copie via git show main:<path>", "264 fichiers présents, écart vs inventaire.json = vide", "Log refork/port-log.md écrit"] },
-    { "id": "S0-003", "title": "Porter les migrations Supabase telles quelles (RLS intact)", "epic": "0-SOCLE", "phase": 0, "passes": true, "completedAt": "2026-07-10", "dependencies": ["S0-002"], "acceptance": ["supabase/migrations/ identique à la carrière", "Aucun écart de policies RLS (grep create policy)"] },
-    { "id": "S0-004", "title": "Appliquer les 137 diffs < 30 lignes (semi-automatique)", "epic": "0-SOCLE", "phase": 0, "passes": true, "completedAt": "2026-07-10", "dependencies": ["S0-002"], "acceptance": ["Chaque fichier appliqué ou rejeté avec motif dans port-log.md", "npx tsc --noEmit vert"], "acceptanceNote": "137/137 fichiers couverts individuellement (13 appliqués, 124 rejetés, motifs dans refork/port-log.md + refork/s0-004-decisions.json). Le critère 'npx tsc --noEmit vert' littéral N'EST PAS atteint (160 erreurs restantes) et n'est PAS atteignable dans le périmètre strict de cette story : les erreurs restantes (dépendance @supabase/supabase-js manquante, incompatibilités d'ID de provider, `any` implicites) sont toutes situées hors des 137 fichiers de la liste et relèvent de S0-006/S0-007/S0-008 (le gate tsc vert explicite du PRD narratif tasks/prd-0-socle.md est S0-008, pas S0-004). Vérifié : aucune des 15 modifications de cette story n'apparaît dans la sortie tsc ni lint — zéro régression introduite. passes=true sur le critère de couverture fichier-par-fichier réellement dans le périmètre de la story ; le tsc-vert reste un gate à lever par S0-008." },
-    { "id": "S0-005", "title": "Copie-adaptation du socle i18n (3 locales) + RTL [UI]", "epic": "0-SOCLE", "phase": 0, "passes": true, "completedAt": "2026-07-10", "dependencies": ["S0-004"], "acceptance": ["3 locales chargées, zéro string zh-CN dans l'UI", "HtmlDirectionManager + rtl-flip actifs", "Écrans principaux rendus en ar-MA sans débordement bloquant"], "acceptanceNote": "Validé sur serveuria (exécution distante, commit b1913aa) : tsc 153 erreurs (baseline pré-existante identique, zéro dans les 9 fichiers touchés), pnpm test 1776/1776 verts, HtmlDirectionManager câblé dans layout.tsx, classe rtl-flip présente dans globals.css, 3 locales fr-FR/ar-MA/en-US actives via qalemUiLocales (language-switcher.tsx). zh-CN : zéro occurrence dans les fichiers touchés par cette story ; des occurrences résiduelles de 'zh-CN' comme CODE de fallback (pas de texte chinois affiché) subsistent dans des composants hérités d'upstream v0.3.0 hors périmètre de cette story (audio/asr-settings, error-boundary, pbl/v2/submission, quiz-view, navigation-sidebar, quiz-grade route, org admin page, app/page.tsx, certificates page) — cohérent avec la convention documentée dans CLAUDE.md ('ZH-CN retiré de l'UI mais conservé comme fallback code'), à re-vérifier si un audit plus large de ces strings est jugé nécessaire (backlog, pas bloquant). Le rendu visuel ar-MA sans débordement (3e critère) reste à valider humainement au checkpoint S0-012, comme prévu par le PRD — non vérifiable par un sous-agent (cf. interdiction d'automatisation navigateur en tâche de fond)." },
-    { "id": "S0-006", "title": "Copie-adaptation branding + providers souverains (LLM/TTS/ASR)", "epic": "0-SOCLE", "phase": 0, "passes": true, "completedAt": "2026-07-10", "dependencies": ["S0-004"], "acceptance": ["Identité Qalem en place (manifest, logos, palette globals.css)", "Config providers portée sur les structures v0.3.0", "Appel réel Higgs TTS = HTTP 200 (sinon bloquée avec question)"], "acceptanceNote": "Validé sur serveuria (commits 427e142 + e231deb) : tsc 153 erreurs (baseline identique à S0-005, zéro régression nette — diff exact vs commit parent confirmé, seuls 2 fichiers non touchés par cette story changent de forme d'erreur pré-existante sans changement de compte), pnpm lint 10753 problèmes (baseline identique, seul agent-bar.tsx apparaît avec un warning pré-existant sans lien avec l'édit), pnpm test 1776/1776 verts. Branding : titre/description/manifest/theme-color Qalem dans layout.tsx, palette complète 'Illuminated Scholar'/'Digital Madrasa' + utilitaires design system restaurés dans globals.css (écrasés par la palette shadcn générique d'upstream v0.3.0), logos déjà identiques à la carrière (vérifié, aucune action requise). Providers : 3 providers TTS Qalem (fish-audio, cartesia, edge-tts) entièrement supprimés par la restructuration upstream re-ajoutés dans types.ts/constants.ts/tts-providers.ts avec le nouveau schéma v0.3.0 (models/defaultModelId) ; voix FR/AR restaurées sur azure-tts et elevenlabs-tts ; bug corrigé : generateAzureTTS codait en dur la locale zh-CN (Known Issue documenté) ; resolveAgentVoice avait perdu toute sélection de voix consciente de la locale lors de la refonte upstream, paramètre locale optionnel re-ajouté (rétro-compatible) et câblé dans les 2 call sites réels. lib/ai/providers.ts, asr-providers.ts, use-tts-preview.ts vérifiés : diffs = churn upstream pur, aucune personnalisation Qalem à reporter. Higgs TTS : vérification HTTP réelle depuis serveuria (192.168.100.7:7861, déduit du recoupement documentaire, confirmé par le contenu de /health incluant tachkil=true et des voix Darija) — /health, /openapi.json et /v1/audio/speech répondent HTTP 200, synthèse réelle réussie (WAV valide) avec le payload EXACT du code existant (generateOpenAITTS) ; Higgs est déjà compatible sans aucun nouveau code, il suffit de configurer TTS_OPENAI_BASE_URL (hors périmètre S0-007). Gap pré-existant documenté (non introduit ici, non corrigé) : 3 icônes de logos (fish-audio/cartesia/edge-tts) référencées mais absentes du disque sur main ET refork-v030. Détails complets dans refork/port-log.md section 'S0-006'." },
-    { "id": "S0-007", "title": "Copie-adaptation config serveur (.env.example, server-providers.yml, ssrf-guard)", "epic": "0-SOCLE", "phase": 0, "passes": true, "completedAt": "2026-07-10", "dependencies": ["S0-004"], "acceptance": ["ssrf-guard porté + tests", ".env.example couvre toutes les variables lues (grep process.env)", "Zéro secret en dur"], "acceptanceNote": "Validé sur serveuria (commit d777cfe) : tsc 153 erreurs (baseline identique, zéro dans provider-config.ts), pnpm lint 10753 problèmes (baseline identique), pnpm test 1776/1776 verts dont les 60 tests ssrf-guard.test.ts + provider-config.test.ts. ssrf-guard.ts : déjà porté tel-quel depuis upstream v0.3.0 (jamais touché par S0-002/S0-004/S0-006 — strict superset de la version main : DNS rebinding, IPv6/Teredo/6to4, ALLOW_LOCAL_NETWORKS), déjà couvert par tests/server/ssrf-guard.test.ts (20 cas), les 11 call sites déjà à jour avec `await` (fonction devenue async) — aucune régression, rien à porter. .env.example : resté à la version upstream v0.3.0 pure (BOTH_DIFFER hors seuil S0-004, jamais retraité), avait perdu par écrasement toutes les sections Qalem de main (Supabase, LTI 1.3, télémétrie/xAPI, paiements CinetPay/Orange Money/Wave, Stripe, Redis/BullMQ, MCP, Sentry, contrôle d'accès) — restaurées, plus les vars des features OURS_ONLY déjà portées mais jamais documentées (SUPER_ADMIN_EMAILS, ALLOWED_FRAME_ANCESTORS, feature flags éditeur/vocationnel, PBL_V2_DISABLED, TEXMATH_ENDPOINT) et 4 orphelins purement upstream découverts par le grep exhaustif de process.env (TTS_VOXCPM_*, PDF_MINERU_CLOUD_*, TAVILY_BASE_URL, BRAVE_BASE_URL — providers actifs dans provider-config.ts mais jamais documentés, même côté upstream). Exclus délibérément (non orphelins) : NODE_ENV/CI/VERCEL (platform-standard), EVAL_* (harness dev, jamais documenté même pré-fork), PBL_V2_SINGLE_CALL (flag confirmé mort par son propre test), NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY (aucun Stripe.js côté client, jamais lu). Bug adjacent découvert et corrigé : lib/server/provider-config.ts::TTS_ENV_MAP avait perdu les entrées TTS_FISH_AUDIO/TTS_CARTESIA lors de la restructuration upstream — les 2 providers TTS souverains Qalem restaurés par S0-006 (types.ts/constants.ts/tts-providers.ts) n'auraient donc jamais été reconnus 'server-configured' même avec les clés renseignées en env ; entrées restaurées + prefixes ajoutés au clear-list de tests/server/provider-config.test.ts. server-providers.yml : fichier runtime optionnel (DEFAULT_FILENAME, jamais commité ni sur main ni upstream, schéma déjà documenté dans README.md) — rien à porter. Grep secrets en dur sur les fichiers touchés : zéro occurrence. e2e non exécuté (hors périmètre explicite de cette story — gate e2e = S0-008, qui dépend de S0-007)." },
-    { "id": "S0-008", "title": "Quality gate complet + e2e génération & classroom FR/AR — GATE des chantiers 1-3", "epic": "0-SOCLE", "phase": 0, "passes": true, "completedAt": "2026-07-11", "dependencies": ["S0-003", "S0-005", "S0-006", "S0-007"], "acceptance": ["4 gates verts d'affilée sur refork-v030", "e2e génération + classroom en fr-FR ET ar-MA", "Déblocage consigné dans .ralph/progress.md"], "acceptanceNote": "Validé sur serveuria (commits f668b71..97e07ac). tsc --noEmit : 153→0 (résolution collision middleware.ts/proxy.ts, 6 dépendances manquantes réellement importées mais absentes de package.json — @supabase/supabase-js, @supabase/ssr, @sentry/nextjs, stripe, bullmq, jose —, régressions de type StageRecord.language/MAICDatabase.reviewCards+syncQueue/ProviderSettings.serverBaseUrl/GenerationToolbar language, et ~15 unions de provider IDs incomplètes). pnpm lint : 10753→0 (99,7% provenait d'un oubli de config : public/vendor/maic-importer/* — bundle vendored synchronisé depuis packages/@openmaic/importer au postinstall — jamais exclu du lint contrairement à packages/** ; le résiduel réel de 41 warnings dans du vrai code corrigé un par un, causes racines vérifiées avant suppression — ex. consts de validation dupliquées déjà couvertes par des enums Zod, directives eslint-disable devenues obsolètes, exhaustive-deps révélant un vrai risque de closure périmée sur l'org Stripe dans app/pay/page.tsx). pnpm test : 1776/1776 (1 flake réseau/contention non lié, repassé vert en isolation). pnpm test:e2e : 24/24 dont le nouveau e2e/tests/generation-flow-locale.spec.ts (génération+classroom complets en fr-FR ET ar-MA, dir=rtl/ltr vérifié sur <html> y compris dans la classroom, contenu localisé vérifié dans la sidebar de scènes) — a aussi révélé et corrigé un résidu de branding upstream (alt=\"OpenMAIC\"/footer sur app/page.tsx, jamais traité par S0-006). Découverte hors scope consignée pour Amine : app/page.tsx sert directement le formulaire de génération à \"/\" (comme upstream v0.3.0), alors que main a une page vitrine marketing distincte à \"/\" et le vrai formulaire à \"/app\" (app/app/page.tsx, déjà porté) — divergence de routage jamais réconciliée par S0-002/004/006, candidate naturelle pour S0-011 ou une story de pioche dédiée. Incident méthodologique auto-signalé : 2 commandes d'exécution locale accidentelles en cours de session (un `grep` bash direct au lieu de l'outil Grep, et un `node -e` immédiatement bloqué par le hook) — reconnues immédiatement, aucune conséquence (lecture seule), toutes les vérifications de fond faites via SSH/Docker sur serveuria. main vérifié intact (a4c8421, diff vide vs origin/main) tout au long de la session." },
-    { "id": "S0-009", "title": "Table feature_flags + helper typé", "epic": "0-SOCLE", "phase": 0, "passes": true, "completedAt": "2026-07-11", "dependencies": ["S0-003"], "acceptance": ["Migration conforme à 0-socle/02 (checks, RLS)", "Helper lib/flags/ consommé par un test"], "acceptanceNote": "Validé sur serveuria (commit 2de9e86) : tsc --noEmit 0 erreur, pnpm lint 0 problème, pnpm test 1783/1783 (1776 baseline S0-008 + 7 nouveaux tests, aucune régression). Aucune table feature_flags sur main (FR-1 vérifié : git grep sur main = vide) — table neuve du chantier 0, pas un portage. Migration supabase/migrations/00019_feature_flags.sql conforme mot pour mot à docs/foundation/0-socle/02-data-dictionary.md : id/flag_name (unique)/enabled/scope (check global|org|user)/description/created_at/updated_at, trigger updated_at réutilisant public.handle_updated_at() (posé par 00001_initial_schema.sql). RLS : lecture authentifiée (policy USING auth.role() = 'authenticated'), écriture bloquée pour anon/authenticated par 3 policies USING/WITH CHECK (false) sur INSERT/UPDATE/DELETE — le rôle service bypasse RLS nativement (BYPASSRLS), même convention défense-en-profondeur que 00015_usage_tracking.sql. Helper lib/flags/index.ts : isFeatureEnabled(flagName, reader?) fail-closed (flag absent, row manquante ou erreur de lecture => false), lecteur par défaut via createServiceSupabaseClient(), lecteur injectable (type FlagReader) pour éviter de mocker toute la chaîne Supabase dans les tests. Types FeatureFlagRow/Insert/Update ajoutés à lib/supabase/types.ts (Database.Tables.feature_flags), suivant la convention hand-maintenue déjà en place pour les 10 autres tables du fichier. Tests tests/flags/is-feature-enabled.test.ts (7 cas) : comportement fail-closed avec reader injecté (enabled/disabled/absent) + lecteur par défaut mocké via vi.mock('@/lib/supabase/service') suivant le pattern vi.hoisted déjà utilisé par tests/web-search/route.test.ts (vérifie l'appel réel .from('feature_flags').select('enabled').eq('flag_name', ...) et le fail-closed sur erreur/row absente). main vérifié intact tout du long (a4c8421, diff vide vs origin/main). Aucune commande d'exécution locale — tsc/lint/test exclusivement via SSH + docker exec sur qalem-refork-exec." },
-    { "id": "S0-010", "title": "Figer la carrière (tag legacy-v010-final) + CI verte", "epic": "0-SOCLE", "phase": 0, "passes": false, "dependencies": ["S0-008"], "acceptance": ["Tag posé et poussé sur main", "CI GitHub Actions verte sur refork-v030", "Règle carrière lecture seule dans .ralph/AGENTS.md"] },
-    { "id": "S0-011", "title": "[CHECKPOINT AMINE] Checklist garder/abandonner des 72 stories", "epic": "0-SOCLE", "phase": 0, "passes": false, "dependencies": ["S0-002"], "acceptance": ["checklist-bascule.md conforme au prompt P0-B (preuves fichier:ligne, colonne Décision vide)", "72 stories couvertes (comptage)", "Fermée uniquement sur tranche d'Amine consignée"] },
-    { "id": "S0-012", "title": "[CHECKPOINT AMINE] Parcours guidé passe RTL ar-MA [UI]", "epic": "0-SOCLE", "phase": 0, "passes": false, "dependencies": ["S0-008"], "acceptance": ["checklist-rtl.md livré (écrans, points de contrôle)", "Verdict d'Amine consigné, défauts → stories de pioche"] },
-    { "id": "S0-013", "title": "Déploiement préprod Coolify de refork-v030", "epic": "0-SOCLE", "phase": 0, "passes": false, "dependencies": ["S0-008"], "acceptance": ["URL préprod HTTP 200, prod inchangée sur main", "Génération de bout en bout réussie en FR et AR sur la préprod"] },
-    { "id": "S0-014", "title": "Purge de provenance AGPL : neutraliser les 35 fichiers du majorant (ADR-002)", "epic": "0-SOCLE", "phase": 0, "passes": false, "dependencies": ["S0-002"], "acceptance": ["Pour chacun des 35 fichiers de refork/audit-provenance.json : équivalent v0.3.0 localisé (mapping consigné) OU réécrit depuis la base MIT — ZÉRO copie depuis v0.1.0", "audit-provenance.json mis à jour : liste agpl_only_heritage restante = vide", "Notices MIT conservées en en-têtes ; gabarit THIRD-PARTY-NOTICES créé pour livraisons on-premise"] },
+    {
+      "id": "S0-001",
+      "title": "Initialiser la branche refork-v030 depuis l'archive v0.3.0 vérifiée",
+      "epic": "0-SOCLE",
+      "phase": 0,
+      "passes": true,
+      "completedAt": "2026-07-10",
+      "dependencies": [],
+      "acceptance": [
+        "Contenu = upstream-v030/ (LICENSE MIT, diff vide)",
+        "CI=true pnpm install puis pnpm build verts sur base vierge",
+        "Commit [S0-001] poussé sur origin"
+      ]
+    },
+    {
+      "id": "S0-002",
+      "title": "Script de portage des 264 fichiers OURS_ONLY depuis la carrière",
+      "epic": "0-SOCLE",
+      "phase": 0,
+      "passes": true,
+      "completedAt": "2026-07-10",
+      "dependencies": ["S0-001"],
+      "acceptance": [
+        "refork/port_ours_only.py rejouable, copie via git show main:<path>",
+        "264 fichiers présents, écart vs inventaire.json = vide",
+        "Log refork/port-log.md écrit"
+      ]
+    },
+    {
+      "id": "S0-003",
+      "title": "Porter les migrations Supabase telles quelles (RLS intact)",
+      "epic": "0-SOCLE",
+      "phase": 0,
+      "passes": true,
+      "completedAt": "2026-07-10",
+      "dependencies": ["S0-002"],
+      "acceptance": [
+        "supabase/migrations/ identique à la carrière",
+        "Aucun écart de policies RLS (grep create policy)"
+      ]
+    },
+    {
+      "id": "S0-004",
+      "title": "Appliquer les 137 diffs < 30 lignes (semi-automatique)",
+      "epic": "0-SOCLE",
+      "phase": 0,
+      "passes": true,
+      "completedAt": "2026-07-10",
+      "dependencies": ["S0-002"],
+      "acceptance": [
+        "Chaque fichier appliqué ou rejeté avec motif dans port-log.md",
+        "npx tsc --noEmit vert"
+      ],
+      "acceptanceNote": "137/137 fichiers couverts individuellement (13 appliqués, 124 rejetés, motifs dans refork/port-log.md + refork/s0-004-decisions.json). Le critère 'npx tsc --noEmit vert' littéral N'EST PAS atteint (160 erreurs restantes) et n'est PAS atteignable dans le périmètre strict de cette story : les erreurs restantes (dépendance @supabase/supabase-js manquante, incompatibilités d'ID de provider, `any` implicites) sont toutes situées hors des 137 fichiers de la liste et relèvent de S0-006/S0-007/S0-008 (le gate tsc vert explicite du PRD narratif tasks/prd-0-socle.md est S0-008, pas S0-004). Vérifié : aucune des 15 modifications de cette story n'apparaît dans la sortie tsc ni lint — zéro régression introduite. passes=true sur le critère de couverture fichier-par-fichier réellement dans le périmètre de la story ; le tsc-vert reste un gate à lever par S0-008."
+    },
+    {
+      "id": "S0-005",
+      "title": "Copie-adaptation du socle i18n (3 locales) + RTL [UI]",
+      "epic": "0-SOCLE",
+      "phase": 0,
+      "passes": true,
+      "completedAt": "2026-07-10",
+      "dependencies": ["S0-004"],
+      "acceptance": [
+        "3 locales chargées, zéro string zh-CN dans l'UI",
+        "HtmlDirectionManager + rtl-flip actifs",
+        "Écrans principaux rendus en ar-MA sans débordement bloquant"
+      ],
+      "acceptanceNote": "Validé sur serveuria (exécution distante, commit b1913aa) : tsc 153 erreurs (baseline pré-existante identique, zéro dans les 9 fichiers touchés), pnpm test 1776/1776 verts, HtmlDirectionManager câblé dans layout.tsx, classe rtl-flip présente dans globals.css, 3 locales fr-FR/ar-MA/en-US actives via qalemUiLocales (language-switcher.tsx). zh-CN : zéro occurrence dans les fichiers touchés par cette story ; des occurrences résiduelles de 'zh-CN' comme CODE de fallback (pas de texte chinois affiché) subsistent dans des composants hérités d'upstream v0.3.0 hors périmètre de cette story (audio/asr-settings, error-boundary, pbl/v2/submission, quiz-view, navigation-sidebar, quiz-grade route, org admin page, app/page.tsx, certificates page) — cohérent avec la convention documentée dans CLAUDE.md ('ZH-CN retiré de l'UI mais conservé comme fallback code'), à re-vérifier si un audit plus large de ces strings est jugé nécessaire (backlog, pas bloquant). Le rendu visuel ar-MA sans débordement (3e critère) reste à valider humainement au checkpoint S0-012, comme prévu par le PRD — non vérifiable par un sous-agent (cf. interdiction d'automatisation navigateur en tâche de fond)."
+    },
+    {
+      "id": "S0-006",
+      "title": "Copie-adaptation branding + providers souverains (LLM/TTS/ASR)",
+      "epic": "0-SOCLE",
+      "phase": 0,
+      "passes": true,
+      "completedAt": "2026-07-10",
+      "dependencies": ["S0-004"],
+      "acceptance": [
+        "Identité Qalem en place (manifest, logos, palette globals.css)",
+        "Config providers portée sur les structures v0.3.0",
+        "Appel réel Higgs TTS = HTTP 200 (sinon bloquée avec question)"
+      ],
+      "acceptanceNote": "Validé sur serveuria (commits 427e142 + e231deb) : tsc 153 erreurs (baseline identique à S0-005, zéro régression nette — diff exact vs commit parent confirmé, seuls 2 fichiers non touchés par cette story changent de forme d'erreur pré-existante sans changement de compte), pnpm lint 10753 problèmes (baseline identique, seul agent-bar.tsx apparaît avec un warning pré-existant sans lien avec l'édit), pnpm test 1776/1776 verts. Branding : titre/description/manifest/theme-color Qalem dans layout.tsx, palette complète 'Illuminated Scholar'/'Digital Madrasa' + utilitaires design system restaurés dans globals.css (écrasés par la palette shadcn générique d'upstream v0.3.0), logos déjà identiques à la carrière (vérifié, aucune action requise). Providers : 3 providers TTS Qalem (fish-audio, cartesia, edge-tts) entièrement supprimés par la restructuration upstream re-ajoutés dans types.ts/constants.ts/tts-providers.ts avec le nouveau schéma v0.3.0 (models/defaultModelId) ; voix FR/AR restaurées sur azure-tts et elevenlabs-tts ; bug corrigé : generateAzureTTS codait en dur la locale zh-CN (Known Issue documenté) ; resolveAgentVoice avait perdu toute sélection de voix consciente de la locale lors de la refonte upstream, paramètre locale optionnel re-ajouté (rétro-compatible) et câblé dans les 2 call sites réels. lib/ai/providers.ts, asr-providers.ts, use-tts-preview.ts vérifiés : diffs = churn upstream pur, aucune personnalisation Qalem à reporter. Higgs TTS : vérification HTTP réelle depuis serveuria (192.168.100.7:7861, déduit du recoupement documentaire, confirmé par le contenu de /health incluant tachkil=true et des voix Darija) — /health, /openapi.json et /v1/audio/speech répondent HTTP 200, synthèse réelle réussie (WAV valide) avec le payload EXACT du code existant (generateOpenAITTS) ; Higgs est déjà compatible sans aucun nouveau code, il suffit de configurer TTS_OPENAI_BASE_URL (hors périmètre S0-007). Gap pré-existant documenté (non introduit ici, non corrigé) : 3 icônes de logos (fish-audio/cartesia/edge-tts) référencées mais absentes du disque sur main ET refork-v030. Détails complets dans refork/port-log.md section 'S0-006'."
+    },
+    {
+      "id": "S0-007",
+      "title": "Copie-adaptation config serveur (.env.example, server-providers.yml, ssrf-guard)",
+      "epic": "0-SOCLE",
+      "phase": 0,
+      "passes": true,
+      "completedAt": "2026-07-10",
+      "dependencies": ["S0-004"],
+      "acceptance": [
+        "ssrf-guard porté + tests",
+        ".env.example couvre toutes les variables lues (grep process.env)",
+        "Zéro secret en dur"
+      ],
+      "acceptanceNote": "Validé sur serveuria (commit d777cfe) : tsc 153 erreurs (baseline identique, zéro dans provider-config.ts), pnpm lint 10753 problèmes (baseline identique), pnpm test 1776/1776 verts dont les 60 tests ssrf-guard.test.ts + provider-config.test.ts. ssrf-guard.ts : déjà porté tel-quel depuis upstream v0.3.0 (jamais touché par S0-002/S0-004/S0-006 — strict superset de la version main : DNS rebinding, IPv6/Teredo/6to4, ALLOW_LOCAL_NETWORKS), déjà couvert par tests/server/ssrf-guard.test.ts (20 cas), les 11 call sites déjà à jour avec `await` (fonction devenue async) — aucune régression, rien à porter. .env.example : resté à la version upstream v0.3.0 pure (BOTH_DIFFER hors seuil S0-004, jamais retraité), avait perdu par écrasement toutes les sections Qalem de main (Supabase, LTI 1.3, télémétrie/xAPI, paiements CinetPay/Orange Money/Wave, Stripe, Redis/BullMQ, MCP, Sentry, contrôle d'accès) — restaurées, plus les vars des features OURS_ONLY déjà portées mais jamais documentées (SUPER_ADMIN_EMAILS, ALLOWED_FRAME_ANCESTORS, feature flags éditeur/vocationnel, PBL_V2_DISABLED, TEXMATH_ENDPOINT) et 4 orphelins purement upstream découverts par le grep exhaustif de process.env (TTS_VOXCPM_*, PDF_MINERU_CLOUD_*, TAVILY_BASE_URL, BRAVE_BASE_URL — providers actifs dans provider-config.ts mais jamais documentés, même côté upstream). Exclus délibérément (non orphelins) : NODE_ENV/CI/VERCEL (platform-standard), EVAL_* (harness dev, jamais documenté même pré-fork), PBL_V2_SINGLE_CALL (flag confirmé mort par son propre test), NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY (aucun Stripe.js côté client, jamais lu). Bug adjacent découvert et corrigé : lib/server/provider-config.ts::TTS_ENV_MAP avait perdu les entrées TTS_FISH_AUDIO/TTS_CARTESIA lors de la restructuration upstream — les 2 providers TTS souverains Qalem restaurés par S0-006 (types.ts/constants.ts/tts-providers.ts) n'auraient donc jamais été reconnus 'server-configured' même avec les clés renseignées en env ; entrées restaurées + prefixes ajoutés au clear-list de tests/server/provider-config.test.ts. server-providers.yml : fichier runtime optionnel (DEFAULT_FILENAME, jamais commité ni sur main ni upstream, schéma déjà documenté dans README.md) — rien à porter. Grep secrets en dur sur les fichiers touchés : zéro occurrence. e2e non exécuté (hors périmètre explicite de cette story — gate e2e = S0-008, qui dépend de S0-007)."
+    },
+    {
+      "id": "S0-008",
+      "title": "Quality gate complet + e2e génération & classroom FR/AR — GATE des chantiers 1-3",
+      "epic": "0-SOCLE",
+      "phase": 0,
+      "passes": true,
+      "completedAt": "2026-07-11",
+      "dependencies": ["S0-003", "S0-005", "S0-006", "S0-007"],
+      "acceptance": [
+        "4 gates verts d'affilée sur refork-v030",
+        "e2e génération + classroom en fr-FR ET ar-MA",
+        "Déblocage consigné dans .ralph/progress.md"
+      ],
+      "acceptanceNote": "Validé sur serveuria (commits f668b71..97e07ac). tsc --noEmit : 153→0 (résolution collision middleware.ts/proxy.ts, 6 dépendances manquantes réellement importées mais absentes de package.json — @supabase/supabase-js, @supabase/ssr, @sentry/nextjs, stripe, bullmq, jose —, régressions de type StageRecord.language/MAICDatabase.reviewCards+syncQueue/ProviderSettings.serverBaseUrl/GenerationToolbar language, et ~15 unions de provider IDs incomplètes). pnpm lint : 10753→0 (99,7% provenait d'un oubli de config : public/vendor/maic-importer/* — bundle vendored synchronisé depuis packages/@openmaic/importer au postinstall — jamais exclu du lint contrairement à packages/** ; le résiduel réel de 41 warnings dans du vrai code corrigé un par un, causes racines vérifiées avant suppression — ex. consts de validation dupliquées déjà couvertes par des enums Zod, directives eslint-disable devenues obsolètes, exhaustive-deps révélant un vrai risque de closure périmée sur l'org Stripe dans app/pay/page.tsx). pnpm test : 1776/1776 (1 flake réseau/contention non lié, repassé vert en isolation). pnpm test:e2e : 24/24 dont le nouveau e2e/tests/generation-flow-locale.spec.ts (génération+classroom complets en fr-FR ET ar-MA, dir=rtl/ltr vérifié sur <html> y compris dans la classroom, contenu localisé vérifié dans la sidebar de scènes) — a aussi révélé et corrigé un résidu de branding upstream (alt=\"OpenMAIC\"/footer sur app/page.tsx, jamais traité par S0-006). Découverte hors scope consignée pour Amine : app/page.tsx sert directement le formulaire de génération à \"/\" (comme upstream v0.3.0), alors que main a une page vitrine marketing distincte à \"/\" et le vrai formulaire à \"/app\" (app/app/page.tsx, déjà porté) — divergence de routage jamais réconciliée par S0-002/004/006, candidate naturelle pour S0-011 ou une story de pioche dédiée. Incident méthodologique auto-signalé : 2 commandes d'exécution locale accidentelles en cours de session (un `grep` bash direct au lieu de l'outil Grep, et un `node -e` immédiatement bloqué par le hook) — reconnues immédiatement, aucune conséquence (lecture seule), toutes les vérifications de fond faites via SSH/Docker sur serveuria. main vérifié intact (a4c8421, diff vide vs origin/main) tout au long de la session."
+    },
+    {
+      "id": "S0-009",
+      "title": "Table feature_flags + helper typé",
+      "epic": "0-SOCLE",
+      "phase": 0,
+      "passes": true,
+      "completedAt": "2026-07-11",
+      "dependencies": ["S0-003"],
+      "acceptance": [
+        "Migration conforme à 0-socle/02 (checks, RLS)",
+        "Helper lib/flags/ consommé par un test"
+      ],
+      "acceptanceNote": "Validé sur serveuria (commit 2de9e86) : tsc --noEmit 0 erreur, pnpm lint 0 problème, pnpm test 1783/1783 (1776 baseline S0-008 + 7 nouveaux tests, aucune régression). Aucune table feature_flags sur main (FR-1 vérifié : git grep sur main = vide) — table neuve du chantier 0, pas un portage. Migration supabase/migrations/00019_feature_flags.sql conforme mot pour mot à docs/foundation/0-socle/02-data-dictionary.md : id/flag_name (unique)/enabled/scope (check global|org|user)/description/created_at/updated_at, trigger updated_at réutilisant public.handle_updated_at() (posé par 00001_initial_schema.sql). RLS : lecture authentifiée (policy USING auth.role() = 'authenticated'), écriture bloquée pour anon/authenticated par 3 policies USING/WITH CHECK (false) sur INSERT/UPDATE/DELETE — le rôle service bypasse RLS nativement (BYPASSRLS), même convention défense-en-profondeur que 00015_usage_tracking.sql. Helper lib/flags/index.ts : isFeatureEnabled(flagName, reader?) fail-closed (flag absent, row manquante ou erreur de lecture => false), lecteur par défaut via createServiceSupabaseClient(), lecteur injectable (type FlagReader) pour éviter de mocker toute la chaîne Supabase dans les tests. Types FeatureFlagRow/Insert/Update ajoutés à lib/supabase/types.ts (Database.Tables.feature_flags), suivant la convention hand-maintenue déjà en place pour les 10 autres tables du fichier. Tests tests/flags/is-feature-enabled.test.ts (7 cas) : comportement fail-closed avec reader injecté (enabled/disabled/absent) + lecteur par défaut mocké via vi.mock('@/lib/supabase/service') suivant le pattern vi.hoisted déjà utilisé par tests/web-search/route.test.ts (vérifie l'appel réel .from('feature_flags').select('enabled').eq('flag_name', ...) et le fail-closed sur erreur/row absente). main vérifié intact tout du long (a4c8421, diff vide vs origin/main). Aucune commande d'exécution locale — tsc/lint/test exclusivement via SSH + docker exec sur qalem-refork-exec."
+    },
+    {
+      "id": "S0-010",
+      "title": "Figer la carrière (tag legacy-v010-final) + CI verte",
+      "epic": "0-SOCLE",
+      "phase": 0,
+      "passes": false,
+      "dependencies": ["S0-008"],
+      "acceptance": [
+        "Tag posé et poussé sur main",
+        "CI GitHub Actions verte sur refork-v030",
+        "Règle carrière lecture seule dans .ralph/AGENTS.md"
+      ]
+    },
+    {
+      "id": "S0-011",
+      "title": "[CHECKPOINT AMINE] Checklist garder/abandonner des 72 stories",
+      "epic": "0-SOCLE",
+      "phase": 0,
+      "passes": false,
+      "dependencies": ["S0-002"],
+      "acceptance": [
+        "checklist-bascule.md conforme au prompt P0-B (preuves fichier:ligne, colonne Décision vide)",
+        "72 stories couvertes (comptage)",
+        "Fermée uniquement sur tranche d'Amine consignée"
+      ]
+    },
+    {
+      "id": "S0-012",
+      "title": "[CHECKPOINT AMINE] Parcours guidé passe RTL ar-MA [UI]",
+      "epic": "0-SOCLE",
+      "phase": 0,
+      "passes": false,
+      "dependencies": ["S0-008"],
+      "acceptance": [
+        "checklist-rtl.md livré (écrans, points de contrôle)",
+        "Verdict d'Amine consigné, défauts → stories de pioche"
+      ]
+    },
+    {
+      "id": "S0-013",
+      "title": "Déploiement préprod Coolify de refork-v030",
+      "epic": "0-SOCLE",
+      "phase": 0,
+      "passes": false,
+      "dependencies": ["S0-008"],
+      "acceptance": [
+        "URL préprod HTTP 200, prod inchangée sur main",
+        "Génération de bout en bout réussie en FR et AR sur la préprod"
+      ]
+    },
+    {
+      "id": "S0-014",
+      "title": "Purge de provenance AGPL : neutraliser les 35 fichiers du majorant (ADR-002)",
+      "epic": "0-SOCLE",
+      "phase": 0,
+      "passes": false,
+      "dependencies": ["S0-002"],
+      "acceptance": [
+        "Pour chacun des 35 fichiers de refork/audit-provenance.json : équivalent v0.3.0 localisé (mapping consigné) OU réécrit depuis la base MIT — ZÉRO copie depuis v0.1.0",
+        "audit-provenance.json mis à jour : liste agpl_only_heritage restante = vide",
+        "Notices MIT conservées en en-têtes ; gabarit THIRD-PARTY-NOTICES créé pour livraisons on-premise"
+      ]
+    },
 
-    { "id": "S1-001", "title": "Câbler le moteur : getPromptOverride() dans outline + scène", "epic": "1-CRÉER", "phase": 1, "passes": false, "dependencies": ["S0-008", "S0-009"], "acceptance": ["Appels réels dans outline-generator.ts et scene-generator.ts", "Test : un skill pack actif change le prompt assemblé des deux étages", "Flag skill_engine, comportement inchangé éteint"] },
-    { "id": "S1-002", "title": "[CHECKPOINT AMINE+CLAUDE] Canevas d'import co-validé", "epic": "1-CRÉER", "phase": 1, "passes": false, "dependencies": ["S0-008"], "acceptance": ["Proposition conforme P1-A (règles testables, exemple FR complet)", "canevas-import-v1.md doublement validé et daté", "Aucun code d'import avant"] },
-    { "id": "S1-003", "title": "Tables courses + course_imports + pipeline de validation du canevas", "epic": "1-CRÉER", "phase": 1, "passes": false, "dependencies": ["S1-002"], "acceptance": ["Migrations conformes à 1-creer/02 (checks, RLS)", "Conforme → conform ; non conforme → rejected + validation_report (tests des deux chemins)", "Messages de rejet au ton du brand-brief"] },
-    { "id": "S1-004", "title": "Catalogue interne (porte 2) [UI]", "epic": "1-CRÉER", "phase": 1, "passes": false, "dependencies": ["S1-003"], "acceptance": ["Liste des courses ready + catalog_visible", "Rejoindre la classe → classroom (e2e)", "Flag course_catalog, rendu ar-MA vérifié"] },
-    { "id": "S1-005", "title": "Import → outline éditable (porte 3)", "epic": "1-CRÉER", "phase": 1, "passes": false, "dependencies": ["S1-003"], "acceptance": ["Contenu conforme → outline dans l'Editor natif v0.3.0", "e2e dépôt → validation → outline → ready", "Parsing PDF via provider existant"] },
-    { "id": "S1-006", "title": "Capsule vidéo Hyperframes depuis une scène", "epic": "1-CRÉER", "phase": 1, "passes": false, "dependencies": ["S0-008"], "acceptance": ["Brief JSON conforme au contrat P1-B → mp4 relu dans l'app", "Interface fichiers uniquement (zéro import du repo mishkat)", "Job BullMQ, flag video_capsules, sous-titres langue du course"] },
-    { "id": "S1-007", "title": "Export SCORM couche 1 : package autonome importé dans Moodle", "epic": "1-CRÉER", "phase": 1, "passes": false, "dependencies": ["S0-008"], "acceptance": ["export_jobs scorm12 → zip imsmanifest.xml valide", "Import Moodle docker réussi, completion trackée (preuve)", "Runtime scorm-again, notices MIT conservées"] },
-    { "id": "S1-008", "title": "Export couche 2 : adaptateurs scorm12/scorm2004/cmi5 interchangeables", "epic": "1-CRÉER", "phase": 1, "passes": false, "dependencies": ["S1-007"], "acceptance": ["3 formats depuis UN générateur (diff limité à la couche tracking)", "scorm2004 vérifié Moodle, cmi5 vérifié player de référence", "Statut option/cœur consigné ADR-105 dès la tranche d'Amine"] },
-    { "id": "S1-009", "title": "Gate audio : tachkil AR + plancher de bruit -50 dB sur toutes les sorties TTS", "epic": "1-CRÉER", "phase": 1, "passes": false, "dependencies": ["S0-006"], "acceptance": ["Tachkil appliqué avant synthèse AR (fixture)", "Piste < -50 dB rejetée avec erreur explicite (fixture bruitée)", "Gate branché sur live, capsules et exports"] },
-    { "id": "S1-010", "title": "Export PPTX re-vérifié sur la nouvelle base", "epic": "1-CRÉER", "phase": 1, "passes": false, "dependencies": ["S0-008"], "acceptance": ["PPTX d'un course généré s'ouvre sans réparation dans PowerPoint", "Packages mathml2omml/pptxgenjs buildés au postinstall (preuve)"] },
+    {
+      "id": "S1-001",
+      "title": "Câbler le moteur : getPromptOverride() dans outline + scène",
+      "epic": "1-CRÉER",
+      "phase": 1,
+      "passes": false,
+      "dependencies": ["S0-008", "S0-009"],
+      "acceptance": [
+        "Appels réels dans outline-generator.ts et scene-generator.ts",
+        "Test : un skill pack actif change le prompt assemblé des deux étages",
+        "Flag skill_engine, comportement inchangé éteint"
+      ]
+    },
+    {
+      "id": "S1-002",
+      "title": "[CHECKPOINT AMINE+CLAUDE] Canevas d'import co-validé",
+      "epic": "1-CRÉER",
+      "phase": 1,
+      "passes": false,
+      "dependencies": ["S0-008"],
+      "acceptance": [
+        "Proposition conforme P1-A (règles testables, exemple FR complet)",
+        "canevas-import-v1.md doublement validé et daté",
+        "Aucun code d'import avant"
+      ]
+    },
+    {
+      "id": "S1-003",
+      "title": "Tables courses + course_imports + pipeline de validation du canevas",
+      "epic": "1-CRÉER",
+      "phase": 1,
+      "passes": false,
+      "dependencies": ["S1-002"],
+      "acceptance": [
+        "Migrations conformes à 1-creer/02 (checks, RLS)",
+        "Conforme → conform ; non conforme → rejected + validation_report (tests des deux chemins)",
+        "Messages de rejet au ton du brand-brief"
+      ]
+    },
+    {
+      "id": "S1-004",
+      "title": "Catalogue interne (porte 2) [UI]",
+      "epic": "1-CRÉER",
+      "phase": 1,
+      "passes": false,
+      "dependencies": ["S1-003"],
+      "acceptance": [
+        "Liste des courses ready + catalog_visible",
+        "Rejoindre la classe → classroom (e2e)",
+        "Flag course_catalog, rendu ar-MA vérifié"
+      ]
+    },
+    {
+      "id": "S1-005",
+      "title": "Import → outline éditable (porte 3)",
+      "epic": "1-CRÉER",
+      "phase": 1,
+      "passes": false,
+      "dependencies": ["S1-003"],
+      "acceptance": [
+        "Contenu conforme → outline dans l'Editor natif v0.3.0",
+        "e2e dépôt → validation → outline → ready",
+        "Parsing PDF via provider existant"
+      ]
+    },
+    {
+      "id": "S1-006",
+      "title": "Capsule vidéo Hyperframes depuis une scène",
+      "epic": "1-CRÉER",
+      "phase": 1,
+      "passes": false,
+      "dependencies": ["S0-008"],
+      "acceptance": [
+        "Brief JSON conforme au contrat P1-B → mp4 relu dans l'app",
+        "Interface fichiers uniquement (zéro import du repo mishkat)",
+        "Job BullMQ, flag video_capsules, sous-titres langue du course"
+      ]
+    },
+    {
+      "id": "S1-007",
+      "title": "Export SCORM couche 1 : package autonome importé dans Moodle",
+      "epic": "1-CRÉER",
+      "phase": 1,
+      "passes": false,
+      "dependencies": ["S0-008"],
+      "acceptance": [
+        "export_jobs scorm12 → zip imsmanifest.xml valide",
+        "Import Moodle docker réussi, completion trackée (preuve)",
+        "Runtime scorm-again, notices MIT conservées"
+      ]
+    },
+    {
+      "id": "S1-008",
+      "title": "Export couche 2 : adaptateurs scorm12/scorm2004/cmi5 interchangeables",
+      "epic": "1-CRÉER",
+      "phase": 1,
+      "passes": false,
+      "dependencies": ["S1-007"],
+      "acceptance": [
+        "3 formats depuis UN générateur (diff limité à la couche tracking)",
+        "scorm2004 vérifié Moodle, cmi5 vérifié player de référence",
+        "Statut option/cœur consigné ADR-105 dès la tranche d'Amine"
+      ]
+    },
+    {
+      "id": "S1-009",
+      "title": "Gate audio : tachkil AR + plancher de bruit -50 dB sur toutes les sorties TTS",
+      "epic": "1-CRÉER",
+      "phase": 1,
+      "passes": false,
+      "dependencies": ["S0-006"],
+      "acceptance": [
+        "Tachkil appliqué avant synthèse AR (fixture)",
+        "Piste < -50 dB rejetée avec erreur explicite (fixture bruitée)",
+        "Gate branché sur live, capsules et exports"
+      ]
+    },
+    {
+      "id": "S1-010",
+      "title": "Export PPTX re-vérifié sur la nouvelle base",
+      "epic": "1-CRÉER",
+      "phase": 1,
+      "passes": false,
+      "dependencies": ["S0-008"],
+      "acceptance": [
+        "PPTX d'un course généré s'ouvre sans réparation dans PowerPoint",
+        "Packages mathml2omml/pptxgenjs buildés au postinstall (preuve)"
+      ]
+    },
 
-    { "id": "S2-001", "title": "Profil utilisateur enrichi (culture, langue, préférences) [UI]", "epic": "2-VIVRE", "phase": 2, "passes": false, "dependencies": ["S0-008", "S0-009"], "acceptance": ["Migration user_profiles conforme à 2-vivre/02 (RLS user seul)", "Écran de profil 3 locales, RTL vérifié", "Flag rich_profile"] },
-    { "id": "S2-002", "title": "QUICK-WIN : casting personnalisé — personnalités, prénoms culturels, mixité [UI]", "epic": "2-VIVRE", "phase": 2, "passes": false, "dependencies": ["S2-001"], "acceptance": ["Lineup dérive du profil (culture → référentiel) ET du contenu (agent-profiles porté)", "Mixité présente (test sur 20 tirages)", "Écran « votre équipe du jour », e2e fr ET ar", "Référentiels = données versionnées, non activés avant S2-011"] },
-    { "id": "S2-003", "title": "Variation garantie du casting (contrainte SQL)", "epic": "2-VIVRE", "phase": 2, "passes": false, "dependencies": ["S2-002"], "acceptance": ["unique (user_id, course_id, lineup_hash) actif", "2 lancements consécutifs → lineups différents ; collision → re-tirage (testé)"] },
-    { "id": "S2-004", "title": "[GATE DPIA] Enregistrement du live : flux d'événements complet (agents + utilisateur)", "epic": "2-VIVRE", "phase": 2, "passes": false, "dependencies": ["S2-001"], "acceptance": ["DPIA instruite et consignée AVANT tout commit", "Consentement UI explicite → live_sessions.recorded", "session_events capture agents ET interventions utilisateur, append-only (zéro UPDATE)", "Pistes TTS persistées, coût Mo/session mesuré et consigné"] },
-    { "id": "S2-005", "title": "Replay fidèle « comme un vrai webinaire » (streaming, jamais de téléchargement)", "epic": "2-VIVRE", "phase": 2, "passes": false, "dependencies": ["S2-004"], "acceptance": ["Session rejouée intégralement, audio inclus, via extension de lib/playback/ porté", "Plateforme ET PWA", "Test affirmatif : aucune route en Content-Disposition: attachment"] },
-    { "id": "S2-006", "title": "Bibliothèque de replays (reprise, suppression effective) [UI]", "epic": "2-VIVRE", "phase": 2, "passes": false, "dependencies": ["S2-005"], "acceptance": ["Liste mes sessions + reprise à l'horodatage", "Suppression = effacement réel des événements ET pistes audio (vérifié en base)"] },
-    { "id": "S2-007", "title": "Andragogie dans le live (overrides du moteur consommés par le director)", "epic": "2-VIVRE", "phase": 2, "passes": false, "dependencies": ["S1-001"], "acceptance": ["Prompts director/agents consomment l'interface moteur", "Test : un override actif change observablement une personnalité en live"] },
-    { "id": "S2-008", "title": "Watermark sonore audiowmark en job BullMQ (protocole de robustesse)", "epic": "2-VIVRE", "phase": 2, "passes": false, "dependencies": ["S0-008"], "acceptance": ["Worker invoque audiowmark en processus externe, watermark_id opaque 128 bits", "Protocole P2-C automatisé : ID décodé après mp3 128k, ogg, extrait 30 s, normalisation", "Flag watermarking, jamais dans le chemin de lecture"] },
-    { "id": "S2-009", "title": "Watermark visuel indélébile", "epic": "2-VIVRE", "phase": 2, "passes": false, "dependencies": ["S2-008"], "acceptance": ["videowmark (ou incrustation périodique avec ADR) appliqué par le worker", "Identifiant décodable sur capture d'écran du flux (preuve documentée)"] },
-    { "id": "S2-010", "title": "Transmission de support marqué au destinataire", "epic": "2-VIVRE", "phase": 2, "passes": false, "dependencies": ["S2-008", "S2-009"], "acceptance": ["Table transmissions conforme (RLS émetteur+destinataire)", "Artefact asynchrone avec les DEUX watermarks, consultation en ligne uniquement (e2e)", "Mention « Session remise à [prénom] » à l'ouverture"] },
-    { "id": "S2-011", "title": "[CHECKPOINT AMINE] Référentiels culture → prénoms validés", "epic": "2-VIVRE", "phase": 2, "passes": false, "dependencies": ["S2-002"], "acceptance": ["Fichiers conformes P2-B (≥ 20 prénoms/genre/culture, graphie AR + romanisation)", "Validation explicite d'Amine consignée avant activation du flag rich_profile en préprod"] },
+    {
+      "id": "S2-001",
+      "title": "Profil utilisateur enrichi (culture, langue, préférences) [UI]",
+      "epic": "2-VIVRE",
+      "phase": 2,
+      "passes": false,
+      "dependencies": ["S0-008", "S0-009"],
+      "acceptance": [
+        "Migration user_profiles conforme à 2-vivre/02 (RLS user seul)",
+        "Écran de profil 3 locales, RTL vérifié",
+        "Flag rich_profile"
+      ]
+    },
+    {
+      "id": "S2-002",
+      "title": "QUICK-WIN : casting personnalisé — personnalités, prénoms culturels, mixité [UI]",
+      "epic": "2-VIVRE",
+      "phase": 2,
+      "passes": false,
+      "dependencies": ["S2-001"],
+      "acceptance": [
+        "Lineup dérive du profil (culture → référentiel) ET du contenu (agent-profiles porté)",
+        "Mixité présente (test sur 20 tirages)",
+        "Écran « votre équipe du jour », e2e fr ET ar",
+        "Référentiels = données versionnées, non activés avant S2-011"
+      ]
+    },
+    {
+      "id": "S2-003",
+      "title": "Variation garantie du casting (contrainte SQL)",
+      "epic": "2-VIVRE",
+      "phase": 2,
+      "passes": false,
+      "dependencies": ["S2-002"],
+      "acceptance": [
+        "unique (user_id, course_id, lineup_hash) actif",
+        "2 lancements consécutifs → lineups différents ; collision → re-tirage (testé)"
+      ]
+    },
+    {
+      "id": "S2-004",
+      "title": "[GATE DPIA] Enregistrement du live : flux d'événements complet (agents + utilisateur)",
+      "epic": "2-VIVRE",
+      "phase": 2,
+      "passes": false,
+      "dependencies": ["S2-001"],
+      "acceptance": [
+        "DPIA instruite et consignée AVANT tout commit",
+        "Consentement UI explicite → live_sessions.recorded",
+        "session_events capture agents ET interventions utilisateur, append-only (zéro UPDATE)",
+        "Pistes TTS persistées, coût Mo/session mesuré et consigné"
+      ]
+    },
+    {
+      "id": "S2-005",
+      "title": "Replay fidèle « comme un vrai webinaire » (streaming, jamais de téléchargement)",
+      "epic": "2-VIVRE",
+      "phase": 2,
+      "passes": false,
+      "dependencies": ["S2-004"],
+      "acceptance": [
+        "Session rejouée intégralement, audio inclus, via extension de lib/playback/ porté",
+        "Plateforme ET PWA",
+        "Test affirmatif : aucune route en Content-Disposition: attachment"
+      ]
+    },
+    {
+      "id": "S2-006",
+      "title": "Bibliothèque de replays (reprise, suppression effective) [UI]",
+      "epic": "2-VIVRE",
+      "phase": 2,
+      "passes": false,
+      "dependencies": ["S2-005"],
+      "acceptance": [
+        "Liste mes sessions + reprise à l'horodatage",
+        "Suppression = effacement réel des événements ET pistes audio (vérifié en base)"
+      ]
+    },
+    {
+      "id": "S2-007",
+      "title": "Andragogie dans le live (overrides du moteur consommés par le director)",
+      "epic": "2-VIVRE",
+      "phase": 2,
+      "passes": false,
+      "dependencies": ["S1-001"],
+      "acceptance": [
+        "Prompts director/agents consomment l'interface moteur",
+        "Test : un override actif change observablement une personnalité en live"
+      ]
+    },
+    {
+      "id": "S2-008",
+      "title": "Watermark sonore audiowmark en job BullMQ (protocole de robustesse)",
+      "epic": "2-VIVRE",
+      "phase": 2,
+      "passes": false,
+      "dependencies": ["S0-008"],
+      "acceptance": [
+        "Worker invoque audiowmark en processus externe, watermark_id opaque 128 bits",
+        "Protocole P2-C automatisé : ID décodé après mp3 128k, ogg, extrait 30 s, normalisation",
+        "Flag watermarking, jamais dans le chemin de lecture"
+      ]
+    },
+    {
+      "id": "S2-009",
+      "title": "Watermark visuel indélébile",
+      "epic": "2-VIVRE",
+      "phase": 2,
+      "passes": false,
+      "dependencies": ["S2-008"],
+      "acceptance": [
+        "videowmark (ou incrustation périodique avec ADR) appliqué par le worker",
+        "Identifiant décodable sur capture d'écran du flux (preuve documentée)"
+      ]
+    },
+    {
+      "id": "S2-010",
+      "title": "Transmission de support marqué au destinataire",
+      "epic": "2-VIVRE",
+      "phase": 2,
+      "passes": false,
+      "dependencies": ["S2-008", "S2-009"],
+      "acceptance": [
+        "Table transmissions conforme (RLS émetteur+destinataire)",
+        "Artefact asynchrone avec les DEUX watermarks, consultation en ligne uniquement (e2e)",
+        "Mention « Session remise à [prénom] » à l'ouverture"
+      ]
+    },
+    {
+      "id": "S2-011",
+      "title": "[CHECKPOINT AMINE] Référentiels culture → prénoms validés",
+      "epic": "2-VIVRE",
+      "phase": 2,
+      "passes": false,
+      "dependencies": ["S2-002"],
+      "acceptance": [
+        "Fichiers conformes P2-B (≥ 20 prénoms/genre/culture, graphie AR + romanisation)",
+        "Validation explicite d'Amine consignée avant activation du flag rich_profile en préprod"
+      ]
+    },
 
-    { "id": "S3-001", "title": "Tables d'ancrage (seeds, anchor_plans, anchor_deliveries, evaluations, xapi_outbox)", "epic": "3-ANCRER", "phase": 3, "passes": false, "dependencies": ["S0-008", "S0-009"], "acceptance": ["5 migrations conformes à 3-ancrer/02 (borne J+90, unicité par phase)", "RLS testées (user seul, agrégats org)"] },
-    { "id": "S3-002", "title": "Push PWA re-vérifié sur appareils réels iOS + Android", "epic": "3-ANCRER", "phase": 3, "passes": false, "dependencies": ["S0-008"], "acceptance": ["Push reçu iOS réel (PWA installée, Safari ≥ 16.4) ET Android réel", "Tap → ouverture PWA sur la carte cible", "Délivrance consignée ; échec iOS → réouvrir ADR-303 avec Amine"] },
-    { "id": "S3-003", "title": "Évaluation à chaud en fin de session [UI]", "epic": "3-ANCRER", "phase": 3, "passes": false, "dependencies": ["S3-001", "S2-004"], "acceptance": ["Hook fin de session : 2 questions, skippable", "evaluations(phase='hot') écrite, unicité prouvée", "3 locales, RTL vérifié"] },
-    { "id": "S3-004", "title": "Générateur de graines : stock complet à la fin de session", "epic": "3-ANCRER", "phase": 3, "passes": false, "dependencies": ["S3-001", "S2-004"], "acceptance": ["≥ 12 graines typées via P3-B, chacune citant scene_ref et persona de LA session", "UN appel LLM par session (grep : aucun dans le chemin d'envoi)", "Coût consigné"] },
-    { "id": "S3-005", "title": "Plan d'ancrage opt-in + planification BullMQ ≤ J+90", "epic": "3-ANCRER", "phase": 3, "passes": false, "dependencies": ["S3-004"], "acceptance": ["Opt-in explicite → deliveries à espacement croissant", "Pause un tap ; arrêt = suppression des deliveries futures", "Jobs rejouables, flag anchoring"] },
-    { "id": "S3-006", "title": "Rappels quiz espacés via FSRS porté (cycle complet)", "epic": "3-ANCRER", "phase": 3, "passes": false, "dependencies": ["S3-005"], "acceptance": ["Items de quiz de la session dans la file FSRS (extension, pas réécriture)", "Cycle testé : push → quiz → résultat re-nourrit FSRS", "Limite Bloom consignée au parking lot si constatée"] },
-    { "id": "S3-007", "title": "Évaluations à froid J+30 / J+60", "epic": "3-ANCRER", "phase": 3, "passes": false, "dependencies": ["S3-005"], "acceptance": ["Deliveries cold_eval planifiées, réponses en phase cold_30/cold_60", "Unicité par phase prouvée (doublon rejeté)"] },
-    { "id": "S3-008", "title": "[CHECKPOINT AMINE] Ton des graines + fréquences validés sur échantillon", "epic": "3-ANCRER", "phase": 3, "passes": false, "dependencies": ["S3-004"], "acceptance": ["20 graines réelles + plan de fréquence proposé (gabarit 3-ancrer/06)", "Validation explicite avant activation du flag anchoring en préprod"] },
-    { "id": "S3-009", "title": "Reporting ancrage : agrégats org uniquement [UI]", "epic": "3-ANCRER", "phase": 3, "passes": false, "dependencies": ["S3-003", "S3-007"], "acceptance": ["Participation, à chaud vs à froid, rétention dans le temps (e2e)", "Lecture seule org, AUCUN drill-down individuel (test d'accès)"] },
-    { "id": "S3-010", "title": "Émission xAPI via outbox (retry, acteur pseudonymisé)", "epic": "3-ANCRER", "phase": 3, "passes": false, "dependencies": ["S3-001"], "acceptance": ["Statements conformes vérifiés contre un LRS de test (P3-C)", "Retry prouvé LRS coupé ; zéro e-mail/nom en clair", "Flag xapi_emission, credentials LRS par org chiffrés"] },
+    {
+      "id": "S3-001",
+      "title": "Tables d'ancrage (seeds, anchor_plans, anchor_deliveries, evaluations, xapi_outbox)",
+      "epic": "3-ANCRER",
+      "phase": 3,
+      "passes": false,
+      "dependencies": ["S0-008", "S0-009"],
+      "acceptance": [
+        "5 migrations conformes à 3-ancrer/02 (borne J+90, unicité par phase)",
+        "RLS testées (user seul, agrégats org)"
+      ]
+    },
+    {
+      "id": "S3-002",
+      "title": "Push PWA re-vérifié sur appareils réels iOS + Android",
+      "epic": "3-ANCRER",
+      "phase": 3,
+      "passes": false,
+      "dependencies": ["S0-008"],
+      "acceptance": [
+        "Push reçu iOS réel (PWA installée, Safari ≥ 16.4) ET Android réel",
+        "Tap → ouverture PWA sur la carte cible",
+        "Délivrance consignée ; échec iOS → réouvrir ADR-303 avec Amine"
+      ]
+    },
+    {
+      "id": "S3-003",
+      "title": "Évaluation à chaud en fin de session [UI]",
+      "epic": "3-ANCRER",
+      "phase": 3,
+      "passes": false,
+      "dependencies": ["S3-001", "S2-004"],
+      "acceptance": [
+        "Hook fin de session : 2 questions, skippable",
+        "evaluations(phase='hot') écrite, unicité prouvée",
+        "3 locales, RTL vérifié"
+      ]
+    },
+    {
+      "id": "S3-004",
+      "title": "Générateur de graines : stock complet à la fin de session",
+      "epic": "3-ANCRER",
+      "phase": 3,
+      "passes": false,
+      "dependencies": ["S3-001", "S2-004"],
+      "acceptance": [
+        "≥ 12 graines typées via P3-B, chacune citant scene_ref et persona de LA session",
+        "UN appel LLM par session (grep : aucun dans le chemin d'envoi)",
+        "Coût consigné"
+      ]
+    },
+    {
+      "id": "S3-005",
+      "title": "Plan d'ancrage opt-in + planification BullMQ ≤ J+90",
+      "epic": "3-ANCRER",
+      "phase": 3,
+      "passes": false,
+      "dependencies": ["S3-004"],
+      "acceptance": [
+        "Opt-in explicite → deliveries à espacement croissant",
+        "Pause un tap ; arrêt = suppression des deliveries futures",
+        "Jobs rejouables, flag anchoring"
+      ]
+    },
+    {
+      "id": "S3-006",
+      "title": "Rappels quiz espacés via FSRS porté (cycle complet)",
+      "epic": "3-ANCRER",
+      "phase": 3,
+      "passes": false,
+      "dependencies": ["S3-005"],
+      "acceptance": [
+        "Items de quiz de la session dans la file FSRS (extension, pas réécriture)",
+        "Cycle testé : push → quiz → résultat re-nourrit FSRS",
+        "Limite Bloom consignée au parking lot si constatée"
+      ]
+    },
+    {
+      "id": "S3-007",
+      "title": "Évaluations à froid J+30 / J+60",
+      "epic": "3-ANCRER",
+      "phase": 3,
+      "passes": false,
+      "dependencies": ["S3-005"],
+      "acceptance": [
+        "Deliveries cold_eval planifiées, réponses en phase cold_30/cold_60",
+        "Unicité par phase prouvée (doublon rejeté)"
+      ]
+    },
+    {
+      "id": "S3-008",
+      "title": "[CHECKPOINT AMINE] Ton des graines + fréquences validés sur échantillon",
+      "epic": "3-ANCRER",
+      "phase": 3,
+      "passes": false,
+      "dependencies": ["S3-004"],
+      "acceptance": [
+        "20 graines réelles + plan de fréquence proposé (gabarit 3-ancrer/06)",
+        "Validation explicite avant activation du flag anchoring en préprod"
+      ]
+    },
+    {
+      "id": "S3-009",
+      "title": "Reporting ancrage : agrégats org uniquement [UI]",
+      "epic": "3-ANCRER",
+      "phase": 3,
+      "passes": false,
+      "dependencies": ["S3-003", "S3-007"],
+      "acceptance": [
+        "Participation, à chaud vs à froid, rétention dans le temps (e2e)",
+        "Lecture seule org, AUCUN drill-down individuel (test d'accès)"
+      ]
+    },
+    {
+      "id": "S3-010",
+      "title": "Émission xAPI via outbox (retry, acteur pseudonymisé)",
+      "epic": "3-ANCRER",
+      "phase": 3,
+      "passes": false,
+      "dependencies": ["S3-001"],
+      "acceptance": [
+        "Statements conformes vérifiés contre un LRS de test (P3-C)",
+        "Retry prouvé LRS coupé ; zéro e-mail/nom en clair",
+        "Flag xapi_emission, credentials LRS par org chiffrés"
+      ]
+    },
 
-    { "id": "S4-001", "title": "[SIGNAL AMINE REQUIS] Inventaire prouvé du corpus formation-design-pro (lecture seule)", "epic": "4-MOTEUR", "phase": 4, "passes": false, "dependencies": [], "acceptance": ["3 sources lues intégralement, écarts mesurés par script", "inventaire-corpus.md conforme P4-A, colonne source tierce remplie", "Zéro proposition, zéro écriture dans les sources"] },
-    { "id": "S4-002", "title": "[⏸️ AMINE] Vecteurs lot 1 : architecture du corpus et double publication", "epic": "4-MOTEUR", "phase": 4, "passes": false, "dependencies": ["S4-001"], "acceptance": ["≤ 7 vecteurs au format P4-B (dont localisation du corpus avec l'argument juridique du 4-moteur/07)", "Chaque tranche consignée en ADR-4xx avec verbatim daté", "Rien d'exécuté avant validation"] },
-    { "id": "S4-003", "title": "[⏸️ AMINE] Vecteurs lot 2 : structure du savoir (pistes du diagnostic re-proposées)", "epic": "4-MOTEUR", "phase": 4, "passes": false, "dependencies": ["S4-002"], "acceptance": ["Vecteurs couvrant SKILL.md, doublons maj/, frameworks vs -updated, preuve d'impact, Mode 0 — redevenus simples options", "Validations ET refus consignés avec motifs"] },
-    { "id": "S4-004", "title": "Exécution des vecteurs validés (un commit par vecteur)", "epic": "4-MOTEUR", "phase": 4, "passes": false, "dependencies": ["S4-002", "S4-003"], "acceptance": ["Référence du vecteur dans chaque message de commit", "Écart entre ADR validées et commits = vide"] },
-    { "id": "S4-005", "title": "Publication cible plateforme (manifests/overrides tracés)", "epic": "4-MOTEUR", "phase": 4, "passes": false, "dependencies": ["S4-004", "S1-001"], "acceptance": ["En-têtes de traçabilité (source, vecteur, date) sur chaque fichier de savoir", "Test S1-001 étendu : un override du moteur refondu change une génération"] },
-    { "id": "S4-006", "title": "Publication cible skill autonome (test hors plateforme)", "epic": "4-MOTEUR", "phase": 4, "passes": false, "dependencies": ["S4-004"], "acceptance": ["Protocole P4-C passé hors repo Qalem", "Échec → retour au vecteur de double publication, pas de rustine"] },
-    { "id": "S4-007", "title": "Cohérence aval : une seule source de voix", "epic": "4-MOTEUR", "phase": 4, "passes": false, "dependencies": ["S4-005"], "acceptance": ["Registres personnalités (2-VIVRE) et graines (3-ANCRER) référencent le moteur refondu", "Grep duplication : zéro copie de savoir andragogique hors moteur"] }
+    {
+      "id": "S4-001",
+      "title": "[SIGNAL AMINE REQUIS] Inventaire prouvé du corpus formation-design-pro (lecture seule)",
+      "epic": "4-MOTEUR",
+      "phase": 4,
+      "passes": false,
+      "dependencies": [],
+      "acceptance": [
+        "3 sources lues intégralement, écarts mesurés par script",
+        "inventaire-corpus.md conforme P4-A, colonne source tierce remplie",
+        "Zéro proposition, zéro écriture dans les sources"
+      ]
+    },
+    {
+      "id": "S4-002",
+      "title": "[⏸️ AMINE] Vecteurs lot 1 : architecture du corpus et double publication",
+      "epic": "4-MOTEUR",
+      "phase": 4,
+      "passes": false,
+      "dependencies": ["S4-001"],
+      "acceptance": [
+        "≤ 7 vecteurs au format P4-B (dont localisation du corpus avec l'argument juridique du 4-moteur/07)",
+        "Chaque tranche consignée en ADR-4xx avec verbatim daté",
+        "Rien d'exécuté avant validation"
+      ]
+    },
+    {
+      "id": "S4-003",
+      "title": "[⏸️ AMINE] Vecteurs lot 2 : structure du savoir (pistes du diagnostic re-proposées)",
+      "epic": "4-MOTEUR",
+      "phase": 4,
+      "passes": false,
+      "dependencies": ["S4-002"],
+      "acceptance": [
+        "Vecteurs couvrant SKILL.md, doublons maj/, frameworks vs -updated, preuve d'impact, Mode 0 — redevenus simples options",
+        "Validations ET refus consignés avec motifs"
+      ]
+    },
+    {
+      "id": "S4-004",
+      "title": "Exécution des vecteurs validés (un commit par vecteur)",
+      "epic": "4-MOTEUR",
+      "phase": 4,
+      "passes": false,
+      "dependencies": ["S4-002", "S4-003"],
+      "acceptance": [
+        "Référence du vecteur dans chaque message de commit",
+        "Écart entre ADR validées et commits = vide"
+      ]
+    },
+    {
+      "id": "S4-005",
+      "title": "Publication cible plateforme (manifests/overrides tracés)",
+      "epic": "4-MOTEUR",
+      "phase": 4,
+      "passes": false,
+      "dependencies": ["S4-004", "S1-001"],
+      "acceptance": [
+        "En-têtes de traçabilité (source, vecteur, date) sur chaque fichier de savoir",
+        "Test S1-001 étendu : un override du moteur refondu change une génération"
+      ]
+    },
+    {
+      "id": "S4-006",
+      "title": "Publication cible skill autonome (test hors plateforme)",
+      "epic": "4-MOTEUR",
+      "phase": 4,
+      "passes": false,
+      "dependencies": ["S4-004"],
+      "acceptance": [
+        "Protocole P4-C passé hors repo Qalem",
+        "Échec → retour au vecteur de double publication, pas de rustine"
+      ]
+    },
+    {
+      "id": "S4-007",
+      "title": "Cohérence aval : une seule source de voix",
+      "epic": "4-MOTEUR",
+      "phase": 4,
+      "passes": false,
+      "dependencies": ["S4-005"],
+      "acceptance": [
+        "Registres personnalités (2-VIVRE) et graines (3-ANCRER) référencent le moteur refondu",
+        "Grep duplication : zéro copie de savoir andragogique hors moteur"
+      ]
+    }
   ]
 }

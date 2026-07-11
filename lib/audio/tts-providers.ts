@@ -892,12 +892,14 @@ async function generateCartesiaTTS(
   const requestedFormat = config.format || 'mp3';
 
   // Map simple format names to Cartesia output_format config
-  const formatConfig: Record<string, { container: string; bit_rate?: number; sample_rate: number }> =
-    {
-      mp3: { container: 'mp3', bit_rate: 128000, sample_rate: 44100 },
-      wav: { container: 'wav', sample_rate: 44100 },
-      pcm: { container: 'raw', sample_rate: 44100 },
-    };
+  const formatConfig: Record<
+    string,
+    { container: string; bit_rate?: number; sample_rate: number }
+  > = {
+    mp3: { container: 'mp3', bit_rate: 128000, sample_rate: 44100 },
+    wav: { container: 'wav', sample_rate: 44100 },
+    pcm: { container: 'raw', sample_rate: 44100 },
+  };
 
   const outputFormat = formatConfig[requestedFormat] || formatConfig.mp3;
 
@@ -924,7 +926,9 @@ async function generateCartesiaTTS(
   if (!response.ok) {
     throwIfTtsRateLimited('Cartesia', response.status);
     const errorText = await response.text().catch(() => response.statusText);
-    throw new Error(`Cartesia TTS API error (${response.status}): ${errorText || response.statusText}`);
+    throw new Error(
+      `Cartesia TTS API error (${response.status}): ${errorText || response.statusText}`,
+    );
   }
 
   const arrayBuffer = await response.arrayBuffer();
@@ -941,10 +945,7 @@ async function generateCartesiaTTS(
  * No API key required. Uses Microsoft Edge's free neural voice service.
  * Works server-side — the audio is generated via HTTP call to Microsoft's endpoint.
  */
-async function generateEdgeTTS(
-  config: TTSModelConfig,
-  text: string,
-): Promise<TTSGenerationResult> {
+async function generateEdgeTTS(config: TTSModelConfig, text: string): Promise<TTSGenerationResult> {
   const { generateEdgeTTSAudio } = await import('@/lib/audio/edge-tts');
   return await generateEdgeTTSAudio(escapeXml(text), config.voice, config.speed);
 }

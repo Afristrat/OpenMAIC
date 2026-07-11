@@ -88,10 +88,7 @@ export async function requireSuperAdmin(req: NextRequest): Promise<AuthResult> {
 // requireOrgMember — auth + membership in org_members
 // ---------------------------------------------------------------------------
 
-export async function requireOrgMember(
-  req: NextRequest,
-  orgId: string,
-): Promise<AuthResult> {
+export async function requireOrgMember(req: NextRequest, orgId: string): Promise<AuthResult> {
   const auth = await requireAuth(req);
   if (auth.response) return auth;
 
@@ -129,10 +126,7 @@ export async function requireOrgMember(
 // requireOrgAdmin — auth + role IN ('admin', 'manager')
 // ---------------------------------------------------------------------------
 
-export async function requireOrgAdmin(
-  req: NextRequest,
-  orgId: string,
-): Promise<AuthResult> {
+export async function requireOrgAdmin(req: NextRequest, orgId: string): Promise<AuthResult> {
   const auth = await requireAuth(req);
   if (auth.response) return auth;
 

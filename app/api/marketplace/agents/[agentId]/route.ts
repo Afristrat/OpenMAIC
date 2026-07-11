@@ -15,17 +15,16 @@ interface RouteParams {
   params: Promise<{ agentId: string }>;
 }
 
-export async function GET(
-  _request: NextRequest,
-  { params }: RouteParams,
-): Promise<Response> {
+export async function GET(_request: NextRequest, { params }: RouteParams): Promise<Response> {
   const { agentId } = await params;
   const supabase = await createServerSupabaseClient();
 
   // Fetch agent
   const { data: agent, error: agentErr } = await supabase
     .from('agent_configs')
-    .select('id, name, role, description, avatar, color, tags, avg_rating, usage_count, owner_id, persona, created_at, is_published')
+    .select(
+      'id, name, role, description, avatar, color, tags, avg_rating, usage_count, owner_id, persona, created_at, is_published',
+    )
     .eq('id', agentId)
     .single();
 
@@ -45,7 +44,12 @@ export async function GET(
     .order('created_at', { ascending: false });
 
   if (reviewErr) {
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to fetch reviews', reviewErr.message);
+    return apiError(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      500,
+      'Failed to fetch reviews',
+      reviewErr.message,
+    );
   }
 
   // Fetch reviewer profiles
@@ -99,10 +103,7 @@ export async function GET(
   });
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: RouteParams,
-): Promise<Response> {
+export async function POST(request: NextRequest, { params }: RouteParams): Promise<Response> {
   const { agentId } = await params;
   const supabase = await createServerSupabaseClient();
 
@@ -141,20 +142,23 @@ export async function POST(
   }
 
   // Upsert review (unique on agent_id + user_id)
-  const { error: upsertErr } = await supabase
-    .from('agent_reviews')
-    .upsert(
-      {
-        agent_id: agentId,
-        user_id: user.id,
-        rating,
-        comment,
-      },
-      { onConflict: 'agent_id,user_id' },
-    );
+  const { error: upsertErr } = await supabase.from('agent_reviews').upsert(
+    {
+      agent_id: agentId,
+      user_id: user.id,
+      rating,
+      comment,
+    },
+    { onConflict: 'agent_id,user_id' },
+  );
 
   if (upsertErr) {
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to submit review', upsertErr.message);
+    return apiError(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      500,
+      'Failed to submit review',
+      upsertErr.message,
+    );
   }
 
   // Recompute average rating

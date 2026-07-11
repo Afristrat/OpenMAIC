@@ -100,10 +100,7 @@ export async function trackUsage(params: TrackUsageParams): Promise<void> {
  * @param orgId  - Organisation UUID
  * @param period - Billing period string (e.g. "2026-03"). Defaults to current month.
  */
-export async function getUsageSummary(
-  orgId: string,
-  period?: string,
-): Promise<UsageSummary> {
+export async function getUsageSummary(orgId: string, period?: string): Promise<UsageSummary> {
   const supabase = getServiceClient();
   const billingPeriod = period ?? currentBillingPeriod();
 

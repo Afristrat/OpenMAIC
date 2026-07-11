@@ -85,9 +85,10 @@ export function renderCertificateHTML(cert: Certificate, locale: Locale): string
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(cert.verificationUrl)}`;
   const formattedDate = formatDate(cert.completionDate, locale);
   const scorePercent = Math.round(cert.score);
-  const skillsList = cert.skills.length > 0
-    ? cert.skills.map((s) => `<span class="skill-tag">${escapeHtml(s)}</span>`).join(' ')
-    : '';
+  const skillsList =
+    cert.skills.length > 0
+      ? cert.skills.map((s) => `<span class="skill-tag">${escapeHtml(s)}</span>`).join(' ')
+      : '';
 
   return `<!DOCTYPE html>
 <html lang="${locale}" dir="${dir}">

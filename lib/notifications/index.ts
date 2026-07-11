@@ -73,7 +73,11 @@ const SW_PATH = '/sw.js';
  * Returns true if push notifications are now enabled, false otherwise.
  */
 export async function requestPushPermission(): Promise<boolean> {
-  if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+  if (
+    typeof window === 'undefined' ||
+    !('serviceWorker' in navigator) ||
+    !('PushManager' in window)
+  ) {
     log.warn('Push notifications are not supported in this browser');
     return false;
   }
@@ -122,7 +126,9 @@ export async function checkAndNotifyDueCards(userId: string): Promise<void> {
   // Verify auth state
   const supabaseAuth = tryCreateClient();
   if (!supabaseAuth) return;
-  const { data: { user } } = await supabaseAuth.auth.getUser();
+  const {
+    data: { user },
+  } = await supabaseAuth.auth.getUser();
   if (!user || user.id !== userId) {
     log.warn('Auth mismatch in notification check');
     return;
@@ -180,8 +186,6 @@ export async function checkAndNotifyDueCards(userId: string): Promise<void> {
     //   POST ${config.baseUrl}/message/sendText/${config.instanceName}
     //   Headers: { apikey: config.apiKey }
     //   Body: { number: prefs.whatsappNumber, text: `Qalem: ${dueCount} cartes à réviser` }
-    log.info(
-      `WhatsApp notification placeholder: ${dueCount} cards due → ${prefs.whatsappNumber}`,
-    );
+    log.info(`WhatsApp notification placeholder: ${dueCount} cards due → ${prefs.whatsappNumber}`);
   }
 }

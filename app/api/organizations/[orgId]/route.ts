@@ -121,7 +121,12 @@ export async function PATCH(
     .single();
 
   if (error || !org) {
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to update organization', error?.message);
+    return apiError(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      500,
+      'Failed to update organization',
+      error?.message,
+    );
   }
 
   return apiSuccess({ organization: { ...org, userRole: 'admin' } });
@@ -150,7 +155,12 @@ export async function DELETE(
   const { error } = await supabase.from('organizations').delete().eq('id', orgId);
 
   if (error) {
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to delete organization', error.message);
+    return apiError(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      500,
+      'Failed to delete organization',
+      error.message,
+    );
   }
 
   return apiSuccess({ deleted: true });

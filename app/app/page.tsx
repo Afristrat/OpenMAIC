@@ -76,7 +76,10 @@ function HomePage() {
   const [form, setForm] = useState<FormState>(initialFormState);
   const openSettings = useCallback(
     (section?: string) => {
-      if (section && ['providers', 'image', 'video', 'pdf', 'web-search', 'tts', 'asr'].includes(section)) {
+      if (
+        section &&
+        ['providers', 'image', 'video', 'pdf', 'web-search', 'tts', 'asr'].includes(section)
+      ) {
         router.push(`/admin?tab=${section}`);
       } else {
         router.push('/settings');

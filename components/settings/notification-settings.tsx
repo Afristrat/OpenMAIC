@@ -94,9 +94,7 @@ export function NotificationSettings(): React.ReactElement {
         <Bell className="h-5 w-5 text-primary" />
         <div>
           <h2 className="text-lg font-semibold">{t('notifications.title')}</h2>
-          <p className="text-sm text-muted-foreground">
-            {t('notifications.description')}
-          </p>
+          <p className="text-sm text-muted-foreground">{t('notifications.description')}</p>
         </div>
       </div>
 
@@ -109,10 +107,7 @@ export function NotificationSettings(): React.ReactElement {
             <p className="text-xs text-muted-foreground">{t('notifications.emailDesc')}</p>
           </div>
         </div>
-        <Switch
-          checked={prefs.email}
-          onCheckedChange={(v) => handleToggle('email', v)}
-        />
+        <Switch checked={prefs.email} onCheckedChange={(v) => handleToggle('email', v)} />
       </div>
 
       {/* Push toggle */}
@@ -140,12 +135,7 @@ export function NotificationSettings(): React.ReactElement {
 
         {/* Enable push button if not yet granted */}
         {pushState === 'default' && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRequestPush}
-            disabled={requesting}
-          >
+          <Button variant="outline" size="sm" onClick={handleRequestPush} disabled={requesting}>
             {requesting ? '...' : t('notifications.pushEnable')}
           </Button>
         )}
@@ -161,10 +151,7 @@ export function NotificationSettings(): React.ReactElement {
               <p className="text-xs text-muted-foreground">{t('notifications.whatsappDesc')}</p>
             </div>
           </div>
-          <Switch
-            checked={prefs.whatsapp}
-            onCheckedChange={(v) => handleToggle('whatsapp', v)}
-          />
+          <Switch checked={prefs.whatsapp} onCheckedChange={(v) => handleToggle('whatsapp', v)} />
         </div>
 
         {/* Phone number input shown only when WhatsApp is on */}
@@ -176,9 +163,7 @@ export function NotificationSettings(): React.ReactElement {
               dir="ltr"
               placeholder={t('notifications.whatsappPlaceholder')}
               value={prefs.whatsappNumber ?? ''}
-              onChange={(e) =>
-                setPrefs((prev) => ({ ...prev, whatsappNumber: e.target.value }))
-              }
+              onChange={(e) => setPrefs((prev) => ({ ...prev, whatsappNumber: e.target.value }))}
               className="max-w-xs"
             />
           </div>

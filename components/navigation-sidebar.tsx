@@ -399,7 +399,11 @@ export function NavigationSidebar(): React.ReactElement {
             {isSyncing ? (
               <>
                 <Loader2 className="size-4 shrink-0 animate-spin text-blue-500" />
-                {!collapsed && <span className="truncate text-blue-600 dark:text-blue-400">{t('nav.syncing')}</span>}
+                {!collapsed && (
+                  <span className="truncate text-blue-600 dark:text-blue-400">
+                    {t('nav.syncing')}
+                  </span>
+                )}
               </>
             ) : queueSize > 0 ? (
               <>

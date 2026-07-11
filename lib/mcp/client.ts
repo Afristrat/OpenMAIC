@@ -103,10 +103,7 @@ function createTransport(config: MCPServerConfig): Transport {
  * Connect to a single MCP server and list its tools.
  */
 async function connectToServer(config: MCPServerConfig): Promise<ConnectedServer> {
-  const client = new Client(
-    { name: 'qalem-mcp-client', version: '1.0.0' },
-    { capabilities: {} },
-  );
+  const client = new Client({ name: 'qalem-mcp-client', version: '1.0.0' }, { capabilities: {} });
 
   const transport = createTransport(config);
   const timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
@@ -227,8 +224,12 @@ export async function initMCPClients(configs: MCPServerConfig[]): Promise<void> 
         // Rejections are already logged inside connectToServer
       }
 
-      const connected = [...connectedServers.values()].filter((s) => s.status === 'connected').length;
-      log.info(`MCP initialization complete: ${connected}/${enabledConfigs.length} server(s) connected`);
+      const connected = [...connectedServers.values()].filter(
+        (s) => s.status === 'connected',
+      ).length;
+      log.info(
+        `MCP initialization complete: ${connected}/${enabledConfigs.length} server(s) connected`,
+      );
     } finally {
       initPromise = null;
     }
@@ -253,7 +254,8 @@ export function getExternalTools(): Record<string, Tool> {
       const qualifiedName = `${serverId}__${mcpTool.name}`;
 
       tools[qualifiedName] = {
-        description: mcpTool.description ?? `Tool "${mcpTool.name}" from MCP server "${server.config.name}"`,
+        description:
+          mcpTool.description ?? `Tool "${mcpTool.name}" from MCP server "${server.config.name}"`,
         parameters: jsonSchema(mcpTool.inputSchema),
         execute: async (args: Record<string, unknown>) => {
           return callExternalTool(serverId, mcpTool.name, args);
@@ -310,7 +312,11 @@ export async function callExternalTool(
     log.error(`Tool call failed: "${toolName}" on "${serverId}": ${message}`);
 
     // Attempt reconnection on transport errors
-    if (message.includes('ECONNREFUSED') || message.includes('fetch failed') || message.includes('aborted')) {
+    if (
+      message.includes('ECONNREFUSED') ||
+      message.includes('fetch failed') ||
+      message.includes('aborted')
+    ) {
       await attemptReconnect(serverId);
     }
 

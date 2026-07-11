@@ -47,7 +47,9 @@ export function LTITab(): React.ReactElement {
       })
       .catch(() => {
         // Config endpoint not available yet
-        setLtiConfig(JSON.stringify({ tool_name: 'Qalem', description: 'AI Interactive Classroom' }, null, 2));
+        setLtiConfig(
+          JSON.stringify({ tool_name: 'Qalem', description: 'AI Interactive Classroom' }, null, 2),
+        );
       });
   }, []);
 
@@ -98,7 +100,9 @@ export function LTITab(): React.ReactElement {
       ) : (
         <Copy className="size-3.5" />
       )}
-      <span className="ml-1 text-xs">{copiedField === field ? t('admin.lti.copied') : t('admin.lti.copy')}</span>
+      <span className="ml-1 text-xs">
+        {copiedField === field ? t('admin.lti.copied') : t('admin.lti.copy')}
+      </span>
     </Button>
   );
 
@@ -120,7 +124,9 @@ export function LTITab(): React.ReactElement {
       <div className="space-y-3">
         <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/30 border">
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-muted-foreground mb-0.5">{t('admin.lti.jwksUrl')}</p>
+            <p className="text-xs font-medium text-muted-foreground mb-0.5">
+              {t('admin.lti.jwksUrl')}
+            </p>
             <code className="text-sm font-mono break-all">{jwksUrl}</code>
           </div>
           {renderCopyButton(jwksUrl, 'jwks')}
@@ -128,7 +134,9 @@ export function LTITab(): React.ReactElement {
 
         <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/30 border">
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-muted-foreground mb-0.5">{t('admin.lti.launchUrl')}</p>
+            <p className="text-xs font-medium text-muted-foreground mb-0.5">
+              {t('admin.lti.launchUrl')}
+            </p>
             <code className="text-sm font-mono break-all">{launchUrl}</code>
           </div>
           {renderCopyButton(launchUrl, 'launch')}
@@ -175,7 +183,9 @@ export function LTITab(): React.ReactElement {
           <div className="rounded-lg border p-4 mb-4 space-y-3 bg-muted/10">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-medium text-muted-foreground">{t('admin.lti.clientId')}</label>
+                <label className="text-xs font-medium text-muted-foreground">
+                  {t('admin.lti.clientId')}
+                </label>
                 <Input
                   value={formData.clientId}
                   onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
@@ -184,7 +194,9 @@ export function LTITab(): React.ReactElement {
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-muted-foreground">{t('admin.lti.issuer')}</label>
+                <label className="text-xs font-medium text-muted-foreground">
+                  {t('admin.lti.issuer')}
+                </label>
                 <Input
                   value={formData.issuer}
                   onChange={(e) => setFormData({ ...formData, issuer: e.target.value })}
@@ -193,7 +205,9 @@ export function LTITab(): React.ReactElement {
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-muted-foreground">{t('admin.lti.jwksUrlField')}</label>
+                <label className="text-xs font-medium text-muted-foreground">
+                  {t('admin.lti.jwksUrlField')}
+                </label>
                 <Input
                   value={formData.jwksUrl}
                   onChange={(e) => setFormData({ ...formData, jwksUrl: e.target.value })}
@@ -202,7 +216,9 @@ export function LTITab(): React.ReactElement {
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-muted-foreground">{t('admin.lti.authUrl')}</label>
+                <label className="text-xs font-medium text-muted-foreground">
+                  {t('admin.lti.authUrl')}
+                </label>
                 <Input
                   value={formData.authUrl}
                   onChange={(e) => setFormData({ ...formData, authUrl: e.target.value })}
@@ -211,7 +227,9 @@ export function LTITab(): React.ReactElement {
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-muted-foreground">{t('admin.lti.tokenUrl')}</label>
+                <label className="text-xs font-medium text-muted-foreground">
+                  {t('admin.lti.tokenUrl')}
+                </label>
                 <Input
                   value={formData.tokenUrl}
                   onChange={(e) => setFormData({ ...formData, tokenUrl: e.target.value })}
@@ -220,7 +238,9 @@ export function LTITab(): React.ReactElement {
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-muted-foreground">{t('admin.lti.deploymentId')}</label>
+                <label className="text-xs font-medium text-muted-foreground">
+                  {t('admin.lti.deploymentId')}
+                </label>
                 <Input
                   value={formData.deploymentId}
                   onChange={(e) => setFormData({ ...formData, deploymentId: e.target.value })}

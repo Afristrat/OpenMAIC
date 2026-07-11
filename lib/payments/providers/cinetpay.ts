@@ -131,18 +131,14 @@ export const cinetpayAdapter: PaymentProviderAdapter = {
     const rawStatus = String(data['cpm_result'] ?? '');
 
     const status =
-      rawStatus === '00'
-        ? 'completed'
-        : rawStatus === 'REFUSED'
-          ? 'failed'
-          : 'pending';
+      rawStatus === '00' ? 'completed' : rawStatus === 'REFUSED' ? 'failed' : 'pending';
 
     return {
       id: transactionId,
       provider: 'cinetpay',
       status,
       amount: Number(data['cpm_amount'] ?? 0),
-      currency: (String(data['cpm_currency'] ?? 'XOF')) as PaymentResult['currency'],
+      currency: String(data['cpm_currency'] ?? 'XOF') as PaymentResult['currency'],
       transactionId,
       createdAt: new Date(),
     };

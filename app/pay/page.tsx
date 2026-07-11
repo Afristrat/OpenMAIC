@@ -135,9 +135,7 @@ export default function PayPage() {
     return (
       <div className="mx-auto max-w-xl px-4 py-12 text-center">
         <CreditCard className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
-        <p className="text-lg text-muted-foreground">
-          {t('payment.noOrg')}
-        </p>
+        <p className="text-lg text-muted-foreground">{t('payment.noOrg')}</p>
       </div>
     );
   }
@@ -155,9 +153,7 @@ export default function PayPage() {
           <div
             key={s}
             className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors ${
-              s <= step
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground'
+              s <= step ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
             }`}
           >
             {s < step ? <CheckCircle2 className="h-4 w-4" /> : s}
@@ -168,9 +164,7 @@ export default function PayPage() {
       {/* Step 1: Select plan */}
       {step >= 1 && (
         <div className="mb-8">
-          <h2 className="mb-4 text-lg font-semibold">
-            1. {t('payment.selectPlan')}
-          </h2>
+          <h2 className="mb-4 text-lg font-semibold">1. {t('payment.selectPlan')}</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             {/* Monthly */}
             <button
@@ -222,9 +216,7 @@ export default function PayPage() {
       {/* Step 2: Select provider */}
       {step >= 2 && (
         <div className="mb-8">
-          <h2 className="mb-4 text-lg font-semibold">
-            2. {t('payment.selectProvider')}
-          </h2>
+          <h2 className="mb-4 text-lg font-semibold">2. {t('payment.selectProvider')}</h2>
           <div className="grid gap-3 sm:grid-cols-3">
             {PROVIDERS.map((prov) => (
               <button
@@ -241,7 +233,13 @@ export default function PayPage() {
                   className="flex h-12 w-12 items-center justify-center rounded-full text-white text-lg font-bold"
                   style={{ backgroundColor: prov.color }}
                 >
-                  {prov.id === 'stripe' ? '💳' : prov.id === 'orange-money' ? 'OM' : prov.id === 'wave' ? 'W' : 'CP'}
+                  {prov.id === 'stripe'
+                    ? '💳'
+                    : prov.id === 'orange-money'
+                      ? 'OM'
+                      : prov.id === 'wave'
+                        ? 'W'
+                        : 'CP'}
                 </div>
                 <span className="text-sm font-medium">{t(prov.labelKey)}</span>
               </button>
@@ -253,9 +251,7 @@ export default function PayPage() {
       {/* Step 3: Phone number (if needed) + submit */}
       {step >= 3 && provider && (
         <div className="mb-8">
-          <h2 className="mb-4 text-lg font-semibold">
-            3. {t('payment.pay')}
-          </h2>
+          <h2 className="mb-4 text-lg font-semibold">3. {t('payment.pay')}</h2>
 
           {selectedProvider?.needsPhone && (
             <div className="mb-4 space-y-2">
@@ -275,19 +271,14 @@ export default function PayPage() {
 
           <div className="mb-4 rounded-lg bg-muted/50 p-4 text-sm">
             <div className="flex justify-between">
-              <span>{t('payment.planProfessional')} ({t(plan.labelKey)})</span>
-              <span className="font-semibold">
-                {plan.priceXOF.toLocaleString()} XOF
+              <span>
+                {t('payment.planProfessional')} ({t(plan.labelKey)})
               </span>
+              <span className="font-semibold">{plan.priceXOF.toLocaleString()} XOF</span>
             </div>
           </div>
 
-          <Button
-            size="lg"
-            className="w-full gap-2"
-            onClick={handleSubmit}
-            disabled={isLoading}
-          >
+          <Button size="lg" className="w-full gap-2" onClick={handleSubmit} disabled={isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />

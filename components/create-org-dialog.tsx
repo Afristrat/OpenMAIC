@@ -17,14 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
-const SECTORS = [
-  'healthcare',
-  'legal',
-  'tech',
-  'finance',
-  'education',
-  'industry',
-] as const;
+const SECTORS = ['healthcare', 'legal', 'tech', 'finance', 'education', 'industry'] as const;
 
 type SectorValue = (typeof SECTORS)[number];
 
@@ -136,9 +129,7 @@ export function CreateOrgDialog({ collapsed = false }: CreateOrgDialogProps): Re
           </div>
 
           {/* Error */}
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
+          {error && <p className="text-sm text-destructive">{error}</p>}
 
           <DialogFooter>
             <Button

@@ -138,9 +138,7 @@ export default function ReportsPage() {
       }
 
       const params = new URLSearchParams({ dateFrom, dateTo });
-      const res = await fetch(
-        `/api/organizations/${orgId}/reports?${params.toString()}`,
-      );
+      const res = await fetch(`/api/organizations/${orgId}/reports?${params.toString()}`);
 
       if (!res.ok) {
         toast.error('Failed to load report');
@@ -164,9 +162,10 @@ export default function ReportsPage() {
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleExportCsv = useCallback(async () => {
-    const range = datePreset === 'custom' && customFrom && customTo
-      ? { from: new Date(customFrom).toISOString(), to: new Date(customTo).toISOString() }
-      : getDateRange(datePreset);
+    const range =
+      datePreset === 'custom' && customFrom && customTo
+        ? { from: new Date(customFrom).toISOString(), to: new Date(customTo).toISOString() }
+        : getDateRange(datePreset);
 
     const params = new URLSearchParams({
       dateFrom: range.from,
@@ -174,9 +173,7 @@ export default function ReportsPage() {
       format: 'csv',
     });
 
-    const res = await fetch(
-      `/api/organizations/${orgId}/reports?${params.toString()}`,
-    );
+    const res = await fetch(`/api/organizations/${orgId}/reports?${params.toString()}`);
 
     if (!res.ok) {
       toast.error('Export failed');
@@ -208,11 +205,7 @@ export default function ReportsPage() {
     <div className="mx-auto max-w-6xl px-4 py-8 print:px-0">
       {/* Header */}
       <div className="mb-8 flex items-center gap-4 print:hidden">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.push(`/org/${orgId}/admin`)}
-        >
+        <Button variant="ghost" size="icon" onClick={() => router.push(`/org/${orgId}/admin`)}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex items-center gap-3">
@@ -222,19 +215,14 @@ export default function ReportsPage() {
       </div>
 
       {/* Print-only header */}
-      <h1 className="mb-6 hidden text-2xl font-bold print:block">
-        {t('reports.title')}
-      </h1>
+      <h1 className="mb-6 hidden text-2xl font-bold print:block">{t('reports.title')}</h1>
 
       {/* Date Range Controls */}
       <div className="mb-6 flex flex-wrap items-center gap-3 print:hidden">
         <span className="text-sm font-medium text-muted-foreground">
           {t('reports.dateRange')} :
         </span>
-        <Select
-          value={datePreset}
-          onValueChange={(v) => setDatePreset(v as DatePreset)}
-        >
+        <Select value={datePreset} onValueChange={(v) => setDatePreset(v as DatePreset)}>
           <SelectTrigger className="w-40">
             <SelectValue />
           </SelectTrigger>
@@ -314,42 +302,21 @@ export default function ReportsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  <th className="px-4 py-3 text-left font-medium">
-                    {t('reports.learnerName')}
-                  </th>
-                  <th className="px-4 py-3 text-right font-medium">
-                    {t('reports.completed')}
-                  </th>
-                  <th className="px-4 py-3 text-right font-medium">
-                    {t('reports.avgScoreCol')}
-                  </th>
-                  <th className="px-4 py-3 text-right font-medium">
-                    {t('reports.timeSpent')}
-                  </th>
-                  <th className="px-4 py-3 text-right font-medium">
-                    {t('reports.lastActive')}
-                  </th>
+                  <th className="px-4 py-3 text-left font-medium">{t('reports.learnerName')}</th>
+                  <th className="px-4 py-3 text-right font-medium">{t('reports.completed')}</th>
+                  <th className="px-4 py-3 text-right font-medium">{t('reports.avgScoreCol')}</th>
+                  <th className="px-4 py-3 text-right font-medium">{t('reports.timeSpent')}</th>
+                  <th className="px-4 py-3 text-right font-medium">{t('reports.lastActive')}</th>
                 </tr>
               </thead>
               <tbody>
                 {learners.map((l) => (
-                  <tr
-                    key={l.user_id}
-                    className="border-b last:border-b-0 hover:bg-muted/30"
-                  >
+                  <tr key={l.user_id} className="border-b last:border-b-0 hover:bg-muted/30">
                     <td className="px-4 py-3 font-medium">{l.nickname}</td>
-                    <td className="px-4 py-3 text-right">
-                      {l.classrooms_completed}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      {l.avg_score.toFixed(1)}%
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      {formatDuration(l.time_spent)}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      {formatDate(l.last_active)}
-                    </td>
+                    <td className="px-4 py-3 text-right">{l.classrooms_completed}</td>
+                    <td className="px-4 py-3 text-right">{l.avg_score.toFixed(1)}%</td>
+                    <td className="px-4 py-3 text-right">{formatDuration(l.time_spent)}</td>
+                    <td className="px-4 py-3 text-right">{formatDate(l.last_active)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -371,15 +338,9 @@ export default function ReportsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  <th className="px-4 py-3 text-left font-medium">
-                    Formation
-                  </th>
-                  <th className="px-4 py-3 text-right font-medium">
-                    {t('reports.totalLearners')}
-                  </th>
-                  <th className="px-4 py-3 text-right font-medium">
-                    {t('reports.avgScoreCol')}
-                  </th>
+                  <th className="px-4 py-3 text-left font-medium">Formation</th>
+                  <th className="px-4 py-3 text-right font-medium">{t('reports.totalLearners')}</th>
+                  <th className="px-4 py-3 text-right font-medium">{t('reports.avgScoreCol')}</th>
                   <th className="px-4 py-3 text-right font-medium">
                     {t('reports.completionRate')}
                   </th>
@@ -387,20 +348,11 @@ export default function ReportsPage() {
               </thead>
               <tbody>
                 {formations.map((f) => (
-                  <tr
-                    key={f.stage_id}
-                    className="border-b last:border-b-0 hover:bg-muted/30"
-                  >
+                  <tr key={f.stage_id} className="border-b last:border-b-0 hover:bg-muted/30">
                     <td className="px-4 py-3 font-medium">{f.name}</td>
-                    <td className="px-4 py-3 text-right">
-                      {f.learner_count}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      {f.avg_score.toFixed(1)}%
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      {f.completion_rate.toFixed(1)}%
-                    </td>
+                    <td className="px-4 py-3 text-right">{f.learner_count}</td>
+                    <td className="px-4 py-3 text-right">{f.avg_score.toFixed(1)}%</td>
+                    <td className="px-4 py-3 text-right">{f.completion_rate.toFixed(1)}%</td>
                   </tr>
                 ))}
               </tbody>

@@ -11,9 +11,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET(): Promise<NextResponse> {
   const appUrl =
-    process.env.LTI_APP_URL ??
-    process.env.NEXT_PUBLIC_APP_URL ??
-    'http://localhost:3000';
+    process.env.LTI_APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 
   const config = {
     title: 'Qalem',

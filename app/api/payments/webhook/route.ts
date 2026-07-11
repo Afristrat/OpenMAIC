@@ -80,7 +80,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const supabase = getSupabaseAdmin();
     if (supabase && result.transactionId) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Untyped service-role client for payments table
-    const { error: updateError } = await (supabase as any)
+      const { error: updateError } = await (supabase as any)
         .from('payments')
         .update({
           status: result.status,

@@ -27,9 +27,7 @@
       "epic": "i18n FR/AR/EN",
       "phase": 1,
       "passes": true,
-      "dependencies": [
-        "S-001"
-      ],
+      "dependencies": ["S-001"],
       "acceptance": [
         "lib/i18n/types.ts : Locale étendu avec fr-FR | ar-MA",
         "use-i18n.tsx : auto-détection FR et AR",
@@ -45,9 +43,7 @@
       "epic": "i18n FR/AR/EN",
       "phase": 1,
       "passes": true,
-      "dependencies": [
-        "S-002"
-      ],
+      "dependencies": ["S-002"],
       "acceptance": [
         "Clés common.*, home.*, toolbar.*, export.* traduites en fr-FR",
         "Mêmes clés traduites en ar-MA",
@@ -62,9 +58,7 @@
       "epic": "i18n FR/AR/EN",
       "phase": 1,
       "passes": true,
-      "dependencies": [
-        "S-002"
-      ],
+      "dependencies": ["S-002"],
       "acceptance": [
         "Clés chat.*, actions.*, agentBar.*, proactiveCard.*, voice.* traduites en fr-FR et ar-MA",
         "Noms d'actions (spotlight, laser, whiteboard) traduits naturellement"
@@ -77,9 +71,7 @@
       "epic": "i18n FR/AR/EN",
       "phase": 1,
       "passes": true,
-      "dependencies": [
-        "S-002"
-      ],
+      "dependencies": ["S-002"],
       "acceptance": [
         "Clés classroom.*, upload.*, generation.* traduites en fr-FR et ar-MA",
         "Messages de progression traduits naturellement"
@@ -92,9 +84,7 @@
       "epic": "i18n FR/AR/EN",
       "phase": 1,
       "passes": true,
-      "dependencies": [
-        "S-002"
-      ],
+      "dependencies": ["S-002"],
       "acceptance": [
         "500+ lignes de clés settings traduites en fr-FR et ar-MA",
         "Noms de providers restent en anglais",
@@ -109,9 +99,7 @@
       "epic": "i18n FR/AR/EN",
       "phase": 1,
       "passes": true,
-      "dependencies": [
-        "S-002"
-      ],
+      "dependencies": ["S-002"],
       "acceptance": [
         "Clés stage.*, whiteboard.*, quiz.*, roundtable.*, pbl.*, share.* traduites en fr-FR et ar-MA"
       ],
@@ -123,9 +111,7 @@
       "epic": "i18n FR/AR/EN",
       "phase": 1,
       "passes": true,
-      "dependencies": [
-        "S-002"
-      ],
+      "dependencies": ["S-002"],
       "acceptance": [
         "6 agents par défaut traduits selon la locale active",
         "AI teacher → Professeur IA / أستاذ الذكاء الاصطناعي",
@@ -143,9 +129,7 @@
       "epic": "i18n FR/AR/EN",
       "phase": 1,
       "passes": true,
-      "dependencies": [
-        "S-002"
-      ],
+      "dependencies": ["S-002"],
       "acceptance": [
         "layout.tsx : dir dynamique (rtl pour ar-MA, ltr sinon)",
         "globals.css : styles RTL pour sidebar, chat, navigation",
@@ -162,9 +146,7 @@
       "epic": "i18n FR/AR/EN",
       "phase": 1,
       "passes": true,
-      "dependencies": [
-        "S-002"
-      ],
+      "dependencies": ["S-002"],
       "acceptance": [
         "Tous les prompts system.md ont instruction de langue",
         "Variable {{language}} injectée via interpolateVariables()",
@@ -179,9 +161,7 @@
       "epic": "TTS Voix naturelles",
       "phase": 1,
       "passes": true,
-      "dependencies": [
-        "S-002"
-      ],
+      "dependencies": ["S-002"],
       "acceptance": [
         "constants.ts : 4+ voix FR (2H, 2F) ajoutées à ElevenLabs",
         "constants.ts : 3+ voix AR (dont Ghizlane Darija) ajoutées",
@@ -247,10 +227,7 @@
       "epic": "TTS Voix naturelles",
       "phase": 1,
       "passes": true,
-      "dependencies": [
-        "S-011",
-        "S-012"
-      ],
+      "dependencies": ["S-011", "S-012"],
       "acceptance": [
         "resolveAgentVoice() prend en compte la locale",
         "Voix filtrées par tag de langue avant assignation",
@@ -281,9 +258,7 @@
       "epic": "MCP Octopus",
       "phase": 1,
       "passes": true,
-      "dependencies": [
-        "S-001"
-      ],
+      "dependencies": ["S-001"],
       "acceptance": [
         "lib/mcp/server.ts : MCP Server via @modelcontextprotocol/sdk",
         "Tool generate_classroom (topic, level, language → classroom ID + URL)",
@@ -301,9 +276,7 @@
       "epic": "MCP Octopus",
       "phase": 1,
       "passes": true,
-      "dependencies": [
-        "S-017"
-      ],
+      "dependencies": ["S-017"],
       "acceptance": [
         "lib/mcp/client.ts : MCP Client via SDK",
         "Config serveurs via mcp-servers.yml",
@@ -320,9 +293,7 @@
       "epic": "MCP Octopus",
       "phase": 1,
       "passes": true,
-      "dependencies": [
-        "S-018"
-      ],
+      "dependencies": ["S-018"],
       "acceptance": [
         "Config serveur MCP NotebookLM dans mcp-servers.yml",
         "Agents peuvent appeler search_notebook(query)",
@@ -338,9 +309,7 @@
       "epic": "MCP Octopus",
       "phase": 1,
       "passes": true,
-      "dependencies": [
-        "S-018"
-      ],
+      "dependencies": ["S-018"],
       "acceptance": [
         "Config serveur MCP Notion dans mcp-servers.yml",
         "search_notion(query) disponible",
@@ -356,9 +325,7 @@
       "epic": "MCP Octopus",
       "phase": 1,
       "passes": true,
-      "dependencies": [
-        "S-018"
-      ],
+      "dependencies": ["S-018"],
       "acceptance": [
         "Config serveur MCP Google Drive dans mcp-servers.yml",
         "search_drive(query) disponible",
@@ -374,9 +341,7 @@
       "epic": "Backend Supabase",
       "phase": 2,
       "passes": true,
-      "dependencies": [
-        "S-001"
-      ],
+      "dependencies": ["S-001"],
       "acceptance": [
         "supabase init",
         "Migration SQL : users, organizations, org_members, stages, scenes, quiz_results, agent_configs",
@@ -394,9 +359,7 @@
       "epic": "Backend Supabase",
       "phase": 2,
       "passes": true,
-      "dependencies": [
-        "S-022"
-      ],
+      "dependencies": ["S-022"],
       "acceptance": [
         "supabase-provider.ts : StorageProvider pour Supabase",
         "Sync bidirectionnelle IndexedDB ↔ Supabase",
@@ -413,9 +376,7 @@
       "epic": "Backend Supabase",
       "phase": 2,
       "passes": true,
-      "dependencies": [
-        "S-022"
-      ],
+      "dependencies": ["S-022"],
       "acceptance": [
         "app/auth/page.tsx : page connexion/inscription",
         "Email + mot de passe",
@@ -433,9 +394,7 @@
       "epic": "Forgetting Curve Killer",
       "phase": 2,
       "passes": true,
-      "dependencies": [
-        "S-022"
-      ],
+      "dependencies": ["S-022"],
       "acceptance": [
         "lib/spaced-repetition/extractor.ts",
         "Items ratés/hésitants extraits après chaque quiz",
@@ -450,9 +409,7 @@
       "epic": "Forgetting Curve Killer",
       "phase": 2,
       "passes": true,
-      "dependencies": [
-        "S-025"
-      ],
+      "dependencies": ["S-025"],
       "acceptance": [
         "lib/spaced-repetition/fsrs.ts : algorithme FSRS",
         "Paramètres FSRS personnalisés par utilisateur",
@@ -468,9 +425,7 @@
       "epic": "Forgetting Curve Killer",
       "phase": 2,
       "passes": true,
-      "dependencies": [
-        "S-026"
-      ],
+      "dependencies": ["S-026"],
       "acceptance": [
         "app/review/page.tsx",
         "Cartes dues avec compteur total",
@@ -488,9 +443,7 @@
       "epic": "Forgetting Curve Killer",
       "phase": 2,
       "passes": true,
-      "dependencies": [
-        "S-027"
-      ],
+      "dependencies": ["S-027"],
       "acceptance": [
         "lib/notifications/ : module multi-canal",
         "Email via Supabase Edge Functions (templates FR/AR/EN)",
@@ -508,9 +461,7 @@
       "epic": "Skills System",
       "phase": 2,
       "passes": true,
-      "dependencies": [
-        "S-001"
-      ],
+      "dependencies": ["S-001"],
       "acceptance": [
         "lib/skills/types.ts : interface Skill",
         "lib/skills/registry.ts : registry CRUD",
@@ -526,9 +477,7 @@
       "epic": "Skills System",
       "phase": 2,
       "passes": true,
-      "dependencies": [
-        "S-029"
-      ],
+      "dependencies": ["S-029"],
       "acceptance": [
         "skills/medical-training/manifest.json",
         "Agents : Dr. Expert, Patient Simulé, Infirmier Observateur",
@@ -544,9 +493,7 @@
       "epic": "Skills System",
       "phase": 2,
       "passes": true,
-      "dependencies": [
-        "S-029"
-      ],
+      "dependencies": ["S-029"],
       "acceptance": [
         "skills/legal-moot-court/manifest.json",
         "Agents : Juge, Avocat défense, Procureur, Greffier",
@@ -562,9 +509,7 @@
       "epic": "Skills System",
       "phase": 2,
       "passes": true,
-      "dependencies": [
-        "S-029"
-      ],
+      "dependencies": ["S-029"],
       "acceptance": [
         "skills/coding-workshop/manifest.json",
         "Agents : Senior Dev, Code Reviewer, Junior Curieux",
@@ -580,9 +525,7 @@
       "epic": "LTI Trojan Horse",
       "phase": 3,
       "passes": true,
-      "dependencies": [
-        "S-022"
-      ],
+      "dependencies": ["S-022"],
       "acceptance": [
         "app/api/lti/launch/route.ts",
         "app/api/lti/jwks/route.ts",
@@ -600,9 +543,7 @@
       "epic": "LTI Trojan Horse",
       "phase": 3,
       "passes": true,
-      "dependencies": [
-        "S-033"
-      ],
+      "dependencies": ["S-033"],
       "acceptance": [
         "lib/lti/grade-service.ts : client LTI AGS",
         "Score envoyé au LMS après chaque quiz",
@@ -618,9 +559,7 @@
       "epic": "LTI Trojan Horse",
       "phase": 3,
       "passes": true,
-      "dependencies": [
-        "S-022"
-      ],
+      "dependencies": ["S-022"],
       "acceptance": [
         "lib/telemetry/xapi.ts : client xAPI ADL conformant",
         "Statements : quiz tenté/réussi, slide vue, PBL résolu, discussion",
@@ -636,9 +575,7 @@
       "epic": "Pedagogy Genome",
       "phase": 3,
       "passes": true,
-      "dependencies": [
-        "S-022"
-      ],
+      "dependencies": ["S-022"],
       "acceptance": [
         "lib/telemetry/pedagogy-collector.ts",
         "Collecte opt-in : séquences scènes, scores, temps, actions, complétion",
@@ -655,9 +592,7 @@
       "epic": "Pedagogy Genome",
       "phase": 3,
       "passes": true,
-      "dependencies": [
-        "S-036"
-      ],
+      "dependencies": ["S-036"],
       "acceptance": [
         "lib/generation/data-optimizer.ts",
         "Ordonnancement optimal basé sur données historiques",
@@ -673,9 +608,7 @@
       "epic": "Organisations Multi-Tenant",
       "phase": 3,
       "passes": true,
-      "dependencies": [
-        "S-022"
-      ],
+      "dependencies": ["S-022"],
       "acceptance": [
         "Tables : organizations, org_members",
         "Rôles : admin, manager, formateur, apprenant",
@@ -691,9 +624,7 @@
       "epic": "Organisations Multi-Tenant",
       "phase": 3,
       "passes": true,
-      "dependencies": [
-        "S-038"
-      ],
+      "dependencies": ["S-038"],
       "acceptance": [
         "app/org/[orgId]/admin/page.tsx",
         "Gestion membres : inviter, supprimer, changer rôle",
@@ -709,9 +640,7 @@
       "epic": "Organisations Multi-Tenant",
       "phase": 3,
       "passes": true,
-      "dependencies": [
-        "S-038"
-      ],
+      "dependencies": ["S-038"],
       "acceptance": [
         "Table shared_classrooms",
         "Visibilité : privé, organisation, public",
@@ -727,10 +656,7 @@
       "epic": "Organisations Multi-Tenant",
       "phase": 3,
       "passes": true,
-      "dependencies": [
-        "S-038",
-        "S-029"
-      ],
+      "dependencies": ["S-038", "S-029"],
       "acceptance": [
         "Table classroom_templates",
         "Templates par secteur : santé, juridique, tech, finance, éducation, industrie",
@@ -746,10 +672,7 @@
       "epic": "Agent Bazaar",
       "phase": 4,
       "passes": true,
-      "dependencies": [
-        "S-022",
-        "S-038"
-      ],
+      "dependencies": ["S-022", "S-038"],
       "acceptance": [
         "Table published_agents",
         "app/marketplace/agents/page.tsx",
@@ -766,10 +689,7 @@
       "epic": "Agent Bazaar",
       "phase": 4,
       "passes": true,
-      "dependencies": [
-        "S-042",
-        "S-036"
-      ],
+      "dependencies": ["S-042", "S-036"],
       "acceptance": [
         "Quiz scores agrégés par agent",
         "Score composite : quiz × complétion × utilisations",
@@ -801,9 +721,7 @@
       "epic": "Scene Genome Protocol",
       "phase": 4,
       "passes": true,
-      "dependencies": [
-        "S-044"
-      ],
+      "dependencies": ["S-044"],
       "acceptance": [
         "Plugin scène type code-sandbox",
         "Monaco Editor dans iframe",
@@ -819,9 +737,7 @@
       "epic": "Scene Genome Protocol",
       "phase": 4,
       "passes": true,
-      "dependencies": [
-        "S-044"
-      ],
+      "dependencies": ["S-044"],
       "acceptance": [
         "Plugin scène type lab-simulation",
         "Three.js + Cannon.js physique 3D",
@@ -837,9 +753,7 @@
       "epic": "Discussion Fingerprint",
       "phase": 4,
       "passes": true,
-      "dependencies": [
-        "S-036"
-      ],
+      "dependencies": ["S-036"],
       "acceptance": [
         "lib/telemetry/discussion-collector.ts",
         "Données : séquence agents, type intervention, durée, quiz score post-discussion",
@@ -854,9 +768,7 @@
       "epic": "Discussion Fingerprint",
       "phase": 4,
       "passes": true,
-      "dependencies": [
-        "S-047"
-      ],
+      "dependencies": ["S-047"],
       "acceptance": [
         "lib/orchestration/data-driven-director.ts",
         "Director consomme patterns agrégés",
@@ -872,9 +784,7 @@
       "epic": "Institutional Memory",
       "phase": 4,
       "passes": true,
-      "dependencies": [
-        "S-038"
-      ],
+      "dependencies": ["S-038"],
       "acceptance": [
         "Table curriculum_graph",
         "Relations : prerequisite, follows, deepens, reviews",
@@ -890,10 +800,7 @@
       "epic": "Institutional Memory",
       "phase": 4,
       "passes": true,
-      "dependencies": [
-        "S-038",
-        "S-036"
-      ],
+      "dependencies": ["S-038", "S-036"],
       "acceptance": [
         "app/org/[orgId]/reports/page.tsx",
         "Métriques par apprenant : complétion, scores, temps, progression SR",
@@ -909,9 +816,7 @@
       "epic": "Docker Self-Hosted",
       "phase": 3,
       "passes": true,
-      "dependencies": [
-        "S-022"
-      ],
+      "dependencies": ["S-022"],
       "acceptance": [
         "docker-compose.yml : qalem-app, supabase-db, supabase-auth, supabase-realtime, redis, minio",
         "Dockerfile multi-stage Next.js",

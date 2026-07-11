@@ -68,7 +68,9 @@ function loadFromYaml(): MCPServerConfig[] | null {
       return [];
     }
 
-    const configs = parsed.servers.map(normalizeConfig).filter((c): c is MCPServerConfig => c !== null);
+    const configs = parsed.servers
+      .map(normalizeConfig)
+      .filter((c): c is MCPServerConfig => c !== null);
     log.info(`Loaded ${configs.length} MCP server config(s) from mcp-servers.yml`);
     return configs;
   } catch (error) {
@@ -99,7 +101,9 @@ function loadFromEnv(): MCPServerConfig[] | null {
       return [];
     }
 
-    const configs = (parsed as MCPServerConfig[]).map(normalizeConfig).filter((c): c is MCPServerConfig => c !== null);
+    const configs = (parsed as MCPServerConfig[])
+      .map(normalizeConfig)
+      .filter((c): c is MCPServerConfig => c !== null);
     log.info(`Loaded ${configs.length} MCP server config(s) from MCP_SERVERS env var`);
     return configs;
   } catch (error) {

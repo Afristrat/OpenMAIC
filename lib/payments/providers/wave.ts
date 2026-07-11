@@ -138,7 +138,7 @@ export const waveAdapter: PaymentProviderAdapter = {
       provider: 'wave',
       status,
       amount: Number(data['amount'] ?? 0),
-      currency: (String(data['currency'] ?? 'XOF')) as PaymentResult['currency'],
+      currency: String(data['currency'] ?? 'XOF') as PaymentResult['currency'],
       transactionId: String(data['id'] ?? ''),
       createdAt: new Date(),
     };

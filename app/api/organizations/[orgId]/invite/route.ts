@@ -45,9 +45,8 @@ export async function POST(
     if (!validation.success) return validation.response;
     const body = validation.data;
 
-    const role = body.role && VALID_ROLES.includes(body.role as OrgMemberRole)
-      ? body.role
-      : 'apprenant';
+    const role =
+      body.role && VALID_ROLES.includes(body.role as OrgMemberRole) ? body.role : 'apprenant';
     const email = body.email?.trim() || null;
 
     const { data: invitation, error } = await supabase

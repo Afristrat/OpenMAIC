@@ -43,9 +43,9 @@ interface SkillData {
 
 const CATEGORY_EMOJI: Record<string, string> = {
   pedagogy: '\u{1F4D0}', // 📐
-  domain: '\u{1F3E5}',   // 🏥
+  domain: '\u{1F3E5}', // 🏥
   interaction: '\u{1F4AC}', // 💬
-  assessment: '\u{1F4CB}',  // 📋
+  assessment: '\u{1F4CB}', // 📋
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -140,13 +140,9 @@ export default function SkillsPage(): React.ReactElement {
                   <div className="min-w-0 flex-1">
                     <h2 className="text-lg font-semibold leading-tight">{skill.name}</h2>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
-                      <Badge className={cn('text-[10px]', categoryClass)}>
-                        {skill.category}
-                      </Badge>
+                      <Badge className={cn('text-[10px]', categoryClass)}>{skill.category}</Badge>
                       <span className="text-xs text-muted-foreground">v{skill.version}</span>
-                      <span className="text-xs text-muted-foreground">
-                        &mdash; {skill.author}
-                      </span>
+                      <span className="text-xs text-muted-foreground">&mdash; {skill.author}</span>
                     </div>
                   </div>
                 </div>

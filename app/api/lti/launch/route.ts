@@ -56,20 +56,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const platform = await getPlatformConfig(storedClientId);
     if (!platform) {
       log.error(`Platform not found for client_id=${storedClientId}`);
-      return NextResponse.json(
-        { success: false, error: 'Unknown LTI platform' },
-        { status: 403 },
-      );
+      return NextResponse.json({ success: false, error: 'Unknown LTI platform' }, { status: 403 });
     }
 
     // Validate id_token format before decoding / verifying
     const tokenParts = idToken.split('.');
     if (tokenParts.length !== 3) {
       log.warn('Malformed id_token: expected 3 parts, got ' + tokenParts.length);
-      return NextResponse.json(
-        { success: false, error: 'Malformed id_token' },
-        { status: 400 },
-      );
+      return NextResponse.json({ success: false, error: 'Malformed id_token' }, { status: 400 });
     }
 
     // Verify the JWT signature and extract claims
@@ -87,9 +81,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     // Decode JWT to get the nonce claim for verification
     const [, payloadB64] = tokenParts;
-    const tokenPayload = JSON.parse(
-      Buffer.from(payloadB64, 'base64url').toString('utf-8'),
-    ) as { nonce?: string };
+    const tokenPayload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf-8')) as {
+      nonce?: string;
+    };
 
     if (!tokenPayload.nonce) {
       log.warn('Missing nonce in id_token');
@@ -114,9 +108,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     // Build redirect URL to the classroom
     const appUrl =
-      process.env.LTI_APP_URL ??
-      process.env.NEXT_PUBLIC_APP_URL ??
-      'http://localhost:3000';
+      process.env.LTI_APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 
     const redirectParams = new URLSearchParams({
       lti: 'true',
@@ -167,10 +159,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return response;
   } catch (error) {
     log.error('LTI launch error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 },
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -210,24 +199,21 @@ async function provisionUser(launchContext: {
   // Build display name for upsert
   const displayName =
     launchContext.name ??
-    ([launchContext.givenName, launchContext.familyName]
-      .filter(Boolean)
-      .join(' ') || `LTI User ${launchContext.userId.slice(0, 8)}`);
+    ([launchContext.givenName, launchContext.familyName].filter(Boolean).join(' ') ||
+      `LTI User ${launchContext.userId.slice(0, 8)}`);
 
-  const email =
-    launchContext.email ?? `lti-${launchContext.userId}@qalem.local`;
+  const email = launchContext.email ?? `lti-${launchContext.userId}@qalem.local`;
 
   // Try to create the user directly — if a duplicate exists, handle the error
-  const { data: newUser, error: createError } =
-    await supabase.auth.admin.createUser({
-      email,
-      email_confirm: true,
-      user_metadata: {
-        lti_user_id: launchContext.userId,
-        full_name: displayName,
-        is_instructor: isInstructor,
-      },
-    });
+  const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+    email,
+    email_confirm: true,
+    user_metadata: {
+      lti_user_id: launchContext.userId,
+      full_name: displayName,
+      is_instructor: isInstructor,
+    },
+  });
 
   if (createError) {
     // User already exists — look up by email via profiles table
@@ -265,10 +251,7 @@ async function provisionUser(launchContext: {
         const match = usersPage?.users?.find((u) => u.email === email);
         if (match) {
           if (displayName) {
-            await supabase
-              .from('profiles')
-              .update({ nickname: displayName })
-              .eq('id', match.id);
+            await supabase.from('profiles').update({ nickname: displayName }).eq('id', match.id);
           }
           return match.id;
         }
@@ -290,16 +273,12 @@ async function provisionUser(launchContext: {
 
   // The profiles table trigger should auto-create the profile row,
   // but update it with the display name just in case
-  await supabase
-    .from('profiles')
-    .upsert({
-      id: newUser.user.id,
-      nickname: displayName,
-    });
+  await supabase.from('profiles').upsert({
+    id: newUser.user.id,
+    nickname: displayName,
+  });
 
-  log.info(
-    `Provisioned LTI user: ${newUser.user.id} (${displayName}, instructor=${isInstructor})`,
-  );
+  log.info(`Provisioned LTI user: ${newUser.user.id} (${displayName}, instructor=${isInstructor})`);
 
   return newUser.user.id;
 }

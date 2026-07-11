@@ -26,9 +26,10 @@ const DEFAULT_BUCKETS = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10
 export function incrementCounter(name: string, labels: CounterLabels = {}): void {
   if (!counters.has(name)) counters.set(name, []);
   const entries = counters.get(name)!;
-  const existing = entries.find((e) =>
-    Object.keys(labels).every((k) => e.labels[k] === labels[k]) &&
-    Object.keys(e.labels).length === Object.keys(labels).length,
+  const existing = entries.find(
+    (e) =>
+      Object.keys(labels).every((k) => e.labels[k] === labels[k]) &&
+      Object.keys(e.labels).length === Object.keys(labels).length,
   );
   if (existing) {
     existing.value += 1;

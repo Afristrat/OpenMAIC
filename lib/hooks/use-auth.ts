@@ -53,7 +53,8 @@ export function useAuth(): AuthState {
       setIsLoading(false); // Unblock UI after 5s even if Supabase hasn't responded
     }, 5000);
 
-    supabase.auth.getUser()
+    supabase.auth
+      .getUser()
       .then(({ data: { user: currentUser } }) => {
         clearTimeout(timeout);
         setUser(currentUser);

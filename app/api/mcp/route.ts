@@ -19,10 +19,7 @@ function authenticate(req: NextRequest): Response | null {
   if (!apiKey) {
     // In production, refuse to run without auth configured
     if (process.env.NODE_ENV === 'production') {
-      return NextResponse.json(
-        { error: 'MCP endpoint not configured' },
-        { status: 503 },
-      );
+      return NextResponse.json({ error: 'MCP endpoint not configured' }, { status: 503 });
     }
     return null; // Development only: open access when no key is set
   }
@@ -55,10 +52,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     }
 
     if (body.method === 'tools/call') {
-      const result = await callTool(
-        body.params?.name ?? '',
-        body.params?.arguments ?? {},
-      );
+      const result = await callTool(body.params?.name ?? '', body.params?.arguments ?? {});
       return NextResponse.json({ jsonrpc: '2.0', result, id: body.id ?? 1 });
     }
 
@@ -68,10 +62,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    return NextResponse.json(
-      { jsonrpc: '2.0', error: { code: -32603, message } },
-      { status: 500 },
-    );
+    return NextResponse.json({ jsonrpc: '2.0', error: { code: -32603, message } }, { status: 500 });
   }
 }
 

@@ -8,23 +8,9 @@ import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { toast } from 'sonner';
-import {
-  ArrowLeft,
-  BookOpen,
-  Copy,
-  Eye,
-  Library,
-  Search,
-  Share2,
-  User,
-} from 'lucide-react';
+import { ArrowLeft, BookOpen, Copy, Eye, Library, Search, Share2, User } from 'lucide-react';
 import type { OrgMemberRole } from '@/lib/supabase/types';
 
 interface SharedClassroom {
@@ -118,10 +104,13 @@ export default function LibraryPage() {
     }
 
     // Fetch sharer profiles
-    const sharerIds = [...new Set(shared.filter((s) => s.shared_by).map((s) => s.shared_by as string))];
-    const { data: profiles } = sharerIds.length > 0
-      ? await supabase.from('profiles').select('id, nickname').in('id', sharerIds)
-      : { data: [] };
+    const sharerIds = [
+      ...new Set(shared.filter((s) => s.shared_by).map((s) => s.shared_by as string)),
+    ];
+    const { data: profiles } =
+      sharerIds.length > 0
+        ? await supabase.from('profiles').select('id, nickname').in('id', sharerIds)
+        : { data: [] };
 
     const stageMap = new Map((stages ?? []).map((s) => [s.id, s]));
     const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
@@ -131,7 +120,7 @@ export default function LibraryPage() {
       visibility: sc.visibility as SharedClassroom['visibility'],
       stage: stageMap.get(sc.stage_id) ?? undefined,
       scene_count: sceneCounts.get(sc.stage_id) ?? 0,
-      sharer_profile: sc.shared_by ? profileMap.get(sc.shared_by) ?? undefined : undefined,
+      sharer_profile: sc.shared_by ? (profileMap.get(sc.shared_by) ?? undefined) : undefined,
     }));
 
     setClassrooms(enriched);
@@ -241,9 +230,7 @@ export default function LibraryPage() {
                   </span>
                 )}
                 <span>{classroom.scene_count ?? 0} scenes</span>
-                <span>
-                  {new Date(classroom.created_at).toLocaleDateString()}
-                </span>
+                <span>{new Date(classroom.created_at).toLocaleDateString()}</span>
               </div>
 
               <div className="flex items-center gap-2">

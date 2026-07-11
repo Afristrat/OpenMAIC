@@ -19,9 +19,7 @@ const log = createLogger('LTI');
  * Fetch an LTI platform registration by client_id using the Supabase service
  * role client. This runs server-side only.
  */
-export async function getPlatformConfig(
-  clientId: string,
-): Promise<LTIPlatformConfig | null> {
+export async function getPlatformConfig(clientId: string): Promise<LTIPlatformConfig | null> {
   // Dynamic import to avoid pulling Supabase into edge bundles unnecessarily
   const { createClient } = await import('@supabase/supabase-js');
 
@@ -60,9 +58,7 @@ export async function getPlatformConfig(
 /**
  * Fetch an LTI platform registration by issuer URI.
  */
-export async function getPlatformConfigByIssuer(
-  issuer: string,
-): Promise<LTIPlatformConfig | null> {
+export async function getPlatformConfigByIssuer(issuer: string): Promise<LTIPlatformConfig | null> {
   const { createClient } = await import('@supabase/supabase-js');
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -120,9 +116,7 @@ export async function verifyLTIToken(
   // Validate required LTI claims
   const messageType = payload[LTI_CLAIMS.MESSAGE_TYPE] as string | undefined;
   if (messageType !== 'LtiResourceLinkRequest') {
-    throw new Error(
-      `Unsupported LTI message type: ${messageType ?? 'missing'}`,
-    );
+    throw new Error(`Unsupported LTI message type: ${messageType ?? 'missing'}`);
   }
 
   const version = payload[LTI_CLAIMS.VERSION] as string | undefined;
@@ -161,9 +155,7 @@ export async function verifyLTIToken(
     | { lineitem?: string; lineitems?: string; scope?: string[] }
     | undefined;
 
-  const targetLinkUri = payload[LTI_CLAIMS.TARGET_LINK_URI] as
-    | string
-    | undefined;
+  const targetLinkUri = payload[LTI_CLAIMS.TARGET_LINK_URI] as string | undefined;
 
   return {
     userId: payload.sub ?? '',
@@ -190,10 +182,7 @@ export async function verifyLTIToken(
 /**
  * Store a nonce in Supabase with a 10-minute expiry for replay protection.
  */
-export async function storeNonce(
-  nonce: string,
-  clientId: string,
-): Promise<void> {
+export async function storeNonce(nonce: string, clientId: string): Promise<void> {
   const { createClient } = await import('@supabase/supabase-js');
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -223,10 +212,7 @@ export async function storeNonce(
  * Consume a nonce — marks it as used and returns true if it was valid.
  * Returns false if the nonce was already consumed, expired, or not found.
  */
-export async function consumeNonce(
-  nonce: string,
-  clientId: string,
-): Promise<boolean> {
+export async function consumeNonce(nonce: string, clientId: string): Promise<boolean> {
   const { createClient } = await import('@supabase/supabase-js');
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

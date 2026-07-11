@@ -23,7 +23,17 @@
       "avatar": "⚖️",
       "color": "#7C3AED",
       "priority": 9,
-      "allowedActions": ["spotlight", "laser", "play_video", "wb_open", "wb_close", "wb_draw_text", "wb_draw_shape", "wb_draw_table", "wb_clear"]
+      "allowedActions": [
+        "spotlight",
+        "laser",
+        "play_video",
+        "wb_open",
+        "wb_close",
+        "wb_draw_text",
+        "wb_draw_shape",
+        "wb_draw_table",
+        "wb_clear"
+      ]
     },
     {
       "id": "legal-avocat-defense",

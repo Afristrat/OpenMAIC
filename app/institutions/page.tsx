@@ -61,7 +61,7 @@ const orgFeatures = [
   {
     icon: GraduationCap,
     title: 'Parcours curriculaires',
-    desc: "Organisez les formations en parcours structur\u00e9s avec pr\u00e9requis et progression guid\u00e9e.",
+    desc: 'Organisez les formations en parcours structur\u00e9s avec pr\u00e9requis et progression guid\u00e9e.',
   },
 ];
 
@@ -115,8 +115,8 @@ export default function InstitutionsPage(): React.ReactElement {
             Int&eacute;gration LTI 1.3 en 4 &eacute;tapes
           </h2>
           <p className="text-muted-foreground text-lg mb-12 max-w-2xl">
-            Compatible Moodle, Canvas, Blackboard et tout LMS certifi&eacute; LTI 1.3.
-            Z&eacute;ro changement de workflow pour vos formateurs.
+            Compatible Moodle, Canvas, Blackboard et tout LMS certifi&eacute; LTI 1.3. Z&eacute;ro
+            changement de workflow pour vos formateurs.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {ltiSteps.map((item) => (
@@ -214,7 +214,8 @@ export default function InstitutionsPage(): React.ReactElement {
             Pr&ecirc;t &agrave; transformer votre institution ?
           </h2>
           <p className="text-muted-foreground text-lg mb-8">
-            Pilote gratuit de 30 jours. D&eacute;ploiement accompagn&eacute;. Support d&eacute;di&eacute;.
+            Pilote gratuit de 30 jours. D&eacute;ploiement accompagn&eacute;. Support
+            d&eacute;di&eacute;.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a

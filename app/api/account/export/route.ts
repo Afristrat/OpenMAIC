@@ -41,10 +41,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const supabase = getSupabaseAdmin();
 
   if (!supabase) {
-    return NextResponse.json(
-      { error: 'Database not configured' },
-      { status: 503 },
-    );
+    return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
   }
 
   try {
@@ -56,10 +53,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     for (const [table, column] of TABLES_TO_EXPORT) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Untyped service-role client for dynamic table access
-      const { data, error } = await (supabase as any)
-        .from(table)
-        .select('*')
-        .eq(column, userId);
+      const { data, error } = await (supabase as any).from(table).select('*').eq(column, userId);
 
       if (error) {
         // Table may not exist — skip gracefully

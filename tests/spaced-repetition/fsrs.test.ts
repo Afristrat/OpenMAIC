@@ -242,10 +242,8 @@ describe('getNextReviewDate — edge cases', () => {
     const strictResult = getNextReviewDate(card, 3, strict);
 
     // Same stability, but loose retention → longer interval
-    const looseDays =
-      (looseResult.nextReview.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
-    const strictDays =
-      (strictResult.nextReview.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+    const looseDays = (looseResult.nextReview.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+    const strictDays = (strictResult.nextReview.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
 
     expect(looseDays).toBeGreaterThan(strictDays);
   });

@@ -19,16 +19,16 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     // Resolve localized name/description for skills that use i18n objects
     const name =
       typeof skill.name === 'object'
-        ? (skill.name as unknown as Record<string, string>)[locale] ??
+        ? ((skill.name as unknown as Record<string, string>)[locale] ??
           Object.values(skill.name as unknown as Record<string, string>)[0] ??
-          skill.id
+          skill.id)
         : skill.name;
 
     const description =
       typeof skill.description === 'object'
-        ? (skill.description as unknown as Record<string, string>)[locale] ??
+        ? ((skill.description as unknown as Record<string, string>)[locale] ??
           Object.values(skill.description as unknown as Record<string, string>)[0] ??
-          ''
+          '')
         : skill.description;
 
     return {
@@ -47,7 +47,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         role: a.role,
         avatar: a.avatar,
         color: a.color,
-        personaPreview: a.localizedPersona.slice(0, 120) + (a.localizedPersona.length > 120 ? '...' : ''),
+        personaPreview:
+          a.localizedPersona.slice(0, 120) + (a.localizedPersona.length > 120 ? '...' : ''),
       })),
       templates: templates.map((t) => ({
         id: t.id,

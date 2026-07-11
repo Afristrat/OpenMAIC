@@ -109,9 +109,7 @@ export function TemplateSelector({ onSelect, sectorFilter }: TemplateSelectorPro
       <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{t('org.templates')}</DialogTitle>
-          <DialogDescription className="sr-only">
-            {t('org.templates')}
-          </DialogDescription>
+          <DialogDescription className="sr-only">{t('org.templates')}</DialogDescription>
         </DialogHeader>
 
         {isLoading ? (
@@ -138,9 +136,7 @@ export function TemplateSelector({ onSelect, sectorFilter }: TemplateSelectorPro
                       >
                         <div className="mb-2 flex items-start justify-between">
                           <h4 className="font-medium leading-tight">{tpl.name}</h4>
-                          <Badge
-                            className={`ml-2 shrink-0 text-xs ${SECTOR_COLORS[sector] ?? ''}`}
-                          >
+                          <Badge className={`ml-2 shrink-0 text-xs ${SECTOR_COLORS[sector] ?? ''}`}>
                             {tpl.language}
                           </Badge>
                         </div>

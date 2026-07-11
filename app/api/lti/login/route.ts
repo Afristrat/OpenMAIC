@@ -10,11 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createLogger } from '@/lib/logger';
-import {
-  getPlatformConfig,
-  getPlatformConfigByIssuer,
-  storeNonce,
-} from '@/lib/lti';
+import { getPlatformConfig, getPlatformConfigByIssuer, storeNonce } from '@/lib/lti';
 
 const log = createLogger('LTI-Login');
 
@@ -37,7 +33,8 @@ async function handleLoginInitiation(req: NextRequest): Promise<NextResponse> {
     const ltiDeploymentId = params.get('lti_deployment_id');
 
     // Validate target_link_uri against allowed app URL
-    const appUrl = process.env.LTI_APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const appUrl =
+      process.env.LTI_APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     if (targetLinkUri && !targetLinkUri.startsWith(appUrl)) {
       return NextResponse.json({ error: 'Invalid target_link_uri' }, { status: 400 });
     }
@@ -55,9 +52,7 @@ async function handleLoginInitiation(req: NextRequest): Promise<NextResponse> {
     }
 
     // Look up the platform config — by client_id first, then by issuer
-    let platform = clientId
-      ? await getPlatformConfig(clientId)
-      : null;
+    let platform = clientId ? await getPlatformConfig(clientId) : null;
 
     if (!platform) {
       platform = await getPlatformConfigByIssuer(iss);
@@ -65,10 +60,7 @@ async function handleLoginInitiation(req: NextRequest): Promise<NextResponse> {
 
     if (!platform) {
       log.warn(`Unknown LTI platform: iss=${iss}, client_id=${clientId}`);
-      return NextResponse.json(
-        { success: false, error: 'Unknown LTI platform' },
-        { status: 403 },
-      );
+      return NextResponse.json({ success: false, error: 'Unknown LTI platform' }, { status: 403 });
     }
 
     // Generate nonce and state
@@ -125,10 +117,7 @@ async function handleLoginInitiation(req: NextRequest): Promise<NextResponse> {
     return response;
   } catch (error) {
     log.error('OIDC login initiation failed:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 },
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 

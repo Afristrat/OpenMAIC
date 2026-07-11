@@ -70,10 +70,9 @@ export function startAllWorkers(): void {
 
       // TODO: delegate to lib/generation/pipeline-runner.ts once it exposes
       // a non-streaming entrypoint. For now, log and succeed.
-      log.info(
-        `Processing job ${job.id} for user=${userId} stage=${stageId}`,
-        { requirementsKeys: requirements ? Object.keys(requirements as Record<string, unknown>) : [] },
-      );
+      log.info(`Processing job ${job.id} for user=${userId} stage=${stageId}`, {
+        requirementsKeys: requirements ? Object.keys(requirements as Record<string, unknown>) : [],
+      });
 
       incrementCounter('qalem_jobs_processed_total', { queue: 'classroom-generation' });
     },
@@ -91,9 +90,7 @@ export function startAllWorkers(): void {
 
       // TODO: iterate actions and call generateTTS() from lib/audio/tts-providers.ts
       // with cache integration from lib/audio/tts-cache.ts.
-      log.info(
-        `Processing ${actions.length} TTS actions for stage=${stageId} (job ${job.id})`,
-      );
+      log.info(`Processing ${actions.length} TTS actions for stage=${stageId} (job ${job.id})`);
 
       incrementCounter('qalem_jobs_processed_total', { queue: 'tts-batch' });
     },
@@ -112,9 +109,7 @@ export function startAllWorkers(): void {
 
       // TODO: delegate to a notification service (email via Resend/SES,
       // push via Web Push, WhatsApp via Evolution API).
-      log.info(
-        `Sending ${type} to user=${userId} via ${channels.join(', ')} (job ${job.id})`,
-      );
+      log.info(`Sending ${type} to user=${userId} via ${channels.join(', ')} (job ${job.id})`);
 
       incrementCounter('qalem_jobs_processed_total', { queue: 'notifications' });
     },
@@ -131,10 +126,7 @@ export function startAllWorkers(): void {
       // - 'xapi' → xAPI LRS endpoint
       // - 'pedagogy' → Supabase analytics table
       // - 'discussion' → Supabase analytics table
-      log.info(
-        `Processing ${type} telemetry (job ${job.id})`,
-        { payloadType: typeof payload },
-      );
+      log.info(`Processing ${type} telemetry (job ${job.id})`, { payloadType: typeof payload });
 
       incrementCounter('qalem_jobs_processed_total', { queue: 'telemetry' });
     },
@@ -152,9 +144,7 @@ export function startAllWorkers(): void {
     });
   }
 
-  log.info(
-    `Started ${workers.length} BullMQ workers: ${workers.map((w) => w.name).join(', ')}`,
-  );
+  log.info(`Started ${workers.length} BullMQ workers: ${workers.map((w) => w.name).join(', ')}`);
 }
 
 /**

@@ -54,10 +54,7 @@ export function isTopAgent(score: number, allScores: number[]): boolean {
  * Fetch top agents for a given category (tag) from the client side.
  * Returns ranked agents sorted by composite score descending.
  */
-export async function getTopAgents(
-  category: string,
-  limit: number,
-): Promise<RankedAgent[]> {
+export async function getTopAgents(category: string, limit: number): Promise<RankedAgent[]> {
   const supabase = tryCreateClient();
   if (!supabase) return [];
 

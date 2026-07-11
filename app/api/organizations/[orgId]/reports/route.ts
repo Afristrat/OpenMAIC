@@ -93,7 +93,10 @@ export async function GET(
   const dateTo = url.searchParams.get('dateTo');
   const format = url.searchParams.get('format') ?? 'json';
   const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1', 10));
-  const perPage = Math.min(500, Math.max(1, parseInt(url.searchParams.get('perPage') ?? '100', 10)));
+  const perPage = Math.min(
+    500,
+    Math.max(1, parseInt(url.searchParams.get('perPage') ?? '100', 10)),
+  );
 
   // 1. Get org members (apprenants)
   const { data: members } = await supabase
@@ -101,9 +104,7 @@ export async function GET(
     .select('user_id, role')
     .eq('org_id', orgId);
 
-  const learnerIds = (members ?? [])
-    .filter((m) => m.role === 'apprenant')
-    .map((m) => m.user_id);
+  const learnerIds = (members ?? []).filter((m) => m.role === 'apprenant').map((m) => m.user_id);
 
   const allMemberIds = (members ?? []).map((m) => m.user_id);
 
@@ -116,27 +117,19 @@ export async function GET(
   const orgStageIds = (sharedClassrooms ?? []).map((sc) => sc.stage_id);
 
   // Also get stages owned by the org
-  const { data: ownedStages } = await supabase
-    .from('stages')
-    .select('id')
-    .eq('org_id', orgId);
+  const { data: ownedStages } = await supabase.from('stages').select('id').eq('org_id', orgId);
 
   const allStageIds = [...new Set([...orgStageIds, ...(ownedStages ?? []).map((s) => s.id)])];
 
   // 3. Get stage details
   let stageMap: Record<string, string> = {};
   if (allStageIds.length > 0) {
-    const { data: stages } = await supabase
-      .from('stages')
-      .select('id, name')
-      .in('id', allStageIds);
+    const { data: stages } = await supabase.from('stages').select('id, name').in('id', allStageIds);
     stageMap = Object.fromEntries((stages ?? []).map((s) => [s.id, s.name]));
   }
 
   // 4. Fetch quiz results for these stages in the date range
-  let quizQuery = supabase
-    .from('quiz_results')
-    .select('*');
+  let quizQuery = supabase.from('quiz_results').select('*');
 
   if (allStageIds.length > 0) {
     quizQuery = quizQuery.in('stage_id', allStageIds);
@@ -151,9 +144,7 @@ export async function GET(
   const { data: quizResults } = await quizQuery.limit(10000);
 
   // 5. Fetch telemetry data
-  let telemetryQuery = supabase
-    .from('pedagogy_telemetry')
-    .select('*');
+  let telemetryQuery = supabase.from('pedagogy_telemetry').select('*');
 
   if (allStageIds.length > 0) {
     telemetryQuery = telemetryQuery.in('stage_id', allStageIds);
@@ -185,54 +176,41 @@ export async function GET(
   const activeClassrooms = allStageIds.length;
 
   // Average score across all quiz results
-  const scores = (quizResults ?? [])
-    .map((qr) => qr.score)
-    .filter((s): s is number => s !== null);
-  const avgScore = scores.length > 0
-    ? scores.reduce((a, b) => a + b, 0) / scores.length
-    : 0;
+  const scores = (quizResults ?? []).map((qr) => qr.score).filter((s): s is number => s !== null);
+  const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
 
   // Completion rate from telemetry
   const completionRates = (telemetry ?? [])
     .map((t) => t.completion_rate)
     .filter((c): c is number => c !== null);
-  const overallCompletionRate = completionRates.length > 0
-    ? completionRates.reduce((a, b) => a + b, 0) / completionRates.length
-    : 0;
+  const overallCompletionRate =
+    completionRates.length > 0
+      ? completionRates.reduce((a, b) => a + b, 0) / completionRates.length
+      : 0;
 
   // Per-learner stats
   const learnerStats: LearnerRow[] = learnerIds.map((uid) => {
     const userQuizzes = (quizResults ?? []).filter((qr) => qr.user_id === uid);
-    const userScores = userQuizzes
-      .map((qr) => qr.score)
-      .filter((s): s is number => s !== null);
+    const userScores = userQuizzes.map((qr) => qr.score).filter((s): s is number => s !== null);
     const completedStages = new Set(userQuizzes.map((qr) => qr.stage_id)).size;
 
     // Time from telemetry (approximate via user_hash — imperfect but best available)
-    const userTelemetry = (telemetry ?? []).filter(
-      (t) => t.user_hash === uid,
-    );
-    const totalDuration = userTelemetry.reduce(
-      (sum, t) => sum + (t.total_duration ?? 0),
-      0,
-    );
+    const userTelemetry = (telemetry ?? []).filter((t) => t.user_hash === uid);
+    const totalDuration = userTelemetry.reduce((sum, t) => sum + (t.total_duration ?? 0), 0);
 
-    const lastQuiz = userQuizzes.length > 0
-      ? userQuizzes.sort(
-          (a, b) =>
-            new Date(b.completed_at).getTime() -
-            new Date(a.completed_at).getTime(),
-        )[0].completed_at
-      : '';
+    const lastQuiz =
+      userQuizzes.length > 0
+        ? userQuizzes.sort(
+            (a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime(),
+          )[0].completed_at
+        : '';
 
     return {
       user_id: uid,
       nickname: profileMap[uid] ?? uid.slice(0, 8),
       classrooms_completed: completedStages,
       avg_score:
-        userScores.length > 0
-          ? userScores.reduce((a, b) => a + b, 0) / userScores.length
-          : 0,
+        userScores.length > 0 ? userScores.reduce((a, b) => a + b, 0) / userScores.length : 0,
       time_spent: Math.round(totalDuration),
       last_active: lastQuiz,
     };
@@ -240,17 +218,11 @@ export async function GET(
 
   // Per-formation stats
   const formationStats: FormationRow[] = allStageIds.map((stageId) => {
-    const stageQuizzes = (quizResults ?? []).filter(
-      (qr) => qr.stage_id === stageId,
-    );
-    const stageScores = stageQuizzes
-      .map((qr) => qr.score)
-      .filter((s): s is number => s !== null);
+    const stageQuizzes = (quizResults ?? []).filter((qr) => qr.stage_id === stageId);
+    const stageScores = stageQuizzes.map((qr) => qr.score).filter((s): s is number => s !== null);
     const uniqueLearners = new Set(stageQuizzes.map((qr) => qr.user_id)).size;
 
-    const stageTelemetry = (telemetry ?? []).filter(
-      (t) => t.stage_id === stageId,
-    );
+    const stageTelemetry = (telemetry ?? []).filter((t) => t.stage_id === stageId);
     const stageCompletions = stageTelemetry
       .map((t) => t.completion_rate)
       .filter((c): c is number => c !== null);
@@ -260,13 +232,10 @@ export async function GET(
       name: stageMap[stageId] ?? stageId,
       learner_count: uniqueLearners,
       avg_score:
-        stageScores.length > 0
-          ? stageScores.reduce((a, b) => a + b, 0) / stageScores.length
-          : 0,
+        stageScores.length > 0 ? stageScores.reduce((a, b) => a + b, 0) / stageScores.length : 0,
       completion_rate:
         stageCompletions.length > 0
-          ? stageCompletions.reduce((a, b) => a + b, 0) /
-            stageCompletions.length
+          ? stageCompletions.reduce((a, b) => a + b, 0) / stageCompletions.length
           : 0,
     };
   });

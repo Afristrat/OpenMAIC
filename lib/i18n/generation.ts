@@ -137,7 +137,7 @@ export const generationEnUS = {
 export const generationFrFR = {
   classroom: {
     recentClassrooms: 'Récents',
-    today: "Aujourd\u2019hui",
+    today: 'Aujourd\u2019hui',
     yesterday: 'Hier',
     daysAgo: 'jours',
     slides: 'diapos',
@@ -252,8 +252,7 @@ export const generationArMA = {
     classroomReady: 'فصلك الذكي المخصّص جاهز للاستخدام.',
     aiWorking: 'الذكاء الاصطناعي يعمل...',
     textTruncated: 'المستند طويل، سيُستخدم أول {n} حرف فقط',
-    imageTruncated:
-      'وُجدت {total} صورة (الحد الأقصى {max}). الصور الزائدة ستُوصف نصيًا فقط',
+    imageTruncated: 'وُجدت {total} صورة (الحد الأقصى {max}). الصور الزائدة ستُوصف نصيًا فقط',
     // إنشاء الشخصيات
     agentGeneration: 'إنشاء أدوار الفصل',
     agentGenerationDesc: 'توزيع الأدوار وفقًا لمحتوى الدرس...',
@@ -262,8 +261,7 @@ export const generationArMA = {
     continue: 'متابعة',
     // أخطاء الخطة
     outlineRetrying: 'خلل في إنشاء الخطة، جارٍ إعادة المحاولة...',
-    outlineEmptyResponse:
-      'لم يُنتج النموذج أي خطة صالحة. تحقّق من إعدادات النموذج وأعِد المحاولة',
+    outlineEmptyResponse: 'لم يُنتج النموذج أي خطة صالحة. تحقّق من إعدادات النموذج وأعِد المحاولة',
     outlineGenerateFailed: 'تعذّر إنشاء الخطة، حاول لاحقًا',
     // البحث في الويب
     webSearching: 'بحث على الويب',

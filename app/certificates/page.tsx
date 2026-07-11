@@ -144,15 +144,12 @@ export default function CertificatesPage(): React.ReactElement {
   };
 
   return (
-    <div className={cn('flex min-h-screen bg-gray-50 dark:bg-gray-950', isRtl && 'flex-row-reverse')}>
+    <div
+      className={cn('flex min-h-screen bg-gray-50 dark:bg-gray-950', isRtl && 'flex-row-reverse')}
+    >
       <NavigationSidebar />
 
-      <main
-        className={cn(
-          'flex-1 px-6 py-8 lg:px-12',
-          isRtl ? 'lg:mr-60' : 'lg:ml-60',
-        )}
-      >
+      <main className={cn('flex-1 px-6 py-8 lg:px-12', isRtl ? 'lg:mr-60' : 'lg:ml-60')}>
         {/* Page header */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">

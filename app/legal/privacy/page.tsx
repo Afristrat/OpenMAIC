@@ -41,19 +41,16 @@ export default function PrivacyPage(): React.ReactElement {
         <h1 className="text-4xl md:text-5xl font-extrabold text-white font-[family-name:var(--font-display)] tracking-tight mb-4">
           Politique de Confidentialit&eacute;
         </h1>
-        <p className="text-slate-400 text-sm">
-          Derni&egrave;re mise &agrave; jour : 31 mars 2026
-        </p>
+        <p className="text-slate-400 text-sm">Derni&egrave;re mise &agrave; jour : 31 mars 2026</p>
         <div className="w-24 h-1 bg-gradient-to-r from-[#722ed1] to-emerald-400 rounded-full mt-6" />
       </div>
 
       {/* Introduction */}
       <Paragraph>
         La pr&eacute;sente Politique de Confidentialit&eacute; d&eacute;crit la mani&egrave;re dont
-        AI-Mpower LLC (ci-apr&egrave;s &laquo; nous &raquo;, &laquo; notre &raquo; ou
-        &laquo; Qalem &raquo;) collecte, utilise, conserve et prot&egrave;ge vos donn&eacute;es
-        personnelles lorsque vous utilisez la plateforme Qalem (accessible via qalem.ma et ses
-        sous-domaines).
+        AI-Mpower LLC (ci-apr&egrave;s &laquo; nous &raquo;, &laquo; notre &raquo; ou &laquo; Qalem
+        &raquo;) collecte, utilise, conserve et prot&egrave;ge vos donn&eacute;es personnelles
+        lorsque vous utilisez la plateforme Qalem (accessible via qalem.ma et ses sous-domaines).
       </Paragraph>
       <Paragraph>
         Cette politique est conforme &agrave; la loi marocaine n&deg; 09-08 relative &agrave; la
@@ -64,9 +61,7 @@ export default function PrivacyPage(): React.ReactElement {
 
       {/* 1. Donn&eacute;es collect&eacute;es */}
       <SectionTitle>1. Donn&eacute;es collect&eacute;es</SectionTitle>
-      <Paragraph>
-        Nous collectons les cat&eacute;gories de donn&eacute;es suivantes :
-      </Paragraph>
+      <Paragraph>Nous collectons les cat&eacute;gories de donn&eacute;es suivantes :</Paragraph>
       <h3 className="text-lg font-semibold text-slate-100 mb-2">
         Donn&eacute;es d&apos;identification
       </h3>
@@ -90,9 +85,7 @@ export default function PrivacyPage(): React.ReactElement {
           'Interactions avec les agents IA (historique de chat)',
         ]}
       />
-      <h3 className="text-lg font-semibold text-slate-100 mb-2">
-        Donn&eacute;es techniques
-      </h3>
+      <h3 className="text-lg font-semibold text-slate-100 mb-2">Donn&eacute;es techniques</h3>
       <List
         items={[
           'Adresse IP',
@@ -104,7 +97,9 @@ export default function PrivacyPage(): React.ReactElement {
 
       {/* 2. Finalit&eacute; du traitement */}
       <SectionTitle>2. Finalit&eacute; du traitement</SectionTitle>
-      <Paragraph>Vos donn&eacute;es sont trait&eacute;es pour les finalit&eacute;s suivantes :</Paragraph>
+      <Paragraph>
+        Vos donn&eacute;es sont trait&eacute;es pour les finalit&eacute;s suivantes :
+      </Paragraph>
       <List
         items={[
           'Fournir et personnaliser l\u2019exp\u00e9rience de formation interactive',
@@ -120,9 +115,7 @@ export default function PrivacyPage(): React.ReactElement {
 
       {/* 3. Base l&eacute;gale */}
       <SectionTitle>3. Base l&eacute;gale du traitement</SectionTitle>
-      <Paragraph>
-        Nos traitements reposent sur les bases l&eacute;gales suivantes :
-      </Paragraph>
+      <Paragraph>Nos traitements reposent sur les bases l&eacute;gales suivantes :</Paragraph>
       <List
         items={[
           'Consentement : pour la collecte de donn\u00e9es de t\u00e9l\u00e9m\u00e9trie, l\u2019utilisation de cookies non essentiels et l\u2019envoi de communications marketing',
@@ -134,9 +127,7 @@ export default function PrivacyPage(): React.ReactElement {
 
       {/* 4. Dur&eacute;e de conservation */}
       <SectionTitle>4. Dur&eacute;e de conservation</SectionTitle>
-      <Paragraph>
-        Nous conservons vos donn&eacute;es selon les dur&eacute;es suivantes :
-      </Paragraph>
+      <Paragraph>Nous conservons vos donn&eacute;es selon les dur&eacute;es suivantes :</Paragraph>
       <div className="overflow-x-auto mb-6">
         <table className="w-full text-sm text-left border-collapse">
           <thead>
@@ -227,9 +218,8 @@ export default function PrivacyPage(): React.ReactElement {
       {/* 7. Transferts internationaux */}
       <SectionTitle>7. Transferts internationaux</SectionTitle>
       <Paragraph>
-        Qalem est con&ccedil;u pour &ecirc;tre auto-h&eacute;berg&eacute; sur vos propres
-        serveurs. Dans le cas o&ugrave; vous utilisez l&apos;instance cloud g&eacute;r&eacute;e par
-        Qalem :
+        Qalem est con&ccedil;u pour &ecirc;tre auto-h&eacute;berg&eacute; sur vos propres serveurs.
+        Dans le cas o&ugrave; vous utilisez l&apos;instance cloud g&eacute;r&eacute;e par Qalem :
       </Paragraph>
       <List
         items={[
@@ -239,13 +229,17 @@ export default function PrivacyPage(): React.ReactElement {
         ]}
       />
       <Paragraph>
-        Pour les instances auto-h&eacute;berg&eacute;es, vous gardez un contr&ocirc;le total sur
-        la localisation de vos donn&eacute;es.
+        Pour les instances auto-h&eacute;berg&eacute;es, vous gardez un contr&ocirc;le total sur la
+        localisation de vos donn&eacute;es.
       </Paragraph>
 
       {/* 8. Contact DPO */}
-      <SectionTitle>8. D&eacute;l&eacute;gu&eacute; &agrave; la Protection des Donn&eacute;es</SectionTitle>
-      <Paragraph>Pour toute question relative &agrave; la protection de vos donn&eacute;es :</Paragraph>
+      <SectionTitle>
+        8. D&eacute;l&eacute;gu&eacute; &agrave; la Protection des Donn&eacute;es
+      </SectionTitle>
+      <Paragraph>
+        Pour toute question relative &agrave; la protection de vos donn&eacute;es :
+      </Paragraph>
       <div className="bg-[#131b2e] rounded-xl p-6 border border-slate-700/30 mb-6 space-y-2 text-sm text-slate-300">
         <p>
           <span className="text-slate-500">Responsable :</span>{' '}
@@ -274,13 +268,13 @@ export default function PrivacyPage(): React.ReactElement {
       </Paragraph>
       <Paragraph>
         Pour les utilisateurs situ&eacute;s dans l&apos;Espace &Eacute;conomique Europ&eacute;en,
-        nous respectons &eacute;galement le R&egrave;glement G&eacute;n&eacute;ral sur la
-        Protection des Donn&eacute;es (RGPD - R&egrave;glement UE 2016/679).
+        nous respectons &eacute;galement le R&egrave;glement G&eacute;n&eacute;ral sur la Protection
+        des Donn&eacute;es (RGPD - R&egrave;glement UE 2016/679).
       </Paragraph>
       <Paragraph>
-        En cas de litige, vous pouvez adresser une r&eacute;clamation &agrave; la CNDP
-        (www.cndp.ma) ou &agrave; l&apos;autorit&eacute; de protection des donn&eacute;es de votre
-        pays de r&eacute;sidence.
+        En cas de litige, vous pouvez adresser une r&eacute;clamation &agrave; la CNDP (www.cndp.ma)
+        ou &agrave; l&apos;autorit&eacute; de protection des donn&eacute;es de votre pays de
+        r&eacute;sidence.
       </Paragraph>
 
       {/* 10. Modifications */}

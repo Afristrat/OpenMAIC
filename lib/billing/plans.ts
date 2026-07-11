@@ -104,10 +104,7 @@ function currentBillingPeriod(): string {
 // Quota checking
 // ---------------------------------------------------------------------------
 
-export async function checkQuota(
-  orgId: string,
-  metric: string,
-): Promise<QuotaCheck> {
+export async function checkQuota(orgId: string, metric: string): Promise<QuotaCheck> {
   const supabase = getSupabaseAdmin();
   if (!supabase) {
     // No Supabase → allow (development mode)

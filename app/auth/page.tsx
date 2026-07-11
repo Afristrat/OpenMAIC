@@ -37,7 +37,12 @@ function GoogleIcon({ className }: { className?: string }) {
 
 function GitHubIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
     </svg>
   );
@@ -144,9 +149,7 @@ function AuthPageContent(): React.ReactElement {
       <div className="w-full max-w-md space-y-8">
         {/* Logo */}
         <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold tracking-tight text-foreground">
-            Qalem
-          </h1>
+          <h1 className="text-4xl font-bold tracking-tight text-foreground">Qalem</h1>
           <p className="text-sm text-muted-foreground" dir={isRTL ? 'rtl' : 'ltr'}>
             {t('home.slogan')}
           </p>
@@ -165,133 +168,129 @@ function AuthPageContent(): React.ReactElement {
             </button>
           </div>
         ) : (
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-6">
-          <Tabs
-            value={activeTab}
-            onValueChange={(v) => {
-              setActiveTab(v as 'login' | 'signup');
-              setError('');
-            }}
-          >
-            <TabsList className="w-full">
-              <TabsTrigger value="login" className="flex-1">
-                {t('auth.login')}
-              </TabsTrigger>
-              <TabsTrigger value="signup" className="flex-1">
-                {t('auth.signup')}
-              </TabsTrigger>
-            </TabsList>
+          <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-6">
+            <Tabs
+              value={activeTab}
+              onValueChange={(v) => {
+                setActiveTab(v as 'login' | 'signup');
+                setError('');
+              }}
+            >
+              <TabsList className="w-full">
+                <TabsTrigger value="login" className="flex-1">
+                  {t('auth.login')}
+                </TabsTrigger>
+                <TabsTrigger value="signup" className="flex-1">
+                  {t('auth.signup')}
+                </TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="login" className="mt-6">
-              <form onSubmit={handleEmailAuth} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-email">{t('auth.email')}</Label>
-                  <Input
-                    id="login-email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    required
-                    autoComplete="email"
-                    dir="ltr"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="login-password">{t('auth.password')}</Label>
-                  <Input
-                    id="login-password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                    autoComplete="current-password"
-                    dir="ltr"
-                  />
-                </div>
-                {error && (
-                  <p className="text-sm text-destructive">{error}</p>
-                )}
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? t('auth.loggingIn') : t('auth.loginButton')}
-                </Button>
-              </form>
-            </TabsContent>
+              <TabsContent value="login" className="mt-6">
+                <form onSubmit={handleEmailAuth} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="login-email">{t('auth.email')}</Label>
+                    <Input
+                      id="login-email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      required
+                      autoComplete="email"
+                      dir="ltr"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="login-password">{t('auth.password')}</Label>
+                    <Input
+                      id="login-password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                      autoComplete="current-password"
+                      dir="ltr"
+                    />
+                  </div>
+                  {error && <p className="text-sm text-destructive">{error}</p>}
+                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? t('auth.loggingIn') : t('auth.loginButton')}
+                  </Button>
+                </form>
+              </TabsContent>
 
-            <TabsContent value="signup" className="mt-6">
-              <form onSubmit={handleEmailAuth} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">{t('auth.email')}</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    required
-                    autoComplete="email"
-                    dir="ltr"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">{t('auth.password')}</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                    autoComplete="new-password"
-                    minLength={6}
-                    dir="ltr"
-                  />
-                </div>
-                {error && (
-                  <p className="text-sm text-destructive">{error}</p>
-                )}
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? t('auth.signingUp') : t('auth.signupButton')}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+              <TabsContent value="signup" className="mt-6">
+                <form onSubmit={handleEmailAuth} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-email">{t('auth.email')}</Label>
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      required
+                      autoComplete="email"
+                      dir="ltr"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password">{t('auth.password')}</Label>
+                    <Input
+                      id="signup-password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                      autoComplete="new-password"
+                      minLength={6}
+                      dir="ltr"
+                    />
+                  </div>
+                  {error && <p className="text-sm text-destructive">{error}</p>}
+                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? t('auth.signingUp') : t('auth.signupButton')}
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
 
-          {/* Divider */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
+            {/* Divider */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="bg-card px-2 text-muted-foreground">
+                  {t('auth.orContinueWith')}
+                </span>
+              </div>
             </div>
-            <div className="relative flex justify-center text-xs">
-              <span className="bg-card px-2 text-muted-foreground">
-                {t('auth.orContinueWith')}
-              </span>
+
+            {/* OAuth Buttons */}
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full gap-2"
+                onClick={() => handleOAuth('google')}
+              >
+                <GoogleIcon className="size-4" />
+                Google
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full gap-2"
+                onClick={() => handleOAuth('github')}
+              >
+                <GitHubIcon className={cn('size-4', 'dark:text-white')} />
+                GitHub
+              </Button>
             </div>
           </div>
-
-          {/* OAuth Buttons */}
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full gap-2"
-              onClick={() => handleOAuth('google')}
-            >
-              <GoogleIcon className="size-4" />
-              Google
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full gap-2"
-              onClick={() => handleOAuth('github')}
-            >
-              <GitHubIcon className={cn('size-4', 'dark:text-white')} />
-              GitHub
-            </Button>
-          </div>
-        </div>
         )}
 
         {/* Guest Mode */}
@@ -311,7 +310,13 @@ function AuthPageContent(): React.ReactElement {
 
 export default function AuthPage(): React.ReactElement {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" /></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
+        </div>
+      }
+    >
       <AuthPageContent />
     </Suspense>
   );

@@ -352,7 +352,7 @@ export const stageFrFR = {
     answering: 'En cours',
     submitAnswers: 'Valider mes réponses',
     aiGrading: "Correction par l'IA...",
-    aiGradingWait: 'Un instant, vos réponses sont en cours d\'analyse',
+    aiGradingWait: "Un instant, vos réponses sont en cours d'analyse",
     quizReport: 'Bilan du quiz',
     retry: 'Recommencer',
   },
@@ -404,12 +404,12 @@ export const stageFrFR = {
       placeholder: 'Votre message...',
       send: 'Envoyer',
       welcomeMessage:
-        'Bonjour ! Je suis votre assistant pour la tâche « {title} ».\n\nVoici quelques questions pour vous aider à démarrer :\n\n{questions}\n\nN\'hésitez pas à m\'interpeller avec @question à tout moment !',
+        "Bonjour ! Je suis votre assistant pour la tâche « {title} ».\n\nVoici quelques questions pour vous aider à démarrer :\n\n{questions}\n\nN'hésitez pas à m'interpeller avec @question à tout moment !",
       issueCompleteMessage: 'Tâche « {completed} » terminée ! On passe à la suivante : « {next} »',
       allCompleteMessage: '🎉 Toutes les tâches sont bouclées ! Beau travail !',
     },
     guide: {
-      howItWorks: 'Mode d\'emploi',
+      howItWorks: "Mode d'emploi",
       help: 'Aide',
       title: 'Aide',
       step1: {
@@ -424,13 +424,14 @@ export const stageFrFR = {
           desc: 'Prenez connaissance du titre, de la description et du responsable',
         },
         s2: {
-          title: 'Demander de l\'aide',
-          example: '@question Par où commencer ?\n@question Comment réaliser cette fonctionnalité ?',
+          title: "Demander de l'aide",
+          example:
+            '@question Par où commencer ?\n@question Comment réaliser cette fonctionnalité ?',
           desc: "L'assistant vous oriente par des questions et des pistes, sans donner la réponse",
         },
         s3: {
           title: 'Soumettre votre travail',
-          example: '@judge J\'ai terminé, merci de vérifier',
+          example: "@judge J'ai terminé, merci de vérifier",
           desc: "L'évaluateur examine votre travail et vous fait un retour :",
           complete: 'Passage automatique à la tâche suivante',
           revision: 'Retravaillez en tenant compte des remarques',
@@ -438,7 +439,7 @@ export const stageFrFR = {
       },
       step3: {
         title: 'ÉTAPE 3 : Boucler le projet',
-        desc: 'Quand toutes les tâches sont terminées, le message « 🎉 Projet terminé ! » s\'affiche',
+        desc: "Quand toutes les tâches sont terminées, le message « 🎉 Projet terminé ! » s'affiche",
       },
     },
   },

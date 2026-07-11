@@ -12,7 +12,11 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 import type { OrgMemberRole } from '@/lib/supabase/types';
 import { validateBody } from '@/lib/api/validate';
-import { orgMembersInviteSchema, orgMembersPatchSchema, orgMembersDeleteSchema } from '@/lib/api/schemas';
+import {
+  orgMembersInviteSchema,
+  orgMembersPatchSchema,
+  orgMembersDeleteSchema,
+} from '@/lib/api/schemas';
 
 async function getUserMembership(
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
@@ -136,7 +140,11 @@ export async function POST(
     .single();
 
   if (existing) {
-    return apiError(API_ERROR_CODES.INVALID_REQUEST, 409, 'User is already a member of this organization');
+    return apiError(
+      API_ERROR_CODES.INVALID_REQUEST,
+      409,
+      'User is already a member of this organization',
+    );
   }
 
   const { data: member, error: insertError } = await supabase
@@ -146,7 +154,12 @@ export async function POST(
     .single();
 
   if (insertError || !member) {
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to add member', insertError?.message);
+    return apiError(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      500,
+      'Failed to add member',
+      insertError?.message,
+    );
   }
 
   return apiSuccess({ member }, 201);
@@ -263,7 +276,11 @@ export async function DELETE(
   }
 
   if (targetMember.user_id === user.id) {
-    return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Cannot remove yourself. Use the leave endpoint instead.');
+    return apiError(
+      API_ERROR_CODES.INVALID_REQUEST,
+      400,
+      'Cannot remove yourself. Use the leave endpoint instead.',
+    );
   }
 
   const { error } = await supabase

@@ -136,9 +136,7 @@ export async function dispatchWebhook(
     if (!configs || configs.length === 0) return;
 
     // Deliver to each config concurrently
-    await Promise.allSettled(
-      configs.map((config) => deliverWithRetry(config, event, payload)),
-    );
+    await Promise.allSettled(configs.map((config) => deliverWithRetry(config, event, payload)));
   } catch (err) {
     log.error('Webhook dispatch failed', { event, err });
   }

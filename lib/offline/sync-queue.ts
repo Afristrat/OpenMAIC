@@ -46,7 +46,11 @@ export async function enqueueOperation(
   if ('serviceWorker' in navigator && 'SyncManager' in window) {
     try {
       const registration = await navigator.serviceWorker.ready;
-      await (registration as ServiceWorkerRegistration & { sync: { register: (tag: string) => Promise<void> } }).sync.register('qalem-sync-queue');
+      await (
+        registration as ServiceWorkerRegistration & {
+          sync: { register: (tag: string) => Promise<void> };
+        }
+      ).sync.register('qalem-sync-queue');
     } catch {
       log.warn('Background sync registration failed — will retry on reconnect');
     }

@@ -13,12 +13,7 @@
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
-import {
-  classroomQueue,
-  ttsQueue,
-  notificationQueue,
-  telemetryQueue,
-} from '@/lib/jobs/queue';
+import { classroomQueue, ttsQueue, notificationQueue, telemetryQueue } from '@/lib/jobs/queue';
 
 // ---------------------------------------------------------------------------
 // Auth — reuse MCP_API_KEY as the admin secret

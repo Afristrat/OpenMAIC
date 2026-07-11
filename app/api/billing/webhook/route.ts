@@ -16,10 +16,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const signature = request.headers.get('stripe-signature');
 
     if (!signature) {
-      return NextResponse.json(
-        { error: 'Missing stripe-signature header' },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: 'Missing stripe-signature header' }, { status: 400 });
     }
 
     await handleStripeWebhook(payload, signature);

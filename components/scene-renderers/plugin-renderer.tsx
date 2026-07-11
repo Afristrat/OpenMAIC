@@ -55,12 +55,9 @@ export function PluginRenderer({ content, mode: _mode, sceneId }: PluginRenderer
   // ------------------------------------------------------------------
   // Send initial data once the iframe signals readiness
   // ------------------------------------------------------------------
-  const sendToPlugin = useCallback(
-    (msg: PluginInboundMessage) => {
-      iframeRef.current?.contentWindow?.postMessage(msg, window.location.origin);
-    },
-    [],
-  );
+  const sendToPlugin = useCallback((msg: PluginInboundMessage) => {
+    iframeRef.current?.contentWindow?.postMessage(msg, window.location.origin);
+  }, []);
 
   const sendInitData = useCallback(() => {
     sendToPlugin({

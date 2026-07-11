@@ -97,8 +97,7 @@ const spec = {
     '/quiz': {
       post: {
         summary: 'Grade quiz answers',
-        description:
-          'Submits a text question and user answer for AI-powered grading and feedback.',
+        description: 'Submits a text question and user answer for AI-powered grading and feedback.',
         requestBody: {
           required: true,
           content: {

@@ -53,7 +53,7 @@ export function useIsSuperAdmin(): { isSuperAdmin: boolean; isLoading: boolean }
   }, [user, authLoading, isGuest]);
 
   // When there's no user / guest, always false
-  const effectiveAdmin = (!authLoading && (isGuest || !user)) ? false : state.isAdmin;
+  const effectiveAdmin = !authLoading && (isGuest || !user) ? false : state.isAdmin;
   const isLoading = authLoading || (!state.checked && !isGuest && !!user);
 
   return {

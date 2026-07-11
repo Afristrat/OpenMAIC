@@ -42,9 +42,15 @@ export default function ProfilePage(): React.ReactElement {
   const [saving, setSaving] = useState(false);
 
   // Sync local state when store changes externally (e.g. hydration)
-  useEffect(() => { setAvatar(storeAvatar); }, [storeAvatar]);
-  useEffect(() => { setNickname(storeNickname); }, [storeNickname]);
-  useEffect(() => { setBio(storeBio); }, [storeBio]);
+  useEffect(() => {
+    setAvatar(storeAvatar);
+  }, [storeAvatar]);
+  useEffect(() => {
+    setNickname(storeNickname);
+  }, [storeNickname]);
+  useEffect(() => {
+    setBio(storeBio);
+  }, [storeBio]);
 
   // Dirty tracking
   const isDirty = useMemo(

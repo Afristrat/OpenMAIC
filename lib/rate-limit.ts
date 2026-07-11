@@ -77,10 +77,7 @@ export interface RateLimitResult {
  * @param key  - Unique identifier (e.g. `user:<id>` or `ip:<addr>`)
  * @param plan - Pricing plan (free | pro | enterprise). Defaults to "free".
  */
-export async function checkRateLimit(
-  key: string,
-  plan?: string,
-): Promise<RateLimitResult> {
+export async function checkRateLimit(key: string, plan?: string): Promise<RateLimitResult> {
   const planConfig = PLANS[plan ?? 'free'] ?? PLANS.free;
   const now = Date.now();
   const windowStart = now - planConfig.windowMs;
@@ -128,10 +125,7 @@ export interface TTSQuotaResult {
  * Check whether an organisation has remaining TTS quota for the current month.
  * Queries the usage_records table via getUsageSummary for persistence across restarts.
  */
-export async function checkTTSQuota(
-  orgId: string,
-  plan: string,
-): Promise<TTSQuotaResult> {
+export async function checkTTSQuota(orgId: string, plan: string): Promise<TTSQuotaResult> {
   const limitConfig = TTS_LIMITS[plan] ?? TTS_LIMITS.free;
 
   let usedMinutes = 0;

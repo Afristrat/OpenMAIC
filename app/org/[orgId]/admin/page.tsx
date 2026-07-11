@@ -129,7 +129,9 @@ export default function OrgAdminPage() {
 
   const fetchMetrics = useCallback(async () => {
     try {
-      const res = await fetch(`/api/organizations/${orgId}/reports?dateFrom=2000-01-01&dateTo=2099-12-31`);
+      const res = await fetch(
+        `/api/organizations/${orgId}/reports?dateFrom=2000-01-01&dateTo=2099-12-31`,
+      );
       if (!res.ok) return;
       const data = await res.json();
       setMetrics({
@@ -295,9 +297,7 @@ export default function OrgAdminPage() {
         <div className="flex items-center gap-3">
           <Building2 className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-bold">{org.name}</h1>
-          {org.sector && (
-            <Badge variant="secondary">{t(`org.sectors.${org.sector}`)}</Badge>
-          )}
+          {org.sector && <Badge variant="secondary">{t(`org.sectors.${org.sector}`)}</Badge>}
         </div>
       </div>
 
@@ -347,10 +347,7 @@ export default function OrgAdminPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium">{t('org.name')}</label>
-              <Input
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-              />
+              <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium">{t('org.sector')}</label>
@@ -419,10 +416,7 @@ export default function OrgAdminPage() {
                 onChange={(e) => setInviteEmail(e.target.value)}
                 className="min-w-[200px] flex-1"
               />
-              <Select
-                value={inviteRole}
-                onValueChange={(v) => setInviteRole(v as OrgMemberRole)}
-              >
+              <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as OrgMemberRole)}>
                 <SelectTrigger className="w-[160px]">
                   <SelectValue />
                 </SelectTrigger>
@@ -487,9 +481,7 @@ export default function OrgAdminPage() {
                       {isAdmin && !isCurrentUser ? (
                         <Select
                           value={member.role}
-                          onValueChange={(v) =>
-                            handleChangeRole(member.id, v as OrgMemberRole)
-                          }
+                          onValueChange={(v) => handleChangeRole(member.id, v as OrgMemberRole)}
                         >
                           <SelectTrigger className="w-[140px]">
                             <SelectValue />

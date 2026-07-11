@@ -37,10 +37,16 @@
         "properties": {
           "gravity": { "type": "number", "description": "Gravity (m/s^2), default 9.81" },
           "mass": { "type": "number", "description": "Object mass (kg), default 1.0" },
-          "initialVelocity": { "type": "number", "description": "Initial velocity (m/s), default 10" },
+          "initialVelocity": {
+            "type": "number",
+            "description": "Initial velocity (m/s), default 10"
+          },
           "angle": { "type": "number", "description": "Launch angle (degrees), default 45" },
           "length": { "type": "number", "description": "Pendulum length (m), default 2" },
-          "springConstant": { "type": "number", "description": "Spring constant (N/m), default 10" },
+          "springConstant": {
+            "type": "number",
+            "description": "Spring constant (N/m), default 10"
+          },
           "damping": { "type": "number", "description": "Damping coefficient, default 0.1" }
         }
       },

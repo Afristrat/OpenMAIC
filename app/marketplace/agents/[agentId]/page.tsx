@@ -20,13 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import {
-  ArrowLeft,
-  Download,
-  Star,
-  User,
-  Users,
-} from 'lucide-react';
+import { ArrowLeft, Download, Star, User, Users } from 'lucide-react';
 
 interface AgentDetail {
   id: string;
@@ -73,22 +67,11 @@ function StarRatingDisplay({ rating, size = 'md' }: { rating: number; size?: 'sm
   );
 }
 
-function ClickableStars({
-  value,
-  onChange,
-}: {
-  value: number;
-  onChange: (v: number) => void;
-}) {
+function ClickableStars({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   return (
     <div className="flex gap-1">
       {[1, 2, 3, 4, 5].map((star) => (
-        <button
-          key={star}
-          type="button"
-          onClick={() => onChange(star)}
-          className="p-0.5"
-        >
+        <button key={star} type="button" onClick={() => onChange(star)} className="p-0.5">
           <Star
             className={`h-6 w-6 transition-colors ${
               star <= value
@@ -175,7 +158,9 @@ export default function AgentDetailPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ rating: undefined, _incrementUsage: true }),
-    }).catch(() => { /* best effort */ });
+    }).catch(() => {
+      /* best effort */
+    });
 
     setImported(true);
     toast.success(t('marketplace.imported'));
@@ -230,7 +215,10 @@ export default function AgentDetailPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
       {/* Back link */}
-      <Link href="/marketplace/agents" className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+      <Link
+        href="/marketplace/agents"
+        className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+      >
         <ArrowLeft className="h-4 w-4" />
         {t('marketplace.backToMarketplace')}
       </Link>
@@ -243,7 +231,11 @@ export default function AgentDetailPage() {
         >
           {agent.avatar ? (
             agent.avatar.startsWith('/') || agent.avatar.startsWith('http') ? (
-              <img src={agent.avatar} alt={agent.name} className="h-full w-full rounded-full object-cover" />
+              <img
+                src={agent.avatar}
+                alt={agent.name}
+                className="h-full w-full rounded-full object-cover"
+              />
             ) : (
               <span>{agent.avatar}</span>
             )
@@ -302,12 +294,7 @@ export default function AgentDetailPage() {
 
       {/* Import button */}
       <div className="mb-10">
-        <Button
-          size="lg"
-          onClick={handleImport}
-          disabled={imported}
-          className="gap-2"
-        >
+        <Button size="lg" onClick={handleImport} disabled={imported} className="gap-2">
           <Download className="h-4 w-4" />
           {imported ? t('marketplace.imported') : t('marketplace.importAgent')}
         </Button>
@@ -327,17 +314,13 @@ export default function AgentDetailPage() {
                 <div className="mb-2 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <StarRatingDisplay rating={review.rating} size="sm" />
-                    <span className="text-sm font-medium">
-                      {review.authorNickname ?? '???'}
-                    </span>
+                    <span className="text-sm font-medium">{review.authorNickname ?? '???'}</span>
                   </div>
                   <span className="text-xs text-muted-foreground">
                     {new Date(review.createdAt).toLocaleDateString()}
                   </span>
                 </div>
-                {review.comment && (
-                  <p className="text-sm leading-relaxed">{review.comment}</p>
-                )}
+                {review.comment && <p className="text-sm leading-relaxed">{review.comment}</p>}
               </div>
             ))}
           </div>

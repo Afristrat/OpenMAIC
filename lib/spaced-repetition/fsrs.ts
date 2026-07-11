@@ -60,8 +60,8 @@ function cardState(card: ReviewCard): CardStateType {
  * Source: https://github.com/open-spaced-repetition/fsrs4anki (v5 release)
  */
 const DEFAULT_WEIGHTS: number[] = [
-  0.4072, 1.1829, 3.1262, 15.4722, 7.2102, 0.5316, 1.0651, 0.0589, 1.5330, 0.1647, 1.0621,
-  1.8559, 0.1203, 0.3109, 2.2266, 0.2301, 3.0459, 0.3470, 0.9476,
+  0.4072, 1.1829, 3.1262, 15.4722, 7.2102, 0.5316, 1.0651, 0.0589, 1.533, 0.1647, 1.0621, 1.8559,
+  0.1203, 0.3109, 2.2266, 0.2301, 3.0459, 0.347, 0.9476,
 ];
 
 export function getDefaultParams(): FSRSParams {
@@ -155,13 +155,7 @@ function nextDifficulty(d: number, rating: Rating, w: number[]): number {
  *
  * S'_r = S * (e^(w[8]) * (11 - D) * S^(-w[9]) * (e^(w[10] * (1 - R)) - 1) * w[15] * (rating==2 ? w[16] : 1) * (rating==4 ? w[17] : 1) + 1)
  */
-function nextRecallStability(
-  s: number,
-  d: number,
-  r: number,
-  rating: Rating,
-  w: number[],
-): number {
+function nextRecallStability(s: number, d: number, r: number, rating: Rating, w: number[]): number {
   const hardBonus = rating === 2 ? w[15] : 1;
   const easyBonus = rating === 4 ? w[16] : 1;
 
@@ -184,7 +178,8 @@ function nextRecallStability(
  * S'_f = w[11] * D^(-w[12]) * ((S+1)^w[13] - 1) * e^(w[14] * (1 - R))
  */
 function nextForgetStability(s: number, d: number, r: number, w: number[]): number {
-  const newS = w[11] * Math.pow(d, -w[12]) * (Math.pow(s + 1, w[13]) - 1) * Math.exp(w[14] * (1 - r));
+  const newS =
+    w[11] * Math.pow(d, -w[12]) * (Math.pow(s + 1, w[13]) - 1) * Math.exp(w[14] * (1 - r));
   return Math.max(Math.min(newS, s), 0.1); // Cannot exceed previous stability on lapse
 }
 

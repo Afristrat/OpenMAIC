@@ -139,9 +139,7 @@ export default function PluginsPage(): React.ReactElement {
                         {plugin.displayType}
                       </Badge>
                       <span className="text-xs text-muted-foreground">v{plugin.version}</span>
-                      <span className="text-xs text-muted-foreground">
-                        &mdash; {plugin.author}
-                      </span>
+                      <span className="text-xs text-muted-foreground">&mdash; {plugin.author}</span>
                     </div>
                   </div>
                 </div>

@@ -30,9 +30,7 @@ function loadGuestCertificates(): GuestCertificateData[] {
 function saveGuestCertificate(data: GuestCertificateData): void {
   try {
     const existing = loadGuestCertificates();
-    const filtered = existing.filter(
-      (c) => c.certificate.stageId !== data.certificate.stageId,
-    );
+    const filtered = existing.filter((c) => c.certificate.stageId !== data.certificate.stageId);
     filtered.push(data);
     localStorage.setItem(GUEST_CERTS_KEY, JSON.stringify(filtered));
   } catch {
@@ -103,18 +101,13 @@ function CertificateModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Overlay */}
-      <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
       <div className="relative z-10 w-[900px] max-w-[95vw] max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            {courseName}
-          </h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{courseName}</h2>
           <button
             onClick={onClose}
             className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -200,9 +193,7 @@ export function CertificatePrompt({
 
   // Check if average quiz score meets threshold
   const avgScore =
-    quizScores.length > 0
-      ? quizScores.reduce((sum, s) => sum + s, 0) / quizScores.length
-      : 100; // No quizzes = auto-pass
+    quizScores.length > 0 ? quizScores.reduce((sum, s) => sum + s, 0) / quizScores.length : 100; // No quizzes = auto-pass
 
   const meetsThreshold = avgScore >= 60;
   const shouldShow = allScenesCompleted && meetsThreshold;
@@ -302,14 +293,8 @@ export function CertificatePrompt({
               'disabled:opacity-50 disabled:cursor-not-allowed',
             )}
           >
-            {loading ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Award className="size-4" />
-            )}
-            {hasExisting
-              ? t('certificate.viewCertificate')
-              : t('certificate.getCertificate')}
+            {loading ? <Loader2 className="size-4 animate-spin" /> : <Award className="size-4" />}
+            {hasExisting ? t('certificate.viewCertificate') : t('certificate.getCertificate')}
           </button>
         </div>
       </div>

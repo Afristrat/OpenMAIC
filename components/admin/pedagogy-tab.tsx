@@ -80,9 +80,7 @@ export function PedagogyTab(): React.ReactElement {
               ? t('admin.pedagogy.collectionEnabled')
               : t('admin.pedagogy.collectionDisabled')}
           </p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {t('admin.pedagogy.envNote')}
-          </p>
+          <p className="text-xs text-muted-foreground mt-0.5">{t('admin.pedagogy.envNote')}</p>
         </div>
         <button
           onClick={() => setCollectionEnabled((prev) => !prev)}
@@ -114,10 +112,7 @@ export function PedagogyTab(): React.ReactElement {
 
           {/* Rows */}
           {MOCK_TOP_SEQUENCES.map((seq, i) => (
-            <div
-              key={i}
-              className="grid grid-cols-[2fr_auto_auto] gap-4 px-4 py-3 items-center"
-            >
+            <div key={i} className="grid grid-cols-[2fr_auto_auto] gap-4 px-4 py-3 items-center">
               <code className="text-xs font-mono text-muted-foreground">{seq.sequence}</code>
               <span className="w-20 text-right text-sm font-medium">{seq.efficiency}%</span>
               <span className="w-20 text-right text-sm text-muted-foreground">{seq.sessions}</span>

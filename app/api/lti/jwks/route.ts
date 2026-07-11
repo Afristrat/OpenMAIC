@@ -30,9 +30,6 @@ export async function GET(): Promise<NextResponse> {
     );
   } catch (error) {
     log.error('Failed to generate JWKS:', error);
-    return NextResponse.json(
-      { error: 'Failed to generate JWKS' },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: 'Failed to generate JWKS' }, { status: 500 });
   }
 }

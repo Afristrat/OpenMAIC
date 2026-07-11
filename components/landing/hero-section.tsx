@@ -73,9 +73,7 @@ export function HeroSection(): React.ReactElement {
                   +50
                 </div>
               </div>
-              <p className="text-white/70 text-sm font-medium">
-                {t('landing.hero.socialProof')}
-              </p>
+              <p className="text-white/70 text-sm font-medium">{t('landing.hero.socialProof')}</p>
             </div>
           </div>
 
@@ -92,7 +90,9 @@ export function HeroSection(): React.ReactElement {
                   <div className="w-3 h-3 rounded-full bg-yellow-400/50" />
                   <div className="w-3 h-3 rounded-full bg-green-400/50" />
                   <div className="ml-4 flex-1 h-6 bg-white/10 rounded px-3 flex items-center">
-                    <span className="text-[10px] text-white/40">qalem.ai/classroom/biology-101</span>
+                    <span className="text-[10px] text-white/40">
+                      qalem.ai/classroom/biology-101
+                    </span>
                   </div>
                 </div>
 
@@ -113,27 +113,25 @@ export function HeroSection(): React.ReactElement {
 
                 {/* Roundtable Avatars */}
                 <div className="grid grid-cols-6 gap-2 mb-4">
-                  {['Yassin', 'Laila', 'Omar', 'Sarah AI', 'Mehdi', 'Adam AI'].map(
-                    (name, i) => (
-                      <div key={name} className="space-y-1 text-center">
-                        <div
-                          className={`w-full aspect-square rounded-full border p-0.5 relative ${
-                            i === 3 || i === 5 ? 'border-emerald-400' : 'border-white/10'
-                          }`}
-                        >
-                          <div className="w-full h-full rounded-full bg-white/10 flex items-center justify-center text-[8px] text-white/60 font-bold">
-                            {name[0]}
-                          </div>
-                          {(i === 3 || i === 5) && (
-                            <div className="absolute -top-1 -right-1 bg-emerald-400 text-[6px] px-1 rounded-full text-white">
-                              AI
-                            </div>
-                          )}
+                  {['Yassin', 'Laila', 'Omar', 'Sarah AI', 'Mehdi', 'Adam AI'].map((name, i) => (
+                    <div key={name} className="space-y-1 text-center">
+                      <div
+                        className={`w-full aspect-square rounded-full border p-0.5 relative ${
+                          i === 3 || i === 5 ? 'border-emerald-400' : 'border-white/10'
+                        }`}
+                      >
+                        <div className="w-full h-full rounded-full bg-white/10 flex items-center justify-center text-[8px] text-white/60 font-bold">
+                          {name[0]}
                         </div>
-                        <span className="text-[8px] text-white/60">{name}</span>
+                        {(i === 3 || i === 5) && (
+                          <div className="absolute -top-1 -right-1 bg-emerald-400 text-[6px] px-1 rounded-full text-white">
+                            AI
+                          </div>
+                        )}
                       </div>
-                    ),
-                  )}
+                      <span className="text-[8px] text-white/60">{name}</span>
+                    </div>
+                  ))}
                 </div>
 
                 {/* Floating Chat */}
@@ -168,8 +166,16 @@ export function HeroSection(): React.ReactElement {
                 label: t('landing.hero.stat1Label'),
                 icon: '\u23F3',
               },
-              { title: t('landing.hero.stat2Title'), label: t('landing.hero.stat2Label'), icon: '\uD83C\uDFA4' },
-              { title: t('landing.hero.stat3Title'), label: t('landing.hero.stat3Label'), icon: '\uD83C\uDF10' },
+              {
+                title: t('landing.hero.stat2Title'),
+                label: t('landing.hero.stat2Label'),
+                icon: '\uD83C\uDFA4',
+              },
+              {
+                title: t('landing.hero.stat3Title'),
+                label: t('landing.hero.stat3Label'),
+                icon: '\uD83C\uDF10',
+              },
             ].map((stat) => (
               <div
                 key={stat.label}

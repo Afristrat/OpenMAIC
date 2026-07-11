@@ -43,7 +43,9 @@ function validateManifest(data: unknown): string[] {
   // Category validation
   const validCategories = ['pedagogy', 'domain', 'interaction', 'assessment'];
   if (typeof obj['category'] === 'string' && !validCategories.includes(obj['category'])) {
-    errors.push(`Invalid category "${obj['category']}". Must be one of: ${validCategories.join(', ')}`);
+    errors.push(
+      `Invalid category "${obj['category']}". Must be one of: ${validCategories.join(', ')}`,
+    );
   }
 
   // Required arrays
@@ -64,7 +66,11 @@ function validateManifest(data: unknown): string[] {
   }
 
   // sceneDefaults must be an object
-  if (typeof obj['sceneDefaults'] !== 'object' || obj['sceneDefaults'] === null || Array.isArray(obj['sceneDefaults'])) {
+  if (
+    typeof obj['sceneDefaults'] !== 'object' ||
+    obj['sceneDefaults'] === null ||
+    Array.isArray(obj['sceneDefaults'])
+  ) {
     errors.push('Missing or invalid field: sceneDefaults (must be an object)');
   }
 
@@ -91,28 +97,30 @@ export function loadSkillFromDir(skillDir: string): Skill | null {
     const manifest = data as Record<string, unknown>;
 
     // Load external prompt files referenced in promptOverrides
-    const promptOverrides = (manifest['promptOverrides'] as SkillPromptOverride[]).map((override) => {
-      // If systemPromptAppend references a file path (starts with "file:"), load it
-      if (override.systemPromptAppend.startsWith('file:')) {
-        const relativePath = override.systemPromptAppend.slice(5);
-        const resolved = path.resolve(skillDir, relativePath);
-        if (!resolved.startsWith(path.resolve(skillDir))) {
-          log.warn(`Path traversal attempt blocked in skill ${manifest['id']}`);
-          return override;
+    const promptOverrides = (manifest['promptOverrides'] as SkillPromptOverride[]).map(
+      (override) => {
+        // If systemPromptAppend references a file path (starts with "file:"), load it
+        if (override.systemPromptAppend.startsWith('file:')) {
+          const relativePath = override.systemPromptAppend.slice(5);
+          const resolved = path.resolve(skillDir, relativePath);
+          if (!resolved.startsWith(path.resolve(skillDir))) {
+            log.warn(`Path traversal attempt blocked in skill ${manifest['id']}`);
+            return override;
+          }
+          const filePath = resolved;
+          try {
+            return {
+              ...override,
+              systemPromptAppend: fs.readFileSync(filePath, 'utf-8').trim(),
+            };
+          } catch {
+            log.warn(`Could not load prompt file ${filePath} for override ${override.promptId}`);
+            return override;
+          }
         }
-        const filePath = resolved;
-        try {
-          return {
-            ...override,
-            systemPromptAppend: fs.readFileSync(filePath, 'utf-8').trim(),
-          };
-        } catch {
-          log.warn(`Could not load prompt file ${filePath} for override ${override.promptId}`);
-          return override;
-        }
-      }
-      return override;
-    });
+        return override;
+      },
+    );
 
     const skill: Skill = {
       id: manifest['id'] as string,

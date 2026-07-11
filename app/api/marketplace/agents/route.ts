@@ -28,7 +28,10 @@ export async function GET(request: NextRequest): Promise<Response> {
 
   let query = supabase
     .from('agent_configs')
-    .select('id, name, role, description, avatar, color, tags, avg_rating, usage_count, created_at, persona', { count: 'exact' })
+    .select(
+      'id, name, role, description, avatar, color, tags, avg_rating, usage_count, created_at, persona',
+      { count: 'exact' },
+    )
     .eq('is_published', true);
 
   // Search filter: name or description
@@ -64,7 +67,9 @@ export async function GET(request: NextRequest): Promise<Response> {
       break;
     default:
       // score — sort by avg_rating as primary, usage_count as secondary
-      query = query.order('avg_rating', { ascending: false }).order('usage_count', { ascending: false });
+      query = query
+        .order('avg_rating', { ascending: false })
+        .order('usage_count', { ascending: false });
       break;
   }
 
@@ -178,7 +183,12 @@ export async function POST(request: NextRequest): Promise<Response> {
     .eq('id', agentId);
 
   if (updateErr) {
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to publish agent', updateErr.message);
+    return apiError(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      500,
+      'Failed to publish agent',
+      updateErr.message,
+    );
   }
 
   return apiSuccess({ published: true, agentId });

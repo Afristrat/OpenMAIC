@@ -118,10 +118,12 @@ export const marketplaceReviewSchema = z.object({
 
 export const mcpCallSchema = z.object({
   method: z.string().min(1, 'method is required'),
-  params: z.object({
-    name: z.string().optional(),
-    arguments: z.record(z.string(), z.unknown()).optional(),
-  }).optional(),
+  params: z
+    .object({
+      name: z.string().optional(),
+      arguments: z.record(z.string(), z.unknown()).optional(),
+    })
+    .optional(),
   id: z.number().optional(),
 });
 
@@ -182,21 +184,33 @@ export const generateAgentProfilesSchema = z.object({
     name: z.string().min(1, 'stageInfo.name is required'),
     description: z.string().optional(),
   }),
-  sceneOutlines: z.array(z.object({
-    title: z.string(),
-    description: z.string().optional(),
-  })).optional(),
+  sceneOutlines: z
+    .array(
+      z.object({
+        title: z.string(),
+        description: z.string().optional(),
+      }),
+    )
+    .optional(),
   language: z.string().min(1, 'language is required'),
   availableAvatars: z.array(z.string()).min(1, 'availableAvatars must not be empty'),
-  avatarDescriptions: z.array(z.object({
-    path: z.string(),
-    desc: z.string(),
-  })).optional(),
-  availableVoices: z.array(z.object({
-    providerId: z.string(),
-    voiceId: z.string(),
-    voiceName: z.string(),
-  })).optional(),
+  avatarDescriptions: z
+    .array(
+      z.object({
+        path: z.string(),
+        desc: z.string(),
+      }),
+    )
+    .optional(),
+  availableVoices: z
+    .array(
+      z.object({
+        providerId: z.string(),
+        voiceId: z.string(),
+        voiceName: z.string(),
+      }),
+    )
+    .optional(),
 });
 
 // ---------------------------------------------------------------------------
@@ -235,12 +249,14 @@ export const generateSceneContentSchema = z.object({
   allOutlines: z.array(z.record(z.string(), z.unknown())).min(1, 'allOutlines must not be empty'),
   pdfImages: z.array(z.record(z.string(), z.unknown())).optional(),
   imageMapping: z.record(z.string(), z.string()).optional(),
-  stageInfo: z.object({
-    name: z.string(),
-    description: z.string().optional(),
-    language: z.string().optional(),
-    style: z.string().optional(),
-  }).optional(),
+  stageInfo: z
+    .object({
+      name: z.string(),
+      description: z.string().optional(),
+      language: z.string().optional(),
+      style: z.string().optional(),
+    })
+    .optional(),
   stageId: z.string().min(1, 'stageId is required'),
   agents: z.array(z.record(z.string(), z.unknown())).optional(),
 });
@@ -289,10 +305,12 @@ export const generateVideoSchema = z.object({
 
 export const generateClassroomSchema = z.object({
   requirement: z.string().min(1, 'requirement is required'),
-  pdfContent: z.object({
-    text: z.string(),
-    images: z.array(z.string()),
-  }).optional(),
+  pdfContent: z
+    .object({
+      text: z.string(),
+      images: z.array(z.string()),
+    })
+    .optional(),
   language: z.string().optional(),
   enableWebSearch: z.boolean().optional(),
   enableImageGeneration: z.boolean().optional(),
@@ -309,10 +327,12 @@ export const pblChatSchema = z.object({
   message: z.string().min(1, 'message is required'),
   agent: z.record(z.string(), z.unknown()),
   currentIssue: z.record(z.string(), z.unknown()).nullable(),
-  recentMessages: z.array(z.object({
-    agent_name: z.string(),
-    message: z.string(),
-  })),
+  recentMessages: z.array(
+    z.object({
+      agent_name: z.string(),
+      message: z.string(),
+    }),
+  ),
   userRole: z.string().optional().default(''),
   agentType: z.enum(['question', 'judge']).optional(),
 });
