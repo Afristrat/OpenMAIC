@@ -270,7 +270,7 @@
       "title": "Capsule vidéo Hyperframes depuis une scène",
       "epic": "1-CRÉER",
       "phase": 1,
-      "passes": false,
+      "passes": true,
       "dependencies": ["S0-008"],
       "acceptance": [
         "Brief JSON conforme au contrat P1-B → mp4 relu dans l'app",
