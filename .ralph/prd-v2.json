@@ -283,13 +283,15 @@
       "title": "Export SCORM couche 1 : package autonome importé dans Moodle",
       "epic": "1-CRÉER",
       "phase": 1,
-      "passes": false,
+      "passes": true,
+      "completedAt": "2026-07-11",
       "dependencies": ["S0-008"],
       "acceptance": [
         "export_jobs scorm12 → zip imsmanifest.xml valide",
         "Import Moodle docker réussi, completion trackée (preuve)",
         "Runtime scorm-again, notices MIT conservées"
-      ]
+      ],
+      "acceptanceNote": "Validé sur serveuria (commits 10be27f..089950c). tsc --noEmit 0 erreur, pnpm lint 0 problème, pnpm test 1810/1810 (baseline 1799 S1-006 + 11 nouveaux tests scorm-*, zéro régression). export_jobs (migration 00021, format discriminant scorm12 pour anticiper scorm2004/cmi5 de S1-008, RLS owner-select + service-only write, bucket Storage privé `exports` deny-all client) → zip généré via lib/export/scorm/build-scorm-package.ts (imsmanifest.xml SCORM 1.2 standard + index.html scorm-again + runtime vendorisé + THIRD-PARTY-NOTICES.txt), job BullMQ export-job (pattern identique à video-capsule S1-006), API POST/GET /api/export-jobs. Preuve d'import Moodle réelle et complète, obtenue SANS AUCUNE automatisation de navigateur (interdiction stricte respectée) : bitnamilegacy/moodle + bitnamilegacy/mariadb montés sur serveuria (image bitnami/moodle officielle retirée depuis la migration Bitnami d'août 2025, vérifié sur Docker Hub/GitHub) ; imsmanifest.xml validé par un vrai parseur XML (python3 xml.dom.minidom) ; import réel via les fonctions backend PHP exactes que le formulaire Moodle d'ajout d'activité SCORM appelle (create_module()/scorm_add_instance(), lues dans le code source réel de ce Moodle pour ne rien deviner) — MANIFEST_PARSED launch_scoes=1 confirme que le parseur SCORM natif de Moodle a walké le manifeste et trouvé le SCO index.html ; complétion trackée en simulant l'effet serveur exact du bouton \"Marquer comme terminé\" (LMSSetValue cmi.core.lesson_status=completed + LMSCommit) via scorm_insert_track() (fonction backend appelée par l'endpoint AJAX de tracking de Moodle), relu via scorm_get_tracks() (API Moodle) ET vérifié en base brute (mdl_scorm_scoes_value/mdl_scorm_attempt/mdl_scorm_element, schéma normalisé de Moodle 5.2) pour 2 apprenants de test distincts. Limite assumée : le JS embarqué (scorm-again) n'a pas été exercé par un vrai navigateur — reproduit au niveau backend Moodle pour respecter l'interdiction stricte d'automatisation navigateur ; le pipeline zip→manifest→import→tracking est prouvé de bout en bout côté serveur Moodle réel. Environnement Moodle de test démonté après la preuve (conteneurs + réseau docker supprimés), scripts ad-hoc PHP/TS jamais commités. Notices MIT scorm-again (^3.0.5, vérifié sur le registre npm réel) conservées dans le zip généré (THIRD-PARTY-NOTICES.txt) — package.json/pnpm-lock.yaml mis à jour (pnpm install --no-frozen-lockfile sur serveuria). Aucune UI ajoutée (story sans tag [UI], acceptance ne le demandant pas)."
     },
     {
       "id": "S1-008",
