@@ -15,11 +15,6 @@
 import { Worker, type Job } from 'bullmq';
 import { incrementCounter } from '@/app/api/metrics/route';
 import { createLogger } from '@/lib/logger';
-import { isFeatureEnabled } from '@/lib/flags';
-import { createServiceSupabaseClient } from '@/lib/supabase/service';
-import { createHyperframesProduction, getHyperframesProduction } from '@/lib/video/hyperframes-client';
-import type { HyperframesBrief } from '@/lib/video/hyperframes-types';
-import type { VideoCapsuleStatus, VideoCapsuleVariant } from '@/lib/supabase/types';
 
 const log = createLogger('Workers');
 
@@ -138,92 +133,7 @@ export function startAllWorkers(): void {
     { connection, concurrency: 10 },
   );
 
-  // ---- Video capsule worker (Mishkāt/Hyperframes, S1-006) ----
-  const videoCapsuleWorker = new Worker(
-    'video-capsule',
-    async (job: Job) => {
-      const { capsuleId } = job.data as { capsuleId: string };
-      const supabase = createServiceSupabaseClient();
-
-      const enabled = await isFeatureEnabled('video_capsules');
-      if (!enabled) {
-        log.warn(`Video capsule ${capsuleId} skipped: flag video_capsules disabled`);
-        await supabase
-          .from('video_capsules')
-          .update({ status: 'error', error: 'video_capsules feature flag disabled' })
-          .eq('id', capsuleId);
-        return;
-      }
-
-      const { data: capsule, error: readError } = await supabase
-        .from('video_capsules')
-        .select('id, brief, mishkat_production_id')
-        .eq('id', capsuleId)
-        .single();
-
-      if (readError || !capsule) {
-        throw new Error(`Video capsule ${capsuleId} not found: ${readError?.message ?? 'no row'}`);
-      }
-
-      try {
-        let productionId = capsule.mishkat_production_id as string | null;
-        if (!productionId) {
-          const production = await createHyperframesProduction(capsule.brief as HyperframesBrief);
-          productionId = production.id;
-          await supabase
-            .from('video_capsules')
-            .update({ status: 'generating', mishkat_production_id: productionId })
-            .eq('id', capsuleId);
-        }
-
-        const POLL_INTERVAL_MS = 5000;
-        const MAX_ATTEMPTS = 90; // ~7.5 min ceiling for a single capsule render
-
-        let lastStatus: VideoCapsuleStatus = 'generating';
-        for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-          const production = await getHyperframesProduction(productionId);
-
-          if (production.status !== lastStatus) {
-            lastStatus = production.status;
-            await supabase.from('video_capsules').update({ status: lastStatus }).eq('id', capsuleId);
-          }
-
-          if (production.status === 'done') {
-            await supabase
-              .from('video_capsules')
-              .update({ status: 'done', variants: (production.variants ?? []) as VideoCapsuleVariant[] })
-              .eq('id', capsuleId);
-            incrementCounter('qalem_jobs_processed_total', { queue: 'video-capsule' });
-            return;
-          }
-
-          if (production.status === 'error') {
-            await supabase
-              .from('video_capsules')
-              .update({ status: 'error', error: production.error ?? 'Mishkāt production error' })
-              .eq('id', capsuleId);
-            incrementCounter('qalem_jobs_failed_total', { queue: 'video-capsule' });
-            return;
-          }
-
-          await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
-        }
-
-        await supabase
-          .from('video_capsules')
-          .update({ status: 'error', error: 'Timed out waiting for Mishkāt production' })
-          .eq('id', capsuleId);
-        incrementCounter('qalem_jobs_failed_total', { queue: 'video-capsule' });
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        await supabase.from('video_capsules').update({ status: 'error', error: message }).eq('id', capsuleId);
-        throw err;
-      }
-    },
-    { connection, concurrency: 2 },
-  );
-
-  workers = [classroomWorker, ttsWorker, notificationWorker, telemetryWorker, videoCapsuleWorker];
+  workers = [classroomWorker, ttsWorker, notificationWorker, telemetryWorker];
 
   // Attach default error handlers to all workers so unhandled failures
   // get logged (and counted) rather than silently swallowed.

@@ -48,7 +48,7 @@ export function VideoCapsuleModal({
         <div className="flex items-center justify-between mb-1">
           <h3 className="text-sm font-bold flex items-center gap-2 text-gray-800 dark:text-gray-100">
             <Video className="w-4 h-4 text-purple-500" />
-            {t('stage.videoCapsule.title')}
+            {t('videoCapsule.title')}
           </h3>
           <button
             onClick={onClose}
@@ -63,7 +63,7 @@ export function VideoCapsuleModal({
         {status === 'idle' || status === 'error' ? (
           <div className="space-y-2.5">
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-300">
-              {t('stage.videoCapsule.audience')}
+              {t('videoCapsule.audience')}
               <input
                 value={audience}
                 onChange={(e) => setAudience(e.target.value)}
@@ -71,7 +71,7 @@ export function VideoCapsuleModal({
               />
             </label>
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-300">
-              {t('stage.videoCapsule.tone')}
+              {t('videoCapsule.tone')}
               <input
                 value={tone}
                 onChange={(e) => setTone(e.target.value)}
@@ -79,7 +79,7 @@ export function VideoCapsuleModal({
               />
             </label>
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-300">
-              {t('stage.videoCapsule.objective')}
+              {t('videoCapsule.objective')}
               <input
                 value={objective}
                 onChange={(e) => setObjective(e.target.value)}
@@ -87,7 +87,7 @@ export function VideoCapsuleModal({
               />
             </label>
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-300">
-              {t('stage.videoCapsule.duration')}
+              {t('videoCapsule.duration')}
               <input
                 type="number"
                 min={10}
@@ -110,19 +110,19 @@ export function VideoCapsuleModal({
               disabled={!audience || !tone || !objective}
               className="mt-1 w-full rounded-lg bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold py-2 transition-colors"
             >
-              {t('stage.videoCapsule.generate')}
+              {t('videoCapsule.generate')}
             </button>
           </div>
         ) : isBusy ? (
           <div className="flex flex-col items-center gap-2 py-8 text-sm text-gray-500 dark:text-gray-400">
             <Loader2 className="w-5 h-5 animate-spin text-purple-500" />
-            <span>{t(`stage.videoCapsule.status.${status}`)}</span>
+            <span>{t(`videoCapsule.status.${status}`)}</span>
           </div>
         ) : isDone ? (
           <div className="space-y-3">
             {variants.length === 0 && (
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {t('stage.videoCapsule.noVariants')}
+                {t('videoCapsule.noVariants')}
               </p>
             )}
             {variants.map((v) => (

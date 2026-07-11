@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
-import type { VideoCapsuleStatus, VideoCapsuleVariant } from '@/lib/supabase/types';
+import type { HyperframesProductionStatus, HyperframesVariant } from '@/lib/video/hyperframes-types';
 
 export interface VideoCapsuleParams {
   stageId: string;
@@ -14,8 +14,8 @@ export interface VideoCapsuleParams {
 }
 
 interface VideoCapsuleState {
-  status: VideoCapsuleStatus | 'idle';
-  variants: VideoCapsuleVariant[];
+  status: HyperframesProductionStatus | 'idle';
+  variants: HyperframesVariant[];
   error: string | null;
 }
 

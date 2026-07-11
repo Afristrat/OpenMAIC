@@ -206,8 +206,8 @@ export function SceneSidebar({
                         setVideoCapsuleSceneId(scene.id);
                       }}
                       className="opacity-0 group-hover:opacity-100 shrink-0 p-1 -mr-0.5 rounded text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-purple-600 dark:hover:text-purple-400 transition-all"
-                      title={t('stage.videoCapsule.title')}
-                      aria-label={t('stage.videoCapsule.title')}
+                      title={t('videoCapsule.title')}
+                      aria-label={t('videoCapsule.title')}
                     >
                       <Video className="w-3.5 h-3.5" />
                     </button>

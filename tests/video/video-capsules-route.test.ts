@@ -16,7 +16,7 @@ vi.mock('@/lib/flags', () => ({ isFeatureEnabled: mocks.isFeatureEnabled }));
 vi.mock('@/lib/video/hyperframes-client', () => ({
   isHyperframesConfigured: mocks.isHyperframesConfigured,
 }));
-vi.mock('@/lib/jobs/queue', () => ({ enqueueVideoCapsule: mocks.enqueueVideoCapsule }));
+vi.mock('@/lib/jobs/video-capsule-queue', () => ({ enqueueVideoCapsule: mocks.enqueueVideoCapsule }));
 vi.mock('@/lib/logger', () => ({
   createLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }),
 }));

@@ -7,6 +7,12 @@ import { stageZhCN, stageEnUS, stageFrFR, stageArMA } from './stage';
 import { chatZhCN, chatEnUS, chatFrFR, chatArMA } from './chat';
 import { generationZhCN, generationEnUS, generationFrFR, generationArMA } from './generation';
 import { settingsZhCN, settingsEnUS, settingsFrFR, settingsArMA } from './settings';
+import {
+  videoCapsulesZhCN,
+  videoCapsulesEnUS,
+  videoCapsulesFrFR,
+  videoCapsulesArMA,
+} from './video-capsules';
 import upstreamI18n from './config';
 
 export const translations = {
@@ -16,6 +22,7 @@ export const translations = {
     ...chatZhCN,
     ...generationZhCN,
     ...settingsZhCN,
+    ...videoCapsulesZhCN,
   },
   'en-US': {
     ...commonEnUS,
@@ -23,6 +30,7 @@ export const translations = {
     ...chatEnUS,
     ...generationEnUS,
     ...settingsEnUS,
+    ...videoCapsulesEnUS,
   },
   'fr-FR': {
     ...commonFrFR,
@@ -30,6 +38,7 @@ export const translations = {
     ...chatFrFR,
     ...generationFrFR,
     ...settingsFrFR,
+    ...videoCapsulesFrFR,
   },
   'ar-MA': {
     ...commonArMA,
@@ -37,6 +46,7 @@ export const translations = {
     ...chatArMA,
     ...generationArMA,
     ...settingsArMA,
+    ...videoCapsulesArMA,
   },
 } as const;
 
