@@ -6,7 +6,7 @@ import type { TTSModelConfig } from '@/lib/audio/types';
 afterEach(() => vi.unstubAllGlobals());
 
 /** Builds a minimal valid mono 16-bit PCM WAV buffer from Int16 samples. */
-function buildWav(samples: number[], sampleRate = 24000): Uint8Array {
+function buildWav(samples: number[], sampleRate = 24000): Uint8Array<ArrayBuffer> {
   const bytesPerSample = 2;
   const dataSize = samples.length * bytesPerSample;
   const buffer = new ArrayBuffer(44 + dataSize);
