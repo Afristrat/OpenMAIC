@@ -38,7 +38,7 @@ function stubWavResponse(samples: number[]) {
   const bytes = buildWav(samples);
   const f = vi.fn(
     async () =>
-      new Response(bytes, {
+      new Response(new Blob([bytes]), {
         status: 200,
         headers: { 'content-type': 'audio/wav' },
       }),
