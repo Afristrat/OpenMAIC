@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { KeyRound, Trash2, Loader2, Mail, User, Save, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { RichProfileSection } from '@/components/profile/rich-profile-section';
 
 export default function ProfilePage(): React.ReactElement {
   const { t } = useI18n();
@@ -139,12 +140,20 @@ export default function ProfilePage(): React.ReactElement {
   }, [signOut, router, t]);
 
   if (!user) {
+    // The rich profile section (culture/langue/préférences, S2-001) is gated
+    // server-side by GET /api/profile (requireAuth + isFeatureEnabled) — it
+    // renders nothing for a real anonymous visitor (401 → section hidden).
+    // It stays mounted here (rather than being excluded outright) so the
+    // gate is always authoritative server-side, never duplicated client-side.
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <User className="size-12 mx-auto text-muted-foreground" />
-          <p className="text-muted-foreground">{t('nav.login')}</p>
-          <Button onClick={() => router.push('/auth')}>{t('nav.login')}</Button>
+      <div className="min-h-[100dvh] bg-background">
+        <div className="max-w-2xl mx-auto px-4 py-12 space-y-10">
+          <div className="flex flex-col items-center justify-center gap-4 text-center py-12">
+            <User className="size-12 mx-auto text-muted-foreground" />
+            <p className="text-muted-foreground">{t('nav.login')}</p>
+            <Button onClick={() => router.push('/auth')}>{t('nav.login')}</Button>
+          </div>
+          <RichProfileSection />
         </div>
       </div>
     );
@@ -242,6 +251,9 @@ export default function ProfilePage(): React.ReactElement {
             {isDirty ? t('profile.save') : t('profile.noChanges')}
           </Button>
         </div>
+
+        {/* Rich profile (culture, langue d'interface, préférences — S2-001) */}
+        <RichProfileSection />
 
         {/* Actions */}
         <div className="flex flex-wrap gap-3 pt-4 border-t border-border">

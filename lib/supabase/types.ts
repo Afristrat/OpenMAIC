@@ -25,6 +25,9 @@ export interface Profile {
   avatar: string | null;
   bio: string | null;
   locale: string; // default 'fr-FR'
+  culture: string; // default 'ma-fr' — référentiel casting (S2-001/S2-002)
+  ui_language: string; // 'fr-FR' | 'ar-MA' | 'en-US', default 'fr-FR' (S2-001)
+  preferences: Record<string, unknown>; // rythme, humour accepté... (S2-001)
   created_at: string; // ISO 8601
   updated_at: string;
 }

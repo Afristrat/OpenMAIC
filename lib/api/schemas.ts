@@ -378,6 +378,22 @@ export const verifyPdfProviderSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
+// Profile (rich profile — culture, langue, préférences — S2-001)
+// ---------------------------------------------------------------------------
+
+export const profilePatchSchema = z.object({
+  culture: z.string().min(1).max(40).optional(),
+  uiLanguage: z.enum(['fr-FR', 'ar-MA', 'en-US']).optional(),
+  preferences: z
+    .object({
+      pace: z.enum(['slow', 'normal', 'fast']).optional(),
+      humorOk: z.boolean().optional(),
+    })
+    .strict()
+    .optional(),
+});
+
+// ---------------------------------------------------------------------------
 // LTI Platforms (add)
 // ---------------------------------------------------------------------------
 

@@ -123,6 +123,55 @@ export class MockApi {
     });
   }
 
+  /**
+   * Mock GET/PATCH /api/profile — rich profile section (culture, langue
+   * d'interface, préférences — S2-001). Stateful: PATCH updates the values
+   * a subsequent GET (or the PATCH response itself) would return, so a test
+   * can save then re-read without a page reload.
+   */
+  async mockRichProfile(
+    initial: { culture: string; uiLanguage: string; preferences: Record<string, unknown> } = {
+      culture: 'ma-fr',
+      uiLanguage: 'fr-FR',
+      preferences: {},
+    },
+  ) {
+    let state = { ...initial };
+    await this.page.route('**/api/profile', async (route) => {
+      const method = route.request().method();
+      if (method === 'GET') {
+        await route.fulfill({
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ success: true, richProfileEnabled: true, ...state }),
+        });
+        return;
+      }
+      if (method === 'PATCH') {
+        const patch = route.request().postDataJSON() as Partial<typeof state>;
+        state = { ...state, ...patch };
+        await route.fulfill({
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ success: true, richProfileEnabled: true, ...state }),
+        });
+        return;
+      }
+      await route.continue();
+    });
+  }
+
+  /** Mock GET /api/profile — feature flag `rich_profile` disabled, section stays hidden */
+  async mockRichProfileDisabled() {
+    await this.page.route('**/api/profile', (route) => {
+      route.fulfill({
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: true, richProfileEnabled: false }),
+      });
+    });
+  }
+
   /** Set up API mocks for the generation flow. Note: server-providers is already mocked by the base fixture. */
   async setupGenerationMocks(stageId?: string) {
     await this.mockSceneOutlinesStream();
