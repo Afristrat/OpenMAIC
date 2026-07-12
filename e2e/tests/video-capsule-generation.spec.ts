@@ -14,7 +14,7 @@ async function seedDatabase(page: import('@playwright/test').Page) {
     localStorage.setItem('locale', 'en-US');
   }, SETTINGS_STORAGE);
 
-  await page.goto('/', { waitUntil: 'networkidle' });
+  await page.goto('/app', { waitUntil: 'networkidle' });
 
   const seedStageData = () =>
     page.evaluate(

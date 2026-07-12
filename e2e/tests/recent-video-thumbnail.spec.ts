@@ -29,7 +29,7 @@ async function seedVideoThumbnailStage({
   storedError?: string;
   extraStoredMediaRefs?: string[];
 }) {
-  await page.goto('/', { waitUntil: 'networkidle' });
+  await page.goto('/app', { waitUntil: 'networkidle' });
 
   await page.evaluate(
     ({
@@ -156,7 +156,7 @@ async function seedVideoThumbnailStage({
     },
   );
 
-  await page.goto('/', { waitUntil: 'networkidle' });
+  await page.goto('/app', { waitUntil: 'networkidle' });
 }
 
 test.describe('Home recent video thumbnails', () => {

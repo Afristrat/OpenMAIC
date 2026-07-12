@@ -43,7 +43,7 @@ async function seedDatabase(page: import('@playwright/test').Page) {
     localStorage.setItem('settings-storage', settings);
   }, SETTINGS_STORAGE);
 
-  await page.goto('/', { waitUntil: 'networkidle' });
+  await page.goto('/app', { waitUntil: 'networkidle' });
 
   await page.evaluate(
     ({ stageId, interactiveId, html, theme }) => {
