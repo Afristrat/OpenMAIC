@@ -1,7 +1,10 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
-import type { HyperframesProductionStatus, HyperframesVariant } from '@/lib/video/hyperframes-types';
+import type {
+  HyperframesProductionStatus,
+  HyperframesVariant,
+} from '@/lib/video/hyperframes-types';
 
 export interface VideoCapsuleParams {
   stageId: string;
@@ -37,36 +40,33 @@ export function useVideoCapsule() {
     }
   }, []);
 
-  const poll = useCallback(
-    (id: string) => {
-      const tick = async () => {
-        try {
-          const res = await fetch(`/api/video-capsules/${id}`);
-          const body = await res.json();
-          if (!res.ok || !body.success) {
-            setState((s) => ({ ...s, status: 'error', error: body.error ?? 'Échec du suivi' }));
-            return;
-          }
-          setState({
-            status: body.status,
-            variants: body.variants ?? [],
-            error: body.error ?? null,
-          });
-          if (!body.done) {
-            pollTimer.current = setTimeout(tick, POLL_INTERVAL_MS);
-          }
-        } catch (err) {
-          setState((s) => ({
-            ...s,
-            status: 'error',
-            error: err instanceof Error ? err.message : String(err),
-          }));
+  const poll = useCallback((id: string) => {
+    const tick = async () => {
+      try {
+        const res = await fetch(`/api/video-capsules/${id}`);
+        const body = await res.json();
+        if (!res.ok || !body.success) {
+          setState((s) => ({ ...s, status: 'error', error: body.error ?? 'Échec du suivi' }));
+          return;
         }
-      };
-      void tick();
-    },
-    [],
-  );
+        setState({
+          status: body.status,
+          variants: body.variants ?? [],
+          error: body.error ?? null,
+        });
+        if (!body.done) {
+          pollTimer.current = setTimeout(tick, POLL_INTERVAL_MS);
+        }
+      } catch (err) {
+        setState((s) => ({
+          ...s,
+          status: 'error',
+          error: err instanceof Error ? err.message : String(err),
+        }));
+      }
+    };
+    void tick();
+  }, []);
 
   const generate = useCallback(
     async (params: VideoCapsuleParams) => {

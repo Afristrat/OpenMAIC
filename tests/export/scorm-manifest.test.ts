@@ -5,7 +5,7 @@ describe('buildScorm12Manifest', () => {
   it('produces a manifest referencing the launch file, resource files and course title', () => {
     const xml = buildScorm12Manifest({
       identifier: 'com.qalem.export.stage-1',
-      title: 'Introduction à l\'algèbre',
+      title: "Introduction à l'algèbre",
       launchUrl: 'index.html',
       resourceFiles: ['index.html', 'scorm12.min.js'],
     });

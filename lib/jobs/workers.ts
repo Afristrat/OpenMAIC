@@ -17,7 +17,10 @@ import { incrementCounter } from '@/app/api/metrics/route';
 import { createLogger } from '@/lib/logger';
 import { isFeatureEnabled } from '@/lib/flags';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
-import { createHyperframesProduction, getHyperframesProduction } from '@/lib/video/hyperframes-client';
+import {
+  createHyperframesProduction,
+  getHyperframesProduction,
+} from '@/lib/video/hyperframes-client';
 import type { HyperframesBrief } from '@/lib/video/hyperframes-types';
 import type { VideoCapsuleStatus, VideoCapsuleVariant } from '@/lib/supabase/types';
 import { buildScormPackage } from '@/lib/export/scorm/build-scorm-package';
@@ -186,13 +189,19 @@ export function startAllWorkers(): void {
 
           if (production.status !== lastStatus) {
             lastStatus = production.status;
-            await supabase.from('video_capsules').update({ status: lastStatus }).eq('id', capsuleId);
+            await supabase
+              .from('video_capsules')
+              .update({ status: lastStatus })
+              .eq('id', capsuleId);
           }
 
           if (production.status === 'done') {
             await supabase
               .from('video_capsules')
-              .update({ status: 'done', variants: (production.variants ?? []) as VideoCapsuleVariant[] })
+              .update({
+                status: 'done',
+                variants: (production.variants ?? []) as VideoCapsuleVariant[],
+              })
               .eq('id', capsuleId);
             incrementCounter('qalem_jobs_processed_total', { queue: 'video-capsule' });
             return;
@@ -217,7 +226,10 @@ export function startAllWorkers(): void {
         incrementCounter('qalem_jobs_failed_total', { queue: 'video-capsule' });
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        await supabase.from('video_capsules').update({ status: 'error', error: message }).eq('id', capsuleId);
+        await supabase
+          .from('video_capsules')
+          .update({ status: 'error', error: message })
+          .eq('id', capsuleId);
         throw err;
       }
     },
@@ -262,7 +274,10 @@ export function startAllWorkers(): void {
         incrementCounter('qalem_jobs_processed_total', { queue: 'export-job' });
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        await supabase.from('export_jobs').update({ status: 'error', error: message }).eq('id', exportJobId);
+        await supabase
+          .from('export_jobs')
+          .update({ status: 'error', error: message })
+          .eq('id', exportJobId);
         incrementCounter('qalem_jobs_failed_total', { queue: 'export-job' });
         throw err;
       }

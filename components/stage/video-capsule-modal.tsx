@@ -104,9 +104,7 @@ export function VideoCapsuleModal({
               </p>
             )}
             <button
-              onClick={() =>
-                generate({ stageId, sceneId, audience, tone, objective, durationS })
-              }
+              onClick={() => generate({ stageId, sceneId, audience, tone, objective, durationS })}
               disabled={!audience || !tone || !objective}
               className="mt-1 w-full rounded-lg bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold py-2 transition-colors"
             >

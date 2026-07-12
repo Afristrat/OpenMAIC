@@ -84,7 +84,10 @@ describe('POST /api/video-capsules', () => {
       data: { id: 'scene_1', title: 'Scène 1' },
       error: null,
     });
-    mocks.insertSingle.mockResolvedValue({ data: { id: 'capsule_1', status: 'queued' }, error: null });
+    mocks.insertSingle.mockResolvedValue({
+      data: { id: 'capsule_1', status: 'queued' },
+      error: null,
+    });
     mocks.enqueueVideoCapsule.mockResolvedValue('job_1');
   });
 

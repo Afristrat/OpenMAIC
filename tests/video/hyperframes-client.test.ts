@@ -86,7 +86,9 @@ describe('hyperframes-client', () => {
     expect(result.variants?.[0].url).toBe('https://example/x.mp4');
     expect(fetchMock).toHaveBeenCalledWith(
       'https://mishkat.ai-mpower.com/v1/productions/prod_123',
-      expect.objectContaining({ headers: expect.objectContaining({ Authorization: 'Bearer test-key' }) }),
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: 'Bearer test-key' }),
+      }),
     );
   });
 

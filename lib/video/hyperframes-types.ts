@@ -50,12 +50,7 @@ export interface HyperframesBrandTokens {
   [key: string]: unknown;
 }
 
-export type HyperframesProductionStatus =
-  | 'queued'
-  | 'generating'
-  | 'rendering'
-  | 'done'
-  | 'error';
+export type HyperframesProductionStatus = 'queued' | 'generating' | 'rendering' | 'done' | 'error';
 
 export interface HyperframesVariant {
   lang: string;

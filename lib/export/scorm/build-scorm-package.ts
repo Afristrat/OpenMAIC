@@ -78,7 +78,9 @@ function buildIndexHtml(stage: StageRow, scenes: SceneRow[], runtimeFilename: st
   const labelPrev = isRtl ? 'التالي' : 'Précédent';
   const labelNext = isRtl ? 'السابق' : 'Suivant';
   const labelComplete = isRtl ? 'وضع علامة مكتمل' : 'Marquer comme terminé';
-  const labelDone = isRtl ? 'تم وضع علامة على هذه الدورة كمكتملة.' : 'Ce cours a été marqué comme terminé.';
+  const labelDone = isRtl
+    ? 'تم وضع علامة على هذه الدورة كمكتملة.'
+    : 'Ce cours a été marqué comme terminé.';
 
   return `<!DOCTYPE html>
 <html lang="${isRtl ? 'ar' : 'fr'}" dir="${dir}">

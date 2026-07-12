@@ -39,7 +39,9 @@ describe('renderSceneContent', () => {
       },
     });
     expect(html).toContain('<div class="scorm-slide-text"><p>Titre</p></div>');
-    expect(html).toContain('<img class="scorm-slide-image" src="https://example.com/a.png" alt="" />');
+    expect(html).toContain(
+      '<img class="scorm-slide-image" src="https://example.com/a.png" alt="" />',
+    );
     expect(html).not.toContain('chart');
   });
 

@@ -45,7 +45,10 @@ export function buildHyperframesBrief(params: BuildHyperframesBriefParams): Hype
     ? `${params.stageName} — ${params.sceneTitle}. ${params.notes}`
     : `${params.stageName} — ${params.sceneTitle}`;
 
-  const durationS = Math.min(MAX_DURATION_S, Math.max(MIN_DURATION_S, Math.round(params.durationS)));
+  const durationS = Math.min(
+    MAX_DURATION_S,
+    Math.max(MIN_DURATION_S, Math.round(params.durationS)),
+  );
 
   return {
     brand_id: brandId,
