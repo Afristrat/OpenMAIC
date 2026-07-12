@@ -14,8 +14,7 @@
 import type { TTSProviderId } from './types';
 
 const ARABIC_SCRIPT_RE = /[؀-ۿݐ-ݿࢠ-ࣿ]/;
-const ARABIC_TASHKEEL_RE =
-  /[ؐ-ًؚ-ٰٟۖ-ۜ۟-۪ۨ-ۭ]/;
+const ARABIC_TASHKEEL_RE = /[ؐ-ًؚ-ٰٟۖ-ۜ۟-۪ۨ-ۭ]/;
 
 /**
  * Fournisseurs TTS dont le backend applique nativement le tachkil (vérifié
