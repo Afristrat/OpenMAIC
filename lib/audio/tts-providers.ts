@@ -104,6 +104,7 @@ import {
   normalizeVoxCPMBackend,
   type VoxCPMProviderOptions,
 } from './voxcpm';
+import { assertAboveNoiseFloor, assertArabicTachkilReady } from './audio-gate';
 
 /**
  * Result of TTS generation
@@ -143,6 +144,14 @@ export function throwIfTtsRateLimited(provider: string, status: number): void {
 
 /**
  * Generate speech using specified TTS provider
+ *
+ * Audio gate (S1-009): every non-browser call is checked for Arabic tachkil
+ * readiness before dispatch, and every generated track is checked against
+ * the -50 dB noise floor before being returned — see lib/audio/audio-gate.ts.
+ * Wiring it here (the single synthesis chokepoint) covers both real callers
+ * (live discussion TTS via app/api/generate/tts/route.ts and scene narration
+ * pre-generation via lib/server/classroom-media-generation.ts) and any
+ * future caller that reuses generateTTS().
  */
 export async function generateTTS(
   config: TTSModelConfig,
@@ -155,6 +164,21 @@ export async function generateTTS(
     throw new Error(`API key required for TTS provider: ${config.providerId}`);
   }
 
+  // Browser-native TTS always throws below (client-side only) regardless of
+  // text content, so the tachkil gate doesn't need to run for it.
+  if (config.providerId !== 'browser-native-tts') {
+    assertArabicTachkilReady(text, config.providerId);
+  }
+
+  const result = await dispatchTTSProvider(config, text);
+  assertAboveNoiseFloor(result.audio, result.format);
+  return result;
+}
+
+async function dispatchTTSProvider(
+  config: TTSModelConfig,
+  text: string,
+): Promise<TTSGenerationResult> {
   switch (config.providerId) {
     case 'openai-tts':
       return await generateOpenAITTS(config, text);
