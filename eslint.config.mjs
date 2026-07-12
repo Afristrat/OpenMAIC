@@ -24,6 +24,10 @@ const eslintConfig = defineConfig([
     '.worktrees/**',
     // Playwright e2e tests (not React code):
     'e2e/**',
+    // Playwright run artifacts (generated, gitignored, may linger on disk
+    // between local/CI runs — contains minified third-party trace-viewer JS):
+    'playwright-report/**',
+    'test-results/**',
   ]),
   {
     rules: {
