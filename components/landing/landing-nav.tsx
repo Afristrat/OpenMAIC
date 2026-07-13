@@ -46,7 +46,7 @@ export function LandingNav(): React.ReactElement {
           </div>
           <Link
             href="/auth"
-            className="hidden lg:block text-slate-400 hover:text-[#d5baff] font-[family-name:var(--font-display)] font-medium text-sm tracking-tight hover:bg-white/5 px-4 py-2 rounded-lg transition-all"
+            className="hidden md:block text-slate-400 hover:text-[#d5baff] font-[family-name:var(--font-display)] font-medium text-sm tracking-tight hover:bg-white/5 px-4 py-2 rounded-lg transition-all"
           >
             {t('landing.nav.login')}
           </Link>
