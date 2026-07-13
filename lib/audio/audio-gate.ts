@@ -50,10 +50,17 @@ const ARABIC_TASHKEEL_RE = buildCharClassRegex([
  * Fournisseurs TTS dont le backend applique nativement le tachkil (vérifié
  * pour VoxCPM/Dīwān — cf. .ralph/progress.md, entrée S0-006 : le /health du
  * studio Higgs, backend réel derrière voxcpm-tts, expose un indicateur
- * tachkil actif). À compléter si un autre fournisseur souverain confirme la
- * même capacité par une vérification équivalente.
+ * tachkil actif). Le service a depuis migré vers Higgs Audio v3, exposé sous
+ * le provider `higgs-tts` (protocole OpenAI-compatible /v1/audio/speech,
+ * distinct du protocole VoxCPM natif) — même capacité tachkil native
+ * (Fine-Tashkeel intégré côté serveur, cf. server_higgs.py). À compléter si
+ * un autre fournisseur souverain confirme la même capacité par une
+ * vérification équivalente.
  */
-const TACHKIL_AWARE_TTS_PROVIDERS: ReadonlySet<TTSProviderId> = new Set(['voxcpm-tts']);
+const TACHKIL_AWARE_TTS_PROVIDERS: ReadonlySet<TTSProviderId> = new Set([
+  'voxcpm-tts',
+  'higgs-tts',
+]);
 
 export class TachkilRequiredError extends Error {
   constructor(message: string) {

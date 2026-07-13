@@ -195,6 +195,9 @@ async function dispatchTTSProvider(
     case 'voxcpm-tts':
       return await generateVoxCPMTTS(config, text);
 
+    case 'higgs-tts':
+      return await generateOpenAITTS(config, text);
+
     case 'minimax-tts':
       return await generateMiniMaxTTS(config, text);
     case 'doubao-tts':

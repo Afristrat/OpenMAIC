@@ -86,6 +86,7 @@ export type BuiltInTTSProviderId =
   | 'glm-tts'
   | 'qwen-tts'
   | 'voxcpm-tts'
+  | 'higgs-tts'
   | 'doubao-tts'
   | 'elevenlabs-tts'
   | 'fish-audio'
