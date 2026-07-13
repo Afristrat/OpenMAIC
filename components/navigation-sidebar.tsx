@@ -255,12 +255,12 @@ export function NavigationSidebar(): React.ReactElement {
       <div className="flex items-center justify-between px-3 py-4 border-b border-border/10">
         {!collapsed && (
           <Link href="/app" className="flex items-center gap-2">
-            <img src="/logo-horizontal.png" alt="Qalem" className="h-7" />
+            <span className="text-xl font-bold tracking-tight text-primary">Qalem</span>
           </Link>
         )}
         {collapsed && (
           <Link href="/app" className="mx-auto">
-            <img src="/logo-horizontal.png" alt="Qalem" className="h-6 w-auto" />
+            <span className="text-lg font-bold text-primary">ق</span>
           </Link>
         )}
         <button

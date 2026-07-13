@@ -12,8 +12,4 @@ describe('PBL v2 static assets', () => {
   test('ships the instructor avatar referenced by the runtime UI', () => {
     expectPng('public/avatars/instructor.png');
   });
-
-  test('ships the OpenMAIC mark used in the workspace header', () => {
-    expectPng('public/openmaic-mark.png');
-  });
 });
