@@ -45,7 +45,7 @@ const log = createLogger('ClassroomMedia');
 async function uploadClassroomMedia(
   classroomId: string,
   subPath: string,
-  buf: Buffer,
+  buf: Buffer | Uint8Array,
 ): Promise<void> {
   const supabase = createServiceSupabaseClient();
   const { error } = await supabase.storage

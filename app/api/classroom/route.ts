@@ -40,8 +40,8 @@ export async function POST(request: NextRequest) {
     const persisted = await persistClassroom(
       {
         id,
-        stage: { ...stage, id } as Stage,
-        scenes: scenes as Scene[],
+        stage: { ...stage, id } as unknown as Stage,
+        scenes: scenes as unknown as Scene[],
         ownerId: auth.user.id,
         orgId,
       },
