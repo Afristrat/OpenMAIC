@@ -24,6 +24,8 @@ export interface ClassroomGenerationJob {
   updatedAt: string;
   startedAt?: string;
   completedAt?: string;
+  ownerId?: string;
+  orgId?: string;
   inputSummary: {
     requirementPreview: string;
     hasPdf: boolean;
@@ -100,6 +102,7 @@ export function isValidClassroomJobId(jobId: string): boolean {
 export async function createClassroomGenerationJob(
   jobId: string,
   input: GenerateClassroomInput,
+  ownerId: string,
 ): Promise<ClassroomGenerationJob> {
   const now = new Date().toISOString();
   const job: ClassroomGenerationJob = {
@@ -110,6 +113,8 @@ export async function createClassroomGenerationJob(
     message: 'Classroom generation job queued',
     createdAt: now,
     updatedAt: now,
+    ownerId,
+    orgId: input.orgId,
     inputSummary: buildInputSummary(input),
     scenesGenerated: 0,
   };

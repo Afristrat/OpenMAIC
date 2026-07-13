@@ -179,11 +179,29 @@
       "title": "Déploiement préprod Coolify de refork-v030",
       "epic": "0-SOCLE",
       "phase": 0,
-      "passes": false,
+      "passes": true,
+      "completedAt": "2026-07-13",
       "dependencies": ["S0-008"],
       "acceptance": [
         "URL préprod HTTP 200, prod inchangée sur main",
         "Génération de bout en bout réussie en FR et AR sur la préprod"
+      ]
+    },
+    {
+      "id": "S0-015",
+      "title": "Auth multi-tenant + persistance Storage sur le flux classroom (P0)",
+      "epic": "0-SOCLE",
+      "phase": 0,
+      "passes": false,
+      "dependencies": ["S0-013"],
+      "acceptance": [
+        "Génération + lecture classroom exigent une session Supabase authentifiée (401 sinon)",
+        "Génération limitée à super-admin OU admin de l'orgId ciblé (403 sinon) ; lecture ouverte à tout membre de l'org",
+        "classroom rattaché à un orgId dès la génération ; propriété (ownerId) dérivée de la session, jamais du body",
+        "stages/scenes persistés en base Postgres normalisée (plus de fichier JSON local), médias dans le bucket Storage classroom-media (plus de fs.writeFile)",
+        "un classroom généré avant survit à un redéploiement Coolify (conteneur recréé) sans perte",
+        "accès cross-org refusé (403) sur un classroom d'une autre organisation",
+        "vérifié dans un vrai navigateur connecté : scènes affichées + audio TTS audible (SOP-011)"
       ]
     },
     {

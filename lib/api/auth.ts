@@ -53,16 +53,23 @@ export async function requireAuth(_req: NextRequest): Promise<AuthResult> {
 // requireSuperAdmin — checks SUPER_ADMIN_EMAILS env var
 // ---------------------------------------------------------------------------
 
+function parseSuperAdminEmails(): string[] {
+  return (process.env.SUPER_ADMIN_EMAILS ?? '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function isSuperAdminEmail(email: string): boolean {
+  const superAdminEmails = parseSuperAdminEmails();
+  return superAdminEmails.length > 0 && superAdminEmails.includes(email.toLowerCase());
+}
+
 export async function requireSuperAdmin(req: NextRequest): Promise<AuthResult> {
   const auth = await requireAuth(req);
   if (auth.response) return auth;
 
-  const superAdminEmails = (process.env.SUPER_ADMIN_EMAILS ?? '')
-    .split(',')
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-
-  if (superAdminEmails.length === 0) {
+  if (parseSuperAdminEmails().length === 0) {
     log.warn('SUPER_ADMIN_EMAILS is not configured');
     return {
       response: NextResponse.json(
@@ -72,7 +79,7 @@ export async function requireSuperAdmin(req: NextRequest): Promise<AuthResult> {
     };
   }
 
-  if (!superAdminEmails.includes(auth.user.email.toLowerCase())) {
+  if (!isSuperAdminEmail(auth.user.email)) {
     return {
       response: NextResponse.json(
         { error: 'Forbidden', code: 'FORBIDDEN', status: 403 },
@@ -158,4 +165,40 @@ export async function requireOrgAdmin(req: NextRequest, orgId: string): Promise<
       ),
     };
   }
+}
+
+// ---------------------------------------------------------------------------
+// requireSuperAdminOrOrgAdmin — auth + (super admin OR admin/manager of orgId)
+// Used for classroom generation and mutation: only trusted roles may create
+// content scoped to an organization.
+// ---------------------------------------------------------------------------
+
+export async function requireSuperAdminOrOrgAdmin(
+  req: NextRequest,
+  orgId: string,
+): Promise<AuthResult> {
+  const auth = await requireAuth(req);
+  if (auth.response) return auth;
+
+  if (isSuperAdminEmail(auth.user.email)) return auth;
+
+  return requireOrgAdmin(req, orgId);
+}
+
+// ---------------------------------------------------------------------------
+// requireSuperAdminOrOrgMember — auth + (super admin OR member of orgId)
+// Used for classroom reads: any member of the owning org (trainer or
+// learner) may consult content, not just admins.
+// ---------------------------------------------------------------------------
+
+export async function requireSuperAdminOrOrgMember(
+  req: NextRequest,
+  orgId: string,
+): Promise<AuthResult> {
+  const auth = await requireAuth(req);
+  if (auth.response) return auth;
+
+  if (isSuperAdminEmail(auth.user.email)) return auth;
+
+  return requireOrgMember(req, orgId);
 }

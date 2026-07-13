@@ -5,6 +5,9 @@ import { type GenerateClassroomInput } from '@/lib/server/classroom-generation';
 import { runClassroomGenerationJob } from '@/lib/server/classroom-job-runner';
 import { createClassroomGenerationJob } from '@/lib/server/classroom-job-store';
 import { buildRequestOrigin } from '@/lib/server/classroom-storage';
+import { requireSuperAdminOrOrgAdmin } from '@/lib/api/auth';
+import { validateBody } from '@/lib/api/validate';
+import { generateClassroomSchema } from '@/lib/api/schemas';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('GenerateClassroom API');
@@ -14,37 +17,40 @@ export const maxDuration = 30;
 export async function POST(req: NextRequest) {
   let requirementSnippet: string | undefined;
   try {
-    const rawBody = (await req.json()) as Partial<GenerateClassroomInput>;
-    requirementSnippet = rawBody.requirement?.substring(0, 60);
+    const rawBody = await req.json();
+    const validation = validateBody(generateClassroomSchema, rawBody);
+    if (!validation.success) return validation.response;
+
+    const parsed = validation.data;
+    requirementSnippet = parsed.requirement.substring(0, 60);
+
+    const auth = await requireSuperAdminOrOrgAdmin(req, parsed.orgId);
+    if (auth.response) return auth.response;
+
     const body: GenerateClassroomInput = {
-      requirement: rawBody.requirement || '',
-      ...(rawBody.pdfContent ? { pdfContent: rawBody.pdfContent } : {}),
-
-      ...(rawBody.enableWebSearch != null ? { enableWebSearch: rawBody.enableWebSearch } : {}),
-      ...(rawBody.webSearchProviderId ? { webSearchProviderId: rawBody.webSearchProviderId } : {}),
-      ...(rawBody.webSearchApiKey ? { webSearchApiKey: rawBody.webSearchApiKey } : {}),
-      ...(rawBody.baiduSubSources ? { baiduSubSources: rawBody.baiduSubSources } : {}),
-      ...(rawBody.enableImageGeneration != null
-        ? { enableImageGeneration: rawBody.enableImageGeneration }
+      orgId: parsed.orgId,
+      requirement: parsed.requirement,
+      ...(parsed.pdfContent ? { pdfContent: parsed.pdfContent } : {}),
+      ...(parsed.enableWebSearch != null ? { enableWebSearch: parsed.enableWebSearch } : {}),
+      ...(parsed.webSearchProviderId ? { webSearchProviderId: parsed.webSearchProviderId } : {}),
+      ...(parsed.webSearchApiKey ? { webSearchApiKey: parsed.webSearchApiKey } : {}),
+      ...(parsed.baiduSubSources ? { baiduSubSources: parsed.baiduSubSources } : {}),
+      ...(parsed.enableImageGeneration != null
+        ? { enableImageGeneration: parsed.enableImageGeneration }
         : {}),
-      ...(rawBody.enableVideoGeneration != null
-        ? { enableVideoGeneration: rawBody.enableVideoGeneration }
+      ...(parsed.enableVideoGeneration != null
+        ? { enableVideoGeneration: parsed.enableVideoGeneration }
         : {}),
-      ...(rawBody.enableTTS != null ? { enableTTS: rawBody.enableTTS } : {}),
-      ...(rawBody.agentMode ? { agentMode: rawBody.agentMode } : {}),
+      ...(parsed.enableTTS != null ? { enableTTS: parsed.enableTTS } : {}),
+      ...(parsed.agentMode ? { agentMode: parsed.agentMode } : {}),
     };
-    const { requirement } = body;
-
-    if (!requirement) {
-      return apiError('MISSING_REQUIRED_FIELD', 400, 'Missing required field: requirement');
-    }
 
     const baseUrl = buildRequestOrigin(req);
     const jobId = nanoid(10);
-    const job = await createClassroomGenerationJob(jobId, body);
+    const job = await createClassroomGenerationJob(jobId, body, auth.user.id);
     const pollUrl = `${baseUrl}/api/generate-classroom/${jobId}`;
 
-    after(() => runClassroomGenerationJob(jobId, body, baseUrl));
+    after(() => runClassroomGenerationJob(jobId, body, baseUrl, auth.user.id));
 
     return apiSuccess(
       {

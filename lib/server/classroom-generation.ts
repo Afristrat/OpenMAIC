@@ -38,6 +38,7 @@ import { AGENT_COLOR_PALETTE, AGENT_DEFAULT_AVATARS } from '@/lib/constants/agen
 const log = createLogger('Classroom');
 
 export interface GenerateClassroomInput {
+  orgId: string;
   requirement: string;
   pdfContent?: { text: string; images: string[] };
   enableWebSearch?: boolean;
@@ -168,6 +169,7 @@ export async function generateClassroom(
   input: GenerateClassroomInput,
   options: {
     baseUrl: string;
+    ownerId: string;
     onProgress?: (progress: ClassroomGenerationProgress) => Promise<void> | void;
   },
 ): Promise<GenerateClassroomResult> {
@@ -549,6 +551,8 @@ export async function generateClassroom(
       id: stageId,
       stage,
       scenes,
+      ownerId: options.ownerId,
+      orgId: input.orgId,
     },
     options.baseUrl,
   );

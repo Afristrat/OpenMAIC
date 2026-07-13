@@ -304,6 +304,7 @@ export const generateVideoSchema = z.object({
 // ---------------------------------------------------------------------------
 
 export const generateClassroomSchema = z.object({
+  orgId: z.string().uuid('orgId must be a valid UUID'),
   requirement: z.string().min(1, 'requirement is required'),
   pdfContent: z
     .object({
@@ -313,6 +314,15 @@ export const generateClassroomSchema = z.object({
     .optional(),
   language: z.string().optional(),
   enableWebSearch: z.boolean().optional(),
+  webSearchProviderId: z.enum(['tavily', 'bocha', 'brave', 'baidu', 'minimax']).optional(),
+  webSearchApiKey: z.string().optional(),
+  baiduSubSources: z
+    .object({
+      webSearch: z.boolean(),
+      baike: z.boolean(),
+      scholar: z.boolean(),
+    })
+    .optional(),
   enableImageGeneration: z.boolean().optional(),
   enableVideoGeneration: z.boolean().optional(),
   enableTTS: z.boolean().optional(),
@@ -342,6 +352,7 @@ export const pblChatSchema = z.object({
 // ---------------------------------------------------------------------------
 
 export const classroomPersistSchema = z.object({
+  orgId: z.string().uuid('orgId must be a valid UUID'),
   stage: z.record(z.string(), z.unknown()),
   scenes: z.array(z.record(z.string(), z.unknown())),
 });

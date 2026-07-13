@@ -1,30 +1,16 @@
-import { promises as fs, createReadStream } from 'fs';
-import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
-import { CLASSROOMS_DIR, isValidClassroomId } from '@/lib/server/classroom-storage';
-import { requireAuth } from '@/lib/api/auth';
-
-const MIME_TYPES: Record<string, string> = {
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.webp': 'image/webp',
-  '.gif': 'image/gif',
-  '.mp4': 'video/mp4',
-  '.webm': 'video/webm',
-  '.mp3': 'audio/mpeg',
-  '.wav': 'audio/wav',
-  '.ogg': 'audio/ogg',
-  '.aac': 'audio/aac',
-};
+import {
+  classroomMediaContentType,
+  isValidClassroomId,
+  readClassroomOwnership,
+} from '@/lib/server/classroom-storage';
+import { requireSuperAdminOrOrgMember } from '@/lib/api/auth';
+import { createServiceSupabaseClient } from '@/lib/supabase/service';
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ classroomId: string; path: string[] }> },
 ) {
-  const auth = await requireAuth(_req);
-  if (auth.response) return auth.response;
-
   const { classroomId, path: pathSegments } = await params;
 
   // Validate classroomId
@@ -44,49 +30,32 @@ export async function GET(
     return NextResponse.json({ error: 'Invalid path' }, { status: 404 });
   }
 
-  const filePath = path.join(CLASSROOMS_DIR, classroomId, ...pathSegments);
-  const resolvedBase = path.resolve(CLASSROOMS_DIR, classroomId);
-
-  try {
-    // Resolve symlinks and verify the real path stays within the classroom dir
-    const realPath = await fs.realpath(filePath);
-    if (!realPath.startsWith(resolvedBase + path.sep) && realPath !== resolvedBase) {
-      return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    }
-
-    const stat = await fs.stat(realPath);
-    if (!stat.isFile()) {
-      return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    }
-
-    const ext = path.extname(realPath).toLowerCase();
-    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
-
-    // Stream the file to avoid loading large videos into memory
-    const stream = createReadStream(realPath);
-    const webStream = new ReadableStream({
-      start(controller) {
-        stream.on('data', (chunk: Buffer | string) => controller.enqueue(chunk));
-        stream.on('end', () => controller.close());
-        stream.on('error', (err) => controller.error(err));
-      },
-      cancel() {
-        stream.destroy();
-      },
-    });
-
-    return new NextResponse(webStream, {
-      status: 200,
-      headers: {
-        'Content-Type': contentType,
-        'Content-Length': String(stat.size),
-        'Cache-Control': 'public, max-age=86400, immutable',
-      },
-    });
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    }
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+  // Scope media access to the classroom's own org — previously any
+  // authenticated user could stream any classroom's media by guessing/knowing
+  // its ID, regardless of org membership. Same authorization as GET /api/classroom.
+  const ownership = await readClassroomOwnership(classroomId);
+  if (!ownership) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
+
+  const auth = await requireSuperAdminOrOrgMember(req, ownership.orgId);
+  if (auth.response) return auth.response;
+
+  const supabase = createServiceSupabaseClient();
+  const { data: blob, error } = await supabase.storage
+    .from('classroom-media')
+    .download(`${classroomId}/${joined}`);
+
+  if (error || !blob) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  return new NextResponse(blob, {
+    status: 200,
+    headers: {
+      'Content-Type': classroomMediaContentType(joined),
+      'Content-Length': String(blob.size),
+      'Cache-Control': 'public, max-age=86400, immutable',
+    },
+  });
 }
