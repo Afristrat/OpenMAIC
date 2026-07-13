@@ -417,6 +417,7 @@ const getDefaultAudioConfig = () => ({
       enabled: true,
       providerOptions: { backend: DEFAULT_VOXCPM_BACKEND },
     },
+    'higgs-tts': { apiKey: '', baseUrl: '', modelId: 'higgs', enabled: true },
     'doubao-tts': { apiKey: '', baseUrl: '', enabled: true },
     'elevenlabs-tts': { apiKey: '', baseUrl: '', enabled: true },
     'fish-audio': { apiKey: '', baseUrl: '', enabled: true },
