@@ -72,8 +72,13 @@ async function downloadToBuffer(url: string): Promise<Buffer> {
   return Buffer.from(await resp.arrayBuffer());
 }
 
-function mediaServingUrl(baseUrl: string, classroomId: string, subPath: string): string {
-  return `${baseUrl}/api/classroom-media/${classroomId}/${subPath}`;
+function mediaServingUrl(classroomId: string, subPath: string): string {
+  // Relative on purpose: an absolute URL bakes in the domain the request
+  // arrived on at generation time, which breaks playback if the classroom
+  // is later viewed from a different domain (preprod/prod split, domain
+  // migration). The browser resolves a relative src against whatever
+  // origin is currently serving the page.
+  return `/api/classroom-media/${classroomId}/${subPath}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -83,7 +88,6 @@ function mediaServingUrl(baseUrl: string, classroomId: string, subPath: string):
 export async function generateMediaForClassroom(
   outlines: SceneOutline[],
   classroomId: string,
-  baseUrl: string,
 ): Promise<Record<string, string>> {
   // Collect all media generation requests from outlines
   const requests = outlines.flatMap((o) => o.mediaGenerations ?? []);
@@ -133,7 +137,7 @@ export async function generateMediaForClassroom(
 
         const filename = `${req.elementId}.${ext}`;
         await uploadClassroomMedia(classroomId, `media/${filename}`, buf);
-        mediaMap[req.elementId] = mediaServingUrl(baseUrl, classroomId, `media/${filename}`);
+        mediaMap[req.elementId] = mediaServingUrl(classroomId, `media/${filename}`);
         log.info(`Generated image: ${filename}`);
       } catch (err) {
         log.warn(`Image generation failed for ${req.elementId}:`, err);
@@ -166,7 +170,7 @@ export async function generateMediaForClassroom(
         const buf = await downloadToBuffer(result.url);
         const filename = `${req.elementId}.mp4`;
         await uploadClassroomMedia(classroomId, `media/${filename}`, buf);
-        mediaMap[req.elementId] = mediaServingUrl(baseUrl, classroomId, `media/${filename}`);
+        mediaMap[req.elementId] = mediaServingUrl(classroomId, `media/${filename}`);
         log.info(`Generated video: ${filename}`);
       } catch (err) {
         log.warn(`Video generation failed for ${req.elementId}:`, err);
@@ -223,11 +227,7 @@ export function replaceMediaPlaceholders(scenes: Scene[], mediaMap: Record<strin
 // TTS generation
 // ---------------------------------------------------------------------------
 
-export async function generateTTSForClassroom(
-  scenes: Scene[],
-  classroomId: string,
-  baseUrl: string,
-): Promise<void> {
+export async function generateTTSForClassroom(scenes: Scene[], classroomId: string): Promise<void> {
   // Resolve TTS provider (exclude browser-native-tts and operator force-disabled
   // providers — server precedence, #665).
   const ttsProviderIds = Object.entries(getServerTTSProviders())
@@ -286,7 +286,7 @@ export async function generateTTSForClassroom(
         await uploadClassroomMedia(classroomId, `audio/${filename}`, result.audio);
 
         speechAction.audioId = audioId;
-        speechAction.audioUrl = mediaServingUrl(baseUrl, classroomId, `audio/${filename}`);
+        speechAction.audioUrl = mediaServingUrl(classroomId, `audio/${filename}`);
         log.info(`Generated TTS: ${filename} (${result.audio.length} bytes)`);
       } catch (err) {
         log.warn(`TTS generation failed for action ${action.id}:`, err);
