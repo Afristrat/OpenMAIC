@@ -455,8 +455,13 @@ export function useSceneGenerator(options: UseSceneGeneratorOptions = {}) {
       // serial) while later content fetches run hidden behind earlier scenes'
       // actions/TTS. Content has no cross-scene dependency, so running it ahead is
       // safe; actions + TTS stay strictly serial to preserve previousSpeeches
-      // threading and the pause-on-failure UX. With parallelism off this is exactly
-      // the original one-at-a-time loop.
+      // threading. With parallelism off this is exactly the original one-at-a-time
+      // loop.
+      //
+      // Failure isolation: a failure at any step (content/actions/TTS) marks that
+      // outline failed and moves on to the next one instead of pausing the whole
+      // batch — one scene failing must never silence the TTS of every scene after
+      // it. The failed outline stays retryable via retrySingleOutline().
       try {
         const fetchContent = (outline: SceneOutline) =>
           fetchSceneContent(
@@ -502,7 +507,7 @@ export function useSceneGenerator(options: UseSceneGeneratorOptions = {}) {
           : null;
 
         let pausedByFailureOrAbort = false;
-        let hadContentFailure = false;
+        let hadFailure = false;
         for (const outline of pending) {
           if (abortRef.current || store.getState().generationEpoch !== startEpoch) {
             store.getState().setGenerationStatus('paused');
@@ -533,17 +538,9 @@ export function useSceneGenerator(options: UseSceneGeneratorOptions = {}) {
             }
             store.getState().addFailedOutline(outline);
             options.onSceneFailed?.(outline, contentResult.error || 'Content generation failed');
-            if (contentPromises) {
-              // Parallel: surface the failure but keep going with the other scenes
-              // (their content is already in flight).
-              hadContentFailure = true;
-              removeGeneratingOutline(outline.id);
-              continue;
-            }
-            // Serial: pause the batch (unchanged behaviour).
-            store.getState().setGenerationStatus('paused');
-            pausedByFailureOrAbort = true;
-            break;
+            removeGeneratingOutline(outline.id);
+            hadFailure = true;
+            continue;
           }
 
           if (abortRef.current || store.getState().generationEpoch !== startEpoch) {
@@ -572,7 +569,7 @@ export function useSceneGenerator(options: UseSceneGeneratorOptions = {}) {
             const scene = actionsResult.scene;
             const settings = useSettingsStore.getState();
 
-            // TTS generation — failure means the whole scene fails
+            // TTS generation — failure means this scene fails (isolated, see above)
             if (
               settings.ttsEnabled &&
               settings.ttsProviderId !== 'browser-native-tts' &&
@@ -593,9 +590,9 @@ export function useSceneGenerator(options: UseSceneGeneratorOptions = {}) {
                 }
                 store.getState().addFailedOutline(outline);
                 options.onSceneFailed?.(outline, ttsResult.error || 'TTS generation failed');
-                store.getState().setGenerationStatus('paused');
-                pausedByFailureOrAbort = true;
-                break;
+                removeGeneratingOutline(outline.id);
+                hadFailure = true;
+                continue;
               }
             }
 
@@ -616,16 +613,17 @@ export function useSceneGenerator(options: UseSceneGeneratorOptions = {}) {
             }
             store.getState().addFailedOutline(outline);
             options.onSceneFailed?.(outline, actionsResult.error || 'Actions generation failed');
-            store.getState().setGenerationStatus('paused');
-            pausedByFailureOrAbort = true;
-            break;
+            removeGeneratingOutline(outline.id);
+            hadFailure = true;
+            continue;
           }
         }
 
         if (!abortRef.current && !pausedByFailureOrAbort) {
-          if (hadContentFailure) {
-            // Parallel content phase left some outlines failed but kept going;
-            // surface them for retry instead of signalling a clean completion.
+          if (hadFailure) {
+            // One or more outlines failed (content/actions/TTS) but generation kept
+            // going for the rest of the batch — surface them for retry instead of
+            // signalling a clean completion.
             store.getState().setGenerationStatus('paused');
           } else {
             store.getState().setGenerationStatus('completed');
