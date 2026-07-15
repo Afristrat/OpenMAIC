@@ -8,7 +8,7 @@ export class HomePage {
 
   constructor(page: Page) {
     this.page = page;
-    this.logo = page.locator('img[alt="Qalem"]');
+    this.logo = page.getByTestId('app-logo');
     this.textarea = page.locator('textarea');
     // Matches the submit button's label across all supported locales
     // (t('toolbar.enterClassroom')): en, zh, fr-FR, ar-MA.
