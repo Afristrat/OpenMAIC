@@ -2,22 +2,19 @@ import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 
 /**
- * Maps a hostname to a Playwright storageState JSON file path. Populated
- * manually: Amine runs `npx playwright open --save-storage=<path> <url>`
- * once per external tool, logs in by hand, then registers the resulting
- * path here. Never written to by any automated code path.
+ * Resolves a hostname to its Playwright storageState JSON file, by naming
+ * convention (dots -> dashes), so registering a new site is a pure ops
+ * action: Amine runs `npx playwright open --save-storage=<dir>/<host-with-dashes>.json <url>`,
+ * logs in by hand, drops the file in the volume. No code change, no redeploy.
  */
-const STORAGE_STATE_DIR = process.env.CAPTURE_STORAGE_STATE_DIR || '/data/storage-states';
-
-const REGISTRY: Record<string, string> = {
-  'proxy.ai-mpower.com': 'proxy-ai-mpower-com.json',
-};
+function storageStateFilename(hostname: string): string {
+  return `${hostname.replace(/\./g, '-')}.json`;
+}
 
 export function resolveStorageStatePath(url: string): string | undefined {
+  const storageStateDir = process.env.CAPTURE_STORAGE_STATE_DIR || '/data/storage-states';
   const hostname = new URL(url).hostname;
-  const filename = REGISTRY[hostname];
-  if (!filename) return undefined;
-  const fullPath = path.join(STORAGE_STATE_DIR, filename);
+  const fullPath = path.join(storageStateDir, storageStateFilename(hostname));
   return existsSync(fullPath) ? fullPath : undefined;
 }
 
