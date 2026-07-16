@@ -58,15 +58,28 @@ describe('splitTextIntoLanguageSegments', () => {
     ]);
   });
 
-  it('merges consecutive anglicisms into a single en segment', () => {
+  it('keeps a French connector between two anglicisms as its own fr segment (never mispronounce "et chez" in English)', () => {
     const segments = splitTextIntoLanguageSegments(
       "C'est le standard utilisé au MIT et chez LiteLLM aujourd'hui.",
       ANGLICISM_TERMS,
     );
     expect(segments).toEqual([
       { text: "C'est le standard utilisé au", language: 'fr' },
-      { text: 'MIT et chez LiteLLM', language: 'en' },
+      { text: 'MIT', language: 'en' },
+      { text: 'et chez', language: 'fr' },
+      { text: 'LiteLLM', language: 'en' },
       { text: "aujourd'hui.", language: 'fr' },
+    ]);
+  });
+
+  it('merges two adjacent anglicisms (no French word between them) into a single en segment', () => {
+    const segments = splitTextIntoLanguageSegments('Le duo LiteLLM MIT est cité en exemple.', [
+      ...ANGLICISM_TERMS,
+    ]);
+    expect(segments).toEqual([
+      { text: 'Le duo', language: 'fr' },
+      { text: 'LiteLLM MIT', language: 'en' },
+      { text: 'est cité en exemple.', language: 'fr' },
     ]);
   });
 
@@ -165,7 +178,7 @@ export function splitTextIntoLanguageSegments(
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `pnpm exec vitest run tests/audio/language-segments.test.ts`
-Expected: PASS (5/5)
+Expected: PASS (6/6)
 
 - [ ] **Step 5: Commit**
 
