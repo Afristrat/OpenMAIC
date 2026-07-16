@@ -369,6 +369,23 @@
     },
 
     {
+      "id": "S1-012",
+      "title": "Capacité capture web réutilisable — service Playwright dédié + injection scène",
+      "epic": "1-CRÉER",
+      "phase": 1,
+      "passes": false,
+      "dependencies": [],
+      "acceptance": [
+        "Stage LLM capture-decision opérationnel, ssrf-guard appelé avant toute capture",
+        "Service capture-worker déployé sur serveuria, /health répond",
+        "storageState proxy.ai-mpower.com enregistré manuellement par Amine",
+        "Échec de capture n'interrompt jamais la génération (test e2e web-capture-failure-isolation vert)",
+        "npx tsc --noEmit && pnpm lint && pnpm test && pnpm test:e2e verts",
+        "Vérification déployée (SOP-011) : une scène du cours F6G9W_LPT8 régénérée illustrée par une vraie capture de proxy.ai-mpower.com, confirmée visuellement par Amine"
+      ]
+    },
+
+    {
       "id": "S2-001",
       "title": "Profil utilisateur enrichi (culture, langue, préférences) [UI]",
       "epic": "2-VIVRE",
