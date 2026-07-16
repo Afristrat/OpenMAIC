@@ -31,7 +31,9 @@ import {
 } from '@/lib/server/classroom-media-generation';
 import { withGenerationRetry } from '@/lib/generation/generation-retry';
 import { buildVideoManifestFromOutlines } from '@/lib/media/video-manifest';
-import type { UserRequirements } from '@/lib/types/generation';
+import { decideCaptureForScene } from '@/lib/generation/web-capture-plan';
+import { requestWebCapture } from '@/lib/server/capture-client';
+import type { UserRequirements, PdfImage, ImageMapping } from '@/lib/types/generation';
 import type { Scene, Stage } from '@/lib/types/stage';
 import { AGENT_COLOR_PALETTE, AGENT_DEFAULT_AVATARS } from '@/lib/constants/agent-defaults';
 
@@ -446,12 +448,39 @@ export async function generateClassroom(
       });
     };
 
+    // Web capture: decide + fetch an illustrative capture for this scene, if
+    // any. Never blocks: any failure at any point here falls through with no
+    // image (decideCaptureForScene/requestWebCapture never throw).
+    let assignedImages: PdfImage[] | undefined;
+    let imageMapping: ImageMapping | undefined;
+    const captureDecision = await decideCaptureForScene(safeOutline, sceneAiCall, languageDirective);
+    if (captureDecision?.needsCapture) {
+      const asset = await requestWebCapture(captureDecision, stageId);
+      if (asset && asset.format === 'image') {
+        const imgId = 'img_capture_1';
+        assignedImages = [
+          {
+            id: imgId,
+            src: asset.assetUrl,
+            pageNumber: 0,
+            description: captureDecision.reason,
+          },
+        ];
+        imageMapping = { [imgId]: asset.assetUrl };
+      }
+      // asset.format === 'video' handled by the existing Hyperframes video
+      // channel — out of scope here, tracked separately if/when a
+      // capture-decision actually returns format:'video' in practice.
+    }
+
     const content = await withGenerationRetry(
       () =>
         generateSceneContent(safeOutline, sceneAiCall, {
           agents,
           languageDirective,
           allowProceduralSkill: vocationalActive,
+          assignedImages,
+          imageMapping,
         }),
       {
         label: `scene ${index + 1}/${outlines.length} content`,
