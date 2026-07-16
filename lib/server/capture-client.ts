@@ -23,9 +23,13 @@ export async function requestWebCapture(
   classroomId: string,
 ): Promise<CaptureAsset | null> {
   try {
+    const captureWorkerToken = process.env.CAPTURE_WORKER_TOKEN;
     const response = await fetch(`${CAPTURE_WORKER_URL}/capture`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(captureWorkerToken ? { Authorization: `Bearer ${captureWorkerToken}` } : {}),
+      },
       body: JSON.stringify({
         url: decision.url,
         interactionSteps: decision.interactionSteps,

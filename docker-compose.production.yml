@@ -33,6 +33,7 @@ services:
       - NEXT_PUBLIC_SUPABASE_ANON_KEY=${ANON_KEY}
       - SUPABASE_SERVICE_ROLE_KEY=${SERVICE_ROLE_KEY}
       - CAPTURE_WORKER_URL=http://capture-worker:8090
+      - CAPTURE_WORKER_TOKEN=${CAPTURE_WORKER_TOKEN}
     depends_on:
       supabase-db:
         condition: service_healthy
@@ -206,6 +207,7 @@ services:
     environment:
       - PORT=8090
       - CAPTURE_STORAGE_STATE_DIR=/data/storage-states
+      - CAPTURE_WORKER_TOKEN=${CAPTURE_WORKER_TOKEN}
     volumes:
       - capture-storage-states:/data/storage-states
     networks:

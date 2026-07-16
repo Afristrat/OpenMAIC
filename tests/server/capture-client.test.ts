@@ -21,7 +21,32 @@ const decision: CaptureDecision = {
 };
 
 describe('requestWebCapture', () => {
-  afterEach(() => vi.restoreAllMocks());
+  const originalToken = process.env.CAPTURE_WORKER_TOKEN;
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    if (originalToken === undefined) delete process.env.CAPTURE_WORKER_TOKEN;
+    else process.env.CAPTURE_WORKER_TOKEN = originalToken;
+  });
+
+  it('sends CAPTURE_WORKER_TOKEN as a Bearer Authorization header', async () => {
+    process.env.CAPTURE_WORKER_TOKEN = 'test-token';
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        buffer: Buffer.from('fake-png').toString('base64'),
+        contentType: 'image/png',
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await requestWebCapture(decision, 'classroom_123');
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const headers = init.headers as Record<string, string>;
+    expect(headers.Authorization).toBe('Bearer test-token');
+  });
 
   it('uploads the returned buffer to Supabase Storage and returns its URL', async () => {
     vi.stubGlobal(
