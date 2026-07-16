@@ -3,6 +3,7 @@ import { parseJsonResponse } from './json-repair';
 import type { AICallFn } from './pipeline-types';
 import type { SceneOutline } from '@/lib/types/generation';
 import { createLogger } from '@/lib/logger';
+import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 
 const log = createLogger('WebCapturePlan');
 
@@ -58,5 +59,14 @@ export async function decideCaptureForScene(
     log.error(`Failed to parse capture-decision response for: ${outline.title}`);
     return null;
   }
+
+  if (decision.needsCapture) {
+    const ssrfError = await validateUrlForSSRF(decision.url);
+    if (ssrfError) {
+      log.warn(`capture-decision URL rejected by ssrf-guard for "${outline.title}": ${ssrfError}`);
+      return { ...decision, needsCapture: false, reason: `URL rejetée par ssrf-guard: ${ssrfError}` };
+    }
+  }
+
   return decision;
 }
