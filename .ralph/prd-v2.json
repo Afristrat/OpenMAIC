@@ -354,6 +354,21 @@
     },
 
     {
+      "id": "S1-011",
+      "title": "Prononciation anglicismes higgs-tts (LiteLLM, MIT) via segmentation fr/en déterministe",
+      "epic": "1-CRÉER",
+      "phase": 1,
+      "passes": false,
+      "dependencies": [],
+      "acceptance": [
+        "splitTextIntoLanguageSegments et splitSpeechActionsByAnglicisms couverts par tests unitaires verts",
+        "TTSModelConfig.language câblé jusqu'au payload /v1/audio/speech de higgs-tts uniquement",
+        "npx tsc --noEmit && pnpm lint && pnpm test verts",
+        "Vérification déployée (SOP-011) : narration réelle générée sur préprod/prod contenant 'LiteLLM' et 'budget' dans la même phrase, écoutée par Amine, prononciation confirmée correcte des deux côtés"
+      ]
+    },
+
+    {
       "id": "S2-001",
       "title": "Profil utilisateur enrichi (culture, langue, préférences) [UI]",
       "epic": "2-VIVRE",
