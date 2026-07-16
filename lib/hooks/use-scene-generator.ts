@@ -15,7 +15,7 @@ import type {
 import type { AgentInfo } from '@/lib/generation/generation-pipeline';
 import type { Scene } from '@/lib/types/stage';
 import type { SpeechAction } from '@/lib/types/action';
-import { splitLongSpeechActions } from '@/lib/audio/tts-utils';
+import { splitLongSpeechActions, splitSpeechActionsByAnglicisms } from '@/lib/audio/tts-utils';
 import { isTTSProviderEnabled } from '@/lib/audio/provider-enablement';
 import { resolveAgentVoiceOptions, pickNarratorAgent } from '@/lib/audio/agent-voice';
 import { useAgentRegistry } from '@/lib/orchestration/registry/store';
@@ -218,6 +218,7 @@ export async function generateAndStoreTTS(
   language?: string,
   signal?: AbortSignal,
   retryOptions?: ClientRetryOptions<TTSApiResponse>,
+  ttsLanguageOverride?: 'fr' | 'en',
 ): Promise<void> {
   const settings = useSettingsStore.getState();
   if (settings.ttsProviderId === 'browser-native-tts') return;
@@ -258,6 +259,7 @@ export async function generateAndStoreTTS(
           ttsBaseUrl:
             ttsProviderConfig?.baseUrl || ttsProviderConfig?.customDefaultBaseUrl || undefined,
           ttsProviderOptions: providerOptions,
+          ttsLanguageOverride,
         }),
         signal,
       });
@@ -304,7 +306,10 @@ async function generateTTSForScene(
   signal?: AbortSignal,
 ): Promise<{ success: boolean; failedCount: number; error?: string }> {
   const providerId = useSettingsStore.getState().ttsProviderId;
-  scene.actions = splitLongSpeechActions(scene.actions || [], providerId);
+  scene.actions = splitSpeechActionsByAnglicisms(
+    splitLongSpeechActions(scene.actions || [], providerId),
+    providerId,
+  );
   const speechActions = scene.actions.filter(
     (a): a is SpeechAction => a.type === 'speech' && !!a.text,
   );
@@ -322,7 +327,14 @@ async function generateTTSForScene(
     const audioId = `tts_s${sceneOrder}_${action.id}`;
     action.audioId = audioId;
     try {
-      await generateAndStoreTTS(audioId, action.text, language, signal);
+      await generateAndStoreTTS(
+        audioId,
+        action.text,
+        language,
+        signal,
+        undefined,
+        action.ttsLanguageOverride,
+      );
     } catch (error) {
       if (isAbortError(error)) throw error;
 

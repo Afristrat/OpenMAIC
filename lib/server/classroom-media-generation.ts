@@ -33,7 +33,7 @@ import type { SpeechAction } from '@/lib/types/action';
 import type { ImageProviderId } from '@/lib/media/types';
 import type { VideoProviderId } from '@/lib/media/types';
 import type { TTSProviderId } from '@/lib/audio/types';
-import { splitLongSpeechActions } from '@/lib/audio/tts-utils';
+import { splitLongSpeechActions, splitSpeechActionsByAnglicisms } from '@/lib/audio/tts-utils';
 import { VOXCPM_AUTO_VOICE_ID, VOXCPM_TTS_PROVIDER_ID } from '@/lib/audio/voxcpm';
 
 const log = createLogger('ClassroomMedia');
@@ -258,7 +258,10 @@ export async function generateTTSForClassroom(scenes: Scene[], classroomId: stri
 
     // Split long speech actions into multiple shorter ones before TTS generation,
     // mirroring the client-side approach. Each sub-action gets its own audio file.
-    scene.actions = splitLongSpeechActions(scene.actions, providerId);
+    scene.actions = splitSpeechActionsByAnglicisms(
+      splitLongSpeechActions(scene.actions, providerId),
+      providerId,
+    );
 
     // Use scene order to make audio IDs unique across scenes
     const sceneOrder = scene.order;
@@ -278,6 +281,7 @@ export async function generateTTSForClassroom(scenes: Scene[], classroomId: stri
             baseUrl: ttsBaseUrl,
             voice,
             speed: speechAction.speed,
+            language: speechAction.ttsLanguageOverride,
           },
           speechAction.text,
         );
