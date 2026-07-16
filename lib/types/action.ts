@@ -43,6 +43,8 @@ export interface SpeechAction extends ActionBase {
   audioUrl?: string; // Server-generated TTS audio URL
   voice?: string;
   speed?: number; // default 1.0
+  /** Forces the TTS provider's language for THIS segment (higgs-tts only) — set by splitSpeechActionsByAnglicisms, never authored directly. */
+  ttsLanguageOverride?: 'fr' | 'en';
 }
 
 /** Open whiteboard (wait for animation) */
