@@ -5,27 +5,23 @@ import {
   readClassroomGenerationJob,
 } from '@/lib/server/classroom-job-store';
 import { buildRequestOrigin } from '@/lib/server/classroom-storage';
-import { requireAuth } from '@/lib/api/auth';
+import { requireSuperAdminOrOrgMember } from '@/lib/api/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest, context: { params: Promise<{ jobId: string }> }) {
-  const auth = await requireAuth(req);
-  if (auth.response) return auth.response;
-
   try {
     const { jobId } = await context.params;
-
     if (!isValidClassroomJobId(jobId)) {
       return apiError('INVALID_REQUEST', 400, 'Invalid classroom generation job id');
     }
 
     const job = await readClassroomGenerationJob(jobId);
-    if (!job) {
-      return apiError('INVALID_REQUEST', 404, 'Classroom generation job not found');
-    }
+    if (!job) return apiError('INVALID_REQUEST', 404, 'Classroom generation job not found');
+    if (!job.orgId) return apiError('INTERNAL_ERROR', 500, 'Classroom generation job has no organization');
 
-    const pollUrl = `${buildRequestOrigin(req)}/api/generate-classroom/${jobId}`;
+    const auth = await requireSuperAdminOrOrgMember(req, job.orgId);
+    if (auth.response) return auth.response;
 
     return apiSuccess({
       jobId: job.id,
@@ -33,7 +29,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ jobId: 
       step: job.step,
       progress: job.progress,
       message: job.message,
-      pollUrl,
+      pollUrl: `${buildRequestOrigin(req)}/api/generate-classroom/${jobId}`,
       pollIntervalMs: 5000,
       scenesGenerated: job.scenesGenerated,
       totalScenes: job.totalScenes,

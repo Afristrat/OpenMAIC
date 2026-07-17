@@ -37,19 +37,12 @@ import { SettingsDialog } from '@/components/settings';
 import { GenerationToolbar } from '@/components/generation/generation-toolbar';
 import { AgentBar } from '@/components/agent/agent-bar';
 import { useTheme } from '@/lib/hooks/use-theme';
-import { nanoid } from 'nanoid';
-import { storePdfBlob } from '@/lib/utils/image-storage';
 import type { UserRequirements } from '@/lib/types/generation';
 import { buildLanguageDirective } from '@/lib/constants/generation';
 import { useSettingsStore } from '@/lib/store/settings';
-import { hasUsableLLMProvider } from '@/lib/store/settings-validation';
 import { useUserProfileStore, AVATAR_OPTIONS } from '@/lib/store/user-profile';
 import {
   StageListItem,
-  listStages,
-  deleteStageData,
-  renameStage,
-  getFirstSlideByStages,
   revokeThumbnailSlideMediaUrls,
 } from '@/lib/utils/stage-storage';
 import { SlideThumbnail } from '@/components/slide-renderer/SlideThumbnail';
@@ -59,14 +52,13 @@ import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useDraftCache } from '@/lib/hooks/use-draft-cache';
 import { SpeechButton } from '@/components/audio/speech-button';
-import { useImportClassroom } from '@/lib/import/use-import-classroom';
 import { shouldShowVocationalTestUi } from '@/lib/config/feature-flags';
-import { useImportPptx } from '@/lib/import/use-import-pptx';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { useOrganizations } from '@/lib/hooks/use-organizations';
 import { TemplateSelector } from '@/components/org/template-selector';
 import { tryCreateClient } from '@/lib/supabase/client';
 import { db } from '@/lib/utils/database';
-import { useDemoSeed, isDemoStage } from '@/lib/demo/use-demo-seed';
+import { isDemoStage } from '@/lib/demo/use-demo-seed';
 
 const log = createLogger('Home');
 
@@ -114,8 +106,6 @@ function HomePage() {
   // A usable LLM provider exists ⇒ a concrete model is always selected (#580
   // invariant). Gate generation on this single condition (state A vs B)
   // instead of inspecting modelId directly.
-  const providersConfig = useSettingsStore((s) => s.providersConfig);
-  const hasUsableProvider = hasUsableLLMProvider(providersConfig);
   const [recentOpen, setRecentOpen] = useState(true);
   const persistRecentOpen = (next: boolean) => {
     setRecentOpen(next);
@@ -128,6 +118,7 @@ function HomePage() {
 
   // Auth + due review count
   const { user } = useAuth();
+  const { currentOrg, isAdmin } = useOrganizations();
   const [dueReviewCount, setDueReviewCount] = useState(0);
 
   const loadDueReviewCount = async () => {
@@ -208,6 +199,16 @@ function HomePage() {
   const [themeOpen, setThemeOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [classrooms, setClassrooms] = useState<StageListItem[]>([]);
+  // Imports remain disabled until their payloads are persisted through the
+  // organization-scoped API, rather than silently creating browser-only courses.
+  const importing = true;
+  const pptxImporting = true;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const pptxFileInputRef = useRef<HTMLInputElement>(null);
+  const triggerFileSelect = () => undefined;
+  const triggerPptxFileSelect = () => undefined;
+  const handleFileChange = () => undefined;
+  const handlePptxFileChange = () => undefined;
   const [thumbnails, setThumbnails] = useState<Record<string, Slide>>({});
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -238,38 +239,21 @@ function HomePage() {
   }, [themeOpen]);
 
   const loadClassrooms = async () => {
+    if (!currentOrg) {
+      setClassrooms([]);
+      replaceThumbnails({});
+      return;
+    }
     try {
-      const list = await listStages();
+      const response = await fetch(`/api/classroom?orgId=${encodeURIComponent(currentOrg.id)}`);
+      if (!response.ok) throw new Error('Failed to load persistent classrooms');
+      const { classrooms: list } = await response.json();
       setClassrooms(list);
-      // Load first slide thumbnails
-      if (list.length > 0) {
-        const slides = await getFirstSlideByStages(list.map((c) => c.id));
-        replaceThumbnails(slides);
-      } else {
-        replaceThumbnails({});
-      }
+      replaceThumbnails({});
     } catch (err) {
       log.error('Failed to load classrooms:', err);
     }
   };
-
-  // Seed demo classrooms on first load (no-ops if already seeded)
-  useDemoSeed(() => {
-    loadClassrooms();
-  });
-
-  const { importing, fileInputRef, triggerFileSelect, handleFileChange } = useImportClassroom(
-    () => {
-      loadClassrooms();
-    },
-  );
-
-  const {
-    importing: pptxImporting,
-    fileInputRef: pptxFileInputRef,
-    triggerFileSelect: triggerPptxFileSelect,
-    handleFileChange: handlePptxFileChange,
-  } = useImportPptx();
 
   useEffect(() => {
     // Clear stale media store to prevent cross-course thumbnail contamination.
@@ -299,7 +283,8 @@ function HomePage() {
   const confirmDelete = async (id: string) => {
     setPendingDeleteId(null);
     try {
-      await deleteStageData(id);
+      const response = await fetch(`/api/classroom?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete classroom');
       await loadClassrooms();
     } catch (err) {
       log.error('Failed to delete classroom:', err);
@@ -309,7 +294,8 @@ function HomePage() {
 
   const handleRename = async (id: string, newName: string) => {
     try {
-      await renameStage(id, newName);
+      const response = await fetch(`/api/classroom?id=${encodeURIComponent(id)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newName }) });
+      if (!response.ok) throw new Error('Failed to rename classroom');
       setClassrooms((prev) => prev.map((c) => (c.id === id ? { ...c, name: newName } : c)));
     } catch (err) {
       log.error('Failed to rename classroom:', err);
@@ -349,6 +335,10 @@ function HomePage() {
       setError(t('upload.requirementRequired'));
       return;
     }
+    if (!user || !currentOrg || !isAdmin) {
+      setError(t('upload.generateFailed'));
+      return;
+    }
 
     setError(null);
 
@@ -368,42 +358,17 @@ function HomePage() {
         ...(form.vocationalTestMode ? { taskEngineMode: true } : {}),
       };
 
-      let pdfStorageKey: string | undefined;
-      let pdfFileName: string | undefined;
-      let pdfProviderId: string | undefined;
-      let pdfProviderConfig: { apiKey?: string; baseUrl?: string } | undefined;
-
+      let pdfContent: { text: string; images: string[] } | undefined;
       if (form.pdfFile) {
-        pdfStorageKey = await storePdfBlob(form.pdfFile);
-        pdfFileName = form.pdfFile.name;
-
-        const settings = useSettingsStore.getState();
-        pdfProviderId = settings.pdfProviderId;
-        const providerCfg = settings.pdfProvidersConfig?.[settings.pdfProviderId];
-        if (providerCfg) {
-          pdfProviderConfig = {
-            apiKey: providerCfg.apiKey,
-            baseUrl: providerCfg.baseUrl,
-          };
-        }
+        const fd = new FormData(); fd.append('pdf', form.pdfFile);
+        const parsed = await (await fetch('/api/parse-pdf', { method: 'POST', body: fd })).json();
+        if (!parsed.success || !parsed.data?.text) throw new Error(t('generation.pdfParseFailed'));
+        pdfContent = { text: parsed.data.text, images: [] };
       }
-
-      const sessionState = {
-        sessionId: nanoid(),
-        requirements,
-        pdfText: '',
-        pdfImages: [],
-        imageStorageIds: [],
-        pdfStorageKey,
-        pdfFileName,
-        pdfProviderId,
-        pdfProviderConfig,
-        sceneOutlines: null,
-        currentStep: 'generating' as const,
-      };
-      sessionStorage.setItem('generationSession', JSON.stringify(sessionState));
-
-      router.push('/generation-preview');
+      const response = await fetch('/api/generate-classroom', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orgId: currentOrg.id, requirement: requirements.requirement, ...(pdfContent ? { pdfContent } : {}), enableWebSearch: form.webSearch, enableTTS: true }) });
+      const result = await response.json();
+      if (!response.ok || !result.jobId) throw new Error(result.error || 'Generation could not start');
+      router.push(`/generation-status?jobId=${encodeURIComponent(result.jobId)}`);
     } catch (err) {
       log.error('Error preparing generation:', err);
       setError(err instanceof Error ? err.message : t('upload.generateFailed'));
@@ -422,7 +387,7 @@ function HomePage() {
     return date.toLocaleDateString();
   };
 
-  const canGenerate = !!form.requirement.trim() && hasUsableProvider;
+  const canGenerate = !!form.requirement.trim() && !!user && !!currentOrg && isAdmin;
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {

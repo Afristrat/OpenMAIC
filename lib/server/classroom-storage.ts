@@ -45,6 +45,17 @@ export interface PersistedClassroomData {
   orgId: string;
 }
 
+export interface ClassroomListItem {
+  id: string;
+  name: string;
+  description?: string;
+  sceneCount: number;
+  createdAt: number;
+  updatedAt: number;
+  interactiveMode?: boolean;
+  taskEngineMode?: boolean;
+}
+
 export function isValidClassroomId(id: string): boolean {
   return /^[a-zA-Z0-9_-]+$/.test(id);
 }
@@ -243,6 +254,74 @@ export async function readClassroom(id: string): Promise<PersistedClassroomData 
     ownerId: stageRow.owner_id,
     orgId: stageRow.org_id,
   };
+}
+
+export async function listClassrooms(orgId: string): Promise<ClassroomListItem[]> {
+  const supabase = createServiceSupabaseClient();
+  const { data, error } = await supabase
+    .from('stages')
+    .select('id, name, description, created_at, extra, scenes(count)')
+    .eq('org_id', orgId)
+    .order('created_at', { ascending: false });
+  if (error) throw new Error(`Failed to list classrooms for org ${orgId}: ${error.message}`);
+
+  return (data ?? []).map((row) => {
+    const extra = (row.extra ?? {}) as StageExtra;
+    const scenes = row.scenes as Array<{ count: number }> | null;
+    const createdAt = new Date(row.created_at).getTime();
+    return {
+      id: row.id,
+      name: row.name,
+      description: row.description ?? undefined,
+      sceneCount: scenes?.[0]?.count ?? 0,
+      createdAt: extra.createdAt ?? createdAt,
+      updatedAt: extra.updatedAt ?? createdAt,
+      interactiveMode: extra.interactiveMode,
+      taskEngineMode: extra.taskEngineMode,
+    };
+  });
+}
+
+export async function renameClassroom(id: string, name: string): Promise<void> {
+  const supabase = createServiceSupabaseClient();
+  const { data: existing, error: readError } = await supabase
+    .from('stages')
+    .select('extra')
+    .eq('id', id)
+    .maybeSingle();
+  if (readError) throw new Error(`Failed to read classroom ${id} before renaming: ${readError.message}`);
+  if (!existing) throw new Error(`Classroom ${id} does not exist`);
+
+  const { error } = await supabase
+    .from('stages')
+    .update({ name, extra: { ...((existing.extra ?? {}) as StageExtra), updatedAt: Date.now() } })
+    .eq('id', id);
+  if (error) throw new Error(`Failed to rename classroom ${id}: ${error.message}`);
+}
+
+async function listClassroomMediaPaths(prefix: string): Promise<string[]> {
+  const bucket = createServiceSupabaseClient().storage.from('classroom-media');
+  const { data, error } = await bucket.list(prefix, { limit: 1000 });
+  if (error) throw new Error(`Failed to list classroom media at ${prefix}: ${error.message}`);
+
+  const paths = await Promise.all(
+    (data ?? []).map(async (entry) => {
+      const entryPath = `${prefix}/${entry.name}`;
+      return entry.id === null ? listClassroomMediaPaths(entryPath) : [entryPath];
+    }),
+  );
+  return paths.flat();
+}
+
+export async function deleteClassroom(id: string): Promise<void> {
+  const supabase = createServiceSupabaseClient();
+  const mediaPaths = await listClassroomMediaPaths(id);
+  const { error: mediaError } = mediaPaths.length
+    ? await supabase.storage.from('classroom-media').remove(mediaPaths)
+    : { error: null };
+  if (mediaError) throw new Error(`Failed to delete classroom media ${id}: ${mediaError.message}`);
+  const { error } = await supabase.from('stages').delete().eq('id', id);
+  if (error) throw new Error(`Failed to delete classroom ${id}: ${error.message}`);
 }
 
 // ---------------------------------------------------------------------------
