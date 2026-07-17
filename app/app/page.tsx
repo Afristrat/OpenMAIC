@@ -70,7 +70,10 @@ import { useDemoSeed, isDemoStage } from '@/lib/demo/use-demo-seed';
 
 const log = createLogger('Home');
 
-const WEB_SEARCH_STORAGE_KEY = 'webSearchEnabled';
+// Nouvelle clé : une préférence « recherche désactivée » héritée d’avant le
+// raccordement Serper + Crawl4AI ne doit pas neutraliser silencieusement les
+// sources fraîches de la première génération après cette mise à niveau.
+const WEB_SEARCH_STORAGE_KEY = 'webSearchEnabled.v2';
 const RECENT_OPEN_STORAGE_KEY = 'recentClassroomsOpen';
 const INTERACTIVE_MODE_STORAGE_KEY = 'interactiveModeEnabled';
 
