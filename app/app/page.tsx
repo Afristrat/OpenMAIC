@@ -39,7 +39,6 @@ import { AgentBar } from '@/components/agent/agent-bar';
 import { useTheme } from '@/lib/hooks/use-theme';
 import type { UserRequirements } from '@/lib/types/generation';
 import { buildLanguageDirective } from '@/lib/constants/generation';
-import { useSettingsStore } from '@/lib/store/settings';
 import { useUserProfileStore, AVATAR_OPTIONS } from '@/lib/store/user-profile';
 import {
   StageListItem,
