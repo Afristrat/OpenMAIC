@@ -11,6 +11,7 @@ import { enrichSourcesWithCrawl4AI } from '@/lib/server/crawl4ai';
 describe('enrichSourcesWithCrawl4AI', () => {
   beforeEach(() => {
     vi.stubEnv('CRAWL4AI_BASE_URL', 'http://crawl4ai:11235');
+    vi.stubEnv('CRAWL4AI_API_TOKEN', 'test-crawl-token');
     validateUrlForSSRFMock.mockReset();
     validateUrlForSSRFMock.mockResolvedValue(null);
     vi.stubGlobal('fetch', vi.fn());
@@ -36,6 +37,10 @@ describe('enrichSourcesWithCrawl4AI', () => {
       'http://crawl4ai:11235/md',
       expect.objectContaining({
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer test-crawl-token',
+        },
         body: JSON.stringify({
           url: 'https://docs.litellm.ai',
           f: 'bm25',

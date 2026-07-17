@@ -1,7 +1,7 @@
 /**
- * Enriches ranked web-search sources with bounded, readable primary content
- * from the private Crawl4AI service. Search URLs are untrusted input: each
- * one is validated against SSRF before the internal crawler receives it.
+ * Enrichit les sources classées du moteur de recherche avec un contenu source
+ * lisible et borné, fourni par le service privé Crawl4AI. Chaque URL venant
+ * du moteur est non fiable et passe donc par le garde SSRF avant le crawl.
  */
 
 import type { WebSearchSource } from '@/lib/types/web-search';
@@ -27,6 +27,14 @@ function getCrawl4AIBaseUrl(): string | undefined {
   return value ? value.replace(/\/+$/, '') : undefined;
 }
 
+function getCrawl4AIHeaders(): HeadersInit {
+  const token = process.env.CRAWL4AI_API_TOKEN?.trim();
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
 function extractMarkdown(value: Crawl4AIResponse): string {
   return (value.fit_markdown || value.markdown || value.data?.fit_markdown || value.data?.markdown || '')
     .replace(/\s+/g, ' ')
@@ -48,7 +56,7 @@ async function crawlSource(
   try {
     const response = await fetch(`${baseUrl}/md`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getCrawl4AIHeaders(),
       body: JSON.stringify({ url: source.url, f: 'bm25', q: query, c: '0' }),
       signal: AbortSignal.timeout(CRAWL_TIMEOUT_MS),
     });
@@ -65,10 +73,10 @@ async function crawlSource(
 }
 
 /**
- * Replaces Serper snippets with readable source content when the local crawler
- * is configured. Deliberately sequential and capped: one classroom must never
- * monopolise the browser pool or turn a research failure into a generation
- * failure.
+ * Remplace les extraits Serper par du contenu source lisible dès que le
+ * crawler local est configuré. Le traitement est séquentiel et plafonné :
+ * une formation ne doit ni monopoliser le navigateur, ni échouer si la
+ * recherche documentaire est indisponible.
  */
 export async function enrichSourcesWithCrawl4AI(
   sources: readonly WebSearchSource[],
