@@ -48,6 +48,13 @@ export const WEB_SEARCH_PROVIDERS: Record<WebSearchProviderId, WebSearchProvider
     endpointPath: '/v1/coding_plan/search',
     icon: '/logos/minimax.svg',
   },
+  serper: {
+    id: 'serper',
+    name: 'Serper',
+    requiresApiKey: true,
+    defaultBaseUrl: 'https://google.serper.dev',
+    endpointPath: '/search',
+  },
 };
 
 export const BAIDU_SUB_SOURCES: Record<

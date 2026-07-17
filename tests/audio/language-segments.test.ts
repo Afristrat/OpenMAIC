@@ -56,6 +56,25 @@ describe('splitTextIntoLanguageSegments', () => {
     expect(segments).toEqual([{ text: 'Elle porte des mitaines.', language: 'fr' }]);
   });
 
+  it('covers the technical LiteLLM vocabulary without converting ordinary French words', () => {
+    const segments = splitTextIntoLanguageSegments(
+      'Le proxy LiteLLM applique un fallback via API, cache le budget et expose un dashboard.',
+      ANGLICISM_TERMS,
+    );
+
+    expect(segments).toEqual([
+      { text: 'Le', language: 'fr' },
+      { text: 'proxy LiteLLM', language: 'en' },
+      { text: 'applique un', language: 'fr' },
+      { text: 'fallback', language: 'en' },
+      { text: 'via', language: 'fr' },
+      { text: 'API', language: 'en' },
+      { text: ', cache le budget et expose un', language: 'fr' },
+      { text: 'dashboard', language: 'en' },
+      { text: '.', language: 'fr' },
+    ]);
+  });
+
   it('returns a single fr segment for empty or whitespace-only text', () => {
     expect(splitTextIntoLanguageSegments('   ', ANGLICISM_TERMS)).toEqual([
       { text: '', language: 'fr' },

@@ -14,6 +14,8 @@ describe('server web search config', () => {
     delete process.env.BAIDU_BASE_URL;
     delete process.env.WEB_SEARCH_MINIMAX_API_KEY;
     delete process.env.WEB_SEARCH_MINIMAX_BASE_URL;
+    delete process.env.SERPER_API_KEY;
+    delete process.env.SERPER_BASE_URL;
   });
 
   it('rejects client-controlled base URLs outside the provider allowlist', async () => {
@@ -91,6 +93,18 @@ describe('server web search config', () => {
       providerId: 'minimax',
       apiKey: 'minimax-server-key',
       baseUrl: 'https://api.minimaxi.com',
+    });
+  });
+
+  it('resolves Serper classroom web search config from server env vars', async () => {
+    vi.stubEnv('SERPER_API_KEY', 'serper-server-key');
+    vi.stubEnv('SERPER_BASE_URL', 'https://google.serper.dev');
+    const { resolveClassroomWebSearchConfig } = await import('@/lib/server/web-search-config');
+
+    expect(resolveClassroomWebSearchConfig({ webSearchProviderId: 'serper' })).toEqual({
+      providerId: 'serper',
+      apiKey: 'serper-server-key',
+      baseUrl: 'https://google.serper.dev',
     });
   });
 

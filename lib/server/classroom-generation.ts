@@ -22,6 +22,7 @@ import { getStageModel } from '@/lib/server/model-routes';
 import { resolveVocationalActive } from '@/lib/config/feature-flags';
 import { buildSearchQuery } from '@/lib/server/search-query-builder';
 import { formatSearchResultsAsContext, searchWeb } from '@/lib/web-search';
+import { enrichSourcesWithCrawl4AI } from '@/lib/server/crawl4ai';
 import type { BaiduSubSources, WebSearchProviderId } from '@/lib/web-search/types';
 import { persistClassroom } from '@/lib/server/classroom-storage';
 import {
@@ -315,9 +316,10 @@ export async function generateClassroom(
           baseUrl: webSearchConfig.baseUrl,
           baiduSubSources: webSearchConfig.baiduSubSources,
         });
-        researchContext = formatSearchResultsAsContext(searchResult);
+        const enrichedSources = await enrichSourcesWithCrawl4AI(searchResult.sources, searchQuery.query);
+        researchContext = formatSearchResultsAsContext({ ...searchResult, sources: enrichedSources });
         if (researchContext) {
-          log.info(`Web search returned ${searchResult.sources.length} sources`);
+          log.info(`Web search returned ${enrichedSources.length} sources`);
         }
       } catch (e) {
         log.warn('Web search failed, continuing without search context:', e);

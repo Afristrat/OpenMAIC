@@ -32,6 +32,7 @@ const OFFICIAL_CLIENT_BASE_URLS: Record<WebSearchProviderId, string[]> = {
     'https://api.minimax.io/v1/coding_plan',
     'https://api.minimax.io/v1/coding_plan/search',
   ],
+  serper: ['https://google.serper.dev', 'https://google.serper.dev/search'],
 };
 
 function normalizeBaseUrl(value: string): string {
