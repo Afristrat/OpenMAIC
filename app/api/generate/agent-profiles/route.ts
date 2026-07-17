@@ -133,7 +133,12 @@ Requirements:
   - "identity": gender + age + role (e.g. "middle-aged male teacher")
   - "texture": pitch + vocal quality (e.g. "warm low-pitched slightly husky")
   - "delivery": emotion + pace (e.g. "calm measured encouraging")
-${voicePrompt}
+  - CRITICAL: the gender stated in "identity" MUST match the gender the agent's "name" reads as (e.g. a name that reads male, such as "Thomas" or "Ahmed", must get a male "identity"; a name that reads female, such as "Sophie" or "Amina", must get a female "identity"). A mismatch between name and voice gender is a serious quality bug — double-check every agent's name against its voiceDesign before returning the JSON.
+${voicePrompt}${
+      voicePrompt
+        ? '\n  - CRITICAL: the picked voice\'s gender must also match the gender the agent\'s "name" reads as.'
+        : ''
+    }
 
 Return a JSON object with this exact structure:
 {

@@ -83,4 +83,14 @@ describe('agent-profiles route — voiceDesign', () => {
     expect(body.success).toBe(true);
     expect(body.agents[0]).not.toHaveProperty('voiceDesign');
   });
+
+  it('instructs the LLM to keep voiceDesign gender consistent with the agent name', async () => {
+    callLLM.mockResolvedValue({ text: llmAgents({}) });
+
+    await POST(makeRequest());
+
+    const prompt = callLLM.mock.calls[0][0].prompt as string;
+    expect(prompt.toLowerCase()).toContain('gender');
+    expect(prompt.toLowerCase()).toContain('name');
+  });
 });
