@@ -27,7 +27,6 @@ export const commonZhCN = {
     pricing: '价格',
     syncing: '同步中...',
     synced: '已同步',
-    pendingSync: '{count} 待同步',
     syncNow: '立即同步',
   },
   profile: {
@@ -242,12 +241,6 @@ export const commonZhCN = {
     reviewSubmitted: '评价已提交',
     noReviews: '暂无评价',
     backToMarketplace: '返回市场',
-  },
-  offline: {
-    banner: '离线 — 您的数据已保存在本地',
-    syncing: '正在同步...',
-    synced: '同步完成',
-    queuedItems: '{n} 项操作待同步',
   },
   payment: {
     title: '支付',
@@ -644,7 +637,6 @@ export const commonEnUS = {
     pricing: 'Pricing',
     syncing: 'Syncing...',
     synced: 'Synced',
-    pendingSync: '{count} pending',
     syncNow: 'Sync now',
   },
   profile: {
@@ -861,12 +853,6 @@ export const commonEnUS = {
     reviewSubmitted: 'Review submitted',
     noReviews: 'No reviews yet',
     backToMarketplace: 'Back to marketplace',
-  },
-  offline: {
-    banner: 'Offline — your data is saved locally',
-    syncing: 'Syncing...',
-    synced: 'Sync complete',
-    queuedItems: '{n} operations pending',
   },
   payment: {
     title: 'Payment',
@@ -1276,7 +1262,6 @@ export const commonFrFR = {
     pricing: 'Tarifs',
     syncing: 'Synchronisation...',
     synced: 'Synchronisé',
-    pendingSync: '{count} en attente',
     syncNow: 'Synchroniser maintenant',
   },
   profile: {
@@ -1495,12 +1480,6 @@ export const commonFrFR = {
     reviewSubmitted: 'Avis soumis',
     noReviews: 'Aucun avis pour le moment',
     backToMarketplace: 'Retour à la marketplace',
-  },
-  offline: {
-    banner: 'Hors ligne — vos données sont sauvegardées localement',
-    syncing: 'Synchronisation en cours...',
-    synced: 'Synchronisation terminée',
-    queuedItems: '{n} opérations en attente',
   },
   payment: {
     title: 'Paiement',
@@ -1919,7 +1898,6 @@ export const commonArMA = {
     pricing: 'الأسعار',
     syncing: 'جارٍ المزامنة...',
     synced: 'تمت المزامنة',
-    pendingSync: '{count} قيد الانتظار',
     syncNow: 'مزامنة الآن',
   },
   profile: {
@@ -2134,12 +2112,6 @@ export const commonArMA = {
     reviewSubmitted: 'تم إرسال التقييم',
     noReviews: 'لا توجد تقييمات بعد',
     backToMarketplace: 'العودة إلى السوق',
-  },
-  offline: {
-    banner: 'غير متصل — بياناتك محفوظة محليًا',
-    syncing: 'جارٍ المزامنة...',
-    synced: 'تمّت المزامنة',
-    queuedItems: '{n} عمليات في الانتظار',
   },
   payment: {
     title: 'الدفع',

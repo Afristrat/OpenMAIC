@@ -6,7 +6,6 @@
  * - Network-first strategy for API routes
  * - Cache-first strategy for static assets
  * - Offline fallback
- * - Background sync for pending operations (quiz results, review ratings)
  * - Push notifications (preserved from sw-notifications.js)
  */
 
@@ -184,85 +183,6 @@ async function networkFirstWithShellFallback(request) {
  */
 function isStaticAsset(pathname) {
   return STATIC_EXTENSIONS.some((ext) => pathname.endsWith(ext));
-}
-
-// ────────────────────────── Background Sync ──────────────────────────
-
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'qalem-sync-queue') {
-    event.waitUntil(processSyncQueue());
-  }
-});
-
-/**
- * Process queued operations stored in IndexedDB.
- * Opens the Dexie database directly from the SW context.
- */
-async function processSyncQueue() {
-  try {
-    const dbReq = indexedDB.open('MAIC-Database');
-    const db = await new Promise((resolve, reject) => {
-      dbReq.onsuccess = () => resolve(dbReq.result);
-      dbReq.onerror = () => reject(dbReq.error);
-    });
-
-    const tx = db.transaction('syncQueue', 'readwrite');
-    const store = tx.objectStore('syncQueue');
-    const allReq = store.getAll();
-    const items = await new Promise((resolve, reject) => {
-      allReq.onsuccess = () => resolve(allReq.result);
-      allReq.onerror = () => reject(allReq.error);
-    });
-
-    for (const item of items) {
-      try {
-        let endpoint = '';
-        let method = 'POST';
-
-        switch (item.type) {
-          case 'quiz_result':
-            endpoint = '/api/quiz/results';
-            break;
-          case 'review_rating':
-            endpoint = '/api/review/ratings';
-            break;
-          case 'stage_sync':
-            endpoint = '/api/stages/sync';
-            break;
-          default:
-            continue;
-        }
-
-        const response = await fetch(endpoint, {
-          method,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(item.payload),
-        });
-
-        if (response.ok) {
-          // Remove from queue on success
-          const delTx = db.transaction('syncQueue', 'readwrite');
-          delTx.objectStore('syncQueue').delete(item.id);
-          await new Promise((resolve) => {
-            delTx.oncomplete = resolve;
-          });
-        } else if (item.retries < 3) {
-          // Increment retry count
-          const retryTx = db.transaction('syncQueue', 'readwrite');
-          retryTx.objectStore('syncQueue').put({ ...item, retries: item.retries + 1 });
-          await new Promise((resolve) => {
-            retryTx.oncomplete = resolve;
-          });
-        }
-      } catch {
-        // Network still down — leave in queue for next sync
-      }
-    }
-
-    db.close();
-  } catch {
-    // Database not available — will retry on next sync event
-  }
 }
 
 // ────────────────────────── Push Notifications ──────────────────────────
