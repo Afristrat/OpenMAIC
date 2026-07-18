@@ -65,7 +65,7 @@ export const commonZhCN = {
   home: {
     slogan: 'Generative Learning in Multi-Agent Interactive Classroom',
     greeting: '嗨，',
-    greetingWithName: '嗨，{{name}}',
+    greetingWithName: '嗨',
   },
   org: {
     title: '组织',
@@ -685,7 +685,7 @@ export const commonEnUS = {
   home: {
     slogan: 'Generative Learning in Multi-Agent Interactive Classroom',
     greeting: 'Hi, ',
-    greetingWithName: 'Hi, {{name}}',
+    greetingWithName: 'Hi',
   },
   org: {
     title: 'Organization',
@@ -1320,7 +1320,7 @@ export const commonFrFR = {
   home: {
     slogan: 'Apprentissage génératif en classe interactive multi-agents',
     greeting: 'Bonjour, ',
-    greetingWithName: 'Bonjour, {{name}}',
+    greetingWithName: 'Bonjour',
   },
   org: {
     title: 'Organisation',
@@ -1963,7 +1963,7 @@ export const commonArMA = {
   home: {
     slogan: 'التعلّم التوليدي في فصل دراسي تفاعلي متعدد الوكلاء',
     greeting: 'مرحبًا، ',
-    greetingWithName: 'مرحبًا، {{name}}',
+    greetingWithName: 'مرحبًا',
   },
   org: {
     title: 'المؤسسة',
