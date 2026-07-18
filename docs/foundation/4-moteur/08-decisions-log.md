@@ -19,6 +19,16 @@
 - **Quoi** : les documents 4-moteur rendent le chantier prêt (processus, garde-fous, backlog) ; l'exécution attend le signal explicite d'Amine (« le moment venu »).
 - **Pourquoi** : respecter la priorité qu'il donnera (les chantiers 0-2 portent le quick-win) ; éviter le travail spontané sur sa matière propre.
 
+## ADR-404 — Autonomie d’exécution des options réversibles (ACTÉE — 2026-07-18)
+
+- **Vecteurs** : V-01 à V-07 de `vecteurs-valides.md`.
+- **Tranche d’Amine** : « agir en total autonomie » ; « le temps c’est de l’argent et tu le gaspilles allègrement ».
+- **Quoi** : les options recommandées des sept vecteurs sont validées pour exécution sans micro-validation supplémentaire. Les opérations irréversibles, la publication externe et les engagements juridiques restent hors de cette délégation.
+- **Pourquoi** : supprimer la délégation inversée et avancer jusqu’à une preuve système.
+- **Sources** : inventaire S4-001, `07-legal-compliance.md`, inventaire live LiteLLM du 2026-07-18.
+- **Alternatives rejetées** : copie complète de Prompt Engineer Pro ; corpus propriétaire dans le repo AGPL ; questionnaire fixe ; confiance aveugle dans `/model/info` ; heuristiques universelles ; synchronisation manuelle ; promotion sans evals.
+- **Impact aval** : CRÉER consomme le compilateur ; VIVRE et ANCRER consomment les mêmes politiques ; la skill autonome est publiée depuis la source canonique.
+
 ## — Réservé aux vecteurs (gabarit) —
 
 ```

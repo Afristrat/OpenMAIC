@@ -640,25 +640,27 @@
       "title": "[⏸️ AMINE] Vecteurs lot 1 : architecture du corpus et double publication",
       "epic": "4-MOTEUR",
       "phase": 4,
-      "passes": false,
+      "passes": true,
       "dependencies": ["S4-001"],
       "acceptance": [
         "≤ 7 vecteurs au format P4-B (dont localisation du corpus avec l'argument juridique du 4-moteur/07)",
         "Chaque tranche consignée en ADR-4xx avec verbatim daté",
         "Rien d'exécuté avant validation"
-      ]
+      ],
+      "acceptanceNote": "Validé le 2026-07-18 par la tranche d'autonomie explicite d'Amine. Sept vecteurs bornés au format P4-B dans docs/foundation/4-moteur/vecteurs-valides.md, dont séparation juridique corpus propriétaire/code AGPL, fork spécialisé de prompt-engineer-pro, registre de capacités certifiées et double publication déterministe. ADR-404 consigne le verbatim, les sources et les alternatives rejetées."
     },
     {
       "id": "S4-003",
       "title": "[⏸️ AMINE] Vecteurs lot 2 : structure du savoir (pistes du diagnostic re-proposées)",
       "epic": "4-MOTEUR",
       "phase": 4,
-      "passes": false,
+      "passes": true,
       "dependencies": ["S4-002"],
       "acceptance": [
         "Vecteurs couvrant SKILL.md, doublons maj/, frameworks vs -updated, preuve d'impact, Mode 0 — redevenus simples options",
         "Validations ET refus consignés avec motifs"
-      ]
+      ],
+      "acceptanceNote": "Validé le 2026-07-18 dans le même lot borné : V-03 cadre le Mode 0 progressif ; V-05 transforme les ratios absolus en politiques conditionnelles ; V-06 traite doublons maj/ et source canonique ; V-07 impose evals et preuve d'impact avant promotion. Les orientations antérieures restent des options et non des acquis."
     },
     {
       "id": "S4-004",
