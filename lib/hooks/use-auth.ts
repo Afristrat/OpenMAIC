@@ -5,6 +5,16 @@ import { tryCreateClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
 
 const GUEST_MODE_KEY = 'qalem-guest-mode';
+const E2E_TEST_MODE = process.env.NEXT_PUBLIC_E2E_TEST_MODE === 'true';
+const E2E_USER = {
+  id: '00000000-0000-4000-8000-000000000001',
+  aud: 'authenticated',
+  role: 'authenticated',
+  email: 'e2e-admin@qalem.test',
+  app_metadata: {},
+  user_metadata: {},
+  created_at: '2026-01-01T00:00:00.000Z',
+} as User;
 
 interface AuthState {
   user: User | null;
@@ -23,12 +33,13 @@ export type { AuthState };
  * Stores guest mode preference in localStorage.
  */
 export function useAuth(): AuthState {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(E2E_TEST_MODE ? E2E_USER : null);
+  const [isLoading, setIsLoading] = useState(!E2E_TEST_MODE);
   const [isGuest, setIsGuest] = useState(false);
 
   /* eslint-disable react-hooks/set-state-in-effect -- Hydration from localStorage + auth listener must happen in effect */
   useEffect(() => {
+    if (E2E_TEST_MODE) return;
     const supabase = tryCreateClient();
 
     // Check guest mode from localStorage

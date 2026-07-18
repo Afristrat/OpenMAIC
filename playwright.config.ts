@@ -26,6 +26,10 @@ export default defineConfig({
     // Enable the MAIC Editor (Pro mode) so editor e2e can reach it. This is a
     // build-time NEXT_PUBLIC_* flag, so it must be set when the webServer runs
     // `pnpm build` (CI) or `pnpm dev` (local).
-    env: { PORT: '3002', NEXT_PUBLIC_MAIC_EDITOR_ENABLED: 'true' },
+    env: {
+      PORT: '3002',
+      NEXT_PUBLIC_MAIC_EDITOR_ENABLED: 'true',
+      NEXT_PUBLIC_E2E_TEST_MODE: 'true',
+    },
   },
 });

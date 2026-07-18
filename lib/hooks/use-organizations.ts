@@ -19,13 +19,30 @@ interface UseOrganizationsReturn {
 }
 
 const CURRENT_ORG_KEY = 'qalem-current-org-id';
+const E2E_TEST_MODE = process.env.NEXT_PUBLIC_E2E_TEST_MODE === 'true';
+const E2E_ORGANIZATION: OrganizationWithRole = {
+  id: '00000000-0000-4000-8000-000000000002',
+  name: 'Qalem E2E',
+  sector: 'education',
+  logo: null,
+  default_locale: 'fr-FR',
+  settings: {},
+  created_at: '2026-01-01T00:00:00.000Z',
+  updated_at: '2026-01-01T00:00:00.000Z',
+  userRole: 'admin',
+};
 
 export function useOrganizations(): UseOrganizationsReturn {
-  const [organizations, setOrganizations] = useState<OrganizationWithRole[]>([]);
-  const [currentOrg, setCurrentOrgState] = useState<OrganizationWithRole | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [organizations, setOrganizations] = useState<OrganizationWithRole[]>(
+    E2E_TEST_MODE ? [E2E_ORGANIZATION] : [],
+  );
+  const [currentOrg, setCurrentOrgState] = useState<OrganizationWithRole | null>(
+    E2E_TEST_MODE ? E2E_ORGANIZATION : null,
+  );
+  const [isLoading, setIsLoading] = useState(!E2E_TEST_MODE);
 
   const fetchOrganizations = useCallback(async () => {
+    if (E2E_TEST_MODE) return;
     setIsLoading(true);
     try {
       const res = await fetch('/api/organizations');
