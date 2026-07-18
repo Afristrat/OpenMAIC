@@ -120,6 +120,7 @@ export const commonZhCN = {
   },
   toolbar: {
     interactiveModeLabel: '深度交互',
+    loginToGenerate: '登录后生成',
     languageHint: '课程将以此语言生成',
     pdfParser: '解析器',
     pdfUpload: '上传 PDF',
@@ -741,6 +742,7 @@ export const commonEnUS = {
   },
   toolbar: {
     interactiveModeLabel: 'Interactive Mode',
+    loginToGenerate: 'Sign in to generate',
     languageHint: 'Course will be generated in this language',
     pdfParser: 'Parser',
     pdfUpload: 'Upload PDF',
@@ -1376,6 +1378,7 @@ export const commonFrFR = {
   },
   toolbar: {
     interactiveModeLabel: 'Mode interactif',
+    loginToGenerate: 'Connectez-vous pour générer',
     languageHint: 'Le cours sera généré dans cette langue',
     pdfParser: 'Analyseur',
     pdfUpload: 'Importer un PDF',
@@ -2018,6 +2021,7 @@ export const commonArMA = {
   },
   toolbar: {
     interactiveModeLabel: 'وضع التفاعل',
+    loginToGenerate: 'سجّل الدخول للإنشاء',
     languageHint: 'سيتم إنشاء الدرس بهذه اللغة',
     pdfParser: 'المحلّل',
     pdfUpload: 'تحميل PDF',

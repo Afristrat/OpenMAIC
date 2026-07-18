@@ -40,10 +40,7 @@ import { useTheme } from '@/lib/hooks/use-theme';
 import type { UserRequirements } from '@/lib/types/generation';
 import { buildLanguageDirective } from '@/lib/constants/generation';
 import { useUserProfileStore, AVATAR_OPTIONS } from '@/lib/store/user-profile';
-import {
-  StageListItem,
-  revokeThumbnailSlideMediaUrls,
-} from '@/lib/utils/stage-storage';
+import { StageListItem, revokeThumbnailSlideMediaUrls } from '@/lib/utils/stage-storage';
 import { SlideThumbnail } from '@/components/slide-renderer/SlideThumbnail';
 import type { Slide } from '@openmaic/dsl';
 import { useMediaGenerationStore } from '@/lib/store/media-generation';
@@ -282,7 +279,9 @@ function HomePage() {
   const confirmDelete = async (id: string) => {
     setPendingDeleteId(null);
     try {
-      const response = await fetch(`/api/classroom?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+      const response = await fetch(`/api/classroom?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
       if (!response.ok) throw new Error('Failed to delete classroom');
       await loadClassrooms();
     } catch (err) {
@@ -293,7 +292,11 @@ function HomePage() {
 
   const handleRename = async (id: string, newName: string) => {
     try {
-      const response = await fetch(`/api/classroom?id=${encodeURIComponent(id)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newName }) });
+      const response = await fetch(`/api/classroom?id=${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName }),
+      });
       if (!response.ok) throw new Error('Failed to rename classroom');
       setClassrooms((prev) => prev.map((c) => (c.id === id ? { ...c, name: newName } : c)));
     } catch (err) {
@@ -359,14 +362,26 @@ function HomePage() {
 
       let pdfContent: { text: string; images: string[] } | undefined;
       if (form.pdfFile) {
-        const fd = new FormData(); fd.append('pdf', form.pdfFile);
+        const fd = new FormData();
+        fd.append('pdf', form.pdfFile);
         const parsed = await (await fetch('/api/parse-pdf', { method: 'POST', body: fd })).json();
         if (!parsed.success || !parsed.data?.text) throw new Error(t('generation.pdfParseFailed'));
         pdfContent = { text: parsed.data.text, images: [] };
       }
-      const response = await fetch('/api/generate-classroom', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orgId: currentOrg.id, requirement: requirements.requirement, ...(pdfContent ? { pdfContent } : {}), enableWebSearch: form.webSearch, enableTTS: true }) });
+      const response = await fetch('/api/generate-classroom', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orgId: currentOrg.id,
+          requirement: requirements.requirement,
+          ...(pdfContent ? { pdfContent } : {}),
+          enableWebSearch: form.webSearch,
+          enableTTS: true,
+        }),
+      });
       const result = await response.json();
-      if (!response.ok || !result.jobId) throw new Error(result.error || 'Generation could not start');
+      if (!response.ok || !result.jobId)
+        throw new Error(result.error || 'Generation could not start');
       router.push(`/generation-status?jobId=${encodeURIComponent(result.jobId)}`);
     } catch (err) {
       log.error('Error preparing generation:', err);
@@ -387,6 +402,16 @@ function HomePage() {
   };
 
   const canGenerate = !!form.requirement.trim() && !!user && !!currentOrg && isAdmin;
+  const requiresAuthentication = !user;
+  const generateDisabled = !requiresAuthentication && !canGenerate;
+
+  const handleGenerateAction = () => {
+    if (requiresAuthentication) {
+      router.push('/auth');
+      return;
+    }
+    handleGenerate();
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
@@ -664,16 +689,20 @@ function HomePage() {
 
               {/* Send button */}
               <button
-                onClick={handleGenerate}
-                disabled={!canGenerate}
+                onClick={handleGenerateAction}
+                disabled={generateDisabled}
                 className={cn(
                   'shrink-0 h-8 rounded-lg flex items-center justify-center gap-1.5 transition-all px-3',
-                  canGenerate
+                  !generateDisabled
                     ? 'bg-primary text-primary-foreground hover:opacity-90 shadow-sm cursor-pointer'
                     : 'bg-muted text-muted-foreground/40 cursor-not-allowed',
                 )}
               >
-                <span className="text-xs font-medium">{t('toolbar.enterClassroom')}</span>
+                <span className="text-xs font-medium">
+                  {requiresAuthentication
+                    ? t('toolbar.loginToGenerate')
+                    : t('toolbar.enterClassroom')}
+                </span>
                 <ArrowUp className="size-3.5" />
               </button>
             </div>
@@ -743,7 +772,7 @@ function HomePage() {
         </AnimatePresence>
 
         {/* ── Import buttons (empty state) ── */}
-        {classrooms.length === 0 && (
+        {classrooms.length === 0 && !importing && (
           <div className="relative z-10 mt-4 flex items-center gap-4">
             <button
               onClick={triggerFileSelect}
@@ -901,16 +930,18 @@ function HomePage() {
                 )}
               </AnimatePresence>
 
-              <button
-                onClick={triggerFileSelect}
-                disabled={importing}
-                className="group/import grid grid-cols-[auto_0fr] hover:grid-cols-[auto_1fr] items-center gap-1 rounded-full px-1.5 py-0.5 text-[12px] text-muted-foreground/35 hover:text-muted-foreground/70 hover:bg-muted/50 transition-all duration-200 cursor-pointer"
-              >
-                <Upload className="size-3" />
-                <span className="overflow-hidden opacity-0 group-hover/import:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-                  {t('import.classroom')}
-                </span>
-              </button>
+              {!importing && (
+                <button
+                  onClick={triggerFileSelect}
+                  disabled={importing}
+                  className="group/import grid grid-cols-[auto_0fr] hover:grid-cols-[auto_1fr] items-center gap-1 rounded-full px-1.5 py-0.5 text-[12px] text-muted-foreground/35 hover:text-muted-foreground/70 hover:bg-muted/50 transition-all duration-200 cursor-pointer"
+                >
+                  <Upload className="size-3" />
+                  <span className="overflow-hidden opacity-0 group-hover/import:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+                    {t('import.classroom')}
+                  </span>
+                </button>
+              )}
               {PPTX_IMPORT_ENABLED && (
                 <button
                   onClick={triggerPptxFileSelect}
