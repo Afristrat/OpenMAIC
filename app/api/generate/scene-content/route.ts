@@ -25,6 +25,7 @@ import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { llmApiError } from '@/lib/server/llm-error-response';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
 import { resolveVocationalActive } from '@/lib/config/feature-flags';
+import { isFeatureEnabled } from '@/lib/flags';
 
 const log = createLogger('Scene Content API');
 
@@ -164,6 +165,7 @@ export async function POST(req: NextRequest) {
     );
 
     const userLocale = req.headers?.get('x-user-locale') ?? '';
+    const skillEngineEnabled = await isFeatureEnabled('skill_engine');
 
     const content = await generateSceneContent(effectiveOutline, aiCall, {
       assignedImages,
@@ -177,6 +179,8 @@ export async function POST(req: NextRequest) {
       targetLanguage: userLocale || undefined,
       userRequirements: requirements,
       allowProceduralSkill: vocationalActive,
+      skillEngineEnabled,
+      activeSkillId: requirements?.activeSkillId,
     });
 
     if (!content) {

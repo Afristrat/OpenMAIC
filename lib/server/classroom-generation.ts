@@ -34,6 +34,7 @@ import { buildVideoManifestFromOutlines } from '@/lib/media/video-manifest';
 import type { UserRequirements } from '@/lib/types/generation';
 import type { Scene, Stage } from '@/lib/types/stage';
 import { AGENT_COLOR_PALETTE, AGENT_DEFAULT_AVATARS } from '@/lib/constants/agent-defaults';
+import { isFeatureEnabled } from '@/lib/flags';
 
 const log = createLogger('Classroom');
 
@@ -49,6 +50,7 @@ export interface GenerateClassroomInput {
   enableVideoGeneration?: boolean;
   enableTTS?: boolean;
   agentMode?: 'default' | 'generate';
+  activeSkillId?: string;
 }
 
 export type ClassroomGenerationStep =
@@ -262,7 +264,9 @@ export async function generateClassroom(
 
   const requirements: UserRequirements = {
     requirement,
+    activeSkillId: input.activeSkillId,
   };
+  const skillEngineEnabled = await isFeatureEnabled('skill_engine');
   const vocationalActive = resolveVocationalActive(requirements);
   const pdfText = pdfContent?.text || undefined;
 
@@ -342,6 +346,7 @@ export async function generateClassroom(
       imageGenerationEnabled: input.enableImageGeneration,
       videoGenerationEnabled: input.enableVideoGeneration,
       researchContext,
+      skillEngineEnabled,
       // NO teacherContext — agents haven't been generated yet
     },
   );
@@ -452,6 +457,8 @@ export async function generateClassroom(
           agents,
           languageDirective,
           allowProceduralSkill: vocationalActive,
+          skillEngineEnabled,
+          activeSkillId: requirements.activeSkillId,
         }),
       {
         label: `scene ${index + 1}/${outlines.length} content`,

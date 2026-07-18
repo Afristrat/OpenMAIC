@@ -33,9 +33,23 @@ function validateManifest(data: unknown): string[] {
   const obj = data as Record<string, unknown>;
 
   // Required string fields
-  const requiredStrings = ['id', 'name', 'description', 'category', 'version', 'author'];
+  const requiredStrings = ['id', 'category', 'version', 'author'];
   for (const field of requiredStrings) {
     if (typeof obj[field] !== 'string' || (obj[field] as string).length === 0) {
+      errors.push(`Missing or invalid required field: ${field}`);
+    }
+  }
+
+  for (const field of ['name', 'description']) {
+    const value = obj[field];
+    const localized =
+      typeof value === 'object' &&
+      value !== null &&
+      !Array.isArray(value) &&
+      Object.values(value as Record<string, unknown>).some(
+        (entry) => typeof entry === 'string' && entry.length > 0,
+      );
+    if (!(typeof value === 'string' && value.length > 0) && !localized) {
       errors.push(`Missing or invalid required field: ${field}`);
     }
   }
@@ -124,8 +138,8 @@ export function loadSkillFromDir(skillDir: string): Skill | null {
 
     const skill: Skill = {
       id: manifest['id'] as string,
-      name: manifest['name'] as string,
-      description: manifest['description'] as string,
+      name: manifest['name'] as Skill['name'],
+      description: manifest['description'] as Skill['description'],
       category: manifest['category'] as Skill['category'],
       version: manifest['version'] as string,
       author: manifest['author'] as string,
@@ -160,6 +174,7 @@ export function loadAllSkills(): Skill[] {
       if (!entry.isDirectory()) continue;
 
       const skillDir = path.join(skillsDir, entry.name);
+      if (!fs.existsSync(path.join(skillDir, 'manifest.json'))) continue;
       const skill = loadSkillFromDir(skillDir);
       if (skill) {
         skills.push(skill);

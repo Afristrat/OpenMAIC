@@ -52,8 +52,8 @@ export interface SkillClassroomTemplate {
  */
 export interface Skill {
   id: string;
-  name: string; // i18n key or plain text
-  description: string;
+  name: string | Record<string, string>; // plain text or localized values
+  description: string | Record<string, string>;
   category: SkillCategory;
   version: string;
   author: string;

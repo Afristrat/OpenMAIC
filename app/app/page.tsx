@@ -90,10 +90,16 @@ function HomePage() {
   const router = useRouter();
   const showVocationalTestUi = shouldShowVocationalTestUi();
   const [form, setForm] = useState<FormState>(initialFormState);
+  const [activeSkillId, setActiveSkillId] = useState<string>();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsSection, setSettingsSection] = useState<
     import('@/lib/types/settings').SettingsSection | undefined
   >(undefined);
+
+  useEffect(() => {
+    const skillId = new URLSearchParams(window.location.search).get('skill')?.trim();
+    setActiveSkillId(skillId || undefined);
+  }, []);
 
   // Draft cache for requirement text
   const { cachedValue: cachedRequirement, updateCache: updateRequirementCache } =
@@ -358,6 +364,7 @@ function HomePage() {
         webSearch: form.webSearch || undefined,
         interactiveMode: form.vocationalTestMode ? true : form.interactiveMode,
         ...(form.vocationalTestMode ? { taskEngineMode: true } : {}),
+        activeSkillId,
       };
 
       let pdfContent: { text: string; images: string[] } | undefined;
@@ -377,6 +384,7 @@ function HomePage() {
           ...(pdfContent ? { pdfContent } : {}),
           enableWebSearch: form.webSearch,
           enableTTS: true,
+          ...(requirements.activeSkillId ? { activeSkillId: requirements.activeSkillId } : {}),
         }),
       });
       const result = await response.json();

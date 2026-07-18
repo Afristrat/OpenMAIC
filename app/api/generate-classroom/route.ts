@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
         : {}),
       ...(parsed.enableTTS != null ? { enableTTS: parsed.enableTTS } : {}),
       ...(parsed.agentMode ? { agentMode: parsed.agentMode } : {}),
+      ...(parsed.activeSkillId ? { activeSkillId: parsed.activeSkillId } : {}),
     };
 
     const baseUrl = buildRequestOrigin(req);

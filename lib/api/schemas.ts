@@ -327,6 +327,7 @@ export const generateClassroomSchema = z.object({
   enableVideoGeneration: z.boolean().optional(),
   enableTTS: z.boolean().optional(),
   agentMode: z.enum(['default', 'generate']).optional(),
+  activeSkillId: z.string().min(1).max(120).optional(),
 });
 
 // ---------------------------------------------------------------------------

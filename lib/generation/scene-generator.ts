@@ -30,6 +30,7 @@ import { generatePBLV2ProjectSingleCall } from '@/lib/pbl/v2/agents/planner-sing
 import { projectV2ToLegacyProjectConfig } from '@/lib/pbl/v2/compat';
 import type { PBLPlannerV2Input, PBLProjectV2 } from '@/lib/pbl/v2/types';
 import { buildPrompt, PROMPT_IDS } from '@/lib/prompts';
+import { buildPromptWithSkill } from '@/lib/skills/prompt-overrides';
 import { DEFAULT_LANGUAGE_DIRECTIVE } from './outline-generator';
 import { postProcessInteractiveHtml } from './interactive-post-processor';
 import { parseActionsFromStructuredOutput } from './action-parser';
@@ -91,6 +92,8 @@ export interface SceneContentOptions {
    * Only consumed by the slide branch alongside `editDirective`.
    */
   baselineContent?: GeneratedSlideContent;
+  skillEngineEnabled?: boolean;
+  activeSkillId?: string;
 }
 
 export interface SceneActionsOptions {
@@ -318,6 +321,8 @@ export async function generateSceneContent(
     allowProceduralSkill = false,
     editDirective,
     baselineContent,
+    skillEngineEnabled,
+    activeSkillId,
   } = options;
 
   // Unified path for interactive scenes (both normal and ultra mode)
@@ -357,9 +362,17 @@ export async function generateSceneContent(
         languageDirective,
         editDirective,
         baselineContent,
+        skillEngineEnabled,
+        activeSkillId,
       );
     case 'quiz':
-      return generateQuizContent(outline, aiCall, languageDirective);
+      return generateQuizContent(
+        outline,
+        aiCall,
+        languageDirective,
+        skillEngineEnabled,
+        activeSkillId,
+      );
     case 'pbl':
       return generatePBLSceneContent(
         outline,
@@ -697,6 +710,8 @@ async function generateSlideContent(
   languageDirective?: string,
   editDirective?: string,
   baselineContent?: GeneratedSlideContent,
+  skillEngineEnabled?: boolean,
+  activeSkillId?: string,
 ): Promise<GeneratedSlideContent | null> {
   // Build assigned images description for the prompt
   let assignedImagesText = '无可用图片，禁止插入任何 image 元素';
@@ -770,21 +785,25 @@ async function generateSlideContent(
 
   const teacherContext = formatTeacherPersonaForPrompt(agents);
 
-  const prompts = buildPrompt(PROMPT_IDS.SLIDE_CONTENT, {
-    title: outline.title,
-    description: outline.description,
-    keyPoints: (outline.keyPoints || []).map((p, i) => `${i + 1}. ${p}`).join('\n'),
-    elements: '（根据要点自动生成）',
-    assignedImages: assignedImagesText,
-    canvas_width: canvasWidth,
-    canvas_height: canvasHeight,
-    teacherContext,
-    languageDirective: languageDirective || '',
-    imageElementEnabled,
-    generatedImageEnabled,
-    generatedVideoEnabled,
-    mediaElementEnabled,
-  });
+  const prompts = buildPromptWithSkill(
+    PROMPT_IDS.SLIDE_CONTENT,
+    {
+      title: outline.title,
+      description: outline.description,
+      keyPoints: (outline.keyPoints || []).map((p, i) => `${i + 1}. ${p}`).join('\n'),
+      elements: '（根据要点自动生成）',
+      assignedImages: assignedImagesText,
+      canvas_width: canvasWidth,
+      canvas_height: canvasHeight,
+      teacherContext,
+      languageDirective: languageDirective || '',
+      imageElementEnabled,
+      generatedImageEnabled,
+      generatedVideoEnabled,
+      mediaElementEnabled,
+    },
+    { enabled: skillEngineEnabled, activeSkillId },
+  );
 
   if (!prompts) {
     return null;
@@ -914,6 +933,8 @@ async function generateQuizContent(
   outline: SceneOutline,
   aiCall: AICallFn,
   languageDirective?: string,
+  skillEngineEnabled?: boolean,
+  activeSkillId?: string,
 ): Promise<GeneratedQuizContent | null> {
   const quizConfig = outline.quizConfig || {
     questionCount: 3,
@@ -921,15 +942,19 @@ async function generateQuizContent(
     questionTypes: ['single'],
   };
 
-  const prompts = buildPrompt(PROMPT_IDS.QUIZ_CONTENT, {
-    title: outline.title,
-    description: outline.description,
-    keyPoints: (outline.keyPoints || []).map((p, i) => `${i + 1}. ${p}`).join('\n'),
-    questionCount: quizConfig.questionCount,
-    difficulty: quizConfig.difficulty,
-    questionTypes: quizConfig.questionTypes.join(', '),
-    languageDirective: languageDirective || '',
-  });
+  const prompts = buildPromptWithSkill(
+    PROMPT_IDS.QUIZ_CONTENT,
+    {
+      title: outline.title,
+      description: outline.description,
+      keyPoints: (outline.keyPoints || []).map((p, i) => `${i + 1}. ${p}`).join('\n'),
+      questionCount: quizConfig.questionCount,
+      difficulty: quizConfig.difficulty,
+      questionTypes: quizConfig.questionTypes.join(', '),
+      languageDirective: languageDirective || '',
+    },
+    { enabled: skillEngineEnabled, activeSkillId },
+  );
 
   if (!prompts) {
     return null;

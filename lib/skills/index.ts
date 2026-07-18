@@ -15,6 +15,7 @@ export {
   listSkills,
   getSkillAgents,
   getSkillTemplates,
+  getPromptOverride,
   resetRegistry,
 } from './registry';
 export { loadSkillFromDir, loadAllSkills } from './loader';

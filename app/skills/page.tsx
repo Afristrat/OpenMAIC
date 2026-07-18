@@ -95,7 +95,7 @@ export default function SkillsPage(): React.ReactElement {
   };
 
   const handleUseSkill = (skillId: string): void => {
-    router.push(`/?skill=${skillId}`);
+    router.push(`/app?skill=${encodeURIComponent(skillId)}`);
   };
 
   return (

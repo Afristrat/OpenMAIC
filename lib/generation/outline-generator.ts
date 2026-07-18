@@ -11,7 +11,8 @@ import type {
   PdfImage,
   ImageMapping,
 } from '@/lib/types/generation';
-import { buildPrompt, PROMPT_IDS } from '@/lib/prompts';
+import { PROMPT_IDS } from '@/lib/prompts';
+import { buildPromptWithSkill } from '@/lib/skills/prompt-overrides';
 import { formatImageDescription, formatImagePlaceholder } from './prompt-formatters';
 import { parseJsonResponse } from './json-repair';
 import { uniquifyMediaElementIds } from './scene-builder';
@@ -45,6 +46,7 @@ export async function generateSceneOutlinesFromRequirements(
     videoGenerationEnabled?: boolean;
     researchContext?: string;
     teacherContext?: string;
+    skillEngineEnabled?: boolean;
   },
 ): Promise<
   GenerationResult<{ languageDirective: string; courseTitle?: string; outlines: SceneOutline[] }>
@@ -92,20 +94,27 @@ export async function generateSceneOutlinesFromRequirements(
   const hasSourceImages = (pdfImages?.length ?? 0) > 0;
 
   // Use simplified prompt variables
-  const prompts = buildPrompt(PROMPT_IDS.REQUIREMENTS_TO_OUTLINES, {
-    // New simplified variables
-    requirement: requirements.requirement,
-    pdfContent: pdfText ? pdfText.substring(0, MAX_PDF_CONTENT_CHARS) : 'None',
-    availableImages: availableImagesText,
-    userProfile: userProfileText,
-    hasSourceImages,
-    imageEnabled,
-    videoEnabled,
-    mediaEnabled,
-    researchContext: options?.researchContext || 'None',
-    // Server-side generation populates this via options; client-side populates via formatTeacherPersonaForPrompt
-    teacherContext: options?.teacherContext || '',
-  });
+  const prompts = buildPromptWithSkill(
+    PROMPT_IDS.REQUIREMENTS_TO_OUTLINES,
+    {
+      // New simplified variables
+      requirement: requirements.requirement,
+      pdfContent: pdfText ? pdfText.substring(0, MAX_PDF_CONTENT_CHARS) : 'None',
+      availableImages: availableImagesText,
+      userProfile: userProfileText,
+      hasSourceImages,
+      imageEnabled,
+      videoEnabled,
+      mediaEnabled,
+      researchContext: options?.researchContext || 'None',
+      // Server-side generation populates this via options; client-side populates via formatTeacherPersonaForPrompt
+      teacherContext: options?.teacherContext || '',
+    },
+    {
+      enabled: options?.skillEngineEnabled,
+      activeSkillId: requirements.activeSkillId,
+    },
+  );
 
   if (!prompts) {
     return { success: false, error: 'Prompt template not found' };

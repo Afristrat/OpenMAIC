@@ -6,7 +6,7 @@
  * for skill agents and classroom templates.
  */
 
-import type { Skill, SkillAgent, SkillClassroomTemplate } from './types';
+import type { Skill, SkillAgent, SkillClassroomTemplate, SkillPromptOverride } from './types';
 import { loadAllSkills } from './loader';
 import { createLogger } from '@/lib/logger';
 
@@ -53,6 +53,14 @@ export function getSkill(id: string): Skill | undefined {
 export function listSkills(): Skill[] {
   ensureInitialized();
   return Array.from(skillMap.values());
+}
+
+/** Return the override declared by a skill for one concrete prompt template. */
+export function getPromptOverride(
+  skillId: string,
+  promptId: string,
+): SkillPromptOverride | undefined {
+  return getSkill(skillId)?.promptOverrides.find((override) => override.promptId === promptId);
 }
 
 /**

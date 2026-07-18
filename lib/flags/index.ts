@@ -25,19 +25,27 @@ const log = createLogger('FeatureFlags');
 export type FlagReader = (flagName: string) => Promise<boolean | null>;
 
 async function readFlagFromSupabase(flagName: string): Promise<boolean | null> {
-  const supabase = createServiceSupabaseClient();
-  const { data, error } = await supabase
-    .from('feature_flags')
-    .select('enabled')
-    .eq('flag_name', flagName)
-    .maybeSingle();
+  try {
+    const supabase = createServiceSupabaseClient();
+    const { data, error } = await supabase
+      .from('feature_flags')
+      .select('enabled')
+      .eq('flag_name', flagName)
+      .maybeSingle();
 
-  if (error) {
-    log.warn('Failed to read feature flag', { flagName, error: error.message });
+    if (error) {
+      log.warn('Failed to read feature flag', { flagName, error: error.message });
+      return null;
+    }
+
+    return data?.enabled ?? null;
+  } catch (error) {
+    log.warn('Feature flag store unavailable', {
+      flagName,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
-
-  return data?.enabled ?? null;
 }
 
 /**
