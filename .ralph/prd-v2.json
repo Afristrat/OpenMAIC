@@ -154,7 +154,7 @@
       "title": "[CHECKPOINT AMINE] Checklist garder/abandonner des 72 stories",
       "epic": "0-SOCLE",
       "phase": 0,
-      "passes": false,
+      "passes": true,
       "dependencies": ["S0-002"],
       "acceptance": [
         "checklist-bascule.md conforme au prompt P0-B (preuves fichier:ligne, colonne Décision vide)",
@@ -632,7 +632,8 @@
         "3 sources lues intégralement, écarts mesurés par script",
         "inventaire-corpus.md conforme P4-A, colonne source tierce remplie",
         "Zéro proposition, zéro écriture dans les sources"
-      ]
+      ],
+      "acceptanceNote": "Validé le 2026-07-18 : inventaire système des 65 fichiers de la source maître OneDrive, des 35 fichiers de la copie .claude, des 35 fichiers de la copie .agents, du diagnostic transmis et du consommateur Qalem. Comparaison SHA-256 fichier par fichier : copie .claude identique au sous-dossier maître ; copie .agents identique sauf SKILL.md (écart d'un octet) ; quatre doublons internes prouvés. Livrable docs/foundation/4-moteur/inventaire-corpus.md avec provenance tierce explicitement qualifiée par fichier ou groupe exhaustif. Aucune écriture dans les trois sources ; seule la photographie documentaire du repo Qalem a été créée."
     },
     {
       "id": "S4-002",
