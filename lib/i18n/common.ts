@@ -65,6 +65,7 @@ export const commonZhCN = {
   home: {
     slogan: 'Generative Learning in Multi-Agent Interactive Classroom',
     greeting: '嗨，',
+    greetingWithName: '嗨，{{name}}',
   },
   org: {
     title: '组织',
@@ -118,6 +119,7 @@ export const commonZhCN = {
     dashboardCompletion: '完成率',
   },
   toolbar: {
+    interactiveModeLabel: '深度交互',
     languageHint: '课程将以此语言生成',
     pdfParser: '解析器',
     pdfUpload: '上传 PDF',
@@ -683,6 +685,7 @@ export const commonEnUS = {
   home: {
     slogan: 'Generative Learning in Multi-Agent Interactive Classroom',
     greeting: 'Hi, ',
+    greetingWithName: 'Hi, {{name}}',
   },
   org: {
     title: 'Organization',
@@ -737,6 +740,7 @@ export const commonEnUS = {
     dashboardCompletion: 'Completion rate',
   },
   toolbar: {
+    interactiveModeLabel: 'Interactive Mode',
     languageHint: 'Course will be generated in this language',
     pdfParser: 'Parser',
     pdfUpload: 'Upload PDF',
@@ -1316,6 +1320,7 @@ export const commonFrFR = {
   home: {
     slogan: 'Apprentissage génératif en classe interactive multi-agents',
     greeting: 'Bonjour, ',
+    greetingWithName: 'Bonjour, {{name}}',
   },
   org: {
     title: 'Organisation',
@@ -1370,6 +1375,7 @@ export const commonFrFR = {
     dashboardCompletion: 'Taux de complétion',
   },
   toolbar: {
+    interactiveModeLabel: 'Mode interactif',
     languageHint: 'Le cours sera généré dans cette langue',
     pdfParser: 'Analyseur',
     pdfUpload: 'Importer un PDF',
@@ -1957,6 +1963,7 @@ export const commonArMA = {
   home: {
     slogan: 'التعلّم التوليدي في فصل دراسي تفاعلي متعدد الوكلاء',
     greeting: 'مرحبًا، ',
+    greetingWithName: 'مرحبًا، {{name}}',
   },
   org: {
     title: 'المؤسسة',
@@ -2010,6 +2017,7 @@ export const commonArMA = {
     dashboardCompletion: 'معدل الإكمال',
   },
   toolbar: {
+    interactiveModeLabel: 'وضع التفاعل',
     languageHint: 'سيتم إنشاء الدرس بهذه اللغة',
     pdfParser: 'المحلّل',
     pdfUpload: 'تحميل PDF',
