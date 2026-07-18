@@ -154,7 +154,7 @@
       "title": "[CHECKPOINT AMINE] Checklist garder/abandonner des 72 stories",
       "epic": "0-SOCLE",
       "phase": 0,
-      "passes": true,
+      "passes": false,
       "dependencies": ["S0-002"],
       "acceptance": [
         "checklist-bascule.md conforme au prompt P0-B (preuves fichier:ligne, colonne Décision vide)",
@@ -626,7 +626,7 @@
       "title": "[SIGNAL AMINE REQUIS] Inventaire prouvé du corpus formation-design-pro (lecture seule)",
       "epic": "4-MOTEUR",
       "phase": 4,
-      "passes": false,
+      "passes": true,
       "dependencies": [],
       "acceptance": [
         "3 sources lues intégralement, écarts mesurés par script",
