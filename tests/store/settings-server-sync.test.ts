@@ -188,8 +188,8 @@ interface MockServerResponse {
   tts?: Record<string, { baseUrl?: string; disabled?: boolean }>;
   asr?: Record<string, { baseUrl?: string }>;
   pdf?: Record<string, { baseUrl?: string }>;
-  image?: Record<string, { baseUrl?: string }>;
-  video?: Record<string, { baseUrl?: string }>;
+  image?: Record<string, { baseUrl?: string; models?: string[] }>;
+  video?: Record<string, { baseUrl?: string; models?: string[] }>;
   webSearch?: Record<string, { baseUrl?: string }>;
 }
 
@@ -971,6 +971,16 @@ describe('fetchServerProviders — Image stale selection', () => {
     // But model should be auto-filled
     expect(store.getState().imageModelId).toBe('doubao-seedream-5-0-260128');
   });
+
+  it('selects only a server-certified image model for a managed provider', async () => {
+    const store = await getStore();
+
+    mockServerResponse({ image: { seedream: { models: ['flux-certified'] } } });
+    await store.getState().fetchServerProviders();
+
+    expect(store.getState().imageProvidersConfig.seedream.serverModels).toEqual(['flux-certified']);
+    expect(store.getState().imageModelId).toBe('flux-certified');
+  });
 });
 
 describe('fetchServerProviders — Video stale selection', () => {
@@ -1058,6 +1068,16 @@ describe('fetchServerProviders — Video stale selection', () => {
     expect(store.getState().videoModelId).toBe('doubao-seedance-1-5-pro-251215');
     // Provider recovered but generation stays off — user enables manually
     expect(store.getState().videoGenerationEnabled).toBe(false);
+  });
+
+  it('selects only a server-certified video model for a managed provider', async () => {
+    const store = await getStore();
+
+    mockServerResponse({ video: { seedance: { models: ['ltx-certified'] } } });
+    await store.getState().fetchServerProviders();
+
+    expect(store.getState().videoProvidersConfig.seedance.serverModels).toEqual(['ltx-certified']);
+    expect(store.getState().videoModelId).toBe('ltx-certified');
   });
 });
 

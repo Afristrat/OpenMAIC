@@ -415,11 +415,14 @@ pdf:
     it('exposes video provider baseUrl', async () => {
       vi.stubEnv('VIDEO_GROK_API_KEY', 'xai-secret');
       vi.stubEnv('VIDEO_GROK_BASE_URL', 'https://proxy.example.com/video');
+      vi.stubEnv('VIDEO_GROK_MODELS', 'ltx-2-video, veo-certified');
       const { getServerVideoProviders, resolveVideoBaseUrl } =
         await import('@/lib/server/provider-config');
 
       const providers = getServerVideoProviders();
-      expect(providers['grok-video']).toEqual({});
+      expect(providers['grok-video']).toEqual({
+        models: ['ltx-2-video', 'veo-certified'],
+      });
       expect(resolveVideoBaseUrl('grok-video')).toBe('https://proxy.example.com/video');
     });
   });

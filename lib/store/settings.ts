@@ -138,6 +138,7 @@ export interface SettingsState {
       baseUrl: string;
       enabled: boolean;
       isServerConfigured?: boolean;
+      serverModels?: string[];
       customModels?: Array<{ id: string; name: string }>;
     }
   >;
@@ -152,6 +153,7 @@ export interface SettingsState {
       baseUrl: string;
       enabled: boolean;
       isServerConfigured?: boolean;
+      serverModels?: string[];
       customModels?: Array<{ id: string; name: string }>;
     }
   >;
@@ -1253,7 +1255,7 @@ export const useSettingsStore = create<SettingsState>()(
               asr: Record<string, Record<string, never>>;
               pdf: Record<string, Record<string, never>>;
               image: Record<string, { models?: string[] }>;
-              video: Record<string, Record<string, never>>;
+              video: Record<string, { models?: string[] }>;
               webSearch: Record<string, Record<string, never>>;
               generation?: { parallelSceneConcurrency?: number };
             };
@@ -1367,15 +1369,17 @@ export const useSettingsStore = create<SettingsState>()(
                   newImageConfig[key] = {
                     ...newImageConfig[key],
                     isServerConfigured: false,
+                    serverModels: undefined,
                   };
                 }
               }
-              for (const pid of Object.keys(data.image)) {
+              for (const [pid, info] of Object.entries(data.image)) {
                 const key = pid as ImageProviderId;
                 if (newImageConfig[key]) {
                   newImageConfig[key] = {
                     ...newImageConfig[key],
                     isServerConfigured: true,
+                    serverModels: info.models,
                   };
                 }
               }
@@ -1388,16 +1392,18 @@ export const useSettingsStore = create<SettingsState>()(
                   newVideoConfig[key] = {
                     ...newVideoConfig[key],
                     isServerConfigured: false,
+                    serverModels: undefined,
                   };
                 }
               }
               if (data.video) {
-                for (const pid of Object.keys(data.video)) {
+                for (const [pid, info] of Object.entries(data.video)) {
                   const key = pid as VideoProviderId;
                   if (newVideoConfig[key]) {
                     newVideoConfig[key] = {
                       ...newVideoConfig[key],
                       isServerConfigured: true,
+                      serverModels: info.models,
                     };
                   }
                 }
@@ -1511,13 +1517,27 @@ export const useSettingsStore = create<SettingsState>()(
               const validLLMModel = validLLMProvider
                 ? resolveSelectedModel(state.modelId, llmModels)
                 : '';
-              const imageModels =
-                IMAGE_PROVIDERS[validImageProvider as ImageProviderId]?.models ?? [];
+              const imageConfig = validImageProvider
+                ? newImageConfig[validImageProvider as ImageProviderId]
+                : undefined;
+              const imageModels = imageConfig?.serverModels?.length
+                ? imageConfig.serverModels.map((id) => ({ id, name: id }))
+                : [
+                    ...(IMAGE_PROVIDERS[validImageProvider as ImageProviderId]?.models ?? []),
+                    ...(imageConfig?.customModels ?? []),
+                  ];
               const validImageModel = validImageProvider
                 ? resolveSelectedModel(state.imageModelId, imageModels)
                 : '';
-              const videoModels =
-                VIDEO_PROVIDERS[validVideoProvider as VideoProviderId]?.models ?? [];
+              const videoConfig = validVideoProvider
+                ? newVideoConfig[validVideoProvider as VideoProviderId]
+                : undefined;
+              const videoModels = videoConfig?.serverModels?.length
+                ? videoConfig.serverModels.map((id) => ({ id, name: id }))
+                : [
+                    ...(VIDEO_PROVIDERS[validVideoProvider as VideoProviderId]?.models ?? []),
+                    ...(videoConfig?.customModels ?? []),
+                  ];
               const validVideoModel = validVideoProvider
                 ? resolveSelectedModel(state.videoModelId, videoModels)
                 : '';
@@ -1589,7 +1609,10 @@ export const useSettingsStore = create<SettingsState>()(
                   !newImageConfig[state.imageProviderId]?.isServerConfigured
                 ) {
                   autoImageProvider = serverImageIds[0];
-                  const models = IMAGE_PROVIDERS[autoImageProvider]?.models;
+                  const serverModels = newImageConfig[autoImageProvider]?.serverModels;
+                  const models = serverModels?.length
+                    ? serverModels.map((id) => ({ id, name: id }))
+                    : IMAGE_PROVIDERS[autoImageProvider]?.models;
                   if (models?.length) autoImageModel = models[0].id;
                 }
                 if (serverImageIds.length > 0 && !state.imageGenerationEnabled) {
@@ -1603,7 +1626,10 @@ export const useSettingsStore = create<SettingsState>()(
                   !newVideoConfig[state.videoProviderId]?.isServerConfigured
                 ) {
                   autoVideoProvider = serverVideoIds[0];
-                  const models = VIDEO_PROVIDERS[autoVideoProvider]?.models;
+                  const serverModels = newVideoConfig[autoVideoProvider]?.serverModels;
+                  const models = serverModels?.length
+                    ? serverModels.map((id) => ({ id, name: id }))
+                    : VIDEO_PROVIDERS[autoVideoProvider]?.models;
                   if (models?.length) autoVideoModel = models[0].id;
                 }
                 if (serverVideoIds.length > 0 && !state.videoGenerationEnabled) {

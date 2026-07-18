@@ -54,12 +54,15 @@ export function ImageSettings({ selectedProviderId }: ImageSettingsProps) {
 
   const currentConfig = imageProvidersConfig[selectedProviderId];
   const currentProvider = IMAGE_PROVIDERS[selectedProviderId];
-  const builtInModels = currentProvider?.models || [];
+  const isServerConfigured = !!currentConfig?.isServerConfigured;
+  const builtInModels =
+    isServerConfigured && currentConfig?.serverModels?.length
+      ? currentConfig.serverModels.map((id) => ({ id, name: id }))
+      : currentProvider?.models || [];
   const customModels = useMemo(
     () => currentConfig?.customModels || [],
     [currentConfig?.customModels],
   );
-  const isServerConfigured = !!currentConfig?.isServerConfigured;
   const requiresApiKey = currentProvider?.requiresApiKey ?? true;
 
   const handleApiKeyChange = (apiKey: string) => {
@@ -268,37 +271,38 @@ export function ImageSettings({ selectedProviderId }: ImageSettingsProps) {
           ))}
 
           {/* Custom models */}
-          {customModels.map((model, index) => (
-            <div
-              key={`custom-${index}`}
-              className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-card"
-            >
-              <div className="flex-1 min-w-0">
-                <div className="font-mono text-sm font-medium">{model.name}</div>
-                <div className="text-xs text-muted-foreground font-mono mt-0.5">{model.id}</div>
+          {!isServerConfigured &&
+            customModels.map((model, index) => (
+              <div
+                key={`custom-${index}`}
+                className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-card"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="font-mono text-sm font-medium">{model.name}</div>
+                  <div className="text-xs text-muted-foreground font-mono mt-0.5">{model.id}</div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-2"
+                    onClick={() => handleOpenEditModel(index)}
+                    title={t('settings.editModel')}
+                  >
+                    <Settings2 className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => handleDeleteModel(index)}
+                    title={t('settings.deleteModel')}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 px-2"
-                  onClick={() => handleOpenEditModel(index)}
-                  title={t('settings.editModel')}
-                >
-                  <Settings2 className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={() => handleDeleteModel(index)}
-                  title={t('settings.deleteModel')}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </div>
-          ))}
+            ))}
         </div>
       </div>
 

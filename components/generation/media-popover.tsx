@@ -124,16 +124,20 @@ export function MediaPopover({ onSettingsOpen }: MediaPopoverProps) {
     () =>
       Object.values(IMAGE_PROVIDERS)
         .filter((p) => cfgOk(imageProvidersConfig, p.id, p.requiresApiKey))
-        .map((p) => ({
-          groupId: p.id,
-          groupName: p.name,
-          groupIcon: IMAGE_PROVIDER_ICONS[p.id],
-          available: true,
-          items: [...p.models, ...(imageProvidersConfig[p.id]?.customModels || [])].map((m) => ({
-            id: m.id,
-            name: m.name,
-          })),
-        })),
+        .map((p) => {
+          const config = imageProvidersConfig[p.id];
+          const models =
+            config?.isServerConfigured && config.serverModels?.length
+              ? config.serverModels.map((id) => ({ id, name: id }))
+              : [...p.models, ...(config?.customModels || [])];
+          return {
+            groupId: p.id,
+            groupName: p.name,
+            groupIcon: IMAGE_PROVIDER_ICONS[p.id],
+            available: true,
+            items: models,
+          };
+        }),
     [cfgOk, imageProvidersConfig],
   );
 
@@ -141,16 +145,20 @@ export function MediaPopover({ onSettingsOpen }: MediaPopoverProps) {
     () =>
       Object.values(VIDEO_PROVIDERS)
         .filter((p) => cfgOk(videoProvidersConfig, p.id, p.requiresApiKey))
-        .map((p) => ({
-          groupId: p.id,
-          groupName: p.name,
-          groupIcon: VIDEO_PROVIDER_ICONS[p.id],
-          available: true,
-          items: [...p.models, ...(videoProvidersConfig[p.id]?.customModels || [])].map((m) => ({
-            id: m.id,
-            name: m.name,
-          })),
-        })),
+        .map((p) => {
+          const config = videoProvidersConfig[p.id];
+          const models =
+            config?.isServerConfigured && config.serverModels?.length
+              ? config.serverModels.map((id) => ({ id, name: id }))
+              : [...p.models, ...(config?.customModels || [])];
+          return {
+            groupId: p.id,
+            groupName: p.name,
+            groupIcon: VIDEO_PROVIDER_ICONS[p.id],
+            available: true,
+            items: models,
+          };
+        }),
     [cfgOk, videoProvidersConfig],
   );
 
