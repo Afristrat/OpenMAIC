@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "QalemCompiledGenerationPlan",
+  "type": "object",
+  "required": ["status", "contract", "assumptions", "blockingQuestions", "tasks"],
+  "properties": {
+    "status": { "enum": ["ready", "needs_input", "uncertified"] },
+    "contract": { "type": "object" },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["value", "evidence", "confidence"],
+        "properties": {
+          "value": {},
+          "evidence": { "type": "string", "minLength": 1 },
+          "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      }
+    },
+    "blockingQuestions": { "type": "array", "items": { "type": "string" } },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "capability", "model", "fallback", "prompt", "evaluations"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "capability": { "type": "string", "minLength": 1 },
+          "model": { "type": ["string", "null"] },
+          "fallback": { "type": ["string", "null"] },
+          "prompt": { "type": "object" },
+          "outputSchema": { "type": ["object", "null"] },
+          "evaluations": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}
