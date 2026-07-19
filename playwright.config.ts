@@ -5,7 +5,10 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // Next.js dev compilation and browser media fixtures saturate ServeurAI
+  // above two concurrent workers, producing navigation timeouts unrelated to
+  // product behavior. Keep local/remote verification deterministic.
+  workers: process.env.CI ? 1 : 2,
   reporter: process.env.CI ? 'html' : 'list',
   use: {
     baseURL: 'http://localhost:3002',
