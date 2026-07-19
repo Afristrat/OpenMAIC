@@ -290,8 +290,6 @@ function HomePage() {
     useMediaGenerationStore.getState().revokeObjectUrls();
     useMediaGenerationStore.setState({ tasks: {} });
 
-    loadClassrooms();
-
     return () => {
       revokeThumbnailSlideMediaUrls(thumbnailsRef.current);
       thumbnailsRef.current = {};
@@ -302,6 +300,16 @@ function HomePage() {
     // chain of helpers in useCallback — this effect must run exactly once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    // The active organisation is restored asynchronously from the persisted
+    // session. Loading only on mount races that hydration and leaves the
+    // catalogue permanently empty until a full reload.
+    void loadClassrooms();
+    // loadClassrooms is intentionally scoped to the current render; the org
+    // identifier is the only state transition that must trigger this fetch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentOrg?.id]);
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
