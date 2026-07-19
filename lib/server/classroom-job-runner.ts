@@ -4,6 +4,7 @@ import {
   markClassroomGenerationJobFailed,
   markClassroomGenerationJobRunning,
   markClassroomGenerationJobSucceeded,
+  touchClassroomGenerationJob,
   updateClassroomGenerationJobProgress,
 } from '@/lib/server/classroom-job-store';
 
@@ -22,6 +23,12 @@ export function runClassroomGenerationJob(
   }
 
   const jobPromise = (async () => {
+    const heartbeat = setInterval(() => {
+      void touchClassroomGenerationJob(jobId).catch((error) => {
+        log.warn(`Classroom generation heartbeat failed for ${jobId}:`, error);
+      });
+    }, 60_000);
+    heartbeat.unref();
     try {
       await markClassroomGenerationJobRunning(jobId);
 
@@ -43,6 +50,7 @@ export function runClassroomGenerationJob(
         log.error(`Failed to persist failed status for job ${jobId}:`, markFailedError);
       }
     } finally {
+      clearInterval(heartbeat);
       runningJobs.delete(jobId);
     }
   })();

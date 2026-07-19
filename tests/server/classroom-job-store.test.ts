@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const database = vi.hoisted(() => ({
-  rows: new Map<string, { status: string; payload: Record<string, unknown> }>(),
+  rows: new Map<
+    string,
+    { status: string; payload: Record<string, unknown>; updated_at: string }
+  >(),
 }));
 
 vi.mock('@/lib/supabase/service', () => ({
@@ -14,25 +17,38 @@ vi.mock('@/lib/supabase/service', () => ({
           status: string;
           payload: Record<string, unknown>;
         }) => {
-          database.rows.set(row.id, { status: row.status, payload: structuredClone(row.payload) });
+          database.rows.set(row.id, {
+            status: row.status,
+            payload: structuredClone(row.payload),
+            updated_at: new Date().toISOString(),
+          });
           return { error: null };
         },
         select: () => ({
           eq: (_column: string, id: string) => ({
             maybeSingle: async () => ({
               data: database.rows.has(id)
-                ? { payload: structuredClone(database.rows.get(id)!.payload) }
+                ? {
+                    payload: structuredClone(database.rows.get(id)!.payload),
+                    updated_at: database.rows.get(id)!.updated_at,
+                  }
                 : null,
               error: null,
             }),
           }),
         }),
-        update: (patch: { status: string; payload: Record<string, unknown> }) => ({
+        update: (patch: {
+          status?: string;
+          payload?: Record<string, unknown>;
+          updated_at?: string;
+        }) => ({
           eq: async (_column: string, id: string) => {
-            if (database.rows.has(id)) {
+            const existing = database.rows.get(id);
+            if (existing) {
               database.rows.set(id, {
-                status: patch.status,
-                payload: structuredClone(patch.payload),
+                status: patch.status ?? existing.status,
+                payload: patch.payload ? structuredClone(patch.payload) : existing.payload,
+                updated_at: patch.updated_at ?? existing.updated_at,
               });
             }
             return { error: null };
@@ -47,6 +63,7 @@ import {
   createClassroomGenerationJob,
   markClassroomGenerationJobRunning,
   readClassroomGenerationJob,
+  touchClassroomGenerationJob,
   updateClassroomGenerationJobProgress,
 } from '@/lib/server/classroom-job-store';
 
@@ -101,5 +118,24 @@ describe('persistent classroom generation jobs', () => {
 
     expect(job).toMatchObject({ status: 'failed', step: 'failed' });
     expect(database.rows.get('job-stale')?.status).toBe('failed');
+  });
+
+  it('keeps a long-running job alive when its heartbeat is fresh', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-19T10:00:00.000Z'));
+    await createClassroomGenerationJob(
+      'job-heartbeat',
+      { orgId: 'org-1', requirement: 'Long TTS generation' },
+      'owner-1',
+    );
+    await markClassroomGenerationJobRunning('job-heartbeat');
+
+    vi.setSystemTime(new Date('2026-07-19T10:29:00.000Z'));
+    await touchClassroomGenerationJob('job-heartbeat');
+    vi.setSystemTime(new Date('2026-07-19T10:45:00.000Z'));
+
+    await expect(readClassroomGenerationJob('job-heartbeat')).resolves.toMatchObject({
+      status: 'running',
+    });
   });
 });
