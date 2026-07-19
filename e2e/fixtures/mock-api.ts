@@ -78,7 +78,7 @@ export class MockApi {
   }
 
   /** Mock the persistent classroom-generation handoff used by the home page. */
-  async mockClassroomGenerationJob(jobId = 'e2e-generation-job') {
+  async mockClassroomGenerationJob(jobId = 'e2e-generation-job', resultUrl?: string) {
     await this.page.route('**/api/generate-classroom', async (route) => {
       await route.fulfill({
         status: 202,
@@ -90,7 +90,11 @@ export class MockApi {
       await route.fulfill({
         status: 200,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ success: true, status: 'running', progress: 42 }),
+        body: JSON.stringify(
+          resultUrl
+            ? { success: true, status: 'succeeded', progress: 100, result: { url: resultUrl } }
+            : { success: true, status: 'running', progress: 42 },
+        ),
       });
     });
   }

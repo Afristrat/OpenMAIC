@@ -85,6 +85,8 @@ test.describe('Generation flow — locale coverage (S0-008)', () => {
         localStorage.setItem('locale', loc);
       }, locale);
 
+      await mockApi.mockClassroomGenerationJob(`e2e-${locale}`, '/generation-preview');
+
       await mockApi.mockSceneOutlinesStream(outlines);
       // Custom (not MockApi's static default): the classroom sidebar reads
       // scene.title from the scene-content response's `effectiveOutline`
