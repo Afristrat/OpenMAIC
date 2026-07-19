@@ -210,4 +210,19 @@ test.describe('Classroom Interaction', () => {
     await expect(page.getByRole('dialog', { name: 'Settings' })).toBeVisible();
     await expectBodyScrollState(true);
   });
+
+  test('exports the complete classroom as an MP4 download', async ({ page, mockApi }) => {
+    await mockApi.mockMp4ExportDone();
+    const classroom = new ClassroomPage(page);
+    await classroom.goto(TEST_STAGE_ID);
+    await classroom.waitForLoaded();
+
+    await page.getByRole('button', { name: 'Export PPTX' }).click();
+    const mp4Export = page.getByTestId('export-mp4');
+    await expect(mp4Export).toContainText('Export MP4 video');
+    const downloadPromise = page.waitForEvent('download');
+    await mp4Export.click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toContain('.mp4');
+  });
 });

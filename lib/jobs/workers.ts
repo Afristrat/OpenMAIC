@@ -24,6 +24,7 @@ import {
 import type { HyperframesBrief } from '@/lib/video/hyperframes-types';
 import type { VideoCapsuleStatus, VideoCapsuleVariant } from '@/lib/supabase/types';
 import { buildScormPackage } from '@/lib/export/scorm/build-scorm-package';
+import { buildClassroomVideo } from '@/lib/export/mp4/build-classroom-video';
 
 const log = createLogger('Workers');
 
@@ -256,14 +257,27 @@ export function startAllWorkers(): void {
       try {
         await supabase.from('export_jobs').update({ status: 'generating' }).eq('id', exportJobId);
 
-        const { zip, sceneCount } = await buildScormPackage(exportJob.stage_id as string);
-
-        const storagePath = `${exportJob.stage_id}/${exportJobId}.scorm12.zip`;
+        const isMp4 = exportJob.format === 'mp4';
+        let file: Buffer;
+        let sceneCount: number;
+        if (isMp4) {
+          const result = await buildClassroomVideo(exportJob.stage_id as string);
+          file = result.video;
+          sceneCount = result.sceneCount;
+        } else {
+          const result = await buildScormPackage(exportJob.stage_id as string);
+          file = result.zip;
+          sceneCount = result.sceneCount;
+        }
+        const storagePath = `${exportJob.stage_id}/${exportJobId}.${isMp4 ? 'mp4' : 'scorm12.zip'}`;
         const { error: uploadError } = await supabase.storage
           .from('exports')
-          .upload(storagePath, zip, { contentType: 'application/zip', upsert: true });
+          .upload(storagePath, file, {
+            contentType: isMp4 ? 'video/mp4' : 'application/zip',
+            upsert: true,
+          });
         if (uploadError) {
-          throw new Error(`Échec du dépôt du package SCORM: ${uploadError.message}`);
+          throw new Error(`Échec du dépôt de l'export ${exportJob.format}: ${uploadError.message}`);
         }
 
         await supabase

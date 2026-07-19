@@ -145,6 +145,31 @@ export class MockApi {
     });
   }
 
+  /** Mock the persistent MP4 export job through creation and immediate completion. */
+  async mockMp4ExportDone(id = 'e2e-mp4-export') {
+    await this.page.route('**/api/export-jobs', async (route) => {
+      await route.fulfill({
+        status: 202,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: true, id, status: 'queued' }),
+      });
+    });
+    await this.page.route(`**/api/export-jobs/${id}`, async (route) => {
+      await route.fulfill({
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          success: true,
+          id,
+          format: 'mp4',
+          status: 'done',
+          done: true,
+          downloadUrl: 'data:video/mp4;base64,AAAA',
+        }),
+      });
+    });
+  }
+
   /**
    * Mock GET/PATCH /api/profile — rich profile section (culture, langue
    * d'interface, préférences — S2-001). Stateful: PATCH updates the values

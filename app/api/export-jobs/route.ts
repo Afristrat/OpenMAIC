@@ -20,7 +20,7 @@ import type { ExportJobFormat } from '@/lib/supabase/types';
 
 const log = createLogger('ExportJobsAPI');
 
-const SUPPORTED_FORMATS: ExportJobFormat[] = ['scorm12'];
+const SUPPORTED_FORMATS: ExportJobFormat[] = ['scorm12', 'mp4'];
 
 interface CreateExportJobBody {
   stageId?: string;
