@@ -28,4 +28,18 @@ describe('MP4 scene cards', () => {
     expect(svg).toContain('Coûts &lt; garde-fous');
     expect(svg).toContain('2 / 10');
   });
+
+  it('excludes technical colour tokens while preserving semantic slide text', () => {
+    const text = sceneReadableText({
+      canvas: {
+        theme: { backgroundColor: '#ffffff', themeColors: ['#5b9bd5'] },
+        elements: [
+          { fill: '#ed7d31', defaultColor: '#333333', content: '<p>Routage intelligent</p>' },
+        ],
+      },
+    });
+
+    expect(text).toBe('Routage intelligent');
+    expect(text).not.toMatch(/#[0-9a-f]{6}/i);
+  });
 });

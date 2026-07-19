@@ -12,6 +12,7 @@ const FFMPEG_TIMEOUT_MS = 30 * 60 * 1000;
 
 interface SpeechAction {
   type?: string;
+  text?: string;
   audioUrl?: string;
 }
 
@@ -36,11 +37,17 @@ async function downloadSceneAudio(
 ): Promise<string[]> {
   const supabase = createServiceSupabaseClient();
   const speechActions = Array.isArray(actions)
-    ? (actions as SpeechAction[]).filter((action) => action.type === 'speech' && action.audioUrl)
+    ? (actions as SpeechAction[]).filter((action) => action.type === 'speech')
     : [];
+  const missingAudioCount = speechActions.filter((action) => action.text && !action.audioUrl).length;
+  if (missingAudioCount > 0) {
+    throw new Error(
+      `Export MP4 refusé : ${missingAudioCount} prise(s) de parole sans audio dans la scène ${sceneIndex + 1}`,
+    );
+  }
   const paths: string[] = [];
 
-  for (const [audioIndex, action] of speechActions.entries()) {
+  for (const [audioIndex, action] of speechActions.filter((item) => item.audioUrl).entries()) {
     const storagePath = storagePathFromAudioUrl(stageId, action.audioUrl!);
     if (!storagePath) continue;
     const { data, error } = await supabase.storage.from('classroom-media').download(storagePath);

@@ -6,13 +6,27 @@ const SKIPPED_KEYS = new Set([
   'audioUrl',
   'html',
   'background',
+  'backgroundColor',
+  'color',
+  'defaultColor',
+  'fill',
+  'fontColor',
+  'outline',
+  'shadow',
+  'stroke',
+  'theme',
+  'themeColors',
 ]);
+
+const TECHNICAL_VALUE = /^(?:#[0-9a-f]{3,8}|rgba?\(|hsla?\(|(?:url|linear-gradient|radial-gradient)\()/i;
 
 function collectStrings(value: unknown, key: string | null, output: string[]): void {
   if (output.join(' ').length >= 1400) return;
   if (typeof value === 'string') {
     const text = value.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-    if (text && !text.startsWith('http') && key !== 'type') output.push(text);
+    if (text && !text.startsWith('http') && key !== 'type' && !TECHNICAL_VALUE.test(text)) {
+      output.push(text);
+    }
     return;
   }
   if (Array.isArray(value)) {
