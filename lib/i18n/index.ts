@@ -23,6 +23,7 @@ export const translations = {
     ...generationZhCN,
     ...settingsZhCN,
     ...videoCapsulesZhCN,
+    profile: { ...commonZhCN.profile, ...settingsZhCN.profile },
   },
   'en-US': {
     ...commonEnUS,
@@ -31,6 +32,7 @@ export const translations = {
     ...generationEnUS,
     ...settingsEnUS,
     ...videoCapsulesEnUS,
+    profile: { ...commonEnUS.profile, ...settingsEnUS.profile },
   },
   'fr-FR': {
     ...commonFrFR,
@@ -39,6 +41,7 @@ export const translations = {
     ...generationFrFR,
     ...settingsFrFR,
     ...videoCapsulesFrFR,
+    profile: { ...commonFrFR.profile, ...settingsFrFR.profile },
   },
   'ar-MA': {
     ...commonArMA,
@@ -47,6 +50,7 @@ export const translations = {
     ...generationArMA,
     ...settingsArMA,
     ...videoCapsulesArMA,
+    profile: { ...commonArMA.profile, ...settingsArMA.profile },
   },
 } as const;
 
