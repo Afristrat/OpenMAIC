@@ -16,6 +16,7 @@ import { requireSuperAdminOrOrgAdmin, requireSuperAdminOrOrgMember } from '@/lib
 import { validateBody } from '@/lib/api/validate';
 import { classroomPersistSchema } from '@/lib/api/schemas';
 import { createLogger } from '@/lib/logger';
+import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import type { Scene, Stage } from '@/lib/types/stage';
 
 const log = createLogger('Classroom API');
@@ -88,6 +89,20 @@ export async function PUT(request: NextRequest) {
       },
       buildRequestOrigin(request),
     );
+    const submittedIds = (rawBody.scenes as Scene[]).map((scene) => scene.id);
+    const supabase = createServiceSupabaseClient();
+    const { data: existingScenes, error: readError } = await supabase
+      .from('scenes')
+      .select('id')
+      .eq('stage_id', stageId);
+    if (readError) throw new Error(`Failed to reconcile classroom scenes: ${readError.message}`);
+    const staleIds = (existingScenes ?? [])
+      .map((scene) => scene.id)
+      .filter((id) => !submittedIds.includes(id));
+    if (staleIds.length > 0) {
+      const { error: deleteError } = await supabase.from('scenes').delete().in('id', staleIds);
+      if (deleteError) throw new Error(`Failed to delete removed classroom scenes: ${deleteError.message}`);
+    }
     return apiSuccess({ id: stageId });
   } catch (error) {
     log.error('Classroom update failed:', error);
