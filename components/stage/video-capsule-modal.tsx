@@ -78,7 +78,9 @@ export function VideoCapsuleModal({
                 className="mt-1 w-full rounded-md border border-gray-200 dark:border-gray-700 bg-transparent px-2.5 py-1.5 text-sm"
               >
                 {HYPERFRAMES_AUDIENCES.map((value) => (
-                  <option key={value} value={value}>{t(`videoCapsule.options.${value}`)}</option>
+                  <option key={value} value={value}>
+                    {t(`videoCapsule.options.${value}`)}
+                  </option>
                 ))}
               </select>
             </label>
@@ -90,7 +92,9 @@ export function VideoCapsuleModal({
                 className="mt-1 w-full rounded-md border border-gray-200 dark:border-gray-700 bg-transparent px-2.5 py-1.5 text-sm"
               >
                 {HYPERFRAMES_TONES.map((value) => (
-                  <option key={value} value={value}>{t(`videoCapsule.options.${value}`)}</option>
+                  <option key={value} value={value}>
+                    {t(`videoCapsule.options.${value}`)}
+                  </option>
                 ))}
               </select>
             </label>
@@ -102,7 +106,9 @@ export function VideoCapsuleModal({
                 className="mt-1 w-full rounded-md border border-gray-200 dark:border-gray-700 bg-transparent px-2.5 py-1.5 text-sm"
               >
                 {HYPERFRAMES_OBJECTIVES.map((value) => (
-                  <option key={value} value={value}>{t(`videoCapsule.options.${value}`)}</option>
+                  <option key={value} value={value}>
+                    {t(`videoCapsule.options.${value}`)}
+                  </option>
                 ))}
               </select>
             </label>

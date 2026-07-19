@@ -10,7 +10,12 @@
  */
 
 export const HYPERFRAMES_AUDIENCES = [
-  'etudiant', 'institution', 'investisseur', 'grand_public', 'pairs_tech', 'interne',
+  'etudiant',
+  'institution',
+  'investisseur',
+  'grand_public',
+  'pairs_tech',
+  'interne',
 ] as const;
 export type HyperframesAudience = (typeof HYPERFRAMES_AUDIENCES)[number];
 export type HyperframesChannel =
@@ -24,11 +29,20 @@ export type HyperframesChannel =
 export type HyperframesAspect = '16:9' | '9:16' | '1:1';
 export type HyperframesLanguageCode = 'fr' | 'ar' | 'darija' | 'en';
 export const HYPERFRAMES_TONES = [
-  'premium', 'insolent', 'cinematic', 'pedagogique', 'urgence', 'default',
+  'premium',
+  'insolent',
+  'cinematic',
+  'pedagogique',
+  'urgence',
+  'default',
 ] as const;
 export type HyperframesTone = (typeof HYPERFRAMES_TONES)[number];
 export const HYPERFRAMES_OBJECTIVES = [
-  'awareness', 'acquisition', 'proof', 'wrapped_shareable', 'demo_day',
+  'awareness',
+  'acquisition',
+  'proof',
+  'wrapped_shareable',
+  'demo_day',
 ] as const;
 export type HyperframesObjective = (typeof HYPERFRAMES_OBJECTIVES)[number];
 
