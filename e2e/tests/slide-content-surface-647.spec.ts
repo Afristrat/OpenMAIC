@@ -1,10 +1,18 @@
 import { test, expect } from '../fixtures/base';
-import { HomePage } from '../pages/home.page';
 import { GenerationPreviewPage } from '../pages/generation-preview.page';
 import { ClassroomPage } from '../pages/classroom.page';
 import { createSettingsStorage } from '../fixtures/test-data/settings';
 
 const SETTINGS_STORAGE = createSettingsStorage({ sidebarCollapsed: false });
+const GENERATION_SESSION = JSON.stringify({
+  sessionId: 'slide-content-e2e',
+  requirements: { requirement: 'Explain photosynthesis', language: 'en-US' },
+  pdfText: '',
+  pdfImages: [],
+  imageStorageIds: [],
+  sceneOutlines: null,
+  currentStep: 'generating',
+});
 
 /**
  * PR3b — slide content surface completion (#647). Verifies the new
@@ -15,26 +23,20 @@ const SETTINGS_STORAGE = createSettingsStorage({ sidebarCollapsed: false });
  */
 test.describe('Slide content surface (#647)', () => {
   test.beforeEach(async ({ page, mockApi }) => {
-    await page.addInitScript((settings) => {
-      localStorage.setItem('settings-storage', settings);
-    }, SETTINGS_STORAGE);
+    await page.addInitScript(
+      ({ settings, session }) => {
+        localStorage.setItem('settings-storage', settings);
+        sessionStorage.setItem('generationSession', session);
+      },
+      { settings: SETTINGS_STORAGE, session: GENERATION_SESSION },
+    );
     await mockApi.setupGenerationMocks();
   });
 
   test('background, z-order, and image bar surface in Pro mode', async ({ page }, testInfo) => {
     // Generate a classroom through the mocked pipeline, then enter Pro mode.
-    const home = new HomePage(page);
-    await home.goto();
-    // Dismiss the "What's New" changelog modal that overlays the home page on
-    // first load (it intercepts the submit button otherwise).
-    await page
-      .getByRole('button', { name: /got it|知道了/i })
-      .click({ timeout: 5_000 })
-      .catch(() => {});
-    await home.fillRequirement('讲解光合作用');
-    await home.submit();
-    await page.waitForURL(/\/generation-preview/);
     const preview = new GenerationPreviewPage(page);
+    await preview.goto();
     await preview.waitForRedirectToClassroom();
 
     const classroom = new ClassroomPage(page);
