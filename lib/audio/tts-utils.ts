@@ -5,6 +5,8 @@
 import type { TTSProviderId } from './types';
 import type { Action, SpeechAction } from '@/lib/types/action';
 import { createLogger } from '@/lib/logger';
+import { splitTextIntoLanguageSegments } from './language-segments';
+import { ANGLICISM_TERMS } from './anglicism-dictionary';
 
 const log = createLogger('TTS');
 
@@ -72,6 +74,43 @@ export function splitLongSpeechText(text: string, maxLength: number): string[] {
 
   pushChunk(current);
   return chunks;
+}
+
+/** Providers empiriquement confirmés pour accepter un `language` par appel TTS. */
+const ANGLICISM_AWARE_PROVIDERS: ReadonlySet<TTSProviderId> = new Set(['higgs-tts']);
+
+/**
+ * Split speech actions so each run of consecutive anglicisms (LiteLLM, MIT…)
+ * becomes its own sub-action with `ttsLanguageOverride: 'en'`, while the rest
+ * stays `'fr'`. One audio file per sub-action — no byte concatenation. Only
+ * applies to providers in ANGLICISM_AWARE_PROVIDERS (empirically verified).
+ */
+export function splitSpeechActionsByAnglicisms(
+  actions: Action[],
+  providerId: TTSProviderId,
+): Action[] {
+  if (!ANGLICISM_AWARE_PROVIDERS.has(providerId)) return actions;
+
+  let didSplit = false;
+  const nextActions: Action[] = actions.flatMap((action) => {
+    if (action.type !== 'speech' || !action.text) return [action];
+
+    const segments = splitTextIntoLanguageSegments(action.text, ANGLICISM_TERMS);
+    if (segments.length <= 1) return [action];
+    didSplit = true;
+    const { audioId: _audioId, ...baseAction } = action as SpeechAction;
+
+    log.info(
+      `Split speech by language for ${providerId}: action=${action.id}, segments=${segments.length}`,
+    );
+    return segments.map((segment, i) => ({
+      ...baseAction,
+      id: `${action.id}_lang_${i + 1}`,
+      text: segment.text,
+      ttsLanguageOverride: segment.language,
+    }));
+  });
+  return didSplit ? nextActions : actions;
 }
 
 /**

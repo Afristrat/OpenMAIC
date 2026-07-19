@@ -3,6 +3,7 @@ import { searchWithBocha } from './bocha';
 import { searchWithBrave } from './brave';
 import { searchWithMiniMax } from './minimax';
 import { searchWithTavily } from './tavily';
+import { searchWithSerper } from './serper';
 import type { WebSearchResult } from '@/lib/types/web-search';
 import type { BaiduSubSources, WebSearchProviderId } from './types';
 
@@ -29,6 +30,8 @@ export async function searchWeb(params: {
       return searchWithMiniMax({ query, apiKey, maxResults, baseUrl });
     case 'tavily':
       return searchWithTavily({ query, apiKey, maxResults, baseUrl });
+    case 'serper':
+      return searchWithSerper({ query, apiKey, maxResults, baseUrl });
     default: {
       const exhaustive: never = providerId;
       throw new Error(`Unsupported web search provider: ${exhaustive}`);

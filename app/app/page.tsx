@@ -55,10 +55,14 @@ import { TemplateSelector } from '@/components/org/template-selector';
 import { tryCreateClient } from '@/lib/supabase/client';
 import { db } from '@/lib/utils/database';
 import { isDemoStage } from '@/lib/demo/use-demo-seed';
+import { useSettingsStore } from '@/lib/store/settings';
 
 const log = createLogger('Home');
 
-const WEB_SEARCH_STORAGE_KEY = 'webSearchEnabled';
+// Nouvelle clé : une préférence « recherche désactivée » héritée d’avant le
+// raccordement Serper + Crawl4AI ne doit pas neutraliser silencieusement les
+// sources fraîches de la première génération après cette mise à niveau.
+const WEB_SEARCH_STORAGE_KEY = 'webSearchEnabled.v2';
 const RECENT_OPEN_STORAGE_KEY = 'recentClassroomsOpen';
 const INTERACTIVE_MODE_STORAGE_KEY = 'interactiveModeEnabled';
 
@@ -91,6 +95,7 @@ function HomePage() {
   const showVocationalTestUi = shouldShowVocationalTestUi();
   const [form, setForm] = useState<FormState>(initialFormState);
   const [activeSkillId, setActiveSkillId] = useState<string>();
+  const webSearchPreferenceSetRef = useRef(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsSection, setSettingsSection] = useState<
     import('@/lib/types/settings').SettingsSection | undefined
@@ -108,6 +113,7 @@ function HomePage() {
   // A usable LLM provider exists ⇒ a concrete model is always selected (#580
   // invariant). Gate generation on this single condition (state A vs B)
   // instead of inspecting modelId directly.
+  const webSearchProvidersConfig = useSettingsStore((s) => s.webSearchProvidersConfig);
   const [recentOpen, setRecentOpen] = useState(true);
   const persistRecentOpen = (next: boolean) => {
     setRecentOpen(next);
@@ -176,6 +182,7 @@ function HomePage() {
       const savedWebSearch = localStorage.getItem(WEB_SEARCH_STORAGE_KEY);
       const savedInteractiveMode = localStorage.getItem(INTERACTIVE_MODE_STORAGE_KEY);
       const updates: Partial<FormState> = {};
+      webSearchPreferenceSetRef.current = savedWebSearch !== null;
       if (savedWebSearch === 'true') updates.webSearch = true;
       if (savedInteractiveMode === 'true') updates.interactiveMode = true;
       if (Object.keys(updates).length > 0) {
@@ -185,6 +192,19 @@ function HomePage() {
       /* localStorage unavailable */
     }
   }, []);
+
+  // Lorsqu’aucun choix n’a encore été mémorisé, active la recherche dès qu’un
+  // fournisseur géré est disponible. Le contenu d’une nouvelle formation est
+  // alors fondé sur des sources récentes, sans empêcher l’utilisateur de la couper.
+  useEffect(() => {
+    if (webSearchPreferenceSetRef.current) return;
+    const hasManagedSearch = Object.values(webSearchProvidersConfig).some(
+      (config) => config.isServerConfigured,
+    );
+    if (hasManagedSearch) {
+      setForm((prev) => (prev.webSearch ? prev : { ...prev, webSearch: true }));
+    }
+  }, [webSearchProvidersConfig]);
 
   // Restore requirement draft from localStorage on mount. The previous derived-state
   // pattern initialised `prev` from the cached value itself, so on the first client
@@ -331,7 +351,10 @@ function HomePage() {
   const updateForm = <K extends keyof FormState>(field: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     try {
-      if (field === 'webSearch') localStorage.setItem(WEB_SEARCH_STORAGE_KEY, String(value));
+      if (field === 'webSearch') {
+        webSearchPreferenceSetRef.current = true;
+        localStorage.setItem(WEB_SEARCH_STORAGE_KEY, String(value));
+      }
       if (field === 'interactiveMode')
         localStorage.setItem(INTERACTIVE_MODE_STORAGE_KEY, String(value));
       if (field === 'requirement') updateRequirementCache(value as string);

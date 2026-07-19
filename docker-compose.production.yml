@@ -32,6 +32,8 @@ services:
       - NEXT_PUBLIC_SUPABASE_URL=http://supabase-kong:8000
       - NEXT_PUBLIC_SUPABASE_ANON_KEY=${ANON_KEY}
       - SUPABASE_SERVICE_ROLE_KEY=${SERVICE_ROLE_KEY}
+      - CAPTURE_WORKER_URL=http://capture-worker:8090
+      - CAPTURE_WORKER_TOKEN=${CAPTURE_WORKER_TOKEN}
     depends_on:
       supabase-db:
         condition: service_healthy
@@ -196,6 +198,26 @@ services:
       - qalem-net
     restart: unless-stopped
 
+  # ── Capture Worker (Playwright, service séparé) ──────────────────────────────
+  capture-worker:
+    build:
+      context: ./services/capture-worker
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      - PORT=8090
+      - CAPTURE_STORAGE_STATE_DIR=/data/storage-states
+      - CAPTURE_WORKER_TOKEN=${CAPTURE_WORKER_TOKEN}
+    volumes:
+      - capture-storage-states:/data/storage-states
+    networks:
+      - qalem-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
   # ── MinIO bucket initializer (run-once) ──────────────────────────────────────
   minio-init:
     image: minio/mc:latest
@@ -229,4 +251,6 @@ volumes:
   redis-data:
     driver: local
   minio-data:
+    driver: local
+  capture-storage-states:
     driver: local

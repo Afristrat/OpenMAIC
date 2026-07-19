@@ -22,6 +22,7 @@ import { getStageModel } from '@/lib/server/model-routes';
 import { resolveVocationalActive } from '@/lib/config/feature-flags';
 import { buildSearchQuery } from '@/lib/server/search-query-builder';
 import { formatSearchResultsAsContext, searchWeb } from '@/lib/web-search';
+import { enrichSourcesWithCrawl4AI } from '@/lib/server/crawl4ai';
 import type { BaiduSubSources, WebSearchProviderId } from '@/lib/web-search/types';
 import { persistClassroom } from '@/lib/server/classroom-storage';
 import {
@@ -31,7 +32,9 @@ import {
 } from '@/lib/server/classroom-media-generation';
 import { withGenerationRetry } from '@/lib/generation/generation-retry';
 import { buildVideoManifestFromOutlines } from '@/lib/media/video-manifest';
-import type { UserRequirements } from '@/lib/types/generation';
+import { decideCaptureForScene } from '@/lib/generation/web-capture-plan';
+import { requestWebCapture } from '@/lib/server/capture-client';
+import type { UserRequirements, PdfImage, ImageMapping } from '@/lib/types/generation';
 import type { Scene, Stage } from '@/lib/types/stage';
 import { AGENT_COLOR_PALETTE, AGENT_DEFAULT_AVATARS } from '@/lib/constants/agent-defaults';
 import { isFeatureEnabled } from '@/lib/flags';
@@ -317,9 +320,10 @@ export async function generateClassroom(
           baseUrl: webSearchConfig.baseUrl,
           baiduSubSources: webSearchConfig.baiduSubSources,
         });
-        researchContext = formatSearchResultsAsContext(searchResult);
+        const enrichedSources = await enrichSourcesWithCrawl4AI(searchResult.sources, searchQuery.query);
+        researchContext = formatSearchResultsAsContext({ ...searchResult, sources: enrichedSources });
         if (researchContext) {
-          log.info(`Web search returned ${searchResult.sources.length} sources`);
+          log.info(`Web search returned ${enrichedSources.length} sources`);
         }
       } catch (e) {
         log.warn('Web search failed, continuing without search context:', e);
@@ -451,6 +455,31 @@ export async function generateClassroom(
       });
     };
 
+    // Web capture: decide + fetch an illustrative capture for this scene, if
+    // any. Never blocks: any failure at any point here falls through with no
+    // image (decideCaptureForScene/requestWebCapture never throw).
+    let assignedImages: PdfImage[] | undefined;
+    let imageMapping: ImageMapping | undefined;
+    const captureDecision = await decideCaptureForScene(safeOutline, sceneAiCall, languageDirective);
+    if (captureDecision?.needsCapture) {
+      const asset = await requestWebCapture(captureDecision, stageId);
+      if (asset && asset.format === 'image') {
+        const imgId = 'img_capture_1';
+        assignedImages = [
+          {
+            id: imgId,
+            src: asset.assetUrl,
+            pageNumber: 0,
+            description: captureDecision.reason,
+          },
+        ];
+        imageMapping = { [imgId]: asset.assetUrl };
+      }
+      // asset.format === 'video' handled by the existing Hyperframes video
+      // channel — out of scope here, tracked separately if/when a
+      // capture-decision actually returns format:'video' in practice.
+    }
+
     const content = await withGenerationRetry(
       () =>
         generateSceneContent(safeOutline, sceneAiCall, {
@@ -462,6 +491,8 @@ export async function generateClassroom(
           allowProceduralSkill: vocationalActive,
           skillEngineEnabled,
           activeSkillId: requirements.activeSkillId,
+          assignedImages,
+          imageMapping,
         }),
       {
         label: `scene ${index + 1}/${outlines.length} content`,

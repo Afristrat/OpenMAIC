@@ -29,7 +29,6 @@ import {
   Moon,
   Monitor,
   Check,
-  Clock,
   Loader2,
 } from 'lucide-react';
 import { useI18n } from '@/lib/hooks/use-i18n';
@@ -62,32 +61,9 @@ export function NavigationSidebar(): React.ReactElement {
 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [queueSize, setQueueSize] = useState(0);
   const isRtl = locale === 'ar-MA';
 
-  // Poll sync queue size
-  useEffect(() => {
-    if (!isSyncAuthenticated) return;
-    let cancelled = false;
-
-    const poll = async (): Promise<void> => {
-      try {
-        const { getQueueSize } = await import('@/lib/offline/sync-queue');
-        const size = await getQueueSize();
-        if (!cancelled) setQueueSize(size);
-      } catch {
-        // sync-queue not available
-      }
-    };
-
-    void poll();
-    const interval = setInterval(() => void poll(), 10_000);
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, [isSyncAuthenticated, isSyncing]);
-
+  /* eslint-disable react-hooks/set-state-in-effect -- localStorage read must happen client-side only (SSR-safe hydration) */
   // Hydrate collapsed state from localStorage
   useEffect(() => {
     try {
@@ -97,11 +73,14 @@ export function NavigationSidebar(): React.ReactElement {
       // localStorage unavailable
     }
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Close mobile sidebar on navigation
-  useEffect(() => {
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
     setMobileOpen(false);
-  }, [pathname]);
+  }
 
   const toggleCollapsed = useCallback(() => {
     setCollapsed((prev) => {
@@ -402,20 +381,6 @@ export function NavigationSidebar(): React.ReactElement {
                 {!collapsed && (
                   <span className="truncate text-blue-600 dark:text-blue-400">
                     {t('nav.syncing')}
-                  </span>
-                )}
-              </>
-            ) : queueSize > 0 ? (
-              <>
-                <span className="relative shrink-0">
-                  <Clock className="size-4 text-amber-500" />
-                  <span className="absolute -top-1 -right-1 flex items-center justify-center size-3.5 rounded-full bg-amber-500 text-[9px] font-bold text-white">
-                    {queueSize}
-                  </span>
-                </span>
-                {!collapsed && (
-                  <span className="truncate text-amber-600 dark:text-amber-400">
-                    {t('nav.pendingSync').replace('{count}', String(queueSize))}
                   </span>
                 )}
               </>

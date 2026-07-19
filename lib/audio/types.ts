@@ -146,6 +146,8 @@ export interface TTSModelConfig {
   speed?: number;
   format?: string;
   providerOptions?: Record<string, unknown>;
+  /** Per-call language override (currently only honored by higgs-tts). */
+  language?: string;
 }
 
 // ============================================================================

@@ -230,15 +230,6 @@ export interface ReviewCardRecord {
   updatedAt: number;
 }
 
-/** SyncQueue table - PWA offline sync outbox */
-export interface SyncQueueRecord {
-  id: string; // PK: unique operation ID
-  type: 'quiz_result' | 'review_rating' | 'stage_sync';
-  payload: unknown;
-  createdAt: number;
-  retries: number;
-}
-
 /** Build the compound primary key for mediaFiles: `${stageId}:${elementId}` */
 export function mediaFileKey(stageId: string, elementId: string): string {
   return `${stageId}:${elementId}`;
@@ -247,7 +238,7 @@ export function mediaFileKey(stageId: string, elementId: string): string {
 // ==================== Database Definition ====================
 
 const DATABASE_NAME = 'MAIC-Database';
-const _DATABASE_VERSION = 12;
+const _DATABASE_VERSION = 13;
 
 /**
  * MAIC Database Instance
@@ -267,7 +258,6 @@ class MAICDatabase extends Dexie {
   voiceProfiles!: EntityTable<VoiceProfileRecord, 'id'>;
   autoVoiceCache!: EntityTable<AutoVoiceCacheRecord, 'voiceId'>;
   reviewCards!: EntityTable<ReviewCardRecord, 'id'>;
-  syncQueue!: EntityTable<SyncQueueRecord, 'id'>;
 
   constructor() {
     super(DATABASE_NAME);
@@ -465,6 +455,27 @@ class MAICDatabase extends Dexie {
       autoVoiceCache: 'voiceId, updatedAt',
       reviewCards: 'id, dueDate, sourceStageId',
       syncQueue: 'id, type, createdAt',
+    });
+
+    // Version 13: Drop syncQueue — dead scaffold, never had a producer wired to
+    // it. quiz_result now syncs directly to Supabase (lib/quiz/sync.ts, same
+    // pattern as reviewCards/stages); review_rating and stage_sync already had
+    // their own direct Supabase sync paths that never used this queue.
+    this.version(13).stores({
+      stages: 'id, updatedAt',
+      scenes: 'id, stageId, order, [stageId+order]',
+      audioFiles: 'id, createdAt',
+      imageFiles: 'id, createdAt',
+      snapshots: '++id',
+      chatSessions: 'id, stageId, [stageId+createdAt]',
+      playbackState: 'stageId',
+      stageOutlines: 'stageId',
+      mediaFiles: 'id, stageId, [stageId+type]',
+      generatedAgents: 'id, stageId',
+      voiceProfiles: 'id, providerId, kind, updatedAt',
+      autoVoiceCache: 'voiceId, updatedAt',
+      reviewCards: 'id, dueDate, sourceStageId',
+      syncQueue: null,
     });
   }
 }

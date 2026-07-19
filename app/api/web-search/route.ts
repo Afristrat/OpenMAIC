@@ -20,6 +20,7 @@ import type { AICallFn } from '@/lib/generation/pipeline-types';
 import { WEB_SEARCH_PROVIDERS } from '@/lib/web-search/constants';
 import type { BaiduSubSources, WebSearchProviderId } from '@/lib/web-search/types';
 import { resolveWebSearchRouteBaseUrl } from '@/lib/server/web-search-config';
+import { enrichSourcesWithCrawl4AI } from '@/lib/server/crawl4ai';
 
 const log = createLogger('WebSearch');
 
@@ -119,14 +120,16 @@ export async function POST(req: NextRequest) {
       baseUrl,
       ...(providerId === 'baidu' && baiduSubSources ? { baiduSubSources } : {}),
     });
-    const context = formatSearchResultsAsContext(result);
+    const enrichedSources = await enrichSourcesWithCrawl4AI(result.sources, searchQuery.query);
+    const enrichedResult = { ...result, sources: enrichedSources };
+    const context = formatSearchResultsAsContext(enrichedResult);
 
     return apiSuccess({
-      answer: result.answer,
-      sources: result.sources,
+      answer: enrichedResult.answer,
+      sources: enrichedResult.sources,
       context,
-      query: result.query,
-      responseTime: result.responseTime,
+      query: enrichedResult.query,
+      responseTime: enrichedResult.responseTime,
     });
   } catch (err) {
     log.error(`Web search failed [query="${query?.substring(0, 60) ?? 'unknown'}"]:`, err);
@@ -145,6 +148,8 @@ function getWebSearchEnvKey(providerId: WebSearchProviderId): string {
       return 'BRAVE_API_KEY';
     case 'minimax':
       return 'WEB_SEARCH_MINIMAX_API_KEY';
+    case 'serper':
+      return 'SERPER_API_KEY';
     case 'tavily':
     default:
       return 'TAVILY_API_KEY';

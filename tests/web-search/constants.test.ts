@@ -28,4 +28,14 @@ describe('web search provider constants', () => {
     });
     expect(getAllWebSearchProviders().map((provider) => provider.id)).toContain('minimax');
   });
+
+  it('registers Serper as an API-key web search provider', () => {
+    expect(WEB_SEARCH_PROVIDERS.serper).toMatchObject({
+      id: 'serper',
+      name: 'Serper',
+      requiresApiKey: true,
+      defaultBaseUrl: 'https://google.serper.dev',
+      endpointPath: '/search',
+    });
+  });
 });

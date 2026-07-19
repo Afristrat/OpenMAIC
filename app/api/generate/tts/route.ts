@@ -32,17 +32,19 @@ export async function POST(req: NextRequest) {
   let audioId: string | undefined;
   try {
     const body = await req.json();
-    const { text, ttsModelId, ttsSpeed, ttsApiKey, ttsBaseUrl, ttsProviderOptions } = body as {
-      text: string;
-      audioId: string;
-      ttsProviderId: TTSProviderId;
-      ttsModelId?: string;
-      ttsVoice: string;
-      ttsSpeed?: number;
-      ttsApiKey?: string;
-      ttsBaseUrl?: string;
-      ttsProviderOptions?: Record<string, unknown>;
-    };
+    const { text, ttsModelId, ttsSpeed, ttsApiKey, ttsBaseUrl, ttsProviderOptions, ttsLanguageOverride } =
+      body as {
+        text: string;
+        audioId: string;
+        ttsProviderId: TTSProviderId;
+        ttsModelId?: string;
+        ttsVoice: string;
+        ttsSpeed?: number;
+        ttsApiKey?: string;
+        ttsBaseUrl?: string;
+        ttsProviderOptions?: Record<string, unknown>;
+        ttsLanguageOverride?: 'fr' | 'en';
+      };
     ttsProviderId = body.ttsProviderId;
     ttsVoice = body.ttsVoice;
     audioId = body.audioId;
@@ -108,6 +110,7 @@ export async function POST(req: NextRequest) {
       apiKey,
       baseUrl,
       providerOptions: ttsProviderOptions,
+      language: ttsLanguageOverride,
     };
 
     log.info(

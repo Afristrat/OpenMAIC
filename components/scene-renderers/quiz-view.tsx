@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/hooks/use-i18n';
+import { useAuth } from '@/lib/hooks/use-auth';
 import { getCurrentModelConfig } from '@/lib/utils/model-config';
 import { createLogger } from '@/lib/logger';
 
@@ -31,6 +32,7 @@ import {
   writeSubmittedResults,
   type SubmittedState,
 } from '@/lib/quiz/persistence';
+import { syncQuizResultToSupabase } from '@/lib/quiz/sync';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -39,6 +41,7 @@ type Phase = 'not_started' | 'answering' | 'grading' | 'reviewing';
 interface QuizViewProps {
   readonly questions: QuizQuestion[];
   readonly sceneId: string;
+  readonly stageId: string;
 }
 
 /** Call /api/quiz-grade for a single short-answer question. */
@@ -646,8 +649,9 @@ function ScoreBanner({
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 
-export function QuizView({ questions, sceneId }: QuizViewProps) {
+export function QuizView({ questions, sceneId, stageId }: QuizViewProps) {
   const { t, locale } = useI18n();
+  const { user } = useAuth();
 
   // Rehydrate submitted state from localStorage on first mount. Runs once.
   const [initialSubmitted] = useState<SubmittedState>(() => readSubmittedState(sceneId));
@@ -748,12 +752,29 @@ export function QuizView({ questions, sceneId }: QuizViewProps) {
       setResults(ordered);
       setPhase('reviewing');
       writeSubmittedResults(sceneId, ordered);
+
+      if (user) {
+        const earned = ordered.reduce((sum, r) => sum + r.earned, 0);
+        const score = totalPoints > 0 ? Math.round((earned / totalPoints) * 100) : 0;
+        void syncQuizResultToSupabase({
+          userId: user.id,
+          stageId,
+          sceneId,
+          answers: ordered.map((r) => ({
+            questionId: r.questionId,
+            userAnswer: String(answers[r.questionId] ?? ''),
+            correct: r.correct ?? false,
+            timestamp: new Date().toISOString(),
+          })),
+          score,
+        });
+      }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [phase, questions, answers, locale, sceneId]);
+  }, [phase, questions, answers, locale, sceneId, stageId, user, totalPoints]);
 
   const handleRetry = useCallback(() => {
     setPhase('not_started');

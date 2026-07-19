@@ -507,6 +507,12 @@ const getDefaultWebSearchConfig = () => ({
       enabled: true,
       requiresApiKey: true,
     },
+    serper: {
+      apiKey: '',
+      baseUrl: WEB_SEARCH_PROVIDERS.serper.defaultBaseUrl || '',
+      enabled: true,
+      requiresApiKey: true,
+    },
   } as Record<
     WebSearchProviderId,
     { apiKey: string; baseUrl: string; enabled: boolean; requiresApiKey?: boolean }
