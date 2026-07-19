@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
+import { resolveAuthReturnPath } from '@/lib/auth/return-path';
 
 const GUEST_MODE_KEY = 'qalem-guest-mode';
 
@@ -53,6 +54,7 @@ function AuthPageContent(): React.ReactElement {
   const router = useRouter();
   const searchParams = useSearchParams();
   const inviteToken = searchParams.get('invite');
+  const returnPath = resolveAuthReturnPath(searchParams.get('next'));
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -112,7 +114,7 @@ function AuthPageContent(): React.ReactElement {
         await consumeInvitation(inviteToken);
       }
 
-      router.push('/app');
+      router.push(returnPath);
     } catch {
       setError('An unexpected error occurred');
     } finally {
@@ -125,7 +127,7 @@ function AuthPageContent(): React.ReactElement {
     if (!supabase) return;
     const redirectTo = inviteToken
       ? `${window.location.origin}/?invite=${inviteToken}`
-      : `${window.location.origin}/`;
+      : `${window.location.origin}${returnPath}`;
     await supabase.auth.signInWithOAuth({
       provider,
       options: { redirectTo },
@@ -138,7 +140,7 @@ function AuthPageContent(): React.ReactElement {
     } catch {
       // localStorage unavailable
     }
-    router.push('/app');
+    router.push(returnPath);
   }
 
   return (

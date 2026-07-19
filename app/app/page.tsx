@@ -421,7 +421,8 @@ function HomePage() {
 
   const handleGenerateAction = () => {
     if (requiresAuthentication) {
-      router.push('/auth');
+      const returnPath = `${window.location.pathname}${window.location.search}`;
+      router.push(`/auth?next=${encodeURIComponent(returnPath)}`);
       return;
     }
     handleGenerate();
