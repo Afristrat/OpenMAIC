@@ -4,6 +4,16 @@ import { useState } from 'react';
 import { AlertCircle, Loader2, Video, X } from 'lucide-react';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useVideoCapsule } from '@/lib/video/use-video-capsule';
+import type {
+  HyperframesAudience,
+  HyperframesObjective,
+  HyperframesTone,
+} from '@/lib/video/hyperframes-types';
+import {
+  HYPERFRAMES_AUDIENCES,
+  HYPERFRAMES_OBJECTIVES,
+  HYPERFRAMES_TONES,
+} from '@/lib/video/hyperframes-types';
 
 interface VideoCapsuleModalProps {
   readonly stageId: string;
@@ -16,9 +26,7 @@ const DEFAULT_DURATION_S = 60;
 
 /**
  * Formulaire + suivi de génération d'une capsule vidéo Hyperframes pour une
- * scène. `audience`/`tone`/`objective` sont des enums côté Mishkāt dont les
- * valeurs closes ne sont pas publiées (cf. lib/video/hyperframes-types.ts) —
- * laissés en saisie libre plutôt que devinés.
+ * scène. Les listes suivent directement le schéma publié par Mishkāt.
  */
 export function VideoCapsuleModal({
   stageId,
@@ -28,9 +36,9 @@ export function VideoCapsuleModal({
 }: VideoCapsuleModalProps) {
   const { t } = useI18n();
   const { status, variants, error, generate } = useVideoCapsule();
-  const [audience, setAudience] = useState('learners');
-  const [tone, setTone] = useState('engaging');
-  const [objective, setObjective] = useState('inform');
+  const [audience, setAudience] = useState<HyperframesAudience>('etudiant');
+  const [tone, setTone] = useState<HyperframesTone>('pedagogique');
+  const [objective, setObjective] = useState<HyperframesObjective>('awareness');
   const [durationS, setDurationS] = useState(DEFAULT_DURATION_S);
 
   const isBusy = status === 'queued' || status === 'generating' || status === 'rendering';
@@ -64,27 +72,39 @@ export function VideoCapsuleModal({
           <div className="space-y-2.5">
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-300">
               {t('videoCapsule.audience')}
-              <input
+              <select
                 value={audience}
-                onChange={(e) => setAudience(e.target.value)}
+                onChange={(e) => setAudience(e.target.value as HyperframesAudience)}
                 className="mt-1 w-full rounded-md border border-gray-200 dark:border-gray-700 bg-transparent px-2.5 py-1.5 text-sm"
-              />
+              >
+                {HYPERFRAMES_AUDIENCES.map((value) => (
+                  <option key={value} value={value}>{t(`videoCapsule.options.${value}`)}</option>
+                ))}
+              </select>
             </label>
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-300">
               {t('videoCapsule.tone')}
-              <input
+              <select
                 value={tone}
-                onChange={(e) => setTone(e.target.value)}
+                onChange={(e) => setTone(e.target.value as HyperframesTone)}
                 className="mt-1 w-full rounded-md border border-gray-200 dark:border-gray-700 bg-transparent px-2.5 py-1.5 text-sm"
-              />
+              >
+                {HYPERFRAMES_TONES.map((value) => (
+                  <option key={value} value={value}>{t(`videoCapsule.options.${value}`)}</option>
+                ))}
+              </select>
             </label>
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-300">
               {t('videoCapsule.objective')}
-              <input
+              <select
                 value={objective}
-                onChange={(e) => setObjective(e.target.value)}
+                onChange={(e) => setObjective(e.target.value as HyperframesObjective)}
                 className="mt-1 w-full rounded-md border border-gray-200 dark:border-gray-700 bg-transparent px-2.5 py-1.5 text-sm"
-              />
+              >
+                {HYPERFRAMES_OBJECTIVES.map((value) => (
+                  <option key={value} value={value}>{t(`videoCapsule.options.${value}`)}</option>
+                ))}
+              </select>
             </label>
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-300">
               {t('videoCapsule.duration')}

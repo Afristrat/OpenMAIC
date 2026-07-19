@@ -57,9 +57,9 @@ async function post(body: Record<string, unknown>) {
 const validBody = {
   stageId: 'stage_1',
   sceneId: 'scene_1',
-  audience: 'learners',
-  tone: 'engaging',
-  objective: 'inform',
+  audience: 'etudiant',
+  tone: 'pedagogique',
+  objective: 'awareness',
   durationS: 60,
 };
 
@@ -106,6 +106,12 @@ describe('POST /api/video-capsules', () => {
   it('returns 400 when a required field is missing', async () => {
     const res = await post({ stageId: 'stage_1' });
     expect(res.status).toBe(400);
+  });
+
+  it('returns 400 before database access when an enum is rejected by Mishkāt', async () => {
+    const res = await post({ ...validBody, audience: 'learners' });
+    expect(res.status).toBe(400);
+    expect(mocks.stageSingle).not.toHaveBeenCalled();
   });
 
   it('creates a capsule and enqueues the render job on success', async () => {

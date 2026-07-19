@@ -20,15 +20,25 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { enqueueVideoCapsule } from '@/lib/jobs/queue';
 import { createLogger } from '@/lib/logger';
 import type { Locale } from '@/lib/i18n/types';
+import type {
+  HyperframesAudience,
+  HyperframesObjective,
+  HyperframesTone,
+} from '@/lib/video/hyperframes-types';
+import {
+  HYPERFRAMES_AUDIENCES,
+  HYPERFRAMES_OBJECTIVES,
+  HYPERFRAMES_TONES,
+} from '@/lib/video/hyperframes-types';
 
 const log = createLogger('VideoCapsulesAPI');
 
 interface CreateCapsuleBody {
   stageId?: string;
   sceneId?: string;
-  audience?: string;
-  tone?: string;
-  objective?: string;
+  audience?: HyperframesAudience;
+  tone?: HyperframesTone;
+  objective?: HyperframesObjective;
   durationS?: number;
   notes?: string;
 }
@@ -60,6 +70,14 @@ export async function POST(request: NextRequest) {
         400,
         'stageId, sceneId, audience, tone, objective et durationS sont requis',
       );
+    }
+
+    if (
+      !HYPERFRAMES_AUDIENCES.includes(audience) ||
+      !HYPERFRAMES_TONES.includes(tone) ||
+      !HYPERFRAMES_OBJECTIVES.includes(objective)
+    ) {
+      return apiError('INVALID_REQUEST', 400, 'Audience, ton ou objectif vidéo invalide');
     }
 
     const supabase = await createServerSupabaseClient();

@@ -20,27 +20,27 @@ describe('buildHyperframesBrief', () => {
     process.env.MISHKAT_BRAND_ID = originalBrandId;
   });
 
-  it('produces a brief conforming to the P1-B contract shape', () => {
+  it('produces a brief conforming to the current Mishkāt schema', () => {
     const brief = buildHyperframesBrief({
       stageName: 'Introduction à la thermodynamique',
       sceneTitle: 'Le premier principe',
       locale: 'fr-FR',
-      audience: 'learners',
-      tone: 'engaging',
-      objective: 'inform',
+      audience: 'etudiant',
+      tone: 'pedagogique',
+      objective: 'awareness',
       durationS: 45,
     });
 
     expect(brief).toEqual({
       brand_id: 'qalem-test-brand',
       intent: 'Introduction à la thermodynamique — Le premier principe',
-      audience: 'learners',
-      channel_format: [{ channel: 'classroom', aspect: '16:9' }],
-      language: { primary: 'fr' },
-      tone: 'engaging',
+      audience: 'etudiant',
+      channel_format: [{ channel: 'presentation', aspect: '16:9' }],
+      language: { primary: 'fr', rtl: false },
+      tone: 'pedagogique',
       duration_s: 45,
-      objective: 'inform',
-      sound: { captions_burned: true },
+      objective: 'awareness',
+      sound: { music: true, voiceover: true, captions_burned: true },
     });
   });
 
@@ -49,9 +49,9 @@ describe('buildHyperframesBrief', () => {
       stageName: 'S',
       sceneTitle: 'X',
       locale: 'en-US',
-      audience: 'a',
-      tone: 't',
-      objective: 'o',
+      audience: 'etudiant',
+      tone: 'default',
+      objective: 'awareness',
       durationS: 3,
     });
     expect(tooShort.duration_s).toBe(10);
@@ -60,9 +60,9 @@ describe('buildHyperframesBrief', () => {
       stageName: 'S',
       sceneTitle: 'X',
       locale: 'en-US',
-      audience: 'a',
-      tone: 't',
-      objective: 'o',
+      audience: 'etudiant',
+      tone: 'default',
+      objective: 'awareness',
       durationS: 999,
     });
     expect(tooLong.duration_s).toBe(180);
@@ -73,14 +73,15 @@ describe('buildHyperframesBrief', () => {
       stageName: 'S',
       sceneTitle: 'X',
       locale: 'ar-MA',
-      audience: 'a',
-      tone: 't',
-      objective: 'o',
+      audience: 'etudiant',
+      tone: 'pedagogique',
+      objective: 'awareness',
       durationS: 30,
       notes: 'Insister sur le graphique final.',
     });
     expect(brief.intent).toBe('S — X. Insister sur le graphique final.');
     expect(brief.language.primary).toBe('ar');
+    expect(brief.language.rtl).toBe(true);
   });
 
   it('throws when MISHKAT_BRAND_ID is not configured', () => {
@@ -90,9 +91,9 @@ describe('buildHyperframesBrief', () => {
         stageName: 'S',
         sceneTitle: 'X',
         locale: 'fr-FR',
-        audience: 'a',
-        tone: 't',
-        objective: 'o',
+        audience: 'etudiant',
+        tone: 'default',
+        objective: 'awareness',
         durationS: 30,
       }),
     ).toThrow(/MISHKAT_BRAND_ID/);

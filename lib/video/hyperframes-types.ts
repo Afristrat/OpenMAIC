@@ -5,20 +5,42 @@
  * aucun import de code depuis le repo mishkat, seulement ces types + le client
  * HTTP (`hyperframes-client.ts`).
  *
- * Les champs `audience`, `tone`, `objective` et `channel_format[].channel` sont
- * documentés comme des enums côté Mishkāt mais leurs valeurs closes ne sont pas
- * publiées dans l'interface — typés `string` plutôt que fabriqués, Mishkāt
- * valide et renvoie `status: "error"` si la valeur est invalide.
+ * Aligné sur `schemas/brief.schema.json` du HEAD Mishkāt. Les unions fermées
+ * empêchent Qalem d'envoyer une valeur que le studio refuserait au rendu.
  */
 
+export const HYPERFRAMES_AUDIENCES = [
+  'etudiant', 'institution', 'investisseur', 'grand_public', 'pairs_tech', 'interne',
+] as const;
+export type HyperframesAudience = (typeof HYPERFRAMES_AUDIENCES)[number];
+export type HyperframesChannel =
+  | 'linkedin'
+  | 'reels'
+  | 'tiktok'
+  | 'whatsapp_status'
+  | 'youtube'
+  | 'presentation'
+  | 'instagram_feed';
+export type HyperframesAspect = '16:9' | '9:16' | '1:1';
+export type HyperframesLanguageCode = 'fr' | 'ar' | 'darija' | 'en';
+export const HYPERFRAMES_TONES = [
+  'premium', 'insolent', 'cinematic', 'pedagogique', 'urgence', 'default',
+] as const;
+export type HyperframesTone = (typeof HYPERFRAMES_TONES)[number];
+export const HYPERFRAMES_OBJECTIVES = [
+  'awareness', 'acquisition', 'proof', 'wrapped_shareable', 'demo_day',
+] as const;
+export type HyperframesObjective = (typeof HYPERFRAMES_OBJECTIVES)[number];
+
 export interface HyperframesChannelFormat {
-  channel: string;
-  aspect: string; // ex. "16:9", "9:16"
+  channel: HyperframesChannel;
+  aspect: HyperframesAspect;
 }
 
 export interface HyperframesLanguage {
-  primary: string; // code langue court, ex. "fr", "ar", "en"
-  secondary?: string;
+  primary: HyperframesLanguageCode;
+  secondary?: HyperframesLanguageCode;
+  rtl?: boolean;
 }
 
 export interface HyperframesSound {
@@ -30,12 +52,12 @@ export interface HyperframesSound {
 export interface HyperframesBrief {
   brand_id: string;
   intent: string;
-  audience: string;
+  audience: HyperframesAudience;
   channel_format: HyperframesChannelFormat[];
   language: HyperframesLanguage;
-  tone: string;
+  tone: HyperframesTone;
   duration_s: number; // 10-180
-  objective: string;
+  objective: HyperframesObjective;
   proof?: string;
   sound?: HyperframesSound;
 }

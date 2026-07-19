@@ -46,14 +46,14 @@ describe('hyperframes-client', () => {
     const { createHyperframesProduction } = await import('@/lib/video/hyperframes-client');
     const brief = {
       brand_id: 'qalem-test-brand',
-      intent: 'test',
-      audience: 'learners',
-      channel_format: [{ channel: 'classroom', aspect: '16:9' }],
-      language: { primary: 'fr' },
-      tone: 'engaging',
+      intent: 'Expliquer le fonctionnement du cours',
+      audience: 'etudiant' as const,
+      channel_format: [{ channel: 'presentation' as const, aspect: '16:9' as const }],
+      language: { primary: 'fr' as const, rtl: false },
+      tone: 'pedagogique' as const,
       duration_s: 30,
-      objective: 'inform',
-      sound: { captions_burned: true },
+      objective: 'awareness' as const,
+      sound: { music: true, voiceover: true, captions_burned: true },
     };
 
     const result = await createHyperframesProduction(brief);

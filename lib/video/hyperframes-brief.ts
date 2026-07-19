@@ -7,15 +7,22 @@
  */
 
 import type { Locale } from '@/lib/i18n/types';
-import type { HyperframesBrief, HyperframesChannelFormat } from './hyperframes-types';
+import type {
+  HyperframesAudience,
+  HyperframesBrief,
+  HyperframesChannelFormat,
+  HyperframesLanguageCode,
+  HyperframesObjective,
+  HyperframesTone,
+} from './hyperframes-types';
 
 /** Mappe une locale Qalem vers le code langue court attendu par Mishkāt. */
-export function localeToHyperframesLanguage(locale: Locale): string {
-  const map: Record<Locale, string> = {
+export function localeToHyperframesLanguage(locale: Locale): HyperframesLanguageCode {
+  const map: Record<Locale, HyperframesLanguageCode> = {
     'fr-FR': 'fr',
     'ar-MA': 'ar',
     'en-US': 'en',
-    'zh-CN': 'zh',
+    'zh-CN': 'en',
   };
   return map[locale];
 }
@@ -24,9 +31,9 @@ export interface BuildHyperframesBriefParams {
   stageName: string;
   sceneTitle: string;
   locale: Locale;
-  audience: string;
-  tone: string;
-  objective: string;
+  audience: HyperframesAudience;
+  tone: HyperframesTone;
+  objective: HyperframesObjective;
   durationS: number;
   channelFormat?: HyperframesChannelFormat[];
   notes?: string;
@@ -54,11 +61,14 @@ export function buildHyperframesBrief(params: BuildHyperframesBriefParams): Hype
     brand_id: brandId,
     intent,
     audience: params.audience,
-    channel_format: params.channelFormat ?? [{ channel: 'classroom', aspect: '16:9' }],
-    language: { primary: localeToHyperframesLanguage(params.locale) },
+    channel_format: params.channelFormat ?? [{ channel: 'presentation', aspect: '16:9' }],
+    language: {
+      primary: localeToHyperframesLanguage(params.locale),
+      rtl: params.locale === 'ar-MA',
+    },
     tone: params.tone,
     duration_s: durationS,
     objective: params.objective,
-    sound: { captions_burned: true },
+    sound: { music: true, voiceover: true, captions_burned: true },
   };
 }
