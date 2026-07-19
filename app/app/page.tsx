@@ -298,7 +298,6 @@ function HomePage() {
     // functions (not memoized) redefined every render, so listing them here
     // would either re-run this effect every render or require wrapping a
     // chain of helpers in useCallback — this effect must run exactly once.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
