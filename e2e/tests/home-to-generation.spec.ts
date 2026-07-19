@@ -45,7 +45,11 @@ test.describe('Home → Generation', () => {
     }, SETTINGS_STORAGE);
   });
 
-  test('home page loads with core UI elements and submits requirement', async ({ page }) => {
+  test('home page loads with core UI elements and submits a persistent job', async ({
+    page,
+    mockApi,
+  }) => {
+    await mockApi.mockClassroomGenerationJob();
     const home = new HomePage(page);
     await home.goto();
 
@@ -60,8 +64,8 @@ test.describe('Home → Generation', () => {
 
     // Submit → navigate to generation-preview
     await home.submit();
-    await page.waitForURL(/\/generation-preview/);
-    expect(page.url()).toContain('/generation-preview');
+    await expect(page).toHaveURL(/\/generation-status\?jobId=e2e-generation-job$/);
+    await expect(page.getByRole('heading', { name: 'Generating course' })).toBeVisible();
   });
 
   test('keeps body spacing stable when the settings dialog opens', async ({ page }) => {

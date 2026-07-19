@@ -77,6 +77,24 @@ export class MockApi {
     });
   }
 
+  /** Mock the persistent classroom-generation handoff used by the home page. */
+  async mockClassroomGenerationJob(jobId = 'e2e-generation-job') {
+    await this.page.route('**/api/generate-classroom', async (route) => {
+      await route.fulfill({
+        status: 202,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: true, jobId }),
+      });
+    });
+    await this.page.route(`**/api/generate-classroom/${jobId}`, async (route) => {
+      await route.fulfill({
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: true, status: 'running', progress: 42 }),
+      });
+    });
+  }
+
   /** Mock POST /api/video-capsules — creation succeeds, returns a queued capsule id */
   async mockVideoCapsuleCreate(id = 'e2e-capsule-1') {
     await this.page.route('**/api/video-capsules', (route) => {
