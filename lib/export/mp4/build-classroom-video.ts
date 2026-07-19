@@ -3,9 +3,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
-import sharp from 'sharp';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
-import { buildSceneCardSvg } from './scene-card';
 
 const execFileAsync = promisify(execFile);
 const FFMPEG_TIMEOUT_MS = 30 * 60 * 1000;
@@ -61,23 +59,20 @@ async function downloadSceneAudio(
 
 async function renderSceneSegment(params: {
   directory: string;
-  classroomName: string;
   stageId: string;
-  scene: { title: string | null; type: string; content: unknown; actions: unknown };
+  scene: { id: string; actions: unknown };
   sceneIndex: number;
-  sceneCount: number;
 }): Promise<string> {
   const imagePath = join(params.directory, `scene-${params.sceneIndex}.png`);
   const segmentPath = join(params.directory, `scene-${params.sceneIndex}.mp4`);
-  const svg = buildSceneCardSvg({
-    classroomName: params.classroomName,
-    sceneTitle: params.scene.title ?? params.classroomName,
-    sceneType: params.scene.type,
-    sceneNumber: params.sceneIndex + 1,
-    sceneCount: params.sceneCount,
-    content: params.scene.content,
-  });
-  await sharp(Buffer.from(svg)).png().toFile(imagePath);
+  const snapshotPath = `${params.stageId}/export/${params.scene.id}.png`;
+  const { data: snapshot, error: snapshotError } = await createServiceSupabaseClient().storage
+    .from('classroom-media')
+    .download(snapshotPath);
+  if (snapshotError || !snapshot) {
+    throw new Error(`Export MP4 refusé : rendu réel absent pour la scène ${params.sceneIndex + 1}`);
+  }
+  await writeFile(imagePath, Buffer.from(await snapshot.arrayBuffer()));
 
   const audioPaths = await downloadSceneAudio(
     params.stageId,
@@ -129,11 +124,9 @@ export async function buildClassroomVideo(stageId: string): Promise<{ video: Buf
     for (const [sceneIndex, scene] of scenes.entries()) {
       segments.push(await renderSceneSegment({
         directory,
-        classroomName: stage.name as string,
         stageId,
-        scene: scene as { title: string | null; type: string; content: unknown; actions: unknown },
+        scene: scene as { id: string; actions: unknown },
         sceneIndex,
-        sceneCount: scenes.length,
       }));
     }
 

@@ -27,6 +27,8 @@ export default function ClassroomDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   const generationStartedRef = useRef(false);
+  const serverBackedRef = useRef(false);
+  const serverSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { generateRemaining, retrySingleOutline, stop } = useSceneGenerator({
     onComplete: () => {
@@ -37,6 +39,7 @@ export default function ClassroomDetailPage() {
   const loadClassroom = useCallback(async () => {
     try {
       await loadFromStorage(classroomId);
+      serverBackedRef.current = useStageStore.getState().stage?.id === classroomId;
 
       // If IndexedDB had no data, try server-side storage (API-generated classrooms)
       if (!useStageStore.getState().stage) {
@@ -61,6 +64,7 @@ export default function ClassroomDetailPage() {
                 // mode across.
                 mode: 'playback',
               });
+              serverBackedRef.current = true;
               log.info('Loaded from server-side storage:', classroomId);
 
               // Hydrate server-generated agents into IndexedDB + registry.
@@ -126,6 +130,28 @@ export default function ClassroomDetailPage() {
       setLoading(false);
     }
   }, [classroomId, loadFromStorage]);
+
+  useEffect(() => {
+    const unsubscribe = useStageStore.subscribe((state, previous) => {
+      if (!serverBackedRef.current || (state.stage === previous.stage && state.scenes === previous.scenes)) return;
+      if (serverSaveTimerRef.current) clearTimeout(serverSaveTimerRef.current);
+      serverSaveTimerRef.current = setTimeout(() => {
+        const latest = useStageStore.getState();
+        if (!latest.stage) return;
+        void fetch('/api/classroom', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ stage: latest.stage, scenes: latest.scenes }),
+        }).then((response) => {
+          if (!response.ok) log.error('Server classroom save failed:', response.status);
+        });
+      }, 800);
+    });
+    return () => {
+      unsubscribe();
+      if (serverSaveTimerRef.current) clearTimeout(serverSaveTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     // Reset loading state on course switch to unmount Stage during transition,

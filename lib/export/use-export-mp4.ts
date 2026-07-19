@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useStageStore } from '@/lib/store/stage';
+import { slideToPng } from '@openmaic/renderer/snapshot';
 
 const POLL_INTERVAL_MS = 5000;
 const MAX_POLLS = 360;
@@ -33,13 +34,27 @@ export function useExportMp4() {
   const { t } = useI18n();
 
   const exportMp4 = useCallback(async () => {
-    const { stage } = useStageStore.getState();
+    const { stage, scenes } = useStageStore.getState();
     if (!stage?.id || activeRef.current) return;
 
     activeRef.current = true;
     setExporting(true);
     const toastId = toast.loading(t('export.videoRendering'));
     try {
+      for (const scene of scenes) {
+        if (scene.content?.type !== 'slide') continue;
+        const snapshot = await slideToPng(scene.content.canvas, {
+          width: 1920,
+          pixelRatio: 1,
+          format: 'blob',
+        });
+        if (!(snapshot instanceof Blob)) throw new Error(t('export.exportFailed'));
+        const upload = await fetch(
+          `/api/export-snapshots/${encodeURIComponent(stage.id)}/${encodeURIComponent(scene.id)}`,
+          { method: 'PUT', headers: { 'Content-Type': 'image/png' }, body: snapshot },
+        );
+        if (!upload.ok) throw new Error(t('export.exportFailed'));
+      }
       const createResponse = await fetch('/api/export-jobs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -67,6 +67,34 @@ export async function POST(request: NextRequest) {
   }
 }
 
+export async function PUT(request: NextRequest) {
+  try {
+    const rawBody = await request.json();
+    const stageId = typeof rawBody?.stage?.id === 'string' ? rawBody.stage.id : '';
+    if (!stageId || !isValidClassroomId(stageId) || !Array.isArray(rawBody?.scenes)) {
+      return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Classroom invalide');
+    }
+    const ownership = await readClassroomOwnership(stageId);
+    if (!ownership) return apiError(API_ERROR_CODES.INVALID_REQUEST, 404, 'Classroom introuvable');
+    const auth = await requireSuperAdminOrOrgAdmin(request, ownership.orgId);
+    if (auth.response) return auth.response;
+    await persistClassroom(
+      {
+        id: stageId,
+        stage: rawBody.stage as Stage,
+        scenes: rawBody.scenes as Scene[],
+        ownerId: ownership.ownerId,
+        orgId: ownership.orgId,
+      },
+      buildRequestOrigin(request),
+    );
+    return apiSuccess({ id: stageId });
+  } catch (error) {
+    log.error('Classroom update failed:', error);
+    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Échec de la sauvegarde de la classroom');
+  }
+}
+
 async function requireClassroomAdmin(request: NextRequest, id: string) {
   const ownership = await readClassroomOwnership(id);
   if (!ownership) return { error: apiError(API_ERROR_CODES.INVALID_REQUEST, 404, 'Classroom not found') };
