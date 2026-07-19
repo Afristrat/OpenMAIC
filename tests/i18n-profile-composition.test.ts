@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { translate } from './index';
+import { translate } from '@/lib/i18n';
 
 describe('profile translation composition', () => {
   it('keeps rich-profile keys when settings profile keys are merged', () => {
