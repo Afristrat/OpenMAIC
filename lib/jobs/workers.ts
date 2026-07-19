@@ -182,10 +182,14 @@ export function startAllWorkers(): void {
         }
 
         const POLL_INTERVAL_MS = 5000;
-        const MAX_ATTEMPTS = 90; // ~7.5 min ceiling for a single capsule render
+        const renderTimeoutMs = Math.max(
+          60_000,
+          Number(process.env.MISHKAT_RENDER_TIMEOUT_MS) || 30 * 60_000,
+        );
+        const maxAttempts = Math.ceil(renderTimeoutMs / POLL_INTERVAL_MS);
 
         let lastStatus: VideoCapsuleStatus = 'generating';
-        for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
           const production = await getHyperframesProduction(productionId);
 
           if (production.status !== lastStatus) {
