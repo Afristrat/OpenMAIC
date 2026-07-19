@@ -5,9 +5,9 @@ import { createSettingsStorage } from '../fixtures/test-data/settings';
 /**
  * #580 — "usable provider ⇒ a concrete model is always selected".
  *
- * State A: no usable provider (keyless ollama/lemonade no longer count until
- *          the user sets an explicit baseUrl) → generate button disabled, the
- *          toolbar shows the single "Set up model" affordance. NO
+ * State A: no local provider → persistent server-side generation remains
+ *          available, while the toolbar shows the single "Set up model"
+ *          affordance. NO
  *          modelNotConfigured toast, NO forced settings dialog.
  * State B: a server-configured provider → a concrete model is auto-resolved,
  *          the toolbar shows provider / model (never "Select Model"), and
@@ -40,7 +40,7 @@ function serverProvidersBody(providers: Record<string, { models?: string[] }>) {
 test.describe.configure({ mode: 'serial' });
 
 test.describe('#580 model-selection invariant', () => {
-  test('State A: no usable provider → disabled generate + single Set-up affordance, no toast', async ({
+  test('State A: no local provider → persistent generation + single Set-up affordance', async ({
     page,
   }) => {
     await page.route('**/api/server-providers', (route) =>
@@ -71,10 +71,10 @@ test.describe('#580 model-selection invariant', () => {
     // No model pill (its aria-label would contain " / ").
     await expect(page.locator('button[aria-label*=" / "]')).toHaveCount(0);
 
-    // Even with a requirement typed, generation stays disabled (gate is
-    // hasUsableProvider, not modelId) — and crucially NO toast / forced dialog.
+    // Model routing is server-side on the persistent path. A missing local
+    // provider must not block submission or force a settings dialog.
     await home.fillRequirement('Explain how photosynthesis works');
-    await expect(home.enterButton).toBeDisabled();
+    await expect(home.enterButton).toBeEnabled();
     await expect(page.locator('[data-sonner-toast]')).toHaveCount(0);
     await expect(page.getByRole('dialog')).toHaveCount(0);
 
