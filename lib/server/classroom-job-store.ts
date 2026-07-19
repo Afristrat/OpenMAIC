@@ -1,16 +1,10 @@
-import { promises as fs } from 'fs';
-import path from 'path';
 import type {
   ClassroomGenerationProgress,
   ClassroomGenerationStep,
   GenerateClassroomInput,
   GenerateClassroomResult,
 } from '@/lib/server/classroom-generation';
-import {
-  CLASSROOM_JOBS_DIR,
-  ensureClassroomJobsDir,
-  writeJsonFileAtomic,
-} from '@/lib/server/classroom-storage';
+import { createServiceSupabaseClient } from '@/lib/supabase/service';
 
 export type ClassroomGenerationJobStatus = 'queued' | 'running' | 'succeeded' | 'failed';
 
@@ -34,17 +28,11 @@ export interface ClassroomGenerationJob {
   };
   scenesGenerated: number;
   totalScenes?: number;
-  result?: {
-    classroomId: string;
-    url: string;
-    scenesCount: number;
-  };
+  result?: { classroomId: string; url: string; scenesCount: number };
   error?: string;
 }
 
-function jobFilePath(jobId: string) {
-  return path.join(CLASSROOM_JOBS_DIR, `${jobId}.json`);
-}
+const STALE_JOB_TIMEOUT_MS = 30 * 60 * 1000;
 
 function buildInputSummary(input: GenerateClassroomInput): ClassroomGenerationJob['inputSummary'] {
   return {
@@ -56,43 +44,22 @@ function buildInputSummary(input: GenerateClassroomInput): ClassroomGenerationJo
   };
 }
 
-/** Simple per-job mutex to serialize read-modify-write on the same job file. */
-const jobLocks = new Map<string, Promise<void>>();
-
-async function withJobLock<T>(jobId: string, fn: () => Promise<T>): Promise<T> {
-  const prev = jobLocks.get(jobId) ?? Promise.resolve();
-  let resolve: () => void;
-  const next = new Promise<void>((r) => {
-    resolve = r;
-  });
-  jobLocks.set(jobId, next);
-  try {
-    await prev;
-    return await fn();
-  } finally {
-    resolve!();
-    if (jobLocks.get(jobId) === next) jobLocks.delete(jobId);
-  }
-}
-
-/** Max age (ms) before a "running" job without an active runner is considered stale. */
-const STALE_JOB_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
-
 function markStaleIfNeeded(job: ClassroomGenerationJob): ClassroomGenerationJob {
-  if (job.status !== 'running') return job;
-  const updatedAt = new Date(job.updatedAt).getTime();
-  if (Date.now() - updatedAt > STALE_JOB_TIMEOUT_MS) {
-    return {
-      ...job,
-      status: 'failed',
-      step: 'failed',
-      message: 'Job appears stale (no progress update for 30 minutes)',
-      error: 'Stale job: process may have restarted during generation',
-      completedAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-  }
-  return job;
+  if (
+    job.status !== 'running' ||
+    Date.now() - new Date(job.updatedAt).getTime() <= STALE_JOB_TIMEOUT_MS
+  )
+    return job;
+  const now = new Date().toISOString();
+  return {
+    ...job,
+    status: 'failed',
+    step: 'failed',
+    message: 'La génération a été interrompue par un redémarrage du service.',
+    error: 'Stale job: process restarted during generation',
+    completedAt: now,
+    updatedAt: now,
+  };
 }
 
 export function isValidClassroomJobId(jobId: string): boolean {
@@ -118,70 +85,69 @@ export async function createClassroomGenerationJob(
     inputSummary: buildInputSummary(input),
     scenesGenerated: 0,
   };
-
-  await ensureClassroomJobsDir();
-  await writeJsonFileAtomic(jobFilePath(jobId), job);
+  const { error } = await createServiceSupabaseClient()
+    .from('classroom_generation_jobs')
+    .insert({
+      id: jobId,
+      owner_id: ownerId,
+      org_id: input.orgId,
+      status: job.status,
+      payload: job,
+    });
+  if (error) throw new Error(`Failed to persist generation job: ${error.message}`);
   return job;
 }
 
 export async function readClassroomGenerationJob(
   jobId: string,
 ): Promise<ClassroomGenerationJob | null> {
-  try {
-    const content = await fs.readFile(jobFilePath(jobId), 'utf-8');
-    const job = JSON.parse(content) as ClassroomGenerationJob;
-    return markStaleIfNeeded(job);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      return null;
-    }
-    throw error;
-  }
+  const { data, error } = await createServiceSupabaseClient()
+    .from('classroom_generation_jobs')
+    .select('payload')
+    .eq('id', jobId)
+    .maybeSingle();
+  if (error) throw new Error(`Failed to read generation job: ${error.message}`);
+  if (!data) return null;
+  const job = markStaleIfNeeded(data.payload as ClassroomGenerationJob);
+  if (
+    job.status === 'failed' &&
+    job.completedAt &&
+    job.updatedAt !== (data.payload as ClassroomGenerationJob).updatedAt
+  )
+    await persistJob(job);
+  return job;
+}
+
+async function persistJob(job: ClassroomGenerationJob): Promise<void> {
+  const { error } = await createServiceSupabaseClient()
+    .from('classroom_generation_jobs')
+    .update({ status: job.status, payload: job, updated_at: job.updatedAt })
+    .eq('id', job.id);
+  if (error) throw new Error(`Failed to update generation job: ${error.message}`);
 }
 
 export async function updateClassroomGenerationJob(
   jobId: string,
   patch: Partial<ClassroomGenerationJob>,
 ): Promise<ClassroomGenerationJob> {
-  return withJobLock(jobId, async () => {
-    const existing = await readClassroomGenerationJob(jobId);
-    if (!existing) {
-      throw new Error(`Classroom generation job not found: ${jobId}`);
-    }
-
-    const updated: ClassroomGenerationJob = {
-      ...existing,
-      ...patch,
-      updatedAt: new Date().toISOString(),
-    };
-
-    await writeJsonFileAtomic(jobFilePath(jobId), updated);
-    return updated;
-  });
+  const existing = await readClassroomGenerationJob(jobId);
+  if (!existing) throw new Error(`Classroom generation job not found: ${jobId}`);
+  const updated = { ...existing, ...patch, updatedAt: new Date().toISOString() };
+  await persistJob(updated);
+  return updated;
 }
 
 export async function markClassroomGenerationJobRunning(
   jobId: string,
 ): Promise<ClassroomGenerationJob> {
-  return withJobLock(jobId, async () => {
-    const existing = await readClassroomGenerationJob(jobId);
-    if (!existing) {
-      throw new Error(`Classroom generation job not found: ${jobId}`);
-    }
-
-    const updated: ClassroomGenerationJob = {
-      ...existing,
-      status: 'running',
-      startedAt: existing.startedAt || new Date().toISOString(),
-      message: 'Classroom generation started',
-      updatedAt: new Date().toISOString(),
-    };
-
-    await writeJsonFileAtomic(jobFilePath(jobId), updated);
-    return updated;
+  const existing = await readClassroomGenerationJob(jobId);
+  if (!existing) throw new Error(`Classroom generation job not found: ${jobId}`);
+  return updateClassroomGenerationJob(jobId, {
+    status: 'running',
+    startedAt: existing.startedAt || new Date().toISOString(),
+    message: 'Classroom generation started',
   });
 }
-
 export async function updateClassroomGenerationJobProgress(
   jobId: string,
   progress: ClassroomGenerationProgress,
@@ -195,7 +161,6 @@ export async function updateClassroomGenerationJobProgress(
     totalScenes: progress.totalScenes,
   });
 }
-
 export async function markClassroomGenerationJobSucceeded(
   jobId: string,
   result: GenerateClassroomResult,
@@ -207,14 +172,9 @@ export async function markClassroomGenerationJobSucceeded(
     message: 'Classroom generation completed',
     completedAt: new Date().toISOString(),
     scenesGenerated: result.scenesCount,
-    result: {
-      classroomId: result.id,
-      url: result.url,
-      scenesCount: result.scenesCount,
-    },
+    result: { classroomId: result.id, url: result.url, scenesCount: result.scenesCount },
   });
 }
-
 export async function markClassroomGenerationJobFailed(
   jobId: string,
   error: string,

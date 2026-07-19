@@ -1,0 +1,105 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const database = vi.hoisted(() => ({
+  rows: new Map<string, { status: string; payload: Record<string, unknown> }>(),
+}));
+
+vi.mock('@/lib/supabase/service', () => ({
+  createServiceSupabaseClient: () => ({
+    from: (table: string) => {
+      if (table !== 'classroom_generation_jobs') throw new Error(`Unexpected table: ${table}`);
+      return {
+        insert: async (row: {
+          id: string;
+          status: string;
+          payload: Record<string, unknown>;
+        }) => {
+          database.rows.set(row.id, { status: row.status, payload: structuredClone(row.payload) });
+          return { error: null };
+        },
+        select: () => ({
+          eq: (_column: string, id: string) => ({
+            maybeSingle: async () => ({
+              data: database.rows.has(id)
+                ? { payload: structuredClone(database.rows.get(id)!.payload) }
+                : null,
+              error: null,
+            }),
+          }),
+        }),
+        update: (patch: { status: string; payload: Record<string, unknown> }) => ({
+          eq: async (_column: string, id: string) => {
+            if (database.rows.has(id)) {
+              database.rows.set(id, {
+                status: patch.status,
+                payload: structuredClone(patch.payload),
+              });
+            }
+            return { error: null };
+          },
+        }),
+      };
+    },
+  }),
+}));
+
+import {
+  createClassroomGenerationJob,
+  markClassroomGenerationJobRunning,
+  readClassroomGenerationJob,
+  updateClassroomGenerationJobProgress,
+} from '@/lib/server/classroom-job-store';
+
+describe('persistent classroom generation jobs', () => {
+  beforeEach(() => {
+    database.rows.clear();
+    vi.useRealTimers();
+  });
+
+  it('persists creation and progress updates in Supabase', async () => {
+    await createClassroomGenerationJob(
+      'job-1',
+      { orgId: 'org-1', requirement: 'Build a practical LiteLLM course' },
+      'owner-1',
+    );
+    await markClassroomGenerationJobRunning('job-1');
+    await updateClassroomGenerationJobProgress('job-1', {
+      step: 'generating_scenes',
+      progress: 52,
+      message: 'Generating scene 4/8',
+      scenesGenerated: 3,
+      totalScenes: 8,
+    });
+
+    const job = await readClassroomGenerationJob('job-1');
+
+    expect(job).toMatchObject({
+      id: 'job-1',
+      ownerId: 'owner-1',
+      orgId: 'org-1',
+      status: 'running',
+      step: 'generating_scenes',
+      progress: 52,
+      scenesGenerated: 3,
+      totalScenes: 8,
+    });
+    expect(database.rows.get('job-1')?.status).toBe('running');
+  });
+
+  it('marks an abandoned running job as failed after thirty minutes', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-19T10:00:00.000Z'));
+    await createClassroomGenerationJob(
+      'job-stale',
+      { orgId: 'org-1', requirement: 'Persistent generation' },
+      'owner-1',
+    );
+    await markClassroomGenerationJobRunning('job-stale');
+
+    vi.setSystemTime(new Date('2026-07-19T10:31:00.000Z'));
+    const job = await readClassroomGenerationJob('job-stale');
+
+    expect(job).toMatchObject({ status: 'failed', step: 'failed' });
+    expect(database.rows.get('job-stale')?.status).toBe('failed');
+  });
+});
