@@ -168,6 +168,32 @@ describe('classroom scene generation retries', () => {
     );
   });
 
+  it('forwards the resolved language model and requirements to scene content generation', async () => {
+    const languageModel = { id: 'pbl-language-model' };
+    const thinkingConfig = { enabled: true, effort: 'high' };
+    mocks.resolveModel.mockResolvedValue({
+      model: languageModel,
+      modelInfo: {},
+      modelString: 'test:model',
+      providerId: 'test',
+      apiKey: '',
+      thinkingConfig,
+    });
+    mocks.generateSceneContent.mockResolvedValue(slideContent);
+
+    await generateWithProgress();
+
+    expect(mocks.generateSceneContent).toHaveBeenCalledWith(
+      outline,
+      expect.any(Function),
+      expect.objectContaining({
+        languageModel,
+        thinkingConfig,
+        userRequirements: expect.objectContaining({ requirement: 'Teach retry basics' }),
+      }),
+    );
+  });
+
   it('retries retryable action generation errors', async () => {
     mocks.generateSceneContent.mockResolvedValue(slideContent);
     mocks.generateSceneActions

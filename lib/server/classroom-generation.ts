@@ -456,6 +456,9 @@ export async function generateClassroom(
         generateSceneContent(safeOutline, sceneAiCall, {
           agents,
           languageDirective,
+          languageModel,
+          thinkingConfig: classroomThinking,
+          userRequirements: requirements,
           allowProceduralSkill: vocationalActive,
           skillEngineEnabled,
           activeSkillId: requirements.activeSkillId,
