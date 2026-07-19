@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   classroomMediaContentType,
+  isClassroomPublic,
   isValidClassroomId,
   readClassroomOwnership,
 } from '@/lib/server/classroom-storage';
@@ -38,8 +39,10 @@ export async function GET(
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  const auth = await requireSuperAdminOrOrgMember(req, ownership.orgId);
-  if (auth.response) return auth.response;
+  if (!(await isClassroomPublic(classroomId))) {
+    const auth = await requireSuperAdminOrOrgMember(req, ownership.orgId);
+    if (auth.response) return auth.response;
+  }
 
   const supabase = createServiceSupabaseClient();
   const { data: blob, error } = await supabase.storage

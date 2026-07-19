@@ -372,3 +372,17 @@ export async function readClassroomOwnership(
   log.info(`Ownership check for classroom ${id}: org ${data.org_id}`);
   return { ownerId: data.owner_id, orgId: data.org_id };
 }
+
+/** Whether a classroom has explicitly been published through the sharing registry. */
+export async function isClassroomPublic(id: string): Promise<boolean> {
+  const supabase = createServiceSupabaseClient();
+  const { data, error } = await supabase
+    .from('shared_classrooms')
+    .select('id')
+    .eq('stage_id', id)
+    .eq('visibility', 'public')
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(`Failed to read classroom visibility for ${id}: ${error.message}`);
+  return Boolean(data);
+}

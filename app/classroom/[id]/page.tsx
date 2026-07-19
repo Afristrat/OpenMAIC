@@ -72,6 +72,9 @@ export default function ClassroomDetailPage() {
                 log.info('Hydrated server-generated agents for stage:', stage.id);
               }
             }
+          } else {
+            const failure = (await res.json().catch(() => null)) as { error?: string } | null;
+            throw new Error(failure?.error || `Classroom API returned HTTP ${res.status}`);
           }
         } catch (fetchErr) {
           log.warn('Server-side storage fetch failed:', fetchErr);

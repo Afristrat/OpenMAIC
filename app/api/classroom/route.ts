@@ -10,6 +10,7 @@ import {
   deleteClassroom,
   readClassroom,
   readClassroomOwnership,
+  isClassroomPublic,
 } from '@/lib/server/classroom-storage';
 import { requireSuperAdminOrOrgAdmin, requireSuperAdminOrOrgMember } from '@/lib/api/auth';
 import { validateBody } from '@/lib/api/validate';
@@ -127,8 +128,10 @@ export async function GET(request: NextRequest) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 404, 'Classroom not found');
     }
 
-    const auth = await requireSuperAdminOrOrgMember(request, ownership.orgId);
-    if (auth.response) return auth.response;
+    if (!(await isClassroomPublic(id))) {
+      const auth = await requireSuperAdminOrOrgMember(request, ownership.orgId);
+      if (auth.response) return auth.response;
+    }
 
     const classroom = await readClassroom(id);
     if (!classroom) {
