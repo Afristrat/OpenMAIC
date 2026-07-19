@@ -39,6 +39,40 @@ async function mockPersistentClassrooms(
       body: JSON.stringify({ success: true, classrooms }),
     }),
   );
+  await page.route('**/api/classroom?id=*', (route) => {
+    const id = new URL(route.request().url()).searchParams.get('id');
+    const item = classrooms.find((classroom) => classroom.id === id);
+    if (!item) {
+      return route.fulfill({ status: 404, contentType: 'application/json', body: '{}' });
+    }
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        classroom: {
+          id,
+          stage: {
+            id,
+            name: item.name,
+            createdAt: item.createdAt,
+            updatedAt: item.updatedAt,
+          },
+          scenes: [
+            {
+              id: `${id}-scene`,
+              stageId: id,
+              type: 'slide',
+              title: 'Video preview',
+              order: 0,
+              content: { type: 'slide', canvas: item.thumbnail },
+            },
+          ],
+          createdAt: new Date(Number(item.createdAt)).toISOString(),
+        },
+      }),
+    });
+  });
 }
 
 test.describe('Home persistent video thumbnails', () => {
