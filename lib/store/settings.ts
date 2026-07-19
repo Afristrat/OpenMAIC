@@ -402,7 +402,7 @@ const getDefaultAudioConfig = () => ({
   ttsVoice: 'default',
   ttsSpeed: 1.0,
   asrProviderId: 'browser-native' as ASRProviderId,
-  asrLanguage: 'zh',
+  asrLanguage: 'fr-FR',
   ttsProvidersConfig: {
     // Built-in providers default enabled:true — they only ever surface once
     // configured (API key or server-managed), so "enabled" is a user opt-OUT,
@@ -1217,7 +1217,7 @@ export const useSettingsStore = create<SettingsState>()(
               asrProvidersConfig: rest as typeof state.asrProvidersConfig,
               ...(state.asrProviderId === id && {
                 asrProviderId: 'browser-native' as ASRProviderId,
-                asrLanguage: 'zh',
+                asrLanguage: 'fr-FR',
               }),
             };
           }),
@@ -1731,10 +1731,17 @@ export const useSettingsStore = create<SettingsState>()(
     },
     {
       name: 'settings-storage',
-      version: 4,
+      version: 5,
       // Migrate persisted state
       migrate: (persistedState: unknown, version: number) => {
         const state = persistedState as Partial<SettingsState>;
+
+        // v4 -> v5: remove the historical Chinese ASR default from existing
+        // browser storage. Qalem's primary locale is French; users can still
+        // explicitly select any supported recognition language afterwards.
+        if (version < 5 && (!state.asrLanguage || /^zh(?:-|$)/i.test(state.asrLanguage))) {
+          state.asrLanguage = 'fr-FR';
+        }
 
         // v0 → v1: clear hardcoded default model so user must actively select
         if (version === 0) {
@@ -1767,7 +1774,10 @@ export const useSettingsStore = create<SettingsState>()(
         // Add default audio config if missing
         if (!state.ttsProvidersConfig || !state.asrProvidersConfig) {
           const defaultAudioConfig = getDefaultAudioConfig();
-          Object.assign(state, defaultAudioConfig);
+          const mutableState = state as Record<string, unknown>;
+          for (const [key, value] of Object.entries(defaultAudioConfig)) {
+            if (mutableState[key] === undefined) mutableState[key] = value;
+          }
         }
         ensureBuiltInAudioProviders(state);
         ensureBuiltInWebSearchProviders(state);

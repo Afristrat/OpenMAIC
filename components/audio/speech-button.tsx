@@ -45,9 +45,18 @@ export function SpeechButton({
     onTranscriptionRef.current(text);
   }, []);
 
-  const handleError = useCallback((error: string) => {
-    toast.error(error);
-  }, []);
+  const handleError = useCallback(
+    (error: string) => {
+      const translatedErrors: Record<string, string> = {
+        'no-speech': t('roundtable.noSpeechDetected'),
+        'not-allowed': t('settings.microphoneAccessDenied'),
+        'audio-capture': t('settings.microphoneAccessFailed'),
+        'microphone-access-failed': t('settings.microphoneAccessFailed'),
+      };
+      toast.error(translatedErrors[error] ?? t('settings.microphoneAccessFailed'));
+    },
+    [t],
+  );
 
   const { isRecording, isProcessing, startRecording, stopRecording, cancelRecording } =
     useAudioRecorder({

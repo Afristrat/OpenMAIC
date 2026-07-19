@@ -10,7 +10,8 @@ export const generationZhCN = {
     delete: '删除',
   },
   upload: {
-    pdfSizeLimit: '支持最大50MB的PDF文件',
+    pdfSizeLimit: '支持最大 50 MB 的 PDF、PPTX、DOCX、TXT 和 MD 文件',
+    unsupportedDocumentType: '不支持此文件格式',
     generateFailed: '生成课堂失败，请重试',
     requirementPlaceholder:
       '输入你想学的任何内容，例如：\n「从零学 Python，30 分钟写出第一个程序」\n「用白板给我讲解傅里叶变换」\n「阿瓦隆桌游怎么玩」',
@@ -77,7 +78,8 @@ export const generationEnUS = {
     delete: 'Delete',
   },
   upload: {
-    pdfSizeLimit: 'Supports PDF files up to 50MB',
+    pdfSizeLimit: 'PDF, PPTX, DOCX, TXT and MD files up to 50 MB',
+    unsupportedDocumentType: 'Unsupported document format',
     generateFailed: 'Failed to generate classroom, please try again',
     requirementPlaceholder:
       'Tell me anything you want to learn, e.g.\n"Teach me Python from scratch in 30 minutes"\n"Explain Fourier Transform on the whiteboard"\n"How to play the board game Avalon"',
@@ -146,7 +148,8 @@ export const generationFrFR = {
     delete: 'Supprimer',
   },
   upload: {
-    pdfSizeLimit: 'PDF jusqu\u2019à 50 Mo acceptés',
+    pdfSizeLimit: 'PDF, PPTX, DOCX, TXT et MD jusqu\u2019à 50 Mo',
+    unsupportedDocumentType: 'Format de document non pris en charge',
     generateFailed: 'La création de la classe a échoué, veuillez réessayer',
     requirementPlaceholder:
       'Décrivez ce que vous voulez apprendre, par exemple :\n« Apprends-moi Python de zéro en 30 minutes »\n« Explique-moi la transformée de Fourier au tableau »\n« Comment jouer au jeu de société Avalon ? »',
@@ -215,7 +218,8 @@ export const generationArMA = {
     delete: 'حذف',
   },
   upload: {
-    pdfSizeLimit: 'ملفات PDF حتى 50 ميغابايت',
+    pdfSizeLimit: 'ملفات PDF وPPTX وDOCX وTXT وMD حتى 50 ميغابايت',
+    unsupportedDocumentType: 'تنسيق المستند غير مدعوم',
     generateFailed: 'تعذّر إنشاء الفصل، يرجى إعادة المحاولة',
     requirementPlaceholder:
       'صِف ما تودّ تعلّمه، مثلًا:\n"علّمني Python من الصفر في 30 دقيقة"\n"اشرح لي تحويل فورييه على السبورة"\n"كيف أتعلّم لعبة أفالون؟"',

@@ -38,8 +38,9 @@ import type { SettingsSection } from '@/lib/types/settings';
 import { MediaPopover } from '@/components/generation/media-popover';
 
 // ─── Constants ───────────────────────────────────────────────
-const MAX_PDF_SIZE_MB = 50;
-const MAX_PDF_SIZE_BYTES = MAX_PDF_SIZE_MB * 1024 * 1024;
+const MAX_DOCUMENT_SIZE_MB = 50;
+const MAX_DOCUMENT_SIZE_BYTES = MAX_DOCUMENT_SIZE_MB * 1024 * 1024;
+const SUPPORTED_DOCUMENT_EXTENSIONS = new Set(['pdf', 'pptx', 'docx', 'txt', 'md']);
 
 // ─── Types ───────────────────────────────────────────────────
 export interface GenerationToolbarProps {
@@ -120,10 +121,14 @@ export function GenerationToolbar({
   const currentThinkingConfig =
     thinkingConfigs[getThinkingConfigKey(currentProviderId, currentModelId)];
 
-  // PDF handler
+  // Source-document handler
   const handleFileSelect = (file: File) => {
-    if (file.type !== 'application/pdf') return;
-    if (file.size > MAX_PDF_SIZE_BYTES) {
+    const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+    if (!SUPPORTED_DOCUMENT_EXTENSIONS.has(extension)) {
+      onPdfError(t('upload.unsupportedDocumentType'));
+      return;
+    }
+    if (file.size > MAX_DOCUMENT_SIZE_BYTES) {
       onPdfError(t('upload.fileTooLarge'));
       return;
     }
@@ -247,7 +252,7 @@ export function GenerationToolbar({
                 type="file"
                 ref={fileInputRef}
                 className="hidden"
-                accept=".pdf"
+                accept=".pdf,.pptx,.docx,.txt,.md"
                 onChange={(e) => {
                   const f = e.target.files?.[0];
                   if (f) handleFileSelect(f);

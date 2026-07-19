@@ -399,8 +399,14 @@ function HomePage() {
       let pdfContent: { text: string; images: string[] } | undefined;
       if (form.pdfFile) {
         const fd = new FormData();
-        fd.append('pdf', form.pdfFile);
-        const parsed = await (await fetch('/api/parse-pdf', { method: 'POST', body: fd })).json();
+        const isPdf = form.pdfFile.name.toLowerCase().endsWith('.pdf');
+        fd.append(isPdf ? 'pdf' : 'document', form.pdfFile);
+        const parsed = await (
+          await fetch(isPdf ? '/api/parse-pdf' : '/api/parse-document', {
+            method: 'POST',
+            body: fd,
+          })
+        ).json();
         if (!parsed.success || !parsed.data?.text) throw new Error(t('generation.pdfParseFailed'));
         pdfContent = { text: parsed.data.text, images: [] };
       }
@@ -716,6 +722,7 @@ function HomePage() {
               {/* Voice input */}
               <SpeechButton
                 size="md"
+                continuous
                 onTranscription={(text) => {
                   setForm((prev) => {
                     const next = prev.requirement + (prev.requirement ? ' ' : '') + text;
