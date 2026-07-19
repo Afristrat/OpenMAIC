@@ -4,6 +4,7 @@ import type { NextRequest } from 'next/server';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 import type { Scene, Stage } from '@/lib/types/stage';
+import type { Slide } from '@openmaic/dsl';
 
 const log = createLogger('ClassroomStorage');
 
@@ -54,6 +55,7 @@ export interface ClassroomListItem {
   updatedAt: number;
   interactiveMode?: boolean;
   taskEngineMode?: boolean;
+  thumbnail?: Slide;
 }
 
 export function isValidClassroomId(id: string): boolean {
@@ -265,6 +267,27 @@ export async function listClassrooms(orgId: string): Promise<ClassroomListItem[]
     .order('created_at', { ascending: false });
   if (error) throw new Error(`Failed to list classrooms for org ${orgId}: ${error.message}`);
 
+  const stageIds = (data ?? []).map((row) => row.id);
+  const firstSlides = new Map<string, Slide>();
+  if (stageIds.length > 0) {
+    const { data: sceneRows, error: scenesError } = await supabase
+      .from('scenes')
+      .select('stage_id, content, order')
+      .in('stage_id', stageIds)
+      .eq('type', 'slide')
+      .order('order', { ascending: true });
+    if (scenesError) {
+      throw new Error(`Failed to list classroom thumbnails for org ${orgId}: ${scenesError.message}`);
+    }
+    for (const scene of sceneRows ?? []) {
+      if (firstSlides.has(scene.stage_id)) continue;
+      const content = scene.content as { type?: string; canvas?: Slide } | null;
+      if (content?.type === 'slide' && content.canvas) {
+        firstSlides.set(scene.stage_id, content.canvas);
+      }
+    }
+  }
+
   return (data ?? []).map((row) => {
     const extra = (row.extra ?? {}) as StageExtra;
     const scenes = row.scenes as Array<{ count: number }> | null;
@@ -278,6 +301,7 @@ export async function listClassrooms(orgId: string): Promise<ClassroomListItem[]
       updatedAt: extra.updatedAt ?? createdAt,
       interactiveMode: extra.interactiveMode,
       taskEngineMode: extra.taskEngineMode,
+      thumbnail: firstSlides.get(row.id),
     };
   });
 }

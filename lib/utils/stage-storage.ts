@@ -31,6 +31,7 @@ export interface StageListItem {
   updatedAt: number;
   interactiveMode?: boolean;
   taskEngineMode?: boolean;
+  thumbnail?: ThumbnailSlide;
 }
 
 /**

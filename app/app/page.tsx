@@ -251,7 +251,13 @@ function HomePage() {
       if (!response.ok) throw new Error('Failed to load persistent classrooms');
       const { classrooms: list } = await response.json();
       setClassrooms(list);
-      replaceThumbnails({});
+      replaceThumbnails(
+        Object.fromEntries(
+          (list as StageListItem[])
+            .filter((classroom) => classroom.thumbnail)
+            .map((classroom) => [classroom.id, classroom.thumbnail as Slide]),
+        ),
+      );
     } catch (err) {
       log.error('Failed to load classrooms:', err);
     }
