@@ -391,12 +391,15 @@ pdf:
     it('uses standard OpenAI env vars for OpenAI image generation fallback', async () => {
       vi.stubEnv('OPENAI_API_KEY', 'sk-openai');
       vi.stubEnv('OPENAI_BASE_URL', 'https://proxy.example.com/v1');
+      vi.stubEnv('IMAGE_OPENAI_MODELS', 'flux-schnell, z-image-turbo');
       const { getServerImageProviders, resolveImageApiKey, resolveImageBaseUrl } =
         await import('@/lib/server/provider-config');
 
       const providers = getServerImageProviders();
       // No base URL exposed; resolution still works server-side.
-      expect(providers['openai-image']).toEqual({});
+      expect(providers['openai-image']).toEqual({
+        models: ['flux-schnell', 'z-image-turbo'],
+      });
       expect(resolveImageApiKey('openai-image')).toBe('sk-openai');
       expect(resolveImageBaseUrl('openai-image')).toBe('https://proxy.example.com/v1');
     });

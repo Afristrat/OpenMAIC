@@ -281,11 +281,15 @@ function applyOpenAIImageFallback(
   if (!apiKey) return imageConfig;
 
   const yamlOpenAIImage = yamlImageSection?.[OPENAI_IMAGE_PROVIDER_ID];
+  const envModels = process.env.IMAGE_OPENAI_MODELS
+    ?.split(',')
+    .map((model) => model.trim())
+    .filter(Boolean);
   imageConfig[OPENAI_IMAGE_PROVIDER_ID] = {
     apiKey,
     baseUrl:
       yamlOpenAIImage?.baseUrl || process.env.IMAGE_OPENAI_BASE_URL || process.env.OPENAI_BASE_URL,
-    models: yamlOpenAIImage?.models,
+    models: envModels?.length ? envModels : yamlOpenAIImage?.models,
     proxy: yamlOpenAIImage?.proxy,
   };
   return imageConfig;
