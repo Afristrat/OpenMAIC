@@ -39,6 +39,10 @@ vi.mock('@/lib/server/classroom-storage', () => ({
   persistClassroom: mocks.persistClassroom,
 }));
 
+vi.mock('@/lib/flags', () => ({
+  isFeatureEnabled: vi.fn().mockResolvedValue(false),
+}));
+
 vi.mock('@/lib/logger', () => ({
   createLogger: () => ({
     info: vi.fn(),

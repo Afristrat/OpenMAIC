@@ -15,6 +15,10 @@ vi.mock('@/lib/server/resolve-model', () => ({
   resolveModelFromRequest: resolveModelFromRequestMock,
 }));
 
+vi.mock('@/lib/flags', () => ({
+  isFeatureEnabled: vi.fn().mockResolvedValue(false),
+}));
+
 describe('scene-content vocational gate', () => {
   beforeEach(() => {
     originalVocationalFlag = process.env[VOCATIONAL_FLAG];

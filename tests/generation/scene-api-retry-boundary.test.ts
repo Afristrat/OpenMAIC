@@ -24,6 +24,10 @@ vi.mock('@/lib/config/feature-flags', () => ({
   resolveVocationalActive: mocks.resolveVocationalActive,
 }));
 
+vi.mock('@/lib/flags', () => ({
+  isFeatureEnabled: vi.fn().mockResolvedValue(false),
+}));
+
 vi.mock('@/lib/generation/generation-pipeline', () => ({
   applyOutlineFallbacks: mocks.applyOutlineFallbacks,
   generateSceneContent: mocks.generateSceneContent,
