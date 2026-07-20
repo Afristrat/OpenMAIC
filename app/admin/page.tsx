@@ -16,10 +16,6 @@ import {
 import {
   Box,
   Trash2,
-  FileText,
-  Image as ImageIcon,
-  Film,
-  Search,
   Volume2,
   Mic,
   Shield,

@@ -132,11 +132,9 @@ export default function LibraryPage() {
     setIsLoading(false);
   }, [orgId, user]);
 
-  /* eslint-disable react-hooks/set-state-in-effect -- Async data loading on mount */
   useEffect(() => {
     fetchLibrary();
   }, [fetchLibrary]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   const filtered = useMemo(() => {
     return classrooms.filter((c) => {
