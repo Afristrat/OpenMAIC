@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
-const testVideoConnectivity = vi.fn();
+const { testVideoConnectivity } = vi.hoisted(() => ({ testVideoConnectivity: vi.fn() }));
 
 vi.mock('@/lib/media/video-providers', async (importOriginal) => {
   const original = await importOriginal<typeof import('@/lib/media/video-providers')>();
