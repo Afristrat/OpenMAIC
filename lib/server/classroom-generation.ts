@@ -39,7 +39,7 @@ import type { Scene, Stage } from '@/lib/types/stage';
 import { AGENT_COLOR_PALETTE, AGENT_DEFAULT_AVATARS } from '@/lib/constants/agent-defaults';
 import { isFeatureEnabled } from '@/lib/flags';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
-import { teachingProfileFromSettings } from '@/lib/org/teaching-profile';
+import { DEFAULT_TEACHING_PROFILE, teachingProfileFromSettings } from '@/lib/org/teaching-profile';
 
 const log = createLogger('Classroom');
 
@@ -181,12 +181,17 @@ export async function generateClassroom(
   },
 ): Promise<GenerateClassroomResult> {
   const { requirement, pdfContent } = input;
-  const { data: organization } = await createServiceSupabaseClient()
-    .from('organizations')
-    .select('settings')
-    .eq('id', input.orgId)
-    .single();
-  const teachingProfile = teachingProfileFromSettings(organization?.settings);
+  let teachingProfile = DEFAULT_TEACHING_PROFILE;
+  try {
+    const { data: organization } = await createServiceSupabaseClient()
+      .from('organizations')
+      .select('settings')
+      .eq('id', input.orgId)
+      .single();
+    teachingProfile = teachingProfileFromSettings(organization?.settings);
+  } catch (error) {
+    log.warn('Tenant teaching profile unavailable; using the coherent default profile:', error);
+  }
 
   await options.onProgress?.({
     step: 'initializing',
