@@ -227,7 +227,11 @@ export function replaceMediaPlaceholders(scenes: Scene[], mediaMap: Record<strin
 // TTS generation
 // ---------------------------------------------------------------------------
 
-export async function generateTTSForClassroom(scenes: Scene[], classroomId: string): Promise<void> {
+export async function generateTTSForClassroom(
+  scenes: Scene[],
+  classroomId: string,
+  preferredVoice?: { providerId: string; voiceId: string },
+): Promise<void> {
   // Resolve TTS provider (exclude browser-native-tts and operator force-disabled
   // providers — server precedence, #665).
   const ttsProviderIds = Object.entries(getServerTTSProviders())
@@ -242,11 +246,14 @@ export async function generateTTSForClassroom(scenes: Scene[], classroomId: stri
   // batch pipeline does not receive. Prefer the first server provider that
   // can synthesize autonomously instead of selecting VoxCPM and abandoning
   // the whole classroom while another configured provider is available.
-  const providerId = ttsProviderIds.find(
+  const preferredProvider = preferredVoice && ttsProviderIds.includes(preferredVoice.providerId)
+    ? preferredVoice.providerId
+    : undefined;
+  const providerId = (preferredProvider ?? ttsProviderIds.find(
     (id) =>
       id !== VOXCPM_TTS_PROVIDER_ID ||
       DEFAULT_TTS_VOICES[id as keyof typeof DEFAULT_TTS_VOICES] !== VOXCPM_AUTO_VOICE_ID,
-  ) as TTSProviderId | undefined;
+  )) as TTSProviderId | undefined;
   if (!providerId) {
     log.warn('No server TTS provider supports context-free classroom generation');
     return;
@@ -258,7 +265,9 @@ export async function generateTTSForClassroom(scenes: Scene[], classroomId: stri
     return;
   }
   const ttsBaseUrl = resolveTTSBaseUrl(providerId) || ttsProvider?.defaultBaseUrl;
-  const voice = DEFAULT_TTS_VOICES[providerId as keyof typeof DEFAULT_TTS_VOICES] || 'default';
+  const voice = preferredProvider === providerId && preferredVoice?.voiceId
+    ? preferredVoice.voiceId
+    : DEFAULT_TTS_VOICES[providerId as keyof typeof DEFAULT_TTS_VOICES] || 'default';
   const format = ttsProvider?.supportedFormats?.[0] || 'mp3';
   for (const scene of scenes) {
     if (!scene.actions) continue;

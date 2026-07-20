@@ -9,6 +9,8 @@ import {
   readClassroom,
   readClassroomOwnership,
 } from '@/lib/server/classroom-storage';
+import { createServiceSupabaseClient } from '@/lib/supabase/service';
+import { teachingProfileFromSettings } from '@/lib/org/teaching-profile';
 
 export async function POST(
   request: NextRequest,
@@ -32,7 +34,16 @@ export async function POST(
     return apiError('INVALID_REQUEST', 404, 'Prise de parole introuvable');
   }
   const generatedScene = { ...scene, actions: [{ ...action, text: body.text.trim(), audioId: undefined, audioUrl: undefined }] };
-  await generateTTSForClassroom([generatedScene], classroomId);
+  const { data: organization } = await createServiceSupabaseClient()
+    .from('organizations')
+    .select('settings')
+    .eq('id', ownership.orgId)
+    .single();
+  await generateTTSForClassroom(
+    [generatedScene],
+    classroomId,
+    teachingProfileFromSettings(organization?.settings),
+  );
   if (!generatedScene.actions?.every((item) => item.type !== 'speech' || item.audioUrl)) {
     return apiError('INTERNAL_ERROR', 502, 'La synthèse vocale a échoué');
   }

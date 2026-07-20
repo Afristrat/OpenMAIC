@@ -31,6 +31,8 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import type { Organization, OrgMemberRole, OrgSector } from '@/lib/supabase/types';
+import { TTS_PROVIDERS } from '@/lib/audio/constants';
+import { DEFAULT_TEACHING_PROFILE, teachingProfileFromSettings } from '@/lib/org/teaching-profile';
 
 interface MemberWithProfile {
   id: string;
@@ -51,6 +53,7 @@ interface OrgWithRole extends Organization {
 const SECTORS: OrgSector[] = ['healthcare', 'legal', 'tech', 'finance', 'education', 'industry'];
 const ROLES: OrgMemberRole[] = ['admin', 'manager', 'formateur', 'apprenant'];
 const LOCALES = ['fr-FR', 'ar-MA', 'en-US', 'zh-CN'];
+const TEACHER_AVATARS = ['/avatars/teacher-2.png', '/avatars/teacher.png', '/avatars/instructor.png'];
 
 const ROLE_ICONS: Record<OrgMemberRole, typeof Crown> = {
   admin: Crown,
@@ -80,6 +83,11 @@ export default function OrgAdminPage() {
   const [editName, setEditName] = useState('');
   const [editSector, setEditSector] = useState<string>('');
   const [editLocale, setEditLocale] = useState('fr-FR');
+  const [teacherName, setTeacherName] = useState(DEFAULT_TEACHING_PROFILE.name);
+  const [teacherAvatar, setTeacherAvatar] = useState(DEFAULT_TEACHING_PROFILE.avatar);
+  const [teacherProviderId, setTeacherProviderId] = useState(DEFAULT_TEACHING_PROFILE.providerId);
+  const [teacherVoiceId, setTeacherVoiceId] = useState(DEFAULT_TEACHING_PROFILE.voiceId);
+  const [managedTtsIds, setManagedTtsIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
   // Invite form
@@ -111,10 +119,26 @@ export default function OrgAdminPage() {
       setEditName(orgData.name);
       setEditSector(orgData.sector ?? '');
       setEditLocale(orgData.default_locale);
+      const profile = teachingProfileFromSettings(orgData.settings);
+      setTeacherName(profile.name);
+      setTeacherAvatar(profile.avatar);
+      setTeacherProviderId(profile.providerId);
+      setTeacherVoiceId(profile.voiceId);
     } catch {
       router.push('/app');
     }
   }, [orgId, router]);
+
+  useEffect(() => {
+    void fetch('/api/server-providers')
+      .then((response) => response.json())
+      .then((payload) => {
+        const ids = Object.entries(payload.tts ?? {})
+          .filter(([, value]) => !(value as { disabled?: boolean }).disabled)
+          .map(([id]) => id);
+        setManagedTtsIds(ids);
+      });
+  }, []);
 
   const fetchMembers = useCallback(async () => {
     try {
@@ -160,6 +184,15 @@ export default function OrgAdminPage() {
           name: editName,
           sector: editSector || null,
           default_locale: editLocale,
+          settings: {
+            ...(org?.settings ?? {}),
+            teachingProfile: {
+              name: teacherName.trim(),
+              avatar: teacherAvatar,
+              providerId: teacherProviderId,
+              voiceId: teacherVoiceId,
+            },
+          },
         }),
       });
       if (res.ok) {
@@ -348,6 +381,59 @@ export default function OrgAdminPage() {
             <div>
               <label className="mb-1 block text-sm font-medium">{t('org.name')}</label>
               <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
+            </div>
+            <div className="sm:col-span-2 border-t pt-4">
+              <p className="mb-3 text-sm font-semibold">{t('org.teacherProfile')}</p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-sm font-medium">{t('org.teacherName')}</label>
+                  <Input value={teacherName} onChange={(event) => setTeacherName(event.target.value)} />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium">{t('org.teacherAvatar')}</label>
+                  <div className="flex gap-2">
+                    {TEACHER_AVATARS.map((avatar) => (
+                      <button
+                        key={avatar}
+                        type="button"
+                        onClick={() => setTeacherAvatar(avatar)}
+                        className={`size-12 overflow-hidden rounded-full border-2 ${teacherAvatar === avatar ? 'border-primary' : 'border-transparent'}`}
+                      >
+                        <img src={avatar} alt="" className="size-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium">{t('org.teacherVoiceProvider')}</label>
+                  <Select
+                    value={teacherProviderId}
+                    onValueChange={(providerId) => {
+                      setTeacherProviderId(providerId);
+                      setTeacherVoiceId(TTS_PROVIDERS[providerId as keyof typeof TTS_PROVIDERS]?.voices[0]?.id ?? 'default');
+                    }}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {managedTtsIds.map((id) => (
+                        <SelectItem key={id} value={id}>{TTS_PROVIDERS[id as keyof typeof TTS_PROVIDERS]?.name ?? id}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium">{t('org.teacherVoice')}</label>
+                  <Select value={teacherVoiceId} onValueChange={setTeacherVoiceId}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {(TTS_PROVIDERS[teacherProviderId as keyof typeof TTS_PROVIDERS]?.voices ?? []).map((voice) => (
+                        <SelectItem key={voice.id} value={voice.id}>{voice.name} · {voice.gender}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">{t('org.teacherProfileHint')}</p>
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium">{t('org.sector')}</label>

@@ -38,6 +38,8 @@ import type { UserRequirements, PdfImage, ImageMapping } from '@/lib/types/gener
 import type { Scene, Stage } from '@/lib/types/stage';
 import { AGENT_COLOR_PALETTE, AGENT_DEFAULT_AVATARS } from '@/lib/constants/agent-defaults';
 import { isFeatureEnabled } from '@/lib/flags';
+import { createServiceSupabaseClient } from '@/lib/supabase/service';
+import { teachingProfileFromSettings } from '@/lib/org/teaching-profile';
 
 const log = createLogger('Classroom');
 
@@ -179,6 +181,12 @@ export async function generateClassroom(
   },
 ): Promise<GenerateClassroomResult> {
   const { requirement, pdfContent } = input;
+  const { data: organization } = await createServiceSupabaseClient()
+    .from('organizations')
+    .select('settings')
+    .eq('id', input.orgId)
+    .single();
+  const teachingProfile = teachingProfileFromSettings(organization?.settings);
 
   await options.onProgress?.({
     step: 'initializing',
@@ -406,16 +414,37 @@ export async function generateClassroom(
       ? {
           generatedAgentConfigs: agents.map((a, i) => ({
             id: a.id,
-            name: a.name,
+            name: a.role === 'teacher' ? teachingProfile.name : a.name,
             role: a.role,
             persona: a.persona || '',
-            avatar: AGENT_DEFAULT_AVATARS[i % AGENT_DEFAULT_AVATARS.length],
+            avatar:
+              a.role === 'teacher'
+                ? teachingProfile.avatar
+                : AGENT_DEFAULT_AVATARS[i % AGENT_DEFAULT_AVATARS.length],
             color: AGENT_COLOR_PALETTE[i % AGENT_COLOR_PALETTE.length],
             priority: a.role === 'teacher' ? 10 : a.role === 'assistant' ? 7 : 5,
+            ...(a.role === 'teacher'
+              ? { voiceConfig: { providerId: teachingProfile.providerId, voiceId: teachingProfile.voiceId } }
+              : {}),
           })),
         }
       : {
           agentIds: agents.map((a) => a.id),
+          generatedAgentConfigs: [
+            {
+              id: 'default-1',
+              name: teachingProfile.name,
+              role: 'teacher',
+              persona: agents.find((agent) => agent.role === 'teacher')?.persona || '',
+              avatar: teachingProfile.avatar,
+              color: AGENT_COLOR_PALETTE[0],
+              priority: 10,
+              voiceConfig: {
+                providerId: teachingProfile.providerId,
+                voiceId: teachingProfile.voiceId,
+              },
+            },
+          ],
         }),
   };
 
@@ -572,7 +601,7 @@ export async function generateClassroom(
     });
 
     try {
-      await generateTTSForClassroom(scenes, stageId);
+      await generateTTSForClassroom(scenes, stageId, teachingProfile);
       log.info('TTS generation complete');
     } catch (err) {
       log.warn('TTS generation phase failed, continuing:', err);

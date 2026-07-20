@@ -48,6 +48,7 @@ export interface GeneratedAgentConfig {
   avatar: string;
   color: string;
   priority: number;
+  voiceConfig?: { providerId: string; modelId?: string; voiceId: string };
 }
 
 /**
