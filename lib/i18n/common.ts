@@ -1636,7 +1636,7 @@ export const commonFrFR = {
     lastActive: 'Dernière activité',
     noData: 'Aucune donnée disponible',
     loadFailed: 'Impossible de charger le rapport',
-    exportFailed: "Échec de l’exportation du rapport",
+    exportFailed: 'Échec de l’exportation du rapport',
   },
   auth: {
     login: 'Connexion',
@@ -2563,7 +2563,8 @@ export const commonArMA = {
   pricing: {
     title: 'الأسعار',
     subtitle: 'من الاستكشاف مفتوح المصدر إلى النشر المؤسسي المحكوم',
-    billingBasis: 'تُحدَّد العروض التجارية حسب عدد المنشئين والمتعلمين النشطين وحجم توليد الذكاء الاصطناعي الفعلي.',
+    billingBasis:
+      'تُحدَّد العروض التجارية حسب عدد المنشئين والمتعلمين النشطين وحجم توليد الذكاء الاصطناعي الفعلي.',
     legalPrefix: 'بالاشتراك، أنتم توافقون على',
     terms: 'شروط الاستخدام',
     and: 'وعلى',

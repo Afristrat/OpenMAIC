@@ -84,7 +84,6 @@ export function PricingSection(): React.ReactElement {
             {t('landing.pricing.subtitle')}
           </p>
         </div>
-
         {/* Pricing Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-32">
           {plans.map((plan) => (

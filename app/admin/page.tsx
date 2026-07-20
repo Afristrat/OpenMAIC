@@ -84,9 +84,7 @@ type AdminSection =
 const PLATFORM_ADMIN_SECTIONS = ['overview', 'mcp', 'lti', 'pedagogy', 'xapi'] as const;
 
 function isPlatformAdminSection(value: string | null): value is AdminSection {
-  return PLATFORM_ADMIN_SECTIONS.includes(
-    value as (typeof PLATFORM_ADMIN_SECTIONS)[number],
-  );
+  return PLATFORM_ADMIN_SECTIONS.includes(value as (typeof PLATFORM_ADMIN_SECTIONS)[number]);
 }
 
 // ─── Provider List Column (reusable) ───
@@ -1022,12 +1020,14 @@ function AdminPageContent(): React.ReactElement {
           <div className="flex-1 overflow-y-auto p-5">
             {activeSection === 'overview' && (
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {([
-                  ['mcp', Server, 'admin.mcp.title'],
-                  ['lti', KeyRound, 'admin.lti.title'],
-                  ['pedagogy', Brain, 'admin.pedagogy.title'],
-                  ['xapi', Activity, 'admin.xapi.title'],
-                ] as const).map(([section, Icon, label]) => (
+                {(
+                  [
+                    ['mcp', Server, 'admin.mcp.title'],
+                    ['lti', KeyRound, 'admin.lti.title'],
+                    ['pedagogy', Brain, 'admin.pedagogy.title'],
+                    ['xapi', Activity, 'admin.xapi.title'],
+                  ] as const
+                ).map(([section, Icon, label]) => (
                   <button
                     key={section}
                     type="button"
