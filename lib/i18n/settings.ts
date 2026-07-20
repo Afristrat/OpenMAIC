@@ -543,7 +543,7 @@ export const settingsZhCN = {
     // Server provider configuration
     serverConfigured: '服务端',
     serverConfiguredNotice:
-      '管理员已在服务端配置了此提供方的 API Key，可直接使用。也可输入自己的 Key 覆盖。',
+      '此提供方由服务端托管，无法在此修改。如需使用自己的凭据，请新增一个提供方。',
     optionalOverride: '可选，留空则使用服务端配置',
     // Access code
     setupNeeded: '请先完成配置',
@@ -1170,7 +1170,7 @@ export const settingsEnUS = {
     // Server provider configuration
     serverConfigured: 'Server',
     serverConfiguredNotice:
-      'Admin has configured an API key for this provider on the server. You can use it directly or enter your own key to override.',
+      "This provider is managed by the server and can't be edited here. To use your own credentials, add a separate provider.",
     optionalOverride: 'Optional — leave empty to use server config',
     // Access code
     setupNeeded: 'Setup required',
@@ -1804,7 +1804,7 @@ export const settingsFrFR = {
     // Server provider configuration
     serverConfigured: 'Serveur',
     serverConfiguredNotice:
-      "L'administrateur a configuré une clé API pour ce fournisseur côté serveur. Vous pouvez l'utiliser telle quelle ou saisir votre propre clé.",
+      'Ce fournisseur est géré côté serveur et ne peut pas être modifié ici. Pour utiliser vos propres identifiants, ajoutez un fournisseur distinct.',
     optionalOverride: 'Facultatif — laisser vide pour utiliser la configuration serveur',
     // Access code
     setupNeeded: 'Configuration nécessaire',
@@ -2426,7 +2426,7 @@ export const settingsArMA = {
     // Server provider configuration
     serverConfigured: 'الخادم',
     serverConfiguredNotice:
-      'أعدّ المسؤول مفتاح API لهذا المزوّد على الخادم. يمكنك استخدامه مباشرةً أو إدخال مفتاحك الخاص بديلًا.',
+      'تتم إدارة هذا المزوّد من قبل الخادم ولا يمكن تعديله هنا. لاستخدام بيانات الاعتماد الخاصة بك، أضِف مزوّدًا منفصلاً.',
     optionalOverride: 'اختياري — اتركه فارغًا لاستخدام إعداد الخادم',
     // Access code
     setupNeeded: 'الإعداد مطلوب',
