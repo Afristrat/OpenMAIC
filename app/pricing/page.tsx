@@ -50,7 +50,7 @@ const cards: PricingCard[] = [
       { labelKey: 'pricing.pro.f6' },
     ],
     ctaKey: 'pricing.pro.cta',
-    href: '/auth?plan=pro',
+    href: 'mailto:contact@qalem.ma?subject=Acc%C3%A8s%20Studio%20Qalem',
     highlighted: true,
     badgeKey: 'pricing.pro.badge',
   },
@@ -162,7 +162,11 @@ export default function PricingPage(): React.ReactElement {
                     href={card.href}
                     className={cn(
                       'mt-8 block w-full rounded-lg py-3 text-center text-sm font-semibold transition-colors',
-                      'bg-white/10 text-white hover:bg-white/20 ring-1 ring-white/20',
+                      card.dark
+                        ? 'bg-white/10 text-white hover:bg-white/20 ring-1 ring-white/20'
+                        : card.highlighted
+                          ? 'bg-purple-600 text-white hover:bg-purple-700'
+                          : 'bg-primary text-primary-foreground hover:bg-primary/90',
                     )}
                   >
                     {t(card.ctaKey)}
@@ -185,15 +189,19 @@ export default function PricingPage(): React.ReactElement {
           })}
         </div>
 
+        <p className="mx-auto mt-10 max-w-3xl text-center text-sm text-muted-foreground">
+          {t('pricing.billingBasis')}
+        </p>
+
         {/* Legal link */}
         <p className="text-center mt-12 text-sm text-muted-foreground">
-          En souscrivant, vous acceptez nos{' '}
+          {t('pricing.legalPrefix')}{' '}
           <Link href="/legal/terms" className="text-primary hover:underline">
-            Conditions G&eacute;n&eacute;rales d&apos;Utilisation
+            {t('pricing.terms')}
           </Link>{' '}
-          et notre{' '}
+          {t('pricing.and')}{' '}
           <Link href="/legal/privacy" className="text-primary hover:underline">
-            Politique de Confidentialit&eacute;
+            {t('pricing.privacy')}
           </Link>
           .
         </p>

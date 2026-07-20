@@ -141,7 +141,7 @@ export default function ReportsPage() {
       const res = await fetch(`/api/organizations/${orgId}/reports?${params.toString()}`);
 
       if (!res.ok) {
-        toast.error('Failed to load report');
+        toast.error(t('reports.loadFailed'));
         setIsLoading(false);
         return;
       }
@@ -152,7 +152,7 @@ export default function ReportsPage() {
       setFormations(json.formations ?? []);
       setIsLoading(false);
     },
-    [orgId, user, customFrom, customTo],
+    [orgId, user, customFrom, customTo, t],
   );
 
   /* eslint-disable react-hooks/set-state-in-effect -- Async data loading on mount */
@@ -176,7 +176,7 @@ export default function ReportsPage() {
     const res = await fetch(`/api/organizations/${orgId}/reports?${params.toString()}`);
 
     if (!res.ok) {
-      toast.error('Export failed');
+      toast.error(t('reports.exportFailed'));
       return;
     }
 
@@ -187,7 +187,7 @@ export default function ReportsPage() {
     a.download = `report-${orgId}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [orgId, datePreset, customFrom, customTo]);
+  }, [orgId, datePreset, customFrom, customTo, t]);
 
   const handleExportPdf = useCallback(async () => {
     const range =

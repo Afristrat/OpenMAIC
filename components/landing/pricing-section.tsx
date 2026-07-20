@@ -22,6 +22,7 @@ export function PricingSection(): React.ReactElement {
         t('landing.pricing.free.f6'),
       ],
       cta: t('landing.pricing.free.cta'),
+      href: '/auth',
       highlighted: false,
       checkColor: 'text-emerald-400',
       btnClass:
@@ -42,6 +43,7 @@ export function PricingSection(): React.ReactElement {
         t('landing.pricing.pro.f6'),
       ],
       cta: t('landing.pricing.pro.cta'),
+      href: 'mailto:contact@qalem.ma?subject=Acc%C3%A8s%20Studio%20Qalem',
       highlighted: true,
       checkColor: 'text-primary',
       btnClass:
@@ -62,6 +64,7 @@ export function PricingSection(): React.ReactElement {
         t('landing.pricing.institution.f7'),
       ],
       cta: t('landing.pricing.institution.cta'),
+      href: 'mailto:contact@qalem.ma?subject=Qalem%20Institution',
       highlighted: false,
       checkColor: 'text-amber-400',
       btnClass:
@@ -124,7 +127,9 @@ export function PricingSection(): React.ReactElement {
                   </li>
                 ))}
               </ul>
-              <button className={plan.btnClass}>{plan.cta}</button>
+              <Link href={plan.href} className={`${plan.btnClass} block text-center`}>
+                {plan.cta}
+              </Link>
             </div>
           ))}
         </div>
@@ -146,23 +151,16 @@ export function PricingSection(): React.ReactElement {
               >
                 {t('landing.cta.button1')}
               </Link>
-              <button className="px-10 py-5 bg-transparent border-2 border-white/30 text-white font-[family-name:var(--font-display)] font-bold rounded-xl hover:bg-white/10 transition-all active:scale-95">
+              <a
+                href="mailto:contact@qalem.ma"
+                className="px-10 py-5 bg-transparent border-2 border-white/30 text-white font-[family-name:var(--font-display)] font-bold rounded-xl hover:bg-white/10 transition-all active:scale-95"
+              >
                 {t('landing.cta.button2')}
-              </button>
+              </a>
             </div>
           </div>
         </div>
 
-        {/* Footnote */}
-        <div className="py-12 text-center">
-          <div className="inline-flex items-center gap-4 px-6 py-2 rounded-full bg-secondary border border-border/10 text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground/60">
-            <span>CNDP Compliant</span>
-            <span className="w-1 h-1 rounded-full bg-border" />
-            <span>RGPD Compliant</span>
-            <span className="w-1 h-1 rounded-full bg-border" />
-            <span>3 Langues</span>
-          </div>
-        </div>
       </div>
     </section>
   );

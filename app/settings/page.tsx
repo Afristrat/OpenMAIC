@@ -5,9 +5,8 @@ import { useRouter } from 'next/navigation';
 import { SettingsDialog } from '@/components/settings';
 
 /**
- * The dedicated route must expose the same complete provider registry as the
- * generation dialog. Keeping a second, reduced settings implementation made
- * image/video providers invisible and let both surfaces drift apart.
+ * User-level model and media preferences live here. Platform governance and
+ * institutional integrations remain in /admin.
  */
 export default function SettingsPage(): React.ReactElement {
   const router = useRouter();
@@ -16,6 +15,7 @@ export default function SettingsPage(): React.ReactElement {
   return (
     <SettingsDialog
       open={open}
+      initialSection="providers"
       onOpenChange={(nextOpen) => {
         setOpen(nextOpen);
         if (!nextOpen) router.push('/app');

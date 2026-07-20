@@ -11,7 +11,14 @@ const nextConfig: NextConfig = {
   // (the "Edit with AI" Pro-mode path), which broke the #619 keep-alive e2e.
   // Mark them server-external so Next loads them natively and the dynamic
   // import resolves as a real Node call.
-  serverExternalPackages: ['@earendil-works/pi-ai', '@earendil-works/pi-agent-core', 'bullmq'],
+  // pdfkit loads its built-in AFM font files at runtime. Keeping it external
+  // makes those assets available in the standalone production image.
+  serverExternalPackages: [
+    '@earendil-works/pi-ai',
+    '@earendil-works/pi-agent-core',
+    'bullmq',
+    'pdfkit',
+  ],
   experimental: {
     proxyClientMaxBodySize: '200mb',
   },

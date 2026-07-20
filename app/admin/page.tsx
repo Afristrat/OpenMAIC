@@ -81,6 +81,14 @@ type AdminSection =
   | 'pedagogy'
   | 'xapi';
 
+const PLATFORM_ADMIN_SECTIONS = ['overview', 'mcp', 'lti', 'pedagogy', 'xapi'] as const;
+
+function isPlatformAdminSection(value: string | null): value is AdminSection {
+  return PLATFORM_ADMIN_SECTIONS.includes(
+    value as (typeof PLATFORM_ADMIN_SECTIONS)[number],
+  );
+}
+
 // ─── Provider List Column (reusable) ───
 function ProviderListColumn<T extends string>({
   providers,
@@ -215,7 +223,8 @@ function AdminPageContent(): React.ReactElement {
   const { isSuperAdmin, isLoading } = useIsSuperAdmin();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const tabParam = searchParams.get('tab') as AdminSection | null;
+  const rawTabParam = searchParams.get('tab');
+  const tabParam = isPlatformAdminSection(rawTabParam) ? rawTabParam : null;
 
   // Redirect non-admins
   useEffect(() => {
@@ -773,94 +782,6 @@ function AdminPageContent(): React.ReactElement {
           </button>
 
           <button
-            onClick={() => setActiveSection('providers')}
-            className={cn(
-              'w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors text-left min-w-0',
-              activeSection === 'providers'
-                ? 'bg-primary/10 text-primary font-medium'
-                : 'hover:bg-muted',
-            )}
-          >
-            <Box className="h-4 w-4 shrink-0" />
-            <span className="truncate">{t('settings.providers')}</span>
-          </button>
-
-          <button
-            onClick={() => setActiveSection('image')}
-            className={cn(
-              'w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors text-left min-w-0',
-              activeSection === 'image'
-                ? 'bg-primary/10 text-primary font-medium'
-                : 'hover:bg-muted',
-            )}
-          >
-            <ImageIcon className="h-4 w-4 shrink-0" />
-            <span className="truncate">{t('settings.imageSettings')}</span>
-          </button>
-
-          <button
-            onClick={() => setActiveSection('video')}
-            className={cn(
-              'w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors text-left min-w-0',
-              activeSection === 'video'
-                ? 'bg-primary/10 text-primary font-medium'
-                : 'hover:bg-muted',
-            )}
-          >
-            <Film className="h-4 w-4 shrink-0" />
-            <span className="truncate">{t('settings.videoSettings')}</span>
-          </button>
-
-          <button
-            onClick={() => setActiveSection('tts')}
-            className={cn(
-              'w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors text-left min-w-0',
-              activeSection === 'tts' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted',
-            )}
-          >
-            <Volume2 className="h-4 w-4 shrink-0" />
-            <span className="truncate">{t('settings.ttsSettings')}</span>
-          </button>
-
-          <button
-            onClick={() => setActiveSection('asr')}
-            className={cn(
-              'w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors text-left min-w-0',
-              activeSection === 'asr' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted',
-            )}
-          >
-            <Mic className="h-4 w-4 shrink-0" />
-            <span className="truncate">{t('settings.asrSettings')}</span>
-          </button>
-
-          <button
-            onClick={() => setActiveSection('pdf')}
-            className={cn(
-              'w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors text-left min-w-0',
-              activeSection === 'pdf' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted',
-            )}
-          >
-            <FileText className="h-4 w-4 shrink-0" />
-            <span className="truncate">{t('settings.pdfSettings')}</span>
-          </button>
-
-          <button
-            onClick={() => setActiveSection('web-search')}
-            className={cn(
-              'w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors text-left min-w-0',
-              activeSection === 'web-search'
-                ? 'bg-primary/10 text-primary font-medium'
-                : 'hover:bg-muted',
-            )}
-          >
-            <Search className="h-4 w-4 shrink-0" />
-            <span className="truncate">{t('settings.webSearchSettings')}</span>
-          </button>
-
-          {/* Separator */}
-          <div className="my-2 mx-2 h-px bg-border/40" />
-
-          <button
             onClick={() => setActiveSection('mcp')}
             className={cn(
               'w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors text-left min-w-0',
@@ -1102,12 +1023,10 @@ function AdminPageContent(): React.ReactElement {
             {activeSection === 'overview' && (
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {([
-                  ['providers', Box, 'settings.providers'],
-                  ['image', ImageIcon, 'settings.imageSettings'],
-                  ['video', Film, 'settings.videoSettings'],
-                  ['tts', Volume2, 'settings.ttsSettings'],
-                  ['asr', Mic, 'settings.asrSettings'],
+                  ['mcp', Server, 'admin.mcp.title'],
+                  ['lti', KeyRound, 'admin.lti.title'],
                   ['pedagogy', Brain, 'admin.pedagogy.title'],
+                  ['xapi', Activity, 'admin.xapi.title'],
                 ] as const).map(([section, Icon, label]) => (
                   <button
                     key={section}

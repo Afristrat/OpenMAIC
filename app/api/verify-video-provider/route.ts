@@ -15,7 +15,7 @@
  */
 
 import { NextRequest } from 'next/server';
-import { testVideoConnectivity } from '@/lib/media/video-providers';
+import { VIDEO_PROVIDERS, testVideoConnectivity } from '@/lib/media/video-providers';
 import {
   isServerConfiguredProvider,
   resolveVideoApiKey,
@@ -47,7 +47,8 @@ export async function POST(request: NextRequest) {
     const apiKey = resolveVideoApiKey(providerId, clientApiKey);
     const baseUrl = resolveVideoBaseUrl(providerId, clientBaseUrl);
 
-    if (!apiKey) {
+    const provider = VIDEO_PROVIDERS[providerId];
+    if (provider?.requiresApiKey && !apiKey) {
       return apiError('MISSING_API_KEY', 400, 'No API key configured');
     }
 

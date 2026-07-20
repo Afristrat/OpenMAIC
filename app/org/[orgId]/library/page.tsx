@@ -7,8 +7,13 @@ import { useAuth } from '@/lib/hooks/use-auth';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { toast } from 'sonner';
 import { ArrowLeft, BookOpen, Copy, Eye, Library, Search, Share2, User } from 'lucide-react';
 import type { OrgMemberRole } from '@/lib/supabase/types';
@@ -159,6 +164,35 @@ export default function LibraryPage() {
     await fetchLibrary();
   };
 
+  const handleShare = async (classroom: SharedClassroom) => {
+    try {
+      if (classroom.visibility !== 'public') {
+        const supabase = createClient();
+        const { error } = await supabase
+          .from('shared_classrooms')
+          .update({ visibility: 'public' })
+          .eq('id', classroom.id);
+        if (error) throw error;
+        setClassrooms((current) =>
+          current.map((item) =>
+            item.id === classroom.id ? { ...item, visibility: 'public' } : item,
+          ),
+        );
+      }
+
+      const url = `${window.location.origin}/classroom/${encodeURIComponent(classroom.stage_id)}`;
+      if (navigator.share) {
+        await navigator.share({ title: classroom.stage?.name ?? t('org.untitled'), url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast.success(t('org.linkCopied'));
+      }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      toast.error(t('org.shareFailed'));
+    }
+  };
+
   const handleClone = async (stageId: string) => {
     // Clone by navigating to the classroom — the user will have a copy in their personal space
     router.push(`/classroom/${stageId}?clone=true`);
@@ -213,7 +247,7 @@ export default function LibraryPage() {
             >
               <div className="mb-3">
                 <h3 className="font-semibold leading-tight">
-                  {classroom.stage?.name ?? 'Untitled'}
+                  {classroom.stage?.name ?? t('org.untitled')}
                 </h3>
                 {classroom.stage?.description && (
                   <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
@@ -229,24 +263,24 @@ export default function LibraryPage() {
                     {classroom.sharer_profile.nickname}
                   </span>
                 )}
-                <span>{classroom.scene_count ?? 0} scenes</span>
+                <span>
+                  {t('org.sceneCount').replace('{count}', String(classroom.scene_count ?? 0))}
+                </span>
                 <span>{new Date(classroom.created_at).toLocaleDateString()}</span>
               </div>
 
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-xs">
-                  <Eye className="mr-1 h-3 w-3" />
-                  {t(`org.visibility.${classroom.visibility}`)}
-                </Badge>
-
+              <div className="flex flex-wrap items-center gap-2">
                 {canShare && (
                   <Select
                     value={classroom.visibility}
                     onValueChange={(v) => handleChangeVisibility(classroom.id, v)}
                   >
-                    <SelectTrigger className="h-7 w-auto gap-1 text-xs">
-                      <Share2 className="h-3 w-3" />
-                      <span>{t('org.share')}</span>
+                    <SelectTrigger
+                      className="h-7 w-auto gap-1 text-xs"
+                      aria-label={t('org.visibility')}
+                    >
+                      <Eye className="h-3 w-3" />
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       {VISIBILITY_OPTIONS.map((v) => (
@@ -256,6 +290,18 @@ export default function LibraryPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                )}
+
+                {canShare && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 gap-1 text-xs"
+                    onClick={() => handleShare(classroom)}
+                  >
+                    <Share2 className="h-3 w-3" />
+                    {t('org.share')}
+                  </Button>
                 )}
 
                 <Button
