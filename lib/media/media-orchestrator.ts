@@ -246,14 +246,45 @@ async function callVideoApi(
     signal: abortSignal,
   });
 
+  const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const data = await response.json().catch(() => ({}));
     throw new MediaApiError(data.error || `Video API returned ${response.status}`, data.errorCode);
   }
 
-  const data = await response.json();
   if (!data.success)
     throw new MediaApiError(data.error || 'Video generation failed', data.errorCode);
+
+  if (response.status === 202 && data.id) {
+    const deadline = Date.now() + 15 * 60 * 1000;
+    let status = data;
+    while (!status.done) {
+      if (Date.now() >= deadline) throw new Error('Video generation timed out');
+      await new Promise<void>((resolve, reject) => {
+        const onAbort = () => {
+          clearTimeout(timer);
+          reject(abortSignal?.reason ?? new DOMException('Aborted', 'AbortError'));
+        };
+        const timer = setTimeout(() => {
+          abortSignal?.removeEventListener('abort', onAbort);
+          resolve();
+        }, status.pollIntervalMs ?? 3000);
+        abortSignal?.addEventListener('abort', onAbort, { once: true });
+      });
+      const pollResponse = await fetch(`/api/generate/video/${data.id}`, {
+        signal: abortSignal,
+      });
+      status = await pollResponse.json().catch(() => ({}));
+      if (!pollResponse.ok || !status.success) {
+        throw new MediaApiError(
+          status.error || `Video job API returned ${pollResponse.status}`,
+          status.errorCode,
+        );
+      }
+    }
+    if (status.status === 'error') throw new Error(status.error || 'Video generation failed');
+    if (!status.downloadUrl) throw new Error('Video generation completed without a download URL');
+    return { url: status.downloadUrl };
+  }
 
   const url = data.result?.url;
   if (!url) throw new Error('No video URL in response');

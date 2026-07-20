@@ -31,12 +31,18 @@ import type { VideoProviderId, VideoGenerationOptions } from '@/lib/media/types'
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
+import { requireAuth } from '@/lib/api/auth';
+import { createServiceSupabaseClient } from '@/lib/supabase/service';
+import { enqueueVideoGeneration } from '@/lib/jobs/queue';
 
 const log = createLogger('VideoGeneration API');
 
 export const maxDuration = 300;
 
 export async function POST(request: NextRequest) {
+  const auth = await requireAuth(request);
+  if (auth.response) return auth.response;
+
   try {
     const body = (await request.json()) as VideoGenerationOptions;
 
@@ -58,6 +64,34 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Normalize options against provider capabilities before persisting or executing.
+    const options = normalizeVideoOptions(providerId, body);
+
+    // Managed video generation can exceed reverse-proxy request limits. Persist it
+    // and let the dedicated worker upload the result to private storage.
+    if (managed) {
+      const serviceSupabase = createServiceSupabaseClient();
+      const { data: generationJob, error: insertError } = await serviceSupabase
+        .from('video_generation_jobs')
+        .insert({
+          owner_id: auth.user.id,
+          provider_id: providerId,
+          model_id: clientModel,
+          request: options as unknown as Record<string, unknown>,
+          status: 'queued',
+        })
+        .select('id, status')
+        .single();
+      if (insertError || !generationJob) {
+        throw new Error(`Failed to create video generation job: ${insertError?.message}`);
+      }
+      await enqueueVideoGeneration({ videoGenerationJobId: generationJob.id });
+      return apiSuccess(
+        { id: generationJob.id, status: generationJob.status, pollIntervalMs: 3000 },
+        202,
+      );
+    }
+
     const apiKey = resolveVideoApiKey(providerId, clientApiKey);
     if (VIDEO_PROVIDERS[providerId]?.requiresApiKey && !apiKey) {
       return apiError(
@@ -68,9 +102,6 @@ export async function POST(request: NextRequest) {
     }
 
     const baseUrl = resolveVideoBaseUrl(providerId, clientBaseUrl);
-
-    // Normalize options against provider capabilities
-    const options = normalizeVideoOptions(providerId, body);
 
     log.info(
       `Generating video: provider=${providerId}, model=${clientModel || 'default'}, ` +

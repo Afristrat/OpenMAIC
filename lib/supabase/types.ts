@@ -498,6 +498,35 @@ export type ExportJobUpdate = Partial<
   Pick<ExportJobRow, 'status' | 'storage_path' | 'scene_count' | 'error'>
 >;
 
+export type VideoGenerationJobStatus = 'queued' | 'generating' | 'done' | 'error';
+
+export interface VideoGenerationJobRow {
+  id: string;
+  owner_id: string;
+  provider_id: string;
+  model_id: string | null;
+  request: Record<string, unknown>;
+  status: VideoGenerationJobStatus;
+  storage_path: string | null;
+  result_metadata: Record<string, unknown> | null;
+  error: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type VideoGenerationJobInsert = Pick<
+  VideoGenerationJobRow,
+  'owner_id' | 'provider_id' | 'request'
+> &
+  Partial<Pick<VideoGenerationJobRow, 'model_id' | 'status'>>;
+
+export type VideoGenerationJobUpdate = Partial<
+  Pick<
+    VideoGenerationJobRow,
+    'status' | 'storage_path' | 'result_metadata' | 'error'
+  >
+>;
+
 // ---------------------------------------------------------------------------
 // Supabase Database type (for createClient<Database>)
 // ---------------------------------------------------------------------------
@@ -624,6 +653,11 @@ export interface Database {
         Row: ExportJobRow;
         Insert: ExportJobInsert;
         Update: ExportJobUpdate;
+      };
+      video_generation_jobs: {
+        Row: VideoGenerationJobRow;
+        Insert: VideoGenerationJobInsert;
+        Update: VideoGenerationJobUpdate;
       };
     };
     Views: {
