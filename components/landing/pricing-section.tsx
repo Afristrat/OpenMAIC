@@ -160,7 +160,6 @@ export function PricingSection(): React.ReactElement {
             </div>
           </div>
         </div>
-
       </div>
     </section>
   );
