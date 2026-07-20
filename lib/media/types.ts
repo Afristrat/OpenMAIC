@@ -188,6 +188,7 @@ export interface ImageGenerationResult {
  * Keep in sync with VIDEO_PROVIDERS registry in constants.ts
  */
 export type VideoProviderId =
+  | 'comfyui-video'
   | 'seedance'
   | 'kling'
   | 'veo'

@@ -150,11 +150,11 @@ export async function generateMediaForClassroom(
       try {
         const providerId = videoProviderIds[0] as VideoProviderId;
         const apiKey = resolveVideoApiKey(providerId);
-        if (!apiKey) {
+        const providerConfig = VIDEO_PROVIDERS[providerId];
+        if (providerConfig?.requiresApiKey && !apiKey) {
           log.warn(`No API key for video provider "${providerId}", skipping ${req.elementId}`);
           continue;
         }
-        const providerConfig = VIDEO_PROVIDERS[providerId];
         const model = providerConfig?.models?.[0]?.id;
 
         const normalized = normalizeVideoOptions(providerId, {

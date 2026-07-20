@@ -115,6 +115,7 @@ const IMAGE_ENV_MAP: Record<string, string> = {
 };
 
 const VIDEO_ENV_MAP: Record<string, string> = {
+  VIDEO_COMFYUI: 'comfyui-video',
   VIDEO_SEEDANCE: 'seedance',
   VIDEO_KLING: 'kling',
   VIDEO_VEO: 'veo',
@@ -315,7 +316,9 @@ function buildConfig(yamlData: YamlData): ServerConfig {
     }),
     pdf: loadEnvSection(PDF_ENV_MAP, yamlData.pdf, { requiresBaseUrl: true }),
     image,
-    video: loadEnvSection(VIDEO_ENV_MAP, yamlData.video),
+    video: loadEnvSection(VIDEO_ENV_MAP, yamlData.video, {
+      keylessProviders: new Set(['comfyui-video']),
+    }),
     webSearch: loadEnvSection(WEB_SEARCH_ENV_MAP, yamlData['web-search']),
     ttsDisabled: collectDisabledTTS(yamlData.tts),
   };

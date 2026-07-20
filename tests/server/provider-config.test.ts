@@ -44,6 +44,7 @@ const ENV_PREFIXES_TO_CLEAR = [
   'IMAGE_NANO_BANANA',
   'IMAGE_MINIMAX',
   'IMAGE_GROK',
+  'VIDEO_COMFYUI',
   'VIDEO_SEEDANCE',
   'VIDEO_KLING',
   'VIDEO_VEO',
@@ -427,6 +428,17 @@ pdf:
         models: ['ltx-2-video', 'veo-certified'],
       });
       expect(resolveVideoBaseUrl('grok-video')).toBe('https://proxy.example.com/video');
+    });
+
+    it('activates the keyless ComfyUI video provider from its private base URL', async () => {
+      vi.stubEnv('VIDEO_COMFYUI_BASE_URL', 'http://192.168.100.7:8189');
+      vi.stubEnv('VIDEO_COMFYUI_MODELS', 'ltx-2-video');
+      const { getServerVideoProviders, resolveVideoApiKey, resolveVideoBaseUrl } =
+        await import('@/lib/server/provider-config');
+
+      expect(getServerVideoProviders()['comfyui-video']).toEqual({ models: ['ltx-2-video'] });
+      expect(resolveVideoApiKey('comfyui-video')).toBe('');
+      expect(resolveVideoBaseUrl('comfyui-video')).toBe('http://192.168.100.7:8189');
     });
   });
 

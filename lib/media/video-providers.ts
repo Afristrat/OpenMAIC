@@ -18,8 +18,23 @@ import {
 } from './adapters/minimax-video-adapter';
 import { generateWithGrokVideo, testGrokVideoConnectivity } from './adapters/grok-video-adapter';
 import { generateWithHappyHorse, testHappyHorseConnectivity } from './adapters/happyhorse-adapter';
+import {
+  generateWithComfyUIVideo,
+  testComfyUIVideoConnectivity,
+} from './adapters/comfyui-video-adapter';
 
 export const VIDEO_PROVIDERS: Record<VideoProviderId, VideoProviderConfig> = {
+  'comfyui-video': {
+    id: 'comfyui-video',
+    name: 'ComfyUI Video (LTX-2)',
+    requiresApiKey: false,
+    defaultBaseUrl: 'http://127.0.0.1:8189',
+    models: [{ id: 'ltx-2-video', name: 'LTX-2.3 22B (vidéo + audio)' }],
+    supportedAspectRatios: ['16:9', '4:3', '1:1', '9:16', '3:4', '21:9'],
+    supportedDurations: [2, 5, 8, 10],
+    supportedResolutions: ['480p', '720p'],
+    maxDuration: 10,
+  },
   seedance: {
     id: 'seedance',
     name: 'Seedance',
@@ -125,6 +140,8 @@ export async function testVideoConnectivity(
   config: VideoGenerationConfig,
 ): Promise<{ success: boolean; message: string }> {
   switch (config.providerId) {
+    case 'comfyui-video':
+      return testComfyUIVideoConnectivity(config);
     case 'seedance':
       return testSeedanceConnectivity(config);
     case 'kling':
@@ -192,6 +209,8 @@ export async function generateVideo(
   options: VideoGenerationOptions,
 ): Promise<VideoGenerationResult> {
   switch (config.providerId) {
+    case 'comfyui-video':
+      return generateWithComfyUIVideo(config, options);
     case 'seedance':
       return generateWithSeedance(config, options);
     case 'kling':

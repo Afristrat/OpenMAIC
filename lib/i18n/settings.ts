@@ -242,6 +242,7 @@ export const settingsZhCN = {
     providerLemonadeImage: 'Lemonade',
     providerMinimaxVideo: 'MiniMax Video',
     providerHappyhorse: 'HappyHorse',
+    providerComfyUIVideo: 'ComfyUI 视频（LTX-2）',
     providerUnpdf: 'unpdf（内置）',
     providerMinerU: 'MinerU',
     browserNativeTTSNote: '浏览器原生 TTS 无需配置，完全免费，使用系统内置语音',
@@ -864,6 +865,7 @@ export const settingsEnUS = {
     providerLemonadeImage: 'Lemonade',
     providerMinimaxVideo: 'MiniMax Video',
     providerHappyhorse: 'HappyHorse',
+    providerComfyUIVideo: 'ComfyUI Video (LTX-2)',
     providerUnpdf: 'unpdf (Built-in)',
     providerMinerU: 'MinerU',
     browserNativeTTSNote:
@@ -1496,6 +1498,7 @@ export const settingsFrFR = {
     providerLemonadeImage: 'Lemonade',
     providerMinimaxVideo: 'MiniMax Vidéo',
     providerHappyhorse: 'HappyHorse',
+    providerComfyUIVideo: 'Vidéo ComfyUI (LTX-2)',
     providerUnpdf: 'unpdf (intégré)',
     providerMinerU: 'MinerU',
     browserNativeTTSNote:
@@ -2122,6 +2125,7 @@ export const settingsArMA = {
     providerLemonadeImage: 'Lemonade',
     providerMinimaxVideo: 'MiniMax للفيديو',
     providerHappyhorse: 'HappyHorse',
+    providerComfyUIVideo: 'فيديو ComfyUI ‏(LTX-2)',
     providerUnpdf: 'unpdf (مدمج)',
     providerMinerU: 'MinerU',
     browserNativeTTSNote:

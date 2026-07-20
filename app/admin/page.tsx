@@ -190,6 +190,7 @@ const IMAGE_PROVIDER_ICONS: Record<ImageProviderId, string> = {
 };
 
 const VIDEO_PROVIDER_NAMES: Record<VideoProviderId, string> = {
+  'comfyui-video': 'providerComfyUIVideo',
   seedance: 'providerSeedance',
   kling: 'providerKling',
   veo: 'providerVeo',
@@ -199,7 +200,7 @@ const VIDEO_PROVIDER_NAMES: Record<VideoProviderId, string> = {
   happyhorse: 'providerHappyhorse',
 };
 
-const VIDEO_PROVIDER_ICONS: Record<VideoProviderId, string> = {
+const VIDEO_PROVIDER_ICONS: Partial<Record<VideoProviderId, string>> = {
   seedance: '/logos/doubao.svg',
   kling: '/logos/kling.svg',
   veo: '/logos/gemini.svg',
