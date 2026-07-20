@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { generateWithComfyUIVideo } from '@/lib/media/adapters/comfyui-video-adapter';
+import {
+  generateWithComfyUIVideo,
+  testComfyUIVideoConnectivity,
+} from '@/lib/media/adapters/comfyui-video-adapter';
 import { VIDEO_PROVIDERS } from '@/lib/media/video-providers';
 
 describe('ComfyUI LTX video provider', () => {
@@ -10,6 +13,24 @@ describe('ComfyUI LTX video provider', () => {
       requiresApiKey: false,
       models: [{ id: 'ltx-2-video' }],
     });
+  });
+
+  it('checks the sidecar health endpoint without depending on its model schema', async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(null, { status: 200 }));
+
+    await expect(
+      testComfyUIVideoConnectivity({
+        providerId: 'comfyui-video',
+        apiKey: '',
+        baseUrl: 'http://comfy.test/',
+      }),
+    ).resolves.toEqual({ success: true, message: 'ComfyUI sidecar is reachable' });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://comfy.test/health',
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
   });
 
   it('calls the native LTX workflow and returns a typed data URL', async () => {

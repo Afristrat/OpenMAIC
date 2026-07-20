@@ -36,7 +36,7 @@ export async function testComfyUIVideoConnectivity(
   const baseUrl = config.baseUrl?.replace(/\/$/, '');
   if (!baseUrl) return { success: false, message: 'ComfyUI sidecar base URL is required' };
   try {
-    const response = await fetch(`${baseUrl}/models`, {
+    const response = await fetch(`${baseUrl}/health`, {
       signal: AbortSignal.timeout(10_000),
     });
     return response.ok
