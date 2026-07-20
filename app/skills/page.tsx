@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useOrganizations } from '@/lib/hooks/use-organizations';
+import { useIsSuperAdmin } from '@/lib/hooks/use-super-admin';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -83,6 +84,7 @@ export default function SkillsPage(): React.ReactElement {
   const { t, locale } = useI18n();
   const router = useRouter();
   const { currentOrg } = useOrganizations();
+  const { isSuperAdmin } = useIsSuperAdmin();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [skills, setSkills] = useState<SkillData[]>([]);
@@ -90,7 +92,10 @@ export default function SkillsPage(): React.ReactElement {
   const [isInstalling, setIsInstalling] = useState(false);
   const [removingSkillId, setRemovingSkillId] = useState<string | null>(null);
   const [expandedSkill, setExpandedSkill] = useState<string | null>(null);
-  const canManageSkills = currentOrg?.userRole === 'admin' || currentOrg?.userRole === 'manager';
+  const canManageSkills = Boolean(
+    currentOrg &&
+      (isSuperAdmin || currentOrg.userRole === 'admin' || currentOrg.userRole === 'manager'),
+  );
 
   const fetchSkills = useCallback(async () => {
     setIsLoading(true);
