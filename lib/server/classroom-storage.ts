@@ -103,6 +103,7 @@ interface StageExtra {
   generatedAgentConfigs?: Stage['generatedAgentConfigs'];
   interactiveMode?: boolean;
   taskEngineMode?: boolean;
+  teacherProfile?: Stage['teacherProfile'];
 }
 
 interface SceneExtra {
@@ -122,6 +123,7 @@ function buildStageExtra(stage: Stage): StageExtra {
     generatedAgentConfigs: stage.generatedAgentConfigs,
     interactiveMode: stage.interactiveMode,
     taskEngineMode: stage.taskEngineMode,
+    teacherProfile: stage.teacherProfile,
   };
 }
 
@@ -229,6 +231,7 @@ export async function readClassroom(id: string): Promise<PersistedClassroomData 
     generatedAgentConfigs: stageExtra.generatedAgentConfigs,
     interactiveMode: stageExtra.interactiveMode,
     taskEngineMode: stageExtra.taskEngineMode,
+    teacherProfile: stageExtra.teacherProfile,
   };
 
   const scenes: Scene[] = (sceneRows ?? []).map((row) => {

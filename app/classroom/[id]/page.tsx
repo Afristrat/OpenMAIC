@@ -90,6 +90,17 @@ export default function ClassroomDetailPage() {
       // Restore agents for this stage
       const { loadGeneratedAgentsForStage, useAgentRegistry } =
         await import('@/lib/orchestration/registry/store');
+      const teacherProfile = useStageStore.getState().stage?.teacherProfile;
+      if (teacherProfile) {
+        useAgentRegistry.getState().updateAgent('default-1', {
+          name: teacherProfile.name,
+          avatar: teacherProfile.avatar,
+          voiceConfig: {
+            providerId: teacherProfile.providerId as import('@/lib/audio/types').TTSProviderId,
+            voiceId: teacherProfile.voiceId,
+          },
+        });
+      }
       const generatedAgentIds = await loadGeneratedAgentsForStage(classroomId);
       const { useSettingsStore } = await import('@/lib/store/settings');
       const { restoreAgentSelection } =

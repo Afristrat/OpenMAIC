@@ -86,6 +86,12 @@ export interface Stage {
    * Server-generated agent configurations. See {@link GeneratedAgentConfig}.
    */
   generatedAgentConfigs?: GeneratedAgentConfig[];
+  teacherProfile?: {
+    name: string;
+    avatar: string;
+    providerId: string;
+    voiceId: string;
+  };
   /**
    * True when this classroom was generated with Interactive Mode enabled
    * (the INTERACTIVE_OUTLINES prompt branch).

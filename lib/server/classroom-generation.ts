@@ -407,6 +407,7 @@ export async function generateClassroom(
     style: 'interactive',
     createdAt: Date.now(),
     updatedAt: Date.now(),
+    teacherProfile: teachingProfile,
     // For LLM-generated agents, embed full configs so the client can
     // hydrate the agent registry without prior IndexedDB data.
     // For default agents, just record IDs — the client already has them.
@@ -430,21 +431,6 @@ export async function generateClassroom(
         }
       : {
           agentIds: agents.map((a) => a.id),
-          generatedAgentConfigs: [
-            {
-              id: 'default-1',
-              name: teachingProfile.name,
-              role: 'teacher',
-              persona: agents.find((agent) => agent.role === 'teacher')?.persona || '',
-              avatar: teachingProfile.avatar,
-              color: AGENT_COLOR_PALETTE[0],
-              priority: 10,
-              voiceConfig: {
-                providerId: teachingProfile.providerId,
-                voiceId: teachingProfile.voiceId,
-              },
-            },
-          ],
         }),
   };
 
