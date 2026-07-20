@@ -10,9 +10,12 @@ export function ServiceWorkerRegistrar(): null {
   useEffect(() => {
     if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
 
-    void navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch((err) => {
-      console.warn('[SW] Registration failed:', err);
-    });
+    void navigator.serviceWorker
+      .register('/sw.js', { scope: '/', updateViaCache: 'none' })
+      .then((registration) => registration.update())
+      .catch((err) => {
+        console.warn('[SW] Registration failed:', err);
+      });
   }, []);
 
   return null;

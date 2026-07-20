@@ -11,9 +11,12 @@
 
 /* global self, caches, fetch, URL */
 
-const APP_SHELL_CACHE = 'qalem-shell-v1';
-const DATA_CACHE = 'qalem-data-v1';
-const STATIC_CACHE = 'qalem-static-v1';
+// Bump all cache namespaces whenever route ownership changes. The root route
+// used to host the creation studio, so keeping the v1 shell made installed
+// browsers serve that obsolete screen instead of the marketing landing page.
+const APP_SHELL_CACHE = 'qalem-shell-v2';
+const DATA_CACHE = 'qalem-data-v2';
+const STATIC_CACHE = 'qalem-static-v2';
 
 /** Pages to pre-cache on install for offline shell */
 const SHELL_URLS = ['/', '/manifest.json'];
@@ -42,7 +45,9 @@ self.addEventListener('install', (event) => {
     caches
       .open(APP_SHELL_CACHE)
       .then((cache) => {
-        return cache.addAll(SHELL_URLS);
+        return Promise.all(
+          SHELL_URLS.map((url) => cache.add(new Request(url, { cache: 'reload' }))),
+        );
       })
       .then(() => {
         // Activate immediately, don't wait for old SW to finish
@@ -158,7 +163,9 @@ async function cacheFirst(request, cacheName) {
  */
 async function networkFirstWithShellFallback(request) {
   try {
-    const response = await fetch(request);
+    // A navigation must never be satisfied by the browser HTTP cache before
+    // the service worker can refresh its own shell cache.
+    const response = await fetch(new Request(request, { cache: 'no-store' }));
     if (response.ok) {
       const cache = await caches.open(APP_SHELL_CACHE);
       cache.put(request, response.clone());
