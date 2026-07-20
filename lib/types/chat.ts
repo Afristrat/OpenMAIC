@@ -262,6 +262,9 @@ export interface StatelessChatRequest {
       color: string;
       allowedActions: string[];
       priority: number;
+      interactionWeight?: number;
+      mechanismId?: string;
+      gender?: 'female' | 'male';
       isGenerated?: boolean;
       boundStageId?: string;
     }>;

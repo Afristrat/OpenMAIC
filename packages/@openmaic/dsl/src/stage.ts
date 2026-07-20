@@ -48,6 +48,11 @@ export interface GeneratedAgentConfig {
   avatar: string;
   color: string;
   priority: number;
+  /** Target share of agent turns for the selected interaction level (0-100). */
+  interactionWeight?: number;
+  /** Stable pedagogical mechanism id from the ten-persona catalogue. */
+  mechanismId?: string;
+  gender?: 'female' | 'male';
   voiceConfig?: { providerId: string; modelId?: string; voiceId: string };
 }
 

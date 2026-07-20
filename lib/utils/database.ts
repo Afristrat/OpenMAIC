@@ -178,6 +178,10 @@ export interface GeneratedAgentRecord {
   avatar: string;
   color: string;
   priority: number;
+  interactionWeight?: number;
+  mechanismId?: string;
+  gender?: 'female' | 'male';
+  voiceConfig?: { providerId: string; voiceId: string };
   voiceDesign?: VoiceDesign; // 3-layer vocal descriptor for auto voice
   createdAt: number;
 }

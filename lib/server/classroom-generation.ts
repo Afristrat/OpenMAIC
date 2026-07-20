@@ -36,10 +36,16 @@ import { decideCaptureForScene } from '@/lib/generation/web-capture-plan';
 import { requestWebCapture } from '@/lib/server/capture-client';
 import type { UserRequirements, PdfImage, ImageMapping } from '@/lib/types/generation';
 import type { Scene, Stage } from '@/lib/types/stage';
-import { AGENT_COLOR_PALETTE, AGENT_DEFAULT_AVATARS } from '@/lib/constants/agent-defaults';
 import { isFeatureEnabled } from '@/lib/flags';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { DEFAULT_TEACHING_PROFILE, teachingProfileFromSettings } from '@/lib/org/teaching-profile';
+import {
+  DEFAULT_LEARNING_DESIGN,
+  approachForAudience,
+  buildTenantAgentConfigs,
+  learningDesignFromSettings,
+  type LearningDesignSettings,
+} from '@/lib/agents/persona-catalog';
 
 const log = createLogger('Classroom');
 
@@ -112,66 +118,6 @@ function createInMemoryStore(stage: Stage): StageStore {
   };
 }
 
-function stripCodeFences(text: string): string {
-  let cleaned = text.trim();
-  if (cleaned.startsWith('```')) {
-    cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
-  }
-  return cleaned.trim();
-}
-
-async function generateAgentProfiles(
-  requirement: string,
-  languageDirective: string,
-  aiCall: AICallFn,
-): Promise<AgentInfo[]> {
-  const systemPrompt =
-    'You are an expert instructional designer. Generate agent profiles for a multi-agent classroom simulation. Return ONLY valid JSON, no markdown or explanation.';
-
-  const userPrompt = `Generate agent profiles for a course with this requirement:
-${requirement}
-
-Requirements:
-- Decide the appropriate number of agents based on the course content (typically 3-5)
-- Exactly 1 agent must have role "teacher", the rest can be "assistant" or "student"
-- Each agent needs: name, role, persona (2-3 sentences describing personality and teaching/learning style)
-- Language directive for this course: ${languageDirective}
-  Agent names and personas must follow this language directive.
-
-Return a JSON object with this exact structure:
-{
-  "agents": [
-    {
-      "name": "string",
-      "role": "teacher" | "assistant" | "student",
-      "persona": "string (2-3 sentences)"
-    }
-  ]
-}`;
-
-  const response = await aiCall(systemPrompt, userPrompt);
-  const rawText = stripCodeFences(response);
-  const parsed = JSON.parse(rawText) as {
-    agents: Array<{ name: string; role: string; persona: string }>;
-  };
-
-  if (!parsed.agents || !Array.isArray(parsed.agents) || parsed.agents.length < 2) {
-    throw new Error(`Expected at least 2 agents, got ${parsed.agents?.length ?? 0}`);
-  }
-
-  const teacherCount = parsed.agents.filter((a) => a.role === 'teacher').length;
-  if (teacherCount !== 1) {
-    throw new Error(`Expected exactly 1 teacher, got ${teacherCount}`);
-  }
-
-  return parsed.agents.map((a, i) => ({
-    id: `gen-server-${i}`,
-    name: a.name,
-    role: a.role,
-    persona: a.persona,
-  }));
-}
-
 export async function generateClassroom(
   input: GenerateClassroomInput,
   options: {
@@ -182,6 +128,7 @@ export async function generateClassroom(
 ): Promise<GenerateClassroomResult> {
   const { requirement, pdfContent } = input;
   let teachingProfile = DEFAULT_TEACHING_PROFILE;
+  let learningDesign: LearningDesignSettings = DEFAULT_LEARNING_DESIGN;
   try {
     const { data: organization } = await createServiceSupabaseClient()
       .from('organizations')
@@ -189,8 +136,18 @@ export async function generateClassroom(
       .eq('id', input.orgId)
       .single();
     teachingProfile = teachingProfileFromSettings(organization?.settings);
+    learningDesign = learningDesignFromSettings(organization?.settings);
+    const professor = learningDesign.personas.find((persona) => persona.id === 'professor');
+    if (professor) {
+      teachingProfile = {
+        name: professor.defaultName,
+        avatar: professor.avatar,
+        providerId: professor.providerId,
+        voiceId: professor.voiceId,
+      };
+    }
   } catch (error) {
-    log.warn('Tenant teaching profile unavailable; using the coherent default profile:', error);
+    log.warn('Tenant learning design unavailable; using coherent defaults:', error);
   }
 
   await options.onProgress?.({
@@ -278,8 +235,10 @@ export async function generateClassroom(
     return result.text;
   };
 
+  const learningApproach = approachForAudience(learningDesign.audienceStage);
+  const instructionalDirective = `Instructional approach: ${learningApproach}. Learner stage: ${learningDesign.audienceStage}. Proficiency: ${learningDesign.expertiseLevel}. Interaction level: ${learningDesign.interactionLevel}. Adapt tone, scaffolding, examples and learner autonomy accordingly.`;
   const requirements: UserRequirements = {
-    requirement,
+    requirement: `${requirement}\n\n${instructionalDirective}`,
     activeSkillId: input.activeSkillId,
   };
   const skillEngineEnabled = await isFeatureEnabled('skill_engine');
@@ -333,8 +292,14 @@ export async function generateClassroom(
           baseUrl: webSearchConfig.baseUrl,
           baiduSubSources: webSearchConfig.baiduSubSources,
         });
-        const enrichedSources = await enrichSourcesWithCrawl4AI(searchResult.sources, searchQuery.query);
-        researchContext = formatSearchResultsAsContext({ ...searchResult, sources: enrichedSources });
+        const enrichedSources = await enrichSourcesWithCrawl4AI(
+          searchResult.sources,
+          searchQuery.query,
+        );
+        researchContext = formatSearchResultsAsContext({
+          ...searchResult,
+          sources: enrichedSources,
+        });
         if (researchContext) {
           log.info(`Web search returned ${enrichedSources.length} sources`);
         }
@@ -389,19 +354,19 @@ export async function generateClassroom(
   // Resolve agents based on agentMode — now AFTER outlines so we can use languageDirective
   let agents: AgentInfo[];
   const agentMode = input.agentMode || 'default';
+  const tenantAgentConfigs =
+    agentMode === 'generate' ? buildTenantAgentConfigs(learningDesign, instructionalDirective) : [];
   if (agentMode === 'generate') {
-    log.info('Generating custom agent profiles via LLM...');
-    try {
-      agents = await generateAgentProfiles(requirement, languageDirective, aiCall);
-      log.info(`Generated ${agents.length} agent profiles`);
-    } catch (e) {
-      log.warn('Agent profile generation failed, falling back to defaults:', e);
-      agents = getDefaultAgents();
-    }
+    agents = tenantAgentConfigs.map(({ id, name, role, persona }) => ({
+      id,
+      name,
+      role,
+      persona,
+    }));
+    log.info(`Instantiated ${agents.length} tenant pedagogical personas`);
   } else {
     agents = getDefaultAgents();
   }
-
   const stageId = nanoid(10);
   const stage: Stage = {
     id: stageId,
@@ -418,21 +383,7 @@ export async function generateClassroom(
     // For default agents, just record IDs — the client already has them.
     ...(agentMode === 'generate'
       ? {
-          generatedAgentConfigs: agents.map((a, i) => ({
-            id: a.id,
-            name: a.role === 'teacher' ? teachingProfile.name : a.name,
-            role: a.role,
-            persona: a.persona || '',
-            avatar:
-              a.role === 'teacher'
-                ? teachingProfile.avatar
-                : AGENT_DEFAULT_AVATARS[i % AGENT_DEFAULT_AVATARS.length],
-            color: AGENT_COLOR_PALETTE[i % AGENT_COLOR_PALETTE.length],
-            priority: a.role === 'teacher' ? 10 : a.role === 'assistant' ? 7 : 5,
-            ...(a.role === 'teacher'
-              ? { voiceConfig: { providerId: teachingProfile.providerId, voiceId: teachingProfile.voiceId } }
-              : {}),
-          })),
+          generatedAgentConfigs: tenantAgentConfigs,
         }
       : {
           agentIds: agents.map((a) => a.id),
@@ -480,7 +431,11 @@ export async function generateClassroom(
     // image (decideCaptureForScene/requestWebCapture never throw).
     let assignedImages: PdfImage[] | undefined;
     let imageMapping: ImageMapping | undefined;
-    const captureDecision = await decideCaptureForScene(safeOutline, sceneAiCall, languageDirective);
+    const captureDecision = await decideCaptureForScene(
+      safeOutline,
+      sceneAiCall,
+      languageDirective,
+    );
     if (captureDecision?.needsCapture) {
       const asset = await requestWebCapture(captureDecision, stageId);
       if (asset && asset.format === 'image') {

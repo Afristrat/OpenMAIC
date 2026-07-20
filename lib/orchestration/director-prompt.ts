@@ -31,8 +31,18 @@ export function buildDirectorPrompt(
   userProfile?: { nickname?: string; bio?: string },
   whiteboardOpen?: boolean,
 ): string {
+  const totalRecordedTurns = agentResponses.length;
+  const responseCounts = agentResponses.reduce<Map<string, number>>((counts, response) => {
+    counts.set(response.agentId, (counts.get(response.agentId) ?? 0) + 1);
+    return counts;
+  }, new Map());
   const agentList = agents
-    .map((a) => `- id: "${a.id}", name: "${a.name}", role: ${a.role}, priority: ${a.priority}`)
+    .map((a) => {
+      const turns = responseCounts.get(a.id) ?? 0;
+      const observedShare =
+        totalRecordedTurns === 0 ? 0 : Math.round((turns / totalRecordedTurns) * 100);
+      return `- id: "${a.id}", name: "${a.name}", role: ${a.role}, mechanism: ${a.mechanismId ?? 'custom'}, target_turn_share: ${a.interactionWeight ?? a.priority}%, observed_turns: ${turns}, observed_turn_share: ${observedShare}%`;
+    })
     .join('\n');
 
   const respondedList =

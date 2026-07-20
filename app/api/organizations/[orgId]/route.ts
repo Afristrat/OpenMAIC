@@ -12,6 +12,7 @@ import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response
 import type { OrgMemberRole } from '@/lib/supabase/types';
 import { validateBody } from '@/lib/api/validate';
 import { organizationPatchSchema } from '@/lib/api/schemas';
+import { validatePersonaSettings } from '@/lib/agents/persona-validation';
 
 async function getUserMembership(
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
@@ -90,6 +91,11 @@ export async function PATCH(
   const validation = validateBody(organizationPatchSchema, rawBody);
   if (!validation.success) return validation.response;
   const body = validation.data;
+
+  const personaValidationError = validatePersonaSettings(body.settings);
+  if (personaValidationError) {
+    return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, personaValidationError);
+  }
 
   const updates: Record<string, unknown> = {};
 

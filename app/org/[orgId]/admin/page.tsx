@@ -31,9 +31,12 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import type { Organization, OrgMemberRole, OrgSector } from '@/lib/supabase/types';
-import { TTS_PROVIDERS } from '@/lib/audio/constants';
-import { DEFAULT_TEACHING_PROFILE, teachingProfileFromSettings } from '@/lib/org/teaching-profile';
-import { AGENT_DEFAULT_AVATARS } from '@/lib/constants/agent-defaults';
+import {
+  DEFAULT_LEARNING_DESIGN,
+  learningDesignFromSettings,
+  type LearningDesignSettings,
+} from '@/lib/agents/persona-catalog';
+import { AgentRosterSettings } from '@/components/org/agent-roster-settings';
 
 interface MemberWithProfile {
   id: string;
@@ -83,10 +86,8 @@ export default function OrgAdminPage() {
   const [editName, setEditName] = useState('');
   const [editSector, setEditSector] = useState<string>('');
   const [editLocale, setEditLocale] = useState('fr-FR');
-  const [teacherName, setTeacherName] = useState(DEFAULT_TEACHING_PROFILE.name);
-  const [teacherAvatar, setTeacherAvatar] = useState(DEFAULT_TEACHING_PROFILE.avatar);
-  const [teacherProviderId, setTeacherProviderId] = useState(DEFAULT_TEACHING_PROFILE.providerId);
-  const [teacherVoiceId, setTeacherVoiceId] = useState(DEFAULT_TEACHING_PROFILE.voiceId);
+  const [learningDesign, setLearningDesign] =
+    useState<LearningDesignSettings>(DEFAULT_LEARNING_DESIGN);
   const [managedTtsIds, setManagedTtsIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -119,11 +120,7 @@ export default function OrgAdminPage() {
       setEditName(orgData.name);
       setEditSector(orgData.sector ?? '');
       setEditLocale(orgData.default_locale);
-      const profile = teachingProfileFromSettings(orgData.settings);
-      setTeacherName(profile.name);
-      setTeacherAvatar(profile.avatar);
-      setTeacherProviderId(profile.providerId);
-      setTeacherVoiceId(profile.voiceId);
+      setLearningDesign(learningDesignFromSettings(orgData.settings));
     } catch {
       router.push('/app');
     }
@@ -175,8 +172,23 @@ export default function OrgAdminPage() {
 
   const handleSaveSettings = async () => {
     if (!isAdmin) return;
+    const invalidWeightLevel = (['guided', 'balanced', 'immersive'] as const).find(
+      (level) =>
+        learningDesign.personas
+          .filter((persona) => persona.enabled)
+          .reduce((total, persona) => total + persona.interactionWeights[level], 0) !== 100,
+    );
+    if (invalidWeightLevel) {
+      toast.error(t('org.weightsMustTotal'));
+      return;
+    }
     setSaving(true);
     try {
+      const professor = learningDesign.personas.find((persona) => persona.id === 'professor');
+      if (!professor) {
+        toast.error(t('org.weightsMustTotal'));
+        return;
+      }
       const res = await fetch(`/api/organizations/${orgId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -186,11 +198,12 @@ export default function OrgAdminPage() {
           default_locale: editLocale,
           settings: {
             ...(org?.settings ?? {}),
+            learningDesign,
             teachingProfile: {
-              name: teacherName.trim(),
-              avatar: teacherAvatar,
-              providerId: teacherProviderId,
-              voiceId: teacherVoiceId,
+              name: professor.defaultName.trim(),
+              avatar: professor.avatar,
+              providerId: professor.providerId,
+              voiceId: professor.voiceId,
             },
           },
         }),
@@ -382,59 +395,12 @@ export default function OrgAdminPage() {
               <label className="mb-1 block text-sm font-medium">{t('org.name')}</label>
               <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
             </div>
-            <div className="sm:col-span-2 border-t pt-4">
-              <p className="mb-3 text-sm font-semibold">{t('org.teacherProfile')}</p>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="mb-1 block text-sm font-medium">{t('org.teacherName')}</label>
-                  <Input value={teacherName} onChange={(event) => setTeacherName(event.target.value)} />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium">{t('org.teacherAvatar')}</label>
-                  <div className="flex gap-2">
-                    {AGENT_DEFAULT_AVATARS.map((avatar) => (
-                      <button
-                        key={avatar}
-                        type="button"
-                        onClick={() => setTeacherAvatar(avatar)}
-                        className={`size-12 overflow-hidden rounded-full border-2 ${teacherAvatar === avatar ? 'border-primary' : 'border-transparent'}`}
-                      >
-                        <img src={avatar} alt="" className="size-full object-cover" />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium">{t('org.teacherVoiceProvider')}</label>
-                  <Select
-                    value={teacherProviderId}
-                    onValueChange={(providerId) => {
-                      setTeacherProviderId(providerId);
-                      setTeacherVoiceId(TTS_PROVIDERS[providerId as keyof typeof TTS_PROVIDERS]?.voices[0]?.id ?? 'default');
-                    }}
-                  >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {managedTtsIds.map((id) => (
-                        <SelectItem key={id} value={id}>{TTS_PROVIDERS[id as keyof typeof TTS_PROVIDERS]?.name ?? id}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium">{t('org.teacherVoice')}</label>
-                  <Select value={teacherVoiceId} onValueChange={setTeacherVoiceId}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {(TTS_PROVIDERS[teacherProviderId as keyof typeof TTS_PROVIDERS]?.voices ?? []).map((voice) => (
-                        <SelectItem key={voice.id} value={voice.id}>{voice.name} · {voice.gender}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <p className="mt-3 text-xs text-muted-foreground">{t('org.teacherProfileHint')}</p>
-            </div>
+            <AgentRosterSettings
+              value={learningDesign}
+              onChange={setLearningDesign}
+              managedTtsIds={managedTtsIds}
+              t={t}
+            />
             <div>
               <label className="mb-1 block text-sm font-medium">{t('org.sector')}</label>
               <Select value={editSector} onValueChange={setEditSector}>

@@ -13,6 +13,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { ServerProvidersInit } from '@/components/server-providers-init';
 import { AccessCodeGuard } from '@/components/access-code-guard';
 import { HtmlDirectionManager } from '@/components/html-direction-manager';
+import { SidebarLayout } from '@/components/sidebar-layout';
 
 const inter = localFont({
   src: '../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2',
@@ -51,7 +52,9 @@ export default function RootLayout({
           <I18nProvider>
             <HtmlDirectionManager />
             <ServerProvidersInit />
-            <AccessCodeGuard>{children}</AccessCodeGuard>
+            <AccessCodeGuard>
+              <SidebarLayout>{children}</SidebarLayout>
+            </AccessCodeGuard>
             <Toaster position="top-center" />
           </I18nProvider>
         </ThemeProvider>

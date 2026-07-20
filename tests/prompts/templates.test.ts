@@ -31,6 +31,8 @@ const baseAgent: AgentConfig = {
     'wb_close',
   ],
   priority: 100,
+  interactionWeight: 28,
+  mechanismId: 'professor',
   createdAt: new Date(0),
   updatedAt: new Date(0),
   isDefault: true,
@@ -96,6 +98,8 @@ describe('no surviving placeholders', () => {
   test('director prompt', () => {
     const out = buildDirectorPrompt([baseAgent], 'No history', [], 0);
     expect(out).not.toMatch(UNRESOLVED_PLACEHOLDER);
+    expect(out).toContain('mechanism: professor');
+    expect(out).toContain('target_turn_share: 28%');
   });
 
   test('pbl-design prompt', () => {

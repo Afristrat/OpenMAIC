@@ -354,14 +354,23 @@ export async function loadGeneratedAgentsForStage(stageId: string): Promise<stri
   // Add new ones
   const ids: string[] = [];
   for (const record of records) {
+    const { voiceConfig, ...rest } = record;
     registry.addAgent({
-      ...record,
+      ...rest,
       allowedActions: getActionsForRole(record.role),
       isDefault: false,
       isGenerated: true,
       boundStageId: record.stageId,
       createdAt: new Date(record.createdAt),
       updatedAt: new Date(record.createdAt),
+      ...(voiceConfig
+        ? {
+            voiceConfig: {
+              providerId: voiceConfig.providerId as TTSProviderId,
+              voiceId: voiceConfig.voiceId,
+            },
+          }
+        : {}),
     });
     ids.push(record.id);
   }
@@ -383,6 +392,9 @@ export async function saveGeneratedAgents(
     avatar: string;
     color: string;
     priority: number;
+    interactionWeight?: number;
+    mechanismId?: string;
+    gender?: 'female' | 'male';
     voiceConfig?: { providerId: string; voiceId: string };
     voiceDesign?: VoiceDesign;
   }>,

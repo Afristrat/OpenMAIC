@@ -189,7 +189,11 @@ describe('classroom scene generation retries', () => {
       expect.objectContaining({
         languageModel,
         thinkingConfig,
-        userRequirements: expect.objectContaining({ requirement: 'Teach retry basics' }),
+        userRequirements: expect.objectContaining({
+          requirement: expect.stringContaining(
+            'Instructional approach: andragogy. Learner stage: adult-professional.',
+          ),
+        }),
       }),
     );
   });

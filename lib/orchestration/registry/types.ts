@@ -15,6 +15,9 @@ export interface AgentConfig {
   color: string; // UI theme color (hex)
   allowedActions: string[]; // Action types this agent can use
   priority: number; // Priority for director selection (1-10)
+  interactionWeight?: number; // Target share of agent turns (0-100)
+  mechanismId?: string; // Stable pedagogical mechanism id
+  gender?: 'female' | 'male';
   voiceConfig?: { providerId: TTSProviderId; modelId?: string; voiceId: string }; // Per-agent TTS voice selection
   voiceDesign?: VoiceDesign; // 3-layer vocal descriptor for auto voice (provider-neutral)
 
@@ -37,6 +40,9 @@ export interface AgentTemplate {
   color: string;
   allowedActions: string[];
   priority: number;
+  interactionWeight?: number;
+  mechanismId?: string;
+  gender?: 'female' | 'male';
   voiceConfig?: { providerId: TTSProviderId; modelId?: string; voiceId: string }; // Per-agent TTS voice selection
   voiceDesign?: VoiceDesign; // 3-layer vocal descriptor for auto voice (provider-neutral)
 
