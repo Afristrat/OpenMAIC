@@ -89,8 +89,7 @@ export default function SkillsPage(): React.ReactElement {
   const [isInstalling, setIsInstalling] = useState(false);
   const [removingSkillId, setRemovingSkillId] = useState<string | null>(null);
   const [expandedSkill, setExpandedSkill] = useState<string | null>(null);
-  const canManageSkills =
-    currentOrg?.userRole === 'admin' || currentOrg?.userRole === 'manager';
+  const canManageSkills = currentOrg?.userRole === 'admin' || currentOrg?.userRole === 'manager';
 
   const fetchSkills = useCallback(async () => {
     setIsLoading(true);

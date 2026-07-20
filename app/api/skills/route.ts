@@ -101,21 +101,29 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const parsed = parseSkillManifest(body.manifest);
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Invalid skill manifest', details: parsed.errors }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Invalid skill manifest', details: parsed.errors },
+      { status: 400 },
+    );
   }
   if (getSkill(parsed.skill.id)) {
-    return NextResponse.json({ error: 'A system skill already uses this identifier' }, { status: 409 });
+    return NextResponse.json(
+      { error: 'A system skill already uses this identifier' },
+      { status: 409 },
+    );
   }
 
-  const { error } = await createServiceSupabaseClient().from('organization_skills').upsert(
-    {
-      org_id: body.orgId,
-      skill_id: parsed.skill.id,
-      manifest: parsed.skill as unknown as Record<string, unknown>,
-      installed_by: auth.user.id,
-    },
-    { onConflict: 'org_id,skill_id' },
-  );
+  const { error } = await createServiceSupabaseClient()
+    .from('organization_skills')
+    .upsert(
+      {
+        org_id: body.orgId,
+        skill_id: parsed.skill.id,
+        manifest: parsed.skill as unknown as Record<string, unknown>,
+        installed_by: auth.user.id,
+      },
+      { onConflict: 'org_id,skill_id' },
+    );
   if (error) {
     return NextResponse.json({ error: 'Failed to install skill' }, { status: 500 });
   }

@@ -68,7 +68,9 @@ export function parseSkillManifest(
       errors: parsed.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`),
     };
   }
-  if (parsed.data.promptOverrides.some((override) => override.systemPromptAppend.startsWith('file:'))) {
+  if (
+    parsed.data.promptOverrides.some((override) => override.systemPromptAppend.startsWith('file:'))
+  ) {
     return { success: false, errors: ['promptOverrides: file references are not allowed'] };
   }
   const invalidPrompt = parsed.data.promptOverrides.find(

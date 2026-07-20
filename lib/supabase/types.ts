@@ -238,7 +238,9 @@ export type ClassroomTemplateInsert = Pick<ClassroomTemplate, 'name' | 'sector' 
   Partial<Omit<ClassroomTemplate, 'id' | 'name' | 'sector' | 'requirements' | 'created_at'>>;
 
 export type OrganizationSkillInsert = Pick<OrganizationSkill, 'org_id' | 'skill_id' | 'manifest'> &
-  Partial<Omit<OrganizationSkill, 'id' | 'org_id' | 'skill_id' | 'manifest' | 'created_at' | 'updated_at'>>;
+  Partial<
+    Omit<OrganizationSkill, 'id' | 'org_id' | 'skill_id' | 'manifest' | 'created_at' | 'updated_at'>
+  >;
 
 // ---------------------------------------------------------------------------
 // Update types (all fields optional except id)

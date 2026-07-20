@@ -1507,18 +1507,18 @@ export const commonFrFR = {
     personaLabels: {
       professor: { female: 'La Professeure IA', male: 'Le Professeur IA' },
       'teaching-assistant': {
-        female: "L’Assistante pédagogique",
-        male: "L’Assistant pédagogique",
+        female: 'L’Assistante pédagogique',
+        male: 'L’Assistant pédagogique',
       },
       joker: { female: 'La Rigolote', male: 'Le Rigolo' },
       curious: { female: 'La Curieuse', male: 'Le Curieux' },
       secretary: { female: 'La Secrétaire', male: 'Le Secrétaire' },
       thinker: { female: 'La Penseuse', male: 'Le Penseur' },
-      analyst: { female: "L’Analyste", male: "L’Analyste" },
+      analyst: { female: 'L’Analyste', male: 'L’Analyste' },
       coach: { female: 'La Coach', male: 'Le Coach' },
       'devils-advocate': {
-        female: "L’Avocate du Diable",
-        male: "L’Avocat du Diable",
+        female: 'L’Avocate du Diable',
+        male: 'L’Avocat du Diable',
       },
       creative: { female: 'La Créative', male: 'Le Créatif' },
     },
@@ -1731,7 +1731,8 @@ export const commonFrFR = {
   admin: {
     title: 'Administration',
     overview: "Vue d'ensemble",
-    overviewHint: 'Pilotez les capacités et les intégrations de la plateforme depuis un seul espace.',
+    overviewHint:
+      'Pilotez les capacités et les intégrations de la plateforme depuis un seul espace.',
     openConfiguration: 'Ouvrir la configuration',
     providers: 'Fournisseurs LLM',
     unauthorized: 'Accès réservé aux administrateurs',
