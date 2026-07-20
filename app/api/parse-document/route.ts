@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import JSZip from 'jszip';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { decodeOfficeXml } from '@/lib/document/decode-office-xml';
 
 const MAX_DOCUMENT_BYTES = 50 * 1024 * 1024;
 const TEXT_EXTENSIONS = new Set(['txt', 'md']);
@@ -8,21 +9,6 @@ const OFFICE_EXTENSIONS = new Set(['pptx', 'docx']);
 
 function extensionOf(fileName: string): string {
   return fileName.split('.').pop()?.toLowerCase() ?? '';
-}
-
-export function decodeOfficeXml(text: string): string {
-  return text
-    .replace(/<a:br\s*\/>|<w:br\s*\/>/g, '\n')
-    .replace(/<\/a:p>|<\/w:p>/g, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
-    .replace(/&amp;/g, '&')
-    .replace(/[ \t]+\n/g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
 }
 
 async function extractOfficeText(buffer: Buffer, extension: string): Promise<string> {

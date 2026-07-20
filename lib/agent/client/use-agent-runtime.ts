@@ -24,7 +24,7 @@ import {
 import type { AgentEvent } from '@earendil-works/pi-agent-core';
 import { useStageStore } from '@/lib/store/stage';
 import { getCurrentModelConfig } from '@/lib/utils/model-config';
-import type { SceneContextMap } from '@/app/api/agent/edit/route';
+import type { SceneContextMap } from '@/lib/agent/scene-context-map';
 import { mergeAssistantParts, type PiPart } from './merge-assistant-parts';
 import { planRegenerateApply, type RegenerateDetails } from './apply-regenerate';
 import { applyScenePatchInSync } from './apply-slide-content';

@@ -15,7 +15,7 @@ import { buildAgent, buildSystemPrompt } from '@/lib/agent/runtime/build-agent';
 import { buildToolset } from '@/lib/agent/tools/registry';
 import { callLLM } from '@/lib/ai/llm';
 import { createLogger } from '@/lib/logger';
-import type { SceneContext } from '@/lib/agent/tools/regenerate-scene-actions';
+import type { SceneContextMap } from '@/lib/agent/scene-context-map';
 
 const log = createLogger('MAIC Agent');
 
@@ -30,8 +30,6 @@ export const maxDuration = 300;
  * Keyed by scene id; the client reads `useStageStore` to build this so the
  * server never has to access a (non-existent) server-side scene store.
  */
-export type SceneContextMap = Record<string, SceneContext>;
-
 interface AgentEditBody {
   message: string;
   scene?: { id: string; title: string };

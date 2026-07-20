@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { decodeOfficeXml } from '@/app/api/parse-document/route';
+import { decodeOfficeXml } from '@/lib/document/decode-office-xml';
 
 describe('decodeOfficeXml', () => {
   it('extracts readable paragraphs and decodes entities', () => {

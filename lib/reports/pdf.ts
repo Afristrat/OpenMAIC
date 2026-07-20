@@ -22,9 +22,6 @@ interface ReportFormation {
   completion_rate: number;
 }
 
-const FONT_REGULAR = require.resolve('@fontsource/roboto/files/roboto-latin-400-normal.woff');
-const FONT_BOLD = require.resolve('@fontsource/roboto/files/roboto-latin-700-normal.woff');
-
 function safeDate(value: string): string {
   if (!value) return '—';
   const date = new Date(value);
@@ -46,9 +43,7 @@ export async function createInstitutionalReportPdf(input: {
   formations: ReportFormation[];
 }): Promise<Buffer> {
   const document = new PDFDocument({ size: 'A4', margin: 46, bufferPages: true });
-  document.registerFont('Qalem', FONT_REGULAR);
-  document.registerFont('QalemBold', FONT_BOLD);
-  document.font('Qalem');
+  document.font('Helvetica');
 
   const chunks: Buffer[] = [];
   document.on('data', (chunk: Buffer) => chunks.push(chunk));
@@ -57,9 +52,9 @@ export async function createInstitutionalReportPdf(input: {
     document.on('error', reject);
   });
 
-  document.fillColor('#7c3aed').font('QalemBold').fontSize(24).text('Qalem');
+  document.fillColor('#7c3aed').font('Helvetica-Bold').fontSize(24).text('Qalem');
   document.fillColor('#111827').fontSize(18).text('Rapport institutionnel', { align: 'right' });
-  document.moveDown(0.4).font('Qalem').fontSize(11).fillColor('#4b5563');
+  document.moveDown(0.4).font('Helvetica').fontSize(11).fillColor('#4b5563');
   document.text(input.organizationName);
   document.text(
     `Période : ${safeDate(input.dateFrom ?? '')} au ${safeDate(input.dateTo ?? '')}`,
@@ -78,10 +73,10 @@ export async function createInstitutionalReportPdf(input: {
   metricCards.forEach(([label, value], index) => {
     const x = 46 + index * (cardWidth + 8);
     document.roundedRect(x, cardY, cardWidth, 58, 6).fillAndStroke('#f5f3ff', '#ddd6fe');
-    document.fillColor('#6d28d9').font('QalemBold').fontSize(15).text(value, x + 10, cardY + 10, {
+    document.fillColor('#6d28d9').font('Helvetica-Bold').fontSize(15).text(value, x + 10, cardY + 10, {
       width: cardWidth - 20,
     });
-    document.fillColor('#4b5563').font('Qalem').fontSize(8.5).text(label, x + 10, cardY + 35, {
+    document.fillColor('#4b5563').font('Helvetica').fontSize(8.5).text(label, x + 10, cardY + 35, {
       width: cardWidth - 20,
     });
   });
@@ -89,7 +84,7 @@ export async function createInstitutionalReportPdf(input: {
 
   const section = (title: string) => {
     if (document.y > 700) document.addPage();
-    document.fillColor('#111827').font('QalemBold').fontSize(14).text(title);
+    document.fillColor('#111827').font('Helvetica-Bold').fontSize(14).text(title);
     document.moveDown(0.5);
   };
   const row = (columns: Array<{ text: string; width: number }>, header = false) => {
@@ -97,7 +92,10 @@ export async function createInstitutionalReportPdf(input: {
     const y = document.y;
     if (header) document.rect(46, y - 3, 503, 22).fill('#ede9fe');
     let x = 52;
-    document.fillColor('#1f2937').font(header ? 'QalemBold' : 'Qalem').fontSize(header ? 8.5 : 8);
+    document
+      .fillColor('#1f2937')
+      .font(header ? 'Helvetica-Bold' : 'Helvetica')
+      .fontSize(header ? 8.5 : 8);
     for (const column of columns) {
       document.text(column.text, x, y + 3, { width: column.width, ellipsis: true, lineBreak: false });
       x += column.width;
@@ -150,7 +148,7 @@ export async function createInstitutionalReportPdf(input: {
   for (let page = 0; page < pageCount; page += 1) {
     document.switchToPage(page);
     document
-      .font('Qalem')
+      .font('Helvetica')
       .fontSize(8)
       .fillColor('#6b7280')
       .text(`Qalem — page ${page + 1}/${pageCount}`, 46, 806, { width: 503, align: 'center' });

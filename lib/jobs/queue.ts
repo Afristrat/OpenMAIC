@@ -21,16 +21,22 @@ const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
  * Parse a redis:// URL into the IORedis-compatible connection object that
  * BullMQ expects. Falls back to localhost defaults when fields are missing.
  */
-function parseRedisUrl(url: string): { host: string; port: number; password?: string } {
+function parseRedisUrl(url: string): {
+  host: string;
+  port: number;
+  password?: string;
+  lazyConnect: true;
+} {
   try {
     const parsed = new URL(url);
     return {
       host: parsed.hostname || 'localhost',
       port: parsed.port ? Number(parsed.port) : 6379,
+      lazyConnect: true,
       ...(parsed.password ? { password: decodeURIComponent(parsed.password) } : {}),
     };
   } catch {
-    return { host: 'localhost', port: 6379 };
+    return { host: 'localhost', port: 6379, lazyConnect: true };
   }
 }
 

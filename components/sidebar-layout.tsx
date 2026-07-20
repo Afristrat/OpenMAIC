@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { useI18n } from '@/lib/hooks/use-i18n';
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { NavigationSidebar } from './navigation-sidebar';
 import { cn } from '@/lib/utils';
 
@@ -65,7 +65,9 @@ export function SidebarLayout({
 
   return (
     <>
-      <NavigationSidebar />
+      <Suspense fallback={null}>
+        <NavigationSidebar />
+      </Suspense>
       <main
         className={cn(
           'min-h-screen transition-all duration-300',

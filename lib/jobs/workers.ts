@@ -13,7 +13,7 @@
  */
 
 import { Worker, type Job } from 'bullmq';
-import { incrementCounter } from '@/app/api/metrics/route';
+import { incrementCounter } from '@/lib/metrics';
 import { createLogger } from '@/lib/logger';
 import { isFeatureEnabled } from '@/lib/flags';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
