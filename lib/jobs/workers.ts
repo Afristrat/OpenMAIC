@@ -287,7 +287,7 @@ export function startAllWorkers(): void {
           generationJob.request as unknown as VideoGenerationOptions,
         );
 
-        const match = result.url.match(/^data:(video\/[a-z0-9.+-]+);base64,(.+)$/is);
+        const match = result.url.match(/^data:(video\/[a-z0-9.+-]+);base64,(.+)$/i);
         if (!match) throw new Error('Managed video provider returned no embedded video');
         const [, contentType, encodedVideo] = match;
         const extension = contentType === 'video/webm' ? 'webm' : 'mp4';
