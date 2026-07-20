@@ -8,7 +8,7 @@ describe('bundled scene plugins', () => {
       .sort();
 
     expect(pluginIds).toEqual(['code-sandbox', 'lab-simulation']);
-    expect(readPluginHtml('code-sandbox')).toContain('<!DOCTYPE html>');
-    expect(readPluginHtml('lab-simulation')).toContain('<!DOCTYPE html>');
+    expect(readPluginHtml('code-sandbox')).toMatch(/<!doctype html>/i);
+    expect(readPluginHtml('lab-simulation')).toMatch(/<!doctype html>/i);
   });
 });
