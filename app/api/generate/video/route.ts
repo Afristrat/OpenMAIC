@@ -17,11 +17,7 @@
  */
 
 import { NextRequest } from 'next/server';
-import {
-  generateVideo,
-  normalizeVideoOptions,
-  VIDEO_PROVIDERS,
-} from '@/lib/media/video-providers';
+import { generateVideo, normalizeVideoOptions, VIDEO_PROVIDERS } from '@/lib/media/video-providers';
 import {
   isServerConfiguredProvider,
   resolveVideoApiKey,

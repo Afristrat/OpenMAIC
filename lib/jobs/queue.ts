@@ -112,7 +112,9 @@ export async function enqueueVideoCapsule(data: { capsuleId: string }): Promise<
   return job.id!;
 }
 
-export async function enqueueVideoGeneration(data: { videoGenerationJobId: string }): Promise<string> {
+export async function enqueueVideoGeneration(data: {
+  videoGenerationJobId: string;
+}): Promise<string> {
   const job = await videoGenerationQueue.add('generate', data, { attempts: 1 });
   return job.id!;
 }

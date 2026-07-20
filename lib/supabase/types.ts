@@ -521,10 +521,7 @@ export type VideoGenerationJobInsert = Pick<
   Partial<Pick<VideoGenerationJobRow, 'model_id' | 'status'>>;
 
 export type VideoGenerationJobUpdate = Partial<
-  Pick<
-    VideoGenerationJobRow,
-    'status' | 'storage_path' | 'result_metadata' | 'error'
-  >
+  Pick<VideoGenerationJobRow, 'status' | 'storage_path' | 'result_metadata' | 'error'>
 >;
 
 // ---------------------------------------------------------------------------
