@@ -94,7 +94,7 @@ export default function SkillsPage(): React.ReactElement {
   const [expandedSkill, setExpandedSkill] = useState<string | null>(null);
   const canManageSkills = Boolean(
     currentOrg &&
-      (isSuperAdmin || currentOrg.userRole === 'admin' || currentOrg.userRole === 'manager'),
+    (isSuperAdmin || currentOrg.userRole === 'admin' || currentOrg.userRole === 'manager'),
   );
 
   const fetchSkills = useCallback(async () => {
