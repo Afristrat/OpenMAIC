@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 const MAX_MANIFEST_BYTES = 256 * 1024;
+const E2E_TEST_MODE = process.env.NEXT_PUBLIC_E2E_TEST_MODE === 'true';
 
 // ── Types ───────────────────────────────────────────────────────────
 
@@ -95,7 +96,7 @@ export default function SkillsPage(): React.ReactElement {
     setIsLoading(true);
     try {
       const searchParams = new URLSearchParams({ locale });
-      if (currentOrg) searchParams.set('orgId', currentOrg.id);
+      if (currentOrg && !E2E_TEST_MODE) searchParams.set('orgId', currentOrg.id);
       const res = await fetch(`/api/skills?${searchParams.toString()}`);
       const json = (await res.json()) as { success: boolean; skills: SkillData[] };
       if (res.ok && json.success) {
