@@ -46,6 +46,8 @@ import {
   learningDesignFromSettings,
   type LearningDesignSettings,
 } from '@/lib/agents/persona-catalog';
+import { getSkill, registerSkill } from '@/lib/skills/registry';
+import { parseSkillManifest } from '@/lib/skills/manifest-schema';
 
 const log = createLogger('Classroom');
 
@@ -127,6 +129,24 @@ export async function generateClassroom(
   },
 ): Promise<GenerateClassroomResult> {
   const { requirement, pdfContent } = input;
+  let activeSkillId = input.activeSkillId;
+  if (activeSkillId && !getSkill(activeSkillId)) {
+    const { data: organizationSkill, error } = await createServiceSupabaseClient()
+      .from('organization_skills')
+      .select('manifest')
+      .eq('org_id', input.orgId)
+      .eq('skill_id', activeSkillId)
+      .single();
+    if (error || !organizationSkill) {
+      throw new Error(`Skill "${activeSkillId}" is not installed for this organization`);
+    }
+    const parsed = parseSkillManifest(organizationSkill.manifest);
+    if (!parsed.success) {
+      throw new Error(`Installed skill "${activeSkillId}" has an invalid manifest`);
+    }
+    activeSkillId = `tenant:${input.orgId}:${parsed.skill.id}`;
+    registerSkill({ ...parsed.skill, id: activeSkillId });
+  }
   let teachingProfile = DEFAULT_TEACHING_PROFILE;
   let learningDesign: LearningDesignSettings = DEFAULT_LEARNING_DESIGN;
   try {
@@ -239,7 +259,7 @@ export async function generateClassroom(
   const instructionalDirective = `Instructional approach: ${learningApproach}. Learner stage: ${learningDesign.audienceStage}. Proficiency: ${learningDesign.expertiseLevel}. Interaction level: ${learningDesign.interactionLevel}. Adapt tone, scaffolding, examples and learner autonomy accordingly.`;
   const requirements: UserRequirements = {
     requirement: `${requirement}\n\n${instructionalDirective}`,
-    activeSkillId: input.activeSkillId,
+    activeSkillId,
   };
   const skillEngineEnabled = await isFeatureEnabled('skill_engine');
   const vocationalActive = resolveVocationalActive(requirements);

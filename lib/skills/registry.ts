@@ -55,6 +55,12 @@ export function listSkills(): Skill[] {
   return Array.from(skillMap.values());
 }
 
+/** Register one already validated tenant skill for the current server process. */
+export function registerSkill(skill: Skill): void {
+  ensureInitialized();
+  skillMap.set(skill.id, skill);
+}
+
 /** Return the override declared by a skill for one concrete prompt template. */
 export function getPromptOverride(
   skillId: string,

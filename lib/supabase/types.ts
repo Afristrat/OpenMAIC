@@ -175,6 +175,16 @@ export interface ClassroomTemplate {
   created_at: string;
 }
 
+export interface OrganizationSkill {
+  id: string;
+  org_id: string;
+  skill_id: string;
+  manifest: Record<string, unknown>;
+  installed_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // ---------------------------------------------------------------------------
 // Insert types (omit server-generated fields)
 // ---------------------------------------------------------------------------
@@ -227,6 +237,9 @@ export type SharedClassroomInsert = Pick<SharedClassroom, 'stage_id' | 'org_id'>
 export type ClassroomTemplateInsert = Pick<ClassroomTemplate, 'name' | 'sector' | 'requirements'> &
   Partial<Omit<ClassroomTemplate, 'id' | 'name' | 'sector' | 'requirements' | 'created_at'>>;
 
+export type OrganizationSkillInsert = Pick<OrganizationSkill, 'org_id' | 'skill_id' | 'manifest'> &
+  Partial<Omit<OrganizationSkill, 'id' | 'org_id' | 'skill_id' | 'manifest' | 'created_at' | 'updated_at'>>;
+
 // ---------------------------------------------------------------------------
 // Update types (all fields optional except id)
 // ---------------------------------------------------------------------------
@@ -243,6 +256,7 @@ export type AgentConfigUpdate = Partial<Omit<AgentConfig, 'id' | 'created_at' | 
 export type CurriculumLinkUpdate = Partial<Omit<CurriculumLink, 'id' | 'created_at'>>;
 export type SharedClassroomUpdate = Partial<Pick<SharedClassroom, 'visibility'>>;
 export type ClassroomTemplateUpdate = Partial<Omit<ClassroomTemplate, 'id' | 'created_at'>>;
+export type OrganizationSkillUpdate = Pick<OrganizationSkill, 'manifest'>;
 
 // ---------------------------------------------------------------------------
 // Pedagogy Telemetry & Consent types
@@ -578,6 +592,11 @@ export interface Database {
         Row: ClassroomTemplate;
         Insert: ClassroomTemplateInsert;
         Update: ClassroomTemplateUpdate;
+      };
+      organization_skills: {
+        Row: OrganizationSkill;
+        Insert: OrganizationSkillInsert;
+        Update: OrganizationSkillUpdate;
       };
       certificates: {
         Row: CertificateDbRow;

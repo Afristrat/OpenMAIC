@@ -1,12 +1,26 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useI18n } from '@/lib/hooks/use-i18n';
+import { useOrganizations } from '@/lib/hooks/use-organizations';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, ChevronDown, ChevronUp, Users, FileText, Globe, Sparkles } from 'lucide-react';
+import {
+  BookOpen,
+  ChevronDown,
+  ChevronUp,
+  Users,
+  FileText,
+  Globe,
+  Sparkles,
+  Upload,
+  Trash2,
+} from 'lucide-react';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+
+const MAX_MANIFEST_BYTES = 256 * 1024;
 
 // ── Types ───────────────────────────────────────────────────────────
 
@@ -37,6 +51,7 @@ interface SkillData {
   templateCount: number;
   agents: SkillAgent[];
   templates: SkillTemplate[];
+  source: 'system' | 'organization';
 }
 
 // ── Category helpers ────────────────────────────────────────────────
@@ -66,17 +81,25 @@ const ROLE_COLORS: Record<string, string> = {
 export default function SkillsPage(): React.ReactElement {
   const { t, locale } = useI18n();
   const router = useRouter();
+  const { currentOrg } = useOrganizations();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [skills, setSkills] = useState<SkillData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInstalling, setIsInstalling] = useState(false);
+  const [removingSkillId, setRemovingSkillId] = useState<string | null>(null);
   const [expandedSkill, setExpandedSkill] = useState<string | null>(null);
+  const canManageSkills =
+    currentOrg?.userRole === 'admin' || currentOrg?.userRole === 'manager';
 
   const fetchSkills = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/skills?locale=${locale}`);
+      const searchParams = new URLSearchParams({ locale });
+      if (currentOrg) searchParams.set('orgId', currentOrg.id);
+      const res = await fetch(`/api/skills?${searchParams.toString()}`);
       const json = (await res.json()) as { success: boolean; skills: SkillData[] };
-      if (json.success) {
+      if (res.ok && json.success) {
         setSkills(json.skills);
       }
     } catch {
@@ -84,7 +107,7 @@ export default function SkillsPage(): React.ReactElement {
     } finally {
       setIsLoading(false);
     }
-  }, [locale]);
+  }, [currentOrg, locale]);
 
   useEffect(() => {
     void fetchSkills();
@@ -98,12 +121,95 @@ export default function SkillsPage(): React.ReactElement {
     router.push(`/app?skill=${encodeURIComponent(skillId)}`);
   };
 
+  const handleInstallSkill = async (file: File): Promise<void> => {
+    if (!currentOrg) return;
+    if (file.size > MAX_MANIFEST_BYTES) {
+      toast.error(t('skills.fileTooLarge'));
+      return;
+    }
+    setIsInstalling(true);
+    try {
+      const manifest = JSON.parse(await file.text()) as unknown;
+      const response = await fetch('/api/skills', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orgId: currentOrg.id, manifest }),
+      });
+      const result = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(result.error ?? t('skills.installFailed'));
+      toast.success(t('skills.installed'));
+      await fetchSkills();
+    } catch (error) {
+      toast.error(
+        error instanceof SyntaxError
+          ? t('skills.invalidFile')
+          : error instanceof Error
+            ? error.message
+            : t('skills.installFailed'),
+      );
+    } finally {
+      setIsInstalling(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveSkill = async (skill: SkillData): Promise<void> => {
+    if (!currentOrg || !window.confirm(t('skills.removeConfirm'))) return;
+    setRemovingSkillId(skill.id);
+    try {
+      const searchParams = new URLSearchParams({ orgId: currentOrg.id, skillId: skill.id });
+      const response = await fetch(`/api/skills?${searchParams.toString()}`, {
+        method: 'DELETE',
+      });
+      const result = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(result.error ?? t('skills.removeFailed'));
+      toast.success(t('skills.removed'));
+      await fetchSkills();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('skills.removeFailed'));
+    } finally {
+      setRemovingSkillId(null);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       {/* Header */}
-      <div className="mb-8 flex items-center gap-3">
-        <BookOpen className="h-7 w-7 text-primary" />
-        <h1 className="text-2xl font-bold">{t('skills.title')}</h1>
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <BookOpen className="h-7 w-7 text-primary" />
+          <div>
+            <h1 className="text-2xl font-bold">{t('skills.title')}</h1>
+            {canManageSkills && (
+              <p className="mt-1 text-sm text-muted-foreground">{t('skills.installHint')}</p>
+            )}
+          </div>
+        </div>
+        {canManageSkills && (
+          <>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              aria-label={t('skills.add')}
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) void handleInstallSkill(file);
+              }}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-2"
+              disabled={isInstalling}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Upload className="h-4 w-4" />
+              {isInstalling ? t('skills.installing') : t('skills.add')}
+            </Button>
+          </>
+        )}
       </div>
 
       {/* Loading */}
@@ -141,6 +247,11 @@ export default function SkillsPage(): React.ReactElement {
                     <h2 className="text-lg font-semibold leading-tight">{skill.name}</h2>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
                       <Badge className={cn('text-[10px]', categoryClass)}>{skill.category}</Badge>
+                      {skill.source === 'organization' && (
+                        <Badge variant="outline" className="text-[10px]">
+                          {t('skills.organizationBadge')}
+                        </Badge>
+                      )}
                       <span className="text-xs text-muted-foreground">v{skill.version}</span>
                       <span className="text-xs text-muted-foreground">&mdash; {skill.author}</span>
                     </div>
@@ -249,15 +360,29 @@ export default function SkillsPage(): React.ReactElement {
                 )}
 
                 {/* Use button */}
-                <Button
-                  variant="default"
-                  size="sm"
-                  className="w-full gap-2"
-                  onClick={() => handleUseSkill(skill.id)}
-                >
-                  <Sparkles className="h-4 w-4" />
-                  {t('skills.use')}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="flex-1 gap-2"
+                    onClick={() => handleUseSkill(skill.id)}
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    {t('skills.use')}
+                  </Button>
+                  {canManageSkills && skill.source === 'organization' && (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      aria-label={t('skills.remove')}
+                      disabled={removingSkillId === skill.id}
+                      onClick={() => void handleRemoveSkill(skill)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
             );
           })}
