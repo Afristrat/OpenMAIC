@@ -33,6 +33,7 @@ import {
 import type { Organization, OrgMemberRole, OrgSector } from '@/lib/supabase/types';
 import { TTS_PROVIDERS } from '@/lib/audio/constants';
 import { DEFAULT_TEACHING_PROFILE, teachingProfileFromSettings } from '@/lib/org/teaching-profile';
+import { AGENT_DEFAULT_AVATARS } from '@/lib/constants/agent-defaults';
 
 interface MemberWithProfile {
   id: string;
@@ -53,7 +54,6 @@ interface OrgWithRole extends Organization {
 const SECTORS: OrgSector[] = ['healthcare', 'legal', 'tech', 'finance', 'education', 'industry'];
 const ROLES: OrgMemberRole[] = ['admin', 'manager', 'formateur', 'apprenant'];
 const LOCALES = ['fr-FR', 'ar-MA', 'en-US', 'zh-CN'];
-const TEACHER_AVATARS = ['/avatars/teacher-2.png', '/avatars/teacher.png', '/avatars/instructor.png'];
 
 const ROLE_ICONS: Record<OrgMemberRole, typeof Crown> = {
   admin: Crown,
@@ -392,7 +392,7 @@ export default function OrgAdminPage() {
                 <div>
                   <label className="mb-1 block text-sm font-medium">{t('org.teacherAvatar')}</label>
                   <div className="flex gap-2">
-                    {TEACHER_AVATARS.map((avatar) => (
+                    {AGENT_DEFAULT_AVATARS.map((avatar) => (
                       <button
                         key={avatar}
                         type="button"
