@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   Home,
@@ -57,6 +57,7 @@ export function NavigationSidebar(): React.ReactElement {
   const { isSuperAdmin } = useIsSuperAdmin();
   const { isSyncing, lastSyncAt, isAuthenticated: isSyncAuthenticated, syncNow } = useSync();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
 
   const [collapsed, setCollapsed] = useState(false);
@@ -173,7 +174,12 @@ export function NavigationSidebar(): React.ReactElement {
 
   const isActive = (href: string): boolean => {
     if (href === '/app') return pathname === '/app';
-    const basePath = href.split('?')[0];
+    const [basePath, query] = href.split('?');
+    if (basePath === '/admin' && pathname === '/admin') {
+      const expectedTab = new URLSearchParams(query ?? '').get('tab');
+      const currentTab = searchParams.get('tab');
+      return expectedTab ? currentTab === expectedTab : !currentTab;
+    }
     return pathname === basePath || pathname.startsWith(basePath + '/');
   };
 

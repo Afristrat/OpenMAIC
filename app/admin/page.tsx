@@ -68,6 +68,7 @@ import { XAPITab } from '@/components/admin/xapi-tab';
 import type { EditingModel } from '@/lib/types/settings';
 
 type AdminSection =
+  | 'overview'
   | 'providers'
   | 'image'
   | 'video'
@@ -246,7 +247,7 @@ function AdminPageContent(): React.ReactElement {
   const setASRProvider = useSettingsStore((state) => state.setASRProvider);
 
   // Navigation
-  const [activeSection, setActiveSection] = useState<AdminSection>(tabParam ?? 'providers');
+  const [activeSection, setActiveSection] = useState<AdminSection>(tabParam ?? 'overview');
   const [selectedProviderId, setSelectedProviderId] = useState<ProviderId>(providerId);
   const [selectedPdfProviderId, setSelectedPdfProviderId] = useState<PDFProviderId>(pdfProviderId);
   const [selectedWebSearchProviderId, setSelectedWebSearchProviderId] =
@@ -519,6 +520,16 @@ function AdminPageContent(): React.ReactElement {
   // Get header content based on section
   const getHeaderContent = (): React.ReactNode => {
     switch (activeSection) {
+      case 'overview':
+        return (
+          <>
+            <Shield className="h-6 w-6 text-primary" />
+            <div>
+              <h2 className="text-lg font-semibold">{t('admin.title')}</h2>
+              <p className="text-xs text-muted-foreground">{t('admin.overviewHint')}</p>
+            </div>
+          </>
+        );
       case 'providers':
         if (selectedProvider) {
           return (
@@ -746,6 +757,19 @@ function AdminPageContent(): React.ReactElement {
             <Shield className="h-5 w-5 text-primary" />
             <h1 className="text-sm font-semibold truncate">{t('admin.title')}</h1>
           </div>
+
+          <button
+            onClick={() => setActiveSection('overview')}
+            className={cn(
+              'w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors text-left min-w-0',
+              activeSection === 'overview'
+                ? 'bg-primary/10 text-primary font-medium'
+                : 'hover:bg-muted',
+            )}
+          >
+            <Shield className="h-4 w-4 shrink-0" />
+            <span className="truncate">{t('admin.overview')}</span>
+          </button>
 
           <button
             onClick={() => setActiveSection('providers')}
@@ -1074,6 +1098,31 @@ function AdminPageContent(): React.ReactElement {
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-5">
+            {activeSection === 'overview' && (
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {([
+                  ['providers', Box, 'settings.providers'],
+                  ['image', ImageIcon, 'settings.imageSettings'],
+                  ['video', Film, 'settings.videoSettings'],
+                  ['tts', Volume2, 'settings.ttsSettings'],
+                  ['asr', Mic, 'settings.asrSettings'],
+                  ['pedagogy', Brain, 'admin.pedagogy.title'],
+                ] as const).map(([section, Icon, label]) => (
+                  <button
+                    key={section}
+                    type="button"
+                    onClick={() => setActiveSection(section)}
+                    className="rounded-xl border bg-card p-5 text-left transition-colors hover:border-primary/50 hover:bg-muted/30"
+                  >
+                    <Icon className="mb-4 h-6 w-6 text-primary" />
+                    <p className="font-semibold">{t(label)}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {t('admin.openConfiguration')}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            )}
             {activeSection === 'providers' && selectedProvider && (
               <ProviderConfigPanel
                 provider={selectedProvider}

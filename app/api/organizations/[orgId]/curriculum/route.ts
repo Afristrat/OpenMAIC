@@ -47,6 +47,67 @@ export async function GET(
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Not a member of this organization');
   }
 
+  const { data: sharedClassrooms, error: sharedError } = await supabase
+    .from('shared_classrooms')
+    .select('stage_id')
+    .eq('org_id', orgId);
+  const { data: ownedStages, error: ownedError } = await supabase
+    .from('stages')
+    .select('id')
+    .eq('org_id', orgId);
+
+  if (sharedError || ownedError) {
+    return apiError(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      500,
+      'Failed to fetch curriculum classrooms',
+      sharedError?.message ?? ownedError?.message,
+    );
+  }
+
+  const orgStageIds = [
+    ...new Set([
+      ...(sharedClassrooms ?? []).map((classroom) => classroom.stage_id),
+      ...(ownedStages ?? []).map((stage) => stage.id),
+    ]),
+  ];
+
+  let curriculumStages: Array<{
+    id: string;
+    name: string;
+    scene_count: number;
+    type_badges: string[];
+  }> = [];
+  if (orgStageIds.length > 0) {
+    const [{ data: stages, error: stagesError }, { data: scenes, error: scenesError }] =
+      await Promise.all([
+        supabase.from('stages').select('id, name').in('id', orgStageIds),
+        supabase.from('scenes').select('stage_id, type').in('stage_id', orgStageIds),
+      ]);
+    if (stagesError || scenesError) {
+      return apiError(
+        API_ERROR_CODES.INTERNAL_ERROR,
+        500,
+        'Failed to fetch curriculum contents',
+        stagesError?.message ?? scenesError?.message,
+      );
+    }
+    const sceneCounts = new Map<string, number>();
+    const sceneTypes = new Map<string, Set<string>>();
+    for (const scene of scenes ?? []) {
+      sceneCounts.set(scene.stage_id, (sceneCounts.get(scene.stage_id) ?? 0) + 1);
+      const types = sceneTypes.get(scene.stage_id) ?? new Set<string>();
+      types.add(scene.type);
+      sceneTypes.set(scene.stage_id, types);
+    }
+    curriculumStages = (stages ?? []).map((stage) => ({
+      id: stage.id,
+      name: stage.name,
+      scene_count: sceneCounts.get(stage.id) ?? 0,
+      type_badges: [...(sceneTypes.get(stage.id) ?? [])],
+    }));
+  }
+
   // Fetch curriculum links
   const { data: links, error } = await supabase
     .from('curriculum_links')
@@ -79,7 +140,7 @@ export async function GET(
     to_stage_name: stageMap[link.to_stage_id] ?? link.to_stage_id,
   }));
 
-  return apiSuccess({ links: enrichedLinks });
+  return apiSuccess({ links: enrichedLinks, stages: curriculumStages, userRole: membership.role });
 }
 
 export async function POST(

@@ -16,8 +16,6 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useI18n } from '@/lib/hooks/use-i18n';
-import { useAuth } from '@/lib/hooks/use-auth';
-import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -103,7 +101,6 @@ export default function CurriculumPage() {
   const { orgId } = useParams<{ orgId: string }>();
   const router = useRouter();
   const { t } = useI18n();
-  const { user } = useAuth();
 
   const [stages, setStages] = useState<StageNode[]>([]);
   const [links, setLinks] = useState<EnrichedLink[]>([]);
@@ -129,78 +126,18 @@ export default function CurriculumPage() {
   }, [stages]);
 
   const fetchData = useCallback(async () => {
-    const supabase = createClient();
-
-    // Check membership
-    if (user) {
-      const { data: membership } = await supabase
-        .from('org_members')
-        .select('role')
-        .eq('org_id', orgId)
-        .eq('user_id', user.id)
-        .single();
-      if (membership) {
-        setUserRole(membership.role as OrgMemberRole);
-      }
-    }
-
-    // Fetch org stages (from shared_classrooms + owned)
-    const { data: sharedClassrooms } = await supabase
-      .from('shared_classrooms')
-      .select('stage_id')
-      .eq('org_id', orgId);
-
-    const { data: ownedStages } = await supabase.from('stages').select('id').eq('org_id', orgId);
-
-    const stageIds = [
-      ...new Set([
-        ...(sharedClassrooms ?? []).map((sc) => sc.stage_id),
-        ...(ownedStages ?? []).map((s) => s.id),
-      ]),
-    ];
-
-    if (stageIds.length === 0) {
+    const res = await fetch(`/api/organizations/${orgId}/curriculum`);
+    if (!res.ok) {
+      const error = await res.json();
+      toast.error(error.error ?? 'Failed to load curriculum');
       setIsLoading(false);
       return;
     }
-
-    // Fetch stage details
-    const { data: stagesData } = await supabase
-      .from('stages')
-      .select('id, name')
-      .in('id', stageIds);
-
-    // Fetch scene counts and types
-    const { data: scenes } = await supabase
-      .from('scenes')
-      .select('stage_id, type')
-      .in('stage_id', stageIds);
-
-    const sceneCounts = new Map<string, number>();
-    const sceneTypes = new Map<string, Set<string>>();
-    for (const scene of scenes ?? []) {
-      sceneCounts.set(scene.stage_id, (sceneCounts.get(scene.stage_id) ?? 0) + 1);
-      if (!sceneTypes.has(scene.stage_id)) {
-        sceneTypes.set(scene.stage_id, new Set());
-      }
-      sceneTypes.get(scene.stage_id)?.add(scene.type);
-    }
-
-    const stageNodes: StageNode[] = (stagesData ?? []).map((s) => ({
-      id: s.id,
-      name: s.name,
-      scene_count: sceneCounts.get(s.id) ?? 0,
-      type_badges: [...(sceneTypes.get(s.id) ?? [])],
-    }));
-
+    const json = await res.json();
+    const stageNodes = (json.stages ?? []) as StageNode[];
+    setUserRole((json.userRole ?? null) as OrgMemberRole | null);
     setStages(stageNodes);
-
-    // Fetch curriculum links
-    const res = await fetch(`/api/organizations/${orgId}/curriculum`);
-    if (res.ok) {
-      const json = await res.json();
-      setLinks(json.links ?? []);
-    }
+    setLinks(json.links ?? []);
 
     // Build ReactFlow nodes — grid layout
     const cols = Math.max(3, Math.ceil(Math.sqrt(stageNodes.length)));
@@ -228,7 +165,7 @@ export default function CurriculumPage() {
 
     setNodes(flowNodes);
     setIsLoading(false);
-  }, [orgId, user, setNodes]);
+  }, [orgId, setNodes]);
 
   // Build edges whenever links change
   useEffect(() => {

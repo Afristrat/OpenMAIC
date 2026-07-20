@@ -155,11 +155,12 @@ export default function OrgAdminPage() {
       );
       if (!res.ok) return;
       const data = await res.json();
+      const reportMetrics = data.metrics ?? {};
       setMetrics({
-        membersCount: data.totalLearners ?? 0,
-        stagesCount: data.activeClassrooms ?? 0,
-        avgScore: data.avgScore ?? null,
-        completionRate: data.completionRate ?? null,
+        membersCount: reportMetrics.totalLearners ?? 0,
+        stagesCount: reportMetrics.activeClassrooms ?? 0,
+        avgScore: reportMetrics.avgScore ?? null,
+        completionRate: reportMetrics.completionRate ?? null,
       });
     } catch {
       // Metrics are optional — fail silently
@@ -211,13 +212,14 @@ export default function OrgAdminPage() {
       if (res.ok) {
         const data = await res.json();
         setOrg(data.organization);
+        setLearningDesign(learningDesignFromSettings(data.organization.settings));
         toast.success(t('org.saved'));
       } else {
         const err = await res.json();
-        toast.error(err.error ?? 'Error');
+        toast.error(err.details ?? err.error ?? t('settings.saveFailed'));
       }
-    } catch {
-      toast.error('Network error');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('settings.saveFailed'));
     } finally {
       setSaving(false);
     }

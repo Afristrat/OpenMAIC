@@ -105,7 +105,7 @@ export function AgentRosterSettings({
         <p className="text-xs text-muted-foreground">{t('org.agentRosterHint')}</p>
       </div>
       <div className="grid gap-4 xl:grid-cols-2">
-        {value.personas.map((persona, index) => {
+        {value.personas.map((persona) => {
           const avatarChoices = PERSONA_CATALOG.filter(
             (candidate) => candidate.gender === persona.gender,
           ).map((candidate) => candidate.avatar);
@@ -115,7 +115,9 @@ export function AgentRosterSettings({
               <div className="mb-3 flex items-center gap-3">
                 <img src={persona.avatar} alt="" className="size-14 rounded-full object-cover" />
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold">{t(`landing.classroom.agent${index + 1}Name`)}</p>
+                  <p className="font-semibold">
+                    {t(`org.personaLabels.${persona.id}.${persona.gender}`)}
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     {t(`settings.agentRoles.${persona.role}`)}
                   </p>

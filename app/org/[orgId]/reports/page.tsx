@@ -189,9 +189,25 @@ export default function ReportsPage() {
     URL.revokeObjectURL(url);
   }, [orgId, datePreset, customFrom, customTo]);
 
-  const handleExportPdf = useCallback(() => {
-    window.print();
-  }, []);
+  const handleExportPdf = useCallback(async () => {
+    const range =
+      datePreset === 'custom' && customFrom && customTo
+        ? { from: new Date(customFrom).toISOString(), to: new Date(customTo).toISOString() }
+        : getDateRange(datePreset);
+    const params = new URLSearchParams({ dateFrom: range.from, dateTo: range.to, format: 'pdf' });
+    const res = await fetch(`/api/organizations/${orgId}/reports?${params.toString()}`);
+    if (!res.ok) {
+      toast.error(t('reports.exportFailed'));
+      return;
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `report-${orgId}.pdf`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }, [orgId, datePreset, customFrom, customTo, t]);
 
   if (isLoading) {
     return (

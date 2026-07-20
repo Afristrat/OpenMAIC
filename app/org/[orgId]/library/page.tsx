@@ -244,7 +244,7 @@ export default function LibraryPage() {
                     value={classroom.visibility}
                     onValueChange={(v) => handleChangeVisibility(classroom.id, v)}
                   >
-                    <SelectTrigger className="h-7 w-auto gap-1 text-xs opacity-0 transition-opacity group-hover:opacity-100">
+                    <SelectTrigger className="h-7 w-auto gap-1 text-xs">
                       <Share2 className="h-3 w-3" />
                       <span>{t('org.share')}</span>
                     </SelectTrigger>
@@ -261,7 +261,7 @@ export default function LibraryPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="ml-auto h-7 gap-1 text-xs opacity-0 transition-opacity group-hover:opacity-100"
+                  className="ml-auto h-7 gap-1 text-xs"
                   onClick={() => handleClone(classroom.stage_id)}
                 >
                   <Copy className="h-3 w-3" />

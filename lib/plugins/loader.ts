@@ -132,5 +132,5 @@ export function readPluginHtml(pluginId: string): string | null {
  * Plugins are served from `/plugins/scenes/<id>/`.
  */
 export function getPluginPublicPath(pluginId: string): string {
-  return `/plugins/scenes/${pluginId}`;
+  return `/api/plugins/scenes/${pluginId}`;
 }

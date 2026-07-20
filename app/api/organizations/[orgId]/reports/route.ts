@@ -9,6 +9,7 @@ import { NextRequest } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 import type { OrgMemberRole } from '@/lib/supabase/types';
+import { createInstitutionalReportPdf } from '@/lib/reports/pdf';
 
 async function getUserMembership(
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
@@ -48,7 +49,7 @@ function toCsv(learners: LearnerRow[], formations: FormationRow[]): string {
   lines.push('user_id,nickname,classrooms_completed,avg_score,time_spent,last_active');
   for (const l of learners) {
     lines.push(
-      `${l.user_id},"${l.nickname}",${l.classrooms_completed},${l.avg_score.toFixed(1)},${l.time_spent},${l.last_active}`,
+      `${csvCell(l.user_id)},${csvCell(l.nickname)},${l.classrooms_completed},${l.avg_score.toFixed(1)},${l.time_spent},${csvCell(l.last_active)}`,
     );
   }
 
@@ -57,11 +58,15 @@ function toCsv(learners: LearnerRow[], formations: FormationRow[]): string {
   lines.push('stage_id,name,learner_count,avg_score,completion_rate');
   for (const f of formations) {
     lines.push(
-      `${f.stage_id},"${f.name}",${f.learner_count},${f.avg_score.toFixed(1)},${f.completion_rate.toFixed(1)}`,
+      `${csvCell(f.stage_id)},${csvCell(f.name)},${f.learner_count},${f.avg_score.toFixed(1)},${f.completion_rate.toFixed(1)}`,
     );
   }
 
   return lines.join('\n');
+}
+
+function csvCell(value: string): string {
+  return `"${value.replaceAll('"', '""')}"`;
 }
 
 export async function GET(
@@ -87,6 +92,12 @@ export async function GET(
   if (!['admin', 'manager', 'formateur'].includes(membership.role)) {
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Insufficient role');
   }
+
+  const { data: organization } = await supabase
+    .from('organizations')
+    .select('name')
+    .eq('id', orgId)
+    .single();
 
   const url = new URL(request.url);
   const dateFrom = url.searchParams.get('dateFrom');
@@ -244,6 +255,12 @@ export async function GET(
   const totalLearnerRows = learnerStats.length;
   const startIdx = (page - 1) * perPage;
   const paginatedLearners = learnerStats.slice(startIdx, startIdx + perPage);
+  const metrics = {
+    totalLearners,
+    activeClassrooms,
+    avgScore: Math.round(avgScore * 10) / 10,
+    completionRate: Math.round(overallCompletionRate * 10) / 10,
+  };
 
   if (format === 'csv') {
     const csvContent = toCsv(paginatedLearners, formationStats);
@@ -256,13 +273,27 @@ export async function GET(
     });
   }
 
+  if (format === 'pdf') {
+    const pdf = await createInstitutionalReportPdf({
+      organizationName: organization?.name ?? 'Organisation',
+      dateFrom,
+      dateTo,
+      metrics,
+      learners: learnerStats,
+      formations: formationStats,
+    });
+    return new Response(new Uint8Array(pdf), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="report-${orgId}.pdf"`,
+        'Cache-Control': 'private, no-store',
+      },
+    });
+  }
+
   return apiSuccess({
-    metrics: {
-      totalLearners,
-      activeClassrooms,
-      avgScore: Math.round(avgScore * 10) / 10,
-      completionRate: Math.round(overallCompletionRate * 10) / 10,
-    },
+    metrics,
     learners: paginatedLearners,
     formations: formationStats,
     pagination: {
