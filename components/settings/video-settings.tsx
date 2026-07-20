@@ -54,6 +54,7 @@ export function VideoSettings({ selectedProviderId }: VideoSettingsProps) {
   const currentConfig = videoProvidersConfig[selectedProviderId];
   const currentProvider = VIDEO_PROVIDERS[selectedProviderId];
   const isServerConfigured = !!currentConfig?.isServerConfigured;
+  const requiresApiKey = currentProvider?.requiresApiKey ?? true;
   const builtInModels =
     isServerConfigured && currentConfig?.serverModels?.length
       ? currentConfig.serverModels.map((id) => ({ id, name: id }))
@@ -145,8 +146,27 @@ export function VideoSettings({ selectedProviderId }: VideoSettingsProps) {
     <div className="space-y-6 max-w-3xl">
       {/* Server-configured notice */}
       {isServerConfigured && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30 p-3 text-sm text-blue-700 dark:text-blue-300">
-          {t('settings.serverConfiguredNotice')}
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30 p-3 text-sm text-blue-700 dark:text-blue-300">
+          <div className="min-w-0">
+            <p>{t('settings.serverConfiguredNotice')}</p>
+            {testMessage && <p className="mt-1 break-all">{testMessage}</p>}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleTest}
+            disabled={testLoading}
+            className="gap-1.5 shrink-0"
+          >
+            {testLoading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <>
+                <Zap className="h-3.5 w-3.5" />
+                {t('settings.testConnection')}
+              </>
+            )}
+          </Button>
         </div>
       )}
 
@@ -187,7 +207,7 @@ export function VideoSettings({ selectedProviderId }: VideoSettingsProps) {
                 variant="outline"
                 size="sm"
                 onClick={handleTest}
-                disabled={testLoading || !currentConfig?.apiKey}
+                disabled={testLoading || (requiresApiKey && !currentConfig?.apiKey)}
                 className="gap-1.5"
               >
                 {testLoading ? (

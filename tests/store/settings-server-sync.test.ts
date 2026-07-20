@@ -152,6 +152,11 @@ vi.mock('@/lib/media/video-providers', () => ({
       requiresApiKey: true,
       models: [{ id: 'kling-v2-6', name: 'Kling V2' }],
     },
+    'comfyui-video': {
+      id: 'comfyui-video',
+      requiresApiKey: false,
+      models: [{ id: 'ltx-2-video', name: 'LTX-2' }],
+    },
   },
 }));
 
@@ -1078,6 +1083,22 @@ describe('fetchServerProviders — Video stale selection', () => {
 
     expect(store.getState().videoProvidersConfig.seedance.serverModels).toEqual(['ltx-certified']);
     expect(store.getState().videoModelId).toBe('ltx-certified');
+  });
+
+  it('keeps every built-in video provider configurable and manages keyless LTX-2', async () => {
+    const store = await getStore();
+
+    expect(store.getState().videoProvidersConfig['comfyui-video']).toBeDefined();
+
+    mockServerResponse({ video: { 'comfyui-video': { models: ['ltx-2-video'] } } });
+    await store.getState().fetchServerProviders();
+
+    expect(store.getState().videoProvidersConfig['comfyui-video']).toMatchObject({
+      isServerConfigured: true,
+      serverModels: ['ltx-2-video'],
+    });
+    expect(store.getState().videoProviderId).toBe('comfyui-video');
+    expect(store.getState().videoModelId).toBe('ltx-2-video');
   });
 });
 

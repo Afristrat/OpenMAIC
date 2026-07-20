@@ -477,15 +477,12 @@ const getDefaultImageConfig = () => ({
 const getDefaultVideoConfig = () => ({
   videoProviderId: 'seedance' as VideoProviderId,
   videoModelId: 'doubao-seedance-1-5-pro-251215',
-  videoProvidersConfig: {
-    seedance: { apiKey: '', baseUrl: '', enabled: false },
-    kling: { apiKey: '', baseUrl: '', enabled: false },
-    veo: { apiKey: '', baseUrl: '', enabled: false },
-    sora: { apiKey: '', baseUrl: '', enabled: false },
-    'minimax-video': { apiKey: '', baseUrl: '', enabled: false },
-    'grok-video': { apiKey: '', baseUrl: '', enabled: false },
-    happyhorse: { apiKey: '', baseUrl: '', enabled: false },
-  } as Record<VideoProviderId, { apiKey: string; baseUrl: string; enabled: boolean }>,
+  videoProvidersConfig: Object.fromEntries(
+    Object.keys(VIDEO_PROVIDERS).map((providerId) => [
+      providerId,
+      { apiKey: '', baseUrl: '', enabled: false },
+    ]),
+  ) as Record<VideoProviderId, { apiKey: string; baseUrl: string; enabled: boolean }>,
 });
 
 // Initialize default Web Search config
