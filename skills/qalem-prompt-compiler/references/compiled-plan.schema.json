@@ -29,7 +29,27 @@
           "capability": { "type": "string", "minLength": 1 },
           "model": { "type": ["string", "null"] },
           "fallback": { "type": ["string", "null"] },
-          "prompt": { "type": "object" },
+          "prompt": {
+            "type": "object",
+            "required": ["strategy", "systemInstructions", "untrustedInput", "response"],
+            "properties": {
+              "strategy": {
+                "enum": [
+                  "direct",
+                  "structured-output",
+                  "reasoning-structured-output",
+                  "multimodal-analysis",
+                  "workflow-parameters"
+                ]
+              },
+              "systemInstructions": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 }
+              },
+              "untrustedInput": { "type": "object" },
+              "response": { "type": "object" }
+            }
+          },
           "outputSchema": { "type": ["object", "null"] },
           "evaluations": { "type": "array", "items": { "type": "string" } }
         }

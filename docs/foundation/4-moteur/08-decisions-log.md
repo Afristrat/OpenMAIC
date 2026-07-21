@@ -38,6 +38,14 @@
 - **Limite** : l'état des deux artefacts déjà publics est enregistré sans nouvelle concession de licence. La licence commerciale future et la création du dépôt privé restent hors de la délégation ADR-404.
 - **Preuves** : `.formation-engine-boundary.json`, `skills/formation-design-pro/publication.json`, `scripts/check-formation-engine-boundary.mjs`, `tests/skills/formation-engine-boundary.test.ts`.
 
+## ADR-406 — Adaptateur de prompts minimal et exécutable (ACTÉE — exécution V-02, 2026-07-21)
+
+- **Vecteur** : V-02 — Fork spécialisé, pas copie de Prompt Engineer Pro.
+- **Quoi** : compilateur TypeScript pur qui reçoit un contrat, des tâches atomiques et un registre injecté ; il sélectionne uniquement des couples tâche/modèle validés, choisit une stratégie par capacité et isole les entrées non fiables des instructions système.
+- **Pourquoi** : rendre l’ossature documentaire `qalem-prompt-compiler` réellement consommable sans créer une troisième copie de la skill globale.
+- **Alternative rejetée** : import ou copie de fichiers depuis `prompt-engineer-pro` ; routage par nom ou origine supposée du modèle.
+- **Preuves** : `lib/formation-engine/prompt-compiler.ts`, `tests/formation-engine/prompt-compiler.test.ts`, schéma portable `skills/qalem-prompt-compiler/references/compiled-plan.schema.json`.
+
 ## — Réservé aux vecteurs (gabarit) —
 
 ```

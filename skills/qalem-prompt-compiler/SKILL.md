@@ -7,6 +7,8 @@ description: Compiler des contrats de génération Qalem en prompts et plans d�
 
 Produire un plan de génération prouvable à partir d’un contrat de formation. Ne jamais recopier ni modifier la skill globale `prompt-engineer-pro` : elle est une dépendance méthodologique en lecture seule.
 
+L’adaptateur exécutable vit dans `lib/formation-engine/prompt-compiler.ts`. Cette skill en décrit le contrat portable ; elle ne contient aucun fichier copié depuis `prompt-engineer-pro`.
+
 ## Workflow
 
 1. Construire le contrat avec `references/generation-contract.md`.
@@ -20,6 +22,14 @@ Produire un plan de génération prouvable à partir d’un contrat de formation
 6. Sélectionner uniquement un modèle `validated` pour une génération livrée. À défaut, utiliser un fallback validé ou déclarer la tâche non certifiée.
 7. Compiler le prompt selon la famille et les capacités observées, jamais selon la nationalité supposée du modèle.
 8. Attacher schéma de sortie, checks déterministes, critères d’évaluation et stratégie de reprise.
+
+## Stratégies compilées
+
+- `direct` pour une réponse textuelle sans schéma ;
+- `structured-output` lorsque la tâche impose un schéma ;
+- `reasoning-structured-output` uniquement si le couple tâche/modèle certifie le raisonnement ;
+- `multimodal-analysis` pour une entrée visuelle validée ;
+- `workflow-parameters` pour un workflow ComfyUI, indépendamment du mode de transport `image_generation`.
 
 ## Règles de compilation
 
