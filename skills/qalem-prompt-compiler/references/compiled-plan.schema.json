@@ -24,10 +24,11 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "capability", "model", "fallback", "prompt", "evaluations"],
+        "required": ["id", "capability", "locale", "model", "fallback", "prompt", "evaluations"],
         "properties": {
           "id": { "type": "string", "minLength": 1 },
           "capability": { "type": "string", "minLength": 1 },
+          "locale": { "type": ["string", "null"] },
           "model": { "type": ["string", "null"] },
           "fallback": { "type": ["string", "null"] },
           "prompt": {

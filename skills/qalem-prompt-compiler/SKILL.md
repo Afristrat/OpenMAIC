@@ -23,6 +23,19 @@ L’adaptateur exécutable vit dans `lib/formation-engine/prompt-compiler.ts`. C
 7. Compiler le prompt selon la famille et les capacités observées, jamais selon la nationalité supposée du modèle.
 8. Attacher schéma de sortie, checks déterministes, critères d’évaluation et stratégie de reprise.
 
+## Registre certifié
+
+Le registre portable suit `references/capability-registry.schema.json`. Il sépare strictement :
+
+- les capacités `advertisedCapabilities`, uniquement déclarées par LiteLLM ;
+- les capacités `capabilities`, observées par le dernier probe de chaque modalité ;
+- les validations par couple tâche/capacité, avec preuve, date, qualité linguistique et limites ;
+- les plafonds opérationnels et le fallback, contrôlé contre les références absentes et les cycles.
+
+Une disparition du dernier inventaire LiteLLM ou l’échec d’un nouveau probe invalide l’usage sans effacer les preuves précédentes. Pour ComfyUI, `image_generation` ne remplit jamais une capacité métier : le probe doit démontrer image, édition, vidéo, musique, voix ou une autre modalité.
+
+Exécuter chaque contrôle de joignabilité selon `references/capability-probe-contract.md` : un simple endpoint de santé ou succès HTTP ne certifie aucune modalité.
+
 ## Stratégies compilées
 
 - `direct` pour une réponse textuelle sans schéma ;

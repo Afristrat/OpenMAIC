@@ -4,16 +4,72 @@ import { compileGenerationPlan } from '@/lib/formation-engine/prompt-compiler';
 import type { ModelCertification } from '@/lib/ai/capability-registry';
 
 function certification(
-  overrides: Partial<ModelCertification> & Pick<ModelCertification, 'modelId'>,
+  overrides: Partial<ModelCertification> &
+    Pick<ModelCertification, 'modelId'> & {
+      validatedTasks?: string[];
+      validatedLocales?: string[];
+    },
 ): ModelCertification {
+  const capabilities = overrides.capabilities ?? ['chat'];
+  const status = overrides.status ?? 'validated';
+  const validatedTasks = overrides.validatedTasks ?? ['outline'];
+  const validatedLocales = overrides.validatedLocales ?? [];
+  const probedAt = overrides.lastProbeAt ?? '2026-07-21T00:00:00.000Z';
   return {
     modelId: overrides.modelId,
     transportModel: overrides.transportModel ?? `openai/${overrides.modelId}`,
     transportMode: overrides.transportMode ?? 'chat',
-    capabilities: overrides.capabilities ?? ['chat'],
-    status: overrides.status ?? 'validated',
-    lastProbeAt: overrides.lastProbeAt ?? '2026-07-21T00:00:00.000Z',
-    validatedTasks: overrides.validatedTasks ?? ['outline'],
+    advertisedCapabilities: overrides.advertisedCapabilities ?? capabilities,
+    capabilities: status === 'referenced' ? [] : capabilities,
+    status,
+    reference: overrides.reference ?? {
+      active: true,
+      firstSeenAt: '2026-07-21T00:00:00.000Z',
+      lastSeenAt: '2026-07-21T00:00:00.000Z',
+      activeSince: '2026-07-21T00:00:00.000Z',
+      evidenceRef: 'inventory:test',
+    },
+    lastProbeAt: status === 'referenced' ? null : probedAt,
+    probes:
+      status === 'referenced'
+        ? []
+        : capabilities.map((capability) => ({
+            modelId: overrides.modelId,
+            capability,
+            outcome: 'passed',
+            probedAt,
+            evidenceRef: `probe:test:${capability}`,
+            latencyMs: 1,
+            limitations: [],
+          })),
+    validations:
+      status === 'validated'
+        ? validatedTasks.flatMap((taskId) =>
+            capabilities.map((capability) => ({
+              modelId: overrides.modelId,
+              taskId,
+              capability,
+              outcome: 'passed' as const,
+              evaluatedAt: '2026-07-21T00:05:00.000Z',
+              evaluationRef: `eval:test:${taskId}:${capability}`,
+              languageQuality: validatedLocales.map((locale) => ({
+                locale,
+                score: 0.9,
+                evidenceRef: `eval:test:language:${locale}`,
+              })),
+              limitations: [],
+            })),
+          )
+        : [],
+    limits: overrides.limits ?? {
+      maxInputTokens: null,
+      maxOutputTokens: null,
+      maxConcurrency: null,
+      maxFileBytes: null,
+      notes: [],
+      observedAt: null,
+      evidenceRef: null,
+    },
     limitations: overrides.limitations ?? [],
     fallbackModelId: overrides.fallbackModelId ?? null,
   };
@@ -79,6 +135,27 @@ describe('Qalem prompt compiler adapter', () => {
 
     expect(plan.tasks[0].prompt.untrustedInput.contract).toEqual({ requirement: injection });
     expect(plan.tasks[0].prompt.systemInstructions.join(' ')).not.toContain(injection);
+  });
+
+  it('requires language evidence when the task declares a locale', () => {
+    const plan = compileGenerationPlan({
+      contract: {},
+      tasks: [
+        {
+          id: 'outline',
+          capability: 'chat',
+          locale: 'ar-MA',
+          instruction: 'Créer le plan en arabe.',
+          evaluationIds: ['outline-ar'],
+        },
+      ],
+      certifications: [
+        certification({ modelId: 'fr-only', validatedLocales: ['fr-FR'] }),
+        certification({ modelId: 'arabic-validated', validatedLocales: ['ar-MA'] }),
+      ],
+    });
+
+    expect(plan.tasks[0]).toMatchObject({ model: 'arabic-validated', locale: 'ar-MA' });
   });
 
   it('maps a validated ComfyUI transport to workflow parameters despite image_generation mode', () => {

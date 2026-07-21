@@ -1,0 +1,176 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qalem.ma/schemas/capability-registry.schema.json",
+  "title": "Qalem certified capability registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "generatedAt", "sourceRevision", "certifications"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "sourceRevision": { "type": "string", "minLength": 1 },
+    "certifications": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/certification" }
+    }
+  },
+  "$defs": {
+    "capability": {
+      "enum": [
+        "chat",
+        "reasoning",
+        "vision",
+        "embedding",
+        "image-generation",
+        "image-editing",
+        "video-generation",
+        "music-generation",
+        "speech-generation",
+        "transcription"
+      ]
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maxInputTokens",
+        "maxOutputTokens",
+        "maxConcurrency",
+        "maxFileBytes",
+        "notes",
+        "observedAt",
+        "evidenceRef"
+      ],
+      "properties": {
+        "maxInputTokens": { "type": ["integer", "null"], "minimum": 1 },
+        "maxOutputTokens": { "type": ["integer", "null"], "minimum": 1 },
+        "maxConcurrency": { "type": ["integer", "null"], "minimum": 1 },
+        "maxFileBytes": { "type": ["integer", "null"], "minimum": 1 },
+        "notes": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "observedAt": { "type": ["string", "null"], "format": "date-time" },
+        "evidenceRef": { "type": ["string", "null"], "minLength": 1 }
+      }
+    },
+    "probe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "modelId",
+        "capability",
+        "outcome",
+        "probedAt",
+        "evidenceRef",
+        "latencyMs",
+        "limitations"
+      ],
+      "properties": {
+        "modelId": { "type": "string", "minLength": 1 },
+        "capability": { "$ref": "#/$defs/capability" },
+        "outcome": { "enum": ["passed", "failed"] },
+        "probedAt": { "type": "string", "format": "date-time" },
+        "evidenceRef": { "type": "string", "minLength": 1 },
+        "latencyMs": { "type": ["number", "null"], "minimum": 0 },
+        "limitations": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "languageQuality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["locale", "score", "evidenceRef"],
+      "properties": {
+        "locale": { "type": "string", "minLength": 1 },
+        "score": { "type": "number", "minimum": 0, "maximum": 1 },
+        "evidenceRef": { "type": "string", "minLength": 1 }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "modelId",
+        "taskId",
+        "capability",
+        "outcome",
+        "evaluatedAt",
+        "evaluationRef",
+        "languageQuality",
+        "limitations"
+      ],
+      "properties": {
+        "modelId": { "type": "string", "minLength": 1 },
+        "taskId": { "type": "string", "minLength": 1 },
+        "capability": { "$ref": "#/$defs/capability" },
+        "outcome": { "enum": ["passed", "failed"] },
+        "evaluatedAt": { "type": "string", "format": "date-time" },
+        "evaluationRef": { "type": "string", "minLength": 1 },
+        "languageQuality": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/languageQuality" }
+        },
+        "limitations": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "certification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "modelId",
+        "transportModel",
+        "transportMode",
+        "advertisedCapabilities",
+        "capabilities",
+        "status",
+        "reference",
+        "lastProbeAt",
+        "probes",
+        "validations",
+        "limits",
+        "limitations",
+        "fallbackModelId"
+      ],
+      "properties": {
+        "modelId": { "type": "string", "minLength": 1 },
+        "transportModel": { "type": "string", "minLength": 1 },
+        "transportMode": { "type": ["string", "null"] },
+        "advertisedCapabilities": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/capability" },
+          "uniqueItems": true
+        },
+        "capabilities": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/capability" },
+          "uniqueItems": true
+        },
+        "status": { "enum": ["referenced", "reachable", "validated", "failed"] },
+        "reference": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["active", "firstSeenAt", "lastSeenAt", "activeSince", "evidenceRef"],
+          "properties": {
+            "active": { "type": "boolean" },
+            "firstSeenAt": { "type": "string", "format": "date-time" },
+            "lastSeenAt": { "type": "string", "format": "date-time" },
+            "activeSince": { "type": "string", "format": "date-time" },
+            "evidenceRef": { "type": "string", "minLength": 1 }
+          }
+        },
+        "lastProbeAt": { "type": ["string", "null"], "format": "date-time" },
+        "probes": { "type": "array", "items": { "$ref": "#/$defs/probe" } },
+        "validations": { "type": "array", "items": { "$ref": "#/$defs/validation" } },
+        "limits": { "$ref": "#/$defs/limits" },
+        "limitations": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "fallbackModelId": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

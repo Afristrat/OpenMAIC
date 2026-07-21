@@ -20,6 +20,7 @@ export interface PromptTaskContract {
   outputSchema?: Record<string, unknown>;
   evaluationIds: string[];
   evidenceRequired?: boolean;
+  locale?: string;
 }
 
 export interface PromptCompilationRequest {
@@ -47,6 +48,7 @@ export interface CompiledPrompt {
 export interface CompiledGenerationTask {
   id: string;
   capability: QalemCapability;
+  locale: string | null;
   model: string | null;
   fallback: string | null;
   prompt: CompiledPrompt;
@@ -80,7 +82,7 @@ function selectCertifiedModels(
   certifications: ModelCertification[],
 ): { primary: ModelCertification | undefined; fallback: ModelCertification | undefined } {
   const candidates = certifications.filter((certification) =>
-    canUseForTask(certification, task.capability, task.id),
+    canUseForTask(certification, task.capability, task.id, task.locale),
   );
   const primary = candidates[0];
   const configuredFallback = primary?.fallbackModelId
@@ -128,6 +130,7 @@ export function compileGenerationPlan(request: PromptCompilationRequest): Compil
     return {
       id: task.id,
       capability: task.capability,
+      locale: task.locale ?? null,
       model: primary?.modelId ?? null,
       fallback: fallback?.modelId ?? null,
       prompt: compilePrompt(contract, task, primary),

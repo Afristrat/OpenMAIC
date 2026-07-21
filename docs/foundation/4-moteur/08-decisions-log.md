@@ -63,6 +63,15 @@
 - **Impact aval** : le compilateur injecte la résolution dans le contrat non fiable ; CRÉER ne peut pas générer sur une contradiction. VIVRE et ANCRER devront consommer les mêmes politiques lors de leur câblage.
 - **Preuves** : `lib/formation-engine/design-policies.ts`, `tests/formation-engine/design-policies.test.ts`, `tests/formation-engine/published-heuristics.test.ts`, contrat portable `skills/qalem-prompt-compiler/references/design-policy-contract.md`.
 
+## ADR-409 — Capacités prouvées par probe, jamais déduites du transport (ACTÉE — exécution V-04, 2026-07-21)
+
+- **Vecteur** : V-04 — Registre de capacités certifiées.
+- **Quoi** : l'inventaire LiteLLM alimente uniquement les références et les capacités annoncées. Un probe daté et relié à une preuve rend une capacité joignable ; une évaluation datée rend un couple tâche/capacité utilisable. Une disparition de l'inventaire ou un probe plus récent en échec invalide le routage sans effacer les preuves historiques.
+- **ComfyUI** : la valeur de transport `image_generation` n'est plus traduite par une liste statique de noms. Le workflow doit prouver sa capacité métier réelle.
+- **Qualité opératoire** : le registre conserve qualité linguistique, limites, latence, restrictions et fallback ; les fallbacks absents, auto-référents ou cycliques sont refusés.
+- **Limite** : les seuils de promotion des évaluations appartiennent à V-07. V-04 garantit la structure, les transitions et l'impossibilité de contourner les preuves.
+- **Preuves** : `lib/ai/capability-registry.ts`, `tests/ai/capability-registry.test.ts`, schéma portable `skills/qalem-prompt-compiler/references/capability-registry.schema.json`.
+
 ## — Réservé aux vecteurs (gabarit) —
 
 ```
