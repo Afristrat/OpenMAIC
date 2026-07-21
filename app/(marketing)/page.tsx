@@ -8,8 +8,6 @@ import { FeaturesGrid } from '@/components/landing/features-grid';
 import { PricingSection } from '@/components/landing/pricing-section';
 import { Footer } from '@/components/landing/footer';
 
-// The production build must render the commercial homepage from this route module.
-// Static prerendering previously emitted /app's generator as index.html for this route.
 export const dynamic = 'force-dynamic';
 
 export default function LandingPage(): React.ReactElement {
