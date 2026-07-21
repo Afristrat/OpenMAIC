@@ -4,6 +4,22 @@ services:
     mem_reservation: 768m
     cpus: 2.0
     pids_limit: 256
+    command:
+      - postgres
+      - -c
+      - config_file=/etc/postgresql/postgresql.conf
+      - -c
+      - log_min_messages=fatal
+      - -c
+      - shared_buffers=512MB
+      - -c
+      - effective_cache_size=1536MB
+      - -c
+      - work_mem=8MB
+      - -c
+      - maintenance_work_mem=256MB
+      - -c
+      - max_connections=100
   supabase-kong:
     mem_limit: 2304m
     mem_reservation: 1g
