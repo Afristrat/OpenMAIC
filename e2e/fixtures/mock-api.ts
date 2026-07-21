@@ -147,6 +147,13 @@ export class MockApi {
 
   /** Mock the persistent MP4 export job through creation and immediate completion. */
   async mockMp4ExportDone(id = 'e2e-mp4-export') {
+    await this.page.route('**/api/export-snapshots/**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: true }),
+      });
+    });
     await this.page.route('**/api/export-jobs', async (route) => {
       await route.fulfill({
         status: 202,

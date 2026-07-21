@@ -15,6 +15,9 @@ export default defineConfig({
   reporter: process.env.CI ? 'html' : 'list',
   use: {
     baseURL: e2eBaseUrl,
+    // Playwright cannot route requests claimed by a service worker. Blocking
+    // it keeps API-contract mocks deterministic across the E2E suite.
+    serviceWorkers: 'block',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },

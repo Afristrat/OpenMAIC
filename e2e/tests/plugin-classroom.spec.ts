@@ -4,8 +4,6 @@ import { createSettingsStorage } from '../fixtures/test-data/settings';
 const TEST_STAGE_ID = 'e2e-plugin-stage';
 const SETTINGS_STORAGE = createSettingsStorage({ sidebarCollapsed: false });
 
-test.use({ serviceWorkers: 'block' });
-
 async function seedPluginScene(page: import('@playwright/test').Page) {
   await page.route('**/api/account/is-admin', (route) =>
     route.fulfill({ status: 200, contentType: 'application/json', body: '{"isAdmin":false}' }),
