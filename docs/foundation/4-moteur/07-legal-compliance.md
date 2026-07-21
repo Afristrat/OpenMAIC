@@ -1,11 +1,12 @@
 # 07 — Legal & compliance · Chantier 4 — MOTEUR
 
-> **Fil conducteur** — Hérite du 0-SOCLE. Couche propre : propriété intellectuelle du corpus et frontière licence entre le savoir d'Amine et le code AGPL de la plateforme.
+> **Fil conducteur** — Hérite du 0-SOCLE. Couche propre : propriété intellectuelle du corpus et frontière de publication entre le savoir d'Amine et le dépôt de la plateforme.
 
 ## 1. Propriété du corpus andragogique
 
 - Le corpus formation-design-pro (méthodologies, templates, mega-prompts, adaptation culturelle) est l'ACTIF PROPRE d'Amine — antérieur et extérieur au fork OpenMAIC. Il ne doit JAMAIS être placé sous la licence du code par accident.
-- **Garantie par construction (à confirmer au vecteur d'architecture S4-002)** : si le corpus canonique vit dans le repo Qalem (AGPL — cf. ADR-002 socle), le distinguer explicitement : répertoire dédié avec son propre fichier LICENSE (tous droits réservés / licence propriétaire d'Amine), exclu de l'obligation de mise à disposition AGPL ? ⚠️ **Point juridique réel** : l'AGPL §13 couvre le « Corresponding Source » du logiciel — des fichiers de DONNÉES/prompts chargés à l'exécution peuvent, selon leur couplage, être considérés comme partie du logiciel ou comme données indépendantes. À instruire sérieusement (sources juridiques, pas de mémoire) AVANT de committer le corpus dans le repo public-facing ; alternatives : corpus dans un repo privé séparé consommé au build/déploiement.
+- **État vérifié le 2026-07-21** : le dépôt GitHub est public et détecté MIT ; `LICENSE` et `package.json` déclarent MIT. La qualification AGPL de cette branche était une information périmée. S0-014 suit séparément 35 fichiers à provenance AGPL potentielle avant la fermeture commerciale du code.
+- **Garantie par construction retenue par V-01** : le corpus canonique ne vit jamais dans ce dépôt. Une source Git privée externe alimentera uniquement des publications compilées et tracées. `11-publication-boundary.md` décrit le contrôle exécutable. La licence commerciale future du corpus reste une décision juridique et business hors ADR-404.
 - Ce point est un ARGUMENT D'ARBITRAGE du vecteur S4-002 (où vit le corpus) — consigné ici pour qu'il ne soit pas oublié au moment de la tranche.
 
 ## 2. Sources tierces dans le corpus
@@ -16,6 +17,6 @@
 
 | Dette | Pourquoi acceptable | Déclencheur |
 |---|---|---|
-| Qualification AGPL du corpus non instruite | Corpus pas encore dans le repo ; chantier non démarré | AVANT le commit du corpus canonique où qu'il soit (S4-002) |
+| Licence commerciale du corpus non instruite | V-01 interdit sa publication dans Qalem ; aucune nouvelle licence n'est nécessaire pour poser cette frontière | Avant toute distribution externe d'une publication issue du corpus |
 | Inventaire des sources tierces non fait | Fait partie de S4-001 | S4-001 |
 | Licence de distribution de la skill autonome non définie | Distribution externe = parking lot (décision business) | Si Amine décide de distribuer la skill hors de son poste |

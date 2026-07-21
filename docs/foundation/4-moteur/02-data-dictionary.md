@@ -1,10 +1,10 @@
 # 02 — Data dictionary · Chantier 4 — MOTEUR
 
-> **Fil conducteur** — Hérite des conventions du 0-SOCLE. Le moteur est un chantier de SAVOIR : sa matière vit en fichiers versionnés (manifests, prompts, référentiels), pas en tables. Ce document fige les conventions de ces fichiers et la SEULE surface base de données existante.
+> **Fil conducteur** — Hérite des conventions du 0-SOCLE. Le moteur est un chantier de SAVOIR : sa source canonique vit dans un Git privé externe ; Qalem ne reçoit que des schémas, adaptateurs et publications compilées versionnées. Ce document fige les conventions de ces fichiers et la SEULE surface base de données existante.
 
 ## Principe
 
-**Aucune table nouvelle par défaut.** Le savoir andragogique se versionne en git (revue par diff, rollback, blame — exactement ce qu'exige la validation vecteur par vecteur). Une table n'apparaîtrait que si un vecteur validé exige du par-utilisateur dynamique (ex. réglages de moteur par org) — ce serait alors une mise à jour de CE fichier dans le même commit (règle du socle).
+**Aucune table nouvelle par défaut.** Le savoir andragogique se versionne dans sa source Git privée ; les publications Qalem se versionnent ici avec provenance et empreintes. Une table n'apparaîtrait que si un vecteur validé exige du par-utilisateur dynamique, par exemple des réglages de moteur par organisation.
 
 ## Surface existante (portée par le socle — état de fait, pas une décision)
 

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "canonicalSource": {
+    "classification": "private",
+    "locationKind": "external-private-git",
+    "trackedInThisRepository": false
+  },
+  "privateInputRoots": [
+    ".formation-engine-private/",
+    "skills/formation-design-pro/.source/"
+  ],
+  "publications": [
+    {
+      "root": "skills/formation-design-pro/",
+      "manifest": "skills/formation-design-pro/publication.json"
+    }
+  ]
+}

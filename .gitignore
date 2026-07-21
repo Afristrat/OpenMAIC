@@ -72,6 +72,10 @@ next-env.d.ts
 /data
 /logs
 
+# Formation engine: private canonical inputs must never enter this repository.
+/.formation-engine-private/
+/skills/formation-design-pro/.source/
+
 # docs (working notes, not versioned) — except docs/foundation, which is
 # tracked product source (CLAUDE.md: "Source produit : docs/foundation/<chantier>/")
 /docs/*

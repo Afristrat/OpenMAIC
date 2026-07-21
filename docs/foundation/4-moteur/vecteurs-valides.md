@@ -2,11 +2,11 @@
 
 Validation opératoire d’Amine, 2026-07-18 : « agir en total autonomie » et « le temps c’est de l’argent ». Cette tranche autorise l’exécution des options recommandées réversibles ci-dessous, sans nouvelle micro-validation.
 
-## V-01 — Séparer le corpus propriétaire du code AGPL
+## V-01 — Séparer le corpus propriétaire du dépôt distribuable
 
-- **Constat** : `07-legal-compliance.md` identifie un risque de contamination/licence si le corpus propriétaire est committé dans Qalem.
+- **Constat corrigé le 2026-07-21 par preuve système** : le dépôt courant est public et GitHub détecte MIT ; `LICENSE` et `package.json` déclarent également MIT. La mention « code AGPL » était donc factuellement fausse pour cette branche, même si S0-014 conserve une dette de provenance AGPL distincte. Le risque immédiat est la publication accidentelle du corpus propriétaire dans un dépôt public sous licence détectée MIT.
 - **Proposition** : maintenir le corpus canonique hors du repo public Qalem ; Qalem ne contient que schémas, compilateur, adaptateurs et artefacts générés explicitement redistribuables.
-- **Options** : A) corpus dans Qalem — coût juridique élevé ; B) repo privé canonique consommé au build — coût d’intégration moyen ; C) copie locale — divergence certaine. **Recommandation : B.**
+- **Options** : A) corpus dans Qalem — exposition publique et coût juridique élevés ; B) repo privé canonique consommé au build — coût d’intégration moyen ; C) copie locale — divergence certaine. **Recommandation : B.**
 - **Impact double cible** : Qalem consomme une publication versionnée ; la skill autonome est générée depuis la même source.
 - **Ce que ça ne décide pas** : licence commerciale future du corpus.
 

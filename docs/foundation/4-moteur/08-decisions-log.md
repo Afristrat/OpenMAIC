@@ -26,8 +26,17 @@
 - **Quoi** : les options recommandées des sept vecteurs sont validées pour exécution sans micro-validation supplémentaire. Les opérations irréversibles, la publication externe et les engagements juridiques restent hors de cette délégation.
 - **Pourquoi** : supprimer la délégation inversée et avancer jusqu’à une preuve système.
 - **Sources** : inventaire S4-001, `07-legal-compliance.md`, inventaire live LiteLLM du 2026-07-18.
-- **Alternatives rejetées** : copie complète de Prompt Engineer Pro ; corpus propriétaire dans le repo AGPL ; questionnaire fixe ; confiance aveugle dans `/model/info` ; heuristiques universelles ; synchronisation manuelle ; promotion sans evals.
+- **Alternatives rejetées** : copie complète de Prompt Engineer Pro ; corpus propriétaire dans le dépôt public ; questionnaire fixe ; confiance aveugle dans `/model/info` ; heuristiques universelles ; synchronisation manuelle ; promotion sans evals.
 - **Impact aval** : CRÉER consomme le compilateur ; VIVRE et ANCRER consomment les mêmes politiques ; la skill autonome est publiée depuis la source canonique.
+
+## ADR-405 — Frontière exécutable du corpus privé (ACTÉE — exécution V-01, 2026-07-21)
+
+- **Vecteur** : V-01 — Séparer le corpus propriétaire du dépôt distribuable.
+- **Rectification factuelle** : le dépôt courant est public et détecté MIT, pas AGPL. La dette de provenance AGPL de S0-014 reste distincte et ouverte.
+- **Quoi** : source canonique privée et externe ; emplacements d'entrée privée gitignorés ; publications Qalem exhaustivement manifestées par provenance et SHA-256 ; test permanent de frontière.
+- **Pourquoi** : empêcher qu'une compilation, une copie manuelle ou une synchronisation future publie silencieusement le corpus propriétaire.
+- **Limite** : l'état des deux artefacts déjà publics est enregistré sans nouvelle concession de licence. La licence commerciale future et la création du dépôt privé restent hors de la délégation ADR-404.
+- **Preuves** : `.formation-engine-boundary.json`, `skills/formation-design-pro/publication.json`, `scripts/check-formation-engine-boundary.mjs`, `tests/skills/formation-engine-boundary.test.ts`.
 
 ## — Réservé aux vecteurs (gabarit) —
 

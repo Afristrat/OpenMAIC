@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "artifactSetId": "formation-design-pro-qalem-legacy-publication",
+  "classification": "existing-public-baseline",
+  "provenance": {
+    "kind": "historical-qalem-authored-artifact",
+    "firstCommit": "490742491b5f32df5da3a9841ab21e7106da60b3",
+    "canonicalPrivateSourceFilesIncluded": false
+  },
+  "exposureAudit": {
+    "repository": "Afristrat/OpenMAIC",
+    "visibility": "PUBLIC",
+    "detectedRepositoryLicense": "MIT",
+    "verifiedAt": "2026-07-21",
+    "newLicenseDecision": false
+  },
+  "files": [
+    {
+      "path": "manifest.json",
+      "sha256": "754a6ba8306de3c26acbe0b8cef9999cc324b4712fd7cafdf2b1514ef476b26c"
+    },
+    {
+      "path": "prompts/andragogy-system-override.md",
+      "sha256": "ee12814737229277283bfd18db7769276257cd8876bf4524cc642f5f06b5ba81"
+    }
+  ]
+}
