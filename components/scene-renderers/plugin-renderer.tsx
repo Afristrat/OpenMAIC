@@ -8,6 +8,7 @@ import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 // code today; it types against the real content shape so it compiles
 // correctly against what it will consume once re-wired (out of scope here).
 import type { PluginSceneContent as PluginContent } from '@/lib/plugins/scene-sdk';
+import type { StageMode } from '@/lib/types/stage';
 
 // ---------------------------------------------------------------------------
 // PostMessage protocol between parent and plugin iframe
@@ -33,7 +34,7 @@ interface PluginOutboundMessage {
 
 interface PluginRendererProps {
   readonly content: PluginContent;
-  readonly mode: 'autonomous' | 'playback';
+  readonly mode: StageMode;
   readonly sceneId: string;
 }
 

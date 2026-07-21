@@ -23,6 +23,6 @@ describe('plugin scene contract', () => {
     };
 
     expect(scene.content).toEqual(content);
-    expectTypeOf(scene.content).toMatchTypeOf<PluginSceneContent>();
+    expectTypeOf(content).toMatchTypeOf<PluginSceneContent>();
   });
 });
