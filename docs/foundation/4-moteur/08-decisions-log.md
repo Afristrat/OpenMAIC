@@ -54,6 +54,15 @@
 - **Internationalisation** : questions natives `fr-FR`, `ar-MA` et `en-US` dans le contrat portable.
 - **Preuves** : `lib/formation-engine/progressive-framing.ts`, `tests/formation-engine/progressive-framing.test.ts`, intégration au statut `needs_input` du compilateur.
 
+## ADR-408 — Heuristiques de design conditionnelles et traçables (ACTÉE — exécution V-05, 2026-07-21)
+
+- **Vecteur** : V-05 — Remplacer les ratios universels par des politiques conditionnelles.
+- **Quoi** : aucune valeur pédagogique n'est appliquée par défaut. Une plage chiffrée n'est recevable qu'avec des conditions structurées, une justification, un déclencheur, une méthode de mesure et une référence probante. Les politiques compatibles sont intersectées ; un conflit bloque la génération et exige un arbitrage explicite.
+- **Pourquoi** : une proportion de pratique, de théorie, d'apprentissage entre pairs ou de contexte local ne devient pas valide parce qu'elle est répétée. Elle dépend de la performance, des acquis, du risque, de la modalité et des contraintes vérifiées.
+- **Internationalisation** : les trois personas du manifeste `fr-FR`, `ar-MA` et `en-US` portent la même règle sans quotas fixes.
+- **Impact aval** : le compilateur injecte la résolution dans le contrat non fiable ; CRÉER ne peut pas générer sur une contradiction. VIVRE et ANCRER devront consommer les mêmes politiques lors de leur câblage.
+- **Preuves** : `lib/formation-engine/design-policies.ts`, `tests/formation-engine/design-policies.test.ts`, `tests/formation-engine/published-heuristics.test.ts`, contrat portable `skills/qalem-prompt-compiler/references/design-policy-contract.md`.
+
 ## — Réservé aux vecteurs (gabarit) —
 
 ```

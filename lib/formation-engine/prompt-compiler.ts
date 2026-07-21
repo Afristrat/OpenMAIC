@@ -3,6 +3,7 @@ import {
   type ModelCertification,
   type QalemCapability,
 } from '@/lib/ai/capability-registry';
+import type { DesignPolicyResolution } from './design-policies';
 import type { ProgressiveFramingResult } from './progressive-framing';
 
 export type PromptStrategy =
@@ -26,6 +27,7 @@ export interface PromptCompilationRequest {
   tasks: PromptTaskContract[];
   certifications: ModelCertification[];
   framing?: ProgressiveFramingResult;
+  designPolicies?: DesignPolicyResolution;
 }
 
 export interface CompiledPrompt {
@@ -116,7 +118,11 @@ function compilePrompt(
 }
 
 export function compileGenerationPlan(request: PromptCompilationRequest): CompiledGenerationPlan {
-  const contract = { ...request.contract, ...(request.framing?.contract ?? {}) };
+  const contract = {
+    ...request.contract,
+    ...(request.framing?.contract ?? {}),
+    ...(request.designPolicies ? { designPolicies: request.designPolicies } : {}),
+  };
   const tasks = request.tasks.map((task) => {
     const { primary, fallback } = selectCertifiedModels(task, request.certifications);
     return {
@@ -132,15 +138,22 @@ export function compileGenerationPlan(request: PromptCompilationRequest): Compil
 
   return {
     status:
-      (request.framing?.blockingQuestions.length ?? 0) > 0
+      (request.framing?.blockingQuestions.length ?? 0) > 0 ||
+      request.designPolicies?.status === 'conflict'
         ? 'needs_input'
         : tasks.length > 0 && tasks.every((task) => task.model)
           ? 'ready'
           : 'uncertified',
     contract,
     assumptions: request.framing?.assumptions ?? [],
-    blockingQuestions:
-      request.framing?.blockingQuestions.map((question) => question.question) ?? [],
+    blockingQuestions: [
+      ...(request.framing?.blockingQuestions.map((question) => question.question) ?? []),
+      ...(request.designPolicies?.status === 'conflict'
+        ? [
+            'Des recommandations de design fondées sur des preuves sont incompatibles pour ce contexte. Arbitrer les politiques en conflit avant de générer.',
+          ]
+        : []),
+    ],
     tasks,
   };
 }

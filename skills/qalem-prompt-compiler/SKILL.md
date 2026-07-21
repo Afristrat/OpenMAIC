@@ -40,6 +40,7 @@ L’adaptateur exécutable vit dans `lib/formation-engine/prompt-compiler.ts`. C
 - Ne jamais déduire la modalité métier de `model_info.mode` pour ComfyUI : le sidecar utilise `image_generation` comme protocole commun.
 - Ne jamais promouvoir un modèle sur son nom, sa présence dans `/model/info` ou un succès HTTP isolé.
 - Conserver les mots techniques dans leur langue canonique et fournir une prononciation ou une reformulation TTS lorsque nécessaire.
+- Ne jamais injecter de ratio pédagogique universel. Résoudre les éventuelles plages par `references/design-policy-contract.md` ; une métrique sans politique applicable reste non contrainte.
 
 ## Sortie obligatoire
 

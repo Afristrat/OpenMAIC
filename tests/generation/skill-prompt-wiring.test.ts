@@ -5,7 +5,7 @@ import type { AICallFn } from '@/lib/generation/pipeline-types';
 import type { SceneOutline, UserRequirements } from '@/lib/types/generation';
 
 const SKILL_ID = 'formation-design-pro';
-const OVERRIDE_SENTINEL = 'Andragogical Design Principles';
+const OVERRIDE_SENTINEL = 'Formation Design Pro — Conditional Andragogy Override';
 
 describe('skill prompt wiring', () => {
   const requirements: UserRequirements = {
