@@ -1,0 +1,39 @@
+services:
+  qalem-redis:
+    image: redis:7-alpine
+    container_name: qalem-redis
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --appendfsync
+      - everysec
+      - --maxmemory
+      - 384mb
+      - --maxmemory-policy
+      - noeviction
+    restart: unless-stopped
+    mem_limit: 512m
+    mem_reservation: 128m
+    cpus: 0.75
+    pids_limit: 64
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - qalem-redis-data:/data
+    networks:
+      - coolify
+
+volumes:
+  qalem-redis-data:
+    external: true
+    name: qalem-redis-data
+
+networks:
+  coolify:
+    external: true
+    name: coolify

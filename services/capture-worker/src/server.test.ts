@@ -88,4 +88,43 @@ describe('POST /capture', () => {
     expect(res.status).toBe(200);
     expect(runCapture).toHaveBeenCalledTimes(1);
   });
+
+  it('rejects a second capture while Chromium capacity is occupied', async () => {
+    process.env.CAPTURE_WORKER_TOKEN = 'secret-token';
+    let releaseCapture!: () => void;
+    let signalStarted!: () => void;
+    const started = new Promise<void>((resolve) => {
+      signalStarted = resolve;
+    });
+    vi.mocked(runCapture).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          signalStarted();
+          releaseCapture = () =>
+            resolve({
+              success: true,
+              buffer: Buffer.from('fake-png'),
+              contentType: 'image/png',
+            });
+        }),
+    );
+
+    const firstCapture = fetch(`${baseUrl}/capture`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer secret-token' },
+      body: JSON.stringify(validBody),
+    });
+    await started;
+
+    const secondCapture = await fetch(`${baseUrl}/capture`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer secret-token' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(secondCapture.status).toBe(429);
+    expect(secondCapture.headers.get('retry-after')).toBe('5');
+    releaseCapture();
+    await expect(firstCapture).resolves.toMatchObject({ status: 200 });
+  });
 });

@@ -1,0 +1,76 @@
+services:
+  supabase-db:
+    mem_limit: 2560m
+    mem_reservation: 768m
+    cpus: 2.0
+    pids_limit: 256
+  supabase-kong:
+    mem_limit: 2304m
+    mem_reservation: 1g
+    cpus: 1.5
+    pids_limit: 128
+  supabase-analytics:
+    mem_limit: 1g
+    mem_reservation: 256m
+    cpus: 1.5
+    pids_limit: 256
+  supabase-studio:
+    mem_limit: 512m
+    mem_reservation: 128m
+    cpus: 0.75
+    pids_limit: 128
+  realtime-dev:
+    mem_limit: 512m
+    mem_reservation: 128m
+    cpus: 1.0
+    pids_limit: 256
+  supabase-auth:
+    mem_limit: 256m
+    mem_reservation: 64m
+    cpus: 0.5
+    pids_limit: 128
+  supabase-rest:
+    mem_limit: 256m
+    mem_reservation: 64m
+    cpus: 0.75
+    pids_limit: 128
+  supabase-storage:
+    mem_limit: 512m
+    mem_reservation: 128m
+    cpus: 1.0
+    pids_limit: 128
+  supabase-minio:
+    mem_limit: 768m
+    mem_reservation: 192m
+    cpus: 1.0
+    pids_limit: 128
+  supabase-supavisor:
+    mem_limit: 512m
+    mem_reservation: 128m
+    cpus: 1.0
+    pids_limit: 256
+  supabase-meta:
+    mem_limit: 384m
+    mem_reservation: 64m
+    cpus: 0.75
+    pids_limit: 128
+  supabase-vector:
+    mem_limit: 256m
+    mem_reservation: 64m
+    cpus: 0.5
+    pids_limit: 128
+  supabase-edge-functions:
+    mem_limit: 512m
+    mem_reservation: 128m
+    cpus: 1.0
+    pids_limit: 256
+  imgproxy:
+    mem_limit: 384m
+    mem_reservation: 64m
+    cpus: 0.75
+    pids_limit: 128
+  minio-createbucket:
+    mem_limit: 128m
+    mem_reservation: 32m
+    cpus: 0.25
+    pids_limit: 64

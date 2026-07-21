@@ -1,10 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const database = vi.hoisted(() => ({
-  rows: new Map<
-    string,
-    { status: string; payload: Record<string, unknown>; updated_at: string }
-  >(),
+  rows: new Map<string, { status: string; payload: Record<string, unknown>; updated_at: string }>(),
 }));
 
 vi.mock('@/lib/supabase/service', () => ({
@@ -12,11 +9,7 @@ vi.mock('@/lib/supabase/service', () => ({
     from: (table: string) => {
       if (table !== 'classroom_generation_jobs') throw new Error(`Unexpected table: ${table}`);
       return {
-        insert: async (row: {
-          id: string;
-          status: string;
-          payload: Record<string, unknown>;
-        }) => {
+        insert: async (row: { id: string; status: string; payload: Record<string, unknown> }) => {
           database.rows.set(row.id, {
             status: row.status,
             payload: structuredClone(row.payload),
@@ -101,6 +94,28 @@ describe('persistent classroom generation jobs', () => {
       totalScenes: 8,
     });
     expect(database.rows.get('job-1')?.status).toBe('running');
+  });
+
+  it('persists durable input without persisting a client API key', async () => {
+    await createClassroomGenerationJob(
+      'job-durable',
+      {
+        orgId: 'org-1',
+        requirement: 'Build a sourced course',
+        enableWebSearch: true,
+        webSearchApiKey: 'client-secret-that-must-not-be-persisted',
+      },
+      'owner-1',
+    );
+
+    const job = await readClassroomGenerationJob('job-durable');
+
+    expect(job?.input).toMatchObject({
+      orgId: 'org-1',
+      requirement: 'Build a sourced course',
+      enableWebSearch: true,
+    });
+    expect(job?.input).not.toHaveProperty('webSearchApiKey');
   });
 
   it('marks an abandoned running job as failed after thirty minutes', async () => {

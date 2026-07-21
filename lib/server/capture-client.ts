@@ -5,6 +5,7 @@ import type { CaptureDecision } from '@/lib/generation/web-capture-plan';
 const log = createLogger('CaptureClient');
 
 const CAPTURE_WORKER_URL = process.env.CAPTURE_WORKER_URL || 'http://capture-worker:8090';
+const CAPTURE_TIMEOUT_MS = 75_000;
 
 export interface CaptureAsset {
   assetUrl: string;
@@ -35,6 +36,7 @@ export async function requestWebCapture(
         interactionSteps: decision.interactionSteps,
         format: decision.format,
       }),
+      signal: AbortSignal.timeout(CAPTURE_TIMEOUT_MS),
     });
     if (!response.ok) {
       log.warn(`capture-worker HTTP ${response.status} for ${decision.url}`);

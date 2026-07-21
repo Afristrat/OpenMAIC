@@ -19,6 +19,12 @@ export type CaptureResult =
 
 const LOGIN_WALL_TITLE_PATTERN = /login|sign in/i;
 
+function captureTimeoutMs(): number {
+  const configured = Number(process.env.CAPTURE_TIMEOUT_MS);
+  if (!Number.isFinite(configured)) return 60_000;
+  return Math.min(Math.max(configured, 10_000), 120_000);
+}
+
 async function runInteractionSteps(
   page: import('playwright').Page,
   steps: CaptureInteractionStep[],
@@ -35,6 +41,11 @@ async function runInteractionSteps(
 
 export async function runCapture(request: CaptureRequest): Promise<CaptureResult> {
   const browser = await chromium.launch();
+  const deadline = setTimeout(
+    () => void browser.close().catch(() => undefined),
+    captureTimeoutMs(),
+  );
+  deadline.unref();
   try {
     const storageState = resolveStorageStatePath(request.url);
     const context = await browser.newContext({
@@ -76,6 +87,7 @@ export async function runCapture(request: CaptureRequest): Promise<CaptureResult
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : String(err) };
   } finally {
-    await browser.close();
+    clearTimeout(deadline);
+    await browser.close().catch(() => undefined);
   }
 }

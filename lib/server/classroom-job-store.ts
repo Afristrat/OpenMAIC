@@ -20,6 +20,7 @@ export interface ClassroomGenerationJob {
   completedAt?: string;
   ownerId?: string;
   orgId?: string;
+  input?: GenerateClassroomInput;
   inputSummary: {
     requirementPreview: string;
     hasPdf: boolean;
@@ -75,6 +76,8 @@ export async function createClassroomGenerationJob(
   ownerId: string,
 ): Promise<ClassroomGenerationJob> {
   const now = new Date().toISOString();
+  const durableInput = { ...input };
+  delete durableInput.webSearchApiKey;
   const job: ClassroomGenerationJob = {
     id: jobId,
     status: 'queued',
@@ -85,18 +88,17 @@ export async function createClassroomGenerationJob(
     updatedAt: now,
     ownerId,
     orgId: input.orgId,
+    input: durableInput,
     inputSummary: buildInputSummary(input),
     scenesGenerated: 0,
   };
-  const { error } = await createServiceSupabaseClient()
-    .from('classroom_generation_jobs')
-    .insert({
-      id: jobId,
-      owner_id: ownerId,
-      org_id: input.orgId,
-      status: job.status,
-      payload: job,
-    });
+  const { error } = await createServiceSupabaseClient().from('classroom_generation_jobs').insert({
+    id: jobId,
+    owner_id: ownerId,
+    org_id: input.orgId,
+    status: job.status,
+    payload: job,
+  });
   if (error) throw new Error(`Failed to persist generation job: ${error.message}`);
   return job;
 }
@@ -111,10 +113,7 @@ export async function readClassroomGenerationJob(
     .maybeSingle();
   if (error) throw new Error(`Failed to read generation job: ${error.message}`);
   if (!data) return null;
-  const job = markStaleIfNeeded(
-    data.payload as ClassroomGenerationJob,
-    data.updated_at as string,
-  );
+  const job = markStaleIfNeeded(data.payload as ClassroomGenerationJob, data.updated_at as string);
   if (
     job.status === 'failed' &&
     job.completedAt &&
@@ -188,6 +187,7 @@ export async function markClassroomGenerationJobSucceeded(
     scenesGenerated: result.scenesCount,
     result: { classroomId: result.id, url: result.url, scenesCount: result.scenesCount },
     error: undefined,
+    input: undefined,
   });
 }
 export async function markClassroomGenerationJobFailed(

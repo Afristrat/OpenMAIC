@@ -31,7 +31,7 @@ export default defineConfig({
     command: process.env.CI ? 'pnpm build && pnpm start' : 'pnpm dev',
     url: e2eBaseUrl,
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    timeout: 180_000,
     // Enable the MAIC Editor (Pro mode) so editor e2e can reach it. This is a
     // build-time NEXT_PUBLIC_* flag, so it must be set when the webServer runs
     // `pnpm build` (CI) or `pnpm dev` (local).
@@ -39,6 +39,9 @@ export default defineConfig({
       PORT: e2ePort,
       NEXT_PUBLIC_MAIC_EDITOR_ENABLED: 'true',
       NEXT_PUBLIC_E2E_TEST_MODE: 'true',
+      NEXT_PUBLIC_SUPABASE_URL: 'http://127.0.0.1:54321',
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: 'e2e-anon-key',
+      SUPABASE_SERVICE_ROLE_KEY: 'e2e-service-role-key',
     },
   },
 });

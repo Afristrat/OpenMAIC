@@ -1,14 +1,17 @@
-import { after, type NextRequest } from 'next/server';
+import { type NextRequest } from 'next/server';
 import { nanoid } from 'nanoid';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { type GenerateClassroomInput } from '@/lib/server/classroom-generation';
-import { runClassroomGenerationJob } from '@/lib/server/classroom-job-runner';
-import { createClassroomGenerationJob } from '@/lib/server/classroom-job-store';
+import {
+  createClassroomGenerationJob,
+  markClassroomGenerationJobFailed,
+} from '@/lib/server/classroom-job-store';
 import { buildRequestOrigin } from '@/lib/server/classroom-storage';
 import { requireSuperAdminOrOrgAdmin } from '@/lib/api/auth';
 import { validateBody } from '@/lib/api/validate';
 import { generateClassroomSchema } from '@/lib/api/schemas';
 import { createLogger } from '@/lib/logger';
+import { enqueueClassroomGeneration } from '@/lib/jobs/queue';
 
 const log = createLogger('GenerateClassroom API');
 
@@ -51,7 +54,15 @@ export async function POST(req: NextRequest) {
     const job = await createClassroomGenerationJob(jobId, body, auth.user.id);
     const pollUrl = `${baseUrl}/api/generate-classroom/${jobId}`;
 
-    after(() => runClassroomGenerationJob(jobId, body, baseUrl, auth.user.id));
+    try {
+      await enqueueClassroomGeneration({ jobId, baseUrl, ownerId: auth.user.id });
+    } catch (error) {
+      await markClassroomGenerationJobFailed(
+        jobId,
+        error instanceof Error ? error.message : String(error),
+      );
+      throw error;
+    }
 
     return apiSuccess(
       {

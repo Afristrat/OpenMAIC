@@ -9,7 +9,7 @@
  * (defaults to redis://localhost:6379 for local development).
  */
 
-import { Queue } from 'bullmq';
+import { Queue, type JobsOptions } from 'bullmq';
 
 // ---------------------------------------------------------------------------
 // Connection
@@ -26,6 +26,9 @@ function parseRedisUrl(url: string): {
   port: number;
   password?: string;
   lazyConnect: true;
+  connectTimeout: number;
+  maxRetriesPerRequest: number;
+  enableOfflineQueue: false;
 } {
   try {
     const parsed = new URL(url);
@@ -33,10 +36,20 @@ function parseRedisUrl(url: string): {
       host: parsed.hostname || 'localhost',
       port: parsed.port ? Number(parsed.port) : 6379,
       lazyConnect: true,
+      connectTimeout: 5000,
+      maxRetriesPerRequest: 1,
+      enableOfflineQueue: false,
       ...(parsed.password ? { password: decodeURIComponent(parsed.password) } : {}),
     };
   } catch {
-    return { host: 'localhost', port: 6379, lazyConnect: true };
+    return {
+      host: 'localhost',
+      port: 6379,
+      lazyConnect: true,
+      connectTimeout: 5000,
+      maxRetriesPerRequest: 1,
+      enableOfflineQueue: false,
+    };
   }
 }
 
@@ -46,24 +59,25 @@ const connection = parseRedisUrl(REDIS_URL);
 // Job type registry (for documentation / type narrowing)
 // ---------------------------------------------------------------------------
 
-export type JobType =
-  | 'classroom-generation'
-  | 'tts-batch'
-  | 'email-notification'
-  | 'xapi-statement'
-  | 'pedagogy-collect'
-  | 'video-capsule'
-  | 'video-generation'
-  | 'export-job';
+export type JobType = 'classroom-generation' | 'video-capsule' | 'video-generation' | 'export-job';
+
+export interface ClassroomGenerationJobData {
+  jobId: string;
+  baseUrl: string;
+  ownerId: string;
+}
+
+const durableJobOptions: JobsOptions = {
+  attempts: 1,
+  removeOnComplete: { age: 24 * 60 * 60, count: 100 },
+  removeOnFail: { age: 7 * 24 * 60 * 60, count: 500 },
+};
 
 // ---------------------------------------------------------------------------
 // Queues
 // ---------------------------------------------------------------------------
 
 export const classroomQueue = new Queue('classroom-generation', { connection });
-export const ttsQueue = new Queue('tts-batch', { connection });
-export const notificationQueue = new Queue('notifications', { connection });
-export const telemetryQueue = new Queue('telemetry', { connection });
 export const videoCapsuleQueue = new Queue('video-capsule', { connection });
 export const videoGenerationQueue = new Queue('video-generation', { connection });
 export const exportJobQueue = new Queue('export-job', { connection });
@@ -72,54 +86,29 @@ export const exportJobQueue = new Queue('export-job', { connection });
 // Enqueue helpers
 // ---------------------------------------------------------------------------
 
-export async function enqueueClassroomGeneration(data: {
-  requirements: unknown;
-  userId: string;
-  stageId: string;
-}): Promise<string> {
+export async function enqueueClassroomGeneration(
+  data: ClassroomGenerationJobData,
+): Promise<string> {
   const job = await classroomQueue.add('generate', data, {
-    attempts: 3,
-    backoff: { type: 'exponential', delay: 5000 },
+    ...durableJobOptions,
+    jobId: `classroom-${data.jobId}`,
   });
   return job.id!;
 }
 
-export async function enqueueTTSBatch(data: {
-  actions: Array<{ id: string; text: string; voice: string }>;
-  stageId: string;
-}): Promise<string> {
-  const job = await ttsQueue.add('batch', data);
-  return job.id!;
-}
-
-export async function enqueueNotification(data: {
-  userId: string;
-  type: 'review-reminder' | 'course-complete' | 'certificate-ready';
-  channels: ('email' | 'push' | 'whatsapp')[];
-}): Promise<void> {
-  await notificationQueue.add('send', data);
-}
-
-export async function enqueueTelemetry(data: {
-  type: 'pedagogy' | 'discussion' | 'xapi';
-  payload: unknown;
-}): Promise<void> {
-  await telemetryQueue.add('collect', data, { removeOnComplete: true });
-}
-
 export async function enqueueVideoCapsule(data: { capsuleId: string }): Promise<string> {
-  const job = await videoCapsuleQueue.add('render', data, { attempts: 1 });
+  const job = await videoCapsuleQueue.add('render', data, durableJobOptions);
   return job.id!;
 }
 
 export async function enqueueVideoGeneration(data: {
   videoGenerationJobId: string;
 }): Promise<string> {
-  const job = await videoGenerationQueue.add('generate', data, { attempts: 1 });
+  const job = await videoGenerationQueue.add('generate', data, durableJobOptions);
   return job.id!;
 }
 
 export async function enqueueExportJob(data: { exportJobId: string }): Promise<string> {
-  const job = await exportJobQueue.add('generate', data, { attempts: 1 });
+  const job = await exportJobQueue.add('generate', data, durableJobOptions);
   return job.id!;
 }

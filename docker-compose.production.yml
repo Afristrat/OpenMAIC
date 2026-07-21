@@ -26,9 +26,11 @@ services:
     ports:
       - "${QALEM_PORT:-3000}:3000"
     env_file:
-      - .env.local
+      - path: .env.local
+        required: false
     environment:
       - NODE_ENV=production
+      - NODE_OPTIONS=--max-old-space-size=1152
       - NEXT_PUBLIC_SUPABASE_URL=http://supabase-kong:8000
       - NEXT_PUBLIC_SUPABASE_ANON_KEY=${ANON_KEY}
       - SUPABASE_SERVICE_ROLE_KEY=${SERVICE_ROLE_KEY}
@@ -46,12 +48,50 @@ services:
     networks:
       - qalem-net
     restart: unless-stopped
+    mem_limit: 1536m
+    mem_reservation: 384m
+    cpus: 2.0
+    pids_limit: 256
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  # Dedicated durable-queue consumer. No heavy generation runs in the web process.
+  qalem-workers:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: worker
+    env_file:
+      - path: .env.local
+        required: false
+    environment:
+      - NODE_ENV=production
+      - NODE_OPTIONS=--max-old-space-size=2560
+      - REDIS_URL=redis://redis:6379
+      - NEXT_PUBLIC_SUPABASE_URL=http://supabase-kong:8000
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SERVICE_ROLE_KEY}
+      - CAPTURE_WORKER_URL=http://capture-worker:8090
+      - CAPTURE_WORKER_TOKEN=${CAPTURE_WORKER_TOKEN}
+      - WORKER_HEAVY_CONCURRENCY=1
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+      supabase-kong:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    networks:
+      - qalem-net
+    restart: unless-stopped
+    mem_limit: 3g
+    mem_reservation: 768m
+    cpus: 3.0
+    pids_limit: 512
 
   # ── Supabase PostgreSQL ──────────────────────────────────────────────────────
   supabase-db:
@@ -63,6 +103,18 @@ services:
       POSTGRES_DB: postgres
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXP: 3600
+    command:
+      - postgres
+      - -c
+      - shared_buffers=512MB
+      - -c
+      - effective_cache_size=1536MB
+      - -c
+      - work_mem=8MB
+      - -c
+      - maintenance_work_mem=256MB
+      - -c
+      - max_connections=100
     volumes:
       - supabase-db-data:/var/lib/postgresql/data
       - ./supabase/migrations:/docker-entrypoint-initdb.d/migrations
@@ -74,6 +126,10 @@ services:
     networks:
       - qalem-net
     restart: unless-stopped
+    mem_limit: 2560m
+    mem_reservation: 768m
+    cpus: 2.0
+    pids_limit: 256
 
   # ── Supabase Auth (GoTrue) ──────────────────────────────────────────────────
   supabase-auth:
@@ -114,6 +170,10 @@ services:
     networks:
       - qalem-net
     restart: unless-stopped
+    mem_limit: 256m
+    mem_reservation: 64m
+    cpus: 0.5
+    pids_limit: 128
 
   # ── Supabase PostgREST ──────────────────────────────────────────────────────
   supabase-rest:
@@ -132,6 +192,10 @@ services:
     networks:
       - qalem-net
     restart: unless-stopped
+    mem_limit: 256m
+    mem_reservation: 64m
+    cpus: 0.75
+    pids_limit: 128
 
   # ── Supabase Kong (API Gateway) ─────────────────────────────────────────────
   supabase-kong:
@@ -155,6 +219,10 @@ services:
     networks:
       - qalem-net
     restart: unless-stopped
+    mem_limit: 2304m
+    mem_reservation: 1g
+    cpus: 1.5
+    pids_limit: 128
 
   # ── Redis ────────────────────────────────────────────────────────────────────
   redis:
@@ -163,9 +231,10 @@ services:
       - "${REDIS_PORT:-6379}:6379"
     command: >
       redis-server
-      --maxmemory 256mb
-      --maxmemory-policy allkeys-lru
+      --maxmemory 384mb
+      --maxmemory-policy noeviction
       --appendonly yes
+      --appendfsync everysec
     volumes:
       - redis-data:/data
     healthcheck:
@@ -176,6 +245,10 @@ services:
     networks:
       - qalem-net
     restart: unless-stopped
+    mem_limit: 512m
+    mem_reservation: 128m
+    cpus: 0.75
+    pids_limit: 64
 
   # ── MinIO (S3-compatible storage) ────────────────────────────────────────────
   minio:
@@ -197,6 +270,10 @@ services:
     networks:
       - qalem-net
     restart: unless-stopped
+    mem_limit: 768m
+    mem_reservation: 192m
+    cpus: 1.0
+    pids_limit: 128
 
   # ── Capture Worker (Playwright, service séparé) ──────────────────────────────
   capture-worker:
@@ -208,6 +285,9 @@ services:
       - PORT=8090
       - CAPTURE_STORAGE_STATE_DIR=/data/storage-states
       - CAPTURE_WORKER_TOKEN=${CAPTURE_WORKER_TOKEN}
+      - CAPTURE_MAX_CONCURRENCY=1
+      - CAPTURE_TIMEOUT_MS=60000
+      - NODE_OPTIONS=--max-old-space-size=256
     volumes:
       - capture-storage-states:/data/storage-states
     networks:
@@ -217,6 +297,10 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+    mem_limit: 1536m
+    mem_reservation: 384m
+    cpus: 1.5
+    pids_limit: 256
 
   # ── MinIO bucket initializer (run-once) ──────────────────────────────────────
   minio-init:
@@ -240,6 +324,10 @@ services:
     networks:
       - qalem-net
     restart: "no"
+    mem_limit: 128m
+    mem_reservation: 32m
+    cpus: 0.25
+    pids_limit: 64
 
 networks:
   qalem-net:
