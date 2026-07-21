@@ -11,7 +11,7 @@ export type OrgMemberRole = 'admin' | 'manager' | 'formateur' | 'apprenant';
 
 export type OrgSector = 'healthcare' | 'legal' | 'tech' | 'finance' | 'education' | 'industry';
 
-export type SceneType = 'slide' | 'quiz' | 'interactive' | 'pbl';
+export type SceneType = 'slide' | 'quiz' | 'interactive' | 'pbl' | 'plugin';
 
 export type CurriculumRelationType = 'prerequisite' | 'follows' | 'deepens' | 'reviews';
 

@@ -15,6 +15,7 @@ import type { Action } from '@/lib/types/action';
 import type { WidgetType, WidgetConfig } from '@/lib/types/widgets';
 import type { PBLProjectConfig } from '@/lib/pbl/types';
 import type { PBLProjectV2 } from '@/lib/pbl/v2/types';
+import type { PluginSceneContent } from '@/lib/plugins/scene-sdk';
 
 export type {
   SceneType,
@@ -43,8 +44,8 @@ export type QuizQuestionType = import('@openmaic/dsl').QuizQuestion['type'];
 
 // The contract's `SceneContent` is the universal subset (slide | quiz). Reach it
 // under a distinct name; the app's own `SceneContent` (declared below) is the
-// full four-way union so existing `switch (content.type)` call sites keep all
-// four cases.
+// full five-way union so existing `switch (content.type)` call sites keep all
+// five cases.
 export type { SceneContent as SceneContentBase } from '@openmaic/dsl';
 
 // The raw, generic contract Scene is reachable under a distinct name for
@@ -82,15 +83,19 @@ export interface PBLContent {
 
 /**
  * The app's full scene-content union: the contract's universal kinds plus the
- * app-only feature kinds. This is what `@/lib/types/stage` callers have always
- * known as `SceneContent` (all four cases).
+ * app-only feature kinds. This is what `@/lib/types/stage` callers know as
+ * `SceneContent` (all five cases).
  */
-export type AppSceneContent = DslSceneContent | InteractiveContent | PBLContent;
+export type AppSceneContent =
+  | DslSceneContent
+  | InteractiveContent
+  | PBLContent
+  | PluginSceneContent;
 
 /**
- * The app's `SceneContent` — the full four-way union. Overrides the contract's
+ * The app's `SceneContent` — the full five-way union. Overrides the contract's
  * narrower `SceneContentBase` (slide | quiz) so call sites that switch on all
- * four `content.type` cases keep compiling.
+ * five `content.type` cases keep compiling.
  */
 export type SceneContent = AppSceneContent;
 

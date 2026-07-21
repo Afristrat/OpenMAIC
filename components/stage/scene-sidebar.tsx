@@ -13,6 +13,7 @@ import {
   RefreshCw,
   Trophy,
   Video,
+  Puzzle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SlideThumbnail } from '@/components/slide-renderer/SlideThumbnail';
@@ -101,6 +102,7 @@ export function SceneSidebar({
       quiz: PieChart,
       interactive: MousePointer2,
       pbl: Cpu,
+      plugin: Puzzle,
     };
     return icons[type] || BookOpen;
   };

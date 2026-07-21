@@ -1,6 +1,6 @@
 'use client';
 
-import { BookOpen, Globe } from 'lucide-react';
+import { BookOpen, Globe, Puzzle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SlideThumbnail } from '@/components/slide-renderer/SlideThumbnail';
 import { ThumbnailInteractive } from '@/components/slide-renderer/components/ThumbnailInteractive';
@@ -158,6 +158,17 @@ export function SceneThumbnailContent({
             </div>
           ))}
         </div>
+      </div>
+    );
+  }
+
+  if (scene.type === 'plugin') {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-gradient-to-br from-violet-50 to-fuchsia-50 text-violet-400 dark:from-violet-950/30 dark:to-fuchsia-950/20 dark:text-violet-500">
+        <Puzzle className="h-5 w-5" />
+        <span className="max-w-[90%] truncate text-[9px] font-semibold">
+          {scene.content.type === 'plugin' ? scene.content.pluginType : 'plugin'}
+        </span>
       </div>
     );
   }

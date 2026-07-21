@@ -15,8 +15,8 @@
  */
 import type { Slide } from './slides.js';
 
-/** All scene kinds the contract is aware of. Feature kinds (interactive/pbl) are still valid `type` values — their *content* shapes live in the app and are composed in via {@link Scene}'s `TContent` parameter. */
-export type SceneType = 'slide' | 'quiz' | 'interactive' | 'pbl';
+/** All scene kinds the contract is aware of. Feature kinds (interactive/pbl/plugin) are still valid `type` values — their *content* shapes live in the app and are composed in via {@link Scene}'s `TContent` parameter. */
+export type SceneType = 'slide' | 'quiz' | 'interactive' | 'pbl' | 'plugin';
 
 /** Lifecycle / interaction mode a {@link Stage} can be operated in. */
 export type StageMode = 'autonomous' | 'playback' | 'edit';
@@ -178,7 +178,7 @@ export type SceneContent = SlideContent | QuizContent;
  * read-only, feature-free scene — what renderers / importers that only care
  * about the skeleton want. The `TContent` constraint is structural — any union
  * of objects tagged with a `type: SceneType` discriminant satisfies it — so an
- * app can pass its own wider content union (slide | quiz | interactive | pbl).
+ * app can pass its own wider content union (slide | quiz | interactive | pbl | plugin).
  *
  * @template TAction  - The playback action type (defaults to `never`, i.e. none).
  * @template TContent - The scene-content union; any object union tagged with a

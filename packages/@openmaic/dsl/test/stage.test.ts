@@ -74,7 +74,7 @@ describe('discriminant guards', () => {
     }
   });
 
-  it('accepts an app-widened content union (interactive / pbl kinds)', () => {
+  it('accepts an app-widened content union (interactive / pbl / plugin kinds)', () => {
     // Regression: the generic Scene lets apps widen TContent beyond the
     // contract's slide|quiz, so the guards must accept that widened union too
     // (not just the narrow SceneContent).
@@ -148,11 +148,11 @@ describe('Whiteboard', () => {
 });
 
 describe('SceneType', () => {
-  it('covers all four scene kinds even though the contract content is only slide|quiz', () => {
-    // The app relies on 'interactive' / 'pbl' being valid Scene.type values;
-    // the contract keeps all four in SceneType even though their content
+  it('covers all five scene kinds even though the contract content is only slide|quiz', () => {
+    // The app relies on 'interactive' / 'pbl' / 'plugin' being valid Scene.type values;
+    // the contract keeps all five in SceneType even though their content
     // shapes are app-side.
-    const types: SceneType[] = ['slide', 'quiz', 'interactive', 'pbl'];
-    expect(types).toHaveLength(4);
+    const types: SceneType[] = ['slide', 'quiz', 'interactive', 'pbl', 'plugin'];
+    expect(types).toHaveLength(5);
   });
 });
