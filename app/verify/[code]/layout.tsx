@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
       'Verify an official Qalem certificate of completion. Confirm that a learner has successfully completed a course.',
     openGraph: {
       title: `Qalem Certificate Verification`,
-      description: `Verify certificate ${code} on Qalem — the open-source AI interactive classroom.`,
+      description: `Verify certificate ${code} on Qalem — the AI interactive classroom.`,
       type: 'website',
       siteName: 'Qalem',
       url: `/verify/${code}`,

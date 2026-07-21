@@ -127,25 +127,28 @@ export default function TermsPage(): React.ReactElement {
       </Paragraph>
       <h3 className="text-lg font-semibold text-slate-100 mb-2">Plateforme et code source</h3>
       <Paragraph>
-        Qalem est distribu&eacute; sous licence AGPL-3.0. Le code source est disponible sur GitHub.
-        Cette licence ne s&apos;&eacute;tend pas aux donn&eacute;es utilisateur, aux configurations
-        sp&eacute;cifiques du d&eacute;ploiement ou aux contenus g&eacute;n&eacute;r&eacute;s.
+        Qalem est une plateforme propri&eacute;taire exploit&eacute;e par AI-Mpower LLC. Les
+        composants tiers &eacute;ventuellement int&eacute;gr&eacute;s restent soumis &agrave; leurs
+        licences respectives. Aucun droit sur le code source, les mod&egrave;les, les configurations
+        ou les actifs propri&eacute;taires de Qalem n&apos;est accord&eacute; en dehors des droits
+        d&apos;usage express&eacute;ment pr&eacute;vus au contrat.
       </Paragraph>
 
-      {/* 5. Abonnements et paiement */}
-      <SectionTitle>5. Abonnements et paiement</SectionTitle>
+      {/* 5. Offres et paiement */}
+      <SectionTitle>5. Offres et paiement</SectionTitle>
       <Paragraph>
-        Qalem propose plusieurs formules d&apos;abonnement, dont une offre gratuite et des offres
-        payantes. Les tarifs sont exprim&eacute;s en dirhams marocains (MAD), toutes taxes
-        comprises.
+        L&apos;acc&egrave;s aux offres Studio et Institution fait l&apos;objet d&apos;une
+        proposition commerciale, d&apos;un bon de commande ou d&apos;un contrat pr&eacute;cisant le
+        prix, la devise, les taxes applicables, la dur&eacute;e et le p&eacute;rim&egrave;tre des
+        services.
       </Paragraph>
       <List
         items={[
-          'Les abonnements sont factur\u00e9s mensuellement ou annuellement selon la formule choisie',
-          'Le paiement s\u2019effectue par carte bancaire ou via les moyens de paiement mobile disponibles (Orange Money, Wave, CinetPay)',
-          'L\u2019abonnement est renouvel\u00e9 automatiquement sauf r\u00e9siliation avant la date d\u2019\u00e9ch\u00e9ance',
-          'Un essai gratuit de 30 jours est propos\u00e9 sur l\u2019offre Pro, sans engagement',
-          'Les d\u00e9tails complets des formules sont disponibles sur la page Tarifs',
+          'La p\u00e9riodicit\u00e9 et les modalit\u00e9s de facturation sont celles de la proposition commerciale ou du contrat accept\u00e9',
+          'Les moyens et d\u00e9lais de paiement sont pr\u00e9cis\u00e9s dans les documents contractuels',
+          'Un renouvellement automatique ne s\u2019applique que s\u2019il est express\u00e9ment stipul\u00e9 dans le contrat',
+          'L\u2019acc\u00e8s est exclusivement accord\u00e9 dans le cadre du p\u00e9rim\u00e8tre commercial accept\u00e9',
+          'En cas de divergence, la proposition commerciale ou le contrat sign\u00e9 pr\u00e9vaut sur la page Tarifs',
         ]}
       />
       <Paragraph>

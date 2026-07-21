@@ -23,21 +23,6 @@ type PricingCard = {
 
 const cards: PricingCard[] = [
   {
-    titleKey: 'pricing.free.title',
-    priceKey: 'pricing.free.price',
-    subtitleKey: 'pricing.free.subtitle',
-    features: [
-      { labelKey: 'pricing.free.f1' },
-      { labelKey: 'pricing.free.f2' },
-      { labelKey: 'pricing.free.f3' },
-      { labelKey: 'pricing.free.f4' },
-      { labelKey: 'pricing.free.f5' },
-      { labelKey: 'pricing.free.f6' },
-    ],
-    ctaKey: 'pricing.free.cta',
-    href: '/auth',
-  },
-  {
     titleKey: 'pricing.pro.title',
     priceKey: 'pricing.pro.price',
     subtitleKey: 'pricing.pro.subtitle',
@@ -90,7 +75,7 @@ export default function PricingPage(): React.ReactElement {
         </div>
 
         {/* Cards grid */}
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3 max-w-6xl mx-auto">
+        <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 md:grid-cols-2">
           {cards.map((card) => {
             const isMailto = card.href.startsWith('mailto:');
 

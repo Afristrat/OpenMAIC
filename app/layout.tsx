@@ -31,7 +31,7 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   title: 'Qalem',
   description:
-    'The open-source AI interactive classroom. Upload a PDF to instantly generate an immersive, multi-agent learning experience.',
+    'The AI interactive classroom that turns your sources into immersive learning experiences guided by multiple agents.',
 };
 
 export default function RootLayout({
