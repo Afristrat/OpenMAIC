@@ -713,12 +713,14 @@
       "title": "Publication cible plateforme (manifests/overrides tracés)",
       "epic": "4-MOTEUR",
       "phase": 4,
-      "passes": false,
+      "passes": true,
+      "completedAt": "2026-07-22",
       "dependencies": ["S4-004", "S1-001"],
       "acceptance": [
         "En-têtes de traçabilité (source, vecteur, date) sur chaque fichier de savoir",
         "Test S1-001 étendu : un override du moteur refondu change une génération"
-      ]
+      ],
+      "acceptanceNote": "La publication plateforme `formation-design-pro` 2.2.0 porte sa source, les vecteurs V-02/V-03/V-04/V-05/V-07, la date et les hashes exacts. Le loader de production partage le schéma strict des skills tenant, hydrate les overrides fichier dans leur racine et refuse liens symboliques ou traversée. Le test passe par `generateSceneOutlinesFromRequirements` et démontre un résultat différent moteur actif/inactif. Commit poussé : 61a70ae54236d5d039e99895ce4ce21e994d3c24. Validation serveuria : TypeScript, lint et format verts ; 259 fichiers et 1 969 tests unitaires verts ; 35/35 parcours Playwright verts."
     },
     {
       "id": "S4-006",
