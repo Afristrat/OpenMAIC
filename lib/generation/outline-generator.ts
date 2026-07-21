@@ -15,6 +15,7 @@ import { PROMPT_IDS } from '@/lib/prompts';
 import { buildPromptWithSkill } from '@/lib/skills/prompt-overrides';
 import { formatImageDescription, formatImagePlaceholder } from './prompt-formatters';
 import { parseJsonResponse } from './json-repair';
+import { formatPluginsForPrompt } from '@/lib/plugins/loader';
 import { uniquifyMediaElementIds } from './scene-builder';
 import type { AICallFn, GenerationResult, GenerationCallbacks } from './pipeline-types';
 import { createLogger } from '@/lib/logger';
@@ -107,6 +108,7 @@ export async function generateSceneOutlinesFromRequirements(
       videoEnabled,
       mediaEnabled,
       researchContext: options?.researchContext || 'None',
+      availablePlugins: formatPluginsForPrompt(),
       // Server-side generation populates this via options; client-side populates via formatTeacherPersonaForPrompt
       teacherContext: options?.teacherContext || '',
     },

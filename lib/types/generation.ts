@@ -199,6 +199,12 @@ export interface GeneratedInteractiveContent {
   widgetConfig?: WidgetConfig;
 }
 
+/** AI-generated data for a registered Scene Genome plug-in. */
+export interface GeneratedPluginContent {
+  pluginType: string;
+  data: Record<string, unknown>;
+}
+
 // ==================== Legacy Types (for compatibility) ====================
 
 export interface SuggestedSlideElement {

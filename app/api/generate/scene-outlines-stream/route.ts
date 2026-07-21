@@ -37,6 +37,7 @@ import { apiError } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
 import { resolveVocationalActive } from '@/lib/config/feature-flags';
+import { formatPluginsForPrompt } from '@/lib/plugins/loader';
 const log = createLogger('Outlines Stream');
 
 export const maxDuration = 300;
@@ -372,6 +373,7 @@ export async function POST(req: NextRequest) {
       pdfContent: pdfText ? pdfText.substring(0, MAX_PDF_CONTENT_CHARS) : 'None',
       availableImages: availableImagesText,
       researchContext: researchContext || 'None',
+      availablePlugins: formatPluginsForPrompt(),
       hasSourceImages,
       imageEnabled: imageGenerationEnabled,
       videoEnabled: videoGenerationEnabled,

@@ -1,12 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
-// NOTE: the 'plugin' scene type is not yet wired into the central scene
-// dispatcher (components/stage/scene-renderer.tsx) — that diff was rejected
-// during the S0-002 OURS_ONLY port (see refork/port-log.md, "perte du
-// support du type de scene 'plugin'"). This component is therefore orphan
-// code today; it types against the real content shape so it compiles
-// correctly against what it will consume once re-wired (out of scope here).
+// The central scene dispatcher routes persisted `plugin` scenes here.
 import type { PluginSceneContent as PluginContent } from '@/lib/plugins/scene-sdk';
 import type { StageMode } from '@/lib/types/stage';
 

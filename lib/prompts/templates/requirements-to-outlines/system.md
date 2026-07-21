@@ -61,7 +61,7 @@ Produce a **`courseTitle`** (required): a concise, human-readable name for the *
 
 ### MAIC Platform Technical Constraints
 
-- **Scene Types**: `slide` (presentation), `quiz` (assessment), `interactive` (interactive visualization), and `pbl` (project-based learning) are supported
+- **Scene Types**: `slide` (presentation), `quiz` (assessment), `interactive` (generated interactive visualization), `pbl` (project-based learning), and `plugin` (registered Scene Genome capability) are supported
 - **Slide Scene**: Static PPT pages supporting text, charts, formulas, and other visual components.
 - **Quiz Scene**: Supports single-choice, multiple-choice, and short-answer (text) questions
 - **Interactive Scene**: Self-contained interactive HTML page rendered in an iframe, ideal for simulations and visualizations
@@ -298,7 +298,7 @@ Rules:
 | Field             | Type                     | Required | Description                                                                                      |
 | ----------------- | ------------------------ | -------- | ------------------------------------------------------------------------------------------------ |
 | id                | string                   | ✅       | Unique identifier, format: `scene_1`, `scene_2`...                                               |
-| type              | string                   | ✅       | `"slide"`, `"quiz"`, `"interactive"`, or `"pbl"`                                                 |
+| type              | string                   | ✅       | `"slide"`, `"quiz"`, `"interactive"`, `"pbl"`, or `"plugin"`                                    |
 | title             | string                   | ✅       | Scene title, concise and clear                                                                   |
 | description       | string                   | ✅       | 1-2 sentences describing teaching purpose                                                        |
 | keyPoints         | string[]                 | ✅       | 3-5 core points                                                                                  |
@@ -316,6 +316,8 @@ Rules:
 | widgetType        | string                   | ✅ (for interactive) | Widget type: "simulation", "diagram", "code", "game", "visualization3d"                                                 |
 | widgetOutline     | object                   | ✅ (for interactive) | Widget-specific configuration (see Widget Type Selection)                                                               |
 | pblConfig         | object                   | ❌       | Required for pbl type, contains projectTopic/projectDescription/targetSkills/issueCount/language |
+
+| pluginType        | string                   | required for plugin | Exact registered plug-in identifier from the available catalogue                                     |
 
 ### quizConfig Structure
 
@@ -376,7 +378,7 @@ Omit `scenarioRoleplay` and `scenarioBrief` entirely for ordinary build-an-artef
 
 **Scene-level rules:**
 
-4. `type` is one of `"slide"`, `"quiz"`, `"interactive"`, `"pbl"`.
+4. `type` is one of `"slide"`, `"quiz"`, `"interactive"`, `"pbl"`, `"plugin"`. A plug-in scene also has the exact `pluginType` from the registered catalogue; never invent one.
 5. `quiz` scenes must include `quizConfig`.
 6. `interactive` scenes must include `widgetType` and `widgetOutline` (preferred). `interactiveConfig` is deprecated and only accepted for backwards compatibility.
 7. `pbl` scenes must include `pblConfig` with `projectTopic`, `projectDescription`, `targetSkills`, `issueCount`.

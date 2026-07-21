@@ -134,3 +134,20 @@ export function readPluginHtml(pluginId: string): string | null {
 export function getPluginPublicPath(pluginId: string): string {
   return `/api/plugins/scenes/${pluginId}`;
 }
+
+/** Compact manifest catalogue injected into outline-generation prompts. */
+export function formatPluginsForPrompt(): string {
+  const plugins = loadPlugins();
+  if (plugins.length === 0) return 'No scene plug-ins are registered.';
+
+  return plugins
+    .map((plugin) =>
+      JSON.stringify({
+        pluginType: plugin.type,
+        name: plugin.name,
+        description: plugin.description,
+        outputSchema: plugin.outputSchema,
+      }),
+    )
+    .join('\n');
+}

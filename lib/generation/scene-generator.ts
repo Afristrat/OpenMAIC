@@ -14,6 +14,7 @@ import type {
   GeneratedQuizContent,
   GeneratedInteractiveContent,
   GeneratedPBLContent,
+  GeneratedPluginContent,
   UserRequirements,
   PdfImage,
   ImageMapping,
@@ -35,6 +36,8 @@ import { DEFAULT_LANGUAGE_DIRECTIVE } from './outline-generator';
 import { postProcessInteractiveHtml } from './interactive-post-processor';
 import { parseActionsFromStructuredOutput } from './action-parser';
 import { parseJsonResponse } from './json-repair';
+import { loadPlugins } from '@/lib/plugins/loader';
+import { validatePluginData } from '@/lib/plugins/schema-validator';
 import {
   buildCourseContext,
   formatAgentsForPrompt,
@@ -305,6 +308,7 @@ export async function generateSceneContent(
   | GeneratedQuizContent
   | GeneratedInteractiveContent
   | GeneratedPBLContent
+  | GeneratedPluginContent
   | null
 > {
   const {
@@ -382,9 +386,55 @@ export async function generateSceneContent(
         targetLanguage,
         userRequirements,
       );
+    case 'plugin':
+      return generatePluginContent(outline, aiCall, languageDirective);
     default:
       return null;
   }
+}
+
+async function generatePluginContent(
+  outline: SceneOutline,
+  aiCall: AICallFn,
+  languageDirective?: string,
+): Promise<GeneratedPluginContent | null> {
+  const pluginType = outline.pluginType?.trim();
+  if (!pluginType) {
+    log.error(`Plugin outline "${outline.title}" has no pluginType`);
+    return null;
+  }
+
+  const plugin = loadPlugins().find(
+    (candidate) => candidate.type === pluginType || candidate.id === pluginType,
+  );
+  if (!plugin) {
+    log.error(`Plugin "${pluginType}" is not registered`);
+    return null;
+  }
+
+  const response = await aiCall(
+    plugin.systemPrompt || 'Generate valid JSON data for this educational scene plug-in.',
+    [
+      `Scene title: ${outline.title}`,
+      `Teaching purpose: ${outline.description}`,
+      `Key points: ${(outline.keyPoints ?? []).join('; ')}`,
+      languageDirective ? `Language directive: ${languageDirective}` : '',
+      'Return only one JSON object that conforms exactly to this JSON Schema:',
+      JSON.stringify(plugin.outputSchema, null, 2),
+    ]
+      .filter(Boolean)
+      .join('\n\n'),
+  );
+  const data = parseJsonResponse<unknown>(response);
+  const validation = validatePluginData(data, plugin.outputSchema);
+  if (!validation.valid || typeof data !== 'object' || data === null || Array.isArray(data)) {
+    log.error(
+      `Generated data for plugin "${plugin.type}" is invalid: ${validation.error ?? 'root must be an object'}`,
+    );
+    return null;
+  }
+
+  return { pluginType: plugin.type, data: data as Record<string, unknown> };
 }
 
 /**
@@ -1362,7 +1412,8 @@ export async function generateSceneActions(
     | GeneratedSlideContent
     | GeneratedQuizContent
     | GeneratedInteractiveContent
-    | GeneratedPBLContent,
+    | GeneratedPBLContent
+    | GeneratedPluginContent,
   aiCall: AICallFn,
   options: SceneActionsOptions = {},
 ): Promise<Action[]> {
@@ -1495,6 +1546,16 @@ export async function generateSceneActions(
     }
 
     return generateDefaultPBLActions(outline);
+  }
+
+  if (outline.type === 'plugin' && 'pluginType' in content) {
+    return [
+      {
+        id: `action_${nanoid(8)}`,
+        type: 'speech',
+        text: outline.description || outline.title,
+      },
+    ];
   }
 
   return [];
@@ -1674,7 +1735,8 @@ export function createSceneWithActions(
     | GeneratedSlideContent
     | GeneratedQuizContent
     | GeneratedInteractiveContent
-    | GeneratedPBLContent,
+    | GeneratedPBLContent
+    | GeneratedPluginContent,
   actions: Action[],
   api: ReturnType<typeof createStageAPI>,
 ): string | null {
@@ -1755,6 +1817,22 @@ export function createSceneWithActions(
         type: 'pbl',
         projectConfig: content.projectConfig,
         ...(content.projectV2 ? { projectV2: content.projectV2 } : {}),
+      },
+      actions,
+    });
+
+    return sceneResult.success ? (sceneResult.data ?? null) : null;
+  }
+
+  if (outline.type === 'plugin' && 'pluginType' in content) {
+    const sceneResult = api.scene.create({
+      type: 'plugin',
+      title: outline.title,
+      order: outline.order,
+      content: {
+        type: 'plugin',
+        pluginType: content.pluginType,
+        data: content.data,
       },
       actions,
     });

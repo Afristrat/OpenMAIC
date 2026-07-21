@@ -605,6 +605,9 @@ function SceneRow({
                 {!disabled && outline.type === 'pbl' && (
                   <PblConfigDisclosure outline={outline} onUpdate={onUpdate} theme={theme} />
                 )}
+                {!disabled && outline.type === 'plugin' && (
+                  <PluginConfigSelect outline={outline} onUpdate={onUpdate} theme={theme} />
+                )}
                 <TypePill
                   type={outline.type}
                   onChange={(type) => onReplace(changeOutlineType(outline, type))}
@@ -615,7 +618,8 @@ function SceneRow({
                     !disabled &&
                     (outline.type === 'quiz' ||
                       outline.type === 'interactive' ||
-                      outline.type === 'pbl')
+                      outline.type === 'pbl' ||
+                      outline.type === 'plugin')
                   }
                 />
               </div>
@@ -992,6 +996,62 @@ function cascadeSegmentClass(theme: (typeof TYPE_THEME)[SceneType]) {
     'inline-flex items-center gap-1 border-r border-black/[0.07] px-2.5 py-1 text-[11px] font-medium uppercase tracking-wider transition-colors dark:border-white/10',
     theme.chip,
     theme.chipHover,
+  );
+}
+
+interface PluginOption {
+  type: string;
+  name: string;
+}
+
+function PluginConfigSelect({
+  outline,
+  onUpdate,
+  theme,
+}: {
+  outline: SceneOutline;
+  onUpdate: (updates: Partial<SceneOutline>) => void;
+  theme: (typeof TYPE_THEME)[SceneType];
+}) {
+  const { t, locale } = useI18n();
+  const [plugins, setPlugins] = useState<PluginOption[]>([]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetch(`/api/plugins?locale=${encodeURIComponent(locale)}`, { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) return [];
+        const payload = (await response.json()) as { plugins?: PluginOption[] };
+        return payload.plugins ?? [];
+      })
+      .then(setPlugins)
+      .catch((error: unknown) => {
+        if (!(error instanceof DOMException && error.name === 'AbortError')) setPlugins([]);
+      });
+    return () => controller.abort();
+  }, [locale]);
+
+  const current = outline.pluginType ?? '';
+  const hasCurrent = plugins.some((plugin) => plugin.type === current);
+
+  return (
+    <select
+      aria-label={t('nav.plugins')}
+      value={current}
+      onChange={(event) => onUpdate({ pluginType: event.target.value })}
+      className={cn(
+        'h-8 max-w-48 border-0 border-r border-background/60 px-3 text-xs font-medium outline-none',
+        theme.chip,
+      )}
+    >
+      {!hasCurrent && current && <option value={current}>{current}</option>}
+      {!current && <option value="">{t('common.loading')}</option>}
+      {plugins.map((plugin) => (
+        <option key={plugin.type} value={plugin.type}>
+          {plugin.name}
+        </option>
+      ))}
+    </select>
   );
 }
 

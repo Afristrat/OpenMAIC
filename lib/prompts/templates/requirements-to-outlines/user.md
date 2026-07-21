@@ -37,6 +37,12 @@ Infer the course language directive by applying the decision rules from the syst
 
 ---
 
+## Available Scene Plug-ins
+
+{{availablePlugins}}
+
+---
+
 ## Output Requirements
 
 Please automatically infer the following from user requirements:
@@ -66,7 +72,7 @@ Never return a bare array. Never omit `languageDirective` or `courseTitle`. All 
 ```json
 {
   "id": "scene_1",
-  "type": "slide" | "quiz" | "interactive" | "pbl",
+  "type": "slide" | "quiz" | "interactive" | "pbl" | "plugin",
   "title": "Scene Title",
   "description": "Teaching purpose description",
   "keyPoints": ["Point 1", "Point 2", "Point 3"],
@@ -90,6 +96,7 @@ Never return a bare array. Never omit `languageDirective` or `courseTitle`. All 
 - **Interactive scenes**: If a concept benefits from hands-on simulation/visualization, use `"type": "interactive"` with `widgetType` and `widgetOutline` fields. Limit to 1-2 per course.
    - Select widgetType based on concept: simulation (physics/chem), diagram (processes), code (programming), game (practice), visualization3d (3D models)
    - Provide appropriate widgetOutline for the widget type
+- **Plug-in scenes**: Use `"type": "plugin"` only when one of the registered plug-ins above is a precise pedagogical fit. Include its exact `"pluginType"` value. Never invent a plug-in identifier. Prefer a plug-in over generic interactive HTML when the registered capability directly matches the exercise.
 - **Scene count**: Based on inferred duration, typically 1-2 scenes per minute
 - **Quiz placement**: Recommend inserting a quiz every 3-5 slides for assessment
 - **Language**: Infer from the user's requirement text and context, then output all content in the inferred language
