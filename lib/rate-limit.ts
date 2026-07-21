@@ -2,10 +2,8 @@
 // Qalem — Rate Limiting (in-memory sliding window)
 // =============================================================================
 //
-// TODO: Upgrade to Redis (ioredis) for multi-instance deployments.
-// Current implementation uses an in-memory Map — suitable for single-instance
-// deployments only. Data is lost on process restart, which is acceptable for
-// rate limiting (limits reset naturally).
+// ponytail: process-local windows while Qalem runs one web replica; move the
+// counters to Redis before increasing the web replica count above one.
 // =============================================================================
 
 import { getUsageSummary } from '@/lib/usage/tracker';
@@ -15,13 +13,13 @@ import { getUsageSummary } from '@/lib/usage/tracker';
 // ---------------------------------------------------------------------------
 
 const PLANS: Record<string, { maxRequests: number; windowMs: number }> = {
-  free: { maxRequests: 100, windowMs: 60_000 }, // 100 req/min
+  unlicensed: { maxRequests: 0, windowMs: 60_000 },
   pro: { maxRequests: 1000, windowMs: 60_000 }, // 1 000 req/min
   enterprise: { maxRequests: 10_000, windowMs: 60_000 }, // 10 000 req/min
 };
 
 const TTS_LIMITS: Record<string, { maxMinutes: number }> = {
-  free: { maxMinutes: 100 }, // per month
+  unlicensed: { maxMinutes: 0 },
   pro: { maxMinutes: 1000 },
   enterprise: { maxMinutes: Infinity },
 };
@@ -75,10 +73,15 @@ export interface RateLimitResult {
  * Check whether a request is allowed under the rate limit for the given key.
  *
  * @param key  - Unique identifier (e.g. `user:<id>` or `ip:<addr>`)
- * @param plan - Pricing plan (free | pro | enterprise). Defaults to "free".
+ * @param plan - Commercial plan (unlicensed | pro | enterprise).
  */
 export async function checkRateLimit(key: string, plan?: string): Promise<RateLimitResult> {
-  const planConfig = PLANS[plan ?? 'free'] ?? PLANS.free;
+  const planConfig = PLANS[plan ?? 'unlicensed'] ?? PLANS.unlicensed;
+
+  if (planConfig.maxRequests === 0) {
+    return { allowed: false, remaining: 0, retryAfterMs: planConfig.windowMs };
+  }
+
   const now = Date.now();
   const windowStart = now - planConfig.windowMs;
 
@@ -126,7 +129,7 @@ export interface TTSQuotaResult {
  * Queries the usage_records table via getUsageSummary for persistence across restarts.
  */
 export async function checkTTSQuota(orgId: string, plan: string): Promise<TTSQuotaResult> {
-  const limitConfig = TTS_LIMITS[plan] ?? TTS_LIMITS.free;
+  const limitConfig = TTS_LIMITS[plan] ?? TTS_LIMITS.unlicensed;
 
   let usedMinutes = 0;
   try {

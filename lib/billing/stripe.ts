@@ -8,6 +8,10 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('Stripe');
 
+function isLicensedPlan(plan: string | undefined): plan is 'pro' | 'enterprise' {
+  return plan === 'pro' || plan === 'enterprise';
+}
+
 // ---------------------------------------------------------------------------
 // Stripe client (lazy singleton)
 // ---------------------------------------------------------------------------
@@ -35,86 +39,6 @@ function getSupabaseAdmin(): ReturnType<typeof createClient> | null {
 }
 
 // ---------------------------------------------------------------------------
-// Price ID resolution
-// ---------------------------------------------------------------------------
-
-const PRICE_MAP: Record<string, string | undefined> = {
-  'pro:month': process.env.STRIPE_PRICE_PRO_MONTHLY,
-  'pro:year': process.env.STRIPE_PRICE_PRO_YEARLY,
-  'enterprise:month': process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY,
-};
-
-function resolvePriceId(plan: 'pro' | 'enterprise', interval: 'month' | 'year'): string {
-  const priceId = PRICE_MAP[`${plan}:${interval}`];
-  if (!priceId) {
-    throw new Error(`No Stripe price configured for ${plan}/${interval}`);
-  }
-  return priceId;
-}
-
-// ---------------------------------------------------------------------------
-// Create Checkout Session
-// ---------------------------------------------------------------------------
-
-export async function createCheckoutSession(params: {
-  orgId: string;
-  plan: 'pro' | 'enterprise';
-  interval: 'month' | 'year';
-  successUrl: string;
-  cancelUrl: string;
-}): Promise<{ url: string }> {
-  const stripe = getStripe();
-  const supabase = getSupabaseAdmin();
-
-  // Retrieve or create Stripe customer for this organization
-  let customerId: string | undefined;
-
-  if (supabase) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Untyped service-role client
-    const { data: org } = await (supabase as any)
-      .from('organizations')
-      .select('stripe_customer_id, name')
-      .eq('id', params.orgId)
-      .single();
-
-    if (org?.stripe_customer_id) {
-      customerId = org.stripe_customer_id;
-    } else {
-      // Create a new Stripe customer
-      const customer = await stripe.customers.create({
-        metadata: { org_id: params.orgId },
-        name: org?.name ?? undefined,
-      });
-      customerId = customer.id;
-
-      // Persist customer ID
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Untyped service-role client
-      await (supabase as any)
-        .from('organizations')
-        .update({ stripe_customer_id: customerId })
-        .eq('id', params.orgId);
-    }
-  }
-
-  const priceId = resolvePriceId(params.plan, params.interval);
-
-  const session = await stripe.checkout.sessions.create({
-    mode: 'subscription',
-    customer: customerId,
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: params.successUrl,
-    cancel_url: params.cancelUrl,
-    metadata: { org_id: params.orgId, plan: params.plan },
-  });
-
-  if (!session.url) {
-    throw new Error('Stripe did not return a checkout URL');
-  }
-
-  return { url: session.url };
-}
-
-// ---------------------------------------------------------------------------
 // Handle Webhook Events
 // ---------------------------------------------------------------------------
 
@@ -135,7 +59,10 @@ export async function handleStripeWebhook(payload: string, signature: string): P
       const session = event.data.object;
       const orgId = session.metadata?.org_id;
       const plan = session.metadata?.plan;
-      if (!orgId || !plan) break;
+      if (!orgId || !isLicensedPlan(plan)) {
+        log.warn('Ignoring checkout completion without a licensed Qalem plan');
+        break;
+      }
 
       const subscriptionId =
         typeof session.subscription === 'string' ? session.subscription : session.subscription?.id;
@@ -197,13 +124,13 @@ export async function handleStripeWebhook(payload: string, signature: string): P
         await (supabase as any)
           .from('organizations')
           .update({
-            plan: 'free',
+            plan: 'unlicensed',
             subscription_status: 'canceled',
             stripe_subscription_id: null,
             current_period_end: null,
           })
           .eq('id', orgId);
-        log.info(`Organization ${orgId} subscription canceled — reverted to free`);
+        log.info(`Organization ${orgId} subscription canceled; access is no longer licensed`);
       }
       break;
     }
@@ -219,7 +146,7 @@ export async function handleStripeWebhook(payload: string, signature: string): P
 
 export async function getSubscriptionStatus(orgId: string): Promise<{
   plan: string;
-  status: 'active' | 'past_due' | 'canceled' | 'trialing';
+  status: 'active' | 'past_due' | 'canceled';
   currentPeriodEnd: Date;
 } | null> {
   const supabase = getSupabaseAdmin();
@@ -232,11 +159,16 @@ export async function getSubscriptionStatus(orgId: string): Promise<{
     .eq('id', orgId)
     .single();
 
-  if (!org || org.plan === 'free') return null;
+  if (!org || org.plan === 'unlicensed' || org.plan === 'free') return null;
+
+  const status =
+    org.subscription_status === 'past_due' || org.subscription_status === 'canceled'
+      ? org.subscription_status
+      : 'active';
 
   return {
     plan: org.plan,
-    status: org.subscription_status ?? 'active',
+    status,
     currentPeriodEnd: org.current_period_end ? new Date(org.current_period_end) : new Date(),
   };
 }

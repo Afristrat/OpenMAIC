@@ -24,11 +24,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const subscription = await getSubscriptionStatus(orgId);
 
     if (!subscription) {
-      const freePlan = getPlan('free');
+      const unlicensedPlan = getPlan('unlicensed');
       return NextResponse.json({
-        plan: 'free',
-        planName: freePlan.name,
-        status: 'active',
+        plan: 'unlicensed',
+        planName: unlicensedPlan.name,
+        status: 'inactive',
         currentPeriodEnd: null,
       });
     }

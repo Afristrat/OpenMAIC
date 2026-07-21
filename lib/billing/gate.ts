@@ -28,7 +28,7 @@ type QuotaGateResult = {
 // ---------------------------------------------------------------------------
 
 const PLAN_RANK: Record<PlanId, number> = {
-  free: 0,
+  unlicensed: 0,
   pro: 1,
   enterprise: 2,
 };
@@ -50,8 +50,14 @@ export async function requirePlan(
 ): Promise<GateResult> {
   const supabase = getSupabaseAdmin();
   if (!supabase) {
-    // No Supabase → allow in dev
-    return { allowed: true, currentPlan: 'enterprise' };
+    return {
+      allowed: false,
+      currentPlan: getPlan('unlicensed').name,
+      response: NextResponse.json(
+        { error: 'Billing service unavailable', code: 'BILLING_UNAVAILABLE' },
+        { status: 503 },
+      ),
+    };
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Untyped service-role client
@@ -61,9 +67,8 @@ export async function requirePlan(
     .eq('id', orgId)
     .single();
 
-  const currentPlanId = (org?.plan ?? 'free') as PlanId;
-  const currentPlan = getPlan(currentPlanId);
-  const currentRank = PLAN_RANK[currentPlanId] ?? 0;
+  const currentPlan = getPlan(org?.plan ?? 'unlicensed');
+  const currentRank = PLAN_RANK[currentPlan.id];
   const requiredRank = PLAN_RANK[minimumPlan];
 
   if (currentRank >= requiredRank) {
