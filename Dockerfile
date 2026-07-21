@@ -14,6 +14,7 @@ RUN apk add --no-cache python3 build-base g++ cairo-dev pango-dev jpeg-dev gifli
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/ ./packages/
+COPY scripts/sync-maic-importer.mjs ./scripts/sync-maic-importer.mjs
 
 RUN pnpm install --frozen-lockfile
 
