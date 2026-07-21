@@ -92,7 +92,7 @@
 
 ## ADR-412 — Publication plateforme chargée par le runtime (ACTÉE — S4-005, 2026-07-22)
 
-- **Quoi** : le manifeste `formation-design-pro` porte la provenance, les vecteurs et la date de validation. Son override publié matérialise le cadrage progressif, les politiques conditionnelles, les capacités prouvées et la promotion à trois portes ; le loader de production hydrate ce même fichier pour les outlines, slides et quiz.
+- **Quoi** : le manifeste `formation-design-pro` porte la provenance, les vecteurs et la date de validation. Son override publié matérialise le cadrage progressif, les politiques conditionnelles, les capacités prouvées et la promotion à trois portes ; le loader de production hydrate ce même fichier pour les outlines, slides et quiz. Quand le moteur de skills est actif, cette publication est le socle systématique ; une skill métier optionnelle se compose ensuite sans la remplacer.
 - **Effet observable** : à modèle réactif identique, activer le moteur change le plan généré d’une présentation générale vers une chaîne performance → activité → preuve. Le test passe par `generateSceneOutlinesFromRequirements`, pas par une lecture isolée du fichier.
 - **Validation des manifests** : le loader intégré et l’installation tenant partagent désormais le même schéma strict. Les références fichier restent autorisées uniquement pour les skills intégrées, puis sont bornées au répertoire racine et refusées si elles sont des liens symboliques.
 - **Preuves** : `skills/formation-design-pro/manifest.json`, `skills/formation-design-pro/prompts/andragogy-system-override.md`, `tests/generation/skill-prompt-wiring.test.ts`, `tests/skills/formation-engine-platform-publication.test.ts`.

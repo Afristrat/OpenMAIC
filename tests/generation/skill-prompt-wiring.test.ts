@@ -91,6 +91,52 @@ describe('skill prompt wiring', () => {
     expect(disabled.data?.outlines[0]?.title).toBe('Présentation générale');
   });
 
+  it('applies the formation engine when no optional domain skill is selected', async () => {
+    let outlineSystem = '';
+    const outlineCall: AICallFn = async (system) => {
+      outlineSystem = system;
+      return JSON.stringify({ languageDirective: 'Répondre en français.', outlines: [] });
+    };
+
+    await generateSceneOutlinesFromRequirements(
+      { requirement: 'Former des responsables aux entretiens difficiles' },
+      undefined,
+      undefined,
+      outlineCall,
+      undefined,
+      { skillEngineEnabled: true },
+    );
+
+    expect(outlineSystem).toContain(OVERRIDE_SENTINEL);
+  });
+
+  it('composes the core formation engine before an optional domain skill', async () => {
+    let sceneSystem = '';
+    const sceneCall: AICallFn = async (system) => {
+      sceneSystem = system;
+      return JSON.stringify([]);
+    };
+
+    await generateSceneContent(
+      {
+        id: 'quiz-1',
+        type: 'quiz',
+        title: 'Revue de code',
+        description: 'Choisir une correction.',
+        keyPoints: ['Identifier le défaut'],
+        order: 1,
+      },
+      sceneCall,
+      { skillEngineEnabled: true, activeSkillId: 'coding-workshop' },
+    );
+
+    expect(sceneSystem).toContain(OVERRIDE_SENTINEL);
+    expect(sceneSystem).toContain('trouver le bug');
+    expect(sceneSystem.indexOf(OVERRIDE_SENTINEL)).toBeLessThan(
+      sceneSystem.indexOf('trouver le bug'),
+    );
+  });
+
   it('keeps both prompts unchanged when the skill engine is disabled', async () => {
     let outlineSystem = '';
     const outlineCall: AICallFn = async (system) => {

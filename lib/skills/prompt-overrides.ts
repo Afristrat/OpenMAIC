@@ -2,6 +2,8 @@ import { buildPrompt } from '@/lib/prompts';
 import type { PromptId } from '@/lib/prompts/types';
 import { getPromptOverride } from './registry';
 
+export const CORE_FORMATION_SKILL_ID = 'formation-design-pro';
+
 export interface SkillPromptContext {
   enabled?: boolean;
   activeSkillId?: string;
@@ -17,18 +19,30 @@ export function buildPromptWithSkill(
   variables: Record<string, unknown>,
   context: SkillPromptContext = {},
 ): { system: string; user: string } | null {
-  const override =
-    context.enabled && context.activeSkillId
-      ? getPromptOverride(context.activeSkillId, promptId)
-      : undefined;
+  const skillIds = context.enabled
+    ? [
+        CORE_FORMATION_SKILL_ID,
+        ...(context.activeSkillId && context.activeSkillId !== CORE_FORMATION_SKILL_ID
+          ? [context.activeSkillId]
+          : []),
+      ]
+    : [];
+  const overrides = skillIds
+    .map((skillId) => getPromptOverride(skillId, promptId))
+    .filter((override) => override !== undefined);
   const prompts = buildPrompt(
     promptId,
-    override ? { ...variables, ...override.variables } : variables,
+    Object.assign({}, variables, ...overrides.map((override) => override.variables)),
   );
-  if (!prompts || !override?.systemPromptAppend.trim()) return prompts;
+  if (!prompts) return null;
+
+  const systemPromptAppends = overrides
+    .map((override) => override.systemPromptAppend.trim())
+    .filter(Boolean);
+  if (systemPromptAppends.length === 0) return prompts;
 
   return {
     ...prompts,
-    system: `${prompts.system}\n\n${override.systemPromptAppend.trim()}`,
+    system: `${prompts.system}\n\n${systemPromptAppends.join('\n\n')}`,
   };
 }
