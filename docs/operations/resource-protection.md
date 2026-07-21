@@ -29,3 +29,21 @@ Redis utilise AOF avec `appendfsync everysec`, la politique `noeviction` et une 
 ## Sources de configuration
 
 Le déploiement autonome complet est décrit dans `docker-compose.production.yml`. Les limites de la Supabase gérée par Coolify sont reproduites dans `infra/coolify/supabase-resource-limits.yml` et doivent être fusionnées dans le compose du service `supabase-qalem` avant redéploiement.
+
+## Dette planifiée — semaine du 27 juillet 2026
+
+**Objet :** réduire le plafond cumulé Qalem après mesure des pics réels, sans diminuer les limites à l’aveugle.
+
+Nouvelle mesure au repos effectuée le 21 juillet 2026 : environ 3,55 Gio consommés par Qalem, dont 1,57 Gio par Kong et 523 Mio par Supabase Analytics. L’hôte conservait 24,1 Go disponibles. Le plafond actuel de 17,1 Gio est donc protecteur, mais surdimensionné pour la charge observée.
+
+**Plafond temporairement accepté :** 17,1 Gio jusqu’au test de charge. **Cible indicative, non encore validée :** environ 12 Gio.
+
+**Déclencheur de réexamen :** semaine du 27 juillet 2026, ou plus tôt si la mémoire disponible de l’hôte passe sous 12 Gio, si un conteneur Qalem subit un OOM, ou si son compteur de redémarrages augmente.
+
+**Critères de sortie :**
+
+1. Exécuter simultanément une génération complète de classroom, une capture Chromium, une génération vidéo et un export.
+2. Mesurer les pics RAM, CPU et PIDs par conteneur pendant toute l’exécution.
+3. Expliquer la consommation au repos de Kong avant toute baisse de son plafond.
+4. Fixer chaque nouvelle limite au-dessus du pic mesuré avec 30 à 50 % de marge selon la volatilité du service.
+5. Valider les composes, redéployer et prouver les limites par `docker inspect`, sans OOM ni redémarrage.
