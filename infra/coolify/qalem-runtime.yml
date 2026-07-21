@@ -1,0 +1,100 @@
+x-qalem-environment: &qalem-environment
+  ASR_OPENAI_API_KEY: ${ASR_OPENAI_API_KEY}
+  ASR_OPENAI_BASE_URL: ${ASR_OPENAI_BASE_URL}
+  ASR_OPENAI_MODELS: ${ASR_OPENAI_MODELS}
+  CAPTURE_WORKER_TOKEN: ${CAPTURE_WORKER_TOKEN}
+  CAPTURE_WORKER_URL: http://capture-worker:8090
+  CRAWL4AI_API_TOKEN: ${CRAWL4AI_API_TOKEN}
+  CRAWL4AI_BASE_URL: ${CRAWL4AI_BASE_URL}
+  DEFAULT_MODEL: ${DEFAULT_MODEL}
+  IMAGE_OPENAI_BASE_URL: ${IMAGE_OPENAI_BASE_URL}
+  IMAGE_OPENAI_MODELS: ${IMAGE_OPENAI_MODELS}
+  MISHKAT_API_KEY: ${MISHKAT_API_KEY}
+  MISHKAT_API_URL: ${MISHKAT_API_URL}
+  MISHKAT_BRAND_ID: ${MISHKAT_BRAND_ID}
+  MISHKAT_RENDER_TIMEOUT_MS: ${MISHKAT_RENDER_TIMEOUT_MS}
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+  NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+  OPENAI_API_KEY: ${OPENAI_API_KEY}
+  OPENAI_BASE_URL: ${OPENAI_BASE_URL}
+  OPENAI_MODELS: ${OPENAI_MODELS}
+  REDIS_URL: ${REDIS_URL}
+  SERPER_API_KEY: ${SERPER_API_KEY}
+  SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+  TTS_HIGGS_BASE_URL: ${TTS_HIGGS_BASE_URL}
+  TTS_HIGGS_MODELS: ${TTS_HIGGS_MODELS}
+  TTS_VOXCPM_API_KEY: ${TTS_VOXCPM_API_KEY}
+  TTS_VOXCPM_BASE_URL: ${TTS_VOXCPM_BASE_URL}
+  TTS_VOXCPM_MODELS: ${TTS_VOXCPM_MODELS}
+  VIDEO_COMFYUI_BASE_URL: ${VIDEO_COMFYUI_BASE_URL}
+  VIDEO_COMFYUI_MODELS: ${VIDEO_COMFYUI_MODELS}
+
+services:
+  qalem:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      target: runner
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+    environment:
+      <<: *qalem-environment
+      NODE_ENV: production
+      NODE_OPTIONS: --max-old-space-size=1152
+    expose:
+      - "3000"
+    restart: unless-stopped
+    mem_limit: 1536m
+    mem_reservation: 384m
+    cpus: 2.0
+    pids_limit: 256
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  qalem-workers:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      target: worker
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+    environment:
+      <<: *qalem-environment
+      NODE_ENV: production
+      NODE_OPTIONS: --max-old-space-size=2560
+      WORKER_HEAVY_CONCURRENCY: "1"
+    restart: unless-stopped
+    mem_limit: 3g
+    mem_reservation: 768m
+    cpus: 3.0
+    pids_limit: 512
+
+  capture-worker:
+    build:
+      context: ../../services/capture-worker
+      dockerfile: Dockerfile
+    environment:
+      CAPTURE_MAX_CONCURRENCY: "1"
+      CAPTURE_TIMEOUT_MS: "60000"
+      CAPTURE_WORKER_TOKEN: ${CAPTURE_WORKER_TOKEN}
+      NODE_OPTIONS: --max-old-space-size=256
+      PORT: "8090"
+    expose:
+      - "8090"
+    restart: unless-stopped
+    mem_limit: 1536m
+    mem_reservation: 384m
+    cpus: 1.5
+    pids_limit: 256
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://127.0.0.1:8090/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
