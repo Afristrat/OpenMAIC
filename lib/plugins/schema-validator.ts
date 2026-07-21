@@ -28,7 +28,11 @@ function schemaTypeMatches(value: unknown, type: unknown): boolean {
   }
 }
 
-function validateNode(value: unknown, schema: Record<string, unknown>, path: string): string | null {
+function validateNode(
+  value: unknown,
+  schema: Record<string, unknown>,
+  path: string,
+): string | null {
   if (!schemaTypeMatches(value, schema.type)) {
     return `${path} must be ${String(schema.type)}`;
   }
