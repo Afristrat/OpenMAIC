@@ -46,6 +46,14 @@
 - **Alternative rejetée** : import ou copie de fichiers depuis `prompt-engineer-pro` ; routage par nom ou origine supposée du modèle.
 - **Preuves** : `lib/formation-engine/prompt-compiler.ts`, `tests/formation-engine/prompt-compiler.test.ts`, schéma portable `skills/qalem-prompt-compiler/references/compiled-plan.schema.json`.
 
+## ADR-407 — Cadrage progressif par impact de design (ACTÉE — exécution V-03, 2026-07-21)
+
+- **Vecteur** : V-03 — Contrat de cadrage progressif.
+- **Quoi** : observations explicites ou inférées ; seuil de confiance vérifié ; hypothèses reliées à leur preuve ; questions activées uniquement par leur impact réel sur l’objectif, le public, le risque, la modalité, les sources, l’accessibilité ou la diffusion.
+- **Pourquoi** : éviter le questionnaire fixe tout en interdisant qu’une information absente devienne silencieusement un fait.
+- **Internationalisation** : questions natives `fr-FR`, `ar-MA` et `en-US` dans le contrat portable.
+- **Preuves** : `lib/formation-engine/progressive-framing.ts`, `tests/formation-engine/progressive-framing.test.ts`, intégration au statut `needs_input` du compilateur.
+
 ## — Réservé aux vecteurs (gabarit) —
 
 ```

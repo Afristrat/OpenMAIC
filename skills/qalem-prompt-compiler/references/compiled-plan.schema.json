@@ -10,8 +10,9 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["value", "evidence", "confidence"],
+        "required": ["field", "value", "evidence", "confidence"],
         "properties": {
+          "field": { "type": "string", "minLength": 1 },
           "value": {},
           "evidence": { "type": "string", "minLength": 1 },
           "confidence": { "type": "number", "minimum": 0, "maximum": 1 }

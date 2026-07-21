@@ -3,6 +3,7 @@ import {
   type ModelCertification,
   type QalemCapability,
 } from '@/lib/ai/capability-registry';
+import type { ProgressiveFramingResult } from './progressive-framing';
 
 export type PromptStrategy =
   | 'direct'
@@ -24,6 +25,7 @@ export interface PromptCompilationRequest {
   contract: Record<string, unknown>;
   tasks: PromptTaskContract[];
   certifications: ModelCertification[];
+  framing?: ProgressiveFramingResult;
 }
 
 export interface CompiledPrompt {
@@ -53,7 +55,7 @@ export interface CompiledGenerationTask {
 export interface CompiledGenerationPlan {
   status: 'ready' | 'needs_input' | 'uncertified';
   contract: Record<string, unknown>;
-  assumptions: Array<{ value: unknown; evidence: string; confidence: number }>;
+  assumptions: Array<{ field: string; value: unknown; evidence: string; confidence: number }>;
   blockingQuestions: string[];
   tasks: CompiledGenerationTask[];
 }
@@ -114,6 +116,7 @@ function compilePrompt(
 }
 
 export function compileGenerationPlan(request: PromptCompilationRequest): CompiledGenerationPlan {
+  const contract = { ...request.contract, ...(request.framing?.contract ?? {}) };
   const tasks = request.tasks.map((task) => {
     const { primary, fallback } = selectCertifiedModels(task, request.certifications);
     return {
@@ -121,17 +124,23 @@ export function compileGenerationPlan(request: PromptCompilationRequest): Compil
       capability: task.capability,
       model: primary?.modelId ?? null,
       fallback: fallback?.modelId ?? null,
-      prompt: compilePrompt(request.contract, task, primary),
+      prompt: compilePrompt(contract, task, primary),
       outputSchema: task.outputSchema ?? null,
       evaluations: [...task.evaluationIds],
     } satisfies CompiledGenerationTask;
   });
 
   return {
-    status: tasks.length > 0 && tasks.every((task) => task.model) ? 'ready' : 'uncertified',
-    contract: request.contract,
-    assumptions: [],
-    blockingQuestions: [],
+    status:
+      (request.framing?.blockingQuestions.length ?? 0) > 0
+        ? 'needs_input'
+        : tasks.length > 0 && tasks.every((task) => task.model)
+          ? 'ready'
+          : 'uncertified',
+    contract,
+    assumptions: request.framing?.assumptions ?? [],
+    blockingQuestions:
+      request.framing?.blockingQuestions.map((question) => question.question) ?? [],
     tasks,
   };
 }
