@@ -17,6 +17,18 @@ const skillManifestSchema = z
     category: z.enum(['pedagogy', 'domain', 'interaction', 'assessment']),
     version: z.string().min(1).max(40),
     author: z.string().min(1).max(160),
+    traceability: z
+      .object({
+        source: z.string().min(1).max(240),
+        vectors: z
+          .array(z.string().regex(/^V-\d{2}$/))
+          .min(1)
+          .max(20),
+        validatedAt: z.string().date(),
+        publicationManifest: z.string().min(1).max(240),
+      })
+      .strict()
+      .optional(),
     agents: z
       .array(
         z.object({
@@ -60,6 +72,7 @@ const skillManifestSchema = z
 
 export function parseSkillManifest(
   input: unknown,
+  options: { allowFileReferences?: boolean } = {},
 ): { success: true; skill: Skill } | { success: false; errors: string[] } {
   const parsed = skillManifestSchema.safeParse(input);
   if (!parsed.success) {
@@ -69,6 +82,7 @@ export function parseSkillManifest(
     };
   }
   if (
+    !options.allowFileReferences &&
     parsed.data.promptOverrides.some((override) => override.systemPromptAppend.startsWith('file:'))
   ) {
     return { success: false, errors: ['promptOverrides: file references are not allowed'] };

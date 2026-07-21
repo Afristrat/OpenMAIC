@@ -47,6 +47,13 @@ export interface SkillClassroomTemplate {
   language: string; // Default language for this template
 }
 
+export interface SkillTraceability {
+  source: string;
+  vectors: string[];
+  validatedAt: string;
+  publicationManifest: string;
+}
+
 /**
  * Skill — Top-level manifest describing a complete skill pack.
  */
@@ -57,6 +64,7 @@ export interface Skill {
   category: SkillCategory;
   version: string;
   author: string;
+  traceability?: SkillTraceability;
 
   // What the skill provides
   agents: SkillAgent[];

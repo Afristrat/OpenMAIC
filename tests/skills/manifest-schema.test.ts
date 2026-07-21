@@ -9,6 +9,12 @@ function manifest(): Record<string, unknown> {
     category: 'domain',
     version: '1.0.0',
     author: 'Qalem',
+    traceability: {
+      source: 'external-private-git publication',
+      vectors: ['V-03', 'V-05'],
+      validatedAt: '2026-07-22',
+      publicationManifest: 'publication.json',
+    },
     agents: [
       {
         id: 'coach',
@@ -85,5 +91,17 @@ describe('parseSkillManifest', () => {
     const result = parseSkillManifest(value);
     expect(result.success).toBe(false);
     if (!result.success) expect(result.errors.join(' ')).toContain('unknown agentId');
+  });
+
+  it('rejects malformed publication traceability', () => {
+    const value = manifest();
+    value.traceability = {
+      source: 'external-private-git publication',
+      vectors: ['vector-three'],
+      validatedAt: 'tomorrow',
+      publicationManifest: 'publication.json',
+    };
+    const result = parseSkillManifest(value);
+    expect(result.success).toBe(false);
   });
 });

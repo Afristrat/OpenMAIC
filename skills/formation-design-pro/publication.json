@@ -6,8 +6,9 @@
     "kind": "historical-qalem-authored-artifact",
     "firstCommit": "490742491b5f32df5da3a9841ab21e7106da60b3",
     "canonicalPrivateSourceFilesIncluded": false,
-    "lastValidatedVector": "V-05",
-    "validatedAt": "2026-07-21"
+    "validatedVectors": ["V-02", "V-03", "V-04", "V-05", "V-07"],
+    "lastValidatedStory": "S4-005",
+    "validatedAt": "2026-07-22"
   },
   "exposureAudit": {
     "repository": "Afristrat/OpenMAIC",
@@ -19,11 +20,11 @@
   "files": [
     {
       "path": "manifest.json",
-      "sha256": "90420a3db5eca005901b512b4ae7688775c2b29ba58b1ac69bbff626a9dae662"
+      "sha256": "1f4ab783f40f608eb22290ed49ec0aebefdb42e195c75e0cf0f31fbac5c2c78b"
     },
     {
       "path": "prompts/andragogy-system-override.md",
-      "sha256": "88f43f27a0e4e318c45612b30d980ad1e854e75f9f9d0d28c0e5ff1838bab5f5"
+      "sha256": "61379e408a20a829604b17775961b05f344d148e417eaa3beded27fb1cfb92bc"
     }
   ]
 }
