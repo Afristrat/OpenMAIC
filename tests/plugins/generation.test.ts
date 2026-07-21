@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { generateSceneContent, generateSceneActions } from '@/lib/generation/scene-generator';
+import { buildCompleteScene } from '@/lib/generation/scene-builder';
 import type { SceneOutline } from '@/lib/types/generation';
 
 const outline: SceneOutline = {
@@ -40,6 +41,17 @@ describe('plugin scene generation', () => {
     const actions = await generateSceneActions(outline, content, aiCall);
     expect(actions).toHaveLength(1);
     expect(actions[0]).toMatchObject({ type: 'speech', text: outline.description });
+
+    const scene = buildCompleteScene(outline, content, actions, 'stage-plugin-test');
+    expect(scene).toMatchObject({
+      stageId: 'stage-plugin-test',
+      type: 'plugin',
+      content: {
+        type: 'plugin',
+        pluginType: 'code-sandbox',
+        data: { language: 'javascript', title: 'Fonction somme' },
+      },
+    });
   });
 
   it('rejects model output that does not conform to the manifest', async () => {

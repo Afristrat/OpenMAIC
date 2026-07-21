@@ -37,7 +37,7 @@ import { apiError } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
 import { resolveVocationalActive } from '@/lib/config/feature-flags';
-import { formatPluginsForPrompt } from '@/lib/plugins/loader';
+import { formatPluginsForPrompt, loadPlugins } from '@/lib/plugins/loader';
 const log = createLogger('Outlines Stream');
 
 export const maxDuration = 300;
@@ -374,6 +374,7 @@ export async function POST(req: NextRequest) {
       availableImages: availableImagesText,
       researchContext: researchContext || 'None',
       availablePlugins: formatPluginsForPrompt(),
+      hasPlugins: loadPlugins().length > 0,
       hasSourceImages,
       imageEnabled: imageGenerationEnabled,
       videoEnabled: videoGenerationEnabled,
