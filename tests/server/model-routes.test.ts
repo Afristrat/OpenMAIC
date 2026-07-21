@@ -207,6 +207,7 @@ describe('model-routes', () => {
         'scene-content:quiz',
         'scene-content:interactive',
         'scene-content:pbl',
+        'scene-content:plugin',
         'scene-outlines-stream',
         'scene-content',
         'scene-actions',
