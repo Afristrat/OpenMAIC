@@ -2,10 +2,10 @@ x-qalem-environment: &qalem-environment
   ASR_OPENAI_API_KEY: ${ASR_OPENAI_API_KEY}
   ASR_OPENAI_BASE_URL: ${ASR_OPENAI_BASE_URL}
   ASR_OPENAI_MODELS: ${ASR_OPENAI_MODELS}
-  CAPTURE_WORKER_TOKEN: ${CAPTURE_WORKER_TOKEN}
+  CAPTURE_WORKER_TOKEN: ${CAPTURE_WORKER_TOKEN:-runtime-only}
   CAPTURE_WORKER_URL: http://capture-worker:8090
-  CRAWL4AI_API_TOKEN: ${CRAWL4AI_API_TOKEN}
-  CRAWL4AI_BASE_URL: ${CRAWL4AI_BASE_URL}
+  CRAWL4AI_API_TOKEN: ${CRAWL4AI_API_TOKEN:-runtime-only}
+  CRAWL4AI_BASE_URL: ${CRAWL4AI_BASE_URL:-runtime-only}
   DEFAULT_MODEL: ${DEFAULT_MODEL}
   IMAGE_OPENAI_BASE_URL: ${IMAGE_OPENAI_BASE_URL}
   IMAGE_OPENAI_MODELS: ${IMAGE_OPENAI_MODELS}
@@ -19,7 +19,7 @@ x-qalem-environment: &qalem-environment
   OPENAI_BASE_URL: ${OPENAI_BASE_URL}
   OPENAI_MODELS: ${OPENAI_MODELS}
   REDIS_URL: ${REDIS_URL}
-  SERPER_API_KEY: ${SERPER_API_KEY}
+  SERPER_API_KEY: ${SERPER_API_KEY:-runtime-only}
   SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
   TTS_HIGGS_BASE_URL: ${TTS_HIGGS_BASE_URL}
   TTS_HIGGS_MODELS: ${TTS_HIGGS_MODELS}
@@ -32,7 +32,7 @@ x-qalem-environment: &qalem-environment
 services:
   qalem:
     build:
-      context: ../..
+      context: .
       dockerfile: Dockerfile
       target: runner
       args:
@@ -58,7 +58,7 @@ services:
 
   qalem-workers:
     build:
-      context: ../..
+      context: .
       dockerfile: Dockerfile
       target: worker
       args:
@@ -77,12 +77,12 @@ services:
 
   capture-worker:
     build:
-      context: ../../services/capture-worker
+      context: ./services/capture-worker
       dockerfile: Dockerfile
     environment:
       CAPTURE_MAX_CONCURRENCY: "1"
       CAPTURE_TIMEOUT_MS: "60000"
-      CAPTURE_WORKER_TOKEN: ${CAPTURE_WORKER_TOKEN}
+      CAPTURE_WORKER_TOKEN: ${CAPTURE_WORKER_TOKEN:-runtime-only}
       NODE_OPTIONS: --max-old-space-size=256
       PORT: "8090"
     expose:
