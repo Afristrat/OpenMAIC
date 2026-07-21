@@ -81,6 +81,15 @@
 - **Indépendance** : la politique décide explicitement si le juge doit être distinct du modèle évalué ; aucun modèle juge n'est imposé globalement.
 - **Preuves** : `lib/formation-engine/evaluation-promotion.ts`, `tests/formation-engine/evaluation-promotion.test.ts`, contrat portable `skills/qalem-prompt-compiler/references/evaluation-promotion-contract.md`.
 
+## ADR-411 — Double publication déterministe depuis une révision unique (ACTÉE — exécution V-06, 2026-07-22)
+
+- **Vecteur** : V-06 — Double publication déterministe.
+- **Quoi** : une source canonique Git propre et externe produit exactement deux cibles, `standalone` et `qalem`. Chaque manifeste enregistre la même révision complète, le hash du plan et le SHA-256 de chaque fichier. Aucun horodatage ne rend les artefacts variables.
+- **Admission** : le plan énumère chaque fichier redistribuable et porte une approbation explicite par cible. Les copies de répertoire, liens symboliques, chemins traversants, fichiers sensibles et sorties déjà peuplées sont refusés avant écriture.
+- **Pourquoi** : empêcher la divergence silencieuse entre la skill autonome et le moteur Qalem, ainsi que l’inclusion accidentelle du corpus privé ou d’un ancien artefact.
+- **Limite** : le compilateur construit et prouve les deux livrables localement. La création du dépôt privé externe, la décision juridique de redistribution et toute publication vers un service tiers restent hors de la délégation ADR-404.
+- **Preuves** : `scripts/publish-formation-engine.mjs`, `tests/skills/formation-engine-publication.test.ts`, `skills/qalem-prompt-compiler/references/publication-contract.md`.
+
 ## — Réservé aux vecteurs (gabarit) —
 
 ```

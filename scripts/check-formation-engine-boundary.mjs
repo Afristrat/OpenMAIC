@@ -56,6 +56,16 @@ if (
   fail('the canonical source must remain private, external and untracked');
 }
 
+const publicationBuilder = policy.publicationBuilder;
+if (
+  publicationBuilder?.script !== 'scripts/publish-formation-engine.mjs' ||
+  publicationBuilder?.plan !== 'publication-plan.json' ||
+  JSON.stringify(publicationBuilder?.targets) !== JSON.stringify(['standalone', 'qalem']) ||
+  !existsSync(resolve(repositoryRoot, publicationBuilder.script))
+) {
+  fail('the deterministic double-publication builder is absent or misconfigured');
+}
+
 const repositoryFileList = repositoryFiles();
 const gitignore = readFileSync(resolve(repositoryRoot, '.gitignore'), 'utf8')
   .split(/\r?\n/u)

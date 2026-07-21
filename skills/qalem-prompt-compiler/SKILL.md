@@ -38,6 +38,10 @@ Exécuter chaque contrôle de joignabilité selon `references/capability-probe-c
 
 Promouvoir un couple tâche/modèle uniquement selon `references/evaluation-promotion-contract.md`. Les checks déterministes, un juge calibré et un échantillon humain sont tous obligatoires ; leurs seuils vivent dans une politique versionnée, jamais dans le compilateur.
 
+## Double publication
+
+Publier la skill autonome et l’adaptateur Qalem depuis une seule révision propre de la source canonique privée selon `references/publication-contract.md`. Le plan conforme à `references/publication-plan.schema.json` énumère exhaustivement les fichiers redistribuables et leur approbation. Ne jamais copier un répertoire entier, compléter une cible à la main ni fusionner un ancien livrable avec le nouveau.
+
 ## Stratégies compilées
 
 - `direct` pour une réponse textuelle sans schéma ;

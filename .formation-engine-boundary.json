@@ -6,6 +6,11 @@
     "trackedInThisRepository": false
   },
   "privateInputRoots": [".formation-engine-private/", "skills/formation-design-pro/.source/"],
+  "publicationBuilder": {
+    "script": "scripts/publish-formation-engine.mjs",
+    "plan": "publication-plan.json",
+    "targets": ["standalone", "qalem"]
+  },
   "publications": [
     {
       "root": "skills/formation-design-pro/",
