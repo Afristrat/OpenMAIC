@@ -10,6 +10,9 @@ export const test = base.extend<Fixtures>({
     const mockApi = new MockApi(page);
     // Always mock server-providers — called on every page load by root layout
     await mockApi.mockServerProviders();
+    await page.route('**/api/account/is-admin', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '{"isAdmin":false}' }),
+    );
     await use(mockApi);
   },
 });

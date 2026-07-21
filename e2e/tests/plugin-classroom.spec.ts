@@ -5,10 +5,6 @@ const TEST_STAGE_ID = 'e2e-plugin-stage';
 const SETTINGS_STORAGE = createSettingsStorage({ sidebarCollapsed: false });
 
 async function seedPluginScene(page: import('@playwright/test').Page) {
-  await page.route('**/api/account/is-admin', (route) =>
-    route.fulfill({ status: 200, contentType: 'application/json', body: '{"isAdmin":false}' }),
-  );
-
   await page.addInitScript((settings) => {
     localStorage.setItem('settings-storage', settings);
     localStorage.setItem('locale', 'fr-FR');
