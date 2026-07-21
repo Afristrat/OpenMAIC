@@ -89,7 +89,9 @@ export async function regenerateSpeechAudio(
   const audioId = speechAudioId(sceneOrder, action.id);
   const { useStageStore } = await import('@/lib/store/stage');
   const state = useStageStore.getState();
-  const scene = state.scenes.find((item) => item.order === sceneOrder && item.actions?.some((item) => item.id === action.id));
+  const scene = state.scenes.find(
+    (item) => item.order === sceneOrder && item.actions?.some((item) => item.id === action.id),
+  );
   if (state.stage?.id && scene) {
     const response = await fetch(`/api/classroom/${encodeURIComponent(state.stage.id)}/tts`, {
       method: 'POST',
@@ -98,7 +100,10 @@ export async function regenerateSpeechAudio(
       signal,
     });
     if (response.ok) {
-      const payload = (await response.json()) as { success?: boolean; actions?: typeof scene.actions };
+      const payload = (await response.json()) as {
+        success?: boolean;
+        actions?: typeof scene.actions;
+      };
       if (payload.success && payload.actions) {
         useStageStore.getState().updateScene(scene.id, { actions: payload.actions });
         return audioId;

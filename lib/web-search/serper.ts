@@ -44,7 +44,10 @@ export async function searchWithSerper(params: {
       'Content-Type': 'application/json',
       'X-API-KEY': apiKey,
     },
-    body: JSON.stringify({ q: boundedQuery, num: Math.min(Math.max(Math.floor(maxResults), 1), 10) }),
+    body: JSON.stringify({
+      q: boundedQuery,
+      num: Math.min(Math.max(Math.floor(maxResults), 1), 10),
+    }),
   });
 
   if (!res.ok) {

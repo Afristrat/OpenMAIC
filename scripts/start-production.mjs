@@ -27,7 +27,9 @@ for (const child of children) {
   child.once('exit', (code, signal) => {
     exitedChildren += 1;
     if (!stopping) {
-      console.error(`[Production] Processus arrêté (code=${code ?? 'null'}, signal=${signal ?? 'null'})`);
+      console.error(
+        `[Production] Processus arrêté (code=${code ?? 'null'}, signal=${signal ?? 'null'})`,
+      );
       stop('SIGTERM', code === 0 ? 1 : (code ?? 1));
     }
     if (exitedChildren === children.length) process.exit(desiredExitCode);

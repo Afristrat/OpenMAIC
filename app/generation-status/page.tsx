@@ -50,18 +50,42 @@ function GenerationStatus() {
   return (
     <main className="min-h-[100dvh] flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950">
       <Card className="w-full max-w-md p-8 text-center space-y-6">
-        {hasFailed ? <AlertCircle className="mx-auto size-12 text-destructive" /> : <Sparkles className="mx-auto size-12 text-primary animate-pulse" />}
+        {hasFailed ? (
+          <AlertCircle className="mx-auto size-12 text-destructive" />
+        ) : (
+          <Sparkles className="mx-auto size-12 text-primary animate-pulse" />
+        )}
         <div className="space-y-2">
-          <h1 className="text-xl font-semibold">{hasFailed ? t('generation.generationFailed') : t('generation.generatingCourse')}</h1>
-          <p className="text-sm text-muted-foreground">{hasFailed ? t('generation.generationFailed') : t('generation.aiWorking')}</p>
+          <h1 className="text-xl font-semibold">
+            {hasFailed ? t('generation.generationFailed') : t('generation.generatingCourse')}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {hasFailed ? t('generation.generationFailed') : t('generation.aiWorking')}
+          </p>
         </div>
-        {!hasFailed && <div className="h-2 overflow-hidden rounded-full bg-muted"><div className="h-full bg-primary transition-all" style={{ width: `${job?.progress ?? 0}%` }} /></div>}
-        {hasFailed && <Button onClick={() => router.push('/app')}><ArrowLeft className="mr-2 size-4" />{t('generation.goBackAndRetry')}</Button>}
+        {!hasFailed && (
+          <div className="h-2 overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full bg-primary transition-all"
+              style={{ width: `${job?.progress ?? 0}%` }}
+            />
+          </div>
+        )}
+        {hasFailed && (
+          <Button onClick={() => router.push('/app')}>
+            <ArrowLeft className="mr-2 size-4" />
+            {t('generation.goBackAndRetry')}
+          </Button>
+        )}
       </Card>
     </main>
   );
 }
 
 export default function GenerationStatusPage() {
-  return <Suspense><GenerationStatus /></Suspense>;
+  return (
+    <Suspense>
+      <GenerationStatus />
+    </Suspense>
+  );
 }

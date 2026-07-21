@@ -179,9 +179,16 @@ describe('searchWeb', () => {
   });
 
   it('dispatches Serper provider requests', async () => {
-    searchWithSerperMock.mockResolvedValueOnce({ answer: '', sources: [], query: 'q', responseTime: 0.6 });
+    searchWithSerperMock.mockResolvedValueOnce({
+      answer: '',
+      sources: [],
+      query: 'q',
+      responseTime: 0.6,
+    });
 
-    await expect(searchWeb({ providerId: 'serper', query: 'q', apiKey: 'serper-key' })).resolves.toMatchObject({
+    await expect(
+      searchWeb({ providerId: 'serper', query: 'q', apiKey: 'serper-key' }),
+    ).resolves.toMatchObject({
       query: 'q',
     });
     expect(searchWithSerperMock).toHaveBeenCalledWith({

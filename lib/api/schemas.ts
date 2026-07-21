@@ -314,7 +314,9 @@ export const generateClassroomSchema = z.object({
     .optional(),
   language: z.string().optional(),
   enableWebSearch: z.boolean().optional(),
-  webSearchProviderId: z.enum(['tavily', 'bocha', 'brave', 'baidu', 'minimax', 'serper']).optional(),
+  webSearchProviderId: z
+    .enum(['tavily', 'bocha', 'brave', 'baidu', 'minimax', 'serper'])
+    .optional(),
   webSearchApiKey: z.string().optional(),
   baiduSubSources: z
     .object({

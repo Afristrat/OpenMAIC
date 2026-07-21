@@ -13,8 +13,7 @@ function extensionOf(fileName: string): string {
 
 async function extractOfficeText(buffer: Buffer, extension: string): Promise<string> {
   const zip = await JSZip.loadAsync(buffer);
-  const pattern =
-    extension === 'pptx' ? /^ppt\/slides\/slide\d+\.xml$/ : /^word\/document\.xml$/;
+  const pattern = extension === 'pptx' ? /^ppt\/slides\/slide\d+\.xml$/ : /^word\/document\.xml$/;
   const entries = Object.values(zip.files)
     .filter((entry) => pattern.test(entry.name))
     .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));

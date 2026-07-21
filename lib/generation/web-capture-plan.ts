@@ -64,7 +64,11 @@ export async function decideCaptureForScene(
     const ssrfError = await validateUrlForSSRF(decision.url);
     if (ssrfError) {
       log.warn(`capture-decision URL rejected by ssrf-guard for "${outline.title}": ${ssrfError}`);
-      return { ...decision, needsCapture: false, reason: `URL rejetée par ssrf-guard: ${ssrfError}` };
+      return {
+        ...decision,
+        needsCapture: false,
+        reason: `URL rejetée par ssrf-guard: ${ssrfError}`,
+      };
     }
   }
 

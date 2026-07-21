@@ -13,7 +13,8 @@ export const DEFAULT_TEACHING_PROFILE: TeachingProfile = {
 };
 
 export function teachingProfileFromSettings(settings: unknown): TeachingProfile {
-  const candidate = (settings as { teachingProfile?: Partial<TeachingProfile> } | null)?.teachingProfile;
+  const candidate = (settings as { teachingProfile?: Partial<TeachingProfile> } | null)
+    ?.teachingProfile;
   return {
     name: candidate?.name?.trim() || DEFAULT_TEACHING_PROFILE.name,
     avatar: candidate?.avatar?.trim() || DEFAULT_TEACHING_PROFILE.avatar,

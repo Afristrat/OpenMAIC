@@ -101,7 +101,8 @@ export async function PUT(request: NextRequest) {
       .filter((id) => !submittedIds.includes(id));
     if (staleIds.length > 0) {
       const { error: deleteError } = await supabase.from('scenes').delete().in('id', staleIds);
-      if (deleteError) throw new Error(`Failed to delete removed classroom scenes: ${deleteError.message}`);
+      if (deleteError)
+        throw new Error(`Failed to delete removed classroom scenes: ${deleteError.message}`);
     }
     return apiSuccess({ id: stageId });
   } catch (error) {
@@ -112,7 +113,8 @@ export async function PUT(request: NextRequest) {
 
 async function requireClassroomAdmin(request: NextRequest, id: string) {
   const ownership = await readClassroomOwnership(id);
-  if (!ownership) return { error: apiError(API_ERROR_CODES.INVALID_REQUEST, 404, 'Classroom not found') };
+  if (!ownership)
+    return { error: apiError(API_ERROR_CODES.INVALID_REQUEST, 404, 'Classroom not found') };
   const auth = await requireSuperAdminOrOrgAdmin(request, ownership.orgId);
   return auth.response ? { error: auth.response } : {};
 }
@@ -120,7 +122,8 @@ async function requireClassroomAdmin(request: NextRequest, id: string) {
 export async function PATCH(request: NextRequest) {
   try {
     const id = request.nextUrl.searchParams.get('id');
-    if (!id || !isValidClassroomId(id)) return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid classroom id');
+    if (!id || !isValidClassroomId(id))
+      return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid classroom id');
     const gate = await requireClassroomAdmin(request, id);
     if (gate.error) return gate.error;
     const body = (await request.json()) as { name?: unknown };
@@ -132,21 +135,32 @@ export async function PATCH(request: NextRequest) {
     return apiSuccess({ id, name });
   } catch (error) {
     log.error('Classroom rename failed:', error);
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to rename classroom', error instanceof Error ? error.message : String(error));
+    return apiError(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      500,
+      'Failed to rename classroom',
+      error instanceof Error ? error.message : String(error),
+    );
   }
 }
 
 export async function DELETE(request: NextRequest) {
   try {
     const id = request.nextUrl.searchParams.get('id');
-    if (!id || !isValidClassroomId(id)) return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid classroom id');
+    if (!id || !isValidClassroomId(id))
+      return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid classroom id');
     const gate = await requireClassroomAdmin(request, id);
     if (gate.error) return gate.error;
     await deleteClassroom(id);
     return apiSuccess({ id });
   } catch (error) {
     log.error('Classroom deletion failed:', error);
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to delete classroom', error instanceof Error ? error.message : String(error));
+    return apiError(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      500,
+      'Failed to delete classroom',
+      error instanceof Error ? error.message : String(error),
+    );
   }
 }
 
@@ -156,7 +170,12 @@ export async function GET(request: NextRequest) {
 
     if (!id) {
       const orgId = request.nextUrl.searchParams.get('orgId');
-      if (!orgId) return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, 'Missing required parameter: id or orgId');
+      if (!orgId)
+        return apiError(
+          API_ERROR_CODES.MISSING_REQUIRED_FIELD,
+          400,
+          'Missing required parameter: id or orgId',
+        );
       const auth = await requireSuperAdminOrOrgMember(request, orgId);
       if (auth.response) return auth.response;
       return apiSuccess({ classrooms: await listClassrooms(orgId) });

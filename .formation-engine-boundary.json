@@ -5,10 +5,7 @@
     "locationKind": "external-private-git",
     "trackedInThisRepository": false
   },
-  "privateInputRoots": [
-    ".formation-engine-private/",
-    "skills/formation-design-pro/.source/"
-  ],
+  "privateInputRoots": [".formation-engine-private/", "skills/formation-design-pro/.source/"],
   "publications": [
     {
       "root": "skills/formation-design-pro/",

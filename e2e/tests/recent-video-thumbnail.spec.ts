@@ -28,10 +28,7 @@ function thumbnail(src: string, poster?: string) {
   };
 }
 
-async function mockPersistentClassrooms(
-  page: Page,
-  classrooms: Array<Record<string, unknown>>,
-) {
+async function mockPersistentClassrooms(page: Page, classrooms: Array<Record<string, unknown>>) {
   await page.route(`**/api/classroom?orgId=${ORG_ID}`, (route) =>
     route.fulfill({
       status: 200,
@@ -92,7 +89,9 @@ test.describe('Home persistent video thumbnails', () => {
     ]);
 
     await page.goto('/app');
-    const card = page.locator('.group.cursor-pointer').filter({ hasText: 'Persistent Video Course' });
+    const card = page
+      .locator('.group.cursor-pointer')
+      .filter({ hasText: 'Persistent Video Course' });
     const video = card.locator('[data-video-element] video');
     await expect(video).toBeVisible();
     await expect(video).toHaveAttribute(
@@ -109,7 +108,9 @@ test.describe('Home persistent video thumbnails', () => {
     await expect(page).toHaveURL(/\/classroom\/persistent-video-stage$/);
   });
 
-  test('shows a play badge without a broken video for an unresolved placeholder', async ({ page }) => {
+  test('shows a play badge without a broken video for an unresolved placeholder', async ({
+    page,
+  }) => {
     await mockPersistentClassrooms(page, [
       {
         id: 'unresolved-video-stage',
@@ -122,7 +123,9 @@ test.describe('Home persistent video thumbnails', () => {
     ]);
 
     await page.goto('/app');
-    const card = page.locator('.group.cursor-pointer').filter({ hasText: 'Unresolved Video Course' });
+    const card = page
+      .locator('.group.cursor-pointer')
+      .filter({ hasText: 'Unresolved Video Course' });
     await expect(card.getByTestId('thumbnail-video-indicator')).toBeVisible();
     await expect(card.locator('[data-video-element] video')).toHaveCount(0);
   });

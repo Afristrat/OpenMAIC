@@ -56,9 +56,7 @@ export async function createInstitutionalReportPdf(input: {
   document.fillColor('#111827').fontSize(18).text('Rapport institutionnel', { align: 'right' });
   document.moveDown(0.4).font('Helvetica').fontSize(11).fillColor('#4b5563');
   document.text(input.organizationName);
-  document.text(
-    `Période : ${safeDate(input.dateFrom ?? '')} au ${safeDate(input.dateTo ?? '')}`,
-  );
+  document.text(`Période : ${safeDate(input.dateFrom ?? '')} au ${safeDate(input.dateTo ?? '')}`);
   document.text(`Généré le ${new Date().toLocaleString('fr-FR')}`);
   document.moveDown(1.4);
 
@@ -73,12 +71,20 @@ export async function createInstitutionalReportPdf(input: {
   metricCards.forEach(([label, value], index) => {
     const x = 46 + index * (cardWidth + 8);
     document.roundedRect(x, cardY, cardWidth, 58, 6).fillAndStroke('#f5f3ff', '#ddd6fe');
-    document.fillColor('#6d28d9').font('Helvetica-Bold').fontSize(15).text(value, x + 10, cardY + 10, {
-      width: cardWidth - 20,
-    });
-    document.fillColor('#4b5563').font('Helvetica').fontSize(8.5).text(label, x + 10, cardY + 35, {
-      width: cardWidth - 20,
-    });
+    document
+      .fillColor('#6d28d9')
+      .font('Helvetica-Bold')
+      .fontSize(15)
+      .text(value, x + 10, cardY + 10, {
+        width: cardWidth - 20,
+      });
+    document
+      .fillColor('#4b5563')
+      .font('Helvetica')
+      .fontSize(8.5)
+      .text(label, x + 10, cardY + 35, {
+        width: cardWidth - 20,
+      });
   });
   document.y = cardY + 78;
 
@@ -97,7 +103,11 @@ export async function createInstitutionalReportPdf(input: {
       .font(header ? 'Helvetica-Bold' : 'Helvetica')
       .fontSize(header ? 8.5 : 8);
     for (const column of columns) {
-      document.text(column.text, x, y + 3, { width: column.width, ellipsis: true, lineBreak: false });
+      document.text(column.text, x, y + 3, {
+        width: column.width,
+        ellipsis: true,
+        lineBreak: false,
+      });
       x += column.width;
     }
     document.y = y + 23;

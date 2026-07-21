@@ -17,7 +17,8 @@ export async function POST(
   { params }: { params: Promise<{ classroomId: string }> },
 ) {
   const { classroomId } = await params;
-  if (!isValidClassroomId(classroomId)) return apiError('INVALID_REQUEST', 400, 'Classroom invalide');
+  if (!isValidClassroomId(classroomId))
+    return apiError('INVALID_REQUEST', 400, 'Classroom invalide');
   const ownership = await readClassroomOwnership(classroomId);
   if (!ownership) return apiError('INVALID_REQUEST', 404, 'Classroom introuvable');
   const auth = await requireSuperAdminOrOrgAdmin(request, ownership.orgId);
@@ -33,7 +34,10 @@ export async function POST(
   if (!classroom || !scene || actionIndex < 0 || action?.type !== 'speech') {
     return apiError('INVALID_REQUEST', 404, 'Prise de parole introuvable');
   }
-  const generatedScene = { ...scene, actions: [{ ...action, text: body.text.trim(), audioId: undefined, audioUrl: undefined }] };
+  const generatedScene = {
+    ...scene,
+    actions: [{ ...action, text: body.text.trim(), audioId: undefined, audioUrl: undefined }],
+  };
   const { data: organization } = await createServiceSupabaseClient()
     .from('organizations')
     .select('settings')
@@ -53,7 +57,13 @@ export async function POST(
     ...(scene.actions ?? []).slice(actionIndex + 1),
   ];
   await persistClassroom(
-    { id: classroomId, stage: classroom.stage, scenes: classroom.scenes, ownerId: ownership.ownerId, orgId: ownership.orgId },
+    {
+      id: classroomId,
+      stage: classroom.stage,
+      scenes: classroom.scenes,
+      ownerId: ownership.ownerId,
+      orgId: ownership.orgId,
+    },
     buildRequestOrigin(request),
   );
   return apiSuccess({ actions: scene.actions });

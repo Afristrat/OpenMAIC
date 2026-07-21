@@ -22,9 +22,12 @@ describe('enrichSourcesWithCrawl4AI', () => {
   it('replaces the top source snippet with bounded Crawl4AI Markdown', async () => {
     const fetchMock = vi.mocked(fetch);
     fetchMock.mockResolvedValueOnce(
-      new Response(JSON.stringify({ fit_markdown: '# Official LiteLLM documentation\n\nCurrent facts.' }), {
-        status: 200,
-      }),
+      new Response(
+        JSON.stringify({ fit_markdown: '# Official LiteLLM documentation\n\nCurrent facts.' }),
+        {
+          status: 200,
+        },
+      ),
     );
 
     const result = await enrichSourcesWithCrawl4AI(

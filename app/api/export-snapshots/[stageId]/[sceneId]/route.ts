@@ -26,9 +26,10 @@ export async function PUT(
     return apiError('INVALID_REQUEST', 413, 'Capture vide ou trop volumineuse');
   }
   const path = `${stageId}/export/${sceneId}.png`;
-  const { error } = await createServiceSupabaseClient().storage
-    .from('classroom-media')
+  const { error } = await createServiceSupabaseClient()
+    .storage.from('classroom-media')
     .upload(path, bytes, { contentType: 'image/png', upsert: true });
-  if (error) return apiError('INTERNAL_ERROR', 500, `Échec du stockage de la capture : ${error.message}`);
+  if (error)
+    return apiError('INTERNAL_ERROR', 500, `Échec du stockage de la capture : ${error.message}`);
   return apiSuccess({ path });
 }

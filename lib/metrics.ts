@@ -1,6 +1,13 @@
 type CounterLabels = Record<string, string>;
-interface CounterEntry { labels: CounterLabels; value: number }
-interface Histogram { sum: number; count: number; buckets: Map<number, number> }
+interface CounterEntry {
+  labels: CounterLabels;
+  value: number;
+}
+interface Histogram {
+  sum: number;
+  count: number;
+  buckets: Map<number, number>;
+}
 
 const DEFAULT_BUCKETS = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10];
 const counters = new Map<string, CounterEntry[]>();
@@ -46,7 +53,8 @@ export function serializeMetrics(): string {
   const lines: string[] = [];
   for (const [name, entries] of counters) {
     lines.push(`# HELP ${name} Counter`, `# TYPE ${name} counter`);
-    for (const entry of entries) lines.push(`${name}${labelsToString(entry.labels)} ${entry.value}`);
+    for (const entry of entries)
+      lines.push(`${name}${labelsToString(entry.labels)} ${entry.value}`);
   }
   for (const [name, histogram] of histograms) {
     lines.push(`# HELP ${name} Histogram`, `# TYPE ${name} histogram`);

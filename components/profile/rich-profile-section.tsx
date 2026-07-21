@@ -103,7 +103,9 @@ export function RichProfileSection() {
           const nextCulture =
             data.culture && isCulture(data.culture) ? data.culture : DEFAULT_CULTURE;
           const nextUiLanguage =
-            data.uiLanguage && isUiLanguage(data.uiLanguage) ? data.uiLanguage : DEFAULT_UI_LANGUAGE;
+            data.uiLanguage && isUiLanguage(data.uiLanguage)
+              ? data.uiLanguage
+              : DEFAULT_UI_LANGUAGE;
           const nextPace =
             data.preferences?.pace && isPace(data.preferences.pace)
               ? data.preferences.pace
@@ -190,7 +192,11 @@ export function RichProfileSection() {
             if (isCulture(value)) setCulture(value);
           }}
         >
-          <SelectTrigger id="rich-profile-culture" data-testid="culture-select" className="max-w-sm">
+          <SelectTrigger
+            id="rich-profile-culture"
+            data-testid="culture-select"
+            className="max-w-sm"
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -201,7 +207,9 @@ export function RichProfileSection() {
             ))}
           </SelectContent>
         </Select>
-        <p className="text-xs text-muted-foreground max-w-sm">{t('profile.richProfile.cultureHint')}</p>
+        <p className="text-xs text-muted-foreground max-w-sm">
+          {t('profile.richProfile.cultureHint')}
+        </p>
       </div>
 
       {/* Langue d'interface */}

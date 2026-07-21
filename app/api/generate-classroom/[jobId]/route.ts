@@ -18,7 +18,8 @@ export async function GET(req: NextRequest, context: { params: Promise<{ jobId: 
 
     const job = await readClassroomGenerationJob(jobId);
     if (!job) return apiError('INVALID_REQUEST', 404, 'Classroom generation job not found');
-    if (!job.orgId) return apiError('INTERNAL_ERROR', 500, 'Classroom generation job has no organization');
+    if (!job.orgId)
+      return apiError('INTERNAL_ERROR', 500, 'Classroom generation job has no organization');
 
     const auth = await requireSuperAdminOrOrgMember(req, job.orgId);
     if (auth.response) return auth.response;

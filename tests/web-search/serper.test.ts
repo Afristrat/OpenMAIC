@@ -15,7 +15,12 @@ describe('searchWithSerper', () => {
         JSON.stringify({
           searchParameters: { q: 'LiteLLM documentation' },
           organic: [
-            { title: 'LiteLLM Docs', link: 'https://docs.litellm.ai', snippet: 'Official docs', position: 1 },
+            {
+              title: 'LiteLLM Docs',
+              link: 'https://docs.litellm.ai',
+              snippet: 'Official docs',
+              position: 1,
+            },
             { title: 'No URL', snippet: 'Ignored' },
           ],
         }),
@@ -23,7 +28,9 @@ describe('searchWithSerper', () => {
       ),
     );
 
-    await expect(searchWithSerper({ query: 'LiteLLM documentation', apiKey: 'key' })).resolves.toMatchObject({
+    await expect(
+      searchWithSerper({ query: 'LiteLLM documentation', apiKey: 'key' }),
+    ).resolves.toMatchObject({
       query: 'LiteLLM documentation',
       sources: [
         {

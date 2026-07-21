@@ -43,7 +43,9 @@ function repositoryFiles() {
 }
 
 function sha256(path) {
-  return createHash('sha256').update(readFileSync(resolve(repositoryRoot, path))).digest('hex');
+  return createHash('sha256')
+    .update(readFileSync(resolve(repositoryRoot, path)))
+    .digest('hex');
 }
 
 if (
@@ -72,7 +74,10 @@ for (const privateRoot of policy.privateInputRoots ?? []) {
 for (const publication of policy.publications ?? []) {
   const publicationRoot = publication.root.replaceAll('\\', '/');
   const manifestPath = publication.manifest.replaceAll('\\', '/');
-  if (!repositoryFileList.includes(manifestPath) && !existsSync(resolve(repositoryRoot, manifestPath))) {
+  if (
+    !repositoryFileList.includes(manifestPath) &&
+    !existsSync(resolve(repositoryRoot, manifestPath))
+  ) {
     fail(`${manifestPath} is absent`);
   }
 

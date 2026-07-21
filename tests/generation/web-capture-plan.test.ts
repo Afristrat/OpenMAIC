@@ -38,7 +38,7 @@ describe('decideCaptureForScene', () => {
   });
 
   it('returns null when the LLM response is not valid JSON', async () => {
-    const aiCall = vi.fn().mockResolvedValue('n\'importe quoi, pas du JSON');
+    const aiCall = vi.fn().mockResolvedValue("n'importe quoi, pas du JSON");
     const decision = await decideCaptureForScene(outline, aiCall);
     expect(decision).toBeNull();
   });
@@ -64,7 +64,7 @@ describe('decideCaptureForScene', () => {
         url: '',
         interactionSteps: [],
         format: 'image',
-        reason: "Scène conceptuelle sans outil concret à montrer.",
+        reason: 'Scène conceptuelle sans outil concret à montrer.',
       }),
     );
     const decision = await decideCaptureForScene(outline, aiCall);

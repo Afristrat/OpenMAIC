@@ -280,7 +280,9 @@ export async function listClassrooms(orgId: string): Promise<ClassroomListItem[]
       .eq('type', 'slide')
       .order('order', { ascending: true });
     if (scenesError) {
-      throw new Error(`Failed to list classroom thumbnails for org ${orgId}: ${scenesError.message}`);
+      throw new Error(
+        `Failed to list classroom thumbnails for org ${orgId}: ${scenesError.message}`,
+      );
     }
     for (const scene of sceneRows ?? []) {
       if (firstSlides.has(scene.stage_id)) continue;
@@ -316,7 +318,8 @@ export async function renameClassroom(id: string, name: string): Promise<void> {
     .select('extra')
     .eq('id', id)
     .maybeSingle();
-  if (readError) throw new Error(`Failed to read classroom ${id} before renaming: ${readError.message}`);
+  if (readError)
+    throw new Error(`Failed to read classroom ${id} before renaming: ${readError.message}`);
   if (!existing) throw new Error(`Classroom ${id} does not exist`);
 
   const { error } = await supabase

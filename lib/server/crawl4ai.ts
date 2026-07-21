@@ -36,7 +36,13 @@ function getCrawl4AIHeaders(): HeadersInit {
 }
 
 function extractMarkdown(value: Crawl4AIResponse): string {
-  return (value.fit_markdown || value.markdown || value.data?.fit_markdown || value.data?.markdown || '')
+  return (
+    value.fit_markdown ||
+    value.markdown ||
+    value.data?.fit_markdown ||
+    value.data?.markdown ||
+    ''
+  )
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, MAX_EXCERPT_LENGTH);
@@ -87,9 +93,7 @@ export async function enrichSourcesWithCrawl4AI(
 
   const enriched: WebSearchSource[] = [];
   for (const [index, source] of sources.entries()) {
-    enriched.push(
-      index < MAX_CRAWLED_SOURCES ? await crawlSource(source, baseUrl, query) : source,
-    );
+    enriched.push(index < MAX_CRAWLED_SOURCES ? await crawlSource(source, baseUrl, query) : source);
   }
   return enriched;
 }

@@ -83,7 +83,9 @@ export function useExportMp4() {
       }
       throw new Error(t('export.videoTimeout'));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('export.exportFailed'), { id: toastId });
+      toast.error(error instanceof Error ? error.message : t('export.exportFailed'), {
+        id: toastId,
+      });
     } finally {
       activeRef.current = false;
       setExporting(false);

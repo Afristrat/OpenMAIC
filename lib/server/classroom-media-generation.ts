@@ -246,14 +246,16 @@ export async function generateTTSForClassroom(
   // batch pipeline does not receive. Prefer the first server provider that
   // can synthesize autonomously instead of selecting VoxCPM and abandoning
   // the whole classroom while another configured provider is available.
-  const preferredProvider = preferredVoice && ttsProviderIds.includes(preferredVoice.providerId)
-    ? preferredVoice.providerId
-    : undefined;
-  const providerId = (preferredProvider ?? ttsProviderIds.find(
-    (id) =>
-      id !== VOXCPM_TTS_PROVIDER_ID ||
-      DEFAULT_TTS_VOICES[id as keyof typeof DEFAULT_TTS_VOICES] !== VOXCPM_AUTO_VOICE_ID,
-  )) as TTSProviderId | undefined;
+  const preferredProvider =
+    preferredVoice && ttsProviderIds.includes(preferredVoice.providerId)
+      ? preferredVoice.providerId
+      : undefined;
+  const providerId = (preferredProvider ??
+    ttsProviderIds.find(
+      (id) =>
+        id !== VOXCPM_TTS_PROVIDER_ID ||
+        DEFAULT_TTS_VOICES[id as keyof typeof DEFAULT_TTS_VOICES] !== VOXCPM_AUTO_VOICE_ID,
+    )) as TTSProviderId | undefined;
   if (!providerId) {
     log.warn('No server TTS provider supports context-free classroom generation');
     return;
@@ -265,9 +267,10 @@ export async function generateTTSForClassroom(
     return;
   }
   const ttsBaseUrl = resolveTTSBaseUrl(providerId) || ttsProvider?.defaultBaseUrl;
-  const voice = preferredProvider === providerId && preferredVoice?.voiceId
-    ? preferredVoice.voiceId
-    : DEFAULT_TTS_VOICES[providerId as keyof typeof DEFAULT_TTS_VOICES] || 'default';
+  const voice =
+    preferredProvider === providerId && preferredVoice?.voiceId
+      ? preferredVoice.voiceId
+      : DEFAULT_TTS_VOICES[providerId as keyof typeof DEFAULT_TTS_VOICES] || 'default';
   const format = ttsProvider?.supportedFormats?.[0] || 'mp3';
   for (const scene of scenes) {
     if (!scene.actions) continue;

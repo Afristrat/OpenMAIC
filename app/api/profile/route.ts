@@ -111,7 +111,12 @@ export async function PATCH(request: NextRequest): Promise<Response> {
 
   if (error || !updated) {
     log.error('Failed to update rich profile', error?.message);
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to update profile', error?.message);
+    return apiError(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      500,
+      'Failed to update profile',
+      error?.message,
+    );
   }
 
   return apiSuccess({

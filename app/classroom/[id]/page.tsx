@@ -144,7 +144,11 @@ export default function ClassroomDetailPage() {
 
   useEffect(() => {
     const unsubscribe = useStageStore.subscribe((state, previous) => {
-      if (!serverBackedRef.current || (state.stage === previous.stage && state.scenes === previous.scenes)) return;
+      if (
+        !serverBackedRef.current ||
+        (state.stage === previous.stage && state.scenes === previous.scenes)
+      )
+        return;
       if (serverSaveTimerRef.current) clearTimeout(serverSaveTimerRef.current);
       serverSaveTimerRef.current = setTimeout(() => {
         const latest = useStageStore.getState();

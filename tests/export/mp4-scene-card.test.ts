@@ -4,7 +4,9 @@ import { buildSceneCardSvg, sceneReadableText } from '@/lib/export/mp4/scene-car
 describe('MP4 scene cards', () => {
   it('extracts pedagogical text without leaking media URLs or HTML', () => {
     const text = sceneReadableText({
-      canvas: { elements: [{ content: 'Routage LiteLLM' }, { src: 'https://secret.example/image' }] },
+      canvas: {
+        elements: [{ content: 'Routage LiteLLM' }, { src: 'https://secret.example/image' }],
+      },
       html: '<script>ignored()</script>',
       question: 'Pourquoi prévoir un fallback ?',
     });
