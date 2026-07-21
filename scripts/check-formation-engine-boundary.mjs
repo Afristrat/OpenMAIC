@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { relative, resolve } from 'node:path';
 
 const repositoryRoot = process.cwd();
 const policyPath = resolve(repositoryRoot, '.formation-engine-boundary.json');
@@ -11,14 +11,35 @@ function fail(message) {
   throw new Error(`Formation engine boundary: ${message}`);
 }
 
-function trackedFiles() {
-  return execFileSync('git', ['ls-files', '-z'], {
-    cwd: repositoryRoot,
-    encoding: 'utf8',
-  })
-    .split('\0')
-    .filter(Boolean)
-    .map((path) => path.replaceAll('\\', '/'));
+function walkFiles(root) {
+  return readdirSync(root, { withFileTypes: true }).flatMap((entry) => {
+    const path = resolve(root, entry.name);
+    if (entry.isDirectory()) return walkFiles(path);
+    if (!entry.isFile()) return [];
+    return [relative(repositoryRoot, path).replaceAll('\\', '/')];
+  });
+}
+
+function repositoryFiles() {
+  try {
+    return execFileSync('git', ['ls-files', '-z'], {
+      cwd: repositoryRoot,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+      .split('\0')
+      .filter(Boolean)
+      .map((path) => path.replaceAll('\\', '/'));
+  } catch {
+    const relevantRoots = [
+      ...(policy.privateInputRoots ?? []),
+      ...(policy.publications ?? []).map((publication) => publication.root),
+    ];
+    return relevantRoots.flatMap((path) => {
+      const root = resolve(repositoryRoot, path);
+      return existsSync(root) ? walkFiles(root) : [];
+    });
+  }
 }
 
 function sha256(path) {
@@ -33,15 +54,15 @@ if (
   fail('the canonical source must remain private, external and untracked');
 }
 
-const tracked = trackedFiles();
+const repositoryFileList = repositoryFiles();
 const gitignore = readFileSync(resolve(repositoryRoot, '.gitignore'), 'utf8')
   .split(/\r?\n/u)
   .map((line) => line.trim());
 
 for (const privateRoot of policy.privateInputRoots ?? []) {
   const normalizedRoot = privateRoot.replace(/^\//u, '').replaceAll('\\', '/');
-  if (tracked.some((path) => path.startsWith(normalizedRoot))) {
-    fail(`private input is tracked under ${normalizedRoot}`);
+  if (repositoryFileList.some((path) => path.startsWith(normalizedRoot))) {
+    fail(`private input is present under ${normalizedRoot}`);
   }
   if (!gitignore.includes(`/${normalizedRoot}`)) {
     fail(`private input root /${normalizedRoot} is not explicitly ignored`);
@@ -51,7 +72,9 @@ for (const privateRoot of policy.privateInputRoots ?? []) {
 for (const publication of policy.publications ?? []) {
   const publicationRoot = publication.root.replaceAll('\\', '/');
   const manifestPath = publication.manifest.replaceAll('\\', '/');
-  if (!tracked.includes(manifestPath)) fail(`${manifestPath} is not tracked`);
+  if (!repositoryFileList.includes(manifestPath) && !existsSync(resolve(repositoryRoot, manifestPath))) {
+    fail(`${manifestPath} is absent`);
+  }
 
   const manifest = JSON.parse(readFileSync(resolve(repositoryRoot, manifestPath), 'utf8'));
   if (manifest.provenance?.canonicalPrivateSourceFilesIncluded !== false) {
@@ -61,7 +84,7 @@ for (const publication of policy.publications ?? []) {
   const declaredFiles = new Map(
     (manifest.files ?? []).map((file) => [`${publicationRoot}${file.path}`, file.sha256]),
   );
-  const publishedFiles = tracked.filter(
+  const publishedFiles = repositoryFileList.filter(
     (path) => path.startsWith(publicationRoot) && path !== manifestPath,
   );
 
@@ -71,7 +94,7 @@ for (const publication of policy.publications ?? []) {
   }
 
   for (const path of declaredFiles.keys()) {
-    if (!publishedFiles.includes(path)) fail(`${path} is declared but not tracked`);
+    if (!publishedFiles.includes(path)) fail(`${path} is declared but absent`);
   }
 }
 
