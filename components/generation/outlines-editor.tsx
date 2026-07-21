@@ -46,7 +46,7 @@ interface OutlinesEditorProps {
   onCollapse?: () => void;
 }
 
-const SCENE_TYPES: SceneType[] = ['slide', 'quiz', 'interactive', 'pbl'];
+const SCENE_TYPES: SceneType[] = ['slide', 'quiz', 'interactive', 'pbl', 'plugin'];
 
 const TYPE_THEME: Record<
   SceneType,
@@ -81,6 +81,12 @@ const TYPE_THEME: Record<
     accent: 'bg-amber-500',
     dot: 'bg-amber-400',
   },
+  plugin: {
+    chip: 'bg-fuchsia-50 text-fuchsia-700 dark:bg-fuchsia-500/10 dark:text-fuchsia-300',
+    chipHover: 'hover:bg-fuchsia-100/80 dark:hover:bg-fuchsia-500/15',
+    accent: 'bg-fuchsia-500',
+    dot: 'bg-fuchsia-400',
+  },
 };
 
 function normalizeOrder(outlines: SceneOutline[]): SceneOutline[] {
@@ -100,6 +106,8 @@ function useSceneTypeLabel() {
         return t('generation.sceneTypeInteractive');
       case 'pbl':
         return t('generation.sceneTypePbl');
+      case 'plugin':
+        return t('nav.plugins');
       case 'slide':
       default:
         return t('generation.sceneTypeSlide');
@@ -603,7 +611,12 @@ function SceneRow({
                   disabled={disabled}
                   label={sceneTypeLabel(outline.type)}
                   theme={theme}
-                  connected={!disabled && outline.type !== 'slide'}
+                  connected={
+                    !disabled &&
+                    (outline.type === 'quiz' ||
+                      outline.type === 'interactive' ||
+                      outline.type === 'pbl')
+                  }
                 />
               </div>
               {!disabled && <DeleteSceneButton onConfirm={onRemove} />}

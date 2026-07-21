@@ -15,9 +15,10 @@ const SCENE_TYPE_ICONS: Record<SceneType, typeof FileText> = {
   quiz: HelpCircle,
   interactive: Gamepad2,
   pbl: Puzzle,
+  plugin: Puzzle,
 };
 
-const TYPE_ORDER: SceneType[] = ['slide', 'quiz', 'interactive', 'pbl'];
+const TYPE_ORDER: SceneType[] = ['slide', 'quiz', 'interactive', 'pbl', 'plugin'];
 
 const CONFETTI_COLORS = [
   '#fbbf24',

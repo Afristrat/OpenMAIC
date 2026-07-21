@@ -235,5 +235,9 @@ export function applyOutlineFallbacks(
     );
     return { ...outline, type: 'slide' };
   }
+  if (outline.type === 'plugin' && !outline.pluginType) {
+    log.warn(`Plugin outline "${outline.title}" missing pluginType, falling back to slide`);
+    return { ...outline, type: 'slide' };
+  }
   return outline;
 }

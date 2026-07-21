@@ -89,6 +89,9 @@ export function changeOutlineType(outline: SceneOutline, newType: SceneType): Sc
       };
     }
 
+    case 'plugin':
+      return { ...baseOutline, pluginType: outline.pluginType ?? 'code-sandbox' };
+
     case 'slide':
     default:
       return baseOutline;

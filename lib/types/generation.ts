@@ -92,7 +92,7 @@ export interface WidgetOutline {
  */
 export interface SceneOutline {
   id: string;
-  type: 'slide' | 'quiz' | 'interactive' | 'pbl';
+  type: 'slide' | 'quiz' | 'interactive' | 'pbl' | 'plugin';
   title: string;
   description: string; // 1-2 sentences describing the purpose
   keyPoints: string[]; // 3-5 core key points
@@ -134,6 +134,8 @@ export interface SceneOutline {
   // Widget fields (required for type === 'interactive' in unified mode)
   widgetType?: WidgetType;
   widgetOutline?: WidgetOutline;
+  /** Registered Scene Genome plug-in type used when `type === 'plugin'`. */
+  pluginType?: string;
 }
 
 // ==================== Stage 3 Output: Generated Content ====================
