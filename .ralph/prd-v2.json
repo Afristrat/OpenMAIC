@@ -699,12 +699,14 @@
       "title": "Exécution des vecteurs validés (un commit par vecteur)",
       "epic": "4-MOTEUR",
       "phase": 4,
-      "passes": false,
+      "passes": true,
+      "completedAt": "2026-07-22",
       "dependencies": ["S4-002", "S4-003"],
       "acceptance": [
         "Référence du vecteur dans chaque message de commit",
         "Écart entre ADR validées et commits = vide"
-      ]
+      ],
+      "acceptanceNote": "Les sept vecteurs validés sont matérialisés par les ADR-405 à ADR-411 et par des commits dédiés [S4-004][V-01] à [S4-004][V-07] ; V-01 comporte deux commits complémentaires de frontière et de validation. Validation finale sur serveuria : frontière exécutable verte, TypeScript 0 erreur, lint 0 erreur, format conforme, 258 fichiers de tests et 1 965 tests unitaires verts, puis 35/35 parcours Playwright verts."
     },
     {
       "id": "S4-005",
