@@ -58,6 +58,15 @@ function certification(
                 evidenceRef: `eval:test:language:${locale}`,
               })),
               limitations: [],
+              promotion: {
+                policyId: `policy:test:${taskId}`,
+                runId: `run:test:${taskId}`,
+                decision: 'passed' as const,
+                deterministicEvidenceRefs: [`check:test:${taskId}`],
+                judgeCalibrationRef: 'calibration:test:judge',
+                judgeEvidenceRefs: [`judge:test:${taskId}`],
+                humanReviewEvidenceRefs: [`review:test:${taskId}`],
+              },
             })),
           )
         : [],

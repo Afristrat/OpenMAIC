@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "status": "candidate",
+  "warning": "Valeurs de calibration à challenger sur des runs réels et à faire approuver avant utilisation.",
+  "policy": {
+    "id": "outline-core-v1",
+    "status": "candidate",
+    "approvedAt": null,
+    "approvalRef": null,
+    "taskId": "outline",
+    "capability": "reasoning",
+    "goldenCaseIds": [
+      "outline-fr-procedural-high-risk",
+      "outline-ar-decision-blended",
+      "outline-en-expert-declarative"
+    ],
+    "requiredDeterministicCheckIds": [
+      "output-schema",
+      "objective-activity-assessment-links",
+      "source-claims-resolved",
+      "assumptions-declared"
+    ],
+    "requiredLocales": ["fr-FR", "ar-MA", "en-US"],
+    "minimumJudgeScore": 0.8,
+    "minimumLanguageScore": 0.8,
+    "judgeRubricVersion": "outline-core-rubric-v1",
+    "minimumCalibrationSamples": 30,
+    "minimumJudgeAgreement": 0.85,
+    "maximumJudgeFalsePositiveRate": 0.1,
+    "requireIndependentJudge": true,
+    "minimumHumanReviews": 1,
+    "maximumHumanFailureRate": 0
+  }
+}

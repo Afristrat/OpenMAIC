@@ -56,6 +56,16 @@ export interface LanguageQualityMeasurement {
   evidenceRef: string;
 }
 
+export interface TaskPromotionEvidence {
+  policyId: string;
+  runId: string;
+  decision: CertificationOutcome;
+  deterministicEvidenceRefs: string[];
+  judgeCalibrationRef: string;
+  judgeEvidenceRefs: string[];
+  humanReviewEvidenceRefs: string[];
+}
+
 export interface TaskValidationResult {
   modelId: string;
   taskId: string;
@@ -65,6 +75,7 @@ export interface TaskValidationResult {
   evaluationRef: string;
   languageQuality: LanguageQualityMeasurement[];
   limitations: string[];
+  promotion: TaskPromotionEvidence;
 }
 
 export interface OperationalLimits {
@@ -229,6 +240,23 @@ function assertValidationShape(modelId: string, validation: TaskValidationResult
   assertIsoDate(validation.evaluatedAt, 'Validation date');
   assertNonEmpty(validation.evaluationRef, 'Validation evidence');
   assertStringList(validation.limitations, 'Validation limitations');
+  assertNonEmpty(validation.promotion.policyId, 'Promotion policy id');
+  assertNonEmpty(validation.promotion.runId, 'Promotion run id');
+  assertNonEmpty(validation.promotion.judgeCalibrationRef, 'Judge calibration evidence');
+  assertStringList(validation.promotion.judgeEvidenceRefs, 'Judge evaluation evidence');
+  assertStringList(validation.promotion.deterministicEvidenceRefs, 'Deterministic check evidence');
+  assertStringList(validation.promotion.humanReviewEvidenceRefs, 'Human review evidence');
+  if (validation.promotion.decision !== validation.outcome) {
+    throw new Error('Promotion decision must match the task validation outcome');
+  }
+  if (
+    validation.outcome === 'passed' &&
+    (validation.promotion.deterministicEvidenceRefs.length === 0 ||
+      validation.promotion.judgeEvidenceRefs.length === 0 ||
+      validation.promotion.humanReviewEvidenceRefs.length === 0)
+  ) {
+    throw new Error('A passed validation requires deterministic and human evidence');
+  }
   const locales = new Set<string>();
   for (const quality of validation.languageQuality) {
     assertNonEmpty(quality.locale, 'Language quality locale');
@@ -444,6 +472,12 @@ export function recordTaskValidation(
         ...validation,
         languageQuality: validation.languageQuality.map((quality) => ({ ...quality })),
         limitations: [...validation.limitations],
+        promotion: {
+          ...validation.promotion,
+          deterministicEvidenceRefs: [...validation.promotion.deterministicEvidenceRefs],
+          judgeEvidenceRefs: [...validation.promotion.judgeEvidenceRefs],
+          humanReviewEvidenceRefs: [...validation.promotion.humanReviewEvidenceRefs],
+        },
       },
     ],
   });

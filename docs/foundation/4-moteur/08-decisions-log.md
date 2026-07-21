@@ -72,6 +72,15 @@
 - **Limite** : les seuils de promotion des évaluations appartiennent à V-07. V-04 garantit la structure, les transitions et l'impossibilité de contourner les preuves.
 - **Preuves** : `lib/ai/capability-registry.ts`, `tests/ai/capability-registry.test.ts`, schéma portable `skills/qalem-prompt-compiler/references/capability-registry.schema.json`.
 
+## ADR-410 — Promotion à trois portes et seuils versionnés (ACTÉE — exécution V-07, 2026-07-21)
+
+- **Vecteur** : V-07 — Évaluation avant promotion.
+- **Quoi** : chaque politique nomme son golden set et fixe explicitement ses seuils. La promotion exige simultanément les checks déterministes demandés, un juge dont la calibration est suffisante et encore valide, puis un échantillon humain conforme. Tous les motifs d'échec sont conservés.
+- **Anti-contournement** : une validation `passed` sans références de checks, de jugements calibrés et de revues humaines est rejetée par le registre. Une évaluation plus récente en échec invalide le couple tâche/capacité sans supprimer l'historique.
+- **Langues** : une tâche déclarant une locale ne peut être routée que si cette locale est couverte par le golden set et sa mesure linguistique.
+- **Indépendance** : la politique décide explicitement si le juge doit être distinct du modèle évalué ; aucun modèle juge n'est imposé globalement.
+- **Preuves** : `lib/formation-engine/evaluation-promotion.ts`, `tests/formation-engine/evaluation-promotion.test.ts`, contrat portable `skills/qalem-prompt-compiler/references/evaluation-promotion-contract.md`.
+
 ## — Réservé aux vecteurs (gabarit) —
 
 ```

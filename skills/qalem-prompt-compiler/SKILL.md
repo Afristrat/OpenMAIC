@@ -36,6 +36,8 @@ Une disparition du dernier inventaire LiteLLM ou l’échec d’un nouveau probe
 
 Exécuter chaque contrôle de joignabilité selon `references/capability-probe-contract.md` : un simple endpoint de santé ou succès HTTP ne certifie aucune modalité.
 
+Promouvoir un couple tâche/modèle uniquement selon `references/evaluation-promotion-contract.md`. Les checks déterministes, un juge calibré et un échantillon humain sont tous obligatoires ; leurs seuils vivent dans une politique versionnée, jamais dans le compilateur.
+
 ## Stratégies compilées
 
 - `direct` pour une réponse textuelle sans schéma ;

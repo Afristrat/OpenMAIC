@@ -13,7 +13,9 @@ import {
   recordTaskValidation,
   setOperationalLimits,
   type CapabilityProbeResult,
+  type CertificationOutcome,
   type ModelCertification,
+  type TaskPromotionEvidence,
 } from '@/lib/ai/capability-registry';
 
 const observation = {
@@ -45,6 +47,18 @@ function probe(
     latencyMs: 420,
     limitations: [],
     ...overrides,
+  };
+}
+
+function promotion(decision: CertificationOutcome = 'passed'): TaskPromotionEvidence {
+  return {
+    policyId: 'policy:outline:v1',
+    runId: 'run:outline:kimi-k2.6:v1',
+    decision,
+    deterministicEvidenceRefs: ['check:outline-schema:v1'],
+    judgeCalibrationRef: 'calibration:judge:v1',
+    judgeEvidenceRefs: ['judge:outline:case-1:v1'],
+    humanReviewEvidenceRefs: ['review:outline:case-1:v1'],
   };
 }
 
@@ -94,6 +108,7 @@ describe('capability registry', () => {
       evaluationRef: 'eval:outline:kimi-k2.6:v1',
       languageQuality: [{ locale: 'fr-FR', score: 0.91, evidenceRef: 'eval:language:fr-FR:v1' }],
       limitations: ['Structured output requires schema enforcement'],
+      promotion: promotion(),
     });
 
     expect(reachable).toMatchObject({
@@ -118,6 +133,7 @@ describe('capability registry', () => {
       evaluationRef: 'eval:outline:kimi-k2.6:v1',
       languageQuality: [],
       limitations: [],
+      promotion: promotion(),
     });
     const failed = recordCapabilityProbe(
       validated,
@@ -145,6 +161,7 @@ describe('capability registry', () => {
       evaluationRef: 'eval:outline:kimi-k2.6:v1',
       languageQuality: [],
       limitations: [],
+      promotion: promotion(),
     });
     const failed = recordTaskValidation(passed, {
       modelId: 'kimi-k2.6',
@@ -155,6 +172,7 @@ describe('capability registry', () => {
       evaluationRef: 'eval:outline:kimi-k2.6:v2',
       languageQuality: [],
       limitations: ['Output schema regression'],
+      promotion: promotion('failed'),
     });
 
     expect(failed.status).toBe('reachable');
@@ -173,6 +191,7 @@ describe('capability registry', () => {
         evaluationRef: 'eval:outline:kimi-k2.6:v1',
         languageQuality: [],
         limitations: [],
+        promotion: promotion(),
       }),
     ).toThrow('cannot be validated before its capability is reachable');
   });

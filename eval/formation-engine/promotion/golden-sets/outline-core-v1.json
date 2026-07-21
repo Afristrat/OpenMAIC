@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "id": "outline-core-v1",
+  "status": "candidate",
+  "purpose": "Calibrer la génération d'architectures de formation multilingues avant toute politique de promotion approuvée.",
+  "cases": [
+    {
+      "id": "outline-fr-procedural-high-risk",
+      "locale": "fr-FR",
+      "contract": {
+        "audience": "Adultes novices",
+        "competencyType": "procedural",
+        "riskLevel": "high",
+        "deliveryMode": "workplace",
+        "requirement": "Construire une procédure de consignation avant intervention sur un équipement industriel."
+      },
+      "reviewFocus": [
+        "Alignement entre performance, pratique et évaluation",
+        "Hypothèses explicites",
+        "Aucune consigne de sécurité inventée"
+      ]
+    },
+    {
+      "id": "outline-ar-decision-blended",
+      "locale": "ar-MA",
+      "contract": {
+        "audience": "أطر ذات خبرة متفاوتة",
+        "competencyType": "decision",
+        "riskLevel": "medium",
+        "deliveryMode": "blended",
+        "requirement": "تصميم مسار لاتخاذ قرار مهني موثق في ظل معلومات ناقصة."
+      },
+      "reviewFocus": [
+        "سلامة العربية الفصحى الحديثة",
+        "وضوح معايير القرار",
+        "الفصل بين الوقائع والافتراضات"
+      ]
+    },
+    {
+      "id": "outline-en-expert-declarative",
+      "locale": "en-US",
+      "contract": {
+        "audience": "Experienced specialists",
+        "competencyType": "declarative",
+        "riskLevel": "low",
+        "deliveryMode": "self-paced",
+        "requirement": "Design a concise update module that helps specialists distinguish verified changes from unchanged guidance."
+      },
+      "reviewFocus": [
+        "Efficient treatment of prior knowledge",
+        "Source traceability",
+        "Assessment fit for the stated objective"
+      ]
+    }
+  ]
+}
