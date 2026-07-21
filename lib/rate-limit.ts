@@ -12,10 +12,11 @@ import { getUsageSummary } from '@/lib/usage/tracker';
 // Plan-based rate limits
 // ---------------------------------------------------------------------------
 
-const PLANS: Record<string, { maxRequests: number; windowMs: number }> = {
-  unlicensed: { maxRequests: 0, windowMs: 60_000 },
-  pro: { maxRequests: 1000, windowMs: 60_000 }, // 1 000 req/min
-  enterprise: { maxRequests: 10_000, windowMs: 60_000 }, // 10 000 req/min
+export type RequestRateLimitTier = 'anonymous' | 'authenticated';
+
+const REQUEST_LIMITS: Record<RequestRateLimitTier, { maxRequests: number; windowMs: number }> = {
+  anonymous: { maxRequests: 100, windowMs: 60_000 },
+  authenticated: { maxRequests: 1000, windowMs: 60_000 },
 };
 
 const TTS_LIMITS: Record<string, { maxMinutes: number }> = {
@@ -73,15 +74,14 @@ export interface RateLimitResult {
  * Check whether a request is allowed under the rate limit for the given key.
  *
  * @param key  - Unique identifier (e.g. `user:<id>` or `ip:<addr>`)
- * @param plan - Commercial plan (unlicensed | pro | enterprise).
+ * @param tier - Abuse-protection tier. Commercial entitlements are enforced
+ *               separately, once the organization is known.
  */
-export async function checkRateLimit(key: string, plan?: string): Promise<RateLimitResult> {
-  const planConfig = PLANS[plan ?? 'unlicensed'] ?? PLANS.unlicensed;
-
-  if (planConfig.maxRequests === 0) {
-    return { allowed: false, remaining: 0, retryAfterMs: planConfig.windowMs };
-  }
-
+export async function checkRateLimit(
+  key: string,
+  tier: RequestRateLimitTier = 'anonymous',
+): Promise<RateLimitResult> {
+  const planConfig = REQUEST_LIMITS[tier] ?? REQUEST_LIMITS.anonymous;
   const now = Date.now();
   const windowStart = now - planConfig.windowMs;
 

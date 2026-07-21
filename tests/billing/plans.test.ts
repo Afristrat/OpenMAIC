@@ -36,11 +36,10 @@ describe('commercial plan catalogue', () => {
     });
   });
 
-  it('rejects rate-limited operations before licensing', async () => {
-    await expect(checkRateLimit('unlicensed-test', 'unlicensed')).resolves.toEqual({
-      allowed: false,
-      remaining: 0,
-      retryAfterMs: 60_000,
+  it('keeps abuse protection independent from commercial licensing', async () => {
+    await expect(checkRateLimit('anonymous-test', 'anonymous')).resolves.toEqual({
+      allowed: true,
+      remaining: 99,
     });
   });
 });

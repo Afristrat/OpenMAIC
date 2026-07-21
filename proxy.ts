@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { checkRateLimit } from '@/lib/rate-limit';
+import { checkRateLimit, type RequestRateLimitTier } from '@/lib/rate-limit';
 
 // ---------------------------------------------------------------------------
 // Routes that bypass rate limiting
@@ -17,7 +17,7 @@ function shouldSkipRateLimit(pathname: string): boolean {
 // Extract client identifier
 // ---------------------------------------------------------------------------
 
-function getClientKey(request: NextRequest): { key: string; plan: string } {
+function getClientKey(request: NextRequest): { key: string; tier: RequestRateLimitTier } {
   // Try to extract user ID from Supabase auth cookie (sb-*-auth-token)
   const cookies = request.cookies;
   let userId: string | undefined;
@@ -48,14 +48,13 @@ function getClientKey(request: NextRequest): { key: string; plan: string } {
   }
 
   if (userId) {
-    // TODO: Look up the user's plan from the database/cache
-    return { key: `user:${userId}`, plan: 'free' };
+    return { key: `user:${userId}`, tier: 'authenticated' };
   }
 
   // Fall back to IP-based rate limiting
   const forwarded = request.headers.get('x-forwarded-for');
   const ip = forwarded?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? '0.0.0.0';
-  return { key: `ip:${ip}`, plan: 'free' };
+  return { key: `ip:${ip}`, tier: 'anonymous' };
 }
 
 // ---------------------------------------------------------------------------
@@ -69,8 +68,8 @@ export default async function proxy(request: NextRequest): Promise<NextResponse>
     return NextResponse.next();
   }
 
-  const { key, plan } = getClientKey(request);
-  const result = await checkRateLimit(key, plan);
+  const { key, tier } = getClientKey(request);
+  const result = await checkRateLimit(key, tier);
 
   if (!result.allowed) {
     const retryAfterSeconds = Math.ceil((result.retryAfterMs ?? 1000) / 1000);
