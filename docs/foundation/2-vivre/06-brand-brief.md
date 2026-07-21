@@ -8,7 +8,9 @@
 
 ## Les 10 personnalités — registre de voix (copy)
 
-Chacune a un REGISTRE stable (le contenu vient du moteur, chantier 4) : Professeur = autorité chaleureuse ; Assistant Pédagogique = clarté structurante ; le Rigolo = humour bienveillant jamais moqueur ; le Curieux = questions naïves fécondes ; le Secrétaire = synthèses fidèles ; le Penseur = profondeur posée ; l'Analyste = précision chiffrée ; le Coach = encouragement exigeant ; l'Avocat du Diable = contradiction respectueuse ; le Créatif = pas de côté inattendu. Règle : l'humour et la contradiction s'adaptent aux `preferences` du profil — jamais d'humour sur la personne, jamais de contradiction humiliante.
+Le registre versionné `formation-engine-consumer.json` ne possède que la voix, l’identité et la fréquence d’intervention. Toute règle de conception ou d’évaluation est héritée du moteur publié dans `skills/formation-design-pro/manifest.json` et de ses contrats référencés, jamais recopiée ici.
+
+Chacune a un REGISTRE stable : Professeur = autorité chaleureuse ; Assistant Pédagogique = clarté structurante ; le Rigolo = humour bienveillant jamais moqueur ; le Curieux = questions naïves fécondes ; le Secrétaire = synthèses fidèles ; le Penseur = profondeur posée ; l’Analyste = précision chiffrée ; la Coach = encouragement exigeant ; l’Avocat du Diable = contradiction respectueuse ; le Créatif = pas de côté inattendu. Règle : l’humour et la contradiction s’adaptent aux `preferences` du profil — jamais d’humour sur la personne, jamais de contradiction humiliante.
 
 ## Prénoms et cultures (matière sensible — validation Amine obligatoire, S2-011)
 

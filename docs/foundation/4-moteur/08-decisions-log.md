@@ -97,6 +97,13 @@
 - **Validation des manifests** : le loader intégré et l’installation tenant partagent désormais le même schéma strict. Les références fichier restent autorisées uniquement pour les skills intégrées, puis sont bornées au répertoire racine et refusées si elles sont des liens symboliques.
 - **Preuves** : `skills/formation-design-pro/manifest.json`, `skills/formation-design-pro/prompts/andragogy-system-override.md`, `tests/generation/skill-prompt-wiring.test.ts`, `tests/skills/formation-engine-platform-publication.test.ts`.
 
+## ADR-413 — Les consommateurs aval possèdent la voix, jamais la doctrine (ACTÉE — S4-007, 2026-07-22)
+
+- **Quoi** : VIVRE et ANCRER possèdent uniquement leurs données spécifiques — identité et registre des personae, poids d’interaction, preuves de session et calendrier. Ils héritent par référence de la publication plateforme, du plan compilé, des politiques de design et du contrat de promotion.
+- **Runtime VIVRE** : le registre des dix personae référence un identifiant consommateur stable ; la directive de live est construite dans `lib/formation-engine/downstream-consumers.ts`, puis injectée à chaque persona. Les formulations andragogiques dupliquées ont été retirées des voix.
+- **ANCRER** : S3-004 devra implémenter `ancrer-seed-registry` tel que déclaré dans son registre de référence. Aucune règle andragogique locale n’est pré-écrite avant cette story.
+- **Preuves** : `docs/foundation/2-vivre/formation-engine-consumer.json`, `docs/foundation/3-ancrer/formation-engine-consumer.json`, `tests/formation-engine/downstream-consumers.test.ts`.
+
 ## — Réservé aux vecteurs (gabarit) —
 
 ```

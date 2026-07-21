@@ -48,6 +48,7 @@ import {
 } from '@/lib/agents/persona-catalog';
 import { getSkill, registerSkill } from '@/lib/skills/registry';
 import { parseSkillManifest } from '@/lib/skills/manifest-schema';
+import { buildLiveInstructionalDirective } from '@/lib/formation-engine/downstream-consumers';
 
 const log = createLogger('Classroom');
 
@@ -256,7 +257,12 @@ export async function generateClassroom(
   };
 
   const learningApproach = approachForAudience(learningDesign.audienceStage);
-  const instructionalDirective = `Instructional approach: ${learningApproach}. Learner stage: ${learningDesign.audienceStage}. Proficiency: ${learningDesign.expertiseLevel}. Interaction level: ${learningDesign.interactionLevel}. Adapt tone, scaffolding, examples and learner autonomy accordingly.`;
+  const instructionalDirective = buildLiveInstructionalDirective({
+    approach: learningApproach,
+    audienceStage: learningDesign.audienceStage,
+    expertiseLevel: learningDesign.expertiseLevel,
+    interactionLevel: learningDesign.interactionLevel,
+  });
   const requirements: UserRequirements = {
     requirement: `${requirement}\n\n${instructionalDirective}`,
     activeSkillId,

@@ -6,7 +6,7 @@
 |---|---|---|---|---|---|
 | Web Push (VAPID, service workers portés) | Canal unique des graines/rappels v1 | clés VAPID (coffre, nom à consigner à S3-002) | gratuit ; ⚠️ iOS : PWA installée + Safari ≥ 16.4 requis | ❌ Non pour l'ancrage (c'est LE canal) | Si délivrance iOS insuffisante (mesure S3-002) → réouvrir ADR-303 avec Amine |
 | BullMQ / Redis (socle) | Planification 10-90 j, outbox xAPI | — | volume de jobs faible (quelques/jour/plan) | — (cf. socle) | — |
-| FSRS (`lib/spaced-repetition/` porté) | Espacement des rappels quiz | — (lib interne) | dette : lien Bloom absent (parking lot) | — | — |
+| FSRS (`lib/spaced-repetition/` porté) | Espacement des rappels quiz | — (lib interne) | dette : lien vers le plan compilé absent (parking lot) | — | — |
 | LRS externe de l'org (xAPI, optionnel) | Réception des statements si l'org en a un | endpoint + credentials PAR ORG (jamais en dur ; stockage config org chiffrée) | selon LRS client | Oui — fonctionnalité optionnelle | Outbox conserve les statements en échec (retry + inspection) |
 
 ## Règles

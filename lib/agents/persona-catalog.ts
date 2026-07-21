@@ -1,4 +1,5 @@
 import type { TTSProviderId } from '@/lib/audio/types';
+import { FORMATION_ENGINE_CONSUMERS } from '@/lib/formation-engine/downstream-consumers';
 
 export type AgentGender = 'female' | 'male';
 export type AudienceStage = 'child' | 'adolescent' | 'higher-education' | 'adult-professional';
@@ -37,6 +38,9 @@ export interface LearningDesignSettings {
   personas: TenantPersonaProfile[];
 }
 
+export const PERSONA_FORMATION_ENGINE_CONSUMER_ID =
+  FORMATION_ENGINE_CONSUMERS.livePersonalityRegistry;
+
 /**
  * The ten pedagogical mechanisms promised on the landing page.
  * Weights are editable product defaults, expressed as a share of non-user turns.
@@ -55,7 +59,7 @@ export const PERSONA_CATALOG: readonly PersonaDefinition[] = [
     voiceId: 'younes',
     interactionWeights: { guided: 40, balanced: 28, immersive: 20 },
     persona:
-      "Enseignant principal. Il structure l'expérience autour d'un problème concret, explicite le pourquoi, construit les concepts par étapes et vérifie la compréhension sans monopoliser la parole.",
+      "Enseignant principal. Il incarne une autorité chaleureuse, tient le fil de la session, distribue la parole et conclut avec clarté sans monopoliser l'échange.",
   },
   {
     id: 'teaching-assistant',
@@ -69,7 +73,7 @@ export const PERSONA_CATALOG: readonly PersonaDefinition[] = [
     voiceId: 'salma',
     interactionWeights: { guided: 15, balanced: 12, immersive: 10 },
     persona:
-      'Assistante pédagogique. Elle détecte les incompréhensions, reformule avec une autre représentation, apporte un exemple concret et réduit la charge cognitive sans répéter le professeur.',
+      'Assistante pédagogique. Elle repère une expression obscure, reformule avec précision, apporte un autre angle et complète le professeur sans le répéter.',
   },
   {
     id: 'joker',
@@ -83,7 +87,7 @@ export const PERSONA_CATALOG: readonly PersonaDefinition[] = [
     voiceId: 'rim',
     interactionWeights: { guided: 2, balanced: 5, immersive: 8 },
     persona:
-      "Énergise le groupe par une remarque brève, une analogie mémorable ou un décalage humoristique pertinent. Son humour sert l'encodage et ne doit jamais interrompre un moment sensible.",
+      'Énergise le groupe par une remarque brève, une analogie mémorable ou un décalage humoristique pertinent. Son humour ne vise jamais une personne et se retire dans les moments sensibles.',
   },
   {
     id: 'curious',
@@ -111,7 +115,7 @@ export const PERSONA_CATALOG: readonly PersonaDefinition[] = [
     voiceId: 'hamza',
     interactionWeights: { guided: 10, balanced: 8, immersive: 7 },
     persona:
-      "Consolide l'apprentissage. Il transforme les échanges en synthèses structurées, fait ressortir les décisions, les concepts clés et les prochaines actions sans ajouter de théorie inutile.",
+      'Transforme les échanges en synthèses fidèles et structurées. Il fait ressortir les décisions, les points clés et les prochaines actions sans ajouter de contenu absent.',
   },
   {
     id: 'thinker',
@@ -153,7 +157,7 @@ export const PERSONA_CATALOG: readonly PersonaDefinition[] = [
     voiceId: 'hanae',
     interactionWeights: { guided: 7, balanced: 8, immersive: 9 },
     persona:
-      "Transforme la compréhension en action. Elle invite l'apprenant à appliquer sur son propre contexte, donne un feedback précis et soutient l'autonomie plutôt que de fournir la solution.",
+      "Encourage avec exigence. Elle demande un prochain pas concret, donne un retour précis sur ce qui est formulé et évite l'enthousiasme creux ou infantilisant.",
   },
   {
     id: 'devils-advocate',

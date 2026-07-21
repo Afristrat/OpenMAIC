@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "consumerId": "vivre-personality-registry",
+  "implementation": "lib/agents/persona-catalog.ts",
+  "inherits": {
+    "platformPublication": "skills/formation-design-pro/manifest.json",
+    "compiledPlan": "skills/qalem-prompt-compiler/references/compiled-plan.schema.json",
+    "designPolicies": "skills/qalem-prompt-compiler/references/design-policy-contract.md",
+    "evaluationPromotion": "skills/qalem-prompt-compiler/references/evaluation-promotion-contract.md"
+  },
+  "localOwnership": [
+    "persona identity and speaking register",
+    "editable name, avatar, gender and voice",
+    "interaction weight by interaction level"
+  ],
+  "doctrineOwnership": "formation-engine-only"
+}

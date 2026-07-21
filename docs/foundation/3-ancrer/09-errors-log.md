@@ -10,10 +10,10 @@
 - **Prévention** : ADR-303 fige le canal v1 ; toute story « canal » commence par lire le module et vérifier ce qui est réel.
 - **Leçon** : un module présent n'est pas un module câblé — vérifier l'appel de bout en bout (règle vitrine/câblé de l'audit).
 
-### 2026-07-09 — FSRS porté : extracteur sans lien avec les objectifs (Bloom)
+### 2026-07-09 — FSRS porté : extracteur sans lien avec le plan compilé
 - **Symptôme attendu** : les rappels espacés fonctionnent mais ancrent des items déconnectés des objectifs pédagogiques du course.
 - **Cause racine** : `lib/spaced-repetition/` extrait des items sans lien avec la taxonomie des objectifs (dette relevée à l'audit 2026-07-09).
-- **Prévention** : S3-006 teste le CYCLE complet ; la limite Bloom est au parking lot avec déclencheur explicite — ne pas la « corriger en passant » dans une story de planification.
+- **Prévention** : S3-006 teste le CYCLE complet ; le lien au plan compilé est au parking lot avec déclencheur explicite — ne pas le « corriger en passant » dans une story de planification.
 - **Leçon** : consigner la dette au bon endroit vaut mieux qu'une refonte opportuniste hors scope.
 
 ### Gabarit d'entrée

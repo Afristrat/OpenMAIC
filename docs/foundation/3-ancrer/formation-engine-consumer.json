@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "consumerId": "ancrer-seed-registry",
+  "implementation": "S3-004",
+  "inherits": {
+    "platformPublication": "skills/formation-design-pro/manifest.json",
+    "compiledPlan": "skills/qalem-prompt-compiler/references/compiled-plan.schema.json",
+    "designPolicies": "skills/qalem-prompt-compiler/references/design-policy-contract.md",
+    "evaluationPromotion": "skills/qalem-prompt-compiler/references/evaluation-promotion-contract.md"
+  },
+  "localOwnership": [
+    "source scene and session evidence",
+    "persona register selected from the lived casting",
+    "delivery schedule and repetition control"
+  ],
+  "doctrineOwnership": "formation-engine-only"
+}
