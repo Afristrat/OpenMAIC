@@ -164,6 +164,23 @@ export const chatSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
+// Generate: TTS
+// ---------------------------------------------------------------------------
+
+export const generateTTSSchema = z.object({
+  text: z.string().min(1, 'text is required'),
+  audioId: z.string().min(1, 'audioId is required'),
+  ttsProviderId: z.string().min(1, 'ttsProviderId is required'),
+  ttsModelId: z.string().optional(),
+  ttsVoice: z.string().min(1, 'ttsVoice is required'),
+  ttsSpeed: z.number().optional(),
+  ttsApiKey: z.string().optional(),
+  ttsBaseUrl: z.string().optional(),
+  ttsProviderOptions: z.record(z.string(), z.unknown()).optional(),
+  ttsLanguageOverride: z.enum(['fr', 'en']).optional(),
+});
+
+// ---------------------------------------------------------------------------
 // Quiz Grade
 // ---------------------------------------------------------------------------
 

@@ -251,7 +251,9 @@ async function generateOpenAITTS(
       input: text,
       voice: config.voice,
       speed: config.speed || 1.0,
-      ...(config.language ? { language: config.language } : {}),
+      ...(config.providerId === 'higgs-tts' && config.language
+        ? { language: config.language }
+        : {}),
     }),
   });
 

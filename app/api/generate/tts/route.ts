@@ -21,6 +21,8 @@ import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { VOXCPM_AUTO_VOICE_ID, VOXCPM_TTS_PROVIDER_ID } from '@/lib/audio/voxcpm';
+import { generateTTSSchema } from '@/lib/api/schemas';
+import { validateBody } from '@/lib/api/validate';
 
 const log = createLogger('TTS API');
 
@@ -31,7 +33,9 @@ export async function POST(req: NextRequest) {
   let ttsVoice: string | undefined;
   let audioId: string | undefined;
   try {
-    const body = await req.json();
+    const validation = validateBody(generateTTSSchema, await req.json().catch(() => null));
+    if (!validation.success) return validation.response;
+    const body = validation.data;
     const {
       text,
       ttsModelId,
@@ -40,29 +44,13 @@ export async function POST(req: NextRequest) {
       ttsBaseUrl,
       ttsProviderOptions,
       ttsLanguageOverride,
-    } = body as {
-      text: string;
-      audioId: string;
-      ttsProviderId: TTSProviderId;
-      ttsModelId?: string;
-      ttsVoice: string;
-      ttsSpeed?: number;
-      ttsApiKey?: string;
-      ttsBaseUrl?: string;
-      ttsProviderOptions?: Record<string, unknown>;
-      ttsLanguageOverride?: 'fr' | 'en';
-    };
+    } = body;
     ttsProviderId = body.ttsProviderId;
     ttsVoice = body.ttsVoice;
     audioId = body.audioId;
 
-    // Validate required fields
-    if (!text || !audioId || !ttsProviderId || !ttsVoice) {
-      return apiError(
-        'MISSING_REQUIRED_FIELD',
-        400,
-        'Missing required fields: text, audioId, ttsProviderId, ttsVoice',
-      );
+    if (ttsLanguageOverride && ttsProviderId !== 'higgs-tts') {
+      return apiError('INVALID_REQUEST', 400, 'Language override is supported by higgs-tts only');
     }
 
     // Reject browser-native TTS — must be handled client-side

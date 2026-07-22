@@ -48,6 +48,22 @@ describe('splitSpeechActionsByAnglicisms', () => {
     expect(result).toEqual([action]);
   });
 
+  it('keeps sentence punctuation on a spoken segment instead of synthesizing punctuation alone', () => {
+    const action: SpeechAction = {
+      id: 'action_4',
+      type: 'speech',
+      text: 'Le budget est routé par LiteLLM.',
+    };
+
+    const result = splitSpeechActionsByAnglicisms([action], 'higgs-tts');
+
+    expect(result).toHaveLength(2);
+    expect(result[1]).toMatchObject({ text: 'LiteLLM.', ttsLanguageOverride: 'en' });
+    expect(result.every((item) => item.type !== 'speech' || /[\p{L}\p{N}]/u.test(item.text))).toBe(
+      true,
+    );
+  });
+
   it('leaves non-speech actions untouched', () => {
     const action = { id: 'a1', type: 'spotlight' as const, elementId: 'el1' };
     const result = splitSpeechActionsByAnglicisms([action], 'higgs-tts');

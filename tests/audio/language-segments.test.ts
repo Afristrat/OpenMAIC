@@ -70,8 +70,17 @@ describe('splitTextIntoLanguageSegments', () => {
       { text: 'via', language: 'fr' },
       { text: 'API', language: 'en' },
       { text: ', cache le budget et expose un', language: 'fr' },
-      { text: 'dashboard', language: 'en' },
-      { text: '.', language: 'fr' },
+      { text: 'dashboard.', language: 'en' },
+    ]);
+  });
+
+  it('never creates punctuation-only TTS segments between or after anglicisms', () => {
+    expect(
+      splitTextIntoLanguageSegments('Le couple LiteLLM, MIT réduit le budget.', ANGLICISM_TERMS),
+    ).toEqual([
+      { text: 'Le couple', language: 'fr' },
+      { text: 'LiteLLM, MIT', language: 'en' },
+      { text: 'réduit le budget.', language: 'fr' },
     ]);
   });
 

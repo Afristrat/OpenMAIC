@@ -47,4 +47,31 @@ describe('generateTTS — higgs-tts language passthrough', () => {
     const body = JSON.parse(requestInit.body as string);
     expect(body.language).toBeUndefined();
   });
+
+  it.each(['openai-tts', 'custom-tts-language-probe'] as const)(
+    'omits Higgs-only language from the %s request body',
+    async (providerId) => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        arrayBuffer: async () => new ArrayBuffer(8),
+        headers: new Headers({ 'content-type': 'audio/wav' }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      await generateTTS(
+        {
+          providerId,
+          voice: 'default',
+          baseUrl: 'https://tts.example.test/v1',
+          language: 'en',
+          ...(providerId === 'openai-tts' ? { apiKey: 'test-key' } : {}),
+        },
+        'LiteLLM',
+      );
+
+      const [, requestInit] = fetchMock.mock.calls[0];
+      const body = JSON.parse(requestInit.body as string);
+      expect(body.language).toBeUndefined();
+    },
+  );
 });

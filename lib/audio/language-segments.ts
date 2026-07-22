@@ -52,5 +52,21 @@ export function splitTextIntoLanguageSegments(
   flushEn();
   flushFr(normalized.length);
 
-  return segments.length > 0 ? segments : [{ text: normalized, language: 'fr' }];
+  const merged: LanguageSegment[] = [];
+  for (let index = 0; index < segments.length; index += 1) {
+    const segment = segments[index];
+    if (!/[\p{L}\p{N}]/u.test(segment.text)) {
+      const previous = merged.at(-1);
+      if (previous) previous.text += segment.text;
+      else if (segments[index + 1])
+        segments[index + 1].text = segment.text + segments[index + 1].text;
+      continue;
+    }
+
+    const previous = merged.at(-1);
+    if (previous?.language === segment.language) previous.text += ` ${segment.text}`;
+    else merged.push({ ...segment });
+  }
+
+  return merged.length > 0 ? merged : [{ text: normalized, language: 'fr' }];
 }
