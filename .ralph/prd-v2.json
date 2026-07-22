@@ -472,12 +472,14 @@
       "title": "Andragogie dans le live (overrides du moteur consommés par le director)",
       "epic": "2-VIVRE",
       "phase": 2,
-      "passes": false,
+      "passes": true,
       "dependencies": ["S1-001"],
       "acceptance": [
         "Prompts director/agents consomment l'interface moteur",
         "Test : un override actif change observablement une personnalité en live"
-      ]
+      ],
+      "completedAt": "2026-07-22",
+      "acceptanceNote": "Le contexte de skill actif est persisté avec la classroom puis rétabli côté serveur à chaque requête live, sans faire confiance au contexte envoyé par le navigateur. Les prompts des agents et du director passent tous deux par buildPromptWithSkill() ; les tests prouvent qu'activer Formation Design Pro change simultanément le comportement de la personnalité par défaut et le routage du director, tandis que le mode désactivé reste identique octet pour octet. Les skills tenant sont rechargées depuis Supabase par organisation et refusent les identifiants d'une autre organisation, ce qui rend l'activation durable entre processus et réplicas. La publication Formation Design Pro 2.3.0 contient des overrides live séparés de l'identité des personas. La directive VIVRE est couverte par un E2E permanent : une intervention d'agent issue du flux /api/chat est révélée, scellée puis transmise avec son texte complet à speechSynthesis.speak. Il s'agit d'une preuve automatisée de la chaîne vocale, pas d'une écoute humaine ; le checkpoint audio humain S0-015 reste ouvert. Le test a aussi révélé et corrigé les noms accessibles manquants des boutons micro/texte et l'épuisement partagé du rate limiter entre parcours E2E, désormais isolés par client sans bypass de la protection. Validation finale sur serveuria au commit b94b6d2 : Prettier, TypeScript et ESLint verts ; 266 fichiers / 2 002 tests Vitest ; 37/37 Playwright sans retry ni flake. main non touchée."
     },
     {
       "id": "S2-008",
