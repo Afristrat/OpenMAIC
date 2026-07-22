@@ -1,13 +1,9 @@
 import { buildPrompt } from '@/lib/prompts';
 import type { PromptId } from '@/lib/prompts/types';
+import type { SkillPromptContext } from '@/lib/types/stage';
 import { getPromptOverride } from './registry';
 
 export const CORE_FORMATION_SKILL_ID = 'formation-design-pro';
-
-export interface SkillPromptContext {
-  enabled?: boolean;
-  activeSkillId?: string;
-}
 
 /**
  * Build a normal platform prompt, then apply the active skill's declared
@@ -17,13 +13,17 @@ export interface SkillPromptContext {
 export function buildPromptWithSkill(
   promptId: PromptId,
   variables: Record<string, unknown>,
-  context: SkillPromptContext = {},
+  context: Partial<SkillPromptContext> = {},
 ): { system: string; user: string } | null {
-  const skillIds = context.enabled
+  const activeSkillId =
+    typeof context.activeSkillId === 'string' && context.activeSkillId.length <= 256
+      ? context.activeSkillId
+      : undefined;
+  const skillIds = context.enabled === true
     ? [
         CORE_FORMATION_SKILL_ID,
-        ...(context.activeSkillId && context.activeSkillId !== CORE_FORMATION_SKILL_ID
-          ? [context.activeSkillId]
+        ...(activeSkillId && activeSkillId !== CORE_FORMATION_SKILL_ID
+          ? [activeSkillId]
           : []),
       ]
     : [];

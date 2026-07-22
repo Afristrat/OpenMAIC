@@ -3,11 +3,11 @@
   "artifactSetId": "formation-design-pro-qalem-publication",
   "classification": "traceable-publication",
   "provenance": {
-    "kind": "historical-qalem-authored-artifact",
+    "kind": "historical-publication-with-qalem-live-adapters",
     "firstCommit": "490742491b5f32df5da3a9841ab21e7106da60b3",
     "canonicalPrivateSourceFilesIncluded": false,
     "validatedVectors": ["V-02", "V-03", "V-04", "V-05", "V-07"],
-    "lastValidatedStory": "S4-005",
+    "lastValidatedStory": "S2-007",
     "validatedAt": "2026-07-22"
   },
   "exposureAudit": {
@@ -20,11 +20,19 @@
   "files": [
     {
       "path": "manifest.json",
-      "sha256": "1f4ab783f40f608eb22290ed49ec0aebefdb42e195c75e0cf0f31fbac5c2c78b"
+      "sha256": "2e355975f696b5b8bbce6afa9ed332d3833cc77b33cf80ce1b581b5c86a53d5d"
     },
     {
       "path": "prompts/andragogy-system-override.md",
       "sha256": "61379e408a20a829604b17775961b05f344d148e417eaa3beded27fb1cfb92bc"
+    },
+    {
+      "path": "prompts/andragogy-live-agent-override.md",
+      "sha256": "4bfc321792f23c4adcded8084175ea50daab32ac44858506352fb2ad8897528f"
+    },
+    {
+      "path": "prompts/andragogy-live-director-override.md",
+      "sha256": "a974ef0bbf109f71bf37be30cd43475e891cf0eb9e106d8ff7359635480733de"
     }
   ]
 }

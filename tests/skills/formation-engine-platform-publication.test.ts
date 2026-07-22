@@ -12,18 +12,16 @@ describe('formation engine platform publication', () => {
   it('hydrates the traced refactored engine override through the production loader', () => {
     const skill = loadSkillFromDir(skillRoot);
 
-    expect(skill?.version).toBe('2.2.0');
+    expect(skill?.version).toBe('2.3.0');
     expect(skill?.traceability).toEqual({
-      source: 'external-private-git publication',
+      source: 'external-private-git publication with Qalem S2-007 live adapters',
       vectors: expectedVectors,
       validatedAt: '2026-07-22',
       publicationManifest: 'publication.json',
     });
-    expect(skill?.promptOverrides).toHaveLength(3);
+    expect(skill?.promptOverrides).toHaveLength(5);
     for (const override of skill?.promptOverrides ?? []) {
-      expect(override.systemPromptAppend).toContain(
-        'Formation Engine Platform Publication — Evidence-Gated Andragogy',
-      );
+      expect(override.systemPromptAppend).toContain('Formation Engine');
       expect(override.systemPromptAppend).not.toMatch(/^file:/u);
     }
   });
@@ -43,7 +41,7 @@ describe('formation engine platform publication', () => {
 
     expect(publication.provenance).toMatchObject({
       validatedVectors: expectedVectors,
-      lastValidatedStory: 'S4-005',
+      lastValidatedStory: 'S2-007',
       validatedAt: '2026-07-22',
     });
     expect(prompt).toContain('source: external-private-git publication');

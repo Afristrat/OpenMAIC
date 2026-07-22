@@ -5,6 +5,8 @@ import { describe, expect, it } from 'vitest';
 const publishedFiles = [
   'skills/formation-design-pro/manifest.json',
   'skills/formation-design-pro/prompts/andragogy-system-override.md',
+  'skills/formation-design-pro/prompts/andragogy-live-agent-override.md',
+  'skills/formation-design-pro/prompts/andragogy-live-director-override.md',
 ];
 
 describe('Formation Design Pro published heuristics', () => {

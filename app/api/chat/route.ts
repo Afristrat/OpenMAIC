@@ -20,6 +20,9 @@ import { apiError } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
 import { resolveModel } from '@/lib/server/resolve-model';
 import type { ThinkingConfig } from '@/lib/types/provider';
+import { isFeatureEnabled } from '@/lib/flags';
+import { readClassroomSkillPromptContext } from '@/lib/server/classroom-storage';
+import { resolveOrganizationSkillId } from '@/lib/server/skill-resolution';
 const log = createLogger('Chat API');
 
 // Allow streaming responses up to 60 seconds
@@ -62,6 +65,36 @@ export async function POST(req: NextRequest) {
 
     if (!body.config || !body.config.agentIds || body.config.agentIds.length === 0) {
       return apiError('MISSING_REQUIRED_FIELD', 400, 'Missing required field: config.agentIds');
+    }
+
+    // The browser sends the stage back on every stateless turn, so prompt
+    // activation must be re-established from server-owned state. This also
+    // activates the global formation engine for classrooms created before the
+    // prompt context was persisted.
+    if (body.storeState.stage) {
+      const skillEngineEnabled = await isFeatureEnabled('skill_engine');
+      let persisted: Awaited<ReturnType<typeof readClassroomSkillPromptContext>> = null;
+      try {
+        persisted = await readClassroomSkillPromptContext(body.storeState.stage.id);
+      } catch (error) {
+        log.warn('Persisted live skill context is unavailable; using the core engine', error);
+      }
+      let activeSkillId = persisted?.context?.activeSkillId;
+      if (skillEngineEnabled && activeSkillId && persisted) {
+        try {
+          activeSkillId = await resolveOrganizationSkillId(persisted.orgId, activeSkillId);
+        } catch (error) {
+          log.warn(`Live skill "${activeSkillId}" is unavailable; using the core engine`, error);
+          activeSkillId = undefined;
+        }
+      }
+      body.storeState.stage = {
+        ...body.storeState.stage,
+        skillPromptContext: {
+          enabled: skillEngineEnabled,
+          activeSkillId: skillEngineEnabled ? activeSkillId : undefined,
+        },
+      };
     }
 
     const {

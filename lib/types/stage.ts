@@ -25,6 +25,7 @@ export type {
   VideoManifest,
   GeneratedAgentConfig,
   MultiAgentConfig,
+  SkillPromptContext,
   Stage,
   SlideContent,
   QuizOption,

@@ -74,6 +74,7 @@ interface StageExtra {
   createdAt?: number;
   updatedAt?: number;
   languageDirective?: string;
+  skillPromptContext?: Stage['skillPromptContext'];
   whiteboard?: Stage['whiteboard'];
   videoManifest?: Stage['videoManifest'];
   generatedAgentConfigs?: Stage['generatedAgentConfigs'];
@@ -94,6 +95,7 @@ function buildStageExtra(stage: Stage): StageExtra {
     createdAt: stage.createdAt,
     updatedAt: stage.updatedAt,
     languageDirective: stage.languageDirective,
+    skillPromptContext: stage.skillPromptContext,
     whiteboard: stage.whiteboard,
     videoManifest: stage.videoManifest,
     generatedAgentConfigs: stage.generatedAgentConfigs,
@@ -200,6 +202,7 @@ export async function readClassroom(id: string): Promise<PersistedClassroomData 
     createdAt: stageExtra.createdAt ?? new Date(stageRow.created_at).getTime(),
     updatedAt: stageExtra.updatedAt ?? new Date(stageRow.created_at).getTime(),
     languageDirective: stageExtra.languageDirective,
+    skillPromptContext: stageExtra.skillPromptContext,
     style: stageRow.style ?? undefined,
     whiteboard: stageExtra.whiteboard,
     videoManifest: stageExtra.videoManifest,
@@ -235,6 +238,24 @@ export async function readClassroom(id: string): Promise<PersistedClassroomData 
     ownerId: stageRow.owner_id,
     orgId: stageRow.org_id,
   };
+}
+
+/** Read the server-owned live prompt context without reconstructing all scenes. */
+export async function readClassroomSkillPromptContext(
+  id: string,
+): Promise<{ orgId: string; context?: Stage['skillPromptContext'] } | null> {
+  const { data, error } = await createServiceSupabaseClient()
+    .from('stages')
+    .select('org_id, extra')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) {
+    throw new Error(`Failed to read skill prompt context for stage ${id}: ${error.message}`);
+  }
+  if (!data) return null;
+
+  const extra = (data.extra ?? {}) as StageExtra;
+  return { orgId: data.org_id, context: extra.skillPromptContext };
 }
 
 export async function listClassrooms(orgId: string): Promise<ClassroomListItem[]> {

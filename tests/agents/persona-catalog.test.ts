@@ -29,10 +29,10 @@ describe('ten-persona learning design', () => {
   });
 
   it('builds the complete immersive roster with persisted identities and weights', () => {
-    const configs = buildTenantAgentConfigs(
-      { ...DEFAULT_LEARNING_DESIGN, interactionLevel: 'immersive' },
-      'Use andragogy for an advanced audience.',
-    );
+    const configs = buildTenantAgentConfigs({
+      ...DEFAULT_LEARNING_DESIGN,
+      interactionLevel: 'immersive',
+    });
 
     expect(configs).toHaveLength(10);
     expect(configs[0]).toMatchObject({
@@ -43,6 +43,7 @@ describe('ten-persona learning design', () => {
       voiceConfig: { providerId: 'higgs-tts', voiceId: 'younes' },
     });
     expect(configs.map((config) => config.interactionWeight).reduce((a, b) => a + b, 0)).toBe(100);
+    expect(configs[0]?.persona).toBe(PERSONA_CATALOG[0]?.persona);
   });
 
   it('rejects a cross-gender avatar even outside the UI', () => {

@@ -46,8 +46,7 @@ import {
   learningDesignFromSettings,
   type LearningDesignSettings,
 } from '@/lib/agents/persona-catalog';
-import { getSkill, registerSkill } from '@/lib/skills/registry';
-import { parseSkillManifest } from '@/lib/skills/manifest-schema';
+import { resolveOrganizationSkillId } from '@/lib/server/skill-resolution';
 import { buildLiveInstructionalDirective } from '@/lib/formation-engine/downstream-consumers';
 
 const log = createLogger('Classroom');
@@ -131,22 +130,8 @@ export async function generateClassroom(
 ): Promise<GenerateClassroomResult> {
   const { requirement, pdfContent } = input;
   let activeSkillId = input.activeSkillId;
-  if (activeSkillId && !getSkill(activeSkillId)) {
-    const { data: organizationSkill, error } = await createServiceSupabaseClient()
-      .from('organization_skills')
-      .select('manifest')
-      .eq('org_id', input.orgId)
-      .eq('skill_id', activeSkillId)
-      .single();
-    if (error || !organizationSkill) {
-      throw new Error(`Skill "${activeSkillId}" is not installed for this organization`);
-    }
-    const parsed = parseSkillManifest(organizationSkill.manifest);
-    if (!parsed.success) {
-      throw new Error(`Installed skill "${activeSkillId}" has an invalid manifest`);
-    }
-    activeSkillId = `tenant:${input.orgId}:${parsed.skill.id}`;
-    registerSkill({ ...parsed.skill, id: activeSkillId });
+  if (activeSkillId) {
+    activeSkillId = await resolveOrganizationSkillId(input.orgId, activeSkillId);
   }
   let teachingProfile = DEFAULT_TEACHING_PROFILE;
   let learningDesign: LearningDesignSettings = DEFAULT_LEARNING_DESIGN;
@@ -381,7 +366,7 @@ export async function generateClassroom(
   let agents: AgentInfo[];
   const agentMode = input.agentMode || 'default';
   const tenantAgentConfigs =
-    agentMode === 'generate' ? buildTenantAgentConfigs(learningDesign, instructionalDirective) : [];
+    agentMode === 'generate' ? buildTenantAgentConfigs(learningDesign) : [];
   if (agentMode === 'generate') {
     agents = tenantAgentConfigs.map(({ id, name, role, persona }) => ({
       id,
@@ -399,6 +384,10 @@ export async function generateClassroom(
     name: courseTitle || outlines[0]?.title || requirement.slice(0, 50),
     description: undefined,
     languageDirective,
+    skillPromptContext: {
+      enabled: skillEngineEnabled,
+      activeSkillId: skillEngineEnabled ? activeSkillId : undefined,
+    },
     videoManifest: buildVideoManifestFromOutlines(outlines),
     style: 'interactive',
     createdAt: Date.now(),

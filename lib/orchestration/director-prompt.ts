@@ -7,7 +7,9 @@
 
 import type { AgentConfig } from '@/lib/orchestration/registry/types';
 import { createLogger } from '@/lib/logger';
-import { buildPrompt, PROMPT_IDS } from '@/lib/prompts';
+import { PROMPT_IDS } from '@/lib/prompts';
+import { buildPromptWithSkill } from '@/lib/skills/prompt-overrides';
+import type { SkillPromptContext } from '@/lib/types/stage';
 import type { WhiteboardActionRecord, AgentTurnSummary } from './types';
 
 const log = createLogger('DirectorPrompt');
@@ -30,6 +32,7 @@ export function buildDirectorPrompt(
   whiteboardLedger?: WhiteboardActionRecord[],
   userProfile?: { nickname?: string; bio?: string },
   whiteboardOpen?: boolean,
+  skillPromptContext?: SkillPromptContext,
 ): string {
   const totalRecordedTurns = agentResponses.length;
   const responseCounts = agentResponses.reduce<Map<string, number>>((counts, response) => {
@@ -91,7 +94,7 @@ ${userProfile.bio ? `Background: ${userProfile.bio}` : ''}
       : 'CLOSED (slide canvas is visible)',
   };
 
-  const prompt = buildPrompt(PROMPT_IDS.DIRECTOR, vars);
+  const prompt = buildPromptWithSkill(PROMPT_IDS.DIRECTOR, vars, skillPromptContext);
   if (!prompt) {
     throw new Error('director prompt template failed to load');
   }

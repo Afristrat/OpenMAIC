@@ -69,6 +69,16 @@ export interface MultiAgentConfig {
 }
 
 /**
+ * Server-selected skill prompt context persisted with a generated classroom.
+ * It contains identifiers only: prompt content is always resolved from the
+ * validated server-side skill registry at live-request time.
+ */
+export interface SkillPromptContext {
+  enabled: boolean;
+  activeSkillId?: string;
+}
+
+/**
  * Stage - Represents the entire classroom/course.
  */
 export interface Stage {
@@ -79,6 +89,7 @@ export interface Stage {
   updatedAt: number;
   // Stage metadata
   languageDirective?: string;
+  skillPromptContext?: SkillPromptContext;
   style?: string;
   // Whiteboard data
   whiteboard?: Whiteboard[];

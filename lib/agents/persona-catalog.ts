@@ -259,10 +259,7 @@ export function activeInteractionWeight(
   return profile.interactionWeights[level];
 }
 
-export function buildTenantAgentConfigs(
-  design: LearningDesignSettings,
-  instructionalDirective: string,
-) {
+export function buildTenantAgentConfigs(design: LearningDesignSettings) {
   return design.personas
     .filter((persona) => persona.enabled)
     .map((persona) => {
@@ -271,7 +268,7 @@ export function buildTenantAgentConfigs(
         id: `persona-${persona.id}`,
         name: persona.defaultName,
         role: persona.role,
-        persona: `${persona.persona}\n${instructionalDirective}`,
+        persona: persona.persona,
         avatar: persona.avatar,
         color: persona.color,
         priority: Math.max(1, Math.min(10, Math.round(interactionWeight / 4))),

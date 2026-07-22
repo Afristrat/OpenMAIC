@@ -1,5 +1,12 @@
 import Dexie, { type EntityTable } from 'dexie';
-import type { Scene, SceneType, SceneContent, Whiteboard, VideoManifest } from '@/lib/types/stage';
+import type {
+  Scene,
+  SceneType,
+  SceneContent,
+  Whiteboard,
+  VideoManifest,
+  SkillPromptContext,
+} from '@/lib/types/stage';
 import type { Action } from '@/lib/types/action';
 import type {
   SessionType,
@@ -52,6 +59,7 @@ export interface StageRecord {
   // pipeline — the two serve different consumers and are not interchangeable.
   language?: string;
   languageDirective?: string;
+  skillPromptContext?: SkillPromptContext;
   style?: string;
   currentSceneId?: string;
   agentIds?: string[]; // Agent IDs selected at creation time

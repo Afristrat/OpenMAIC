@@ -12,6 +12,7 @@ import { buildStateContext } from './summarizers/state-context';
 import { buildVirtualWhiteboardContext } from './summarizers/whiteboard-ledger';
 import { buildPeerContextSection } from './summarizers/peer-context';
 import { buildPrompt, PROMPT_IDS } from '@/lib/prompts';
+import { buildPromptWithSkill } from '@/lib/skills/prompt-overrides';
 
 // ==================== Role Guidelines ====================
 
@@ -157,7 +158,11 @@ export function buildStructuredPrompt(
     discussionContextSection: buildDiscussionContextSection(discussionContext, agentResponses),
   };
 
-  const prompt = buildPrompt(PROMPT_IDS.AGENT_SYSTEM, vars);
+  const prompt = buildPromptWithSkill(
+    PROMPT_IDS.AGENT_SYSTEM,
+    vars,
+    storeState.stage?.skillPromptContext,
+  );
   if (!prompt) {
     throw new Error('agent-system template not found');
   }

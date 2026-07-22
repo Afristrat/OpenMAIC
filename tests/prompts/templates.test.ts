@@ -195,6 +195,46 @@ describe('optional sections toggle on / off correctly', () => {
   });
 });
 
+describe('formation engine live overrides', () => {
+  test('an active override changes a default agent prompt without mutating its persona', () => {
+    const enabledState: StatelessChatRequest['storeState'] = {
+      ...slideState,
+      stage: {
+        ...slideState.stage!,
+        skillPromptContext: { enabled: true },
+      },
+    };
+    const disabled = buildStructuredPrompt(baseAgent, slideState);
+    const enabled = buildStructuredPrompt(baseAgent, enabledState);
+
+    expect(disabled).not.toContain('Formation Engine Live Contract — Agent');
+    expect(enabled).toContain('Formation Engine Live Contract — Agent');
+    expect(enabled).toContain('Teach toward an observable performance');
+    expect(enabled).toContain(baseAgent.persona);
+    expect(baseAgent.persona).toBe('Patient physics teacher.');
+  });
+
+  test('the same active engine changes director routing guidance', () => {
+    const disabled = buildDirectorPrompt([baseAgent], 'No history', [], 0);
+    const enabled = buildDirectorPrompt(
+      [baseAgent],
+      'No history',
+      [],
+      0,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      { enabled: true },
+    );
+
+    expect(disabled).not.toContain('Formation Engine Live Contract — Director');
+    expect(enabled).toContain('Formation Engine Live Contract — Director');
+    expect(enabled).toContain('Route the next turn toward observable learner performance');
+  });
+});
+
 describe('director routing contract', () => {
   test('output spec mentions next_agent JSON field', () => {
     const out = buildDirectorPrompt([baseAgent], 'No history', [], 0);

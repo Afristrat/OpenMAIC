@@ -15,10 +15,7 @@ describe('classroom agent modes', () => {
   });
 
   test('generate mode instantiates the ten tenant pedagogical mechanisms', () => {
-    const configs = buildTenantAgentConfigs(
-      DEFAULT_LEARNING_DESIGN,
-      'Use andragogy for adult professionals.',
-    );
+    const configs = buildTenantAgentConfigs(DEFAULT_LEARNING_DESIGN);
 
     expect(configs).toHaveLength(10);
     expect(configs.filter((agent) => agent.role === 'teacher')).toHaveLength(1);
@@ -37,10 +34,10 @@ describe('classroom agent modes', () => {
   });
 
   test('uses the selected interaction matrix without changing the personas', () => {
-    const immersive = buildTenantAgentConfigs(
-      { ...DEFAULT_LEARNING_DESIGN, interactionLevel: 'immersive' },
-      'Immersive mode.',
-    );
+    const immersive = buildTenantAgentConfigs({
+      ...DEFAULT_LEARNING_DESIGN,
+      interactionLevel: 'immersive',
+    });
 
     expect(immersive.find((agent) => agent.mechanismId === 'professor')?.interactionWeight).toBe(
       20,
