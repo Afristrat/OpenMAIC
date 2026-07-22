@@ -426,6 +426,9 @@ function HomePage() {
           ...(pdfContent ? { pdfContent } : {}),
           enableWebSearch: form.webSearch,
           enableTTS: true,
+          // Le parcours public doit passer par le roster tenant persistant,
+          // jamais par les six agents historiques de compatibilité.
+          agentMode: 'generate',
           ...(requirements.activeSkillId ? { activeSkillId: requirements.activeSkillId } : {}),
         }),
       });

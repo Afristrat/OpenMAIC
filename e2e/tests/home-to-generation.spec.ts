@@ -49,7 +49,7 @@ test.describe('Home → Generation', () => {
     page,
     mockApi,
   }) => {
-    await mockApi.mockClassroomGenerationJob();
+    const generationJob = await mockApi.mockClassroomGenerationJob();
     const home = new HomePage(page);
     await home.goto();
 
@@ -66,6 +66,7 @@ test.describe('Home → Generation', () => {
     await home.submit();
     await expect(page).toHaveURL(/\/generation-status\?jobId=e2e-generation-job$/);
     await expect(page.getByRole('heading', { name: 'Generating course' })).toBeVisible();
+    expect(generationJob.getSubmittedBody()).toMatchObject({ agentMode: 'generate' });
   });
 
   test('keeps body spacing stable when the settings dialog opens', async ({ page }) => {

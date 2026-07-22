@@ -79,7 +79,9 @@ export class MockApi {
 
   /** Mock the persistent classroom-generation handoff used by the home page. */
   async mockClassroomGenerationJob(jobId = 'e2e-generation-job', resultUrl?: string) {
+    let submittedBody: unknown;
     await this.page.route('**/api/generate-classroom', async (route) => {
+      submittedBody = route.request().postDataJSON();
       await route.fulfill({
         status: 202,
         headers: { 'Content-Type': 'application/json' },
@@ -97,6 +99,7 @@ export class MockApi {
         ),
       });
     });
+    return { getSubmittedBody: () => submittedBody };
   }
 
   /** Mock POST /api/video-capsules — creation succeeds, returns a queued capsule id */
