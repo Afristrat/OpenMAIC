@@ -207,6 +207,22 @@
       "acceptanceNote": "Partie machine vérifiée le 2026-07-22, story maintenue à passes=false jusqu'à l'écoute humaine exigée par SOP-011. Le critère de lecture a été corrigé pour intégrer la diffusion à des tiers demandée ultérieurement : seules les classrooms explicitement publiées et leurs médias sont anonymement accessibles. Après redéploiement Coolify, la classroom publique 9H4k970HIy, créée le 2026-07-19, est toujours en base avec 9 scènes, 52 actions speech, 52 audioUrl Storage et 52 objets audio ; un WAV servi par Qalem répond 200, audio/wav, 582 764 octets. En production : anonyme = 401 sur génération, catalogue d'organisation et classroom privée ; utilisateur authentifié hors tenant = 403 sur la privée ; contenu publié = 200. Le compte de contrôle éphémère a été supprimé (API 200). Quinze tests permanents couvrent RBAC, ownerId issu de la session, séparation privé/public et médias ; formatage, TypeScript et ESLint verts ; Vitest 2 017/2 017 ; Playwright 37/37 sans retry ni flake. Reste exclusivement à confirmer humainement que l'audio est audible dans un vrai navigateur."
     },
     {
+      "id": "S0-016",
+      "title": "Relais public stable et déploiement sans interruption de Qalem (P0)",
+      "epic": "0-SOCLE",
+      "phase": 0,
+      "passes": false,
+      "dependencies": ["S0-013"],
+      "acceptance": [
+        "Une cible edge Docker indépendante relaie le trafic public vers le frontend Qalem par un alias réseau stable, sans mettre en mémoire tampon les flux de génération",
+        "Le frontend Qalem est déployé en application Dockerfile avec health check réel et alias réseau stable",
+        "Le domaine qalem.ma bascule vers le relais seulement après validation du frontend en amont ; les parcours accueil, authentification, classroom et média audio restent accessibles",
+        "Une sonde à la seconde sur qalem.ma couvre un déploiement complet du frontend et ne relève aucun code non-200",
+        "L'ancien service web Compose est retiré après la preuve ; les workers et capture-worker persistent avec leurs limites et health checks",
+        "npx tsc --noEmit && pnpm lint && pnpm test && pnpm test:e2e verts"
+      ]
+    },
+    {
       "id": "S0-014",
       "title": "Purge de provenance AGPL : neutraliser les 35 fichiers du majorant (ADR-002)",
       "epic": "0-SOCLE",

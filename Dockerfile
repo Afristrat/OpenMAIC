@@ -1,3 +1,13 @@
+# ---- Edge: stable public relay ----
+# This target is deliberately independent from the Node build stages. Coolify can
+# deploy it once as the public Qalem entrypoint while the application target is
+# replaced behind it without changing the public router.
+FROM nginx:1.27-alpine AS edge
+
+COPY infra/coolify/qalem-edge.nginx.conf /etc/nginx/nginx.conf
+
+EXPOSE 3000
+
 # ---- Stage 1: Base ----
 FROM node:22-alpine AS base
 
