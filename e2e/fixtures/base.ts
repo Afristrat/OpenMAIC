@@ -31,6 +31,10 @@ export const test = base.extend<Fixtures>({
       });
     });
     await use(mockApi);
+    // The editor schedules its server autosave 800 ms after the last store
+    // mutation. Keep the route active through that debounce window instead of
+    // letting a teardown-time request escape to the fake Supabase endpoint.
+    if (!page.isClosed()) await page.waitForTimeout(900);
   },
 });
 
