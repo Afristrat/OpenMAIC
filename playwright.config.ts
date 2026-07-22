@@ -8,10 +8,11 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  // Next.js dev compilation and browser media fixtures saturate ServeurAI
-  // above two concurrent workers, producing navigation timeouts unrelated to
-  // product behavior. Keep local/remote verification deterministic.
-  workers: process.env.CI ? 1 : 2,
+  // The Next.js server plus two Chromium workers saturate ServeurAI during
+  // browser-media scenarios. That contention destroys IndexedDB contexts and
+  // turns an otherwise valid suite into a non-deterministic gate. Use the same
+  // bounded execution model locally and in CI so a green gate is reproducible.
+  workers: 1,
   reporter: process.env.CI ? 'html' : 'list',
   use: {
     baseURL: e2eBaseUrl,
