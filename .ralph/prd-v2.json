@@ -445,12 +445,14 @@
       "title": "Variation garantie du casting (contrainte SQL)",
       "epic": "2-VIVRE",
       "phase": 2,
-      "passes": false,
+      "passes": true,
+      "completedAt": "2026-07-22",
       "dependencies": ["S2-002"],
       "acceptance": [
         "unique (user_id, course_id, lineup_hash) actif",
         "2 lancements consécutifs → lineups différents ; collision → re-tirage (testé)"
-      ]
+      ],
+      "acceptanceNote": "Migration 00030 crée public.castings avec l'invariante PostgreSQL UNIQUE (user_id, course_id, lineup_hash), RLS actif et écritures service-only. Le flux de génération réserve le lineup avant de produire les scènes : un conflit SQL 23505 déclenche un nouveau tirage, et toute réservation est libérée si la génération échoue. Un course_id persistant est consommé quand il existe ; le flux actuel dérive sinon un UUID v5 déterministe du besoin normalisé. Preuves 2026-07-22 : TypeScript, ESLint et 2 000+ tests unitaires verts sur clone propre ; Playwright 39/39 vert ; transaction PostgreSQL réelle de collision rejetée puis nettoyée ; frontend et worker healthy sur 65e8ab6."
     },
     {
       "id": "S2-004",
