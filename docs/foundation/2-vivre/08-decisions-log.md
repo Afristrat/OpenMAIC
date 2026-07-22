@@ -37,3 +37,10 @@
 - **Quoi** : la classe v1 = un utilisateur + ses agents ; « classes mixtes » désigne la mixité du CASTING d'agents.
 - **Pourquoi** : le multi-humains ajoute présence temps réel, tours de parole, modération — un chantier entier ; le point central de la vision (agents en live avec l'utilisateur) n'en dépend pas.
 - **Réexamen** : décision produit d'Amine + S2-005 stable en usage réel. Si la lecture d'Amine de « classes mixtes » incluait PLUSIEURS humains dès la v1 → le signaler immédiatement, cette ADR saute.
+
+## ADR-206 — Watermark visuel : incrustation persistante de l’identifiant opaque (ACTÉE)
+
+- **Quoi** : le worker BullMQ génère une dérivée MP4 privée après le rendu de la source. L’identifiant opaque de 128 bits est incrusté dans chaque image, sous forme lisible, dans un cartouche discret en bas à droite. Le flux ne sert jamais la source non marquée.
+- **Pourquoi** : cette option emploie FFmpeg et Sharp déjà présents dans l’image Qalem, n’ajoute ni service tiers ni dépendance sous licence à trancher, et rend l’identifiant décodable depuis une capture normale du flux. Le traitement reste borné, asynchrone et idempotent par transmission.
+- **Limite explicite** : « indélébile » signifie ici incrusté dans le MP4 servi, pas DRM ni résistance cryptographique à un recadrage malveillant. Toute promesse de robustesse contre des attaques de transformation doit passer le protocole P2-C avant d’être revendiquée.
+- **Alternatives rejetées** : `videowmark`, car sa compatibilité et sa licence doivent être instruites avec le même niveau d’exigence qu’audiowmark ; texte injecté dans le lecteur, car il disparaîtrait d’une capture ou d’un téléchargement ; QR code, car aucune dépendance QR n’est nécessaire pour décoder un identifiant textuel opaque sur une capture.

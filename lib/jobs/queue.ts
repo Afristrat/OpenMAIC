@@ -64,7 +64,8 @@ export type JobType =
   | 'video-capsule'
   | 'video-generation'
   | 'export-job'
-  | 'transmission';
+  | 'transmission'
+  | 'transmission-visual-watermark';
 
 export interface ClassroomGenerationJobData {
   jobId: string;
@@ -88,6 +89,7 @@ export interface JobQueues {
   videoGeneration: Queue;
   exportJob: Queue;
   transmission: Queue;
+  transmissionVisualWatermark: Queue;
 }
 
 let queues: JobQueues | undefined;
@@ -104,6 +106,7 @@ export function getJobQueues(): JobQueues {
     videoGeneration: new Queue('video-generation', { connection }),
     exportJob: new Queue('export-job', { connection }),
     transmission: new Queue('transmission', { connection }),
+    transmissionVisualWatermark: new Queue('transmission-visual-watermark', { connection }),
   };
   return queues;
 }
@@ -143,6 +146,16 @@ export async function enqueueTransmission(data: { transmissionId: string }): Pro
   const job = await getJobQueues().transmission.add('render-source', data, {
     ...durableJobOptions,
     jobId: `transmission-${data.transmissionId}`,
+  });
+  return job.id!;
+}
+
+export async function enqueueTransmissionVisualWatermark(data: {
+  transmissionId: string;
+}): Promise<string> {
+  const job = await getJobQueues().transmissionVisualWatermark.add('burn-visual-watermark', data, {
+    ...durableJobOptions,
+    jobId: `transmission-visual-watermark-${data.transmissionId}`,
   });
   return job.id!;
 }

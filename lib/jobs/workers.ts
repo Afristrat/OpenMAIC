@@ -36,6 +36,8 @@ import { runClassroomGenerationJob } from '@/lib/server/classroom-job-runner';
 import { readClassroomGenerationJob } from '@/lib/server/classroom-job-store';
 import type { ClassroomGenerationJobData } from '@/lib/jobs/queue';
 import { PermitPool } from '@/lib/jobs/permit-pool';
+import { enqueueTransmissionVisualWatermark } from '@/lib/jobs/queue';
+import { applyVisualWatermark } from '@/lib/transmissions/visual-watermark';
 
 const log = createLogger('Workers');
 
@@ -398,14 +400,16 @@ export function startAllWorkers(): void {
             throw new Error(`Transmission source upload failed: ${uploadError.message}`);
           }
 
-          const { error: completionError } = await supabase
+          const { error: sourceUpdateError } = await supabase
             .from('transmissions')
-            .update({ status: 'done', source_artifact_path: sourceArtifactPath, error: null })
+            .update({ status: 'processing', source_artifact_path: sourceArtifactPath, error: null })
             .eq('id', transmissionId);
-          if (completionError)
-            throw new Error(`Transmission completion failed: ${completionError.message}`);
+          if (sourceUpdateError)
+            throw new Error(`Transmission source completion failed: ${sourceUpdateError.message}`);
 
-          incrementCounter('qalem_jobs_processed_total', { queue: 'transmission' });
+          await enqueueTransmissionVisualWatermark({ transmissionId });
+
+          incrementCounter('qalem_jobs_processed_total', { queue: 'transmission-source' });
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
           await supabase
@@ -419,12 +423,82 @@ export function startAllWorkers(): void {
     workerOptions(),
   );
 
+  // ---- Transmission visual watermark worker (S2-009) ----
+  // The original source remains immutable. Only this private derivative is served.
+  const transmissionVisualWatermarkWorker = new Worker(
+    'transmission-visual-watermark',
+    async (job: Job) =>
+      heavyTasks.run(async () => {
+        const { transmissionId } = job.data as { transmissionId: string };
+        const supabase = createServiceSupabaseClient();
+        const { data: transmission, error: readError } = await supabase
+          .from('transmissions')
+          .select('id, status, source_artifact_path, visual_watermark_path, watermark_id')
+          .eq('id', transmissionId)
+          .single();
+
+        if (readError || !transmission) {
+          throw new Error(
+            `Transmission ${transmissionId} not found: ${readError?.message ?? 'no row'}`,
+          );
+        }
+        if (transmission.status === 'done' && transmission.visual_watermark_path) return;
+        if (!transmission.source_artifact_path) {
+          throw new Error(`Transmission ${transmissionId} has no source artifact to watermark`);
+        }
+
+        try {
+          const { data: source, error: sourceDownloadError } = await supabase.storage
+            .from('transmissions')
+            .download(transmission.source_artifact_path);
+          if (sourceDownloadError || !source) {
+            throw new Error(
+              `Transmission source download failed: ${sourceDownloadError?.message ?? 'no file'}`,
+            );
+          }
+
+          const watermarkedVideo = await applyVisualWatermark(
+            Buffer.from(await source.arrayBuffer()),
+            transmission.watermark_id,
+          );
+          const visualWatermarkPath = `${transmissionId}/visual-watermark.mp4`;
+          const { error: uploadError } = await supabase.storage
+            .from('transmissions')
+            .upload(visualWatermarkPath, watermarkedVideo, {
+              contentType: 'video/mp4',
+              upsert: true,
+            });
+          if (uploadError) throw new Error(`Visual watermark upload failed: ${uploadError.message}`);
+
+          const { error: completionError } = await supabase
+            .from('transmissions')
+            .update({ status: 'done', visual_watermark_path: visualWatermarkPath, error: null })
+            .eq('id', transmissionId);
+          if (completionError) {
+            throw new Error(`Visual watermark completion failed: ${completionError.message}`);
+          }
+
+          incrementCounter('qalem_jobs_processed_total', { queue: 'transmission-visual-watermark' });
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          await supabase
+            .from('transmissions')
+            .update({ status: 'failed', error: message })
+            .eq('id', transmissionId);
+          incrementCounter('qalem_jobs_failed_total', { queue: 'transmission-visual-watermark' });
+          throw err;
+        }
+      }),
+    workerOptions(),
+  );
+
   workers = [
     classroomWorker,
     videoCapsuleWorker,
     videoGenerationWorker,
     exportJobWorker,
     transmissionWorker,
+    transmissionVisualWatermarkWorker,
   ];
 
   // Attach default error handlers to all workers so unhandled failures
