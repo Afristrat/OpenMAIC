@@ -1,11 +1,11 @@
 /**
- * Export Jobs API (S1-007, couche 1 — SCORM 1.2)
+ * Export Jobs API (S1-007/S1-008 — SCORM 1.2, SCORM 2004, cmi5 et MP4)
  *
  * POST /api/export-jobs — crée un job d'export pour un cours (stage) et
  * enfile un job BullMQ qui construit le package SCORM (voir
  * lib/jobs/workers.ts et lib/export/scorm/build-scorm-package.ts).
  *
- * Body: { stageId, format }  — format actuellement limité à 'scorm12'.
+ * Body: { stageId, format }.
  * Response: { success: boolean, id?: string, status?: string, error?: string }
  */
 
@@ -20,7 +20,7 @@ import type { ExportJobFormat } from '@/lib/supabase/types';
 
 const log = createLogger('ExportJobsAPI');
 
-const SUPPORTED_FORMATS: ExportJobFormat[] = ['scorm12', 'mp4'];
+const SUPPORTED_FORMATS: ExportJobFormat[] = ['scorm12', 'scorm2004', 'cmi5', 'mp4'];
 
 interface CreateExportJobBody {
   stageId?: string;

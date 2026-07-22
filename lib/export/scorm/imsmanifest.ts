@@ -15,7 +15,7 @@ export interface ScormManifestOptions {
   resourceFiles: string[];
 }
 
-function escapeXml(value: string): string {
+export function escapeXml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -51,6 +51,47 @@ export function buildScorm12Manifest(options: ScormManifestOptions): string {
   </organizations>
   <resources>
     <resource identifier="resource_1" type="webcontent" adlcp:scormtype="sco" href="${escapeXml(launchUrl)}">
+${fileTags}
+    </resource>
+  </resources>
+</manifest>
+`;
+}
+
+/**
+ * SCORM 2004 4th Edition content aggregation manifest.
+ *
+ * Qalem deliberately emits one SCO without sequencing extensions: the shared
+ * course viewer owns its scene navigation, while the LMS remains responsible
+ * for launch and runtime tracking. This keeps the format difference confined
+ * to the tracking adapter rather than duplicating pedagogical content.
+ */
+export function buildScorm2004Manifest(options: ScormManifestOptions): string {
+  const { identifier, title, launchUrl, resourceFiles } = options;
+  const safeTitle = escapeXml(title);
+  const fileTags = resourceFiles.map((f) => `      <file href="${escapeXml(f)}"/>`).join('\n');
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<manifest identifier="${escapeXml(identifier)}" version="1.0"
+  xmlns="http://www.imsglobal.org/xsd/imscp_v1p1"
+  xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_v1p3"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.imsglobal.org/xsd/imscp_v1p1 imscp_v1p1.xsd
+                      http://www.adlnet.org/xsd/adlcp_v1p3 adlcp_v1p3.xsd">
+  <metadata>
+    <schema>ADL SCORM</schema>
+    <schemaversion>2004 4th Edition</schemaversion>
+  </metadata>
+  <organizations default="qalem_org">
+    <organization identifier="qalem_org">
+      <title>${safeTitle}</title>
+      <item identifier="item_1" identifierref="resource_1">
+        <title>${safeTitle}</title>
+      </item>
+    </organization>
+  </organizations>
+  <resources>
+    <resource identifier="resource_1" type="webcontent" adlcp:scormType="sco" href="${escapeXml(launchUrl)}">
 ${fileTags}
     </resource>
   </resources>

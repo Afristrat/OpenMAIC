@@ -23,7 +23,8 @@ import {
 } from '@/lib/video/hyperframes-client';
 import type { HyperframesBrief } from '@/lib/video/hyperframes-types';
 import type { VideoCapsuleStatus, VideoCapsuleVariant } from '@/lib/supabase/types';
-import { buildScormPackage } from '@/lib/export/scorm/build-scorm-package';
+import { buildLearningPackage } from '@/lib/export/scorm/build-scorm-package';
+import { isLearningPackageFormat, trackingAdapters } from '@/lib/export/scorm/tracking-adapters';
 import { buildClassroomVideo } from '@/lib/export/mp4/build-classroom-video';
 import { generateVideo } from '@/lib/media/video-providers';
 import type { VideoGenerationOptions, VideoProviderId } from '@/lib/media/types';
@@ -322,16 +323,23 @@ export function startAllWorkers(): void {
           const isMp4 = exportJob.format === 'mp4';
           let file: Buffer;
           let sceneCount: number;
+          let extension: string;
           if (isMp4) {
             const result = await buildClassroomVideo(exportJob.stage_id as string);
             file = result.video;
             sceneCount = result.sceneCount;
+            extension = 'mp4';
           } else {
-            const result = await buildScormPackage(exportJob.stage_id as string);
+            const learningFormat = String(exportJob.format);
+            if (!isLearningPackageFormat(learningFormat)) {
+              throw new Error(`Unsupported learning export format: ${learningFormat}`);
+            }
+            const result = await buildLearningPackage(exportJob.stage_id as string, learningFormat);
             file = result.zip;
             sceneCount = result.sceneCount;
+            extension = trackingAdapters[learningFormat].archiveExtension;
           }
-          const storagePath = `${exportJob.stage_id}/${exportJobId}.${isMp4 ? 'mp4' : 'scorm12.zip'}`;
+          const storagePath = `${exportJob.stage_id}/${exportJobId}.${extension}`;
           const { error: uploadError } = await supabase.storage
             .from('exports')
             .upload(storagePath, file, {

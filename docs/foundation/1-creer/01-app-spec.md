@@ -36,7 +36,7 @@ Créateur de contenu (Amine et ses clients formateurs/institutions) : « devenir
 |---|---|---|
 | Le pipeline génération v0.3.0 accepte des prompt overrides par skill sans refonte | S1-001 : câblage `getPromptOverride()` sur UN point d'injection | Refonte du pipeline nécessaire → ADR + re-chiffrage avec Amine |
 | Hyperframes s'intègre par appel de pipeline (brief→IR→frames) sans couplage de code | S1-005 : une capsule générée depuis une scène Qalem réelle | Couplage fort requis → interface de fichiers (brief JSON) en repli |
-| scorm-again couvre le runtime des packages exportés (1.2 + 2004) | S1-007 : un export importé avec succès dans Moodle local | Échec d'import → tester EscolaLMS/Scorm-player, consigner en ADR |
+| Les adaptateurs natifs appellent l’API réelle du LMS ou le protocole cmi5 | S1-008 : trois paquets issus d’un même rendu, validés avec les lecteurs de référence | Échec d’import ou de suivi → consigner la compatibilité lecteur dans l’ADR-106 |
 
 ## Traçabilité verdict
 

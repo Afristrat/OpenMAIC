@@ -33,3 +33,11 @@
 
 - **Quoi** : option ou cœur de l'offre — verbatim : « à ce stade maybe le scorm peut ne plus devenir une option ».
 - **État** : l'ingénierie prépare les deux (S1-007/S1-008 identiques dans les deux cas) ; la tranche ne bloque aucune story de ce chantier. À consigner dès qu'Amine décide.
+
+## ADR-106 — Adaptateurs natifs de suivi, pas d’API LMS simulée (ACTÉE)
+
+- **Quoi** : le paquet Qalem rend le même contenu dans les trois formats. Seul l’adaptateur de suivi diffère : recherche de `API` et appels `LMSInitialize`/`LMSSetValue` pour SCORM 1.2 ; recherche de `API_1484_11` et appels `Initialize`/`SetValue` pour SCORM 2004 ; paramètres de lancement cmi5, récupération unique du jeton, lecture de `LMS.LaunchData`, puis statements xAPI `Initialized`, `Completed` et `Terminated` pour cmi5.
+- **Pourquoi** : l’ancienne approche créait une API SCORM locale dans le SCO. Elle pouvait donner l’illusion d’un suivi sans l’émettre au LMS. Elle est supprimée avec la dépendance `scorm-again` : celle-ci est une bibliothèque de lecteur, non une API que le contenu doit s’auto-attribuer.
+- **Limites vérifiées** : le paquet SCORM 2004 est conforme côté contenu, mais Moodle standard n’est pas un oracle de conformité SCORM 2004 complet ; son lecteur historique ne couvre pas tout le séquencement. La preuve SCORM 2004 doit donc passer par un lecteur compatible. cmi5 exige un LMS disposant d’un LRS et de son protocole de lancement : les paramètres et le jeton viennent du LMS, jamais de Qalem.
+- **Sources** : [ADL, exigences SCORM 2004 4e édition](https://www.adlnet.gov/assets/uploads/SCORM_2004_4ED_v1_1_TR_20090814.pdf) ; [spécification cmi5 Quartz](https://github.com/AICC/CMI-5_Spec_Current/blob/master/cmi5_spec.md) ; [documentation Moodle App 5.0](https://docs.moodle.org/502/en/Moodle_app_SCORM_player).
+- **Conséquence produit** : ADR-105 reste réservée. « Format générable » ne signifie pas encore « format commercialement promu » tant que les validations des lecteurs de référence ne sont pas enregistrées.

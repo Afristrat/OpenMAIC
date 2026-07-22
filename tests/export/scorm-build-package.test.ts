@@ -38,10 +38,11 @@ vi.mock('@/lib/logger', () => ({
 
 // Dynamic import after mocks are registered (vi.mock is hoisted, but keeping
 // the import here documents the dependency order explicitly).
-const { buildScormPackage } = await import('@/lib/export/scorm/build-scorm-package');
+const { buildLearningPackage, buildScormPackage } =
+  await import('@/lib/export/scorm/build-scorm-package');
 
 describe('buildScormPackage', () => {
-  it('builds a zip with imsmanifest.xml, index.html, the scorm-again runtime and MIT notices', async () => {
+  it('builds a SCORM 1.2 zip whose SCO uses the LMS API instead of a local mock', async () => {
     mocks.stagesSingle.mockResolvedValue({
       data: { id: 'stage-1', name: 'Cours Test', description: 'Un cours', language: 'fr-FR' },
       error: null,
@@ -65,16 +66,50 @@ describe('buildScormPackage', () => {
     const parsed = await JSZip.loadAsync(zip);
     const manifest = await parsed.file('imsmanifest.xml')?.async('string');
     const index = await parsed.file('index.html')?.async('string');
-    const notices = await parsed.file('THIRD-PARTY-NOTICES.txt')?.async('string');
 
     expect(manifest).toContain('adlcp:scormtype="sco"');
     expect(manifest).toContain('href="index.html"');
     expect(index).toContain('Cours Test');
-    expect(index).toContain('Scorm12API');
+    expect(index).toContain("findApi('API')");
     expect(index).toContain('LMSInitialize');
-    expect(notices).toContain('MIT License');
-    expect(parsed.file('scorm12.min.js')).not.toBeNull();
+    expect(index).not.toContain('new Scorm12API');
+    expect(parsed.file('scorm12.min.js')).toBeNull();
   });
+
+  it.each([
+    ['scorm2004', 'imsmanifest.xml', 'API_1484_11'],
+    ['cmi5', 'cmi5.xml', 'auth-token'],
+  ] as const)(
+    'reuses one content generator for %s and changes only tracking metadata',
+    async (format, manifestName, trackingMarker) => {
+      mocks.stagesSingle.mockResolvedValue({
+        data: { id: 'stage-1', name: 'Cours Test', description: 'Un cours', language: 'fr-FR' },
+        error: null,
+      });
+      mocks.scenesOrder.mockResolvedValue({
+        data: [
+          {
+            id: 'sc-1',
+            type: 'quiz',
+            title: 'Quiz',
+            order: 0,
+            content: { type: 'quiz', questions: [] },
+          },
+        ],
+        error: null,
+      });
+
+      const { zip } = await buildLearningPackage('stage-1', format);
+      const parsed = await JSZip.loadAsync(zip);
+      const manifest = await parsed.file(manifestName)?.async('string');
+      const index = await parsed.file('index.html')?.async('string');
+
+      expect(manifest).toContain('Cours Test');
+      expect(index).toContain('Cours Test');
+      expect(index).toContain('Quiz');
+      expect(index).toContain(trackingMarker);
+    },
+  );
 
   it('rejects with a clear error when the stage has no scenes', async () => {
     mocks.stagesSingle.mockResolvedValue({

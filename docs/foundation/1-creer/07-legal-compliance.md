@@ -16,7 +16,7 @@
 ## 3. Exports SCORM/cmi5 vers LMS tiers
 
 - Le package exporté embarque le CONTENU mais **jamais de données personnelles d'apprenants Qalem** (le tracking se fait dans le LMS de destination — architecture deux couches favorable ici : le package est autonome).
-- Licence des runtimes embarqués : `scorm-again` est MIT — compatible avec l'inclusion dans un package distribué. Vérifié au choix de la lib (ADR-102) ; à re-vérifier si la lib change.
+- Runtime embarqué : aucun. Les adaptateurs utilisent exclusivement l’API fournie par le LMS ou le LRS de destination ; aucune dépendance tierce n’est distribuée dans le package (ADR-106).
 
 ## 4. Dettes assumées du chantier
 
