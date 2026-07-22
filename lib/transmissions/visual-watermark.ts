@@ -13,7 +13,9 @@ export const visualWatermarkLabel = 'Qalem · transmission individuelle';
 
 function assertWatermarkId(watermarkId: string): void {
   if (!WATERMARK_ID_PATTERN.test(watermarkId)) {
-    throw new Error('L’identifiant de watermark visuel doit contenir exactement 128 bits hexadécimaux');
+    throw new Error(
+      'L’identifiant de watermark visuel doit contenir exactement 128 bits hexadécimaux',
+    );
   }
 }
 
@@ -73,10 +75,7 @@ async function runFfmpeg(args: string[]): Promise<void> {
  * Burns the opaque 128-bit delivery identifier into every video frame.
  * This is deliberately a derivative: callers must preserve the source artifact.
  */
-export async function applyVisualWatermark(
-  source: Buffer,
-  watermarkId: string,
-): Promise<Buffer> {
+export async function applyVisualWatermark(source: Buffer, watermarkId: string): Promise<Buffer> {
   assertWatermarkId(watermarkId);
   const directory = await mkdtemp(join(tmpdir(), 'qalem-visual-watermark-'));
   const sourcePath = join(directory, 'source.mp4');
@@ -85,7 +84,9 @@ export async function applyVisualWatermark(
 
   try {
     await writeFile(sourcePath, source);
-    await sharp(Buffer.from(buildVisualWatermarkSvg(watermarkId))).png().toFile(overlayPath);
+    await sharp(Buffer.from(buildVisualWatermarkSvg(watermarkId)))
+      .png()
+      .toFile(overlayPath);
     await runFfmpeg(buildVisualWatermarkFfmpegArgs({ sourcePath, overlayPath, outputPath }));
     return await readFile(outputPath);
   } finally {

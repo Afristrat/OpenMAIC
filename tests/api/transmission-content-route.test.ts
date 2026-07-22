@@ -58,7 +58,11 @@ describe('GET /api/transmissions/[id]/content', () => {
 
   it('refuses to expose a completed-looking source without its visual derivative', async () => {
     mocks.transmission.mockResolvedValue({
-      data: { status: 'done', source_artifact_path: 'tx_1/source.mp4', visual_watermark_path: null },
+      data: {
+        status: 'done',
+        source_artifact_path: 'tx_1/source.mp4',
+        visual_watermark_path: null,
+      },
       error: null,
     });
 

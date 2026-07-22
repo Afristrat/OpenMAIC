@@ -468,7 +468,8 @@ export function startAllWorkers(): void {
               contentType: 'video/mp4',
               upsert: true,
             });
-          if (uploadError) throw new Error(`Visual watermark upload failed: ${uploadError.message}`);
+          if (uploadError)
+            throw new Error(`Visual watermark upload failed: ${uploadError.message}`);
 
           const { error: completionError } = await supabase
             .from('transmissions')
@@ -478,7 +479,9 @@ export function startAllWorkers(): void {
             throw new Error(`Visual watermark completion failed: ${completionError.message}`);
           }
 
-          incrementCounter('qalem_jobs_processed_total', { queue: 'transmission-visual-watermark' });
+          incrementCounter('qalem_jobs_processed_total', {
+            queue: 'transmission-visual-watermark',
+          });
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
           await supabase
