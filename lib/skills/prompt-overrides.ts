@@ -19,14 +19,13 @@ export function buildPromptWithSkill(
     typeof context.activeSkillId === 'string' && context.activeSkillId.length <= 256
       ? context.activeSkillId
       : undefined;
-  const skillIds = context.enabled === true
-    ? [
-        CORE_FORMATION_SKILL_ID,
-        ...(activeSkillId && activeSkillId !== CORE_FORMATION_SKILL_ID
-          ? [activeSkillId]
-          : []),
-      ]
-    : [];
+  const skillIds =
+    context.enabled === true
+      ? [
+          CORE_FORMATION_SKILL_ID,
+          ...(activeSkillId && activeSkillId !== CORE_FORMATION_SKILL_ID ? [activeSkillId] : []),
+        ]
+      : [];
   const overrides = skillIds
     .map((skillId) => getPromptOverride(skillId, promptId))
     .filter((override) => override !== undefined);

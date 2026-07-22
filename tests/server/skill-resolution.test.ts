@@ -58,9 +58,9 @@ describe('resolveOrganizationSkillId', () => {
     mocks.parseSkillManifest.mockReturnValue({ success: true, skill: tenantSkill });
     const { resolveOrganizationSkillId } = await import('@/lib/server/skill-resolution');
 
-    await expect(resolveOrganizationSkillId('org-a', 'tenant:org-a:marketing-practice')).resolves.toBe(
-      'tenant:org-a:marketing-practice',
-    );
+    await expect(
+      resolveOrganizationSkillId('org-a', 'tenant:org-a:marketing-practice'),
+    ).resolves.toBe('tenant:org-a:marketing-practice');
     expect(mocks.registerSkill).toHaveBeenCalledWith({
       ...tenantSkill,
       id: 'tenant:org-a:marketing-practice',
