@@ -77,7 +77,7 @@ function buildCmi5TrackingScript(): string {
   }
   function endpointUrl(path, query) {
     var url = new URL(path, required(endpoint, 'endpoint'));
-    Object.keys(query).forEach(function (key) { url.searchParams.set(key, query[key]); });
+    Object.keys(query || {}).forEach(function (key) { url.searchParams.set(key, query[key]); });
     return url.toString();
   }
   function headers() {

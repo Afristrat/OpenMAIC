@@ -80,7 +80,10 @@ describe('learning package tracking adapters at runtime', () => {
 
   it('uses the cmi5 launch contract and sends initialized, completed, then terminated statements', async () => {
     const requests: Array<{ url: string; init?: RequestInit }> = [];
-    const actor = JSON.stringify({ objectType: 'Agent', account: { homePage: 'https://qalem.ma', name: 'learner-1' } });
+    const actor = JSON.stringify({
+      objectType: 'Agent',
+      account: { homePage: 'https://qalem.ma', name: 'learner-1' },
+    });
     const windowLike = {
       location: {
         search: `?endpoint=${encodeURIComponent('https://lrs.example/xapi/')}&fetch=${encodeURIComponent('https://lms.example/fetch')}&actor=${encodeURIComponent(actor)}&registration=registration-1&activityId=${encodeURIComponent('https://qalem.ma/activity/1')}`,
@@ -92,7 +95,13 @@ describe('learning package tracking adapters at runtime', () => {
           return { ok: true, json: async () => ({ 'auth-token': 'Bearer cmi5-token' }) };
         }
         if (url.startsWith('https://lrs.example/xapi/activities/state')) {
-          return { ok: true, json: async () => ({ launchMode: 'Normal', contextTemplate: { registration: 'registration-1' } }) };
+          return {
+            ok: true,
+            json: async () => ({
+              launchMode: 'Normal',
+              contextTemplate: { registration: 'registration-1' },
+            }),
+          };
         }
         return { ok: true, json: async () => ({}) };
       },
@@ -107,8 +116,13 @@ describe('learning package tracking adapters at runtime', () => {
     await tracking.terminate();
     await tracking.terminate();
 
-    const statementRequests = requests.filter(({ url }) => url.startsWith('https://lrs.example/xapi/statements'));
-    expect(requests[0]).toMatchObject({ url: 'https://lms.example/fetch', init: { method: 'POST' } });
+    const statementRequests = requests.filter(({ url }) =>
+      url.startsWith('https://lrs.example/xapi/statements'),
+    );
+    expect(requests[0]).toMatchObject({
+      url: 'https://lms.example/fetch',
+      init: { method: 'POST' },
+    });
     expect(requests[1]?.url).toContain('stateId=LMS.LaunchData');
     expect(statementRequests).toHaveLength(3);
     expect(statementRequests.map(({ init }) => JSON.parse(String(init?.body)).verb.id)).toEqual([
@@ -117,6 +131,11 @@ describe('learning package tracking adapters at runtime', () => {
       'http://adlnet.gov/expapi/verbs/terminated',
     ]);
     expect(statementRequests[2]?.init).toMatchObject({ keepalive: true });
-    expect(statementRequests.every(({ init }) => (init?.headers as Record<string, string>).Authorization === 'Bearer cmi5-token')).toBe(true);
+    expect(
+      statementRequests.every(
+        ({ init }) =>
+          (init?.headers as Record<string, string>).Authorization === 'Bearer cmi5-token',
+      ),
+    ).toBe(true);
   });
 });
