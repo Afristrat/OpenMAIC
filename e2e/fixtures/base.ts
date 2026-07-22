@@ -16,7 +16,7 @@ export const test = base.extend<Fixtures>({
     // Classroom editor scenarios seed IndexedDB rather than a Supabase test
     // project. Intercept their debounced server autosave so a successful UI
     // flow cannot hide connection errors to the deliberately fake E2E URL.
-    await page.route('**/api/classroom**', async (route) => {
+    await page.context().route('**/api/classroom**', async (route) => {
       if (route.request().method() !== 'PUT') {
         await route.fallback();
         return;
