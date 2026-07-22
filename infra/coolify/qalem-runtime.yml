@@ -30,32 +30,9 @@ x-qalem-environment: &qalem-environment
   VIDEO_COMFYUI_MODELS: ${VIDEO_COMFYUI_MODELS}
 
 services:
-  qalem:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: runner
-      args:
-        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
-    environment:
-      <<: *qalem-environment
-      NODE_ENV: production
-      NODE_OPTIONS: --max-old-space-size=1152
-    expose:
-      - "3000"
-    restart: unless-stopped
-    mem_limit: 1536m
-    mem_reservation: 384m
-    cpus: 2.0
-    pids_limit: 256
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 40s
-
+  # The public web runner is deployed as the rolling Dockerfile application
+  # behind qalem-public-edge. This Compose runtime intentionally owns only the
+  # durable background workers that do not require rolling web replacement.
   qalem-workers:
     build:
       context: .
