@@ -1991,5 +1991,13 @@
   "videoCapsule.status.queued": "Video queued…",
   "videoCapsule.status.rendering": "Rendering the final cut…",
   "videoCapsule.title": "Create a video capsule",
-  "videoCapsule.tone": "Tone"
+  "videoCapsule.tone": "Tone",
+  "transmission.title": "Your resource is ready",
+  "transmission.deliveredTo": "Session delivered to {{name}}",
+  "transmission.loading": "Loading transmission…",
+  "transmission.queued": "The resource is queued for preparation.",
+  "transmission.processing": "The resource is being prepared.",
+  "transmission.failed": "The resource could not be prepared. Please try again later.",
+  "transmission.unavailable": "This transmission is unavailable.",
+  "transmission.videoUnsupported": "Your browser cannot play this video."
 }

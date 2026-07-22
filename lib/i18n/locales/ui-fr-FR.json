@@ -1991,5 +1991,13 @@
   "videoCapsule.status.queued": "Vidéo en file d\u0027attente…",
   "videoCapsule.status.rendering": "Rendu du montage final…",
   "videoCapsule.title": "Créer une capsule vidéo",
-  "videoCapsule.tone": "Ton"
+  "videoCapsule.tone": "Ton",
+  "transmission.title": "Votre support est prêt",
+  "transmission.deliveredTo": "Session remise à {{name}}",
+  "transmission.loading": "Chargement de la transmission…",
+  "transmission.queued": "La préparation du support est en file d’attente.",
+  "transmission.processing": "Le support est en cours de préparation.",
+  "transmission.failed": "La préparation du support a échoué. Réessayez ultérieurement.",
+  "transmission.unavailable": "Cette transmission est indisponible.",
+  "transmission.videoUnsupported": "Votre navigateur ne peut pas lire cette vidéo."
 }

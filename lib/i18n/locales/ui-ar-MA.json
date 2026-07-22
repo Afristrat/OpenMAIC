@@ -1991,5 +1991,13 @@
   "videoCapsule.status.queued": "أُضيف الفيديو إلى قائمة الانتظار…",
   "videoCapsule.status.rendering": "جارٍ تصيير النسخة النهائية…",
   "videoCapsule.title": "إنشاء كبسولة فيديو",
-  "videoCapsule.tone": "النبرة"
+  "videoCapsule.tone": "النبرة",
+  "transmission.title": "المورد الخاص بك جاهز",
+  "transmission.deliveredTo": "تم تسليم الجلسة إلى {{name}}",
+  "transmission.loading": "جارٍ تحميل الإرسال…",
+  "transmission.queued": "المورد في قائمة انتظار التحضير.",
+  "transmission.processing": "يجري تحضير المورد.",
+  "transmission.failed": "تعذّر تحضير المورد. يُرجى المحاولة لاحقًا.",
+  "transmission.unavailable": "هذا الإرسال غير متاح.",
+  "transmission.videoUnsupported": "لا يستطيع متصفحك تشغيل هذا الفيديو."
 }

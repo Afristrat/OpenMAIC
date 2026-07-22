@@ -549,6 +549,44 @@ export type VideoGenerationJobUpdate = Partial<
 >;
 
 // ---------------------------------------------------------------------------
+// Transmissions (chantier 2 — VIVRE, S2-010)
+// ---------------------------------------------------------------------------
+
+export type TransmissionStatus = 'queued' | 'processing' | 'done' | 'failed';
+
+export interface TransmissionRow {
+  id: string;
+  stage_id: string;
+  sender_user_id: string;
+  recipient_user_id: string;
+  watermark_id: string;
+  status: TransmissionStatus;
+  source_artifact_path: string | null;
+  audio_watermark_path: string | null;
+  visual_watermark_path: string | null;
+  error: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type TransmissionInsert = Pick<
+  TransmissionRow,
+  'stage_id' | 'sender_user_id' | 'recipient_user_id'
+> &
+  Partial<Pick<TransmissionRow, 'watermark_id' | 'status'>>;
+
+export type TransmissionUpdate = Partial<
+  Pick<
+    TransmissionRow,
+    | 'status'
+    | 'source_artifact_path'
+    | 'audio_watermark_path'
+    | 'visual_watermark_path'
+    | 'error'
+  >
+>;
+
+// ---------------------------------------------------------------------------
 // Supabase Database type (for createClient<Database>)
 // ---------------------------------------------------------------------------
 
@@ -689,6 +727,11 @@ export interface Database {
         Row: VideoGenerationJobRow;
         Insert: VideoGenerationJobInsert;
         Update: VideoGenerationJobUpdate;
+      };
+      transmissions: {
+        Row: TransmissionRow;
+        Insert: TransmissionInsert;
+        Update: TransmissionUpdate;
       };
     };
     Views: {

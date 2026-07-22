@@ -59,7 +59,12 @@ const connection = parseRedisUrl(REDIS_URL);
 // Job type registry (for documentation / type narrowing)
 // ---------------------------------------------------------------------------
 
-export type JobType = 'classroom-generation' | 'video-capsule' | 'video-generation' | 'export-job';
+export type JobType =
+  | 'classroom-generation'
+  | 'video-capsule'
+  | 'video-generation'
+  | 'export-job'
+  | 'transmission';
 
 export interface ClassroomGenerationJobData {
   jobId: string;
@@ -82,6 +87,7 @@ export interface JobQueues {
   videoCapsule: Queue;
   videoGeneration: Queue;
   exportJob: Queue;
+  transmission: Queue;
 }
 
 let queues: JobQueues | undefined;
@@ -97,6 +103,7 @@ export function getJobQueues(): JobQueues {
     videoCapsule: new Queue('video-capsule', { connection }),
     videoGeneration: new Queue('video-generation', { connection }),
     exportJob: new Queue('export-job', { connection }),
+    transmission: new Queue('transmission', { connection }),
   };
   return queues;
 }
@@ -129,5 +136,13 @@ export async function enqueueVideoGeneration(data: {
 
 export async function enqueueExportJob(data: { exportJobId: string }): Promise<string> {
   const job = await getJobQueues().exportJob.add('generate', data, durableJobOptions);
+  return job.id!;
+}
+
+export async function enqueueTransmission(data: { transmissionId: string }): Promise<string> {
+  const job = await getJobQueues().transmission.add('render-source', data, {
+    ...durableJobOptions,
+    jobId: `transmission-${data.transmissionId}`,
+  });
   return job.id!;
 }

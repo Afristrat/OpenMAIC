@@ -361,7 +361,70 @@ export function startAllWorkers(): void {
     workerOptions(),
   );
 
-  workers = [classroomWorker, videoCapsuleWorker, videoGenerationWorker, exportJobWorker];
+  // ---- Transmission source worker (S2-010) ----
+  // The source is immutable once the row is done. Future watermark workers
+  // publish separate derivatives and never rewrite this path.
+  const transmissionWorker = new Worker(
+    'transmission',
+    async (job: Job) =>
+      heavyTasks.run(async () => {
+        const { transmissionId } = job.data as { transmissionId: string };
+        const supabase = createServiceSupabaseClient();
+        const { data: transmission, error: readError } = await supabase
+          .from('transmissions')
+          .select('id, stage_id, status, source_artifact_path')
+          .eq('id', transmissionId)
+          .single();
+
+        if (readError || !transmission) {
+          throw new Error(
+            `Transmission ${transmissionId} not found: ${readError?.message ?? 'no row'}`,
+          );
+        }
+        if (transmission.status === 'done' && transmission.source_artifact_path) return;
+
+        try {
+          await supabase
+            .from('transmissions')
+            .update({ status: 'processing', error: null })
+            .eq('id', transmissionId);
+
+          const result = await buildClassroomVideo(transmission.stage_id);
+          const sourceArtifactPath = `${transmissionId}/source.mp4`;
+          const { error: uploadError } = await supabase.storage
+            .from('transmissions')
+            .upload(sourceArtifactPath, result.video, { contentType: 'video/mp4', upsert: true });
+          if (uploadError) {
+            throw new Error(`Transmission source upload failed: ${uploadError.message}`);
+          }
+
+          const { error: completionError } = await supabase
+            .from('transmissions')
+            .update({ status: 'done', source_artifact_path: sourceArtifactPath, error: null })
+            .eq('id', transmissionId);
+          if (completionError) throw new Error(`Transmission completion failed: ${completionError.message}`);
+
+          incrementCounter('qalem_jobs_processed_total', { queue: 'transmission' });
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          await supabase
+            .from('transmissions')
+            .update({ status: 'failed', error: message })
+            .eq('id', transmissionId);
+          incrementCounter('qalem_jobs_failed_total', { queue: 'transmission' });
+          throw err;
+        }
+      }),
+    workerOptions(),
+  );
+
+  workers = [
+    classroomWorker,
+    videoCapsuleWorker,
+    videoGenerationWorker,
+    exportJobWorker,
+    transmissionWorker,
+  ];
 
   // Attach default error handlers to all workers so unhandled failures
   // get logged (and counted) rather than silently swallowed.
