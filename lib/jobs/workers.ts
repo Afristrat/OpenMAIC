@@ -402,7 +402,8 @@ export function startAllWorkers(): void {
             .from('transmissions')
             .update({ status: 'done', source_artifact_path: sourceArtifactPath, error: null })
             .eq('id', transmissionId);
-          if (completionError) throw new Error(`Transmission completion failed: ${completionError.message}`);
+          if (completionError)
+            throw new Error(`Transmission completion failed: ${completionError.message}`);
 
           incrementCounter('qalem_jobs_processed_total', { queue: 'transmission' });
         } catch (err) {

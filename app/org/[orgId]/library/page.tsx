@@ -203,8 +203,13 @@ export default function LibraryPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ stageId: shareTarget.stage_id, recipientUserId }),
       });
-      const payload = (await response.json()) as { url?: string; error?: string; existing?: boolean };
-      if (!response.ok || !payload.url) throw new Error(payload.error ?? 'Transmission unavailable');
+      const payload = (await response.json()) as {
+        url?: string;
+        error?: string;
+        existing?: boolean;
+      };
+      if (!response.ok || !payload.url)
+        throw new Error(payload.error ?? 'Transmission unavailable');
       await navigator.clipboard.writeText(payload.url);
       toast.success(payload.existing ? t('transmission.existing') : t('transmission.created'));
       setShareTarget(null);
@@ -384,7 +389,10 @@ export default function LibraryPage() {
             <Button variant="outline" onClick={() => setShareTarget(null)}>
               {t('common.cancel')}
             </Button>
-            <Button disabled={!recipientUserId || isSubmittingTransmission} onClick={submitTransmission}>
+            <Button
+              disabled={!recipientUserId || isSubmittingTransmission}
+              onClick={submitTransmission}
+            >
               {isSubmittingTransmission ? t('transmission.submitting') : t('transmission.confirm')}
             </Button>
           </DialogFooter>

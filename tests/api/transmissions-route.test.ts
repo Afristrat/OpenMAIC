@@ -67,7 +67,10 @@ describe('POST /api/transmissions', () => {
     });
     mocks.recipientMembership.mockResolvedValue({ data: { user_id: recipient }, error: null });
     mocks.existingTransmission.mockResolvedValue({ data: null, error: null });
-    mocks.insertedTransmission.mockResolvedValue({ data: { id: 'tx_1', status: 'queued' }, error: null });
+    mocks.insertedTransmission.mockResolvedValue({
+      data: { id: 'tx_1', status: 'queued' },
+      error: null,
+    });
     mocks.enqueueTransmission.mockResolvedValue('transmission-tx_1');
   });
 
@@ -85,7 +88,10 @@ describe('POST /api/transmissions', () => {
   });
 
   it('returns an existing transmission without submitting duplicate work', async () => {
-    mocks.existingTransmission.mockResolvedValue({ data: { id: 'tx_existing', status: 'done' }, error: null });
+    mocks.existingTransmission.mockResolvedValue({
+      data: { id: 'tx_existing', status: 'done' },
+      error: null,
+    });
     const response = await post({ stageId: 'stage_1', recipientUserId: recipient });
     const payload = await response.json();
     expect(response.status).toBe(200);

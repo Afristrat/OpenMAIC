@@ -1,7 +1,4 @@
-import {
-  buildTenantAgentConfigs,
-  type LearningDesignSettings,
-} from '@/lib/agents/persona-catalog';
+import { buildTenantAgentConfigs, type LearningDesignSettings } from '@/lib/agents/persona-catalog';
 import { resolveCultureReference } from '@/lib/agents/culture-references';
 
 type GeneratedAgent = ReturnType<typeof buildTenantAgentConfigs>[number];
@@ -75,11 +72,17 @@ function ensureGenderMix(
   scores: Map<string, number>,
 ): GeneratedAgent[] {
   const genders = new Set(selected.flatMap((agent) => (agent.gender ? [agent.gender] : [])));
-  const missingGender = genders.has('female') ? (genders.has('male') ? undefined : 'male') : 'female';
+  const missingGender = genders.has('female')
+    ? genders.has('male')
+      ? undefined
+      : 'male'
+    : 'female';
   if (!missingGender) return selected;
 
   const replacement = candidates
-    .filter((agent) => agent.gender === missingGender && !selected.some((item) => item.id === agent.id))
+    .filter(
+      (agent) => agent.gender === missingGender && !selected.some((item) => item.id === agent.id),
+    )
     .sort((a, b) => (scores.get(b.id) ?? 0) - (scores.get(a.id) ?? 0))[0];
   if (!replacement) return selected;
 

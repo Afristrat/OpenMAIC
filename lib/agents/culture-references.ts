@@ -18,7 +18,6 @@ export const CULTURE_REFERENCES: readonly CultureReference[] = [
 
 export function resolveCultureReference(culture: string): CultureReference {
   return (
-    CULTURE_REFERENCES.find((reference) => reference.code === culture) ??
-    CULTURE_REFERENCES[0]
+    CULTURE_REFERENCES.find((reference) => reference.code === culture) ?? CULTURE_REFERENCES[0]
   );
 }

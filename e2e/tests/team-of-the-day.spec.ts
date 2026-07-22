@@ -64,7 +64,12 @@ async function seedClassroom(page: import('@playwright/test').Page, locale: 'fr-
           createdAt: now,
           updatedAt: now,
         });
-        tx.objectStore('stageOutlines').put({ stageId, outlines: [], createdAt: now, updatedAt: now });
+        tx.objectStore('stageOutlines').put({
+          stageId,
+          outlines: [],
+          createdAt: now,
+          updatedAt: now,
+        });
         tx.oncomplete = () => {
           db.close();
           resolve();

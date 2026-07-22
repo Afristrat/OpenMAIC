@@ -31,6 +31,8 @@ describe('selectTenantCast', () => {
     expect(practical.cultureReference).toBe('ma-ar');
     expect(practical.agents.map((agent) => agent.mechanismId)).toContain('coach');
     expect(practical.agents.map((agent) => agent.mechanismId)).not.toContain('joker');
-    expect(practical.agents.find((agent) => agent.mechanismId === 'professor')?.name).toBe('Younes');
+    expect(practical.agents.find((agent) => agent.mechanismId === 'professor')?.name).toBe(
+      'Younes',
+    );
   });
 });

@@ -25,7 +25,10 @@ export function parseContentCastMechanisms(
   allowedMechanismIds: readonly string[],
 ): string[] {
   try {
-    const cleaned = raw.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+    const cleaned = raw
+      .trim()
+      .replace(/^```(?:json)?\s*/i, '')
+      .replace(/\s*```$/, '');
     const parsed = JSON.parse(cleaned) as { mechanismIds?: unknown };
     if (!Array.isArray(parsed.mechanismIds)) return [];
     return [...new Set(parsed.mechanismIds)]

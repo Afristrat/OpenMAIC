@@ -6,10 +6,7 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service';
 
 const log = createLogger('TransmissionDetailAPI');
 
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> },
-) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },

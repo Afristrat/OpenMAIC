@@ -578,11 +578,7 @@ export type TransmissionInsert = Pick<
 export type TransmissionUpdate = Partial<
   Pick<
     TransmissionRow,
-    | 'status'
-    | 'source_artifact_path'
-    | 'audio_watermark_path'
-    | 'visual_watermark_path'
-    | 'error'
+    'status' | 'source_artifact_path' | 'audio_watermark_path' | 'visual_watermark_path' | 'error'
   >
 >;
 

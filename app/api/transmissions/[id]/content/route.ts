@@ -9,10 +9,7 @@ const log = createLogger('TransmissionContentAPI');
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function GET(
-  _request: NextRequest,
-  context: { params: Promise<{ id: string }> },
-) {
+export async function GET(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },

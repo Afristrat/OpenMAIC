@@ -66,7 +66,11 @@ export async function POST(request: NextRequest) {
     return apiError('INTERNAL_ERROR', 500, 'Impossible de vérifier le destinataire');
   }
   if (!recipientMembership) {
-    return apiError('INVALID_REQUEST', 404, 'Le destinataire ne fait pas partie de cette organisation');
+    return apiError(
+      'INVALID_REQUEST',
+      404,
+      'Le destinataire ne fait pas partie de cette organisation',
+    );
   }
 
   const { data: existing, error: existingError } = await service
@@ -107,7 +111,10 @@ export async function POST(request: NextRequest) {
     await enqueueTransmission({ transmissionId: transmission.id });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    await service.from('transmissions').update({ status: 'failed', error: message }).eq('id', transmission.id);
+    await service
+      .from('transmissions')
+      .update({ status: 'failed', error: message })
+      .eq('id', transmission.id);
     log.error('Transmission enqueue failed', message);
     return apiError('INTERNAL_ERROR', 503, 'La file de transmission est indisponible');
   }

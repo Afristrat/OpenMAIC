@@ -30,7 +30,8 @@ export function TransmissionViewer({ id }: { id: string }) {
         }
         if (active) setTransmission(payload.transmission);
       } catch (loadError) {
-        if (active) setError(loadError instanceof Error ? loadError.message : t('transmission.unavailable'));
+        if (active)
+          setError(loadError instanceof Error ? loadError.message : t('transmission.unavailable'));
       }
     };
     void load();
@@ -55,8 +56,12 @@ export function TransmissionViewer({ id }: { id: string }) {
         )}
       </div>
 
-      {error && <p className="rounded-md border border-destructive/40 p-4 text-destructive">{error}</p>}
-      {!error && !transmission && <p className="text-muted-foreground">{t('transmission.loading')}</p>}
+      {error && (
+        <p className="rounded-md border border-destructive/40 p-4 text-destructive">{error}</p>
+      )}
+      {!error && !transmission && (
+        <p className="text-muted-foreground">{t('transmission.loading')}</p>
+      )}
       {transmission?.status === 'queued' && <p>{t('transmission.queued')}</p>}
       {transmission?.status === 'processing' && <p>{t('transmission.processing')}</p>}
       {transmission?.status === 'failed' && (
