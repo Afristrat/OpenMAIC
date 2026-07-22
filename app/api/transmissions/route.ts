@@ -21,7 +21,7 @@ function isUuid(value: unknown): value is string {
   );
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
