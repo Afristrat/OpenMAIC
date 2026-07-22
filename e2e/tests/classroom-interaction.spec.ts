@@ -211,6 +211,133 @@ test.describe('Classroom Interaction', () => {
     await expectBodyScrollState(true);
   });
 
+  test('speaks a live agent intervention after a learner message', async ({ page }) => {
+    const agentSpeech = 'Apply this idea to one decision you make at work.';
+
+    await page.addInitScript(() => {
+      const spokenTexts: string[] = [];
+      Object.defineProperty(window, '__e2eSpokenTexts', { value: spokenTexts });
+
+      class MockSpeechSynthesisUtterance {
+        readonly text: string;
+        rate = 1;
+        pitch = 1;
+        volume = 1;
+        lang = '';
+        voice: SpeechSynthesisVoice | null = null;
+        onstart: ((event: SpeechSynthesisEvent) => void) | null = null;
+        onend: ((event: SpeechSynthesisEvent) => void) | null = null;
+        onerror: ((event: SpeechSynthesisErrorEvent) => void) | null = null;
+        onpause: ((event: SpeechSynthesisEvent) => void) | null = null;
+        onresume: ((event: SpeechSynthesisEvent) => void) | null = null;
+
+        constructor(text: string) {
+          this.text = text;
+        }
+      }
+
+      const voice = {
+        default: true,
+        lang: 'en-US',
+        localService: true,
+        name: 'E2E Voice',
+        voiceURI: 'e2e-voice',
+      } as SpeechSynthesisVoice;
+      const speechSynthesis = {
+        onvoiceschanged: null,
+        paused: false,
+        pending: false,
+        speaking: false,
+        getVoices: () => [voice],
+        cancel: () => undefined,
+        pause: () => undefined,
+        resume: () => undefined,
+        speak: (utterance: MockSpeechSynthesisUtterance) => {
+          spokenTexts.push(utterance.text);
+          queueMicrotask(() => {
+            utterance.onstart?.({} as SpeechSynthesisEvent);
+            utterance.onend?.({} as SpeechSynthesisEvent);
+          });
+        },
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+        dispatchEvent: () => true,
+      } as unknown as SpeechSynthesis;
+
+      Object.defineProperty(window, 'SpeechSynthesisUtterance', {
+        value: MockSpeechSynthesisUtterance,
+      });
+      Object.defineProperty(window, 'speechSynthesis', { value: speechSynthesis });
+    });
+
+    await page.evaluate((settings) => {
+      localStorage.setItem('settings-storage', settings);
+    },
+    createSettingsStorage({
+      ttsEnabled: true,
+      ttsMuted: false,
+      ttsVolume: 1,
+      ttsProviderId: 'browser-native-tts',
+      ttsVoice: 'e2e-voice',
+      ttsProvidersConfig: {
+        'browser-native-tts': { apiKey: '', baseUrl: '', enabled: true },
+      },
+    }));
+
+    await page.route('**/api/chat', async (route) => {
+      const events = [
+        {
+          type: 'agent_start',
+          data: {
+            messageId: 'e2e-live-message',
+            agentId: 'default-1',
+            agentName: 'E2E Teacher',
+            agentAvatar: '/avatars/teacher.png',
+            agentColor: '#3b82f6',
+          },
+        },
+        {
+          type: 'text_delta',
+          data: { messageId: 'e2e-live-message', content: agentSpeech },
+        },
+        {
+          type: 'agent_end',
+          data: { messageId: 'e2e-live-message', agentId: 'default-1' },
+        },
+        { type: 'cue_user', data: { fromAgentId: 'default-1' } },
+        {
+          type: 'done',
+          data: {
+            totalActions: 0,
+            totalAgents: 1,
+            agentHadContent: true,
+            directorState: { turnCount: 1, agentResponses: [], whiteboardLedger: [] },
+          },
+        },
+      ];
+      await route.fulfill({
+        status: 200,
+        headers: { 'Content-Type': 'text/event-stream' },
+        body: events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join(''),
+      });
+    });
+
+    const classroom = new ClassroomPage(page);
+    await classroom.goto(TEST_STAGE_ID);
+    await classroom.waitForLoaded();
+    await page.getByRole('button', { name: 'Text input' }).click();
+    await page.getByPlaceholder('Type your message...').fill('How can I use this at work?');
+    await page.getByPlaceholder('Type your message...').press('Enter');
+
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          (window as unknown as { __e2eSpokenTexts: string[] }).__e2eSpokenTexts.join(' '),
+        ),
+      )
+      .toContain(agentSpeech);
+  });
+
   test('exports the complete classroom as an MP4 download', async ({ page, mockApi }) => {
     await mockApi.mockMp4ExportDone();
     const classroom = new ClassroomPage(page);
