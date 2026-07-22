@@ -80,6 +80,7 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
       setCurrentSceneId,
       generatingOutlines,
       outlines,
+      stage,
     } = useStageStore();
     const failedOutlines = useStageStore.use.failedOutlines();
     const generationComplete = useStageStore.use.generationComplete();
@@ -1048,6 +1049,7 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
               mode={mode}
               canEdit={!!canEnterProMode}
               onToggleEditMode={onEnterProMode}
+              generatedAgents={stage?.generatedAgentConfigs}
             />
           )}
 

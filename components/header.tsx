@@ -4,16 +4,25 @@ import { ArrowLeft } from 'lucide-react';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useRouter } from 'next/navigation';
 import type { StageMode } from '@/lib/types/stage';
+import type { GeneratedAgentConfig } from '@/lib/types/stage';
 import { HeaderControls } from './stage/header-controls';
+import { TeamOfTheDay } from './stage/team-of-the-day';
 
 interface HeaderProps {
   readonly currentSceneTitle: string;
   readonly mode?: StageMode;
   readonly canEdit?: boolean;
   readonly onToggleEditMode?: () => void;
+  readonly generatedAgents?: GeneratedAgentConfig[];
 }
 
-export function Header({ currentSceneTitle, mode, canEdit, onToggleEditMode }: HeaderProps) {
+export function Header({
+  currentSceneTitle,
+  mode,
+  canEdit,
+  onToggleEditMode,
+  generatedAgents,
+}: HeaderProps) {
   const { t } = useI18n();
   const router = useRouter();
 
@@ -52,7 +61,10 @@ export function Header({ currentSceneTitle, mode, canEdit, onToggleEditMode }: H
           )}
         </div>
 
-        <HeaderControls mode={mode} canEdit={canEdit} onToggleEditMode={onToggleEditMode} />
+        <div className="flex items-center gap-2">
+          <TeamOfTheDay agents={generatedAgents} />
+          <HeaderControls mode={mode} canEdit={canEdit} onToggleEditMode={onToggleEditMode} />
+        </div>
       </header>
     </>
   );

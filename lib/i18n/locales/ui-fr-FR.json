@@ -121,6 +121,7 @@
   "voice.startListening": "Saisie vocale",
   "voice.stopListening": "Arrêter l\u0027enregistrement",
   "stage.currentScene": "Scène actuelle",
+  "stage.teamOfTheDay": "Votre équipe du jour",
   "stage.generating": "Génération...",
   "stage.paused": "En pause",
   "stage.generationFailed": "La génération a échoué",

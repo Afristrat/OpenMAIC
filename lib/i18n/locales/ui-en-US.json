@@ -121,6 +121,7 @@
   "voice.startListening": "Voice input",
   "voice.stopListening": "Stop recording",
   "stage.currentScene": "Current Scene",
+  "stage.teamOfTheDay": "Your team today",
   "stage.generating": "Generating...",
   "stage.paused": "Paused",
   "stage.generationFailed": "Generation failed",

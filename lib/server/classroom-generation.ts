@@ -42,10 +42,10 @@ import { DEFAULT_TEACHING_PROFILE, teachingProfileFromSettings } from '@/lib/org
 import {
   DEFAULT_LEARNING_DESIGN,
   approachForAudience,
-  buildTenantAgentConfigs,
   learningDesignFromSettings,
   type LearningDesignSettings,
 } from '@/lib/agents/persona-catalog';
+import { selectTenantCast, type LearnerCastingProfile } from '@/lib/agents/cast-selection';
 import { resolveOrganizationSkillId } from '@/lib/server/skill-resolution';
 import { buildLiveInstructionalDirective } from '@/lib/formation-engine/downstream-consumers';
 
@@ -135,14 +135,23 @@ export async function generateClassroom(
   }
   let teachingProfile = DEFAULT_TEACHING_PROFILE;
   let learningDesign: LearningDesignSettings = DEFAULT_LEARNING_DESIGN;
+  let learnerCastingProfile: LearnerCastingProfile = { culture: 'ma-fr', preferences: {} };
   try {
-    const { data: organization } = await createServiceSupabaseClient()
-      .from('organizations')
-      .select('settings')
-      .eq('id', input.orgId)
-      .single();
+    const supabase = createServiceSupabaseClient();
+    const [{ data: organization }, { data: profile }] = await Promise.all([
+      supabase.from('organizations').select('settings').eq('id', input.orgId).single(),
+      supabase
+        .from('user_profiles')
+        .select('culture, preferences')
+        .eq('user_id', options.ownerId)
+        .maybeSingle(),
+    ]);
     teachingProfile = teachingProfileFromSettings(organization?.settings);
     learningDesign = learningDesignFromSettings(organization?.settings);
+    learnerCastingProfile = {
+      culture: profile?.culture ?? learnerCastingProfile.culture,
+      preferences: profile?.preferences ?? learnerCastingProfile.preferences,
+    };
     const professor = learningDesign.personas.find((persona) => persona.id === 'professor');
     if (professor) {
       teachingProfile = {
@@ -366,7 +375,14 @@ export async function generateClassroom(
   let agents: AgentInfo[];
   const agentMode = input.agentMode || 'default';
   const tenantAgentConfigs =
-    agentMode === 'generate' ? buildTenantAgentConfigs(learningDesign) : [];
+    agentMode === 'generate'
+      ? selectTenantCast({
+          design: learningDesign,
+          profile: learnerCastingProfile,
+          content: `${requirement}\n${JSON.stringify(outlines)}`,
+          seed: nanoid(10),
+        }).agents
+      : [];
   if (agentMode === 'generate') {
     agents = tenantAgentConfigs.map(({ id, name, role, persona }) => ({
       id,

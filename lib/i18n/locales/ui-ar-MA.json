@@ -121,6 +121,7 @@
   "voice.startListening": "إدخال صوتي",
   "voice.stopListening": "إيقاف التسجيل",
   "stage.currentScene": "المشهد الحالي",
+  "stage.teamOfTheDay": "فريقك اليوم",
   "stage.generating": "جارٍ التوليد...",
   "stage.paused": "متوقف مؤقتًا",
   "stage.generationFailed": "فشل التوليد",
