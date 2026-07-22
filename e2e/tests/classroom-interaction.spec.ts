@@ -23,7 +23,10 @@ const LIVE_TTS_SETTINGS_STORAGE = createSettingsStorage(
 );
 
 /** Seed IndexedDB with stage + 3 scenes using raw IndexedDB API */
-async function seedDatabase(page: import('@playwright/test').Page, settingsStorage = SETTINGS_STORAGE) {
+async function seedDatabase(
+  page: import('@playwright/test').Page,
+  settingsStorage = SETTINGS_STORAGE,
+) {
   // Inject settings before navigating so it's available immediately on load
   await page.addInitScript((settings) => {
     localStorage.setItem('settings-storage', settings);
