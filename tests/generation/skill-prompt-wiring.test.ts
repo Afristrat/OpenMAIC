@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { generateSceneOutlinesFromRequirements } from '@/lib/generation/outline-generator';
 import { generateSceneContent } from '@/lib/generation/scene-generator';
+import { buildPrompt, PROMPT_IDS } from '@/lib/prompts';
+import { buildPromptWithSkill } from '@/lib/skills/prompt-overrides';
 import type { AICallFn } from '@/lib/generation/pipeline-types';
 import type { SceneOutline, UserRequirements } from '@/lib/types/generation';
 
@@ -172,5 +174,54 @@ describe('skill prompt wiring', () => {
 
     expect(outlineSystem).not.toContain(OVERRIDE_SENTINEL);
     expect(sceneSystem).not.toContain(OVERRIDE_SENTINEL);
+  });
+
+  it('keeps the assembled outline and scene prompts byte-for-byte identical when disabled', () => {
+    const promptCases = [
+      {
+        id: PROMPT_IDS.REQUIREMENTS_TO_OUTLINES,
+        variables: {
+          requirement: requirements.requirement,
+          pdfContent: 'None',
+          availableImages: 'No images available',
+          userProfile: '',
+          hasSourceImages: false,
+          imageEnabled: false,
+          videoEnabled: false,
+          mediaEnabled: false,
+          researchContext: 'None',
+          availablePlugins: '',
+          hasPlugins: false,
+          teacherContext: '',
+        },
+      },
+      {
+        id: PROMPT_IDS.SLIDE_CONTENT,
+        variables: {
+          title: 'Conduire l’entretien',
+          description: 'Une mise en situation professionnelle.',
+          keyPoints: '1. Préparer',
+          elements: '',
+          assignedImages: 'No images available',
+          canvas_width: 1000,
+          canvas_height: 562.5,
+          teacherContext: '',
+          languageDirective: 'Répondre en français.',
+          imageElementEnabled: false,
+          generatedImageEnabled: false,
+          generatedVideoEnabled: false,
+          mediaElementEnabled: false,
+        },
+      },
+    ];
+
+    for (const { id, variables } of promptCases) {
+      expect(
+        buildPromptWithSkill(id, variables, {
+          enabled: false,
+          activeSkillId: SKILL_ID,
+        }),
+      ).toEqual(buildPrompt(id, variables));
+    }
   });
 });
