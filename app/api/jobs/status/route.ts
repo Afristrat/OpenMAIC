@@ -13,12 +13,7 @@
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
-import {
-  classroomQueue,
-  exportJobQueue,
-  videoCapsuleQueue,
-  videoGenerationQueue,
-} from '@/lib/jobs/queue';
+import { getJobQueues } from '@/lib/jobs/queue';
 
 // ---------------------------------------------------------------------------
 // Auth — reuse MCP_API_KEY as the admin secret
@@ -53,7 +48,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const authError = authenticate(req);
   if (authError) return authError as NextResponse;
 
-  const queues = [classroomQueue, videoCapsuleQueue, videoGenerationQueue, exportJobQueue];
+  const queues = Object.values(getJobQueues());
 
   const stats = await Promise.all(
     queues.map(async (q) => {

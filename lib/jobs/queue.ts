@@ -77,10 +77,29 @@ const durableJobOptions: JobsOptions = {
 // Queues
 // ---------------------------------------------------------------------------
 
-export const classroomQueue = new Queue('classroom-generation', { connection });
-export const videoCapsuleQueue = new Queue('video-capsule', { connection });
-export const videoGenerationQueue = new Queue('video-generation', { connection });
-export const exportJobQueue = new Queue('export-job', { connection });
+export interface JobQueues {
+  classroom: Queue;
+  videoCapsule: Queue;
+  videoGeneration: Queue;
+  exportJob: Queue;
+}
+
+let queues: JobQueues | undefined;
+
+/**
+ * Instantiate BullMQ only when a runtime request actually needs Redis.
+ * Next.js imports route modules while building its route manifest; creating
+ * queues at module scope would make that compile-time analysis open sockets.
+ */
+export function getJobQueues(): JobQueues {
+  queues ??= {
+    classroom: new Queue('classroom-generation', { connection }),
+    videoCapsule: new Queue('video-capsule', { connection }),
+    videoGeneration: new Queue('video-generation', { connection }),
+    exportJob: new Queue('export-job', { connection }),
+  };
+  return queues;
+}
 
 // ---------------------------------------------------------------------------
 // Enqueue helpers
@@ -89,7 +108,7 @@ export const exportJobQueue = new Queue('export-job', { connection });
 export async function enqueueClassroomGeneration(
   data: ClassroomGenerationJobData,
 ): Promise<string> {
-  const job = await classroomQueue.add('generate', data, {
+  const job = await getJobQueues().classroom.add('generate', data, {
     ...durableJobOptions,
     jobId: `classroom-${data.jobId}`,
   });
@@ -97,18 +116,18 @@ export async function enqueueClassroomGeneration(
 }
 
 export async function enqueueVideoCapsule(data: { capsuleId: string }): Promise<string> {
-  const job = await videoCapsuleQueue.add('render', data, durableJobOptions);
+  const job = await getJobQueues().videoCapsule.add('render', data, durableJobOptions);
   return job.id!;
 }
 
 export async function enqueueVideoGeneration(data: {
   videoGenerationJobId: string;
 }): Promise<string> {
-  const job = await videoGenerationQueue.add('generate', data, durableJobOptions);
+  const job = await getJobQueues().videoGeneration.add('generate', data, durableJobOptions);
   return job.id!;
 }
 
 export async function enqueueExportJob(data: { exportJobId: string }): Promise<string> {
-  const job = await exportJobQueue.add('generate', data, durableJobOptions);
+  const job = await getJobQueues().exportJob.add('generate', data, durableJobOptions);
   return job.id!;
 }
