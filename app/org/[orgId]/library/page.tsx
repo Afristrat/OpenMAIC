@@ -14,6 +14,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { ArrowLeft, BookOpen, Copy, Eye, Library, Search, Share2, User } from 'lucide-react';
 import type { OrgMemberRole } from '@/lib/supabase/types';
@@ -39,6 +47,11 @@ interface SharedClassroom {
   };
 }
 
+interface OrganizationMember {
+  user_id: string;
+  profile?: { nickname?: string | null };
+}
+
 const VISIBILITY_OPTIONS = ['private', 'organization', 'public'] as const;
 
 export default function LibraryPage() {
@@ -53,6 +66,10 @@ export default function LibraryPage() {
   // Reserved for future scene-type filtering (see comment below) — not wired yet.
   const [_filterType, _setFilterType] = useState<string>('all');
   const [userRole, setUserRole] = useState<OrgMemberRole | null>(null);
+  const [shareTarget, setShareTarget] = useState<SharedClassroom | null>(null);
+  const [members, setMembers] = useState<OrganizationMember[]>([]);
+  const [recipientUserId, setRecipientUserId] = useState('');
+  const [isSubmittingTransmission, setIsSubmittingTransmission] = useState(false);
 
   const canShare = userRole === 'admin' || userRole === 'manager' || userRole === 'formateur';
 
@@ -162,31 +179,49 @@ export default function LibraryPage() {
     await fetchLibrary();
   };
 
-  const handleShare = async (classroom: SharedClassroom) => {
+  const openTransmissionDialog = async (classroom: SharedClassroom) => {
     try {
-      if (classroom.visibility !== 'public') {
-        const supabase = createClient();
-        const { error } = await supabase
-          .from('shared_classrooms')
-          .update({ visibility: 'public' })
-          .eq('id', classroom.id);
-        if (error) throw error;
-        setClassrooms((current) =>
-          current.map((item) =>
-            item.id === classroom.id ? { ...item, visibility: 'public' } : item,
-          ),
-        );
-      }
+      const response = await fetch(`/api/organizations/${encodeURIComponent(orgId)}/members`, {
+        cache: 'no-store',
+      });
+      const payload = (await response.json()) as { members?: OrganizationMember[]; error?: string };
+      if (!response.ok || !payload.members) throw new Error(payload.error ?? 'Members unavailable');
+      setMembers(payload.members.filter((member) => member.user_id !== user?.id));
+      setRecipientUserId('');
+      setShareTarget(classroom);
+    } catch {
+      toast.error(t('org.shareFailed'));
+    }
+  };
 
-      const url = `${window.location.origin}/classroom/${encodeURIComponent(classroom.stage_id)}`;
-      if (navigator.share) {
-        await navigator.share({ title: classroom.stage?.name ?? t('org.untitled'), url });
-      } else {
-        await navigator.clipboard.writeText(url);
-        toast.success(t('org.linkCopied'));
-      }
-    } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') return;
+  const submitTransmission = async () => {
+    if (!shareTarget || !recipientUserId) return;
+    setIsSubmittingTransmission(true);
+    try {
+      const response = await fetch('/api/transmissions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stageId: shareTarget.stage_id, recipientUserId }),
+      });
+      const payload = (await response.json()) as { url?: string; error?: string; existing?: boolean };
+      if (!response.ok || !payload.url) throw new Error(payload.error ?? 'Transmission unavailable');
+      await navigator.clipboard.writeText(payload.url);
+      toast.success(payload.existing ? t('transmission.existing') : t('transmission.created'));
+      setShareTarget(null);
+    } catch {
+      toast.error(t('transmission.failed'));
+    } finally {
+      setIsSubmittingTransmission(false);
+    }
+  };
+
+  const copyPublicLink = async (classroom: SharedClassroom) => {
+    try {
+      await navigator.clipboard.writeText(
+        `${window.location.origin}/classroom/${encodeURIComponent(classroom.stage_id)}`,
+      );
+      toast.success(t('org.linkCopied'));
+    } catch {
       toast.error(t('org.shareFailed'));
     }
   };
@@ -293,10 +328,22 @@ export default function LibraryPage() {
                     variant="outline"
                     size="sm"
                     className="h-7 gap-1 text-xs"
-                    onClick={() => handleShare(classroom)}
+                    onClick={() => openTransmissionDialog(classroom)}
                   >
                     <Share2 className="h-3 w-3" />
-                    {t('org.share')}
+                    {t('transmission.share')}
+                  </Button>
+                )}
+
+                {classroom.visibility === 'public' && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 gap-1 text-xs"
+                    onClick={() => copyPublicLink(classroom)}
+                  >
+                    <Copy className="h-3 w-3" />
+                    {t('transmission.copyPublicLink')}
                   </Button>
                 )}
 
@@ -314,6 +361,35 @@ export default function LibraryPage() {
           ))}
         </div>
       )}
+
+      <Dialog open={Boolean(shareTarget)} onOpenChange={(open) => !open && setShareTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('transmission.share')}</DialogTitle>
+            <DialogDescription>{shareTarget?.stage?.name ?? t('org.untitled')}</DialogDescription>
+          </DialogHeader>
+          <Select value={recipientUserId} onValueChange={setRecipientUserId}>
+            <SelectTrigger aria-label={t('transmission.recipient')}>
+              <SelectValue placeholder={t('transmission.recipient')} />
+            </SelectTrigger>
+            <SelectContent>
+              {members.map((member) => (
+                <SelectItem key={member.user_id} value={member.user_id}>
+                  {member.profile?.nickname ?? t('transmission.unnamedRecipient')}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShareTarget(null)}>
+              {t('common.cancel')}
+            </Button>
+            <Button disabled={!recipientUserId || isSubmittingTransmission} onClick={submitTransmission}>
+              {isSubmittingTransmission ? t('transmission.submitting') : t('transmission.confirm')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

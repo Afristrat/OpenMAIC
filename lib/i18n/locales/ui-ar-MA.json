@@ -1999,5 +1999,13 @@
   "transmission.processing": "يجري تحضير المورد.",
   "transmission.failed": "تعذّر تحضير المورد. يُرجى المحاولة لاحقًا.",
   "transmission.unavailable": "هذا الإرسال غير متاح.",
-  "transmission.videoUnsupported": "لا يستطيع متصفحك تشغيل هذا الفيديو."
+  "transmission.videoUnsupported": "لا يستطيع متصفحك تشغيل هذا الفيديو.",
+  "transmission.share": "تسليم إلى عضو",
+  "transmission.recipient": "المستلم",
+  "transmission.unnamedRecipient": "عضو بلا اسم ظاهر",
+  "transmission.confirm": "إنشاء الإرسال",
+  "transmission.submitting": "جارٍ الإنشاء…",
+  "transmission.created": "تم إنشاء الإرسال ونسخ الرابط الخاص.",
+  "transmission.existing": "هذا الإرسال موجود بالفعل ونسخ رابطه الخاص.",
+  "transmission.copyPublicLink": "نسخ الرابط العام"
 }

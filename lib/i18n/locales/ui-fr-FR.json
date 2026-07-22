@@ -1999,5 +1999,13 @@
   "transmission.processing": "Le support est en cours de préparation.",
   "transmission.failed": "La préparation du support a échoué. Réessayez ultérieurement.",
   "transmission.unavailable": "Cette transmission est indisponible.",
-  "transmission.videoUnsupported": "Votre navigateur ne peut pas lire cette vidéo."
+  "transmission.videoUnsupported": "Votre navigateur ne peut pas lire cette vidéo.",
+  "transmission.share": "Remettre à un membre",
+  "transmission.recipient": "Destinataire",
+  "transmission.unnamedRecipient": "Membre sans prénom affiché",
+  "transmission.confirm": "Créer la transmission",
+  "transmission.submitting": "Création…",
+  "transmission.created": "Transmission créée : le lien privé a été copié.",
+  "transmission.existing": "Cette transmission existe déjà : le lien privé a été copié.",
+  "transmission.copyPublicLink": "Copier le lien public"
 }

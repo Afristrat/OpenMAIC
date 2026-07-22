@@ -1999,5 +1999,13 @@
   "transmission.processing": "The resource is being prepared.",
   "transmission.failed": "The resource could not be prepared. Please try again later.",
   "transmission.unavailable": "This transmission is unavailable.",
-  "transmission.videoUnsupported": "Your browser cannot play this video."
+  "transmission.videoUnsupported": "Your browser cannot play this video.",
+  "transmission.share": "Deliver to a member",
+  "transmission.recipient": "Recipient",
+  "transmission.unnamedRecipient": "Member without a displayed name",
+  "transmission.confirm": "Create transmission",
+  "transmission.submitting": "Creating…",
+  "transmission.created": "Transmission created: the private link was copied.",
+  "transmission.existing": "This transmission already exists: the private link was copied.",
+  "transmission.copyPublicLink": "Copy public link"
 }
