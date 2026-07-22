@@ -178,15 +178,17 @@ function buildCmi5Manifest(
   const description = options.description || options.title;
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<course xmlns="https://w3id.org/xapi/profiles/cmi5/v1/CourseStructure.xsd" id="${escapeXml(courseId)}">
-  <title><langstring lang="${escapeXml(language)}">${escapeXml(options.title)}</langstring></title>
-  <description><langstring lang="${escapeXml(language)}">${escapeXml(description)}</langstring></description>
+<courseStructure xmlns="https://w3id.org/xapi/profiles/cmi5/v1/CourseStructure.xsd">
+  <course id="${escapeXml(courseId)}">
+    <title><langstring lang="${escapeXml(language)}">${escapeXml(options.title)}</langstring></title>
+    <description><langstring lang="${escapeXml(language)}">${escapeXml(description)}</langstring></description>
+  </course>
   <au id="${escapeXml(auId)}" launchMethod="AnyWindow" moveOn="CompletedOrPassed">
     <title><langstring lang="${escapeXml(language)}">${escapeXml(options.title)}</langstring></title>
     <description><langstring lang="${escapeXml(language)}">${escapeXml(description)}</langstring></description>
     <url>${escapeXml(options.launchUrl)}</url>
   </au>
-</course>
+</courseStructure>
 `;
 }
 
