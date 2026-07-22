@@ -62,6 +62,7 @@ const LLM_ENV_MAP: Record<string, string> = {
   TENCENT_HUNYUAN: 'tencent-hunyuan',
   XIAOMI: 'xiaomi',
   MIMO: 'xiaomi',
+  VLLM: 'vllm',
   OLLAMA: 'ollama',
   LEMONADE: 'lemonade',
 };
@@ -305,7 +306,7 @@ function buildConfig(yamlData: YamlData): ServerConfig {
 
   return {
     providers: loadEnvSection(LLM_ENV_MAP, yamlData.providers, {
-      keylessProviders: new Set(['ollama', 'lemonade']),
+      keylessProviders: new Set(['vllm', 'ollama', 'lemonade']),
     }),
     tts: loadEnvSection(TTS_ENV_MAP, yamlData.tts, {
       keylessProviders: new Set(['voxcpm-tts', 'lemonade-tts', 'higgs-tts']),

@@ -22,6 +22,7 @@ const ENV_PREFIXES_TO_CLEAR = [
   'TENCENT_HUNYUAN',
   'XIAOMI',
   'MIMO',
+  'VLLM',
   'HY3',
   'OLLAMA',
   'TTS_OPENAI',
@@ -299,6 +300,17 @@ providers:
 
       expect(providers.openai.models).toEqual(['gpt-4o', 'gpt-4o-mini']);
     });
+  });
+
+  it('activates a self-hosted vLLM provider from its base URL alone', async () => {
+    vi.stubEnv('VLLM_BASE_URL', 'http://192.168.100.7:8000/v1');
+    vi.stubEnv('VLLM_MODELS', 'qwen3.6-35b');
+    const { getServerProviders, resolveApiKey, resolveBaseUrl } =
+      await import('@/lib/server/provider-config');
+
+    expect(getServerProviders().vllm).toEqual({ models: ['qwen3.6-35b'] });
+    expect(resolveApiKey('vllm')).toBe('');
+    expect(resolveBaseUrl('vllm')).toBe('http://192.168.100.7:8000/v1');
   });
 
   describe('resolveWebSearchApiKey', () => {

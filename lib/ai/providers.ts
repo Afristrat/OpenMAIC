@@ -672,6 +672,18 @@ export const PROVIDERS: Record<ProviderId, ProviderConfig> = {
     ],
   },
 
+  // A dedicated entry keeps self-hosted OpenAI-compatible runtimes separate
+  // from Qwen's managed DashScope API. Its catalog is supplied exclusively by
+  // VLLM_MODELS on the server, so Qalem never advertises an unverified model.
+  vllm: {
+    id: 'vllm',
+    name: 'vLLM auto-hébergé',
+    type: 'openai',
+    requiresApiKey: false,
+    icon: '/logos/qwen.svg',
+    models: [],
+  },
+
   kimi: {
     id: 'kimi',
     name: 'Kimi',
@@ -1365,6 +1377,13 @@ function getCompatThinkingBodyParams(
       return { chat_template_kwargs: chatTemplateKwargs };
     }
 
+    case 'vllm':
+      // The self-hosted Qwen runtime returns hidden reasoning in `message.reasoning`,
+      // not the OpenAI-compatible `reasoning_content` field. Defaulting to an
+      // answer-first response prevents it from consuming the whole output budget.
+      // ponytail: remove this adapter when the runtime proves standard reasoning streaming.
+      return { chat_template_kwargs: { enable_thinking: mode === 'enabled' } };
+
     default:
       return undefined;
   }
@@ -1458,7 +1477,7 @@ export function getModel(config: ModelConfig): ModelWithInfo {
           const thinkingFromContext = thinkingCtx?.getStore?.() as ThinkingConfig | undefined;
           const thinking =
             thinkingFromContext ??
-            (providerId === 'lemonade'
+            (providerId === 'lemonade' || providerId === 'vllm'
               ? getDefaultThinkingConfig(getCatalogThinkingCapability(providerId, config.modelId))
               : undefined);
           if (thinking && init?.body && typeof init.body === 'string') {

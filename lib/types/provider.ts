@@ -20,6 +20,7 @@ export type BuiltInProviderId =
   | 'grok'
   | 'tencent-hunyuan'
   | 'xiaomi'
+  | 'vllm'
   | 'lemonade'
   | 'ollama';
 
@@ -53,6 +54,7 @@ export type ThinkingRequestAdapter =
   | 'anthropic'
   | 'google'
   | 'qwen'
+  | 'vllm'
   | 'deepseek'
   | 'kimi'
   | 'glm'

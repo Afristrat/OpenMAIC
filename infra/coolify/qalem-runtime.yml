@@ -28,6 +28,8 @@ x-qalem-environment: &qalem-environment
   TTS_VOXCPM_MODELS: ${TTS_VOXCPM_MODELS}
   VIDEO_COMFYUI_BASE_URL: ${VIDEO_COMFYUI_BASE_URL}
   VIDEO_COMFYUI_MODELS: ${VIDEO_COMFYUI_MODELS}
+  VLLM_BASE_URL: ${VLLM_BASE_URL}
+  VLLM_MODELS: ${VLLM_MODELS}
 
 services:
   # The public web runner is deployed as the rolling Dockerfile application

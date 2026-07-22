@@ -216,6 +216,22 @@ describe('OpenAI provider defaults', () => {
     });
   });
 
+  it('disables vLLM reasoning by default so the Qwen response budget reaches content', async () => {
+    const body = await captureInjectedRequestBody('vllm', 'qwen3.6-35b');
+
+    expect(body).toMatchObject({
+      chat_template_kwargs: { enable_thinking: false },
+    });
+  });
+
+  it('enables vLLM reasoning only when the server explicitly requests it', async () => {
+    const body = await captureInjectedRequestBody('vllm', 'qwen3.6-35b', { mode: 'enabled' });
+
+    expect(body).toMatchObject({
+      chat_template_kwargs: { enable_thinking: true },
+    });
+  });
+
   it('recognizes manually added Lemonade reasoning model IDs', async () => {
     const body = await captureInjectedRequestBody('lemonade', 'custom-gpt-oss-20b-q4');
 

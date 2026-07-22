@@ -102,6 +102,11 @@ const fixedThinkingCapability: ThinkingCapability = {
   defaultEnabled: true,
 };
 
+// Qalem's self-hosted vLLM runtime currently exposes reasoning in a field the
+// OpenAI SDK does not consume. Keep reasoning opt-in until the runtime emits a
+// standard reasoning_content stream and an end-to-end regression proves it.
+const vllmToggle = toggleCapability('vllm', false);
+
 const anthropicManualBudgetByEffort: Partial<Record<ThinkingEffort, number>> = {
   low: 4096,
   medium: 10240,
@@ -377,6 +382,10 @@ export function getCatalogThinkingCapability(
 
   if (providerId === 'lemonade') {
     return lemonadeToggleBudget;
+  }
+
+  if (providerId === 'vllm') {
+    return vllmToggle;
   }
 
   return undefined;
