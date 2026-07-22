@@ -407,7 +407,8 @@
         "Échec de capture n'interrompt jamais la génération (test e2e web-capture-failure-isolation vert)",
         "npx tsc --noEmit && pnpm lint && pnpm test && pnpm test:e2e verts",
         "Vérification déployée (SOP-011) : une scène du cours F6G9W_LPT8 régénérée illustrée par une vraie capture de proxy.ai-mpower.com, confirmée visuellement par Amine"
-      ]
+      ],
+      "acceptanceNote": "Le défaut de persistance du storageState est corrigé au commit fe065b6 : Coolify déploie désormais le volume capture-storage-states sur /data/storage-states, vérifié après déploiement par docker inspect avec le worker healthy et qalem.ma/health à HTTP 200. La session proxy.ai-mpower.com et la confirmation visuelle d'une vraie capture restent requises ; passes=false est volontaire. Voir docs/foundation/5-illustration/S1-012-capture-worker-persistence-proof.md."
     },
 
     {
