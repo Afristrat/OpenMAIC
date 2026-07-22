@@ -14,6 +14,7 @@ describe('visual transmission watermark', () => {
     expect(svg).toContain(visualWatermarkLabel);
     expect(svg).toContain('01234567 89abcdef 01234567 89abcdef');
     expect(svg).toContain('fill-opacity="0.82"');
+    expect(svg).toContain('font-family="DejaVu Sans Mono"');
   });
 
   it('rejects any identifier that is not exactly 128 bits of hexadecimal data', () => {

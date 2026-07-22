@@ -49,7 +49,7 @@ FROM base AS worker
 ENV NODE_ENV=production
 ENV NODE_OPTIONS=--max-old-space-size=2560
 
-RUN apk add --no-cache libc6-compat cairo pango jpeg giflib librsvg ffmpeg
+RUN apk add --no-cache libc6-compat cairo pango jpeg giflib librsvg ffmpeg font-dejavu
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 

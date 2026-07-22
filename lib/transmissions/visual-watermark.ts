@@ -26,8 +26,8 @@ export function buildVisualWatermarkSvg(watermarkId: string): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="720" height="116" viewBox="0 0 720 116">
   <rect x="0" y="0" width="720" height="116" rx="14" fill="#050816" fill-opacity="0.82"/>
   <rect x="0" y="0" width="8" height="116" rx="4" fill="#d8b4fe"/>
-  <text x="30" y="43" fill="#f5f3ff" font-family="sans-serif" font-size="24" font-weight="700">${visualWatermarkLabel}</text>
-  <text x="30" y="82" fill="#d8b4fe" font-family="monospace" font-size="26" font-weight="700" letter-spacing="1">${readableId}</text>
+  <text x="30" y="43" fill="#f5f3ff" font-family="DejaVu Sans" font-size="24" font-weight="700">${visualWatermarkLabel}</text>
+  <text x="30" y="82" fill="#d8b4fe" font-family="DejaVu Sans Mono" font-size="26" font-weight="700" letter-spacing="1">${readableId}</text>
 </svg>`;
 }
 
