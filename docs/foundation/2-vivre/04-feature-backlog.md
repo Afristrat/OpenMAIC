@@ -13,9 +13,9 @@
 | S2-005 | Replay « comme un vrai webinaire » | Une session enregistrée se rejoue intégralement (audio inclus, choix ADR-203) sur plateforme ET PWA ; AUCUNE route de téléchargement (test qui l'affirme) |
 | S2-006 | Bibliothèque de replays | Liste « mes sessions », reprise à l'horodatage, suppression par l'utilisateur (droit effacement) ; e2e |
 | S2-007 | Andragogie dans le live | Les interventions des agents consomment les overrides du moteur (interface chantier 4) ; test : un override actif change observablement le comportement d'une personnalité |
-| S2-008 | Watermark sonore : audiowmark en job BullMQ | Artefact audio marqué (128 bits) → ré-encodé mp3 128k → `watermark_id` décodé avec succès (test automatisé) ; flag `watermarking` |
-| S2-009 | Watermark visuel | Identifiant visuel indélébile (videowmark ou incrustation périodique) sur le support transmis ; décodable sur capture d'écran du flux (test manuel documenté) |
-| S2-010 | Transmission de support | Table `transmissions` ; génération asynchrone de l'artefact marqué au nom du destinataire ; consultation en ligne uniquement ; les deux watermarks présents |
+| S2-010 | Fondation de transmission de support | Table `transmissions`, RLS émetteur + destinataire, artefact source asynchrone consultable en ligne uniquement ; l'original reste intact pour les traitements dérivés |
+| S2-008 | Watermark sonore : audiowmark en job BullMQ | Après S2-010 et une décision de conformité GPL explicite : artefact audio marqué (128 bits) → ré-encodé mp3 128k → `watermark_id` décodé avec succès (test automatisé) ; flag `watermarking` |
+| S2-009 | Watermark visuel | Après S2-010 : identifiant visuel indélébile (videowmark ou incrustation périodique avec ADR) sur le support transmis ; décodable sur capture d'écran du flux (test manuel documenté) |
 | S2-011 | **[CHECKPOINT AMINE]** Référentiels culture → prénoms | Fichiers de données proposés (cultures couvertes, prénoms mixtes par culture) ; validation explicite d'Amine AVANT le flag `rich_profile` en préprod |
 
 ## Parking lot (condition de sortie obligatoire)

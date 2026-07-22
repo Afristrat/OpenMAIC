@@ -514,12 +514,14 @@
       "epic": "2-VIVRE",
       "phase": 2,
       "passes": false,
-      "dependencies": ["S0-008"],
+      "dependencies": ["S0-008", "S2-010"],
       "acceptance": [
         "Worker invoque audiowmark en processus externe, watermark_id opaque 128 bits",
         "Protocole P2-C automatisé : ID décodé après mp3 128k, ogg, extrait 30 s, normalisation",
-        "Flag watermarking, jamais dans le chemin de lecture"
-      ]
+        "Flag watermarking, jamais dans le chemin de lecture",
+        "Aucune image distribuée ni décision de licence n'est implicitement déduite de l'isolation de processus : la décision de conformité documentée est un prérequis de livraison"
+      ],
+      "acceptanceNote": "Dépendance corrigée le 2026-07-22 : le watermark est nécessairement rattaché à une transmission et à son destinataire. S2-010 crée donc d'abord la source de vérité et l'artefact non marqué ; S2-008 publie ensuite l'artefact audio marqué. Audiowmark est GPL-3.0 : l'isolation dans un processus ou un sidecar est une séparation technique, pas une conclusion juridique."
     },
     {
       "id": "S2-009",
@@ -527,7 +529,7 @@
       "epic": "2-VIVRE",
       "phase": 2,
       "passes": false,
-      "dependencies": ["S2-008"],
+      "dependencies": ["S2-010"],
       "acceptance": [
         "videowmark (ou incrustation périodique avec ADR) appliqué par le worker",
         "Identifiant décodable sur capture d'écran du flux (preuve documentée)"
@@ -535,16 +537,18 @@
     },
     {
       "id": "S2-010",
-      "title": "Transmission de support marqué au destinataire",
+      "title": "Fondation de transmission de support au destinataire",
       "epic": "2-VIVRE",
       "phase": 2,
       "passes": false,
-      "dependencies": ["S2-008", "S2-009"],
+      "dependencies": ["S0-008"],
       "acceptance": [
         "Table transmissions conforme (RLS émetteur+destinataire)",
-        "Artefact asynchrone avec les DEUX watermarks, consultation en ligne uniquement (e2e)",
-        "Mention « Session remise à [prénom] » à l'ouverture"
-      ]
+        "Artefact source asynchrone, consultation en ligne uniquement (e2e)",
+        "Mention « Session remise à [prénom] » à l'ouverture",
+        "Contrat de job idempotent permettant à S2-008 et S2-009 de publier leurs artefacts dérivés sans écraser l'original"
+      ],
+      "acceptanceNote": "Découpage corrigé le 2026-07-22 pour supprimer le cycle S2-008 → S2-010 → S2-008. La transmission est la fondation de persistance et de RLS ; les watermarks audio et visuel sont des traitements dérivés ultérieurs."
     },
     {
       "id": "S2-011",

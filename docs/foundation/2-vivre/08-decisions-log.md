@@ -23,12 +23,14 @@
 - **Coût accepté** : stockage (à mesurer en Mo/session dès S2-004 — si prohibitif, compression agressive avant de reconsidérer).
 - **Alternatives rejetées** : re-synthèse au replay (infidèle + fragile) ; pas d'audio au replay (ce ne serait plus un webinaire).
 
-## ADR-204 — Watermarking : audiowmark/videowmark en processus externe, job async (ACTÉE, réversible S2-008)
+## ADR-204 — Watermarking : traitement asynchrone par transmission, conformité à décider (EN ATTENTE)
 
-- **Quoi** : binaires invoqués par le worker BullMQ, un artefact marqué par transmission ; `audioseal` en second si la robustesse déçoit.
-- **Pourquoi** : audiowmark = 128 bits inaudibles, décodage aveugle, survit au ré-encodage ≥128 kbit/s (README du projet, lu 2026-07-09) ; l'invocation en processus externe borne la GPL au binaire ; async car le coût est PAR transmission (angle mort chiffré au stress-test).
-- **Sources** : github.com/swesterfeld/audiowmark ; github.com/facebookresearch/audioseal (np-cadrage §3).
-- **Alternatives rejetées** : service cloud (souveraineté du traçage) ; watermark maison (réinventer la roue, non éprouvé) ; marquage synchrone (latence dans le chemin utilisateur).
+- **Faits établis** : audiowmark est sous GPL-3.0, encode un message opaque de 128 bits, se décode à l'aveugle et son protocole documenté vise notamment la résistance aux ré-encodages MP3/OGG. AudioSeal est publié sous licence MIT, mais son message optionnel est limité à 16 bits : il ne satisfait donc pas tel quel le protocole Qalem à 128 bits.
+- **Architecture retenue sous réserve** : après S2-010, un job borné et idempotent traite une copie de l'artefact source par transmission ; aucun marquage ne s'exécute dans le chemin de lecture. L'identifiant est généré côté serveur et son lien avec le destinataire reste exclusivement dans `transmissions`. Le binaire audiowmark, s'il est retenu, vit dans un sidecar local dédié avec clé de watermark injectée par coffre.
+- **Point non tranché** : invoquer un binaire GPL dans un processus séparé est une séparation technique ; ce n'est pas, à elle seule, une conclusion sur les obligations de licence. Avant toute distribution d'image, déploiement on-premise ou promesse commerciale incluant ce composant, une décision de conformité doit couvrir le modèle de distribution, les obligations applicables et le plan d'inventaire des licences.
+- **Options soumises à décision** : (A) audiowmark, après validation de conformité, pour conserver le protocole opaque à 128 bits ; (B) AudioSeal MIT, uniquement après modification explicite de l'exigence produit ou conception hybride démontrant une traçabilité équivalente ; (C) ne pas exposer le watermark tant que le prérequis de conformité n'est pas levé.
+- **Sources** : [audiowmark — licence et protocole](https://github.com/swesterfeld/audiowmark) ; [documentation audiowmark](https://uplex.de/audiowmark/README.html) ; [AudioSeal — licence et capacité de message](https://github.com/facebookresearch/audioseal).
+- **Alternatives rejetées à ce stade** : service cloud (souveraineté du traçage) ; watermark maison (non éprouvé) ; marquage synchrone (latence dans le chemin utilisateur).
 
 ## ADR-205 — Multi-apprenants humains : HORS v1, chantier dédié (ACTÉE)
 
