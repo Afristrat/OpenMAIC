@@ -85,6 +85,37 @@ export async function POST(request: NextRequest) {
     return apiError('INTERNAL_ERROR', 500, 'Impossible de créer la transmission');
   }
   if (existing) {
+    if (existing.status === 'failed') {
+      const { error: retryError } = await service
+        .from('transmissions')
+        .update({ status: 'queued', error: null })
+        .eq('id', existing.id);
+      if (retryError) {
+        log.error('Transmission retry reset failed', retryError.message);
+        return apiError('INTERNAL_ERROR', 500, 'Impossible de relancer la transmission');
+      }
+      try {
+        await enqueueTransmission({ transmissionId: existing.id });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        await service
+          .from('transmissions')
+          .update({ status: 'failed', error: message })
+          .eq('id', existing.id);
+        log.error('Transmission retry enqueue failed', message);
+        return apiError('INTERNAL_ERROR', 503, 'La file de transmission est indisponible');
+      }
+      return apiSuccess(
+        {
+          id: existing.id,
+          status: 'queued',
+          existing: true,
+          retried: true,
+          url: new URL(`/transmissions/${existing.id}`, request.url).toString(),
+        },
+        202,
+      );
+    }
     return apiSuccess({
       id: existing.id,
       status: existing.status,

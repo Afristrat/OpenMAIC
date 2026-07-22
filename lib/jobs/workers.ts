@@ -399,21 +399,23 @@ export function startAllWorkers(): void {
             .update({ status: 'processing', error: null })
             .eq('id', transmissionId);
 
-          const result = await buildClassroomVideo(transmission.stage_id);
-          const sourceArtifactPath = `${transmissionId}/source.mp4`;
-          const { error: uploadError } = await supabase.storage
-            .from('transmissions')
-            .upload(sourceArtifactPath, result.video, { contentType: 'video/mp4', upsert: true });
-          if (uploadError) {
-            throw new Error(`Transmission source upload failed: ${uploadError.message}`);
-          }
+          if (!transmission.source_artifact_path) {
+            const result = await buildClassroomVideo(transmission.stage_id);
+            const sourceArtifactPath = `${transmissionId}/source.mp4`;
+            const { error: uploadError } = await supabase.storage
+              .from('transmissions')
+              .upload(sourceArtifactPath, result.video, { contentType: 'video/mp4', upsert: true });
+            if (uploadError) {
+              throw new Error(`Transmission source upload failed: ${uploadError.message}`);
+            }
 
-          const { error: sourceUpdateError } = await supabase
-            .from('transmissions')
-            .update({ status: 'processing', source_artifact_path: sourceArtifactPath, error: null })
-            .eq('id', transmissionId);
-          if (sourceUpdateError)
-            throw new Error(`Transmission source completion failed: ${sourceUpdateError.message}`);
+            const { error: sourceUpdateError } = await supabase
+              .from('transmissions')
+              .update({ status: 'processing', source_artifact_path: sourceArtifactPath, error: null })
+              .eq('id', transmissionId);
+            if (sourceUpdateError)
+              throw new Error(`Transmission source completion failed: ${sourceUpdateError.message}`);
+          }
 
           await enqueueTransmissionVisualWatermark({ transmissionId });
 

@@ -99,6 +99,21 @@ describe('POST /api/transmissions', () => {
     expect(mocks.enqueueTransmission).not.toHaveBeenCalled();
   });
 
+  it('requeues a failed transmission without creating a duplicate delivery', async () => {
+    mocks.existingTransmission.mockResolvedValue({
+      data: { id: 'tx_failed', status: 'failed' },
+      error: null,
+    });
+
+    const response = await post({ stageId: 'stage_1', recipientUserId: recipient });
+    const payload = await response.json();
+
+    expect(response.status).toBe(202);
+    expect(payload).toMatchObject({ id: 'tx_failed', status: 'queued', existing: true, retried: true });
+    expect(mocks.enqueueTransmission).toHaveBeenCalledWith({ transmissionId: 'tx_failed' });
+    expect(mocks.insertedTransmission).not.toHaveBeenCalled();
+  });
+
   it('creates a tenant-scoped asynchronous transmission', async () => {
     const response = await post({ stageId: 'stage_1', recipientUserId: recipient });
     const payload = await response.json();

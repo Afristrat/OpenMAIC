@@ -143,9 +143,12 @@ export async function enqueueExportJob(data: { exportJobId: string }): Promise<s
 }
 
 export async function enqueueTransmission(data: { transmissionId: string }): Promise<string> {
-  const job = await getJobQueues().transmission.add('render-source', data, {
+  const queue = getJobQueues().transmission;
+  const jobId = `transmission-${data.transmissionId}`;
+  await removeFinishedJob(queue, jobId);
+  const job = await queue.add('render-source', data, {
     ...durableJobOptions,
-    jobId: `transmission-${data.transmissionId}`,
+    jobId,
   });
   return job.id!;
 }
@@ -153,9 +156,28 @@ export async function enqueueTransmission(data: { transmissionId: string }): Pro
 export async function enqueueTransmissionVisualWatermark(data: {
   transmissionId: string;
 }): Promise<string> {
-  const job = await getJobQueues().transmissionVisualWatermark.add('burn-visual-watermark', data, {
+  const queue = getJobQueues().transmissionVisualWatermark;
+  const jobId = `transmission-visual-watermark-${data.transmissionId}`;
+  await removeFinishedJob(queue, jobId);
+  const job = await queue.add('burn-visual-watermark', data, {
     ...durableJobOptions,
-    jobId: `transmission-visual-watermark-${data.transmissionId}`,
+    jobId,
   });
   return job.id!;
+}
+
+/**
+ * A failed delivery is explicitly retriable by the sender. BullMQ keeps a
+ * terminal job with its deterministic id, so remove only terminal jobs before
+ * creating its successor; active jobs are never disturbed.
+ */
+async function removeFinishedJob(
+  queue: Pick<Queue, 'getJob'>,
+  jobId: string,
+): Promise<void> {
+  const previous = await queue.getJob(jobId);
+  if (!previous) return;
+
+  const state = await previous.getState();
+  if (state === 'completed' || state === 'failed') await previous.remove();
 }
