@@ -1,4 +1,3 @@
-import { promises as fs } from 'fs';
 import path from 'path';
 import type { NextRequest } from 'next/server';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
@@ -7,29 +6,6 @@ import type { Scene, Stage } from '@/lib/types/stage';
 import type { Slide } from '@openmaic/dsl';
 
 const log = createLogger('ClassroomStorage');
-
-// Ephemeral generation-job status tracking (queued/running/succeeded/failed
-// polling state) — separate concern from the final classroom persisted below,
-// short-lived and safe to lose on redeploy (the client re-polls or re-triggers).
-export const CLASSROOM_JOBS_DIR = path.join(process.cwd(), 'data', 'classroom-jobs');
-
-async function ensureDir(dir: string) {
-  await fs.mkdir(dir, { recursive: true });
-}
-
-export async function ensureClassroomJobsDir() {
-  await ensureDir(CLASSROOM_JOBS_DIR);
-}
-
-export async function writeJsonFileAtomic(filePath: string, data: unknown) {
-  const dir = path.dirname(filePath);
-  await ensureDir(dir);
-
-  const tempFilePath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
-  const content = JSON.stringify(data, null, 2);
-  await fs.writeFile(tempFilePath, content, 'utf-8');
-  await fs.rename(tempFilePath, filePath);
-}
 
 export function buildRequestOrigin(req: NextRequest): string {
   return req.headers.get('x-forwarded-host')

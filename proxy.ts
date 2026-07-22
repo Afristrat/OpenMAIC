@@ -17,35 +17,83 @@ function shouldSkipRateLimit(pathname: string): boolean {
 // Extract client identifier
 // ---------------------------------------------------------------------------
 
-function getClientKey(request: NextRequest): { key: string; tier: RequestRateLimitTier } {
-  // Try to extract user ID from Supabase auth cookie (sb-*-auth-token)
-  const cookies = request.cookies;
-  let userId: string | undefined;
+type CookieEntry = [string, { value: string }];
 
-  // Supabase stores the session in cookies named sb-<project-ref>-auth-token*
+function decodeBase64Url(value: string): string {
+  const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+  const bytes = Uint8Array.from(atob(padded), (character) => character.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+
+function readSupabaseSessionCookie(cookies: Iterable<CookieEntry>): string | undefined {
+  const wholeCookies = new Map<string, string>();
+  const chunkedCookies = new Map<string, Map<number, string>>();
+
   for (const [name, cookie] of cookies) {
-    if (name.startsWith('sb-') && name.includes('-auth-token')) {
-      try {
-        // The cookie value is a JSON array; the first element contains the access token.
-        // We extract the sub claim without a full JWT verify (rate-limiting is best-effort).
-        const raw = cookie.value;
-        const parsed = JSON.parse(raw);
-        const token = Array.isArray(parsed) ? parsed[0] : parsed;
-        if (typeof token === 'string') {
-          const payloadB64 = token.split('.')[1];
-          if (payloadB64) {
-            const payload = JSON.parse(atob(payloadB64));
-            if (payload.sub) {
-              userId = payload.sub as string;
-            }
-          }
-        }
-      } catch {
-        // Cookie parsing failed — fall through to IP-based limiting
-      }
-      break;
+    const match = /^(sb-.+-auth-token)(?:\.(\d+))?$/.exec(name);
+    if (!match) continue;
+
+    const baseName = match[1];
+    const chunkIndex = match[2];
+    if (chunkIndex === undefined) {
+      wholeCookies.set(baseName, cookie.value);
+      continue;
     }
+
+    const chunks = chunkedCookies.get(baseName) ?? new Map<number, string>();
+    chunks.set(Number(chunkIndex), cookie.value);
+    chunkedCookies.set(baseName, chunks);
   }
+
+  const wholeCookie = wholeCookies.values().next().value;
+  if (typeof wholeCookie === 'string') return wholeCookie;
+
+  for (const chunks of chunkedCookies.values()) {
+    const indexes = [...chunks.keys()].sort((left, right) => left - right);
+    if (indexes.length === 0 || indexes.some((index, position) => index !== position)) continue;
+    return indexes.map((index) => chunks.get(index)).join('');
+  }
+
+  return undefined;
+}
+
+export function extractAuthenticatedUserIdFromCookies(
+  cookies: Iterable<CookieEntry>,
+): string | undefined {
+  try {
+    const storedSession = readSupabaseSessionCookie(cookies);
+    if (!storedSession) return undefined;
+
+    const decodedSession = storedSession.startsWith('base64-')
+      ? decodeBase64Url(storedSession.slice('base64-'.length))
+      : storedSession;
+    const parsedSession: unknown = JSON.parse(decodedSession);
+    const accessToken =
+      typeof parsedSession === 'string'
+        ? parsedSession
+        : Array.isArray(parsedSession)
+          ? parsedSession[0]
+          : parsedSession && typeof parsedSession === 'object' && 'access_token' in parsedSession
+            ? parsedSession.access_token
+            : undefined;
+
+    if (typeof accessToken !== 'string') return undefined;
+
+    const payload = accessToken.split('.')[1];
+    if (!payload) return undefined;
+
+    const claims: unknown = JSON.parse(decodeBase64Url(payload));
+    if (!claims || typeof claims !== 'object' || !('sub' in claims)) return undefined;
+    return typeof claims.sub === 'string' && claims.sub.length > 0 ? claims.sub : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function getClientKey(request: NextRequest): { key: string; tier: RequestRateLimitTier } {
+  // Identity only partitions rate-limit buckets. API authorization verifies the JWT separately.
+  const userId = extractAuthenticatedUserIdFromCookies(request.cookies);
 
   if (userId) {
     return { key: `user:${userId}`, tier: 'authenticated' };

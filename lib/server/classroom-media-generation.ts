@@ -2,7 +2,7 @@
  * Server-side media and TTS generation for classrooms.
  *
  * Generates image/video files and TTS audio for a classroom,
- * writes them to disk, and returns serving URL mappings.
+ * stores them in Supabase Storage, and returns serving URL mappings.
  */
 
 import path from 'path';
