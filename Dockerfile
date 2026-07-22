@@ -69,7 +69,7 @@ ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
 ENV NODE_OPTIONS=--max-old-space-size=1152
 
-RUN apk add --no-cache libc6-compat cairo pango jpeg giflib librsvg ffmpeg
+RUN apk add --no-cache libc6-compat cairo pango jpeg giflib librsvg ffmpeg curl
 
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
