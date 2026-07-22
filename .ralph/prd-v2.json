@@ -225,13 +225,15 @@
       "title": "Câbler le moteur : getPromptOverride() dans outline + scène",
       "epic": "1-CRÉER",
       "phase": 1,
-      "passes": false,
+      "passes": true,
+      "completedAt": "2026-07-22",
       "dependencies": ["S0-008", "S0-009"],
       "acceptance": [
         "Appels réels dans outline-generator.ts et scene-generator.ts",
         "Test : un skill pack actif change le prompt assemblé des deux étages",
         "Flag skill_engine, comportement inchangé éteint"
-      ]
+      ],
+      "acceptanceNote": "Reprouvé sur le code et le système le 2026-07-22, sans se fonder sur le statut historique : outline-generator.ts et les chemins slide/quiz de scene-generator.ts appellent buildPromptWithSkill(), qui compose le moteur formation-design-pro puis résout chaque override par getPromptOverride(). Les deux points d'entrée de production (classroom-generation.ts et la route scene-content) lisent isFeatureEnabled('skill_engine'). La base réelle de qalem.ma contient une ligne unique skill_engine activée, scope global, relue via le conteneur applicatif sans afficher de secret. tests/generation/skill-prompt-wiring.test.ts couvre désormais 6 cas : modification observable des prompts outline et scène, effet observable sur l'outline généré, activation du moteur central sans skill métier, composition moteur puis skill métier, absence de l'override quand le flag est éteint et identité byte-for-byte avec buildPrompt() pour l'outline et la slide lorsque le flag est éteint. Validation isolée sur serveuria au commit 413de15 : provenance 35/35, i18n 3/3, Prettier, TypeScript, ESLint et build Next.js verts ; Vitest 265 fichiers / 1 995 tests ; Playwright 36/36. Un premier passage TypeScript a correctement été invalidé car le harnais montait un ancien dist du DSL ; les cinq packages internes ont été reconstruits depuis le commit testé, puis la chaîne complète a été rejouée avec succès."
     },
     {
       "id": "S1-002",
