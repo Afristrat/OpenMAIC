@@ -16,6 +16,7 @@ import { migrateScene } from '@/lib/edit/slide-schema';
 import type { Scene } from '@/lib/types/stage';
 
 const log = createLogger('Classroom');
+const E2E_TEST_MODE = process.env.NEXT_PUBLIC_E2E_TEST_MODE === 'true';
 
 export default function ClassroomDetailPage() {
   const params = useParams();
@@ -143,6 +144,8 @@ export default function ClassroomDetailPage() {
   }, [classroomId, loadFromStorage]);
 
   useEffect(() => {
+    if (E2E_TEST_MODE) return;
+
     const unsubscribe = useStageStore.subscribe((state, previous) => {
       if (
         !serverBackedRef.current ||
