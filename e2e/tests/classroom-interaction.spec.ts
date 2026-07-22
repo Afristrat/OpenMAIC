@@ -4,16 +4,31 @@ import { createSettingsStorage } from '../fixtures/test-data/settings';
 import { defaultTheme } from '../fixtures/test-data/scene-content';
 
 const TEST_STAGE_ID = 'e2e-test-stage';
+const LIVE_SPEECH_TEST = 'speaks a live agent intervention after a learner message';
 
 const SETTINGS_STORAGE = createSettingsStorage({ sidebarCollapsed: false });
+const LIVE_TTS_SETTINGS_STORAGE = createSettingsStorage(
+  {
+    sidebarCollapsed: false,
+    ttsEnabled: true,
+    ttsMuted: false,
+    ttsVolume: 1,
+    ttsProviderId: 'browser-native-tts',
+    ttsVoice: 'e2e-voice',
+    ttsProvidersConfig: {
+      'browser-native-tts': { apiKey: '', baseUrl: '', enabled: true },
+    },
+  },
+  5,
+);
 
 /** Seed IndexedDB with stage + 3 scenes using raw IndexedDB API */
-async function seedDatabase(page: import('@playwright/test').Page) {
+async function seedDatabase(page: import('@playwright/test').Page, settingsStorage = SETTINGS_STORAGE) {
   // Inject settings before navigating so it's available immediately on load
   await page.addInitScript((settings) => {
     localStorage.setItem('settings-storage', settings);
     localStorage.setItem('locale', 'en-US');
-  }, SETTINGS_STORAGE);
+  }, settingsStorage);
 
   // Navigate to the app page first — this causes Dexie to open/create the DB at v8
   // with the correct schema. We wait for network idle to ensure Dexie is done.
@@ -141,8 +156,11 @@ async function seedDatabase(page: import('@playwright/test').Page) {
 }
 
 test.describe('Classroom Interaction', () => {
-  test.beforeEach(async ({ page }) => {
-    await seedDatabase(page);
+  test.beforeEach(async ({ page }, testInfo) => {
+    await seedDatabase(
+      page,
+      testInfo.title === LIVE_SPEECH_TEST ? LIVE_TTS_SETTINGS_STORAGE : SETTINGS_STORAGE,
+    );
   });
 
   test('loads classroom and switches scenes', async ({ page }) => {
@@ -211,7 +229,7 @@ test.describe('Classroom Interaction', () => {
     await expectBodyScrollState(true);
   });
 
-  test('speaks a live agent intervention after a learner message', async ({ page }) => {
+  test(LIVE_SPEECH_TEST, async ({ page }) => {
     const agentSpeech = 'Apply this idea to one decision you make at work.';
 
     await page.addInitScript(() => {
@@ -269,22 +287,6 @@ test.describe('Classroom Interaction', () => {
       });
       Object.defineProperty(window, 'speechSynthesis', { value: speechSynthesis });
     });
-
-    await page.evaluate(
-      (settings) => {
-        localStorage.setItem('settings-storage', settings);
-      },
-      createSettingsStorage({
-        ttsEnabled: true,
-        ttsMuted: false,
-        ttsVolume: 1,
-        ttsProviderId: 'browser-native-tts',
-        ttsVoice: 'e2e-voice',
-        ttsProvidersConfig: {
-          'browser-native-tts': { apiKey: '', baseUrl: '', enabled: true },
-        },
-      }, 5),
-    );
 
     await page.route('**/api/chat', async (route) => {
       const events = [
