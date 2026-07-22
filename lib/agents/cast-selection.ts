@@ -2,6 +2,7 @@ import {
   buildTenantAgentConfigs,
   type LearningDesignSettings,
 } from '@/lib/agents/persona-catalog';
+import { resolveCultureReference } from '@/lib/agents/culture-references';
 
 type GeneratedAgent = ReturnType<typeof buildTenantAgentConfigs>[number];
 
@@ -128,6 +129,6 @@ export function selectTenantCast({
 
   return {
     agents: ensureGenderMix(teacher ? [teacher, ...selected] : selected, candidates, scores),
-    cultureReference: profile.culture,
+    cultureReference: resolveCultureReference(profile.culture).code,
   };
 }

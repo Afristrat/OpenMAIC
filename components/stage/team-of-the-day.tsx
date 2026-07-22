@@ -32,7 +32,11 @@ export function TeamOfTheDay({
             <li key={agent.id} className="flex items-center gap-2">
               <img src={agent.avatar} alt="" className="size-8 rounded-full object-cover" />
               <span className="min-w-0 flex-1 truncate text-sm font-medium">{agent.name}</span>
-              <span className="text-xs text-muted-foreground">{agent.role}</span>
+              <span className="text-xs text-muted-foreground">
+                {agent.mechanismId && agent.gender
+                  ? t(`org.personaLabels.${agent.mechanismId}.${agent.gender}`)
+                  : t(`settings.agentRoles.${agent.role}`)}
+              </span>
             </li>
           ))}
         </ul>

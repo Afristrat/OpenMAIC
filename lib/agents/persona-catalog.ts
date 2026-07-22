@@ -49,7 +49,7 @@ export const PERSONA_FORMATION_ENGINE_CONSUMER_ID =
 export const PERSONA_CATALOG: readonly PersonaDefinition[] = [
   {
     id: 'professor',
-    label: 'Professeur IA',
+    label: 'Le Professeur',
     role: 'teacher',
     defaultName: 'Younes',
     gender: 'male',
@@ -77,7 +77,7 @@ export const PERSONA_CATALOG: readonly PersonaDefinition[] = [
   },
   {
     id: 'joker',
-    label: 'Le Rigolo',
+    label: 'La Rigolote',
     role: 'student',
     defaultName: 'Rim',
     gender: 'female',
@@ -119,7 +119,7 @@ export const PERSONA_CATALOG: readonly PersonaDefinition[] = [
   },
   {
     id: 'thinker',
-    label: 'Le Penseur',
+    label: 'La Penseuse',
     role: 'assistant',
     defaultName: 'Maryam',
     gender: 'female',
@@ -147,7 +147,7 @@ export const PERSONA_CATALOG: readonly PersonaDefinition[] = [
   },
   {
     id: 'coach',
-    label: 'Le Coach',
+    label: 'La Coach',
     role: 'assistant',
     defaultName: 'Hanae',
     gender: 'female',

@@ -13,6 +13,7 @@ describe('ten-persona learning design', () => {
     expect(PERSONA_CATALOG).toHaveLength(10);
     expect(new Set(PERSONA_CATALOG.map((persona) => persona.id)).size).toBe(10);
     expect(PERSONA_CATALOG.filter((persona) => persona.role === 'teacher')).toHaveLength(1);
+    expect(PERSONA_CATALOG.find((persona) => persona.id === 'coach')?.label).toBe('La Coach');
   });
 
   it.each(['guided', 'balanced', 'immersive'] as const)(
