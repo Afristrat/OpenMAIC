@@ -270,19 +270,21 @@ test.describe('Classroom Interaction', () => {
       Object.defineProperty(window, 'speechSynthesis', { value: speechSynthesis });
     });
 
-    await page.evaluate((settings) => {
-      localStorage.setItem('settings-storage', settings);
-    },
-    createSettingsStorage({
-      ttsEnabled: true,
-      ttsMuted: false,
-      ttsVolume: 1,
-      ttsProviderId: 'browser-native-tts',
-      ttsVoice: 'e2e-voice',
-      ttsProvidersConfig: {
-        'browser-native-tts': { apiKey: '', baseUrl: '', enabled: true },
+    await page.evaluate(
+      (settings) => {
+        localStorage.setItem('settings-storage', settings);
       },
-    }));
+      createSettingsStorage({
+        ttsEnabled: true,
+        ttsMuted: false,
+        ttsVolume: 1,
+        ttsProviderId: 'browser-native-tts',
+        ttsVoice: 'e2e-voice',
+        ttsProvidersConfig: {
+          'browser-native-tts': { apiKey: '', baseUrl: '', enabled: true },
+        },
+      }),
+    );
 
     await page.route('**/api/chat', async (route) => {
       const events = [
