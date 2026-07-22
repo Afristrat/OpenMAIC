@@ -3,6 +3,7 @@ import path from 'node:path';
 
 const LOCALES_DIR = path.join(process.cwd(), 'lib', 'i18n', 'locales');
 const SOURCE_LOCALE = 'en-US.json';
+const UI_LOCALES = ['ui-en-US.json', 'ui-fr-FR.json', 'ui-ar-MA.json'];
 
 function isPlainObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -56,21 +57,12 @@ function readLocaleKeys(filePath) {
   return [...collectLeafKeys(parsed, fileName)].sort();
 }
 
-function main() {
-  const localeFiles = fs
-    .readdirSync(LOCALES_DIR)
-    .filter((name) => name.endsWith('.json'))
-    .sort();
-
-  if (!localeFiles.includes(SOURCE_LOCALE)) {
-    throw new Error(`Missing source locale: ${SOURCE_LOCALE}`);
-  }
-
-  const sourceKeys = new Set(readLocaleKeys(path.join(LOCALES_DIR, SOURCE_LOCALE)));
+function compareGroup(sourceFile, localeFiles, label) {
+  const sourceKeys = new Set(readLocaleKeys(path.join(LOCALES_DIR, sourceFile)));
   const reports = [];
 
   for (const localeFile of localeFiles) {
-    if (localeFile === SOURCE_LOCALE) continue;
+    if (localeFile === sourceFile) continue;
 
     const localeKeys = new Set(readLocaleKeys(path.join(LOCALES_DIR, localeFile)));
     const missing = [...sourceKeys].filter((key) => !localeKeys.has(key)).sort();
@@ -83,12 +75,12 @@ function main() {
 
   if (reports.length === 0) {
     console.log(
-      `i18n key alignment check passed (${localeFiles.length} locale files, source: ${SOURCE_LOCALE}).`,
+      `${label} key alignment passed (${localeFiles.length} files, source: ${sourceFile}).`,
     );
     return;
   }
 
-  console.error(`i18n key alignment check failed against ${SOURCE_LOCALE}:`);
+  console.error(`${label} key alignment failed against ${sourceFile}:`);
 
   for (const report of reports) {
     console.error(`\n- ${report.file}`);
@@ -109,6 +101,27 @@ function main() {
   }
 
   process.exit(1);
+}
+
+function main() {
+  const localeFiles = fs
+    .readdirSync(LOCALES_DIR)
+    .filter((name) => name.endsWith('.json'))
+    .sort();
+
+  if (!localeFiles.includes(SOURCE_LOCALE)) {
+    throw new Error(`Missing source locale: ${SOURCE_LOCALE}`);
+  }
+  for (const uiLocale of UI_LOCALES) {
+    if (!localeFiles.includes(uiLocale)) throw new Error(`Missing UI locale: ${uiLocale}`);
+  }
+
+  compareGroup(
+    SOURCE_LOCALE,
+    localeFiles.filter((name) => !name.startsWith('ui-')),
+    'Upstream locale',
+  );
+  compareGroup('ui-en-US.json', UI_LOCALES, 'Qalem UI locale');
 }
 
 main();

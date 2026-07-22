@@ -16,6 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: pnpm/action-setup@v4
 
@@ -23,6 +25,12 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+
+      - name: Verify S0-014 provenance
+        run: pnpm check:provenance
+
+      - name: Verify locale key parity
+        run: pnpm check:i18n-keys
 
       - run: pnpm install --frozen-lockfile
 

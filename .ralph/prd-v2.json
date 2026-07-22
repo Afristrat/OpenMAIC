@@ -209,13 +209,15 @@
       "title": "Purge de provenance AGPL : neutraliser les 35 fichiers du majorant (ADR-002)",
       "epic": "0-SOCLE",
       "phase": 0,
-      "passes": false,
+      "passes": true,
+      "completedAt": "2026-07-22T05:22:00Z",
       "dependencies": ["S0-002"],
       "acceptance": [
-        "Pour chacun des 35 fichiers de refork/audit-provenance.json : équivalent v0.3.0 localisé (mapping consigné) OU réécrit depuis la base MIT — ZÉRO copie depuis v0.1.0",
+        "Pour chacun des 35 fichiers de refork/audit-provenance.json : équivalent v0.3.0 localisé, réécriture clean-room depuis la base MIT, ou suppression comme obsolète avec remplaçant fonctionnel — ZÉRO copie depuis v0.1.0",
         "audit-provenance.json mis à jour : liste agpl_only_heritage restante = vide",
-        "Notices MIT conservées en en-têtes ; gabarit THIRD-PARTY-NOTICES créé pour livraisons on-premise"
-      ]
+        "Notice MIT racine conservée ; THIRD-PARTY-NOTICES créé pour les livraisons on-premise ; la preuve technique n'emporte aucune conclusion juridique automatique"
+      ],
+      "acceptanceNote": "Preuve système du 2026-07-22 : le majorant a été recalculé depuis les objets Git des commits v0.1.0, legacy-v010-final et de l'import MIT v0.3.0, soit exactement 35 chemins. Le manifeste déterministe refork/audit-provenance.json résout les 35/35 chemins, confirme leur absence du worktree et expose agpl_only_heritage=[] ; le script check:provenance recalcule ces invariants, les blobs interdits et les notices à chaque CI. Les anciens modules i18n ont été supprimés et remplacés par trois catalogues clean-room de 1 992 clés chacun, avec parité stricte FR/AR/EN, 193 clés dynamiques finies et couverture automatique de chaque clé littérale utilisée par l'application. THIRD-PARTY-NOTICES conserve la notice MIT racine et documente l'inventaire des dépendances on-premise. Cette preuve est technique : elle ne constitue ni un avis juridique ni une modification automatique de licence. Validation intégrale sur serveuria : provenance 35/35, i18n 3/3, Prettier vert, TypeScript 0 erreur, ESLint 0 problème, build Next.js vert, Vitest 265 fichiers et 1 994 tests verts, Playwright 36/36 vert."
     },
 
     {

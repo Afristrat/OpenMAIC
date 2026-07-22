@@ -219,7 +219,7 @@ test.describe('Classroom Interaction', () => {
 
     await page.getByRole('button', { name: 'Export PPTX' }).click();
     const mp4Export = page.getByTestId('export-mp4');
-    await expect(mp4Export).toContainText('Export MP4 video');
+    await expect(mp4Export).toContainText('MP4 video');
     const downloadPromise = page.waitForEvent('download');
     await mp4Export.click();
     const download = await downloadPromise;

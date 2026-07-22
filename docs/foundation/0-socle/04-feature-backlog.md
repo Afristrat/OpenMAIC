@@ -19,7 +19,7 @@
 | S0-011 | **[CHECKPOINT AMINE]** Liste garder/abandonner des features des 72 stories | Checklist générée depuis l'inventaire et les stories Ralph v1, présentée à Amine ; sa tranche consignée en ADR — conditionne la bascule prod |
 | S0-012 | **[CHECKPOINT AMINE]** Passe RTL ar-MA visuelle | Parcours guidé préparé (écrans + points de contrôle) ; verdict d'Amine consigné ; défauts → stories de pioche |
 | S0-013 | Déploiement préprod Coolify de `refork-v030` | URL préprod répond 200, génération d'une formation de bout en bout réussie en FR et en AR |
-| S0-014 | Purge de provenance AGPL — les 35 fichiers du majorant (ADR-002, verdict council) | Chaque fichier de `refork/audit-provenance.json` : équivalent v0.3.0 mappé OU réécrit depuis la base MIT (zéro copie v0.1.0) ; liste résiduelle vide ; gabarit `THIRD-PARTY-NOTICES` créé |
+| S0-014 | Purge de provenance AGPL — les 35 fichiers du majorant (ADR-002) | Chaque fichier de `refork/audit-provenance.json` : équivalent v0.3.0 mappé, réécrit depuis la base MIT selon une méthode clean-room, ou supprimé comme obsolète avec remplaçant fonctionnel ; liste résiduelle vide ; contrôle CI et `THIRD-PARTY-NOTICES` créés. Preuve technique, sans conclusion juridique automatique. |
 
 ## Parking lot (YAGNI institutionnalisé — condition de sortie obligatoire)
 

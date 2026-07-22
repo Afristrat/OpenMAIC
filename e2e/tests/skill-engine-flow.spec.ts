@@ -43,7 +43,9 @@ test.describe('Formation Design Pro — persistent generation path', () => {
     await expect(page).toHaveURL(/\/app\?skill=formation-design-pro$/);
     await page.locator('textarea').fill('Concevoir une formation aux entretiens difficiles');
     await page
-      .getByRole('button', { name: /entrer en classe|enter classroom|دخول الفصل/i })
+      .getByRole('button', {
+        name: /accéder à la classe virtuelle|enter classroom|دخول الفصل/i,
+      })
       .click();
 
     await expect(page).toHaveURL(/\/generation-status\?jobId=skill-engine-e2e$/);

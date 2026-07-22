@@ -864,7 +864,7 @@ function HomePage() {
               <BookOpen className="size-4 text-violet-600 dark:text-violet-400" />
             </div>
             <span className="text-sm font-medium text-violet-700 dark:text-violet-300">
-              {t('review.dueCards').replace('{n}', String(dueReviewCount))}
+              {t('review.dueCards', { n: dueReviewCount })}
             </span>
             <span className="ml-auto text-xs text-violet-500 dark:text-violet-400 group-hover:translate-x-0.5 transition-transform">
               &rarr;

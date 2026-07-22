@@ -8,13 +8,13 @@ const LOCALE_CASES = [
     locale: 'fr-FR',
     dir: 'ltr',
     requirement: 'Expliquer la photosynthèse',
-    heading: /cours en préparation/i,
+    heading: /génération de cours/i,
   },
   {
     locale: 'ar-MA',
     dir: 'rtl',
     requirement: 'شرح عملية التركيب الضوئي',
-    heading: /الدرس قيد التحضير/i,
+    heading: /جارٍ توليد المقرر/i,
   },
 ] as const;
 

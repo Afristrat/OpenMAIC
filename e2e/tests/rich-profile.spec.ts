@@ -31,7 +31,7 @@ test.describe('Rich profile section (S2-001)', () => {
     await expect(profile.uiLanguageSelect).toContainText('English');
 
     await profile.pickSelectOption(profile.paceSelect, 'pace-option-fast');
-    await expect(profile.paceSelect).toContainText('Soutenu');
+    await expect(profile.paceSelect).toContainText('Rapide');
 
     await profile.humorCheckbox.click();
     await expect(profile.humorCheckbox).toHaveAttribute('data-state', 'checked');
@@ -68,9 +68,9 @@ test.describe('Rich profile section (S2-001)', () => {
 
   const LOCALE_CASES: { locale: 'fr-FR' | 'en-US' | 'ar-MA'; dir: 'ltr' | 'rtl'; label: string }[] =
     [
-      { locale: 'fr-FR', dir: 'ltr', label: 'Référence culturelle' },
-      { locale: 'en-US', dir: 'ltr', label: 'Cultural reference' },
-      { locale: 'ar-MA', dir: 'rtl', label: 'المرجعية الثقافية' },
+      { locale: 'fr-FR', dir: 'ltr', label: 'Contexte culturel' },
+      { locale: 'en-US', dir: 'ltr', label: 'Cultural context' },
+      { locale: 'ar-MA', dir: 'rtl', label: 'السياق الثقافي' },
     ];
 
   for (const { locale, dir, label } of LOCALE_CASES) {

@@ -5,12 +5,12 @@
 ## 1. Licences (fait vérifié, décision à consigner)
 
 **Faits (preuves lues le 2026-07-09/10)** :
-- Notre fork dérive d'OpenMAIC **v0.1.0 sous AGPL-3.0** (notre `LICENSE` actuelle, 661 lignes).
-- L'upstream **v0.3.0 est sous MIT** (`upstream-v030/LICENSE` lu : « MIT License, Copyright (c) 2026 THU-MAIC »).
+- La carrière figée au tag `legacy-v010-final` dérive d'OpenMAIC **v0.1.0 sous AGPL-3.0** ; son blob `LICENSE` est épinglé dans `refork/audit-provenance.json`.
+- Le re-fork courant part du snapshot upstream **v0.3.0 déclaré MIT** (`LICENSE` : « MIT License, Copyright (c) 2026 THU-MAIC »), importé au commit `14d31aa48d48909d9eb0b17dd35dc793381e2b00`.
 
 **Analyse** : nos personnalisations copiées-adaptées sont des œuvres dérivées d'une base AGPL — les porter telles quelles sur la base MIT fait du fork combiné une œuvre où s'applique la licence la plus contraignante pour les parties concernées. MIT est compatible avec une intégration dans un projet AGPL (l'inverse n'est pas vrai).
 
-**Recommandation (ADR-002, tranche Amine)** : garder **AGPL-3.0 pour notre fork** — coût quasi nul pour nous (nous opérons le service nous-mêmes ; l'obligation §13 de mise à disposition du code source aux utilisateurs du service réseau s'applique déjà aujourd'hui) et zéro risque de contamination inverse. Alternative « tout MIT » rejetée sauf réécriture clean-room des parties dérivées (coût sans valeur produit). ⚠️ Obligation AGPL §13 active dès aujourd'hui sur la prod : un lien vers les sources doit être offert aux utilisateurs — vérifier sa présence, sinon story de pioche.
+**Décision conditionnelle (ADR-002)** : le re-fork reste sous la déclaration `MIT` présente dans son dépôt tant qu'une revue juridique indépendante et une décision de licence séparée n'ont pas validé un autre régime. S0-014 produit une preuve technique reproductible sur les 35 chemins du majorant ; elle ne constitue pas un avis juridique et n'autorise pas à elle seule la privatisation. Toute livraison on-premise doit inclure `THIRD-PARTY-NOTICES` et l'inventaire des dépendances de l'artefact exact livré.
 
 ## 2. Données personnelles — dettes assumées au stade du socle
 

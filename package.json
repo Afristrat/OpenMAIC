@@ -16,6 +16,7 @@
     "start:workers": "tsx scripts/start-workers.ts",
     "lint": "eslint",
     "check:i18n-keys": "node scripts/check-i18n-keys.mjs",
+    "check:provenance": "node scripts/check-audit-provenance.mjs",
     "check": "prettier . --check",
     "format": "prettier . --write",
     "test": "vitest run",

@@ -1,0 +1,778 @@
+{
+  "schema_version": 1,
+  "story": "S0-014",
+  "keys": [
+    {
+      "key": "actions.names.discussion",
+      "placeholders": []
+    },
+    {
+      "key": "actions.names.laser",
+      "placeholders": []
+    },
+    {
+      "key": "actions.names.play_video",
+      "placeholders": []
+    },
+    {
+      "key": "actions.names.speech",
+      "placeholders": []
+    },
+    {
+      "key": "actions.names.spotlight",
+      "placeholders": []
+    },
+    {
+      "key": "actions.names.wb_clear",
+      "placeholders": []
+    },
+    {
+      "key": "actions.names.wb_close",
+      "placeholders": []
+    },
+    {
+      "key": "actions.names.wb_delete",
+      "placeholders": []
+    },
+    {
+      "key": "actions.names.wb_draw_chart",
+      "placeholders": []
+    },
+    {
+      "key": "actions.names.wb_draw_code",
+      "placeholders": []
+    },
+    {
+      "key": "actions.names.wb_draw_latex",
+      "placeholders": []
+    },
+    {
+      "key": "actions.names.wb_draw_line",
+      "placeholders": []
+    },
+    {
+      "key": "actions.names.wb_draw_shape",
+      "placeholders": []
+    },
+    {
+      "key": "actions.names.wb_draw_table",
+      "placeholders": []
+    },
+    {
+      "key": "actions.names.wb_draw_text",
+      "placeholders": []
+    },
+    {
+      "key": "actions.names.wb_edit_code",
+      "placeholders": []
+    },
+    {
+      "key": "actions.names.wb_open",
+      "placeholders": []
+    },
+    {
+      "key": "actions.names.widget_annotation",
+      "placeholders": []
+    },
+    {
+      "key": "actions.names.widget_highlight",
+      "placeholders": []
+    },
+    {
+      "key": "actions.names.widget_reveal",
+      "placeholders": []
+    },
+    {
+      "key": "actions.names.widget_setState",
+      "placeholders": []
+    },
+    {
+      "key": "actions.status.error",
+      "placeholders": []
+    },
+    {
+      "key": "actions.status.inputAvailable",
+      "placeholders": []
+    },
+    {
+      "key": "actions.status.inputStreaming",
+      "placeholders": []
+    },
+    {
+      "key": "actions.status.outputAvailable",
+      "placeholders": []
+    },
+    {
+      "key": "actions.status.outputDenied",
+      "placeholders": []
+    },
+    {
+      "key": "actions.status.outputError",
+      "placeholders": []
+    },
+    {
+      "key": "actions.status.result",
+      "placeholders": []
+    },
+    {
+      "key": "actions.status.running",
+      "placeholders": []
+    },
+    {
+      "key": "chat.badge.discussion",
+      "placeholders": []
+    },
+    {
+      "key": "chat.badge.lecture",
+      "placeholders": []
+    },
+    {
+      "key": "chat.badge.qa",
+      "placeholders": []
+    },
+    {
+      "key": "classroomComplete.encouragement.high",
+      "placeholders": []
+    },
+    {
+      "key": "classroomComplete.encouragement.low",
+      "placeholders": []
+    },
+    {
+      "key": "classroomComplete.encouragement.mid",
+      "placeholders": []
+    },
+    {
+      "key": "classroomComplete.trailLabels.interactive",
+      "placeholders": []
+    },
+    {
+      "key": "classroomComplete.trailLabels.pbl",
+      "placeholders": []
+    },
+    {
+      "key": "classroomComplete.trailLabels.plugin",
+      "placeholders": []
+    },
+    {
+      "key": "classroomComplete.trailLabels.quiz",
+      "placeholders": []
+    },
+    {
+      "key": "classroomComplete.trailLabels.slide",
+      "placeholders": []
+    },
+    {
+      "key": "curriculum.deepens",
+      "placeholders": []
+    },
+    {
+      "key": "curriculum.follows",
+      "placeholders": []
+    },
+    {
+      "key": "curriculum.prerequisite",
+      "placeholders": []
+    },
+    {
+      "key": "curriculum.reviews",
+      "placeholders": []
+    },
+    {
+      "key": "edit.quiz.hint.emptyOption",
+      "placeholders": ["n"]
+    },
+    {
+      "key": "edit.quiz.hint.emptyText",
+      "placeholders": ["n"]
+    },
+    {
+      "key": "edit.quiz.hint.fewOptions",
+      "placeholders": ["n"]
+    },
+    {
+      "key": "edit.quiz.hint.noCorrect",
+      "placeholders": ["n"]
+    },
+    {
+      "key": "edit.quiz.type.multiple",
+      "placeholders": []
+    },
+    {
+      "key": "edit.quiz.type.short_answer",
+      "placeholders": []
+    },
+    {
+      "key": "edit.quiz.type.single",
+      "placeholders": []
+    },
+    {
+      "key": "edit.sceneType.interactive",
+      "placeholders": []
+    },
+    {
+      "key": "edit.sceneType.pbl",
+      "placeholders": []
+    },
+    {
+      "key": "edit.sceneType.plugin",
+      "placeholders": []
+    },
+    {
+      "key": "edit.sceneType.quiz",
+      "placeholders": []
+    },
+    {
+      "key": "edit.sceneType.slide",
+      "placeholders": []
+    },
+    {
+      "key": "generation.sceneTypeInteractive",
+      "placeholders": []
+    },
+    {
+      "key": "generation.sceneTypePbl",
+      "placeholders": []
+    },
+    {
+      "key": "generation.sceneTypePlugin",
+      "placeholders": []
+    },
+    {
+      "key": "generation.sceneTypeQuiz",
+      "placeholders": []
+    },
+    {
+      "key": "generation.sceneTypeSlide",
+      "placeholders": []
+    },
+    {
+      "key": "marketplace.sort.rating",
+      "placeholders": []
+    },
+    {
+      "key": "marketplace.sort.recent",
+      "placeholders": []
+    },
+    {
+      "key": "marketplace.sort.score",
+      "placeholders": []
+    },
+    {
+      "key": "marketplace.sort.usage",
+      "placeholders": []
+    },
+    {
+      "key": "org.admin",
+      "placeholders": []
+    },
+    {
+      "key": "org.apprenant",
+      "placeholders": []
+    },
+    {
+      "key": "org.audienceStages.adolescent",
+      "placeholders": []
+    },
+    {
+      "key": "org.audienceStages.adult-professional",
+      "placeholders": []
+    },
+    {
+      "key": "org.audienceStages.child",
+      "placeholders": []
+    },
+    {
+      "key": "org.audienceStages.higher-education",
+      "placeholders": []
+    },
+    {
+      "key": "org.expertiseLevels.advanced",
+      "placeholders": []
+    },
+    {
+      "key": "org.expertiseLevels.beginner",
+      "placeholders": []
+    },
+    {
+      "key": "org.expertiseLevels.intermediate",
+      "placeholders": []
+    },
+    {
+      "key": "org.formateur",
+      "placeholders": []
+    },
+    {
+      "key": "org.interactionLevels.balanced",
+      "placeholders": []
+    },
+    {
+      "key": "org.interactionLevels.guided",
+      "placeholders": []
+    },
+    {
+      "key": "org.interactionLevels.immersive",
+      "placeholders": []
+    },
+    {
+      "key": "org.learningApproaches.andragogy",
+      "placeholders": []
+    },
+    {
+      "key": "org.learningApproaches.hybrid",
+      "placeholders": []
+    },
+    {
+      "key": "org.learningApproaches.pedagogy",
+      "placeholders": []
+    },
+    {
+      "key": "org.manager",
+      "placeholders": []
+    },
+    {
+      "key": "org.personaLabels.analyst.female",
+      "placeholders": []
+    },
+    {
+      "key": "org.personaLabels.analyst.male",
+      "placeholders": []
+    },
+    {
+      "key": "org.personaLabels.coach.female",
+      "placeholders": []
+    },
+    {
+      "key": "org.personaLabels.coach.male",
+      "placeholders": []
+    },
+    {
+      "key": "org.personaLabels.creative.female",
+      "placeholders": []
+    },
+    {
+      "key": "org.personaLabels.creative.male",
+      "placeholders": []
+    },
+    {
+      "key": "org.personaLabels.curious.female",
+      "placeholders": []
+    },
+    {
+      "key": "org.personaLabels.curious.male",
+      "placeholders": []
+    },
+    {
+      "key": "org.personaLabels.devils-advocate.female",
+      "placeholders": []
+    },
+    {
+      "key": "org.personaLabels.devils-advocate.male",
+      "placeholders": []
+    },
+    {
+      "key": "org.personaLabels.joker.female",
+      "placeholders": []
+    },
+    {
+      "key": "org.personaLabels.joker.male",
+      "placeholders": []
+    },
+    {
+      "key": "org.personaLabels.professor.female",
+      "placeholders": []
+    },
+    {
+      "key": "org.personaLabels.professor.male",
+      "placeholders": []
+    },
+    {
+      "key": "org.personaLabels.secretary.female",
+      "placeholders": []
+    },
+    {
+      "key": "org.personaLabels.secretary.male",
+      "placeholders": []
+    },
+    {
+      "key": "org.personaLabels.teaching-assistant.female",
+      "placeholders": []
+    },
+    {
+      "key": "org.personaLabels.teaching-assistant.male",
+      "placeholders": []
+    },
+    {
+      "key": "org.personaLabels.thinker.female",
+      "placeholders": []
+    },
+    {
+      "key": "org.personaLabels.thinker.male",
+      "placeholders": []
+    },
+    {
+      "key": "org.sectors.education",
+      "placeholders": []
+    },
+    {
+      "key": "org.sectors.finance",
+      "placeholders": []
+    },
+    {
+      "key": "org.sectors.healthcare",
+      "placeholders": []
+    },
+    {
+      "key": "org.sectors.industry",
+      "placeholders": []
+    },
+    {
+      "key": "org.sectors.legal",
+      "placeholders": []
+    },
+    {
+      "key": "org.sectors.tech",
+      "placeholders": []
+    },
+    {
+      "key": "org.visibility.organization",
+      "placeholders": []
+    },
+    {
+      "key": "org.visibility.private",
+      "placeholders": []
+    },
+    {
+      "key": "org.visibility.public",
+      "placeholders": []
+    },
+    {
+      "key": "pbl.v2.completion.synthesisQuality.ok",
+      "placeholders": []
+    },
+    {
+      "key": "pbl.v2.completion.synthesisQuality.strong",
+      "placeholders": []
+    },
+    {
+      "key": "pbl.v2.completion.synthesisQuality.weak",
+      "placeholders": []
+    },
+    {
+      "key": "profile.richProfile.culture.en",
+      "placeholders": []
+    },
+    {
+      "key": "profile.richProfile.culture.fr",
+      "placeholders": []
+    },
+    {
+      "key": "profile.richProfile.culture.ma-ar",
+      "placeholders": []
+    },
+    {
+      "key": "profile.richProfile.culture.ma-fr",
+      "placeholders": []
+    },
+    {
+      "key": "profile.richProfile.pace.fast",
+      "placeholders": []
+    },
+    {
+      "key": "profile.richProfile.pace.normal",
+      "placeholders": []
+    },
+    {
+      "key": "profile.richProfile.pace.slow",
+      "placeholders": []
+    },
+    {
+      "key": "settings.agentDescriptions.default-2",
+      "placeholders": []
+    },
+    {
+      "key": "settings.agentDescriptions.default-3",
+      "placeholders": []
+    },
+    {
+      "key": "settings.agentDescriptions.default-4",
+      "placeholders": []
+    },
+    {
+      "key": "settings.agentDescriptions.default-5",
+      "placeholders": []
+    },
+    {
+      "key": "settings.agentDescriptions.default-6",
+      "placeholders": []
+    },
+    {
+      "key": "settings.agentNames.default-1",
+      "placeholders": []
+    },
+    {
+      "key": "settings.agentNames.default-2",
+      "placeholders": []
+    },
+    {
+      "key": "settings.agentNames.default-3",
+      "placeholders": []
+    },
+    {
+      "key": "settings.agentNames.default-4",
+      "placeholders": []
+    },
+    {
+      "key": "settings.agentNames.default-5",
+      "placeholders": []
+    },
+    {
+      "key": "settings.agentNames.default-6",
+      "placeholders": []
+    },
+    {
+      "key": "settings.agentRoles.assistant",
+      "placeholders": []
+    },
+    {
+      "key": "settings.agentRoles.student",
+      "placeholders": []
+    },
+    {
+      "key": "settings.agentRoles.teacher",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerComfyUIVideo",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerGrokImage",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerGrokVideo",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerHappyHorse",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerHappyhorse",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerKling",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerLemonadeImage",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerMiniMaxImage",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerMiniMaxVideo",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerMinimaxImage",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerMinimaxVideo",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerNames.anthropic",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerNames.deepseek",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerNames.doubao",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerNames.glm",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerNames.google",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerNames.grok",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerNames.kimi",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerNames.lemonade",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerNames.minimax",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerNames.ollama",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerNames.openai",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerNames.openrouter",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerNames.qwen",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerNames.siliconflow",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerNames.tencent-hunyuan",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerNames.xiaomi",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerNanoBanana",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerOpenAIImage",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerQwenImage",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerSeedance",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerSeedream",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerSora",
+      "placeholders": []
+    },
+    {
+      "key": "settings.providerVeo",
+      "placeholders": []
+    },
+    {
+      "key": "toolbar.auto",
+      "placeholders": []
+    },
+    {
+      "key": "toolbar.dynamic",
+      "placeholders": []
+    },
+    {
+      "key": "toolbar.off",
+      "placeholders": []
+    },
+    {
+      "key": "toolbar.on",
+      "placeholders": []
+    },
+    {
+      "key": "videoCapsule.options.acquisition",
+      "placeholders": []
+    },
+    {
+      "key": "videoCapsule.options.awareness",
+      "placeholders": []
+    },
+    {
+      "key": "videoCapsule.options.cinematic",
+      "placeholders": []
+    },
+    {
+      "key": "videoCapsule.options.default",
+      "placeholders": []
+    },
+    {
+      "key": "videoCapsule.options.demo_day",
+      "placeholders": []
+    },
+    {
+      "key": "videoCapsule.options.etudiant",
+      "placeholders": []
+    },
+    {
+      "key": "videoCapsule.options.grand_public",
+      "placeholders": []
+    },
+    {
+      "key": "videoCapsule.options.insolent",
+      "placeholders": []
+    },
+    {
+      "key": "videoCapsule.options.institution",
+      "placeholders": []
+    },
+    {
+      "key": "videoCapsule.options.interne",
+      "placeholders": []
+    },
+    {
+      "key": "videoCapsule.options.investisseur",
+      "placeholders": []
+    },
+    {
+      "key": "videoCapsule.options.pairs_tech",
+      "placeholders": []
+    },
+    {
+      "key": "videoCapsule.options.pedagogique",
+      "placeholders": []
+    },
+    {
+      "key": "videoCapsule.options.premium",
+      "placeholders": []
+    },
+    {
+      "key": "videoCapsule.options.proof",
+      "placeholders": []
+    },
+    {
+      "key": "videoCapsule.options.urgence",
+      "placeholders": []
+    },
+    {
+      "key": "videoCapsule.options.wrapped_shareable",
+      "placeholders": []
+    },
+    {
+      "key": "videoCapsule.status.generating",
+      "placeholders": []
+    },
+    {
+      "key": "videoCapsule.status.queued",
+      "placeholders": []
+    },
+    {
+      "key": "videoCapsule.status.rendering",
+      "placeholders": []
+    }
+  ]
+}

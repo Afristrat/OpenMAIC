@@ -1,0 +1,928 @@
+{
+  "schema_version": 1,
+  "story": "S0-014",
+  "scope": "technical_provenance_evidence_not_legal_opinion",
+  "methodology": "Intersection of paths present in upstream v0.1 and legacy-final, absent from the imported MIT v0.3 tree; every result is then mapped, rewritten from the MIT baseline, or removed as obsolete.",
+  "source_snapshots": {
+    "upstream_v01": {
+      "commit": "1d0514424c69d78b55945a668df7dbfed4686586",
+      "tree": "35dbbfdefa889077c589980778d75a0261a9d90c",
+      "declared_license": "AGPL-3.0",
+      "license_blob_oid": "be3f7b28e564e7dd05eaf59d64adba1a4065ac0e"
+    },
+    "legacy_final": {
+      "tag": "legacy-v010-final",
+      "commit": "a4c8421695820e63be585e166d7ed35829d13369",
+      "tree": "cdf3665984ea188f0dcd6a7ccdbbde7932ee260c",
+      "declared_license": "AGPL-3.0",
+      "license_blob_oid": "be3f7b28e564e7dd05eaf59d64adba1a4065ac0e"
+    },
+    "mit_baseline": {
+      "repository": "https://github.com/THU-MAIC/OpenMAIC.git",
+      "tag": "v0.3.0",
+      "upstream_commit": "da0b394b81745153b0dffd8537d0b2d1b94eaf61",
+      "import_commit": "14d31aa48d48909d9eb0b17dd35dc793381e2b00",
+      "import_tree": "179a875db78ac3c8537a556fb0d548173446dd4b",
+      "declared_license": "MIT",
+      "license_blob_oid": "76abc5f13261e94fc0382b33ac8c101555288083"
+    }
+  },
+  "majorant_count": 35,
+  "agpl_only_heritage": [],
+  "resolutions": [
+    {
+      "legacy_path": "components/chat/process-sse-stream.ts",
+      "upstream_v01_blob_oid": "7ba0f450abc601d9a20ada8fd86eb78158117405",
+      "legacy_final_blob_oid": "7ba0f450abc601d9a20ada8fd86eb78158117405",
+      "disposition": "removed_obsolete",
+      "mit_sources": [
+        {
+          "path": "lib/agent/runtime/stream-fn.ts",
+          "blob_oid": "b66a52202852cd348f6f157aeeb8a7b43144a2b9"
+        },
+        {
+          "path": "lib/hooks/use-streaming-text.ts",
+          "blob_oid": "ba39d044e3e248610590ad919725d786b07b5d8b"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/agent/runtime/stream-fn.ts",
+          "sha256": "0005b364f71d469b960769316d17644180be4955ae8b7efff608b3c304c9af15"
+        },
+        {
+          "path": "lib/hooks/use-streaming-text.ts",
+          "sha256": "4b0aa2ada8f7f71efed7f5387946e123cdcbc6d1b57b91a16b03b7b29a25a63e"
+        }
+      ]
+    },
+    {
+      "legacy_path": "components/settings/audio-settings.tsx",
+      "upstream_v01_blob_oid": "dd69eed23e8583908eb8c04cbd3987a8e315e724",
+      "legacy_final_blob_oid": "1f12181a79e8a51aa7470b8e2e09ba0a9dba3a48",
+      "disposition": "removed_obsolete",
+      "mit_sources": [
+        {
+          "path": "components/settings/tts-settings.tsx",
+          "blob_oid": "90c5ff74ea553fb1cb94cbea029f68a84ada552b"
+        },
+        {
+          "path": "components/settings/asr-settings.tsx",
+          "blob_oid": "dec386aae6e4d4dca0b0dc79ec21a08fd05c51e8"
+        },
+        {
+          "path": "components/settings/provider-list.tsx",
+          "blob_oid": "5350e29ae02caf854061e9e64333abded3ca3619"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "components/settings/tts-settings.tsx",
+          "sha256": "839aef66db7f986ec4d4ae43b2b6670fba4499035b7e0e0a57d3b57a440e164e"
+        },
+        {
+          "path": "components/settings/asr-settings.tsx",
+          "sha256": "b340e0abc4c44776fbb5c8080f23c5dbfc135fabf615356147b083089e0977eb"
+        },
+        {
+          "path": "components/settings/provider-list.tsx",
+          "sha256": "d61ac8b790ae9709627c821955293763d81d9175178adf8944cfac206c66941d"
+        }
+      ]
+    },
+    {
+      "legacy_path": "components/settings/model-selector.tsx",
+      "upstream_v01_blob_oid": "8ce07fddfff0c9b724693eb80e90991ad30a9d64",
+      "legacy_final_blob_oid": "8ce07fddfff0c9b724693eb80e90991ad30a9d64",
+      "disposition": "removed_obsolete",
+      "mit_sources": [
+        {
+          "path": "components/ai-elements/model-selector.tsx",
+          "blob_oid": "e2a7e498d1c952309275dfbe31b3dd566790b547"
+        },
+        {
+          "path": "components/settings/model-edit-dialog.tsx",
+          "blob_oid": "10cb405a0eade9707aa08680a9fc849a904edcad"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "components/ai-elements/model-selector.tsx",
+          "sha256": "36a07e25730bb285725fd66a62dbc13a28cbe635034fef7b3a1db5a5a395feb3"
+        },
+        {
+          "path": "components/settings/model-edit-dialog.tsx",
+          "sha256": "cc45e38301ad5bb7ef5aefe3c77819a8faddeaf07931aee49ae017b7475705af"
+        }
+      ]
+    },
+    {
+      "legacy_path": "components/slide-renderer/components/ThumbnailSlide/index.tsx",
+      "upstream_v01_blob_oid": "1aac102d9dccaa589b61d4f4dc63711da0f53537",
+      "legacy_final_blob_oid": "1aac102d9dccaa589b61d4f4dc63711da0f53537",
+      "disposition": "removed_obsolete",
+      "mit_sources": [
+        {
+          "path": "components/slide-renderer/SlideThumbnail.tsx",
+          "blob_oid": "874278a9ca84c361ae53b82880dfcc6ddf98ed35"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "components/slide-renderer/SlideThumbnail.tsx",
+          "sha256": "c45b0ba0c00d40ffdaaaf14629129a545542596ec798fd9e0fd9f5091723a952"
+        }
+      ]
+    },
+    {
+      "legacy_path": "components/slide-renderer/components/ThumbnailSlide/ThumbnailElement.tsx",
+      "upstream_v01_blob_oid": "5f0b5f9efeb94fe3f22009a35014efa9797a7cb7",
+      "legacy_final_blob_oid": "5f0b5f9efeb94fe3f22009a35014efa9797a7cb7",
+      "disposition": "removed_obsolete",
+      "mit_sources": [
+        {
+          "path": "components/slide-renderer/SlideThumbnail.tsx",
+          "blob_oid": "874278a9ca84c361ae53b82880dfcc6ddf98ed35"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "components/slide-renderer/SlideThumbnail.tsx",
+          "sha256": "c45b0ba0c00d40ffdaaaf14629129a545542596ec798fd9e0fd9f5091723a952"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/generation/prompts/index.ts",
+      "upstream_v01_blob_oid": "8c6b2967e966f2739917276979d1f65134400faa",
+      "legacy_final_blob_oid": "8c6b2967e966f2739917276979d1f65134400faa",
+      "disposition": "derived_from_mit",
+      "mit_sources": [
+        {
+          "path": "lib/prompts/index.ts",
+          "blob_oid": "1131916d150be8f778add9b300dfd52ce0536449"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/prompts/index.ts",
+          "sha256": "19c42aceed83cfb011dfff777ed11f1d4c5bb873e57a8e90f4ce2b4217ff8946"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/generation/prompts/loader.ts",
+      "upstream_v01_blob_oid": "aa81df0d4a5d382de2a3b60bd5391c6fb54967e9",
+      "legacy_final_blob_oid": "aa81df0d4a5d382de2a3b60bd5391c6fb54967e9",
+      "disposition": "derived_from_mit",
+      "mit_sources": [
+        {
+          "path": "lib/prompts/loader.ts",
+          "blob_oid": "d70aa9c54992f6a8af57c9f62beedeac0fe00917"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/prompts/loader.ts",
+          "sha256": "d628ffea29d4267aebc1d5ad4882feab0157ae79f8cab00b33af16e9c44816c1"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/generation/prompts/snippets/action-types.md",
+      "upstream_v01_blob_oid": "f28294bd46aa9df6152074304d72e83606dff764",
+      "legacy_final_blob_oid": "f28294bd46aa9df6152074304d72e83606dff764",
+      "disposition": "derived_from_mit",
+      "mit_sources": [
+        {
+          "path": "lib/prompts/snippets/action-types.md",
+          "blob_oid": "f28294bd46aa9df6152074304d72e83606dff764"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/prompts/snippets/action-types.md",
+          "sha256": "e35455e68aaabf8aa1407466f450dd74295b87ec68f15751b24875f357483d5a"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/generation/prompts/snippets/element-types.md",
+      "upstream_v01_blob_oid": "4dc9660c48794b7a5a4a0118125c8b60f2b1c615",
+      "legacy_final_blob_oid": "4dc9660c48794b7a5a4a0118125c8b60f2b1c615",
+      "disposition": "derived_from_mit",
+      "mit_sources": [
+        {
+          "path": "lib/prompts/snippets/element-types.md",
+          "blob_oid": "4dc9660c48794b7a5a4a0118125c8b60f2b1c615"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/prompts/snippets/element-types.md",
+          "sha256": "c5d6473ea493e79986ac50cdc8b91d11c854db02d94292894d8129a587bbf9ab"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/generation/prompts/snippets/json-output-rules.md",
+      "upstream_v01_blob_oid": "1cf8796e67e636e9ebc85965f184c769318fde3e",
+      "legacy_final_blob_oid": "1cf8796e67e636e9ebc85965f184c769318fde3e",
+      "disposition": "derived_from_mit",
+      "mit_sources": [
+        {
+          "path": "lib/prompts/snippets/json-output-rules.md",
+          "blob_oid": "1cf8796e67e636e9ebc85965f184c769318fde3e"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/prompts/snippets/json-output-rules.md",
+          "sha256": "05ba04da6ef247a4b87bfcad989faf7b58aefcba1ec7a94f972890c2c5aed616"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/generation/prompts/templates/interactive-actions/system.md",
+      "upstream_v01_blob_oid": "dd1e8893d88b4aef588ae67d8f1764c91404f716",
+      "legacy_final_blob_oid": "0b0e6213513e97608a77e0d5d94e407f69be8f89",
+      "disposition": "derived_from_mit",
+      "mit_sources": [
+        {
+          "path": "lib/prompts/templates/interactive-actions/system.md",
+          "blob_oid": "259f9c4b1c545a16df456919e99e99854c6262e2"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/prompts/templates/interactive-actions/system.md",
+          "sha256": "63100a38f92323bd21c2d6ab3be361ea125c09bfb410692b695c90f6d735a745"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/generation/prompts/templates/interactive-actions/user.md",
+      "upstream_v01_blob_oid": "6c08811bde4ad4f3dfebfd737a9ac92f6b3ab264",
+      "legacy_final_blob_oid": "6c08811bde4ad4f3dfebfd737a9ac92f6b3ab264",
+      "disposition": "derived_from_mit",
+      "mit_sources": [
+        {
+          "path": "lib/prompts/templates/interactive-actions/user.md",
+          "blob_oid": "51b490f488d9b94e4dc4bd5ddff2bd014320f78c"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/prompts/templates/interactive-actions/user.md",
+          "sha256": "e3c9afe443dc8222178f2fdf263acce6ae11b284597fdb4221eb4d9f05538fc2"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/generation/prompts/templates/interactive-html/system.md",
+      "upstream_v01_blob_oid": "0b9421997e37360371bb02ec9b72fbe48bf41dcc",
+      "legacy_final_blob_oid": "d494cfae3bd804b15b2de09964285641dd00a75b",
+      "disposition": "removed_obsolete",
+      "mit_sources": [
+        {
+          "path": "lib/prompts/templates/interactive-outlines/system.md",
+          "blob_oid": "ae2091d440c882ed7ade283d67ec6623b806ec08"
+        },
+        {
+          "path": "lib/prompts/templates/simulation-content/system.md",
+          "blob_oid": "c690097a3b99fb923940bdd87bb47e2fcdea2b6b"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/prompts/templates/interactive-outlines/system.md",
+          "sha256": "ca99b9dd10282794126f95dd0e3735a0b13f35a6afdb8cd9e61517cc44c7d938"
+        },
+        {
+          "path": "lib/prompts/templates/simulation-content/system.md",
+          "sha256": "b1ec88316f06da25e76e44b8a103639158a75fb28e45c3be82d8c48eba67d66c"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/generation/prompts/templates/interactive-html/user.md",
+      "upstream_v01_blob_oid": "30a3ab23005dd0500cdb24d0ee1394d2c6fe85c9",
+      "legacy_final_blob_oid": "30a3ab23005dd0500cdb24d0ee1394d2c6fe85c9",
+      "disposition": "removed_obsolete",
+      "mit_sources": [
+        {
+          "path": "lib/prompts/templates/interactive-outlines/user.md",
+          "blob_oid": "e14a534c38ca2ffa1479af79f22b2f62c3309d1b"
+        },
+        {
+          "path": "lib/prompts/templates/simulation-content/user.md",
+          "blob_oid": "3e4739b3b131071568962a5adcee083595e84a7f"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/prompts/templates/interactive-outlines/user.md",
+          "sha256": "3970a0539adffe8e7d78407bc6b67798aa20394452d5d4703b0f0e3723edfa07"
+        },
+        {
+          "path": "lib/prompts/templates/simulation-content/user.md",
+          "sha256": "d5a52c8a249351b8438f5edfeac9b95ca0af2da6631be3aedc95b13f1a199bfe"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/generation/prompts/templates/interactive-scientific-model/system.md",
+      "upstream_v01_blob_oid": "59d7db5aad0fc16b4d0b2581623a792a6ea35dcb",
+      "legacy_final_blob_oid": "6381b14ca6494657b54d77086b41b4baa6b3a2d4",
+      "disposition": "removed_obsolete",
+      "mit_sources": [
+        {
+          "path": "lib/prompts/templates/simulation-content/system.md",
+          "blob_oid": "c690097a3b99fb923940bdd87bb47e2fcdea2b6b"
+        },
+        {
+          "path": "lib/prompts/templates/visualization3d-content/system.md",
+          "blob_oid": "00d7a8219f4f4d912c5ac0d0f3f49bc2a55322ee"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/prompts/templates/simulation-content/system.md",
+          "sha256": "b1ec88316f06da25e76e44b8a103639158a75fb28e45c3be82d8c48eba67d66c"
+        },
+        {
+          "path": "lib/prompts/templates/visualization3d-content/system.md",
+          "sha256": "836675508900ea11828d85765cf9eca3ebc3b697cf27dfe7871a3816b639c447"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/generation/prompts/templates/interactive-scientific-model/user.md",
+      "upstream_v01_blob_oid": "df0f56e91af24a4e5c6552036a4264492951aa18",
+      "legacy_final_blob_oid": "df0f56e91af24a4e5c6552036a4264492951aa18",
+      "disposition": "removed_obsolete",
+      "mit_sources": [
+        {
+          "path": "lib/prompts/templates/simulation-content/user.md",
+          "blob_oid": "3e4739b3b131071568962a5adcee083595e84a7f"
+        },
+        {
+          "path": "lib/prompts/templates/visualization3d-content/user.md",
+          "blob_oid": "8f6d0b00d572db888713b6dccc315a1776255fe8"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/prompts/templates/simulation-content/user.md",
+          "sha256": "d5a52c8a249351b8438f5edfeac9b95ca0af2da6631be3aedc95b13f1a199bfe"
+        },
+        {
+          "path": "lib/prompts/templates/visualization3d-content/user.md",
+          "sha256": "962b8fc01b310a8a7cf00165b0477708d81ab2b9c7388bc0f321eb40bcdd4dcc"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/generation/prompts/templates/pbl-actions/system.md",
+      "upstream_v01_blob_oid": "92ccdfe6c8767074a599337d34995e1b1b2d53b7",
+      "legacy_final_blob_oid": "f1516ebaa106318bb21e3f6df37df126f1270e7f",
+      "disposition": "derived_from_mit",
+      "mit_sources": [
+        {
+          "path": "lib/prompts/templates/pbl-actions/system.md",
+          "blob_oid": "6fb45e2fb1545c60e846c6ff7c96115d4c86eb7d"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/prompts/templates/pbl-actions/system.md",
+          "sha256": "d723c554a88ee915499ede40e115d8279d605f484c405e1d2e8dc952e6119052"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/generation/prompts/templates/pbl-actions/user.md",
+      "upstream_v01_blob_oid": "cb8a72c7b131722292d0e568eaa78da580e660d3",
+      "legacy_final_blob_oid": "cb8a72c7b131722292d0e568eaa78da580e660d3",
+      "disposition": "derived_from_mit",
+      "mit_sources": [
+        {
+          "path": "lib/prompts/templates/pbl-actions/user.md",
+          "blob_oid": "3d68ed83fe692061f1e9a26df42193d826502391"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/prompts/templates/pbl-actions/user.md",
+          "sha256": "a75c7e4b131d131f8e85856abd53d7972b4967d558b0c623b46547912954ef1c"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/generation/prompts/templates/quiz-actions/system.md",
+      "upstream_v01_blob_oid": "16f708c7364e439e8d524fa6e7b79bdfdd1f4fdc",
+      "legacy_final_blob_oid": "6cbbcbf0319d33377ffa04957d7be89cc08a0c0d",
+      "disposition": "derived_from_mit",
+      "mit_sources": [
+        {
+          "path": "lib/prompts/templates/quiz-actions/system.md",
+          "blob_oid": "50f92e59df2d4761b417e9f0981bdda009e13000"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/prompts/templates/quiz-actions/system.md",
+          "sha256": "c6884e9d3366563bf4f4ef48641fa35d2111a7b1df8b3c29e48e1b4f02aaf7c8"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/generation/prompts/templates/quiz-actions/user.md",
+      "upstream_v01_blob_oid": "c624852289bc2dcba55769961976cd0f8537c081",
+      "legacy_final_blob_oid": "c624852289bc2dcba55769961976cd0f8537c081",
+      "disposition": "derived_from_mit",
+      "mit_sources": [
+        {
+          "path": "lib/prompts/templates/quiz-actions/user.md",
+          "blob_oid": "d92bb1e1c0b81538f72ba17f6bde3d7dd2e653f8"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/prompts/templates/quiz-actions/user.md",
+          "sha256": "69d73d4fa0cd7490307c3a5fee667c25412e8dafe1606416139a8f7f1a2a4893"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/generation/prompts/templates/quiz-content/system.md",
+      "upstream_v01_blob_oid": "0a3efda83c27266df3d9e8728ed6c2303ff4c838",
+      "legacy_final_blob_oid": "9cd66dd262832189981b8854ebd28ff0f91149db",
+      "disposition": "derived_from_mit",
+      "mit_sources": [
+        {
+          "path": "lib/prompts/templates/quiz-content/system.md",
+          "blob_oid": "0a3efda83c27266df3d9e8728ed6c2303ff4c838"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/prompts/templates/quiz-content/system.md",
+          "sha256": "9f8b9d192f202e060ded6b0d9bc2164cc7baa00f079b1edbfcacb852513f96fd"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/generation/prompts/templates/quiz-content/user.md",
+      "upstream_v01_blob_oid": "69e96286be8617bd11b50ab89514507d6396875e",
+      "legacy_final_blob_oid": "69e96286be8617bd11b50ab89514507d6396875e",
+      "disposition": "derived_from_mit",
+      "mit_sources": [
+        {
+          "path": "lib/prompts/templates/quiz-content/user.md",
+          "blob_oid": "c4eeba8b57eb0593a8c5bf0cfe496589ede8bc1e"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/prompts/templates/quiz-content/user.md",
+          "sha256": "823409f741caa49ba136711e4f5be79d505c060cf7432dc5dcde5973390c59e0"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/generation/prompts/templates/requirements-to-outlines/system.md",
+      "upstream_v01_blob_oid": "72f5bc0ecb277ea04ef27988e76aeb900da25920",
+      "legacy_final_blob_oid": "25a7ea3352479dd3118c8f94cece32ab9ca331ed",
+      "disposition": "derived_from_mit",
+      "mit_sources": [
+        {
+          "path": "lib/prompts/templates/requirements-to-outlines/system.md",
+          "blob_oid": "f6d4d35bb28d8cac3a33e9950deef2c6ec00800b"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/prompts/templates/requirements-to-outlines/system.md",
+          "sha256": "ac65a7d556f0c419aa97974a6dbb0c1683bce615f7577c93ca6be8cae5a5ddbd"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/generation/prompts/templates/requirements-to-outlines/user.md",
+      "upstream_v01_blob_oid": "65d0a4921400fc825ce578ea6140f187180eac76",
+      "legacy_final_blob_oid": "65d0a4921400fc825ce578ea6140f187180eac76",
+      "disposition": "derived_from_mit",
+      "mit_sources": [
+        {
+          "path": "lib/prompts/templates/requirements-to-outlines/user.md",
+          "blob_oid": "9d8ed199ad6e920a96a295e592fab81fcd8541fa"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/prompts/templates/requirements-to-outlines/user.md",
+          "sha256": "b2ec0c19b75699b8099f58fad5a34ffc64cf6b90afd5419942752abfd00b8ed5"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/generation/prompts/templates/slide-actions/system.md",
+      "upstream_v01_blob_oid": "81c6fe78561361f7b6901ec2242ad538779bc885",
+      "legacy_final_blob_oid": "38cd04164bac935065b4962be8c7450174de349f",
+      "disposition": "derived_from_mit",
+      "mit_sources": [
+        {
+          "path": "lib/prompts/templates/slide-actions/system.md",
+          "blob_oid": "9cf7a53d9720f2f25344e920bb2f2977e458c6f5"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/prompts/templates/slide-actions/system.md",
+          "sha256": "219e8da1eb3c854dbe6ee6fdedda1936e0092fff6c8984b9277c5c6cef2443b6"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/generation/prompts/templates/slide-actions/user.md",
+      "upstream_v01_blob_oid": "7caa61fd47e541563fb00bfa031c939aacf92562",
+      "legacy_final_blob_oid": "7caa61fd47e541563fb00bfa031c939aacf92562",
+      "disposition": "derived_from_mit",
+      "mit_sources": [
+        {
+          "path": "lib/prompts/templates/slide-actions/user.md",
+          "blob_oid": "296ef93b8b453ff4b3e74faa96935f123dc5a785"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/prompts/templates/slide-actions/user.md",
+          "sha256": "71a95329793ba0fae6030b6b9eb562bed62e9460bd26c2fcbd92d7c53f549512"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/generation/prompts/templates/slide-content/system.md",
+      "upstream_v01_blob_oid": "ac8006fb60a5be9646655a33300cd7327c1b101f",
+      "legacy_final_blob_oid": "94813ad9d30854aff5442bd6de231ca43f43482f",
+      "disposition": "derived_from_mit",
+      "mit_sources": [
+        {
+          "path": "lib/prompts/templates/slide-content/system.md",
+          "blob_oid": "c0517f5ba87e3cce46a5c9a0e7061886d91222ef"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/prompts/templates/slide-content/system.md",
+          "sha256": "fac82e884070e71cf82ffca67fb1ee1c861e3cd90d4f9816c7085c428180aebd"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/generation/prompts/templates/slide-content/user.md",
+      "upstream_v01_blob_oid": "04d3878805d8ad623770bac3596a25a23c532a1b",
+      "legacy_final_blob_oid": "04d3878805d8ad623770bac3596a25a23c532a1b",
+      "disposition": "derived_from_mit",
+      "mit_sources": [
+        {
+          "path": "lib/prompts/templates/slide-content/user.md",
+          "blob_oid": "844139b9c3617f21e931bafb4a668339612bc05b"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/prompts/templates/slide-content/user.md",
+          "sha256": "7d7486fed0d897a85273794359cd17383d7b9f2dbca7481134a1519687368c99"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/generation/prompts/types.ts",
+      "upstream_v01_blob_oid": "6df91b3fe855b763e4617eaeaf3e404d835719c2",
+      "legacy_final_blob_oid": "6df91b3fe855b763e4617eaeaf3e404d835719c2",
+      "disposition": "derived_from_mit",
+      "mit_sources": [
+        {
+          "path": "lib/prompts/types.ts",
+          "blob_oid": "3787df8aeb5534968e0c091290abc0fb881ff3a7"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/prompts/types.ts",
+          "sha256": "baf500d930cb83012f441ee0e4bb832c54e3552aac18ad5f6c103c7bd74b68a1"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/i18n/chat.ts",
+      "upstream_v01_blob_oid": "1bb535d3e3901c7f2b5be64b7779b72f120e432b",
+      "legacy_final_blob_oid": "fc0b3f0707e23fabe62a626f15e9f664421117d8",
+      "disposition": "rewritten_from_mit",
+      "mit_sources": [
+        {
+          "path": "lib/i18n/config.ts",
+          "blob_oid": "f0a427800129dc410e6f5b8dc19c929ab249881a"
+        },
+        {
+          "path": "lib/i18n/index.ts",
+          "blob_oid": "e845b2794b0d2c9eefaadab88200feae25b386a6"
+        },
+        {
+          "path": "lib/i18n/locales/en-US.json",
+          "blob_oid": "e159bf92b5ba03e93d740b36ea64abcb6afb335c"
+        },
+        {
+          "path": "lib/i18n/locales/ar-SA.json",
+          "blob_oid": "109526e3b13ae9069fadc933a9056c39747826a1"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/i18n/config.ts",
+          "sha256": "9ae097a40f4c33dd384b42ff86bab989a5d8e402f075b8f6501342764ba7d169"
+        },
+        {
+          "path": "lib/i18n/index.ts",
+          "sha256": "b30021d30cf1db88496ece8d94fdc3e9dd599ab9ce8dd559293096d1339e64b8"
+        },
+        {
+          "path": "lib/i18n/locales/ui-en-US.json",
+          "sha256": "53d6d370a06f67cdd6dbf3812e3ff29b14ab3ecb2cb07b41baff8c658c41edaf"
+        },
+        {
+          "path": "lib/i18n/locales/ui-fr-FR.json",
+          "sha256": "c0d2c02ac911b0b4fe12369f1ae879d27e49b12250e69de2533196fa03301ed1"
+        },
+        {
+          "path": "lib/i18n/locales/ui-ar-MA.json",
+          "sha256": "4913f93eedf1bb1fc8dc1b5728ff0bc610bf787b66fa8b2bab6d90fd83cc2a8f"
+        },
+        {
+          "path": "refork/i18n-cleanroom-contract.json",
+          "sha256": "8538d03639b207826362b7c7df4cd34247e282a023ac13710ee528d113c6254a"
+        },
+        {
+          "path": "refork/i18n-dynamic-keys.json",
+          "sha256": "a14bb24894d1a86fa29fe0c2bee16bb4eaa94cfd7da8ed9f7ae611f33565eeae"
+        },
+        {
+          "path": "refork/i18n-cleanroom-method.md",
+          "sha256": "83c7bb2bf6818ad4144b9dd7f150c17533bd57a2f04ee89c5d1cc660b639eccc"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/i18n/common.ts",
+      "upstream_v01_blob_oid": "1bceb5d6161dacd63d0c9da9d7c9f6ed7387a02c",
+      "legacy_final_blob_oid": "c21792fe2ac258646ab37d7f8d16a1d8cdc16202",
+      "disposition": "rewritten_from_mit",
+      "mit_sources": [
+        {
+          "path": "lib/i18n/config.ts",
+          "blob_oid": "f0a427800129dc410e6f5b8dc19c929ab249881a"
+        },
+        {
+          "path": "lib/i18n/index.ts",
+          "blob_oid": "e845b2794b0d2c9eefaadab88200feae25b386a6"
+        },
+        {
+          "path": "lib/i18n/locales/en-US.json",
+          "blob_oid": "e159bf92b5ba03e93d740b36ea64abcb6afb335c"
+        },
+        {
+          "path": "lib/i18n/locales/ar-SA.json",
+          "blob_oid": "109526e3b13ae9069fadc933a9056c39747826a1"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/i18n/config.ts",
+          "sha256": "9ae097a40f4c33dd384b42ff86bab989a5d8e402f075b8f6501342764ba7d169"
+        },
+        {
+          "path": "lib/i18n/index.ts",
+          "sha256": "b30021d30cf1db88496ece8d94fdc3e9dd599ab9ce8dd559293096d1339e64b8"
+        },
+        {
+          "path": "lib/i18n/locales/ui-en-US.json",
+          "sha256": "53d6d370a06f67cdd6dbf3812e3ff29b14ab3ecb2cb07b41baff8c658c41edaf"
+        },
+        {
+          "path": "lib/i18n/locales/ui-fr-FR.json",
+          "sha256": "c0d2c02ac911b0b4fe12369f1ae879d27e49b12250e69de2533196fa03301ed1"
+        },
+        {
+          "path": "lib/i18n/locales/ui-ar-MA.json",
+          "sha256": "4913f93eedf1bb1fc8dc1b5728ff0bc610bf787b66fa8b2bab6d90fd83cc2a8f"
+        },
+        {
+          "path": "refork/i18n-cleanroom-contract.json",
+          "sha256": "8538d03639b207826362b7c7df4cd34247e282a023ac13710ee528d113c6254a"
+        },
+        {
+          "path": "refork/i18n-dynamic-keys.json",
+          "sha256": "a14bb24894d1a86fa29fe0c2bee16bb4eaa94cfd7da8ed9f7ae611f33565eeae"
+        },
+        {
+          "path": "refork/i18n-cleanroom-method.md",
+          "sha256": "83c7bb2bf6818ad4144b9dd7f150c17533bd57a2f04ee89c5d1cc660b639eccc"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/i18n/generation.ts",
+      "upstream_v01_blob_oid": "98694c234629c725edb9bdb5ac76eabc0da303ee",
+      "legacy_final_blob_oid": "4a3cce50ccccfc47471b23a13d7724e495777e34",
+      "disposition": "rewritten_from_mit",
+      "mit_sources": [
+        {
+          "path": "lib/i18n/config.ts",
+          "blob_oid": "f0a427800129dc410e6f5b8dc19c929ab249881a"
+        },
+        {
+          "path": "lib/i18n/index.ts",
+          "blob_oid": "e845b2794b0d2c9eefaadab88200feae25b386a6"
+        },
+        {
+          "path": "lib/i18n/locales/en-US.json",
+          "blob_oid": "e159bf92b5ba03e93d740b36ea64abcb6afb335c"
+        },
+        {
+          "path": "lib/i18n/locales/ar-SA.json",
+          "blob_oid": "109526e3b13ae9069fadc933a9056c39747826a1"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/i18n/config.ts",
+          "sha256": "9ae097a40f4c33dd384b42ff86bab989a5d8e402f075b8f6501342764ba7d169"
+        },
+        {
+          "path": "lib/i18n/index.ts",
+          "sha256": "b30021d30cf1db88496ece8d94fdc3e9dd599ab9ce8dd559293096d1339e64b8"
+        },
+        {
+          "path": "lib/i18n/locales/ui-en-US.json",
+          "sha256": "53d6d370a06f67cdd6dbf3812e3ff29b14ab3ecb2cb07b41baff8c658c41edaf"
+        },
+        {
+          "path": "lib/i18n/locales/ui-fr-FR.json",
+          "sha256": "c0d2c02ac911b0b4fe12369f1ae879d27e49b12250e69de2533196fa03301ed1"
+        },
+        {
+          "path": "lib/i18n/locales/ui-ar-MA.json",
+          "sha256": "4913f93eedf1bb1fc8dc1b5728ff0bc610bf787b66fa8b2bab6d90fd83cc2a8f"
+        },
+        {
+          "path": "refork/i18n-cleanroom-contract.json",
+          "sha256": "8538d03639b207826362b7c7df4cd34247e282a023ac13710ee528d113c6254a"
+        },
+        {
+          "path": "refork/i18n-dynamic-keys.json",
+          "sha256": "a14bb24894d1a86fa29fe0c2bee16bb4eaa94cfd7da8ed9f7ae611f33565eeae"
+        },
+        {
+          "path": "refork/i18n-cleanroom-method.md",
+          "sha256": "83c7bb2bf6818ad4144b9dd7f150c17533bd57a2f04ee89c5d1cc660b639eccc"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/i18n/settings.ts",
+      "upstream_v01_blob_oid": "3ba0be4f38e1b881720214f8558e0ad95027d59c",
+      "legacy_final_blob_oid": "666fbf1ff7528f208b47e344d30c27e3ec078e23",
+      "disposition": "rewritten_from_mit",
+      "mit_sources": [
+        {
+          "path": "lib/i18n/config.ts",
+          "blob_oid": "f0a427800129dc410e6f5b8dc19c929ab249881a"
+        },
+        {
+          "path": "lib/i18n/index.ts",
+          "blob_oid": "e845b2794b0d2c9eefaadab88200feae25b386a6"
+        },
+        {
+          "path": "lib/i18n/locales/en-US.json",
+          "blob_oid": "e159bf92b5ba03e93d740b36ea64abcb6afb335c"
+        },
+        {
+          "path": "lib/i18n/locales/ar-SA.json",
+          "blob_oid": "109526e3b13ae9069fadc933a9056c39747826a1"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/i18n/config.ts",
+          "sha256": "9ae097a40f4c33dd384b42ff86bab989a5d8e402f075b8f6501342764ba7d169"
+        },
+        {
+          "path": "lib/i18n/index.ts",
+          "sha256": "b30021d30cf1db88496ece8d94fdc3e9dd599ab9ce8dd559293096d1339e64b8"
+        },
+        {
+          "path": "lib/i18n/locales/ui-en-US.json",
+          "sha256": "53d6d370a06f67cdd6dbf3812e3ff29b14ab3ecb2cb07b41baff8c658c41edaf"
+        },
+        {
+          "path": "lib/i18n/locales/ui-fr-FR.json",
+          "sha256": "c0d2c02ac911b0b4fe12369f1ae879d27e49b12250e69de2533196fa03301ed1"
+        },
+        {
+          "path": "lib/i18n/locales/ui-ar-MA.json",
+          "sha256": "4913f93eedf1bb1fc8dc1b5728ff0bc610bf787b66fa8b2bab6d90fd83cc2a8f"
+        },
+        {
+          "path": "refork/i18n-cleanroom-contract.json",
+          "sha256": "8538d03639b207826362b7c7df4cd34247e282a023ac13710ee528d113c6254a"
+        },
+        {
+          "path": "refork/i18n-dynamic-keys.json",
+          "sha256": "a14bb24894d1a86fa29fe0c2bee16bb4eaa94cfd7da8ed9f7ae611f33565eeae"
+        },
+        {
+          "path": "refork/i18n-cleanroom-method.md",
+          "sha256": "83c7bb2bf6818ad4144b9dd7f150c17533bd57a2f04ee89c5d1cc660b639eccc"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/i18n/stage.ts",
+      "upstream_v01_blob_oid": "0a376ca101141ed11c07f82e81c2c2ba2b977747",
+      "legacy_final_blob_oid": "68ff518a61ad1ab61980b1f2099b1459ea50b8f2",
+      "disposition": "rewritten_from_mit",
+      "mit_sources": [
+        {
+          "path": "lib/i18n/config.ts",
+          "blob_oid": "f0a427800129dc410e6f5b8dc19c929ab249881a"
+        },
+        {
+          "path": "lib/i18n/index.ts",
+          "blob_oid": "e845b2794b0d2c9eefaadab88200feae25b386a6"
+        },
+        {
+          "path": "lib/i18n/locales/en-US.json",
+          "blob_oid": "e159bf92b5ba03e93d740b36ea64abcb6afb335c"
+        },
+        {
+          "path": "lib/i18n/locales/ar-SA.json",
+          "blob_oid": "109526e3b13ae9069fadc933a9056c39747826a1"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lib/i18n/config.ts",
+          "sha256": "9ae097a40f4c33dd384b42ff86bab989a5d8e402f075b8f6501342764ba7d169"
+        },
+        {
+          "path": "lib/i18n/index.ts",
+          "sha256": "b30021d30cf1db88496ece8d94fdc3e9dd599ab9ce8dd559293096d1339e64b8"
+        },
+        {
+          "path": "lib/i18n/locales/ui-en-US.json",
+          "sha256": "53d6d370a06f67cdd6dbf3812e3ff29b14ab3ecb2cb07b41baff8c658c41edaf"
+        },
+        {
+          "path": "lib/i18n/locales/ui-fr-FR.json",
+          "sha256": "c0d2c02ac911b0b4fe12369f1ae879d27e49b12250e69de2533196fa03301ed1"
+        },
+        {
+          "path": "lib/i18n/locales/ui-ar-MA.json",
+          "sha256": "4913f93eedf1bb1fc8dc1b5728ff0bc610bf787b66fa8b2bab6d90fd83cc2a8f"
+        },
+        {
+          "path": "refork/i18n-cleanroom-contract.json",
+          "sha256": "8538d03639b207826362b7c7df4cd34247e282a023ac13710ee528d113c6254a"
+        },
+        {
+          "path": "refork/i18n-dynamic-keys.json",
+          "sha256": "a14bb24894d1a86fa29fe0c2bee16bb4eaa94cfd7da8ed9f7ae611f33565eeae"
+        },
+        {
+          "path": "refork/i18n-cleanroom-method.md",
+          "sha256": "83c7bb2bf6818ad4144b9dd7f150c17533bd57a2f04ee89c5d1cc660b639eccc"
+        }
+      ]
+    },
+    {
+      "legacy_path": "lib/types/slides.ts",
+      "upstream_v01_blob_oid": "2163f59c7de48936a929f683d900600426185291",
+      "legacy_final_blob_oid": "2163f59c7de48936a929f683d900600426185291",
+      "disposition": "mapped_to_mit",
+      "mit_sources": [
+        {
+          "path": "packages/@openmaic/dsl/src/slides.ts",
+          "blob_oid": "3b5f391c6bf3f80b5bfae9acfad563571fadf755"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "packages/@openmaic/dsl/src/slides.ts",
+          "sha256": "36e5be49b1e65ab5fa5843fc0c6c06b0b43a2686d42a8d7d2ffc808e11d36f99"
+        }
+      ]
+    }
+  ]
+}

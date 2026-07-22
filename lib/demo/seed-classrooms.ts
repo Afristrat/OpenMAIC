@@ -12,7 +12,7 @@
 import type { StageRecord, SceneRecord } from '@/lib/utils/database';
 import type { SlideContent, QuizContent, InteractiveContent } from '@/lib/types/stage';
 import type { Action } from '@/lib/types/action';
-import type { Slide, PPTTextElement, PPTShapeElement, SlideTheme } from '@/lib/types/slides';
+import type { Slide, PPTTextElement, PPTShapeElement, SlideTheme } from '@openmaic/dsl';
 
 // ─── Shared helpers ──────────────────────────────────────────────
 

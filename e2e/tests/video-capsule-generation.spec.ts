@@ -120,13 +120,13 @@ test.describe('Video capsule generation', () => {
     await classroom.sidebarScenes.first().hover();
     await page.getByTestId('video-capsule-button').click();
 
-    const modal = page.getByRole('heading', { name: 'Video Capsule (Hyperframes)' });
+    const modal = page.getByRole('heading', { name: 'Create a video capsule' });
     await expect(modal).toBeVisible();
 
     await page.getByRole('button', { name: 'Generate video' }).click();
 
     // Busy state: the first status poll remains in progress before completion.
-    await expect(page.getByText('Generating...')).toBeVisible();
+    await expect(page.getByText('Building the video…')).toBeVisible();
 
     // Done state: the mp4 variant is rendered as a playable <video>
     const video = page.locator('video').first();
@@ -144,7 +144,7 @@ test.describe('Video capsule generation', () => {
     await classroom.sidebarScenes.first().hover();
     await page.getByTestId('video-capsule-button').click();
 
-    await expect(page.getByRole('heading', { name: 'Video Capsule (Hyperframes)' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Create a video capsule' })).toBeVisible();
     await page.getByRole('button', { name: 'Generate video' }).click();
 
     await expect(page.getByText('La génération de capsules vidéo est désactivée')).toBeVisible();

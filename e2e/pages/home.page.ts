@@ -13,7 +13,7 @@ export class HomePage {
     // Matches the submit button's label across all supported locales
     // (t('toolbar.enterClassroom')): en, zh, fr-FR, ar-MA.
     this.enterButton = page.getByRole('button', {
-      name: /enter classroom|进入课堂|entrer en classe|دخول الفصل/i,
+      name: /enter classroom|进入课堂|accéder à la classe virtuelle|دخول الفصل/i,
     });
   }
 

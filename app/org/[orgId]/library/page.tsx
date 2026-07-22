@@ -261,9 +261,7 @@ export default function LibraryPage() {
                     {classroom.sharer_profile.nickname}
                   </span>
                 )}
-                <span>
-                  {t('org.sceneCount').replace('{count}', String(classroom.scene_count ?? 0))}
-                </span>
+                <span>{t('org.sceneCount', { count: classroom.scene_count ?? 0 })}</span>
                 <span>{new Date(classroom.created_at).toLocaleDateString()}</span>
               </div>
 
