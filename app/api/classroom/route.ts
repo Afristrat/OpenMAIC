@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
   let stageId: string | undefined;
   let sceneCount: number | undefined;
   try {
-    const rawBody = await request.json();
+    const rawBody = await request.json().catch(() => null);
     const validation = validateBody(classroomPersistSchema, rawBody);
     if (!validation.success) return validation.response;
 
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const rawBody = await request.json();
+    const rawBody = await request.json().catch(() => null);
     const stageId = typeof rawBody?.stage?.id === 'string' ? rawBody.stage.id : '';
     if (!stageId || !isValidClassroomId(stageId) || !Array.isArray(rawBody?.scenes)) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Classroom invalide');
@@ -126,8 +126,8 @@ export async function PATCH(request: NextRequest) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid classroom id');
     const gate = await requireClassroomAdmin(request, id);
     if (gate.error) return gate.error;
-    const body = (await request.json()) as { name?: unknown };
-    if (typeof body.name !== 'string' || !body.name.trim()) {
+    const body = (await request.json().catch(() => null)) as { name?: unknown } | null;
+    if (typeof body?.name !== 'string' || !body.name.trim()) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'A classroom name is required');
     }
     const name = body.name.trim();

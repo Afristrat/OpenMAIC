@@ -195,14 +195,16 @@
       "passes": false,
       "dependencies": ["S0-013"],
       "acceptance": [
-        "Génération + lecture classroom exigent une session Supabase authentifiée (401 sinon)",
+        "Génération + lecture d'une classroom non publiée exigent une session Supabase authentifiée (401 sinon)",
         "Génération limitée à super-admin OU admin de l'orgId ciblé (403 sinon) ; lecture ouverte à tout membre de l'org",
+        "Lecture anonyme autorisée uniquement après publication explicite ; les médias suivent exactement la visibilité de la classroom",
         "classroom rattaché à un orgId dès la génération ; propriété (ownerId) dérivée de la session, jamais du body",
         "stages/scenes persistés en base Postgres normalisée (plus de fichier JSON local), médias dans le bucket Storage classroom-media (plus de fs.writeFile)",
         "un classroom généré avant survit à un redéploiement Coolify (conteneur recréé) sans perte",
         "accès cross-org refusé (403) sur un classroom d'une autre organisation",
-        "vérifié dans un vrai navigateur connecté : scènes affichées + audio TTS audible (SOP-011)"
-      ]
+        "vérifié dans un vrai navigateur connecté pour le contenu privé et en fenêtre anonyme pour le contenu publié : scènes affichées + audio TTS audible (SOP-011)"
+      ],
+      "acceptanceNote": "Partie machine vérifiée le 2026-07-22, story maintenue à passes=false jusqu'à l'écoute humaine exigée par SOP-011. Le critère de lecture a été corrigé pour intégrer la diffusion à des tiers demandée ultérieurement : seules les classrooms explicitement publiées et leurs médias sont anonymement accessibles. Après redéploiement Coolify, la classroom publique 9H4k970HIy, créée le 2026-07-19, est toujours en base avec 9 scènes, 52 actions speech, 52 audioUrl Storage et 52 objets audio ; un WAV servi par Qalem répond 200, audio/wav, 582 764 octets. En production : anonyme = 401 sur génération, catalogue d'organisation et classroom privée ; utilisateur authentifié hors tenant = 403 sur la privée ; contenu publié = 200. Le compte de contrôle éphémère a été supprimé (API 200). Quinze tests permanents couvrent RBAC, ownerId issu de la session, séparation privé/public et médias ; formatage, TypeScript et ESLint verts ; Vitest 2 017/2 017 ; Playwright 37/37 sans retry ni flake. Reste exclusivement à confirmer humainement que l'audio est audible dans un vrai navigateur."
     },
     {
       "id": "S0-014",

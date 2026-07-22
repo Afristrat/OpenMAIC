@@ -20,7 +20,7 @@ export const maxDuration = 30;
 export async function POST(req: NextRequest) {
   let requirementSnippet: string | undefined;
   try {
-    const rawBody = await req.json();
+    const rawBody = await req.json().catch(() => null);
     const validation = validateBody(generateClassroomSchema, rawBody);
     if (!validation.success) return validation.response;
 
