@@ -63,6 +63,7 @@ services:
       context: ./services/capture-worker
       dockerfile: Dockerfile
     environment:
+      CAPTURE_STORAGE_STATE_DIR: /data/storage-states
       CAPTURE_MAX_CONCURRENCY: "1"
       CAPTURE_TIMEOUT_MS: "60000"
       CAPTURE_WORKER_TOKEN: ${CAPTURE_WORKER_TOKEN:-runtime-only}
@@ -70,6 +71,8 @@ services:
       PORT: "8090"
     expose:
       - "8090"
+    volumes:
+      - capture-storage-states:/data/storage-states
     restart: unless-stopped
     mem_limit: 1536m
     mem_reservation: 384m
@@ -81,3 +84,6 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
+
+volumes:
+  capture-storage-states:
