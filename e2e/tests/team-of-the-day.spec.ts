@@ -33,6 +33,7 @@ async function seedClassroom(page: import('@playwright/test').Page, locale: 'fr-
               avatar: '/avatars/teacher.png',
               color: '#3b82f6',
               priority: 7,
+              mechanismId: 'professor',
               gender: 'male',
               voiceConfig: { providerId: 'higgs-tts', voiceId: 'younes' },
             },
@@ -44,6 +45,7 @@ async function seedClassroom(page: import('@playwright/test').Page, locale: 'fr-
               avatar: '/avatars/teacher-2.png',
               color: '#f43f5e',
               priority: 6,
+              mechanismId: 'coach',
               gender: 'female',
               voiceConfig: { providerId: 'higgs-tts', voiceId: 'hanae' },
             },
@@ -74,9 +76,9 @@ async function seedClassroom(page: import('@playwright/test').Page, locale: 'fr-
   }, STAGE_ID);
 }
 
-for (const { locale, label } of [
-  { locale: 'fr-FR' as const, label: 'Votre équipe du jour' },
-  { locale: 'ar-MA' as const, label: 'فريقك اليوم' },
+for (const { locale, label, coachRole } of [
+  { locale: 'fr-FR' as const, label: 'Votre équipe du jour', coachRole: 'La Coach' },
+  { locale: 'ar-MA' as const, label: 'فريقك اليوم', coachRole: 'المدرّبة' },
 ]) {
   test(`affiche l'équipe de session en ${locale}`, async ({ page }) => {
     await seedClassroom(page, locale);
@@ -85,5 +87,6 @@ for (const { locale, label } of [
     await page.getByRole('button', { name: label }).click();
     await expect(page.getByRole('list', { name: label })).toContainText('Younes');
     await expect(page.getByRole('list', { name: label })).toContainText('Hanae');
+    await expect(page.getByRole('list', { name: label })).toContainText(coachRole);
   });
 }
