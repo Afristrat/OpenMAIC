@@ -6,10 +6,10 @@
  *
  * Gated par le feature flag `rich_profile` (lib/flags) : tant qu'il n'est
  * pas activé, GET répond `richProfileEnabled: false` (le client masque la
- * section) et PATCH répond 403. Écrit dans `public.profiles` (existant,
- * étendu par la migration 00022) via le client serveur — RLS
- * `profiles_update_own` / `profiles_insert_own` (auth.uid() = id) protège
- * l'accès, pas besoin du client service.
+ * section) et PATCH répond 403. Écrit dans `public.user_profiles` (migration
+ * 00029), distincte de `public.profiles` qui est lisible entre collègues pour
+ * les besoins de l'organisation. Ses policies n'autorisent que
+ * `auth.uid() = user_id`.
  */
 
 import { NextRequest } from 'next/server';
@@ -42,9 +42,9 @@ export async function GET(_request: NextRequest): Promise<Response> {
   }
 
   const { data: profile, error } = await supabase
-    .from('profiles')
+    .from('user_profiles')
     .select('culture, ui_language, preferences')
-    .eq('id', user.id)
+    .eq('user_id', user.id)
     .maybeSingle();
 
   if (error) {
@@ -95,16 +95,16 @@ export async function PATCH(request: NextRequest): Promise<Response> {
   }
 
   const { data: updated, error } = await supabase
-    .from('profiles')
+    .from('user_profiles')
     .upsert(
       {
-        id: user.id,
+        user_id: user.id,
         ...(culture !== undefined ? { culture } : {}),
         ...(uiLanguage !== undefined ? { ui_language: uiLanguage } : {}),
         ...(preferences !== undefined ? { preferences } : {}),
         updated_at: new Date().toISOString(),
       },
-      { onConflict: 'id' },
+      { onConflict: 'user_id' },
     )
     .select('culture, ui_language, preferences')
     .single();

@@ -25,10 +25,16 @@ export interface Profile {
   avatar: string | null;
   bio: string | null;
   locale: string; // default 'fr-FR'
+  created_at: string; // ISO 8601
+  updated_at: string;
+}
+
+/** Données de personnalisation, volontairement isolées de profiles (S2-001). */
+export interface UserProfile {
+  user_id: string; // UUID — matches auth.users.id
   culture: string; // default 'ma-fr' — référentiel casting (S2-001/S2-002)
   ui_language: string; // 'fr-FR' | 'ar-MA' | 'en-US', default 'fr-FR' (S2-001)
   preferences: Record<string, unknown>; // rythme, humour accepté... (S2-001)
-  created_at: string; // ISO 8601
   updated_at: string;
 }
 
@@ -192,6 +198,9 @@ export interface OrganizationSkill {
 export type ProfileInsert = Pick<Profile, 'id'> &
   Partial<Omit<Profile, 'id' | 'created_at' | 'updated_at'>>;
 
+export type UserProfileInsert = Pick<UserProfile, 'user_id'> &
+  Partial<Pick<UserProfile, 'culture' | 'ui_language' | 'preferences'>>;
+
 export type OrganizationInsert = Partial<Omit<Organization, 'id' | 'created_at' | 'updated_at'>> &
   Pick<Organization, 'name'>;
 
@@ -247,6 +256,7 @@ export type OrganizationSkillInsert = Pick<OrganizationSkill, 'org_id' | 'skill_
 // ---------------------------------------------------------------------------
 
 export type ProfileUpdate = Partial<Omit<Profile, 'id' | 'created_at' | 'updated_at'>>;
+export type UserProfileUpdate = Partial<Omit<UserProfile, 'user_id' | 'updated_at'>>;
 export type OrganizationUpdate = Partial<Omit<Organization, 'id' | 'created_at' | 'updated_at'>>;
 export type OrgMemberUpdate = Partial<Pick<OrgMember, 'role'>>;
 export type StageUpdate = Partial<Omit<Stage, 'id' | 'created_at' | 'updated_at'>>;
@@ -535,6 +545,11 @@ export interface Database {
         Row: Profile;
         Insert: ProfileInsert;
         Update: ProfileUpdate;
+      };
+      user_profiles: {
+        Row: UserProfile;
+        Insert: UserProfileInsert;
+        Update: UserProfileUpdate;
       };
       organizations: {
         Row: Organization;
