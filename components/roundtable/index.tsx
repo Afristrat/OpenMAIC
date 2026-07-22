@@ -2004,6 +2004,11 @@ export function Roundtable({
               ) : (
                 <>
                   <button
+                    aria-label={
+                      asrEnabled
+                        ? t('roundtable.voiceInput')
+                        : t('roundtable.voiceInputDisabled')
+                    }
                     onClick={(e) => {
                       e.stopPropagation();
                       if (asrEnabled) handleToggleVoice();
@@ -2025,6 +2030,7 @@ export function Roundtable({
                     )}
                   </button>
                   <button
+                    aria-label={t('roundtable.textInput')}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleToggleInput();
