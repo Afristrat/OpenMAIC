@@ -171,10 +171,7 @@ export async function enqueueTransmissionVisualWatermark(data: {
  * terminal job with its deterministic id, so remove only terminal jobs before
  * creating its successor; active jobs are never disturbed.
  */
-async function removeFinishedJob(
-  queue: Pick<Queue, 'getJob'>,
-  jobId: string,
-): Promise<void> {
+async function removeFinishedJob(queue: Pick<Queue, 'getJob'>, jobId: string): Promise<void> {
   const previous = await queue.getJob(jobId);
   if (!previous) return;
 

@@ -411,10 +411,16 @@ export function startAllWorkers(): void {
 
             const { error: sourceUpdateError } = await supabase
               .from('transmissions')
-              .update({ status: 'processing', source_artifact_path: sourceArtifactPath, error: null })
+              .update({
+                status: 'processing',
+                source_artifact_path: sourceArtifactPath,
+                error: null,
+              })
               .eq('id', transmissionId);
             if (sourceUpdateError)
-              throw new Error(`Transmission source completion failed: ${sourceUpdateError.message}`);
+              throw new Error(
+                `Transmission source completion failed: ${sourceUpdateError.message}`,
+              );
           }
 
           await enqueueTransmissionVisualWatermark({ transmissionId });

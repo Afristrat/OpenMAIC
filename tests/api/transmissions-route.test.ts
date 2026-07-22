@@ -109,7 +109,12 @@ describe('POST /api/transmissions', () => {
     const payload = await response.json();
 
     expect(response.status).toBe(202);
-    expect(payload).toMatchObject({ id: 'tx_failed', status: 'queued', existing: true, retried: true });
+    expect(payload).toMatchObject({
+      id: 'tx_failed',
+      status: 'queued',
+      existing: true,
+      retried: true,
+    });
     expect(mocks.enqueueTransmission).toHaveBeenCalledWith({ transmissionId: 'tx_failed' });
     expect(mocks.insertedTransmission).not.toHaveBeenCalled();
   });

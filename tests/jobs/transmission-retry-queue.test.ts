@@ -33,7 +33,11 @@ describe('transmission retry queues', () => {
 
     expect(mocks.getJob).toHaveBeenCalledWith(jobId);
     expect(mocks.remove).toHaveBeenCalledOnce();
-    expect(mocks.add).toHaveBeenCalledWith(expect.any(String), { transmissionId: 'tx_1' }, expect.objectContaining({ jobId }));
+    expect(mocks.add).toHaveBeenCalledWith(
+      expect.any(String),
+      { transmissionId: 'tx_1' },
+      expect.objectContaining({ jobId }),
+    );
   });
 
   it('does not disturb an active transmission job', async () => {
