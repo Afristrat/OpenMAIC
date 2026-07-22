@@ -92,14 +92,16 @@ describe('learning package tracking adapters at runtime', () => {
       fetch: async (url: string, init?: RequestInit) => {
         requests.push({ url, init });
         if (url === 'https://lms.example/fetch') {
-          return { ok: true, json: async () => ({ 'auth-token': 'Bearer cmi5-token' }) };
+          return { ok: true, json: async () => ({ 'auth-token': 'cmi5-token' }) };
         }
         if (url.startsWith('https://lrs.example/xapi/activities/state')) {
           return {
             ok: true,
             json: async () => ({
               launchMode: 'Normal',
-              contextTemplate: { registration: 'registration-1' },
+              contextTemplate: {
+                contextActivities: { grouping: [{ id: 'https://qalem.ma/course/1' }] },
+              },
             }),
           };
         }
