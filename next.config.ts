@@ -13,11 +13,15 @@ const nextConfig: NextConfig = {
   // import resolves as a real Node call.
   // pdfkit loads its built-in AFM font files at runtime. Keeping it external
   // makes those assets available in the standalone production image.
+  // unpdf embeds PDF.js, whose runtime module resolution is intentionally
+  // dynamic. Loading it natively avoids an incomplete webpack analysis while
+  // Next's standalone trace still ships the direct dependency.
   serverExternalPackages: [
     '@earendil-works/pi-ai',
     '@earendil-works/pi-agent-core',
     'bullmq',
     'pdfkit',
+    'unpdf',
   ],
   experimental: {
     proxyClientMaxBodySize: '200mb',
