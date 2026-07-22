@@ -144,7 +144,9 @@ describe('learning package tracking adapters at runtime', () => {
       ),
     ).toBe(true);
     const statements = statementRequests.map(({ init }) => JSON.parse(String(init?.body)));
-    expect(statements.every((statement) => statement.context.registration === 'registration-1')).toBe(true);
+    expect(
+      statements.every((statement) => statement.context.registration === 'registration-1'),
+    ).toBe(true);
     expect(
       statements.every((statement) =>
         statement.context.contextActivities.category.some(
