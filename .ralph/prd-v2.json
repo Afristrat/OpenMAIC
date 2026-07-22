@@ -415,13 +415,15 @@
       "title": "Profil utilisateur enrichi (culture, langue, préférences) [UI]",
       "epic": "2-VIVRE",
       "phase": 2,
-      "passes": false,
+      "passes": true,
+      "completedAt": "2026-07-22",
       "dependencies": ["S0-008", "S0-009"],
       "acceptance": [
         "Migration user_profiles conforme à 2-vivre/02 (RLS user seul)",
         "Écran de profil 3 locales, RTL vérifié",
         "Flag rich_profile"
-      ]
+      ],
+      "acceptanceNote": "L'implémentation précédente ajoutait culture, langue et préférences à public.profiles, mais la policy profiles_select_org_comember rend cette table lisible entre collègues. La cause racine est corrigée par 00029_secure_user_profiles.sql : création de public.user_profiles, RLS propriétaire seule, migration des quatre profils existants et neutralisation immédiate des anciennes valeurs exposées. L'API /api/profile ne lit et n'écrit plus que user_profiles. Preuve production : les trois policies ont auth.uid() = user_id ; le résidu privé dans profiles est 0 ; sous le rôle authenticated, le propriétaire lit sa ligne (1) et la ligne d'un autre utilisateur est invisible (0), transaction annulée. Déploiement public 93cc6d6 healthy ; /api/health = 200, /api/profile anonyme = 401 et 20/20 sondes santé = 200. Validation clone propre : TypeScript et lint verts, suite Vitest complète verte et Playwright passé sans échec. L'écran est couvert dans les trois locales, y compris ar-MA RTL, et reste contrôlé par le flag rich_profile."
     },
     {
       "id": "S2-002",
