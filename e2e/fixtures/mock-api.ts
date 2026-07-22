@@ -124,21 +124,31 @@ export class MockApi {
     });
   }
 
-  /** Mock GET /api/video-capsules/:id — resolves immediately as done, with a playable mp4 variant */
-  async mockVideoCapsuleStatusDone(id = 'e2e-capsule-1') {
+  /** Mock GET /api/video-capsules/:id — exposes one generating poll before the playable result. */
+  async mockVideoCapsuleStatusGeneratingThenDone(id = 'e2e-capsule-1') {
+    let pollCount = 0;
     await this.page.route(`**/api/video-capsules/${id}`, (route) => {
+      pollCount += 1;
+      const done = pollCount > 1;
       route.fulfill({
         status: 200,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           success: true,
           id,
-          status: 'done',
-          variants: [
-            { lang: 'fr', format: 'mp4', gatePassed: true, url: `https://example.com/${id}.mp4` },
-          ],
+          status: done ? 'done' : 'generating',
+          variants: done
+            ? [
+                {
+                  lang: 'fr',
+                  format: 'mp4',
+                  gatePassed: true,
+                  url: `https://example.com/${id}.mp4`,
+                },
+              ]
+            : [],
           error: null,
-          done: true,
+          done,
           pollIntervalMs: 5000,
         }),
       });

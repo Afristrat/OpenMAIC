@@ -29,7 +29,7 @@ function buildTextPdf(text: string): Buffer {
   return Buffer.from(pdf);
 }
 
-test('parses a PDF through the standalone production runtime', async ({ request }) => {
+test('parses a PDF through the production Next.js runtime', async ({ request }) => {
   const response = await request.post('/api/parse-pdf', {
     multipart: {
       pdf: {

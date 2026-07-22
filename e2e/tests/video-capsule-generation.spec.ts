@@ -109,7 +109,7 @@ test.describe('Video capsule generation', () => {
 
   test('generates a video capsule and plays the resulting mp4', async ({ page, mockApi }) => {
     await mockApi.mockVideoCapsuleCreate('e2e-capsule-1');
-    await mockApi.mockVideoCapsuleStatusDone('e2e-capsule-1');
+    await mockApi.mockVideoCapsuleStatusGeneratingThenDone('e2e-capsule-1');
 
     const classroom = new ClassroomPage(page);
     await classroom.goto(TEST_STAGE_ID);
@@ -125,8 +125,8 @@ test.describe('Video capsule generation', () => {
 
     await page.getByRole('button', { name: 'Generate video' }).click();
 
-    // Busy state: spinner + status label while the (mocked) job is in flight
-    await expect(page.getByText('Queued...')).toBeVisible();
+    // Busy state: the first status poll remains in progress before completion.
+    await expect(page.getByText('Generating...')).toBeVisible();
 
     // Done state: the mp4 variant is rendered as a playable <video>
     const video = page.locator('video').first();
