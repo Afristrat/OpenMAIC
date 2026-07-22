@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Archive,
+  BookOpenCheck,
   Download,
   FileDown,
   Loader2,
@@ -12,6 +13,7 @@ import {
   Settings,
   Sun,
   Video,
+  Workflow,
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { useI18n } from '@/lib/hooks/use-i18n';
@@ -21,6 +23,7 @@ import { useMediaGenerationStore } from '@/lib/store/media-generation';
 import { useExportPPTX } from '@/lib/export/use-export-pptx';
 import { useExportClassroom } from '@/lib/export/use-export-classroom';
 import { useExportMp4 } from '@/lib/export/use-export-mp4';
+import { useExportLearningPackage } from '@/lib/export/use-export-learning-package';
 import { LanguageSwitcher } from '../language-switcher';
 import { SettingsDialog } from '../settings';
 import {
@@ -80,6 +83,8 @@ export function HeaderControls({
   const { exporting: isExporting, exportPPTX, exportResourcePack } = useExportPPTX();
   const { exporting: isExportingZip, exportClassroomZip } = useExportClassroom();
   const { exporting: isExportingMp4, exportMp4 } = useExportMp4();
+  const { exporting: isExportingLearningPackage, exportLearningPackage } =
+    useExportLearningPackage();
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
 
@@ -243,27 +248,43 @@ export function HeaderControls({
       <div className="relative" ref={exportRef}>
         <button
           onClick={() => {
-            if (canExport && !isExporting && !isExportingZip && !isExportingMp4) {
+            if (
+              canExport &&
+              !isExporting &&
+              !isExportingZip &&
+              !isExportingMp4 &&
+              !isExportingLearningPackage
+            ) {
               setExportMenuOpen(!exportMenuOpen);
             }
           }}
-          disabled={!canExport || isExporting || isExportingZip || isExportingMp4}
+          disabled={
+            !canExport ||
+            isExporting ||
+            isExportingZip ||
+            isExportingMp4 ||
+            isExportingLearningPackage
+          }
           title={
             canExport
-              ? isExporting || isExportingZip || isExportingMp4
+              ? isExporting || isExportingZip || isExportingMp4 || isExportingLearningPackage
                 ? t('export.exporting')
                 : t('export.pptx')
               : t('share.notReady')
           }
           className={cn(
             'shrink-0 p-2 rounded-full transition-all',
-            canExport && !isExporting && !isExportingZip && !isExportingMp4
+            canExport &&
+              !isExporting &&
+              !isExportingZip &&
+              !isExportingMp4 &&
+              !isExportingLearningPackage
               ? 'text-gray-400 dark:text-gray-500 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 hover:shadow-sm'
               : 'text-gray-300 dark:text-gray-600 cursor-not-allowed opacity-50',
           )}
           aria-label={t('export.pptx')}
         >
-          {isExporting || isExportingZip || isExportingMp4 ? (
+          {isExporting || isExportingZip || isExportingMp4 || isExportingLearningPackage ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
             <Download className="w-4 h-4" />
@@ -285,6 +306,60 @@ export function HeaderControls({
                 <div>{t('export.mp4')}</div>
                 <div className="text-[11px] text-gray-400 dark:text-gray-500">
                   {t('export.mp4Desc')}
+                </div>
+              </div>
+            </button>
+            <div className="border-t border-gray-100 dark:border-gray-700 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500">
+              {t('export.lmsPackages')}
+            </div>
+            <button
+              data-testid="export-scorm12"
+              onClick={() => {
+                setExportMenuOpen(false);
+                void exportLearningPackage('scorm12');
+              }}
+              disabled={isExportingLearningPackage}
+              className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2.5"
+            >
+              <BookOpenCheck className="w-4 h-4 text-gray-400 shrink-0" />
+              <div>
+                <div>{t('export.scorm12')}</div>
+                <div className="text-[11px] text-gray-400 dark:text-gray-500">
+                  {t('export.scorm12Desc')}
+                </div>
+              </div>
+            </button>
+            <button
+              data-testid="export-scorm2004"
+              onClick={() => {
+                setExportMenuOpen(false);
+                void exportLearningPackage('scorm2004');
+              }}
+              disabled={isExportingLearningPackage}
+              className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2.5"
+            >
+              <BookOpenCheck className="w-4 h-4 text-gray-400 shrink-0" />
+              <div>
+                <div>{t('export.scorm2004')}</div>
+                <div className="text-[11px] text-gray-400 dark:text-gray-500">
+                  {t('export.scorm2004Desc')}
+                </div>
+              </div>
+            </button>
+            <button
+              data-testid="export-cmi5"
+              onClick={() => {
+                setExportMenuOpen(false);
+                void exportLearningPackage('cmi5');
+              }}
+              disabled={isExportingLearningPackage}
+              className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2.5"
+            >
+              <Workflow className="w-4 h-4 text-gray-400 shrink-0" />
+              <div>
+                <div>{t('export.cmi5')}</div>
+                <div className="text-[11px] text-gray-400 dark:text-gray-500">
+                  {t('export.cmi5Desc')}
                 </div>
               </div>
             </button>
