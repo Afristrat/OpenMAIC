@@ -40,12 +40,18 @@ function preferenceText(value: unknown): string {
   return typeof value === 'string' ? value.toLowerCase() : '';
 }
 
-function scoreAgent(agent: GeneratedAgent, content: string, preferences: Record<string, unknown>): number {
+function scoreAgent(
+  agent: GeneratedAgent,
+  content: string,
+  preferences: Record<string, unknown>,
+  preferredMechanismIds: readonly string[],
+): number {
   if (agent.mechanismId === 'joker' && preferenceIsFalse(preferences.humorOk)) {
     return Number.NEGATIVE_INFINITY;
   }
 
   let score = agent.interactionWeight ?? 0;
+  if (agent.mechanismId && preferredMechanismIds.includes(agent.mechanismId)) score += 100;
   for (const [mechanismId, signals] of Object.entries(CONTENT_SIGNALS)) {
     if (signals.some((signal) => content.includes(signal)) && agent.mechanismId === mechanismId) {
       score += 30;
@@ -94,18 +100,23 @@ export function selectTenantCast({
   profile,
   content,
   seed,
+  preferredMechanismIds = [],
 }: {
   design: LearningDesignSettings;
   profile: LearnerCastingProfile;
   content: string;
   seed: string;
+  preferredMechanismIds?: readonly string[];
 }): TenantCast {
   const roster = buildTenantAgentConfigs(design);
   const teacher = roster.find((agent) => agent.role === 'teacher');
   const candidates = roster.filter((agent) => agent.id !== teacher?.id);
   const normalizedContent = content.toLocaleLowerCase();
   const scores = new Map(
-    candidates.map((agent) => [agent.id, scoreAgent(agent, normalizedContent, profile.preferences)]),
+    candidates.map((agent) => [
+      agent.id,
+      scoreAgent(agent, normalizedContent, profile.preferences, preferredMechanismIds),
+    ]),
   );
   const selected = candidates
     .filter((agent) => Number.isFinite(scores.get(agent.id)))

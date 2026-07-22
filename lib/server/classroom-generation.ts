@@ -46,6 +46,10 @@ import {
   type LearningDesignSettings,
 } from '@/lib/agents/persona-catalog';
 import { selectTenantCast, type LearnerCastingProfile } from '@/lib/agents/cast-selection';
+import {
+  buildContentCastPrompt,
+  parseContentCastMechanisms,
+} from '@/lib/agents/content-cast-director';
 import { resolveOrganizationSkillId } from '@/lib/server/skill-resolution';
 import { buildLiveInstructionalDirective } from '@/lib/formation-engine/downstream-consumers';
 
@@ -374,6 +378,45 @@ export async function generateClassroom(
   // Resolve agents based on agentMode — now AFTER outlines so we can use languageDirective
   let agents: AgentInfo[];
   const agentMode = input.agentMode || 'default';
+  let preferredMechanismIds: string[] = [];
+  if (agentMode === 'generate') {
+    try {
+      const contentCastModel = await resolveModel({ stage: 'agent-profiles' });
+      if (isProviderKeyRequired(contentCastModel.providerId) && !contentCastModel.apiKey) {
+        throw new Error(`No API key configured for provider "${contentCastModel.providerId}".`);
+      }
+      const selection = await callLLM(
+        {
+          model: contentCastModel.model,
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You select existing teaching mechanisms for a classroom. Obey the supplied roster exactly.',
+            },
+            {
+              role: 'user',
+              content: buildContentCastPrompt({
+                courseTitle: courseTitle || requirement,
+                outlines,
+                personas: learningDesign.personas,
+              }),
+            },
+          ],
+          maxOutputTokens: Math.min(contentCastModel.modelInfo?.outputWindow ?? 128, 128),
+        },
+        'agent-profiles',
+        undefined,
+        contentCastModel.thinkingConfig,
+      );
+      preferredMechanismIds = parseContentCastMechanisms(
+        selection.text,
+        learningDesign.personas.filter((persona) => persona.enabled).map((persona) => persona.id),
+      );
+    } catch (error) {
+      log.warn('Content-aware cast selection unavailable; using deterministic fallback:', error);
+    }
+  }
   const tenantAgentConfigs =
     agentMode === 'generate'
       ? selectTenantCast({
@@ -381,6 +424,7 @@ export async function generateClassroom(
           profile: learnerCastingProfile,
           content: `${requirement}\n${JSON.stringify(outlines)}`,
           seed: nanoid(10),
+          preferredMechanismIds,
         }).agents
       : [];
   if (agentMode === 'generate') {
