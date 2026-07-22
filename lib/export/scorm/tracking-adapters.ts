@@ -61,6 +61,9 @@ window.qalemTracking = {
 function buildCmi5TrackingScript(): string {
   return `
 (function () {
+  var XAPI_VERSION = '1.0.3';
+  var CMI5_CATEGORY = 'https://w3id.org/xapi/cmi5/context/categories/cmi5';
+  var MOVE_ON_CATEGORY = 'https://w3id.org/xapi/cmi5/context/categories/moveon';
   var params = new URLSearchParams(window.location.search);
   var endpoint = params.get('endpoint');
   var fetchUrl = params.get('fetch');
@@ -70,6 +73,7 @@ function buildCmi5TrackingScript(): string {
   var terminated = false;
   var state = null;
   var authToken = null;
+  var initializedAt = null;
 
   function required(value, name) {
     if (!value) throw new Error('Paramètre de lancement cmi5 manquant : ' + name);
@@ -81,7 +85,7 @@ function buildCmi5TrackingScript(): string {
     return url.toString();
   }
   function headers() {
-    return { 'Authorization': authToken, 'Content-Type': 'application/json', 'X-Experience-API-Version': '1.0.3' };
+    return { 'Authorization': authToken, 'Content-Type': 'application/json', 'X-Experience-API-Version': XAPI_VERSION };
   }
   function statementId() {
     if (window.crypto && window.crypto.randomUUID) return window.crypto.randomUUID();
@@ -90,20 +94,32 @@ function buildCmi5TrackingScript(): string {
       return (c === 'x' ? r : (r & 3) | 8).toString(16);
     });
   }
-  function context() {
-    return state.contextTemplate;
+  function context(completes) {
+    var value = JSON.parse(JSON.stringify(state.contextTemplate));
+    value.registration = required(registration, 'registration');
+    value.contextActivities = value.contextActivities || {};
+    value.contextActivities.category = value.contextActivities.category || [];
+    value.contextActivities.category.push({ id: CMI5_CATEGORY });
+    if (completes) value.contextActivities.category.push({ id: MOVE_ON_CATEGORY });
+    return value;
   }
-  function send(verb, result, keepalive) {
+  function duration() {
+    return initializedAt === null ? undefined : 'PT' + Math.max(0, (Date.now() - initializedAt) / 1000).toFixed(2) + 'S';
+  }
+  function send(verb, result, keepalive, completes) {
     var payload = {
       id: statementId(),
       actor: JSON.parse(required(actor, 'actor')),
-      verb: { id: verb },
+      verb: { id: verb, display: { en: verb.split('/').pop() } },
       object: { id: required(activityId, 'activityId') },
-      context: context(),
+      context: context(Boolean(completes)),
       timestamp: new Date().toISOString()
     };
     if (result) payload.result = result;
-    return window.fetch(endpointUrl('statements'), { method: 'POST', headers: headers(), body: JSON.stringify(payload), keepalive: Boolean(keepalive) });
+    return window.fetch(endpointUrl('statements'), { method: 'POST', headers: headers(), body: JSON.stringify(payload), keepalive: Boolean(keepalive) }).then(function (response) {
+      if (!response.ok) throw new Error('Statement cmi5 refusé par le LMS.');
+      return response;
+    });
   }
   async function initialize() {
     required(fetchUrl, 'fetch');
@@ -111,8 +127,9 @@ function buildCmi5TrackingScript(): string {
     var tokenResponse = await window.fetch(fetchUrl, { method: 'POST' });
     if (!tokenResponse.ok) throw new Error('Jeton cmi5 refusé par le LMS.');
     var tokenPayload = await tokenResponse.json();
-    authToken = tokenPayload['auth-token'];
-    if (!authToken) throw new Error('Jeton cmi5 absent de la réponse LMS.');
+    var token = tokenPayload['auth-token'];
+    if (!token) throw new Error('Jeton cmi5 absent de la réponse LMS.');
+    authToken = 'Basic ' + token;
     var launchDataResponse = await window.fetch(endpointUrl('activities/state', {
       activityId: required(activityId, 'activityId'),
       agent: required(actor, 'actor'),
@@ -122,7 +139,15 @@ function buildCmi5TrackingScript(): string {
     if (!launchDataResponse.ok) throw new Error('Données de lancement cmi5 indisponibles.');
     state = await launchDataResponse.json();
     if (!state.contextTemplate || !state.launchMode) throw new Error('Données de lancement cmi5 invalides.');
+    var preferencesResponse = await window.fetch(endpointUrl('agents/profile', {
+      profileId: 'cmi5LearnerPreferences',
+      agent: required(actor, 'actor')
+    }), { headers: headers() });
+    if (!preferencesResponse.ok && preferencesResponse.status !== 404) {
+      throw new Error('Préférences apprenant cmi5 indisponibles.');
+    }
     await send('http://adlnet.gov/expapi/verbs/initialized');
+    initializedAt = Date.now();
   }
 
   var ready = initialize();
@@ -131,13 +156,13 @@ function buildCmi5TrackingScript(): string {
     complete: function () {
       return ready.then(function () {
         if (state.launchMode !== 'Normal') return;
-        return send('http://adlnet.gov/expapi/verbs/completed', { completion: true, extensions: { 'https://w3id.org/xapi/cmi5/result/extensions/progress': 1 } });
+        return send('http://adlnet.gov/expapi/verbs/completed', { completion: true, duration: duration(), extensions: { 'https://w3id.org/xapi/cmi5/result/extensions/progress': 1 } }, false, true);
       });
     },
     terminate: function () {
       if (terminated) return Promise.resolve();
       terminated = true;
-      return ready.then(function () { return send('http://adlnet.gov/expapi/verbs/terminated', null, true); });
+      return ready.then(function () { return send('http://adlnet.gov/expapi/verbs/terminated', { duration: duration() }, true); });
     }
   };
 }());

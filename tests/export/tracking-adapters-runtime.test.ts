@@ -103,6 +103,9 @@ describe('learning package tracking adapters at runtime', () => {
             }),
           };
         }
+        if (url.startsWith('https://lrs.example/xapi/agents/profile')) {
+          return { ok: false, status: 404, json: async () => ({}) };
+        }
         return { ok: true, json: async () => ({}) };
       },
     } as Record<string, unknown>;
@@ -124,6 +127,7 @@ describe('learning package tracking adapters at runtime', () => {
       init: { method: 'POST' },
     });
     expect(requests[1]?.url).toContain('stateId=LMS.LaunchData');
+    expect(requests[2]?.url).toContain('profileId=cmi5LearnerPreferences');
     expect(statementRequests).toHaveLength(3);
     expect(statementRequests.map(({ init }) => JSON.parse(String(init?.body)).verb.id)).toEqual([
       'http://adlnet.gov/expapi/verbs/initialized',
@@ -134,8 +138,23 @@ describe('learning package tracking adapters at runtime', () => {
     expect(
       statementRequests.every(
         ({ init }) =>
-          (init?.headers as Record<string, string>).Authorization === 'Bearer cmi5-token',
+          (init?.headers as Record<string, string>).Authorization === 'Basic cmi5-token',
       ),
     ).toBe(true);
+    const statements = statementRequests.map(({ init }) => JSON.parse(String(init?.body)));
+    expect(statements.every((statement) => statement.context.registration === 'registration-1')).toBe(true);
+    expect(
+      statements.every((statement) =>
+        statement.context.contextActivities.category.some(
+          (category: { id: string }) =>
+            category.id === 'https://w3id.org/xapi/cmi5/context/categories/cmi5',
+        ),
+      ),
+    ).toBe(true);
+    expect(statements[1].context.contextActivities.category).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'https://w3id.org/xapi/cmi5/context/categories/moveon' }),
+      ]),
+    );
   });
 });
