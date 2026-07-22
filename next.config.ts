@@ -27,6 +27,11 @@ const nextConfig: NextConfig = {
     'unpdf',
   ],
   experimental: {
+    // Coolify builds share ServeurAI with the live platform. The default is
+    // based on host CPUs (27 here), which can starve the serving containers
+    // during static generation. A bounded build remains deterministic without
+    // competing with classroom traffic.
+    cpus: 2,
     proxyClientMaxBodySize: '200mb',
   },
   async headers() {
