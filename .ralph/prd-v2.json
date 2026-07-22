@@ -430,7 +430,8 @@
       "title": "QUICK-WIN : casting personnalisé — personnalités, prénoms culturels, mixité [UI]",
       "epic": "2-VIVRE",
       "phase": 2,
-      "passes": false,
+      "passes": true,
+      "completedAt": "2026-07-22",
       "dependencies": ["S2-001"],
       "acceptance": [
         "Lineup dérive du profil (culture → référentiel) ET du contenu (agent-profiles porté)",
