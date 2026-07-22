@@ -322,6 +322,7 @@ export const generateVideoSchema = z.object({
 
 export const generateClassroomSchema = z.object({
   orgId: z.string().uuid('orgId must be a valid UUID'),
+  courseId: z.string().uuid('courseId must be a valid UUID').optional(),
   requirement: z.string().min(1, 'requirement is required'),
   pdfContent: z
     .object({

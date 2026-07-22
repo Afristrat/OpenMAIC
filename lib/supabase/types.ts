@@ -38,6 +38,17 @@ export interface UserProfile {
   updated_at: string;
 }
 
+/** Historique serveur des équipes de session, garantissant leur variation (S2-003). */
+export interface Casting {
+  id: string;
+  user_id: string;
+  course_id: string;
+  session_no: number;
+  lineup: Record<string, unknown>[];
+  lineup_hash: string;
+  created_at: string;
+}
+
 export interface Organization {
   id: string; // UUID
   name: string;
@@ -200,6 +211,9 @@ export type ProfileInsert = Pick<Profile, 'id'> &
 
 export type UserProfileInsert = Pick<UserProfile, 'user_id'> &
   Partial<Pick<UserProfile, 'culture' | 'ui_language' | 'preferences'>>;
+
+export type CastingInsert = Pick<Casting, 'user_id' | 'course_id' | 'lineup' | 'lineup_hash'> &
+  Partial<Pick<Casting, 'session_no'>>;
 
 export type OrganizationInsert = Partial<Omit<Organization, 'id' | 'created_at' | 'updated_at'>> &
   Pick<Organization, 'name'>;
@@ -550,6 +564,11 @@ export interface Database {
         Row: UserProfile;
         Insert: UserProfileInsert;
         Update: UserProfileUpdate;
+      };
+      castings: {
+        Row: Casting;
+        Insert: CastingInsert;
+        Update: Record<string, never>;
       };
       organizations: {
         Row: Organization;

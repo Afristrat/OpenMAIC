@@ -46,6 +46,8 @@ import {
   type LearningDesignSettings,
 } from '@/lib/agents/persona-catalog';
 import { selectTenantCast, type LearnerCastingProfile } from '@/lib/agents/cast-selection';
+import { deriveCourseId, reserveDistinctCasting } from '@/lib/agents/casting-variation';
+import { releaseCastingReservation, reserveCasting } from '@/lib/server/casting-storage';
 import {
   buildContentCastPrompt,
   parseContentCastMechanisms,
@@ -57,6 +59,8 @@ const log = createLogger('Classroom');
 
 export interface GenerateClassroomInput {
   orgId: string;
+  /** Persisted courses from S1-003 override the deterministic current-flow identity. */
+  courseId?: string;
   requirement: string;
   pdfContent?: { text: string; images: string[] };
   enableWebSearch?: boolean;
@@ -417,16 +421,30 @@ export async function generateClassroom(
       log.warn('Content-aware cast selection unavailable; using deterministic fallback:', error);
     }
   }
-  const tenantAgentConfigs =
-    agentMode === 'generate'
-      ? selectTenantCast({
+  let tenantAgentConfigs: ReturnType<typeof selectTenantCast>['agents'] = [];
+  let castingReservationId: string | undefined;
+  if (agentMode === 'generate') {
+    const courseId = input.courseId ?? deriveCourseId(input.orgId, requirement);
+    const reservation = await reserveDistinctCasting({
+      draw: () =>
+        selectTenantCast({
           design: learningDesign,
           profile: learnerCastingProfile,
           content: `${requirement}\n${JSON.stringify(outlines)}`,
           seed: nanoid(10),
           preferredMechanismIds,
-        }).agents
-      : [];
+        }).agents,
+      reserve: (agents, lineupHash) =>
+        reserveCasting({
+          userId: options.ownerId,
+          courseId,
+          lineup: agents.map((agent) => ({ ...agent })),
+          lineupHash,
+        }),
+    });
+    tenantAgentConfigs = reservation.agents;
+    castingReservationId = reservation.reservation.id;
+  }
   if (agentMode === 'generate') {
     agents = tenantAgentConfigs.map(({ id, name, role, persona }) => ({
       id,
@@ -438,232 +456,243 @@ export async function generateClassroom(
   } else {
     agents = getDefaultAgents();
   }
-  const stageId = nanoid(10);
-  const stage: Stage = {
-    id: stageId,
-    name: courseTitle || outlines[0]?.title || requirement.slice(0, 50),
-    description: undefined,
-    languageDirective,
-    skillPromptContext: {
-      enabled: skillEngineEnabled,
-      activeSkillId: skillEngineEnabled ? activeSkillId : undefined,
-    },
-    videoManifest: buildVideoManifestFromOutlines(outlines),
-    style: 'interactive',
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-    teacherProfile: teachingProfile,
-    // For LLM-generated agents, embed full configs so the client can
-    // hydrate the agent registry without prior IndexedDB data.
-    // For default agents, just record IDs — the client already has them.
-    ...(agentMode === 'generate'
-      ? {
-          generatedAgentConfigs: tenantAgentConfigs,
-        }
-      : {
-          agentIds: agents.map((a) => a.id),
-        }),
-  };
+  try {
+    const stageId = nanoid(10);
+    const stage: Stage = {
+      id: stageId,
+      name: courseTitle || outlines[0]?.title || requirement.slice(0, 50),
+      description: undefined,
+      languageDirective,
+      skillPromptContext: {
+        enabled: skillEngineEnabled,
+        activeSkillId: skillEngineEnabled ? activeSkillId : undefined,
+      },
+      videoManifest: buildVideoManifestFromOutlines(outlines),
+      style: 'interactive',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      teacherProfile: teachingProfile,
+      // For LLM-generated agents, embed full configs so the client can
+      // hydrate the agent registry without prior IndexedDB data.
+      // For default agents, just record IDs — the client already has them.
+      ...(agentMode === 'generate'
+        ? {
+            generatedAgentConfigs: tenantAgentConfigs,
+          }
+        : {
+            agentIds: agents.map((a) => a.id),
+          }),
+    };
 
-  const store = createInMemoryStore(stage);
-  const api = createStageAPI(store);
+    const store = createInMemoryStore(stage);
+    const api = createStageAPI(store);
 
-  log.info('Stage 2: Generating scene content and actions...');
-  let generatedScenes = 0;
+    log.info('Stage 2: Generating scene content and actions...');
+    let generatedScenes = 0;
 
-  for (const [index, outline] of outlines.entries()) {
-    const safeOutline = applyOutlineFallbacks(outline, true, {
-      allowProceduralSkill: vocationalActive,
-    });
-    const progressStart = 30 + Math.floor((index / Math.max(outlines.length, 1)) * 60);
+    for (const [index, outline] of outlines.entries()) {
+      const safeOutline = applyOutlineFallbacks(outline, true, {
+        allowProceduralSkill: vocationalActive,
+      });
+      const progressStart = 30 + Math.floor((index / Math.max(outlines.length, 1)) * 60);
 
-    await options.onProgress?.({
-      step: 'generating_scenes',
-      progress: Math.max(progressStart, 31),
-      message: `Generating scene ${index + 1}/${outlines.length}: ${safeOutline.title}`,
-      scenesGenerated: generatedScenes,
-      totalScenes: outlines.length,
-    });
-
-    const reportSceneRetry = async (
-      phase: 'content' | 'actions',
-      event: { attempt: number; maxAttempts: number; reason: string },
-    ) => {
-      const nextAttempt = Math.min(event.attempt + 1, event.maxAttempts);
-      const message = `Retrying scene ${index + 1}/${outlines.length} ${phase} (${nextAttempt}/${event.maxAttempts}): ${safeOutline.title}`;
-      log.warn(`${message} — ${event.reason}`);
       await options.onProgress?.({
         step: 'generating_scenes',
         progress: Math.max(progressStart, 31),
-        message,
+        message: `Generating scene ${index + 1}/${outlines.length}: ${safeOutline.title}`,
         scenesGenerated: generatedScenes,
         totalScenes: outlines.length,
       });
-    };
 
-    // Web capture: decide + fetch an illustrative capture for this scene, if
-    // any. Never blocks: any failure at any point here falls through with no
-    // image (decideCaptureForScene/requestWebCapture never throw).
-    let assignedImages: PdfImage[] | undefined;
-    let imageMapping: ImageMapping | undefined;
-    const captureDecision = await decideCaptureForScene(
-      safeOutline,
-      sceneAiCall,
-      languageDirective,
-    );
-    if (captureDecision?.needsCapture) {
-      const asset = await requestWebCapture(captureDecision, stageId);
-      if (asset && asset.format === 'image') {
-        const imgId = 'img_capture_1';
-        assignedImages = [
-          {
-            id: imgId,
-            src: asset.assetUrl,
-            pageNumber: 0,
-            description: captureDecision.reason,
-          },
-        ];
-        imageMapping = { [imgId]: asset.assetUrl };
+      const reportSceneRetry = async (
+        phase: 'content' | 'actions',
+        event: { attempt: number; maxAttempts: number; reason: string },
+      ) => {
+        const nextAttempt = Math.min(event.attempt + 1, event.maxAttempts);
+        const message = `Retrying scene ${index + 1}/${outlines.length} ${phase} (${nextAttempt}/${event.maxAttempts}): ${safeOutline.title}`;
+        log.warn(`${message} — ${event.reason}`);
+        await options.onProgress?.({
+          step: 'generating_scenes',
+          progress: Math.max(progressStart, 31),
+          message,
+          scenesGenerated: generatedScenes,
+          totalScenes: outlines.length,
+        });
+      };
+
+      // Web capture: decide + fetch an illustrative capture for this scene, if
+      // any. Never blocks: any failure at any point here falls through with no
+      // image (decideCaptureForScene/requestWebCapture never throw).
+      let assignedImages: PdfImage[] | undefined;
+      let imageMapping: ImageMapping | undefined;
+      const captureDecision = await decideCaptureForScene(
+        safeOutline,
+        sceneAiCall,
+        languageDirective,
+      );
+      if (captureDecision?.needsCapture) {
+        const asset = await requestWebCapture(captureDecision, stageId);
+        if (asset && asset.format === 'image') {
+          const imgId = 'img_capture_1';
+          assignedImages = [
+            {
+              id: imgId,
+              src: asset.assetUrl,
+              pageNumber: 0,
+              description: captureDecision.reason,
+            },
+          ];
+          imageMapping = { [imgId]: asset.assetUrl };
+        }
+        // asset.format === 'video' handled by the existing Hyperframes video
+        // channel — out of scope here, tracked separately if/when a
+        // capture-decision actually returns format:'video' in practice.
       }
-      // asset.format === 'video' handled by the existing Hyperframes video
-      // channel — out of scope here, tracked separately if/when a
-      // capture-decision actually returns format:'video' in practice.
+
+      const content = await withGenerationRetry(
+        () =>
+          generateSceneContent(safeOutline, sceneAiCall, {
+            agents,
+            languageDirective,
+            languageModel,
+            thinkingConfig: classroomThinking,
+            userRequirements: requirements,
+            allowProceduralSkill: vocationalActive,
+            skillEngineEnabled,
+            activeSkillId: requirements.activeSkillId,
+            assignedImages,
+            imageMapping,
+          }),
+        {
+          label: `scene ${index + 1}/${outlines.length} content`,
+          shouldRetryResult: (result) => result === null,
+          onRetry: (event) => reportSceneRetry('content', event),
+        },
+      );
+      if (!content) {
+        log.warn(`Skipping scene "${safeOutline.title}" — content generation failed`);
+        continue;
+      }
+
+      const actions = await withGenerationRetry(
+        () =>
+          generateSceneActions(safeOutline, content, sceneAiCall, {
+            agents,
+            languageDirective,
+          }),
+        {
+          label: `scene ${index + 1}/${outlines.length} actions`,
+          onRetry: (event) => reportSceneRetry('actions', event),
+        },
+      );
+      log.info(`Scene "${safeOutline.title}": ${actions.length} actions`);
+
+      const sceneId = createSceneWithActions(safeOutline, content, actions, api);
+      if (!sceneId) {
+        log.warn(`Skipping scene "${safeOutline.title}" — scene creation failed`);
+        continue;
+      }
+
+      generatedScenes += 1;
+      const progressEnd = 30 + Math.floor(((index + 1) / Math.max(outlines.length, 1)) * 60);
+      await options.onProgress?.({
+        step: 'generating_scenes',
+        progress: Math.min(progressEnd, 90),
+        message: `Generated ${generatedScenes}/${outlines.length} scenes`,
+        scenesGenerated: generatedScenes,
+        totalScenes: outlines.length,
+      });
     }
 
-    const content = await withGenerationRetry(
-      () =>
-        generateSceneContent(safeOutline, sceneAiCall, {
-          agents,
-          languageDirective,
-          languageModel,
-          thinkingConfig: classroomThinking,
-          userRequirements: requirements,
-          allowProceduralSkill: vocationalActive,
-          skillEngineEnabled,
-          activeSkillId: requirements.activeSkillId,
-          assignedImages,
-          imageMapping,
-        }),
-      {
-        label: `scene ${index + 1}/${outlines.length} content`,
-        shouldRetryResult: (result) => result === null,
-        onRetry: (event) => reportSceneRetry('content', event),
-      },
-    );
-    if (!content) {
-      log.warn(`Skipping scene "${safeOutline.title}" — content generation failed`);
-      continue;
+    const scenes = store.getState().scenes;
+    log.info(`Pipeline complete: ${scenes.length} scenes generated`);
+
+    if (scenes.length === 0) {
+      throw new Error('No scenes were generated');
     }
 
-    const actions = await withGenerationRetry(
-      () =>
-        generateSceneActions(safeOutline, content, sceneAiCall, {
-          agents,
-          languageDirective,
-        }),
-      {
-        label: `scene ${index + 1}/${outlines.length} actions`,
-        onRetry: (event) => reportSceneRetry('actions', event),
-      },
-    );
-    log.info(`Scene "${safeOutline.title}": ${actions.length} actions`);
+    // Phase: Media generation (after all scenes generated)
+    if (input.enableImageGeneration || input.enableVideoGeneration) {
+      await options.onProgress?.({
+        step: 'generating_media',
+        progress: 90,
+        message: 'Generating media files',
+        scenesGenerated: scenes.length,
+        totalScenes: outlines.length,
+      });
 
-    const sceneId = createSceneWithActions(safeOutline, content, actions, api);
-    if (!sceneId) {
-      log.warn(`Skipping scene "${safeOutline.title}" — scene creation failed`);
-      continue;
+      try {
+        const mediaMap = await generateMediaForClassroom(outlines, stageId);
+        replaceMediaPlaceholders(scenes, mediaMap);
+        log.info(`Media generation complete: ${Object.keys(mediaMap).length} files`);
+      } catch (err) {
+        log.warn('Media generation phase failed, continuing:', err);
+      }
     }
 
-    generatedScenes += 1;
-    const progressEnd = 30 + Math.floor(((index + 1) / Math.max(outlines.length, 1)) * 60);
+    // Phase: TTS generation
+    if (input.enableTTS) {
+      await options.onProgress?.({
+        step: 'generating_tts',
+        progress: 94,
+        message: 'Generating TTS audio',
+        scenesGenerated: scenes.length,
+        totalScenes: outlines.length,
+      });
+
+      try {
+        await generateTTSForClassroom(scenes, stageId, teachingProfile);
+        log.info('TTS generation complete');
+      } catch (err) {
+        log.warn('TTS generation phase failed, continuing:', err);
+      }
+    }
+
     await options.onProgress?.({
-      step: 'generating_scenes',
-      progress: Math.min(progressEnd, 90),
-      message: `Generated ${generatedScenes}/${outlines.length} scenes`,
-      scenesGenerated: generatedScenes,
-      totalScenes: outlines.length,
-    });
-  }
-
-  const scenes = store.getState().scenes;
-  log.info(`Pipeline complete: ${scenes.length} scenes generated`);
-
-  if (scenes.length === 0) {
-    throw new Error('No scenes were generated');
-  }
-
-  // Phase: Media generation (after all scenes generated)
-  if (input.enableImageGeneration || input.enableVideoGeneration) {
-    await options.onProgress?.({
-      step: 'generating_media',
-      progress: 90,
-      message: 'Generating media files',
+      step: 'persisting',
+      progress: 98,
+      message: 'Persisting classroom data',
       scenesGenerated: scenes.length,
       totalScenes: outlines.length,
     });
 
-    try {
-      const mediaMap = await generateMediaForClassroom(outlines, stageId);
-      replaceMediaPlaceholders(scenes, mediaMap);
-      log.info(`Media generation complete: ${Object.keys(mediaMap).length} files`);
-    } catch (err) {
-      log.warn('Media generation phase failed, continuing:', err);
-    }
-  }
+    const persisted = await persistClassroom(
+      {
+        id: stageId,
+        stage,
+        scenes,
+        ownerId: options.ownerId,
+        orgId: input.orgId,
+      },
+      options.baseUrl,
+    );
 
-  // Phase: TTS generation
-  if (input.enableTTS) {
+    log.info(`Classroom persisted: ${persisted.id}, URL: ${persisted.url}`);
+
     await options.onProgress?.({
-      step: 'generating_tts',
-      progress: 94,
-      message: 'Generating TTS audio',
+      step: 'completed',
+      progress: 100,
+      message: 'Classroom generation completed',
       scenesGenerated: scenes.length,
       totalScenes: outlines.length,
     });
 
-    try {
-      await generateTTSForClassroom(scenes, stageId, teachingProfile);
-      log.info('TTS generation complete');
-    } catch (err) {
-      log.warn('TTS generation phase failed, continuing:', err);
-    }
-  }
-
-  await options.onProgress?.({
-    step: 'persisting',
-    progress: 98,
-    message: 'Persisting classroom data',
-    scenesGenerated: scenes.length,
-    totalScenes: outlines.length,
-  });
-
-  const persisted = await persistClassroom(
-    {
-      id: stageId,
+    return {
+      id: persisted.id,
+      url: persisted.url,
       stage,
       scenes,
-      ownerId: options.ownerId,
-      orgId: input.orgId,
-    },
-    options.baseUrl,
-  );
-
-  log.info(`Classroom persisted: ${persisted.id}, URL: ${persisted.url}`);
-
-  await options.onProgress?.({
-    step: 'completed',
-    progress: 100,
-    message: 'Classroom generation completed',
-    scenesGenerated: scenes.length,
-    totalScenes: outlines.length,
-  });
-
-  return {
-    id: persisted.id,
-    url: persisted.url,
-    stage,
-    scenes,
-    scenesCount: scenes.length,
-    createdAt: persisted.createdAt,
-  };
+      scenesCount: scenes.length,
+      createdAt: persisted.createdAt,
+    };
+  } catch (error) {
+    if (castingReservationId) {
+      try {
+        await releaseCastingReservation(castingReservationId);
+      } catch (releaseError) {
+        log.error('Failed to release an unfinished casting reservation:', releaseError);
+      }
+    }
+    throw error;
+  }
 }

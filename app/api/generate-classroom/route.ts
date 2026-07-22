@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
 
     const body: GenerateClassroomInput = {
       orgId: parsed.orgId,
+      ...(parsed.courseId ? { courseId: parsed.courseId } : {}),
       requirement: parsed.requirement,
       ...(parsed.pdfContent ? { pdfContent: parsed.pdfContent } : {}),
       ...(parsed.enableWebSearch != null ? { enableWebSearch: parsed.enableWebSearch } : {}),
