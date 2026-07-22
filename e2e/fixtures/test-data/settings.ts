@@ -1,5 +1,8 @@
 /** Default settings-storage value for e2e tests (Zustand persist v4 format) */
-export function createSettingsStorage(overrides: Record<string, unknown> = {}) {
+export function createSettingsStorage(
+  overrides: Record<string, unknown> = {},
+  storageVersion = 2,
+) {
   return JSON.stringify({
     state: {
       modelId: 'gpt-4o',
@@ -14,6 +17,6 @@ export function createSettingsStorage(overrides: Record<string, unknown> = {}) {
       autoConfigApplied: true,
       ...overrides,
     },
-    version: 2,
+    version: storageVersion,
   });
 }

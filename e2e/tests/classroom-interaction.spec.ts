@@ -283,7 +283,7 @@ test.describe('Classroom Interaction', () => {
         ttsProvidersConfig: {
           'browser-native-tts': { apiKey: '', baseUrl: '', enabled: true },
         },
-      }),
+      }, 5),
     );
 
     await page.route('**/api/chat', async (route) => {
