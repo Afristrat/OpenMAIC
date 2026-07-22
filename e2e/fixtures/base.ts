@@ -13,6 +13,23 @@ export const test = base.extend<Fixtures>({
     await page.route('**/api/account/is-admin', (route) =>
       route.fulfill({ status: 200, contentType: 'application/json', body: '{"isAdmin":false}' }),
     );
+    // Classroom editor scenarios seed IndexedDB rather than a Supabase test
+    // project. Intercept their debounced server autosave so a successful UI
+    // flow cannot hide connection errors to the deliberately fake E2E URL.
+    await page.route('**/api/classroom', async (route) => {
+      if (route.request().method() !== 'PUT') {
+        await route.fallback();
+        return;
+      }
+
+      const body = route.request().postDataJSON() as { stage?: { id?: unknown } };
+      const id = typeof body.stage?.id === 'string' ? body.stage.id : 'e2e-classroom';
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: { id } }),
+      });
+    });
     await use(mockApi);
   },
 });
