@@ -16,14 +16,14 @@ vi.mock('@/lib/supabase/server', () => ({
       if (table === 'org_invitations') {
         return {
           select: () => ({ eq: () => ({ single: () => mocks.invitation() }) }),
-          update: () => ({ eq: () => mocks.markInvitationUsed() }),
+          update: (payload: unknown) => ({ eq: () => mocks.markInvitationUsed(payload) }),
         };
       }
       return {
         select: () => ({
           eq: () => ({ eq: () => ({ single: () => mocks.existingMember() }) }),
         }),
-        insert: () => mocks.insertMember(),
+        insert: (payload: unknown) => mocks.insertMember(payload),
       };
     },
   })),
