@@ -30,7 +30,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     // Find the invitation
     const { data: invitation, error: findError } = await supabase
       .from('org_invitations')
-      .select('id, org_id, role, expires_at, used_at')
+      .select('id, org_id, role, email, expires_at, used_at')
       .eq('token', body.token)
       .single();
 
@@ -46,6 +46,14 @@ export async function POST(request: NextRequest): Promise<Response> {
     // Check if expired
     if (new Date(invitation.expires_at) < new Date()) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 410, 'Invitation expired');
+    }
+
+    // A named invitation is not a transferable bearer credential. The invite
+    // link may travel by email, but only the account at that address can join.
+    const invitationEmail = invitation.email?.trim().toLowerCase();
+    const userEmail = user.email?.trim().toLowerCase();
+    if (invitationEmail && invitationEmail !== userEmail) {
+      return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Invitation email does not match');
     }
 
     // Check if user is already a member
