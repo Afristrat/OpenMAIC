@@ -70,8 +70,11 @@ export default function LibraryPage() {
   const [members, setMembers] = useState<OrganizationMember[]>([]);
   const [recipientUserId, setRecipientUserId] = useState('');
   const [isSubmittingTransmission, setIsSubmittingTransmission] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [isInvitingRecipient, setIsInvitingRecipient] = useState(false);
 
   const canShare = userRole === 'admin' || userRole === 'manager' || userRole === 'formateur';
+  const canInvite = userRole === 'admin' || userRole === 'manager';
 
   const fetchLibrary = useCallback(async () => {
     const supabase = createClient();
@@ -188,9 +191,32 @@ export default function LibraryPage() {
       if (!response.ok || !payload.members) throw new Error(payload.error ?? 'Members unavailable');
       setMembers(payload.members.filter((member) => member.user_id !== user?.id));
       setRecipientUserId('');
+      setInviteEmail('');
       setShareTarget(classroom);
     } catch {
       toast.error(t('org.shareFailed'));
+    }
+  };
+
+  const inviteRecipient = async () => {
+    if (!inviteEmail.trim()) return;
+    setIsInvitingRecipient(true);
+    try {
+      const response = await fetch(`/api/organizations/${encodeURIComponent(orgId)}/invite`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: inviteEmail.trim(), role: 'apprenant' }),
+      });
+      const payload = (await response.json()) as { inviteUrl?: string; error?: string };
+      if (!response.ok || !payload.inviteUrl)
+        throw new Error(payload.error ?? 'Invitation unavailable');
+      await navigator.clipboard.writeText(payload.inviteUrl);
+      setInviteEmail('');
+      toast.success(t('org.inviteLinkCopied'));
+    } catch {
+      toast.error(t('org.shareFailed'));
+    } finally {
+      setIsInvitingRecipient(false);
     }
   };
 
@@ -373,18 +399,49 @@ export default function LibraryPage() {
             <DialogTitle>{t('transmission.share')}</DialogTitle>
             <DialogDescription>{shareTarget?.stage?.name ?? t('org.untitled')}</DialogDescription>
           </DialogHeader>
-          <Select value={recipientUserId} onValueChange={setRecipientUserId}>
-            <SelectTrigger aria-label={t('transmission.recipient')}>
-              <SelectValue placeholder={t('transmission.recipient')} />
-            </SelectTrigger>
-            <SelectContent>
-              {members.map((member) => (
-                <SelectItem key={member.user_id} value={member.user_id}>
-                  {member.profile?.nickname ?? t('transmission.unnamedRecipient')}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {members.length > 0 ? (
+            <Select value={recipientUserId} onValueChange={setRecipientUserId}>
+              <SelectTrigger aria-label={t('transmission.recipient')}>
+                <SelectValue placeholder={t('transmission.recipient')} />
+              </SelectTrigger>
+              <SelectContent>
+                {members.map((member) => (
+                  <SelectItem key={member.user_id} value={member.user_id}>
+                    {member.profile?.nickname ?? t('transmission.unnamedRecipient')}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <p className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
+              {t('transmission.noEligibleRecipients')}
+            </p>
+          )}
+          {canInvite && (
+            <div className="space-y-2 rounded-md border p-3">
+              <p className="text-sm font-medium">{t('transmission.inviteRecipient')}</p>
+              <p className="text-sm text-muted-foreground">{t('transmission.inviteRecipientHint')}</p>
+              <div className="flex gap-2">
+                <Input
+                  aria-label={t('auth.email')}
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(event) => setInviteEmail(event.target.value)}
+                  placeholder={t('auth.email')}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={!inviteEmail.trim() || isInvitingRecipient}
+                  onClick={inviteRecipient}
+                >
+                  {isInvitingRecipient
+                    ? t('transmission.invitingRecipient')
+                    : t('transmission.inviteRecipient')}
+                </Button>
+              </div>
+            </div>
+          )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setShareTarget(null)}>
               {t('common.cancel')}
