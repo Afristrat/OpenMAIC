@@ -533,7 +533,8 @@
       "acceptance": [
         "videowmark (ou incrustation périodique avec ADR) appliqué par le worker",
         "Identifiant décodable sur capture d'écran du flux (preuve documentée)"
-      ]
+      ],
+      "acceptanceNote": "État certifié le 2026-07-23, sans déclaration de complétude : l'incrustation FFmpeg rend un dérivé MP4 avec audio et identifiant opaque de 128 bits, le worker ne publie l'état done qu'après l'upload du dérivé, et la route de consultation refuse la source brute. Le test d'intégration tests/transmissions/visual-watermark.test.ts crée un MP4 réel, extrait les images source/dérivée et vérifie l'altération visuelle ainsi que le flux audio ; la CI GitHub 30045186118 est entièrement verte (formatage, lint, TypeScript, 2 066 tests unitaires, build, migrations et E2E). La preuve d'acceptation finale reste volontairement ouverte : la base Qalem ne contient aucune transmission et chaque organisation ne compte actuellement qu'un seul membre, donc aucun destinataire légitime ne peut recevoir une transmission réelle sans provisionnement explicite d'un second membre."
     },
     {
       "id": "S2-010",
