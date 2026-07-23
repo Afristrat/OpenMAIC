@@ -29,7 +29,12 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: process.env.CI ? 'pnpm build && pnpm start:web' : 'pnpm dev',
+    command:
+      process.env.E2E_PREBUILT === 'true'
+        ? 'pnpm start:web'
+        : process.env.CI
+          ? 'pnpm build && pnpm start:web'
+          : 'pnpm dev',
     url: e2eBaseUrl,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,

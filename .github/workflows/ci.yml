@@ -71,8 +71,19 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install chromium --with-deps
 
+      - name: Build E2E app
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_MAIC_EDITOR_ENABLED: 'true'
+          NEXT_PUBLIC_E2E_TEST_MODE: 'true'
+          NEXT_PUBLIC_SUPABASE_URL: 'http://127.0.0.1:54321'
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: 'e2e-anon-key'
+          SUPABASE_SERVICE_ROLE_KEY: 'e2e-service-role-key'
+
       - name: Run e2e tests
         run: pnpm exec playwright test
+        env:
+          E2E_PREBUILT: 'true'
 
       - uses: actions/upload-artifact@v4
         if: failure()
