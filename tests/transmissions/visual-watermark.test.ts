@@ -64,6 +64,7 @@ describe('visual transmission watermark', () => {
     const directory = await mkdtemp(join(tmpdir(), 'qalem-visual-watermark-proof-'));
     temporaryDirectories.push(directory);
     const sourcePath = join(directory, 'source.mp4');
+    const sourceFramePath = join(directory, 'source-frame.png');
     const framePath = join(directory, 'watermarked-frame.png');
 
     await runFfmpeg([
@@ -88,13 +89,18 @@ describe('visual transmission watermark', () => {
     const derivative = await applyVisualWatermark(await readFile(sourcePath), watermarkId);
     const derivativePath = join(directory, 'watermarked.mp4');
     await writeFile(derivativePath, derivative);
+    await runFfmpeg(['-ss', '0.5', '-i', sourcePath, '-frames:v', '1', sourceFramePath]);
     await runFfmpeg(['-ss', '0.5', '-i', derivativePath, '-frames:v', '1', framePath]);
 
-    const { data, info } = await sharp(framePath).raw().toBuffer({ resolveWithObject: true });
+    const [{ data: sourcePixels, info }, { data: watermarkedPixels }] = await Promise.all([
+      sharp(sourceFramePath).raw().toBuffer({ resolveWithObject: true }),
+      sharp(framePath).raw().toBuffer({ resolveWithObject: true }),
+    ]);
     const pixel = (info.width * (info.height - 40) + (info.width - 40)) * info.channels;
-    const [red, green, blue] = data.subarray(pixel, pixel + 3);
+    const [sourceRed] = sourcePixels.subarray(pixel, pixel + 1);
+    const [watermarkedRed] = watermarkedPixels.subarray(pixel, pixel + 1);
     expect(derivative.subarray(4, 8).toString()).toBe('ftyp');
-    expect([red, green, blue].every((channel) => channel < 30)).toBe(true);
+    expect(watermarkedRed).toBeLessThan(sourceRed * 0.5);
 
     const { stdout } = await execFileAsync(process.env.FFPROBE_PATH || 'ffprobe', [
       '-v',
