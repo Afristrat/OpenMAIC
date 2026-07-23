@@ -76,7 +76,9 @@ describe('buildScorm12Manifest', () => {
     expect(xml).toContain(
       '<courseStructure xmlns="https://w3id.org/xapi/profiles/cmi5/v1/CourseStructure.xsd"',
     );
-    expect(xml).toContain('<course id="https://qalem.ma/exports/courses/com.qalem.export.stage-cmi5">');
+    expect(xml).toContain(
+      '<course id="https://qalem.ma/exports/courses/com.qalem.export.stage-cmi5">',
+    );
     expect(xml).toContain('<au ');
     expect(xml).toContain('moveOn="CompletedOrPassed"');
     expect(xml).toContain('<url>index.html</url>');

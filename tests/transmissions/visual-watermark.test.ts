@@ -56,7 +56,9 @@ describe('visual transmission watermark', () => {
     });
 
     expect(args).toContain('[0:v][1:v]overlay=x=W-w-32:y=H-h-32:format=auto[v]');
-    expect(args).toEqual(expect.arrayContaining(['-map', '[v]', '-map', '0:a?', '-c:a', 'copy']));
+    expect(args).toEqual(
+      expect.arrayContaining(['-map', '[v]', '-map', '0:a?', '-c:a', 'copy']),
+    );
     expect(args.at(-1)).toBe('/tmp/output.mp4');
   });
 
