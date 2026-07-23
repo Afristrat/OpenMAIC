@@ -540,7 +540,8 @@
       "title": "Fondation de transmission de support au destinataire",
       "epic": "2-VIVRE",
       "phase": 2,
-      "passes": false,
+      "passes": true,
+      "completedAt": "2026-07-23",
       "dependencies": ["S0-008"],
       "acceptance": [
         "Table transmissions conforme (RLS émetteur+destinataire)",
@@ -548,7 +549,7 @@
         "Mention « Session remise à [prénom] » à l'ouverture",
         "Contrat de job idempotent permettant à S2-008 et S2-009 de publier leurs artefacts dérivés sans écraser l'original"
       ],
-      "acceptanceNote": "Découpage corrigé le 2026-07-22 pour supprimer le cycle S2-008 → S2-010 → S2-008. La transmission est la fondation de persistance et de RLS ; les watermarks audio et visuel sont des traitements dérivés ultérieurs."
+      "acceptanceNote": "Découpage corrigé le 2026-07-22 pour supprimer le cycle S2-008 → S2-010 → S2-008. La transmission est la fondation de persistance et de RLS ; les watermarks audio et visuel sont des traitements dérivés ultérieurs. La source immuable, le contrat de reprise idempotente et le streaming privé en ligne sont couverts par les tests de routes, de workers et de file. Le parcours Playwright permanent e2e/tests/transmission-viewer.spec.ts prouve désormais l'ouverture destinataire, la mention « Session remise à Amina », la lecture via la route privée de contenu et l'absence de lien de téléchargement. Validation propre sur ServeurAI au commit 65f8836 : TypeScript et lint verts, 2 065 tests Vitest et 40/40 Playwright réussis ; main non touchée."
     },
     {
       "id": "S2-011",
