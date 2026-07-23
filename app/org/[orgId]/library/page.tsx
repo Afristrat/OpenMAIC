@@ -420,7 +420,9 @@ export default function LibraryPage() {
           {canInvite && (
             <div className="space-y-2 rounded-md border p-3">
               <p className="text-sm font-medium">{t('transmission.inviteRecipient')}</p>
-              <p className="text-sm text-muted-foreground">{t('transmission.inviteRecipientHint')}</p>
+              <p className="text-sm text-muted-foreground">
+                {t('transmission.inviteRecipientHint')}
+              </p>
               <div className="flex gap-2">
                 <Input
                   aria-label={t('auth.email')}
