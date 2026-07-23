@@ -8,6 +8,10 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
+  // A hung browser, fixture, or web-server request must fail visibly in CI.
+  // The complete suite normally finishes in a few minutes; fifteen minutes
+  // preserves diagnostic headroom without allowing a runner to stall forever.
+  globalTimeout: process.env.CI ? 15 * 60 * 1000 : undefined,
   // The Next.js server plus two Chromium workers saturate ServeurAI during
   // browser-media scenarios. That contention destroys IndexedDB contexts and
   // turns an otherwise valid suite into a non-deterministic gate. Use the same
