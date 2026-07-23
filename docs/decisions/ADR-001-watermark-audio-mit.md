@@ -27,7 +27,7 @@ L'identifiant de 128 bits ne sera pas remplacé par un identifiant de 16 bits. I
 | 4 bits | index de segment, de `0` à `10` |
 | 12 bits | tranche consécutive de l'identifiant opaque |
 
-Les dix premiers segments portent 120 bits. Le onzième porte les 8 derniers bits, un marqueur de version et une somme de contrôle tronquée. Le cycle dure 22 secondes et se répète ; un extrait continu de 30 secondes doit donc contenir au moins un cycle complet, même s'il commence entre deux segments.
+Les dix premiers segments portent 120 bits. Le onzième porte les 8 derniers bits et une somme de contrôle tronquée sur 4 bits ; la version du protocole est portée par cette ADR et son implémentation versionnée. Le cycle dure 22 secondes et se répète ; un extrait continu de 30 secondes doit donc contenir au moins un cycle complet, même s'il commence entre deux segments.
 
 Le détecteur reconstitue l'identifiant uniquement s'il récupère les onze index, si la somme de contrôle est valide et si chaque segment franchit son seuil de confiance. Un résultat partiel est un échec, jamais une attribution approximative.
 
