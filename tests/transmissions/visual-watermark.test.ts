@@ -17,11 +17,21 @@ const execFileAsync = promisify(execFile);
 const temporaryDirectories: string[] = [];
 
 async function runFfmpeg(args: string[]): Promise<void> {
-  await execFileAsync(process.env.FFMPEG_PATH || 'ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', ...args]);
+  await execFileAsync(process.env.FFMPEG_PATH || 'ffmpeg', [
+    '-hide_banner',
+    '-loglevel',
+    'error',
+    '-y',
+    ...args,
+  ]);
 }
 
 afterEach(async () => {
-  await Promise.all(temporaryDirectories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })));
+  await Promise.all(
+    temporaryDirectories
+      .splice(0)
+      .map((directory) => rm(directory, { recursive: true, force: true })),
+  );
 });
 
 describe('visual transmission watermark', () => {
@@ -57,9 +67,22 @@ describe('visual transmission watermark', () => {
     const framePath = join(directory, 'watermarked-frame.png');
 
     await runFfmpeg([
-      '-f', 'lavfi', '-i', 'color=c=#e11d48:s=1280x720:d=1',
-      '-f', 'lavfi', '-i', 'sine=frequency=440:sample_rate=48000:d=1',
-      '-shortest', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-c:a', 'aac', sourcePath,
+      '-f',
+      'lavfi',
+      '-i',
+      'color=c=#e11d48:s=1280x720:d=1',
+      '-f',
+      'lavfi',
+      '-i',
+      'sine=frequency=440:sample_rate=48000:d=1',
+      '-shortest',
+      '-c:v',
+      'libx264',
+      '-pix_fmt',
+      'yuv420p',
+      '-c:a',
+      'aac',
+      sourcePath,
     ]);
 
     const derivative = await applyVisualWatermark(await readFile(sourcePath), watermarkId);
@@ -73,9 +96,20 @@ describe('visual transmission watermark', () => {
     expect(derivative.subarray(4, 8).toString()).toBe('ftyp');
     expect([red, green, blue].every((channel) => channel < 30)).toBe(true);
 
-    const { stdout } = await execFileAsync(process.env.FFPROBE_PATH || 'ffprobe', [
-      '-v', 'error', '-select_streams', 'a:0', '-show_entries', 'stream=codec_type', '-of', 'default=noprint_wrappers=1:nokey=1', derivativePath,
-    ]);
+    const { stdout } = await execFileAsync(
+      process.env.FFPROBE_PATH || 'ffprobe',
+      [
+        '-v',
+        'error',
+        '-select_streams',
+        'a:0',
+        '-show_entries',
+        'stream=codec_type',
+        '-of',
+        'default=noprint_wrappers=1:nokey=1',
+        derivativePath,
+      ],
+    );
     expect(stdout.trim()).toBe('audio');
   }, 30_000);
 });
