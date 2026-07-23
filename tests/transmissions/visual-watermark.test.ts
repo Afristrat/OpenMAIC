@@ -56,66 +56,57 @@ describe('visual transmission watermark', () => {
     });
 
     expect(args).toContain('[0:v][1:v]overlay=x=W-w-32:y=H-h-32:format=auto[v]');
-    expect(args).toEqual(
-      expect.arrayContaining(['-map', '[v]', '-map', '0:a?', '-c:a', 'copy']),
-    );
+    expect(args).toEqual(expect.arrayContaining(['-map', '[v]', '-map', '0:a?', '-c:a', 'copy']));
     expect(args.at(-1)).toBe('/tmp/output.mp4');
   });
 
-  it(
-    'renders a real private MP4 derivative with its readable watermark and audio',
-    async () => {
-      const directory = await mkdtemp(join(tmpdir(), 'qalem-visual-watermark-proof-'));
-      temporaryDirectories.push(directory);
-      const sourcePath = join(directory, 'source.mp4');
-      const framePath = join(directory, 'watermarked-frame.png');
+  it('renders a real private MP4 derivative with its readable watermark and audio', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'qalem-visual-watermark-proof-'));
+    temporaryDirectories.push(directory);
+    const sourcePath = join(directory, 'source.mp4');
+    const framePath = join(directory, 'watermarked-frame.png');
 
-      await runFfmpeg([
-        '-f',
-        'lavfi',
-        '-i',
-        'color=c=#e11d48:s=1280x720:d=1',
-        '-f',
-        'lavfi',
-        '-i',
-        'sine=frequency=440:sample_rate=48000:d=1',
-        '-shortest',
-        '-c:v',
-        'libx264',
-        '-pix_fmt',
-        'yuv420p',
-        '-c:a',
-        'aac',
-        sourcePath,
-      ]);
+    await runFfmpeg([
+      '-f',
+      'lavfi',
+      '-i',
+      'color=c=#e11d48:s=1280x720:d=1',
+      '-f',
+      'lavfi',
+      '-i',
+      'sine=frequency=440:sample_rate=48000:d=1',
+      '-shortest',
+      '-c:v',
+      'libx264',
+      '-pix_fmt',
+      'yuv420p',
+      '-c:a',
+      'aac',
+      sourcePath,
+    ]);
 
-      const derivative = await applyVisualWatermark(await readFile(sourcePath), watermarkId);
-      const derivativePath = join(directory, 'watermarked.mp4');
-      await writeFile(derivativePath, derivative);
-      await runFfmpeg(['-ss', '0.5', '-i', derivativePath, '-frames:v', '1', framePath]);
+    const derivative = await applyVisualWatermark(await readFile(sourcePath), watermarkId);
+    const derivativePath = join(directory, 'watermarked.mp4');
+    await writeFile(derivativePath, derivative);
+    await runFfmpeg(['-ss', '0.5', '-i', derivativePath, '-frames:v', '1', framePath]);
 
-      const { data, info } = await sharp(framePath).raw().toBuffer({ resolveWithObject: true });
-      const pixel = (info.width * (info.height - 40) + (info.width - 40)) * info.channels;
-      const [red, green, blue] = data.subarray(pixel, pixel + 3);
-      expect(derivative.subarray(4, 8).toString()).toBe('ftyp');
-      expect([red, green, blue].every((channel) => channel < 30)).toBe(true);
+    const { data, info } = await sharp(framePath).raw().toBuffer({ resolveWithObject: true });
+    const pixel = (info.width * (info.height - 40) + (info.width - 40)) * info.channels;
+    const [red, green, blue] = data.subarray(pixel, pixel + 3);
+    expect(derivative.subarray(4, 8).toString()).toBe('ftyp');
+    expect([red, green, blue].every((channel) => channel < 30)).toBe(true);
 
-      const { stdout } = await execFileAsync(
-        process.env.FFPROBE_PATH || 'ffprobe',
-        [
-          '-v',
-          'error',
-          '-select_streams',
-          'a:0',
-          '-show_entries',
-          'stream=codec_type',
-          '-of',
-          'default=noprint_wrappers=1:nokey=1',
-          derivativePath,
-        ],
-      );
-      expect(stdout.trim()).toBe('audio');
-    },
-    30_000,
-  );
+    const { stdout } = await execFileAsync(process.env.FFPROBE_PATH || 'ffprobe', [
+      '-v',
+      'error',
+      '-select_streams',
+      'a:0',
+      '-show_entries',
+      'stream=codec_type',
+      '-of',
+      'default=noprint_wrappers=1:nokey=1',
+      derivativePath,
+    ]);
+    expect(stdout.trim()).toBe('audio');
+  }, 30_000);
 });
