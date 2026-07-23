@@ -16,7 +16,9 @@ const FINAL_DATA_BITS = 8;
 
 function assertWatermarkId(watermarkId: string): void {
   if (!WATERMARK_ID_PATTERN.test(watermarkId)) {
-    throw new Error('L’identifiant audio doit contenir exactement 128 bits hexadécimaux');
+    throw new Error(
+      'L’identifiant audio doit contenir exactement 128 bits hexadécimaux',
+    );
   }
 }
 
@@ -31,7 +33,9 @@ function encodePayloads(watermarkId: string): number[] {
     .map((byte) => byte.toString(2).padStart(8, '0'))
     .join('');
   const payloads = Array.from({ length: SEGMENT_COUNT }, (_, index) => {
-    if (index < SEGMENT_COUNT - 1) return Number.parseInt(bits.slice(index * 12, index * 12 + 12), 2);
+    if (index < SEGMENT_COUNT - 1) {
+      return Number.parseInt(bits.slice(index * 12, index * 12 + 12), 2);
+    }
     const remaining = Number.parseInt(bits.slice((SEGMENT_COUNT - 1) * 12), 2);
     return (remaining << 4) | checksum4(watermarkId);
   });
@@ -62,12 +66,15 @@ export function decodeAudioWatermarkMessages(messages: Iterable<number>): string
   }
 
   if (payloads.size !== SEGMENT_COUNT) return null;
-  const dataBits = Array.from({ length: SEGMENT_COUNT - 1 }, (_, index) =>
-    payloads.get(index)?.toString(2).padStart(12, '0'),
+  const dataBits = Array.from(
+    { length: SEGMENT_COUNT - 1 },
+    (_, index) => payloads.get(index)?.toString(2).padStart(12, '0'),
   ).join('');
   const finalPayload = payloads.get(SEGMENT_COUNT - 1);
   if (finalPayload === undefined) return null;
-  const finalBits = (finalPayload >>> 4).toString(2).padStart(FINAL_DATA_BITS, '0');
+  const finalBits = (finalPayload >>> 4)
+    .toString(2)
+    .padStart(FINAL_DATA_BITS, '0');
   const bits = dataBits + finalBits;
   const bytes = Array.from({ length: 16 }, (_, index) =>
     Number.parseInt(bits.slice(index * 8, index * 8 + 8), 2),
