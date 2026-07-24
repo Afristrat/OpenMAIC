@@ -43,6 +43,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import type { StageMode } from '@/lib/types/stage';
+import type { ResearchSource } from '@openmaic/dsl';
+
+// Zustand selectors must return the same reference when the selected value has
+// not changed. An inline `?? []` allocates on every store read and causes React
+// to keep scheduling updates for classrooms without research sources.
+const EMPTY_RESEARCH_SOURCES: ResearchSource[] = [];
 
 interface HeaderControlsProps {
   readonly mode?: StageMode;
@@ -86,7 +92,7 @@ export function HeaderControls({
   // across mode swaps (was previously in `Header` only, missing from
   // CommandBar's right cluster).
   const scenes = useStageStore((s) => s.scenes);
-  const researchSources = useStageStore((s) => s.stage?.researchSources ?? []);
+  const researchSources = useStageStore((s) => s.stage?.researchSources ?? EMPTY_RESEARCH_SOURCES);
   const generatingOutlines = useStageStore((s) => s.generatingOutlines);
   const failedOutlines = useStageStore((s) => s.failedOutlines);
   const mediaTasks = useMediaGenerationStore((s) => s.tasks);
