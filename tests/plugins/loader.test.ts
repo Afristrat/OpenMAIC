@@ -10,7 +10,12 @@ describe('bundled scene plugins', () => {
 
     expect(pluginIds).toEqual(['code-sandbox', 'lab-simulation']);
     expect(readPluginHtml('code-sandbox')).toMatch(/<!doctype html>/i);
-    expect(readPluginHtml('lab-simulation')).toMatch(/<!doctype html>/i);
+    const labSimulationHtml = readPluginHtml('lab-simulation');
+    expect(labSimulationHtml).toMatch(/<!doctype html>/i);
+    expect(labSimulationHtml).toContain(
+      "import * as CANNON from 'https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js';",
+    );
+    expect(labSimulationHtml).not.toContain('cannon-es.cjs.js');
     expect(formatPluginsForPrompt()).toContain('code-sandbox');
     expect(formatPluginsForPrompt()).toContain('lab-simulation');
   });

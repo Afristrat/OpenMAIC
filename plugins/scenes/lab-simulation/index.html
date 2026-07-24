@@ -279,10 +279,12 @@
 
     <!-- Three.js from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.min.js"></script>
-    <!-- cannon-es for physics -->
-    <script src="https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.cjs.js"></script>
 
-    <script>
+    <script type="module">
+      // cannon-es is published as ESM/CJS. The ESM entry is required here: a
+      // classic browser script cannot expose the CJS bundle as window.CANNON.
+      import * as CANNON from 'https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js';
+
       /*
        * Lab Simulation 3D Plugin for Qalem
        *
@@ -407,7 +409,6 @@
       // Physics (cannon-es)
       // ====================================================================
       function initPhysics() {
-        // cannon-es is loaded as CJS, accessible via CANNON global
         world = new CANNON.World();
         world.gravity.set(0, -(params.gravity || 9.81), 0);
 
