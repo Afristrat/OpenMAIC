@@ -771,7 +771,8 @@
       "acceptance": [
         "Protocole P4-C passé hors repo Qalem",
         "Échec → retour au vecteur de double publication, pas de rustine"
-      ]
+      ],
+      "acceptanceNote": "Tentative P4-C du 2026-07-24 : les deux installations autonomes réelles (`C:\\Users\\amans\\.agents\\skills\\formation-design-pro` et `C:\\Users\\amans\\.claude\\skills\\formation-design-pro`) contiennent chacune 35 fichiers, mais leurs SKILL.md de 1 238 lignes divergent. Elles déclarent encore Formation Design Pro 2.1, tandis que la publication plateforme traçable est 2.3.0. Le test hors Qalem ne peut donc pas certifier le moteur publié : il exercerait une version antérieure. Conformément à P4-C, aucun contournement ni copie manuelle n'est appliqué dans les installations autonomes ; S4-006 reste ouverte et revient au mécanisme de double publication pour rendre la version et les empreintes vérifiables avant une nouvelle invocation."
     },
     {
       "id": "S4-007",
