@@ -38,7 +38,11 @@ import type { UserRequirements, PdfImage, ImageMapping } from '@/lib/types/gener
 import type { Scene, Stage } from '@/lib/types/stage';
 import { isFeatureEnabled } from '@/lib/flags';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
-import { DEFAULT_TEACHING_PROFILE, teachingProfileFromSettings } from '@/lib/org/teaching-profile';
+import {
+  DEFAULT_TEACHING_PROFILE,
+  teachingProfileFromLearningDesign,
+  teachingProfileFromSettings,
+} from '@/lib/org/teaching-profile';
 import {
   DEFAULT_LEARNING_DESIGN,
   approachForAudience,
@@ -160,15 +164,7 @@ export async function generateClassroom(
       culture: profile?.culture ?? learnerCastingProfile.culture,
       preferences: profile?.preferences ?? learnerCastingProfile.preferences,
     };
-    const professor = learningDesign.personas.find((persona) => persona.id === 'professor');
-    if (professor) {
-      teachingProfile = {
-        name: professor.defaultName,
-        avatar: professor.avatar,
-        providerId: professor.providerId,
-        voiceId: professor.voiceId,
-      };
-    }
+    teachingProfile = teachingProfileFromLearningDesign(learningDesign);
   } catch (error) {
     log.warn('Tenant learning design unavailable; using coherent defaults:', error);
   }

@@ -10,7 +10,8 @@ import {
   readClassroomOwnership,
 } from '@/lib/server/classroom-storage';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
-import { teachingProfileFromSettings } from '@/lib/org/teaching-profile';
+import { learningDesignFromSettings } from '@/lib/agents/persona-catalog';
+import { teachingProfileFromLearningDesign } from '@/lib/org/teaching-profile';
 
 export async function POST(
   request: NextRequest,
@@ -43,11 +44,10 @@ export async function POST(
     .select('settings')
     .eq('id', ownership.orgId)
     .single();
-  await generateTTSForClassroom(
-    [generatedScene],
-    classroomId,
-    teachingProfileFromSettings(organization?.settings),
+  const teachingProfile = teachingProfileFromLearningDesign(
+    learningDesignFromSettings(organization?.settings),
   );
+  await generateTTSForClassroom([generatedScene], classroomId, teachingProfile);
   if (!generatedScene.actions?.every((item) => item.type !== 'speech' || item.audioUrl)) {
     return apiError('INTERNAL_ERROR', 502, 'La synthèse vocale a échoué');
   }

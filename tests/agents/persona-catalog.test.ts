@@ -7,6 +7,7 @@ import {
   learningDesignFromSettings,
 } from '@/lib/agents/persona-catalog';
 import { validatePersonaSettings } from '@/lib/agents/persona-validation';
+import { teachingProfileFromLearningDesign } from '@/lib/org/teaching-profile';
 
 describe('ten-persona learning design', () => {
   it('defines ten unique mechanisms with one lead teacher', () => {
@@ -81,6 +82,17 @@ describe('ten-persona learning design', () => {
       gender: 'female',
       avatar: '/avatars/teacher-2.png',
       voiceId: 'hanae',
+    });
+  });
+
+  it('uses the professor persona as the sole classroom voice source', () => {
+    const teachingProfile = teachingProfileFromLearningDesign(DEFAULT_LEARNING_DESIGN);
+
+    expect(teachingProfile).toEqual({
+      name: 'Younes',
+      avatar: '/avatars/teacher.png',
+      providerId: 'higgs-tts',
+      voiceId: 'younes',
     });
   });
 });
