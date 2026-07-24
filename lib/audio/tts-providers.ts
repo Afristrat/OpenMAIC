@@ -977,7 +977,7 @@ async function generateCartesiaTTS(
  */
 async function generateEdgeTTS(config: TTSModelConfig, text: string): Promise<TTSGenerationResult> {
   const { generateEdgeTTSAudio } = await import('@/lib/audio/edge-tts');
-  return await generateEdgeTTSAudio(escapeXml(text), config.voice, config.speed);
+  return await generateEdgeTTSAudio(text, config.voice, config.speed);
 }
 
 /**

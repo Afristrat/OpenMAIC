@@ -14,6 +14,38 @@ const log = createLogger('EdgeTTS');
 
 const EDGE_ORIGIN = 'chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold';
 
+const EDGE_VOICE_LOCALE = /^([a-z]{2,3}-[A-Z]{2})-/u;
+
+function escapeSsmlText(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/** Resolve the BCP-47 locale embedded in every supported Edge voice identifier. */
+export function resolveEdgeTTSLocale(voice: string): string {
+  return EDGE_VOICE_LOCALE.exec(voice)?.[1] ?? 'fr-FR';
+}
+
+export function buildEdgeTTSSsml(
+  text: string,
+  voice: string,
+  speed: number = 1.0,
+): string {
+  const locale = resolveEdgeTTSLocale(voice);
+  const ratePercent = `${speed >= 1 ? '+' : ''}${Math.round((speed - 1) * 100)}%`;
+  const escapedText = escapeSsmlText(text);
+
+  return [
+    `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="${locale}">`,
+    `<voice xml:lang="${locale}" name="${voice}">`,
+    `<prosody rate="${ratePercent}">${escapedText}</prosody>`,
+    '</voice></speak>',
+  ].join('');
+}
+
 /**
  * Generate speech audio using Microsoft Edge's free TTS service.
  */
@@ -22,15 +54,7 @@ export async function generateEdgeTTSAudio(
   voice: string,
   speed: number = 1.0,
 ): Promise<{ audio: Uint8Array; format: string }> {
-  // Build SSML
-  const ratePercent = `${speed >= 1 ? '+' : ''}${Math.round((speed - 1) * 100)}%`;
-  const escapedText = text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-
-  const ssml = `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US"><voice name="${voice}"><prosody rate="${ratePercent}">${escapedText}</prosody></voice></speak>`;
+  const ssml = buildEdgeTTSSsml(text, voice, speed);
 
   // Use the REST-like approach via fetch to the Edge cognitive services endpoint
   // This avoids WebSocket complexity and works in server-side Node.js
@@ -67,12 +91,6 @@ export async function generateEdgeTTSAudio(
 async function generateEdgeTTSViaAlternative(
   ssml: string,
 ): Promise<{ audio: Uint8Array; format: string }> {
-  // Extract voice name and text from SSML for the simpler endpoint
-  const voiceMatch = ssml.match(/name="([^"]+)"/);
-  const textMatch = ssml.match(/<prosody[^>]*>([\s\S]*?)<\/prosody>/);
-  const voice = voiceMatch?.[1] || 'fr-FR-DeniseNeural';
-  const text = textMatch?.[1] || '';
-
   // Use the free Bing TTS endpoint
   const params = new URLSearchParams({
     trustedclienttoken: '6A5AA1D4EAFF4E9FB37E23D68491D6F4',
@@ -87,7 +105,8 @@ async function generateEdgeTTSViaAlternative(
         'X-Microsoft-OutputFormat': 'audio-24khz-96kbitrate-mono-mp3',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       },
-      body: `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US"><voice name="${voice}"><prosody rate="+0%">${text}</prosody></voice></speak>`,
+      // Preserve the original locale, speed and escaped narration exactly.
+      body: ssml,
     },
   );
 
