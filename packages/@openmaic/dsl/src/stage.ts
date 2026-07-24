@@ -79,6 +79,17 @@ export interface SkillPromptContext {
 }
 
 /**
+ * Traceable source retained with a classroom generated from web research.
+ * The full crawl stays in the generation context only; the persisted excerpt
+ * gives learners and reviewers enough evidence to assess the claim safely.
+ */
+export interface ResearchSource {
+  title: string;
+  url: string;
+  excerpt: string;
+}
+
+/**
  * Stage - Represents the entire classroom/course.
  */
 export interface Stage {
@@ -90,6 +101,8 @@ export interface Stage {
   // Stage metadata
   languageDirective?: string;
   skillPromptContext?: SkillPromptContext;
+  /** Sources consulted for this classroom when web research was enabled. */
+  researchSources?: ResearchSource[];
   style?: string;
   // Whiteboard data
   whiteboard?: Whiteboard[];

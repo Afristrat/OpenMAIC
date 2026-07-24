@@ -58,6 +58,7 @@ import {
 } from '@/lib/agents/content-cast-director';
 import { resolveOrganizationSkillId } from '@/lib/server/skill-resolution';
 import { buildLiveInstructionalDirective } from '@/lib/formation-engine/downstream-consumers';
+import { toPersistedResearchSources } from '@/lib/server/research-sources';
 
 const log = createLogger('Classroom');
 
@@ -278,6 +279,7 @@ export async function generateClassroom(
 
   // Web search (optional, graceful degradation)
   let researchContext: string | undefined;
+  let researchSources: Stage['researchSources'];
   if (input.enableWebSearch) {
     const webSearchConfig = resolveClassroomWebSearchConfig(input);
     if (webSearchConfig) {
@@ -320,6 +322,7 @@ export async function generateClassroom(
           searchResult.sources,
           searchQuery.query,
         );
+        researchSources = toPersistedResearchSources(enrichedSources);
         researchContext = formatSearchResultsAsContext({
           ...searchResult,
           sources: enrichedSources,
@@ -463,6 +466,7 @@ export async function generateClassroom(
         enabled: skillEngineEnabled,
         activeSkillId: skillEngineEnabled ? activeSkillId : undefined,
       },
+      ...(researchSources?.length ? { researchSources } : {}),
       videoManifest: buildVideoManifestFromOutlines(outlines),
       style: 'interactive',
       createdAt: Date.now(),

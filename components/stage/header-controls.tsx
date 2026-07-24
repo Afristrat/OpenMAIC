@@ -5,6 +5,7 @@ import {
   Archive,
   BookOpenCheck,
   Download,
+  ExternalLink,
   FileDown,
   Loader2,
   Monitor,
@@ -26,6 +27,14 @@ import { useExportMp4 } from '@/lib/export/use-export-mp4';
 import { useExportLearningPackage } from '@/lib/export/use-export-learning-package';
 import { LanguageSwitcher } from '../language-switcher';
 import { SettingsDialog } from '../settings';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -77,6 +86,7 @@ export function HeaderControls({
   // across mode swaps (was previously in `Header` only, missing from
   // CommandBar's right cluster).
   const scenes = useStageStore((s) => s.scenes);
+  const researchSources = useStageStore((s) => s.stage?.researchSources ?? []);
   const generatingOutlines = useStageStore((s) => s.generatingOutlines);
   const failedOutlines = useStageStore((s) => s.failedOutlines);
   const mediaTasks = useMediaGenerationStore((s) => s.tasks);
@@ -407,6 +417,47 @@ export function HeaderControls({
           </div>
         )}
       </div>
+
+      {researchSources.length > 0 && (
+        <Dialog>
+          <DialogTrigger asChild>
+            <button
+              type="button"
+              className="inline-flex size-9 items-center justify-center rounded-full border border-gray-100/50 bg-white/60 text-gray-400 shadow-sm backdrop-blur-md transition-all hover:bg-white hover:text-gray-800 hover:shadow dark:border-gray-700/50 dark:bg-gray-800/60 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+              aria-label={t('classroom.researchSources')}
+              title={t('classroom.researchSources')}
+            >
+              <BookOpenCheck className="size-4" />
+            </button>
+          </DialogTrigger>
+          <DialogContent className="max-h-[80vh] max-w-xl overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{t('classroom.researchSourcesTitle')}</DialogTitle>
+              <DialogDescription>{t('classroom.researchSourcesDescription')}</DialogDescription>
+            </DialogHeader>
+            <ol className="space-y-3">
+              {researchSources.map((source) => (
+                <li key={source.url} className="rounded-lg border border-border/70 p-3">
+                  <a
+                    href={source.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline"
+                  >
+                    {source.title}
+                    <ExternalLink className="size-3" aria-hidden="true" />
+                  </a>
+                  {source.excerpt && (
+                    <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+                      {source.excerpt}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </DialogContent>
+        </Dialog>
+      )}
 
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
