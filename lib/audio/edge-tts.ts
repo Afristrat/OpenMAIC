@@ -29,11 +29,7 @@ export function resolveEdgeTTSLocale(voice: string): string {
   return EDGE_VOICE_LOCALE.exec(voice)?.[1] ?? 'fr-FR';
 }
 
-export function buildEdgeTTSSsml(
-  text: string,
-  voice: string,
-  speed: number = 1.0,
-): string {
+export function buildEdgeTTSSsml(text: string, voice: string, speed: number = 1.0): string {
   const locale = resolveEdgeTTSLocale(voice);
   const ratePercent = `${speed >= 1 ? '+' : ''}${Math.round((speed - 1) * 100)}%`;
   const escapedText = escapeSsmlText(text);
