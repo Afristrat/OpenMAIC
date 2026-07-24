@@ -9,9 +9,7 @@ const MAX_PERSISTED_EXCERPT_LENGTH = 600;
  * Crawled page bodies remain transient prompt context; only a short excerpt
  * and its URL are persisted for learners and reviewers.
  */
-export function toPersistedResearchSources(
-  sources: readonly WebSearchSource[],
-): ResearchSource[] {
+export function toPersistedResearchSources(sources: readonly WebSearchSource[]): ResearchSource[] {
   const persisted: ResearchSource[] = [];
 
   for (const source of sources) {
