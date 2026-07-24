@@ -30,7 +30,10 @@ export function toPersistedResearchSources(
     persisted.push({
       title,
       url: url.toString(),
-      excerpt: source.content.replace(/\s+/g, ' ').trim().slice(0, MAX_PERSISTED_EXCERPT_LENGTH),
+      excerpt: source.content
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, MAX_PERSISTED_EXCERPT_LENGTH),
     });
   }
 
