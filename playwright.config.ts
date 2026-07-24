@@ -17,7 +17,10 @@ export default defineConfig({
   // turns an otherwise valid suite into a non-deterministic gate. Use the same
   // bounded execution model locally and in CI so a green gate is reproducible.
   workers: 1,
-  reporter: process.env.CI ? 'html' : 'list',
+  // Keep the HTML artifact and stream the active test to CI logs. Without the
+  // line reporter, a stalled browser provides no actionable identity until the
+  // global timeout ends.
+  reporter: process.env.CI ? [['line'], ['html']] : 'list',
   use: {
     baseURL: e2eBaseUrl,
     // Playwright cannot route requests claimed by a service worker. Blocking
