@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Politique de Confidentialit\u00e9 \u2014 Qalem',
   description:
-    'Politique de confidentialit\u00e9 de Qalem (AI-Mpower LLC). Conformit\u00e9 CNDP (loi 09-08) et RGPD. Protection des donn\u00e9es personnelles.',
+    'Politique de confidentialit\u00e9 de Qalem, \u00e9dit\u00e9 par AIMPower SARL A.U. Protection des donn\u00e9es personnelles.',
 };
 
 function SectionTitle({ children }: Readonly<{ children: React.ReactNode }>): React.ReactElement {
@@ -41,14 +41,14 @@ export default function PrivacyPage(): React.ReactElement {
         <h1 className="text-4xl md:text-5xl font-extrabold text-white font-[family-name:var(--font-display)] tracking-tight mb-4">
           Politique de Confidentialit&eacute;
         </h1>
-        <p className="text-slate-400 text-sm">Derni&egrave;re mise &agrave; jour : 31 mars 2026</p>
+        <p className="text-slate-400 text-sm">Derni&egrave;re mise &agrave; jour : 27 juillet 2026</p>
         <div className="w-24 h-1 bg-gradient-to-r from-[#722ed1] to-emerald-400 rounded-full mt-6" />
       </div>
 
       {/* Introduction */}
       <Paragraph>
         La pr&eacute;sente Politique de Confidentialit&eacute; d&eacute;crit la mani&egrave;re dont
-        AI-Mpower LLC (ci-apr&egrave;s &laquo; nous &raquo;, &laquo; notre &raquo; ou &laquo; Qalem
+        AIMPower SARL A.U. (ci-apr&egrave;s &laquo; nous &raquo;, &laquo; notre &raquo; ou &laquo; Qalem
         &raquo;) collecte, utilise, conserve et prot&egrave;ge vos donn&eacute;es personnelles
         lorsque vous utilisez la plateforme Qalem (accessible via qalem.ma et ses sous-domaines).
       </Paragraph>
@@ -83,6 +83,7 @@ export default function PrivacyPage(): React.ReactElement {
           'Scores de r\u00e9p\u00e9tition espac\u00e9e (FSRS)',
           'Documents t\u00e9l\u00e9vers\u00e9s (PDF, supports de cours)',
           'Interactions avec les agents IA (historique de chat)',
+          'Lorsque vous activez explicitement l’enregistrement d’une session : les événements de cette session et ses pistes audio, uniquement pour vous permettre de la revivre',
         ]}
       />
       <h3 className="text-lg font-semibold text-slate-100 mb-2">Donn&eacute;es techniques</h3>
@@ -153,6 +154,10 @@ export default function PrivacyPage(): React.ReactElement {
               <td className="py-3 pr-4">Donn&eacute;es techniques / logs</td>
               <td className="py-3">12 mois</td>
             </tr>
+            <tr className="border-b border-slate-800">
+              <td className="py-3 pr-4">Replay de session activ&eacute; par vous</td>
+              <td className="py-3">30 jours maximum, sauf suppression demand&eacute;e avant ce terme</td>
+            </tr>
             <tr>
               <td className="py-3 pr-4">Cookies de session</td>
               <td className="py-3">Dur&eacute;e de la session</td>
@@ -183,12 +188,10 @@ export default function PrivacyPage(): React.ReactElement {
       />
       <Paragraph>
         Pour exercer ces droits, envoyez un e-mail &agrave;{' '}
-        <a href="mailto:dpo@qalem.ma" className="text-[#d5baff] hover:underline">
-          dpo@qalem.ma
+        <a href="mailto:dpo@ai-mpower.com" className="text-[#d5baff] hover:underline">
+          dpo@ai-mpower.com
         </a>
-        . Nous r&eacute;pondrons dans un d&eacute;lai de 30 jours. La fonctionnalit&eacute;
-        d&apos;export de donn&eacute;es est &eacute;galement disponible directement depuis votre
-        profil (Param&egrave;tres &rarr; Exporter mes donn&eacute;es).
+        . Nous r&eacute;pondrons dans les d&eacute;lais l&eacute;galement applicables.
       </Paragraph>
 
       {/* 6. Cookies */}
@@ -218,19 +221,9 @@ export default function PrivacyPage(): React.ReactElement {
       {/* 7. Transferts internationaux */}
       <SectionTitle>7. Transferts internationaux</SectionTitle>
       <Paragraph>
-        Qalem est con&ccedil;u pour &ecirc;tre auto-h&eacute;berg&eacute; sur vos propres serveurs.
-        Dans le cas o&ugrave; vous utilisez l&apos;instance cloud g&eacute;r&eacute;e par Qalem :
-      </Paragraph>
-      <List
-        items={[
-          'Les donn\u00e9es sont h\u00e9berg\u00e9es sur des serveurs situ\u00e9s en Europe (Railway EU) ou au Maroc selon votre choix',
-          'Les appels aux fournisseurs d\u2019IA (g\u00e9n\u00e9ration de contenu, synth\u00e8se vocale) peuvent impliquer un transfert temporaire vers les serveurs du fournisseur choisi (configurable)',
-          'Aucune donn\u00e9e personnelle d\u2019apprentissage n\u2019est transmise aux fournisseurs d\u2019IA \u2014 seul le contenu p\u00e9dagogique g\u00e9n\u00e9r\u00e9 est concern\u00e9',
-        ]}
-      />
-      <Paragraph>
-        Pour les instances auto-h&eacute;berg&eacute;es, vous gardez un contr&ocirc;le total sur la
-        localisation de vos donn&eacute;es.
+        Les donn&eacute;es de Qalem sont trait&eacute;es sur une infrastructure auto-h&eacute;berg&eacute;e
+        sous le contr&ocirc;le d&apos;AIMPower. Aucun fournisseur cloud ne traite les donn&eacute;es
+        d&apos;un replay de session.
       </Paragraph>
 
       {/* 8. Contact DPO */}
@@ -243,17 +236,21 @@ export default function PrivacyPage(): React.ReactElement {
       <div className="bg-[#131b2e] rounded-xl p-6 border border-slate-700/30 mb-6 space-y-2 text-sm text-slate-300">
         <p>
           <span className="text-slate-500">Responsable :</span>{' '}
-          <span className="text-slate-200 font-medium">AI-Mpower LLC</span>
+          <span className="text-slate-200 font-medium">AIMPower SARL A.U.</span>
+        </p>
+        <p>
+          <span className="text-slate-500">DPO :</span>{' '}
+          <span className="text-slate-200">Med Amine MANSOURI IDRISSI</span>
         </p>
         <p>
           <span className="text-slate-500">E-mail :</span>{' '}
-          <a href="mailto:dpo@qalem.ma" className="text-[#d5baff] hover:underline">
-            dpo@qalem.ma
+          <a href="mailto:dpo@ai-mpower.com" className="text-[#d5baff] hover:underline">
+            dpo@ai-mpower.com
           </a>
         </p>
         <p>
           <span className="text-slate-500">Adresse :</span>{' '}
-          <span className="text-slate-200">Casablanca, Maroc</span>
+          <span className="text-slate-200">32 Rue Al Banafsaj, résidence Ezzaitouna, 2ᵉ étage, Apt 21, Casablanca 20390, Royaume du Maroc</span>
         </p>
       </div>
 
@@ -288,7 +285,7 @@ export default function PrivacyPage(): React.ReactElement {
 
       {/* Footer */}
       <div className="mt-16 pt-8 border-t border-slate-700/30 text-slate-500 text-xs">
-        <p>&copy; 2026 AI-Mpower LLC. Tous droits r&eacute;serv&eacute;s.</p>
+        <p>&copy; 2026 AIMPower SARL A.U. Tous droits r&eacute;serv&eacute;s.</p>
       </div>
     </article>
   );

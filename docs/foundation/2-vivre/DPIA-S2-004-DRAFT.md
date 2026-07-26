@@ -1,8 +1,9 @@
 # DPIA — S2-004 Enregistrement des sessions live
 
-> **Statut : DRAFT — non approuvé.** Ce dossier interdit tout build d’enregistrement
-> tant que le responsable de traitement n’a pas renseigné les décisions marquées
-> `À VALIDER` et qu’un conseil juridique ou DPO compétent n’a pas revu le résultat.
+> **Statut : DRAFT — décisions de conception renseignées le 27 juillet 2026, non
+> approuvé pour production.** Ce dossier interdit tout build d’enregistrement tant
+> que la formalité CNDP applicable et l’approbation explicite du DPO ne sont pas
+> consignées.
 
 ## 1. Décision de gate
 
@@ -29,14 +30,14 @@ Sources primaires, vérifiées le 2026-07-22 :
 | Déclenchement | Opt-in explicite par session, jamais précoché. | Le live fonctionne sans enregistrement. |
 | Accès | Propriétaire de la session et rôle de service uniquement. | RLS et proxy autorisé ; aucun bucket public. |
 | Restitution | Streaming dans Qalem, jamais téléchargement. | Réduit l’exfiltration et respecte le contrat produit. |
-| Effacement | Suppression effective des événements et pistes à la demande. | À implémenter avant ouverture publique de S2-006. |
+| Effacement | Suppression effective des événements et pistes à la demande ; conservation par défaut de 30 jours. | À implémenter et tester avant ouverture publique de S2-006. |
 
 ## 3. Risques et mesures exigées avant GO
 
 | Risque | Gravité | Mesure exigée | État |
 |---|---:|---|---|
 | Captation de voix sans compréhension | élevée | Copy localisée : qui, quoi, durée, suppression ; opt-in non précoché ; preuve d’action horodatée. | À implémenter |
-| Conservation excessive | élevée | Durée de rétention explicite + purge contrôlée + test de suppression audio et événements. | **À VALIDER : durée** |
+| Conservation excessive | élevée | Rétention par défaut de 30 jours + purge contrôlée + test de suppression audio et événements. | À implémenter |
 | Accès par un collègue/tenant | élevée | RLS propriétaire, service-only write, tests d’isolation réels. | À implémenter |
 | Fuite de piste audio | élevée | Bucket privé, URL signée courte/proxy autorisé, chiffrement en transit, journal d’accès minimal. | À implémenter |
 | Détournement biométrique | élevée | Interdiction explicite d’identification, d’empreinte vocale et de réutilisation TTS sans consentement distinct. | À implémenter |
@@ -44,17 +45,25 @@ Sources primaires, vérifiées le 2026-07-22 :
 
 ## 4. Décisions du responsable de traitement requises
 
-1. **Identité et coordonnées du responsable de traitement** : À VALIDER.
-2. **Durée de conservation par défaut** : À VALIDER.
-3. **Cadre CNDP applicable et formalité nécessaire avant production** : À VALIDER
-   avec conseil compétent et état réglementaire au jour du lancement.
-4. **Territoires et sous-traitants réellement impliqués** : À VALIDER après
-   inventaire des fournisseurs audio, stockage et observabilité.
-5. **DPO ou contact privacy** : À VALIDER.
+1. **Responsable de traitement** : AIMPower SARL A.U., SARL A.U. de droit marocain,
+   32 Rue Al Banafsaj, résidence Ezzaitouna, 2ᵉ étage, Apt 21, Casablanca 20390,
+   Royaume du Maroc. RC Casablanca 618105 ; ICE 003438689000014 ; IF 60276299.
+   Contact opposable : a.mansouri@ai-mpower.com. Contact public : contact@taqwim.ma.
+2. **Durée de conservation par défaut** : 30 jours, avec suppression effective à la
+   demande de l’utilisateur.
+3. **Cadre CNDP applicable et formalité nécessaire avant production** : à confirmer
+   par le DPO ou un conseil compétent, au regard de l’état réglementaire applicable
+   le jour du lancement. Cette décision ne peut pas être inférée du code.
+4. **Territoires et sous-traitants** : traitement exclusivement auto-hébergé sous le
+   contrôle d’AIMPower ; aucun fournisseur cloud ne traite les données d’un replay.
+   Le détail d’infrastructure ne figure pas dans la DPIA publique.
+5. **DPO / contact privacy** : Med Amine MANSOURI IDRISSI, Gérant et Associé Unique
+   d’AIMPower SARL A.U. Contact DPO : dpo@ai-mpower.com.
 
 ## 5. Conditions de sortie de gate
 
-S2-004 peut commencer uniquement lorsque les cinq décisions ci-dessus sont
-datées et approuvées, et lorsque les mesures de la section 3 sont traduites en
-critères testables. Une modification de la finalité, de la durée de rétention,
-des sous-traitants ou du risque impose une révision de ce dossier avant traitement.
+S2-004 peut commencer uniquement lorsque la formalité CNDP applicable est datée et
+approuvée explicitement par le DPO, et lorsque les mesures de la section 3 sont
+traduites en critères testables. Une modification de la finalité, de la durée de
+rétention, des sous-traitants ou du risque impose une révision de ce dossier avant
+traitement.

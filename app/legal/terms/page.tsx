@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: "Conditions G\u00e9n\u00e9rales d'Utilisation \u2014 Qalem",
   description:
-    "Conditions g\u00e9n\u00e9rales d'utilisation de la plateforme Qalem (AI-Mpower LLC). Loi applicable : droit marocain. Juridiction : Casablanca.",
+    "Conditions g\u00e9n\u00e9rales d'utilisation de la plateforme Qalem, \u00e9dit\u00e9e par AIMPower SARL A.U. Loi applicable : droit marocain. Juridiction : Casablanca.",
 };
 
 function SectionTitle({ children }: Readonly<{ children: React.ReactNode }>): React.ReactElement {
@@ -41,7 +41,7 @@ export default function TermsPage(): React.ReactElement {
         <h1 className="text-4xl md:text-5xl font-extrabold text-white font-[family-name:var(--font-display)] tracking-tight mb-4">
           Conditions G&eacute;n&eacute;rales d&apos;Utilisation
         </h1>
-        <p className="text-slate-400 text-sm">Derni&egrave;re mise &agrave; jour : 31 mars 2026</p>
+        <p className="text-slate-400 text-sm">Derni&egrave;re mise &agrave; jour : 27 juillet 2026</p>
         <div className="w-24 h-1 bg-gradient-to-r from-[#722ed1] to-emerald-400 rounded-full mt-6" />
       </div>
 
@@ -50,7 +50,7 @@ export default function TermsPage(): React.ReactElement {
       <Paragraph>
         Les pr&eacute;sentes Conditions G&eacute;n&eacute;rales d&apos;Utilisation (ci-apr&egrave;s
         &laquo; CGU &raquo;) r&eacute;gissent l&apos;acc&egrave;s et l&apos;utilisation de la
-        plateforme Qalem, &eacute;dit&eacute;e par AI-Mpower LLC (ci-apr&egrave;s &laquo;
+        plateforme Qalem, &eacute;dit&eacute;e par AIMPower SARL A.U. (ci-apr&egrave;s &laquo;
         l&apos;&Eacute;diteur &raquo;).
       </Paragraph>
       <Paragraph>
@@ -75,7 +75,7 @@ export default function TermsPage(): React.ReactElement {
         items={[
           'L\u2019utilisateur s\u2019engage \u00e0 fournir des informations exactes et \u00e0 les maintenir \u00e0 jour',
           'Chaque compte est personnel et incessible. L\u2019utilisateur est responsable de la confidentialit\u00e9 de ses identifiants',
-          'En cas d\u2019acc\u00e8s non autoris\u00e9 \u00e0 votre compte, vous devez nous en informer imm\u00e9diatement \u00e0 contact@qalem.ma',
+          'En cas d\u2019acc\u00e8s non autoris\u00e9 \u00e0 votre compte, vous devez nous en informer imm\u00e9diatement \u00e0 contact@taqwim.ma',
           'Nous nous r\u00e9servons le droit de suspendre ou supprimer un compte en cas de violation des pr\u00e9sentes CGU',
         ]}
       />
@@ -127,7 +127,7 @@ export default function TermsPage(): React.ReactElement {
       </Paragraph>
       <h3 className="text-lg font-semibold text-slate-100 mb-2">Plateforme et code source</h3>
       <Paragraph>
-        Qalem est une plateforme propri&eacute;taire exploit&eacute;e par AI-Mpower LLC. Les
+        Qalem est une plateforme propri&eacute;taire exploit&eacute;e par AIMPower SARL A.U. Les
         composants tiers &eacute;ventuellement int&eacute;gr&eacute;s restent soumis &agrave; leurs
         licences respectives. Aucun droit sur le code source, les mod&egrave;les, les configurations
         ou les actifs propri&eacute;taires de Qalem n&apos;est accord&eacute; en dehors des droits
@@ -222,28 +222,43 @@ export default function TermsPage(): React.ReactElement {
         comp&eacute;tence exclusive des tribunaux de Casablanca, Maroc.
       </Paragraph>
 
-      {/* 10. Contact */}
-      <SectionTitle>10. Contact</SectionTitle>
+      {/* 10. Directeur de la publication */}
+      <SectionTitle>10. Directeur de la publication</SectionTitle>
+      <Paragraph>
+        Le directeur de la publication est Med Amine MANSOURI IDRISSI, Gérant et
+        Associé Unique d&apos;AIMPower SARL A.U. Il peut être contacté à{' '}
+        <a href="mailto:a.mansouri@ai-mpower.com" className="text-[#d5baff] hover:underline">
+          a.mansouri@ai-mpower.com
+        </a>
+        .
+      </Paragraph>
+
+      {/* 11. Contact */}
+      <SectionTitle>11. Contact</SectionTitle>
       <Paragraph>Pour toute question relative aux pr&eacute;sentes CGU :</Paragraph>
       <div className="bg-[#131b2e] rounded-xl p-6 border border-slate-700/30 mb-6 space-y-2 text-sm text-slate-300">
         <p>
           <span className="text-slate-500">&Eacute;diteur :</span>{' '}
-          <span className="text-slate-200 font-medium">AI-Mpower LLC</span>
+          <span className="text-slate-200 font-medium">AIMPower SARL A.U.</span>
+        </p>
+        <p>
+          <span className="text-slate-500">Identifiants :</span>{' '}
+          <span className="text-slate-200">RC Casablanca 618105 · ICE 003438689000014 · IF 60276299</span>
         </p>
         <p>
           <span className="text-slate-500">E-mail :</span>{' '}
-          <a href="mailto:contact@qalem.ma" className="text-[#d5baff] hover:underline">
-            contact@qalem.ma
+          <a href="mailto:contact@taqwim.ma" className="text-[#d5baff] hover:underline">
+            contact@taqwim.ma
           </a>
         </p>
         <p>
           <span className="text-slate-500">Si&egrave;ge :</span>{' '}
-          <span className="text-slate-200">Casablanca, Maroc</span>
+          <span className="text-slate-200">32 Rue Al Banafsaj, résidence Ezzaitouna, 2ᵉ étage, Apt 21, Casablanca 20390, Royaume du Maroc</span>
         </p>
       </div>
 
-      {/* 11. Modifications */}
-      <SectionTitle>11. Modifications des CGU</SectionTitle>
+      {/* 12. Modifications */}
+      <SectionTitle>12. Modifications des CGU</SectionTitle>
       <Paragraph>
         Nous nous r&eacute;servons le droit de modifier les pr&eacute;sentes CGU &agrave; tout
         moment. Les modifications seront notifi&eacute;es par e-mail ou via l&apos;application au
@@ -253,7 +268,7 @@ export default function TermsPage(): React.ReactElement {
 
       {/* Footer */}
       <div className="mt-16 pt-8 border-t border-slate-700/30 text-slate-500 text-xs">
-        <p>&copy; 2026 AI-Mpower LLC. Tous droits r&eacute;serv&eacute;s.</p>
+        <p>&copy; 2026 AIMPower SARL A.U. Tous droits r&eacute;serv&eacute;s.</p>
       </div>
     </article>
   );
