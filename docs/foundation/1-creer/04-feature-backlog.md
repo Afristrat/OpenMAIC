@@ -25,4 +25,5 @@
 | Import format libre (hors canevas) | Canevas v1 en usage réel + demande récurrente documentée |
 | Émission xAPI temps réel vers LRS externe | Chantier 3 (évaluations) en aura l'usage — porté là-bas |
 | Voix clonées / VoxCPM2 (upstream v0.2.1) | Provider AR tranché par Amine + exigence produit explicite |
+| Références vocales anglaises Higgs par genre | Ajouter et valider au moins une référence anglaise féminine et une masculine ; la sélection par segment anglais doit préserver le genre de l’avatar, jamais remplacer silencieusement une enseignante par une voix masculine |
 | Sources « tous azimuts » niveau Dīwān (RSS, multi-format exhaustif) | Canevas v1 stable ; chaque format supplémentaire = story dédiée avec cas client réel |
