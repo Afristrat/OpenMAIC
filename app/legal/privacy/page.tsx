@@ -41,15 +41,17 @@ export default function PrivacyPage(): React.ReactElement {
         <h1 className="text-4xl md:text-5xl font-extrabold text-white font-[family-name:var(--font-display)] tracking-tight mb-4">
           Politique de Confidentialit&eacute;
         </h1>
-        <p className="text-slate-400 text-sm">Derni&egrave;re mise &agrave; jour : 27 juillet 2026</p>
+        <p className="text-slate-400 text-sm">
+          Derni&egrave;re mise &agrave; jour : 27 juillet 2026
+        </p>
         <div className="w-24 h-1 bg-gradient-to-r from-[#722ed1] to-emerald-400 rounded-full mt-6" />
       </div>
 
       {/* Introduction */}
       <Paragraph>
         La pr&eacute;sente Politique de Confidentialit&eacute; d&eacute;crit la mani&egrave;re dont
-        AIMPower SARL A.U. (ci-apr&egrave;s &laquo; nous &raquo;, &laquo; notre &raquo; ou &laquo; Qalem
-        &raquo;) collecte, utilise, conserve et prot&egrave;ge vos donn&eacute;es personnelles
+        AIMPower SARL A.U. (ci-apr&egrave;s &laquo; nous &raquo;, &laquo; notre &raquo; ou &laquo;
+        Qalem &raquo;) collecte, utilise, conserve et prot&egrave;ge vos donn&eacute;es personnelles
         lorsque vous utilisez la plateforme Qalem (accessible via qalem.ma et ses sous-domaines).
       </Paragraph>
       <Paragraph>
@@ -156,7 +158,9 @@ export default function PrivacyPage(): React.ReactElement {
             </tr>
             <tr className="border-b border-slate-800">
               <td className="py-3 pr-4">Replay de session activ&eacute; par vous</td>
-              <td className="py-3">30 jours maximum, sauf suppression demand&eacute;e avant ce terme</td>
+              <td className="py-3">
+                30 jours maximum, sauf suppression demand&eacute;e avant ce terme
+              </td>
             </tr>
             <tr>
               <td className="py-3 pr-4">Cookies de session</td>
@@ -221,9 +225,9 @@ export default function PrivacyPage(): React.ReactElement {
       {/* 7. Transferts internationaux */}
       <SectionTitle>7. Transferts internationaux</SectionTitle>
       <Paragraph>
-        Les donn&eacute;es de Qalem sont trait&eacute;es sur une infrastructure auto-h&eacute;berg&eacute;e
-        sous le contr&ocirc;le d&apos;AIMPower. Aucun fournisseur cloud ne traite les donn&eacute;es
-        d&apos;un replay de session.
+        Les donn&eacute;es de Qalem sont trait&eacute;es sur une infrastructure
+        auto-h&eacute;berg&eacute;e sous le contr&ocirc;le d&apos;AIMPower. Aucun fournisseur cloud
+        ne traite les donn&eacute;es d&apos;un replay de session.
       </Paragraph>
 
       {/* 8. Contact DPO */}
@@ -250,7 +254,10 @@ export default function PrivacyPage(): React.ReactElement {
         </p>
         <p>
           <span className="text-slate-500">Adresse :</span>{' '}
-          <span className="text-slate-200">32 Rue Al Banafsaj, résidence Ezzaitouna, 2ᵉ étage, Apt 21, Casablanca 20390, Royaume du Maroc</span>
+          <span className="text-slate-200">
+            32 Rue Al Banafsaj, résidence Ezzaitouna, 2ᵉ étage, Apt 21, Casablanca 20390, Royaume du
+            Maroc
+          </span>
         </p>
       </div>
 

@@ -41,7 +41,9 @@ export default function TermsPage(): React.ReactElement {
         <h1 className="text-4xl md:text-5xl font-extrabold text-white font-[family-name:var(--font-display)] tracking-tight mb-4">
           Conditions G&eacute;n&eacute;rales d&apos;Utilisation
         </h1>
-        <p className="text-slate-400 text-sm">Derni&egrave;re mise &agrave; jour : 27 juillet 2026</p>
+        <p className="text-slate-400 text-sm">
+          Derni&egrave;re mise &agrave; jour : 27 juillet 2026
+        </p>
         <div className="w-24 h-1 bg-gradient-to-r from-[#722ed1] to-emerald-400 rounded-full mt-6" />
       </div>
 
@@ -225,8 +227,8 @@ export default function TermsPage(): React.ReactElement {
       {/* 10. Directeur de la publication */}
       <SectionTitle>10. Directeur de la publication</SectionTitle>
       <Paragraph>
-        Le directeur de la publication est Med Amine MANSOURI IDRISSI, Gérant et
-        Associé Unique d&apos;AIMPower SARL A.U. Il peut être contacté à{' '}
+        Le directeur de la publication est Med Amine MANSOURI IDRISSI, Gérant et Associé Unique
+        d&apos;AIMPower SARL A.U. Il peut être contacté à{' '}
         <a href="mailto:a.mansouri@ai-mpower.com" className="text-[#d5baff] hover:underline">
           a.mansouri@ai-mpower.com
         </a>
@@ -243,7 +245,9 @@ export default function TermsPage(): React.ReactElement {
         </p>
         <p>
           <span className="text-slate-500">Identifiants :</span>{' '}
-          <span className="text-slate-200">RC Casablanca 618105 · ICE 003438689000014 · IF 60276299</span>
+          <span className="text-slate-200">
+            RC Casablanca 618105 · ICE 003438689000014 · IF 60276299
+          </span>
         </p>
         <p>
           <span className="text-slate-500">E-mail :</span>{' '}
@@ -253,7 +257,10 @@ export default function TermsPage(): React.ReactElement {
         </p>
         <p>
           <span className="text-slate-500">Si&egrave;ge :</span>{' '}
-          <span className="text-slate-200">32 Rue Al Banafsaj, résidence Ezzaitouna, 2ᵉ étage, Apt 21, Casablanca 20390, Royaume du Maroc</span>
+          <span className="text-slate-200">
+            32 Rue Al Banafsaj, résidence Ezzaitouna, 2ᵉ étage, Apt 21, Casablanca 20390, Royaume du
+            Maroc
+          </span>
         </p>
       </div>
 
