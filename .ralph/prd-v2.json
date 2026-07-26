@@ -571,11 +571,12 @@
       "epic": "3-ANCRER",
       "phase": 3,
       "passes": false,
-      "dependencies": ["S0-008", "S0-009"],
+      "dependencies": ["S0-008", "S0-009", "S2-004"],
       "acceptance": [
         "5 migrations conformes à 3-ancrer/02 (borne J+90, unicité par phase)",
         "RLS testées (user seul, agrégats org)"
-      ]
+      ],
+      "acceptanceNote": "Dépendance S2-004 ajoutée le 2026-07-26 : le data dictionary impose des clés étrangères vers live_sessions, table qui porte l’enregistrement du live et ne peut être créée avant l’instruction DPIA. Cette dépendance empêche de fabriquer un schéma d’ancrage incomplet ou de contourner le gate de protection des voix et interventions utilisateur."
     },
     {
       "id": "S3-002",
