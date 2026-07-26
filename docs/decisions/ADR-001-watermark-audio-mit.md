@@ -51,3 +51,29 @@ Le détecteur reconstitue l'identifiant uniquement s'il récupère les onze inde
 - vecteurs P2-C reproductibles, dont un échec contrôlé sur un audio non marqué ;
 - validation de la reconstruction 128 bits sans collision sur les vecteurs de test ;
 - décision explicite de déploiement ou d'abandon documentée à partir de ces mesures.
+
+## Mesure de faisabilité du 26 juillet 2026
+
+Une sonde Docker éphémère, isolée de la stack Qalem, a été exécutée sur ServeurAI avec
+`6 Gio` de mémoire maximale, `2 CPU`, `256 PID`, aucun redémarrage automatique et aucun port
+exposé. Elle a été supprimée après la mesure. Le pic cgroup relevé est de `3 289 272 320` octets
+(environ `3,06 Gio`) et le pic de processus est de `71` PID. Le budget de service retenable est
+donc `4 Gio`, `2 CPU`, `128 PID` et une concurrence de `1` : il reste sous le plafond mesuré avec
+une marge d'environ `0,94 Gio`, sans emprunter la mémoire du worker BullMQ Qalem.
+
+Le modèle officiel AudioSeal `audioseal_wm_16bits` a reconstruit le message de contrôle `beef`
+à l'identique, avec une probabilité comprise entre `0,999838` et `1,0`, après :
+
+- une compression MP3 à `128 kbit/s` ;
+- un encodage OGG/Opus ;
+- un extrait non aligné de `30 secondes` ;
+- une normalisation loudness.
+
+Le vecteur était une voix Higgs générique, sans donnée personnelle. Un signal sinusoïdal non
+vocal a échoué à la détection, ce qui est le comportement attendu d'un modèle entraîné pour la
+parole et constitue un échec contrôlé utile.
+
+Cette mesure ne clôt **pas** la P2-C : l'ADR exige un MP4 de classroom réel. Au moment de la
+vérification, Qalem ne contenait aucun artefact source de transmission candidat (`0`). Aucun
+sidecar durable, aucune image distribuée et aucun chemin de diffusion n'est donc ajouté avant
+la création d'une transmission de validation et la répétition du protocole complet sur son MP4.
