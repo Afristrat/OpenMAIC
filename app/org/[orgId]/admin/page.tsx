@@ -398,6 +398,7 @@ export default function OrgAdminPage() {
               <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
             </div>
             <AgentRosterSettings
+              orgId={orgId}
               value={learningDesign}
               onChange={setLearningDesign}
               managedTtsIds={managedTtsIds}

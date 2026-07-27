@@ -18,8 +18,10 @@ import {
   type InteractionLevel,
   type LearningDesignSettings,
 } from '@/lib/agents/persona-catalog';
+import { CulturalReferenceReview } from '@/components/org/cultural-reference-review';
 
 interface AgentRosterSettingsProps {
+  orgId: string;
   value: LearningDesignSettings;
   onChange: (value: LearningDesignSettings) => void;
   managedTtsIds: string[];
@@ -27,6 +29,7 @@ interface AgentRosterSettingsProps {
 }
 
 export function AgentRosterSettings({
+  orgId,
   value,
   onChange,
   managedTtsIds,
@@ -243,6 +246,7 @@ export function AgentRosterSettings({
           );
         })}
       </div>
+      <CulturalReferenceReview orgId={orgId} value={value} onChange={onChange} t={t} />
     </div>
   );
 }

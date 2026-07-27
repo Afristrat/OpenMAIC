@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_LEARNING_DESIGN } from '@/lib/agents/persona-catalog';
 import { selectTenantCast } from '@/lib/agents/cast-selection';
+import { CULTURE_REFERENCE_VERSION, getCultureNames } from '@/lib/agents/culture-references';
 
 const profile = { culture: 'ma-ar', preferences: {} };
 
@@ -34,5 +35,33 @@ describe('selectTenantCast', () => {
     expect(practical.agents.find((agent) => agent.mechanismId === 'professor')?.name).toBe(
       'Younes',
     );
+  });
+
+  it('utilise uniquement les prénoms validés, sans modifier les voix ni les avatars', () => {
+    const design = {
+      ...DEFAULT_LEARNING_DESIGN,
+      cultureReferenceApprovals: {
+        'ma-ar': {
+          version: CULTURE_REFERENCE_VERSION,
+          approvedAt: '2026-07-27T00:00:00.000Z',
+          approvedBy: 'admin-id',
+        },
+      },
+    };
+    const cast = selectTenantCast({
+      design,
+      profile,
+      content: 'Analyse de données et décision stratégique.',
+      seed: 'approved-reference',
+    });
+
+    for (const agent of cast.agents) {
+      const approvedNames = getCultureNames('ma-ar', agent.gender ?? 'male').map(
+        (name) => name.display,
+      );
+      expect(approvedNames).toContain(agent.name);
+      expect(agent.voiceConfig).toBeDefined();
+      expect(agent.avatar).toMatch(/^\/avatars\//);
+    }
   });
 });

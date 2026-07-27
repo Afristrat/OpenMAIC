@@ -31,11 +31,18 @@ export interface TenantPersonaProfile extends PersonaDefinition {
   enabled: boolean;
 }
 
+export interface CultureReferenceApproval {
+  version: string;
+  approvedAt: string;
+  approvedBy: string;
+}
+
 export interface LearningDesignSettings {
   audienceStage: AudienceStage;
   expertiseLevel: ExpertiseLevel;
   interactionLevel: InteractionLevel;
   personas: TenantPersonaProfile[];
+  cultureReferenceApprovals: Partial<Record<'ma-fr' | 'ma-ar' | 'en', CultureReferenceApproval>>;
 }
 
 export const PERSONA_FORMATION_ENGINE_CONSUMER_ID =
@@ -194,6 +201,7 @@ export const DEFAULT_LEARNING_DESIGN: LearningDesignSettings = {
   expertiseLevel: 'beginner',
   interactionLevel: 'balanced',
   personas: PERSONA_CATALOG.map((persona) => ({ ...persona, enabled: true })),
+  cultureReferenceApprovals: {},
 };
 
 export function approachForAudience(stage: AudienceStage): LearningApproach {
@@ -220,6 +228,7 @@ export function learningDesignFromSettings(settings: unknown): LearningDesignSet
     audienceStage: candidate?.audienceStage ?? DEFAULT_LEARNING_DESIGN.audienceStage,
     expertiseLevel: candidate?.expertiseLevel ?? DEFAULT_LEARNING_DESIGN.expertiseLevel,
     interactionLevel: candidate?.interactionLevel ?? DEFAULT_LEARNING_DESIGN.interactionLevel,
+    cultureReferenceApprovals: candidate?.cultureReferenceApprovals ?? {},
     personas: PERSONA_CATALOG.map((definition) => {
       const saved = savedById.get(definition.id);
       const legacyGender = PERSONA_CATALOG.find(

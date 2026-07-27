@@ -1,5 +1,9 @@
 import { buildTenantAgentConfigs, type LearningDesignSettings } from '@/lib/agents/persona-catalog';
-import { resolveCultureReference } from '@/lib/agents/culture-references';
+import {
+  CULTURE_REFERENCE_VERSION,
+  getCultureNames,
+  resolveCultureReference,
+} from '@/lib/agents/culture-references';
 
 type GeneratedAgent = ReturnType<typeof buildTenantAgentConfigs>[number];
 
@@ -130,8 +134,17 @@ export function selectTenantCast({
     })
     .slice(0, 3);
 
-  return {
-    agents: ensureGenderMix(teacher ? [teacher, ...selected] : selected, candidates, scores),
-    cultureReference: resolveCultureReference(profile.culture).code,
-  };
+  const cultureReference = resolveCultureReference(profile.culture).code;
+  const mixed = ensureGenderMix(teacher ? [teacher, ...selected] : selected, candidates, scores);
+  const approved =
+    design.cultureReferenceApprovals[cultureReference]?.version === CULTURE_REFERENCE_VERSION;
+  const agents = approved
+    ? mixed.map((agent) => {
+        const names = getCultureNames(cultureReference, agent.gender ?? 'male');
+        const selectedName = names[stableRank(agent.id, seed) % names.length];
+        return selectedName ? { ...agent, name: selectedName.display } : agent;
+      })
+    : mixed;
+
+  return { agents, cultureReference };
 }
