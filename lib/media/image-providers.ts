@@ -26,6 +26,20 @@ import {
   testLemonadeImageConnectivity,
 } from './adapters/lemonade-image-adapter';
 
+/**
+ * Human-readable labels for server-managed image models.
+ * Keep model IDs as the source of truth for requests; this mapping only
+ * prevents raw provider identifiers from becoming the user-facing UI.
+ */
+const IMAGE_MODEL_DISPLAY_NAMES: Readonly<Record<string, string>> = {
+  'gemini-3.1-flash-image': 'Gemini 3.1 Flash Image — rapide',
+  'gemini-3-pro-image': 'Gemini 3 Pro Image — qualité',
+};
+
+export function getImageModelDisplayName(modelId: string): string {
+  return IMAGE_MODEL_DISPLAY_NAMES[modelId] || modelId;
+}
+
 export const IMAGE_PROVIDERS: Record<ImageProviderId, ImageProviderConfig> = {
   seedream: {
     id: 'seedream',

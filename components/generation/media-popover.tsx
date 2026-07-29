@@ -25,7 +25,7 @@ import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useSettingsStore } from '@/lib/store/settings';
-import { IMAGE_PROVIDERS } from '@/lib/media/image-providers';
+import { getImageModelDisplayName, IMAGE_PROVIDERS } from '@/lib/media/image-providers';
 import { VIDEO_PROVIDERS } from '@/lib/media/video-providers';
 import { CUSTOM_ASR_DEFAULT_LANGUAGES } from '@/lib/audio/constants';
 import { ASR_PROVIDERS, getASRSupportedLanguages } from '@/lib/audio/constants';
@@ -128,7 +128,7 @@ export function MediaPopover({ onSettingsOpen }: MediaPopoverProps) {
           const config = imageProvidersConfig[p.id];
           const models =
             config?.isServerConfigured && config.serverModels?.length
-              ? config.serverModels.map((id) => ({ id, name: id }))
+              ? config.serverModels.map((id) => ({ id, name: getImageModelDisplayName(id) }))
               : [...p.models, ...(config?.customModels || [])];
           return {
             groupId: p.id,

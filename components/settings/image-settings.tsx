@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useSettingsStore } from '@/lib/store/settings';
-import { IMAGE_PROVIDERS } from '@/lib/media/image-providers';
+import { getImageModelDisplayName, IMAGE_PROVIDERS } from '@/lib/media/image-providers';
 import {
   Loader2,
   CheckCircle2,
@@ -57,7 +57,7 @@ export function ImageSettings({ selectedProviderId }: ImageSettingsProps) {
   const isServerConfigured = !!currentConfig?.isServerConfigured;
   const builtInModels =
     isServerConfigured && currentConfig?.serverModels?.length
-      ? currentConfig.serverModels.map((id) => ({ id, name: id }))
+      ? currentConfig.serverModels.map((id) => ({ id, name: getImageModelDisplayName(id) }))
       : currentProvider?.models || [];
   const customModels = useMemo(
     () => currentConfig?.customModels || [],

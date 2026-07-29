@@ -241,6 +241,20 @@
     },
 
     {
+      "id": "S0-017",
+      "title": "Modèles image LiteLLM administrés : libellés, sélection et preuve UI [UI]",
+      "epic": "0-SOCLE",
+      "phase": 0,
+      "passes": false,
+      "dependencies": ["S0-007"],
+      "acceptance": [
+        "Les modèles image administrés Gemini sont affichés avec un libellé compréhensible dans le popover média et les paramètres, tout en conservant leur identifiant de requête exact",
+        "Un modèle image administré inconnu reste sélectionnable et s'affiche avec son identifiant, sans liste blanche fragile",
+        "Test unitaire ciblé, TypeScript, lint et tests du projet verts sur ServeurAI",
+        "La production expose les modèles administrés et une vérification humaine confirme leur lisibilité dans le sélecteur"
+      ]
+    },
+    {
       "id": "S1-001",
       "title": "Câbler le moteur : getPromptOverride() dans outline + scène",
       "epic": "1-CRÉER",
