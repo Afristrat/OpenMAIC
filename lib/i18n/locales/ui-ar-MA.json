@@ -1401,6 +1401,8 @@
   "media.voice": "الصوت",
   "media.speed": "السرعة",
   "media.language": "اللغة",
+  "media.imageModelGeminiFlash": "Gemini 3.1 Flash Image — سريع",
+  "media.imageModelGeminiPro": "Gemini 3 Pro Image — جودة",
   "accessCode.title": "أدخل رمز الوصول",
   "accessCode.placeholder": "رمز الوصول",
   "accessCode.error": "رمز الوصول غير صالح. يرجى المحاولة مرة أخرى.",

@@ -27,17 +27,20 @@ import {
 } from './adapters/lemonade-image-adapter';
 
 /**
- * Human-readable labels for server-managed image models.
- * Keep model IDs as the source of truth for requests; this mapping only
- * prevents raw provider identifiers from becoming the user-facing UI.
+ * Translation keys for server-managed image models. Model IDs remain the
+ * source of truth for requests; presentation is resolved by the UI locale.
  */
-const IMAGE_MODEL_DISPLAY_NAMES: Readonly<Record<string, string>> = {
-  'gemini-3.1-flash-image': 'Gemini 3.1 Flash Image — rapide',
-  'gemini-3-pro-image': 'Gemini 3 Pro Image — qualité',
+const IMAGE_MODEL_DISPLAY_NAME_KEYS: Readonly<Record<string, string>> = {
+  'gemini-3.1-flash-image': 'media.imageModelGeminiFlash',
+  'gemini-3-pro-image': 'media.imageModelGeminiPro',
 };
 
-export function getImageModelDisplayName(modelId: string): string {
-  return IMAGE_MODEL_DISPLAY_NAMES[modelId] || modelId;
+export function getImageModelDisplayName(
+  modelId: string,
+  translate: (key: string) => string,
+): string {
+  const translationKey = IMAGE_MODEL_DISPLAY_NAME_KEYS[modelId];
+  return translationKey ? translate(translationKey) : modelId;
 }
 
 export const IMAGE_PROVIDERS: Record<ImageProviderId, ImageProviderConfig> = {

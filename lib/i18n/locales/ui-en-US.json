@@ -1401,6 +1401,8 @@
   "media.voice": "Voice",
   "media.speed": "Speed",
   "media.language": "Language",
+  "media.imageModelGeminiFlash": "Gemini 3.1 Flash Image — Fast",
+  "media.imageModelGeminiPro": "Gemini 3 Pro Image — Quality",
   "accessCode.title": "Enter Access Code",
   "accessCode.placeholder": "Access code",
   "accessCode.error": "Invalid access code. Please try again.",
