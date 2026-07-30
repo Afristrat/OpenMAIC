@@ -138,7 +138,7 @@ export function MediaPopover({ onSettingsOpen }: MediaPopoverProps) {
             items: models,
           };
         }),
-    [cfgOk, imageProvidersConfig],
+    [cfgOk, imageProvidersConfig, t],
   );
 
   const videoGroups = useMemo(
