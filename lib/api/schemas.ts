@@ -330,7 +330,7 @@ export const generateClassroomSchema = z.object({
       images: z.array(z.string()),
     })
     .optional(),
-  language: z.string().optional(),
+  language: z.enum(['fr-FR', 'ar-MA', 'en-US']).optional(),
   enableWebSearch: z.boolean().optional(),
   webSearchProviderId: z
     .enum(['tavily', 'bocha', 'brave', 'baidu', 'minimax', 'serper'])
