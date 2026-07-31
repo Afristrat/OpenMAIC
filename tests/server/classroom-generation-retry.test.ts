@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   generateSceneActions: vi.fn(),
   createSceneWithActions: vi.fn(),
   persistClassroom: vi.fn(),
+  persistGeneratedCourse: vi.fn(),
   callLLM: vi.fn(),
 }));
 
@@ -37,6 +38,10 @@ vi.mock('@/lib/generation/scene-generator', () => ({
 
 vi.mock('@/lib/server/classroom-storage', () => ({
   persistClassroom: mocks.persistClassroom,
+}));
+
+vi.mock('@/lib/server/course-storage', () => ({
+  persistGeneratedCourse: mocks.persistGeneratedCourse,
 }));
 
 vi.mock('@/lib/flags', () => ({
@@ -129,6 +134,7 @@ describe('classroom scene generation retries', () => {
       scenesCount: scenes.length,
       createdAt: '2026-06-22T00:00:00.000Z',
     }));
+    mocks.persistGeneratedCourse.mockResolvedValue('course-1');
   });
 
   it('retries an empty scene content result before skipping the scene', async () => {

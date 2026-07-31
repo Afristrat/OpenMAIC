@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   generateSceneActions: vi.fn(),
   createSceneWithActions: vi.fn(),
   persistClassroom: vi.fn(),
+  persistGeneratedCourse: vi.fn(),
   callLLM: vi.fn(),
   decideCaptureForScene: vi.fn(),
   requestWebCapture: vi.fn(),
@@ -39,6 +40,10 @@ vi.mock('@/lib/generation/scene-generator', () => ({
 
 vi.mock('@/lib/server/classroom-storage', () => ({
   persistClassroom: mocks.persistClassroom,
+}));
+
+vi.mock('@/lib/server/course-storage', () => ({
+  persistGeneratedCourse: mocks.persistGeneratedCourse,
 }));
 
 vi.mock('@/lib/generation/web-capture-plan', () => ({
@@ -128,6 +133,7 @@ describe('classroom generation — web capture injection', () => {
       scenesCount: scenes.length,
       createdAt: '2026-06-22T00:00:00.000Z',
     }));
+    mocks.persistGeneratedCourse.mockResolvedValue('course-1');
     mocks.decideCaptureForScene.mockResolvedValue(null);
     mocks.requestWebCapture.mockResolvedValue(null);
   });
