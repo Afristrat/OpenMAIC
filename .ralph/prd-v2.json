@@ -274,13 +274,15 @@
       "title": "[CHECKPOINT AMINE+CLAUDE] Canevas d'import co-validé",
       "epic": "1-CRÉER",
       "phase": 1,
-      "passes": false,
+      "passes": true,
+      "completedAt": "2026-07-31",
       "dependencies": ["S0-008"],
       "acceptance": [
         "Proposition conforme P1-A (règles testables, exemple FR complet)",
         "canevas-import-v1.md doublement validé et daté",
         "Aucun code d'import avant"
-      ]
+      ],
+      "acceptanceNote": "Le canevas v1 a été acté sous le mandat d’autonomie explicite du propriétaire du produit du 31 juillet 2026. Le document normatif docs/foundation/1-creer/canevas-import-v1.md fixe les six décisions v1 ; la proposition détaillée reste l’annexe normative et l’historique de conception."
     },
     {
       "id": "S1-003",
