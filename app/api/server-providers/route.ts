@@ -13,6 +13,11 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('ServerProviders');
 
+// Provider availability is determined by runtime environment variables injected
+// by the deployment platform. Caching this route at build time would expose a
+// stale catalogue after an operator changes those variables.
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     return apiSuccess({
