@@ -189,7 +189,7 @@ export const quizGradeSchema = z.object({
   userAnswer: z.string().min(1, 'userAnswer is required'),
   points: z.number().positive(),
   commentPrompt: z.string().optional(),
-  language: z.string().optional(),
+  language: z.enum(['fr-FR', 'ar-MA', 'en-US']).optional(),
 });
 
 // ---------------------------------------------------------------------------

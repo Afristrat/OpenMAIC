@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
       ...(parsed.courseId ? { courseId: parsed.courseId } : {}),
       requirement: parsed.requirement,
       ...(parsed.pdfContent ? { pdfContent: parsed.pdfContent } : {}),
+      ...(parsed.language ? { language: parsed.language } : {}),
       ...(parsed.enableWebSearch != null ? { enableWebSearch: parsed.enableWebSearch } : {}),
       ...(parsed.webSearchProviderId ? { webSearchProviderId: parsed.webSearchProviderId } : {}),
       ...(parsed.webSearchApiKey ? { webSearchApiKey: parsed.webSearchApiKey } : {}),

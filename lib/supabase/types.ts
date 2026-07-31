@@ -178,6 +178,37 @@ export interface SharedClassroom {
   created_at: string;
 }
 
+export type CourseSourceKind = 'generated' | 'imported' | 'catalog_copy';
+export type CourseStatus = 'draft' | 'ready' | 'archived';
+export type CourseImportValidationStatus = 'pending' | 'conform' | 'rejected';
+
+export interface CourseImport {
+  id: string;
+  owner_id: string;
+  original_filename: string;
+  storage_path: string;
+  canvas_version: 'v1';
+  validation_status: CourseImportValidationStatus;
+  validation_report: Record<string, unknown>[];
+  created_at: string;
+}
+
+export interface Course {
+  id: string;
+  owner_id: string;
+  org_id: string | null;
+  stage_id: string | null;
+  title: string;
+  language: 'fr-FR' | 'ar-MA' | 'en-US';
+  source_kind: CourseSourceKind;
+  import_id: string | null;
+  outline: Record<string, unknown>;
+  status: CourseStatus;
+  catalog_visible: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ClassroomTemplate {
   id: string; // UUID
   name: string;
@@ -257,6 +288,25 @@ export type CurriculumLinkInsert = Pick<
 export type SharedClassroomInsert = Pick<SharedClassroom, 'stage_id' | 'org_id'> &
   Partial<Omit<SharedClassroom, 'id' | 'stage_id' | 'org_id' | 'created_at'>>;
 
+export type CourseImportInsert = Pick<
+  CourseImport,
+  'owner_id' | 'original_filename' | 'storage_path'
+> &
+  Partial<
+    Pick<CourseImport, 'canvas_version' | 'validation_status' | 'validation_report'>
+  >;
+
+export type CourseInsert = Pick<
+  Course,
+  'owner_id' | 'title' | 'language' | 'source_kind' | 'outline'
+> &
+  Partial<
+    Pick<
+      Course,
+      'org_id' | 'stage_id' | 'import_id' | 'status' | 'catalog_visible'
+    >
+  >;
+
 export type ClassroomTemplateInsert = Pick<ClassroomTemplate, 'name' | 'sector' | 'requirements'> &
   Partial<Omit<ClassroomTemplate, 'id' | 'name' | 'sector' | 'requirements' | 'created_at'>>;
 
@@ -281,6 +331,9 @@ export type ReviewCardUpdate = Partial<
 export type AgentConfigUpdate = Partial<Omit<AgentConfig, 'id' | 'created_at' | 'updated_at'>>;
 export type CurriculumLinkUpdate = Partial<Omit<CurriculumLink, 'id' | 'created_at'>>;
 export type SharedClassroomUpdate = Partial<Pick<SharedClassroom, 'visibility'>>;
+export type CourseUpdate = Partial<
+  Pick<Course, 'stage_id' | 'title' | 'language' | 'outline' | 'status' | 'catalog_visible'>
+>;
 export type ClassroomTemplateUpdate = Partial<Omit<ClassroomTemplate, 'id' | 'created_at'>>;
 export type OrganizationSkillUpdate = Pick<OrganizationSkill, 'manifest'>;
 
@@ -683,6 +736,16 @@ export interface Database {
         Row: SharedClassroom;
         Insert: SharedClassroomInsert;
         Update: SharedClassroomUpdate;
+      };
+      course_imports: {
+        Row: CourseImport;
+        Insert: CourseImportInsert;
+        Update: Partial<Pick<CourseImport, 'validation_status' | 'validation_report'>>;
+      };
+      courses: {
+        Row: Course;
+        Insert: CourseInsert;
+        Update: CourseUpdate;
       };
       classroom_templates: {
         Row: ClassroomTemplate;

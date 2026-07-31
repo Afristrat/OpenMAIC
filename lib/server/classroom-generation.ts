@@ -25,6 +25,7 @@ import { formatSearchResultsAsContext, searchWeb } from '@/lib/web-search';
 import { enrichSourcesWithCrawl4AI } from '@/lib/server/crawl4ai';
 import type { BaiduSubSources, WebSearchProviderId } from '@/lib/web-search/types';
 import { persistClassroom } from '@/lib/server/classroom-storage';
+import { persistGeneratedCourse, type CourseLocale } from '@/lib/server/course-storage';
 import {
   generateMediaForClassroom,
   replaceMediaPlaceholders,
@@ -66,6 +67,7 @@ export interface GenerateClassroomInput {
   orgId: string;
   /** Persisted courses from S1-003 override the deterministic current-flow identity. */
   courseId?: string;
+  language?: CourseLocale;
   requirement: string;
   pdfContent?: { text: string; images: string[] };
   enableWebSearch?: boolean;
@@ -666,6 +668,15 @@ export async function generateClassroom(
       },
       options.baseUrl,
     );
+    await persistGeneratedCourse({
+      courseId: input.courseId,
+      ownerId: options.ownerId,
+      orgId: input.orgId,
+      stageId,
+      title: stage.name,
+      language: input.language ?? 'fr-FR',
+      outlines,
+    });
 
     log.info(`Classroom persisted: ${persisted.id}, URL: ${persisted.url}`);
 
