@@ -38,6 +38,15 @@ import { VOXCPM_AUTO_VOICE_ID, VOXCPM_TTS_PROVIDER_ID } from '@/lib/audio/voxcpm
 
 const log = createLogger('ClassroomMedia');
 
+export function selectClassroomImageModel(
+  providerId: ImageProviderId,
+  serverProviders: Record<string, { models?: string[] }>,
+): string | undefined {
+  return (
+    serverProviders[providerId]?.models?.[0] ?? IMAGE_PROVIDERS[providerId]?.models?.[0]?.id
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -94,7 +103,8 @@ export async function generateMediaForClassroom(
   if (requests.length === 0) return {};
 
   // Resolve providers
-  const imageProviderIds = Object.keys(getServerImageProviders());
+  const serverImageProviders = getServerImageProviders();
+  const imageProviderIds = Object.keys(serverImageProviders);
   const videoProviderIds = Object.keys(getServerVideoProviders());
 
   const mediaMap: Record<string, string> = {};
@@ -114,7 +124,7 @@ export async function generateMediaForClassroom(
           log.warn(`No API key for image provider "${providerId}", skipping ${req.elementId}`);
           continue;
         }
-        const model = providerConfig?.models?.[0]?.id;
+        const model = selectClassroomImageModel(providerId, serverImageProviders);
 
         const result = await generateImage(
           { providerId, apiKey, baseUrl: resolveImageBaseUrl(providerId), model },

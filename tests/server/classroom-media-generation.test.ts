@@ -1,5 +1,8 @@
 import { describe, expect, test } from 'vitest';
-import { replaceMediaPlaceholders } from '@/lib/server/classroom-media-generation';
+import {
+  replaceMediaPlaceholders,
+  selectClassroomImageModel,
+} from '@/lib/server/classroom-media-generation';
 import type { Scene } from '@/lib/types/stage';
 
 function slideScene(
@@ -41,5 +44,15 @@ describe('classroom media placeholder replacement', () => {
     };
     const video = content.canvas.elements[0];
     expect(video.src).toBe('https://example.com/direct.mp4');
+  });
+});
+
+describe('classroom image model selection', () => {
+  test('prefers the server-certified model over the provider default', () => {
+    expect(
+      selectClassroomImageModel('openai-image', {
+        'openai-image': { models: ['gemini-3.1-flash-image'] },
+      }),
+    ).toBe('gemini-3.1-flash-image');
   });
 });
