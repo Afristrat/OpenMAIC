@@ -421,7 +421,7 @@ test.describe('Classroom Interaction', () => {
     await classroom.waitForLoaded();
 
     const downloadFromMenu = async (testId: string) => {
-      const exportButton = page.getByRole('button', { name: 'Export PPTX' });
+      const exportButton = page.getByLabel('Export PPTX');
       await expect(exportButton).toBeEnabled();
       await exportButton.click();
       const downloadPromise = page.waitForEvent('download');
