@@ -2034,5 +2034,14 @@
   "transmission.submitting": "جارٍ الإنشاء…",
   "transmission.created": "تم إنشاء الإرسال ونسخ الرابط الخاص.",
   "transmission.existing": "هذا الإرسال موجود بالفعل ونسخ رابطه الخاص.",
-  "transmission.copyPublicLink": "نسخ الرابط العام"
+  "transmission.copyPublicLink": "نسخ الرابط العام",
+  "catalog.eyebrow": "جاهز للتعلّم",
+  "catalog.title": "دليل التكوينات",
+  "catalog.description": "تجارب تعلّم جاهزة، مختارة لمؤسستك.",
+  "catalog.unavailable": "دليل التكوينات غير متاح بعد.",
+  "catalog.emptyTitle": "لا توجد تكوينات منشورة بعد",
+  "catalog.emptyDescription": "ستظهر التكوينات المنشورة هنا عندما تصبح جاهزة للانضمام.",
+  "catalog.openClassroom": "الالتحاق بالقسم",
+  "catalog.noOrganization": "اختر مؤسسة للاطلاع على تكويناتها.",
+  "nav.catalog": "التكوينات"
 }

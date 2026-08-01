@@ -2034,5 +2034,14 @@
   "transmission.submitting": "Creating…",
   "transmission.created": "Transmission created: the private link was copied.",
   "transmission.existing": "This transmission already exists: the private link was copied.",
-  "transmission.copyPublicLink": "Copy public link"
+  "transmission.copyPublicLink": "Copy public link",
+  "catalog.eyebrow": "Ready to learn",
+  "catalog.title": "Course catalog",
+  "catalog.description": "Ready-to-run learning experiences selected for your organization.",
+  "catalog.unavailable": "The course catalog is not available yet.",
+  "catalog.emptyTitle": "No course is published yet",
+  "catalog.emptyDescription": "Published courses will appear here when they are ready to join.",
+  "catalog.openClassroom": "Join the classroom",
+  "catalog.noOrganization": "Choose an organization to view its courses.",
+  "nav.catalog": "Courses"
 }

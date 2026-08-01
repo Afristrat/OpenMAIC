@@ -119,6 +119,12 @@ export function NavigationSidebar(): React.ReactElement {
       show: true,
     },
     {
+      href: '/catalog',
+      labelKey: 'nav.catalog',
+      icon: <Library className="size-5" />,
+      show: isAuthenticated,
+    },
+    {
       href: '/plugins',
       labelKey: 'nav.plugins',
       icon: <Puzzle className="size-5" />,

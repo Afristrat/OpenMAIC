@@ -2034,5 +2034,14 @@
   "transmission.submitting": "Création…",
   "transmission.created": "Transmission créée : le lien privé a été copié.",
   "transmission.existing": "Cette transmission existe déjà : le lien privé a été copié.",
-  "transmission.copyPublicLink": "Copier le lien public"
+  "transmission.copyPublicLink": "Copier le lien public",
+  "catalog.eyebrow": "Prêt à apprendre",
+  "catalog.title": "Catalogue de formations",
+  "catalog.description": "Des expériences d’apprentissage prêtes à vivre, sélectionnées pour votre organisation.",
+  "catalog.unavailable": "Le catalogue de formations n’est pas encore disponible.",
+  "catalog.emptyTitle": "Aucune formation n’est encore publiée",
+  "catalog.emptyDescription": "Les formations publiées apparaîtront ici lorsqu’elles seront prêtes à rejoindre.",
+  "catalog.openClassroom": "Rejoindre la classe",
+  "catalog.noOrganization": "Choisissez une organisation pour consulter ses formations.",
+  "nav.catalog": "Formations"
 }
