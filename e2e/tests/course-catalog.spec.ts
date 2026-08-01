@@ -3,6 +3,7 @@ import { createSettingsStorage } from '../fixtures/test-data/settings';
 
 const ORG_ID = '00000000-0000-4000-8000-000000000002';
 const CLASSROOM_ID = 'e2e-catalog-classroom';
+const PUBLISHED_CLASSROOM_ID = 'e2e-unpublished-classroom';
 
 test.describe('Catalogue de formations', () => {
   test('affiche la formation publiée de l’organisation et rejoint sa classroom', async ({ page }) => {
@@ -30,7 +31,7 @@ test.describe('Catalogue de formations', () => {
               id: '00000000-0000-4000-8000-000000000019',
               title: 'Formation à publier',
               language: 'fr-FR',
-              classroomId: 'e2e-unpublished-classroom',
+              classroomId: PUBLISHED_CLASSROOM_ID,
               createdAt: '2026-08-01T00:00:00.000Z',
             },
           ],
@@ -49,7 +50,7 @@ test.describe('Catalogue de formations', () => {
     await page.getByRole('button', { name: 'Publier au catalogue' }).click();
     await expect(page.getByRole('button', { name: 'Publier au catalogue' })).toHaveCount(0);
     await page.getByRole('link', { name: 'Rejoindre la classe' }).first().click();
-    await expect(page).toHaveURL(new RegExp(`/classroom/${CLASSROOM_ID}$`));
+    await expect(page).toHaveURL(new RegExp(`/classroom/${PUBLISHED_CLASSROOM_ID}$`));
   });
 
   test('préserve une mise en page RTL en arabe', async ({ page }) => {
