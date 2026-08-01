@@ -6,6 +6,7 @@ import { useI18n } from '@/lib/hooks/use-i18n';
 import { useStageStore } from '@/lib/store/stage';
 import { slideToPng } from '@openmaic/renderer/snapshot';
 import { persistCurrentClassroomForExport } from './persist-before-server-export';
+import { addPresentationBrandToSnapshot } from './presentation-brand-snapshot';
 
 const POLL_INTERVAL_MS = 5000;
 const MAX_POLLS = 360;
@@ -51,9 +52,13 @@ export function useExportMp4() {
           format: 'blob',
         });
         if (!(snapshot instanceof Blob)) throw new Error(t('export.exportFailed'));
+        const brandedSnapshot = await addPresentationBrandToSnapshot(
+          snapshot,
+          stage.presentationBranding,
+        );
         const upload = await fetch(
           `/api/export-snapshots/${encodeURIComponent(stage.id)}/${encodeURIComponent(scene.id)}`,
-          { method: 'PUT', headers: { 'Content-Type': 'image/png' }, body: snapshot },
+          { method: 'PUT', headers: { 'Content-Type': 'image/png' }, body: brandedSnapshot },
         );
         if (!upload.ok) throw new Error(t('export.exportFailed'));
       }
