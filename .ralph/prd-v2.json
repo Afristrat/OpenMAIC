@@ -289,13 +289,15 @@
       "title": "Tables courses + course_imports + pipeline de validation du canevas",
       "epic": "1-CRÉER",
       "phase": 1,
-      "passes": false,
+      "passes": true,
+      "completedAt": "2026-08-01",
       "dependencies": ["S1-002"],
       "acceptance": [
         "Migrations conformes à 1-creer/02 (checks, RLS)",
         "Conforme → conform ; non conforme → rejected + validation_report (tests des deux chemins)",
         "Messages de rejet au ton du brand-brief"
-      ]
+      ],
+      "acceptanceNote": "Migration 00035 confirmée en production : courses et course_imports répondent toutes deux via le service Supabase. validateAndPersistCourseImport persiste le verdict conform ou rejected et son rapport actionnable, sans stocker le texte du dépôt ; le chemin Storage est vérifié contre le propriétaire avant écriture. Tests ciblés : 5/5. Gates sur un clone propre reconstruit avec FFmpeg : TypeScript, lint, Vitest complet et Playwright 40/40, tous verts. Code déployé par Coolify au commit 340b50f ; health public 200 après remplacement du conteneur."
     },
     {
       "id": "S1-004",
