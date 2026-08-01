@@ -41,6 +41,7 @@ export function PluginRenderer({ content, mode: _mode, sceneId }: PluginRenderer
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [iframeHeight, setIframeHeight] = useState<number | undefined>(undefined);
   const [ready, setReady] = useState(false);
+  const title = typeof content.data.title === 'string' ? content.data.title : content.pluginType;
 
   // Plugins are served via the API route /api/plugins/scenes/<id>
   const pluginSrc = useMemo(
@@ -146,16 +147,17 @@ export function PluginRenderer({ content, mode: _mode, sceneId }: PluginRenderer
   // Render
   // ------------------------------------------------------------------
   return (
-    <div className="w-full h-full relative">
+    <section className="flex h-full w-full flex-col" aria-label={title}>
+      <h2 className="shrink-0 border-b px-5 py-3 text-lg font-semibold">{title}</h2>
       <iframe
         ref={iframeRef}
         src={pluginSrc}
-        className="absolute inset-0 w-full border-0"
-        style={{ height: iframeHeight ? `${iframeHeight}px` : '100%' }}
+        className="min-h-0 flex-1 w-full border-0"
+        style={iframeHeight ? { height: `${iframeHeight}px`, flex: 'none' } : undefined}
         title={`Plugin Scene ${sceneId} (${content.pluginType})`}
         sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
       />
-    </div>
+    </section>
   );
 }
 
