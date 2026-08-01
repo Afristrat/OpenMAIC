@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useStageStore } from '@/lib/store/stage';
 import { slideToPng } from '@openmaic/renderer/snapshot';
+import { persistCurrentClassroomForExport } from './persist-before-server-export';
 
 const POLL_INTERVAL_MS = 5000;
 const MAX_POLLS = 360;
@@ -41,6 +42,7 @@ export function useExportMp4() {
     setExporting(true);
     const toastId = toast.loading(t('export.videoRendering'));
     try {
+      await persistCurrentClassroomForExport();
       for (const scene of scenes) {
         if (scene.content?.type !== 'slide') continue;
         const snapshot = await slideToPng(scene.content.canvas, {

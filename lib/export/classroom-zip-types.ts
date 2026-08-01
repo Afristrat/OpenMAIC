@@ -4,7 +4,7 @@ import type { Action } from '@/lib/types/action';
 import type { Slide } from '@openmaic/dsl';
 
 export const CLASSROOM_ZIP_FORMAT_VERSION = 1;
-export const CLASSROOM_ZIP_EXTENSION = '.maic.zip';
+export const CLASSROOM_ZIP_EXTENSION = '.qalem.zip';
 
 export interface ClassroomManifest {
   formatVersion: number;

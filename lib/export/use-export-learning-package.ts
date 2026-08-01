@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useStageStore } from '@/lib/store/stage';
 import type { ExportJobFormat } from '@/lib/supabase/types';
+import { persistCurrentClassroomForExport } from './persist-before-server-export';
 
 const POLL_INTERVAL_MS = 5000;
 const MAX_POLLS = 360;
@@ -56,6 +57,7 @@ export function useExportLearningPackage() {
       const toastId = toast.loading(t('export.learningPackagePreparing'));
 
       try {
+        await persistCurrentClassroomForExport();
         const createResponse = await fetch('/api/export-jobs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

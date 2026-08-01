@@ -3,7 +3,9 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
+import sharp from 'sharp';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
+import { buildSceneCardSvg } from './scene-card';
 
 const execFileAsync = promisify(execFile);
 const FFMPEG_TIMEOUT_MS = 30 * 60 * 1000;
@@ -68,7 +70,9 @@ async function downloadSceneAudio(
 async function renderSceneSegment(params: {
   directory: string;
   stageId: string;
-  scene: { id: string; actions: unknown };
+  classroomName: string;
+  sceneCount: number;
+  scene: { id: string; title: string; type: string; content: unknown; actions: unknown };
   sceneIndex: number;
 }): Promise<string> {
   const imagePath = join(params.directory, `scene-${params.sceneIndex}.png`);
@@ -78,9 +82,23 @@ async function renderSceneSegment(params: {
     .storage.from('classroom-media')
     .download(snapshotPath);
   if (snapshotError || !snapshot) {
-    throw new Error(`Export MP4 refusé : rendu réel absent pour la scène ${params.sceneIndex + 1}`);
+    await sharp(
+      Buffer.from(
+        buildSceneCardSvg({
+          classroomName: params.classroomName,
+          sceneTitle: params.scene.title,
+          sceneType: params.scene.type,
+          sceneNumber: params.sceneIndex + 1,
+          sceneCount: params.sceneCount,
+          content: params.scene.content,
+        }),
+      ),
+    )
+      .png()
+      .toFile(imagePath);
+  } else {
+    await writeFile(imagePath, Buffer.from(await snapshot.arrayBuffer()));
   }
-  await writeFile(imagePath, Buffer.from(await snapshot.arrayBuffer()));
 
   const audioPaths = await downloadSceneAudio(
     params.stageId,
@@ -195,7 +213,15 @@ export async function buildClassroomVideo(
         await renderSceneSegment({
           directory,
           stageId,
-          scene: scene as { id: string; actions: unknown },
+          classroomName: stage.name,
+          sceneCount: scenes.length,
+          scene: scene as {
+            id: string;
+            title: string;
+            type: string;
+            content: unknown;
+            actions: unknown;
+          },
           sceneIndex,
         }),
       );
