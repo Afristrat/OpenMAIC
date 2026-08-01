@@ -398,7 +398,8 @@
       "title": "Prononciation anglicismes higgs-tts (LiteLLM, MIT) via segmentation fr/en déterministe",
       "epic": "1-CRÉER",
       "phase": 1,
-      "passes": false,
+      "passes": true,
+      "completedAt": "2026-08-01",
       "dependencies": [],
       "acceptance": [
         "splitTextIntoLanguageSegments et splitSpeechActionsByAnglicisms couverts par tests unitaires verts",
@@ -406,7 +407,7 @@
         "npx tsc --noEmit && pnpm lint && pnpm test verts",
         "Vérification déployée (SOP-011) : narration réelle générée sur Qalem en production contenant 'LiteLLM' et 'budget' dans la même phrase, écoutée par Amine, prononciation confirmée correcte des deux côtés"
       ],
-      "acceptanceNote": "Partie machine certifiée le 2026-07-22 au commit ea76760da89ecbe9daa5b740e6109135675858ed. Les corrections bornent le champ language au seul fournisseur higgs-tts, refusent les valeurs invalides ou envoyées à un autre fournisseur, et empêchent la synthèse de segments composés uniquement de ponctuation. Validation sur serveuria : Prettier, TypeScript et ESLint verts ; 266 fichiers et 2 009 tests Vitest réussis ; 37/37 parcours Playwright réussis. Déploiement Coolify u2tr3aii48cskqlspm0j22fx terminé ; web, worker et capture-worker sains, sans redémarrage, sur le SHA exact. La vraie route de régénération Qalem a créé la classroom publique s1_011_mrvswtsj et persisté la phrase « Avec LiteLLM, le budget reste maîtrisé grâce à un routage explicite. » sous forme de trois actions fr/en/fr et de trois WAV de 42 284, 73 004 et 178 604 octets ; classroom et médias répondent HTTP 200. Le compte technique éphémère a été supprimé et aucun profil résiduel ne subsiste. passes=false reste volontaire : l'écoute humaine d'Amine doit encore confirmer la prononciation de « LiteLLM » et de « budget » avant clôture."
+      "acceptanceNote": "Partie machine certifiée le 2026-07-22 au commit ea76760da89ecbe9daa5b740e6109135675858ed. Les corrections bornent le champ language au seul fournisseur higgs-tts, refusent les valeurs invalides ou envoyées à un autre fournisseur, et empêchent la synthèse de segments composés uniquement de ponctuation. Validation sur serveuria : Prettier, TypeScript et ESLint verts ; 266 fichiers et 2 009 tests Vitest réussis ; 37/37 parcours Playwright réussis. Déploiement Coolify u2tr3aii48cskqlspm0j22fx terminé ; web, worker et capture-worker sains, sans redémarrage, sur le SHA exact. La vraie route de régénération Qalem a créé la classroom publique s1_011_mrvswtsj et persisté la phrase « Avec LiteLLM, le budget reste maîtrisé grâce à un routage explicite. » sous forme de trois actions fr/en/fr et de trois WAV de 42 284, 73 004 et 178 604 octets ; classroom et médias répondent HTTP 200. Le compte technique éphémère a été supprimé et aucun profil résiduel ne subsiste. Le 2026-08-01, Amine a écouté les deux extraits FR/EN fournis et confirmé la prononciation correcte de l'anglais comme du français ; le dernier critère de SOP-011 est donc satisfait."
     },
 
     {
