@@ -1073,7 +1073,7 @@ export function Roundtable({
       {/* ── Toolbar strip — merged from CanvasArea ── */}
       <div
         className={cn(
-          'transition-opacity duration-300',
+          'relative z-[100] transition-opacity duration-300',
           isPresenting && !controlsVisible && 'opacity-0 pointer-events-none',
         )}
       >
