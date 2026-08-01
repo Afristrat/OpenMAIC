@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import {
   Archive,
   BookOpenCheck,
@@ -102,27 +102,12 @@ export function HeaderControls({
   const { exporting: isExportingLearningPackage, exportLearningPackage } =
     useExportLearningPackage();
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
-  const exportRef = useRef<HTMLDivElement>(null);
 
   const canExport =
     scenes.length > 0 &&
     generatingOutlines.length === 0 &&
     failedOutlines.length === 0 &&
     Object.values(mediaTasks).every((task) => task.status === 'done' || task.status === 'failed');
-
-  const handleClickOutside = useCallback(
-    (e: MouseEvent) => {
-      if (exportMenuOpen && exportRef.current && !exportRef.current.contains(e.target as Node)) {
-        setExportMenuOpen(false);
-      }
-    },
-    [exportMenuOpen],
-  );
-  useEffect(() => {
-    if (!exportMenuOpen) return;
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [exportMenuOpen, handleClickOutside]);
 
   const compact = variant === 'compact';
 
@@ -261,19 +246,9 @@ export function HeaderControls({
           Not a settings function so it does not belong inside the
           settings pill; kept as a separate sibling sitting between the
           Pro Switch and the right edge of the chrome. */}
-      <div className={cn('relative', exportMenuOpen && 'z-[100]')} ref={exportRef}>
+      <DropdownMenu modal={false} open={exportMenuOpen} onOpenChange={setExportMenuOpen}>
+        <DropdownMenuTrigger asChild>
         <button
-          onClick={() => {
-            if (
-              canExport &&
-              !isExporting &&
-              !isExportingZip &&
-              !isExportingMp4 &&
-              !isExportingLearningPackage
-            ) {
-              setExportMenuOpen(!exportMenuOpen);
-            }
-          }}
           disabled={
             !canExport ||
             isExporting ||
@@ -306,8 +281,8 @@ export function HeaderControls({
             <Download className="w-4 h-4" />
           )}
         </button>
-        {exportMenuOpen && (
-          <div className="absolute right-0 bottom-full mb-2 min-w-[200px] overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg z-50 dark:border-gray-700 dark:bg-gray-800">
+        </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" sideOffset={8} className="min-w-[200px] overflow-hidden rounded-lg border border-gray-200 bg-white p-0 shadow-lg dark:border-gray-700 dark:bg-gray-800">
             <button
               data-testid="export-mp4"
               onClick={() => {
@@ -423,9 +398,8 @@ export function HeaderControls({
                 </div>
               </div>
             </button>
-          </div>
-        )}
-      </div>
+          </DropdownMenuContent>
+      </DropdownMenu>
 
       {researchSources.length > 0 && (
         <Dialog>
