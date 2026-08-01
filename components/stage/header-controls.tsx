@@ -261,7 +261,7 @@ export function HeaderControls({
           Not a settings function so it does not belong inside the
           settings pill; kept as a separate sibling sitting between the
           Pro Switch and the right edge of the chrome. */}
-      <div className="relative" ref={exportRef}>
+      <div className={cn('relative', exportMenuOpen && 'z-[100]')} ref={exportRef}>
         <button
           onClick={() => {
             if (
