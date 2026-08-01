@@ -12,6 +12,7 @@ import type { CanvasToolbarProps } from '@/components/canvas/canvas-toolbar';
 import type { Scene, StageMode } from '@/lib/types/stage';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { ClassroomCompletePageConnected } from '@/components/scene-renderers/classroom-complete';
+import { PresentationBrandMark } from '@/components/branding/presentation-brand-mark';
 
 interface CanvasAreaProps extends CanvasToolbarProps {
   readonly currentScene: Scene | null;
@@ -118,6 +119,8 @@ export function CanvasArea({
               </SceneProvider>
             </div>
           )}
+
+          <PresentationBrandMark />
 
           {/* Pending Scene Loading / Completion Overlay */}
           <AnimatePresence>

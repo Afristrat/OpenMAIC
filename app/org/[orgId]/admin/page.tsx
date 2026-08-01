@@ -37,6 +37,11 @@ import {
   type LearningDesignSettings,
 } from '@/lib/agents/persona-catalog';
 import { AgentRosterSettings } from '@/components/org/agent-roster-settings';
+import {
+  presentationBrandingFromOrganization,
+  presentationBrandingSettings,
+  type PresentationBrandMode,
+} from '@/lib/branding/presentation-branding';
 
 interface MemberWithProfile {
   id: string;
@@ -86,6 +91,9 @@ export default function OrgAdminPage() {
   const [editName, setEditName] = useState('');
   const [editSector, setEditSector] = useState<string>('');
   const [editLocale, setEditLocale] = useState('fr-FR');
+  const [editLogo, setEditLogo] = useState('');
+  const [presentationBrandMode, setPresentationBrandMode] =
+    useState<PresentationBrandMode>('organization');
   const [learningDesign, setLearningDesign] =
     useState<LearningDesignSettings>(DEFAULT_LEARNING_DESIGN);
   const [managedTtsIds, setManagedTtsIds] = useState<string[]>([]);
@@ -120,6 +128,10 @@ export default function OrgAdminPage() {
       setEditName(orgData.name);
       setEditSector(orgData.sector ?? '');
       setEditLocale(orgData.default_locale);
+      setEditLogo(orgData.logo ?? '');
+      setPresentationBrandMode(
+        presentationBrandingFromOrganization(orgData.logo, orgData.settings).mode,
+      );
       setLearningDesign(learningDesignFromSettings(orgData.settings));
     } catch {
       router.push('/app');
@@ -197,17 +209,19 @@ export default function OrgAdminPage() {
           name: editName,
           sector: editSector || null,
           default_locale: editLocale,
-          settings: {
-            ...(org?.settings ?? {}),
-            learningDesign,
-            teachingProfile: {
-              name: professor.defaultName.trim(),
-              avatar: professor.avatar,
-              providerId: professor.providerId,
-              voiceId: professor.voiceId,
+            settings: {
+              ...(org?.settings ?? {}),
+              presentationBranding: presentationBrandingSettings(presentationBrandMode),
+              learningDesign,
+              teachingProfile: {
+                name: professor.defaultName.trim(),
+                avatar: professor.avatar,
+                providerId: professor.providerId,
+                voiceId: professor.voiceId,
+              },
             },
-          },
-        }),
+            logo: editLogo.trim() || null,
+          }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -433,6 +447,34 @@ export default function OrgAdminPage() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-sm font-medium">{t('org.presentationLogoUrl')}</label>
+              <Input
+                type="url"
+                value={editLogo}
+                onChange={(event) => setEditLogo(event.target.value)}
+                placeholder="https://…/logo.svg"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">{t('org.presentationLogoUrlHint')}</p>
+            </div>
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-sm font-medium">{t('org.presentationBranding')}</label>
+              <Select
+                value={presentationBrandMode}
+                onValueChange={(value) => setPresentationBrandMode(value as PresentationBrandMode)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="organization">{t('org.presentationBrandingOrganization')}</SelectItem>
+                  <SelectItem value="qalem">{t('org.presentationBrandingQalem')}</SelectItem>
+                  <SelectItem value="both">{t('org.presentationBrandingBoth')}</SelectItem>
+                  <SelectItem value="none">{t('org.presentationBrandingNone')}</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="mt-1 text-xs text-muted-foreground">{t('org.presentationBrandingHint')}</p>
             </div>
           </div>
           <div className="mt-4 flex items-center gap-4">

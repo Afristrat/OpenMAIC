@@ -23,7 +23,7 @@ export const organizationPatchSchema = z.object({
   sector: z.enum(orgSectors).nullable().optional(),
   default_locale: z.string().optional(),
   settings: z.record(z.string(), z.unknown()).optional(),
-  logo: z.string().optional(),
+  logo: z.string().url().max(2048).nullable().optional(),
 });
 
 // ---------------------------------------------------------------------------

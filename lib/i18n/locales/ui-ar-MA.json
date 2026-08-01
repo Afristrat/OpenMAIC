@@ -2048,5 +2048,13 @@
   "catalog.publish": "النشر في الدليل",
   "catalog.publishing": "جارٍ النشر…",
   "catalog.publicationFailed": "لم يكتمل النشر. حاول مرة أخرى بعد قليل.",
-  "nav.catalog": "التكوينات"
+  "nav.catalog": "التكوينات",
+  "org.presentationLogoUrl": "رابط شعار المؤسسة",
+  "org.presentationLogoUrlHint": "استخدم رابط HTTPS مباشرًا لصورة SVG أو PNG أو WebP.",
+  "org.presentationBranding": "هوية العرض",
+  "org.presentationBrandingOrganization": "شعار المؤسسة",
+  "org.presentationBrandingQalem": "شعار Qalem",
+  "org.presentationBrandingBoth": "المؤسسة وQalem",
+  "org.presentationBrandingNone": "بدون شعار",
+  "org.presentationBrandingHint": "يُطبّق هذا الخيار على القسم والعروض المرتبطة به."
 }

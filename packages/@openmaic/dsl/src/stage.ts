@@ -134,6 +134,11 @@ export interface Stage {
    * vocational.
    */
   taskEngineMode?: boolean;
+  /** Tenant-wide display policy injected on classroom read, never authored per slide. */
+  presentationBranding?: {
+    mode: 'none' | 'organization' | 'qalem' | 'both';
+    organizationLogoUrl?: string;
+  };
 }
 
 /**

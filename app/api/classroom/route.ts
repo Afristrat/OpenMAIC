@@ -18,6 +18,7 @@ import { classroomPersistSchema } from '@/lib/api/schemas';
 import { createLogger } from '@/lib/logger';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import type { Scene, Stage } from '@/lib/types/stage';
+import { presentationBrandingFromOrganization } from '@/lib/branding/presentation-branding';
 
 const log = createLogger('Classroom API');
 
@@ -200,10 +201,29 @@ export async function GET(request: NextRequest) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 404, 'Classroom not found');
     }
 
+    const { data: organization, error: organizationError } = await createServiceSupabaseClient()
+      .from('organizations')
+      .select('logo, settings')
+      .eq('id', ownership.orgId)
+      .maybeSingle();
+    if (organizationError) {
+      throw new Error(`Failed to read organization presentation branding: ${organizationError.message}`);
+    }
+
     // ownerId/orgId are internal authorization state — never exposed to the client.
     const { ownerId: _ownerId, orgId: _orgId, ...publicClassroom } = classroom;
-
-    return apiSuccess({ classroom: publicClassroom });
+    return apiSuccess({
+      classroom: {
+        ...publicClassroom,
+        stage: {
+          ...publicClassroom.stage,
+          presentationBranding: presentationBrandingFromOrganization(
+            organization?.logo,
+            organization?.settings as Record<string, unknown> | undefined,
+          ),
+        },
+      },
+    });
   } catch (error) {
     log.error(
       `Classroom retrieval failed [id=${request.nextUrl.searchParams.get('id') ?? 'unknown'}]:`,

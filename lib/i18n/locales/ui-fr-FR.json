@@ -2048,5 +2048,13 @@
   "catalog.publish": "Publier au catalogue",
   "catalog.publishing": "Publication…",
   "catalog.publicationFailed": "La publication n’a pas abouti. Réessayez dans un instant.",
-  "nav.catalog": "Formations"
+  "nav.catalog": "Formations",
+  "org.presentationLogoUrl": "URL du logo de l’organisation",
+  "org.presentationLogoUrlHint": "Utilisez un lien HTTPS direct vers une image SVG, PNG ou WebP.",
+  "org.presentationBranding": "Signature de présentation",
+  "org.presentationBrandingOrganization": "Logo de l’organisation",
+  "org.presentationBrandingQalem": "Logo Qalem",
+  "org.presentationBrandingBoth": "Organisation et Qalem",
+  "org.presentationBrandingNone": "Sans logo",
+  "org.presentationBrandingHint": "Ce choix s’applique à la classroom et aux présentations associées."
 }

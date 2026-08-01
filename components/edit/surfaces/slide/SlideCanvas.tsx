@@ -15,6 +15,7 @@ import {
 import { AnchoredTextBar } from './AnchoredTextBar';
 import { AnchoredElementBar } from './AnchoredElementBar';
 import { ElementPickLayer } from './ElementPickLayer';
+import { PresentationBrandMark } from '@/components/branding/presentation-brand-mark';
 
 /**
  * The slide surface's canvas. Reuses the unmodified slide renderer
@@ -67,6 +68,7 @@ export function SlideCanvas() {
         <SpotlightOverlay domIdPrefix="editable-element-" />
         <LaserPointerOverlay domIdPrefix="editable-element-" />
       </SceneProvider>
+      <PresentationBrandMark />
       <AnchoredTextBar editingElementId={editingElementId} />
       <AnchoredElementBar element={nonTextElement} />
       {/* Canvas-side element picker for the timeline's element-bound cues. */}

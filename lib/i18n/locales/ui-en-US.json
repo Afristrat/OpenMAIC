@@ -2048,5 +2048,13 @@
   "catalog.publish": "Publish to catalog",
   "catalog.publishing": "Publishing…",
   "catalog.publicationFailed": "Publication did not complete. Please try again shortly.",
-  "nav.catalog": "Courses"
+  "nav.catalog": "Courses",
+  "org.presentationLogoUrl": "Organization logo URL",
+  "org.presentationLogoUrlHint": "Use a direct HTTPS URL to an SVG, PNG, or WebP image.",
+  "org.presentationBranding": "Presentation signature",
+  "org.presentationBrandingOrganization": "Organization logo",
+  "org.presentationBrandingQalem": "Qalem logo",
+  "org.presentationBrandingBoth": "Organization and Qalem",
+  "org.presentationBrandingNone": "No logo",
+  "org.presentationBrandingHint": "This choice applies to the classroom and its related presentations."
 }
