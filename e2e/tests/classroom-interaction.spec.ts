@@ -421,10 +421,14 @@ test.describe('Classroom Interaction', () => {
     await classroom.waitForLoaded();
 
     const downloadFromMenu = async (testId: string) => {
-      await page.getByRole('button', { name: 'Export PPTX' }).click();
+      const exportButton = page.getByRole('button', { name: 'Export PPTX' });
+      await expect(exportButton).toBeEnabled();
+      await exportButton.click();
       const downloadPromise = page.waitForEvent('download');
       await page.getByTestId(testId).click();
-      return downloadPromise;
+      const download = await downloadPromise;
+      await expect(exportButton).toBeEnabled();
+      return download;
     };
 
     const pptx = await downloadFromMenu('export-pptx');
