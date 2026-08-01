@@ -1,11 +1,11 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { ArrowRight, BookOpen, CalendarDays, Languages } from 'lucide-react';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useOrganizations } from '@/lib/hooks/use-organizations';
-import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface CatalogCourse {
   id: string;
@@ -99,12 +99,13 @@ export default function CatalogPage() {
                   )}
                 </div>
               </dl>
-              <Button asChild className="mt-auto w-full">
-                <Link href={`/classroom/${encodeURIComponent(course.classroomId)}`}>
-                  {t('catalog.openClassroom')}
-                  <ArrowRight className="ms-2 size-4 rtl-flip" />
-                </Link>
-              </Button>
+              <a
+                href={`/classroom/${encodeURIComponent(course.classroomId)}`}
+                className={cn(buttonVariants(), 'mt-auto w-full')}
+              >
+                {t('catalog.openClassroom')}
+                <ArrowRight className="ms-2 size-4 rtl-flip" />
+              </a>
             </article>
           ))}
         </section>
