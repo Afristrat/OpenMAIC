@@ -428,13 +428,18 @@ test.describe('Classroom Interaction', () => {
     };
 
     const pptx = await downloadFromMenu('export-pptx');
-    expect(pptx.suggestedFilename()).toMatch(/\.pptx$/i);
+    const pptxPath = await pptx.path();
+    expect(pptxPath).not.toBeNull();
+    const pptxArchive = await JSZip.loadAsync(await readFile(pptxPath!));
+    expect(pptxArchive.file('[Content_Types].xml')).not.toBeNull();
 
     const resourcePack = await downloadFromMenu('export-resource-pack');
-    expect(resourcePack.suggestedFilename()).toMatch(/\.zip$/i);
+    const resourcePackPath = await resourcePack.path();
+    expect(resourcePackPath).not.toBeNull();
+    const resourcePackArchive = await JSZip.loadAsync(await readFile(resourcePackPath!));
+    expect(Object.keys(resourcePackArchive.files).some((path) => path.endsWith('.pptx'))).toBe(true);
 
     const qalemArchive = await downloadFromMenu('export-classroom-zip');
-    expect(qalemArchive.suggestedFilename()).toMatch(/\.qalem\.zip$/i);
     const archivePath = await qalemArchive.path();
     expect(archivePath).not.toBeNull();
     const archive = await JSZip.loadAsync(await readFile(archivePath!));
