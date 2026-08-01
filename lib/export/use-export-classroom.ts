@@ -26,6 +26,7 @@ import {
 } from './inline-assets';
 import { createProxiedFetch } from './proxied-fetch';
 import type { SceneContent } from '@/lib/types/stage';
+import { persistCurrentClassroomForExport } from './persist-before-server-export';
 
 export async function inlineSceneContent(
   content: SceneContent,
@@ -52,6 +53,7 @@ export function useExportClassroom() {
     const toastId = toast.loading(t('export.exporting'));
 
     try {
+      await persistCurrentClassroomForExport();
       const JSZip = (await import('jszip')).default;
       const zip = new JSZip();
 
@@ -63,15 +65,19 @@ export function useExportClassroom() {
       const agentRecords = await getGeneratedAgentsByStageId(stage.id);
 
       // 3. Collect audio files
-      const audioFiles = await collectAudioFiles(scenes);
+      const audioFiles = await collectAudioFiles(scenes, stage.id);
 
       // 4. Collect media files (generated images/videos)
-      const mediaFiles = await collectMediaFiles(stage.id);
+      const mediaFiles = await collectMediaFiles(stage.id, scenes);
 
       // 5. Build audioId → zipPath mapping for manifest
       const audioIdToPath = new Map<string, string>();
       for (const af of audioFiles) {
         audioIdToPath.set(af.record.id, af.zipPath);
+      }
+      const audioUrlToPath = new Map<string, string>();
+      for (const af of audioFiles) {
+        if (af.sourceUrl) audioUrlToPath.set(af.sourceUrl, af.zipPath);
       }
 
       // 6. Build manifest
@@ -132,7 +138,7 @@ export function useExportClassroom() {
             order: scene.order,
             content,
             actions: scene.actions
-              ? actionsToManifest(scene.actions, audioIdToPath, agentIdToIndex)
+              ? actionsToManifest(scene.actions, audioIdToPath, agentIdToIndex, audioUrlToPath)
               : undefined,
             whiteboards: scene.whiteboards,
             ...(scene.multiAgent?.enabled

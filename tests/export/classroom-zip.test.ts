@@ -126,6 +126,28 @@ describe('actionsToManifest', () => {
     expect(result[0]).not.toHaveProperty('audioRef');
   });
 
+  test('replaces a persisted audio URL with an archive reference', () => {
+    const sourceUrl = '/api/classroom-media/classroom-1/audio/scene-1.wav';
+    const actions = [
+      {
+        id: 'act1',
+        type: 'speech' as const,
+        text: 'Bonjour',
+        audioUrl: sourceUrl,
+      } as SpeechAction,
+    ];
+
+    const result = actionsToManifest(
+      actions,
+      new Map(),
+      new Map(),
+      new Map([[sourceUrl, 'audio/scene-1.wav']]),
+    );
+
+    expect(result[0]).toMatchObject({ audioRef: 'audio/scene-1.wav' });
+    expect(result[0]).not.toHaveProperty('audioUrl');
+  });
+
   test('converts discussion agentId to agentIndex', () => {
     const actions = [
       {

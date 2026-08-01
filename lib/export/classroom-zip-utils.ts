@@ -9,20 +9,58 @@ import type { Scene } from '@/lib/types/stage';
 export interface CollectedAudio {
   zipPath: string;
   record: AudioFileRecord;
+  sourceUrl?: string;
 }
 
 export interface CollectedMedia {
   zipPath: string;
   record: MediaFileRecord;
   elementId: string;
+  sourceUrl?: string;
 }
 
-export async function collectAudioFiles(scenes: Scene[]): Promise<CollectedAudio[]> {
+type FetchLike = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+
+function classroomMediaZipPath(stageId: string, sourceUrl: string): string | null {
+  const marker = `/api/classroom-media/${encodeURIComponent(stageId)}/`;
+  const pathname = new URL(sourceUrl, 'https://qalem.invalid').pathname;
+  const index = pathname.indexOf(marker);
+  if (index === -1) return null;
+
+  const path = decodeURIComponent(pathname.slice(index + marker.length));
+  return path.startsWith('audio/') || path.startsWith('media/') ? path : null;
+}
+
+function extensionFromPath(path: string, fallback: string): string {
+  const extension = path.split('/').pop()?.split('.').pop()?.toLowerCase();
+  return extension && /^[a-z0-9]{1,8}$/.test(extension) ? extension : fallback;
+}
+
+async function downloadServerAsset(
+  sourceUrl: string,
+  zipPath: string,
+  fetchImpl: FetchLike,
+): Promise<Blob> {
+  const response = await fetchImpl(sourceUrl, { credentials: 'same-origin' });
+  if (!response.ok) {
+    throw new Error(`Média persistant indisponible pour l'export (${response.status})`);
+  }
+  return response.blob();
+}
+
+export async function collectAudioFiles(
+  scenes: Scene[],
+  stageId?: string,
+  fetchImpl: FetchLike = fetch,
+): Promise<CollectedAudio[]> {
   const audioIds = new Set<string>();
+  const audioUrls = new Set<string>();
   for (const scene of scenes) {
     for (const action of scene.actions ?? []) {
-      if (action.type === 'speech' && (action as SpeechAction).audioId) {
-        audioIds.add((action as SpeechAction).audioId!);
+      if (action.type === 'speech') {
+        const speech = action as SpeechAction;
+        if (speech.audioId) audioIds.add(speech.audioId);
+        if (speech.audioUrl) audioUrls.add(speech.audioUrl);
       }
     }
   }
@@ -34,16 +72,81 @@ export async function collectAudioFiles(scenes: Scene[]): Promise<CollectedAudio
       collected.push({ zipPath: `audio/${audioId}.${ext}`, record });
     }
   }
+
+  if (!stageId) return collected;
+
+  for (const sourceUrl of audioUrls) {
+    const zipPath = classroomMediaZipPath(stageId, sourceUrl);
+    if (!zipPath || collected.some((item) => item.zipPath === zipPath)) continue;
+    const blob = await downloadServerAsset(sourceUrl, zipPath, fetchImpl);
+    collected.push({
+      zipPath,
+      sourceUrl,
+      record: {
+        id: `server:${zipPath}`,
+        blob,
+        format: extensionFromPath(zipPath, 'wav'),
+        createdAt: Date.now(),
+      },
+    });
+  }
   return collected;
 }
 
-export async function collectMediaFiles(stageId: string): Promise<CollectedMedia[]> {
+function collectServerMediaUrls(value: unknown, stageId: string, urls: Set<string>): void {
+  if (typeof value === 'string') {
+    const zipPath = classroomMediaZipPath(stageId, value);
+    if (zipPath?.startsWith('media/')) urls.add(value);
+    return;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectServerMediaUrls(item, stageId, urls));
+    return;
+  }
+  if (value && typeof value === 'object') {
+    Object.values(value as Record<string, unknown>).forEach((item) =>
+      collectServerMediaUrls(item, stageId, urls),
+    );
+  }
+}
+
+export async function collectMediaFiles(
+  stageId: string,
+  scenes: Scene[] = [],
+  fetchImpl: FetchLike = fetch,
+): Promise<CollectedMedia[]> {
   const records = await db.mediaFiles.where('stageId').equals(stageId).toArray();
   const collected: CollectedMedia[] = [];
   for (const record of records) {
     const elementId = record.id.includes(':') ? record.id.split(':').slice(1).join(':') : record.id;
     const ext = record.mimeType?.split('/')[1] || 'jpg';
     collected.push({ zipPath: `media/${elementId}.${ext}`, record, elementId });
+  }
+
+  const serverMediaUrls = new Set<string>();
+  scenes.forEach((scene) => collectServerMediaUrls(scene.content, stageId, serverMediaUrls));
+  for (const sourceUrl of serverMediaUrls) {
+    const zipPath = classroomMediaZipPath(stageId, sourceUrl);
+    if (!zipPath || collected.some((item) => item.zipPath === zipPath)) continue;
+    const blob = await downloadServerAsset(sourceUrl, zipPath, fetchImpl);
+    const mimeType = blob.type || 'application/octet-stream';
+    const elementId = zipPath.split('/').pop()?.replace(/\.[^.]+$/, '') || 'media';
+    collected.push({
+      zipPath,
+      sourceUrl,
+      elementId,
+      record: {
+        id: `server:${zipPath}`,
+        stageId,
+        type: mimeType.startsWith('video/') ? 'video' : 'image',
+        blob,
+        mimeType,
+        size: blob.size,
+        prompt: '',
+        params: '{}',
+        createdAt: Date.now(),
+      },
+    });
   }
   return collected;
 }
@@ -54,16 +157,17 @@ export function actionsToManifest(
   actions: Action[],
   audioIdToPath: Map<string, string>,
   agentIdToIndex: Map<string, number> = new Map(),
+  audioUrlToPath: Map<string, string> = new Map(),
 ): ManifestAction[] {
   return actions.map((action) => {
     if (action.type === 'speech') {
       const speech = action as SpeechAction;
-      const { audioId, ...rest } = speech;
-      const audioRef = audioId ? audioIdToPath.get(audioId) : undefined;
+      const { audioId, audioUrl, ...rest } = speech;
+      const audioRef = audioId ? audioIdToPath.get(audioId) : audioUrlToPath.get(audioUrl ?? '');
       return {
         ...rest,
         ...(audioRef ? { audioRef } : {}),
-        ...(speech.audioUrl ? { audioUrl: speech.audioUrl } : {}),
+        ...(audioRef || !audioUrl ? {} : { audioUrl }),
       } as ManifestAction;
     }
     if (action.type === 'discussion') {
