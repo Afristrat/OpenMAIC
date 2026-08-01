@@ -384,7 +384,7 @@ test.describe('Classroom Interaction', () => {
       });
     });
     await page.route('**/api/export-jobs/*', (route) => {
-      const format = route.request().url().split('/').pop()!;
+      const format = route.request().url().split('/').pop()!.replace(/^e2e-export-/, '');
       const extension = format === 'cmi5' ? 'cmi5.zip' : `${format}.zip`;
       return route.fulfill({
         status: 200,
