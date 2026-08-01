@@ -160,6 +160,21 @@ export class MockApi {
 
   /** Mock the persistent MP4 export job through creation and immediate completion. */
   async mockMp4ExportDone(id = 'e2e-mp4-export') {
+    // Server exports are intentionally gated by an explicit persistence write:
+    // the rendered job must consume the current editor state, never a stale
+    // autosave. This mock acknowledges that write while keeping the fixture
+    // independent from a real Supabase instance.
+    await this.page.route('**/api/classroom', async (route) => {
+      if (route.request().method() !== 'PUT') {
+        await route.continue();
+        return;
+      }
+      await route.fulfill({
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: true }),
+      });
+    });
     await this.page.route('**/api/export-snapshots/**', async (route) => {
       await route.fulfill({
         status: 200,
