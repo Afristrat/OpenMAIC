@@ -1,5 +1,5 @@
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
-import { requireSuperAdminOrOrgMember } from '@/lib/api/auth';
+import { requireSuperAdminOrOrgAdmin, requireSuperAdminOrOrgMember } from '@/lib/api/auth';
 import { isFeatureEnabled } from '@/lib/flags';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import type { NextRequest } from 'next/server';
@@ -8,6 +8,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   const orgId = request.nextUrl.searchParams.get('orgId');
+  const includeUnpublished = request.nextUrl.searchParams.get('includeUnpublished') === 'true';
   if (!orgId) {
     return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, 'orgId is required');
   }
@@ -33,19 +34,52 @@ export async function GET(request: NextRequest) {
     return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to load course catalog');
   }
 
+  if (!includeUnpublished) {
+    return apiSuccess({ courses: serializeCourses(data ?? []) });
+  }
+
+  const admin = await requireSuperAdminOrOrgAdmin(request, orgId);
+  if (admin.response) return admin.response;
+
+  const { data: unpublished, error: unpublishedError } = await supabase
+    .from('courses')
+    .select('id, title, language, stage_id, created_at')
+    .eq('org_id', orgId)
+    .eq('status', 'ready')
+    .eq('catalog_visible', false)
+    .not('stage_id', 'is', null)
+    .order('created_at', { ascending: false });
+
+  if (unpublishedError) {
+    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to load unpublished courses');
+  }
+
   return apiSuccess({
-    courses: (data ?? []).flatMap((course) =>
-      course.stage_id
-        ? [
-            {
-              id: course.id,
-              title: course.title,
-              language: course.language,
-              classroomId: course.stage_id,
-              createdAt: course.created_at,
-            },
-          ]
-        : [],
-    ),
+    courses: serializeCourses(data ?? []),
+    unpublished: serializeCourses(unpublished ?? []),
   });
+}
+
+interface CourseRow {
+  id: string;
+  title: string;
+  language: string;
+  stage_id: string | null;
+  created_at: string;
+}
+
+function serializeCourses(courses: CourseRow[]) {
+  return courses.flatMap((course) =>
+    course.stage_id
+      ? [
+          {
+            id: course.id,
+            title: course.title,
+            language: course.language,
+            classroomId: course.stage_id,
+            createdAt: course.created_at,
+          },
+        ]
+      : [],
+  );
 }

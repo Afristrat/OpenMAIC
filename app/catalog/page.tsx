@@ -17,10 +17,13 @@ interface CatalogCourse {
 
 export default function CatalogPage() {
   const { t, locale } = useI18n();
-  const { currentOrg, isLoading: organizationsLoading } = useOrganizations();
+  const { currentOrg, isAdmin, isLoading: organizationsLoading } = useOrganizations();
   const [courses, setCourses] = useState<CatalogCourse[]>([]);
+  const [unpublished, setUnpublished] = useState<CatalogCourse[]>([]);
   const [loading, setLoading] = useState(true);
   const [unavailable, setUnavailable] = useState(false);
+  const [publishingCourseId, setPublishingCourseId] = useState<string | null>(null);
+  const [publicationError, setPublicationError] = useState(false);
 
   useEffect(() => {
     if (organizationsLoading) return;
@@ -32,15 +35,23 @@ export default function CatalogPage() {
     let active = true;
     setLoading(true);
     setUnavailable(false);
-    void fetch(`/api/courses/catalog?orgId=${encodeURIComponent(currentOrg.id)}`, { cache: 'no-store' })
+    const query = new URLSearchParams({ orgId: currentOrg.id });
+    if (isAdmin) query.set('includeUnpublished', 'true');
+    void fetch(`/api/courses/catalog?${query.toString()}`, { cache: 'no-store' })
       .then(async (response) => {
         if (response.status === 404) {
           if (active) setUnavailable(true);
           return;
         }
         if (!response.ok) throw new Error('Catalog request failed');
-        const payload = (await response.json()) as { courses?: CatalogCourse[] };
-        if (active) setCourses(payload.courses ?? []);
+        const payload = (await response.json()) as {
+          courses?: CatalogCourse[];
+          unpublished?: CatalogCourse[];
+        };
+        if (active) {
+          setCourses(payload.courses ?? []);
+          setUnpublished(payload.unpublished ?? []);
+        }
       })
       .catch(() => {
         if (active) setUnavailable(true);
@@ -51,7 +62,27 @@ export default function CatalogPage() {
     return () => {
       active = false;
     };
-  }, [currentOrg, organizationsLoading]);
+  }, [currentOrg, isAdmin, organizationsLoading]);
+
+  const publishCourse = async (course: CatalogCourse) => {
+    if (!currentOrg) return;
+    setPublicationError(false);
+    setPublishingCourseId(course.id);
+    try {
+      const response = await fetch(`/api/courses/${encodeURIComponent(course.id)}/publication`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orgId: currentOrg.id, visible: true }),
+      });
+      if (!response.ok) throw new Error('Publication request failed');
+      setUnpublished((previous) => previous.filter((item) => item.id !== course.id));
+      setCourses((previous) => [course, ...previous]);
+    } catch {
+      setPublicationError(true);
+    } finally {
+      setPublishingCourseId(null);
+    }
+  };
 
   if (loading || organizationsLoading) {
     return <main className="mx-auto max-w-6xl px-6 py-16">{t('common.loading')}</main>;
@@ -108,6 +139,36 @@ export default function CatalogPage() {
               </a>
             </article>
           ))}
+        </section>
+      )}
+
+      {isAdmin && unpublished.length > 0 && (
+        <section className="mt-12 border-t pt-10" aria-label={t('catalog.publishReadyTitle')}>
+          <h2 className="text-xl font-semibold">{t('catalog.publishReadyTitle')}</h2>
+          <p className="mt-2 text-sm text-muted-foreground">{t('catalog.publishReadyDescription')}</p>
+          {publicationError && (
+            <p className="mt-3 text-sm text-destructive" role="alert">
+              {t('catalog.publicationFailed')}
+            </p>
+          )}
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {unpublished.map((course) => (
+              <article key={course.id} className="rounded-2xl border bg-card p-5">
+                <h3 className="font-semibold">{course.title}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{course.language}</p>
+                <button
+                  type="button"
+                  className={cn(buttonVariants({ size: 'sm' }), 'mt-5 w-full')}
+                  disabled={publishingCourseId === course.id}
+                  onClick={() => void publishCourse(course)}
+                >
+                  {publishingCourseId === course.id
+                    ? t('catalog.publishing')
+                    : t('catalog.publish')}
+                </button>
+              </article>
+            ))}
+          </div>
         </section>
       )}
     </main>

@@ -2043,5 +2043,10 @@
   "catalog.emptyDescription": "ستظهر التكوينات المنشورة هنا عندما تصبح جاهزة للانضمام.",
   "catalog.openClassroom": "الالتحاق بالقسم",
   "catalog.noOrganization": "اختر مؤسسة للاطلاع على تكويناتها.",
+  "catalog.publishReadyTitle": "تكوينات جاهزة للنشر",
+  "catalog.publishReadyDescription": "انشر تكوينا ليصبح متاحا لأعضاء مؤسستك.",
+  "catalog.publish": "النشر في الدليل",
+  "catalog.publishing": "جارٍ النشر…",
+  "catalog.publicationFailed": "لم يكتمل النشر. حاول مرة أخرى بعد قليل.",
   "nav.catalog": "التكوينات"
 }

@@ -2043,5 +2043,10 @@
   "catalog.emptyDescription": "Published courses will appear here when they are ready to join.",
   "catalog.openClassroom": "Join the classroom",
   "catalog.noOrganization": "Choose an organization to view its courses.",
+  "catalog.publishReadyTitle": "Courses ready to publish",
+  "catalog.publishReadyDescription": "Publish a course to make it available to members of your organization.",
+  "catalog.publish": "Publish to catalog",
+  "catalog.publishing": "Publishing…",
+  "catalog.publicationFailed": "Publication did not complete. Please try again shortly.",
   "nav.catalog": "Courses"
 }

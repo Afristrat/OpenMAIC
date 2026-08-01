@@ -11,7 +11,7 @@ test.describe('Catalogue de formations', () => {
       localStorage.setItem('locale', 'fr-FR');
     }, createSettingsStorage());
 
-    await page.route(`**/api/courses/catalog?orgId=${ORG_ID}`, (route) =>
+    await page.route(/\/api\/courses\/catalog\?/, (route) =>
       route.fulfill({
         contentType: 'application/json',
         body: JSON.stringify({
@@ -25,15 +25,30 @@ test.describe('Catalogue de formations', () => {
               createdAt: '2026-08-01T00:00:00.000Z',
             },
           ],
+          unpublished: [
+            {
+              id: '00000000-0000-4000-8000-000000000019',
+              title: 'Formation à publier',
+              language: 'fr-FR',
+              classroomId: 'e2e-unpublished-classroom',
+              createdAt: '2026-08-01T00:00:00.000Z',
+            },
+          ],
         }),
       }),
+    );
+    await page.route('**/api/courses/00000000-0000-4000-8000-000000000019/publication', (route) =>
+      route.fulfill({ contentType: 'application/json', body: '{"success":true,"catalogVisible":true}' }),
     );
 
     await page.goto('/catalog');
 
     await expect(page.getByRole('heading', { name: 'Catalogue de formations' })).toBeVisible();
     await expect(page.getByText('Piloter une décision complexe')).toBeVisible();
-    await page.getByRole('link', { name: 'Rejoindre la classe' }).click();
+    await expect(page.getByText('Formation à publier')).toBeVisible();
+    await page.getByRole('button', { name: 'Publier au catalogue' }).click();
+    await expect(page.getByRole('button', { name: 'Publier au catalogue' })).toHaveCount(0);
+    await page.getByRole('link', { name: 'Rejoindre la classe' }).first().click();
     await expect(page).toHaveURL(new RegExp(`/classroom/${CLASSROOM_ID}$`));
   });
 
@@ -42,7 +57,7 @@ test.describe('Catalogue de formations', () => {
       localStorage.setItem('settings-storage', settings);
       localStorage.setItem('locale', 'ar-MA');
     }, createSettingsStorage());
-    await page.route(`**/api/courses/catalog?orgId=${ORG_ID}`, (route) =>
+    await page.route(/\/api\/courses\/catalog\?/, (route) =>
       route.fulfill({ contentType: 'application/json', body: JSON.stringify({ success: true, courses: [] }) }),
     );
 

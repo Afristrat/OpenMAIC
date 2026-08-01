@@ -2043,5 +2043,10 @@
   "catalog.emptyDescription": "Les formations publiées apparaîtront ici lorsqu’elles seront prêtes à rejoindre.",
   "catalog.openClassroom": "Rejoindre la classe",
   "catalog.noOrganization": "Choisissez une organisation pour consulter ses formations.",
+  "catalog.publishReadyTitle": "Formations prêtes à publier",
+  "catalog.publishReadyDescription": "Publiez une formation pour la rendre accessible aux membres de votre organisation.",
+  "catalog.publish": "Publier au catalogue",
+  "catalog.publishing": "Publication…",
+  "catalog.publicationFailed": "La publication n’a pas abouti. Réessayez dans un instant.",
   "nav.catalog": "Formations"
 }
