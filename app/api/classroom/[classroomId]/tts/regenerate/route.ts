@@ -43,7 +43,15 @@ export async function POST(
   const classroom = await readClassroom(classroomId);
   if (!classroom) return apiError('INVALID_REQUEST', 404, 'Classroom introuvable');
 
-  const speechCount = classroom.scenes.reduce(
+  const body = (await request.json().catch(() => null)) as { sceneId?: string } | null;
+  const selectedScenes = body?.sceneId
+    ? classroom.scenes.filter((scene) => scene.id === body.sceneId)
+    : classroom.scenes;
+  if (body?.sceneId && selectedScenes.length === 0) {
+    return apiError('INVALID_REQUEST', 404, 'Scène introuvable');
+  }
+
+  const speechCount = selectedScenes.reduce(
     (count, scene) => count + (scene.actions ?? []).filter((action) => action.type === 'speech').length,
     0,
   );
@@ -60,7 +68,7 @@ export async function POST(
     learningDesignFromSettings(organization?.settings),
   );
 
-  const regeneratedScenes = structuredClone(classroom.scenes);
+  const regeneratedScenes = structuredClone(selectedScenes);
   await generateTTSForClassroom(regeneratedScenes, classroomId, teachingProfile);
   const generatedAudioCount = countSpeechAudio(regeneratedScenes);
   if (generatedAudioCount === 0) {
@@ -71,7 +79,9 @@ export async function POST(
     {
       id: classroomId,
       stage: classroom.stage,
-      scenes: regeneratedScenes,
+      scenes: classroom.scenes.map((scene) =>
+        regeneratedScenes.find((regenerated) => regenerated.id === scene.id) ?? scene,
+      ),
       ownerId: ownership.ownerId,
       orgId: ownership.orgId,
     },
