@@ -21,6 +21,8 @@ import { latexToOmml } from '@/lib/export/latex-to-omml';
 import { createLogger } from '@/lib/logger';
 import { inlineHtmlAssets, createAssetFetcher } from './inline-assets';
 import { createProxiedFetch } from './proxied-fetch';
+import { toDataUri } from './inline-assets';
+import type { PresentationBranding } from '@/lib/branding/presentation-branding';
 
 const log = createLogger('ExportPPTX');
 
@@ -366,8 +368,49 @@ export async function buildPptxBlob(
   viewportSize: number,
   ratioPx2Inch: number,
   ratioPx2Pt: number,
+  presentationBranding?: PresentationBranding,
 ): Promise<Blob> {
   const pptx = new pptxgen();
+  const presentationWidth = viewportSize / ratioPx2Inch;
+  const presentationHeight = (viewportSize * viewportRatio) / ratioPx2Inch;
+  const showOrganization =
+    !!presentationBranding?.organizationLogoUrl &&
+    (presentationBranding.mode === 'organization' || presentationBranding.mode === 'both');
+  const showQalem =
+    presentationBranding?.mode === 'qalem' || presentationBranding?.mode === 'both';
+  const organizationLogoData = showOrganization
+    ? await createAssetFetcher({ fetchImpl: createProxiedFetch() })(
+        presentationBranding.organizationLogoUrl!,
+      ).then((asset) => (asset ? toDataUri(asset.bytes, asset.contentType) : null))
+    : null;
+
+  const addPresentationBranding = (pptxSlide: ReturnType<typeof pptx.addSlide>) => {
+    if (!organizationLogoData && !showQalem) return;
+    const bottom = presentationHeight - 0.42;
+    if (organizationLogoData) {
+      pptxSlide.addImage({
+        data: organizationLogoData,
+        x: presentationWidth - 1.42,
+        y: bottom,
+        w: 1.1,
+        h: 0.25,
+        transparency: 6,
+      });
+    }
+    if (showQalem) {
+      pptxSlide.addText('Qalem', {
+        x: presentationWidth - (organizationLogoData ? 2.2 : 1.25),
+        y: bottom + 0.01,
+        w: 0.95,
+        h: 0.22,
+        margin: 0,
+        fontFace: 'Arial',
+        fontSize: 10,
+        bold: true,
+        color: '6D28D9',
+      });
+    }
+  };
 
   // Set layout based on aspect ratio
   if (viewportRatio === 0.625) pptx.layout = 'LAYOUT_16x10';
@@ -421,7 +464,10 @@ export async function buildPptxBlob(
       }
     }
 
-    if (!slide.elements) continue;
+    if (!slide.elements) {
+      addPresentationBranding(pptxSlide);
+      continue;
+    }
 
     // ── Elements ──
     for (const el of slide.elements) {
@@ -1083,6 +1129,7 @@ export async function buildPptxBlob(
         }
       }
     }
+    addPresentationBranding(pptxSlide);
   }
 
   return (await pptx.write({ outputType: 'blob' })) as Blob;
@@ -1138,6 +1185,7 @@ export function useExportPPTX() {
         viewportSize,
         ratioPx2Inch,
         ratioPx2Pt,
+        stage?.presentationBranding,
       );
       saveAs(blob, `${fileName}.pptx`);
       toast.success(t('export.exportSuccess'));
@@ -1169,6 +1217,7 @@ export function useExportPPTX() {
         viewportSize,
         ratioPx2Inch,
         ratioPx2Pt,
+        stage?.presentationBranding,
       );
       zip.file(`${fileName}.pptx`, pptxBlob);
 

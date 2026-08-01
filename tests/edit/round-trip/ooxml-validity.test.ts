@@ -162,4 +162,21 @@ describe('PPTX export produces valid, well-formed OOXML', () => {
       expect(notesXml).not.toContain('<script>');
     }
   });
+
+  it('writes the Qalem presentation signature without corrupting OOXML', async () => {
+    const { scene, content } = buildHostileFixture();
+    const blob = await buildPptxBlob(
+      [content.canvas],
+      [scene],
+      VIEWPORT_RATIO,
+      VIEWPORT_SIZE,
+      RATIO_PX2_INCH,
+      RATIO_PX2_PT,
+      { mode: 'qalem' },
+    );
+    const zip = await JSZip.loadAsync(await blob.arrayBuffer());
+    const slideXml = await zip.file('ppt/slides/slide1.xml')!.async('string');
+    expect(slideXml).toContain('Qalem');
+    assertTagsBalanced(slideXml, 'ppt/slides/slide1.xml');
+  });
 });
