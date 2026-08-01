@@ -307,7 +307,7 @@ export function HeaderControls({
           )}
         </button>
         {exportMenuOpen && (
-          <div className="absolute top-full mt-2 right-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden z-50 min-w-[200px]">
+          <div className="absolute right-0 bottom-full mb-2 min-w-[200px] overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg z-50 dark:border-gray-700 dark:bg-gray-800">
             <button
               data-testid="export-mp4"
               onClick={() => {
