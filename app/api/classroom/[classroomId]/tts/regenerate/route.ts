@@ -12,6 +12,7 @@ import {
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { learningDesignFromSettings } from '@/lib/agents/persona-catalog';
 import { teachingProfileFromLearningDesign } from '@/lib/org/teaching-profile';
+import type { Action } from '@/lib/types/action';
 import type { Scene } from '@/lib/types/stage';
 
 function countSpeechAudio(scenes: Scene[]): number {
@@ -19,7 +20,7 @@ function countSpeechAudio(scenes: Scene[]): number {
     (count, scene) =>
       count +
       (scene.actions ?? []).filter(
-        (action) => action.type === 'speech' && Boolean(action.audioUrl),
+        (action: Action) => action.type === 'speech' && Boolean(action.audioUrl),
       ).length,
     0,
   );
@@ -52,7 +53,8 @@ export async function POST(
   }
 
   const speechCount = selectedScenes.reduce(
-    (count, scene) => count + (scene.actions ?? []).filter((action) => action.type === 'speech').length,
+    (count, scene) =>
+      count + (scene.actions ?? []).filter((action: Action) => action.type === 'speech').length,
     0,
   );
   if (speechCount === 0) {

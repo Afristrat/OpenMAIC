@@ -12,6 +12,7 @@ import {
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { learningDesignFromSettings } from '@/lib/agents/persona-catalog';
 import { teachingProfileFromLearningDesign } from '@/lib/org/teaching-profile';
+import type { Action } from '@/lib/types/action';
 
 export async function POST(
   request: NextRequest,
@@ -29,8 +30,8 @@ export async function POST(
     return apiError('INVALID_REQUEST', 400, 'Scène, prise de parole et texte sont requis');
   }
   const classroom = await readClassroom(classroomId);
-  const scene = classroom?.scenes.find((item) => item.id === body.sceneId);
-  const actionIndex = scene?.actions?.findIndex((item) => item.id === body.actionId) ?? -1;
+  const scene = classroom?.scenes.find((item: { id: string }) => item.id === body.sceneId);
+  const actionIndex = scene?.actions?.findIndex((item: Action) => item.id === body.actionId) ?? -1;
   const action = scene?.actions?.[actionIndex];
   if (!classroom || !scene || actionIndex < 0 || action?.type !== 'speech') {
     return apiError('INVALID_REQUEST', 404, 'Prise de parole introuvable');
@@ -48,7 +49,7 @@ export async function POST(
     learningDesignFromSettings(organization?.settings),
   );
   await generateTTSForClassroom([generatedScene], classroomId, teachingProfile);
-  if (!generatedScene.actions?.every((item) => item.type !== 'speech' || item.audioUrl)) {
+  if (!generatedScene.actions?.every((item: Action) => item.type !== 'speech' || item.audioUrl)) {
     return apiError('INTERNAL_ERROR', 502, 'La synthèse vocale a échoué');
   }
   scene.actions = [
