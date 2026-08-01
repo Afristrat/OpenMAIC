@@ -199,10 +199,20 @@ export class MockApi {
           format: 'mp4',
           status: 'done',
           done: true,
-          downloadUrl: 'data:video/mp4;base64,AAAA',
+          downloadUrl: `https://example.com/${id}.mp4`,
         }),
       });
     });
+    await this.page.route(`https://example.com/${id}.mp4`, (route) =>
+      route.fulfill({
+        status: 200,
+        headers: {
+          'Content-Type': 'video/mp4',
+          'Content-Disposition': `attachment; filename="${id}.mp4"`,
+        },
+        body: 'MP4',
+      }),
+    );
   }
 
   /**

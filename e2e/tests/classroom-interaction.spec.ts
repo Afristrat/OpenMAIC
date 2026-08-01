@@ -1,4 +1,6 @@
 import { test, expect } from '../fixtures/base';
+import JSZip from 'jszip';
+import { readFile } from 'node:fs/promises';
 import { ClassroomPage } from '../pages/classroom.page';
 import { createSettingsStorage } from '../fixtures/test-data/settings';
 import { defaultTheme } from '../fixtures/test-data/scene-content';
@@ -93,6 +95,14 @@ async function seedDatabase(
                 title: '基本概念',
                 order: 0,
                 content: makeSlideContent('基本概念', '0'),
+                actions: [
+                  {
+                    id: 'export-audio',
+                    type: 'speech',
+                    text: 'Narration exportée',
+                    audioUrl: `/api/classroom-media/${stageId}/audio/narration.wav`,
+                  },
+                ],
                 createdAt: now,
                 updatedAt: now,
               },
@@ -358,5 +368,88 @@ test.describe('Classroom Interaction', () => {
     await mp4Export.click();
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toContain('.mp4');
+  });
+
+  test('exports every downloadable format from the current editable classroom', async ({
+    page,
+    mockApi,
+  }) => {
+    await mockApi.mockMp4ExportDone('e2e-all-export-formats');
+    await page.route('**/api/export-jobs', (route) => {
+      const { format } = route.request().postDataJSON() as { format: string };
+      return route.fulfill({
+        status: 202,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: true, id: `e2e-export-${format}`, status: 'queued' }),
+      });
+    });
+    await page.route('**/api/export-jobs/*', (route) => {
+      const format = route.request().url().split('/').pop()!;
+      const extension = format === 'cmi5' ? 'cmi5.zip' : `${format}.zip`;
+      return route.fulfill({
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          success: true,
+          id: `e2e-export-${format}`,
+          status: 'done',
+          done: true,
+          downloadUrl: `https://example.com/e2e-export.${extension}`,
+        }),
+      });
+    });
+    await page.route('https://example.com/e2e-export.*', (route) => {
+      const filename = route.request().url().split('/').pop()!;
+      return route.fulfill({
+        status: 200,
+        headers: {
+          'Content-Type': 'application/zip',
+          'Content-Disposition': `attachment; filename="${filename}"`,
+        },
+        body: 'PK',
+      });
+    });
+    await page.route(`**/api/classroom-media/${TEST_STAGE_ID}/audio/narration.wav`, (route) =>
+      route.fulfill({
+        status: 200,
+        headers: { 'Content-Type': 'audio/wav' },
+        body: 'RIFFtest',
+      }),
+    );
+    const classroom = new ClassroomPage(page);
+    await classroom.goto(TEST_STAGE_ID);
+    await classroom.waitForLoaded();
+
+    const downloadFromMenu = async (testId: string) => {
+      await page.getByRole('button', { name: 'Export PPTX' }).click();
+      const downloadPromise = page.waitForEvent('download');
+      await page.getByTestId(testId).click();
+      return downloadPromise;
+    };
+
+    const pptx = await downloadFromMenu('export-pptx');
+    expect(pptx.suggestedFilename()).toMatch(/\.pptx$/i);
+
+    const resourcePack = await downloadFromMenu('export-resource-pack');
+    expect(resourcePack.suggestedFilename()).toMatch(/\.zip$/i);
+
+    const qalemArchive = await downloadFromMenu('export-classroom-zip');
+    expect(qalemArchive.suggestedFilename()).toMatch(/\.qalem\.zip$/i);
+    const archivePath = await qalemArchive.path();
+    expect(archivePath).not.toBeNull();
+    const archive = await JSZip.loadAsync(await readFile(archivePath!));
+    expect(archive.file('manifest.json')).not.toBeNull();
+    expect(archive.file('audio/narration.wav')).not.toBeNull();
+
+    for (const [testId, suffix] of [
+      ['export-scorm12', '.scorm12.zip'],
+      ['export-scorm2004', '.scorm2004.zip'],
+      ['export-cmi5', '.cmi5.zip'],
+    ] as const) {
+      const learningPackage = await downloadFromMenu(testId);
+      expect(learningPackage.suggestedFilename()).toMatch(
+        new RegExp(`${suffix.replaceAll('.', '\\.').replace('+', '\\+')}$`, 'i'),
+      );
+    }
   });
 });

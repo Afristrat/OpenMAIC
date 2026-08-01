@@ -66,7 +66,7 @@ test.describe('Catalogue de formations', () => {
     await page.getByRole('button', { name: 'Publier au catalogue' }).click();
     await expect(page.getByRole('button', { name: 'Publier au catalogue' })).toHaveCount(0);
     await page.getByRole('link', { name: 'Rejoindre la classe' }).first().click();
-    await expect(page).toHaveURL(new RegExp(`/classroom/${CLASSROOM_ID}$`));
+    await expect(page).toHaveURL(new RegExp(`/classroom/${PUBLISHED_CLASSROOM_ID}$`));
   });
 
   test('préserve une mise en page RTL en arabe', async ({ page }) => {

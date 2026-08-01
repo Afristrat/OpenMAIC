@@ -380,6 +380,7 @@ export function HeaderControls({
               </div>
             </button>
             <button
+              data-testid="export-pptx"
               onClick={() => {
                 setExportMenuOpen(false);
                 exportPPTX();
@@ -390,6 +391,7 @@ export function HeaderControls({
               <span>{t('export.pptx')}</span>
             </button>
             <button
+              data-testid="export-resource-pack"
               onClick={() => {
                 setExportMenuOpen(false);
                 exportResourcePack();
@@ -405,6 +407,7 @@ export function HeaderControls({
               </div>
             </button>
             <button
+              data-testid="export-classroom-zip"
               onClick={() => {
                 setExportMenuOpen(false);
                 exportClassroomZip();
