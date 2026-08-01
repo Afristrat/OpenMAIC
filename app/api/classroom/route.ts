@@ -201,13 +201,25 @@ export async function GET(request: NextRequest) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 404, 'Classroom not found');
     }
 
-    const { data: organization, error: organizationError } = await createServiceSupabaseClient()
-      .from('organizations')
-      .select('logo, settings')
-      .eq('id', ownership.orgId)
-      .maybeSingle();
-    if (organizationError) {
-      throw new Error(`Failed to read organization presentation branding: ${organizationError.message}`);
+    let presentationBranding = presentationBrandingFromOrganization(undefined, undefined);
+    try {
+      const { data: organization, error: organizationError } = await createServiceSupabaseClient()
+        .from('organizations')
+        .select('logo, settings')
+        .eq('id', ownership.orgId)
+        .maybeSingle();
+      if (organizationError) {
+        log.warn(`Presentation branding unavailable for classroom ${id}: ${organizationError.message}`);
+      } else {
+        presentationBranding = presentationBrandingFromOrganization(
+          organization?.logo,
+          organization?.settings as Record<string, unknown> | undefined,
+        );
+      }
+    } catch (error) {
+      // Branding is an optional presentation layer. A transient lookup failure must not make a
+      // published classroom unavailable or weaken its access boundary.
+      log.warn(`Presentation branding lookup failed for classroom ${id}:`, error);
     }
 
     // ownerId/orgId are internal authorization state — never exposed to the client.
@@ -217,10 +229,7 @@ export async function GET(request: NextRequest) {
         ...publicClassroom,
         stage: {
           ...publicClassroom.stage,
-          presentationBranding: presentationBrandingFromOrganization(
-            organization?.logo,
-            organization?.settings as Record<string, unknown> | undefined,
-          ),
+          presentationBranding,
         },
       },
     });
