@@ -41,6 +41,22 @@ test.describe('Catalogue de formations', () => {
     await page.route('**/api/courses/00000000-0000-4000-8000-000000000019/publication', (route) =>
       route.fulfill({ contentType: 'application/json', body: '{"success":true,"catalogVisible":true}' }),
     );
+    await page.route('**/api/classroom?id=*', (route) => {
+      const classroomId = new URL(route.request().url()).searchParams.get('id');
+      return route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          stage: {
+            id: classroomId,
+            name: 'Formation de démonstration',
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          },
+          scenes: [],
+        }),
+      });
+    });
 
     await page.goto('/catalog');
 
