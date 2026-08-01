@@ -40,6 +40,11 @@ export default function ClassroomDetailPage() {
   const loadClassroom = useCallback(async () => {
     try {
       await loadFromStorage(classroomId);
+      // A valid local snapshot is immediately usable. The authoritative
+      // server refresh below may wait on an unavailable network connection;
+      // keeping the whole classroom behind that request made cached
+      // classrooms (including plug-in scenes) appear to load forever.
+      if (useStageStore.getState().stage) setLoading(false);
       // The server copy is authoritative for generated classrooms. IndexedDB
       // may contain the snapshot created before asynchronous media generation
       // finished; preferring it would keep a classroom visually intact but
