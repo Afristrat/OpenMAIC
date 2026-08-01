@@ -8,6 +8,7 @@ test.describe('Catalogue de formations', () => {
   test('affiche la formation publiée de l’organisation et rejoint sa classroom', async ({ page }) => {
     await page.addInitScript((settings) => {
       localStorage.setItem('settings-storage', settings);
+      localStorage.setItem('locale', 'fr-FR');
     }, createSettingsStorage());
 
     await page.route(`**/api/courses/catalog?orgId=${ORG_ID}`, (route) =>
