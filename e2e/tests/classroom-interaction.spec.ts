@@ -455,6 +455,8 @@ test.describe('Classroom Interaction', () => {
       ['export-scorm2004', '.scorm2004.zip'],
       ['export-cmi5', '.cmi5.zip'],
     ] as const) {
+      await classroom.goto(TEST_STAGE_ID);
+      await classroom.waitForLoaded();
       const learningPackage = await downloadFromMenu(testId);
       expect(learningPackage.suggestedFilename()).toMatch(
         new RegExp(`${suffix.replaceAll('.', '\\.').replace('+', '\\+')}$`, 'i'),
