@@ -148,7 +148,6 @@ export function PluginRenderer({ content, mode: _mode, sceneId }: PluginRenderer
   // ------------------------------------------------------------------
   return (
     <section className="flex h-full w-full flex-col" aria-label={title}>
-      <h2 className="shrink-0 border-b px-5 py-3 text-lg font-semibold">{title}</h2>
       <iframe
         ref={iframeRef}
         src={pluginSrc}
