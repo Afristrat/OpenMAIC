@@ -48,7 +48,11 @@ export async function validateAndPersistCourseImport(
     storage_path: input.storagePath,
     canvas_version: validation.canvasVersion,
     validation_status: validation.status,
-    validation_report: validation.issues,
+    validation_report: validation.issues.map(({ rule, message, path }) => ({
+      rule,
+      message,
+      ...(path ? { path } : {}),
+    })),
   });
 
   return { importId: persisted.id, validation };
