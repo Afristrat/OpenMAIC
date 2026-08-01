@@ -48,7 +48,13 @@ export async function addPresentationBrandToSnapshot(
       const asset = await createAssetFetcher({ fetchImpl: createProxiedFetch() })(
         branding.organizationLogoUrl!,
       );
-      if (asset) organizationLogo = await loadImage(new Blob([asset.bytes], { type: asset.contentType }));
+      if (asset) {
+        // Copy into an owned ArrayBuffer: the fetcher may expose a view backed by a SharedArrayBuffer,
+        // which is intentionally not a valid BlobPart in TypeScript's DOM types.
+        const bytes = new Uint8Array(asset.bytes.byteLength);
+        bytes.set(asset.bytes);
+        organizationLogo = await loadImage(new Blob([bytes.buffer], { type: asset.contentType }));
+      }
     }
 
     const canvas = document.createElement('canvas');
