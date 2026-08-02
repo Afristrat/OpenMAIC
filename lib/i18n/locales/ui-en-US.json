@@ -307,6 +307,8 @@
   "edit.timeline.discussionAgentUnset": "Unspecified",
   "edit.tts.preview": "Preview",
   "edit.tts.regenerate": "Regenerate voiceover",
+  "edit.tts.regenerationFailed": "{{count}} voiceover lines could not be regenerated.",
+  "edit.tts.regenerationSucceeded": "{{count}} voiceover lines were regenerated and saved.",
   "edit.tts.statusReady": "Voiced",
   "edit.tts.statusNone": "Not voiced",
   "edit.tts.statusGenerating": "Generating",

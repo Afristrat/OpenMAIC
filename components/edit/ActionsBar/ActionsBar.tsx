@@ -36,6 +36,7 @@ import {
   Volume2,
 } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils/cn';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useStageStore } from '@/lib/store/stage';
@@ -234,7 +235,6 @@ function SpeechTtsBar({
   actionId,
   audioId,
   sceneOrder,
-  language,
   text,
   audioUrl,
   refreshKey,
@@ -243,7 +243,6 @@ function SpeechTtsBar({
   actionId: string;
   audioId?: string;
   sceneOrder: number;
-  language?: string;
   text: string;
   audioUrl?: string;
   refreshKey?: number;
@@ -301,7 +300,7 @@ function SpeechTtsBar({
   const regenerate = async () => {
     setStatus('generating');
     try {
-      const id = await regenerateSpeechAudio(sceneOrder, { id: actionId, text }, language);
+      const id = await regenerateSpeechAudio(sceneOrder, { id: actionId, text });
       if (id) {
         onGenerated();
         setStatus('ready');
@@ -360,7 +359,6 @@ function SpeechClip({
   actionId,
   audioId,
   sceneOrder,
-  language,
   autoFocus,
   ttsActive,
   audioUrl,
@@ -381,7 +379,6 @@ function SpeechClip({
   actionId: string;
   audioId?: string;
   sceneOrder: number;
-  language?: string;
   autoFocus: boolean;
   ttsActive: boolean;
   audioUrl?: string;
@@ -471,7 +468,6 @@ function SpeechClip({
           actionId={actionId}
           audioId={audioId}
           sceneOrder={sceneOrder}
-          language={language}
           text={val}
           audioUrl={audioUrl}
           refreshKey={ttsRefresh}
@@ -845,7 +841,6 @@ export function ActionsBar({ sceneId }: { sceneId: string }) {
   // bind to — offer speech only, so the user can't insert unsupported cues.
   const palette =
     scene?.type === 'slide' ? PALETTE : PALETTE.filter((pt) => !ELEMENT_BOUND.has(pt));
-  const language = useStageStore((s) => s.stage?.languageDirective);
   // Managed TTS on → speech clips show audio status + 试听 / 重新生成.
   const ttsActive = useSettingsStore(
     (s) => s.ttsEnabled && s.ttsProviderId !== 'browser-native-tts',
@@ -904,18 +899,18 @@ export function ActionsBar({ sceneId }: { sceneId: string }) {
     // Stamp audioId only for lines that actually synthesized — a skipped/failed
     // line must not get an id pointing at a blob that was never written.
     const okIds = new Set<string>();
+    let failedCount = 0;
     try {
       for (const a of speeches) {
         if (!a.id) continue;
         try {
-          const id = await regenerateSpeechAudio(
-            order,
-            { id: a.id, text: (a as { text?: string }).text ?? '' },
-            language,
-          );
+          const id = await regenerateSpeechAudio(order, {
+            id: a.id,
+            text: (a as { text?: string }).text ?? '',
+          });
           if (id) okIds.add(a.id);
         } catch {
-          /* skip a failed line, keep going */
+          failedCount += 1;
         }
       }
       if (okIds.size > 0) {
@@ -929,10 +924,15 @@ export function ActionsBar({ sceneId }: { sceneId: string }) {
         });
         setTtsRefresh((n) => n + 1);
       }
+      if (failedCount > 0) {
+        toast.error(t('edit.tts.regenerationFailed', { count: failedCount }));
+      } else if (okIds.size > 0) {
+        toast.success(t('edit.tts.regenerationSucceeded', { count: okIds.size }));
+      }
     } finally {
       setRegenAll(false);
     }
-  }, [regenAll, sceneId, language, commit]);
+  }, [regenAll, sceneId, commit, t]);
 
   // Height drag-resize (top edge).
   const sectionRef = useRef<HTMLElement>(null);
@@ -1228,7 +1228,6 @@ export function ActionsBar({ sceneId }: { sceneId: string }) {
                               actionId={key}
                               audioId={(action as { audioId?: string }).audioId}
                               sceneOrder={sceneOrder}
-                              language={language}
                               ttsActive={ttsActive}
                               audioUrl={(action as { audioUrl?: string }).audioUrl}
                               ttsRefresh={ttsRefresh}

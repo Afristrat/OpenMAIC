@@ -307,6 +307,8 @@
   "edit.timeline.discussionAgentUnset": "غير محدد",
   "edit.tts.preview": "معاينة",
   "edit.tts.regenerate": "إعادة توليد التعليق الصوتي",
+  "edit.tts.regenerationFailed": "تعذر إعادة توليد {{count}} من المقاطع الصوتية.",
+  "edit.tts.regenerationSucceeded": "تمت إعادة توليد {{count}} من المقاطع الصوتية وحفظها.",
   "edit.tts.statusReady": "مُصوّت",
   "edit.tts.statusNone": "غير مُصوّت",
   "edit.tts.statusGenerating": "جارٍ التوليد",

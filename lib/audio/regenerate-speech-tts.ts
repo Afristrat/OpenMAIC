@@ -8,7 +8,6 @@
  */
 import { db } from '@/lib/utils/database';
 import { useSettingsStore } from '@/lib/store/settings';
-import { generateAndStoreTTS } from '@/lib/hooks/use-scene-generator';
 
 /** Canonical audio cache key — matches the generation pipeline. */
 export function speechAudioId(sceneOrder: number, actionId: string): string {
@@ -73,14 +72,16 @@ export async function discardSpeechAudio(
 }
 
 /**
- * (Re)generate TTS for one speech line and cache it under the canonical key.
- * Returns the audioId on success, or null when TTS isn't applicable. Throws if
- * synthesis fails. Delegates to the pipeline's `generateAndStoreTTS`.
+ * (Re)generate TTS for one persisted speech line.
+ *
+ * The classroom API synthesizes the audio, stores it in the durable classroom
+ * bucket, and persists the amended action. A browser cache fallback would make
+ * a corrected narration disappear on another device or after a redeploy, so it
+ * is deliberately forbidden here.
  */
 export async function regenerateSpeechAudio(
   sceneOrder: number,
   action: { id?: string; text?: string },
-  language?: string,
   signal?: AbortSignal,
 ): Promise<string | null> {
   if (!isManagedTtsActive()) return null;
@@ -92,24 +93,25 @@ export async function regenerateSpeechAudio(
   const scene = state.scenes.find(
     (item) => item.order === sceneOrder && item.actions?.some((item) => item.id === action.id),
   );
-  if (state.stage?.id && scene) {
-    const response = await fetch(`/api/classroom/${encodeURIComponent(state.stage.id)}/tts`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sceneId: scene.id, actionId: action.id, text }),
-      signal,
-    });
-    if (response.ok) {
-      const payload = (await response.json()) as {
-        success?: boolean;
-        actions?: typeof scene.actions;
-      };
-      if (payload.success && payload.actions) {
-        useStageStore.getState().updateScene(scene.id, { actions: payload.actions });
-        return audioId;
-      }
-    }
+  if (!state.stage?.id || !scene) {
+    throw new Error('La classroom doit être enregistrée avant de régénérer une voix off.');
   }
-  await generateAndStoreTTS(audioId, text, language, signal);
+  const response = await fetch(`/api/classroom/${encodeURIComponent(state.stage.id)}/tts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sceneId: scene.id, actionId: action.id, text }),
+    signal,
+  });
+  if (!response.ok) {
+    throw new Error('La régénération de la voix off n’a pas pu être enregistrée.');
+  }
+  const payload = (await response.json()) as {
+    success?: boolean;
+    actions?: typeof scene.actions;
+  };
+  if (!payload.success || !payload.actions) {
+    throw new Error('La régénération de la voix off a retourné une réponse invalide.');
+  }
+  useStageStore.getState().updateScene(scene.id, { actions: payload.actions });
   return audioId;
 }
