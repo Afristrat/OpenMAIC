@@ -148,6 +148,8 @@
   "stage.doneEditing": "Done editing",
   "stage.proModeDisabledHint": "Editing isn't available on this page — open a course slide to edit with Pro mode.",
   "edit.proMode": "Pro",
+  "edit.selection.count": "{{count}} selected element(s)",
+  "edit.selection.fitCanvas": "Fit in slide",
   "edit.undo": "Undo",
   "edit.redo": "Redo",
   "edit.delete": "Delete",

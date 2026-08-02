@@ -148,6 +148,8 @@
   "stage.doneEditing": "Modification terminée",
   "stage.proModeDisabledHint": "La modification n\u0027est pas disponible sur cette page : ouvrez une diapositive de cours pour la modifier en mode Pro.",
   "edit.proMode": "Pro",
+  "edit.selection.count": "{{count}} élément(s) sélectionné(s)",
+  "edit.selection.fitCanvas": "Rentrer dans le cadre",
   "edit.undo": "Annuler",
   "edit.redo": "Refaire",
   "edit.delete": "Supprimer",

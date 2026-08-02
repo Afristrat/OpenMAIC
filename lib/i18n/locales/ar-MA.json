@@ -162,6 +162,10 @@
   },
   "edit": {
     "proMode": "احترافي",
+    "selection": {
+      "count": "{{count}} عنصر محدد",
+      "fitCanvas": "إدخال ضمن الشريحة"
+    },
     "undo": "تراجع",
     "redo": "إعادة",
     "delete": "حذف",

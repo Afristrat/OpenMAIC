@@ -71,6 +71,11 @@ export type SlideEditOperation =
       command: SlideElementAlignCommand;
     }
   | {
+      /** Move a selection into the visible slide bounds without changing its content. */
+      type: 'element.fitCanvas';
+      elementIds: string[];
+    }
+  | {
       type: 'element.removeProps';
       elementId: string;
       propNames: ElementPropName[];
@@ -273,6 +278,10 @@ function applyOperationToContent(
         alignElementsToCanvas(draft.canvas, operation.elementIds, operation.command);
         return;
       }
+      case 'element.fitCanvas': {
+        fitElementsToCanvas(draft.canvas, operation.elementIds);
+        return;
+      }
       case 'element.removeProps': {
         const element = draft.canvas.elements.find((item) => item.id === operation.elementId);
         if (!element) return;
@@ -288,6 +297,31 @@ function applyOperationToContent(
         return;
       }
     }
+  });
+}
+
+/**
+ * Translates a selection just enough to make its bounding box visible. A
+ * selection wider/taller than the slide is pinned to the corresponding origin:
+ * resizing text blindly would create a different readability problem. This is
+ * deliberately a geometry repair, not an AI content rewrite.
+ */
+function fitElementsToCanvas(slide: Slide, elementIds: string[]) {
+  const selectedIds = new Set(elementIds);
+  const selected = slide.elements.filter((element) => selectedIds.has(element.id));
+  if (selected.length === 0) return;
+
+  const range = getElementListRange(selected);
+  const width = slide.viewportSize;
+  const height = slide.viewportSize * slide.viewportRatio;
+  const offsetX = range.minX < 0 ? -range.minX : range.maxX > width ? width - range.maxX : 0;
+  const offsetY = range.minY < 0 ? -range.minY : range.maxY > height ? height - range.maxY : 0;
+  if (offsetX === 0 && offsetY === 0) return;
+
+  slide.elements.forEach((element) => {
+    if (!selectedIds.has(element.id)) return;
+    element.left += offsetX;
+    element.top += offsetY;
   });
 }
 

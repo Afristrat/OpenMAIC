@@ -459,6 +459,26 @@ describe('element.align all directions', () => {
   });
 });
 
+describe('element.fitCanvas', () => {
+  test('translates a multi-selection into the visible slide without changing its layout', () => {
+    const original = slideContent([
+      textElement({ id: 'a', left: -80, top: -30, width: 200, height: 90 }),
+      textElement({ id: 'b', left: 180, top: 110, width: 100, height: 60 }),
+    ]);
+
+    const updated = applySlideEditOperation(original, {
+      type: 'element.fitCanvas',
+      elementIds: ['a', 'b'],
+    });
+
+    expect(updated.canvas.elements.map((element) => [element.left, element.top])).toEqual([
+      [0, 0],
+      [260, 140],
+    ]);
+    expect(original.canvas.elements[0]).toMatchObject({ left: -80, top: -30 });
+  });
+});
+
 describe('no-op operations skip history push', () => {
   test('element.update against a missing id returns the same content reference', () => {
     const original = slideContent();

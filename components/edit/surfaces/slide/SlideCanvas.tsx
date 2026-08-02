@@ -16,6 +16,7 @@ import { AnchoredTextBar } from './AnchoredTextBar';
 import { AnchoredElementBar } from './AnchoredElementBar';
 import { ElementPickLayer } from './ElementPickLayer';
 import { PresentationBrandMark } from '@/components/branding/presentation-brand-mark';
+import { SelectionSafetyBar } from './SelectionSafetyBar';
 
 /**
  * The slide surface's canvas. Reuses the unmodified slide renderer
@@ -35,6 +36,7 @@ export function SlideCanvas() {
   const { controller, gestureProps } = useSlideCanvasController();
   const editingElementId = useEditingTextElementId();
   const nonTextElement = useSelectedNonTextElement();
+  const activeElementIds = useCanvasStore.use.activeElementIdList();
   useSyncEditingElementId(editingElementId);
 
   // Esc disarms in-flight insert mode. Read via getState so the listener mounts
@@ -69,6 +71,7 @@ export function SlideCanvas() {
         <LaserPointerOverlay domIdPrefix="editable-element-" />
       </SceneProvider>
       <PresentationBrandMark />
+      <SelectionSafetyBar elementIds={activeElementIds} />
       <AnchoredTextBar editingElementId={editingElementId} />
       <AnchoredElementBar element={nonTextElement} />
       {/* Canvas-side element picker for the timeline's element-bound cues. */}
