@@ -11,6 +11,9 @@ const mocks = vi.hoisted(() => ({
   persistClassroom: vi.fn(),
   persistGeneratedCourse: vi.fn(),
   callLLM: vi.fn(),
+  generateMediaForClassroom: vi.fn(),
+  replaceMediaPlaceholders: vi.fn(),
+  generateTTSForClassroom: vi.fn(),
 }));
 
 vi.mock('@/lib/server/resolve-model', () => ({
@@ -44,6 +47,12 @@ vi.mock('@/lib/server/course-storage', () => ({
   persistGeneratedCourse: mocks.persistGeneratedCourse,
 }));
 
+vi.mock('@/lib/server/classroom-media-generation', () => ({
+  generateMediaForClassroom: mocks.generateMediaForClassroom,
+  replaceMediaPlaceholders: mocks.replaceMediaPlaceholders,
+  generateTTSForClassroom: mocks.generateTTSForClassroom,
+}));
+
 vi.mock('@/lib/flags', () => ({
   isFeatureEnabled: vi.fn().mockResolvedValue(false),
 }));
@@ -71,11 +80,11 @@ const slideContent = {
   remark: 'Retry transient failures',
 };
 
-async function generateWithProgress() {
+async function generateWithProgress(input: Record<string, unknown> = {}) {
   const progress: Array<{ message: string }> = [];
   const { generateClassroom } = await import('@/lib/server/classroom-generation');
   const result = await generateClassroom(
-    { orgId: 'org-1', requirement: 'Teach retry basics' },
+    { orgId: 'org-1', requirement: 'Teach retry basics', ...input },
     {
       baseUrl: 'http://localhost',
       ownerId: 'owner-1',
@@ -135,6 +144,7 @@ describe('classroom scene generation retries', () => {
       createdAt: '2026-06-22T00:00:00.000Z',
     }));
     mocks.persistGeneratedCourse.mockResolvedValue('course-1');
+    mocks.generateTTSForClassroom.mockResolvedValue({ requested: 0, generated: 0 });
   });
 
   it('retries an empty scene content result before skipping the scene', async () => {
@@ -227,5 +237,18 @@ describe('classroom scene generation retries', () => {
     await expect(generateWithProgress()).rejects.toBe(unauthorized);
 
     expect(mocks.generateSceneActions).toHaveBeenCalledTimes(1);
+  });
+
+  it('fails the classroom job when requested narration was not persisted', async () => {
+    mocks.generateSceneContent.mockResolvedValue(slideContent);
+    mocks.generateSceneActions.mockResolvedValue([
+      { id: 'speech-1', type: 'speech', text: 'Narration indispensable.' },
+    ]);
+    mocks.generateTTSForClassroom.mockResolvedValue({ requested: 1, generated: 0 });
+
+    await expect(generateWithProgress({ enableTTS: true })).rejects.toThrow(
+      'TTS persistence incomplete: 0/1 speech actions generated',
+    );
+    expect(mocks.persistClassroom).not.toHaveBeenCalled();
   });
 });

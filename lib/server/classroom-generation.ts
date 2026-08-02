@@ -642,12 +642,13 @@ export async function generateClassroom(
         totalScenes: outlines.length,
       });
 
-      try {
-        await generateTTSForClassroom(scenes, stageId, teachingProfile);
-        log.info('TTS generation complete');
-      } catch (err) {
-        log.warn('TTS generation phase failed, continuing:', err);
+      const ttsReport = await generateTTSForClassroom(scenes, stageId, teachingProfile);
+      if (ttsReport.generated !== ttsReport.requested) {
+        throw new Error(
+          `TTS persistence incomplete: ${ttsReport.generated}/${ttsReport.requested} speech actions generated`,
+        );
       }
+      log.info(`TTS generation complete: ${ttsReport.generated}/${ttsReport.requested} files`);
     }
 
     await options.onProgress?.({

@@ -38,6 +38,11 @@ import { VOXCPM_AUTO_VOICE_ID, VOXCPM_TTS_PROVIDER_ID } from '@/lib/audio/voxcpm
 
 const log = createLogger('ClassroomMedia');
 
+export interface ClassroomTTSGenerationReport {
+  requested: number;
+  generated: number;
+}
+
 export function selectClassroomImageModel(
   providerId: ImageProviderId,
   serverProviders: Record<string, { models?: string[] }>,
@@ -241,7 +246,8 @@ export async function generateTTSForClassroom(
   scenes: Scene[],
   classroomId: string,
   preferredVoice?: { providerId: string; voiceId: string },
-): Promise<void> {
+): Promise<ClassroomTTSGenerationReport> {
+  const report: ClassroomTTSGenerationReport = { requested: 0, generated: 0 };
   // Resolve TTS provider (exclude browser-native-tts and operator force-disabled
   // providers — server precedence, #665).
   const ttsProviderIds = Object.entries(getServerTTSProviders())
@@ -249,7 +255,7 @@ export async function generateTTSForClassroom(
     .map(([id]) => id);
   if (ttsProviderIds.length === 0) {
     log.warn('No server TTS provider configured, skipping TTS generation');
-    return;
+    return report;
   }
 
   // VoxCPM's automatic voice needs per-agent reference audio, which this
@@ -268,13 +274,13 @@ export async function generateTTSForClassroom(
     )) as TTSProviderId | undefined;
   if (!providerId) {
     log.warn('No server TTS provider supports context-free classroom generation');
-    return;
+    return report;
   }
   const apiKey = resolveTTSApiKey(providerId);
   const ttsProvider = TTS_PROVIDERS[providerId as keyof typeof TTS_PROVIDERS];
   if (ttsProvider?.requiresApiKey && !apiKey) {
     log.warn(`No API key for TTS provider "${providerId}", skipping TTS generation`);
-    return;
+    return report;
   }
   const ttsBaseUrl = resolveTTSBaseUrl(providerId) || ttsProvider?.defaultBaseUrl;
   const voice =
@@ -298,6 +304,7 @@ export async function generateTTSForClassroom(
     for (const action of scene.actions) {
       if (action.type !== 'speech' || !(action as SpeechAction).text) continue;
       const speechAction = action as SpeechAction;
+      report.requested += 1;
       // Include scene order in audioId to prevent collision across scenes
       const audioId = `tts_s${sceneOrder}_${action.id}`;
 
@@ -320,10 +327,12 @@ export async function generateTTSForClassroom(
 
         speechAction.audioId = audioId;
         speechAction.audioUrl = mediaServingUrl(classroomId, `audio/${filename}`);
+        report.generated += 1;
         log.info(`Generated TTS: ${filename} (${result.audio.length} bytes)`);
       } catch (err) {
         log.warn(`TTS generation failed for action ${action.id}:`, err);
       }
     }
   }
+  return report;
 }
