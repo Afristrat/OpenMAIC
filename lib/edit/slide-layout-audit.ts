@@ -1,4 +1,4 @@
-import type { PPTElement, Slide } from '@openmaic/dsl';
+import type { Slide } from '@openmaic/dsl';
 import { getElementListRange } from '@/lib/utils/element';
 
 export type SlideLayoutIssue =
