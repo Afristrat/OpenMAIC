@@ -3,12 +3,12 @@
   "artifactSetId": "formation-design-pro-qalem-publication",
   "classification": "traceable-publication",
   "provenance": {
-    "kind": "historical-publication-with-qalem-live-adapters",
+    "kind": "historical-publication-with-qalem-animation-contract",
     "firstCommit": "490742491b5f32df5da3a9841ab21e7106da60b3",
     "canonicalPrivateSourceFilesIncluded": false,
     "validatedVectors": ["V-02", "V-03", "V-04", "V-05", "V-07"],
-    "lastValidatedStory": "S2-007",
-    "validatedAt": "2026-07-22"
+    "lastValidatedStory": "S4-008",
+    "validatedAt": "2026-08-03"
   },
   "exposureAudit": {
     "repository": "Afristrat/OpenMAIC",
@@ -20,7 +20,15 @@
   "files": [
     {
       "path": "manifest.json",
-      "sha256": "2e355975f696b5b8bbce6afa9ed332d3833cc77b33cf80ce1b581b5c86a53d5d"
+      "sha256": "d8244053f7304987d2e7b9116387059b006fbbfafd9760a9c87fa33515623761"
+    },
+    {
+      "path": "SKILL.md",
+      "sha256": "669c37a34d6f9ed50c3c1d2fe12723963aa6b6c5d536addd022ee87275e6be8e"
+    },
+    {
+      "path": "references/formation-design-contract.md",
+      "sha256": "da3143e2dfd09f259d8dc1a1a9ebd9d8f76b941649a71707d6d65893f2e9782e"
     },
     {
       "path": "prompts/andragogy-system-override.md",

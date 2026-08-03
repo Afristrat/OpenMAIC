@@ -29,6 +29,13 @@ const skillManifestSchema = z
       })
       .strict()
       .optional(),
+    designEngine: z
+      .object({
+        approachSelection: z.literal('author-required'),
+        animationContract: z.string().regex(/^references\/[a-z0-9][a-z0-9./-]*\.md$/),
+      })
+      .strict()
+      .optional(),
     agents: z
       .array(
         z.object({

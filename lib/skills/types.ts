@@ -54,6 +54,11 @@ export interface SkillTraceability {
   publicationManifest: string;
 }
 
+export interface SkillDesignEngine {
+  approachSelection: 'author-required';
+  animationContract: string;
+}
+
 /**
  * Skill — Top-level manifest describing a complete skill pack.
  */
@@ -65,6 +70,7 @@ export interface Skill {
   version: string;
   author: string;
   traceability?: SkillTraceability;
+  designEngine?: SkillDesignEngine;
 
   // What the skill provides
   agents: SkillAgent[];

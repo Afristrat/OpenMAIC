@@ -15,6 +15,10 @@ function manifest(): Record<string, unknown> {
       validatedAt: '2026-07-22',
       publicationManifest: 'publication.json',
     },
+    designEngine: {
+      approachSelection: 'author-required',
+      animationContract: 'references/formation-design-contract.md',
+    },
     agents: [
       {
         id: 'coach',
@@ -100,6 +104,16 @@ describe('parseSkillManifest', () => {
       vectors: ['vector-three'],
       validatedAt: 'tomorrow',
       publicationManifest: 'publication.json',
+    };
+    const result = parseSkillManifest(value);
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects a design engine that could infer the learning approach', () => {
+    const value = manifest();
+    value.designEngine = {
+      approachSelection: 'automatic',
+      animationContract: 'references/formation-design-contract.md',
     };
     const result = parseSkillManifest(value);
     expect(result.success).toBe(false);

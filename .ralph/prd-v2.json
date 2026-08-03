@@ -807,6 +807,21 @@
         "Grep duplication : zéro copie de savoir andragogique hors moteur"
       ],
       "acceptanceNote": "Le commit 042cbf8f65fb5a878d7bfeee8ed994baed07ffde introduit une interface aval unique dans lib/formation-engine/downstream-consumers.ts. Les registres machine-readable de 2-VIVRE et 3-ANCRER héritent exactement des mêmes quatre contrats du moteur et limitent leur propriété locale à la voix, au casting, aux preuves de session et à la distribution. Le runtime de génération live consomme cette directive centrale ; le catalogue des dix personnalités ne duplique plus de doctrine de formation. Un test récursif interdit ADDIE, Bloom, Knowles, Kirkpatrick, les ratios universels et les copies équivalentes dans les deux chantiers aval. Validation sur serveuria, contenu formaté exact : TypeScript, lint et Prettier verts ; 260 fichiers de tests, 1 976 tests unitaires réussis ; 35 parcours Playwright sur 35 réussis. Les refus Redis du serveur E2E et l'avertissement d'import dynamique unpdf sont observés mais ne sont pas déclarés corrigés par cette story."
+    },
+    {
+      "id": "S4-008",
+      "title": "Constitution d’animation adaptative produite par Formation Design Pro",
+      "epic": "4-MOTEUR",
+      "phase": 4,
+      "passes": false,
+      "dependencies": ["S4-005", "S4-007"],
+      "acceptance": [
+        "L’auteur choisit explicitement pédagogie, hybride ou andragogie ; aucune inférence par l’âge",
+        "Le contrat sépare ossature conçue et réactions adaptatives fondées sur les signaux réels",
+        "Le roster persistant fige prénom, avatar, voix compatible, poids et capacités des agents",
+        "Le schéma refuse les rôles, identités et agents non autorisés",
+        "Skill compacte, publication hashée et quality gates verts sur ServeurAI"
+      ]
     }
   ]
 }

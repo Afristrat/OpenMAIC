@@ -12,14 +12,18 @@ describe('formation engine platform publication', () => {
   it('hydrates the traced refactored engine override through the production loader', () => {
     const skill = loadSkillFromDir(skillRoot);
 
-    expect(skill?.version).toBe('2.3.0');
+    expect(skill?.version).toBe('3.0.0');
     expect(skill?.traceability).toEqual({
-      source: 'external-private-git publication with Qalem S2-007 live adapters',
+      source: 'external-private-git publication with Qalem animation contract',
       vectors: expectedVectors,
-      validatedAt: '2026-07-22',
+      validatedAt: '2026-08-03',
       publicationManifest: 'publication.json',
     });
     expect(skill?.promptOverrides).toHaveLength(5);
+    expect(skill?.designEngine).toEqual({
+      approachSelection: 'author-required',
+      animationContract: 'references/formation-design-contract.md',
+    });
     for (const override of skill?.promptOverrides ?? []) {
       expect(override.systemPromptAppend).toContain('Formation Engine');
       expect(override.systemPromptAppend).not.toMatch(/^file:/u);
@@ -41,8 +45,8 @@ describe('formation engine platform publication', () => {
 
     expect(publication.provenance).toMatchObject({
       validatedVectors: expectedVectors,
-      lastValidatedStory: 'S2-007',
-      validatedAt: '2026-07-22',
+      lastValidatedStory: 'S4-008',
+      validatedAt: '2026-08-03',
     });
     expect(prompt).toContain('source: external-private-git publication');
     expect(prompt).toContain(`vectors: ${expectedVectors.join(', ')}`);
