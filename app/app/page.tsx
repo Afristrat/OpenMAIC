@@ -791,6 +791,7 @@ function HomePage() {
           {(['pedagogy', 'hybrid', 'andragogy'] as LearningApproach[]).map((approach) => (
             <button
               key={approach}
+              data-testid={`learning-approach-${approach}`}
               type="button"
               onClick={() => updateForm('learningApproach', approach)}
               className={cn(
@@ -809,6 +810,7 @@ function HomePage() {
           {(['guided', 'balanced', 'immersive'] as InteractionLevel[]).map((level) => (
             <button
               key={level}
+              data-testid={`interaction-level-${level}`}
               type="button"
               onClick={() => updateForm('interactionLevel', level)}
               className={cn(

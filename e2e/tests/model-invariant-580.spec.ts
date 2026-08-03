@@ -74,6 +74,7 @@ test.describe('#580 model-selection invariant', () => {
     // Model routing is server-side on the persistent path. A missing local
     // provider must not block submission or force a settings dialog.
     await home.fillRequirement('Explain how photosynthesis works');
+    await home.configureAnimation();
     await expect(home.enterButton).toBeEnabled();
     await expect(page.locator('[data-sonner-toast]')).toHaveCount(0);
     await expect(page.getByRole('dialog')).toHaveCount(0);
@@ -120,6 +121,7 @@ test.describe('#580 model-selection invariant', () => {
     await expect(modelPill).toHaveAttribute('aria-label', /OpenAI \/ gpt-4o/);
 
     await home.fillRequirement('Explain how photosynthesis works');
+    await home.configureAnimation();
     await expect(home.enterButton).toBeEnabled();
     await expect(page.locator('[data-sonner-toast]')).toHaveCount(0);
 

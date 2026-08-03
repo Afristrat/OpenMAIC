@@ -60,6 +60,7 @@ test.describe('Home → Generation', () => {
 
     // Type requirement → button activates
     await home.fillRequirement('讲解光合作用');
+    await home.configureAnimation();
     await expect(home.enterButton).toBeEnabled();
 
     // Submit → navigate to generation-preview

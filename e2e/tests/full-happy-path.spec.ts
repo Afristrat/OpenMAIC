@@ -21,6 +21,8 @@ test.describe('Full Happy Path', () => {
     await expect(home.enterButton).toBeDisabled();
 
     await home.fillRequirement('Explain photosynthesis');
+    await expect(home.enterButton).toBeDisabled();
+    await home.configureAnimation();
     await expect(home.enterButton).toBeEnabled();
     await home.submit();
 

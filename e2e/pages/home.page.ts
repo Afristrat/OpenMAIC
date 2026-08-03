@@ -25,6 +25,14 @@ export class HomePage {
     await this.textarea.fill(text);
   }
 
+  async configureAnimation(
+    approach: 'pedagogy' | 'hybrid' | 'andragogy' = 'andragogy',
+    level: 'guided' | 'balanced' | 'immersive' = 'balanced',
+  ) {
+    await this.page.getByTestId(`learning-approach-${approach}`).click();
+    await this.page.getByTestId(`interaction-level-${level}`).click();
+  }
+
   async submit() {
     await this.enterButton.click();
   }

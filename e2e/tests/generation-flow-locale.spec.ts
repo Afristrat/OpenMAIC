@@ -36,6 +36,7 @@ test.describe('Generation flow — locale coverage (S0-008)', () => {
       await expect(page.locator('html')).toHaveAttribute('dir', dir);
 
       await home.fillRequirement(requirement);
+      await home.configureAnimation();
       await home.submit();
 
       await expect(page).toHaveURL(
