@@ -66,9 +66,17 @@ test.describe('Slide content surface (#647)', () => {
     await page.keyboard.press('Escape');
 
     // --- Z-order on the text element bar: select the title, expect to-front/to-back.
-    await page.locator('.editable-element-text').first().click();
+    const selectedText = page.locator('.editable-element-text').first();
+    await selectedText.click();
     await expect(page.locator('.lucide-bring-to-front').first()).toBeVisible({ timeout: 10_000 });
     await expect(page.locator('.lucide-send-to-back').first()).toBeVisible();
+
+    const initialBox = await selectedText.boundingBox();
+    expect(initialBox).not.toBeNull();
+    await page.keyboard.press('Alt+Shift+ArrowRight');
+    await expect
+      .poll(async () => (await selectedText.boundingBox())?.x ?? 0)
+      .toBeGreaterThan(initialBox?.x ?? 0);
     await testInfo.attach('text-bar-zorder', {
       body: await page.screenshot(),
       contentType: 'image/png',

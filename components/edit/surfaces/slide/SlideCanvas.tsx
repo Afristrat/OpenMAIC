@@ -56,10 +56,10 @@ export function SlideCanvas() {
     const handler = (event: KeyboardEvent) => {
       if (!event.key.startsWith('Arrow')) return;
       const target = event.target as HTMLElement | null;
-      if (
+      const isEditingText =
         target?.isContentEditable ||
-        target?.closest('input, textarea, select, [contenteditable="true"]')
-      ) {
+        Boolean(target?.closest('input, textarea, select, [contenteditable="true"]'));
+      if (isEditingText && !event.altKey) {
         return;
       }
 
@@ -74,6 +74,7 @@ export function SlideCanvas() {
       };
       const [deltaX, deltaY] = deltas[event.key] ?? [0, 0];
       event.preventDefault();
+      event.stopPropagation();
       useSlideEditSession.getState().applyOp({
         type: 'element.nudge',
         elementIds: [...elementIds],
@@ -81,8 +82,8 @@ export function SlideCanvas() {
         deltaY,
       });
     };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
+    document.addEventListener('keydown', handler, true);
+    return () => document.removeEventListener('keydown', handler, true);
   }, []);
 
   return (

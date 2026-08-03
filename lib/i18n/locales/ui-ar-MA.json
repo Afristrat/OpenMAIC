@@ -152,7 +152,7 @@
   "edit.redo": "إعادة",
   "edit.selection.count": "{{count}} عنصرًا محددًا",
   "edit.selection.fitCanvas": "ملاءمة داخل الشريحة",
-  "edit.selection.keyboardMove": "الأسهم: تحريك · Shift: ‏10 بكسل",
+  "edit.selection.keyboardMove": "الأسهم: تحريك · Alt للنص · Shift: ‏10 بكسل",
   "edit.layout.outOfBounds": "{{count}} خارج حدود الشريحة",
   "edit.layout.overlap": "{{count}} تداخل",
   "edit.layout.resolveOverlaps": "تصحيح",

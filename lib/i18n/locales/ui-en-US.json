@@ -150,7 +150,7 @@
   "edit.proMode": "Pro",
   "edit.selection.count": "{{count}} selected element(s)",
   "edit.selection.fitCanvas": "Fit in slide",
-  "edit.selection.keyboardMove": "Arrows: move · Shift: 10 px",
+  "edit.selection.keyboardMove": "Arrows: move · Alt for text · Shift: 10 px",
   "edit.layout.outOfBounds": "{{count}} out of bounds",
   "edit.layout.overlap": "{{count}} overlap(s)",
   "edit.layout.resolveOverlaps": "Fix",
