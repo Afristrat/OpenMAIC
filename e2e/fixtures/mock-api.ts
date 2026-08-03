@@ -266,6 +266,17 @@ export class MockApi {
 
   /** Set up API mocks for the generation flow. Note: server-providers is already mocked by the base fixture. */
   async setupGenerationMocks(stageId?: string) {
+    await this.page.route('**/api/classroom?*', async (route) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({
+          status: 404,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: false, error: 'Local E2E classroom' }),
+        });
+        return;
+      }
+      await route.continue();
+    });
     await this.mockSceneOutlinesStream();
     await this.mockSceneContent();
     await this.mockSceneActions(stageId);

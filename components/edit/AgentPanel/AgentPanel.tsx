@@ -137,7 +137,7 @@ function VoiceInputButton({ disabled }: { readonly disabled?: boolean }) {
   return (
     <SpeechButton
       size="md"
-      className="size-[30px]"
+      className="size-[30px] max-md:size-11"
       disabled={disabled}
       onTranscription={(text) => {
         if (!text) return;
@@ -155,9 +155,21 @@ interface AgentPanelProps {
   readonly clearThread: () => void;
   readonly hasMessages: boolean;
   readonly canSend: boolean;
+  readonly mobileMode?: boolean;
+  readonly mobileOpen?: boolean;
+  readonly onMobileOpenChange?: (open: boolean) => void;
 }
 
-export function AgentPanel({ scene, runtime, clearThread, hasMessages, canSend }: AgentPanelProps) {
+export function AgentPanel({
+  scene,
+  runtime,
+  clearThread,
+  hasMessages,
+  canSend,
+  mobileMode = false,
+  mobileOpen = false,
+  onMobileOpenChange,
+}: AgentPanelProps) {
   const { t } = useI18n();
 
   // Interactive scenes expose a different agent capability (fix the page's bugs)
@@ -224,13 +236,28 @@ export function AgentPanel({ scene, runtime, clearThread, hasMessages, canSend }
   }, []);
 
   const [collapsed, setCollapsed] = useState(false);
+  const effectiveCollapsed = mobileMode ? !mobileOpen : collapsed;
+  const setEffectiveCollapsed = (next: boolean) => {
+    if (mobileMode) onMobileOpenChange?.(!next);
+    else setCollapsed(next);
+  };
 
   // Collapsed: a slim rail with the brand mark — click anywhere to reopen. The
   // runtime is owned above this panel, so the conversation is preserved.
-  if (collapsed) {
+  if (effectiveCollapsed) {
     return (
       <aside
-        onClick={() => setCollapsed(false)}
+        onClick={() => setEffectiveCollapsed(false)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            setEffectiveCollapsed(false);
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        data-testid="agent-panel"
+        data-mobile-open={mobileOpen}
         title={t('edit.agent.expand')}
         className="group/rail relative flex h-full w-11 shrink-0 cursor-pointer flex-col items-center gap-3 border-l border-gray-100 bg-white/80 pt-3 backdrop-blur-xl transition-colors hover:bg-violet-50/40 dark:border-gray-800 dark:bg-slate-900/80 dark:hover:bg-violet-500/5 shadow-[-2px_0_24px_rgba(0,0,0,0.02)]"
       >
@@ -239,7 +266,7 @@ export function AgentPanel({ scene, runtime, clearThread, hasMessages, canSend }
         </span>
         <Sparkles className="size-4 text-[#5b1fa8]/80 dark:text-violet-300/80" />
         <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5b1fa8]/70 [writing-mode:vertical-rl] dark:text-violet-300/70">
-          Edit with AI
+          {t('edit.agent.panelLabel')}
         </span>
       </aside>
     );
@@ -248,20 +275,24 @@ export function AgentPanel({ scene, runtime, clearThread, hasMessages, canSend }
   return (
     <aside
       ref={railRef}
-      style={{ width }}
+      data-testid="agent-panel"
+      data-mobile-open={mobileOpen}
+      style={{ width: mobileMode ? 'min(82vw, 320px)' : width }}
       // Mirrors SlideNavRail's surface (white/translucent glass, soft hairline,
       // faint side shadow) so the two rails read as one chrome family.
       className="relative flex h-full shrink-0 flex-col border-l border-gray-100 bg-white/80 backdrop-blur-xl dark:border-gray-800 dark:bg-slate-900/80 shadow-[-2px_0_24px_rgba(0,0,0,0.02)]"
     >
-      <div
-        onPointerDown={onResizeStart}
-        onPointerMove={onResizeMove}
-        onPointerUp={onResizeEnd}
-        onPointerCancel={onResizeEnd}
-        className="group absolute left-0 top-0 bottom-0 z-10 w-1.5 cursor-col-resize touch-none transition-colors hover:bg-violet-400/30 active:bg-violet-500/50 dark:hover:bg-violet-500/30"
-      >
-        <div className="absolute left-0.5 top-1/2 h-8 w-0.5 -translate-y-1/2 rounded-full bg-gray-300 transition-colors group-hover:bg-violet-400 dark:bg-gray-600 dark:group-hover:bg-violet-500" />
-      </div>
+      {!mobileMode && (
+        <div
+          onPointerDown={onResizeStart}
+          onPointerMove={onResizeMove}
+          onPointerUp={onResizeEnd}
+          onPointerCancel={onResizeEnd}
+          className="group absolute left-0 top-0 bottom-0 z-10 w-1.5 cursor-col-resize touch-none transition-colors hover:bg-violet-400/30 active:bg-violet-500/50 dark:hover:bg-violet-500/30"
+        >
+          <div className="absolute left-0.5 top-1/2 h-8 w-0.5 -translate-y-1/2 rounded-full bg-gray-300 transition-colors group-hover:bg-violet-400 dark:bg-gray-600 dark:group-hover:bg-violet-500" />
+        </div>
+      )}
 
       {/* Header — "Edit with AI" with a violet sparkles mark (design .ae-head). */}
       <header className="flex h-10 shrink-0 items-center gap-2 border-b border-gray-100 px-4 pl-5 dark:border-gray-800">
@@ -275,18 +306,18 @@ export function AgentPanel({ scene, runtime, clearThread, hasMessages, canSend }
             onClick={clearThread}
             title={t('edit.agent.newConversation')}
             aria-label={t('edit.agent.newConversation')}
-            className="ml-auto grid size-7 place-items-center rounded-md text-muted-foreground/55 transition-colors hover:bg-muted hover:text-foreground"
+            className="ml-auto grid size-7 place-items-center rounded-md text-muted-foreground/55 transition-colors hover:bg-muted hover:text-foreground max-md:size-11"
           >
             <SquarePen className="size-4" />
           </button>
         ) : null}
         <button
           type="button"
-          onClick={() => setCollapsed(true)}
+          onClick={() => setEffectiveCollapsed(true)}
           title={t('edit.agent.collapse')}
           aria-label={t('edit.agent.collapse')}
           className={cn(
-            'grid size-7 place-items-center rounded-md text-muted-foreground/55 transition-colors hover:bg-muted hover:text-foreground',
+            'grid size-7 place-items-center rounded-md text-muted-foreground/55 transition-colors hover:bg-muted hover:text-foreground max-md:size-11',
             hasMessages ? '' : 'ml-auto',
           )}
         >
@@ -381,7 +412,7 @@ export function AgentPanel({ scene, runtime, clearThread, hasMessages, canSend }
                   <ThreadPrimitive.If running={false}>
                     <ComposerPrimitive.Send
                       disabled={!canSend}
-                      className="grid size-[30px] shrink-0 place-items-center rounded-lg bg-primary text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground/50"
+                      className="grid size-[30px] shrink-0 place-items-center rounded-lg bg-primary text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground/50 max-md:size-11"
                     >
                       <ArrowUp className="size-4" />
                     </ComposerPrimitive.Send>
@@ -397,7 +428,7 @@ export function AgentPanel({ scene, runtime, clearThread, hasMessages, canSend }
                           /* no run to cancel */
                         }
                       }}
-                      className="grid size-[30px] shrink-0 place-items-center rounded-lg bg-primary text-white transition-colors hover:opacity-90"
+                      className="grid size-[30px] shrink-0 place-items-center rounded-lg bg-primary text-white transition-colors hover:opacity-90 max-md:size-11"
                     >
                       <Square className="size-3 fill-current" />
                     </button>

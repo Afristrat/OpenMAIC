@@ -8,6 +8,9 @@
  */
 import { db } from '@/lib/utils/database';
 import { useSettingsStore } from '@/lib/store/settings';
+import { isTTSProviderEnabled } from '@/lib/audio/provider-enablement';
+import type { Action, SpeechAction } from '@/lib/types/action';
+import type { Scene } from '@/lib/types/stage';
 
 /** Canonical audio cache key — matches the generation pipeline. */
 export function speechAudioId(sceneOrder: number, actionId: string): string {
@@ -29,7 +32,64 @@ export function resolveSpeechAudioId(
 /** Managed (server) TTS is on — browser-native TTS has no cached file to manage. */
 export function isManagedTtsActive(): boolean {
   const s = useSettingsStore.getState();
-  return s.ttsEnabled && s.ttsProviderId !== 'browser-native-tts';
+  return (
+    s.ttsEnabled &&
+    s.ttsProviderId !== 'browser-native-tts' &&
+    isTTSProviderEnabled(s.ttsProviderId, s.ttsProvidersConfig?.[s.ttsProviderId])
+  );
+}
+
+/** Non-empty speech lines that managed playback cannot currently play. */
+export function missingSpeechAudioActions(scene: Scene): SpeechAction[] {
+  return (scene.actions ?? []).filter(
+    (action): action is SpeechAction =>
+      action.type === 'speech' && !!action.text.trim() && !action.audioId && !action.audioUrl,
+  );
+}
+
+async function requestSpeechAudio(
+  sceneId: string,
+  action: Pick<SpeechAction, 'id' | 'text'>,
+  signal?: AbortSignal,
+): Promise<Action[]> {
+  const { useStageStore } = await import('@/lib/store/stage');
+  const stageId = useStageStore.getState().stage?.id;
+  if (!stageId) {
+    throw new Error('La classroom doit être enregistrée avant de régénérer une voix off.');
+  }
+  const response = await fetch(`/api/classroom/${encodeURIComponent(stageId)}/tts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sceneId, actionId: action.id, text: action.text.trim() }),
+    signal,
+  });
+  if (!response.ok) {
+    throw new Error('La régénération de la voix off n’a pas pu être enregistrée.');
+  }
+  const payload = (await response.json()) as { success?: boolean; actions?: Action[] };
+  if (!payload.success || !payload.actions) {
+    throw new Error('La régénération de la voix off a retourné une réponse invalide.');
+  }
+  return payload.actions;
+}
+
+/**
+ * Generate only missing managed-TTS lines, one request at a time.
+ * The caller owns the single final scene update.
+ */
+export async function preflightMissingSpeechAudio(
+  scene: Scene,
+  signal?: AbortSignal,
+): Promise<Action[] | null> {
+  if (!isManagedTtsActive()) return null;
+  const missing = missingSpeechAudioActions(scene);
+  if (missing.length === 0) return null;
+
+  let actions: Action[] | null = null;
+  for (const action of missing) {
+    actions = await requestSpeechAudio(scene.id, action, signal);
+  }
+  return actions;
 }
 
 /** True if an audio blob is cached under this exact audioId. */
@@ -96,22 +156,7 @@ export async function regenerateSpeechAudio(
   if (!state.stage?.id || !scene) {
     throw new Error('La classroom doit être enregistrée avant de régénérer une voix off.');
   }
-  const response = await fetch(`/api/classroom/${encodeURIComponent(state.stage.id)}/tts`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ sceneId: scene.id, actionId: action.id, text }),
-    signal,
-  });
-  if (!response.ok) {
-    throw new Error('La régénération de la voix off n’a pas pu être enregistrée.');
-  }
-  const payload = (await response.json()) as {
-    success?: boolean;
-    actions?: typeof scene.actions;
-  };
-  if (!payload.success || !payload.actions) {
-    throw new Error('La régénération de la voix off a retourné une réponse invalide.');
-  }
-  useStageStore.getState().updateScene(scene.id, { actions: payload.actions });
+  const actions = await requestSpeechAudio(scene.id, { id: action.id, text }, signal);
+  useStageStore.getState().updateScene(scene.id, { actions });
   return audioId;
 }

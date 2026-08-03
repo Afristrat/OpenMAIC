@@ -112,7 +112,7 @@ export function QuestionCard({ question: q, index, expanded, onToggle }: Props) 
           type="button"
           aria-label={t('edit.quiz.reorder')}
           onPointerDown={(e) => controls.start(e)}
-          className="cursor-grab touch-none text-zinc-300 opacity-0 transition-opacity group-hover/card:opacity-100 hover:text-zinc-500 active:cursor-grabbing dark:text-zinc-600 dark:hover:text-zinc-400"
+          className="cursor-grab touch-none text-zinc-300 opacity-0 transition-opacity group-hover/card:opacity-100 hover:text-zinc-500 active:cursor-grabbing dark:text-zinc-600 dark:hover:text-zinc-400 max-md:flex max-md:size-11 max-md:items-center max-md:justify-center max-md:opacity-100"
         >
           <GripVertical className="h-4 w-4" />
         </button>
@@ -120,7 +120,7 @@ export function QuestionCard({ question: q, index, expanded, onToggle }: Props) 
           type="button"
           onPointerDown={stopDrag}
           onClick={onToggle}
-          className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
+          className="flex min-h-11 min-w-0 flex-1 items-center gap-2.5 text-left"
         >
           <ChevronRight
             className={cn(
@@ -158,7 +158,7 @@ export function QuestionCard({ question: q, index, expanded, onToggle }: Props) 
           aria-label={t('edit.quiz.deleteQuestion')}
           onPointerDown={stopDrag}
           onClick={() => deleteQuizQuestion(q.id)}
-          className="shrink-0 rounded-lg p-1.5 text-zinc-300 transition-colors hover:bg-rose-50 hover:text-rose-500 dark:text-zinc-600 dark:hover:bg-rose-950/40"
+          className="flex size-11 shrink-0 items-center justify-center rounded-lg text-zinc-300 transition-colors hover:bg-rose-50 hover:text-rose-500 dark:text-zinc-600 dark:hover:bg-rose-950/40"
         >
           <Trash2 className="h-4 w-4" />
         </button>
@@ -187,12 +187,12 @@ export function QuestionCard({ question: q, index, expanded, onToggle }: Props) 
 
           {/* Type + points row */}
           <div className="flex gap-3">
-            <Field label={t('edit.quiz.typeLabel')} className="flex-1">
+            <Field label={t('edit.quiz.typeLabel')} className="min-w-0 flex-1">
               <Select
                 value={q.type}
                 onValueChange={(v) => setQuizQuestionType(q.id, v as QuizQuestionType)}
               >
-                <SelectTrigger onPointerDown={stopDrag} className={cn('w-full', FOCUS)}>
+                <SelectTrigger onPointerDown={stopDrag} className={cn('w-full max-md:h-11', FOCUS)}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -204,7 +204,7 @@ export function QuestionCard({ question: q, index, expanded, onToggle }: Props) 
                 </SelectContent>
               </Select>
             </Field>
-            <Field label={t('edit.quiz.pointsLabel')} className="w-24">
+            <Field label={t('edit.quiz.pointsLabel')} className="w-24 shrink-0">
               <Input
                 type="number"
                 min={0}
@@ -215,7 +215,7 @@ export function QuestionCard({ question: q, index, expanded, onToggle }: Props) 
                   if (Number.isNaN(n)) return;
                   typeQuizQuestion(q.id, { points: n }, `${q.id}:points`);
                 }}
-                className={cn('font-mono tabular-nums', FOCUS)}
+                className={cn('font-mono tabular-nums max-md:h-11', FOCUS)}
               />
             </Field>
           </div>
@@ -248,7 +248,7 @@ export function QuestionCard({ question: q, index, expanded, onToggle }: Props) 
                         onPointerDown={stopDrag}
                         onClick={() => toggleQuizCorrect(q.id, i)}
                         className={cn(
-                          'relative flex h-8 w-8 shrink-0 items-center justify-center border font-mono text-xs font-bold transition-all',
+                          'relative flex h-8 w-8 shrink-0 items-center justify-center border font-mono text-xs font-bold transition-all max-md:h-11 max-md:w-11',
                           q.type === 'single' ? 'rounded-full' : 'rounded-lg',
                           correct
                             ? 'border-emerald-500 bg-emerald-500 text-white shadow-sm shadow-emerald-500/30'
@@ -263,11 +263,11 @@ export function QuestionCard({ question: q, index, expanded, onToggle }: Props) 
                         onChange={(e) => typeQuizOptionLabel(q.id, i, e.target.value)}
                         placeholder={t('edit.quiz.optionPlaceholder')}
                         className={cn(
-                          'flex-1 border-transparent bg-transparent shadow-none',
+                          'min-w-0 flex-1 border-transparent bg-transparent shadow-none max-md:h-11',
                           FOCUS,
                         )}
                       />
-                      <div className="flex shrink-0 items-center opacity-60 transition-opacity group-hover/opt:opacity-100">
+                      <div className="flex shrink-0 items-center opacity-60 transition-opacity group-hover/opt:opacity-100 max-md:opacity-100">
                         <IconButton
                           label={t('edit.quiz.moveUp')}
                           disabled={i === 0}
@@ -299,7 +299,7 @@ export function QuestionCard({ question: q, index, expanded, onToggle }: Props) 
                   disabled={(q.options?.length ?? 0) >= MAX_OPTIONS}
                   onPointerDown={stopDrag}
                   onClick={() => addQuizOption(q.id)}
-                  className="mt-0.5 inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-zinc-200 py-2 text-xs font-medium text-zinc-500 transition-colors hover:border-violet-300 hover:bg-violet-50/60 hover:text-violet-600 disabled:pointer-events-none disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-violet-500/40 dark:hover:bg-violet-500/10 dark:hover:text-violet-300"
+                  className="mt-0.5 inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-zinc-200 py-2 text-xs font-medium text-zinc-500 transition-colors hover:border-violet-300 hover:bg-violet-50/60 hover:text-violet-600 disabled:pointer-events-none disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-violet-500/40 dark:hover:bg-violet-500/10 dark:hover:text-violet-300"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   {t('edit.quiz.addOption')}
@@ -396,7 +396,7 @@ function IconButton({
       onPointerDown={stopDrag}
       onClick={onClick}
       className={cn(
-        'rounded-lg p-1 text-zinc-400 transition-colors disabled:pointer-events-none disabled:opacity-30',
+        'flex size-11 items-center justify-center rounded-lg text-zinc-400 transition-colors disabled:pointer-events-none disabled:opacity-30',
         danger
           ? 'hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/40'
           : 'hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300',

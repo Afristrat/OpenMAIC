@@ -12,7 +12,7 @@
  *
  * Editing (persisted via useStageStore.updateScene → actions-edit ops):
  * - speech clip text is editable inline (commit on blur);
- * - palette chips drag into the track to add an action at a drop slot;
+ * - palette chips tap to append or drag into the track to add at a drop slot;
  * - existing items drag to reorder; each card carries a delete button;
  * - clicking an element-bound cue arms canvas pick mode (useCanvasStore.pickTarget),
  *   so the target is chosen by clicking the element directly on the slide.
@@ -173,7 +173,7 @@ function DeleteButton({ onDelete }: { onDelete: () => void }) {
         e.stopPropagation();
         onDelete();
       }}
-      className="grid size-5 place-items-center rounded-md text-muted-foreground/55 transition-colors hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-500/15"
+      className="grid size-5 place-items-center rounded-md text-muted-foreground/55 transition-colors hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-500/15 max-md:size-11"
       aria-label={t('edit.delete')}
     >
       <Trash2 className="size-3.5" />
@@ -195,7 +195,7 @@ function MoveButtons({
 }) {
   const { t } = useI18n();
   const cls =
-    'grid size-5 place-items-center rounded text-muted-foreground/55 transition-colors hover:bg-muted hover:text-foreground disabled:opacity-25 disabled:hover:bg-transparent';
+    'grid size-5 place-items-center rounded text-muted-foreground/55 transition-colors hover:bg-muted hover:text-foreground disabled:opacity-25 disabled:hover:bg-transparent max-md:size-11';
   return (
     <>
       <button
@@ -332,7 +332,7 @@ function SpeechTtsBar({
         type="button"
         onClick={preview}
         disabled={status !== 'ready'}
-        className="grid size-5 place-items-center rounded-md text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent"
+        className="grid size-5 place-items-center rounded-md text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent max-md:size-11"
         aria-label={t('edit.tts.preview')}
         title={t('edit.tts.preview')}
       >
@@ -342,7 +342,7 @@ function SpeechTtsBar({
         type="button"
         onClick={regenerate}
         disabled={status === 'generating' || !text.trim()}
-        className="grid size-5 place-items-center rounded-md text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent"
+        className="grid size-5 place-items-center rounded-md text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent max-md:size-11"
         aria-label={t('edit.tts.regenerate')}
         title={t('edit.tts.regenerate')}
       >
@@ -432,7 +432,7 @@ function SpeechClip({
           draggable
           onDragStart={onDragStart}
           onDragEnd={onDragEnd}
-          className="cursor-grab text-muted-foreground/40 transition-colors hover:text-muted-foreground active:cursor-grabbing"
+          className="cursor-grab text-muted-foreground/40 transition-colors hover:text-muted-foreground active:cursor-grabbing max-md:flex max-md:size-11 max-md:items-center max-md:justify-center"
           aria-label={t('edit.timeline.reorder')}
         >
           <GripVertical className="size-3.5" />
@@ -671,6 +671,12 @@ function CueMarker({
       onClick={() => {
         if (bound) onPick();
       }}
+      onKeyDown={(e) => {
+        if (bound && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          onPick();
+        }
+      }}
       className={cn(
         'group/cue relative flex h-full w-[108px] shrink-0 flex-col overflow-hidden rounded-xl border bg-white/65 shadow-sm transition-colors dark:bg-slate-800/40',
         bound
@@ -681,6 +687,8 @@ function CueMarker({
           : 'border-gray-200/80 dark:border-gray-700/60',
       )}
       aria-label={label}
+      role={bound ? 'button' : undefined}
+      tabIndex={bound ? 0 : undefined}
     >
       <span className={cn('absolute inset-x-0 top-0 h-[3px]', m.accent)} />
       <div className="flex items-center gap-0.5 px-1 pt-1">
@@ -689,7 +697,7 @@ function CueMarker({
           onDragStart={onDragStart}
           onDragEnd={onDragEnd}
           onClick={(e) => e.stopPropagation()}
-          className="cursor-grab text-muted-foreground/35 transition-colors hover:text-muted-foreground active:cursor-grabbing"
+          className="cursor-grab text-muted-foreground/35 transition-colors hover:text-muted-foreground active:cursor-grabbing max-md:flex max-md:size-11 max-md:items-center max-md:justify-center"
           aria-label={t('edit.timeline.reorder')}
         >
           <GripVertical className="size-3.5" />
@@ -1001,6 +1009,18 @@ export function ActionsBar({ sceneId }: { sceneId: string }) {
     [commit],
   );
 
+  const appendAction = useCallback(
+    (type: AddableType) => {
+      const id =
+        typeof crypto !== 'undefined' && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `a-${Date.now()}`;
+      commit((cur) => insertAt(cur, clampInsertSlot(cur, cur.length), makeAction(type, id)));
+      if (type === 'speech') setFocusId(id);
+    },
+    [commit],
+  );
+
   const speechCount = actions.filter((a) => a.type === 'speech').length;
   const cueCount = actions.length - speechCount;
 
@@ -1025,6 +1045,7 @@ export function ActionsBar({ sceneId }: { sceneId: string }) {
     <section
       ref={sectionRef}
       style={{ height: lineMode ? LINE_H : height }}
+      data-testid="actions-bar"
       className="relative flex flex-col border-t border-gray-100 bg-white/80 backdrop-blur-xl dark:border-gray-800 dark:bg-slate-900/80"
     >
       {!lineMode && (
@@ -1039,11 +1060,11 @@ export function ActionsBar({ sceneId }: { sceneId: string }) {
         </div>
       )}
 
-      <div className="flex h-10 shrink-0 items-center gap-2.5 px-6">
+      <div className="flex h-10 shrink-0 items-center gap-2.5 overflow-x-auto px-6 max-md:h-14 max-md:px-2">
         <button
           type="button"
           onClick={() => setLineMode((v) => !v)}
-          className="flex items-center gap-2.5"
+          className="flex shrink-0 items-center gap-2.5 max-md:min-h-11"
         >
           <span className="size-1.5 rounded-full bg-primary" />
           <span className="text-[12px] font-medium tracking-[0.18em] text-foreground/80">
@@ -1052,16 +1073,18 @@ export function ActionsBar({ sceneId }: { sceneId: string }) {
         </button>
 
         {!lineMode && (
-          <div className="ml-3 flex items-center gap-1.5 border-l border-gray-200/70 pl-3 dark:border-gray-700/60">
-            <span className="text-[10px] text-muted-foreground/45">
+          <div className="ml-3 flex shrink-0 items-center gap-1.5 border-l border-gray-200/70 pl-3 dark:border-gray-700/60 max-md:ml-0 max-md:pl-2">
+            <span className="text-[10px] text-muted-foreground/45 max-md:hidden">
               {t('edit.timeline.dragToAdd')}
             </span>
             {palette.map((pt) => {
               const Icon = cueMeta(pt).icon;
               return (
-                <span
+                <button
+                  type="button"
                   key={pt}
                   draggable
+                  onClick={() => appendAction(pt)}
                   onDragStart={(e) => {
                     dragRef.current = { kind: 'new', type: pt };
                     setBlankDragImage(e);
@@ -1070,11 +1093,11 @@ export function ActionsBar({ sceneId }: { sceneId: string }) {
                     dragRef.current = null;
                     setDragOver(null);
                   }}
-                  className="inline-flex cursor-grab items-center gap-1 rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] text-muted-foreground transition-colors hover:border-primary/30 hover:text-foreground active:cursor-grabbing"
+                  className="inline-flex cursor-grab items-center gap-1 rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] text-muted-foreground transition-colors hover:border-primary/30 hover:text-foreground active:cursor-grabbing max-md:min-h-11 max-md:px-3"
                 >
                   <Icon className="size-3" />
                   {cueLabel(pt, t)}
-                </span>
+                </button>
               );
             })}
           </div>
@@ -1087,7 +1110,7 @@ export function ActionsBar({ sceneId }: { sceneId: string }) {
             disabled={regenAll}
             title={t('edit.timeline.regenAllTts')}
             aria-label={t('edit.timeline.regenAllTts')}
-            className="ml-1.5 inline-flex items-center gap-1 rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] text-muted-foreground transition-colors hover:border-primary/30 hover:text-foreground disabled:opacity-50"
+            className="ml-1.5 inline-flex shrink-0 items-center gap-1 rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] text-muted-foreground transition-colors hover:border-primary/30 hover:text-foreground disabled:opacity-50 max-md:min-h-11 max-md:px-3"
           >
             <RefreshCw className={cn('size-3', regenAll && 'animate-spin')} />
             {t('edit.timeline.voiceAll')}
@@ -1108,14 +1131,14 @@ export function ActionsBar({ sceneId }: { sceneId: string }) {
                 : t('edit.timeline.addDiscussion')
             }
             aria-label={t('edit.timeline.addDiscussion')}
-            className="ml-1.5 inline-flex items-center gap-1 rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] text-muted-foreground transition-colors hover:border-yellow-400/50 hover:text-foreground disabled:opacity-40 disabled:hover:border-border disabled:hover:text-muted-foreground"
+            className="ml-1.5 inline-flex shrink-0 items-center gap-1 rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] text-muted-foreground transition-colors hover:border-yellow-400/50 hover:text-foreground disabled:opacity-40 disabled:hover:border-border disabled:hover:text-muted-foreground max-md:min-h-11 max-md:px-3"
           >
             <Flag className="size-3" />
             {t('edit.timeline.addDiscussion')}
           </button>
         )}
 
-        <span className="ml-auto font-mono text-[11px] tabular-nums text-muted-foreground/60">
+        <span className="ml-auto shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground/60 max-md:hidden">
           {t('edit.timeline.counts', { speech: speechCount, cue: cueCount })}
         </span>
         {/* pan the timeline viewport left/right */}
@@ -1126,7 +1149,7 @@ export function ActionsBar({ sceneId }: { sceneId: string }) {
               onClick={() => panViewport(-1)}
               title={t('edit.timeline.panLeft')}
               aria-label={t('edit.timeline.panLeft')}
-              className="grid size-7 place-items-center rounded-md text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
+              className="grid size-7 place-items-center rounded-md text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground max-md:size-11"
             >
               <ChevronsLeft className="size-4" />
             </button>
@@ -1135,7 +1158,7 @@ export function ActionsBar({ sceneId }: { sceneId: string }) {
               onClick={() => panViewport(1)}
               title={t('edit.timeline.panRight')}
               aria-label={t('edit.timeline.panRight')}
-              className="grid size-7 place-items-center rounded-md text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
+              className="grid size-7 place-items-center rounded-md text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground max-md:size-11"
             >
               <ChevronsRight className="size-4" />
             </button>
@@ -1146,7 +1169,7 @@ export function ActionsBar({ sceneId }: { sceneId: string }) {
           onClick={() => setLineMode((v) => !v)}
           title={lineMode ? t('edit.timeline.expandTrack') : t('edit.timeline.collapseAxis')}
           aria-label={lineMode ? t('edit.timeline.expandTrack') : t('edit.timeline.collapseAxis')}
-          className="ml-1 grid size-7 place-items-center rounded-md text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
+          className="ml-1 grid size-7 shrink-0 place-items-center rounded-md text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground max-md:size-11"
         >
           {lineMode ? <UnfoldVertical className="size-4" /> : <FoldVertical className="size-4" />}
         </button>

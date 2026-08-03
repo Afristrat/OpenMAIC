@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   listClassrooms: vi.fn(),
   requireAdmin: vi.fn(),
   requireAuthor: vi.fn(),
+  requireEditor: vi.fn(),
   requireMember: vi.fn(),
   download: vi.fn(),
   createGenerationJob: vi.fn(),
@@ -37,6 +38,7 @@ vi.mock('@/lib/server/classroom-storage', () => ({
 vi.mock('@/lib/api/auth', () => ({
   requireSuperAdminOrOrgAdmin: mocks.requireAdmin,
   requireSuperAdminOrOrgAuthor: mocks.requireAuthor,
+  requireSuperAdminOrOrgEditor: mocks.requireEditor,
   requireSuperAdminOrOrgMember: mocks.requireMember,
 }));
 
@@ -70,6 +72,9 @@ describe('classroom tenant boundary', () => {
     mocks.requireAuthor.mockResolvedValue({
       user: { id: 'session-owner', email: 'author@qalem.ma' },
       authoredByRole: 'author',
+    });
+    mocks.requireEditor.mockResolvedValue({
+      user: { id: 'session-owner', email: 'author@qalem.ma' },
     });
     mocks.requireMember.mockResolvedValue({
       user: { id: 'org-member', email: 'member@qalem.ma' },
@@ -109,7 +114,7 @@ describe('classroom tenant boundary', () => {
     );
 
     expect(response.status).toBe(201);
-    expect(mocks.requireAdmin).toHaveBeenCalledWith(expect.any(NextRequest), ORG_ID);
+    expect(mocks.requireAuthor).toHaveBeenCalledWith(expect.any(NextRequest), ORG_ID);
     expect(mocks.persistClassroom).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'classroom_15',
@@ -163,6 +168,7 @@ describe('classroom tenant boundary', () => {
 
   it('allows anonymous reads only after explicit publication and hides ownership state', async () => {
     mocks.isClassroomPublic.mockResolvedValue(true);
+    mocks.requireEditor.mockResolvedValue({ response: forbidden() });
     mocks.readClassroom.mockResolvedValue({
       id: 'published_classroom',
       stage: { id: 'published_classroom', name: 'Published classroom' },
@@ -181,6 +187,37 @@ describe('classroom tenant boundary', () => {
     expect(mocks.requireMember).not.toHaveBeenCalled();
     expect(body.classroom).not.toHaveProperty('ownerId');
     expect(body.classroom).not.toHaveProperty('orgId');
+    expect(body.canEdit).toBe(false);
+    expect(mocks.requireEditor).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      ORG_ID,
+      'session-owner',
+    );
+  });
+
+  it('exposes the editor to the classroom author after ownership verification', async () => {
+    mocks.isClassroomPublic.mockResolvedValue(true);
+    mocks.readClassroom.mockResolvedValue({
+      id: 'authored_classroom',
+      stage: { id: 'authored_classroom', name: 'Authored classroom' },
+      scenes: [],
+      createdAt: '2026-07-22T00:00:00.000Z',
+      ownerId: 'session-owner',
+      orgId: ORG_ID,
+    });
+
+    const response = await getClassroom(
+      new NextRequest('https://qalem.ma/api/classroom?id=authored_classroom'),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.canEdit).toBe(true);
+    expect(mocks.requireEditor).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      ORG_ID,
+      'session-owner',
+    );
   });
 
   it('protects organization catalogue reads with the member gate', async () => {

@@ -62,13 +62,27 @@ export function StageGrid({
   className,
 }: StageGridProps) {
   return (
-    <div className={cn('h-full w-full', className)} style={GRID_STYLE}>
+    <div className={cn('relative h-full w-full', className)} style={GRID_STYLE}>
       {topSlot ? <div style={{ gridArea: 'top' }}>{topSlot}</div> : null}
-      {leftSlot ? <div style={{ gridArea: 'left' }}>{leftSlot}</div> : null}
+      {leftSlot ? (
+        <div
+          className="max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-30"
+          style={{ gridArea: 'left' }}
+        >
+          {leftSlot}
+        </div>
+      ) : null}
       <div style={{ gridArea: 'center', minHeight: 0, minWidth: 0, position: 'relative' }}>
         {centerSlot}
       </div>
-      {rightSlot ? <div style={{ gridArea: 'right' }}>{rightSlot}</div> : null}
+      {rightSlot ? (
+        <div
+          className="max-md:absolute max-md:inset-y-0 max-md:right-0 max-md:z-30"
+          style={{ gridArea: 'right' }}
+        >
+          {rightSlot}
+        </div>
+      ) : null}
       {bottomSlot ? <div style={{ gridArea: 'bottom' }}>{bottomSlot}</div> : null}
     </div>
   );

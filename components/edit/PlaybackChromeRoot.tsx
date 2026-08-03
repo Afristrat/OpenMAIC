@@ -41,6 +41,11 @@ import {
 } from '@/components/ui/alert-dialog';
 import { AlertTriangle } from 'lucide-react';
 import { VisuallyHidden } from 'radix-ui';
+import { toast } from 'sonner';
+import {
+  missingSpeechAudioActions,
+  preflightMissingSpeechAudio,
+} from '@/lib/audio/regenerate-speech-tts';
 
 /**
  * Imperative handle exposed via `ref` so the parent (`Stage`) can tear
@@ -207,6 +212,8 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
     const sceneEpochRef = useRef(0);
     // When true, the next engine init will auto-start playback (for auto-play scene advance)
     const autoStartRef = useRef(false);
+    // Covers the async managed-TTS preflight before the engine can change mode.
+    const playPreflightRef = useRef(false);
     // Discussion buffer-level pause state (distinct from soft-pause which aborts SSE)
     const [isDiscussionPaused, setIsDiscussionPaused] = useState(false);
 
@@ -783,23 +790,46 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
           chatAreaRef.current?.resumeBuffer(lectureSessionIdRef.current);
         }
       } else {
-        const wasCompleted = playbackCompleted;
-        setPlaybackCompleted(false);
-        // Starting playback - create/reuse lecture session
-        if (currentScene && chatAreaRef.current) {
-          const sessionId = await chatAreaRef.current.startLecture(currentScene.id);
-          lectureSessionIdRef.current = sessionId;
-        }
-        if (wasCompleted) {
-          // Restart from beginning (user clicked restart after completion)
-          lectureActionCounterRef.current = 0;
-          engine.start();
-        } else {
-          // Continue from current position (e.g. after discussion end)
-          engine.continuePlayback();
+        if (playPreflightRef.current) return;
+        playPreflightRef.current = true;
+        try {
+          if (currentScene) {
+            const missingCount = missingSpeechAudioActions(currentScene).length;
+            try {
+              const actions = await preflightMissingSpeechAudio(currentScene);
+              if (actions) {
+                // The scene update rebuilds the engine; only that new engine may start.
+                autoStartRef.current = true;
+                useStageStore.getState().updateScene(currentScene.id, { actions });
+                return;
+              }
+            } catch {
+              autoStartRef.current = false;
+              toast.error(t('edit.tts.regenerationFailed', { count: missingCount }));
+              return;
+            }
+          }
+
+          const wasCompleted = playbackCompleted;
+          setPlaybackCompleted(false);
+          // Starting playback - create/reuse lecture session
+          if (currentScene && chatAreaRef.current) {
+            const sessionId = await chatAreaRef.current.startLecture(currentScene.id);
+            lectureSessionIdRef.current = sessionId;
+          }
+          if (wasCompleted) {
+            // Restart from beginning (user clicked restart after completion)
+            lectureActionCounterRef.current = 0;
+            engine.start();
+          } else {
+            // Continue from current position (e.g. after discussion end)
+            engine.continuePlayback();
+          }
+        } finally {
+          playPreflightRef.current = false;
         }
       }
-    }, [playbackCompleted, currentScene]);
+    }, [playbackCompleted, currentScene, t]);
 
     // get scene information
     const isPendingScene = currentSceneId === PENDING_SCENE_ID;

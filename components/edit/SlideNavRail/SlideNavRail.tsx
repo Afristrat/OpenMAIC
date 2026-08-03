@@ -36,7 +36,17 @@ const RAIL_MAX_PX = 360;
  * explicit grip handle on the thumb so the whole tile remains
  * click-to-switch.
  */
-export function SlideNavRail() {
+interface SlideNavRailProps {
+  readonly mobileMode?: boolean;
+  readonly mobileOpen?: boolean;
+  readonly onMobileOpenChange?: (open: boolean) => void;
+}
+
+export function SlideNavRail({
+  mobileMode = false,
+  mobileOpen = false,
+  onMobileOpenChange,
+}: SlideNavRailProps = {}) {
   const { t } = useI18n();
   const router = useRouter();
   const scenes = useStageStore.use.scenes();
@@ -51,6 +61,11 @@ export function SlideNavRail() {
   const persistedWidth = useSettingsStore((s) => s.editRailWidth);
   const setPersistedWidth = useSettingsStore((s) => s.setEditRailWidth);
   const prefersReducedMotion = useReducedMotion();
+  const effectiveCollapsed = mobileMode ? !mobileOpen : collapsed;
+  const toggleCollapsed = () => {
+    if (mobileMode) onMobileOpenChange?.(!mobileOpen);
+    else setCollapsed(!collapsed);
+  };
 
   // Drag-to-resize.
   //
@@ -89,7 +104,7 @@ export function SlideNavRail() {
 
   const handleResizeStart = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if (collapsed) return;
+      if (effectiveCollapsed) return;
       // Only primary button; ignore right-click / middle-click.
       if (e.button !== 0) return;
       e.preventDefault();
@@ -119,7 +134,7 @@ export function SlideNavRail() {
       document.body.style.userSelect = 'none';
       setIsDragging(true);
     },
-    [collapsed, persistedWidth],
+    [effectiveCollapsed, persistedWidth],
   );
 
   const handleResizeMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
@@ -327,7 +342,8 @@ export function SlideNavRail() {
     <aside
       ref={railRef}
       data-testid="slide-nav-rail"
-      data-collapsed={collapsed}
+      data-collapsed={effectiveCollapsed}
+      data-mobile-open={mobileOpen}
       // Mirrors playback SceneSidebar: white/translucent surface, soft
       // right border, backdrop blur. `overflow-hidden` clips tiles to
       // the rail's current width — without it, mid-drag widths leak
@@ -346,7 +362,13 @@ export function SlideNavRail() {
         'shadow-[2px_0_24px_rgba(0,0,0,0.02)]',
       )}
       style={{
-        width: collapsed ? RAIL_COLLAPSED_PX : persistedWidth,
+        width: effectiveCollapsed
+          ? mobileMode
+            ? 44
+            : RAIL_COLLAPSED_PX
+          : mobileMode
+            ? 'min(82vw, 320px)'
+            : persistedWidth,
         transition: widthTransitionCss,
       }}
     >
@@ -356,7 +378,7 @@ export function SlideNavRail() {
           cursor location, so the rail can't get stuck in a "still
           dragging" state on alt-tab / window blur / cursor-leaves-
           window. */}
-      {!collapsed && (
+      {!effectiveCollapsed && !mobileMode && (
         <div
           onPointerDown={handleResizeStart}
           onPointerMove={handleResizeMove}
@@ -374,30 +396,32 @@ export function SlideNavRail() {
           mode swap. */}
       <div
         className={cn(
-          'shrink-0 px-3 mt-3 mb-1 h-10',
-          collapsed ? 'flex flex-col items-center gap-1' : 'flex items-center justify-between',
+          'shrink-0 px-3 mt-3 mb-1 h-10 max-md:px-0',
+          effectiveCollapsed
+            ? 'flex flex-col items-center gap-1'
+            : 'flex items-center justify-between',
         )}
       >
-        {!collapsed && (
+        {!effectiveCollapsed && (
           <button
             type="button"
             onClick={() => router.push('/app')}
             title={t('generation.backToHome')}
-            className="flex items-center gap-2 cursor-pointer rounded-lg px-1.5 -mx-1.5 py-1 -my-1 hover:bg-gray-100/80 dark:hover:bg-gray-800/60 active:scale-[0.97] transition-all duration-150"
+            className="flex items-center gap-2 cursor-pointer rounded-lg px-1.5 -mx-1.5 py-1 -my-1 hover:bg-gray-100/80 dark:hover:bg-gray-800/60 active:scale-[0.97] transition-all duration-150 max-md:min-h-11"
           >
             <span className="text-base font-bold tracking-tight text-primary">Qalem</span>
           </button>
         )}
-        <div className={cn('flex items-center gap-1', collapsed && 'flex-col')}>
+        <div className={cn('flex items-center gap-1', effectiveCollapsed && 'flex-col')}>
           {/* Insertion lives in the `InsertionZone` strips between (and
               before/after) thumbs now — no header `+` button. */}
           <button
             type="button"
-            onClick={() => setCollapsed(!collapsed)}
-            aria-label={collapsed ? t('edit.nav.expand') : t('edit.nav.collapse')}
-            title={collapsed ? t('edit.nav.expand') : t('edit.nav.collapse')}
+            onClick={toggleCollapsed}
+            aria-label={effectiveCollapsed ? t('edit.nav.expand') : t('edit.nav.collapse')}
+            title={effectiveCollapsed ? t('edit.nav.expand') : t('edit.nav.collapse')}
             className={cn(
-              'inline-flex h-7 w-7 items-center justify-center rounded-lg',
+              'inline-flex h-7 w-7 items-center justify-center rounded-lg max-md:h-11 max-md:w-11',
               'bg-gray-100/80 text-gray-500 ring-1 ring-black/[0.04]',
               'dark:bg-gray-800/80 dark:text-gray-400 dark:ring-white/[0.06]',
               'hover:bg-gray-200/90 hover:text-gray-700',
@@ -405,24 +429,31 @@ export function SlideNavRail() {
               'active:scale-90 transition-all duration-200',
             )}
           >
-            {collapsed ? (
+            {effectiveCollapsed ? (
               <PanelLeftOpen className="h-4 w-4" />
             ) : (
               <PanelLeftClose className="h-4 w-4" />
             )}
           </button>
+          {effectiveCollapsed && mobileMode ? (
+            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500 [writing-mode:vertical-rl] dark:text-zinc-400">
+              {t('edit.nav.deckLabel')}
+            </span>
+          ) : null}
         </div>
       </div>
 
       {/* Body — list padding (p-2 space-y-2) matches playback's scene
           list so spacing/density read the same. */}
       <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide pt-1">
-        {collapsed ? (
-          <CollapsedList
-            scenes={scenes}
-            currentSceneId={currentSceneId}
-            onActivate={handleActivate}
-          />
+        {effectiveCollapsed ? (
+          mobileMode ? null : (
+            <CollapsedList
+              scenes={scenes}
+              currentSceneId={currentSceneId}
+              onActivate={handleActivate}
+            />
+          )
         ) : (
           <AnimatePresence initial={false}>
             <motion.div

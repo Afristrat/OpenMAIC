@@ -32,6 +32,7 @@ vi.mock('@/lib/supabase/server', () => ({
 import {
   requireSuperAdminOrOrgAdmin,
   requireSuperAdminOrOrgAuthor,
+  requireSuperAdminOrOrgEditor,
   requireSuperAdminOrOrgMember,
 } from '@/lib/api/auth';
 
@@ -98,6 +99,42 @@ describe('classroom RBAC', () => {
     const result = await requireSuperAdminOrOrgAuthor(request, 'org-target');
 
     if ('authoredByRole' in result) expect(result.authoredByRole).toBe('super-admin');
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
+
+  it('lets an author edit a classroom they own', async () => {
+    mocks.membership = { role: 'author' };
+
+    const result = await requireSuperAdminOrOrgEditor(request, 'org-target', 'user-1');
+
+    expect(result.user?.id).toBe('user-1');
+  });
+
+  it('refuses an author access to another author’s classroom', async () => {
+    mocks.membership = { role: 'author' };
+
+    const result = await requireSuperAdminOrOrgEditor(request, 'org-target', 'other-author');
+
+    expect(result.response?.status).toBe(403);
+  });
+
+  it.each(['admin', 'manager'])(
+    'lets the %s edit every classroom in its organization',
+    async (role) => {
+      mocks.membership = { role };
+
+      const result = await requireSuperAdminOrOrgEditor(request, 'org-target', 'other-author');
+
+      expect(result.user?.id).toBe('user-1');
+    },
+  );
+
+  it('lets the super-admin edit a classroom without tenant membership', async () => {
+    mocks.user = { id: 'root-1', email: 'ROOT@qalem.ma' };
+
+    const result = await requireSuperAdminOrOrgEditor(request, 'org-target', 'other-author');
+
+    expect(result.user?.id).toBe('root-1');
     expect(mocks.from).not.toHaveBeenCalled();
   });
 

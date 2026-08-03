@@ -12,7 +12,11 @@ import {
   readClassroomOwnership,
   isClassroomPublic,
 } from '@/lib/server/classroom-storage';
-import { requireSuperAdminOrOrgAdmin, requireSuperAdminOrOrgMember } from '@/lib/api/auth';
+import {
+  requireSuperAdminOrOrgAuthor,
+  requireSuperAdminOrOrgEditor,
+  requireSuperAdminOrOrgMember,
+} from '@/lib/api/auth';
 import { validateBody } from '@/lib/api/validate';
 import { classroomPersistSchema } from '@/lib/api/schemas';
 import { createLogger } from '@/lib/logger';
@@ -34,7 +38,7 @@ export async function POST(request: NextRequest) {
     stageId = typeof stage.id === 'string' ? stage.id : undefined;
     sceneCount = scenes.length;
 
-    const auth = await requireSuperAdminOrOrgAdmin(request, orgId);
+    const auth = await requireSuperAdminOrOrgAuthor(request, orgId);
     if (auth.response) return auth.response;
 
     const id = stageId || randomUUID();
@@ -78,7 +82,7 @@ export async function PUT(request: NextRequest) {
     }
     const ownership = await readClassroomOwnership(stageId);
     if (!ownership) return apiError(API_ERROR_CODES.INVALID_REQUEST, 404, 'Classroom introuvable');
-    const auth = await requireSuperAdminOrOrgAdmin(request, ownership.orgId);
+    const auth = await requireSuperAdminOrOrgEditor(request, ownership.orgId, ownership.ownerId);
     if (auth.response) return auth.response;
     await persistClassroom(
       {
@@ -112,11 +116,11 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-async function requireClassroomAdmin(request: NextRequest, id: string) {
+async function requireClassroomEditor(request: NextRequest, id: string) {
   const ownership = await readClassroomOwnership(id);
   if (!ownership)
     return { error: apiError(API_ERROR_CODES.INVALID_REQUEST, 404, 'Classroom not found') };
-  const auth = await requireSuperAdminOrOrgAdmin(request, ownership.orgId);
+  const auth = await requireSuperAdminOrOrgEditor(request, ownership.orgId, ownership.ownerId);
   return auth.response ? { error: auth.response } : {};
 }
 
@@ -125,7 +129,7 @@ export async function PATCH(request: NextRequest) {
     const id = request.nextUrl.searchParams.get('id');
     if (!id || !isValidClassroomId(id))
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid classroom id');
-    const gate = await requireClassroomAdmin(request, id);
+    const gate = await requireClassroomEditor(request, id);
     if (gate.error) return gate.error;
     const body = (await request.json().catch(() => null)) as { name?: unknown } | null;
     if (typeof body?.name !== 'string' || !body.name.trim()) {
@@ -150,7 +154,7 @@ export async function DELETE(request: NextRequest) {
     const id = request.nextUrl.searchParams.get('id');
     if (!id || !isValidClassroomId(id))
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid classroom id');
-    const gate = await requireClassroomAdmin(request, id);
+    const gate = await requireClassroomEditor(request, id);
     if (gate.error) return gate.error;
     await deleteClassroom(id);
     return apiSuccess({ id });
@@ -201,6 +205,16 @@ export async function GET(request: NextRequest) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 404, 'Classroom not found');
     }
 
+    // Reading a classroom and editing it are distinct capabilities. Public
+    // viewers and ordinary organization members may enter playback, but the
+    // client must not expose an editor whose PUT would be rejected.
+    const editAuth = await requireSuperAdminOrOrgEditor(
+      request,
+      ownership.orgId,
+      ownership.ownerId,
+    );
+    const canEdit = !editAuth.response;
+
     let presentationBranding = presentationBrandingFromOrganization(undefined, undefined);
     try {
       const { data: organization, error: organizationError } = await createServiceSupabaseClient()
@@ -227,6 +241,7 @@ export async function GET(request: NextRequest) {
     // ownerId/orgId are internal authorization state — never exposed to the client.
     const { ownerId: _ownerId, orgId: _orgId, ...publicClassroom } = classroom;
     return apiSuccess({
+      canEdit,
       classroom: {
         ...publicClassroom,
         stage: {

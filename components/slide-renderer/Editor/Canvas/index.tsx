@@ -13,7 +13,7 @@ import { useScaleElement } from './hooks/useScaleElement';
 import { useDragLineElement } from './hooks/useDragLineElement';
 import { useMoveShapeKeypoint } from './hooks/useMoveShapeKeypoint';
 import { useInsertFromCreateSelection } from './hooks/useInsertFromCreateSelection';
-import { useDrop } from './hooks/useDrop';
+import { insertCanvasText, useDrop } from './hooks/useDrop';
 import { AlignmentLine } from './AlignmentLine';
 import { MouseSelection } from './MouseSelection';
 import { ViewportBackground } from './ViewportBackground';
@@ -21,10 +21,10 @@ import { EditableElement } from './EditableElement';
 import { Operate } from './Operate';
 import { MultiSelectOperate } from './Operate/MultiSelectOperate';
 import { ElementCreateSelection } from './ElementCreateSelection';
-import { ShapeCreateCanvas } from './ShapeCreateCanvas';
 import { Ruler } from './Ruler';
 import { GridLines } from './GridLines';
 import type { PPTElement } from '@openmaic/dsl';
+import { useI18n } from '@/lib/hooks/use-i18n';
 import type { AlignmentLineProps } from '@/lib/types/edit';
 import type { ContextmenuItem } from './EditableElement';
 import type { SlideContent } from '@/lib/types/stage';
@@ -60,6 +60,7 @@ export interface CanvasProps {
  * </SceneProvider>
  */
 export function Canvas(_props: CanvasProps) {
+  const { t } = useI18n();
   const canvasRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
 
@@ -75,7 +76,6 @@ export function Canvas(_props: CanvasProps) {
   const handleElementId = useCanvasStore.use.handleElementId();
   const hiddenElementIdList = useCanvasStore.use.hiddenElementIdList();
   const creatingElement = useCanvasStore.use.creatingElement();
-  const creatingCustomShape = useCanvasStore.use.creatingCustomShape();
   const showRuler = useCanvasStore.use.showRuler();
   const gridLineSize = useCanvasStore.use.gridLineSize();
   const setActiveElementIdList = useCanvasStore.use.setActiveElementIdList();
@@ -86,7 +86,6 @@ export function Canvas(_props: CanvasProps) {
   const spaceKeyState = useKeyboardStore((state) => state.spaceKeyState);
 
   const [alignmentLines, setAlignmentLines] = useState<AlignmentLineProps[]>([]);
-  const [linkDialogVisible, setLinkDialogVisible] = useState(false);
 
   // Local element list for drag/scale/rotate operations
   const elementListRef = useRef<PPTElement[]>(elements || []);
@@ -104,7 +103,7 @@ export function Canvas(_props: CanvasProps) {
   const { viewportStyles, dragViewport } = useViewportSize(canvasRef);
 
   // Initialize drop handler
-  useDrop(canvasRef);
+  useDrop(canvasRef, viewportRef, canvasScale);
 
   // Element drag (with alignment snapping)
   const { dragElement } = useDragElement(elementListRef, setElementList, setAlignmentLines);
@@ -159,65 +158,70 @@ export function Canvas(_props: CanvasProps) {
   };
 
   // Double-click blank area to insert text
-  const handleDblClick = (_e: React.MouseEvent) => {
-    if (activeElementIdList.length || creatingElement || creatingCustomShape) return;
+  const handleDblClick = (e: React.MouseEvent) => {
+    if (activeElementIdList.length || creatingElement) return;
     if (!viewportRef.current) return;
 
-    const _viewportRect = viewportRef.current.getBoundingClientRect();
-    // TODO: implement createTextElement (use _viewportRect + e.pageX/Y + canvasScale)
+    const target = e.target as HTMLElement;
+    if (target.closest('.editable-element')) return;
+
+    insertCanvasText(
+      '',
+      e.clientX,
+      e.clientY,
+      viewportRef.current.getBoundingClientRect(),
+      canvasScale,
+      addElement,
+    );
   };
 
-  const openLinkDialog = () => {
-    setLinkDialogVisible(true);
-  };
-
-  const { pasteElement, selectAllElements, deleteAllElements } = useCanvasOperations();
+  const { addElement, pasteElement, selectAllElements, deleteAllElements } = useCanvasOperations();
 
   const contextmenus = (): ContextmenuItem[] => {
     return [
       {
-        text: '粘贴',
+        text: t('edit.canvas.paste'),
         subText: 'Ctrl + V',
         handler: pasteElement,
       },
       {
-        text: '全选',
+        text: t('edit.canvas.selectAll'),
         subText: 'Ctrl + A',
         handler: selectAllElements,
       },
       {
-        text: '标尺',
+        text: t('edit.canvas.ruler'),
         subText: showRuler ? '√' : '',
         handler: () => setRulerState(!showRuler),
       },
       {
-        text: '网格线',
+        text: t('edit.canvas.grid'),
         handler: () => setGridLineSize(gridLineSize ? 0 : 50),
         children: [
           {
-            text: '无',
+            text: t('edit.canvas.none'),
             subText: gridLineSize === 0 ? '√' : '',
             handler: () => setGridLineSize(0),
           },
           {
-            text: '小',
+            text: t('edit.canvas.small'),
             subText: gridLineSize === 25 ? '√' : '',
             handler: () => setGridLineSize(25),
           },
           {
-            text: '中',
+            text: t('edit.canvas.medium'),
             subText: gridLineSize === 50 ? '√' : '',
             handler: () => setGridLineSize(50),
           },
           {
-            text: '大',
+            text: t('edit.canvas.large'),
             subText: gridLineSize === 100 ? '√' : '',
             handler: () => setGridLineSize(100),
           },
         ],
       },
       {
-        text: '重置当前页',
+        text: t('edit.canvas.clearSlide'),
         handler: deleteAllElements,
       },
     ];
@@ -235,15 +239,6 @@ export function Canvas(_props: CanvasProps) {
           {/* Element creation selection */}
           {creatingElement && (
             <ElementCreateSelection onCreated={insertElementFromCreateSelection} />
-          )}
-
-          {/* Custom shape creation canvas */}
-          {creatingCustomShape && (
-            <ShapeCreateCanvas
-              onCreated={(_data) => {
-                // TODO: implement insertCustomShape
-              }}
-            />
           )}
 
           {/* Viewport wrapper */}
@@ -292,7 +287,6 @@ export function Canvas(_props: CanvasProps) {
                       scaleElement={scaleElement}
                       dragLineElement={dragLineElement}
                       moveShapeKeypoint={moveShapeKeypoint}
-                      openLinkDialog={openLinkDialog}
                     />
                   ),
               )}
@@ -334,7 +328,6 @@ export function Canvas(_props: CanvasProps) {
                     elementIndex={index + 1}
                     isMultiSelect={activeElementIdList.length > 1}
                     selectElement={selectElement}
-                    openLinkDialog={openLinkDialog}
                   />
                 ) : null,
               )}
@@ -346,9 +339,6 @@ export function Canvas(_props: CanvasProps) {
 
           {/* Drag mask when space key is pressed */}
           {spaceKeyState && <div className="drag-mask absolute inset-0 cursor-grab" />}
-
-          {/* TODO: Add LinkDialog modal */}
-          {linkDialogVisible && <div>LinkDialog placeholder</div>}
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent>

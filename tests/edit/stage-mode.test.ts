@@ -86,6 +86,32 @@ describe('isCurrentSceneEditable', () => {
       }),
     ).toBe(false);
   });
+
+  test('returns false when the server denies persistence', () => {
+    expect(
+      isCurrentSceneEditable({
+        currentSceneId: 'scene-1',
+        sceneCount: 1,
+        generatingOutlineCount: 0,
+        hasCurrentScene: true,
+        sceneType: 'slide',
+        canPersist: false,
+      }),
+    ).toBe(false);
+  });
+
+  test('does not expose Pro mode for scene types without a real editor', () => {
+    expect(
+      isCurrentSceneEditable({
+        currentSceneId: 'scene-1',
+        sceneCount: 1,
+        generatingOutlineCount: 0,
+        hasCurrentScene: true,
+        sceneType: 'pbl',
+        canPersist: true,
+      }),
+    ).toBe(false);
+  });
 });
 
 describe('sceneEditorRegistry', () => {

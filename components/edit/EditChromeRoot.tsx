@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { EditShell } from '@/components/edit/EditShell';
 import { SlideNavRail } from '@/components/edit/SlideNavRail';
 import { AgentPanel } from '@/components/edit/AgentPanel/AgentPanel';
@@ -40,6 +40,19 @@ interface EditChromeRootProps {
  * `mode === 'edit' && currentScene` to satisfy this contract.
  */
 export function EditChromeRoot({ scene, isEditable, onToggleEditMode }: EditChromeRootProps) {
+  const [mobileDrawer, setMobileDrawer] = useState<'nav' | 'agent' | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const query = window.matchMedia('(max-width: 767px)');
+    const sync = () => {
+      setIsMobile(query.matches);
+      if (!query.matches) setMobileDrawer(null);
+    };
+    sync();
+    query.addEventListener('change', sync);
+    return () => query.removeEventListener('change', sync);
+  }, []);
   // Mark the body while edit mode is mounted, so the editor-scoped CSS
   // rule in globals.css that pins `body.padding-right` to 0 only fires
   // in Pro mode — not on non-editor pages where Radix's
@@ -91,7 +104,13 @@ export function EditChromeRoot({ scene, isEditable, onToggleEditMode }: EditChro
   return (
     <EditShell
       scene={scene}
-      leftRail={<SlideNavRail />}
+      leftRail={
+        <SlideNavRail
+          mobileMode={isMobile}
+          mobileOpen={mobileDrawer === 'nav'}
+          onMobileOpenChange={(open) => setMobileDrawer(open ? 'nav' : null)}
+        />
+      }
       rightRail={
         showAgentPanel ? (
           <AgentPanel
@@ -100,6 +119,9 @@ export function EditChromeRoot({ scene, isEditable, onToggleEditMode }: EditChro
             clearThread={agentRuntime.clearThread}
             hasMessages={agentRuntime.hasMessages}
             canSend={agentEnabled}
+            mobileMode={isMobile}
+            mobileOpen={mobileDrawer === 'agent'}
+            onMobileOpenChange={(open) => setMobileDrawer(open ? 'agent' : null)}
           />
         ) : undefined
       }

@@ -41,38 +41,36 @@ export async function saveStageData(stageId: string, data: StageStoreData): Prom
   try {
     const now = Date.now();
 
-    // Save to stages table
-    await db.stages.put({
-      id: stageId,
-      name: data.stage.name || 'Untitled Stage',
-      description: data.stage.description,
-      createdAt: data.stage.createdAt || now,
-      updatedAt: now,
-      languageDirective: data.stage.languageDirective,
-      skillPromptContext: data.stage.skillPromptContext,
-      style: data.stage.style,
-      currentSceneId: data.currentSceneId || undefined,
-      agentIds: data.stage.agentIds,
-      videoManifest: data.stage.videoManifest,
-      interactiveMode: data.stage.interactiveMode,
-      taskEngineMode: data.stage.taskEngineMode,
+    await db.transaction('rw', [db.stages, db.scenes], async () => {
+      await db.stages.put({
+        id: stageId,
+        name: data.stage.name || 'Untitled Stage',
+        description: data.stage.description,
+        createdAt: data.stage.createdAt || now,
+        updatedAt: now,
+        languageDirective: data.stage.languageDirective,
+        skillPromptContext: data.stage.skillPromptContext,
+        style: data.stage.style,
+        currentSceneId: data.currentSceneId || undefined,
+        agentIds: data.stage.agentIds,
+        videoManifest: data.stage.videoManifest,
+        interactiveMode: data.stage.interactiveMode,
+        taskEngineMode: data.stage.taskEngineMode,
+      });
+
+      await db.scenes.where('stageId').equals(stageId).delete();
+      if (data.scenes.length > 0) {
+        await db.scenes.bulkPut(
+          data.scenes.map((scene, index) => ({
+            ...scene,
+            stageId,
+            order: scene.order ?? index,
+            createdAt: scene.createdAt || now,
+            updatedAt: scene.updatedAt || now,
+          })),
+        );
+      }
     });
-
-    // Delete old scenes first to avoid orphaned data
-    await db.scenes.where('stageId').equals(stageId).delete();
-
-    // Save new scenes
-    if (data.scenes && data.scenes.length > 0) {
-      await db.scenes.bulkPut(
-        data.scenes.map((scene, index) => ({
-          ...scene,
-          stageId,
-          order: scene.order ?? index,
-          createdAt: scene.createdAt || now,
-          updatedAt: scene.updatedAt || now,
-        })),
-      );
-    }
 
     // Save chat sessions to independent table
     if (data.chats) {

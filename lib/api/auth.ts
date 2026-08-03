@@ -228,6 +228,52 @@ export async function requireSuperAdminOrOrgAuthor(
   }
 }
 
+/**
+ * Mutation permission for an existing classroom.
+ * Tenant admins may edit every classroom in their organization; an author may
+ * edit only classrooms they own; the configured super-admin may edit all.
+ */
+export async function requireSuperAdminOrOrgEditor(
+  req: NextRequest,
+  orgId: string,
+  ownerId: string,
+): Promise<AuthResult> {
+  const auth = await requireAuth(req);
+  if (auth.response) return auth;
+  if (isSuperAdminEmail(auth.user.email)) return auth;
+
+  try {
+    const supabase = await createServerSupabaseClient();
+    const { data: membership } = await supabase
+      .from('org_members')
+      .select('role')
+      .eq('org_id', orgId)
+      .eq('user_id', auth.user.id)
+      .single();
+    const canEdit =
+      membership &&
+      (['admin', 'manager'].includes(membership.role) ||
+        (membership.role === 'author' && auth.user.id === ownerId));
+    if (!canEdit) {
+      return {
+        response: NextResponse.json(
+          { error: 'Classroom editor access required', code: 'FORBIDDEN', status: 403 },
+          { status: 403 },
+        ),
+      };
+    }
+    return auth;
+  } catch (err) {
+    log.error('Classroom editor check error:', err instanceof Error ? err.message : String(err));
+    return {
+      response: NextResponse.json(
+        { error: 'Failed to verify classroom editor role', code: 'INTERNAL_ERROR', status: 500 },
+        { status: 500 },
+      ),
+    };
+  }
+}
+
 // ---------------------------------------------------------------------------
 // requireSuperAdminOrOrgMember — auth + (super admin OR member of orgId)
 // Used for classroom reads: any member of the owning org (trainer or

@@ -80,7 +80,7 @@ function ToggleButton({ label, active, payload, run, children }: ToggleButtonPro
     <BarButton
       label={label}
       onClick={() => run(payload)}
-      className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
+      className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors max-md:h-11 max-md:w-11 ${
         active
           ? 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300'
           : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
@@ -102,7 +102,7 @@ export const FONT_SIZE_MAX = 96;
 
 // Subtle raised −/+ button inside the size stepper pill.
 const STEP_BUTTON =
-  'flex h-7 w-7 items-center justify-center rounded text-zinc-600 transition-colors ' +
+  'flex h-7 w-7 items-center justify-center rounded text-zinc-600 transition-colors max-md:h-11 max-md:w-11 ' +
   'hover:bg-white hover:text-zinc-900 hover:shadow-sm ' +
   'dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100';
 
@@ -136,7 +136,7 @@ export function TextFormatBar({ elementId, attrs }: TextFormatBarProps) {
   return (
     // w-max keeps the row at its natural width so the popover (w-auto) sizes to
     // it — one clean line, nothing squished.
-    <div className="flex w-max items-center gap-1">
+    <div data-testid="text-format-bar" className="flex w-max items-center gap-1">
       {/* Font — design-system Select; options come from the FONTS registry
           (configs/font.ts), scoped to fonts the app actually loads. */}
       <Select
@@ -146,7 +146,7 @@ export function TextFormatBar({ elementId, attrs }: TextFormatBarProps) {
         <SelectTrigger
           size="sm"
           aria-label={t('edit.text.font')}
-          className="w-32 border-0 px-2 text-xs font-normal text-zinc-700 shadow-none hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          className="w-32 border-0 px-2 text-xs font-normal text-zinc-700 shadow-none hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800 max-md:h-11"
         >
           {/* Render the trigger text via children — Radix's `placeholder` only
               fires for an *empty* `value`, not for an unmatched non-empty one,
@@ -234,7 +234,7 @@ export function TextFormatBar({ elementId, attrs }: TextFormatBarProps) {
             type="button"
             aria-label={t('edit.text.color')}
             onMouseDown={(e) => e.preventDefault()}
-            className="flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            className="flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 max-md:h-11 max-md:w-11"
           >
             <span
               className="h-4 w-4 rounded ring-1 ring-inset ring-black/15 dark:ring-white/20"

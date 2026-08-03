@@ -1,45 +1,102 @@
 import { useEffect, type RefObject } from 'react';
 import { useCanvasStore } from '@/lib/store';
+import { createElementId } from '@/lib/edit/element-id';
+import { createDefaultTextElement, plainTextToParagraphHtml } from '@/lib/edit/slide-edit-elements';
+import { useCanvasOperations } from '@/lib/hooks/use-canvas-operations';
+import type { PPTTextElement } from '@openmaic/dsl';
 
-export function useDrop(elementRef: RefObject<HTMLElement | null>) {
+interface CanvasRect {
+  readonly left: number;
+  readonly top: number;
+  readonly right: number;
+  readonly bottom: number;
+}
+
+export function canvasPointFromClient(
+  clientX: number,
+  clientY: number,
+  viewportRect: CanvasRect,
+  canvasScale: number,
+) {
+  if (
+    canvasScale <= 0 ||
+    clientX < viewportRect.left ||
+    clientX >= viewportRect.right ||
+    clientY < viewportRect.top ||
+    clientY >= viewportRect.bottom
+  ) {
+    return null;
+  }
+
+  return {
+    left: (clientX - viewportRect.left) / canvasScale,
+    top: (clientY - viewportRect.top) / canvasScale,
+  };
+}
+
+export function createCanvasTextElement(text: string, left: number, top: number) {
+  return {
+    ...createDefaultTextElement(createElementId('text')),
+    left,
+    top,
+    content: text ? plainTextToParagraphHtml(text) : '<p><br></p>',
+  };
+}
+
+export function insertCanvasText(
+  text: string,
+  clientX: number,
+  clientY: number,
+  viewportRect: CanvasRect,
+  canvasScale: number,
+  addElement: (element: PPTTextElement) => void,
+) {
+  const point = canvasPointFromClient(clientX, clientY, viewportRect, canvasScale);
+  if (!point) return false;
+
+  addElement(createCanvasTextElement(text, point.left, point.top));
+  return true;
+}
+
+export function useDrop(
+  elementRef: RefObject<HTMLElement | null>,
+  viewportRef: RefObject<HTMLElement | null>,
+  canvasScale: number,
+) {
   const disableHotkeys = useCanvasStore.use.disableHotkeys();
+  const { addElement } = useCanvasOperations();
 
   useEffect(() => {
     const element = elementRef.current;
-    // Handle drop of elements/pages onto canvas
     const handleDrop = (e: DragEvent) => {
-      if (!e.dataTransfer || e.dataTransfer.items.length === 0) return;
-      if (disableHotkeys) return;
+      e.preventDefault();
+      if (!e.dataTransfer || disableHotkeys || !viewportRef.current) return;
 
-      const firstItem = e.dataTransfer.items[0];
-      if (firstItem && firstItem.kind === 'string' && firstItem.type === 'text/plain') {
-        firstItem.getAsString((_text) => {
-          if (disableHotkeys) return;
-          // TODO: implement createTextElement
-        });
-      }
+      const text = e.dataTransfer.getData('text/plain');
+      if (!text.trim()) return;
+
+      insertCanvasText(
+        text,
+        e.clientX,
+        e.clientY,
+        viewportRef.current.getBoundingClientRect(),
+        canvasScale,
+        addElement,
+      );
     };
 
     const preventDefault = (e: DragEvent) => e.preventDefault();
 
     if (element) {
       element.addEventListener('drop', handleDrop);
+      element.addEventListener('dragover', preventDefault);
     }
-
-    document.addEventListener('dragleave', preventDefault);
-    document.addEventListener('drop', preventDefault);
-    document.addEventListener('dragenter', preventDefault);
-    document.addEventListener('dragover', preventDefault);
 
     return () => {
       if (element) {
         element.removeEventListener('drop', handleDrop);
+        element.removeEventListener('dragover', preventDefault);
       }
-
-      document.removeEventListener('dragleave', preventDefault);
-      document.removeEventListener('drop', preventDefault);
-      document.removeEventListener('dragenter', preventDefault);
-      document.removeEventListener('dragover', preventDefault);
     };
-  }, [elementRef, disableHotkeys]);
+  }, [elementRef, viewportRef, canvasScale, disableHotkeys, addElement]);
 }

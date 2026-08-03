@@ -118,7 +118,7 @@ function ThumbItemComponent({
         // hover-revealed three-dot menu (the only editor affordance
         // overlaid on the playback shape).
         className={cn(
-          'group/thumb relative flex cursor-pointer select-none flex-col gap-1 rounded-lg p-1.5',
+          'group/thumb relative flex min-h-11 cursor-pointer select-none flex-col gap-1 rounded-lg p-1.5',
           'outline-none transition-colors duration-150',
           active
             ? 'bg-violet-50 ring-1 ring-violet-200 dark:bg-violet-900/20 dark:ring-violet-700'
@@ -197,8 +197,8 @@ function ThumbItemComponent({
                   aria-label={t('edit.nav.moreActions')}
                   data-testid="slide-nav-more"
                   className={cn(
-                    'shrink-0 rounded p-0.5 text-zinc-400 transition-opacity',
-                    'opacity-0 group-hover/thumb:opacity-100 data-[state=open]:opacity-100',
+                    'shrink-0 rounded p-0.5 text-zinc-400 transition-opacity max-md:flex max-md:size-11 max-md:items-center max-md:justify-center',
+                    'opacity-0 group-hover/thumb:opacity-100 data-[state=open]:opacity-100 max-md:opacity-100',
                     'hover:bg-zinc-200/80 hover:text-zinc-700',
                     'dark:hover:bg-zinc-700 dark:hover:text-zinc-200',
                   )}
@@ -212,13 +212,20 @@ function ThumbItemComponent({
                 className="min-w-36"
                 onClick={(e) => e.stopPropagation()}
               >
-                <DropdownMenuItem onSelect={startRename}>{t('edit.nav.rename')}</DropdownMenuItem>
+                <DropdownMenuItem className="max-md:min-h-11" onSelect={startRename}>
+                  {t('edit.nav.rename')}
+                </DropdownMenuItem>
                 {SCENE_CREATION_ENABLED && (
-                  <DropdownMenuItem onSelect={onDuplicate}>
+                  <DropdownMenuItem className="max-md:min-h-11" onSelect={onDuplicate}>
                     {t('edit.nav.duplicate')}
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem disabled={!canDelete} onSelect={onDelete} variant="destructive">
+                <DropdownMenuItem
+                  className="max-md:min-h-11"
+                  disabled={!canDelete}
+                  onSelect={onDelete}
+                  variant="destructive"
+                >
                   {t('edit.nav.delete')}
                 </DropdownMenuItem>
               </DropdownMenuContent>

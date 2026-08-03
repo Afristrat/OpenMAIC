@@ -32,8 +32,10 @@ import { preloadEditor } from '@/lib/edit/preload-editor';
  */
 export function Stage({
   onRetryOutline,
+  canEdit = true,
 }: {
   onRetryOutline?: (outlineId: string) => Promise<void>;
+  canEdit?: boolean;
 }) {
   const { mode, setMode, scenes, currentSceneId, generatingOutlines, stage } = useStageStore();
   const currentScene = useStageStore((s) => s.getCurrentScene());
@@ -47,6 +49,8 @@ export function Stage({
     sceneCount: scenes.length,
     generatingOutlineCount: generatingOutlines.length,
     hasCurrentScene: !!currentScene,
+    sceneType: currentScene?.type,
+    canPersist: canEdit,
   });
 
   // Cross-tab edit lock (#571). Lives at this layer because entry must

@@ -14,9 +14,21 @@ import { MediaStageProvider } from '@/lib/contexts/media-stage-context';
 import { generateMediaForOutlines } from '@/lib/media/media-orchestrator';
 import { migrateScene } from '@/lib/edit/slide-schema';
 import type { Scene } from '@/lib/types/stage';
+import { saveStageData, type StageStoreData } from '@/lib/utils/stage-storage';
+import {
+  activateClassroomPersistence,
+  ClassroomPersistence,
+  clearUnsyncedClassroom,
+  hasUnsyncedClassroom,
+} from '@/lib/edit/classroom-persistence';
 
 const log = createLogger('Classroom');
 const E2E_TEST_MODE = process.env.NEXT_PUBLIC_E2E_TEST_MODE === 'true';
+
+function currentSnapshot(): StageStoreData | null {
+  const { stage, scenes, currentSceneId, chats } = useStageStore.getState();
+  return stage ? { stage, scenes, currentSceneId, chats } : null;
+}
 
 export default function ClassroomDetailPage() {
   const params = useParams();
@@ -26,10 +38,11 @@ export default function ClassroomDetailPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [canEdit, setCanEdit] = useState(false);
 
   const generationStartedRef = useRef(false);
   const serverBackedRef = useRef(false);
-  const serverSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const persistenceRef = useRef<ClassroomPersistence | null>(null);
 
   const { generateRemaining, retrySingleOutline, stop } = useSceneGenerator({
     onComplete: () => {
@@ -45,33 +58,49 @@ export default function ClassroomDetailPage() {
       // keeping the whole classroom behind that request made cached
       // classrooms (including plug-in scenes) appear to load forever.
       if (useStageStore.getState().stage) setLoading(false);
+      const localSnapshot = currentSnapshot();
+      const protectUnsyncedLocal =
+        localSnapshot?.stage.id === classroomId && hasUnsyncedClassroom(classroomId);
+      if (protectUnsyncedLocal && localSnapshot) {
+        persistenceRef.current?.schedule(localSnapshot, true);
+      }
       // The server copy is authoritative for generated classrooms. IndexedDB
       // may contain the snapshot created before asynchronous media generation
       // finished; preferring it would keep a classroom visually intact but
       // silently omit its newly persisted narration after a refresh.
       serverBackedRef.current = false;
+      setCanEdit(false);
       try {
         const res = await fetch(`/api/classroom?id=${encodeURIComponent(classroomId)}`);
         if (res.ok) {
           const json = await res.json();
           if (json.success && json.classroom) {
+            setCanEdit(Boolean(json.canEdit));
             const { stage, scenes } = json.classroom;
-            useStageStore.getState().setStage(stage);
-            // Normalize legacy slide content (missing schemaVersion) on the
-            // way in, same as the store's setScenes/loadFromStorage paths —
-            // server snapshots predate the schema field.
-            const migrated = (scenes as Scene[]).map(migrateScene);
-            useStageStore.setState({
-              scenes: migrated,
-              currentSceneId: migrated[0]?.id ?? null,
-              // Match `loadFromStorage` semantics: mode is transient UI
-              // state, not persisted with the stage. Reset on every
-              // classroom load so SPA navigation doesn't carry Pro
-              // mode across.
-              mode: 'playback',
-            });
-            serverBackedRef.current = true;
-            log.info('Loaded authoritative server-side classroom:', classroomId);
+            if (protectUnsyncedLocal && localSnapshot) {
+              serverBackedRef.current = true;
+              log.info('Preserved unsynced local classroom:', classroomId);
+            } else {
+              if (!localSnapshot) clearUnsyncedClassroom(classroomId);
+              useStageStore.getState().setStage(stage);
+              // Normalize legacy slide content (missing schemaVersion) on the
+              // way in, same as the store's setScenes/loadFromStorage paths —
+              // server snapshots predate the schema field.
+              const migrated = (scenes as Scene[]).map(migrateScene);
+              useStageStore.setState({
+                scenes: migrated,
+                currentSceneId: migrated[0]?.id ?? null,
+                // Match `loadFromStorage` semantics: mode is transient UI
+                // state, not persisted with the stage. Reset on every
+                // classroom load so SPA navigation doesn't carry Pro
+                // mode across.
+                mode: 'playback',
+              });
+              serverBackedRef.current = true;
+              const serverSnapshot = currentSnapshot();
+              if (serverSnapshot) await saveStageData(classroomId, serverSnapshot);
+              log.info('Loaded authoritative server-side classroom:', classroomId);
+            }
 
             // Hydrate server-generated agents into IndexedDB + registry.
             // Don't set selectedAgentIds here — the general agent
@@ -82,14 +111,20 @@ export default function ClassroomDetailPage() {
               log.info('Hydrated server-generated agents for stage:', stage.id);
             }
           }
-        } else if (!useStageStore.getState().stage) {
-          const failure = (await res.json().catch(() => null)) as { error?: string } | null;
-          throw new Error(failure?.error || `Classroom API returned HTTP ${res.status}`);
+        } else {
+          const hasLocalClassroom = Boolean(useStageStore.getState().stage);
+          if (hasLocalClassroom && res.status === 404) {
+            setCanEdit(true);
+          } else if (!hasLocalClassroom) {
+            const failure = (await res.json().catch(() => null)) as { error?: string } | null;
+            throw new Error(failure?.error || `Classroom API returned HTTP ${res.status}`);
+          }
         }
       } catch (fetchErr) {
         // Local classrooms remain usable offline. A server-backed classroom
         // always refreshes when reachable, which prevents stale media refs.
         log.warn('Authoritative classroom fetch failed:', fetchErr);
+        if (useStageStore.getState().stage) setCanEdit(true);
       }
 
       // Restore completed media generation tasks from IndexedDB
@@ -152,30 +187,54 @@ export default function ClassroomDetailPage() {
   useEffect(() => {
     if (E2E_TEST_MODE) return;
 
+    const controller = new ClassroomPersistence({
+      stageId: classroomId,
+      saveLocal: (snapshot) => saveStageData(classroomId, snapshot),
+      saveRemote: async (snapshot) => {
+        const response = await fetch('/api/classroom', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ stage: snapshot.stage, scenes: snapshot.scenes }),
+          keepalive: true,
+        });
+        if (!response.ok) throw new Error(`Classroom save returned HTTP ${response.status}`);
+      },
+    });
+    persistenceRef.current = controller;
+    const deactivate = activateClassroomPersistence(controller);
     const unsubscribe = useStageStore.subscribe((state, previous) => {
       if (
         !serverBackedRef.current ||
         (state.stage === previous.stage && state.scenes === previous.scenes)
       )
         return;
-      if (serverSaveTimerRef.current) clearTimeout(serverSaveTimerRef.current);
-      serverSaveTimerRef.current = setTimeout(() => {
-        const latest = useStageStore.getState();
-        if (!latest.stage) return;
-        void fetch('/api/classroom', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ stage: latest.stage, scenes: latest.scenes }),
-        }).then((response) => {
-          if (!response.ok) log.error('Server classroom save failed:', response.status);
-        });
-      }, 800);
+      const snapshot = currentSnapshot();
+      if (snapshot?.stage.id === classroomId) controller.schedule(snapshot);
     });
+    const flushOnPageHide = () => void controller.flush();
+    const flushWhenHidden = () => {
+      if (document.visibilityState === 'hidden') void controller.flush();
+    };
+    const flushBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (controller.state === 'saved') return;
+      void controller.flush();
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('pagehide', flushOnPageHide);
+    document.addEventListener('visibilitychange', flushWhenHidden);
+    window.addEventListener('beforeunload', flushBeforeUnload);
+
     return () => {
       unsubscribe();
-      if (serverSaveTimerRef.current) clearTimeout(serverSaveTimerRef.current);
+      window.removeEventListener('pagehide', flushOnPageHide);
+      document.removeEventListener('visibilitychange', flushWhenHidden);
+      window.removeEventListener('beforeunload', flushBeforeUnload);
+      deactivate();
+      persistenceRef.current = null;
+      void controller.flush().finally(() => controller.dispose());
     };
-  }, []);
+  }, [classroomId]);
 
   useEffect(() => {
     // Reset loading state on course switch to unmount Stage during transition,
@@ -292,7 +351,7 @@ export default function ClassroomDetailPage() {
               </div>
             </div>
           ) : (
-            <Stage onRetryOutline={retrySingleOutline} />
+            <Stage onRetryOutline={retrySingleOutline} canEdit={canEdit} />
           )}
         </div>
       </MediaStageProvider>

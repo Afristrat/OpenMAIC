@@ -48,7 +48,6 @@ interface OperateProps {
     element: PPTShapeElement,
     index: number,
   ) => void;
-  readonly openLinkDialog: () => void;
 }
 
 export function Operate({
@@ -61,7 +60,6 @@ export function Operate({
   scaleElement,
   dragLineElement,
   moveShapeKeypoint,
-  openLinkDialog: _openLinkDialog,
 }: OperateProps) {
   const canvasScale = useCanvasStore.use.canvasScale();
   const toolbarState = useCanvasStore.use.toolbarState();

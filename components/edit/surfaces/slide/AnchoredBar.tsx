@@ -69,7 +69,7 @@ export function AnchoredBar({ elementId, children }: AnchoredBarProps) {
           onOpenAutoFocus={(e) => e.preventDefault()}
           onPointerDownOutside={(e) => e.preventDefault()}
           onFocusOutside={(e) => e.preventDefault()}
-          className="w-auto max-w-[92vw] p-1"
+          className="w-auto max-w-[92vw] overflow-x-auto p-1"
         >
           {children}
         </PopoverContent>

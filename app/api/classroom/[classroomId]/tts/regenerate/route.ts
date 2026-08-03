@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { requireSuperAdminOrOrgAdmin } from '@/lib/api/auth';
+import { requireSuperAdminOrOrgEditor } from '@/lib/api/auth';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { generateTTSForClassroom } from '@/lib/server/classroom-media-generation';
 import {
@@ -38,7 +38,7 @@ export async function POST(
 
   const ownership = await readClassroomOwnership(classroomId);
   if (!ownership) return apiError('INVALID_REQUEST', 404, 'Classroom introuvable');
-  const auth = await requireSuperAdminOrOrgAdmin(request, ownership.orgId);
+  const auth = await requireSuperAdminOrOrgEditor(request, ownership.orgId, ownership.ownerId);
   if (auth.response) return auth.response;
 
   const classroom = await readClassroom(classroomId);

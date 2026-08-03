@@ -24,7 +24,7 @@ export function InsertionZone({ label, onInsert }: InsertionZoneProps) {
   // top, and its violet ring clips through the `+` badge regardless of
   // any z-index applied inside the InsertionZone itself.
   return (
-    <div className="group/insert relative isolate z-20 h-2 cursor-pointer overflow-visible">
+    <div className="group/insert relative isolate z-20 h-2 cursor-pointer overflow-visible max-md:h-11">
       <button
         type="button"
         onClick={onInsert}
@@ -50,7 +50,7 @@ export function InsertionZone({ label, onInsert }: InsertionZoneProps) {
           // Popup motion: start tiny + transparent, end full size with a
           // small overshoot. The custom cubic-bezier is a classic
           // "back-ease-out" giving it a quick, springy reveal.
-          'opacity-0 scale-50',
+          'opacity-0 scale-50 max-md:h-11 max-md:w-11 max-md:opacity-100 max-md:scale-100',
           'group-hover/insert:opacity-100 group-hover/insert:scale-100',
           'group-focus-within/insert:opacity-100 group-focus-within/insert:scale-100',
           'transition-[opacity,transform] duration-200',

@@ -2,12 +2,18 @@
 
 import { ArrowLeft, Redo2, Undo2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import type { ReactNode } from 'react';
+import { useState, useSyncExternalStore, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { cn } from '@/lib/utils';
 import type { EditorCommand, SurfaceHistory } from '@/lib/edit/scene-editor-surface';
+import {
+  flushClassroomPersistence,
+  getClassroomSaveState,
+  retryClassroomPersistence,
+  subscribeClassroomSaveState,
+} from '@/lib/edit/classroom-persistence';
 
 interface CommandBarProps {
   readonly title: string;
@@ -35,13 +41,25 @@ interface CommandBarProps {
 export function CommandBar({ title, history, commands, trailing }: CommandBarProps) {
   const { t } = useI18n();
   const router = useRouter();
+  const [leaving, setLeaving] = useState(false);
+  const saveState = useSyncExternalStore(
+    subscribeClassroomSaveState,
+    getClassroomSaveState,
+    getClassroomSaveState,
+  );
+
+  const backToHome = async () => {
+    setLeaving(true);
+    if (await flushClassroomPersistence()) router.push('/app');
+    setLeaving(false);
+  };
 
   return (
-    <header className="flex h-20 shrink-0 items-center gap-3 border-b border-zinc-200/60 px-8 dark:border-zinc-800/60">
-      <div className="flex min-w-0 flex-1 items-center gap-2">
+    <header className="flex h-20 shrink-0 items-center gap-3 border-b border-zinc-200/60 px-8 dark:border-zinc-800/60 max-md:h-auto max-md:min-h-20 max-md:flex-wrap max-md:gap-2 max-md:px-2 max-md:py-2">
+      <div className="flex min-w-0 flex-1 items-center gap-2 max-md:basis-full">
         {/* Back-to-home — mirrors playback Header's leftmost button so the
             user has the same global-out affordance across modes. */}
-        <IconButton title={t('generation.backToHome')} onClick={() => router.push('/app')}>
+        <IconButton title={t('generation.backToHome')} disabled={leaving} onClick={backToHome}>
           <ArrowLeft className="h-4 w-4" />
         </IconButton>
         {history && (
@@ -62,7 +80,22 @@ export function CommandBar({ title, history, commands, trailing }: CommandBarPro
         </span>
       </div>
 
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex shrink-0 items-center gap-2 max-md:w-full max-md:overflow-x-auto">
+        <div
+          role="status"
+          aria-live="polite"
+          className={cn(
+            'flex items-center gap-2 text-xs',
+            saveState === 'error' ? 'text-destructive' : 'text-zinc-500 dark:text-zinc-400',
+          )}
+        >
+          <span>{t(`edit.save.${saveState}`)}</span>
+          {saveState === 'error' && (
+            <Button size="sm" variant="outline" onClick={retryClassroomPersistence}>
+              {t('edit.save.retry')}
+            </Button>
+          )}
+        </div>
         {commands && commands.length > 0 && (
           <div className="flex shrink-0 items-center gap-1">
             {commands.map((command) => (
@@ -94,10 +127,11 @@ function IconButton({
         <Button
           size="icon-sm"
           variant="ghost"
-          className="h-8 w-8 shrink-0 rounded-xl text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+          className="h-8 w-8 shrink-0 rounded-xl text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 max-md:h-11 max-md:w-auto max-md:gap-2 max-md:px-3"
           {...props}
         >
           {children}
+          <span className="hidden text-xs max-md:inline">{title}</span>
         </Button>
       </TooltipTrigger>
       <TooltipContent>{title}</TooltipContent>
