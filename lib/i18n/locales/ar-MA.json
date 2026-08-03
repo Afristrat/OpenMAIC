@@ -167,7 +167,8 @@
       "fitCanvas": "إدخال ضمن الشريحة"
     },
     "layout": {
-      "outOfBounds": "{{count}} خارج الشريحة"
+      "outOfBounds": "{{count}} خارج الشريحة",
+      "overlap": "{{count}} تداخل"
     },
     "undo": "تراجع",
     "redo": "إعادة",

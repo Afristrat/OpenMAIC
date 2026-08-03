@@ -18,15 +18,17 @@ export function SelectionSafetyBar({ elementIds }: SelectionSafetyBarProps) {
   const { t } = useI18n();
   const content = useResolvedSlideContent();
   const setActiveElementIdList = useCanvasStore.use.setActiveElementIdList();
+  const issues = useMemo(() => auditSlideLayout(content.canvas), [content.canvas]);
   const outOfBoundsIds = useMemo(
-    () =>
-      auditSlideLayout(content.canvas)
-        .filter((issue) => issue.type === 'out-of-bounds')
-        .map((issue) => issue.elementId),
-    [content.canvas],
+    () => issues.filter((issue) => issue.type === 'out-of-bounds').map((issue) => issue.elementId),
+    [issues],
+  );
+  const overlappingIds = useMemo(
+    () => issues.flatMap((issue) => (issue.type === 'overlap' ? issue.elementIds : [])),
+    [issues],
   );
   const hasSelection = elementIds.length > 0;
-  if (!hasSelection && outOfBoundsIds.length === 0) return null;
+  if (!hasSelection && outOfBoundsIds.length === 0 && overlappingIds.length === 0) return null;
 
   return (
     <div className="absolute right-3 top-3 z-50 flex items-center gap-2 rounded-lg border border-cyan-300/40 bg-slate-950/90 p-1.5 text-white shadow-lg backdrop-blur">
@@ -40,6 +42,18 @@ export function SelectionSafetyBar({ elementIds }: SelectionSafetyBarProps) {
         >
           <TriangleAlert className="h-4 w-4" />
           {t('edit.layout.outOfBounds', { count: outOfBoundsIds.length })}
+        </Button>
+      )}
+      {overlappingIds.length > 0 && (
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="gap-1.5 border-rose-300/50 bg-rose-300/10 text-rose-100 hover:bg-rose-300/20"
+          onClick={() => setActiveElementIdList([...new Set(overlappingIds)])}
+        >
+          <TriangleAlert className="h-4 w-4" />
+          {t('edit.layout.overlap', { count: overlappingIds.length / 2 })}
         </Button>
       )}
       {hasSelection && <span className="hidden text-xs text-slate-200 sm:inline">{t('edit.selection.count', { count: elementIds.length })}</span>}

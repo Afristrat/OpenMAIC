@@ -18,4 +18,11 @@ describe('auditSlideLayout', () => {
       { type: 'overlap', elementIds: ['a', 'b'] },
     ]);
   });
+
+  test('ignores a tiny decorative contact but flags a concealing overlap', () => {
+    const tinyContact = structuredClone(slide);
+    tinyContact.elements[1].left = 119;
+    expect(auditSlideLayout(tinyContact).filter((issue) => issue.type === 'overlap')).toEqual([]);
+    expect(auditSlideLayout(slide).filter((issue) => issue.type === 'overlap')).toHaveLength(1);
+  });
 });

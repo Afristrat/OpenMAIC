@@ -151,6 +151,7 @@
   "edit.selection.count": "{{count}} selected element(s)",
   "edit.selection.fitCanvas": "Fit in slide",
   "edit.layout.outOfBounds": "{{count}} out of bounds",
+  "edit.layout.overlap": "{{count}} overlap(s)",
   "edit.undo": "Undo",
   "edit.redo": "Redo",
   "edit.delete": "Delete",

@@ -29,7 +29,12 @@ export function auditSlideLayout(slide: Slide): SlideLayoutIssue[] {
       const b = boxes[other];
       const overlapWidth = Math.min(a.range.maxX, b.range.maxX) - Math.max(a.range.minX, b.range.minX);
       const overlapHeight = Math.min(a.range.maxY, b.range.maxY) - Math.max(a.range.minY, b.range.minY);
-      if (overlapWidth > 0 && overlapHeight > 0) {
+      const overlapArea = overlapWidth * overlapHeight;
+      const smallerArea = Math.min(
+        (a.range.maxX - a.range.minX) * (a.range.maxY - a.range.minY),
+        (b.range.maxX - b.range.minX) * (b.range.maxY - b.range.minY),
+      );
+      if (overlapWidth > 0 && overlapHeight > 0 && overlapArea / smallerArea >= 0.2) {
         issues.push({ type: 'overlap', elementIds: [a.element.id, b.element.id] });
       }
     }
