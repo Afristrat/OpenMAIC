@@ -1,6 +1,6 @@
 'use client';
 
-import { ScanLine, TriangleAlert } from 'lucide-react';
+import { Move, ScanLine, TriangleAlert, WandSparkles } from 'lucide-react';
 import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { auditSlideLayout } from '@/lib/edit/slide-layout-audit';
@@ -45,20 +45,45 @@ export function SelectionSafetyBar({ elementIds }: SelectionSafetyBarProps) {
         </Button>
       )}
       {overlappingIds.length > 0 && (
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          className="gap-1.5 border-rose-300/50 bg-rose-300/10 text-rose-100 hover:bg-rose-300/20"
-          onClick={() => setActiveElementIdList([...new Set(overlappingIds)])}
-        >
-          <TriangleAlert className="h-4 w-4" />
-          {t('edit.layout.overlap', { count: overlappingIds.length / 2 })}
-        </Button>
+        <>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="gap-1.5 border-rose-300/50 bg-rose-300/10 text-rose-100 hover:bg-rose-300/20"
+            onClick={() => setActiveElementIdList([...new Set(overlappingIds)])}
+          >
+            <TriangleAlert className="h-4 w-4" />
+            {t('edit.layout.overlap', { count: overlappingIds.length / 2 })}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            className="gap-1.5"
+            data-testid="resolve-slide-overlaps"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() =>
+              useSlideEditSession.getState().applyOp({
+                type: 'element.resolveOverlaps',
+                elementIds: [...new Set(overlappingIds)],
+              })
+            }
+          >
+            <WandSparkles className="h-4 w-4" />
+            {t('edit.layout.resolveOverlaps')}
+          </Button>
+        </>
       )}
       {hasSelection && (
         <span className="hidden text-xs text-slate-200 sm:inline">
           {t('edit.selection.count', { count: elementIds.length })}
+        </span>
+      )}
+      {hasSelection && (
+        <span className="hidden items-center gap-1 text-xs text-slate-300 lg:flex">
+          <Move className="h-3.5 w-3.5" />
+          {t('edit.selection.keyboardMove')}
         </span>
       )}
       {hasSelection && (

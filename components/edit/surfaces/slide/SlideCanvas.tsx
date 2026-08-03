@@ -17,6 +17,7 @@ import { AnchoredElementBar } from './AnchoredElementBar';
 import { ElementPickLayer } from './ElementPickLayer';
 import { PresentationBrandMark } from '@/components/branding/presentation-brand-mark';
 import { SelectionSafetyBar } from './SelectionSafetyBar';
+import { useSlideEditSession } from './slide-edit-session';
 
 /**
  * The slide surface's canvas. Reuses the unmodified slide renderer
@@ -46,6 +47,39 @@ export function SlideCanvas() {
       if (e.key !== 'Escape') return;
       const cs = useCanvasStore.getState();
       if (cs.creatingElement) cs.setCreatingElement(null);
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if (!event.key.startsWith('Arrow')) return;
+      const target = event.target as HTMLElement | null;
+      if (
+        target?.isContentEditable ||
+        target?.closest('input, textarea, select, [contenteditable="true"]')
+      ) {
+        return;
+      }
+
+      const elementIds = useCanvasStore.getState().activeElementIdList;
+      if (elementIds.length === 0) return;
+      const step = event.shiftKey ? 10 : 1;
+      const deltas: Record<string, readonly [number, number]> = {
+        ArrowLeft: [-step, 0],
+        ArrowRight: [step, 0],
+        ArrowUp: [0, -step],
+        ArrowDown: [0, step],
+      };
+      const [deltaX, deltaY] = deltas[event.key] ?? [0, 0];
+      event.preventDefault();
+      useSlideEditSession.getState().applyOp({
+        type: 'element.nudge',
+        elementIds: [...elementIds],
+        deltaX,
+        deltaY,
+      });
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);

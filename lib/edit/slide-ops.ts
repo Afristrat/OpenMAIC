@@ -2,6 +2,7 @@ import { current, produce } from 'immer';
 import type { SlideContent } from '@/lib/types/stage';
 import type { PPTElement, Slide } from '@openmaic/dsl';
 import { getElementListRange } from '@/lib/utils/element';
+import { auditSlideLayout } from '@/lib/edit/slide-layout-audit';
 
 type ElementPatch = Partial<PPTElement>;
 type ElementPropName = string;
@@ -73,6 +74,18 @@ export type SlideEditOperation =
   | {
       /** Move a selection into the visible slide bounds without changing its content. */
       type: 'element.fitCanvas';
+      elementIds: string[];
+    }
+  | {
+      /** Move a selection by a keyboard-sized delta while keeping it visible. */
+      type: 'element.nudge';
+      elementIds: string[];
+      deltaX: number;
+      deltaY: number;
+    }
+  | {
+      /** Separate generated elements whose bounding boxes conceal one another. */
+      type: 'element.resolveOverlaps';
       elementIds: string[];
     }
   | {
@@ -282,6 +295,14 @@ function applyOperationToContent(
         fitElementsToCanvas(draft.canvas, operation.elementIds);
         return;
       }
+      case 'element.nudge': {
+        nudgeElements(draft.canvas, operation.elementIds, operation.deltaX, operation.deltaY);
+        return;
+      }
+      case 'element.resolveOverlaps': {
+        resolveElementOverlaps(draft.canvas, operation.elementIds);
+        return;
+      }
       case 'element.removeProps': {
         const element = draft.canvas.elements.find((item) => item.id === operation.elementId);
         if (!element) return;
@@ -323,6 +344,113 @@ function fitElementsToCanvas(slide: Slide, elementIds: string[]) {
     element.left += offsetX;
     element.top += offsetY;
   });
+}
+
+function nudgeElements(slide: Slide, elementIds: string[], requestedX: number, requestedY: number) {
+  const selectedIds = new Set(elementIds);
+  const selected = slide.elements.filter((element) => selectedIds.has(element.id));
+  if (selected.length === 0) return;
+
+  const range = getElementListRange(selected);
+  const width = slide.viewportSize;
+  const height = width * slide.viewportRatio;
+  const deltaX = clampTranslation(requestedX, -range.minX, width - range.maxX);
+  const deltaY = clampTranslation(requestedY, -range.minY, height - range.maxY);
+  if (deltaX === 0 && deltaY === 0) return;
+
+  slide.elements.forEach((element) => {
+    if (!selectedIds.has(element.id)) return;
+    element.left += deltaX;
+    element.top += deltaY;
+  });
+}
+
+function resolveElementOverlaps(slide: Slide, elementIds: string[]) {
+  const targetIds = new Set(elementIds);
+  if (targetIds.size < 2) return;
+  fitElementsToCanvas(slide, elementIds);
+
+  const maxIterations = Math.max(8, slide.elements.length * slide.elements.length * 2);
+  for (let iteration = 0; iteration < maxIterations; iteration += 1) {
+    const issue = auditSlideLayout(slide).find(
+      (candidate) =>
+        candidate.type === 'overlap' &&
+        candidate.elementIds.every((elementId) => targetIds.has(elementId)),
+    );
+    if (!issue || issue.type !== 'overlap') return;
+
+    const anchor = slide.elements.find((element) => element.id === issue.elementIds[0]);
+    const moving = slide.elements.find((element) => element.id === issue.elementIds[1]);
+    if (!anchor || !moving) return;
+
+    const anchorRange = getElementListRange([anchor]);
+    const movingRange = getElementListRange([moving]);
+    const width = slide.viewportSize;
+    const height = width * slide.viewportRatio;
+    const gap = 8;
+    const requested = [
+      { x: anchorRange.maxX + gap - movingRange.minX, y: 0 },
+      { x: anchorRange.minX - gap - movingRange.maxX, y: 0 },
+      { x: 0, y: anchorRange.maxY + gap - movingRange.minY },
+      { x: 0, y: anchorRange.minY - gap - movingRange.maxY },
+    ];
+
+    const candidates = requested
+      .map(({ x, y }) => ({
+        x: clampTranslation(x, -movingRange.minX, width - movingRange.maxX),
+        y: clampTranslation(y, -movingRange.minY, height - movingRange.maxY),
+      }))
+      .filter(({ x, y }) => x !== 0 || y !== 0)
+      .filter(({ x, y }) => !rangesOverlap(anchorRange, translateRange(movingRange, x, y)))
+      .map(({ x, y }) => ({
+        x,
+        y,
+        collisions: slide.elements.filter((element) => {
+          if (element.id === moving.id) return false;
+          return rangesOverlap(getElementListRange([element]), translateRange(movingRange, x, y));
+        }).length,
+        distance: Math.abs(x) + Math.abs(y),
+      }))
+      .sort((a, b) => a.collisions - b.collisions || a.distance - b.distance);
+
+    const best = candidates[0];
+    if (!best) return;
+    moving.left += best.x;
+    moving.top += best.y;
+  }
+}
+
+interface ElementRange {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+}
+
+function clampTranslation(value: number, minimum: number, maximum: number): number {
+  if (minimum > maximum) return 0;
+  return Math.min(maximum, Math.max(minimum, value));
+}
+
+function translateRange(range: ElementRange, x: number, y: number): ElementRange {
+  return {
+    minX: range.minX + x,
+    minY: range.minY + y,
+    maxX: range.maxX + x,
+    maxY: range.maxY + y,
+  };
+}
+
+function rangesOverlap(a: ElementRange, b: ElementRange): boolean {
+  const overlapWidth = Math.min(a.maxX, b.maxX) - Math.max(a.minX, b.minX);
+  const overlapHeight = Math.min(a.maxY, b.maxY) - Math.max(a.minY, b.minY);
+  if (overlapWidth <= 0 || overlapHeight <= 0) return false;
+  const overlapArea = overlapWidth * overlapHeight;
+  const smallerArea = Math.min(
+    (a.maxX - a.minX) * (a.maxY - a.minY),
+    (b.maxX - b.minX) * (b.maxY - b.minY),
+  );
+  return smallerArea > 0 && overlapArea / smallerArea >= 0.2;
 }
 
 function isSlideEditHistory(target: SlideContent | SlideEditHistory): target is SlideEditHistory {

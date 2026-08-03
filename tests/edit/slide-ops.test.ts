@@ -7,6 +7,7 @@ import {
 } from '@/lib/edit/slide-ops';
 import type { SlideContent } from '@/lib/types/stage';
 import type { PPTElement, PPTLineElement, PPTTextElement } from '@openmaic/dsl';
+import { auditSlideLayout } from '@/lib/edit/slide-layout-audit';
 
 function textElement(overrides: Partial<PPTTextElement> = {}): PPTTextElement {
   return {
@@ -476,6 +477,49 @@ describe('element.fitCanvas', () => {
       [260, 140],
     ]);
     expect(original.canvas.elements[0]).toMatchObject({ left: -80, top: -30 });
+  });
+});
+
+describe('element.nudge', () => {
+  test('moves a multi-selection with the keyboard delta and keeps it in the canvas', () => {
+    const original = slideContent([
+      textElement({ id: 'a', left: 10, top: 10, width: 100, height: 50 }),
+      textElement({ id: 'b', left: 120, top: 70, width: 100, height: 50 }),
+    ]);
+
+    const moved = applySlideEditOperation(original, {
+      type: 'element.nudge',
+      elementIds: ['a', 'b'],
+      deltaX: -20,
+      deltaY: 10,
+    });
+
+    expect(moved.canvas.elements.map(({ left, top }) => [left, top])).toEqual([
+      [0, 20],
+      [110, 80],
+    ]);
+  });
+});
+
+describe('element.resolveOverlaps', () => {
+  test('separates concealing elements without pushing them outside the slide', () => {
+    const original = slideContent([
+      textElement({ id: 'a', left: 100, top: 100, width: 300, height: 120 }),
+      textElement({ id: 'b', left: 180, top: 120, width: 300, height: 120 }),
+      textElement({ id: 'c', left: 700, top: 350, width: 200, height: 100 }),
+    ]);
+
+    const repaired = applySlideEditOperation(original, {
+      type: 'element.resolveOverlaps',
+      elementIds: ['a', 'b'],
+    });
+
+    expect(auditSlideLayout(repaired.canvas).filter((issue) => issue.type === 'overlap')).toEqual(
+      [],
+    );
+    expect(
+      auditSlideLayout(repaired.canvas).filter((issue) => issue.type === 'out-of-bounds'),
+    ).toEqual([]);
   });
 });
 
