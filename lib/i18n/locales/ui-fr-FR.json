@@ -150,6 +150,7 @@
   "edit.proMode": "Pro",
   "edit.selection.count": "{{count}} élément(s) sélectionné(s)",
   "edit.selection.fitCanvas": "Rentrer dans le cadre",
+  "edit.layout.outOfBounds": "{{count}} hors cadre",
   "edit.undo": "Annuler",
   "edit.redo": "Refaire",
   "edit.delete": "Supprimer",

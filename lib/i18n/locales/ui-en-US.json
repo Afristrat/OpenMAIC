@@ -150,6 +150,7 @@
   "edit.proMode": "Pro",
   "edit.selection.count": "{{count}} selected element(s)",
   "edit.selection.fitCanvas": "Fit in slide",
+  "edit.layout.outOfBounds": "{{count}} out of bounds",
   "edit.undo": "Undo",
   "edit.redo": "Redo",
   "edit.delete": "Delete",

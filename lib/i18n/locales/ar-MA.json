@@ -166,6 +166,9 @@
       "count": "{{count}} عنصر محدد",
       "fitCanvas": "إدخال ضمن الشريحة"
     },
+    "layout": {
+      "outOfBounds": "{{count}} خارج الشريحة"
+    },
     "undo": "تراجع",
     "redo": "إعادة",
     "delete": "حذف",
