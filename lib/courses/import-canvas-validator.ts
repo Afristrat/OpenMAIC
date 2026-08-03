@@ -16,15 +16,16 @@ export interface CanvasValidationResult {
 
 const ACCEPTED_EXTENSIONS = new Map([
   ['md', ['text/markdown', 'text/plain']],
-  [
-    'docx',
-    ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-  ],
+  ['docx', ['application/vnd.openxmlformats-officedocument.wordprocessingml.document']],
   ['pdf', ['application/pdf']],
 ]);
 
 const SECTION_ALIASES = {
-  outcome: ['résultat professionnel visé', 'target professional outcome', 'النتيجة المهنية المستهدفة'],
+  outcome: [
+    'résultat professionnel visé',
+    'target professional outcome',
+    'النتيجة المهنية المستهدفة',
+  ],
   audience: ['pour qui et dans quel contexte', 'audience and context', 'الفئة المستهدفة والسياق'],
   objective: ['objectif observable', 'observable objective', 'هدف قابل للملاحظة'],
   essential: ['contenu essentiel', 'essential content', 'المحتوى الأساسي'],
@@ -33,7 +34,12 @@ const SECTION_ALIASES = {
     'practice or checkpoint',
     'تطبيق عملي أو نقطة تحقق',
   ],
-  evidence: ['preuve finale d’application', "preuve finale d'application", 'final application evidence', 'دليل التطبيق النهائي'],
+  evidence: [
+    'preuve finale d’application',
+    "preuve finale d'application",
+    'final application evidence',
+    'دليل التطبيق النهائي',
+  ],
 } as const;
 
 const PII_PATTERNS = [
@@ -66,10 +72,12 @@ function detectLanguage(text: string): SupportedCourseLanguage | undefined {
   const latinCharacters = (text.match(/[A-Za-zÀ-ÿ]/g) ?? []).length;
   if (arabicCharacters >= 20 && arabicCharacters > latinCharacters / 2) return 'ar-MA';
 
-  const frenchSignals = (text.match(/\b(le|la|les|des|une|pour|avec|dans|et|formation|objectif)\b/gi) ?? [])
-    .length;
-  const englishSignals = (text.match(/\b(the|and|with|for|course|objective|practice|final)\b/gi) ?? [])
-    .length;
+  const frenchSignals = (
+    text.match(/\b(le|la|les|des|une|pour|avec|dans|et|formation|objectif)\b/gi) ?? []
+  ).length;
+  const englishSignals = (
+    text.match(/\b(the|and|with|for|course|objective|practice|final)\b/gi) ?? []
+  ).length;
   if (latinCharacters < 20) return undefined;
   return frenchSignals >= englishSignals ? 'fr-FR' : 'en-US';
 }
@@ -102,19 +110,23 @@ export function validateImportCanvas(input: {
 
   const language = detectLanguage(text);
   if (!language) {
-    issues.push(
-      issue('CI-03', 'Règle CI-03 : Qalem n’identifie pas une langue prise en charge.'),
-    );
+    issues.push(issue('CI-03', 'Règle CI-03 : Qalem n’identifie pas une langue prise en charge.'));
   }
 
   const lines = text.split(/\r?\n/);
   const headings = lines
     .map((line, index) => ({ line: line.trim(), index }))
     .filter(({ line }) => /^#{1,3}\s+\S/.test(line))
-    .map(({ line, index }) => ({ level: line.match(/^#+/)?.[0].length ?? 0, text: line.replace(/^#+\s*/, ''), index }));
+    .map(({ line, index }) => ({
+      level: line.match(/^#+/)?.[0].length ?? 0,
+      text: line.replace(/^#+\s*/, ''),
+      index,
+    }));
   const title = headings.find((heading) => heading.level === 1)?.text;
   if (!title) {
-    issues.push(issue('CI-04', 'Règle CI-04 : ajoutez un titre principal unique au début du document.'));
+    issues.push(
+      issue('CI-04', 'Règle CI-04 : ajoutez un titre principal unique au début du document.'),
+    );
   }
 
   const levelTwoHeadings = headings.filter((heading) => heading.level === 2);
@@ -123,7 +135,9 @@ export function validateImportCanvas(input: {
     issues.push(issue('CI-05', 'Règle CI-05 : indiquez le résultat professionnel visé.'));
   }
   if (!hasSection(topLevelSections, SECTION_ALIASES.audience)) {
-    issues.push(issue('CI-06', 'Règle CI-06 : précisez le public, son niveau et son contexte de travail.'));
+    issues.push(
+      issue('CI-06', 'Règle CI-06 : précisez le public, son niveau et son contexte de travail.'),
+    );
   }
 
   const chapters = levelTwoHeadings.filter((heading) =>
@@ -134,19 +148,41 @@ export function validateImportCanvas(input: {
   }
 
   for (const chapter of chapters) {
-    const nextChapterIndex = chapters.find((candidate) => candidate.index > chapter.index)?.index ?? lines.length;
+    const nextChapterIndex =
+      chapters.find((candidate) => candidate.index > chapter.index)?.index ?? lines.length;
     const chapterHeadings = headings
-      .filter((heading) => heading.level === 3 && heading.index > chapter.index && heading.index < nextChapterIndex)
+      .filter(
+        (heading) =>
+          heading.level === 3 && heading.index > chapter.index && heading.index < nextChapterIndex,
+      )
       .map((heading) => heading.text);
     const chapterPath = chapter.text;
     if (!hasSection(chapterHeadings, SECTION_ALIASES.objective)) {
-      issues.push(issue('CI-08', `Règle CI-08 : le chapitre « ${chapterPath} » n’a pas d’objectif observable.`, chapterPath));
+      issues.push(
+        issue(
+          'CI-08',
+          `Règle CI-08 : le chapitre « ${chapterPath} » n’a pas d’objectif observable.`,
+          chapterPath,
+        ),
+      );
     }
     if (!hasSection(chapterHeadings, SECTION_ALIASES.essential)) {
-      issues.push(issue('CI-09', `Règle CI-09 : le chapitre « ${chapterPath} » ne contient pas le contenu essentiel.`, chapterPath));
+      issues.push(
+        issue(
+          'CI-09',
+          `Règle CI-09 : le chapitre « ${chapterPath} » ne contient pas le contenu essentiel.`,
+          chapterPath,
+        ),
+      );
     }
     if (!hasSection(chapterHeadings, SECTION_ALIASES.practice)) {
-      issues.push(issue('CI-10', `Règle CI-10 : le chapitre « ${chapterPath} » n’a pas de mise en pratique.`, chapterPath));
+      issues.push(
+        issue(
+          'CI-10',
+          `Règle CI-10 : le chapitre « ${chapterPath} » n’a pas de mise en pratique.`,
+          chapterPath,
+        ),
+      );
     }
   }
 
@@ -155,14 +191,24 @@ export function validateImportCanvas(input: {
   }
   if (!input.rightsAttested || PII_PATTERNS.some((pattern) => pattern.test(text))) {
     issues.push(
-      issue('CI-12', 'Règle CI-12 : retirez ou anonymisez les données personnelles de tiers et attestez vos droits.'),
+      issue(
+        'CI-12',
+        'Règle CI-12 : retirez ou anonymisez les données personnelles de tiers et attestez vos droits.',
+      ),
     );
   }
-  if (chapters.some((chapter) => headings.some((heading) => heading.level === 3 && heading.index < chapter.index))) {
-    issues.push(issue('CI-13', 'Règle CI-13 : placez chaque sous-section sous le chapitre concerné.'));
+  if (
+    chapters.some((chapter) =>
+      headings.some((heading) => heading.level === 3 && heading.index < chapter.index),
+    )
+  ) {
+    issues.push(
+      issue('CI-13', 'Règle CI-13 : placez chaque sous-section sous le chapitre concerné.'),
+    );
   }
 
-  if (issues.length > 0) return { canvasVersion: 'v1', status: 'rejected', ...(language ? { language } : {}), issues };
+  if (issues.length > 0)
+    return { canvasVersion: 'v1', status: 'rejected', ...(language ? { language } : {}), issues };
   return {
     canvasVersion: 'v1',
     status: 'conform',

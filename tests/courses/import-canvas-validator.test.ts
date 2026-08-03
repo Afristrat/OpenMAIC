@@ -33,7 +33,10 @@ describe('validateImportCanvas', () => {
       status: 'conform',
       language: 'fr-FR',
       issues: [],
-      outlinePreview: { title: 'Automatiser une tâche récurrente', chapters: ['Chapitre 1 — Choisir une tâche utile'] },
+      outlinePreview: {
+        title: 'Automatiser une tâche récurrente',
+        chapters: ['Chapitre 1 — Choisir une tâche utile'],
+      },
     });
   });
 
@@ -49,6 +52,8 @@ describe('validateImportCanvas', () => {
     expect(result.issues.map((entry) => entry.rule)).toEqual(
       expect.arrayContaining(['CI-01', 'CI-05', 'CI-07', 'CI-11', 'CI-12']),
     );
-    expect(result.issues.every((entry) => entry.message.startsWith(`Règle ${entry.rule}`))).toBe(true);
+    expect(result.issues.every((entry) => entry.message.startsWith(`Règle ${entry.rule}`))).toBe(
+      true,
+    );
   });
 });

@@ -56,24 +56,29 @@ export function SelectionSafetyBar({ elementIds }: SelectionSafetyBarProps) {
           {t('edit.layout.overlap', { count: overlappingIds.length / 2 })}
         </Button>
       )}
-      {hasSelection && <span className="hidden text-xs text-slate-200 sm:inline">{t('edit.selection.count', { count: elementIds.length })}</span>}
-      {hasSelection && <Button
-        type="button"
-        size="sm"
-        variant="secondary"
-        className="gap-1.5"
-        onMouseDown={(event) => event.preventDefault()}
-        onClick={() =>
-          useSlideEditSession.getState().applyOp({
-            type: 'element.fitCanvas',
-            elementIds: [...elementIds],
-          })
-        }
-      >
-        <ScanLine className="h-4 w-4" />
-        {t('edit.selection.fitCanvas')}
-      </Button>
-      }
+      {hasSelection && (
+        <span className="hidden text-xs text-slate-200 sm:inline">
+          {t('edit.selection.count', { count: elementIds.length })}
+        </span>
+      )}
+      {hasSelection && (
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          className="gap-1.5"
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() =>
+            useSlideEditSession.getState().applyOp({
+              type: 'element.fitCanvas',
+              elementIds: [...elementIds],
+            })
+          }
+        >
+          <ScanLine className="h-4 w-4" />
+          {t('edit.selection.fitCanvas')}
+        </Button>
+      )}
     </div>
   );
 }

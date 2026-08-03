@@ -130,7 +130,11 @@ export async function collectMediaFiles(
     if (!zipPath || collected.some((item) => item.zipPath === zipPath)) continue;
     const blob = await downloadServerAsset(sourceUrl, zipPath, fetchImpl);
     const mimeType = blob.type || 'application/octet-stream';
-    const elementId = zipPath.split('/').pop()?.replace(/\.[^.]+$/, '') || 'media';
+    const elementId =
+      zipPath
+        .split('/')
+        .pop()
+        ?.replace(/\.[^.]+$/, '') || 'media';
     collected.push({
       zipPath,
       sourceUrl,

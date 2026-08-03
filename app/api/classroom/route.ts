@@ -209,7 +209,9 @@ export async function GET(request: NextRequest) {
         .eq('id', ownership.orgId)
         .maybeSingle();
       if (organizationError) {
-        log.warn(`Presentation branding unavailable for classroom ${id}: ${organizationError.message}`);
+        log.warn(
+          `Presentation branding unavailable for classroom ${id}: ${organizationError.message}`,
+        );
       } else {
         presentationBranding = presentationBrandingFromOrganization(
           organization?.logo,

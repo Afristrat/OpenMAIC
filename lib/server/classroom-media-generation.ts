@@ -47,9 +47,7 @@ export function selectClassroomImageModel(
   providerId: ImageProviderId,
   serverProviders: Record<string, { models?: string[] }>,
 ): string | undefined {
-  return (
-    serverProviders[providerId]?.models?.[0] ?? IMAGE_PROVIDERS[providerId]?.models?.[0]?.id
-  );
+  return serverProviders[providerId]?.models?.[0] ?? IMAGE_PROVIDERS[providerId]?.models?.[0]?.id;
 }
 
 // ---------------------------------------------------------------------------

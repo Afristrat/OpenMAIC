@@ -17,7 +17,9 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@/lib/api/auth', () => ({ requireSuperAdminOrOrgAdmin: mocks.requireAdmin }));
-vi.mock('@/lib/supabase/service', () => ({ createServiceSupabaseClient: () => ({ from: mocks.from }) }));
+vi.mock('@/lib/supabase/service', () => ({
+  createServiceSupabaseClient: () => ({ from: mocks.from }),
+}));
 
 import { PATCH } from '@/app/api/courses/[courseId]/publication/route';
 

@@ -14,7 +14,10 @@ export type SlideLayoutIssue =
 export function auditSlideLayout(slide: Slide): SlideLayoutIssue[] {
   const width = slide.viewportSize;
   const height = width * slide.viewportRatio;
-  const boxes = slide.elements.map((element) => ({ element, range: getElementListRange([element]) }));
+  const boxes = slide.elements.map((element) => ({
+    element,
+    range: getElementListRange([element]),
+  }));
   const issues: SlideLayoutIssue[] = [];
 
   for (const { element, range } of boxes) {
@@ -27,8 +30,10 @@ export function auditSlideLayout(slide: Slide): SlideLayoutIssue[] {
     for (let other = index + 1; other < boxes.length; other += 1) {
       const a = boxes[index];
       const b = boxes[other];
-      const overlapWidth = Math.min(a.range.maxX, b.range.maxX) - Math.max(a.range.minX, b.range.minX);
-      const overlapHeight = Math.min(a.range.maxY, b.range.maxY) - Math.max(a.range.minY, b.range.minY);
+      const overlapWidth =
+        Math.min(a.range.maxX, b.range.maxX) - Math.max(a.range.minX, b.range.minX);
+      const overlapHeight =
+        Math.min(a.range.maxY, b.range.maxY) - Math.max(a.range.minY, b.range.minY);
       const overlapArea = overlapWidth * overlapHeight;
       const smallerArea = Math.min(
         (a.range.maxX - a.range.minX) * (a.range.maxY - a.range.minY),

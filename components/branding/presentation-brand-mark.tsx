@@ -32,9 +32,13 @@ export function PresentationBrandMark() {
           className="max-h-7 max-w-24 object-contain"
         />
       )}
-      {showOrganization && showQalem && <span className="h-5 w-px bg-zinc-300/80 dark:bg-zinc-700" />}
+      {showOrganization && showQalem && (
+        <span className="h-5 w-px bg-zinc-300/80 dark:bg-zinc-700" />
+      )}
       {showQalem && (
-        <span className="text-sm font-bold tracking-tight text-violet-700 dark:text-violet-300">Qalem</span>
+        <span className="text-sm font-bold tracking-tight text-violet-700 dark:text-violet-300">
+          Qalem
+        </span>
       )}
     </div>
   );

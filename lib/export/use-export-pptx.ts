@@ -376,8 +376,7 @@ export async function buildPptxBlob(
   const showOrganization =
     !!presentationBranding?.organizationLogoUrl &&
     (presentationBranding.mode === 'organization' || presentationBranding.mode === 'both');
-  const showQalem =
-    presentationBranding?.mode === 'qalem' || presentationBranding?.mode === 'both';
+  const showQalem = presentationBranding?.mode === 'qalem' || presentationBranding?.mode === 'both';
   const organizationLogoData = showOrganization
     ? await createAssetFetcher({ fetchImpl: createProxiedFetch() })(
         presentationBranding.organizationLogoUrl!,

@@ -384,7 +384,12 @@ test.describe('Classroom Interaction', () => {
       });
     });
     await page.route('**/api/export-jobs/*', (route) => {
-      const format = route.request().url().split('/').pop()!.replace(/^e2e-export-/, '');
+      const format = route
+        .request()
+        .url()
+        .split('/')
+        .pop()!
+        .replace(/^e2e-export-/, '');
       const extension = format === 'cmi5' ? 'cmi5.zip' : `${format}.zip`;
       return route.fulfill({
         status: 200,
@@ -441,7 +446,9 @@ test.describe('Classroom Interaction', () => {
     const resourcePackPath = await resourcePack.path();
     expect(resourcePackPath).not.toBeNull();
     const resourcePackArchive = await JSZip.loadAsync(await readFile(resourcePackPath!));
-    expect(Object.keys(resourcePackArchive.files).some((path) => path.endsWith('.pptx'))).toBe(true);
+    expect(Object.keys(resourcePackArchive.files).some((path) => path.endsWith('.pptx'))).toBe(
+      true,
+    );
 
     const qalemArchive = await downloadFromMenu('export-classroom-zip');
     const archivePath = await qalemArchive.path();

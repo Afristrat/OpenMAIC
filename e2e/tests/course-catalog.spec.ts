@@ -6,7 +6,9 @@ const CLASSROOM_ID = 'e2e-catalog-classroom';
 const PUBLISHED_CLASSROOM_ID = 'e2e-unpublished-classroom';
 
 test.describe('Catalogue de formations', () => {
-  test('affiche la formation publiée de l’organisation et rejoint sa classroom', async ({ page }) => {
+  test('affiche la formation publiée de l’organisation et rejoint sa classroom', async ({
+    page,
+  }) => {
     await page.addInitScript((settings) => {
       localStorage.setItem('settings-storage', settings);
       localStorage.setItem('locale', 'fr-FR');
@@ -39,7 +41,10 @@ test.describe('Catalogue de formations', () => {
       }),
     );
     await page.route('**/api/courses/00000000-0000-4000-8000-000000000019/publication', (route) =>
-      route.fulfill({ contentType: 'application/json', body: '{"success":true,"catalogVisible":true}' }),
+      route.fulfill({
+        contentType: 'application/json',
+        body: '{"success":true,"catalogVisible":true}',
+      }),
     );
     await page.route('**/api/classroom?id=*', (route) => {
       const classroomId = new URL(route.request().url()).searchParams.get('id');
@@ -75,7 +80,10 @@ test.describe('Catalogue de formations', () => {
       localStorage.setItem('locale', 'ar-MA');
     }, createSettingsStorage());
     await page.route(/\/api\/courses\/catalog\?/, (route) =>
-      route.fulfill({ contentType: 'application/json', body: JSON.stringify({ success: true, courses: [] }) }),
+      route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, courses: [] }),
+      }),
     );
 
     await page.goto('/catalog');

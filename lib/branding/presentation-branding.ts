@@ -23,7 +23,9 @@ export function presentationBrandingFromOrganization(
 ): PresentationBranding {
   const raw = settings?.presentationBranding;
   const mode =
-    raw && typeof raw === 'object' && 'mode' in raw &&
+    raw &&
+    typeof raw === 'object' &&
+    'mode' in raw &&
     typeof (raw as { mode?: unknown }).mode === 'string' &&
     MODES.includes((raw as { mode: PresentationBrandMode }).mode)
       ? (raw as { mode: PresentationBrandMode }).mode

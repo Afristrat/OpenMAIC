@@ -20,7 +20,10 @@ function loadImage(source: Blob): Promise<HTMLImageElement> {
 
 function canvasBlob(canvas: HTMLCanvasElement): Promise<Blob> {
   return new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Snapshot de branding impossible'))), 'image/png');
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error('Snapshot de branding impossible'))),
+      'image/png',
+    );
   });
 }
 

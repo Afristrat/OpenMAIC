@@ -113,9 +113,15 @@ export default function CatalogPage() {
           <p className="mt-2 text-sm text-muted-foreground">{t('catalog.emptyDescription')}</p>
         </div>
       ) : (
-        <section className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-label={t('catalog.title')}>
+        <section
+          className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+          aria-label={t('catalog.title')}
+        >
           {courses.map((course) => (
-            <article key={course.id} className="flex min-h-60 flex-col rounded-2xl border bg-card p-6 shadow-sm">
+            <article
+              key={course.id}
+              className="flex min-h-60 flex-col rounded-2xl border bg-card p-6 shadow-sm"
+            >
               <BookOpen className="mb-8 size-8 text-primary" />
               <h2 className="text-xl font-semibold leading-tight">{course.title}</h2>
               <dl className="mt-4 space-y-2 text-sm text-muted-foreground">
@@ -145,7 +151,9 @@ export default function CatalogPage() {
       {isAdmin && unpublished.length > 0 && (
         <section className="mt-12 border-t pt-10" aria-label={t('catalog.publishReadyTitle')}>
           <h2 className="text-xl font-semibold">{t('catalog.publishReadyTitle')}</h2>
-          <p className="mt-2 text-sm text-muted-foreground">{t('catalog.publishReadyDescription')}</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {t('catalog.publishReadyDescription')}
+          </p>
           {publicationError && (
             <p className="mt-3 text-sm text-destructive" role="alert">
               {t('catalog.publicationFailed')}

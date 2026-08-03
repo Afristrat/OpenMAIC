@@ -81,8 +81,8 @@ export async function POST(
     {
       id: classroomId,
       stage: classroom.stage,
-      scenes: classroom.scenes.map((scene) =>
-        regeneratedScenes.find((regenerated) => regenerated.id === scene.id) ?? scene,
+      scenes: classroom.scenes.map(
+        (scene) => regeneratedScenes.find((regenerated) => regenerated.id === scene.id) ?? scene,
       ),
       ownerId: ownership.ownerId,
       orgId: ownership.orgId,

@@ -1,4 +1,7 @@
-import { validateImportCanvas, type CanvasValidationResult } from '@/lib/courses/import-canvas-validator';
+import {
+  validateImportCanvas,
+  type CanvasValidationResult,
+} from '@/lib/courses/import-canvas-validator';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import type { CourseImportInsert } from '@/lib/supabase/types';
 

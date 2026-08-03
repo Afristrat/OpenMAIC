@@ -3,7 +3,9 @@ import { createSettingsStorage } from '../fixtures/test-data/settings';
 
 const STAGE_ID = 'e2e-authoritative-audio';
 
-test('privilégie la classroom serveur et sa narration sur le cache local périmé', async ({ page }) => {
+test('privilégie la classroom serveur et sa narration sur le cache local périmé', async ({
+  page,
+}) => {
   await page.addInitScript(
     ({ settings, stageId }) => {
       localStorage.setItem('settings-storage', settings);
@@ -12,7 +14,12 @@ test('privilégie la classroom serveur et sa narration sur le cache local périm
         const db = (event.target as IDBOpenDBRequest).result;
         const tx = db.transaction(['stages', 'scenes', 'stageOutlines'], 'readwrite');
         const now = Date.now();
-        tx.objectStore('stages').put({ id: stageId, name: 'Cache périmé', createdAt: now, updatedAt: now });
+        tx.objectStore('stages').put({
+          id: stageId,
+          name: 'Cache périmé',
+          createdAt: now,
+          updatedAt: now,
+        });
         tx.objectStore('scenes').put({
           id: 'cached-scene',
           stageId,
@@ -24,7 +31,12 @@ test('privilégie la classroom serveur et sa narration sur le cache local périm
           createdAt: now,
           updatedAt: now,
         });
-        tx.objectStore('stageOutlines').put({ stageId, outlines: [], createdAt: now, updatedAt: now });
+        tx.objectStore('stageOutlines').put({
+          stageId,
+          outlines: [],
+          createdAt: now,
+          updatedAt: now,
+        });
         tx.oncomplete = () => db.close();
       };
     },
@@ -37,7 +49,12 @@ test('privilégie la classroom serveur et sa narration sur le cache local périm
       body: JSON.stringify({
         success: true,
         classroom: {
-          stage: { id: STAGE_ID, name: 'Version serveur', createdAt: Date.now(), updatedAt: Date.now() },
+          stage: {
+            id: STAGE_ID,
+            name: 'Version serveur',
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          },
           scenes: [
             {
               id: 'server-scene',
