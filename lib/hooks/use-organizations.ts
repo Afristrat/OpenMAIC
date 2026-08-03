@@ -13,6 +13,7 @@ interface UseOrganizationsReturn {
   setCurrentOrg: (org: OrganizationWithRole | null) => void;
   isLoading: boolean;
   isAdmin: boolean;
+  canAuthor: boolean;
   isMember: boolean;
   refresh: () => Promise<void>;
   createOrganization: (name: string, sector: string | null) => Promise<OrganizationWithRole>;
@@ -122,6 +123,8 @@ export function useOrganizations(): UseOrganizationsReturn {
   );
 
   const isAdmin = currentOrg?.userRole === 'admin';
+  const canAuthor =
+    currentOrg != null && ['admin', 'manager', 'author'].includes(currentOrg.userRole);
   const isMember = currentOrg !== null;
 
   return {
@@ -130,6 +133,7 @@ export function useOrganizations(): UseOrganizationsReturn {
     setCurrentOrg,
     isLoading,
     isAdmin,
+    canAuthor,
     isMember,
     refresh: fetchOrganizations,
     createOrganization,

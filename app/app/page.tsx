@@ -56,6 +56,7 @@ import { tryCreateClient } from '@/lib/supabase/client';
 import { db } from '@/lib/utils/database';
 import { isDemoStage } from '@/lib/demo/use-demo-seed';
 import { useSettingsStore } from '@/lib/store/settings';
+import type { InteractionLevel, LearningApproach } from '@/lib/agents/persona-catalog';
 
 const log = createLogger('Home');
 
@@ -78,6 +79,8 @@ interface FormState {
   webSearch: boolean;
   interactiveMode: boolean;
   vocationalTestMode: boolean;
+  learningApproach: LearningApproach | null;
+  interactionLevel: InteractionLevel | null;
 }
 
 const initialFormState: FormState = {
@@ -86,6 +89,8 @@ const initialFormState: FormState = {
   webSearch: false,
   interactiveMode: false,
   vocationalTestMode: false,
+  learningApproach: null,
+  interactionLevel: null,
 };
 
 function HomePage() {
@@ -126,7 +131,7 @@ function HomePage() {
 
   // Auth + due review count
   const { user } = useAuth();
-  const { currentOrg, isAdmin } = useOrganizations();
+  const { currentOrg, canAuthor } = useOrganizations();
   const [dueReviewCount, setDueReviewCount] = useState(0);
 
   const loadDueReviewCount = async () => {
@@ -379,7 +384,11 @@ function HomePage() {
       setError(t('upload.requirementRequired'));
       return;
     }
-    if (!user || !currentOrg || !isAdmin) {
+    if (!form.learningApproach || !form.interactionLevel) {
+      setError(t('animation.selectionRequired'));
+      return;
+    }
+    if (!user || !currentOrg || !canAuthor) {
       setError(t('upload.generateFailed'));
       return;
     }
@@ -422,6 +431,8 @@ function HomePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           orgId: currentOrg.id,
+          learningApproach: form.learningApproach,
+          interactionLevel: form.interactionLevel,
           requirement: requirements.requirement,
           ...(pdfContent ? { pdfContent } : {}),
           enableWebSearch: form.webSearch,
@@ -454,7 +465,13 @@ function HomePage() {
     return date.toLocaleDateString();
   };
 
-  const canGenerate = !!form.requirement.trim() && !!user && !!currentOrg && isAdmin;
+  const canGenerate =
+    !!form.requirement.trim() &&
+    !!form.learningApproach &&
+    !!form.interactionLevel &&
+    !!user &&
+    !!currentOrg &&
+    canAuthor;
   const requiresAuthentication = !user;
   const generateDisabled = !requiresAuthentication && !canGenerate;
 
@@ -763,6 +780,48 @@ function HomePage() {
             </div>
           </div>
         </motion.div>
+
+        <div
+          className="mt-2 flex w-full flex-wrap items-center gap-2 px-1"
+          data-testid="animation-authoring-controls"
+        >
+          <span className="text-xs font-medium text-muted-foreground">
+            {t('animation.learningApproach')}
+          </span>
+          {(['pedagogy', 'hybrid', 'andragogy'] as LearningApproach[]).map((approach) => (
+            <button
+              key={approach}
+              type="button"
+              onClick={() => updateForm('learningApproach', approach)}
+              className={cn(
+                'rounded-full border px-2.5 py-1 text-xs transition-colors',
+                form.learningApproach === approach
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-border bg-background text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {t(`org.learningApproaches.${approach}`)}
+            </button>
+          ))}
+          <span className="ml-1 text-xs font-medium text-muted-foreground">
+            {t('animation.interactionLevel')}
+          </span>
+          {(['guided', 'balanced', 'immersive'] as InteractionLevel[]).map((level) => (
+            <button
+              key={level}
+              type="button"
+              onClick={() => updateForm('interactionLevel', level)}
+              className={cn(
+                'rounded-full border px-2.5 py-1 text-xs transition-colors',
+                form.interactionLevel === level
+                  ? 'border-cyan-500 bg-cyan-500 text-white'
+                  : 'border-border bg-background text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {t(`org.interactionLevels.${level}`)}
+            </button>
+          ))}
+        </div>
 
         {showVocationalTestUi && (
           <motion.div

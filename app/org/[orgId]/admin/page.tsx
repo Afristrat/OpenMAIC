@@ -21,6 +21,7 @@ import {
   Shield,
   GraduationCap,
   BookOpen,
+  PenLine,
   UserPlus,
   Trash2,
   Settings,
@@ -60,12 +61,13 @@ interface OrgWithRole extends Organization {
 }
 
 const SECTORS: OrgSector[] = ['healthcare', 'legal', 'tech', 'finance', 'education', 'industry'];
-const ROLES: OrgMemberRole[] = ['admin', 'manager', 'formateur', 'apprenant'];
+const ROLES: OrgMemberRole[] = ['admin', 'manager', 'author', 'formateur', 'apprenant'];
 const LOCALES = ['fr-FR', 'ar-MA', 'en-US', 'zh-CN'];
 
 const ROLE_ICONS: Record<OrgMemberRole, typeof Crown> = {
   admin: Crown,
   manager: Shield,
+  author: PenLine,
   formateur: GraduationCap,
   apprenant: BookOpen,
 };
@@ -73,6 +75,7 @@ const ROLE_ICONS: Record<OrgMemberRole, typeof Crown> = {
 const ROLE_COLORS: Record<OrgMemberRole, string> = {
   admin: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
   manager: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+  author: 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300',
   formateur: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
   apprenant: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300',
 };
@@ -209,19 +212,19 @@ export default function OrgAdminPage() {
           name: editName,
           sector: editSector || null,
           default_locale: editLocale,
-            settings: {
-              ...(org?.settings ?? {}),
-              presentationBranding: presentationBrandingSettings(presentationBrandMode),
-              learningDesign,
-              teachingProfile: {
-                name: professor.defaultName.trim(),
-                avatar: professor.avatar,
-                providerId: professor.providerId,
-                voiceId: professor.voiceId,
-              },
+          settings: {
+            ...(org?.settings ?? {}),
+            presentationBranding: presentationBrandingSettings(presentationBrandMode),
+            learningDesign,
+            teachingProfile: {
+              name: professor.defaultName.trim(),
+              avatar: professor.avatar,
+              providerId: professor.providerId,
+              voiceId: professor.voiceId,
             },
-            logo: editLogo.trim() || null,
-          }),
+          },
+          logo: editLogo.trim() || null,
+        }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -449,17 +452,23 @@ export default function OrgAdminPage() {
               </Select>
             </div>
             <div className="sm:col-span-2">
-              <label className="mb-1 block text-sm font-medium">{t('org.presentationLogoUrl')}</label>
+              <label className="mb-1 block text-sm font-medium">
+                {t('org.presentationLogoUrl')}
+              </label>
               <Input
                 type="url"
                 value={editLogo}
                 onChange={(event) => setEditLogo(event.target.value)}
                 placeholder="https://…/logo.svg"
               />
-              <p className="mt-1 text-xs text-muted-foreground">{t('org.presentationLogoUrlHint')}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {t('org.presentationLogoUrlHint')}
+              </p>
             </div>
             <div className="sm:col-span-2">
-              <label className="mb-1 block text-sm font-medium">{t('org.presentationBranding')}</label>
+              <label className="mb-1 block text-sm font-medium">
+                {t('org.presentationBranding')}
+              </label>
               <Select
                 value={presentationBrandMode}
                 onValueChange={(value) => setPresentationBrandMode(value as PresentationBrandMode)}
@@ -468,13 +477,17 @@ export default function OrgAdminPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="organization">{t('org.presentationBrandingOrganization')}</SelectItem>
+                  <SelectItem value="organization">
+                    {t('org.presentationBrandingOrganization')}
+                  </SelectItem>
                   <SelectItem value="qalem">{t('org.presentationBrandingQalem')}</SelectItem>
                   <SelectItem value="both">{t('org.presentationBrandingBoth')}</SelectItem>
                   <SelectItem value="none">{t('org.presentationBrandingNone')}</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="mt-1 text-xs text-muted-foreground">{t('org.presentationBrandingHint')}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {t('org.presentationBrandingHint')}
+              </p>
             </div>
           </div>
           <div className="mt-4 flex items-center gap-4">

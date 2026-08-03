@@ -42,6 +42,8 @@ test.describe('Formation Design Pro — persistent generation path', () => {
 
     await expect(page).toHaveURL(/\/app\?skill=formation-design-pro$/);
     await page.locator('textarea').fill('Concevoir une formation aux entretiens difficiles');
+    await page.getByRole('button', { name: 'Apprentissage des adultes', exact: true }).click();
+    await page.getByRole('button', { name: 'Équilibré', exact: true }).click();
     await page
       .getByRole('button', {
         name: /accéder à la classe virtuelle|enter classroom|دخول الفصل/i,
@@ -51,5 +53,7 @@ test.describe('Formation Design Pro — persistent generation path', () => {
     await expect(page).toHaveURL(/\/generation-status\?jobId=skill-engine-e2e$/);
     expect(submittedBody?.activeSkillId).toBe('formation-design-pro');
     expect(submittedBody?.orgId).toBe('00000000-0000-4000-8000-000000000002');
+    expect(submittedBody?.learningApproach).toBe('andragogy');
+    expect(submittedBody?.interactionLevel).toBe('balanced');
   });
 });

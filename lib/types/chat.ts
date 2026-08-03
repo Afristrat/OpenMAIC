@@ -216,6 +216,7 @@ export interface LectureNoteEntry {
 
 import type { Stage, Scene, StageMode } from '@/lib/types/stage';
 import type { AgentTurnSummary, WhiteboardActionRecord } from '@/lib/orchestration/types';
+import type { AnimationConstitution } from '@/lib/formation-engine/animation-constitution';
 
 /**
  * Accumulated director state passed between per-agent requests.
@@ -242,6 +243,8 @@ export interface StatelessChatRequest {
     mode: StageMode;
     whiteboardOpen: boolean;
   };
+  /** Server-owned; the chat route overwrites any client value from persisted classroom state. */
+  animationConstitution?: AnimationConstitution;
   /** Agent configuration */
   config: {
     agentIds: string[];

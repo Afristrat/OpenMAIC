@@ -10,6 +10,10 @@ import { createLogger } from '@/lib/logger';
 import { PROMPT_IDS } from '@/lib/prompts';
 import { buildPromptWithSkill } from '@/lib/skills/prompt-overrides';
 import type { SkillPromptContext } from '@/lib/types/stage';
+import {
+  buildAnimationDirective,
+  type AnimationConstitution,
+} from '@/lib/formation-engine/animation-constitution';
 import type { WhiteboardActionRecord, AgentTurnSummary } from './types';
 
 const log = createLogger('DirectorPrompt');
@@ -33,6 +37,7 @@ export function buildDirectorPrompt(
   userProfile?: { nickname?: string; bio?: string },
   whiteboardOpen?: boolean,
   skillPromptContext?: SkillPromptContext,
+  animationConstitution?: AnimationConstitution,
 ): string {
   const totalRecordedTurns = agentResponses.length;
   const responseCounts = agentResponses.reduce<Map<string, number>>((counts, response) => {
@@ -98,7 +103,8 @@ ${userProfile.bio ? `Background: ${userProfile.bio}` : ''}
   if (!prompt) {
     throw new Error('director prompt template failed to load');
   }
-  return prompt.system;
+  const animationDirective = buildAnimationDirective(animationConstitution, null);
+  return animationDirective ? `${prompt.system}\n\n${animationDirective}` : prompt.system;
 }
 
 /**

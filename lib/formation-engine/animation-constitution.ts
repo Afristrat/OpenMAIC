@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { GeneratedAgentConfig, Scene } from '@/lib/types/stage';
 
 export const LEARNING_APPROACHES = ['pedagogy', 'hybrid', 'andragogy'] as const;
 export const INTERACTION_LEVELS = ['guided', 'balanced', 'immersive'] as const;
@@ -146,6 +147,185 @@ export const animationConstitutionSchema = z
   });
 
 export type AnimationConstitution = z.infer<typeof animationConstitutionSchema>;
+
+const FORMS_BY_MECHANISM: Record<
+  string,
+  AnimationConstitution['agentRosterSnapshot'][number]['allowedForms']
+> = {
+  professor: ['question', 'example', 'feedback', 'clarification', 'regulation', 'synthesis'],
+  'teaching-assistant': ['clarification', 'example', 'feedback'],
+  joker: ['humor', 'anecdote', 'example'],
+  curious: ['question', 'blind-spot'],
+  secretary: ['synthesis', 'regulation'],
+  thinker: ['blind-spot', 'question', 'synthesis'],
+  analyst: ['objection', 'disagreement', 'blind-spot', 'feedback'],
+  coach: ['feedback', 'challenge', 'question'],
+  'devils-advocate': ['objection', 'disagreement', 'blind-spot'],
+  creative: ['example', 'use-case', 'anecdote', 'challenge'],
+};
+
+interface CreateAnimationConstitutionInput {
+  classroomId: string;
+  organizationId: string;
+  authorUserId: string;
+  authorRole: 'author' | 'super-admin';
+  approach: AnimationConstitution['approach'];
+  interactionLevel: AnimationConstitution['interactionLevel'];
+  targetPerformance: string;
+  scenes: Scene[];
+  agents: GeneratedAgentConfig[];
+}
+
+export function createAnimationConstitution(
+  input: CreateAnimationConstitutionInput,
+): AnimationConstitution {
+  const activeAgents = input.agents.filter(
+    (agent) => agent.voiceConfig?.voiceId && agent.mechanismId,
+  );
+  if (activeAgents.length === 0) {
+    throw new Error('An animation constitution requires at least one voiced tenant agent.');
+  }
+
+  const agentRosterSnapshot: AnimationConstitution['agentRosterSnapshot'] = activeAgents.map(
+    (agent) => ({
+      agentId: agent.id,
+      displayName: agent.name,
+      avatarId: agent.avatar,
+      voiceId: agent.voiceConfig!.voiceId,
+      identityCompatibility: 'validated',
+      organizationWeight: agent.interactionWeight ?? 0,
+      enabled: true,
+      allowedForms: FORMS_BY_MECHANISM[agent.mechanismId!] ?? ['question', 'feedback'],
+      allowedModalities: ['text', 'voice', 'both'],
+    }),
+  );
+
+  const idsForForm = (form: (typeof INTERVENTION_FORMS)[number]): string[] => {
+    const matching = agentRosterSnapshot
+      .filter((agent) => agent.allowedForms.includes(form))
+      .map((agent) => agent.agentId);
+    return matching.length > 0 ? matching : [agentRosterSnapshot[0].agentId];
+  };
+
+  const authoredBackbone: AnimationConstitution['authoredBackbone'] = input.scenes.map(
+    (scene, index) => ({
+      id: `scene-${index + 1}-reflection`,
+      sceneId: scene.id,
+      moment: 'after',
+      activation: 'if-needed',
+      purpose: `Vérifier la compréhension et le transfert de « ${scene.title} » avant de poursuivre.`,
+      preferredForms: index === input.scenes.length - 1 ? ['synthesis', 'challenge'] : ['question'],
+      eligibleAgentIds:
+        index === input.scenes.length - 1 ? idsForForm('synthesis') : idsForForm('question'),
+      modality: 'both',
+    }),
+  );
+
+  const adaptiveRules: AnimationConstitution['adaptiveRules'] = [
+    {
+      id: 'respond-to-learner',
+      trigger: 'learner-answer',
+      purpose: 'Réagir au raisonnement exprimé et demander une précision utile si nécessaire.',
+      allowedForms: ['feedback', 'question'],
+      eligibleAgentIds: [...new Set([...idsForForm('feedback'), ...idsForForm('question')])],
+      requiresGrounding: false,
+      mayInterrupt: false,
+      enabled: true,
+    },
+    {
+      id: 'support-hesitation',
+      trigger: 'hesitation',
+      purpose: 'Distinguer une difficulté de formulation d’une incompréhension du concept.',
+      allowedForms: ['clarification', 'question'],
+      eligibleAgentIds: [...new Set([...idsForForm('clarification'), ...idsForForm('question')])],
+      requiresGrounding: false,
+      mayInterrupt: false,
+      enabled: true,
+    },
+    {
+      id: 'surface-blind-spot',
+      trigger: 'unaddressed-risk',
+      purpose:
+        'Faire apparaître un risque ou une hypothèse importante sans polémique artificielle.',
+      allowedForms: ['blind-spot', 'objection'],
+      eligibleAgentIds: [...new Set([...idsForForm('blind-spot'), ...idsForForm('objection')])],
+      requiresGrounding: true,
+      mayInterrupt: false,
+      enabled: true,
+    },
+    {
+      id: 'enable-transfer',
+      trigger: 'transfer-opportunity',
+      purpose: 'Relier le concept à une décision ou une situation réellement réutilisable.',
+      allowedForms: ['use-case', 'challenge'],
+      eligibleAgentIds: [...new Set([...idsForForm('use-case'), ...idsForForm('challenge')])],
+      requiresGrounding: true,
+      mayInterrupt: false,
+      enabled: true,
+    },
+  ];
+
+  return animationConstitutionSchema.parse({
+    schemaVersion: 1,
+    classroomId: input.classroomId,
+    authoredBy: {
+      userId: input.authorUserId,
+      role: input.authorRole,
+      organizationId: input.organizationId,
+    },
+    approach: input.approach,
+    interactionLevel: input.interactionLevel,
+    learningIntent: {
+      targetPerformance: input.targetPerformance,
+      successEvidence: [
+        'L’apprenant formule une réponse ou réalise une action observable alignée sur la demande de formation.',
+      ],
+    },
+    policy: {
+      responseMode: 'adaptive',
+      weightSource: 'organization-roster-snapshot',
+      allowedModalities: ['text', 'voice', 'both'],
+      prohibitedTopics: [],
+      maxConsecutiveAgentTurns: input.interactionLevel === 'guided' ? 1 : 2,
+      numericPolicyRationale:
+        'La limite préserve une prise de parole réelle de l’apprenant tout en appliquant le niveau d’interaction choisi par l’auteur.',
+    },
+    agentRosterSnapshot,
+    authoredBackbone,
+    adaptiveRules,
+  });
+}
+
+export function buildAnimationDirective(
+  constitution: AnimationConstitution | undefined,
+  sceneId: string | null,
+): string {
+  if (!constitution) return '';
+  const beats = constitution.authoredBackbone.filter((beat) => beat.sceneId === sceneId);
+  const rules = constitution.adaptiveRules.filter((rule) => rule.enabled);
+
+  return [
+    '# Server-owned animation constitution',
+    `Learning approach selected by the author: ${constitution.approach}.`,
+    `Interaction level: ${constitution.interactionLevel}.`,
+    `Target performance: ${constitution.learningIntent.targetPerformance}`,
+    `Maximum consecutive agent turns: ${constitution.policy.maxConsecutiveAgentTurns}.`,
+    'Every intervention must advance the target performance. Never make an agent speak merely to satisfy its weight.',
+    'React to the learner’s actual answer, question, hesitation or misunderstanding before adding proactive material.',
+    'Ground factual examples, use cases, anecdotes and blind spots in authorized course sources; otherwise label them as synthetic.',
+    beats.length > 0
+      ? `Current scene backbone: ${beats
+          .map((beat) => `${beat.activation}/${beat.moment}: ${beat.purpose}`)
+          .join(' | ')}`
+      : 'Current scene has no mandatory authored beat.',
+    `Adaptive rules: ${rules
+      .map(
+        (rule) =>
+          `${rule.trigger} => ${rule.allowedForms.join('/')} for ${rule.purpose}${rule.requiresGrounding ? ' [grounding required]' : ''}`,
+      )
+      .join(' | ')}`,
+  ].join('\n');
+}
 
 export function parseAnimationConstitution(
   input: unknown,

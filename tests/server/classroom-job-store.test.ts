@@ -69,7 +69,13 @@ describe('persistent classroom generation jobs', () => {
   it('persists creation and progress updates in Supabase', async () => {
     await createClassroomGenerationJob(
       'job-1',
-      { orgId: 'org-1', requirement: 'Build a practical LiteLLM course' },
+      {
+        orgId: 'org-1',
+        authorRole: 'author',
+        learningApproach: 'andragogy',
+        interactionLevel: 'balanced',
+        requirement: 'Build a practical LiteLLM course',
+      },
       'owner-1',
     );
     await markClassroomGenerationJobRunning('job-1');
@@ -101,6 +107,9 @@ describe('persistent classroom generation jobs', () => {
       'job-durable',
       {
         orgId: 'org-1',
+        authorRole: 'author',
+        learningApproach: 'andragogy',
+        interactionLevel: 'balanced',
         requirement: 'Build a sourced course',
         enableWebSearch: true,
         webSearchApiKey: 'client-secret-that-must-not-be-persisted',
@@ -123,7 +132,13 @@ describe('persistent classroom generation jobs', () => {
     vi.setSystemTime(new Date('2026-07-19T10:00:00.000Z'));
     await createClassroomGenerationJob(
       'job-stale',
-      { orgId: 'org-1', requirement: 'Persistent generation' },
+      {
+        orgId: 'org-1',
+        authorRole: 'author',
+        learningApproach: 'andragogy',
+        interactionLevel: 'balanced',
+        requirement: 'Persistent generation',
+      },
       'owner-1',
     );
     await markClassroomGenerationJobRunning('job-stale');
@@ -140,7 +155,13 @@ describe('persistent classroom generation jobs', () => {
     vi.setSystemTime(new Date('2026-07-19T10:00:00.000Z'));
     await createClassroomGenerationJob(
       'job-heartbeat',
-      { orgId: 'org-1', requirement: 'Long TTS generation' },
+      {
+        orgId: 'org-1',
+        authorRole: 'author',
+        learningApproach: 'andragogy',
+        interactionLevel: 'balanced',
+        requirement: 'Long TTS generation',
+      },
       'owner-1',
     );
     await markClassroomGenerationJobRunning('job-heartbeat');

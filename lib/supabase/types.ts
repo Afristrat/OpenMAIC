@@ -7,7 +7,7 @@
 // Enums
 // ---------------------------------------------------------------------------
 
-export type OrgMemberRole = 'admin' | 'manager' | 'formateur' | 'apprenant';
+export type OrgMemberRole = 'admin' | 'manager' | 'author' | 'formateur' | 'apprenant';
 
 export type OrgSector = 'healthcare' | 'legal' | 'tech' | 'finance' | 'education' | 'industry';
 
@@ -292,20 +292,13 @@ export type CourseImportInsert = Pick<
   CourseImport,
   'owner_id' | 'original_filename' | 'storage_path'
 > &
-  Partial<
-    Pick<CourseImport, 'canvas_version' | 'validation_status' | 'validation_report'>
-  >;
+  Partial<Pick<CourseImport, 'canvas_version' | 'validation_status' | 'validation_report'>>;
 
 export type CourseInsert = Pick<
   Course,
   'owner_id' | 'title' | 'language' | 'source_kind' | 'outline'
 > &
-  Partial<
-    Pick<
-      Course,
-      'org_id' | 'stage_id' | 'import_id' | 'status' | 'catalog_visible'
-    >
-  >;
+  Partial<Pick<Course, 'org_id' | 'stage_id' | 'import_id' | 'status' | 'catalog_visible'>>;
 
 export type ClassroomTemplateInsert = Pick<ClassroomTemplate, 'name' | 'sector' | 'requirements'> &
   Partial<Omit<ClassroomTemplate, 'id' | 'name' | 'sector' | 'requirements' | 'created_at'>>;

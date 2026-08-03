@@ -5,6 +5,10 @@
  */
 
 import type { StatelessChatRequest } from '@/lib/types/chat';
+import {
+  buildAnimationDirective,
+  type AnimationConstitution,
+} from '@/lib/formation-engine/animation-constitution';
 import type { AgentConfig } from '@/lib/orchestration/registry/types';
 import type { WhiteboardActionRecord, AgentTurnSummary } from './types';
 import { getActionDescriptions, getEffectiveActions } from './tool-schemas';
@@ -128,6 +132,7 @@ export function buildStructuredPrompt(
   whiteboardLedger?: WhiteboardActionRecord[],
   userProfile?: { nickname?: string; bio?: string },
   agentResponses?: AgentTurnSummary[],
+  animationConstitution?: AnimationConstitution,
 ): string {
   // Determine current scene type for action filtering
   const currentScene = storeState.currentSceneId
@@ -166,7 +171,11 @@ export function buildStructuredPrompt(
   if (!prompt) {
     throw new Error('agent-system template not found');
   }
-  return prompt.system;
+  const animationDirective = buildAnimationDirective(
+    animationConstitution,
+    storeState.currentSceneId,
+  );
+  return animationDirective ? `${prompt.system}\n\n${animationDirective}` : prompt.system;
 }
 
 // ==================== Length Guidelines ====================

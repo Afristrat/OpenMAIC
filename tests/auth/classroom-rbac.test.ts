@@ -29,7 +29,11 @@ vi.mock('@/lib/supabase/server', () => ({
   },
 }));
 
-import { requireSuperAdminOrOrgAdmin, requireSuperAdminOrOrgMember } from '@/lib/api/auth';
+import {
+  requireSuperAdminOrOrgAdmin,
+  requireSuperAdminOrOrgAuthor,
+  requireSuperAdminOrOrgMember,
+} from '@/lib/api/auth';
 
 const request = new NextRequest('https://qalem.ma/api/classroom');
 
@@ -77,6 +81,24 @@ describe('classroom RBAC', () => {
     const result = await requireSuperAdminOrOrgAdmin(request, 'org-target');
 
     expect(result.response?.status).toBe(403);
+  });
+
+  it.each(['admin', 'manager', 'author'])('lets the %s role author a classroom', async (role) => {
+    mocks.membership = { role };
+
+    const result = await requireSuperAdminOrOrgAuthor(request, 'org-target');
+
+    expect(result.user?.id).toBe('user-1');
+    if ('authoredByRole' in result) expect(result.authoredByRole).toBe('author');
+  });
+
+  it('records the configured super-admin as the cross-organization author', async () => {
+    mocks.user = { id: 'root-1', email: 'ROOT@qalem.ma' };
+
+    const result = await requireSuperAdminOrOrgAuthor(request, 'org-target');
+
+    if ('authoredByRole' in result) expect(result.authoredByRole).toBe('super-admin');
+    expect(mocks.from).not.toHaveBeenCalled();
   });
 
   it('lets a learner read classrooms from their own organization', async () => {

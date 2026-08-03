@@ -95,6 +95,7 @@ export async function POST(req: NextRequest) {
           activeSkillId: skillEngineEnabled ? activeSkillId : undefined,
         },
       };
+      body.animationConstitution = persisted?.animationConstitution;
     }
 
     const {

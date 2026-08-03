@@ -52,6 +52,7 @@ const OrchestratorState = Annotation.Root({
   // Input (set once at graph entry)
   messages: Annotation<StatelessChatRequest['messages']>,
   storeState: Annotation<StatelessChatRequest['storeState']>,
+  animationConstitution: Annotation<StatelessChatRequest['animationConstitution']>,
   availableAgentIds: Annotation<string[]>,
   languageModel: Annotation<LanguageModel>,
   thinkingConfig: Annotation<ThinkingConfig | null>,
@@ -172,6 +173,7 @@ async function directorNode(
     state.userProfile || undefined,
     state.storeState.whiteboardOpen,
     state.storeState.stage?.skillPromptContext,
+    state.animationConstitution,
   );
 
   const adapter = new AISdkLangGraphAdapter(state.languageModel, state.thinkingConfig ?? undefined);
@@ -284,6 +286,7 @@ async function runAgentGeneration(
     state.whiteboardLedger,
     state.userProfile || undefined,
     state.agentResponses,
+    state.animationConstitution,
   );
   const openaiMessages = convertMessagesToOpenAI(state.messages, agentId);
   const adapter = new AISdkLangGraphAdapter(state.languageModel, state.thinkingConfig ?? undefined);
@@ -532,6 +535,7 @@ export function buildInitialState(
   return {
     messages: request.messages,
     storeState: request.storeState,
+    animationConstitution: request.animationConstitution,
     availableAgentIds: request.config.agentIds,
     languageModel,
     thinkingConfig: thinkingConfig ?? null,

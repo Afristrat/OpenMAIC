@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { parseAnimationConstitution } from '@/lib/formation-engine/animation-constitution';
+import {
+  buildAnimationDirective,
+  createAnimationConstitution,
+  parseAnimationConstitution,
+} from '@/lib/formation-engine/animation-constitution';
+import type { GeneratedAgentConfig, Scene } from '@/lib/types/stage';
 
 function validConstitution(): Record<string, unknown> {
   return {
@@ -103,5 +108,47 @@ describe('animation constitution', () => {
     const result = parseAnimationConstitution(input);
     expect(result.success).toBe(false);
     if (!result.success) expect(result.errors.join(' ')).toContain('Unknown agentId');
+  });
+
+  it('builds a persistent backbone and adaptive director directive from the tenant roster', () => {
+    const constitution = createAnimationConstitution({
+      classroomId: 'classroom-1',
+      organizationId: 'org-1',
+      authorUserId: 'author-1',
+      authorRole: 'author',
+      approach: 'andragogy',
+      interactionLevel: 'immersive',
+      targetPerformance: 'Diagnostiquer puis corriger un routage LiteLLM défaillant.',
+      scenes: [
+        { id: 'scene-1', title: 'Diagnostic', type: 'slide', order: 0, stageId: 'classroom-1' },
+      ] as Scene[],
+      agents: [
+        {
+          id: 'persona-professor',
+          name: 'Younes',
+          role: 'teacher',
+          persona: 'Guide la réflexion.',
+          avatar: '/avatars/teacher.png',
+          color: '#3b82f6',
+          priority: 8,
+          interactionWeight: 20,
+          mechanismId: 'professor',
+          gender: 'male',
+          voiceConfig: { providerId: 'higgs-tts', voiceId: 'younes' },
+        },
+      ] as GeneratedAgentConfig[],
+    });
+
+    expect(constitution.authoredBackbone).toHaveLength(1);
+    expect(constitution.agentRosterSnapshot[0]).toMatchObject({
+      displayName: 'Younes',
+      voiceId: 'younes',
+      identityCompatibility: 'validated',
+      organizationWeight: 20,
+    });
+    const directive = buildAnimationDirective(constitution, 'scene-1');
+    expect(directive).toContain('selected by the author: andragogy');
+    expect(directive).toContain('Vérifier la compréhension');
+    expect(directive).toContain('unaddressed-risk');
   });
 });

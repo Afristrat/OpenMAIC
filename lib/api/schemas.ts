@@ -30,7 +30,7 @@ export const organizationPatchSchema = z.object({
 // Organization Members
 // ---------------------------------------------------------------------------
 
-const orgMemberRoles = ['admin', 'manager', 'formateur', 'apprenant'] as const;
+const orgMemberRoles = ['admin', 'manager', 'author', 'formateur', 'apprenant'] as const;
 
 export const orgMembersInviteSchema = z.object({
   email: z.string().email('Valid email is required'),
@@ -331,6 +331,8 @@ export const generateClassroomSchema = z.object({
     })
     .optional(),
   language: z.enum(['fr-FR', 'ar-MA', 'en-US']).optional(),
+  learningApproach: z.enum(['pedagogy', 'hybrid', 'andragogy']),
+  interactionLevel: z.enum(['guided', 'balanced', 'immersive']),
   enableWebSearch: z.boolean().optional(),
   webSearchProviderId: z
     .enum(['tavily', 'bocha', 'brave', 'baidu', 'minimax', 'serper'])

@@ -46,8 +46,9 @@ import {
 } from '@/lib/org/teaching-profile';
 import {
   DEFAULT_LEARNING_DESIGN,
-  approachForAudience,
   learningDesignFromSettings,
+  type InteractionLevel,
+  type LearningApproach,
   type LearningDesignSettings,
 } from '@/lib/agents/persona-catalog';
 import { selectTenantCast, type LearnerCastingProfile } from '@/lib/agents/cast-selection';
@@ -60,11 +61,15 @@ import {
 import { resolveOrganizationSkillId } from '@/lib/server/skill-resolution';
 import { buildLiveInstructionalDirective } from '@/lib/formation-engine/downstream-consumers';
 import { toPersistedResearchSources } from '@/lib/server/research-sources';
+import { createAnimationConstitution } from '@/lib/formation-engine/animation-constitution';
 
 const log = createLogger('Classroom');
 
 export interface GenerateClassroomInput {
   orgId: string;
+  authorRole: 'author' | 'super-admin';
+  learningApproach: LearningApproach;
+  interactionLevel: InteractionLevel;
   /** Persisted courses from S1-003 override the deterministic current-flow identity. */
   courseId?: string;
   language?: CourseLocale;
@@ -162,7 +167,10 @@ export async function generateClassroom(
         .maybeSingle(),
     ]);
     teachingProfile = teachingProfileFromSettings(organization?.settings);
-    learningDesign = learningDesignFromSettings(organization?.settings);
+    learningDesign = {
+      ...learningDesignFromSettings(organization?.settings),
+      interactionLevel: input.interactionLevel,
+    };
     learnerCastingProfile = {
       culture: profile?.culture ?? learnerCastingProfile.culture,
       preferences: profile?.preferences ?? learnerCastingProfile.preferences,
@@ -257,12 +265,11 @@ export async function generateClassroom(
     return result.text;
   };
 
-  const learningApproach = approachForAudience(learningDesign.audienceStage);
   const instructionalDirective = buildLiveInstructionalDirective({
-    approach: learningApproach,
+    approach: input.learningApproach,
     audienceStage: learningDesign.audienceStage,
     expertiseLevel: learningDesign.expertiseLevel,
-    interactionLevel: learningDesign.interactionLevel,
+    interactionLevel: input.interactionLevel,
   });
   const requirements: UserRequirements = {
     requirement: `${requirement}\n\n${instructionalDirective}`,
@@ -613,6 +620,21 @@ export async function generateClassroom(
       throw new Error('No scenes were generated');
     }
 
+    const animationConstitution =
+      agentMode === 'generate'
+        ? createAnimationConstitution({
+            classroomId: stageId,
+            organizationId: input.orgId,
+            authorUserId: options.ownerId,
+            authorRole: input.authorRole,
+            approach: input.learningApproach,
+            interactionLevel: input.interactionLevel,
+            targetPerformance: requirement,
+            scenes,
+            agents: tenantAgentConfigs,
+          })
+        : undefined;
+
     // Phase: Media generation (after all scenes generated)
     if (input.enableImageGeneration || input.enableVideoGeneration) {
       await options.onProgress?.({
@@ -666,6 +688,7 @@ export async function generateClassroom(
         scenes,
         ownerId: options.ownerId,
         orgId: input.orgId,
+        animationConstitution,
       },
       options.baseUrl,
     );

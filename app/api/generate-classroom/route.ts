@@ -7,7 +7,7 @@ import {
   markClassroomGenerationJobFailed,
 } from '@/lib/server/classroom-job-store';
 import { buildRequestOrigin } from '@/lib/server/classroom-storage';
-import { requireSuperAdminOrOrgAdmin } from '@/lib/api/auth';
+import { requireSuperAdminOrOrgAuthor } from '@/lib/api/auth';
 import { validateBody } from '@/lib/api/validate';
 import { generateClassroomSchema } from '@/lib/api/schemas';
 import { createLogger } from '@/lib/logger';
@@ -27,11 +27,14 @@ export async function POST(req: NextRequest) {
     const parsed = validation.data;
     requirementSnippet = parsed.requirement.substring(0, 60);
 
-    const auth = await requireSuperAdminOrOrgAdmin(req, parsed.orgId);
+    const auth = await requireSuperAdminOrOrgAuthor(req, parsed.orgId);
     if (auth.response) return auth.response;
 
     const body: GenerateClassroomInput = {
       orgId: parsed.orgId,
+      authorRole: auth.authoredByRole,
+      learningApproach: parsed.learningApproach,
+      interactionLevel: parsed.interactionLevel,
       ...(parsed.courseId ? { courseId: parsed.courseId } : {}),
       requirement: parsed.requirement,
       ...(parsed.pdfContent ? { pdfContent: parsed.pdfContent } : {}),

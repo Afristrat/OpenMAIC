@@ -80,7 +80,13 @@ const slideContent = {
 async function generateWithProgress() {
   const { generateClassroom } = await import('@/lib/server/classroom-generation');
   return generateClassroom(
-    { orgId: 'org-1', requirement: 'Configurer LiteLLM' },
+    {
+      orgId: 'org-1',
+      authorRole: 'author',
+      learningApproach: 'andragogy',
+      interactionLevel: 'balanced',
+      requirement: 'Configurer LiteLLM',
+    },
     { baseUrl: 'http://localhost', ownerId: 'owner-1' },
   );
 }

@@ -11,7 +11,7 @@ import type { OrgMemberRole } from '@/lib/supabase/types';
 import { validateBody } from '@/lib/api/validate';
 import { orgInviteSchema } from '@/lib/api/schemas';
 
-const VALID_ROLES: OrgMemberRole[] = ['admin', 'manager', 'formateur', 'apprenant'];
+const VALID_ROLES: OrgMemberRole[] = ['admin', 'manager', 'author', 'formateur', 'apprenant'];
 
 export async function POST(
   request: NextRequest,

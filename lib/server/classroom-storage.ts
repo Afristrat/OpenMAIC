@@ -4,6 +4,10 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 import type { Scene, Stage } from '@/lib/types/stage';
 import type { Slide } from '@openmaic/dsl';
+import {
+  parseAnimationConstitution,
+  type AnimationConstitution,
+} from '@/lib/formation-engine/animation-constitution';
 
 const log = createLogger('ClassroomStorage');
 
@@ -70,7 +74,7 @@ export function classroomMediaContentType(filename: string): string {
 // RLS on this path.
 // ---------------------------------------------------------------------------
 
-interface StageExtra {
+export interface StageExtra {
   createdAt?: number;
   updatedAt?: number;
   languageDirective?: string;
@@ -81,6 +85,7 @@ interface StageExtra {
   interactiveMode?: boolean;
   taskEngineMode?: boolean;
   teacherProfile?: Stage['teacherProfile'];
+  animationConstitution?: AnimationConstitution;
 }
 
 interface SceneExtra {
@@ -90,7 +95,10 @@ interface SceneExtra {
   multiAgent?: Scene['multiAgent'];
 }
 
-function buildStageExtra(stage: Stage): StageExtra {
+export function buildStageExtra(
+  stage: Stage,
+  animationConstitution?: AnimationConstitution,
+): StageExtra {
   return {
     createdAt: stage.createdAt,
     updatedAt: stage.updatedAt,
@@ -102,6 +110,19 @@ function buildStageExtra(stage: Stage): StageExtra {
     interactiveMode: stage.interactiveMode,
     taskEngineMode: stage.taskEngineMode,
     teacherProfile: stage.teacherProfile,
+    animationConstitution,
+  };
+}
+
+export function extractStageLiveContext(extra: unknown): {
+  context?: Stage['skillPromptContext'];
+  animationConstitution?: AnimationConstitution;
+} {
+  const candidate = (extra ?? {}) as StageExtra;
+  const parsed = parseAnimationConstitution(candidate.animationConstitution);
+  return {
+    context: candidate.skillPromptContext,
+    animationConstitution: parsed.success ? parsed.constitution : undefined,
   };
 }
 
@@ -121,6 +142,7 @@ export async function persistClassroom(
     scenes: Scene[];
     ownerId: string;
     orgId: string;
+    animationConstitution?: AnimationConstitution;
   },
   baseUrl: string,
 ): Promise<PersistedClassroomData & { url: string }> {
@@ -134,7 +156,7 @@ export async function persistClassroom(
     description: data.stage.description ?? null,
     style: data.stage.style ?? null,
     agent_ids: data.stage.agentIds ?? null,
-    extra: buildStageExtra(data.stage),
+    extra: buildStageExtra(data.stage, data.animationConstitution),
   });
   if (stageError) {
     throw new Error(`Failed to persist stage ${data.id}: ${stageError.message}`);
@@ -241,9 +263,11 @@ export async function readClassroom(id: string): Promise<PersistedClassroomData 
 }
 
 /** Read the server-owned live prompt context without reconstructing all scenes. */
-export async function readClassroomSkillPromptContext(
-  id: string,
-): Promise<{ orgId: string; context?: Stage['skillPromptContext'] } | null> {
+export async function readClassroomSkillPromptContext(id: string): Promise<{
+  orgId: string;
+  context?: Stage['skillPromptContext'];
+  animationConstitution?: AnimationConstitution;
+} | null> {
   const { data, error } = await createServiceSupabaseClient()
     .from('stages')
     .select('org_id, extra')
@@ -254,8 +278,11 @@ export async function readClassroomSkillPromptContext(
   }
   if (!data) return null;
 
-  const extra = (data.extra ?? {}) as StageExtra;
-  return { orgId: data.org_id, context: extra.skillPromptContext };
+  const liveContext = extractStageLiveContext(data.extra);
+  return {
+    orgId: data.org_id,
+    ...liveContext,
+  };
 }
 
 export async function listClassrooms(orgId: string): Promise<ClassroomListItem[]> {

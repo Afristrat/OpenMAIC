@@ -84,7 +84,14 @@ async function generateWithProgress(input: Record<string, unknown> = {}) {
   const progress: Array<{ message: string }> = [];
   const { generateClassroom } = await import('@/lib/server/classroom-generation');
   const result = await generateClassroom(
-    { orgId: 'org-1', requirement: 'Teach retry basics', ...input },
+    {
+      orgId: 'org-1',
+      authorRole: 'author',
+      learningApproach: 'andragogy',
+      interactionLevel: 'balanced',
+      requirement: 'Teach retry basics',
+      ...input,
+    },
     {
       baseUrl: 'http://localhost',
       ownerId: 'owner-1',

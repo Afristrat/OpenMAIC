@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   isClassroomPublic: vi.fn(),
   listClassrooms: vi.fn(),
   requireAdmin: vi.fn(),
+  requireAuthor: vi.fn(),
   requireMember: vi.fn(),
   download: vi.fn(),
   createGenerationJob: vi.fn(),
@@ -35,6 +36,7 @@ vi.mock('@/lib/server/classroom-storage', () => ({
 
 vi.mock('@/lib/api/auth', () => ({
   requireSuperAdminOrOrgAdmin: mocks.requireAdmin,
+  requireSuperAdminOrOrgAuthor: mocks.requireAuthor,
   requireSuperAdminOrOrgMember: mocks.requireMember,
 }));
 
@@ -64,6 +66,10 @@ describe('classroom tenant boundary', () => {
     vi.clearAllMocks();
     mocks.requireAdmin.mockResolvedValue({
       user: { id: 'session-owner', email: 'admin@qalem.ma' },
+    });
+    mocks.requireAuthor.mockResolvedValue({
+      user: { id: 'session-owner', email: 'author@qalem.ma' },
+      authoredByRole: 'author',
     });
     mocks.requireMember.mockResolvedValue({
       user: { id: 'org-member', email: 'member@qalem.ma' },
@@ -138,7 +144,7 @@ describe('classroom tenant boundary', () => {
     );
 
     expect(response.status).toBe(400);
-    expect(mocks.requireAdmin).not.toHaveBeenCalled();
+    expect(mocks.requireAuthor).not.toHaveBeenCalled();
     expect(mocks.createGenerationJob).not.toHaveBeenCalled();
     expect(mocks.enqueueGeneration).not.toHaveBeenCalled();
   });

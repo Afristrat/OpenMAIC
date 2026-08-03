@@ -16,6 +16,8 @@ interface AuthUser {
 type AuthSuccess = { user: AuthUser; response?: never };
 type AuthFailure = { user?: never; response: NextResponse };
 type AuthResult = AuthSuccess | AuthFailure;
+type AuthorAuthSuccess = AuthSuccess & { authoredByRole: 'author' | 'super-admin' };
+type AuthorAuthResult = AuthorAuthSuccess | AuthFailure;
 
 // ---------------------------------------------------------------------------
 // requireAuth — any authenticated user
@@ -183,6 +185,47 @@ export async function requireSuperAdminOrOrgAdmin(
   if (isSuperAdminEmail(auth.user.email)) return auth;
 
   return requireOrgAdmin(req, orgId);
+}
+
+/** Authoring permission for organization-scoped learning content. */
+export async function requireSuperAdminOrOrgAuthor(
+  req: NextRequest,
+  orgId: string,
+): Promise<AuthorAuthResult> {
+  const auth = await requireAuth(req);
+  if (auth.response) return auth;
+
+  if (isSuperAdminEmail(auth.user.email)) {
+    return { ...auth, authoredByRole: 'super-admin' };
+  }
+
+  try {
+    const supabase = await createServerSupabaseClient();
+    const { data: membership } = await supabase
+      .from('org_members')
+      .select('role')
+      .eq('org_id', orgId)
+      .eq('user_id', auth.user.id)
+      .single();
+
+    if (!membership || !['admin', 'manager', 'author'].includes(membership.role)) {
+      return {
+        response: NextResponse.json(
+          { error: 'Author access required', code: 'FORBIDDEN', status: 403 },
+          { status: 403 },
+        ),
+      };
+    }
+    return { ...auth, authoredByRole: 'author' };
+  } catch (err) {
+    log.error('Org author check error:', err instanceof Error ? err.message : String(err));
+    return {
+      response: NextResponse.json(
+        { error: 'Failed to verify organization role', code: 'INTERNAL_ERROR', status: 500 },
+        { status: 500 },
+      ),
+    };
+  }
 }
 
 // ---------------------------------------------------------------------------
