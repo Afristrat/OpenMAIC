@@ -49,7 +49,6 @@ export function Stage({
     sceneCount: scenes.length,
     generatingOutlineCount: generatingOutlines.length,
     hasCurrentScene: !!currentScene,
-    sceneType: currentScene?.type,
     canPersist: canEdit,
   });
 

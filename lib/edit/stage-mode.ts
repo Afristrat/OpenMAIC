@@ -1,5 +1,4 @@
 import { PENDING_SCENE_ID } from '@/lib/store/stage';
-import type { SceneType } from '@/lib/types/stage';
 
 /**
  * Inputs the edit-mode auto-exit guard reads. Kept as primitives so callers
@@ -11,7 +10,6 @@ export interface StageEditModeContext {
   sceneCount: number;
   generatingOutlineCount: number;
   hasCurrentScene: boolean;
-  sceneType?: SceneType;
   canPersist?: boolean;
 }
 
@@ -23,7 +21,6 @@ export interface StageEditModeContext {
  */
 export function isCurrentSceneEditable(ctx: StageEditModeContext): boolean {
   if (ctx.canPersist === false) return false;
-  if (ctx.sceneType && ctx.sceneType !== 'slide' && ctx.sceneType !== 'quiz') return false;
   if (ctx.currentSceneId === PENDING_SCENE_ID) return false;
   if (ctx.sceneCount === 0) return false;
   if (ctx.generatingOutlineCount > 0) return false;
