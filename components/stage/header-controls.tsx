@@ -246,7 +246,7 @@ export function HeaderControls({
           Not a settings function so it does not belong inside the
           settings pill; kept as a separate sibling sitting between the
           Pro Switch and the right edge of the chrome. */}
-      <DropdownMenu modal={false} open={exportMenuOpen} onOpenChange={setExportMenuOpen}>
+      <DropdownMenu open={exportMenuOpen} onOpenChange={setExportMenuOpen}>
         <DropdownMenuTrigger asChild>
           <button
             disabled={

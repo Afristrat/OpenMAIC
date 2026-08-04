@@ -374,11 +374,6 @@ test.describe('Classroom Interaction', () => {
     page,
     mockApi,
   }) => {
-    // This single scenario generates and opens six independent archives. Keep
-    // the ordinary 30 s timeout everywhere else, but do not let CPU contention
-    // turn a completed export into a false click failure halfway through here.
-    test.setTimeout(90_000);
-
     await mockApi.mockMp4ExportDone('e2e-all-export-formats');
     await page.route('**/api/export-jobs', (route) => {
       const { format } = route.request().postDataJSON() as { format: string };
