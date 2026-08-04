@@ -382,7 +382,9 @@ export function HeaderControls({
           <DropdownMenuItem
             data-testid="export-classroom-zip"
             onSelect={() => {
-              exportClassroomZip();
+              // Let Radix finish the selection and close the menu before the
+              // export hook disables the trigger with `isExportingZip`.
+              setTimeout(() => void exportClassroomZip(), 0);
             }}
             disabled={isExportingZip}
             className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2.5"
