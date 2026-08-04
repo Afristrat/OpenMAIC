@@ -938,4 +938,9 @@ Before outputting JSON, verify:
 
 - When the requested presentation language is French, never use an em dash (—) or en dash (–) in visible slide text. Use standard French punctuation such as commas, colons, semicolons, parentheses, or full stops.
 
+- Never display, cite, recommend, or invent a third-party website, domain name, or URL in learner-visible slide content. Research sources belong only in private author metadata.
+{{#if hasLearningResources}}
+- The only learner-visible URL allowed is an exact download link supplied in **Downloadable learning resources**. Copy it exactly. Never shorten, replace, or supplement it with another URL.
+{{/if}}
+
 Output valid JSON only. No explanations, no code blocks, no additional text.

@@ -188,9 +188,16 @@ describe('classroom tenant boundary', () => {
   it('allows anonymous reads only after explicit publication and hides ownership state', async () => {
     mocks.isClassroomPublic.mockResolvedValue(true);
     mocks.requireEditor.mockResolvedValue({ response: forbidden() });
+    mocks.requireAuthor.mockResolvedValue({ response: forbidden() });
     mocks.readClassroom.mockResolvedValue({
       id: 'published_classroom',
-      stage: { id: 'published_classroom', name: 'Published classroom' },
+      stage: {
+        id: 'published_classroom',
+        name: 'Published classroom',
+        researchSources: [
+          { title: 'Private source', url: 'https://source.example', excerpt: 'Private' },
+        ],
+      },
       scenes: [],
       createdAt: '2026-07-22T00:00:00.000Z',
       ownerId: 'session-owner',
@@ -207,6 +214,8 @@ describe('classroom tenant boundary', () => {
     expect(body.classroom).not.toHaveProperty('ownerId');
     expect(body.classroom).not.toHaveProperty('orgId');
     expect(body.canEdit).toBe(false);
+    expect(body.canViewSources).toBe(false);
+    expect(body.classroom.stage).not.toHaveProperty('researchSources');
     expect(mocks.requireEditor).toHaveBeenCalledWith(
       expect.any(NextRequest),
       ORG_ID,
@@ -218,7 +227,13 @@ describe('classroom tenant boundary', () => {
     mocks.isClassroomPublic.mockResolvedValue(true);
     mocks.readClassroom.mockResolvedValue({
       id: 'authored_classroom',
-      stage: { id: 'authored_classroom', name: 'Authored classroom' },
+      stage: {
+        id: 'authored_classroom',
+        name: 'Authored classroom',
+        researchSources: [
+          { title: 'Author source', url: 'https://source.example', excerpt: 'Visible' },
+        ],
+      },
       scenes: [],
       createdAt: '2026-07-22T00:00:00.000Z',
       ownerId: 'session-owner',
@@ -232,6 +247,8 @@ describe('classroom tenant boundary', () => {
 
     expect(response.status).toBe(200);
     expect(body.canEdit).toBe(true);
+    expect(body.canViewSources).toBe(true);
+    expect(body.classroom.stage.researchSources).toHaveLength(1);
     expect(mocks.requireEditor).toHaveBeenCalledWith(
       expect.any(NextRequest),
       ORG_ID,

@@ -89,7 +89,7 @@ describe('media prompt condition wiring', () => {
 
   test('resolves semantic QR image IDs used by generated learning resources', async () => {
     const qrImageUrl = '/api/classroom-media/classroom-1/resources/resource_1-qr.png';
-    const downloadUrl = '/r/classroom-1/resource_1/budget-tresorerie.xlsx';
+    const downloadUrl = 'https://qalem.ma/A7bK2';
     const aiCall: AICallFn = async () =>
       JSON.stringify({
         background: { type: 'solid', color: '#ffffff' },
@@ -156,6 +156,73 @@ describe('media prompt condition wiring', () => {
     expect(result.elements).toEqual(
       expect.arrayContaining([expect.objectContaining({ type: 'image', src: qrImageUrl })]),
     );
+  });
+
+  test('rejects an invented third-party URL even when the expected Qalem link is present', async () => {
+    const downloadUrl = 'https://qalem.ma/A7bK2';
+    const qrImageUrl = '/api/classroom-media/classroom-1/resources/resource_1-qr.png';
+    const aiCall: AICallFn = async () =>
+      JSON.stringify({
+        elements: [
+          {
+            id: 'resource-qr',
+            type: 'image',
+            src: 'qr_resource_1',
+            left: 620,
+            top: 120,
+            width: 260,
+            height: 260,
+          },
+          {
+            id: 'resource-link',
+            type: 'text',
+            left: 80,
+            top: 120,
+            width: 480,
+            height: 160,
+            content: `<p>${downloadUrl}</p><p>https://cours.tpe-treso.ma/budget</p>`,
+            defaultFontName: '',
+            defaultColor: '#111111',
+          },
+        ],
+      });
+
+    const result = await generateSceneContent(
+      {
+        id: 'resource-scene',
+        type: 'slide',
+        title: 'Téléchargez le classeur',
+        description: 'Mettre le fichier à disposition',
+        keyPoints: ['Télécharger le fichier'],
+        order: 1,
+        generatedResources: [
+          {
+            id: 'resource_1',
+            format: 'xlsx',
+            title: 'Budget de trésorerie',
+            fileName: 'budget-tresorerie.xlsx',
+            downloadUrl,
+            qrImageUrl,
+          },
+        ],
+      },
+      aiCall,
+      {
+        assignedImages: [
+          {
+            id: 'qr_resource_1',
+            src: qrImageUrl,
+            pageNumber: 0,
+            width: 320,
+            height: 320,
+            description: 'QR code du classeur',
+          },
+        ],
+        imageMapping: { qr_resource_1: qrImageUrl },
+      },
+    );
+
+    expect(result).toBeNull();
   });
 });
 

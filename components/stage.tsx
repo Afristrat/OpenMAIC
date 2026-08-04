@@ -33,9 +33,11 @@ import { preloadEditor } from '@/lib/edit/preload-editor';
 export function Stage({
   onRetryOutline,
   canEdit = true,
+  canViewSources = false,
 }: {
   onRetryOutline?: (outlineId: string) => Promise<void>;
   canEdit?: boolean;
+  canViewSources?: boolean;
 }) {
   const { mode, setMode, scenes, currentSceneId, generatingOutlines, stage } = useStageStore();
   const currentScene = useStageStore((s) => s.getCurrentScene());
@@ -136,6 +138,7 @@ export function Stage({
             <EditChromeRoot
               scene={currentScene}
               isEditable={isEditable}
+              canViewSources={canViewSources}
               onToggleEditMode={toggleHandler}
             />
           </motion.div>
@@ -152,6 +155,7 @@ export function Stage({
               ref={playbackRef}
               onRetryOutline={onRetryOutline}
               canEnterProMode={isEditable}
+              canViewSources={canViewSources}
               onEnterProMode={toggleHandler}
             />
           </motion.div>

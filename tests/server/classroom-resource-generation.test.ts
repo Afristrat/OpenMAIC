@@ -1,8 +1,21 @@
 import JSZip from 'jszip';
 import { describe, expect, it } from 'vitest';
-import { buildXlsx } from '@/lib/server/classroom-resource-generation';
+import {
+  buildXlsx,
+  createResourceShortCode,
+} from '@/lib/server/classroom-resource-generation';
 
 describe('classroom resource generation', () => {
+  it('always creates a five-character code with upper, lower and numeric characters', () => {
+    for (let index = 0; index < 100; index += 1) {
+      const code = createResourceShortCode();
+      expect(code).toMatch(/^[a-zA-Z0-9]{5}$/);
+      expect(code).toMatch(/[A-Z]/);
+      expect(code).toMatch(/[a-z]/);
+      expect(code).toMatch(/[0-9]/);
+    }
+  });
+
   it('builds a real multi-sheet XLSX with values, formulas and escaped text', async () => {
     const workbook = await buildXlsx({
       sheets: [

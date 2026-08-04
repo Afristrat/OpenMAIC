@@ -17,7 +17,7 @@ describe('downloadable resource narration', () => {
           format: 'xlsx',
           title: 'Budget prévisionnel',
           fileName: 'budget-previsionnel.xlsx',
-          downloadUrl: '/A7bK2',
+          downloadUrl: 'https://qalem.ma/A7bK2',
           qrImageUrl: '/api/classroom-media/classroom/resources/resource_1-qr.png',
         },
       ],
@@ -58,7 +58,7 @@ describe('downloadable resource narration', () => {
     });
     expect(actions[pauseIndex]).toMatchObject({
       resourceId: 'resource_1',
-      downloadUrl: '/A7bK2',
+      downloadUrl: 'https://qalem.ma/A7bK2',
     });
   });
 });

@@ -39,6 +39,7 @@ export default function ClassroomDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [canEdit, setCanEdit] = useState(false);
+  const [canViewSources, setCanViewSources] = useState(false);
 
   const generationStartedRef = useRef(false);
   const serverBackedRef = useRef(false);
@@ -76,6 +77,7 @@ export default function ClassroomDetailPage() {
           const json = await res.json();
           if (json.success && json.classroom) {
             setCanEdit(Boolean(json.canEdit));
+            setCanViewSources(Boolean(json.canViewSources));
             const { stage, scenes } = json.classroom;
             if (protectUnsyncedLocal && localSnapshot) {
               serverBackedRef.current = true;
@@ -353,7 +355,11 @@ export default function ClassroomDetailPage() {
               </div>
             </div>
           ) : (
-            <Stage onRetryOutline={retrySingleOutline} canEdit={canEdit} />
+            <Stage
+              onRetryOutline={retrySingleOutline}
+              canEdit={canEdit}
+              canViewSources={canViewSources}
+            />
           )}
         </div>
       </MediaStageProvider>

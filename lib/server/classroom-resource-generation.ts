@@ -21,13 +21,21 @@ const MAX_ROWS = 500;
 const MAX_COLUMNS = 50;
 const MAX_CELL_LENGTH = 20_000;
 const SHORT_CODE_ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-const createShortCode = customAlphabet(SHORT_CODE_ALPHABET, 5);
+const randomShortCode = customAlphabet(SHORT_CODE_ALPHABET, 5);
 const MAX_SHORT_CODE_ATTEMPTS = 20;
 
 interface ResourceShortLink {
   classroomId: string;
   resourceId: string;
   fileName: string;
+}
+
+export function createResourceShortCode(): string {
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    const code = randomShortCode();
+    if (/[0-9]/.test(code) && /[A-Z]/.test(code) && /[a-z]/.test(code)) return code;
+  }
+  throw new Error('Unable to generate a mixed alphanumeric short code');
 }
 
 function xml(value: string): string {
@@ -160,7 +168,7 @@ async function reserveShortLink(metadata: ResourceShortLink): Promise<string> {
   const bucket = createServiceSupabaseClient().storage.from('classroom-media');
   const body = Buffer.from(JSON.stringify(metadata), 'utf8');
   for (let attempt = 0; attempt < MAX_SHORT_CODE_ATTEMPTS; attempt += 1) {
-    const code = createShortCode();
+    const code = createResourceShortCode();
     const { error } = await bucket.upload(`short-links/${code}.json`, body, {
       contentType: 'application/json',
       upsert: false,
@@ -179,7 +187,15 @@ export async function generateResourcesForClassroom(
   languageDirective: string,
   aiCall: AICallFn,
 ): Promise<number> {
-  const origin = new URL(baseUrl).origin;
+  const publicUrl = new URL(baseUrl);
+  if (
+    publicUrl.protocol === 'http:' &&
+    publicUrl.hostname !== 'localhost' &&
+    publicUrl.hostname !== '127.0.0.1'
+  ) {
+    publicUrl.protocol = 'https:';
+  }
+  const publicOrigin = publicUrl.origin;
   const seenIds = new Set<string>();
   const requestedCount = outlines.reduce(
     (count, outline) => count + (outline.resourceGenerations?.length ?? 0),
@@ -202,8 +218,8 @@ export async function generateResourcesForClassroom(
         resourceId: request.id,
         fileName,
       });
-      const downloadUrl = `/${shortCode}`;
-      const qr = await fetchQrPng(`${origin}${downloadUrl}`);
+      const downloadUrl = `${publicOrigin}/${shortCode}`;
+      const qr = await fetchQrPng(downloadUrl);
       await uploadClassroomMedia(classroomId, `resources/${request.id}-qr.png`, qr);
       resources.push({
         id: request.id,

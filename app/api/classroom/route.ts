@@ -214,6 +214,8 @@ export async function GET(request: NextRequest) {
       ownership.ownerId,
     );
     const canEdit = !editAuth.response;
+    const sourceAuth = await requireSuperAdminOrOrgAuthor(request, ownership.orgId);
+    const canViewSources = !sourceAuth.response;
 
     let presentationBranding = presentationBrandingFromOrganization(undefined, undefined);
     try {
@@ -240,12 +242,15 @@ export async function GET(request: NextRequest) {
 
     // ownerId/orgId are internal authorization state — never exposed to the client.
     const { ownerId: _ownerId, orgId: _orgId, ...publicClassroom } = classroom;
+    const { researchSources, ...learnerStage } = publicClassroom.stage;
     return apiSuccess({
       canEdit,
+      canViewSources,
       classroom: {
         ...publicClassroom,
         stage: {
-          ...publicClassroom.stage,
+          ...learnerStage,
+          ...(canViewSources && researchSources?.length ? { researchSources } : {}),
           presentationBranding,
         },
       },

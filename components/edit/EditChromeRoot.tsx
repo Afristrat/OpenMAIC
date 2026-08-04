@@ -16,6 +16,7 @@ import { shouldRenderAgentPanel } from './agent-panel-visibility';
 interface EditChromeRootProps {
   readonly scene: Scene;
   readonly isEditable: boolean;
+  readonly canViewSources?: boolean;
   readonly onToggleEditMode?: () => void;
 }
 
@@ -39,7 +40,12 @@ interface EditChromeRootProps {
  * `scene` is required (non-null). The parent gates mounting on
  * `mode === 'edit' && currentScene` to satisfy this contract.
  */
-export function EditChromeRoot({ scene, isEditable, onToggleEditMode }: EditChromeRootProps) {
+export function EditChromeRoot({
+  scene,
+  isEditable,
+  canViewSources,
+  onToggleEditMode,
+}: EditChromeRootProps) {
   const [mobileDrawer, setMobileDrawer] = useState<'nav' | 'agent' | null>(null);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -130,6 +136,7 @@ export function EditChromeRoot({ scene, isEditable, onToggleEditMode }: EditChro
         <HeaderControls
           mode="edit"
           canEdit={isEditable}
+          canViewSources={canViewSources}
           onToggleEditMode={isMaicEditorEnabled() ? onToggleEditMode : undefined}
         />
       }

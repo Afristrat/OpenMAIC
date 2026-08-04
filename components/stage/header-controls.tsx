@@ -53,6 +53,7 @@ const EMPTY_RESEARCH_SOURCES: ResearchSource[] = [];
 interface HeaderControlsProps {
   readonly mode?: StageMode;
   readonly canEdit?: boolean;
+  readonly canViewSources?: boolean;
   readonly onToggleEditMode?: () => void;
   /**
    * `default` — the chunky h-9 pill used in the playback Stage Header.
@@ -79,6 +80,7 @@ interface HeaderControlsProps {
 export function HeaderControls({
   mode,
   canEdit,
+  canViewSources,
   onToggleEditMode,
   variant = 'default',
 }: HeaderControlsProps) {
@@ -390,7 +392,7 @@ export function HeaderControls({
         </DialogContent>
       </Dialog>
 
-      {researchSources.length > 0 && (
+      {canViewSources && researchSources.length > 0 && (
         <Dialog>
           <DialogTrigger asChild>
             <button

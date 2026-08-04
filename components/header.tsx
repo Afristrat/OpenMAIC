@@ -12,6 +12,7 @@ interface HeaderProps {
   readonly currentSceneTitle: string;
   readonly mode?: StageMode;
   readonly canEdit?: boolean;
+  readonly canViewSources?: boolean;
   readonly onToggleEditMode?: () => void;
   readonly generatedAgents?: GeneratedAgentConfig[];
 }
@@ -20,6 +21,7 @@ export function Header({
   currentSceneTitle,
   mode,
   canEdit,
+  canViewSources,
   onToggleEditMode,
   generatedAgents,
 }: HeaderProps) {
@@ -63,7 +65,12 @@ export function Header({
 
         <div className="flex items-center gap-2">
           <TeamOfTheDay agents={generatedAgents} />
-          <HeaderControls mode={mode} canEdit={canEdit} onToggleEditMode={onToggleEditMode} />
+          <HeaderControls
+            mode={mode}
+            canEdit={canEdit}
+            canViewSources={canViewSources}
+            onToggleEditMode={onToggleEditMode}
+          />
         </div>
       </header>
     </>
