@@ -13,18 +13,33 @@ const settings: {
   ttsProvidersConfig: { 'openai-tts': { apiKey: 'configured' } },
 };
 
+const editorMocks = vi.hoisted(() => ({
+  flush: vi.fn<() => Promise<boolean>>(),
+  updateScene: vi.fn(),
+  state: {
+    stage: { id: 'classroom-1' },
+    scenes: [] as Scene[],
+  },
+}));
+
 vi.mock('@/lib/utils/database', () => ({ db: { audioFiles: {} } }));
 vi.mock('@/lib/store/settings', () => ({
   useSettingsStore: { getState: () => settings },
 }));
 vi.mock('@/lib/store/stage', () => ({
-  useStageStore: { getState: () => ({ stage: { id: 'classroom-1' } }) },
+  useStageStore: {
+    getState: () => ({ ...editorMocks.state, updateScene: editorMocks.updateScene }),
+  },
+}));
+vi.mock('@/lib/edit/classroom-persistence', () => ({
+  flushClassroomPersistence: editorMocks.flush,
 }));
 
 import {
   isManagedTtsActive,
   missingSpeechAudioActions,
   preflightMissingSpeechAudio,
+  regenerateSpeechAudio,
 } from '@/lib/audio/regenerate-speech-tts';
 
 function scene(): Scene {
@@ -50,6 +65,9 @@ describe('managed speech preflight', () => {
     settings.ttsEnabled = true;
     settings.ttsProviderId = 'openai-tts';
     settings.ttsProvidersConfig['openai-tts'] = { apiKey: 'configured' };
+    editorMocks.flush.mockReset().mockResolvedValue(true);
+    editorMocks.updateScene.mockReset();
+    editorMocks.state.scenes = [];
     vi.unstubAllGlobals();
   });
 
@@ -116,5 +134,33 @@ describe('managed speech preflight', () => {
       'La régénération de la voix off n’a pas pu être enregistrée.',
     );
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('flushes the current edit before requesting durable regenerated audio', async () => {
+    const currentScene = scene();
+    editorMocks.state.scenes = [currentScene];
+    const order: string[] = [];
+    editorMocks.flush.mockImplementation(async () => {
+      order.push('flush');
+      return true;
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        order.push('tts');
+        return new Response(JSON.stringify({ success: true, actions: currentScene.actions }), {
+          status: 200,
+        });
+      }),
+    );
+
+    await expect(
+      regenerateSpeechAudio(currentScene.order, currentScene.actions?.[0] ?? {}),
+    ).resolves.toBe('tts_s1_missing-1');
+
+    expect(order).toEqual(['flush', 'tts']);
+    expect(editorMocks.updateScene).toHaveBeenCalledWith(currentScene.id, {
+      actions: currentScene.actions,
+    });
   });
 });

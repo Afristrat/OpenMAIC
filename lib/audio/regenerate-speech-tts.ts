@@ -9,6 +9,7 @@
 import { db } from '@/lib/utils/database';
 import { useSettingsStore } from '@/lib/store/settings';
 import { isTTSProviderEnabled } from '@/lib/audio/provider-enablement';
+import { flushClassroomPersistence } from '@/lib/edit/classroom-persistence';
 import type { Action, SpeechAction } from '@/lib/types/action';
 import type { Scene } from '@/lib/types/stage';
 
@@ -154,6 +155,9 @@ export async function regenerateSpeechAudio(
     (item) => item.order === sceneOrder && item.actions?.some((item) => item.id === action.id),
   );
   if (!state.stage?.id || !scene) {
+    throw new Error('La classroom doit être enregistrée avant de régénérer une voix off.');
+  }
+  if (!(await flushClassroomPersistence())) {
     throw new Error('La classroom doit être enregistrée avant de régénérer une voix off.');
   }
   const actions = await requestSpeechAudio(scene.id, { id: action.id, text }, signal);

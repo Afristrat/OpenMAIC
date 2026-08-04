@@ -83,13 +83,12 @@ describe('ClassroomPersistence', () => {
     expect(hasUnsyncedClassroom('course-1', storage)).toBe(false);
   });
 
-  it('retries the atomic local write before starting the remote save', async () => {
+  it('does not let a local cache failure block the durable remote save', async () => {
     const storage = markerStorage();
     const saveRemote = vi.fn().mockResolvedValue(undefined);
     const saveLocal = vi
       .fn<(data: StageStoreData) => Promise<void>>()
-      .mockRejectedValueOnce(new Error('IndexedDB unavailable'))
-      .mockResolvedValue(undefined);
+      .mockRejectedValue(new Error('IndexedDB unavailable'));
     const controller = new ClassroomPersistence({
       stageId: 'course-1',
       markerStorage: storage,
@@ -99,14 +98,8 @@ describe('ClassroomPersistence', () => {
     });
 
     controller.schedule(snapshot('not durable'));
-    await expect(controller.flush()).resolves.toBe(false);
-
-    expect(saveRemote).not.toHaveBeenCalled();
-    expect(controller.state).toBe('error');
-    expect(hasUnsyncedClassroom('course-1', storage)).toBe(true);
-
     await expect(controller.flush()).resolves.toBe(true);
-    expect(saveLocal).toHaveBeenCalledTimes(2);
+    expect(saveLocal).toHaveBeenCalledOnce();
     expect(saveRemote).toHaveBeenCalledOnce();
     expect(controller.state).toBe('saved');
     expect(hasUnsyncedClassroom('course-1', storage)).toBe(false);

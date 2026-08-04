@@ -147,7 +147,10 @@ export class ClassroomPersistence {
         const localWrite = this.localTail;
         if (!snapshot) break;
 
-        await localWrite;
+        // IndexedDB is a convenience cache; the authenticated server copy is
+        // authoritative. A browser cache failure must never block the durable
+        // remote save.
+        await localWrite.catch(() => undefined);
         await this.options.saveRemote(snapshot, revision);
         this.savedRevision = revision;
       }
