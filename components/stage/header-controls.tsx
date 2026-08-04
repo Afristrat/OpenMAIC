@@ -102,6 +102,10 @@ export function HeaderControls({
   const { exporting: isExportingLearningPackage, exportLearningPackage } =
     useExportLearningPackage();
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const launchExport = (action: () => void) => {
+    setExportMenuOpen(false);
+    setTimeout(action, 0);
+  };
 
   const canExport =
     scenes.length > 0 &&
@@ -246,8 +250,8 @@ export function HeaderControls({
           Not a settings function so it does not belong inside the
           settings pill; kept as a separate sibling sitting between the
           Pro Switch and the right edge of the chrome. */}
-      <DropdownMenu open={exportMenuOpen} onOpenChange={setExportMenuOpen}>
-        <DropdownMenuTrigger asChild>
+      <Dialog open={exportMenuOpen} onOpenChange={setExportMenuOpen}>
+        <DialogTrigger asChild>
           <button
             disabled={
               !canExport ||
@@ -281,19 +285,18 @@ export function HeaderControls({
               <Download className="w-4 h-4" />
             )}
           </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent
-          align="end"
-          sideOffset={8}
-          className="min-w-[200px] overflow-hidden rounded-lg border border-gray-200 bg-white p-0 shadow-lg data-open:animate-none data-closed:animate-none dark:border-gray-700 dark:bg-gray-800"
-        >
-          <DropdownMenuItem
+        </DialogTrigger>
+        <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{t('export.dialogTitle')}</DialogTitle>
+            <DialogDescription>{t('export.dialogDescription')}</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-1">
+          <button
             data-testid="export-mp4"
-            onSelect={() => {
-              void exportMp4();
-            }}
+            onClick={() => launchExport(() => void exportMp4())}
             disabled={isExportingMp4}
-            className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2.5"
+            className="flex w-full items-center gap-2.5 rounded-md px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <Video className="w-4 h-4 text-gray-400 shrink-0" />
             <div>
@@ -302,17 +305,15 @@ export function HeaderControls({
                 {t('export.mp4Desc')}
               </div>
             </div>
-          </DropdownMenuItem>
+          </button>
           <div className="border-t border-gray-100 dark:border-gray-700 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500">
             {t('export.lmsPackages')}
           </div>
-          <DropdownMenuItem
+          <button
             data-testid="export-scorm12"
-            onSelect={() => {
-              void exportLearningPackage('scorm12');
-            }}
+            onClick={() => launchExport(() => void exportLearningPackage('scorm12'))}
             disabled={isExportingLearningPackage}
-            className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2.5"
+            className="flex w-full items-center gap-2.5 rounded-md px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <BookOpenCheck className="w-4 h-4 text-gray-400 shrink-0" />
             <div>
@@ -321,14 +322,12 @@ export function HeaderControls({
                 {t('export.scorm12Desc')}
               </div>
             </div>
-          </DropdownMenuItem>
-          <DropdownMenuItem
+          </button>
+          <button
             data-testid="export-scorm2004"
-            onSelect={() => {
-              void exportLearningPackage('scorm2004');
-            }}
+            onClick={() => launchExport(() => void exportLearningPackage('scorm2004'))}
             disabled={isExportingLearningPackage}
-            className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2.5"
+            className="flex w-full items-center gap-2.5 rounded-md px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <BookOpenCheck className="w-4 h-4 text-gray-400 shrink-0" />
             <div>
@@ -337,14 +336,12 @@ export function HeaderControls({
                 {t('export.scorm2004Desc')}
               </div>
             </div>
-          </DropdownMenuItem>
-          <DropdownMenuItem
+          </button>
+          <button
             data-testid="export-cmi5"
-            onSelect={() => {
-              void exportLearningPackage('cmi5');
-            }}
+            onClick={() => launchExport(() => void exportLearningPackage('cmi5'))}
             disabled={isExportingLearningPackage}
-            className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2.5"
+            className="flex w-full items-center gap-2.5 rounded-md px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <Workflow className="w-4 h-4 text-gray-400 shrink-0" />
             <div>
@@ -353,23 +350,19 @@ export function HeaderControls({
                 {t('export.cmi5Desc')}
               </div>
             </div>
-          </DropdownMenuItem>
-          <DropdownMenuItem
+          </button>
+          <button
             data-testid="export-pptx"
-            onSelect={() => {
-              exportPPTX();
-            }}
-            className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2.5"
+            onClick={() => launchExport(exportPPTX)}
+            className="flex w-full items-center gap-2.5 rounded-md px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <FileDown className="w-4 h-4 text-gray-400 shrink-0" />
             <span>{t('export.pptx')}</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
+          </button>
+          <button
             data-testid="export-resource-pack"
-            onSelect={() => {
-              exportResourcePack();
-            }}
-            className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2.5"
+            onClick={() => launchExport(exportResourcePack)}
+            className="flex w-full items-center gap-2.5 rounded-md px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <Package className="w-4 h-4 text-gray-400 shrink-0" />
             <div>
@@ -378,16 +371,12 @@ export function HeaderControls({
                 {t('export.resourcePackDesc')}
               </div>
             </div>
-          </DropdownMenuItem>
-          <DropdownMenuItem
+          </button>
+          <button
             data-testid="export-classroom-zip"
-            onSelect={() => {
-              // Let Radix finish the selection and close the menu before the
-              // export hook disables the trigger with `isExportingZip`.
-              setTimeout(() => void exportClassroomZip(), 0);
-            }}
+            onClick={() => launchExport(() => void exportClassroomZip())}
             disabled={isExportingZip}
-            className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2.5"
+            className="flex w-full items-center gap-2.5 rounded-md px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <Archive className="w-4 h-4 text-gray-400 shrink-0" />
             <div>
@@ -396,9 +385,10 @@ export function HeaderControls({
                 {t('export.classroomZipDesc')}
               </div>
             </div>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          </button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {researchSources.length > 0 && (
         <Dialog>

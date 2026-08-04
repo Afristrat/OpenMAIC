@@ -36,6 +36,8 @@
   "toolbar.interactiveModeHint": "Activez le mode interactif d\u0027abord pour plus de contenu pratique",
   "toolbar.interactiveModeLabel": "Mode interactif",
   "export.pptx": "Exporter PPTX",
+  "export.dialogTitle": "Exporter la formation",
+  "export.dialogDescription": "Choisissez le format adapté à votre usage.",
   "export.resourcePack": "Exporter le pack de ressources",
   "export.resourcePackDesc": "PPTX + pages interactives",
   "export.exporting": "Exportation...",

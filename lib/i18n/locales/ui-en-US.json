@@ -36,6 +36,8 @@
   "toolbar.interactiveModeHint": "Enable interactive-first mode for more hands-on content",
   "toolbar.interactiveModeLabel": "Interactive Mode",
   "export.pptx": "Export PPTX",
+  "export.dialogTitle": "Export the course",
+  "export.dialogDescription": "Choose the format that fits your use case.",
   "export.resourcePack": "Export Resource Pack",
   "export.resourcePackDesc": "PPTX + interactive pages",
   "export.exporting": "Exporting...",

@@ -36,6 +36,8 @@
   "toolbar.interactiveModeHint": "فعّل الوضع التفاعلي للمحتوى التطبيقي",
   "toolbar.interactiveModeLabel": "وضع التفاعل",
   "export.pptx": "تصدير PPTX",
+  "export.dialogTitle": "تصدير التكوين",
+  "export.dialogDescription": "اختر الصيغة المناسبة لاستخدامك.",
   "export.resourcePack": "تصدير حزمة الموارد",
   "export.resourcePackDesc": "PPTX + صفحات تفاعلية",
   "export.exporting": "جارٍ التصدير...",
