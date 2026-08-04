@@ -772,9 +772,7 @@ function learnerVisibleUrls(elements: readonly PPTElement[]): string[] {
           : [candidate.href, candidate.url, candidate.link]
               .filter((value): value is string => typeof value === 'string')
               .join(' ');
-    return (visible.match(LEARNER_URL_PATTERN) ?? []).map((url) =>
-      url.replace(/[),.;!?]+$/u, ''),
-    );
+    return (visible.match(LEARNER_URL_PATTERN) ?? []).map((url) => url.replace(/[),.;!?]+$/u, ''));
   });
 }
 
@@ -1496,11 +1494,7 @@ function appendResourcePauseActions(
   });
   const discussionIndex = actions.findIndex((action) => action.type === 'discussion');
   if (discussionIndex < 0) return [...actions, ...checkpoints];
-  return [
-    ...actions.slice(0, discussionIndex),
-    ...checkpoints,
-    ...actions.slice(discussionIndex),
-  ];
+  return [...actions.slice(0, discussionIndex), ...checkpoints, ...actions.slice(discussionIndex)];
 }
 
 /**

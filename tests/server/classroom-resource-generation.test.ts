@@ -1,9 +1,6 @@
 import JSZip from 'jszip';
 import { describe, expect, it } from 'vitest';
-import {
-  buildXlsx,
-  createResourceShortCode,
-} from '@/lib/server/classroom-resource-generation';
+import { buildXlsx, createResourceShortCode } from '@/lib/server/classroom-resource-generation';
 
 describe('classroom resource generation', () => {
   it('always creates a five-character code with upper, lower and numeric characters', () => {
@@ -27,7 +24,13 @@ describe('classroom resource generation', () => {
             ['Total', '=SUM(B2:B2)'],
           ],
         },
-        { name: 'Scénarios', rows: [['Nom', 'Actif'], ['Base', true]] },
+        {
+          name: 'Scénarios',
+          rows: [
+            ['Nom', 'Actif'],
+            ['Base', true],
+          ],
+        },
       ],
     });
 

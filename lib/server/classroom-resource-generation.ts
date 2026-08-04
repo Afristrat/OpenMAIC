@@ -206,12 +206,16 @@ export async function generateResourcesForClassroom(
   for (const outline of outlines) {
     const resources: GeneratedLearningResource[] = [];
     for (const request of outline.resourceGenerations ?? []) {
-      if (request.format !== 'xlsx') throw new Error(`Unsupported resource format: ${request.format}`);
-      if (!/^[a-zA-Z0-9_-]+$/.test(request.id)) throw new Error(`Invalid resource id: ${request.id}`);
+      if (request.format !== 'xlsx')
+        throw new Error(`Unsupported resource format: ${request.format}`);
+      if (!/^[a-zA-Z0-9_-]+$/.test(request.id))
+        throw new Error(`Invalid resource id: ${request.id}`);
       if (seenIds.has(request.id)) throw new Error(`Duplicate resource id: ${request.id}`);
       seenIds.add(request.id);
       const fileName = safeFileName(request.fileName);
-      const workbook = await buildXlsx(await generateWorkbookSpec(request, languageDirective, aiCall));
+      const workbook = await buildXlsx(
+        await generateWorkbookSpec(request, languageDirective, aiCall),
+      );
       await uploadClassroomMedia(classroomId, `resources/${request.id}.xlsx`, workbook);
       const shortCode = await reserveShortLink({
         classroomId,

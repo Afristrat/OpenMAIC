@@ -42,10 +42,7 @@ describe('five-character learning resource links', () => {
     );
     expect(response.headers.get('content-disposition')).toContain('budget-tresorerie.xlsx');
     expect(mocks.download).toHaveBeenNthCalledWith(1, 'short-links/A7bK2.json');
-    expect(mocks.download).toHaveBeenNthCalledWith(
-      2,
-      'classroom_1/resources/resource_1.xlsx',
-    );
+    expect(mocks.download).toHaveBeenNthCalledWith(2, 'classroom_1/resources/resource_1.xlsx');
   });
 
   it('rejects any code that is not exactly five alphanumeric characters', async () => {

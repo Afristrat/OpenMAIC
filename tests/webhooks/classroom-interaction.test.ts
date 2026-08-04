@@ -18,7 +18,9 @@ describe('classroom interaction delivery', () => {
     const learner = message('user', 'user', 'learner-1');
 
     expect(latestExplicitLearnerMessage([learner])).toBe(learner);
-    expect(latestExplicitLearnerMessage([learner, message('assistant', 'agent', 'agent-1')])).toBeNull();
+    expect(
+      latestExplicitLearnerMessage([learner, message('assistant', 'agent', 'agent-1')]),
+    ).toBeNull();
     expect(latestExplicitLearnerMessage([message('user', 'agent', 'synthetic')])).toBeNull();
   });
 });

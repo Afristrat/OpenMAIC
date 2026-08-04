@@ -54,10 +54,7 @@ const DEFAULT_WIDTH = 384;
 const SLIDE_CAPABILITY_KEYS = [
   {
     label: 'edit.agent.cap.layout.label',
-    prompts: [
-      'edit.agent.cap.layout.promptSlide',
-      'edit.agent.cap.layout.promptPresentation',
-    ],
+    prompts: ['edit.agent.cap.layout.promptSlide', 'edit.agent.cap.layout.promptPresentation'],
   },
   {
     label: 'edit.agent.cap.content.label',
