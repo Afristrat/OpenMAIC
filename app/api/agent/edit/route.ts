@@ -149,7 +149,15 @@ export async function POST(req: NextRequest) {
 
   const agent = buildAgent({
     streamFn,
-    systemPrompt: buildSystemPrompt(body.scene),
+    systemPrompt: buildSystemPrompt(
+      body.scene,
+      Object.values(sceneContextMap).map(({ outline }) => ({
+        id: outline.id,
+        title: outline.title,
+        type: outline.type,
+        order: outline.order,
+      })),
+    ),
     tools,
     history: toHistoryMessages(body.history),
   });
