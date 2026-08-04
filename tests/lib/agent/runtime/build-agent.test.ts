@@ -3,13 +3,10 @@ import { describe, expect, it } from 'vitest';
 import { buildSystemPrompt } from '@/lib/agent/runtime/build-agent';
 
 describe('buildSystemPrompt capability boundary', () => {
-  const prompt = buildSystemPrompt(
-    { id: 's1', title: 'Photosynthesis' },
-    [
-      { id: 's2', title: 'Practice', type: 'quiz', order: 2 },
-      { id: 's1', title: 'Photosynthesis', type: 'slide', order: 1 },
-    ],
-  ).toLowerCase();
+  const prompt = buildSystemPrompt({ id: 's1', title: 'Photosynthesis' }, [
+    { id: 's2', title: 'Practice', type: 'quiz', order: 2 },
+    { id: 's1', title: 'Photosynthesis', type: 'slide', order: 1 },
+  ]).toLowerCase();
 
   it('grants reading and slide regeneration', () => {
     expect(prompt).toContain('read_scene_content');
