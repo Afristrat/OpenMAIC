@@ -195,7 +195,8 @@ export default function ClassroomDetailPage() {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ stage: snapshot.stage, scenes: snapshot.scenes }),
-          keepalive: true,
+          // Classroom snapshots regularly exceed Chromium's keepalive payload
+          // limit. The durable unsynced marker already covers interrupted exits.
         });
         if (!response.ok) throw new Error(`Classroom save returned HTTP ${response.status}`);
       },
