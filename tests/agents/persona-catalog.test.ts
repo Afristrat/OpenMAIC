@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_LEARNING_DESIGN,
   PERSONA_CATALOG,
-  approachForAudience,
   buildTenantAgentConfigs,
   learningDesignFromSettings,
 } from '@/lib/agents/persona-catalog';
@@ -57,13 +56,6 @@ describe('ten-persona learning design', () => {
         learningDesign: { ...DEFAULT_LEARNING_DESIGN, personas },
       }),
     ).toContain('Avatar gender mismatch');
-  });
-
-  it('derives the approach from learner stage, not proficiency', () => {
-    expect(approachForAudience('child')).toBe('pedagogy');
-    expect(approachForAudience('adolescent')).toBe('pedagogy');
-    expect(approachForAudience('higher-education')).toBe('hybrid');
-    expect(approachForAudience('adult-professional')).toBe('andragogy');
   });
 
   it('migrates the previous teacher profile into the professor mechanism', () => {

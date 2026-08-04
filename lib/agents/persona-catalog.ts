@@ -204,12 +204,6 @@ export const DEFAULT_LEARNING_DESIGN: LearningDesignSettings = {
   cultureReferenceApprovals: {},
 };
 
-export function approachForAudience(stage: AudienceStage): LearningApproach {
-  if (stage === 'adult-professional') return 'andragogy';
-  if (stage === 'higher-education') return 'hybrid';
-  return 'pedagogy';
-}
-
 export function learningDesignFromSettings(settings: unknown): LearningDesignSettings {
   const settingsObject = settings as {
     learningDesign?: Partial<LearningDesignSettings>;

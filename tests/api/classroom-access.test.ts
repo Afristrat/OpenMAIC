@@ -154,6 +154,25 @@ describe('classroom tenant boundary', () => {
     expect(mocks.enqueueGeneration).not.toHaveBeenCalled();
   });
 
+  it('requires the author to choose a learning approach explicitly', async () => {
+    const response = await generateClassroom(
+      new NextRequest('https://qalem.ma/api/generate-classroom', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          orgId: ORG_ID,
+          requirement: 'Former une cohorte au pilotage budgétaire',
+          interactionLevel: 'balanced',
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(mocks.requireAuthor).not.toHaveBeenCalled();
+    expect(mocks.createGenerationJob).not.toHaveBeenCalled();
+    expect(mocks.enqueueGeneration).not.toHaveBeenCalled();
+  });
+
   it('returns the authorization failure before reading a private cross-org classroom', async () => {
     mocks.requireMember.mockResolvedValue({ response: forbidden() });
 

@@ -11,7 +11,6 @@ import {
 import { TTS_PROVIDERS } from '@/lib/audio/constants';
 import {
   PERSONA_CATALOG,
-  approachForAudience,
   type AgentGender,
   type AudienceStage,
   type ExpertiseLevel,
@@ -98,9 +97,6 @@ export function AgentRosterSettings({
             onChange({ ...value, interactionLevel: interactionLevel as InteractionLevel })
           }
         />
-        <div className="rounded-md border bg-muted px-3 py-2 text-sm">
-          {t(`org.learningApproaches.${approachForAudience(value.audienceStage)}`)}
-        </div>
       </div>
 
       <div className="mb-3">
