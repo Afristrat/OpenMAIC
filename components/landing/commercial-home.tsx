@@ -195,7 +195,7 @@ function Hero({ locale }: { locale: CommercialLocale }): React.ReactElement {
       <div className="mx-auto grid max-w-[90rem] items-center gap-16 px-5 sm:px-8 lg:grid-cols-[1.05fr_.95fr] lg:px-12">
         <div className="max-w-3xl">
           <Eyebrow>{copy.hero.eyebrow}</Eyebrow>
-          <h1 className="max-w-4xl font-[family-name:var(--font-display)] text-[clamp(3rem,7vw,6.75rem)] font-black leading-[0.92] tracking-[-0.065em] text-white">
+          <h1 className="max-w-4xl font-[family-name:var(--font-display)] text-[clamp(2.5rem,5vw,4.75rem)] font-black leading-[1] tracking-[-0.045em] text-white">
             {copy.hero.title}
           </h1>
           <p className="mt-8 max-w-2xl text-lg leading-8 text-white/72 sm:text-xl">
@@ -341,7 +341,7 @@ function Experience({ locale }: { locale: CommercialLocale }): React.ReactElemen
         <div className="grid gap-8 border-b border-[#1b1523]/15 pb-14 lg:grid-cols-[.8fr_1.2fr]">
           <Eyebrow dark>{copy.eyebrow}</Eyebrow>
           <div>
-            <h2 className="max-w-4xl font-[family-name:var(--font-display)] text-4xl font-black leading-[1.02] tracking-[-0.045em] sm:text-6xl">
+            <h2 className="max-w-4xl font-[family-name:var(--font-display)] text-3xl font-black leading-[1.08] tracking-[-0.035em] sm:text-5xl">
               {copy.title}
             </h2>
             <p className="mt-7 max-w-3xl text-lg leading-8 text-[#51485a]">{copy.body}</p>
@@ -379,7 +379,7 @@ function Agents({ locale }: { locale: CommercialLocale }): React.ReactElement {
         <div className="grid items-end gap-12 lg:grid-cols-[1.15fr_.85fr]">
           <div>
             <Eyebrow>{copy.eyebrow}</Eyebrow>
-            <h2 className="max-w-4xl font-[family-name:var(--font-display)] text-4xl font-black leading-[1] tracking-[-0.05em] sm:text-6xl">
+            <h2 className="max-w-4xl font-[family-name:var(--font-display)] text-3xl font-black leading-[1.08] tracking-[-0.035em] sm:text-5xl">
               {copy.title}
             </h2>
           </div>
@@ -441,7 +441,7 @@ function Studio({ locale }: { locale: CommercialLocale }): React.ReactElement {
       <div className="mx-auto grid max-w-[90rem] items-center gap-16 px-5 sm:px-8 lg:grid-cols-[.9fr_1.1fr] lg:px-12">
         <div>
           <Eyebrow dark>{copy.eyebrow}</Eyebrow>
-          <h2 className="font-[family-name:var(--font-display)] text-4xl font-black leading-[1.02] tracking-[-0.045em] sm:text-6xl">
+          <h2 className="font-[family-name:var(--font-display)] text-3xl font-black leading-[1.08] tracking-[-0.035em] sm:text-5xl">
             {copy.title}
           </h2>
           <p className="mt-7 text-lg leading-8 text-[#61576a]">{copy.body}</p>
@@ -473,7 +473,7 @@ function Studio({ locale }: { locale: CommercialLocale }): React.ReactElement {
                   Cas pratique
                 </span>
                 <div>
-                  <h3 className="font-[family-name:var(--font-display)] text-4xl font-black leading-none">
+                  <h3 className="font-[family-name:var(--font-display)] text-3xl font-black leading-tight">
                     {copy.slideTitle}
                   </h3>
                   <p className="mt-5 max-w-sm leading-7 text-white/65">{copy.slideBody}</p>
@@ -524,7 +524,7 @@ function Institutions({ locale }: { locale: CommercialLocale }): React.ReactElem
           <Building2 className="mt-12 size-24 stroke-[1] text-[#176f61]" />
         </div>
         <div>
-          <h2 className="font-[family-name:var(--font-display)] text-4xl font-black leading-[1.02] tracking-[-0.045em] sm:text-6xl">
+          <h2 className="font-[family-name:var(--font-display)] text-3xl font-black leading-[1.08] tracking-[-0.035em] sm:text-5xl">
             {copy.title}
           </h2>
           <p className="mt-7 max-w-3xl text-lg leading-8 text-[#38584f]">{copy.body}</p>
@@ -561,7 +561,7 @@ function Offers({ locale }: { locale: CommercialLocale }): React.ReactElement {
       <div className="mx-auto max-w-[90rem] px-5 sm:px-8 lg:px-12">
         <div className="max-w-5xl">
           <Eyebrow dark>{copy.eyebrow}</Eyebrow>
-          <h2 className="font-[family-name:var(--font-display)] text-4xl font-black leading-[1.02] tracking-[-0.045em] sm:text-6xl">
+          <h2 className="font-[family-name:var(--font-display)] text-3xl font-black leading-[1.08] tracking-[-0.035em] sm:text-5xl">
             {copy.title}
           </h2>
           <p className="mt-7 max-w-3xl text-lg leading-8 text-[#61576a]">{copy.body}</p>
@@ -580,7 +580,7 @@ function Offers({ locale }: { locale: CommercialLocale }): React.ReactElement {
                   >
                     Qalem
                   </p>
-                  <h3 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-black tracking-[-0.04em]">
+                  <h3 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-black tracking-[-0.03em]">
                     {plan.name}
                   </h3>
                 </div>
@@ -639,7 +639,7 @@ function Closing({ locale }: { locale: CommercialLocale }): React.ReactElement {
       <div className="relative mx-auto grid max-w-[90rem] items-end gap-12 px-5 sm:px-8 lg:grid-cols-[1.15fr_.85fr] lg:px-12">
         <div>
           <Eyebrow>{copy.eyebrow}</Eyebrow>
-          <h2 className="max-w-5xl font-[family-name:var(--font-display)] text-4xl font-black leading-[1] tracking-[-0.05em] sm:text-6xl">
+          <h2 className="max-w-5xl font-[family-name:var(--font-display)] text-3xl font-black leading-[1.08] tracking-[-0.035em] sm:text-5xl">
             {copy.title}
           </h2>
           <p className="mt-7 max-w-3xl text-lg leading-8 text-white/75">{copy.body}</p>
