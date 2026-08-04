@@ -287,10 +287,9 @@ export function HeaderControls({
           sideOffset={8}
           className="min-w-[200px] overflow-hidden rounded-lg border border-gray-200 bg-white p-0 shadow-lg dark:border-gray-700 dark:bg-gray-800"
         >
-          <button
+          <DropdownMenuItem
             data-testid="export-mp4"
-            onClick={() => {
-              setExportMenuOpen(false);
+            onSelect={() => {
               void exportMp4();
             }}
             disabled={isExportingMp4}
@@ -303,14 +302,13 @@ export function HeaderControls({
                 {t('export.mp4Desc')}
               </div>
             </div>
-          </button>
+          </DropdownMenuItem>
           <div className="border-t border-gray-100 dark:border-gray-700 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500">
             {t('export.lmsPackages')}
           </div>
-          <button
+          <DropdownMenuItem
             data-testid="export-scorm12"
-            onClick={() => {
-              setExportMenuOpen(false);
+            onSelect={() => {
               void exportLearningPackage('scorm12');
             }}
             disabled={isExportingLearningPackage}
@@ -323,11 +321,10 @@ export function HeaderControls({
                 {t('export.scorm12Desc')}
               </div>
             </div>
-          </button>
-          <button
+          </DropdownMenuItem>
+          <DropdownMenuItem
             data-testid="export-scorm2004"
-            onClick={() => {
-              setExportMenuOpen(false);
+            onSelect={() => {
               void exportLearningPackage('scorm2004');
             }}
             disabled={isExportingLearningPackage}
@@ -340,11 +337,10 @@ export function HeaderControls({
                 {t('export.scorm2004Desc')}
               </div>
             </div>
-          </button>
-          <button
+          </DropdownMenuItem>
+          <DropdownMenuItem
             data-testid="export-cmi5"
-            onClick={() => {
-              setExportMenuOpen(false);
+            onSelect={() => {
               void exportLearningPackage('cmi5');
             }}
             disabled={isExportingLearningPackage}
@@ -357,22 +353,20 @@ export function HeaderControls({
                 {t('export.cmi5Desc')}
               </div>
             </div>
-          </button>
-          <button
+          </DropdownMenuItem>
+          <DropdownMenuItem
             data-testid="export-pptx"
-            onClick={() => {
-              setExportMenuOpen(false);
+            onSelect={() => {
               exportPPTX();
             }}
             className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2.5"
           >
             <FileDown className="w-4 h-4 text-gray-400 shrink-0" />
             <span>{t('export.pptx')}</span>
-          </button>
-          <button
+          </DropdownMenuItem>
+          <DropdownMenuItem
             data-testid="export-resource-pack"
-            onClick={() => {
-              setExportMenuOpen(false);
+            onSelect={() => {
               exportResourcePack();
             }}
             className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2.5"
@@ -384,11 +378,10 @@ export function HeaderControls({
                 {t('export.resourcePackDesc')}
               </div>
             </div>
-          </button>
-          <button
+          </DropdownMenuItem>
+          <DropdownMenuItem
             data-testid="export-classroom-zip"
-            onClick={() => {
-              setExportMenuOpen(false);
+            onSelect={() => {
               exportClassroomZip();
             }}
             disabled={isExportingZip}
@@ -401,7 +394,7 @@ export function HeaderControls({
                 {t('export.classroomZipDesc')}
               </div>
             </div>
-          </button>
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
