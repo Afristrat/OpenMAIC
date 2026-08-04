@@ -259,6 +259,17 @@ describe('director routing contract', () => {
     expect(out).toContain('Force decomposition');
     expect(out).toContain('student_1');
   });
+
+  test('treats learner input as an enrichment trigger without turning into consulting', () => {
+    const director = buildDirectorPrompt([baseAgent], 'No history', [], 0);
+    const agent = buildStructuredPrompt(baseAgent, slideState);
+
+    expect(director).toContain('explicit interaction trigger');
+    expect(director).toContain('not a consulting service');
+    expect(agent).toContain('explicit trigger');
+    expect(agent).toContain('https://ai-mpower.com');
+    expect(agent).toContain('https://www.linkedin.com/in/aminemansouri/');
+  });
 });
 
 describe('pbl-design template fills all repeated placeholders', () => {

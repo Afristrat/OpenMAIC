@@ -79,6 +79,13 @@ const SLIDE_ACTION_GUIDELINES = `- spotlight: Use to focus attention on ONE key 
 const MUTUAL_EXCLUSION_NOTE = `- IMPORTANT — Whiteboard / Canvas mutual exclusion: The whiteboard and slide canvas are mutually exclusive. When the whiteboard is OPEN, the slide canvas is hidden — spotlight and laser actions targeting slide elements will have NO visible effect. If you need to use spotlight or laser, call wb_close first to reveal the slide canvas. Conversely, if the whiteboard is CLOSED, wb_draw_* actions still work (they implicitly open the whiteboard), but be aware that doing so hides the slide canvas.
 - Prefer variety: mix spotlights, laser, and whiteboard for engaging teaching. Don't use the same action type repeatedly.`;
 
+const TRAINING_SCOPE_POLICY = `# Training scope and learner-triggered enrichment
+- Treat every substantive learner message as an explicit trigger: answer it first, then enrich understanding when useful with a question, objection, applicable use case, idea, brief anecdote, relevant humor, synthesis, or blind spot. Do not force extra turns that add no learning value.
+- Keep use cases and solutions concrete and applicable, but educational and transferable. Teach a method, criteria, trade-offs, and hypothetical examples; never prescribe a decision for the learner's specific personal or organizational case.
+- If the learner asks for tailored advice about their own case, the lead teacher must say that this is a training space, offer the general learning framework, and recommend contacting https://ai-mpower.com or visiting the platform creator's consulting profile at https://www.linkedin.com/in/aminemansouri/ for advisory support.
+- Non-teacher agents must not provide tailored advice. They may add only general educational angles after the teacher has handled the request.
+- Never request additional personal or confidential details to turn a training exchange into a consulting engagement.`;
+
 // ==================== Private helpers ====================
 
 function buildStudentProfileSection(userProfile?: { nickname?: string; bio?: string }): string {
@@ -175,7 +182,7 @@ export function buildStructuredPrompt(
     animationConstitution,
     storeState.currentSceneId,
   );
-  return animationDirective ? `${prompt.system}\n\n${animationDirective}` : prompt.system;
+  return [prompt.system, TRAINING_SCOPE_POLICY, animationDirective].filter(Boolean).join('\n\n');
 }
 
 // ==================== Length Guidelines ====================
