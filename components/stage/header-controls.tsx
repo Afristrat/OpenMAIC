@@ -292,100 +292,100 @@ export function HeaderControls({
             <DialogDescription>{t('export.dialogDescription')}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-1">
-          <button
-            data-testid="export-mp4"
-            onClick={() => launchExport(() => void exportMp4())}
-            disabled={isExportingMp4}
-            className="flex w-full items-center gap-2.5 rounded-md px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            <Video className="w-4 h-4 text-gray-400 shrink-0" />
-            <div>
-              <div>{t('export.mp4')}</div>
-              <div className="text-[11px] text-gray-400 dark:text-gray-500">
-                {t('export.mp4Desc')}
+            <button
+              data-testid="export-mp4"
+              onClick={() => launchExport(() => void exportMp4())}
+              disabled={isExportingMp4}
+              className="flex w-full items-center gap-2.5 rounded-md px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <Video className="w-4 h-4 text-gray-400 shrink-0" />
+              <div>
+                <div>{t('export.mp4')}</div>
+                <div className="text-[11px] text-gray-400 dark:text-gray-500">
+                  {t('export.mp4Desc')}
+                </div>
               </div>
+            </button>
+            <div className="border-t border-gray-100 dark:border-gray-700 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500">
+              {t('export.lmsPackages')}
             </div>
-          </button>
-          <div className="border-t border-gray-100 dark:border-gray-700 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500">
-            {t('export.lmsPackages')}
-          </div>
-          <button
-            data-testid="export-scorm12"
-            onClick={() => launchExport(() => void exportLearningPackage('scorm12'))}
-            disabled={isExportingLearningPackage}
-            className="flex w-full items-center gap-2.5 rounded-md px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            <BookOpenCheck className="w-4 h-4 text-gray-400 shrink-0" />
-            <div>
-              <div>{t('export.scorm12')}</div>
-              <div className="text-[11px] text-gray-400 dark:text-gray-500">
-                {t('export.scorm12Desc')}
+            <button
+              data-testid="export-scorm12"
+              onClick={() => launchExport(() => void exportLearningPackage('scorm12'))}
+              disabled={isExportingLearningPackage}
+              className="flex w-full items-center gap-2.5 rounded-md px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <BookOpenCheck className="w-4 h-4 text-gray-400 shrink-0" />
+              <div>
+                <div>{t('export.scorm12')}</div>
+                <div className="text-[11px] text-gray-400 dark:text-gray-500">
+                  {t('export.scorm12Desc')}
+                </div>
               </div>
-            </div>
-          </button>
-          <button
-            data-testid="export-scorm2004"
-            onClick={() => launchExport(() => void exportLearningPackage('scorm2004'))}
-            disabled={isExportingLearningPackage}
-            className="flex w-full items-center gap-2.5 rounded-md px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            <BookOpenCheck className="w-4 h-4 text-gray-400 shrink-0" />
-            <div>
-              <div>{t('export.scorm2004')}</div>
-              <div className="text-[11px] text-gray-400 dark:text-gray-500">
-                {t('export.scorm2004Desc')}
+            </button>
+            <button
+              data-testid="export-scorm2004"
+              onClick={() => launchExport(() => void exportLearningPackage('scorm2004'))}
+              disabled={isExportingLearningPackage}
+              className="flex w-full items-center gap-2.5 rounded-md px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <BookOpenCheck className="w-4 h-4 text-gray-400 shrink-0" />
+              <div>
+                <div>{t('export.scorm2004')}</div>
+                <div className="text-[11px] text-gray-400 dark:text-gray-500">
+                  {t('export.scorm2004Desc')}
+                </div>
               </div>
-            </div>
-          </button>
-          <button
-            data-testid="export-cmi5"
-            onClick={() => launchExport(() => void exportLearningPackage('cmi5'))}
-            disabled={isExportingLearningPackage}
-            className="flex w-full items-center gap-2.5 rounded-md px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            <Workflow className="w-4 h-4 text-gray-400 shrink-0" />
-            <div>
-              <div>{t('export.cmi5')}</div>
-              <div className="text-[11px] text-gray-400 dark:text-gray-500">
-                {t('export.cmi5Desc')}
+            </button>
+            <button
+              data-testid="export-cmi5"
+              onClick={() => launchExport(() => void exportLearningPackage('cmi5'))}
+              disabled={isExportingLearningPackage}
+              className="flex w-full items-center gap-2.5 rounded-md px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <Workflow className="w-4 h-4 text-gray-400 shrink-0" />
+              <div>
+                <div>{t('export.cmi5')}</div>
+                <div className="text-[11px] text-gray-400 dark:text-gray-500">
+                  {t('export.cmi5Desc')}
+                </div>
               </div>
-            </div>
-          </button>
-          <button
-            data-testid="export-pptx"
-            onClick={() => launchExport(exportPPTX)}
-            className="flex w-full items-center gap-2.5 rounded-md px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            <FileDown className="w-4 h-4 text-gray-400 shrink-0" />
-            <span>{t('export.pptx')}</span>
-          </button>
-          <button
-            data-testid="export-resource-pack"
-            onClick={() => launchExport(exportResourcePack)}
-            className="flex w-full items-center gap-2.5 rounded-md px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            <Package className="w-4 h-4 text-gray-400 shrink-0" />
-            <div>
-              <div>{t('export.resourcePack')}</div>
-              <div className="text-[11px] text-gray-400 dark:text-gray-500">
-                {t('export.resourcePackDesc')}
+            </button>
+            <button
+              data-testid="export-pptx"
+              onClick={() => launchExport(exportPPTX)}
+              className="flex w-full items-center gap-2.5 rounded-md px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <FileDown className="w-4 h-4 text-gray-400 shrink-0" />
+              <span>{t('export.pptx')}</span>
+            </button>
+            <button
+              data-testid="export-resource-pack"
+              onClick={() => launchExport(exportResourcePack)}
+              className="flex w-full items-center gap-2.5 rounded-md px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <Package className="w-4 h-4 text-gray-400 shrink-0" />
+              <div>
+                <div>{t('export.resourcePack')}</div>
+                <div className="text-[11px] text-gray-400 dark:text-gray-500">
+                  {t('export.resourcePackDesc')}
+                </div>
               </div>
-            </div>
-          </button>
-          <button
-            data-testid="export-classroom-zip"
-            onClick={() => launchExport(() => void exportClassroomZip())}
-            disabled={isExportingZip}
-            className="flex w-full items-center gap-2.5 rounded-md px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            <Archive className="w-4 h-4 text-gray-400 shrink-0" />
-            <div>
-              <div>{t('export.classroomZip')}</div>
-              <div className="text-[11px] text-gray-400 dark:text-gray-500">
-                {t('export.classroomZipDesc')}
+            </button>
+            <button
+              data-testid="export-classroom-zip"
+              onClick={() => launchExport(() => void exportClassroomZip())}
+              disabled={isExportingZip}
+              className="flex w-full items-center gap-2.5 rounded-md px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <Archive className="w-4 h-4 text-gray-400 shrink-0" />
+              <div>
+                <div>{t('export.classroomZip')}</div>
+                <div className="text-[11px] text-gray-400 dark:text-gray-500">
+                  {t('export.classroomZipDesc')}
+                </div>
               </div>
-            </div>
-          </button>
+            </button>
           </div>
         </DialogContent>
       </Dialog>
