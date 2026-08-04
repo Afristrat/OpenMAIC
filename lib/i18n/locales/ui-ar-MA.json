@@ -350,6 +350,8 @@
   "edit.timeline.discussionAgent": "المُبادر",
   "edit.timeline.discussionAgentUnset": "غير محدد",
   "edit.tts.preview": "معاينة",
+  "edit.tts.stopPreview": "إيقاف",
+  "edit.tts.previewError": "المسار الصوتي موجود، لكن تعذّر تشغيله.",
   "edit.tts.regenerate": "إعادة توليد التعليق الصوتي",
   "edit.tts.regenerationFailed": "تعذر إعادة توليد {{count}} من المقاطع الصوتية.",
   "edit.tts.regenerationSucceeded": "تمت إعادة توليد {{count}} من المقاطع الصوتية وحفظها.",

@@ -1,9 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import { createAnimationConstitution } from '@/lib/formation-engine/animation-constitution';
-import { buildStageExtra, extractStageLiveContext } from '@/lib/server/classroom-storage';
+import {
+  buildStageExtra,
+  extractStageLiveContext,
+  preserveAnimationConstitution,
+} from '@/lib/server/classroom-storage';
+import type { AnimationConstitution } from '@/lib/formation-engine/animation-constitution';
 import type { GeneratedAgentConfig, Scene, Stage } from '@/lib/types/stage';
 
 describe('classroom animation persistence', () => {
+  it('preserves the server-owned constitution when a caller omits it', () => {
+    const existing = { schemaVersion: 1 } as AnimationConstitution;
+
+    expect(preserveAnimationConstitution(undefined, existing)).toBe(existing);
+    expect(preserveAnimationConstitution(existing, undefined)).toBe(existing);
+  });
+
   it('round-trips the server-owned constitution through stage.extra', () => {
     const constitution = createAnimationConstitution({
       classroomId: 'classroom-1',

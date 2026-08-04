@@ -350,6 +350,8 @@
   "edit.timeline.discussionAgent": "Initiateur",
   "edit.timeline.discussionAgentUnset": "Non spécifié",
   "edit.tts.preview": "Aperçu",
+  "edit.tts.stopPreview": "Arrêter",
+  "edit.tts.previewError": "La piste audio existe, mais sa lecture a échoué.",
   "edit.tts.regenerate": "Régénérer la voix off",
   "edit.tts.regenerationFailed": "{{count}} voix off n’ont pas pu être régénérées.",
   "edit.tts.regenerationSucceeded": "{{count}} voix off ont été régénérées et enregistrées.",

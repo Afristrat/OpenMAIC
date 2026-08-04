@@ -29,6 +29,7 @@ import {
   Flag,
   FoldVertical,
   GripVertical,
+  Pause,
   Play,
   RefreshCw,
   Trash2,
@@ -250,6 +251,7 @@ function SpeechTtsBar({
 }) {
   const { t } = useI18n();
   const [status, setStatus] = useState<TtsStatus>('none');
+  const [playing, setPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const objUrlRef = useRef<string | null>(null);
 
@@ -260,6 +262,7 @@ function SpeechTtsBar({
   const stopPreview = useCallback(() => {
     audioRef.current?.pause();
     audioRef.current = null;
+    setPlaying(false);
     if (objUrlRef.current) {
       URL.revokeObjectURL(objUrlRef.current);
       objUrlRef.current = null;
@@ -284,6 +287,10 @@ function SpeechTtsBar({
   useEffect(() => () => stopPreview(), [stopPreview]);
 
   const preview = async () => {
+    if (audioRef.current && !audioRef.current.paused) {
+      stopPreview();
+      return;
+    }
     stopPreview();
     let src = audioUrl ?? null;
     if (!src) {
@@ -294,7 +301,20 @@ function SpeechTtsBar({
     const a = new Audio(src);
     audioRef.current = a;
     a.addEventListener('ended', stopPreview);
-    void a.play().catch(() => stopPreview());
+    let failureReported = false;
+    const reportFailure = () => {
+      if (failureReported) return;
+      failureReported = true;
+      stopPreview();
+      toast.error(t('edit.tts.previewError'));
+    };
+    a.addEventListener('error', reportFailure, { once: true });
+    try {
+      await a.play();
+      setPlaying(true);
+    } catch {
+      reportFailure();
+    }
   };
 
   const regenerate = async () => {
@@ -332,11 +352,15 @@ function SpeechTtsBar({
         type="button"
         onClick={preview}
         disabled={status !== 'ready'}
-        className="grid size-5 place-items-center rounded-md text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent max-md:size-11"
-        aria-label={t('edit.tts.preview')}
-        title={t('edit.tts.preview')}
+        aria-pressed={playing}
+        className="flex h-7 items-center gap-1 rounded-md px-2 text-muted-foreground/70 transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent max-md:h-11"
+        aria-label={playing ? t('edit.tts.stopPreview') : t('edit.tts.preview')}
+        title={playing ? t('edit.tts.stopPreview') : t('edit.tts.preview')}
       >
-        <Play className="size-3" />
+        {playing ? <Pause className="size-3" /> : <Play className="size-3" />}
+        <span className="text-[10px] font-medium">
+          {playing ? t('edit.tts.stopPreview') : t('edit.tts.preview')}
+        </span>
       </button>
       <button
         type="button"

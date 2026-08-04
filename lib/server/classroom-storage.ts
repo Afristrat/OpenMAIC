@@ -114,6 +114,13 @@ export function buildStageExtra(
   };
 }
 
+export function preserveAnimationConstitution(
+  provided: AnimationConstitution | undefined,
+  existing: AnimationConstitution | undefined,
+): AnimationConstitution | undefined {
+  return provided ?? existing;
+}
+
 export function extractStageLiveContext(extra: unknown): {
   context?: Stage['skillPromptContext'];
   animationConstitution?: AnimationConstitution;
@@ -147,6 +154,14 @@ export async function persistClassroom(
   baseUrl: string,
 ): Promise<PersistedClassroomData & { url: string }> {
   const supabase = createServiceSupabaseClient();
+  const existingLiveContext =
+    data.animationConstitution === undefined
+      ? await readClassroomSkillPromptContext(data.id)
+      : null;
+  const animationConstitution = preserveAnimationConstitution(
+    data.animationConstitution,
+    existingLiveContext?.animationConstitution,
+  );
 
   const { error: stageError } = await supabase.from('stages').upsert({
     id: data.id,
@@ -156,7 +171,7 @@ export async function persistClassroom(
     description: data.stage.description ?? null,
     style: data.stage.style ?? null,
     agent_ids: data.stage.agentIds ?? null,
-    extra: buildStageExtra(data.stage, data.animationConstitution),
+    extra: buildStageExtra(data.stage, animationConstitution),
   });
   if (stageError) {
     throw new Error(`Failed to persist stage ${data.id}: ${stageError.message}`);

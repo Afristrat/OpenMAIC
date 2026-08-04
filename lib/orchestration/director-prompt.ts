@@ -38,6 +38,7 @@ export function buildDirectorPrompt(
   whiteboardOpen?: boolean,
   skillPromptContext?: SkillPromptContext,
   animationConstitution?: AnimationConstitution,
+  currentSceneId?: string | null,
 ): string {
   const totalRecordedTurns = agentResponses.length;
   const responseCounts = agentResponses.reduce<Map<string, number>>((counts, response) => {
@@ -103,7 +104,7 @@ ${userProfile.bio ? `Background: ${userProfile.bio}` : ''}
   if (!prompt) {
     throw new Error('director prompt template failed to load');
   }
-  const animationDirective = buildAnimationDirective(animationConstitution, null);
+  const animationDirective = buildAnimationDirective(animationConstitution, currentSceneId ?? null);
   return animationDirective ? `${prompt.system}\n\n${animationDirective}` : prompt.system;
 }
 

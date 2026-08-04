@@ -174,6 +174,7 @@ async function directorNode(
     state.storeState.whiteboardOpen,
     state.storeState.stage?.skillPromptContext,
     state.animationConstitution,
+    state.storeState.currentSceneId,
   );
 
   const adapter = new AISdkLangGraphAdapter(state.languageModel, state.thinkingConfig ?? undefined);

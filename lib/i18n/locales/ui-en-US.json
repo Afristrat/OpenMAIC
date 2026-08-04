@@ -350,6 +350,8 @@
   "edit.timeline.discussionAgent": "Initiator",
   "edit.timeline.discussionAgentUnset": "Unspecified",
   "edit.tts.preview": "Preview",
+  "edit.tts.stopPreview": "Stop",
+  "edit.tts.previewError": "The audio track exists, but playback failed.",
   "edit.tts.regenerate": "Regenerate voiceover",
   "edit.tts.regenerationFailed": "{{count}} voiceover lines could not be regenerated.",
   "edit.tts.regenerationSucceeded": "{{count}} voiceover lines were regenerated and saved.",
