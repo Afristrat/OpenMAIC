@@ -3,6 +3,7 @@
  */
 
 export type WebhookEvent =
+  | 'classroom.interaction'
   | 'classroom.created'
   | 'classroom.completed'
   | 'quiz.completed'
@@ -11,6 +12,7 @@ export type WebhookEvent =
   | 'member.joined';
 
 export const WEBHOOK_EVENTS: readonly WebhookEvent[] = [
+  'classroom.interaction',
   'classroom.created',
   'classroom.completed',
   'quiz.completed',

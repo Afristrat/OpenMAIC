@@ -10,6 +10,7 @@
  */
 
 import { Queue, type JobsOptions } from 'bullmq';
+import type { StatelessChatRequest } from '@/lib/types/chat';
 
 // ---------------------------------------------------------------------------
 // Connection
@@ -64,6 +65,7 @@ export type JobType =
   | 'video-capsule'
   | 'video-generation'
   | 'export-job'
+  | 'webhook-delivery'
   | 'transmission'
   | 'transmission-visual-watermark';
 
@@ -71,6 +73,18 @@ export interface ClassroomGenerationJobData {
   jobId: string;
   baseUrl: string;
   ownerId: string;
+}
+
+export interface ClassroomInteractionJobData {
+  event: 'classroom.interaction';
+  orgId: string;
+  interactionId: string;
+  payload: {
+    classroomId: string;
+    sceneId: string | null;
+    user: { id: string; email: string };
+    transcript: StatelessChatRequest['messages'];
+  };
 }
 
 const durableJobOptions: JobsOptions = {
@@ -90,6 +104,7 @@ export interface JobQueues {
   exportJob: Queue;
   transmission: Queue;
   transmissionVisualWatermark: Queue;
+  webhookDelivery: Queue;
 }
 
 let queues: JobQueues | undefined;
@@ -107,6 +122,7 @@ export function getJobQueues(): JobQueues {
     exportJob: new Queue('export-job', { connection }),
     transmission: new Queue('transmission', { connection }),
     transmissionVisualWatermark: new Queue('transmission-visual-watermark', { connection }),
+    webhookDelivery: new Queue('webhook-delivery', { connection }),
   };
   return queues;
 }
@@ -162,6 +178,16 @@ export async function enqueueTransmissionVisualWatermark(data: {
   const job = await queue.add('burn-visual-watermark', data, {
     ...durableJobOptions,
     jobId,
+  });
+  return job.id!;
+}
+
+export async function enqueueClassroomInteraction(
+  data: ClassroomInteractionJobData,
+): Promise<string> {
+  const job = await getJobQueues().webhookDelivery.add('deliver', data, {
+    ...durableJobOptions,
+    jobId: `classroom-interaction-${data.interactionId}`,
   });
   return job.id!;
 }

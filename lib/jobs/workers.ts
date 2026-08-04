@@ -36,9 +36,11 @@ import {
 import { runClassroomGenerationJob } from '@/lib/server/classroom-job-runner';
 import { readClassroomGenerationJob } from '@/lib/server/classroom-job-store';
 import type { ClassroomGenerationJobData } from '@/lib/jobs/queue';
+import type { ClassroomInteractionJobData } from '@/lib/jobs/queue';
 import { PermitPool } from '@/lib/jobs/permit-pool';
 import { enqueueTransmissionVisualWatermark } from '@/lib/jobs/queue';
 import { applyVisualWatermark } from '@/lib/transmissions/visual-watermark';
+import { dispatchWebhook } from '@/lib/webhooks/dispatcher';
 
 const log = createLogger('Workers');
 
@@ -99,6 +101,16 @@ function workerOptions() {
 export function startAllWorkers(): void {
   if (workersStarted) return;
   workersStarted = true;
+
+  const webhookDeliveryWorker = new Worker(
+    'webhook-delivery',
+    async (job: Job) => {
+      const data = job.data as ClassroomInteractionJobData;
+      await dispatchWebhook(data.event, data.payload, data.orgId);
+      incrementCounter('qalem_jobs_processed_total', { queue: 'webhook-delivery' });
+    },
+    workerOptions(),
+  );
 
   // ---- Classroom generation worker ----
   const classroomWorker = new Worker(
@@ -512,6 +524,7 @@ export function startAllWorkers(): void {
   );
 
   workers = [
+    webhookDeliveryWorker,
     classroomWorker,
     videoCapsuleWorker,
     videoGenerationWorker,

@@ -23,6 +23,9 @@ import type { ThinkingConfig } from '@/lib/types/provider';
 import { isFeatureEnabled } from '@/lib/flags';
 import { readClassroomSkillPromptContext } from '@/lib/server/classroom-storage';
 import { resolveOrganizationSkillId } from '@/lib/server/skill-resolution';
+import { requireAuth, requireSuperAdminOrOrgMember } from '@/lib/api/auth';
+import { latestExplicitLearnerMessage } from '@/lib/webhooks/classroom-interaction';
+import { enqueueClassroomInteraction } from '@/lib/jobs/queue';
 const log = createLogger('Chat API');
 
 // Allow streaming responses up to 60 seconds
@@ -50,6 +53,9 @@ export async function POST(req: NextRequest) {
   let chatMessageCount: number | undefined;
 
   try {
+    const authentication = await requireAuth(req);
+    if (authentication.response) return authentication.response;
+
     const body: StatelessChatRequest = await req.json();
     chatModel = body.model;
     chatMessageCount = body.messages?.length;
@@ -78,6 +84,25 @@ export async function POST(req: NextRequest) {
         persisted = await readClassroomSkillPromptContext(body.storeState.stage.id);
       } catch (error) {
         log.warn('Persisted live skill context is unavailable; using the core engine', error);
+      }
+      if (persisted) {
+        const access = await requireSuperAdminOrOrgMember(req, persisted.orgId);
+        if (access.response) return access.response;
+
+        const learnerMessage = latestExplicitLearnerMessage(body.messages);
+        if (learnerMessage) {
+          await enqueueClassroomInteraction({
+            event: 'classroom.interaction',
+            orgId: persisted.orgId,
+            interactionId: learnerMessage.id,
+            payload: {
+              classroomId: body.storeState.stage.id,
+              sceneId: body.storeState.currentSceneId,
+              user: authentication.user,
+              transcript: body.messages,
+            },
+          });
+        }
       }
       let activeSkillId = persisted?.context?.activeSkillId;
       if (skillEngineEnabled && activeSkillId && persisted) {
