@@ -285,7 +285,7 @@ export function HeaderControls({
         <DropdownMenuContent
           align="end"
           sideOffset={8}
-          className="min-w-[200px] overflow-hidden rounded-lg border border-gray-200 bg-white p-0 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+          className="min-w-[200px] overflow-hidden rounded-lg border border-gray-200 bg-white p-0 shadow-lg data-open:animate-none data-closed:animate-none dark:border-gray-700 dark:bg-gray-800"
         >
           <DropdownMenuItem
             data-testid="export-mp4"
