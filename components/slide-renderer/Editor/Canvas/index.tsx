@@ -43,6 +43,7 @@ import {
 
 export interface CanvasProps {
   editable?: boolean;
+  canvasPercentage?: number;
 }
 
 /**
@@ -59,7 +60,7 @@ export interface CanvasProps {
  *   <Canvas />
  * </SceneProvider>
  */
-export function Canvas(_props: CanvasProps) {
+export function Canvas({ canvasPercentage }: CanvasProps) {
   const { t } = useI18n();
   const canvasRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -100,7 +101,7 @@ export function Canvas(_props: CanvasProps) {
   }, [elements]);
 
   // Viewport size and positioning
-  const { viewportStyles, dragViewport } = useViewportSize(canvasRef);
+  const { viewportStyles, dragViewport } = useViewportSize(canvasRef, canvasPercentage);
 
   // Initialize drop handler
   useDrop(canvasRef, viewportRef, canvasScale);

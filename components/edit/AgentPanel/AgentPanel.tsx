@@ -49,15 +49,51 @@ const MIN_WIDTH = 320;
 const MAX_WIDTH = 640;
 const DEFAULT_WIDTH = 384;
 
-/** Capability rows shown in the empty state — read-only tips (not clickable),
- *  each a label + example phrasings. One unified list describing what the agent
- *  can do across scenes (slide content + narration + interactive-page fixing),
- *  shown regardless of the active scene type. */
-const CAPABILITY_KEYS = [
-  { label: 'edit.agent.cap.content.label', examples: 'edit.agent.cap.content.examples' },
-  { label: 'edit.agent.cap.narration.label', examples: 'edit.agent.cap.narration.examples' },
-  { label: 'edit.agent.cap.fixHtml.label', examples: 'edit.agent.cap.fixHtml.examples' },
+/** Contextual prompt starters. A click fills the composer but never submits,
+ *  so the author reviews every AI instruction before it can mutate a scene. */
+const SLIDE_CAPABILITY_KEYS = [
+  {
+    label: 'edit.agent.cap.content.label',
+    prompts: ['edit.agent.cap.content.promptCondense', 'edit.agent.cap.content.promptExample'],
+  },
+  {
+    label: 'edit.agent.cap.narration.label',
+    prompts: [
+      'edit.agent.cap.narration.promptConversational',
+      'edit.agent.cap.narration.promptAlign',
+    ],
+  },
 ];
+
+const INTERACTIVE_CAPABILITY_KEYS = [
+  {
+    label: 'edit.agent.cap.fixHtml.label',
+    prompts: [
+      'edit.agent.cap.fixHtml.promptStartButton',
+      'edit.agent.cap.fixHtml.promptMobilePanels',
+    ],
+  },
+];
+
+function PromptSuggestion({
+  prompt,
+  disabled,
+}: {
+  readonly prompt: string;
+  readonly disabled: boolean;
+}) {
+  const composer = useComposerRuntime();
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={() => composer.setText(prompt)}
+      className="rounded-lg border border-violet-200/80 bg-violet-50/70 px-2.5 py-2 text-left text-[11.5px] leading-snug text-[#5b1fa8] transition-colors hover:border-violet-300 hover:bg-violet-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-violet-500/25 dark:bg-violet-500/10 dark:text-violet-200 dark:hover:bg-violet-500/15"
+    >
+      {prompt}
+    </button>
+  );
+}
 
 function UserMessage() {
   return (
@@ -175,11 +211,9 @@ export function AgentPanel({
   // Interactive scenes expose a different agent capability (fix the page's bugs)
   // than slides (regenerate content/narration), so the empty-state copy and the
   // composer placeholder switch by scene type.
-  // Empty-state copy is unified (no slide/interactive split) — the capability
-  // list above already covers fixing interactive pages. The composer placeholder
-  // still adapts to the active scene type.
+  // Prompt starters and placeholder adapt to the active scene type.
   const isInteractive = scene?.type === 'interactive';
-  const capabilityKeys = CAPABILITY_KEYS;
+  const capabilityKeys = isInteractive ? INTERACTIVE_CAPABILITY_KEYS : SLIDE_CAPABILITY_KEYS;
   const emptyTitleKey = 'edit.agent.emptyTitle';
   const emptyLeadKey = 'edit.agent.empty.lead';
   const emptyBoundaryKey = 'edit.agent.empty.boundary';
@@ -334,9 +368,7 @@ export function AgentPanel({
         <ThreadPrimitive.Root className="relative flex min-h-0 flex-1 flex-col">
           <ThreadPrimitive.Viewport className="flex-1 space-y-6 overflow-y-auto px-4 py-5 scroll-smooth">
             <ThreadPrimitive.Empty>
-              {/* Capability tips — read-only (not clickable). Communicates what
-                  the agent can actually do (content + narration + read), with
-                  example phrasings, instead of clickable recommendation chips. */}
+              {/* Clicking a prompt starter fills the composer without sending it. */}
               <div className="mx-auto mt-12 flex max-w-[268px] flex-col">
                 <p className="text-center text-sm font-medium text-foreground">
                   {t(emptyTitleKey)}
@@ -346,12 +378,16 @@ export function AgentPanel({
                 </p>
 
                 <div className="mt-5 space-y-3">
-                  {capabilityKeys.map(({ label, examples }) => (
-                    <div key={label} className="flex flex-col gap-0.5">
+                  {capabilityKeys.map(({ label, prompts }) => (
+                    <div key={label} className="flex flex-col gap-1.5">
                       <span className="text-[12px] font-semibold text-foreground">{t(label)}</span>
-                      <span className="text-[11.5px] leading-relaxed text-[#5b1fa8]/70 dark:text-violet-300/70">
-                        {t(examples)}
-                      </span>
+                      {prompts.map((promptKey) => (
+                        <PromptSuggestion
+                          key={promptKey}
+                          prompt={t(promptKey)}
+                          disabled={!canSend}
+                        />
+                      ))}
                     </div>
                   ))}
                 </div>

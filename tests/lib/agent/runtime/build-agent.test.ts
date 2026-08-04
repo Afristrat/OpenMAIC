@@ -21,6 +21,12 @@ describe('buildSystemPrompt capability boundary', () => {
     expect(prompt).toMatch(/add|delete|reorder|duplicate/);
   });
 
+  it('does not confuse the current slide with the whole presentation', () => {
+    expect(prompt).toContain('only the current slide');
+    expect(prompt).toContain('diaporama');
+    expect(prompt).toContain('do not call `regenerate_scene`');
+  });
+
   it('embeds the active scene id/title', () => {
     expect(prompt).toContain('s1');
     expect(prompt).toContain('photosynthesis');

@@ -59,15 +59,30 @@ export function CommandBar({ title, history, commands, trailing }: CommandBarPro
       <div className="flex min-w-0 flex-1 items-center gap-2 max-md:basis-full">
         {/* Back-to-home — mirrors playback Header's leftmost button so the
             user has the same global-out affordance across modes. */}
-        <IconButton title={t('generation.backToHome')} disabled={leaving} onClick={backToHome}>
+        <IconButton
+          title={t('generation.backToHome')}
+          showLabel
+          disabled={leaving}
+          onClick={backToHome}
+        >
           <ArrowLeft className="h-4 w-4" />
         </IconButton>
         {history && (
           <>
-            <IconButton title={t('edit.undo')} disabled={!history.canUndo} onClick={history.undo}>
+            <IconButton
+              title={t('edit.undo')}
+              showLabel
+              disabled={!history.canUndo}
+              onClick={history.undo}
+            >
               <Undo2 className="h-4 w-4" />
             </IconButton>
-            <IconButton title={t('edit.redo')} disabled={!history.canRedo} onClick={history.redo}>
+            <IconButton
+              title={t('edit.redo')}
+              showLabel
+              disabled={!history.canRedo}
+              onClick={history.redo}
+            >
               <Redo2 className="h-4 w-4" />
             </IconButton>
           </>
@@ -118,20 +133,30 @@ export function CommandBar({ title, history, commands, trailing }: CommandBarPro
 
 function IconButton({
   title,
+  showLabel = false,
   children,
   ...props
-}: React.ComponentProps<typeof Button> & { readonly title: string }) {
+}: React.ComponentProps<typeof Button> & {
+  readonly title: string;
+  readonly showLabel?: boolean;
+}) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
           size="icon-sm"
           variant="ghost"
-          className="h-8 w-8 shrink-0 rounded-xl text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 max-md:h-11 max-md:w-auto max-md:gap-2 max-md:px-3"
+          aria-label={title}
+          className={cn(
+            'h-8 shrink-0 rounded-xl text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 max-md:h-11 max-md:w-auto max-md:gap-2 max-md:px-3',
+            showLabel ? 'w-auto gap-2 px-3' : 'w-8',
+          )}
           {...props}
         >
           {children}
-          <span className="hidden text-xs max-md:inline">{title}</span>
+          <span className={cn('text-xs', showLabel ? 'inline' : 'hidden max-md:inline')}>
+            {title}
+          </span>
         </Button>
       </TooltipTrigger>
       <TooltipContent>{title}</TooltipContent>

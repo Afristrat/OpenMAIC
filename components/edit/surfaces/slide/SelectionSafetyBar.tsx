@@ -2,6 +2,7 @@
 
 import { Move, ScanLine, TriangleAlert, WandSparkles } from 'lucide-react';
 import { useMemo } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { auditSlideLayout } from '@/lib/edit/slide-layout-audit';
 import { useI18n } from '@/lib/hooks/use-i18n';
@@ -23,9 +24,10 @@ export function SelectionSafetyBar({ elementIds }: SelectionSafetyBarProps) {
     () => issues.filter((issue) => issue.type === 'out-of-bounds').map((issue) => issue.elementId),
     [issues],
   );
+  const overlapIssues = useMemo(() => issues.filter((issue) => issue.type === 'overlap'), [issues]);
   const overlappingIds = useMemo(
-    () => issues.flatMap((issue) => (issue.type === 'overlap' ? issue.elementIds : [])),
-    [issues],
+    () => overlapIssues.flatMap((issue) => issue.elementIds),
+    [overlapIssues],
   );
   const hasSelection = elementIds.length > 0;
   if (!hasSelection && outOfBoundsIds.length === 0 && overlappingIds.length === 0) return null;
@@ -54,7 +56,7 @@ export function SelectionSafetyBar({ elementIds }: SelectionSafetyBarProps) {
             onClick={() => setActiveElementIdList([...new Set(overlappingIds)])}
           >
             <TriangleAlert className="h-4 w-4" />
-            {t('edit.layout.overlap', { count: overlappingIds.length / 2 })}
+            {t('edit.layout.overlap', { count: overlapIssues.length })}
           </Button>
           <Button
             type="button"
@@ -63,12 +65,27 @@ export function SelectionSafetyBar({ elementIds }: SelectionSafetyBarProps) {
             className="gap-1.5"
             data-testid="resolve-slide-overlaps"
             onMouseDown={(event) => event.preventDefault()}
-            onClick={() =>
+            onClick={() => {
+              const issue = overlapIssues[0];
+              if (!issue) return;
+              setActiveElementIdList([...issue.elementIds]);
               useSlideEditSession.getState().applyOp({
                 type: 'element.resolveOverlaps',
-                elementIds: [...new Set(overlappingIds)],
-              })
-            }
+                elementIds: [...issue.elementIds],
+              });
+              const repairedSnapshot = useSlideEditSession.getState().history?.present;
+              toast(t('edit.layout.repairApplied'), {
+                position: 'bottom-center',
+                duration: 5000,
+                action: {
+                  label: t('edit.undo'),
+                  onClick: () => {
+                    const session = useSlideEditSession.getState();
+                    if (session.history?.present === repairedSnapshot) session.undo();
+                  },
+                },
+              });
+            }}
           >
             <WandSparkles className="h-4 w-4" />
             {t('edit.layout.resolveOverlaps')}

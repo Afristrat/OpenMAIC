@@ -292,7 +292,7 @@ function Frame({
         // layout jump when switching scene type). Children render
         // inside an inner ring/shadow card that the playback
         // CanvasArea visually mirrors.
-        <div className="relative h-full w-full p-3 sm:p-4">
+        <div className="relative h-full w-full p-1">
           <div className="relative h-full w-full overflow-hidden rounded-xl bg-white ring-1 ring-zinc-200/80 dark:bg-zinc-900 dark:ring-zinc-800/80 shadow-[0_10px_40px_-12px_rgba(15,23,42,0.18)] dark:shadow-[0_10px_40px_-12px_rgba(0,0,0,0.6)]">
             {children}
           </div>

@@ -24,6 +24,7 @@ server-providers*.yml
 # misc
 assets
 *.md
+!lib/prompts/**/*.md
 *.pdf
 *.pem
 .DS_Store

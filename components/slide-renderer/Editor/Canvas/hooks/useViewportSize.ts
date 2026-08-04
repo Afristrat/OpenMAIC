@@ -12,11 +12,15 @@ export interface ViewportStyles {
  * Hook for managing Canvas viewport size and position
  * Handles viewport scaling, positioning, and Canvas dragging
  */
-export function useViewportSize(canvasRef: RefObject<HTMLElement | null>) {
+export function useViewportSize(
+  canvasRef: RefObject<HTMLElement | null>,
+  preferredCanvasPercentage?: number,
+) {
   const [viewportLeft, setViewportLeft] = useState(0);
   const [viewportTop, setViewportTop] = useState(0);
 
-  const canvasPercentage = useCanvasStore.use.canvasPercentage();
+  const storedCanvasPercentage = useCanvasStore.use.canvasPercentage();
+  const canvasPercentage = preferredCanvasPercentage ?? storedCanvasPercentage;
   const canvasDragged = useCanvasStore.use.canvasDragged();
   const setCanvasScale = useCanvasStore.use.setCanvasScale();
   const setCanvasDragged = useCanvasStore.use.setCanvasDragged();

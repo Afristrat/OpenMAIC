@@ -97,7 +97,7 @@ export function SlideCanvas() {
     // interactive layout jump.
     <div className="relative h-full w-full" {...gestureProps}>
       <SceneProvider controller={controller}>
-        <Canvas />
+        <Canvas canvasPercentage={96} />
         {/* Same spotlight + laser effects as playback, retargeted to the
             editor's element ids — driven by useCanvasStore.setSpotlight /
             setLaser (e.g. from the ActionsBar cue-badge hover). The laser cue

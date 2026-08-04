@@ -66,7 +66,7 @@ export function StageGrid({
       {topSlot ? <div style={{ gridArea: 'top' }}>{topSlot}</div> : null}
       {leftSlot ? (
         <div
-          className="max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-30"
+          className="max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-[70]"
           style={{ gridArea: 'left' }}
         >
           {leftSlot}
@@ -77,7 +77,7 @@ export function StageGrid({
       </div>
       {rightSlot ? (
         <div
-          className="max-md:absolute max-md:inset-y-0 max-md:right-0 max-md:z-30"
+          className="max-md:absolute max-md:inset-y-0 max-md:right-0 max-md:z-[70]"
           style={{ gridArea: 'right' }}
         >
           {rightSlot}

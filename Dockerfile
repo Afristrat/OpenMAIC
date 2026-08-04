@@ -77,6 +77,9 @@ RUN addgroup --system --gid 1001 nodejs && \
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# Prompt templates are read from process.cwd() at request time. Next's
+# standalone trace cannot discover these dynamic fs.readFileSync paths.
+COPY --from=builder --chown=nextjs:nodejs /app/lib/prompts ./lib/prompts
 
 USER nextjs
 

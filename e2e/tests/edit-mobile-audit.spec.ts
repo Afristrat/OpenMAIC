@@ -94,6 +94,15 @@ test.describe('Mobile Pro editor audit', () => {
               width: 800,
               height: 120,
             },
+            {
+              id: 'mobile-text-2',
+              type: 'text',
+              content: 'Overlapping content',
+              left: 120,
+              top: 110,
+              width: 700,
+              height: 120,
+            },
           ],
         },
       },
@@ -108,11 +117,12 @@ test.describe('Mobile Pro editor audit', () => {
     await expect(nav).toContainText('Scenes');
     await expect(agent).toContainText('AI assistant');
 
-    const undo = page.getByRole('button', { name: 'Undo' });
+    const undo = page.locator('button[aria-label="Undo"]');
     await expect(undo).toBeVisible();
+    await expect(undo).toContainText('Undo');
     expect((await undo.boundingBox())?.height).toBeGreaterThanOrEqual(44);
 
-    const editableText = page.locator('.editable-element-text').first();
+    const editableText = page.locator('.editable-element-text').last();
     await expect(editableText).toBeVisible();
     const canvasWidth = await editableText.evaluate(
       (element) => element.closest('[style*="grid-area: center"]')?.getBoundingClientRect().width,
@@ -120,20 +130,6 @@ test.describe('Mobile Pro editor audit', () => {
     // 375 px is the complete CSS viewport in headless Chromium at 390 px
     // (the remaining 15 px are its scrollbar), so neither rail consumes it.
     expect(canvasWidth).toBeGreaterThanOrEqual(370);
-
-    await nav.getByRole('button').first().click();
-    await expect(nav).toHaveAttribute('data-mobile-open', 'true');
-    await agent.click();
-    await expect(agent).toHaveAttribute('data-mobile-open', 'true');
-    await expect(nav).toHaveAttribute('data-mobile-open', 'false');
-    await agent.locator('button:has(.lucide-panel-right-close)').click();
-    await expect(agent).toHaveAttribute('data-mobile-open', 'false');
-
-    const actionsBar = page.getByTestId('actions-bar');
-    const speechPaletteButton = actionsBar.locator('button[draggable="true"]').first();
-    await expect(speechPaletteButton).toBeVisible();
-    await speechPaletteButton.click();
-    await expect(actionsBar.locator('textarea')).toHaveCount(1);
 
     await editableText.click();
     const formatBar = page.getByTestId('text-format-bar');
@@ -143,6 +139,36 @@ test.describe('Mobile Pro editor audit', () => {
       await formatViewport.evaluate((element) => element.scrollWidth > element.clientWidth),
     ).toBe(true);
     expect((await formatViewport.boundingBox())?.width).toBeLessThanOrEqual(359);
+
+    const secondText = page.locator('.editable-element-text').nth(1);
+    const beforeRepair = await secondText.boundingBox();
+    await page.getByTestId('resolve-slide-overlaps').click();
+    const afterRepair = await secondText.boundingBox();
+    expect(afterRepair?.x !== beforeRepair?.x || afterRepair?.y !== beforeRepair?.y).toBeTruthy();
+
+    await nav.getByRole('button').first().click();
+    await expect(nav).toHaveAttribute('data-mobile-open', 'true');
+    await agent.click();
+    await expect(agent).toHaveAttribute('data-mobile-open', 'true');
+    await expect(nav).toHaveAttribute('data-mobile-open', 'false');
+    const promptStarter = agent.getByRole('button', {
+      name: 'Condense this slide to 3 points.',
+    });
+    await promptStarter.click();
+    await expect(agent.locator('textarea')).toHaveValue('Condense this slide to 3 points.');
+    await agent.locator('button:has(.lucide-panel-right-close)').click();
+    await expect(agent).toHaveAttribute('data-mobile-open', 'false');
+
+    await undo.click();
+    const afterUndo = await secondText.boundingBox();
+    expect(afterUndo?.x).toBeCloseTo(beforeRepair?.x ?? 0, 0);
+    expect(afterUndo?.y).toBeCloseTo(beforeRepair?.y ?? 0, 0);
+
+    const actionsBar = page.getByTestId('actions-bar');
+    const speechPaletteButton = actionsBar.locator('button[draggable="true"]').first();
+    await expect(speechPaletteButton).toBeVisible();
+    await speechPaletteButton.click();
+    await expect(actionsBar.locator('textarea')).toHaveCount(1);
   });
 
   test('offers no projector or laser cue on a quiz without a canvas picker', async ({ page }) => {
