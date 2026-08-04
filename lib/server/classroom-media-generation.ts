@@ -54,7 +54,7 @@ export function selectClassroomImageModel(
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function uploadClassroomMedia(
+export async function uploadClassroomMedia(
   classroomId: string,
   subPath: string,
   buf: Buffer | Uint8Array,

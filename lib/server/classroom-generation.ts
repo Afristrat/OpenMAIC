@@ -62,6 +62,7 @@ import { resolveOrganizationSkillId } from '@/lib/server/skill-resolution';
 import { buildLiveInstructionalDirective } from '@/lib/formation-engine/downstream-consumers';
 import { toPersistedResearchSources } from '@/lib/server/research-sources';
 import { createAnimationConstitution } from '@/lib/formation-engine/animation-constitution';
+import { generateResourcesForClassroom } from '@/lib/server/classroom-resource-generation';
 
 const log = createLogger('Classroom');
 
@@ -499,6 +500,25 @@ export async function generateClassroom(
     log.info('Stage 2: Generating scene content and actions...');
     let generatedScenes = 0;
 
+    const requestedResourceCount = outlines.reduce(
+      (count, outline) => count + (outline.resourceGenerations?.length ?? 0),
+      0,
+    );
+    if (requestedResourceCount > 0) {
+      const generatedResourceCount = await generateResourcesForClassroom(
+        outlines,
+        stageId,
+        options.baseUrl,
+        languageDirective,
+        sceneAiCall,
+      );
+      if (generatedResourceCount !== requestedResourceCount) {
+        throw new Error(
+          `Resource persistence incomplete: ${generatedResourceCount}/${requestedResourceCount} files generated`,
+        );
+      }
+    }
+
     for (const [index, outline] of outlines.entries()) {
       const safeOutline = applyOutlineFallbacks(outline, true, {
         allowProceduralSkill: vocationalActive,
@@ -534,6 +554,22 @@ export async function generateClassroom(
       // image (decideCaptureForScene/requestWebCapture never throw).
       let assignedImages: PdfImage[] | undefined;
       let imageMapping: ImageMapping | undefined;
+      if (safeOutline.generatedResources?.length) {
+        assignedImages = safeOutline.generatedResources.map((resource) => ({
+          id: `qr_${resource.id}`,
+          src: resource.qrImageUrl,
+          pageNumber: 0,
+          width: 320,
+          height: 320,
+          description: `QR code for downloading ${resource.title}`,
+        }));
+        imageMapping = Object.fromEntries(
+          safeOutline.generatedResources.map((resource) => [
+            `qr_${resource.id}`,
+            resource.qrImageUrl,
+          ]),
+        );
+      }
       const captureDecision = await decideCaptureForScene(
         safeOutline,
         sceneAiCall,
@@ -544,6 +580,7 @@ export async function generateClassroom(
         if (asset && asset.format === 'image') {
           const imgId = 'img_capture_1';
           assignedImages = [
+            ...(assignedImages ?? []),
             {
               id: imgId,
               src: asset.assetUrl,
@@ -551,7 +588,7 @@ export async function generateClassroom(
               description: captureDecision.reason,
             },
           ];
-          imageMapping = { [imgId]: asset.assetUrl };
+          imageMapping = { ...(imageMapping ?? {}), [imgId]: asset.assetUrl };
         }
         // asset.format === 'video' handled by the existing Hyperframes video
         // channel — out of scope here, tracked separately if/when a

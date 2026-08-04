@@ -25,7 +25,12 @@ import { createAudioPlayer } from '@/lib/utils/audio-player';
 import { useDiscussionTTS } from '@/lib/hooks/use-discussion-tts';
 import { useWidgetIframeStore } from '@/lib/store/widget-iframe';
 import type { AudioIndicatorState } from '@/components/roundtable/audio-indicator';
-import type { Action, DiscussionAction, SpeechAction } from '@/lib/types/action';
+import type {
+  Action,
+  DiscussionAction,
+  ResourcePauseAction,
+  SpeechAction,
+} from '@/lib/types/action';
 import { cn } from '@/lib/utils';
 // Playback state persistence removed — refresh always starts from the beginning
 import { ChatArea, type ChatAreaRef } from '@/components/chat/chat-area';
@@ -109,6 +114,7 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
     const [liveSpeech, setLiveSpeech] = useState<string | null>(null); // From buffer (discussion/QA)
     const [speechProgress, setSpeechProgress] = useState<number | null>(null); // StreamBuffer reveal progress (0–1)
     const [discussionTrigger, setDiscussionTrigger] = useState<TriggerEvent | null>(null);
+    const [resourcePause, setResourcePause] = useState<ResourcePauseAction | null>(null);
 
     // Speaking agent tracking (Issue 2)
     const [speakingAgentId, setSpeakingAgentId] = useState<string | null>(null);
@@ -435,6 +441,7 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
 
       // Reset all roundtable/live state so scenes are fully isolated
       resetSceneState();
+      setResourcePause(null);
 
       if (!currentScene || !currentScene.actions || currentScene.actions.length === 0) {
         engineRef.current = null;
@@ -470,6 +477,8 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
         onModeChange: (mode) => {
           setEngineMode(mode);
         },
+        onResourcePause: setResourcePause,
+        onResourceResume: () => setResourcePause(null),
         onSceneChange: (_sceneId) => {
           // Scene change handled by engine
         },
@@ -1129,6 +1138,7 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
                   ? () => onRetryOutline(generatingOutlines[0].id)
                   : undefined
               }
+              resourcePause={resourcePause}
             />
           </div>
 

@@ -11,6 +11,14 @@
 
 ## Available Resources
 
+{{#if hasLearningResources}}
+### Downloadable learning resources
+
+{{learningResources}}
+
+The slide MUST show every resource's QR image and its exact short download link. Keep both fully legible and inside the slide frame. Present the resource as a clear learner action, not as decorative content.
+{{/if}}
+
 {{#if mediaElementEnabled}}
 - **Available Media**: {{assignedImages}}
 {{/if}}

@@ -25,9 +25,9 @@ export async function GET(
     return NextResponse.json({ error: 'Invalid path' }, { status: 400 });
   }
 
-  // Only allow media/ and audio/ subdirectories
+  // Only allow the classroom's generated media, audio and learning resources.
   const subDir = pathSegments[0];
-  if (subDir !== 'media' && subDir !== 'audio') {
+  if (subDir !== 'media' && subDir !== 'audio' && subDir !== 'resources') {
     return NextResponse.json({ error: 'Invalid path' }, { status: 404 });
   }
 

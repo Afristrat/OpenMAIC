@@ -49,6 +49,12 @@ export function changeOutlineType(outline: SceneOutline, newType: SceneType): Sc
       suggestedImageIds: outline.suggestedImageIds,
     }),
     ...(outline.mediaGenerations !== undefined && { mediaGenerations: outline.mediaGenerations }),
+    ...(outline.resourceGenerations !== undefined && {
+      resourceGenerations: outline.resourceGenerations,
+    }),
+    ...(outline.generatedResources !== undefined && {
+      generatedResources: outline.generatedResources,
+    }),
   };
 
   switch (newType) {

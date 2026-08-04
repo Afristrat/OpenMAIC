@@ -24,7 +24,12 @@
  */
 
 import type { Scene } from '@/lib/types/stage';
-import type { Action, SpeechAction, DiscussionAction } from '@/lib/types/action';
+import type {
+  Action,
+  SpeechAction,
+  DiscussionAction,
+  ResourcePauseAction,
+} from '@/lib/types/action';
 import type {
   EngineMode,
   TopicState,
@@ -190,6 +195,7 @@ export class PlaybackEngine {
       log.warn('Cannot resume: not paused, mode is', this.mode);
       return;
     }
+    this.callbacks.onResourceResume?.();
 
     if (this.currentTopicState === 'pending') {
       // Resume discussion → live
@@ -580,6 +586,12 @@ export class PlaybackEngine {
           this.callbacks.onProactiveShow?.(trigger);
           // Engine pauses here — user calls confirmDiscussion() or skipDiscussion()
         }, 3000);
+        break;
+      }
+
+      case 'resource_pause': {
+        this.setMode('paused');
+        this.callbacks.onResourcePause?.(action as ResourcePauseAction);
         break;
       }
 

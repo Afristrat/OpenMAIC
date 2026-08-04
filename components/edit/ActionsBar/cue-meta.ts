@@ -10,6 +10,7 @@
 import {
   Circle,
   Crosshair,
+  Download,
   Flag,
   Focus,
   PenLine,
@@ -88,6 +89,12 @@ const META: Record<string, CueMeta> = {
     labelKey: 'edit.cue.discussion',
     glyph: 'text-yellow-600 bg-yellow-500/10 dark:text-yellow-400',
     accent: 'bg-yellow-400/70',
+  },
+  resource_pause: {
+    icon: Download,
+    labelKey: 'edit.cue.resourcePause',
+    glyph: 'text-emerald-600 bg-emerald-500/10 dark:text-emerald-400',
+    accent: 'bg-emerald-400/70',
   },
 };
 

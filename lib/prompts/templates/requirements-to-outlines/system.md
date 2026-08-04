@@ -228,6 +228,31 @@ Leave **both unset** for ordinary build-an-artefact PBL projects (this is the de
 
 ---
 
+## Downloadable learning resources
+
+When a learner genuinely needs a reusable workbook to complete an exercise, apply a method, or transfer the lesson to work, add a `resourceGenerations` entry to the relevant slide. The resource is not decorative: it must contain complete, usable data and instructions.
+
+- Supported format: `xlsx`.
+- Generate at most two resources per course.
+- Never mention a downloadable file in a title, description, or key point unless a matching `resourceGenerations` entry exists on that scene.
+- Use a globally unique id such as `resource_1`.
+- `fileName` must end in `.xlsx`.
+- `prompt` must specify the workbook sheets, columns, useful example data, formulas if needed, and the learner task precisely enough to generate a production-ready workbook.
+
+```json
+"resourceGenerations": [
+  {
+    "id": "resource_1",
+    "format": "xlsx",
+    "title": "Budget prévisionnel",
+    "fileName": "budget-previsionnel.xlsx",
+    "prompt": "Create a complete budget workbook with Assumptions, Monthly budget, and Dashboard sheets..."
+  }
+]
+```
+
+---
+
 ## Output Format
 
 ### Top-level shape — NON-NEGOTIABLE

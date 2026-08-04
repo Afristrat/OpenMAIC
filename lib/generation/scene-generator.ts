@@ -797,6 +797,13 @@ async function generateSlideContent(
   const hasAssignedImages = (assignedImages?.length ?? 0) > 0;
   const generatedImageEnabled = generatedImageEntries.length > 0;
   const generatedVideoEnabled = generatedVideoEntries.length > 0;
+  const generatedResources = outline.generatedResources ?? [];
+  const learningResources = generatedResources
+    .map(
+      (resource) =>
+        `- ${resource.title}: QR image id "qr_${resource.id}", short link "${resource.downloadUrl}", file "${resource.fileName}"`,
+    )
+    .join('\n');
   const imageElementEnabled = hasAssignedImages || generatedImageEnabled;
   const mediaElementEnabled = imageElementEnabled || generatedVideoEnabled;
 
@@ -851,6 +858,8 @@ async function generateSlideContent(
       generatedImageEnabled,
       generatedVideoEnabled,
       mediaElementEnabled,
+      hasLearningResources: generatedResources.length > 0,
+      learningResources,
     },
     { enabled: skillEngineEnabled, activeSkillId },
   );
@@ -948,6 +957,18 @@ async function generateSlideContent(
     outline.mediaGenerations,
   );
   log.debug(`After video reference normalization: ${videoNormalizedElements.length} elements`);
+
+  if (generatedResources.length > 0) {
+    const serialized = JSON.stringify(videoNormalizedElements);
+    const missingResource = generatedResources.find(
+      (resource) =>
+        !serialized.includes(resource.qrImageUrl) || !serialized.includes(resource.downloadUrl),
+    );
+    if (missingResource) {
+      log.warn(`Slide omitted required resource access for ${missingResource.id}; retrying`);
+      return null;
+    }
+  }
 
   // Process elements, assign unique IDs
   const processedElements: PPTElement[] = videoNormalizedElements.map((el) => ({
@@ -1403,6 +1424,42 @@ function extractWidgetConfig(html: string): WidgetConfig | undefined {
   }
 }
 
+function appendResourcePauseActions(
+  actions: Action[],
+  outline: SceneOutline,
+  languageDirective?: string,
+): Action[] {
+  const resources = outline.generatedResources ?? [];
+  if (resources.length === 0) return actions;
+
+  const isArabic = /arabic|arabe|العربية/i.test(languageDirective ?? '');
+  const isFrench = /french|français|francais|fr-FR/i.test(languageDirective ?? '');
+  const checkpoints: Action[] = resources.flatMap((resource) => {
+    const text = isArabic
+      ? `يتوفر ملف «${resource.title}» للتنزيل عبر الرابط القصير أو رمز الاستجابة السريعة الظاهر على الشريحة. سأتوقف الآن. بعد تنزيل الملف، اضغط على زر التشغيل لمتابعة التكوين.`
+      : isFrench
+        ? `Le fichier « ${resource.title} » est disponible au téléchargement avec le lien court ou le QR code affiché sur la diapositive. Je mets maintenant la formation en pause. Après avoir téléchargé le fichier, cliquez sur Lecture pour continuer.`
+        : `The file “${resource.title}” is ready to download from the short link or QR code shown on the slide. I will pause the course now. After downloading it, click Play to continue.`;
+    return [
+      { id: `action_${nanoid(8)}`, type: 'speech' as const, text },
+      {
+        id: `action_${nanoid(8)}`,
+        type: 'resource_pause' as const,
+        resourceId: resource.id,
+        resourceTitle: resource.title,
+        downloadUrl: resource.downloadUrl,
+      },
+    ];
+  });
+  const discussionIndex = actions.findIndex((action) => action.type === 'discussion');
+  if (discussionIndex < 0) return [...actions, ...checkpoints];
+  return [
+    ...actions.slice(0, discussionIndex),
+    ...checkpoints,
+    ...actions.slice(discussionIndex),
+  ];
+}
+
 /**
  * Step 3.2: Generate Actions based on content and script
  */
@@ -1452,10 +1509,18 @@ export async function generateSceneActions(
 
     if (actions.length > 0) {
       // Validate and fill in Action IDs
-      return processActions(actions, content.elements, agents);
+      return appendResourcePauseActions(
+        processActions(actions, content.elements, agents),
+        outline,
+        languageDirective,
+      );
     }
 
-    return generateDefaultSlideActions(outline, content.elements);
+    return appendResourcePauseActions(
+      generateDefaultSlideActions(outline, content.elements),
+      outline,
+      languageDirective,
+    );
   }
 
   if (outline.type === 'quiz' && 'questions' in content) {

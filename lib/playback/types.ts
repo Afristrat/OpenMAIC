@@ -3,6 +3,7 @@
  */
 
 import type { PlaybackSnapshot } from '@/lib/utils/playback-storage';
+import type { ResourcePauseAction } from '@/lib/types/action';
 
 export type { PlaybackSnapshot };
 
@@ -34,6 +35,8 @@ export interface PlaybackEngineCallbacks {
   onTextDelta?: (content: string) => void;
   onSpeakerChange?: (role: string) => void;
   onEffectFire?: (effect: Effect) => void;
+  onResourcePause?: (resource: ResourcePauseAction) => void;
+  onResourceResume?: () => void;
 
   // Proactive discussion
   onProactiveShow?: (trigger: TriggerEvent) => void;

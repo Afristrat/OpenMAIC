@@ -104,6 +104,10 @@ export interface SceneOutline {
   suggestedImageIds?: string[]; // e.g., ["img_1", "img_3"]
   // AI-generated media requests (when PDF images are insufficient)
   mediaGenerations?: MediaGenerationRequest[]; // e.g., [{ type: 'image', prompt: '...', elementId: 'gen_img_1' }]
+  /** Downloadable learning resources that must be generated before this scene is rendered. */
+  resourceGenerations?: ResourceGenerationRequest[];
+  /** Server-produced resources, added after outline generation and before slide rendering. */
+  generatedResources?: GeneratedLearningResource[];
   // Quiz-specific config
   quizConfig?: {
     questionCount: number;
@@ -136,6 +140,23 @@ export interface SceneOutline {
   widgetOutline?: WidgetOutline;
   /** Registered Scene Genome plug-in type used when `type === 'plugin'`. */
   pluginType?: string;
+}
+
+export interface ResourceGenerationRequest {
+  id: string;
+  format: 'xlsx';
+  title: string;
+  fileName: string;
+  prompt: string;
+}
+
+export interface GeneratedLearningResource {
+  id: string;
+  format: 'xlsx';
+  title: string;
+  fileName: string;
+  downloadUrl: string;
+  qrImageUrl: string;
 }
 
 // ==================== Stage 3 Output: Generated Content ====================

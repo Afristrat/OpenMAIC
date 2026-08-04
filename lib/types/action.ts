@@ -186,6 +186,14 @@ export interface DiscussionAction extends ActionBase {
   agentId?: string;
 }
 
+/** Download checkpoint. Playback resumes only after another explicit Play click. */
+export interface ResourcePauseAction extends ActionBase {
+  type: 'resource_pause';
+  resourceId: string;
+  resourceTitle: string;
+  downloadUrl: string;
+}
+
 // ==================== Widget Interaction Actions ====================
 
 /** Widget Highlight — highlight an element in a widget iframe */
@@ -236,6 +244,7 @@ export type Action =
   | WbDrawCodeAction
   | WbEditCodeAction
   | DiscussionAction
+  | ResourcePauseAction
   | WidgetHighlightAction
   | WidgetSetStateAction
   | WidgetAnnotationAction
@@ -266,6 +275,7 @@ export const SYNC_ACTIONS: ActionType[] = [
   'wb_delete',
   'wb_close',
   'discussion',
+  'resource_pause',
   'widget_highlight',
   'widget_setState',
   'widget_annotation',

@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Play } from 'lucide-react';
+import { Download, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SceneRenderer } from '@/components/stage/scene-renderer';
 import { SceneProvider } from '@/lib/contexts/scene-context';
@@ -22,6 +22,7 @@ interface CanvasAreaProps extends CanvasToolbarProps {
   readonly isCourseComplete?: boolean;
   readonly isGenerationFailed?: boolean;
   readonly onRetryGeneration?: () => void;
+  readonly resourcePause?: { title: string; downloadUrl: string } | null;
 }
 
 export function CanvasArea({
@@ -49,6 +50,7 @@ export function CanvasArea({
   isCourseComplete,
   isGenerationFailed,
   onRetryGeneration,
+  resourcePause,
 }: CanvasAreaProps) {
   const { t } = useI18n();
   const showControls = mode === 'playback' && !whiteboardOpen;
@@ -121,6 +123,25 @@ export function CanvasArea({
           )}
 
           <PresentationBrandMark />
+
+          {resourcePause ? (
+            <div className="absolute inset-x-4 bottom-4 z-[104] flex justify-center pointer-events-none">
+              <div className="pointer-events-auto flex max-w-[92%] items-center gap-3 rounded-xl border border-violet-200 bg-white/95 px-4 py-3 shadow-xl backdrop-blur dark:border-violet-500/40 dark:bg-slate-900/95">
+                <a
+                  href={resourcePause.downloadUrl}
+                  download
+                  onClick={(event) => event.stopPropagation()}
+                  className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-700"
+                >
+                  <Download className="size-4" />
+                  {t('classroom.resourcePause.download', { title: resourcePause.title })}
+                </a>
+                <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+                  {t('classroom.resourcePause.instruction')}
+                </p>
+              </div>
+            </div>
+          ) : null}
 
           {/* Pending Scene Loading / Completion Overlay */}
           <AnimatePresence>
