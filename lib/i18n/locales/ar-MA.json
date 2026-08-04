@@ -162,14 +162,6 @@
   },
   "edit": {
     "proMode": "احترافي",
-    "selection": {
-      "count": "{{count}} عنصر محدد",
-      "fitCanvas": "إدخال ضمن الشريحة"
-    },
-    "layout": {
-      "outOfBounds": "{{count}} خارج الشريحة",
-      "overlap": "{{count}} تداخل"
-    },
     "undo": "تراجع",
     "redo": "إعادة",
     "delete": "حذف",
