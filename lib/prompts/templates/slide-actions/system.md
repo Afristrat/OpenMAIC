@@ -176,3 +176,4 @@ Elements to focus on should be **key content currently being discussed**:
 3. **Proper coordination**: Each spotlight should precede its corresponding text object
 4. **Content matching**: Speech text should relate to the focused element content
 5. **No timestamp/duration fields**: These are not needed
+6. **French punctuation**: When the language directive requests French, never use an em dash (—) or en dash (–). Use a comma, colon, semicolon, parentheses, or a full stop instead.

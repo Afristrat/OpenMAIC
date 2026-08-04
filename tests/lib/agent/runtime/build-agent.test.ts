@@ -42,4 +42,9 @@ describe('buildSystemPrompt capability boundary', () => {
     expect(prompt).toContain('s1');
     expect(prompt).toContain('photosynthesis');
   });
+
+  it('forbids AI-looking dash punctuation in French content', () => {
+    expect(prompt).toContain('never use an em dash');
+    expect(prompt).toContain('normal french punctuation');
+  });
 });

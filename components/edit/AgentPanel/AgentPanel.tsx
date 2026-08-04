@@ -53,6 +53,13 @@ const DEFAULT_WIDTH = 384;
  *  so the author reviews every AI instruction before it can mutate a scene. */
 const SLIDE_CAPABILITY_KEYS = [
   {
+    label: 'edit.agent.cap.layout.label',
+    prompts: [
+      'edit.agent.cap.layout.promptSlide',
+      'edit.agent.cap.layout.promptPresentation',
+    ],
+  },
+  {
     label: 'edit.agent.cap.content.label',
     prompts: ['edit.agent.cap.content.promptCondense', 'edit.agent.cap.content.promptExample'],
   },
@@ -328,11 +335,11 @@ export function AgentPanel({
         </div>
       )}
 
-      {/* Header — "Edit with AI" with a violet sparkles mark (design .ae-head). */}
+      {/* Localized editor-assistant header. */}
       <header className="flex h-10 shrink-0 items-center gap-2 border-b border-gray-100 px-4 pl-5 dark:border-gray-800">
         <Sparkles className="size-3.5 text-[#5b1fa8] dark:text-violet-300" />
         <span className="text-[13px] font-semibold text-[#5b1fa8] dark:text-violet-300">
-          Edit with AI
+          {t('edit.agent.title')}
         </span>
         {hasMessages ? (
           <button

@@ -934,4 +934,10 @@ Before outputting JSON, verify:
 
 ## Output Format
 
+### Language and resource integrity
+
+- When the requested presentation language is French, never use an em dash (—) or en dash (–) in visible slide text. Use standard French punctuation such as commas, colons, semicolons, parentheses, or full stops.
+- Never mention, promise, or instruct the learner to download an Excel file, spreadsheet, PDF, template, attachment, workbook, dataset, or other resource unless that exact resource is explicitly present in the assigned resources supplied to you.
+- If useful data is not backed by an assigned downloadable resource, show the necessary data directly and legibly on the slide. Never invent a missing file.
+
 Output valid JSON only. No explanations, no code blocks, no additional text.
