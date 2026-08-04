@@ -166,6 +166,43 @@ describe('classroom scene generation retries', () => {
     );
   });
 
+  it('fails instead of silently skipping a required resource scene', async () => {
+    vi.useFakeTimers();
+    mocks.generateSceneOutlinesFromRequirements.mockResolvedValue({
+      success: true,
+      data: {
+        languageDirective: 'Use English.',
+        outlines: [
+          {
+            ...outline,
+            generatedResources: [
+              {
+                id: 'resource-1',
+                format: 'xlsx',
+                title: 'Cash flow workbook',
+                fileName: 'cash-flow.xlsx',
+                downloadUrl: '/r/classroom-1/resource-1/cash-flow.xlsx',
+                qrImageUrl: '/api/classroom-media/classroom-1/resources/resource-1-qr.png',
+              },
+            ],
+          },
+        ],
+      },
+    });
+    mocks.generateSceneContent.mockResolvedValue(null);
+
+    const rejection = expect(generateWithProgress()).rejects.toThrow(
+      'Required resource scene generation failed: Retry Basics',
+    );
+    try {
+      await vi.runAllTimersAsync();
+      await rejection;
+      expect(mocks.persistClassroom).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('forwards classroom thinking config to scene retry LLM calls', async () => {
     const thinkingConfig = { enabled: true, effort: 'high' };
     mocks.resolveModel.mockResolvedValue({

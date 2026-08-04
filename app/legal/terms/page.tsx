@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: "Conditions G\u00e9n\u00e9rales d'Utilisation \u2014 Qalem",
@@ -155,9 +156,9 @@ export default function TermsPage(): React.ReactElement {
       />
       <Paragraph>
         Consultez les d&eacute;tails complets de nos offres sur la{' '}
-        <a href="/pricing" className="text-[#d5baff] hover:underline">
+        <Link href="/pricing" className="text-[#d5baff] hover:underline">
           page Tarifs
-        </a>
+        </Link>
         .
       </Paragraph>
 
@@ -181,9 +182,9 @@ export default function TermsPage(): React.ReactElement {
       <SectionTitle>7. Donn&eacute;es personnelles</SectionTitle>
       <Paragraph>
         Le traitement de vos donn&eacute;es personnelles est r&eacute;gi par notre{' '}
-        <a href="/legal/privacy" className="text-[#d5baff] hover:underline">
+        <Link href="/legal/privacy" className="text-[#d5baff] hover:underline">
           Politique de Confidentialit&eacute;
-        </a>
+        </Link>
         , qui fait partie int&eacute;grante des pr&eacute;sentes CGU. Nous vous invitons &agrave; la
         consulter attentivement.
       </Paragraph>

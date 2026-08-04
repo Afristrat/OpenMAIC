@@ -1,4 +1,5 @@
 import JSZip from 'jszip';
+import { customAlphabet } from 'nanoid';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
 import type { AICallFn } from '@/lib/generation/pipeline-types';
 import type {
@@ -7,6 +8,7 @@ import type {
   SceneOutline,
 } from '@/lib/types/generation';
 import { uploadClassroomMedia } from '@/lib/server/classroom-media-generation';
+import { createServiceSupabaseClient } from '@/lib/supabase/service';
 
 type CellValue = string | number | boolean | null;
 
@@ -18,6 +20,15 @@ const MAX_SHEETS = 5;
 const MAX_ROWS = 500;
 const MAX_COLUMNS = 50;
 const MAX_CELL_LENGTH = 20_000;
+const SHORT_CODE_ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+const createShortCode = customAlphabet(SHORT_CODE_ALPHABET, 5);
+const MAX_SHORT_CODE_ATTEMPTS = 20;
+
+interface ResourceShortLink {
+  classroomId: string;
+  resourceId: string;
+  fileName: string;
+}
 
 function xml(value: string): string {
   return value
@@ -145,6 +156,22 @@ async function fetchQrPng(url: string): Promise<Buffer> {
   return bytes;
 }
 
+async function reserveShortLink(metadata: ResourceShortLink): Promise<string> {
+  const bucket = createServiceSupabaseClient().storage.from('classroom-media');
+  const body = Buffer.from(JSON.stringify(metadata), 'utf8');
+  for (let attempt = 0; attempt < MAX_SHORT_CODE_ATTEMPTS; attempt += 1) {
+    const code = createShortCode();
+    const { error } = await bucket.upload(`short-links/${code}.json`, body, {
+      contentType: 'application/json',
+      upsert: false,
+    });
+    if (!error) return code;
+    if (error.message.toLowerCase().includes('already exists')) continue;
+    throw new Error(`Short-link persistence failed: ${error.message}`);
+  }
+  throw new Error('Unable to reserve a unique five-character short link');
+}
+
 export async function generateResourcesForClassroom(
   outlines: SceneOutline[],
   classroomId: string,
@@ -168,10 +195,15 @@ export async function generateResourcesForClassroom(
       if (seenIds.has(request.id)) throw new Error(`Duplicate resource id: ${request.id}`);
       seenIds.add(request.id);
       const fileName = safeFileName(request.fileName);
-      const downloadUrl = `/r/${classroomId}/${request.id}/${encodeURIComponent(fileName)}`;
       const workbook = await buildXlsx(await generateWorkbookSpec(request, languageDirective, aiCall));
-      const qr = await fetchQrPng(`${origin}${downloadUrl}`);
       await uploadClassroomMedia(classroomId, `resources/${request.id}.xlsx`, workbook);
+      const shortCode = await reserveShortLink({
+        classroomId,
+        resourceId: request.id,
+        fileName,
+      });
+      const downloadUrl = `/${shortCode}`;
+      const qr = await fetchQrPng(`${origin}${downloadUrl}`);
       await uploadClassroomMedia(classroomId, `resources/${request.id}-qr.png`, qr);
       resources.push({
         id: request.id,

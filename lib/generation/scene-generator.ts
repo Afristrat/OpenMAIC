@@ -492,6 +492,15 @@ function resolveImageIds(
         }
         const src = el.src as string;
 
+        // Resource QR codes and web captures use semantic IDs such as
+        // qr_resource_1 and img_capture_1. Resolve every key explicitly
+        // registered by the trusted image mapping before applying the legacy
+        // img_N heuristic.
+        if (imageMapping?.[src]) {
+          log.debug(`Resolved mapped image ID "${src}" to URL`);
+          return { ...el, src: imageMapping[src] };
+        }
+
         // If src is an image ID reference, replace with actual URL
         if (isImageIdReference(src)) {
           if (!imageMapping || !imageMapping[src]) {

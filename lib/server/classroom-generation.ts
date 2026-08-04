@@ -616,6 +616,9 @@ export async function generateClassroom(
         },
       );
       if (!content) {
+        if (safeOutline.generatedResources?.length) {
+          throw new Error(`Required resource scene generation failed: ${safeOutline.title}`);
+        }
         log.warn(`Skipping scene "${safeOutline.title}" — content generation failed`);
         continue;
       }
@@ -635,6 +638,9 @@ export async function generateClassroom(
 
       const sceneId = createSceneWithActions(safeOutline, content, actions, api);
       if (!sceneId) {
+        if (safeOutline.generatedResources?.length) {
+          throw new Error(`Required resource scene creation failed: ${safeOutline.title}`);
+        }
         log.warn(`Skipping scene "${safeOutline.title}" — scene creation failed`);
         continue;
       }

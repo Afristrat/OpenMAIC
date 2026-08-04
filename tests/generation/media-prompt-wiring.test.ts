@@ -86,6 +86,77 @@ describe('media prompt condition wiring', () => {
     expect(capturedPrompt).not.toContain('gen_img_');
     expect(capturedPrompt).not.toContain('{{');
   });
+
+  test('resolves semantic QR image IDs used by generated learning resources', async () => {
+    const qrImageUrl = '/api/classroom-media/classroom-1/resources/resource_1-qr.png';
+    const downloadUrl = '/r/classroom-1/resource_1/budget-tresorerie.xlsx';
+    const aiCall: AICallFn = async () =>
+      JSON.stringify({
+        background: { type: 'solid', color: '#ffffff' },
+        elements: [
+          {
+            id: 'resource-qr',
+            type: 'image',
+            src: 'qr_resource_1',
+            left: 620,
+            top: 120,
+            width: 260,
+            height: 260,
+          },
+          {
+            id: 'resource-link',
+            type: 'text',
+            left: 80,
+            top: 120,
+            width: 480,
+            height: 160,
+            content: `<p>${downloadUrl}</p>`,
+            defaultFontName: '',
+            defaultColor: '#111111',
+          },
+        ],
+      });
+    const outline: SceneOutline = {
+      id: 'resource-scene',
+      type: 'slide',
+      title: 'Téléchargez le classeur',
+      description: 'Mettre le fichier à disposition',
+      keyPoints: ['Scanner le QR code', 'Télécharger le fichier'],
+      order: 1,
+      generatedResources: [
+        {
+          id: 'resource_1',
+          format: 'xlsx',
+          title: 'Budget de trésorerie',
+          fileName: 'budget-tresorerie.xlsx',
+          downloadUrl,
+          qrImageUrl,
+        },
+      ],
+    };
+
+    const result = await generateSceneContent(outline, aiCall, {
+      assignedImages: [
+        {
+          id: 'qr_resource_1',
+          src: qrImageUrl,
+          pageNumber: 0,
+          width: 320,
+          height: 320,
+          description: 'QR code du classeur',
+        },
+      ],
+      imageMapping: { qr_resource_1: qrImageUrl },
+    });
+
+    expect(result).not.toBeNull();
+    if (!result || !('elements' in result)) {
+      throw new Error('Expected generated slide content');
+    }
+    expect(result.elements).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'image', src: qrImageUrl })]),
+    );
+  });
 });
 
 describe('outline courseTitle parsing', () => {
