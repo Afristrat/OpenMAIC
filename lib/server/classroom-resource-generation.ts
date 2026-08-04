@@ -130,6 +130,7 @@ async function generateWorkbookSpec(
   const system = `You generate a complete, immediately usable learning workbook as strict JSON. Return {"sheets":[{"name":"...","rows":[[...]]}]}. Use only string, finite number, boolean, or null cell values. Include clear headers, all data needed for the exercise, and useful formulas as literal Excel formulas beginning with = only when the request requires them. Maximum ${MAX_SHEETS} sheets, ${MAX_ROWS} rows per sheet, and ${MAX_COLUMNS} columns. Do not return markdown or commentary.`;
   const user = `Language directive: ${languageDirective}\nResource title: ${request.title}\nCreate the workbook requested between the markers.\n<<<RESOURCE_REQUEST\n${request.prompt}\nRESOURCE_REQUEST>>>`;
   const parsed = parseJsonResponse<WorkbookSpec>(await aiCall(system, user));
+  if (!parsed) throw new Error(`Resource generation returned invalid JSON for ${request.id}`);
   return normalizeWorkbook(parsed);
 }
 

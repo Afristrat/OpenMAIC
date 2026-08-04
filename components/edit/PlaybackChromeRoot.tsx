@@ -1138,7 +1138,14 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
                   ? () => onRetryOutline(generatingOutlines[0].id)
                   : undefined
               }
-              resourcePause={resourcePause}
+              resourcePause={
+                resourcePause
+                  ? {
+                      title: resourcePause.resourceTitle,
+                      downloadUrl: resourcePause.downloadUrl,
+                    }
+                  : null
+              }
             />
           </div>
 
