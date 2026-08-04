@@ -374,6 +374,10 @@ test.describe('Classroom Interaction', () => {
     page,
     mockApi,
   }) => {
+    // Six independent archives are generated and opened in this scenario; the
+    // first PPTX/resource-pack pass also warms the serializer in a cold build.
+    test.setTimeout(90_000);
+
     await mockApi.mockMp4ExportDone('e2e-all-export-formats');
     await page.route('**/api/export-jobs', (route) => {
       const { format } = route.request().postDataJSON() as { format: string };
