@@ -32,7 +32,9 @@ describe('bundled scene plugins', () => {
     for (const pluginId of pluginIds.filter(
       (pluginId) => !['code-sandbox', 'lab-simulation'].includes(pluginId),
     )) {
-      expect(readPluginHtml(pluginId)).toContain('/plugin-runtime/business-simulator.js');
+      expect(readPluginHtml(pluginId)).toContain(
+        '/plugin-runtime/business-simulator.js?v=20260805-2',
+      );
       expect(plugins.find((plugin) => plugin.id === pluginId)?.demoData).toBeDefined();
       expect(formatPluginsForPrompt()).toContain(pluginId);
     }

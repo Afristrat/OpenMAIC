@@ -40,6 +40,10 @@ const nextConfig: NextConfig = {
 
     return [
       {
+        source: '/plugin-runtime/:path*',
+        headers: [{ key: 'Cache-Control', value: 'no-store, max-age=0' }],
+      },
+      {
         source: '/(.*)',
         headers: [
           // X-Frame-Options only supports SAMEORIGIN (no allow-list),

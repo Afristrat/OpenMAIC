@@ -58,7 +58,7 @@ export async function GET(
       status: 200,
       headers: {
         'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=3600',
+        'Cache-Control': 'no-cache, max-age=0, must-revalidate',
         // CSP for plugin iframes
         'Content-Security-Policy': [
           "default-src 'self'",
