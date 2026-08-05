@@ -49,9 +49,7 @@ test.describe('Créateur guidé d’expertises', () => {
     await page.goto('/skills');
     await page.getByRole('button', { name: 'Créer une expertise' }).click();
     await page.getByLabel('Nom de l’expertise').fill('Pilotage trésorerie TPE');
-    await page
-      .getByLabel('Promesse pédagogique')
-      .fill('Anticiper une tension de trésorerie.');
+    await page.getByLabel('Promesse pédagogique').fill('Anticiper une tension de trésorerie.');
     await page
       .getByLabel('Règles et savoir métier')
       .fill('Distinguer résultat, trésorerie et besoin en fonds de roulement.');

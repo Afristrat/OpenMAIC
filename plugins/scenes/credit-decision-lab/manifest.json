@@ -1,7 +1,11 @@
 {
   "id": "credit-decision-lab",
   "type": "credit-decision-lab",
-  "name": { "fr": "Comité de décision crédit", "ar": "لجنة قرار الائتمان", "en": "Credit decision lab" },
+  "name": {
+    "fr": "Comité de décision crédit",
+    "ar": "لجنة قرار الائتمان",
+    "en": "Credit decision lab"
+  },
   "description": {
     "fr": "Analysez un dossier fictif à partir de ratios simples et identifiez les informations manquantes avant toute décision.",
     "ar": "حلّل ملفاً افتراضياً بواسطة نسب بسيطة وحدد المعلومات الناقصة قبل اتخاذ أي قرار.",
@@ -16,20 +20,37 @@
   "outputSchema": {
     "type": "object",
     "properties": {
-      "title": { "type": "string" }, "instructions": { "type": "string" }, "currency": { "type": "string" },
+      "title": { "type": "string" },
+      "instructions": { "type": "string" },
+      "currency": { "type": "string" },
       "assumptions": {
         "type": "object",
         "properties": {
-          "annualRevenue": { "$ref": "#/$defs/input" }, "existingDebt": { "$ref": "#/$defs/input" }, "monthlyDebtService": { "$ref": "#/$defs/input" },
-          "requestedAmount": { "$ref": "#/$defs/input" }, "margin": { "$ref": "#/$defs/input" }, "cashBuffer": { "$ref": "#/$defs/input" }
+          "annualRevenue": { "$ref": "#/$defs/input" },
+          "existingDebt": { "$ref": "#/$defs/input" },
+          "monthlyDebtService": { "$ref": "#/$defs/input" },
+          "requestedAmount": { "$ref": "#/$defs/input" },
+          "margin": { "$ref": "#/$defs/input" },
+          "cashBuffer": { "$ref": "#/$defs/input" }
         },
-        "required": ["annualRevenue", "existingDebt", "monthlyDebtService", "requestedAmount", "margin", "cashBuffer"]
+        "required": [
+          "annualRevenue",
+          "existingDebt",
+          "monthlyDebtService",
+          "requestedAmount",
+          "margin",
+          "cashBuffer"
+        ]
       },
       "labels": {
         "type": "object",
         "properties": {
-          "debtService": { "type": "string" }, "leverage": { "type": "string" }, "riskLevel": { "type": "string" },
-          "controlled": { "type": "string" }, "watch": { "type": "string" }, "high": { "type": "string" }
+          "debtService": { "type": "string" },
+          "leverage": { "type": "string" },
+          "riskLevel": { "type": "string" },
+          "controlled": { "type": "string" },
+          "watch": { "type": "string" },
+          "high": { "type": "string" }
         },
         "required": ["debtService", "leverage", "riskLevel", "controlled", "watch", "high"]
       },
@@ -38,7 +59,14 @@
     "$defs": {
       "input": {
         "type": "object",
-        "properties": { "label": { "type": "string" }, "value": { "type": "number" }, "min": { "type": "number" }, "max": { "type": "number" }, "step": { "type": "number" }, "unit": { "type": "string" } },
+        "properties": {
+          "label": { "type": "string" },
+          "value": { "type": "number" },
+          "min": { "type": "number" },
+          "max": { "type": "number" },
+          "step": { "type": "number" },
+          "unit": { "type": "string" }
+        },
         "required": ["label", "value"]
       }
     },
@@ -51,14 +79,59 @@
     "instructions": "Modifiez les données du dossier et observez les ratios. Le niveau affiché sert à susciter l’analyse, pas à prendre une décision réelle.",
     "currency": "MAD",
     "assumptions": {
-      "annualRevenue": { "label": "Chiffre d’affaires annuel", "value": 4200000, "min": 0, "step": 50000, "unit": "MAD" },
-      "existingDebt": { "label": "Dette existante", "value": 750000, "min": 0, "step": 10000, "unit": "MAD" },
-      "monthlyDebtService": { "label": "Service mensuel de la dette", "value": 82000, "min": 0, "step": 1000, "unit": "MAD" },
-      "requestedAmount": { "label": "Montant demandé", "value": 900000, "min": 0, "step": 10000, "unit": "MAD" },
-      "margin": { "label": "Marge opérationnelle", "value": 17, "min": -50, "max": 100, "step": 1, "unit": "%" },
-      "cashBuffer": { "label": "Réserve de trésorerie", "value": 4, "min": 0, "max": 24, "step": 1, "unit": "mois" }
+      "annualRevenue": {
+        "label": "Chiffre d’affaires annuel",
+        "value": 4200000,
+        "min": 0,
+        "step": 50000,
+        "unit": "MAD"
+      },
+      "existingDebt": {
+        "label": "Dette existante",
+        "value": 750000,
+        "min": 0,
+        "step": 10000,
+        "unit": "MAD"
+      },
+      "monthlyDebtService": {
+        "label": "Service mensuel de la dette",
+        "value": 82000,
+        "min": 0,
+        "step": 1000,
+        "unit": "MAD"
+      },
+      "requestedAmount": {
+        "label": "Montant demandé",
+        "value": 900000,
+        "min": 0,
+        "step": 10000,
+        "unit": "MAD"
+      },
+      "margin": {
+        "label": "Marge opérationnelle",
+        "value": 17,
+        "min": -50,
+        "max": 100,
+        "step": 1,
+        "unit": "%"
+      },
+      "cashBuffer": {
+        "label": "Réserve de trésorerie",
+        "value": 4,
+        "min": 0,
+        "max": 24,
+        "step": 1,
+        "unit": "mois"
+      }
     },
-    "labels": { "debtService": "Charge de dette mensuelle", "leverage": "Dette après financement sur CA", "riskLevel": "Signal pédagogique", "controlled": "Maîtrisé", "watch": "À approfondir", "high": "Fragile" },
+    "labels": {
+      "debtService": "Charge de dette mensuelle",
+      "leverage": "Dette après financement sur CA",
+      "riskLevel": "Signal pédagogique",
+      "controlled": "Maîtrisé",
+      "watch": "À approfondir",
+      "high": "Fragile"
+    },
     "disclaimer": "Exercice pédagogique sur un dossier fictif. Ce signal simplifié ne constitue ni une notation de crédit ni un conseil financier."
   }
 }

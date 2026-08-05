@@ -5,9 +5,7 @@ import { validatePluginData } from '@/lib/plugins/schema-validator';
 describe('bundled scene plugins', () => {
   it('loads every production plugin and its iframe document', () => {
     const plugins = loadPlugins();
-    const pluginIds = plugins
-      .map((plugin) => plugin.id)
-      .sort();
+    const pluginIds = plugins.map((plugin) => plugin.id).sort();
 
     expect(pluginIds).toEqual([
       'cash-flow-simulator',

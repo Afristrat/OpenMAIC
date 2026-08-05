@@ -122,8 +122,7 @@ export default function SkillsPage(): React.ReactElement {
   const [skillInstructions, setSkillInstructions] = useState('');
   const [skillStarterRequest, setSkillStarterRequest] = useState('');
   const canManageSkills = Boolean(
-    currentOrg &&
-    (isSuperAdmin || ['admin', 'manager', 'author'].includes(currentOrg.userRole)),
+    currentOrg && (isSuperAdmin || ['admin', 'manager', 'author'].includes(currentOrg.userRole)),
   );
 
   const fetchSkills = useCallback(async () => {
@@ -309,24 +308,57 @@ export default function SkillsPage(): React.ReactElement {
                 <div className="grid gap-5 py-2">
                   <div className="grid gap-2">
                     <Label htmlFor="skill-name">{t('skills.creatorName')}</Label>
-                    <Input id="skill-name" value={skillName} onChange={(event) => setSkillName(event.target.value)} placeholder={t('skills.creatorNamePlaceholder')} />
+                    <Input
+                      id="skill-name"
+                      value={skillName}
+                      onChange={(event) => setSkillName(event.target.value)}
+                      placeholder={t('skills.creatorNamePlaceholder')}
+                    />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="skill-description">{t('skills.creatorSummary')}</Label>
-                    <Textarea id="skill-description" value={skillDescription} onChange={(event) => setSkillDescription(event.target.value)} placeholder={t('skills.creatorSummaryPlaceholder')} rows={3} />
+                    <Textarea
+                      id="skill-description"
+                      value={skillDescription}
+                      onChange={(event) => setSkillDescription(event.target.value)}
+                      placeholder={t('skills.creatorSummaryPlaceholder')}
+                      rows={3}
+                    />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="skill-instructions">{t('skills.creatorInstructions')}</Label>
-                    <Textarea id="skill-instructions" value={skillInstructions} onChange={(event) => setSkillInstructions(event.target.value)} placeholder={t('skills.creatorInstructionsPlaceholder')} rows={6} />
-                    <p className="text-xs text-muted-foreground">{t('skills.creatorInstructionsHelp')}</p>
+                    <Textarea
+                      id="skill-instructions"
+                      value={skillInstructions}
+                      onChange={(event) => setSkillInstructions(event.target.value)}
+                      placeholder={t('skills.creatorInstructionsPlaceholder')}
+                      rows={6}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {t('skills.creatorInstructionsHelp')}
+                    </p>
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="skill-request">{t('skills.creatorRequest')}</Label>
-                    <Textarea id="skill-request" value={skillStarterRequest} onChange={(event) => setSkillStarterRequest(event.target.value)} placeholder={t('skills.creatorRequestPlaceholder')} rows={3} />
+                    <Textarea
+                      id="skill-request"
+                      value={skillStarterRequest}
+                      onChange={(event) => setSkillStarterRequest(event.target.value)}
+                      placeholder={t('skills.creatorRequestPlaceholder')}
+                      rows={3}
+                    />
                   </div>
                   <div className="flex justify-end gap-2">
-                    <Button type="button" variant="outline" onClick={() => setCreatorOpen(false)}>{t('common.cancel')}</Button>
-                    <Button type="button" disabled={isCreating} onClick={() => void handleCreateSkill()}>{isCreating ? t('skills.creating') : t('skills.createAndInstall')}</Button>
+                    <Button type="button" variant="outline" onClick={() => setCreatorOpen(false)}>
+                      {t('common.cancel')}
+                    </Button>
+                    <Button
+                      type="button"
+                      disabled={isCreating}
+                      onClick={() => void handleCreateSkill()}
+                    >
+                      {isCreating ? t('skills.creating') : t('skills.createAndInstall')}
+                    </Button>
                   </div>
                 </div>
               </DialogContent>

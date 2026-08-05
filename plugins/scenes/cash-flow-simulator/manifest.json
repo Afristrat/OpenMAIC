@@ -1,13 +1,21 @@
 {
   "id": "cash-flow-simulator",
   "type": "cash-flow-simulator",
-  "name": { "fr": "Simulateur de trésorerie", "ar": "محاكي التدفق النقدي", "en": "Cash flow simulator" },
+  "name": {
+    "fr": "Simulateur de trésorerie",
+    "ar": "محاكي التدفق النقدي",
+    "en": "Cash flow simulator"
+  },
   "description": {
     "fr": "Faites varier revenus, charges et croissance pour visualiser la trajectoire de trésorerie et les mois à risque.",
     "ar": "غيّر الإيرادات والمصاريف والنمو لمشاهدة مسار السيولة والأشهر المعرضة للخطر.",
     "en": "Vary revenue, costs and growth to visualize cash trajectory and months at risk."
   },
-  "displayType": { "fr": "Simulation financière", "ar": "محاكاة مالية", "en": "Financial simulation" },
+  "displayType": {
+    "fr": "Simulation financière",
+    "ar": "محاكاة مالية",
+    "en": "Financial simulation"
+  },
   "version": "1.0.0",
   "author": "Qalem",
   "renderUrl": "index.html",
@@ -33,8 +41,12 @@
       "labels": {
         "type": "object",
         "properties": {
-          "endingCash": { "type": "string" }, "monthlyBalance": { "type": "string" }, "alert": { "type": "string" },
-          "month": { "type": "string" }, "none": { "type": "string" }, "cashPath": { "type": "string" }
+          "endingCash": { "type": "string" },
+          "monthlyBalance": { "type": "string" },
+          "alert": { "type": "string" },
+          "month": { "type": "string" },
+          "none": { "type": "string" },
+          "cashPath": { "type": "string" }
         },
         "required": ["endingCash", "monthlyBalance", "alert", "month", "none", "cashPath"]
       }
@@ -43,7 +55,14 @@
     "$defs": {
       "input": {
         "type": "object",
-        "properties": { "label": { "type": "string" }, "value": { "type": "number" }, "min": { "type": "number" }, "max": { "type": "number" }, "step": { "type": "number" }, "unit": { "type": "string" } },
+        "properties": {
+          "label": { "type": "string" },
+          "value": { "type": "number" },
+          "min": { "type": "number" },
+          "max": { "type": "number" },
+          "step": { "type": "number" },
+          "unit": { "type": "string" }
+        },
         "required": ["label", "value"]
       }
     }
@@ -55,14 +74,44 @@
     "instructions": "Modifiez chaque hypothèse. La trajectoire est recalculée immédiatement afin de rendre les arbitrages visibles.",
     "currency": "MAD",
     "assumptions": {
-      "openingCash": { "label": "Trésorerie de départ", "value": 240000, "min": 0, "step": 5000, "unit": "MAD" },
-      "monthlyRevenue": { "label": "Revenus mensuels", "value": 95000, "min": 0, "step": 1000, "unit": "MAD" },
-      "monthlyCosts": { "label": "Charges mensuelles", "value": 112000, "min": 0, "step": 1000, "unit": "MAD" },
-      "revenueGrowth": { "label": "Croissance mensuelle des revenus", "value": 4, "min": -20, "max": 50, "step": 0.5, "unit": "%" },
+      "openingCash": {
+        "label": "Trésorerie de départ",
+        "value": 240000,
+        "min": 0,
+        "step": 5000,
+        "unit": "MAD"
+      },
+      "monthlyRevenue": {
+        "label": "Revenus mensuels",
+        "value": 95000,
+        "min": 0,
+        "step": 1000,
+        "unit": "MAD"
+      },
+      "monthlyCosts": {
+        "label": "Charges mensuelles",
+        "value": 112000,
+        "min": 0,
+        "step": 1000,
+        "unit": "MAD"
+      },
+      "revenueGrowth": {
+        "label": "Croissance mensuelle des revenus",
+        "value": 4,
+        "min": -20,
+        "max": 50,
+        "step": 0.5,
+        "unit": "%"
+      },
       "months": { "label": "Horizon", "value": 12, "min": 1, "max": 24, "step": 1, "unit": "mois" }
     },
     "labels": {
-      "endingCash": "Trésorerie finale", "monthlyBalance": "Solde du premier mois", "alert": "Premier signal", "month": "Mois", "none": "Aucun", "cashPath": "Trajectoire mensuelle"
+      "endingCash": "Trésorerie finale",
+      "monthlyBalance": "Solde du premier mois",
+      "alert": "Premier signal",
+      "month": "Mois",
+      "none": "Aucun",
+      "cashPath": "Trajectoire mensuelle"
     }
   }
 }

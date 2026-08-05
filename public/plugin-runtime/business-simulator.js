@@ -54,7 +54,13 @@
     var header = el('header', 'simulator-header');
     header.appendChild(el('p', 'eyebrow', data.eyebrow || 'Qalem · Atelier interactif'));
     header.appendChild(el('h1', '', data.title || 'Simulation'));
-    header.appendChild(el('p', 'intro', data.instructions || 'Modifiez les hypothèses et observez les conséquences.'));
+    header.appendChild(
+      el(
+        'p',
+        'intro',
+        data.instructions || 'Modifiez les hypothèses et observez les conséquences.',
+      ),
+    );
     page.appendChild(header);
     var layout = el('div', 'simulator-layout');
     var controls = el('section', 'panel controls');
@@ -71,7 +77,11 @@
     var assumptions = data.assumptions;
     Object.keys(assumptions).forEach(function (key) {
       var item = assumptions[key];
-      view.controls.appendChild(field(item.label, item.value, item, function (value) { item.value = value; }));
+      view.controls.appendChild(
+        field(item.label, item.value, item, function (value) {
+          item.value = value;
+        }),
+      );
     });
     var cash = assumptions.openingCash.value;
     var revenue = assumptions.monthlyRevenue.value;
@@ -87,39 +97,98 @@
       revenue *= 1 + growth;
     }
     var cards = el('div', 'result-grid');
-    cards.appendChild(resultCard(data.labels.endingCash, format(cash, data.currency), cash >= 0 ? 'positive' : 'negative'));
-    cards.appendChild(resultCard(data.labels.monthlyBalance, format(assumptions.monthlyRevenue.value - costs, data.currency)));
-    cards.appendChild(resultCard(data.labels.alert, firstNegative ? data.labels.month + ' ' + firstNegative : data.labels.none, firstNegative ? 'negative' : 'positive'));
+    cards.appendChild(
+      resultCard(
+        data.labels.endingCash,
+        format(cash, data.currency),
+        cash >= 0 ? 'positive' : 'negative',
+      ),
+    );
+    cards.appendChild(
+      resultCard(
+        data.labels.monthlyBalance,
+        format(assumptions.monthlyRevenue.value - costs, data.currency),
+      ),
+    );
+    cards.appendChild(
+      resultCard(
+        data.labels.alert,
+        firstNegative ? data.labels.month + ' ' + firstNegative : data.labels.none,
+        firstNegative ? 'negative' : 'positive',
+      ),
+    );
     view.output.appendChild(cards);
     renderBars(view.output, series, data.labels.cashPath, data.currency);
   }
 
   function renderFunds(data, view) {
-    view.controls.appendChild(field(data.budget.label, data.budget.value, data.budget, function (value) { data.budget.value = value; }));
+    view.controls.appendChild(
+      field(data.budget.label, data.budget.value, data.budget, function (value) {
+        data.budget.value = value;
+      }),
+    );
     data.allocations.forEach(function (item) {
-      view.controls.appendChild(field(item.label, item.value, { min: 0, step: 1000, unit: data.currency }, function (value) { item.value = value; }));
+      view.controls.appendChild(
+        field(
+          item.label,
+          item.value,
+          { min: 0, step: 1000, unit: data.currency },
+          function (value) {
+            item.value = value;
+          },
+        ),
+      );
     });
-    var total = data.allocations.reduce(function (sum, item) { return sum + number(item.value); }, 0);
+    var total = data.allocations.reduce(function (sum, item) {
+      return sum + number(item.value);
+    }, 0);
     var remaining = data.budget.value - total;
     var cards = el('div', 'result-grid');
     cards.appendChild(resultCard(data.labels.allocated, format(total, data.currency)));
-    cards.appendChild(resultCard(data.labels.remaining, format(remaining, data.currency), remaining >= 0 ? 'positive' : 'negative'));
-    cards.appendChild(resultCard(data.labels.status, remaining === 0 ? data.labels.balanced : remaining > 0 ? data.labels.unallocated : data.labels.overBudget, remaining === 0 ? 'positive' : 'warning'));
+    cards.appendChild(
+      resultCard(
+        data.labels.remaining,
+        format(remaining, data.currency),
+        remaining >= 0 ? 'positive' : 'negative',
+      ),
+    );
+    cards.appendChild(
+      resultCard(
+        data.labels.status,
+        remaining === 0
+          ? data.labels.balanced
+          : remaining > 0
+            ? data.labels.unallocated
+            : data.labels.overBudget,
+        remaining === 0 ? 'positive' : 'warning',
+      ),
+    );
     view.output.appendChild(cards);
     var totalBase = Math.max(data.budget.value, total, 1);
-    renderNamedBars(view.output, data.allocations.map(function (item) { return { label: item.label, value: item.value, ratio: item.value / totalBase }; }), data.labels.breakdown, data.currency);
+    renderNamedBars(
+      view.output,
+      data.allocations.map(function (item) {
+        return { label: item.label, value: item.value, ratio: item.value / totalBase };
+      }),
+      data.labels.breakdown,
+      data.currency,
+    );
   }
 
   function renderFunnel(data, view) {
     Object.keys(data.assumptions).forEach(function (key) {
       var item = data.assumptions[key];
-      view.controls.appendChild(field(item.label, item.value, item, function (value) { item.value = value; }));
+      view.controls.appendChild(
+        field(item.label, item.value, item, function (value) {
+          item.value = value;
+        }),
+      );
     });
     var a = data.assumptions;
-    var reached = a.audience.value * a.reachRate.value / 100;
-    var visitors = reached * a.clickRate.value / 100;
-    var leads = visitors * a.leadRate.value / 100;
-    var clients = leads * a.conversionRate.value / 100;
+    var reached = (a.audience.value * a.reachRate.value) / 100;
+    var visitors = (reached * a.clickRate.value) / 100;
+    var leads = (visitors * a.leadRate.value) / 100;
+    var clients = (leads * a.conversionRate.value) / 100;
     var revenue = clients * a.averageOrder.value;
     var stages = [
       { label: data.labels.audience, value: a.audience.value },
@@ -131,31 +200,68 @@
     var cards = el('div', 'result-grid');
     cards.appendChild(resultCard(data.labels.clients, format(clients)));
     cards.appendChild(resultCard(data.labels.revenue, format(revenue, data.currency), 'positive'));
-    cards.appendChild(resultCard(data.labels.globalRate, format(a.audience.value ? clients / a.audience.value * 100 : 0, '%')));
+    cards.appendChild(
+      resultCard(
+        data.labels.globalRate,
+        format(a.audience.value ? (clients / a.audience.value) * 100 : 0, '%'),
+      ),
+    );
     view.output.appendChild(cards);
-    renderNamedBars(view.output, stages.map(function (item) { return { label: item.label, value: item.value, ratio: item.value / Math.max(a.audience.value, 1) }; }), data.labels.funnel, '');
+    renderNamedBars(
+      view.output,
+      stages.map(function (item) {
+        return {
+          label: item.label,
+          value: item.value,
+          ratio: item.value / Math.max(a.audience.value, 1),
+        };
+      }),
+      data.labels.funnel,
+      '',
+    );
   }
 
   function renderCredit(data, view) {
     Object.keys(data.assumptions).forEach(function (key) {
       var item = data.assumptions[key];
-      view.controls.appendChild(field(item.label, item.value, item, function (value) { item.value = value; }));
+      view.controls.appendChild(
+        field(item.label, item.value, item, function (value) {
+          item.value = value;
+        }),
+      );
     });
     var a = data.assumptions;
     var monthlyRevenue = a.annualRevenue.value / 12;
-    var serviceRatio = monthlyRevenue ? a.monthlyDebtService.value / monthlyRevenue * 100 : 0;
-    var leverage = a.annualRevenue.value ? (a.existingDebt.value + a.requestedAmount.value) / a.annualRevenue.value * 100 : 0;
+    var serviceRatio = monthlyRevenue ? (a.monthlyDebtService.value / monthlyRevenue) * 100 : 0;
+    var leverage = a.annualRevenue.value
+      ? ((a.existingDebt.value + a.requestedAmount.value) / a.annualRevenue.value) * 100
+      : 0;
     var score = 100;
-    if (serviceRatio > 30) score -= 35; else if (serviceRatio > 20) score -= 15;
-    if (leverage > 80) score -= 30; else if (leverage > 50) score -= 15;
+    if (serviceRatio > 30) score -= 35;
+    else if (serviceRatio > 20) score -= 15;
+    if (leverage > 80) score -= 30;
+    else if (leverage > 50) score -= 15;
     if (a.margin.value < 10) score -= 20;
     if (a.cashBuffer.value < 3) score -= 15;
     score = Math.max(0, score);
-    var level = score >= 75 ? data.labels.controlled : score >= 50 ? data.labels.watch : data.labels.high;
+    var level =
+      score >= 75 ? data.labels.controlled : score >= 50 ? data.labels.watch : data.labels.high;
     var cards = el('div', 'result-grid');
-    cards.appendChild(resultCard(data.labels.debtService, format(serviceRatio, '%'), serviceRatio <= 30 ? 'positive' : 'negative'));
+    cards.appendChild(
+      resultCard(
+        data.labels.debtService,
+        format(serviceRatio, '%'),
+        serviceRatio <= 30 ? 'positive' : 'negative',
+      ),
+    );
     cards.appendChild(resultCard(data.labels.leverage, format(leverage, '%')));
-    cards.appendChild(resultCard(data.labels.riskLevel, level, score >= 75 ? 'positive' : score >= 50 ? 'warning' : 'negative'));
+    cards.appendChild(
+      resultCard(
+        data.labels.riskLevel,
+        level,
+        score >= 75 ? 'positive' : score >= 50 ? 'warning' : 'negative',
+      ),
+    );
     view.output.appendChild(cards);
     var note = el('p', 'notice', data.disclaimer);
     view.output.appendChild(note);
@@ -163,7 +269,11 @@
 
   function renderKpis(data, view) {
     data.metrics.forEach(function (metric) {
-      view.controls.appendChild(field(metric.label, metric.current, metric, function (value) { metric.current = value; }));
+      view.controls.appendChild(
+        field(metric.label, metric.current, metric, function (value) {
+          metric.current = value;
+        }),
+      );
     });
     var heading = el('h2', 'panel-title', data.labels.dashboard);
     view.output.appendChild(heading);
@@ -178,7 +288,13 @@
       var row = el('div', 'kpi-row');
       var top = el('div', 'kpi-top');
       top.appendChild(el('strong', '', metric.label));
-      top.appendChild(el('span', ratio >= 1 ? 'status positive' : ratio >= 0.8 ? 'status warning' : 'status negative', format(metric.current, metric.unit) + ' / ' + format(metric.target, metric.unit)));
+      top.appendChild(
+        el(
+          'span',
+          ratio >= 1 ? 'status positive' : ratio >= 0.8 ? 'status warning' : 'status negative',
+          format(metric.current, metric.unit) + ' / ' + format(metric.target, metric.unit),
+        ),
+      );
       row.appendChild(top);
       var track = el('div', 'bar-track');
       var bar = el('div', 'bar-fill');
@@ -190,8 +306,22 @@
   }
 
   function renderBars(parent, values, title, unit) {
-    var max = Math.max.apply(null, values.map(function (value) { return Math.abs(value); }).concat([1]));
-    renderNamedBars(parent, values.map(function (value, index) { return { label: String(index + 1), value: value, ratio: Math.abs(value) / max }; }), title, unit);
+    var max = Math.max.apply(
+      null,
+      values
+        .map(function (value) {
+          return Math.abs(value);
+        })
+        .concat([1]),
+    );
+    renderNamedBars(
+      parent,
+      values.map(function (value, index) {
+        return { label: String(index + 1), value: value, ratio: Math.abs(value) / max };
+      }),
+      title,
+      unit,
+    );
   }
 
   function renderNamedBars(parent, items, title, unit) {
@@ -240,5 +370,8 @@
     }
   });
 
-  window.parent.postMessage({ source: 'qalem-plugin', type: 'ready', payload: {} }, window.location.origin);
+  window.parent.postMessage(
+    { source: 'qalem-plugin', type: 'ready', payload: {} },
+    window.location.origin,
+  );
 })();
