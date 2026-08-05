@@ -7,15 +7,17 @@
  */
 
 import { NextRequest } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 import type { OrgMemberRole } from '@/lib/supabase/types';
 import { validateBody } from '@/lib/api/validate';
 import { organizationPatchSchema } from '@/lib/api/schemas';
 import { validatePersonaSettings } from '@/lib/agents/persona-validation';
+import { requireSuperAdminOrOrgAdmin, requireSuperAdminOrOrgMember } from '@/lib/api/auth';
+import { mergeOrganizationSettings } from '@/lib/org/organization-settings';
 
 async function getUserMembership(
-  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  supabase: ReturnType<typeof createServiceSupabaseClient>,
   orgId: string,
   userId: string,
 ): Promise<{ role: OrgMemberRole } | null> {
@@ -29,24 +31,14 @@ async function getUserMembership(
 }
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ orgId: string }> },
 ): Promise<Response> {
   const { orgId } = await params;
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return apiError(API_ERROR_CODES.INVALID_REQUEST, 401, 'Authentication required');
-  }
-
-  const membership = await getUserMembership(supabase, orgId, user.id);
-  if (!membership) {
-    return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Not a member of this organization');
-  }
+  const auth = await requireSuperAdminOrOrgMember(request, orgId);
+  if (auth.response) return auth.response;
+  const supabase = createServiceSupabaseClient();
+  const membership = await getUserMembership(supabase, orgId, auth.user.id);
 
   const { data: org, error } = await supabase
     .from('organizations')
@@ -58,7 +50,7 @@ export async function GET(
     return apiError(API_ERROR_CODES.INTERNAL_ERROR, 404, 'Organization not found');
   }
 
-  return apiSuccess({ organization: { ...org, userRole: membership.role } });
+  return apiSuccess({ organization: { ...org, userRole: membership?.role ?? 'admin' } });
 }
 
 export async function PATCH(
@@ -66,20 +58,9 @@ export async function PATCH(
   { params }: { params: Promise<{ orgId: string }> },
 ): Promise<Response> {
   const { orgId } = await params;
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return apiError(API_ERROR_CODES.INVALID_REQUEST, 401, 'Authentication required');
-  }
-
-  const membership = await getUserMembership(supabase, orgId, user.id);
-  if (!membership || membership.role !== 'admin') {
-    return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Admin access required');
-  }
+  const auth = await requireSuperAdminOrOrgAdmin(request, orgId);
+  if (auth.response) return auth.response;
+  const supabase = createServiceSupabaseClient();
 
   let rawBody: unknown;
   try {
@@ -109,7 +90,15 @@ export async function PATCH(
     updates.default_locale = body.default_locale;
   }
   if (body.settings !== undefined) {
-    updates.settings = body.settings;
+    const { data: currentOrganization, error: settingsReadError } = await supabase
+      .from('organizations')
+      .select('settings')
+      .eq('id', orgId)
+      .single();
+    if (settingsReadError || !currentOrganization) {
+      return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to read organization settings');
+    }
+    updates.settings = mergeOrganizationSettings(currentOrganization.settings, body.settings);
   }
   if (body.logo !== undefined) {
     updates.logo = body.logo;
@@ -139,24 +128,13 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ orgId: string }> },
 ): Promise<Response> {
   const { orgId } = await params;
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return apiError(API_ERROR_CODES.INVALID_REQUEST, 401, 'Authentication required');
-  }
-
-  const membership = await getUserMembership(supabase, orgId, user.id);
-  if (!membership || membership.role !== 'admin') {
-    return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Admin access required');
-  }
+  const auth = await requireSuperAdminOrOrgAdmin(request, orgId);
+  if (auth.response) return auth.response;
+  const supabase = createServiceSupabaseClient();
 
   const { error } = await supabase.from('organizations').delete().eq('id', orgId);
 

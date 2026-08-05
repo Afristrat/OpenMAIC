@@ -3,6 +3,7 @@ import { requireSuperAdminOrOrgAdmin } from '@/lib/api/auth';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { extractOrganizationDesignSystem } from '@/lib/server/organization-brand-extractor';
+import { organizationDesignSystemFromSettings } from '@/lib/branding/organization-design-system';
 
 export const maxDuration = 60;
 
@@ -46,6 +47,53 @@ export async function POST(
       'UPSTREAM_ERROR',
       502,
       error instanceof Error ? error.message : 'Brand extraction failed',
+    );
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ orgId: string }> },
+) {
+  const { orgId } = await params;
+  const auth = await requireSuperAdminOrOrgAdmin(request, orgId);
+  if (auth.response) return auth.response;
+  try {
+    const body = (await request.json()) as { designSystem?: unknown; logoUrl?: unknown };
+    const designSystem = organizationDesignSystemFromSettings({
+      brandDesignSystem: body.designSystem,
+    });
+    if (!designSystem) {
+      return apiError('INVALID_REQUEST', 400, 'A complete design system is required');
+    }
+    const logoUrl =
+      typeof body.logoUrl === 'string' && body.logoUrl.trim()
+        ? new URL(body.logoUrl.trim()).toString()
+        : null;
+    const supabase = createServiceSupabaseClient();
+    const { data: organization, error: readError } = await supabase
+      .from('organizations')
+      .select('settings')
+      .eq('id', orgId)
+      .single();
+    if (readError || !organization) {
+      return apiError('INVALID_REQUEST', 404, 'Organization not found');
+    }
+    const settings = {
+      ...((organization.settings as Record<string, unknown> | null) ?? {}),
+      brandDesignSystem: designSystem,
+    };
+    const { error: updateError } = await supabase
+      .from('organizations')
+      .update({ settings, logo: logoUrl })
+      .eq('id', orgId);
+    if (updateError) return apiError('INTERNAL_ERROR', 500, updateError.message);
+    return apiSuccess({ designSystem, logoUrl });
+  } catch (error) {
+    return apiError(
+      'INVALID_REQUEST',
+      400,
+      error instanceof Error ? error.message : 'Invalid organization brand settings',
     );
   }
 }

@@ -6,6 +6,7 @@ import { useI18n } from '@/lib/hooks/use-i18n';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import {
   Select,
@@ -31,6 +32,7 @@ import {
   BarChart3,
   CheckCircle2,
   Palette,
+  Upload,
 } from 'lucide-react';
 import type { Organization, OrgMemberRole, OrgSector } from '@/lib/supabase/types';
 import {
@@ -103,6 +105,8 @@ export default function OrgAdminPage() {
   const [brandWebsiteUrl, setBrandWebsiteUrl] = useState('');
   const [brandDesignSystem, setBrandDesignSystem] = useState<OrganizationDesignSystem>();
   const [extractingBrand, setExtractingBrand] = useState(false);
+  const [savingBrand, setSavingBrand] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [presentationBrandMode, setPresentationBrandMode] =
     useState<PresentationBrandMode>('organization');
   const [learningDesign, setLearningDesign] =
@@ -216,6 +220,8 @@ export default function OrgAdminPage() {
         toast.error(t('org.weightsMustTotal'));
         return;
       }
+      const settingsWithoutBrand = { ...(org?.settings ?? {}) };
+      delete settingsWithoutBrand.brandDesignSystem;
       const res = await fetch(`/api/organizations/${orgId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -224,8 +230,7 @@ export default function OrgAdminPage() {
           sector: editSector || null,
           default_locale: editLocale,
           settings: {
-            ...(org?.settings ?? {}),
-            ...(brandDesignSystem ? { brandDesignSystem } : {}),
+            ...settingsWithoutBrand,
             presentationBranding: presentationBrandingSettings(presentationBrandMode),
             learningDesign,
             teachingProfile: {
@@ -288,6 +293,68 @@ export default function OrgAdminPage() {
       toast.error(error instanceof Error ? error.message : t('org.brandExtractionFailed'));
     } finally {
       setExtractingBrand(false);
+    }
+  };
+
+  const handleSaveBrand = async () => {
+    if (!brandDesignSystem || !isAdmin) return;
+    setSavingBrand(true);
+    try {
+      const response = await fetch(`/api/organizations/${orgId}/brand-system`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          designSystem: brandDesignSystem,
+          logoUrl: editLogo.trim() || null,
+        }),
+      });
+      const payload = (await response.json()) as {
+        designSystem?: OrganizationDesignSystem;
+        logoUrl?: string | null;
+        error?: string;
+      };
+      if (!response.ok || !payload.designSystem) {
+        throw new Error(payload.error || t('settings.saveFailed'));
+      }
+      setBrandDesignSystem(payload.designSystem);
+      setOrg((current) =>
+        current
+          ? {
+              ...current,
+              logo: payload.logoUrl ?? null,
+              settings: { ...current.settings, brandDesignSystem: payload.designSystem },
+            }
+          : current,
+      );
+      toast.success(t('org.brandSaved'));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('settings.saveFailed'));
+    } finally {
+      setSavingBrand(false);
+    }
+  };
+
+  const handleUploadLogo = async (file: File | undefined) => {
+    if (!file || !isAdmin) return;
+    setUploadingLogo(true);
+    try {
+      const formData = new FormData();
+      formData.set('logo', file);
+      const response = await fetch(`/api/organizations/${orgId}/logo`, {
+        method: 'POST',
+        body: formData,
+      });
+      const payload = (await response.json()) as { logoUrl?: string; error?: string };
+      if (!response.ok || !payload.logoUrl) {
+        throw new Error(payload.error || t('org.logoUploadFailed'));
+      }
+      setEditLogo(payload.logoUrl);
+      setOrg((current) => (current ? { ...current, logo: payload.logoUrl ?? null } : current));
+      toast.success(t('org.logoUploaded'));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('org.logoUploadFailed'));
+    } finally {
+      setUploadingLogo(false);
     }
   };
 
@@ -521,21 +588,142 @@ export default function OrgAdminPage() {
               </div>
               <p className="mt-1 text-xs text-muted-foreground">{t('org.brandWebsiteHint')}</p>
               {brandDesignSystem && (
-                <div className="mt-3 rounded-lg border bg-muted/30 p-3">
-                  <div className="flex flex-wrap gap-2">
-                    {brandDesignSystem.palette.map((token) => (
-                      <div
-                        key={token.name}
-                        className="flex items-center gap-1.5 rounded-full border bg-background px-2 py-1 text-xs"
-                      >
-                        <span
-                          className="h-3 w-3 rounded-full border"
-                          style={{ backgroundColor: token.hex }}
+                <div className="mt-3 space-y-4 rounded-lg border bg-muted/30 p-4">
+                  <div>
+                    <p className="mb-2 text-sm font-medium">{t('org.brandPalette')}</p>
+                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                      {brandDesignSystem.palette.map((token, index) => (
+                        <label
+                          key={token.name}
+                          className="flex items-center gap-2 rounded-md border bg-background p-2 text-xs"
+                        >
+                          <input
+                            type="color"
+                            value={token.hex}
+                            className="h-8 w-10 cursor-pointer border-0 bg-transparent p-0"
+                            aria-label={t(`org.brandColor.${token.name}`)}
+                            onChange={(event) =>
+                              setBrandDesignSystem((current) =>
+                                current
+                                  ? {
+                                      ...current,
+                                      palette: current.palette.map((item, itemIndex) =>
+                                        itemIndex === index
+                                          ? { ...item, hex: event.target.value }
+                                          : item,
+                                      ),
+                                    }
+                                  : current,
+                              )
+                            }
+                          />
+                          <span className="min-w-0">
+                            <span className="block font-medium">
+                              {t(`org.brandColor.${token.name}`)}
+                            </span>
+                            <span className="font-mono text-muted-foreground">{token.hex}</span>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="mb-2 text-sm font-medium">{t('org.brandTypography')}</p>
+                    <div className="grid gap-2 sm:grid-cols-3">
+                      {(['display', 'body', 'utility'] as const).map((role) => (
+                        <label key={role} className="text-xs">
+                          <span className="mb-1 block text-muted-foreground">
+                            {t(`org.brandTypographyRole.${role}`)}
+                          </span>
+                          <Input
+                            value={brandDesignSystem.typography[role]}
+                            onChange={(event) =>
+                              setBrandDesignSystem((current) =>
+                                current
+                                  ? {
+                                      ...current,
+                                      typography: {
+                                        ...current.typography,
+                                        [role]: event.target.value,
+                                      },
+                                    }
+                                  : current,
+                              )
+                            }
+                          />
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {(
+                      [
+                        ['spacingRhythm', 'brandSpacing'],
+                        ['cornerRadius', 'brandCorners'],
+                        ['borderAndShadow', 'brandBorders'],
+                        ['density', 'brandDensity'],
+                      ] as const
+                    ).map(([field, label]) => (
+                      <label key={field} className="text-xs">
+                        <span className="mb-1 block text-muted-foreground">
+                          {t(`org.${label}`)}
+                        </span>
+                        <Input
+                          value={brandDesignSystem[field]}
+                          onChange={(event) =>
+                            setBrandDesignSystem((current) =>
+                              current ? { ...current, [field]: event.target.value } : current,
+                            )
+                          }
                         />
-                        {t(`org.brandColor.${token.name}`)}
-                      </div>
+                      </label>
                     ))}
                   </div>
+                  <label className="block text-xs">
+                    <span className="mb-1 block text-muted-foreground">
+                      {t('org.brandLayoutLogic')}
+                    </span>
+                    <Textarea
+                      value={brandDesignSystem.layoutLogic}
+                      onChange={(event) =>
+                        setBrandDesignSystem((current) =>
+                          current ? { ...current, layoutLogic: event.target.value } : current,
+                        )
+                      }
+                    />
+                  </label>
+                  <label className="block text-xs">
+                    <span className="mb-1 block text-muted-foreground">
+                      {t('org.brandSignature')}
+                    </span>
+                    <Textarea
+                      value={brandDesignSystem.signatureElement}
+                      onChange={(event) =>
+                        setBrandDesignSystem((current) =>
+                          current ? { ...current, signatureElement: event.target.value } : current,
+                        )
+                      }
+                    />
+                  </label>
+                  <label className="block text-xs">
+                    <span className="mb-1 block text-muted-foreground">{t('org.brandNever')}</span>
+                    <Textarea
+                      value={brandDesignSystem.never.join('\n')}
+                      onChange={(event) =>
+                        setBrandDesignSystem((current) =>
+                          current
+                            ? {
+                                ...current,
+                                never: event.target.value
+                                  .split('\n')
+                                  .map((item) => item.trim())
+                                  .filter(Boolean),
+                              }
+                            : current,
+                        )
+                      }
+                    />
+                  </label>
                   <p className="mt-2 text-xs text-muted-foreground">
                     {t('org.brandLastExtracted')}{' '}
                     {new Date(brandDesignSystem.extractedAt).toLocaleString()}
@@ -553,10 +741,38 @@ export default function OrgAdminPage() {
                 onChange={(event) => setEditLogo(event.target.value)}
                 placeholder="https://…/logo.svg"
               />
+              <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted">
+                  <Upload className="h-4 w-4" />
+                  {uploadingLogo ? t('common.loading') : t('org.uploadLogo')}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="sr-only"
+                    disabled={uploadingLogo}
+                    onChange={(event) => void handleUploadLogo(event.target.files?.[0])}
+                  />
+                </label>
+                {editLogo && (
+                  <img
+                    src={editLogo}
+                    alt={t('org.logoPreview')}
+                    className="h-16 max-w-48 rounded-md border bg-white object-contain p-2"
+                  />
+                )}
+              </div>
               <p className="mt-1 text-xs text-muted-foreground">
                 {t('org.presentationLogoUrlHint')}
               </p>
             </div>
+            {brandDesignSystem && (
+              <div className="sm:col-span-2">
+                <Button type="button" onClick={handleSaveBrand} disabled={savingBrand}>
+                  {savingBrand ? t('common.loading') : t('org.saveBrand')}
+                </Button>
+                <p className="mt-1 text-xs text-muted-foreground">{t('org.saveBrandHint')}</p>
+              </div>
+            )}
             <div className="sm:col-span-2">
               <label className="mb-1 block text-sm font-medium">
                 {t('org.presentationBranding')}
