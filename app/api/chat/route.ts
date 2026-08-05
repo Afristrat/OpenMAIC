@@ -29,6 +29,7 @@ import { resolveOrganizationSkillId } from '@/lib/server/skill-resolution';
 import { requireAuth, requireSuperAdminOrOrgMember } from '@/lib/api/auth';
 import { latestExplicitLearnerMessage } from '@/lib/webhooks/classroom-interaction';
 import { enqueueClassroomInteraction } from '@/lib/jobs/queue';
+import { getActionsForRole } from '@/lib/orchestration/registry/types';
 const log = createLogger('Chat API');
 
 // Allow streaming responses up to 60 seconds
@@ -121,7 +122,7 @@ export async function POST(req: NextRequest) {
             persona: agent!.persona,
             avatar: agent!.avatar,
             color: agent!.color,
-            allowedActions: [],
+            allowedActions: getActionsForRole(agent!.role),
             priority: agent!.priority,
             interactionWeight: agent!.interactionWeight,
             mechanismId: agent!.mechanismId,
