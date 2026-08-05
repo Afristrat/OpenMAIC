@@ -18,6 +18,7 @@ import { DEFAULT_VOXCPM_BACKEND, VOXCPM_MODEL_ID, VOXCPM_VLLM_MODEL_ID } from '@
 import { PDF_PROVIDERS } from '@/lib/pdf/constants';
 import type { PDFProviderId } from '@/lib/pdf/types';
 import type { ImageProviderId, VideoProviderId } from '@/lib/media/types';
+import type { ContextualSpecialist } from '@/lib/agents/contextual-specialist';
 import { IMAGE_PROVIDERS } from '@/lib/media/image-providers';
 import { VIDEO_PROVIDERS } from '@/lib/media/video-providers';
 import { WEB_SEARCH_PROVIDERS } from '@/lib/web-search/constants';
@@ -195,6 +196,7 @@ export interface SettingsState {
 
   // Agent settings
   selectedAgentIds: string[];
+  contextualSpecialists: ContextualSpecialist[];
   agentMode: 'preset' | 'auto';
   autoAgentCount: number;
   /**
@@ -234,6 +236,7 @@ export interface SettingsState {
   setAutoPlayLecture: (autoPlay: boolean) => void;
   setPlaybackSpeed: (speed: PlaybackSpeed) => void;
   setSelectedAgentIds: (ids: string[]) => void;
+  setContextualSpecialists: (specialists: ContextualSpecialist[]) => void;
   setAgentMode: (mode: 'preset' | 'auto') => void;
   setAutoAgentCount: (count: number) => void;
   /** Set (or clear, with `undefined`) the persisted voice pick for one agent. */
@@ -838,6 +841,7 @@ export const useSettingsStore = create<SettingsState>()(
         providersConfig: initialProvidersConfig,
         ttsModel: migratedData?.ttsModel || 'openai-tts',
         selectedAgentIds: migratedData?.selectedAgentIds || ['default-1', 'default-2', 'default-3'],
+        contextualSpecialists: [],
         agentMode: 'auto' as const,
         autoAgentCount: 3,
         agentVoiceOverrides: {},
@@ -960,6 +964,7 @@ export const useSettingsStore = create<SettingsState>()(
         setPlaybackSpeed: (speed) => set({ playbackSpeed: speed }),
 
         setSelectedAgentIds: (ids) => set({ selectedAgentIds: ids }),
+        setContextualSpecialists: (specialists) => set({ contextualSpecialists: specialists }),
 
         setAgentMode: (mode) => set({ agentMode: mode }),
         setAutoAgentCount: (count) => set({ autoAgentCount: count }),
@@ -1728,10 +1733,29 @@ export const useSettingsStore = create<SettingsState>()(
     },
     {
       name: 'settings-storage',
-      version: 5,
+      version: 6,
       // Migrate persisted state
       migrate: (persistedState: unknown, version: number) => {
         const state = persistedState as Partial<SettingsState>;
+
+        if (version < 6) {
+          const legacyPersonaMap: Record<string, string> = {
+            'default-1': 'persona-professor',
+            'default-2': 'persona-teaching-assistant',
+            'default-3': 'persona-joker',
+            'default-4': 'persona-curious',
+            'default-5': 'persona-secretary',
+            'default-6': 'persona-thinker',
+          };
+          state.selectedAgentIds = (
+            state.selectedAgentIds ?? ['default-1', 'default-2', 'default-3']
+          )
+            .map((id) => legacyPersonaMap[id] ?? id)
+            .filter((id, index, values) => values.indexOf(id) === index);
+          // Re-run the managed-provider selection once so existing browsers
+          // adopt newly published Whisper, image and TTS services.
+          state.autoConfigApplied = false;
+        }
 
         // v4 -> v5: remove the historical Chinese ASR default from existing
         // browser storage. Qalem's primary locale is French; users can still
@@ -1858,6 +1882,9 @@ export const useSettingsStore = create<SettingsState>()(
 
         if ((state as Record<string, unknown>).agentMode === undefined) {
           (state as Record<string, unknown>).agentMode = 'preset';
+        }
+        if ((state as Record<string, unknown>).contextualSpecialists === undefined) {
+          (state as Record<string, unknown>).contextualSpecialists = [];
         }
         if ((state as Record<string, unknown>).autoAgentCount === undefined) {
           (state as Record<string, unknown>).autoAgentCount = 3;

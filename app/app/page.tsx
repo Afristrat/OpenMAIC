@@ -25,7 +25,9 @@ import {
   Atom,
   X,
   Presentation,
+  WandSparkles,
 } from 'lucide-react';
+import type { User } from '@supabase/supabase-js';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { createLogger } from '@/lib/logger';
@@ -57,6 +59,8 @@ import { db } from '@/lib/utils/database';
 import { isDemoStage } from '@/lib/demo/use-demo-seed';
 import { useSettingsStore } from '@/lib/store/settings';
 import type { InteractionLevel, LearningApproach } from '@/lib/agents/persona-catalog';
+import { TTS_PROVIDERS } from '@/lib/audio/constants';
+import type { BuiltInTTSProviderId } from '@/lib/audio/types';
 
 const log = createLogger('Home');
 
@@ -66,6 +70,18 @@ const log = createLogger('Home');
 const WEB_SEARCH_STORAGE_KEY = 'webSearchEnabled.v2';
 const RECENT_OPEN_STORAGE_KEY = 'recentClassroomsOpen';
 const INTERACTIVE_MODE_STORAGE_KEY = 'interactiveModeEnabled';
+const REQUIREMENT_EXPANSION_THRESHOLD = 120;
+
+function authenticatedFirstName(user: User | null): string {
+  if (!user) return '';
+  const metadata = user.user_metadata as Record<string, unknown>;
+  const candidate = [metadata.given_name, metadata.first_name, metadata.full_name, metadata.name]
+    .find((value): value is string => typeof value === 'string' && value.trim().length > 0)
+    ?.trim();
+  if (candidate) return candidate.split(/\s+/)[0] ?? candidate;
+  const emailPrefix = user.email?.split('@')[0]?.trim();
+  return emailPrefix ? (emailPrefix.split(/[._-]+/)[0] ?? emailPrefix) : '';
+}
 
 // PPTX import is still scaffolding: `useImportPptx` has no `onImported` consumer
 // yet, so the flow only logs the parsed slides. Hide the entry point behind a
@@ -100,6 +116,7 @@ function HomePage() {
   const showVocationalTestUi = shouldShowVocationalTestUi();
   const [form, setForm] = useState<FormState>(initialFormState);
   const [activeSkillId, setActiveSkillId] = useState<string>();
+  const [isImprovingRequirement, setIsImprovingRequirement] = useState(false);
   const webSearchPreferenceSetRef = useRef(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsSection, setSettingsSection] = useState<
@@ -119,6 +136,15 @@ function HomePage() {
   // invariant). Gate generation on this single condition (state A vs B)
   // instead of inspecting modelId directly.
   const webSearchProvidersConfig = useSettingsStore((s) => s.webSearchProvidersConfig);
+  const imageGenerationEnabled = useSettingsStore((s) => s.imageGenerationEnabled);
+  const videoGenerationEnabled = useSettingsStore((s) => s.videoGenerationEnabled);
+  const ttsEnabled = useSettingsStore((s) => s.ttsEnabled);
+  const agentMode = useSettingsStore((s) => s.agentMode);
+  const selectedAgentIds = useSettingsStore((s) => s.selectedAgentIds);
+  const contextualSpecialists = useSettingsStore((s) => s.contextualSpecialists);
+  const ttsProviderId = useSettingsStore((s) => s.ttsProviderId);
+  const ttsVoice = useSettingsStore((s) => s.ttsVoice);
+  const ttsProvidersConfig = useSettingsStore((s) => s.ttsProvidersConfig);
   const [recentOpen, setRecentOpen] = useState(true);
   const persistRecentOpen = (next: boolean) => {
     setRecentOpen(next);
@@ -404,7 +430,7 @@ function HomePage() {
       // leaving it to guesswork.
       const requirements: UserRequirements = {
         requirement: `${buildLanguageDirective(locale)}\n\n${form.requirement}`,
-        userNickname: userProfile.nickname || undefined,
+        userNickname: userProfile.nickname || authenticatedFirstName(user) || undefined,
         userBio: userProfile.bio || undefined,
         webSearch: form.webSearch || undefined,
         interactiveMode: form.vocationalTestMode ? true : form.interactiveMode,
@@ -436,10 +462,25 @@ function HomePage() {
           requirement: requirements.requirement,
           ...(pdfContent ? { pdfContent } : {}),
           enableWebSearch: form.webSearch,
-          enableTTS: true,
-          // Le parcours public doit passer par le roster tenant persistant,
-          // jamais par les six agents historiques de compatibilité.
-          agentMode: 'generate',
+          enableImageGeneration: imageGenerationEnabled,
+          enableVideoGeneration: videoGenerationEnabled,
+          enableTTS: ttsEnabled,
+          interactiveMode: form.vocationalTestMode ? true : form.interactiveMode,
+          agentMode: agentMode === 'auto' ? 'generate' : 'default',
+          selectedPersonaIds: selectedAgentIds
+            .map((id) => id.replace(/^persona-/, ''))
+            .filter((id) => !id.startsWith('default-') && !id.startsWith('specialist-')),
+          contextualSpecialists: contextualSpecialists.filter((specialist) =>
+            selectedAgentIds.includes(specialist.id),
+          ),
+          teacherVoiceConfig: {
+            providerId: ttsProviderId,
+            modelId: ttsProvidersConfig[ttsProviderId]?.modelId,
+            voiceId: ttsVoice,
+            gender: TTS_PROVIDERS[ttsProviderId as BuiltInTTSProviderId]?.voices.find(
+              (voice) => voice.id === ttsVoice,
+            )?.gender,
+          },
           ...(requirements.activeSkillId ? { activeSkillId: requirements.activeSkillId } : {}),
         }),
       });
@@ -450,6 +491,34 @@ function HomePage() {
     } catch (err) {
       log.error('Error preparing generation:', err);
       setError(err instanceof Error ? err.message : t('upload.generateFailed'));
+    }
+  };
+
+  const handleImproveRequirement = async () => {
+    const requirement = form.requirement.trim();
+    if (!requirement || !currentOrg || !canAuthor || isImprovingRequirement) return;
+    setIsImprovingRequirement(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/generate/refine-requirement', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orgId: currentOrg.id,
+          requirement,
+          locale,
+          mode: requirement.length < REQUIREMENT_EXPANSION_THRESHOLD ? 'expand' : 'improve',
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok || typeof result.requirement !== 'string') {
+        throw new Error(result.error || t('upload.generateFailed'));
+      }
+      updateForm('requirement', result.requirement);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : t('upload.generateFailed'));
+    } finally {
+      setIsImprovingRequirement(false);
     }
   };
 
@@ -673,22 +742,52 @@ function HomePage() {
           <div className="w-full rounded-2xl border border-border/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-xl shadow-black/[0.03] dark:shadow-black/20 transition-shadow focus-within:shadow-2xl focus-within:shadow-violet-500/[0.06]">
             {/* ── Greeting + Profile + Agents ── */}
             <div className="relative z-20 flex items-start justify-between">
-              <GreetingBar />
+              <GreetingBar user={user} />
               <div className="pr-3 pt-3.5 shrink-0">
-                <AgentBar />
+                <AgentBar
+                  organizationSettings={currentOrg?.settings}
+                  orgId={currentOrg?.id}
+                  topic={form.requirement}
+                />
               </div>
             </div>
 
             {/* Textarea */}
-            <textarea
-              ref={textareaRef}
-              placeholder={t('upload.requirementPlaceholder')}
-              className="w-full resize-none border-0 bg-transparent px-4 pt-1 pb-2 text-[13px] leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none min-h-[140px] max-h-[300px]"
-              value={form.requirement}
-              onChange={(e) => updateForm('requirement', e.target.value)}
-              onKeyDown={handleKeyDown}
-              rows={4}
-            />
+            <div className="relative">
+              <textarea
+                ref={textareaRef}
+                placeholder={t('upload.requirementPlaceholder')}
+                className="w-full resize-none border-0 bg-transparent px-4 pt-1 pb-10 text-[13px] leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none min-h-[140px] max-h-[300px]"
+                value={form.requirement}
+                onChange={(e) => updateForm('requirement', e.target.value)}
+                onKeyDown={handleKeyDown}
+                rows={4}
+              />
+              {form.requirement.trim() && canAuthor && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={handleImproveRequirement}
+                      disabled={isImprovingRequirement}
+                      className="absolute bottom-2 right-3 inline-flex h-7 items-center gap-1.5 rounded-full border border-violet-300/60 bg-violet-50 px-2.5 text-[11px] font-medium text-violet-700 transition hover:bg-violet-100 disabled:opacity-50 dark:border-violet-700/60 dark:bg-violet-950/40 dark:text-violet-300"
+                    >
+                      {form.requirement.trim().length < REQUIREMENT_EXPANSION_THRESHOLD ? (
+                        <WandSparkles className="size-3.5" />
+                      ) : (
+                        <Sparkles className="size-3.5" />
+                      )}
+                      {form.requirement.trim().length < REQUIREMENT_EXPANSION_THRESHOLD
+                        ? t('generation.expandRequest')
+                        : t('generation.improveRequest')}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    {t('generation.requirementAssistantHint')}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
 
             {/* Toolbar row */}
             <div className="px-3 pb-3 flex items-end gap-2">
@@ -1136,7 +1235,7 @@ function isCustomAvatar(src: string) {
   return src.startsWith('data:');
 }
 
-function GreetingBar() {
+function GreetingBar({ user }: { user: User | null }) {
   const { t } = useI18n();
   const avatar = useUserProfileStore((s) => s.avatar);
   const nickname = useUserProfileStore((s) => s.nickname);
@@ -1153,7 +1252,7 @@ function GreetingBar() {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const displayName = nickname || t('profile.defaultNickname');
+  const displayName = nickname || authenticatedFirstName(user) || t('profile.defaultNickname');
 
   // Click-outside to collapse
   useEffect(() => {

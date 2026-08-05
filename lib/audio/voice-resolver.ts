@@ -137,13 +137,23 @@ export function getServerVoiceList(
 export interface ModelVoiceGroup {
   modelId: string;
   modelName: string;
-  voices: Array<{ id: string; name: string; language?: string }>;
+  voices: Array<{
+    id: string;
+    name: string;
+    language?: string;
+    gender?: 'male' | 'female' | 'neutral';
+  }>;
 }
 
 export interface ProviderWithVoices {
   providerId: TTSProviderId;
   providerName: string;
-  voices: Array<{ id: string; name: string; language?: string }>;
+  voices: Array<{
+    id: string;
+    name: string;
+    language?: string;
+    gender?: 'male' | 'female' | 'neutral';
+  }>;
   modelGroups: ModelVoiceGroup[]; // voices grouped by model
 }
 
@@ -194,12 +204,14 @@ export function getEnabledProvidersWithVoices(
           id: v.id,
           name: v.name,
           language: v.language,
+          gender: v.gender,
         })),
         ...(providerId === VOXCPM_TTS_PROVIDER_ID
           ? visibleVoxCPMProfiles.map((profile) => ({
               id: getVoxCPMProfileVoiceId(profile.id),
               name: profile.name,
               language: 'auto',
+              gender: undefined,
             }))
           : []),
       ];
@@ -210,13 +222,19 @@ export function getEnabledProvidersWithVoices(
         for (const model of config.models) {
           const compatibleVoices = config.voices
             .filter((v) => !v.compatibleModels || v.compatibleModels.includes(model.id))
-            .map((v) => ({ id: v.id, name: v.name, language: v.language }));
+            .map((v) => ({
+              id: v.id,
+              name: v.name,
+              language: v.language,
+              gender: v.gender,
+            }));
           if (providerId === VOXCPM_TTS_PROVIDER_ID) {
             compatibleVoices.push(
               ...visibleVoxCPMProfiles.map((profile) => ({
                 id: getVoxCPMProfileVoiceId(profile.id),
                 name: profile.name,
                 language: 'auto',
+                gender: undefined,
               })),
             );
           }

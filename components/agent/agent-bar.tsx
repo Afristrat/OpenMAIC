@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -8,6 +8,8 @@ import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useSettingsStore } from '@/lib/store/settings';
 import { useAgentRegistry } from '@/lib/orchestration/registry/store';
+import { getActionsForRole } from '@/lib/orchestration/registry/types';
+import { buildTenantAgentConfigs, learningDesignFromSettings } from '@/lib/agents/persona-catalog';
 import { resolveAgentVoice, getSelectableProvidersWithVoices } from '@/lib/audio/voice-resolver';
 import { playBrowserTTSPreview } from '@/lib/audio/browser-tts-preview';
 import { useVoxCPMVoiceProfiles } from '@/lib/audio/voxcpm-voices';
@@ -27,6 +29,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import type { AgentConfig } from '@/lib/orchestration/registry/types';
 import type { TTSProviderId } from '@/lib/audio/types';
 import type { ProviderWithVoices } from '@/lib/audio/voice-resolver';
+import type { ContextualSpecialist } from '@/lib/agents/contextual-specialist';
 
 function matchesVoiceQuery(value: string | undefined, query: string): boolean {
   return !!value?.toLowerCase().includes(query);
@@ -608,8 +611,16 @@ function TeacherVoicePill({
   );
 }
 
-export function AgentBar() {
-  const { t } = useI18n();
+export function AgentBar({
+  organizationSettings,
+  orgId,
+  topic = '',
+}: {
+  organizationSettings?: unknown;
+  orgId?: string;
+  topic?: string;
+}) {
+  const { t, locale } = useI18n();
   const { listAgents } = useAgentRegistry();
   const selectedAgentIds = useSettingsStore((s) => s.selectedAgentIds);
   const setSelectedAgentIds = useSettingsStore((s) => s.setSelectedAgentIds);
@@ -618,9 +629,16 @@ export function AgentBar() {
   const setAgentSelectionIsUserSet = useSettingsStore((s) => s.setAgentSelectionIsUserSet);
   const ttsProvidersConfig = useSettingsStore((s) => s.ttsProvidersConfig);
   const ttsEnabled = useSettingsStore((s) => s.ttsEnabled);
+  const ttsProviderId = useSettingsStore((s) => s.ttsProviderId);
+  const ttsVoice = useSettingsStore((s) => s.ttsVoice);
+  const agentVoiceOverrides = useSettingsStore((s) => s.agentVoiceOverrides);
+  const contextualSpecialists = useSettingsStore((s) => s.contextualSpecialists);
+  const setContextualSpecialists = useSettingsStore((s) => s.setContextualSpecialists);
 
   const [open, setOpen] = useState(false);
   const [browserVoices, setBrowserVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [isSuggestingSpecialists, setIsSuggestingSpecialists] = useState(false);
+  const [specialistError, setSpecialistError] = useState('');
   const { profiles: voxcpmProfiles } = useVoxCPMVoiceProfiles();
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -634,10 +652,47 @@ export function AgentBar() {
   }, []);
 
   const allAgents = listAgents();
-  const agents = allAgents.filter((a) => !a.isGenerated);
-  const teacherAgent = agents.find((a) => a.role === 'teacher');
+  const baseAgents = useMemo(
+    () =>
+      buildTenantAgentConfigs(learningDesignFromSettings(organizationSettings)).map((agent) => ({
+        ...agent,
+        allowedActions: getActionsForRole(agent.role),
+        createdAt: new Date(0),
+        updatedAt: new Date(0),
+        isDefault: true,
+      })),
+    [organizationSettings],
+  );
+  const agents = useMemo(
+    () => [
+      ...baseAgents,
+      ...contextualSpecialists.map((specialist) => ({
+        id: specialist.id,
+        name: specialist.name,
+        role: specialist.role,
+        persona: specialist.persona,
+        avatar: specialist.avatar,
+        color: '#7c3aed',
+        allowedActions: getActionsForRole(specialist.role),
+        priority: 7,
+        gender: specialist.gender,
+        voiceConfig: specialist.voiceConfig,
+        createdAt: new Date(0),
+        updatedAt: new Date(0),
+        isDefault: false,
+      })),
+    ],
+    [baseAgents, contextualSpecialists],
+  );
+  const baseTeacherAgent = agents.find((a) => a.role === 'teacher');
   const selectedAgents = agents.filter((a) => selectedAgentIds.includes(a.id));
   const nonTeacherSelected = selectedAgents.filter((a) => a.role !== 'teacher');
+
+  useEffect(() => {
+    if (agentMode !== 'preset') return;
+    if (selectedAgentIds.some((id) => agents.some((agent) => agent.id === id))) return;
+    setSelectedAgentIds(agents.slice(0, 4).map((agent) => agent.id));
+  }, [agentMode, agents, selectedAgentIds, setSelectedAgentIds]);
 
   // Single source of truth for selectable provider+voice options (enabled
   // providers + opt-in browser-native), shared with discussion TTS (#665).
@@ -646,6 +701,23 @@ export function AgentBar() {
     voxcpmProfiles,
     browserVoices,
   );
+  const teacherVoiceGender = availableProviders
+    .find((provider) => provider.providerId === ttsProviderId)
+    ?.voices.find((voice) => voice.id === ttsVoice)?.gender;
+  const teacherAgent = baseTeacherAgent
+    ? {
+        ...baseTeacherAgent,
+        avatar:
+          teacherVoiceGender === 'female'
+            ? '/avatars/teacher-2.png'
+            : teacherVoiceGender === 'male'
+              ? '/avatars/teacher.png'
+              : baseTeacherAgent.avatar,
+        ...(teacherVoiceGender === 'female' || teacherVoiceGender === 'male'
+          ? { gender: teacherVoiceGender }
+          : {}),
+      }
+    : undefined;
 
   useEffect(() => {
     if (!open) return;
@@ -678,7 +750,7 @@ export function AgentBar() {
         presetIds.unshift(teacherAgent.id);
       }
       setSelectedAgentIds(
-        presetIds.length > 0 ? presetIds : ['default-1', 'default-2', 'default-3'],
+        presetIds.length > 0 ? presetIds : agents.slice(0, 4).map((agent) => agent.id),
       );
     } else {
       // Auto mode plays the current classroom's generated agents — leaving the
@@ -699,6 +771,36 @@ export function AgentBar() {
       setSelectedAgentIds(selectedAgentIds.filter((id) => id !== agentId));
     } else {
       setSelectedAgentIds([...selectedAgentIds, agentId]);
+    }
+  };
+
+  const suggestSpecialists = async () => {
+    if (!orgId || topic.trim().length < 8 || isSuggestingSpecialists) return;
+    setIsSuggestingSpecialists(true);
+    setSpecialistError('');
+    try {
+      const response = await fetch('/api/generate/contextual-specialists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orgId, topic: topic.trim(), locale }),
+      });
+      const result = (await response.json()) as {
+        specialists?: ContextualSpecialist[];
+        error?: string;
+      };
+      if (!response.ok) throw new Error(result.error || t('agentBar.specialistGenerationFailed'));
+      const specialists = result.specialists ?? [];
+      setContextualSpecialists(specialists);
+      setSelectedAgentIds([
+        ...selectedAgentIds.filter((id) => !id.startsWith('specialist-')),
+        ...specialists.map((specialist) => specialist.id),
+      ]);
+    } catch (error) {
+      setSpecialistError(
+        error instanceof Error ? error.message : t('agentBar.specialistGenerationFailed'),
+      );
+    } finally {
+      setIsSuggestingSpecialists(false);
     }
   };
 
@@ -778,6 +880,24 @@ export function AgentBar() {
 
   const renderAgentRow = (agent: AgentConfig, agentIndex: number, isTeacher: boolean) => {
     const isSelected = isTeacher || selectedAgentIds.includes(agent.id);
+    const resolvedVoice = resolveAgentVoice(
+      agent,
+      agentIndex,
+      availableProviders,
+      agentVoiceOverrides,
+      locale,
+    );
+    const selectedGender = resolvedVoice
+      ? availableProviders
+          .find((provider) => provider.providerId === resolvedVoice.providerId)
+          ?.voices.find((voice) => voice.id === resolvedVoice.voiceId)?.gender
+      : undefined;
+    const alignedAvatar =
+      selectedGender && selectedGender !== 'neutral' && selectedGender !== agent.gender
+        ? (agents.find(
+            (candidate) => candidate.gender === selectedGender && candidate.role === agent.role,
+          )?.avatar ?? agents.find((candidate) => candidate.gender === selectedGender)?.avatar)
+        : agent.avatar;
     return (
       <div
         key={agent.id}
@@ -798,13 +918,15 @@ export function AgentBar() {
           className="size-7 rounded-full overflow-hidden shrink-0 ring-1 ring-border/40"
           style={{ boxShadow: isSelected ? `0 0 0 2px ${agent.color}30` : undefined }}
         >
-          <img src={agent.avatar} alt={getAgentName(agent)} className="size-full object-cover" />
+          <img src={alignedAvatar} alt={getAgentName(agent)} className="size-full object-cover" />
         </div>
         <span className="text-[13px] font-medium truncate min-w-0 flex-1">
           {getAgentName(agent)}
         </span>
-        <span className="text-[10px] text-muted-foreground/50 shrink-0 w-[52px] text-right">
-          {getAgentRole(agent)}
+        <span className="text-[10px] text-muted-foreground/50 shrink-0 w-[62px] text-right">
+          {contextualSpecialists.find((specialist) => specialist.id === agent.id)
+            ? `ISCO ${contextualSpecialists.find((specialist) => specialist.id === agent.id)?.iscoCode}`
+            : getAgentRole(agent)}
         </span>
         <AgentVoicePill
           agent={agent}
@@ -929,6 +1051,26 @@ export function AgentBar() {
                   </div>
                 </div>
               )}
+              <div className="mt-2 border-t border-border/40 pt-2">
+                <button
+                  type="button"
+                  onClick={suggestSpecialists}
+                  disabled={!orgId || topic.trim().length < 8 || isSuggestingSpecialists}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-[11px] font-medium text-violet-700 transition hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-40 dark:text-violet-300 dark:hover:bg-violet-950/30"
+                >
+                  {isSuggestingSpecialists ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <Sparkles className="size-3.5" />
+                  )}
+                  {t('agentBar.suggestSpecialists')}
+                </button>
+                {specialistError && (
+                  <p className="px-2 pt-1 text-center text-[10px] text-destructive">
+                    {specialistError}
+                  </p>
+                )}
+              </div>
             </div>
           </motion.div>
         )}

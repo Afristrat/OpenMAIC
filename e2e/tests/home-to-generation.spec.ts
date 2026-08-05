@@ -67,7 +67,7 @@ test.describe('Home → Generation', () => {
     await home.submit();
     await expect(page).toHaveURL(/\/generation-status\?jobId=e2e-generation-job$/);
     await expect(page.getByRole('heading', { name: 'Generating course' })).toBeVisible();
-    expect(generationJob.getSubmittedBody()).toMatchObject({ agentMode: 'generate' });
+    expect(generationJob.getSubmittedBody()).toMatchObject({ agentMode: 'default' });
   });
 
   test('keeps body spacing stable when the settings dialog opens', async ({ page }) => {

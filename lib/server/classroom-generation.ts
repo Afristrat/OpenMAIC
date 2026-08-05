@@ -13,7 +13,6 @@ import {
 } from '@/lib/generation/scene-generator';
 import type { AICallFn } from '@/lib/generation/pipeline-types';
 import type { AgentInfo } from '@/lib/generation/pipeline-types';
-import { getDefaultAgents } from '@/lib/orchestration/registry/store';
 import { createLogger } from '@/lib/logger';
 import { isProviderKeyRequired } from '@/lib/ai/providers';
 import { resolveClassroomWebSearchConfig } from '@/lib/server/web-search-config';
@@ -46,6 +45,7 @@ import {
 } from '@/lib/org/teaching-profile';
 import {
   DEFAULT_LEARNING_DESIGN,
+  buildTenantAgentConfigs,
   learningDesignFromSettings,
   type InteractionLevel,
   type LearningApproach,
@@ -63,6 +63,8 @@ import { buildLiveInstructionalDirective } from '@/lib/formation-engine/downstre
 import { toPersistedResearchSources } from '@/lib/server/research-sources';
 import { createAnimationConstitution } from '@/lib/formation-engine/animation-constitution';
 import { generateResourcesForClassroom } from '@/lib/server/classroom-resource-generation';
+import type { TTSProviderId } from '@/lib/audio/types';
+import type { ContextualSpecialist } from '@/lib/agents/contextual-specialist';
 
 const log = createLogger('Classroom');
 
@@ -83,8 +85,48 @@ export interface GenerateClassroomInput {
   enableImageGeneration?: boolean;
   enableVideoGeneration?: boolean;
   enableTTS?: boolean;
+  interactiveMode?: boolean;
   agentMode?: 'default' | 'generate';
+  selectedPersonaIds?: string[];
+  contextualSpecialists?: ContextualSpecialist[];
+  teacherVoiceConfig?: {
+    providerId: string;
+    modelId?: string;
+    voiceId: string;
+    gender?: 'female' | 'male' | 'neutral';
+  };
   activeSkillId?: string;
+}
+
+function applyTeacherVoiceConfig<
+  T extends {
+    role: string;
+    avatar: string;
+    gender?: 'female' | 'male';
+    voiceConfig?: { providerId: TTSProviderId; modelId?: string; voiceId: string };
+  },
+>(agents: T[], config: GenerateClassroomInput['teacherVoiceConfig']): T[] {
+  if (!config) return agents;
+  return agents.map((agent) => {
+    if (agent.role !== 'teacher') return agent;
+    const gender =
+      config.gender === 'female' || config.gender === 'male' ? config.gender : agent.gender;
+    return {
+      ...agent,
+      gender,
+      avatar:
+        gender === 'female'
+          ? '/avatars/teacher-2.png'
+          : gender === 'male'
+            ? '/avatars/teacher.png'
+            : agent.avatar,
+      voiceConfig: {
+        providerId: config.providerId as TTSProviderId,
+        ...(config.modelId ? { modelId: config.modelId } : {}),
+        voiceId: config.voiceId,
+      },
+    };
+  });
 }
 
 export type ClassroomGenerationStep =
@@ -274,6 +316,7 @@ export async function generateClassroom(
   });
   const requirements: UserRequirements = {
     requirement: `${requirement}\n\n${instructionalDirective}`,
+    interactiveMode: input.interactiveMode ?? false,
     activeSkillId,
   };
   const skillEngineEnabled = await isFeatureEnabled('skill_engine');
@@ -454,6 +497,25 @@ export async function generateClassroom(
     tenantAgentConfigs = reservation.agents;
     castingReservationId = reservation.reservation.id;
   }
+  tenantAgentConfigs = applyTeacherVoiceConfig(tenantAgentConfigs, input.teacherVoiceConfig);
+  if (input.contextualSpecialists?.length) {
+    tenantAgentConfigs = [
+      ...tenantAgentConfigs,
+      ...input.contextualSpecialists.map((specialist) => ({
+        id: specialist.id,
+        name: specialist.name,
+        role: specialist.role,
+        persona: specialist.persona,
+        avatar: specialist.avatar,
+        color: '#7c3aed',
+        priority: 7,
+        interactionWeight: 6,
+        mechanismId: `isco-${specialist.iscoCode}`,
+        gender: specialist.gender,
+        voiceConfig: specialist.voiceConfig,
+      })),
+    ];
+  }
   if (agentMode === 'generate') {
     agents = tenantAgentConfigs.map(({ id, name, role, persona }) => ({
       id,
@@ -463,7 +525,30 @@ export async function generateClassroom(
     }));
     log.info(`Instantiated ${agents.length} tenant pedagogical personas`);
   } else {
-    agents = getDefaultAgents();
+    const selectedIds = new Set(input.selectedPersonaIds ?? []);
+    const tenantRoster = applyTeacherVoiceConfig(
+      buildTenantAgentConfigs(learningDesign),
+      input.teacherVoiceConfig,
+    );
+    const contextualAgents = (input.contextualSpecialists ?? []).map((specialist) => ({
+      id: specialist.id,
+      name: specialist.name,
+      role: specialist.role,
+      persona: specialist.persona,
+      avatar: specialist.avatar,
+      color: '#7c3aed',
+      priority: 7,
+      interactionWeight: 6,
+      mechanismId: `isco-${specialist.iscoCode}`,
+      gender: specialist.gender,
+      voiceConfig: specialist.voiceConfig,
+    }));
+    tenantRoster.push(...contextualAgents);
+    const selectedRoster = tenantRoster.filter(
+      (agent) => agent.role === 'teacher' || selectedIds.has(agent.mechanismId ?? agent.id),
+    );
+    tenantAgentConfigs = selectedRoster.length > 1 ? selectedRoster : tenantRoster.slice(0, 4);
+    agents = tenantAgentConfigs.map(({ id, name, role, persona }) => ({ id, name, role, persona }));
   }
   try {
     const stageId = nanoid(10);
@@ -479,19 +564,14 @@ export async function generateClassroom(
       ...(researchSources?.length ? { researchSources } : {}),
       videoManifest: buildVideoManifestFromOutlines(outlines),
       style: 'interactive',
+      interactiveMode: input.interactiveMode ?? false,
       createdAt: Date.now(),
       updatedAt: Date.now(),
       teacherProfile: teachingProfile,
       // For LLM-generated agents, embed full configs so the client can
       // hydrate the agent registry without prior IndexedDB data.
       // For default agents, just record IDs — the client already has them.
-      ...(agentMode === 'generate'
-        ? {
-            generatedAgentConfigs: tenantAgentConfigs,
-          }
-        : {
-            agentIds: agents.map((a) => a.id),
-          }),
+      generatedAgentConfigs: tenantAgentConfigs,
     };
 
     const store = createInMemoryStore(stage);

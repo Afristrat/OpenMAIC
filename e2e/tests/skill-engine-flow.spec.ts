@@ -42,7 +42,7 @@ test.describe('Formation Design Pro — persistent generation path', () => {
 
     await expect(page).toHaveURL(/\/app\?skill=formation-design-pro$/);
     await page.locator('textarea').fill('Concevoir une formation aux entretiens difficiles');
-    await page.getByRole('button', { name: 'Apprentissage des adultes', exact: true }).click();
+    await page.getByTestId('learning-approach-andragogy').click();
     await page.getByRole('button', { name: 'Équilibré', exact: true }).click();
     await page
       .getByRole('button', {

@@ -11,6 +11,7 @@ import { requireSuperAdminOrOrgAuthor } from '@/lib/api/auth';
 import { validateBody } from '@/lib/api/validate';
 import { generateClassroomSchema } from '@/lib/api/schemas';
 import { createLogger } from '@/lib/logger';
+import type { TTSProviderId } from '@/lib/audio/types';
 import { enqueueClassroomGeneration } from '@/lib/jobs/queue';
 
 const log = createLogger('GenerateClassroom API');
@@ -50,7 +51,21 @@ export async function POST(req: NextRequest) {
         ? { enableVideoGeneration: parsed.enableVideoGeneration }
         : {}),
       ...(parsed.enableTTS != null ? { enableTTS: parsed.enableTTS } : {}),
+      ...(parsed.interactiveMode != null ? { interactiveMode: parsed.interactiveMode } : {}),
       ...(parsed.agentMode ? { agentMode: parsed.agentMode } : {}),
+      ...(parsed.selectedPersonaIds ? { selectedPersonaIds: parsed.selectedPersonaIds } : {}),
+      ...(parsed.contextualSpecialists
+        ? {
+            contextualSpecialists: parsed.contextualSpecialists.map((specialist) => ({
+              ...specialist,
+              voiceConfig: {
+                ...specialist.voiceConfig,
+                providerId: specialist.voiceConfig.providerId as TTSProviderId,
+              },
+            })),
+          }
+        : {}),
+      ...(parsed.teacherVoiceConfig ? { teacherVoiceConfig: parsed.teacherVoiceConfig } : {}),
       ...(parsed.activeSkillId ? { activeSkillId: parsed.activeSkillId } : {}),
     };
 

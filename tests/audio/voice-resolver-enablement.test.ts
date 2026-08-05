@@ -33,6 +33,15 @@ describe('getEnabledProvidersWithVoices', () => {
     expect(ids).not.toContain('lemonade-tts');
     expect(ids).not.toContain('browser-native-tts');
   });
+
+  it('preserves voice gender so the UI can align avatars', () => {
+    const providers = getEnabledProvidersWithVoices({
+      'higgs-tts': { isServerConfigured: true, enabled: true },
+    });
+    const higgs = providers.find((provider) => provider.providerId === 'higgs-tts');
+    expect(higgs?.voices.find((voice) => voice.id === 'hanae')?.gender).toBe('female');
+    expect(higgs?.voices.find((voice) => voice.id === 'younes')?.gender).toBe('male');
+  });
 });
 
 describe('resolveAgentVoice', () => {

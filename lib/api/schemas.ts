@@ -348,7 +348,38 @@ export const generateClassroomSchema = z.object({
   enableImageGeneration: z.boolean().optional(),
   enableVideoGeneration: z.boolean().optional(),
   enableTTS: z.boolean().optional(),
+  interactiveMode: z.boolean().optional(),
   agentMode: z.enum(['default', 'generate']).optional(),
+  selectedPersonaIds: z.array(z.string().min(1).max(80)).max(10).optional(),
+  contextualSpecialists: z
+    .array(
+      z.object({
+        id: z.string().regex(/^specialist-[A-Za-z0-9_-]+$/),
+        name: z.string().min(1).max(80),
+        occupationTitle: z.string().min(1).max(240),
+        iscoCode: z.string().regex(/^\d{4}$/),
+        escoUri: z.string().url(),
+        reason: z.string().min(1).max(800),
+        gender: z.enum(['female', 'male']),
+        avatar: z.string().startsWith('/avatars/'),
+        role: z.literal('assistant'),
+        persona: z.string().min(1).max(1200),
+        voiceConfig: z.object({
+          providerId: z.string().min(1).max(80),
+          voiceId: z.string().min(1).max(160),
+        }),
+      }),
+    )
+    .max(3)
+    .optional(),
+  teacherVoiceConfig: z
+    .object({
+      providerId: z.string().min(1).max(80),
+      modelId: z.string().max(160).optional(),
+      voiceId: z.string().min(1).max(160),
+      gender: z.enum(['female', 'male', 'neutral']).optional(),
+    })
+    .optional(),
   activeSkillId: z.string().min(1).max(120).optional(),
 });
 
