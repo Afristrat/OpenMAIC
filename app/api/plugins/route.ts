@@ -33,7 +33,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       author: plugin.author,
       icon: plugin.icon ?? 'Puzzle',
       displayType,
-      renderUrl: getPluginPublicPath(plugin.id),
+      renderUrl: `${getPluginPublicPath(plugin.id)}?v=${encodeURIComponent(plugin.version)}`,
       demoData:
         plugin.demoDataByLocale?.[lang] ??
         plugin.demoDataByLocale?.fr ??
