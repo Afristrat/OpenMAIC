@@ -7,6 +7,7 @@ import type { Slide } from '@openmaic/dsl';
 import {
   parseAnimationConstitution,
   type AnimationConstitution,
+  type InterventionDecision,
 } from '@/lib/formation-engine/animation-constitution';
 
 const log = createLogger('ClassroomStorage');
@@ -286,6 +287,7 @@ export async function readClassroomSkillPromptContext(id: string): Promise<{
   orgId: string;
   context?: Stage['skillPromptContext'];
   animationConstitution?: AnimationConstitution;
+  generatedAgentConfigs?: Stage['generatedAgentConfigs'];
 } | null> {
   const { data, error } = await createServiceSupabaseClient()
     .from('stages')
@@ -301,7 +303,37 @@ export async function readClassroomSkillPromptContext(id: string): Promise<{
   return {
     orgId: data.org_id,
     ...liveContext,
+    generatedAgentConfigs: ((data.extra ?? {}) as StageExtra).generatedAgentConfigs,
   };
+}
+
+export async function persistInterventionDecision(
+  decision: InterventionDecision,
+  orgId: string,
+  learnerUserId: string,
+): Promise<void> {
+  const { error } = await createServiceSupabaseClient()
+    .from('classroom_intervention_decisions')
+    .upsert(
+      {
+        decision_id: decision.decisionId,
+        classroom_id: decision.classroomId,
+        org_id: orgId,
+        learner_user_id: learnerUserId,
+        interaction_id: decision.interactionId,
+        scene_id: decision.sceneId,
+        turn_index: decision.turnIndex,
+        agent_id: decision.agentId,
+        agent_name: decision.agentName,
+        trigger: decision.trigger,
+        form: decision.form,
+        reason: decision.reason,
+      },
+      { onConflict: 'decision_id' },
+    );
+  if (error) {
+    throw new Error(`Failed to persist intervention decision: ${error.message}`);
+  }
 }
 
 export async function listClassrooms(orgId: string): Promise<ClassroomListItem[]> {

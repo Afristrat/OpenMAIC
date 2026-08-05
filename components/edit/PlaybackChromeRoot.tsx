@@ -585,6 +585,19 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
             chatAreaRef.current?.endSession(lectureSessionIdRef.current);
             lectureSessionIdRef.current = null;
           }
+          const shouldStartAdaptiveBeat =
+            Boolean(stage?.generatedAgentConfigs?.length) &&
+            !currentScene.actions?.some((action) => action.type === 'discussion') &&
+            !chatAreaRef.current?.getIsStreaming();
+          if (shouldStartAdaptiveBeat) {
+            void chatAreaRef.current?.startDiscussion({
+              topic: currentScene.title,
+              prompt: 'Relier cette scène à la performance visée avant de poursuivre.',
+              explicitTrigger: 'play',
+              interactionId: `play-${currentScene.id}-${Date.now()}`,
+            });
+            return;
+          }
           // Auto-play: advance to next scene after a short pause
           const { autoPlayLecture } = useSettingsStore.getState();
           if (autoPlayLecture) {

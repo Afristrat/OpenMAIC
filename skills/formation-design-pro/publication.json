@@ -8,7 +8,7 @@
     "canonicalPrivateSourceFilesIncluded": false,
     "validatedVectors": ["V-02", "V-03", "V-04", "V-05", "V-07"],
     "lastValidatedStory": "S4-008",
-    "validatedAt": "2026-08-03"
+    "validatedAt": "2026-08-05"
   },
   "exposureAudit": {
     "repository": "Afristrat/OpenMAIC",
@@ -20,15 +20,15 @@
   "files": [
     {
       "path": "manifest.json",
-      "sha256": "d8244053f7304987d2e7b9116387059b006fbbfafd9760a9c87fa33515623761"
+      "sha256": "0dcabe0e2f9fb27528919c290645a78932e863f7eba350396372a81b696d8922"
     },
     {
       "path": "SKILL.md",
-      "sha256": "669c37a34d6f9ed50c3c1d2fe12723963aa6b6c5d536addd022ee87275e6be8e"
+      "sha256": "bcbd0a9ae0e0e8239621ca0080b21def2067989b6968cefb45408a52b0d186d8"
     },
     {
       "path": "references/formation-design-contract.md",
-      "sha256": "da3143e2dfd09f259d8dc1a1a9ebd9d8f76b941649a71707d6d65893f2e9782e"
+      "sha256": "d9b80d97fe550567aff9b11af88f209a124f201b5dd1fef717be9df0ffbc8433"
     },
     {
       "path": "prompts/andragogy-system-override.md",
@@ -40,7 +40,7 @@
     },
     {
       "path": "prompts/andragogy-live-director-override.md",
-      "sha256": "a974ef0bbf109f71bf37be30cd43475e891cf0eb9e106d8ff7359635480733de"
+      "sha256": "ac18c2680b2c371f73adfefd8160f1380bbc5123255e67b669c2c99f8a1839e8"
     }
   ]
 }

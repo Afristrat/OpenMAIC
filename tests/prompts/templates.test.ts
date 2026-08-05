@@ -9,7 +9,7 @@
 
 import { describe, test, expect } from 'vitest';
 import { buildStructuredPrompt } from '@/lib/orchestration/prompt-builder';
-import { buildDirectorPrompt } from '@/lib/orchestration/director-prompt';
+import { buildDirectorPrompt, parseDirectorDecision } from '@/lib/orchestration/director-prompt';
 import { buildPBLSystemPrompt } from '@/lib/pbl/pbl-system-prompt';
 import type { AgentConfig } from '@/lib/orchestration/registry/types';
 import type { StatelessChatRequest } from '@/lib/types/chat';
@@ -239,6 +239,41 @@ describe('director routing contract', () => {
   test('output spec mentions next_agent JSON field', () => {
     const out = buildDirectorPrompt([baseAgent], 'No history', [], 0);
     expect(out).toContain('next_agent');
+    expect(out).toContain('authorized_trigger');
+    expect(out).toContain('authorized_form');
+  });
+
+  test('parses a traceable adaptive routing decision', () => {
+    expect(
+      parseDirectorDecision(
+        '{"next_agent":"a1","trigger":"learner-question","form":"clarification","reason":"Répondre précisément avant tout enrichissement."}',
+      ),
+    ).toEqual({
+      nextAgentId: 'a1',
+      shouldEnd: false,
+      trigger: 'learner-question',
+      form: 'clarification',
+      reason: 'Répondre précisément avant tout enrichissement.',
+    });
+  });
+
+  test('makes Play explicit to the director', () => {
+    const out = buildDirectorPrompt(
+      [baseAgent],
+      'No history',
+      [],
+      0,
+      null,
+      null,
+      [],
+      undefined,
+      false,
+      undefined,
+      undefined,
+      'scene-1',
+      'play',
+    );
+    expect(out).toContain('The learner pressed Play');
   });
 
   test('Q&A mode omits Discussion Mode block', () => {

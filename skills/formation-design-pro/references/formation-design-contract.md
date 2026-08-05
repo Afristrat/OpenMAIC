@@ -43,6 +43,13 @@ Le directeur peut réagir à une réponse, une question, une hésitation, un sil
 
 Chaque décision doit expliciter sa finalité. Une intervention n’est pas déclenchée pour faire exister un agent, remplir un quota ou simuler artificiellement une conversation.
 
+Deux actions de l’apprenant ouvrent explicitement un tour adaptatif :
+
+- Play, après la fin de la narration de la scène courante ;
+- un message écrit ou vocal réellement soumis par l’apprenant.
+
+Le directeur retourne un contrat structuré comprenant l’agent, le déclencheur, la forme et la raison d’apprentissage. Le serveur refuse un agent absent du roster, une forme hors de ses capacités, un déclencheur sans règle active ou un temps Play sans ossature autorisée. Une décision acceptée est persistée de façon idempotente avant d’être transmise au moteur de prise de parole.
+
 Les cas, anecdotes et touches d’humour doivent être pertinents, inclusifs et compatibles avec les sources autorisées. Quand un contenu ne peut pas être présenté comme factuel, il est clairement qualifié d’hypothèse ou de scénario synthétique.
 
 ## Cohérence des agents
@@ -59,5 +66,7 @@ Un agent désactivé ne peut apparaître dans l’ossature ni dans une règle ad
 - aucun agent inconnu ou désactivé ;
 - aucune identité voix, avatar et prénom non validée ;
 - aucune parole vocale sans transcription visible correspondante ;
+- aucune prise de parole sans décision structurée, autorisée et persistée ;
+- aucun dépassement du nombre de tours consécutifs choisi par l’auteur ;
 - aucune anecdote, statistique, référence ou situation locale présentée comme factuelle sans fondement autorisé ;
 - aucune confiance dans un rôle envoyé par le navigateur : le serveur reste l’autorité.

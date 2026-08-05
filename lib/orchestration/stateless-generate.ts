@@ -26,6 +26,7 @@ import { createOrchestrationGraph, buildInitialState } from './director-graph';
 import { parse as parsePartialJson, Allow } from 'partial-json';
 import { jsonrepair } from 'jsonrepair';
 import { createLogger } from '@/lib/logger';
+import type { InterventionDecision } from '@/lib/formation-engine/animation-constitution';
 
 const log = createLogger('StatelessGenerate');
 
@@ -349,6 +350,7 @@ export async function* statelessGenerate(
     let contentPreview = '';
     let agentActionCount = 0;
     const agentWbActions: WhiteboardActionRecord[] = [];
+    let interventionDecision: InterventionDecision | null = null;
 
     for await (const chunk of stream) {
       const event = chunk as StatelessEvent;
@@ -360,6 +362,9 @@ export async function* statelessGenerate(
         contentPreview = '';
         agentActionCount = 0;
         agentWbActions.length = 0;
+      }
+      if (event.type === 'intervention_decision') {
+        interventionDecision = event.data;
       }
       if (event.type === 'text_delta' && contentPreview.length < 100) {
         contentPreview = (contentPreview + event.data.content).slice(0, 100);
@@ -387,6 +392,7 @@ export async function* statelessGenerate(
     const prevResponses = incoming?.agentResponses ?? [];
     const prevLedger = incoming?.whiteboardLedger ?? [];
     const prevTurnCount = incoming?.turnCount ?? 0;
+    const prevDecisions = incoming?.interventionDecisions ?? [];
 
     const directorState =
       totalAgents > 0
@@ -403,11 +409,15 @@ export async function* statelessGenerate(
               },
             ],
             whiteboardLedger: [...prevLedger, ...agentWbActions],
+            interventionDecisions: interventionDecision
+              ? [...prevDecisions, interventionDecision]
+              : prevDecisions,
           }
         : {
             turnCount: prevTurnCount,
             agentResponses: prevResponses,
             whiteboardLedger: prevLedger,
+            interventionDecisions: prevDecisions,
           };
 
     yield {

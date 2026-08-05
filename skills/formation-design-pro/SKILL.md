@@ -17,9 +17,11 @@ description: Concevoir ou industrialiser une formation Qalem fondée sur une per
 
 - Écrire une ossature minimale liée aux scènes : intention, moment, formes d’intervention possibles, agents éligibles et modalité.
 - Laisser le directeur adapter l’intervention aux réponses, questions, hésitations, incompréhensions, désaccords et occasions de transfert réelles.
+- Traiter Play et toute prise de parole explicite de l’apprenant comme des déclencheurs. Après Play, attendre la fin de la scène et n’activer qu’un temps autorisé par son ossature.
 - Autoriser exemples, cas d’usage, anecdotes, humour et angles morts seulement lorsqu’ils servent un objectif explicite et respectent les règles de sources.
 - Conserver le texte visible de toute prise de parole et utiliser une identité voix, avatar et prénom validée dans le roster de l’organisation.
 - Prendre les poids d’interaction dans un instantané du roster de l’organisation. Ne pas inventer de fréquence dans le prompt.
+- Exiger pour chaque routage un agent, un déclencheur, une forme et une raison d’apprentissage. Refuser la décision si l’un de ces éléments sort de la constitution, puis la persister avant la prise de parole.
 
 ## Bloquer plutôt qu’inventer
 

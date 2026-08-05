@@ -1188,16 +1188,16 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
 
       const sessionId = `session-${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const now = Date.now();
-      const agentId = request.agentId || 'default-1';
+      const agentId = request.agentId;
 
       // Read all selected agent IDs from settings store
       const settingsState = useSettingsStore.getState();
       const agentIds: string[] =
         settingsState.selectedAgentIds?.length > 0
           ? [...settingsState.selectedAgentIds]
-          : [agentId];
+          : [agentId || 'default-1'];
       // Ensure the trigger agent is included
-      if (!agentIds.includes(agentId)) {
+      if (agentId && !agentIds.includes(agentId)) {
         agentIds.unshift(agentId);
       }
 
@@ -1249,7 +1249,10 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
               sessionType: 'discussion',
               discussionTopic: request.topic,
               discussionPrompt: request.prompt,
-              triggerAgentId: agentId,
+              triggerAgentId: request.explicitTrigger ? undefined : agentId,
+              explicitTrigger: request.explicitTrigger,
+              interactionId:
+                request.interactionId || `discussion-${sessionId}`,
             },
             userProfile: {
               nickname: userProfileState.nickname || undefined,

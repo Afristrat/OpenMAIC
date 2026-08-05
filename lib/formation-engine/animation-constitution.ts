@@ -32,6 +32,7 @@ export const ADAPTIVE_TRIGGERS = [
   'transfer-opportunity',
   'unaddressed-risk',
 ] as const;
+export const LIVE_INTERVENTION_TRIGGERS = ['play', ...ADAPTIVE_TRIGGERS] as const;
 
 const identifier = z.string().trim().min(1).max(160);
 const purposefulText = z.string().trim().min(8).max(2_000);
@@ -148,6 +149,23 @@ export const animationConstitutionSchema = z
 
 export type AnimationConstitution = z.infer<typeof animationConstitutionSchema>;
 
+export const interventionDecisionSchema = z
+  .object({
+    decisionId: identifier,
+    classroomId: identifier,
+    interactionId: identifier,
+    sceneId: identifier.nullable(),
+    turnIndex: z.number().int().min(0).max(100),
+    agentId: identifier,
+    agentName: z.string().trim().min(1).max(120),
+    trigger: z.enum(LIVE_INTERVENTION_TRIGGERS),
+    form: interventionForm,
+    reason: purposefulText,
+  })
+  .strict();
+
+export type InterventionDecision = z.infer<typeof interventionDecisionSchema>;
+
 const FORMS_BY_MECHANISM: Record<
   string,
   AnimationConstitution['agentRosterSnapshot'][number]['allowedForms']
@@ -222,6 +240,22 @@ export function createAnimationConstitution(
   );
 
   const adaptiveRules: AnimationConstitution['adaptiveRules'] = [
+    {
+      id: 'respond-to-question',
+      trigger: 'learner-question',
+      purpose: 'Répondre précisément à la question avant d’ajouter un autre angle utile.',
+      allowedForms: ['clarification', 'feedback', 'question'],
+      eligibleAgentIds: [
+        ...new Set([
+          ...idsForForm('clarification'),
+          ...idsForForm('feedback'),
+          ...idsForForm('question'),
+        ]),
+      ],
+      requiresGrounding: false,
+      mayInterrupt: false,
+      enabled: true,
+    },
     {
       id: 'respond-to-learner',
       trigger: 'learner-answer',
@@ -311,20 +345,66 @@ export function buildAnimationDirective(
     `Target performance: ${constitution.learningIntent.targetPerformance}`,
     `Maximum consecutive agent turns: ${constitution.policy.maxConsecutiveAgentTurns}.`,
     'Every intervention must advance the target performance. Never make an agent speak merely to satisfy its weight.',
+    'A learner pressing Play is an explicit interaction trigger. At the end of the current scene, use the authored backbone only when an intervention adds learning value.',
     'React to the learner’s actual answer, question, hesitation or misunderstanding before adding proactive material.',
     'Ground factual examples, use cases, anecdotes and blind spots in authorized course sources; otherwise label them as synthetic.',
     beats.length > 0
       ? `Current scene backbone: ${beats
-          .map((beat) => `${beat.activation}/${beat.moment}: ${beat.purpose}`)
+          .map(
+            (beat) =>
+              `${beat.activation}/${beat.moment}: ${beat.purpose}; forms=${beat.preferredForms.join('/')}; agents=${beat.eligibleAgentIds.join(',')}`,
+          )
           .join(' | ')}`
       : 'Current scene has no mandatory authored beat.',
     `Adaptive rules: ${rules
       .map(
         (rule) =>
-          `${rule.trigger} => ${rule.allowedForms.join('/')} for ${rule.purpose}${rule.requiresGrounding ? ' [grounding required]' : ''}`,
+          `${rule.trigger} => ${rule.allowedForms.join('/')} with agents=${rule.eligibleAgentIds.join(',')} for ${rule.purpose}${rule.requiresGrounding ? ' [grounding required]' : ''}`,
       )
       .join(' | ')}`,
   ].join('\n');
+}
+
+export function validateInterventionDecision(
+  constitution: AnimationConstitution,
+  decision: InterventionDecision,
+): { success: true } | { success: false; reason: string } {
+  const parsed = interventionDecisionSchema.safeParse(decision);
+  if (!parsed.success) return { success: false, reason: parsed.error.issues[0]?.message ?? 'invalid' };
+  if (decision.classroomId !== constitution.classroomId) {
+    return { success: false, reason: 'The decision targets another classroom.' };
+  }
+
+  const agent = constitution.agentRosterSnapshot.find(
+    (candidate) => candidate.agentId === decision.agentId && candidate.enabled,
+  );
+  if (!agent) return { success: false, reason: 'The selected agent is not enabled in the roster.' };
+  if (!agent.allowedForms.includes(decision.form)) {
+    return { success: false, reason: 'The selected agent cannot use this intervention form.' };
+  }
+
+  if (decision.trigger === 'play') {
+    const beat = constitution.authoredBackbone.find(
+      (candidate) =>
+        candidate.sceneId === decision.sceneId &&
+        candidate.eligibleAgentIds.includes(decision.agentId) &&
+        candidate.preferredForms.includes(decision.form),
+    );
+    return beat
+      ? { success: true }
+      : { success: false, reason: 'No authored beat authorizes this Play intervention.' };
+  }
+
+  const rule = constitution.adaptiveRules.find(
+    (candidate) =>
+      candidate.enabled &&
+      candidate.trigger === decision.trigger &&
+      candidate.eligibleAgentIds.includes(decision.agentId) &&
+      candidate.allowedForms.includes(decision.form),
+  );
+  return rule
+    ? { success: true }
+    : { success: false, reason: 'No adaptive rule authorizes this intervention.' };
 }
 
 export function parseAnimationConstitution(

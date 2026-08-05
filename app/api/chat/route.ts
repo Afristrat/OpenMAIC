@@ -21,7 +21,10 @@ import { createLogger } from '@/lib/logger';
 import { resolveModel } from '@/lib/server/resolve-model';
 import type { ThinkingConfig } from '@/lib/types/provider';
 import { isFeatureEnabled } from '@/lib/flags';
-import { readClassroomSkillPromptContext } from '@/lib/server/classroom-storage';
+import {
+  persistInterventionDecision,
+  readClassroomSkillPromptContext,
+} from '@/lib/server/classroom-storage';
 import { resolveOrganizationSkillId } from '@/lib/server/skill-resolution';
 import { requireAuth, requireSuperAdminOrOrgMember } from '@/lib/api/auth';
 import { latestExplicitLearnerMessage } from '@/lib/webhooks/classroom-interaction';
@@ -51,6 +54,7 @@ export async function POST(req: NextRequest) {
   const encoder = new TextEncoder();
   let chatModel: string | undefined;
   let chatMessageCount: number | undefined;
+  let liveOrgId: string | null = null;
 
   try {
     const authentication = await requireAuth(req);
@@ -86,8 +90,42 @@ export async function POST(req: NextRequest) {
         log.warn('Persisted live skill context is unavailable; using the core engine', error);
       }
       if (persisted) {
+        liveOrgId = persisted.orgId;
         const access = await requireSuperAdminOrOrgMember(req, persisted.orgId);
         if (access.response) return access.response;
+
+        if (persisted.animationConstitution) {
+          const allowedIds = new Set(
+            persisted.animationConstitution.agentRosterSnapshot
+              .filter((agent) => agent.enabled)
+              .map((agent) => agent.agentId),
+          );
+          if (body.config.agentIds.some((id) => !allowedIds.has(id))) {
+            return apiError('INVALID_REQUEST', 400, 'An agent is not authorized for this classroom');
+          }
+          const serverAgents = persisted.generatedAgentConfigs ?? [];
+          const requestedAgents = body.config.agentIds.map((id) =>
+            serverAgents.find((agent) => agent.id === id),
+          );
+          if (requestedAgents.some((agent) => !agent)) {
+            return apiError('INVALID_REQUEST', 400, 'An agent identity is unavailable');
+          }
+          body.config.agentConfigs = requestedAgents.map((agent) => ({
+            id: agent!.id,
+            name: agent!.name,
+            role: agent!.role,
+            persona: agent!.persona,
+            avatar: agent!.avatar,
+            color: agent!.color,
+            allowedActions: [],
+            priority: agent!.priority,
+            interactionWeight: agent!.interactionWeight,
+            mechanismId: agent!.mechanismId,
+            gender: agent!.gender,
+            isGenerated: true,
+            boundStageId: body.storeState.stage!.id,
+          }));
+        }
 
         const learnerMessage = latestExplicitLearnerMessage(body.messages);
         if (learnerMessage) {
@@ -202,6 +240,11 @@ export async function POST(req: NextRequest) {
           if (signal.aborted) {
             log.info('Request was aborted');
             break;
+          }
+
+          if (event.type === 'intervention_decision') {
+            if (!liveOrgId) throw new Error('Intervention decision has no persisted classroom.');
+            await persistInterventionDecision(event.data, liveOrgId, authentication.user.id);
           }
 
           const data = `data: ${JSON.stringify(event)}\n\n`;

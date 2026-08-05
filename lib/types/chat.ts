@@ -216,7 +216,10 @@ export interface LectureNoteEntry {
 
 import type { Stage, Scene, StageMode } from '@/lib/types/stage';
 import type { AgentTurnSummary, WhiteboardActionRecord } from '@/lib/orchestration/types';
-import type { AnimationConstitution } from '@/lib/formation-engine/animation-constitution';
+import type {
+  AnimationConstitution,
+  InterventionDecision,
+} from '@/lib/formation-engine/animation-constitution';
 
 /**
  * Accumulated director state passed between per-agent requests.
@@ -226,6 +229,7 @@ export interface DirectorState {
   turnCount: number;
   agentResponses: AgentTurnSummary[];
   whiteboardLedger: WhiteboardActionRecord[];
+  interventionDecisions?: InterventionDecision[];
 }
 
 /**
@@ -255,6 +259,10 @@ export interface StatelessChatRequest {
     discussionPrompt?: string;
     /** Which agent should speak first in a discussion */
     triggerAgentId?: string;
+    /** Explicit learner action that opened this round. */
+    explicitTrigger?: 'play';
+    /** Stable id used to make decision persistence idempotent. */
+    interactionId?: string;
     /** Full agent configs for generated (non-default) agents that aren't in the server-side registry */
     agentConfigs?: Array<{
       id: string;
@@ -336,6 +344,7 @@ export type StatelessEvent =
       type: 'thinking';
       data: { stage: 'director' | 'agent_loading'; agentId?: string };
     }
+  | { type: 'intervention_decision'; data: InterventionDecision }
   | { type: 'cue_user'; data: { fromAgentId?: string; prompt?: string } }
   | {
       type: 'done';

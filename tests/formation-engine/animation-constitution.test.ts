@@ -3,6 +3,7 @@ import {
   buildAnimationDirective,
   createAnimationConstitution,
   parseAnimationConstitution,
+  validateInterventionDecision,
 } from '@/lib/formation-engine/animation-constitution';
 import type { GeneratedAgentConfig, Scene } from '@/lib/types/stage';
 
@@ -150,5 +151,33 @@ describe('animation constitution', () => {
     expect(directive).toContain('selected by the author: andragogy');
     expect(directive).toContain('Vérifier la compréhension');
     expect(directive).toContain('unaddressed-risk');
+  });
+
+  it('accepts only decisions authorized by the scene backbone or an adaptive rule', () => {
+    const parsed = parseAnimationConstitution(validConstitution());
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+
+    const base = {
+      decisionId: 'decision-1',
+      classroomId: 'classroom-litellm',
+      interactionId: 'message-1',
+      sceneId: 'scene-1',
+      turnIndex: 0,
+      agentId: 'coach-nadia',
+      agentName: 'Nadia',
+      form: 'question' as const,
+      reason: 'Vérifier le raisonnement exprimé avant de poursuivre.',
+    };
+
+    expect(
+      validateInterventionDecision(parsed.constitution, { ...base, trigger: 'play' }),
+    ).toEqual({ success: true });
+    expect(
+      validateInterventionDecision(parsed.constitution, {
+        ...base,
+        trigger: 'unaddressed-risk',
+      }),
+    ).toMatchObject({ success: false });
   });
 });

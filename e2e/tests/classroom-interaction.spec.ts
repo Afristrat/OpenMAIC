@@ -243,7 +243,8 @@ test.describe('Classroom Interaction', () => {
   });
 
   test(LIVE_SPEECH_TEST, async ({ page }) => {
-    const agentSpeech = 'Apply this idea to one decision you make at work.';
+    const teacherSpeech = 'Apply this idea to one decision you make at work.';
+    const analystSpeech = 'Which assumption would make that decision fail?';
 
     await page.addInitScript(() => {
       const spokenTexts: string[] = [];
@@ -301,34 +302,61 @@ test.describe('Classroom Interaction', () => {
       Object.defineProperty(window, 'speechSynthesis', { value: speechSynthesis });
     });
 
+    let adaptiveTurn = 0;
     await page.route('**/api/chat', async (route) => {
+      adaptiveTurn += 1;
+      const isTeacherTurn = adaptiveTurn === 1;
+      const agentId = isTeacherTurn ? 'default-1' : 'default-2';
+      const agentName = isTeacherTurn ? 'E2E Teacher' : 'E2E Analyst';
+      const speech = isTeacherTurn ? teacherSpeech : analystSpeech;
       const events = [
+        {
+          type: 'intervention_decision',
+          data: {
+            decisionId: `decision-${adaptiveTurn}`,
+            classroomId: TEST_STAGE_ID,
+            interactionId: 'e2e-learner-message',
+            sceneId: 'scene-1',
+            turnIndex: adaptiveTurn - 1,
+            agentId,
+            agentName,
+            trigger: isTeacherTurn ? 'learner-question' : 'unaddressed-risk',
+            form: isTeacherTurn ? 'clarification' : 'blind-spot',
+            reason: isTeacherTurn
+              ? 'Répondre à la demande réelle de l’apprenant.'
+              : 'Faire apparaître une hypothèse qui limite le transfert.',
+          },
+        },
         {
           type: 'agent_start',
           data: {
-            messageId: 'e2e-live-message',
-            agentId: 'default-1',
-            agentName: 'E2E Teacher',
+            messageId: `e2e-live-message-${adaptiveTurn}`,
+            agentId,
+            agentName,
             agentAvatar: '/avatars/teacher.png',
             agentColor: '#3b82f6',
           },
         },
         {
           type: 'text_delta',
-          data: { messageId: 'e2e-live-message', content: agentSpeech },
+          data: { messageId: `e2e-live-message-${adaptiveTurn}`, content: speech },
         },
         {
           type: 'agent_end',
-          data: { messageId: 'e2e-live-message', agentId: 'default-1' },
+          data: { messageId: `e2e-live-message-${adaptiveTurn}`, agentId },
         },
-        { type: 'cue_user', data: { fromAgentId: 'default-1' } },
+        ...(isTeacherTurn ? [] : [{ type: 'cue_user', data: { fromAgentId: agentId } }]),
         {
           type: 'done',
           data: {
             totalActions: 0,
             totalAgents: 1,
             agentHadContent: true,
-            directorState: { turnCount: 1, agentResponses: [], whiteboardLedger: [] },
+            directorState: {
+              turnCount: adaptiveTurn,
+              agentResponses: [],
+              whiteboardLedger: [],
+            },
           },
         },
       ];
@@ -352,7 +380,9 @@ test.describe('Classroom Interaction', () => {
           (window as unknown as { __e2eSpokenTexts: string[] }).__e2eSpokenTexts.join(' '),
         ),
       )
-      .toContain(agentSpeech);
+      .toContain(`${teacherSpeech} ${analystSpeech}`);
+    await expect(page.getByText('E2E Teacher')).toBeVisible();
+    await expect(page.getByText('E2E Analyst')).toBeVisible();
   });
 
   test('exports the complete classroom as an MP4 download', async ({ page, mockApi }) => {

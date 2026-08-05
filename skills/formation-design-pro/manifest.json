@@ -1,9 +1,9 @@
 {
   "id": "formation-design-pro",
   "name": {
-    "fr-FR": "Formation Design Pro — Ingénierie Andragogique",
-    "ar-MA": "تصميم التكوين الاحترافي — الهندسة الأندراغوجية",
-    "en-US": "Formation Design Pro — Andragogical Engineering"
+    "fr-FR": "Formation Design Pro — Ingénierie de formation adaptative",
+    "ar-MA": "تصميم التكوين الاحترافي — هندسة تكوين تكيفية",
+    "en-US": "Formation Design Pro — Adaptive Learning Engineering"
   },
   "description": {
     "fr-FR": "Moteur d'ingénierie de formation pour adultes qui aligne performance visée, acquis, contexte, activités et évaluations. Les cadres ADDIE, Bloom, Kirkpatrick et Knowles sont mobilisés selon leur pertinence, sans quota universel ni cas local inventé.",
@@ -11,12 +11,12 @@
     "en-US": "Adult-learning design engine aligning target performance, prior knowledge, context, activities and assessment. ADDIE, Bloom, Kirkpatrick and Knowles are applied when relevant, without universal quotas or fabricated local cases."
   },
   "category": "pedagogy",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "author": "Med Amine MANSOURI IDRISSI",
   "traceability": {
     "source": "external-private-git publication with Qalem animation contract",
     "vectors": ["V-02", "V-03", "V-04", "V-05", "V-07"],
-    "validatedAt": "2026-08-03",
+    "validatedAt": "2026-08-05",
     "publicationManifest": "publication.json"
   },
   "designEngine": {

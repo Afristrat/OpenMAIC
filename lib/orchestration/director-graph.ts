@@ -40,6 +40,10 @@ import { getEffectiveActions } from './tool-schemas';
 import type { AgentTurnSummary, WhiteboardActionRecord } from './types';
 import { parseStructuredChunk, createParserState, finalizeParser } from './stateless-generate';
 import { createLogger } from '@/lib/logger';
+import {
+  validateInterventionDecision,
+  type InterventionDecision,
+} from '@/lib/formation-engine/animation-constitution';
 
 const log = createLogger('DirectorGraph');
 
@@ -58,6 +62,8 @@ const OrchestratorState = Annotation.Root({
   thinkingConfig: Annotation<ThinkingConfig | null>,
   discussionContext: Annotation<{ topic: string; prompt?: string } | null>,
   triggerAgentId: Annotation<string | null>,
+  explicitTrigger: Annotation<'play' | null>,
+  interactionId: Annotation<string>,
   userProfile: Annotation<{ nickname?: string; bio?: string } | null>,
   /** Request-scoped agent configs for generated agents (not in the default registry) */
   agentConfigOverrides: Annotation<Record<string, AgentConfig>>,
@@ -115,8 +121,16 @@ async function directorNode(
   };
   const isSingleAgent = state.availableAgentIds.length <= 1;
 
+  if (
+    state.animationConstitution &&
+    state.turnCount >= state.animationConstitution.policy.maxConsecutiveAgentTurns
+  ) {
+    write({ type: 'cue_user', data: { fromAgentId: state.currentAgentId || undefined } });
+    return { shouldEnd: true };
+  }
+
   // ── Single agent: code-only director ──
-  if (isSingleAgent) {
+  if (isSingleAgent && !state.animationConstitution) {
     const agentId = state.availableAgentIds[0] || 'default-1';
 
     if (state.turnCount === 0) {
@@ -133,7 +147,7 @@ async function directorNode(
   }
 
   // ── Multi agent: fast-path for first turn with trigger ──
-  if (state.turnCount === 0 && state.triggerAgentId) {
+  if (state.turnCount === 0 && state.triggerAgentId && !state.animationConstitution) {
     const triggerId = state.triggerAgentId;
     if (state.availableAgentIds.includes(triggerId)) {
       log.info(`[Director] First turn: dispatching trigger agent "${triggerId}"`);
@@ -175,6 +189,7 @@ async function directorNode(
     state.storeState.stage?.skillPromptContext,
     state.animationConstitution,
     state.storeState.currentSceneId,
+    state.explicitTrigger,
   );
 
   const adapter = new AISdkLangGraphAdapter(state.languageModel, state.thinkingConfig ?? undefined);
@@ -208,6 +223,40 @@ async function directorNode(
     if (!agentExists) {
       log.warn(`[Director] Unknown agent "${decision.nextAgentId}", ending`);
       return { shouldEnd: true };
+    }
+
+    const selectedAgent = agents.find((agent) => agent.id === decision.nextAgentId)!;
+    let interventionDecision: InterventionDecision | null = null;
+    if (state.animationConstitution) {
+      if (!decision.trigger || !decision.form || !decision.reason) {
+        log.warn('[Director] Incomplete structured intervention decision, ending');
+        return { shouldEnd: true };
+      }
+      if (state.explicitTrigger === 'play' && decision.trigger !== 'play') {
+        log.warn('[Director] Play round returned another trigger, ending');
+        return { shouldEnd: true };
+      }
+      interventionDecision = {
+        decisionId: `${state.animationConstitution.classroomId}:${state.interactionId}:${state.turnCount}`,
+        classroomId: state.animationConstitution.classroomId,
+        interactionId: state.interactionId,
+        sceneId: state.storeState.currentSceneId,
+        turnIndex: state.turnCount,
+        agentId: decision.nextAgentId,
+        agentName: selectedAgent.name,
+        trigger: decision.trigger,
+        form: decision.form,
+        reason: decision.reason,
+      };
+      const validation = validateInterventionDecision(
+        state.animationConstitution,
+        interventionDecision,
+      );
+      if (!validation.success) {
+        log.warn(`[Director] Unauthorized intervention decision: ${validation.reason}`);
+        return { shouldEnd: true };
+      }
+      write({ type: 'intervention_decision', data: interventionDecision });
     }
 
     write({
@@ -537,11 +586,22 @@ export function buildInitialState(
     messages: request.messages,
     storeState: request.storeState,
     animationConstitution: request.animationConstitution,
-    availableAgentIds: request.config.agentIds,
+    availableAgentIds: request.animationConstitution
+      ? request.config.agentIds.filter((id) =>
+          request.animationConstitution!.agentRosterSnapshot.some(
+            (agent) => agent.enabled && agent.agentId === id,
+          ),
+        )
+      : request.config.agentIds,
     languageModel,
     thinkingConfig: thinkingConfig ?? null,
     discussionContext,
     triggerAgentId: request.config.triggerAgentId || null,
+    explicitTrigger: request.config.explicitTrigger || null,
+    interactionId:
+      request.config.interactionId ||
+      request.messages.findLast((message) => message.role === 'user')?.id ||
+      `round-${Date.now()}`,
     userProfile: request.userProfile || null,
     agentConfigOverrides,
     currentAgentId: null,

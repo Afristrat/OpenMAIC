@@ -37,6 +37,8 @@ export interface DiscussionRequest {
   topic: string;
   prompt?: string;
   agentId?: string; // Agent ID to initiate discussion (default: 'default-1')
+  explicitTrigger?: 'play';
+  interactionId?: string;
 }
 
 interface RoundtableProps {

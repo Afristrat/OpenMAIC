@@ -11,6 +11,8 @@ import { PROMPT_IDS } from '@/lib/prompts';
 import { buildPromptWithSkill } from '@/lib/skills/prompt-overrides';
 import type { SkillPromptContext } from '@/lib/types/stage';
 import {
+  ADAPTIVE_TRIGGERS,
+  INTERVENTION_FORMS,
   buildAnimationDirective,
   type AnimationConstitution,
 } from '@/lib/formation-engine/animation-constitution';
@@ -39,6 +41,7 @@ export function buildDirectorPrompt(
   skillPromptContext?: SkillPromptContext,
   animationConstitution?: AnimationConstitution,
   currentSceneId?: string | null,
+  explicitTrigger?: 'play' | null,
 ): string {
   const totalRecordedTurns = agentResponses.length;
   const responseCounts = agentResponses.reduce<Map<string, number>>((counts, response) => {
@@ -98,6 +101,10 @@ ${userProfile.bio ? `Background: ${userProfile.bio}` : ''}
     whiteboardOpenText: whiteboardOpen
       ? 'OPEN (slide canvas is hidden — spotlight/laser will not work)'
       : 'CLOSED (slide canvas is visible)',
+    explicitTriggerSection:
+      explicitTrigger === 'play'
+        ? '\n# Explicit live trigger\nThe learner pressed Play. Route only an authorized current-scene backbone intervention and return trigger "play".\n'
+        : '',
   };
 
   const prompt = buildPromptWithSkill(PROMPT_IDS.DIRECTOR, vars, skillPromptContext);
@@ -236,6 +243,9 @@ Contributors: ${contributors.length > 0 ? contributors.join(', ') : 'none'}${cro
 export function parseDirectorDecision(content: string): {
   nextAgentId: string | null;
   shouldEnd: boolean;
+  trigger?: (typeof ADAPTIVE_TRIGGERS)[number] | 'play';
+  form?: (typeof INTERVENTION_FORMS)[number];
+  reason?: string;
 } {
   try {
     // Try to extract JSON from the response
@@ -248,7 +258,12 @@ export function parseDirectorDecision(content: string): {
         return { nextAgentId: null, shouldEnd: true };
       }
 
-      return { nextAgentId: nextAgent, shouldEnd: false };
+      const trigger = [...ADAPTIVE_TRIGGERS, 'play'].includes(parsed.trigger)
+        ? parsed.trigger
+        : undefined;
+      const form = INTERVENTION_FORMS.includes(parsed.form) ? parsed.form : undefined;
+      const reason = typeof parsed.reason === 'string' ? parsed.reason.trim() : undefined;
+      return { nextAgentId: nextAgent, shouldEnd: false, trigger, form, reason };
     }
   } catch (_e) {
     log.warn('[Director] Failed to parse decision:', content.slice(0, 200));
