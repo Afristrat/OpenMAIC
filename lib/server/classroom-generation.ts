@@ -752,20 +752,17 @@ export async function generateClassroom(
       throw new Error('No scenes were generated');
     }
 
-    const animationConstitution =
-      agentMode === 'generate'
-        ? createAnimationConstitution({
-            classroomId: stageId,
-            organizationId: input.orgId,
-            authorUserId: options.ownerId,
-            authorRole: input.authorRole,
-            approach: input.learningApproach,
-            interactionLevel: input.interactionLevel,
-            targetPerformance: requirement,
-            scenes,
-            agents: tenantAgentConfigs,
-          })
-        : undefined;
+    const animationConstitution = createAnimationConstitution({
+      classroomId: stageId,
+      organizationId: input.orgId,
+      authorUserId: options.ownerId,
+      authorRole: input.authorRole,
+      approach: input.learningApproach,
+      interactionLevel: input.interactionLevel,
+      targetPerformance: requirement,
+      scenes,
+      agents: tenantAgentConfigs,
+    });
 
     // Phase: Media generation (after all scenes generated)
     if (input.enableImageGeneration || input.enableVideoGeneration) {

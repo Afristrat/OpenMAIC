@@ -188,6 +188,26 @@ describe('classroom generation — web capture injection', () => {
     expect(optionsArg.assignedImages).toBeUndefined();
   });
 
+  it('persists the animation constitution when the author uses the preset roster', async () => {
+    await generateWithProgress();
+
+    expect(mocks.persistClassroom).toHaveBeenCalledWith(
+      expect.objectContaining({
+        animationConstitution: expect.objectContaining({
+          approach: 'andragogy',
+          interactionLevel: 'balanced',
+          agentRosterSnapshot: expect.arrayContaining([
+            expect.objectContaining({
+              enabled: true,
+              identityCompatibility: 'validated',
+            }),
+          ]),
+        }),
+      }),
+      'http://localhost',
+    );
+  });
+
   it('never blocks scene generation when requestWebCapture returns null (capture failed)', async () => {
     mocks.decideCaptureForScene.mockResolvedValue({
       needsCapture: true,
