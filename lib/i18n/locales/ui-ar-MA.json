@@ -7,6 +7,7 @@
   "classroom.researchSources": "المصادر",
   "classroom.researchSourcesTitle": "المصادر المستخدمة",
   "classroom.researchSourcesDescription": "المصادر التي استند إليها توليد هذه القاعة التعليمية. لا تظهر إلا للمؤلفين والمشرفين العامين.",
+  "classroom.noResearchSources": "لم يتم تسجيل أي مصدر لهذه القاعة التعليمية.",
   "home.slogan": "التعلّم التوليدي في فصل تفاعلي متعدد الوكلاء",
   "home.greetingWithName": "مرحبًا، {{name}}",
   "toolbar.pdfParser": "محلل PDF",

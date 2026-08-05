@@ -7,6 +7,7 @@
   "classroom.researchSources": "Sources",
   "classroom.researchSourcesTitle": "Sources utilisées",
   "classroom.researchSourcesDescription": "Sources consultées pour générer cette classe virtuelle. Elles sont réservées aux auteurs et aux super administrateurs.",
+  "classroom.noResearchSources": "Aucune source n’a été enregistrée pour cette classe virtuelle.",
   "home.slogan": "Apprentissage génératif au sein d’une classe virtuelle multi-agents",
   "home.greetingWithName": "Bonjour, {{name}}",
   "toolbar.pdfParser": "Analyseur",

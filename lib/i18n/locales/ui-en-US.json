@@ -7,6 +7,7 @@
   "classroom.researchSources": "Sources",
   "classroom.researchSourcesTitle": "Sources used",
   "classroom.researchSourcesDescription": "Sources consulted to generate this classroom. They are restricted to authors and super administrators.",
+  "classroom.noResearchSources": "No source was recorded for this classroom.",
   "home.slogan": "Generative Learning in Multi-Agent Interactive Classroom",
   "home.greetingWithName": "Hi, {{name}}",
   "toolbar.pdfParser": "Parser",

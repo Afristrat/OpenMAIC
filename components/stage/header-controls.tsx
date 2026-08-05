@@ -392,7 +392,7 @@ export function HeaderControls({
         </DialogContent>
       </Dialog>
 
-      {canViewSources && researchSources.length > 0 && (
+      {canViewSources && (
         <Dialog>
           <DialogTrigger asChild>
             <button
@@ -409,26 +409,32 @@ export function HeaderControls({
               <DialogTitle>{t('classroom.researchSourcesTitle')}</DialogTitle>
               <DialogDescription>{t('classroom.researchSourcesDescription')}</DialogDescription>
             </DialogHeader>
-            <ol className="space-y-3">
-              {researchSources.map((source) => (
-                <li key={source.url} className="rounded-lg border border-border/70 p-3">
-                  <a
-                    href={source.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline"
-                  >
-                    {source.title}
-                    <ExternalLink className="size-3" aria-hidden="true" />
-                  </a>
-                  {source.excerpt && (
-                    <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
-                      {source.excerpt}
-                    </p>
-                  )}
-                </li>
-              ))}
-            </ol>
+            {researchSources.length > 0 ? (
+              <ol className="space-y-3">
+                {researchSources.map((source) => (
+                  <li key={source.url} className="rounded-lg border border-border/70 p-3">
+                    <a
+                      href={source.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline"
+                    >
+                      {source.title}
+                      <ExternalLink className="size-3" aria-hidden="true" />
+                    </a>
+                    {source.excerpt && (
+                      <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+                        {source.excerpt}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="rounded-lg border border-border/70 p-3 text-sm text-muted-foreground">
+                {t('classroom.noResearchSources')}
+              </p>
+            )}
           </DialogContent>
         </Dialog>
       )}
