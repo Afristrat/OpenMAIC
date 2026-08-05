@@ -761,13 +761,13 @@ function processLatexElements(
 const LEARNER_URL_PATTERN =
   /(?:https?:\/\/|www\.)[^\s<>"']+|(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+(?:ma|com|org|net|io|ai|fr)(?:\/[^\s<>"']*)?/gi;
 
-function learnerVisibleUrls(elements: readonly PPTElement[]): string[] {
+function learnerVisibleUrls(elements: readonly unknown[]): string[] {
   return elements.flatMap((element) => {
-    const candidate = element as unknown as Record<string, unknown>;
+    const candidate = element as Record<string, unknown>;
     const visible =
-      element.type === 'text'
+      candidate.type === 'text'
         ? String(candidate.content ?? '')
-        : element.type === 'table'
+        : candidate.type === 'table'
           ? JSON.stringify(candidate.data ?? '')
           : [candidate.href, candidate.url, candidate.link]
               .filter((value): value is string => typeof value === 'string')
@@ -777,7 +777,7 @@ function learnerVisibleUrls(elements: readonly PPTElement[]): string[] {
 }
 
 export function hasUnexpectedLearnerUrl(
-  elements: readonly PPTElement[],
+  elements: readonly unknown[],
   allowedUrls: readonly string[],
 ): boolean {
   const allowed = new Set(allowedUrls);
@@ -994,7 +994,7 @@ async function generateSlideContent(
   log.debug(`After video reference normalization: ${videoNormalizedElements.length} elements`);
 
   const allowedDownloadUrls = generatedResources.map((resource) => resource.downloadUrl);
-  if (hasUnexpectedLearnerUrl(videoNormalizedElements as PPTElement[], allowedDownloadUrls)) {
+  if (hasUnexpectedLearnerUrl(videoNormalizedElements, allowedDownloadUrls)) {
     log.warn(`Slide contains an unauthorized learner-visible URL for ${outline.id}; retrying`);
     return null;
   }
