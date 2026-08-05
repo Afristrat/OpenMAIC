@@ -828,7 +828,8 @@
       "title": "Extensions métier utilisables et création guidée d’expertises [UI]",
       "epic": "5-ÉCOSYSTÈME",
       "phase": 5,
-      "passes": false,
+      "passes": true,
+      "completedAt": "2026-08-05",
       "dependencies": ["S4-005"],
       "acceptance": [
         "La page Plugins présente au moins cinq expériences métier réellement interactives avec une démonstration fonctionnelle",
@@ -836,7 +837,8 @@
         "Un auteur, un manager, un administrateur ou le super administrateur peut créer une expertise sans rédiger de JSON",
         "L’expertise créée est validée côté serveur, persistée dans l’organisation et sélectionnable pour générer une formation",
         "Interface et textes validés en français, arabe et anglais, avec parcours Playwright permanent"
-      ]
+      ],
+      "acceptanceNote": "Validé factuellement sur ServeurAI et en production. La page Plugins expose 10 expériences métier, dont huit sur le moteur partagé borné, avec manifestes et schémas stricts. Les démonstrations réelles du tableur contrôlé, de l’arbre de décision et du simulateur de processus recalculent leurs résultats dans le navigateur. Le parcours guidé permet aux rôles autorisés de créer une expertise sans JSON, la relire après rechargement, la sélectionner dans /app avec un indicateur visible, puis la supprimer ; l’artefact temporaire de preuve a été supprimé. Les scènes et ressources du moteur partagé ont des contrats de cache explicites et versionnés. Gate complet isolé au commit 4b0e585 sur ServeurAI avec FFmpeg présent : Prettier vert, TypeScript sans erreur, ESLint sans problème, Vitest 309 fichiers et 2 171 tests verts, Playwright Chromium 50/50 vert. Production vérifiée sur qalem.ma : 10 plugins localisés, sélection d’expertise visible, endpoint de santé HTTP 200."
     }
   ]
 }
