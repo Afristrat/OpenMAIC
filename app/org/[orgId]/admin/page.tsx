@@ -30,6 +30,7 @@ import {
   Link2,
   BarChart3,
   CheckCircle2,
+  Palette,
 } from 'lucide-react';
 import type { Organization, OrgMemberRole, OrgSector } from '@/lib/supabase/types';
 import {
@@ -43,6 +44,10 @@ import {
   presentationBrandingSettings,
   type PresentationBrandMode,
 } from '@/lib/branding/presentation-branding';
+import {
+  organizationDesignSystemFromSettings,
+  type OrganizationDesignSystem,
+} from '@/lib/branding/organization-design-system';
 
 interface MemberWithProfile {
   id: string;
@@ -95,6 +100,9 @@ export default function OrgAdminPage() {
   const [editSector, setEditSector] = useState<string>('');
   const [editLocale, setEditLocale] = useState('fr-FR');
   const [editLogo, setEditLogo] = useState('');
+  const [brandWebsiteUrl, setBrandWebsiteUrl] = useState('');
+  const [brandDesignSystem, setBrandDesignSystem] = useState<OrganizationDesignSystem>();
+  const [extractingBrand, setExtractingBrand] = useState(false);
   const [presentationBrandMode, setPresentationBrandMode] =
     useState<PresentationBrandMode>('organization');
   const [learningDesign, setLearningDesign] =
@@ -132,6 +140,9 @@ export default function OrgAdminPage() {
       setEditSector(orgData.sector ?? '');
       setEditLocale(orgData.default_locale);
       setEditLogo(orgData.logo ?? '');
+      const savedDesignSystem = organizationDesignSystemFromSettings(orgData.settings);
+      setBrandDesignSystem(savedDesignSystem);
+      setBrandWebsiteUrl(savedDesignSystem?.sourceUrl ?? '');
       setPresentationBrandMode(
         presentationBrandingFromOrganization(orgData.logo, orgData.settings).mode,
       );
@@ -214,6 +225,7 @@ export default function OrgAdminPage() {
           default_locale: editLocale,
           settings: {
             ...(org?.settings ?? {}),
+            ...(brandDesignSystem ? { brandDesignSystem } : {}),
             presentationBranding: presentationBrandingSettings(presentationBrandMode),
             learningDesign,
             teachingProfile: {
@@ -239,6 +251,43 @@ export default function OrgAdminPage() {
       toast.error(error instanceof Error ? error.message : t('settings.saveFailed'));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleExtractBrand = async () => {
+    if (!brandWebsiteUrl.trim() || !isAdmin) return;
+    setExtractingBrand(true);
+    try {
+      const response = await fetch(`/api/organizations/${orgId}/brand-system`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ websiteUrl: brandWebsiteUrl.trim() }),
+      });
+      const payload = (await response.json()) as {
+        designSystem?: OrganizationDesignSystem;
+        logoUrl?: string | null;
+        error?: string;
+        details?: string;
+      };
+      if (!response.ok || !payload.designSystem) {
+        throw new Error(payload.details || payload.error || t('org.brandExtractionFailed'));
+      }
+      setBrandDesignSystem(payload.designSystem);
+      if (payload.logoUrl) setEditLogo(payload.logoUrl);
+      setOrg((current) =>
+        current
+          ? {
+              ...current,
+              logo: payload.logoUrl ?? current.logo,
+              settings: { ...current.settings, brandDesignSystem: payload.designSystem },
+            }
+          : current,
+      );
+      toast.success(t('org.brandExtractionSuccess'));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('org.brandExtractionFailed'));
+    } finally {
+      setExtractingBrand(false);
     }
   };
 
@@ -450,6 +499,49 @@ export default function OrgAdminPage() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-sm font-medium">{t('org.brandWebsite')}</label>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Input
+                  type="url"
+                  value={brandWebsiteUrl}
+                  onChange={(event) => setBrandWebsiteUrl(event.target.value)}
+                  placeholder="https://example.com"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleExtractBrand}
+                  disabled={extractingBrand || !brandWebsiteUrl.trim()}
+                >
+                  <Palette className="mr-2 h-4 w-4" />
+                  {extractingBrand ? t('common.loading') : t('org.extractBrand')}
+                </Button>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">{t('org.brandWebsiteHint')}</p>
+              {brandDesignSystem && (
+                <div className="mt-3 rounded-lg border bg-muted/30 p-3">
+                  <div className="flex flex-wrap gap-2">
+                    {brandDesignSystem.palette.map((token) => (
+                      <div
+                        key={token.name}
+                        className="flex items-center gap-1.5 rounded-full border bg-background px-2 py-1 text-xs"
+                      >
+                        <span
+                          className="h-3 w-3 rounded-full border"
+                          style={{ backgroundColor: token.hex }}
+                        />
+                        {t(`org.brandColor.${token.name}`)}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {t('org.brandLastExtracted')}{' '}
+                    {new Date(brandDesignSystem.extractedAt).toLocaleString()}
+                  </p>
+                </div>
+              )}
             </div>
             <div className="sm:col-span-2">
               <label className="mb-1 block text-sm font-medium">

@@ -477,6 +477,9 @@ function HomePage() {
             providerId: ttsProviderId,
             modelId: ttsProvidersConfig[ttsProviderId]?.modelId,
             voiceId: ttsVoice,
+            voiceName: TTS_PROVIDERS[ttsProviderId as BuiltInTTSProviderId]?.voices.find(
+              (voice) => voice.id === ttsVoice,
+            )?.name,
             gender: TTS_PROVIDERS[ttsProviderId as BuiltInTTSProviderId]?.voices.find(
               (voice) => voice.id === ttsVoice,
             )?.gender,

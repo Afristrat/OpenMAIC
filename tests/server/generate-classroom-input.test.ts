@@ -32,6 +32,7 @@ describe('generateClassroomSchema', () => {
       teacherVoiceConfig: {
         providerId: 'higgs-tts',
         voiceId: 'hanae',
+        voiceName: 'Hanae',
         gender: 'female',
       },
       contextualSpecialists: [

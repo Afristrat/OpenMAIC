@@ -35,6 +35,10 @@ import type { VideoProviderId } from '@/lib/media/types';
 import type { TTSProviderId } from '@/lib/audio/types';
 import { splitLongSpeechActions, splitSpeechActionsByAnglicisms } from '@/lib/audio/tts-utils';
 import { VOXCPM_AUTO_VOICE_ID, VOXCPM_TTS_PROVIDER_ID } from '@/lib/audio/voxcpm';
+import {
+  buildOrganizationImagePrompt,
+  type OrganizationDesignSystem,
+} from '@/lib/branding/organization-design-system';
 
 const log = createLogger('ClassroomMedia');
 
@@ -100,6 +104,7 @@ function mediaServingUrl(classroomId: string, subPath: string): string {
 export async function generateMediaForClassroom(
   outlines: SceneOutline[],
   classroomId: string,
+  designSystem?: OrganizationDesignSystem,
 ): Promise<Record<string, string>> {
   // Collect all media generation requests from outlines
   const requests = outlines.flatMap((o) => o.mediaGenerations ?? []);
@@ -131,7 +136,10 @@ export async function generateMediaForClassroom(
 
         const result = await generateImage(
           { providerId, apiKey, baseUrl: resolveImageBaseUrl(providerId), model },
-          { prompt: req.prompt, aspectRatio: req.aspectRatio || '16:9' },
+          {
+            prompt: buildOrganizationImagePrompt(req.prompt, designSystem),
+            aspectRatio: req.aspectRatio || '16:9',
+          },
         );
 
         let buf: Buffer;

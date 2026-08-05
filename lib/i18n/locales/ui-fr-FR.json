@@ -2121,5 +2121,17 @@
   "org.presentationBrandingQalem": "Logo Qalem",
   "org.presentationBrandingBoth": "Organisation et Qalem",
   "org.presentationBrandingNone": "Sans logo",
-  "org.presentationBrandingHint": "Ce choix s’applique à la classroom et aux présentations associées."
+  "org.presentationBrandingHint": "Ce choix s’applique à la classroom et aux présentations associées.",
+  "org.brandWebsite": "Site de référence de l’organisation",
+  "org.brandWebsiteHint": "Crawl4AI analyse le site rendu, son logo, ses couleurs et ses règles visuelles. Cette charte guide ensuite toutes les images et infographies générées.",
+  "org.extractBrand": "Extraire la charte",
+  "org.brandExtractionSuccess": "La charte visuelle de l’organisation est enregistrée.",
+  "org.brandExtractionFailed": "Impossible d’extraire la charte visuelle.",
+  "org.brandLastExtracted": "Dernière analyse :",
+  "org.brandColor.background": "Fond",
+  "org.brandColor.surface": "Surface",
+  "org.brandColor.ink": "Texte",
+  "org.brandColor.accent": "Accent",
+  "org.brandColor.muted": "Atténué",
+  "org.brandColor.secondary": "Secondaire"
 }

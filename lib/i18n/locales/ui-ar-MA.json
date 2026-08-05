@@ -2121,5 +2121,17 @@
   "org.presentationBrandingQalem": "شعار Qalem",
   "org.presentationBrandingBoth": "المؤسسة وQalem",
   "org.presentationBrandingNone": "بدون شعار",
-  "org.presentationBrandingHint": "يُطبّق هذا الخيار على القسم والعروض المرتبطة به."
+  "org.presentationBrandingHint": "يُطبّق هذا الخيار على القسم والعروض المرتبطة به.",
+  "org.brandWebsite": "الموقع المرجعي للمؤسسة",
+  "org.brandWebsiteHint": "يحلل Crawl4AI الموقع كما يظهر، والشعار، والألوان، والقواعد البصرية. ثم توجه هذه الهوية كل صورة وإنفوغراف يتم إنشاؤهما.",
+  "org.extractBrand": "استخراج الهوية البصرية",
+  "org.brandExtractionSuccess": "تم حفظ الهوية البصرية للمؤسسة.",
+  "org.brandExtractionFailed": "تعذر استخراج الهوية البصرية.",
+  "org.brandLastExtracted": "آخر تحليل:",
+  "org.brandColor.background": "الخلفية",
+  "org.brandColor.surface": "السطح",
+  "org.brandColor.ink": "النص",
+  "org.brandColor.accent": "اللون البارز",
+  "org.brandColor.muted": "اللون الهادئ",
+  "org.brandColor.secondary": "اللون الثانوي"
 }

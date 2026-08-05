@@ -2121,5 +2121,17 @@
   "org.presentationBrandingQalem": "Qalem logo",
   "org.presentationBrandingBoth": "Organization and Qalem",
   "org.presentationBrandingNone": "No logo",
-  "org.presentationBrandingHint": "This choice applies to the classroom and its related presentations."
+  "org.presentationBrandingHint": "This choice applies to the classroom and its related presentations.",
+  "org.brandWebsite": "Organization reference website",
+  "org.brandWebsiteHint": "Crawl4AI analyzes the rendered website, logo, colors and visual rules. This system then guides every generated image and infographic.",
+  "org.extractBrand": "Extract design system",
+  "org.brandExtractionSuccess": "The organization design system has been saved.",
+  "org.brandExtractionFailed": "The design system could not be extracted.",
+  "org.brandLastExtracted": "Last analysis:",
+  "org.brandColor.background": "Background",
+  "org.brandColor.surface": "Surface",
+  "org.brandColor.ink": "Ink",
+  "org.brandColor.accent": "Accent",
+  "org.brandColor.muted": "Muted",
+  "org.brandColor.secondary": "Secondary"
 }

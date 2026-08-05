@@ -114,11 +114,9 @@ export function AgentRosterSettings({
               <div className="mb-3 flex items-center gap-3">
                 <img src={persona.avatar} alt="" className="size-14 rounded-full object-cover" />
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold">
-                    {t(`org.personaLabels.${persona.id}.${persona.gender}`)}
-                  </p>
+                  <p className="font-semibold">{persona.defaultName}</p>
                   <p className="text-xs text-muted-foreground">
-                    {t(`settings.agentRoles.${persona.role}`)}
+                    {t(`org.personaLabels.${persona.id}.${persona.gender}`)}
                   </p>
                 </div>
               </div>

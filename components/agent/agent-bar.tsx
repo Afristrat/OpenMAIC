@@ -701,12 +701,14 @@ export function AgentBar({
     voxcpmProfiles,
     browserVoices,
   );
-  const teacherVoiceGender = availableProviders
+  const teacherVoice = availableProviders
     .find((provider) => provider.providerId === ttsProviderId)
-    ?.voices.find((voice) => voice.id === ttsVoice)?.gender;
+    ?.voices.find((voice) => voice.id === ttsVoice);
+  const teacherVoiceGender = teacherVoice?.gender;
   const teacherAgent = baseTeacherAgent
     ? {
         ...baseTeacherAgent,
+        ...(teacherVoice?.name ? { name: teacherVoice.name } : {}),
         avatar:
           teacherVoiceGender === 'female'
             ? '/avatars/teacher-2.png'
@@ -810,7 +812,16 @@ export function AgentBar({
     return translated !== key ? translated : agent.name;
   };
 
-  const getAgentRole = (agent: { role: string }) => {
+  const getAgentRole = (agent: {
+    role: string;
+    mechanismId?: string;
+    gender?: 'female' | 'male';
+  }) => {
+    if (agent.mechanismId && agent.gender) {
+      const personaKey = `org.personaLabels.${agent.mechanismId}.${agent.gender}`;
+      const personaLabel = t(personaKey);
+      if (personaLabel !== personaKey) return personaLabel;
+    }
     const key = `settings.agentRoles.${agent.role}`;
     const translated = t(key);
     return translated !== key ? translated : agent.role;
@@ -822,7 +833,7 @@ export function AgentBar({
         <div className="size-8 rounded-full overflow-hidden ring-2 ring-blue-400/40 dark:ring-blue-500/30 shrink-0">
           <img
             src={teacherAgent.avatar}
-            alt={getAgentName(teacherAgent)}
+            alt={teacherAgent.name}
             className="size-full object-cover"
           />
         </div>
@@ -986,12 +997,12 @@ export function AgentBar({
                   >
                     <img
                       src={teacherAgent.avatar}
-                      alt={getAgentName(teacherAgent)}
+                      alt={teacherAgent.name}
                       className="size-full object-cover"
                     />
                   </div>
                   <span className="text-[13px] font-medium truncate min-w-0 flex-1">
-                    {getAgentName(teacherAgent)}
+                    {teacherAgent.name}
                   </span>
                   <TeacherVoicePill
                     availableProviders={availableProviders}

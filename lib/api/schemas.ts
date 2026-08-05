@@ -377,6 +377,7 @@ export const generateClassroomSchema = z.object({
       providerId: z.string().min(1).max(80),
       modelId: z.string().max(160).optional(),
       voiceId: z.string().min(1).max(160),
+      voiceName: z.string().min(1).max(120).optional(),
       gender: z.enum(['female', 'male', 'neutral']).optional(),
     })
     .optional(),

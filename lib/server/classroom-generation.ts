@@ -65,6 +65,10 @@ import { createAnimationConstitution } from '@/lib/formation-engine/animation-co
 import { generateResourcesForClassroom } from '@/lib/server/classroom-resource-generation';
 import type { TTSProviderId } from '@/lib/audio/types';
 import type { ContextualSpecialist } from '@/lib/agents/contextual-specialist';
+import {
+  organizationDesignSystemFromSettings,
+  type OrganizationDesignSystem,
+} from '@/lib/branding/organization-design-system';
 
 const log = createLogger('Classroom');
 
@@ -93,6 +97,7 @@ export interface GenerateClassroomInput {
     providerId: string;
     modelId?: string;
     voiceId: string;
+    voiceName?: string;
     gender?: 'female' | 'male' | 'neutral';
   };
   activeSkillId?: string;
@@ -100,6 +105,7 @@ export interface GenerateClassroomInput {
 
 function applyTeacherVoiceConfig<
   T extends {
+    name: string;
     role: string;
     avatar: string;
     gender?: 'female' | 'male';
@@ -113,6 +119,7 @@ function applyTeacherVoiceConfig<
       config.gender === 'female' || config.gender === 'male' ? config.gender : agent.gender;
     return {
       ...agent,
+      ...(config.voiceName ? { name: config.voiceName } : {}),
       gender,
       avatar:
         gender === 'female'
@@ -199,6 +206,7 @@ export async function generateClassroom(
   let teachingProfile = DEFAULT_TEACHING_PROFILE;
   let learningDesign: LearningDesignSettings = DEFAULT_LEARNING_DESIGN;
   let learnerCastingProfile: LearnerCastingProfile = { culture: 'ma-fr', preferences: {} };
+  let organizationDesignSystem: OrganizationDesignSystem | undefined;
   try {
     const supabase = createServiceSupabaseClient();
     const [{ data: organization }, { data: profile }] = await Promise.all([
@@ -210,6 +218,7 @@ export async function generateClassroom(
         .maybeSingle(),
     ]);
     teachingProfile = teachingProfileFromSettings(organization?.settings);
+    organizationDesignSystem = organizationDesignSystemFromSettings(organization?.settings);
     learningDesign = {
       ...learningDesignFromSettings(organization?.settings),
       interactionLevel: input.interactionLevel,
@@ -769,7 +778,11 @@ export async function generateClassroom(
       });
 
       try {
-        const mediaMap = await generateMediaForClassroom(outlines, stageId);
+        const mediaMap = await generateMediaForClassroom(
+          outlines,
+          stageId,
+          organizationDesignSystem,
+        );
         replaceMediaPlaceholders(scenes, mediaMap);
         log.info(`Media generation complete: ${Object.keys(mediaMap).length} files`);
       } catch (err) {
