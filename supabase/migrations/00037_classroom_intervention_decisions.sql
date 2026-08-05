@@ -27,6 +27,36 @@ CREATE TABLE public.classroom_intervention_decisions (
 CREATE INDEX idx_classroom_intervention_decisions_classroom_created
   ON public.classroom_intervention_decisions(classroom_id, created_at DESC);
 
+CREATE OR REPLACE FUNCTION public.validate_classroom_intervention_decision_scope()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM public.stages
+    WHERE stages.id = NEW.classroom_id
+      AND stages.org_id = NEW.org_id
+  ) THEN
+    RAISE EXCEPTION 'Intervention organization does not own the classroom';
+  END IF;
+
+  IF NEW.scene_id IS NOT NULL AND NOT EXISTS (
+    SELECT 1 FROM public.scenes
+    WHERE scenes.id = NEW.scene_id
+      AND scenes.stage_id = NEW.classroom_id
+  ) THEN
+    RAISE EXCEPTION 'Intervention scene does not belong to the classroom';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER validate_classroom_intervention_decision_scope
+  BEFORE INSERT OR UPDATE ON public.classroom_intervention_decisions
+  FOR EACH ROW EXECUTE FUNCTION public.validate_classroom_intervention_decision_scope();
+
 ALTER TABLE public.classroom_intervention_decisions ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "classroom_intervention_decisions_select_author"
