@@ -381,8 +381,11 @@ test.describe('Classroom Interaction', () => {
         ),
       )
       .toContain(`${teacherSpeech} ${analystSpeech}`);
+    await page.getByRole('tab', { name: 'Chat' }).click();
     await expect(page.getByText('E2E Teacher')).toBeVisible();
     await expect(page.getByText('E2E Analyst')).toBeVisible();
+    await expect(page.getByText(teacherSpeech)).toBeVisible();
+    await expect(page.getByText(analystSpeech)).toBeVisible();
   });
 
   test('exports the complete classroom as an MP4 download', async ({ page, mockApi }) => {
