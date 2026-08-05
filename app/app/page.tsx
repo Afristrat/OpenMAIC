@@ -116,6 +116,7 @@ function HomePage() {
   const showVocationalTestUi = shouldShowVocationalTestUi();
   const [form, setForm] = useState<FormState>(initialFormState);
   const [activeSkillId, setActiveSkillId] = useState<string>();
+  const [activeSkill, setActiveSkill] = useState<{ id: string; name: string }>();
   const [isImprovingRequirement, setIsImprovingRequirement] = useState(false);
   const webSearchPreferenceSetRef = useRef(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -159,6 +160,27 @@ function HomePage() {
   const { user } = useAuth();
   const { currentOrg, canAuthor } = useOrganizations();
   const [dueReviewCount, setDueReviewCount] = useState(0);
+
+  useEffect(() => {
+    if (!activeSkillId) return;
+    const controller = new AbortController();
+    const searchParams = new URLSearchParams({ locale });
+    if (currentOrg) searchParams.set('orgId', currentOrg.id);
+    void fetch(`/api/skills?${searchParams.toString()}`, { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) return;
+        const payload = (await response.json()) as {
+          skills?: Array<{ id: string; name: string }>;
+        };
+        const selected = payload.skills?.find((skill) => skill.id === activeSkillId);
+        if (selected) setActiveSkill({ id: activeSkillId, name: selected.name });
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+        log.warn('Unable to resolve active skill name', error);
+      });
+    return () => controller.abort();
+  }, [activeSkillId, currentOrg, locale]);
 
   const loadDueReviewCount = async () => {
     const now = new Date();
@@ -754,6 +776,34 @@ function HomePage() {
                 />
               </div>
             </div>
+
+            {activeSkillId && (
+              <div
+                data-testid="active-skill-indicator"
+                className="mx-4 mb-2 flex flex-wrap items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs text-violet-800 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-200"
+              >
+                <BookOpen className="size-3.5" />
+                <span>{t('skills.activeLabel')}</span>
+                <strong>
+                  {activeSkill?.id === activeSkillId ? activeSkill.name : activeSkillId}
+                </strong>
+                <Link className="ms-auto font-medium underline underline-offset-2" href="/skills">
+                  {t('skills.changeActive')}
+                </Link>
+                <button
+                  type="button"
+                  aria-label={t('skills.removeActive')}
+                  className="rounded-full p-1 hover:bg-violet-100 dark:hover:bg-violet-900"
+                  onClick={() => {
+                    setActiveSkillId(undefined);
+                    setActiveSkill(undefined);
+                    router.replace('/app');
+                  }}
+                >
+                  <X className="size-3.5" />
+                </button>
+              </div>
+            )}
 
             {/* Textarea */}
             <div className="relative">

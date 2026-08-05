@@ -414,6 +414,7 @@ export default function SkillsPage(): React.ReactElement {
             return (
               <div
                 key={skill.id}
+                data-testid={`skill-card-${skill.id}`}
                 className="group rounded-xl border bg-card p-5 transition-shadow hover:shadow-md"
               >
                 {/* Top: icon + name + category badge */}

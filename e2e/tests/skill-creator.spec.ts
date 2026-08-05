@@ -62,5 +62,14 @@ test.describe('Créateur guidé d’expertises', () => {
     expect(submittedManifest?.id).toBe('pilotage-tresorerie-tpe');
     expect(submittedManifest?.promptOverrides).toHaveLength(5);
     expect(submittedManifest?.classroomTemplates).toHaveLength(1);
+
+    await page
+      .getByTestId('skill-card-pilotage-tresorerie-tpe')
+      .getByRole('button', { name: 'Utiliser l’expertise' })
+      .click();
+    await expect(page).toHaveURL(/\/app\?skill=pilotage-tresorerie-tpe$/);
+    await expect(page.getByTestId('active-skill-indicator')).toContainText(
+      'Pilotage trésorerie TPE',
+    );
   });
 });
