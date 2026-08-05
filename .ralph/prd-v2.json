@@ -822,6 +822,21 @@
         "Le schéma refuse les rôles, identités et agents non autorisés",
         "Skill compacte, publication hashée et quality gates verts sur ServeurAI"
       ]
+    },
+    {
+      "id": "S5-001",
+      "title": "Extensions métier utilisables et création guidée d’expertises [UI]",
+      "epic": "5-ÉCOSYSTÈME",
+      "phase": 5,
+      "passes": false,
+      "dependencies": ["S4-005"],
+      "acceptance": [
+        "La page Plugins présente au moins cinq expériences métier réellement interactives avec une démonstration fonctionnelle",
+        "Les plugins partagent un moteur borné, déclarent un schéma de génération strict et restent utilisables dans une classroom",
+        "Un auteur, un manager, un administrateur ou le super administrateur peut créer une expertise sans rédiger de JSON",
+        "L’expertise créée est validée côté serveur, persistée dans l’organisation et sélectionnable pour générer une formation",
+        "Interface et textes validés en français, arabe et anglais, avec parcours Playwright permanent"
+      ]
     }
   ]
 }

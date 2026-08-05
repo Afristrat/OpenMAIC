@@ -7,6 +7,17 @@ import { useOrganizations } from '@/lib/hooks/use-organizations';
 import { useIsSuperAdmin } from '@/lib/hooks/use-super-admin';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import {
   BookOpen,
   ChevronDown,
@@ -15,14 +26,26 @@ import {
   FileText,
   Globe,
   Sparkles,
-  Upload,
   Trash2,
+  Plus,
+  FileJson,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 const MAX_MANIFEST_BYTES = 256 * 1024;
 const E2E_TEST_MODE = process.env.NEXT_PUBLIC_E2E_TEST_MODE === 'true';
+
+function slugifySkillName(value: string): string {
+  const slug = value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 90);
+  return slug.length >= 3 ? slug : `${slug || 'expertise'}-qalem`;
+}
 
 // ── Types ───────────────────────────────────────────────────────────
 
@@ -92,9 +115,15 @@ export default function SkillsPage(): React.ReactElement {
   const [isInstalling, setIsInstalling] = useState(false);
   const [removingSkillId, setRemovingSkillId] = useState<string | null>(null);
   const [expandedSkill, setExpandedSkill] = useState<string | null>(null);
+  const [creatorOpen, setCreatorOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [skillName, setSkillName] = useState('');
+  const [skillDescription, setSkillDescription] = useState('');
+  const [skillInstructions, setSkillInstructions] = useState('');
+  const [skillStarterRequest, setSkillStarterRequest] = useState('');
   const canManageSkills = Boolean(
     currentOrg &&
-    (isSuperAdmin || currentOrg.userRole === 'admin' || currentOrg.userRole === 'manager'),
+    (isSuperAdmin || ['admin', 'manager', 'author'].includes(currentOrg.userRole)),
   );
 
   const fetchSkills = useCallback(async () => {
@@ -158,6 +187,79 @@ export default function SkillsPage(): React.ReactElement {
     }
   };
 
+  const handleCreateSkill = async (): Promise<void> => {
+    if (!currentOrg) return;
+    const name = skillName.trim();
+    const description = skillDescription.trim();
+    const instructions = skillInstructions.trim();
+    const starterRequest = skillStarterRequest.trim();
+    if (!name || !description || !instructions || !starterRequest) {
+      toast.error(t('skills.creatorRequired'));
+      return;
+    }
+
+    const skillId = slugifySkillName(name);
+    const localeKey = locale || 'fr-FR';
+    const promptAppend = [
+      'EXPERTISE MÉTIER FOURNIE PAR L’ORGANISATION',
+      instructions,
+      'Appliquer cette expertise uniquement lorsqu’elle est pertinente pour le sujet. Signaler les limites, les hypothèses et les informations manquantes. Ne jamais la présenter comme un conseil personnalisé.',
+    ].join('\n\n');
+    const manifest = {
+      id: skillId,
+      name: { [localeKey]: name },
+      description: { [localeKey]: description },
+      category: 'domain',
+      version: '1.0.0',
+      author: currentOrg.name,
+      agents: [],
+      promptOverrides: [
+        'requirements-to-outlines',
+        'slide-content',
+        'quiz-content',
+        'agent-system',
+        'director',
+      ].map((promptId) => ({ promptId, systemPromptAppend: promptAppend, variables: {} })),
+      classroomTemplates: [
+        {
+          id: `${skillId}-starter`,
+          name: { [localeKey]: name },
+          description: { [localeKey]: description },
+          requirement: starterRequest,
+          agentIds: [],
+          language: localeKey,
+        },
+      ],
+      sceneDefaults: {},
+      requiredProviders: [],
+      supportedLanguages: [localeKey],
+    };
+
+    setIsCreating(true);
+    try {
+      const response = await fetch('/api/skills', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orgId: currentOrg.id, manifest }),
+      });
+      const result = (await response.json()) as { error?: string; details?: string[] };
+      if (!response.ok) {
+        throw new Error(result.details?.join(' · ') || result.error || t('skills.createFailed'));
+      }
+      toast.success(t('skills.created'));
+      setCreatorOpen(false);
+      setSkillName('');
+      setSkillDescription('');
+      setSkillInstructions('');
+      setSkillStarterRequest('');
+      await fetchSkills();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('skills.createFailed'));
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   const handleRemoveSkill = async (skill: SkillData): Promise<void> => {
     if (!currentOrg || !window.confirm(t('skills.removeConfirm'))) return;
     setRemovingSkillId(skill.id);
@@ -191,7 +293,44 @@ export default function SkillsPage(): React.ReactElement {
           </div>
         </div>
         {canManageSkills && (
-          <>
+          <div className="flex flex-wrap gap-2">
+            <Dialog open={creatorOpen} onOpenChange={setCreatorOpen}>
+              <DialogTrigger asChild>
+                <Button type="button" className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  {t('skills.create')}
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>{t('skills.creatorTitle')}</DialogTitle>
+                  <DialogDescription>{t('skills.creatorDescription')}</DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-5 py-2">
+                  <div className="grid gap-2">
+                    <Label htmlFor="skill-name">{t('skills.creatorName')}</Label>
+                    <Input id="skill-name" value={skillName} onChange={(event) => setSkillName(event.target.value)} placeholder={t('skills.creatorNamePlaceholder')} />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="skill-description">{t('skills.creatorSummary')}</Label>
+                    <Textarea id="skill-description" value={skillDescription} onChange={(event) => setSkillDescription(event.target.value)} placeholder={t('skills.creatorSummaryPlaceholder')} rows={3} />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="skill-instructions">{t('skills.creatorInstructions')}</Label>
+                    <Textarea id="skill-instructions" value={skillInstructions} onChange={(event) => setSkillInstructions(event.target.value)} placeholder={t('skills.creatorInstructionsPlaceholder')} rows={6} />
+                    <p className="text-xs text-muted-foreground">{t('skills.creatorInstructionsHelp')}</p>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="skill-request">{t('skills.creatorRequest')}</Label>
+                    <Textarea id="skill-request" value={skillStarterRequest} onChange={(event) => setSkillStarterRequest(event.target.value)} placeholder={t('skills.creatorRequestPlaceholder')} rows={3} />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button type="button" variant="outline" onClick={() => setCreatorOpen(false)}>{t('common.cancel')}</Button>
+                    <Button type="button" disabled={isCreating} onClick={() => void handleCreateSkill()}>{isCreating ? t('skills.creating') : t('skills.createAndInstall')}</Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
             <input
               ref={fileInputRef}
               type="file"
@@ -210,10 +349,10 @@ export default function SkillsPage(): React.ReactElement {
               disabled={isInstalling}
               onClick={() => fileInputRef.current?.click()}
             >
-              <Upload className="h-4 w-4" />
-              {isInstalling ? t('skills.installing') : t('skills.add')}
+              <FileJson className="h-4 w-4" />
+              {isInstalling ? t('skills.installing') : t('skills.importManifest')}
             </Button>
-          </>
+          </div>
         )}
       </div>
 
@@ -228,7 +367,7 @@ export default function SkillsPage(): React.ReactElement {
       {!isLoading && skills.length === 0 && (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16">
           <Sparkles className="mb-4 h-12 w-12 text-muted-foreground/50" />
-          <p className="text-muted-foreground">Aucun skill disponible</p>
+          <p className="text-muted-foreground">{t('skills.empty')}</p>
         </div>
       )}
 
@@ -258,7 +397,7 @@ export default function SkillsPage(): React.ReactElement {
                         </Badge>
                       )}
                       <span className="text-xs text-muted-foreground">v{skill.version}</span>
-                      <span className="text-xs text-muted-foreground">&mdash; {skill.author}</span>
+                      <span className="text-xs text-muted-foreground">· {skill.author}</span>
                     </div>
                   </div>
                 </div>

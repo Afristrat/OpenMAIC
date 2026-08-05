@@ -3,12 +3,21 @@ import { formatPluginsForPrompt, loadPlugins, readPluginHtml } from '@/lib/plugi
 import { validatePluginData } from '@/lib/plugins/schema-validator';
 
 describe('bundled scene plugins', () => {
-  it('loads both production plugins and their iframe documents', () => {
-    const pluginIds = loadPlugins()
+  it('loads every production plugin and its iframe document', () => {
+    const plugins = loadPlugins();
+    const pluginIds = plugins
       .map((plugin) => plugin.id)
       .sort();
 
-    expect(pluginIds).toEqual(['code-sandbox', 'lab-simulation']);
+    expect(pluginIds).toEqual([
+      'cash-flow-simulator',
+      'code-sandbox',
+      'credit-decision-lab',
+      'kpi-dashboard',
+      'lab-simulation',
+      'marketing-funnel-builder',
+      'use-of-funds-allocator',
+    ]);
     expect(readPluginHtml('code-sandbox')).toMatch(/<!doctype html>/i);
     const labSimulationHtml = readPluginHtml('lab-simulation');
     expect(labSimulationHtml).toMatch(/<!doctype html>/i);
@@ -18,6 +27,14 @@ describe('bundled scene plugins', () => {
     expect(labSimulationHtml).not.toContain('cannon-es.cjs.js');
     expect(formatPluginsForPrompt()).toContain('code-sandbox');
     expect(formatPluginsForPrompt()).toContain('lab-simulation');
+
+    for (const pluginId of pluginIds.filter(
+      (pluginId) => !['code-sandbox', 'lab-simulation'].includes(pluginId),
+    )) {
+      expect(readPluginHtml(pluginId)).toContain('/plugin-runtime/business-simulator.js');
+      expect(plugins.find((plugin) => plugin.id === pluginId)?.demoData).toBeDefined();
+      expect(formatPluginsForPrompt()).toContain(pluginId);
+    }
   });
 
   it('validates generated data against the plug-in manifest schema', () => {

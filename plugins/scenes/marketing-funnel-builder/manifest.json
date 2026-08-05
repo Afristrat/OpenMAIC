@@ -1,0 +1,62 @@
+{
+  "id": "marketing-funnel-builder",
+  "type": "marketing-funnel-builder",
+  "name": { "fr": "Constructeur d’entonnoir marketing", "ar": "منشئ مسار التسويق", "en": "Marketing funnel builder" },
+  "description": {
+    "fr": "Transformez des hypothèses d’audience et de conversion en volumes de prospects, de clients et de chiffre d’affaires.",
+    "ar": "حوّل افتراضات الجمهور والتحويل إلى أعداد زوار وعملاء وإيرادات.",
+    "en": "Turn audience and conversion assumptions into leads, customers and revenue."
+  },
+  "displayType": { "fr": "Simulation marketing", "ar": "محاكاة تسويقية", "en": "Marketing simulation" },
+  "version": "1.0.0",
+  "author": "Qalem",
+  "renderUrl": "index.html",
+  "icon": "Filter",
+  "systemPrompt": "",
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "title": { "type": "string" }, "instructions": { "type": "string" }, "currency": { "type": "string" },
+      "assumptions": {
+        "type": "object",
+        "properties": {
+          "audience": { "$ref": "#/$defs/input" }, "reachRate": { "$ref": "#/$defs/input" }, "clickRate": { "$ref": "#/$defs/input" },
+          "leadRate": { "$ref": "#/$defs/input" }, "conversionRate": { "$ref": "#/$defs/input" }, "averageOrder": { "$ref": "#/$defs/input" }
+        },
+        "required": ["audience", "reachRate", "clickRate", "leadRate", "conversionRate", "averageOrder"]
+      },
+      "labels": {
+        "type": "object",
+        "properties": {
+          "audience": { "type": "string" }, "reached": { "type": "string" }, "visitors": { "type": "string" }, "leads": { "type": "string" },
+          "clients": { "type": "string" }, "revenue": { "type": "string" }, "globalRate": { "type": "string" }, "funnel": { "type": "string" }
+        },
+        "required": ["audience", "reached", "visitors", "leads", "clients", "revenue", "globalRate", "funnel"]
+      }
+    },
+    "$defs": {
+      "input": {
+        "type": "object",
+        "properties": { "label": { "type": "string" }, "value": { "type": "number" }, "min": { "type": "number" }, "max": { "type": "number" }, "step": { "type": "number" }, "unit": { "type": "string" } },
+        "required": ["label", "value"]
+      }
+    },
+    "required": ["title", "instructions", "currency", "assumptions", "labels"]
+  },
+  "supportedActions": ["change-rate", "inspect-funnel"],
+  "demoData": {
+    "eyebrow": "Atelier d’acquisition",
+    "title": "Quel levier déplace réellement votre résultat commercial ?",
+    "instructions": "Faites varier les taux du parcours. Comparez leur effet sur le nombre de clients et le chiffre d’affaires.",
+    "currency": "MAD",
+    "assumptions": {
+      "audience": { "label": "Audience adressable", "value": 100000, "min": 0, "step": 1000 },
+      "reachRate": { "label": "Taux de couverture", "value": 35, "min": 0, "max": 100, "step": 1, "unit": "%" },
+      "clickRate": { "label": "Taux de clic", "value": 4.5, "min": 0, "max": 100, "step": 0.1, "unit": "%" },
+      "leadRate": { "label": "Taux de qualification", "value": 18, "min": 0, "max": 100, "step": 0.5, "unit": "%" },
+      "conversionRate": { "label": "Taux de conversion", "value": 12, "min": 0, "max": 100, "step": 0.5, "unit": "%" },
+      "averageOrder": { "label": "Panier moyen", "value": 2800, "min": 0, "step": 100, "unit": "MAD" }
+    },
+    "labels": { "audience": "Audience", "reached": "Personnes touchées", "visitors": "Visites", "leads": "Prospects", "clients": "Clients", "revenue": "Chiffre d’affaires", "globalRate": "Conversion globale", "funnel": "Entonnoir calculé" }
+  }
+}

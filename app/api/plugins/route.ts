@@ -18,8 +18,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const description =
       plugin.description[lang] ?? plugin.description['fr'] ?? plugin.description['en'] ?? '';
 
-    // Determine display type
-    const pluginType = plugin.type.includes('code') ? 'Code' : 'Simulation 3D';
+    const displayType =
+      plugin.displayType?.[lang] ??
+      plugin.displayType?.fr ??
+      plugin.displayType?.en ??
+      (plugin.type.includes('code') ? 'Code' : 'Simulation interactive');
 
     return {
       id: plugin.id,
@@ -29,8 +32,14 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       version: plugin.version,
       author: plugin.author,
       icon: plugin.icon ?? 'Puzzle',
-      displayType: pluginType,
+      displayType,
       renderUrl: getPluginPublicPath(plugin.id),
+      demoData:
+        plugin.demoDataByLocale?.[lang] ??
+        plugin.demoDataByLocale?.fr ??
+        plugin.demoDataByLocale?.en ??
+        plugin.demoData ??
+        null,
       width: plugin.width,
       height: plugin.height,
       supportedActions: plugin.supportedActions ?? [],

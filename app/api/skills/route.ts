@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { listSkills, getSkill } from '@/lib/skills/registry';
 import { parseSkillManifest } from '@/lib/skills/manifest-schema';
 import type { Skill } from '@/lib/skills/types';
-import { requireSuperAdminOrOrgAdmin, requireSuperAdminOrOrgMember } from '@/lib/api/auth';
+import { requireSuperAdminOrOrgAuthor, requireSuperAdminOrOrgMember } from '@/lib/api/auth';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 
 const MAX_MANIFEST_BYTES = 256 * 1024;
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   if (typeof body.orgId !== 'string') {
     return NextResponse.json({ error: 'orgId is required' }, { status: 400 });
   }
-  const auth = await requireSuperAdminOrOrgAdmin(req, body.orgId);
+  const auth = await requireSuperAdminOrOrgAuthor(req, body.orgId);
   if (auth.response) return auth.response;
   const serializedManifest = JSON.stringify(body.manifest);
   if (!serializedManifest) {
@@ -136,7 +136,7 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
   if (!orgId || !skillId) {
     return NextResponse.json({ error: 'orgId and skillId are required' }, { status: 400 });
   }
-  const auth = await requireSuperAdminOrOrgAdmin(req, orgId);
+  const auth = await requireSuperAdminOrOrgAuthor(req, orgId);
   if (auth.response) return auth.response;
 
   const { error } = await createServiceSupabaseClient()

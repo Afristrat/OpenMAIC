@@ -1,0 +1,58 @@
+{
+  "id": "use-of-funds-allocator",
+  "type": "use-of-funds-allocator",
+  "name": { "fr": "Atelier d’allocation de fonds", "ar": "ورشة توزيع التمويل", "en": "Use of funds allocator" },
+  "description": {
+    "fr": "Répartissez une enveloppe entre produit, acquisition, équipe, opérations et réserve, puis observez les déséquilibres.",
+    "ar": "وزّع الميزانية بين المنتج والاكتساب والفريق والعمليات والاحتياطي ثم راقب الاختلالات.",
+    "en": "Allocate a budget across product, acquisition, team, operations and reserve, then observe imbalances."
+  },
+  "displayType": { "fr": "Atelier d’arbitrage", "ar": "ورشة مفاضلة", "en": "Allocation workshop" },
+  "version": "1.0.0",
+  "author": "Qalem",
+  "renderUrl": "index.html",
+  "icon": "Scale",
+  "systemPrompt": "",
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "title": { "type": "string" }, "instructions": { "type": "string" }, "currency": { "type": "string" },
+      "budget": {
+        "type": "object",
+        "properties": { "label": { "type": "string" }, "value": { "type": "number" }, "min": { "type": "number" }, "step": { "type": "number" }, "unit": { "type": "string" } },
+        "required": ["label", "value"]
+      },
+      "allocations": {
+        "type": "array",
+        "minItems": 3,
+        "maxItems": 8,
+        "items": { "type": "object", "properties": { "label": { "type": "string" }, "value": { "type": "number" } }, "required": ["label", "value"] }
+      },
+      "labels": {
+        "type": "object",
+        "properties": {
+          "allocated": { "type": "string" }, "remaining": { "type": "string" }, "status": { "type": "string" },
+          "balanced": { "type": "string" }, "unallocated": { "type": "string" }, "overBudget": { "type": "string" }, "breakdown": { "type": "string" }
+        },
+        "required": ["allocated", "remaining", "status", "balanced", "unallocated", "overBudget", "breakdown"]
+      }
+    },
+    "required": ["title", "instructions", "currency", "budget", "allocations", "labels"]
+  },
+  "supportedActions": ["allocate-funds", "balance-budget"],
+  "demoData": {
+    "eyebrow": "Décision sous contrainte",
+    "title": "Comment répartir 1,5 million de dirhams sans fragiliser l’exécution ?",
+    "instructions": "Ajustez les enveloppes. Le total, le reliquat et la structure d’allocation se mettent à jour en direct.",
+    "currency": "MAD",
+    "budget": { "label": "Enveloppe disponible", "value": 1500000, "min": 0, "step": 10000, "unit": "MAD" },
+    "allocations": [
+      { "label": "Produit et technologie", "value": 420000 },
+      { "label": "Acquisition commerciale", "value": 330000 },
+      { "label": "Équipe", "value": 380000 },
+      { "label": "Opérations", "value": 170000 },
+      { "label": "Réserve", "value": 200000 }
+    ],
+    "labels": { "allocated": "Montant alloué", "remaining": "Reliquat", "status": "Équilibre", "balanced": "Budget équilibré", "unallocated": "Montant non affecté", "overBudget": "Dépassement", "breakdown": "Répartition" }
+  }
+}

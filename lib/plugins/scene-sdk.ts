@@ -32,6 +32,15 @@ export interface ScenePlugin {
   /** Author name or organisation. */
   author: string;
 
+  /** Localized family shown in the plugin catalogue. */
+  displayType?: Record<string, string>;
+
+  /** Safe sample payload used by the catalogue preview. */
+  demoData?: Record<string, unknown>;
+
+  /** Localized safe samples when the preview text varies by language. */
+  demoDataByLocale?: Record<string, Record<string, unknown>>;
+
   // -- Rendering ----------------------------------------------------------
 
   /**

@@ -1,10 +1,20 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Puzzle, X, Code, FlaskConical } from 'lucide-react';
+import {
+  Puzzle,
+  X,
+  Code,
+  FlaskConical,
+  ChartNoAxesCombined,
+  Scale,
+  Filter,
+  Landmark,
+  Gauge,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // ── Types ───────────────────────────────────────────────────────────
@@ -22,6 +32,7 @@ interface PluginData {
   width?: number;
   height?: number;
   supportedActions: string[];
+  demoData: Record<string, unknown> | null;
 }
 
 // ── Icon helper ─────────────────────────────────────────────────────
@@ -29,6 +40,11 @@ interface PluginData {
 function PluginIcon({ icon, className }: { icon: string; className?: string }): React.ReactElement {
   if (icon === 'Code') return <Code className={className} />;
   if (icon === 'FlaskConical') return <FlaskConical className={className} />;
+  if (icon === 'ChartNoAxesCombined') return <ChartNoAxesCombined className={className} />;
+  if (icon === 'Scale') return <Scale className={className} />;
+  if (icon === 'Filter') return <Filter className={className} />;
+  if (icon === 'Landmark') return <Landmark className={className} />;
+  if (icon === 'Gauge') return <Gauge className={className} />;
   return <Puzzle className={className} />;
 }
 
@@ -40,6 +56,7 @@ export default function PluginsPage(): React.ReactElement {
   const [plugins, setPlugins] = useState<PluginData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activePlugin, setActivePlugin] = useState<PluginData | null>(null);
+  const previewRef = useRef<HTMLIFrameElement>(null);
 
   const fetchPlugins = useCallback(async () => {
     setIsLoading(true);
@@ -66,6 +83,23 @@ export default function PluginsPage(): React.ReactElement {
 
   const closePlugin = (): void => {
     setActivePlugin(null);
+  };
+
+  const initialisePreview = (): void => {
+    if (!activePlugin?.demoData) return;
+    previewRef.current?.contentWindow?.postMessage(
+      {
+        source: 'qalem-host',
+        type: 'init',
+        payload: {
+          sceneId: `preview-${activePlugin.id}`,
+          pluginType: activePlugin.type,
+          data: activePlugin.demoData,
+          theme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',
+        },
+      },
+      window.location.origin,
+    );
   };
 
   // Close overlay on Escape
@@ -98,7 +132,7 @@ export default function PluginsPage(): React.ReactElement {
       {!isLoading && plugins.length === 0 && (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16">
           <Puzzle className="mb-4 h-12 w-12 text-muted-foreground/50" />
-          <p className="text-muted-foreground">Aucun plugin disponible</p>
+          <p className="text-muted-foreground">{t('plugins.empty')}</p>
         </div>
       )}
 
@@ -111,6 +145,7 @@ export default function PluginsPage(): React.ReactElement {
             return (
               <div
                 key={plugin.id}
+                data-testid={`plugin-card-${plugin.id}`}
                 className="group rounded-xl border bg-card p-5 transition-shadow hover:shadow-md"
               >
                 {/* Top: icon + name */}
@@ -139,7 +174,7 @@ export default function PluginsPage(): React.ReactElement {
                         {plugin.displayType}
                       </Badge>
                       <span className="text-xs text-muted-foreground">v{plugin.version}</span>
-                      <span className="text-xs text-muted-foreground">&mdash; {plugin.author}</span>
+                      <span className="text-xs text-muted-foreground">· {plugin.author}</span>
                     </div>
                   </div>
                 </div>
@@ -208,10 +243,13 @@ export default function PluginsPage(): React.ReactElement {
           {/* Iframe */}
           <div className="flex-1">
             <iframe
+              ref={previewRef}
+              data-testid="plugin-preview"
               src={activePlugin.renderUrl}
               title={activePlugin.name}
               className="h-full w-full border-0"
               sandbox="allow-scripts allow-same-origin"
+              onLoad={initialisePreview}
             />
           </div>
         </div>
