@@ -309,6 +309,165 @@
     });
   }
 
+  function renderSpreadsheet(data, view) {
+    data.rows.forEach(function (row) {
+      view.controls.appendChild(
+        field(row.label + ' · ' + data.labels.quantity, row.quantity, row, function (value) {
+          row.quantity = value;
+        }),
+      );
+      view.controls.appendChild(
+        field(
+          row.label + ' · ' + data.labels.unitPrice,
+          row.unitPrice,
+          { min: 0, step: row.priceStep || 1, unit: data.currency },
+          function (value) {
+            row.unitPrice = value;
+          },
+        ),
+      );
+    });
+    var total = data.rows.reduce(function (sum, row) {
+      return sum + number(row.quantity) * number(row.unitPrice);
+    }, 0);
+    var table = el('div', 'data-table');
+    var header = el('div', 'data-row data-header');
+    [data.labels.item, data.labels.quantity, data.labels.unitPrice, data.labels.total].forEach(
+      function (label) {
+        header.appendChild(el('span', '', label));
+      },
+    );
+    table.appendChild(header);
+    data.rows.forEach(function (row) {
+      var line = el('div', 'data-row');
+      line.appendChild(el('strong', '', row.label));
+      line.appendChild(el('span', '', format(row.quantity)));
+      line.appendChild(el('span', '', format(row.unitPrice, data.currency)));
+      line.appendChild(el('span', '', format(row.quantity * row.unitPrice, data.currency)));
+      table.appendChild(line);
+    });
+    view.output.appendChild(table);
+    var cards = el('div', 'result-grid compact-results');
+    cards.appendChild(resultCard(data.labels.grandTotal, format(total, data.currency), 'positive'));
+    cards.appendChild(resultCard(data.labels.lines, format(data.rows.length)));
+    view.output.appendChild(cards);
+  }
+
+  function renderDecisionTree(data, view) {
+    data.options.forEach(function (option) {
+      view.controls.appendChild(
+        field(
+          option.label + ' · ' + data.labels.probability,
+          option.probability,
+          {
+            min: 0,
+            max: 100,
+            step: 1,
+            unit: '%',
+          },
+          function (value) {
+            option.probability = value;
+          },
+        ),
+      );
+      view.controls.appendChild(
+        field(option.label + ' · ' + data.labels.impact, option.impact, option, function (value) {
+          option.impact = value;
+        }),
+      );
+    });
+    var ranked = data.options
+      .map(function (option) {
+        return {
+          label: option.label,
+          value: (option.probability / 100) * option.impact,
+        };
+      })
+      .sort(function (left, right) {
+        return right.value - left.value;
+      });
+    var best = ranked[0];
+    var cards = el('div', 'result-grid');
+    cards.appendChild(resultCard(data.labels.preferred, best.label, 'positive'));
+    cards.appendChild(resultCard(data.labels.expectedValue, format(best.value, data.unit)));
+    cards.appendChild(resultCard(data.labels.options, format(ranked.length)));
+    view.output.appendChild(cards);
+    var max = Math.max.apply(
+      null,
+      ranked
+        .map(function (item) {
+          return Math.abs(item.value);
+        })
+        .concat([1]),
+    );
+    renderNamedBars(
+      view.output,
+      ranked.map(function (item) {
+        return { label: item.label, value: item.value, ratio: Math.abs(item.value) / max };
+      }),
+      data.labels.comparison,
+      data.unit,
+    );
+    view.output.appendChild(el('p', 'notice', data.disclaimer));
+  }
+
+  function renderIndustrialProcess(data, view) {
+    data.stages.forEach(function (stage) {
+      view.controls.appendChild(
+        field(stage.label + ' · ' + data.labels.capacity, stage.capacity, stage, function (value) {
+          stage.capacity = value;
+        }),
+      );
+      view.controls.appendChild(
+        field(
+          stage.label + ' · ' + data.labels.availability,
+          stage.availability,
+          { min: 0, max: 100, step: 1, unit: '%' },
+          function (value) {
+            stage.availability = value;
+          },
+        ),
+      );
+    });
+    var effective = data.stages.map(function (stage) {
+      return {
+        label: stage.label,
+        value: stage.capacity * (stage.availability / 100),
+      };
+    });
+    var bottleneck = effective.reduce(function (lowest, stage) {
+      return stage.value < lowest.value ? stage : lowest;
+    }, effective[0]);
+    var demand = number(data.demand);
+    var cards = el('div', 'result-grid');
+    cards.appendChild(resultCard(data.labels.throughput, format(bottleneck.value, data.unit)));
+    cards.appendChild(resultCard(data.labels.bottleneck, bottleneck.label, 'warning'));
+    cards.appendChild(
+      resultCard(
+        data.labels.demandCoverage,
+        format(demand ? (bottleneck.value / demand) * 100 : 0, '%'),
+        bottleneck.value >= demand ? 'positive' : 'negative',
+      ),
+    );
+    view.output.appendChild(cards);
+    var max = Math.max.apply(
+      null,
+      effective
+        .map(function (stage) {
+          return stage.value;
+        })
+        .concat([1]),
+    );
+    renderNamedBars(
+      view.output,
+      effective.map(function (stage) {
+        return { label: stage.label, value: stage.value, ratio: stage.value / max };
+      }),
+      data.labels.effectiveCapacity,
+      data.unit,
+    );
+  }
+
   function renderBars(parent, values, title, unit) {
     var max = Math.max.apply(
       null,
@@ -355,6 +514,10 @@
     else if (pluginId === 'marketing-funnel-builder') renderFunnel(currentData, view);
     else if (pluginId === 'credit-decision-lab') renderCredit(currentData, view);
     else if (pluginId === 'kpi-dashboard') renderKpis(currentData, view);
+    else if (pluginId === 'controlled-spreadsheet') renderSpreadsheet(currentData, view);
+    else if (pluginId === 'decision-tree-lab') renderDecisionTree(currentData, view);
+    else if (pluginId === 'industrial-process-simulator')
+      renderIndustrialProcess(currentData, view);
   }
 
   function applyTheme(theme) {

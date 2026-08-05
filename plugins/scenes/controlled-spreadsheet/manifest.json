@@ -1,0 +1,108 @@
+{
+  "id": "controlled-spreadsheet",
+  "type": "controlled-spreadsheet",
+  "name": { "fr": "Tableur contrôlé", "ar": "جدول حساب تفاعلي", "en": "Controlled spreadsheet" },
+  "description": {
+    "fr": "Modifiez quantités et prix unitaires dans un tableau borné, puis observez immédiatement les totaux.",
+    "ar": "عدّل الكميات والأسعار الوحدوية داخل جدول مضبوط، ثم راقب الإجماليات فوراً.",
+    "en": "Edit quantities and unit prices in a bounded table, then see totals update immediately."
+  },
+  "displayType": { "fr": "Calcul guidé", "ar": "حساب موجّه", "en": "Guided calculation" },
+  "version": "1.0.0",
+  "author": "Qalem",
+  "renderUrl": "index.html",
+  "icon": "Sheet",
+  "systemPrompt": "",
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "title": { "type": "string" },
+      "instructions": { "type": "string" },
+      "currency": { "type": "string" },
+      "rows": {
+        "type": "array",
+        "minItems": 3,
+        "maxItems": 8,
+        "items": {
+          "type": "object",
+          "properties": {
+            "label": { "type": "string" },
+            "quantity": { "type": "number" },
+            "unitPrice": { "type": "number" },
+            "min": { "type": "number" },
+            "max": { "type": "number" },
+            "step": { "type": "number" },
+            "priceStep": { "type": "number" }
+          },
+          "required": ["label", "quantity", "unitPrice"]
+        }
+      },
+      "labels": {
+        "type": "object",
+        "properties": {
+          "item": { "type": "string" },
+          "quantity": { "type": "string" },
+          "unitPrice": { "type": "string" },
+          "total": { "type": "string" },
+          "grandTotal": { "type": "string" },
+          "lines": { "type": "string" }
+        },
+        "required": ["item", "quantity", "unitPrice", "total", "grandTotal", "lines"]
+      }
+    },
+    "required": ["title", "instructions", "currency", "rows", "labels"]
+  },
+  "supportedActions": ["change-cell", "recalculate-table"],
+  "demoData": {
+    "eyebrow": "Calcul opérationnel",
+    "title": "Quel budget faut-il prévoir pour cette commande ?",
+    "instructions": "Modifiez les quantités et les prix unitaires. Le détail et le total sont recalculés sans formule cachée.",
+    "currency": "MAD",
+    "rows": [
+      {
+        "label": "Ordinateurs",
+        "quantity": 4,
+        "unitPrice": 7800,
+        "min": 0,
+        "max": 50,
+        "step": 1,
+        "priceStep": 100
+      },
+      {
+        "label": "Écrans",
+        "quantity": 8,
+        "unitPrice": 2100,
+        "min": 0,
+        "max": 100,
+        "step": 1,
+        "priceStep": 50
+      },
+      {
+        "label": "Licences",
+        "quantity": 12,
+        "unitPrice": 900,
+        "min": 0,
+        "max": 200,
+        "step": 1,
+        "priceStep": 10
+      },
+      {
+        "label": "Formation",
+        "quantity": 2,
+        "unitPrice": 4500,
+        "min": 0,
+        "max": 20,
+        "step": 1,
+        "priceStep": 100
+      }
+    ],
+    "labels": {
+      "item": "Poste",
+      "quantity": "Quantité",
+      "unitPrice": "Prix unitaire",
+      "total": "Total",
+      "grandTotal": "Budget total",
+      "lines": "Postes"
+    }
+  }
+}

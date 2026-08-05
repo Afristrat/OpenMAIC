@@ -10,7 +10,10 @@ describe('bundled scene plugins', () => {
     expect(pluginIds).toEqual([
       'cash-flow-simulator',
       'code-sandbox',
+      'controlled-spreadsheet',
       'credit-decision-lab',
+      'decision-tree-lab',
+      'industrial-process-simulator',
       'kpi-dashboard',
       'lab-simulation',
       'marketing-funnel-builder',

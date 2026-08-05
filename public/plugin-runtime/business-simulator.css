@@ -225,6 +225,31 @@ h1 {
   font-weight: 750;
   text-align: right;
 }
+.data-table {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+.data-row {
+  display: grid;
+  grid-template-columns: minmax(130px, 1.4fr) repeat(3, minmax(80px, 1fr));
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.data-row:last-child {
+  border-bottom: 0;
+}
+.data-header {
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-weight: 750;
+}
+.compact-results {
+  margin-top: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
 
 @media (max-width: 760px) {
   .simulator-layout {
@@ -242,5 +267,11 @@ h1 {
   .chart-value {
     grid-column: 2;
     text-align: left;
+  }
+  .data-table {
+    overflow-x: auto;
+  }
+  .data-row {
+    min-width: 560px;
   }
 }

@@ -14,6 +14,9 @@ import {
   Filter,
   Landmark,
   Gauge,
+  Sheet,
+  GitBranch,
+  Factory,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -45,6 +48,9 @@ function PluginIcon({ icon, className }: { icon: string; className?: string }): 
   if (icon === 'Filter') return <Filter className={className} />;
   if (icon === 'Landmark') return <Landmark className={className} />;
   if (icon === 'Gauge') return <Gauge className={className} />;
+  if (icon === 'Sheet') return <Sheet className={className} />;
+  if (icon === 'GitBranch') return <GitBranch className={className} />;
+  if (icon === 'Factory') return <Factory className={className} />;
   return <Puzzle className={className} />;
 }
 

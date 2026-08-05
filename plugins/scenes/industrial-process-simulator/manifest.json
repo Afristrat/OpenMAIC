@@ -1,0 +1,121 @@
+{
+  "id": "industrial-process-simulator",
+  "type": "industrial-process-simulator",
+  "name": {
+    "fr": "Simulation de processus industriel",
+    "ar": "محاكاة عملية صناعية",
+    "en": "Industrial process simulation"
+  },
+  "description": {
+    "fr": "Faites varier capacité et disponibilité de chaque étape pour révéler le goulot d’étranglement.",
+    "ar": "غيّر الطاقة ومعدل الجاهزية في كل مرحلة لكشف عنق الزجاجة.",
+    "en": "Change each stage capacity and availability to reveal the process bottleneck."
+  },
+  "displayType": { "fr": "Simulation de flux", "ar": "محاكاة التدفق", "en": "Flow simulation" },
+  "version": "1.0.0",
+  "author": "Qalem",
+  "renderUrl": "index.html",
+  "icon": "Factory",
+  "systemPrompt": "",
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "title": { "type": "string" },
+      "instructions": { "type": "string" },
+      "demand": { "type": "number" },
+      "unit": { "type": "string" },
+      "stages": {
+        "type": "array",
+        "minItems": 3,
+        "maxItems": 6,
+        "items": {
+          "type": "object",
+          "properties": {
+            "label": { "type": "string" },
+            "capacity": { "type": "number" },
+            "availability": { "type": "number" },
+            "min": { "type": "number" },
+            "max": { "type": "number" },
+            "step": { "type": "number" },
+            "unit": { "type": "string" }
+          },
+          "required": ["label", "capacity", "availability"]
+        }
+      },
+      "labels": {
+        "type": "object",
+        "properties": {
+          "capacity": { "type": "string" },
+          "availability": { "type": "string" },
+          "throughput": { "type": "string" },
+          "bottleneck": { "type": "string" },
+          "demandCoverage": { "type": "string" },
+          "effectiveCapacity": { "type": "string" }
+        },
+        "required": [
+          "capacity",
+          "availability",
+          "throughput",
+          "bottleneck",
+          "demandCoverage",
+          "effectiveCapacity"
+        ]
+      }
+    },
+    "required": ["title", "instructions", "demand", "unit", "stages", "labels"]
+  },
+  "supportedActions": ["change-capacity", "inspect-bottleneck"],
+  "demoData": {
+    "eyebrow": "Pilotage des flux",
+    "title": "Quelle étape limite réellement la production ?",
+    "instructions": "Modifiez la capacité et la disponibilité de chaque étape. Le débit global reste limité par l’étape la plus faible.",
+    "demand": 100,
+    "unit": "unités/h",
+    "stages": [
+      {
+        "label": "Préparation",
+        "capacity": 130,
+        "availability": 92,
+        "min": 0,
+        "max": 300,
+        "step": 5,
+        "unit": "unités/h"
+      },
+      {
+        "label": "Assemblage",
+        "capacity": 110,
+        "availability": 88,
+        "min": 0,
+        "max": 300,
+        "step": 5,
+        "unit": "unités/h"
+      },
+      {
+        "label": "Contrôle",
+        "capacity": 95,
+        "availability": 96,
+        "min": 0,
+        "max": 300,
+        "step": 5,
+        "unit": "unités/h"
+      },
+      {
+        "label": "Conditionnement",
+        "capacity": 125,
+        "availability": 90,
+        "min": 0,
+        "max": 300,
+        "step": 5,
+        "unit": "unités/h"
+      }
+    ],
+    "labels": {
+      "capacity": "Capacité nominale",
+      "availability": "Disponibilité",
+      "throughput": "Débit maximal",
+      "bottleneck": "Goulot d’étranglement",
+      "demandCoverage": "Couverture de la demande",
+      "effectiveCapacity": "Capacité effective par étape"
+    }
+  }
+}

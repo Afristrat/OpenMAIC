@@ -1,0 +1,101 @@
+{
+  "id": "decision-tree-lab",
+  "type": "decision-tree-lab",
+  "name": { "fr": "Arbre de décision", "ar": "شجرة القرار", "en": "Decision tree" },
+  "description": {
+    "fr": "Comparez plusieurs options à partir de probabilités et d’impacts explicites, sans masquer les hypothèses.",
+    "ar": "قارن بين عدة خيارات انطلاقاً من احتمالات وتأثيرات واضحة، من دون إخفاء الفرضيات.",
+    "en": "Compare options using explicit probabilities and impacts without hiding the assumptions."
+  },
+  "displayType": { "fr": "Aide à la décision", "ar": "دعم القرار", "en": "Decision support" },
+  "version": "1.0.0",
+  "author": "Qalem",
+  "renderUrl": "index.html",
+  "icon": "GitBranch",
+  "systemPrompt": "",
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "title": { "type": "string" },
+      "instructions": { "type": "string" },
+      "unit": { "type": "string" },
+      "disclaimer": { "type": "string" },
+      "options": {
+        "type": "array",
+        "minItems": 3,
+        "maxItems": 5,
+        "items": {
+          "type": "object",
+          "properties": {
+            "label": { "type": "string" },
+            "probability": { "type": "number" },
+            "impact": { "type": "number" },
+            "min": { "type": "number" },
+            "max": { "type": "number" },
+            "step": { "type": "number" },
+            "unit": { "type": "string" }
+          },
+          "required": ["label", "probability", "impact"]
+        }
+      },
+      "labels": {
+        "type": "object",
+        "properties": {
+          "probability": { "type": "string" },
+          "impact": { "type": "string" },
+          "preferred": { "type": "string" },
+          "expectedValue": { "type": "string" },
+          "options": { "type": "string" },
+          "comparison": { "type": "string" }
+        },
+        "required": ["probability", "impact", "preferred", "expectedValue", "options", "comparison"]
+      }
+    },
+    "required": ["title", "instructions", "unit", "disclaimer", "options", "labels"]
+  },
+  "supportedActions": ["change-probability", "compare-options"],
+  "demoData": {
+    "eyebrow": "Décision sous incertitude",
+    "title": "Quelle option mérite d’être explorée en premier ?",
+    "instructions": "Ajustez probabilités et impacts. La valeur attendue rend les hypothèses comparables, sans prendre la décision à votre place.",
+    "unit": "kMAD",
+    "disclaimer": "Une valeur attendue ne couvre ni les risques rares, ni les contraintes humaines, ni la fiabilité des estimations.",
+    "options": [
+      {
+        "label": "Lancement national",
+        "probability": 45,
+        "impact": 900,
+        "min": -1000,
+        "max": 2000,
+        "step": 50,
+        "unit": "kMAD"
+      },
+      {
+        "label": "Pilote régional",
+        "probability": 75,
+        "impact": 480,
+        "min": -1000,
+        "max": 2000,
+        "step": 50,
+        "unit": "kMAD"
+      },
+      {
+        "label": "Partenariat",
+        "probability": 60,
+        "impact": 650,
+        "min": -1000,
+        "max": 2000,
+        "step": 50,
+        "unit": "kMAD"
+      }
+    ],
+    "labels": {
+      "probability": "Probabilité",
+      "impact": "Impact",
+      "preferred": "Valeur attendue la plus élevée",
+      "expectedValue": "Valeur attendue",
+      "options": "Options comparées",
+      "comparison": "Comparaison des valeurs attendues"
+    }
+  }
+}
