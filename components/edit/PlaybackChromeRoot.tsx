@@ -590,6 +590,8 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
             !currentScene.actions?.some((action) => action.type === 'discussion') &&
             !chatAreaRef.current?.getIsStreaming();
           if (shouldStartAdaptiveBeat) {
+            setChatAreaCollapsed(false);
+            chatAreaRef.current?.switchToTab('chat');
             void chatAreaRef.current?.startDiscussion({
               topic: currentScene.title,
               prompt: 'Relier cette scène à la performance visée avant de poursuivre.',
@@ -698,6 +700,7 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
      */
     const handleDiscussionSSE = useCallback(
       async (topic: string, prompt?: string, agentId?: string) => {
+        setChatAreaCollapsed(false);
         // Start discussion display in ChatArea (lecture speech is preserved independently)
         chatAreaRef.current?.startDiscussion({
           topic,
@@ -712,7 +715,7 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
         // Optimistic thinking: show thinking dots immediately (same as onMessageSend)
         setThinkingState({ stage: 'director' });
       },
-      [],
+      [setChatAreaCollapsed],
     );
 
     // First speech text for idle display (extracted here for playbackView)
@@ -1235,7 +1238,8 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
                   } else {
                     chatAreaRef.current?.sendMessage(msg);
                   }
-                  // Auto-switch to chat tab when user sends a message
+                  // Keep the persistent transcript visible when the user sends a message.
+                  setChatAreaCollapsed(false);
                   chatAreaRef.current?.switchToTab('chat');
                   setIsCueUser(false);
                   // Immediately mark streaming for synchronized stop button
