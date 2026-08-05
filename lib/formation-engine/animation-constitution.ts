@@ -370,7 +370,8 @@ export function validateInterventionDecision(
   decision: InterventionDecision,
 ): { success: true } | { success: false; reason: string } {
   const parsed = interventionDecisionSchema.safeParse(decision);
-  if (!parsed.success) return { success: false, reason: parsed.error.issues[0]?.message ?? 'invalid' };
+  if (!parsed.success)
+    return { success: false, reason: parsed.error.issues[0]?.message ?? 'invalid' };
   if (decision.classroomId !== constitution.classroomId) {
     return { success: false, reason: 'The decision targets another classroom.' };
   }

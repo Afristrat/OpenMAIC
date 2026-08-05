@@ -1251,8 +1251,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
               discussionPrompt: request.prompt,
               triggerAgentId: request.explicitTrigger ? undefined : agentId,
               explicitTrigger: request.explicitTrigger,
-              interactionId:
-                request.interactionId || `discussion-${sessionId}`,
+              interactionId: request.interactionId || `discussion-${sessionId}`,
             },
             userProfile: {
               nickname: userProfileState.nickname || undefined,

@@ -101,7 +101,11 @@ export async function POST(req: NextRequest) {
               .map((agent) => agent.agentId),
           );
           if (body.config.agentIds.some((id) => !allowedIds.has(id))) {
-            return apiError('INVALID_REQUEST', 400, 'An agent is not authorized for this classroom');
+            return apiError(
+              'INVALID_REQUEST',
+              400,
+              'An agent is not authorized for this classroom',
+            );
           }
           const serverAgents = persisted.generatedAgentConfigs ?? [];
           const requestedAgents = body.config.agentIds.map((id) =>

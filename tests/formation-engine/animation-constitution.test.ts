@@ -170,9 +170,9 @@ describe('animation constitution', () => {
       reason: 'Vérifier le raisonnement exprimé avant de poursuivre.',
     };
 
-    expect(
-      validateInterventionDecision(parsed.constitution, { ...base, trigger: 'play' }),
-    ).toEqual({ success: true });
+    expect(validateInterventionDecision(parsed.constitution, { ...base, trigger: 'play' })).toEqual(
+      { success: true },
+    );
     expect(
       validateInterventionDecision(parsed.constitution, {
         ...base,
