@@ -1,6 +1,6 @@
 ---
 name: formation-design-pro
-description: Concevoir ou industrialiser une formation Qalem fondée sur une performance observable, puis produire un contrat structuré pour la génération, l’évaluation et l’animation multi-agent. Utiliser pour créer, adapter, auditer ou régénérer une formation, choisir explicitement entre pédagogie, andragogie et approche hybride, cadrer les interactions des agents et empêcher les ratios, cas locaux ou affirmations non sourcés.
+description: Concevoir ou industrialiser une formation Qalem fondée sur une performance observable, puis produire un contrat structuré pour la génération, l’évaluation et l’animation multi-agent. Utiliser pour créer, adapter, auditer ou régénérer une formation, recommander puis faire valider une approche pédagogique, andragogique ou hybride, cadrer les interactions des agents et empêcher les ratios, cas locaux ou affirmations non sourcés.
 ---
 
 # Formation Design Pro
@@ -8,7 +8,7 @@ description: Concevoir ou industrialiser une formation Qalem fondée sur une per
 ## Produire le contrat avant le contenu
 
 1. Identifier la performance observable attendue, les acquis, les contraintes, les sources autorisées et les preuves de réussite.
-2. Demander à l’auteur de choisir explicitement `pedagogy`, `hybrid` ou `andragogy`. Ne jamais déduire cette décision de l’âge seul.
+2. Recueillir la performance cible, les acquis, l’autonomie réelle, l’expérience mobilisable, le risque, les contraintes et la modalité. Recommander ensuite `pedagogy`, `hybrid` ou `andragogy`, expliquer les conséquences en langage courant, puis exiger la validation explicite de l’auteur. Ne jamais déduire cette recommandation de l’âge seul.
 3. Compiler le plan de formation avec le moteur `qalem-prompt-compiler`. Ne pas recréer ses schémas ni ses politiques.
 4. Concevoir chaque activité et chaque évaluation en fonction de sa contribution à la performance visée. Ne jamais imposer de ratio universel de théorie, pratique, parole ou apprentissage entre pairs.
 5. Produire une constitution d’animation persistante avant le live. Lire [le contrat de conception](references/formation-design-contract.md) pour les entrées, sorties et invariants.

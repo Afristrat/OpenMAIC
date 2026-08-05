@@ -7,7 +7,7 @@ La source de vérité de la constitution d’animation est `lib/formation-engine
 ## Entrées obligatoires
 
 - auteur et organisation propriétaires ;
-- approche choisie explicitement : pédagogie, hybride ou andragogie ;
+- approche recommandée à partir du contexte, expliquée puis validée explicitement par l’auteur : pédagogie, hybride ou andragogie ;
 - niveau d’interaction choisi ;
 - performance observable visée et preuves de réussite ;
 - roster d’agents validé par l’organisation ;
@@ -60,7 +60,7 @@ Un agent désactivé ne peut apparaître dans l’ossature ni dans une règle ad
 
 ## Invariants
 
-- aucune inférence silencieuse de l’approche d’apprentissage ;
+- aucune inférence silencieuse de l’approche d’apprentissage : la recommandation est expliquée et l’auteur la valide ;
 - aucun ratio universel ;
 - aucune intervention sans finalité d’apprentissage ;
 - aucun agent inconnu ou désactivé ;
