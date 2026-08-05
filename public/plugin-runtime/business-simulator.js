@@ -4,6 +4,7 @@
   var root = document.getElementById('app');
   var pluginId = document.body.dataset.plugin;
   var currentData = null;
+  var fieldSequence = 0;
 
   function el(tag, className, text) {
     var node = document.createElement(tag);
@@ -28,6 +29,9 @@
     var wrapper = el('label', 'field');
     wrapper.appendChild(el('span', 'field-label', label));
     var input = el('input', 'field-input');
+    input.id = 'qalem-field-' + pluginId + '-' + ++fieldSequence;
+    input.setAttribute('aria-label', label);
+    wrapper.htmlFor = input.id;
     input.type = 'number';
     input.value = String(value);
     input.min = String(options.min ?? 0);
