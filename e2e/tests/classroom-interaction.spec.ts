@@ -306,7 +306,7 @@ test.describe('Classroom Interaction', () => {
     await page.route('**/api/chat', async (route) => {
       adaptiveTurn += 1;
       const isTeacherTurn = adaptiveTurn === 1;
-      const agentId = isTeacherTurn ? 'default-1' : 'default-2';
+      const agentId = isTeacherTurn ? 'persona-e2e-teacher' : 'persona-e2e-analyst';
       const agentName = isTeacherTurn ? 'E2E Teacher' : 'E2E Analyst';
       const speech = isTeacherTurn ? teacherSpeech : analystSpeech;
       const events = [
