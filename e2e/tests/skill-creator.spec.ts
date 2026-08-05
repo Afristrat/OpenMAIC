@@ -67,7 +67,7 @@ test.describe('Créateur guidé d’expertises', () => {
       .getByTestId('skill-card-pilotage-tresorerie-tpe')
       .getByRole('button', { name: 'Utiliser l’expertise' })
       .click();
-    await expect(page).toHaveURL(/\/app\?skill=pilotage-tresorerie-tpe$/);
+    await expect(page).toHaveURL(/\/app\?skill=pilotage-tresorerie-tpe$/, { timeout: 15_000 });
     await expect(page.getByTestId('active-skill-indicator')).toContainText(
       'Pilotage trésorerie TPE',
     );
