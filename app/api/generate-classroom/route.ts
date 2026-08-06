@@ -47,6 +47,8 @@ export async function POST(req: NextRequest) {
       ...(parsed.enableImageGeneration != null
         ? { enableImageGeneration: parsed.enableImageGeneration }
         : {}),
+      ...(parsed.imageProviderId ? { imageProviderId: parsed.imageProviderId } : {}),
+      ...(parsed.imageModelId ? { imageModelId: parsed.imageModelId } : {}),
       ...(parsed.enableVideoGeneration != null
         ? { enableVideoGeneration: parsed.enableVideoGeneration }
         : {}),

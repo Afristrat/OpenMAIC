@@ -346,6 +346,8 @@ export const generateClassroomSchema = z.object({
     })
     .optional(),
   enableImageGeneration: z.boolean().optional(),
+  imageProviderId: z.string().min(1).max(80).optional(),
+  imageModelId: z.string().min(1).max(160).optional(),
   enableVideoGeneration: z.boolean().optional(),
   enableTTS: z.boolean().optional(),
   interactiveMode: z.boolean().optional(),

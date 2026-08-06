@@ -87,6 +87,8 @@ export interface GenerateClassroomInput {
   webSearchApiKey?: string;
   baiduSubSources?: BaiduSubSources;
   enableImageGeneration?: boolean;
+  imageProviderId?: string;
+  imageModelId?: string;
   enableVideoGeneration?: boolean;
   enableTTS?: boolean;
   interactiveMode?: boolean;
@@ -779,6 +781,10 @@ export async function generateClassroom(
           outlines,
           stageId,
           organizationDesignSystem,
+          {
+            ...(input.imageProviderId ? { providerId: input.imageProviderId } : {}),
+            ...(input.imageModelId ? { modelId: input.imageModelId } : {}),
+          },
         );
         replaceMediaPlaceholders(scenes, mediaMap);
         log.info(`Media generation complete: ${Object.keys(mediaMap).length} files`);

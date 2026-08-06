@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import {
   replaceMediaPlaceholders,
+  selectClassroomImageProvider,
   selectClassroomImageModel,
 } from '@/lib/server/classroom-media-generation';
 import type { Scene } from '@/lib/types/stage';
@@ -54,5 +55,41 @@ describe('classroom image model selection', () => {
         'openai-image': { models: ['gemini-3.1-flash-image'] },
       }),
     ).toBe('gemini-3.1-flash-image');
+  });
+
+  test('preserves the exact author selection when it is administered', () => {
+    expect(
+      selectClassroomImageModel(
+        'openai-image',
+        {
+          'openai-image': {
+            models: ['gemini-3.1-flash-image', 'future-administered-image-model'],
+          },
+        },
+        'future-administered-image-model',
+      ),
+    ).toBe('future-administered-image-model');
+  });
+
+  test('rejects an unadministered client model and falls back to the first administered model', () => {
+    expect(
+      selectClassroomImageModel(
+        'openai-image',
+        { 'openai-image': { models: ['gemini-3.1-flash-image'] } },
+        'client-injected-model',
+      ),
+    ).toBe('gemini-3.1-flash-image');
+  });
+
+  test('preserves the selected administered provider', () => {
+    expect(
+      selectClassroomImageProvider(
+        {
+          'openai-image': { models: ['gemini-3.1-flash-image'] },
+          'qwen-image': { models: ['qwen-image-max'] },
+        },
+        'qwen-image',
+      ),
+    ).toBe('qwen-image');
   });
 });

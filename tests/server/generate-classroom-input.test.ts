@@ -14,6 +14,8 @@ describe('generateClassroomSchema', () => {
       ...baseInput,
       interactiveMode: true,
       enableImageGeneration: true,
+      imageProviderId: 'openai-image',
+      imageModelId: 'gemini-3-pro-image',
       enableVideoGeneration: false,
       enableTTS: true,
       agentMode: 'default',
@@ -53,6 +55,10 @@ describe('generateClassroomSchema', () => {
     });
 
     expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.imageProviderId).toBe('openai-image');
+      expect(result.data.imageModelId).toBe('gemini-3-pro-image');
+    }
   });
 
   test('rejects a specialist without a four-digit ISCO-08 unit-group code', () => {

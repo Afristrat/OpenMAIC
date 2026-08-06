@@ -50,8 +50,23 @@ export interface ClassroomTTSGenerationReport {
 export function selectClassroomImageModel(
   providerId: ImageProviderId,
   serverProviders: Record<string, { models?: string[] }>,
+  requestedModelId?: string,
 ): string | undefined {
-  return serverProviders[providerId]?.models?.[0] ?? IMAGE_PROVIDERS[providerId]?.models?.[0]?.id;
+  const administeredModels = serverProviders[providerId]?.models ?? [];
+  if (requestedModelId && administeredModels.includes(requestedModelId)) {
+    return requestedModelId;
+  }
+  return administeredModels[0] ?? IMAGE_PROVIDERS[providerId]?.models?.[0]?.id;
+}
+
+export function selectClassroomImageProvider(
+  serverProviders: Record<string, { models?: string[] }>,
+  requestedProviderId?: string,
+): ImageProviderId | undefined {
+  if (requestedProviderId && requestedProviderId in serverProviders) {
+    return requestedProviderId as ImageProviderId;
+  }
+  return Object.keys(serverProviders)[0] as ImageProviderId | undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -105,6 +120,7 @@ export async function generateMediaForClassroom(
   outlines: SceneOutline[],
   classroomId: string,
   designSystem?: OrganizationDesignSystem,
+  imageSelection?: { providerId?: string; modelId?: string },
 ): Promise<Record<string, string>> {
   // Collect all media generation requests from outlines
   const requests = outlines.flatMap((o) => o.mediaGenerations ?? []);
@@ -112,27 +128,34 @@ export async function generateMediaForClassroom(
 
   // Resolve providers
   const serverImageProviders = getServerImageProviders();
-  const imageProviderIds = Object.keys(serverImageProviders);
+  const imageProviderId = selectClassroomImageProvider(
+    serverImageProviders,
+    imageSelection?.providerId,
+  );
   const videoProviderIds = Object.keys(getServerVideoProviders());
 
   const mediaMap: Record<string, string> = {};
 
   // Separate image and video requests, generate each type sequentially
   // but run the two types in parallel (providers often have limited concurrency).
-  const imageRequests = requests.filter((r) => r.type === 'image' && imageProviderIds.length > 0);
+  const imageRequests = requests.filter((r) => r.type === 'image' && imageProviderId);
   const videoRequests = requests.filter((r) => r.type === 'video' && videoProviderIds.length > 0);
 
   const generateImages = async () => {
     for (const req of imageRequests) {
       try {
-        const providerId = imageProviderIds[0] as ImageProviderId;
+        const providerId = imageProviderId!;
         const apiKey = resolveImageApiKey(providerId);
         const providerConfig = IMAGE_PROVIDERS[providerId];
         if (providerConfig?.requiresApiKey && !apiKey) {
           log.warn(`No API key for image provider "${providerId}", skipping ${req.elementId}`);
           continue;
         }
-        const model = selectClassroomImageModel(providerId, serverImageProviders);
+        const model = selectClassroomImageModel(
+          providerId,
+          serverImageProviders,
+          imageSelection?.modelId,
+        );
 
         const result = await generateImage(
           { providerId, apiKey, baseUrl: resolveImageBaseUrl(providerId), model },

@@ -138,6 +138,8 @@ function HomePage() {
   // instead of inspecting modelId directly.
   const webSearchProvidersConfig = useSettingsStore((s) => s.webSearchProvidersConfig);
   const imageGenerationEnabled = useSettingsStore((s) => s.imageGenerationEnabled);
+  const imageProviderId = useSettingsStore((s) => s.imageProviderId);
+  const imageModelId = useSettingsStore((s) => s.imageModelId);
   const videoGenerationEnabled = useSettingsStore((s) => s.videoGenerationEnabled);
   const ttsEnabled = useSettingsStore((s) => s.ttsEnabled);
   const agentMode = useSettingsStore((s) => s.agentMode);
@@ -485,6 +487,8 @@ function HomePage() {
           ...(pdfContent ? { pdfContent } : {}),
           enableWebSearch: form.webSearch,
           enableImageGeneration: imageGenerationEnabled,
+          imageProviderId,
+          imageModelId,
           enableVideoGeneration: videoGenerationEnabled,
           enableTTS: ttsEnabled,
           interactiveMode: form.vocationalTestMode ? true : form.interactiveMode,
