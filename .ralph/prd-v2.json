@@ -923,7 +923,8 @@
       "title": "Identité territoriale et preuve complète des spécialistes ISCO [UI]",
       "epic": "5-ÉCOSYSTÈME",
       "phase": 5,
-      "passes": false,
+      "passes": true,
+      "completedAt": "2026-08-08",
       "dependencies": ["S5-002"],
       "acceptance": [
         "Le territoire choisi par l’auteur est transmis à la génération des spécialistes et le prénom est culturellement plausible dans ce territoire, pas seulement dans la langue",
@@ -933,7 +934,8 @@
         "Le texte visible, l’audio persistant et l’identité affichée de cette intervention sont vérifiés dans un navigateur de production",
         "Formation Design Pro publie le même invariant territorial",
         "Quality gates complets verts sur ServeurAI et endpoint public sain après déploiement"
-      ]
+      ],
+      "acceptanceNote": "Validé sur ServeurAI et en production aux commits 5dacf23 et 3e334a2. La cause racine des agents silencieux était double : le contrat n’exigeait qu’une intervention non enseignante par scène et le post-traitement s’arrêtait dès qu’une seule intervention canonique existait ; de plus, le filtrage du mode préréglé retirait les spécialistes contextuels explicitement sélectionnés. Le serveur répartit désormais tous les agents actifs entre les scènes, exige une prise de parole utile de chacun, répare individuellement les interventions absentes, traite également les actions de repli afin de persister leur identité, puis refuse la classroom avant écriture si un agent du casting reste muet. Le territoire auteur traverse maintenant l’interface et l’API ; le spécialiste reçoit un prénom réellement plausible dans ce territoire, cohérent avec son genre, son avatar et sa voix. Formation Design Pro 3.6.0 publie le même invariant. Preuve réelle : https://qalem.ma/classroom/xYyVvJa5j0, 3 scènes, propriétaire transféré à amine@qalem.ma, casting de 4 agents. Younes : 16 prises de parole avec audio ; Rim, la Rigolote : 2 avec audio ; Mehdi, le Curieux : 2 avec audio ; Youssef Benali, spécialiste ISCO-08 2412 contextualisé au Maroc : 3 avec audio. Le navigateur de production affiche les quatre identités, la première narration et une lecture active sans erreur audio. Le compte auteur de preuve a été supprimé. Gates sur le SHA déployé 3e334a2 : Prettier, TypeScript, ESLint, Vitest complet et build verts ; relance Playwright isolée 54/54 verte en 2,9 minutes après un premier passage chaîné non terminal. Endpoint public /api/health : HTTP 200 en 0,25 s."
     }
   ]
 }
