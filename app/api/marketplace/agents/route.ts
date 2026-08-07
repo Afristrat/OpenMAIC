@@ -11,6 +11,7 @@ import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response
 import { computeAgentScore, isTopAgent } from '@/lib/marketplace/ranking';
 import { validateBody } from '@/lib/api/validate';
 import { marketplacePublishSchema } from '@/lib/api/schemas';
+import { getSystemAgents } from '@/lib/marketplace/system-agents';
 
 export async function GET(request: NextRequest): Promise<Response> {
   const supabase = await createServerSupabaseClient();
@@ -25,6 +26,23 @@ export async function GET(request: NextRequest): Promise<Response> {
   const sortBy = url.searchParams.get('sort') ?? 'score'; // score | rating | usage | recent
 
   const offset = (page - 1) * limit;
+  const searchLower = search.toLocaleLowerCase();
+  const systemAgents = getSystemAgents().filter((agent) => {
+    const agentTags = agent.tags ?? [];
+    const textMatches =
+      !searchLower ||
+      agent.name.toLocaleLowerCase().includes(searchLower) ||
+      agent.description?.toLocaleLowerCase().includes(searchLower);
+    return (
+      textMatches &&
+      (!tag || agentTags.includes(tag)) &&
+      (!language || agentTags.includes(language)) &&
+      (!level || agentTags.includes(level))
+    );
+  });
+  const systemAgentsOnPage = systemAgents.slice(offset, offset + limit);
+  const customSlots = limit - systemAgentsOnPage.length;
+  const customOffset = Math.max(0, offset - systemAgents.length);
 
   let query = supabase
     .from('agent_configs')
@@ -73,13 +91,14 @@ export async function GET(request: NextRequest): Promise<Response> {
       break;
   }
 
-  query = query.range(offset, offset + limit - 1);
+  query = query.range(customOffset, customOffset + Math.max(customSlots, 1) - 1);
 
   const { data: agents, error, count } = await query;
 
-  if (error) {
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to fetch agents', error.message);
-  }
+  // The versioned system catalog remains usable when the optional custom-agent
+  // store is unavailable. Custom agents reappear automatically once Supabase
+  // recovers; a database outage must not erase Qalem's ten canonical personas.
+  void error;
 
   // Compute scores and top-agent badges
   const scored = (agents ?? []).map((a) => {
@@ -122,13 +141,15 @@ export async function GET(request: NextRequest): Promise<Response> {
     agent.isTopAgent = isTopAgent(agent.compositeScore, allScores);
   }
 
+  const total = (count ?? 0) + systemAgents.length;
+
   return apiSuccess({
-    agents: scored,
+    agents: [...systemAgentsOnPage, ...scored.slice(0, customSlots)],
     pagination: {
       page,
       limit,
-      total: count ?? 0,
-      totalPages: Math.ceil((count ?? 0) / limit),
+      total,
+      totalPages: Math.ceil(total / limit),
     },
   });
 }

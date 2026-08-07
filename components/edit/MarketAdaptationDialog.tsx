@@ -21,6 +21,7 @@ import {
 } from '@/lib/formation-engine/market-adaptation';
 import { DEFAULT_LEARNING_CONTEXT } from '@/lib/formation-engine/learning-context';
 import { useStageStore } from '@/lib/store/stage';
+import { toast } from 'sonner';
 
 interface MarketAdaptationDialogProps {
   readonly disabled?: boolean;
@@ -85,6 +86,12 @@ export function MarketAdaptationDialog({
         }
       }
       updateStage({ learningContext: plan.target });
+      toast.success(
+        t('edit.market.applied', {
+          territory: plan.target.territory,
+          currency: plan.target.currencyCode,
+        }),
+      );
       setOpen(false);
     } finally {
       setApplying(false);
@@ -92,7 +99,8 @@ export function MarketAdaptationDialog({
   };
 
   const busy = applying || agentRunning;
-  const applyDisabled = busy || !plan?.hasChanges || counts.manual > 0;
+  const applyDisabled =
+    busy || !plan?.hasChanges || (counts.automatable === 0 && counts.manual > 0);
   const applyLabel =
     counts.automatable === 0
       ? t('edit.market.saveContext')

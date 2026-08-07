@@ -60,7 +60,7 @@ const scenes = [
 ] as unknown as Scene[];
 
 describe('planMarketAdaptation', () => {
-  it('liste uniquement les scènes qui mentionnent le territoire ou la devise source', () => {
+  it('inclut toutes les scènes car les dépendances au marché peuvent être implicites', () => {
     const plan = planMarketAdaptation(stage, scenes, {
       territory: 'France',
       currencyCode: 'EUR',
@@ -71,6 +71,14 @@ describe('planMarketAdaptation', () => {
         sceneId: 'slide-money',
         order: 1,
         title: 'Budget à Casablanca',
+        sceneType: 'slide',
+        reasons: ['currency', 'territory'],
+        automatable: true,
+      },
+      {
+        sceneId: 'slide-neutral',
+        order: 2,
+        title: 'Décider',
         sceneType: 'slide',
         reasons: ['currency', 'territory'],
         automatable: true,
@@ -106,7 +114,7 @@ describe('buildMarketAdaptationInstruction', () => {
 
     expect(buildMarketAdaptationInstruction(plan)).toBe(
       [
-        'Adapte uniquement les diapositives suivantes au territoire France et à la devise EUR : slide-money.',
+        'Adapte uniquement les diapositives suivantes au territoire France et à la devise EUR : slide-money, slide-neutral.',
         'Conserve leurs objectifs, leur ordre, leur structure pédagogique et les éléments sans rapport avec le marché.',
         'Adapte les exemples, contraintes, budgets, textes visibles et notes de présentation qui dépendent du Maroc ou de MAD.',
         'Ne convertis aucun montant existant sans taux de change actuel et sourcé. Sans source suffisante, reformule le montant comme une hypothèse illustrative explicite dans la devise cible.',

@@ -1878,6 +1878,7 @@
   "org.sectors.finance": "Financial services",
   "org.sectors.healthcare": "Healthcare",
   "org.sectors.industry": "Industry",
+  "org.sectors.method": "Learning design method",
   "org.sectors.legal": "Legal services",
   "org.sectors.tech": "Technology",
   "org.settings": "Organization settings",
@@ -2200,5 +2201,6 @@
   "edit.market.saveContext": "Save context",
   "edit.market.applyOne": "Adapt 1 slide",
   "edit.market.applyMany": "Adapt {{count}} slides",
-  "edit.market.failed": "Adaptation failed. No market change was saved."
+  "edit.market.failed": "Adaptation failed. No market change was saved.",
+  "edit.market.applied": "Adaptation to {{territory}} in {{currency}} saved."
 }

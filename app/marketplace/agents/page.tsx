@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import type { RankedAgent } from '@/lib/marketplace/ranking';
+import { getSystemAgents } from '@/lib/marketplace/system-agents';
 
 interface PaginationInfo {
   page: number;
@@ -76,14 +77,14 @@ export default function MarketplacePage() {
   const { user } = useAuth();
   const addAgent = useAgentRegistry((s) => s.addAgent);
 
-  const [agents, setAgents] = useState<RankedAgent[]>([]);
+  const [agents, setAgents] = useState<RankedAgent[]>(() => getSystemAgents());
   const [pagination, setPagination] = useState<PaginationInfo>({
     page: 1,
     limit: 20,
     total: 0,
     totalPages: 0,
   });
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [filterTag, setFilterTag] = useState('all');
@@ -305,7 +306,7 @@ export default function MarketplacePage() {
       </div>
 
       {/* Loading */}
-      {isLoading && (
+      {isLoading && agents.length === 0 && (
         <div className="flex items-center justify-center py-20">
           <p className="text-muted-foreground">{t('common.loading')}</p>
         </div>
@@ -320,7 +321,7 @@ export default function MarketplacePage() {
       )}
 
       {/* Agent Grid */}
-      {!isLoading && agents.length > 0 && (
+      {agents.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {agents.map((agent) => (
             <div

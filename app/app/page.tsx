@@ -881,6 +881,14 @@ function HomePage() {
                 onSelect={(template) => {
                   const requirement = template.requirements.requirement;
                   if (typeof requirement === 'string') updateForm('requirement', requirement);
+                  const learningApproach = template.requirements.learningApproach;
+                  if (
+                    learningApproach === 'pedagogy' ||
+                    learningApproach === 'hybrid' ||
+                    learningApproach === 'andragogy'
+                  ) {
+                    updateForm('learningApproach', learningApproach);
+                  }
                   const templateContext = template.requirements.learningContext;
                   if (
                     templateContext &&

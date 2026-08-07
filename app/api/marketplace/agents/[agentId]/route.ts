@@ -10,6 +10,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 import { validateBody } from '@/lib/api/validate';
 import { marketplaceReviewSchema } from '@/lib/api/schemas';
+import { getSystemAgent } from '@/lib/marketplace/system-agents';
 
 interface RouteParams {
   params: Promise<{ agentId: string }>;
@@ -17,6 +18,8 @@ interface RouteParams {
 
 export async function GET(_request: NextRequest, { params }: RouteParams): Promise<Response> {
   const { agentId } = await params;
+  const systemAgent = getSystemAgent(agentId);
+  if (systemAgent) return apiSuccess({ agent: systemAgent, reviews: [] });
   const supabase = await createServerSupabaseClient();
 
   // Fetch agent

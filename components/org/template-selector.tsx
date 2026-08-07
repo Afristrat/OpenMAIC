@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { tryCreateClient } from '@/lib/supabase/client';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,7 @@ import {
   Factory,
 } from 'lucide-react';
 import type { ClassroomTemplate, OrgSector } from '@/lib/supabase/types';
+import { getSystemBlueprints } from '@/lib/formation-engine/system-blueprints';
 
 // NOTE: We import Dialog* above — ensure your ui/dialog exports DialogContent, DialogHeader, DialogTitle, DialogTrigger.
 // If not, the component uses a simpler overlay fallback.
@@ -51,14 +52,19 @@ const SECTOR_COLORS: Record<string, string> = {
 };
 
 export function TemplateSelector({ onSelect, sectorFilter }: TemplateSelectorProps) {
-  const { t } = useI18n();
-  const [templates, setTemplates] = useState<ClassroomTemplate[]>([]);
+  const { t, locale } = useI18n();
+  const systemTemplates = useMemo(() => getSystemBlueprints(locale), [locale]);
+  const [templates, setTemplates] = useState<ClassroomTemplate[]>(systemTemplates);
   const [isLoading, setIsLoading] = useState(true);
   const [open, setOpen] = useState(false);
 
   const fetchTemplates = useCallback(async () => {
+    const builtIns = sectorFilter
+      ? systemTemplates.filter((template) => template.sector === sectorFilter)
+      : systemTemplates;
     const supabase = tryCreateClient();
     if (!supabase) {
+      setTemplates(builtIns);
       setIsLoading(false);
       return;
     }
@@ -69,11 +75,9 @@ export function TemplateSelector({ onSelect, sectorFilter }: TemplateSelectorPro
     }
 
     const { data, error } = await query;
-    if (!error && data) {
-      setTemplates(data);
-    }
+    setTemplates(!error && data ? [...builtIns, ...data] : builtIns);
     setIsLoading(false);
-  }, [sectorFilter]);
+  }, [sectorFilter, systemTemplates]);
 
   /* eslint-disable react-hooks/set-state-in-effect -- Async data loading */
   useEffect(() => {
@@ -112,7 +116,7 @@ export function TemplateSelector({ onSelect, sectorFilter }: TemplateSelectorPro
           <DialogDescription className="sr-only">{t('org.templates')}</DialogDescription>
         </DialogHeader>
 
-        {isLoading ? (
+        {isLoading && templates.length === 0 ? (
           <p className="py-8 text-center text-muted-foreground">{t('common.loading')}</p>
         ) : templates.length === 0 ? (
           <p className="py-8 text-center text-muted-foreground">{t('org.noTemplates')}</p>

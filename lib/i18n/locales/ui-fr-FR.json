@@ -1878,6 +1878,7 @@
   "org.sectors.finance": "Services financiers",
   "org.sectors.healthcare": "Soins de santé",
   "org.sectors.industry": "Industrie",
+  "org.sectors.method": "Méthode de conception",
   "org.sectors.legal": "Services juridiques",
   "org.sectors.tech": "Technologie",
   "org.settings": "Paramètres de l\u0027organisation",
@@ -2200,5 +2201,6 @@
   "edit.market.saveContext": "Enregistrer le contexte",
   "edit.market.applyOne": "Adapter 1 diapositive",
   "edit.market.applyMany": "Adapter {{count}} diapositives",
-  "edit.market.failed": "L’adaptation a échoué. Aucun changement de marché n’a été enregistré."
+  "edit.market.failed": "L’adaptation a échoué. Aucun changement de marché n’a été enregistré.",
+  "edit.market.applied": "Adaptation à {{territory}} en {{currency}} enregistrée."
 }

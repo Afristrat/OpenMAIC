@@ -217,6 +217,44 @@ test.describe('Mobile Pro editor audit', () => {
     page,
   }) => {
     const stageId = 'e2e-market-adaptation';
+    await page.route('**/api/agent/edit', async (route) => {
+      const event = {
+        type: 'tool_execution_end',
+        toolCallId: 'market-adaptation-1',
+        toolName: 'regenerate_scene',
+        result: {
+          details: {
+            sceneId: 'scene-market',
+            content: {
+              elements: [
+                {
+                  id: 'market-text-adapted',
+                  type: 'text',
+                  content: 'Budget indicatif en France : hypothèse de 10 000 EUR',
+                  left: 100,
+                  top: 100,
+                  width: 800,
+                  height: 120,
+                },
+              ],
+              background: { type: 'solid', color: '#ffffff' },
+            },
+            actions: [
+              {
+                type: 'speech',
+                text: 'En France, ce budget illustratif est exprimé en euros.',
+              },
+            ],
+          },
+        },
+        isError: false,
+      };
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: `data: ${JSON.stringify(event)}\n\n`,
+      });
+    });
     await page.addInitScript(() => localStorage.setItem('locale', 'fr-FR'));
     await seedScene(page, stageId, {
       id: 'scene-market',
@@ -260,6 +298,13 @@ test.describe('Mobile Pro editor audit', () => {
     await expect(page.getByTestId('market-impact-list')).toContainText('Budget au Maroc');
     await expect(page.getByTestId('market-impact-list')).toContainText('Devise');
     await expect(page.getByTestId('market-impact-list')).toContainText('Territoire');
-    await expect(page.getByRole('button', { name: 'Adapter 1 diapositive' })).toBeEnabled();
+    const applyButton = page.getByRole('button', { name: 'Adapter 1 diapositive' });
+    await expect(applyButton).toBeEnabled();
+    await applyButton.click();
+
+    await expect(
+      page.getByText('Budget indicatif en France : hypothèse de 10 000 EUR'),
+    ).toBeVisible();
+    await expect(page.getByText('Enregistré', { exact: true })).toBeVisible();
   });
 });

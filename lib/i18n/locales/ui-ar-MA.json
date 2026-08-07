@@ -1878,6 +1878,7 @@
   "org.sectors.finance": "الخدمات المالية",
   "org.sectors.healthcare": "الرعاية الصحية",
   "org.sectors.industry": "الصناعة",
+  "org.sectors.method": "منهجية تصميم التكوين",
   "org.sectors.legal": "الخدمات القانونية",
   "org.sectors.tech": "التكنولوجيا",
   "org.settings": "إعدادات المؤسسة",
@@ -2200,5 +2201,6 @@
   "edit.market.saveContext": "حفظ السياق",
   "edit.market.applyOne": "تكييف شريحة واحدة",
   "edit.market.applyMany": "تكييف {{count}} شرائح",
-  "edit.market.failed": "فشل التكييف. لم يتم حفظ أي تغيير في السوق."
+  "edit.market.failed": "فشل التكييف. لم يتم حفظ أي تغيير في السوق.",
+  "edit.market.applied": "تم حفظ التكييف مع {{territory}} بعملة {{currency}}."
 }

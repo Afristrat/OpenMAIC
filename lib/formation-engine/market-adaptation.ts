@@ -19,48 +19,6 @@ export interface MarketAdaptationPlan {
   impacts: MarketAdaptationImpact[];
 }
 
-const CURRENCY_TOKENS: Readonly<Record<string, readonly string[]>> = {
-  MAD: ['MAD', 'د.م.', 'DH', 'DHS'],
-  EUR: ['EUR', '€'],
-  USD: ['USD', 'US$'],
-  GBP: ['GBP', '£'],
-  XOF: ['XOF', 'FCFA'],
-  DZD: ['DZD', 'DA'],
-  TND: ['TND', 'DT'],
-};
-
-function normalizedText(value: unknown): string {
-  const parts: string[] = [];
-  const visit = (candidate: unknown, key?: string) => {
-    if (typeof candidate === 'string') {
-      if (key === 'src' || candidate.startsWith('data:')) return;
-      parts.push(candidate);
-      return;
-    }
-    if (Array.isArray(candidate)) {
-      candidate.forEach((item) => visit(item));
-      return;
-    }
-    if (!candidate || typeof candidate !== 'object') return;
-    Object.entries(candidate).forEach(([childKey, child]) => visit(child, childKey));
-  };
-  visit(value);
-  return parts.join('\n').toLocaleLowerCase();
-}
-
-function includesToken(haystack: string, token: string): boolean {
-  const normalizedToken = token.toLocaleLowerCase();
-  if (!/^[a-z0-9]+$/i.test(token)) return haystack.includes(normalizedToken);
-  const escaped = normalizedToken.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`, 'i').test(haystack);
-}
-
-function mentionsCurrency(text: string, currencyCode: string): boolean {
-  return (CURRENCY_TOKENS[currencyCode] ?? [currencyCode]).some((token) =>
-    includesToken(text, token),
-  );
-}
-
 export function planMarketAdaptation(
   stage: Stage,
   scenes: readonly Scene[],
@@ -79,16 +37,12 @@ export function planMarketAdaptation(
   if (!hasChanges) return { source, target, hasChanges, impacts: [] };
 
   const impacts = scenes.flatMap<MarketAdaptationImpact>((scene) => {
-    const text = normalizedText(scene);
     const reasons: MarketAdaptationReason[] = [];
-    if (currencyChanged && mentionsCurrency(text, source.currencyCode)) reasons.push('currency');
-    if (
-      territoryChanged &&
-      source.territory &&
-      text.includes(source.territory.toLocaleLowerCase())
-    ) {
-      reasons.push('territory');
-    }
+    // Market assumptions may be implicit in examples, constraints, imagery,
+    // narration, or missing metadata. A changed market therefore affects every
+    // scene, not only scenes where a token scan finds the old context.
+    if (currencyChanged) reasons.push('currency');
+    if (territoryChanged) reasons.push('territory');
     if (reasons.length === 0) return [];
     return [
       {
