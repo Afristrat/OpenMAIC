@@ -741,6 +741,12 @@ export async function generateClassroom(
         () =>
           generateSceneActions(safeOutline, content, sceneAiCall, {
             agents,
+            requiredAgentIds: tenantAgentConfigs
+              .filter(
+                (agent, agentIndex) =>
+                  agent.role !== 'teacher' && agentIndex % outlines.length === index,
+              )
+              .map((agent) => agent.id),
             languageDirective,
           }),
         {
@@ -775,6 +781,22 @@ export async function generateClassroom(
 
     if (scenes.length === 0) {
       throw new Error('No scenes were generated');
+    }
+
+    const speakingAgentIds = new Set(
+      scenes.flatMap((scene) =>
+        (scene.actions ?? []).flatMap((action) =>
+          action.type === 'speech' && action.agentId ? [action.agentId] : [],
+        ),
+      ),
+    );
+    const silentAgents = tenantAgentConfigs.filter((agent) => !speakingAgentIds.has(agent.id));
+    if (silentAgents.length > 0) {
+      throw new Error(
+        `Active classroom agents have no persisted speech: ${silentAgents
+          .map((agent) => agent.id)
+          .join(', ')}`,
+      );
     }
 
     const animationConstitution = createAnimationConstitution({

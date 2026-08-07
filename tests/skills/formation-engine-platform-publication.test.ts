@@ -12,7 +12,7 @@ describe('formation engine platform publication', () => {
   it('hydrates the traced refactored engine override through the production loader', () => {
     const skill = loadSkillFromDir(skillRoot);
 
-    expect(skill?.version).toBe('3.5.0');
+    expect(skill?.version).toBe('3.6.0');
     expect(skill?.traceability).toEqual({
       source: 'external-private-git publication with Qalem animation contract',
       vectors: expectedVectors,
@@ -45,7 +45,7 @@ describe('formation engine platform publication', () => {
 
     expect(publication.provenance).toMatchObject({
       validatedVectors: expectedVectors,
-      lastValidatedStory: 'S4-011',
+      lastValidatedStory: 'S5-003',
       validatedAt: '2026-08-07',
     });
     expect(prompt).toContain('source: external-private-git publication');
@@ -80,5 +80,7 @@ describe('formation engine platform publication', () => {
     expect(publication).toContain('prévisualiser la liste des scènes affectées');
     expect(publication).toContain('sans taux de change actuel et sourcé');
     expect(publication).toContain('objectifs, l’ordre et la structure pédagogique');
+    expect(publication).toContain('au moins une prise de parole canonique utile par agent actif');
+    expect(publication).toContain('plus de membres que la formation ne comporte de scènes');
   });
 });

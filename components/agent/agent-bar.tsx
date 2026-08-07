@@ -615,10 +615,12 @@ export function AgentBar({
   organizationSettings,
   orgId,
   topic = '',
+  territory = '',
 }: {
   organizationSettings?: unknown;
   orgId?: string;
   topic?: string;
+  territory?: string;
 }) {
   const { t, locale } = useI18n();
   const { listAgents } = useAgentRegistry();
@@ -787,7 +789,7 @@ export function AgentBar({
       const response = await fetch('/api/generate/contextual-specialists', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orgId, topic: topic.trim(), locale }),
+        body: JSON.stringify({ orgId, topic: topic.trim(), locale, territory: territory.trim() }),
       });
       const result = (await response.json()) as {
         specialists?: ContextualSpecialist[];

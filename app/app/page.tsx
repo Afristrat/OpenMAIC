@@ -789,6 +789,7 @@ function HomePage() {
                   organizationSettings={currentOrg?.settings}
                   orgId={currentOrg?.id}
                   topic={form.requirement}
+                  territory={form.learningContext.territory}
                 />
               </div>
             </div>

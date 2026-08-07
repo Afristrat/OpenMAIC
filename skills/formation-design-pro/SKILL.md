@@ -12,6 +12,7 @@ description: Concevoir ou industrialiser une formation Qalem fondée sur une per
 3. Compiler le plan de formation avec le moteur `qalem-prompt-compiler`. Ne pas recréer ses schémas ni ses politiques.
 4. Concevoir chaque activité et chaque évaluation en fonction de sa contribution à la performance visée. Ne jamais imposer de ratio universel de théorie, pratique, parole ou apprentissage entre pairs.
 5. Produire une constitution d’animation persistante avant le live. Lire [le contrat de conception](references/formation-design-contract.md) pour les entrées, sorties et invariants.
+6. Ne retenir dans le casting que des agents qui apportent une contribution identifiable. Répartir au moins une prise de parole canonique utile par agent actif, même lorsque le roster comporte plus de membres que la formation ne comporte de scènes.
 
 Le territoire et la devise sont des variables structurées de la trame, jamais des détails déduits d’un exemple. Les recopier dans la classroom afin qu’une adaptation ultérieure puisse retraiter uniquement les cas, montants, ressources et narrations concernés. Ne jamais convertir un montant existant sans taux actuel et source vérifiable.
 

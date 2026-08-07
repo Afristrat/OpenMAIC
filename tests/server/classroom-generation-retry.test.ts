@@ -80,6 +80,23 @@ const slideContent = {
   remark: 'Retry transient failures',
 };
 
+const completeRosterActions = [
+  {
+    id: 'speech-teacher',
+    type: 'speech',
+    text: 'Teacher narration.',
+    agentId: 'persona-professor',
+  },
+  {
+    id: 'speech-assistant',
+    type: 'speech',
+    text: 'Assistant contribution.',
+    agentId: 'persona-teaching-assistant',
+  },
+  { id: 'speech-joker', type: 'speech', text: 'Useful humor.', agentId: 'persona-joker' },
+  { id: 'speech-curious', type: 'speech', text: 'Useful question.', agentId: 'persona-curious' },
+] as const;
+
 async function generateWithProgress(input: Record<string, unknown> = {}) {
   const progress: Array<{ message: string }> = [];
   const { generateClassroom } = await import('@/lib/server/classroom-generation');
@@ -125,7 +142,7 @@ describe('classroom scene generation retries', () => {
       },
     });
     mocks.applyOutlineFallbacks.mockImplementation((value) => value);
-    mocks.generateSceneActions.mockResolvedValue([]);
+    mocks.generateSceneActions.mockResolvedValue(completeRosterActions);
     mocks.createSceneWithActions.mockImplementation((sceneOutline, content, actions, api) => {
       const sceneResult = api.scene.create({
         type: sceneOutline.type,
@@ -262,7 +279,7 @@ describe('classroom scene generation retries', () => {
     mocks.generateSceneContent.mockResolvedValue(slideContent);
     mocks.generateSceneActions
       .mockRejectedValueOnce(Object.assign(new Error('rate limited'), { statusCode: 429 }))
-      .mockResolvedValueOnce([]);
+      .mockResolvedValueOnce(completeRosterActions);
 
     const { result, progress } = await generateWithProgress();
 
@@ -285,9 +302,7 @@ describe('classroom scene generation retries', () => {
 
   it('fails the classroom job when requested narration was not persisted', async () => {
     mocks.generateSceneContent.mockResolvedValue(slideContent);
-    mocks.generateSceneActions.mockResolvedValue([
-      { id: 'speech-1', type: 'speech', text: 'Narration indispensable.' },
-    ]);
+    mocks.generateSceneActions.mockResolvedValue([...completeRosterActions]);
     mocks.generateTTSForClassroom.mockResolvedValue({ requested: 1, generated: 0 });
 
     await expect(generateWithProgress({ enableTTS: true })).rejects.toThrow(

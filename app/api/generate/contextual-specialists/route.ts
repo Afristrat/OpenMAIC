@@ -15,6 +15,7 @@ import {
   ESCO_SOURCE_VERSION,
   type EscoOccupationResource,
 } from '@/lib/agents/isco-profile';
+import { buildContextualSpecialistSystemPrompt } from '@/lib/agents/contextual-specialist-prompt';
 
 const log = createLogger('ContextualSpecialists');
 const ESCO_SEARCH_URL = 'https://ec.europa.eu/esco/api/search';
@@ -25,6 +26,7 @@ interface SpecialistRequest {
   orgId?: string;
   topic?: string;
   locale?: 'fr-FR' | 'ar-MA' | 'en-US';
+  territory?: string;
 }
 
 interface ProposedSpecialist {
@@ -220,8 +222,20 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as SpecialistRequest;
     const orgId = body.orgId?.trim();
     const topic = body.topic?.trim();
-    if (!orgId || !topic || topic.length < 8 || topic.length > 12_000) {
-      return apiError('INVALID_REQUEST', 400, 'A valid orgId and topic are required');
+    const territory = body.territory?.trim();
+    if (
+      !orgId ||
+      !topic ||
+      topic.length < 8 ||
+      topic.length > 12_000 ||
+      !territory ||
+      territory.length > 120
+    ) {
+      return apiError(
+        'INVALID_REQUEST',
+        400,
+        'A valid orgId, topic and learning territory are required',
+      );
     }
     const auth = await requireSuperAdminOrOrgAuthor(req, orgId);
     if (auth.response) return auth.response;
@@ -231,16 +245,11 @@ export async function POST(req: NextRequest) {
       body as unknown as Record<string, unknown>,
       'generate-classroom',
     );
-    const outputLanguage =
-      body.locale === 'ar-MA'
-        ? 'Modern Standard Arabic'
-        : body.locale === 'en-US'
-          ? 'English'
-          : 'French';
+    const locale = body.locale ?? 'fr-FR';
     const result = await callLLM(
       {
         model,
-        system: `You design an immersive multi-agent professional course. Identify zero to three occupations whose real-world expertise would materially improve the topic. Do not replace the permanent pedagogical personas. Avoid decorative or redundant experts. Each searchTerm must be a concise occupation title in ${body.locale === 'fr-FR' ? 'French' : 'English'} suitable for an ESCO occupation search. displayName and reason must be in ${outputLanguage}. Use culturally plausible first names and align each name with the declared binary voice gender. Never use em dashes. Return only JSON: {"specialists":[{"searchTerm":"...","displayName":"...","reason":"...","gender":"female|male"}]}.`,
+        system: buildContextualSpecialistSystemPrompt({ locale, territory }),
         prompt: topic,
       },
       'contextual-specialists',
@@ -252,8 +261,8 @@ export async function POST(req: NextRequest) {
       proposals.map((proposal) =>
         resolveOccupation(
           proposal,
-          body.locale === 'fr-FR' ? 'fr' : 'en',
-          body.locale === 'fr-FR' ? 'fr' : body.locale === 'ar-MA' ? 'ar' : 'en',
+          locale === 'fr-FR' ? 'fr' : 'en',
+          locale === 'fr-FR' ? 'fr' : locale === 'ar-MA' ? 'ar' : 'en',
         ),
       ),
     );
@@ -262,7 +271,7 @@ export async function POST(req: NextRequest) {
     );
     const specialists = await localizeSpecialistTasks(
       groundedSpecialists,
-      body.locale ?? 'fr-FR',
+      locale,
       model,
       thinkingConfig,
     );

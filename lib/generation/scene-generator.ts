@@ -103,6 +103,8 @@ export interface SceneContentOptions {
 export interface SceneActionsOptions {
   ctx?: SceneGenerationContext;
   agents?: AgentInfo[];
+  /** Agents that must contribute a prepared intervention in this scene. */
+  requiredAgentIds?: string[];
   userProfile?: string;
   languageDirective?: string;
 }
@@ -1512,8 +1514,17 @@ export async function generateSceneActions(
   aiCall: AICallFn,
   options: SceneActionsOptions = {},
 ): Promise<Action[]> {
-  const { ctx, agents, userProfile, languageDirective } = options;
-  const agentsText = formatAgentsForPrompt(agents);
+  const { ctx, agents, requiredAgentIds, userProfile, languageDirective } = options;
+  const requiredAgents =
+    agents?.filter((agent) => requiredAgentIds?.includes(agent.id)).map((agent) => agent.id) ?? [];
+  const agentsText = [
+    formatAgentsForPrompt(agents),
+    requiredAgents.length > 0
+      ? `Required prepared speakers for this scene: ${requiredAgents.join(', ')}. Every listed speaker must contribute one useful, persona-specific intervention.`
+      : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
 
   // Debug: Log content type for interactive scenes
   if (outline.type === 'interactive') {
@@ -1541,13 +1552,21 @@ export async function generateSceneActions(
     const actions = prompts
       ? parseActionsFromStructuredOutput(await aiCall(prompts.system, prompts.user), outline.type)
       : [];
-    const processed =
-      actions.length > 0
-        ? processActions(actions, content.elements, agents)
-        : generateDefaultSlideActions(outline, content.elements);
+    const processed = processActions(
+      actions.length > 0 ? actions : generateDefaultSlideActions(outline, content.elements),
+      content.elements,
+      agents,
+    );
 
     return appendResourcePauseActions(
-      await ensureCanonicalAgentIntervention(processed, outline, agents, aiCall, languageDirective),
+      await ensureCanonicalAgentInterventions(
+        processed,
+        outline,
+        agents,
+        requiredAgentIds,
+        aiCall,
+        languageDirective,
+      ),
       outline,
       languageDirective,
     );
@@ -1570,11 +1589,19 @@ export async function generateSceneActions(
     const actions = prompts
       ? parseActionsFromStructuredOutput(await aiCall(prompts.system, prompts.user), outline.type)
       : [];
-    const processed =
-      actions.length > 0
-        ? processActions(actions, [], agents)
-        : generateDefaultQuizActions(outline);
-    return ensureCanonicalAgentIntervention(processed, outline, agents, aiCall, languageDirective);
+    const processed = processActions(
+      actions.length > 0 ? actions : generateDefaultQuizActions(outline),
+      [],
+      agents,
+    );
+    return ensureCanonicalAgentInterventions(
+      processed,
+      outline,
+      agents,
+      requiredAgentIds,
+      aiCall,
+      languageDirective,
+    );
   }
 
   if (outline.type === 'interactive' && 'html' in content) {
@@ -1600,11 +1627,19 @@ export async function generateSceneActions(
           INTERACTIVE_WIDGET_ACTIONS,
         )
       : [];
-    const processed =
-      actions.length > 0
-        ? processActions(actions, [], agents)
-        : generateDefaultInteractiveActions(outline);
-    return ensureCanonicalAgentIntervention(processed, outline, agents, aiCall, languageDirective);
+    const processed = processActions(
+      actions.length > 0 ? actions : generateDefaultInteractiveActions(outline),
+      [],
+      agents,
+    );
+    return ensureCanonicalAgentInterventions(
+      processed,
+      outline,
+      agents,
+      requiredAgentIds,
+      aiCall,
+      languageDirective,
+    );
   }
 
   if (outline.type === 'pbl' && 'projectConfig' in content) {
@@ -1624,22 +1659,37 @@ export async function generateSceneActions(
     const actions = prompts
       ? parseActionsFromStructuredOutput(await aiCall(prompts.system, prompts.user), outline.type)
       : [];
-    const processed =
-      actions.length > 0 ? processActions(actions, [], agents) : generateDefaultPBLActions(outline);
-    return ensureCanonicalAgentIntervention(processed, outline, agents, aiCall, languageDirective);
+    const processed = processActions(
+      actions.length > 0 ? actions : generateDefaultPBLActions(outline),
+      [],
+      agents,
+    );
+    return ensureCanonicalAgentInterventions(
+      processed,
+      outline,
+      agents,
+      requiredAgentIds,
+      aiCall,
+      languageDirective,
+    );
   }
 
   if (outline.type === 'plugin' && 'pluginType' in content) {
-    return ensureCanonicalAgentIntervention(
-      [
-        {
-          id: `action_${nanoid(8)}`,
-          type: 'speech',
-          text: outline.description || outline.title,
-        },
-      ],
+    return ensureCanonicalAgentInterventions(
+      processActions(
+        [
+          {
+            id: `action_${nanoid(8)}`,
+            type: 'speech',
+            text: outline.description || outline.title,
+          },
+        ],
+        [],
+        agents,
+      ),
       outline,
       agents,
+      requiredAgentIds,
       aiCall,
       languageDirective,
     );
@@ -1677,68 +1727,85 @@ function fallbackPreparedQuestion(
   };
 }
 
-async function ensureCanonicalAgentIntervention(
+async function ensureCanonicalAgentInterventions(
   actions: Action[],
   outline: SceneOutline,
   agents: AgentInfo[] | undefined,
+  requiredAgentIds: string[] | undefined,
   aiCall: AICallFn,
   languageDirective?: string,
 ): Promise<Action[]> {
   const nonTeacherAgents = agents?.filter((agent) => agent.role !== 'teacher') ?? [];
   if (nonTeacherAgents.length === 0) return actions;
 
-  const validAgentIds = new Set(nonTeacherAgents.map((agent) => agent.id));
-  const alreadyCanonical = actions.some(
-    (action) =>
-      action.type === 'speech' &&
-      Boolean(action.agentId && validAgentIds.has(action.agentId)) &&
-      Boolean(action.interventionId) &&
-      Boolean(action.interventionForm && INTERVENTION_FORM_SET.has(action.interventionForm)),
-  );
-  if (alreadyCanonical) return actions;
+  const requiredSet = new Set(requiredAgentIds ?? []);
+  const targetAgents =
+    requiredSet.size > 0
+      ? nonTeacherAgents.filter((agent) => requiredSet.has(agent.id))
+      : [nonTeacherAgents[Math.abs(outline.order ?? 0) % nonTeacherAgents.length]];
+  let coveredActions = actions;
 
-  const selectedAgent = nonTeacherAgents[Math.abs(outline.order ?? 0) % nonTeacherAgents.length];
-  try {
-    const response = await aiCall(
-      [
-        'Generate exactly one concise, preproduced classroom intervention.',
-        `The speaker agentId MUST be exactly "${selectedAgent.id}" (${selectedAgent.name}).`,
-        `Persona: ${selectedAgent.persona || selectedAgent.role}.`,
-        `Use exactly one interventionForm from: ${INTERVENTION_FORMS.join(', ')}.`,
-        'Return only a JSON array with one type:"text" object.',
-        'Include content, agentId, a stable interventionId, and interventionForm.',
-        'Do not invent a learner response. Do not prefix the content with a speaker name.',
-        languageDirective ? `Language directive: ${languageDirective}.` : '',
-      ]
-        .filter(Boolean)
-        .join('\n'),
-      [
-        `Scene id: ${outline.id}`,
-        `Title: ${outline.title}`,
-        `Description: ${outline.description}`,
-        `Key points: ${(outline.keyPoints ?? []).join('; ')}`,
-      ].join('\n'),
-    );
-    const repaired = processActions(
-      parseActionsFromStructuredOutput(response, outline.type),
-      [],
-      agents,
-    ).find(
+  for (const selectedAgent of targetAgents) {
+    const alreadyCanonical = coveredActions.some(
       (action) =>
         action.type === 'speech' &&
         action.agentId === selectedAgent.id &&
         Boolean(action.interventionId) &&
         Boolean(action.interventionForm && INTERVENTION_FORM_SET.has(action.interventionForm)),
     );
-    if (repaired) return insertBeforeDiscussion(actions, repaired);
-  } catch (error) {
-    log.warn(`Prepared intervention repair failed for scene ${outline.id}:`, error);
+    if (alreadyCanonical) continue;
+
+    try {
+      const response = await aiCall(
+        [
+          'Generate exactly one concise, preproduced classroom intervention.',
+          `The speaker agentId MUST be exactly "${selectedAgent.id}" (${selectedAgent.name}).`,
+          `Persona: ${selectedAgent.persona || selectedAgent.role}.`,
+          `Use exactly one interventionForm from: ${INTERVENTION_FORMS.join(', ')}.`,
+          'The contribution must add a distinct question, objection, example, synthesis, useful anecdote or light humor that serves comprehension.',
+          'Return only a JSON array with one type:"text" object.',
+          'Include content, agentId, a stable interventionId, and interventionForm.',
+          'Do not invent a learner response. Do not prefix the content with a speaker name.',
+          languageDirective ? `Language directive: ${languageDirective}.` : '',
+        ]
+          .filter(Boolean)
+          .join('\n'),
+        [
+          `Scene id: ${outline.id}`,
+          `Title: ${outline.title}`,
+          `Description: ${outline.description}`,
+          `Key points: ${(outline.keyPoints ?? []).join('; ')}`,
+        ].join('\n'),
+      );
+      const repaired = processActions(
+        parseActionsFromStructuredOutput(response, outline.type),
+        [],
+        agents,
+      ).find(
+        (action) =>
+          action.type === 'speech' &&
+          action.agentId === selectedAgent.id &&
+          Boolean(action.interventionId) &&
+          Boolean(action.interventionForm && INTERVENTION_FORM_SET.has(action.interventionForm)),
+      );
+      if (repaired) {
+        coveredActions = insertBeforeDiscussion(coveredActions, repaired);
+        continue;
+      }
+    } catch (error) {
+      log.warn(
+        `Prepared intervention repair failed for ${selectedAgent.id} in scene ${outline.id}:`,
+        error,
+      );
+    }
+
+    coveredActions = insertBeforeDiscussion(
+      coveredActions,
+      fallbackPreparedQuestion(outline, selectedAgent, languageDirective),
+    );
   }
 
-  return insertBeforeDiscussion(
-    actions,
-    fallbackPreparedQuestion(outline, selectedAgent, languageDirective),
-  );
+  return coveredActions;
 }
 
 /**

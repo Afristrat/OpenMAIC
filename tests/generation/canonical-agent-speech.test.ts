@@ -186,4 +186,79 @@ describe('canonical agent speech', () => {
       ]),
     );
   });
+
+  test('requires every planned roster member even when the scene count is smaller', async () => {
+    let callCount = 0;
+    const renderedPrompts: string[] = [];
+    const actions = await generateSceneActions(
+      {
+        id: 'scene-short-course',
+        type: 'slide',
+        title: 'Prioriser son temps',
+        description: 'Comparer urgence et importance.',
+        keyPoints: ['Choisir une priorité utile'],
+        order: 0,
+      },
+      { elements: [], background: undefined, remark: '' },
+      async (system, user) => {
+        renderedPrompts.push(`${system}\n${user}`);
+        callCount += 1;
+        if (callCount === 1) {
+          return JSON.stringify([
+            { type: 'text', content: 'Commençons par distinguer urgence et importance.' },
+          ]);
+        }
+        const agentId = callCount === 2 ? 'curious' : 'joker';
+        return JSON.stringify([
+          {
+            type: 'text',
+            content:
+              agentId === 'curious'
+                ? 'Que perd-on à traiter seulement ce qui est urgent ?'
+                : 'Une liste de priorités infinie, c’est surtout une liste sans priorité.',
+            agentId,
+            interventionId: `scene-short-course-${agentId}-1`,
+            interventionForm: agentId === 'curious' ? 'question' : 'humor',
+          },
+        ]);
+      },
+      {
+        agents: [
+          { id: 'teacher', name: 'Hanae', role: 'teacher' },
+          { id: 'curious', name: 'Mehdi', role: 'student', persona: 'Pose la question naïve.' },
+          { id: 'joker', name: 'Rim', role: 'student', persona: 'Utilise un humour utile.' },
+        ],
+        requiredAgentIds: ['curious', 'joker'],
+        languageDirective: 'fr-FR',
+      },
+    );
+
+    expect(renderedPrompts[0]).toContain(
+      'Required prepared speakers for this scene: curious, joker',
+    );
+    expect(callCount).toBe(3);
+    expect(
+      actions.filter((action) => action.type === 'speech').map((action) => action.agentId),
+    ).toEqual(expect.arrayContaining(['teacher', 'curious', 'joker']));
+  });
+
+  test('attributes fallback narration to the teacher before persistence', async () => {
+    const actions = await generateSceneActions(
+      {
+        id: 'scene-fallback',
+        type: 'slide',
+        title: 'Repère',
+        description: 'Un repère opérationnel.',
+        keyPoints: ['Observer'],
+        order: 0,
+      },
+      { elements: [], background: undefined, remark: '' },
+      async () => '[]',
+      { agents: [{ id: 'teacher', name: 'Younes', role: 'teacher' }] },
+    );
+
+    expect(actions.some((action) => action.type === 'speech' && action.agentId === 'teacher')).toBe(
+      true,
+    );
+  });
 });

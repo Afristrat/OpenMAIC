@@ -15,7 +15,7 @@
 ## Known Issues
 
 - Azure TTS hardcodé `xml:lang='zh-CN'` dans `tts-providers.ts`
-- ElevenLabs : seulement 7 voix EN, pas de FR/AR
+- Catalogue vocal à élargir et qualifier : environ 10 voix françaises et 10 voix anglaises de référence, avec genre, langue, aperçu et compatibilité fournisseur vérifiés avant publication
 - 2 strings hardcodées en chinois dans `header.tsx` (lignes 126, 139)
 - 6 agents par défaut avec noms chinois dans `registry/store.ts`
 - `@modelcontextprotocol/sdk` installé mais jamais importé dans le code

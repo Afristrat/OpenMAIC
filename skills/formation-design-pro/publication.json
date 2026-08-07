@@ -7,7 +7,7 @@
     "firstCommit": "490742491b5f32df5da3a9841ab21e7106da60b3",
     "canonicalPrivateSourceFilesIncluded": false,
     "validatedVectors": ["V-02", "V-03", "V-04", "V-05", "V-07"],
-    "lastValidatedStory": "S4-011",
+    "lastValidatedStory": "S5-003",
     "validatedAt": "2026-08-07"
   },
   "exposureAudit": {
@@ -20,15 +20,15 @@
   "files": [
     {
       "path": "manifest.json",
-      "sha256": "b9de622a318c0d3bc84a601afbb6afde3b8691a27f3b1957dddb57ecd37da69f"
+      "sha256": "9590a93bd44fbff6e8a3212391f4842a4d421660cdeb3c65b36a8f265cbf02cc"
     },
     {
       "path": "SKILL.md",
-      "sha256": "f9a24aa0a44f19982fa15193abde474be5f3cfdf75d91958accae56d04f21b2a"
+      "sha256": "91bf1883d7ab16af13935e85364126d453f6b3bc497b17a1a366eb3d4e171276"
     },
     {
       "path": "references/formation-design-contract.md",
-      "sha256": "34d7a12ee52453f39f59d2cff6b4305f3fbcbcfd078f23c3978b88e0b5bd7ee1"
+      "sha256": "24f76c17a2437a72fee374d3b16156836537357ac5238f1452fa54ca895a8a81"
     },
     {
       "path": "prompts/andragogy-system-override.md",

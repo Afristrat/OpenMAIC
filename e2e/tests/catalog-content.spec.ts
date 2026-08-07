@@ -41,8 +41,10 @@ test.describe('System learning catalogs', () => {
 
   test('shows the verified ISCO-08 grounding before classroom generation', async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem('locale', 'fr-FR'));
-    await page.route('**/api/generate/contextual-specialists', (route) =>
-      route.fulfill({
+    let specialistRequest: Record<string, unknown> | undefined;
+    await page.route('**/api/generate/contextual-specialists', async (route) => {
+      specialistRequest = route.request().postDataJSON() as Record<string, unknown>;
+      await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
@@ -85,13 +87,15 @@ test.describe('System learning catalogs', () => {
           ],
           reference: 'ISCO-08 via ESCO v1.2.1',
         }),
-      }),
-    );
+      });
+    });
 
     await page.goto('/app', { waitUntil: 'networkidle' });
     await page.locator('textarea').first().fill('Former une équipe au pilotage de trésorerie.');
     await page.getByRole('button', { name: 'Prêt à apprendre ensemble ?' }).click();
     await page.getByRole('button', { name: 'Proposer des spécialistes du sujet' }).click();
+
+    expect(specialistRequest).toMatchObject({ territory: 'Maroc', locale: 'fr-FR' });
 
     await expect(page.getByText('Nadia · comptable')).toBeVisible();
     await expect(page.getByText('ISCO-08 2411 · Cadres comptables')).toBeVisible();

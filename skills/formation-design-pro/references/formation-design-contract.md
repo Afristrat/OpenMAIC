@@ -83,6 +83,10 @@ La fin de chaque scène affiche un choix persistant : `Approfondir` ou `Continue
 
 La constitution prend un instantané du roster publié par l’organisation : identifiant, prénom affiché, avatar, voix, validation de compatibilité, poids et capacités. Cet instantané garantit la reproductibilité d’une classroom même si le roster change ensuite.
 
+Tout spécialiste contextuel reçoit aussi le territoire d’apprentissage. Son prénom doit être réellement plausible dans ce territoire, pas seulement dans la langue de l’interface. Le prénom, le genre déclaré, l’avatar et la voix forment une seule identité cohérente qui doit persister dans la classroom.
+
+Chaque membre du casting actif doit apporter au moins une prise de parole canonique utile, conforme à sa persona. Un agent sans contribution ne doit pas être retenu dans le casting. Le plan répartit les interventions sur les scènes et peut placer plusieurs agents sur une même scène lorsque la formation est plus courte que le roster.
+
 Un agent désactivé ne peut apparaître dans l’ossature ni dans une règle adaptative. Une identité non validée ne peut pas être publiée.
 
 ## Invariants

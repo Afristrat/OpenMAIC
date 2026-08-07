@@ -917,6 +917,23 @@
         "Quality gates complets verts sur ServeurAI et preuve navigateur en production"
       ],
       "acceptanceNote": "Validé sur ServeurAI et en production au commit 23b4820. Un auteur peut demander jusqu’à trois spécialistes contextuels distincts des dix personæ pédagogiques. Chaque spécialiste conserve l’instantané de son groupe de base ISCO-08 à quatre chiffres, sa description, ses compétences, ses sources, les tâches canoniques anglaises et leur version localisée dans la langue de la formation. La recherche utilise ESCO v1.2.1, version officielle actuelle ; une traduction incomplète est refusée. Le profil persiste dans la classroom et sa constitution d’animation borne les interventions aux exemples, cas d’usage, objections, angles morts et feedbacks liés aux tâches, sans conseil personnalisé. Gates distants : formatage, TypeScript, lint, suite Vitest complète, build de production et Playwright Chromium 54/54 verts. Preuve headless réelle sur https://qalem.ma/app : ISCO-08 2421 visible avec tâches françaises ; compte auteur éphémère supprimé et suppression vérifiée. Web, worker et capture-worker sont healthy sur 23b4820, zéro redémarrage ; /api/health répond HTTP 200."
+    },
+    {
+      "id": "S5-003",
+      "title": "Identité territoriale et preuve complète des spécialistes ISCO [UI]",
+      "epic": "5-ÉCOSYSTÈME",
+      "phase": 5,
+      "passes": false,
+      "dependencies": ["S5-002"],
+      "acceptance": [
+        "Le territoire choisi par l’auteur est transmis à la génération des spécialistes et le prénom est culturellement plausible dans ce territoire, pas seulement dans la langue",
+        "Le prénom, le genre déclaré, l’avatar et la voix forment une identité cohérente avant génération puis dans la classroom persistée",
+        "Chaque agent du casting actif apporte au moins une prise de parole canonique utile ; une classroom contenant un agent muet est refusée avant persistance",
+        "Une classroom réelle appartenant à l’auteur contient le profil ISCO, sa constitution d’animation et au moins une intervention canonique pertinente du spécialiste",
+        "Le texte visible, l’audio persistant et l’identité affichée de cette intervention sont vérifiés dans un navigateur de production",
+        "Formation Design Pro publie le même invariant territorial",
+        "Quality gates complets verts sur ServeurAI et endpoint public sain après déploiement"
+      ]
     }
   ]
 }

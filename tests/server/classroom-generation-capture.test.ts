@@ -77,6 +77,23 @@ const slideContent = {
   remark: 'Panel /ui',
 };
 
+const completeRosterActions = [
+  {
+    id: 'speech-teacher',
+    type: 'speech',
+    text: 'Teacher narration.',
+    agentId: 'persona-professor',
+  },
+  {
+    id: 'speech-assistant',
+    type: 'speech',
+    text: 'Assistant contribution.',
+    agentId: 'persona-teaching-assistant',
+  },
+  { id: 'speech-joker', type: 'speech', text: 'Useful humor.', agentId: 'persona-joker' },
+  { id: 'speech-curious', type: 'speech', text: 'Useful question.', agentId: 'persona-curious' },
+] as const;
+
 async function generateWithProgress() {
   const { generateClassroom } = await import('@/lib/server/classroom-generation');
   return generateClassroom(
@@ -114,7 +131,7 @@ describe('classroom generation — web capture injection', () => {
     });
     mocks.applyOutlineFallbacks.mockImplementation((value) => value);
     mocks.generateSceneContent.mockResolvedValue(slideContent);
-    mocks.generateSceneActions.mockResolvedValue([]);
+    mocks.generateSceneActions.mockResolvedValue(completeRosterActions);
     mocks.createSceneWithActions.mockImplementation((sceneOutline, content, actions, api) => {
       const sceneResult = api.scene.create({
         type: sceneOutline.type,
