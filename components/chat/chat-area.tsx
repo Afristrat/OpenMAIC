@@ -2,7 +2,7 @@
 
 import { useImperativeHandle, forwardRef, useRef, useCallback, useState, useMemo } from 'react';
 import type { SessionType } from '@/lib/types/chat';
-import type { LectureNoteEntry } from '@/lib/types/chat';
+import type { LectureNoteEntry, LectureNoteItem } from '@/lib/types/chat';
 import type { DiscussionRequest } from '@/components/roundtable';
 import type { Action, SpeechAction, DiscussionAction } from '@/lib/types/action';
 import { cn } from '@/lib/utils';
@@ -37,6 +37,7 @@ interface ChatAreaProps {
   /** When provided and returns true, StreamBuffer holds on the current text item after reveal. */
   shouldHoldAfterReveal?: () => { holding: boolean; segmentDone: number } | boolean;
   currentSceneId?: string | null;
+  onDeepenIntervention?: (speech: Extract<LectureNoteItem, { kind: 'speech' }>) => void;
 }
 
 export interface ChatAreaRef {
@@ -82,11 +83,17 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
       onSegmentSealed,
       shouldHoldAfterReveal,
       currentSceneId,
+      onDeepenIntervention,
     },
     ref,
   ) => {
     const { t } = useI18n();
     const scenes = useStageStore((s) => s.scenes);
+    const generatedAgents = useStageStore((s) => s.stage?.generatedAgentConfigs);
+    const agentNames = useMemo(
+      () => new Map((generatedAgents ?? []).map((agent) => [agent.id, agent.name])),
+      [generatedAgents],
+    );
     const {
       sessions,
       activeSessionType,
@@ -145,9 +152,14 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
               )
               .map((a) => {
                 if (a.type === 'speech') {
+                  const speech = a as SpeechAction;
                   return {
                     kind: 'speech' as const,
-                    text: (a as SpeechAction).text,
+                    text: speech.text,
+                    agentId: speech.agentId,
+                    agentName: speech.agentId ? agentNames.get(speech.agentId) : undefined,
+                    interventionId: speech.interventionId,
+                    interventionForm: speech.interventionForm,
                   };
                 }
                 return {
@@ -159,7 +171,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
             completedAt: scene.updatedAt || scene.createdAt || 0,
           }))
           .sort((a, b) => a.sceneOrder - b.sceneOrder),
-      [scenes],
+      [agentNames, scenes],
     );
 
     // Filter out lecture sessions for the Chat tab
@@ -297,7 +309,11 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
 
             {/* Notes Tab */}
             <TabsContent value="lecture" className="flex-1 overflow-hidden flex flex-col">
-              <LectureNotesView notes={lectureNotes} currentSceneId={currentSceneId} />
+              <LectureNotesView
+                notes={lectureNotes}
+                currentSceneId={currentSceneId}
+                onDeepenIntervention={onDeepenIntervention}
+              />
             </TabsContent>
 
             {/* Chat Tab */}

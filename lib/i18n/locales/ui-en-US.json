@@ -88,6 +88,7 @@
   "chat.lectureNotes.emptyHint": "Press play to start the lecture",
   "chat.lectureNotes.pageLabel": "Page {{n}}",
   "chat.lectureNotes.currentPage": "Current",
+  "chat.lectureNotes.deepen": "Explore this intervention",
   "chat.badge.qa": "Q&A",
   "chat.badge.discussion": "DISC",
   "chat.badge.lecture": "LEC",

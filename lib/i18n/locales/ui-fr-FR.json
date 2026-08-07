@@ -88,6 +88,7 @@
   "chat.lectureNotes.emptyHint": "Lancez la lecture pour démarrer le cours",
   "chat.lectureNotes.pageLabel": "Page {{n}}",
   "chat.lectureNotes.currentPage": "En cours",
+  "chat.lectureNotes.deepen": "Approfondir cette intervention",
   "chat.badge.qa": "Q\u0026R",
   "chat.badge.discussion": "DISC",
   "chat.badge.lecture": "COURS",

@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { BookOpen, MessageSquare, Flashlight, MousePointer2, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/hooks/use-i18n';
-import type { LectureNoteEntry } from '@/lib/types/chat';
+import type { LectureNoteEntry, LectureNoteItem } from '@/lib/types/chat';
 
 const ACTION_ICON_ONLY: Record<string, { Icon: typeof Flashlight; style: string }> = {
   spotlight: {
@@ -27,9 +27,40 @@ const ACTION_ICON_ONLY: Record<string, { Icon: typeof Flashlight; style: string 
 interface LectureNotesViewProps {
   notes: LectureNoteEntry[];
   currentSceneId?: string | null;
+  onDeepenIntervention?: (speech: Extract<LectureNoteItem, { kind: 'speech' }>) => void;
 }
 
-export function LectureNotesView({ notes, currentSceneId }: LectureNotesViewProps) {
+export type LectureRow =
+  | (Extract<LectureNoteItem, { kind: 'speech' }> & { inlineActions: string[] })
+  | { kind: 'discussion'; label?: string }
+  | { kind: 'trailing'; inlineActions: string[] };
+
+export function buildLectureRows(items: LectureNoteItem[]): LectureRow[] {
+  const rows: LectureRow[] = [];
+  let pendingInline: string[] = [];
+  for (const item of items) {
+    if (item.kind === 'action' && item.type === 'discussion') {
+      if (pendingInline.length > 0) {
+        rows.push({ kind: 'trailing', inlineActions: pendingInline });
+        pendingInline = [];
+      }
+      rows.push({ kind: 'discussion', label: item.label });
+    } else if (item.kind === 'action') {
+      pendingInline.push(item.type);
+    } else {
+      rows.push({ ...item, inlineActions: pendingInline });
+      pendingInline = [];
+    }
+  }
+  if (pendingInline.length > 0) rows.push({ kind: 'trailing', inlineActions: pendingInline });
+  return rows;
+}
+
+export function LectureNotesView({
+  notes,
+  currentSceneId,
+  onDeepenIntervention,
+}: LectureNotesViewProps) {
   const { t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -116,39 +147,7 @@ export function LectureNotesView({ notes, currentSceneId }: LectureNotesViewProp
             {/* Ordered items: spotlight/laser inline at sentence start, discussion as card */}
             <div className="pl-4 space-y-1">
               {(() => {
-                // Build render rows: group inline actions (spotlight/laser) with next speech,
-                // but render discussion as its own block
-                type Row =
-                  | { kind: 'speech'; inlineActions: string[]; text: string }
-                  | { kind: 'discussion'; label?: string }
-                  | { kind: 'trailing'; inlineActions: string[] };
-                const rows: Row[] = [];
-                let pendingInline: string[] = [];
-                for (const item of note.items) {
-                  if (item.kind === 'action' && item.type === 'discussion') {
-                    // Flush pending inline actions as trailing if any
-                    if (pendingInline.length > 0) {
-                      rows.push({
-                        kind: 'trailing',
-                        inlineActions: pendingInline,
-                      });
-                      pendingInline = [];
-                    }
-                    rows.push({ kind: 'discussion', label: item.label });
-                  } else if (item.kind === 'action') {
-                    pendingInline.push(item.type);
-                  } else {
-                    rows.push({
-                      kind: 'speech',
-                      inlineActions: pendingInline,
-                      text: item.text,
-                    });
-                    pendingInline = [];
-                  }
-                }
-                if (pendingInline.length > 0) {
-                  rows.push({ kind: 'trailing', inlineActions: pendingInline });
-                }
+                const rows = buildLectureRows(note.items);
                 return rows.map((row, i) => {
                   if (row.kind === 'discussion') {
                     return (
@@ -164,11 +163,30 @@ export function LectureNotesView({ notes, currentSceneId }: LectureNotesViewProp
                     );
                   }
                   const actions = row.kind === 'trailing' ? row.inlineActions : row.inlineActions;
+                  const Wrapper = row.kind === 'speech' && row.interventionId ? 'button' : 'p';
                   return (
-                    <p
+                    <Wrapper
                       key={i}
-                      className="text-[12px] leading-[1.8] text-gray-700 dark:text-gray-300"
+                      {...(row.kind === 'speech' && row.interventionId
+                        ? {
+                            type: 'button' as const,
+                            'data-intervention-id': row.interventionId,
+                            onClick: () => onDeepenIntervention?.(row),
+                            title: t('chat.lectureNotes.deepen'),
+                          }
+                        : {})}
+                      className={cn(
+                        'w-full text-start text-[12px] leading-[1.8] text-gray-700 dark:text-gray-300',
+                        row.kind === 'speech' &&
+                          row.interventionId &&
+                          'rounded-md border border-blue-200/70 bg-blue-50/60 px-2 py-1.5 transition-colors hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-blue-800/60 dark:bg-blue-950/30 dark:hover:bg-blue-950/50',
+                      )}
                     >
+                      {row.kind === 'speech' && row.agentName ? (
+                        <span className="me-1 font-semibold text-blue-700 dark:text-blue-300">
+                          {row.agentName} :
+                        </span>
+                      ) : null}
                       {actions.map((a, j) => {
                         const cfg = ACTION_ICON_ONLY[a];
                         if (!cfg) return null;
@@ -186,7 +204,7 @@ export function LectureNotesView({ notes, currentSceneId }: LectureNotesViewProp
                         );
                       })}
                       {row.kind === 'speech' ? row.text : null}
-                    </p>
+                    </Wrapper>
                   );
                 });
               })()}

@@ -88,6 +88,7 @@
   "chat.lectureNotes.emptyHint": "اضغط تشغيل لبدء المحاضرة",
   "chat.lectureNotes.pageLabel": "الصفحة {{n}}",
   "chat.lectureNotes.currentPage": "الحالية",
+  "chat.lectureNotes.deepen": "التعمق في هذه المداخلة",
   "chat.badge.qa": "أسئلة",
   "chat.badge.discussion": "نقاش",
   "chat.badge.lecture": "محاضرة",

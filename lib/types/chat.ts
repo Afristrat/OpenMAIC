@@ -7,6 +7,7 @@
 
 import type { UIMessage } from 'ai';
 import type { ThinkingConfig } from './provider';
+import type { SpeechAction } from './action';
 
 // Session Types
 export type SessionType = 'qa' | 'discussion' | 'lecture';
@@ -197,7 +198,14 @@ export function toSessionListItem(session: ChatSession): SessionListItem {
  * Ordered to match the original action sequence in the scene.
  */
 export type LectureNoteItem =
-  | { kind: 'speech'; text: string }
+  | {
+      kind: 'speech';
+      text: string;
+      agentId?: string;
+      agentName?: string;
+      interventionId?: string;
+      interventionForm?: SpeechAction['interventionForm'];
+    }
   | { kind: 'action'; type: string; label?: string };
 
 /**
