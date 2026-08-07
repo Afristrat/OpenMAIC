@@ -904,7 +904,8 @@
       "title": "Spécialistes métier fondés sur les tâches ISCO-08 [UI]",
       "epic": "5-ÉCOSYSTÈME",
       "phase": 5,
-      "passes": false,
+      "passes": true,
+      "completedAt": "2026-08-07",
       "dependencies": ["S4-009", "S5-001"],
       "acceptance": [
         "L’auteur ou le super administrateur peut demander jusqu’à trois spécialistes métier pertinents à partir du sujet de formation",
@@ -914,7 +915,8 @@
         "Les interventions préproduites et adaptatives des spécialistes s’appuient sur leurs tâches professionnelles sans produire de conseil personnalisé",
         "Interface localisée en français, arabe et anglais, avec parcours Playwright permanent",
         "Quality gates complets verts sur ServeurAI et preuve navigateur en production"
-      ]
+      ],
+      "acceptanceNote": "Validé sur ServeurAI et en production au commit 23b4820. Un auteur peut demander jusqu’à trois spécialistes contextuels distincts des dix personæ pédagogiques. Chaque spécialiste conserve l’instantané de son groupe de base ISCO-08 à quatre chiffres, sa description, ses compétences, ses sources, les tâches canoniques anglaises et leur version localisée dans la langue de la formation. La recherche utilise ESCO v1.2.1, version officielle actuelle ; une traduction incomplète est refusée. Le profil persiste dans la classroom et sa constitution d’animation borne les interventions aux exemples, cas d’usage, objections, angles morts et feedbacks liés aux tâches, sans conseil personnalisé. Gates distants : formatage, TypeScript, lint, suite Vitest complète, build de production et Playwright Chromium 54/54 verts. Preuve headless réelle sur https://qalem.ma/app : ISCO-08 2421 visible avec tâches françaises ; compte auteur éphémère supprimé et suppression vérifiée. Web, worker et capture-worker sont healthy sur 23b4820, zéro redémarrage ; /api/health répond HTTP 200."
     }
   ]
 }
