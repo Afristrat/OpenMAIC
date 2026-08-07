@@ -44,6 +44,7 @@ export type SnippetId =
   | 'slide-generated-image-instructions'
   | 'slide-video-instructions'
   | 'speech-guidelines'
+  | 'canonical-agent-speech'
   | 'whiteboard-reference';
 
 /**

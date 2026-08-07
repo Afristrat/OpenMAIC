@@ -91,7 +91,7 @@ For any widget type, only use a `target` you can derive from the conventions abo
 
 The user prompt includes a Course Outline and Position indicator. Use them to determine the tone.
 
-**CRITICAL - Single voice, teacher only.** Every `text` segment is spoken by the teacher, in one continuous voice. Do not write dialogue or lines for students, assistants, or named agents. Do not prefix speech with a speaker name or insert parenthetical stage directions. Any Classroom Agents listed do not speak in your `text`. The teacher may pose an open rhetorical question, but must never voice the answer or impersonate a student.
+{{snippet:canonical-agent-speech}}
 
 **CRITICAL - Same-session continuity**: All pages belong to the same class session. This is not a series of separate classes.
 
