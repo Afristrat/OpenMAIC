@@ -19,14 +19,21 @@ export interface EscoOccupationResource {
 }
 
 function compact(text: string): string {
-  return text.replace(/\s+/gu, ' ').trim().replace(/[.;]\s*$/u, '');
+  return text
+    .replace(/\s+/gu, ' ')
+    .trim()
+    .replace(/[.;]\s*$/u, '');
 }
 
 export function readDescription(resource: EscoOccupationResource): string {
   if (!resource.description) return '';
   const english = resource.description.en?.literal;
   if (english) return english.trim();
-  return Object.values(resource.description).find((value) => value.literal?.trim())?.literal?.trim() ?? '';
+  return (
+    Object.values(resource.description)
+      .find((value) => value.literal?.trim())
+      ?.literal?.trim() ?? ''
+  );
 }
 
 export function parseIscoTasks(description: string): string[] {
@@ -60,7 +67,12 @@ export function buildOccupationalProfile(input: {
   const unitGroupDescription = readDescription(input.unitGroup);
   const tasks = parseIscoTasks(unitGroupDescription);
   const occupationDescription = readDescription(input.occupation);
-  if (!input.occupation.uri || !input.unitGroup.title || !occupationDescription || tasks.length === 0) {
+  if (
+    !input.occupation.uri ||
+    !input.unitGroup.title ||
+    !occupationDescription ||
+    tasks.length === 0
+  ) {
     return null;
   }
 
