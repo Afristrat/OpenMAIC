@@ -295,4 +295,41 @@ describe('classroom scene generation retries', () => {
     );
     expect(mocks.persistClassroom).not.toHaveBeenCalled();
   });
+
+  it('fails instead of persisting unresolved generated image placeholders', async () => {
+    const imageOutline = {
+      ...outline,
+      mediaGenerations: [
+        {
+          type: 'image' as const,
+          prompt: 'A clear visual explanation of retry backoff',
+          elementId: 'gen_img_retry',
+          aspectRatio: '16:9',
+        },
+      ],
+    };
+    mocks.generateSceneOutlinesFromRequirements.mockResolvedValue({
+      success: true,
+      data: {
+        languageDirective: 'Use English.',
+        outlines: [imageOutline],
+      },
+    });
+    mocks.generateSceneContent.mockResolvedValue({
+      elements: [
+        {
+          id: 'image-1',
+          type: 'image',
+          src: 'gen_img_retry',
+        },
+      ],
+      remark: 'Retry transient failures',
+    });
+    mocks.generateMediaForClassroom.mockResolvedValue({});
+
+    await expect(generateWithProgress({ enableImageGeneration: true })).rejects.toThrow(
+      'Media persistence incomplete: 0/1 requested files generated',
+    );
+    expect(mocks.persistClassroom).not.toHaveBeenCalled();
+  });
 });
