@@ -6,14 +6,18 @@ import { promisify } from 'node:util';
 import sharp from 'sharp';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { buildSceneCardSvg } from './scene-card';
+import type { SpeechAction } from '@/lib/types/action';
 
 const execFileAsync = promisify(execFile);
 const FFMPEG_TIMEOUT_MS = 30 * 60 * 1000;
 
-interface SpeechAction {
-  type?: string;
-  text?: string;
-  audioUrl?: string;
+export function collectSceneSpeechActions(actions: unknown): SpeechAction[] {
+  return Array.isArray(actions)
+    ? actions.filter(
+        (action): action is SpeechAction =>
+          Boolean(action) && typeof action === 'object' && action.type === 'speech',
+      )
+    : [];
 }
 
 function storagePathFromAudioUrl(stageId: string, audioUrl: string): string | null {
@@ -42,9 +46,7 @@ async function downloadSceneAudio(
   sceneIndex: number,
 ): Promise<string[]> {
   const supabase = createServiceSupabaseClient();
-  const speechActions = Array.isArray(actions)
-    ? (actions as SpeechAction[]).filter((action) => action.type === 'speech')
-    : [];
+  const speechActions = collectSceneSpeechActions(actions);
   const missingAudioCount = speechActions.filter(
     (action) => action.text && !action.audioUrl,
   ).length;
