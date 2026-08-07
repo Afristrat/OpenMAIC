@@ -1539,10 +1539,7 @@ export async function generateSceneActions(
     });
 
     const actions = prompts
-      ? parseActionsFromStructuredOutput(
-          await aiCall(prompts.system, prompts.user),
-          outline.type,
-        )
+      ? parseActionsFromStructuredOutput(await aiCall(prompts.system, prompts.user), outline.type)
       : [];
     const processed =
       actions.length > 0
@@ -1550,13 +1547,7 @@ export async function generateSceneActions(
         : generateDefaultSlideActions(outline, content.elements);
 
     return appendResourcePauseActions(
-      await ensureCanonicalAgentIntervention(
-        processed,
-        outline,
-        agents,
-        aiCall,
-        languageDirective,
-      ),
+      await ensureCanonicalAgentIntervention(processed, outline, agents, aiCall, languageDirective),
       outline,
       languageDirective,
     );
@@ -1577,20 +1568,13 @@ export async function generateSceneActions(
     });
 
     const actions = prompts
-      ? parseActionsFromStructuredOutput(
-          await aiCall(prompts.system, prompts.user),
-          outline.type,
-        )
+      ? parseActionsFromStructuredOutput(await aiCall(prompts.system, prompts.user), outline.type)
       : [];
     const processed =
-      actions.length > 0 ? processActions(actions, [], agents) : generateDefaultQuizActions(outline);
-    return ensureCanonicalAgentIntervention(
-      processed,
-      outline,
-      agents,
-      aiCall,
-      languageDirective,
-    );
+      actions.length > 0
+        ? processActions(actions, [], agents)
+        : generateDefaultQuizActions(outline);
+    return ensureCanonicalAgentIntervention(processed, outline, agents, aiCall, languageDirective);
   }
 
   if (outline.type === 'interactive' && 'html' in content) {
@@ -1620,13 +1604,7 @@ export async function generateSceneActions(
       actions.length > 0
         ? processActions(actions, [], agents)
         : generateDefaultInteractiveActions(outline);
-    return ensureCanonicalAgentIntervention(
-      processed,
-      outline,
-      agents,
-      aiCall,
-      languageDirective,
-    );
+    return ensureCanonicalAgentIntervention(processed, outline, agents, aiCall, languageDirective);
   }
 
   if (outline.type === 'pbl' && 'projectConfig' in content) {
@@ -1644,30 +1622,21 @@ export async function generateSceneActions(
     });
 
     const actions = prompts
-      ? parseActionsFromStructuredOutput(
-          await aiCall(prompts.system, prompts.user),
-          outline.type,
-        )
+      ? parseActionsFromStructuredOutput(await aiCall(prompts.system, prompts.user), outline.type)
       : [];
     const processed =
       actions.length > 0 ? processActions(actions, [], agents) : generateDefaultPBLActions(outline);
-    return ensureCanonicalAgentIntervention(
-      processed,
-      outline,
-      agents,
-      aiCall,
-      languageDirective,
-    );
+    return ensureCanonicalAgentIntervention(processed, outline, agents, aiCall, languageDirective);
   }
 
   if (outline.type === 'plugin' && 'pluginType' in content) {
     return ensureCanonicalAgentIntervention(
       [
-      {
-        id: `action_${nanoid(8)}`,
-        type: 'speech',
-        text: outline.description || outline.title,
-      },
+        {
+          id: `action_${nanoid(8)}`,
+          type: 'speech',
+          text: outline.description || outline.title,
+        },
       ],
       outline,
       agents,
@@ -1684,11 +1653,7 @@ const INTERVENTION_FORM_SET = new Set<string>(INTERVENTION_FORMS);
 function insertBeforeDiscussion(actions: Action[], intervention: Action): Action[] {
   const discussionIndex = actions.findIndex((action) => action.type === 'discussion');
   if (discussionIndex < 0) return [...actions, intervention];
-  return [
-    ...actions.slice(0, discussionIndex),
-    intervention,
-    ...actions.slice(discussionIndex),
-  ];
+  return [...actions.slice(0, discussionIndex), intervention, ...actions.slice(discussionIndex)];
 }
 
 function fallbackPreparedQuestion(
