@@ -1,4 +1,6 @@
 import { createElement } from 'react';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, test, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { SceneCompletionGate } from '@/components/playback/scene-completion-gate';
@@ -37,5 +39,15 @@ describe('scene completion gate', () => {
 
     scheduled.shift()?.(16);
     expect(start).toHaveBeenCalledOnce();
+  });
+
+  test('does not advertise an auto-play mode that bypasses the explicit choice', () => {
+    const toolbar = readFileSync(
+      resolve(process.cwd(), 'components/canvas/canvas-toolbar.tsx'),
+      'utf8',
+    );
+
+    expect(toolbar).not.toContain('onToggleAutoPlay');
+    expect(toolbar).not.toContain('autoPlayLecture');
   });
 });

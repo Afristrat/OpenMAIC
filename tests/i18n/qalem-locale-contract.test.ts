@@ -98,4 +98,11 @@ describe('Qalem clean-room locale contract', () => {
       );
     }
   });
+
+  it('localizes explicit deepening prompts in every Qalem locale', () => {
+    for (const [locale, catalog] of Object.entries(catalogs)) {
+      expect(placeholders(catalog['stage.deepenInterventionPrompt']), locale).toEqual(['text']);
+      expect(placeholders(catalog['stage.deepenScenePrompt']), locale).toEqual(['title']);
+    }
+  });
 });
