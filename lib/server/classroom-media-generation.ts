@@ -293,6 +293,7 @@ export async function generateTTSForClassroom(
   scenes: Scene[],
   classroomId: string,
   preferredVoice?: { providerId: string; voiceId: string },
+  agents: CanonicalSpeechAgentVoice[] = [],
 ): Promise<ClassroomTTSGenerationReport> {
   const report: ClassroomTTSGenerationReport = { requested: 0, generated: 0 };
   // Resolve TTS provider (exclude browser-native-tts and operator force-disabled
@@ -323,27 +324,24 @@ export async function generateTTSForClassroom(
     log.warn('No server TTS provider supports context-free classroom generation');
     return report;
   }
-  const apiKey = resolveTTSApiKey(providerId);
-  const ttsProvider = TTS_PROVIDERS[providerId as keyof typeof TTS_PROVIDERS];
-  if (ttsProvider?.requiresApiKey && !apiKey) {
-    log.warn(`No API key for TTS provider "${providerId}", skipping TTS generation`);
-    return report;
-  }
-  const ttsBaseUrl = resolveTTSBaseUrl(providerId) || ttsProvider?.defaultBaseUrl;
-  const voice =
-    preferredProvider === providerId && preferredVoice?.voiceId
-      ? preferredVoice.voiceId
-      : DEFAULT_TTS_VOICES[providerId as keyof typeof DEFAULT_TTS_VOICES] || 'default';
-  const format = ttsProvider?.supportedFormats?.[0] || 'mp3';
   for (const scene of scenes) {
     if (!scene.actions) continue;
 
-    // Split long speech actions into multiple shorter ones before TTS generation,
-    // mirroring the client-side approach. Each sub-action gets its own audio file.
-    scene.actions = splitSpeechActionsByAnglicisms(
-      splitLongSpeechActions(scene.actions, providerId),
-      providerId,
-    );
+    // Split with the provider that will actually speak each line. The spread-based
+    // splitters preserve agent and intervention identity on every resulting segment.
+    scene.actions = scene.actions.flatMap((action) => {
+      if (action.type !== 'speech') return [action];
+      const requestedVoice = resolveCanonicalSpeechVoice(action, preferredVoice, agents);
+      const actionProviderId = (
+        requestedVoice && ttsProviderIds.includes(requestedVoice.providerId)
+          ? requestedVoice.providerId
+          : providerId
+      ) as TTSProviderId;
+      return splitSpeechActionsByAnglicisms(
+        splitLongSpeechActions([action], actionProviderId),
+        actionProviderId,
+      );
+    });
 
     // Use scene order to make audio IDs unique across scenes
     const sceneOrder = scene.order;
@@ -356,10 +354,31 @@ export async function generateTTSForClassroom(
       const audioId = `tts_s${sceneOrder}_${action.id}`;
 
       try {
+        const requestedVoice = resolveCanonicalSpeechVoice(speechAction, preferredVoice, agents);
+        const actionProviderId = (
+          requestedVoice && ttsProviderIds.includes(requestedVoice.providerId)
+            ? requestedVoice.providerId
+            : providerId
+        ) as TTSProviderId;
+        const actionProvider = TTS_PROVIDERS[actionProviderId as keyof typeof TTS_PROVIDERS];
+        const apiKey = resolveTTSApiKey(actionProviderId);
+        if (actionProvider?.requiresApiKey && !apiKey) {
+          throw new Error(`No API key configured for TTS provider "${actionProviderId}"`);
+        }
+        const ttsBaseUrl =
+          resolveTTSBaseUrl(actionProviderId) || actionProvider?.defaultBaseUrl;
+        const voice =
+          requestedVoice?.providerId === actionProviderId
+            ? requestedVoice.voiceId
+            : DEFAULT_TTS_VOICES[actionProviderId as keyof typeof DEFAULT_TTS_VOICES] || 'default';
+        const format = actionProvider?.supportedFormats?.[0] || 'mp3';
         const result = await generateTTS(
           {
-            providerId,
-            modelId: DEFAULT_TTS_MODELS[providerId as keyof typeof DEFAULT_TTS_MODELS] || '',
+            providerId: actionProviderId,
+            modelId:
+              agents.find((agent) => agent.id === speechAction.agentId)?.voiceConfig?.modelId ||
+              DEFAULT_TTS_MODELS[actionProviderId as keyof typeof DEFAULT_TTS_MODELS] ||
+              '',
             apiKey,
             baseUrl: ttsBaseUrl,
             voice,

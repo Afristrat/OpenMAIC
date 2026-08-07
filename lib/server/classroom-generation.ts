@@ -816,7 +816,12 @@ export async function generateClassroom(
         totalScenes: outlines.length,
       });
 
-      const ttsReport = await generateTTSForClassroom(scenes, stageId, teachingProfile);
+      const ttsReport = await generateTTSForClassroom(
+        scenes,
+        stageId,
+        teachingProfile,
+        tenantAgentConfigs,
+      );
       if (ttsReport.generated !== ttsReport.requested) {
         throw new Error(
           `TTS persistence incomplete: ${ttsReport.generated}/${ttsReport.requested} speech actions generated`,
