@@ -50,11 +50,7 @@ export function buildLaserPath(geometry: PercentageGeometry): LaserPath {
  * - Elegant light dot with soft breathing glow
  * - Uses percentage positioning (0-100)
  */
-export function LaserOverlay({
-  geometry,
-  color = '#ff3b30',
-  duration = 8000,
-}: LaserOverlayProps) {
+export function LaserOverlay({ geometry, color = '#ff3b30', duration = 8000 }: LaserOverlayProps) {
   const { centerX, centerY } = geometry;
   const path = buildLaserPath(geometry);
 

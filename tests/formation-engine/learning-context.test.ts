@@ -16,9 +16,7 @@ describe('learning context', () => {
   });
 
   it('rejects a missing territory or malformed ISO code', () => {
-    expect(() =>
-      buildLearningContextDirective({ territory: '', currencyCode: 'EUR' }),
-    ).toThrow();
+    expect(() => buildLearningContextDirective({ territory: '', currencyCode: 'EUR' })).toThrow();
     expect(() =>
       buildLearningContextDirective({ territory: 'France', currencyCode: 'EURO' }),
     ).toThrow();

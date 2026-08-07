@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildLaserPath } from '@/components/slide-renderer/Editor/LaserOverlay';
-import {
-  DEFAULT_VISUAL_EFFECT_DURATION_MS,
-  visualEffectDurationMs,
-} from '@/lib/action/engine';
+import { DEFAULT_VISUAL_EFFECT_DURATION_MS, visualEffectDurationMs } from '@/lib/action/engine';
 
 describe('laser guidance', () => {
   it('sweeps the complete useful area of a wide target', () => {
