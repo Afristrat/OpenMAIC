@@ -501,11 +501,7 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
           // Chat area pacing is handled by the StreamBuffer (onTextReveal)
           if (lectureSessionIdRef.current) {
             const idx = lectureActionCounterRef.current++;
-            chatAreaRef.current?.addLectureMessage(
-              lectureSessionIdRef.current,
-              speechAction,
-              idx,
-            );
+            chatAreaRef.current?.addLectureMessage(lectureSessionIdRef.current, speechAction, idx);
             // Track active bubble for highlight (Issue 8)
             const msgId = chatAreaRef.current?.getLectureMessageId(lectureSessionIdRef.current!);
             if (msgId) setActiveBubbleId(msgId);

@@ -365,8 +365,7 @@ export async function generateTTSForClassroom(
         if (actionProvider?.requiresApiKey && !apiKey) {
           throw new Error(`No API key configured for TTS provider "${actionProviderId}"`);
         }
-        const ttsBaseUrl =
-          resolveTTSBaseUrl(actionProviderId) || actionProvider?.defaultBaseUrl;
+        const ttsBaseUrl = resolveTTSBaseUrl(actionProviderId) || actionProvider?.defaultBaseUrl;
         const voice =
           requestedVoice?.providerId === actionProviderId
             ? requestedVoice.voiceId

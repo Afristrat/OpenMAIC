@@ -69,7 +69,11 @@ describe('canonical agent speech', () => {
       async (system) => {
         renderedSystem = system;
         return JSON.stringify([
-          { type: 'text', content: 'Commençons par expliciter notre hypothèse.', agentId: 'teacher' },
+          {
+            type: 'text',
+            content: 'Commençons par expliciter notre hypothèse.',
+            agentId: 'teacher',
+          },
           {
             type: 'text',
             content: 'Quel fait pourrait invalider cette hypothèse ?',

@@ -99,9 +99,7 @@ export function parseActionsFromStructuredOutput(
         const interventionId =
           typeof typedItem.interventionId === 'string' ? typedItem.interventionId.trim() : '';
         const interventionForm =
-          typeof typedItem.interventionForm === 'string'
-            ? typedItem.interventionForm.trim()
-            : '';
+          typeof typedItem.interventionForm === 'string' ? typedItem.interventionForm.trim() : '';
         actions.push({
           id: `action_${nanoid(8)}`,
           type: 'speech',
@@ -109,7 +107,12 @@ export function parseActionsFromStructuredOutput(
           ...(agentId ? { agentId } : {}),
           ...(interventionId ? { interventionId } : {}),
           ...(interventionForm
-            ? { interventionForm: interventionForm as Extract<Action, { type: 'speech' }>['interventionForm'] }
+            ? {
+                interventionForm: interventionForm as Extract<
+                  Action,
+                  { type: 'speech' }
+                >['interventionForm'],
+              }
             : {}),
         });
       }
