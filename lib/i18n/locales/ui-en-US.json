@@ -1891,6 +1891,8 @@
   "org.teacherVoiceProvider": "Voice provider",
   "org.templates": "Blueprints",
   "generation.expandRequest": "Structure my idea",
+  "generation.territory": "Territory",
+  "generation.currency": "Currency",
   "generation.improveRequest": "Improve my request",
   "generation.requirementAssistantHint": "The assistant turns your idea into a course brief without inventing missing information.",
   "agentBar.suggestSpecialists": "Suggest topic specialists",

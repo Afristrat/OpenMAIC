@@ -31,6 +31,8 @@ export interface LaserAction extends ActionBase {
   type: 'laser';
   elementId: string;
   color?: string; // default '#ff0000'
+  /** Total visible time. The renderer uses it to sweep the complete target area. */
+  durationMs?: number;
 }
 
 // ==================== Synchronous actions ====================

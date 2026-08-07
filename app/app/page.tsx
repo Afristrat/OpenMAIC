@@ -61,6 +61,12 @@ import { useSettingsStore } from '@/lib/store/settings';
 import type { InteractionLevel, LearningApproach } from '@/lib/agents/persona-catalog';
 import { TTS_PROVIDERS } from '@/lib/audio/constants';
 import type { BuiltInTTSProviderId } from '@/lib/audio/types';
+import type { LearningContext } from '@/lib/types/stage';
+import {
+  COMMON_LEARNING_CURRENCIES,
+  DEFAULT_LEARNING_CONTEXT,
+  normalizeLearningContext,
+} from '@/lib/formation-engine/learning-context';
 
 const log = createLogger('Home');
 
@@ -97,6 +103,7 @@ interface FormState {
   vocationalTestMode: boolean;
   learningApproach: LearningApproach | null;
   interactionLevel: InteractionLevel | null;
+  learningContext: LearningContext;
 }
 
 const initialFormState: FormState = {
@@ -107,6 +114,7 @@ const initialFormState: FormState = {
   vocationalTestMode: false,
   learningApproach: null,
   interactionLevel: null,
+  learningContext: DEFAULT_LEARNING_CONTEXT,
 };
 
 function HomePage() {
@@ -481,8 +489,10 @@ function HomePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           orgId: currentOrg.id,
+          language: locale,
           learningApproach: form.learningApproach,
           interactionLevel: form.interactionLevel,
+          learningContext: normalizeLearningContext(form.learningContext),
           requirement: requirements.requirement,
           ...(pdfContent ? { pdfContent } : {}),
           enableWebSearch: form.webSearch,
@@ -567,6 +577,8 @@ function HomePage() {
     !!form.requirement.trim() &&
     !!form.learningApproach &&
     !!form.interactionLevel &&
+    !!form.learningContext.territory.trim() &&
+    /^[A-Za-z]{3}$/.test(form.learningContext.currencyCode.trim()) &&
     !!user &&
     !!currentOrg &&
     canAuthor;
@@ -866,8 +878,21 @@ function HomePage() {
                   own language field is ignored here since generation language
                   is now driven globally by the LanguageSwitcher locale. */}
               <TemplateSelector
-                onSelect={(requirement) => {
-                  updateForm('requirement', requirement);
+                onSelect={(template) => {
+                  const requirement = template.requirements.requirement;
+                  if (typeof requirement === 'string') updateForm('requirement', requirement);
+                  const templateContext = template.requirements.learningContext;
+                  if (
+                    templateContext &&
+                    typeof templateContext === 'object' &&
+                    typeof (templateContext as Record<string, unknown>).territory === 'string' &&
+                    typeof (templateContext as Record<string, unknown>).currencyCode === 'string'
+                  ) {
+                    updateForm(
+                      'learningContext',
+                      normalizeLearningContext(templateContext as unknown as LearningContext),
+                    );
+                  }
                 }}
               />
 
@@ -941,6 +966,41 @@ function HomePage() {
           className="mt-2 flex w-full flex-wrap items-center gap-2 px-1"
           data-testid="animation-authoring-controls"
         >
+          <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            {t('generation.territory')}
+            <input
+              data-testid="learning-territory"
+              value={form.learningContext.territory}
+              onChange={(event) =>
+                updateForm('learningContext', {
+                  ...form.learningContext,
+                  territory: event.target.value,
+                })
+              }
+              className="h-7 w-28 rounded-md border border-border bg-background px-2 text-foreground"
+            />
+          </label>
+          <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            {t('generation.currency')}
+            <input
+              data-testid="learning-currency"
+              list="learning-currency-codes"
+              value={form.learningContext.currencyCode}
+              maxLength={3}
+              onChange={(event) =>
+                updateForm('learningContext', {
+                  ...form.learningContext,
+                  currencyCode: event.target.value.toUpperCase(),
+                })
+              }
+              className="h-7 w-16 rounded-md border border-border bg-background px-2 uppercase text-foreground"
+            />
+            <datalist id="learning-currency-codes">
+              {COMMON_LEARNING_CURRENCIES.map((currency) => (
+                <option key={currency} value={currency} />
+              ))}
+            </datalist>
+          </label>
           <span className="text-xs font-medium text-muted-foreground">
             {t('animation.learningApproach')}
           </span>

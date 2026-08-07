@@ -65,6 +65,12 @@ import { createAnimationConstitution } from '@/lib/formation-engine/animation-co
 import { generateResourcesForClassroom } from '@/lib/server/classroom-resource-generation';
 import type { TTSProviderId } from '@/lib/audio/types';
 import type { ContextualSpecialist } from '@/lib/agents/contextual-specialist';
+import type { LearningContext } from '@/lib/types/stage';
+import {
+  buildLearningContextDirective,
+  DEFAULT_LEARNING_CONTEXT,
+  normalizeLearningContext,
+} from '@/lib/formation-engine/learning-context';
 import {
   organizationDesignSystemFromSettings,
   type OrganizationDesignSystem,
@@ -77,6 +83,8 @@ export interface GenerateClassroomInput {
   authorRole: 'author' | 'super-admin';
   learningApproach: LearningApproach;
   interactionLevel: InteractionLevel;
+  /** Required for new authoring requests; optional only to drain legacy queued jobs safely. */
+  learningContext?: LearningContext;
   /** Persisted courses from S1-003 override the deterministic current-flow identity. */
   courseId?: string;
   language?: CourseLocale;
@@ -201,6 +209,14 @@ export async function generateClassroom(
   },
 ): Promise<GenerateClassroomResult> {
   const { requirement, pdfContent } = input;
+  const learningContext = normalizeLearningContext(
+    input.learningContext ?? DEFAULT_LEARNING_CONTEXT,
+  );
+  const learningContextDirective = buildLearningContextDirective(
+    learningContext,
+    input.language ?? 'fr-FR',
+  );
+  const contextualRequirement = `${requirement}\n\n${learningContextDirective}`;
   let activeSkillId = input.activeSkillId;
   if (activeSkillId) {
     activeSkillId = await resolveOrganizationSkillId(input.orgId, activeSkillId);
@@ -326,7 +342,7 @@ export async function generateClassroom(
     interactionLevel: input.interactionLevel,
   });
   const requirements: UserRequirements = {
-    requirement: `${requirement}\n\n${instructionalDirective}`,
+    requirement: `${contextualRequirement}\n\n${instructionalDirective}`,
     interactiveMode: input.interactiveMode ?? false,
     activeSkillId,
   };
@@ -366,7 +382,11 @@ export async function generateClassroom(
         }
       }
       try {
-        const searchQuery = await buildSearchQuery(requirement, pdfText, searchQueryAiCall);
+        const searchQuery = await buildSearchQuery(
+          contextualRequirement,
+          pdfText,
+          searchQueryAiCall,
+        );
 
         log.info('Running web search for classroom generation', {
           hasPdfContext: searchQuery.hasPdfContext,
@@ -568,6 +588,7 @@ export async function generateClassroom(
       name: courseTitle || outlines[0]?.title || requirement.slice(0, 50),
       description: undefined,
       languageDirective,
+      learningContext,
       skillPromptContext: {
         enabled: skillEngineEnabled,
         activeSkillId: skillEngineEnabled ? activeSkillId : undefined,

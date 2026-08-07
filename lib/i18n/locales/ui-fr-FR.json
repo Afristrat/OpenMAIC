@@ -1891,6 +1891,8 @@
   "org.teacherVoiceProvider": "Fournisseur de voix",
   "org.templates": "Trames",
   "generation.expandRequest": "Structurer mon idée",
+  "generation.territory": "Territoire",
+  "generation.currency": "Devise",
   "generation.improveRequest": "Améliorer ma demande",
   "generation.requirementAssistantHint": "L’assistant transforme votre idée en cahier des charges de formation sans inventer les informations manquantes.",
   "agentBar.suggestSpecialists": "Proposer des spécialistes du sujet",

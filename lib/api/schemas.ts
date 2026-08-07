@@ -333,6 +333,10 @@ export const generateClassroomSchema = z.object({
   language: z.enum(['fr-FR', 'ar-MA', 'en-US']).optional(),
   learningApproach: z.enum(['pedagogy', 'hybrid', 'andragogy']),
   interactionLevel: z.enum(['guided', 'balanced', 'immersive']),
+  learningContext: z.object({
+    territory: z.string().trim().min(1).max(120),
+    currencyCode: z.string().trim().regex(/^[A-Za-z]{3}$/),
+  }),
   enableWebSearch: z.boolean().optional(),
   webSearchProviderId: z
     .enum(['tavily', 'bocha', 'brave', 'baidu', 'minimax', 'serper'])

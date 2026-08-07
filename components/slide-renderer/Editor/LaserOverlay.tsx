@@ -9,6 +9,39 @@ interface LaserOverlayProps {
   duration?: number;
 }
 
+export interface LaserPath {
+  x: number[];
+  y: number[];
+  times: number[];
+}
+
+const clamp = (value: number) => Math.min(99, Math.max(1, value));
+
+/**
+ * Visit the useful extent of a target instead of pinning a dot to its centre.
+ * Small targets keep a steady point; wider/taller targets receive a readable
+ * serpentine sweep that remains inside the measured DOM bounds.
+ */
+export function buildLaserPath(geometry: PercentageGeometry): LaserPath {
+  const { x, y, w, h, centerX, centerY } = geometry;
+  if (w < 4 && h < 4) {
+    return { x: [centerX, centerX], y: [centerY, centerY], times: [0, 1] };
+  }
+
+  const insetX = Math.min(Math.max(w * 0.12, 0.8), w / 2);
+  const insetY = Math.min(Math.max(h * 0.18, 0.8), h / 2);
+  const left = clamp(x + insetX);
+  const right = clamp(x + w - insetX);
+  const top = clamp(y + insetY);
+  const bottom = clamp(y + h - insetY);
+
+  return {
+    x: [clamp(centerX), left, right, left, right, clamp(centerX)],
+    y: [clamp(centerY), top, top, bottom, bottom, clamp(centerY)],
+    times: [0, 0.12, 0.34, 0.56, 0.78, 1],
+  };
+}
+
 /**
  * Laser pointer overlay component
  *
@@ -20,9 +53,10 @@ interface LaserOverlayProps {
 export function LaserOverlay({
   geometry,
   color = '#ff3b30',
-  duration: _duration = 3000,
+  duration = 8000,
 }: LaserOverlayProps) {
   const { centerX, centerY } = geometry;
+  const path = buildLaserPath(geometry);
 
   const startPos = {
     x: centerX > 50 ? 105 : -5,
@@ -39,8 +73,8 @@ export function LaserOverlay({
       }}
       animate={{
         opacity: 1,
-        left: `${centerX}%`,
-        top: `${centerY}%`,
+        left: path.x.map((value) => `${value}%`),
+        top: path.y.map((value) => `${value}%`),
       }}
       exit={{
         opacity: 0,
@@ -49,8 +83,8 @@ export function LaserOverlay({
         transition: { duration: 0.25, ease: [0.4, 0, 1, 1] },
       }}
       transition={{
-        left: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
-        top: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+        left: { duration: duration / 1000, times: path.times, ease: 'easeInOut' },
+        top: { duration: duration / 1000, times: path.times, ease: 'easeInOut' },
         opacity: { duration: 0.15 },
       }}
       className="absolute z-[101] pointer-events-none"

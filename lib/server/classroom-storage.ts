@@ -81,6 +81,7 @@ export interface StageExtra {
   updatedAt?: number;
   languageDirective?: string;
   skillPromptContext?: Stage['skillPromptContext'];
+  learningContext?: Stage['learningContext'];
   researchSources?: Stage['researchSources'];
   whiteboard?: Stage['whiteboard'];
   videoManifest?: Stage['videoManifest'];
@@ -107,6 +108,7 @@ export function buildStageExtra(
     updatedAt: stage.updatedAt,
     languageDirective: stage.languageDirective,
     skillPromptContext: stage.skillPromptContext,
+    learningContext: stage.learningContext,
     researchSources: stage.researchSources,
     whiteboard: stage.whiteboard,
     videoManifest: stage.videoManifest,
@@ -244,6 +246,7 @@ export async function readClassroom(id: string): Promise<PersistedClassroomData 
     updatedAt: stageExtra.updatedAt ?? new Date(stageRow.created_at).getTime(),
     languageDirective: stageExtra.languageDirective,
     skillPromptContext: stageExtra.skillPromptContext,
+    learningContext: stageExtra.learningContext,
     researchSources: stageExtra.researchSources,
     style: stageRow.style ?? undefined,
     whiteboard: stageExtra.whiteboard,

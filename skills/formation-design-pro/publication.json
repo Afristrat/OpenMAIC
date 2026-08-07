@@ -20,19 +20,19 @@
   "files": [
     {
       "path": "manifest.json",
-      "sha256": "5e4189ab049e0b1ad160fd98145676fdadd54e053726c33ea4f15f8db1b5d4ac"
+      "sha256": "ff85b73713a94ee9080fbc6436e5e58fa8c2d510a194df7fe53b861c329e4bb0"
     },
     {
       "path": "SKILL.md",
-      "sha256": "1202bbef36f8135925cf925b0389fdcc184f63257beb67e2bc1a6c35b8123064"
+      "sha256": "7e00ca5dfc47a819afcd7487c548c140ae38bd47dedb51d69fe0d72b35e25f1d"
     },
     {
       "path": "references/formation-design-contract.md",
-      "sha256": "fecbb2945d252e2434ca2305f36eebac4abbfb179cac1d073742affc69cd1ddf"
+      "sha256": "a97a8b055041938b88744a2746e3dd0cd90bb068a3e072ccf5826e0fe5270594"
     },
     {
       "path": "prompts/andragogy-system-override.md",
-      "sha256": "61379e408a20a829604b17775961b05f344d148e417eaa3beded27fb1cfb92bc"
+      "sha256": "af97da70aa51f56521bc10b2305555646fb2c23a4f338749599b2e3c6b7bdd6b"
     },
     {
       "path": "prompts/andragogy-live-agent-override.md",

@@ -3,17 +3,16 @@
 import { ScreenElement } from './ScreenElement';
 import { HighlightOverlay } from './HighlightOverlay';
 import { SpotlightOverlay } from './SpotlightOverlay';
-import { LaserOverlay } from './LaserOverlay';
+import { LaserPointerOverlay } from './LaserPointerOverlay';
 import { useSlideBackgroundStyle } from '@/lib/hooks/use-slide-background-style';
 import { useCanvasStore } from '@/lib/store';
 import { useSceneSelector } from '@/lib/contexts/scene-context';
 import { findElementGeometry } from '@/lib/utils/geometry';
 import type { SlideContent } from '@/lib/types/stage';
-import type { PPTElement, SlideBackground } from '@openmaic/dsl';
 import type { PercentageGeometry } from '@/lib/types/action';
+import type { PPTElement, SlideBackground } from '@openmaic/dsl';
 import { useViewportSize } from './Canvas/hooks/useViewportSize';
 import { useRef, useMemo } from 'react';
-import { AnimatePresence } from 'motion/react';
 
 export function ScreenCanvas() {
   const canvasScale = useCanvasStore.use.canvasScale();
@@ -32,20 +31,7 @@ export function ScreenCanvas() {
   const { backgroundStyle } = useSlideBackgroundStyle(background);
 
   // Get visual effect state
-  const laserElementId = useCanvasStore.use.laserElementId();
-  const laserOptions = useCanvasStore.use.laserOptions();
   const zoomTarget = useCanvasStore.use.zoomTarget();
-
-  // Compute laser pointer geometry
-  const laserGeometry = useMemo<PercentageGeometry | null>(() => {
-    if (!laserElementId) return null;
-    const element = elements.find((el) => el.id === laserElementId);
-    if (!element) return null;
-    return findElementGeometry(
-      { type: 'slide', content: { canvas: { elements } } } as Record<string, unknown>,
-      laserElementId,
-    );
-  }, [laserElementId, elements]);
 
   // Compute zoom target geometry
   const zoomGeometry = useMemo<PercentageGeometry | null>(() => {
@@ -101,22 +87,8 @@ export function ScreenCanvas() {
         {/* Spotlight overlay - covers the entire slide, positioned via DOM measurement */}
         <SpotlightOverlay />
 
-        {/* Visual effects layer - outside the scale layer, using percentage coordinates */}
-        <div className="absolute inset-0 pointer-events-none" style={{ padding: '5%' }}>
-          <div className="relative w-full h-full">
-            {/* Laser pointer overlay */}
-            <AnimatePresence>
-              {laserElementId && laserGeometry && (
-                <LaserOverlay
-                  key={`laser-${laserElementId}`}
-                  geometry={laserGeometry}
-                  color={laserOptions?.color}
-                  duration={laserOptions?.duration}
-                />
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
+        {/* DOM-measured laser: no padded coordinate layer that shifts edge targets. */}
+        <LaserPointerOverlay />
       </div>
     </div>
   );

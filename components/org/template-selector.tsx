@@ -28,7 +28,7 @@ import type { ClassroomTemplate, OrgSector } from '@/lib/supabase/types';
 // If not, the component uses a simpler overlay fallback.
 
 interface TemplateSelectorProps {
-  onSelect: (requirement: string, language: string) => void;
+  onSelect: (template: ClassroomTemplate) => void;
   sectorFilter?: OrgSector | null;
 }
 
@@ -86,7 +86,7 @@ export function TemplateSelector({ onSelect, sectorFilter }: TemplateSelectorPro
   const handleSelect = (template: ClassroomTemplate) => {
     const reqs = template.requirements as Record<string, unknown>;
     const requirement = typeof reqs.requirement === 'string' ? reqs.requirement : '';
-    onSelect(requirement, template.language);
+    onSelect({ ...template, requirements: { ...reqs, requirement } });
     setOpen(false);
   };
 

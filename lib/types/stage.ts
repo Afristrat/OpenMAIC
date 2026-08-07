@@ -26,6 +26,7 @@ export type {
   GeneratedAgentConfig,
   MultiAgentConfig,
   SkillPromptContext,
+  LearningContext,
   Stage,
   SlideContent,
   QuizOption,

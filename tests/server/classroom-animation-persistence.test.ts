@@ -50,6 +50,7 @@ describe('classroom animation persistence', () => {
       createdAt: 1,
       updatedAt: 1,
       skillPromptContext: { enabled: true, activeSkillId: 'formation-design-pro' },
+      learningContext: { territory: 'Maroc', currencyCode: 'MAD' },
       researchSources: [
         { title: 'Source fiable', url: 'https://example.com/source', excerpt: 'Extrait.' },
       ],
@@ -59,6 +60,7 @@ describe('classroom animation persistence', () => {
     const restored = extractStageLiveContext(JSON.parse(JSON.stringify(extra)));
 
     expect(restored.context).toEqual(stage.skillPromptContext);
+    expect(extra.learningContext).toEqual(stage.learningContext);
     expect(extra.researchSources).toEqual(stage.researchSources);
     expect(restored.animationConstitution).toEqual(constitution);
     expect(restored.animationConstitution?.authoredBy).toMatchObject({

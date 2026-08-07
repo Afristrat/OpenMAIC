@@ -71,8 +71,18 @@ function generateLineIds(count: number): string[] {
 
 // ==================== ActionEngine ====================
 
-/** Default duration (ms) before fire-and-forget effects auto-clear */
-const EFFECT_AUTO_CLEAR_MS = 5000;
+/** Default duration (ms) before fire-and-forget effects auto-clear. */
+export const DEFAULT_VISUAL_EFFECT_DURATION_MS = 8000;
+const MIN_VISUAL_EFFECT_DURATION_MS = 2000;
+const MAX_VISUAL_EFFECT_DURATION_MS = 30000;
+
+export function visualEffectDurationMs(durationMs?: number): number {
+  if (!Number.isFinite(durationMs)) return DEFAULT_VISUAL_EFFECT_DURATION_MS;
+  return Math.min(
+    MAX_VISUAL_EFFECT_DURATION_MS,
+    Math.max(MIN_VISUAL_EFFECT_DURATION_MS, Math.round(durationMs!)),
+  );
+}
 
 /** Callback for sending messages to widget iframe */
 export type WidgetMessageCallback = (type: string, payload: Record<string, unknown>) => void;
@@ -184,14 +194,14 @@ export class ActionEngine {
   }
 
   /** Schedule auto-clear for fire-and-forget effects */
-  private scheduleEffectClear(): void {
+  private scheduleEffectClear(durationMs = DEFAULT_VISUAL_EFFECT_DURATION_MS): void {
     if (this.effectTimer) {
       clearTimeout(this.effectTimer);
     }
     this.effectTimer = setTimeout(() => {
       useCanvasStore.getState().clearAllEffects();
       this.effectTimer = null;
-    }, EFFECT_AUTO_CLEAR_MS);
+    }, durationMs);
   }
 
   // ==================== Fire-and-forget ====================
@@ -204,10 +214,12 @@ export class ActionEngine {
   }
 
   private executeLaser(action: LaserAction): void {
+    const duration = visualEffectDurationMs(action.durationMs);
     useCanvasStore.getState().setLaser(action.elementId, {
       color: action.color ?? '#ff0000',
+      duration,
     });
-    this.scheduleEffectClear();
+    this.scheduleEffectClear(duration);
   }
 
   // ==================== Synchronous — Speech ====================

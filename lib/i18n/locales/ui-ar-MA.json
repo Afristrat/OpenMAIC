@@ -1891,6 +1891,8 @@
   "org.teacherVoiceProvider": "مزوّد الصوت",
   "org.templates": "مخططات التكوين",
   "generation.expandRequest": "هيكلة فكرتي",
+  "generation.territory": "البلد أو الإقليم",
+  "generation.currency": "العملة",
   "generation.improveRequest": "تحسين طلبي",
   "generation.requirementAssistantHint": "يحوّل المساعد فكرتك إلى موجز تكوين من دون اختلاق المعلومات الناقصة.",
   "agentBar.suggestSpecialists": "اقتراح خبراء في الموضوع",

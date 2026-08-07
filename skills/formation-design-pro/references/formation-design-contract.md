@@ -9,6 +9,7 @@ La source de vérité de la constitution d’animation est `lib/formation-engine
 - auteur et organisation propriétaires ;
 - approche recommandée à partir du contexte, expliquée puis validée explicitement par l’auteur : pédagogie, hybride ou andragogie ;
 - niveau d’interaction choisi ;
+- territoire d’usage et devise ISO 4217 choisis ou hérités d’une trame puis confirmés par l’auteur ;
 - performance observable visée et preuves de réussite ;
 - roster d’agents validé par l’organisation ;
 - sources autorisées, contraintes, accessibilité et sujets interdits ;
@@ -24,6 +25,8 @@ Une production complète livre quatre objets distincts :
 2. la constitution d’animation, persistée avec la classroom ;
 3. les prises de parole ordinaires préproduites, intégrées au parcours canonique et aux exports ;
 4. les décisions d’intervention prises pendant le live, persistées comme événements lorsque l’enregistrement est autorisé.
+
+La trame conserve le contexte réutilisable. La classroom en prend un instantané modifiable. Une adaptation de territoire ou de devise cible uniquement les exemples, montants, ressources et narrations concernés ; elle ne reconstruit pas les objectifs, la progression, les évaluations ou l’animation sans nécessité démontrée. Toute conversion monétaire exige un taux actuel et une source vérifiable.
 
 La constitution associe un parcours canonique reproductible à des règles adaptatives déclenchées uniquement par une action explicite de l’apprenant. Elle ne transforme pas chaque échange en appel réseau pendant la lecture.
 
@@ -91,6 +94,8 @@ Un agent désactivé ne peut apparaître dans l’ossature ni dans une règle ad
 - aucune génération adaptative sans action explicite de l’apprenant ;
 - aucune perte du point de reprise après un approfondissement ;
 - aucun audio de scène suivante avant l’affichage de cette scène ;
+- aucune devise implicite ou différente de la devise de référence hors comparaison explicitement signalée ;
+- aucun laser réduit à un point central fugitif lorsqu’il doit guider la lecture d’une zone ;
 - aucun dépassement du nombre de tours consécutifs choisi par l’auteur ;
 - aucune anecdote, statistique, référence ou situation locale présentée comme factuelle sans fondement autorisé ;
 - aucune confiance dans un rôle envoyé par le navigateur : le serveur reste l’autorité.

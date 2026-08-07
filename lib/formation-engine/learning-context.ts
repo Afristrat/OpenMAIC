@@ -1,0 +1,65 @@
+import type { LearningContext } from '@/lib/types/stage';
+
+export const DEFAULT_LEARNING_CONTEXT: LearningContext = {
+  territory: 'Maroc',
+  currencyCode: 'MAD',
+};
+
+export const COMMON_LEARNING_CURRENCIES = [
+  'MAD',
+  'XOF',
+  'DZD',
+  'TND',
+  'EGP',
+  'NGN',
+  'GHS',
+  'KES',
+  'ZAR',
+  'EUR',
+  'USD',
+  'GBP',
+  'AED',
+  'SAR',
+] as const;
+
+export function normalizeLearningContext(value: LearningContext): LearningContext {
+  return {
+    territory: value.territory.trim(),
+    currencyCode: value.currencyCode.trim().toUpperCase(),
+  };
+}
+
+export function buildLearningContextDirective(
+  rawContext: LearningContext,
+  locale: 'fr-FR' | 'ar-MA' | 'en-US' = 'fr-FR',
+): string {
+  const context = normalizeLearningContext(rawContext);
+  if (!context.territory || !/^[A-Z]{3}$/.test(context.currencyCode)) {
+    throw new Error('A territory and a three-letter ISO 4217 currency code are required');
+  }
+
+  if (locale === 'ar-MA') {
+    return [
+      'سياق الاستخدام الإلزامي:',
+      `البلد أو الإقليم: ${context.territory}.`,
+      `العملة المرجعية: ${context.currencyCode}.`,
+      `استخدم ${context.currencyCode} في جميع المبالغ والميزانيات والأمثلة والتمارين. لا تستخدم عملة أخرى إلا في مقارنة موضحة صراحة. لا تحوّل مبلغًا قائماً دون سعر صرف حديث ومصدر موثوق.`,
+    ].join('\n');
+  }
+
+  if (locale === 'en-US') {
+    return [
+      'MANDATORY USAGE CONTEXT:',
+      `Country or territory: ${context.territory}.`,
+      `Reference currency: ${context.currencyCode}.`,
+      `Use ${context.currencyCode} for every amount, budget, example and exercise. Use another currency only in an explicitly labelled comparison. Never convert an existing amount without a current, sourced exchange rate.`,
+    ].join('\n');
+  }
+
+  return [
+    'CONTEXTE D’USAGE OBLIGATOIRE :',
+    `Pays ou territoire : ${context.territory}.`,
+    `Devise de référence : ${context.currencyCode}.`,
+    `Utiliser ${context.currencyCode} pour tous les montants, budgets, exemples et exercices. N’utiliser une autre devise que dans une comparaison explicitement signalée. Ne jamais convertir un montant existant sans taux de change actuel et sourcé.`,
+  ].join('\n');
+}

@@ -33,7 +33,14 @@ export function LaserPointerOverlay({
   const laserElementId = useCanvasStore.use.laserElementId();
   const laserOptions = useCanvasStore.use.laserOptions();
   const containerRef = useRef<HTMLDivElement>(null);
-  const [center, setCenter] = useState<{ x: number; y: number } | null>(null);
+  const [geometry, setGeometry] = useState<{
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    centerX: number;
+    centerY: number;
+  } | null>(null);
 
   const elements = useSceneSelector<SlideContent, PPTElement[]>(
     (content) => content.canvas.elements,
@@ -42,33 +49,54 @@ export function LaserPointerOverlay({
   // Compute the target element center as a percentage of the overlay container.
   const measure = useCallback(() => {
     if (!laserElementId || !containerRef.current) {
-      setCenter(null);
+      setGeometry(null);
       return;
     }
 
     const domElement = document.getElementById(`${domIdPrefix}${laserElementId}`);
     if (!domElement) {
-      setCenter(null);
+      setGeometry(null);
       return;
     }
 
-    // Prefer .element-content (the actual rendered area for auto-height).
+    // Measure the union of the authored box and its rendered content. Text can
+    // grow beyond an auto-height box, while grouped/table elements can occupy
+    // the full outer box. Picking either rectangle alone loses part of a target.
     const contentEl = domElement.querySelector('.element-content');
-    const targetEl = contentEl ?? domElement;
-
     const containerRect = containerRef.current.getBoundingClientRect();
-    const targetRect = targetEl.getBoundingClientRect();
+    const outerRect = domElement.getBoundingClientRect();
+    const contentRect = contentEl?.getBoundingClientRect();
+    const targetRect = contentRect
+      ? {
+          left: Math.min(outerRect.left, contentRect.left),
+          top: Math.min(outerRect.top, contentRect.top),
+          right: Math.max(outerRect.right, contentRect.right),
+          bottom: Math.max(outerRect.bottom, contentRect.bottom),
+          width:
+            Math.max(outerRect.right, contentRect.right) -
+            Math.min(outerRect.left, contentRect.left),
+          height:
+            Math.max(outerRect.bottom, contentRect.bottom) -
+            Math.min(outerRect.top, contentRect.top),
+        }
+      : outerRect;
 
     if (containerRect.width === 0 || containerRect.height === 0) {
-      setCenter(null);
+      setGeometry(null);
       return;
     }
 
-    setCenter({
-      x:
-        ((targetRect.left + targetRect.width / 2 - containerRect.left) / containerRect.width) * 100,
-      y:
-        ((targetRect.top + targetRect.height / 2 - containerRect.top) / containerRect.height) * 100,
+    const x = ((targetRect.left - containerRect.left) / containerRect.width) * 100;
+    const y = ((targetRect.top - containerRect.top) / containerRect.height) * 100;
+    const w = (targetRect.width / containerRect.width) * 100;
+    const h = (targetRect.height / containerRect.height) * 100;
+    setGeometry({
+      x,
+      y,
+      w,
+      h,
+      centerX: x + w / 2,
+      centerY: y + h / 2,
     });
   }, [laserElementId, domIdPrefix]);
 
@@ -81,10 +109,10 @@ export function LaserPointerOverlay({
     // No overflow-hidden: the laser flies in from just outside the frame.
     <div ref={containerRef} className="absolute inset-0 z-[101] pointer-events-none">
       <AnimatePresence>
-        {laserElementId && center && (
+        {laserElementId && geometry && (
           <LaserOverlay
             key={`laser-${laserElementId}`}
-            geometry={{ x: 0, y: 0, w: 0, h: 0, centerX: center.x, centerY: center.y }}
+            geometry={geometry}
             color={laserOptions?.color}
             duration={laserOptions?.duration}
           />

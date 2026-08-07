@@ -7,11 +7,13 @@ description: Concevoir ou industrialiser une formation Qalem fondée sur une per
 
 ## Produire le contrat avant le contenu
 
-1. Identifier la performance observable attendue, les acquis, les contraintes, les sources autorisées et les preuves de réussite.
+1. Identifier la performance observable attendue, les acquis, les contraintes, les sources autorisées, le territoire d’usage, la devise de référence et les preuves de réussite.
 2. Recueillir la performance cible, les acquis, l’autonomie réelle, l’expérience mobilisable, le risque, les contraintes et la modalité. Recommander ensuite `pedagogy`, `hybrid` ou `andragogy`, expliquer les conséquences en langage courant, puis exiger la validation explicite de l’auteur. Ne jamais déduire cette recommandation de l’âge seul.
 3. Compiler le plan de formation avec le moteur `qalem-prompt-compiler`. Ne pas recréer ses schémas ni ses politiques.
 4. Concevoir chaque activité et chaque évaluation en fonction de sa contribution à la performance visée. Ne jamais imposer de ratio universel de théorie, pratique, parole ou apprentissage entre pairs.
 5. Produire une constitution d’animation persistante avant le live. Lire [le contrat de conception](references/formation-design-contract.md) pour les entrées, sorties et invariants.
+
+Le territoire et la devise sont des variables structurées de la trame, jamais des détails déduits d’un exemple. Les recopier dans la classroom afin qu’une adaptation ultérieure puisse retraiter uniquement les cas, montants, ressources et narrations concernés. Ne jamais convertir un montant existant sans taux actuel et source vérifiable.
 
 ## Séparer le canonique de l’adaptatif
 
@@ -25,6 +27,7 @@ description: Concevoir ou industrialiser une formation Qalem fondée sur une per
 - Conserver le texte visible de toute prise de parole et utiliser une identité voix, avatar et prénom validée dans le roster de l’organisation.
 - Prendre les poids d’interaction dans un instantané du roster de l’organisation. Ne pas inventer de fréquence dans le prompt.
 - Exiger pour chaque routage un agent, un déclencheur, une forme et une raison d’apprentissage. Refuser la décision si l’un de ces éléments sort de la constitution, puis la persister avant la prise de parole.
+- Lorsqu’un laser accompagne une explication, couvrir la zone utile de l’élément visé et maintenir le guidage pendant un temps réellement lisible. Un point central fugitif ne constitue pas un guidage visuel valide.
 
 ## Bloquer plutôt qu’inventer
 

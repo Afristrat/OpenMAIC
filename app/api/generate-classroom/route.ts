@@ -36,6 +36,10 @@ export async function POST(req: NextRequest) {
       authorRole: auth.authoredByRole,
       learningApproach: parsed.learningApproach,
       interactionLevel: parsed.interactionLevel,
+      learningContext: {
+        territory: parsed.learningContext.territory,
+        currencyCode: parsed.learningContext.currencyCode.toUpperCase(),
+      },
       ...(parsed.courseId ? { courseId: parsed.courseId } : {}),
       requirement: parsed.requirement,
       ...(parsed.pdfContent ? { pdfContent: parsed.pdfContent } : {}),

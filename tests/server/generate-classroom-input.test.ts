@@ -6,6 +6,7 @@ const baseInput = {
   requirement: 'Former une équipe au pilotage de trésorerie.',
   learningApproach: 'andragogy' as const,
   interactionLevel: 'immersive' as const,
+  learningContext: { territory: 'Maroc', currencyCode: 'MAD' },
 };
 
 describe('generateClassroomSchema', () => {
@@ -82,5 +83,16 @@ describe('generateClassroomSchema', () => {
     });
 
     expect(result.success).toBe(false);
+  });
+
+  test('requires an explicit territory and ISO 4217 currency', () => {
+    const { learningContext: _learningContext, ...withoutContext } = baseInput;
+    expect(generateClassroomSchema.safeParse(withoutContext).success).toBe(false);
+    expect(
+      generateClassroomSchema.safeParse({
+        ...baseInput,
+        learningContext: { territory: 'Maroc', currencyCode: 'euro' },
+      }).success,
+    ).toBe(false);
   });
 });

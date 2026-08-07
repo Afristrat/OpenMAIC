@@ -78,6 +78,14 @@ export interface SkillPromptContext {
   activeSkillId?: string;
 }
 
+/** Reusable territorial assumptions selected by the author or inherited from a template. */
+export interface LearningContext {
+  /** Plain-language territory used to ground cases, institutions and examples. */
+  territory: string;
+  /** ISO 4217 alphabetic code used by every monetary example. */
+  currencyCode: string;
+}
+
 /**
  * Traceable source retained with a classroom generated from web research.
  * The full crawl stays in the generation context only; the persisted excerpt
@@ -101,6 +109,7 @@ export interface Stage {
   // Stage metadata
   languageDirective?: string;
   skillPromptContext?: SkillPromptContext;
+  learningContext?: LearningContext;
   /** Sources consulted for this classroom when web research was enabled. */
   researchSources?: ResearchSource[];
   style?: string;
