@@ -70,7 +70,7 @@ describe('formation engine platform publication', () => {
 
     expect(publication).toContain('prises de parole ordinaires préproduites');
     expect(publication).toContain('identifiant stable d’intervention');
-    expect(publication).toContain('voix et avatar du roster');
+    expect(publication).toMatch(/voix et (?:l’)?avatar du roster/u);
     expect(publication).toContain('export vidéo');
     expect(publication).toContain('action explicite de l’apprenant');
     expect(publication).toContain('reprendre exactement au même point');

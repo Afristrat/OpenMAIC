@@ -18,7 +18,7 @@ Le rôle `author` conçoit la constitution pour son organisation. Le `super-admi
 
 ## Sorties industrielles
 
-Une production complète livre trois objets distincts :
+Une production complète livre quatre objets distincts :
 
 1. le plan compilé de formation, consommé par la génération des scènes ;
 2. la constitution d’animation, persistée avec la classroom ;
@@ -64,7 +64,7 @@ Trois actions de l’apprenant ouvrent explicitement un tour adaptatif :
 
 La sélection conserve le curseur canonique. Quand l’échange adaptatif se termine, la lecture doit reprendre exactement au même point, sans sauter ni répéter une autre intervention.
 
-Le directeur retourne un contrat structuré comprenant l’agent, le déclencheur, la forme et la raison d’apprentissage. Le serveur refuse un agent absent du roster, une forme hors de ses capacités, un déclencheur sans règle active ou un temps Play sans ossature autorisée. Une décision acceptée est persistée de façon idempotente avant d’être transmise au moteur de prise de parole.
+Le directeur retourne un contrat structuré comprenant l’agent, le déclencheur, la forme et la raison d’apprentissage. Le serveur refuse un agent absent du roster, une forme hors de ses capacités, un déclencheur sans règle active ou une sélection sans intervention canonique identifiable. Une décision acceptée est persistée de façon idempotente avant d’être transmise au moteur de prise de parole.
 
 Les cas, anecdotes et touches d’humour doivent être pertinents, inclusifs et compatibles avec les sources autorisées. Quand un contenu ne peut pas être présenté comme factuel, il est clairement qualifié d’hypothèse ou de scénario synthétique.
 
