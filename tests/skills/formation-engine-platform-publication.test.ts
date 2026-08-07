@@ -59,4 +59,23 @@ describe('formation engine platform publication', () => {
       expect(actual).toBe(file.sha256);
     }
   });
+
+  it('publishes the canonical multi-agent learning contract', () => {
+    const skill = readFileSync(resolve(skillRoot, 'SKILL.md'), 'utf8');
+    const contract = readFileSync(
+      resolve(skillRoot, 'references/formation-design-contract.md'),
+      'utf8',
+    );
+    const publication = `${skill}\n${contract}`;
+
+    expect(publication).toContain('prises de parole ordinaires préproduites');
+    expect(publication).toContain('identifiant stable d’intervention');
+    expect(publication).toContain('voix et avatar du roster');
+    expect(publication).toContain('export vidéo');
+    expect(publication).toContain('action explicite de l’apprenant');
+    expect(publication).toContain('reprendre exactement au même point');
+    expect(publication).toContain('Approfondir');
+    expect(publication).toContain('Continuer');
+    expect(publication).toContain('afficher la scène suivante avant de lancer son audio');
+  });
 });
