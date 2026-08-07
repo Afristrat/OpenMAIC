@@ -6,6 +6,9 @@ export interface OccupationalProfile {
   unitGroupTitle: string;
   occupationDescription: string;
   tasks: string[];
+  sourceTasks: string[];
+  taskLocale: 'fr-FR' | 'ar-MA' | 'en-US';
+  sourceVersion: 'v1.2.1';
   essentialSkills: string[];
   knowledge: string[];
   iscoUri: string;

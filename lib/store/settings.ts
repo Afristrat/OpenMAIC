@@ -1733,12 +1733,12 @@ export const useSettingsStore = create<SettingsState>()(
     },
     {
       name: 'settings-storage',
-      version: 7,
+      version: 8,
       // Migrate persisted state
       migrate: (persistedState: unknown, version: number) => {
         const state = persistedState as Partial<SettingsState>;
 
-        if (version < 7) {
+        if (version < 8) {
           const legacySpecialistIds = new Set(
             (state.contextualSpecialists ?? []).map((specialist) => specialist.id),
           );

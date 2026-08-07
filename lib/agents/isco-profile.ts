@@ -1,6 +1,7 @@
 import type { OccupationalProfile } from '@/lib/agents/contextual-specialist';
 
 export const ISCO_08_SOURCE_URL = 'https://isco.ilo.org/en/isco-08/';
+export const ESCO_SOURCE_VERSION = 'v1.2.1' as const;
 
 export interface EscoResourceLink {
   uri?: string;
@@ -82,12 +83,25 @@ export function buildOccupationalProfile(input: {
     unitGroupTitle: input.unitGroup.title.trim(),
     occupationDescription: compact(occupationDescription),
     tasks,
+    sourceTasks: [...tasks],
+    taskLocale: 'en-US',
+    sourceVersion: ESCO_SOURCE_VERSION,
     essentialSkills: uniqueTitles(input.occupation._links?.hasEssentialSkill, 12),
     knowledge: uniqueTitles(input.occupation._links?.hasEssentialKnowledge, 8),
     iscoUri: input.iscoUri,
     occupationUri: input.occupation.uri,
     sourceUrl: ISCO_08_SOURCE_URL,
   };
+}
+
+export function applyLocalizedTasks(
+  profile: OccupationalProfile,
+  localizedTasks: string[],
+  locale: OccupationalProfile['taskLocale'],
+): OccupationalProfile | null {
+  const tasks = localizedTasks.map(compact).filter(Boolean);
+  if (tasks.length !== profile.sourceTasks.length) return null;
+  return { ...profile, tasks, taskLocale: locale };
 }
 
 export function buildSpecialistPersona(input: {

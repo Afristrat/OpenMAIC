@@ -68,6 +68,12 @@ test.describe('System learning catalogs', () => {
                   'préparer et certifier les états financiers',
                   'préparer des prévisions et des budgets',
                 ],
+                sourceTasks: [
+                  'prepare and certify financial statements',
+                  'prepare forecasts and budgets',
+                ],
+                taskLocale: 'fr-FR',
+                sourceVersion: 'v1.2.1',
                 essentialSkills: ['analyser le risque financier'],
                 knowledge: ['techniques comptables'],
                 iscoUri: 'http://data.europa.eu/esco/isco/C2411',
@@ -77,7 +83,7 @@ test.describe('System learning catalogs', () => {
               voiceConfig: { providerId: 'higgs-tts', voiceId: 'hanae' },
             },
           ],
-          reference: 'ISCO-08 via ESCO v1.2.0',
+          reference: 'ISCO-08 via ESCO v1.2.1',
         }),
       }),
     );

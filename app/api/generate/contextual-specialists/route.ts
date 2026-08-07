@@ -1,21 +1,25 @@
 import { type NextRequest } from 'next/server';
 import { nanoid } from 'nanoid';
+import type { LanguageModel } from 'ai';
 import { callLLM } from '@/lib/ai/llm';
 import { requireSuperAdminOrOrgAuthor } from '@/lib/api/auth';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
 import { createLogger } from '@/lib/logger';
 import type { ContextualSpecialist } from '@/lib/agents/contextual-specialist';
+import type { ThinkingConfig } from '@/lib/types/provider';
 import {
+  applyLocalizedTasks,
   buildOccupationalProfile,
   buildSpecialistPersona,
+  ESCO_SOURCE_VERSION,
   type EscoOccupationResource,
 } from '@/lib/agents/isco-profile';
 
 const log = createLogger('ContextualSpecialists');
 const ESCO_SEARCH_URL = 'https://ec.europa.eu/esco/api/search';
 
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 interface SpecialistRequest {
   orgId?: string;
@@ -52,7 +56,7 @@ async function fetchOccupationResource(uri: string, language: 'ar' | 'en' | 'fr'
   const url = new URL('https://ec.europa.eu/esco/api/resource/occupation');
   url.searchParams.set('uri', uri);
   url.searchParams.set('language', language);
-  url.searchParams.set('selectedVersion', 'v1.2.0');
+  url.searchParams.set('selectedVersion', ESCO_SOURCE_VERSION);
   const response = await fetch(url, { signal: AbortSignal.timeout(10_000) });
   if (!response.ok) return null;
   return (await response.json()) as EscoOccupationResource;
@@ -90,7 +94,7 @@ async function resolveOccupation(
   url.searchParams.set('language', searchLanguage);
   url.searchParams.set('type', 'occupation');
   url.searchParams.set('limit', '5');
-  url.searchParams.set('selectedVersion', 'v1.2.0');
+  url.searchParams.set('selectedVersion', ESCO_SOURCE_VERSION);
   const response = await fetch(url, { signal: AbortSignal.timeout(10_000) });
   if (!response.ok) return null;
   const payload = (await response.json()) as EscoSearchPayload;
@@ -141,6 +145,76 @@ async function resolveOccupation(
   };
 }
 
+function parseTaskTranslations(raw: string): Map<string, string[]> {
+  const cleaned = raw
+    .trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/```$/i, '')
+    .trim();
+  const parsed = JSON.parse(cleaned) as { translations?: unknown };
+  if (!Array.isArray(parsed.translations)) return new Map();
+  return new Map(
+    parsed.translations.flatMap((item) => {
+      if (!item || typeof item !== 'object') return [];
+      const candidate = item as Record<string, unknown>;
+      if (
+        typeof candidate.id !== 'string' ||
+        !Array.isArray(candidate.tasks) ||
+        !candidate.tasks.every((task) => typeof task === 'string')
+      ) {
+        return [];
+      }
+      return [[candidate.id, candidate.tasks as string[]] as const];
+    }),
+  );
+}
+
+async function localizeSpecialistTasks(
+  specialists: ContextualSpecialist[],
+  locale: 'fr-FR' | 'ar-MA' | 'en-US',
+  model: LanguageModel,
+  thinkingConfig: ThinkingConfig | undefined,
+): Promise<ContextualSpecialist[]> {
+  if (locale === 'en-US' || specialists.length === 0) return specialists;
+  const targetLanguage = locale === 'ar-MA' ? 'Modern Standard Arabic' : 'French';
+  const translation = await callLLM(
+    {
+      model,
+      system: `Translate the supplied official ISCO-08 tasks into ${targetLanguage}. Preserve each id, order, meaning and number of tasks exactly. Do not summarize, add, remove or merge tasks. Never use em dashes. Return only JSON: {"translations":[{"id":"...","tasks":["..."]}]}.`,
+      prompt: JSON.stringify(
+        specialists.map((specialist) => ({
+          id: specialist.id,
+          tasks: specialist.occupationalProfile.sourceTasks,
+        })),
+      ),
+    },
+    'contextual-specialists',
+    undefined,
+    thinkingConfig,
+  );
+  const translations = parseTaskTranslations(translation.text);
+  return specialists.map((specialist) => {
+    const localizedProfile = applyLocalizedTasks(
+      specialist.occupationalProfile,
+      translations.get(specialist.id) ?? [],
+      locale,
+    );
+    if (!localizedProfile) {
+      throw new Error(`Invalid ISCO task translation for ${specialist.id}`);
+    }
+    return {
+      ...specialist,
+      occupationalProfile: localizedProfile,
+      persona: buildSpecialistPersona({
+        name: specialist.name,
+        occupationTitle: specialist.occupationTitle,
+        reason: specialist.reason,
+        profile: localizedProfile,
+      }),
+    };
+  });
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as SpecialistRequest;
@@ -183,10 +257,16 @@ export async function POST(req: NextRequest) {
         ),
       ),
     );
-    const specialists = resolved.filter(
+    const groundedSpecialists = resolved.filter(
       (specialist): specialist is ContextualSpecialist => specialist !== null,
     );
-    return apiSuccess({ specialists, reference: 'ISCO-08 via ESCO v1.2.0' });
+    const specialists = await localizeSpecialistTasks(
+      groundedSpecialists,
+      body.locale ?? 'fr-FR',
+      model,
+      thinkingConfig,
+    );
+    return apiSuccess({ specialists, reference: `ISCO-08 via ESCO ${ESCO_SOURCE_VERSION}` });
   } catch (error) {
     log.error('Contextual specialist generation failed:', error);
     return apiError(
