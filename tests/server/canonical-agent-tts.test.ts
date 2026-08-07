@@ -1,0 +1,83 @@
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import type { Scene } from '@/lib/types/stage';
+
+const mocks = vi.hoisted(() => ({
+  generateTTS: vi.fn(),
+  upload: vi.fn(),
+}));
+
+vi.mock('@/lib/audio/tts-providers', () => ({
+  generateTTS: mocks.generateTTS,
+}));
+
+vi.mock('@/lib/server/provider-config', () => ({
+  getServerImageProviders: vi.fn(() => ({})),
+  getServerVideoProviders: vi.fn(() => ({})),
+  getServerTTSProviders: vi.fn(() => ({ 'higgs-tts': { disabled: false } })),
+  resolveImageApiKey: vi.fn(),
+  resolveImageBaseUrl: vi.fn(),
+  resolveVideoApiKey: vi.fn(),
+  resolveVideoBaseUrl: vi.fn(),
+  resolveTTSApiKey: vi.fn(() => 'test-key'),
+  resolveTTSBaseUrl: vi.fn(() => 'http://tts.test'),
+}));
+
+vi.mock('@/lib/supabase/service', () => ({
+  createServiceSupabaseClient: vi.fn(() => ({
+    storage: {
+      from: vi.fn(() => ({ upload: mocks.upload })),
+    },
+  })),
+}));
+
+import { generateTTSForClassroom } from '@/lib/server/classroom-media-generation';
+
+describe('canonical classroom agent TTS', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.generateTTS.mockResolvedValue({ audio: Buffer.from('wav'), format: 'wav' });
+    mocks.upload.mockResolvedValue({ error: null });
+  });
+
+  test('synthesizes an authored intervention with the speaking agent voice', async () => {
+    const scene = {
+      id: 'scene-1',
+      stageId: 'classroom-1',
+      type: 'slide',
+      title: 'Hypothèses',
+      order: 1,
+      content: { type: 'slide', canvas: { id: 'canvas-1', elements: [] } },
+      actions: [
+        {
+          id: 'speech-1',
+          type: 'speech',
+          text: 'Et si cette hypothèse était fausse ?',
+          agentId: 'agent-analyst',
+          interventionId: 'scene-1-objection',
+          interventionForm: 'objection',
+        },
+      ],
+    } as unknown as Scene;
+
+    await generateTTSForClassroom(
+      [scene],
+      'classroom-1',
+      { providerId: 'higgs-tts', voiceId: 'teacher-voice' },
+      [
+        {
+          id: 'agent-analyst',
+          voiceConfig: { providerId: 'higgs-tts', voiceId: 'analyst-voice' },
+        },
+      ],
+    );
+
+    expect(mocks.generateTTS).toHaveBeenCalledWith(
+      expect.objectContaining({ providerId: 'higgs-tts', voice: 'analyst-voice' }),
+      'Et si cette hypothèse était fausse ?',
+    );
+    expect(scene.actions?.[0]).toMatchObject({
+      agentId: 'agent-analyst',
+      audioUrl: '/api/classroom-media/classroom-1/audio/tts_s1_speech-1.wav',
+    });
+  });
+});
