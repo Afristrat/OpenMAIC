@@ -100,4 +100,38 @@ describe('canonical agent speech', () => {
       ]),
     );
   });
+
+  test('refuses a hallucinated speaker identity instead of assigning the wrong avatar and voice', async () => {
+    const actions = await generateSceneActions(
+      {
+        id: 'scene-1',
+        type: 'slide',
+        title: 'Hypothèses',
+        description: 'Examiner une hypothèse de travail.',
+        keyPoints: ['Identifier les hypothèses'],
+        order: 0,
+      },
+      { elements: [], background: undefined, remark: '' },
+      async () =>
+        JSON.stringify([
+          {
+            type: 'text',
+            content: 'Je vois un angle mort.',
+            agentId: 'agent-invented',
+            interventionId: 'invented-beat',
+            interventionForm: 'blind-spot',
+          },
+        ]),
+      {
+        agents: [
+          { id: 'teacher', name: 'Hanae', role: 'teacher' },
+          { id: 'analyst', name: 'Nadia', role: 'student' },
+        ],
+      },
+    );
+
+    expect(actions[0]).toMatchObject({ type: 'speech', agentId: 'teacher' });
+    expect(actions[0]).not.toHaveProperty('interventionId');
+    expect(actions[0]).not.toHaveProperty('interventionForm');
+  });
 });
