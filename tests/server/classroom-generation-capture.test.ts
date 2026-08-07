@@ -94,7 +94,7 @@ const completeRosterActions = [
   { id: 'speech-curious', type: 'speech', text: 'Useful question.', agentId: 'persona-curious' },
 ] as const;
 
-async function generateWithProgress() {
+async function generateWithProgress(input: Record<string, unknown> = {}) {
   const { generateClassroom } = await import('@/lib/server/classroom-generation');
   return generateClassroom(
     {
@@ -103,6 +103,7 @@ async function generateWithProgress() {
       learningApproach: 'andragogy',
       interactionLevel: 'balanced',
       requirement: 'Configurer LiteLLM',
+      ...input,
     },
     { baseUrl: 'http://localhost', ownerId: 'owner-1' },
   );
@@ -217,6 +218,66 @@ describe('classroom generation — web capture injection', () => {
             expect.objectContaining({
               enabled: true,
               identityCompatibility: 'validated',
+            }),
+          ]),
+        }),
+      }),
+      'http://localhost',
+    );
+  });
+
+  it('keeps every explicitly selected contextual specialist in the preset roster', async () => {
+    const specialist = {
+      id: 'specialist-Ab12Cd34',
+      name: 'Nadia',
+      occupationTitle: 'comptable',
+      iscoCode: '2411',
+      escoUri: 'http://data.europa.eu/esco/occupation/accountant',
+      reason: 'Relier les exercices aux décisions financières.',
+      gender: 'female' as const,
+      avatar: '/avatars/assist.png',
+      role: 'assistant' as const,
+      persona: 'Spécialiste fondée sur les tâches ISCO-08.',
+      occupationalProfile: {
+        standard: 'ISCO-08' as const,
+        unitGroupCode: '2411',
+        unitGroupTitle: 'Cadres comptables',
+        occupationDescription: 'Analyse les documents financiers.',
+        tasks: ['préparer et certifier les états financiers'],
+        sourceTasks: ['prepare and certify financial statements'],
+        taskLocale: 'fr-FR' as const,
+        sourceVersion: 'v1.2.1' as const,
+        essentialSkills: ['analyser le risque financier'],
+        knowledge: ['techniques comptables'],
+        iscoUri: 'http://data.europa.eu/esco/isco/C2411',
+        occupationUri: 'http://data.europa.eu/esco/occupation/accountant',
+        sourceUrl: 'https://esco.ec.europa.eu/en/classification/occupation_main',
+      },
+      voiceConfig: { providerId: 'higgs-tts' as const, voiceId: 'hanae' },
+    };
+    mocks.generateSceneActions.mockResolvedValue([
+      ...completeRosterActions.filter((action) => action.agentId !== 'persona-teaching-assistant'),
+      {
+        id: 'speech-specialist',
+        type: 'speech',
+        text: 'Vérifions ce budget avec une pratique comptable réelle.',
+        agentId: specialist.id,
+      },
+    ]);
+
+    await generateWithProgress({
+      agentMode: 'default',
+      selectedPersonaIds: ['joker', 'curious'],
+      contextualSpecialists: [specialist],
+    });
+
+    expect(mocks.persistClassroom).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stage: expect.objectContaining({
+          generatedAgentConfigs: expect.arrayContaining([
+            expect.objectContaining({
+              id: specialist.id,
+              occupationalProfile: specialist.occupationalProfile,
             }),
           ]),
         }),
