@@ -22,9 +22,22 @@ Une production complète livre trois objets distincts :
 
 1. le plan compilé de formation, consommé par la génération des scènes ;
 2. la constitution d’animation, persistée avec la classroom ;
-3. les décisions d’intervention prises pendant le live, persistées comme événements lorsque l’enregistrement est autorisé.
+3. les prises de parole ordinaires préproduites, intégrées au parcours canonique et aux exports ;
+4. les décisions d’intervention prises pendant le live, persistées comme événements lorsque l’enregistrement est autorisé.
 
-La constitution ne contient pas un dialogue figé. Elle associe une ossature conçue par l’auteur à des règles adaptatives déclenchées par les signaux réels de l’apprenant.
+La constitution associe un parcours canonique reproductible à des règles adaptatives déclenchées uniquement par une action explicite de l’apprenant. Elle ne transforme pas chaque échange en appel réseau pendant la lecture.
+
+## Prises de parole canoniques
+
+Les prises de parole ordinaires préproduites sont générées en même temps que les scènes. Elles sont persistées dans l’ordre de lecture et contiennent au minimum :
+
+- un identifiant stable d’intervention ;
+- l’identifiant d’un agent actif du roster ;
+- une forme et une finalité d’apprentissage ;
+- le texte visible et prononcé ;
+- la résolution de la voix et de l’avatar du roster.
+
+Elles peuvent prendre la forme d’une question, d’une objection, d’une synthèse, d’un exemple, d’un retour, d’un cas d’usage, d’une anecdote, d’un trait d’humour, d’un désaccord, d’un angle mort, d’une clarification, d’un défi ou d’une régulation. Elles ne sont produites que lorsqu’elles servent un objectif identifié. Elles suivent le même ordre dans la classroom et dans l’export vidéo.
 
 ## Ossature conçue par l’auteur
 
@@ -43,14 +56,21 @@ Le directeur peut réagir à une réponse, une question, une hésitation, un sil
 
 Chaque décision doit expliciter sa finalité. Une intervention n’est pas déclenchée pour faire exister un agent, remplir un quota ou simuler artificiellement une conversation.
 
-Deux actions de l’apprenant ouvrent explicitement un tour adaptatif :
+Trois actions de l’apprenant ouvrent explicitement un tour adaptatif :
 
-- Play, après la fin de la narration de la scène courante ;
-- un message écrit ou vocal réellement soumis par l’apprenant.
+- un message écrit réellement soumis ;
+- un message vocal réellement soumis ;
+- la sélection d’une intervention canonique pour l’approfondir.
+
+La sélection conserve le curseur canonique. Quand l’échange adaptatif se termine, la lecture doit reprendre exactement au même point, sans sauter ni répéter une autre intervention.
 
 Le directeur retourne un contrat structuré comprenant l’agent, le déclencheur, la forme et la raison d’apprentissage. Le serveur refuse un agent absent du roster, une forme hors de ses capacités, un déclencheur sans règle active ou un temps Play sans ossature autorisée. Une décision acceptée est persistée de façon idempotente avant d’être transmise au moteur de prise de parole.
 
 Les cas, anecdotes et touches d’humour doivent être pertinents, inclusifs et compatibles avec les sources autorisées. Quand un contenu ne peut pas être présenté comme factuel, il est clairement qualifié d’hypothèse ou de scénario synthétique.
+
+## Fin de scène
+
+La fin de chaque scène affiche un choix persistant : `Approfondir` ou `Continuer`. Aucun appel adaptatif n’est lancé sans ce geste de l’apprenant. `Continuer` doit afficher la scène suivante avant de lancer son audio, afin que la voix ne précède jamais le visuel correspondant.
 
 ## Cohérence des agents
 
@@ -66,7 +86,11 @@ Un agent désactivé ne peut apparaître dans l’ossature ni dans une règle ad
 - aucun agent inconnu ou désactivé ;
 - aucune identité voix, avatar et prénom non validée ;
 - aucune parole vocale sans transcription visible correspondante ;
+- aucune prise de parole canonique absente de l’export vidéo ;
 - aucune prise de parole sans décision structurée, autorisée et persistée ;
+- aucune génération adaptative sans action explicite de l’apprenant ;
+- aucune perte du point de reprise après un approfondissement ;
+- aucun audio de scène suivante avant l’affichage de cette scène ;
 - aucun dépassement du nombre de tours consécutifs choisi par l’auteur ;
 - aucune anecdote, statistique, référence ou situation locale présentée comme factuelle sans fondement autorisé ;
 - aucune confiance dans un rôle envoyé par le navigateur : le serveur reste l’autorité.

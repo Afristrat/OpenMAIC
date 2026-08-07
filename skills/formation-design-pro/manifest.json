@@ -11,12 +11,12 @@
     "en-US": "Adult-learning design engine aligning target performance, prior knowledge, context, activities and assessment. ADDIE, Bloom, Kirkpatrick and Knowles are applied when relevant, without universal quotas or fabricated local cases."
   },
   "category": "pedagogy",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "author": "Med Amine MANSOURI IDRISSI",
   "traceability": {
     "source": "external-private-git publication with Qalem animation contract",
     "vectors": ["V-02", "V-03", "V-04", "V-05", "V-07"],
-    "validatedAt": "2026-08-05",
+    "validatedAt": "2026-08-07",
     "publicationManifest": "publication.json"
   },
   "designEngine": {

@@ -13,11 +13,14 @@ description: Concevoir ou industrialiser une formation Qalem fondée sur une per
 4. Concevoir chaque activité et chaque évaluation en fonction de sa contribution à la performance visée. Ne jamais imposer de ratio universel de théorie, pratique, parole ou apprentissage entre pairs.
 5. Produire une constitution d’animation persistante avant le live. Lire [le contrat de conception](references/formation-design-contract.md) pour les entrées, sorties et invariants.
 
-## Séparer le prévu de l’adaptatif
+## Séparer le canonique de l’adaptatif
 
-- Écrire une ossature minimale liée aux scènes : intention, moment, formes d’intervention possibles, agents éligibles et modalité.
-- Laisser le directeur adapter l’intervention aux réponses, questions, hésitations, incompréhensions, désaccords et occasions de transfert réelles.
-- Traiter Play et toute prise de parole explicite de l’apprenant comme des déclencheurs. Après Play, attendre la fin de la scène et n’activer qu’un temps autorisé par son ossature.
+- Écrire les prises de parole ordinaires préproduites avec le contenu de chaque scène. Elles font partie du parcours canonique, restent visibles dans la conversation et sont incluses dans chaque export vidéo.
+- Attribuer chaque prise de parole canonique à un agent actif du roster avec un identifiant stable d’intervention, une forme, une finalité d’apprentissage et le texte prononcé. La voix et l’avatar du roster portent cette intervention ; le formateur ne parle jamais à la place d’un autre agent.
+- Concevoir ces échanges seulement lorsqu’ils améliorent la compréhension, la mémorisation ou le transfert. Ne jamais remplir un quota ni simuler une conversation décorative.
+- Réserver la génération adaptative en direct à une action explicite de l’apprenant : message écrit ou vocal, ou sélection d’une intervention canonique pour l’approfondir.
+- Après une branche adaptative, reprendre exactement au même point du parcours canonique.
+- À la fin d’une scène, proposer durablement `Approfondir` et `Continuer`. Si l’apprenant continue, afficher la scène suivante avant de lancer son audio.
 - Autoriser exemples, cas d’usage, anecdotes, humour et angles morts seulement lorsqu’ils servent un objectif explicite et respectent les règles de sources.
 - Conserver le texte visible de toute prise de parole et utiliser une identité voix, avatar et prénom validée dans le roster de l’organisation.
 - Prendre les poids d’interaction dans un instantané du roster de l’organisation. Ne pas inventer de fréquence dans le prompt.
