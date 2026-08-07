@@ -449,6 +449,27 @@ export function useAgentRuntime(opts: UseAgentRuntimeOptions) {
     setIsRunning(false);
   }, []);
 
+  const submitText = useCallback(
+    async (text: string): Promise<boolean> => {
+      await onNew({
+        role: 'user',
+        content: [{ type: 'text', text }],
+        attachments: [],
+        createdAt: new Date(),
+        metadata: { custom: {} },
+        parentId: null,
+        sourceId: null,
+        runConfig: undefined,
+      });
+      return (
+        phaseRef.current === 'complete' &&
+        toolResultsRef.current.size > 0 &&
+        [...toolResultsRef.current.values()].every((result) => !result.isError)
+      );
+    },
+    [onNew],
+  );
+
   const runtime = useExternalStoreRuntime({
     messages,
     isRunning,
@@ -458,5 +479,5 @@ export function useAgentRuntime(opts: UseAgentRuntimeOptions) {
     convertMessage: (m) => m,
   });
 
-  return { runtime, clearThread, hasMessages: messages.length > 0, isRunning };
+  return { runtime, clearThread, submitText, hasMessages: messages.length > 0, isRunning };
 }

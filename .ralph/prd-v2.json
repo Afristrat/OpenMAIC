@@ -863,6 +863,26 @@
       "acceptanceNote": "Cause laser corrigée au parent commun : suppression du calque décalé de 5 %, mesure de l’union entre la boîte DOM externe et son contenu, parcours serpentin de toute la zone au lieu d’un point central, durée d’action honorée et valeur par défaut portée à 8 secondes. Le contexte d’apprentissage territoire/devise est désormais explicite dans le formulaire, transmis par les trames structurées, injecté dans la recherche et les prompts, puis persisté dans le Stage de la classroom. Une adaptation ultérieure peut donc cibler les exemples monétaires, tableaux, fichiers et narrations concernés sans reconstruire la structure pédagogique. Formation Design Pro 3.4.0 publie les mêmes invariants avec empreintes vérifiées. Validation isolée ServeurAI : Prettier, TypeScript, ESLint et suite Vitest complète à code de sortie 0 ; Playwright Chromium 50/50, puis preuve ciblée du contrat Maroc/MAD 1/1. Production : web, qalem-workers et capture-worker healthy sur 9fb64e79513af41c9c5870e0d88a0902caf0fbf6 ; /api/health répond 200 ; navigateur public /app affiche Territoire=Maroc et Devise=MAD sans erreur console."
     },
     {
+      "id": "S4-011",
+      "title": "Adaptation sélective d’une classroom à un nouveau marché [UI]",
+      "epic": "4-MOTEUR",
+      "phase": 4,
+      "passes": true,
+      "completedAt": "2026-08-07",
+      "dependencies": ["S4-010"],
+      "acceptance": [
+        "L’auteur ou le super administrateur ouvre Adapter au marché depuis l’éditeur",
+        "Le système compare le contexte source et la cible puis liste les scènes réellement affectées et la raison",
+        "La régénération utilise le moteur d’édition existant uniquement sur les diapositives affectées",
+        "La structure pédagogique, l’ordre des scènes et les scènes non affectées restent inchangés",
+        "Le nouveau contexte est sauvegardé avec la classroom et chaque régénération reste annulable",
+        "Aucun montant existant n’est converti sans taux de change actuel et sourcé",
+        "Interface localisée en français, arabe et anglais, contrôles tactiles utilisables",
+        "Quality gates complets verts sur ServeurAI et parcours navigateur validé"
+      ],
+      "acceptanceNote": "L’éditeur Pro expose Adapter au marché aux rôles autorisés. Une analyse déterministe compare l’instantané territoire/devise de la classroom à la cible, liste chaque scène réellement concernée et distingue les diapositives régénérables des scènes qui exigent une correction manuelle. L’application réutilise le moteur Edit with AI et ses instantanés d’annulation, borne le prompt aux seuls identifiants de diapositives impactées et ne persiste le nouveau contexte qu’après des appels outils réussis. Sans impact textuel, le contexte est enregistré sans appel IA. Toute conversion sans taux actuel sourcé est interdite et devient une hypothèse illustrative explicite. Formation Design Pro 3.5.0 publie ce contrat avec empreintes vérifiées. Validation isolée ServeurAI : Prettier, TypeScript, lint et build verts ; 319 fichiers et 2 201 tests Vitest verts ; Playwright ciblé 1/1 puis suite complète 51/51 en 2,6 minutes. Une première exécution cumulée après le build a subi un oom_kill cgroup prouvé dans le conteneur de validation plafonné à 6 Gio ; la relance E2E seule sous le même plafond est entièrement verte."
+    },
+    {
       "id": "S5-001",
       "title": "Extensions métier utilisables et création guidée d’expertises [UI]",
       "epic": "5-ÉCOSYSTÈME",

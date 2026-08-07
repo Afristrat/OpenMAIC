@@ -5,6 +5,7 @@ import { EditShell } from '@/components/edit/EditShell';
 import { SlideNavRail } from '@/components/edit/SlideNavRail';
 import { AgentPanel } from '@/components/edit/AgentPanel/AgentPanel';
 import { ActionsBar } from '@/components/edit/ActionsBar/ActionsBar';
+import { MarketAdaptationDialog } from '@/components/edit/MarketAdaptationDialog';
 import { HeaderControls } from '@/components/stage/header-controls';
 import { useAgentRuntime } from '@/lib/agent/client/use-agent-runtime';
 import { isMaicEditorEnabled } from '@/lib/config/feature-flags';
@@ -133,12 +134,19 @@ export function EditChromeRoot({
       }
       bottomRail={authoringEnabled ? <ActionsBar sceneId={scene.id} /> : undefined}
       commandTrailing={
-        <HeaderControls
-          mode="edit"
-          canEdit={isEditable}
-          canViewSources={canViewSources}
-          onToggleEditMode={isMaicEditorEnabled() ? onToggleEditMode : undefined}
-        />
+        <div className="flex items-center gap-2">
+          <MarketAdaptationDialog
+            disabled={!isEditable}
+            agentRunning={agentRuntime.isRunning}
+            onAdapt={agentRuntime.submitText}
+          />
+          <HeaderControls
+            mode="edit"
+            canEdit={isEditable}
+            canViewSources={canViewSources}
+            onToggleEditMode={isMaicEditorEnabled() ? onToggleEditMode : undefined}
+          />
+        </div>
       }
     />
   );

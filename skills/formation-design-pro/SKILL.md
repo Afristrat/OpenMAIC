@@ -15,6 +15,12 @@ description: Concevoir ou industrialiser une formation Qalem fondée sur une per
 
 Le territoire et la devise sont des variables structurées de la trame, jamais des détails déduits d’un exemple. Les recopier dans la classroom afin qu’une adaptation ultérieure puisse retraiter uniquement les cas, montants, ressources et narrations concernés. Ne jamais convertir un montant existant sans taux actuel et source vérifiable.
 
+## Adapter une classroom à un nouveau marché
+
+Avant toute régénération, prévisualiser la liste des scènes affectées et expliquer pour chacune si le territoire, la devise ou les deux sont en cause. Ne modifier automatiquement que les diapositives explicitement listées. Signaler les autres types de scènes comme corrections manuelles tant qu’un éditeur compatible n’existe pas.
+
+Pendant l’adaptation, conserver les objectifs, l’ordre et la structure pédagogique. Localiser uniquement les exemples, contraintes, budgets, textes visibles et notes de présentation qui dépendent du marché. Ne jamais convertir un montant sans taux de change actuel et sourcé. Sans source suffisante, reformuler le montant comme une hypothèse illustrative explicite dans la devise cible. Enregistrer le nouveau contexte seulement après la réussite de toutes les régénérations demandées. Les scènes non affectées restent strictement inchangées.
+
 ## Séparer le canonique de l’adaptatif
 
 - Écrire les prises de parole ordinaires préproduites avec le contenu de chaque scène. Elles font partie du parcours canonique, restent visibles dans la conversation et sont incluses dans chaque export vidéo.

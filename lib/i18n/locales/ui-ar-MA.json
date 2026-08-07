@@ -2184,5 +2184,21 @@
   "org.uploadLogo": "رفع شعار",
   "org.logoPreview": "معاينة شعار المؤسسة",
   "org.logoUploaded": "تم رفع الشعار وحفظه",
-  "org.logoUploadFailed": "فشل رفع الشعار"
+  "org.logoUploadFailed": "فشل رفع الشعار",
+  "edit.market.trigger": "تكييف حسب السوق",
+  "edit.market.title": "تكييف هذا التكوين مع سوق آخر",
+  "edit.market.description": "يحدد قلم المشاهد التي تذكر البلد أو العملة. تراجع التأثير قبل إجراء أي تعديل.",
+  "edit.market.analyze": "تحليل التغييرات",
+  "edit.market.invalidContext": "أدخل بلدا ورمز عملة من ثلاثة أحرف.",
+  "edit.market.noImpact": "لا يوجد محتوى يحتاج إلى إعادة الصياغة. يمكن حفظ السياق الجديد كما هو.",
+  "edit.market.impactCount": "عدد المشاهد المتأثرة: {{count}}",
+  "edit.market.automatic": "تكييف تلقائي",
+  "edit.market.manual": "تصحيح يدوي مطلوب",
+  "edit.market.reason.currency": "العملة",
+  "edit.market.reason.territory": "البلد",
+  "edit.market.manualBlock": "يجب تصحيح {{count}} مشهد يدويا قبل حفظ السياق الجديد.",
+  "edit.market.saveContext": "حفظ السياق",
+  "edit.market.applyOne": "تكييف شريحة واحدة",
+  "edit.market.applyMany": "تكييف {{count}} شرائح",
+  "edit.market.failed": "فشل التكييف. لم يتم حفظ أي تغيير في السوق."
 }

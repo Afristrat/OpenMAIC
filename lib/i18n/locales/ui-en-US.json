@@ -2184,5 +2184,21 @@
   "org.uploadLogo": "Upload a logo",
   "org.logoPreview": "Organization logo preview",
   "org.logoUploaded": "Logo uploaded and saved",
-  "org.logoUploadFailed": "Logo upload failed"
+  "org.logoUploadFailed": "Logo upload failed",
+  "edit.market.trigger": "Adapt to market",
+  "edit.market.title": "Adapt this course to another market",
+  "edit.market.description": "Qalem identifies scenes that mention the territory or currency. You review the impact before anything changes.",
+  "edit.market.analyze": "Analyze changes",
+  "edit.market.invalidContext": "Enter a territory and a three-letter currency code.",
+  "edit.market.noImpact": "No content needs rewriting. The new context can be saved as is.",
+  "edit.market.impactCount": "{{count}} affected scene(s)",
+  "edit.market.automatic": "Automatic adaptation",
+  "edit.market.manual": "Manual correction required",
+  "edit.market.reason.currency": "Currency",
+  "edit.market.reason.territory": "Territory",
+  "edit.market.manualBlock": "{{count}} scene(s) must be corrected manually before the new context can be saved.",
+  "edit.market.saveContext": "Save context",
+  "edit.market.applyOne": "Adapt 1 slide",
+  "edit.market.applyMany": "Adapt {{count}} slides",
+  "edit.market.failed": "Adaptation failed. No market change was saved."
 }

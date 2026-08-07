@@ -28,6 +28,10 @@ Une production complète livre quatre objets distincts :
 
 La trame conserve le contexte réutilisable. La classroom en prend un instantané modifiable. Une adaptation de territoire ou de devise cible uniquement les exemples, montants, ressources et narrations concernés ; elle ne reconstruit pas les objectifs, la progression, les évaluations ou l’animation sans nécessité démontrée. Toute conversion monétaire exige un taux actuel et une source vérifiable.
 
+L’auteur ou le super administrateur doit prévisualiser la liste des scènes affectées avant d’appliquer une adaptation de marché. Cette prévisualisation indique pour chaque scène si le territoire, la devise ou les deux ont déclenché l’impact. Le moteur régénère uniquement les diapositives listées, conserve leurs objectifs, l’ordre et la structure pédagogique, et laisse toutes les autres scènes inchangées. Un type de scène non pris en charge bloque l’enregistrement global et demande une correction manuelle explicite.
+
+Le nouveau contexte territorial et monétaire n’est persisté qu’après la réussite de toutes les régénérations demandées. Une conversion est interdite sans taux de change actuel et sourcé. Sans cette preuve, le montant est réécrit comme une hypothèse illustrative explicite dans la devise cible. Chaque régénération conserve son instantané d’annulation.
+
 La constitution associe un parcours canonique reproductible à des règles adaptatives déclenchées uniquement par une action explicite de l’apprenant. Elle ne transforme pas chaque échange en appel réseau pendant la lecture.
 
 ## Prises de parole canoniques

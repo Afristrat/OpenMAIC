@@ -212,4 +212,54 @@ test.describe('Mobile Pro editor audit', () => {
       }
     }
   });
+
+  test('previews the scenes affected by a market adaptation before applying it', async ({
+    page,
+  }) => {
+    const stageId = 'e2e-market-adaptation';
+    await page.addInitScript(() => localStorage.setItem('locale', 'fr-FR'));
+    await seedScene(page, stageId, {
+      id: 'scene-market',
+      type: 'slide',
+      title: 'Budget au Maroc',
+      content: {
+        type: 'slide',
+        canvas: {
+          id: 'market-canvas',
+          viewportSize: 1000,
+          viewportRatio: 0.5625,
+          theme: {
+            backgroundColor: '#ffffff',
+            themeColors: ['#5b8def'],
+            fontColor: '#111827',
+            fontName: 'Inter',
+          },
+          background: { type: 'solid', color: '#ffffff' },
+          elements: [
+            {
+              id: 'market-text',
+              type: 'text',
+              content: 'Budget indicatif : 10 000 MAD',
+              left: 100,
+              top: 100,
+              width: 800,
+              height: 120,
+            },
+          ],
+        },
+      },
+      actions: [{ type: 'speech', text: 'Au Maroc, ce budget est en MAD.' }],
+    });
+    await enterProMode(page, stageId);
+
+    await page.getByRole('button', { name: 'Adapter au marché' }).click();
+    await page.getByTestId('market-territory').fill('France');
+    await page.getByTestId('market-currency').fill('EUR');
+    await page.getByRole('button', { name: 'Analyser les changements' }).click();
+
+    await expect(page.getByTestId('market-impact-list')).toContainText('Budget au Maroc');
+    await expect(page.getByTestId('market-impact-list')).toContainText('Devise');
+    await expect(page.getByTestId('market-impact-list')).toContainText('Territoire');
+    await expect(page.getByRole('button', { name: 'Adapter 1 diapositive' })).toBeEnabled();
+  });
 });
