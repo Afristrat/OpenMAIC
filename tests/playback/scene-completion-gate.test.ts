@@ -1,3 +1,4 @@
+import { createElement } from 'react';
 import { describe, expect, test, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { SceneCompletionGate } from '@/components/playback/scene-completion-gate';
@@ -6,13 +7,13 @@ import { scheduleAfterVisualCommit } from '@/lib/playback/visual-transition';
 describe('scene completion gate', () => {
   test('keeps both learner choices visible instead of launching a discussion automatically', () => {
     const html = renderToStaticMarkup(
-      <SceneCompletionGate
-        title="Que souhaitez-vous faire ?"
-        deepenLabel="Approfondir dans la discussion"
-        continueLabel="Continuer"
-        onDeepen={vi.fn()}
-        onContinue={vi.fn()}
-      />,
+      createElement(SceneCompletionGate, {
+        title: 'Que souhaitez-vous faire ?',
+        deepenLabel: 'Approfondir dans la discussion',
+        continueLabel: 'Continuer',
+        onDeepen: vi.fn(),
+        onContinue: vi.fn(),
+      }),
     );
 
     expect(html).toContain('data-scene-completion-gate="true"');
