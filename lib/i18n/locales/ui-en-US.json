@@ -1898,6 +1898,7 @@
   "generation.requirementAssistantHint": "The assistant turns your idea into a course brief without inventing missing information.",
   "agentBar.suggestSpecialists": "Suggest topic specialists",
   "agentBar.specialistGenerationFailed": "Unable to suggest specialists.",
+  "agentBar.officialTasks": "Reference occupational tasks",
   "org.title": "Organizations",
   "org.untitled": "Untitled organization",
   "org.useTemplate": "Use template",

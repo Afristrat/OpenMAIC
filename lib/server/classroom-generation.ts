@@ -544,6 +544,7 @@ export async function generateClassroom(
         mechanismId: `isco-${specialist.iscoCode}`,
         gender: specialist.gender,
         voiceConfig: specialist.voiceConfig,
+        occupationalProfile: specialist.occupationalProfile,
       })),
     ];
   }
@@ -573,6 +574,7 @@ export async function generateClassroom(
       mechanismId: `isco-${specialist.iscoCode}`,
       gender: specialist.gender,
       voiceConfig: specialist.voiceConfig,
+      occupationalProfile: specialist.occupationalProfile,
     }));
     tenantRoster.push(...contextualAgents);
     const selectedRoster = tenantRoster.filter(

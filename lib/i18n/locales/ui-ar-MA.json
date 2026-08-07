@@ -1898,6 +1898,7 @@
   "generation.requirementAssistantHint": "يحوّل المساعد فكرتك إلى موجز تكوين من دون اختلاق المعلومات الناقصة.",
   "agentBar.suggestSpecialists": "اقتراح خبراء في الموضوع",
   "agentBar.specialistGenerationFailed": "تعذر اقتراح الخبراء.",
+  "agentBar.officialTasks": "المهام المهنية المرجعية",
   "org.title": "المؤسسات",
   "org.untitled": "مؤسسة بلا اسم",
   "org.useTemplate": "استخدام القالب",

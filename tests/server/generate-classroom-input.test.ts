@@ -9,6 +9,19 @@ const baseInput = {
   learningContext: { territory: 'Maroc', currencyCode: 'MAD' },
 };
 
+const occupationalProfile = {
+  standard: 'ISCO-08' as const,
+  unitGroupCode: '2413',
+  unitGroupTitle: 'Analystes financiers',
+  occupationDescription: 'Analyse les informations financières utiles à la décision.',
+  tasks: ['analyser des données financières', 'préparer des prévisions financières'],
+  essentialSkills: ['analyser le risque financier'],
+  knowledge: ['finance d’entreprise'],
+  iscoUri: 'http://data.europa.eu/esco/isco/C2413',
+  occupationUri: 'http://data.europa.eu/esco/occupation/example',
+  sourceUrl: 'https://isco.ilo.org/en/isco-08/',
+};
+
 describe('generateClassroomSchema', () => {
   test('accepts the complete authoring contract', () => {
     const result = generateClassroomSchema.safeParse({
@@ -50,6 +63,7 @@ describe('generateClassroomSchema', () => {
           avatar: '/avatars/assist.png',
           role: 'assistant',
           persona: 'Spécialiste financière qui apporte des situations de travail vérifiables.',
+          occupationalProfile,
           voiceConfig: { providerId: 'higgs-tts', voiceId: 'hanae' },
         },
       ],
@@ -77,6 +91,7 @@ describe('generateClassroomSchema', () => {
           avatar: '/avatars/assist.png',
           role: 'assistant',
           persona: 'Spécialiste financière.',
+          occupationalProfile: { ...occupationalProfile, unitGroupCode: '24' },
           voiceConfig: { providerId: 'higgs-tts', voiceId: 'hanae' },
         },
       ],

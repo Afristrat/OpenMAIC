@@ -1898,6 +1898,7 @@
   "generation.requirementAssistantHint": "L’assistant transforme votre idée en cahier des charges de formation sans inventer les informations manquantes.",
   "agentBar.suggestSpecialists": "Proposer des spécialistes du sujet",
   "agentBar.specialistGenerationFailed": "Impossible de proposer les spécialistes.",
+  "agentBar.officialTasks": "Tâches professionnelles de référence",
   "org.title": "Organisations",
   "org.untitled": "Organisation sans titre",
   "org.useTemplate": "Utiliser un modèle",

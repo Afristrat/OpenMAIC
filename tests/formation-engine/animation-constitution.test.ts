@@ -137,6 +137,31 @@ describe('animation constitution', () => {
           gender: 'male',
           voiceConfig: { providerId: 'higgs-tts', voiceId: 'younes' },
         },
+        {
+          id: 'specialist-accountant',
+          name: 'Nadia',
+          role: 'assistant',
+          persona: 'Apporte le regard vérifié du métier.',
+          avatar: '/avatars/assist.png',
+          color: '#7c3aed',
+          priority: 7,
+          interactionWeight: 6,
+          mechanismId: 'isco-2411',
+          gender: 'female',
+          voiceConfig: { providerId: 'higgs-tts', voiceId: 'hanae' },
+          occupationalProfile: {
+            standard: 'ISCO-08',
+            unitGroupCode: '2411',
+            unitGroupTitle: 'Cadres comptables',
+            occupationDescription: 'Analyse les documents financiers.',
+            tasks: ['préparer et certifier les états financiers'],
+            essentialSkills: ['analyser le risque financier'],
+            knowledge: ['techniques comptables'],
+            iscoUri: 'http://data.europa.eu/esco/isco/C2411',
+            occupationUri: 'http://data.europa.eu/esco/occupation/accountant',
+            sourceUrl: 'https://isco.ilo.org/en/isco-08/',
+          },
+        },
       ] as GeneratedAgentConfig[],
     });
 
@@ -147,10 +172,20 @@ describe('animation constitution', () => {
       identityCompatibility: 'validated',
       organizationWeight: 20,
     });
+    expect(constitution.agentRosterSnapshot[1]).toMatchObject({
+      agentId: 'specialist-accountant',
+      allowedForms: ['example', 'use-case', 'blind-spot', 'objection', 'feedback'],
+      occupationalGrounding: {
+        standard: 'ISCO-08',
+        unitGroupCode: '2411',
+      },
+    });
     const directive = buildAnimationDirective(constitution, 'scene-1');
     expect(directive).toContain('selected by the author: andragogy');
     expect(directive).toContain('Vérifier la compréhension');
     expect(directive).toContain('unaddressed-risk');
+    expect(directive).toContain('ISCO-08 2411 Cadres comptables');
+    expect(directive).toContain('préparer et certifier les états financiers');
   });
 
   it('accepts only decisions authorized by the scene backbone or an adaptive rule', () => {

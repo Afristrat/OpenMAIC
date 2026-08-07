@@ -38,4 +38,57 @@ test.describe('System learning catalogs', () => {
     await expect(page.getByText('Hanae', { exact: true })).toBeVisible();
     await expect(page.getByText('Layla', { exact: true })).toBeVisible();
   });
+
+  test('shows the verified ISCO-08 grounding before classroom generation', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('locale', 'fr-FR'));
+    await page.route('**/api/generate/contextual-specialists', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          specialists: [
+            {
+              id: 'specialist-Ab12Cd34',
+              name: 'Nadia',
+              occupationTitle: 'comptable',
+              iscoCode: '2411',
+              escoUri: 'http://data.europa.eu/esco/occupation/accountant',
+              reason: 'Relier les exercices aux décisions financières.',
+              gender: 'female',
+              avatar: '/avatars/assist.png',
+              role: 'assistant',
+              persona: 'Spécialiste fondée sur les tâches ISCO-08.',
+              occupationalProfile: {
+                standard: 'ISCO-08',
+                unitGroupCode: '2411',
+                unitGroupTitle: 'Cadres comptables',
+                occupationDescription: 'Analyse les documents financiers.',
+                tasks: [
+                  'préparer et certifier les états financiers',
+                  'préparer des prévisions et des budgets',
+                ],
+                essentialSkills: ['analyser le risque financier'],
+                knowledge: ['techniques comptables'],
+                iscoUri: 'http://data.europa.eu/esco/isco/C2411',
+                occupationUri: 'http://data.europa.eu/esco/occupation/accountant',
+                sourceUrl: 'https://isco.ilo.org/en/isco-08/',
+              },
+              voiceConfig: { providerId: 'higgs-tts', voiceId: 'hanae' },
+            },
+          ],
+          reference: 'ISCO-08 via ESCO v1.2.0',
+        }),
+      }),
+    );
+
+    await page.goto('/app', { waitUntil: 'networkidle' });
+    await page.locator('textarea').first().fill('Former une équipe au pilotage de trésorerie.');
+    await page.getByRole('button', { name: 'Prêt à apprendre ensemble ?' }).click();
+    await page.getByRole('button', { name: 'Proposer des spécialistes du sujet' }).click();
+
+    await expect(page.getByText('Nadia · comptable')).toBeVisible();
+    await expect(page.getByText('ISCO-08 2411 · Cadres comptables')).toBeVisible();
+    await expect(page.getByText(/préparer et certifier les états financiers/)).toBeVisible();
+  });
 });

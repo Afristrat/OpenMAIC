@@ -898,6 +898,23 @@
         "Interface et textes validés en français, arabe et anglais, avec parcours Playwright permanent"
       ],
       "acceptanceNote": "Validé factuellement sur ServeurAI et en production. La page Plugins expose 10 expériences métier, dont huit sur le moteur partagé borné, avec manifestes et schémas stricts. Les démonstrations réelles du tableur contrôlé, de l’arbre de décision et du simulateur de processus recalculent leurs résultats dans le navigateur. Le parcours guidé permet aux rôles autorisés de créer une expertise sans JSON, la relire après rechargement, la sélectionner dans /app avec un indicateur visible, puis la supprimer ; l’artefact temporaire de preuve a été supprimé. Les scènes et ressources du moteur partagé ont des contrats de cache explicites et versionnés. Gate complet isolé au commit 4b0e585 sur ServeurAI avec FFmpeg présent : Prettier vert, TypeScript sans erreur, ESLint sans problème, Vitest 309 fichiers et 2 171 tests verts, Playwright Chromium 50/50 vert. Production vérifiée sur qalem.ma : 10 plugins localisés, sélection d’expertise visible, endpoint de santé HTTP 200."
+    },
+    {
+      "id": "S5-002",
+      "title": "Spécialistes métier fondés sur les tâches ISCO-08 [UI]",
+      "epic": "5-ÉCOSYSTÈME",
+      "phase": 5,
+      "passes": false,
+      "dependencies": ["S4-009", "S5-001"],
+      "acceptance": [
+        "L’auteur ou le super administrateur peut demander jusqu’à trois spécialistes métier pertinents à partir du sujet de formation",
+        "Chaque spécialiste est rattaché à un groupe de base ISCO-08 à quatre chiffres et conserve un instantané de sa description, de ses tâches, de ses compétences et de ses sources",
+        "Les dix personæ permanentes restent des mécanismes pédagogiques distincts des expertises professionnelles ISCO-08",
+        "Le profil métier est visible avant génération puis persiste dans la classroom et dans sa constitution d’animation",
+        "Les interventions préproduites et adaptatives des spécialistes s’appuient sur leurs tâches professionnelles sans produire de conseil personnalisé",
+        "Interface localisée en français, arabe et anglais, avec parcours Playwright permanent",
+        "Quality gates complets verts sur ServeurAI et preuve navigateur en production"
+      ]
     }
   ]
 }

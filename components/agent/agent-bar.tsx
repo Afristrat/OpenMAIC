@@ -675,8 +675,11 @@ export function AgentBar({
         color: '#7c3aed',
         allowedActions: getActionsForRole(specialist.role),
         priority: 7,
+        interactionWeight: 6,
+        mechanismId: `isco-${specialist.iscoCode}`,
         gender: specialist.gender,
         voiceConfig: specialist.voiceConfig,
+        occupationalProfile: specialist.occupationalProfile,
         createdAt: new Date(0),
         updatedAt: new Date(0),
         isDefault: false,
@@ -1080,6 +1083,28 @@ export function AgentBar({
                   <p className="px-2 pt-1 text-center text-[10px] text-destructive">
                     {specialistError}
                   </p>
+                )}
+                {contextualSpecialists.length > 0 && (
+                  <div className="mt-2 max-h-36 space-y-2 overflow-y-auto px-1">
+                    {contextualSpecialists.map((specialist) => (
+                      <div
+                        key={specialist.id}
+                        className="rounded-lg border border-violet-200/70 bg-violet-50/60 p-2 text-start dark:border-violet-900/60 dark:bg-violet-950/20"
+                      >
+                        <p className="text-[11px] font-semibold text-foreground">
+                          {specialist.name} · {specialist.occupationTitle}
+                        </p>
+                        <p className="mt-0.5 text-[10px] text-violet-700 dark:text-violet-300">
+                          ISCO-08 {specialist.iscoCode} ·{' '}
+                          {specialist.occupationalProfile.unitGroupTitle}
+                        </p>
+                        <p className="mt-1 line-clamp-2 text-[10px] leading-relaxed text-muted-foreground">
+                          {t('agentBar.officialTasks')} :{' '}
+                          {specialist.occupationalProfile.tasks.slice(0, 2).join(' · ')}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>

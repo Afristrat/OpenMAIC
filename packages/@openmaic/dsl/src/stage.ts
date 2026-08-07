@@ -54,6 +54,19 @@ export interface GeneratedAgentConfig {
   mechanismId?: string;
   gender?: 'female' | 'male';
   voiceConfig?: { providerId: string; modelId?: string; voiceId: string };
+  /** Immutable occupational grounding captured when an ISCO specialist is cast. */
+  occupationalProfile?: {
+    standard: 'ISCO-08';
+    unitGroupCode: string;
+    unitGroupTitle: string;
+    occupationDescription: string;
+    tasks: string[];
+    essentialSkills: string[];
+    knowledge: string[];
+    iscoUri: string;
+    occupationUri: string;
+    sourceUrl: string;
+  };
 }
 
 /**

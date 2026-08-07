@@ -6,6 +6,11 @@ import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
 import { createLogger } from '@/lib/logger';
 import type { ContextualSpecialist } from '@/lib/agents/contextual-specialist';
+import {
+  buildOccupationalProfile,
+  buildSpecialistPersona,
+  type EscoOccupationResource,
+} from '@/lib/agents/isco-profile';
 
 const log = createLogger('ContextualSpecialists');
 const ESCO_SEARCH_URL = 'https://ec.europa.eu/esco/api/search';
@@ -29,6 +34,28 @@ interface EscoSearchResult {
   uri?: string;
   title?: string;
   broaderIscoGroup?: string[];
+}
+
+interface EscoSearchPayload {
+  _embedded?: { results?: EscoSearchResult[] };
+}
+
+function normalizedTitle(value: string): string {
+  return value
+    .normalize('NFKD')
+    .replace(/\p{Diacritic}/gu, '')
+    .trim()
+    .toLocaleLowerCase('en');
+}
+
+async function fetchOccupationResource(uri: string, language: 'ar' | 'en' | 'fr') {
+  const url = new URL('https://ec.europa.eu/esco/api/resource/occupation');
+  url.searchParams.set('uri', uri);
+  url.searchParams.set('language', language);
+  url.searchParams.set('selectedVersion', 'v1.2.0');
+  const response = await fetch(url, { signal: AbortSignal.timeout(10_000) });
+  if (!response.ok) return null;
+  return (await response.json()) as EscoOccupationResource;
 }
 
 function parseProposals(raw: string): ProposedSpecialist[] {
@@ -56,34 +83,57 @@ function parseProposals(raw: string): ProposedSpecialist[] {
 async function resolveOccupation(
   proposal: ProposedSpecialist,
   searchLanguage: 'fr' | 'en',
+  resourceLanguage: 'ar' | 'fr' | 'en',
 ): Promise<ContextualSpecialist | null> {
   const url = new URL(ESCO_SEARCH_URL);
   url.searchParams.set('text', proposal.searchTerm);
   url.searchParams.set('language', searchLanguage);
   url.searchParams.set('type', 'occupation');
-  url.searchParams.set('limit', '1');
+  url.searchParams.set('limit', '5');
   url.searchParams.set('selectedVersion', 'v1.2.0');
   const response = await fetch(url, { signal: AbortSignal.timeout(10_000) });
   if (!response.ok) return null;
-  const payload = (await response.json()) as {
-    _embedded?: { results?: EscoSearchResult[] };
-  };
-  const occupation = payload._embedded?.results?.[0];
+  const payload = (await response.json()) as EscoSearchPayload;
+  const results = payload._embedded?.results ?? [];
+  const requestedTitle = normalizedTitle(proposal.searchTerm);
+  const occupation =
+    results.find((candidate) => normalizedTitle(candidate.title ?? '') === requestedTitle) ??
+    results[0];
   const iscoUri = occupation?.broaderIscoGroup?.[0];
   const iscoCode = iscoUri?.match(/C(\d{4})$/)?.[1];
   if (!occupation?.uri || !occupation.title || !iscoCode) return null;
 
+  const [occupationResource, unitGroupResource] = await Promise.all([
+    fetchOccupationResource(occupation.uri, resourceLanguage),
+    fetchOccupationResource(iscoUri, resourceLanguage),
+  ]);
+  if (!occupationResource || !unitGroupResource) return null;
+  const occupationalProfile = buildOccupationalProfile({
+    iscoCode,
+    occupation: occupationResource,
+    unitGroup: unitGroupResource,
+    iscoUri,
+  });
+  if (!occupationalProfile) return null;
+  const occupationTitle = occupationResource.title?.trim() || occupation.title;
+
   return {
     id: `specialist-${nanoid(8)}`,
     name: proposal.displayName.trim(),
-    occupationTitle: occupation.title,
+    occupationTitle,
     iscoCode,
     escoUri: occupation.uri,
     reason: proposal.reason.trim(),
     gender: proposal.gender,
     avatar: proposal.gender === 'female' ? '/avatars/assist.png' : '/avatars/curious.png',
     role: 'assistant',
-    persona: `${proposal.displayName.trim()} intervient comme spécialiste ${occupation.title} (ISCO-08 ${iscoCode}). ${proposal.reason.trim()}`,
+    persona: buildSpecialistPersona({
+      name: proposal.displayName.trim(),
+      occupationTitle,
+      reason: proposal.reason.trim(),
+      profile: occupationalProfile,
+    }),
+    occupationalProfile,
     voiceConfig: {
       providerId: 'higgs-tts',
       voiceId: proposal.gender === 'female' ? 'hanae' : 'younes',
@@ -126,7 +176,11 @@ export async function POST(req: NextRequest) {
     const proposals = parseProposals(result.text);
     const resolved = await Promise.all(
       proposals.map((proposal) =>
-        resolveOccupation(proposal, body.locale === 'fr-FR' ? 'fr' : 'en'),
+        resolveOccupation(
+          proposal,
+          body.locale === 'fr-FR' ? 'fr' : 'en',
+          body.locale === 'fr-FR' ? 'fr' : body.locale === 'ar-MA' ? 'ar' : 'en',
+        ),
       ),
     );
     const specialists = resolved.filter(

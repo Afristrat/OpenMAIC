@@ -50,6 +50,16 @@ const agentSnapshotSchema = z
     enabled: z.boolean(),
     allowedForms: z.array(interventionForm).min(1),
     allowedModalities: z.array(modality).min(1),
+    occupationalGrounding: z
+      .object({
+        standard: z.literal('ISCO-08'),
+        unitGroupCode: z.string().regex(/^\d{4}$/),
+        unitGroupTitle: z.string().trim().min(1).max(240),
+        tasks: z.array(z.string().trim().min(1).max(1_000)).min(1).max(12),
+        sourceUrl: z.string().url(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 
@@ -213,8 +223,21 @@ export function createAnimationConstitution(
       identityCompatibility: 'validated',
       organizationWeight: agent.interactionWeight ?? 0,
       enabled: true,
-      allowedForms: FORMS_BY_MECHANISM[agent.mechanismId!] ?? ['question', 'feedback'],
+      allowedForms: agent.mechanismId!.startsWith('isco-')
+        ? ['example', 'use-case', 'blind-spot', 'objection', 'feedback']
+        : (FORMS_BY_MECHANISM[agent.mechanismId!] ?? ['question', 'feedback']),
       allowedModalities: ['text', 'voice', 'both'],
+      ...(agent.occupationalProfile
+        ? {
+            occupationalGrounding: {
+              standard: agent.occupationalProfile.standard,
+              unitGroupCode: agent.occupationalProfile.unitGroupCode,
+              unitGroupTitle: agent.occupationalProfile.unitGroupTitle,
+              tasks: agent.occupationalProfile.tasks,
+              sourceUrl: agent.occupationalProfile.sourceUrl,
+            },
+          }
+        : {}),
     }),
   );
 
@@ -337,6 +360,9 @@ export function buildAnimationDirective(
   if (!constitution) return '';
   const beats = constitution.authoredBackbone.filter((beat) => beat.sceneId === sceneId);
   const rules = constitution.adaptiveRules.filter((rule) => rule.enabled);
+  const occupationalGroundings = constitution.agentRosterSnapshot.filter(
+    (agent) => agent.occupationalGrounding,
+  );
 
   return [
     '# Server-owned animation constitution',
@@ -348,6 +374,14 @@ export function buildAnimationDirective(
     'A learner pressing Play is an explicit interaction trigger. At the end of the current scene, use the authored backbone only when an intervention adds learning value.',
     'React to the learner’s actual answer, question, hesitation or misunderstanding before adding proactive material.',
     'Ground factual examples, use cases, anecdotes and blind spots in authorized course sources; otherwise label them as synthetic.',
+    occupationalGroundings.length > 0
+      ? `Occupational specialists: ${occupationalGroundings
+          .map(
+            (agent) =>
+              `${agent.agentId}=ISCO-08 ${agent.occupationalGrounding!.unitGroupCode} ${agent.occupationalGrounding!.unitGroupTitle}; verified tasks=${agent.occupationalGrounding!.tasks.slice(0, 4).join('; ')}`,
+          )
+          .join(' | ')}. Use these specialists only within this verified occupational scope.`
+      : '',
     beats.length > 0
       ? `Current scene backbone: ${beats
           .map(
