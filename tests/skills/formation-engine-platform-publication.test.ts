@@ -12,7 +12,7 @@ describe('formation engine platform publication', () => {
   it('hydrates the traced refactored engine override through the production loader', () => {
     const skill = loadSkillFromDir(skillRoot);
 
-    expect(skill?.version).toBe('3.3.0');
+    expect(skill?.version).toBe('3.4.0');
     expect(skill?.traceability).toEqual({
       source: 'external-private-git publication with Qalem animation contract',
       vectors: expectedVectors,
