@@ -138,4 +138,52 @@ describe('canonical agent speech', () => {
     expect(actions[0]).not.toHaveProperty('interventionId');
     expect(actions[0]).not.toHaveProperty('interventionForm');
   });
+
+  test('repairs a teacher-only model response with a prepared agent intervention', async () => {
+    let callCount = 0;
+    const actions = await generateSceneActions(
+      {
+        id: 'scene-2',
+        type: 'slide',
+        title: 'Coûts variables',
+        description: 'Relier les coûts variables au niveau d’activité.',
+        keyPoints: ['Le coût variable évolue avec le volume'],
+        order: 1,
+      },
+      { elements: [], background: undefined, remark: '' },
+      async () => {
+        callCount += 1;
+        return callCount === 1
+          ? JSON.stringify([{ type: 'text', content: 'Le coût varie avec le volume.' }])
+          : JSON.stringify([
+              {
+                type: 'text',
+                content: 'Que se passe-t-il si le volume double ?',
+                agentId: 'analyst',
+                interventionId: 'scene-2-analyst-question-1',
+                interventionForm: 'question',
+              },
+            ]);
+      },
+      {
+        agents: [
+          { id: 'teacher', name: 'Hanae', role: 'teacher' },
+          { id: 'analyst', name: 'Khalid', role: 'assistant', persona: 'Teste les hypothèses.' },
+        ],
+        languageDirective: 'fr-FR',
+      },
+    );
+
+    expect(callCount).toBe(2);
+    expect(actions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'speech',
+          agentId: 'analyst',
+          interventionId: 'scene-2-analyst-question-1',
+          interventionForm: 'question',
+        }),
+      ]),
+    );
+  });
 });
