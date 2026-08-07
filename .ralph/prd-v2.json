@@ -786,7 +786,8 @@
       "title": "Publication cible skill autonome (test hors plateforme)",
       "epic": "4-MOTEUR",
       "phase": 4,
-      "passes": false,
+      "passes": true,
+      "completedAt": "2026-08-07",
       "dependencies": ["S4-004"],
       "acceptance": [
         "Protocole P4-C passé hors repo Qalem",
@@ -858,7 +859,8 @@
         "Le laser mesure la zone DOM complète, la parcourt et respecte une durée lisible",
         "Formation Design Pro publie ces invariants avec des empreintes vérifiées",
         "Quality gates complets verts sur ServeurAI et parcours navigateur validé"
-      ]
+      ],
+      "acceptanceNote": "Cause laser corrigée au parent commun : suppression du calque décalé de 5 %, mesure de l’union entre la boîte DOM externe et son contenu, parcours serpentin de toute la zone au lieu d’un point central, durée d’action honorée et valeur par défaut portée à 8 secondes. Le contexte d’apprentissage territoire/devise est désormais explicite dans le formulaire, transmis par les trames structurées, injecté dans la recherche et les prompts, puis persisté dans le Stage de la classroom. Une adaptation ultérieure peut donc cibler les exemples monétaires, tableaux, fichiers et narrations concernés sans reconstruire la structure pédagogique. Formation Design Pro 3.4.0 publie les mêmes invariants avec empreintes vérifiées. Validation isolée ServeurAI : Prettier, TypeScript, ESLint et suite Vitest complète à code de sortie 0 ; Playwright Chromium 50/50, puis preuve ciblée du contrat Maroc/MAD 1/1. Production : web, qalem-workers et capture-worker healthy sur 9fb64e79513af41c9c5870e0d88a0902caf0fbf6 ; /api/health répond 200 ; navigateur public /app affiche Territoire=Maroc et Devise=MAD sans erreur console."
     },
     {
       "id": "S5-001",

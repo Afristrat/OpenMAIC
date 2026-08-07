@@ -7,7 +7,7 @@
     "firstCommit": "490742491b5f32df5da3a9841ab21e7106da60b3",
     "canonicalPrivateSourceFilesIncluded": false,
     "validatedVectors": ["V-02", "V-03", "V-04", "V-05", "V-07"],
-    "lastValidatedStory": "S4-009",
+    "lastValidatedStory": "S4-010",
     "validatedAt": "2026-08-07"
   },
   "exposureAudit": {
