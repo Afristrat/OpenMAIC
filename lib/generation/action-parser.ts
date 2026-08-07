@@ -95,10 +95,22 @@ export function parseActionsFromStructuredOutput(
     if (typedItem.type === 'text') {
       const text = ((typedItem.content as string) || '').trim();
       if (text) {
+        const agentId = typeof typedItem.agentId === 'string' ? typedItem.agentId.trim() : '';
+        const interventionId =
+          typeof typedItem.interventionId === 'string' ? typedItem.interventionId.trim() : '';
+        const interventionForm =
+          typeof typedItem.interventionForm === 'string'
+            ? typedItem.interventionForm.trim()
+            : '';
         actions.push({
           id: `action_${nanoid(8)}`,
           type: 'speech',
           text,
+          ...(agentId ? { agentId } : {}),
+          ...(interventionId ? { interventionId } : {}),
+          ...(interventionForm
+            ? { interventionForm: interventionForm as Extract<Action, { type: 'speech' }>['interventionForm'] }
+            : {}),
         });
       }
     } else if (typedItem.type === 'action') {

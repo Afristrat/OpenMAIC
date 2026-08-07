@@ -47,6 +47,24 @@ export interface ClassroomTTSGenerationReport {
   generated: number;
 }
 
+export interface CanonicalSpeechAgentVoice {
+  id: string;
+  voiceConfig?: { providerId: string; modelId?: string; voiceId: string };
+}
+
+export function resolveCanonicalSpeechVoice(
+  action: Pick<SpeechAction, 'agentId'>,
+  preferredVoice: { providerId: string; voiceId: string } | undefined,
+  agents: CanonicalSpeechAgentVoice[] = [],
+): { providerId: string; voiceId: string } | undefined {
+  const agentVoice = action.agentId
+    ? agents.find((agent) => agent.id === action.agentId)?.voiceConfig
+    : undefined;
+  return agentVoice
+    ? { providerId: agentVoice.providerId, voiceId: agentVoice.voiceId }
+    : preferredVoice;
+}
+
 export function selectClassroomImageModel(
   providerId: ImageProviderId,
   serverProviders: Record<string, { models?: string[] }>,

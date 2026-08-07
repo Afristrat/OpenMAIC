@@ -39,6 +39,25 @@ export interface LaserAction extends ActionBase {
 export interface SpeechAction extends ActionBase {
   type: 'speech';
   text: string;
+  /** Stable classroom agent identity. Omitted only for legacy teacher narration. */
+  agentId?: string;
+  /** Stable identifier of a preproduced intervention that can be deepened live. */
+  interventionId?: string;
+  /** Pedagogical function of the preproduced intervention. */
+  interventionForm?:
+    | 'question'
+    | 'objection'
+    | 'synthesis'
+    | 'example'
+    | 'feedback'
+    | 'use-case'
+    | 'anecdote'
+    | 'humor'
+    | 'disagreement'
+    | 'blind-spot'
+    | 'clarification'
+    | 'challenge'
+    | 'regulation';
   audioId?: string;
   audioUrl?: string; // Server-generated TTS audio URL
   voice?: string;
