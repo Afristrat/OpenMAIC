@@ -51,6 +51,8 @@ import {
   missingSpeechAudioActions,
   preflightMissingSpeechAudio,
 } from '@/lib/audio/regenerate-speech-tts';
+import { SceneCompletionGate } from '@/components/playback/scene-completion-gate';
+import { scheduleAfterVisualCommit } from '@/lib/playback/visual-transition';
 
 /**
  * Imperative handle exposed via `ref` so the parent (`Stage`) can tear
@@ -119,6 +121,7 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
     const [speechProgress, setSpeechProgress] = useState<number | null>(null); // StreamBuffer reveal progress (0–1)
     const [discussionTrigger, setDiscussionTrigger] = useState<TriggerEvent | null>(null);
     const [resourcePause, setResourcePause] = useState<ResourcePauseAction | null>(null);
+    const [showSceneCompletionGate, setShowSceneCompletionGate] = useState(false);
 
     // Speaking agent tracking (Issue 2)
     const [speakingAgentId, setSpeakingAgentId] = useState<string | null>(null);
@@ -267,6 +270,7 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
       setShowEndFlash(false);
       setActiveBubbleId(null);
       setDiscussionTrigger(null);
+      setShowSceneCompletionGate(false);
     }, [resetLiveState]);
 
     /** Request failure should exit live discussion UI without hard-closing the session. */
@@ -566,6 +570,7 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
           // playback as completed so the bubble shows reset instead of play.
           if (engineRef.current?.isExhausted()) {
             setPlaybackCompleted(true);
+            setShowSceneCompletionGate(true);
           }
         },
         onUserInterrupt: (text) => {
@@ -588,56 +593,9 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
             chatAreaRef.current?.endSession(lectureSessionIdRef.current);
             lectureSessionIdRef.current = null;
           }
-          const shouldStartAdaptiveBeat =
-            Boolean(stage?.generatedAgentConfigs?.length) &&
-            !currentScene.actions?.some((action) => action.type === 'discussion') &&
-            !chatAreaRef.current?.getIsStreaming();
-          if (shouldStartAdaptiveBeat) {
-            setChatAreaCollapsed(false);
-            chatAreaRef.current?.switchToTab('chat');
-            void chatAreaRef.current?.startDiscussion({
-              topic: currentScene.title,
-              prompt: 'Relier cette scène à la performance visée avant de poursuivre.',
-              explicitTrigger: 'play',
-              interactionId: `play-${currentScene.id}-${Date.now()}`,
-            });
-            return;
-          }
-          // Auto-play: advance to next scene after a short pause
-          const { autoPlayLecture } = useSettingsStore.getState();
-          if (autoPlayLecture) {
-            setTimeout(() => {
-              const stageState = useStageStore.getState();
-              if (!useSettingsStore.getState().autoPlayLecture) return;
-              const allScenes = stageState.scenes;
-              const curId = stageState.currentSceneId;
-              const idx = allScenes.findIndex((s) => s.id === curId);
-              if (idx >= 0 && idx < allScenes.length - 1) {
-                const currentScene = allScenes[idx];
-                if (
-                  currentScene.type === 'quiz' ||
-                  currentScene.type === 'interactive' ||
-                  currentScene.type === 'pbl'
-                ) {
-                  return;
-                }
-                autoStartRef.current = true;
-                stageState.setCurrentSceneId(allScenes[idx + 1].id);
-              } else if (idx === allScenes.length - 1 && stageState.generatingOutlines.length > 0) {
-                // Last scene exhausted but next is still generating — go to pending page
-                const currentScene = allScenes[idx];
-                if (
-                  currentScene.type === 'quiz' ||
-                  currentScene.type === 'interactive' ||
-                  currentScene.type === 'pbl'
-                ) {
-                  return;
-                }
-                autoStartRef.current = true;
-                stageState.setCurrentSceneId(PENDING_SCENE_ID);
-              }
-            }, 1500);
-          }
+          // A completed canonical scene never opens a network discussion or starts
+          // the next audio on its own. The learner chooses the next branch explicitly.
+          setShowSceneCompletionGate(true);
         },
       });
 
@@ -652,7 +610,7 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
             lectureSessionIdRef.current = sessionId;
             lectureActionCounterRef.current = 0;
           }
-          engine.start();
+          scheduleAfterVisualCommit(() => engine.start());
         })();
       } else {
         // Load saved playback state and restore position (but never auto-play).
@@ -913,6 +871,39 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
       setCurrentSceneId,
     ]);
 
+    const handleContinueAfterScene = useCallback(() => {
+      setShowSceneCompletionGate(false);
+      const currentIndex = scenes.findIndex((scene) => scene.id === currentSceneId);
+      if (currentIndex >= 0 && currentIndex < scenes.length - 1) {
+        autoStartRef.current = true;
+        setCurrentSceneId(scenes[currentIndex + 1].id);
+        return;
+      }
+      handleNextScene();
+    }, [currentSceneId, handleNextScene, scenes, setCurrentSceneId]);
+
+    const handleDeepenAfterScene = useCallback(() => {
+      if (!currentScene) return;
+      const preparedIntervention = [...(currentScene.actions ?? [])]
+        .reverse()
+        .find(
+          (action): action is SpeechAction =>
+            action.type === 'speech' && Boolean(action.interventionId),
+        );
+      setShowSceneCompletionGate(false);
+      setChatAreaCollapsed(false);
+      chatAreaRef.current?.switchToTab('chat');
+      void chatAreaRef.current?.startDiscussion({
+        topic: currentScene.title,
+        prompt: preparedIntervention
+          ? `Approfondir cette intervention : ${preparedIntervention.text}`
+          : `Approfondir le contenu de la scène : ${currentScene.title}`,
+        agentId: preparedIntervention?.agentId,
+        explicitTrigger: 'play',
+        interactionId: `deepen-${preparedIntervention?.interventionId ?? currentScene.id}-${Date.now()}`,
+      });
+    }, [currentScene, setChatAreaCollapsed]);
+
     const currentSceneIndex = isPendingScene
       ? scenes.length
       : scenes.findIndex((s) => s.id === currentSceneId);
@@ -1171,6 +1162,19 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
                   : null
               }
             />
+            {showSceneCompletionGate && currentScene && (
+              <SceneCompletionGate
+                title={t('stage.sceneCompletePrompt')}
+                deepenLabel={t('stage.deepenDiscussion')}
+                continueLabel={
+                  currentSceneIndex < scenes.length - 1
+                    ? t('stage.continueCourse')
+                    : t('stage.finishCourse')
+                }
+                onDeepen={handleDeepenAfterScene}
+                onContinue={handleContinueAfterScene}
+              />
+            )}
           </div>
 
           {/* Roundtable Area */}
