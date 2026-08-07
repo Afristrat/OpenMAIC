@@ -1724,6 +1724,7 @@ function formatQuestionsForPrompt(questions: QuizQuestion[]): string {
 function processActions(actions: Action[], elements: PPTElement[], agents?: AgentInfo[]): Action[] {
   const elementIds = new Set(elements.map((el) => el.id));
   const agentIds = new Set(agents?.map((a) => a.id) || []);
+  const teacherAgent = agents?.find((agent) => agent.role === 'teacher');
   const studentAgents = agents?.filter((a) => a.role === 'student') || [];
   const nonTeacherAgents = agents?.filter((a) => a.role !== 'teacher') || [];
 
@@ -1733,6 +1734,19 @@ function processActions(actions: Action[], elements: PPTElement[], agents?: Agen
       ...action,
       id: action.id || `action_${nanoid(8)}`,
     };
+
+    // A spoken line controls both the visible avatar and the synthesized voice.
+    // Never let an LLM-invented identity cross that trust boundary. Legacy lines
+    // without attribution inherit the configured teacher when one is available.
+    if (processedAction.type === 'speech' && agents && agents.length > 0) {
+      const hasValidSpeaker =
+        Boolean(processedAction.agentId) && agentIds.has(processedAction.agentId!);
+      if (!hasValidSpeaker) {
+        processedAction.agentId = teacherAgent?.id;
+        delete processedAction.interventionId;
+        delete processedAction.interventionForm;
+      }
+    }
 
     // Validate spotlight elementId
     if (processedAction.type === 'spotlight') {
