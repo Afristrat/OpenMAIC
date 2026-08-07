@@ -776,21 +776,34 @@ export async function generateClassroom(
         totalScenes: outlines.length,
       });
 
-      try {
-        const mediaMap = await generateMediaForClassroom(
-          outlines,
-          stageId,
-          organizationDesignSystem,
-          {
-            ...(input.imageProviderId ? { providerId: input.imageProviderId } : {}),
-            ...(input.imageModelId ? { modelId: input.imageModelId } : {}),
-          },
+      const mediaMap = await generateMediaForClassroom(
+        outlines,
+        stageId,
+        organizationDesignSystem,
+        {
+          ...(input.imageProviderId ? { providerId: input.imageProviderId } : {}),
+          ...(input.imageModelId ? { modelId: input.imageModelId } : {}),
+        },
+      );
+      const requestedMediaIds = new Set(
+        outlines.flatMap((outline) =>
+          (outline.mediaGenerations ?? [])
+            .filter(
+              (request) =>
+                (request.type === 'image' && input.enableImageGeneration) ||
+                (request.type === 'video' && input.enableVideoGeneration),
+            )
+            .map((request) => request.elementId),
+        ),
+      );
+      const generatedMediaCount = [...requestedMediaIds].filter((id) => mediaMap[id]).length;
+      if (generatedMediaCount !== requestedMediaIds.size) {
+        throw new Error(
+          `Media persistence incomplete: ${generatedMediaCount}/${requestedMediaIds.size} requested files generated`,
         );
-        replaceMediaPlaceholders(scenes, mediaMap);
-        log.info(`Media generation complete: ${Object.keys(mediaMap).length} files`);
-      } catch (err) {
-        log.warn('Media generation phase failed, continuing:', err);
       }
+      replaceMediaPlaceholders(scenes, mediaMap);
+      log.info(`Media generation complete: ${generatedMediaCount} files`);
     }
 
     // Phase: TTS generation
