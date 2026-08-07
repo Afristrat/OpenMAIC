@@ -826,6 +826,23 @@
       "acceptanceNote": "Contrat S4-008 certifié au commit d49dce0. Le choix de l’approche et du niveau d’interaction est explicite et obligatoire dans l’interface auteur. La constitution sépare les temps conçus par scène des règles adaptatives liées aux signaux réels, fige le roster de l’organisation et refuse les rôles, identités, formes et agents non autorisés. Les décisions sont validées, persistées de façon idempotente avant diffusion et bornées en base par la classroom, l’organisation et la scène. Le défaut final identifié puis corrigé concernait le mode prédéfini : sa constitution est désormais persistée comme celle du casting automatique. La publication Formation Design Pro 3.2.0 contient six fichiers dont les empreintes SHA-256 sont vérifiées par test. Gate complet isolé sur ServeurAI avec FFmpeg : Prettier vert, TypeScript sans erreur, ESLint sans problème, Vitest 309 fichiers et 2 172 tests verts, Playwright Chromium 50/50 vert."
     },
     {
+      "id": "S4-009",
+      "title": "Parcours multi-agent canonique et approfondissement explicite [UI]",
+      "epic": "4-MOTEUR",
+      "phase": 4,
+      "passes": false,
+      "dependencies": ["S4-008"],
+      "acceptance": [
+        "Les interventions ordinaires des agents sont préproduites, persistées avec leur identité, leur forme et leur voix, puis lues dans l’ordre canonique",
+        "La classroom affiche chaque intervention avec son agent et permet à l’apprenant de la sélectionner pour l’approfondir",
+        "L’approfondissement adaptatif ne démarre qu’après une action explicite et rend ensuite le contrôle au point canonique exact",
+        "La fin de scène propose durablement Approfondir ou Continuer, puis affiche la scène suivante avant son audio",
+        "L’export MP4 reprend toutes les prises de parole canoniques dans le même ordre",
+        "Formation Design Pro publie ce contrat avec des empreintes vérifiées",
+        "Quality gates complets verts sur ServeurAI et parcours de production validé"
+      ]
+    },
+    {
       "id": "S5-001",
       "title": "Extensions métier utilisables et création guidée d’expertises [UI]",
       "epic": "5-ÉCOSYSTÈME",
