@@ -53,7 +53,7 @@ export interface CanonicalSpeechAgentVoice {
 }
 
 export function resolveCanonicalSpeechVoice(
-  action: Pick<SpeechAction, 'agentId'>,
+  action: SpeechAction,
   preferredVoice: { providerId: string; voiceId: string } | undefined,
   agents: CanonicalSpeechAgentVoice[] = [],
 ): { providerId: string; voiceId: string } | undefined {
