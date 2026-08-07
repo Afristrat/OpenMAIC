@@ -486,16 +486,19 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
         onSceneChange: (_sceneId) => {
           // Scene change handled by engine
         },
-        onSpeechStart: (text) => {
+        onSpeechStart: (text, speechAction) => {
           setLectureSpeech(text);
+          const teacherAgentId = stage?.generatedAgentConfigs?.find(
+            (agent) => agent.role === 'teacher',
+          )?.id;
+          setSpeakingAgentId(speechAction.agentId ?? teacherAgentId ?? null);
           // Add to lecture session with incrementing index for dedup
           // Chat area pacing is handled by the StreamBuffer (onTextReveal)
           if (lectureSessionIdRef.current) {
             const idx = lectureActionCounterRef.current++;
-            const speechId = `speech-${Date.now()}`;
             chatAreaRef.current?.addLectureMessage(
               lectureSessionIdRef.current,
-              { id: speechId, type: 'speech', text } as Action,
+              speechAction,
               idx,
             );
             // Track active bubble for highlight (Issue 8)

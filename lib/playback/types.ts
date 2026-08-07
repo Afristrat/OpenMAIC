@@ -3,7 +3,7 @@
  */
 
 import type { PlaybackSnapshot } from '@/lib/utils/playback-storage';
-import type { ResourcePauseAction } from '@/lib/types/action';
+import type { ResourcePauseAction, SpeechAction } from '@/lib/types/action';
 
 export type { PlaybackSnapshot };
 
@@ -30,7 +30,7 @@ export interface TriggerEvent {
 export interface PlaybackEngineCallbacks {
   onModeChange?: (mode: EngineMode) => void;
   onSceneChange?: (sceneId: string) => void;
-  onSpeechStart?: (text: string) => void;
+  onSpeechStart?: (text: string, action: SpeechAction) => void;
   onSpeechEnd?: () => void;
   onTextDelta?: (content: string) => void;
   onSpeakerChange?: (role: string) => void;

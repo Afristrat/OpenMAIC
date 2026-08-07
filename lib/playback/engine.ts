@@ -462,7 +462,7 @@ export class PlaybackEngine {
     switch (action.type) {
       case 'speech': {
         const speechAction = action as SpeechAction;
-        this.callbacks.onSpeechStart?.(speechAction.text);
+        this.callbacks.onSpeechStart?.(speechAction.text, speechAction);
 
         // onEnded → processNext; if paused, resume() will call processNext
         this.audioPlayer.onEnded(() => {
