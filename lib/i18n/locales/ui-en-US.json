@@ -149,6 +149,8 @@
   "stage.sceneCompletePrompt": "Would you like to explore this point further or continue the course?",
   "stage.deepenDiscussion": "Explore in the discussion",
   "stage.continueCourse": "Continue",
+  "stage.deepenInterventionPrompt": "Explore this intervention further: {{text}}",
+  "stage.deepenScenePrompt": "Explore this scene further: {{title}}",
   "stage.finishCourse": "Finish",
   "stage.fullscreen": "Fullscreen",
   "stage.exitFullscreen": "Exit Fullscreen",

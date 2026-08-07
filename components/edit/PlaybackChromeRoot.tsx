@@ -895,13 +895,13 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
         chatAreaRef.current?.switchToTab('chat');
         void chatAreaRef.current?.startDiscussion({
           topic: currentScene.title,
-          prompt: `Approfondir cette intervention : ${speech.text}`,
+          prompt: t('stage.deepenInterventionPrompt', { text: speech.text }),
           agentId: speech.agentId,
           explicitTrigger: 'play',
           interactionId: `deepen-${speech.interventionId}-${Date.now()}`,
         });
       },
-      [currentScene, setChatAreaCollapsed],
+      [currentScene, setChatAreaCollapsed, t],
     );
 
     const handleDeepenAfterScene = useCallback(() => {
@@ -931,11 +931,11 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
       chatAreaRef.current?.switchToTab('chat');
       void chatAreaRef.current?.startDiscussion({
         topic: currentScene.title,
-        prompt: `Approfondir le contenu de la scène : ${currentScene.title}`,
+        prompt: t('stage.deepenScenePrompt', { title: currentScene.title }),
         explicitTrigger: 'play',
         interactionId: `deepen-${currentScene.id}-${Date.now()}`,
       });
-    }, [currentScene, handleDeepenIntervention, setChatAreaCollapsed]);
+    }, [currentScene, handleDeepenIntervention, setChatAreaCollapsed, t]);
 
     const currentSceneIndex = isPendingScene
       ? scenes.length

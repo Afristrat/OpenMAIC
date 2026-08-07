@@ -149,6 +149,8 @@
   "stage.sceneCompletePrompt": "هل تريد التعمق في هذه النقطة أم متابعة التكوين؟",
   "stage.deepenDiscussion": "التعمق في النقاش",
   "stage.continueCourse": "متابعة",
+  "stage.deepenInterventionPrompt": "تعمّق في هذه المداخلة: {{text}}",
+  "stage.deepenScenePrompt": "تعمّق في محتوى هذا المشهد: {{title}}",
   "stage.finishCourse": "إنهاء",
   "stage.fullscreen": "ملء الشاشة",
   "stage.exitFullscreen": "الخروج من ملء الشاشة",

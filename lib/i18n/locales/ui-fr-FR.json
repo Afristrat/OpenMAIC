@@ -149,6 +149,8 @@
   "stage.sceneCompletePrompt": "Souhaitez-vous approfondir ce point ou poursuivre la formation ?",
   "stage.deepenDiscussion": "Approfondir dans la discussion",
   "stage.continueCourse": "Continuer",
+  "stage.deepenInterventionPrompt": "Approfondis cette intervention : {{text}}",
+  "stage.deepenScenePrompt": "Approfondis le contenu de la scène : {{title}}",
   "stage.finishCourse": "Terminer",
   "stage.fullscreen": "Plein écran",
   "stage.exitFullscreen": "Quitter le plein écran",

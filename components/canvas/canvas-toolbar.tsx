@@ -12,7 +12,6 @@ import {
   Volume1,
   Volume2,
   VolumeX,
-  Repeat,
   Maximize2,
   Minimize2,
 } from 'lucide-react';
@@ -46,8 +45,6 @@ export interface CanvasToolbarProps {
   readonly ttsVolume?: number;
   readonly onToggleMute?: () => void;
   readonly onVolumeChange?: (volume: number) => void;
-  readonly autoPlayLecture?: boolean;
-  readonly onToggleAutoPlay?: () => void;
   readonly playbackSpeed?: number;
   readonly onCycleSpeed?: () => void;
 }
@@ -104,8 +101,6 @@ export function CanvasToolbar({
   ttsVolume = 1,
   onToggleMute,
   onVolumeChange,
-  autoPlayLecture,
-  onToggleAutoPlay,
   playbackSpeed = 1,
   onCycleSpeed,
 }: CanvasToolbarProps) {
@@ -343,34 +338,6 @@ export function CanvasToolbar({
             >
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
-          )}
-
-          <CtrlDivider />
-
-          {/* Auto-play */}
-          {onToggleAutoPlay && (
-            <TooltipProvider delayDuration={0}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={onToggleAutoPlay}
-                    className={cn(
-                      ctrlBtn,
-                      'w-8 h-6',
-                      autoPlayLecture
-                        ? 'text-violet-600 dark:text-violet-400'
-                        : 'text-gray-500 dark:text-gray-400',
-                    )}
-                    aria-label="Auto-play"
-                  >
-                    <Repeat className="w-3.5 h-3.5" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">
-                  {autoPlayLecture ? t('roundtable.autoPlayOff') : t('roundtable.autoPlay')}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
           )}
 
           {/* Whiteboard */}
