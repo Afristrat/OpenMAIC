@@ -341,6 +341,12 @@ export class PlaybackEngine {
 
   /** User sends a message during playback → interrupt → live mode */
   handleUserInterrupt(text: string): void {
+    this.beginExplicitDiscussion();
+    this.callbacks.onUserInterrupt?.(text);
+  }
+
+  /** Enter a learner-requested live branch without fabricating a user message. */
+  beginExplicitDiscussion(): void {
     if (this.mode === 'playing' || this.mode === 'paused') {
       // Save lecture state BEFORE stopping audio — actionIndex was already
       // incremented by processNext, so subtract 1 to replay the interrupted
@@ -366,7 +372,6 @@ export class PlaybackEngine {
     this.setMode('live');
     this.audioPlayer.stop();
     this.cancelBrowserTTS();
-    this.callbacks.onUserInterrupt?.(text);
   }
 
   /** Whether all remaining actions have been consumed (no speech left to play) */

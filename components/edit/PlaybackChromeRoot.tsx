@@ -53,6 +53,7 @@ import {
 } from '@/lib/audio/regenerate-speech-tts';
 import { SceneCompletionGate } from '@/components/playback/scene-completion-gate';
 import { scheduleAfterVisualCommit } from '@/lib/playback/visual-transition';
+import type { LectureNoteItem } from '@/lib/types/chat';
 
 /**
  * Imperative handle exposed via `ref` so the parent (`Stage`) can tear
@@ -882,6 +883,27 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
       handleNextScene();
     }, [currentSceneId, handleNextScene, scenes, setCurrentSceneId]);
 
+    const handleDeepenIntervention = useCallback(
+      (speech: Extract<LectureNoteItem, { kind: 'speech' }>) => {
+        if (!currentScene || !speech.interventionId) return;
+        engineRef.current?.beginExplicitDiscussion();
+        setShowSceneCompletionGate(false);
+        setChatAreaCollapsed(false);
+        setChatIsStreaming(true);
+        setChatSessionType('discussion');
+        setThinkingState({ stage: 'director', agentId: speech.agentId });
+        chatAreaRef.current?.switchToTab('chat');
+        void chatAreaRef.current?.startDiscussion({
+          topic: currentScene.title,
+          prompt: `Approfondir cette intervention : ${speech.text}`,
+          agentId: speech.agentId,
+          explicitTrigger: 'play',
+          interactionId: `deepen-${speech.interventionId}-${Date.now()}`,
+        });
+      },
+      [currentScene, setChatAreaCollapsed],
+    );
+
     const handleDeepenAfterScene = useCallback(() => {
       if (!currentScene) return;
       const preparedIntervention = [...(currentScene.actions ?? [])]
@@ -890,19 +912,30 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
           (action): action is SpeechAction =>
             action.type === 'speech' && Boolean(action.interventionId),
         );
+      if (preparedIntervention?.interventionId) {
+        handleDeepenIntervention({
+          kind: 'speech',
+          text: preparedIntervention.text,
+          agentId: preparedIntervention.agentId,
+          interventionId: preparedIntervention.interventionId,
+          interventionForm: preparedIntervention.interventionForm,
+        });
+        return;
+      }
+      engineRef.current?.beginExplicitDiscussion();
       setShowSceneCompletionGate(false);
       setChatAreaCollapsed(false);
+      setChatIsStreaming(true);
+      setChatSessionType('discussion');
+      setThinkingState({ stage: 'director' });
       chatAreaRef.current?.switchToTab('chat');
       void chatAreaRef.current?.startDiscussion({
         topic: currentScene.title,
-        prompt: preparedIntervention
-          ? `Approfondir cette intervention : ${preparedIntervention.text}`
-          : `Approfondir le contenu de la scène : ${currentScene.title}`,
-        agentId: preparedIntervention?.agentId,
+        prompt: `Approfondir le contenu de la scène : ${currentScene.title}`,
         explicitTrigger: 'play',
-        interactionId: `deepen-${preparedIntervention?.interventionId ?? currentScene.id}-${Date.now()}`,
+        interactionId: `deepen-${currentScene.id}-${Date.now()}`,
       });
-    }, [currentScene, setChatAreaCollapsed]);
+    }, [currentScene, handleDeepenIntervention, setChatAreaCollapsed]);
 
     const currentSceneIndex = isPendingScene
       ? scenes.length
@@ -1333,6 +1366,7 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
             activeBubbleId={activeBubbleId}
             onActiveBubble={(id) => setActiveBubbleId(id)}
             currentSceneId={currentSceneId}
+            onDeepenIntervention={handleDeepenIntervention}
             onLiveSpeech={(text, agentId) => {
               // Capture epoch at call time — discard if scene has changed since
               const epoch = sceneEpochRef.current;
