@@ -41,6 +41,8 @@ test.describe('Formation Design Pro — persistent generation path', () => {
     await card.first().getByRole('button').last().click();
 
     await expect(page).toHaveURL(/\/app\?skill=formation-design-pro$/);
+    await expect(page.getByTestId('learning-territory')).toHaveValue('Maroc');
+    await expect(page.getByTestId('learning-currency')).toHaveValue('MAD');
     await page.locator('textarea').fill('Concevoir une formation aux entretiens difficiles');
     await page.getByTestId('learning-approach-andragogy').click();
     await page.getByRole('button', { name: 'Équilibré', exact: true }).click();
@@ -55,5 +57,9 @@ test.describe('Formation Design Pro — persistent generation path', () => {
     expect(submittedBody?.orgId).toBe('00000000-0000-4000-8000-000000000002');
     expect(submittedBody?.learningApproach).toBe('andragogy');
     expect(submittedBody?.interactionLevel).toBe('balanced');
+    expect(submittedBody?.learningContext).toEqual({
+      territory: 'Maroc',
+      currencyCode: 'MAD',
+    });
   });
 });
