@@ -942,7 +942,7 @@
       "title": "Plan auteur obligatoire et ingestion documentaire fiable [UI]",
       "epic": "5-ÉCOSYSTÈME",
       "phase": 5,
-      "passes": false,
+      "passes": true,
       "dependencies": ["S5-003"],
       "acceptance": [
         "Le parseur PDF choisi dans l’interface et sa configuration effective sont transmis à l’API ; un échec affiche la cause retournée par le serveur",
@@ -952,7 +952,8 @@
         "Le contrat porte au minimum le titre, les objectifs, la progression, les points clés, les activités ou évaluations et les durées lorsqu’elles sont justifiées",
         "Interface et erreurs localisées en français, arabe et anglais, avec parcours Playwright permanent",
         "Quality gates complets verts sur ServeurAI et preuve navigateur en production"
-      ]
+      ],
+      "acceptanceNote": "Validé sur ServeurAI et en production au commit b8acfc0. La cause racine du PDF était la perte, dans /app, du parseur choisi et de sa configuration avant l’appel à /api/parse-pdf ; les erreurs serveur étaient ensuite remplacées par un message générique. Le formulaire transmet désormais le fournisseur PDF effectif, conserve le diagnostic et oriente les documents sans texte exploitable vers MinerU OCR. Preuve réelle en production : codetravail.pdf, 56 pages, HTTP 200, 320 387 caractères extraits par unpdf. Le flux de création ne lance plus directement une classroom : /api/generate-classroom/plan produit d’abord un plan éditable ; l’auteur peut modifier, ajouter, supprimer et réordonner les séquences, revenir aux exigences ou confirmer explicitement. Le worker reçoit ensuite exactement approvedPlan et ne régénère aucun plan concurrent. Preuve navigateur authentifiée sur https://qalem.ma/app : plan de 12 séquences visible, éditable, avec verrou « Validation du plan obligatoire avant chaque génération » et bouton « Confirmer et générer le cours » ; aucune classroom n’a été créée pendant cette vérification. Formation Design Pro 3.7.0 porte le même invariant. Gates ServeurAI : Prettier, TypeScript, ESLint, Vitest 2 219/2 219, build et Playwright 55/55 verts. Déploiements Coolify g26kh24tgoo7ggpw5v592w4t et s12gg2bxftmedhrycmpma47f terminés ; web, worker et capture-worker sains, sans redémarrage, sur b8acfc0 ; /api/health public HTTP 200."
     }
   ]
 }
