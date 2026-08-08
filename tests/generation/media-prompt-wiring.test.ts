@@ -267,9 +267,7 @@ describe('outline courseTitle parsing', () => {
 
     expect(result.success).toBe(true);
     expect(result.data?.courseTitle).toBe('To be confirmed by the author');
-    expect(result.data?.syllabus.learningObjectives).toEqual([
-      'To be confirmed by the author',
-    ]);
+    expect(result.data?.syllabus.learningObjectives).toEqual(['To be confirmed by the author']);
   });
 
   test('replaces a non-string or empty courseTitle with an explicit placeholder', async () => {

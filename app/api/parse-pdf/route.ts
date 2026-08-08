@@ -97,7 +97,10 @@ export async function POST(req: NextRequest) {
             break;
           }
         } catch (ocrError) {
-          log.warn(`OCR fallback failed [provider=${ocrProviderId}, file="${pdfFile.name}"]`, ocrError);
+          log.warn(
+            `OCR fallback failed [provider=${ocrProviderId}, file="${pdfFile.name}"]`,
+            ocrError,
+          );
         }
       }
     }

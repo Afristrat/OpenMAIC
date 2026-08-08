@@ -51,10 +51,7 @@ function normalizeSyllabus(
     .filter(Boolean)
     .slice(0, 12);
   const explicitDuration = Number(candidate.totalDurationMinutes);
-  const seconds = outlines.reduce(
-    (total, outline) => total + (outline.estimatedDuration ?? 0),
-    0,
-  );
+  const seconds = outlines.reduce((total, outline) => total + (outline.estimatedDuration ?? 0), 0);
   const derivedDuration = Math.max(1, Math.ceil(seconds / 60) || outlines.length * 3);
   const overallObjective = stringValue(
     'overallObjective',
@@ -109,9 +106,7 @@ export async function generateSceneOutlinesFromRequirements(
     teacherContext?: string;
     skillEngineEnabled?: boolean;
   },
-): Promise<
-  GenerationResult<ClassroomPlan>
-> {
+): Promise<GenerationResult<ClassroomPlan>> {
   // Build available images description for the prompt
   let availableImagesText = 'No images available';
   let visionImages: Array<{ id: string; src: string }> | undefined;
