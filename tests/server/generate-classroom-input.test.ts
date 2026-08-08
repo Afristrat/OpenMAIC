@@ -118,6 +118,20 @@ describe('generateClassroomSchema', () => {
     const approvedPlan = {
       courseTitle: 'Piloter la trésorerie de la TPE',
       languageDirective: 'Répondre en français.',
+      syllabus: {
+        audience: 'Dirigeants de TPE marocaines',
+        prerequisites: 'Disposer des ventes, achats et délais de paiement récents.',
+        overallObjective: 'Piloter le besoin en fonds de roulement.',
+        learningObjectives: [
+          'Calculer le BFR.',
+          'Interpréter un écart.',
+          'Choisir une action corrective.',
+        ],
+        totalDurationMinutes: 45,
+        deliveryMode: 'Classe virtuelle interactive',
+        assessmentStrategy: 'Étude de cas avec décision argumentée.',
+        expectedDeliverable: 'Plan d’action de trésorerie à 30 jours.',
+      },
       outlines: [
         {
           id: 'scene-bfr',
@@ -135,5 +149,27 @@ describe('generateClassroomSchema', () => {
 
     expect(result.success).toBe(true);
     if (result.success) expect(result.data.approvedPlan).toEqual(approvedPlan);
+  });
+
+  test('rejects an approved plan that is only a slide list without a syllabus', () => {
+    const result = generateClassroomSchema.safeParse({
+      ...baseInput,
+      approvedPlan: {
+        courseTitle: 'Liste de diapositives',
+        languageDirective: 'Répondre en français.',
+        outlines: [
+          {
+            id: 'scene-1',
+            type: 'slide',
+            title: 'Introduction',
+            description: 'Présenter le sujet.',
+            keyPoints: ['Contexte'],
+            order: 1,
+          },
+        ],
+      },
+    });
+
+    expect(result.success).toBe(false);
   });
 });

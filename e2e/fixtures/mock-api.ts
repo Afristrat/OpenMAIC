@@ -90,6 +90,16 @@ export class MockApi {
           success: true,
           courseTitle: 'E2E approved plan',
           languageDirective: 'Teach in English.',
+          syllabus: {
+            audience: 'Store managers',
+            prerequisites: 'No prerequisite',
+            overallObjective: 'Prevent till discrepancies',
+            learningObjectives: ['Identify a discrepancy', 'Apply the closing procedure'],
+            totalDurationMinutes: 45,
+            deliveryMode: 'Interactive virtual classroom',
+            assessmentStrategy: 'Observed case resolution',
+            expectedDeliverable: 'Completed closing checklist',
+          },
           outlines: mockOutlines,
         }),
       });

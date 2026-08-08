@@ -66,13 +66,25 @@ test.describe('Home → Generation', () => {
     // Submit → navigate to generation-preview
     await home.submit();
     await expect(page.getByRole('heading', { name: 'Training plan' })).toBeVisible();
+    await expect(page.getByLabel('Course title')).toHaveValue('E2E approved plan');
+    await expect(page.getByLabel('Audience')).toHaveValue('Store managers');
+    await expect(page.getByLabel('Overall objective')).toHaveValue(
+      'Prevent till discrepancies',
+    );
+    await expect(page.getByLabel('Total duration in minutes')).toHaveValue('45');
+    await page.getByLabel('Course title').fill('Editable E2E syllabus');
+    await page.getByLabel('Audience').fill('Retail team leaders');
+    await expect(page.getByRole('button', { name: 'Move scene 2 up' })).toBeVisible();
     expect(generationJob.getSubmittedBody()).toBeUndefined();
     await page.getByRole('button', { name: 'Confirm and generate course' }).click();
     await expect(page).toHaveURL(/\/generation-status\?jobId=e2e-generation-job$/);
     await expect(page.getByRole('heading', { name: 'Generating course' })).toBeVisible();
     expect(generationJob.getSubmittedBody()).toMatchObject({
       agentMode: 'default',
-      approvedPlan: { courseTitle: 'E2E approved plan' },
+      approvedPlan: {
+        courseTitle: 'Editable E2E syllabus',
+        syllabus: { audience: 'Retail team leaders' },
+      },
     });
   });
 
