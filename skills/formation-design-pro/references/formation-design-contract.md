@@ -14,14 +14,17 @@ La source de vérité de la constitution d’animation est `lib/formation-engine
 - roster d’agents validé par l’organisation ;
 - sources autorisées, contraintes, accessibilité et sujets interdits ;
 - scènes auxquelles rattacher l’ossature d’animation.
+- plan de formation prévisualisé, modifiable et explicitement approuvé par l’auteur ou le super administrateur avant toute génération de scène.
 
 Le rôle `author` conçoit la constitution pour son organisation. Le `super-admin` peut le faire dans toute organisation. Cette propriété du contrat ne remplace pas les contrôles d’autorisation côté serveur.
+
+Le plan approuvé est une frontière transactionnelle. Lorsque l’auteur fournit un syllabus, le moteur le normalise et le soumet malgré tout à confirmation. Lorsqu’aucun syllabus n’est fourni, le moteur en propose un à partir du besoin, des documents analysés et des paramètres de conception. Aucun contenu de scène ne peut être produit avant cette confirmation. Le worker consomme exactement le plan approuvé et ne génère jamais une ossature concurrente en arrière-plan.
 
 ## Sorties industrielles
 
 Une production complète livre quatre objets distincts :
 
-1. le plan compilé de formation, consommé par la génération des scènes ;
+1. le plan compilé, édité puis explicitement approuvé, consommé à l’identique par la génération des scènes ;
 2. la constitution d’animation, persistée avec la classroom ;
 3. les prises de parole ordinaires préproduites, intégrées au parcours canonique et aux exports ;
 4. les décisions d’intervention prises pendant le live, persistées comme événements lorsque l’enregistrement est autorisé.

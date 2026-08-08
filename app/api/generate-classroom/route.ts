@@ -73,6 +73,7 @@ export async function POST(req: NextRequest) {
         : {}),
       ...(parsed.teacherVoiceConfig ? { teacherVoiceConfig: parsed.teacherVoiceConfig } : {}),
       ...(parsed.activeSkillId ? { activeSkillId: parsed.activeSkillId } : {}),
+      ...(parsed.approvedPlan ? { approvedPlan: parsed.approvedPlan } : {}),
     };
 
     const baseUrl = buildRequestOrigin(req);

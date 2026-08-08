@@ -80,6 +80,20 @@ export class MockApi {
   /** Mock the persistent classroom-generation handoff used by the home page. */
   async mockClassroomGenerationJob(jobId = 'e2e-generation-job', resultUrl?: string) {
     let submittedBody: unknown;
+    let planRequestBody: unknown;
+    await this.page.route('**/api/generate-classroom/plan', async (route) => {
+      planRequestBody = route.request().postDataJSON();
+      await route.fulfill({
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          success: true,
+          courseTitle: 'E2E approved plan',
+          languageDirective: 'Teach in English.',
+          outlines: mockOutlines,
+        }),
+      });
+    });
     await this.page.route('**/api/generate-classroom', async (route) => {
       submittedBody = route.request().postDataJSON();
       await route.fulfill({
@@ -99,7 +113,10 @@ export class MockApi {
         ),
       });
     });
-    return { getSubmittedBody: () => submittedBody };
+    return {
+      getSubmittedBody: () => submittedBody,
+      getPlanRequestBody: () => planRequestBody,
+    };
   }
 
   /** Mock POST /api/video-capsules — creation succeeds, returns a queued capsule id */

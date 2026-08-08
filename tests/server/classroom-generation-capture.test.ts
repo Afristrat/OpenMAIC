@@ -302,4 +302,32 @@ describe('classroom generation — web capture injection', () => {
     const optionsArg = mocks.generateSceneContent.mock.calls[0][2];
     expect(optionsArg.assignedImages).toBeUndefined();
   });
+
+  it('uses the syllabus approved by the author without regenerating another outline', async () => {
+    const approvedOutline = {
+      ...outline,
+      id: 'approved-outline',
+      title: 'Plan validé par l’auteur',
+      order: 1,
+    };
+
+    await generateWithProgress({
+      approvedPlan: {
+        courseTitle: 'Formation validée',
+        languageDirective: 'Répondre en français.',
+        outlines: [approvedOutline],
+      },
+    });
+
+    expect(mocks.generateSceneOutlinesFromRequirements).not.toHaveBeenCalled();
+    expect(mocks.generateSceneContent).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'approved-outline', title: 'Plan validé par l’auteur' }),
+      expect.any(Function),
+      expect.any(Object),
+    );
+    expect(mocks.persistClassroom).toHaveBeenCalledWith(
+      expect.objectContaining({ stage: expect.objectContaining({ name: 'Formation validée' }) }),
+      'http://localhost',
+    );
+  });
 });

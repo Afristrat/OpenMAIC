@@ -12,11 +12,11 @@ describe('formation engine platform publication', () => {
   it('hydrates the traced refactored engine override through the production loader', () => {
     const skill = loadSkillFromDir(skillRoot);
 
-    expect(skill?.version).toBe('3.6.0');
+    expect(skill?.version).toBe('3.7.0');
     expect(skill?.traceability).toEqual({
       source: 'external-private-git publication with Qalem animation contract',
       vectors: expectedVectors,
-      validatedAt: '2026-08-07',
+      validatedAt: '2026-08-08',
       publicationManifest: 'publication.json',
     });
     expect(skill?.promptOverrides).toHaveLength(5);
@@ -45,8 +45,8 @@ describe('formation engine platform publication', () => {
 
     expect(publication.provenance).toMatchObject({
       validatedVectors: expectedVectors,
-      lastValidatedStory: 'S5-003',
-      validatedAt: '2026-08-07',
+      lastValidatedStory: 'S5-004',
+      validatedAt: '2026-08-08',
     });
     expect(prompt).toContain('source: external-private-git publication');
     expect(prompt).toContain(`vectors: ${expectedVectors.join(', ')}`);
@@ -76,6 +76,8 @@ describe('formation engine platform publication', () => {
     expect(publication).toContain('reprendre exactement au même point');
     expect(publication).toContain('Approfondir');
     expect(publication).toContain('Continuer');
+    expect(publication).toContain('plan explicitement approuvé');
+    expect(publication).toContain('ne génère jamais une ossature concurrente en arrière-plan');
     expect(publication).toContain('afficher la scène suivante avant de lancer son audio');
     expect(publication).toContain('prévisualiser la liste des scènes affectées');
     expect(publication).toContain('sans taux de change actuel et sourcé');

@@ -65,9 +65,66 @@ test.describe('Home → Generation', () => {
 
     // Submit → navigate to generation-preview
     await home.submit();
+    await expect(page.getByRole('heading', { name: 'Training plan' })).toBeVisible();
+    expect(generationJob.getSubmittedBody()).toBeUndefined();
+    await page.getByRole('button', { name: 'Confirm and generate course' }).click();
     await expect(page).toHaveURL(/\/generation-status\?jobId=e2e-generation-job$/);
     await expect(page.getByRole('heading', { name: 'Generating course' })).toBeVisible();
-    expect(generationJob.getSubmittedBody()).toMatchObject({ agentMode: 'default' });
+    expect(generationJob.getSubmittedBody()).toMatchObject({
+      agentMode: 'default',
+      approvedPlan: { courseTitle: 'E2E approved plan' },
+    });
+  });
+
+  test('sends the selected PDF parser and preserves extracted text in the plan request', async ({
+    page,
+    mockApi,
+  }) => {
+    await page.addInitScript(() => {
+      const stored = JSON.parse(localStorage.getItem('settings-storage') ?? '{}');
+      stored.state.pdfProviderId = 'mineru';
+      stored.state.pdfProvidersConfig = {
+        unpdf: { apiKey: '', baseUrl: '', enabled: true },
+        mineru: {
+          apiKey: 'e2e-mineru-key',
+          baseUrl: 'https://mineru.e2e.test/v1',
+          enabled: true,
+        },
+        'mineru-cloud': { apiKey: '', baseUrl: '', enabled: false },
+      };
+      localStorage.setItem('settings-storage', JSON.stringify(stored));
+    });
+    let multipartBody = '';
+    await page.route('**/api/parse-pdf', async (route) => {
+      multipartBody = route.request().postDataBuffer()?.toString('utf8') ?? '';
+      await route.fulfill({
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          success: true,
+          data: { text: 'Source PDF validée', images: [], metadata: { pageCount: 1 } },
+        }),
+      });
+    });
+    const generationJob = await mockApi.mockClassroomGenerationJob('e2e-pdf-job');
+    const home = new HomePage(page);
+    await home.goto();
+    await home.fillRequirement('Create a course from this source');
+    await home.configureAnimation();
+    await page.getByRole('button', { name: 'Upload PDF' }).click();
+    await page.locator('input[type="file"][accept*=".pdf"]').setInputFiles({
+      name: 'source.pdf',
+      mimeType: 'application/pdf',
+      buffer: Buffer.from('%PDF-1.4 e2e'),
+    });
+    await home.submit();
+
+    await expect(page.getByRole('heading', { name: 'Training plan' })).toBeVisible();
+    expect(multipartBody).toContain('mineru');
+    expect(multipartBody).toContain('https://mineru.e2e.test/v1');
+    expect(generationJob.getPlanRequestBody()).toMatchObject({
+      pdfContent: { text: 'Source PDF validée', images: [] },
+    });
   });
 
   test('keeps body spacing stable when the settings dialog opens', async ({ page }) => {

@@ -9,10 +9,11 @@ description: Concevoir ou industrialiser une formation Qalem fondée sur une per
 
 1. Identifier la performance observable attendue, les acquis, les contraintes, les sources autorisées, le territoire d’usage, la devise de référence et les preuves de réussite.
 2. Recueillir la performance cible, les acquis, l’autonomie réelle, l’expérience mobilisable, le risque, les contraintes et la modalité. Recommander ensuite `pedagogy`, `hybrid` ou `andragogy`, expliquer les conséquences en langage courant, puis exiger la validation explicite de l’auteur. Ne jamais déduire cette recommandation de l’âge seul.
-3. Compiler le plan de formation avec le moteur `qalem-prompt-compiler`. Ne pas recréer ses schémas ni ses politiques.
-4. Concevoir chaque activité et chaque évaluation en fonction de sa contribution à la performance visée. Ne jamais imposer de ratio universel de théorie, pratique, parole ou apprentissage entre pairs.
-5. Produire une constitution d’animation persistante avant le live. Lire [le contrat de conception](references/formation-design-contract.md) pour les entrées, sorties et invariants.
-6. Ne retenir dans le casting que des agents qui apportent une contribution identifiable. Répartir au moins une prise de parole canonique utile par agent actif, même lorsque le roster comporte plus de membres que la formation ne comporte de scènes.
+3. Compiler le plan de formation avec le moteur `qalem-prompt-compiler`. Si l’auteur fournit un syllabus, le normaliser sans en changer silencieusement l’intention. S’il n’en fournit pas, proposer un plan complet à partir du besoin et des sources analysées.
+4. Suspendre la production du contenu sur un écran auteur dédié. L’auteur ou le super administrateur doit pouvoir modifier, ajouter, supprimer et réordonner les séquences, puis valider explicitement le plan. Le plan approuvé devient l’unique contrat consommé par la génération : il est interdit d’en régénérer un second en arrière-plan.
+5. Concevoir chaque activité et chaque évaluation en fonction de sa contribution à la performance visée. Ne jamais imposer de ratio universel de théorie, pratique, parole ou apprentissage entre pairs.
+6. Produire une constitution d’animation persistante avant le live. Lire [le contrat de conception](references/formation-design-contract.md) pour les entrées, sorties et invariants.
+7. Ne retenir dans le casting que des agents qui apportent une contribution identifiable. Répartir au moins une prise de parole canonique utile par agent actif, même lorsque le roster comporte plus de membres que la formation ne comporte de scènes.
 
 Le territoire et la devise sont des variables structurées de la trame, jamais des détails déduits d’un exemple. Les recopier dans la classroom afin qu’une adaptation ultérieure puisse retraiter uniquement les cas, montants, ressources et narrations concernés. Ne jamais convertir un montant existant sans taux actuel et source vérifiable.
 
@@ -38,7 +39,7 @@ Pendant l’adaptation, conserver les objectifs, l’ordre et la structure péda
 
 ## Bloquer plutôt qu’inventer
 
-Bloquer la production lorsque manquent le mode choisi par l’auteur, la performance cible, une preuve de réussite, une source requise ou une identité agent compatible. Étiqueter toute hypothèse autorisée. Ne jamais fabriquer un cas local, une référence, une statistique ou une règle de conformité.
+Bloquer la production lorsque manquent le mode choisi par l’auteur, la performance cible, une preuve de réussite, une source requise, un plan explicitement approuvé ou une identité agent compatible. Étiqueter toute hypothèse autorisée. Ne jamais fabriquer un cas local, une référence, une statistique ou une règle de conformité.
 
 ## Ressources Qalem
 

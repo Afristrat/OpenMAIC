@@ -20,10 +20,10 @@ export class GenerationPreviewPage {
       name: /tap to review|点击审阅|點擊審閱|クリックでレビュー|нажмите, чтобы проверить|اضغط للمراجعة/i,
     });
     this.editorTitle = page.getByRole('heading', {
-      name: /scene outline|场景大纲|場景大綱|シーンアウトライン|план сцен|مخطط المشاهد/i,
+      name: /training plan|plan de formation|مخطط التكوين|scene outline|مخطط المشاهد/i,
     });
     this.alwaysReviewCheckbox = page.getByRole('checkbox', {
-      name: /always review outlines before generation|以后生成前都审阅大纲|以後生成前都審閱大綱|生成前に常にアウトラインを確認|всегда проверять план|مراجعة المخططات دائمًا/i,
+      name: /plan approval is required before every generation|validation du plan obligatoire avant chaque génération|اعتماد المخطط إلزامي قبل كل توليد|always review outlines before generation/i,
     });
     this.confirmOutlinesButton = page.getByRole('button', {
       name: /confirm and generate course|确认并生成课程|確認並生成課程|確認してコースを生成|подтвердить и сгенерировать курс|تأكيد وتوليد المقرر/i,

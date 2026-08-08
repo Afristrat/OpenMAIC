@@ -1,5 +1,6 @@
 import { expect, test } from '../fixtures/base';
 import { createSettingsStorage } from '../fixtures/test-data/settings';
+import { mockOutlines } from '../fixtures/test-data/scene-outlines';
 
 test.describe('Formation Design Pro — persistent generation path', () => {
   test('catalogue selection reaches the persistent job with the active skill', async ({ page }) => {
@@ -16,6 +17,18 @@ test.describe('Formation Design Pro — persistent generation path', () => {
         status: 202,
         contentType: 'application/json',
         body: JSON.stringify({ success: true, jobId: 'skill-engine-e2e' }),
+      });
+    });
+    await page.route('**/api/generate-classroom/plan', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          courseTitle: 'Entretiens difficiles',
+          languageDirective: 'Former en français.',
+          outlines: mockOutlines,
+        }),
       });
     });
     await page.route('**/api/generate-classroom/skill-engine-e2e', async (route) => {
@@ -51,6 +64,9 @@ test.describe('Formation Design Pro — persistent generation path', () => {
         name: /accéder à la classe virtuelle|enter classroom|دخول الفصل/i,
       })
       .click();
+
+    await expect(page.getByRole('heading', { name: 'Plan de formation' })).toBeVisible();
+    await page.getByRole('button', { name: 'Confirmer et générer le cours' }).click();
 
     await expect(page).toHaveURL(/\/generation-status\?jobId=skill-engine-e2e$/);
     expect(submittedBody?.activeSkillId).toBe('formation-design-pro');

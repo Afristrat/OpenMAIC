@@ -37,9 +37,10 @@ import { Textarea as UITextarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { SettingsDialog } from '@/components/settings';
 import { GenerationToolbar } from '@/components/generation/generation-toolbar';
+import { OutlinesEditor } from '@/components/generation/outlines-editor';
 import { AgentBar } from '@/components/agent/agent-bar';
 import { useTheme } from '@/lib/hooks/use-theme';
-import type { UserRequirements } from '@/lib/types/generation';
+import type { SceneOutline, UserRequirements } from '@/lib/types/generation';
 import { buildLanguageDirective } from '@/lib/constants/generation';
 import { useUserProfileStore, AVATAR_OPTIONS } from '@/lib/store/user-profile';
 import { StageListItem, revokeThumbnailSlideMediaUrls } from '@/lib/utils/stage-storage';
@@ -67,6 +68,7 @@ import {
   DEFAULT_LEARNING_CONTEXT,
   normalizeLearningContext,
 } from '@/lib/formation-engine/learning-context';
+import { buildDocumentParseFormData } from '@/lib/document/upload-request';
 
 const log = createLogger('Home');
 
@@ -104,6 +106,12 @@ interface FormState {
   learningApproach: LearningApproach | null;
   interactionLevel: InteractionLevel | null;
   learningContext: LearningContext;
+}
+
+interface ClassroomPlan {
+  courseTitle: string;
+  languageDirective: string;
+  outlines: SceneOutline[];
 }
 
 const initialFormState: FormState = {
@@ -156,6 +164,8 @@ function HomePage() {
   const ttsProviderId = useSettingsStore((s) => s.ttsProviderId);
   const ttsVoice = useSettingsStore((s) => s.ttsVoice);
   const ttsProvidersConfig = useSettingsStore((s) => s.ttsProvidersConfig);
+  const pdfProviderId = useSettingsStore((s) => s.pdfProviderId);
+  const pdfProvidersConfig = useSettingsStore((s) => s.pdfProvidersConfig);
   const [recentOpen, setRecentOpen] = useState(true);
   const persistRecentOpen = (next: boolean) => {
     setRecentOpen(next);
@@ -283,6 +293,13 @@ function HomePage() {
 
   const [themeOpen, setThemeOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isPlanning, setIsPlanning] = useState(false);
+  const [isStartingGeneration, setIsStartingGeneration] = useState(false);
+  const [draftPlan, setDraftPlan] = useState<ClassroomPlan | null>(null);
+  const [pendingGenerationRequest, setPendingGenerationRequest] = useState<Record<
+    string,
+    unknown
+  > | null>(null);
   const [classrooms, setClassrooms] = useState<StageListItem[]>([]);
   // Imports remain disabled until their payloads are persisted through the
   // organization-scoped API, rather than silently creating browser-only courses.
@@ -470,66 +487,116 @@ function HomePage() {
         activeSkillId,
       };
 
+      setIsPlanning(true);
       let pdfContent: { text: string; images: string[] } | undefined;
       if (form.pdfFile) {
-        const fd = new FormData();
         const isPdf = form.pdfFile.name.toLowerCase().endsWith('.pdf');
-        fd.append(isPdf ? 'pdf' : 'document', form.pdfFile);
-        const parsed = await (
-          await fetch(isPdf ? '/api/parse-pdf' : '/api/parse-document', {
-            method: 'POST',
-            body: fd,
-          })
-        ).json();
-        if (!parsed.success || !parsed.data?.text) throw new Error(t('generation.pdfParseFailed'));
-        pdfContent = { text: parsed.data.text, images: [] };
+        const providerConfig = pdfProvidersConfig[pdfProviderId];
+        const parseResponse = await fetch(isPdf ? '/api/parse-pdf' : '/api/parse-document', {
+          method: 'POST',
+          body: buildDocumentParseFormData(form.pdfFile, {
+            providerId: pdfProviderId,
+            apiKey: providerConfig?.apiKey,
+            baseUrl: providerConfig?.baseUrl,
+          }),
+        });
+        const parsed = await parseResponse.json();
+        const parsedText = typeof parsed.data?.text === 'string' ? parsed.data.text.trim() : '';
+        if (!parseResponse.ok || !parsed.success || !parsedText) {
+          const parserDetails =
+            typeof parsed.details === 'string'
+              ? parsed.details
+              : typeof parsed.error === 'string'
+                ? parsed.error
+                : t('generation.pdfParseFailed');
+          throw new Error(
+            isPdf && !parsedText
+              ? `${t('generation.pdfNoTextExtracted')} ${parserDetails}`
+              : parserDetails,
+          );
+        }
+        pdfContent = {
+          text: parsedText,
+          images: Array.isArray(parsed.data.images) ? parsed.data.images : [],
+        };
       }
-      const response = await fetch('/api/generate-classroom', {
+      const generationRequest = {
+        orgId: currentOrg.id,
+        language: locale,
+        learningApproach: form.learningApproach,
+        interactionLevel: form.interactionLevel,
+        learningContext: normalizeLearningContext(form.learningContext),
+        requirement: requirements.requirement,
+        ...(pdfContent ? { pdfContent } : {}),
+        enableWebSearch: form.webSearch,
+        enableImageGeneration: imageGenerationEnabled,
+        imageProviderId,
+        imageModelId,
+        enableVideoGeneration: videoGenerationEnabled,
+        enableTTS: ttsEnabled,
+        interactiveMode: form.vocationalTestMode ? true : form.interactiveMode,
+        agentMode: agentMode === 'auto' ? 'generate' : 'default',
+        selectedPersonaIds: selectedAgentIds
+          .map((id) => id.replace(/^persona-/, ''))
+          .filter((id) => !id.startsWith('default-') && !id.startsWith('specialist-')),
+        contextualSpecialists: contextualSpecialists.filter((specialist) =>
+          selectedAgentIds.includes(specialist.id),
+        ),
+        teacherVoiceConfig: {
+          providerId: ttsProviderId,
+          modelId: ttsProvidersConfig[ttsProviderId]?.modelId,
+          voiceId: ttsVoice,
+          voiceName: TTS_PROVIDERS[ttsProviderId as BuiltInTTSProviderId]?.voices.find(
+            (voice) => voice.id === ttsVoice,
+          )?.name,
+          gender: TTS_PROVIDERS[ttsProviderId as BuiltInTTSProviderId]?.voices.find(
+            (voice) => voice.id === ttsVoice,
+          )?.gender,
+        },
+        ...(requirements.activeSkillId ? { activeSkillId: requirements.activeSkillId } : {}),
+      };
+      const response = await fetch('/api/generate-classroom/plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orgId: currentOrg.id,
-          language: locale,
-          learningApproach: form.learningApproach,
-          interactionLevel: form.interactionLevel,
-          learningContext: normalizeLearningContext(form.learningContext),
-          requirement: requirements.requirement,
-          ...(pdfContent ? { pdfContent } : {}),
-          enableWebSearch: form.webSearch,
-          enableImageGeneration: imageGenerationEnabled,
-          imageProviderId,
-          imageModelId,
-          enableVideoGeneration: videoGenerationEnabled,
-          enableTTS: ttsEnabled,
-          interactiveMode: form.vocationalTestMode ? true : form.interactiveMode,
-          agentMode: agentMode === 'auto' ? 'generate' : 'default',
-          selectedPersonaIds: selectedAgentIds
-            .map((id) => id.replace(/^persona-/, ''))
-            .filter((id) => !id.startsWith('default-') && !id.startsWith('specialist-')),
-          contextualSpecialists: contextualSpecialists.filter((specialist) =>
-            selectedAgentIds.includes(specialist.id),
-          ),
-          teacherVoiceConfig: {
-            providerId: ttsProviderId,
-            modelId: ttsProvidersConfig[ttsProviderId]?.modelId,
-            voiceId: ttsVoice,
-            voiceName: TTS_PROVIDERS[ttsProviderId as BuiltInTTSProviderId]?.voices.find(
-              (voice) => voice.id === ttsVoice,
-            )?.name,
-            gender: TTS_PROVIDERS[ttsProviderId as BuiltInTTSProviderId]?.voices.find(
-              (voice) => voice.id === ttsVoice,
-            )?.gender,
-          },
-          ...(requirements.activeSkillId ? { activeSkillId: requirements.activeSkillId } : {}),
-        }),
+        body: JSON.stringify(generationRequest),
       });
       const result = await response.json();
-      if (!response.ok || !result.jobId)
-        throw new Error(result.error || 'Generation could not start');
-      router.push(`/generation-status?jobId=${encodeURIComponent(result.jobId)}`);
+      if (!response.ok || !Array.isArray(result.outlines) || result.outlines.length === 0) {
+        throw new Error(result.details || result.error || t('generation.planGenerationFailed'));
+      }
+      setPendingGenerationRequest(generationRequest);
+      setDraftPlan({
+        courseTitle: result.courseTitle || form.requirement.slice(0, 120),
+        languageDirective: result.languageDirective || buildLanguageDirective(locale),
+        outlines: result.outlines,
+      });
     } catch (err) {
       log.error('Error preparing generation:', err);
       setError(err instanceof Error ? err.message : t('upload.generateFailed'));
+    } finally {
+      setIsPlanning(false);
+    }
+  };
+
+  const handleConfirmPlan = async () => {
+    if (!draftPlan || !pendingGenerationRequest || isStartingGeneration) return;
+    setIsStartingGeneration(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/generate-classroom', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...pendingGenerationRequest, approvedPlan: draftPlan }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.jobId) {
+        throw new Error(result.details || result.error || t('upload.generateFailed'));
+      }
+      router.push(`/generation-status?jobId=${encodeURIComponent(result.jobId)}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('upload.generateFailed'));
+    } finally {
+      setIsStartingGeneration(false);
     }
   };
 
@@ -583,7 +650,7 @@ function HomePage() {
     !!currentOrg &&
     canAuthor;
   const requiresAuthentication = !user;
-  const generateDisabled = !requiresAuthentication && !canGenerate;
+  const generateDisabled = !requiresAuthentication && (!canGenerate || isPlanning);
 
   const handleGenerateAction = () => {
     if (requiresAuthentication) {
@@ -597,12 +664,29 @@ function HomePage() {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       e.preventDefault();
-      if (canGenerate) handleGenerate();
+      if (canGenerate && !isPlanning) handleGenerate();
     }
   };
 
   return (
     <div className="min-h-[100dvh] w-full bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 flex flex-col items-center p-4 pt-16 md:p-8 md:pt-16 overflow-x-hidden">
+      {draftPlan && (
+        <div className="fixed inset-0 z-[100] overflow-y-auto bg-slate-950/70 p-3 backdrop-blur-sm md:p-8">
+          <div className="mx-auto max-w-5xl">
+            <OutlinesEditor
+              outlines={draftPlan.outlines}
+              onChange={(outlines) => setDraftPlan((plan) => (plan ? { ...plan, outlines } : plan))}
+              onConfirm={handleConfirmPlan}
+              onBack={() => {
+                setDraftPlan(null);
+                setPendingGenerationRequest(null);
+              }}
+              alwaysReview
+              isLoading={isStartingGeneration}
+            />
+          </div>
+        </div>
+      )}
       <input
         ref={fileInputRef}
         type="file"
@@ -963,7 +1047,9 @@ function HomePage() {
                 <span className="text-xs font-medium">
                   {requiresAuthentication
                     ? t('toolbar.loginToGenerate')
-                    : t('toolbar.enterClassroom')}
+                    : isPlanning
+                      ? t('generation.generatingOutlines')
+                      : t('toolbar.enterClassroom')}
                 </span>
                 <ArrowUp className="size-3.5" />
               </button>

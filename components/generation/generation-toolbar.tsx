@@ -186,7 +186,7 @@ export function GenerationToolbar({
         <Popover>
           <PopoverTrigger asChild>
             {pdfFile ? (
-              <button className={pillActive}>
+              <button className={pillActive} aria-label={t('toolbar.pdfUpload')}>
                 <Paperclip className="size-3.5" />
                 <span className="max-w-[100px] truncate">{pdfFile.name}</span>
                 <span
@@ -201,7 +201,7 @@ export function GenerationToolbar({
                 </span>
               </button>
             ) : (
-              <button className={pillMuted}>
+              <button className={pillMuted} aria-label={t('toolbar.pdfUpload')}>
                 <Paperclip className="size-3.5" />
               </button>
             )}

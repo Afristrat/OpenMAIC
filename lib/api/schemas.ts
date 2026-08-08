@@ -320,6 +320,27 @@ export const generateVideoSchema = z.object({
 // Generate Classroom
 // ---------------------------------------------------------------------------
 
+export const approvedSceneOutlineSchema = z
+  .object({
+    id: z.string().min(1).max(120),
+    type: z.enum(['slide', 'quiz', 'interactive', 'pbl', 'plugin']),
+    title: z.string().trim().min(1).max(300),
+    description: z.string().trim().min(1).max(4000),
+    keyPoints: z.array(z.string().trim().min(1).max(1000)).max(12),
+    teachingObjective: z.string().trim().min(1).max(1000).optional(),
+    estimatedDuration: z.number().int().positive().max(7200).optional(),
+    order: z.number().int().positive(),
+    languageNote: z.string().trim().min(1).max(1000).optional(),
+    suggestedImageIds: z.array(z.string().min(1).max(120)).max(30).optional(),
+  })
+  .passthrough();
+
+export const approvedClassroomPlanSchema = z.object({
+  courseTitle: z.string().trim().min(1).max(300),
+  languageDirective: z.string().trim().min(1).max(2000),
+  outlines: z.array(approvedSceneOutlineSchema).min(1).max(60),
+});
+
 export const generateClassroomSchema = z.object({
   orgId: z.string().uuid('orgId must be a valid UUID'),
   courseId: z.string().uuid('courseId must be a valid UUID').optional(),
@@ -406,6 +427,7 @@ export const generateClassroomSchema = z.object({
     })
     .optional(),
   activeSkillId: z.string().min(1).max(120).optional(),
+  approvedPlan: approvedClassroomPlanSchema.optional(),
 });
 
 // ---------------------------------------------------------------------------

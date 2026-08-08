@@ -113,4 +113,27 @@ describe('generateClassroomSchema', () => {
       }).success,
     ).toBe(false);
   });
+
+  test('preserves the syllabus explicitly approved by the author', () => {
+    const approvedPlan = {
+      courseTitle: 'Piloter la trésorerie de la TPE',
+      languageDirective: 'Répondre en français.',
+      outlines: [
+        {
+          id: 'scene-bfr',
+          type: 'slide',
+          title: 'Diagnostiquer le BFR',
+          description: 'Interpréter le cycle d’exploitation avant toute décision.',
+          keyPoints: ['Créances', 'Stocks', 'Dettes fournisseurs'],
+          teachingObjective: 'Calculer et interpréter le BFR d’une TPE.',
+          order: 1,
+        },
+      ],
+    };
+
+    const result = generateClassroomSchema.safeParse({ ...baseInput, approvedPlan });
+
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.approvedPlan).toEqual(approvedPlan);
+  });
 });

@@ -34,7 +34,12 @@ import { withGenerationRetry } from '@/lib/generation/generation-retry';
 import { buildVideoManifestFromOutlines } from '@/lib/media/video-manifest';
 import { decideCaptureForScene } from '@/lib/generation/web-capture-plan';
 import { requestWebCapture } from '@/lib/server/capture-client';
-import type { UserRequirements, PdfImage, ImageMapping } from '@/lib/types/generation';
+import type {
+  UserRequirements,
+  PdfImage,
+  ImageMapping,
+  SceneOutline,
+} from '@/lib/types/generation';
 import type { Scene, Stage } from '@/lib/types/stage';
 import { isFeatureEnabled } from '@/lib/flags';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
@@ -111,6 +116,11 @@ export interface GenerateClassroomInput {
     gender?: 'female' | 'male' | 'neutral';
   };
   activeSkillId?: string;
+  approvedPlan?: {
+    courseTitle: string;
+    languageDirective: string;
+    outlines: SceneOutline[];
+  };
 }
 
 function applyTeacherVoiceConfig<
@@ -429,20 +439,22 @@ export async function generateClassroom(
     scenesGenerated: 0,
   });
 
-  const outlinesResult = await generateSceneOutlinesFromRequirements(
-    requirements,
-    pdfText,
-    undefined,
-    aiCall,
-    undefined,
-    {
-      imageGenerationEnabled: input.enableImageGeneration,
-      videoGenerationEnabled: input.enableVideoGeneration,
-      researchContext,
-      skillEngineEnabled,
-      // NO teacherContext — agents haven't been generated yet
-    },
-  );
+  const outlinesResult = input.approvedPlan
+    ? { success: true as const, data: input.approvedPlan }
+    : await generateSceneOutlinesFromRequirements(
+        requirements,
+        pdfText,
+        undefined,
+        aiCall,
+        undefined,
+        {
+          imageGenerationEnabled: input.enableImageGeneration,
+          videoGenerationEnabled: input.enableVideoGeneration,
+          researchContext,
+          skillEngineEnabled,
+          // NO teacherContext — agents haven't been generated yet
+        },
+      );
 
   if (!outlinesResult.success || !outlinesResult.data) {
     log.error('Failed to generate outlines:', outlinesResult.error);
