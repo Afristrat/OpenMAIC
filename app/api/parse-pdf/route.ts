@@ -7,6 +7,7 @@ import {
 import type { PDFProviderId } from '@/lib/pdf/types';
 import type { ParsedPdfContent } from '@/lib/types/pdf';
 import { documentArtifactToParsedPdfContent, extractDocument } from '@/lib/document';
+import { shouldUseOcrFallback } from '@/lib/document/pdf-text-quality';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
@@ -61,15 +62,50 @@ export async function POST(req: NextRequest) {
     const arrayBuffer = await pdfFile.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Route the existing PDF API through the document extraction boundary.
-    const artifact = await extractDocument({
-      buffer,
-      fileName: pdfFile.name,
-      fileSize: pdfFile.size,
-      mimeType: 'application/pdf',
-      config,
-    });
-    const result = documentArtifactToParsedPdfContent(artifact);
+    const extract = async (parserConfig: typeof config) =>
+      documentArtifactToParsedPdfContent(
+        await extractDocument({
+          buffer,
+          fileName: pdfFile.name,
+          fileSize: pdfFile.size,
+          mimeType: 'application/pdf',
+          config: parserConfig,
+        }),
+      );
+
+    let result: ParsedPdfContent | undefined;
+    let primaryError: unknown;
+    try {
+      result = await extract(config);
+    } catch (error) {
+      primaryError = error;
+      if (effectiveProviderId !== 'unpdf') throw error;
+    }
+
+    if (effectiveProviderId === 'unpdf' && (!result || shouldUseOcrFallback(result.text))) {
+      for (const ocrProviderId of ['mineru', 'mineru-cloud'] as const) {
+        if (!isServerConfiguredProvider('pdf', ocrProviderId)) continue;
+        try {
+          const ocrResult = await extract({
+            providerId: ocrProviderId,
+            apiKey: resolvePDFApiKey(ocrProviderId),
+            baseUrl: resolvePDFBaseUrl(ocrProviderId),
+          });
+          if (!shouldUseOcrFallback(ocrResult.text)) {
+            result = ocrResult;
+            resolvedProviderId = ocrProviderId;
+            break;
+          }
+        } catch (ocrError) {
+          log.warn(`OCR fallback failed [provider=${ocrProviderId}, file="${pdfFile.name}"]`, ocrError);
+        }
+      }
+    }
+
+    if (!result) throw primaryError ?? new Error('No PDF parser returned usable content');
+    if (shouldUseOcrFallback(result.text)) {
+      throw new Error('No configured PDF parser returned readable text, including OCR fallback');
+    }
 
     // Add file metadata
     const resultWithMetadata: ParsedPdfContent = {

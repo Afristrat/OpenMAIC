@@ -63,11 +63,21 @@ Then output your response as a single JSON object.
 {
   "languageDirective": "2-5 sentence instruction describing the course language behavior",
   "courseTitle": "concise course name, ≤30 chars, in the teaching language",
+  "syllabus": {
+    "audience": "target participants",
+    "prerequisites": "verified prerequisites or an explicit author-confirmation placeholder",
+    "overallObjective": "observable overall performance",
+    "learningObjectives": ["observable objective 1", "observable objective 2"],
+    "totalDurationMinutes": 45,
+    "deliveryMode": "delivery format",
+    "assessmentStrategy": "how performance will be evidenced",
+    "expectedDeliverable": "usable output produced by the learner"
+  },
   "outlines": [ /* array of scene objects, schema described below */ ]
 }
 ```
 
-Never return a bare array. Never omit `languageDirective` or `courseTitle`. All three keys are required.
+Never return a bare array. Never omit `languageDirective`, `courseTitle`, or `syllabus`. All four keys are required. Do not invent missing audience or prerequisites: write an explicit author-confirmation placeholder in the teaching language.
 
 **Each scene inside the `outlines` array has this minimum shape:**
 
@@ -106,4 +116,4 @@ Never return a bare array. Never omit `languageDirective` or `courseTitle`. All 
 - **Language**: Infer from the user's requirement text and context, then output all content in the inferred language
 - **If web search results are provided**, reference specific findings and sources in scene descriptions and keyPoints. The search results provide up-to-date information — incorporate it to make the course content current and accurate.
 
-**Final reminder**: your entire response must be a JSON **object** with exactly three top-level keys — `languageDirective` (string), `courseTitle` (string, ≤30 chars, in the teaching language), and `outlines` (array). Do not return a bare array. Do not wrap in prose or code fences.
+**Final reminder**: your entire response must be a JSON **object** with exactly four top-level keys: `languageDirective`, `courseTitle`, `syllabus`, and `outlines`. Do not return a bare array. Do not wrap in prose or code fences.

@@ -259,17 +259,20 @@ describe('outline courseTitle parsing', () => {
     expect(result.data?.courseTitle?.startsWith(' ')).toBe(false);
   });
 
-  test('returns undefined courseTitle when the field is missing (graceful fallback)', async () => {
+  test('returns an explicit author-confirmation placeholder when courseTitle is missing', async () => {
     const result = await runWith({
       languageDirective: 'Teach in English.',
       outlines: [],
     });
 
     expect(result.success).toBe(true);
-    expect(result.data?.courseTitle).toBeUndefined();
+    expect(result.data?.courseTitle).toBe('To be confirmed by the author');
+    expect(result.data?.syllabus.learningObjectives).toEqual([
+      'To be confirmed by the author',
+    ]);
   });
 
-  test('ignores a non-string / empty courseTitle', async () => {
+  test('replaces a non-string or empty courseTitle with an explicit placeholder', async () => {
     const result = await runWith({
       languageDirective: 'Teach in English.',
       courseTitle: '   ',
@@ -277,6 +280,28 @@ describe('outline courseTitle parsing', () => {
     });
 
     expect(result.success).toBe(true);
-    expect(result.data?.courseTitle).toBeUndefined();
+    expect(result.data?.courseTitle).toBe('To be confirmed by the author');
+  });
+
+  test('preserves a complete syllabus proposed for author approval', async () => {
+    const syllabus = {
+      audience: 'Store managers',
+      prerequisites: 'No prerequisite',
+      overallObjective: 'Prevent till discrepancies',
+      learningObjectives: ['Identify a discrepancy'],
+      totalDurationMinutes: 45,
+      deliveryMode: 'Interactive virtual classroom',
+      assessmentStrategy: 'Observed case resolution',
+      expectedDeliverable: 'Completed closing checklist',
+    };
+    const result = await runWith({
+      languageDirective: 'Teach in English.',
+      courseTitle: 'Till closing',
+      syllabus,
+      outlines: [],
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data?.syllabus).toEqual(syllabus);
   });
 });

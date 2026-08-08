@@ -18,7 +18,9 @@ La source de vérité de la constitution d’animation est `lib/formation-engine
 
 Le rôle `author` conçoit la constitution pour son organisation. Le `super-admin` peut le faire dans toute organisation. Cette propriété du contrat ne remplace pas les contrôles d’autorisation côté serveur.
 
-Le plan approuvé est une frontière transactionnelle. Lorsque l’auteur fournit un syllabus, le moteur le normalise et le soumet malgré tout à confirmation. Lorsqu’aucun syllabus n’est fourni, le moteur en propose un à partir du besoin, des documents analysés et des paramètres de conception. Aucun contenu de scène ne peut être produit avant cette confirmation. Le worker consomme exactement le plan approuvé et ne génère jamais une ossature concurrente en arrière-plan.
+Le plan approuvé est une frontière transactionnelle. Lorsque l’auteur fournit un syllabus, le moteur le normalise et le soumet malgré tout à confirmation. Lorsqu’aucun syllabus n’est fourni, le moteur en propose un à partir du besoin, des documents analysés et des paramètres de conception. Il contient au minimum le titre, le public, les prérequis, l’objectif général, les objectifs d’apprentissage, la durée totale, la modalité, la stratégie d’évaluation et le livrable attendu. Chaque séquence expose son objectif et sa durée. Tous ces champs sont directement modifiables ; les séquences peuvent être ajoutées, supprimées et réordonnées par des commandes visibles, sans dépendre du glisser-déposer. Aucun contenu de scène ne peut être produit avant cette confirmation. Le worker consomme exactement le plan approuvé et ne génère jamais une ossature concurrente en arrière-plan.
+
+Une source PDF n’est exploitable que si son texte est lisible. L’extraction locale est tentée en premier, puis un OCR configuré prend automatiquement le relais lorsque le résultat est vide ou corrompu. La présence de caractères ne constitue jamais, à elle seule, une preuve de réussite. Si aucun parseur ne fournit un texte lisible, le moteur bloque la génération et restitue la cause à l’auteur.
 
 ## Sorties industrielles
 

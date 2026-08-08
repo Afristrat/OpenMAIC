@@ -35,6 +35,7 @@ import { buildVideoManifestFromOutlines } from '@/lib/media/video-manifest';
 import { decideCaptureForScene } from '@/lib/generation/web-capture-plan';
 import { requestWebCapture } from '@/lib/server/capture-client';
 import type {
+  ClassroomPlan,
   UserRequirements,
   PdfImage,
   ImageMapping,
@@ -116,11 +117,7 @@ export interface GenerateClassroomInput {
     gender?: 'female' | 'male' | 'neutral';
   };
   activeSkillId?: string;
-  approvedPlan?: {
-    courseTitle: string;
-    languageDirective: string;
-    outlines: SceneOutline[];
-  };
+  approvedPlan?: ClassroomPlan;
 }
 
 function applyTeacherVoiceConfig<

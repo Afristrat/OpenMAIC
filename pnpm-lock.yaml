@@ -330,8 +330,8 @@ importers:
         specifier: ^7.22.0
         version: 7.22.0
       unpdf:
-        specifier: ^1.4.0
-        version: 1.4.0(@napi-rs/canvas@0.1.96)
+        specifier: ^1.8.0
+        version: 1.8.0(@napi-rs/canvas@0.1.96)
       use-stick-to-bottom:
         specifier: ^1.1.1
         version: 1.1.3(react@19.2.3)
@@ -12737,10 +12737,11 @@ packages:
     resolution: {integrity: sha512-gptHNQghINnc/vTGIk0SOFGFNXw7JVrlRUtConJRlvaw6DuX0wO5Jeko9sWrMBhh+PsYAZ7oXAiOnf/UKogyiw==}
     engines: {node: '>= 10.0.0'}
 
-  unpdf@1.4.0:
-    resolution: {integrity: sha512-TahIk0xdH/4jh/MxfclzU79g40OyxtP00VnEUZdEkJoYtXAHWLiir6t3FC6z3vDqQTzc2ZHcla6uEiVTNjejuA==}
+  unpdf@1.8.0:
+    resolution: {integrity: sha512-jQlkckbe5nKxRHQdbvo9IKHlU6Cjq00UlxxB8lrCIxvS2o5IbAL1wM+4a1Yc3+BIohg9p5AsoaftwO+G4Aq/qQ==}
+    engines: {node: '>=22'}
     peerDependencies:
-      '@napi-rs/canvas': ^0.1.69
+      '@napi-rs/canvas': ^0.1.69 || ^1.0.0
     peerDependenciesMeta:
       '@napi-rs/canvas':
         optional: true
@@ -27394,7 +27395,7 @@ snapshots:
 
   universalify@2.0.1: {}
 
-  unpdf@1.4.0(@napi-rs/canvas@0.1.96):
+  unpdf@1.8.0(@napi-rs/canvas@0.1.96):
     optionalDependencies:
       '@napi-rs/canvas': 0.1.96
 

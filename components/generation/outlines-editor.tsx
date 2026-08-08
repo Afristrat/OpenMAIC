@@ -3,6 +3,8 @@
 import { Fragment, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
+  ArrowDown,
+  ArrowUp,
   Check,
   ChevronDown,
   GripVertical,
@@ -26,14 +28,18 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { cn } from '@/lib/utils';
-import type { SceneOutline } from '@/lib/types/generation';
+import type { ClassroomSyllabus, SceneOutline } from '@/lib/types/generation';
 import type { WidgetType } from '@/lib/types/widgets';
 import { changeOutlineType } from '@/lib/generation/outline-type';
 
 type SceneType = SceneOutline['type'];
 
 interface OutlinesEditorProps {
+  courseTitle?: string;
+  syllabus?: ClassroomSyllabus;
   outlines: SceneOutline[];
+  onCourseTitleChange?: (courseTitle: string) => void;
+  onSyllabusChange?: (syllabus: ClassroomSyllabus) => void;
   onChange: (outlines: SceneOutline[]) => void;
   onConfirm: () => void;
   onBack: () => void;
@@ -116,7 +122,11 @@ function useSceneTypeLabel() {
 }
 
 export function OutlinesEditor({
+  courseTitle,
+  syllabus,
   outlines,
+  onCourseTitleChange,
+  onSyllabusChange,
   onChange,
   onConfirm,
   onBack,
@@ -279,6 +289,16 @@ export function OutlinesEditor({
         )}
       </div>
 
+      {courseTitle !== undefined && syllabus && onCourseTitleChange && onSyllabusChange && (
+        <SyllabusFields
+          courseTitle={courseTitle}
+          syllabus={syllabus}
+          onCourseTitleChange={onCourseTitleChange}
+          onSyllabusChange={onSyllabusChange}
+          disabled={editingDisabled}
+        />
+      )}
+
       {/* Scene list */}
       <div className="relative max-h-[64vh] overflow-y-auto px-3 pb-2 md:px-6">
         {outlines.length === 0 ? (
@@ -399,6 +419,155 @@ export function OutlinesEditor({
         </div>
       </div>
     </motion.div>
+  );
+}
+
+function SyllabusFields({
+  courseTitle,
+  syllabus,
+  onCourseTitleChange,
+  onSyllabusChange,
+  disabled,
+}: {
+  courseTitle: string;
+  syllabus: ClassroomSyllabus;
+  onCourseTitleChange: (courseTitle: string) => void;
+  onSyllabusChange: (syllabus: ClassroomSyllabus) => void;
+  disabled: boolean;
+}) {
+  const { t } = useI18n();
+  const update = <K extends keyof ClassroomSyllabus>(key: K, value: ClassroomSyllabus[K]) =>
+    onSyllabusChange({ ...syllabus, [key]: value });
+  const fieldClass =
+    'w-full rounded-xl border border-border/60 bg-background/70 px-3 py-2 text-sm outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-500/15 disabled:cursor-not-allowed disabled:opacity-60';
+
+  return (
+    <section className="relative mx-3 mb-4 rounded-2xl border border-border/50 bg-muted/20 p-4 md:mx-6 md:p-6">
+      <h3 className="mb-4 text-base font-semibold">{t('generation.syllabusIdentity')}</h3>
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="space-y-1.5 md:col-span-2">
+          <span className="text-xs font-medium text-muted-foreground">
+            {t('generation.courseTitle')}
+          </span>
+          <input
+            className={fieldClass}
+            value={courseTitle}
+            onChange={(event) => onCourseTitleChange(event.target.value)}
+            disabled={disabled}
+            aria-label={t('generation.courseTitle')}
+          />
+        </label>
+        <SyllabusTextField
+          label={t('generation.syllabusAudience')}
+          value={syllabus.audience}
+          onChange={(value) => update('audience', value)}
+          disabled={disabled}
+          className={fieldClass}
+        />
+        <SyllabusTextField
+          label={t('generation.syllabusPrerequisites')}
+          value={syllabus.prerequisites}
+          onChange={(value) => update('prerequisites', value)}
+          disabled={disabled}
+          className={fieldClass}
+        />
+        <SyllabusTextField
+          label={t('generation.syllabusOverallObjective')}
+          value={syllabus.overallObjective}
+          onChange={(value) => update('overallObjective', value)}
+          disabled={disabled}
+          className={fieldClass}
+          wide
+        />
+        <SyllabusTextField
+          label={t('generation.syllabusLearningObjectives')}
+          value={syllabus.learningObjectives.join('\n')}
+          onChange={(value) =>
+            update(
+              'learningObjectives',
+              value
+                .split('\n')
+                .map((item) => item.trim())
+                .filter(Boolean),
+            )
+          }
+          disabled={disabled}
+          className={fieldClass}
+          wide
+          rows={4}
+        />
+        <label className="space-y-1.5">
+          <span className="text-xs font-medium text-muted-foreground">
+            {t('generation.syllabusTotalDuration')}
+          </span>
+          <input
+            type="number"
+            min={1}
+            max={10080}
+            className={fieldClass}
+            value={syllabus.totalDurationMinutes}
+            onChange={(event) =>
+              update('totalDurationMinutes', Math.max(1, Number(event.target.value) || 1))
+            }
+            disabled={disabled}
+            aria-label={t('generation.syllabusTotalDuration')}
+          />
+        </label>
+        <SyllabusTextField
+          label={t('generation.syllabusDeliveryMode')}
+          value={syllabus.deliveryMode}
+          onChange={(value) => update('deliveryMode', value)}
+          disabled={disabled}
+          className={fieldClass}
+        />
+        <SyllabusTextField
+          label={t('generation.syllabusAssessment')}
+          value={syllabus.assessmentStrategy}
+          onChange={(value) => update('assessmentStrategy', value)}
+          disabled={disabled}
+          className={fieldClass}
+        />
+        <SyllabusTextField
+          label={t('generation.syllabusDeliverable')}
+          value={syllabus.expectedDeliverable}
+          onChange={(value) => update('expectedDeliverable', value)}
+          disabled={disabled}
+          className={fieldClass}
+        />
+      </div>
+    </section>
+  );
+}
+
+function SyllabusTextField({
+  label,
+  value,
+  onChange,
+  disabled,
+  className,
+  rows = 2,
+  wide = false,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  disabled: boolean;
+  className: string;
+  rows?: number;
+  wide?: boolean;
+}) {
+  return (
+    <label className={cn('space-y-1.5', wide && 'md:col-span-2')}>
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      <textarea
+        className={className}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        disabled={disabled}
+        aria-label={label}
+        rows={rows}
+      />
+    </label>
   );
 }
 
@@ -623,6 +792,28 @@ function SceneRow({
                   }
                 />
               </div>
+              {!disabled && (
+                <>
+                  <button
+                    type="button"
+                    onClick={onMoveUp}
+                    disabled={!canMoveUp}
+                    aria-label={t('generation.moveSceneUp', { index: index + 1 })}
+                    className="inline-flex size-8 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
+                  >
+                    <ArrowUp className="size-4" aria-hidden />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onMoveDown}
+                    disabled={!canMoveDown}
+                    aria-label={t('generation.moveSceneDown', { index: index + 1 })}
+                    className="inline-flex size-8 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
+                  >
+                    <ArrowDown className="size-4" aria-hidden />
+                  </button>
+                </>
+              )}
               {!disabled && <DeleteSceneButton onConfirm={onRemove} />}
             </div>
           </div>
@@ -642,6 +833,45 @@ function SceneRow({
               disabled && 'cursor-default',
             )}
           />
+
+          <div className="grid gap-2 pt-1 md:grid-cols-[1fr_10rem]">
+            <label className="space-y-1">
+              <span className="text-[11px] font-medium text-muted-foreground">
+                {t('generation.sceneTeachingObjective')}
+              </span>
+              <input
+                value={outline.teachingObjective ?? ''}
+                onChange={(event) => onUpdate({ teachingObjective: event.target.value })}
+                placeholder={t('generation.sceneTeachingObjectivePlaceholder')}
+                disabled={disabled}
+                aria-label={t('generation.sceneTeachingObjectiveFor', { index: index + 1 })}
+                className="w-full rounded-lg border border-border/50 bg-background/60 px-2.5 py-1.5 text-xs outline-none focus:border-blue-400 disabled:opacity-60"
+              />
+            </label>
+            <label className="space-y-1">
+              <span className="text-[11px] font-medium text-muted-foreground">
+                {t('generation.sceneDuration')}
+              </span>
+              <input
+                type="number"
+                min={30}
+                max={7200}
+                step={30}
+                value={outline.estimatedDuration ?? ''}
+                onChange={(event) =>
+                  onUpdate({
+                    estimatedDuration: event.target.value
+                      ? Math.max(30, Number(event.target.value))
+                      : undefined,
+                  })
+                }
+                placeholder="180"
+                disabled={disabled}
+                aria-label={t('generation.sceneDurationFor', { index: index + 1 })}
+                className="w-full rounded-lg border border-border/50 bg-background/60 px-2.5 py-1.5 text-xs outline-none focus:border-blue-400 disabled:opacity-60"
+              />
+            </label>
+          </div>
 
           {/* Key points */}
           <div className="flex flex-wrap items-center gap-1.5 pt-1">

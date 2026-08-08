@@ -27,6 +27,16 @@ test.describe('Formation Design Pro — persistent generation path', () => {
           success: true,
           courseTitle: 'Entretiens difficiles',
           languageDirective: 'Former en français.',
+          syllabus: {
+            audience: 'Managers de proximité',
+            prerequisites: 'Aucun prérequis',
+            overallObjective: 'Conduire un entretien difficile avec méthode.',
+            learningObjectives: ['Préparer et conduire un entretien difficile.'],
+            totalDurationMinutes: 45,
+            deliveryMode: 'Classe virtuelle interactive',
+            assessmentStrategy: 'Mise en situation avec retour structuré',
+            expectedDeliverable: 'Trame d’entretien complétée',
+          },
           outlines: mockOutlines,
         }),
       });

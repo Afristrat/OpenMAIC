@@ -40,7 +40,7 @@ import { GenerationToolbar } from '@/components/generation/generation-toolbar';
 import { OutlinesEditor } from '@/components/generation/outlines-editor';
 import { AgentBar } from '@/components/agent/agent-bar';
 import { useTheme } from '@/lib/hooks/use-theme';
-import type { SceneOutline, UserRequirements } from '@/lib/types/generation';
+import type { ClassroomPlan, UserRequirements } from '@/lib/types/generation';
 import { buildLanguageDirective } from '@/lib/constants/generation';
 import { useUserProfileStore, AVATAR_OPTIONS } from '@/lib/store/user-profile';
 import { StageListItem, revokeThumbnailSlideMediaUrls } from '@/lib/utils/stage-storage';
@@ -106,12 +106,6 @@ interface FormState {
   learningApproach: LearningApproach | null;
   interactionLevel: InteractionLevel | null;
   learningContext: LearningContext;
-}
-
-interface ClassroomPlan {
-  courseTitle: string;
-  languageDirective: string;
-  outlines: SceneOutline[];
 }
 
 const initialFormState: FormState = {
@@ -568,6 +562,7 @@ function HomePage() {
       setDraftPlan({
         courseTitle: result.courseTitle || form.requirement.slice(0, 120),
         languageDirective: result.languageDirective || buildLanguageDirective(locale),
+        syllabus: result.syllabus,
         outlines: result.outlines,
       });
     } catch (err) {
@@ -674,7 +669,15 @@ function HomePage() {
         <div className="fixed inset-0 z-[100] overflow-y-auto bg-slate-950/70 p-3 backdrop-blur-sm md:p-8">
           <div className="mx-auto max-w-5xl">
             <OutlinesEditor
+              courseTitle={draftPlan.courseTitle}
+              syllabus={draftPlan.syllabus}
               outlines={draftPlan.outlines}
+              onCourseTitleChange={(courseTitle) =>
+                setDraftPlan((plan) => (plan ? { ...plan, courseTitle } : plan))
+              }
+              onSyllabusChange={(syllabus) =>
+                setDraftPlan((plan) => (plan ? { ...plan, syllabus } : plan))
+              }
               onChange={(outlines) => setDraftPlan((plan) => (plan ? { ...plan, outlines } : plan))}
               onConfirm={handleConfirmPlan}
               onBack={() => {

@@ -315,6 +315,16 @@ describe('classroom generation — web capture injection', () => {
       approvedPlan: {
         courseTitle: 'Formation validée',
         languageDirective: 'Répondre en français.',
+        syllabus: {
+          audience: 'Responsables opérationnels',
+          prerequisites: 'Aucun prérequis',
+          overallObjective: 'Appliquer la méthode présentée.',
+          learningObjectives: ['Mettre en œuvre la méthode.'],
+          totalDurationMinutes: 15,
+          deliveryMode: 'Classe virtuelle interactive',
+          assessmentStrategy: 'Mise en situation observée',
+          expectedDeliverable: 'Plan d’action individuel',
+        },
         outlines: [approvedOutline],
       },
     });

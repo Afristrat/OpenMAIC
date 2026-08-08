@@ -6,6 +6,8 @@
 import { nanoid } from 'nanoid';
 import { MAX_PDF_CONTENT_CHARS, MAX_VISION_IMAGES } from '@/lib/constants/generation';
 import type {
+  ClassroomPlan,
+  ClassroomSyllabus,
   UserRequirements,
   SceneOutline,
   PdfImage,
@@ -20,6 +22,64 @@ import { uniquifyMediaElementIds } from './scene-builder';
 import type { AICallFn, GenerationResult, GenerationCallbacks } from './pipeline-types';
 import { createLogger } from '@/lib/logger';
 const log = createLogger('Generation');
+
+function syllabusPlaceholder(languageDirective: string): string {
+  if (/arabic|ar-MA|العربية/i.test(languageDirective)) return 'يحدده المؤلف';
+  if (/french|fr-FR|français/i.test(languageDirective)) return 'À préciser par l’auteur';
+  return 'To be confirmed by the author';
+}
+
+function normalizeSyllabus(
+  value: unknown,
+  languageDirective: string,
+  courseTitle: string | undefined,
+  outlines: SceneOutline[],
+): ClassroomSyllabus {
+  const candidate = value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+  const placeholder = syllabusPlaceholder(languageDirective);
+  const stringValue = (key: string, fallback = placeholder) => {
+    const raw = candidate[key];
+    return typeof raw === 'string' && raw.trim() ? raw.trim() : fallback;
+  };
+  const objectives = Array.isArray(candidate.learningObjectives)
+    ? candidate.learningObjectives.filter(
+        (item): item is string => typeof item === 'string' && item.trim().length > 0,
+      )
+    : [];
+  const derivedObjectives = outlines
+    .map((outline) => outline.teachingObjective?.trim() || outline.title.trim())
+    .filter(Boolean)
+    .slice(0, 12);
+  const explicitDuration = Number(candidate.totalDurationMinutes);
+  const seconds = outlines.reduce(
+    (total, outline) => total + (outline.estimatedDuration ?? 0),
+    0,
+  );
+  const derivedDuration = Math.max(1, Math.ceil(seconds / 60) || outlines.length * 3);
+  const overallObjective = stringValue(
+    'overallObjective',
+    outlines[0]?.teachingObjective?.trim() || courseTitle || placeholder,
+  );
+
+  return {
+    audience: stringValue('audience'),
+    prerequisites: stringValue('prerequisites'),
+    overallObjective,
+    learningObjectives:
+      objectives.length > 0
+        ? objectives.slice(0, 12)
+        : derivedObjectives.length > 0
+          ? derivedObjectives
+          : [overallObjective],
+    totalDurationMinutes:
+      Number.isInteger(explicitDuration) && explicitDuration > 0
+        ? Math.min(explicitDuration, 10080)
+        : derivedDuration,
+    deliveryMode: stringValue('deliveryMode'),
+    assessmentStrategy: stringValue('assessmentStrategy'),
+    expectedDeliverable: stringValue('expectedDeliverable'),
+  };
+}
 
 /**
  * Used when the outline stage fails to produce an explicit directive (LLM
@@ -50,7 +110,7 @@ export async function generateSceneOutlinesFromRequirements(
     skillEngineEnabled?: boolean;
   },
 ): Promise<
-  GenerationResult<{ languageDirective: string; courseTitle?: string; outlines: SceneOutline[] }>
+  GenerationResult<ClassroomPlan>
 > {
   // Build available images description for the prompt
   let availableImagesText = 'No images available';
@@ -135,11 +195,18 @@ export async function generateSceneOutlinesFromRequirements(
 
     const response = await aiCall(prompts.system, prompts.user, visionImages);
     const parsed = parseJsonResponse<
-      { languageDirective: string; courseTitle?: string; outlines: SceneOutline[] } | SceneOutline[]
+      | {
+          languageDirective: string;
+          courseTitle?: string;
+          syllabus?: unknown;
+          outlines: SceneOutline[];
+        }
+      | SceneOutline[]
     >(response);
 
     let languageDirective: string;
     let courseTitle: string | undefined;
+    let rawSyllabus: unknown;
     let rawOutlines: SceneOutline[];
 
     if (Array.isArray(parsed)) {
@@ -154,6 +221,7 @@ export async function generateSceneOutlinesFromRequirements(
       const rawTitle = parsed.courseTitle;
       courseTitle =
         typeof rawTitle === 'string' && rawTitle.trim() ? rawTitle.trim().slice(0, 120) : undefined;
+      rawSyllabus = parsed.syllabus;
       rawOutlines = parsed.outlines;
     } else {
       return { success: false, error: 'Failed to parse scene outlines response' };
@@ -182,7 +250,15 @@ export async function generateSceneOutlinesFromRequirements(
       totalScenes: result.length,
     });
 
-    return { success: true, data: { languageDirective, courseTitle, outlines: result } };
+    return {
+      success: true,
+      data: {
+        languageDirective,
+        courseTitle: courseTitle || syllabusPlaceholder(languageDirective),
+        syllabus: normalizeSyllabus(rawSyllabus, languageDirective, courseTitle, result),
+        outlines: result,
+      },
+    };
   } catch (error) {
     return { success: false, error: String(error) };
   }

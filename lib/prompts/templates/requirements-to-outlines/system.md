@@ -257,12 +257,22 @@ When a learner genuinely needs a reusable workbook to complete an exercise, appl
 
 ### Top-level shape — NON-NEGOTIABLE
 
-Your entire response MUST be a single JSON **object** with exactly these three top-level keys:
+Your entire response MUST be a single JSON **object** with exactly these four top-level keys:
 
 ```json
 {
   "languageDirective": "<the directive you inferred in the Language Inference step>",
   "courseTitle": "<concise course name, ≤30 chars, in the teaching language>",
+  "syllabus": {
+    "audience": "<target participants>",
+    "prerequisites": "<verified prerequisites or explicit author-confirmation placeholder>",
+    "overallObjective": "<observable overall performance>",
+    "learningObjectives": ["<observable objective 1>", "<observable objective 2>"],
+    "totalDurationMinutes": 45,
+    "deliveryMode": "<delivery format>",
+    "assessmentStrategy": "<how performance will be evidenced>",
+    "expectedDeliverable": "<usable learner output>"
+  },
   "outlines": [ /* array of scene objects */ ]
 }
 ```
@@ -270,7 +280,7 @@ Your entire response MUST be a single JSON **object** with exactly these three t
 Rules:
 
 - **Never** return a bare array. The top level is an object, not an array.
-- **Never** omit `languageDirective` or `courseTitle`. Both are required even if you think they are obvious.
+- **Never** omit `languageDirective`, `courseTitle`, or `syllabus`. When audience or prerequisites are unknown, use an explicit author-confirmation placeholder in the teaching language instead of inventing them.
 - **Never** wrap the response in any other structure, prose, or code fence.
 
 ### Minimal complete example
@@ -279,6 +289,16 @@ Rules:
 {
   "languageDirective": "Deliver the entire course in English. Use simple vocabulary suitable for a beginner.",
   "courseTitle": "Intro to Projectile Motion",
+  "syllabus": {
+    "audience": "Beginning physics learners",
+    "prerequisites": "Basic arithmetic",
+    "overallObjective": "Predict and explain a simple projectile trajectory",
+    "learningObjectives": ["Identify the trajectory variables", "Predict the effect of angle and velocity"],
+    "totalDurationMinutes": 30,
+    "deliveryMode": "Interactive virtual classroom",
+    "assessmentStrategy": "Observed simulation challenge and short explanation",
+    "expectedDeliverable": "A justified set of launch parameters"
+  },
   "outlines": [
     {
       "id": "scene_1",
@@ -398,7 +418,7 @@ Omit `scenarioRoleplay` and `scenarioBrief` entirely for ordinary build-an-artef
 **Top-level response shape (these come first because they are most often violated):**
 
 1. Return exactly one JSON **object** — never a bare array.
-2. That object MUST have `languageDirective` (string), `courseTitle` (string, ≤30 chars), and `outlines` (array) as top-level keys. Omitting any is a failure.
+2. That object MUST have `languageDirective`, `courseTitle`, `syllabus`, and `outlines` as top-level keys. Omitting any is a failure.
 3. Do not wrap the object in prose, markdown, or code fences.
 
 **Scene-level rules:**

@@ -150,6 +150,24 @@ export interface ResourceGenerationRequest {
   prompt: string;
 }
 
+export interface ClassroomSyllabus {
+  audience: string;
+  prerequisites: string;
+  overallObjective: string;
+  learningObjectives: string[];
+  totalDurationMinutes: number;
+  deliveryMode: string;
+  assessmentStrategy: string;
+  expectedDeliverable: string;
+}
+
+export interface ClassroomPlan {
+  courseTitle: string;
+  languageDirective: string;
+  syllabus: ClassroomSyllabus;
+  outlines: SceneOutline[];
+}
+
 export interface GeneratedLearningResource {
   id: string;
   format: 'xlsx';

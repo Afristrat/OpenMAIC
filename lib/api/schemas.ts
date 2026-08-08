@@ -338,6 +338,16 @@ export const approvedSceneOutlineSchema = z
 export const approvedClassroomPlanSchema = z.object({
   courseTitle: z.string().trim().min(1).max(300),
   languageDirective: z.string().trim().min(1).max(2000),
+  syllabus: z.object({
+    audience: z.string().trim().min(1).max(2000),
+    prerequisites: z.string().trim().min(1).max(2000),
+    overallObjective: z.string().trim().min(1).max(2000),
+    learningObjectives: z.array(z.string().trim().min(1).max(1000)).min(1).max(12),
+    totalDurationMinutes: z.number().int().positive().max(10080),
+    deliveryMode: z.string().trim().min(1).max(1000),
+    assessmentStrategy: z.string().trim().min(1).max(2000),
+    expectedDeliverable: z.string().trim().min(1).max(2000),
+  }),
   outlines: z.array(approvedSceneOutlineSchema).min(1).max(60),
 });
 
