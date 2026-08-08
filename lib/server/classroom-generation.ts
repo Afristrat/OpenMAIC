@@ -39,7 +39,6 @@ import type {
   UserRequirements,
   PdfImage,
   ImageMapping,
-  SceneOutline,
 } from '@/lib/types/generation';
 import type { Scene, Stage } from '@/lib/types/stage';
 import { isFeatureEnabled } from '@/lib/flags';
