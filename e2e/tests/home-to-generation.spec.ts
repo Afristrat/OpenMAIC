@@ -68,9 +68,7 @@ test.describe('Home → Generation', () => {
     await expect(page.getByRole('heading', { name: 'Training plan' })).toBeVisible();
     await expect(page.getByLabel('Course title')).toHaveValue('E2E approved plan');
     await expect(page.getByLabel('Audience')).toHaveValue('Store managers');
-    await expect(page.getByLabel('Overall objective')).toHaveValue(
-      'Prevent till discrepancies',
-    );
+    await expect(page.getByLabel('Overall objective')).toHaveValue('Prevent till discrepancies');
     await expect(page.getByLabel('Total duration in minutes')).toHaveValue('45');
     await page.getByLabel('Course title').fill('Editable E2E syllabus');
     await page.getByLabel('Audience').fill('Retail team leaders');
