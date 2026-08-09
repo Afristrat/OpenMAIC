@@ -115,7 +115,10 @@ test.describe('Home → Generation', () => {
     const [briefBox, sequenceBox, viewport] = await Promise.all([
       briefPanel.boundingBox(),
       sequencePanel.boundingBox(),
-      page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, width: innerWidth })),
+      page.evaluate(() => ({
+        scrollWidth: document.documentElement.scrollWidth,
+        width: innerWidth,
+      })),
     ]);
     expect(briefBox).not.toBeNull();
     expect(sequenceBox).not.toBeNull();
