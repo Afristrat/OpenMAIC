@@ -65,6 +65,18 @@ test.describe('Home → Generation', () => {
 
     // Submit → navigate to generation-preview
     await home.submit();
+    await expect(page.getByTestId('syllabus-workspace')).toBeVisible();
+    await expect(page.getByTestId('syllabus-brief-panel')).toBeVisible();
+    await expect(page.getByTestId('syllabus-sequence-panel')).toBeVisible();
+    await expect(page.locator('iframe')).toHaveCount(0);
+
+    const [briefBox, sequenceBox] = await Promise.all([
+      page.getByTestId('syllabus-brief-panel').boundingBox(),
+      page.getByTestId('syllabus-sequence-panel').boundingBox(),
+    ]);
+    expect(briefBox).not.toBeNull();
+    expect(sequenceBox).not.toBeNull();
+    expect(sequenceBox!.x).toBeGreaterThan(briefBox!.x);
     await expect(page.getByRole('heading', { name: 'Training plan' })).toBeVisible();
     await expect(page.getByLabel('Course title')).toHaveValue('E2E approved plan');
     await expect(page.getByLabel('Audience')).toHaveValue('Store managers');
@@ -84,6 +96,31 @@ test.describe('Home → Generation', () => {
         syllabus: { audience: 'Retail team leaders' },
       },
     });
+  });
+
+  test('turns the syllabus workspace into one readable mobile flow', async ({ page, mockApi }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await mockApi.mockClassroomGenerationJob('e2e-mobile-syllabus-job');
+    const home = new HomePage(page);
+    await home.goto();
+    await home.fillRequirement('Create a practical course for store managers');
+    await home.configureAnimation();
+    await home.submit();
+
+    const briefPanel = page.getByTestId('syllabus-brief-panel');
+    const sequencePanel = page.getByTestId('syllabus-sequence-panel');
+    await expect(briefPanel).toBeVisible();
+    await expect(sequencePanel).toBeVisible();
+
+    const [briefBox, sequenceBox, viewport] = await Promise.all([
+      briefPanel.boundingBox(),
+      sequencePanel.boundingBox(),
+      page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, width: innerWidth })),
+    ]);
+    expect(briefBox).not.toBeNull();
+    expect(sequenceBox).not.toBeNull();
+    expect(sequenceBox!.y).toBeGreaterThan(briefBox!.y);
+    expect(viewport.scrollWidth).toBeLessThanOrEqual(viewport.width);
   });
 
   test('sends the selected PDF parser and preserves extracted text in the plan request', async ({
