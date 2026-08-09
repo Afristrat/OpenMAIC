@@ -380,7 +380,7 @@ describe('classroom generation — web capture injection', () => {
       expect.objectContaining({
         animationConstitution: expect.objectContaining({
           learningIntent: expect.objectContaining({
-            targetPerformance: 'Configurer les clés virtuelles LiteLLM',
+            targetPerformance: 'Configurer LiteLLM',
           }),
         }),
       }),
