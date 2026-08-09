@@ -19,10 +19,7 @@ vi.mock('@/lib/server/resolve-model', () => ({
   }),
 }));
 
-import {
-  POST,
-  parseRefinedRequirement,
-} from '@/app/api/generate/refine-requirement/route';
+import { POST, parseRefinedRequirement } from '@/app/api/generate/refine-requirement/route';
 
 describe('POST /api/generate/refine-requirement', () => {
   beforeEach(() => {
