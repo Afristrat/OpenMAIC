@@ -625,6 +625,7 @@ function HomePage() {
           requirement,
           locale,
           mode: requirement.length < REQUIREMENT_EXPANSION_THRESHOLD ? 'expand' : 'improve',
+          sourceFileName: form.pdfFile?.name,
         }),
       });
       const result = await response.json();
