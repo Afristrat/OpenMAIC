@@ -89,21 +89,23 @@ describe('classroom plan source alignment gate', () => {
       modelInfo: { outputWindow: 4096 },
       thinkingConfig: undefined,
     });
-    mocks.callLLM.mockImplementation(async ({ messages }: { messages?: Array<{ content: string }> }) => {
-      const system = messages?.[0]?.content ?? '';
-      if (system.includes('SOURCE ALIGNMENT GATE')) {
-        return {
-          text: JSON.stringify({
-            status: 'conflicting',
-            requestTopic: 'Gestion du temps',
-            sourceTopic: 'Amélioration des processus',
-            explanation:
-              'La demande porte sur la gestion individuelle du temps, tandis que le document traite de méthodes d’amélioration des processus.',
-          }),
-        };
-      }
-      return { text: generatedPlan };
-    });
+    mocks.callLLM.mockImplementation(
+      async ({ messages }: { messages?: Array<{ content: string }> }) => {
+        const system = messages?.[0]?.content ?? '';
+        if (system.includes('SOURCE ALIGNMENT GATE')) {
+          return {
+            text: JSON.stringify({
+              status: 'conflicting',
+              requestTopic: 'Gestion du temps',
+              sourceTopic: 'Amélioration des processus',
+              explanation:
+                'La demande porte sur la gestion individuelle du temps, tandis que le document traite de méthodes d’amélioration des processus.',
+            }),
+          };
+        }
+        return { text: generatedPlan };
+      },
+    );
   });
 
   test('refuses to generate a syllabus when the request and attached source conflict', async () => {

@@ -38,6 +38,10 @@ import { cn } from '@/lib/utils';
 import { SettingsDialog } from '@/components/settings';
 import { GenerationToolbar } from '@/components/generation/generation-toolbar';
 import { OutlinesEditor } from '@/components/generation/outlines-editor';
+import {
+  SourceConflictDialog,
+  type SourceConflict,
+} from '@/components/generation/source-conflict-dialog';
 import { AgentBar } from '@/components/agent/agent-bar';
 import { useTheme } from '@/lib/hooks/use-theme';
 import type { ClassroomPlan, UserRequirements } from '@/lib/types/generation';
@@ -290,6 +294,7 @@ function HomePage() {
   const [isPlanning, setIsPlanning] = useState(false);
   const [isStartingGeneration, setIsStartingGeneration] = useState(false);
   const [draftPlan, setDraftPlan] = useState<ClassroomPlan | null>(null);
+  const [sourceConflict, setSourceConflict] = useState<SourceConflict | null>(null);
   const [pendingGenerationRequest, setPendingGenerationRequest] = useState<Record<
     string,
     unknown
@@ -463,6 +468,7 @@ function HomePage() {
     }
 
     setError(null);
+    setSourceConflict(null);
 
     try {
       const userProfile = useUserProfileStore.getState();
@@ -555,6 +561,16 @@ function HomePage() {
         body: JSON.stringify(generationRequest),
       });
       const result = await response.json();
+      if (
+        response.status === 409 &&
+        result.errorCode === 'SOURCE_MATERIAL_CONFLICT' &&
+        result.sourceAlignment &&
+        (result.sourceAlignment.status === 'conflicting' ||
+          result.sourceAlignment.status === 'uncertain')
+      ) {
+        setSourceConflict(result.sourceAlignment as SourceConflict);
+        return;
+      }
       if (!response.ok || !Array.isArray(result.outlines) || result.outlines.length === 0) {
         throw new Error(result.details || result.error || t('generation.planGenerationFailed'));
       }
@@ -665,6 +681,20 @@ function HomePage() {
 
   return (
     <div className="min-h-[100dvh] w-full bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 flex flex-col items-center p-4 pt-16 md:p-8 md:pt-16 overflow-x-hidden">
+      <SourceConflictDialog
+        conflict={sourceConflict}
+        onReview={() => setSourceConflict(null)}
+        onRemoveSource={() => {
+          setForm((previous) => ({ ...previous, pdfFile: null }));
+          setSourceConflict(null);
+        }}
+        onUseSource={() => {
+          const requirement = t('generation.sourceConflict.sourceOnlyRequirement');
+          setForm((previous) => ({ ...previous, requirement }));
+          updateRequirementCache(requirement);
+          setSourceConflict(null);
+        }}
+      />
       {draftPlan && (
         <div className="fixed inset-0 z-[100] overflow-y-auto bg-slate-950/70 p-3 backdrop-blur-sm md:p-8">
           <div className="mx-auto max-w-5xl">

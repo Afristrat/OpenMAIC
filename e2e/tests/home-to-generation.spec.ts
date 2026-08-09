@@ -137,6 +137,62 @@ test.describe('Home → Generation', () => {
     });
   });
 
+  test('blocks a contradictory attachment before showing a syllabus', async ({ page }) => {
+    await page.route('**/api/parse-pdf', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: {
+            text: 'Process improvement, Lean Six Sigma and continuous improvement.',
+            images: [],
+          },
+        }),
+      });
+    });
+    await page.route('**/api/generate-classroom/plan', async (route) => {
+      await route.fulfill({
+        status: 409,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: false,
+          errorCode: 'SOURCE_MATERIAL_CONFLICT',
+          error: 'The request and attached document do not match.',
+          sourceAlignment: {
+            status: 'conflicting',
+            requestTopic: 'Time management',
+            sourceTopic: 'Process improvement',
+            explanation: 'The request and source cover different primary topics.',
+          },
+        }),
+      });
+    });
+
+    const home = new HomePage(page);
+    await home.goto();
+    await home.fillRequirement('Create five slides about time management.');
+    await home.configureAnimation();
+    await page.getByRole('button', { name: 'Upload PDF' }).click();
+    await page.locator('input[type="file"][accept*=".pdf"]').setInputFiles({
+      name: 'process-improvement.pdf',
+      mimeType: 'application/pdf',
+      buffer: Buffer.from('%PDF-1.4 e2e'),
+    });
+    await home.submit();
+
+    await expect(page.getByRole('alertdialog')).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'The request and document conflict' }),
+    ).toBeVisible();
+    await expect(page.getByText('Time management', { exact: true })).toBeVisible();
+    await expect(page.getByText('Process improvement', { exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Training plan' })).not.toBeVisible();
+
+    await page.getByRole('button', { name: 'Remove the document' }).click();
+    await expect(page.getByText('process-improvement.pdf')).not.toBeVisible();
+  });
+
   test('keeps body spacing stable when the settings dialog opens', async ({ page }) => {
     const home = new HomePage(page);
     await home.goto();

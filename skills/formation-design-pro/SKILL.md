@@ -21,6 +21,8 @@ Le territoire et la devise sont des variables structurées de la trame, jamais d
 
 Pour un PDF, tenter d’abord l’extraction textuelle locale. Un résultat vide, composé de caractères de contrôle ou manifestement illisible n’est pas une extraction réussie. Déclencher alors automatiquement un parseur OCR configuré et ne transmettre au moteur que du texte exploitable. Si aucun parseur ne produit un résultat lisible, afficher la cause à l’auteur et conserver le fichier sélectionné afin qu’il puisse réessayer sans recommencer son cadrage.
 
+Avant de produire le moindre syllabus, comparer le sujet, la finalité et le périmètre de la demande avec ceux de chaque source jointe. Une simple proximité lexicale ou thématique ne suffit pas. Si la source contredit la demande ou si la cohérence ne peut pas être établie de façon fiable, bloquer la génération et présenter à l’auteur les sujets détectés. L’auteur choisit explicitement de revoir sa demande, d’utiliser la source ou de retirer la source. Ne jamais fusionner silencieusement deux intentions contradictoires et ne jamais produire un syllabus pendant ce conflit.
+
 ## Adapter une classroom à un nouveau marché
 
 Avant toute régénération, prévisualiser la liste des scènes affectées et expliquer pour chacune si le territoire, la devise ou les deux sont en cause. Ne modifier automatiquement que les diapositives explicitement listées. Signaler les autres types de scènes comme corrections manuelles tant qu’un éditeur compatible n’existe pas.

@@ -1,10 +1,11 @@
-import type { NextRequest } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { requireSuperAdminOrOrgAuthor } from '@/lib/api/auth';
 import { generateClassroomSchema } from '@/lib/api/schemas';
 import { validateBody } from '@/lib/api/validate';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { generateClassroomPlan } from '@/lib/server/classroom-plan-generation';
 import type { GenerateClassroomInput } from '@/lib/server/classroom-generation';
+import { SourceMaterialConflictError } from '@/lib/server/source-material-alignment';
 
 export const maxDuration = 300;
 
@@ -38,6 +39,17 @@ export async function POST(request: NextRequest) {
     };
     return apiSuccess(await generateClassroomPlan(input));
   } catch (error) {
+    if (error instanceof SourceMaterialConflictError) {
+      return NextResponse.json(
+        {
+          success: false as const,
+          errorCode: 'SOURCE_MATERIAL_CONFLICT' as const,
+          error: 'La demande et le document joint ne sont pas cohérents.',
+          sourceAlignment: error.alignment,
+        },
+        { status: 409 },
+      );
+    }
     return apiError(
       'INTERNAL_ERROR',
       500,

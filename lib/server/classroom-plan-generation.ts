@@ -12,6 +12,7 @@ import type { AICallFn } from '@/lib/generation/pipeline-types';
 import { DEFAULT_LEARNING_DESIGN, learningDesignFromSettings } from '@/lib/agents/persona-catalog';
 import { resolveModel } from '@/lib/server/resolve-model';
 import { resolveOrganizationSkillId } from '@/lib/server/skill-resolution';
+import { assertSourceMaterialAlignment } from '@/lib/server/source-material-alignment';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import type { GenerateClassroomInput } from '@/lib/server/classroom-generation';
 
@@ -74,6 +75,10 @@ export async function generateClassroomPlan(input: GenerateClassroomInput) {
     );
     return result.text;
   };
+
+  if (input.pdfContent?.text) {
+    await assertSourceMaterialAlignment(input.requirement, input.pdfContent.text, aiCall);
+  }
 
   const result = await generateSceneOutlinesFromRequirements(
     requirements,
