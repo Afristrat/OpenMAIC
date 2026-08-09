@@ -1,8 +1,15 @@
 import JSZip from 'jszip';
-import { describe, expect, it } from 'vitest';
-import { buildXlsx, createResourceShortCode } from '@/lib/server/classroom-resource-generation';
+import sharp from 'sharp';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  buildXlsx,
+  createResourceShortCode,
+  generateQrPng,
+} from '@/lib/server/classroom-resource-generation';
 
 describe('classroom resource generation', () => {
+  afterEach(() => vi.restoreAllMocks());
+
   it('always creates a five-character code with upper, lower and numeric characters', () => {
     for (let index = 0; index < 100; index += 1) {
       const code = createResourceShortCode();
@@ -42,5 +49,19 @@ describe('classroom resource generation', () => {
     expect(manifest).toContain('Scénarios');
     expect(firstSheet).toContain('Revenus &lt;nets&gt;');
     expect(firstSheet).toContain('<f>SUM(B2:B2)</f>');
+  });
+
+  it('generates the resource QR locally as a real 320px PNG', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+    const qr = await generateQrPng('https://qalem.ma/Blf5Q');
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(qr.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
+    await expect(sharp(qr).metadata()).resolves.toMatchObject({
+      format: 'png',
+      width: 320,
+      height: 320,
+    });
   });
 });

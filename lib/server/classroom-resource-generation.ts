@@ -1,5 +1,7 @@
 import JSZip from 'jszip';
+import { Byte, Encoder } from '@nuintun/qrcode';
 import { customAlphabet } from 'nanoid';
+import sharp from 'sharp';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
 import type { AICallFn } from '@/lib/generation/pipeline-types';
 import type {
@@ -153,15 +155,28 @@ async function generateWorkbookSpec(
   return normalizeWorkbook(parsed);
 }
 
-async function fetchQrPng(url: string): Promise<Buffer> {
-  const response = await fetch(
-    `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(url)}`,
-    { signal: AbortSignal.timeout(30_000) },
-  );
-  if (!response.ok) throw new Error(`QR generation failed with HTTP ${response.status}`);
-  const bytes = Buffer.from(await response.arrayBuffer());
-  if (bytes.length < 500) throw new Error('QR generation returned an invalid image');
-  return bytes;
+export async function generateQrPng(url: string): Promise<Buffer> {
+  const qr = new Encoder({ level: 'M' }).encode(new Byte(url));
+  const imageSize = 320;
+  const quietZoneModules = 4;
+  const moduleSize = Math.floor(imageSize / (qr.size + quietZoneModules * 2));
+  if (moduleSize < 1) throw new Error('QR content is too large to render');
+
+  const qrPixelSize = qr.size * moduleSize;
+  const offset = Math.floor((imageSize - qrPixelSize) / 2);
+  const modules: string[] = [];
+  for (let y = 0; y < qr.size; y += 1) {
+    for (let x = 0; x < qr.size; x += 1) {
+      if (qr.get(x, y) === 1) {
+        modules.push(
+          `<rect x="${offset + x * moduleSize}" y="${offset + y * moduleSize}" width="${moduleSize}" height="${moduleSize}"/>`,
+        );
+      }
+    }
+  }
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${imageSize}" height="${imageSize}" viewBox="0 0 ${imageSize} ${imageSize}" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="#fff"/><g fill="#000">${modules.join('')}</g></svg>`;
+  return sharp(Buffer.from(svg, 'utf8')).png({ compressionLevel: 9 }).toBuffer();
 }
 
 async function reserveShortLink(metadata: ResourceShortLink): Promise<string> {
@@ -223,7 +238,7 @@ export async function generateResourcesForClassroom(
         fileName,
       });
       const downloadUrl = `${publicOrigin}/${shortCode}`;
-      const qr = await fetchQrPng(downloadUrl);
+      const qr = await generateQrPng(downloadUrl);
       await uploadClassroomMedia(classroomId, `resources/${request.id}-qr.png`, qr);
       resources.push({
         id: request.id,
