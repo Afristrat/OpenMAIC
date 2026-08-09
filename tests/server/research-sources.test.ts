@@ -16,6 +16,7 @@ describe('toPersistedResearchSources', () => {
 
     expect(toPersistedResearchSources(sources)).toEqual([
       {
+        kind: 'web',
         title: 'LiteLLM documentation',
         url: 'https://docs.litellm.ai/',
         excerpt: `First second ${'x'.repeat(587)}`,

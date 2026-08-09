@@ -15,6 +15,7 @@ import { resolveOrganizationSkillId } from '@/lib/server/skill-resolution';
 import { assertSourceMaterialAlignment } from '@/lib/server/source-material-alignment';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import type { GenerateClassroomInput } from '@/lib/server/classroom-generation';
+import { normalizePdfImages } from '@/lib/server/pdf-source';
 
 export async function generateClassroomPlan(input: GenerateClassroomInput) {
   const learningContext = normalizeLearningContext(
@@ -83,7 +84,7 @@ export async function generateClassroomPlan(input: GenerateClassroomInput) {
   const result = await generateSceneOutlinesFromRequirements(
     requirements,
     input.pdfContent?.text || undefined,
-    undefined,
+    normalizePdfImages(input.pdfContent),
     aiCall,
     undefined,
     {

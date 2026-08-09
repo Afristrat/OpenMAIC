@@ -347,4 +347,31 @@ describe('classroom scene generation retries', () => {
     );
     expect(mocks.persistClassroom).not.toHaveBeenCalled();
   });
+
+  it('fails when a generated image file is not integrated into any scene', async () => {
+    const imageOutline = {
+      ...outline,
+      mediaGenerations: [
+        {
+          type: 'image' as const,
+          prompt: 'A clear visual explanation of retry backoff',
+          elementId: 'gen_img_orphan',
+          aspectRatio: '16:9',
+        },
+      ],
+    };
+    mocks.generateSceneOutlinesFromRequirements.mockResolvedValue({
+      success: true,
+      data: { languageDirective: 'Use English.', outlines: [imageOutline] },
+    });
+    mocks.generateSceneContent.mockResolvedValue(slideContent);
+    mocks.generateMediaForClassroom.mockResolvedValue({
+      gen_img_orphan: '/api/classroom-media/classroom-1/media/gen_img_orphan.png',
+    });
+
+    await expect(generateWithProgress({ enableImageGeneration: true })).rejects.toThrow(
+      'Media integration incomplete: gen_img_orphan',
+    );
+    expect(mocks.persistClassroom).not.toHaveBeenCalled();
+  });
 });

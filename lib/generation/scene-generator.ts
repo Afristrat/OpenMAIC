@@ -58,6 +58,7 @@ import type {
   GenerationCallbacks,
 } from './pipeline-types';
 import type { ThinkingConfig } from '@/lib/types/provider';
+import { auditSlideLayout } from '@/lib/edit/slide-layout-audit';
 import { createLogger } from '@/lib/logger';
 const log = createLogger('Generation');
 
@@ -996,6 +997,31 @@ async function generateSlideContent(
   );
   log.debug(`After video reference normalization: ${videoNormalizedElements.length} elements`);
 
+  const missingGeneratedMedia = outline.mediaGenerations?.find((request) => {
+    const resolvedUrl = generatedMediaMapping?.[request.elementId];
+    return !videoNormalizedElements.some((element) => {
+      if (request.type === 'image') {
+        return (
+          element.type === 'image' &&
+          (element.src === request.elementId || (resolvedUrl && element.src === resolvedUrl))
+        );
+      }
+      if (element.type !== 'video') return false;
+      const mediaRef = (element as Record<string, unknown>).mediaRef;
+      return (
+        mediaRef === request.elementId ||
+        element.src === request.elementId ||
+        (resolvedUrl && element.src === resolvedUrl)
+      );
+    });
+  });
+  if (missingGeneratedMedia) {
+    log.warn(
+      `Slide omitted required generated ${missingGeneratedMedia.type} ${missingGeneratedMedia.elementId}; retrying`,
+    );
+    return null;
+  }
+
   const allowedDownloadUrls = generatedResources.map((resource) => resource.downloadUrl);
   if (hasUnexpectedLearnerUrl(videoNormalizedElements, allowedDownloadUrls)) {
     log.warn(`Slide contains an unauthorized learner-visible URL for ${outline.id}; retrying`);
@@ -1032,6 +1058,17 @@ async function generateSlideContent(
         gradient: generatedData.background.gradient,
       };
     }
+  }
+
+  const layoutIssues = auditSlideLayout({
+    id: outline.id,
+    elements: processedElements,
+    viewportSize: canvasWidth,
+    viewportRatio: canvasHeight / canvasWidth,
+  } as Slide);
+  if (layoutIssues.length > 0) {
+    log.warn(`Slide layout invalid for ${outline.id}: ${JSON.stringify(layoutIssues)}; retrying`);
+    return null;
   }
 
   return {

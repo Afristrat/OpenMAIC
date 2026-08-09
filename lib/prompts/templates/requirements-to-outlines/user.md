@@ -21,6 +21,14 @@ Infer the course language directive by applying the decision rules from the syst
 
 ## Reference Materials
 
+### Source hierarchy
+
+- When an author attaches a document and asks for a course based on that content, the attached document is the primary source and determines the course's concepts, sequence, examples, qualifications, and conclusions.
+- Web results are secondary. Use them only to update, verify, localize, or clarify the primary source. They must never silently replace or dilute it.
+- If a web result conflicts with the attached document, preserve the document's position and make the conflict explicit for the author.
+- Cover the whole supplied extract, including its conclusion. Do not infer that an omitted section is absent from the original document.
+- Prefer relevant source images listed below before requesting synthetic media.
+
 ### PDF Content Summary
 
 {{pdfContent}}

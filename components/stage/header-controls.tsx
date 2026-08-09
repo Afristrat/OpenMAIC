@@ -411,17 +411,24 @@ export function HeaderControls({
             </DialogHeader>
             {researchSources.length > 0 ? (
               <ol className="space-y-3">
-                {researchSources.map((source) => (
-                  <li key={source.url} className="rounded-lg border border-border/70 p-3">
-                    <a
-                      href={source.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline"
-                    >
-                      {source.title}
-                      <ExternalLink className="size-3" aria-hidden="true" />
-                    </a>
+                {researchSources.map((source, index) => (
+                  <li
+                    key={`${source.kind ?? 'web'}-${source.url ?? source.title}-${index}`}
+                    className="rounded-lg border border-border/70 p-3"
+                  >
+                    {source.url ? (
+                      <a
+                        href={source.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline"
+                      >
+                        {source.title}
+                        <ExternalLink className="size-3" aria-hidden="true" />
+                      </a>
+                    ) : (
+                      <p className="font-medium text-foreground">{source.title}</p>
+                    )}
                     {source.excerpt && (
                       <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
                         {source.excerpt}

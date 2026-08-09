@@ -25,7 +25,8 @@ import {
 } from '@/lib/generation/generation-pipeline';
 import type { AgentInfo } from '@/lib/generation/generation-pipeline';
 import { DEFAULT_LANGUAGE_DIRECTIVE } from '@/lib/generation/outline-generator';
-import { MAX_PDF_CONTENT_CHARS, MAX_VISION_IMAGES } from '@/lib/constants/generation';
+import { MAX_VISION_IMAGES } from '@/lib/constants/generation';
+import { selectSourceContext } from '@/lib/generation/source-context';
 import { nanoid } from 'nanoid';
 import type {
   UserRequirements,
@@ -370,7 +371,7 @@ export async function POST(req: NextRequest) {
 
     const prompts = buildPrompt(promptId, {
       requirement: requirements.requirement,
-      pdfContent: pdfText ? pdfText.substring(0, MAX_PDF_CONTENT_CHARS) : 'None',
+      pdfContent: pdfText ? selectSourceContext(pdfText) : 'None',
       availableImages: availableImagesText,
       researchContext: researchContext || 'None',
       availablePlugins: formatPluginsForPrompt(),

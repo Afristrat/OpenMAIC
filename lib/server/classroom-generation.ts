@@ -39,6 +39,7 @@ import type {
   UserRequirements,
   PdfImage,
   ImageMapping,
+  PdfSourceContent,
 } from '@/lib/types/generation';
 import type { Scene, Stage } from '@/lib/types/stage';
 import { isFeatureEnabled } from '@/lib/flags';
@@ -80,6 +81,11 @@ import {
   organizationDesignSystemFromSettings,
   type OrganizationDesignSystem,
 } from '@/lib/branding/organization-design-system';
+import {
+  normalizePdfImages,
+  persistSelectedPdfImages,
+  uploadedPdfSource,
+} from '@/lib/server/pdf-source';
 
 const log = createLogger('Classroom');
 
@@ -94,7 +100,7 @@ export interface GenerateClassroomInput {
   courseId?: string;
   language?: CourseLocale;
   requirement: string;
-  pdfContent?: { text: string; images: string[] };
+  pdfContent?: PdfSourceContent;
   enableWebSearch?: boolean;
   webSearchProviderId?: WebSearchProviderId;
   webSearchApiKey?: string;
@@ -372,6 +378,7 @@ export async function generateClassroom(
   const skillEngineEnabled = await isFeatureEnabled('skill_engine');
   const vocationalActive = resolveVocationalActive(requirements);
   const pdfText = pdfContent?.text || undefined;
+  const pdfImages = normalizePdfImages(pdfContent);
 
   await options.onProgress?.({
     step: 'researching',
@@ -382,7 +389,8 @@ export async function generateClassroom(
 
   // Web search (optional, graceful degradation)
   let researchContext: string | undefined;
-  let researchSources: Stage['researchSources'];
+  const uploadedSource = uploadedPdfSource(pdfContent);
+  let researchSources: Stage['researchSources'] = uploadedSource ? [uploadedSource] : undefined;
   if (input.enableWebSearch) {
     const webSearchConfig = resolveClassroomWebSearchConfig(input);
     if (webSearchConfig) {
@@ -429,7 +437,8 @@ export async function generateClassroom(
           searchResult.sources,
           searchQuery.query,
         );
-        researchSources = toPersistedResearchSources(enrichedSources);
+        const webSources = toPersistedResearchSources(enrichedSources);
+        researchSources = uploadedSource ? [uploadedSource, ...webSources.slice(0, 7)] : webSources;
         researchContext = formatSearchResultsAsContext({
           ...searchResult,
           sources: enrichedSources,
@@ -457,7 +466,7 @@ export async function generateClassroom(
     : await generateSceneOutlinesFromRequirements(
         requirements,
         pdfText,
-        undefined,
+        pdfImages,
         aiCall,
         undefined,
         {
@@ -637,6 +646,15 @@ export async function generateClassroom(
       generatedAgentConfigs: tenantAgentConfigs,
     };
 
+    const selectedPdfImageIds = new Set(
+      outlines.flatMap((outline) => outline.suggestedImageIds ?? []),
+    );
+    const persistedPdfImageMapping = await persistSelectedPdfImages(
+      stageId,
+      pdfImages,
+      selectedPdfImageIds,
+    );
+
     const store = createInMemoryStore(stage);
     const api = createStageAPI(store);
 
@@ -697,21 +715,40 @@ export async function generateClassroom(
       // image (decideCaptureForScene/requestWebCapture never throw).
       let assignedImages: PdfImage[] | undefined;
       let imageMapping: ImageMapping | undefined;
-      if (safeOutline.generatedResources?.length) {
-        assignedImages = safeOutline.generatedResources.map((resource) => ({
-          id: `qr_${resource.id}`,
-          src: resource.qrImageUrl,
-          pageNumber: 0,
-          width: 320,
-          height: 320,
-          description: `QR code for downloading ${resource.title}`,
+      const sourceImageIds = new Set(safeOutline.suggestedImageIds ?? []);
+      const sourceImages = pdfImages.filter((image) => sourceImageIds.has(image.id));
+      if (sourceImages.length > 0) {
+        assignedImages = sourceImages.map((image) => ({
+          ...image,
+          src: persistedPdfImageMapping[image.id] ?? image.src,
         }));
         imageMapping = Object.fromEntries(
-          safeOutline.generatedResources.map((resource) => [
-            `qr_${resource.id}`,
-            resource.qrImageUrl,
-          ]),
+          sourceImages
+            .filter((image) => persistedPdfImageMapping[image.id])
+            .map((image) => [image.id, persistedPdfImageMapping[image.id]]),
         );
+      }
+      if (safeOutline.generatedResources?.length) {
+        assignedImages = [
+          ...(assignedImages ?? []),
+          ...safeOutline.generatedResources.map((resource) => ({
+            id: `qr_${resource.id}`,
+            src: resource.qrImageUrl,
+            pageNumber: 0,
+            width: 320,
+            height: 320,
+            description: `QR code for downloading ${resource.title}`,
+          })),
+        ];
+        imageMapping = {
+          ...(imageMapping ?? {}),
+          ...Object.fromEntries(
+            safeOutline.generatedResources.map((resource) => [
+              `qr_${resource.id}`,
+              resource.qrImageUrl,
+            ]),
+          ),
+        };
       }
       const captureDecision = await decideCaptureForScene(
         safeOutline,
@@ -877,6 +914,13 @@ export async function generateClassroom(
         );
       }
       replaceMediaPlaceholders(scenes, mediaMap);
+      const serializedScenes = JSON.stringify(scenes);
+      const unreferencedMediaIds = [...requestedMediaIds].filter(
+        (id) => mediaMap[id] && !serializedScenes.includes(mediaMap[id]),
+      );
+      if (unreferencedMediaIds.length > 0) {
+        throw new Error(`Media integration incomplete: ${unreferencedMediaIds.join(', ')}`);
+      }
       log.info(`Media generation complete: ${generatedMediaCount} files`);
     }
 
@@ -895,6 +939,15 @@ export async function generateClassroom(
         stageId,
         teachingProfile,
         tenantAgentConfigs,
+        async ({ completed, total }) => {
+          await options.onProgress?.({
+            step: 'generating_tts',
+            progress: total > 0 ? 94 + Math.floor((completed / total) * 3) : 97,
+            message: `Generating TTS audio (${completed}/${total})`,
+            scenesGenerated: scenes.length,
+            totalScenes: outlines.length,
+          });
+        },
       );
       if (ttsReport.generated !== ttsReport.requested) {
         throw new Error(

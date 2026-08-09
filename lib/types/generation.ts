@@ -28,6 +28,12 @@ export interface PdfImage {
  */
 export type ImageMapping = Record<string, string>;
 
+export interface PdfSourceContent {
+  text: string;
+  name?: string;
+  images: Array<string | PdfImage>;
+}
+
 // ==================== Stage 1 Input ====================
 
 export interface UploadedDocument {

@@ -358,7 +358,20 @@ export const generateClassroomSchema = z.object({
   pdfContent: z
     .object({
       text: z.string(),
-      images: z.array(z.string()),
+      name: z.string().trim().min(1).max(260).optional(),
+      images: z.array(
+        z.union([
+          z.string(),
+          z.object({
+            id: z.string().trim().min(1).max(120),
+            src: z.string(),
+            pageNumber: z.number().int().nonnegative(),
+            description: z.string().max(2000).optional(),
+            width: z.number().positive().optional(),
+            height: z.number().positive().optional(),
+          }),
+        ]),
+      ),
     })
     .optional(),
   language: z.enum(['fr-FR', 'ar-MA', 'en-US']).optional(),

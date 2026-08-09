@@ -49,4 +49,25 @@ describe('auditSlideLayout', () => {
     expect(auditSlideLayout(tinyContact).filter((issue) => issue.type === 'overlap')).toEqual([]);
     expect(auditSlideLayout(slide).filter((issue) => issue.type === 'overlap')).toHaveLength(1);
   });
+
+  test('ignores an intentional text overlay on a decorative shape', () => {
+    const panel = structuredClone(slide);
+    panel.elements[0] = {
+      id: 'panel',
+      type: 'shape',
+      left: 20,
+      top: 20,
+      width: 300,
+      height: 120,
+      rotate: 0,
+      path: 'M 0 0 L 1 0 L 1 1 L 0 1 Z',
+      viewBox: [1, 1],
+      fill: '#ffffff',
+      fixedRatio: false,
+    };
+    panel.elements[1].left = 40;
+    panel.elements[1].top = 40;
+
+    expect(auditSlideLayout(panel).filter((issue) => issue.type === 'overlap')).toEqual([]);
+  });
 });

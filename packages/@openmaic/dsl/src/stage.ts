@@ -109,8 +109,10 @@ export interface LearningContext {
  */
 export interface ResearchSource {
   title: string;
-  url: string;
+  /** Web sources are links; author-uploaded files remain non-public metadata. */
+  url?: string;
   excerpt: string;
+  kind?: 'web' | 'uploaded';
 }
 
 /**

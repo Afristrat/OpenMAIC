@@ -7,6 +7,7 @@ import { isMediaPlaceholder, useMediaGenerationStore } from '@/lib/store/media-g
 import { useMediaStageId } from '@/lib/contexts/media-stage-context';
 import { getVideoMediaRefForElement } from '@/lib/media/video-manifest';
 import { SlideCanvas } from '@openmaic/renderer';
+import { useI18n } from '@/lib/hooks/use-i18n';
 
 interface SlideThumbnailProps {
   /** Slide data */
@@ -165,6 +166,7 @@ export function SlideThumbnail({
   viewportRatio,
   visible = true,
 }: SlideThumbnailProps) {
+  const { t } = useI18n();
   const resolvedSlide = useResolvedSlide(slide);
   const autoSize = size === undefined;
 
@@ -179,7 +181,7 @@ export function SlideThumbnail({
     return (
       <div className={containerClass} style={containerStyle}>
         <div className="placeholder w-full h-full flex justify-center items-center text-gray-400 text-sm">
-          加载中 ...
+          {t('common.loading')}
         </div>
       </div>
     );

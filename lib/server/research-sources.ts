@@ -26,6 +26,7 @@ export function toPersistedResearchSources(sources: readonly WebSearchSource[]):
     if (url.protocol !== 'https:' && url.protocol !== 'http:') continue;
 
     persisted.push({
+      kind: 'web',
       title,
       url: url.toString(),
       excerpt: source.content.replace(/\s+/g, ' ').trim().slice(0, MAX_PERSISTED_EXCERPT_LENGTH),

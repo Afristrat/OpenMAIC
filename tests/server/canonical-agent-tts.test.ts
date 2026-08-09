@@ -80,4 +80,33 @@ describe('canonical classroom agent TTS', () => {
       audioUrl: '/api/classroom-media/classroom-1/audio/tts_s1_speech-1.wav',
     });
   });
+
+  test('reports durable progress after every generated speech line', async () => {
+    const scene = {
+      id: 'scene-1',
+      stageId: 'classroom-1',
+      type: 'slide',
+      title: 'Progression',
+      order: 1,
+      content: { type: 'slide', canvas: { id: 'canvas-1', elements: [] } },
+      actions: [
+        { id: 'speech-1', type: 'speech', text: 'Première intervention.' },
+        { id: 'speech-2', type: 'speech', text: 'Deuxième intervention.' },
+      ],
+    } as unknown as Scene;
+    const onProgress = vi.fn();
+
+    await generateTTSForClassroom(
+      [scene],
+      'classroom-1',
+      { providerId: 'higgs-tts', voiceId: 'teacher-voice' },
+      [],
+      onProgress,
+    );
+
+    expect(onProgress.mock.calls).toEqual([
+      [{ completed: 1, total: 2 }],
+      [{ completed: 2, total: 2 }],
+    ]);
+  });
 });

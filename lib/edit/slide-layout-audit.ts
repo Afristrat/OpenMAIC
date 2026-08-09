@@ -30,6 +30,10 @@ export function auditSlideLayout(slide: Slide): SlideLayoutIssue[] {
     for (let other = index + 1; other < boxes.length; other += 1) {
       const a = boxes[index];
       const b = boxes[other];
+      // Shapes are routinely used as intentional backgrounds, cards, bands and
+      // callouts behind readable content. Treating those compositions as
+      // collisions produces false alarms on otherwise valid slides.
+      if (a.element.type === 'shape' || b.element.type === 'shape') continue;
       const overlapWidth =
         Math.min(a.range.maxX, b.range.maxX) - Math.max(a.range.minX, b.range.minX);
       const overlapHeight =

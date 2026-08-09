@@ -5,6 +5,33 @@ import type { SceneOutline, UserRequirements } from '@/lib/types/generation';
 import type { AICallFn } from '@/lib/generation/pipeline-types';
 
 describe('media prompt condition wiring', () => {
+  test('makes an attached document primary and web research secondary', async () => {
+    let capturedPrompt = '';
+    const aiCall: AICallFn = async (system, user) => {
+      capturedPrompt = `${system}\n${user}`;
+      return JSON.stringify({
+        languageDirective: 'Teach in English.',
+        courseTitle: 'Source-grounded course',
+        outlines: [],
+      });
+    };
+
+    await generateSceneOutlinesFromRequirements(
+      { requirement: 'Create a course based on the attached document.' },
+      'PRIMARY SOURCE CONTENT',
+      undefined,
+      aiCall,
+      undefined,
+      { researchContext: 'SECONDARY WEB CONTENT' },
+    );
+
+    expect(capturedPrompt).toContain('attached document is the primary source');
+    expect(capturedPrompt).toContain('Web results are secondary');
+    expect(capturedPrompt.indexOf('PRIMARY SOURCE CONTENT')).toBeLessThan(
+      capturedPrompt.indexOf('SECONDARY WEB CONTENT'),
+    );
+  });
+
   test('requires revised Bloom objectives with observable success criteria', async () => {
     let capturedPrompt = '';
     const aiCall: AICallFn = async (system) => {
@@ -87,6 +114,15 @@ describe('media prompt condition wiring', () => {
             defaultFontName: '',
             defaultColor: '#333333',
           },
+          {
+            id: 'video',
+            type: 'video',
+            mediaRef: 'gen_vid_unique1',
+            left: 100,
+            top: 180,
+            width: 800,
+            height: 320,
+          },
         ],
       });
     };
@@ -118,6 +154,92 @@ describe('media prompt condition wiring', () => {
     expect(capturedPrompt).not.toContain('ImageElement');
     expect(capturedPrompt).not.toContain('gen_img_');
     expect(capturedPrompt).not.toContain('{{');
+  });
+
+  test('rejects a slide that omits a requested generated image', async () => {
+    const aiCall: AICallFn = async () =>
+      JSON.stringify({
+        background: { type: 'solid', color: '#ffffff' },
+        elements: [
+          {
+            id: 'title',
+            type: 'text',
+            left: 60,
+            top: 80,
+            width: 880,
+            height: 76,
+            content: '<p>Evaporation</p>',
+            defaultFontName: '',
+            defaultColor: '#333333',
+          },
+        ],
+      });
+
+    const result = await generateSceneContent(
+      {
+        id: 'scene_1',
+        type: 'slide',
+        title: 'Evaporation',
+        description: 'Explain evaporation',
+        keyPoints: ['Molecules gain energy'],
+        order: 1,
+        mediaGenerations: [
+          {
+            type: 'image',
+            prompt: 'Water molecules evaporating',
+            elementId: 'gen_img_required',
+            aspectRatio: '16:9',
+          },
+        ],
+      },
+      aiCall,
+    );
+
+    expect(result).toBeNull();
+  });
+
+  test('rejects a slide whose content-bearing elements overlap', async () => {
+    const aiCall: AICallFn = async () =>
+      JSON.stringify({
+        elements: [
+          {
+            id: 'first',
+            type: 'text',
+            left: 60,
+            top: 80,
+            width: 500,
+            height: 100,
+            content: '<p>First block</p>',
+            defaultFontName: '',
+            defaultColor: '#333333',
+          },
+          {
+            id: 'second',
+            type: 'text',
+            left: 100,
+            top: 100,
+            width: 500,
+            height: 100,
+            content: '<p>Second block</p>',
+            defaultFontName: '',
+            defaultColor: '#333333',
+          },
+        ],
+      });
+
+    const result = await generateSceneContent(
+      {
+        id: 'scene_overlap',
+        type: 'slide',
+        title: 'Overlap',
+        description: 'Detect overlap',
+        keyPoints: ['Keep content readable'],
+        order: 1,
+      },
+      aiCall,
+    );
+
+    expect(result).toBeNull();
   });
 
   test('resolves semantic QR image IDs used by generated learning resources', async () => {

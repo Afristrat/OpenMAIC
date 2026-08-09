@@ -4,7 +4,7 @@
  */
 
 import { nanoid } from 'nanoid';
-import { MAX_PDF_CONTENT_CHARS, MAX_VISION_IMAGES } from '@/lib/constants/generation';
+import { MAX_VISION_IMAGES } from '@/lib/constants/generation';
 import type {
   ClassroomPlan,
   ClassroomSyllabus,
@@ -21,6 +21,7 @@ import { formatPluginsForPrompt, loadPlugins } from '@/lib/plugins/loader';
 import { uniquifyMediaElementIds } from './scene-builder';
 import type { AICallFn, GenerationResult, GenerationCallbacks } from './pipeline-types';
 import { createLogger } from '@/lib/logger';
+import { selectSourceContext } from './source-context';
 const log = createLogger('Generation');
 
 function syllabusPlaceholder(languageDirective: string): string {
@@ -155,7 +156,7 @@ export async function generateSceneOutlinesFromRequirements(
     {
       // New simplified variables
       requirement: requirements.requirement,
-      pdfContent: pdfText ? pdfText.substring(0, MAX_PDF_CONTENT_CHARS) : 'None',
+      pdfContent: pdfText ? selectSourceContext(pdfText) : 'None',
       availableImages: availableImagesText,
       userProfile: userProfileText,
       hasSourceImages,

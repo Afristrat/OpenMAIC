@@ -22,6 +22,8 @@ Le plan approuvé est une frontière transactionnelle. Lorsque l’auteur fourni
 
 Une source PDF n’est exploitable que si son texte est lisible. L’extraction locale est tentée en premier, puis un OCR configuré prend automatiquement le relais lorsque le résultat est vide ou corrompu. La présence de caractères ne constitue jamais, à elle seule, une preuve de réussite. Si aucun parseur ne fournit un texte lisible, le moteur bloque la génération et restitue la cause à l’auteur.
 
+Quand l’auteur demande une formation « sur ce contenu » ou formule une intention équivalente, le document fourni est la source primaire. Ses concepts distinctifs, sa progression, ses exemples, ses réserves et ses conclusions doivent rester identifiables dans le syllabus et la classroom. La recherche web est secondaire : elle vérifie l’actualité, ajoute le contexte local et signale les conflits, sans jamais remplacer silencieusement la source. Un document long est échantillonné sur son début, son milieu et sa fin ; la troncature silencieuse limitée au début est interdite. Le titre de la source et la trace d’extraction sont conservés pour l’auteur. Les visuels pertinents extraits de la source sont considérés avant de générer des substituts synthétiques.
+
 ## Sorties industrielles
 
 Une production complète livre quatre objets distincts :

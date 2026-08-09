@@ -294,6 +294,7 @@ export async function generateTTSForClassroom(
   classroomId: string,
   preferredVoice?: { providerId: string; voiceId: string },
   agents: CanonicalSpeechAgentVoice[] = [],
+  onProgress?: (progress: { completed: number; total: number }) => Promise<void> | void,
 ): Promise<ClassroomTTSGenerationReport> {
   const report: ClassroomTTSGenerationReport = { requested: 0, generated: 0 };
   // Resolve TTS provider (exclude browser-native-tts and operator force-disabled
@@ -342,6 +343,19 @@ export async function generateTTSForClassroom(
         actionProviderId,
       );
     });
+  }
+
+  const totalSpeechActions = scenes.reduce(
+    (total, scene) =>
+      total +
+      (scene.actions?.filter(
+        (action) => action.type === 'speech' && Boolean((action as SpeechAction).text),
+      ).length ?? 0),
+    0,
+  );
+
+  for (const scene of scenes) {
+    if (!scene.actions) continue;
 
     // Use scene order to make audio IDs unique across scenes
     const sceneOrder = scene.order;
@@ -394,6 +408,7 @@ export async function generateTTSForClassroom(
         speechAction.audioUrl = mediaServingUrl(classroomId, `audio/${filename}`);
         report.generated += 1;
         log.info(`Generated TTS: ${filename} (${result.audio.length} bytes)`);
+        await onProgress?.({ completed: report.generated, total: totalSpeechActions });
       } catch (err) {
         log.warn(`TTS generation failed for action ${action.id}:`, err);
       }

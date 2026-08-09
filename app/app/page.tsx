@@ -44,7 +44,12 @@ import {
 } from '@/components/generation/source-conflict-dialog';
 import { AgentBar } from '@/components/agent/agent-bar';
 import { useTheme } from '@/lib/hooks/use-theme';
-import type { ClassroomPlan, UserRequirements } from '@/lib/types/generation';
+import type {
+  ClassroomPlan,
+  PdfImage,
+  PdfSourceContent,
+  UserRequirements,
+} from '@/lib/types/generation';
 import { buildLanguageDirective } from '@/lib/constants/generation';
 import { useUserProfileStore, AVATAR_OPTIONS } from '@/lib/store/user-profile';
 import { StageListItem, revokeThumbnailSlideMediaUrls } from '@/lib/utils/stage-storage';
@@ -488,7 +493,7 @@ function HomePage() {
       };
 
       setIsPlanning(true);
-      let pdfContent: { text: string; images: string[] } | undefined;
+      let pdfContent: PdfSourceContent | undefined;
       if (form.pdfFile) {
         const isPdf = form.pdfFile.name.toLowerCase().endsWith('.pdf');
         const providerConfig = pdfProvidersConfig[pdfProviderId];
@@ -515,9 +520,15 @@ function HomePage() {
               : parserDetails,
           );
         }
+        const richImages = Array.isArray(parsed.data?.metadata?.pdfImages)
+          ? (parsed.data.metadata.pdfImages as PdfImage[])
+          : Array.isArray(parsed.data.images)
+            ? (parsed.data.images as string[])
+            : [];
         pdfContent = {
+          name: form.pdfFile.name,
           text: parsedText,
-          images: Array.isArray(parsed.data.images) ? parsed.data.images : [],
+          images: richImages,
         };
       }
       const generationRequest = {
