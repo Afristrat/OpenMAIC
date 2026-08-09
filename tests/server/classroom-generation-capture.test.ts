@@ -340,4 +340,36 @@ describe('classroom generation — web capture injection', () => {
       'http://localhost',
     );
   });
+
+  it('uses the approved learning objective for animation even when the source brief is long', async () => {
+    const overallObjective = 'Appliquer une méthode d’amélioration à un processus réel.';
+
+    await generateWithProgress({
+      requirement: 'Brief source détaillé. '.repeat(220),
+      approvedPlan: {
+        courseTitle: 'Amélioration des processus',
+        languageDirective: 'Répondre en français.',
+        syllabus: {
+          audience: 'Responsables opérationnels',
+          prerequisites: 'Aucun prérequis',
+          overallObjective,
+          learningObjectives: ['Diagnostiquer puis améliorer un processus.'],
+          totalDurationMinutes: 15,
+          deliveryMode: 'Classe virtuelle interactive',
+          assessmentStrategy: 'Mise en situation observée',
+          expectedDeliverable: 'Plan d’action individuel',
+        },
+        outlines: [outline],
+      },
+    });
+
+    expect(mocks.persistClassroom).toHaveBeenCalledWith(
+      expect.objectContaining({
+        animationConstitution: expect.objectContaining({
+          learningIntent: expect.objectContaining({ targetPerformance: overallObjective }),
+        }),
+      }),
+      'http://localhost',
+    );
+  });
 });
