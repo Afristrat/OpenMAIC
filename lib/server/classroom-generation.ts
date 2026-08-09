@@ -206,6 +206,23 @@ function createInMemoryStore(stage: Stage): StageStore {
   };
 }
 
+const MAX_TARGET_PERFORMANCE_LENGTH = 2000;
+
+export function resolveAnimationTargetPerformance(
+  plan: ClassroomPlan,
+  requirement: string,
+): string {
+  const candidate =
+    plan.syllabus?.overallObjective?.trim() ||
+    plan.outlines.find((outline) => outline.teachingObjective?.trim())?.teachingObjective?.trim() ||
+    plan.courseTitle?.trim() ||
+    requirement.trim() ||
+    'Complete the expected learning performance.';
+
+  if (candidate.length <= MAX_TARGET_PERFORMANCE_LENGTH) return candidate;
+  return `${candidate.slice(0, MAX_TARGET_PERFORMANCE_LENGTH - 1).trimEnd()}…`;
+}
+
 export async function generateClassroom(
   input: GenerateClassroomInput,
   options: {
@@ -457,7 +474,7 @@ export async function generateClassroom(
     throw new Error(outlinesResult.error || 'Failed to generate scene outlines');
   }
 
-  const { languageDirective, courseTitle, outlines, syllabus } = outlinesResult.data;
+  const { languageDirective, courseTitle, outlines } = outlinesResult.data;
   log.info(
     `Generated ${outlines.length} scene outlines (languageDirective: ${languageDirective}, courseTitle: ${courseTitle ?? 'n/a'})`,
   );
@@ -818,7 +835,7 @@ export async function generateClassroom(
       authorRole: input.authorRole,
       approach: input.learningApproach,
       interactionLevel: input.interactionLevel,
-      targetPerformance: syllabus.overallObjective,
+      targetPerformance: resolveAnimationTargetPerformance(outlinesResult.data, requirement),
       scenes,
       agents: tenantAgentConfigs,
     });

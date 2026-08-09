@@ -372,4 +372,19 @@ describe('classroom generation — web capture injection', () => {
       'http://localhost',
     );
   });
+
+  it('keeps legacy plans without a syllabus compatible with the animation contract', async () => {
+    await generateWithProgress();
+
+    expect(mocks.persistClassroom).toHaveBeenCalledWith(
+      expect.objectContaining({
+        animationConstitution: expect.objectContaining({
+          learningIntent: expect.objectContaining({
+            targetPerformance: 'Configurer les clés virtuelles LiteLLM',
+          }),
+        }),
+      }),
+      'http://localhost',
+    );
+  });
 });
