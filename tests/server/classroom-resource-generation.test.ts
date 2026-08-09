@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   buildXlsx,
   createResourceShortCode,
+  generateWorkbookSpec,
   generateQrPng,
 } from '@/lib/server/classroom-resource-generation';
 
@@ -50,6 +51,29 @@ describe('classroom resource generation', () => {
     expect(manifest).toContain('Scénarios');
     expect(firstSheet).toContain('Revenus &lt;nets&gt;');
     expect(firstSheet).toContain('<f>SUM(B2:B2)</f>');
+  });
+
+  it('repairs one structurally empty workbook response before failing the classroom', async () => {
+    const aiCall = vi
+      .fn()
+      .mockResolvedValueOnce('{"sheets":[]}')
+      .mockResolvedValueOnce('{"sheets":[{"name":"Exercice","rows":[["Action"]]}]}');
+
+    await expect(
+      generateWorkbookSpec(
+        {
+          id: 'resource_1',
+          format: 'xlsx',
+          title: 'Plan d’action',
+          fileName: 'plan-action.xlsx',
+          prompt: 'Créer un plan d’action immédiatement utilisable.',
+        },
+        'Write in French.',
+        aiCall,
+      ),
+    ).resolves.toEqual({ sheets: [{ name: 'Exercice', rows: [['Action']] }] });
+    expect(aiCall).toHaveBeenCalledTimes(2);
+    expect(aiCall.mock.calls[1]?.[1]).toContain('previous response was structurally invalid');
   });
 
   it('generates the resource QR locally as a real 320px PNG', async () => {

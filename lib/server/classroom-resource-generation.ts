@@ -22,6 +22,7 @@ const MAX_SHEETS = 5;
 const MAX_ROWS = 500;
 const MAX_COLUMNS = 50;
 const MAX_CELL_LENGTH = 20_000;
+const MAX_WORKBOOK_GENERATION_ATTEMPTS = 2;
 const SHORT_CODE_ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 const randomShortCode = customAlphabet(SHORT_CODE_ALPHABET, 5);
 const MAX_SHORT_CODE_ATTEMPTS = 20;
@@ -143,16 +144,28 @@ export async function buildXlsx(spec: WorkbookSpec): Promise<Buffer> {
   return zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
 }
 
-async function generateWorkbookSpec(
+export async function generateWorkbookSpec(
   request: ResourceGenerationRequest,
   languageDirective: string,
   aiCall: AICallFn,
 ): Promise<WorkbookSpec> {
   const system = `You generate a complete, immediately usable learning workbook as strict JSON. Return {"sheets":[{"name":"...","rows":[[...]]}]}. Use only string, finite number, boolean, or null cell values. Include clear headers, all data needed for the exercise, and useful formulas as literal Excel formulas beginning with = only when the request requires them. Maximum ${MAX_SHEETS} sheets, ${MAX_ROWS} rows per sheet, and ${MAX_COLUMNS} columns. Do not return markdown or commentary.`;
   const user = `Language directive: ${languageDirective}\nResource title: ${request.title}\nCreate the workbook requested between the markers.\n<<<RESOURCE_REQUEST\n${request.prompt}\nRESOURCE_REQUEST>>>`;
-  const parsed = parseJsonResponse<WorkbookSpec>(await aiCall(system, user));
-  if (!parsed) throw new Error(`Resource generation returned invalid JSON for ${request.id}`);
-  return normalizeWorkbook(parsed);
+  let lastError: Error | undefined;
+  for (let attempt = 1; attempt <= MAX_WORKBOOK_GENERATION_ATTEMPTS; attempt += 1) {
+    try {
+      const retryDirective =
+        attempt === 1
+          ? ''
+          : '\nYour previous response was structurally invalid. Return at least one non-empty worksheet using exactly the required JSON shape.';
+      const parsed = parseJsonResponse<WorkbookSpec>(await aiCall(system, `${user}${retryDirective}`));
+      if (!parsed) throw new Error(`Resource generation returned invalid JSON for ${request.id}`);
+      return normalizeWorkbook(parsed);
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+    }
+  }
+  throw lastError ?? new Error(`Resource generation failed for ${request.id}`);
 }
 
 export async function generateQrPng(url: string): Promise<Buffer> {

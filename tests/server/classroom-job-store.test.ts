@@ -54,6 +54,7 @@ vi.mock('@/lib/supabase/service', () => ({
 
 import {
   createClassroomGenerationJob,
+  markClassroomGenerationJobFailed,
   markClassroomGenerationJobRunning,
   readClassroomGenerationJob,
   touchClassroomGenerationJob,
@@ -125,6 +126,32 @@ describe('persistent classroom generation jobs', () => {
       enableWebSearch: true,
     });
     expect(job?.input).not.toHaveProperty('webSearchApiKey');
+  });
+
+  it('clears the terminal state when a failed durable job is retried', async () => {
+    await createClassroomGenerationJob(
+      'job-retry',
+      {
+        orgId: 'org-1',
+        authorRole: 'author',
+        learningApproach: 'andragogy',
+        interactionLevel: 'balanced',
+        requirement: 'Build a resilient course',
+      },
+      'owner-1',
+    );
+    await markClassroomGenerationJobFailed('job-retry', 'Previous provider failure');
+
+    await markClassroomGenerationJobRunning('job-retry');
+
+    await expect(readClassroomGenerationJob('job-retry')).resolves.toMatchObject({
+      status: 'running',
+      step: 'queued',
+      progress: 0,
+      scenesGenerated: 0,
+      error: undefined,
+      completedAt: undefined,
+    });
   });
 
   it('marks an abandoned running job as failed after thirty minutes', async () => {

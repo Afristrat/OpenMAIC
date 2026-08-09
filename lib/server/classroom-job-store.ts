@@ -153,12 +153,19 @@ export async function updateClassroomGenerationJob(
 export async function markClassroomGenerationJobRunning(
   jobId: string,
 ): Promise<ClassroomGenerationJob> {
-  const existing = await readClassroomGenerationJob(jobId);
-  if (!existing) throw new Error(`Classroom generation job not found: ${jobId}`);
+  if (!(await readClassroomGenerationJob(jobId)))
+    throw new Error(`Classroom generation job not found: ${jobId}`);
   return updateClassroomGenerationJob(jobId, {
     status: 'running',
-    startedAt: existing.startedAt || new Date().toISOString(),
+    step: 'queued',
+    progress: 0,
+    startedAt: new Date().toISOString(),
+    completedAt: undefined,
     message: 'Classroom generation started',
+    scenesGenerated: 0,
+    totalScenes: undefined,
+    result: undefined,
+    error: undefined,
   });
 }
 export async function updateClassroomGenerationJobProgress(
