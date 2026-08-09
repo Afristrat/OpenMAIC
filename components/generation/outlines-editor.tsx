@@ -5,15 +5,21 @@ import { AnimatePresence, motion } from 'motion/react';
 import {
   ArrowDown,
   ArrowUp,
+  BookOpenText,
   Check,
   ChevronDown,
+  ClipboardCheck,
+  Clock3,
   GripVertical,
   Loader2,
   Minimize2,
   Minus,
+  PackageCheck,
   Plus,
   Sparkles,
+  Target,
   Trash2,
+  Users,
   X,
 } from 'lucide-react';
 import { nanoid } from 'nanoid';
@@ -143,6 +149,11 @@ export function OutlinesEditor({
   const lastScrollTargetRef = useRef<string | null>(null);
   const editingDisabled = isLoading || isStreaming;
   const lastOutlineId = outlines.length > 0 ? outlines[outlines.length - 1].id : null;
+  const hasSyllabusWorkspace =
+    courseTitle !== undefined &&
+    syllabus !== undefined &&
+    onCourseTitleChange !== undefined &&
+    onSyllabusChange !== undefined;
 
   // Auto-scroll to the latest streamed scene so streaming feels alive.
   useEffect(() => {
@@ -230,6 +241,72 @@ export function OutlinesEditor({
     return t('generation.outlineEditorSummary', { count: outlines.length });
   }, [isStreaming, outlines.length, t]);
 
+  const sceneList =
+    outlines.length === 0 ? (
+      <EmptyState isStreaming={isStreaming} disabled={editingDisabled} onAdd={addOutline} />
+    ) : (
+      <ol className="flex flex-col py-1">
+        {!isStreaming && (
+          <InsertDivider
+            onClick={() => insertOutlineAt(0)}
+            disabled={editingDisabled}
+            position="edge"
+          />
+        )}
+        <AnimatePresence initial={false}>
+          {outlines.map((outline, index) => {
+            const isLast = outline.id === lastOutlineId;
+            const isStreamingTip = isStreaming && isLast;
+
+            return (
+              <Fragment key={outline.id}>
+                <SceneRow
+                  index={index}
+                  outline={outline}
+                  onUpdate={(updates) => updateOutline(index, updates)}
+                  onReplace={(next) => replaceOutline(index, next)}
+                  onRemove={() => removeOutline(index)}
+                  onMoveUp={() => moveOutline(index, 'up')}
+                  onMoveDown={() => moveOutline(index, 'down')}
+                  canMoveUp={index > 0}
+                  canMoveDown={index < outlines.length - 1}
+                  sceneTypeLabel={sceneTypeLabel}
+                  disabled={editingDisabled}
+                  isStreamingTip={isStreamingTip}
+                  isDragging={draggingId === outline.id}
+                  isDragTarget={dragOverId === outline.id && draggingId !== outline.id}
+                  onDragStart={() => setDraggingId(outline.id)}
+                  onDragEnd={() => {
+                    setDraggingId(null);
+                    setDragOverId(null);
+                  }}
+                  onDragEnter={() => {
+                    if (draggingId && draggingId !== outline.id) {
+                      setDragOverId(outline.id);
+                    }
+                  }}
+                  onDrop={(sourceId) => {
+                    const fromIndex = outlines.findIndex((item) => item.id === sourceId);
+                    if (fromIndex >= 0) reorderOutline(fromIndex, index);
+                    setDraggingId(null);
+                    setDragOverId(null);
+                  }}
+                />
+                {!isStreaming && (
+                  <InsertDivider
+                    onClick={() => insertOutlineAt(index + 1)}
+                    disabled={editingDisabled}
+                    position={isLast ? 'edge' : 'between'}
+                  />
+                )}
+              </Fragment>
+            );
+          })}
+        </AnimatePresence>
+        {isStreaming && <StreamingPlaceholder nextIndex={outlines.length + 1} />}
+      </ol>
+    );
+
   return (
     <motion.div
       layoutId="outline-review-surface"
@@ -239,9 +316,10 @@ export function OutlinesEditor({
       initial={{ rotate: 0 }}
       animate={{ rotate: 0 }}
       className={cn(
-        'relative overflow-hidden rounded-3xl border border-border/40',
-        'bg-white/85 shadow-[0_30px_80px_-30px_rgba(15,23,42,0.25)] backdrop-blur-xl',
-        'dark:border-white/5 dark:bg-slate-950/70 dark:shadow-[0_30px_80px_-30px_rgba(0,0,0,0.6)]',
+        'relative overflow-hidden border border-border/40',
+        hasSyllabusWorkspace
+          ? 'flex h-[100dvh] min-h-0 w-full flex-col border-0 bg-background'
+          : 'rounded-3xl bg-white/85 shadow-[0_30px_80px_-30px_rgba(15,23,42,0.25)] backdrop-blur-xl dark:border-white/5 dark:bg-slate-950/70 dark:shadow-[0_30px_80px_-30px_rgba(0,0,0,0.6)]',
       )}
     >
       {/* Soft gradient wash */}
@@ -249,7 +327,14 @@ export function OutlinesEditor({
       <div className="pointer-events-none absolute -top-32 left-1/2 h-64 w-[80%] -translate-x-1/2 rounded-full bg-blue-500/[0.04] blur-3xl dark:bg-blue-400/[0.08]" />
 
       {/* Header */}
-      <div className="relative flex items-start gap-3 px-6 pt-6 pb-4 md:px-10 md:pt-8 md:pb-6">
+      <div
+        className={cn(
+          'relative flex items-start gap-3',
+          hasSyllabusWorkspace
+            ? 'shrink-0 border-b border-border/50 bg-background/95 px-4 py-4 md:px-8 md:py-5'
+            : 'px-6 pt-6 pb-4 md:px-10 md:pt-8 md:pb-6',
+        )}
+      >
         <div className="min-w-0 flex-1 space-y-1.5">
           <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground/70">
             <Sparkles className="size-3 text-blue-500" />
@@ -289,83 +374,49 @@ export function OutlinesEditor({
         )}
       </div>
 
-      {courseTitle !== undefined && syllabus && onCourseTitleChange && onSyllabusChange && (
-        <SyllabusFields
-          courseTitle={courseTitle}
-          syllabus={syllabus}
-          onCourseTitleChange={onCourseTitleChange}
-          onSyllabusChange={onSyllabusChange}
-          disabled={editingDisabled}
-        />
+      {hasSyllabusWorkspace ? (
+        <div
+          data-testid="syllabus-workspace"
+          className="grid min-h-0 flex-1 overflow-y-auto bg-background lg:grid-cols-[minmax(22rem,0.88fr)_minmax(34rem,1.2fr)] lg:overflow-hidden"
+        >
+          <SyllabusFields
+            courseTitle={courseTitle}
+            syllabus={syllabus}
+            onCourseTitleChange={onCourseTitleChange}
+            onSyllabusChange={onSyllabusChange}
+            disabled={editingDisabled}
+          />
+          <section
+            data-testid="syllabus-sequence-panel"
+            aria-labelledby="syllabus-sequence-heading"
+            className="min-w-0 border-t border-border/50 bg-slate-50/60 lg:flex lg:min-h-0 lg:flex-col lg:overflow-hidden lg:border-t-0 dark:bg-slate-950/40"
+          >
+            <div className="shrink-0 border-b border-border/40 px-5 py-5 md:px-8">
+              <div className="flex items-center gap-3">
+                <span className="flex size-10 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-300">
+                  <BookOpenText className="size-5" aria-hidden />
+                </span>
+                <div>
+                  <h3
+                    id="syllabus-sequence-heading"
+                    className="text-lg font-semibold tracking-tight"
+                  >
+                    {t('generation.syllabusJourneyTitle')}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {t('generation.syllabusJourneyDescription', { count: outlines.length })}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="px-2 pb-5 md:px-5 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+              {sceneList}
+            </div>
+          </section>
+        </div>
+      ) : (
+        <div className="relative max-h-[64vh] overflow-y-auto px-3 pb-2 md:px-6">{sceneList}</div>
       )}
-
-      {/* Scene list */}
-      <div className="relative max-h-[64vh] overflow-y-auto px-3 pb-2 md:px-6">
-        {outlines.length === 0 ? (
-          <EmptyState isStreaming={isStreaming} disabled={editingDisabled} onAdd={addOutline} />
-        ) : (
-          <ol className="flex flex-col py-1">
-            {!isStreaming && (
-              <InsertDivider
-                onClick={() => insertOutlineAt(0)}
-                disabled={editingDisabled}
-                position="edge"
-              />
-            )}
-            <AnimatePresence initial={false}>
-              {outlines.map((outline, index) => {
-                const isLast = outline.id === lastOutlineId;
-                const isStreamingTip = isStreaming && isLast;
-
-                return (
-                  <Fragment key={outline.id}>
-                    <SceneRow
-                      index={index}
-                      outline={outline}
-                      onUpdate={(updates) => updateOutline(index, updates)}
-                      onReplace={(next) => replaceOutline(index, next)}
-                      onRemove={() => removeOutline(index)}
-                      onMoveUp={() => moveOutline(index, 'up')}
-                      onMoveDown={() => moveOutline(index, 'down')}
-                      canMoveUp={index > 0}
-                      canMoveDown={index < outlines.length - 1}
-                      sceneTypeLabel={sceneTypeLabel}
-                      disabled={editingDisabled}
-                      isStreamingTip={isStreamingTip}
-                      isDragging={draggingId === outline.id}
-                      isDragTarget={dragOverId === outline.id && draggingId !== outline.id}
-                      onDragStart={() => setDraggingId(outline.id)}
-                      onDragEnd={() => {
-                        setDraggingId(null);
-                        setDragOverId(null);
-                      }}
-                      onDragEnter={() => {
-                        if (draggingId && draggingId !== outline.id) {
-                          setDragOverId(outline.id);
-                        }
-                      }}
-                      onDrop={(sourceId) => {
-                        const fromIndex = outlines.findIndex((item) => item.id === sourceId);
-                        if (fromIndex >= 0) reorderOutline(fromIndex, index);
-                        setDraggingId(null);
-                        setDragOverId(null);
-                      }}
-                    />
-                    {!isStreaming && (
-                      <InsertDivider
-                        onClick={() => insertOutlineAt(index + 1)}
-                        disabled={editingDisabled}
-                        position={isLast ? 'edge' : 'between'}
-                      />
-                    )}
-                  </Fragment>
-                );
-              })}
-            </AnimatePresence>
-            {isStreaming && <StreamingPlaceholder nextIndex={outlines.length + 1} />}
-          </ol>
-        )}
-      </div>
 
       {/* Footer */}
       <div className="relative flex flex-col gap-3 border-t border-border/40 bg-gradient-to-t from-background/95 to-transparent px-6 py-4 md:flex-row md:items-center md:justify-between md:px-10 md:py-5">
@@ -439,101 +490,176 @@ function SyllabusFields({
   const update = <K extends keyof ClassroomSyllabus>(key: K, value: ClassroomSyllabus[K]) =>
     onSyllabusChange({ ...syllabus, [key]: value });
   const fieldClass =
-    'w-full rounded-xl border border-border/60 bg-background/70 px-3 py-2 text-sm outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-500/15 disabled:cursor-not-allowed disabled:opacity-60';
+    'w-full rounded-xl border border-border/60 bg-background px-3 py-2.5 text-sm leading-relaxed outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-500/15 disabled:cursor-not-allowed disabled:opacity-60';
+  const updateLearningObjective = (index: number, value: string) => {
+    const next = [...syllabus.learningObjectives];
+    next[index] = value;
+    update('learningObjectives', next);
+  };
+  const removeLearningObjective = (index: number) =>
+    update(
+      'learningObjectives',
+      syllabus.learningObjectives.filter((_, objectiveIndex) => objectiveIndex !== index),
+    );
 
   return (
-    <section className="relative mx-3 mb-4 rounded-2xl border border-border/50 bg-muted/20 p-4 md:mx-6 md:p-6">
-      <h3 className="mb-4 text-base font-semibold">{t('generation.syllabusIdentity')}</h3>
-      <div className="grid gap-4 md:grid-cols-2">
-        <label className="space-y-1.5 md:col-span-2">
-          <span className="text-xs font-medium text-muted-foreground">
-            {t('generation.courseTitle')}
-          </span>
-          <input
-            className={fieldClass}
-            value={courseTitle}
-            onChange={(event) => onCourseTitleChange(event.target.value)}
-            disabled={disabled}
-            aria-label={t('generation.courseTitle')}
-          />
-        </label>
-        <SyllabusTextField
-          label={t('generation.syllabusAudience')}
-          value={syllabus.audience}
-          onChange={(value) => update('audience', value)}
-          disabled={disabled}
-          className={fieldClass}
-        />
-        <SyllabusTextField
-          label={t('generation.syllabusPrerequisites')}
-          value={syllabus.prerequisites}
-          onChange={(value) => update('prerequisites', value)}
-          disabled={disabled}
-          className={fieldClass}
-        />
-        <SyllabusTextField
-          label={t('generation.syllabusOverallObjective')}
-          value={syllabus.overallObjective}
-          onChange={(value) => update('overallObjective', value)}
-          disabled={disabled}
-          className={fieldClass}
-          wide
-        />
-        <SyllabusTextField
-          label={t('generation.syllabusLearningObjectives')}
-          value={syllabus.learningObjectives.join('\n')}
-          onChange={(value) =>
-            update(
-              'learningObjectives',
-              value
-                .split('\n')
-                .map((item) => item.trim())
-                .filter(Boolean),
-            )
-          }
-          disabled={disabled}
-          className={fieldClass}
-          wide
-          rows={4}
-        />
-        <label className="space-y-1.5">
-          <span className="text-xs font-medium text-muted-foreground">
-            {t('generation.syllabusTotalDuration')}
-          </span>
-          <input
-            type="number"
-            min={1}
-            max={10080}
-            className={fieldClass}
-            value={syllabus.totalDurationMinutes}
-            onChange={(event) =>
-              update('totalDurationMinutes', Math.max(1, Number(event.target.value) || 1))
-            }
-            disabled={disabled}
-            aria-label={t('generation.syllabusTotalDuration')}
-          />
-        </label>
-        <SyllabusTextField
-          label={t('generation.syllabusDeliveryMode')}
-          value={syllabus.deliveryMode}
-          onChange={(value) => update('deliveryMode', value)}
-          disabled={disabled}
-          className={fieldClass}
-        />
-        <SyllabusTextField
-          label={t('generation.syllabusAssessment')}
-          value={syllabus.assessmentStrategy}
-          onChange={(value) => update('assessmentStrategy', value)}
-          disabled={disabled}
-          className={fieldClass}
-        />
-        <SyllabusTextField
-          label={t('generation.syllabusDeliverable')}
-          value={syllabus.expectedDeliverable}
-          onChange={(value) => update('expectedDeliverable', value)}
-          disabled={disabled}
-          className={fieldClass}
-        />
+    <section
+      data-testid="syllabus-brief-panel"
+      aria-labelledby="syllabus-brief-heading"
+      className="relative min-w-0 border-border/50 bg-background px-5 py-6 lg:min-h-0 lg:overflow-y-auto lg:border-e md:px-8"
+    >
+      <div className="mx-auto max-w-2xl space-y-8 lg:max-w-none">
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <span className="flex size-10 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-600 dark:text-violet-300">
+              <Target className="size-5" aria-hidden />
+            </span>
+            <div>
+              <h3 id="syllabus-brief-heading" className="text-lg font-semibold tracking-tight">
+                {t('generation.syllabusPromiseTitle')}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {t('generation.syllabusPromiseDescription')}
+              </p>
+            </div>
+          </div>
+          <label className="block space-y-1.5">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {t('generation.courseTitle')}
+            </span>
+            <input
+              className="w-full border-0 border-b border-border/70 bg-transparent px-0 py-2 text-xl font-semibold tracking-tight outline-none transition focus:border-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
+              value={courseTitle}
+              onChange={(event) => onCourseTitleChange(event.target.value)}
+              disabled={disabled}
+              aria-label={t('generation.courseTitle')}
+            />
+          </label>
+          <div className="rounded-2xl border border-violet-500/20 bg-violet-500/[0.05] p-4">
+            <SyllabusTextField
+              label={t('generation.syllabusOverallObjective')}
+              value={syllabus.overallObjective}
+              onChange={(value) => update('overallObjective', value)}
+              disabled={disabled}
+              className={fieldClass}
+              rows={3}
+            />
+          </div>
+          <div className="space-y-2.5">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {t('generation.syllabusLearningObjectives')}
+            </span>
+            {syllabus.learningObjectives.map((objective, index) => (
+              <div key={index} className="group flex items-start gap-2">
+                <span className="mt-2.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-foreground text-xs font-semibold text-background">
+                  {index + 1}
+                </span>
+                <textarea
+                  className={fieldClass}
+                  value={objective}
+                  onChange={(event) => updateLearningObjective(index, event.target.value)}
+                  disabled={disabled}
+                  aria-label={`${t('generation.syllabusLearningObjectives')} ${index + 1}`}
+                  rows={2}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeLearningObjective(index)}
+                  disabled={disabled || syllabus.learningObjectives.length === 1}
+                  aria-label={t('generation.syllabusDeleteObjective')}
+                  className="mt-1 rounded-lg p-2 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive disabled:opacity-30"
+                >
+                  <Trash2 className="size-4" aria-hidden />
+                </button>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={disabled || syllabus.learningObjectives.length >= 12}
+              onClick={() => update('learningObjectives', [...syllabus.learningObjectives, ''])}
+              className="rounded-full"
+            >
+              <Plus className="size-4" />
+              {t('generation.syllabusAddObjective')}
+            </Button>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <Users className="size-4 text-blue-500" aria-hidden />
+            {t('generation.syllabusContextTitle')}
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <SyllabusTextField
+              label={t('generation.syllabusAudience')}
+              value={syllabus.audience}
+              onChange={(value) => update('audience', value)}
+              disabled={disabled}
+              className={fieldClass}
+            />
+            <SyllabusTextField
+              label={t('generation.syllabusPrerequisites')}
+              value={syllabus.prerequisites}
+              onChange={(value) => update('prerequisites', value)}
+              disabled={disabled}
+              className={fieldClass}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <ClipboardCheck className="size-4 text-emerald-500" aria-hidden />
+            {t('generation.syllabusEvidenceTitle')}
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="space-y-1.5">
+              <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                <Clock3 className="size-3.5" aria-hidden />
+                {t('generation.syllabusTotalDuration')}
+              </span>
+              <input
+                type="number"
+                min={1}
+                max={10080}
+                className={fieldClass}
+                value={syllabus.totalDurationMinutes}
+                onChange={(event) =>
+                  update('totalDurationMinutes', Math.max(1, Number(event.target.value) || 1))
+                }
+                disabled={disabled}
+                aria-label={t('generation.syllabusTotalDuration')}
+              />
+            </label>
+            <SyllabusTextField
+              label={t('generation.syllabusDeliveryMode')}
+              value={syllabus.deliveryMode}
+              onChange={(value) => update('deliveryMode', value)}
+              disabled={disabled}
+              className={fieldClass}
+            />
+            <SyllabusTextField
+              label={t('generation.syllabusAssessment')}
+              value={syllabus.assessmentStrategy}
+              onChange={(value) => update('assessmentStrategy', value)}
+              disabled={disabled}
+              className={fieldClass}
+            />
+            <div className="relative">
+              <PackageCheck className="pointer-events-none absolute end-3 top-8 size-4 text-muted-foreground" />
+              <SyllabusTextField
+                label={t('generation.syllabusDeliverable')}
+                value={syllabus.expectedDeliverable}
+                onChange={(value) => update('expectedDeliverable', value)}
+                disabled={disabled}
+                className={cn(fieldClass, 'pe-9')}
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -546,7 +672,6 @@ function SyllabusTextField({
   disabled,
   className,
   rows = 2,
-  wide = false,
 }: {
   label: string;
   value: string;
@@ -554,10 +679,9 @@ function SyllabusTextField({
   disabled: boolean;
   className: string;
   rows?: number;
-  wide?: boolean;
 }) {
   return (
-    <label className={cn('space-y-1.5', wide && 'md:col-span-2')}>
+    <label className="block space-y-1.5">
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
       <textarea
         className={className}

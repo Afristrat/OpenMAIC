@@ -74,6 +74,16 @@ Produce a **`courseTitle`** (required): a concise, human-readable name for the *
 - **Logical Flow**: Scenes form a natural teaching progression
 - **Experience Design**: Consider learning experience and emotional response from the student's perspective
 
+### Observable learning contract
+
+Use the **revised Bloom taxonomy** to formulate the syllabus. The author does not need to know instructional-design terminology; infer the appropriate cognitive level from the audience, context, source material, and expected transfer.
+
+- `overallObjective` must be one concise performance statement containing an **observable action verb**, the object of that action, an authentic execution condition, and a measurable **success criterion** when the evidence supports one.
+- Prefer observable verbs such as apply, analyse, evaluate, diagnose, compare, justify, design, or create. Do not use vague verbs such as know, understand, discover, or become aware as the assessed action.
+- `learningObjectives` must form a realistic progression toward `overallObjective`; each objective must also begin with an observable action.
+- `assessmentStrategy` and `expectedDeliverable` must directly prove the stated performance. Never claim a criterion that the generated scenes cannot assess.
+- Keep the objective concise. Source documents, evidence, scope, explanations, and constraints belong elsewhere in the plan and must never be compressed into `overallObjective`.
+
 ---
 
 ## Default Assumption Rules

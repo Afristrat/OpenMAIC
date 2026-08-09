@@ -5,6 +5,39 @@ import type { SceneOutline, UserRequirements } from '@/lib/types/generation';
 import type { AICallFn } from '@/lib/generation/pipeline-types';
 
 describe('media prompt condition wiring', () => {
+  test('requires revised Bloom objectives with observable success criteria', async () => {
+    let capturedPrompt = '';
+    const aiCall: AICallFn = async (system) => {
+      capturedPrompt = system;
+      return JSON.stringify({
+        languageDirective: 'Répondre en français.',
+        courseTitle: 'Améliorer un processus',
+        syllabus: {
+          audience: 'Responsables opérationnels',
+          prerequisites: 'Aucun prérequis',
+          overallObjective: 'Diagnostiquer un processus et produire un plan mesurable.',
+          learningObjectives: ['Analyser les causes de contre-performance.'],
+          totalDurationMinutes: 30,
+          deliveryMode: 'Classe virtuelle interactive',
+          assessmentStrategy: 'Mise en situation observée',
+          expectedDeliverable: 'Plan d’action mesurable',
+        },
+        outlines: [],
+      });
+    };
+
+    await generateSceneOutlinesFromRequirements(
+      { requirement: 'Former à l’amélioration des processus' },
+      undefined,
+      undefined,
+      aiCall,
+    );
+
+    expect(capturedPrompt).toContain('revised Bloom taxonomy');
+    expect(capturedPrompt).toContain('observable action verb');
+    expect(capturedPrompt).toContain('success criterion');
+  });
+
   test('outline generation passes media enable flags into conditional snippets', async () => {
     let capturedPrompt = '';
     const aiCall: AICallFn = async (system, user) => {

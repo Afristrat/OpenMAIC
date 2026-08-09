@@ -697,8 +697,13 @@ function HomePage() {
         }}
       />
       {draftPlan && (
-        <div className="fixed inset-0 z-[100] overflow-y-auto bg-slate-950/70 p-3 backdrop-blur-sm md:p-8">
-          <div className="mx-auto max-w-5xl">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('generation.outlineEditorTitle')}
+          className="fixed inset-0 z-[100] overflow-hidden bg-background"
+        >
+          <div className="h-full w-full">
             <OutlinesEditor
               courseTitle={draftPlan.courseTitle}
               syllabus={draftPlan.syllabus}
