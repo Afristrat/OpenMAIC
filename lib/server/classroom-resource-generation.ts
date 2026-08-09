@@ -158,7 +158,9 @@ export async function generateWorkbookSpec(
         attempt === 1
           ? ''
           : '\nYour previous response was structurally invalid. Return at least one non-empty worksheet using exactly the required JSON shape.';
-      const parsed = parseJsonResponse<WorkbookSpec>(await aiCall(system, `${user}${retryDirective}`));
+      const parsed = parseJsonResponse<WorkbookSpec>(
+        await aiCall(system, `${user}${retryDirective}`),
+      );
       if (!parsed) throw new Error(`Resource generation returned invalid JSON for ${request.id}`);
       return normalizeWorkbook(parsed);
     } catch (error) {
