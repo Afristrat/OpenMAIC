@@ -27,7 +27,7 @@ export const VIDEO_PROVIDERS: Record<VideoProviderId, VideoProviderConfig> = {
   'comfyui-video': {
     id: 'comfyui-video',
     name: 'ComfyUI Video (LTX-2)',
-    requiresApiKey: false,
+    requiresApiKey: true,
     defaultBaseUrl: 'http://127.0.0.1:8189',
     models: [{ id: 'ltx-2-video', name: 'LTX-2.3 22B (vidéo + audio)' }],
     supportedAspectRatios: ['16:9', '4:3', '1:1', '9:16', '3:4', '21:9'],

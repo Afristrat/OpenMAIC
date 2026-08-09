@@ -65,6 +65,7 @@ function clearProviderEnv() {
   delete process.env.TAVILY_API_KEY;
   delete process.env.BOCHA_API_KEY;
   delete process.env.BOCHA_BASE_URL;
+  delete process.env.QALEM_VIDEO_SIDECAR_SECRET;
 }
 
 vi.mock('fs', async (importOriginal) => {
@@ -442,15 +443,16 @@ pdf:
       expect(resolveVideoBaseUrl('grok-video')).toBe('https://proxy.example.com/video');
     });
 
-    it('activates the keyless ComfyUI video provider from its private base URL', async () => {
-      vi.stubEnv('VIDEO_COMFYUI_BASE_URL', 'http://192.168.100.7:8189');
+    it('activates the authenticated ComfyUI video provider from its private base URL', async () => {
+      vi.stubEnv('VIDEO_COMFYUI_BASE_URL', 'http://192.168.100.20:8189');
       vi.stubEnv('VIDEO_COMFYUI_MODELS', 'ltx-2-video');
+      vi.stubEnv('QALEM_VIDEO_SIDECAR_SECRET', 'sidecar-secret');
       const { getServerVideoProviders, resolveVideoApiKey, resolveVideoBaseUrl } =
         await import('@/lib/server/provider-config');
 
       expect(getServerVideoProviders()['comfyui-video']).toEqual({ models: ['ltx-2-video'] });
-      expect(resolveVideoApiKey('comfyui-video')).toBe('');
-      expect(resolveVideoBaseUrl('comfyui-video')).toBe('http://192.168.100.7:8189');
+      expect(resolveVideoApiKey('comfyui-video')).toBe('sidecar-secret');
+      expect(resolveVideoBaseUrl('comfyui-video')).toBe('http://192.168.100.20:8189');
     });
   });
 

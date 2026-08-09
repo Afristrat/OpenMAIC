@@ -10,7 +10,9 @@ vi.mock('@/lib/media/video-providers', async (importOriginal) => {
 
 vi.mock('@/lib/server/provider-config', () => ({
   isServerConfiguredProvider: vi.fn(() => true),
-  resolveVideoApiKey: vi.fn(() => undefined),
+  resolveVideoApiKey: vi.fn((providerId: string) =>
+    providerId === 'comfyui-video' ? 'sidecar-secret' : undefined,
+  ),
   resolveVideoBaseUrl: vi.fn(() => 'http://comfyui.test'),
 }));
 
@@ -29,13 +31,13 @@ describe('verify-video-provider route', () => {
     testVideoConnectivity.mockResolvedValue({ success: true, message: 'Connected' });
   });
 
-  it('verifies the keyless ComfyUI LTX-2 provider without requiring an API key', async () => {
+  it('verifies the managed ComfyUI LTX-2 provider with its server-side secret', async () => {
     const response = await POST(request('comfyui-video'));
 
     expect(response.status).toBe(200);
     expect(testVideoConnectivity).toHaveBeenCalledWith({
       providerId: 'comfyui-video',
-      apiKey: undefined,
+      apiKey: 'sidecar-secret',
       baseUrl: 'http://comfyui.test',
       model: undefined,
     });

@@ -23,12 +23,12 @@ vi.mock('@/lib/supabase/service', () => ({
 
 vi.mock('@/lib/server/provider-config', () => ({
   isServerConfiguredProvider: vi.fn(() => true),
-  resolveVideoApiKey: vi.fn(),
+  resolveVideoApiKey: vi.fn(() => 'sidecar-secret'),
   resolveVideoBaseUrl: vi.fn(),
 }));
 
 vi.mock('@/lib/media/video-providers', () => ({
-  VIDEO_PROVIDERS: { 'comfyui-video': { requiresApiKey: false } },
+  VIDEO_PROVIDERS: { 'comfyui-video': { requiresApiKey: true } },
   generateVideo: mocks.generateVideo,
   normalizeVideoOptions: vi.fn((_providerId, options) => options),
 }));

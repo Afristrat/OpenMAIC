@@ -544,6 +544,9 @@ export function getServerVideoProviders(): Record<string, { models?: string[] }>
 }
 
 export function resolveVideoApiKey(providerId: string, clientKey?: string): string {
+  if (providerId === 'comfyui-video') {
+    return process.env.QALEM_VIDEO_SIDECAR_SECRET || '';
+  }
   return resolveSectionApiKey('video', providerId, clientKey);
 }
 

@@ -4,14 +4,16 @@ import type {
   VideoGenerationResult,
 } from '../types';
 
-interface ComfyUIWorkflowResponse {
-  images?: string[];
-  filenames?: string[];
+interface LtxJobResponse {
+  jobId?: string;
+  status?: 'queued' | 'running' | 'completed' | 'failed' | 'expired';
   error?: string;
 }
 
-const WORKFLOW_PATH = '/workflow/ltx2/txt2video';
+const HEALTH_PATH = '/health/ltx2';
+const WORKFLOW_PATH = '/workflow/ltx2/txt2video/async';
 const GENERATION_TIMEOUT_MS = 15 * 60 * 1000;
+const POLL_INTERVAL_MS = 2_000;
 
 const DIMENSIONS = {
   '16:9': { width: 768, height: 432 },
@@ -22,12 +24,22 @@ const DIMENSIONS = {
   '21:9': { width: 896, height: 384 },
 } as const;
 
-function mediaType(filename: string | undefined): string {
-  const extension = filename?.split('.').pop()?.toLowerCase();
-  if (extension === 'webm') return 'video/webm';
-  if (extension === 'mkv') return 'video/x-matroska';
-  if (extension === 'mov') return 'video/quicktime';
-  return 'video/mp4';
+function authHeaders(secret: string): Record<string, string> {
+  if (!secret) throw new Error('Qalem LTX-2 sidecar secret is required');
+  return { 'X-Qalem-Video-Secret': secret };
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function encodeBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let offset = 0; offset < bytes.length; offset += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+  }
+  return btoa(binary);
 }
 
 export async function testComfyUIVideoConnectivity(
@@ -36,7 +48,8 @@ export async function testComfyUIVideoConnectivity(
   const baseUrl = config.baseUrl?.replace(/\/$/, '');
   if (!baseUrl) return { success: false, message: 'ComfyUI sidecar base URL is required' };
   try {
-    const response = await fetch(`${baseUrl}/health`, {
+    const response = await fetch(`${baseUrl}${HEALTH_PATH}`, {
+      headers: authHeaders(config.apiKey),
       signal: AbortSignal.timeout(10_000),
     });
     return response.ok
@@ -53,6 +66,7 @@ export async function generateWithComfyUIVideo(
 ): Promise<VideoGenerationResult> {
   const baseUrl = config.baseUrl?.replace(/\/$/, '');
   if (!baseUrl) throw new Error('ComfyUI sidecar base URL is required');
+  const headers = authHeaders(config.apiKey);
 
   const dimensions = DIMENSIONS[options.aspectRatio ?? '16:9'];
   const duration = options.duration ?? 2;
@@ -60,7 +74,7 @@ export async function generateWithComfyUIVideo(
   const numFrames = Math.max(49, Math.min(257, Math.round((duration * fps - 1) / 8) * 8 + 1));
   const response = await fetch(`${baseUrl}${WORKFLOW_PATH}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { ...headers, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       input: {
         prompt: options.prompt,
@@ -73,17 +87,53 @@ export async function generateWithComfyUIVideo(
     }),
     signal: AbortSignal.timeout(GENERATION_TIMEOUT_MS),
   });
-  const payload = (await response.json()) as ComfyUIWorkflowResponse;
+  const payload = (await response.json()) as LtxJobResponse;
+  if (response.status === 429) {
+    throw new Error('LTX-2 service is busy; no new job was submitted');
+  }
   if (!response.ok) {
     throw new Error(payload.error || `ComfyUI LTX workflow failed with HTTP ${response.status}`);
   }
-  const encodedVideo = payload.images?.[0];
-  if (!encodedVideo) throw new Error('ComfyUI LTX workflow returned no video');
-  const filename = payload.filenames?.[0];
-  return {
-    url: `data:${mediaType(filename)};base64,${encodedVideo}`,
-    width: dimensions.width,
-    height: dimensions.height,
-    duration: numFrames / fps,
-  };
+  if (response.status !== 202 || !payload.jobId) {
+    throw new Error('ComfyUI LTX workflow did not return a job ID');
+  }
+
+  const jobId = encodeURIComponent(payload.jobId);
+  const deadline = Date.now() + GENERATION_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    const statusResponse = await fetch(`${baseUrl}/video-jobs/${jobId}`, {
+      headers,
+      signal: AbortSignal.timeout(10_000),
+    });
+    const status = (await statusResponse.json()) as LtxJobResponse;
+    if (!statusResponse.ok) {
+      throw new Error(status.error || `LTX-2 job status failed with HTTP ${statusResponse.status}`);
+    }
+    if (status.status === 'failed' || status.status === 'expired') {
+      throw new Error(status.error || `LTX-2 job ${status.status}`);
+    }
+    if (status.status === 'completed') {
+      const resultResponse = await fetch(`${baseUrl}/video-jobs/${jobId}/result`, {
+        headers,
+        signal: AbortSignal.timeout(120_000),
+      });
+      if (!resultResponse.ok) {
+        throw new Error(`LTX-2 result download failed with HTTP ${resultResponse.status}`);
+      }
+      const contentType = resultResponse.headers.get('content-type') || 'video/mp4';
+      const encodedVideo = encodeBase64(await resultResponse.arrayBuffer());
+      return {
+        url: `data:${contentType};base64,${encodedVideo}`,
+        width: dimensions.width,
+        height: dimensions.height,
+        duration: numFrames / fps,
+      };
+    }
+    if (status.status !== 'queued' && status.status !== 'running') {
+      throw new Error('LTX-2 job returned an unknown status');
+    }
+    await wait(POLL_INTERVAL_MS);
+  }
+
+  throw new Error('LTX-2 generation timed out');
 }
