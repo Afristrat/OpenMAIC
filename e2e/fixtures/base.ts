@@ -25,6 +25,18 @@ export const test = base.extend<Fixtures>({
     await page.route('**/api/account/is-admin', (route) =>
       route.fulfill({ status: 200, contentType: 'application/json', body: '{"isAdmin":false}' }),
     );
+    // The authoring home loads the current organisation's catalog on mount.
+    // Keep that background request inside the E2E boundary instead of letting
+    // it reach the deliberately fake Supabase configured by Playwright.
+    // Tests that exercise classroom persistence register a more specific route
+    // afterwards and therefore retain full control of their own fixture.
+    await page.route('**/api/classroom?orgId=*', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: '{"success":true,"classrooms":[]}',
+      }),
+    );
     await use(mockApi);
   },
 });
