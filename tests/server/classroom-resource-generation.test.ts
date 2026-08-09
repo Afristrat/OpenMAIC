@@ -79,13 +79,17 @@ describe('classroom resource generation', () => {
     const detections = new Detector().detect(binarize(luminances, info.width, info.height));
     const decoder = new Decoder();
     let decoded: string | undefined;
-    for (const detection of detections) {
+    let current = detections.next();
+    while (!current.done) {
+      let succeeded = false;
       try {
-        decoded = decoder.decode(detection.matrix).content;
-        break;
+        decoded = decoder.decode(current.value.matrix).content;
+        succeeded = true;
       } catch {
         // A detector may yield geometric candidates that are not QR symbols.
       }
+      if (succeeded) break;
+      current = detections.next(false);
     }
     expect(decoded).toBe(target);
   });
