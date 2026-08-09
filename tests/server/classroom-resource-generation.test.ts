@@ -1,4 +1,5 @@
 import JSZip from 'jszip';
+import { binarize, Decoder, Detector, grayscale } from '@nuintun/qrcode';
 import sharp from 'sharp';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -53,8 +54,9 @@ describe('classroom resource generation', () => {
 
   it('generates the resource QR locally as a real 320px PNG', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    const target = 'https://qalem.ma/Blf5Q';
 
-    const qr = await generateQrPng('https://qalem.ma/Blf5Q');
+    const qr = await generateQrPng(target);
 
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(qr.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
@@ -63,5 +65,28 @@ describe('classroom resource generation', () => {
       width: 320,
       height: 320,
     });
+
+    const { data, info } = await sharp(qr)
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    const luminances = grayscale({
+      data: new Uint8ClampedArray(data),
+      width: info.width,
+      height: info.height,
+      colorSpace: 'srgb',
+    } as ImageData);
+    const detections = new Detector().detect(binarize(luminances, info.width, info.height));
+    const decoder = new Decoder();
+    let decoded: string | undefined;
+    for (const detection of detections) {
+      try {
+        decoded = decoder.decode(detection.matrix).content;
+        break;
+      } catch {
+        // A detector may yield geometric candidates that are not QR symbols.
+      }
+    }
+    expect(decoded).toBe(target);
   });
 });
