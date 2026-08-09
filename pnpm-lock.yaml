@@ -95,6 +95,9 @@ importers:
       '@napi-rs/canvas':
         specifier: ^0.1.88
         version: 0.1.96
+      '@nuintun/qrcode':
+        specifier: ^5.0.3
+        version: 5.0.3
       '@openmaic/dsl':
         specifier: workspace:*
         version: link:packages/@openmaic/dsl
@@ -3228,6 +3231,9 @@ packages:
   '@nolyfill/is-core-module@1.0.39':
     resolution: {integrity: sha512-nn5ozdjYQpUCZlWGuxcJY/KpxkWQs4DcbMCmKojjyrYDEAGy4Ce19NN4v5MduafTwJlbKc99UA8YhSVqq9yPZA==}
     engines: {node: '>=12.4.0'}
+
+  '@nuintun/qrcode@5.0.3':
+    resolution: {integrity: sha512-eKxU05NO2A5ycOiAKu9XKaf5akfR0wJHgjBvy4Wgy2dOgBjMh58IHz8gvMwS2IBiqWq63ITntuzP/iuVA2wOHg==}
 
   '@oclif/core@4.8.4':
     resolution: {integrity: sha512-UTAqwXJJyRvLBvosL+1uPZYSpr8lEHgUb/EVGbPXo5WZqUIBHfJ0sR2bkBEsrj00/ar4IegKxx4YK0wn2c8SQg==}
@@ -16312,6 +16318,10 @@ snapshots:
       fastq: 1.20.1
 
   '@nolyfill/is-core-module@1.0.39': {}
+
+  '@nuintun/qrcode@5.0.3':
+    dependencies:
+      tslib: 2.8.1
 
   '@oclif/core@4.8.4':
     dependencies:
