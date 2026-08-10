@@ -22,11 +22,24 @@ describe('slide insert palette', () => {
   beforeEach(seedEmptySlideSession);
   afterEach(() => vi.restoreAllMocks());
 
-  it('exposes a text-box and an image insert item', () => {
+  it('exposes text, uploaded image, AI image and background items', () => {
     const items = buildInsertItems((k) => k, undefined);
-    expect(items.map((i) => i.id)).toEqual(['insert-text', 'insert-image', 'slide-background']);
+    expect(items.map((i) => i.id)).toEqual([
+      'insert-text',
+      'insert-image',
+      'insert-ai-image',
+      'slide-background',
+    ]);
     expect(items[1].popoverContent).toBeTypeOf('function');
     expect(items[0].onInvoke).toBeTypeOf('function');
+  });
+
+  it('AI image invoke arms and disarms zone selection', () => {
+    const spy = vi.spyOn(useCanvasStore.getState(), 'setCreatingElement');
+    buildInsertItems((k) => k, undefined)[2].onInvoke();
+    expect(spy).toHaveBeenLastCalledWith({ type: 'ai-image' });
+    buildInsertItems((k) => k, 'ai-image')[2].onInvoke();
+    expect(spy).toHaveBeenLastCalledWith(null);
   });
 
   it('text-box invoke arms text-insertion (sets creatingElement)', () => {
