@@ -298,6 +298,9 @@ describe('media prompt condition wiring', () => {
 
     expect(capturedPrompt).toContain('REQUIRED SOURCE IMAGE');
     expect(capturedPrompt).toContain('img_source_1');
+    expect(capturedPrompt).toContain('two-column composition');
+    expect(capturedPrompt).toContain('x=560, y=150, width=380, height=300');
+    expect(capturedPrompt).toContain('Do not add a table, chart, or another media element');
     expect(result).not.toBeNull();
     if (!result || !('elements' in result)) {
       throw new Error('Expected generated slide content');

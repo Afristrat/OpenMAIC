@@ -976,7 +976,8 @@ async function generateSlideContent(
     userPrompt +=
       `\n\n## REQUIRED SOURCE IMAGE\n` +
       `Include at least one image element whose src is exactly one of these approved source image IDs: ${requiredSourceImageIds.map((id) => `"${id}"`).join(', ')}. ` +
-      `Choose the most instructionally relevant image and place it legibly without overlap.`;
+      `Use a restrained two-column composition: keep the title above y=110; place all body text only in the left column from x=60 to x=500 and below y=130; place the source image in the right column at x=560, y=150, width=380, height=300. ` +
+      `Do not add a table, chart, or another media element on this slide. Keep every element fully inside the 1000 by 562.5 canvas and leave clear space between columns.`;
   }
 
   const response = await aiCall(prompts.system, userPrompt, visionImages);
