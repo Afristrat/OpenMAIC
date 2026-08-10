@@ -4,7 +4,9 @@ import { createStageAPI } from '@/lib/api/stage-api';
 import type { StageStore } from '@/lib/api/stage-api-types';
 import {
   applyOutlineFallbacks,
+  extractRequestedSceneCount,
   generateSceneOutlinesFromRequirements,
+  isSceneCountMismatch,
 } from '@/lib/generation/outline-generator';
 import {
   createSceneWithActions,
@@ -461,7 +463,8 @@ export async function generateClassroom(
     scenesGenerated: 0,
   });
 
-  const outlinesResult = input.approvedPlan
+  const expectedSceneCount = extractRequestedSceneCount(input.requirement);
+  let outlinesResult = input.approvedPlan
     ? { success: true as const, data: input.approvedPlan }
     : await generateSceneOutlinesFromRequirements(
         requirements,
@@ -474,13 +477,41 @@ export async function generateClassroom(
           videoGenerationEnabled: input.enableVideoGeneration,
           researchContext,
           skillEngineEnabled,
+          expectedSceneCount,
           // NO teacherContext — agents haven't been generated yet
         },
       );
 
+  if (!input.approvedPlan && expectedSceneCount && isSceneCountMismatch(outlinesResult.error)) {
+    outlinesResult = await generateSceneOutlinesFromRequirements(
+      {
+        ...requirements,
+        requirement: `${requirements.requirement}\n\nAUTHORITATIVE CORRECTION: Return exactly ${expectedSceneCount} complete, semantically coherent scene outlines. Redesign the plan as needed. Do not truncate an existing plan.`,
+      },
+      pdfText,
+      pdfImages,
+      aiCall,
+      undefined,
+      {
+        imageGenerationEnabled: input.enableImageGeneration,
+        videoGenerationEnabled: input.enableVideoGeneration,
+        researchContext,
+        skillEngineEnabled,
+        expectedSceneCount,
+      },
+    );
+  }
+
   if (!outlinesResult.success || !outlinesResult.data) {
     log.error('Failed to generate outlines:', outlinesResult.error);
     throw new Error(outlinesResult.error || 'Failed to generate scene outlines');
+  }
+
+  if (expectedSceneCount && outlinesResult.data.outlines.length !== expectedSceneCount) {
+    const actualSceneLabel = outlinesResult.data.outlines.length === 1 ? 'scene' : 'scenes';
+    throw new Error(
+      `The approved classroom plan contains ${outlinesResult.data.outlines.length} ${actualSceneLabel}, but the author explicitly requested ${expectedSceneCount}.`,
+    );
   }
 
   const { languageDirective, courseTitle, outlines } = outlinesResult.data;

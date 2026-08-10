@@ -30,6 +30,8 @@ vi.mock('@/lib/ai/llm', () => ({
 vi.mock('@/lib/generation/outline-generator', () => ({
   generateSceneOutlinesFromRequirements: mocks.generateSceneOutlinesFromRequirements,
   applyOutlineFallbacks: mocks.applyOutlineFallbacks,
+  extractRequestedSceneCount: vi.fn(() => undefined),
+  isSceneCountMismatch: vi.fn(() => false),
 }));
 
 vi.mock('@/lib/generation/scene-generator', () => ({

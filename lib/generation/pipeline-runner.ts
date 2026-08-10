@@ -6,7 +6,11 @@
 import { nanoid } from 'nanoid';
 import type { UserRequirements, GenerationSession } from '@/lib/types/generation';
 import type { StageStore } from '@/lib/api/stage-api';
-import { generateSceneOutlinesFromRequirements } from './outline-generator';
+import {
+  extractRequestedSceneCount,
+  generateSceneOutlinesFromRequirements,
+  isSceneCountMismatch,
+} from './outline-generator';
 import { generateFullScenes } from './scene-generator';
 import type { AICallFn, GenerationResult, GenerationCallbacks } from './pipeline-types';
 
@@ -42,13 +46,28 @@ export async function runGenerationPipeline(
       statusMessage: 'Analyzing requirements, generating outlines...',
     });
 
-    const outlinesResult = await generateSceneOutlinesFromRequirements(
+    const expectedSceneCount = extractRequestedSceneCount(session.requirements.requirement);
+    let outlinesResult = await generateSceneOutlinesFromRequirements(
       session.requirements,
       undefined, // No PDF text in this flow
       undefined, // No PDF images in this flow
       aiCall,
       callbacks,
+      { expectedSceneCount },
     );
+    if (expectedSceneCount && isSceneCountMismatch(outlinesResult.error)) {
+      outlinesResult = await generateSceneOutlinesFromRequirements(
+        {
+          ...session.requirements,
+          requirement: `${session.requirements.requirement}\n\nAUTHORITATIVE CORRECTION: Return exactly ${expectedSceneCount} complete, semantically coherent scene outlines. Redesign the plan as needed. Do not truncate an existing plan.`,
+        },
+        undefined,
+        undefined,
+        aiCall,
+        callbacks,
+        { expectedSceneCount },
+      );
+    }
     if (!outlinesResult.success || !outlinesResult.data) {
       throw new Error(outlinesResult.error || 'Failed to generate scene outlines');
     }

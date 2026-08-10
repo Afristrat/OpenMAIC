@@ -88,6 +88,97 @@ function normalizeSyllabus(
 export const DEFAULT_LANGUAGE_DIRECTIVE =
   'Teach in the language that matches the user requirement.';
 
+export const SCENE_COUNT_MISMATCH_CODE = 'SCENE_COUNT_MISMATCH';
+
+const NUMBER_WORDS: Readonly<Record<string, number>> = {
+  un: 1,
+  une: 1,
+  deux: 2,
+  trois: 3,
+  quatre: 4,
+  cinq: 5,
+  six: 6,
+  sept: 7,
+  huit: 8,
+  neuf: 9,
+  dix: 10,
+  onze: 11,
+  douze: 12,
+  treize: 13,
+  quatorze: 14,
+  quinze: 15,
+  seize: 16,
+  'dix-sept': 17,
+  'dix-huit': 18,
+  'dix-neuf': 19,
+  vingt: 20,
+  one: 1,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  seven: 7,
+  eight: 8,
+  nine: 9,
+  ten: 10,
+  eleven: 11,
+  twelve: 12,
+  thirteen: 13,
+  fourteen: 14,
+  fifteen: 15,
+  sixteen: 16,
+  seventeen: 17,
+  eighteen: 18,
+  nineteen: 19,
+  twenty: 20,
+  واحد: 1,
+  واحدة: 1,
+  اثنان: 2,
+  اثنتان: 2,
+  ثلاثة: 3,
+  أربع: 4,
+  خمسة: 5,
+  ستة: 6,
+  سبعة: 7,
+  ثمانية: 8,
+  تسعة: 9,
+  عشرة: 10,
+  أحدعشر: 11,
+  اثناعشر: 12,
+};
+
+function parseSceneCountToken(token: string): number | undefined {
+  const normalizedDigits = token.replace(/[٠-٩]/g, (digit) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(digit)));
+  const numeric = Number.parseInt(normalizedDigits, 10);
+  if (Number.isInteger(numeric)) return numeric;
+  return NUMBER_WORDS[token.toLocaleLowerCase('fr-FR')];
+}
+
+/** Extracts only an explicit author-specified number attached to a scene-like unit. */
+export function extractRequestedSceneCount(requirement: string): number | undefined {
+  const numberToken =
+    '(?:[1-9]|[1-9][0-9]|100|[٠-٩]{1,3}|un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|dix-sept|dix-huit|dix-neuf|vingt|one|two|three|four|five|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|واحد|واحدة|اثنان|اثنتان|ثلاثة|أربع|خمسة|ستة|سبعة|ثمانية|تسعة|عشرة|أحدعشر|اثناعشر)';
+  const unit =
+    '(?:diapositives?|slides?|sc[eè]nes?|s[eé]quences?|شريحة|شرائح|مشهد|مشاهد|تسلسل|تسلسلات)';
+  const patterns = [
+    new RegExp(`(?:exactement|exactly|pr[eé]cis[eé]ment)\\s+(${numberToken})\\s+${unit}`, 'iu'),
+    new RegExp(`\\b(${numberToken})\\s+${unit}\\b`, 'iu'),
+    new RegExp(`(${numberToken})\\s+${unit}`, 'iu'),
+  ];
+
+  for (const pattern of patterns) {
+    const match = requirement.match(pattern);
+    if (!match?.[1]) continue;
+    const count = parseSceneCountToken(match[1]);
+    if (count && count <= 100) return count;
+  }
+  return undefined;
+}
+
+export function isSceneCountMismatch(error: string | undefined): boolean {
+  return error?.startsWith(`${SCENE_COUNT_MISMATCH_CODE}:`) ?? false;
+}
+
 /**
  * Generate scene outlines from user requirements
  * Now uses simplified UserRequirements with just requirement text and language
@@ -106,6 +197,7 @@ export async function generateSceneOutlinesFromRequirements(
     researchContext?: string;
     teacherContext?: string;
     skillEngineEnabled?: boolean;
+    expectedSceneCount?: number;
   },
 ): Promise<GenerationResult<ClassroomPlan>> {
   // Build available images description for the prompt
@@ -225,6 +317,16 @@ export async function generateSceneOutlinesFromRequirements(
 
     if (!Array.isArray(rawOutlines)) {
       return { success: false, error: 'Failed to parse scene outlines response' };
+    }
+
+    if (
+      options?.expectedSceneCount !== undefined &&
+      rawOutlines.length !== options.expectedSceneCount
+    ) {
+      return {
+        success: false,
+        error: `${SCENE_COUNT_MISMATCH_CODE}: requested ${options.expectedSceneCount}, received ${rawOutlines.length}`,
+      };
     }
 
     // Ensure IDs and order

@@ -5,6 +5,8 @@ const mocks = vi.hoisted(() => ({
   isProviderKeyRequired: vi.fn(),
   generateSceneOutlinesFromRequirements: vi.fn(),
   applyOutlineFallbacks: vi.fn(),
+  extractRequestedSceneCount: vi.fn(),
+  isSceneCountMismatch: vi.fn(),
   generateSceneContent: vi.fn(),
   generateSceneActions: vi.fn(),
   createSceneWithActions: vi.fn(),
@@ -31,6 +33,8 @@ vi.mock('@/lib/ai/llm', () => ({
 vi.mock('@/lib/generation/outline-generator', () => ({
   generateSceneOutlinesFromRequirements: mocks.generateSceneOutlinesFromRequirements,
   applyOutlineFallbacks: mocks.applyOutlineFallbacks,
+  extractRequestedSceneCount: mocks.extractRequestedSceneCount,
+  isSceneCountMismatch: mocks.isSceneCountMismatch,
 }));
 
 vi.mock('@/lib/generation/scene-generator', () => ({
@@ -134,6 +138,8 @@ describe('classroom scene generation retries', () => {
     });
     mocks.isProviderKeyRequired.mockReturnValue(false);
     mocks.callLLM.mockResolvedValue({ text: 'ok' });
+    mocks.extractRequestedSceneCount.mockReturnValue(undefined);
+    mocks.isSceneCountMismatch.mockReturnValue(false);
     mocks.generateSceneOutlinesFromRequirements.mockResolvedValue({
       success: true,
       data: {
@@ -191,6 +197,23 @@ describe('classroom scene generation retries', () => {
     expect(progress.some((event) => event.message.includes('Retrying scene 1/1 content'))).toBe(
       true,
     );
+  });
+
+  it('rejects an approved plan that violates the explicit author scene count', async () => {
+    mocks.extractRequestedSceneCount.mockReturnValue(2);
+
+    await expect(
+      generateWithProgress({
+        requirement: 'Create exactly 2 slides.',
+        approvedPlan: {
+          languageDirective: 'Use English.',
+          outlines: [outline],
+        },
+      }),
+    ).rejects.toThrow(
+      'The approved classroom plan contains 1 scene, but the author explicitly requested 2.',
+    );
+    expect(mocks.generateSceneContent).not.toHaveBeenCalled();
   });
 
   it('fails instead of silently skipping any required scene', async () => {

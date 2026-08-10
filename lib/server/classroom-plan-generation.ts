@@ -7,7 +7,11 @@ import {
   DEFAULT_LEARNING_CONTEXT,
   normalizeLearningContext,
 } from '@/lib/formation-engine/learning-context';
-import { generateSceneOutlinesFromRequirements } from '@/lib/generation/outline-generator';
+import {
+  extractRequestedSceneCount,
+  generateSceneOutlinesFromRequirements,
+  isSceneCountMismatch,
+} from '@/lib/generation/outline-generator';
 import type { AICallFn } from '@/lib/generation/pipeline-types';
 import { DEFAULT_LEARNING_DESIGN, learningDesignFromSettings } from '@/lib/agents/persona-catalog';
 import { resolveModel } from '@/lib/server/resolve-model';
@@ -81,18 +85,30 @@ export async function generateClassroomPlan(input: GenerateClassroomInput) {
     await assertSourceMaterialAlignment(input.requirement, input.pdfContent.text, aiCall);
   }
 
-  const result = await generateSceneOutlinesFromRequirements(
-    requirements,
-    input.pdfContent?.text || undefined,
-    normalizePdfImages(input.pdfContent),
-    aiCall,
-    undefined,
-    {
-      imageGenerationEnabled: input.enableImageGeneration,
-      videoGenerationEnabled: input.enableVideoGeneration,
-      skillEngineEnabled: await isFeatureEnabled('skill_engine'),
-    },
-  );
+  const expectedSceneCount = extractRequestedSceneCount(input.requirement);
+  const generationOptions = {
+    imageGenerationEnabled: input.enableImageGeneration,
+    videoGenerationEnabled: input.enableVideoGeneration,
+    skillEngineEnabled: await isFeatureEnabled('skill_engine'),
+    expectedSceneCount,
+  };
+  const generatePlan = (nextRequirements: typeof requirements) =>
+    generateSceneOutlinesFromRequirements(
+      nextRequirements,
+      input.pdfContent?.text || undefined,
+      normalizePdfImages(input.pdfContent),
+      aiCall,
+      undefined,
+      generationOptions,
+    );
+
+  let result = await generatePlan(requirements);
+  if (expectedSceneCount && isSceneCountMismatch(result.error)) {
+    result = await generatePlan({
+      ...requirements,
+      requirement: `${requirements.requirement}\n\nAUTHORITATIVE CORRECTION: Return exactly ${expectedSceneCount} complete, semantically coherent scene outlines. Redesign the plan as needed. Do not truncate an existing plan.`,
+    });
+  }
   if (!result.success || !result.data) {
     throw new Error(result.error || 'Failed to generate classroom plan');
   }
