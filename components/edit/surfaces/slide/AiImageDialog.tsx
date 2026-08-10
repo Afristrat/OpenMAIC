@@ -87,12 +87,12 @@ export function AiImageDialog() {
 
   return (
     <Dialog open={Boolean(target)} onOpenChange={(open) => !open && close()}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{t('edit.image.aiTitle')}</DialogTitle>
           <DialogDescription>{t('edit.image.aiDescription')}</DialogDescription>
         </DialogHeader>
-        <div className="space-y-2">
+        <div className="min-h-0 space-y-2 overflow-y-auto pe-1">
           <label htmlFor="editor-image-prompt" className="text-sm font-medium">
             {t('edit.image.aiPrompt')}
           </label>
@@ -102,6 +102,7 @@ export function AiImageDialog() {
             onChange={(event) => setPrompt(event.target.value)}
             rows={12}
             disabled={generating}
+            className="min-h-40 max-h-[45dvh] resize-y"
           />
           <p className="text-xs text-muted-foreground">{t('edit.image.aiTranscriptHint')}</p>
         </div>
