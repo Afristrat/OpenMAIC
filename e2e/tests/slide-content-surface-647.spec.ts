@@ -92,5 +92,41 @@ test.describe('Slide content surface (#647)', () => {
       body: await page.screenshot(),
       contentType: 'image/png',
     });
+    await page.keyboard.press('Escape');
+
+    // --- AI image zone: draw a target rectangle, review the narration-grounded
+    // prompt, then insert the generated image into that exact zone.
+    let submittedPrompt = '';
+    await page.route('**/api/generate/image', async (route) => {
+      const body = route.request().postDataJSON() as { prompt?: string };
+      submittedPrompt = body.prompt ?? '';
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          result: {
+            url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+          },
+        }),
+      });
+    });
+    await page.getByRole('button', { name: 'Draw the area for the new image' }).click();
+    const viewport = page.locator('.viewport').first();
+    const viewportBox = await viewport.boundingBox();
+    expect(viewportBox).not.toBeNull();
+    await page.mouse.move((viewportBox?.x ?? 0) + 300, (viewportBox?.y ?? 0) + 180);
+    await page.mouse.down();
+    await page.mouse.move((viewportBox?.x ?? 0) + 520, (viewportBox?.y ?? 0) + 320);
+    await page.mouse.up();
+
+    await expect(page.getByRole('dialog')).toContainText('Create an image from the narration');
+    const imagePrompt = page.getByLabel('Generation prompt');
+    await expect(imagePrompt).not.toHaveValue('');
+    await imagePrompt.fill(`${await imagePrompt.inputValue()}\nUse a clear process diagram.`);
+    await page.getByRole('button', { name: 'Generate and insert' }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    expect(submittedPrompt).toContain('Use a clear process diagram.');
+    await expect(page.locator('.editable-element-image')).toHaveCount(1);
   });
 });
