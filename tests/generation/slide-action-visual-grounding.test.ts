@@ -35,7 +35,9 @@ const content: GeneratedSlideContent = {
       width: 260,
       height: 260,
       rotate: 0,
-      shape: 'rect',
+      path: 'M 0 0 L 1 0 L 1 1 L 0 1 Z',
+      viewBox: [1, 1],
+      fixedRatio: false,
       fill: '#ffff00',
     },
   ],
@@ -110,6 +112,7 @@ describe('slide action visual grounding', () => {
           width: 300,
           height: 240,
           rotate: 0,
+          fixedRatio: true,
         },
       ],
     };

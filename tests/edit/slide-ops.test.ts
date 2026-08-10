@@ -88,6 +88,7 @@ describe('applySlideEditOperation', () => {
       width: 360,
       height: 240,
       rotate: 0,
+      fixedRatio: true,
     };
 
     const updated = applySlideEditOperation(original, {

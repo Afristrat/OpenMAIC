@@ -166,15 +166,20 @@ export function applyGeneratedImage(
   const id = target.element?.id ?? createElementId('image');
   const base = createDefaultImageElement(id, src);
   const geometry = target.element ?? target.rect;
+  const numericGeometry = (key: 'left' | 'top' | 'width' | 'height' | 'rotate', fallback: number) => {
+    if (!geometry || !(key in geometry)) return fallback;
+    const value = geometry[key as keyof typeof geometry];
+    return typeof value === 'number' ? value : fallback;
+  };
   const element: PPTImageElement = {
     ...base,
     ...(geometry
       ? {
-          left: geometry.left,
-          top: geometry.top,
-          width: geometry.width,
-          height: geometry.height,
-          rotate: 'rotate' in geometry ? geometry.rotate : 0,
+          left: numericGeometry('left', base.left),
+          top: numericGeometry('top', base.top),
+          width: numericGeometry('width', base.width),
+          height: numericGeometry('height', base.height),
+          rotate: numericGeometry('rotate', 0),
         }
       : {}),
     src,
