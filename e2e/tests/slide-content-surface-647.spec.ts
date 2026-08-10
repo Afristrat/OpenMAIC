@@ -112,20 +112,24 @@ test.describe('Slide content surface (#647)', () => {
       });
     });
     await page.getByRole('button', { name: 'AI image', exact: true }).click();
-    const viewport = page.locator('.viewport').first();
-    const viewportBox = await viewport.boundingBox();
-    expect(viewportBox).not.toBeNull();
-    await page.mouse.move((viewportBox?.x ?? 0) + 300, (viewportBox?.y ?? 0) + 180);
+    const createLayer = page.locator('.element-create-selection');
+    await expect(createLayer).toBeVisible();
+    const createBox = await createLayer.boundingBox();
+    expect(createBox).not.toBeNull();
+    await page.mouse.move((createBox?.x ?? 0) + 300, (createBox?.y ?? 0) + 180);
     await page.mouse.down();
-    await page.mouse.move((viewportBox?.x ?? 0) + 520, (viewportBox?.y ?? 0) + 320);
+    await page.mouse.move((createBox?.x ?? 0) + 520, (createBox?.y ?? 0) + 320);
     await page.mouse.up();
 
-    await expect(page.getByRole('dialog')).toContainText('Create an image from the narration');
+    const imageDialogTitle = page.getByRole('heading', {
+      name: 'Create an image from the narration',
+    });
+    await expect(imageDialogTitle).toBeVisible();
     const imagePrompt = page.getByLabel('Generation prompt');
     await expect(imagePrompt).not.toHaveValue('');
     await imagePrompt.fill(`${await imagePrompt.inputValue()}\nUse a clear process diagram.`);
     await page.getByRole('button', { name: 'Generate and insert' }).click();
-    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(imageDialogTitle).toHaveCount(0);
     expect(submittedPrompt).toContain('Use a clear process diagram.');
     await expect(page.locator('.editable-element-image')).toHaveCount(1);
   });
