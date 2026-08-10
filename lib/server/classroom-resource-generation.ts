@@ -18,6 +18,11 @@ interface WorkbookSpec {
   sheets: Array<{ name: string; rows: CellValue[][] }>;
 }
 
+export interface DocumentSpec {
+  title: string;
+  sections: Array<{ heading: string; paragraphs: string[]; bulletPoints?: string[] }>;
+}
+
 const MAX_SHEETS = 5;
 const MAX_ROWS = 500;
 const MAX_COLUMNS = 50;
@@ -50,15 +55,15 @@ function xml(value: string): string {
     .replaceAll("'", '&apos;');
 }
 
-function safeFileName(value: string): string {
+function safeFileName(value: string, format: ResourceGenerationRequest['format']): string {
   const stem = value
-    .replace(/\.xlsx$/i, '')
+    .replace(/\.(?:xlsx|docx)$/i, '')
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-zA-Z0-9._-]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 80);
-  return `${stem || 'ressource'}.xlsx`;
+  return `${stem || 'ressource'}.${format}`;
 }
 
 function normalizeWorkbook(input: WorkbookSpec): WorkbookSpec {
@@ -144,6 +149,49 @@ export async function buildXlsx(spec: WorkbookSpec): Promise<Buffer> {
   return zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
 }
 
+function wordParagraph(text: string, style?: 'Title' | 'Heading1'): string {
+  const styleXml = style ? `<w:pPr><w:pStyle w:val="${style}"/></w:pPr>` : '';
+  return `<w:p>${styleXml}<w:r><w:t xml:space="preserve">${xml(text)}</w:t></w:r></w:p>`;
+}
+
+export async function buildDocx(spec: DocumentSpec): Promise<Buffer> {
+  if (!spec.title?.trim() || !Array.isArray(spec.sections) || spec.sections.length === 0) {
+    throw new Error('Document generation returned no usable content');
+  }
+  const sections = spec.sections.slice(0, 30);
+  const body = [
+    wordParagraph(spec.title.trim().slice(0, 500), 'Title'),
+    ...sections.flatMap((section) => [
+      wordParagraph(
+        String(section.heading || '')
+          .trim()
+          .slice(0, 500),
+        'Heading1',
+      ),
+      ...(Array.isArray(section.paragraphs) ? section.paragraphs : [])
+        .slice(0, 100)
+        .map((paragraph) => wordParagraph(String(paragraph).slice(0, MAX_CELL_LENGTH))),
+      ...(Array.isArray(section.bulletPoints) ? section.bulletPoints : [])
+        .slice(0, 100)
+        .map((item) => wordParagraph(`• ${String(item).slice(0, MAX_CELL_LENGTH)}`)),
+    ]),
+  ].join('');
+  const zip = new JSZip();
+  zip.file(
+    '[Content_Types].xml',
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>',
+  );
+  zip.file(
+    '_rels/.rels',
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>',
+  );
+  zip.file(
+    'word/document.xml',
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${body}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/></w:sectPr></w:body></w:document>`,
+  );
+  return zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
+}
+
 export async function generateWorkbookSpec(
   request: ResourceGenerationRequest,
   languageDirective: string,
@@ -168,6 +216,20 @@ export async function generateWorkbookSpec(
     }
   }
   throw lastError ?? new Error(`Resource generation failed for ${request.id}`);
+}
+
+async function generateDocumentSpec(
+  request: ResourceGenerationRequest,
+  languageDirective: string,
+  aiCall: AICallFn,
+): Promise<DocumentSpec> {
+  const system = `You generate a complete, editable learning document as strict JSON. Return {"title":"...","sections":[{"heading":"...","paragraphs":["..."],"bulletPoints":["..."]}]}. Include all instructions, templates, examples and learner work areas needed to use the resource immediately. Maximum 30 sections and 100 paragraphs or bullet points per section. Do not return markdown or commentary.`;
+  const user = `Language directive: ${languageDirective}\nResource title: ${request.title}\nCreate the document requested between the markers.\n<<<RESOURCE_REQUEST\n${request.prompt}\nRESOURCE_REQUEST>>>`;
+  const parsed = parseJsonResponse<DocumentSpec>(await aiCall(system, user));
+  if (!parsed?.title || !Array.isArray(parsed.sections) || parsed.sections.length === 0) {
+    throw new Error(`Document generation returned invalid JSON for ${request.id}`);
+  }
+  return parsed;
 }
 
 export async function generateQrPng(url: string): Promise<Buffer> {
@@ -236,17 +298,20 @@ export async function generateResourcesForClassroom(
   for (const outline of outlines) {
     const resources: GeneratedLearningResource[] = [];
     for (const request of outline.resourceGenerations ?? []) {
-      if (request.format !== 'xlsx')
-        throw new Error(`Unsupported resource format: ${request.format}`);
       if (!/^[a-zA-Z0-9_-]+$/.test(request.id))
         throw new Error(`Invalid resource id: ${request.id}`);
       if (seenIds.has(request.id)) throw new Error(`Duplicate resource id: ${request.id}`);
       seenIds.add(request.id);
-      const fileName = safeFileName(request.fileName);
-      const workbook = await buildXlsx(
-        await generateWorkbookSpec(request, languageDirective, aiCall),
+      const fileName = safeFileName(request.fileName, request.format);
+      const resource =
+        request.format === 'xlsx'
+          ? await buildXlsx(await generateWorkbookSpec(request, languageDirective, aiCall))
+          : await buildDocx(await generateDocumentSpec(request, languageDirective, aiCall));
+      await uploadClassroomMedia(
+        classroomId,
+        `resources/${request.id}.${request.format}`,
+        resource,
       );
-      await uploadClassroomMedia(classroomId, `resources/${request.id}.xlsx`, workbook);
       const shortCode = await reserveShortLink({
         classroomId,
         resourceId: request.id,
@@ -257,7 +322,7 @@ export async function generateResourcesForClassroom(
       await uploadClassroomMedia(classroomId, `resources/${request.id}-qr.png`, qr);
       resources.push({
         id: request.id,
-        format: 'xlsx',
+        format: request.format,
         title: request.title,
         fileName,
         downloadUrl,

@@ -3,6 +3,7 @@ import { binarize, Decoder, Detector, grayscale } from '@nuintun/qrcode';
 import sharp from 'sharp';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  buildDocx,
   buildXlsx,
   createResourceShortCode,
   generateWorkbookSpec,
@@ -74,6 +75,28 @@ describe('classroom resource generation', () => {
     ).resolves.toEqual({ sheets: [{ name: 'Exercice', rows: [['Action']] }] });
     expect(aiCall).toHaveBeenCalledTimes(2);
     expect(aiCall.mock.calls[1]?.[1]).toContain('previous response was structurally invalid');
+  });
+
+  it('construit un vrai DOCX Unicode structuré et modifiable', async () => {
+    const document = await buildDocx({
+      title: 'Fiche d’exercice SIPOC',
+      sections: [
+        {
+          heading: 'Consigne',
+          paragraphs: ['Cartographiez le processus étudié.'],
+          bulletPoints: ['Fournisseurs', 'Entrées', 'Processus', 'Sorties', 'Clients'],
+        },
+      ],
+    });
+
+    expect(document.subarray(0, 2).toString()).toBe('PK');
+    const zip = await JSZip.loadAsync(document);
+    const contentTypes = await zip.file('[Content_Types].xml')!.async('string');
+    const body = await zip.file('word/document.xml')!.async('string');
+    expect(contentTypes).toContain('wordprocessingml.document.main+xml');
+    expect(body).toContain('Fiche d’exercice SIPOC');
+    expect(body).toContain('Cartographiez le processus étudié.');
+    expect(body).toContain('Fournisseurs');
   });
 
   it('generates the resource QR locally as a real 320px PNG', async () => {

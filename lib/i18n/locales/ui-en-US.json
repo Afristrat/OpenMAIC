@@ -227,7 +227,7 @@
   "edit.image.aiCreateZone": "Draw the area for the new image",
   "edit.image.aiReplace": "Regenerate this element as an image",
   "edit.image.aiTitle": "Create an image from the narration",
-  "edit.image.aiDescription": "Qalem prepared a prompt from this slide's transcript. Edit it if needed before generating.",
+  "edit.image.aiDescription": "Qalem distils the teaching idea and prepares a visual fitted to the selected area. Edit the brief if needed before generating.",
   "edit.image.aiPrompt": "Generation prompt",
   "edit.image.aiTranscriptHint": "The visual will replace the selected object or fill the exact area you draw.",
   "edit.image.aiGenerate": "Generate and insert",

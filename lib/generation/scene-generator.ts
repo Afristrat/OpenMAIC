@@ -1658,7 +1658,7 @@ export async function generateSceneActions(
           prompts.system,
           visualGroundingInstruction,
           groundingFeedback
-            ? `Your previous output was rejected: ${groundingFeedback}\nRegenerate the complete action sequence without claiming that an absent visual is shown.`
+            ? `Your previous output was rejected: ${groundingFeedback}\nRegenerate the complete action sequence without claiming that an absent visual or downloadable resource exists.`
             : '',
         ]
           .filter(Boolean)
@@ -1668,7 +1668,9 @@ export async function generateSceneActions(
           outline.type,
         );
         processed = processActions(actions, content.elements, agents);
-        const issue = findUngroundedVisualClaim(processed, content.elements);
+        const issue =
+          findUngroundedVisualClaim(processed, content.elements) ??
+          findUngroundedResourceClaim(processed, outline.generatedResources?.length ?? 0);
         if (!issue) break;
         groundingFeedback = issue;
         processed = [];
@@ -1997,6 +1999,12 @@ const VISUAL_CLAIM_RULES: Array<{
     elementTypes: ['video'],
   },
   {
+    label: 'image',
+    pattern:
+      /\b(?:cette|une) (?:image|illustration|photo)\b|\bl['’](?:image|illustration)\b|\bthis (?:image|illustration|photo)\b|\bthe (?:image|illustration|photo) (?:shown|displayed)\b/iu,
+    elementTypes: ['image'],
+  },
+  {
     label: 'schéma',
     pattern:
       /\b(?:ce|le|un) sch[ée]ma\b|\b(?:ce|le|un) diagramme\b|\bthis diagram\b|\bthe diagram (?:shown|displayed)\b/iu,
@@ -2020,6 +2028,18 @@ function findUngroundedVisualClaim(actions: Action[], elements: PPTElement[]): s
     }
   }
   return null;
+}
+
+function findUngroundedResourceClaim(actions: Action[], resourceCount: number): string | null {
+  if (resourceCount > 0) return null;
+  const claimPattern =
+    /\b(?:télécharg\w*|telecharg\w*|download\w*|QR\s*code|lien\s+court|short\s+link)\b|\b(?:fichier|document|workbook|worksheet)\b.{0,50}\b(?:disponible|joint|fourni|ready|available)\b/iu;
+  const offending = actions.find(
+    (action) => action.type === 'speech' && claimPattern.test(action.text),
+  );
+  return offending?.type === 'speech'
+    ? `The narration promises a downloadable resource, but this scene has no generated resource. Offending speech: "${offending.text}"`
+    : null;
 }
 
 /**

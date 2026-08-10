@@ -242,12 +242,15 @@ Leave **both unset** for ordinary build-an-artefact PBL projects (this is the de
 
 When a learner genuinely needs a reusable workbook to complete an exercise, apply a method, or transfer the lesson to work, add a `resourceGenerations` entry to the relevant slide. The resource is not decorative: it must contain complete, usable data and instructions.
 
-- Supported format: `xlsx`.
+- Supported formats: `xlsx` for calculation sheets, tables and reusable workbooks; `docx` for editable instructions, worksheets, checklists, templates and written exercises.
 - Generate at most two resources per course.
 - Never mention a downloadable file in a title, description, or key point unless a matching `resourceGenerations` entry exists on that scene.
+- Treat every promised file, exercise sheet, template, workbook, document, short link or QR code as an executable obligation. Create the matching `resourceGenerations` entry before writing that promise. If no real resource is needed, omit the promise entirely.
+- When narration will tell the learner to inspect an image, diagram or schema, schedule a suitable source image, generated image, native chart or native table in that same scene. Never describe a visual that the scene does not actually contain.
 - Use a globally unique id such as `resource_1`.
-- `fileName` must end in `.xlsx`.
-- `prompt` must specify the workbook sheets, columns, useful example data, formulas if needed, and the learner task precisely enough to generate a production-ready workbook.
+- `fileName` must end in the extension matching `format`.
+- For `xlsx`, `prompt` must specify the workbook sheets, columns, useful example data, formulas if needed, and the learner task precisely enough to generate a production-ready workbook.
+- For `docx`, `prompt` must specify the required sections, instructions, examples, prompts and learner work areas precisely enough to generate a complete editable document.
 
 ```json
 "resourceGenerations": [

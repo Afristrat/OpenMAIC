@@ -227,7 +227,7 @@
   "edit.image.aiCreateZone": "Dessiner la zone de la future image",
   "edit.image.aiReplace": "Régénérer cet élément en image",
   "edit.image.aiTitle": "Créer l’image depuis la narration",
-  "edit.image.aiDescription": "Qalem a préparé un prompt à partir de la transcription de cette diapositive. Corrigez-le si nécessaire avant de générer.",
+  "edit.image.aiDescription": "Qalem synthétise l’idée pédagogique et prépare un visuel adapté à la zone choisie. Corrigez le brief si nécessaire avant de générer.",
   "edit.image.aiPrompt": "Prompt de génération",
   "edit.image.aiTranscriptHint": "Le visuel remplacera l’objet sélectionné ou occupera exactement la zone dessinée.",
   "edit.image.aiGenerate": "Générer et insérer",

@@ -227,7 +227,7 @@
   "edit.image.aiCreateZone": "ارسم مساحة الصورة الجديدة",
   "edit.image.aiReplace": "إعادة إنشاء هذا العنصر كصورة",
   "edit.image.aiTitle": "إنشاء صورة انطلاقا من السرد",
-  "edit.image.aiDescription": "أعد قلم وصفا انطلاقا من نص هذه الشريحة. يمكنك تعديله قبل إنشاء الصورة.",
+  "edit.image.aiDescription": "يلخص قلم الفكرة التعليمية ويعد مرئيا ملائما للمساحة المحددة. يمكنك تعديل الوصف قبل إنشاء الصورة.",
   "edit.image.aiPrompt": "وصف الصورة",
   "edit.image.aiTranscriptHint": "ستعوض الصورة العنصر المحدد أو ستملأ المساحة التي ترسمها.",
   "edit.image.aiGenerate": "إنشاء وإدراج",

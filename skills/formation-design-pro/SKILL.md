@@ -14,6 +14,7 @@ description: Concevoir ou industrialiser une formation Qalem fondée sur une per
 5. Concevoir chaque activité et chaque évaluation en fonction de sa contribution à la performance visée. Ne jamais imposer de ratio universel de théorie, pratique, parole ou apprentissage entre pairs.
 6. Produire une constitution d’animation persistante avant le live. Lire [le contrat de conception](references/formation-design-contract.md) pour les entrées, sorties et invariants.
 7. Ne retenir dans le casting que des agents qui apportent une contribution identifiable. Répartir au moins une prise de parole canonique utile par agent actif, même lorsque le roster comporte plus de membres que la formation ne comporte de scènes.
+8. Compiler un manifeste des ressources annoncées avant de produire les scènes. Tout fichier, document, image, schéma, lien court ou QR code mentionné dans le contenu ou la narration devient une obligation exécutable : le produire, le persister et le rattacher à la scène, ou retirer cette mention avant publication.
 
 Le territoire et la devise sont des variables structurées de la trame, jamais des détails déduits d’un exemple. Les recopier dans la classroom afin qu’une adaptation ultérieure puisse retraiter uniquement les cas, montants, ressources et narrations concernés. Ne jamais convertir un montant existant sans taux actuel et source vérifiable.
 
@@ -46,6 +47,12 @@ Pendant l’adaptation, conserver les objectifs, l’ordre et la structure péda
 ## Bloquer plutôt qu’inventer
 
 Bloquer la production lorsque manquent le mode choisi par l’auteur, la performance cible, une preuve de réussite, une source requise, un plan explicitement approuvé ou une identité agent compatible. Étiqueter toute hypothèse autorisée. Ne jamais fabriquer un cas local, une référence, une statistique ou une règle de conformité.
+
+## Matérialiser les ressources annoncées
+
+Transformer le sens pédagogique en visuel, jamais la transcription brute en image. Choisir d’abord la représentation qui explique le mieux : processus, relation, comparaison, chronologie, système, scène utile ou objet concret. Une personne décorative, une posture générique ou du texte minuscule dans une image sont des échecs de conception. Adapter le cadrage aux proportions réelles de la zone et préserver des marges de sécurité.
+
+Lorsqu’une prise de parole annonce un fichier, le manifeste doit contenir la ressource correspondante avant la génération de la scène. Le fichier est complet et exploitable, persisté avec la classroom, servi par un lien court Qalem valide et accompagné d’un QR code réel. La narration nomme la ressource, explique son usage, met la formation en pause et attend une action Lecture explicite. Une URL inventée ou un QR code sans cible bloque la publication.
 
 ## Ressources Qalem
 

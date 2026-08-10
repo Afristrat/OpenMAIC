@@ -61,4 +61,56 @@ describe('downloadable resource narration', () => {
       downloadUrl: 'https://qalem.ma/A7bK2',
     });
   });
+
+  it('rejette une annonce de téléchargement sans ressource réellement générée', async () => {
+    const outline: SceneOutline = {
+      id: 'scene_2',
+      type: 'slide',
+      title: 'Exercice',
+      description: 'Appliquer la méthode.',
+      keyPoints: ['Application'],
+      order: 2,
+    };
+    const content: GeneratedSlideContent = {
+      elements: [
+        {
+          id: 'text_1',
+          type: 'text',
+          left: 50,
+          top: 50,
+          width: 900,
+          height: 76,
+          content: '<p>Exercice</p>',
+          defaultFontName: '',
+          defaultColor: '#000000',
+          rotate: 0,
+        },
+      ],
+    };
+    const aiCall = vi
+      .fn()
+      .mockResolvedValueOnce(
+        JSON.stringify([
+          {
+            type: 'text',
+            content: 'Téléchargez le fichier d’exercice grâce au QR code affiché.',
+          },
+        ]),
+      )
+      .mockResolvedValueOnce(
+        JSON.stringify([{ type: 'text', content: 'Appliquez maintenant la méthode.' }]),
+      );
+
+    const actions = await generateSceneActions(outline, content, aiCall, {
+      languageDirective: 'Deliver the entire course in French.',
+    });
+
+    expect(aiCall).toHaveBeenCalledTimes(2);
+    expect(
+      actions.some(
+        (action) =>
+          action.type === 'speech' && /télécharg|QR code|fichier d’exercice/i.test(action.text),
+      ),
+    ).toBe(false);
+  });
 });

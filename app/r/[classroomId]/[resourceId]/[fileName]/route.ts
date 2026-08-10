@@ -16,6 +16,10 @@ export async function GET(
   if (!isValidClassroomId(classroomId) || !/^[a-zA-Z0-9_-]+$/.test(resourceId)) {
     return NextResponse.json({ error: 'Invalid resource' }, { status: 400 });
   }
+  const extension = fileName.match(/\.(xlsx|docx)$/i)?.[1]?.toLowerCase();
+  if (extension !== 'xlsx' && extension !== 'docx') {
+    return NextResponse.json({ error: 'Invalid resource' }, { status: 400 });
+  }
   const ownership = await readClassroomOwnership(classroomId);
   if (!ownership) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   if (!(await isClassroomPublic(classroomId))) {
@@ -24,9 +28,9 @@ export async function GET(
   }
   const { data, error } = await createServiceSupabaseClient()
     .storage.from('classroom-media')
-    .download(`${classroomId}/resources/${resourceId}.xlsx`);
+    .download(`${classroomId}/resources/${resourceId}.${extension}`);
   if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  const downloadName = fileName.toLowerCase().endsWith('.xlsx') ? fileName : `${fileName}.xlsx`;
+  const downloadName = fileName;
   return new NextResponse(data, {
     headers: {
       'Content-Type': classroomMediaContentType(downloadName),

@@ -8,6 +8,11 @@ interface ResourceShortLink {
   fileName: string;
 }
 
+function resourceExtension(fileName: string): 'xlsx' | 'docx' | null {
+  const extension = fileName.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase();
+  return extension === 'xlsx' || extension === 'docx' ? extension : null;
+}
+
 function isResourceShortLink(value: unknown): value is ResourceShortLink {
   if (!value || typeof value !== 'object') return false;
   const candidate = value as Partial<ResourceShortLink>;
@@ -17,7 +22,8 @@ function isResourceShortLink(value: unknown): value is ResourceShortLink {
     typeof candidate.resourceId === 'string' &&
     /^[a-zA-Z0-9_-]+$/.test(candidate.resourceId) &&
     typeof candidate.fileName === 'string' &&
-    /^[a-zA-Z0-9._-]+\.xlsx$/i.test(candidate.fileName)
+    /^[a-zA-Z0-9._-]+\.(?:xlsx|docx)$/i.test(candidate.fileName) &&
+    resourceExtension(candidate.fileName) !== null
   );
 }
 
@@ -48,8 +54,10 @@ export async function GET(
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
+  const extension = resourceExtension(metadata.fileName);
+  if (!extension) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   const { data, error } = await bucket.download(
-    `${metadata.classroomId}/resources/${metadata.resourceId}.xlsx`,
+    `${metadata.classroomId}/resources/${metadata.resourceId}.${extension}`,
   );
   if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 

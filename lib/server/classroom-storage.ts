@@ -59,6 +59,7 @@ export const CLASSROOM_MEDIA_MIME_TYPES: Record<string, string> = {
   '.ogg': 'audio/ogg',
   '.aac': 'audio/aac',
   '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 };
 
 export function classroomMediaContentType(filename: string): string {

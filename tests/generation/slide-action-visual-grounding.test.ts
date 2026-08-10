@@ -147,4 +147,36 @@ describe('slide action visual grounding', () => {
       ]),
     );
   });
+
+  it('refuse de pointer une image ou une illustration absente', async () => {
+    const aiCall = vi
+      .fn<AICallFn>()
+      .mockResolvedValueOnce(
+        JSON.stringify([
+          {
+            type: 'text',
+            content: 'Cette illustration montre clairement la chaîne de valeur.',
+          },
+        ]),
+      )
+      .mockResolvedValueOnce(
+        JSON.stringify([
+          {
+            type: 'text',
+            content: 'La chaîne de valeur relie les activités qui contribuent au résultat.',
+          },
+        ]),
+      );
+
+    const actions = await generateSceneActions(outline, content, aiCall, {
+      languageDirective: 'French (fr-FR)',
+    });
+
+    expect(aiCall).toHaveBeenCalledTimes(2);
+    expect(actions).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ text: expect.stringMatching(/cette illustration/i) }),
+      ]),
+    );
+  });
 });

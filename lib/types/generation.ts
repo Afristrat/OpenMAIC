@@ -150,7 +150,7 @@ export interface SceneOutline {
 
 export interface ResourceGenerationRequest {
   id: string;
-  format: 'xlsx';
+  format: 'xlsx' | 'docx';
   title: string;
   fileName: string;
   prompt: string;
@@ -176,7 +176,7 @@ export interface ClassroomPlan {
 
 export interface GeneratedLearningResource {
   id: string;
-  format: 'xlsx';
+  format: 'xlsx' | 'docx';
   title: string;
   fileName: string;
   downloadUrl: string;

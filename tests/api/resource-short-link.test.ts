@@ -55,4 +55,30 @@ describe('five-character learning resource links', () => {
     expect(response.status).toBe(404);
     expect(mocks.download).not.toHaveBeenCalled();
   });
+
+  it('sert un document Word réel avec son type MIME', async () => {
+    mocks.download
+      .mockResolvedValueOnce({
+        data: new Blob([
+          JSON.stringify({
+            classroomId: 'classroom_1',
+            resourceId: 'resource_2',
+            fileName: 'fiche-sipoc.docx',
+          }),
+        ]),
+        error: null,
+      })
+      .mockResolvedValueOnce({ data: new Blob(['PK-document']), error: null });
+    const { GET } = await import('@/app/[shortCode]/route');
+
+    const response = await GET(new Request('https://qalem.ma/B8cL3'), {
+      params: Promise.resolve({ shortCode: 'B8cL3' }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toContain(
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    );
+    expect(mocks.download).toHaveBeenNthCalledWith(2, 'classroom_1/resources/resource_2.docx');
+  });
 });

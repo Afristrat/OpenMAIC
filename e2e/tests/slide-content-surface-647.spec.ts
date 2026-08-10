@@ -97,9 +97,26 @@ test.describe('Slide content surface (#647)', () => {
     // --- AI image zone: draw a target rectangle, review the narration-grounded
     // prompt, then insert the generated image into that exact zone.
     let submittedPrompt = '';
+    let submittedAspectRatio = '';
+    let briefTranscript = '';
+    await page.route('**/api/generate/editor-image-brief', async (route) => {
+      const body = route.request().postDataJSON() as { transcript?: string };
+      briefTranscript = body.transcript ?? '';
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          prompt:
+            'A concise process diagram with three connected stages, strong hierarchy and no decorative person.',
+          negativePrompt: 'tiny text, watermark, decorative person',
+        }),
+      });
+    });
     await page.route('**/api/generate/image', async (route) => {
-      const body = route.request().postDataJSON() as { prompt?: string };
+      const body = route.request().postDataJSON() as { prompt?: string; aspectRatio?: string };
       submittedPrompt = body.prompt ?? '';
+      submittedAspectRatio = body.aspectRatio ?? '';
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -124,10 +141,12 @@ test.describe('Slide content surface (#647)', () => {
     await expect(imageDialogTitle).toBeVisible();
     const imagePrompt = page.getByLabel('Generation prompt');
     await expect(imagePrompt).not.toHaveValue('');
+    expect(briefTranscript).not.toBe('');
     await imagePrompt.fill(`${await imagePrompt.inputValue()}\nUse a clear process diagram.`);
     await page.getByRole('button', { name: 'Generate and insert' }).click();
     await expect(imageDialogTitle).toHaveCount(0);
     expect(submittedPrompt).toContain('Use a clear process diagram.');
+    expect(submittedAspectRatio).toBe('1:1');
     await expect(page.locator('.editable-element-image')).toHaveCount(1);
   });
 });

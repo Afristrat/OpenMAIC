@@ -33,6 +33,8 @@ Une production complète livre quatre objets distincts :
 3. les prises de parole ordinaires préproduites, intégrées au parcours canonique et aux exports ;
 4. les décisions d’intervention prises pendant le live, persistées comme événements lorsque l’enregistrement est autorisé.
 
+Elle livre aussi un manifeste exécutable des ressources promises par les scènes. Chaque entrée relie l’annonce pédagogique à un artefact réellement produit, son emplacement persistant, son lien court Qalem, son QR code et le point de pause canonique. Une image annoncée est soit une image source autorisée, soit un média généré et persisté, soit un élément structuré natif adapté. La transcription brute n’est jamais utilisée comme prompt image final : elle est condensée en intention visuelle, représentation, composition et contraintes négatives.
+
 La trame conserve le contexte réutilisable. La classroom en prend un instantané modifiable. Une adaptation de territoire ou de devise cible uniquement les exemples, montants, ressources et narrations concernés ; elle ne reconstruit pas les objectifs, la progression, les évaluations ou l’animation sans nécessité démontrée. Toute conversion monétaire exige un taux actuel et une source vérifiable.
 
 L’auteur ou le super administrateur doit prévisualiser la liste des scènes affectées avant d’appliquer une adaptation de marché. Cette prévisualisation indique pour chaque scène si le territoire, la devise ou les deux ont déclenché l’impact. Le moteur régénère uniquement les diapositives listées, conserve leurs objectifs, l’ordre et la structure pédagogique, et laisse toutes les autres scènes inchangées. Un type de scène non pris en charge bloque l’enregistrement global et demande une correction manuelle explicite.
@@ -114,3 +116,6 @@ Un agent désactivé ne peut apparaître dans l’ossature ni dans une règle ad
 - aucun dépassement du nombre de tours consécutifs choisi par l’auteur ;
 - aucune anecdote, statistique, référence ou situation locale présentée comme factuelle sans fondement autorisé ;
 - aucune confiance dans un rôle envoyé par le navigateur : le serveur reste l’autorité.
+- aucun fichier, document, image, schéma, lien court ou QR code annoncé sans artefact réel, persistant et accessible ;
+- aucun prompt image final obtenu par copie longue de la narration ;
+- aucune image décorative sans contribution identifiable à la compréhension.

@@ -24,11 +24,11 @@
     },
     {
       "path": "SKILL.md",
-      "sha256": "b7ef28e9df889e7ace7a3356506f48590ae7426cd151ec8fb77011a9c2116c99"
+      "sha256": "36c25343d25017b015d8ea510f58f209ab6b99bbc9b17e53b7b05805b024f220"
     },
     {
       "path": "references/formation-design-contract.md",
-      "sha256": "871a49ac67eb8b103feaa437d6e406edbdfcbea85d0e80256c05851766d5cf20"
+      "sha256": "ed2fa2b9f0ddad856a63c509ca633f1a7a0be5d1ea4111116eb27665275bceaa"
     },
     {
       "path": "prompts/andragogy-system-override.md",
