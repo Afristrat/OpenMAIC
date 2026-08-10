@@ -111,7 +111,7 @@ test.describe('Slide content surface (#647)', () => {
         }),
       });
     });
-    await page.getByRole('button', { name: 'Draw the area for the new image' }).click();
+    await page.getByRole('button', { name: 'AI image', exact: true }).click();
     const viewport = page.locator('.viewport').first();
     const viewportBox = await viewport.boundingBox();
     expect(viewportBox).not.toBeNull();
