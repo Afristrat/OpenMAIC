@@ -6,6 +6,7 @@
  */
 
 import path from 'path';
+import { createHash } from 'node:crypto';
 import { createLogger } from '@/lib/logger';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { classroomMediaContentType } from '@/lib/server/classroom-storage';
@@ -456,9 +457,10 @@ export async function generateTTSForClassroom(
 
         const filename = `${audioId}.${result.format || format}`;
         await uploadClassroomMedia(classroomId, `audio/${filename}`, result.audio);
+        const audioVersion = createHash('sha256').update(result.audio).digest('hex').slice(0, 12);
 
         speechAction.audioId = audioId;
-        speechAction.audioUrl = mediaServingUrl(classroomId, `audio/${filename}`);
+        speechAction.audioUrl = `${mediaServingUrl(classroomId, `audio/${filename}`)}?v=${audioVersion}`;
         report.generated += 1;
         log.info(`Generated TTS: ${filename} (${result.audio.length} bytes)`);
         await onProgress?.({ completed: report.generated, total: totalSpeechActions });

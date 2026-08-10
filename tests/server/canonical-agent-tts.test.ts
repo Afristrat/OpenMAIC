@@ -77,7 +77,9 @@ describe('canonical classroom agent TTS', () => {
     );
     expect(scene.actions?.[0]).toMatchObject({
       agentId: 'agent-analyst',
-      audioUrl: '/api/classroom-media/classroom-1/audio/tts_s1_speech-1.wav',
+      audioUrl: expect.stringMatching(
+        /^\/api\/classroom-media\/classroom-1\/audio\/tts_s1_speech-1\.wav\?v=[a-f0-9]{12}$/,
+      ),
     });
   });
 
