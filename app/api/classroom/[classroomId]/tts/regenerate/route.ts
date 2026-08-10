@@ -66,12 +66,17 @@ export async function POST(
     .select('settings')
     .eq('id', ownership.orgId)
     .single();
-  const teachingProfile = teachingProfileFromLearningDesign(
-    learningDesignFromSettings(organization?.settings),
-  );
+  const teachingProfile =
+    classroom.stage.teacherProfile ??
+    teachingProfileFromLearningDesign(learningDesignFromSettings(organization?.settings));
 
   const regeneratedScenes = structuredClone(selectedScenes);
-  await generateTTSForClassroom(regeneratedScenes, classroomId, teachingProfile);
+  await generateTTSForClassroom(
+    regeneratedScenes,
+    classroomId,
+    teachingProfile,
+    classroom.stage.generatedAgentConfigs ?? [],
+  );
   const generatedAudioCount = countSpeechAudio(regeneratedScenes);
   if (generatedAudioCount === 0) {
     return apiError('GENERATION_FAILED', 502, 'Aucune piste audio n’a pu être générée');

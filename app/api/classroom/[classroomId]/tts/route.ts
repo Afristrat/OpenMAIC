@@ -45,10 +45,15 @@ export async function POST(
     .select('settings')
     .eq('id', ownership.orgId)
     .single();
-  const teachingProfile = teachingProfileFromLearningDesign(
-    learningDesignFromSettings(organization?.settings),
+  const teachingProfile =
+    classroom.stage.teacherProfile ??
+    teachingProfileFromLearningDesign(learningDesignFromSettings(organization?.settings));
+  await generateTTSForClassroom(
+    [generatedScene],
+    classroomId,
+    teachingProfile,
+    classroom.stage.generatedAgentConfigs ?? [],
   );
-  await generateTTSForClassroom([generatedScene], classroomId, teachingProfile);
   if (!generatedScene.actions?.every((item: Action) => item.type !== 'speech' || item.audioUrl)) {
     return apiError('INTERNAL_ERROR', 502, 'La synthèse vocale a échoué');
   }
