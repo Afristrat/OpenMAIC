@@ -15,6 +15,7 @@ import type {
   InteractiveContent,
   PBLContent,
 } from '@/lib/types/stage';
+import type { PluginSceneContent } from '@/lib/plugins/scene-sdk';
 
 // ==================== Utility Functions ====================
 
@@ -107,6 +108,17 @@ export function createDefaultPBLContent(): PBLContent {
 }
 
 /**
+ * Create default PluginContent.
+ */
+export function createDefaultPluginContent(): PluginSceneContent {
+  return {
+    type: 'plugin',
+    pluginType: '',
+    data: {},
+  };
+}
+
+/**
  * Create default Content based on type
  */
 export function createDefaultContent(type: SceneType): SceneContent {
@@ -119,6 +131,8 @@ export function createDefaultContent(type: SceneType): SceneContent {
       return createDefaultInteractiveContent();
     case 'pbl':
       return createDefaultPBLContent();
+    case 'plugin':
+      return createDefaultPluginContent();
     default:
       throw new Error(`Unknown scene type: ${type}`);
   }
