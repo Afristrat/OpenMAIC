@@ -58,7 +58,9 @@ export async function GET(
     headers: {
       'Content-Type': classroomMediaContentType(joined),
       'Content-Length': String(blob.size),
-      'Cache-Control': 'public, max-age=86400, immutable',
+      // Narration is replaced in place after an author edits a speech line.
+      // Caching that stable URL as immutable replays the previous recording.
+      'Cache-Control': subDir === 'audio' ? 'no-store' : 'public, max-age=86400, immutable',
     },
   });
 }

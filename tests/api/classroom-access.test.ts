@@ -309,4 +309,22 @@ describe('classroom media tenant boundary', () => {
     expect(mocks.requireMember).not.toHaveBeenCalled();
     expect(mocks.download).toHaveBeenCalledWith('published_classroom/audio/voice.wav');
   });
+
+  it('never serves replaceable narration audio as immutable', async () => {
+    mocks.isClassroomPublic.mockResolvedValue(true);
+    mocks.download.mockResolvedValue({ data: new Blob(['regenerated voice']), error: null });
+
+    const response = await getClassroomMedia(
+      new NextRequest('https://qalem.ma/api/classroom-media/published_classroom/audio/voice.wav'),
+      {
+        params: Promise.resolve({
+          classroomId: 'published_classroom',
+          path: ['audio', 'voice.wav'],
+        }),
+      },
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('cache-control')).toBe('no-store');
+  });
 });
