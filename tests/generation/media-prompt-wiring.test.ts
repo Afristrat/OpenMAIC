@@ -310,6 +310,67 @@ describe('media prompt condition wiring', () => {
     );
   });
 
+  test('fits a portrait source image inside the authored box without pushing it out of bounds', async () => {
+    const persistedUrl = '/api/classroom-media/classroom-1/portrait.png';
+    const aiCall: AICallFn = async () =>
+      JSON.stringify({
+        background: { type: 'solid', color: '#ffffff' },
+        elements: [
+          {
+            id: 'source-image',
+            type: 'image',
+            src: 'img_portrait',
+            left: 560,
+            top: 150,
+            width: 380,
+            height: 300,
+          },
+        ],
+      });
+
+    const result = await generateSceneContent(
+      {
+        id: 'scene_portrait_source',
+        type: 'slide',
+        title: 'Portrait source',
+        description: 'Keep the portrait inside the slide',
+        keyPoints: ['Respect the source ratio'],
+        order: 1,
+      },
+      aiCall,
+      {
+        assignedImages: [
+          {
+            id: 'img_portrait',
+            src: persistedUrl,
+            pageNumber: 2,
+            width: 1000,
+            height: 2000,
+          },
+        ],
+        imageMapping: { img_portrait: persistedUrl },
+        requiredSourceImageIds: ['img_portrait'],
+      },
+    );
+
+    expect(result).not.toBeNull();
+    if (!result || !('elements' in result)) {
+      throw new Error('Expected generated slide content');
+    }
+    expect(result.elements).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'image',
+          src: persistedUrl,
+          left: 560,
+          top: 150,
+          width: 150,
+          height: 300,
+        }),
+      ]),
+    );
+  });
+
   test('rejects a slide whose content-bearing elements overlap', async () => {
     const aiCall: AICallFn = async () =>
       JSON.stringify({

@@ -689,15 +689,11 @@ function fixElementDefaults(
           const curW = (el.width || 400) as number;
           const curH = (el.height || 300) as number;
           if (Math.abs(curW / curH - knownRatio) / knownRatio > 0.1) {
-            // Keep width, correct height
-            const newH = Math.round(curW / knownRatio);
-            if (newH > 462) {
-              // canvas 562.5 - margins 50×2
-              const newW = Math.round(462 * knownRatio);
-              imageEl.width = newW;
-              imageEl.height = 462;
+            // Preserve the requested box by shrinking one dimension, never expanding it.
+            if (curW / curH > knownRatio) {
+              imageEl.width = Math.round(curH * knownRatio);
             } else {
-              imageEl.height = newH;
+              imageEl.height = Math.round(curW / knownRatio);
             }
           }
         }
