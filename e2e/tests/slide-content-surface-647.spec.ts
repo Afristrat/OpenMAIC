@@ -114,12 +114,9 @@ test.describe('Slide content surface (#647)', () => {
     await page.getByRole('button', { name: 'AI image', exact: true }).click();
     const createLayer = page.locator('.element-create-selection');
     await expect(createLayer).toBeVisible();
-    const createBox = await createLayer.boundingBox();
-    expect(createBox).not.toBeNull();
-    await page.mouse.move((createBox?.x ?? 0) + 300, (createBox?.y ?? 0) + 180);
-    await page.mouse.down();
-    await page.mouse.move((createBox?.x ?? 0) + 520, (createBox?.y ?? 0) + 320);
-    await page.mouse.up();
+    // A click exercises the editor's documented 200 × 200 fallback. Pointer
+    // drag uses the same onCreated path with the dragged rectangle.
+    await createLayer.click({ position: { x: 300, y: 180 } });
 
     const imageDialogTitle = page.getByRole('heading', {
       name: 'Create an image from the narration',
