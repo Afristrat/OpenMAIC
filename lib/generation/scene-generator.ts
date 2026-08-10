@@ -97,6 +97,10 @@ export interface SceneContentOptions {
    * Only consumed by the slide branch alongside `editDirective`.
    */
   baselineContent?: GeneratedSlideContent;
+  /** Exact validation feedback from the previous attempt, fed back to the model on retry. */
+  validationDirective?: string;
+  /** Reports a retryable validation failure to the orchestration retry loop. */
+  onValidationFailure?: (directive: string) => void;
   skillEngineEnabled?: boolean;
   activeSkillId?: string;
 }
@@ -329,6 +333,8 @@ export async function generateSceneContent(
     allowProceduralSkill = false,
     editDirective,
     baselineContent,
+    validationDirective,
+    onValidationFailure,
     skillEngineEnabled,
     activeSkillId,
   } = options;
@@ -370,6 +376,8 @@ export async function generateSceneContent(
         languageDirective,
         editDirective,
         baselineContent,
+        validationDirective,
+        onValidationFailure,
         skillEngineEnabled,
         activeSkillId,
       );
@@ -799,6 +807,8 @@ async function generateSlideContent(
   languageDirective?: string,
   editDirective?: string,
   baselineContent?: GeneratedSlideContent,
+  validationDirective?: string,
+  onValidationFailure?: (directive: string) => void,
   skillEngineEnabled?: boolean,
   activeSkillId?: string,
 ): Promise<GeneratedSlideContent | null> {
@@ -950,6 +960,13 @@ async function generateSlideContent(
       `Return the full updated slide content in the same schema.`;
   }
 
+  if (validationDirective) {
+    userPrompt +=
+      `\n\n## REQUIRED CORRECTION FROM THE PREVIOUS ATTEMPT\n` +
+      `${validationDirective}\n` +
+      `Regenerate the full slide JSON and correct every listed defect. Do not repeat the invalid geometry or omit required assets.`;
+  }
+
   const response = await aiCall(prompts.system, userPrompt, visionImages);
   const generatedData = parseJsonResponse<GeneratedSlideData>(response);
 
@@ -999,6 +1016,16 @@ async function generateSlideContent(
 
   const missingGeneratedMedia = outline.mediaGenerations?.find((request) => {
     const resolvedUrl = generatedMediaMapping?.[request.elementId];
+    const fulfilledByDirectVideo =
+      request.type === 'video' &&
+      resolvedElements.some(
+        (element) =>
+          element.type === 'video' &&
+          (element as Record<string, unknown>).mediaRef === request.elementId &&
+          typeof element.src === 'string' &&
+          !isGeneratedImageId(element.src),
+      );
+    if (fulfilledByDirectVideo) return false;
     return !videoNormalizedElements.some((element) => {
       if (request.type === 'image') {
         return (
@@ -1016,9 +1043,9 @@ async function generateSlideContent(
     });
   });
   if (missingGeneratedMedia) {
-    log.warn(
-      `Slide omitted required generated ${missingGeneratedMedia.type} ${missingGeneratedMedia.elementId}; retrying`,
-    );
+    const failure = `Include the required generated ${missingGeneratedMedia.type} element with src exactly "${missingGeneratedMedia.elementId}".`;
+    log.warn(`Slide omitted required generated media: ${failure} Retrying`);
+    onValidationFailure?.(failure);
     return null;
   }
 
@@ -1035,7 +1062,9 @@ async function generateSlideContent(
         !serialized.includes(resource.qrImageUrl) || !serialized.includes(resource.downloadUrl),
     );
     if (missingResource) {
-      log.warn(`Slide omitted required resource access for ${missingResource.id}; retrying`);
+      const failure = `Include both the QR image and the download link for required resource "${missingResource.id}".`;
+      log.warn(`Slide omitted required resource access: ${failure} Retrying`);
+      onValidationFailure?.(failure);
       return null;
     }
   }
@@ -1068,6 +1097,9 @@ async function generateSlideContent(
   } as Slide);
   if (layoutIssues.length > 0) {
     log.warn(`Slide layout invalid for ${outline.id}: ${JSON.stringify(layoutIssues)}; retrying`);
+    onValidationFailure?.(
+      `Correct these layout defects exactly: ${JSON.stringify(layoutIssues)}. Keep every element fully inside the slide and remove unintended overlaps while preserving a coherent alignment.`,
+    );
     return null;
   }
 

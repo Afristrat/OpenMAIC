@@ -39,6 +39,7 @@ import {
   buildOrganizationImagePrompt,
   type OrganizationDesignSystem,
 } from '@/lib/branding/organization-design-system';
+import { withGenerationRetry } from '@/lib/generation/generation-retry';
 
 const log = createLogger('ClassroomMedia');
 
@@ -96,16 +97,33 @@ export async function uploadClassroomMedia(
   subPath: string,
   buf: Buffer | Uint8Array,
 ): Promise<void> {
-  const supabase = createServiceSupabaseClient();
-  const { error } = await supabase.storage
-    .from('classroom-media')
-    .upload(`${classroomId}/${subPath}`, buf, {
-      contentType: classroomMediaContentType(subPath),
-      upsert: true,
-    });
-  if (error) {
-    throw new Error(`Failed to upload classroom media ${subPath}: ${error.message}`);
-  }
+  await withGenerationRetry(
+    async () => {
+      const supabase = createServiceSupabaseClient();
+      const { error } = await supabase.storage
+        .from('classroom-media')
+        .upload(`${classroomId}/${subPath}`, buf, {
+          contentType: classroomMediaContentType(subPath),
+          upsert: true,
+        });
+      if (error) {
+        throw new Error(`Failed to upload classroom media ${subPath}: ${error.message}`, {
+          cause: error,
+        });
+      }
+    },
+    {
+      label: `classroom media upload ${subPath}`,
+      maxRetries: 3,
+      baseDelayMs: 500,
+      maxDelayMs: 4_000,
+      onRetry: ({ attempt, maxAttempts, reason }) => {
+        log.warn(
+          `Retrying classroom media upload ${subPath} (${attempt + 1}/${maxAttempts}): ${reason}`,
+        );
+      },
+    },
+  );
 }
 
 const DOWNLOAD_TIMEOUT_MS = 120_000; // 2 minutes

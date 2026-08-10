@@ -1,8 +1,20 @@
-import { describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+
+const storageUpload = vi.hoisted(() => vi.fn());
+
+vi.mock('@/lib/supabase/service', () => ({
+  createServiceSupabaseClient: () => ({
+    storage: {
+      from: () => ({ upload: storageUpload }),
+    },
+  }),
+}));
+
 import {
   replaceMediaPlaceholders,
   selectClassroomImageProvider,
   selectClassroomImageModel,
+  uploadClassroomMedia,
 } from '@/lib/server/classroom-media-generation';
 import type { Scene } from '@/lib/types/stage';
 
@@ -26,6 +38,10 @@ function slideScene(
 }
 
 describe('classroom media placeholder replacement', () => {
+  beforeEach(() => {
+    storageUpload.mockReset();
+  });
+
   test('preserves direct video src when mediaRef is also present', () => {
     const scene = slideScene([
       {
@@ -45,6 +61,42 @@ describe('classroom media placeholder replacement', () => {
     };
     const video = content.canvas.elements[0];
     expect(video.src).toBe('https://example.com/direct.mp4');
+  });
+});
+
+describe('classroom media upload reliability', () => {
+  beforeEach(() => {
+    storageUpload.mockReset();
+  });
+
+  test('retries only the idempotent upload after a transient network failure', async () => {
+    vi.useFakeTimers();
+    storageUpload
+      .mockResolvedValueOnce({ error: new Error('fetch failed') })
+      .mockResolvedValueOnce({ error: null });
+
+    const upload = uploadClassroomMedia('classroom-1', 'media/generated.png', Buffer.from('png'));
+    try {
+      await vi.runAllTimersAsync();
+      await expect(upload).resolves.toBeUndefined();
+      expect(storageUpload).toHaveBeenCalledTimes(2);
+      expect(storageUpload).toHaveBeenLastCalledWith(
+        'classroom-1/media/generated.png',
+        expect.any(Buffer),
+        expect.objectContaining({ upsert: true }),
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('does not retry a permanent authorization failure', async () => {
+    storageUpload.mockResolvedValue({ error: { message: 'Unauthorized', statusCode: 401 } });
+
+    await expect(
+      uploadClassroomMedia('classroom-1', 'media/generated.png', Buffer.from('png')),
+    ).rejects.toThrow('Unauthorized');
+    expect(storageUpload).toHaveBeenCalledTimes(1);
   });
 });
 

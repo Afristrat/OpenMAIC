@@ -171,19 +171,29 @@ describe('classroom scene generation retries', () => {
     mocks.generateTTSForClassroom.mockResolvedValue({ requested: 0, generated: 0 });
   });
 
-  it('retries an empty scene content result before skipping the scene', async () => {
-    mocks.generateSceneContent.mockResolvedValueOnce(null).mockResolvedValueOnce(slideContent);
+  it('feeds exact validation feedback into the next scene content attempt', async () => {
+    mocks.generateSceneContent
+      .mockImplementationOnce(async (_outline, _aiCall, options) => {
+        options.onValidationFailure('Move the title fully inside the slide.');
+        return null;
+      })
+      .mockResolvedValueOnce(slideContent);
 
     const { result, progress } = await generateWithProgress();
 
     expect(result.scenesCount).toBe(1);
     expect(mocks.generateSceneContent).toHaveBeenCalledTimes(2);
+    expect(mocks.generateSceneContent.mock.calls[1]?.[2]).toEqual(
+      expect.objectContaining({
+        validationDirective: 'Move the title fully inside the slide.',
+      }),
+    );
     expect(progress.some((event) => event.message.includes('Retrying scene 1/1 content'))).toBe(
       true,
     );
   });
 
-  it('fails instead of silently skipping a required resource scene', async () => {
+  it('fails instead of silently skipping any required scene', async () => {
     vi.useFakeTimers();
     mocks.generateSceneOutlinesFromRequirements.mockResolvedValue({
       success: true,
@@ -209,7 +219,7 @@ describe('classroom scene generation retries', () => {
     mocks.generateSceneContent.mockResolvedValue(null);
 
     const rejection = expect(generateWithProgress()).rejects.toThrow(
-      'Required resource scene generation failed: Retry Basics',
+      'Required scene generation failed: Retry Basics',
     );
     try {
       await vi.runAllTimersAsync();
@@ -218,6 +228,16 @@ describe('classroom scene generation retries', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('fails instead of persisting when scene creation returns no scene id', async () => {
+    mocks.generateSceneContent.mockResolvedValue(slideContent);
+    mocks.createSceneWithActions.mockReturnValue(null);
+
+    await expect(generateWithProgress()).rejects.toThrow(
+      'Required scene creation failed: Retry Basics',
+    );
+    expect(mocks.persistClassroom).not.toHaveBeenCalled();
   });
 
   it('forwards classroom thinking config to scene retry LLM calls', async () => {

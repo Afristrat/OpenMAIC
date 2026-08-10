@@ -242,6 +242,69 @@ describe('media prompt condition wiring', () => {
     expect(result).toBeNull();
   });
 
+  test('reports exact layout defects and injects them into the next prompt', async () => {
+    let feedback = '';
+    const invalidAiCall: AICallFn = async () =>
+      JSON.stringify({
+        elements: [
+          {
+            id: 'outside',
+            type: 'text',
+            left: 940,
+            top: 80,
+            width: 200,
+            height: 100,
+            content: '<p>Outside</p>',
+            defaultFontName: '',
+            defaultColor: '#333333',
+          },
+        ],
+      });
+    const outline: SceneOutline = {
+      id: 'scene_retry_feedback',
+      type: 'slide',
+      title: 'Layout feedback',
+      description: 'Keep content in bounds',
+      keyPoints: ['Readable geometry'],
+      order: 1,
+    };
+
+    const first = await generateSceneContent(outline, invalidAiCall, {
+      onValidationFailure: (directive) => {
+        feedback = directive;
+      },
+    });
+    expect(first).toBeNull();
+    expect(feedback).toContain('Correct these layout defects exactly');
+
+    let retryPrompt = '';
+    const validAiCall: AICallFn = async (_system, user) => {
+      retryPrompt = user;
+      return JSON.stringify({
+        elements: [
+          {
+            id: 'inside',
+            type: 'text',
+            left: 60,
+            top: 80,
+            width: 500,
+            height: 100,
+            content: '<p>Inside</p>',
+            defaultFontName: '',
+            defaultColor: '#333333',
+          },
+        ],
+      });
+    };
+
+    const second = await generateSceneContent(outline, validAiCall, {
+      validationDirective: feedback,
+    });
+    expect(second).not.toBeNull();
+    expect(retryPrompt).toContain('REQUIRED CORRECTION FROM THE PREVIOUS ATTEMPT');
+    expect(retryPrompt).toContain(feedback);
+  });
+
   test('resolves semantic QR image IDs used by generated learning resources', async () => {
     const qrImageUrl = '/api/classroom-media/classroom-1/resources/resource_1-qr.png';
     const downloadUrl = 'https://qalem.ma/A7bK2';

@@ -775,6 +775,7 @@ export async function generateClassroom(
         // capture-decision actually returns format:'video' in practice.
       }
 
+      let sceneValidationDirective: string | undefined;
       const content = await withGenerationRetry(
         () =>
           generateSceneContent(safeOutline, sceneAiCall, {
@@ -788,6 +789,10 @@ export async function generateClassroom(
             activeSkillId: requirements.activeSkillId,
             assignedImages,
             imageMapping,
+            validationDirective: sceneValidationDirective,
+            onValidationFailure: (directive) => {
+              sceneValidationDirective = directive;
+            },
           }),
         {
           label: `scene ${index + 1}/${outlines.length} content`,
@@ -796,11 +801,7 @@ export async function generateClassroom(
         },
       );
       if (!content) {
-        if (safeOutline.generatedResources?.length) {
-          throw new Error(`Required resource scene generation failed: ${safeOutline.title}`);
-        }
-        log.warn(`Skipping scene "${safeOutline.title}" — content generation failed`);
-        continue;
+        throw new Error(`Required scene generation failed: ${safeOutline.title}`);
       }
 
       const actions = await withGenerationRetry(
@@ -824,11 +825,7 @@ export async function generateClassroom(
 
       const sceneId = createSceneWithActions(safeOutline, content, actions, api);
       if (!sceneId) {
-        if (safeOutline.generatedResources?.length) {
-          throw new Error(`Required resource scene creation failed: ${safeOutline.title}`);
-        }
-        log.warn(`Skipping scene "${safeOutline.title}" — scene creation failed`);
-        continue;
+        throw new Error(`Required scene creation failed: ${safeOutline.title}`);
       }
 
       generatedScenes += 1;
@@ -845,8 +842,10 @@ export async function generateClassroom(
     const scenes = store.getState().scenes;
     log.info(`Pipeline complete: ${scenes.length} scenes generated`);
 
-    if (scenes.length === 0) {
-      throw new Error('No scenes were generated');
+    if (generatedScenes !== outlines.length || scenes.length !== outlines.length) {
+      throw new Error(
+        `Scene persistence incomplete: ${scenes.length}/${outlines.length} required scenes generated`,
+      );
     }
 
     const speakingAgentIds = new Set(
