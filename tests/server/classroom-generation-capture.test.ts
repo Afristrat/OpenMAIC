@@ -13,6 +13,9 @@ const mocks = vi.hoisted(() => ({
   callLLM: vi.fn(),
   decideCaptureForScene: vi.fn(),
   requestWebCapture: vi.fn(),
+  selectTenantCast: vi.fn(),
+  reserveDistinctCasting: vi.fn(),
+  releaseCastingReservation: vi.fn(),
 }));
 
 vi.mock('@/lib/server/resolve-model', () => ({
@@ -54,6 +57,56 @@ vi.mock('@/lib/generation/web-capture-plan', () => ({
 
 vi.mock('@/lib/server/capture-client', () => ({
   requestWebCapture: mocks.requestWebCapture,
+}));
+
+vi.mock('@/lib/agents/cast-selection', () => ({
+  selectTenantCast: mocks.selectTenantCast,
+}));
+
+vi.mock('@/lib/agents/casting-variation', () => ({
+  deriveCourseId: vi.fn(() => 'course-1'),
+  reserveDistinctCasting: mocks.reserveDistinctCasting,
+}));
+
+vi.mock('@/lib/server/casting-storage', () => ({
+  reserveCasting: vi.fn(),
+  releaseCastingReservation: mocks.releaseCastingReservation,
+}));
+
+vi.mock('@/lib/supabase/service', () => ({
+  createServiceSupabaseClient: () => ({
+    from: (table: string) => ({
+      select: () => ({
+        eq: () =>
+          table === 'organizations'
+            ? {
+                single: async () => ({
+                  data: {
+                    settings: {
+                      learningDesign: {
+                        personas: [
+                          {
+                            id: 'professor',
+                            defaultName: 'Younes',
+                            gender: 'male',
+                            avatar: '/avatars/teacher.png',
+                            providerId: 'higgs-tts',
+                            voiceId: 'younes',
+                          },
+                        ],
+                      },
+                    },
+                  },
+                }),
+              }
+            : {
+                maybeSingle: async () => ({
+                  data: { culture: 'ma-fr', preferences: {} },
+                }),
+              },
+      }),
+    }),
+  }),
 }));
 
 vi.mock('@/lib/logger', () => ({
@@ -162,6 +215,12 @@ describe('classroom generation — web capture injection', () => {
     mocks.persistGeneratedCourse.mockResolvedValue('course-1');
     mocks.decideCaptureForScene.mockResolvedValue(null);
     mocks.requestWebCapture.mockResolvedValue(null);
+    mocks.reserveDistinctCasting.mockImplementation(async ({ draw }) => ({
+      agents: draw(),
+      reservation: { id: 'reservation-1' },
+      lineupHash: 'lineup-1',
+    }));
+    mocks.releaseCastingReservation.mockResolvedValue(undefined);
   });
 
   it('injects a captured image into assignedImages before generating slide content', async () => {
@@ -222,6 +281,48 @@ describe('classroom generation — web capture injection', () => {
               identityCompatibility: 'validated',
             }),
           ]),
+        }),
+      }),
+      'http://localhost',
+    );
+  });
+
+  it('fige le profil du formateur depuis le professeur réellement distribué', async () => {
+    const hanae = {
+      id: 'persona-professor',
+      name: 'Hanae',
+      role: 'teacher' as const,
+      persona: 'Professeure principale',
+      avatar: '/avatars/teacher-2.png',
+      color: '#3b82f6',
+      priority: 10,
+      interactionWeight: 28,
+      mechanismId: 'professor',
+      gender: 'female' as const,
+      voiceConfig: { providerId: 'higgs-tts' as const, voiceId: 'hanae' },
+    };
+    mocks.selectTenantCast.mockReturnValue({ agents: [hanae], cultureReference: 'ma-fr' });
+    mocks.generateSceneActions.mockResolvedValue([
+      {
+        id: 'speech-teacher',
+        type: 'speech',
+        text: 'Bienvenue dans cette formation.',
+        agentId: hanae.id,
+      },
+    ]);
+
+    await generateWithProgress({ agentMode: 'generate' });
+
+    expect(mocks.persistClassroom).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stage: expect.objectContaining({
+          teacherProfile: {
+            name: 'Hanae',
+            avatar: '/avatars/teacher-2.png',
+            providerId: 'higgs-tts',
+            voiceId: 'hanae',
+          },
+          generatedAgentConfigs: [hanae],
         }),
       }),
       'http://localhost',

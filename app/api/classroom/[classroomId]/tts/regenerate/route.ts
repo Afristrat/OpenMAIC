@@ -9,9 +9,7 @@ import {
   readClassroom,
   readClassroomOwnership,
 } from '@/lib/server/classroom-storage';
-import { createServiceSupabaseClient } from '@/lib/supabase/service';
-import { learningDesignFromSettings } from '@/lib/agents/persona-catalog';
-import { teachingProfileFromLearningDesign } from '@/lib/org/teaching-profile';
+import { ClassroomCastingError, normalizeClassroomCasting } from '@/lib/agents/classroom-casting';
 import type { Action } from '@/lib/types/action';
 import type { Scene } from '@/lib/types/stage';
 
@@ -44,10 +42,22 @@ export async function POST(
   const classroom = await readClassroom(classroomId);
   if (!classroom) return apiError('INVALID_REQUEST', 404, 'Classroom introuvable');
 
+  let casting;
+  try {
+    casting = normalizeClassroomCasting(classroom.stage, classroom.scenes);
+  } catch (error) {
+    const message =
+      error instanceof ClassroomCastingError ? error.message : 'Le casting vocal est invalide.';
+    return apiError('INVALID_REQUEST', 422, message);
+  }
+  if (!casting) {
+    return apiError('INVALID_REQUEST', 422, 'Cette classroom ne possède aucun casting vocal.');
+  }
+
   const body = (await request.json().catch(() => null)) as { sceneId?: string } | null;
   const selectedScenes = body?.sceneId
-    ? classroom.scenes.filter((scene) => scene.id === body.sceneId)
-    : classroom.scenes;
+    ? casting.scenes.filter((scene) => scene.id === body.sceneId)
+    : casting.scenes;
   if (body?.sceneId && selectedScenes.length === 0) {
     return apiError('INVALID_REQUEST', 404, 'Scène introuvable');
   }
@@ -61,21 +71,12 @@ export async function POST(
     return apiError('INVALID_REQUEST', 422, 'Cette classroom ne contient aucune prise de parole');
   }
 
-  const { data: organization } = await createServiceSupabaseClient()
-    .from('organizations')
-    .select('settings')
-    .eq('id', ownership.orgId)
-    .single();
-  const teachingProfile =
-    classroom.stage.teacherProfile ??
-    teachingProfileFromLearningDesign(learningDesignFromSettings(organization?.settings));
-
   const regeneratedScenes = structuredClone(selectedScenes);
   await generateTTSForClassroom(
     regeneratedScenes,
     classroomId,
-    teachingProfile,
-    classroom.stage.generatedAgentConfigs ?? [],
+    casting.teacherProfile,
+    casting.agents,
   );
   const generatedAudioCount = countSpeechAudio(regeneratedScenes);
   if (generatedAudioCount === 0) {
@@ -85,8 +86,8 @@ export async function POST(
   await persistClassroom(
     {
       id: classroomId,
-      stage: classroom.stage,
-      scenes: classroom.scenes.map(
+      stage: casting.stage,
+      scenes: casting.scenes.map(
         (scene) => regeneratedScenes.find((regenerated) => regenerated.id === scene.id) ?? scene,
       ),
       ownerId: ownership.ownerId,

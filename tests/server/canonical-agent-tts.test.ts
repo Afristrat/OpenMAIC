@@ -83,6 +83,40 @@ describe('canonical classroom agent TTS', () => {
     });
   });
 
+  test('refuse de remplacer silencieusement un agent inconnu par la voix du professeur', async () => {
+    const scene = {
+      id: 'scene-1',
+      stageId: 'classroom-1',
+      type: 'slide',
+      title: 'Casting invalide',
+      order: 1,
+      content: { type: 'slide', canvas: { id: 'canvas-1', elements: [] } },
+      actions: [
+        {
+          id: 'speech-1',
+          type: 'speech',
+          text: 'Cette voix ne doit pas être remplacée.',
+          agentId: 'agent-inconnu',
+        },
+      ],
+    } as unknown as Scene;
+
+    await expect(
+      generateTTSForClassroom(
+        [scene],
+        'classroom-1',
+        { providerId: 'higgs-tts', voiceId: 'teacher-voice' },
+        [
+          {
+            id: 'persona-professor',
+            voiceConfig: { providerId: 'higgs-tts', voiceId: 'hanae' },
+          },
+        ],
+      ),
+    ).rejects.toThrow('agent-inconnu');
+    expect(mocks.generateTTS).not.toHaveBeenCalled();
+  });
+
   test('reports durable progress after every generated speech line', async () => {
     const scene = {
       id: 'scene-1',
@@ -141,8 +175,16 @@ describe('canonical classroom agent TTS', () => {
       'classroom-1',
       { providerId: 'higgs-tts', voiceId: 'teacher-voice' },
       [
-        { id: 'agent-teacher', name: 'Hanae' },
-        { id: 'agent-analyst', name: 'Khalid' },
+        {
+          id: 'agent-teacher',
+          name: 'Hanae',
+          voiceConfig: { providerId: 'higgs-tts', voiceId: 'teacher-voice' },
+        },
+        {
+          id: 'agent-analyst',
+          name: 'Khalid',
+          voiceConfig: { providerId: 'higgs-tts', voiceId: 'analyst-voice' },
+        },
       ],
     );
 

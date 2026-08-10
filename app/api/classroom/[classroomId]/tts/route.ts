@@ -9,9 +9,7 @@ import {
   readClassroom,
   readClassroomOwnership,
 } from '@/lib/server/classroom-storage';
-import { createServiceSupabaseClient } from '@/lib/supabase/service';
-import { learningDesignFromSettings } from '@/lib/agents/persona-catalog';
-import { teachingProfileFromLearningDesign } from '@/lib/org/teaching-profile';
+import { ClassroomCastingError, normalizeClassroomCasting } from '@/lib/agents/classroom-casting';
 import type { Action } from '@/lib/types/action';
 
 export async function POST(
@@ -30,29 +28,33 @@ export async function POST(
     return apiError('INVALID_REQUEST', 400, 'Scène, prise de parole et texte sont requis');
   }
   const classroom = await readClassroom(classroomId);
-  const scene = classroom?.scenes.find((item: { id: string }) => item.id === body.sceneId);
+  if (!classroom) return apiError('INVALID_REQUEST', 404, 'Classroom introuvable');
+  let casting;
+  try {
+    casting = normalizeClassroomCasting(classroom.stage, classroom.scenes);
+  } catch (error) {
+    const message =
+      error instanceof ClassroomCastingError ? error.message : 'Le casting vocal est invalide.';
+    return apiError('INVALID_REQUEST', 422, message);
+  }
+  if (!casting) {
+    return apiError('INVALID_REQUEST', 422, 'Cette classroom ne possède aucun casting vocal.');
+  }
+  const scene = casting.scenes.find((item: { id: string }) => item.id === body.sceneId);
   const actionIndex = scene?.actions?.findIndex((item: Action) => item.id === body.actionId) ?? -1;
   const action = scene?.actions?.[actionIndex];
-  if (!classroom || !scene || actionIndex < 0 || action?.type !== 'speech') {
+  if (!scene || actionIndex < 0 || action?.type !== 'speech') {
     return apiError('INVALID_REQUEST', 404, 'Prise de parole introuvable');
   }
   const generatedScene = {
     ...scene,
     actions: [{ ...action, text: body.text.trim(), audioId: undefined, audioUrl: undefined }],
   };
-  const { data: organization } = await createServiceSupabaseClient()
-    .from('organizations')
-    .select('settings')
-    .eq('id', ownership.orgId)
-    .single();
-  const teachingProfile =
-    classroom.stage.teacherProfile ??
-    teachingProfileFromLearningDesign(learningDesignFromSettings(organization?.settings));
   await generateTTSForClassroom(
     [generatedScene],
     classroomId,
-    teachingProfile,
-    classroom.stage.generatedAgentConfigs ?? [],
+    casting.teacherProfile,
+    casting.agents,
   );
   if (!generatedScene.actions?.every((item: Action) => item.type !== 'speech' || item.audioUrl)) {
     return apiError('INTERNAL_ERROR', 502, 'La synthèse vocale a échoué');
@@ -65,8 +67,8 @@ export async function POST(
   await persistClassroom(
     {
       id: classroomId,
-      stage: classroom.stage,
-      scenes: classroom.scenes,
+      stage: casting.stage,
+      scenes: casting.scenes,
       ownerId: ownership.ownerId,
       orgId: ownership.orgId,
     },

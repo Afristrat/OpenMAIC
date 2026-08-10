@@ -9,6 +9,7 @@ import {
   type AnimationConstitution,
   type InterventionDecision,
 } from '@/lib/formation-engine/animation-constitution';
+import { normalizeClassroomCasting } from '@/lib/agents/classroom-casting';
 
 const log = createLogger('ClassroomStorage');
 
@@ -161,6 +162,9 @@ export async function persistClassroom(
   baseUrl: string,
 ): Promise<PersistedClassroomData & { url: string }> {
   const supabase = createServiceSupabaseClient();
+  const casting = normalizeClassroomCasting(data.stage, data.scenes);
+  const stage = casting?.stage ?? data.stage;
+  const scenes = casting?.scenes ?? data.scenes;
   const existingLiveContext =
     data.animationConstitution === undefined
       ? await readClassroomSkillPromptContext(data.id)
@@ -174,19 +178,19 @@ export async function persistClassroom(
     id: data.id,
     owner_id: data.ownerId,
     org_id: data.orgId,
-    name: data.stage.name,
-    description: data.stage.description ?? null,
-    style: data.stage.style ?? null,
-    agent_ids: data.stage.agentIds ?? null,
-    extra: buildStageExtra(data.stage, animationConstitution),
+    name: stage.name,
+    description: stage.description ?? null,
+    style: stage.style ?? null,
+    agent_ids: stage.agentIds ?? null,
+    extra: buildStageExtra(stage, animationConstitution),
   });
   if (stageError) {
     throw new Error(`Failed to persist stage ${data.id}: ${stageError.message}`);
   }
 
-  if (data.scenes.length > 0) {
+  if (scenes.length > 0) {
     const { error: scenesError } = await supabase.from('scenes').upsert(
-      data.scenes.map((scene) => ({
+      scenes.map((scene) => ({
         id: scene.id,
         stage_id: data.id,
         type: scene.type,

@@ -88,6 +88,7 @@ import {
   persistSelectedPdfImages,
   uploadedPdfSource,
 } from '@/lib/server/pdf-source';
+import { teacherProfileFromClassroomCast } from '@/lib/agents/classroom-casting';
 
 const log = createLogger('Classroom');
 
@@ -652,6 +653,7 @@ export async function generateClassroom(
     tenantAgentConfigs = selectedRoster.length > 1 ? selectedRoster : tenantRoster.slice(0, 4);
     agents = tenantAgentConfigs.map(({ id, name, role, persona }) => ({ id, name, role, persona }));
   }
+  teachingProfile = teacherProfileFromClassroomCast(tenantAgentConfigs);
   try {
     const stageId = nanoid(10);
     const stage: Stage = {

@@ -41,6 +41,7 @@ import {
   type OrganizationDesignSystem,
 } from '@/lib/branding/organization-design-system';
 import { withGenerationRetry } from '@/lib/generation/generation-retry';
+import { ClassroomCastingError } from '@/lib/agents/classroom-casting';
 
 const log = createLogger('ClassroomMedia');
 
@@ -86,12 +87,25 @@ export function resolveCanonicalSpeechVoice(
   preferredVoice: { providerId: string; voiceId: string } | undefined,
   agents: CanonicalSpeechAgentVoice[] = [],
 ): { providerId: string; voiceId: string } | undefined {
-  const agentVoice = action.agentId
-    ? agents.find((agent) => agent.id === action.agentId)?.voiceConfig
-    : undefined;
-  return agentVoice
-    ? { providerId: agentVoice.providerId, voiceId: agentVoice.voiceId }
-    : preferredVoice;
+  if (agents.length === 0) return preferredVoice;
+  if (!action.agentId) {
+    throw new ClassroomCastingError(
+      `La prise de parole ${action.id} ne référence aucun agent du casting.`,
+    );
+  }
+  const agent = agents.find((candidate) => candidate.id === action.agentId);
+  if (!agent) {
+    throw new ClassroomCastingError(
+      `La prise de parole ${action.id} référence l’agent inconnu ${action.agentId}.`,
+    );
+  }
+  if (!agent.voiceConfig) {
+    throw new ClassroomCastingError(`L’agent ${agent.id} ne possède aucune voix persistante.`);
+  }
+  return {
+    providerId: agent.voiceConfig.providerId,
+    voiceId: agent.voiceConfig.voiceId,
+  };
 }
 
 export function selectClassroomImageModel(
