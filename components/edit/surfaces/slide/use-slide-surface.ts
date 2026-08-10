@@ -161,12 +161,18 @@ export function replaceImageSrc(elementId: string, src: string): void {
 
 export function applyGeneratedImage(
   src: string,
-  target: { element?: PPTElement; rect?: { left: number; top: number; width: number; height: number } },
+  target: {
+    element?: PPTElement;
+    rect?: { left: number; top: number; width: number; height: number };
+  },
 ): void {
   const id = target.element?.id ?? createElementId('image');
   const base = createDefaultImageElement(id, src);
   const geometry = target.element ?? target.rect;
-  const numericGeometry = (key: 'left' | 'top' | 'width' | 'height' | 'rotate', fallback: number) => {
+  const numericGeometry = (
+    key: 'left' | 'top' | 'width' | 'height' | 'rotate',
+    fallback: number,
+  ) => {
     if (!geometry || !(key in geometry)) return fallback;
     const value = geometry[key as keyof typeof geometry];
     return typeof value === 'number' ? value : fallback;

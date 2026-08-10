@@ -39,9 +39,7 @@ export function AnchoredElementBar({ element }: AnchoredElementBarProps) {
           aria-label={t('edit.image.aiReplace')}
           title={t('edit.image.aiReplace')}
           onMouseDown={(event) => event.preventDefault()}
-          onClick={() =>
-            useCanvasStore.getState().setAiImageTarget({ kind: 'element', elementId })
-          }
+          onClick={() => useCanvasStore.getState().setAiImageTarget({ kind: 'element', elementId })}
           className="flex h-8 w-8 items-center justify-center rounded-md text-violet-600 transition-colors hover:bg-violet-50 dark:hover:bg-violet-950/40"
         >
           <Sparkles className="h-4 w-4" />

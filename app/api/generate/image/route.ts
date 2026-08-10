@@ -54,11 +54,7 @@ export async function POST(request: NextRequest) {
       }
       const ownership = await readClassroomOwnership(classroomId);
       if (!ownership) return apiError('INVALID_REQUEST', 404, 'Classroom not found');
-      const auth = await requireSuperAdminOrOrgEditor(
-        request,
-        ownership.orgId,
-        ownership.ownerId,
-      );
+      const auth = await requireSuperAdminOrOrgEditor(request, ownership.orgId, ownership.ownerId);
       if (auth.response) return auth.response;
     }
 

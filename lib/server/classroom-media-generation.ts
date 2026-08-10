@@ -64,9 +64,7 @@ export function removeAgentNamesFromSpeech(
 ): string {
   const names = [
     ...new Set(
-      agents
-        .map((agent) => agent.name?.trim())
-        .filter((name): name is string => Boolean(name)),
+      agents.map((agent) => agent.name?.trim()).filter((name): name is string => Boolean(name)),
     ),
   ].sort((a, b) => b.length - a.length);
   if (names.length === 0) return text;

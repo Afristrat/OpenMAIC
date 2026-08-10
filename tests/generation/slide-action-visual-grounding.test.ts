@@ -142,7 +142,9 @@ describe('slide action visual grounding', () => {
     expect(aiCall).toHaveBeenCalledTimes(2);
     expect(aiCall.mock.calls[1]?.[0]).toContain('schéma');
     expect(actions).not.toEqual(
-      expect.arrayContaining([expect.objectContaining({ text: expect.stringMatching(/ce schéma/i) })]),
+      expect.arrayContaining([
+        expect.objectContaining({ text: expect.stringMatching(/ce schéma/i) }),
+      ]),
     );
   });
 });
