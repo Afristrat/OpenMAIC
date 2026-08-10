@@ -820,6 +820,8 @@ export async function generateClassroom(
             activeSkillId: requirements.activeSkillId,
             assignedImages,
             imageMapping,
+            requiredSourceImageIds:
+              safeOutline.type === 'slide' ? sourceImages.map((image) => image.id) : undefined,
             validationDirective: sceneValidationDirective,
             onValidationFailure: (directive) => {
               sceneValidationDirective = directive;

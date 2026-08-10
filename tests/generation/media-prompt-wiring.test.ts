@@ -198,6 +198,115 @@ describe('media prompt condition wiring', () => {
     expect(result).toBeNull();
   });
 
+  test('rejects a slide that omits every source image selected by the approved outline', async () => {
+    let feedback = '';
+    const aiCall: AICallFn = async () =>
+      JSON.stringify({
+        background: { type: 'solid', color: '#ffffff' },
+        elements: [
+          {
+            id: 'title',
+            type: 'text',
+            left: 60,
+            top: 80,
+            width: 880,
+            height: 76,
+            content: '<p>Process map</p>',
+            defaultFontName: '',
+            defaultColor: '#333333',
+          },
+        ],
+      });
+
+    const result = await generateSceneContent(
+      {
+        id: 'scene_source_image',
+        type: 'slide',
+        title: 'Process map',
+        description: 'Explain the source diagram',
+        keyPoints: ['Read the process map'],
+        order: 1,
+      },
+      aiCall,
+      {
+        assignedImages: [
+          {
+            id: 'img_source_1',
+            src: '/api/classroom-media/classroom-1/img_source_1.png',
+            pageNumber: 2,
+            width: 640,
+            height: 360,
+          },
+        ],
+        imageMapping: { img_source_1: '/api/classroom-media/classroom-1/img_source_1.png' },
+        requiredSourceImageIds: ['img_source_1'],
+        onValidationFailure: (directive) => {
+          feedback = directive;
+        },
+      },
+    );
+
+    expect(result).toBeNull();
+    expect(feedback).toContain('img_source_1');
+  });
+
+  test('requires and resolves a source image selected by the approved outline', async () => {
+    let capturedPrompt = '';
+    const persistedUrl = '/api/classroom-media/classroom-1/img_source_1.png';
+    const aiCall: AICallFn = async (_system, user) => {
+      capturedPrompt = user;
+      return JSON.stringify({
+        background: { type: 'solid', color: '#ffffff' },
+        elements: [
+          {
+            id: 'source-image',
+            type: 'image',
+            src: 'img_source_1',
+            left: 520,
+            top: 120,
+            width: 400,
+            height: 300,
+          },
+        ],
+      });
+    };
+
+    const result = await generateSceneContent(
+      {
+        id: 'scene_source_image',
+        type: 'slide',
+        title: 'Process map',
+        description: 'Explain the source diagram',
+        keyPoints: ['Read the process map'],
+        order: 1,
+      },
+      aiCall,
+      {
+        assignedImages: [
+          {
+            id: 'img_source_1',
+            src: persistedUrl,
+            pageNumber: 2,
+            width: 640,
+            height: 360,
+          },
+        ],
+        imageMapping: { img_source_1: persistedUrl },
+        requiredSourceImageIds: ['img_source_1'],
+      },
+    );
+
+    expect(capturedPrompt).toContain('REQUIRED SOURCE IMAGE');
+    expect(capturedPrompt).toContain('img_source_1');
+    expect(result).not.toBeNull();
+    if (!result || !('elements' in result)) {
+      throw new Error('Expected generated slide content');
+    }
+    expect(result.elements).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'image', src: persistedUrl })]),
+    );
+  });
+
   test('rejects a slide whose content-bearing elements overlap', async () => {
     const aiCall: AICallFn = async () =>
       JSON.stringify({

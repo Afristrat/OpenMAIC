@@ -74,6 +74,8 @@ const INTERACTIVE_WIDGET_ACTIONS = [
 export interface SceneContentOptions {
   assignedImages?: PdfImage[];
   imageMapping?: ImageMapping;
+  /** Source image IDs selected by the approved outline that the slide must actually place. */
+  requiredSourceImageIds?: string[];
   languageModel?: LanguageModel;
   visionEnabled?: boolean;
   generatedMediaMapping?: ImageMapping;
@@ -322,6 +324,7 @@ export async function generateSceneContent(
   const {
     assignedImages,
     imageMapping,
+    requiredSourceImageIds,
     languageModel,
     visionEnabled,
     generatedMediaMapping,
@@ -370,6 +373,7 @@ export async function generateSceneContent(
         aiCall,
         assignedImages,
         imageMapping,
+        requiredSourceImageIds,
         visionEnabled,
         generatedMediaMapping,
         agents,
@@ -801,6 +805,7 @@ async function generateSlideContent(
   aiCall: AICallFn,
   assignedImages?: PdfImage[],
   imageMapping?: ImageMapping,
+  requiredSourceImageIds?: string[],
   visionEnabled?: boolean,
   generatedMediaMapping?: ImageMapping,
   agents?: AgentInfo[],
@@ -967,6 +972,13 @@ async function generateSlideContent(
       `Regenerate the full slide JSON and correct every listed defect. Do not repeat the invalid geometry or omit required assets.`;
   }
 
+  if (requiredSourceImageIds?.length) {
+    userPrompt +=
+      `\n\n## REQUIRED SOURCE IMAGE\n` +
+      `Include at least one image element whose src is exactly one of these approved source image IDs: ${requiredSourceImageIds.map((id) => `"${id}"`).join(', ')}. ` +
+      `Choose the most instructionally relevant image and place it legibly without overlap.`;
+  }
+
   const response = await aiCall(prompts.system, userPrompt, visionImages);
   const generatedData = parseJsonResponse<GeneratedSlideData>(response);
 
@@ -995,6 +1007,20 @@ async function generateSlideContent(
   // Fix elements with missing required fields + aspect ratio correction (while src is still img_id)
   const fixedElements = fixElementDefaults(generatedData.elements, assignedImages);
   log.debug(`After element fixing: ${fixedElements.length} elements`);
+
+  if (requiredSourceImageIds?.length) {
+    const approvedIds = new Set(requiredSourceImageIds);
+    const hasRequiredSourceImage = fixedElements.some(
+      (element) =>
+        element.type === 'image' && typeof element.src === 'string' && approvedIds.has(element.src),
+    );
+    if (!hasRequiredSourceImage) {
+      const failure = `Include at least one approved source image element with src exactly one of: ${requiredSourceImageIds.map((id) => `"${id}"`).join(', ')}.`;
+      log.warn(`Slide omitted its approved source image: ${failure} Retrying`);
+      onValidationFailure?.(failure);
+      return null;
+    }
+  }
 
   // Process LaTeX elements: render latex string → HTML via KaTeX
   const latexProcessedElements = processLatexElements(fixedElements);
