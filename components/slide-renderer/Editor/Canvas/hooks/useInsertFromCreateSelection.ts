@@ -17,6 +17,7 @@ export function useInsertFromCreateSelection(viewportRef: RefObject<HTMLElement 
   const canvasScale = useCanvasStore.use.canvasScale();
   const creatingElement = useCanvasStore.use.creatingElement();
   const setCreatingElement = useCanvasStore.use.setCreatingElement();
+  const setAiImageTarget = useCanvasStore.use.setAiImageTarget();
   const { addElement } = useCanvasOperations();
 
   // Calculate selection position and size from the start and end points of mouse drag selection
@@ -116,6 +117,9 @@ export function useInsertFromCreateSelection(viewportRef: RefObject<HTMLElement 
           };
           addElement(textEl);
         }
+      } else if (type === 'ai-image') {
+        const position = formatCreateSelection(selectionData);
+        if (position) setAiImageTarget({ kind: 'zone', rect: position });
       } else if (type === 'shape') {
         const position = formatCreateSelection(selectionData);
         if (position) {
@@ -134,6 +138,7 @@ export function useInsertFromCreateSelection(viewportRef: RefObject<HTMLElement 
       formatCreateSelection,
       formatCreateSelectionForLine,
       setCreatingElement,
+      setAiImageTarget,
       addElement,
     ],
   );

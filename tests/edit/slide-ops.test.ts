@@ -73,6 +73,38 @@ describe('applySlideEditOperation', () => {
     expect(original.canvas.elements[0]).toMatchObject({ left: 100, top: 80, rotate: 0 });
   });
 
+  test('replaces an element atomically while preserving its z-order slot', () => {
+    const original = slideContent([
+      textElement({ id: 'title' }),
+      textElement({ id: 'visual', content: '<p>Placeholder</p>' }),
+      textElement({ id: 'footer' }),
+    ]);
+    const replacement = {
+      id: 'visual',
+      type: 'image' as const,
+      src: '/api/classroom-media/course/media/generated.png',
+      left: 400,
+      top: 120,
+      width: 360,
+      height: 240,
+      rotate: 0,
+    };
+
+    const updated = applySlideEditOperation(original, {
+      type: 'element.replace',
+      elementId: 'visual',
+      element: replacement,
+    });
+
+    expect(updated.canvas.elements.map((element) => element.id)).toEqual([
+      'title',
+      'visual',
+      'footer',
+    ]);
+    expect(updated.canvas.elements[1]).toEqual(replacement);
+    expect(original.canvas.elements[1]?.type).toBe('text');
+  });
+
   test('updates text content only for text elements', () => {
     const original = slideContent();
 

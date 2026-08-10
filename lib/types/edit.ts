@@ -104,7 +104,20 @@ export interface CreatingLineElement {
   type: 'line';
   data: LinePoolItem;
 }
-export type CreatingElement = CreatingTextElement | CreatingShapeElement | CreatingLineElement;
+export interface CreatingAiImageElement {
+  type: 'ai-image';
+}
+export type CreatingElement =
+  | CreatingTextElement
+  | CreatingShapeElement
+  | CreatingLineElement
+  | CreatingAiImageElement;
+
+export interface AiImageTarget {
+  kind: 'element' | 'zone';
+  elementId?: string;
+  rect?: { left: number; top: number; width: number; height: number };
+}
 
 export type TextFormatPainterKeys =
   | 'bold'

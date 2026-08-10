@@ -4,6 +4,9 @@ import type { PPTElement } from '@openmaic/dsl';
 import { AnchoredBar } from './AnchoredBar';
 import { DeleteButton } from './DeleteButton';
 import { ImageActions } from './ImageActions';
+import { Sparkles } from 'lucide-react';
+import { useI18n } from '@/lib/hooks/use-i18n';
+import { useCanvasStore } from '@/lib/store/canvas';
 import { ZOrderButtons } from './ZOrderButtons';
 
 interface AnchoredElementBarProps {
@@ -20,6 +23,7 @@ const Separator = () => <div className="h-5 w-px bg-zinc-200 dark:bg-zinc-800" /
  * — see AnchoredBar for the shell. Text elements get their own AnchoredTextBar.
  */
 export function AnchoredElementBar({ element }: AnchoredElementBarProps) {
+  const { t } = useI18n();
   const elementId = element?.id ?? '';
   return (
     <AnchoredBar elementId={elementId}>
@@ -30,6 +34,19 @@ export function AnchoredElementBar({ element }: AnchoredElementBarProps) {
             <Separator />
           </>
         )}
+        <button
+          type="button"
+          aria-label={t('edit.image.aiReplace')}
+          title={t('edit.image.aiReplace')}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() =>
+            useCanvasStore.getState().setAiImageTarget({ kind: 'element', elementId })
+          }
+          className="flex h-8 w-8 items-center justify-center rounded-md text-violet-600 transition-colors hover:bg-violet-50 dark:hover:bg-violet-950/40"
+        >
+          <Sparkles className="h-4 w-4" />
+        </button>
+        <Separator />
         <ZOrderButtons elementId={elementId} />
         <Separator />
         <DeleteButton elementId={elementId} />

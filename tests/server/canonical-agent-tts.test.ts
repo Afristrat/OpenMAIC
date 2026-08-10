@@ -109,4 +109,54 @@ describe('canonical classroom agent TTS', () => {
       [{ completed: 2, total: 2 }],
     ]);
   });
+
+  test('retire les prénoms des agents avant la synthèse et la persistance', async () => {
+    const scene = {
+      id: 'scene-1',
+      stageId: 'classroom-1',
+      type: 'slide',
+      title: 'SIPOC',
+      order: 1,
+      content: { type: 'slide', canvas: { id: 'canvas-1', elements: [] } },
+      actions: [
+        {
+          id: 'speech-1',
+          type: 'speech',
+          text: 'Une remarque importante, Hanae : vérifions les frontières.',
+          agentId: 'agent-analyst',
+        },
+        {
+          id: 'speech-2',
+          type: 'speech',
+          text: 'Excellente précision, Khalid. Passons aux étapes.',
+          agentId: 'agent-teacher',
+        },
+      ],
+    } as unknown as Scene;
+
+    await generateTTSForClassroom(
+      [scene],
+      'classroom-1',
+      { providerId: 'higgs-tts', voiceId: 'teacher-voice' },
+      [
+        { id: 'agent-teacher', name: 'Hanae' },
+        { id: 'agent-analyst', name: 'Khalid' },
+      ],
+    );
+
+    expect(mocks.generateTTS).toHaveBeenNthCalledWith(
+      1,
+      expect.any(Object),
+      'Une remarque importante : vérifions les frontières.',
+    );
+    expect(mocks.generateTTS).toHaveBeenNthCalledWith(
+      2,
+      expect.any(Object),
+      'Excellente précision. Passons aux étapes.',
+    );
+    expect(scene.actions?.map((action) => ('text' in action ? action.text : ''))).toEqual([
+      'Une remarque importante : vérifions les frontières.',
+      'Excellente précision. Passons aux étapes.',
+    ]);
+  });
 });

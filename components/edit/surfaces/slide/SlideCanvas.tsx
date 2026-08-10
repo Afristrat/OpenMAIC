@@ -18,6 +18,7 @@ import { ElementPickLayer } from './ElementPickLayer';
 import { PresentationBrandMark } from '@/components/branding/presentation-brand-mark';
 import { SelectionSafetyBar } from './SelectionSafetyBar';
 import { useSlideEditSession } from './slide-edit-session';
+import { AiImageDialog } from './AiImageDialog';
 
 /**
  * The slide surface's canvas. Reuses the unmodified slide renderer
@@ -111,6 +112,7 @@ export function SlideCanvas() {
       <AnchoredElementBar element={nonTextElement} />
       {/* Canvas-side element picker for the timeline's element-bound cues. */}
       <ElementPickLayer />
+      <AiImageDialog />
     </div>
   );
 }

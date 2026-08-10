@@ -50,7 +50,36 @@ export interface ClassroomTTSGenerationReport {
 
 export interface CanonicalSpeechAgentVoice {
   id: string;
+  name?: string;
   voiceConfig?: { providerId: string; modelId?: string; voiceId: string };
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export function removeAgentNamesFromSpeech(
+  text: string,
+  agents: CanonicalSpeechAgentVoice[] = [],
+): string {
+  const names = [
+    ...new Set(
+      agents
+        .map((agent) => agent.name?.trim())
+        .filter((name): name is string => Boolean(name)),
+    ),
+  ].sort((a, b) => b.length - a.length);
+  if (names.length === 0) return text;
+
+  const directAddress = new RegExp(
+    `([,;:]?\\s*)(?:${names.map(escapeRegExp).join('|')})(?=$|[^\\p{L}\\p{N}])`,
+    'giu',
+  );
+  return text
+    .replace(directAddress, '')
+    .replace(/^\s*[,;:.!?]\s*/, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
 }
 
 export function resolveCanonicalSpeechVoice(
@@ -350,14 +379,22 @@ export async function generateTTSForClassroom(
     // splitters preserve agent and intervention identity on every resulting segment.
     scene.actions = scene.actions.flatMap((action) => {
       if (action.type !== 'speech') return [action];
-      const requestedVoice = resolveCanonicalSpeechVoice(action, preferredVoice, agents);
+      const speechWithoutAgentNames = {
+        ...action,
+        text: removeAgentNamesFromSpeech(action.text, agents),
+      };
+      const requestedVoice = resolveCanonicalSpeechVoice(
+        speechWithoutAgentNames,
+        preferredVoice,
+        agents,
+      );
       const actionProviderId = (
         requestedVoice && ttsProviderIds.includes(requestedVoice.providerId)
           ? requestedVoice.providerId
           : providerId
       ) as TTSProviderId;
       return splitSpeechActionsByAnglicisms(
-        splitLongSpeechActions([action], actionProviderId),
+        splitLongSpeechActions([speechWithoutAgentNames], actionProviderId),
         actionProviderId,
       );
     });

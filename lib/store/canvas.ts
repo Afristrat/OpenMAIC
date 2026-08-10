@@ -2,7 +2,12 @@ import { create } from 'zustand';
 import { createSelectors } from '@/lib/utils/create-selectors';
 import type { TextAttrs } from '@/lib/prosemirror/utils';
 import { defaultRichTextAttrs } from '@/lib/prosemirror/utils';
-import type { TextFormatPainter, ShapeFormatPainter, CreatingElement } from '@/lib/types/edit';
+import type {
+  TextFormatPainter,
+  ShapeFormatPainter,
+  CreatingElement,
+  AiImageTarget,
+} from '@/lib/types/edit';
 import type { PercentageGeometry } from '@/lib/types/action';
 
 /**
@@ -90,6 +95,7 @@ interface CanvasState {
 
   // ===== Element creation =====
   creatingElement: CreatingElement | null; // Element being created (needs draw-to-insert)
+  aiImageTarget: AiImageTarget | null;
   creatingCustomShape: boolean; // Drawing custom shape (arbitrary polygon)
 
   // ===== Editing state =====
@@ -142,6 +148,7 @@ interface CanvasState {
 
   // ----- Element creation -----
   setCreatingElement: (element: CreatingElement | null) => void;
+  setAiImageTarget: (target: AiImageTarget | null) => void;
   setCreatingCustomShapeState: (creating: boolean) => void;
 
   // ----- Editing state -----
@@ -216,6 +223,7 @@ const initialState = {
 
   // Element creation
   creatingElement: null,
+  aiImageTarget: null,
   creatingCustomShape: false,
 
   // Editing state
@@ -320,6 +328,7 @@ const useCanvasStoreBase = create<CanvasState>((set, get) => ({
   // ===== Element Creation Actions =====
 
   setCreatingElement: (element) => set({ creatingElement: element }),
+  setAiImageTarget: (aiImageTarget) => set({ aiImageTarget }),
 
   setCreatingCustomShapeState: (creating) => set({ creatingCustomShape: creating }),
 

@@ -1641,14 +1641,46 @@ export async function generateSceneActions(
       languageDirective: languageDirective || '',
     });
 
-    const actions = prompts
-      ? parseActionsFromStructuredOutput(await aiCall(prompts.system, prompts.user), outline.type)
-      : [];
-    const processed = processActions(
-      actions.length > 0 ? actions : generateDefaultSlideActions(outline, content.elements),
-      content.elements,
-      agents,
-    );
+    let processed: Action[] = [];
+    if (prompts) {
+      const visualInventory = [...new Set(content.elements.map((element) => element.type))].join(
+        ', ',
+      );
+      const visualGroundingInstruction = [
+        `Visible element types: ${visualInventory || 'none'}.`,
+        'Only say that a table, chart, image or video is visible when that exact element type exists in this inventory.',
+        'Only call something a diagram or schema when a structured chart or table element exists.',
+        'Never reinterpret a decorative shape or an unlabelled generic image as a table, chart, diagram or video.',
+      ].join(' ');
+      let groundingFeedback = '';
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const systemPrompt = [
+          prompts.system,
+          visualGroundingInstruction,
+          groundingFeedback
+            ? `Your previous output was rejected: ${groundingFeedback}\nRegenerate the complete action sequence without claiming that an absent visual is shown.`
+            : '',
+        ]
+          .filter(Boolean)
+          .join('\n\n');
+        const actions = parseActionsFromStructuredOutput(
+          await aiCall(systemPrompt, prompts.user),
+          outline.type,
+        );
+        processed = processActions(actions, content.elements, agents);
+        const issue = findUngroundedVisualClaim(processed, content.elements);
+        if (!issue) break;
+        groundingFeedback = issue;
+        processed = [];
+      }
+    }
+    if (processed.length === 0) {
+      processed = processActions(
+        generateDefaultSlideActions(outline, content.elements),
+        content.elements,
+        agents,
+      );
+    }
 
     return appendResourcePauseActions(
       await ensureCanonicalAgentInterventions(
@@ -1939,6 +1971,55 @@ function formatElementsForPrompt(elements: PPTElement[]): string {
       return `- id: "${el.id}", type: "${el.type}", ${summary}`;
     })
     .join('\n');
+}
+
+const VISUAL_CLAIM_RULES: Array<{
+  label: string;
+  pattern: RegExp;
+  elementTypes: PPTElement['type'][];
+}> = [
+  {
+    label: 'tableau',
+    pattern:
+      /\b(?:ce|le|un) tableau\b|\bdans (?:ce|le) tableau\b|\bthis table\b|\bthe table (?:shown|displayed)\b|هذا الجدول/iu,
+    elementTypes: ['table'],
+  },
+  {
+    label: 'graphique',
+    pattern:
+      /\b(?:ce|le|un) graphique\b|\bdans (?:ce|le) graphique\b|\bthis chart\b|\bthe chart (?:shown|displayed)\b|هذا الرسم البياني/iu,
+    elementTypes: ['chart'],
+  },
+  {
+    label: 'vidéo',
+    pattern:
+      /\b(?:cette|la|une) vidéo\b|\bthis video\b|\bthe video (?:shown|displayed)\b|هذا الفيديو/iu,
+    elementTypes: ['video'],
+  },
+  {
+    label: 'schéma',
+    pattern:
+      /\b(?:ce|le|un) sch[ée]ma\b|\b(?:ce|le|un) diagramme\b|\bthis diagram\b|\bthe diagram (?:shown|displayed)\b/iu,
+    // A generic source image has no semantic metadata proving that it depicts
+    // the claimed structure. A demonstrative "ce schéma" therefore needs a
+    // structured chart or table element.
+    elementTypes: ['chart', 'table'],
+  },
+];
+
+function findUngroundedVisualClaim(actions: Action[], elements: PPTElement[]): string | null {
+  for (const action of actions) {
+    if (action.type !== 'speech') continue;
+    for (const rule of VISUAL_CLAIM_RULES) {
+      if (
+        rule.pattern.test(action.text) &&
+        !elements.some((element) => rule.elementTypes.includes(element.type))
+      ) {
+        return `The narration mentions a visible ${rule.label}, but the slide element inventory contains no ${rule.elementTypes.join(' or ')} element. Offending speech: "${action.text}"`;
+      }
+    }
+  }
+  return null;
 }
 
 /**

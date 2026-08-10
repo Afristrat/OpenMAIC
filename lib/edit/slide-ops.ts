@@ -40,6 +40,12 @@ export type SlideEditOperation =
       patch: ElementPatch;
     }
   | {
+      /** Replace an element atomically while preserving its z-order slot. */
+      type: 'element.replace';
+      elementId: string;
+      element: PPTElement;
+    }
+  | {
       type: 'element.updateMany';
       elementIds: string[];
       patch: ElementPatch;
@@ -200,6 +206,23 @@ function applyOperationToContent(
         const element = draft.canvas.elements.find((item) => item.id === operation.elementId);
         if (!element) return;
         Object.assign(element, operation.patch);
+        return;
+      }
+      case 'element.replace': {
+        const index = draft.canvas.elements.findIndex((item) => item.id === operation.elementId);
+        if (index === -1) return;
+        if (
+          operation.element.id !== operation.elementId &&
+          draft.canvas.elements.some((item) => item.id === operation.element.id)
+        ) {
+          throw new Error(`element.replace: id "${operation.element.id}" already exists`);
+        }
+        draft.canvas.elements[index] = cloneElement(operation.element);
+        if (draft.canvas.animations) {
+          draft.canvas.animations.forEach((animation) => {
+            if (animation.elId === operation.elementId) animation.elId = operation.element.id;
+          });
+        }
         return;
       }
       case 'element.updateMany': {

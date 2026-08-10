@@ -30,6 +30,10 @@ import type { ImageProviderId, ImageGenerationOptions } from '@/lib/media/types'
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
+import { randomUUID } from 'node:crypto';
+import { requireSuperAdminOrOrgEditor } from '@/lib/api/auth';
+import { uploadClassroomMedia } from '@/lib/server/classroom-media-generation';
+import { isValidClassroomId, readClassroomOwnership } from '@/lib/server/classroom-storage';
 
 const log = createLogger('ImageGeneration API');
 
@@ -37,10 +41,25 @@ export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as ImageGenerationOptions;
+    const requestBody = (await request.json()) as ImageGenerationOptions & { classroomId?: string };
+    const { classroomId, ...body } = requestBody;
 
     if (!body.prompt) {
       return apiError('MISSING_REQUIRED_FIELD', 400, 'Missing prompt');
+    }
+
+    if (classroomId) {
+      if (!isValidClassroomId(classroomId)) {
+        return apiError('INVALID_REQUEST', 400, 'Invalid classroom id');
+      }
+      const ownership = await readClassroomOwnership(classroomId);
+      if (!ownership) return apiError('INVALID_REQUEST', 404, 'Classroom not found');
+      const auth = await requireSuperAdminOrOrgEditor(
+        request,
+        ownership.orgId,
+        ownership.ownerId,
+      );
+      if (auth.response) return auth.response;
     }
 
     const providerId = (request.headers.get('x-image-provider') || 'seedream') as ImageProviderId;
@@ -82,6 +101,25 @@ export async function POST(request: NextRequest) {
     );
 
     const result = await generateImage({ providerId, apiKey, baseUrl, model: clientModel }, body);
+
+    if (classroomId) {
+      const bytes = result.base64
+        ? Buffer.from(result.base64, 'base64')
+        : result.url
+          ? Buffer.from(
+              await (
+                await fetch(result.url, { signal: AbortSignal.timeout(60_000) })
+              ).arrayBuffer(),
+            )
+          : null;
+      if (!bytes?.length) {
+        return apiError('GENERATION_FAILED', 502, 'Image generation returned no media');
+      }
+      const filename = `editor-${randomUUID()}.png`;
+      await uploadClassroomMedia(classroomId, `media/${filename}`, bytes);
+      result.url = `/api/classroom-media/${classroomId}/media/${filename}`;
+      result.base64 = undefined;
+    }
 
     return apiSuccess({ result });
   } catch (error) {

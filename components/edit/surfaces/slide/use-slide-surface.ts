@@ -1,7 +1,7 @@
 'use client';
 
 import { produce } from 'immer';
-import { Image as ImageIcon, PaintBucket, Type } from 'lucide-react';
+import { Image as ImageIcon, PaintBucket, Sparkles, Type } from 'lucide-react';
 import React, { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import type { SceneDataController } from '@/lib/contexts/scene-context';
 import type { InsertPaletteItem, SurfaceState } from '@/lib/edit/scene-editor-surface';
@@ -53,6 +53,17 @@ export function buildInsertItems(
         React.createElement(ImagePicker, {
           onPick: insertImageElement,
         }),
+    },
+    {
+      id: 'insert-ai-image',
+      label: t('edit.image.aiCreate'),
+      tooltip: t('edit.image.aiCreateZone'),
+      icon: React.createElement(Sparkles, { className: 'h-4 w-4' }),
+      active: creatingType === 'ai-image',
+      onInvoke: () => {
+        const cs = useCanvasStore.getState();
+        cs.setCreatingElement(creatingType === 'ai-image' ? null : { type: 'ai-image' });
+      },
     },
     {
       // Slide-level (not element-anchored): set the slide background. Rides the
@@ -146,6 +157,36 @@ export function replaceImageSrc(elementId: string, src: string): void {
   useSlideEditSession
     .getState()
     .applyOp({ type: 'element.update', elementId, patch: { src, clip: undefined } });
+}
+
+export function applyGeneratedImage(
+  src: string,
+  target: { element?: PPTElement; rect?: { left: number; top: number; width: number; height: number } },
+): void {
+  const id = target.element?.id ?? createElementId('image');
+  const base = createDefaultImageElement(id, src);
+  const geometry = target.element ?? target.rect;
+  const element: PPTImageElement = {
+    ...base,
+    ...(geometry
+      ? {
+          left: geometry.left,
+          top: geometry.top,
+          width: geometry.width,
+          height: geometry.height,
+          rotate: 'rotate' in geometry ? geometry.rotate : 0,
+        }
+      : {}),
+    src,
+    clip: undefined,
+  };
+  const session = useSlideEditSession.getState();
+  if (target.element) {
+    session.applyOp({ type: 'element.replace', elementId: target.element.id, element });
+  } else {
+    session.applyOp({ type: 'element.add', element });
+  }
+  useCanvasStore.getState().setActiveElementIdList([id]);
 }
 
 /** Toggle horizontal/vertical flip on an image element. */
