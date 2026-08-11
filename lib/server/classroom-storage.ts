@@ -1,5 +1,4 @@
 import path from 'path';
-import type { NextRequest } from 'next/server';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 import type { Scene, Stage } from '@/lib/types/stage';
@@ -10,14 +9,9 @@ import {
   type InterventionDecision,
 } from '@/lib/formation-engine/animation-constitution';
 import { normalizeClassroomCasting } from '@/lib/agents/classroom-casting';
+export { buildRequestOrigin } from '@/lib/server/request-origin';
 
 const log = createLogger('ClassroomStorage');
-
-export function buildRequestOrigin(req: NextRequest): string {
-  return req.headers.get('x-forwarded-host')
-    ? `${req.headers.get('x-forwarded-proto') || 'http'}://${req.headers.get('x-forwarded-host')}`
-    : req.nextUrl.origin;
-}
 
 export interface PersistedClassroomData {
   id: string;

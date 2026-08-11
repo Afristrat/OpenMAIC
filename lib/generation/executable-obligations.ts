@@ -1,0 +1,152 @@
+import type {
+  ClassroomPlan,
+  ResourceGenerationRequest,
+  SceneOutline,
+} from '@/lib/types/generation';
+
+const WORKBOOK_WORDS = /\b(?:classeur|excel|xlsx|workbook|spreadsheet)\b/i;
+const WORKBOOK_ACTIONS =
+  /\b(?:cr[ée]e?r?|g[ée]n[èe]re?r?|produi(?:s|re)|t[ée]l[ée]charg(?:er|ement)|modifiable|utilisable|fichier r[ée]el|v[ée]ritable)\b/i;
+const CASH_FLOW_13_WEEK =
+  /(?:tr[ée]sorerie|cash[ -]?flow)[\s\S]{0,160}\b13\s+semaines?\b|\b13\s+semaines?[\s\S]{0,160}(?:tr[ée]sorerie|cash[ -]?flow)/i;
+const DOWNLOAD_SCENE =
+  /(?:t[ée]l[ée]charg|classeur|fichier|lien court|qr\s*code|ressource|workbook|spreadsheet)/i;
+const DIAGNOSTIC_SCENE = /(?:diagnostic|python|analyse|[ée]valuation|retour)/i;
+const PREMATURE_VERDICT =
+  /(?:travail conforme|bonne analyse|aucun axe|aucune am[ée]lioration|r[ée]ussi|valid[ée]|score|note\s*[:=]|100\s*\/\s*100)/i;
+
+function outlineText(outline: SceneOutline): string {
+  return [outline.title, outline.description, ...(outline.keyPoints ?? [])].join(' ');
+}
+
+function workbookRequest(
+  id: string,
+  requirement: string,
+  cashFlow13Week: boolean,
+): ResourceGenerationRequest {
+  if (cashFlow13Week) {
+    return {
+      id,
+      format: 'xlsx',
+      title: 'Prévision de trésorerie sur 13 semaines',
+      fileName: 'prevision-tresorerie-13-semaines.xlsx',
+      prompt: [
+        'Créer un classeur Excel professionnel, modifiable et directement utilisable.',
+        'Prévoir treize colonnes hebdomadaires, les hypothèses, les encaissements, les décaissements, le solde initial, le solde final, les alertes et plusieurs scénarios.',
+        'Utiliser exclusivement le MAD et conserver les formules nécessaires au contrôle automatisé.',
+        requirement,
+      ].join(' '),
+      evaluationProfile: 'cash-flow-13-week',
+    };
+  }
+  return {
+    id,
+    format: 'xlsx',
+    title: 'Classeur d’exercice',
+    fileName: 'classeur-exercice.xlsx',
+    prompt: `Créer un classeur Excel modifiable, complet et directement utilisable pour cette formation. Exigence de l’auteur : ${requirement}`,
+  };
+}
+
+/**
+ * Converts explicit author promises into executable contracts. Prompt rules
+ * improve model output, but this boundary prevents a model omission from
+ * producing a fake file, link, upload or assessment later in the pipeline.
+ */
+export function enforceExecutableObligations(
+  plan: ClassroomPlan,
+  requirement: string,
+): ClassroomPlan {
+  const workbookRequired = WORKBOOK_WORDS.test(requirement) && WORKBOOK_ACTIONS.test(requirement);
+  if (!workbookRequired) return plan;
+
+  const cashFlow13Week = CASH_FLOW_13_WEEK.test(requirement);
+  const outlines = plan.outlines.map((outline) => ({
+    ...outline,
+    keyPoints: [...(outline.keyPoints ?? [])],
+    resourceGenerations: outline.resourceGenerations?.map((resource) => ({ ...resource })),
+  }));
+
+  const existingWorkbook = outlines
+    .flatMap((outline, outlineIndex) =>
+      (outline.resourceGenerations ?? []).map((resource) => ({
+        outlineIndex,
+        resource,
+      })),
+    )
+    .find(({ resource }) => resource.format === 'xlsx');
+  let targetIndex = outlines.findIndex(
+    (outline) =>
+      outline.type === 'slide' &&
+      outline.resourceGenerations?.some((resource) => resource.format === 'xlsx'),
+  );
+  if (targetIndex < 0) {
+    targetIndex = outlines.findIndex(
+      (outline) => outline.type === 'slide' && DOWNLOAD_SCENE.test(outlineText(outline)),
+    );
+  }
+  if (targetIndex < 0) {
+    const pblIndex = outlines.findIndex((outline) => outline.type === 'pbl');
+    const candidates = outlines
+      .map((outline, index) => ({ outline, index }))
+      .filter(
+        ({ outline, index }) => outline.type === 'slide' && (pblIndex < 0 || index < pblIndex),
+      );
+    targetIndex =
+      candidates.at(-1)?.index ?? outlines.findIndex((outline) => outline.type === 'slide');
+  }
+  if (targetIndex < 0) return plan;
+
+  const target = outlines[targetIndex];
+  if (existingWorkbook && existingWorkbook.outlineIndex !== targetIndex) {
+    const source = outlines[existingWorkbook.outlineIndex];
+    source.resourceGenerations = source.resourceGenerations?.filter(
+      (resource) => resource !== existingWorkbook.resource,
+    );
+    target.resourceGenerations = [...(target.resourceGenerations ?? []), existingWorkbook.resource];
+  }
+  const existingIndex = target.resourceGenerations?.findIndex(
+    (resource) => resource.format === 'xlsx',
+  );
+  if (existingIndex !== undefined && existingIndex >= 0 && target.resourceGenerations) {
+    if (cashFlow13Week) {
+      target.resourceGenerations[existingIndex] = {
+        ...target.resourceGenerations[existingIndex],
+        evaluationProfile: 'cash-flow-13-week',
+      };
+    }
+  } else {
+    target.resourceGenerations = [
+      ...(target.resourceGenerations ?? []),
+      workbookRequest(`workbook-${target.id}`, requirement, cashFlow13Week),
+    ];
+  }
+  target.description =
+    'Téléchargez le classeur réellement généré à partir du lien court ou du QR code affiché, puis ouvrez-le avant de poursuivre.';
+  target.keyPoints = [
+    'Le lien court affiché ouvre le fichier réel de cette formation.',
+    'Le QR code donne accès exactement au même fichier.',
+    'La formation attend votre action explicite avant de poursuivre.',
+  ];
+
+  if (cashFlow13Week) {
+    const pblIndex = outlines.findIndex((outline) => outline.type === 'pbl');
+    for (let index = Math.max(pblIndex + 1, 0); index < outlines.length; index += 1) {
+      const outline = outlines[index];
+      const text = outlineText(outline);
+      if (outline.type === 'slide' && DIAGNOSTIC_SCENE.test(text) && PREMATURE_VERDICT.test(text)) {
+        outline.title = 'Comprendre le diagnostic Python';
+        outline.description =
+          'Le diagnostic sera produit uniquement après le dépôt et l’analyse du classeur réellement complété.';
+        outline.keyPoints = [
+          'Python contrôle la structure, les formules, les signes, les calculs et le scénario.',
+          'Le résultat dépend exclusivement du fichier réellement déposé par l’apprenant.',
+          'La formatrice explique ensuite les constats et propose des améliorations si elles sont nécessaires.',
+          'Aucun verdict ni score n’est annoncé avant cette analyse.',
+        ];
+      }
+    }
+  }
+
+  return { ...plan, outlines };
+}

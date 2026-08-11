@@ -116,8 +116,8 @@ export function CanvasArea({
           {/* Scene Content */}
           {currentScene && !whiteboardOpen && (
             <div className="absolute inset-0">
-              <SceneProvider>
-                <SceneRenderer scene={currentScene} mode={mode} />
+              <SceneProvider key={currentScene.id}>
+                <SceneRenderer key={currentScene.id} scene={currentScene} mode={mode} />
               </SceneProvider>
             </div>
           )}

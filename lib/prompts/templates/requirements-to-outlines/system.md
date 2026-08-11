@@ -246,6 +246,7 @@ When a learner genuinely needs a reusable workbook to complete an exercise, appl
 - Generate at most two resources per course.
 - Never mention a downloadable file in a title, description, or key point unless a matching `resourceGenerations` entry exists on that scene.
 - Treat every promised file, exercise sheet, template, workbook, document, short link or QR code as an executable obligation. Create the matching `resourceGenerations` entry before writing that promise. If no real resource is needed, omit the promise entirely.
+- Never invent a learner upload, Python result, score, verdict or feedback in a later scene. Describe the evaluation method only. The actual result exists only after the learner has uploaded the generated file and Python has analysed that exact upload.
 - When narration will tell the learner to inspect an image, diagram or schema, schedule a suitable source image, generated image, native chart or native table in that same scene. Never describe a visual that the scene does not actually contain.
 - Use a globally unique id such as `resource_1`.
 - `fileName` must end in the extension matching `format`.

@@ -673,6 +673,7 @@ function HomePage() {
     !!currentOrg &&
     canAuthor;
   const requiresAuthentication = !user;
+  const missingAuthoringSelections = !form.learningApproach || !form.interactionLevel;
   const generateDisabled = !requiresAuthentication && (!canGenerate || isPlanning);
 
   const handleGenerateAction = () => {
@@ -1087,6 +1088,9 @@ function HomePage() {
               <button
                 onClick={handleGenerateAction}
                 disabled={generateDisabled}
+                aria-describedby={
+                  missingAuthoringSelections ? 'generation-selection-requirement' : undefined
+                }
                 className={cn(
                   'shrink-0 h-8 rounded-lg flex items-center justify-center gap-1.5 transition-all px-3',
                   !generateDisabled
@@ -1184,6 +1188,15 @@ function HomePage() {
               {t(`org.interactionLevels.${level}`)}
             </button>
           ))}
+          {missingAuthoringSelections && (
+            <p
+              id="generation-selection-requirement"
+              data-testid="generation-selection-requirement"
+              className="basis-full text-xs font-medium text-amber-700 dark:text-amber-300"
+            >
+              {t('animation.selectionRequired')}
+            </p>
+          )}
         </div>
 
         {showVocationalTestUi && (

@@ -12,6 +12,7 @@ import {
   generateSceneOutlinesFromRequirements,
   isSceneCountMismatch,
 } from '@/lib/generation/outline-generator';
+import { enforceExecutableObligations } from '@/lib/generation/executable-obligations';
 import type { AICallFn } from '@/lib/generation/pipeline-types';
 import { DEFAULT_LEARNING_DESIGN, learningDesignFromSettings } from '@/lib/agents/persona-catalog';
 import { resolveModel } from '@/lib/server/resolve-model';
@@ -112,5 +113,5 @@ export async function generateClassroomPlan(input: GenerateClassroomInput) {
   if (!result.success || !result.data) {
     throw new Error(result.error || 'Failed to generate classroom plan');
   }
-  return result.data;
+  return enforceExecutableObligations(result.data, input.requirement);
 }

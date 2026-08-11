@@ -60,7 +60,12 @@ test.describe('Home → Generation', () => {
 
     // Type requirement → button activates
     await home.fillRequirement('讲解光合作用');
+    await expect(page.getByTestId('generation-selection-requirement')).toContainText(
+      'Choose the learning approach and interaction level.',
+    );
+    await expect(home.enterButton).toBeDisabled();
     await home.configureAnimation();
+    await expect(page.getByTestId('generation-selection-requirement')).toHaveCount(0);
     await expect(home.enterButton).toBeEnabled();
 
     // Submit → navigate to generation-preview

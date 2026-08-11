@@ -70,4 +70,44 @@ describe('auditSlideLayout', () => {
 
     expect(auditSlideLayout(panel).filter((issue) => issue.type === 'overlap')).toEqual([]);
   });
+
+  test('uses the rendered minimum height of every table row', () => {
+    const tableOverflow: Slide = {
+      ...structuredClone(slide),
+      elements: [
+        {
+          id: 'table',
+          type: 'table',
+          left: 40,
+          top: 40,
+          width: 500,
+          height: 90,
+          rotate: 0,
+          outline: { width: 1, color: '#111', style: 'solid' },
+          colWidths: [1],
+          cellMinHeight: 36,
+          data: Array.from({ length: 4 }, (_, index) => [
+            { id: `cell-${index}`, colspan: 1, rowspan: 1, text: `Ligne ${index + 1}` },
+          ]),
+        },
+        {
+          id: 'paragraph',
+          type: 'text',
+          left: 40,
+          top: 150,
+          width: 500,
+          height: 50,
+          rotate: 0,
+          content: '<p>Conclusion</p>',
+          defaultFontName: 'Inter',
+          defaultColor: '#111',
+        },
+      ],
+    };
+
+    expect(auditSlideLayout(tableOverflow)).toContainEqual({
+      type: 'overlap',
+      elementIds: ['table', 'paragraph'],
+    });
+  });
 });

@@ -1825,7 +1825,7 @@ export async function generateSceneActions(
     }
     if (processed.length === 0) {
       processed = processActions(
-        generateDefaultSlideActions(outline, content.elements),
+        generateDefaultSlideActions(outline, content.elements, languageDirective),
         content.elements,
         agents,
       );
@@ -2272,8 +2272,14 @@ function processActions(actions: Action[], elements: PPTElement[], agents?: Agen
 /**
  * Generate default slide Actions (fallback)
  */
-function generateDefaultSlideActions(outline: SceneOutline, elements: PPTElement[]): Action[] {
+export function generateDefaultSlideActions(
+  outline: SceneOutline,
+  elements: PPTElement[],
+  languageDirective?: string,
+): Action[] {
   const actions: Action[] = [];
+  const isArabic = /arabic|arabe|العربية|ar-MA/i.test(languageDirective ?? '');
+  const isFrench = /french|français|francais|fr-FR/i.test(languageDirective ?? '');
 
   // Add spotlight for text elements
   const textElements = elements.filter((el) => el.type === 'text');
@@ -2281,19 +2287,21 @@ function generateDefaultSlideActions(outline: SceneOutline, elements: PPTElement
     actions.push({
       id: `action_${nanoid(8)}`,
       type: 'spotlight',
-      title: '聚焦重点',
+      title: isArabic ? 'النقطة الأساسية' : isFrench ? 'Point essentiel' : 'Key point',
       elementId: textElements[0].id,
     });
   }
 
   // Add opening speech based on key points
+  const sentenceSeparator = isArabic ? '۔ ' : '. ';
+  const sentenceEnd = isArabic ? '۔' : '.';
   const speechText = outline.keyPoints?.length
-    ? outline.keyPoints.join('。') + '。'
+    ? `${outline.keyPoints.map((point) => point.replace(/[.!?。۔]+\s*$/u, '')).join(sentenceSeparator)}${sentenceEnd}`
     : outline.description || outline.title;
   actions.push({
     id: `action_${nanoid(8)}`,
     type: 'speech',
-    title: '场景讲解',
+    title: isArabic ? 'شرح المشهد' : isFrench ? 'Explication' : 'Scene explanation',
     text: speechText,
   });
 

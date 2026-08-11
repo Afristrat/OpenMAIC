@@ -1,9 +1,25 @@
-import type { Slide } from '@openmaic/dsl';
+import type { PPTElement, Slide } from '@openmaic/dsl';
 import { getElementListRange } from '@/lib/utils/element';
 
 export type SlideLayoutIssue =
   | { type: 'out-of-bounds'; elementId: string }
   | { type: 'overlap'; elementIds: readonly [string, string] };
+
+function effectiveElementRange(element: PPTElement) {
+  if (element.type !== 'table') return getElementListRange([element]);
+
+  const renderedMinimumHeight = element.data.reduce(
+    (total, _row, index) =>
+      total + Math.max(element.rowHeights?.[index] ?? element.cellMinHeight, element.cellMinHeight),
+    0,
+  );
+  return getElementListRange([
+    {
+      ...element,
+      height: Math.max(element.height, renderedMinimumHeight),
+    },
+  ]);
+}
 
 /**
  * Deterministic geometry audit. It deliberately does not infer whether a
@@ -16,7 +32,7 @@ export function auditSlideLayout(slide: Slide): SlideLayoutIssue[] {
   const height = width * slide.viewportRatio;
   const boxes = slide.elements.map((element) => ({
     element,
-    range: getElementListRange([element]),
+    range: effectiveElementRange(element),
   }));
   const issues: SlideLayoutIssue[] = [];
 

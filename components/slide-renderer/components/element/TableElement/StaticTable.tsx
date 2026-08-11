@@ -14,7 +14,7 @@ interface StaticTableProps {
  * Renders table data with theme colors, outline borders, and merged cells.
  */
 export function StaticTable({ elementInfo }: StaticTableProps) {
-  const { width, data, colWidths, cellMinHeight, outline, theme } = elementInfo;
+  const { width, data, colWidths, cellMinHeight, rowHeights, outline, theme } = elementInfo;
 
   const hiddenCells = useMemo(() => getHiddenCells(data), [data]);
 
@@ -87,7 +87,12 @@ export function StaticTable({ elementInfo }: StaticTableProps) {
       </colgroup>
       <tbody>
         {data.map((row, rowIdx) => (
-          <tr key={rowIdx} style={{ height: `${cellMinHeight}px` }}>
+          <tr
+            key={rowIdx}
+            style={{
+              height: `${Math.max(rowHeights?.[rowIdx] ?? cellMinHeight, cellMinHeight)}px`,
+            }}
+          >
             {row.map((cell, colIdx) => {
               if (hiddenCells.has(`${rowIdx}_${colIdx}`)) return null;
 
