@@ -203,7 +203,8 @@ def workbook_cells(path: Path) -> dict[str, dict[str, dict[str, object]]]:
         relationships = ET.fromstring(archive.read("xl/_rels/workbook.xml.rels"))
         targets = {rel.attrib["Id"]: rel.attrib["Target"] for rel in relationships}
         result: dict[str, dict[str, dict[str, object]]] = {}
-        for sheet in workbook.find(f"{{{NS}}}sheets") or []:
+        sheets = workbook.find(f"{{{NS}}}sheets")
+        for sheet in () if sheets is None else sheets:
             name = sheet.attrib["name"]
             rel_id = sheet.attrib[f"{{{REL_NS}}}id"]
             target = targets[rel_id]
