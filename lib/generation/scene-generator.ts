@@ -1502,21 +1502,20 @@ async function generatePBLSceneContent(
  * Extract HTML document from AI response.
  * Tries to find <!DOCTYPE html>...</html> first, then falls back to code block extraction.
  */
-function extractHtml(response: string): string | null {
-  // Strategy 1: Find complete HTML document
-  const doctypeStart = response.indexOf('<!DOCTYPE html>');
-  const htmlTagStart = response.indexOf('<html');
-  const start = doctypeStart !== -1 ? doctypeStart : htmlTagStart;
-
-  if (start !== -1) {
-    const htmlEnd = response.lastIndexOf('</html>');
-    if (htmlEnd !== -1) {
-      return response.substring(start, htmlEnd + 7);
+export function extractHtml(response: string): string | null {
+  // Strategy 1: Find a complete HTML document, without assuming tag casing.
+  const startMatch = /<!doctype\s+html\s*>|<html(?:\s|>)/iu.exec(response);
+  if (startMatch) {
+    const candidate = response.slice(startMatch.index);
+    const closingTags = [...candidate.matchAll(/<\/html\s*>/giu)];
+    const closingTag = closingTags.at(-1);
+    if (closingTag?.index !== undefined) {
+      return candidate.slice(0, closingTag.index + closingTag[0].length);
     }
   }
 
   // Strategy 2: Extract from code block
-  const codeBlockMatch = response.match(/```(?:html)?\s*([\s\S]*?)```/);
+  const codeBlockMatch = response.match(/```(?:html)?\s*([\s\S]*?)```/iu);
   if (codeBlockMatch) {
     const content = codeBlockMatch[1].trim();
     if (content.includes('<html') || content.includes('<!DOCTYPE')) {
@@ -1524,7 +1523,21 @@ function extractHtml(response: string): string | null {
     }
   }
 
-  // Strategy 3: If response itself looks like HTML
+  // Strategy 3: Models occasionally omit only the closing Markdown fence or
+  // </html> tag. Browsers safely complete missing document tags, so accept a
+  // fenced remainder only when it still contains both an html root and body.
+  const openCodeBlockMatch = response.match(/```(?:html)?\s*([\s\S]+)$/iu);
+  if (openCodeBlockMatch) {
+    const content = openCodeBlockMatch[1]
+      .trim()
+      .replace(/```\s*$/u, '')
+      .trim();
+    if (/<html(?:\s|>)/iu.test(content) && /<body(?:\s|>)/iu.test(content)) {
+      return content;
+    }
+  }
+
+  // Strategy 4: If response itself looks like HTML
   const trimmed = response.trim();
   if (trimmed.startsWith('<!DOCTYPE') || trimmed.startsWith('<html')) {
     return trimmed;

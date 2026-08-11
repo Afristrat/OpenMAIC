@@ -34,6 +34,7 @@ import {
 } from '@/lib/server/classroom-media-generation';
 import { withGenerationRetry } from '@/lib/generation/generation-retry';
 import { buildVideoManifestFromOutlines } from '@/lib/media/video-manifest';
+import { placeGeneratedMediaOnSlides } from '@/lib/generation/media-placement';
 import { decideCaptureForScene } from '@/lib/generation/web-capture-plan';
 import { requestWebCapture } from '@/lib/server/capture-client';
 import type {
@@ -515,7 +516,8 @@ export async function generateClassroom(
     );
   }
 
-  const { languageDirective, courseTitle, outlines } = outlinesResult.data;
+  const { languageDirective, courseTitle } = outlinesResult.data;
+  const outlines = placeGeneratedMediaOnSlides(outlinesResult.data.outlines);
   log.info(
     `Generated ${outlines.length} scene outlines (languageDirective: ${languageDirective}, courseTitle: ${courseTitle ?? 'n/a'})`,
   );
