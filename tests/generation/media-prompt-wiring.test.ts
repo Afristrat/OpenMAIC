@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import { generateSceneOutlinesFromRequirements } from '@/lib/generation/outline-generator';
 import { generateSceneContent, hasUnexpectedLearnerUrl } from '@/lib/generation/scene-generator';
 import type { SceneOutline, UserRequirements } from '@/lib/types/generation';
@@ -549,10 +549,10 @@ describe('media prompt condition wiring', () => {
     );
   });
 
-  test('rejects an invented third-party URL even when the expected Qalem link is present', async () => {
+  test('renders only trusted resource access without calling the model', async () => {
     const downloadUrl = 'https://qalem.ma/A7bK2';
     const qrImageUrl = '/api/classroom-media/classroom-1/resources/resource_1-qr.png';
-    const aiCall: AICallFn = async () =>
+    const aiCall = vi.fn<AICallFn>().mockResolvedValue(
       JSON.stringify({
         elements: [
           {
@@ -576,7 +576,8 @@ describe('media prompt condition wiring', () => {
             defaultColor: '#111111',
           },
         ],
-      });
+      }),
+    );
 
     const result = await generateSceneContent(
       {
@@ -613,7 +614,11 @@ describe('media prompt condition wiring', () => {
       },
     );
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(aiCall).not.toHaveBeenCalled();
+    expect(JSON.stringify(result)).toContain(downloadUrl);
+    expect(JSON.stringify(result)).toContain(qrImageUrl);
+    expect(JSON.stringify(result)).not.toContain('cours.tpe-treso.ma');
   });
 
   test('accepts the persisted short link when its visible label omits the scheme', () => {

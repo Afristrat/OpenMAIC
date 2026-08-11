@@ -19,6 +19,7 @@ import type {
   PdfImage,
   ImageMapping,
   WidgetOutline,
+  GeneratedLearningResource,
 } from '@/lib/types/generation';
 import type { WidgetType, WidgetConfig } from '@/lib/types/widgets';
 import type { PromptId } from '@/lib/prompts/types';
@@ -818,6 +819,10 @@ async function generateSlideContent(
   skillEngineEnabled?: boolean,
   activeSkillId?: string,
 ): Promise<GeneratedSlideContent | null> {
+  if (outline.generatedResources?.length) {
+    return buildLearningResourceSlide(outline, outline.generatedResources);
+  }
+
   // Build assigned images description for the prompt
   let assignedImagesText = '无可用图片，禁止插入任何 image 元素';
   let visionImages: Array<{ id: string; src: string }> | undefined;
@@ -1135,6 +1140,109 @@ async function generateSlideContent(
     elements: processedElements,
     background,
     remark: generatedData.remark || outline.description,
+  };
+}
+
+function escapeResourceHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+/**
+ * A generated file is trusted application data, not creative content. Render
+ * its access card deterministically so a classroom can never fail because a
+ * language model omitted or altered the QR code or short link.
+ */
+export function buildLearningResourceSlide(
+  outline: SceneOutline,
+  resources: GeneratedLearningResource[],
+): GeneratedSlideContent {
+  const title: PPTElement = {
+    id: `resource_title_${nanoid(8)}`,
+    type: 'text',
+    left: 60,
+    top: 44,
+    width: 500,
+    height: 72,
+    rotate: 0,
+    content: `<p style="font-size:32px;font-weight:700;line-height:1.15">${escapeResourceHtml(outline.title)}</p>`,
+    defaultFontName: '',
+    defaultColor: '#17122B',
+  };
+  const description: PPTElement = {
+    id: `resource_description_${nanoid(8)}`,
+    type: 'text',
+    left: 60,
+    top: 138,
+    width: 480,
+    height: 96,
+    rotate: 0,
+    content: `<p style="font-size:20px;line-height:1.35">${escapeResourceHtml(outline.description)}</p>`,
+    defaultFontName: '',
+    defaultColor: '#342D4E',
+  };
+  const keyPoints: PPTElement = {
+    id: `resource_points_${nanoid(8)}`,
+    type: 'text',
+    left: 60,
+    top: 258,
+    width: 480,
+    height: 240,
+    rotate: 0,
+    content: `<ul>${outline.keyPoints
+      .slice(0, 4)
+      .map(
+        (point) =>
+          `<li style="font-size:18px;line-height:1.35;margin-bottom:10px">${escapeResourceHtml(point)}</li>`,
+      )
+      .join('')}</ul>`,
+    defaultFontName: '',
+    defaultColor: '#342D4E',
+  };
+
+  const accessElements = resources.flatMap<PPTElement>((resource, index) => {
+    const count = resources.length;
+    const qrSize = count === 1 ? 230 : 160;
+    const columnWidth = count === 1 ? 360 : 190;
+    const left = count === 1 ? 640 : 570 + index * 215;
+    const qrLeft = left + (columnWidth - qrSize) / 2;
+    return [
+      {
+        id: `resource_qr_${resource.id}`,
+        type: 'image',
+        src: resource.qrImageUrl,
+        left: qrLeft,
+        top: 125,
+        width: qrSize,
+        height: qrSize,
+        rotate: 0,
+        fixedRatio: true,
+      },
+      {
+        id: `resource_link_${resource.id}`,
+        type: 'text',
+        left,
+        top: count === 1 ? 385 : 315,
+        width: columnWidth,
+        height: count === 1 ? 100 : 150,
+        rotate: 0,
+        content: `<p style="font-size:17px;font-weight:700;text-align:center">${escapeResourceHtml(resource.title)}</p><p style="font-size:16px;text-align:center">${escapeResourceHtml(resource.downloadUrl)}</p><p style="font-size:14px;text-align:center">${escapeResourceHtml(resource.fileName)}</p>`,
+        defaultFontName: '',
+        defaultColor: '#17122B',
+        fill: '#F3ECFF',
+        link: { type: 'web', target: resource.downloadUrl },
+      },
+    ];
+  });
+
+  return {
+    elements: [title, description, keyPoints, ...accessElements],
+    background: { type: 'solid', color: '#FCFAFF' },
+    remark: outline.description,
   };
 }
 
