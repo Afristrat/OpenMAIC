@@ -118,6 +118,49 @@ describe('executable learning obligations', () => {
     expect(result.outlines[1].description).not.toContain('https://qalem.ma');
   });
 
+  it('removes decorative QR media from scenes that do not own the real resource', () => {
+    const plan = unsafePlan();
+    plan.outlines[0].mediaGenerations = [
+      {
+        type: 'image',
+        elementId: 'fake-qr',
+        prompt: 'Créer un QR code décoratif pour télécharger le classeur',
+      },
+      {
+        type: 'image',
+        elementId: 'cash-flow-chart',
+        prompt: 'Créer un graphique de trésorerie sur 13 semaines',
+      },
+    ];
+
+    const result = enforceExecutableObligations(plan, requirement);
+
+    expect(result.outlines[0].mediaGenerations).toEqual([
+      expect.objectContaining({ elementId: 'cash-flow-chart' }),
+    ]);
+  });
+
+  it('does not invent an exact alert threshold when the author did not provide one', () => {
+    const plan = unsafePlan();
+    plan.outlines.splice(
+      2,
+      0,
+      scene({
+        id: 'knowledge-check',
+        type: 'quiz',
+        title: 'Vérification des connaissances',
+        keyPoints: ['Question sur le seuil minimal en MAD'],
+        order: 3,
+      }),
+    );
+
+    const result = enforceExecutableObligations(plan, requirement);
+
+    expect(result.outlines[2].keyPoints).toEqual([
+      'Interpréter une alerte à partir du seuil configuré dans le classeur, sans inventer de montant.',
+    ]);
+  });
+
   it('does not invent a resource when the author did not request one', () => {
     const plan = unsafePlan();
     const result = enforceExecutableObligations(plan, 'Explique les principes de trésorerie.');

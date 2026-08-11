@@ -695,6 +695,7 @@ export async function generateClassroom(
 
     log.info('Stage 2: Generating scene content and actions...');
     let generatedScenes = 0;
+    let previousSceneSpeeches: string[] = [];
 
     const requestedResourceCount = outlines.reduce(
       (count, outline) => count + (outline.resourceGenerations?.length ?? 0),
@@ -845,6 +846,12 @@ export async function generateClassroom(
       const actions = await withGenerationRetry(
         () =>
           generateSceneActions(safeOutline, content, sceneAiCall, {
+            ctx: {
+              pageIndex: index + 1,
+              totalPages: outlines.length,
+              allTitles: outlines.map((item) => item.title),
+              previousSpeeches: previousSceneSpeeches,
+            },
             agents,
             requiredAgentIds: tenantAgentConfigs
               .filter(
@@ -860,6 +867,10 @@ export async function generateClassroom(
         },
       );
       log.info(`Scene "${safeOutline.title}": ${actions.length} actions`);
+
+      previousSceneSpeeches = actions.flatMap((action) =>
+        action.type === 'speech' ? [action.text] : [],
+      );
 
       const sceneId = createSceneWithActions(safeOutline, content, actions, api);
       if (!sceneId) {
@@ -965,7 +976,7 @@ export async function generateClassroom(
     if (input.enableTTS) {
       await options.onProgress?.({
         step: 'generating_tts',
-        progress: 94,
+        progress: 90,
         message: 'Generating TTS audio',
         scenesGenerated: scenes.length,
         totalScenes: outlines.length,
@@ -979,7 +990,7 @@ export async function generateClassroom(
         async ({ completed, total }) => {
           await options.onProgress?.({
             step: 'generating_tts',
-            progress: total > 0 ? 94 + Math.floor((completed / total) * 3) : 97,
+            progress: total > 0 ? 90 + Math.floor((completed / total) * 8) : 98,
             message: `Generating TTS audio (${completed}/${total})`,
             scenesGenerated: scenes.length,
             totalScenes: outlines.length,

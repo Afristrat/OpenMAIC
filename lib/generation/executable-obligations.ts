@@ -14,6 +14,11 @@ const DOWNLOAD_SCENE =
 const DIAGNOSTIC_SCENE = /(?:diagnostic|python|analyse|[ée]valuation|retour)/i;
 const PREMATURE_VERDICT =
   /(?:travail conforme|bonne analyse|aucun axe|aucune am[ée]lioration|r[ée]ussi|valid[ée]|score|note\s*[:=]|100\s*\/\s*100)/i;
+const DECORATIVE_RESOURCE_MEDIA =
+  /(?:qr\s*code|code\s*qr|lien\s*court|short\s*link|download\s*link|t[ée]l[ée]chargement)/i;
+const EXPLICIT_MAD_THRESHOLD =
+  /(?:seuil[\s\S]{0,40}\b\d[\d\s.,]*\s*MAD\b|\b\d[\d\s.,]*\s*MAD\b[\s\S]{0,40}seuil)/i;
+const UNSPECIFIED_THRESHOLD_POINT = /(?:seuil|minimal)[\s\S]{0,40}(?:MAD|montant|valeur)/i;
 
 function outlineText(outline: SceneOutline): string {
   return [outline.title, outline.description, ...(outline.keyPoints ?? [])].join(' ');
@@ -65,6 +70,7 @@ export function enforceExecutableObligations(
     ...outline,
     keyPoints: [...(outline.keyPoints ?? [])],
     resourceGenerations: outline.resourceGenerations?.map((resource) => ({ ...resource })),
+    mediaGenerations: outline.mediaGenerations?.map((media) => ({ ...media })),
   }));
 
   const existingWorkbook = outlines
@@ -129,7 +135,25 @@ export function enforceExecutableObligations(
     'La formation attend votre action explicite avant de poursuivre.',
   ];
 
+  for (const [index, outline] of outlines.entries()) {
+    if (index === targetIndex || !outline.mediaGenerations?.length) continue;
+    outline.mediaGenerations = outline.mediaGenerations.filter(
+      (media) => !DECORATIVE_RESOURCE_MEDIA.test(media.prompt),
+    );
+  }
+
   if (cashFlow13Week) {
+    if (!EXPLICIT_MAD_THRESHOLD.test(requirement)) {
+      for (const outline of outlines) {
+        if (outline.type !== 'quiz') continue;
+        outline.keyPoints = outline.keyPoints.map((point) =>
+          UNSPECIFIED_THRESHOLD_POINT.test(point)
+            ? 'Interpréter une alerte à partir du seuil configuré dans le classeur, sans inventer de montant.'
+            : point,
+        );
+      }
+    }
+
     const pblIndex = outlines.findIndex((outline) => outline.type === 'pbl');
     for (let index = Math.max(pblIndex + 1, 0); index < outlines.length; index += 1) {
       const outline = outlines[index];

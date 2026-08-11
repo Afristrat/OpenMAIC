@@ -91,7 +91,8 @@
     var revenue = assumptions.monthlyRevenue.value;
     var costs = assumptions.monthlyCosts.value;
     var growth = assumptions.revenueGrowth.value / 100;
-    var months = Math.max(1, Math.min(24, Math.round(assumptions.months.value)));
+    var horizonMaximum = Number.isFinite(assumptions.months.max) ? assumptions.months.max : 24;
+    var months = Math.max(1, Math.min(horizonMaximum, Math.round(assumptions.months.value)));
     var series = [];
     var firstNegative = null;
     for (var month = 1; month <= months; month += 1) {

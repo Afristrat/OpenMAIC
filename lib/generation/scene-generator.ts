@@ -394,6 +394,10 @@ export async function generateSceneContent(
         outline,
         aiCall,
         languageDirective,
+        userRequirements,
+        courseOutlines,
+        validationDirective,
+        onValidationFailure,
         skillEngineEnabled,
         activeSkillId,
       );
@@ -455,7 +459,78 @@ async function generatePluginContent(
     return null;
   }
 
-  return { pluginType: plugin.type, data: data as Record<string, unknown> };
+  const normalizedData = normalizePluginDataForOutline(
+    plugin.type,
+    data as Record<string, unknown>,
+    outline,
+  );
+
+  return { pluginType: plugin.type, data: normalizedData };
+}
+
+function normalizePluginDataForOutline(
+  pluginType: string,
+  data: Record<string, unknown>,
+  outline: SceneOutline,
+): Record<string, unknown> {
+  if (pluginType !== 'cash-flow-simulator' || !/13\s+semaines?/iu.test(outlineText(outline))) {
+    return data;
+  }
+
+  const assumptions = data.assumptions;
+  const labels = data.labels;
+  if (
+    !assumptions ||
+    typeof assumptions !== 'object' ||
+    Array.isArray(assumptions) ||
+    !labels ||
+    typeof labels !== 'object' ||
+    Array.isArray(labels)
+  ) {
+    return data;
+  }
+
+  const typedAssumptions = assumptions as Record<string, Record<string, unknown>>;
+  const typedLabels = labels as Record<string, unknown>;
+  return {
+    ...data,
+    instructions:
+      'Ajustez les hypothèses hebdomadaires et observez la trajectoire de trésorerie sur treize semaines.',
+    assumptions: {
+      ...typedAssumptions,
+      monthlyRevenue: {
+        ...typedAssumptions.monthlyRevenue,
+        label: 'Encaissements hebdomadaires',
+      },
+      monthlyCosts: {
+        ...typedAssumptions.monthlyCosts,
+        label: 'Décaissements hebdomadaires',
+      },
+      revenueGrowth: {
+        ...typedAssumptions.revenueGrowth,
+        label: 'Variation hebdomadaire des encaissements',
+      },
+      months: {
+        ...typedAssumptions.months,
+        label: 'Horizon',
+        value: 13,
+        min: 1,
+        max: 52,
+        step: 1,
+        unit: 'semaines',
+      },
+    },
+    labels: {
+      ...typedLabels,
+      monthlyBalance: 'Solde de la première semaine',
+      month: 'Semaine',
+      cashPath: 'Trajectoire hebdomadaire',
+    },
+  };
+}
+
+function outlineText(outline: SceneOutline): string {
+  return [outline.title, outline.description, ...(outline.keyPoints ?? [])].join(' ');
 }
 
 /**
@@ -1253,6 +1328,10 @@ async function generateQuizContent(
   outline: SceneOutline,
   aiCall: AICallFn,
   languageDirective?: string,
+  userRequirements?: UserRequirements,
+  courseOutlines?: SceneOutline[],
+  validationDirective?: string,
+  onValidationFailure?: (directive: string) => void,
   skillEngineEnabled?: boolean,
   activeSkillId?: string,
 ): Promise<GeneratedQuizContent | null> {
@@ -1271,6 +1350,9 @@ async function generateQuizContent(
       questionCount: quizConfig.questionCount,
       difficulty: quizConfig.difficulty,
       questionTypes: quizConfig.questionTypes.join(', '),
+      courseContext: formatQuizCourseContext(courseOutlines),
+      originalRequirement: userRequirements?.requirement ?? '',
+      validationDirective: validationDirective ?? '',
       languageDirective: languageDirective || '',
     },
     { enabled: skillEngineEnabled, activeSkillId },
@@ -1303,7 +1385,99 @@ async function generateQuizContent(
     };
   });
 
+  const relevanceIssue = findQuizRelevanceIssue(
+    questions,
+    outline,
+    courseOutlines,
+    userRequirements?.requirement,
+  );
+  if (relevanceIssue) {
+    log.warn(`Quiz content rejected for ${outline.id}: ${relevanceIssue}`);
+    onValidationFailure?.(relevanceIssue);
+    return null;
+  }
+
   return { questions };
+}
+
+const QUIZ_STOP_WORDS = new Set([
+  'avec',
+  'cette',
+  'comme',
+  'dans',
+  'des',
+  'pour',
+  'quelle',
+  'quelles',
+  'quels',
+  'the',
+  'this',
+  'that',
+  'what',
+  'which',
+  'with',
+  'from',
+  'your',
+  'course',
+  'formation',
+  'final',
+  'quiz',
+  'maroc',
+  'marocain',
+  'marocaine',
+]);
+
+function significantQuizTokens(value: string): Set<string> {
+  return new Set(
+    value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .match(/[a-z0-9]{4,}/g)
+      ?.filter((token) => !QUIZ_STOP_WORDS.has(token)) ?? [],
+  );
+}
+
+function formatQuizCourseContext(courseOutlines?: SceneOutline[]): string {
+  if (!courseOutlines?.length) return '';
+  return courseOutlines
+    .map(
+      (item, index) =>
+        `${index + 1}. ${item.title}: ${item.description}; ${(item.keyPoints ?? []).join('; ')}`,
+    )
+    .join('\n');
+}
+
+export function findQuizRelevanceIssue(
+  questions: QuizQuestion[],
+  outline: SceneOutline,
+  courseOutlines?: SceneOutline[],
+  originalRequirement?: string,
+): string | null {
+  const reference = [
+    originalRequirement ?? '',
+    outlineText(outline),
+    ...(courseOutlines ?? []).map(outlineText),
+  ].join(' ');
+  const referenceTokens = significantQuizTokens(reference);
+  if (referenceTokens.size === 0 || questions.length === 0) return null;
+
+  const quizText = questions
+    .flatMap((question) => [
+      question.question,
+      question.analysis ?? '',
+      ...(question.options?.map((option) => option.label) ?? []),
+    ])
+    .join(' ');
+  const quizTokens = significantQuizTokens(quizText);
+  const overlap = [...quizTokens].filter((token) => referenceTokens.has(token));
+  if (overlap.length >= 2) return null;
+
+  return [
+    'The quiz is unrelated to the approved course.',
+    `Regenerate every question using only the original requirement and course context.`,
+    'Do not introduce another industry, regulation, product, acronym meaning or topic.',
+  ].join(' ');
 }
 
 /**
