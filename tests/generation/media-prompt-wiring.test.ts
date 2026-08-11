@@ -1,6 +1,9 @@
 import { describe, expect, test } from 'vitest';
 import { generateSceneOutlinesFromRequirements } from '@/lib/generation/outline-generator';
-import { generateSceneContent } from '@/lib/generation/scene-generator';
+import {
+  generateSceneContent,
+  hasUnexpectedLearnerUrl,
+} from '@/lib/generation/scene-generator';
 import type { SceneOutline, UserRequirements } from '@/lib/types/generation';
 import type { AICallFn } from '@/lib/generation/pipeline-types';
 
@@ -614,6 +617,24 @@ describe('media prompt condition wiring', () => {
     );
 
     expect(result).toBeNull();
+  });
+
+  test('accepts the persisted short link when its visible label omits the scheme', () => {
+    expect(
+      hasUnexpectedLearnerUrl(
+        [{ type: 'text', content: '<p>Téléchargez sur qalem.ma/A7bK2</p>' }],
+        ['https://qalem.ma/A7bK2'],
+      ),
+    ).toBe(false);
+  });
+
+  test('rejects an illustrative short code even on the Qalem domain', () => {
+    expect(
+      hasUnexpectedLearnerUrl(
+        [{ type: 'text', content: '<p>Téléchargez sur qalem.ma/Ab3X9</p>' }],
+        ['https://qalem.ma/A7bK2'],
+      ),
+    ).toBe(true);
   });
 });
 

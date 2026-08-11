@@ -792,8 +792,9 @@ export function hasUnexpectedLearnerUrl(
   elements: readonly unknown[],
   allowedUrls: readonly string[],
 ): boolean {
-  const allowed = new Set(allowedUrls);
-  return learnerVisibleUrls(elements).some((url) => !allowed.has(url));
+  const canonicalize = (url: string) => url.replace(/^https?:\/\//iu, '');
+  const allowed = new Set(allowedUrls.map(canonicalize));
+  return learnerVisibleUrls(elements).some((url) => !allowed.has(canonicalize(url)));
 }
 
 async function generateSlideContent(
