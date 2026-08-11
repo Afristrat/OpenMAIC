@@ -769,6 +769,7 @@
   "generation.generatingActionsDesc": "جارٍ تنسيق السرد والتسليط والتفاعلات...",
   "generation.generationComplete": "اكتمل التوليد!",
   "generation.generationFailed": "فشل التوليد",
+  "generation.mediaProviderUnavailable": "تعذّر على مزوّد الصور أو الفيديو إنتاج الوسائط المطلوبة. لم يُنشر أي مقرر غير مكتمل. اطلب من المسؤول استعادة سعة المزوّد، أو عطّل الوسائط لتوليد مقرر من دون صور توضيحية أو فيديو.",
   "generation.generatingCourse": "جارٍ توليد المقرر",
   "generation.openingClassroom": "جارٍ فتح الفصل...",
   "generation.outlineReady": "تم توليد مخطط المقرر",

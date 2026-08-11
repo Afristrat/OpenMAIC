@@ -769,6 +769,7 @@
   "generation.generatingActionsDesc": "Orchestrer la narration, les projecteurs et les interactions...",
   "generation.generationComplete": "Génération terminée !",
   "generation.generationFailed": "La génération a échoué",
+  "generation.mediaProviderUnavailable": "Le fournisseur d’images ou de vidéos n’a pas pu produire les médias demandés. Aucun cours incomplet n’a été publié. Demandez à l’administrateur de rétablir sa capacité, ou désactivez les médias pour générer un cours sans illustration ni vidéo.",
   "generation.generatingCourse": "Génération de cours",
   "generation.openingClassroom": "Ouverture de la classe...",
   "generation.outlineReady": "Plan de cours généré",

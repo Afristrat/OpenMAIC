@@ -769,6 +769,7 @@
   "generation.generatingActionsDesc": "Orchestrating narration, spotlights, and interactions...",
   "generation.generationComplete": "Generation complete!",
   "generation.generationFailed": "Generation failed",
+  "generation.mediaProviderUnavailable": "The image or video provider could not produce the requested media. No incomplete course was published. Ask the administrator to restore provider capacity, or disable media to generate a course without illustrations or video.",
   "generation.generatingCourse": "Generating course",
   "generation.openingClassroom": "Opening classroom...",
   "generation.outlineReady": "Course outline generated",

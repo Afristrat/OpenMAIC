@@ -11,6 +11,7 @@ interface GenerationJob {
   status: 'queued' | 'running' | 'succeeded' | 'failed';
   progress: number;
   result?: { url: string };
+  failureCode?: 'MEDIA_PROVIDER_UNAVAILABLE';
 }
 
 function GenerationStatus() {
@@ -60,7 +61,11 @@ function GenerationStatus() {
             {hasFailed ? t('generation.generationFailed') : t('generation.generatingCourse')}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {hasFailed ? t('generation.generationFailed') : t('generation.aiWorking')}
+            {hasFailed
+              ? job?.failureCode === 'MEDIA_PROVIDER_UNAVAILABLE'
+                ? t('generation.mediaProviderUnavailable')
+                : t('generation.generationFailed')
+              : t('generation.aiWorking')}
           </p>
         </div>
         {!hasFailed && (
