@@ -1150,7 +1150,7 @@ async function generateSlideContent(
   );
   log.debug(`After video reference normalization: ${videoNormalizedElements.length} elements`);
 
-  const missingGeneratedMedia = outline.mediaGenerations?.find((request) => {
+  const missingGeneratedMedia = outline.mediaGenerations?.filter((request) => {
     const resolvedUrl = generatedMediaMapping?.[request.elementId];
     const fulfilledByDirectVideo =
       request.type === 'video' &&
@@ -1178,8 +1178,14 @@ async function generateSlideContent(
       );
     });
   });
-  if (missingGeneratedMedia) {
-    const failure = `Include the required generated ${missingGeneratedMedia.type} element with src exactly "${missingGeneratedMedia.elementId}".`;
+  if (missingGeneratedMedia?.length) {
+    const requirements = missingGeneratedMedia
+      .map(
+        (request) =>
+          `${request.type} element with ${request.type === 'video' ? 'mediaRef' : 'src'} exactly "${request.elementId}"`,
+      )
+      .join('; ');
+    const failure = `Include every required generated medium in the same response: ${requirements}.`;
     log.warn(`Slide omitted required generated media: ${failure} Retrying`);
     onValidationFailure?.(failure);
     return null;

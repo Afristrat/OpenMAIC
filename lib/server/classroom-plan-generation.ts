@@ -61,7 +61,11 @@ export async function generateClassroomPlan(input: GenerateClassroomInput) {
     interactiveMode: input.interactiveMode ?? false,
     activeSkillId,
   };
-  const resolved = await resolveModel({ stage: 'generate-classroom' });
+  const resolved = await resolveModel(
+    input.modelString
+      ? { modelString: input.modelString }
+      : { stage: 'generate-classroom' },
+  );
   if (isProviderKeyRequired(resolved.providerId) && !resolved.apiKey) {
     throw new Error(`No API key configured for provider "${resolved.providerId}".`);
   }

@@ -37,8 +37,13 @@ import { cn } from '@/lib/utils';
 import type { ClassroomSyllabus, SceneOutline } from '@/lib/types/generation';
 import type { WidgetType } from '@/lib/types/widgets';
 import { changeOutlineType } from '@/lib/generation/outline-type';
+import type { InteractionLevel, LearningApproach } from '@/lib/agents/persona-catalog';
+import { getSyllabusValidationIssues } from '@/lib/generation/syllabus-validation';
 
 type SceneType = SceneOutline['type'];
+export type SyllabusAssistTarget =
+  | { kind: 'syllabus' }
+  | { kind: 'scene'; sceneIndex: number };
 
 interface OutlinesEditorProps {
   courseTitle?: string;
@@ -54,6 +59,10 @@ interface OutlinesEditorProps {
   isLoading?: boolean;
   /** SSE is still pumping outlines into this editor — render read-only. */
   isStreaming?: boolean;
+  learningApproach?: LearningApproach;
+  interactionLevel?: InteractionLevel;
+  onAssist?: (target: SyllabusAssistTarget) => void;
+  assistingTarget?: string | null;
   /** Collapse the editor back to the preview surface (small streaming card / outline-ready). */
   onCollapse?: () => void;
 }
@@ -140,6 +149,10 @@ export function OutlinesEditor({
   onAlwaysReviewChange,
   isLoading = false,
   isStreaming = false,
+  learningApproach,
+  interactionLevel,
+  onAssist,
+  assistingTarget,
   onCollapse,
 }: OutlinesEditorProps) {
   const { t } = useI18n();
@@ -154,6 +167,11 @@ export function OutlinesEditor({
     syllabus !== undefined &&
     onCourseTitleChange !== undefined &&
     onSyllabusChange !== undefined;
+  const validationIssues = hasSyllabusWorkspace && syllabus
+    ? getSyllabusValidationIssues(syllabus, outlines)
+    : [];
+  const isPlanComplete = validationIssues.length === 0;
+  const syllabusNeedsGeneration = validationIssues.some((issue) => !('sceneIndex' in issue));
 
   // Auto-scroll to the latest streamed scene so streaming feels alive.
   useEffect(() => {
@@ -291,6 +309,8 @@ export function OutlinesEditor({
                     setDraggingId(null);
                     setDragOverId(null);
                   }}
+                  onAssist={onAssist ? () => onAssist({ kind: 'scene', sceneIndex: index }) : undefined}
+                  isAssisting={assistingTarget === `scene:${index}`}
                 />
                 {!isStreaming && (
                   <InsertDivider
@@ -318,7 +338,7 @@ export function OutlinesEditor({
       className={cn(
         'relative overflow-hidden border border-border/40',
         hasSyllabusWorkspace
-          ? 'flex h-[100dvh] min-h-0 w-full flex-col border-0 bg-background'
+          ? 'flex min-h-[100dvh] w-full flex-col border-0 bg-background'
           : 'rounded-3xl bg-white/85 shadow-[0_30px_80px_-30px_rgba(15,23,42,0.25)] backdrop-blur-xl dark:border-white/5 dark:bg-slate-950/70 dark:shadow-[0_30px_80px_-30px_rgba(0,0,0,0.6)]',
       )}
     >
@@ -354,6 +374,23 @@ export function OutlinesEditor({
             )}
             {headerSubtitle}
           </p>
+          {hasSyllabusWorkspace && learningApproach && interactionLevel && (
+            <div
+              className="flex flex-wrap gap-2 pt-1"
+              aria-label={t('generation.validatedDesignChoices')}
+            >
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-200">
+                <Check className="size-3.5" aria-hidden />
+                {t('animation.learningApproach')} :{' '}
+                {t(`org.learningApproaches.${learningApproach}`)}
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/25 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-700 dark:text-cyan-200">
+                <Check className="size-3.5" aria-hidden />
+                {t('animation.interactionLevel')} :{' '}
+                {t(`org.interactionLevels.${interactionLevel}`)}
+              </span>
+            </div>
+          )}
         </div>
         {onCollapse && (
           <button
@@ -377,7 +414,7 @@ export function OutlinesEditor({
       {hasSyllabusWorkspace ? (
         <div
           data-testid="syllabus-workspace"
-          className="grid min-h-0 flex-1 overflow-y-auto bg-background lg:grid-cols-[minmax(22rem,0.88fr)_minmax(34rem,1.2fr)] lg:overflow-hidden"
+          className="mx-auto flex w-full max-w-[112rem] flex-1 flex-col bg-background"
         >
           <SyllabusFields
             courseTitle={courseTitle}
@@ -385,11 +422,14 @@ export function OutlinesEditor({
             onCourseTitleChange={onCourseTitleChange}
             onSyllabusChange={onSyllabusChange}
             disabled={editingDisabled}
+            onAssist={onAssist ? () => onAssist({ kind: 'syllabus' }) : undefined}
+            isAssisting={assistingTarget === 'syllabus'}
+            needsGeneration={syllabusNeedsGeneration}
           />
           <section
             data-testid="syllabus-sequence-panel"
             aria-labelledby="syllabus-sequence-heading"
-            className="min-w-0 border-t border-border/50 bg-slate-50/60 lg:flex lg:min-h-0 lg:flex-col lg:overflow-hidden lg:border-t-0 dark:bg-slate-950/40"
+            className="min-w-0 border-t border-border/50 bg-slate-50/60 dark:bg-slate-950/40"
           >
             <div className="shrink-0 border-b border-border/40 px-5 py-5 md:px-8">
               <div className="flex items-center gap-3">
@@ -409,7 +449,7 @@ export function OutlinesEditor({
                 </div>
               </div>
             </div>
-            <div className="px-2 pb-5 md:px-5 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+            <div className="px-2 pb-5 md:px-5">
               {sceneList}
             </div>
           </section>
@@ -419,7 +459,7 @@ export function OutlinesEditor({
       )}
 
       {/* Footer */}
-      <div className="relative flex flex-col gap-3 border-t border-border/40 bg-gradient-to-t from-background/95 to-transparent px-6 py-4 md:flex-row md:items-center md:justify-between md:px-10 md:py-5">
+      <div className="sticky bottom-0 z-20 flex flex-col gap-3 border-t border-border/40 bg-background/95 px-6 py-4 shadow-[0_-12px_30px_-24px_rgba(15,23,42,0.45)] backdrop-blur md:flex-row md:items-center md:justify-between md:px-10 md:py-5">
         <label
           className={cn(
             'flex cursor-pointer items-center gap-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground',
@@ -437,6 +477,11 @@ export function OutlinesEditor({
         </label>
 
         <div className="flex flex-col-reverse gap-2 md:flex-row md:items-center md:gap-2">
+          {hasSyllabusWorkspace && !isPlanComplete && (
+            <p className="text-xs font-medium text-amber-700 dark:text-amber-300" role="status">
+              {t('generation.syllabusIncomplete', { count: validationIssues.length })}
+            </p>
+          )}
           <Button
             variant="ghost"
             onClick={onBack}
@@ -446,8 +491,10 @@ export function OutlinesEditor({
             {t('generation.backToRequirements')}
           </Button>
           <Button
-            onClick={onConfirm}
-            disabled={isLoading || isStreaming || outlines.length === 0}
+            onClick={() => {
+              if (isPlanComplete) onConfirm();
+            }}
+            disabled={isLoading || isStreaming || outlines.length === 0 || !isPlanComplete}
             className="rounded-full px-6 shadow-lg shadow-blue-500/20"
           >
             {isLoading ? (
@@ -479,12 +526,18 @@ function SyllabusFields({
   onCourseTitleChange,
   onSyllabusChange,
   disabled,
+  onAssist,
+  isAssisting,
+  needsGeneration,
 }: {
   courseTitle: string;
   syllabus: ClassroomSyllabus;
   onCourseTitleChange: (courseTitle: string) => void;
   onSyllabusChange: (syllabus: ClassroomSyllabus) => void;
   disabled: boolean;
+  onAssist?: () => void;
+  isAssisting: boolean;
+  needsGeneration: boolean;
 }) {
   const { t } = useI18n();
   const update = <K extends keyof ClassroomSyllabus>(key: K, value: ClassroomSyllabus[K]) =>
@@ -506,11 +559,11 @@ function SyllabusFields({
     <section
       data-testid="syllabus-brief-panel"
       aria-labelledby="syllabus-brief-heading"
-      className="relative min-w-0 border-border/50 bg-background px-5 py-6 lg:min-h-0 lg:overflow-y-auto lg:border-e md:px-8"
+      className="relative min-w-0 bg-background px-5 py-6 md:px-8"
     >
-      <div className="mx-auto max-w-2xl space-y-8 lg:max-w-none">
+      <div className="mx-auto max-w-5xl space-y-8">
         <div className="space-y-4">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <span className="flex size-10 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-600 dark:text-violet-300">
               <Target className="size-5" aria-hidden />
             </span>
@@ -522,6 +575,27 @@ function SyllabusFields({
                 {t('generation.syllabusPromiseDescription')}
               </p>
             </div>
+            {onAssist && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={disabled || isAssisting}
+                onClick={onAssist}
+                className="ms-auto rounded-full"
+              >
+                {isAssisting ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Sparkles className="size-4" />
+                )}
+                {t(
+                  needsGeneration
+                    ? 'generation.generateBlockWithAi'
+                    : 'generation.improveBlockWithAi',
+                )}
+              </Button>
+            )}
           </div>
           <label className="block space-y-1.5">
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -718,6 +792,8 @@ interface SceneRowProps {
   onDragEnd: () => void;
   onDragEnter: () => void;
   onDrop: (sourceId: string) => void;
+  onAssist?: () => void;
+  isAssisting: boolean;
 }
 
 function SceneRow({
@@ -739,12 +815,19 @@ function SceneRow({
   onDragEnd,
   onDragEnter,
   onDrop,
+  onAssist,
+  isAssisting,
 }: SceneRowProps) {
   const { t } = useI18n();
   const theme = TYPE_THEME[outline.type] ?? TYPE_THEME.slide;
   const [keyPointDraft, setKeyPointDraft] = useState('');
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const descRef = useRef<HTMLTextAreaElement>(null);
+  const needsGeneration =
+    !outline.title.trim() ||
+    !outline.description.trim() ||
+    !outline.teachingObjective?.trim() ||
+    !outline.estimatedDuration;
 
   // Auto-resize textareas to content for the typography-first feel.
   useAutoResize(titleRef, outline.title);
@@ -883,6 +966,32 @@ function SceneRow({
               )}
             />
             <div className="flex shrink-0 items-center gap-1.5 pt-0.5">
+              {onAssist && !disabled && (
+                <button
+                  type="button"
+                  onClick={onAssist}
+                  disabled={isAssisting}
+                  aria-label={t(
+                    needsGeneration
+                      ? 'generation.generateBlockWithAi'
+                      : 'generation.improveBlockWithAi',
+                  )}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-full border border-violet-500/25 bg-violet-500/10 px-2.5 text-xs font-medium text-violet-700 transition hover:bg-violet-500/15 disabled:opacity-50 dark:text-violet-200"
+                >
+                  {isAssisting ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <Sparkles className="size-3.5" />
+                  )}
+                  <span className="hidden xl:inline">
+                    {t(
+                      needsGeneration
+                        ? 'generation.generateBlockWithAi'
+                        : 'generation.improveBlockWithAi',
+                    )}
+                  </span>
+                </button>
+              )}
               {/* Cascading control: type-specific config (left) joined to the type selector (right) */}
               <div className="inline-flex items-center overflow-hidden rounded-full">
                 {!disabled && outline.type === 'quiz' && (

@@ -8,6 +8,8 @@ export const mockOutlines: SceneOutline[] = [
     title: '光合作用的基本概念',
     description: '介绍光合作用的定义和基本反应方程式',
     keyPoints: ['光合作用的定义', '反应方程式', '能量转换'],
+    teachingObjective: 'Explain the inputs, outputs, and purpose of photosynthesis.',
+    estimatedDuration: 300,
     order: 0,
   },
   {
@@ -16,6 +18,8 @@ export const mockOutlines: SceneOutline[] = [
     title: '光反应阶段',
     description: '光反应中光能的吸收与水的分解',
     keyPoints: ['光能吸收', '水的光解', 'ATP 与 NADPH 生成'],
+    teachingObjective: 'Describe how light energy produces ATP and NADPH.',
+    estimatedDuration: 300,
     order: 1,
   },
   {
@@ -24,6 +28,8 @@ export const mockOutlines: SceneOutline[] = [
     title: '暗反应阶段',
     description: '暗反应中碳固定与糖类合成',
     keyPoints: ['CO₂ 固定', 'C₃ 还原', '糖类合成'],
+    teachingObjective: 'Connect carbon fixation to carbohydrate production.',
+    estimatedDuration: 300,
     order: 2,
   },
 ];

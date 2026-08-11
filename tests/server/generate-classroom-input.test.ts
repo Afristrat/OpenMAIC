@@ -79,6 +79,16 @@ describe('generateClassroomSchema', () => {
     }
   });
 
+  test('preserves the language model explicitly selected by the author', () => {
+    const result = generateClassroomSchema.safeParse({
+      ...baseInput,
+      modelString: 'openai:kimi-k2.5',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.modelString).toBe('openai:kimi-k2.5');
+  });
+
   test('rejects a specialist without a four-digit ISCO-08 unit-group code', () => {
     const result = generateClassroomSchema.safeParse({
       ...baseInput,

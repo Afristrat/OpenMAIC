@@ -234,6 +234,62 @@ describe('media prompt condition wiring', () => {
     expect(result).toBeNull();
   });
 
+  test('reports every omitted generated medium in one correction', async () => {
+    let feedback = '';
+    const aiCall: AICallFn = async () =>
+      JSON.stringify({
+        background: { type: 'solid', color: '#ffffff' },
+        elements: [
+          {
+            id: 'title',
+            type: 'text',
+            left: 60,
+            top: 80,
+            width: 880,
+            height: 76,
+            content: '<p>Process mapping</p>',
+            defaultFontName: '',
+            defaultColor: '#333333',
+          },
+        ],
+      });
+
+    const result = await generateSceneContent(
+      {
+        id: 'scene_multiple_media',
+        type: 'slide',
+        title: 'Process mapping',
+        description: 'Compare the current and target process',
+        keyPoints: ['Current state', 'Target state'],
+        order: 1,
+        mediaGenerations: [
+          {
+            type: 'image',
+            prompt: 'Current process map',
+            elementId: 'gen_img_current',
+            aspectRatio: '16:9',
+          },
+          {
+            type: 'image',
+            prompt: 'Target process map',
+            elementId: 'gen_img_target',
+            aspectRatio: '16:9',
+          },
+        ],
+      },
+      aiCall,
+      {
+        onValidationFailure: (directive) => {
+          feedback = directive;
+        },
+      },
+    );
+
+    expect(result).toBeNull();
+    expect(feedback).toContain('gen_img_current');
+    expect(feedback).toContain('gen_img_target');
+  });
+
   test('rejects a slide that omits every source image selected by the approved outline', async () => {
     let feedback = '';
     const aiCall: AICallFn = async () =>

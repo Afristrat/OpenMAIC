@@ -1,8 +1,8 @@
 #### AI-Generated Images (`gen_img_*`)
 
-If the scene outline includes image entries in `mediaGenerations`, you may use those generated image placeholders:
+If the scene outline includes image entries in `mediaGenerations`, every listed generated image is mandatory. Include one image element for each placeholder in the same response:
 
-- `src` can be a generated image ID like `"gen_img_1"`, `"gen_img_2"`, etc.
+- Set each image element's `src` to the exact generated image ID listed in the assigned media, such as `"gen_img_1"` or `"gen_img_2"`
 - These placeholders will be replaced with actual generated images after slide creation
 - Use the same positioning rules as source images
 - Default aspect ratio for generated images: 16:9 (width:height = 16:9)

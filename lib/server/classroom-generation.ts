@@ -90,6 +90,7 @@ import {
   uploadedPdfSource,
 } from '@/lib/server/pdf-source';
 import { teacherProfileFromClassroomCast } from '@/lib/agents/classroom-casting';
+import { shouldRunClassroomWebSearch } from '@/lib/server/web-search-policy';
 
 const log = createLogger('Classroom');
 
@@ -103,6 +104,7 @@ export interface GenerateClassroomInput {
   /** Persisted courses from S1-003 override the deterministic current-flow identity. */
   courseId?: string;
   language?: CourseLocale;
+  modelString?: string;
   requirement: string;
   pdfContent?: PdfSourceContent;
   enableWebSearch?: boolean;
@@ -297,8 +299,12 @@ export async function generateClassroom(
     providerId,
     apiKey,
     thinkingConfig: classroomThinking,
-  } = await resolveModel({ stage: 'generate-classroom' });
-  log.info(`Using server-configured model: ${modelString}`);
+  } = await resolveModel(
+    input.modelString
+      ? { modelString: input.modelString }
+      : { stage: 'generate-classroom' },
+  );
+  log.info(`Using classroom model: ${modelString}`);
 
   // Fail fast if the resolved provider has no API key configured
   if (isProviderKeyRequired(providerId) && !apiKey) {
@@ -395,7 +401,15 @@ export async function generateClassroom(
   let researchContext: string | undefined;
   const uploadedSource = uploadedPdfSource(pdfContent);
   let researchSources: Stage['researchSources'] = uploadedSource ? [uploadedSource] : undefined;
-  if (input.enableWebSearch) {
+  const runWebSearch = shouldRunClassroomWebSearch({
+    enabled: input.enableWebSearch,
+    hasUploadedSource: Boolean(uploadedSource),
+    requirement: contextualRequirement,
+  });
+  if (input.enableWebSearch && !runWebSearch) {
+    log.info('Skipping web search because the author required exclusive use of the uploaded source');
+  }
+  if (runWebSearch) {
     const webSearchConfig = resolveClassroomWebSearchConfig(input);
     if (webSearchConfig) {
       // Re-resolve the query-rewrite model only when explicitly routed. If

@@ -75,14 +75,19 @@ test.describe('Home → Generation', () => {
     await expect(page.getByTestId('syllabus-sequence-panel')).toBeVisible();
     await expect(page.locator('iframe')).toHaveCount(0);
 
-    const [briefBox, sequenceBox] = await Promise.all([
+    const [workspaceBox, briefBox, sequenceBox] = await Promise.all([
+      page.getByTestId('syllabus-workspace').boundingBox(),
       page.getByTestId('syllabus-brief-panel').boundingBox(),
       page.getByTestId('syllabus-sequence-panel').boundingBox(),
     ]);
+    expect(workspaceBox).not.toBeNull();
     expect(briefBox).not.toBeNull();
     expect(sequenceBox).not.toBeNull();
-    expect(sequenceBox!.x).toBeGreaterThan(briefBox!.x);
+    expect(workspaceBox!.width).toBeGreaterThan(700);
+    expect(sequenceBox!.y).toBeGreaterThan(briefBox!.y);
     await expect(page.getByRole('heading', { name: 'Training plan' })).toBeVisible();
+    await expect(page.getByText('Approach : Build on experience', { exact: true })).toBeVisible();
+    await expect(page.getByText('Interaction : Balanced', { exact: true })).toBeVisible();
     await expect(page.getByLabel('Course title')).toHaveValue('E2E approved plan');
     await expect(page.getByLabel('Audience')).toHaveValue('Store managers');
     await expect(page.getByLabel('Overall objective')).toHaveValue('Prevent till discrepancies');

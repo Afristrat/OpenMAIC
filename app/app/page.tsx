@@ -37,7 +37,10 @@ import { Textarea as UITextarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { SettingsDialog } from '@/components/settings';
 import { GenerationToolbar } from '@/components/generation/generation-toolbar';
-import { OutlinesEditor } from '@/components/generation/outlines-editor';
+import {
+  OutlinesEditor,
+  type SyllabusAssistTarget,
+} from '@/components/generation/outlines-editor';
 import {
   SourceConflictDialog,
   type SourceConflict,
@@ -157,6 +160,8 @@ function HomePage() {
   // instead of inspecting modelId directly.
   const webSearchProvidersConfig = useSettingsStore((s) => s.webSearchProvidersConfig);
   const imageGenerationEnabled = useSettingsStore((s) => s.imageGenerationEnabled);
+  const languageProviderId = useSettingsStore((s) => s.providerId);
+  const languageModelId = useSettingsStore((s) => s.modelId);
   const imageProviderId = useSettingsStore((s) => s.imageProviderId);
   const imageModelId = useSettingsStore((s) => s.imageModelId);
   const videoGenerationEnabled = useSettingsStore((s) => s.videoGenerationEnabled);
@@ -299,6 +304,7 @@ function HomePage() {
   const [isPlanning, setIsPlanning] = useState(false);
   const [isStartingGeneration, setIsStartingGeneration] = useState(false);
   const [draftPlan, setDraftPlan] = useState<ClassroomPlan | null>(null);
+  const [assistingTarget, setAssistingTarget] = useState<string | null>(null);
   const [sourceConflict, setSourceConflict] = useState<SourceConflict | null>(null);
   const [pendingGenerationRequest, setPendingGenerationRequest] = useState<Record<
     string,
@@ -534,6 +540,7 @@ function HomePage() {
       const generationRequest = {
         orgId: currentOrg.id,
         language: locale,
+        modelString: `${languageProviderId}:${languageModelId}`,
         learningApproach: form.learningApproach,
         interactionLevel: form.interactionLevel,
         learningContext: normalizeLearningContext(form.learningContext),
@@ -619,6 +626,53 @@ function HomePage() {
       setError(err instanceof Error ? err.message : t('upload.generateFailed'));
     } finally {
       setIsStartingGeneration(false);
+    }
+  };
+
+  const handleAssistPlan = async (target: SyllabusAssistTarget) => {
+    if (
+      !draftPlan ||
+      !currentOrg ||
+      !form.learningApproach ||
+      !form.interactionLevel ||
+      assistingTarget
+    ) {
+      return;
+    }
+    const targetKey = target.kind === 'scene' ? `scene:${target.sceneIndex}` : 'syllabus';
+    const previousPlan = draftPlan;
+    setAssistingTarget(targetKey);
+    setError(null);
+    try {
+      const response = await fetch('/api/generate/assist-syllabus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orgId: currentOrg.id,
+          locale,
+          learningApproach: form.learningApproach,
+          interactionLevel: form.interactionLevel,
+          target,
+          plan: draftPlan,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.plan) {
+        throw new Error(result.error || t('generation.syllabusAssistFailed'));
+      }
+      setDraftPlan(result.plan as ClassroomPlan);
+      toast(t('generation.syllabusAssistApplied'), {
+        action: {
+          label: t('edit.undo'),
+          onClick: () => setDraftPlan(previousPlan),
+        },
+      });
+    } catch (assistError) {
+      setError(
+        assistError instanceof Error ? assistError.message : t('generation.syllabusAssistFailed'),
+      );
+    } finally {
+      setAssistingTarget(null);
     }
   };
 
@@ -713,7 +767,7 @@ function HomePage() {
           role="dialog"
           aria-modal="true"
           aria-label={t('generation.outlineEditorTitle')}
-          className="fixed inset-0 z-[100] overflow-hidden bg-background"
+          className="fixed inset-0 z-[100] overflow-y-auto bg-background"
         >
           <div className="h-full w-full">
             <OutlinesEditor
@@ -734,6 +788,10 @@ function HomePage() {
               }}
               alwaysReview
               isLoading={isStartingGeneration}
+              learningApproach={form.learningApproach ?? undefined}
+              interactionLevel={form.interactionLevel ?? undefined}
+              onAssist={handleAssistPlan}
+              assistingTarget={assistingTarget}
             />
           </div>
         </div>
@@ -878,7 +936,7 @@ function HomePage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: 'easeOut' }}
         className={cn(
-          'relative z-20 w-full max-w-[800px] flex flex-col items-center',
+          'relative z-20 w-full max-w-[1120px] flex flex-col items-center',
           classrooms.length === 0 ? 'justify-center min-h-[calc(100dvh-8rem)]' : 'mt-[10vh]',
         )}
       >
@@ -995,8 +1053,8 @@ function HomePage() {
             </div>
 
             {/* Toolbar row */}
-            <div className="px-3 pb-3 flex items-end gap-2">
-              <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-end gap-2 px-3 pb-3 xl:flex-nowrap">
+              <div className="min-w-0 basis-full xl:flex-1 xl:basis-auto">
                 <GenerationToolbar
                   webSearch={form.webSearch}
                   onWebSearchChange={(v) => updateForm('webSearch', v)}

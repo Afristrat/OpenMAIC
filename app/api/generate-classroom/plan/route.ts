@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
       authorRole: auth.authoredByRole,
       requirement: parsed.requirement,
       language: parsed.language,
+      modelString: parsed.modelString,
       learningApproach: parsed.learningApproach,
       interactionLevel: parsed.interactionLevel,
       learningContext: {
