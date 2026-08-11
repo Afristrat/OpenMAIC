@@ -47,6 +47,10 @@ describe('downloadable resource narration', () => {
 
     const actions = await generateSceneActions(outline, content, aiCall, {
       languageDirective: 'Deliver the entire course in French.',
+      agents: [
+        { id: 'teacher-hanae', name: 'Hanae', role: 'teacher' },
+        { id: 'curious-mehdi', name: 'Mehdi', role: 'student' },
+      ],
     });
     const pauseIndex = actions.findIndex((action) => action.type === 'resource_pause');
     const discussionIndex = actions.findIndex((action) => action.type === 'discussion');
@@ -54,6 +58,7 @@ describe('downloadable resource narration', () => {
     expect(pauseIndex).toBeLessThan(discussionIndex);
     expect(actions[pauseIndex - 1]).toMatchObject({
       type: 'speech',
+      agentId: 'teacher-hanae',
       text: expect.stringContaining('cliquez sur Lecture'),
     });
     expect(actions[pauseIndex]).toMatchObject({

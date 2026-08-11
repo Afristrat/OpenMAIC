@@ -1565,10 +1565,12 @@ function appendResourcePauseActions(
   actions: Action[],
   outline: SceneOutline,
   languageDirective?: string,
+  agents?: AgentInfo[],
 ): Action[] {
   const resources = outline.generatedResources ?? [];
   if (resources.length === 0) return actions;
 
+  const teacherAgentId = agents?.find((agent) => agent.role === 'teacher')?.id;
   const isArabic = /arabic|arabe|العربية/i.test(languageDirective ?? '');
   const isFrench = /french|français|francais|fr-FR/i.test(languageDirective ?? '');
   const checkpoints: Action[] = resources.flatMap((resource) => {
@@ -1578,7 +1580,12 @@ function appendResourcePauseActions(
         ? `Le fichier « ${resource.title} » est disponible au téléchargement avec le lien court ou le QR code affiché sur la diapositive. Je mets maintenant la formation en pause. Après avoir téléchargé le fichier, cliquez sur Lecture pour continuer.`
         : `The file “${resource.title}” is ready to download from the short link or QR code shown on the slide. I will pause the course now. After downloading it, click Play to continue.`;
     return [
-      { id: `action_${nanoid(8)}`, type: 'speech' as const, text },
+      {
+        id: `action_${nanoid(8)}`,
+        type: 'speech' as const,
+        text,
+        ...(teacherAgentId ? { agentId: teacherAgentId } : {}),
+      },
       {
         id: `action_${nanoid(8)}`,
         type: 'resource_pause' as const,
@@ -1696,6 +1703,7 @@ export async function generateSceneActions(
       ),
       outline,
       languageDirective,
+      agents,
     );
   }
 
