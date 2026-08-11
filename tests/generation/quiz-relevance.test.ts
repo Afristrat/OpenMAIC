@@ -60,6 +60,35 @@ describe('quiz course relevance', () => {
 
     expect(issue).toBeNull();
   });
+
+  it('rejects a quiz whose generated question count differs from the approved syllabus', async () => {
+    const outline: SceneOutline = {
+      ...cashFlowOutline,
+      quizConfig: {
+        questionCount: 5,
+        difficulty: 'medium',
+        questionTypes: ['single'],
+      },
+    };
+    let correction = '';
+    const generated = Array.from({ length: 4 }, (_, index) => ({
+      ...question(`Question de trésorerie ${index + 1}`, 'Analyse de trésorerie'),
+      id: `q${index + 1}`,
+    }));
+
+    const result = await generateSceneContent(outline, async () => JSON.stringify(generated), {
+      userRequirements: {
+        requirement: 'Terminer par un quiz final de cinq questions sur la trésorerie.',
+      },
+      courseOutlines: [outline],
+      onValidationFailure: (directive) => {
+        correction = directive;
+      },
+    });
+
+    expect(result).toBeNull();
+    expect(correction).toContain('exactly 5');
+  });
 });
 
 describe('cash-flow simulator horizon', () => {

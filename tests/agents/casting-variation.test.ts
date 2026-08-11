@@ -38,5 +38,18 @@ describe('casting variation', () => {
     expect(attemptedHashes).toEqual([createLineupHash(firstCast), createLineupHash(secondCast)]);
     expect(result.agents).toEqual(secondCast);
     expect(result.lineupHash).not.toBe(createLineupHash(firstCast));
+    expect(result.reused).toBe(false);
+  });
+
+  it('reuses a valid lineup when every distinct casting has already been reserved', async () => {
+    const result = await reserveDistinctCasting({
+      draw: () => firstCast,
+      reserve: async () => null,
+      maxAttempts: 2,
+    });
+
+    expect(result.agents).toEqual(firstCast);
+    expect(result.reservation).toBeNull();
+    expect(result.reused).toBe(true);
   });
 });

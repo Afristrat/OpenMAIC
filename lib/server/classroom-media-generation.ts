@@ -71,15 +71,19 @@ export function removeAgentNamesFromSpeech(
   ].sort((a, b) => b.length - a.length);
   if (names.length === 0) return text;
 
-  const directAddress = new RegExp(
-    `([,;:]?\\s*)(?:${names.map(escapeRegExp).join('|')})(?=$|[^\\p{L}\\p{N}])`,
+  const namesPattern = names.map(escapeRegExp).join('|');
+  const selfIntroduction = new RegExp(
+    `\\b(?:je suis|moi[,]? c['â€™]est|mon nom est)\\s+(?:${namesPattern})(?=$|[^\\p{L}\\p{N}])[,;:]?\\s*`,
     'giu',
   );
-  return text
+  const directAddress = new RegExp(`([,;:]?\\s*)(?:${namesPattern})(?=$|[^\\p{L}\\p{N}])`, 'giu');
+  const sanitized = text
+    .replace(selfIntroduction, '')
     .replace(directAddress, '')
     .replace(/^\s*[,;:.!?]\s*/, '')
     .replace(/\s{2,}/g, ' ')
     .trim();
+  return sanitized ? sanitized[0].toLocaleUpperCase('fr-FR') + sanitized.slice(1) : sanitized;
 }
 
 export function resolveCanonicalSpeechVoice(
@@ -342,6 +346,36 @@ export function replaceMediaPlaceholders(scenes: Scene[], mediaMap: Record<strin
         el.src = mediaMap[el.src];
       }
     }
+  }
+}
+
+/**
+ * A provider outage or exhausted budget must not destroy an otherwise usable
+ * classroom. Remove only unresolved generated-media placeholders; real source
+ * images and already persisted media remain untouched.
+ */
+export function removeUnresolvedMediaPlaceholders(
+  scenes: Scene[],
+  unresolvedIds: ReadonlySet<string>,
+): void {
+  if (unresolvedIds.size === 0) return;
+  for (const scene of scenes) {
+    if (scene.type !== 'slide') continue;
+    const canvas = (
+      scene.content as {
+        canvas?: {
+          elements?: Array<{ src?: string; mediaRef?: string; type?: string }>;
+        };
+      }
+    )?.canvas;
+    if (!canvas?.elements) continue;
+    canvas.elements = canvas.elements.filter((element) => {
+      if (element.type !== 'image' && element.type !== 'video') return true;
+      return !(
+        (typeof element.src === 'string' && unresolvedIds.has(element.src)) ||
+        (typeof element.mediaRef === 'string' && unresolvedIds.has(element.mediaRef))
+      );
+    });
   }
 }
 

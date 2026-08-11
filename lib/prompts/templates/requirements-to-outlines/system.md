@@ -82,6 +82,8 @@ Use the **revised Bloom taxonomy** to formulate the syllabus. The author does no
 - Prefer observable verbs such as apply, analyse, evaluate, diagnose, compare, justify, design, or create. Do not use vague verbs such as know, understand, discover, or become aware as the assessed action.
 - `learningObjectives` must form a realistic progression toward `overallObjective`; each objective must also begin with an observable action.
 - `assessmentStrategy` and `expectedDeliverable` must directly prove the stated performance. Never claim a criterion that the generated scenes cannot assess.
+- Never invent a monetary threshold, deadline, legal rule, statistic, target value, or acronym meaning. A configurable value remains explicitly configurable unless the author or an approved source supplied its exact value.
+- If the author requests a final quiz or an exact number of questions, the last assessment scene must be that final quiz and `quizConfig.questionCount` must equal the requested number exactly.
 - Keep the objective concise. Source documents, evidence, scope, explanations, and constraints belong elsewhere in the plan and must never be compressed into `overallObjective`.
 
 ---
@@ -244,6 +246,7 @@ When a learner genuinely needs a reusable workbook to complete an exercise, appl
 
 - Supported formats: `xlsx` for calculation sheets, tables and reusable workbooks; `docx` for editable instructions, worksheets, checklists, templates and written exercises.
 - Generate at most two resources per course.
+- Generate each requested learner artefact exactly once. Its short link and QR code belong on the same resource scene; never create a second guide or file merely to repeat access instructions.
 - Never mention a downloadable file in a title, description, or key point unless a matching `resourceGenerations` entry exists on that scene.
 - Treat every promised file, exercise sheet, template, workbook, document, short link or QR code as an executable obligation. Create the matching `resourceGenerations` entry before writing that promise. If no real resource is needed, omit the promise entirely.
 - Never invent a learner upload, Python result, score, verdict or feedback in a later scene. Describe the evaluation method only. The actual result exists only after the learner has uploaded the generated file and Python has analysed that exact upload.

@@ -30,7 +30,11 @@ vi.mock('@/lib/supabase/service', () => ({
   })),
 }));
 
-import { generateTTSForClassroom } from '@/lib/server/classroom-media-generation';
+import {
+  generateTTSForClassroom,
+  removeAgentNamesFromSpeech,
+  removeUnresolvedMediaPlaceholders,
+} from '@/lib/server/classroom-media-generation';
 
 describe('canonical classroom agent TTS', () => {
   beforeEach(() => {
@@ -202,5 +206,42 @@ describe('canonical classroom agent TTS', () => {
       'Une remarque importante : vérifions les frontières.',
       'Excellente précision. Passons aux étapes.',
     ]);
+  });
+
+  test('retire une auto-présentation entière sans laisser une phrase cassée', () => {
+    expect(
+      removeAgentNamesFromSpeech('Je suis Hanae, et je serai votre accompagnatrice.', [
+        { id: 'teacher', name: 'Hanae' },
+      ]),
+    ).toBe('Et je serai votre accompagnatrice.');
+  });
+
+  test('retire seulement les placeholders des médias optionnels indisponibles', () => {
+    const scene = {
+      id: 'scene-1',
+      stageId: 'classroom-1',
+      type: 'slide',
+      title: 'Médias',
+      order: 1,
+      content: {
+        type: 'slide',
+        canvas: {
+          id: 'canvas-1',
+          elements: [
+            { id: 'missing', type: 'image', src: 'gen_img_missing' },
+            { id: 'source', type: 'image', src: '/api/classroom-media/source.png' },
+            { id: 'text', type: 'text', content: '<p>Conserver</p>' },
+          ],
+        },
+      },
+    } as unknown as Scene;
+
+    removeUnresolvedMediaPlaceholders([scene], new Set(['gen_img_missing']));
+
+    expect(
+      (scene.content as { canvas: { elements: Array<{ id: string }> } }).canvas.elements.map(
+        (element) => element.id,
+      ),
+    ).toEqual(['source', 'text']);
   });
 });

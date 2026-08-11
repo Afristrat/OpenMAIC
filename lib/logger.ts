@@ -10,14 +10,26 @@ function isJsonFormat(): boolean {
   return process.env.LOG_FORMAT === 'json';
 }
 
+export function redactSensitiveLogData(value: string): string {
+  return value
+    .replace(/\b(?:sk|xai|gsk|AIza)[-_][A-Za-z0-9._-]{6,}\b/g, '[REDACTED]')
+    .replace(
+      /((?:authorization|api[_ -]?key|access[_ -]?token|secret)\s*(?:[:=]|\bis\b)?\s*)(?:bearer\s+)?["']?[^\s,"'}]{4,}/gi,
+      '$1[REDACTED]',
+    )
+    .replace(/([?&](?:api_key|key|token|secret)=)[^&\s]+/gi, '$1[REDACTED]');
+}
+
 function formatLine(level: LogLevel, tag: string, args: unknown[]): string {
   const timestamp = new Date().toISOString();
   const upperLevel = level.toUpperCase();
-  const msg = args
-    .map((a) =>
-      a instanceof Error ? (a.stack ?? a.message) : typeof a === 'string' ? a : JSON.stringify(a),
-    )
-    .join(' ');
+  const msg = redactSensitiveLogData(
+    args
+      .map((a) =>
+        a instanceof Error ? (a.stack ?? a.message) : typeof a === 'string' ? a : JSON.stringify(a),
+      )
+      .join(' '),
+  );
 
   if (isJsonFormat()) {
     return JSON.stringify({ timestamp, level: upperLevel, tag, message: msg });

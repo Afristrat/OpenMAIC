@@ -19,9 +19,42 @@ const DECORATIVE_RESOURCE_MEDIA =
 const EXPLICIT_MAD_THRESHOLD =
   /(?:seuil[\s\S]{0,40}\b\d[\d\s.,]*\s*MAD\b|\b\d[\d\s.,]*\s*MAD\b[\s\S]{0,40}seuil)/i;
 const UNSPECIFIED_THRESHOLD_POINT = /(?:seuil|minimal)[\s\S]{0,40}(?:MAD|montant|valeur)/i;
+const FINAL_ASSESSMENT =
+  /(?:quiz|test|[ée]valuation)[\s\S]{0,32}(?:finale?|des acquis)|(?:finale?|des acquis)[\s\S]{0,32}(?:quiz|test|[ée]valuation)/i;
+const DOCUMENT_WORDS = /\b(?:document|docx|guide|fiche|checklist|mode d['’]emploi)\b/i;
+const EXPLICIT_QUIZ_COUNT = new RegExp(
+  String.raw`\b(\d{1,2}|un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix)\s+(?:questions?|items?)\b`,
+  'i',
+);
+const QUIZ_COUNT_WORDS: Readonly<Record<string, number>> = {
+  un: 1,
+  une: 1,
+  deux: 2,
+  trois: 3,
+  quatre: 4,
+  cinq: 5,
+  six: 6,
+  sept: 7,
+  huit: 8,
+  neuf: 9,
+  dix: 10,
+};
 
 function outlineText(outline: SceneOutline): string {
   return [outline.title, outline.description, ...(outline.keyPoints ?? [])].join(' ');
+}
+
+function requestedQuizCount(requirement: string): number | undefined {
+  const token = requirement.match(EXPLICIT_QUIZ_COUNT)?.[1]?.toLocaleLowerCase('fr-FR');
+  if (!token) return undefined;
+  const count = Number.parseInt(token, 10) || QUIZ_COUNT_WORDS[token];
+  return count && count <= 20 ? count : undefined;
+}
+
+function sanitizeUnspecifiedThreshold(value: string): string {
+  return EXPLICIT_MAD_THRESHOLD.test(value)
+    ? 'Interpréter une alerte à partir du seuil configurable, sans inventer de montant.'
+    : value;
 }
 
 function workbookRequest(
@@ -63,8 +96,6 @@ export function enforceExecutableObligations(
   requirement: string,
 ): ClassroomPlan {
   const workbookRequired = WORKBOOK_WORDS.test(requirement) && WORKBOOK_ACTIONS.test(requirement);
-  if (!workbookRequired) return plan;
-
   const cashFlow13Week = CASH_FLOW_13_WEEK.test(requirement);
   const outlines = plan.outlines.map((outline) => ({
     ...outline,
@@ -72,6 +103,56 @@ export function enforceExecutableObligations(
     resourceGenerations: outline.resourceGenerations?.map((resource) => ({ ...resource })),
     mediaGenerations: outline.mediaGenerations?.map((media) => ({ ...media })),
   }));
+
+  if (!EXPLICIT_MAD_THRESHOLD.test(requirement)) {
+    for (const outline of outlines) {
+      outline.title = sanitizeUnspecifiedThreshold(outline.title);
+      outline.description = sanitizeUnspecifiedThreshold(outline.description);
+      outline.keyPoints = outline.keyPoints.map(sanitizeUnspecifiedThreshold);
+    }
+  }
+
+  const explicitQuizCount = requestedQuizCount(requirement);
+  if (FINAL_ASSESSMENT.test(requirement)) {
+    let finalQuizIndex = outlines.findIndex(
+      (outline) => outline.type === 'quiz' && /finale?|des acquis/i.test(outlineText(outline)),
+    );
+    if (finalQuizIndex < 0 && outlines.length > 0) {
+      finalQuizIndex = outlines.length - 1;
+      const previous = outlines[finalQuizIndex];
+      outlines[finalQuizIndex] = {
+        id: previous.id,
+        type: 'quiz',
+        title: 'Quiz final de validation des acquis',
+        description:
+          'Vérifier la maîtrise des objectifs annoncés à partir du contenu de cette formation.',
+        keyPoints:
+          previous.keyPoints.length > 0 ? previous.keyPoints : [plan.syllabus.overallObjective],
+        order: previous.order,
+        teachingObjective: previous.teachingObjective,
+        estimatedDuration: previous.estimatedDuration,
+        resourceGenerations: undefined,
+        mediaGenerations: undefined,
+        quizConfig: {
+          questionCount: explicitQuizCount ?? 5,
+          difficulty: 'medium',
+          questionTypes: ['single'],
+        },
+      };
+    }
+    const finalQuiz = outlines[finalQuizIndex];
+    if (finalQuiz?.type === 'quiz') {
+      finalQuiz.quizConfig = {
+        questionCount: explicitQuizCount ?? finalQuiz.quizConfig?.questionCount ?? 5,
+        difficulty: finalQuiz.quizConfig?.difficulty ?? 'medium',
+        questionTypes: finalQuiz.quizConfig?.questionTypes?.length
+          ? finalQuiz.quizConfig.questionTypes
+          : ['single'],
+      };
+    }
+  }
+
+  if (!workbookRequired) return { ...plan, outlines };
 
   const existingWorkbook = outlines
     .flatMap((outline, outlineIndex) =>
@@ -134,6 +215,32 @@ export function enforceExecutableObligations(
     'Le QR code donne accès exactement au même fichier.',
     'La formation attend votre action explicite avant de poursuivre.',
   ];
+
+  const documentExplicitlyRequired =
+    DOCUMENT_WORDS.test(requirement) && WORKBOOK_ACTIONS.test(requirement);
+  for (const [index, outline] of outlines.entries()) {
+    if (!outline.resourceGenerations?.length) continue;
+    outline.resourceGenerations = outline.resourceGenerations.filter(
+      (resource) =>
+        (resource.format === 'xlsx' && index === targetIndex) ||
+        (resource.format === 'docx' && documentExplicitlyRequired),
+    );
+    if (
+      index !== targetIndex &&
+      outline.type === 'slide' &&
+      DOWNLOAD_SCENE.test(outlineText(outline)) &&
+      outline.resourceGenerations.length === 0
+    ) {
+      outline.title = 'Préparer le classeur au dépôt';
+      outline.description =
+        'Vérifiez le classeur téléchargé précédemment, complétez les hypothèses et conservez son nom avant le dépôt.';
+      outline.keyPoints = [
+        'Contrôler les treize semaines et la devise MAD.',
+        'Vérifier les formules et le seuil configurable.',
+        'Enregistrer le classeur avant de passer à son analyse.',
+      ];
+    }
+  }
 
   for (const [index, outline] of outlines.entries()) {
     if (index === targetIndex || !outline.mediaGenerations?.length) continue;

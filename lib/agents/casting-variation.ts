@@ -66,12 +66,27 @@ export async function reserveDistinctCasting<T extends readonly CastAgent[]>({
   draw: () => T;
   reserve: (agents: T, lineupHash: string) => Promise<CastingReservation | null>;
   maxAttempts?: number;
-}): Promise<{ agents: T; reservation: CastingReservation; lineupHash: string }> {
+}): Promise<{
+  agents: T;
+  reservation: CastingReservation | null;
+  lineupHash: string;
+  reused: boolean;
+}> {
+  let lastAgents: T | undefined;
+  let lastLineupHash = '';
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     const agents = draw();
     const lineupHash = createLineupHash(agents);
+    lastAgents = agents;
+    lastLineupHash = lineupHash;
     const reservation = await reserve(agents, lineupHash);
-    if (reservation) return { agents, reservation, lineupHash };
+    if (reservation) return { agents, reservation, lineupHash, reused: false };
   }
-  throw new CastingVariationExhaustedError();
+  if (!lastAgents) throw new CastingVariationExhaustedError();
+  return {
+    agents: lastAgents,
+    reservation: null,
+    lineupHash: lastLineupHash,
+    reused: true,
+  };
 }

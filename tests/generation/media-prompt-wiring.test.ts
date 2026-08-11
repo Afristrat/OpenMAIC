@@ -1,10 +1,46 @@
 import { describe, expect, test, vi } from 'vitest';
 import { generateSceneOutlinesFromRequirements } from '@/lib/generation/outline-generator';
-import { generateSceneContent, hasUnexpectedLearnerUrl } from '@/lib/generation/scene-generator';
+import {
+  findUnreadableTextualLatexIssue,
+  generateSceneContent,
+  hasUnexpectedLearnerUrl,
+} from '@/lib/generation/scene-generator';
 import type { SceneOutline, UserRequirements } from '@/lib/types/generation';
 import type { AICallFn } from '@/lib/generation/pipeline-types';
 
 describe('media prompt condition wiring', () => {
+  test('rejects prose-heavy French text rendered as a tiny LaTeX formula', () => {
+    expect(
+      findUnreadableTextualLatexIssue([
+        {
+          id: 'formula',
+          type: 'latex',
+          left: 0,
+          top: 0,
+          width: 180,
+          height: 60,
+          latex: '\\text{Solde} = \\text{Encaissements} - \\text{Décaissements}',
+        },
+      ]),
+    ).toContain('normal HTML text element');
+  });
+
+  test('keeps compact symbolic formulas in LaTeX', () => {
+    expect(
+      findUnreadableTextualLatexIssue([
+        {
+          id: 'formula',
+          type: 'latex',
+          left: 0,
+          top: 0,
+          width: 180,
+          height: 60,
+          latex: 'S = E - D',
+        },
+      ]),
+    ).toBeNull();
+  });
+
   test('makes an attached document primary and web research secondary', async () => {
     let capturedPrompt = '';
     const aiCall: AICallFn = async (system, user) => {

@@ -29,6 +29,7 @@ import { persistClassroom } from '@/lib/server/classroom-storage';
 import { persistGeneratedCourse, type CourseLocale } from '@/lib/server/course-storage';
 import {
   generateMediaForClassroom,
+  removeUnresolvedMediaPlaceholders,
   replaceMediaPlaceholders,
   generateTTSForClassroom,
 } from '@/lib/server/classroom-media-generation';
@@ -594,7 +595,10 @@ export async function generateClassroom(
         }),
     });
     tenantAgentConfigs = reservation.agents;
-    castingReservationId = reservation.reservation.id;
+    castingReservationId = reservation.reservation?.id;
+    if (reservation.reused) {
+      log.info('All distinct castings were already used; reusing a valid lineup.');
+    }
   }
   tenantAgentConfigs = applyTeacherVoiceConfig(tenantAgentConfigs, input.teacherVoiceConfig);
   if (input.contextualSpecialists?.length) {
@@ -957,8 +961,10 @@ export async function generateClassroom(
       );
       const generatedMediaCount = [...requestedMediaIds].filter((id) => mediaMap[id]).length;
       if (generatedMediaCount !== requestedMediaIds.size) {
-        throw new Error(
-          `Media persistence incomplete: ${generatedMediaCount}/${requestedMediaIds.size} requested files generated`,
+        const unresolvedMediaIds = new Set([...requestedMediaIds].filter((id) => !mediaMap[id]));
+        removeUnresolvedMediaPlaceholders(scenes, unresolvedMediaIds);
+        log.warn(
+          `Optional media unavailable: ${generatedMediaCount}/${requestedMediaIds.size} files generated; unresolved placeholders removed.`,
         );
       }
       replaceMediaPlaceholders(scenes, mediaMap);

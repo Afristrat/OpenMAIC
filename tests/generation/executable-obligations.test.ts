@@ -161,9 +161,70 @@ describe('executable learning obligations', () => {
     ]);
   });
 
+  it('removes an invented threshold from every outline field, not only quizzes', () => {
+    const plan = unsafePlan();
+    plan.outlines[0] = scene({
+      id: 'intro',
+      type: 'slide',
+      title: 'Seuil d’alerte de 50 000 MAD',
+      description: 'Le seuil de 50 000 MAD déclenche une décision.',
+      keyPoints: ['Agir sous le seuil de 50 000 MAD'],
+      order: 1,
+    });
+
+    const result = enforceExecutableObligations(plan, requirement);
+    expect(JSON.stringify(result.outlines[0])).not.toContain('50 000');
+    expect(result.outlines[0].description).toContain('seuil configurable');
+  });
+
+  it('enforces the requested final quiz and its exact question count without adding a scene', () => {
+    const plan = unsafePlan();
+    const before = plan.outlines.length;
+    const result = enforceExecutableObligations(
+      plan,
+      `${requirement} Termine par un quiz final de cinq questions.`,
+    );
+    const last = result.outlines.at(-1);
+
+    expect(result.outlines).toHaveLength(before);
+    expect(last).toMatchObject({
+      type: 'quiz',
+      quizConfig: { questionCount: 5 },
+    });
+  });
+
+  it('removes an unrequested duplicate document and repurposes its QR-only slide', () => {
+    const plan = unsafePlan();
+    plan.outlines.splice(
+      2,
+      0,
+      scene({
+        id: 'duplicate-guide',
+        type: 'slide',
+        title: 'Le lien Qalem et le QR code',
+        description: 'Téléchargez un guide.',
+        order: 3,
+        resourceGenerations: [
+          {
+            id: 'unrequested-guide',
+            format: 'docx',
+            title: 'Guide Qalem',
+            fileName: 'guide.docx',
+            prompt: 'Créer un guide.',
+          },
+        ],
+      }),
+    );
+
+    const result = enforceExecutableObligations(plan, requirement);
+    const duplicate = result.outlines.find((outline) => outline.id === 'duplicate-guide');
+    expect(duplicate?.resourceGenerations).toEqual([]);
+    expect(duplicate?.title).toBe('Préparer le classeur au dépôt');
+  });
+
   it('does not invent a resource when the author did not request one', () => {
     const plan = unsafePlan();
     const result = enforceExecutableObligations(plan, 'Explique les principes de trésorerie.');
-    expect(result).toBe(plan);
+    expect(result).toEqual(plan);
   });
 });

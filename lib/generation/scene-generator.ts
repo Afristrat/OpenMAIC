@@ -847,6 +847,27 @@ function processLatexElements(
     .filter((el): el is NonNullable<typeof el> => el !== null);
 }
 
+export function findUnreadableTextualLatexIssue(
+  elements: GeneratedSlideData['elements'],
+): string | null {
+  for (const element of elements) {
+    if (element.type !== 'latex' || typeof element.latex !== 'string') continue;
+    const textSegments = [...element.latex.matchAll(/\\text\{([^}]*)\}/g)].map(
+      (match) => match[1] ?? '',
+    );
+    const letterCount = textSegments.join('').replace(/[^\p{L}]/gu, '').length;
+    const containsNonAsciiText = textSegments.some((segment) => /[^\x00-\x7F]/.test(segment));
+    if (containsNonAsciiText || letterCount > 18) {
+      return [
+        `The LaTeX element "${element.id}" contains long or non-English prose inside \\text{}.`,
+        'Use a normal HTML text element for the words and reserve LaTeX for compact mathematical symbols.',
+        'Keep the formula readable at its actual card width.',
+      ].join(' ');
+    }
+  }
+  return null;
+}
+
 /**
  * Generate slide content
  */
@@ -1089,6 +1110,13 @@ async function generateSlideContent(
   // Fix elements with missing required fields + aspect ratio correction (while src is still img_id)
   const fixedElements = fixElementDefaults(generatedData.elements, assignedImages);
   log.debug(`After element fixing: ${fixedElements.length} elements`);
+
+  const textualLatexIssue = findUnreadableTextualLatexIssue(fixedElements);
+  if (textualLatexIssue) {
+    log.warn(`Slide textual LaTeX rejected for ${outline.id}: ${textualLatexIssue}`);
+    onValidationFailure?.(textualLatexIssue);
+    return null;
+  }
 
   if (requiredSourceImageIds?.length) {
     const approvedIds = new Set(requiredSourceImageIds);
@@ -1372,6 +1400,13 @@ async function generateQuizContent(
   }
 
   log.debug(`Got ${generatedQuestions.length} questions for: ${outline.title}`);
+
+  if (generatedQuestions.length !== quizConfig.questionCount) {
+    const failure = `Return exactly ${quizConfig.questionCount} complete quiz questions; the rejected response contained ${generatedQuestions.length}.`;
+    log.warn(`Quiz question count rejected for ${outline.id}: ${failure}`);
+    onValidationFailure?.(failure);
+    return null;
+  }
 
   // Ensure each question has an ID and normalize options format
   const questions: QuizQuestion[] = generatedQuestions.map((q) => {

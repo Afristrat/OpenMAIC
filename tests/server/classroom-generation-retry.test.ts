@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   persistGeneratedCourse: vi.fn(),
   callLLM: vi.fn(),
   generateMediaForClassroom: vi.fn(),
+  removeUnresolvedMediaPlaceholders: vi.fn(),
   replaceMediaPlaceholders: vi.fn(),
   generateTTSForClassroom: vi.fn(),
 }));
@@ -53,6 +54,7 @@ vi.mock('@/lib/server/course-storage', () => ({
 
 vi.mock('@/lib/server/classroom-media-generation', () => ({
   generateMediaForClassroom: mocks.generateMediaForClassroom,
+  removeUnresolvedMediaPlaceholders: mocks.removeUnresolvedMediaPlaceholders,
   replaceMediaPlaceholders: mocks.replaceMediaPlaceholders,
   generateTTSForClassroom: mocks.generateTTSForClassroom,
 }));
@@ -354,7 +356,7 @@ describe('classroom scene generation retries', () => {
     expect(mocks.persistClassroom).not.toHaveBeenCalled();
   });
 
-  it('fails instead of persisting unresolved generated image placeholders', async () => {
+  it('persists the classroom without an unresolved optional image placeholder', async () => {
     const imageOutline = {
       ...outline,
       mediaGenerations: [
@@ -385,10 +387,12 @@ describe('classroom scene generation retries', () => {
     });
     mocks.generateMediaForClassroom.mockResolvedValue({});
 
-    await expect(generateWithProgress({ enableImageGeneration: true })).rejects.toThrow(
-      'Media persistence incomplete: 0/1 requested files generated',
+    await expect(generateWithProgress({ enableImageGeneration: true })).resolves.toBeDefined();
+    expect(mocks.persistClassroom).toHaveBeenCalled();
+    expect(mocks.removeUnresolvedMediaPlaceholders).toHaveBeenCalledWith(
+      expect.any(Array),
+      new Set(['gen_img_retry']),
     );
-    expect(mocks.persistClassroom).not.toHaveBeenCalled();
   });
 
   it('fails when a generated image file is not integrated into any scene', async () => {
