@@ -29,7 +29,6 @@ import { persistClassroom } from '@/lib/server/classroom-storage';
 import { persistGeneratedCourse, type CourseLocale } from '@/lib/server/course-storage';
 import {
   generateMediaForClassroom,
-  removeUnresolvedMediaPlaceholders,
   replaceMediaPlaceholders,
   generateTTSForClassroom,
 } from '@/lib/server/classroom-media-generation';
@@ -961,10 +960,8 @@ export async function generateClassroom(
       );
       const generatedMediaCount = [...requestedMediaIds].filter((id) => mediaMap[id]).length;
       if (generatedMediaCount !== requestedMediaIds.size) {
-        const unresolvedMediaIds = new Set([...requestedMediaIds].filter((id) => !mediaMap[id]));
-        removeUnresolvedMediaPlaceholders(scenes, unresolvedMediaIds);
-        log.warn(
-          `Optional media unavailable: ${generatedMediaCount}/${requestedMediaIds.size} files generated; unresolved placeholders removed.`,
+        throw new Error(
+          `Enabled media generation produced ${generatedMediaCount}/${requestedMediaIds.size} requested files. Disable the failing media capability or ask its administrator to restore provider capacity.`,
         );
       }
       replaceMediaPlaceholders(scenes, mediaMap);

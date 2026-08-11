@@ -11,6 +11,7 @@ vi.mock('@/lib/supabase/service', () => ({
 }));
 
 import {
+  describeMediaProviderFailure,
   replaceMediaPlaceholders,
   selectClassroomImageProvider,
   selectClassroomImageModel,
@@ -143,5 +144,18 @@ describe('classroom image model selection', () => {
         'qwen-image',
       ),
     ).toBe('qwen-image');
+  });
+});
+
+describe('classroom media failure reporting', () => {
+  test('turns a provider budget refusal into an actionable message without echoing details', () => {
+    const failure = new Error(
+      'OpenAI image generation failed (429): budget exceeded for a private provider key',
+    );
+
+    expect(describeMediaProviderFailure(failure)).toBe(
+      'provider budget or quota exceeded (HTTP 429)',
+    );
+    expect(describeMediaProviderFailure(failure)).not.toContain('private provider key');
   });
 });

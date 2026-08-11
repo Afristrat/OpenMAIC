@@ -65,6 +65,8 @@ describe('POST /api/generate/refine-requirement', () => {
     expect(params.system).toContain('not a chat interface');
     expect(params.system).toContain('Never expose JSON');
     expect(params.system).toContain('Never claim to know the attachment contents');
+    expect(params.system).toContain('The editable syllabus shown immediately after this step');
+    expect(params.system).toContain('Never ask again for a decision already supplied');
     expect(params.prompt).toContain('<attached_file>process-improvement.pdf</attached_file>');
     expect(params.prompt).toContain(
       '<author_request>Créer cinq diapositives sur la gestion du temps.</author_request>',

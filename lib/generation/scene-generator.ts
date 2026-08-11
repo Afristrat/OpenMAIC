@@ -2399,6 +2399,17 @@ function findUngroundedResourceClaim(actions: Action[], resourceCount: number): 
     : null;
 }
 
+export function stripVisualProductionDirectives(text: string): string {
+  return text
+    .replace(
+      /\s*\[(?:sch[ée]ma|schema|diagram(?:me)?|image|illustration|visual)\]\s*[^.!?]*(?:[.!?](?=\s|$)|$)/giu,
+      ' ',
+    )
+    .replace(/\s+([,.;:!?])/g, '$1')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
 /**
  * Format question list for AI reference
  */
@@ -2423,11 +2434,17 @@ function processActions(actions: Action[], elements: PPTElement[], agents?: Agen
   const studentAgents = agents?.filter((a) => a.role === 'student') || [];
   const nonTeacherAgents = agents?.filter((a) => a.role !== 'teacher') || [];
 
-  return actions.map((action) => {
+  return actions.flatMap((action) => {
+    const sanitizedAction =
+      action.type === 'speech'
+        ? { ...action, text: stripVisualProductionDirectives(action.text) }
+        : action;
+    if (sanitizedAction.type === 'speech' && !sanitizedAction.text) return [];
+
     // Ensure each action has an ID
     const processedAction: Action = {
-      ...action,
-      id: action.id || `action_${nanoid(8)}`,
+      ...sanitizedAction,
+      id: sanitizedAction.id || `action_${nanoid(8)}`,
     };
 
     // A spoken line controls both the visible avatar and the synthesized voice.
@@ -2474,7 +2491,7 @@ function processActions(actions: Action[], elements: PPTElement[], agents?: Agen
       }
     }
 
-    return processedAction;
+    return [processedAction];
   });
 }
 

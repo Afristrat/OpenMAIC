@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { generateSceneActions } from '@/lib/generation/scene-generator';
+import {
+  generateSceneActions,
+  stripVisualProductionDirectives,
+} from '@/lib/generation/scene-generator';
 import type { AICallFn } from '@/lib/generation/pipeline-types';
 import type { GeneratedSlideContent, SceneOutline } from '@/lib/types/generation';
 
@@ -46,6 +49,14 @@ const content: GeneratedSlideContent = {
 };
 
 describe('slide action visual grounding', () => {
+  it('retire les instructions de production visuelle du texte destiné à être lu', () => {
+    expect(
+      stripVisualProductionDirectives(
+        "Les encaissements entrent. [Schéma] Illustration épurée avec trois flèches. L'analyste pose une question.",
+      ),
+    ).toBe("Les encaissements entrent. L'analyste pose une question.");
+  });
+
   it('régénère une narration qui prétend montrer un tableau absent', async () => {
     const aiCall = vi
       .fn<AICallFn>()

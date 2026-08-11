@@ -356,7 +356,7 @@ describe('classroom scene generation retries', () => {
     expect(mocks.persistClassroom).not.toHaveBeenCalled();
   });
 
-  it('persists the classroom without an unresolved optional image placeholder', async () => {
+  it('fails instead of persisting when enabled image generation produces no file', async () => {
     const imageOutline = {
       ...outline,
       mediaGenerations: [
@@ -387,12 +387,10 @@ describe('classroom scene generation retries', () => {
     });
     mocks.generateMediaForClassroom.mockResolvedValue({});
 
-    await expect(generateWithProgress({ enableImageGeneration: true })).resolves.toBeDefined();
-    expect(mocks.persistClassroom).toHaveBeenCalled();
-    expect(mocks.removeUnresolvedMediaPlaceholders).toHaveBeenCalledWith(
-      expect.any(Array),
-      new Set(['gen_img_retry']),
+    await expect(generateWithProgress({ enableImageGeneration: true })).rejects.toThrow(
+      'Enabled media generation produced 0/1 requested files',
     );
+    expect(mocks.persistClassroom).not.toHaveBeenCalled();
   });
 
   it('fails when a generated image file is not integrated into any scene', async () => {

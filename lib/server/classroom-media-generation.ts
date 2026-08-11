@@ -137,6 +137,18 @@ export function selectClassroomImageProvider(
   return Object.keys(serverProviders)[0] as ImageProviderId | undefined;
 }
 
+export function describeMediaProviderFailure(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  if (/\b429\b|budget|quota|rate.?limit/i.test(message)) {
+    return 'provider budget or quota exceeded (HTTP 429)';
+  }
+  if (/\b401\b|\b403\b|unauthori[sz]ed|forbidden/i.test(message)) {
+    return 'provider authentication rejected';
+  }
+  if (/timeout|timed out|abort/i.test(message)) return 'provider request timed out';
+  return 'provider request failed';
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -220,6 +232,7 @@ export async function generateMediaForClassroom(
   const videoProviderIds = Object.keys(getServerVideoProviders());
 
   const mediaMap: Record<string, string> = {};
+  const failures: Array<{ type: 'image' | 'video'; elementId: string; reason: string }> = [];
 
   // Separate image and video requests, generate each type sequentially
   // but run the two types in parallel (providers often have limited concurrency).
@@ -270,6 +283,11 @@ export async function generateMediaForClassroom(
         log.info(`Generated image: ${filename}`);
       } catch (err) {
         log.warn(`Image generation failed for ${req.elementId}:`, err);
+        failures.push({
+          type: 'image',
+          elementId: req.elementId,
+          reason: describeMediaProviderFailure(err),
+        });
       }
     }
   };
@@ -303,11 +321,25 @@ export async function generateMediaForClassroom(
         log.info(`Generated video: ${filename}`);
       } catch (err) {
         log.warn(`Video generation failed for ${req.elementId}:`, err);
+        failures.push({
+          type: 'video',
+          elementId: req.elementId,
+          reason: describeMediaProviderFailure(err),
+        });
       }
     }
   };
 
   await Promise.all([generateImages(), generateVideos()]);
+
+  if (failures.length > 0) {
+    const summary = failures
+      .map((failure) => `${failure.type}:${failure.elementId} (${failure.reason})`)
+      .join(', ');
+    throw new Error(
+      `Enabled media generation failed for ${failures.length}/${requests.length} requested files: ${summary}. Disable the failing media capability or ask its administrator to restore provider capacity.`,
+    );
+  }
 
   return mediaMap;
 }

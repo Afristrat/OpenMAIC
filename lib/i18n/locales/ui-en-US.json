@@ -23,6 +23,7 @@
   "toolbar.configureProviderHint": "Configure at least one model provider to generate courses",
   "toolbar.enterClassroom": "Enter Classroom",
   "toolbar.advancedSettings": "Advanced Settings",
+  "toolbar.mediaSettings": "Media",
   "toolbar.thinking": "Thinking",
   "toolbar.thinkingBudget": "Budget",
   "toolbar.default": "Default",
