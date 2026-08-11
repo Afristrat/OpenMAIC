@@ -54,6 +54,9 @@ export const TEXT_AND_PDF_ACCEPT = `${TEXT_FILE_ACCEPT},.pdf`;
 /** `accept` string for the upload picker: text + PDF + images. */
 export const TEXT_PDF_IMAGE_ACCEPT = `${TEXT_FILE_ACCEPT},.pdf,image/*`;
 
+/** Upload picker for all supported learner evidence, including Qalem workbooks. */
+export const TEXT_PDF_IMAGE_XLSX_ACCEPT = `${TEXT_PDF_IMAGE_ACCEPT},.xlsx`;
+
 /** Raster image extensions accepted for submission upload (vision-gradeable). */
 const IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp']);
 
@@ -74,6 +77,17 @@ export function isImageFile(file: File): boolean {
   const dot = file.name.lastIndexOf('.');
   if (dot < 0) return false;
   return IMAGE_EXTENSIONS.has(file.name.slice(dot + 1).toLowerCase());
+}
+
+/** True for an OOXML Excel workbook. The server performs structural validation. */
+export function isXlsxFile(file: File): boolean {
+  const extension = file.name.slice(file.name.lastIndexOf('.') + 1).toLowerCase();
+  if (extension !== 'xlsx') return false;
+  return (
+    !file.type ||
+    file.type === 'application/octet-stream' ||
+    file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  );
 }
 
 /**

@@ -154,6 +154,8 @@ export interface ResourceGenerationRequest {
   title: string;
   fileName: string;
   prompt: string;
+  /** Deterministic Python validation contract embedded in generated workbooks. */
+  evaluationProfile?: 'cash-flow-13-week';
 }
 
 export interface ClassroomSyllabus {

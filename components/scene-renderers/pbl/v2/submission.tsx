@@ -43,9 +43,10 @@ import {
 
 import { addSubmission, listSubmissionsForMicrotask } from '@/lib/pbl/v2/operations/submission';
 import {
-  TEXT_PDF_IMAGE_ACCEPT,
+  TEXT_PDF_IMAGE_XLSX_ACCEPT,
   isImageFile,
   isPdfFile,
+  isXlsxFile,
   isValidTextFile,
 } from '@/lib/pbl/v2/operations/file-validation';
 import { uploadBlobToStorage } from '@/lib/storage/client';
@@ -1008,6 +1009,52 @@ function SubmissionModal({
       }
       return;
     }
+    // Qalem workbook: Python performs deterministic checks. The evaluator-facing
+    // text contains its structured result so the LLM explains rather than guesses.
+    if (isXlsxFile(file)) {
+      setParsing(true);
+      try {
+        const formData = new FormData();
+        formData.append('workbook', file);
+        const response = await fetch('/api/pbl/v2/evaluate-workbook', {
+          method: 'POST',
+          body: formData,
+          signal: ac.signal,
+        });
+        const payload = (await response.json()) as {
+          assessment?: Record<string, unknown>;
+          error?: string;
+        };
+        if (!response.ok || !payload.assessment) {
+          throw new Error(payload.error || `HTTP ${response.status}`);
+        }
+        setText(
+          [
+            '## Évaluation déterministe du classeur par Python',
+            'Le score, les contrôles et les indicateurs ci-dessous font autorité. Expliquez-les sans les recalculer ni les modifier.',
+            JSON.stringify(payload.assessment, null, 2),
+          ].join('\n\n'),
+        );
+        textFromFileRef.current = true;
+        setFilename(file.name);
+        setMimeType(
+          file.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        );
+        const url = await uploadBlobToStorage(file, 'media', ac.signal);
+        if (ac.signal.aborted) return;
+        setFileUrl(url ?? undefined);
+      } catch (error) {
+        if (ac.signal.aborted) return;
+        setError(
+          t('pbl.v2.submission.xlsxEvaluationFailed', {
+            error: error instanceof Error ? error.message : String(error),
+          }),
+        );
+      } finally {
+        if (!ac.signal.aborted) setParsing(false);
+      }
+      return;
+    }
     // PDF: parse to text via OpenMAIC's existing /api/parse-pdf (reused, not
     // modified), so the parsed text flows through the unchanged text-based
     // evaluator. The original PDF is kept at `fileUrl` (object storage,
@@ -1195,7 +1242,7 @@ function SubmissionModal({
             <label className="block cursor-pointer rounded-xl border border-dashed border-cyan-100/[0.14] bg-slate-700/[0.24] px-4 py-4 text-center text-xs text-muted-foreground transition-colors hover:bg-slate-700/[0.34]">
               <input
                 type="file"
-                accept={TEXT_PDF_IMAGE_ACCEPT}
+                accept={TEXT_PDF_IMAGE_XLSX_ACCEPT}
                 className="hidden"
                 disabled={parsing || uploading}
                 onChange={(e) => {

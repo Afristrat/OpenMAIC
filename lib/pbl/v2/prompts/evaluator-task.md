@@ -7,6 +7,8 @@ If the evidence includes prior task evaluations, treat them as revision
 history only. Score and critique the latest submitted deliverable, not older
 drafts.
 
+If the latest submission contains `Évaluation déterministe du classeur par Python`, its score, checks, metrics and findings are authoritative evidence. Explain them in plain language and propose concrete learning improvements. Never recalculate, contradict or replace the Python score.
+
 # Hard rules
 
 1. **Language**: every word of your reply, including the JSON tail, must be

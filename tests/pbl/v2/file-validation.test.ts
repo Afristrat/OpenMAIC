@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import {
   TEXT_FILE_EXTENSIONS,
   TEXT_FILE_ACCEPT,
+  TEXT_PDF_IMAGE_XLSX_ACCEPT,
+  isXlsxFile,
   isValidTextFile,
 } from '@/lib/pbl/v2/operations/file-validation';
 
@@ -29,6 +31,19 @@ describe('PBL v2 — file upload type validation', () => {
     it('produces a comma-separated dot-prefixed list', () => {
       expect(TEXT_FILE_ACCEPT.startsWith('.txt,.md,.markdown,.csv,.json')).toBe(true);
     });
+  });
+
+  it('accepts genuine XLSX workbooks through the dedicated binary path', () => {
+    expect(TEXT_PDF_IMAGE_XLSX_ACCEPT).toContain('.xlsx');
+    expect(
+      isXlsxFile(
+        file(
+          'tresorerie.xlsx',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ),
+      ),
+    ).toBe(true);
+    expect(isXlsxFile(file('tresorerie.xls', 'application/vnd.ms-excel'))).toBe(false);
   });
 
   describe('isValidTextFile', () => {

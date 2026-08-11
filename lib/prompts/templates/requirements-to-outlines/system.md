@@ -250,6 +250,7 @@ When a learner genuinely needs a reusable workbook to complete an exercise, appl
 - Use a globally unique id such as `resource_1`.
 - `fileName` must end in the extension matching `format`.
 - For `xlsx`, `prompt` must specify the workbook sheets, columns, useful example data, formulas if needed, and the learner task precisely enough to generate a production-ready workbook.
+- When the requested exercise is a rolling 13-week cash-flow forecast, set `evaluationProfile` to `"cash-flow-13-week"`. This creates a Python-generated workbook that the learner can upload for deterministic checking. Do not use this profile for another topic or another horizon.
 - For `docx`, `prompt` must specify the required sections, instructions, examples, prompts and learner work areas precisely enough to generate a complete editable document.
 
 ```json
@@ -257,9 +258,10 @@ When a learner genuinely needs a reusable workbook to complete an exercise, appl
   {
     "id": "resource_1",
     "format": "xlsx",
-    "title": "Budget prévisionnel",
-    "fileName": "budget-previsionnel.xlsx",
-    "prompt": "Create a complete budget workbook with Assumptions, Monthly budget, and Dashboard sheets..."
+    "title": "Budget de trésorerie sur 13 semaines",
+    "fileName": "tresorerie-13-semaines.xlsx",
+    "evaluationProfile": "cash-flow-13-week",
+    "prompt": "Create a rolling 13-week direct cash-flow exercise in MAD with weekly receipts, payments, opening and closing cash, a safety threshold, one scenario decision, and clear learner instructions."
   }
 ]
 ```

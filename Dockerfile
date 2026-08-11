@@ -49,7 +49,7 @@ FROM base AS worker
 ENV NODE_ENV=production
 ENV NODE_OPTIONS=--max-old-space-size=2560
 
-RUN apk add --no-cache libc6-compat cairo pango jpeg giflib librsvg ffmpeg font-dejavu
+RUN apk add --no-cache libc6-compat cairo pango jpeg giflib librsvg ffmpeg font-dejavu python3
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
@@ -69,7 +69,7 @@ ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
 ENV NODE_OPTIONS=--max-old-space-size=1152
 
-RUN apk add --no-cache libc6-compat cairo pango jpeg giflib librsvg ffmpeg curl
+RUN apk add --no-cache libc6-compat cairo pango jpeg giflib librsvg ffmpeg curl python3
 
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
@@ -80,6 +80,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # Prompt templates are read from process.cwd() at request time. Next's
 # standalone trace cannot discover these dynamic fs.readFileSync paths.
 COPY --from=builder --chown=nextjs:nodejs /app/lib/prompts ./lib/prompts
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/workbooks ./scripts/workbooks
 
 USER nextjs
 

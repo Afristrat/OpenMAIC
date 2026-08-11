@@ -9,6 +9,7 @@ import {
   generateWorkbookSpec,
   generateQrPng,
 } from '@/lib/server/classroom-resource-generation';
+import { evaluateWorkbookWithPython } from '@/lib/server/workbook-python';
 
 describe('classroom resource generation', () => {
   afterEach(() => vi.restoreAllMocks());
@@ -52,6 +53,28 @@ describe('classroom resource generation', () => {
     expect(manifest).toContain('Scénarios');
     expect(firstSheet).toContain('Revenus &lt;nets&gt;');
     expect(firstSheet).toContain('<f>SUM(B2:B2)</f>');
+  });
+
+  it('generates a Python-assessable 13-week cash-flow workbook', async () => {
+    const workbook = await buildXlsx(
+      { sheets: [{ name: 'Placeholder', rows: [['unused']] }] },
+      'cash-flow-13-week',
+    );
+
+    const zip = await JSZip.loadAsync(workbook);
+    const manifest = await zip.file('xl/workbook.xml')!.async('string');
+    expect(manifest).toContain('Trésorerie 13 semaines');
+    expect(manifest).toContain('name="_Qalem"');
+    expect(manifest).toContain('state="hidden"');
+
+    const assessment = await evaluateWorkbookWithPython(workbook);
+    expect(assessment).toMatchObject({
+      profile: 'cash-flow-13-week',
+      authority: 'python-deterministic',
+      score: 55,
+      verdict: 'Révision nécessaire',
+    });
+    expect(assessment.findings).toContain('118 cellule(s) de saisie restent à compléter.');
   });
 
   it('repairs one structurally empty workbook response before failing the classroom', async () => {

@@ -11,6 +11,7 @@ import type {
 } from '@/lib/types/generation';
 import { uploadClassroomMedia } from '@/lib/server/classroom-media-generation';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
+import { generateWorkbookWithPython } from '@/lib/server/workbook-python';
 
 type CellValue = string | number | boolean | null;
 
@@ -88,65 +89,11 @@ function normalizeWorkbook(input: WorkbookSpec): WorkbookSpec {
   };
 }
 
-function columnName(index: number): string {
-  let value = index + 1;
-  let result = '';
-  while (value > 0) {
-    value -= 1;
-    result = String.fromCharCode(65 + (value % 26)) + result;
-    value = Math.floor(value / 26);
-  }
-  return result;
-}
-
-function worksheetXml(rows: CellValue[][]): string {
-  const body = rows
-    .map((row, rowIndex) => {
-      const cells = row
-        .map((cell, columnIndex) => {
-          const ref = `${columnName(columnIndex)}${rowIndex + 1}`;
-          if (cell === null) return `<c r="${ref}"/>`;
-          if (typeof cell === 'number' && Number.isFinite(cell)) {
-            return `<c r="${ref}"><v>${cell}</v></c>`;
-          }
-          if (typeof cell === 'boolean') {
-            return `<c r="${ref}" t="b"><v>${cell ? 1 : 0}</v></c>`;
-          }
-          if (typeof cell === 'string' && cell.startsWith('=') && cell.length > 1) {
-            return `<c r="${ref}"><f>${xml(cell.slice(1))}</f></c>`;
-          }
-          return `<c r="${ref}" t="inlineStr"><is><t xml:space="preserve">${xml(String(cell))}</t></is></c>`;
-        })
-        .join('');
-      return `<row r="${rowIndex + 1}">${cells}</row>`;
-    })
-    .join('');
-  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${body}</sheetData></worksheet>`;
-}
-
-export async function buildXlsx(spec: WorkbookSpec): Promise<Buffer> {
-  const workbook = normalizeWorkbook(spec);
-  const zip = new JSZip();
-  zip.file(
-    '[Content_Types].xml',
-    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>${workbook.sheets.map((_, index) => `<Override PartName="/xl/worksheets/sheet${index + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}</Types>`,
-  );
-  zip.file(
-    '_rels/.rels',
-    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>',
-  );
-  zip.file(
-    'xl/workbook.xml',
-    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${workbook.sheets.map((sheet, index) => `<sheet name="${xml(sheet.name)}" sheetId="${index + 1}" r:id="rId${index + 1}"/>`).join('')}</sheets></workbook>`,
-  );
-  zip.file(
-    'xl/_rels/workbook.xml.rels',
-    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${workbook.sheets.map((_, index) => `<Relationship Id="rId${index + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${index + 1}.xml"/>`).join('')}</Relationships>`,
-  );
-  workbook.sheets.forEach((sheet, index) => {
-    zip.file(`xl/worksheets/sheet${index + 1}.xml`, worksheetXml(sheet.rows));
-  });
-  return zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
+export async function buildXlsx(
+  spec: WorkbookSpec,
+  evaluationProfile?: ResourceGenerationRequest['evaluationProfile'],
+): Promise<Buffer> {
+  return generateWorkbookWithPython(normalizeWorkbook(spec), evaluationProfile);
 }
 
 function wordParagraph(text: string, style?: 'Title' | 'Heading1'): string {
@@ -305,7 +252,10 @@ export async function generateResourcesForClassroom(
       const fileName = safeFileName(request.fileName, request.format);
       const resource =
         request.format === 'xlsx'
-          ? await buildXlsx(await generateWorkbookSpec(request, languageDirective, aiCall))
+          ? await buildXlsx(
+              await generateWorkbookSpec(request, languageDirective, aiCall),
+              request.evaluationProfile,
+            )
           : await buildDocx(await generateDocumentSpec(request, languageDirective, aiCall));
       await uploadClassroomMedia(
         classroomId,
