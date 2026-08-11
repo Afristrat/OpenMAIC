@@ -7,6 +7,7 @@ import { useStageStore } from '@/lib/store/stage';
 import { slideToPng } from '@openmaic/renderer/snapshot';
 import { persistCurrentClassroomForExport } from './persist-before-server-export';
 import { addPresentationBrandToSnapshot } from './presentation-brand-snapshot';
+import { downloadExport } from './download-export';
 
 const POLL_INTERVAL_MS = 5000;
 const MAX_POLLS = 360;
@@ -18,16 +19,6 @@ interface ExportJobResponse {
   done?: boolean;
   downloadUrl?: string | null;
   error?: string | null;
-}
-
-function downloadFile(url: string, filename: string): void {
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.rel = 'noopener';
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
 }
 
 export function useExportMp4() {
@@ -82,7 +73,7 @@ export function useExportMp4() {
           if (status.status !== 'done' || !status.downloadUrl) {
             throw new Error(status.error || t('export.exportFailed'));
           }
-          downloadFile(status.downloadUrl, `${stage.name || 'qalem-classroom'}.mp4`);
+          await downloadExport(status.downloadUrl, `${stage.name || 'qalem-classroom'}.mp4`);
           toast.success(t('export.videoReady'), { id: toastId });
           return;
         }

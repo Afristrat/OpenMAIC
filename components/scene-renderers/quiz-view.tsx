@@ -152,7 +152,8 @@ function QuizCover({
             <BookOpenText className="w-3.5 h-3.5 text-violet-500" />
           </div>
           <span>
-            {questionCount} {t('quiz.questionsCount')}
+            {questionCount}{' '}
+            {t(questionCount === 1 ? 'quiz.questionsCount_one' : 'quiz.questionsCount_other')}
           </span>
         </div>
         <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
@@ -446,8 +447,7 @@ function ShortAnswerQuestion({
                 </p>
               </div>
               <span className="ml-auto text-xs font-bold text-violet-600 dark:text-violet-400 shrink-0">
-                {result.earned}/{question.points ?? 1}
-                {t('quiz.pointsSuffix')}
+                {result.earned}/{question.points ?? 1} {t('quiz.pointsSuffix')}
               </span>
             </div>
           )}
@@ -605,10 +605,12 @@ function ScoreBanner({
           </div>
           <div className="flex gap-3 mt-3 text-xs">
             <span className="flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5" /> {correctCount} {t('quiz.correct')}
+              <CheckCircle2 className="w-3.5 h-3.5" /> {correctCount}{' '}
+              {t(correctCount === 1 ? 'quiz.correct_one' : 'quiz.correct_other')}
             </span>
             <span className="flex items-center gap-1">
-              <XCircle className="w-3.5 h-3.5" /> {incorrectCount} {t('quiz.incorrect')}
+              <XCircle className="w-3.5 h-3.5" /> {incorrectCount}{' '}
+              {t(incorrectCount === 1 ? 'quiz.incorrect_one' : 'quiz.incorrect_other')}
             </span>
           </div>
         </div>

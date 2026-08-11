@@ -102,4 +102,17 @@ describe('PBL v2 — post-submission flow', () => {
     expect(message?.content).toContain('参照上面的任务点评');
     expect(message?.content).not.toContain('不合格');
   });
+
+  it('builds revision guidance in the classroom language', () => {
+    const message = buildRevisionGuidanceMessage({
+      evaluation: taskEval(45),
+      instructorId: 'role-i',
+      microtaskId: 'mt-1',
+      language: 'fr-FR',
+    });
+
+    expect(message?.content).toContain('Arrêtons-nous ici avant de poursuivre.');
+    expect(message?.content).toContain('Reprenez l’évaluation de la tâche');
+    expect(message?.content).not.toContain("Let's pause");
+  });
 });

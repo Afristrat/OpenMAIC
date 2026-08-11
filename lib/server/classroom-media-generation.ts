@@ -73,7 +73,7 @@ export function removeAgentNamesFromSpeech(
 
   const namesPattern = names.map(escapeRegExp).join('|');
   const selfIntroduction = new RegExp(
-    `\\b(?:je suis|moi[,]? c['â€™]est|mon nom est)\\s+(?:${namesPattern})(?=$|[^\\p{L}\\p{N}])[,;:]?\\s*`,
+    `\\b(?:je suis|moi[,]? c['’]est|mon nom est)\\s+(?:${namesPattern})(?=$|[^\\p{L}\\p{N}])[,;:]?\\s*(?:et\\s+)?`,
     'giu',
   );
   const directAddress = new RegExp(`([,;:]?\\s*)(?:${namesPattern})(?=$|[^\\p{L}\\p{N}])`, 'giu');
@@ -83,7 +83,10 @@ export function removeAgentNamesFromSpeech(
     .replace(/^\s*[,;:.!?]\s*/, '')
     .replace(/\s{2,}/g, ' ')
     .trim();
-  return sanitized ? sanitized[0].toLocaleUpperCase('fr-FR') + sanitized.slice(1) : sanitized;
+  return sanitized.replace(
+    /(^|[.!?]\s+)(\p{Ll})/gu,
+    (_match, prefix: string, letter: string) => prefix + letter.toLocaleUpperCase('fr-FR'),
+  );
 }
 
 export function resolveCanonicalSpeechVoice(

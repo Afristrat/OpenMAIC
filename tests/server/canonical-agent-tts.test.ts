@@ -213,7 +213,16 @@ describe('canonical classroom agent TTS', () => {
       removeAgentNamesFromSpeech('Je suis Hanae, et je serai votre accompagnatrice.', [
         { id: 'teacher', name: 'Hanae' },
       ]),
-    ).toBe('Et je serai votre accompagnatrice.');
+    ).toBe('Je serai votre accompagnatrice.');
+  });
+
+  test('répare aussi la phrase située après une auto-présentation supprimée', () => {
+    expect(
+      removeAgentNamesFromSpeech(
+        'Bienvenue aux entreprises marocaines. Je suis Hanae, et je serai votre accompagnatrice.',
+        [{ id: 'teacher', name: 'Hanae' }],
+      ),
+    ).toBe('Bienvenue aux entreprises marocaines. Je serai votre accompagnatrice.');
   });
 
   test('retire seulement les placeholders des médias optionnels indisponibles', () => {

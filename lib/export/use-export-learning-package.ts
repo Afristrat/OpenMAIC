@@ -6,6 +6,7 @@ import { useI18n } from '@/lib/hooks/use-i18n';
 import { useStageStore } from '@/lib/store/stage';
 import type { ExportJobFormat } from '@/lib/supabase/types';
 import { persistCurrentClassroomForExport } from './persist-before-server-export';
+import { downloadExport } from './download-export';
 
 const POLL_INTERVAL_MS = 5000;
 const MAX_POLLS = 360;
@@ -21,16 +22,6 @@ interface ExportJobResponse {
   done?: boolean;
   downloadUrl?: string | null;
   error?: string | null;
-}
-
-function downloadFile(url: string, filename: string): void {
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.rel = 'noopener';
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
 }
 
 export function learningPackageExtension(format: LearningPackageFormat): string {
@@ -78,7 +69,7 @@ export function useExportLearningPackage() {
             if (status.status !== 'done' || !status.downloadUrl) {
               throw new Error(status.error || t('export.exportFailed'));
             }
-            downloadFile(
+            await downloadExport(
               status.downloadUrl,
               `${stage.name || 'qalem-classroom'}.${learningPackageExtension(format)}`,
             );
