@@ -16,6 +16,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   generatePBLV2Project,
+  formatCourseContext,
   PlannerV2Error,
   plannerCompletionGaps,
   plannerStepHasAcceptedCompletion,
@@ -248,6 +249,77 @@ describe('PBL v2 Planner — completion gate', () => {
 
   it('accepts design completion only after all required project structure exists', () => {
     expect(plannerCompletionGaps(minimalPlannerProject())).toEqual([]);
+  });
+
+  it('grounds the evaluated budget project in the real workbook', () => {
+    const resourceOutline: SceneOutline = {
+      id: 'resource-scene',
+      type: 'slide',
+      title: 'Télécharger le budget',
+      description: 'Téléchargez le classeur de trésorerie.',
+      keyPoints: ['13 semaines'],
+      order: 0,
+      resourceGenerations: [
+        {
+          id: 'budget-13w',
+          format: 'xlsx',
+          title: 'Prévision de trésorerie',
+          fileName: 'prevision-tresorerie-13-semaines.xlsx',
+          prompt: 'Créer le classeur.',
+          evaluationProfile: 'cash-flow-13-week',
+        },
+      ],
+      generatedResources: [
+        {
+          id: 'budget-13w',
+          format: 'xlsx',
+          title: 'Prévision de trésorerie',
+          fileName: 'prevision-tresorerie-13-semaines.xlsx',
+          downloadUrl: 'https://qalem.ma/8FhGw',
+          qrImageUrl: '/api/classroom-media/class/resources/budget-13w-qr.png',
+        },
+      ],
+    };
+    const input = plannerInput({
+      courseContext: {
+        allOutlines: [resourceOutline, pblOutline()],
+        languageDirective: 'Répondre en français.',
+      },
+    });
+    expect(formatCourseContext(input)).toContain(
+      'REAL GENERATED RESOURCE ALREADY DELIVERED: title="Prévision de trésorerie"; fileName="prevision-tresorerie-13-semaines.xlsx"; evaluationProfile="cash-flow-13-week"; downloadUrl="https://qalem.ma/8FhGw"',
+    );
+
+    expect(plannerCompletionGaps(minimalPlannerProject(), { input })).toEqual(
+      expect.arrayContaining([
+        'cash-flow-13-week project must have exactly two microtasks',
+        'first microtask must name the delivered workbook exactly: prevision-tresorerie-13-semaines.xlsx',
+        'second microtask must explicitly interpret the Python diagnostic',
+      ]),
+    );
+
+    const validProject = minimalPlannerProject();
+    validProject.milestones[0].microtasks = [
+      {
+        id: 'upload',
+        title: 'Déposer prevision-tresorerie-13-semaines.xlsx',
+        description: 'Chargez votre classeur complété pour le contrôle.',
+        status: 'in_progress',
+        assignee: 'user',
+        hints: [],
+        order: 0,
+      },
+      {
+        id: 'improve',
+        title: 'Interpréter le diagnostic Python',
+        description: 'Analysez le retour du formateur et choisissez les améliorations utiles.',
+        status: 'todo',
+        assignee: 'user',
+        hints: [],
+        order: 1,
+      },
+    ];
+    expect(plannerCompletionGaps(validProject, { input })).toEqual([]);
   });
 
   it('rejects ordinary PBL hidden documents because the workspace does not render them', () => {

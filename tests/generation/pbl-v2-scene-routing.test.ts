@@ -120,12 +120,25 @@ describe('generateSceneContent — PBL v2 planner routing', () => {
     projectV2ToLegacyProjectConfigMock.mockReturnValue(legacyConfig);
 
     const { generateSceneContent } = await import('@/lib/generation/scene-generator');
-    const content = (await generateSceneContent(pblOutline(), vi.fn(), {
+    const priorOutline: SceneOutline = {
+      id: 'scene-before',
+      type: 'slide',
+      title: 'Prior scene',
+      description: 'Prior context.',
+      keyPoints: ['context'],
+      order: 0,
+    };
+    const activeOutline = pblOutline();
+    const content = (await generateSceneContent(activeOutline, vi.fn(), {
       languageModel: mockModel(),
       languageDirective: 'Reply in English.',
+      courseOutlines: [priorOutline, activeOutline],
     })) as GeneratedPBLContent | null;
 
     expect(generatePBLV2ProjectSingleCallMock).toHaveBeenCalledTimes(1);
+    expect(generatePBLV2ProjectSingleCallMock.mock.calls[0]?.[0].courseContext.allOutlines).toEqual(
+      [priorOutline, activeOutline],
+    );
     expect(generatePBLV2ProjectMock).not.toHaveBeenCalled();
     expect(generatePBLContentMock).not.toHaveBeenCalled();
     expect(projectV2ToLegacyProjectConfigMock).toHaveBeenCalledWith(projectV2);
@@ -179,6 +192,53 @@ describe('generateSceneContent — PBL v2 planner routing', () => {
     expect(generatePBLV2ProjectMock).toHaveBeenCalledTimes(1);
     expect(generatePBLContentMock).toHaveBeenCalledTimes(1);
     expect(content).toEqual({ projectConfig: legacyConfig });
+  });
+
+  it('never replaces an evaluated workbook project with an unrelated legacy project', async () => {
+    generatePBLV2ProjectSingleCallMock.mockRejectedValueOnce(new Error('single-call failed'));
+    generatePBLV2ProjectMock.mockRejectedValueOnce(new Error('loop failed'));
+
+    const resourceOutline: SceneOutline = {
+      id: 'resource-scene',
+      type: 'slide',
+      title: 'Download the budget',
+      description: 'The real workbook was delivered here.',
+      keyPoints: ['13 weeks'],
+      order: 0,
+      resourceGenerations: [
+        {
+          id: 'budget-13w',
+          format: 'xlsx',
+          title: 'Cash-flow forecast',
+          fileName: 'prevision-tresorerie-13-semaines.xlsx',
+          prompt: 'Build the workbook.',
+          evaluationProfile: 'cash-flow-13-week',
+        },
+      ],
+      generatedResources: [
+        {
+          id: 'budget-13w',
+          format: 'xlsx',
+          title: 'Cash-flow forecast',
+          fileName: 'prevision-tresorerie-13-semaines.xlsx',
+          downloadUrl: 'https://qalem.ma/8FhGw',
+          qrImageUrl: '/api/classroom-media/class/resources/budget-13w-qr.png',
+        },
+      ],
+    };
+    const activeOutline = pblOutline();
+    const { generateSceneContent } = await import('@/lib/generation/scene-generator');
+    const content = await generateSceneContent(activeOutline, vi.fn(), {
+      languageModel: mockModel(),
+      languageDirective: 'Reply in English.',
+      courseOutlines: [resourceOutline, activeOutline],
+    });
+
+    expect(content).toBeNull();
+    expect(generatePBLContentMock).not.toHaveBeenCalled();
+    expect(loggerMock.error).toHaveBeenCalledWith(
+      expect.stringContaining('refusing to replace it with an unrelated legacy project'),
+    );
   });
 
   it('does not fall back to legacy v1 when scenario PBL v2 generation fails', async () => {

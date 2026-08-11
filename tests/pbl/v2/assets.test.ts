@@ -12,4 +12,11 @@ describe('PBL v2 static assets', () => {
   test('ships the instructor avatar referenced by the runtime UI', () => {
     expectPng('public/avatars/instructor.png');
   });
+
+  test('packages the runtime PBL prompts in the standalone web image', () => {
+    const dockerfile = readFileSync('Dockerfile', 'utf8');
+    expect(dockerfile).toContain(
+      'COPY --from=builder --chown=nextjs:nodejs /app/lib/pbl/v2/prompts ./lib/pbl/v2/prompts',
+    );
+  });
 });

@@ -73,6 +73,54 @@ function plannerInput(overrides?: Partial<PBLPlannerV2Input>): PBLPlannerV2Input
   };
 }
 
+function evaluatedWorkbookInput(): PBLPlannerV2Input {
+  const outline = pblOutline({
+    title: 'Analyser un budget de trésorerie',
+    description: 'Déposer le budget complété et interpréter son évaluation.',
+    pblConfig: {
+      projectTopic: 'Valider une prévision de trésorerie sur 13 semaines',
+      projectDescription: 'Déposer le classeur complété et exploiter le diagnostic Python.',
+      targetSkills: ['prévision de trésorerie', 'analyse des écarts'],
+      issueCount: 3,
+    },
+  });
+  const resourceOutline: SceneOutline = {
+    id: 'resource-scene',
+    type: 'slide',
+    title: 'Télécharger le classeur',
+    description: 'Le classeur réel a déjà été livré.',
+    keyPoints: ['13 semaines'],
+    order: 0,
+    resourceGenerations: [
+      {
+        id: 'budget-13w',
+        format: 'xlsx',
+        title: 'Prévision de trésorerie',
+        fileName: 'prevision-tresorerie-13-semaines.xlsx',
+        prompt: 'Créer le classeur.',
+        evaluationProfile: 'cash-flow-13-week',
+      },
+    ],
+    generatedResources: [
+      {
+        id: 'budget-13w',
+        format: 'xlsx',
+        title: 'Prévision de trésorerie',
+        fileName: 'prevision-tresorerie-13-semaines.xlsx',
+        downloadUrl: 'https://qalem.ma/8FhGw',
+        qrImageUrl: '/api/classroom-media/class/resources/budget-13w-qr.png',
+      },
+    ],
+  };
+  return {
+    outline,
+    courseContext: {
+      allOutlines: [resourceOutline, outline],
+      languageDirective: 'Reply in English.',
+    },
+  };
+}
+
 /** A valid, on-topic project JSON the LLM might emit. */
 function validOutput(overrides?: { proficiency?: string; coreConcept?: string }): string {
   return JSON.stringify({
@@ -229,6 +277,52 @@ describe('PBL v2 single-call planner — guards + retry', () => {
     await expect(
       generatePBLV2ProjectSingleCall(plannerInput(), textModel(noMilestones, noMilestones)),
     ).rejects.toBeInstanceOf(PlannerV2Error);
+  });
+
+  it('rejects a replacement workbook and accepts the exact Python path on retry', async () => {
+    const corrected = JSON.parse(validOutput());
+    corrected.projectInfo.title = '13-week cash-flow workbook review';
+    corrected.projectInfo.description =
+      'Upload prevision-tresorerie-13-semaines.xlsx and use its diagnostic.';
+    corrected.projectInfo.learningObjective = 'Interpret a deterministic cash-flow assessment.';
+    corrected.projectInfo.gains = [
+      'Check a 13-week cash-flow forecast',
+      'Interpret deterministic workbook controls',
+      'Select useful improvements from evidence',
+    ];
+    corrected.milestones = [
+      {
+        title: 'Validate the delivered forecast',
+        description: 'Submit the completed forecast, then use the resulting evidence.',
+        briefing: 'You will work from the exact workbook already delivered by Qalem.',
+        completionCriteria: 'The workbook is assessed and the feedback is interpreted.',
+        debrief: 'You have turned the workbook controls into an improvement decision.',
+        microtasks: [
+          {
+            title: 'Upload prevision-tresorerie-13-semaines.xlsx',
+            description: 'Submit the completed workbook for its deterministic checks.',
+            hints: ['Use the workbook downloaded in the previous scene.'],
+          },
+          {
+            title: 'Interpret the Python diagnostic',
+            description: 'Review the Instructor feedback and identify useful improvements.',
+            hints: ['Start with the lowest-scoring control.'],
+          },
+        ],
+      },
+    ];
+
+    const project = await generatePBLV2ProjectSingleCall(
+      evaluatedWorkbookInput(),
+      textModel(validOutput(), JSON.stringify(corrected)),
+    );
+
+    expect(project.milestones).toHaveLength(1);
+    expect(project.milestones[0].microtasks).toHaveLength(2);
+    expect(project.milestones[0].microtasks[0].title).toContain(
+      'prevision-tresorerie-13-semaines.xlsx',
+    );
+    expect(project.milestones[0].microtasks[1].title).toContain('Python');
   });
 
   it('throws PlannerV2Error when the response is not JSON at all', async () => {

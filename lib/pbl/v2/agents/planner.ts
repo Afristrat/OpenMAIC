@@ -199,7 +199,7 @@ export async function generatePBLV2Project(
   // Scenario-aware validation: when scenario mode was requested, require
   // a coherent cast + scene milestone (throws → existing fallback). For
   // ordinary projects this is byte-identical to before.
-  validateProject(project, scenarioRoleplay);
+  validateProject(project, scenarioRoleplay, input);
   // SCENARIO ONLY safety net. After validation the scenario is coherent,
   // so this only assigns any missing character ids / is a no-op; it's
   // kept here for idempotency with the load path.
@@ -293,8 +293,54 @@ export function formatCourseContext(input: PBLPlannerV2Input): string {
     if (o.description) {
       lines.push(`    ${o.description}`);
     }
+    for (const request of o.resourceGenerations ?? []) {
+      const generated = o.generatedResources?.find((resource) => resource.id === request.id);
+      if (!generated) continue;
+      lines.push(
+        `    REAL GENERATED RESOURCE ALREADY DELIVERED: title="${generated.title}"; fileName="${generated.fileName}"; evaluationProfile="${request.evaluationProfile ?? 'none'}"; downloadUrl="${generated.downloadUrl}"`,
+      );
+    }
   }
   return lines.join('\n');
+}
+
+interface EvaluatedWorkbookContract {
+  fileName: string;
+}
+
+function evaluatedWorkbookContract(
+  input?: PBLPlannerV2Input,
+): EvaluatedWorkbookContract | undefined {
+  for (const outline of input?.courseContext.allOutlines ?? []) {
+    for (const request of outline.resourceGenerations ?? []) {
+      if (request.evaluationProfile !== 'cash-flow-13-week') continue;
+      const generated = outline.generatedResources?.find((resource) => resource.id === request.id);
+      if (generated) return { fileName: generated.fileName };
+    }
+  }
+  return undefined;
+}
+
+function evaluatedWorkbookGaps(project: PBLProjectV2, input?: PBLPlannerV2Input): string[] {
+  const contract = evaluatedWorkbookContract(input);
+  if (!contract) return [];
+  const gaps: string[] = [];
+  if (project.milestones.length !== 1) {
+    gaps.push('cash-flow-13-week project must have exactly one milestone');
+  }
+  const tasks = project.milestones[0]?.microtasks ?? [];
+  if (tasks.length !== 2) {
+    gaps.push('cash-flow-13-week project must have exactly two microtasks');
+  }
+  const firstTask = `${tasks[0]?.title ?? ''} ${tasks[0]?.description ?? ''}`.toLocaleLowerCase();
+  if (!firstTask.includes(contract.fileName.toLocaleLowerCase())) {
+    gaps.push(`first microtask must name the delivered workbook exactly: ${contract.fileName}`);
+  }
+  const secondTask = `${tasks[1]?.title ?? ''} ${tasks[1]?.description ?? ''}`.toLocaleLowerCase();
+  if (!secondTask.includes('python')) {
+    gaps.push('second microtask must explicitly interpret the Python diagnostic');
+  }
+  return gaps;
 }
 
 export async function buildPlannerSystemPrompt(
@@ -838,7 +884,7 @@ function buildTools(
         'Call this exactly once at the very end, after every milestone, microtask, and role has been added. Signals the design is complete.',
       inputSchema: z.object({}),
       execute: async (): Promise<PlannerCompletionToolResult> => {
-        const gaps = plannerCompletionGaps(project, { scenarioRoleplay });
+        const gaps = plannerCompletionGaps(project, { scenarioRoleplay, input });
         if (gaps.length > 0) {
           return {
             ok: false,
@@ -1027,7 +1073,7 @@ type PlannerCompletionToolResult = { ok: true } | { ok: false; gaps: string[]; n
 
 export function plannerCompletionGaps(
   project: PBLProjectV2,
-  opts?: { scenarioRoleplay?: boolean },
+  opts?: { scenarioRoleplay?: boolean; input?: PBLPlannerV2Input },
 ): string[] {
   const errors: string[] = [];
   if (!project.title) errors.push('title is empty');
@@ -1045,6 +1091,7 @@ export function plannerCompletionGaps(
   }
   if (!opts?.scenarioRoleplay) {
     errors.push(...ordinaryPBLTextOnlyGaps(project));
+    errors.push(...evaluatedWorkbookGaps(project, opts?.input));
   }
   // SCENARIO ONLY. When scenario mode was requested, the design must be
   // a coherent role-play scenario: a full cast + the fixed three-stage
@@ -1154,8 +1201,12 @@ function plannerDesignAccepted(): StopCondition<ToolSet> {
   return ({ steps }) => steps.some(plannerStepHasAcceptedCompletion);
 }
 
-function validateProject(project: PBLProjectV2, scenarioRoleplay = false): void {
-  const errors = plannerCompletionGaps(project, { scenarioRoleplay });
+function validateProject(
+  project: PBLProjectV2,
+  scenarioRoleplay = false,
+  input?: PBLPlannerV2Input,
+): void {
+  const errors = plannerCompletionGaps(project, { scenarioRoleplay, input });
   if (errors.length > 0) {
     throw new PlannerV2Error(`Planner v2 output failed validation: ${errors.join('; ')}`, project);
   }

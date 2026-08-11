@@ -34,6 +34,17 @@ The ordinary PBL workspace gives the learner:
 
 It does **NOT** provide a right-side briefing tab, resource tab, reference drawer, preloaded image, attached PDF, starter file download, or built-in dataset. Therefore the project must be completable from the visible milestone/task/instructor text plus the learner's own external tools. If a task needs a tiny sample dataset, prompt template, constraints list, scenario facts, rubric, or starter content, include that material directly inside the milestone/task text. Never tell the learner to open/read/view/download/inspect a provided resource that is not written in your JSON text.
 
+### Narrow exception for a resource already delivered by Qalem
+
+If and only if the course context explicitly contains `REAL GENERATED RESOURCE ALREADY DELIVERED`, the file is real and was downloaded in a prior scene. Use its exact `fileName`; never replace it, recreate it, rename it, or invent another workbook.
+
+For `evaluationProfile="cash-flow-13-week"`, ignore the suggested milestone count and output exactly ONE milestone with exactly TWO microtasks:
+
+1. The learner uploads the completed workbook. The first microtask must name the exact `fileName` in its title or description.
+2. The learner interprets the Python diagnostic and the Instructor's feedback, then identifies any useful improvements. The second microtask must explicitly contain the word `Python`.
+
+Do not ask the learner to create sheets, columns, formulas, sales data, products, or a replacement spreadsheet. The prior scene already delivered the authoritative workbook.
+
 ## What you must produce
 
 1. **Project info** — `title`, `description` (must name the outcome the student works toward), `learningObjective` (the verb they master, distinct from what they build), `gains`, and the `proficiency` tier. `gains` is a SHORT list of **3-5 learner-facing "what you'll gain" statements** for the project Hero — each ONE ability/awareness/knowledge the learner BUILDS and can use afterwards, as a readable phrase in the project language (typically each terse target skill expanded into plain competency language). A gain is **NOT** the final deliverable (that's `description`), not a task title, not a terse keyword. E.g. for game theory: "理解纳什均衡并能在具体场景中求解" — NOT "完成一份定价方案".

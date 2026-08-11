@@ -80,6 +80,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # Prompt templates are read from process.cwd() at request time. Next's
 # standalone trace cannot discover these dynamic fs.readFileSync paths.
 COPY --from=builder --chown=nextjs:nodejs /app/lib/prompts ./lib/prompts
+COPY --from=builder --chown=nextjs:nodejs /app/lib/pbl/v2/prompts ./lib/pbl/v2/prompts
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/workbooks ./scripts/workbooks
 
 USER nextjs

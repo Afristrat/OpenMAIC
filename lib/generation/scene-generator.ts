@@ -86,6 +86,8 @@ export interface SceneContentOptions {
   targetLanguage?: string;
   /** Original course request/profile, used by PBL v2 for explicit learner-level signals. */
   userRequirements?: UserRequirements;
+  /** Full generated course context, including resources delivered before a PBL scene. */
+  courseOutlines?: SceneOutline[];
   allowProceduralSkill?: boolean;
   /**
    * Natural-language edit instruction for whole-slide regeneration (MAIC Editor
@@ -333,6 +335,7 @@ export async function generateSceneContent(
     thinkingConfig,
     targetLanguage,
     userRequirements,
+    courseOutlines,
     allowProceduralSkill = false,
     editDirective,
     baselineContent,
@@ -401,6 +404,7 @@ export async function generateSceneContent(
         thinkingConfig,
         targetLanguage,
         userRequirements,
+        courseOutlines,
       );
     case 'plugin':
       return generatePluginContent(outline, aiCall, languageDirective);
@@ -1255,6 +1259,7 @@ async function generatePBLSceneContent(
   thinkingConfig?: ThinkingConfig,
   targetLanguage?: string,
   userRequirements?: UserRequirements,
+  courseOutlines?: SceneOutline[],
 ): Promise<GeneratedPBLContent | null> {
   if (!languageModel) {
     log.error('LanguageModel required for PBL generation');
@@ -1283,8 +1288,7 @@ async function generatePBLSceneContent(
     const plannerInput: PBLPlannerV2Input = {
       outline,
       courseContext: {
-        // Keep the planner scoped to the active PBL outline.
-        allOutlines: [outline],
+        allOutlines: courseOutlines?.length ? courseOutlines : [outline],
         languageDirective: languageDirective || DEFAULT_LANGUAGE_DIRECTIVE,
       },
       user: userRequirements
@@ -1339,6 +1343,20 @@ async function generatePBLSceneContent(
     if (scenarioRoleplay) {
       log.error(
         `PBL v2 scenario generation failed for "${outline.title}"; refusing to fall back to legacy ordinary PBL.`,
+      );
+      return null;
+    }
+
+    const requiresEvaluatedWorkbook = plannerInput.courseContext.allOutlines.some((item) =>
+      item.resourceGenerations?.some(
+        (request) =>
+          request.evaluationProfile === 'cash-flow-13-week' &&
+          item.generatedResources?.some((resource) => resource.id === request.id),
+      ),
+    );
+    if (requiresEvaluatedWorkbook) {
+      log.error(
+        `PBL v2 evaluated-workbook generation failed for "${outline.title}"; refusing to replace it with an unrelated legacy project.`,
       );
       return null;
     }

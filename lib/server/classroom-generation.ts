@@ -817,6 +817,7 @@ export async function generateClassroom(
             languageModel,
             thinkingConfig: classroomThinking,
             userRequirements: requirements,
+            courseOutlines: outlines,
             allowProceduralSkill: vocationalActive,
             skillEngineEnabled,
             activeSkillId: requirements.activeSkillId,

@@ -51,6 +51,17 @@ describe('planner-system prompt — instructor learner-facing intro spec', () =>
     expect(singleCallPrompt).toContain('near-copyable code fragment');
   });
 
+  it('grounds an evaluated cash-flow project in the workbook already delivered by Qalem', () => {
+    for (const text of [prompt, singleCallPrompt]) {
+      expect(text).toContain('REAL GENERATED RESOURCE ALREADY DELIVERED');
+      expect(text).toContain('evaluationProfile="cash-flow-13-week"');
+      expect(text).toContain('exactly ONE milestone with exactly TWO microtasks');
+      expect(text).toContain('exact `fileName`');
+      expect(text).toContain('Python diagnostic');
+      expect(text).toContain('Do not ask the learner to create sheets');
+    }
+  });
+
   it('hardens the single-call prompt against fake deliverables and prose-only software tasks', () => {
     expect(singleCallPrompt).toContain('never de-grade a build into prose-only work');
     expect(singleCallPrompt).toContain('could be completed by prose alone');

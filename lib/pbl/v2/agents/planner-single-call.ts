@@ -177,6 +177,7 @@ function validateLLMOutput(
   parsed: PlannerLLMOutput | null,
   project: PBLProjectV2,
   scenarioRoleplay: boolean,
+  input: PBLPlannerV2Input,
 ): string[] {
   const gaps: string[] = [];
   if (!parsed || typeof parsed !== 'object') {
@@ -243,6 +244,38 @@ function validateLLMOutput(
       if (!toText(t?.title)) gaps.push(`milestone ${label}: microtask #${j + 1} title is empty`);
     });
   });
+
+  const evaluatedWorkbook = input.courseContext.allOutlines
+    .flatMap((outline) =>
+      (outline.resourceGenerations ?? []).map((request) => ({ outline, request })),
+    )
+    .find(
+      ({ outline, request }) =>
+        request.evaluationProfile === 'cash-flow-13-week' &&
+        outline.generatedResources?.some((resource) => resource.id === request.id),
+    );
+  if (evaluatedWorkbook) {
+    const generated = evaluatedWorkbook.outline.generatedResources!.find(
+      (resource) => resource.id === evaluatedWorkbook.request.id,
+    )!;
+    if (milestones.length !== 1) {
+      gaps.push('cash-flow-13-week project must have exactly one milestone');
+    }
+    const tasks = Array.isArray(milestones[0]?.microtasks) ? milestones[0].microtasks : [];
+    if (tasks.length !== 2) {
+      gaps.push('cash-flow-13-week project must have exactly two microtasks');
+    }
+    const firstTask =
+      `${toText(tasks[0]?.title)} ${toText(tasks[0]?.description)}`.toLocaleLowerCase();
+    if (!firstTask.includes(generated.fileName.toLocaleLowerCase())) {
+      gaps.push(`first microtask must name the delivered workbook exactly: ${generated.fileName}`);
+    }
+    const secondTask =
+      `${toText(tasks[1]?.title)} ${toText(tasks[1]?.description)}`.toLocaleLowerCase();
+    if (!secondTask.includes('python')) {
+      gaps.push('second microtask must explicitly interpret the Python diagnostic');
+    }
+  }
 
   // NOTE: topic-alignment and content-language are NOT policed here. Those
   // are semantic "does the content match the outline" checks, and a lexical /
@@ -517,7 +550,7 @@ export async function generatePBLV2ProjectSingleCall(
 
   // First attempt.
   let parsed = await callModel(basePrompt);
-  let gaps = validateLLMOutput(parsed, project, scenarioRoleplay);
+  let gaps = validateLLMOutput(parsed, project, scenarioRoleplay, input);
 
   // One targeted retry: hand the model its concrete problems back.
   if (gaps.length > 0) {
@@ -528,7 +561,7 @@ export async function generatePBLV2ProjectSingleCall(
       .map((g) => `- ${g}`)
       .join('\n')}\n\nFix every one of them and output the corrected single JSON object.`;
     parsed = await callModel(retryPrompt);
-    gaps = validateLLMOutput(parsed, project, scenarioRoleplay);
+    gaps = validateLLMOutput(parsed, project, scenarioRoleplay, input);
   }
 
   if (!parsed || gaps.length > 0) {
@@ -561,7 +594,7 @@ export async function generatePBLV2ProjectSingleCall(
   // ordinary projects.
   normalizeScenario(project);
 
-  const finalGaps = plannerCompletionGaps(project, { scenarioRoleplay });
+  const finalGaps = plannerCompletionGaps(project, { scenarioRoleplay, input });
   if (finalGaps.length > 0) {
     throw new PlannerV2Error(
       `Planner v2 (single-call) output failed validation: ${finalGaps.join('; ')}`,
