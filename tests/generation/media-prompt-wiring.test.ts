@@ -1,9 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { generateSceneOutlinesFromRequirements } from '@/lib/generation/outline-generator';
-import {
-  generateSceneContent,
-  hasUnexpectedLearnerUrl,
-} from '@/lib/generation/scene-generator';
+import { generateSceneContent, hasUnexpectedLearnerUrl } from '@/lib/generation/scene-generator';
 import type { SceneOutline, UserRequirements } from '@/lib/types/generation';
 import type { AICallFn } from '@/lib/generation/pipeline-types';
 
