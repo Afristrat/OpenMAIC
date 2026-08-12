@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef, useDeferredValue } from 'react';
+import { useState, useEffect, useMemo, useRef, useDeferredValue, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
@@ -91,9 +91,21 @@ const WEB_SEARCH_STORAGE_KEY = 'webSearchEnabled.v2';
 const RECENT_OPEN_STORAGE_KEY = 'recentClassroomsOpen';
 const INTERACTIVE_MODE_STORAGE_KEY = 'interactiveModeEnabled';
 const REQUIREMENT_EXPANSION_THRESHOLD = 120;
+const MIN_PLAN_POLL_MS = process.env.NEXT_PUBLIC_E2E_TEST_MODE === 'true' ? 10 : 30_000;
 
-type ClassroomPlanResponse = Partial<ClassroomPlan> & {
+type ClassroomPlanJobCreationResponse = {
+  jobId?: string;
+  pollIntervalMs?: number;
   details?: string;
+  error?: string;
+};
+
+type ClassroomPlanJobStatusResponse = {
+  status?: 'queued' | 'running' | 'succeeded' | 'failed';
+  done?: boolean;
+  result?: ClassroomPlan;
+  generationRequest?: Record<string, unknown>;
+  pollIntervalMs?: number;
   error?: string;
   errorCode?: string;
   sourceAlignment?: SourceConflict;
@@ -331,6 +343,7 @@ function HomePage() {
     string,
     unknown
   > | null>(null);
+  const planPollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [classrooms, setClassrooms] = useState<StageListItem[]>([]);
   // Imports remain disabled until their payloads are persisted through the
   // organization-scoped API, rather than silently creating browser-only courses.
@@ -481,6 +494,94 @@ function HomePage() {
     }
   };
 
+  const clearPlanJobLocation = useCallback(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('planJobId');
+    window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+  }, []);
+
+  const pollPlanJobRef = useRef<(jobId: string) => Promise<void>>(async () => undefined);
+  const schedulePlanPoll = useCallback((jobId: string, delayMs: number) => {
+    if (planPollTimerRef.current) clearTimeout(planPollTimerRef.current);
+    planPollTimerRef.current = setTimeout(
+      () => void pollPlanJobRef.current(jobId),
+      Math.max(MIN_PLAN_POLL_MS, delayMs),
+    );
+  }, []);
+
+  const pollPlanJob = useCallback(
+    async (jobId: string) => {
+      try {
+        const response = await fetch(
+          `/api/generate-classroom/plan/${encodeURIComponent(jobId)}`,
+          { cache: 'no-store' },
+        );
+        const result = await readJsonResponse<ClassroomPlanJobStatusResponse>(
+          response,
+          t('generation.planGenerationFailed'),
+        );
+        if (!response.ok) {
+          if (response.status >= 400 && response.status < 500) {
+            setIsPlanning(false);
+            clearPlanJobLocation();
+            setError(result.error || t('generation.planGenerationFailed'));
+            return;
+          }
+          throw new Error(result.error || t('generation.planGenerationFailed'));
+        }
+        if (!result.done) {
+          schedulePlanPoll(jobId, result.pollIntervalMs ?? 30_000);
+          return;
+        }
+
+        setIsPlanning(false);
+        clearPlanJobLocation();
+        if (
+          result.errorCode === 'SOURCE_MATERIAL_CONFLICT' &&
+          result.sourceAlignment &&
+          (result.sourceAlignment.status === 'conflicting' ||
+            result.sourceAlignment.status === 'uncertain')
+        ) {
+          setSourceConflict(result.sourceAlignment);
+          return;
+        }
+        if (!result.result?.syllabus || !result.result.outlines?.length) {
+          setError(result.error || t('generation.planGenerationFailed'));
+          return;
+        }
+        if (!result.generationRequest) {
+          setError(t('generation.planGenerationFailed'));
+          return;
+        }
+        const request = result.generationRequest;
+        setPendingGenerationRequest(request);
+        setForm((previous) => ({
+          ...previous,
+          learningApproach:
+            (request.learningApproach as LearningApproach | undefined) ?? previous.learningApproach,
+          interactionLevel:
+            (request.interactionLevel as InteractionLevel | undefined) ?? previous.interactionLevel,
+        }));
+        setDraftPlan(result.result);
+      } catch (pollError) {
+        log.warn('Unable to read classroom plan job:', pollError);
+        schedulePlanPoll(jobId, 30_000);
+      }
+    },
+    [clearPlanJobLocation, schedulePlanPoll, t],
+  );
+  pollPlanJobRef.current = pollPlanJob;
+
+  useEffect(() => {
+    const jobId = new URLSearchParams(window.location.search).get('planJobId');
+    if (!jobId) return;
+    setIsPlanning(true);
+    void pollPlanJobRef.current(jobId);
+    return () => {
+      if (planPollTimerRef.current) clearTimeout(planPollTimerRef.current);
+    };
+  }, []);
+
   const handleGenerate = async () => {
     // No model/provider guard here: generation is gated by `canGenerate`
     // (requires a usable provider), and under the #580 invariant a usable
@@ -599,41 +700,26 @@ function HomePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(generationRequest),
       });
-      const result = await readJsonResponse<ClassroomPlanResponse>(
+      const result = await readJsonResponse<ClassroomPlanJobCreationResponse>(
         response,
         response.status >= 502 && response.status <= 504
           ? t('generation.planGatewayTimeout')
           : t('generation.planGenerationFailed'),
       );
-      if (
-        response.status === 409 &&
-        result.errorCode === 'SOURCE_MATERIAL_CONFLICT' &&
-        result.sourceAlignment &&
-        (result.sourceAlignment.status === 'conflicting' ||
-          result.sourceAlignment.status === 'uncertain')
-      ) {
-        setSourceConflict(result.sourceAlignment as SourceConflict);
-        return;
-      }
-      if (
-        !response.ok ||
-        !result.syllabus ||
-        !Array.isArray(result.outlines) ||
-        result.outlines.length === 0
-      ) {
+      if (!response.ok || !result.jobId) {
         throw new Error(result.details || result.error || t('generation.planGenerationFailed'));
       }
-      setPendingGenerationRequest(generationRequest);
-      setDraftPlan({
-        courseTitle: result.courseTitle || form.requirement.slice(0, 120),
-        languageDirective: result.languageDirective || buildLanguageDirective(locale),
-        syllabus: result.syllabus,
-        outlines: result.outlines,
-      });
+      const location = new URL(window.location.href);
+      location.searchParams.set('planJobId', result.jobId);
+      window.history.replaceState(
+        window.history.state,
+        '',
+        `${location.pathname}${location.search}${location.hash}`,
+      );
+      schedulePlanPoll(result.jobId, result.pollIntervalMs ?? 30_000);
     } catch (err) {
       log.error('Error preparing generation:', err);
       setError(err instanceof Error ? err.message : t('upload.generateFailed'));
-    } finally {
       setIsPlanning(false);
     }
   };
@@ -1337,6 +1423,11 @@ function HomePage() {
         )}
 
         {/* ── Error ── */}
+        {isPlanning && (
+          <p className="mt-3 w-full text-sm text-muted-foreground" role="status">
+            {t('generation.planAsyncHint')}
+          </p>
+        )}
         <AnimatePresence>
           {error && (
             <motion.div

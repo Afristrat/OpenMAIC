@@ -764,6 +764,7 @@
   "generation.streamNotReadable": "تعذرت قراءة تدفق التوليد",
   "generation.generatingOutlines": "صياغة مخطط المقرر",
   "generation.generatingOutlinesDesc": "جارٍ هيكلة مسار التعلم...",
+  "generation.planAsyncHint": "يجري إعداد مخطط التكوين في الخلفية. يمكنك تحديث هذه الصفحة أو العودة إليها لاحقًا دون فقدان العمل.",
   "generation.generatingSlideContent": "توليد محتوى الصفحة",
   "generation.generatingSlideContentDesc": "جارٍ إنشاء الشرائح والاختبارات والمحتوى التفاعلي...",
   "generation.generatingActions": "توليد إجراءات التدريس",

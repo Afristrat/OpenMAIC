@@ -62,6 +62,7 @@ const connection = parseRedisUrl(REDIS_URL);
 
 export type JobType =
   | 'classroom-generation'
+  | 'classroom-plan'
   | 'video-capsule'
   | 'video-generation'
   | 'export-job'
@@ -73,6 +74,10 @@ export interface ClassroomGenerationJobData {
   jobId: string;
   baseUrl: string;
   ownerId: string;
+}
+
+export interface ClassroomPlanJobData {
+  jobId: string;
 }
 
 export interface ClassroomInteractionJobData {
@@ -137,6 +142,14 @@ export async function enqueueClassroomGeneration(
   const job = await getJobQueues().classroom.add('generate', data, {
     ...durableJobOptions,
     jobId: `classroom-${data.jobId}`,
+  });
+  return job.id!;
+}
+
+export async function enqueueClassroomPlan(data: ClassroomPlanJobData): Promise<string> {
+  const job = await getJobQueues().classroom.add('prepare-plan', data, {
+    ...durableJobOptions,
+    jobId: data.jobId,
   });
   return job.id!;
 }

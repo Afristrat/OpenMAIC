@@ -1,6 +1,7 @@
 import { test, expect } from '../fixtures/base';
 import { HomePage } from '../pages/home.page';
 import { createSettingsStorage } from '../fixtures/test-data/settings';
+import { mockOutlines } from '../fixtures/test-data/scene-outlines';
 import type { Page } from '@playwright/test';
 
 // Inject settings with modelId so the "enter classroom" button works
@@ -203,10 +204,23 @@ test.describe('Home → Generation', () => {
     });
     await page.route('**/api/generate-classroom/plan', async (route) => {
       await route.fulfill({
-        status: 409,
+        status: 202,
         contentType: 'application/json',
         body: JSON.stringify({
-          success: false,
+          success: true,
+          jobId: 'plan-conflict-e2e',
+          pollIntervalMs: 10,
+        }),
+      });
+    });
+    await page.route('**/api/generate-classroom/plan/plan-conflict-e2e', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          status: 'failed',
+          done: true,
           errorCode: 'SOURCE_MATERIAL_CONFLICT',
           error: 'The request and attached document do not match.',
           sourceAlignment: {
@@ -243,8 +257,21 @@ test.describe('Home → Generation', () => {
     await expect(page.getByText('process-improvement.pdf')).not.toBeVisible();
   });
 
-  test('explains an HTML gateway timeout without exposing a JSON parsing error', async ({ page }) => {
+  test('keeps an asynchronous plan recoverable when its status endpoint returns HTML', async ({
+    page,
+  }) => {
     await page.route('**/api/generate-classroom/plan', async (route) => {
+      await route.fulfill({
+        status: 202,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          jobId: 'plan-recoverable-e2e',
+          pollIntervalMs: 10,
+        }),
+      });
+    });
+    await page.route('**/api/generate-classroom/plan/plan-recoverable-e2e', async (route) => {
       await route.fulfill({
         status: 504,
         contentType: 'text/html',
@@ -258,13 +285,69 @@ test.describe('Home → Generation', () => {
     await home.configureAnimation('andragogy', 'immersive');
     await home.submit();
 
-    await expect(
-      page.getByText(
-        'The training plan is taking longer than expected. Your request and document are still available; please try again.',
-        { exact: true },
-      ),
-    ).toBeVisible();
+    await expect(page).toHaveURL(/planJobId=plan-recoverable-e2e/);
     await expect(page.getByText(/Unexpected token/)).not.toBeVisible();
+  });
+
+  test('resumes a completed syllabus after a page refresh without resubmitting it', async ({
+    page,
+  }) => {
+    let submissions = 0;
+    await page.route('**/api/generate-classroom/plan', async (route) => {
+      submissions += 1;
+      await route.fulfill({
+        status: 202,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          jobId: 'plan-refresh-e2e',
+          pollIntervalMs: 60_000,
+        }),
+      });
+    });
+    await page.route('**/api/generate-classroom/plan/plan-refresh-e2e', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          status: 'succeeded',
+          done: true,
+          generationRequest: {
+            orgId: 'e2e-org',
+            requirement: 'Persistent syllabus',
+            learningApproach: 'andragogy',
+            interactionLevel: 'balanced',
+          },
+          result: {
+            courseTitle: 'Recovered syllabus',
+            languageDirective: 'Teach in English.',
+            syllabus: {
+              audience: 'Operations managers',
+              prerequisites: 'None',
+              overallObjective: 'Improve one process',
+              learningObjectives: ['Diagnose one bottleneck'],
+              totalDurationMinutes: 30,
+              deliveryMode: 'Virtual classroom',
+              assessmentStrategy: 'Observed exercise',
+              expectedDeliverable: 'Improvement plan',
+            },
+            outlines: mockOutlines,
+          },
+        }),
+      });
+    });
+
+    const home = new HomePage(page);
+    await home.goto();
+    await home.fillRequirement('Create a persistent process improvement syllabus.');
+    await home.configureAnimation('andragogy', 'balanced');
+    await home.submit();
+    await expect(page).toHaveURL(/planJobId=plan-refresh-e2e/);
+    await page.reload();
+
+    await expect(page.getByLabel('Course title')).toHaveValue('Recovered syllabus');
+    expect(submissions).toBe(1);
   });
 
   test('keeps body spacing stable when the settings dialog opens', async ({ page }) => {

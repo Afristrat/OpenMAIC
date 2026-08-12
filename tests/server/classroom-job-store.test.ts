@@ -60,6 +60,11 @@ import {
   touchClassroomGenerationJob,
   updateClassroomGenerationJobProgress,
 } from '@/lib/server/classroom-job-store';
+import {
+  createClassroomPlanJob,
+  markClassroomPlanJobSucceeded,
+  readClassroomPlanJob,
+} from '@/lib/server/classroom-plan-job-store';
 
 describe('persistent classroom generation jobs', () => {
   beforeEach(() => {
@@ -200,5 +205,48 @@ describe('persistent classroom generation jobs', () => {
     await expect(readClassroomGenerationJob('job-heartbeat')).resolves.toMatchObject({
       status: 'running',
     });
+  });
+});
+
+describe('persistent classroom plan jobs', () => {
+  beforeEach(() => database.rows.clear());
+
+  it('keeps the durable request and the completed syllabus across reads', async () => {
+    await createClassroomPlanJob(
+      'plan-job-1',
+      {
+        orgId: 'org-1',
+        authorRole: 'author',
+        learningApproach: 'andragogy',
+        interactionLevel: 'balanced',
+        requirement: 'Créer une formation fondée sur le PDF',
+        pdfContent: { name: 'source.pdf', text: 'Source durable', images: [] },
+        webSearchApiKey: 'must-not-persist',
+      },
+      'owner-1',
+    );
+    await markClassroomPlanJobSucceeded('plan-job-1', {
+      courseTitle: 'Plan durable',
+      languageDirective: 'Répondre en français.',
+      syllabus: {
+        audience: 'Dirigeants',
+        prerequisites: 'Aucun',
+        overallObjective: 'Améliorer un processus',
+        learningObjectives: ['Diagnostiquer'],
+        totalDurationMinutes: 30,
+        deliveryMode: 'Classe virtuelle',
+        assessmentStrategy: 'Mise en situation',
+        expectedDeliverable: 'Plan d’action',
+      },
+      outlines: [],
+    });
+
+    const job = await readClassroomPlanJob('plan-job-1');
+    expect(job).toMatchObject({
+      status: 'succeeded',
+      input: { pdfContent: { text: 'Source durable' } },
+      result: { courseTitle: 'Plan durable' },
+    });
+    expect(job?.input).not.toHaveProperty('webSearchApiKey');
   });
 });

@@ -764,6 +764,7 @@
   "generation.streamNotReadable": "Impossible de lire le flux de génération",
   "generation.generatingOutlines": "Rédaction d\u0027un plan de cours",
   "generation.generatingOutlinesDesc": "Structurer le parcours d\u0027apprentissage...",
+  "generation.planAsyncHint": "Le syllabus se prépare en arrière-plan. Vous pouvez actualiser cette page ou y revenir plus tard sans perdre le travail.",
   "generation.generatingSlideContent": "Générer du contenu de page",
   "generation.generatingSlideContentDesc": "Création de diapositives, de quiz et de contenu interactif...",
   "generation.generatingActions": "Générer des actions pédagogiques",

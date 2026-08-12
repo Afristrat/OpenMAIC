@@ -81,26 +81,44 @@ export class MockApi {
   async mockClassroomGenerationJob(jobId = 'e2e-generation-job', resultUrl?: string) {
     let submittedBody: unknown;
     let planRequestBody: unknown;
+    const planJobId = `plan-${jobId}`;
     await this.page.route('**/api/generate-classroom/plan', async (route) => {
       planRequestBody = route.request().postDataJSON();
+      await route.fulfill({
+        status: 202,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          success: true,
+          jobId: planJobId,
+          pollIntervalMs: 10,
+        }),
+      });
+    });
+    await this.page.route(`**/api/generate-classroom/plan/${planJobId}`, async (route) => {
       await route.fulfill({
         status: 200,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           success: true,
-          courseTitle: 'E2E approved plan',
-          languageDirective: 'Teach in English.',
-          syllabus: {
-            audience: 'Store managers',
-            prerequisites: 'No prerequisite',
-            overallObjective: 'Prevent till discrepancies',
-            learningObjectives: ['Identify a discrepancy', 'Apply the closing procedure'],
-            totalDurationMinutes: 45,
-            deliveryMode: 'Interactive virtual classroom',
-            assessmentStrategy: 'Observed case resolution',
-            expectedDeliverable: 'Completed closing checklist',
+          jobId: planJobId,
+          status: 'succeeded',
+          done: true,
+          generationRequest: planRequestBody,
+          result: {
+            courseTitle: 'E2E approved plan',
+            languageDirective: 'Teach in English.',
+            syllabus: {
+              audience: 'Store managers',
+              prerequisites: 'No prerequisite',
+              overallObjective: 'Prevent till discrepancies',
+              learningObjectives: ['Identify a discrepancy', 'Apply the closing procedure'],
+              totalDurationMinutes: 45,
+              deliveryMode: 'Interactive virtual classroom',
+              assessmentStrategy: 'Observed case resolution',
+              expectedDeliverable: 'Completed closing checklist',
+            },
+            outlines: mockOutlines,
           },
-          outlines: mockOutlines,
         }),
       });
     });

@@ -5,6 +5,7 @@ import { mockOutlines } from '../fixtures/test-data/scene-outlines';
 test.describe('Formation Design Pro — persistent generation path', () => {
   test('catalogue selection reaches the persistent job with the active skill', async ({ page }) => {
     let submittedBody: Record<string, unknown> | undefined;
+    let planBody: Record<string, unknown> | undefined;
 
     await page.addInitScript((settings) => {
       localStorage.setItem('settings-storage', settings);
@@ -20,24 +21,41 @@ test.describe('Formation Design Pro — persistent generation path', () => {
       });
     });
     await page.route('**/api/generate-classroom/plan', async (route) => {
+      planBody = route.request().postDataJSON() as Record<string, unknown>;
+      await route.fulfill({
+        status: 202,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          jobId: 'plan-skill-engine-e2e',
+          pollIntervalMs: 10,
+        }),
+      });
+    });
+    await page.route('**/api/generate-classroom/plan/plan-skill-engine-e2e', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          courseTitle: 'Entretiens difficiles',
-          languageDirective: 'Former en français.',
-          syllabus: {
-            audience: 'Managers de proximité',
-            prerequisites: 'Aucun prérequis',
-            overallObjective: 'Conduire un entretien difficile avec méthode.',
-            learningObjectives: ['Préparer et conduire un entretien difficile.'],
-            totalDurationMinutes: 45,
-            deliveryMode: 'Classe virtuelle interactive',
-            assessmentStrategy: 'Mise en situation avec retour structuré',
-            expectedDeliverable: 'Trame d’entretien complétée',
+          status: 'succeeded',
+          done: true,
+          generationRequest: planBody,
+          result: {
+            courseTitle: 'Entretiens difficiles',
+            languageDirective: 'Former en français.',
+            syllabus: {
+              audience: 'Managers de proximité',
+              prerequisites: 'Aucun prérequis',
+              overallObjective: 'Conduire un entretien difficile avec méthode.',
+              learningObjectives: ['Préparer et conduire un entretien difficile.'],
+              totalDurationMinutes: 45,
+              deliveryMode: 'Classe virtuelle interactive',
+              assessmentStrategy: 'Mise en situation avec retour structuré',
+              expectedDeliverable: 'Trame d’entretien complétée',
+            },
+            outlines: mockOutlines,
           },
-          outlines: mockOutlines,
         }),
       });
     });

@@ -34,8 +34,10 @@ import {
   resolveVideoBaseUrl,
 } from '@/lib/server/provider-config';
 import { runClassroomGenerationJob } from '@/lib/server/classroom-job-runner';
+import { runClassroomPlanJob } from '@/lib/server/classroom-plan-job-runner';
+import { readClassroomPlanJob } from '@/lib/server/classroom-plan-job-store';
 import { readClassroomGenerationJob } from '@/lib/server/classroom-job-store';
-import type { ClassroomGenerationJobData } from '@/lib/jobs/queue';
+import type { ClassroomGenerationJobData, ClassroomPlanJobData } from '@/lib/jobs/queue';
 import type { ClassroomInteractionJobData } from '@/lib/jobs/queue';
 import { PermitPool } from '@/lib/jobs/permit-pool';
 import { enqueueTransmissionVisualWatermark } from '@/lib/jobs/queue';
@@ -117,6 +119,14 @@ export function startAllWorkers(): void {
     'classroom-generation',
     async (job: Job) =>
       heavyTasks.run(async () => {
+        if (job.name === 'prepare-plan') {
+          const { jobId } = job.data as ClassroomPlanJobData;
+          const planJob = await readClassroomPlanJob(jobId);
+          if (!planJob?.input) throw new Error(`Classroom plan job ${jobId} has no durable input`);
+          await runClassroomPlanJob(jobId, planJob.input);
+          incrementCounter('qalem_jobs_processed_total', { queue: 'classroom-plan' });
+          return;
+        }
         const { jobId, baseUrl, ownerId } = job.data as ClassroomGenerationJobData;
         const generationJob = await readClassroomGenerationJob(jobId);
         if (!generationJob?.input) {

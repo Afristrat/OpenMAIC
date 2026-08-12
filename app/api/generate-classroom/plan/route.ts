@@ -1,20 +1,20 @@
-import { NextResponse, type NextRequest } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { nanoid } from 'nanoid';
 import { requireSuperAdminOrOrgAuthor } from '@/lib/api/auth';
 import { generateClassroomSchema } from '@/lib/api/schemas';
 import { validateBody } from '@/lib/api/validate';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
-import { generateClassroomPlan } from '@/lib/server/classroom-plan-generation';
 import type { GenerateClassroomInput } from '@/lib/server/classroom-generation';
-import { SourceMaterialConflictError } from '@/lib/server/source-material-alignment';
+import { createClassroomPlanJob, markClassroomPlanJobFailed } from '@/lib/server/classroom-plan-job-store';
+import { enqueueClassroomPlan } from '@/lib/jobs/queue';
+import type { TTSProviderId } from '@/lib/audio/types';
 
-export const maxDuration = 300;
+export const maxDuration = 30;
 
 export async function POST(request: NextRequest) {
+  let jobId: string | undefined;
   try {
-    const validation = validateBody(
-      generateClassroomSchema,
-      await request.json().catch(() => null),
-    );
+    const validation = validateBody(generateClassroomSchema, await request.json().catch(() => null));
     if (!validation.success) return validation.response;
     const parsed = validation.data;
     const auth = await requireSuperAdminOrOrgAuthor(request, parsed.orgId);
@@ -33,29 +33,54 @@ export async function POST(request: NextRequest) {
         currencyCode: parsed.learningContext.currencyCode.toUpperCase(),
       },
       pdfContent: parsed.pdfContent,
+      enableWebSearch: parsed.enableWebSearch,
+      webSearchProviderId: parsed.webSearchProviderId,
       enableImageGeneration: parsed.enableImageGeneration,
+      imageProviderId: parsed.imageProviderId,
+      imageModelId: parsed.imageModelId,
       enableVideoGeneration: parsed.enableVideoGeneration,
+      enableTTS: parsed.enableTTS,
       interactiveMode: parsed.interactiveMode,
+      agentMode: parsed.agentMode,
+      selectedPersonaIds: parsed.selectedPersonaIds,
+      contextualSpecialists: parsed.contextualSpecialists?.map((specialist) => ({
+        ...specialist,
+        voiceConfig: {
+          ...specialist.voiceConfig,
+          providerId: specialist.voiceConfig.providerId as TTSProviderId,
+        },
+      })),
+      teacherVoiceConfig: parsed.teacherVoiceConfig,
       activeSkillId: parsed.activeSkillId,
     };
-    return apiSuccess(await generateClassroomPlan(input));
-  } catch (error) {
-    if (error instanceof SourceMaterialConflictError) {
-      return NextResponse.json(
-        {
-          success: false as const,
-          errorCode: 'SOURCE_MATERIAL_CONFLICT' as const,
-          error: 'La demande et le document joint ne sont pas cohérents.',
-          sourceAlignment: error.alignment,
-        },
-        { status: 409 },
+
+    jobId = `plan-${nanoid(10)}`;
+    const job = await createClassroomPlanJob(jobId, input, auth.user.id);
+    try {
+      await enqueueClassroomPlan({ jobId });
+    } catch (error) {
+      await markClassroomPlanJobFailed(
+        jobId,
+        error instanceof Error ? error.message : String(error),
       );
+      throw error;
     }
+
+    return apiSuccess(
+      {
+        jobId,
+        status: job.status,
+        pollUrl: `/api/generate-classroom/plan/${jobId}`,
+        pollIntervalMs: 30_000,
+      },
+      202,
+    );
+  } catch (error) {
     return apiError(
       'INTERNAL_ERROR',
       500,
-      'Failed to prepare classroom plan',
-      error instanceof Error ? error.message : 'Unknown error',
+      'Failed to create classroom plan job',
+      error instanceof Error ? error.message : String(error),
     );
   }
 }
