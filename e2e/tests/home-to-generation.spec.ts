@@ -243,6 +243,30 @@ test.describe('Home → Generation', () => {
     await expect(page.getByText('process-improvement.pdf')).not.toBeVisible();
   });
 
+  test('explains an HTML gateway timeout without exposing a JSON parsing error', async ({ page }) => {
+    await page.route('**/api/generate-classroom/plan', async (route) => {
+      await route.fulfill({
+        status: 504,
+        contentType: 'text/html',
+        body: '<!DOCTYPE html><html><body>Gateway Time-out</body></html>',
+      });
+    });
+
+    const home = new HomePage(page);
+    await home.goto();
+    await home.fillRequirement('Create five practical slides about process improvement.');
+    await home.configureAnimation('andragogy', 'immersive');
+    await home.submit();
+
+    await expect(
+      page.getByText(
+        'The training plan is taking longer than expected. Your request and document are still available; please try again.',
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await expect(page.getByText(/Unexpected token/)).not.toBeVisible();
+  });
+
   test('keeps body spacing stable when the settings dialog opens', async ({ page }) => {
     const home = new HomePage(page);
     await home.goto();

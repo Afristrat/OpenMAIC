@@ -752,6 +752,7 @@
   "generation.pdfParseFailed": "PDF parsing failed",
   "generation.pdfNoTextExtracted": "No usable text was extracted. If this is a scanned PDF, select the MinerU OCR parser in PDF settings.",
   "generation.planGenerationFailed": "The training plan could not be prepared. No content was generated.",
+  "generation.planGatewayTimeout": "The training plan is taking longer than expected. Your request and document are still available; please try again.",
   "generation.sourceConflict.title": "The request and document conflict",
   "generation.sourceConflict.description": "No syllabus was created. Choose which source should guide the training.",
   "generation.sourceConflict.requestTopic": "Requested topic",

@@ -92,6 +92,27 @@ const RECENT_OPEN_STORAGE_KEY = 'recentClassroomsOpen';
 const INTERACTIVE_MODE_STORAGE_KEY = 'interactiveModeEnabled';
 const REQUIREMENT_EXPANSION_THRESHOLD = 120;
 
+type ClassroomPlanResponse = Partial<ClassroomPlan> & {
+  details?: string;
+  error?: string;
+  errorCode?: string;
+  sourceAlignment?: SourceConflict;
+};
+
+async function readJsonResponse<T extends object>(
+  response: Response,
+  fallbackMessage: string,
+): Promise<T> {
+  const contentType = response.headers.get('content-type')?.toLowerCase() ?? '';
+  if (!contentType.includes('application/json')) throw new Error(fallbackMessage);
+
+  try {
+    return (await response.json()) as T;
+  } catch {
+    throw new Error(fallbackMessage);
+  }
+}
+
 function authenticatedFirstName(user: User | null): string {
   if (!user) return '';
   const metadata = user.user_metadata as Record<string, unknown>;
@@ -578,7 +599,12 @@ function HomePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(generationRequest),
       });
-      const result = await response.json();
+      const result = await readJsonResponse<ClassroomPlanResponse>(
+        response,
+        response.status >= 502 && response.status <= 504
+          ? t('generation.planGatewayTimeout')
+          : t('generation.planGenerationFailed'),
+      );
       if (
         response.status === 409 &&
         result.errorCode === 'SOURCE_MATERIAL_CONFLICT' &&
@@ -589,7 +615,12 @@ function HomePage() {
         setSourceConflict(result.sourceAlignment as SourceConflict);
         return;
       }
-      if (!response.ok || !Array.isArray(result.outlines) || result.outlines.length === 0) {
+      if (
+        !response.ok ||
+        !result.syllabus ||
+        !Array.isArray(result.outlines) ||
+        result.outlines.length === 0
+      ) {
         throw new Error(result.details || result.error || t('generation.planGenerationFailed'));
       }
       setPendingGenerationRequest(generationRequest);
