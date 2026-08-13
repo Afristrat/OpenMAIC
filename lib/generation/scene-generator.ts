@@ -898,6 +898,81 @@ export function hasUnexpectedLearnerUrl(
   return learnerVisibleUrls(elements).some((url) => !allowed.has(canonicalize(url)));
 }
 
+type GeneratedSlideElement = GeneratedSlideData['elements'][number];
+
+interface MediaBox {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+function generatedImageSize(aspectRatio?: string): Pick<MediaBox, 'width' | 'height'> {
+  const [rawWidth, rawHeight] = (aspectRatio || '16:9').split(':').map(Number);
+  const ratio =
+    Number.isFinite(rawWidth) && Number.isFinite(rawHeight) && rawWidth > 0 && rawHeight > 0
+      ? rawWidth / rawHeight
+      : 16 / 9;
+  const maxWidth = 380;
+  const maxHeight = 300;
+  if (maxWidth / ratio <= maxHeight) return { width: maxWidth, height: maxWidth / ratio };
+  return { width: maxHeight * ratio, height: maxHeight };
+}
+
+function significantOverlap(a: MediaBox, b: MediaBox): boolean {
+  const overlapWidth = Math.min(a.left + a.width, b.left + b.width) - Math.max(a.left, b.left);
+  const overlapHeight = Math.min(a.top + a.height, b.top + b.height) - Math.max(a.top, b.top);
+  if (overlapWidth <= 0 || overlapHeight <= 0) return false;
+  const overlapArea = overlapWidth * overlapHeight;
+  return overlapArea / Math.min(a.width * a.height, b.width * b.height) >= 0.2;
+}
+
+function placeRequiredGeneratedImages(
+  elements: GeneratedSlideData['elements'],
+  mediaGenerations: SceneOutline['mediaGenerations'],
+  generatedMediaMapping: ImageMapping | undefined,
+  canvasWidth: number,
+  canvasHeight: number,
+): GeneratedSlideData['elements'] {
+  const requests = mediaGenerations?.filter((request) => request.type === 'image') ?? [];
+  if (requests.length === 0) return elements;
+
+  const placedElements = [...elements];
+  for (const request of requests) {
+    const resolvedUrl = generatedMediaMapping?.[request.elementId];
+    const existingIndex = placedElements.findIndex(
+      (element) =>
+        element.type === 'image' &&
+        (element.src === request.elementId || (resolvedUrl && element.src === resolvedUrl)),
+    );
+    const existing = existingIndex >= 0 ? placedElements[existingIndex] : undefined;
+    const obstacles = placedElements.filter((_, index) => index !== existingIndex);
+    const { width, height } = generatedImageSize(request.aspectRatio);
+    const candidates: MediaBox[] = [
+      { left: canvasWidth - width - 60, top: 170, width, height },
+      { left: 60, top: 170, width, height },
+      { left: canvasWidth - width - 60, top: canvasHeight - height - 40, width, height },
+      { left: 60, top: canvasHeight - height - 40, width, height },
+      { left: (canvasWidth - width) / 2, top: 170, width, height },
+    ];
+    const candidate = candidates.find((box) =>
+      obstacles.every((element) => !significantOverlap(box, element)),
+    );
+    if (!candidate) continue;
+
+    const positioned: GeneratedSlideElement = {
+      ...(existing ?? { id: request.elementId, type: 'image' }),
+      type: 'image',
+      src: existing?.src ?? request.elementId,
+      ...candidate,
+      fixedRatio: true,
+    };
+    if (existingIndex >= 0) placedElements[existingIndex] = positioned;
+    else placedElements.push(positioned);
+  }
+  return placedElements;
+}
+
 async function generateSlideContent(
   outline: SceneOutline,
   aiCall: AICallFn,
@@ -1109,9 +1184,16 @@ async function generateSlideContent(
 
   // Fix elements with missing required fields + aspect ratio correction (while src is still img_id)
   const fixedElements = fixElementDefaults(generatedData.elements, assignedImages);
-  log.debug(`After element fixing: ${fixedElements.length} elements`);
+  const mediaPositionedElements = placeRequiredGeneratedImages(
+    fixedElements,
+    outline.mediaGenerations,
+    generatedMediaMapping,
+    canvasWidth,
+    canvasHeight,
+  );
+  log.debug(`After element fixing: ${mediaPositionedElements.length} elements`);
 
-  const textualLatexIssue = findUnreadableTextualLatexIssue(fixedElements);
+  const textualLatexIssue = findUnreadableTextualLatexIssue(mediaPositionedElements);
   if (textualLatexIssue) {
     log.warn(`Slide textual LaTeX rejected for ${outline.id}: ${textualLatexIssue}`);
     onValidationFailure?.(textualLatexIssue);
@@ -1120,7 +1202,7 @@ async function generateSlideContent(
 
   if (requiredSourceImageIds?.length) {
     const approvedIds = new Set(requiredSourceImageIds);
-    const hasRequiredSourceImage = fixedElements.some(
+    const hasRequiredSourceImage = mediaPositionedElements.some(
       (element) =>
         element.type === 'image' && typeof element.src === 'string' && approvedIds.has(element.src),
     );
@@ -1133,7 +1215,7 @@ async function generateSlideContent(
   }
 
   // Process LaTeX elements: render latex string → HTML via KaTeX
-  const latexProcessedElements = processLatexElements(fixedElements);
+  const latexProcessedElements = processLatexElements(mediaPositionedElements);
   log.debug(`After LaTeX processing: ${latexProcessedElements.length} elements`);
 
   // Resolve image_id references to actual URLs

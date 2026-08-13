@@ -7,6 +7,15 @@ import {
 } from '@/lib/generation/scene-generator';
 import type { SceneOutline, UserRequirements } from '@/lib/types/generation';
 import type { AICallFn } from '@/lib/generation/pipeline-types';
+import { auditSlideLayout } from '@/lib/edit/slide-layout-audit';
+import type { SlideTheme } from '@openmaic/dsl';
+
+const TEST_SLIDE_THEME: SlideTheme = {
+  backgroundColor: '#ffffff',
+  themeColors: ['#6d28d9'],
+  fontColor: '#111827',
+  fontName: 'Inter',
+};
 
 describe('media prompt condition wiring', () => {
   test('rejects prose-heavy French text rendered as a tiny LaTeX formula', () => {
@@ -192,7 +201,7 @@ describe('media prompt condition wiring', () => {
     expect(capturedPrompt).not.toContain('{{');
   });
 
-  test('rejects a slide that omits a requested generated image', async () => {
+  test('backfills a requested generated image omitted by the model', async () => {
     const aiCall: AICallFn = async () =>
       JSON.stringify({
         background: { type: 'solid', color: '#ffffff' },
@@ -205,6 +214,17 @@ describe('media prompt condition wiring', () => {
             width: 880,
             height: 76,
             content: '<p>Evaporation</p>',
+            defaultFontName: '',
+            defaultColor: '#333333',
+          },
+          {
+            id: 'body',
+            type: 'text',
+            left: 60,
+            top: 180,
+            width: 420,
+            height: 220,
+            content: '<p>Molecules gain energy and leave the liquid.</p>',
             defaultFontName: '',
             defaultColor: '#333333',
           },
@@ -231,11 +251,93 @@ describe('media prompt condition wiring', () => {
       aiCall,
     );
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    if (!result || !('elements' in result)) {
+      throw new Error('Expected generated slide content');
+    }
+    expect(result.elements).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'image',
+          src: 'gen_img_required',
+        }),
+      ]),
+    );
+    expect(
+      auditSlideLayout({
+        id: 'scene_1',
+        elements: result.elements,
+        viewportSize: 1000,
+        viewportRatio: 0.5625,
+        theme: TEST_SLIDE_THEME,
+      }),
+    ).toEqual([]);
   });
 
-  test('reports every omitted generated medium in one correction', async () => {
-    let feedback = '';
+  test('repositions a required generated image that the model placed out of bounds', async () => {
+    const aiCall: AICallFn = async () =>
+      JSON.stringify({
+        background: { type: 'solid', color: '#ffffff' },
+        elements: [
+          {
+            id: 'title',
+            type: 'text',
+            left: 60,
+            top: 70,
+            width: 880,
+            height: 76,
+            content: '<p>Process map</p>',
+            defaultFontName: '',
+            defaultColor: '#333333',
+          },
+          {
+            id: 'generated-image',
+            type: 'image',
+            src: 'gen_img_process',
+            left: 900,
+            top: 300,
+            width: 420,
+            height: 240,
+          },
+        ],
+      });
+
+    const result = await generateSceneContent(
+      {
+        id: 'scene_process',
+        type: 'slide',
+        title: 'Process map',
+        description: 'Explain the process map',
+        keyPoints: ['Map the current state'],
+        order: 1,
+        mediaGenerations: [
+          {
+            type: 'image',
+            prompt: 'A clear process map',
+            elementId: 'gen_img_process',
+            aspectRatio: '16:9',
+          },
+        ],
+      },
+      aiCall,
+    );
+
+    expect(result).not.toBeNull();
+    if (!result || !('elements' in result)) {
+      throw new Error('Expected generated slide content');
+    }
+    expect(
+      auditSlideLayout({
+        id: 'scene_process',
+        elements: result.elements,
+        viewportSize: 1000,
+        viewportRatio: 0.5625,
+        theme: TEST_SLIDE_THEME,
+      }),
+    ).toEqual([]);
+  });
+
+  test('backfills every omitted generated image when the slide has room', async () => {
     const aiCall: AICallFn = async () =>
       JSON.stringify({
         background: { type: 'solid', color: '#ffffff' },
@@ -278,16 +380,19 @@ describe('media prompt condition wiring', () => {
         ],
       },
       aiCall,
-      {
-        onValidationFailure: (directive) => {
-          feedback = directive;
-        },
-      },
+      {},
     );
 
-    expect(result).toBeNull();
-    expect(feedback).toContain('gen_img_current');
-    expect(feedback).toContain('gen_img_target');
+    expect(result).not.toBeNull();
+    if (!result || !('elements' in result)) {
+      throw new Error('Expected generated slide content');
+    }
+    expect(result.elements).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: 'image', src: 'gen_img_current' }),
+        expect.objectContaining({ type: 'image', src: 'gen_img_target' }),
+      ]),
+    );
   });
 
   test('rejects a slide that omits every source image selected by the approved outline', async () => {
