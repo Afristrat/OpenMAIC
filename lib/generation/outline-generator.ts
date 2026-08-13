@@ -79,6 +79,34 @@ function normalizeSyllabus(
   };
 }
 
+function fallbackTeachingObjective(outline: SceneOutline, languageDirective: string): string {
+  const title = outline.title.trim();
+  if (/arabic|ar-MA|العربية/i.test(languageDirective)) {
+    return `شرح « ${title} » بالاستناد إلى عنصرين رئيسيين على الأقل.`;
+  }
+  if (/french|fr-FR|français/i.test(languageDirective)) {
+    return `Expliquer « ${title} » en mobilisant au moins deux éléments clés.`;
+  }
+  return `Explain “${title}” using at least two key points.`;
+}
+
+function normalizeOutlineTeachingObjectives(
+  outlines: SceneOutline[],
+  syllabus: ClassroomSyllabus,
+  languageDirective: string,
+): SceneOutline[] {
+  return outlines.map((outline, index) => {
+    const existing = outline.teachingObjective?.trim();
+    if (existing) return { ...outline, teachingObjective: existing };
+
+    const syllabusObjective = syllabus.learningObjectives[index]?.trim();
+    return {
+      ...outline,
+      teachingObjective: syllabusObjective || fallbackTeachingObjective(outline, languageDirective),
+    };
+  });
+}
+
 /**
  * Used when the outline stage fails to produce an explicit directive (LLM
  * schema regression, empty response, upstream error). Downstream prompts
@@ -338,6 +366,12 @@ export async function generateSceneOutlinesFromRequirements(
 
     // Replace sequential gen_img_N/gen_vid_N with globally unique IDs
     const result = uniquifyMediaElementIds(enriched);
+    const syllabus = normalizeSyllabus(rawSyllabus, languageDirective, courseTitle, result);
+    const normalizedOutlines = normalizeOutlineTeachingObjectives(
+      result,
+      syllabus,
+      languageDirective,
+    );
 
     callbacks?.onProgress?.({
       currentStage: 1,
@@ -345,7 +379,7 @@ export async function generateSceneOutlinesFromRequirements(
       stageProgress: 100,
       statusMessage: `已生成 ${result.length} 个场景大纲`,
       scenesGenerated: 0,
-      totalScenes: result.length,
+      totalScenes: normalizedOutlines.length,
     });
 
     return {
@@ -353,8 +387,8 @@ export async function generateSceneOutlinesFromRequirements(
       data: {
         languageDirective,
         courseTitle: courseTitle || syllabusPlaceholder(languageDirective),
-        syllabus: normalizeSyllabus(rawSyllabus, languageDirective, courseTitle, result),
-        outlines: result,
+        syllabus,
+        outlines: normalizedOutlines,
       },
     };
   } catch (error) {

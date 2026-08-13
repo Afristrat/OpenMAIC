@@ -395,8 +395,7 @@ describe('media prompt condition wiring', () => {
     );
   });
 
-  test('rejects a slide that omits every source image selected by the approved outline', async () => {
-    let feedback = '';
+  test('backfills a source image selected by the approved outline', async () => {
     const aiCall: AICallFn = async () =>
       JSON.stringify({
         background: { type: 'solid', color: '#ffffff' },
@@ -437,14 +436,104 @@ describe('media prompt condition wiring', () => {
         ],
         imageMapping: { img_source_1: '/api/classroom-media/classroom-1/img_source_1.png' },
         requiredSourceImageIds: ['img_source_1'],
-        onValidationFailure: (directive) => {
-          feedback = directive;
-        },
       },
     );
 
-    expect(result).toBeNull();
-    expect(feedback).toContain('img_source_1');
+    expect(result).not.toBeNull();
+    if (!result || !('elements' in result)) {
+      throw new Error('Expected generated slide content');
+    }
+    expect(result.elements).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'image',
+          src: '/api/classroom-media/classroom-1/img_source_1.png',
+        }),
+      ]),
+    );
+  });
+
+  test('places a required source image and generated image in separate media slots', async () => {
+    const sourceUrl = '/api/classroom-media/classroom-1/process.png';
+    const generatedUrl = '/api/classroom-media/classroom-1/generated.png';
+    const aiCall: AICallFn = async () =>
+      JSON.stringify({
+        background: { type: 'solid', color: '#ffffff' },
+        elements: [
+          {
+            id: 'title',
+            type: 'text',
+            left: 60,
+            top: 60,
+            width: 880,
+            height: 70,
+            content: '<p>Process improvement</p>',
+            defaultFontName: '',
+            defaultColor: '#333333',
+          },
+          {
+            id: 'source',
+            type: 'image',
+            src: 'img_process',
+            left: 560,
+            top: 150,
+            width: 380,
+            height: 300,
+          },
+          {
+            id: 'generated',
+            type: 'image',
+            src: 'gen_img_process',
+            left: 560,
+            top: 150,
+            width: 380,
+            height: 300,
+          },
+        ],
+      });
+
+    const result = await generateSceneContent(
+      {
+        id: 'scene_two_required_images',
+        type: 'slide',
+        title: 'Process improvement',
+        description: 'Compare a source diagram with an original illustration',
+        keyPoints: ['Read the process', 'Spot the waste'],
+        order: 1,
+        mediaGenerations: [
+          {
+            type: 'image',
+            prompt: 'Original process improvement illustration',
+            elementId: 'gen_img_process',
+            aspectRatio: '16:9',
+          },
+        ],
+      },
+      aiCall,
+      {
+        assignedImages: [
+          { id: 'img_process', src: sourceUrl, pageNumber: 1, width: 800, height: 600 },
+        ],
+        imageMapping: { img_process: sourceUrl },
+        generatedMediaMapping: { gen_img_process: generatedUrl },
+        requiredSourceImageIds: ['img_process'],
+      },
+    );
+
+    expect(result).not.toBeNull();
+    if (!result || !('elements' in result)) {
+      throw new Error('Expected generated slide content');
+    }
+    expect(result.elements.filter((element) => element.type === 'image')).toHaveLength(2);
+    expect(
+      auditSlideLayout({
+        id: 'scene_two_required_images',
+        elements: result.elements,
+        viewportSize: 1000,
+        viewportRatio: 0.5625,
+        theme: TEST_SLIDE_THEME,
+      }),
+    ).toEqual([]);
   });
 
   test('requires and resolves a source image selected by the approved outline', async () => {
@@ -554,18 +643,23 @@ describe('media prompt condition wiring', () => {
     if (!result || !('elements' in result)) {
       throw new Error('Expected generated slide content');
     }
-    expect(result.elements).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          type: 'image',
-          src: persistedUrl,
-          left: 560,
-          top: 150,
-          width: 150,
-          height: 300,
-        }),
-      ]),
+    const portrait = result.elements.find(
+      (element) => element.type === 'image' && element.src === persistedUrl,
     );
+    expect(portrait).toBeDefined();
+    if (!portrait || portrait.type !== 'image') {
+      throw new Error('Expected the required portrait image');
+    }
+    expect(portrait.width / portrait.height).toBeCloseTo(0.5);
+    expect(
+      auditSlideLayout({
+        id: 'scene_portrait_source',
+        elements: result.elements,
+        viewportSize: 1000,
+        viewportRatio: 0.5625,
+        theme: TEST_SLIDE_THEME,
+      }),
+    ).toEqual([]);
   });
 
   test('rejects a slide whose content-bearing elements overlap', async () => {
@@ -912,5 +1006,60 @@ describe('outline courseTitle parsing', () => {
 
     expect(result.success).toBe(true);
     expect(result.data?.syllabus).toEqual(syllabus);
+  });
+
+  test('backfills missing scene objectives from the syllabus and outline content', async () => {
+    const result = await runWith({
+      languageDirective: 'Répondre en français.',
+      courseTitle: 'Améliorer les processus',
+      syllabus: {
+        audience: 'Responsables opérationnels',
+        prerequisites: 'Aucun',
+        overallObjective: 'Améliorer un processus de PME.',
+        learningObjectives: [
+          'Identifier deux gaspillages dans un processus.',
+          'Choisir une méthode adaptée et justifier ce choix.',
+        ],
+        totalDurationMinutes: 15,
+        deliveryMode: 'Classe virtuelle',
+        assessmentStrategy: 'Étude de cas',
+        expectedDeliverable: 'Plan d’amélioration',
+      },
+      outlines: [
+        {
+          id: 'scene-1',
+          order: 1,
+          type: 'slide',
+          title: 'Repérer les gaspillages',
+          description: 'Observer les pertes dans un processus réel.',
+          keyPoints: ['Attente', 'Retouche'],
+          teachingObjective: '',
+        },
+        {
+          id: 'scene-2',
+          order: 2,
+          type: 'slide',
+          title: 'Choisir une méthode',
+          description: 'Comparer Lean, Six Sigma et Kaizen.',
+          keyPoints: ['Lean', 'Six Sigma', 'Kaizen'],
+        },
+        {
+          id: 'scene-3',
+          order: 3,
+          type: 'slide',
+          title: 'Passer à l’action',
+          description: 'Construire une première action mesurable.',
+          keyPoints: ['Responsable', 'Échéance'],
+          teachingObjective: '  ',
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data?.outlines.map((outline) => outline.teachingObjective)).toEqual([
+      'Identifier deux gaspillages dans un processus.',
+      'Choisir une méthode adaptée et justifier ce choix.',
+      'Expliquer « Passer à l’action » en mobilisant au moins deux éléments clés.',
+    ]);
   });
 });

@@ -900,77 +900,138 @@ export function hasUnexpectedLearnerUrl(
 
 type GeneratedSlideElement = GeneratedSlideData['elements'][number];
 
-interface MediaBox {
-  left: number;
-  top: number;
-  width: number;
-  height: number;
+interface RequiredSlideImage {
+  id: string;
+  src: string;
+  aspectRatio?: string;
 }
 
-function generatedImageSize(aspectRatio?: string): Pick<MediaBox, 'width' | 'height'> {
+function imageRatio(aspectRatio?: string): number {
   const [rawWidth, rawHeight] = (aspectRatio || '16:9').split(':').map(Number);
-  const ratio =
-    Number.isFinite(rawWidth) && Number.isFinite(rawHeight) && rawWidth > 0 && rawHeight > 0
-      ? rawWidth / rawHeight
-      : 16 / 9;
-  const maxWidth = 380;
-  const maxHeight = 300;
-  if (maxWidth / ratio <= maxHeight) return { width: maxWidth, height: maxWidth / ratio };
-  return { width: maxHeight * ratio, height: maxHeight };
+  return Number.isFinite(rawWidth) && Number.isFinite(rawHeight) && rawWidth > 0 && rawHeight > 0
+    ? rawWidth / rawHeight
+    : 16 / 9;
 }
 
-function significantOverlap(a: MediaBox, b: MediaBox): boolean {
-  const overlapWidth = Math.min(a.left + a.width, b.left + b.width) - Math.max(a.left, b.left);
-  const overlapHeight = Math.min(a.top + a.height, b.top + b.height) - Math.max(a.top, b.top);
-  if (overlapWidth <= 0 || overlapHeight <= 0) return false;
-  const overlapArea = overlapWidth * overlapHeight;
-  return overlapArea / Math.min(a.width * a.height, b.width * b.height) >= 0.2;
-}
-
-function placeRequiredGeneratedImages(
-  elements: GeneratedSlideData['elements'],
+function requiredSlideImages(
   mediaGenerations: SceneOutline['mediaGenerations'],
   generatedMediaMapping: ImageMapping | undefined,
+  assignedImages: PdfImage[] | undefined,
+  imageMapping: ImageMapping | undefined,
+  requiredSourceImageIds: string[] | undefined,
+): RequiredSlideImage[] {
+  const assignedById = new Map((assignedImages ?? []).map((image) => [image.id, image]));
+  const sourceImages = (requiredSourceImageIds ?? []).flatMap((id) => {
+    const image = assignedById.get(id);
+    const src = imageMapping?.[id] ?? image?.src;
+    if (!src) return [];
+    return [
+      {
+        id,
+        src,
+        aspectRatio: image?.width && image?.height ? `${image.width}:${image.height}` : undefined,
+      },
+    ];
+  });
+  const generatedImages = (mediaGenerations ?? [])
+    .filter((request) => request.type === 'image')
+    .map((request) => ({
+      id: request.elementId,
+      src: generatedMediaMapping?.[request.elementId] ?? request.elementId,
+      aspectRatio: request.aspectRatio,
+    }));
+  return [...sourceImages, ...generatedImages];
+}
+
+function placeRequiredImages(
+  elements: GeneratedSlideData['elements'],
+  requiredImages: RequiredSlideImage[],
   canvasWidth: number,
   canvasHeight: number,
 ): GeneratedSlideData['elements'] {
-  const requests = mediaGenerations?.filter((request) => request.type === 'image') ?? [];
-  if (requests.length === 0) return elements;
-
-  const placedElements = [...elements];
-  for (const request of requests) {
-    const resolvedUrl = generatedMediaMapping?.[request.elementId];
+  if (requiredImages.length === 0) return elements;
+  const requiredRefs = new Set(requiredImages.flatMap((image) => [image.id, image.src]));
+  const placedElements = elements.filter(
+    (element) => element.type !== 'image' || requiredRefs.has(String(element.src)),
+  );
+  const railTop = 145;
+  const railBottom = canvasHeight - 42;
+  const gap = 18;
+  const slotHeight =
+    (railBottom - railTop - gap * (requiredImages.length - 1)) / requiredImages.length;
+  const slotWidth = 380;
+  for (const [index, requiredImage] of requiredImages.entries()) {
     const existingIndex = placedElements.findIndex(
       (element) =>
         element.type === 'image' &&
-        (element.src === request.elementId || (resolvedUrl && element.src === resolvedUrl)),
+        (element.src === requiredImage.id || element.src === requiredImage.src),
     );
     const existing = existingIndex >= 0 ? placedElements[existingIndex] : undefined;
-    const obstacles = placedElements.filter((_, index) => index !== existingIndex);
-    const { width, height } = generatedImageSize(request.aspectRatio);
-    const candidates: MediaBox[] = [
-      { left: canvasWidth - width - 60, top: 170, width, height },
-      { left: 60, top: 170, width, height },
-      { left: canvasWidth - width - 60, top: canvasHeight - height - 40, width, height },
-      { left: 60, top: canvasHeight - height - 40, width, height },
-      { left: (canvasWidth - width) / 2, top: 170, width, height },
-    ];
-    const candidate = candidates.find((box) =>
-      obstacles.every((element) => !significantOverlap(box, element)),
-    );
-    if (!candidate) continue;
-
+    const ratio = imageRatio(requiredImage.aspectRatio);
+    const width = Math.min(slotWidth, slotHeight * ratio);
+    const height = Math.min(slotHeight, slotWidth / ratio);
     const positioned: GeneratedSlideElement = {
-      ...(existing ?? { id: request.elementId, type: 'image' }),
+      ...(existing ?? { id: requiredImage.id, type: 'image' }),
       type: 'image',
-      src: existing?.src ?? request.elementId,
-      ...candidate,
+      src: existing?.src ?? requiredImage.id,
+      left: canvasWidth - 60 - (slotWidth + width) / 2,
+      top: railTop + index * (slotHeight + gap) + (slotHeight - height) / 2,
+      width,
+      height,
       fixedRatio: true,
     };
     if (existingIndex >= 0) placedElements[existingIndex] = positioned;
     else placedElements.push(positioned);
   }
   return placedElements;
+}
+
+function buildRequiredMediaFallback(outline: SceneOutline, images: PPTElement[]): PPTElement[] {
+  return [
+    {
+      id: `fallback_title_${outline.id}`,
+      type: 'text',
+      left: 60,
+      top: 42,
+      width: 880,
+      height: 72,
+      content: `<p style="font-size:32px;font-weight:700;line-height:1.15">${escapeResourceHtml(outline.title)}</p>`,
+      defaultFontName: '',
+      defaultColor: '#17122B',
+      rotate: 0,
+    },
+    {
+      id: `fallback_description_${outline.id}`,
+      type: 'text',
+      left: 60,
+      top: 145,
+      width: 440,
+      height: 90,
+      content: `<p style="font-size:19px;line-height:1.35">${escapeResourceHtml(outline.description)}</p>`,
+      defaultFontName: '',
+      defaultColor: '#342D4E',
+      rotate: 0,
+    },
+    {
+      id: `fallback_points_${outline.id}`,
+      type: 'text',
+      left: 60,
+      top: 255,
+      width: 440,
+      height: 255,
+      content: `<ul>${outline.keyPoints
+        .slice(0, 4)
+        .map(
+          (point) =>
+            `<li style="font-size:18px;line-height:1.3;margin-bottom:10px">${escapeResourceHtml(point)}</li>`,
+        )
+        .join('')}</ul>`,
+      defaultFontName: '',
+      defaultColor: '#342D4E',
+      rotate: 0,
+    },
+    ...images,
+  ];
 }
 
 async function generateSlideContent(
@@ -1184,10 +1245,16 @@ async function generateSlideContent(
 
   // Fix elements with missing required fields + aspect ratio correction (while src is still img_id)
   const fixedElements = fixElementDefaults(generatedData.elements, assignedImages);
-  const mediaPositionedElements = placeRequiredGeneratedImages(
-    fixedElements,
+  const requiredImages = requiredSlideImages(
     outline.mediaGenerations,
     generatedMediaMapping,
+    assignedImages,
+    imageMapping,
+    requiredSourceImageIds,
+  );
+  const mediaPositionedElements = placeRequiredImages(
+    fixedElements,
+    requiredImages,
     canvasWidth,
     canvasHeight,
   );
@@ -1320,6 +1387,28 @@ async function generateSlideContent(
     viewportRatio: canvasHeight / canvasWidth,
   } as Slide);
   if (layoutIssues.length > 0) {
+    if (requiredImages.length > 0) {
+      const fallbackElements = buildRequiredMediaFallback(
+        outline,
+        processedElements.filter((element) => element.type === 'image'),
+      ).map((element) => ({ ...element, id: `${element.type}_${nanoid(8)}`, rotate: 0 }));
+      const fallbackIssues = auditSlideLayout({
+        id: outline.id,
+        elements: fallbackElements,
+        viewportSize: canvasWidth,
+        viewportRatio: canvasHeight / canvasWidth,
+      } as Slide);
+      if (fallbackIssues.length === 0) {
+        log.warn(
+          `Replaced invalid model geometry with deterministic media layout for ${outline.id}`,
+        );
+        return {
+          elements: fallbackElements,
+          background,
+          remark: generatedData.remark || outline.description,
+        };
+      }
+    }
     log.warn(`Slide layout invalid for ${outline.id}: ${JSON.stringify(layoutIssues)}; retrying`);
     onValidationFailure?.(
       `Correct these layout defects exactly: ${JSON.stringify(layoutIssues)}. Keep every element fully inside the slide and remove unintended overlaps while preserving a coherent alignment.`,
