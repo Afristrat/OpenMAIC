@@ -231,7 +231,8 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
 
       // For discussion/QA sessions, add pacing delays so fast models don't
       // rush through text and actions. Lecture pacing is handled by PlaybackEngine.
-      const pacingOptions = type === 'lecture' ? {} : { postTextDelayMs: 1200, actionDelayMs: 800 };
+      const pacingOptions =
+        type === 'lecture' ? {} : { charsPerTick: 4, postTextDelayMs: 600, actionDelayMs: 400 };
 
       const buffer = new StreamBuffer(
         {

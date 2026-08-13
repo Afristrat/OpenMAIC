@@ -536,6 +536,68 @@ describe('media prompt condition wiring', () => {
     ).toEqual([]);
   });
 
+  test('uses one tall text flow in the required-media fallback so prose cannot cover bullets', async () => {
+    const generatedUrl = '/api/classroom-media/classroom-1/generated-fallback.png';
+    const aiCall: AICallFn = async () =>
+      JSON.stringify({
+        elements: [
+          {
+            id: 'description',
+            type: 'text',
+            left: 60,
+            top: 145,
+            width: 440,
+            height: 180,
+            content: '<p>Long description</p>',
+            defaultFontName: '',
+            defaultColor: '#333333',
+          },
+          {
+            id: 'points',
+            type: 'text',
+            left: 60,
+            top: 160,
+            width: 440,
+            height: 250,
+            content: '<p>Overlapping points</p>',
+            defaultFontName: '',
+            defaultColor: '#333333',
+          },
+        ],
+      });
+
+    const result = await generateSceneContent(
+      {
+        id: 'scene_media_fallback_flow',
+        type: 'slide',
+        title: 'Process improvement',
+        description: 'A detailed explanation that must remain readable above every key point.',
+        keyPoints: ['First practical point', 'Second practical point', 'Third practical point'],
+        order: 1,
+        mediaGenerations: [
+          {
+            type: 'image',
+            prompt: 'Process improvement illustration',
+            elementId: 'gen_img_fallback',
+            aspectRatio: '16:9',
+          },
+        ],
+      },
+      aiCall,
+      { generatedMediaMapping: { gen_img_fallback: generatedUrl } },
+    );
+
+    expect(result).not.toBeNull();
+    if (!result || !('elements' in result)) throw new Error('Expected generated slide content');
+    const fallbackText = result.elements.filter((element) => element.type === 'text');
+    expect(fallbackText).toHaveLength(2);
+    expect(fallbackText.find((element) => element.height === 365)).toMatchObject({
+      top: 145,
+      height: 365,
+    });
+    expect(JSON.stringify(fallbackText)).toContain('First practical point');
+  });
+
   test('requires and resolves a source image selected by the approved outline', async () => {
     let capturedPrompt = '';
     const persistedUrl = '/api/classroom-media/classroom-1/img_source_1.png';

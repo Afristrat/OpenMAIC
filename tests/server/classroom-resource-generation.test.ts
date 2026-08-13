@@ -100,6 +100,39 @@ describe('classroom resource generation', () => {
     expect(aiCall.mock.calls[1]?.[1]).toContain('previous response was structurally invalid');
   });
 
+  it('quotes an unquoted rate emitted by the model without launching a second generation', async () => {
+    const aiCall = vi
+      .fn()
+      .mockResolvedValue(
+        '{"sheets":[{"name":"Budget","rows":[["Poste","Coût"],["Loyer",8000/mois]]}]}',
+      );
+
+    await expect(
+      generateWorkbookSpec(
+        {
+          id: 'resource_rate',
+          format: 'xlsx',
+          title: 'Budget mensuel',
+          fileName: 'budget.xlsx',
+          prompt: 'Créer un budget mensuel.',
+        },
+        'Write in French.',
+        aiCall,
+      ),
+    ).resolves.toEqual({
+      sheets: [
+        {
+          name: 'Budget',
+          rows: [
+            ['Poste', 'Coût'],
+            ['Loyer', '8000/mois'],
+          ],
+        },
+      ],
+    });
+    expect(aiCall).toHaveBeenCalledTimes(1);
+  });
+
   it('construit un vrai DOCX Unicode structuré et modifiable', async () => {
     const document = await buildDocx({
       title: 'Fiche d’exercice SIPOC',

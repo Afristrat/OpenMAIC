@@ -33,6 +33,13 @@ const SHORT_CODE_ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmno
 const randomShortCode = customAlphabet(SHORT_CODE_ALPHABET, 5);
 const MAX_SHORT_CODE_ATTEMPTS = 20;
 
+function quoteUnquotedWorkbookRates(response: string): string {
+  return response.replace(
+    /([[:,]\s*)([+-]?\d+(?:[.,]\d+)?\s*\/\s*[\p{L}_][^,\]}\r\n]*)(?=\s*[,\]}])/gu,
+    (_match, prefix: string, value: string) => `${prefix}${JSON.stringify(value.trim())}`,
+  );
+}
+
 interface ResourceShortLink {
   classroomId: string;
   resourceId: string;
@@ -144,7 +151,7 @@ export async function generateWorkbookSpec(
   languageDirective: string,
   aiCall: AICallFn,
 ): Promise<WorkbookSpec> {
-  const system = `You generate a complete, immediately usable learning workbook as strict JSON. Return {"sheets":[{"name":"...","rows":[[...]]}]}. Use only string, finite number, boolean, or null cell values. Include clear headers, all data needed for the exercise, and useful formulas as literal Excel formulas beginning with = only when the request requires them. Maximum ${MAX_SHEETS} sheets, ${MAX_ROWS} rows per sheet, and ${MAX_COLUMNS} columns. Do not return markdown or commentary.`;
+  const system = `You generate a complete, immediately usable learning workbook as strict JSON. Return {"sheets":[{"name":"...","rows":[[...]]}]}. Use only string, finite number, boolean, or null cell values. Every unit, rate or expression such as "8000/month" MUST be a quoted JSON string; never emit arithmetic-like bare tokens. Include clear headers, all data needed for the exercise, and useful formulas as literal Excel formulas beginning with = only when the request requires them. Maximum ${MAX_SHEETS} sheets, ${MAX_ROWS} rows per sheet, and ${MAX_COLUMNS} columns. Do not return markdown or commentary.`;
   const user = `Language directive: ${languageDirective}\nResource title: ${request.title}\nCreate the workbook requested between the markers.\n<<<RESOURCE_REQUEST\n${request.prompt}\nRESOURCE_REQUEST>>>`;
   let lastError: Error | undefined;
   for (let attempt = 1; attempt <= MAX_WORKBOOK_GENERATION_ATTEMPTS; attempt += 1) {
@@ -153,9 +160,8 @@ export async function generateWorkbookSpec(
         attempt === 1
           ? ''
           : '\nYour previous response was structurally invalid. Return at least one non-empty worksheet using exactly the required JSON shape.';
-      const parsed = parseJsonResponse<WorkbookSpec>(
-        await aiCall(system, `${user}${retryDirective}`),
-      );
+      const response = await aiCall(system, `${user}${retryDirective}`);
+      const parsed = parseJsonResponse<WorkbookSpec>(quoteUnquotedWorkbookRates(response));
       if (!parsed) throw new Error(`Resource generation returned invalid JSON for ${request.id}`);
       return normalizeWorkbook(parsed);
     } catch (error) {

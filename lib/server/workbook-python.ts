@@ -37,6 +37,11 @@ async function runPython(args: string[], stdin?: Buffer): Promise<Buffer> {
     const child = spawn(pythonExecutable(), [workbookScriptPath(), ...args], {
       stdio: ['pipe', 'pipe', 'pipe'],
       windowsHide: true,
+      env: {
+        ...process.env,
+        PYTHONUTF8: '1',
+        PYTHONIOENCODING: 'utf-8',
+      },
     });
     const stdout: Buffer[] = [];
     const stderr: Buffer[] = [];

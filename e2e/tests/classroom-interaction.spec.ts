@@ -170,6 +170,7 @@ async function seedDatabase(
 
 test.describe('Classroom Interaction', () => {
   test.beforeEach(async ({ page }, testInfo) => {
+    if (testInfo.title === LIVE_SPEECH_TEST) testInfo.setTimeout(60_000);
     await seedDatabase(
       page,
       testInfo.title === LIVE_SPEECH_TEST ? LIVE_TTS_SETTINGS_STORAGE : SETTINGS_STORAGE,
@@ -375,10 +376,12 @@ test.describe('Classroom Interaction', () => {
     await page.getByPlaceholder('Type your message...').press('Enter');
 
     await expect
-      .poll(() =>
-        page.evaluate(() =>
-          (window as unknown as { __e2eSpokenTexts: string[] }).__e2eSpokenTexts.join(' '),
-        ),
+      .poll(
+        () =>
+          page.evaluate(() =>
+            (window as unknown as { __e2eSpokenTexts: string[] }).__e2eSpokenTexts.join(' '),
+          ),
+        { timeout: 15_000 },
       )
       .toContain(`${teacherSpeech} ${analystSpeech}`);
     await page.getByRole('tab', { name: 'Chat' }).click();

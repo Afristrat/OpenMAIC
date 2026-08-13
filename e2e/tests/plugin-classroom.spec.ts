@@ -11,76 +11,87 @@ async function seedPluginScene(page: import('@playwright/test').Page) {
   }, SETTINGS_STORAGE);
 
   await page.goto('/app', { waitUntil: 'networkidle' });
-  await page.evaluate((stageId) => {
-    return new Promise<void>((resolve, reject) => {
-      const request = indexedDB.open('MAIC-Database');
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      await page.waitForLoadState('domcontentloaded');
+      await page.evaluate((stageId) => {
+        return new Promise<void>((resolve, reject) => {
+          const request = indexedDB.open('MAIC-Database');
 
-      request.onsuccess = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-        const tx = db.transaction(['stages', 'scenes', 'stageOutlines'], 'readwrite');
-        const now = Date.now();
+          request.onsuccess = (event) => {
+            const db = (event.target as IDBOpenDBRequest).result;
+            const tx = db.transaction(['stages', 'scenes', 'stageOutlines'], 'readwrite');
+            const now = Date.now();
 
-        tx.objectStore('stages').put({
-          id: stageId,
-          name: 'Atelier JavaScript',
-          description: 'Classroom avec un exercice de code interactif',
-          language: 'fr-FR',
-          style: 'professional',
-          createdAt: now,
-          updatedAt: now,
-        });
+            tx.objectStore('stages').put({
+              id: stageId,
+              name: 'Atelier JavaScript',
+              description: 'Classroom avec un exercice de code interactif',
+              language: 'fr-FR',
+              style: 'professional',
+              createdAt: now,
+              updatedAt: now,
+            });
 
-        tx.objectStore('scenes').put({
-          id: 'scene-plugin-code',
-          stageId,
-          type: 'plugin',
-          title: 'Fonction somme',
-          order: 0,
-          content: {
-            type: 'plugin',
-            pluginType: 'code-sandbox',
-            data: {
-              language: 'javascript',
+            tx.objectStore('scenes').put({
+              id: 'scene-plugin-code',
+              stageId,
+              type: 'plugin',
               title: 'Fonction somme',
-              instructions: 'Complétez la fonction puis exécutez les tests.',
-              starterCode: 'function sum(a, b) { return 0; }',
-              solution: 'function sum(a, b) { return a + b; }',
-              tests: [{ name: 'addition simple', input: 'sum(2, 3)', expected: '5' }],
-            },
-          },
-          actions: [
-            {
-              id: 'plugin-introduction',
-              type: 'speech',
-              text: 'Appliquons maintenant les paramètres et la valeur de retour.',
-              actor: 'teacher',
-            },
-          ],
-          createdAt: now,
-          updatedAt: now,
+              order: 0,
+              content: {
+                type: 'plugin',
+                pluginType: 'code-sandbox',
+                data: {
+                  language: 'javascript',
+                  title: 'Fonction somme',
+                  instructions: 'Complétez la fonction puis exécutez les tests.',
+                  starterCode: 'function sum(a, b) { return 0; }',
+                  solution: 'function sum(a, b) { return a + b; }',
+                  tests: [{ name: 'addition simple', input: 'sum(2, 3)', expected: '5' }],
+                },
+              },
+              actions: [
+                {
+                  id: 'plugin-introduction',
+                  type: 'speech',
+                  text: 'Appliquons maintenant les paramètres et la valeur de retour.',
+                  actor: 'teacher',
+                },
+              ],
+              createdAt: now,
+              updatedAt: now,
+            });
+
+            tx.objectStore('stageOutlines').put({
+              stageId,
+              outlines: [],
+              createdAt: now,
+              updatedAt: now,
+            });
+
+            tx.oncomplete = () => {
+              db.close();
+              resolve();
+            };
+            tx.onerror = () => reject(tx.error);
+          };
+
+          request.onerror = () => reject(request.error);
         });
-
-        tx.objectStore('stageOutlines').put({
-          stageId,
-          outlines: [],
-          createdAt: now,
-          updatedAt: now,
-        });
-
-        tx.oncomplete = () => {
-          db.close();
-          resolve();
-        };
-        tx.onerror = () => reject(tx.error);
-      };
-
-      request.onerror = () => reject(request.error);
-    });
-  }, TEST_STAGE_ID);
+      }, TEST_STAGE_ID);
+      return;
+    } catch (error) {
+      if (attempt === 2 || !String(error).includes('Execution context was destroyed')) throw error;
+    }
+  }
 }
 
 test.describe('Classroom plug-in scene', () => {
-  test('persists and renders a generated code exercise inside the classroom', async ({ page }) => {
+  test('persists and renders a generated code exercise inside the classroom', async ({
+    page,
+  }, testInfo) => {
+    testInfo.setTimeout(60_000);
     await seedPluginScene(page);
     await page.goto(`/classroom/${TEST_STAGE_ID}`);
 

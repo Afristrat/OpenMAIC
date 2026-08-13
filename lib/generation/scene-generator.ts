@@ -987,6 +987,19 @@ function placeRequiredImages(
 }
 
 function buildRequiredMediaFallback(outline: SceneOutline, images: PPTElement[]): PPTElement[] {
+  const learningContent = [
+    `<p style="font-size:19px;line-height:1.35;margin:0 0 18px">${escapeResourceHtml(outline.description)}</p>`,
+    outline.keyPoints.length > 0
+      ? `<ul style="margin:0;padding-left:24px">${outline.keyPoints
+          .slice(0, 4)
+          .map(
+            (point) =>
+              `<li style="font-size:18px;line-height:1.3;margin-bottom:10px">${escapeResourceHtml(point)}</li>`,
+          )
+          .join('')}</ul>`
+      : '',
+  ].join('');
+
   return [
     {
       id: `fallback_title_${outline.id}`,
@@ -1001,31 +1014,13 @@ function buildRequiredMediaFallback(outline: SceneOutline, images: PPTElement[])
       rotate: 0,
     },
     {
-      id: `fallback_description_${outline.id}`,
+      id: `fallback_content_${outline.id}`,
       type: 'text',
       left: 60,
       top: 145,
       width: 440,
-      height: 90,
-      content: `<p style="font-size:19px;line-height:1.35">${escapeResourceHtml(outline.description)}</p>`,
-      defaultFontName: '',
-      defaultColor: '#342D4E',
-      rotate: 0,
-    },
-    {
-      id: `fallback_points_${outline.id}`,
-      type: 'text',
-      left: 60,
-      top: 255,
-      width: 440,
-      height: 255,
-      content: `<ul>${outline.keyPoints
-        .slice(0, 4)
-        .map(
-          (point) =>
-            `<li style="font-size:18px;line-height:1.3;margin-bottom:10px">${escapeResourceHtml(point)}</li>`,
-        )
-        .join('')}</ul>`,
+      height: 365,
+      content: learningContent,
       defaultFontName: '',
       defaultColor: '#342D4E',
       rotate: 0,
@@ -2125,6 +2120,16 @@ function appendResourcePauseActions(
   return [...actions.slice(0, discussionIndex), ...checkpoints, ...actions.slice(discussionIndex)];
 }
 
+const RESOURCE_DETAIL_PATTERN =
+  /\b(?:classeur|fichier|document|ressource|t[Ã©e]l[Ã©e]charg\w*|QR\s*code|lien\s+court|workbook|worksheet|download\w*|short\s+link)\b/iu;
+
+function removeUntrustedResourceDetails(actions: Action[], outline: SceneOutline): Action[] {
+  if (!outline.generatedResources?.length) return actions;
+  return actions.filter(
+    (action) => action.type !== 'speech' || !RESOURCE_DETAIL_PATTERN.test(action.text),
+  );
+}
+
 /**
  * Step 3.2: Generate Actions based on content and script
  */
@@ -2217,15 +2222,16 @@ export async function generateSceneActions(
       );
     }
 
+    const preparedActions = await ensureCanonicalAgentInterventions(
+      processed,
+      outline,
+      agents,
+      requiredAgentIds,
+      aiCall,
+      languageDirective,
+    );
     return appendResourcePauseActions(
-      await ensureCanonicalAgentInterventions(
-        processed,
-        outline,
-        agents,
-        requiredAgentIds,
-        aiCall,
-        languageDirective,
-      ),
+      removeUntrustedResourceDetails(preparedActions, outline),
       outline,
       languageDirective,
       agents,

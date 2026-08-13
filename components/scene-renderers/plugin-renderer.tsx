@@ -53,7 +53,7 @@ export function PluginRenderer({ content, mode: _mode, sceneId }: PluginRenderer
   // Send initial data once the iframe signals readiness
   // ------------------------------------------------------------------
   const sendToPlugin = useCallback((msg: PluginInboundMessage) => {
-    iframeRef.current?.contentWindow?.postMessage(msg, window.location.origin);
+    iframeRef.current?.contentWindow?.postMessage(msg, '*');
   }, []);
 
   const sendInitData = useCallback(() => {
@@ -74,7 +74,7 @@ export function PluginRenderer({ content, mode: _mode, sceneId }: PluginRenderer
   // ------------------------------------------------------------------
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
-      if (event.origin !== window.location.origin) return;
+      if (event.source !== iframeRef.current?.contentWindow) return;
 
       const msg = event.data as PluginOutboundMessage | undefined;
       if (!msg || msg.source !== 'qalem-plugin') return;
@@ -151,6 +151,7 @@ export function PluginRenderer({ content, mode: _mode, sceneId }: PluginRenderer
       <iframe
         ref={iframeRef}
         src={pluginSrc}
+        onLoad={sendInitData}
         className="min-h-0 flex-1 w-full border-0"
         style={iframeHeight ? { height: `${iframeHeight}px`, flex: 'none' } : undefined}
         title={`Plugin Scene ${sceneId} (${content.pluginType})`}

@@ -407,6 +407,7 @@
           runCode();
         });
 
+        if (exerciseData) initExercise();
         notifyParent('ready', {});
       });
 
@@ -427,6 +428,10 @@
         }
       });
 
+      // The host can initialize readable exercise metadata immediately.
+      // Monaco is an enhancement and must never gate the host handshake.
+      notifyParent('ready', {});
+
       function notifyParent(type, payload) {
         window.parent.postMessage({ source: 'qalem-plugin', type: type, payload: payload }, '*');
       }
@@ -441,20 +446,21 @@
 
       // ---- Exercise init ----
       function initExercise() {
-        if (!exerciseData || !editor) return;
+        if (!exerciseData) return;
 
         var lang = exerciseData.language || 'javascript';
-        var monacoLang = lang === 'python' ? 'python' : 'javascript';
-
         document.getElementById('lang-badge').textContent = lang === 'python' ? 'PY' : 'JS';
         document.getElementById('exercise-title').textContent =
           exerciseData.title || 'Code Sandbox';
 
+        // Metadata is useful immediately and must not depend on the external
+        // Monaco bundle. The editor can finish loading independently.
+        renderInstructions(exerciseData.instructions || '');
+        if (!editor) return;
+
+        var monacoLang = lang === 'python' ? 'python' : 'javascript';
         monaco.editor.setModelLanguage(editor.getModel(), monacoLang);
         editor.setValue(exerciseData.starterCode || '');
-
-        // Render instructions using safe DOM methods
-        renderInstructions(exerciseData.instructions || '');
 
         clearElement(document.getElementById('panel-console'));
         clearElement(document.getElementById('panel-tests'));

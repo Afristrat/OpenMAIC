@@ -67,6 +67,70 @@ describe('downloadable resource narration', () => {
     });
   });
 
+  it('removes invented workbook details and keeps only the trusted download checkpoint', async () => {
+    const outline: SceneOutline = {
+      id: 'scene_resource_truth',
+      type: 'slide',
+      title: 'Plan d’action',
+      description: 'Appliquer la méthode.',
+      keyPoints: ['Prioriser les actions'],
+      order: 4,
+      generatedResources: [
+        {
+          id: 'resource_truth',
+          format: 'xlsx',
+          title: 'Plan d’action',
+          fileName: 'plan-action.xlsx',
+          downloadUrl: 'https://qalem.ma/A7bK2',
+          qrImageUrl: '/api/classroom-media/classroom/resources/resource_truth-qr.png',
+        },
+      ],
+    };
+    const content: GeneratedSlideContent = {
+      elements: [
+        {
+          id: 'title',
+          type: 'text',
+          left: 60,
+          top: 60,
+          width: 880,
+          height: 70,
+          content: '<p>Plan d’action</p>',
+          defaultFontName: '',
+          defaultColor: '#000000',
+          rotate: 0,
+        },
+      ],
+    };
+    const aiCall = vi.fn().mockResolvedValue(
+      JSON.stringify([
+        {
+          type: 'text',
+          content: 'Le classeur contient une matrice d’Ishikawa et un formatage conditionnel.',
+        },
+        { type: 'text', content: 'Priorisez maintenant les actions selon leur impact.' },
+      ]),
+    );
+
+    const actions = await generateSceneActions(outline, content, aiCall, {
+      languageDirective: 'Deliver the entire course in French.',
+    });
+
+    expect(
+      actions.some(
+        (action) =>
+          action.type === 'speech' && /Ishikawa|formatage conditionnel/i.test(action.text),
+      ),
+    ).toBe(false);
+    expect(
+      actions.some(
+        (action) =>
+          action.type === 'speech' && /Priorisez maintenant les actions/i.test(action.text),
+      ),
+    ).toBe(true);
+    expect(actions.some((action) => action.type === 'resource_pause')).toBe(true);
+  });
+
   it('rejette une annonce de téléchargement sans ressource réellement générée', async () => {
     const outline: SceneOutline = {
       id: 'scene_2',
