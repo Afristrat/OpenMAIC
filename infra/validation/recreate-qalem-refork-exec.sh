@@ -16,7 +16,7 @@ fi
 docker run --detach \
   --name "$container_name" \
   --init \
-  --memory 6g \
+  --memory 10g \
   --cpus 4 \
   --volume "$workspace:/workspace" \
   --workdir /workspace \
