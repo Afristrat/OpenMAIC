@@ -485,6 +485,12 @@ export function resolveASRBaseUrl(providerId: string, clientBaseUrl?: string): s
   return resolveSectionBaseUrl('asr', providerId, clientBaseUrl);
 }
 
+export function resolveASRModel(providerId: string, clientModel?: string): string | undefined {
+  const entry = getConfig().asr[providerId];
+  if (entry?.models && entry.models.length > 0) return entry.models[0];
+  return clientModel;
+}
+
 // ---------------------------------------------------------------------------
 // Public API — PDF
 // ---------------------------------------------------------------------------

@@ -4,6 +4,7 @@ import {
   isServerConfiguredProvider,
   resolveASRApiKey,
   resolveASRBaseUrl,
+  resolveASRModel,
 } from '@/lib/server/provider-config';
 import type { ASRProviderId } from '@/lib/audio/types';
 import { createLogger } from '@/lib/logger';
@@ -46,7 +47,7 @@ export async function POST(req: NextRequest) {
 
     const config = {
       providerId: effectiveProviderId,
-      modelId: modelId || undefined,
+      modelId: resolveASRModel(effectiveProviderId, modelId || undefined),
       language: language || 'auto',
       apiKey: resolveASRApiKey(effectiveProviderId, managed ? undefined : apiKey || undefined),
       baseUrl: resolveASRBaseUrl(effectiveProviderId, clientBaseUrl),
