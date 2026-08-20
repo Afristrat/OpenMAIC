@@ -145,8 +145,6 @@
  * - Upload + Poll: For async providers (AssemblyAI, Deepgram batch)
  */
 
-import { createOpenAI } from '@ai-sdk/openai';
-import { experimental_transcribe as transcribe } from 'ai';
 import type { ASRModelConfig } from './types';
 import { isCustomASRProvider } from './types';
 import { ASR_PROVIDERS } from './constants';
@@ -292,48 +290,57 @@ function getOptionalBearerAuthHeaders(apiKey?: string): Record<string, string> {
 }
 
 /**
- * OpenAI Whisper implementation (using Vercel AI SDK)
+ * OpenAI-compatible Whisper implementation.
  */
 async function transcribeOpenAIWhisper(
   config: ASRModelConfig,
   audioBuffer: Buffer | Blob,
 ): Promise<ASRTranscriptionResult> {
-  const openai = createOpenAI({
-    apiKey: config.apiKey!,
-    baseURL: config.baseUrl || ASR_PROVIDERS['openai-whisper'].defaultBaseUrl,
+  const baseUrl = (config.baseUrl || ASR_PROVIDERS['openai-whisper'].defaultBaseUrl || '').replace(
+    /\/$/,
+    '',
+  );
+  const audioBlob = await toAudioBlob(audioBuffer);
+  const formData = new FormData();
+  formData.set('file', audioBlob, getAudioFilename(audioBlob));
+  formData.set('model', config.modelId || 'gpt-4o-mini-transcribe');
+  formData.set('response_format', 'json');
+  if (config.language && config.language !== 'auto') {
+    formData.set('language', config.language);
+  }
+
+  const response = await fetch(`${baseUrl}/audio/transcriptions`, {
+    method: 'POST',
+    headers: getOptionalBearerAuthHeaders(config.apiKey),
+    body: formData,
   });
 
-  // Convert to Buffer or Uint8Array (which is required by the AI SDK)
-  let audioData: Buffer | Uint8Array;
-  if (audioBuffer instanceof Buffer) {
-    audioData = audioBuffer;
-  } else if (audioBuffer instanceof Blob) {
-    const arrayBuffer = await audioBuffer.arrayBuffer();
-    audioData = new Uint8Array(arrayBuffer);
-  } else {
-    throw new Error('Invalid audio buffer type');
-  }
-
-  try {
-    const result = await transcribe({
-      model: openai.transcription(config.modelId || 'gpt-4o-mini-transcribe'),
-      audio: audioData,
-      providerOptions: {
-        openai: {
-          language: config.language === 'auto' ? undefined : config.language,
-        },
-      },
-    });
-
-    return { text: result.text || '' };
-  } catch (error: unknown) {
-    // Short/silent audio may cause the SDK to throw — treat as empty transcription
-    const errMsg = error instanceof Error ? error.message : '';
-    if (errMsg.includes('empty') || errMsg.includes('too short')) {
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => response.statusText);
+    if (errorText.includes('audio is empty') || errorText.includes('too short')) {
       return { text: '' };
     }
-    throw error;
+    throw new Error(`OpenAI-compatible ASR API error: ${errorText || response.statusText}`);
   }
+
+  const data = (await response.json()) as { text?: unknown };
+  return { text: typeof data.text === 'string' ? data.text : '' };
+}
+
+function getAudioFilename(audio: Blob): string {
+  if (typeof File !== 'undefined' && audio instanceof File && audio.name) return audio.name;
+
+  const extensionByType: Record<string, string> = {
+    'audio/aac': 'aac',
+    'audio/flac': 'flac',
+    'audio/mp4': 'm4a',
+    'audio/mpeg': 'mp3',
+    'audio/ogg': 'ogg',
+    'audio/wav': 'wav',
+    'audio/webm': 'webm',
+    'audio/x-wav': 'wav',
+  };
+  return `audio.${extensionByType[audio.type] || 'wav'}`;
 }
 
 /**
