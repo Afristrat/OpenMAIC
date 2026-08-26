@@ -1,24 +1,39 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## État de référence — 26 août 2026
+
+La source active est désormais `.ralph/prd-v3.json` ; vue de lecture : `tasks/prd-v3.md`.
+Réconciliation documentaire sur `332941dc7f0727dc673c4364f78e122b879f2f96` : 65 stories v2 et 72 stories v1/UI inventoriées ; 17 ensembles de demandes rattachés à leurs US.
+Le registre actif comporte 63 US : 26 ouvertes v2 reprises, 3 v2 rouvertes sur défaut de preuve/couverture, 18 capacités héritées remises en suivi et 16 nouveaux restes transverses.
+Aucune livraison de fonctionnalité n’est certifiée par cette entrée. L’accès SSH canonique a été rétabli le 27 août ; le clone historique ServeurIA est divergent et sale, donc la recertification doit utiliser un clone isolé neuf. PRD modifié localement, publication Git non encore prouvée.
+Les logs ci-dessous sont des archives datées ; leurs chiffres et mentions « vert », « fait » ou « en production » ne font pas autorité pour l’état présent.
+
+### Réconciliation des constats périmés
+
+- Le service worker est monté dans `app/layout.tsx` ; le déclenchement des rappels reste absent : S6-010. E-mail/WhatsApp restent soumis à la décision S6-011.
+- L’éditeur complet de syllabus et les adaptateurs SCORM 2004/cmi5 existent : S5-004 et S1-008 demandent une recette, pas une réimplémentation.
+- Le catalogue dispose d’une route et d’un E2E : S1-004 reste une validation à terminer.
+- Les mentions anciennes d’Azure `xml:lang` figé sont contredites par le code dynamique actuel. Les anciens comptes de strings chinoises ou d’imports MCP ne sont pas reconduits sans nouveau comptage.
+- S1-011 conserve son acceptation humaine historique ; elle ne ferme ni le catalogue vocal S6-012, ni la prononciation de dirhams S6-008, ni la recette Whisper S6-009.
+- La règle de zéro rotation reste en vigueur : S6-014 est bloquée, pas une action à exécuter automatiquement.
+
 ## Codebase Patterns
 
-- **i18n** : `lib/i18n/` — 5 modules (common, chat, generation, settings, stage), type Locale dans types.ts, hook useI18n dans `lib/hooks/use-i18n.tsx`, auto-détection langue navigateur
+- **i18n** : catalogues localisés dans `lib/i18n/locales/` ; contrôler les clés sur les catalogues actuels, pas sur les anciens modules du portage.
 - **TTS** : Factory pattern dans `lib/audio/tts-providers.ts`, registry dans `constants.ts`, voice resolver dans `voice-resolver.ts`
 - **Stores** : Zustand avec `persist` middleware, `createSelectors()` helper, pattern `useXxxStore`
 - **API routes** : Next.js App Router `app/api/*/route.ts`, validation Zod, provider resolution via `lib/server/provider-config.ts`
 - **Orchestration** : LangGraph StateGraph dans `lib/orchestration/director-graph.ts`, registry agents dans `lib/orchestration/registry/`
-- **Génération** : Pipeline dans `lib/generation/`, prompts markdown dans `prompts/templates/`, snippets réutilisables via `{{snippet:name}}`
-- **PBL MCP** : Classes internes dans `lib/pbl/mcp/` (PAS le vrai MCP Protocol), SDK `@modelcontextprotocol/sdk` installé mais inutilisé
+- **Génération** : orchestration serveur dans `lib/server/classroom-generation.ts`, générateurs dans `lib/generation/` ; vérifier le passage des sources à chaque étage.
+- **MCP externe** : SDK importé dans `lib/mcp/client.ts` et `lib/mcp/server.ts` ; import du SDK, initialisation et consommation effective des outils sont trois preuves distinctes (S-018).
 - **Path alias** : `@/*` → project root
 - **Imports** : pas de barrel files, imports directs vers les fichiers
 
 ## Known Issues
 
-- Azure TTS hardcodé `xml:lang='zh-CN'` dans `tts-providers.ts`
-- Catalogue vocal à élargir et qualifier : environ 10 voix françaises et 10 voix anglaises de référence, avec genre, langue, aperçu et compatibilité fournisseur vérifiés avant publication
-- 2 strings hardcodées en chinois dans `header.tsx` (lignes 126, 139)
-- 6 agents par défaut avec noms chinois dans `registry/store.ts`
-- `@modelcontextprotocol/sdk` installé mais jamais importé dans le code
+- Voir les motifs d’ouverture, preuves et critères de chaque US de `.ralph/prd-v3.json` ; aucune liste active parallèle.
+- Priorité produit : fidélité documentaire, reformulation, visuels originaux, restitution monétaire, ASR réel et rappels réellement déclenchés.
+- Le bilan d’exploitation et la qualité globale restent à recertifier sur ServeurIA ; ne pas déplacer le sujet vers un autre projet.
 
 ## Session Log
 

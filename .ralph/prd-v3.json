@@ -1,0 +1,4367 @@
+{
+  "project": "Qalem",
+  "version": "3.0.0",
+  "branch": "refork-v030",
+  "title": "Réconciliation des engagements et clôture prouvée",
+  "description": "Référence active unique pour tous les restes identifiés de Qalem. Les critères v2 et les capacités v1 sont tracés sans transformer une acceptation historique en certification actuelle. Ce PRD planifie ; il n’exécute ni n’autorise automatiquement les mutations bloquées.",
+  "reconciledAt": "2026-08-26",
+  "inspectedCommit": "332941dc7f0727dc673c4364f78e122b879f2f96",
+  "supersedes": ".ralph/prd-v2.json",
+  "scope": {
+    "included": [
+      "26 stories v2 déjà ouvertes",
+      "3 stories v2 rouvertes sur défaut de preuve ou couverture",
+      "18 capacités héritées remises explicitement en suivi",
+      "16 engagements ou gaps transverses non représentés dans la v2",
+      "Inventaire complet des 65 stories v2 et des 72 stories v1/UI"
+    ],
+    "notIncluded": [
+      "Implémentation des fonctionnalités durant la réconciliation",
+      "Mutation de Diwan, Saqr ou d’un autre projet",
+      "Modification de main ou des fichiers utilisateur non suivis",
+      "Rotation de secrets sans nouvel accord explicite",
+      "Activation d’un enregistrement, d’une collecte ou d’un canal avant son gate"
+    ],
+    "verificationLimits": [
+      "Inspection du code local et des registres seulement au 26 août 2026.",
+      "L’audit initial du 26 août ne disposait pas de SSH ni de Mnemo ; l’accès SSH a été rétabli le 27 août, mais les preuves de recette et de publication restent à consigner dans chaque US.",
+      "Les 36 acceptations v2 conservées dans l’inventaire sont historiques, pas un nouveau verdict de livraison.",
+      "Les 72 décisions de conservation v1 restent rattachées à S0-011 ; aucun abandon inféré du silence.",
+      "La couverture documentaire est exhaustive pour les registres listés ; elle ne remplace pas la recette de chaque critère ni une recherche dans des conversations indisponibles."
+    ]
+  },
+  "priorityPolicy": {
+    "P0": "Preuves d’exploitation, isolation et qualité ; sécurité bloquée tant que non autorisée.",
+    "P1": "Demandes explicites non soldées et défauts du parcours auteur/apprenant.",
+    "P2": "Achèvement des capacités de création, diffusion, replay et ancrage ; décisions préalables respectées.",
+    "P3": "Capacités héritées à conserver ou retirer explicitement avant intégration.",
+    "selection": "Choisir le plus petit priorityRank éligible dont les dépendances actives sont soldées. Une priorité élevée n’autorise jamais un gate bloqué. Ne pas attendre un service externe pour corriger un parcours autonome.",
+    "statuses": {
+      "to_implement": "Travail de code ou de câblage restant identifié.",
+      "to_validate": "Code ou preuves historiques présents ; recette/clôture manquante, pas reconstruction automatique.",
+      "decision_required": "Arbitrage humain ou cadrage à consigner avant implémentation.",
+      "blocked": "Condition externe ou autorisation absente ; inspection sûre possible, mutation interdite."
+    }
+  },
+  "qualityGates": "pnpm check && npx tsc --noEmit && pnpm lint && pnpm test && pnpm build && pnpm test:e2e",
+  "validationPolicy": {
+    "execution": "ServeurIA via SSH/Docker, clone isolé du SHA visé ; jamais d’exécution du code sur le poste Windows.",
+    "format": "Formatage global sans erreur, pas seulement les fichiers ciblés.",
+    "lint": "Zéro erreur et zéro avertissement ; ne pas masquer un résidu par le seul code de sortie.",
+    "browser": "E2E headless sur ServeurIA et preuves production pertinentes. Les checkpoints humains restent explicitement humains.",
+    "persistence": "Commit exact et présence sur le remote vérifiés ; montages et configuration effective contrôlés quand la story touche le runtime.",
+    "completion": "passes=true uniquement avec chaque critère satisfait et closureEvidence non vide : date, SHA, environnement, commande/parcours, résultat et référence d’artefact ; confirmation humaine si requise.",
+    "withdrawal": "Une capacité refusée devient explicitement retired avec décision datée, pas passes=true. Aucun retrait automatique.",
+    "externalPrerequisites": "historicalDependencies désigne un prérequis précédemment déclaré acquis : le vérifier avant usage, sans créer d’US dupliquée.",
+    "secrets": "Métadonnées seulement ; aucune valeur ni dump de configuration. Refus de rotation maintenu."
+  },
+  "architectureConstraints": [
+    "Qalem web/runtime : Coolify sur ServeurIA ; LiteLLM : Hostinger, sans Coolify. Vérifier les cibles avant toute commande.",
+    "La cible ASR attendue passe par le tunnel Cloudflare ; un endpoint LAN n’est pas accessible par hypothèse depuis Hostinger.",
+    "Diwan est un service documentaire autonome consommé par contrat ; aucun partage de code ou de base.",
+    "Réutiliser les moteurs, adaptateurs et tests existants avant d’ajouter un composant ; pas de réécriture du catalogue, du syllabus ou de FSRS.",
+    "UI FR/AR/EN, RTL, RLS et validation des frontières de confiance obligatoires.",
+    "Une seule session propriétaire par projet ; aucune délégation ou mutation transfrontalière implicite."
+  ],
+  "conflicts": [
+    {
+      "id": "C-001",
+      "topic": "PRD 3",
+      "resolution": "Aucun prd-v3.json trouvé. Le présent fichier est la version consolidée ; tasks/prd-3-ancrer.md reste la spécification du seul chantier ANCRER."
+    },
+    {
+      "id": "C-002",
+      "topic": "Rappels e-mail/WhatsApp",
+      "resolution": "Promesse v1 et exclusion ANCRER contradictoires ; S6-011 conserve les deux sources et impose une décision avant implémentation."
+    },
+    {
+      "id": "C-003",
+      "topic": "Images originales et capture web",
+      "resolution": "S6-007 interdit la reprise des images PDF ; S1-012 reste une capture explicitement demandée, à confirmer avec Amine avant régénération."
+    },
+    {
+      "id": "C-004",
+      "topic": "Syllabus et catalogue",
+      "resolution": "Code récent présent malgré passes=false ; statuts to_validate, aucune réimplémentation ni fermeture automatique."
+    },
+    {
+      "id": "C-005",
+      "topic": "SCORM",
+      "resolution": "Adaptateurs natifs présents ; ancien critère scorm-again et choix NP d’export statique à réconcilier explicitement dans S1-007/008."
+    },
+    {
+      "id": "C-006",
+      "topic": "Ancien cadrage NP",
+      "resolution": "Les références de modèles, hébergement et pédagogie de juillet ne font pas autorité aujourd’hui ; S6-016 actualise les seules décisions encore applicables."
+    },
+    {
+      "id": "C-007",
+      "topic": "TTS versus ASR",
+      "resolution": "S1-011 est une acceptation historique de prononciation TTS ; S6-009 est une recette ASR, S6-012 le catalogue vocal et S6-008 le mot dirhams. Ne pas fusionner leurs preuves."
+    },
+    {
+      "id": "C-008",
+      "topic": "Affirmation de complétude Whisper",
+      "resolution": "Le test synthétique du 20 août ne mesure ni la transcription de parole ni le parcours microphone ; S6-009 garde cette dette ouverte."
+    }
+  ],
+  "reconciliationInventory": {
+    "v2": [
+      {
+        "id": "S0-001",
+        "title": "Initialiser la branche refork-v030 depuis l'archive v0.3.0 vérifiée",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S0-001"
+      },
+      {
+        "id": "S0-002",
+        "title": "Script de portage des 264 fichiers OURS_ONLY depuis la carrière",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S0-002"
+      },
+      {
+        "id": "S0-003",
+        "title": "Porter les migrations Supabase telles quelles (RLS intact)",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S0-003"
+      },
+      {
+        "id": "S0-004",
+        "title": "Appliquer les 137 diffs < 30 lignes (semi-automatique)",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S0-004"
+      },
+      {
+        "id": "S0-005",
+        "title": "Copie-adaptation du socle i18n (3 locales) + RTL [UI]",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S0-005"
+      },
+      {
+        "id": "S0-006",
+        "title": "Copie-adaptation branding + providers souverains (LLM/TTS/ASR)",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S0-006"
+      },
+      {
+        "id": "S0-007",
+        "title": "Copie-adaptation config serveur (.env.example, server-providers.yml, ssrf-guard)",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S0-007"
+      },
+      {
+        "id": "S0-008",
+        "title": "Quality gate complet + e2e génération & classroom FR/AR — GATE des chantiers 1-3",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S0-008"
+      },
+      {
+        "id": "S0-009",
+        "title": "Table feature_flags + helper typé",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S0-009"
+      },
+      {
+        "id": "S0-010",
+        "title": "Figer la carrière (tag legacy-v010-final) + CI verte",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S0-010"
+      },
+      {
+        "id": "S0-011",
+        "title": "[CHECKPOINT AMINE] Checklist garder/abandonner des 72 stories",
+        "previousPasses": false,
+        "disposition": "carried_open",
+        "trackedBy": [
+          "S0-011"
+        ],
+        "source": ".ralph/prd-v2.json#S0-011"
+      },
+      {
+        "id": "S0-012",
+        "title": "[CHECKPOINT AMINE] Parcours guidé passe RTL ar-MA [UI]",
+        "previousPasses": false,
+        "disposition": "carried_open",
+        "trackedBy": [
+          "S0-012"
+        ],
+        "source": ".ralph/prd-v2.json#S0-012"
+      },
+      {
+        "id": "S0-013",
+        "title": "Déploiement préprod Coolify de refork-v030",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S0-013"
+      },
+      {
+        "id": "S0-015",
+        "title": "Auth multi-tenant + persistance Storage sur le flux classroom (P0)",
+        "previousPasses": false,
+        "disposition": "carried_open",
+        "trackedBy": [
+          "S0-015"
+        ],
+        "source": ".ralph/prd-v2.json#S0-015"
+      },
+      {
+        "id": "S0-016",
+        "title": "Relais public stable et déploiement sans interruption de Qalem (P0)",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S0-016"
+      },
+      {
+        "id": "S0-014",
+        "title": "Purge de provenance AGPL : neutraliser les 35 fichiers du majorant (ADR-002)",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S0-014"
+      },
+      {
+        "id": "S0-017",
+        "title": "Modèles image LiteLLM administrés : libellés, sélection et preuve UI [UI]",
+        "previousPasses": false,
+        "disposition": "carried_open",
+        "trackedBy": [
+          "S0-017"
+        ],
+        "source": ".ralph/prd-v2.json#S0-017"
+      },
+      {
+        "id": "S1-001",
+        "title": "Câbler le moteur : getPromptOverride() dans outline + scène",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S1-001"
+      },
+      {
+        "id": "S1-002",
+        "title": "[CHECKPOINT AMINE+CLAUDE] Canevas d'import co-validé",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S1-002"
+      },
+      {
+        "id": "S1-003",
+        "title": "Tables courses + course_imports + pipeline de validation du canevas",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S1-003"
+      },
+      {
+        "id": "S1-004",
+        "title": "Catalogue interne (porte 2) [UI]",
+        "previousPasses": false,
+        "disposition": "carried_open",
+        "trackedBy": [
+          "S1-004"
+        ],
+        "source": ".ralph/prd-v2.json#S1-004"
+      },
+      {
+        "id": "S1-005",
+        "title": "Import → outline éditable (porte 3)",
+        "previousPasses": false,
+        "disposition": "carried_open",
+        "trackedBy": [
+          "S1-005"
+        ],
+        "source": ".ralph/prd-v2.json#S1-005"
+      },
+      {
+        "id": "S1-006",
+        "title": "Capsule vidéo Hyperframes depuis une scène",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S1-006"
+      },
+      {
+        "id": "S1-007",
+        "title": "Export SCORM couche 1 : package autonome importé dans Moodle",
+        "previousPasses": true,
+        "disposition": "reopened",
+        "trackedBy": [
+          "S1-007"
+        ],
+        "source": ".ralph/prd-v2.json#S1-007"
+      },
+      {
+        "id": "S1-008",
+        "title": "Export couche 2 : adaptateurs scorm12/scorm2004/cmi5 interchangeables",
+        "previousPasses": false,
+        "disposition": "carried_open",
+        "trackedBy": [
+          "S1-008"
+        ],
+        "source": ".ralph/prd-v2.json#S1-008"
+      },
+      {
+        "id": "S1-009",
+        "title": "Gate audio : tachkil AR + plancher de bruit -50 dB sur toutes les sorties TTS",
+        "previousPasses": true,
+        "disposition": "reopened",
+        "trackedBy": [
+          "S1-009"
+        ],
+        "source": ".ralph/prd-v2.json#S1-009"
+      },
+      {
+        "id": "S1-010",
+        "title": "Export PPTX re-vérifié sur la nouvelle base",
+        "previousPasses": true,
+        "disposition": "reopened",
+        "trackedBy": [
+          "S1-010"
+        ],
+        "source": ".ralph/prd-v2.json#S1-010"
+      },
+      {
+        "id": "S1-011",
+        "title": "Prononciation anglicismes higgs-tts (LiteLLM, MIT) via segmentation fr/en déterministe",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S1-011"
+      },
+      {
+        "id": "S1-012",
+        "title": "Capacité capture web réutilisable — service Playwright dédié + injection scène",
+        "previousPasses": false,
+        "disposition": "carried_open",
+        "trackedBy": [
+          "S1-012"
+        ],
+        "source": ".ralph/prd-v2.json#S1-012"
+      },
+      {
+        "id": "S2-001",
+        "title": "Profil utilisateur enrichi (culture, langue, préférences) [UI]",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S2-001"
+      },
+      {
+        "id": "S2-002",
+        "title": "QUICK-WIN : casting personnalisé — personnalités, prénoms culturels, mixité [UI]",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S2-002"
+      },
+      {
+        "id": "S2-003",
+        "title": "Variation garantie du casting (contrainte SQL)",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S2-003"
+      },
+      {
+        "id": "S2-004",
+        "title": "[GATE DPIA] Enregistrement du live : flux d'événements complet (agents + utilisateur)",
+        "previousPasses": false,
+        "disposition": "carried_open",
+        "trackedBy": [
+          "S2-004"
+        ],
+        "source": ".ralph/prd-v2.json#S2-004"
+      },
+      {
+        "id": "S2-005",
+        "title": "Replay fidèle « comme un vrai webinaire » (streaming, jamais de téléchargement)",
+        "previousPasses": false,
+        "disposition": "carried_open",
+        "trackedBy": [
+          "S2-005"
+        ],
+        "source": ".ralph/prd-v2.json#S2-005"
+      },
+      {
+        "id": "S2-006",
+        "title": "Bibliothèque de replays (reprise, suppression effective) [UI]",
+        "previousPasses": false,
+        "disposition": "carried_open",
+        "trackedBy": [
+          "S2-006"
+        ],
+        "source": ".ralph/prd-v2.json#S2-006"
+      },
+      {
+        "id": "S2-007",
+        "title": "Andragogie dans le live (overrides du moteur consommés par le director)",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S2-007"
+      },
+      {
+        "id": "S2-008",
+        "title": "Watermark sonore AudioSeal MIT en job BullMQ (protocole de robustesse)",
+        "previousPasses": false,
+        "disposition": "carried_open",
+        "trackedBy": [
+          "S2-008"
+        ],
+        "source": ".ralph/prd-v2.json#S2-008"
+      },
+      {
+        "id": "S2-009",
+        "title": "Watermark visuel indélébile",
+        "previousPasses": false,
+        "disposition": "carried_open",
+        "trackedBy": [
+          "S2-009"
+        ],
+        "source": ".ralph/prd-v2.json#S2-009"
+      },
+      {
+        "id": "S2-010",
+        "title": "Fondation de transmission de support au destinataire",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S2-010"
+      },
+      {
+        "id": "S2-011",
+        "title": "[CHECKPOINT AMINE] Référentiels culture → prénoms validés",
+        "previousPasses": false,
+        "disposition": "carried_open",
+        "trackedBy": [
+          "S2-011"
+        ],
+        "source": ".ralph/prd-v2.json#S2-011"
+      },
+      {
+        "id": "S3-001",
+        "title": "Tables d'ancrage (seeds, anchor_plans, anchor_deliveries, evaluations, xapi_outbox)",
+        "previousPasses": false,
+        "disposition": "carried_open",
+        "trackedBy": [
+          "S3-001"
+        ],
+        "source": ".ralph/prd-v2.json#S3-001"
+      },
+      {
+        "id": "S3-002",
+        "title": "Push PWA re-vérifié sur appareils réels iOS + Android",
+        "previousPasses": false,
+        "disposition": "carried_open",
+        "trackedBy": [
+          "S3-002"
+        ],
+        "source": ".ralph/prd-v2.json#S3-002"
+      },
+      {
+        "id": "S3-003",
+        "title": "Évaluation à chaud en fin de session [UI]",
+        "previousPasses": false,
+        "disposition": "carried_open",
+        "trackedBy": [
+          "S3-003"
+        ],
+        "source": ".ralph/prd-v2.json#S3-003"
+      },
+      {
+        "id": "S3-004",
+        "title": "Générateur de graines : stock complet à la fin de session",
+        "previousPasses": false,
+        "disposition": "carried_open",
+        "trackedBy": [
+          "S3-004"
+        ],
+        "source": ".ralph/prd-v2.json#S3-004"
+      },
+      {
+        "id": "S3-005",
+        "title": "Plan d'ancrage opt-in + planification BullMQ ≤ J+90",
+        "previousPasses": false,
+        "disposition": "carried_open",
+        "trackedBy": [
+          "S3-005"
+        ],
+        "source": ".ralph/prd-v2.json#S3-005"
+      },
+      {
+        "id": "S3-006",
+        "title": "Rappels quiz espacés via FSRS porté (cycle complet)",
+        "previousPasses": false,
+        "disposition": "carried_open",
+        "trackedBy": [
+          "S3-006"
+        ],
+        "source": ".ralph/prd-v2.json#S3-006"
+      },
+      {
+        "id": "S3-007",
+        "title": "Évaluations à froid J+30 / J+60",
+        "previousPasses": false,
+        "disposition": "carried_open",
+        "trackedBy": [
+          "S3-007"
+        ],
+        "source": ".ralph/prd-v2.json#S3-007"
+      },
+      {
+        "id": "S3-008",
+        "title": "[CHECKPOINT AMINE] Ton des graines + fréquences validés sur échantillon",
+        "previousPasses": false,
+        "disposition": "carried_open",
+        "trackedBy": [
+          "S3-008"
+        ],
+        "source": ".ralph/prd-v2.json#S3-008"
+      },
+      {
+        "id": "S3-009",
+        "title": "Reporting ancrage : agrégats org uniquement [UI]",
+        "previousPasses": false,
+        "disposition": "carried_open",
+        "trackedBy": [
+          "S3-009"
+        ],
+        "source": ".ralph/prd-v2.json#S3-009"
+      },
+      {
+        "id": "S3-010",
+        "title": "Émission xAPI via outbox (retry, acteur pseudonymisé)",
+        "previousPasses": false,
+        "disposition": "carried_open",
+        "trackedBy": [
+          "S3-010"
+        ],
+        "source": ".ralph/prd-v2.json#S3-010"
+      },
+      {
+        "id": "S4-001",
+        "title": "[SIGNAL AMINE REQUIS] Inventaire prouvé du corpus formation-design-pro (lecture seule)",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S4-001"
+      },
+      {
+        "id": "S4-002",
+        "title": "[⏸️ AMINE] Vecteurs lot 1 : architecture du corpus et double publication",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S4-002"
+      },
+      {
+        "id": "S4-003",
+        "title": "[⏸️ AMINE] Vecteurs lot 2 : structure du savoir (pistes du diagnostic re-proposées)",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S4-003"
+      },
+      {
+        "id": "S4-004",
+        "title": "Exécution des vecteurs validés (un commit par vecteur)",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S4-004"
+      },
+      {
+        "id": "S4-005",
+        "title": "Publication cible plateforme (manifests/overrides tracés)",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S4-005"
+      },
+      {
+        "id": "S4-006",
+        "title": "Publication cible skill autonome (test hors plateforme)",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S4-006"
+      },
+      {
+        "id": "S4-007",
+        "title": "Cohérence aval : une seule source de voix",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S4-007"
+      },
+      {
+        "id": "S4-008",
+        "title": "Constitution d’animation adaptative produite par Formation Design Pro",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S4-008"
+      },
+      {
+        "id": "S4-009",
+        "title": "Parcours multi-agent canonique et approfondissement explicite [UI]",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S4-009"
+      },
+      {
+        "id": "S4-010",
+        "title": "Contexte territorial réutilisable et guidage laser lisible [UI]",
+        "previousPasses": false,
+        "disposition": "carried_open",
+        "trackedBy": [
+          "S4-010"
+        ],
+        "source": ".ralph/prd-v2.json#S4-010"
+      },
+      {
+        "id": "S4-011",
+        "title": "Adaptation sélective d’une classroom à un nouveau marché [UI]",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S4-011"
+      },
+      {
+        "id": "S5-001",
+        "title": "Extensions métier utilisables et création guidée d’expertises [UI]",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S5-001"
+      },
+      {
+        "id": "S5-002",
+        "title": "Spécialistes métier fondés sur les tâches ISCO-08 [UI]",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S5-002"
+      },
+      {
+        "id": "S5-003",
+        "title": "Identité territoriale et preuve complète des spécialistes ISCO [UI]",
+        "previousPasses": true,
+        "disposition": "historically_accepted_not_recertified",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-v2.json#S5-003"
+      },
+      {
+        "id": "S5-004",
+        "title": "Plan auteur obligatoire et ingestion documentaire fiable [UI]",
+        "previousPasses": false,
+        "disposition": "carried_open",
+        "trackedBy": [
+          "S5-004"
+        ],
+        "source": ".ralph/prd-v2.json#S5-004"
+      }
+    ],
+    "legacy": [
+      {
+        "id": "S-001",
+        "title": "Renommer le projet OpenMAIC → Qalem",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-001"
+      },
+      {
+        "id": "S-002",
+        "title": "Ajouter les locales fr-FR et ar-MA au système i18n",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-002"
+      },
+      {
+        "id": "S-003",
+        "title": "Traduire le module common en FR et AR",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-003"
+      },
+      {
+        "id": "S-004",
+        "title": "Traduire le module chat en FR et AR",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-004"
+      },
+      {
+        "id": "S-005",
+        "title": "Traduire le module generation en FR et AR",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-005"
+      },
+      {
+        "id": "S-006",
+        "title": "Traduire le module settings en FR et AR",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-006"
+      },
+      {
+        "id": "S-007",
+        "title": "Traduire le module stage en FR et AR",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-007"
+      },
+      {
+        "id": "S-008",
+        "title": "Traduire les agents par défaut en FR et AR",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-008"
+      },
+      {
+        "id": "S-009",
+        "title": "Support RTL (right-to-left) pour l'arabe",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011",
+          "S0-012"
+        ],
+        "source": ".ralph/prd.json#S-009"
+      },
+      {
+        "id": "S-010",
+        "title": "Adapter les prompts de génération pour FR/AR",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011",
+          "S6-013"
+        ],
+        "source": ".ralph/prd.json#S-010"
+      },
+      {
+        "id": "S-011",
+        "title": "Ajouter des voix FR et AR à ElevenLabs",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011",
+          "S6-012"
+        ],
+        "source": ".ralph/prd.json#S-011"
+      },
+      {
+        "id": "S-012",
+        "title": "Rendre Azure TTS dynamique (supprimer hardcode zh-CN)",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011",
+          "S6-012"
+        ],
+        "source": ".ralph/prd.json#S-012"
+      },
+      {
+        "id": "S-013",
+        "title": "Intégrer Fish Audio S2 comme provider TTS",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011",
+          "S6-012"
+        ],
+        "source": ".ralph/prd.json#S-013"
+      },
+      {
+        "id": "S-014",
+        "title": "Intégrer Cartesia Sonic 3 comme provider TTS",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011",
+          "S6-012"
+        ],
+        "source": ".ralph/prd.json#S-014"
+      },
+      {
+        "id": "S-015",
+        "title": "Rendre le voice-resolver conscient de la locale",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011",
+          "S6-012"
+        ],
+        "source": ".ralph/prd.json#S-015"
+      },
+      {
+        "id": "S-016",
+        "title": "TTS hybride — clé serveur + clé utilisateur",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011",
+          "S6-013"
+        ],
+        "source": ".ralph/prd.json#S-016"
+      },
+      {
+        "id": "S-017",
+        "title": "Exposer Qalem comme MCP Server",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-017"
+      },
+      {
+        "id": "S-018",
+        "title": "Implémenter le MCP Client pour serveurs externes",
+        "previousPasses": true,
+        "disposition": "explicit_open_story",
+        "trackedBy": [
+          "S-018",
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-018"
+      },
+      {
+        "id": "S-019",
+        "title": "Connecter NotebookLM via MCP",
+        "previousPasses": true,
+        "disposition": "explicit_open_story",
+        "trackedBy": [
+          "S-019",
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-019"
+      },
+      {
+        "id": "S-020",
+        "title": "Connecter Notion via MCP",
+        "previousPasses": true,
+        "disposition": "explicit_open_story",
+        "trackedBy": [
+          "S-020",
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-020"
+      },
+      {
+        "id": "S-021",
+        "title": "Connecter Google Drive via MCP",
+        "previousPasses": true,
+        "disposition": "explicit_open_story",
+        "trackedBy": [
+          "S-021",
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-021"
+      },
+      {
+        "id": "S-022",
+        "title": "Setup Supabase (schema + auth + RLS)",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011",
+          "S0-015"
+        ],
+        "source": ".ralph/prd.json#S-022"
+      },
+      {
+        "id": "S-023",
+        "title": "Migration IndexedDB → Supabase (sync hybride)",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011",
+          "S0-015"
+        ],
+        "source": ".ralph/prd.json#S-023"
+      },
+      {
+        "id": "S-024",
+        "title": "Écran de connexion / inscription",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011",
+          "S0-015"
+        ],
+        "source": ".ralph/prd.json#S-024"
+      },
+      {
+        "id": "S-025",
+        "title": "Extraire les items de révision depuis les quiz",
+        "previousPasses": true,
+        "disposition": "explicit_open_story",
+        "trackedBy": [
+          "S-025",
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-025"
+      },
+      {
+        "id": "S-026",
+        "title": "Implémenter l'algorithme FSRS",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011",
+          "S-025",
+          "S3-006"
+        ],
+        "source": ".ralph/prd.json#S-026"
+      },
+      {
+        "id": "S-027",
+        "title": "Interface de révision espacée",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011",
+          "S-025",
+          "S3-006"
+        ],
+        "source": ".ralph/prd.json#S-027"
+      },
+      {
+        "id": "S-028",
+        "title": "Notifications de révision (email + push + WhatsApp)",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011",
+          "S6-010",
+          "S6-011"
+        ],
+        "source": ".ralph/prd.json#S-028"
+      },
+      {
+        "id": "S-029",
+        "title": "Définir l'architecture du Skills Registry",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011",
+          "S6-013"
+        ],
+        "source": ".ralph/prd.json#S-029"
+      },
+      {
+        "id": "S-030",
+        "title": "Créer le skill Medical Training",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011",
+          "S6-013"
+        ],
+        "source": ".ralph/prd.json#S-030"
+      },
+      {
+        "id": "S-031",
+        "title": "Créer le skill Legal Moot Court",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011",
+          "S6-013"
+        ],
+        "source": ".ralph/prd.json#S-031"
+      },
+      {
+        "id": "S-032",
+        "title": "Créer le skill Coding Workshop",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011",
+          "S6-013"
+        ],
+        "source": ".ralph/prd.json#S-032"
+      },
+      {
+        "id": "S-033",
+        "title": "Implémenter LTI 1.3 Tool Provider",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-033"
+      },
+      {
+        "id": "S-034",
+        "title": "LTI Assignment and Grade Services (AGS)",
+        "previousPasses": true,
+        "disposition": "explicit_open_story",
+        "trackedBy": [
+          "S-034",
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-034"
+      },
+      {
+        "id": "S-035",
+        "title": "Télémétrie xAPI",
+        "previousPasses": true,
+        "disposition": "explicit_open_story",
+        "trackedBy": [
+          "S-035",
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-035"
+      },
+      {
+        "id": "S-036",
+        "title": "Pipeline de collecte de données pédagogiques",
+        "previousPasses": true,
+        "disposition": "explicit_open_story",
+        "trackedBy": [
+          "S-036",
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-036"
+      },
+      {
+        "id": "S-037",
+        "title": "Optimisation pipeline de génération par les données",
+        "previousPasses": true,
+        "disposition": "explicit_open_story",
+        "trackedBy": [
+          "S-037",
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-037"
+      },
+      {
+        "id": "S-038",
+        "title": "Modèle de données organisations",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-038"
+      },
+      {
+        "id": "S-039",
+        "title": "Interface d'administration d'organisation",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-039"
+      },
+      {
+        "id": "S-040",
+        "title": "Bibliothèque partagée d'organisation",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-040"
+      },
+      {
+        "id": "S-041",
+        "title": "Templates de classroom par secteur",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-041"
+      },
+      {
+        "id": "S-042",
+        "title": "Marketplace d'agents pédagogiques",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-042"
+      },
+      {
+        "id": "S-043",
+        "title": "Ranking d'agents par performance",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-043"
+      },
+      {
+        "id": "S-044",
+        "title": "SDK de plugins de scènes",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011",
+          "S6-015"
+        ],
+        "source": ".ralph/prd.json#S-044"
+      },
+      {
+        "id": "S-045",
+        "title": "Plugin Code Sandbox",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011",
+          "S6-015"
+        ],
+        "source": ".ralph/prd.json#S-045"
+      },
+      {
+        "id": "S-046",
+        "title": "Plugin Lab Simulation 3D",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011",
+          "S6-015"
+        ],
+        "source": ".ralph/prd.json#S-046"
+      },
+      {
+        "id": "S-047",
+        "title": "Collecte des patterns de discussion multi-agent",
+        "previousPasses": true,
+        "disposition": "explicit_open_story",
+        "trackedBy": [
+          "S-047",
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-047"
+      },
+      {
+        "id": "S-048",
+        "title": "Director data-driven",
+        "previousPasses": true,
+        "disposition": "explicit_open_story",
+        "trackedBy": [
+          "S-048",
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-048"
+      },
+      {
+        "id": "S-049",
+        "title": "Graphe de curriculum",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-049"
+      },
+      {
+        "id": "S-050",
+        "title": "Reporting institutionnel pour accréditations",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-050"
+      },
+      {
+        "id": "S-051",
+        "title": "Docker Compose avec services séparés",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011"
+        ],
+        "source": ".ralph/prd.json#S-051"
+      },
+      {
+        "id": "U-001",
+        "title": "Fix profil — bouton Enregistrer",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011"
+        ],
+        "source": ".ralph/prd-ui.json#U-001"
+      },
+      {
+        "id": "U-002",
+        "title": "Séparer Admin / Clés API / Paramètres en pages distinctes",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011"
+        ],
+        "source": ".ralph/prd-ui.json#U-002"
+      },
+      {
+        "id": "U-003",
+        "title": "Paramètres notifications",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011",
+          "S6-010",
+          "S6-011"
+        ],
+        "source": ".ralph/prd-ui.json#U-003"
+      },
+      {
+        "id": "U-004",
+        "title": "Créer une organisation depuis la sidebar",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011"
+        ],
+        "source": ".ralph/prd-ui.json#U-004"
+      },
+      {
+        "id": "U-005",
+        "title": "Invitation membres avec lien",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011"
+        ],
+        "source": ".ralph/prd-ui.json#U-005"
+      },
+      {
+        "id": "U-006",
+        "title": "Dashboard admin organisation amélioré",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011"
+        ],
+        "source": ".ralph/prd-ui.json#U-006"
+      },
+      {
+        "id": "U-007",
+        "title": "Bouton certificat dans classroom",
+        "previousPasses": true,
+        "disposition": "explicit_open_story",
+        "trackedBy": [
+          "U-007",
+          "S0-011"
+        ],
+        "source": ".ralph/prd-ui.json#U-007"
+      },
+      {
+        "id": "U-008",
+        "title": "Page Mes certificats",
+        "previousPasses": true,
+        "disposition": "explicit_open_story",
+        "trackedBy": [
+          "U-008",
+          "S0-011"
+        ],
+        "source": ".ralph/prd-ui.json#U-008"
+      },
+      {
+        "id": "U-009",
+        "title": "Page Skills disponibles",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-ui.json#U-009"
+      },
+      {
+        "id": "U-010",
+        "title": "Page Plugins de scènes",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011",
+          "S6-013"
+        ],
+        "source": ".ralph/prd-ui.json#U-010"
+      },
+      {
+        "id": "U-011",
+        "title": "Publier un agent sur la marketplace",
+        "previousPasses": true,
+        "disposition": "explicit_open_story",
+        "trackedBy": [
+          "U-011",
+          "S0-011"
+        ],
+        "source": ".ralph/prd-ui.json#U-011"
+      },
+      {
+        "id": "U-012",
+        "title": "Détail agent marketplace + avis",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011"
+        ],
+        "source": ".ralph/prd-ui.json#U-012"
+      },
+      {
+        "id": "U-013",
+        "title": "Page pricing publique",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011"
+        ],
+        "source": ".ralph/prd-ui.json#U-013"
+      },
+      {
+        "id": "U-014",
+        "title": "Page de paiement mobile",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011"
+        ],
+        "source": ".ralph/prd-ui.json#U-014"
+      },
+      {
+        "id": "U-015",
+        "title": "Configuration MCP dans admin",
+        "previousPasses": true,
+        "disposition": "explicit_open_story",
+        "trackedBy": [
+          "U-015",
+          "S0-011"
+        ],
+        "source": ".ralph/prd-ui.json#U-015"
+      },
+      {
+        "id": "U-016",
+        "title": "Configuration LTI dans admin",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011",
+          "S-034"
+        ],
+        "source": ".ralph/prd-ui.json#U-016"
+      },
+      {
+        "id": "U-017",
+        "title": "Dashboard Pedagogy Genome",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011",
+          "S-036"
+        ],
+        "source": ".ralph/prd-ui.json#U-017"
+      },
+      {
+        "id": "U-018",
+        "title": "Widget xAPI status",
+        "previousPasses": true,
+        "disposition": "explicit_open_story",
+        "trackedBy": [
+          "U-018",
+          "S0-011"
+        ],
+        "source": ".ralph/prd-ui.json#U-018"
+      },
+      {
+        "id": "U-019",
+        "title": "Indicateur sync dans sidebar",
+        "previousPasses": true,
+        "disposition": "scope_and_delivery_review_required",
+        "trackedBy": [
+          "S0-011",
+          "S6-010"
+        ],
+        "source": ".ralph/prd-ui.json#U-019"
+      },
+      {
+        "id": "U-020",
+        "title": "Bannière installer PWA",
+        "previousPasses": true,
+        "disposition": "explicit_open_story",
+        "trackedBy": [
+          "U-020",
+          "S0-011"
+        ],
+        "source": ".ralph/prd-ui.json#U-020"
+      },
+      {
+        "id": "U-021",
+        "title": "Bannière consentement télémétrie RGPD",
+        "previousPasses": true,
+        "disposition": "explicit_open_story",
+        "trackedBy": [
+          "U-021",
+          "S0-011"
+        ],
+        "source": ".ralph/prd-ui.json#U-021"
+      }
+    ],
+    "requests": [
+      {
+        "id": "R-001",
+        "request": "Bilan réel et fermeture des promesses",
+        "trackedBy": [
+          "S6-001",
+          "S6-013"
+        ],
+        "source": "Conversation courante, 26 août 2026"
+      },
+      {
+        "id": "R-002",
+        "request": "Mémoire et OOM Qalem",
+        "trackedBy": [
+          "S6-002"
+        ],
+        "source": "Conversation courante, août 2026"
+      },
+      {
+        "id": "R-003",
+        "request": "Whisper sur DGX et proxy Hostinger via tunnel",
+        "trackedBy": [
+          "S6-009"
+        ],
+        "source": "Conversation courante, août 2026"
+      },
+      {
+        "id": "R-004",
+        "request": "Multi-source et contrat Diwan autonome",
+        "trackedBy": [
+          "S6-003",
+          "S6-004"
+        ],
+        "source": "Thread Qalem, 13 août 2026"
+      },
+      {
+        "id": "R-005",
+        "request": "Reformulation demande/source intelligente",
+        "trackedBy": [
+          "S6-005"
+        ],
+        "source": "Thread Qalem, 13 août 2026"
+      },
+      {
+        "id": "R-006",
+        "request": "Fidélité documentaire des diapositives",
+        "trackedBy": [
+          "S6-006"
+        ],
+        "source": "Thread Qalem, 13 août 2026"
+      },
+      {
+        "id": "R-007",
+        "request": "Illustrations créées et non copiées",
+        "trackedBy": [
+          "S6-007"
+        ],
+        "source": "Thread Qalem, 13 août 2026"
+      },
+      {
+        "id": "R-008",
+        "request": "Dirhams et s final muet",
+        "trackedBy": [
+          "S6-008"
+        ],
+        "source": "Thread Qalem, 13 août 2026"
+      },
+      {
+        "id": "R-009",
+        "request": "PWA et notifications fonctionnelles",
+        "trackedBy": [
+          "S6-010",
+          "S6-011",
+          "S3-002",
+          "U-020"
+        ],
+        "source": "PASSATION 17 juillet et PRD v1/ANCRER"
+      },
+      {
+        "id": "R-010",
+        "request": "Catalogue de voix qualifiées",
+        "trackedBy": [
+          "S6-012"
+        ],
+        "source": ".ralph/progress.md"
+      },
+      {
+        "id": "R-011",
+        "request": "Syllabus complet et PDF lisible",
+        "trackedBy": [
+          "S5-004"
+        ],
+        "source": ".ralph/prd-v2.json, réouverture du 9 août"
+      },
+      {
+        "id": "R-012",
+        "request": "Laser et contexte territorial",
+        "trackedBy": [
+          "S4-010"
+        ],
+        "source": ".ralph/prd-v2.json"
+      },
+      {
+        "id": "R-013",
+        "request": "Capture authentifiée et régénération groupée",
+        "trackedBy": [
+          "S1-012"
+        ],
+        "source": "PASSATION 17 juillet ; cible à reconfirmer"
+      },
+      {
+        "id": "R-014",
+        "request": "Formation complète, ressources, quiz et médias",
+        "trackedBy": [
+          "S6-013"
+        ],
+        "source": "Thread Qalem, 11–13 août"
+      },
+      {
+        "id": "R-015",
+        "request": "Aucune rotation dans ce chantier",
+        "trackedBy": [
+          "S6-014"
+        ],
+        "source": "Refus explicite dans la conversation courante"
+      },
+      {
+        "id": "R-016",
+        "request": "Builder de widgets et cadrage NP",
+        "trackedBy": [
+          "S6-015",
+          "S6-016"
+        ],
+        "source": "docs/np-cadrage.md, 14–15 juillet"
+      },
+      {
+        "id": "R-017",
+        "request": "Exports réellement utilisables",
+        "trackedBy": [
+          "S1-007",
+          "S1-008",
+          "S1-010",
+          "S6-013"
+        ],
+        "source": "PRD v2 et NP Q3/Q4"
+      }
+    ]
+  },
+  "stories": [
+    {
+      "id": "S6-001",
+      "title": "Recertifier le SHA livré et solder le contrôle qualité global",
+      "description": "En tant qu’utilisateur de Qalem, je veux recertifier le sha livré et solder le contrôle qualité global afin que le parcours promis soit réellement utilisable.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P0",
+      "status": "to_validate",
+      "passes": false,
+      "source": {
+        "type": "request_or_observed_gap",
+        "date": "2026-08-26"
+      },
+      "sourceDependencies": [],
+      "dependencies": [],
+      "gap": "L’accès SSH canonique a été rétabli le 27 août 2026. Le clone historique ServeurIA est divergent et sale ; la recertification doit donc utiliser un clone isolé neuf et identifier les déploiements effectifs avant toute clôture.",
+      "evidence": [
+        ".ralph/prd-v2.json",
+        "git:332941dc7f0727dc673c4364f78e122b879f2f96",
+        "thread:01a005ad-360e-7710-aeb5-bf5fc84c67b6/2026-08-20"
+      ],
+      "acceptance": [
+        "Identifier séparément les SHA web, workers et capture-worker ainsi que leurs configurations effectives sans imprimer de secrets.",
+        "Exécuter sur un clone isolé ServeurIA le contrôle de formatage global, le typecheck, le lint, les tests, le build et les E2E ; corriger tout échec dans le périmètre Qalem.",
+        "Consigner commandes, date, SHA, codes de sortie et artefacts ; une suite ciblée ne remplace pas la suite globale.",
+        "Vérifier les parcours publics et authentifiés critiques ainsi que les limites et montages persistants après déploiement.",
+        "Vérifier que le PRD v3 et ses pointeurs sont suivis et poussés sur refork-v030 ; aucune clôture documentaire permanente avant preuve du remote."
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 1
+    },
+    {
+      "id": "S6-002",
+      "title": "Terminer le diagnostic mémoire propre à Qalem",
+      "description": "En tant qu’utilisateur de Qalem, je veux terminer le diagnostic mémoire propre à qalem afin que le parcours promis soit réellement utilisable.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P0",
+      "status": "blocked",
+      "passes": false,
+      "source": {
+        "type": "request_or_observed_gap",
+        "date": "2026-08-26"
+      },
+      "sourceDependencies": [],
+      "dependencies": [],
+      "gap": "Le dimensionnement du build est commité ; la stabilité actuelle des conteneurs Qalem et la fermeture de la demande OOM restent à re-prouver. Ne pas transférer ce chantier à Saqr.",
+      "evidence": [
+        "Dockerfile",
+        "next.config.ts",
+        "infra/coolify/qalem-runtime.yml",
+        "git:53bc4ad"
+      ],
+      "acceptance": [
+        "Corréler les événements OOM datés aux identifiants exacts des conteneurs Qalem, en distinguant validation, build, web et workers.",
+        "Mesurer mémoire et redémarrages pendant un scénario représentatif de génération et d’export dans un environnement borné, sans provoquer de charge non maîtrisée en production.",
+        "Vérifier les limites persistantes après recréation d’un conteneur de test ; documenter toute intervention Qalem encore nécessaire.",
+        "Ne modifier ni swap global ni conteneur d’un autre projet ; signaler séparément toute cause externe."
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": [],
+      "executionAllowed": false,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 2
+    },
+    {
+      "id": "S0-015",
+      "title": "Auth multi-tenant + persistance Storage sur le flux classroom (P0)",
+      "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Auth multi-tenant + persistance Storage sur le flux classroom (P0) » afin de disposer d’une livraison prouvée de bout en bout.",
+      "epic": "0-SOCLE",
+      "priority": "P0",
+      "status": "to_validate",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-v2.json",
+        "id": "S0-015",
+        "previousPasses": false
+      },
+      "sourceDependencies": [
+        "S0-013"
+      ],
+      "dependencies": [],
+      "gap": "Preuves historiques d’isolation et de persistance ; écoute finale et état courant non certifiés.",
+      "evidence": [
+        "tests/api/classroom-access.test.ts",
+        ".ralph/prd-v2.json#S0-015"
+      ],
+      "acceptance": [
+        "Génération + lecture d'une classroom non publiée exigent une session Supabase authentifiée (401 sinon)",
+        "Génération limitée à super-admin OU admin de l'orgId ciblé (403 sinon) ; lecture ouverte à tout membre de l'org",
+        "Lecture anonyme autorisée uniquement après publication explicite ; les médias suivent exactement la visibilité de la classroom",
+        "classroom rattaché à un orgId dès la génération ; propriété (ownerId) dérivée de la session, jamais du body",
+        "stages/scenes persistés en base Postgres normalisée (plus de fichier JSON local), médias dans le bucket Storage classroom-media (plus de fs.writeFile)",
+        "un classroom généré avant survit à un redéploiement Coolify (conteneur recréé) sans perte",
+        "accès cross-org refusé (403) sur un classroom d'une autre organisation",
+        "vérifié dans un vrai navigateur connecté pour le contenu privé et en fenêtre anonyme pour le contenu publié : scènes affichées + audio TTS audible (SOP-011)"
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": null,
+        "note": "Partie machine vérifiée le 2026-07-22, story maintenue à passes=false jusqu'à l'écoute humaine exigée par SOP-011. Le critère de lecture a été corrigé pour intégrer la diffusion à des tiers demandée ultérieurement : seules les classrooms explicitement publiées et leurs médias sont anonymement accessibles. Après redéploiement Coolify, la classroom publique 9H4k970HIy, créée le 2026-07-19, est toujours en base avec 9 scènes, 52 actions speech, 52 audioUrl Storage et 52 objets audio ; un WAV servi par Qalem répond 200, audio/wav, 582 764 octets. En production : anonyme = 401 sur génération, catalogue d'organisation et classroom privée ; utilisateur authentifié hors tenant = 403 sur la privée ; contenu publié = 200. Le compte de contrôle éphémère a été supprimé (API 200). Quinze tests permanents couvrent RBAC, ownerId issu de la session, séparation privé/public et médias ; formatage, TypeScript et ESLint verts ; Vitest 2 017/2 017 ; Playwright 37/37 sans retry ni flake. Reste exclusivement à confirmer humainement que l'audio est audible dans un vrai navigateur.",
+        "status": "historical_not_recertified"
+      },
+      "historicalDependencies": [
+        "S0-013"
+      ],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 3
+    },
+    {
+      "id": "S6-014",
+      "title": "Conserver la dette de sécurité Qalem sous autorisation explicite",
+      "description": "En tant qu’utilisateur de Qalem, je veux conserver la dette de sécurité qalem sous autorisation explicite afin que le parcours promis soit réellement utilisable.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P0",
+      "status": "blocked",
+      "passes": false,
+      "source": {
+        "type": "request_or_observed_gap",
+        "date": "2026-08-26"
+      },
+      "sourceDependencies": [],
+      "dependencies": [],
+      "gap": "Expositions de secrets signalées dans l’historique ; l’utilisateur a explicitement refusé les rotations dans ce chantier.",
+      "evidence": [
+        "AGENTS.md#Règles du projet",
+        "thread:01a005ad-360e-7710-aeb5-bf5fc84c67b6"
+      ],
+      "acceptance": [
+        "Conserver uniquement les catégories de secrets et services concernés, jamais leurs valeurs.",
+        "Ne déclencher aucune rotation, révocation ou mutation sans nouvelle autorisation explicite d’Amine dans la session propriétaire.",
+        "Si autorisation ultérieure : utiliser le broker/coffre prévu, vérifier les consommateurs Qalem et consigner la clôture réelle.",
+        "Une priorité P0 exprime le risque, pas une permission d’exécution ; garder cette US bloquée tant que le refus s’applique."
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": [],
+      "executionAllowed": false,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 4
+    },
+    {
+      "id": "S6-005",
+      "title": "Proposer une reformulation fondée sur les sources en cas de conflit",
+      "description": "En tant qu’utilisateur de Qalem, je veux proposer une reformulation fondée sur les sources en cas de conflit afin que le parcours promis soit réellement utilisable.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P1",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "type": "request_or_observed_gap",
+        "date": "2026-08-26"
+      },
+      "sourceDependencies": [],
+      "dependencies": [],
+      "gap": "onUseSource remplace la demande par une phrase générique ; le raffinement courant ne reçoit que le nom du fichier.",
+      "evidence": [
+        "app/app/page.tsx:810",
+        "app/app/page.tsx:876",
+        "components/generation/source-conflict-dialog.tsx"
+      ],
+      "acceptance": [
+        "Analyser le contenu disponible et la demande ; afficher la divergence et une proposition de reformulation précise, avec références.",
+        "L’auteur peut accepter, modifier ou refuser la proposition, ou changer les sources ; aucun remplacement silencieux.",
+        "Tester désalignement réel, alignement correct et document sans contenu exploitable ; ne pas déduire un thème du seul nom de fichier.",
+        "Éprouver le dialogue FR/AR/EN et vérifier que seule la demande acceptée alimente le plan."
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 5
+    },
+    {
+      "id": "S6-006",
+      "title": "Maintenir l’ancrage documentaire jusqu’aux scènes et à leur édition",
+      "description": "En tant qu’utilisateur de Qalem, je veux maintenir l’ancrage documentaire jusqu’aux scènes et à leur édition afin que le parcours promis soit réellement utilisable.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P1",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "type": "request_or_observed_gap",
+        "date": "2026-08-26"
+      },
+      "sourceDependencies": [],
+      "dependencies": [],
+      "gap": "Le texte source est passé à l’étage plan, pas à generateSceneContent ; le résumé ne suffit pas à certifier la fidélité.",
+      "evidence": [
+        "lib/server/classroom-generation.ts:390",
+        "lib/server/classroom-generation.ts:834",
+        "lib/generation/scene-generator.ts"
+      ],
+      "acceptance": [
+        "Transmettre à chaque scène les passages pertinents avec identifiants de source et version ; ne pas injecter aveuglément tous les documents.",
+        "Conserver la traçabilité lors d’une édition ou régénération et signaler explicitement une affirmation non étayée ou contradictoire.",
+        "Tester une information uniquement présente dans le document et absente du résumé, ainsi que deux sources contradictoires.",
+        "Conserver le mode source unique dès cette story ; étendre ensuite au manifeste multi-source sans seconde logique concurrente.",
+        "Recetter plan → scènes → narration et références sur un corpus autorisé ; HTTP 200 ne suffit pas."
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 6
+    },
+    {
+      "id": "S6-007",
+      "title": "Créer les illustrations sans réutiliser les images du document source",
+      "description": "En tant qu’utilisateur de Qalem, je veux créer les illustrations sans réutiliser les images du document source afin que le parcours promis soit réellement utilisable.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P1",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "type": "request_or_observed_gap",
+        "date": "2026-08-26"
+      },
+      "sourceDependencies": [],
+      "dependencies": [],
+      "gap": "Le générateur exige encore une image source dans certains slides, en contradiction avec la demande explicite.",
+      "evidence": [
+        "lib/server/classroom-generation.ts:772",
+        "lib/generation/scene-generator.ts:1208",
+        "thread:019f6d49-52ed-7ee2-aca0-466c8b675d00/019ffbf7-eef1-71a1-9101-430197ccba1b"
+      ],
+      "acceptance": [
+        "Supprimer l’obligation de réutiliser une image de PDF au parent commun du pipeline ; créer une illustration nouvelle et pertinente.",
+        "Ne jamais remplacer un échec de génération par la reprise silencieuse d’une image source ; exposer l’échec et la reprise.",
+        "Tester la provenance des visuels persistés et vérifier visuellement leur adéquation au sujet, sans chevauchement ni élément coupé.",
+        "Préserver les QR codes fonctionnels ; les captures web explicitement demandées restent un cas distinct de S1-012 à faire accepter."
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 7
+    },
+    {
+      "id": "S6-008",
+      "title": "Afficher dirhams et prononcer le mot sans s final",
+      "description": "En tant qu’utilisateur de Qalem, je veux afficher dirhams et prononcer le mot sans s final afin que le parcours promis soit réellement utilisable.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P1",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "type": "request_or_observed_gap",
+        "date": "2026-08-26"
+      },
+      "sourceDependencies": [],
+      "dependencies": [],
+      "gap": "Les prompts imposent MAD dans le contenu ; aucune règle vocale dédiée ni test trouvés.",
+      "evidence": [
+        "lib/formation-engine/learning-context.ts:62",
+        "lib/audio/tts-utils.ts",
+        "thread:019f6d49-52ed-7ee2-aca0-466c8b675d00/019ffbfb-139a-7b01-81f5-657ac8e48174"
+      ],
+      "acceptance": [
+        "Conserver MAD comme code ISO interne ; employer dirham/dirhams dans les textes pédagogiques français destinés à l’apprenant.",
+        "Adapter la représentation envoyée au TTS afin de rendre le s final muet, sans dégrader le texte affiché ni les autres langues.",
+        "Tester montants singuliers/pluriels, sigles voisins et absence de conversion de devise.",
+        "Faire écouter un extrait réel français et consigner le verdict d’Amine avant clôture."
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 8
+    },
+    {
+      "id": "S5-004",
+      "title": "Plan auteur obligatoire et ingestion documentaire fiable [UI]",
+      "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Plan auteur obligatoire et ingestion documentaire fiable [UI] » afin de disposer d’une livraison prouvée de bout en bout.",
+      "epic": "5-ÉCOSYSTÈME",
+      "priority": "P1",
+      "status": "to_validate",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-v2.json",
+        "id": "S5-004",
+        "previousPasses": false
+      },
+      "sourceDependencies": [
+        "S5-003"
+      ],
+      "dependencies": [],
+      "gap": "L’éditeur de syllabus complet existe désormais ; la réouverture du 9 août ne justifie pas de le réimplémenter. Recetter extraction lisible, OCR et consommation du plan approuvé.",
+      "evidence": [
+        "components/generation/outlines-editor.tsx",
+        "tests/generation/syllabus-validation.test.ts",
+        ".ralph/prd-v2.json#S5-004"
+      ],
+      "acceptance": [
+        "Le parseur PDF choisi dans l’interface et sa configuration effective sont transmis à l’API ; un échec affiche la cause retournée par le serveur",
+        "Un PDF texte réel est extrait en production et un PDF sans texte exploitable oriente explicitement l’auteur vers un parseur OCR disponible",
+        "Avant toute création de classroom, Qalem propose un plan de formation lorsque l’auteur n’en fournit pas et lui permet de le modifier, le réordonner, l’enrichir ou l’annuler",
+        "La génération ne démarre qu’après validation explicite du plan par l’auteur ; le serveur consomme exactement le plan approuvé sans en générer silencieusement un second",
+        "Le contrat porte au minimum le titre, les objectifs, la progression, les points clés, les activités ou évaluations et les durées lorsqu’elles sont justifiées",
+        "Interface et erreurs localisées en français, arabe et anglais, avec parcours Playwright permanent",
+        "Quality gates complets verts sur ServeurAI et preuve navigateur en production"
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": null,
+        "note": "Réouverte le 2026-08-09 après validation humaine : le plan affiché n’était pas un syllabus complet et ne permettait pas de modifier ses métadonnées. La preuve PDF antérieure était invalide, car elle assimilait un HTTP 200 et un texte non vide à une extraction lisible alors que le document réel contenait du texte corrompu. passes=false jusqu’à validation du syllabus entièrement éditable, de la bibliothèque PDF actualisée, du repli OCR conditionnel, des quality gates, du déploiement et du parcours navigateur de production.",
+        "status": "historical_not_recertified"
+      },
+      "historicalDependencies": [
+        "S5-003"
+      ],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 9
+    },
+    {
+      "id": "S6-009",
+      "title": "Recetter Whisper sur de la parole réelle et le parcours microphone",
+      "description": "En tant qu’utilisateur de Qalem, je veux recetter whisper sur de la parole réelle et le parcours microphone afin que le parcours promis soit réellement utilisable.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P1",
+      "status": "to_validate",
+      "passes": false,
+      "source": {
+        "type": "request_or_observed_gap",
+        "date": "2026-08-26"
+      },
+      "sourceDependencies": [],
+      "dependencies": [],
+      "gap": "Le test public historique utilisait dix secondes de son synthétique : routage prouvé à cette date, qualité et latence réelle non mesurées.",
+      "evidence": [
+        "app/api/transcription/route.ts",
+        "lib/audio/asr-providers.ts",
+        "tests/audio/openai-whisper-asr.test.ts",
+        "thread:01a005ad-360e-7710-aeb5-bf5fc84c67b6/2026-08-20"
+      ],
+      "acceptance": [
+        "Utiliser des extraits de parole autorisés FR/AR/EN avec transcription de référence, plus silence, fichier invalide et ancien modèle client.",
+        "Mesurer erreurs de transcription et latence par langue, sur extraits courts et longs ; consigner les valeurs et faire accepter les résultats sans inventer un seuil déjà approuvé.",
+        "Tester microphone → envoi → texte visible → utilisation dans Qalem, ainsi que refus de permission et panne amont.",
+        "Re-prouver la route Qalem → LiteLLM Hostinger → tunnel Cloudflare → DGX et sa configuration persistante ; aucun endpoint LAN inaccessible depuis Hostinger.",
+        "Ne pas confondre résultat ASR et qualité de synthèse TTS."
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 10
+    },
+    {
+      "id": "S6-003",
+      "title": "Consommer Diwan par un contrat documentaire autonome",
+      "description": "En tant qu’utilisateur de Qalem, je veux consommer diwan par un contrat documentaire autonome afin que le parcours promis soit réellement utilisable.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P1",
+      "status": "blocked",
+      "passes": false,
+      "source": {
+        "type": "request_or_observed_gap",
+        "date": "2026-08-26"
+      },
+      "sourceDependencies": [],
+      "dependencies": [],
+      "gap": "Le contrat a été demandé le 13 août ; aucun adaptateur documentaire Qalem retrouvé. L’état du service Diwan n’est pas audité ici.",
+      "evidence": [
+        "thread:019f6d49-52ed-7ee2-aca0-466c8b675d00/019ffc8f-65d2-77d0-90bf-f0f4315d4fd1",
+        "app/api/parse-document/route.ts",
+        "lib/server/course-import-storage.ts"
+      ],
+      "acceptance": [
+        "Obtenir le contrat versionné auprès du service propriétaire : ingestion, statut, recherche, provenance et effacement ; aucun endpoint inventé.",
+        "Implémenter uniquement l’adaptateur côté Qalem, sans import du dépôt Diwan ni accès direct à sa base.",
+        "Transmettre l’identité de tenant depuis la session serveur ; tester refus inter-organisations, indisponibilité, délai dépassé et réponse invalide.",
+        "Recetter un appel réel autorisé et conserver des métadonnées de preuve non sensibles.",
+        "Ne pas attendre Diwan pour corriger les sources déjà disponibles dans le flux Qalem."
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": [],
+      "executionAllowed": false,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 11
+    },
+    {
+      "id": "S6-004",
+      "title": "Bibliothèque et sélection de plusieurs sources par formation",
+      "description": "En tant qu’utilisateur de Qalem, je veux bibliothèque et sélection de plusieurs sources par formation afin que le parcours promis soit réellement utilisable.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P1",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "type": "request_or_observed_gap",
+        "date": "2026-08-26"
+      },
+      "sourceDependencies": [],
+      "dependencies": [
+        "S6-003"
+      ],
+      "gap": "Le formulaire porte pdfFile: File | null et le dépôt ne prend que files[0].",
+      "evidence": [
+        "app/app/page.tsx:146",
+        "components/generation/generation-toolbar.tsx:299"
+      ],
+      "acceptance": [
+        "Permettre sélection, ajout, retrait et réutilisation de plusieurs documents autorisés, avec état individuel d’ingestion.",
+        "Persister un manifeste versionné de sources par organisation et par formation ; un rechargement retrouve la sélection.",
+        "Tester trois sources, un document rejeté, un doublon et une tentative d’accès cross-tenant sans perdre les sources valides.",
+        "Associer passages et références stables aux documents et exposer les contradictions sans les fusionner silencieusement.",
+        "Préserver le parcours à source unique et le parcours sans source."
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 12
+    },
+    {
+      "id": "S6-012",
+      "title": "Qualifier le catalogue vocal français et anglais",
+      "description": "En tant qu’utilisateur de Qalem, je veux qualifier le catalogue vocal français et anglais afin que le parcours promis soit réellement utilisable.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P1",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "type": "request_or_observed_gap",
+        "date": "2026-08-26"
+      },
+      "sourceDependencies": [],
+      "dependencies": [],
+      "gap": "La dette d’environ dix voix FR et dix EN est encore explicite dans le journal ; elle est distincte de la prononciation des anglicismes déjà acceptée.",
+      "evidence": [
+        ".ralph/progress.md:18",
+        "lib/audio/constants.ts",
+        "lib/audio/voice-resolver.ts"
+      ],
+      "acceptance": [
+        "Établir le catalogue cible de dix voix FR et dix EN, avec genre déclaré, langue, fournisseur, identifiant et aperçu réel.",
+        "Vérifier que chaque choix est réellement disponible et conservé lors de génération, régénération et rechargement.",
+        "Contrôler la cohérence prénom, avatar, voix et langue pour les agents ; une indisponibilité ne doit pas déclencher un changement silencieux d’identité.",
+        "Consigner l’écoute et l’acceptation humaine du catalogue ; ne pas rouvrir S1-011 pour cette extension."
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 13
+    },
+    {
+      "id": "S1-009",
+      "title": "Gate audio : tachkil AR + plancher de bruit -50 dB sur toutes les sorties TTS",
+      "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Gate audio : tachkil AR + plancher de bruit -50 dB sur toutes les sorties TTS » afin de disposer d’une livraison prouvée de bout en bout.",
+      "epic": "1-CRÉER",
+      "priority": "P1",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-v2.json",
+        "id": "S1-009",
+        "previousPasses": true
+      },
+      "sourceDependencies": [
+        "S0-006"
+      ],
+      "dependencies": [],
+      "gap": "Réouverture : le garde-fou ignore les formats autres que WAV/PCM16 et la note historique exclut certaines capsules/exports de la preuve.",
+      "evidence": [
+        "lib/audio/audio-gate.ts",
+        ".ralph/prd-v2.json#S1-009"
+      ],
+      "acceptance": [
+        "Tachkil appliqué avant synthèse AR (fixture)",
+        "Piste < -50 dB rejetée avec erreur explicite (fixture bruitée)",
+        "Gate branché sur live, capsules et exports",
+        "Tester les formats réellement servis et les capsules/exports réellement audio ; une sortie ignorée par le contrôle ne peut pas être déclarée validée."
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": null,
+        "note": "lib/audio/audio-gate.ts créé et branché au point de synthèse unique generateTTS() (lib/audio/tts-providers.ts) : assertArabicTachkilReady() rejette (TachkilRequiredError) tout texte en écriture arabe sans diacritiques tachkil sur un fournisseur non listé comme tachkil-aware (seul voxcpm-tts l'est, vérifié via le /health du studio Higgs en S0-006) ; assertAboveNoiseFloor() décode le WAV PCM16 retourné et rejette (NoiseFloorError) tout pic sous -50 dBFS. 19 tests dédiés (tests/audio/audio-gate.test.ts + tests/audio/tts-audio-gate.test.ts), 0 régression (1830/1830 vert). Limite du décodage dB documentée en commentaire ponytail : seul le WAV PCM16 est décodé sans dépendance nouvelle ; les formats compressés (mp3/opus/flac) passent sans vérification de niveau (aucune lib de décodage audio dans le repo, pas d'ajout justifié pour cette story). Sur le 3e critère (\"branché sur live, capsules et exports\") : vérifié par lecture de code que SEUL le chat live (app/api/generate/tts/route.ts) et la pré-génération de narration (lib/server/classroom-media-generation.ts) appellent réellement generateTTS() aujourd'hui — les deux sont donc protégés par construction. Les capsules Hyperframes (S1-006) délèguent la voix off à Mishkāt, un studio externe qui n'expose aucun contrat de synthèse vers notre code (lib/video/hyperframes-brief.ts n'envoie qu'un brief texte, HyperframesSound.voiceover est un simple booléen) : aucun fournisseur TTS Qalem n'est sélectionnable à ce point, donc aucune assertion honnête basée sur TACHKIL_AWARE_TTS_PROVIDERS n'y est applicable sans deviner le comportement interne de Mishkāt. L'export SCORM couche 1 (S1-007, lib/export/scorm/scene-to-html.ts, lib/export/scorm/build-scorm-package.ts) ne gère aucun audio (confirmé par lecture : ni audioUrl ni generateTTS, rendu texte/quiz/slide/pbl uniquement, gap documenté et tracké pour S1-008). Plutôt que fabriquer un branchement fictif dans ces deux fichiers, le choix a été de gater le point de synthèse unique et réel — toute future consommation audio de S1-008/capsules réutilisant generateTTS() hérite automatiquement de la gate. Limite honnêtement assumée, signalée à Amine plutôt que devinée.",
+        "status": "historical_not_recertified"
+      },
+      "historicalDependencies": [
+        "S0-006"
+      ],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 14
+    },
+    {
+      "id": "S4-010",
+      "title": "Contexte territorial réutilisable et guidage laser lisible [UI]",
+      "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Contexte territorial réutilisable et guidage laser lisible [UI] » afin de disposer d’une livraison prouvée de bout en bout.",
+      "epic": "4-MOTEUR",
+      "priority": "P1",
+      "status": "to_validate",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-v2.json",
+        "id": "S4-010",
+        "previousPasses": false
+      },
+      "sourceDependencies": [
+        "S4-009"
+      ],
+      "dependencies": [],
+      "gap": "Contexte et laser implémentés avec traces historiques ; passes=false conservé, validation ciblée encore à solder.",
+      "evidence": [
+        "lib/formation-engine/learning-context.ts",
+        ".ralph/prd-v2.json#S4-010"
+      ],
+      "acceptance": [
+        "L’auteur choisit explicitement le territoire et la devise ISO 4217 avant la génération",
+        "Une trame transmet son contexte structuré au formulaire au lieu de ne transmettre que son texte",
+        "La classroom persiste un instantané du contexte et tous les prompts monétaires utilisent la devise choisie",
+        "Le laser mesure la zone DOM complète, la parcourt et respecte une durée lisible",
+        "Formation Design Pro publie ces invariants avec des empreintes vérifiées",
+        "Quality gates complets verts sur ServeurAI et parcours navigateur validé"
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": null,
+        "note": "Cause laser corrigée au parent commun : suppression du calque décalé de 5 %, mesure de l’union entre la boîte DOM externe et son contenu, parcours serpentin de toute la zone au lieu d’un point central, durée d’action honorée et valeur par défaut portée à 8 secondes. Le contexte d’apprentissage territoire/devise est désormais explicite dans le formulaire, transmis par les trames structurées, injecté dans la recherche et les prompts, puis persisté dans le Stage de la classroom. Une adaptation ultérieure peut donc cibler les exemples monétaires, tableaux, fichiers et narrations concernés sans reconstruire la structure pédagogique. Formation Design Pro 3.4.0 publie les mêmes invariants avec empreintes vérifiées. Validation isolée ServeurAI : Prettier, TypeScript, ESLint et suite Vitest complète à code de sortie 0 ; Playwright Chromium 50/50, puis preuve ciblée du contrat Maroc/MAD 1/1. Production : web, qalem-workers et capture-worker healthy sur 9fb64e79513af41c9c5870e0d88a0902caf0fbf6 ; /api/health répond 200 ; navigateur public /app affiche Territoire=Maroc et Devise=MAD sans erreur console.",
+        "status": "historical_not_recertified"
+      },
+      "historicalDependencies": [
+        "S4-009"
+      ],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 15
+    },
+    {
+      "id": "S0-017",
+      "title": "Modèles image LiteLLM administrés : libellés, sélection et preuve UI [UI]",
+      "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Modèles image LiteLLM administrés : libellés, sélection et preuve UI [UI] » afin de disposer d’une livraison prouvée de bout en bout.",
+      "epic": "0-SOCLE",
+      "priority": "P1",
+      "status": "to_validate",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-v2.json",
+        "id": "S0-017",
+        "previousPasses": false
+      },
+      "sourceDependencies": [
+        "S0-007"
+      ],
+      "dependencies": [],
+      "gap": "La story n’a pas de clôture ; vérifier les libellés et l’identifiant réellement envoyé en production.",
+      "evidence": [
+        ".ralph/prd-v2.json#S0-017",
+        "components/generation/generation-toolbar.tsx"
+      ],
+      "acceptance": [
+        "Les modèles image administrés Gemini sont affichés avec un libellé compréhensible dans le popover média et les paramètres, tout en conservant leur identifiant de requête exact",
+        "Un modèle image administré inconnu reste sélectionnable et s'affiche avec son identifiant, sans liste blanche fragile",
+        "Test unitaire ciblé, TypeScript, lint et tests du projet verts sur ServeurAI",
+        "La production expose les modèles administrés et une vérification humaine confirme leur lisibilité dans le sélecteur"
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": null,
+        "note": null,
+        "status": "historical_not_recertified"
+      },
+      "historicalDependencies": [
+        "S0-007"
+      ],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 16
+    },
+    {
+      "id": "S6-013",
+      "title": "Recetter une formation complète avec ressources et exports réels",
+      "description": "En tant qu’utilisateur de Qalem, je veux recetter une formation complète avec ressources et exports réels afin que le parcours promis soit réellement utilisable.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P1",
+      "status": "to_validate",
+      "passes": false,
+      "source": {
+        "type": "request_or_observed_gap",
+        "date": "2026-08-26"
+      },
+      "sourceDependencies": [],
+      "dependencies": [
+        "S5-004",
+        "S6-005",
+        "S6-006",
+        "S6-007",
+        "S6-008"
+      ],
+      "gap": "Les corrections des 11–13 août existent ; aucune recette actuelle ne certifie ensemble toutes les promesses. Réutiliser les parcours existants.",
+      "evidence": [
+        "e2e/tests",
+        "lib/server/classroom-resource-generation.ts",
+        "lib/export",
+        "thread:019f6d49-52ed-7ee2-aca0-466c8b675d00/2026-08-13"
+      ],
+      "acceptance": [
+        "Depuis une demande et un document autorisé : valider le syllabus, générer les scènes et reprendre après rechargement.",
+        "Vérifier pour chaque agent parole canonique, identité, audio ; approfondissement explicite puis reprise au curseur correct.",
+        "Ouvrir les ressources produites, tester QR/lien court, recalcul du classeur et correction du quiz/PBL sur les valeurs réellement utilisées.",
+        "Lire un export MP4 réel jusqu’à la fin et contrôler toutes les prises de parole, les scènes, les images et la synchronisation ; ne pas remplacer cette preuve par la collecte unitaire des segments.",
+        "Consigner les défauts corrigés et les preuves ; SCORM et PPTX conservent leurs recettes spécialisées S1-007/008/010."
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 17
+    },
+    {
+      "id": "S-025",
+      "title": "Extraire les items de révision depuis les quiz",
+      "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Extraire les items de révision depuis les quiz » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
+      "epic": "7-HÉRITAGE",
+      "priority": "P1",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd.json",
+        "id": "S-025",
+        "previousPasses": true
+      },
+      "sourceDependencies": [
+        "S-022"
+      ],
+      "dependencies": [],
+      "gap": "extractReviewCards ne possède aucun appelant dans app/components/lib hors sa définition.",
+      "evidence": [
+        "lib/spaced-repetition/extractor.ts:80"
+      ],
+      "acceptance": [
+        "lib/spaced-repetition/extractor.ts",
+        "Items ratés/hésitants extraits après chaque quiz",
+        "Format carte : question, correctAnswer, userAnswer, difficulty, tags, sourceIds",
+        "Cartes stockées dans Supabase + IndexedDB",
+        "Relier la soumission réelle de quiz à l’extracteur et à la persistance sans créer une seconde file concurrente.",
+        "Tester idempotence, bonne réponse, erreur, hésitation et isolation utilisateur ; une carte due doit apparaître dans la page de révision après rechargement."
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": "2026-03-29T10:33:12.008Z",
+        "status": "legacy_claim_not_delivery_proof"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 18
+    },
+    {
+      "id": "S6-010",
+      "title": "Déclencher les rappels de révision et vérifier le cache PWA",
+      "description": "En tant qu’utilisateur de Qalem, je veux déclencher les rappels de révision et vérifier le cache pwa afin que le parcours promis soit réellement utilisable.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P1",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "type": "request_or_observed_gap",
+        "date": "2026-08-26"
+      },
+      "sourceDependencies": [],
+      "dependencies": [
+        "S-025"
+      ],
+      "gap": "ServiceWorkerRegistrar est monté ; checkAndNotifyDueCards ne possède aucun appelant.",
+      "evidence": [
+        "app/layout.tsx:56",
+        "lib/notifications/index.ts:120",
+        "public/sw.js",
+        "../PASSATION.md:13"
+      ],
+      "acceptance": [
+        "Brancher un déclenchement authentifié et borné avec déduplication ; zéro notification sans préférence et permission explicites.",
+        "Tester rappel dû, aucun rappel dû, désactivation, changement d’utilisateur et absence de doublon entre onglets.",
+        "Vérifier le comportement hors ligne et l’actualisation du service worker sans servir le contenu privé d’un autre utilisateur.",
+        "Cette story ne prétend pas prouver la délivrance distante application fermée : cette recette reste S3-002.",
+        "Ne pas implémenter e-mail/WhatsApp avant S6-011."
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 19
+    },
+    {
+      "id": "U-020",
+      "title": "Bannière installer PWA",
+      "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Bannière installer PWA » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
+      "epic": "7-HÉRITAGE",
+      "priority": "P1",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-ui.json",
+        "id": "U-020",
+        "previousPasses": true
+      },
+      "sourceDependencies": [],
+      "dependencies": [],
+      "gap": "Bannière d’installation présente mais sans montage retrouvé ; distincte du service worker monté.",
+      "evidence": [
+        "components/pwa-install-banner.tsx:15",
+        "app/layout.tsx"
+      ],
+      "acceptance": [
+        "Brancher la proposition d’installation seulement si applicable ; respecter refus et app déjà installée.",
+        "Vérifier les instructions iOS et le parcours Android sur appareils réels conjointement avec S3-002."
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": "2026-03-29T23:34:34.182Z",
+        "status": "legacy_claim_not_delivery_proof"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 20
+    },
+    {
+      "id": "S3-002",
+      "title": "Push PWA re-vérifié sur appareils réels iOS + Android",
+      "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Push PWA re-vérifié sur appareils réels iOS + Android » afin de disposer d’une livraison prouvée de bout en bout.",
+      "epic": "3-ANCRER",
+      "priority": "P1",
+      "status": "to_validate",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-v2.json",
+        "id": "S3-002",
+        "previousPasses": false
+      },
+      "sourceDependencies": [
+        "S0-008"
+      ],
+      "dependencies": [
+        "S6-010",
+        "U-020"
+      ],
+      "gap": "Le service worker est monté ; réception et ouverture sur iOS/Android réels restent à prouver.",
+      "evidence": [
+        "app/layout.tsx",
+        "tasks/prd-3-ancrer.md"
+      ],
+      "acceptance": [
+        "Push reçu iOS réel (PWA installée, Safari ≥ 16.4) ET Android réel",
+        "Tap → ouverture PWA sur la carte cible",
+        "Délivrance consignée ; échec iOS → réouvrir ADR-303 avec Amine"
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": null,
+        "note": null,
+        "status": "historical_not_recertified"
+      },
+      "historicalDependencies": [
+        "S0-008"
+      ],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 21
+    },
+    {
+      "id": "S0-012",
+      "title": "[CHECKPOINT AMINE] Parcours guidé passe RTL ar-MA [UI]",
+      "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « [CHECKPOINT AMINE] Parcours guidé passe RTL ar-MA [UI] » afin de disposer d’une livraison prouvée de bout en bout.",
+      "epic": "0-SOCLE",
+      "priority": "P1",
+      "status": "to_validate",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-v2.json",
+        "id": "S0-012",
+        "previousPasses": false
+      },
+      "sourceDependencies": [
+        "S0-008"
+      ],
+      "dependencies": [],
+      "gap": "Checklist présente ; ne pas substituer une suite automatique au verdict RTL humain requis.",
+      "evidence": [
+        "docs/foundation/0-socle/checklist-rtl.md"
+      ],
+      "acceptance": [
+        "checklist-rtl.md livré (écrans, points de contrôle)",
+        "Verdict d'Amine consigné, défauts → stories de pioche"
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": null,
+        "note": null,
+        "status": "historical_not_recertified"
+      },
+      "historicalDependencies": [
+        "S0-008"
+      ],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "explicit_human_decision"
+      ],
+      "priorityRank": 22
+    },
+    {
+      "id": "S1-012",
+      "title": "Capacité capture web réutilisable — service Playwright dédié + injection scène",
+      "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Capacité capture web réutilisable — service Playwright dédié + injection scène » afin de disposer d’une livraison prouvée de bout en bout.",
+      "epic": "1-CRÉER",
+      "priority": "P1",
+      "status": "to_validate",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-v2.json",
+        "id": "S1-012",
+        "previousPasses": false
+      },
+      "sourceDependencies": [],
+      "dependencies": [],
+      "gap": "Volume déclaré et preuve historique disponibles ; session authentifiée actuelle et capture finale non recontrôlables ici.",
+      "evidence": [
+        "infra/coolify/qalem-runtime.yml",
+        "docs/foundation/5-illustration/S1-012-capture-worker-persistence-proof.md"
+      ],
+      "acceptance": [
+        "Stage LLM capture-decision opérationnel, ssrf-guard appelé avant toute capture",
+        "Service capture-worker déployé sur serveuria, /health répond",
+        "storageState proxy.ai-mpower.com enregistré manuellement par Amine",
+        "Échec de capture n'interrompt jamais la génération (test e2e web-capture-failure-isolation vert)",
+        "npx tsc --noEmit && pnpm lint && pnpm test && pnpm test:e2e verts",
+        "Vérification déployée (SOP-011) : une scène du cours F6G9W_LPT8 régénérée illustrée par une vraie capture de proxy.ai-mpower.com, confirmée visuellement par Amine",
+        "Vérifier avec Amine si la capture réelle est toujours souhaitée dans ce cours, au regard de l’exigence récente de visuels originaux ; ne pas régénérer un contenu existant sans confirmer la cible."
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": null,
+        "note": "Le défaut de persistance du storageState est corrigé au commit fe065b6 : Coolify déploie désormais le volume capture-storage-states sur /data/storage-states, vérifié après déploiement par docker inspect avec le worker healthy et qalem.ma/health à HTTP 200. La session proxy.ai-mpower.com et la confirmation visuelle d'une vraie capture restent requises ; passes=false est volontaire. Voir docs/foundation/5-illustration/S1-012-capture-worker-persistence-proof.md.",
+        "status": "historical_not_recertified"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 23
+    },
+    {
+      "id": "S0-011",
+      "title": "[CHECKPOINT AMINE] Checklist garder/abandonner des 72 stories",
+      "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « [CHECKPOINT AMINE] Checklist garder/abandonner des 72 stories » afin de disposer d’une livraison prouvée de bout en bout.",
+      "epic": "0-SOCLE",
+      "priority": "P2",
+      "status": "decision_required",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-v2.json",
+        "id": "S0-011",
+        "previousPasses": false
+      },
+      "sourceDependencies": [
+        "S0-002"
+      ],
+      "dependencies": [],
+      "gap": "Les 72 décisions de conservation restent à consigner ; présence du code et acceptation produit sont distinctes.",
+      "evidence": [
+        "docs/foundation/0-socle/checklist-bascule.md"
+      ],
+      "acceptance": [
+        "checklist-bascule.md conforme au prompt P0-B (preuves fichier:ligne, colonne Décision vide)",
+        "72 stories couvertes (comptage)",
+        "Fermée uniquement sur tranche d'Amine consignée",
+        "Décider explicitement le devenir des capacités v1 reprises dans le PRD v3 ; aucune colonne vide assimilée à un abandon."
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": null,
+        "note": null,
+        "status": "historical_not_recertified"
+      },
+      "historicalDependencies": [
+        "S0-002"
+      ],
+      "executionAllowed": false,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "explicit_human_decision"
+      ],
+      "priorityRank": 24
+    },
+    {
+      "id": "S1-007",
+      "title": "Export SCORM couche 1 : package autonome importé dans Moodle",
+      "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Export SCORM couche 1 : package autonome importé dans Moodle » afin de disposer d’une livraison prouvée de bout en bout.",
+      "epic": "1-CRÉER",
+      "priority": "P2",
+      "status": "to_validate",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-v2.json",
+        "id": "S1-007",
+        "previousPasses": true
+      },
+      "sourceDependencies": [
+        "S0-008"
+      ],
+      "dependencies": [],
+      "gap": "Réouverture de preuve : la complétion Moodle historique a été simulée via PHP, pas déclenchée par le runtime navigateur. Le runtime a évolué vers des adaptateurs natifs.",
+      "evidence": [
+        "lib/export/scorm/tracking-adapters.ts",
+        ".ralph/prd-v2.json#S1-007"
+      ],
+      "acceptance": [
+        "export_jobs scorm12 → zip imsmanifest.xml valide",
+        "Import Moodle docker réussi, completion trackée (preuve)",
+        "Runtime scorm-again, notices MIT conservées",
+        "Déclencher le tracking depuis le navigateur du LMS et relire la complétion ; documenter le remplacement de scorm-again par le runtime réellement utilisé et mettre en cohérence les notices."
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": "2026-07-11",
+        "note": "Validé sur serveuria (commits 10be27f..089950c). tsc --noEmit 0 erreur, pnpm lint 0 problème, pnpm test 1810/1810 (baseline 1799 S1-006 + 11 nouveaux tests scorm-*, zéro régression). export_jobs (migration 00021, format discriminant scorm12 pour anticiper scorm2004/cmi5 de S1-008, RLS owner-select + service-only write, bucket Storage privé `exports` deny-all client) → zip généré via lib/export/scorm/build-scorm-package.ts (imsmanifest.xml SCORM 1.2 standard + index.html scorm-again + runtime vendorisé + THIRD-PARTY-NOTICES.txt), job BullMQ export-job (pattern identique à video-capsule S1-006), API POST/GET /api/export-jobs. Preuve d'import Moodle réelle et complète, obtenue SANS AUCUNE automatisation de navigateur (interdiction stricte respectée) : bitnamilegacy/moodle + bitnamilegacy/mariadb montés sur serveuria (image bitnami/moodle officielle retirée depuis la migration Bitnami d'août 2025, vérifié sur Docker Hub/GitHub) ; imsmanifest.xml validé par un vrai parseur XML (python3 xml.dom.minidom) ; import réel via les fonctions backend PHP exactes que le formulaire Moodle d'ajout d'activité SCORM appelle (create_module()/scorm_add_instance(), lues dans le code source réel de ce Moodle pour ne rien deviner) — MANIFEST_PARSED launch_scoes=1 confirme que le parseur SCORM natif de Moodle a walké le manifeste et trouvé le SCO index.html ; complétion trackée en simulant l'effet serveur exact du bouton \"Marquer comme terminé\" (LMSSetValue cmi.core.lesson_status=completed + LMSCommit) via scorm_insert_track() (fonction backend appelée par l'endpoint AJAX de tracking de Moodle), relu via scorm_get_tracks() (API Moodle) ET vérifié en base brute (mdl_scorm_scoes_value/mdl_scorm_attempt/mdl_scorm_element, schéma normalisé de Moodle 5.2) pour 2 apprenants de test distincts. Limite assumée : le JS embarqué (scorm-again) n'a pas été exercé par un vrai navigateur — reproduit au niveau backend Moodle pour respecter l'interdiction stricte d'automatisation navigateur ; le pipeline zip→manifest→import→tracking est prouvé de bout en bout côté serveur Moodle réel. Environnement Moodle de test démonté après la preuve (conteneurs + réseau docker supprimés), scripts ad-hoc PHP/TS jamais commités. Notices MIT scorm-again (^3.0.5, vérifié sur le registre npm réel) conservées dans le zip généré (THIRD-PARTY-NOTICES.txt) — package.json/pnpm-lock.yaml mis à jour (pnpm install --no-frozen-lockfile sur serveuria). Aucune UI ajoutée (story sans tag [UI], acceptance ne le demandant pas).",
+        "status": "historical_not_recertified"
+      },
+      "historicalDependencies": [
+        "S0-008"
+      ],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 25
+    },
+    {
+      "id": "S1-008",
+      "title": "Export couche 2 : adaptateurs scorm12/scorm2004/cmi5 interchangeables",
+      "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Export couche 2 : adaptateurs scorm12/scorm2004/cmi5 interchangeables » afin de disposer d’une livraison prouvée de bout en bout.",
+      "epic": "1-CRÉER",
+      "priority": "P2",
+      "status": "to_validate",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-v2.json",
+        "id": "S1-008",
+        "previousPasses": false
+      },
+      "sourceDependencies": [
+        "S1-007"
+      ],
+      "dependencies": [
+        "S1-007"
+      ],
+      "gap": "Les trois adaptateurs et leurs tests existent ; restent les preuves LMS/lecteur de référence et la décision option/cœur.",
+      "evidence": [
+        "lib/export/scorm/tracking-adapters.ts",
+        "tests/export/learning-package-formats.test.ts"
+      ],
+      "acceptance": [
+        "3 formats depuis UN générateur (diff limité à la couche tracking)",
+        "scorm2004 vérifié Moodle, cmi5 vérifié player de référence",
+        "Statut option/cœur consigné ADR-105 dès la tranche d'Amine",
+        "Réconcilier le choix NP Q3 : export honnêtement utilisable avec contenu, audio et captures statiques de widgets ; ne pas promettre le runtime interactif Qalem dans le LMS."
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": null,
+        "note": null,
+        "status": "historical_not_recertified"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 26
+    },
+    {
+      "id": "S1-010",
+      "title": "Export PPTX re-vérifié sur la nouvelle base",
+      "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Export PPTX re-vérifié sur la nouvelle base » afin de disposer d’une livraison prouvée de bout en bout.",
+      "epic": "1-CRÉER",
+      "priority": "P2",
+      "status": "to_validate",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-v2.json",
+        "id": "S1-010",
+        "previousPasses": true
+      },
+      "sourceDependencies": [
+        "S0-008"
+      ],
+      "dependencies": [],
+      "gap": "Réouverture de preuve : OOXML bien formé ne prouve pas l’ouverture sans réparation dans PowerPoint.",
+      "evidence": [
+        "tests/edit/round-trip/ooxml-validity.test.ts",
+        ".ralph/prd-v2.json#S1-010"
+      ],
+      "acceptance": [
+        "PPTX d'un course généré s'ouvre sans réparation dans PowerPoint",
+        "Packages mathml2omml/pptxgenjs buildés au postinstall (preuve)",
+        "Consigner une ouverture réelle du fichier généré dans PowerPoint, sans réparation et avec contrôle FR/AR des éléments ; si cette application est inaccessible, garder la story ouverte."
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": "2026-07-12",
+        "note": "FR-1 vérifié : `buildPptxBlob` (lib/export/use-export-pptx.ts) était déjà exporté explicitement pour un harnais de tests round-trip (tests/edit/round-trip/*.test.ts, 8 fichiers) qui vérifiait la survie de chaque op de slide-ops à la sérialisation, mais aucun test n'auditait la bien-formation OOXML globale du zip généré. Nouveau test permanent `tests/edit/round-trip/ooxml-validity.test.ts` : construit une fixture hostile (texte avec `&`/`<script>`/guillemets/apostrophes + arabe injecté dans un élément texte, une cellule de tableau et une note de discours SpeechAction, plus une formule LaTeX réelle passant par le chemin OMML de `latexToOmml`, une image en data URL) puis (1) vérifie la présence des parties OOXML obligatoires ([Content_Types].xml, _rels/.rels, ppt/presentation.xml+rels, ppt/slides/slide1.xml+rels, docProps/core.xml, docProps/app.xml), (2) pour CHAQUE fichier .xml/.rels du zip vérifie l'équilibre des balises (même technique regex que le test SCORM existant, indépendant de mes propres helpers) et l'absence de `&` brut non échappé, (3) vérifie que le contenu hostile ressort échappé (jamais `<script>` brut) et que la formule est bien passée par `<m:oMath` (pas le fallback SVG). Zéro nouvelle dépendance (jszip déjà présent). Preuve indépendante forte (comme SCORM S1-007) : script tsx jetable générant un vrai .pptx multi-slides (2 chapitres, formule, tableau, image, lien inter-slides, contenu hostile FR/AR) exécuté sur serveuria — validé par un vrai parseur XML Python (`xml.dom.minidom`, indépendant de mon propre code) : 44 entrées zip, 10/10 parties OOXML requises présentes, 24 parties XML/rels bien formées, contenu hostile confirmé échappé, arabe préservé, formule OMML confirmée présente. Preuve postinstall : `packages/mathml2omml/dist` et `packages/pptxgenjs/dist` supprimés puis régénérés via `npm run build` (rollup) dans chacun des 2 packages sur serveuria, timestamps confirmés après rebuild — les deux dossiers `dist/` sont gitignorés localement à chaque package (vérifié `git check-ignore`), rebuild sans impact git. Validation gate sur serveuria (exécutée par le chef d'équipe suite à un blocage bash-guard bloquant toute commande contenant npx/vitest/pnpm/python même via SSH légitime dans cette session, escaladé plutôt que contourné) : `pnpm check` (Prettier) 0 problème, `npx tsc --noEmit` 0 erreur, `pnpm lint` 0 problème, `pnpm test` complet 1827/1830 verts — les 3 échecs sont exclusivement dans `tests/audio/audio-gate.test.ts`/`tts-audio-gate.test.ts`, domaine strictement disjoint de S1-009 (travail en cours d'un autre agent sur le même workspace serveuria partagé), confirmé par une ré-exécution isolée de `tests/edit/round-trip/` seul : 10 fichiers, 16 tests, tous verts. `main` non touché. **e2e non relancé** : le workspace serveuria partagé était dans un état transitoire (S1-009 non finalisé) au moment de la validation ; reporté à la stabilisation du workspace, jugé acceptable car cette story n'ajoute/modifie aucun test e2e et ne touche aucun code de production (uniquement un fichier de test vitest ajouté), risque de régression e2e nul.",
+        "status": "historical_not_recertified"
+      },
+      "historicalDependencies": [
+        "S0-008"
+      ],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 27
+    },
+    {
+      "id": "S1-004",
+      "title": "Catalogue interne (porte 2) [UI]",
+      "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Catalogue interne (porte 2) [UI] » afin de disposer d’une livraison prouvée de bout en bout.",
+      "epic": "1-CRÉER",
+      "priority": "P2",
+      "status": "to_validate",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-v2.json",
+        "id": "S1-004",
+        "previousPasses": false
+      },
+      "sourceDependencies": [
+        "S1-003"
+      ],
+      "dependencies": [],
+      "gap": "Catalogue, route et E2E présents : ne pas reconstruire ; terminer la recette de publication, visibilité et entrée en cours.",
+      "evidence": [
+        "app/api/courses/catalog/route.ts",
+        "e2e/tests/course-catalog.spec.ts"
+      ],
+      "acceptance": [
+        "Liste des courses ready + catalog_visible",
+        "Rejoindre la classe → classroom (e2e)",
+        "Flag course_catalog, rendu ar-MA vérifié"
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": null,
+        "note": null,
+        "status": "historical_not_recertified"
+      },
+      "historicalDependencies": [
+        "S1-003"
+      ],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 28
+    },
+    {
+      "id": "S1-005",
+      "title": "Import → outline éditable (porte 3)",
+      "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Import → outline éditable (porte 3) » afin de disposer d’une livraison prouvée de bout en bout.",
+      "epic": "1-CRÉER",
+      "priority": "P2",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-v2.json",
+        "id": "S1-005",
+        "previousPasses": false
+      },
+      "sourceDependencies": [
+        "S1-003"
+      ],
+      "dependencies": [],
+      "gap": "Persistance du verdict d’import présente ; le parcours complet dépôt conforme → édition → ready reste à prouver et compléter.",
+      "evidence": [
+        "lib/server/course-import-storage.ts",
+        "lib/server/course-storage.ts"
+      ],
+      "acceptance": [
+        "Contenu conforme → outline dans l'Editor natif v0.3.0",
+        "e2e dépôt → validation → outline → ready",
+        "Parsing PDF via provider existant"
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": null,
+        "note": null,
+        "status": "historical_not_recertified"
+      },
+      "historicalDependencies": [
+        "S1-003"
+      ],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 29
+    },
+    {
+      "id": "S6-016",
+      "title": "Clore le cadrage NP des widgets à partir du produit actuel",
+      "description": "En tant qu’utilisateur de Qalem, je veux clore le cadrage np des widgets à partir du produit actuel afin que le parcours promis soit réellement utilisable.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P2",
+      "status": "decision_required",
+      "passes": false,
+      "source": {
+        "type": "request_or_observed_gap",
+        "date": "2026-08-26"
+      },
+      "sourceDependencies": [],
+      "dependencies": [],
+      "gap": "Le stress-test NP est resté en attente ; plusieurs prémisses ont changé depuis juillet, notamment les plugins et les choix pédagogiques.",
+      "evidence": [
+        "../docs/np-cadrage.md:43",
+        ".ralph/prd-v2.json#S5-001",
+        ".ralph/prd-v2.json#S4-008"
+      ],
+      "acceptance": [
+        "Confronter les décisions Q1–Q4 au moteur actuel et présenter les seuls écarts non couverts, sans restaurer les anciens modèles ou endpoints.",
+        "Consigner la tranche d’Amine sur le reste du cadrage et la frontière super-admin/tenant.",
+        "Mettre à jour les critères du builder et de l’export statique retenus ; ne pas imposer l’ancienne restriction andragogie seule qui a été remplacée par un choix explicite.",
+        "Documenter le verdict et les livrables de cadrage encore demandés ; aucune écriture dans un autre projet."
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": [],
+      "executionAllowed": false,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "explicit_human_decision"
+      ],
+      "priorityRank": 30
+    },
+    {
+      "id": "S6-015",
+      "title": "Composer et publier des widgets déterministes sans redéploiement",
+      "description": "En tant qu’utilisateur de Qalem, je veux composer et publier des widgets déterministes sans redéploiement afin que le parcours promis soit réellement utilisable.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P2",
+      "status": "decision_required",
+      "passes": false,
+      "source": {
+        "type": "request_or_observed_gap",
+        "date": "2026-08-26"
+      },
+      "sourceDependencies": [],
+      "dependencies": [
+        "S6-016"
+      ],
+      "gap": "Le cadrage NP exige une composition par le super-admin ; les plugins métier livrés ne prouvent pas ce builder. Le cadrage est resté en phase 2.1.",
+      "evidence": [
+        "../docs/np-cadrage.md",
+        "lib/plugins",
+        "lib/generation/scene-generator.ts",
+        ".ralph/prd-v2.json#S5-001"
+      ],
+      "acceptance": [
+        "Après validation du cadrage actualisé, réutiliser le moteur borné existant pour composer un nouveau template à partir d’une demande, sans générer de code exécutable.",
+        "Valider structure et calculs par schéma strict et cas de référence avant prévisualisation et publication.",
+        "Autoriser création/publication au seul super-admin si la décision v1 est confirmée ; vérifier le refus aux administrateurs tenant.",
+        "Publier une nouvelle composition, la retrouver après rechargement et la consommer dans une formation sans déploiement.",
+        "Scinder en US d’exécution bornées avant implémentation ; aucune nouvelle brique atomique ni constructeur drag-and-drop implicite."
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": [],
+      "executionAllowed": false,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "explicit_human_decision"
+      ],
+      "priorityRank": 31
+    },
+    {
+      "id": "S6-011",
+      "title": "Réconcilier puis livrer les canaux de rappel e-mail et WhatsApp retenus",
+      "description": "En tant qu’utilisateur de Qalem, je veux réconcilier puis livrer les canaux de rappel e-mail et whatsapp retenus afin que le parcours promis soit réellement utilisable.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P2",
+      "status": "decision_required",
+      "passes": false,
+      "source": {
+        "type": "request_or_observed_gap",
+        "date": "2026-08-26"
+      },
+      "sourceDependencies": [],
+      "dependencies": [
+        "S6-010"
+      ],
+      "gap": "Le PRD v1 promet les trois canaux ; tasks/prd-3-ancrer.md les exclut et le code contient des placeholders. Décision de portée nécessaire.",
+      "evidence": [
+        ".ralph/prd.json#S-028",
+        "tasks/prd-3-ancrer.md#Non-Goals",
+        "lib/notifications/index.ts:176"
+      ],
+      "acceptance": [
+        "Consigner la décision explicite : rappels de révision historiques versus ancrage ; préciser quels canaux sont conservés ou retirés.",
+        "Pour chaque canal conservé : mettre en œuvre opt-in, désinscription, déduplication, envoi réel autorisé et retour d’échec sans exposition de données.",
+        "Pour chaque canal retiré : retirer la promesse de l’interface et marquer la décision de retrait, jamais passes=true par omission.",
+        "Supprimer les placeholders seulement avec leur remplacement ou une décision produit de retrait."
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": [],
+      "executionAllowed": false,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "explicit_human_decision"
+      ],
+      "priorityRank": 32
+    },
+    {
+      "id": "S2-004",
+      "title": "[GATE DPIA] Enregistrement du live : flux d'événements complet (agents + utilisateur)",
+      "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « [GATE DPIA] Enregistrement du live : flux d'événements complet (agents + utilisateur) » afin de disposer d’une livraison prouvée de bout en bout.",
+      "epic": "2-VIVRE",
+      "priority": "P2",
+      "status": "blocked",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-v2.json",
+        "id": "S2-004",
+        "previousPasses": false
+      },
+      "sourceDependencies": [
+        "S2-001"
+      ],
+      "dependencies": [],
+      "gap": "Le dossier DPIA reste DRAFT/NO-GO ; aucun enregistrement d’intervention utilisateur avant décision formelle.",
+      "evidence": [
+        "docs/foundation/2-vivre/DPIA-S2-004-DRAFT.md"
+      ],
+      "acceptance": [
+        "DPIA instruite et consignée AVANT tout commit",
+        "Consentement UI explicite → live_sessions.recorded",
+        "session_events capture agents ET interventions utilisateur, append-only (zéro UPDATE)",
+        "Pistes TTS persistées, coût Mo/session mesuré et consigné"
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": null,
+        "note": null,
+        "status": "historical_not_recertified"
+      },
+      "historicalDependencies": [
+        "S2-001"
+      ],
+      "executionAllowed": false,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 33
+    },
+    {
+      "id": "S2-005",
+      "title": "Replay fidèle « comme un vrai webinaire » (streaming, jamais de téléchargement)",
+      "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Replay fidèle « comme un vrai webinaire » (streaming, jamais de téléchargement) » afin de disposer d’une livraison prouvée de bout en bout.",
+      "epic": "2-VIVRE",
+      "priority": "P2",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-v2.json",
+        "id": "S2-005",
+        "previousPasses": false
+      },
+      "sourceDependencies": [
+        "S2-004"
+      ],
+      "dependencies": [
+        "S2-004"
+      ],
+      "gap": "Dépend de la levée effective du gate d’enregistrement ; playback canonique ne signifie pas replay de session utilisateur.",
+      "evidence": [
+        ".ralph/prd-v2.json#S2-005"
+      ],
+      "acceptance": [
+        "Session rejouée intégralement, audio inclus, via extension de lib/playback/ porté",
+        "Plateforme ET PWA",
+        "Test affirmatif : aucune route en Content-Disposition: attachment"
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": null,
+        "note": null,
+        "status": "historical_not_recertified"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 34
+    },
+    {
+      "id": "S2-006",
+      "title": "Bibliothèque de replays (reprise, suppression effective) [UI]",
+      "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Bibliothèque de replays (reprise, suppression effective) [UI] » afin de disposer d’une livraison prouvée de bout en bout.",
+      "epic": "2-VIVRE",
+      "priority": "P2",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-v2.json",
+        "id": "S2-006",
+        "previousPasses": false
+      },
+      "sourceDependencies": [
+        "S2-005"
+      ],
+      "dependencies": [
+        "S2-005"
+      ],
+      "gap": "Bibliothèque et suppression effective des événements/pistes à livrer après le replay.",
+      "evidence": [
+        ".ralph/prd-v2.json#S2-006"
+      ],
+      "acceptance": [
+        "Liste mes sessions + reprise à l'horodatage",
+        "Suppression = effacement réel des événements ET pistes audio (vérifié en base)"
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": null,
+        "note": null,
+        "status": "historical_not_recertified"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 35
+    },
+    {
+      "id": "S2-008",
+      "title": "Watermark sonore AudioSeal MIT en job BullMQ (protocole de robustesse)",
+      "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Watermark sonore AudioSeal MIT en job BullMQ (protocole de robustesse) » afin de disposer d’une livraison prouvée de bout en bout.",
+      "epic": "2-VIVRE",
+      "priority": "P2",
+      "status": "blocked",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-v2.json",
+        "id": "S2-008",
+        "previousPasses": false
+      },
+      "sourceDependencies": [
+        "S0-008",
+        "S2-010"
+      ],
+      "dependencies": [],
+      "gap": "Protocole composite déterministe présent ; sidecar, budget mémoire, conformité et robustesse P2-C non soldés.",
+      "evidence": [
+        "lib/transmissions/audio-watermark-protocol.ts",
+        ".ralph/prd-v2.json#S2-008"
+      ],
+      "acceptance": [
+        "Worker invoque AudioSeal MIT dans un sidecar borné ; watermark_id opaque 128 bits reconstitué par protocole composite documenté",
+        "Protocole P2-C automatisé : ID décodé après mp3 128k, ogg, extrait 30 s, normalisation",
+        "Flag watermarking, jamais dans le chemin de lecture",
+        "Aucune image distribuée ni décision de licence n'est implicitement déduite de l'isolation de processus : la décision de conformité documentée est un prérequis de livraison"
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": null,
+        "note": "Décision de licence mise à jour le 2026-07-23 après choix explicite MIT : AudioSeal remplace audiowmark, qui était GPL-3.0. L'ADR-001 documente la base factuelle : AudioSeal est MIT, y compris ses poids, mais son message natif est limité à 16 bits. Il ne peut donc pas être présenté comme un encodeur 128 bits direct. Qalem conserve son watermark_id de 128 bits par un cycle composite de onze segments de deux secondes (index + tranche de données + contrôle), à valider par P2-C sur MP3 128 kbit/s, OGG, normalisation et extrait de 30 secondes non aligné. La brique déterministe est maintenant implémentée dans lib/transmissions/audio-watermark-protocol.ts : elle recompose les 128 bits sur onze messages 16 bits, accepte seulement les répétitions cohérentes et échoue fermement sur segment absent, contradictoire ou corrompu. La CI GitHub 30054875307 est entièrement verte (formatage, lint, TypeScript, tests unitaires, build, migrations et E2E). Aucun sidecar, poids ou image n'est distribué avant la preuve P2-C mesurée et une décision explicite de budget mémoire. La transmission est nécessairement rattachée à un destinataire : S2-010 crée d'abord la source de vérité et l'artefact non marqué ; S2-008 publie ensuite le dérivé audio marqué.",
+        "status": "historical_not_recertified"
+      },
+      "historicalDependencies": [
+        "S0-008",
+        "S2-010"
+      ],
+      "executionAllowed": false,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 36
+    },
+    {
+      "id": "S2-009",
+      "title": "Watermark visuel indélébile",
+      "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Watermark visuel indélébile » afin de disposer d’une livraison prouvée de bout en bout.",
+      "epic": "2-VIVRE",
+      "priority": "P2",
+      "status": "to_validate",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-v2.json",
+        "id": "S2-009",
+        "previousPasses": false
+      },
+      "sourceDependencies": [
+        "S2-010"
+      ],
+      "dependencies": [],
+      "gap": "Dérivé FFmpeg et test présents ; preuve avec destinataire légitime et décodage depuis capture encore requise.",
+      "evidence": [
+        "tests/transmissions/visual-watermark.test.ts",
+        ".ralph/prd-v2.json#S2-009"
+      ],
+      "acceptance": [
+        "videowmark (ou incrustation périodique avec ADR) appliqué par le worker",
+        "Identifiant décodable sur capture d'écran du flux (preuve documentée)"
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": null,
+        "note": "État certifié le 2026-07-23, sans déclaration de complétude : l'incrustation FFmpeg rend un dérivé MP4 avec audio et identifiant opaque de 128 bits, le worker ne publie l'état done qu'après l'upload du dérivé, et la route de consultation refuse la source brute. Le test d'intégration tests/transmissions/visual-watermark.test.ts crée un MP4 réel, extrait les images source/dérivée et vérifie l'altération visuelle ainsi que le flux audio ; la CI GitHub 30045186118 est entièrement verte (formatage, lint, TypeScript, 2 066 tests unitaires, build, migrations et E2E). La preuve d'acceptation finale reste volontairement ouverte : la base Qalem ne contient aucune transmission et chaque organisation ne compte actuellement qu'un seul membre, donc aucun destinataire légitime ne peut recevoir une transmission réelle sans provisionnement explicite d'un second membre.",
+        "status": "historical_not_recertified"
+      },
+      "historicalDependencies": [
+        "S2-010"
+      ],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 37
+    },
+    {
+      "id": "S2-011",
+      "title": "[CHECKPOINT AMINE] Référentiels culture → prénoms validés",
+      "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « [CHECKPOINT AMINE] Référentiels culture → prénoms validés » afin de disposer d’une livraison prouvée de bout en bout.",
+      "epic": "2-VIVRE",
+      "priority": "P2",
+      "status": "decision_required",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-v2.json",
+        "id": "S2-011",
+        "previousPasses": false
+      },
+      "sourceDependencies": [
+        "S2-002"
+      ],
+      "dependencies": [],
+      "gap": "Aucune clôture humaine dans le registre ; ne pas activer automatiquement les référentiels.",
+      "evidence": [
+        ".ralph/prd-v2.json#S2-011"
+      ],
+      "acceptance": [
+        "Fichiers conformes P2-B (≥ 20 prénoms/genre/culture, graphie AR + romanisation)",
+        "Validation explicite d'Amine consignée avant activation du flag rich_profile en préprod"
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": null,
+        "note": null,
+        "status": "historical_not_recertified"
+      },
+      "historicalDependencies": [
+        "S2-002"
+      ],
+      "executionAllowed": false,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "explicit_human_decision"
+      ],
+      "priorityRank": 38
+    },
+    {
+      "id": "S3-001",
+      "title": "Tables d'ancrage (seeds, anchor_plans, anchor_deliveries, evaluations, xapi_outbox)",
+      "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Tables d'ancrage (seeds, anchor_plans, anchor_deliveries, evaluations, xapi_outbox) » afin de disposer d’une livraison prouvée de bout en bout.",
+      "epic": "3-ANCRER",
+      "priority": "P2",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-v2.json",
+        "id": "S3-001",
+        "previousPasses": false
+      },
+      "sourceDependencies": [
+        "S0-008",
+        "S0-009",
+        "S2-004"
+      ],
+      "dependencies": [
+        "S2-004"
+      ],
+      "gap": "Le schéma dépend de live_sessions et donc du gate S2-004.",
+      "evidence": [
+        "docs/foundation/3-ancrer/02-data-dictionary.md"
+      ],
+      "acceptance": [
+        "5 migrations conformes à 3-ancrer/02 (borne J+90, unicité par phase)",
+        "RLS testées (user seul, agrégats org)"
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": null,
+        "note": "Dépendance S2-004 ajoutée le 2026-07-26 : le data dictionary impose des clés étrangères vers live_sessions, table qui porte l’enregistrement du live et ne peut être créée avant l’instruction DPIA. Cette dépendance empêche de fabriquer un schéma d’ancrage incomplet ou de contourner le gate de protection des voix et interventions utilisateur.",
+        "status": "historical_not_recertified"
+      },
+      "historicalDependencies": [
+        "S0-008",
+        "S0-009"
+      ],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 39
+    },
+    {
+      "id": "S3-003",
+      "title": "Évaluation à chaud en fin de session [UI]",
+      "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Évaluation à chaud en fin de session [UI] » afin de disposer d’une livraison prouvée de bout en bout.",
+      "epic": "3-ANCRER",
+      "priority": "P2",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-v2.json",
+        "id": "S3-003",
+        "previousPasses": false
+      },
+      "sourceDependencies": [
+        "S3-001",
+        "S2-004"
+      ],
+      "dependencies": [
+        "S3-001",
+        "S2-004"
+      ],
+      "gap": "Évaluation à chaud et unicité à livrer sur la source de vérité de session.",
+      "evidence": [
+        "tasks/prd-3-ancrer.md"
+      ],
+      "acceptance": [
+        "Hook fin de session : 2 questions, skippable",
+        "evaluations(phase='hot') écrite, unicité prouvée",
+        "3 locales, RTL vérifié"
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": null,
+        "note": null,
+        "status": "historical_not_recertified"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 40
+    },
+    {
+      "id": "S3-004",
+      "title": "Générateur de graines : stock complet à la fin de session",
+      "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Générateur de graines : stock complet à la fin de session » afin de disposer d’une livraison prouvée de bout en bout.",
+      "epic": "3-ANCRER",
+      "priority": "P2",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-v2.json",
+        "id": "S3-004",
+        "previousPasses": false
+      },
+      "sourceDependencies": [
+        "S3-001",
+        "S2-004"
+      ],
+      "dependencies": [
+        "S3-001",
+        "S2-004"
+      ],
+      "gap": "Stock de graines de la session et coût réel non soldés.",
+      "evidence": [
+        "tasks/prd-3-ancrer.md"
+      ],
+      "acceptance": [
+        "≥ 12 graines typées via P3-B, chacune citant scene_ref et persona de LA session",
+        "UN appel LLM par session (grep : aucun dans le chemin d'envoi)",
+        "Coût consigné"
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": null,
+        "note": null,
+        "status": "historical_not_recertified"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 41
+    },
+    {
+      "id": "S3-005",
+      "title": "Plan d'ancrage opt-in + planification BullMQ ≤ J+90",
+      "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Plan d'ancrage opt-in + planification BullMQ ≤ J+90 » afin de disposer d’une livraison prouvée de bout en bout.",
+      "epic": "3-ANCRER",
+      "priority": "P2",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-v2.json",
+        "id": "S3-005",
+        "previousPasses": false
+      },
+      "sourceDependencies": [
+        "S3-004"
+      ],
+      "dependencies": [
+        "S3-004"
+      ],
+      "gap": "Opt-in, pause, arrêt et planification bornée J+90 non soldés.",
+      "evidence": [
+        "tasks/prd-3-ancrer.md"
+      ],
+      "acceptance": [
+        "Opt-in explicite → deliveries à espacement croissant",
+        "Pause un tap ; arrêt = suppression des deliveries futures",
+        "Jobs rejouables, flag anchoring"
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": null,
+        "note": null,
+        "status": "historical_not_recertified"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 42
+    },
+    {
+      "id": "S3-006",
+      "title": "Rappels quiz espacés via FSRS porté (cycle complet)",
+      "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Rappels quiz espacés via FSRS porté (cycle complet) » afin de disposer d’une livraison prouvée de bout en bout.",
+      "epic": "3-ANCRER",
+      "priority": "P2",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-v2.json",
+        "id": "S3-006",
+        "previousPasses": false
+      },
+      "sourceDependencies": [
+        "S3-005"
+      ],
+      "dependencies": [
+        "S3-005",
+        "S-025"
+      ],
+      "gap": "Étendre le FSRS existant ; l’alimentation post-quiz manquante est isolée dans S-025 pour ne pas dépendre du replay.",
+      "evidence": [
+        "lib/spaced-repetition/extractor.ts",
+        "tasks/prd-3-ancrer.md"
+      ],
+      "acceptance": [
+        "Items de quiz de la session dans la file FSRS (extension, pas réécriture)",
+        "Cycle testé : push → quiz → résultat re-nourrit FSRS",
+        "Limite Bloom consignée au parking lot si constatée"
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": null,
+        "note": null,
+        "status": "historical_not_recertified"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 43
+    },
+    {
+      "id": "S3-007",
+      "title": "Évaluations à froid J+30 / J+60",
+      "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Évaluations à froid J+30 / J+60 » afin de disposer d’une livraison prouvée de bout en bout.",
+      "epic": "3-ANCRER",
+      "priority": "P2",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-v2.json",
+        "id": "S3-007",
+        "previousPasses": false
+      },
+      "sourceDependencies": [
+        "S3-005"
+      ],
+      "dependencies": [
+        "S3-005"
+      ],
+      "gap": "Évaluations froides et unicité à livrer.",
+      "evidence": [
+        "tasks/prd-3-ancrer.md"
+      ],
+      "acceptance": [
+        "Deliveries cold_eval planifiées, réponses en phase cold_30/cold_60",
+        "Unicité par phase prouvée (doublon rejeté)"
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": null,
+        "note": null,
+        "status": "historical_not_recertified"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 44
+    },
+    {
+      "id": "S3-008",
+      "title": "[CHECKPOINT AMINE] Ton des graines + fréquences validés sur échantillon",
+      "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « [CHECKPOINT AMINE] Ton des graines + fréquences validés sur échantillon » afin de disposer d’une livraison prouvée de bout en bout.",
+      "epic": "3-ANCRER",
+      "priority": "P2",
+      "status": "decision_required",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-v2.json",
+        "id": "S3-008",
+        "previousPasses": false
+      },
+      "sourceDependencies": [
+        "S3-004"
+      ],
+      "dependencies": [
+        "S3-004"
+      ],
+      "gap": "Échantillon réel et fréquence à produire avant décision humaine ; pas de validation présumée.",
+      "evidence": [
+        "tasks/prd-3-ancrer.md"
+      ],
+      "acceptance": [
+        "20 graines réelles + plan de fréquence proposé (gabarit 3-ancrer/06)",
+        "Validation explicite avant activation du flag anchoring en préprod"
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": null,
+        "note": null,
+        "status": "historical_not_recertified"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": false,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "explicit_human_decision"
+      ],
+      "priorityRank": 45
+    },
+    {
+      "id": "S3-009",
+      "title": "Reporting ancrage : agrégats org uniquement [UI]",
+      "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Reporting ancrage : agrégats org uniquement [UI] » afin de disposer d’une livraison prouvée de bout en bout.",
+      "epic": "3-ANCRER",
+      "priority": "P2",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-v2.json",
+        "id": "S3-009",
+        "previousPasses": false
+      },
+      "sourceDependencies": [
+        "S3-003",
+        "S3-007"
+      ],
+      "dependencies": [
+        "S3-003",
+        "S3-007"
+      ],
+      "gap": "Agrégats d’ancrage et absence de drill-down individuel à prouver.",
+      "evidence": [
+        "tasks/prd-3-ancrer.md"
+      ],
+      "acceptance": [
+        "Participation, à chaud vs à froid, rétention dans le temps (e2e)",
+        "Lecture seule org, AUCUN drill-down individuel (test d'accès)"
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": null,
+        "note": null,
+        "status": "historical_not_recertified"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 46
+    },
+    {
+      "id": "S3-010",
+      "title": "Émission xAPI via outbox (retry, acteur pseudonymisé)",
+      "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Émission xAPI via outbox (retry, acteur pseudonymisé) » afin de disposer d’une livraison prouvée de bout en bout.",
+      "epic": "3-ANCRER",
+      "priority": "P2",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-v2.json",
+        "id": "S3-010",
+        "previousPasses": false
+      },
+      "sourceDependencies": [
+        "S3-001"
+      ],
+      "dependencies": [
+        "S3-001"
+      ],
+      "gap": "Outbox et LRS de référence à livrer ; le client xAPI hérité sans appelant n’est pas une preuve de livraison.",
+      "evidence": [
+        "lib/telemetry/xapi.ts",
+        "tasks/prd-3-ancrer.md"
+      ],
+      "acceptance": [
+        "Statements conformes vérifiés contre un LRS de test (P3-C)",
+        "Retry prouvé LRS coupé ; zéro e-mail/nom en clair",
+        "Flag xapi_emission, credentials LRS par org chiffrés"
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": null,
+        "note": null,
+        "status": "historical_not_recertified"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 47
+    },
+    {
+      "id": "U-007",
+      "title": "Bouton certificat dans classroom",
+      "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Bouton certificat dans classroom » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
+      "epic": "7-HÉRITAGE",
+      "priority": "P2",
+      "status": "decision_required",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-ui.json",
+        "id": "U-007",
+        "previousPasses": true
+      },
+      "sourceDependencies": [],
+      "dependencies": [
+        "S0-011"
+      ],
+      "gap": "CertificatePrompt existe sans montage retrouvé.",
+      "evidence": [
+        "components/certificate-prompt.tsx:181"
+      ],
+      "acceptance": [
+        "Après conservation, rendre l’action accessible au moment autorisé de fin de cours.",
+        "Tester émission idempotente, refus hors droits et accès au certificat depuis le parcours réel."
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": "2026-03-29T23:48:14.366Z",
+        "status": "legacy_claim_not_delivery_proof"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": false,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "explicit_human_decision"
+      ],
+      "priorityRank": 48
+    },
+    {
+      "id": "U-008",
+      "title": "Page Mes certificats",
+      "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Page Mes certificats » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
+      "epic": "7-HÉRITAGE",
+      "priority": "P2",
+      "status": "to_validate",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-ui.json",
+        "id": "U-008",
+        "previousPasses": true
+      },
+      "sourceDependencies": [
+        "U-007"
+      ],
+      "dependencies": [
+        "U-007"
+      ],
+      "gap": "Page existante ; parcours amont du certificat non soldé.",
+      "evidence": [
+        "app/certificates/page.tsx"
+      ],
+      "acceptance": [
+        "Un certificat obtenu via le parcours U-007 apparaît après rechargement et n’est visible que par son bénéficiaire autorisé.",
+        "Vérifier les états vide, erreur et consultation FR/AR/EN."
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": "2026-03-29T23:48:14.366Z",
+        "status": "legacy_claim_not_delivery_proof"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "priorityRank": 49
+    },
+    {
+      "id": "U-021",
+      "title": "Bannière consentement télémétrie RGPD",
+      "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Bannière consentement télémétrie RGPD » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
+      "epic": "7-HÉRITAGE",
+      "priority": "P2",
+      "status": "decision_required",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-ui.json",
+        "id": "U-021",
+        "previousPasses": true
+      },
+      "sourceDependencies": [],
+      "dependencies": [
+        "S0-011"
+      ],
+      "gap": "Bannière de consentement sans montage retrouvé ; ne pas activer une collecte pour justifier la bannière.",
+      "evidence": [
+        "components/telemetry-consent-banner.tsx:10",
+        "app/layout.tsx"
+      ],
+      "acceptance": [
+        "Inventorier les collectes réellement actives avant de décider de l’interface de consentement.",
+        "Pour chaque collecte retenue, vérifier consentement explicite, refus, retrait et absence d’envoi avant opt-in.",
+        "Une décision de désactivation reste une décision tracée, pas une clôture fictive."
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": "2026-03-29T23:34:34.182Z",
+        "status": "legacy_claim_not_delivery_proof"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": false,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "explicit_human_decision"
+      ],
+      "priorityRank": 50
+    },
+    {
+      "id": "S-018",
+      "title": "Implémenter le MCP Client pour serveurs externes",
+      "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Implémenter le MCP Client pour serveurs externes » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
+      "epic": "7-HÉRITAGE",
+      "priority": "P3",
+      "status": "decision_required",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd.json",
+        "id": "S-018",
+        "previousPasses": true
+      },
+      "sourceDependencies": [
+        "S-017"
+      ],
+      "dependencies": [
+        "S0-011"
+      ],
+      "gap": "Client MCP sans appelant de production retrouvé ; arbitrer les connecteurs directs face au contrat Diwan.",
+      "evidence": [
+        "lib/mcp/client.ts:198"
+      ],
+      "acceptance": [
+        "lib/mcp/client.ts : MCP Client via SDK",
+        "Config serveurs via mcp-servers.yml",
+        "Tools MCP injectables dans PBL agentic loop",
+        "Tools MCP injectables dans Director Graph",
+        "Gestion erreurs connexion/timeout",
+        "Registry avec health check",
+        "Après conservation explicite, brancher une seule initialisation serveur et injecter réellement les outils dans les consommateurs approuvés.",
+        "Prouver un appel réel, un timeout et une réponse invalide ; isolation tenant et secrets serveur obligatoires."
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": "2026-03-29T09:22:14.993Z",
+        "status": "legacy_claim_not_delivery_proof"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": false,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "explicit_human_decision"
+      ],
+      "priorityRank": 51
+    },
+    {
+      "id": "S-019",
+      "title": "Connecter NotebookLM via MCP",
+      "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Connecter NotebookLM via MCP » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
+      "epic": "7-HÉRITAGE",
+      "priority": "P3",
+      "status": "decision_required",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd.json",
+        "id": "S-019",
+        "previousPasses": true
+      },
+      "sourceDependencies": [
+        "S-018"
+      ],
+      "dependencies": [
+        "S0-011",
+        "S-018"
+      ],
+      "gap": "NotebookLM demeure une configuration d’exemple désactivée, sans preuve d’intégration Qalem.",
+      "evidence": [
+        "components/admin/mcp-tab.tsx",
+        "mcp-servers.yml.example"
+      ],
+      "acceptance": [
+        "Config serveur MCP NotebookLM dans mcp-servers.yml",
+        "Agents peuvent appeler search_notebook(query)",
+        "Agents peuvent appeler get_source_content(sourceId)",
+        "Pipeline de génération utilise sources NotebookLM comme input",
+        "Documentation utilisateur",
+        "Choisir explicitement connecteur direct ou via Diwan ; ne pas développer les deux.",
+        "Après choix, rechercher une source autorisée et produire une formation qui la référence réellement."
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": "2026-03-29T09:23:59.947Z",
+        "status": "legacy_claim_not_delivery_proof"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": false,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "explicit_human_decision"
+      ],
+      "priorityRank": 52
+    },
+    {
+      "id": "S-020",
+      "title": "Connecter Notion via MCP",
+      "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Connecter Notion via MCP » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
+      "epic": "7-HÉRITAGE",
+      "priority": "P3",
+      "status": "decision_required",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd.json",
+        "id": "S-020",
+        "previousPasses": true
+      },
+      "sourceDependencies": [
+        "S-018"
+      ],
+      "dependencies": [
+        "S0-011",
+        "S-018"
+      ],
+      "gap": "Notion demeure une configuration d’exemple, pas une livraison prouvée.",
+      "evidence": [
+        "components/admin/mcp-tab.tsx",
+        "mcp-servers.yml.example"
+      ],
+      "acceptance": [
+        "Config serveur MCP Notion dans mcp-servers.yml",
+        "search_notion(query) disponible",
+        "get_page_content(pageId) disponible",
+        "Pipeline accepte source Notion comme input",
+        "Cours généré depuis Notion est cohérent",
+        "Choisir explicitement connecteur direct ou via Diwan.",
+        "Après choix, lire une page autorisée, respecter ses droits et prouver son utilisation dans le cours."
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": "2026-03-29T09:23:59.947Z",
+        "status": "legacy_claim_not_delivery_proof"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": false,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "explicit_human_decision"
+      ],
+      "priorityRank": 53
+    },
+    {
+      "id": "S-021",
+      "title": "Connecter Google Drive via MCP",
+      "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Connecter Google Drive via MCP » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
+      "epic": "7-HÉRITAGE",
+      "priority": "P3",
+      "status": "decision_required",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd.json",
+        "id": "S-021",
+        "previousPasses": true
+      },
+      "sourceDependencies": [
+        "S-018"
+      ],
+      "dependencies": [
+        "S0-011",
+        "S-018"
+      ],
+      "gap": "Drive demeure une configuration d’exemple, pas une livraison prouvée.",
+      "evidence": [
+        "components/admin/mcp-tab.tsx",
+        "mcp-servers.yml.example"
+      ],
+      "acceptance": [
+        "Config serveur MCP Google Drive dans mcp-servers.yml",
+        "search_drive(query) disponible",
+        "get_document(docId) disponible",
+        "Support Google Docs, Slides, PDF dans Drive",
+        "Pipeline accepte source Drive comme input",
+        "Choisir explicitement connecteur direct ou via Diwan.",
+        "Après choix, vérifier une source Docs/Slides/PDF autorisée et le refus d’un document non autorisé."
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": "2026-03-29T09:23:59.947Z",
+        "status": "legacy_claim_not_delivery_proof"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": false,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "explicit_human_decision"
+      ],
+      "priorityRank": 54
+    },
+    {
+      "id": "S-034",
+      "title": "LTI Assignment and Grade Services (AGS)",
+      "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « LTI Assignment and Grade Services (AGS) » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
+      "epic": "7-HÉRITAGE",
+      "priority": "P3",
+      "status": "decision_required",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd.json",
+        "id": "S-034",
+        "previousPasses": true
+      },
+      "sourceDependencies": [
+        "S-033"
+      ],
+      "dependencies": [
+        "S0-011"
+      ],
+      "gap": "submitGrade ne possède aucun appelant de production retrouvé.",
+      "evidence": [
+        "lib/lti/grade-service.ts:77"
+      ],
+      "acceptance": [
+        "lib/lti/grade-service.ts : client LTI AGS",
+        "Score envoyé au LMS après chaque quiz",
+        "Support scores 0-100 et statuts",
+        "Retry avec backoff",
+        "Log grades dans Supabase",
+        "Après confirmation du périmètre LTI, relier le score réel au contexte du lancement LMS.",
+        "Vérifier en LMS de test score, destinataire, retry et absence de doublon ; aucune preuve par appel backend manuel seul."
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": "2026-03-29T11:34:06.346Z",
+        "status": "legacy_claim_not_delivery_proof"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": false,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "explicit_human_decision"
+      ],
+      "priorityRank": 55
+    },
+    {
+      "id": "S-035",
+      "title": "Télémétrie xAPI",
+      "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Télémétrie xAPI » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
+      "epic": "7-HÉRITAGE",
+      "priority": "P3",
+      "status": "decision_required",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd.json",
+        "id": "S-035",
+        "previousPasses": true
+      },
+      "sourceDependencies": [
+        "S-022"
+      ],
+      "dependencies": [
+        "S0-011",
+        "U-021"
+      ],
+      "gap": "Client xAPI hérité sans appelant ; distinguer télémétrie du cours et événements d’ancrage.",
+      "evidence": [
+        "lib/telemetry/xapi.ts:106"
+      ],
+      "acceptance": [
+        "lib/telemetry/xapi.ts : client xAPI ADL conformant",
+        "Statements : quiz tenté/réussi, slide vue, PBL résolu, discussion",
+        "Config LRS via env vars ou settings",
+        "Contexte : classroom ID, scene type, durée, score",
+        "Opt-in, désactivé par défaut",
+        "Décider les événements de cours conservés et la frontière avec S3-010 ; réutiliser le même mécanisme d’envoi/outbox si ces usages coexistent.",
+        "Après opt-in, vérifier dans un LRS réel les événements autorisés et leur pseudonymisation ; zéro envoi avant consentement."
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": "2026-03-29T11:28:49.856Z",
+        "status": "legacy_claim_not_delivery_proof"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": false,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "explicit_human_decision"
+      ],
+      "priorityRank": 56
+    },
+    {
+      "id": "S-036",
+      "title": "Pipeline de collecte de données pédagogiques",
+      "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Pipeline de collecte de données pédagogiques » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
+      "epic": "7-HÉRITAGE",
+      "priority": "P3",
+      "status": "decision_required",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd.json",
+        "id": "S-036",
+        "previousPasses": true
+      },
+      "sourceDependencies": [
+        "S-022"
+      ],
+      "dependencies": [
+        "S0-011",
+        "U-021"
+      ],
+      "gap": "collectPedagogyData sans appelant ; un schéma existant ne prouve aucune collecte utile.",
+      "evidence": [
+        "lib/telemetry/pedagogy-collector.ts:74"
+      ],
+      "acceptance": [
+        "lib/telemetry/pedagogy-collector.ts",
+        "Collecte opt-in : séquences scènes, scores, temps, actions, complétion",
+        "Anonymisation : IDs hashés, aucune PII",
+        "Table pedagogy_telemetry",
+        "Consentement RGPD/CNDP",
+        "Dashboard admin données agrégées",
+        "Avant toute activation, confirmer finalité, données et consentement avec le responsable du produit.",
+        "Prouver collecte consentie, absence de collecte refusée, agrégation et suppression ; ne jamais présenter un identifiant hashé comme une anonymisation garantie."
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": "2026-03-29T11:28:49.856Z",
+        "status": "legacy_claim_not_delivery_proof"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": false,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "explicit_human_decision"
+      ],
+      "priorityRank": 57
+    },
+    {
+      "id": "S-037",
+      "title": "Optimisation pipeline de génération par les données",
+      "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Optimisation pipeline de génération par les données » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
+      "epic": "7-HÉRITAGE",
+      "priority": "P3",
+      "status": "decision_required",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd.json",
+        "id": "S-037",
+        "previousPasses": true
+      },
+      "sourceDependencies": [
+        "S-036"
+      ],
+      "dependencies": [
+        "S0-011",
+        "S-036"
+      ],
+      "gap": "getOptimizationSuggestion sans appelant ; bénéfice produit non démontré.",
+      "evidence": [
+        "lib/generation/data-optimizer.ts:84"
+      ],
+      "acceptance": [
+        "lib/generation/data-optimizer.ts",
+        "Ordonnancement optimal basé sur données historiques",
+        "Difficulté quiz calibrée par performances passées",
+        "Fallback si pas assez de données",
+        "Seuil minimum 100 sessions/sujet",
+        "Après conservation explicite, tester le fallback en dessous du seuil et la sélection au-dessus du seuil.",
+        "Mesurer l’effet sur un protocole d’évaluation défini avant l’expérience ; aucune amélioration pédagogique déclarée sur simple présence du module."
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": "2026-03-29T11:28:49.856Z",
+        "status": "legacy_claim_not_delivery_proof"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": false,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "explicit_human_decision"
+      ],
+      "priorityRank": 58
+    },
+    {
+      "id": "S-047",
+      "title": "Collecte des patterns de discussion multi-agent",
+      "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Collecte des patterns de discussion multi-agent » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
+      "epic": "7-HÉRITAGE",
+      "priority": "P3",
+      "status": "decision_required",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd.json",
+        "id": "S-047",
+        "previousPasses": true
+      },
+      "sourceDependencies": [
+        "S-036"
+      ],
+      "dependencies": [
+        "S0-011",
+        "U-021"
+      ],
+      "gap": "collectDiscussionData sans appelant ; le consentement doit précéder tout branchement.",
+      "evidence": [
+        "lib/telemetry/discussion-collector.ts:195"
+      ],
+      "acceptance": [
+        "lib/telemetry/discussion-collector.ts",
+        "Données : séquence agents, type intervention, durée, quiz score post-discussion",
+        "Stockage anonymisé Supabase",
+        "Pipeline agrégation séquence ↔ performance",
+        "Décider la conservation de cette collecte et ses limites avant toute donnée réelle.",
+        "Après choix, vérifier événements, agrégats, absence de collecte sans opt-in et contrôle d’accès."
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": "2026-03-29T11:47:17.413Z",
+        "status": "legacy_claim_not_delivery_proof"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": false,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "explicit_human_decision"
+      ],
+      "priorityRank": 59
+    },
+    {
+      "id": "S-048",
+      "title": "Director data-driven",
+      "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Director data-driven » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
+      "epic": "7-HÉRITAGE",
+      "priority": "P3",
+      "status": "decision_required",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd.json",
+        "id": "S-048",
+        "previousPasses": true
+      },
+      "sourceDependencies": [
+        "S-047"
+      ],
+      "dependencies": [
+        "S0-011",
+        "S-047"
+      ],
+      "gap": "suggestNextAgent et shouldUseDataDriven sans appelant ; seuil code/acceptance à réconcilier.",
+      "evidence": [
+        "lib/orchestration/data-driven-director.ts"
+      ],
+      "acceptance": [
+        "lib/orchestration/data-driven-director.ts",
+        "Director consomme patterns agrégés",
+        "A/B testing 50/50 classique vs data-driven",
+        "Fallback sur Director classique si pas assez données",
+        "Seuil minimum 1000 sessions discussions",
+        "Faire approuver un seuil unique et un protocole A/B avant branchement ; ne pas garder deux seuils contradictoires.",
+        "Tester fallback, séparation des cohortes et résultat observable sans promettre un gain non mesuré."
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": "2026-03-29T11:47:17.413Z",
+        "status": "legacy_claim_not_delivery_proof"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": false,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "explicit_human_decision"
+      ],
+      "priorityRank": 60
+    },
+    {
+      "id": "U-011",
+      "title": "Publier un agent sur la marketplace",
+      "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Publier un agent sur la marketplace » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
+      "epic": "7-HÉRITAGE",
+      "priority": "P3",
+      "status": "decision_required",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-ui.json",
+        "id": "U-011",
+        "previousPasses": true
+      },
+      "sourceDependencies": [],
+      "dependencies": [
+        "S0-011"
+      ],
+      "gap": "PublishAgentDialog sans montage retrouvé.",
+      "evidence": [
+        "components/agent/publish-agent-dialog.tsx:31"
+      ],
+      "acceptance": [
+        "Après conservation du marketplace, brancher publication depuis une action visible et autorisée.",
+        "Tester validation, publication réelle, refus inter-tenant et retrait selon le contrat produit."
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": "2026-03-29T23:48:14.366Z",
+        "status": "legacy_claim_not_delivery_proof"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": false,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "explicit_human_decision"
+      ],
+      "priorityRank": 61
+    },
+    {
+      "id": "U-015",
+      "title": "Configuration MCP dans admin",
+      "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Configuration MCP dans admin » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
+      "epic": "7-HÉRITAGE",
+      "priority": "P3",
+      "status": "decision_required",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-ui.json",
+        "id": "U-015",
+        "previousPasses": true
+      },
+      "sourceDependencies": [
+        "U-002"
+      ],
+      "dependencies": [
+        "S0-011",
+        "S-018"
+      ],
+      "gap": "L’administration MCP affiche des exemples et simule le test de connexion.",
+      "evidence": [
+        "components/admin/mcp-tab.tsx:9"
+      ],
+      "acceptance": [
+        "Afficher la configuration effective autorisée et un résultat réel de connexion, jamais un délai simulé.",
+        "Ne jamais exposer les secrets au navigateur ; tester refus aux rôles non autorisés."
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": "2026-03-29T23:58:12.356Z",
+        "status": "legacy_claim_not_delivery_proof"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": false,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "explicit_human_decision"
+      ],
+      "priorityRank": 62
+    },
+    {
+      "id": "U-018",
+      "title": "Widget xAPI status",
+      "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Widget xAPI status » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
+      "epic": "7-HÉRITAGE",
+      "priority": "P3",
+      "status": "decision_required",
+      "passes": false,
+      "source": {
+        "file": ".ralph/prd-ui.json",
+        "id": "U-018",
+        "previousPasses": true
+      },
+      "sourceDependencies": [
+        "U-002"
+      ],
+      "dependencies": [
+        "S0-011",
+        "S-035"
+      ],
+      "gap": "Le widget appelle /api/xapi/status et /api/xapi/test ; routes non retrouvées.",
+      "evidence": [
+        "components/admin/xapi-tab.tsx"
+      ],
+      "acceptance": [
+        "Après conservation, brancher statut/test réels avec contrôle de rôle et résultat observable.",
+        "Ne pas exposer les credentials LRS ; tester erreur réseau et configuration absente."
+      ],
+      "closureEvidence": [],
+      "historicalEvidence": {
+        "completedAt": "2026-03-29T23:58:12.356Z",
+        "status": "legacy_claim_not_delivery_proof"
+      },
+      "historicalDependencies": [],
+      "executionAllowed": false,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "explicit_human_decision"
+      ],
+      "priorityRank": 63
+    }
+  ]
+}

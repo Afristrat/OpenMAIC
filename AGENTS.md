@@ -15,7 +15,10 @@
 - **Rôle** : Implémente les user stories du PRD Qalem selon le Ralph Loop
 - **Stack** : Next.js 16 + React 19 + TypeScript 5 + Tailwind 4 + Zustand + LangGraph + AI SDK + Supabase
 - **Règles** :
-  - Sur la branche `refork-v030` : lire `.ralph/prd-v2.json` (PAS `prd.json`, v1 soldé/archivé) + `.ralph/progress.md` avant chaque itération
+  - Sur la branche `refork-v030` : lire `.ralph/prd-v3.json` + `.ralph/progress.md` avant chaque itération. Le PRD v3 est la référence active depuis la réconciliation du 2026-08-26 ; `prd-v2.json`, `prd.json` et `prd-ui.json` sont des sources historiques, pas des verdicts actuels.
+  - Vue de lecture : `tasks/prd-v3.md`. Le fichier `tasks/prd-3-ancrer.md` décrit uniquement le chantier ANCRER, pas le PRD v3 global.
+  - Choisir une US selon `priorityRank`, ses dépendances et son statut. `executionAllowed=false` interdit l’implémentation avant levée explicite du gate ; une priorité P0 ne vaut pas autorisation.
+  - Ne fermer aucune US sans `closureEvidence` datée au SHA validé. Les acceptations historiques et les décisions de retrait sont distinctes de `passes=true`.
   - Une seule story par itération
   - Suivre les patterns dans "Codebase Patterns" de progress.md
   - Typecheck + lint + test + e2e avant de marquer passes=true
@@ -38,7 +41,7 @@ Toute exécution se fait sur `serveuria` via SSH :
 ## Quality Gates (à exécuter sur serveuria, jamais en local)
 
 ```bash
-npx tsc --noEmit && pnpm lint && pnpm test && pnpm test:e2e
+pnpm check && npx tsc --noEmit && pnpm lint && pnpm test && pnpm build && pnpm test:e2e
 ```
 
 ## Conventions spécifiques Qalem
