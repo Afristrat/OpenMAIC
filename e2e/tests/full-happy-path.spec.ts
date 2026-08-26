@@ -52,6 +52,8 @@ test.describe('Full Happy Path', () => {
     await page.goto('/generation-status?jobId=e2e-media-failure');
 
     await expect(page.getByRole('heading', { name: 'Generation failed' })).toBeVisible();
-    await expect(page.getByText('No incomplete course was published', { exact: false })).toBeVisible();
+    await expect(
+      page.getByText('No incomplete course was published', { exact: false }),
+    ).toBeVisible();
   });
 });

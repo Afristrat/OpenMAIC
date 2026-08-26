@@ -20,10 +20,7 @@ export async function runClassroomPlanJob(
       await markClassroomPlanJobConflict(jobId, error.alignment);
       return;
     }
-    await markClassroomPlanJobFailed(
-      jobId,
-      error instanceof Error ? error.message : String(error),
-    );
+    await markClassroomPlanJobFailed(jobId, error instanceof Error ? error.message : String(error));
     throw error;
   }
 }

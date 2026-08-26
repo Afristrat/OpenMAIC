@@ -300,9 +300,7 @@ export async function generateClassroom(
     apiKey,
     thinkingConfig: classroomThinking,
   } = await resolveModel(
-    input.modelString
-      ? { modelString: input.modelString }
-      : { stage: 'generate-classroom' },
+    input.modelString ? { modelString: input.modelString } : { stage: 'generate-classroom' },
   );
   log.info(`Using classroom model: ${modelString}`);
 
@@ -407,7 +405,9 @@ export async function generateClassroom(
     requirement: contextualRequirement,
   });
   if (input.enableWebSearch && !runWebSearch) {
-    log.info('Skipping web search because the author required exclusive use of the uploaded source');
+    log.info(
+      'Skipping web search because the author required exclusive use of the uploaded source',
+    );
   }
   if (runWebSearch) {
     const webSearchConfig = resolveClassroomWebSearchConfig(input);

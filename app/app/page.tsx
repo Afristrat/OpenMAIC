@@ -37,10 +37,7 @@ import { Textarea as UITextarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { SettingsDialog } from '@/components/settings';
 import { GenerationToolbar } from '@/components/generation/generation-toolbar';
-import {
-  OutlinesEditor,
-  type SyllabusAssistTarget,
-} from '@/components/generation/outlines-editor';
+import { OutlinesEditor, type SyllabusAssistTarget } from '@/components/generation/outlines-editor';
 import {
   SourceConflictDialog,
   type SourceConflict,
@@ -497,7 +494,11 @@ function HomePage() {
   const clearPlanJobLocation = useCallback(() => {
     const url = new URL(window.location.href);
     url.searchParams.delete('planJobId');
-    window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+    window.history.replaceState(
+      window.history.state,
+      '',
+      `${url.pathname}${url.search}${url.hash}`,
+    );
   }, []);
 
   const pollPlanJobRef = useRef<(jobId: string) => Promise<void>>(async () => undefined);
@@ -512,10 +513,9 @@ function HomePage() {
   const pollPlanJob = useCallback(
     async (jobId: string) => {
       try {
-        const response = await fetch(
-          `/api/generate-classroom/plan/${encodeURIComponent(jobId)}`,
-          { cache: 'no-store' },
-        );
+        const response = await fetch(`/api/generate-classroom/plan/${encodeURIComponent(jobId)}`, {
+          cache: 'no-store',
+        });
         const result = await readJsonResponse<ClassroomPlanJobStatusResponse>(
           response,
           t('generation.planGenerationFailed'),

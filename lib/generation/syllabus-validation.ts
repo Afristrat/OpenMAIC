@@ -3,7 +3,10 @@ import type { ClassroomSyllabus, SceneOutline } from '@/lib/types/generation';
 export type SyllabusValidationIssue =
   | { field: 'audience' | 'prerequisites' | 'overallObjective' | 'learningObjectives' }
   | { field: 'deliveryMode' | 'assessmentStrategy' | 'expectedDeliverable' | 'totalDuration' }
-  | { field: 'sceneTitle' | 'sceneDescription' | 'sceneObjective' | 'sceneDuration'; sceneIndex: number };
+  | {
+      field: 'sceneTitle' | 'sceneDescription' | 'sceneObjective' | 'sceneDuration';
+      sceneIndex: number;
+    };
 
 function isBlank(value: string | undefined): boolean {
   return !value?.trim();

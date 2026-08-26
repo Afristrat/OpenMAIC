@@ -41,9 +41,7 @@ import type { InteractionLevel, LearningApproach } from '@/lib/agents/persona-ca
 import { getSyllabusValidationIssues } from '@/lib/generation/syllabus-validation';
 
 type SceneType = SceneOutline['type'];
-export type SyllabusAssistTarget =
-  | { kind: 'syllabus' }
-  | { kind: 'scene'; sceneIndex: number };
+export type SyllabusAssistTarget = { kind: 'syllabus' } | { kind: 'scene'; sceneIndex: number };
 
 interface OutlinesEditorProps {
   courseTitle?: string;
@@ -167,9 +165,8 @@ export function OutlinesEditor({
     syllabus !== undefined &&
     onCourseTitleChange !== undefined &&
     onSyllabusChange !== undefined;
-  const validationIssues = hasSyllabusWorkspace && syllabus
-    ? getSyllabusValidationIssues(syllabus, outlines)
-    : [];
+  const validationIssues =
+    hasSyllabusWorkspace && syllabus ? getSyllabusValidationIssues(syllabus, outlines) : [];
   const isPlanComplete = validationIssues.length === 0;
   const syllabusNeedsGeneration = validationIssues.some((issue) => !('sceneIndex' in issue));
 
@@ -309,7 +306,9 @@ export function OutlinesEditor({
                     setDraggingId(null);
                     setDragOverId(null);
                   }}
-                  onAssist={onAssist ? () => onAssist({ kind: 'scene', sceneIndex: index }) : undefined}
+                  onAssist={
+                    onAssist ? () => onAssist({ kind: 'scene', sceneIndex: index }) : undefined
+                  }
                   isAssisting={assistingTarget === `scene:${index}`}
                 />
                 {!isStreaming && (
@@ -386,8 +385,7 @@ export function OutlinesEditor({
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/25 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-700 dark:text-cyan-200">
                 <Check className="size-3.5" aria-hidden />
-                {t('animation.interactionLevel')} :{' '}
-                {t(`org.interactionLevels.${interactionLevel}`)}
+                {t('animation.interactionLevel')} : {t(`org.interactionLevels.${interactionLevel}`)}
               </span>
             </div>
           )}
@@ -449,9 +447,7 @@ export function OutlinesEditor({
                 </div>
               </div>
             </div>
-            <div className="px-2 pb-5 md:px-5">
-              {sceneList}
-            </div>
+            <div className="px-2 pb-5 md:px-5">{sceneList}</div>
           </section>
         </div>
       ) : (

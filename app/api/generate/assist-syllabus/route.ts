@@ -34,12 +34,8 @@ export async function POST(request: NextRequest) {
     const target = body?.target as AssistTarget | undefined;
     const planValidation = approvedClassroomPlanSchema.safeParse(body?.plan);
 
-    const validApproach = ['pedagogy', 'hybrid', 'andragogy'].includes(
-      String(learningApproach),
-    );
-    const validInteraction = ['guided', 'balanced', 'immersive'].includes(
-      String(interactionLevel),
-    );
+    const validApproach = ['pedagogy', 'hybrid', 'andragogy'].includes(String(learningApproach));
+    const validInteraction = ['guided', 'balanced', 'immersive'].includes(String(interactionLevel));
     const validTarget =
       target?.kind === 'syllabus' ||
       (target?.kind === 'scene' &&
@@ -48,21 +44,23 @@ export async function POST(request: NextRequest) {
         target.sceneIndex < (planValidation.success ? planValidation.data.outlines.length : 0));
 
     if (!orgId || !validApproach || !validInteraction || !validTarget || !planValidation.success) {
-      return apiError('INVALID_REQUEST', 400, 'A valid plan and validated design choices are required');
+      return apiError(
+        'INVALID_REQUEST',
+        400,
+        'A valid plan and validated design choices are required',
+      );
     }
 
     const auth = await requireSuperAdminOrOrgAuthor(request, orgId);
     if (auth.response) return auth.response;
 
-    const { model, thinkingConfig } = await resolveModelFromRequest(
-      request,
-      'generate-classroom',
-    );
+    const { model, thinkingConfig } = await resolveModelFromRequest(request, 'generate-classroom');
     const targetMarkup =
       target.kind === 'scene'
         ? `<target>scene</target>\n<target_scene_index>${target.sceneIndex}</target_scene_index>`
         : '<target>syllabus</target>';
-    const locale = body?.locale === 'ar-MA' ? 'ar-MA' : body?.locale === 'en-US' ? 'en-US' : 'fr-FR';
+    const locale =
+      body?.locale === 'ar-MA' ? 'ar-MA' : body?.locale === 'en-US' ? 'en-US' : 'fr-FR';
     const prompt = `<locale>${locale}</locale>
 <learning_approach>${learningApproach}</learning_approach>
 <interaction_level>${interactionLevel}</interaction_level>

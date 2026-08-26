@@ -112,10 +112,7 @@
         "title": "Initialiser la branche refork-v030 depuis l'archive v0.3.0 vérifiée",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S0-001"
       },
       {
@@ -123,10 +120,7 @@
         "title": "Script de portage des 264 fichiers OURS_ONLY depuis la carrière",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S0-002"
       },
       {
@@ -134,10 +128,7 @@
         "title": "Porter les migrations Supabase telles quelles (RLS intact)",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S0-003"
       },
       {
@@ -145,10 +136,7 @@
         "title": "Appliquer les 137 diffs < 30 lignes (semi-automatique)",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S0-004"
       },
       {
@@ -156,10 +144,7 @@
         "title": "Copie-adaptation du socle i18n (3 locales) + RTL [UI]",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S0-005"
       },
       {
@@ -167,10 +152,7 @@
         "title": "Copie-adaptation branding + providers souverains (LLM/TTS/ASR)",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S0-006"
       },
       {
@@ -178,10 +160,7 @@
         "title": "Copie-adaptation config serveur (.env.example, server-providers.yml, ssrf-guard)",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S0-007"
       },
       {
@@ -189,10 +168,7 @@
         "title": "Quality gate complet + e2e génération & classroom FR/AR — GATE des chantiers 1-3",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S0-008"
       },
       {
@@ -200,10 +176,7 @@
         "title": "Table feature_flags + helper typé",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S0-009"
       },
       {
@@ -211,10 +184,7 @@
         "title": "Figer la carrière (tag legacy-v010-final) + CI verte",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S0-010"
       },
       {
@@ -222,9 +192,7 @@
         "title": "[CHECKPOINT AMINE] Checklist garder/abandonner des 72 stories",
         "previousPasses": false,
         "disposition": "carried_open",
-        "trackedBy": [
-          "S0-011"
-        ],
+        "trackedBy": ["S0-011"],
         "source": ".ralph/prd-v2.json#S0-011"
       },
       {
@@ -232,9 +200,7 @@
         "title": "[CHECKPOINT AMINE] Parcours guidé passe RTL ar-MA [UI]",
         "previousPasses": false,
         "disposition": "carried_open",
-        "trackedBy": [
-          "S0-012"
-        ],
+        "trackedBy": ["S0-012"],
         "source": ".ralph/prd-v2.json#S0-012"
       },
       {
@@ -242,10 +208,7 @@
         "title": "Déploiement préprod Coolify de refork-v030",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S0-013"
       },
       {
@@ -253,9 +216,7 @@
         "title": "Auth multi-tenant + persistance Storage sur le flux classroom (P0)",
         "previousPasses": false,
         "disposition": "carried_open",
-        "trackedBy": [
-          "S0-015"
-        ],
+        "trackedBy": ["S0-015"],
         "source": ".ralph/prd-v2.json#S0-015"
       },
       {
@@ -263,10 +224,7 @@
         "title": "Relais public stable et déploiement sans interruption de Qalem (P0)",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S0-016"
       },
       {
@@ -274,10 +232,7 @@
         "title": "Purge de provenance AGPL : neutraliser les 35 fichiers du majorant (ADR-002)",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S0-014"
       },
       {
@@ -285,9 +240,7 @@
         "title": "Modèles image LiteLLM administrés : libellés, sélection et preuve UI [UI]",
         "previousPasses": false,
         "disposition": "carried_open",
-        "trackedBy": [
-          "S0-017"
-        ],
+        "trackedBy": ["S0-017"],
         "source": ".ralph/prd-v2.json#S0-017"
       },
       {
@@ -295,10 +248,7 @@
         "title": "Câbler le moteur : getPromptOverride() dans outline + scène",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S1-001"
       },
       {
@@ -306,10 +256,7 @@
         "title": "[CHECKPOINT AMINE+CLAUDE] Canevas d'import co-validé",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S1-002"
       },
       {
@@ -317,10 +264,7 @@
         "title": "Tables courses + course_imports + pipeline de validation du canevas",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S1-003"
       },
       {
@@ -328,9 +272,7 @@
         "title": "Catalogue interne (porte 2) [UI]",
         "previousPasses": false,
         "disposition": "carried_open",
-        "trackedBy": [
-          "S1-004"
-        ],
+        "trackedBy": ["S1-004"],
         "source": ".ralph/prd-v2.json#S1-004"
       },
       {
@@ -338,9 +280,7 @@
         "title": "Import → outline éditable (porte 3)",
         "previousPasses": false,
         "disposition": "carried_open",
-        "trackedBy": [
-          "S1-005"
-        ],
+        "trackedBy": ["S1-005"],
         "source": ".ralph/prd-v2.json#S1-005"
       },
       {
@@ -348,10 +288,7 @@
         "title": "Capsule vidéo Hyperframes depuis une scène",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S1-006"
       },
       {
@@ -359,9 +296,7 @@
         "title": "Export SCORM couche 1 : package autonome importé dans Moodle",
         "previousPasses": true,
         "disposition": "reopened",
-        "trackedBy": [
-          "S1-007"
-        ],
+        "trackedBy": ["S1-007"],
         "source": ".ralph/prd-v2.json#S1-007"
       },
       {
@@ -369,9 +304,7 @@
         "title": "Export couche 2 : adaptateurs scorm12/scorm2004/cmi5 interchangeables",
         "previousPasses": false,
         "disposition": "carried_open",
-        "trackedBy": [
-          "S1-008"
-        ],
+        "trackedBy": ["S1-008"],
         "source": ".ralph/prd-v2.json#S1-008"
       },
       {
@@ -379,9 +312,7 @@
         "title": "Gate audio : tachkil AR + plancher de bruit -50 dB sur toutes les sorties TTS",
         "previousPasses": true,
         "disposition": "reopened",
-        "trackedBy": [
-          "S1-009"
-        ],
+        "trackedBy": ["S1-009"],
         "source": ".ralph/prd-v2.json#S1-009"
       },
       {
@@ -389,9 +320,7 @@
         "title": "Export PPTX re-vérifié sur la nouvelle base",
         "previousPasses": true,
         "disposition": "reopened",
-        "trackedBy": [
-          "S1-010"
-        ],
+        "trackedBy": ["S1-010"],
         "source": ".ralph/prd-v2.json#S1-010"
       },
       {
@@ -399,10 +328,7 @@
         "title": "Prononciation anglicismes higgs-tts (LiteLLM, MIT) via segmentation fr/en déterministe",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S1-011"
       },
       {
@@ -410,9 +336,7 @@
         "title": "Capacité capture web réutilisable — service Playwright dédié + injection scène",
         "previousPasses": false,
         "disposition": "carried_open",
-        "trackedBy": [
-          "S1-012"
-        ],
+        "trackedBy": ["S1-012"],
         "source": ".ralph/prd-v2.json#S1-012"
       },
       {
@@ -420,10 +344,7 @@
         "title": "Profil utilisateur enrichi (culture, langue, préférences) [UI]",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S2-001"
       },
       {
@@ -431,10 +352,7 @@
         "title": "QUICK-WIN : casting personnalisé — personnalités, prénoms culturels, mixité [UI]",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S2-002"
       },
       {
@@ -442,10 +360,7 @@
         "title": "Variation garantie du casting (contrainte SQL)",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S2-003"
       },
       {
@@ -453,9 +368,7 @@
         "title": "[GATE DPIA] Enregistrement du live : flux d'événements complet (agents + utilisateur)",
         "previousPasses": false,
         "disposition": "carried_open",
-        "trackedBy": [
-          "S2-004"
-        ],
+        "trackedBy": ["S2-004"],
         "source": ".ralph/prd-v2.json#S2-004"
       },
       {
@@ -463,9 +376,7 @@
         "title": "Replay fidèle « comme un vrai webinaire » (streaming, jamais de téléchargement)",
         "previousPasses": false,
         "disposition": "carried_open",
-        "trackedBy": [
-          "S2-005"
-        ],
+        "trackedBy": ["S2-005"],
         "source": ".ralph/prd-v2.json#S2-005"
       },
       {
@@ -473,9 +384,7 @@
         "title": "Bibliothèque de replays (reprise, suppression effective) [UI]",
         "previousPasses": false,
         "disposition": "carried_open",
-        "trackedBy": [
-          "S2-006"
-        ],
+        "trackedBy": ["S2-006"],
         "source": ".ralph/prd-v2.json#S2-006"
       },
       {
@@ -483,10 +392,7 @@
         "title": "Andragogie dans le live (overrides du moteur consommés par le director)",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S2-007"
       },
       {
@@ -494,9 +400,7 @@
         "title": "Watermark sonore AudioSeal MIT en job BullMQ (protocole de robustesse)",
         "previousPasses": false,
         "disposition": "carried_open",
-        "trackedBy": [
-          "S2-008"
-        ],
+        "trackedBy": ["S2-008"],
         "source": ".ralph/prd-v2.json#S2-008"
       },
       {
@@ -504,9 +408,7 @@
         "title": "Watermark visuel indélébile",
         "previousPasses": false,
         "disposition": "carried_open",
-        "trackedBy": [
-          "S2-009"
-        ],
+        "trackedBy": ["S2-009"],
         "source": ".ralph/prd-v2.json#S2-009"
       },
       {
@@ -514,10 +416,7 @@
         "title": "Fondation de transmission de support au destinataire",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S2-010"
       },
       {
@@ -525,9 +424,7 @@
         "title": "[CHECKPOINT AMINE] Référentiels culture → prénoms validés",
         "previousPasses": false,
         "disposition": "carried_open",
-        "trackedBy": [
-          "S2-011"
-        ],
+        "trackedBy": ["S2-011"],
         "source": ".ralph/prd-v2.json#S2-011"
       },
       {
@@ -535,9 +432,7 @@
         "title": "Tables d'ancrage (seeds, anchor_plans, anchor_deliveries, evaluations, xapi_outbox)",
         "previousPasses": false,
         "disposition": "carried_open",
-        "trackedBy": [
-          "S3-001"
-        ],
+        "trackedBy": ["S3-001"],
         "source": ".ralph/prd-v2.json#S3-001"
       },
       {
@@ -545,9 +440,7 @@
         "title": "Push PWA re-vérifié sur appareils réels iOS + Android",
         "previousPasses": false,
         "disposition": "carried_open",
-        "trackedBy": [
-          "S3-002"
-        ],
+        "trackedBy": ["S3-002"],
         "source": ".ralph/prd-v2.json#S3-002"
       },
       {
@@ -555,9 +448,7 @@
         "title": "Évaluation à chaud en fin de session [UI]",
         "previousPasses": false,
         "disposition": "carried_open",
-        "trackedBy": [
-          "S3-003"
-        ],
+        "trackedBy": ["S3-003"],
         "source": ".ralph/prd-v2.json#S3-003"
       },
       {
@@ -565,9 +456,7 @@
         "title": "Générateur de graines : stock complet à la fin de session",
         "previousPasses": false,
         "disposition": "carried_open",
-        "trackedBy": [
-          "S3-004"
-        ],
+        "trackedBy": ["S3-004"],
         "source": ".ralph/prd-v2.json#S3-004"
       },
       {
@@ -575,9 +464,7 @@
         "title": "Plan d'ancrage opt-in + planification BullMQ ≤ J+90",
         "previousPasses": false,
         "disposition": "carried_open",
-        "trackedBy": [
-          "S3-005"
-        ],
+        "trackedBy": ["S3-005"],
         "source": ".ralph/prd-v2.json#S3-005"
       },
       {
@@ -585,9 +472,7 @@
         "title": "Rappels quiz espacés via FSRS porté (cycle complet)",
         "previousPasses": false,
         "disposition": "carried_open",
-        "trackedBy": [
-          "S3-006"
-        ],
+        "trackedBy": ["S3-006"],
         "source": ".ralph/prd-v2.json#S3-006"
       },
       {
@@ -595,9 +480,7 @@
         "title": "Évaluations à froid J+30 / J+60",
         "previousPasses": false,
         "disposition": "carried_open",
-        "trackedBy": [
-          "S3-007"
-        ],
+        "trackedBy": ["S3-007"],
         "source": ".ralph/prd-v2.json#S3-007"
       },
       {
@@ -605,9 +488,7 @@
         "title": "[CHECKPOINT AMINE] Ton des graines + fréquences validés sur échantillon",
         "previousPasses": false,
         "disposition": "carried_open",
-        "trackedBy": [
-          "S3-008"
-        ],
+        "trackedBy": ["S3-008"],
         "source": ".ralph/prd-v2.json#S3-008"
       },
       {
@@ -615,9 +496,7 @@
         "title": "Reporting ancrage : agrégats org uniquement [UI]",
         "previousPasses": false,
         "disposition": "carried_open",
-        "trackedBy": [
-          "S3-009"
-        ],
+        "trackedBy": ["S3-009"],
         "source": ".ralph/prd-v2.json#S3-009"
       },
       {
@@ -625,9 +504,7 @@
         "title": "Émission xAPI via outbox (retry, acteur pseudonymisé)",
         "previousPasses": false,
         "disposition": "carried_open",
-        "trackedBy": [
-          "S3-010"
-        ],
+        "trackedBy": ["S3-010"],
         "source": ".ralph/prd-v2.json#S3-010"
       },
       {
@@ -635,10 +512,7 @@
         "title": "[SIGNAL AMINE REQUIS] Inventaire prouvé du corpus formation-design-pro (lecture seule)",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S4-001"
       },
       {
@@ -646,10 +520,7 @@
         "title": "[⏸️ AMINE] Vecteurs lot 1 : architecture du corpus et double publication",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S4-002"
       },
       {
@@ -657,10 +528,7 @@
         "title": "[⏸️ AMINE] Vecteurs lot 2 : structure du savoir (pistes du diagnostic re-proposées)",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S4-003"
       },
       {
@@ -668,10 +536,7 @@
         "title": "Exécution des vecteurs validés (un commit par vecteur)",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S4-004"
       },
       {
@@ -679,10 +544,7 @@
         "title": "Publication cible plateforme (manifests/overrides tracés)",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S4-005"
       },
       {
@@ -690,10 +552,7 @@
         "title": "Publication cible skill autonome (test hors plateforme)",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S4-006"
       },
       {
@@ -701,10 +560,7 @@
         "title": "Cohérence aval : une seule source de voix",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S4-007"
       },
       {
@@ -712,10 +568,7 @@
         "title": "Constitution d’animation adaptative produite par Formation Design Pro",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S4-008"
       },
       {
@@ -723,10 +576,7 @@
         "title": "Parcours multi-agent canonique et approfondissement explicite [UI]",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S4-009"
       },
       {
@@ -734,9 +584,7 @@
         "title": "Contexte territorial réutilisable et guidage laser lisible [UI]",
         "previousPasses": false,
         "disposition": "carried_open",
-        "trackedBy": [
-          "S4-010"
-        ],
+        "trackedBy": ["S4-010"],
         "source": ".ralph/prd-v2.json#S4-010"
       },
       {
@@ -744,10 +592,7 @@
         "title": "Adaptation sélective d’une classroom à un nouveau marché [UI]",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S4-011"
       },
       {
@@ -755,10 +600,7 @@
         "title": "Extensions métier utilisables et création guidée d’expertises [UI]",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S5-001"
       },
       {
@@ -766,10 +608,7 @@
         "title": "Spécialistes métier fondés sur les tâches ISCO-08 [UI]",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S5-002"
       },
       {
@@ -777,10 +616,7 @@
         "title": "Identité territoriale et preuve complète des spécialistes ISCO [UI]",
         "previousPasses": true,
         "disposition": "historically_accepted_not_recertified",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": ".ralph/prd-v2.json#S5-003"
       },
       {
@@ -788,9 +624,7 @@
         "title": "Plan auteur obligatoire et ingestion documentaire fiable [UI]",
         "previousPasses": false,
         "disposition": "carried_open",
-        "trackedBy": [
-          "S5-004"
-        ],
+        "trackedBy": ["S5-004"],
         "source": ".ralph/prd-v2.json#S5-004"
       }
     ],
@@ -800,9 +634,7 @@
         "title": "Renommer le projet OpenMAIC → Qalem",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011"
-        ],
+        "trackedBy": ["S0-011"],
         "source": ".ralph/prd.json#S-001"
       },
       {
@@ -810,9 +642,7 @@
         "title": "Ajouter les locales fr-FR et ar-MA au système i18n",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011"
-        ],
+        "trackedBy": ["S0-011"],
         "source": ".ralph/prd.json#S-002"
       },
       {
@@ -820,9 +650,7 @@
         "title": "Traduire le module common en FR et AR",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011"
-        ],
+        "trackedBy": ["S0-011"],
         "source": ".ralph/prd.json#S-003"
       },
       {
@@ -830,9 +658,7 @@
         "title": "Traduire le module chat en FR et AR",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011"
-        ],
+        "trackedBy": ["S0-011"],
         "source": ".ralph/prd.json#S-004"
       },
       {
@@ -840,9 +666,7 @@
         "title": "Traduire le module generation en FR et AR",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011"
-        ],
+        "trackedBy": ["S0-011"],
         "source": ".ralph/prd.json#S-005"
       },
       {
@@ -850,9 +674,7 @@
         "title": "Traduire le module settings en FR et AR",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011"
-        ],
+        "trackedBy": ["S0-011"],
         "source": ".ralph/prd.json#S-006"
       },
       {
@@ -860,9 +682,7 @@
         "title": "Traduire le module stage en FR et AR",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011"
-        ],
+        "trackedBy": ["S0-011"],
         "source": ".ralph/prd.json#S-007"
       },
       {
@@ -870,9 +690,7 @@
         "title": "Traduire les agents par défaut en FR et AR",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011"
-        ],
+        "trackedBy": ["S0-011"],
         "source": ".ralph/prd.json#S-008"
       },
       {
@@ -880,10 +698,7 @@
         "title": "Support RTL (right-to-left) pour l'arabe",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011",
-          "S0-012"
-        ],
+        "trackedBy": ["S0-011", "S0-012"],
         "source": ".ralph/prd.json#S-009"
       },
       {
@@ -891,10 +706,7 @@
         "title": "Adapter les prompts de génération pour FR/AR",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011",
-          "S6-013"
-        ],
+        "trackedBy": ["S0-011", "S6-013"],
         "source": ".ralph/prd.json#S-010"
       },
       {
@@ -902,10 +714,7 @@
         "title": "Ajouter des voix FR et AR à ElevenLabs",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011",
-          "S6-012"
-        ],
+        "trackedBy": ["S0-011", "S6-012"],
         "source": ".ralph/prd.json#S-011"
       },
       {
@@ -913,10 +722,7 @@
         "title": "Rendre Azure TTS dynamique (supprimer hardcode zh-CN)",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011",
-          "S6-012"
-        ],
+        "trackedBy": ["S0-011", "S6-012"],
         "source": ".ralph/prd.json#S-012"
       },
       {
@@ -924,10 +730,7 @@
         "title": "Intégrer Fish Audio S2 comme provider TTS",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011",
-          "S6-012"
-        ],
+        "trackedBy": ["S0-011", "S6-012"],
         "source": ".ralph/prd.json#S-013"
       },
       {
@@ -935,10 +738,7 @@
         "title": "Intégrer Cartesia Sonic 3 comme provider TTS",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011",
-          "S6-012"
-        ],
+        "trackedBy": ["S0-011", "S6-012"],
         "source": ".ralph/prd.json#S-014"
       },
       {
@@ -946,10 +746,7 @@
         "title": "Rendre le voice-resolver conscient de la locale",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011",
-          "S6-012"
-        ],
+        "trackedBy": ["S0-011", "S6-012"],
         "source": ".ralph/prd.json#S-015"
       },
       {
@@ -957,10 +754,7 @@
         "title": "TTS hybride — clé serveur + clé utilisateur",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011",
-          "S6-013"
-        ],
+        "trackedBy": ["S0-011", "S6-013"],
         "source": ".ralph/prd.json#S-016"
       },
       {
@@ -968,9 +762,7 @@
         "title": "Exposer Qalem comme MCP Server",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011"
-        ],
+        "trackedBy": ["S0-011"],
         "source": ".ralph/prd.json#S-017"
       },
       {
@@ -978,10 +770,7 @@
         "title": "Implémenter le MCP Client pour serveurs externes",
         "previousPasses": true,
         "disposition": "explicit_open_story",
-        "trackedBy": [
-          "S-018",
-          "S0-011"
-        ],
+        "trackedBy": ["S-018", "S0-011"],
         "source": ".ralph/prd.json#S-018"
       },
       {
@@ -989,10 +778,7 @@
         "title": "Connecter NotebookLM via MCP",
         "previousPasses": true,
         "disposition": "explicit_open_story",
-        "trackedBy": [
-          "S-019",
-          "S0-011"
-        ],
+        "trackedBy": ["S-019", "S0-011"],
         "source": ".ralph/prd.json#S-019"
       },
       {
@@ -1000,10 +786,7 @@
         "title": "Connecter Notion via MCP",
         "previousPasses": true,
         "disposition": "explicit_open_story",
-        "trackedBy": [
-          "S-020",
-          "S0-011"
-        ],
+        "trackedBy": ["S-020", "S0-011"],
         "source": ".ralph/prd.json#S-020"
       },
       {
@@ -1011,10 +794,7 @@
         "title": "Connecter Google Drive via MCP",
         "previousPasses": true,
         "disposition": "explicit_open_story",
-        "trackedBy": [
-          "S-021",
-          "S0-011"
-        ],
+        "trackedBy": ["S-021", "S0-011"],
         "source": ".ralph/prd.json#S-021"
       },
       {
@@ -1022,10 +802,7 @@
         "title": "Setup Supabase (schema + auth + RLS)",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011",
-          "S0-015"
-        ],
+        "trackedBy": ["S0-011", "S0-015"],
         "source": ".ralph/prd.json#S-022"
       },
       {
@@ -1033,10 +810,7 @@
         "title": "Migration IndexedDB → Supabase (sync hybride)",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011",
-          "S0-015"
-        ],
+        "trackedBy": ["S0-011", "S0-015"],
         "source": ".ralph/prd.json#S-023"
       },
       {
@@ -1044,10 +818,7 @@
         "title": "Écran de connexion / inscription",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011",
-          "S0-015"
-        ],
+        "trackedBy": ["S0-011", "S0-015"],
         "source": ".ralph/prd.json#S-024"
       },
       {
@@ -1055,10 +826,7 @@
         "title": "Extraire les items de révision depuis les quiz",
         "previousPasses": true,
         "disposition": "explicit_open_story",
-        "trackedBy": [
-          "S-025",
-          "S0-011"
-        ],
+        "trackedBy": ["S-025", "S0-011"],
         "source": ".ralph/prd.json#S-025"
       },
       {
@@ -1066,11 +834,7 @@
         "title": "Implémenter l'algorithme FSRS",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011",
-          "S-025",
-          "S3-006"
-        ],
+        "trackedBy": ["S0-011", "S-025", "S3-006"],
         "source": ".ralph/prd.json#S-026"
       },
       {
@@ -1078,11 +842,7 @@
         "title": "Interface de révision espacée",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011",
-          "S-025",
-          "S3-006"
-        ],
+        "trackedBy": ["S0-011", "S-025", "S3-006"],
         "source": ".ralph/prd.json#S-027"
       },
       {
@@ -1090,11 +850,7 @@
         "title": "Notifications de révision (email + push + WhatsApp)",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011",
-          "S6-010",
-          "S6-011"
-        ],
+        "trackedBy": ["S0-011", "S6-010", "S6-011"],
         "source": ".ralph/prd.json#S-028"
       },
       {
@@ -1102,10 +858,7 @@
         "title": "Définir l'architecture du Skills Registry",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011",
-          "S6-013"
-        ],
+        "trackedBy": ["S0-011", "S6-013"],
         "source": ".ralph/prd.json#S-029"
       },
       {
@@ -1113,10 +866,7 @@
         "title": "Créer le skill Medical Training",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011",
-          "S6-013"
-        ],
+        "trackedBy": ["S0-011", "S6-013"],
         "source": ".ralph/prd.json#S-030"
       },
       {
@@ -1124,10 +874,7 @@
         "title": "Créer le skill Legal Moot Court",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011",
-          "S6-013"
-        ],
+        "trackedBy": ["S0-011", "S6-013"],
         "source": ".ralph/prd.json#S-031"
       },
       {
@@ -1135,10 +882,7 @@
         "title": "Créer le skill Coding Workshop",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011",
-          "S6-013"
-        ],
+        "trackedBy": ["S0-011", "S6-013"],
         "source": ".ralph/prd.json#S-032"
       },
       {
@@ -1146,9 +890,7 @@
         "title": "Implémenter LTI 1.3 Tool Provider",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011"
-        ],
+        "trackedBy": ["S0-011"],
         "source": ".ralph/prd.json#S-033"
       },
       {
@@ -1156,10 +898,7 @@
         "title": "LTI Assignment and Grade Services (AGS)",
         "previousPasses": true,
         "disposition": "explicit_open_story",
-        "trackedBy": [
-          "S-034",
-          "S0-011"
-        ],
+        "trackedBy": ["S-034", "S0-011"],
         "source": ".ralph/prd.json#S-034"
       },
       {
@@ -1167,10 +906,7 @@
         "title": "Télémétrie xAPI",
         "previousPasses": true,
         "disposition": "explicit_open_story",
-        "trackedBy": [
-          "S-035",
-          "S0-011"
-        ],
+        "trackedBy": ["S-035", "S0-011"],
         "source": ".ralph/prd.json#S-035"
       },
       {
@@ -1178,10 +914,7 @@
         "title": "Pipeline de collecte de données pédagogiques",
         "previousPasses": true,
         "disposition": "explicit_open_story",
-        "trackedBy": [
-          "S-036",
-          "S0-011"
-        ],
+        "trackedBy": ["S-036", "S0-011"],
         "source": ".ralph/prd.json#S-036"
       },
       {
@@ -1189,10 +922,7 @@
         "title": "Optimisation pipeline de génération par les données",
         "previousPasses": true,
         "disposition": "explicit_open_story",
-        "trackedBy": [
-          "S-037",
-          "S0-011"
-        ],
+        "trackedBy": ["S-037", "S0-011"],
         "source": ".ralph/prd.json#S-037"
       },
       {
@@ -1200,9 +930,7 @@
         "title": "Modèle de données organisations",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011"
-        ],
+        "trackedBy": ["S0-011"],
         "source": ".ralph/prd.json#S-038"
       },
       {
@@ -1210,9 +938,7 @@
         "title": "Interface d'administration d'organisation",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011"
-        ],
+        "trackedBy": ["S0-011"],
         "source": ".ralph/prd.json#S-039"
       },
       {
@@ -1220,9 +946,7 @@
         "title": "Bibliothèque partagée d'organisation",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011"
-        ],
+        "trackedBy": ["S0-011"],
         "source": ".ralph/prd.json#S-040"
       },
       {
@@ -1230,9 +954,7 @@
         "title": "Templates de classroom par secteur",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011"
-        ],
+        "trackedBy": ["S0-011"],
         "source": ".ralph/prd.json#S-041"
       },
       {
@@ -1240,9 +962,7 @@
         "title": "Marketplace d'agents pédagogiques",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011"
-        ],
+        "trackedBy": ["S0-011"],
         "source": ".ralph/prd.json#S-042"
       },
       {
@@ -1250,9 +970,7 @@
         "title": "Ranking d'agents par performance",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011"
-        ],
+        "trackedBy": ["S0-011"],
         "source": ".ralph/prd.json#S-043"
       },
       {
@@ -1260,10 +978,7 @@
         "title": "SDK de plugins de scènes",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011",
-          "S6-015"
-        ],
+        "trackedBy": ["S0-011", "S6-015"],
         "source": ".ralph/prd.json#S-044"
       },
       {
@@ -1271,10 +986,7 @@
         "title": "Plugin Code Sandbox",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011",
-          "S6-015"
-        ],
+        "trackedBy": ["S0-011", "S6-015"],
         "source": ".ralph/prd.json#S-045"
       },
       {
@@ -1282,10 +994,7 @@
         "title": "Plugin Lab Simulation 3D",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011",
-          "S6-015"
-        ],
+        "trackedBy": ["S0-011", "S6-015"],
         "source": ".ralph/prd.json#S-046"
       },
       {
@@ -1293,10 +1002,7 @@
         "title": "Collecte des patterns de discussion multi-agent",
         "previousPasses": true,
         "disposition": "explicit_open_story",
-        "trackedBy": [
-          "S-047",
-          "S0-011"
-        ],
+        "trackedBy": ["S-047", "S0-011"],
         "source": ".ralph/prd.json#S-047"
       },
       {
@@ -1304,10 +1010,7 @@
         "title": "Director data-driven",
         "previousPasses": true,
         "disposition": "explicit_open_story",
-        "trackedBy": [
-          "S-048",
-          "S0-011"
-        ],
+        "trackedBy": ["S-048", "S0-011"],
         "source": ".ralph/prd.json#S-048"
       },
       {
@@ -1315,9 +1018,7 @@
         "title": "Graphe de curriculum",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011"
-        ],
+        "trackedBy": ["S0-011"],
         "source": ".ralph/prd.json#S-049"
       },
       {
@@ -1325,9 +1026,7 @@
         "title": "Reporting institutionnel pour accréditations",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011"
-        ],
+        "trackedBy": ["S0-011"],
         "source": ".ralph/prd.json#S-050"
       },
       {
@@ -1335,9 +1034,7 @@
         "title": "Docker Compose avec services séparés",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011"
-        ],
+        "trackedBy": ["S0-011"],
         "source": ".ralph/prd.json#S-051"
       },
       {
@@ -1345,9 +1042,7 @@
         "title": "Fix profil — bouton Enregistrer",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011"
-        ],
+        "trackedBy": ["S0-011"],
         "source": ".ralph/prd-ui.json#U-001"
       },
       {
@@ -1355,9 +1050,7 @@
         "title": "Séparer Admin / Clés API / Paramètres en pages distinctes",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011"
-        ],
+        "trackedBy": ["S0-011"],
         "source": ".ralph/prd-ui.json#U-002"
       },
       {
@@ -1365,11 +1058,7 @@
         "title": "Paramètres notifications",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011",
-          "S6-010",
-          "S6-011"
-        ],
+        "trackedBy": ["S0-011", "S6-010", "S6-011"],
         "source": ".ralph/prd-ui.json#U-003"
       },
       {
@@ -1377,9 +1066,7 @@
         "title": "Créer une organisation depuis la sidebar",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011"
-        ],
+        "trackedBy": ["S0-011"],
         "source": ".ralph/prd-ui.json#U-004"
       },
       {
@@ -1387,9 +1074,7 @@
         "title": "Invitation membres avec lien",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011"
-        ],
+        "trackedBy": ["S0-011"],
         "source": ".ralph/prd-ui.json#U-005"
       },
       {
@@ -1397,9 +1082,7 @@
         "title": "Dashboard admin organisation amélioré",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011"
-        ],
+        "trackedBy": ["S0-011"],
         "source": ".ralph/prd-ui.json#U-006"
       },
       {
@@ -1407,10 +1090,7 @@
         "title": "Bouton certificat dans classroom",
         "previousPasses": true,
         "disposition": "explicit_open_story",
-        "trackedBy": [
-          "U-007",
-          "S0-011"
-        ],
+        "trackedBy": ["U-007", "S0-011"],
         "source": ".ralph/prd-ui.json#U-007"
       },
       {
@@ -1418,10 +1098,7 @@
         "title": "Page Mes certificats",
         "previousPasses": true,
         "disposition": "explicit_open_story",
-        "trackedBy": [
-          "U-008",
-          "S0-011"
-        ],
+        "trackedBy": ["U-008", "S0-011"],
         "source": ".ralph/prd-ui.json#U-008"
       },
       {
@@ -1429,10 +1106,7 @@
         "title": "Page Skills disponibles",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011",
-          "S6-013"
-        ],
+        "trackedBy": ["S0-011", "S6-013"],
         "source": ".ralph/prd-ui.json#U-009"
       },
       {
@@ -1440,10 +1114,7 @@
         "title": "Page Plugins de scènes",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011",
-          "S6-013"
-        ],
+        "trackedBy": ["S0-011", "S6-013"],
         "source": ".ralph/prd-ui.json#U-010"
       },
       {
@@ -1451,10 +1122,7 @@
         "title": "Publier un agent sur la marketplace",
         "previousPasses": true,
         "disposition": "explicit_open_story",
-        "trackedBy": [
-          "U-011",
-          "S0-011"
-        ],
+        "trackedBy": ["U-011", "S0-011"],
         "source": ".ralph/prd-ui.json#U-011"
       },
       {
@@ -1462,9 +1130,7 @@
         "title": "Détail agent marketplace + avis",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011"
-        ],
+        "trackedBy": ["S0-011"],
         "source": ".ralph/prd-ui.json#U-012"
       },
       {
@@ -1472,9 +1138,7 @@
         "title": "Page pricing publique",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011"
-        ],
+        "trackedBy": ["S0-011"],
         "source": ".ralph/prd-ui.json#U-013"
       },
       {
@@ -1482,9 +1146,7 @@
         "title": "Page de paiement mobile",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011"
-        ],
+        "trackedBy": ["S0-011"],
         "source": ".ralph/prd-ui.json#U-014"
       },
       {
@@ -1492,10 +1154,7 @@
         "title": "Configuration MCP dans admin",
         "previousPasses": true,
         "disposition": "explicit_open_story",
-        "trackedBy": [
-          "U-015",
-          "S0-011"
-        ],
+        "trackedBy": ["U-015", "S0-011"],
         "source": ".ralph/prd-ui.json#U-015"
       },
       {
@@ -1503,10 +1162,7 @@
         "title": "Configuration LTI dans admin",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011",
-          "S-034"
-        ],
+        "trackedBy": ["S0-011", "S-034"],
         "source": ".ralph/prd-ui.json#U-016"
       },
       {
@@ -1514,10 +1170,7 @@
         "title": "Dashboard Pedagogy Genome",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011",
-          "S-036"
-        ],
+        "trackedBy": ["S0-011", "S-036"],
         "source": ".ralph/prd-ui.json#U-017"
       },
       {
@@ -1525,10 +1178,7 @@
         "title": "Widget xAPI status",
         "previousPasses": true,
         "disposition": "explicit_open_story",
-        "trackedBy": [
-          "U-018",
-          "S0-011"
-        ],
+        "trackedBy": ["U-018", "S0-011"],
         "source": ".ralph/prd-ui.json#U-018"
       },
       {
@@ -1536,10 +1186,7 @@
         "title": "Indicateur sync dans sidebar",
         "previousPasses": true,
         "disposition": "scope_and_delivery_review_required",
-        "trackedBy": [
-          "S0-011",
-          "S6-010"
-        ],
+        "trackedBy": ["S0-011", "S6-010"],
         "source": ".ralph/prd-ui.json#U-019"
       },
       {
@@ -1547,10 +1194,7 @@
         "title": "Bannière installer PWA",
         "previousPasses": true,
         "disposition": "explicit_open_story",
-        "trackedBy": [
-          "U-020",
-          "S0-011"
-        ],
+        "trackedBy": ["U-020", "S0-011"],
         "source": ".ralph/prd-ui.json#U-020"
       },
       {
@@ -1558,10 +1202,7 @@
         "title": "Bannière consentement télémétrie RGPD",
         "previousPasses": true,
         "disposition": "explicit_open_story",
-        "trackedBy": [
-          "U-021",
-          "S0-011"
-        ],
+        "trackedBy": ["U-021", "S0-011"],
         "source": ".ralph/prd-ui.json#U-021"
       }
     ],
@@ -1569,146 +1210,103 @@
       {
         "id": "R-001",
         "request": "Bilan réel et fermeture des promesses",
-        "trackedBy": [
-          "S6-001",
-          "S6-013"
-        ],
+        "trackedBy": ["S6-001", "S6-013"],
         "source": "Conversation courante, 26 août 2026"
       },
       {
         "id": "R-002",
         "request": "Mémoire et OOM Qalem",
-        "trackedBy": [
-          "S6-002"
-        ],
+        "trackedBy": ["S6-002"],
         "source": "Conversation courante, août 2026"
       },
       {
         "id": "R-003",
         "request": "Whisper sur DGX et proxy Hostinger via tunnel",
-        "trackedBy": [
-          "S6-009"
-        ],
+        "trackedBy": ["S6-009"],
         "source": "Conversation courante, août 2026"
       },
       {
         "id": "R-004",
         "request": "Multi-source et contrat Diwan autonome",
-        "trackedBy": [
-          "S6-003",
-          "S6-004"
-        ],
+        "trackedBy": ["S6-003", "S6-004"],
         "source": "Thread Qalem, 13 août 2026"
       },
       {
         "id": "R-005",
         "request": "Reformulation demande/source intelligente",
-        "trackedBy": [
-          "S6-005"
-        ],
+        "trackedBy": ["S6-005"],
         "source": "Thread Qalem, 13 août 2026"
       },
       {
         "id": "R-006",
         "request": "Fidélité documentaire des diapositives",
-        "trackedBy": [
-          "S6-006"
-        ],
+        "trackedBy": ["S6-006"],
         "source": "Thread Qalem, 13 août 2026"
       },
       {
         "id": "R-007",
         "request": "Illustrations créées et non copiées",
-        "trackedBy": [
-          "S6-007"
-        ],
+        "trackedBy": ["S6-007"],
         "source": "Thread Qalem, 13 août 2026"
       },
       {
         "id": "R-008",
         "request": "Dirhams et s final muet",
-        "trackedBy": [
-          "S6-008"
-        ],
+        "trackedBy": ["S6-008"],
         "source": "Thread Qalem, 13 août 2026"
       },
       {
         "id": "R-009",
         "request": "PWA et notifications fonctionnelles",
-        "trackedBy": [
-          "S6-010",
-          "S6-011",
-          "S3-002",
-          "U-020"
-        ],
+        "trackedBy": ["S6-010", "S6-011", "S3-002", "U-020"],
         "source": "PASSATION 17 juillet et PRD v1/ANCRER"
       },
       {
         "id": "R-010",
         "request": "Catalogue de voix qualifiées",
-        "trackedBy": [
-          "S6-012"
-        ],
+        "trackedBy": ["S6-012"],
         "source": ".ralph/progress.md"
       },
       {
         "id": "R-011",
         "request": "Syllabus complet et PDF lisible",
-        "trackedBy": [
-          "S5-004"
-        ],
+        "trackedBy": ["S5-004"],
         "source": ".ralph/prd-v2.json, réouverture du 9 août"
       },
       {
         "id": "R-012",
         "request": "Laser et contexte territorial",
-        "trackedBy": [
-          "S4-010"
-        ],
+        "trackedBy": ["S4-010"],
         "source": ".ralph/prd-v2.json"
       },
       {
         "id": "R-013",
         "request": "Capture authentifiée et régénération groupée",
-        "trackedBy": [
-          "S1-012"
-        ],
+        "trackedBy": ["S1-012"],
         "source": "PASSATION 17 juillet ; cible à reconfirmer"
       },
       {
         "id": "R-014",
         "request": "Formation complète, ressources, quiz et médias",
-        "trackedBy": [
-          "S6-013"
-        ],
+        "trackedBy": ["S6-013"],
         "source": "Thread Qalem, 11–13 août"
       },
       {
         "id": "R-015",
         "request": "Aucune rotation dans ce chantier",
-        "trackedBy": [
-          "S6-014"
-        ],
+        "trackedBy": ["S6-014"],
         "source": "Refus explicite dans la conversation courante"
       },
       {
         "id": "R-016",
         "request": "Builder de widgets et cadrage NP",
-        "trackedBy": [
-          "S6-015",
-          "S6-016"
-        ],
+        "trackedBy": ["S6-015", "S6-016"],
         "source": "docs/np-cadrage.md, 14–15 juillet"
       },
       {
         "id": "R-017",
         "request": "Exports réellement utilisables",
-        "trackedBy": [
-          "S1-007",
-          "S1-008",
-          "S1-010",
-          "S6-013"
-        ],
+        "trackedBy": ["S1-007", "S1-008", "S1-010", "S6-013"],
         "source": "PRD v2 et NP Q3/Q4"
       }
     ]
@@ -1744,10 +1342,7 @@
       "closureEvidence": [],
       "historicalDependencies": [],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 1
     },
     {
@@ -1780,10 +1375,7 @@
       "closureEvidence": [],
       "historicalDependencies": [],
       "executionAllowed": false,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 2
     },
     {
@@ -1799,15 +1391,10 @@
         "id": "S0-015",
         "previousPasses": false
       },
-      "sourceDependencies": [
-        "S0-013"
-      ],
+      "sourceDependencies": ["S0-013"],
       "dependencies": [],
       "gap": "Preuves historiques d’isolation et de persistance ; écoute finale et état courant non certifiés.",
-      "evidence": [
-        "tests/api/classroom-access.test.ts",
-        ".ralph/prd-v2.json#S0-015"
-      ],
+      "evidence": ["tests/api/classroom-access.test.ts", ".ralph/prd-v2.json#S0-015"],
       "acceptance": [
         "Génération + lecture d'une classroom non publiée exigent une session Supabase authentifiée (401 sinon)",
         "Génération limitée à super-admin OU admin de l'orgId ciblé (403 sinon) ; lecture ouverte à tout membre de l'org",
@@ -1824,14 +1411,9 @@
         "note": "Partie machine vérifiée le 2026-07-22, story maintenue à passes=false jusqu'à l'écoute humaine exigée par SOP-011. Le critère de lecture a été corrigé pour intégrer la diffusion à des tiers demandée ultérieurement : seules les classrooms explicitement publiées et leurs médias sont anonymement accessibles. Après redéploiement Coolify, la classroom publique 9H4k970HIy, créée le 2026-07-19, est toujours en base avec 9 scènes, 52 actions speech, 52 audioUrl Storage et 52 objets audio ; un WAV servi par Qalem répond 200, audio/wav, 582 764 octets. En production : anonyme = 401 sur génération, catalogue d'organisation et classroom privée ; utilisateur authentifié hors tenant = 403 sur la privée ; contenu publié = 200. Le compte de contrôle éphémère a été supprimé (API 200). Quinze tests permanents couvrent RBAC, ownerId issu de la session, séparation privé/public et médias ; formatage, TypeScript et ESLint verts ; Vitest 2 017/2 017 ; Playwright 37/37 sans retry ni flake. Reste exclusivement à confirmer humainement que l'audio est audible dans un vrai navigateur.",
         "status": "historical_not_recertified"
       },
-      "historicalDependencies": [
-        "S0-013"
-      ],
+      "historicalDependencies": ["S0-013"],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 3
     },
     {
@@ -1849,10 +1431,7 @@
       "sourceDependencies": [],
       "dependencies": [],
       "gap": "Expositions de secrets signalées dans l’historique ; l’utilisateur a explicitement refusé les rotations dans ce chantier.",
-      "evidence": [
-        "AGENTS.md#Règles du projet",
-        "thread:01a005ad-360e-7710-aeb5-bf5fc84c67b6"
-      ],
+      "evidence": ["AGENTS.md#Règles du projet", "thread:01a005ad-360e-7710-aeb5-bf5fc84c67b6"],
       "acceptance": [
         "Conserver uniquement les catégories de secrets et services concernés, jamais leurs valeurs.",
         "Ne déclencher aucune rotation, révocation ou mutation sans nouvelle autorisation explicite d’Amine dans la session propriétaire.",
@@ -1862,10 +1441,7 @@
       "closureEvidence": [],
       "historicalDependencies": [],
       "executionAllowed": false,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 4
     },
     {
@@ -1897,10 +1473,7 @@
       "closureEvidence": [],
       "historicalDependencies": [],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 5
     },
     {
@@ -1933,10 +1506,7 @@
       "closureEvidence": [],
       "historicalDependencies": [],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 6
     },
     {
@@ -1968,10 +1538,7 @@
       "closureEvidence": [],
       "historicalDependencies": [],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 7
     },
     {
@@ -2003,10 +1570,7 @@
       "closureEvidence": [],
       "historicalDependencies": [],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 8
     },
     {
@@ -2022,9 +1586,7 @@
         "id": "S5-004",
         "previousPasses": false
       },
-      "sourceDependencies": [
-        "S5-003"
-      ],
+      "sourceDependencies": ["S5-003"],
       "dependencies": [],
       "gap": "L’éditeur de syllabus complet existe désormais ; la réouverture du 9 août ne justifie pas de le réimplémenter. Recetter extraction lisible, OCR et consommation du plan approuvé.",
       "evidence": [
@@ -2047,14 +1609,9 @@
         "note": "Réouverte le 2026-08-09 après validation humaine : le plan affiché n’était pas un syllabus complet et ne permettait pas de modifier ses métadonnées. La preuve PDF antérieure était invalide, car elle assimilait un HTTP 200 et un texte non vide à une extraction lisible alors que le document réel contenait du texte corrompu. passes=false jusqu’à validation du syllabus entièrement éditable, de la bibliothèque PDF actualisée, du repli OCR conditionnel, des quality gates, du déploiement et du parcours navigateur de production.",
         "status": "historical_not_recertified"
       },
-      "historicalDependencies": [
-        "S5-003"
-      ],
+      "historicalDependencies": ["S5-003"],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 9
     },
     {
@@ -2088,10 +1645,7 @@
       "closureEvidence": [],
       "historicalDependencies": [],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 10
     },
     {
@@ -2124,10 +1678,7 @@
       "closureEvidence": [],
       "historicalDependencies": [],
       "executionAllowed": false,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 11
     },
     {
@@ -2143,14 +1694,9 @@
         "date": "2026-08-26"
       },
       "sourceDependencies": [],
-      "dependencies": [
-        "S6-003"
-      ],
+      "dependencies": ["S6-003"],
       "gap": "Le formulaire porte pdfFile: File | null et le dépôt ne prend que files[0].",
-      "evidence": [
-        "app/app/page.tsx:146",
-        "components/generation/generation-toolbar.tsx:299"
-      ],
+      "evidence": ["app/app/page.tsx:146", "components/generation/generation-toolbar.tsx:299"],
       "acceptance": [
         "Permettre sélection, ajout, retrait et réutilisation de plusieurs documents autorisés, avec état individuel d’ingestion.",
         "Persister un manifeste versionné de sources par organisation et par formation ; un rechargement retrouve la sélection.",
@@ -2161,10 +1707,7 @@
       "closureEvidence": [],
       "historicalDependencies": [],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 12
     },
     {
@@ -2196,10 +1739,7 @@
       "closureEvidence": [],
       "historicalDependencies": [],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 13
     },
     {
@@ -2215,15 +1755,10 @@
         "id": "S1-009",
         "previousPasses": true
       },
-      "sourceDependencies": [
-        "S0-006"
-      ],
+      "sourceDependencies": ["S0-006"],
       "dependencies": [],
       "gap": "Réouverture : le garde-fou ignore les formats autres que WAV/PCM16 et la note historique exclut certaines capsules/exports de la preuve.",
-      "evidence": [
-        "lib/audio/audio-gate.ts",
-        ".ralph/prd-v2.json#S1-009"
-      ],
+      "evidence": ["lib/audio/audio-gate.ts", ".ralph/prd-v2.json#S1-009"],
       "acceptance": [
         "Tachkil appliqué avant synthèse AR (fixture)",
         "Piste < -50 dB rejetée avec erreur explicite (fixture bruitée)",
@@ -2236,14 +1771,9 @@
         "note": "lib/audio/audio-gate.ts créé et branché au point de synthèse unique generateTTS() (lib/audio/tts-providers.ts) : assertArabicTachkilReady() rejette (TachkilRequiredError) tout texte en écriture arabe sans diacritiques tachkil sur un fournisseur non listé comme tachkil-aware (seul voxcpm-tts l'est, vérifié via le /health du studio Higgs en S0-006) ; assertAboveNoiseFloor() décode le WAV PCM16 retourné et rejette (NoiseFloorError) tout pic sous -50 dBFS. 19 tests dédiés (tests/audio/audio-gate.test.ts + tests/audio/tts-audio-gate.test.ts), 0 régression (1830/1830 vert). Limite du décodage dB documentée en commentaire ponytail : seul le WAV PCM16 est décodé sans dépendance nouvelle ; les formats compressés (mp3/opus/flac) passent sans vérification de niveau (aucune lib de décodage audio dans le repo, pas d'ajout justifié pour cette story). Sur le 3e critère (\"branché sur live, capsules et exports\") : vérifié par lecture de code que SEUL le chat live (app/api/generate/tts/route.ts) et la pré-génération de narration (lib/server/classroom-media-generation.ts) appellent réellement generateTTS() aujourd'hui — les deux sont donc protégés par construction. Les capsules Hyperframes (S1-006) délèguent la voix off à Mishkāt, un studio externe qui n'expose aucun contrat de synthèse vers notre code (lib/video/hyperframes-brief.ts n'envoie qu'un brief texte, HyperframesSound.voiceover est un simple booléen) : aucun fournisseur TTS Qalem n'est sélectionnable à ce point, donc aucune assertion honnête basée sur TACHKIL_AWARE_TTS_PROVIDERS n'y est applicable sans deviner le comportement interne de Mishkāt. L'export SCORM couche 1 (S1-007, lib/export/scorm/scene-to-html.ts, lib/export/scorm/build-scorm-package.ts) ne gère aucun audio (confirmé par lecture : ni audioUrl ni generateTTS, rendu texte/quiz/slide/pbl uniquement, gap documenté et tracké pour S1-008). Plutôt que fabriquer un branchement fictif dans ces deux fichiers, le choix a été de gater le point de synthèse unique et réel — toute future consommation audio de S1-008/capsules réutilisant generateTTS() hérite automatiquement de la gate. Limite honnêtement assumée, signalée à Amine plutôt que devinée.",
         "status": "historical_not_recertified"
       },
-      "historicalDependencies": [
-        "S0-006"
-      ],
+      "historicalDependencies": ["S0-006"],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 14
     },
     {
@@ -2259,15 +1789,10 @@
         "id": "S4-010",
         "previousPasses": false
       },
-      "sourceDependencies": [
-        "S4-009"
-      ],
+      "sourceDependencies": ["S4-009"],
       "dependencies": [],
       "gap": "Contexte et laser implémentés avec traces historiques ; passes=false conservé, validation ciblée encore à solder.",
-      "evidence": [
-        "lib/formation-engine/learning-context.ts",
-        ".ralph/prd-v2.json#S4-010"
-      ],
+      "evidence": ["lib/formation-engine/learning-context.ts", ".ralph/prd-v2.json#S4-010"],
       "acceptance": [
         "L’auteur choisit explicitement le territoire et la devise ISO 4217 avant la génération",
         "Une trame transmet son contexte structuré au formulaire au lieu de ne transmettre que son texte",
@@ -2282,14 +1807,9 @@
         "note": "Cause laser corrigée au parent commun : suppression du calque décalé de 5 %, mesure de l’union entre la boîte DOM externe et son contenu, parcours serpentin de toute la zone au lieu d’un point central, durée d’action honorée et valeur par défaut portée à 8 secondes. Le contexte d’apprentissage territoire/devise est désormais explicite dans le formulaire, transmis par les trames structurées, injecté dans la recherche et les prompts, puis persisté dans le Stage de la classroom. Une adaptation ultérieure peut donc cibler les exemples monétaires, tableaux, fichiers et narrations concernés sans reconstruire la structure pédagogique. Formation Design Pro 3.4.0 publie les mêmes invariants avec empreintes vérifiées. Validation isolée ServeurAI : Prettier, TypeScript, ESLint et suite Vitest complète à code de sortie 0 ; Playwright Chromium 50/50, puis preuve ciblée du contrat Maroc/MAD 1/1. Production : web, qalem-workers et capture-worker healthy sur 9fb64e79513af41c9c5870e0d88a0902caf0fbf6 ; /api/health répond 200 ; navigateur public /app affiche Territoire=Maroc et Devise=MAD sans erreur console.",
         "status": "historical_not_recertified"
       },
-      "historicalDependencies": [
-        "S4-009"
-      ],
+      "historicalDependencies": ["S4-009"],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 15
     },
     {
@@ -2305,15 +1825,10 @@
         "id": "S0-017",
         "previousPasses": false
       },
-      "sourceDependencies": [
-        "S0-007"
-      ],
+      "sourceDependencies": ["S0-007"],
       "dependencies": [],
       "gap": "La story n’a pas de clôture ; vérifier les libellés et l’identifiant réellement envoyé en production.",
-      "evidence": [
-        ".ralph/prd-v2.json#S0-017",
-        "components/generation/generation-toolbar.tsx"
-      ],
+      "evidence": [".ralph/prd-v2.json#S0-017", "components/generation/generation-toolbar.tsx"],
       "acceptance": [
         "Les modèles image administrés Gemini sont affichés avec un libellé compréhensible dans le popover média et les paramètres, tout en conservant leur identifiant de requête exact",
         "Un modèle image administré inconnu reste sélectionnable et s'affiche avec son identifiant, sans liste blanche fragile",
@@ -2326,14 +1841,9 @@
         "note": null,
         "status": "historical_not_recertified"
       },
-      "historicalDependencies": [
-        "S0-007"
-      ],
+      "historicalDependencies": ["S0-007"],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 16
     },
     {
@@ -2349,13 +1859,7 @@
         "date": "2026-08-26"
       },
       "sourceDependencies": [],
-      "dependencies": [
-        "S5-004",
-        "S6-005",
-        "S6-006",
-        "S6-007",
-        "S6-008"
-      ],
+      "dependencies": ["S5-004", "S6-005", "S6-006", "S6-007", "S6-008"],
       "gap": "Les corrections des 11–13 août existent ; aucune recette actuelle ne certifie ensemble toutes les promesses. Réutiliser les parcours existants.",
       "evidence": [
         "e2e/tests",
@@ -2373,10 +1877,7 @@
       "closureEvidence": [],
       "historicalDependencies": [],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 17
     },
     {
@@ -2392,14 +1893,10 @@
         "id": "S-025",
         "previousPasses": true
       },
-      "sourceDependencies": [
-        "S-022"
-      ],
+      "sourceDependencies": ["S-022"],
       "dependencies": [],
       "gap": "extractReviewCards ne possède aucun appelant dans app/components/lib hors sa définition.",
-      "evidence": [
-        "lib/spaced-repetition/extractor.ts:80"
-      ],
+      "evidence": ["lib/spaced-repetition/extractor.ts:80"],
       "acceptance": [
         "lib/spaced-repetition/extractor.ts",
         "Items ratés/hésitants extraits après chaque quiz",
@@ -2415,10 +1912,7 @@
       },
       "historicalDependencies": [],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 18
     },
     {
@@ -2434,9 +1928,7 @@
         "date": "2026-08-26"
       },
       "sourceDependencies": [],
-      "dependencies": [
-        "S-025"
-      ],
+      "dependencies": ["S-025"],
       "gap": "ServiceWorkerRegistrar est monté ; checkAndNotifyDueCards ne possède aucun appelant.",
       "evidence": [
         "app/layout.tsx:56",
@@ -2454,10 +1946,7 @@
       "closureEvidence": [],
       "historicalDependencies": [],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 19
     },
     {
@@ -2476,10 +1965,7 @@
       "sourceDependencies": [],
       "dependencies": [],
       "gap": "Bannière d’installation présente mais sans montage retrouvé ; distincte du service worker monté.",
-      "evidence": [
-        "components/pwa-install-banner.tsx:15",
-        "app/layout.tsx"
-      ],
+      "evidence": ["components/pwa-install-banner.tsx:15", "app/layout.tsx"],
       "acceptance": [
         "Brancher la proposition d’installation seulement si applicable ; respecter refus et app déjà installée.",
         "Vérifier les instructions iOS et le parcours Android sur appareils réels conjointement avec S3-002."
@@ -2491,10 +1977,7 @@
       },
       "historicalDependencies": [],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 20
     },
     {
@@ -2510,18 +1993,10 @@
         "id": "S3-002",
         "previousPasses": false
       },
-      "sourceDependencies": [
-        "S0-008"
-      ],
-      "dependencies": [
-        "S6-010",
-        "U-020"
-      ],
+      "sourceDependencies": ["S0-008"],
+      "dependencies": ["S6-010", "U-020"],
       "gap": "Le service worker est monté ; réception et ouverture sur iOS/Android réels restent à prouver.",
-      "evidence": [
-        "app/layout.tsx",
-        "tasks/prd-3-ancrer.md"
-      ],
+      "evidence": ["app/layout.tsx", "tasks/prd-3-ancrer.md"],
       "acceptance": [
         "Push reçu iOS réel (PWA installée, Safari ≥ 16.4) ET Android réel",
         "Tap → ouverture PWA sur la carte cible",
@@ -2533,14 +2008,9 @@
         "note": null,
         "status": "historical_not_recertified"
       },
-      "historicalDependencies": [
-        "S0-008"
-      ],
+      "historicalDependencies": ["S0-008"],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 21
     },
     {
@@ -2556,14 +2026,10 @@
         "id": "S0-012",
         "previousPasses": false
       },
-      "sourceDependencies": [
-        "S0-008"
-      ],
+      "sourceDependencies": ["S0-008"],
       "dependencies": [],
       "gap": "Checklist présente ; ne pas substituer une suite automatique au verdict RTL humain requis.",
-      "evidence": [
-        "docs/foundation/0-socle/checklist-rtl.md"
-      ],
+      "evidence": ["docs/foundation/0-socle/checklist-rtl.md"],
       "acceptance": [
         "checklist-rtl.md livré (écrans, points de contrôle)",
         "Verdict d'Amine consigné, défauts → stories de pioche"
@@ -2574,9 +2040,7 @@
         "note": null,
         "status": "historical_not_recertified"
       },
-      "historicalDependencies": [
-        "S0-008"
-      ],
+      "historicalDependencies": ["S0-008"],
       "executionAllowed": true,
       "validationRequires": [
         "qualityGates",
@@ -2622,10 +2086,7 @@
       },
       "historicalDependencies": [],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 23
     },
     {
@@ -2641,14 +2102,10 @@
         "id": "S0-011",
         "previousPasses": false
       },
-      "sourceDependencies": [
-        "S0-002"
-      ],
+      "sourceDependencies": ["S0-002"],
       "dependencies": [],
       "gap": "Les 72 décisions de conservation restent à consigner ; présence du code et acceptation produit sont distinctes.",
-      "evidence": [
-        "docs/foundation/0-socle/checklist-bascule.md"
-      ],
+      "evidence": ["docs/foundation/0-socle/checklist-bascule.md"],
       "acceptance": [
         "checklist-bascule.md conforme au prompt P0-B (preuves fichier:ligne, colonne Décision vide)",
         "72 stories couvertes (comptage)",
@@ -2661,9 +2118,7 @@
         "note": null,
         "status": "historical_not_recertified"
       },
-      "historicalDependencies": [
-        "S0-002"
-      ],
+      "historicalDependencies": ["S0-002"],
       "executionAllowed": false,
       "validationRequires": [
         "qualityGates",
@@ -2685,15 +2140,10 @@
         "id": "S1-007",
         "previousPasses": true
       },
-      "sourceDependencies": [
-        "S0-008"
-      ],
+      "sourceDependencies": ["S0-008"],
       "dependencies": [],
       "gap": "Réouverture de preuve : la complétion Moodle historique a été simulée via PHP, pas déclenchée par le runtime navigateur. Le runtime a évolué vers des adaptateurs natifs.",
-      "evidence": [
-        "lib/export/scorm/tracking-adapters.ts",
-        ".ralph/prd-v2.json#S1-007"
-      ],
+      "evidence": ["lib/export/scorm/tracking-adapters.ts", ".ralph/prd-v2.json#S1-007"],
       "acceptance": [
         "export_jobs scorm12 → zip imsmanifest.xml valide",
         "Import Moodle docker réussi, completion trackée (preuve)",
@@ -2706,14 +2156,9 @@
         "note": "Validé sur serveuria (commits 10be27f..089950c). tsc --noEmit 0 erreur, pnpm lint 0 problème, pnpm test 1810/1810 (baseline 1799 S1-006 + 11 nouveaux tests scorm-*, zéro régression). export_jobs (migration 00021, format discriminant scorm12 pour anticiper scorm2004/cmi5 de S1-008, RLS owner-select + service-only write, bucket Storage privé `exports` deny-all client) → zip généré via lib/export/scorm/build-scorm-package.ts (imsmanifest.xml SCORM 1.2 standard + index.html scorm-again + runtime vendorisé + THIRD-PARTY-NOTICES.txt), job BullMQ export-job (pattern identique à video-capsule S1-006), API POST/GET /api/export-jobs. Preuve d'import Moodle réelle et complète, obtenue SANS AUCUNE automatisation de navigateur (interdiction stricte respectée) : bitnamilegacy/moodle + bitnamilegacy/mariadb montés sur serveuria (image bitnami/moodle officielle retirée depuis la migration Bitnami d'août 2025, vérifié sur Docker Hub/GitHub) ; imsmanifest.xml validé par un vrai parseur XML (python3 xml.dom.minidom) ; import réel via les fonctions backend PHP exactes que le formulaire Moodle d'ajout d'activité SCORM appelle (create_module()/scorm_add_instance(), lues dans le code source réel de ce Moodle pour ne rien deviner) — MANIFEST_PARSED launch_scoes=1 confirme que le parseur SCORM natif de Moodle a walké le manifeste et trouvé le SCO index.html ; complétion trackée en simulant l'effet serveur exact du bouton \"Marquer comme terminé\" (LMSSetValue cmi.core.lesson_status=completed + LMSCommit) via scorm_insert_track() (fonction backend appelée par l'endpoint AJAX de tracking de Moodle), relu via scorm_get_tracks() (API Moodle) ET vérifié en base brute (mdl_scorm_scoes_value/mdl_scorm_attempt/mdl_scorm_element, schéma normalisé de Moodle 5.2) pour 2 apprenants de test distincts. Limite assumée : le JS embarqué (scorm-again) n'a pas été exercé par un vrai navigateur — reproduit au niveau backend Moodle pour respecter l'interdiction stricte d'automatisation navigateur ; le pipeline zip→manifest→import→tracking est prouvé de bout en bout côté serveur Moodle réel. Environnement Moodle de test démonté après la preuve (conteneurs + réseau docker supprimés), scripts ad-hoc PHP/TS jamais commités. Notices MIT scorm-again (^3.0.5, vérifié sur le registre npm réel) conservées dans le zip généré (THIRD-PARTY-NOTICES.txt) — package.json/pnpm-lock.yaml mis à jour (pnpm install --no-frozen-lockfile sur serveuria). Aucune UI ajoutée (story sans tag [UI], acceptance ne le demandant pas).",
         "status": "historical_not_recertified"
       },
-      "historicalDependencies": [
-        "S0-008"
-      ],
+      "historicalDependencies": ["S0-008"],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 25
     },
     {
@@ -2729,12 +2174,8 @@
         "id": "S1-008",
         "previousPasses": false
       },
-      "sourceDependencies": [
-        "S1-007"
-      ],
-      "dependencies": [
-        "S1-007"
-      ],
+      "sourceDependencies": ["S1-007"],
+      "dependencies": ["S1-007"],
       "gap": "Les trois adaptateurs et leurs tests existent ; restent les preuves LMS/lecteur de référence et la décision option/cœur.",
       "evidence": [
         "lib/export/scorm/tracking-adapters.ts",
@@ -2754,10 +2195,7 @@
       },
       "historicalDependencies": [],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 26
     },
     {
@@ -2773,15 +2211,10 @@
         "id": "S1-010",
         "previousPasses": true
       },
-      "sourceDependencies": [
-        "S0-008"
-      ],
+      "sourceDependencies": ["S0-008"],
       "dependencies": [],
       "gap": "Réouverture de preuve : OOXML bien formé ne prouve pas l’ouverture sans réparation dans PowerPoint.",
-      "evidence": [
-        "tests/edit/round-trip/ooxml-validity.test.ts",
-        ".ralph/prd-v2.json#S1-010"
-      ],
+      "evidence": ["tests/edit/round-trip/ooxml-validity.test.ts", ".ralph/prd-v2.json#S1-010"],
       "acceptance": [
         "PPTX d'un course généré s'ouvre sans réparation dans PowerPoint",
         "Packages mathml2omml/pptxgenjs buildés au postinstall (preuve)",
@@ -2793,14 +2226,9 @@
         "note": "FR-1 vérifié : `buildPptxBlob` (lib/export/use-export-pptx.ts) était déjà exporté explicitement pour un harnais de tests round-trip (tests/edit/round-trip/*.test.ts, 8 fichiers) qui vérifiait la survie de chaque op de slide-ops à la sérialisation, mais aucun test n'auditait la bien-formation OOXML globale du zip généré. Nouveau test permanent `tests/edit/round-trip/ooxml-validity.test.ts` : construit une fixture hostile (texte avec `&`/`<script>`/guillemets/apostrophes + arabe injecté dans un élément texte, une cellule de tableau et une note de discours SpeechAction, plus une formule LaTeX réelle passant par le chemin OMML de `latexToOmml`, une image en data URL) puis (1) vérifie la présence des parties OOXML obligatoires ([Content_Types].xml, _rels/.rels, ppt/presentation.xml+rels, ppt/slides/slide1.xml+rels, docProps/core.xml, docProps/app.xml), (2) pour CHAQUE fichier .xml/.rels du zip vérifie l'équilibre des balises (même technique regex que le test SCORM existant, indépendant de mes propres helpers) et l'absence de `&` brut non échappé, (3) vérifie que le contenu hostile ressort échappé (jamais `<script>` brut) et que la formule est bien passée par `<m:oMath` (pas le fallback SVG). Zéro nouvelle dépendance (jszip déjà présent). Preuve indépendante forte (comme SCORM S1-007) : script tsx jetable générant un vrai .pptx multi-slides (2 chapitres, formule, tableau, image, lien inter-slides, contenu hostile FR/AR) exécuté sur serveuria — validé par un vrai parseur XML Python (`xml.dom.minidom`, indépendant de mon propre code) : 44 entrées zip, 10/10 parties OOXML requises présentes, 24 parties XML/rels bien formées, contenu hostile confirmé échappé, arabe préservé, formule OMML confirmée présente. Preuve postinstall : `packages/mathml2omml/dist` et `packages/pptxgenjs/dist` supprimés puis régénérés via `npm run build` (rollup) dans chacun des 2 packages sur serveuria, timestamps confirmés après rebuild — les deux dossiers `dist/` sont gitignorés localement à chaque package (vérifié `git check-ignore`), rebuild sans impact git. Validation gate sur serveuria (exécutée par le chef d'équipe suite à un blocage bash-guard bloquant toute commande contenant npx/vitest/pnpm/python même via SSH légitime dans cette session, escaladé plutôt que contourné) : `pnpm check` (Prettier) 0 problème, `npx tsc --noEmit` 0 erreur, `pnpm lint` 0 problème, `pnpm test` complet 1827/1830 verts — les 3 échecs sont exclusivement dans `tests/audio/audio-gate.test.ts`/`tts-audio-gate.test.ts`, domaine strictement disjoint de S1-009 (travail en cours d'un autre agent sur le même workspace serveuria partagé), confirmé par une ré-exécution isolée de `tests/edit/round-trip/` seul : 10 fichiers, 16 tests, tous verts. `main` non touché. **e2e non relancé** : le workspace serveuria partagé était dans un état transitoire (S1-009 non finalisé) au moment de la validation ; reporté à la stabilisation du workspace, jugé acceptable car cette story n'ajoute/modifie aucun test e2e et ne touche aucun code de production (uniquement un fichier de test vitest ajouté), risque de régression e2e nul.",
         "status": "historical_not_recertified"
       },
-      "historicalDependencies": [
-        "S0-008"
-      ],
+      "historicalDependencies": ["S0-008"],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 27
     },
     {
@@ -2816,15 +2244,10 @@
         "id": "S1-004",
         "previousPasses": false
       },
-      "sourceDependencies": [
-        "S1-003"
-      ],
+      "sourceDependencies": ["S1-003"],
       "dependencies": [],
       "gap": "Catalogue, route et E2E présents : ne pas reconstruire ; terminer la recette de publication, visibilité et entrée en cours.",
-      "evidence": [
-        "app/api/courses/catalog/route.ts",
-        "e2e/tests/course-catalog.spec.ts"
-      ],
+      "evidence": ["app/api/courses/catalog/route.ts", "e2e/tests/course-catalog.spec.ts"],
       "acceptance": [
         "Liste des courses ready + catalog_visible",
         "Rejoindre la classe → classroom (e2e)",
@@ -2836,14 +2259,9 @@
         "note": null,
         "status": "historical_not_recertified"
       },
-      "historicalDependencies": [
-        "S1-003"
-      ],
+      "historicalDependencies": ["S1-003"],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 28
     },
     {
@@ -2859,15 +2277,10 @@
         "id": "S1-005",
         "previousPasses": false
       },
-      "sourceDependencies": [
-        "S1-003"
-      ],
+      "sourceDependencies": ["S1-003"],
       "dependencies": [],
       "gap": "Persistance du verdict d’import présente ; le parcours complet dépôt conforme → édition → ready reste à prouver et compléter.",
-      "evidence": [
-        "lib/server/course-import-storage.ts",
-        "lib/server/course-storage.ts"
-      ],
+      "evidence": ["lib/server/course-import-storage.ts", "lib/server/course-storage.ts"],
       "acceptance": [
         "Contenu conforme → outline dans l'Editor natif v0.3.0",
         "e2e dépôt → validation → outline → ready",
@@ -2879,14 +2292,9 @@
         "note": null,
         "status": "historical_not_recertified"
       },
-      "historicalDependencies": [
-        "S1-003"
-      ],
+      "historicalDependencies": ["S1-003"],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 29
     },
     {
@@ -2938,9 +2346,7 @@
         "date": "2026-08-26"
       },
       "sourceDependencies": [],
-      "dependencies": [
-        "S6-016"
-      ],
+      "dependencies": ["S6-016"],
       "gap": "Le cadrage NP exige une composition par le super-admin ; les plugins métier livrés ne prouvent pas ce builder. Le cadrage est resté en phase 2.1.",
       "evidence": [
         "../docs/np-cadrage.md",
@@ -2978,9 +2384,7 @@
         "date": "2026-08-26"
       },
       "sourceDependencies": [],
-      "dependencies": [
-        "S6-010"
-      ],
+      "dependencies": ["S6-010"],
       "gap": "Le PRD v1 promet les trois canaux ; tasks/prd-3-ancrer.md les exclut et le code contient des placeholders. Décision de portée nécessaire.",
       "evidence": [
         ".ralph/prd.json#S-028",
@@ -3016,14 +2420,10 @@
         "id": "S2-004",
         "previousPasses": false
       },
-      "sourceDependencies": [
-        "S2-001"
-      ],
+      "sourceDependencies": ["S2-001"],
       "dependencies": [],
       "gap": "Le dossier DPIA reste DRAFT/NO-GO ; aucun enregistrement d’intervention utilisateur avant décision formelle.",
-      "evidence": [
-        "docs/foundation/2-vivre/DPIA-S2-004-DRAFT.md"
-      ],
+      "evidence": ["docs/foundation/2-vivre/DPIA-S2-004-DRAFT.md"],
       "acceptance": [
         "DPIA instruite et consignée AVANT tout commit",
         "Consentement UI explicite → live_sessions.recorded",
@@ -3036,14 +2436,9 @@
         "note": null,
         "status": "historical_not_recertified"
       },
-      "historicalDependencies": [
-        "S2-001"
-      ],
+      "historicalDependencies": ["S2-001"],
       "executionAllowed": false,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 33
     },
     {
@@ -3059,16 +2454,10 @@
         "id": "S2-005",
         "previousPasses": false
       },
-      "sourceDependencies": [
-        "S2-004"
-      ],
-      "dependencies": [
-        "S2-004"
-      ],
+      "sourceDependencies": ["S2-004"],
+      "dependencies": ["S2-004"],
       "gap": "Dépend de la levée effective du gate d’enregistrement ; playback canonique ne signifie pas replay de session utilisateur.",
-      "evidence": [
-        ".ralph/prd-v2.json#S2-005"
-      ],
+      "evidence": [".ralph/prd-v2.json#S2-005"],
       "acceptance": [
         "Session rejouée intégralement, audio inclus, via extension de lib/playback/ porté",
         "Plateforme ET PWA",
@@ -3082,10 +2471,7 @@
       },
       "historicalDependencies": [],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 34
     },
     {
@@ -3101,16 +2487,10 @@
         "id": "S2-006",
         "previousPasses": false
       },
-      "sourceDependencies": [
-        "S2-005"
-      ],
-      "dependencies": [
-        "S2-005"
-      ],
+      "sourceDependencies": ["S2-005"],
+      "dependencies": ["S2-005"],
       "gap": "Bibliothèque et suppression effective des événements/pistes à livrer après le replay.",
-      "evidence": [
-        ".ralph/prd-v2.json#S2-006"
-      ],
+      "evidence": [".ralph/prd-v2.json#S2-006"],
       "acceptance": [
         "Liste mes sessions + reprise à l'horodatage",
         "Suppression = effacement réel des événements ET pistes audio (vérifié en base)"
@@ -3123,10 +2503,7 @@
       },
       "historicalDependencies": [],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 35
     },
     {
@@ -3142,16 +2519,10 @@
         "id": "S2-008",
         "previousPasses": false
       },
-      "sourceDependencies": [
-        "S0-008",
-        "S2-010"
-      ],
+      "sourceDependencies": ["S0-008", "S2-010"],
       "dependencies": [],
       "gap": "Protocole composite déterministe présent ; sidecar, budget mémoire, conformité et robustesse P2-C non soldés.",
-      "evidence": [
-        "lib/transmissions/audio-watermark-protocol.ts",
-        ".ralph/prd-v2.json#S2-008"
-      ],
+      "evidence": ["lib/transmissions/audio-watermark-protocol.ts", ".ralph/prd-v2.json#S2-008"],
       "acceptance": [
         "Worker invoque AudioSeal MIT dans un sidecar borné ; watermark_id opaque 128 bits reconstitué par protocole composite documenté",
         "Protocole P2-C automatisé : ID décodé après mp3 128k, ogg, extrait 30 s, normalisation",
@@ -3164,15 +2535,9 @@
         "note": "Décision de licence mise à jour le 2026-07-23 après choix explicite MIT : AudioSeal remplace audiowmark, qui était GPL-3.0. L'ADR-001 documente la base factuelle : AudioSeal est MIT, y compris ses poids, mais son message natif est limité à 16 bits. Il ne peut donc pas être présenté comme un encodeur 128 bits direct. Qalem conserve son watermark_id de 128 bits par un cycle composite de onze segments de deux secondes (index + tranche de données + contrôle), à valider par P2-C sur MP3 128 kbit/s, OGG, normalisation et extrait de 30 secondes non aligné. La brique déterministe est maintenant implémentée dans lib/transmissions/audio-watermark-protocol.ts : elle recompose les 128 bits sur onze messages 16 bits, accepte seulement les répétitions cohérentes et échoue fermement sur segment absent, contradictoire ou corrompu. La CI GitHub 30054875307 est entièrement verte (formatage, lint, TypeScript, tests unitaires, build, migrations et E2E). Aucun sidecar, poids ou image n'est distribué avant la preuve P2-C mesurée et une décision explicite de budget mémoire. La transmission est nécessairement rattachée à un destinataire : S2-010 crée d'abord la source de vérité et l'artefact non marqué ; S2-008 publie ensuite le dérivé audio marqué.",
         "status": "historical_not_recertified"
       },
-      "historicalDependencies": [
-        "S0-008",
-        "S2-010"
-      ],
+      "historicalDependencies": ["S0-008", "S2-010"],
       "executionAllowed": false,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 36
     },
     {
@@ -3188,15 +2553,10 @@
         "id": "S2-009",
         "previousPasses": false
       },
-      "sourceDependencies": [
-        "S2-010"
-      ],
+      "sourceDependencies": ["S2-010"],
       "dependencies": [],
       "gap": "Dérivé FFmpeg et test présents ; preuve avec destinataire légitime et décodage depuis capture encore requise.",
-      "evidence": [
-        "tests/transmissions/visual-watermark.test.ts",
-        ".ralph/prd-v2.json#S2-009"
-      ],
+      "evidence": ["tests/transmissions/visual-watermark.test.ts", ".ralph/prd-v2.json#S2-009"],
       "acceptance": [
         "videowmark (ou incrustation périodique avec ADR) appliqué par le worker",
         "Identifiant décodable sur capture d'écran du flux (preuve documentée)"
@@ -3207,14 +2567,9 @@
         "note": "État certifié le 2026-07-23, sans déclaration de complétude : l'incrustation FFmpeg rend un dérivé MP4 avec audio et identifiant opaque de 128 bits, le worker ne publie l'état done qu'après l'upload du dérivé, et la route de consultation refuse la source brute. Le test d'intégration tests/transmissions/visual-watermark.test.ts crée un MP4 réel, extrait les images source/dérivée et vérifie l'altération visuelle ainsi que le flux audio ; la CI GitHub 30045186118 est entièrement verte (formatage, lint, TypeScript, 2 066 tests unitaires, build, migrations et E2E). La preuve d'acceptation finale reste volontairement ouverte : la base Qalem ne contient aucune transmission et chaque organisation ne compte actuellement qu'un seul membre, donc aucun destinataire légitime ne peut recevoir une transmission réelle sans provisionnement explicite d'un second membre.",
         "status": "historical_not_recertified"
       },
-      "historicalDependencies": [
-        "S2-010"
-      ],
+      "historicalDependencies": ["S2-010"],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 37
     },
     {
@@ -3230,14 +2585,10 @@
         "id": "S2-011",
         "previousPasses": false
       },
-      "sourceDependencies": [
-        "S2-002"
-      ],
+      "sourceDependencies": ["S2-002"],
       "dependencies": [],
       "gap": "Aucune clôture humaine dans le registre ; ne pas activer automatiquement les référentiels.",
-      "evidence": [
-        ".ralph/prd-v2.json#S2-011"
-      ],
+      "evidence": [".ralph/prd-v2.json#S2-011"],
       "acceptance": [
         "Fichiers conformes P2-B (≥ 20 prénoms/genre/culture, graphie AR + romanisation)",
         "Validation explicite d'Amine consignée avant activation du flag rich_profile en préprod"
@@ -3248,9 +2599,7 @@
         "note": null,
         "status": "historical_not_recertified"
       },
-      "historicalDependencies": [
-        "S2-002"
-      ],
+      "historicalDependencies": ["S2-002"],
       "executionAllowed": false,
       "validationRequires": [
         "qualityGates",
@@ -3272,18 +2621,10 @@
         "id": "S3-001",
         "previousPasses": false
       },
-      "sourceDependencies": [
-        "S0-008",
-        "S0-009",
-        "S2-004"
-      ],
-      "dependencies": [
-        "S2-004"
-      ],
+      "sourceDependencies": ["S0-008", "S0-009", "S2-004"],
+      "dependencies": ["S2-004"],
       "gap": "Le schéma dépend de live_sessions et donc du gate S2-004.",
-      "evidence": [
-        "docs/foundation/3-ancrer/02-data-dictionary.md"
-      ],
+      "evidence": ["docs/foundation/3-ancrer/02-data-dictionary.md"],
       "acceptance": [
         "5 migrations conformes à 3-ancrer/02 (borne J+90, unicité par phase)",
         "RLS testées (user seul, agrégats org)"
@@ -3294,15 +2635,9 @@
         "note": "Dépendance S2-004 ajoutée le 2026-07-26 : le data dictionary impose des clés étrangères vers live_sessions, table qui porte l’enregistrement du live et ne peut être créée avant l’instruction DPIA. Cette dépendance empêche de fabriquer un schéma d’ancrage incomplet ou de contourner le gate de protection des voix et interventions utilisateur.",
         "status": "historical_not_recertified"
       },
-      "historicalDependencies": [
-        "S0-008",
-        "S0-009"
-      ],
+      "historicalDependencies": ["S0-008", "S0-009"],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 39
     },
     {
@@ -3318,18 +2653,10 @@
         "id": "S3-003",
         "previousPasses": false
       },
-      "sourceDependencies": [
-        "S3-001",
-        "S2-004"
-      ],
-      "dependencies": [
-        "S3-001",
-        "S2-004"
-      ],
+      "sourceDependencies": ["S3-001", "S2-004"],
+      "dependencies": ["S3-001", "S2-004"],
       "gap": "Évaluation à chaud et unicité à livrer sur la source de vérité de session.",
-      "evidence": [
-        "tasks/prd-3-ancrer.md"
-      ],
+      "evidence": ["tasks/prd-3-ancrer.md"],
       "acceptance": [
         "Hook fin de session : 2 questions, skippable",
         "evaluations(phase='hot') écrite, unicité prouvée",
@@ -3343,10 +2670,7 @@
       },
       "historicalDependencies": [],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 40
     },
     {
@@ -3362,18 +2686,10 @@
         "id": "S3-004",
         "previousPasses": false
       },
-      "sourceDependencies": [
-        "S3-001",
-        "S2-004"
-      ],
-      "dependencies": [
-        "S3-001",
-        "S2-004"
-      ],
+      "sourceDependencies": ["S3-001", "S2-004"],
+      "dependencies": ["S3-001", "S2-004"],
       "gap": "Stock de graines de la session et coût réel non soldés.",
-      "evidence": [
-        "tasks/prd-3-ancrer.md"
-      ],
+      "evidence": ["tasks/prd-3-ancrer.md"],
       "acceptance": [
         "≥ 12 graines typées via P3-B, chacune citant scene_ref et persona de LA session",
         "UN appel LLM par session (grep : aucun dans le chemin d'envoi)",
@@ -3387,10 +2703,7 @@
       },
       "historicalDependencies": [],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 41
     },
     {
@@ -3406,16 +2719,10 @@
         "id": "S3-005",
         "previousPasses": false
       },
-      "sourceDependencies": [
-        "S3-004"
-      ],
-      "dependencies": [
-        "S3-004"
-      ],
+      "sourceDependencies": ["S3-004"],
+      "dependencies": ["S3-004"],
       "gap": "Opt-in, pause, arrêt et planification bornée J+90 non soldés.",
-      "evidence": [
-        "tasks/prd-3-ancrer.md"
-      ],
+      "evidence": ["tasks/prd-3-ancrer.md"],
       "acceptance": [
         "Opt-in explicite → deliveries à espacement croissant",
         "Pause un tap ; arrêt = suppression des deliveries futures",
@@ -3429,10 +2736,7 @@
       },
       "historicalDependencies": [],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 42
     },
     {
@@ -3448,18 +2752,10 @@
         "id": "S3-006",
         "previousPasses": false
       },
-      "sourceDependencies": [
-        "S3-005"
-      ],
-      "dependencies": [
-        "S3-005",
-        "S-025"
-      ],
+      "sourceDependencies": ["S3-005"],
+      "dependencies": ["S3-005", "S-025"],
       "gap": "Étendre le FSRS existant ; l’alimentation post-quiz manquante est isolée dans S-025 pour ne pas dépendre du replay.",
-      "evidence": [
-        "lib/spaced-repetition/extractor.ts",
-        "tasks/prd-3-ancrer.md"
-      ],
+      "evidence": ["lib/spaced-repetition/extractor.ts", "tasks/prd-3-ancrer.md"],
       "acceptance": [
         "Items de quiz de la session dans la file FSRS (extension, pas réécriture)",
         "Cycle testé : push → quiz → résultat re-nourrit FSRS",
@@ -3473,10 +2769,7 @@
       },
       "historicalDependencies": [],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 43
     },
     {
@@ -3492,16 +2785,10 @@
         "id": "S3-007",
         "previousPasses": false
       },
-      "sourceDependencies": [
-        "S3-005"
-      ],
-      "dependencies": [
-        "S3-005"
-      ],
+      "sourceDependencies": ["S3-005"],
+      "dependencies": ["S3-005"],
       "gap": "Évaluations froides et unicité à livrer.",
-      "evidence": [
-        "tasks/prd-3-ancrer.md"
-      ],
+      "evidence": ["tasks/prd-3-ancrer.md"],
       "acceptance": [
         "Deliveries cold_eval planifiées, réponses en phase cold_30/cold_60",
         "Unicité par phase prouvée (doublon rejeté)"
@@ -3514,10 +2801,7 @@
       },
       "historicalDependencies": [],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 44
     },
     {
@@ -3533,16 +2817,10 @@
         "id": "S3-008",
         "previousPasses": false
       },
-      "sourceDependencies": [
-        "S3-004"
-      ],
-      "dependencies": [
-        "S3-004"
-      ],
+      "sourceDependencies": ["S3-004"],
+      "dependencies": ["S3-004"],
       "gap": "Échantillon réel et fréquence à produire avant décision humaine ; pas de validation présumée.",
-      "evidence": [
-        "tasks/prd-3-ancrer.md"
-      ],
+      "evidence": ["tasks/prd-3-ancrer.md"],
       "acceptance": [
         "20 graines réelles + plan de fréquence proposé (gabarit 3-ancrer/06)",
         "Validation explicite avant activation du flag anchoring en préprod"
@@ -3575,18 +2853,10 @@
         "id": "S3-009",
         "previousPasses": false
       },
-      "sourceDependencies": [
-        "S3-003",
-        "S3-007"
-      ],
-      "dependencies": [
-        "S3-003",
-        "S3-007"
-      ],
+      "sourceDependencies": ["S3-003", "S3-007"],
+      "dependencies": ["S3-003", "S3-007"],
       "gap": "Agrégats d’ancrage et absence de drill-down individuel à prouver.",
-      "evidence": [
-        "tasks/prd-3-ancrer.md"
-      ],
+      "evidence": ["tasks/prd-3-ancrer.md"],
       "acceptance": [
         "Participation, à chaud vs à froid, rétention dans le temps (e2e)",
         "Lecture seule org, AUCUN drill-down individuel (test d'accès)"
@@ -3599,10 +2869,7 @@
       },
       "historicalDependencies": [],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 46
     },
     {
@@ -3618,17 +2885,10 @@
         "id": "S3-010",
         "previousPasses": false
       },
-      "sourceDependencies": [
-        "S3-001"
-      ],
-      "dependencies": [
-        "S3-001"
-      ],
+      "sourceDependencies": ["S3-001"],
+      "dependencies": ["S3-001"],
       "gap": "Outbox et LRS de référence à livrer ; le client xAPI hérité sans appelant n’est pas une preuve de livraison.",
-      "evidence": [
-        "lib/telemetry/xapi.ts",
-        "tasks/prd-3-ancrer.md"
-      ],
+      "evidence": ["lib/telemetry/xapi.ts", "tasks/prd-3-ancrer.md"],
       "acceptance": [
         "Statements conformes vérifiés contre un LRS de test (P3-C)",
         "Retry prouvé LRS coupé ; zéro e-mail/nom en clair",
@@ -3642,10 +2902,7 @@
       },
       "historicalDependencies": [],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 47
     },
     {
@@ -3662,13 +2919,9 @@
         "previousPasses": true
       },
       "sourceDependencies": [],
-      "dependencies": [
-        "S0-011"
-      ],
+      "dependencies": ["S0-011"],
       "gap": "CertificatePrompt existe sans montage retrouvé.",
-      "evidence": [
-        "components/certificate-prompt.tsx:181"
-      ],
+      "evidence": ["components/certificate-prompt.tsx:181"],
       "acceptance": [
         "Après conservation, rendre l’action accessible au moment autorisé de fin de cours.",
         "Tester émission idempotente, refus hors droits et accès au certificat depuis le parcours réel."
@@ -3700,16 +2953,10 @@
         "id": "U-008",
         "previousPasses": true
       },
-      "sourceDependencies": [
-        "U-007"
-      ],
-      "dependencies": [
-        "U-007"
-      ],
+      "sourceDependencies": ["U-007"],
+      "dependencies": ["U-007"],
       "gap": "Page existante ; parcours amont du certificat non soldé.",
-      "evidence": [
-        "app/certificates/page.tsx"
-      ],
+      "evidence": ["app/certificates/page.tsx"],
       "acceptance": [
         "Un certificat obtenu via le parcours U-007 apparaît après rechargement et n’est visible que par son bénéficiaire autorisé.",
         "Vérifier les états vide, erreur et consultation FR/AR/EN."
@@ -3721,10 +2968,7 @@
       },
       "historicalDependencies": [],
       "executionAllowed": true,
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 49
     },
     {
@@ -3741,14 +2985,9 @@
         "previousPasses": true
       },
       "sourceDependencies": [],
-      "dependencies": [
-        "S0-011"
-      ],
+      "dependencies": ["S0-011"],
       "gap": "Bannière de consentement sans montage retrouvé ; ne pas activer une collecte pour justifier la bannière.",
-      "evidence": [
-        "components/telemetry-consent-banner.tsx:10",
-        "app/layout.tsx"
-      ],
+      "evidence": ["components/telemetry-consent-banner.tsx:10", "app/layout.tsx"],
       "acceptance": [
         "Inventorier les collectes réellement actives avant de décider de l’interface de consentement.",
         "Pour chaque collecte retenue, vérifier consentement explicite, refus, retrait et absence d’envoi avant opt-in.",
@@ -3781,16 +3020,10 @@
         "id": "S-018",
         "previousPasses": true
       },
-      "sourceDependencies": [
-        "S-017"
-      ],
-      "dependencies": [
-        "S0-011"
-      ],
+      "sourceDependencies": ["S-017"],
+      "dependencies": ["S0-011"],
       "gap": "Client MCP sans appelant de production retrouvé ; arbitrer les connecteurs directs face au contrat Diwan.",
-      "evidence": [
-        "lib/mcp/client.ts:198"
-      ],
+      "evidence": ["lib/mcp/client.ts:198"],
       "acceptance": [
         "lib/mcp/client.ts : MCP Client via SDK",
         "Config serveurs via mcp-servers.yml",
@@ -3828,18 +3061,10 @@
         "id": "S-019",
         "previousPasses": true
       },
-      "sourceDependencies": [
-        "S-018"
-      ],
-      "dependencies": [
-        "S0-011",
-        "S-018"
-      ],
+      "sourceDependencies": ["S-018"],
+      "dependencies": ["S0-011", "S-018"],
       "gap": "NotebookLM demeure une configuration d’exemple désactivée, sans preuve d’intégration Qalem.",
-      "evidence": [
-        "components/admin/mcp-tab.tsx",
-        "mcp-servers.yml.example"
-      ],
+      "evidence": ["components/admin/mcp-tab.tsx", "mcp-servers.yml.example"],
       "acceptance": [
         "Config serveur MCP NotebookLM dans mcp-servers.yml",
         "Agents peuvent appeler search_notebook(query)",
@@ -3876,18 +3101,10 @@
         "id": "S-020",
         "previousPasses": true
       },
-      "sourceDependencies": [
-        "S-018"
-      ],
-      "dependencies": [
-        "S0-011",
-        "S-018"
-      ],
+      "sourceDependencies": ["S-018"],
+      "dependencies": ["S0-011", "S-018"],
       "gap": "Notion demeure une configuration d’exemple, pas une livraison prouvée.",
-      "evidence": [
-        "components/admin/mcp-tab.tsx",
-        "mcp-servers.yml.example"
-      ],
+      "evidence": ["components/admin/mcp-tab.tsx", "mcp-servers.yml.example"],
       "acceptance": [
         "Config serveur MCP Notion dans mcp-servers.yml",
         "search_notion(query) disponible",
@@ -3924,18 +3141,10 @@
         "id": "S-021",
         "previousPasses": true
       },
-      "sourceDependencies": [
-        "S-018"
-      ],
-      "dependencies": [
-        "S0-011",
-        "S-018"
-      ],
+      "sourceDependencies": ["S-018"],
+      "dependencies": ["S0-011", "S-018"],
       "gap": "Drive demeure une configuration d’exemple, pas une livraison prouvée.",
-      "evidence": [
-        "components/admin/mcp-tab.tsx",
-        "mcp-servers.yml.example"
-      ],
+      "evidence": ["components/admin/mcp-tab.tsx", "mcp-servers.yml.example"],
       "acceptance": [
         "Config serveur MCP Google Drive dans mcp-servers.yml",
         "search_drive(query) disponible",
@@ -3972,16 +3181,10 @@
         "id": "S-034",
         "previousPasses": true
       },
-      "sourceDependencies": [
-        "S-033"
-      ],
-      "dependencies": [
-        "S0-011"
-      ],
+      "sourceDependencies": ["S-033"],
+      "dependencies": ["S0-011"],
       "gap": "submitGrade ne possède aucun appelant de production retrouvé.",
-      "evidence": [
-        "lib/lti/grade-service.ts:77"
-      ],
+      "evidence": ["lib/lti/grade-service.ts:77"],
       "acceptance": [
         "lib/lti/grade-service.ts : client LTI AGS",
         "Score envoyé au LMS après chaque quiz",
@@ -4018,17 +3221,10 @@
         "id": "S-035",
         "previousPasses": true
       },
-      "sourceDependencies": [
-        "S-022"
-      ],
-      "dependencies": [
-        "S0-011",
-        "U-021"
-      ],
+      "sourceDependencies": ["S-022"],
+      "dependencies": ["S0-011", "U-021"],
       "gap": "Client xAPI hérité sans appelant ; distinguer télémétrie du cours et événements d’ancrage.",
-      "evidence": [
-        "lib/telemetry/xapi.ts:106"
-      ],
+      "evidence": ["lib/telemetry/xapi.ts:106"],
       "acceptance": [
         "lib/telemetry/xapi.ts : client xAPI ADL conformant",
         "Statements : quiz tenté/réussi, slide vue, PBL résolu, discussion",
@@ -4065,17 +3261,10 @@
         "id": "S-036",
         "previousPasses": true
       },
-      "sourceDependencies": [
-        "S-022"
-      ],
-      "dependencies": [
-        "S0-011",
-        "U-021"
-      ],
+      "sourceDependencies": ["S-022"],
+      "dependencies": ["S0-011", "U-021"],
       "gap": "collectPedagogyData sans appelant ; un schéma existant ne prouve aucune collecte utile.",
-      "evidence": [
-        "lib/telemetry/pedagogy-collector.ts:74"
-      ],
+      "evidence": ["lib/telemetry/pedagogy-collector.ts:74"],
       "acceptance": [
         "lib/telemetry/pedagogy-collector.ts",
         "Collecte opt-in : séquences scènes, scores, temps, actions, complétion",
@@ -4113,17 +3302,10 @@
         "id": "S-037",
         "previousPasses": true
       },
-      "sourceDependencies": [
-        "S-036"
-      ],
-      "dependencies": [
-        "S0-011",
-        "S-036"
-      ],
+      "sourceDependencies": ["S-036"],
+      "dependencies": ["S0-011", "S-036"],
       "gap": "getOptimizationSuggestion sans appelant ; bénéfice produit non démontré.",
-      "evidence": [
-        "lib/generation/data-optimizer.ts:84"
-      ],
+      "evidence": ["lib/generation/data-optimizer.ts:84"],
       "acceptance": [
         "lib/generation/data-optimizer.ts",
         "Ordonnancement optimal basé sur données historiques",
@@ -4160,17 +3342,10 @@
         "id": "S-047",
         "previousPasses": true
       },
-      "sourceDependencies": [
-        "S-036"
-      ],
-      "dependencies": [
-        "S0-011",
-        "U-021"
-      ],
+      "sourceDependencies": ["S-036"],
+      "dependencies": ["S0-011", "U-021"],
       "gap": "collectDiscussionData sans appelant ; le consentement doit précéder tout branchement.",
-      "evidence": [
-        "lib/telemetry/discussion-collector.ts:195"
-      ],
+      "evidence": ["lib/telemetry/discussion-collector.ts:195"],
       "acceptance": [
         "lib/telemetry/discussion-collector.ts",
         "Données : séquence agents, type intervention, durée, quiz score post-discussion",
@@ -4206,17 +3381,10 @@
         "id": "S-048",
         "previousPasses": true
       },
-      "sourceDependencies": [
-        "S-047"
-      ],
-      "dependencies": [
-        "S0-011",
-        "S-047"
-      ],
+      "sourceDependencies": ["S-047"],
+      "dependencies": ["S0-011", "S-047"],
       "gap": "suggestNextAgent et shouldUseDataDriven sans appelant ; seuil code/acceptance à réconcilier.",
-      "evidence": [
-        "lib/orchestration/data-driven-director.ts"
-      ],
+      "evidence": ["lib/orchestration/data-driven-director.ts"],
       "acceptance": [
         "lib/orchestration/data-driven-director.ts",
         "Director consomme patterns agrégés",
@@ -4254,13 +3422,9 @@
         "previousPasses": true
       },
       "sourceDependencies": [],
-      "dependencies": [
-        "S0-011"
-      ],
+      "dependencies": ["S0-011"],
       "gap": "PublishAgentDialog sans montage retrouvé.",
-      "evidence": [
-        "components/agent/publish-agent-dialog.tsx:31"
-      ],
+      "evidence": ["components/agent/publish-agent-dialog.tsx:31"],
       "acceptance": [
         "Après conservation du marketplace, brancher publication depuis une action visible et autorisée.",
         "Tester validation, publication réelle, refus inter-tenant et retrait selon le contrat produit."
@@ -4292,17 +3456,10 @@
         "id": "U-015",
         "previousPasses": true
       },
-      "sourceDependencies": [
-        "U-002"
-      ],
-      "dependencies": [
-        "S0-011",
-        "S-018"
-      ],
+      "sourceDependencies": ["U-002"],
+      "dependencies": ["S0-011", "S-018"],
       "gap": "L’administration MCP affiche des exemples et simule le test de connexion.",
-      "evidence": [
-        "components/admin/mcp-tab.tsx:9"
-      ],
+      "evidence": ["components/admin/mcp-tab.tsx:9"],
       "acceptance": [
         "Afficher la configuration effective autorisée et un résultat réel de connexion, jamais un délai simulé.",
         "Ne jamais exposer les secrets au navigateur ; tester refus aux rôles non autorisés."
@@ -4334,17 +3491,10 @@
         "id": "U-018",
         "previousPasses": true
       },
-      "sourceDependencies": [
-        "U-002"
-      ],
-      "dependencies": [
-        "S0-011",
-        "S-035"
-      ],
+      "sourceDependencies": ["U-002"],
+      "dependencies": ["S0-011", "S-035"],
       "gap": "Le widget appelle /api/xapi/status et /api/xapi/test ; routes non retrouvées.",
-      "evidence": [
-        "components/admin/xapi-tab.tsx"
-      ],
+      "evidence": ["components/admin/xapi-tab.tsx"],
       "acceptance": [
         "Après conservation, brancher statut/test réels avec contrôle de rôle et résultat observable.",
         "Ne pas exposer les credentials LRS ; tester erreur réseau et configuration absente."

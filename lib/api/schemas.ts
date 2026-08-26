@@ -355,7 +355,13 @@ export const generateClassroomSchema = z.object({
   orgId: z.string().uuid('orgId must be a valid UUID'),
   courseId: z.string().uuid('courseId must be a valid UUID').optional(),
   requirement: z.string().min(1, 'requirement is required'),
-  modelString: z.string().trim().min(3).max(240).regex(/^[A-Za-z0-9_-]+:.+$/).optional(),
+  modelString: z
+    .string()
+    .trim()
+    .min(3)
+    .max(240)
+    .regex(/^[A-Za-z0-9_-]+:.+$/)
+    .optional(),
   pdfContent: z
     .object({
       text: z.string(),
