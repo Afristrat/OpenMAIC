@@ -1789,15 +1789,15 @@
       "description": "En tant que mainteneur de Qalem, je veux que chaque sortie d’erreur ou d’avertissement du gate corresponde à une assertion locale et explicite afin qu’un défaut de runtime, de fixture ou de test ne puisse plus se cacher dans un run vert.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P0",
-      "status": "to_implement",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "type": "request_or_observed_gap",
         "date": "2026-08-27"
       },
       "sourceDependencies": [],
       "dependencies": ["S6-018"],
-      "gap": "Le gate exact de S6-018 est fonctionnellement vert, mais son journal contient encore des sorties non qualifiées : stockage Zustand indisponible dans un harnais Vitest, logs de chemins négatifs attendus, lectures StageStore absentes, synchronisations Quiz en échec, mismatch d’hydratation et collisions répétées de clé React scene-0. Tant que ces signaux coexistent, une nouvelle régression peut se confondre avec le bruit historique.",
+      "gap": "Soldé : chaque chemin négatif possède un contrat de console local et exact, la fixture Playwright échoue sur toute console, pageerror, réponse HTTP ou erreur applicative non déclarée, les défauts de store/réseau/hydratation/clé ont été corrigés à la racine et le gate final ne contient aucun signal résiduel.",
       "evidence": [
         "command:pnpm check && pnpm exec tsc --noEmit && pnpm lint && pnpm test && pnpm build && pnpm test:e2e@7f589d69ce1f4bd3607f56a6b254d4f04508f64c",
         "artifact:/tmp/qalem-gate-logs/s6018-7f589d-full-gate.log",
@@ -1813,7 +1813,16 @@
         "Ajouter un contrôle permanent qui fait échouer le scénario concerné dès qu’une nouvelle erreur ou un nouvel avertissement navigateur non explicitement consommé apparaît, sans masquer les sorties du serveur ni les erreurs d’API.",
         "Réussir le gate complet au SHA exact sans retry ni flaky, puis prouver dans son journal zéro WARN/ERROR résiduel non consommé, zéro avertissement Zustand, zéro collision de clé React et zéro mismatch d’hydratation."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-08-27 — SHA fonctionnel 74fb1055cd76790061131ef6a26beb13846b4958 présent sur origin/refork-v030 ; clone isolé ServeurIA /tmp/qalem-s6018-c68c260, image qalem-s6017-gate:ffmpeg.",
+        "2026-08-27 — Inventaire initial du journal S6-018 : 53 blocs stderr, 64 WARN, 17 ERROR, 6 avertissements Zustand, 54 collisions de clé React et 1 mismatch d’hydratation ; classification et émetteurs consignés dans docs/validation/S6-020-silent-gate.md.",
+        "2026-08-27 — Les chemins négatifs Vitest sont capturés par tests/helpers/expected-console.ts avec nombre et contenu exacts, restauration onTestFinished et stockage déterministe ; aucune interception console de test ne subsiste hors de ce helper.",
+        "2026-08-27 — e2e/fixtures/base.ts et expected-console.ts imposent automatiquement zéro console.warn/error, pageerror, erreur applicative ou réponse HTTP en échec non déclarée ; chaque exception attendue appartient au scénario et doit être observée exactement.",
+        "2026-08-27 — Défauts corrigés à la racine : routes Supabase/Classroom déterministes, identifiants de scène uniques, rendu serveur/client stable, sandbox iframe à origine opaque et absence locale StageStore reclassée INFO ; silent:true retiré de la configuration Sentry.",
+        "2026-08-27 — Gate exact au SHA 74fb105 : pnpm check, TypeScript et lint verts ; Vitest 376/376 fichiers et 2 474/2 474 tests ; build 99/99 ; Playwright 82/82 en 3,9 min, zéro retry/flaky ; journal /tmp/qalem-gate-logs/s6020-74fb105-full-gate.log, code 0.",
+        "2026-08-27 — Audit du journal final : zéro stderr, zéro [WARN], zéro [ERROR], zéro avertissement Zustand, zéro collision de clé React et zéro mismatch d’hydratation."
+      ],
+      "completedAt": "2026-08-27",
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
