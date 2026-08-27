@@ -2,6 +2,25 @@ import { devices, expect, test } from '@playwright/test';
 
 const dismissedKey = 'qalem-pwa-dismissed';
 
+async function initializePwaTest(page: import('@playwright/test').Page): Promise<void> {
+  await page.addInitScript((key) => {
+    if (!sessionStorage.getItem('pwa-test-initialized')) {
+      localStorage.removeItem(key);
+      localStorage.setItem('locale', 'fr-FR');
+      sessionStorage.setItem('pwa-test-initialized', 'true');
+    }
+
+    Object.assign(window, { __pwaInstallEffectRan: false });
+    const originalMatchMedia = window.matchMedia.bind(window);
+    window.matchMedia = (query: string): MediaQueryList => {
+      if (query === '(display-mode: standalone)') {
+        Object.assign(window, { __pwaInstallEffectRan: true });
+      }
+      return originalMatchMedia(query);
+    };
+  }, dismissedKey);
+}
+
 async function dispatchInstallPrompt(
   page: import('@playwright/test').Page,
   outcome: 'accepted' | 'dismissed',
@@ -22,15 +41,20 @@ async function dispatchInstallPrompt(
   }, outcome);
 }
 
+async function showInstallPrompt(
+  page: import('@playwright/test').Page,
+  outcome: 'accepted' | 'dismissed',
+): Promise<void> {
+  await page.waitForFunction(
+    () => (window as typeof window & { __pwaInstallEffectRan?: boolean }).__pwaInstallEffectRan,
+  );
+  await dispatchInstallPrompt(page, outcome);
+  await expect(page.getByTestId('pwa-install-banner')).toBeVisible();
+}
+
 test.describe('PWA install banner', () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript((key) => {
-      if (!sessionStorage.getItem('pwa-test-initialized')) {
-        localStorage.removeItem(key);
-        localStorage.setItem('locale', 'fr-FR');
-        sessionStorage.setItem('pwa-test-initialized', 'true');
-      }
-    }, dismissedKey);
+    await initializePwaTest(page);
   });
 
   test('only proposes an applicable Chromium install and persists refusal', async ({ page }) => {
@@ -38,8 +62,7 @@ test.describe('PWA install banner', () => {
     const banner = page.getByTestId('pwa-install-banner');
     await expect(banner).toBeHidden();
 
-    await dispatchInstallPrompt(page, 'dismissed');
-    await expect(banner).toBeVisible();
+    await showInstallPrompt(page, 'dismissed');
     await page.getByRole('button', { name: "Installer l'application" }).click();
     await expect(banner).toBeHidden();
     await expect
@@ -56,28 +79,29 @@ test.describe('PWA install banner', () => {
       .toEqual({ dismissed: 'true', prompts: 1 });
 
     await page.reload();
+    await page.waitForFunction(
+      () => (window as typeof window & { __pwaInstallEffectRan?: boolean }).__pwaInstallEffectRan,
+    );
     await dispatchInstallPrompt(page, 'accepted');
     await expect(banner).toBeHidden();
   });
 
   test('hides the proposal when installation completes outside the banner', async ({ page }) => {
     await page.goto('/');
-    await dispatchInstallPrompt(page, 'accepted');
+    await showInstallPrompt(page, 'accepted');
     const banner = page.getByTestId('pwa-install-banner');
-    await expect(banner).toBeVisible();
     await page.evaluate(() => window.dispatchEvent(new Event('appinstalled')));
     await expect(banner).toBeHidden();
   });
 
   test('does not propose installation in standalone mode', async ({ page }) => {
     await page.addInitScript(() => {
-      const originalMatchMedia = window.matchMedia.bind(window);
-      window.matchMedia = (query: string): MediaQueryList =>
-        query === '(display-mode: standalone)'
-          ? ({ matches: true, media: query } as MediaQueryList)
-          : originalMatchMedia(query);
+      Object.defineProperty(navigator, 'standalone', { configurable: true, value: true });
     });
     await page.goto('/');
+    await page.waitForFunction(
+      () => (window as typeof window & { __pwaInstallEffectRan?: boolean }).__pwaInstallEffectRan,
+    );
     await dispatchInstallPrompt(page, 'accepted');
     await expect(page.getByTestId('pwa-install-banner')).toBeHidden();
   });
@@ -95,13 +119,7 @@ test.describe('PWA install banner on iOS', () => {
   });
 
   test('shows manual instructions in browser mode and respects dismissal', async ({ page }) => {
-    await page.addInitScript((key) => {
-      if (!sessionStorage.getItem('pwa-test-initialized')) {
-        localStorage.removeItem(key);
-        localStorage.setItem('locale', 'fr-FR');
-        sessionStorage.setItem('pwa-test-initialized', 'true');
-      }
-    }, dismissedKey);
+    await initializePwaTest(page);
     await page.goto('/');
 
     const banner = page.getByTestId('pwa-install-banner');
