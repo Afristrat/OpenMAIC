@@ -293,12 +293,20 @@ test.describe('Mobile Pro editor audit', () => {
     expect(geometry.width).toBeGreaterThan(75);
     expect(geometry.width).toBeLessThan(85);
 
-    const firstPosition = await laser.boundingBox();
-    await page.waitForTimeout(700);
-    const sweptPosition = await laser.boundingBox();
+    // Resolve the timed overlay once. Looking it up again after a delay races
+    // with the authored 2.5 s teardown on a loaded full-suite run.
+    const { firstPosition, sweptPosition } = await laser.evaluate(async (element) => {
+      const readPosition = () => {
+        const rect = element.getBoundingClientRect();
+        return { x: rect.x, y: rect.y };
+      };
+      const firstPosition = readPosition();
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      return { firstPosition, sweptPosition: readPosition() };
+    });
     expect(
-      Math.abs((sweptPosition?.x ?? 0) - (firstPosition?.x ?? 0)) > 3 ||
-        Math.abs((sweptPosition?.y ?? 0) - (firstPosition?.y ?? 0)) > 3,
+      Math.abs(sweptPosition.x - firstPosition.x) > 3 ||
+        Math.abs(sweptPosition.y - firstPosition.y) > 3,
     ).toBe(true);
   });
 
