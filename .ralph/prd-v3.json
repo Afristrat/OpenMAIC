@@ -1528,15 +1528,15 @@
       "description": "En tant qu’utilisateur de Qalem, je veux créer les illustrations sans réutiliser les images du document source afin que le parcours promis soit réellement utilisable.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P1",
-      "status": "to_implement",
-      "passes": false,
+      "status": "to_validate",
+      "passes": true,
       "source": {
         "type": "request_or_observed_gap",
         "date": "2026-08-26"
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Le générateur exige encore une image source dans certains slides, en contradiction avec la demande explicite.",
+      "gap": "Soldé : les images extraites du document restent un contexte d’analyse et ne sont plus persistées ni injectées dans les scènes ; toute demande visuelle devient une illustration originale avec provenance contrôlée.",
       "evidence": [
         "lib/server/classroom-generation.ts:772",
         "lib/generation/scene-generator.ts:1208",
@@ -1548,7 +1548,15 @@
         "Tester la provenance des visuels persistés et vérifier visuellement leur adéquation au sujet, sans chevauchement ni élément coupé.",
         "Préserver les QR codes fonctionnels ; les captures web explicitement demandées restent un cas distinct de S1-012 à faire accepter."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-08-27 — SHA validé d0e5b2abe68c1f654cf466536b368770fdfbbddf, présent sur origin/refork-v030 ; clone isolé ServeurIA /tmp/qalem-s6005-a344577-1.",
+        "2026-08-27 — Parent commun corrigé dans lib/server/classroom-generation.ts et lib/generation/original-illustration-policy.ts : suggestedImageIds est supprimé, aucune image PDF n’est persistée ou assignée à une scène, et une suggestion source devient une requête d’illustration originale lorsque la génération d’images est active.",
+        "2026-08-27 — Aucun repli silencieux : une génération absente interrompt le job avec son compteur, une URL de provenance source est refusée, et un média non intégré empêche la persistance ; preuves dans tests/server/classroom-generation-retry.test.ts et tests/generation/original-illustration-policy.test.ts.",
+        "2026-08-27 — Provenance et géométrie : 66/66 tests ciblés vérifient l’URL /media/<elementId>.*, l’absence de chevauchement et le repositionnement des éléments hors cadre. La recette Chromium e2e/tests/slide-content-surface-647.spec.ts rend une illustration originale de photosynthèse, contrôle une zone supérieure à 100 × 100 px et joint la capture original-photosynthesis-illustration ; inspection visuelle : soleil, feuille, oxygène et glucose lisibles, image entièrement dans la diapositive, sans coupe ni chevauchement.",
+        "2026-08-27 — QR codes et captures web préservés : tests/server/classroom-generation-capture.test.ts 10/10 dans la sélection ciblée ; la capture explicitement demandée reste assignée par son chemin distinct et S1-012 n’est pas fermée par cette story.",
+        "2026-08-27 — Gates ServeurIA au SHA exact : pnpm check, npx tsc --noEmit et pnpm lint sans erreur ni avertissement ; pnpm test 2 386/2 386 ; pnpm build réussi (95/95 pages statiques) ; pnpm test:e2e 66/66 ; conteneur qalem-s6007-d0e5b2a-full exit 0, OOMKilled=false."
+      ],
+      "completedAt": "2026-08-27",
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
