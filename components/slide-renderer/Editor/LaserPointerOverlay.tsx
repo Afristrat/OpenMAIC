@@ -111,7 +111,11 @@ export function LaserPointerOverlay({
 
   return (
     // No overflow-hidden: the laser flies in from just outside the frame.
-    <div ref={containerRef} className="absolute inset-0 z-[101] pointer-events-none">
+    <div
+      ref={containerRef}
+      data-testid="laser-guidance-surface"
+      className="absolute inset-0 z-[101] pointer-events-none"
+    >
       <AnimatePresence>
         {laserElementId && geometry && (
           <LaserOverlay

@@ -264,19 +264,34 @@ test.describe('Mobile Pro editor audit', () => {
     await expect(laser).toBeVisible();
     await expect(laser).toHaveAttribute('data-duration-ms', '2500');
 
+    const expectedGeometry = await page.evaluate(() => {
+      const wrapper = document.getElementById('editable-element-laser-text');
+      const content = wrapper?.querySelector<HTMLElement>('.element-content');
+      const authored =
+        content?.closest<HTMLElement>('[class*="editable-element-"]') ?? content ?? wrapper;
+      const surface = document.querySelector<HTMLElement>('[data-testid="laser-guidance-surface"]');
+      if (!authored || !surface) throw new Error('Laser target or surface is missing');
+      const targetRect = authored.getBoundingClientRect();
+      const surfaceRect = surface.getBoundingClientRect();
+      return {
+        x: ((targetRect.left - surfaceRect.left) / surfaceRect.width) * 100,
+        y: ((targetRect.top - surfaceRect.top) / surfaceRect.height) * 100,
+        width: (targetRect.width / surfaceRect.width) * 100,
+        height: (targetRect.height / surfaceRect.height) * 100,
+      };
+    });
     const geometry = await laser.evaluate((element) => ({
       x: Number(element.getAttribute('data-geometry-x')),
       y: Number(element.getAttribute('data-geometry-y')),
       width: Number(element.getAttribute('data-geometry-width')),
       height: Number(element.getAttribute('data-geometry-height')),
     }));
-    expect(geometry.x).toBeGreaterThan(8);
-    expect(geometry.x).toBeLessThan(12);
-    expect(geometry.y).toBeGreaterThan(8);
-    expect(geometry.y).toBeLessThan(12);
+    expect(geometry.x).toBeCloseTo(expectedGeometry.x, 3);
+    expect(geometry.y).toBeCloseTo(expectedGeometry.y, 3);
+    expect(geometry.width).toBeCloseTo(expectedGeometry.width, 3);
+    expect(geometry.height).toBeCloseTo(expectedGeometry.height, 3);
     expect(geometry.width).toBeGreaterThan(75);
     expect(geometry.width).toBeLessThan(85);
-    expect(geometry.height).toBeGreaterThan(8);
 
     const firstPosition = await laser.boundingBox();
     await page.waitForTimeout(700);
