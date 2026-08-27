@@ -131,6 +131,8 @@ describe('régénération TTS et casting persistant', () => {
       'classroom-1',
       canonicalTeacherProfile,
       generatedAgentConfigs,
+      undefined,
+      undefined,
     );
     expect(mocks.persistClassroom).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -160,6 +162,8 @@ describe('régénération TTS et casting persistant', () => {
       'classroom-1',
       canonicalTeacherProfile,
       generatedAgentConfigs,
+      undefined,
+      undefined,
     );
   });
 
@@ -203,6 +207,8 @@ describe('régénération TTS et casting persistant', () => {
           voiceConfig: { providerId: 'higgs-tts', voiceId: 'hanae' },
         }),
       ],
+      undefined,
+      undefined,
     );
   });
 });
