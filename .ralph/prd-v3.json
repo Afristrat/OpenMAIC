@@ -2262,14 +2262,59 @@
       },
       "sourceDependencies": ["S0-008"],
       "dependencies": ["S6-010", "U-020"],
-      "gap": "Le service worker est monté ; réception et ouverture sur iOS/Android réels restent à prouver.",
-      "evidence": ["app/layout.tsx", "tasks/prd-3-ancrer.md"],
+      "gap": "Implémentation Web Push, gate machine, migration et déploiement production soldés au SHA b9c4ad59eb54383ccd3a970bd1707b6ffc009b25. Restent exclusivement la réception application fermée et le tap vers la carte cible sur appareils iOS et Android physiques, puis la consignation du taux ; passes demeure donc false.",
+      "evidence": [
+        "app/api/push-subscriptions/route.ts",
+        "app/api/push-test/route.ts",
+        "app/review/page.tsx",
+        "components/settings/notification-settings.tsx",
+        "lib/notifications/index.ts",
+        "lib/server/web-push.ts",
+        "public/sw.js",
+        "supabase/migrations/00042_web_push.sql",
+        "tests/api/web-push-api.test.ts",
+        "tests/notifications/web-push.test.ts",
+        "tests/security/web-push-migration.test.ts",
+        "tests/service-worker-push.test.ts",
+        "commit:b9c4ad59eb54383ccd3a970bd1707b6ffc009b25"
+      ],
       "acceptance": [
         "Push reçu iOS réel (PWA installée, Safari ≥ 16.4) ET Android réel",
         "Tap → ouverture PWA sur la carte cible",
         "Délivrance consignée ; échec iOS → réouvrir ADR-303 avec Amine"
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-08-27 — Le SHA exact b9c4ad59eb54383ccd3a970bd1707b6ffc009b25 livre le chemin Web Push complet : abonnement navigateur explicite et isolé par compte, persistance RLS, envoi VAPID serveur audité, suppression des endpoints 404/410, notification localisée, clic same-origin vers /review?card=<id> et priorité de la carte due ciblée.",
+        "2026-08-27 — Les tests permanents exécutent le vrai service worker dans une VM et prouvent le repli des URL malveillantes, la navigation exacte d’une PWA déjà ouverte, le remplacement d’un abonnement lors d’un changement de compte, le rollback en cas de persistance refusée, la désinscription locale même hors ligne, l’audit accepté/échoué/expiré et les frontières d’autorisation de l’API. La suite ciblée couvre 54/54 tests.",
+        "2026-08-27 — Gate complet frais sur ServeurIA dans le clone isolé /tmp/qalem-s3002-e40baf3 au SHA exact : pnpm check, TypeScript et lint sans erreur ni avertissement, suite Vitest complète, build Next.js 99/99 et 82/82 tests Playwright en 3,6 minutes ; commande globale terminée avec le code 0.",
+        "2026-08-27 — La migration 00042 a été appliquée en production dans une transaction unique sous verrou consultatif. Les tables push_subscriptions et web_push_deliveries existent avec RLS actif, 4 politiques chacune, trigger updated_at et contraintes ; elles étaient vides au contrôle post-commit.",
+        "2026-08-27 — Une paire VAPID P-256 neuve est conservée dans le coffre DPAPI sous QALEM_WEB_PUSH_VAPID_PUBLIC_KEY, QALEM_WEB_PUSH_VAPID_PRIVATE_KEY et QALEM_WEB_PUSH_VAPID_SUBJECT. Coolify expose les trois variables runtime sans préfixe ; le conteneur prouve les longueurs 87/43, le sujet mailto et la cohérence cryptographique public↔privé sans afficher les valeurs.",
+        "2026-08-27 — Déploiement Coolify t8grd99yyyz6cb38dksqbs1o terminé sur le commit exact. Le conteneur bcx5pxyuc9z3lt4jtyjipcqu-163133456391 est running/healthy, restartCount=0 et OOMKilled=false ; qalem.ma/api/health répond 200 ok, /sw.js répond 200 avec les écouteurs push et notificationclick, et les deux routes Web Push refusent l’anonyme en 401.",
+        "2026-08-27 — Recette authentifiée sur qalem.ma : le panneau Notifications est réellement visible et GET /api/push-subscriptions renvoie success=true avec une clé publique de 87 caractères. Le navigateur de recette a cependant sa permission de notification déjà bloquée ; l’interface désactive correctement l’interrupteur et aucun abonnement ni envoi distant n’a été simulé pour masquer cette frontière."
+      ],
+      "validationDebt": {
+        "recordedAt": "2026-08-27",
+        "decision": "Implémentation, infrastructure, gate et production certifiées ; story non certifiée tant que la réception application fermée et le tap vers la carte cible ne sont pas consignés sur iOS et Android physiques.",
+        "implementedButUncertified": [
+          "Abonnement Web Push explicite et isolé par compte, persistance RLS et révocation locale/serveur.",
+          "Envoi VAPID serveur vers tous les abonnements du compte, audit et purge des endpoints expirés.",
+          "Notification localisée et clic same-origin vers la carte de révision due exacte.",
+          "Déploiement production avec paire VAPID cohérente et API authentifiée configurée."
+        ],
+        "machineEvidence": {
+          "targetedSuite": "54/54 tests ciblés au SHA b9c4ad59eb54383ccd3a970bd1707b6ffc009b25.",
+          "qualityGate": "Gate complet terminé avec le code 0 : formatage, TypeScript, lint, Vitest, build 99/99 et Playwright 82/82.",
+          "database": "Migration 00042 persistante ; deux tables RLS, huit politiques, trigger et contraintes vérifiés.",
+          "production": "Déploiement exact finished ; conteneur healthy ; API authentifiée success=true ; service worker push servi en 200.",
+          "oom": "Conteneur production à zéro redémarrage, OOMKilled=false ; limite mémoire 1,5 Gio et memory+swap 3 Gio."
+        },
+        "stillRequired": [
+          "Autoriser les notifications, installer Qalem et recevoir un push application fermée sur un iPhone ou iPad physique avec Safari ≥ 16.4.",
+          "Toucher la notification iOS et confirmer l’ouverture de la PWA sur la carte de révision ciblée.",
+          "Répéter réception et tap sur un appareil Android physique installé.",
+          "Consigner les deux résultats et le taux de délivrance ; en cas d’échec iOS, réouvrir ADR-303 avec Amine."
+        ]
+      },
       "historicalEvidence": {
         "completedAt": null,
         "note": null,
