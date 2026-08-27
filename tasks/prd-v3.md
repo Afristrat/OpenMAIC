@@ -88,7 +88,7 @@ Les descriptions et critères exécutables complets sont dans le JSON canonique.
 | 16   | S0-017 | P1       | À valider        | Modèles image LiteLLM administrés : libellés, sélection et preuve UI [UI]             |
 | 17   | S6-013 | P1       | À valider        | Recetter une formation complète avec ressources et exports réels                      |
 | 18   | S-025  | P1       | Soldée           | Extraire les items de révision depuis les quiz                                        |
-| 19   | S6-010 | P1       | À implémenter    | Déclencher les rappels de révision et vérifier le cache PWA                           |
+| 19   | S6-010 | P1       | Soldée           | Déclencher les rappels de révision et vérifier le cache PWA                           |
 | 20   | U-020  | P1       | À implémenter    | Bannière installer PWA                                                                |
 | 21   | S3-002 | P1       | À valider        | Push PWA re-vérifié sur appareils réels iOS + Android                                 |
 | 22   | S0-012 | P1       | À valider        | [CHECKPOINT AMINE] Parcours guidé passe RTL ar-MA [UI]                                |

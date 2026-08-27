@@ -2136,20 +2136,25 @@
       "description": "En tant qu’utilisateur de Qalem, je veux déclencher les rappels de révision et vérifier le cache pwa afin que le parcours promis soit réellement utilisable.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P1",
-      "status": "to_implement",
-      "passes": false,
+      "status": "to_validate",
+      "passes": true,
       "source": {
         "type": "request_or_observed_gap",
         "date": "2026-08-26"
       },
       "sourceDependencies": [],
       "dependencies": ["S-025"],
-      "gap": "ServiceWorkerRegistrar est monté ; checkAndNotifyDueCards ne possède aucun appelant.",
+      "gap": "Soldé : le rappel local PWA est déclenché pour l’utilisateur authentifié avec préférence et permission explicites, borné et dédupliqué entre onglets ; le cache ne conserve plus aucune réponse privée.",
       "evidence": [
-        "app/layout.tsx:56",
-        "lib/notifications/index.ts:120",
+        "components/service-worker-registrar.tsx",
+        "components/settings/notification-settings.tsx",
+        "components/settings/index.tsx",
+        "lib/notifications/index.ts",
         "public/sw.js",
-        "../PASSATION.md:13"
+        "tests/notifications/review-reminders.test.ts",
+        "tests/service-worker-cache.test.ts",
+        "e2e/tests/pwa-review-reminders.spec.ts",
+        "commit:c024d067eb98154358efc9f67e04bc595ac657e7"
       ],
       "acceptance": [
         "Brancher un déclenchement authentifié et borné avec déduplication ; zéro notification sans préférence et permission explicites.",
@@ -2158,7 +2163,17 @@
         "Cette story ne prétend pas prouver la délivrance distante application fermée : cette recette reste S3-002.",
         "Ne pas implémenter e-mail/WhatsApp avant S6-011."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-08-27 — Le commit c024d067eb98154358efc9f67e04bc595ac657e7 branche ServiceWorkerRegistrar sur checkAndNotifyDueCards pour l’utilisateur authentifié au chargement, au retour en ligne, au retour au premier plan et toutes les quinze minutes, avec nettoyage complet lors d’un changement de compte.",
+        "2026-08-27 — Les préférences et l’horodatage de contrôle sont isolés par identifiant utilisateur. Le contrôle ne sollicite ni Supabase ni Notification.requestPermission sans préférence push et permission déjà accordée. Navigator Locks sérialise les onglets et le tag stable review-reminder empêche tout doublon visible.",
+        "2026-08-27 — Sept tests unitaires permanents couvrent rappel dû, aucune carte due, préférence absente, permission absente, changement d’utilisateur pendant et entre les contrôles, déduplication concurrente et expiration de la borne. Deux E2E Chromium couvrent mise à jour des caches, purge d’une ancienne réponse privée, API hors ligne en 503, shell public hors ligne et refus de permission sans écriture de préférence.",
+        "2026-08-27 — Le service worker v3 ne met en cache que le shell public sans credentials et une liste blanche de ressources statiques. Les routes /api, les navigations authentifiées et les données RSC ne sont jamais stockées ; l’activation purge exclusivement les anciens caches qalem-* et le gestionnaire push distant prématuré est retiré jusqu’à S3-002.",
+        "2026-08-27 — Gate complet frais sur ServeurIA : Prettier, TypeScript et lint sans erreur ni avertissement, 371/371 fichiers et 2 458/2 458 tests Vitest, build de 97/97 pages, puis 78/78 tests Playwright en 3,8 minutes avec le build E2E correctement paramétré. Le conteneur de validation est resté sous 12 Gio sans OOM.",
+        "2026-08-27 — Coolify a déployé l’application web au SHA exact c024d067eb98154358efc9f67e04bc595ac657e7. Le conteneur est running/healthy, zéro redémarrage et OOMKilled=false ; qalem.ma et /api/health répondent 200. Le /sw.js public répond 200, contient le contrat v3 et son SHA-256 24cecb05686bf79e9ef670cbdaab0bb4ddd926ce4d72f8ab436015791d5b4bd0 correspond octet pour octet au fichier validé.",
+        "2026-08-27 — Recette authentifiée en production avec Chromium normal sous Xvfb : permission granted, préférence initiale inactive, une seule invocation et un seul rappel « Reviews due: 1. » malgré deux onglets ; zéro rappel après désactivation, zéro après suppression de la carte due, puis zéro pour le compte B sur le même navigateur. La préférence A reste dans sa clé dédiée, la clé B et l’ancienne clé globale sont absentes.",
+        "2026-08-27 — Nettoyage doublement vérifié : les deux comptes Auth temporaires sont supprimés, zéro profil et zéro carte associés ; contrôle SQL global final auth=0 et cards=0 pour les marqueurs S6-010. Aucun script temporaire n’a été conservé."
+      ],
+      "completedAt": "2026-08-27",
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
