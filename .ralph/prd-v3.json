@@ -12,7 +12,7 @@
       "26 stories v2 déjà ouvertes",
       "3 stories v2 rouvertes sur défaut de preuve ou couverture",
       "18 capacités héritées remises explicitement en suivi",
-      "16 engagements ou gaps transverses non représentés dans la v2",
+      "17 engagements ou gaps transverses non représentés dans la v2",
       "Inventaire complet des 65 stories v2 et des 72 stories v1/UI"
     ],
     "notIncluded": [
@@ -1308,6 +1308,12 @@
         "request": "Exports réellement utilisables",
         "trackedBy": ["S1-007", "S1-008", "S1-010", "S6-013"],
         "source": "PRD v2 et NP Q3/Q4"
+      },
+      {
+        "id": "R-018",
+        "request": "Remédier les vulnérabilités du graphe de dépendances de production",
+        "trackedBy": ["S6-017"],
+        "source": "Audit JSON frais découvert pendant la clôture S3-002, 27 août 2026"
       }
     ]
   },
@@ -1445,6 +1451,39 @@
       "priorityRank": 3
     },
     {
+      "id": "S6-017",
+      "title": "Éliminer les vulnérabilités critiques et hautes des dépendances de production",
+      "description": "En tant qu’utilisateur de Qalem, je veux que le graphe de dépendances de production ne contienne plus de vulnérabilité critique ou haute afin que la plateforme et sa chaîne de livraison restent défendables.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P0",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "type": "request_or_observed_gap",
+        "date": "2026-08-27"
+      },
+      "sourceDependencies": [],
+      "dependencies": [],
+      "gap": "Audit frais au SHA e59eb8af4378c51efe35709f3f1f346d8733f77f : 1 650 dépendances de production, 216 avis et 232 occurrences, dont 2 critiques et 88 hautes. Les chemins incluent notamment Next, LangChain/CopilotKit et plusieurs transitifs ; web-push ne figure dans aucun champ de l’audit. Aucun résultat ne doit être écarté comme préexistant.",
+      "evidence": [
+        "package.json",
+        "pnpm-lock.yaml",
+        "command:pnpm audit --prod --json@e59eb8af4378c51efe35709f3f1f346d8733f77f"
+      ],
+      "acceptance": [
+        "Rejouer l’audit JSON sur un clone ServeurIA isolé et inventorier chaque chemin critique ou haut : dépendance directe/transitive, appelant Qalem, version corrigée et caractère atteignable.",
+        "Éliminer toutes les occurrences critiques et hautes du graphe de production par mises à niveau compatibles, overrides bornés, retrait ou remplacement de la capacité concernée ; aucune simple acceptation de risque ne vaut clôture.",
+        "Prouver séparément que la dépendance web-push ajoutée par S3-002 ne contribue à aucun avis, sans retirer ni dégrader le Web Push livré.",
+        "Ajouter ou renforcer les tests permanents des frontières touchées par chaque montée majeure ou remplacement ; vérifier les trois locales, RTL, RLS et contrats externes quand concernés.",
+        "Obtenir audit production critical=0 et high=0, puis réussir le gate complet au SHA exact et recertifier les conteneurs déployés, leurs redémarrages et leur état OOM."
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
+      "priorityRank": 4
+    },
+    {
       "id": "S6-014",
       "title": "Conserver la dette de sécurité Qalem sous autorisation explicite",
       "description": "En tant qu’utilisateur de Qalem, je veux conserver la dette de sécurité qalem sous autorisation explicite afin que le parcours promis soit réellement utilisable.",
@@ -1470,7 +1509,7 @@
       "historicalDependencies": [],
       "executionAllowed": false,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 4
+      "priorityRank": 5
     },
     {
       "id": "S6-005",
@@ -1508,7 +1547,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 5
+      "priorityRank": 6
     },
     {
       "id": "S6-006",
@@ -1548,7 +1587,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 6
+      "priorityRank": 7
     },
     {
       "id": "S6-007",
@@ -1588,7 +1627,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 7
+      "priorityRank": 8
     },
     {
       "id": "S6-008",
@@ -1628,7 +1667,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 8
+      "priorityRank": 9
     },
     {
       "id": "S5-004",
@@ -1678,7 +1717,7 @@
       "completedAt": "2026-08-27",
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 9
+      "priorityRank": 10
     },
     {
       "id": "S6-009",
@@ -1734,7 +1773,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 10
+      "priorityRank": 11
     },
     {
       "id": "S6-003",
@@ -1767,7 +1806,7 @@
       "historicalDependencies": [],
       "executionAllowed": false,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 11
+      "priorityRank": 12
     },
     {
       "id": "S6-004",
@@ -1818,7 +1857,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 12
+      "priorityRank": 13
     },
     {
       "id": "S6-012",
@@ -1886,7 +1925,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 13
+      "priorityRank": 14
     },
     {
       "id": "S1-009",
@@ -1927,7 +1966,7 @@
       "historicalDependencies": ["S0-006"],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 14
+      "priorityRank": 15
     },
     {
       "id": "S4-010",
@@ -1971,7 +2010,7 @@
       "historicalDependencies": ["S4-009"],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 15
+      "priorityRank": 16
     },
     {
       "id": "S0-017",
@@ -2038,7 +2077,7 @@
       "historicalDependencies": ["S0-007"],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 16
+      "priorityRank": 17
     },
     {
       "id": "S6-013",
@@ -2072,7 +2111,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 17
+      "priorityRank": 18
     },
     {
       "id": "S-025",
@@ -2128,7 +2167,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 18
+      "priorityRank": 19
     },
     {
       "id": "S6-010",
@@ -2177,7 +2216,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 19
+      "priorityRank": 20
     },
     {
       "id": "U-020",
@@ -2245,7 +2284,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 20
+      "priorityRank": 21
     },
     {
       "id": "S3-002",
@@ -2323,7 +2362,7 @@
       "historicalDependencies": ["S0-008"],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 21
+      "priorityRank": 22
     },
     {
       "id": "S0-012",
@@ -2359,7 +2398,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 22
+      "priorityRank": 23
     },
     {
       "id": "S1-012",
@@ -2399,7 +2438,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 23
+      "priorityRank": 24
     },
     {
       "id": "S0-011",
@@ -2437,7 +2476,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 24
+      "priorityRank": 25
     },
     {
       "id": "S1-007",
@@ -2471,7 +2510,7 @@
       "historicalDependencies": ["S0-008"],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 25
+      "priorityRank": 26
     },
     {
       "id": "S1-008",
@@ -2508,7 +2547,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 26
+      "priorityRank": 27
     },
     {
       "id": "S1-010",
@@ -2541,7 +2580,7 @@
       "historicalDependencies": ["S0-008"],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 27
+      "priorityRank": 28
     },
     {
       "id": "S1-004",
@@ -2574,7 +2613,7 @@
       "historicalDependencies": ["S1-003"],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 28
+      "priorityRank": 29
     },
     {
       "id": "S1-005",
@@ -2607,7 +2646,7 @@
       "historicalDependencies": ["S1-003"],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 29
+      "priorityRank": 30
     },
     {
       "id": "S6-016",
@@ -2643,7 +2682,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 30
+      "priorityRank": 31
     },
     {
       "id": "S6-015",
@@ -2681,7 +2720,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 31
+      "priorityRank": 32
     },
     {
       "id": "S6-011",
@@ -2717,7 +2756,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 32
+      "priorityRank": 33
     },
     {
       "id": "S2-004",
@@ -2751,7 +2790,7 @@
       "historicalDependencies": ["S2-001"],
       "executionAllowed": false,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 33
+      "priorityRank": 34
     },
     {
       "id": "S2-005",
@@ -2784,7 +2823,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 34
+      "priorityRank": 35
     },
     {
       "id": "S2-006",
@@ -2816,7 +2855,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 35
+      "priorityRank": 36
     },
     {
       "id": "S2-008",
@@ -2850,7 +2889,7 @@
       "historicalDependencies": ["S0-008", "S2-010"],
       "executionAllowed": false,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 36
+      "priorityRank": 37
     },
     {
       "id": "S2-009",
@@ -2882,7 +2921,7 @@
       "historicalDependencies": ["S2-010"],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 37
+      "priorityRank": 38
     },
     {
       "id": "S2-011",
@@ -2918,7 +2957,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 38
+      "priorityRank": 39
     },
     {
       "id": "S3-001",
@@ -2950,7 +2989,7 @@
       "historicalDependencies": ["S0-008", "S0-009"],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 39
+      "priorityRank": 40
     },
     {
       "id": "S3-003",
@@ -2983,7 +3022,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 40
+      "priorityRank": 41
     },
     {
       "id": "S3-004",
@@ -3016,7 +3055,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 41
+      "priorityRank": 42
     },
     {
       "id": "S3-005",
@@ -3049,7 +3088,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 42
+      "priorityRank": 43
     },
     {
       "id": "S3-006",
@@ -3082,7 +3121,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 43
+      "priorityRank": 44
     },
     {
       "id": "S3-007",
@@ -3114,7 +3153,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 44
+      "priorityRank": 45
     },
     {
       "id": "S3-008",
@@ -3150,7 +3189,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 45
+      "priorityRank": 46
     },
     {
       "id": "S3-009",
@@ -3182,7 +3221,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 46
+      "priorityRank": 47
     },
     {
       "id": "S3-010",
@@ -3215,7 +3254,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 47
+      "priorityRank": 48
     },
     {
       "id": "U-007",
@@ -3250,7 +3289,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 48
+      "priorityRank": 49
     },
     {
       "id": "U-008",
@@ -3281,7 +3320,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 49
+      "priorityRank": 50
     },
     {
       "id": "U-021",
@@ -3317,7 +3356,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 50
+      "priorityRank": 51
     },
     {
       "id": "S-018",
@@ -3358,7 +3397,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 51
+      "priorityRank": 52
     },
     {
       "id": "S-019",
@@ -3398,7 +3437,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 52
+      "priorityRank": 53
     },
     {
       "id": "S-020",
@@ -3438,7 +3477,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 53
+      "priorityRank": 54
     },
     {
       "id": "S-021",
@@ -3478,7 +3517,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 54
+      "priorityRank": 55
     },
     {
       "id": "S-034",
@@ -3518,7 +3557,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 55
+      "priorityRank": 56
     },
     {
       "id": "S-035",
@@ -3558,7 +3597,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 56
+      "priorityRank": 57
     },
     {
       "id": "S-036",
@@ -3599,7 +3638,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 57
+      "priorityRank": 58
     },
     {
       "id": "S-037",
@@ -3639,7 +3678,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 58
+      "priorityRank": 59
     },
     {
       "id": "S-047",
@@ -3678,7 +3717,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 59
+      "priorityRank": 60
     },
     {
       "id": "S-048",
@@ -3718,7 +3757,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 60
+      "priorityRank": 61
     },
     {
       "id": "U-011",
@@ -3753,7 +3792,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 61
+      "priorityRank": 62
     },
     {
       "id": "U-015",
@@ -3788,7 +3827,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 62
+      "priorityRank": 63
     },
     {
       "id": "U-018",
@@ -3823,7 +3862,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 63
+      "priorityRank": 64
     }
   ]
 }
