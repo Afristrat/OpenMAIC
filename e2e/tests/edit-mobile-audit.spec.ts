@@ -261,6 +261,7 @@ test.describe('Mobile Pro editor audit', () => {
     const laserCue = page.getByTestId('actions-bar').getByLabel('Laser').last();
     await laserCue.hover();
     const laser = page.getByTestId('laser-guidance');
+    await expect(laser).toHaveCount(1);
     await expect(laser).toBeVisible();
     await expect(laser).toHaveAttribute('data-duration-ms', '2500');
 
