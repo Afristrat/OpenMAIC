@@ -1,6 +1,7 @@
 import { test, expect } from '../fixtures/base';
 import { HomePage } from '../pages/home.page';
 import { createSettingsStorage } from '../fixtures/test-data/settings';
+import { captureExpectedBrowserConsole } from '../fixtures/expected-console';
 import { mockOutlines } from '../fixtures/test-data/scene-outlines';
 import type { Page } from '@playwright/test';
 
@@ -537,6 +538,11 @@ test.describe('Home → Generation', () => {
   test('keeps an asynchronous plan recoverable when its status endpoint returns HTML', async ({
     page,
   }) => {
+    const consoleCapture = await captureExpectedBrowserConsole(
+      page,
+      'warn',
+      '[Home] Unable to read classroom plan job:',
+    );
     await page.route('**/api/generate-classroom/plan', async (route) => {
       await route.fulfill({
         status: 202,
@@ -564,6 +570,9 @@ test.describe('Home → Generation', () => {
 
     await expect(page).toHaveURL(/planJobId=plan-recoverable-e2e/);
     await expect(page.getByText(/Unexpected token/)).not.toBeVisible();
+    const messages = await consoleCapture.stop();
+    expect(messages).toHaveLength(1);
+    expect(messages[0]).toContain('The training plan could not be prepared');
   });
 
   test('resumes a completed syllabus after a page refresh without resubmitting it', async ({

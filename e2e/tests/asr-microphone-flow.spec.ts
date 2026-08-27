@@ -1,6 +1,7 @@
 import { test, expect } from '../fixtures/base';
 import { HomePage } from '../pages/home.page';
 import { createSettingsStorage } from '../fixtures/test-data/settings';
+import { captureExpectedBrowserConsole } from '../fixtures/expected-console';
 
 const TRANSCRIPTION = 'Le texte transcrit est visible dans Qalem.';
 
@@ -120,17 +121,30 @@ test.describe('Whisper microphone flow', () => {
   test('reports a microphone permission refusal without sending audio', async ({ page }) => {
     await installMicrophone(page, false);
     await mockManagedWhisper(page);
+    const consoleCapture = await captureExpectedBrowserConsole(
+      page,
+      'error',
+      '[AudioRecorder] Failed to start recording:',
+    );
 
     const home = new HomePage(page);
     await home.goto();
     await page.getByRole('button', { name: 'Voice input' }).click();
 
     await expect(page.getByText('Failed to access microphone')).toBeVisible();
+    const messages = await consoleCapture.stop();
+    expect(messages).toHaveLength(1);
+    expect(messages[0]).toContain('Permission denied');
   });
 
   test('reports an upstream transcription failure after recording', async ({ page }) => {
     await installMicrophone(page);
     await mockManagedWhisper(page);
+    const consoleCapture = await captureExpectedBrowserConsole(
+      page,
+      'error',
+      '[AudioRecorder] Transcription error:',
+    );
     await page.route('**/api/transcription', (route) =>
       route.fulfill({
         status: 502,
@@ -145,5 +159,8 @@ test.describe('Whisper microphone flow', () => {
     await page.getByRole('button', { name: 'Stop recording' }).click();
 
     await expect(page.getByText('Speech recognition failed')).toBeVisible();
+    const messages = await consoleCapture.stop();
+    expect(messages).toHaveLength(1);
+    expect(messages[0]).toContain('upstream-failed');
   });
 });

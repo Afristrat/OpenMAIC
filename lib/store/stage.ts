@@ -475,7 +475,7 @@ const useStageStoreBase = create<StageState>()((set, get) => ({
         });
         log.info('Loaded from storage:', stageId);
       } else {
-        log.warn('No data found for stage:', stageId);
+        log.info('No data found for stage:', stageId);
       }
     } catch (error) {
       log.error('Failed to load from storage:', error);

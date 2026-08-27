@@ -1,12 +1,33 @@
-import { test as base } from '@playwright/test';
+import { expect, test as base } from '@playwright/test';
 import { MockApi } from './mock-api';
 
 type Fixtures = {
+  browserConsoleContract: void;
   mockApi: MockApi;
   rateLimitIdentity: void;
 };
 
 export const test = base.extend<Fixtures>({
+  browserConsoleContract: [
+    async ({ page }, use) => {
+      const unexpected: string[] = [];
+      const onConsole = (message: { type(): string; text(): string }) => {
+        if (message.type() === 'warning' || message.type() === 'error') {
+          unexpected.push(`${message.type()}: ${message.text()}`);
+        }
+      };
+      const onPageError = (error: Error) => unexpected.push(`pageerror: ${error.message}`);
+      page.on('console', onConsole);
+      page.on('pageerror', onPageError);
+
+      await use();
+
+      page.off('console', onConsole);
+      page.off('pageerror', onPageError);
+      expect(unexpected, 'unexpected browser console output').toEqual([]);
+    },
+    { auto: true },
+  ],
   rateLimitIdentity: [
     async ({ page }, use, testInfo) => {
       // The proxy treats the forwarded value as an opaque bucket key after the

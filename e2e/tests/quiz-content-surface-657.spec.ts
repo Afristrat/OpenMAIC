@@ -3,6 +3,7 @@ import type { Page } from '@playwright/test';
 import { ClassroomPage } from '../pages/classroom.page';
 import { createSettingsStorage } from '../fixtures/test-data/settings';
 import type { QuizQuestion } from '../../lib/types/stage';
+import type { RequestBoundaryTracker } from '../fixtures/mock-api';
 
 const SETTINGS_STORAGE = createSettingsStorage({ sidebarCollapsed: false });
 
@@ -73,6 +74,16 @@ async function seedQuiz(page: Page, stageId: string, questions: QuizQuestion[]) 
 }
 
 test.describe('Quiz content surface (#657)', () => {
+  let persistence: RequestBoundaryTracker;
+
+  test.beforeEach(async ({ mockApi }) => {
+    persistence = await mockApi.mockQuizPersistence();
+  });
+
+  test.afterEach(() => {
+    expect(persistence.unexpectedRequests).toEqual([]);
+  });
+
   test('authoring: add every question type, edit, and delete', async ({ page }, testInfo) => {
     const STAGE = 'e2e-quiz-authoring';
     await seedQuiz(page, STAGE, [
@@ -368,14 +379,6 @@ test.describe('Quiz content surface (#657)', () => {
         }),
     );
 
-    await page.route('**/rest/v1/review_cards*', (route) =>
-      route.fulfill({
-        status: route.request().method() === 'GET' ? 200 : 201,
-        contentType: 'application/json',
-        body: '[]',
-        headers: { 'content-range': '0-0/0' },
-      }),
-    );
     await page.goto('/review');
     await page.reload();
     await expect(page.getByRole('heading', { name: 'Review queue' })).toBeVisible();

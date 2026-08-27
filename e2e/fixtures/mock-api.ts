@@ -2,8 +2,14 @@ import type { Page } from '@playwright/test';
 import { mockOutlines } from './test-data/scene-outlines';
 import { mockSceneContentResponse } from './test-data/scene-content';
 import { createMockSceneActionsResponse } from './test-data/scene-actions';
+import type { SceneOutline } from '../../lib/types/generation';
 
 export interface LocalClassroomFallbackTracker {
+  expectedRequests: string[];
+  unexpectedRequests: string[];
+}
+
+export interface RequestBoundaryTracker {
   expectedRequests: string[];
   unexpectedRequests: string[];
 }
@@ -93,20 +99,53 @@ export class MockApi {
   async mockSceneActions(stageId?: string) {
     await this.page.route('**/api/generate/scene-actions', async (route) => {
       let id = stageId ?? 'test-stage';
-      if (!stageId) {
-        try {
-          const body = route.request().postDataJSON();
-          if (body?.stageId) id = body.stageId;
-        } catch {
-          // fallback to default
-        }
+      let outline: SceneOutline | undefined;
+      try {
+        const body = route.request().postDataJSON() as {
+          stageId?: string;
+          outline?: SceneOutline;
+        };
+        if (!stageId && body?.stageId) id = body.stageId;
+        outline = body?.outline;
+      } catch {
+        // fallback to default
       }
       await route.fulfill({
         status: 200,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(createMockSceneActionsResponse(id)),
+        body: JSON.stringify(createMockSceneActionsResponse(id, outline)),
       });
     });
+  }
+
+  /** Keep quiz persistence inside the fake Supabase boundary used by browser tests. */
+  async mockQuizPersistence(): Promise<RequestBoundaryTracker> {
+    const tracker: RequestBoundaryTracker = { expectedRequests: [], unexpectedRequests: [] };
+    const routeTable = async (
+      table: 'review_cards' | 'quiz_results',
+      allowedMethods: readonly string[],
+    ) => {
+      await this.page.route(`**/rest/v1/${table}*`, async (route) => {
+        const request = route.request();
+        const label = `${request.method()} ${new URL(request.url()).pathname}`;
+        if (!allowedMethods.includes(request.method())) {
+          tracker.unexpectedRequests.push(label);
+          await route.abort('blockedbyclient');
+          return;
+        }
+        tracker.expectedRequests.push(label);
+        await route.fulfill({
+          status: request.method() === 'GET' ? 200 : 201,
+          contentType: 'application/json',
+          headers: { 'content-range': '0-0/0' },
+          body: '[]',
+        });
+      });
+    };
+
+    await routeTable('review_cards', ['GET', 'POST']);
+    await routeTable('quiz_results', ['POST']);
+    return tracker;
   }
 
   /** Mock one usable managed LLM while keeping every unrelated modality empty. */
