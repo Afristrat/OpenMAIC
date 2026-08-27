@@ -1,0 +1,54 @@
+{
+  "project": "Qalem",
+  "artifact": "PRD v3",
+  "checkedAtUtc": "2026-08-27T00:01:15.5028353Z",
+  "verdict": "BRANCH_CERTIFIED_DEPLOYMENT_NOT_CURRENT",
+  "scope": "Certification du SHA distant et de la chaîne qualité sur clone isolé ServeurIA ; la clôture globale reste ouverte tant que le déploiement et le parcours authentifié ne sont pas recertifiés au SHA courant.",
+  "validatedCommit": "76c54d2a7b60022d145141e6c090dd01dc15468c",
+  "branch": "refork-v030",
+  "files": [
+    { "path": ".ralph/prd-v3.json", "sha256": "5af4ccafc3749a143c5e7a12299237e0468d42cf5c39b16140131c3d346d3ee5" },
+    { "path": "tasks/prd-v3.md", "sha256": "7e3fd5b415611d7d2d94880a797a88bcc0edb2aa3e5c8b9389e03dc56e1530f8" },
+    { "path": "AGENTS.md", "sha256": "f948108e61cf8766f5fcb5420784008423bdcb7c7688afb915930986de53be38" },
+    { "path": ".ralph/progress.md", "sha256": "9c023ce64f9e4bd95164069491320057d7a7a0fa77387568211f3c403ecc7f62" }
+  ],
+  "qualityGates": {
+    "environment": "ServeurIA, clone isolé /tmp/qalem-s6001-76c54d2, image qalem-validation:playwright-1.58.2-ffmpeg",
+    "containerLimits": { "memory": "10 GiB", "memorySwap": "10 GiB", "cpus": 4, "nodeOptions": "--max-old-space-size=2560", "oomKilled": false },
+    "format": "passed",
+    "typecheck": "passed",
+    "lint": "passed",
+    "unitTests": "2370/2370 passed",
+    "build": "passed",
+    "e2e": "62/62 passed"
+  },
+  "runtimeChecks": {
+    "checkedAtServer": "2026-08-27T00:59:17+01:00",
+    "publicHealthHttp": 200,
+    "publicHomeHttp": 200,
+    "publicAppHttp": 200,
+    "anonymousProfileHttp": 401,
+    "deployedImages": {
+      "web": "332941dc7f0727dc673c4364f78e122b879f2f96",
+      "workers": "53bc4adc4f1d6c00c634e9c8016dda69d2f8c780",
+      "captureWorker": "53bc4adc4f1d6c00c634e9c8016dda69d2f8c780",
+      "edge": "73cc2b7b08630fbe62cc906fd6c2c426818ae290"
+    },
+    "health": { "web": "healthy", "workers": "healthy", "captureWorker": "healthy", "edge": "healthy" },
+    "restartCounts": { "web": 0, "workers": 0, "captureWorker": 0, "edge": 0 },
+    "oomKilled": { "web": false, "workers": false, "captureWorker": false, "edge": false },
+    "persistentMounts": { "web": [], "workers": [], "captureWorker": ["/data/storage-states"], "edge": [] }
+  },
+  "publication": {
+    "committed": true,
+    "pushed": true,
+    "remoteVerified": true,
+    "remoteCommit": "76c54d2a7b60022d145141e6c090dd01dc15468c"
+  },
+  "remainingBeforeS6001Closure": [
+    "Déployer un SHA contenant les commits de certification sur les cibles web, workers et capture-worker.",
+    "Re-vérifier les limites, montages et parcours critiques après ce déploiement.",
+    "Produire une preuve authentifiée au SHA déployé ; le contrôle anonyme /api/profile=401 ne remplace pas ce parcours."
+  ],
+  "unchanged": "S6-001 reste passes=false ; aucune rotation de secret, aucune mutation de main et aucun nettoyage du clone historique divergent n’ont été effectués."
+}
