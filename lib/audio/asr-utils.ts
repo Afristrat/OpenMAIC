@@ -79,7 +79,9 @@ export function isSupportedASRAudioUpload(file: File): boolean {
   const mediaType = file.type.toLowerCase().split(';', 1)[0];
   if (AUDIO_MEDIA_TYPES.has(mediaType)) return true;
   const extension = file.name.split('.').pop()?.toLowerCase();
-  return (!mediaType || mediaType === 'application/octet-stream') &&
+  return (
+    (!mediaType || mediaType === 'application/octet-stream') &&
     !!extension &&
-    AUDIO_FILE_EXTENSIONS.has(extension);
+    AUDIO_FILE_EXTENSIONS.has(extension)
+  );
 }

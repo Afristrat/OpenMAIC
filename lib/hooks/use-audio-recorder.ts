@@ -225,7 +225,9 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
       // Create MediaRecorder
-      const mimeType = selectASRRecordingMimeType(MediaRecorder.isTypeSupported?.bind(MediaRecorder));
+      const mimeType = selectASRRecordingMimeType(
+        MediaRecorder.isTypeSupported?.bind(MediaRecorder),
+      );
       const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
 
       mediaRecorderRef.current = mediaRecorder;

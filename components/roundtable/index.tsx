@@ -2012,9 +2012,7 @@ export function Roundtable({
                 <>
                   <button
                     aria-label={
-                      asrAvailable
-                        ? t('roundtable.voiceInput')
-                        : t('roundtable.voiceInputDisabled')
+                      asrAvailable ? t('roundtable.voiceInput') : t('roundtable.voiceInputDisabled')
                     }
                     onClick={(e) => {
                       e.stopPropagation();

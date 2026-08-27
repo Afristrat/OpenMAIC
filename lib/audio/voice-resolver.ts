@@ -99,11 +99,12 @@ export function resolveAgentVoice(
   if (locale && enabledProviders.length > 0) {
     const langPrefix = locale.split('-')[0];
     for (const provider of enabledProviders) {
-      const localeVoices = provider.voices.filter((voice) =>
-        isVoiceGenderCompatible(agent.gender, voice.gender) &&
-        (voice.languages ?? (voice.language ? [voice.language] : [])).some(
-          (language) => language.split('-')[0] === langPrefix,
-        ),
+      const localeVoices = provider.voices.filter(
+        (voice) =>
+          isVoiceGenderCompatible(agent.gender, voice.gender) &&
+          (voice.languages ?? (voice.language ? [voice.language] : [])).some(
+            (language) => language.split('-')[0] === langPrefix,
+          ),
       );
       if (localeVoices.length > 0) {
         return {

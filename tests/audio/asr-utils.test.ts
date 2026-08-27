@@ -31,24 +31,22 @@ describe('ASR recording and upload formats', () => {
   });
 
   it('derives a filename from the actual recording MIME type', () => {
-    expect(getASRAudioFileName(new Blob(['audio'], { type: 'audio/mp4' }))).toBe(
-      'recording.m4a',
-    );
+    expect(getASRAudioFileName(new Blob(['audio'], { type: 'audio/mp4' }))).toBe('recording.m4a');
     expect(getASRAudioFileName(new Blob(['audio'], { type: 'audio/ogg;codecs=opus' }))).toBe(
       'recording.ogg',
     );
   });
 
   it('rejects a text upload while accepting audio MIME types and legacy audio extensions', () => {
-    expect(isSupportedASRAudioUpload(new File(['audio'], 'clip.webm', { type: 'audio/webm' }))).toBe(
-      true,
-    );
+    expect(
+      isSupportedASRAudioUpload(new File(['audio'], 'clip.webm', { type: 'audio/webm' })),
+    ).toBe(true);
     expect(isSupportedASRAudioUpload(new File(['audio'], 'clip.wav'))).toBe(true);
     expect(
       isSupportedASRAudioUpload(new File(['fake'], 'clip.wav', { type: 'audio/unknown' })),
     ).toBe(false);
-    expect(isSupportedASRAudioUpload(new File(['not audio'], 'notes.txt', { type: 'text/plain' }))).toBe(
-      false,
-    );
+    expect(
+      isSupportedASRAudioUpload(new File(['not audio'], 'notes.txt', { type: 'text/plain' })),
+    ).toBe(false);
   });
 });
