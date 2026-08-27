@@ -108,7 +108,7 @@ test.describe('Slide content surface (#647)', () => {
         body: JSON.stringify({
           success: true,
           prompt:
-            'A concise process diagram with three connected stages, strong hierarchy and no decorative person.',
+            'An original photosynthesis diagram showing sunlight entering a leaf, then oxygen and glucose leaving it, with clear arrows and no decorative person.',
           negativePrompt: 'tiny text, watermark, decorative person',
         }),
       });
@@ -123,7 +123,7 @@ test.describe('Slide content surface (#647)', () => {
         body: JSON.stringify({
           success: true,
           result: {
-            url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+            url: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"%3E%3Crect width="400" height="400" rx="24" fill="%23eefbf0"/%3E%3Ccircle cx="72" cy="72" r="34" fill="%23facc15"/%3E%3Cpath d="M98 105 L155 165" stroke="%23ca8a04" stroke-width="10" marker-end="url(%23a)"/%3E%3Cellipse cx="215" cy="215" rx="82" ry="120" fill="%2322c55e" transform="rotate(35 215 215)"/%3E%3Cpath d="M165 278 Q215 215 270 145" stroke="%23f0fdf4" stroke-width="10" fill="none"/%3E%3Cpath d="M270 210 L350 155 M270 245 L350 300" stroke="%2316a34a" stroke-width="10"/%3E%3Ctext x="18" y="135" font-family="Arial" font-size="22" fill="%2371350a"%3ESunlight%3C/text%3E%3Ctext x="295" y="135" font-family="Arial" font-size="22" fill="%23166534"%3EOxygen%3C/text%3E%3Ctext x="285" y="335" font-family="Arial" font-size="22" fill="%23166534"%3EGlucose%3C/text%3E%3Cdefs%3E%3Cmarker id="a" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"%3E%3Cpath d="M0 0 L8 4 L0 8z" fill="%23ca8a04"/%3E%3C/marker%3E%3C/defs%3E%3C/svg%3E',
           },
         }),
       });
@@ -147,6 +147,16 @@ test.describe('Slide content surface (#647)', () => {
     await expect(imageDialogTitle).toHaveCount(0);
     expect(submittedPrompt).toContain('Use a clear process diagram.');
     expect(submittedAspectRatio).toBe('1:1');
-    await expect(page.locator('.editable-element-image')).toHaveCount(1);
+    const generatedImage = page.locator('.editable-element-image');
+    await expect(generatedImage).toHaveCount(1);
+    await expect(generatedImage.locator('img')).toHaveAttribute('src', /^data:image\/svg\+xml,/);
+    const generatedImageBox = await generatedImage.boundingBox();
+    expect(generatedImageBox).not.toBeNull();
+    expect(generatedImageBox?.width ?? 0).toBeGreaterThan(100);
+    expect(generatedImageBox?.height ?? 0).toBeGreaterThan(100);
+    await testInfo.attach('original-photosynthesis-illustration', {
+      body: await page.screenshot(),
+      contentType: 'image/png',
+    });
   });
 });
