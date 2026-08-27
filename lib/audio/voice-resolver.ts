@@ -258,6 +258,7 @@ export function getEnabledProvidersWithVoices(
                 id: getVoxCPMProfileVoiceId(profile.id),
                 name: profile.name,
                 language: 'auto',
+                languages: undefined,
                 gender: undefined,
               })),
             );

@@ -223,12 +223,16 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
       // Use MediaRecorder for server-side ASR
       // Request microphone permission
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recordingStream = stream;
 
       // Create MediaRecorder
       const mimeType = selectASRRecordingMimeType(
         MediaRecorder.isTypeSupported?.bind(MediaRecorder),
       );
-      const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      const mediaRecorder = new MediaRecorder(
+        recordingStream,
+        mimeType ? { mimeType } : undefined,
+      );
 
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
@@ -241,7 +245,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
 
       mediaRecorder.onstop = async () => {
         // Stop all audio tracks
-        stream.getTracks().forEach((track) => track.stop());
+        recordingStream.getTracks().forEach((track) => track.stop());
 
         // Merge audio chunks
         const audioBlob = new Blob(audioChunksRef.current, {

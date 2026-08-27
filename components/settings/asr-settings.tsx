@@ -123,17 +123,21 @@ export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {
           stream = await navigator.mediaDevices.getUserMedia({
             audio: true,
           });
+          const recordingStream = stream;
           const mimeType = selectASRRecordingMimeType(
             MediaRecorder.isTypeSupported?.bind(MediaRecorder),
           );
-          const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+          const mediaRecorder = new MediaRecorder(
+            recordingStream,
+            mimeType ? { mimeType } : undefined,
+          );
           mediaRecorderRef.current = mediaRecorder;
           const audioChunks: Blob[] = [];
           mediaRecorder.ondataavailable = (event) => {
             audioChunks.push(event.data);
           };
           mediaRecorder.onstop = async () => {
-            stream.getTracks().forEach((track) => track.stop());
+            recordingStream.getTracks().forEach((track) => track.stop());
             setIsProcessing(true);
 
             try {
