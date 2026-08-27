@@ -2,7 +2,7 @@
  * Math serializer — converts MathNodeData into a Math element with LaTeX.
  *
  * Pipeline: OMML XML → normalizeOmmlXml (surrogate-safe Unicode normalization)
- *         → omml2mathml (MathML DOM) → mathml-to-latex (LaTeX string)
+ *         → @openmaic/omml2mathml (MathML DOM) → mathml-to-latex (LaTeX string)
  *         → postProcessLatex (clean up remaining Unicode / HTML entities)
  */
 
@@ -16,8 +16,7 @@ import { DOMParser } from '@xmldom/xmldom';
 import { parseDocxMathContent } from '../utils/eqFieldParser';
 import JSZip from 'jszip';
 
-// @ts-expect-error — omml2mathml has no type declarations
-import omml2mathml from 'omml2mathml';
+import omml2mathml from '@openmaic/omml2mathml';
 import mathmlToLatex from 'mathml-to-latex';
 const MathMLToLaTeX = mathmlToLatex.MathMLToLaTeX ?? mathmlToLatex;
 
@@ -34,7 +33,7 @@ function pxToPt(px: number): number {
 // (e.g. U+1D465 "𝑥" instead of "x", U+1D6FC "𝛼" instead of "α").
 //
 // Two-stage normalization:
-//   1. normalizeOmmlXml (pre-omml2mathml): converts to plain Unicode only
+//   1. normalizeOmmlXml (pre-conversion): converts to plain Unicode only
 //      (ASCII for Latin, basic Greek for Greek). No LaTeX commands — those
 //      would corrupt the XML structure and get split into separate elements.
 //   2. postProcessLatex (post-mathml-to-latex): converts remaining basic
@@ -158,8 +157,8 @@ function normalizeMathCharToUnicode(cp: number): string | undefined {
 
 /**
  * Pre-process OMML XML: normalize Unicode Mathematical Alphanumeric chars
- * to BMP equivalents BEFORE passing to omml2mathml.
- * This avoids surrogate-pair splitting in jsdom (used by omml2mathml in Node).
+ * to BMP equivalents BEFORE passing to the OMML converter.
+ * This guarantees consistent Unicode handling across browser and Node runtimes.
  * Only produces single Unicode characters — never multi-char LaTeX commands.
  */
 function normalizeOmmlXml(xml: string): string {
@@ -292,7 +291,7 @@ function postProcessLatex(latex: string): string {
 // ---------------------------------------------------------------------------
 // texmath cache (server-side high-fidelity OMML→LaTeX)
 // ---------------------------------------------------------------------------
-// The in-browser JS path (omml2mathml + mathml-to-latex) is the fallback. When
+// The in-browser JS path (@openmaic/omml2mathml + mathml-to-latex) is the fallback. When
 // available we prefer texmath via the app's /api/texmath endpoint (Pandoc's
 // math engine — much better structure/coverage). `prefetchTexmath` is an async
 // pre-pass that fills this cache BEFORE the (synchronous) serializer runs, so
@@ -346,7 +345,7 @@ export async function prefetchTexmath(ommlList: string[]): Promise<void> {
 
 /**
  * Convert OMML XML string to LaTeX. Prefers a cached texmath result (filled by
- * {@link prefetchTexmath}); otherwise uses the in-browser omml2mathml +
+ * {@link prefetchTexmath}); otherwise uses the in-browser OMML converter +
  * mathml-to-latex pipeline.
  * Exported so textSerializer can render inline `m:oMath` runs (公式与正文混排)
  * without going through the standalone Math element path.
