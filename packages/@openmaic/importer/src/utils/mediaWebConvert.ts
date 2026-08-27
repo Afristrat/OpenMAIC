@@ -12,7 +12,6 @@
  */
 
 import UTIF from 'utif';
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import JpegXR from 'jpegxr';
 import { parseEmfContent } from './emfParser';
 import { rgbaToPngDataUrl } from './rgbaToPng';
@@ -31,10 +30,19 @@ type PdfjsLib = {
   GlobalWorkerOptions: { workerSrc: string };
   getDocument(args: { data: Uint8Array; verbosity?: number }): { promise: Promise<PdfDocument> };
 };
-const pdfjs = pdfjsLib as unknown as PdfjsLib;
 
-const PDFJS_CDN_VERSION = pdfjs.version || '4.8.69';
-pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_CDN_VERSION}/legacy/build/pdf.worker.min.mjs`;
+let pdfjsPromise: Promise<PdfjsLib> | undefined;
+
+function loadPdfjs(): Promise<PdfjsLib> {
+  pdfjsPromise ??= import('pdfjs-dist/legacy/build/pdf.mjs').then((module) => {
+    const pdfjs = module as unknown as PdfjsLib;
+    const version = pdfjs.version || '4.8.69';
+    pdfjs.GlobalWorkerOptions.workerSrc =
+      `https://cdn.jsdelivr.net/npm/pdfjs-dist@${version}/legacy/build/pdf.worker.min.mjs`;
+    return pdfjs;
+  });
+  return pdfjsPromise;
+}
 
 type UtifPage = {
   width: number;
@@ -120,6 +128,7 @@ async function wdpToPngDataUrl(data: Uint8Array): Promise<string> {
 
 async function emfPdfToPngDataUrl(pdfData: Uint8Array, targetWidth = 1024): Promise<string> {
   try {
+    const pdfjs = await loadPdfjs();
     const doc = await pdfjs.getDocument({ data: pdfData, verbosity: 0 }).promise;
     const page = await doc.getPage(1);
     const baseViewport = page.getViewport({ scale: 1 });
