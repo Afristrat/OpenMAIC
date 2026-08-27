@@ -191,9 +191,7 @@ describe('review reminders', () => {
     vi.mocked(browser.pushManager.getSubscription).mockResolvedValue(browser.subscription);
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
     expectConsoleMessages({
-      warn: [
-        '[WARN] [Notifications] Failed to disable browser notifications: Error: offline',
-      ],
+      warn: ['[WARN] [Notifications] Failed to disable browser notifications: Error: offline'],
     });
 
     await expect(unsubscribeFromPush()).resolves.toBeUndefined();
