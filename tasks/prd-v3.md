@@ -18,6 +18,7 @@ Aucune fonctionnalité n’est implémentée par cette opération documentaire.
 - 17 demandes/ensembles d’engagements rattachés à des US.
 - 63 US actives : 15 à implémenter, 22 à valider, 21 avec décision préalable, 5 bloquées.
 - Huit US sont soldées sur preuves actuelles. Une décision de retrait n’est jamais une réussite d’implémentation.
+- S0-015 est entièrement certifiée côté machine sur le SHA déployé `6ea54d9` ; seule l’écoute humaine SOP-011 maintient son état « À valider ».
 
 ## Limites de preuve
 

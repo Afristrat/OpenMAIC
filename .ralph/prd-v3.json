@@ -1400,12 +1400,16 @@
       },
       "sourceDependencies": ["S0-013"],
       "dependencies": [],
-      "gap": "La recertification a confirmé l’isolation historique, mais a révélé deux défauts de cycle de vie en production : le premier administrateur ne pouvait pas créer son organisation sous RLS, et la suppression d’une classroom liée à un cours ready violait courses_ready_requires_classroom après avoir effacé ses médias. Correctifs codés ; restent les gates, le déploiement, la preuve de persistance et l’écoute navigateur exigée.",
+      "gap": "Partie machine soldée sur le SHA 6ea54d92eeb95dde70247f70e345ef9a234641b0 : gates complets, migration, déploiement, isolation multi-tenant, persistance après redéploiement, suppression transactionnelle, scènes privées/publiques et décodage audio Chromium sont prouvés. Reste exclusivement l’écoute humaine exigée par SOP-011 ; passes demeure donc false.",
       "evidence": [
         "tests/api/classroom-access.test.ts",
         "tests/api/organizations-create.test.ts",
         "tests/supabase/classroom-course-delete-lifecycle.test.ts",
         "supabase/migrations/00039_multi_tenant_classroom_lifecycle.sql",
+        "thread-artifact:s0-015/evidence.json",
+        "thread-artifact:s0-015/private-connected.png",
+        "thread-artifact:s0-015/public-anonymous.png",
+        "thread-artifact:s0-015/public-audio.wav",
         ".ralph/prd-v2.json#S0-015"
       ],
       "acceptance": [
@@ -1420,7 +1424,16 @@
         "accès cross-org refusé (403) sur un classroom d'une autre organisation",
         "vérifié dans un vrai navigateur connecté pour le contenu privé et en fenêtre anonyme pour le contenu publié : scènes affichées + audio TTS audible (SOP-011)"
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-08-27 — SHA exact 6ea54d92eeb95dde70247f70e345ef9a234641b0 certifié dans le clone isolé /tmp/qalem-s0015-6ea54d9 sur ServeurIA : pnpm check, TypeScript, lint, 368/368 fichiers et 2 436/2 436 tests Vitest, build 95/95 et 74/74 tests Playwright réussis ; build et E2E sans OOM.",
+        "2026-08-27 — Migration 00039 appliquée atomiquement à la base Qalem : RPC create_organization_with_admin et trigger archive_courses_before_classroom_delete présents et activés. Le web Coolify a été redéployé sur le même SHA ; conteneur healthy, zéro redémarrage, OOMKilled=false et cinq requêtes consécutives vers qalem.ma répondent 200.",
+        "2026-08-27 — Preuve production éphémère à deux locataires : bootstrap anonyme 401, bootstrap authentifié 201, organisation et première adhésion admin créées ensemble ; génération cross-org 403, lecture cross-org 403, lecture privée anonyme 401 et lecture propriétaire 200.",
+        "2026-08-27 — La classroom de preuve crée exactement un stage et une scène normalisés ; owner_id correspond à l’utilisateur de la session malgré l’ownerId adverse envoyé dans le body, org_id correspond au tenant autorisé et un WAV existe réellement dans le bucket privé classroom-media. Média propriétaire 200, cross-org 403 et anonyme 401.",
+        "2026-08-27 — Suppression production via DELETE /api/classroom : HTTP 200, stage et média absents ; le cours ready lié devient archived, catalog_visible=false et stage_id=null avant suppression. L’orpheline historique S5-004, confirmée sans propriétaire, organisation ni cours lié, a également été supprimée ; zéro scène et zéro média résiduels.",
+        "2026-08-27 — Persistance après redéploiement : la classroom publique historique 9H4k970HIy reste présente avec 9 scènes, 97 actions et 53 objets Storage ; l’API et son WAV public répondent 200. Le fichier exact mesure 596 204 octets, 12,42 s, −30,5 dB moyen et −14,0 dB crête.",
+        "2026-08-27 — Chromium réel affiche une scène privée en session connectée et neuf scènes publiques en contexte anonyme ; il décode le WAV exact et sa lecture progresse de 1,465 s. Captures et preuve structurée conservées dans les artefacts s0-015. L’audibilité humaine SOP-011 n’est pas auto-déclarée et reste le seul critère ouvert.",
+        "2026-08-27 — Nettoyage post-preuve indépendant : zéro utilisateur codex-s0-015, zéro organisation Codex S0-015 Proof, zéro stage s0015_ et zéro cours S0-015 cycle de vie dans la base de production."
+      ],
       "historicalEvidence": {
         "completedAt": null,
         "note": "Partie machine vérifiée le 2026-07-22, story maintenue à passes=false jusqu'à l'écoute humaine exigée par SOP-011. Le critère de lecture a été corrigé pour intégrer la diffusion à des tiers demandée ultérieurement : seules les classrooms explicitement publiées et leurs médias sont anonymement accessibles. Après redéploiement Coolify, la classroom publique 9H4k970HIy, créée le 2026-07-19, est toujours en base avec 9 scènes, 52 actions speech, 52 audioUrl Storage et 52 objets audio ; un WAV servi par Qalem répond 200, audio/wav, 582 764 octets. En production : anonyme = 401 sur génération, catalogue d'organisation et classroom privée ; utilisateur authentifié hors tenant = 403 sur la privée ; contenu publié = 200. Le compte de contrôle éphémère a été supprimé (API 200). Quinze tests permanents couvrent RBAC, ownerId issu de la session, séparation privé/public et médias ; formatage, TypeScript et ESLint verts ; Vitest 2 017/2 017 ; Playwright 37/37 sans retry ni flake. Reste exclusivement à confirmer humainement que l'audio est audible dans un vrai navigateur.",
