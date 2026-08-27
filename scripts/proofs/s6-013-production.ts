@@ -16,6 +16,7 @@ const PASSWORD = process.env.PROOF_PASSWORD;
 const MARKER = process.env.PROOF_MARKER ?? `s6013-${Date.now()}`;
 const ARTIFACT_DIR = process.env.PROOF_ARTIFACT_DIR ?? join(tmpdir(), MARKER);
 const SHA = process.env.PROOF_SHA ?? 'unknown';
+const HARNESS_SHA = process.env.PROOF_HARNESS_SHA ?? 'unknown';
 const PLAN_TIMEOUT_MS = 15 * 60_000;
 const GENERATION_TIMEOUT_MS = 45 * 60_000;
 const EXPORT_TIMEOUT_MS = 45 * 60_000;
@@ -33,6 +34,7 @@ type MultipartValue =
 interface Evidence {
   marker: string;
   sha: string;
+  harnessSha: string;
   startedAt: string;
   finishedAt?: string;
   source?: { id: string; manifestId: string; aligned: boolean };
@@ -338,6 +340,7 @@ async function main(): Promise<void> {
   const evidence: Evidence = {
     marker: MARKER,
     sha: SHA,
+    harnessSha: HARNESS_SHA,
     startedAt: new Date().toISOString(),
     cleanup: { classroom: false, organization: false, account: false },
   };
