@@ -15,7 +15,7 @@ describe('toPoints', () => {
     const malformed = 'M 1 0.5 alert 0.5 0.5 0 1 1 0 0.5 A 0.5 0.5 0 1 1 1 0.5 Z';
     expectConsoleMessages({
       warn: [
-        `[WARN] [SvgPathParser] Failed to parse SVG path "${malformed}": SyntaxError: Unexpected character "a" at index 8.`,
+        `[WARN] [SvgPathParser] Failed to parse SVG path "${malformed}": SyntaxError: Unexpected character "l" at index 9. Command cannot follow comma`,
       ],
     });
     expect(toPoints(malformed)).toEqual([]);
