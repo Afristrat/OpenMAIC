@@ -94,7 +94,8 @@ export const test = base.extend<Fixtures>({
       await mockApi.mockServerProviders();
       await mockApi.mockSourceLibrary();
       await context.route(/\/rest\/v1\/review_cards(?:\?.*)?$/, async (route) => {
-        if (route.request().method() !== 'GET') {
+        const method = route.request().method();
+        if (method !== 'GET' && method !== 'HEAD') {
           await route.fallback();
           return;
         }
@@ -102,7 +103,7 @@ export const test = base.extend<Fixtures>({
           status: 200,
           contentType: 'application/json',
           headers: { 'content-range': '0-0/0' },
-          body: '[]',
+          body: method === 'HEAD' ? '' : '[]',
         });
       });
       await page.route('**/api/account/is-admin', (route) =>
