@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { generateTTS } from '@/lib/audio/tts-providers';
 import type { TTSModelConfig } from '@/lib/audio/types';
+import { buildPcm16Wav } from './pcm16-wav-fixture';
 
 describe('generateTTS — higgs-tts language passthrough', () => {
   afterEach(() => {
@@ -10,7 +11,7 @@ describe('generateTTS — higgs-tts language passthrough', () => {
   it('includes language in the request body when config.language is set', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      arrayBuffer: async () => new ArrayBuffer(8),
+      arrayBuffer: async () => buildPcm16Wav().buffer,
       headers: new Headers({ 'content-type': 'audio/wav' }),
     });
     vi.stubGlobal('fetch', fetchMock);
@@ -31,7 +32,7 @@ describe('generateTTS — higgs-tts language passthrough', () => {
   it('omits language from the request body when config.language is undefined', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      arrayBuffer: async () => new ArrayBuffer(8),
+      arrayBuffer: async () => buildPcm16Wav().buffer,
       headers: new Headers({ 'content-type': 'audio/wav' }),
     });
     vi.stubGlobal('fetch', fetchMock);
@@ -53,7 +54,7 @@ describe('generateTTS — higgs-tts language passthrough', () => {
     async (providerId) => {
       const fetchMock = vi.fn().mockResolvedValue({
         ok: true,
-        arrayBuffer: async () => new ArrayBuffer(8),
+        arrayBuffer: async () => buildPcm16Wav().buffer,
         headers: new Headers({ 'content-type': 'audio/wav' }),
       });
       vi.stubGlobal('fetch', fetchMock);
@@ -78,7 +79,7 @@ describe('generateTTS — higgs-tts language passthrough', () => {
   it('sends a French pronunciation copy without mutating or converting the displayed amount', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      arrayBuffer: async () => new ArrayBuffer(8),
+      arrayBuffer: async () => buildPcm16Wav().buffer,
       headers: new Headers({ 'content-type': 'audio/wav' }),
     });
     vi.stubGlobal('fetch', fetchMock);

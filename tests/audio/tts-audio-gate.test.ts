@@ -2,40 +2,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { generateTTS } from '@/lib/audio/tts-providers';
 import { NoiseFloorError, TachkilRequiredError } from '@/lib/audio/audio-gate';
 import type { TTSModelConfig } from '@/lib/audio/types';
+import { buildPcm16Wav } from './pcm16-wav-fixture';
 
 afterEach(() => vi.unstubAllGlobals());
 
-/** Builds a minimal valid mono 16-bit PCM WAV buffer from Int16 samples. */
-function buildWav(samples: number[], sampleRate = 24000): Uint8Array<ArrayBuffer> {
-  const bytesPerSample = 2;
-  const dataSize = samples.length * bytesPerSample;
-  const buffer = new ArrayBuffer(44 + dataSize);
-  const view = new DataView(buffer);
-  const writeStr = (offset: number, str: string) => {
-    for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
-  };
-
-  writeStr(0, 'RIFF');
-  view.setUint32(4, 36 + dataSize, true);
-  writeStr(8, 'WAVE');
-  writeStr(12, 'fmt ');
-  view.setUint32(16, 16, true);
-  view.setUint16(20, 1, true);
-  view.setUint16(22, 1, true);
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, sampleRate * bytesPerSample, true);
-  view.setUint16(32, bytesPerSample, true);
-  view.setUint16(34, 16, true);
-  writeStr(36, 'data');
-  view.setUint32(40, dataSize, true);
-
-  samples.forEach((sample, i) => view.setInt16(44 + i * bytesPerSample, sample, true));
-
-  return new Uint8Array(buffer);
-}
-
 function stubWavResponse(samples: number[]) {
-  const bytes = buildWav(samples);
+  const bytes = buildPcm16Wav(samples);
   const f = vi.fn(
     async () =>
       new Response(new Blob([bytes]), {
@@ -95,12 +67,12 @@ describe('generateTTS — audio gate wiring (S1-009)', () => {
     expect(result.audio.length).toBeGreaterThan(0);
   });
 
-  it('passes through already-diacritized Arabic text on any provider', async () => {
+  it('passes through already-diacritized Arabic text on a non-tachkil-aware provider', async () => {
     stubWavResponse([16000, -16000]);
     const config: TTSModelConfig = {
-      providerId: 'azure-tts',
+      providerId: 'glm-tts',
       apiKey: 'test-key',
-      voice: 'ar-MA-MounaNeural',
+      voice: 'tongtong',
     };
 
     await expect(generateTTS(config, 'السَّلَامُ عَلَيْكُمْ')).resolves.toBeDefined();

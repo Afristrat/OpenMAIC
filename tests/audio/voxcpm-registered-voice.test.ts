@@ -2,13 +2,14 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { generateTTS } from '@/lib/audio/tts-providers';
 import { VOXCPM_AUTO_VOICE_ID } from '@/lib/audio/voxcpm';
 import type { TTSModelConfig } from '@/lib/audio/types';
+import { buildPcm16Wav } from './pcm16-wav-fixture';
 
 afterEach(() => vi.unstubAllGlobals());
 
 function stubSpeech() {
   const f = vi.fn(
     async () =>
-      new Response(new Uint8Array([82, 73, 70, 70]), {
+      new Response(buildPcm16Wav(), {
         status: 200,
         headers: { 'content-type': 'audio/wav' },
       }),

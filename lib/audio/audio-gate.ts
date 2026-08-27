@@ -12,6 +12,7 @@
  */
 
 import type { TTSProviderId } from './types';
+import { spawn } from 'node:child_process';
 
 // Plages Unicode construites à partir de points de code hexadécimaux
 // (0x....), jamais de caractères arabes littéraux dans le source : un aller-
@@ -101,6 +102,13 @@ export class NoiseFloorError extends Error {
   }
 }
 
+export class AudioGateFormatError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AudioGateFormatError';
+  }
+}
+
 interface WavPcmChunk {
   audioFormat: number;
   bitsPerSample: number;
@@ -156,14 +164,7 @@ function findWavPcmChunk(audio: Uint8Array): WavPcmChunk | null {
 
 /**
  * Calcule le niveau crête (dBFS) d'un WAV PCM 16 bits. Retourne `null` si le
- * format n'est pas un WAV PCM 16 bits reconnaissable — silencieusement
- * ignoré par `assertAboveNoiseFloor` plutôt que de faire échouer une sortie
- * valide dans un format qu'on ne sait pas décoder.
- *
- * ponytail: décodage limité au WAV/PCM16 (couvre le studio souverain
- * VoxCPM/Dīwān, vérifié WAV PCM 16 bits mono en production lors de S0-006) ;
- * réexaminer si un besoin réel de valider le niveau de formats compressés
- * (mp3/opus/flac) apparaît pour un fournisseur devenu majoritaire en arabe.
+ * format n'est pas un WAV PCM 16 bits reconnaissable.
  */
 export function computeWavPeakDbfs(audio: Uint8Array): number | null {
   const pcm = findWavPcmChunk(audio);
@@ -182,16 +183,111 @@ export function computeWavPeakDbfs(audio: Uint8Array): number | null {
   return 20 * Math.log10(peak / 32768);
 }
 
+const FFMPEG_AUDIO_GATE_TIMEOUT_MS = 15_000;
+
+function computePcm16PeakDbfs(audio: Uint8Array): number | null {
+  if (audio.length < 2) return null;
+  const view = new DataView(audio.buffer, audio.byteOffset, audio.byteLength);
+  const sampleCount = Math.floor(audio.length / 2);
+  let peak = 0;
+  for (let index = 0; index < sampleCount; index++) {
+    const absoluteSample = Math.abs(view.getInt16(index * 2, true));
+    if (absoluteSample > peak) peak = absoluteSample;
+  }
+  if (peak === 0) return -Infinity;
+  return 20 * Math.log10(peak / 32768);
+}
+
+/** Décode un MP3 en PCM16 avec le même FFmpeg requis par l'export MP4. */
+async function computeMp3PeakDbfs(audio: Uint8Array): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const ffmpeg = spawn(process.env.FFMPEG_PATH || 'ffmpeg', [
+      '-hide_banner',
+      '-loglevel',
+      'error',
+      '-f',
+      'mp3',
+      '-i',
+      'pipe:0',
+      '-f',
+      's16le',
+      '-acodec',
+      'pcm_s16le',
+      'pipe:1',
+    ]);
+    const chunks: Buffer[] = [];
+    const errors: Buffer[] = [];
+    let settled = false;
+    const timeout = setTimeout(() => {
+      settled = true;
+      ffmpeg.kill('SIGKILL');
+      reject(
+        new AudioGateFormatError(
+          `Piste audio rejetée : décodage MP3 interrompu après ${FFMPEG_AUDIO_GATE_TIMEOUT_MS} ms.`,
+        ),
+      );
+    }, FFMPEG_AUDIO_GATE_TIMEOUT_MS);
+
+    ffmpeg.stdout.on('data', (chunk: Buffer) => chunks.push(chunk));
+    ffmpeg.stderr.on('data', (chunk: Buffer) => errors.push(chunk));
+    ffmpeg.on('error', (error) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      reject(
+        new AudioGateFormatError(
+          `Piste audio rejetée : FFmpeg est indisponible pour contrôler le MP3 (${error.message}).`,
+        ),
+      );
+    });
+    ffmpeg.on('close', (code) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      if (code !== 0) {
+        const detail = Buffer.concat(errors).toString('utf8').trim();
+        reject(
+          new AudioGateFormatError(
+            `Piste audio rejetée : MP3 illisible${detail ? ` (${detail})` : ''}.`,
+          ),
+        );
+        return;
+      }
+      const pcm = Buffer.concat(chunks);
+      const dbfs = computePcm16PeakDbfs(pcm);
+      if (dbfs === null) {
+        reject(
+          new AudioGateFormatError('Piste audio rejetée : MP3 décodé sans échantillon audio.'),
+        );
+        return;
+      }
+      resolve(dbfs);
+    });
+    ffmpeg.stdin.end(audio);
+  });
+}
+
 /**
  * Rejette la synthèse si la piste audio générée est sous le plancher de
- * bruit -50 dB. N'agit que sur les sorties WAV PCM 16 bits reconnaissables
- * (cf. `computeWavPeakDbfs`) ; les autres formats/tailles passent sans
- * vérification (limite documentée ci-dessus).
+ * bruit -50 dB. Les formats réellement servis par défaut sont contrôlés :
+ * WAV PCM16 sans dépendance et MP3 via FFmpeg. Tout autre format est rejeté
+ * explicitement afin qu'aucune sortie ne contourne silencieusement la gate.
  */
-export function assertAboveNoiseFloor(audio: Uint8Array, format: string): void {
-  if (format !== 'wav') return;
-  const dbfs = computeWavPeakDbfs(audio);
-  if (dbfs === null) return;
+export async function assertAboveNoiseFloor(audio: Uint8Array, format: string): Promise<void> {
+  const normalizedFormat = format.trim().toLowerCase();
+  let dbfs: number | null;
+  if (normalizedFormat === 'wav' || normalizedFormat === 'wave') {
+    dbfs = computeWavPeakDbfs(audio);
+    if (dbfs === null) {
+      throw new AudioGateFormatError('Piste audio rejetée : WAV non PCM16 ou illisible.');
+    }
+  } else if (normalizedFormat === 'mp3' || normalizedFormat === 'mpeg') {
+    dbfs = await computeMp3PeakDbfs(audio);
+  } else {
+    throw new AudioGateFormatError(
+      `Piste audio rejetée : format "${format}" non contrôlable par la gate audio.`,
+    );
+  }
   if (dbfs < NOISE_FLOOR_DBFS) {
     const dbfsLabel = dbfs === -Infinity ? '-Inf' : dbfs.toFixed(1);
     throw new NoiseFloorError(

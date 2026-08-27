@@ -92,6 +92,26 @@ describe('hyperframes-client', () => {
     );
   });
 
+  it('refuses capsule variants that did not pass the Mishkāt media gate', async () => {
+    const { assertHyperframesVariantsPassedGate } = await import('@/lib/video/hyperframes-client');
+    expect(() =>
+      assertHyperframesVariantsPassedGate([
+        { lang: 'fr', format: '16x9', gatePassed: false, url: 'https://example/x.mp4' },
+      ]),
+    ).toThrow(/gate média Mishkāt/);
+    expect(() => assertHyperframesVariantsPassedGate([])).toThrow(/aucune variante contrôlée/);
+  });
+
+  it('accepts only capsule variants explicitly approved by the Mishkāt media gate', async () => {
+    const { assertHyperframesVariantsPassedGate } = await import('@/lib/video/hyperframes-client');
+    expect(() =>
+      assertHyperframesVariantsPassedGate([
+        { lang: 'fr', format: '16x9', gatePassed: true, url: 'https://example/x.mp4' },
+        { lang: 'ar', format: '9x16', gatePassed: true, url: 'https://example/y.mp4' },
+      ]),
+    ).not.toThrow();
+  });
+
   it('throws a descriptive error on a non-ok response', async () => {
     fetchMock.mockResolvedValue({
       ok: false,

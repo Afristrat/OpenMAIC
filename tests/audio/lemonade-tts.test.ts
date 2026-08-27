@@ -1,20 +1,12 @@
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { generateTTS } from '@/lib/audio/tts-providers';
+import { buildPcm16Wav } from './pcm16-wav-fixture';
 
 const mockFetch = vi.fn() as Mock;
 vi.stubGlobal('fetch', mockFetch);
 
 function wavBytes(): ArrayBuffer {
-  const data = new Uint8Array(16);
-  data[0] = 0x52; // 'R'
-  data[1] = 0x49; // 'I'
-  data[2] = 0x46; // 'F'
-  data[3] = 0x46; // 'F'
-  data[8] = 0x57; // 'W'
-  data[9] = 0x41; // 'A'
-  data[10] = 0x56; // 'V'
-  data[11] = 0x45; // 'E'
-  return data.buffer;
+  return buildPcm16Wav().buffer;
 }
 
 describe('Lemonade TTS', () => {
@@ -52,7 +44,7 @@ describe('Lemonade TTS', () => {
       response_format: 'wav',
     });
     expect(result.audio).toBeInstanceOf(Uint8Array);
-    expect(result.audio.byteLength).toBe(16);
+    expect(result.audio.byteLength).toBe(buildPcm16Wav().byteLength);
     expect(result.format).toBe('wav');
   });
 

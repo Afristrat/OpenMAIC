@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import sharp from 'sharp';
+import { assertAboveNoiseFloor } from '@/lib/audio/audio-gate';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { buildSceneCardSvg } from './scene-card';
 import type { SpeechAction } from '@/lib/types/action';
@@ -20,12 +21,24 @@ export function collectSceneSpeechActions(actions: unknown): SpeechAction[] {
     : [];
 }
 
-function storagePathFromAudioUrl(stageId: string, audioUrl: string): string | null {
+export function storagePathFromAudioUrl(stageId: string, audioUrl: string): string | null {
   const marker = `/api/classroom-media/${encodeURIComponent(stageId)}/`;
-  const index = audioUrl.indexOf(marker);
+  const pathname = new URL(audioUrl, 'https://qalem.invalid').pathname;
+  const index = pathname.indexOf(marker);
   return index === -1
     ? null
-    : `${stageId}/${decodeURIComponent(audioUrl.slice(index + marker.length))}`;
+    : `${stageId}/${decodeURIComponent(pathname.slice(index + marker.length))}`;
+}
+
+export function audioFormatFromStoragePath(storagePath: string): string {
+  return storagePath.split('.').pop()?.toLowerCase() || '';
+}
+
+export async function assertExportAudioAboveNoiseFloor(
+  audio: Uint8Array,
+  storagePath: string,
+): Promise<void> {
+  await assertAboveNoiseFloor(audio, audioFormatFromStoragePath(storagePath));
 }
 
 async function runFfmpeg(args: string[]): Promise<void> {
@@ -62,8 +75,11 @@ async function downloadSceneAudio(
     if (!storagePath) continue;
     const { data, error } = await supabase.storage.from('classroom-media').download(storagePath);
     if (error || !data) throw new Error(`Audio indisponible pour l'export MP4: ${storagePath}`);
-    const localPath = join(directory, `scene-${sceneIndex}-audio-${audioIndex}.wav`);
-    await writeFile(localPath, Buffer.from(await data.arrayBuffer()));
+    const audio = new Uint8Array(await data.arrayBuffer());
+    await assertExportAudioAboveNoiseFloor(audio, storagePath);
+    const format = audioFormatFromStoragePath(storagePath);
+    const localPath = join(directory, `scene-${sceneIndex}-audio-${audioIndex}.${format}`);
+    await writeFile(localPath, audio);
     paths.push(localPath);
   }
   return paths;

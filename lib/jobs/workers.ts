@@ -18,6 +18,7 @@ import { createLogger } from '@/lib/logger';
 import { isFeatureEnabled } from '@/lib/flags';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import {
+  assertHyperframesVariantsPassedGate,
   createHyperframesProduction,
   getHyperframesProduction,
 } from '@/lib/video/hyperframes-client';
@@ -203,11 +204,13 @@ export function startAllWorkers(): void {
             }
 
             if (production.status === 'done') {
+              const variants = production.variants ?? [];
+              assertHyperframesVariantsPassedGate(variants);
               await supabase
                 .from('video_capsules')
                 .update({
                   status: 'done',
-                  variants: (production.variants ?? []) as VideoCapsuleVariant[],
+                  variants: variants as VideoCapsuleVariant[],
                 })
                 .eq('id', capsuleId);
               incrementCounter('qalem_jobs_processed_total', { queue: 'video-capsule' });

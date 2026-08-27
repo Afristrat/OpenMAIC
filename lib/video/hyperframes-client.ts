@@ -15,6 +15,7 @@ import type {
   HyperframesBrandTokens,
   HyperframesCreateProductionResponse,
   HyperframesProduction,
+  HyperframesVariant,
 } from './hyperframes-types';
 
 const log = createLogger('HyperframesClient');
@@ -68,4 +69,17 @@ export async function createHyperframesProduction(
 
 export async function getHyperframesProduction(id: string): Promise<HyperframesProduction> {
   return hyperframesFetch<HyperframesProduction>(`/v1/productions/${encodeURIComponent(id)}`);
+}
+
+/** Refuse de publier une capsule que la gate média de Mishkāt n'a pas validée. */
+export function assertHyperframesVariantsPassedGate(variants: HyperframesVariant[]): void {
+  if (variants.length === 0) {
+    throw new Error('Capsule vidéo rejetée : Mishkāt n’a retourné aucune variante contrôlée.');
+  }
+  const failed = variants.filter((variant) => variant.gatePassed !== true);
+  if (failed.length > 0) {
+    throw new Error(
+      `Capsule vidéo rejetée : ${failed.length} variante(s) n’ont pas franchi la gate média Mishkāt.`,
+    );
+  }
 }
