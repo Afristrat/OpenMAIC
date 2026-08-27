@@ -78,13 +78,12 @@ function base64UrlToUint8Array(value: string): Uint8Array<ArrayBuffer> {
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
 }
 
-async function persistBrowserSubscription(subscription: PushSubscription): Promise<boolean> {
-  const response = await fetch(PUSH_SUBSCRIPTION_PATH, {
+async function persistBrowserSubscription(subscription: PushSubscription): Promise<Response> {
+  return fetch(PUSH_SUBSCRIPTION_PATH, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(subscription.toJSON()),
   });
-  return response.ok;
 }
 
 export async function requestPushPermission(): Promise<boolean> {
@@ -112,15 +111,25 @@ export async function requestPushPermission(): Promise<boolean> {
     if (typeof keyBody.publicKey !== 'string') return false;
 
     const existing = await registration.pushManager.getSubscription();
-    const subscription =
+    let subscription =
       existing ??
       (await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: base64UrlToUint8Array(keyBody.publicKey),
       }));
-    const persisted = await persistBrowserSubscription(subscription);
-    if (!persisted && !existing) await subscription.unsubscribe();
-    return persisted;
+    let created = !existing;
+    let response = await persistBrowserSubscription(subscription);
+    if (response.status === 409 && existing) {
+      await existing.unsubscribe();
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: base64UrlToUint8Array(keyBody.publicKey),
+      });
+      created = true;
+      response = await persistBrowserSubscription(subscription);
+    }
+    if (!response.ok && created) await subscription.unsubscribe();
+    return response.ok;
   } catch (error) {
     log.error('Failed to enable browser notifications:', error);
     return false;
@@ -147,12 +156,15 @@ export async function unsubscribeFromPush(): Promise<void> {
     const registration = await navigator.serviceWorker.ready;
     const subscription = await registration.pushManager.getSubscription();
     if (!subscription) return;
-    await fetch(PUSH_SUBSCRIPTION_PATH, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ endpoint: subscription.endpoint }),
-    });
-    await subscription.unsubscribe();
+    try {
+      await fetch(PUSH_SUBSCRIPTION_PATH, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ endpoint: subscription.endpoint }),
+      });
+    } finally {
+      await subscription.unsubscribe();
+    }
   } catch (error) {
     log.warn('Failed to disable browser notifications:', error);
   }

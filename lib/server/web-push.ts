@@ -41,7 +41,9 @@ function requiredVapidConfig(): { publicKey: string; privateKey: string; subject
   const subject = process.env.WEB_PUSH_VAPID_SUBJECT?.trim() ?? '';
 
   if (
+    publicKey.length !== 87 ||
     !BASE64URL_PATTERN.test(publicKey) ||
+    privateKey.length !== 43 ||
     !BASE64URL_PATTERN.test(privateKey) ||
     !/^(mailto:|https:\/\/)/.test(subject)
   ) {
@@ -72,12 +74,10 @@ export function validateBrowserPushSubscription(value: unknown): BrowserPushSubs
 
   if (
     typeof p256dh !== 'string' ||
-    p256dh.length < 40 ||
-    p256dh.length > 256 ||
+    p256dh.length !== 87 ||
     !BASE64URL_PATTERN.test(p256dh) ||
     typeof auth !== 'string' ||
-    auth.length < 16 ||
-    auth.length > 256 ||
+    auth.length !== 22 ||
     !BASE64URL_PATTERN.test(auth) ||
     (expirationTime !== null &&
       (!Number.isSafeInteger(expirationTime) || expirationTime < Date.now()))

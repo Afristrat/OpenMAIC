@@ -21,6 +21,7 @@ describe('PWA shell cache', () => {
     expect(serviceWorker).toContain("addEventListener('push'");
     expect(serviceWorker).toContain('safeNotificationTarget(payload.targetUrl)');
     expect(serviceWorker).toContain("icon: '/icon-192.png'");
+    expect(serviceWorker).toContain('client.navigate(absoluteTarget)');
     expect(serviceWorker).toContain("cache: 'no-store'");
     expect(registrar).toContain("updateViaCache: 'none'");
     expect(registrar).toContain('registration.update()');

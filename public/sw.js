@@ -215,6 +215,11 @@ self.addEventListener('notificationclick', function (event) {
           return client.focus();
         }
       }
+      for (const client of clients) {
+        if (new URL(client.url).origin === self.location.origin && 'navigate' in client) {
+          return client.navigate(absoluteTarget).then(() => client.focus());
+        }
+      }
       // Otherwise open a new tab
       if (self.clients.openWindow) {
         return self.clients.openWindow(targetUrl);

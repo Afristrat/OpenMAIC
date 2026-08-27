@@ -14,6 +14,7 @@ import {
   REVIEW_REMINDER_INTERVAL_MS,
   requestPushPermission,
   savePreferences,
+  unsubscribeFromPush,
 } from '@/lib/notifications';
 
 class MemoryStorage implements Storage {
@@ -65,7 +66,7 @@ function installBrowser(permission: NotificationPermission = 'granted') {
     toJSON: () => ({
       endpoint: 'https://push.example/subscription',
       expirationTime: null,
-      keys: { p256dh: 'p'.repeat(65), auth: 'a'.repeat(22) },
+      keys: { p256dh: 'p'.repeat(87), auth: 'a'.repeat(22) },
     }),
     unsubscribe: vi.fn().mockResolvedValue(true),
   } as unknown as PushSubscription;
@@ -165,6 +166,33 @@ describe('review reminders', () => {
       '/api/push-subscriptions',
       expect.objectContaining({ method: 'POST' }),
     );
+  });
+
+  it('replaces a subscription owned by the previous account without transferring ownership', async () => {
+    const browser = installBrowser();
+    vi.mocked(browser.pushManager.getSubscription).mockResolvedValue(browser.subscription);
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ publicKey: 'B'.repeat(87) }) })
+      .mockResolvedValueOnce({ ok: false, status: 409 })
+      .mockResolvedValueOnce({ ok: true, status: 201 });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(requestPushPermission()).resolves.toBe(true);
+
+    expect(browser.subscription.unsubscribe).toHaveBeenCalledOnce();
+    expect(browser.pushManager.subscribe).toHaveBeenCalledOnce();
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('unsubscribes the browser even when server cleanup is temporarily offline', async () => {
+    const browser = installBrowser();
+    vi.mocked(browser.pushManager.getSubscription).mockResolvedValue(browser.subscription);
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+
+    await expect(unsubscribeFromPush()).resolves.toBeUndefined();
+
+    expect(browser.subscription.unsubscribe).toHaveBeenCalledOnce();
   });
 
   it('records a bounded successful check without notifying when no card is due', async () => {

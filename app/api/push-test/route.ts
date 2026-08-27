@@ -45,10 +45,11 @@ export async function POST(request: NextRequest): Promise<Response> {
     if (deliveries.length === 0) {
       return apiError('INVALID_REQUEST', 409, 'Aucun appareil n’est abonné aux notifications');
     }
-    return apiSuccess({
-      deliveries,
-      accepted: deliveries.filter((delivery) => delivery.status === 'accepted').length,
-    });
+    const accepted = deliveries.filter((delivery) => delivery.status === 'accepted').length;
+    if (accepted === 0) {
+      return apiError('UPSTREAM_ERROR', 502, 'Aucun service push n’a accepté la notification');
+    }
+    return apiSuccess({ deliveries, accepted });
   } catch (sendError) {
     if (sendError instanceof WebPushConfigurationError) {
       return apiError('PROVIDER_DISABLED', 503, 'Les notifications push ne sont pas configurées');

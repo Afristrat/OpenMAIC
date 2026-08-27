@@ -5,8 +5,8 @@ CREATE TABLE public.push_subscriptions (
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   endpoint TEXT NOT NULL UNIQUE
     CHECK (char_length(endpoint) BETWEEN 16 AND 2048 AND endpoint ~ '^https://'),
-  p256dh TEXT NOT NULL CHECK (char_length(p256dh) BETWEEN 40 AND 256),
-  auth TEXT NOT NULL CHECK (char_length(auth) BETWEEN 16 AND 256),
+  p256dh TEXT NOT NULL CHECK (char_length(p256dh) = 87),
+  auth TEXT NOT NULL CHECK (char_length(auth) = 22),
   expiration_time BIGINT CHECK (expiration_time IS NULL OR expiration_time >= 0),
   last_success_at TIMESTAMPTZ,
   last_failure_at TIMESTAMPTZ,
@@ -45,7 +45,10 @@ CREATE TABLE public.web_push_deliveries (
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   subscription_id UUID REFERENCES public.push_subscriptions(id) ON DELETE SET NULL,
   target_url TEXT NOT NULL
-    CHECK (char_length(target_url) BETWEEN 1 AND 1024 AND target_url ~ '^/[^/]'),
+    CHECK (
+      char_length(target_url) BETWEEN 1 AND 1024
+      AND (target_url = '/' OR target_url ~ '^/[^/]')
+    ),
   status TEXT NOT NULL CHECK (status IN ('accepted', 'failed', 'expired')),
   push_service_status INTEGER CHECK (push_service_status BETWEEN 100 AND 599),
   error_code TEXT CHECK (error_code IS NULL OR char_length(error_code) <= 64),

@@ -15,6 +15,8 @@ describe('Web Push persistence migration', () => {
     expect(sql).toContain('web_push_deliveries_insert_service_only');
     expect(sql).toContain('WITH CHECK (false)');
     expect(sql).toContain("endpoint ~ '^https://'");
+    expect(sql).toContain('char_length(p256dh) = 87');
+    expect(sql).toContain('char_length(auth) = 22');
     expect(sql).toContain("target_url ~ '^/[^/]'");
   });
 });

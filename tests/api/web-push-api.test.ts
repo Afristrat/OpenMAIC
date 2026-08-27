@@ -23,11 +23,17 @@ vi.mock('@/lib/server/web-push', () => ({
 }));
 vi.mock('@/lib/supabase/service', () => ({
   createServiceSupabaseClient: () => ({
-    from: () => ({
-      select: () => ({
-        eq: () => ({ eq: () => ({ maybeSingle: mocks.maybeSingle }) }),
-      }),
-    }),
+    from: () => {
+      const chain = {
+        select: () => chain,
+        eq: () => chain,
+        lte: () => chain,
+        order: () => chain,
+        limit: () => chain,
+        maybeSingle: mocks.maybeSingle,
+      };
+      return chain;
+    },
   }),
 }));
 
@@ -75,6 +81,22 @@ describe('Web Push APIs', () => {
     );
   });
 
+  it('selects the caller’s next due card for the settings test button', async () => {
+    const cardId = '22222222-2222-4222-8222-222222222222';
+    mocks.maybeSingle.mockResolvedValue({ data: { id: cardId }, error: null });
+    mocks.send.mockResolvedValue([
+      { subscriptionId: 'subscription-a', status: 'accepted', pushServiceStatus: 201 },
+    ]);
+
+    const response = await sendTestPush(request('/api/push-test', {}));
+
+    expect(response.status).toBe(200);
+    expect(mocks.send).toHaveBeenCalledWith(
+      'user-a',
+      expect.objectContaining({ targetUrl: `/review?card=${cardId}` }),
+    );
+  });
+
   it('does not send when the requested card is not owned by the caller', async () => {
     const cardId = '11111111-1111-4111-8111-111111111111';
     mocks.maybeSingle.mockResolvedValue({ data: null, error: null });
@@ -83,5 +105,21 @@ describe('Web Push APIs', () => {
 
     expect(response.status).toBe(404);
     expect(mocks.send).not.toHaveBeenCalled();
+  });
+
+  it('reports an upstream failure when no push service accepts the message', async () => {
+    const cardId = '11111111-1111-4111-8111-111111111111';
+    mocks.maybeSingle.mockResolvedValue({ data: { id: cardId }, error: null });
+    mocks.send.mockResolvedValue([
+      { subscriptionId: 'subscription-a', status: 'failed', pushServiceStatus: 503 },
+    ]);
+
+    const response = await sendTestPush(request('/api/push-test', { cardId }));
+
+    expect(response.status).toBe(502);
+    expect(await response.json()).toMatchObject({
+      success: false,
+      errorCode: 'UPSTREAM_ERROR',
+    });
   });
 });

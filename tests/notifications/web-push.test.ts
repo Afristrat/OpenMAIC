@@ -26,13 +26,13 @@ const subscriptions = [
   {
     id: 'subscription-a',
     endpoint: 'https://push.example/a',
-    p256dh: 'p'.repeat(65),
+    p256dh: 'p'.repeat(87),
     auth: 'a'.repeat(22),
   },
   {
     id: 'subscription-b',
     endpoint: 'https://push.example/b',
-    p256dh: 'q'.repeat(65),
+    p256dh: 'q'.repeat(87),
     auth: 'b'.repeat(22),
   },
 ];
@@ -86,14 +86,14 @@ describe('Web Push', () => {
       validateBrowserPushSubscription({
         endpoint: 'https://push.example/subscription',
         expirationTime: null,
-        keys: { p256dh: 'p'.repeat(65), auth: 'a'.repeat(22) },
+        keys: { p256dh: 'p'.repeat(87), auth: 'a'.repeat(22) },
       }),
     ).not.toBeNull();
     expect(
       validateBrowserPushSubscription({
         endpoint: 'http://push.example/subscription',
         expirationTime: null,
-        keys: { p256dh: 'p'.repeat(65), auth: 'a'.repeat(22) },
+        keys: { p256dh: 'p'.repeat(87), auth: 'a'.repeat(22) },
       }),
     ).toBeNull();
     expect(validateWebPushTarget('/review?card=abc')).toBe(true);
