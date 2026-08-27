@@ -81,7 +81,7 @@ Les descriptions et critères exécutables complets sont dans le JSON canonique.
 | 9    | S6-006 | P1       | Soldée           | Maintenir l’ancrage documentaire jusqu’aux scènes et à leur édition                   |
 | 10   | S6-007 | P1       | Soldée           | Créer les illustrations sans réutiliser les images du document source                 |
 | 11   | S6-008 | P1       | Soldée           | Afficher dirhams et prononcer le mot sans s final                                     |
-| 12   | S5-004 | P1       | Soldée           | Plan auteur obligatoire et ingestion documentaire fiable [UI]                         |
+| 12   | S6-020 | P0       | À implémenter    | Rendre le gate silencieux sur toute erreur ou tout avertissement inattendu             |
 | 13   | S6-009 | P1       | À valider        | Recetter Whisper sur de la parole réelle et le parcours microphone                    |
 | 14   | S6-003 | P1       | Bloquée          | Consommer Diwan par un contrat documentaire autonome                                  |
 | 15   | S6-004 | P1       | Soldée           | Bibliothèque et sélection de plusieurs sources par formation                          |
@@ -136,6 +136,7 @@ Les descriptions et critères exécutables complets sont dans le JSON canonique.
 | 64   | U-011  | P3       | Décision requise | Publier un agent sur la marketplace                                                   |
 | 65   | U-015  | P3       | Décision requise | Configuration MCP dans admin                                                          |
 | 66   | U-018  | P3       | Décision requise | Widget xAPI status                                                                    |
+| 67   | S5-004 | P1       | Soldée           | Plan auteur obligatoire et ingestion documentaire fiable [UI]                         |
 
 ## Décisions encore ouvertes
 
