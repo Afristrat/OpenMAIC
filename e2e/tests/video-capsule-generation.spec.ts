@@ -103,7 +103,8 @@ async function seedDatabase(page: import('@playwright/test').Page) {
 }
 
 test.describe('Video capsule generation', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ browserConsoleContract, page }) => {
+    browserConsoleContract.expectHttpError('/api/classroom', 404);
     await seedDatabase(page);
   });
 
@@ -134,7 +135,12 @@ test.describe('Video capsule generation', () => {
     await expect(video).toHaveAttribute('src', 'https://example.com/e2e-capsule-1.mp4');
   });
 
-  test('shows an error message when the feature flag is disabled', async ({ page, mockApi }) => {
+  test('shows an error message when the feature flag is disabled', async ({
+    browserConsoleContract,
+    page,
+    mockApi,
+  }) => {
+    browserConsoleContract.expectHttpError('/api/video-capsules', 403);
     await mockApi.mockVideoCapsuleCreateForbidden();
 
     const classroom = new ClassroomPage(page);

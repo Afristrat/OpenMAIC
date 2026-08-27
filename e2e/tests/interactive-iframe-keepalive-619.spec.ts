@@ -139,7 +139,11 @@ const resetMutations = (page: import('@playwright/test').Page) =>
   });
 
 test.describe('#619 interactive iframe keep-alive', () => {
-  test('iframe survives Pro-mode toggle and scene switch without reloading', async ({ page }) => {
+  test('iframe survives Pro-mode toggle and scene switch without reloading', async ({
+    browserConsoleContract,
+    page,
+  }) => {
+    browserConsoleContract.expectHttpError('/api/classroom', 404);
     // Record add/remove of the keep-alive iframe (by title) in the top document.
     await page.addInitScript((title) => {
       if (window.top !== window.self) return;

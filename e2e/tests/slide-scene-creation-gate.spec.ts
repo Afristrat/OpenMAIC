@@ -35,8 +35,10 @@ test.describe('Slide editor — scene creation (enabled)', () => {
   });
 
   test('Pro mode rail exposes insert + duplicate alongside rename/delete', async ({
+    browserConsoleContract,
     page,
   }, testInfo) => {
+    browserConsoleContract.expectHttpError('/api/classroom', 404);
     // Generate a classroom through the mocked pipeline.
     const preview = new GenerationPreviewPage(page);
     await preview.goto();

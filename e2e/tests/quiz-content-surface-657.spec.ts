@@ -74,6 +74,9 @@ async function seedQuiz(page: Page, stageId: string, questions: QuizQuestion[]) 
 }
 
 test.describe('Quiz content surface (#657)', () => {
+  test.beforeEach(async ({ browserConsoleContract }) => {
+    browserConsoleContract.expectHttpError('/api/classroom', 404);
+  });
   let persistence: RequestBoundaryTracker;
 
   test.beforeEach(async ({ mockApi }) => {

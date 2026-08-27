@@ -169,7 +169,8 @@ async function seedDatabase(
 }
 
 test.describe('Classroom Interaction', () => {
-  test.beforeEach(async ({ page }, testInfo) => {
+  test.beforeEach(async ({ browserConsoleContract, page }, testInfo) => {
+    browserConsoleContract.expectHttpError('/api/classroom', 404);
     if (testInfo.title === LIVE_SPEECH_TEST) testInfo.setTimeout(60_000);
     await seedDatabase(
       page,

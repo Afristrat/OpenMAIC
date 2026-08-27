@@ -81,7 +81,7 @@ export function ThumbnailInteractive({
         >
           <iframe
             srcDoc={patchedHtml}
-            src={patchedHtml ? undefined : content.url}
+            src={patchedHtml ? undefined : content.url || undefined}
             className="w-full h-full border-0"
             title="Interactive Preview"
             sandbox="allow-scripts allow-forms allow-popups"

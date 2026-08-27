@@ -19,7 +19,10 @@ export interface RequestBoundaryTracker {
  * Supports both JSON and SSE (text/event-stream) responses.
  */
 export class MockApi {
-  constructor(private page: Page) {}
+  constructor(
+    private page: Page,
+    private expectHttpError?: (pathname: string, status: number) => void,
+  ) {}
 
   /**
    * Model a classroom that exists only in IndexedDB. The production client
@@ -28,6 +31,7 @@ export class MockApi {
    * and blocked so the test cannot pass after leaking into fake Supabase.
    */
   async mockLocalClassroomFallback(stageId: string): Promise<LocalClassroomFallbackTracker> {
+    this.expectHttpError?.('/api/classroom', 404);
     const tracker: LocalClassroomFallbackTracker = {
       expectedRequests: [],
       unexpectedRequests: [],

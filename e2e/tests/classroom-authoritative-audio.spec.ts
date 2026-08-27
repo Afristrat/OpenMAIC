@@ -6,9 +6,13 @@ const STAGE_ID = 'e2e-authoritative-audio';
 test('privilégie la classroom serveur et sa narration sur le cache local périmé', async ({
   page,
 }) => {
-  await page.addInitScript(
-    ({ settings, stageId }) => {
-      localStorage.setItem('settings-storage', settings);
+  await page.addInitScript((settings) => {
+    localStorage.setItem('settings-storage', settings);
+  }, createSettingsStorage());
+  await page.goto('/app');
+  await page.evaluate(
+    (stageId) =>
+      new Promise<void>((resolve, reject) => {
       const request = indexedDB.open('MAIC-Database');
       request.onsuccess = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
@@ -37,10 +41,15 @@ test('privilégie la classroom serveur et sa narration sur le cache local périm
           createdAt: now,
           updatedAt: now,
         });
-        tx.oncomplete = () => db.close();
+        tx.oncomplete = () => {
+          db.close();
+          resolve();
+        };
+        tx.onerror = () => reject(tx.error);
       };
-    },
-    { settings: createSettingsStorage(), stageId: STAGE_ID },
+      request.onerror = () => reject(request.error);
+    }),
+    STAGE_ID,
   );
 
   await page.route(`**/api/classroom?id=${STAGE_ID}`, (route) =>

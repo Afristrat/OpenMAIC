@@ -33,7 +33,11 @@ test.describe('Slide content surface (#647)', () => {
     await mockApi.setupGenerationMocks();
   });
 
-  test('background, z-order, and image bar surface in Pro mode', async ({ page }, testInfo) => {
+  test('background, z-order, and image bar surface in Pro mode', async ({
+    browserConsoleContract,
+    page,
+  }, testInfo) => {
+    browserConsoleContract.expectHttpError('/api/classroom', 404);
     // Generate a classroom through the mocked pipeline, then enter Pro mode.
     const preview = new GenerationPreviewPage(page);
     await preview.goto();

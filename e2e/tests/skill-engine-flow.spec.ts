@@ -3,7 +3,11 @@ import { createSettingsStorage } from '../fixtures/test-data/settings';
 import { mockOutlines } from '../fixtures/test-data/scene-outlines';
 
 test.describe('Formation Design Pro — persistent generation path', () => {
-  test('catalogue selection reaches the persistent job with the active skill', async ({ page }) => {
+  test('catalogue selection reaches the persistent job with the active skill', async ({
+    browserConsoleContract,
+    page,
+  }) => {
+    browserConsoleContract.expectHttpError('/api/classroom', 404);
     let submittedBody: Record<string, unknown> | undefined;
     let planBody: Record<string, unknown> | undefined;
 

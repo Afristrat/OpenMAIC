@@ -253,9 +253,11 @@ test.describe('Home → Generation', () => {
   });
 
   test('selects, reloads, removes and reuses three sources without losing valid documents', async ({
+    browserConsoleContract,
     page,
     mockApi,
   }) => {
+    browserConsoleContract.expectHttpError('/api/parse-pdf', 422);
     await page.route('**/api/parse-pdf', async (route) => {
       const multipart = route.request().postDataBuffer()?.toString('utf8') ?? '';
       if (multipart.includes('rejected.pdf')) {
@@ -324,7 +326,11 @@ test.describe('Home → Generation', () => {
   });
 
   for (const localized of PDF_OCR_GUIDANCE_LOCALES) {
-    test(`localizes unreadable PDF OCR guidance in ${localized.locale}`, async ({ page }) => {
+    test(`localizes unreadable PDF OCR guidance in ${localized.locale}`, async ({
+      browserConsoleContract,
+      page,
+    }) => {
+      browserConsoleContract.expectHttpError('/api/parse-pdf', 422);
       await page.addInitScript(
         (locale) => localStorage.setItem('locale', locale),
         localized.locale,

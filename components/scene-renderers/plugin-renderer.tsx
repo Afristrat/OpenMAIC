@@ -155,7 +155,7 @@ export function PluginRenderer({ content, mode: _mode, sceneId }: PluginRenderer
         className="min-h-0 flex-1 w-full border-0"
         style={iframeHeight ? { height: `${iframeHeight}px`, flex: 'none' } : undefined}
         title={`Plugin Scene ${sceneId} (${content.pluginType})`}
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+        sandbox="allow-scripts allow-forms allow-popups allow-modals"
       />
     </section>
   );

@@ -66,9 +66,14 @@ export const test = base.extend<Fixtures>({
       }
       for (const resourceError of resourceErrors) {
         const pathname = resourceError.url ? new URL(resourceError.url).pathname : '';
-        if (
-          !expectedHttpErrors.some((expectedHttpError) => expectedHttpError.pathname === pathname)
-        ) {
+        const matchingExpectation = expectedHttpErrors.find(
+          (expectedHttpError) => expectedHttpError.pathname === pathname,
+        );
+        const matchingResponse = failedResponses.some(
+          (response) =>
+            response.url === resourceError.url && response.status === matchingExpectation?.status,
+        );
+        if (!matchingExpectation || !matchingResponse) {
           unexpected.push(`error: ${resourceError.text} @ ${resourceError.url}`);
         }
       }
@@ -88,8 +93,8 @@ export const test = base.extend<Fixtures>({
     { auto: true },
   ],
   mockApi: [
-    async ({ context, page }, use) => {
-      const mockApi = new MockApi(page);
+    async ({ browserConsoleContract, context, page }, use) => {
+      const mockApi = new MockApi(page, browserConsoleContract.expectHttpError);
       // Always mock server-providers — called on every page load by root layout
       await mockApi.mockServerProviders();
       await mockApi.mockSourceLibrary();

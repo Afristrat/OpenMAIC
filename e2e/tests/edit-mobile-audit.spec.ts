@@ -61,7 +61,8 @@ async function enterProMode(page: Page, stageId: string) {
 }
 
 test.describe('Mobile Pro editor audit', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ browserConsoleContract, page }) => {
+    browserConsoleContract.expectHttpError('/api/classroom', 404);
     await page.setViewportSize({ width: 390, height: 844 });
   });
 
