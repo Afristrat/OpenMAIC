@@ -314,7 +314,10 @@ test.describe('Home → Generation', () => {
 
   for (const localized of SOURCE_CONFLICT_LOCALES) {
     test(`localizes the source-conflict decision in ${localized.locale}`, async ({ page }) => {
-      await page.addInitScript((locale) => localStorage.setItem('locale', locale), localized.locale);
+      await page.addInitScript(
+        (locale) => localStorage.setItem('locale', locale),
+        localized.locale,
+      );
       await page.route('**/api/parse-pdf', async (route) => {
         await route.fulfill({
           status: 200,
