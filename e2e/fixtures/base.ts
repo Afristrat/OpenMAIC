@@ -11,9 +11,16 @@ export const test = base.extend<Fixtures>({
   browserConsoleContract: [
     async ({ page }, use) => {
       const unexpected: string[] = [];
-      const onConsole = (message: { type(): string; text(): string }) => {
+      const onConsole = (message: {
+        type(): string;
+        text(): string;
+        location(): { url: string };
+      }) => {
         if (message.type() === 'warning' || message.type() === 'error') {
-          unexpected.push(`${message.type()}: ${message.text()}`);
+          const location = message.location();
+          unexpected.push(
+            `${message.type()}: ${message.text()}${location.url ? ` @ ${location.url}` : ''}`,
+          );
         }
       };
       const onPageError = (error: Error) => unexpected.push(`pageerror: ${error.message}`);
