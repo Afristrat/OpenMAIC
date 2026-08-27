@@ -137,12 +137,16 @@ test.describe('Whisper microphone flow', () => {
     expect(messages[0]).toContain('Permission denied');
   });
 
-  test('reports an upstream transcription failure after recording', async ({ page }) => {
+  test('reports an upstream transcription failure after recording', async ({
+    browserConsoleContract,
+    page,
+  }) => {
     await installMicrophone(page);
     await mockManagedWhisper(page);
+    browserConsoleContract.expectHttpError('/api/transcription', 502);
     await page.route('**/api/transcription', (route) =>
       route.fulfill({
-        status: 200,
+        status: 502,
         contentType: 'application/json',
         body: JSON.stringify({ success: false, error: 'Transcription failed' }),
       }),

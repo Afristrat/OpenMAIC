@@ -2,7 +2,9 @@ import { expect, test as base } from '@playwright/test';
 import { MockApi } from './mock-api';
 
 type Fixtures = {
-  browserConsoleContract: void;
+  browserConsoleContract: {
+    expectHttpError(pathname: string, status: number): void;
+  };
   mockApi: MockApi;
   rateLimitIdentity: void;
 };
@@ -11,6 +13,9 @@ export const test = base.extend<Fixtures>({
   browserConsoleContract: [
     async ({ page }, use) => {
       const unexpected: string[] = [];
+      const expectedHttpErrors: Array<{ pathname: string; status: number }> = [];
+      const failedResponses: Array<{ url: string; status: number }> = [];
+      const resourceErrors: Array<{ text: string; url: string }> = [];
       const onConsole = (message: {
         type(): string;
         text(): string;
@@ -18,19 +23,55 @@ export const test = base.extend<Fixtures>({
       }) => {
         if (message.type() === 'warning' || message.type() === 'error') {
           const location = message.location();
+          if (
+            message.type() === 'error' &&
+            message.text().startsWith('Failed to load resource:')
+          ) {
+            resourceErrors.push({ text: message.text(), url: location.url });
+            return;
+          }
           unexpected.push(
             `${message.type()}: ${message.text()}${location.url ? ` @ ${location.url}` : ''}`,
           );
         }
       };
       const onPageError = (error: Error) => unexpected.push(`pageerror: ${error.message}`);
+      const onResponse = (response: { status(): number; url(): string }) => {
+        if (response.status() >= 400) {
+          failedResponses.push({ url: response.url(), status: response.status() });
+        }
+      };
       page.on('console', onConsole);
       page.on('pageerror', onPageError);
+      page.on('response', onResponse);
 
-      await use();
+      await use({
+        expectHttpError(pathname, status) {
+          expectedHttpErrors.push({ pathname, status });
+        },
+      });
 
       page.off('console', onConsole);
       page.off('pageerror', onPageError);
+      page.off('response', onResponse);
+      for (const expectedHttpError of expectedHttpErrors) {
+        const matchingResponses = failedResponses.filter((response) => {
+          const url = new URL(response.url);
+          return (
+            url.pathname === expectedHttpError.pathname && response.status === expectedHttpError.status
+          );
+        });
+        expect(
+          matchingResponses,
+          `expected HTTP ${expectedHttpError.status} response for ${expectedHttpError.pathname}`,
+        ).toHaveLength(1);
+      }
+      for (const resourceError of resourceErrors) {
+        const pathname = resourceError.url ? new URL(resourceError.url).pathname : '';
+        if (!expectedHttpErrors.some((expectedHttpError) => expectedHttpError.pathname === pathname)) {
+          unexpected.push(`error: ${resourceError.text} @ ${resourceError.url}`);
+        }
+      }
       expect(unexpected, 'unexpected browser console output').toEqual([]);
     },
     { auto: true },
@@ -47,12 +88,12 @@ export const test = base.extend<Fixtures>({
     { auto: true },
   ],
   mockApi: [
-    async ({ page }, use) => {
+    async ({ context, page }, use) => {
       const mockApi = new MockApi(page);
       // Always mock server-providers — called on every page load by root layout
       await mockApi.mockServerProviders();
       await mockApi.mockSourceLibrary();
-      await page.route('**/rest/v1/review_cards*', async (route) => {
+      await context.route(/\/rest\/v1\/review_cards(?:\?.*)?$/, async (route) => {
         if (route.request().method() !== 'GET') {
           await route.fallback();
           return;
