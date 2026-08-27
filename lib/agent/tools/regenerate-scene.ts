@@ -284,6 +284,7 @@ export function makeRegenerateSceneTool(
         ctx,
         agents,
         languageDirective,
+        sourceGrounding,
       });
 
       const text =
