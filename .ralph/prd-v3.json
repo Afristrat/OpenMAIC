@@ -1450,7 +1450,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux proposer une reformulation fondée sur les sources en cas de conflit afin que le parcours promis soit réellement utilisable.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P1",
-      "status": "to_implement",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "type": "request_or_observed_gap",
@@ -1458,7 +1458,7 @@
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "onUseSource remplace la demande par une phrase générique ; le raffinement courant ne reçoit que le nom du fichier.",
+      "gap": "Implémentation préparée : la divergence transporte une reformulation éditable et des extraits vérifiés dans le contenu ; la fermeture attend les quality gates du SHA poussé.",
       "evidence": [
         "app/app/page.tsx:810",
         "app/app/page.tsx:876",

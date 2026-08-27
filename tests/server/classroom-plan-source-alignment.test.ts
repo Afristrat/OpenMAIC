@@ -100,6 +100,9 @@ describe('classroom plan source alignment gate', () => {
               sourceTopic: 'Amélioration des processus',
               explanation:
                 'La demande porte sur la gestion individuelle du temps, tandis que le document traite de méthodes d’amélioration des processus.',
+              suggestedRequirement:
+                'Créer exactement cinq diapositives sur l’analyse des causes racines, Lean Six Sigma et l’amélioration continue.',
+              references: ['Root cause analysis, Lean Six Sigma'],
             }),
           };
         }
@@ -115,9 +118,68 @@ describe('classroom plan source alignment gate', () => {
         status: 'conflicting',
         requestTopic: 'Gestion du temps',
         sourceTopic: 'Amélioration des processus',
+        suggestedRequirement:
+          'Créer exactement cinq diapositives sur l’analyse des causes racines, Lean Six Sigma et l’amélioration continue.',
+        references: ['Root cause analysis, Lean Six Sigma'],
       },
     });
 
     expect(mocks.callLLM).toHaveBeenCalledTimes(1);
+    const alignmentCall = mocks.callLLM.mock.calls[0]?.[0] as {
+      messages: Array<{ content: string }>;
+    };
+    expect(alignmentCall.messages[0]?.content).toContain('exact, verbatim excerpts');
+    expect(alignmentCall.messages[1]?.content).toContain('"authorLocale":"fr-FR"');
+    expect(alignmentCall.messages[1]?.content).toContain('Root cause analysis');
+    expect(alignmentCall.messages[1]?.content).not.toContain('process-improvement.pdf');
+  });
+
+  test('continues to the syllabus only when the source and request are aligned', async () => {
+    mocks.callLLM.mockImplementation(
+      async ({ messages }: { messages?: Array<{ content: string }> }) => {
+        const system = messages?.[0]?.content ?? '';
+        if (system.includes('SOURCE ALIGNMENT GATE')) {
+          return {
+            text: JSON.stringify({
+              status: 'aligned',
+              requestTopic: 'Amélioration des processus',
+              sourceTopic: 'Amélioration des processus',
+              explanation: 'Le document étaye directement la demande.',
+              suggestedRequirement: '',
+              references: [],
+            }),
+          };
+        }
+        return { text: generatedPlan };
+      },
+    );
+
+    const result = await generateClassroomPlan({
+      ...input,
+      requirement: 'Créer une formation sur l’amélioration continue et Lean Six Sigma.',
+    });
+
+    expect(result.courseTitle).toBe('Gestion du temps');
+    expect(mocks.callLLM).toHaveBeenCalledTimes(2);
+  });
+
+  test('rejects a document without usable text without inventing a topic from metadata', async () => {
+    await expect(
+      generateClassroomPlan({
+        ...input,
+        language: 'en-US',
+        pdfContent: { text: '   ', images: [] },
+      }),
+    ).rejects.toMatchObject({
+      name: 'SourceMaterialConflictError',
+      alignment: {
+        status: 'uncertain',
+        sourceTopic: 'No usable content',
+        suggestedRequirement: undefined,
+        references: [],
+      },
+    });
+
+    expect(mocks.callLLM).not.toHaveBeenCalled();
   });
 });

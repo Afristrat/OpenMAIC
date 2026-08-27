@@ -38,6 +38,8 @@ describe('classroom plan worker', () => {
       requestTopic: 'Gestion du temps',
       sourceTopic: 'Amélioration des processus',
       explanation: 'Les sujets diffèrent.',
+      suggestedRequirement: 'Créer une formation sur Lean Six Sigma.',
+      references: ['Lean Six Sigma et amélioration continue'],
     };
     mocks.generate.mockRejectedValue(new SourceMaterialConflictError(alignment));
 

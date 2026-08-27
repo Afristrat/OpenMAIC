@@ -872,8 +872,7 @@ function HomePage() {
           setForm((previous) => ({ ...previous, pdfFile: null }));
           setSourceConflict(null);
         }}
-        onUseSource={() => {
-          const requirement = t('generation.sourceConflict.sourceOnlyRequirement');
+        onUseSuggestion={(requirement) => {
           setForm((previous) => ({ ...previous, requirement }));
           updateRequirementCache(requirement);
           setSourceConflict(null);

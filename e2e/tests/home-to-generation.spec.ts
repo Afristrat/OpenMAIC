@@ -188,7 +188,11 @@ test.describe('Home → Generation', () => {
     });
   });
 
-  test('blocks a contradictory attachment before showing a syllabus', async ({ page }) => {
+  test('blocks a contradictory attachment before showing a syllabus', async ({
+    page,
+    mockApi,
+  }) => {
+    const acceptedJob = await mockApi.mockClassroomGenerationJob('source-reformulation-e2e');
     await page.route('**/api/parse-pdf', async (route) => {
       await route.fulfill({
         status: 200,
@@ -202,7 +206,13 @@ test.describe('Home → Generation', () => {
         }),
       });
     });
+    let planRequests = 0;
     await page.route('**/api/generate-classroom/plan', async (route) => {
+      planRequests += 1;
+      if (planRequests > 1) {
+        await route.fallback();
+        return;
+      }
       await route.fulfill({
         status: 202,
         contentType: 'application/json',
@@ -228,6 +238,9 @@ test.describe('Home → Generation', () => {
             requestTopic: 'Time management',
             sourceTopic: 'Process improvement',
             explanation: 'The request and source cover different primary topics.',
+            suggestedRequirement:
+              'Create five practical slides about Lean Six Sigma and continuous improvement.',
+            references: ['Process improvement, Lean Six Sigma and continuous improvement.'],
           },
         }),
       });
@@ -251,10 +264,117 @@ test.describe('Home → Generation', () => {
     ).toBeVisible();
     await expect(page.getByText('Time management', { exact: true })).toBeVisible();
     await expect(page.getByText('Process improvement', { exact: true })).toBeVisible();
+    await expect(
+      page.getByText('Process improvement, Lean Six Sigma and continuous improvement.', {
+        exact: true,
+      }),
+    ).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Training plan' })).not.toBeVisible();
 
-    await page.getByRole('button', { name: 'Remove the document' }).click();
-    await expect(page.getByText('process-improvement.pdf')).not.toBeVisible();
+    const suggestion = page.getByLabel('Suggested reformulation');
+    await suggestion.fill(
+      'Create five practical slides about Lean Six Sigma, Kaizen and continuous improvement.',
+    );
+    await page.getByRole('button', { name: 'Use this reformulation' }).click();
+    await expect(page.getByRole('alertdialog')).not.toBeVisible();
+    await expect(home.textarea).toHaveValue(
+      'Create five practical slides about Lean Six Sigma, Kaizen and continuous improvement.',
+    );
+    await expect(page.getByText('process-improvement.pdf')).toBeVisible();
+
+    await home.submit();
+    await expect(page.getByRole('heading', { name: 'Training plan' })).toBeVisible();
+    expect(acceptedJob.getPlanRequestBody()).toMatchObject({
+      requirement:
+        'Create five practical slides about Lean Six Sigma, Kaizen and continuous improvement.',
+    });
+  });
+
+  test('localizes the source-conflict decision in French, Arabic and English', async ({ page }) => {
+    await page.route('**/api/parse-pdf', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: { text: 'Lean Six Sigma and continuous improvement.', images: [] },
+        }),
+      });
+    });
+    await page.route('**/api/generate-classroom/plan', async (route) => {
+      await route.fulfill({
+        status: 202,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, jobId: 'localized-conflict', pollIntervalMs: 10 }),
+      });
+    });
+    await page.route('**/api/generate-classroom/plan/localized-conflict', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          status: 'failed',
+          done: true,
+          errorCode: 'SOURCE_MATERIAL_CONFLICT',
+          sourceAlignment: {
+            status: 'conflicting',
+            requestTopic: 'Time management',
+            sourceTopic: 'Process improvement',
+            explanation: 'The request and source cover different primary topics.',
+            suggestedRequirement: 'Create a course about Lean Six Sigma.',
+            references: ['Lean Six Sigma and continuous improvement.'],
+          },
+        }),
+      });
+    });
+
+    const cases = [
+      {
+        locale: 'fr-FR',
+        dir: 'ltr',
+        suggestion: 'Reformulation proposée',
+        accept: 'Utiliser cette reformulation',
+        review: 'Refuser et revoir ma demande',
+      },
+      {
+        locale: 'ar-MA',
+        dir: 'rtl',
+        suggestion: 'إعادة الصياغة المقترحة',
+        accept: 'استخدام إعادة الصياغة هذه',
+        review: 'رفض الاقتراح ومراجعة طلبي',
+      },
+      {
+        locale: 'en-US',
+        dir: 'ltr',
+        suggestion: 'Suggested reformulation',
+        accept: 'Use this reformulation',
+        review: 'Reject and review my request',
+      },
+    ] as const;
+
+    const home = new HomePage(page);
+    for (const localized of cases) {
+      await home.goto();
+      await page.evaluate((locale) => localStorage.setItem('locale', locale), localized.locale);
+      await page.reload();
+      await home.fillRequirement('Create five slides about time management.');
+      await home.configureAnimation();
+      await page.getByRole('button', { name: /PDF/ }).click();
+      await page.locator('input[type="file"][accept*=".pdf"]').setInputFiles({
+        name: 'source.pdf',
+        mimeType: 'application/pdf',
+        buffer: Buffer.from('%PDF-1.4 e2e'),
+      });
+      await home.submit();
+
+      await expect(page.locator('html')).toHaveAttribute('lang', localized.locale);
+      await expect(page.locator('html')).toHaveAttribute('dir', localized.dir);
+      await expect(page.getByLabel(localized.suggestion)).toBeVisible();
+      await expect(page.getByRole('button', { name: localized.accept })).toBeVisible();
+      await page.getByRole('button', { name: localized.review }).click();
+      await expect(page.getByRole('alertdialog')).not.toBeVisible();
+    }
   });
 
   test('keeps an asynchronous plan recoverable when its status endpoint returns HTML', async ({

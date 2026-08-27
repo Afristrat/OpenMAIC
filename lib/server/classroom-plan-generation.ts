@@ -84,8 +84,13 @@ export async function generateClassroomPlan(input: GenerateClassroomInput) {
     return result.text;
   };
 
-  if (input.pdfContent?.text) {
-    await assertSourceMaterialAlignment(input.requirement, input.pdfContent.text, aiCall);
+  if (input.pdfContent) {
+    await assertSourceMaterialAlignment(
+      input.requirement,
+      input.pdfContent.text,
+      aiCall,
+      input.language ?? 'fr-FR',
+    );
   }
 
   const expectedSceneCount = extractRequestedSceneCount(input.requirement);
