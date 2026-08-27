@@ -91,6 +91,10 @@ import {
 } from '@/lib/server/pdf-source';
 import { teacherProfileFromClassroomCast } from '@/lib/agents/classroom-casting';
 import { shouldRunClassroomWebSearch } from '@/lib/server/web-search-policy';
+import {
+  buildSceneSourceGrounding,
+  uploadedSourceDocument as createUploadedSourceDocument,
+} from '@/lib/generation/source-grounding';
 
 const log = createLogger('Classroom');
 
@@ -387,6 +391,7 @@ export async function generateClassroom(
   const vocationalActive = resolveVocationalActive(requirements);
   const pdfText = pdfContent?.text || undefined;
   const pdfImages = normalizePdfImages(pdfContent);
+  const sourceDocuments = pdfContent ? [createUploadedSourceDocument(pdfContent)] : [];
 
   await options.onProgress?.({
     step: 'researching',
@@ -737,6 +742,7 @@ export async function generateClassroom(
       const safeOutline = applyOutlineFallbacks(outline, true, {
         allowProceduralSkill: vocationalActive,
       });
+      const sourceGrounding = buildSceneSourceGrounding(safeOutline, sourceDocuments);
       const progressStart = 30 + Math.floor((index / Math.max(outlines.length, 1)) * 60);
 
       await options.onProgress?.({
@@ -841,6 +847,7 @@ export async function generateClassroom(
             allowProceduralSkill: vocationalActive,
             skillEngineEnabled,
             activeSkillId: requirements.activeSkillId,
+            sourceGrounding,
             assignedImages,
             imageMapping,
             requiredSourceImageIds:
@@ -877,6 +884,7 @@ export async function generateClassroom(
               )
               .map((agent) => agent.id),
             languageDirective,
+            sourceGrounding,
           }),
         {
           label: `scene ${index + 1}/${outlines.length} actions`,
@@ -889,7 +897,13 @@ export async function generateClassroom(
         action.type === 'speech' ? [action.text] : [],
       );
 
-      const sceneId = createSceneWithActions(safeOutline, content, actions, api);
+      const sceneId = createSceneWithActions(
+        safeOutline,
+        content,
+        actions,
+        api,
+        sourceGrounding,
+      );
       if (!sceneId) {
         throw new Error(`Required scene creation failed: ${safeOutline.title}`);
       }

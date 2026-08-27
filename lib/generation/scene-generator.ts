@@ -61,6 +61,10 @@ import type {
 import type { ThinkingConfig } from '@/lib/types/provider';
 import { auditSlideLayout } from '@/lib/edit/slide-layout-audit';
 import { createLogger } from '@/lib/logger';
+import {
+  formatSourceGroundingForPrompt,
+  type SceneSourceGrounding,
+} from './source-grounding';
 const log = createLogger('Generation');
 
 const INTERACTIVE_WIDGET_ACTIONS = [
@@ -69,6 +73,14 @@ const INTERACTIVE_WIDGET_ACTIONS = [
   'widget_annotation',
   'widget_reveal',
 ];
+
+function withSourceGrounding(
+  prompt: string,
+  grounding: SceneSourceGrounding | undefined,
+): string {
+  const sourceBlock = formatSourceGroundingForPrompt(grounding);
+  return sourceBlock ? `${prompt}\n\n${sourceBlock}` : prompt;
+}
 
 // ── Options interfaces for scene generation functions ──
 
@@ -108,6 +120,8 @@ export interface SceneContentOptions {
   onValidationFailure?: (directive: string) => void;
   skillEngineEnabled?: boolean;
   activeSkillId?: string;
+  /** Bounded, versioned passages selected for this scene from the supplied documents. */
+  sourceGrounding?: SceneSourceGrounding;
 }
 
 export interface SceneActionsOptions {
@@ -117,6 +131,7 @@ export interface SceneActionsOptions {
   requiredAgentIds?: string[];
   userProfile?: string;
   languageDirective?: string;
+  sourceGrounding?: SceneSourceGrounding;
 }
 
 // ==================== Stage 2: Full Scenes (Two-Step) ====================
@@ -344,6 +359,7 @@ export async function generateSceneContent(
     onValidationFailure,
     skillEngineEnabled,
     activeSkillId,
+    sourceGrounding,
   } = options;
 
   // Unified path for interactive scenes (both normal and ultra mode)
@@ -367,7 +383,10 @@ export async function generateSceneContent(
     }
 
     // Route to widget generation (handles all 5 types)
-    return generateWidgetContent(outline, aiCall, languageDirective, { allowProceduralSkill });
+    return generateWidgetContent(outline, aiCall, languageDirective, {
+      allowProceduralSkill,
+      sourceGrounding,
+    });
   }
 
   switch (outline.type) {
@@ -388,6 +407,7 @@ export async function generateSceneContent(
         onValidationFailure,
         skillEngineEnabled,
         activeSkillId,
+        sourceGrounding,
       );
     case 'quiz':
       return generateQuizContent(
@@ -400,6 +420,7 @@ export async function generateSceneContent(
         onValidationFailure,
         skillEngineEnabled,
         activeSkillId,
+        sourceGrounding,
       );
     case 'pbl':
       return generatePBLSceneContent(
@@ -410,9 +431,10 @@ export async function generateSceneContent(
         targetLanguage,
         userRequirements,
         courseOutlines,
+        sourceGrounding,
       );
     case 'plugin':
-      return generatePluginContent(outline, aiCall, languageDirective);
+      return generatePluginContent(outline, aiCall, languageDirective, sourceGrounding);
     default:
       return null;
   }
@@ -422,6 +444,7 @@ async function generatePluginContent(
   outline: SceneOutline,
   aiCall: AICallFn,
   languageDirective?: string,
+  sourceGrounding?: SceneSourceGrounding,
 ): Promise<GeneratedPluginContent | null> {
   const pluginType = outline.pluginType?.trim();
   if (!pluginType) {
@@ -444,6 +467,7 @@ async function generatePluginContent(
       `Teaching purpose: ${outline.description}`,
       `Key points: ${(outline.keyPoints ?? []).join('; ')}`,
       languageDirective ? `Language directive: ${languageDirective}` : '',
+      formatSourceGroundingForPrompt(sourceGrounding),
       'Return only one JSON object that conforms exactly to this JSON Schema:',
       JSON.stringify(plugin.outputSchema, null, 2),
     ]
@@ -1045,6 +1069,7 @@ async function generateSlideContent(
   onValidationFailure?: (directive: string) => void,
   skillEngineEnabled?: boolean,
   activeSkillId?: string,
+  sourceGrounding?: SceneSourceGrounding,
 ): Promise<GeneratedSlideContent | null> {
   if (outline.generatedResources?.length) {
     return buildLearningResourceSlide(outline, outline.generatedResources);
@@ -1212,6 +1237,8 @@ async function generateSlideContent(
       `Use a restrained two-column composition: keep the title above y=110; place all body text only in the left column from x=60 to x=500 and below y=130; place the source image in the right column at x=560, y=150, width=380, height=300. ` +
       `Do not add a table, chart, or another media element on this slide. Keep every element fully inside the 1000 by 562.5 canvas and leave clear space between columns.`;
   }
+
+  userPrompt = withSourceGrounding(userPrompt, sourceGrounding);
 
   const response = await aiCall(prompts.system, userPrompt, visionImages);
   const generatedData = parseJsonResponse<GeneratedSlideData>(response);
@@ -1534,6 +1561,7 @@ async function generateQuizContent(
   onValidationFailure?: (directive: string) => void,
   skillEngineEnabled?: boolean,
   activeSkillId?: string,
+  sourceGrounding?: SceneSourceGrounding,
 ): Promise<GeneratedQuizContent | null> {
   const quizConfig = outline.quizConfig || {
     questionCount: 3,
@@ -1563,7 +1591,7 @@ async function generateQuizContent(
   }
 
   log.debug(`Generating quiz content for: ${outline.title}`);
-  const response = await aiCall(prompts.system, prompts.user);
+  const response = await aiCall(prompts.system, withSourceGrounding(prompts.user, sourceGrounding));
   const generatedQuestions = parseJsonResponse<QuizQuestion[]>(response);
 
   if (!generatedQuestions || !Array.isArray(generatedQuestions)) {
@@ -1749,6 +1777,7 @@ async function generatePBLSceneContent(
   targetLanguage?: string,
   userRequirements?: UserRequirements,
   courseOutlines?: SceneOutline[],
+  sourceGrounding?: SceneSourceGrounding,
 ): Promise<GeneratedPBLContent | null> {
   if (!languageModel) {
     log.error('LanguageModel required for PBL generation');
@@ -1774,6 +1803,7 @@ async function generatePBLSceneContent(
   }
 
   if (!v2Disabled) {
+    const sourceBlock = formatSourceGroundingForPrompt(sourceGrounding);
     const plannerInput: PBLPlannerV2Input = {
       outline,
       courseContext: {
@@ -1784,7 +1814,7 @@ async function generatePBLSceneContent(
         ? {
             nickname: userRequirements.userNickname,
             bio: userRequirements.userBio,
-            requirement: userRequirements.requirement,
+            requirement: withSourceGrounding(userRequirements.requirement, sourceGrounding),
           }
         : undefined,
       targetLanguage,
@@ -1857,7 +1887,9 @@ async function generatePBLSceneContent(
     const projectConfig = await generatePBLContent(
       {
         projectTopic: pblConfig.projectTopic,
-        projectDescription: pblConfig.projectDescription,
+        projectDescription: sourceBlock
+          ? `${pblConfig.projectDescription}\n\n${sourceBlock}`
+          : pblConfig.projectDescription,
         targetSkills: pblConfig.targetSkills,
         issueCount: pblConfig.issueCount,
         languageDirective: languageDirective || DEFAULT_LANGUAGE_DIRECTIVE,
@@ -1938,7 +1970,10 @@ export async function generateWidgetContent(
   outline: SceneOutline,
   aiCall: AICallFn,
   languageDirective?: string,
-  options: { allowProceduralSkill?: boolean } = {},
+  options: {
+    allowProceduralSkill?: boolean;
+    sourceGrounding?: SceneSourceGrounding;
+  } = {},
 ): Promise<GeneratedInteractiveContent | null> {
   const widgetType = outline.widgetType;
   const widgetOutline = outline.widgetOutline;
@@ -2047,7 +2082,10 @@ export async function generateWidgetContent(
   }
 
   log.info(`Generating ${widgetType} widget for: ${outline.title}`);
-  const response = await aiCall(prompts.system, prompts.user);
+  const response = await aiCall(
+    prompts.system,
+    withSourceGrounding(prompts.user, options.sourceGrounding),
+  );
   const html = extractHtml(response);
 
   if (!html) {
@@ -2144,7 +2182,8 @@ export async function generateSceneActions(
   aiCall: AICallFn,
   options: SceneActionsOptions = {},
 ): Promise<Action[]> {
-  const { ctx, agents, requiredAgentIds, userProfile, languageDirective } = options;
+  const { ctx, agents, requiredAgentIds, userProfile, languageDirective, sourceGrounding } =
+    options;
   const requiredAgents =
     agents?.filter((agent) => requiredAgentIds?.includes(agent.id)).map((agent) => agent.id) ?? [];
   const agentsText = [
@@ -2202,7 +2241,7 @@ export async function generateSceneActions(
           .filter(Boolean)
           .join('\n\n');
         const actions = parseActionsFromStructuredOutput(
-          await aiCall(systemPrompt, prompts.user),
+          await aiCall(systemPrompt, withSourceGrounding(prompts.user, sourceGrounding)),
           outline.type,
         );
         processed = processActions(actions, content.elements, agents);
@@ -2229,6 +2268,7 @@ export async function generateSceneActions(
       requiredAgentIds,
       aiCall,
       languageDirective,
+      sourceGrounding,
     );
     return appendResourcePauseActions(
       removeUntrustedResourceDetails(preparedActions, outline),
@@ -2253,7 +2293,10 @@ export async function generateSceneActions(
     });
 
     const actions = prompts
-      ? parseActionsFromStructuredOutput(await aiCall(prompts.system, prompts.user), outline.type)
+      ? parseActionsFromStructuredOutput(
+          await aiCall(prompts.system, withSourceGrounding(prompts.user, sourceGrounding)),
+          outline.type,
+        )
       : [];
     const processed = processActions(
       actions.length > 0 ? actions : generateDefaultQuizActions(outline),
@@ -2267,6 +2310,7 @@ export async function generateSceneActions(
       requiredAgentIds,
       aiCall,
       languageDirective,
+      sourceGrounding,
     );
   }
 
@@ -2288,7 +2332,7 @@ export async function generateSceneActions(
 
     const actions = prompts
       ? parseActionsFromStructuredOutput(
-          await aiCall(prompts.system, prompts.user),
+          await aiCall(prompts.system, withSourceGrounding(prompts.user, sourceGrounding)),
           outline.type,
           INTERACTIVE_WIDGET_ACTIONS,
         )
@@ -2305,6 +2349,7 @@ export async function generateSceneActions(
       requiredAgentIds,
       aiCall,
       languageDirective,
+      sourceGrounding,
     );
   }
 
@@ -2323,7 +2368,10 @@ export async function generateSceneActions(
     });
 
     const actions = prompts
-      ? parseActionsFromStructuredOutput(await aiCall(prompts.system, prompts.user), outline.type)
+      ? parseActionsFromStructuredOutput(
+          await aiCall(prompts.system, withSourceGrounding(prompts.user, sourceGrounding)),
+          outline.type,
+        )
       : [];
     const processed = processActions(
       actions.length > 0 ? actions : generateDefaultPBLActions(outline),
@@ -2337,6 +2385,7 @@ export async function generateSceneActions(
       requiredAgentIds,
       aiCall,
       languageDirective,
+      sourceGrounding,
     );
   }
 
@@ -2358,6 +2407,7 @@ export async function generateSceneActions(
       requiredAgentIds,
       aiCall,
       languageDirective,
+      sourceGrounding,
     );
   }
 
@@ -2400,6 +2450,7 @@ async function ensureCanonicalAgentInterventions(
   requiredAgentIds: string[] | undefined,
   aiCall: AICallFn,
   languageDirective?: string,
+  sourceGrounding?: SceneSourceGrounding,
 ): Promise<Action[]> {
   const nonTeacherAgents = agents?.filter((agent) => agent.role !== 'teacher') ?? [];
   if (nonTeacherAgents.length === 0) return actions;
@@ -2436,12 +2487,15 @@ async function ensureCanonicalAgentInterventions(
         ]
           .filter(Boolean)
           .join('\n'),
-        [
-          `Scene id: ${outline.id}`,
-          `Title: ${outline.title}`,
-          `Description: ${outline.description}`,
-          `Key points: ${(outline.keyPoints ?? []).join('; ')}`,
-        ].join('\n'),
+        withSourceGrounding(
+          [
+            `Scene id: ${outline.id}`,
+            `Title: ${outline.title}`,
+            `Description: ${outline.description}`,
+            `Key points: ${(outline.keyPoints ?? []).join('; ')}`,
+          ].join('\n'),
+          sourceGrounding,
+        ),
       );
       const repaired = processActions(
         parseActionsFromStructuredOutput(response, outline.type),
@@ -2758,6 +2812,7 @@ export function createSceneWithActions(
     | GeneratedPluginContent,
   actions: Action[],
   api: ReturnType<typeof createStageAPI>,
+  sourceGrounding?: SceneSourceGrounding,
 ): string | null {
   if (outline.type === 'slide' && 'elements' in content) {
     // Build complete Slide object
@@ -2790,7 +2845,7 @@ export function createSceneWithActions(
       actions,
     });
 
-    return sceneResult.success ? (sceneResult.data ?? null) : null;
+    return finalizeSceneCreation(sceneResult, api, sourceGrounding);
   }
 
   if (outline.type === 'quiz' && 'questions' in content) {
@@ -2805,7 +2860,7 @@ export function createSceneWithActions(
       actions,
     });
 
-    return sceneResult.success ? (sceneResult.data ?? null) : null;
+    return finalizeSceneCreation(sceneResult, api, sourceGrounding);
   }
 
   if (outline.type === 'interactive' && 'html' in content) {
@@ -2824,7 +2879,7 @@ export function createSceneWithActions(
       actions,
     });
 
-    return sceneResult.success ? (sceneResult.data ?? null) : null;
+    return finalizeSceneCreation(sceneResult, api, sourceGrounding);
   }
 
   if (outline.type === 'pbl' && 'projectConfig' in content) {
@@ -2840,7 +2895,7 @@ export function createSceneWithActions(
       actions,
     });
 
-    return sceneResult.success ? (sceneResult.data ?? null) : null;
+    return finalizeSceneCreation(sceneResult, api, sourceGrounding);
   }
 
   if (outline.type === 'plugin' && 'pluginType' in content) {
@@ -2856,8 +2911,21 @@ export function createSceneWithActions(
       actions,
     });
 
-    return sceneResult.success ? (sceneResult.data ?? null) : null;
+    return finalizeSceneCreation(sceneResult, api, sourceGrounding);
   }
 
   return null;
+}
+
+function finalizeSceneCreation(
+  result: { success: boolean; data?: string },
+  api: ReturnType<typeof createStageAPI>,
+  sourceGrounding: SceneSourceGrounding | undefined,
+): string | null {
+  const sceneId = result.success ? (result.data ?? null) : null;
+  if (sceneId && sourceGrounding) {
+    const updated = api.scene.update(sceneId, { sourceGrounding });
+    if (!updated.success) return null;
+  }
+  return sceneId;
 }

@@ -135,6 +135,41 @@ describe('regenerate_scene tool', () => {
     expect(contentPrompt).toContain('KEEP them');
   });
 
+  it('preserves the versioned source passages in content and narration regeneration', async () => {
+    const prompts: string[] = [];
+    const aiCall = vi.fn(async (_stage: string, _system: string, user: string) => {
+      prompts.push(user);
+      return prompts.length === 1 ? NEW_SLIDE_JSON : '[]';
+    });
+    const ctx = slideCtx('s1');
+    ctx.sourceGrounding = {
+      schemaVersion: 1,
+      status: 'grounded',
+      issues: [],
+      passages: [
+        {
+          id: 'guide:v1-proof:p1',
+          sourceId: 'guide',
+          sourceVersion: 'v1-proof',
+          sourceTitle: 'guide.pdf',
+          text: 'La marge contributive cible est de 37,5 %.',
+          start: 0,
+          end: 48,
+        },
+      ],
+    };
+
+    const tool = makeRegenerateSceneTool({ aiCall, getSceneContext: () => ctx });
+    const res = await tool.execute('call-grounded', {
+      sceneId: 's1',
+      instruction: 'Rends l’exemple plus concret.',
+    });
+
+    expect(prompts).toHaveLength(2);
+    expect(prompts.every((prompt) => prompt.includes('guide:v1-proof:p1'))).toBe(true);
+    expect(res.details.sourceGrounding).toEqual(ctx.sourceGrounding);
+  });
+
   it('refuses slides containing a video without generating anything', async () => {
     const aiCall = vi.fn(async () => NEW_SLIDE_JSON);
     const videoEl = {

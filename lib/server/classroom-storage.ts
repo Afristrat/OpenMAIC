@@ -93,6 +93,7 @@ interface SceneExtra {
   updatedAt?: number;
   whiteboards?: Scene['whiteboards'];
   multiAgent?: Scene['multiAgent'];
+  sourceGrounding?: Scene['sourceGrounding'];
 }
 
 export function buildStageExtra(
@@ -141,6 +142,7 @@ function buildSceneExtra(scene: Scene): SceneExtra {
     updatedAt: scene.updatedAt,
     whiteboards: scene.whiteboards,
     multiAgent: scene.multiAgent,
+    sourceGrounding: scene.sourceGrounding,
   };
 }
 
@@ -269,6 +271,7 @@ export async function readClassroom(id: string): Promise<PersistedClassroomData 
       actions: row.actions ?? undefined,
       whiteboards: sceneExtra.whiteboards,
       multiAgent: sceneExtra.multiAgent,
+      sourceGrounding: sceneExtra.sourceGrounding,
       createdAt: sceneExtra.createdAt,
       updatedAt: sceneExtra.updatedAt,
     } as Scene;

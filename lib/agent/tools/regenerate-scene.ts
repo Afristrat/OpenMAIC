@@ -26,6 +26,7 @@ import type { SceneGenerationContext } from '@/lib/generation/generation-pipelin
 import type { Action } from '@/lib/types/action';
 import type { GeneratedSlideContent, PdfImage, ImageMapping } from '@/lib/types/generation';
 import type { SceneContent } from '@/lib/types/stage';
+import type { SceneSourceGrounding } from '@/lib/generation/source-grounding';
 import type { RegenerateActionsDeps, SceneContext } from './regenerate-scene-actions';
 
 // ── Runtime SlideContent → generation GeneratedSlideContent (edit baseline) ──
@@ -136,6 +137,7 @@ export interface RegenerateSceneDetails {
   sceneId: string;
   content: GeneratedSlideContent | null;
   actions: Action[];
+  sourceGrounding?: SceneSourceGrounding;
 }
 
 // ── Factory ──────────────────────────────────────────────────────────────────
@@ -169,7 +171,15 @@ export function makeRegenerateSceneTool(
         };
       }
 
-      const { outline, allOutlines, content, stageId, agents, languageDirective } = ctxData;
+      const {
+        outline,
+        allOutlines,
+        content,
+        stageId,
+        agents,
+        languageDirective,
+        sourceGrounding,
+      } = ctxData;
       void stageId;
 
       // slide-only this release — refuse non-slide outlines AND any scene whose
@@ -237,11 +247,13 @@ export function makeRegenerateSceneTool(
         baseline: editBaseline,
         assignedImages,
         imageMapping,
+        sourceGrounding,
       } = buildImageResources(slideBase);
 
       const newContent = await generateSceneContent(outline, contentAiCall, {
         agents,
         languageDirective,
+        sourceGrounding,
         editDirective: instruction,
         baselineContent: editBaseline,
         assignedImages,
@@ -289,7 +301,7 @@ export function makeRegenerateSceneTool(
 
       return {
         content: [{ type: 'text', text }],
-        details: { sceneId, content: newContent, actions },
+        details: { sceneId, content: newContent, actions, sourceGrounding },
       };
     },
   };

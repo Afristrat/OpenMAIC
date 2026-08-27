@@ -16,6 +16,7 @@ import type { WidgetType, WidgetConfig } from '@/lib/types/widgets';
 import type { PBLProjectConfig } from '@/lib/pbl/types';
 import type { PBLProjectV2 } from '@/lib/pbl/v2/types';
 import type { PluginSceneContent } from '@/lib/plugins/scene-sdk';
+import type { SceneSourceGrounding } from '@/lib/generation/source-grounding';
 
 export type {
   SceneType,
@@ -109,5 +110,8 @@ export type SceneContent = AppSceneContent;
  * callers keep their original semantics (actions are `Action[]`, content spans
  * all four kinds).
  */
-export type AppScene = DslScene<Action, SceneContent>;
+export type AppScene = DslScene<Action, SceneContent> & {
+  /** Versioned source passages selected for this scene and preserved across edits. */
+  sourceGrounding?: SceneSourceGrounding;
+};
 export type Scene = AppScene;
