@@ -1775,16 +1775,27 @@
       "description": "En tant qu’utilisateur de Qalem, je veux bibliothèque et sélection de plusieurs sources par formation afin que le parcours promis soit réellement utilisable.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P1",
-      "status": "to_implement",
-      "passes": false,
+      "status": "to_validate",
+      "passes": true,
       "source": {
         "type": "request_or_observed_gap",
         "date": "2026-08-26"
       },
       "sourceDependencies": [],
       "dependencies": ["S6-003"],
-      "gap": "Le formulaire porte pdfFile: File | null et le dépôt ne prend que files[0].",
-      "evidence": ["app/app/page.tsx:146", "components/generation/generation-toolbar.tsx:299"],
+      "gap": "Soldé : Qalem possède une bibliothèque multi-source par organisation, des manifestes immuables versionnés par auteur et un pipeline de génération fondé sur l’instantané sélectionné.",
+      "evidence": [
+        "components/generation/source-library-popover.tsx",
+        "app/api/source-library/route.ts",
+        "app/api/source-manifests/route.ts",
+        "lib/server/formation-source-library.ts",
+        "supabase/migrations/00040_formation_source_library.sql",
+        "tests/api/source-library-api.test.ts",
+        "tests/server/formation-source-library.test.ts",
+        "e2e/tests/home-to-generation.spec.ts",
+        "commit:c6caa7f51f830999c187c4fde2f315c122d469a6",
+        "commit:aa9ff9130e4ef9f313a548dd7a47df7ded848a8f"
+      ],
       "acceptance": [
         "Permettre sélection, ajout, retrait et réutilisation de plusieurs documents autorisés, avec état individuel d’ingestion.",
         "Persister un manifeste versionné de sources par organisation et par formation ; un rechargement retrouve la sélection.",
@@ -1792,7 +1803,18 @@
         "Associer passages et références stables aux documents et exposer les contradictions sans les fusionner silencieusement.",
         "Préserver le parcours à source unique et le parcours sans source."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-08-27 — Le code S6-004 est poussé sur origin/refork-v030 aux commits c6caa7f51f830999c187c4fde2f315c122d469a6 puis aa9ff9130e4ef9f313a548dd7a47df7ded848a8f. L’interface accepte plusieurs fichiers, affiche leur état individuel, restaure la bibliothèque et permet retrait puis réutilisation.",
+        "2026-08-27 — La migration 00040 crée organization_sources et formation_source_manifests avec RLS, contraintes inter-tenant, manifestes immuables chaînés et remplacement atomique sérialisé. La fonction est SECURITY INVOKER, exécutable par service_role seulement ; authenticated ne dispose que de SELECT sous RLS.",
+        "2026-08-27 — Contrat PostgreSQL exécuté sur une base Supabase PostgreSQL 17 neuve puis dans une transaction annulée sur la base Qalem PostgreSQL 15.8 : migrations 00001 à 00040 applicables, intégrité d’organisation, unicité, version concurrente, ACL et RLS toutes vérifiées. La migration de production conserve les 18 cours existants.",
+        "2026-08-27 — Preuve authentifiée via le proxy de production : trois créations HTTP 201, trois états ready, doublon HTTP 200 réutilisant le même identifiant, document vide HTTP 422 SOURCE_REJECTED, lecture d’une autre organisation HTTP 403 et inclusion d’une source étrangère HTTP 400 sans altérer le manifeste valide.",
+        "2026-08-27 — Le manifeste passe réellement de v1 à v5 : sélection de trois sources, rechargement, retrait, réutilisation, sélection vide puis source unique. Chromium headless recharge l’interface avec les comptes 3, 3 puis 1 et retrouve les noms des trois documents ainsi que les versions v1 et v3.",
+        "2026-08-27 — Les identifiants documentaires et versions sha256 sont stables. tests/server/formation-source-library.test.ts prouve deux résolutions identiques, les passages associés à leur document et l’exposition explicite du conflit 30 % contre 45 % ; les parcours historiques source unique et sans source restent couverts.",
+        "2026-08-27 — Gate complet frais dans le clone ServeurIA isolé /tmp/qalem-s6004-final-MGb7gb au SHA exact aa9ff9130e4ef9f313a548dd7a47df7ded848a8f : pnpm check, TypeScript, lint, 2 448/2 448 tests Vitest, build et 75/75 tests Playwright réussis ; le clone est propre.",
+        "2026-08-27 — Migration appliquée à db.qalem.ma et déploiement séquentiel runtime puis web sur le SHA exact aa9ff9130e4ef9f313a548dd7a47df7ded848a8f. Web, worker de génération et capture-worker sont healthy, à zéro redémarrage et OOMKilled=false ; le proxy répond 200 sur / et /api/health, et refuse l’accès anonyme à la bibliothèque en 401.",
+        "2026-08-27 — Nettoyage indépendant après la preuve : zéro compte qalem-s6004 temporaire, zéro organisation S6-004 temporaire, zéro organization_sources et zéro formation_source_manifests résiduels en production."
+      ],
+      "completedAt": "2026-08-27",
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
