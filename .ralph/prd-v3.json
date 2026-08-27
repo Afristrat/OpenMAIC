@@ -1767,7 +1767,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux qualifier le catalogue vocal français et anglais afin que le parcours promis soit réellement utilisable.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P1",
-      "status": "to_implement",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "type": "request_or_observed_gap",
@@ -1779,7 +1779,13 @@
       "evidence": [
         ".ralph/progress.md:18",
         "lib/audio/constants.ts",
-        "lib/audio/voice-resolver.ts"
+        "lib/audio/voice-resolver.ts",
+        "lib/audio/qualified-voice-catalog.ts",
+        "docs/evidence/s6-012-voice-preview-manifest.json",
+        "tests/audio/qualified-voice-catalog.test.ts",
+        "commit:b3f5552cdbfc691b7debe015adf2df9bd3790d52",
+        "commit:f03381c2cea114780704159f7b953d57002873a5",
+        "commit:d8c782fe4de54eb9ffa48b9a8bdc10005708fcbb"
       ],
       "acceptance": [
         "Établir le catalogue cible de dix voix FR et dix EN, avec genre déclaré, langue, fournisseur, identifiant et aperçu réel.",
@@ -1788,6 +1794,29 @@
         "Consigner l’écoute et l’acceptation humaine du catalogue ; ne pas rouvrir S1-011 pour cette extension."
       ],
       "closureEvidence": [],
+      "validationDebt": {
+        "recordedAt": "2026-08-27",
+        "decision": "Implémentation et preuves machine conservées ; story non certifiée tant que l’écoute humaine et le gate E2E final ne sont pas soldés.",
+        "implementedButUncertified": [
+          "Catalogue de dix identités Higgs utilisables en français et en anglais, avec fournisseur, identifiant, genre déclaré et textes d’aperçu.",
+          "Vingt WAV réels générés via Qalem, tous non vides et consignés avec taille et SHA-256 dans le manifeste de preuve.",
+          "Filtrage des voix incompatibles avec le genre déclaré et conservation déterministe de l’identité entre FR et EN.",
+          "Prévisualisation TTS avec la langue effective de l’interface."
+        ],
+        "machineEvidence": {
+          "targeted": "19/19 tests audio initiaux, puis 6/6 tests ciblés export/catalogue sur les SHA de diagnostic.",
+          "unitSuite": "2417/2417 tests Vitest au SHA d8c782fe4de54eb9ffa48b9a8bdc10005708fcbb.",
+          "build": "Build Next.js réussi, 95/95 pages générées.",
+          "e2e": "67/69 parcours Playwright réussis avec Chromium 145 ; les trois parcours microphone/Whisper sont verts.",
+          "oom": "OOMKilled=false sur tous les conteneurs de validation observés."
+        },
+        "stillRequired": [
+          "Faire écouter et accepter humainement les vingt aperçus FR/EN ; le manifeste conserve humanAcceptance=false.",
+          "Re-prouver la conservation du choix vocal lors de génération, régénération et rechargement dans le navigateur.",
+          "Résoudre ou cadrer explicitement l’incompatibilité Chromium 145 des deux E2E d’export : le téléchargement blob asynchrone est bien déclenché, mais Playwright reçoit le nom générique download au lieu de l’extension attendue.",
+          "Rejouer le gate complet au SHA exact après résolution ; ne pas marquer passes=true avant un résultat intégralement vert."
+        ]
+      },
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
