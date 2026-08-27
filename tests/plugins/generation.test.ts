@@ -57,7 +57,9 @@ describe('plugin scene generation', () => {
 
   it('rejects model output that does not conform to the manifest', async () => {
     expectConsoleMessages({
-      error: ['[ERROR] [Generation] Generated data for plugin "code-sandbox" is invalid: $.title is required'],
+      error: [
+        '[ERROR] [Generation] Generated data for plugin "code-sandbox" is invalid: $.title is required',
+      ],
     });
     const aiCall = vi.fn().mockResolvedValue('{"language":"ruby"}');
     await expect(generateSceneContent(outline, aiCall)).resolves.toBeNull();
