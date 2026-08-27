@@ -1451,14 +1451,14 @@
       "epic": "6-RÉCONCILIATION",
       "priority": "P1",
       "status": "to_validate",
-      "passes": false,
+      "passes": true,
       "source": {
         "type": "request_or_observed_gap",
         "date": "2026-08-26"
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Implémentation préparée : la divergence transporte une reformulation éditable et des extraits vérifiés dans le contenu ; la fermeture attend les quality gates du SHA poussé.",
+      "gap": "Soldé : la divergence transporte une reformulation éditable et des extraits dont la présence dans la source est vérifiée ; seule la demande explicitement acceptée alimente le plan.",
       "evidence": [
         "app/app/page.tsx:810",
         "app/app/page.tsx:876",
@@ -1470,7 +1470,13 @@
         "Tester désalignement réel, alignement correct et document sans contenu exploitable ; ne pas déduire un thème du seul nom de fichier.",
         "Éprouver le dialogue FR/AR/EN et vérifier que seule la demande acceptée alimente le plan."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-08-27 — SHA validé ba8c5a20dd539ee62030d07fff0e9abea8bfb977, présent sur origin/refork-v030 ; clone isolé ServeurIA /tmp/qalem-s6005-a344577-1.",
+        "2026-08-27 — Conteneur ciblé qalem-s6005-ba8c5a2-targeted2 : pnpm check, npx tsc --noEmit et pnpm lint sans erreur ni avertissement ; e2e/tests/home-to-generation.spec.ts 10/10, couvrant divergence, alignement, document vide, acceptation modifiée et dialogue FR/AR/EN dont RTL arabe.",
+        "2026-08-27 — Conteneur global qalem-s6005-ba8c5a2-full : pnpm test 2 372/2 372, pnpm build réussi, pnpm test:e2e 65/65 ; exit 0 et OOMKilled=false.",
+        "2026-08-27 — Preuves de code : lib/server/source-material-alignment.ts et ses tests valident les extraits contre le contenu réel ; components/generation/source-conflict-dialog.tsx rend la proposition modifiable ; app/app/page.tsx transmet uniquement la reformulation acceptée. Référence de synthèse : .ralph/progress.md, entrée S6-005."
+      ],
+      "completedAt": "2026-08-27",
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
