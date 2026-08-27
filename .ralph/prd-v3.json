@@ -1400,18 +1400,23 @@
       },
       "sourceDependencies": ["S0-013"],
       "dependencies": [],
-      "gap": "Preuves historiques d’isolation et de persistance ; écoute finale et état courant non certifiés.",
+      "gap": "La recertification a confirmé l’isolation historique, mais a révélé deux défauts de cycle de vie en production : le premier administrateur ne pouvait pas créer son organisation sous RLS, et la suppression d’une classroom liée à un cours ready violait courses_ready_requires_classroom après avoir effacé ses médias. Correctifs codés ; restent les gates, le déploiement, la preuve de persistance et l’écoute navigateur exigée.",
       "evidence": [
         "tests/api/classroom-access.test.ts",
+        "tests/api/organizations-create.test.ts",
+        "tests/supabase/classroom-course-delete-lifecycle.test.ts",
+        "supabase/migrations/00039_multi_tenant_classroom_lifecycle.sql",
         ".ralph/prd-v2.json#S0-015"
       ],
       "acceptance": [
+        "Un utilisateur authentifié peut créer atomiquement une organisation et sa première adhésion admin ; un appel anonyme ne peut pas invoquer ce bootstrap",
         "Génération + lecture d'une classroom non publiée exigent une session Supabase authentifiée (401 sinon)",
         "Génération limitée à super-admin OU admin de l'orgId ciblé (403 sinon) ; lecture ouverte à tout membre de l'org",
         "Lecture anonyme autorisée uniquement après publication explicite ; les médias suivent exactement la visibilité de la classroom",
         "classroom rattaché à un orgId dès la génération ; propriété (ownerId) dérivée de la session, jamais du body",
         "stages/scenes persistés en base Postgres normalisée (plus de fichier JSON local), médias dans le bucket Storage classroom-media (plus de fs.writeFile)",
         "un classroom généré avant survit à un redéploiement Coolify (conteneur recréé) sans perte",
+        "La suppression d’une classroom liée à un cours ready archive et dépublie le cours avant de supprimer la classroom et ses médias, sans HTTP 500",
         "accès cross-org refusé (403) sur un classroom d'une autre organisation",
         "vérifié dans un vrai navigateur connecté pour le contenu privé et en fenêtre anonyme pour le contenu publié : scènes affichées + audio TTS audible (SOP-011)"
       ],
@@ -1441,10 +1446,7 @@
       "sourceDependencies": [],
       "dependencies": [],
       "gap": "Expositions de secrets signalées dans l’historique ; l’utilisateur a explicitement refusé les rotations dans ce chantier.",
-      "evidence": [
-        "AGENTS.md#Règles du projet",
-        "thread:01a005ad-360e-7710-aeb5-bf5fc84c67b6"
-      ],
+      "evidence": ["AGENTS.md#Règles du projet", "thread:01a005ad-360e-7710-aeb5-bf5fc84c67b6"],
       "acceptance": [
         "Conserver uniquement les catégories de secrets et services concernés, jamais leurs valeurs.",
         "Ne déclencher aucune rotation, révocation ou mutation sans nouvelle autorisation explicite d’Amine dans la session propriétaire.",
@@ -1769,10 +1771,7 @@
       "sourceDependencies": [],
       "dependencies": ["S6-003"],
       "gap": "Le formulaire porte pdfFile: File | null et le dépôt ne prend que files[0].",
-      "evidence": [
-        "app/app/page.tsx:146",
-        "components/generation/generation-toolbar.tsx:299"
-      ],
+      "evidence": ["app/app/page.tsx:146", "components/generation/generation-toolbar.tsx:299"],
       "acceptance": [
         "Permettre sélection, ajout, retrait et réutilisation de plusieurs documents autorisés, avec état individuel d’ingestion.",
         "Persister un manifeste versionné de sources par organisation et par formation ; un rechargement retrouve la sélection.",
@@ -1904,10 +1903,7 @@
       "sourceDependencies": ["S4-009"],
       "dependencies": [],
       "gap": "Soldé : devise réellement validée contre le registre ISO 4217 du runtime, contexte structuré porté par les trames et persisté dans la classroom, zone laser mesurée sur l’élément DOM positionné puis parcourue pendant la durée normalisée.",
-      "evidence": [
-        "lib/formation-engine/learning-context.ts",
-        ".ralph/prd-v2.json#S4-010"
-      ],
+      "evidence": ["lib/formation-engine/learning-context.ts", ".ralph/prd-v2.json#S4-010"],
       "acceptance": [
         "L’auteur choisit explicitement le territoire et la devise ISO 4217 avant la génération",
         "Une trame transmet son contexte structuré au formulaire au lieu de ne transmettre que son texte",
@@ -2299,10 +2295,7 @@
       "sourceDependencies": ["S0-008"],
       "dependencies": [],
       "gap": "Réouverture de preuve : la complétion Moodle historique a été simulée via PHP, pas déclenchée par le runtime navigateur. Le runtime a évolué vers des adaptateurs natifs.",
-      "evidence": [
-        "lib/export/scorm/tracking-adapters.ts",
-        ".ralph/prd-v2.json#S1-007"
-      ],
+      "evidence": ["lib/export/scorm/tracking-adapters.ts", ".ralph/prd-v2.json#S1-007"],
       "acceptance": [
         "export_jobs scorm12 → zip imsmanifest.xml valide",
         "Import Moodle docker réussi, completion trackée (preuve)",
@@ -2373,10 +2366,7 @@
       "sourceDependencies": ["S0-008"],
       "dependencies": [],
       "gap": "Réouverture de preuve : OOXML bien formé ne prouve pas l’ouverture sans réparation dans PowerPoint.",
-      "evidence": [
-        "tests/edit/round-trip/ooxml-validity.test.ts",
-        ".ralph/prd-v2.json#S1-010"
-      ],
+      "evidence": ["tests/edit/round-trip/ooxml-validity.test.ts", ".ralph/prd-v2.json#S1-010"],
       "acceptance": [
         "PPTX d'un course généré s'ouvre sans réparation dans PowerPoint",
         "Packages mathml2omml/pptxgenjs buildés au postinstall (preuve)",
@@ -2409,10 +2399,7 @@
       "sourceDependencies": ["S1-003"],
       "dependencies": [],
       "gap": "Catalogue, route et E2E présents : ne pas reconstruire ; terminer la recette de publication, visibilité et entrée en cours.",
-      "evidence": [
-        "app/api/courses/catalog/route.ts",
-        "e2e/tests/course-catalog.spec.ts"
-      ],
+      "evidence": ["app/api/courses/catalog/route.ts", "e2e/tests/course-catalog.spec.ts"],
       "acceptance": [
         "Liste des courses ready + catalog_visible",
         "Rejoindre la classe → classroom (e2e)",
@@ -2445,10 +2432,7 @@
       "sourceDependencies": ["S1-003"],
       "dependencies": [],
       "gap": "Persistance du verdict d’import présente ; le parcours complet dépôt conforme → édition → ready reste à prouver et compléter.",
-      "evidence": [
-        "lib/server/course-import-storage.ts",
-        "lib/server/course-storage.ts"
-      ],
+      "evidence": ["lib/server/course-import-storage.ts", "lib/server/course-storage.ts"],
       "acceptance": [
         "Contenu conforme → outline dans l'Editor natif v0.3.0",
         "e2e dépôt → validation → outline → ready",
@@ -2690,10 +2674,7 @@
       "sourceDependencies": ["S0-008", "S2-010"],
       "dependencies": [],
       "gap": "Protocole composite déterministe présent ; sidecar, budget mémoire, conformité et robustesse P2-C non soldés.",
-      "evidence": [
-        "lib/transmissions/audio-watermark-protocol.ts",
-        ".ralph/prd-v2.json#S2-008"
-      ],
+      "evidence": ["lib/transmissions/audio-watermark-protocol.ts", ".ralph/prd-v2.json#S2-008"],
       "acceptance": [
         "Worker invoque AudioSeal MIT dans un sidecar borné ; watermark_id opaque 128 bits reconstitué par protocole composite documenté",
         "Protocole P2-C automatisé : ID décodé après mp3 128k, ogg, extrait 30 s, normalisation",
@@ -2727,10 +2708,7 @@
       "sourceDependencies": ["S2-010"],
       "dependencies": [],
       "gap": "Dérivé FFmpeg et test présents ; preuve avec destinataire légitime et décodage depuis capture encore requise.",
-      "evidence": [
-        "tests/transmissions/visual-watermark.test.ts",
-        ".ralph/prd-v2.json#S2-009"
-      ],
+      "evidence": ["tests/transmissions/visual-watermark.test.ts", ".ralph/prd-v2.json#S2-009"],
       "acceptance": [
         "videowmark (ou incrustation périodique avec ADR) appliqué par le worker",
         "Identifiant décodable sur capture d'écran du flux (preuve documentée)"
@@ -2929,10 +2907,7 @@
       "sourceDependencies": ["S3-005"],
       "dependencies": ["S3-005", "S-025"],
       "gap": "Étendre le FSRS existant ; l’alimentation post-quiz manquante est isolée dans S-025 pour ne pas dépendre du replay.",
-      "evidence": [
-        "lib/spaced-repetition/extractor.ts",
-        "tasks/prd-3-ancrer.md"
-      ],
+      "evidence": ["lib/spaced-repetition/extractor.ts", "tasks/prd-3-ancrer.md"],
       "acceptance": [
         "Items de quiz de la session dans la file FSRS (extension, pas réécriture)",
         "Cycle testé : push → quiz → résultat re-nourrit FSRS",
@@ -3164,10 +3139,7 @@
       "sourceDependencies": [],
       "dependencies": ["S0-011"],
       "gap": "Bannière de consentement sans montage retrouvé ; ne pas activer une collecte pour justifier la bannière.",
-      "evidence": [
-        "components/telemetry-consent-banner.tsx:10",
-        "app/layout.tsx"
-      ],
+      "evidence": ["components/telemetry-consent-banner.tsx:10", "app/layout.tsx"],
       "acceptance": [
         "Inventorier les collectes réellement actives avant de décider de l’interface de consentement.",
         "Pour chaque collecte retenue, vérifier consentement explicite, refus, retrait et absence d’envoi avant opt-in.",

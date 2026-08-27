@@ -791,7 +791,16 @@ export interface Database {
         Row: UsageSummaryRow;
       };
     };
-    Functions: Record<string, never>;
+    Functions: {
+      create_organization_with_admin: {
+        Args: {
+          organization_name: string;
+          organization_sector?: OrgSector | null;
+          organization_default_locale?: 'fr-FR' | 'ar-MA' | 'en-US';
+        };
+        Returns: Organization[];
+      };
+    };
     Enums: Record<string, never>;
   };
 }
