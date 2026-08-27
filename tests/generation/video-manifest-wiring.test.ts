@@ -1,10 +1,16 @@
 import { describe, expect, test } from 'vitest';
+import { expectConsoleMessages } from '@/tests/helpers/expected-console';
 import { generateSceneContent } from '@/lib/generation/scene-generator';
 import type { AICallFn } from '@/lib/generation/pipeline-types';
 import type { GeneratedSlideContent, SceneOutline } from '@/lib/types/generation';
 
 describe('video manifest wiring', () => {
   test('corrects an invalid generated video src to the only available mediaRef', async () => {
+    expectConsoleMessages({
+      warn: [
+        '[WARN] [Generation] Correcting generated video reference "gen_vid_1" to "gen_vid_real123"',
+      ],
+    });
     const outline: SceneOutline = {
       id: 'scene_1',
       type: 'slide',
@@ -52,6 +58,11 @@ describe('video manifest wiring', () => {
   });
 
   test('removes hallucinated generated video refs when no generated videos are available', async () => {
+    expectConsoleMessages({
+      warn: [
+        '[WARN] [Generation] Invalid generated video reference "gen_vid_fake", removing element',
+      ],
+    });
     const outline: SceneOutline = {
       id: 'scene_1',
       type: 'slide',

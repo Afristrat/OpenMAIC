@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { expectConsoleMessages } from '@/tests/helpers/expected-console';
 import type { QuizQuestion } from '@/lib/types/stage';
 import type { QuizAnswer } from '@/lib/supabase/types';
 import type { ReviewCardRecord } from '@/lib/utils/database';
@@ -63,6 +64,9 @@ describe('syncQuizResultToSupabase', () => {
   });
 
   it('never throws when the upsert fails', async () => {
+    expectConsoleMessages({
+      warn: ['[WARN] [QuizSync] Quiz result sync unreachable for scene sc1: Error: network down'],
+    });
     const upsert = vi.fn().mockRejectedValue(new Error('network down'));
     vi.mocked(tryCreateClient).mockReturnValue({ from: () => ({ upsert }) } as never);
 

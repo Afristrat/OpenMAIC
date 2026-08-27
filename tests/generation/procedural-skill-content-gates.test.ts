@@ -1,10 +1,16 @@
 import { describe, expect, test } from 'vitest';
+import { expectConsoleMessages } from '@/tests/helpers/expected-console';
 
 import { applyOutlineFallbacks } from '@/lib/generation/outline-generator';
 import type { SceneOutline } from '@/lib/types/generation';
 
 describe('procedural-skill content gates', () => {
   test('applyOutlineFallbacks strips procedural-skill when vocational mode is not active', () => {
+    expectConsoleMessages({
+      warn: [
+        '[WARN] [Generation] Procedural-skill outline "Device Calibration Practice" is not enabled, falling back to diagram',
+      ],
+    });
     const outline = createProceduralSkillOutline();
     const safeOutline = applyOutlineFallbacks(outline, true);
 

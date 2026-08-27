@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { expectConsoleMessages } from '@/tests/helpers/expected-console';
 
 const storageUpload = vi.hoisted(() => vi.fn());
 
@@ -71,6 +72,11 @@ describe('classroom media upload reliability', () => {
   });
 
   test('retries only the idempotent upload after a transient network failure', async () => {
+    expectConsoleMessages({
+      warn: [
+        '[WARN] [ClassroomMedia] Retrying classroom media upload media/generated.png (2/4): Failed to upload classroom media media/generated.png: fetch failed',
+      ],
+    });
     vi.useFakeTimers();
     storageUpload
       .mockResolvedValueOnce({ error: new Error('fetch failed') })

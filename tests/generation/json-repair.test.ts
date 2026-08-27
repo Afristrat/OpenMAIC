@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import { expectConsoleMessages } from '@/tests/helpers/expected-console';
 
 import { parseJsonResponse } from '@/lib/generation/json-repair';
 
 describe('json-repair targeted fixes', () => {
   it('repairs quoted key-value fragments such as "height: 76"', () => {
+    expectConsoleMessages({
+      warn: [/^\[WARN\] \[Generation\] Attempt 1 parse error at position 212:/],
+    });
     const raw = `{
   "background": {
     "type": "solid",
@@ -34,6 +38,9 @@ describe('json-repair targeted fixes', () => {
   });
 
   it('repairs boolean property fragments without touching valid string values', () => {
+    expectConsoleMessages({
+      warn: [/^\[WARN\] \[Generation\] Attempt 1 parse error at position 72:/],
+    });
     const raw = `{
   "elements": [
     {

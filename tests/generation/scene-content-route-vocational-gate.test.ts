@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { expectConsoleMessages } from '@/tests/helpers/expected-console';
 
 import type { SceneOutline } from '@/lib/types/generation';
 
@@ -42,6 +43,11 @@ describe('scene-content vocational gate', () => {
   });
 
   test('flag off direct/replayed procedural-skill outline is downgraded before content generation', async () => {
+    expectConsoleMessages({
+      warn: [
+        '[WARN] [Generation] Procedural-skill outline "Device Calibration Practice" is not enabled, falling back to diagram',
+      ],
+    });
     vi.resetModules();
     process.env[VOCATIONAL_FLAG] = 'false';
     callLLMMock.mockResolvedValueOnce({
@@ -64,6 +70,11 @@ describe('scene-content vocational gate', () => {
   });
 
   test('flag off without requirements defaults to safe false for persisted procedural-skill outlines', async () => {
+    expectConsoleMessages({
+      warn: [
+        '[WARN] [Generation] Procedural-skill outline "Device Calibration Practice" is not enabled, falling back to diagram',
+      ],
+    });
     vi.resetModules();
     callLLMMock.mockResolvedValueOnce({
       text: htmlForWidget('diagram'),

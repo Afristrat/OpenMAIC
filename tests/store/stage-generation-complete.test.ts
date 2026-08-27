@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { expectConsoleMessages } from '@/tests/helpers/expected-console';
 
 // IndexedDB / stage-storage modules are imported dynamically inside the
 // store's save/load actions. Mock them so we can drive load inputs and
@@ -113,6 +114,9 @@ describe('generationComplete', () => {
   });
 
   it('does not persist the completion flag when the scene flush fails', async () => {
+    expectConsoleMessages({
+      error: ['[ERROR] [StageStore] Failed to save to storage: Error: disk full'],
+    });
     useStageStore.setState({ stage: makeStage(), outlines: [makeOutline(1)] });
     saveStageDataMock.mockRejectedValueOnce(new Error('disk full'));
     stageOutlinesPut.mockClear();

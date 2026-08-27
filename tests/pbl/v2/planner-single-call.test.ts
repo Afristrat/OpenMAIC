@@ -9,6 +9,7 @@
  * full parse → hydrate → normalize path without a live LLM.
  */
 import { describe, it, expect } from 'vitest';
+import { expectConsoleMessages } from '@/tests/helpers/expected-console';
 import { MockLanguageModelV3 } from 'ai/test';
 
 import { generatePBLV2ProjectSingleCall } from '@/lib/pbl/v2/agents/planner-single-call';
@@ -263,6 +264,11 @@ describe('PBL v2 single-call planner — happy path', () => {
 
 describe('PBL v2 single-call planner — guards + retry', () => {
   it('throws PlannerV2Error when both attempts are invalid', async () => {
+    expectConsoleMessages({
+      warn: [
+        /^\[WARN\] \[PBL v2 Planner \(single-call\)\] Single-call planner first attempt had 2 gap\(s\); retrying once: projectInfo\.gains must be a list of 3-5 non-empty learner-facing statements; milestones must be a non-empty array$/,
+      ],
+    });
     const noMilestones = JSON.stringify({
       projectInfo: {
         title: 'CSV Data Analyzer project',
@@ -280,6 +286,11 @@ describe('PBL v2 single-call planner — guards + retry', () => {
   });
 
   it('rejects a replacement workbook and accepts the exact Python path on retry', async () => {
+    expectConsoleMessages({
+      warn: [
+        /^\[WARN\] \[PBL v2 Planner \(single-call\)\] Single-call planner first attempt had 3 gap\(s\); retrying once:/,
+      ],
+    });
     const corrected = JSON.parse(validOutput());
     corrected.projectInfo.title = '13-week cash-flow workbook review';
     corrected.projectInfo.description =
@@ -326,6 +337,15 @@ describe('PBL v2 single-call planner — guards + retry', () => {
   });
 
   it('throws PlannerV2Error when the response is not JSON at all', async () => {
+    expectConsoleMessages({
+      warn: [
+        /^\[WARN\] \[Generation\] Attempt 1 parse error:/,
+        /^\[WARN\] \[Generation\] Attempt 2 parse error:/,
+        /^\[WARN\] \[PBL v2 Planner \(single-call\)\] Single-call planner first attempt had 6 gap\(s\); retrying once:/,
+        /^\[WARN\] \[Generation\] Attempt 1 parse error:/,
+        /^\[WARN\] \[Generation\] Attempt 2 parse error:/,
+      ],
+    });
     await expect(
       generatePBLV2ProjectSingleCall(
         plannerInput(),
@@ -342,6 +362,11 @@ describe('PBL v2 single-call planner — guards + retry', () => {
   });
 
   it('throws PlannerV2Error when gains are missing (parity with the loop set_project_info schema)', async () => {
+    expectConsoleMessages({
+      warn: [
+        /^\[WARN\] \[PBL v2 Planner \(single-call\)\] Single-call planner first attempt had 1 gap\(s\); retrying once: projectInfo\.gains must be a list of 3-5 non-empty learner-facing statements$/,
+      ],
+    });
     const noGains = JSON.parse(validOutput());
     delete noGains.projectInfo.gains;
     const text = JSON.stringify(noGains);
@@ -351,6 +376,11 @@ describe('PBL v2 single-call planner — guards + retry', () => {
   });
 
   it('throws PlannerV2Error when fewer than 3 gains are provided', async () => {
+    expectConsoleMessages({
+      warn: [
+        /^\[WARN\] \[PBL v2 Planner \(single-call\)\] Single-call planner first attempt had 1 gap\(s\); retrying once: projectInfo\.gains must be a list of 3-5 non-empty learner-facing statements$/,
+      ],
+    });
     const fewGains = JSON.parse(validOutput());
     fewGains.projectInfo.gains = ['Only one gain'];
     const text = JSON.stringify(fewGains);
@@ -360,6 +390,11 @@ describe('PBL v2 single-call planner — guards + retry', () => {
   });
 
   it('reports a gap (not a raw TypeError) when milestones is not an array', async () => {
+    expectConsoleMessages({
+      warn: [
+        '[WARN] [PBL v2 Planner (single-call)] Single-call planner first attempt had 1 gap(s); retrying once: milestones must be a non-empty array',
+      ],
+    });
     const badShape = JSON.parse(validOutput());
     badShape.milestones = 'I forgot this should be an array';
     const text = JSON.stringify(badShape);
@@ -371,6 +406,11 @@ describe('PBL v2 single-call planner — guards + retry', () => {
   });
 
   it('reports a gap (not a raw TypeError) when a text field is a non-string scalar', async () => {
+    expectConsoleMessages({
+      warn: [
+        '[WARN] [PBL v2 Planner (single-call)] Single-call planner first attempt had 1 gap(s); retrying once: projectInfo.title is empty',
+      ],
+    });
     const badScalar = JSON.parse(validOutput());
     badScalar.projectInfo.title = 123; // schema drift: number where a string is expected
     const text = JSON.stringify(badScalar);
@@ -391,6 +431,11 @@ describe('PBL v2 single-call planner — guards + retry', () => {
   });
 
   it('rejects an explicit-level mismatch under a learner lock (both attempts wrong → error)', async () => {
+    expectConsoleMessages({
+      warn: [
+        '[WARN] [PBL v2 Planner (single-call)] Single-call planner first attempt had 1 gap(s); retrying once: The learner explicitly stated their level as beginner; set projectInfo.proficiency="beginner" and design the milestones for that tier.',
+      ],
+    });
     const lockedInput = plannerInput({ user: { requirement: '我是零基础，请用最简单的方式讲' } });
     // Model insists on `advanced` both times — never matches the beginner lock.
     const advanced = validOutput({ proficiency: 'advanced' });
@@ -587,6 +632,11 @@ describe('PBL v2 single-call planner — scenario roleplay', () => {
   });
 
   it('throws PlannerV2Error when the scenario has no characters', async () => {
+    expectConsoleMessages({
+      warn: [
+        '[WARN] [PBL v2 Planner (single-call)] Single-call planner first attempt had 1 gap(s); retrying once: scenario.characters must have at least one character',
+      ],
+    });
     const text = validScenarioOutput({ dropCharacters: true });
     await expect(
       generatePBLV2ProjectSingleCall(scenarioInput(), textModel(text, text)),
@@ -594,6 +644,11 @@ describe('PBL v2 single-call planner — scenario roleplay', () => {
   });
 
   it('throws PlannerV2Error when a roleplay beat is missing successWhen', async () => {
+    expectConsoleMessages({
+      warn: [
+        '[WARN] [PBL v2 Planner (single-call)] Single-call planner first attempt had 1 gap(s); retrying once: roleplay milestone #2 beat #1: successWhen is required',
+      ],
+    });
     const drift = JSON.parse(validScenarioOutput());
     delete drift.milestones[1].microtasks[0].successWhen;
     const text = JSON.stringify(drift);
@@ -603,6 +658,11 @@ describe('PBL v2 single-call planner — scenario roleplay', () => {
   });
 
   it('throws PlannerV2Error when the stage skeleton is wrong (no wrapup)', async () => {
+    expectConsoleMessages({
+      warn: [
+        '[WARN] [PBL v2 Planner (single-call)] Single-call planner first attempt had 2 gap(s); retrying once: scenario: the LAST milestone must have scenarioStage:"wrapup"; roleplay milestone #3 beat #1: successWhen is required',
+      ],
+    });
     const drift = JSON.parse(validScenarioOutput());
     drift.milestones[2].scenarioStage = 'roleplay'; // last is no longer wrapup
     const text = JSON.stringify(drift);

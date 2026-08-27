@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { expectConsoleMessages } from '@/tests/helpers/expected-console';
 
 // IndexedDB / stage-storage modules are imported dynamically inside the
 // store's save/load actions. Mock them so the debounced save doesn't try
@@ -76,6 +77,11 @@ describe('insertSceneAfter', () => {
   });
 
   it('rejects a scene whose stageId mismatches the current stage', () => {
+    expectConsoleMessages({
+      warn: [
+        '[WARN] [StageStore] insertSceneAfter ignored "z" - stageId mismatch (scene: stage-9, current: stage-1)',
+      ],
+    });
     const foreign = makeSlideScene('z', 4, 'stage-9');
     useStageStore.getState().insertSceneAfter('a', foreign);
     const ids = useStageStore.getState().scenes.map((s) => s.id);

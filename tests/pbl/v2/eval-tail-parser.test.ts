@@ -7,6 +7,7 @@
  * staring at a star rating that says "good".
  */
 import { describe, expect, it } from 'vitest';
+import { expectConsoleMessages } from '@/tests/helpers/expected-console';
 import {
   normalizeOptionalString,
   normalizeScore,
@@ -20,11 +21,30 @@ import {
 
 describe('parseEvaluationTail', () => {
   it('returns null on empty / blank input', () => {
+    expectConsoleMessages({
+      warn: [
+        '[WARN] [Generation] Attempt 1 parse error: Unexpected end of JSON input',
+        '[WARN] [Generation] Attempt 2 parse error: Unexpected end of JSON input',
+        /^\[WARN\] \[Generation\] Attempt 3 parse error at position 0:/,
+        '[WARN] [Generation] Attempt 4 parse error: Unexpected end of JSON input',
+      ],
+      error: [
+        '[ERROR] [Generation] Failed to parse JSON from response',
+        '[ERROR] [Generation] Raw response (first 500 chars): ',
+        '[ERROR] [Generation] Raw response (last 500 chars): ',
+      ],
+    });
     expect(parseEvaluationTail('')).toBeNull();
     expect(parseEvaluationTail('     ')).toBeNull();
   });
 
   it('returns null when no JSON tail is present', () => {
+    expectConsoleMessages({
+      warn: [
+        /^\[WARN\] \[Generation\] Attempt 1 parse error:/,
+        /^\[WARN\] \[Generation\] Attempt 2 parse error:/,
+      ],
+    });
     expect(parseEvaluationTail('Great work today!')).toBeNull();
   });
 
@@ -78,6 +98,13 @@ describe('parseEvaluationTail', () => {
   });
 
   it('uses the shared JSON repair parser for malformed fenced blocks', () => {
+    expectConsoleMessages({
+      warn: [
+        /^\[WARN\] \[Generation\] Attempt 1 parse error at position 2:/,
+        '[WARN] [Generation] Fixed truncated JSON object',
+        /^\[WARN\] \[Generation\] Attempt 2 parse error at position 2:/,
+      ],
+    });
     const text = '反馈\n```json\n{ this is not json\n```';
     expect(parseEvaluationTail(text)).toEqual({ 'this is not json': null });
   });

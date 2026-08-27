@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectConsoleMessages } from '@/tests/helpers/expected-console';
 import { generateSceneOutlinesFromRequirements } from '@/lib/generation/outline-generator';
 import { generateSceneContent } from '@/lib/generation/scene-generator';
 import { buildPrompt, PROMPT_IDS } from '@/lib/prompts';
@@ -113,6 +114,11 @@ describe('skill prompt wiring', () => {
   });
 
   it('composes the core formation engine before an optional domain skill', async () => {
+    expectConsoleMessages({
+      warn: [
+        '[WARN] [Generation] Quiz question count rejected for quiz-1: Return exactly 3 complete quiz questions; the rejected response contained 0.',
+      ],
+    });
     let sceneSystem = '';
     const sceneCall: AICallFn = async (system) => {
       sceneSystem = system;

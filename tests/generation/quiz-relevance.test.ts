@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectConsoleMessages } from '@/tests/helpers/expected-console';
 import { findQuizRelevanceIssue, generateSceneContent } from '@/lib/generation/scene-generator';
 import type { QuizQuestion } from '@/lib/types/stage';
 import type { SceneOutline, UserRequirements } from '@/lib/types/generation';
@@ -62,6 +63,11 @@ describe('quiz course relevance', () => {
   });
 
   it('rejects a quiz whose generated question count differs from the approved syllabus', async () => {
+    expectConsoleMessages({
+      warn: [
+        '[WARN] [Generation] Quiz question count rejected for cash-flow-quiz: Return exactly 5 complete quiz questions; the rejected response contained 4.',
+      ],
+    });
     const outline: SceneOutline = {
       ...cashFlowOutline,
       quizConfig: {

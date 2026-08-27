@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { expectConsoleMessages } from '@/tests/helpers/expected-console';
 
 const transcribeAudioMock = vi.hoisted(() => vi.fn());
 
@@ -135,6 +136,11 @@ describe('POST /api/transcription', () => {
   });
 
   it('maps an upstream failure to a transcription error', async () => {
+    expectConsoleMessages({
+      error: [
+        '[ERROR] [Transcription] Transcription failed [provider=openai-whisper, model=default]: Error: upstream unavailable',
+      ],
+    });
     transcribeAudioMock.mockRejectedValueOnce(new Error('upstream unavailable'));
     const { POST } = await import('@/app/api/transcription/route');
     const formData = new FormData();

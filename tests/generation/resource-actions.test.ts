@@ -1,9 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
+import { expectConsoleMessages } from '@/tests/helpers/expected-console';
 import { generateSceneActions } from '@/lib/generation/scene-generator';
 import type { GeneratedSlideContent, SceneOutline } from '@/lib/types/generation';
 
 describe('downloadable resource narration', () => {
   it('announces the real file and pauses before a final discussion', async () => {
+    expectConsoleMessages({
+      warn: [
+        '[WARN] [Generation] Discussion agentId "(none)" invalid, assigned: curious-mehdi (Mehdi)',
+        '[WARN] [Generation] Discussion agentId "(none)" invalid, assigned: curious-mehdi (Mehdi)',
+      ],
+    });
     const outline: SceneOutline = {
       id: 'scene_8',
       type: 'slide',

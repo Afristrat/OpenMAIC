@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
+import { expectConsoleMessages } from '@/tests/helpers/expected-console';
 import { requestWebCapture } from '@/lib/server/capture-client';
 import type { CaptureDecision } from '@/lib/generation/web-capture-plan';
 
@@ -65,6 +66,11 @@ describe('requestWebCapture', () => {
   });
 
   it('returns null (never throws) when the capture service reports failure', async () => {
+    expectConsoleMessages({
+      warn: [
+        '[WARN] [CaptureClient] capture failed for https://proxy.ai-mpower.com/ui: Login wall detected',
+      ],
+    });
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
@@ -77,6 +83,11 @@ describe('requestWebCapture', () => {
   });
 
   it('returns null (never throws) when the capture service is unreachable', async () => {
+    expectConsoleMessages({
+      warn: [
+        '[WARN] [CaptureClient] capture-worker unreachable for https://proxy.ai-mpower.com/ui: Error: ECONNREFUSED',
+      ],
+    });
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('ECONNREFUSED')));
     const result = await requestWebCapture(decision, 'classroom_123');
     expect(result).toBeNull();

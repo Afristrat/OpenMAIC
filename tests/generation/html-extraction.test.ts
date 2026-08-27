@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectConsoleMessages } from '@/tests/helpers/expected-console';
 
 import { extractHtml } from '@/lib/generation/scene-generator';
 
@@ -16,6 +17,12 @@ describe('interactive HTML extraction', () => {
   });
 
   it('rejects an arbitrary incomplete code block', () => {
+    expectConsoleMessages({
+      error: [
+        '[ERROR] [Generation] Could not extract HTML from response',
+        '[ERROR] [Generation] Response preview: ```html',
+      ],
+    });
     expect(extractHtml('```html\nconst simulation = true;')).toBeNull();
   });
 });

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { expectConsoleMessages } from '@/tests/helpers/expected-console';
 
 // Mock the IndexedDB layer so importing AudioPlayer doesn't pull in Dexie.
 const getMock = vi.fn();
@@ -38,6 +39,9 @@ describe('AudioPlayer blob URL lifecycle', () => {
   });
 
   it('revokes the blob URL when play() rejects (no leak)', async () => {
+    expectConsoleMessages({
+      error: ['[ERROR] [AudioPlayer] Failed to play audio: Error: NotAllowedError'],
+    });
     const { createObjectURL, revokeObjectURL } = stubObjectUrl();
     stubAudio(() => Promise.reject(new Error('NotAllowedError')));
 

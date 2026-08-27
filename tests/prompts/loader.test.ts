@@ -1,4 +1,5 @@
 import { describe, test, expect } from 'vitest';
+import { expectConsoleMessages } from '@/tests/helpers/expected-console';
 import { loadPrompt, loadSnippet, buildPrompt } from '@/lib/prompts';
 
 describe('lib/prompts loader', () => {
@@ -24,6 +25,11 @@ describe('lib/prompts loader', () => {
   });
 
   test('returns null for unknown promptId', () => {
+    expectConsoleMessages({
+      error: [
+        "[ERROR] [PromptLoader] Failed to load prompt does-not-exist: Error: ENOENT: no such file or directory, open '<cwd>/lib/prompts/templates/does-not-exist/system.md'",
+      ],
+    });
     // @ts-expect-error — testing runtime behavior with invalid id
     expect(loadPrompt('does-not-exist')).toBeNull();
   });

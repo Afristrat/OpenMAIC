@@ -9,6 +9,7 @@
  * placeholder is gone.
  */
 import { describe, expect, it, vi, afterEach } from 'vitest';
+import { expectConsoleMessages } from '@/tests/helpers/expected-console';
 
 import { generateSceneContent, generateSceneActions } from '@/lib/generation/scene-generator';
 import { buildSceneFromOutline } from '@/lib/generation/scene-builder';
@@ -70,6 +71,11 @@ describe('scene-generator language directive threading (issue #472)', () => {
     });
 
     it('threads languageDirective into quiz content prompt', async () => {
+      expectConsoleMessages({
+        warn: [
+          '[WARN] [Generation] Quiz question count rejected for scene-1: Return exactly 1 complete quiz questions; the rejected response contained 0.',
+        ],
+      });
       const { aiCall, lastUser } = makeCapturingAiCall(JSON.stringify([]));
 
       await generateSceneContent(
@@ -254,6 +260,13 @@ describe('scene-generator language directive threading (issue #472)', () => {
     });
 
     it('forwards options.languageDirective to generatePBLContent', async () => {
+      expectConsoleMessages({
+        warn: [
+          '[WARN] [Generation] PBL v2 generation failed (single-call: Unsupported model version undefined for provider "undefined" and model "undefined". AI SDK 5 only supports models that implement specification version "v2".).',
+          '[WARN] [Generation] PBL v2 generation failed (loop: Unsupported model version undefined for provider "undefined" and model "undefined". AI SDK 5 only supports models that implement specification version "v2".).',
+          '[WARN] [Generation] All PBL v2 attempts failed; falling back to v1 generator.',
+        ],
+      });
       const pblModule = await import('@/lib/pbl/generate-pbl');
       const spy = vi.spyOn(pblModule, 'generatePBLContent').mockResolvedValue({
         projectInfo: { title: '', description: '' },

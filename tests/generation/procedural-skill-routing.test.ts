@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import { expectConsoleMessages } from '@/tests/helpers/expected-console';
 
 import { generateSceneContent, generateWidgetContent } from '@/lib/generation/scene-generator';
 import type { AICallFn } from '@/lib/generation/pipeline-types';
@@ -8,6 +9,12 @@ const DIRECTIVE = '<<PROCEDURAL-SKILL-LANGUAGE-DIRECTIVE>>';
 
 describe('procedural-skill widget content routing', () => {
   test('does not generate procedural-skill content by default', async () => {
+    expectConsoleMessages({
+      warn: [
+        '[WARN] [Generation] Procedural-skill widget "Device Calibration Practice" is not enabled',
+        '[WARN] [Generation] Procedural-skill widget "Device Calibration Practice" is not enabled',
+      ],
+    });
     const aiCall: AICallFn = async () => {
       throw new Error('procedural-skill prompt should not be called');
     };

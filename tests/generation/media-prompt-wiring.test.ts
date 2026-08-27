@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
+import { expectConsoleMessages } from '@/tests/helpers/expected-console';
 import { generateSceneOutlinesFromRequirements } from '@/lib/generation/outline-generator';
 import {
   findUnreadableTextualLatexIssue,
@@ -537,6 +538,11 @@ describe('media prompt condition wiring', () => {
   });
 
   test('uses one tall text flow in the required-media fallback so prose cannot cover bullets', async () => {
+    expectConsoleMessages({
+      warn: [
+        '[WARN] [Generation] Replaced invalid model geometry with deterministic media layout for scene_media_fallback_flow',
+      ],
+    });
     const generatedUrl = '/api/classroom-media/classroom-1/generated-fallback.png';
     const aiCall: AICallFn = async () =>
       JSON.stringify({
@@ -725,6 +731,11 @@ describe('media prompt condition wiring', () => {
   });
 
   test('rejects a slide whose content-bearing elements overlap', async () => {
+    expectConsoleMessages({
+      warn: [
+        '[WARN] [Generation] Slide layout invalid for scene_overlap: [{"type":"overlap","elementIds":["text_1t0lxe_2","text_RU7aVD_E"]}]; retrying',
+      ],
+    });
     const aiCall: AICallFn = async () =>
       JSON.stringify({
         elements: [
@@ -769,6 +780,11 @@ describe('media prompt condition wiring', () => {
   });
 
   test('reports exact layout defects and injects them into the next prompt', async () => {
+    expectConsoleMessages({
+      warn: [
+        '[WARN] [Generation] Slide layout invalid for scene_retry_feedback: [{"type":"out-of-bounds","elementId":"text_8Qbhivr3"}]; retrying',
+      ],
+    });
     let feedback = '';
     const invalidAiCall: AICallFn = async () =>
       JSON.stringify({

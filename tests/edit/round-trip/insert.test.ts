@@ -1,5 +1,6 @@
 import JSZip from 'jszip';
 import { describe, expect, it } from 'vitest';
+import { expectConsoleMessages } from '@/tests/helpers/expected-console';
 import { buildPptxBlob } from '@/lib/export/use-export-pptx';
 import { applySlideEditOperation } from '@/lib/edit/slide-ops';
 import {
@@ -62,6 +63,11 @@ describe('round-trip: element.add inserts (PR2 gate)', () => {
   });
 
   it('(b) inserted default image element (remote URL) — slide XML is non-empty', async () => {
+    expectConsoleMessages({
+      warn: [
+        '[WARN] [ExportPPTX] Failed to fetch image (HTTP 404), skipping element: https://example.com/x.png',
+      ],
+    });
     const { scene, content } = makeSlideFixture();
 
     const after = applySlideEditOperation(content, {
