@@ -94,7 +94,7 @@ vi.mock('@/lib/audio/constants', () => ({
       requiresApiKey: true,
       defaultModelId: 'gpt-4o-mini-transcribe',
       models: [{ id: 'gpt-4o-mini-transcribe', name: 'GPT-4o Mini Transcribe' }],
-      supportedLanguages: ['auto', 'zh'],
+      supportedLanguages: ['auto', 'fr', 'ar', 'en'],
       supportedFormats: ['webm'],
     },
     'browser-native': {
@@ -103,7 +103,7 @@ vi.mock('@/lib/audio/constants', () => ({
       requiresApiKey: false,
       defaultModelId: '',
       models: [],
-      supportedLanguages: ['zh'],
+      supportedLanguages: ['fr-FR', 'ar-MA', 'en-US'],
       supportedFormats: ['browser'],
     },
   },
