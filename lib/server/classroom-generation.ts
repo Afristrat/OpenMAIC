@@ -95,10 +95,8 @@ import {
   type ClassroomVoiceOverrides,
 } from '@/lib/agents/classroom-casting';
 import { shouldRunClassroomWebSearch } from '@/lib/server/web-search-policy';
-import {
-  buildSceneSourceGrounding,
-  uploadedSourceDocument as createUploadedSourceDocument,
-} from '@/lib/generation/source-grounding';
+import { buildSceneSourceGrounding } from '@/lib/generation/source-grounding';
+import { resolveFormationSources } from '@/lib/server/formation-source-library';
 
 const log = createLogger('Classroom');
 
@@ -111,6 +109,8 @@ export interface GenerateClassroomInput {
   learningContext?: LearningContext;
   /** Persisted courses from S1-003 override the deterministic current-flow identity. */
   courseId?: string;
+  /** Immutable selection snapshot from the organization source library. */
+  sourceManifestId?: string;
   language?: CourseLocale;
   modelString?: string;
   requirement: string;
@@ -252,7 +252,7 @@ export async function generateClassroom(
     onProgress?: (progress: ClassroomGenerationProgress) => Promise<void> | void;
   },
 ): Promise<GenerateClassroomResult> {
-  const { requirement, pdfContent } = input;
+  const { requirement } = input;
   const learningContext = normalizeLearningContext(
     input.learningContext ?? DEFAULT_LEARNING_CONTEXT,
   );
@@ -394,9 +394,16 @@ export async function generateClassroom(
   };
   const skillEngineEnabled = await isFeatureEnabled('skill_engine');
   const vocationalActive = resolveVocationalActive(requirements);
-  const pdfText = pdfContent?.text || undefined;
-  const pdfImages = normalizePdfImages(pdfContent);
-  const sourceDocuments = pdfContent ? [createUploadedSourceDocument(pdfContent)] : [];
+  const resolvedSources = await resolveFormationSources({
+    orgId: input.orgId,
+    ownerId: options.ownerId,
+    sourceManifestId: input.sourceManifestId,
+    legacySource: input.pdfContent,
+  });
+  const combinedSource = resolvedSources.combinedContent;
+  const pdfText = combinedSource?.text || undefined;
+  const pdfImages = normalizePdfImages(combinedSource);
+  const sourceDocuments = resolvedSources.documents;
 
   await options.onProgress?.({
     step: 'researching',
@@ -407,11 +414,15 @@ export async function generateClassroom(
 
   // Web search (optional, graceful degradation)
   let researchContext: string | undefined;
-  const uploadedSource = uploadedPdfSource(pdfContent);
-  let researchSources: Stage['researchSources'] = uploadedSource ? [uploadedSource] : undefined;
+  const uploadedSources = resolvedSources.contents
+    .map((source) => uploadedPdfSource(source))
+    .filter((source): source is NonNullable<typeof source> => source != null);
+  let researchSources: Stage['researchSources'] = uploadedSources.length
+    ? uploadedSources
+    : undefined;
   const runWebSearch = shouldRunClassroomWebSearch({
     enabled: input.enableWebSearch,
-    hasUploadedSource: Boolean(uploadedSource),
+    hasUploadedSource: uploadedSources.length > 0,
     requirement: contextualRequirement,
   });
   if (input.enableWebSearch && !runWebSearch) {
@@ -466,7 +477,9 @@ export async function generateClassroom(
           searchQuery.query,
         );
         const webSources = toPersistedResearchSources(enrichedSources);
-        researchSources = uploadedSource ? [uploadedSource, ...webSources.slice(0, 7)] : webSources;
+        researchSources = uploadedSources.length
+          ? [...uploadedSources, ...webSources.slice(0, Math.max(0, 8 - uploadedSources.length))]
+          : webSources;
         researchContext = formatSearchResultsAsContext({
           ...searchResult,
           sources: enrichedSources,
@@ -1056,6 +1069,7 @@ export async function generateClassroom(
       title: stage.name,
       language: input.language ?? 'fr-FR',
       outlines,
+      sourceManifestId: resolvedSources.manifest?.id,
     });
 
     log.info(`Classroom persisted: ${persisted.id}, URL: ${persisted.url}`);

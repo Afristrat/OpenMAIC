@@ -73,4 +73,23 @@ describe('POST /api/generate-classroom/plan', () => {
     );
     expect(mocks.enqueue).toHaveBeenCalledWith({ jobId: result.jobId });
   });
+
+  test('persists an immutable source manifest without copying document contents into the job', async () => {
+    const sourceManifestId = '10000000-0000-4000-8000-000000000001';
+    const response = await POST(
+      new NextRequest('http://localhost/api/generate-classroom/plan', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ ...body, pdfContent: undefined, sourceManifestId }),
+      }),
+    );
+    const result = await response.json();
+
+    expect(response.status).toBe(202);
+    expect(mocks.createJob).toHaveBeenCalledWith(
+      result.jobId,
+      expect.objectContaining({ sourceManifestId, pdfContent: undefined }),
+      'author-1',
+    );
+  });
 });

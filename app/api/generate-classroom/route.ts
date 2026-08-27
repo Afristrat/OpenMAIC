@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
         currencyCode: parsed.learningContext.currencyCode.toUpperCase(),
       },
       ...(parsed.courseId ? { courseId: parsed.courseId } : {}),
+      ...(parsed.sourceManifestId ? { sourceManifestId: parsed.sourceManifestId } : {}),
       requirement: parsed.requirement,
       ...(parsed.pdfContent ? { pdfContent: parsed.pdfContent } : {}),
       ...(parsed.language ? { language: parsed.language } : {}),

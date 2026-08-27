@@ -77,6 +77,94 @@ export class MockApi {
     });
   }
 
+  /** Stateful organization source library used by authoring-home tests. */
+  async mockSourceLibrary() {
+    const sources: Array<{
+      id: string;
+      name: string;
+      mimeType: string;
+      sizeBytes: number;
+      status: 'ready';
+      content: { text: string; images: unknown[] };
+    }> = [];
+    let manifest: { id: string; version: number; sourceIds: string[] } | null = null;
+    let sourceSequence = 0;
+    let manifestSequence = 0;
+
+    await this.page.route('**/api/source-library?*', async (route) => {
+      if (route.request().method() !== 'GET') {
+        await route.fallback();
+        return;
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, sources }),
+      });
+    });
+    await this.page.route('**/api/source-library', async (route) => {
+      if (route.request().method() !== 'POST') {
+        await route.fallback();
+        return;
+      }
+      const body = route.request().postDataJSON() as {
+        name: string;
+        mimeType: string;
+        sizeBytes: number;
+        content: { text: string; images: unknown[] };
+      };
+      const duplicate = sources.find((source) => source.content.text === body.content.text);
+      const source = duplicate ?? {
+        id: `10000000-0000-4000-8000-${String(++sourceSequence).padStart(12, '0')}`,
+        name: body.name,
+        mimeType: body.mimeType,
+        sizeBytes: body.sizeBytes,
+        status: 'ready' as const,
+        content: body.content,
+      };
+      if (!duplicate) sources.push(source);
+      await route.fulfill({
+        status: duplicate ? 200 : 201,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, source, duplicate: !!duplicate }),
+      });
+    });
+    await this.page.route('**/api/source-manifests?*', async (route) => {
+      if (route.request().method() !== 'GET') {
+        await route.fallback();
+        return;
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, manifest }),
+      });
+    });
+    await this.page.route('**/api/source-manifests', async (route) => {
+      if (route.request().method() !== 'PUT') {
+        await route.fallback();
+        return;
+      }
+      const body = route.request().postDataJSON() as { sourceIds: string[] };
+      manifestSequence += 1;
+      manifest = {
+        id: `20000000-0000-4000-8000-${String(manifestSequence).padStart(12, '0')}`,
+        version: manifestSequence,
+        sourceIds: body.sourceIds,
+      };
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, manifest }),
+      });
+    });
+
+    return {
+      getSources: () => [...sources],
+      getManifest: () => manifest,
+    };
+  }
+
   /** Mock the persistent classroom-generation handoff used by the home page. */
   async mockClassroomGenerationJob(jobId = 'e2e-generation-job', resultUrl?: string) {
     let submittedBody: unknown;

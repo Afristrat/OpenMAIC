@@ -44,12 +44,7 @@ import {
 } from '@/components/generation/source-conflict-dialog';
 import { AgentBar } from '@/components/agent/agent-bar';
 import { useTheme } from '@/lib/hooks/use-theme';
-import type {
-  ClassroomPlan,
-  PdfImage,
-  PdfSourceContent,
-  UserRequirements,
-} from '@/lib/types/generation';
+import type { ClassroomPlan, UserRequirements } from '@/lib/types/generation';
 import { buildLanguageDirective } from '@/lib/constants/generation';
 import { useUserProfileStore, AVATAR_OPTIONS } from '@/lib/store/user-profile';
 import { StageListItem, revokeThumbnailSlideMediaUrls } from '@/lib/utils/stage-storage';
@@ -78,7 +73,6 @@ import {
   isIso4217CurrencyCode,
   normalizeLearningContext,
 } from '@/lib/formation-engine/learning-context';
-import { buildDocumentParseFormData } from '@/lib/document/upload-request';
 
 const log = createLogger('Home');
 
@@ -141,7 +135,6 @@ function authenticatedFirstName(user: User | null): string {
 const PPTX_IMPORT_ENABLED = process.env.NEXT_PUBLIC_ENABLE_PPTX_IMPORT === 'true';
 
 interface FormState {
-  pdfFile: File | null;
   requirement: string;
   webSearch: boolean;
   interactiveMode: boolean;
@@ -152,7 +145,6 @@ interface FormState {
 }
 
 const initialFormState: FormState = {
-  pdfFile: null,
   requirement: '',
   webSearch: false,
   interactiveMode: false,
@@ -204,8 +196,6 @@ function HomePage() {
   const ttsProviderId = useSettingsStore((s) => s.ttsProviderId);
   const ttsVoice = useSettingsStore((s) => s.ttsVoice);
   const ttsProvidersConfig = useSettingsStore((s) => s.ttsProvidersConfig);
-  const pdfProviderId = useSettingsStore((s) => s.pdfProviderId);
-  const pdfProvidersConfig = useSettingsStore((s) => s.pdfProvidersConfig);
   const [recentOpen, setRecentOpen] = useState(true);
   const persistRecentOpen = (next: boolean) => {
     setRecentOpen(next);
@@ -220,6 +210,17 @@ function HomePage() {
   const { user } = useAuth();
   const { currentOrg, canAuthor } = useOrganizations();
   const [dueReviewCount, setDueReviewCount] = useState(0);
+  const [sourceManifestId, setSourceManifestId] = useState<string>();
+  const [selectedSourceCount, setSelectedSourceCount] = useState(0);
+  const [sourceIngestionBlocked, setSourceIngestionBlocked] = useState(false);
+  const [sourceClearRequestToken, setSourceClearRequestToken] = useState(0);
+  const handleSourceManifestChange = useCallback(
+    (manifestId: string | undefined, selectedCount: number) => {
+      setSourceManifestId(selectedCount > 0 ? manifestId : undefined);
+      setSelectedSourceCount(selectedCount);
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!activeSkillId) return;
@@ -597,6 +598,10 @@ function HomePage() {
       setError(t('animation.selectionRequired'));
       return;
     }
+    if (sourceIngestionBlocked) {
+      setError(t('sources.resolveRejected'));
+      return;
+    }
     if (!user || !currentOrg || !canAuthor) {
       setError(t('upload.generateFailed'));
       return;
@@ -623,53 +628,15 @@ function HomePage() {
       };
 
       setIsPlanning(true);
-      let pdfContent: PdfSourceContent | undefined;
-      if (form.pdfFile) {
-        const isPdf = form.pdfFile.name.toLowerCase().endsWith('.pdf');
-        const providerConfig = pdfProvidersConfig[pdfProviderId];
-        const parseResponse = await fetch(isPdf ? '/api/parse-pdf' : '/api/parse-document', {
-          method: 'POST',
-          body: buildDocumentParseFormData(form.pdfFile, {
-            providerId: pdfProviderId,
-            apiKey: providerConfig?.apiKey,
-            baseUrl: providerConfig?.baseUrl,
-          }),
-        });
-        const parsed = await parseResponse.json();
-        const parsedText = typeof parsed.data?.text === 'string' ? parsed.data.text.trim() : '';
-        if (!parseResponse.ok || !parsed.success || !parsedText) {
-          const noReadablePdfText =
-            isPdf &&
-            (parsed.errorCode === 'NO_READABLE_PDF_TEXT' ||
-              (parseResponse.ok && parsed.success && !parsedText));
-          const parserDetails =
-            typeof parsed.details === 'string'
-              ? parsed.details
-              : typeof parsed.error === 'string'
-                ? parsed.error
-                : t('generation.pdfParseFailed');
-          throw new Error(noReadablePdfText ? t('generation.pdfNoTextExtracted') : parserDetails);
-        }
-        const richImages = Array.isArray(parsed.data?.metadata?.pdfImages)
-          ? (parsed.data.metadata.pdfImages as PdfImage[])
-          : Array.isArray(parsed.data.images)
-            ? (parsed.data.images as string[])
-            : [];
-        pdfContent = {
-          name: form.pdfFile.name,
-          text: parsedText,
-          images: richImages,
-        };
-      }
       const generationRequest = {
         orgId: currentOrg.id,
+        ...(sourceManifestId ? { sourceManifestId } : {}),
         language: locale,
         modelString: `${languageProviderId}:${languageModelId}`,
         learningApproach: form.learningApproach,
         interactionLevel: form.interactionLevel,
         learningContext: normalizeLearningContext(form.learningContext),
         requirement: requirements.requirement,
-        ...(pdfContent ? { pdfContent } : {}),
         enableWebSearch: form.webSearch,
         enableImageGeneration: imageGenerationEnabled,
         imageProviderId,
@@ -810,7 +777,8 @@ function HomePage() {
           requirement,
           locale,
           mode: requirement.length < REQUIREMENT_EXPANSION_THRESHOLD ? 'expand' : 'improve',
-          sourceFileName: form.pdfFile?.name,
+          sourceFileName:
+            selectedSourceCount > 0 ? `${selectedSourceCount} selected sources` : undefined,
         }),
       });
       const result = await response.json();
@@ -872,7 +840,9 @@ function HomePage() {
         conflict={sourceConflict}
         onReview={() => setSourceConflict(null)}
         onRemoveSource={() => {
-          setForm((previous) => ({ ...previous, pdfFile: null }));
+          setSourceManifestId(undefined);
+          setSelectedSourceCount(0);
+          setSourceClearRequestToken((token) => token + 1);
           setSourceConflict(null);
         }}
         onUseSuggestion={(requirement) => {
@@ -1181,9 +1151,11 @@ function HomePage() {
                     setSettingsSection(section);
                     setSettingsOpen(true);
                   }}
-                  pdfFile={form.pdfFile}
-                  onPdfFileChange={(f) => updateForm('pdfFile', f)}
-                  onPdfError={setError}
+                  orgId={currentOrg?.id}
+                  sourceClearRequestToken={sourceClearRequestToken}
+                  onSourceManifestChange={handleSourceManifestChange}
+                  onSourceIngestionBlockChange={setSourceIngestionBlocked}
+                  onSourceError={setError}
                 />
               </div>
 

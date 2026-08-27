@@ -11,6 +11,7 @@ export async function persistGeneratedCourse(input: {
   title: string;
   language: CourseLocale;
   outlines: SceneOutline[];
+  sourceManifestId?: string;
 }): Promise<string> {
   const supabase = createServiceSupabaseClient();
   const payload = {
@@ -21,6 +22,7 @@ export async function persistGeneratedCourse(input: {
     language: input.language,
     source_kind: 'generated' as const,
     outline: { scenes: input.outlines },
+    source_manifest_id: input.sourceManifestId ?? null,
     status: 'ready' as const,
   };
 

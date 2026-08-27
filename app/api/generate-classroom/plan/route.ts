@@ -28,6 +28,7 @@ export async function POST(request: NextRequest) {
 
     const input: GenerateClassroomInput = {
       orgId: parsed.orgId,
+      sourceManifestId: parsed.sourceManifestId,
       authorRole: auth.authoredByRole,
       requirement: parsed.requirement,
       language: parsed.language,

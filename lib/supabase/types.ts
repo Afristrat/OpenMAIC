@@ -202,11 +202,39 @@ export interface Course {
   language: 'fr-FR' | 'ar-MA' | 'en-US';
   source_kind: CourseSourceKind;
   import_id: string | null;
+  source_manifest_id: string | null;
   outline: Record<string, unknown>;
   status: CourseStatus;
   catalog_visible: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface OrganizationSource {
+  id: string;
+  org_id: string;
+  owner_id: string;
+  name: string;
+  mime_type: string;
+  size_bytes: number;
+  content_hash: string;
+  parser_id: string;
+  text_content: string;
+  images: unknown[];
+  status: 'ready' | 'rejected';
+  rejection_reason: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FormationSourceManifest {
+  id: string;
+  org_id: string;
+  owner_id: string;
+  version: number;
+  source_ids: string[];
+  previous_manifest_id: string | null;
+  created_at: string;
 }
 
 export interface ClassroomTemplate {
@@ -298,7 +326,31 @@ export type CourseInsert = Pick<
   Course,
   'owner_id' | 'title' | 'language' | 'source_kind' | 'outline'
 > &
-  Partial<Pick<Course, 'org_id' | 'stage_id' | 'import_id' | 'status' | 'catalog_visible'>>;
+  Partial<
+    Pick<
+      Course,
+      'org_id' | 'stage_id' | 'import_id' | 'source_manifest_id' | 'status' | 'catalog_visible'
+    >
+  >;
+
+export type OrganizationSourceInsert = Pick<
+  OrganizationSource,
+  | 'org_id'
+  | 'owner_id'
+  | 'name'
+  | 'mime_type'
+  | 'size_bytes'
+  | 'content_hash'
+  | 'parser_id'
+  | 'text_content'
+> &
+  Partial<Pick<OrganizationSource, 'images' | 'status' | 'rejection_reason'>>;
+
+export type FormationSourceManifestInsert = Pick<
+  FormationSourceManifest,
+  'org_id' | 'owner_id' | 'version' | 'source_ids'
+> &
+  Partial<Pick<FormationSourceManifest, 'previous_manifest_id'>>;
 
 export type ClassroomTemplateInsert = Pick<ClassroomTemplate, 'name' | 'sector' | 'requirements'> &
   Partial<Omit<ClassroomTemplate, 'id' | 'name' | 'sector' | 'requirements' | 'created_at'>>;
@@ -325,7 +377,16 @@ export type AgentConfigUpdate = Partial<Omit<AgentConfig, 'id' | 'created_at' | 
 export type CurriculumLinkUpdate = Partial<Omit<CurriculumLink, 'id' | 'created_at'>>;
 export type SharedClassroomUpdate = Partial<Pick<SharedClassroom, 'visibility'>>;
 export type CourseUpdate = Partial<
-  Pick<Course, 'stage_id' | 'title' | 'language' | 'outline' | 'status' | 'catalog_visible'>
+  Pick<
+    Course,
+    | 'stage_id'
+    | 'title'
+    | 'language'
+    | 'outline'
+    | 'source_manifest_id'
+    | 'status'
+    | 'catalog_visible'
+  >
 >;
 export type ClassroomTemplateUpdate = Partial<Omit<ClassroomTemplate, 'id' | 'created_at'>>;
 export type OrganizationSkillUpdate = Pick<OrganizationSkill, 'manifest'>;
@@ -740,6 +801,18 @@ export interface Database {
         Insert: CourseInsert;
         Update: CourseUpdate;
       };
+      organization_sources: {
+        Row: OrganizationSource;
+        Insert: OrganizationSourceInsert;
+        Update: Partial<
+          Pick<OrganizationSource, 'name' | 'parser_id' | 'status' | 'rejection_reason'>
+        >;
+      };
+      formation_source_manifests: {
+        Row: FormationSourceManifest;
+        Insert: FormationSourceManifestInsert;
+        Update: Record<string, never>;
+      };
       classroom_templates: {
         Row: ClassroomTemplate;
         Insert: ClassroomTemplateInsert;
@@ -799,6 +872,15 @@ export interface Database {
           organization_default_locale?: 'fr-FR' | 'ar-MA' | 'en-US';
         };
         Returns: Organization[];
+      };
+      replace_formation_source_manifest: {
+        Args: {
+          p_org_id: string;
+          p_owner_id: string;
+          p_source_ids: string[];
+          p_expected_version?: number | null;
+        };
+        Returns: FormationSourceManifest[];
       };
     };
     Enums: Record<string, never>;

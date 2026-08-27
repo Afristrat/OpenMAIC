@@ -11,10 +11,11 @@ import { SourceMaterialConflictError } from '@/lib/server/source-material-alignm
 export async function runClassroomPlanJob(
   jobId: string,
   input: GenerateClassroomInput,
+  ownerId?: string,
 ): Promise<void> {
   await markClassroomPlanJobRunning(jobId);
   try {
-    await markClassroomPlanJobSucceeded(jobId, await generateClassroomPlan(input));
+    await markClassroomPlanJobSucceeded(jobId, await generateClassroomPlan(input, ownerId));
   } catch (error) {
     if (error instanceof SourceMaterialConflictError) {
       await markClassroomPlanJobConflict(jobId, error.alignment);

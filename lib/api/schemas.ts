@@ -353,127 +353,133 @@ export const approvedClassroomPlanSchema = z.object({
   outlines: z.array(approvedSceneOutlineSchema).min(1).max(60),
 });
 
-export const generateClassroomSchema = z.object({
-  orgId: z.string().uuid('orgId must be a valid UUID'),
-  courseId: z.string().uuid('courseId must be a valid UUID').optional(),
-  requirement: z.string().min(1, 'requirement is required'),
-  modelString: z
-    .string()
-    .trim()
-    .min(3)
-    .max(240)
-    .regex(/^[A-Za-z0-9_-]+:.+$/)
-    .optional(),
-  pdfContent: z
-    .object({
-      text: z.string(),
-      name: z.string().trim().min(1).max(260).optional(),
-      images: z.array(
-        z.union([
-          z.string(),
-          z.object({
-            id: z.string().trim().min(1).max(120),
-            src: z.string(),
-            pageNumber: z.number().int().nonnegative(),
-            description: z.string().max(2000).optional(),
-            width: z.number().positive().optional(),
-            height: z.number().positive().optional(),
-          }),
-        ]),
-      ),
-    })
-    .optional(),
-  language: z.enum(['fr-FR', 'ar-MA', 'en-US']).optional(),
-  learningApproach: z.enum(['pedagogy', 'hybrid', 'andragogy']),
-  interactionLevel: z.enum(['guided', 'balanced', 'immersive']),
-  learningContext: z.object({
-    territory: z.string().trim().min(1).max(120),
-    currencyCode: z
+export const generateClassroomSchema = z
+  .object({
+    orgId: z.string().uuid('orgId must be a valid UUID'),
+    courseId: z.string().uuid('courseId must be a valid UUID').optional(),
+    sourceManifestId: z.string().uuid('sourceManifestId must be a valid UUID').optional(),
+    requirement: z.string().min(1, 'requirement is required'),
+    modelString: z
       .string()
       .trim()
-      .refine(isIso4217CurrencyCode, 'currencyCode must be a valid ISO 4217 code'),
-  }),
-  enableWebSearch: z.boolean().optional(),
-  webSearchProviderId: z
-    .enum(['tavily', 'bocha', 'brave', 'baidu', 'minimax', 'serper'])
-    .optional(),
-  webSearchApiKey: z.string().optional(),
-  baiduSubSources: z
-    .object({
-      webSearch: z.boolean(),
-      baike: z.boolean(),
-      scholar: z.boolean(),
-    })
-    .optional(),
-  enableImageGeneration: z.boolean().optional(),
-  imageProviderId: z.string().min(1).max(80).optional(),
-  imageModelId: z.string().min(1).max(160).optional(),
-  enableVideoGeneration: z.boolean().optional(),
-  enableTTS: z.boolean().optional(),
-  interactiveMode: z.boolean().optional(),
-  agentMode: z.enum(['default', 'generate']).optional(),
-  selectedPersonaIds: z.array(z.string().min(1).max(80)).max(10).optional(),
-  contextualSpecialists: z
-    .array(
-      z.object({
-        id: z.string().regex(/^specialist-[A-Za-z0-9_-]+$/),
-        name: z.string().min(1).max(80),
-        occupationTitle: z.string().min(1).max(240),
-        iscoCode: z.string().regex(/^\d{4}$/),
-        escoUri: z.string().url(),
-        reason: z.string().min(1).max(800),
-        gender: z.enum(['female', 'male']),
-        avatar: z.string().startsWith('/avatars/'),
-        role: z.literal('assistant'),
-        persona: z.string().min(1).max(4000),
-        occupationalProfile: z.object({
-          standard: z.literal('ISCO-08'),
-          unitGroupCode: z.string().regex(/^\d{4}$/),
-          unitGroupTitle: z.string().min(1).max(240),
-          occupationDescription: z.string().min(1).max(4000),
-          tasks: z.array(z.string().min(1).max(1000)).min(1).max(12),
-          sourceTasks: z.array(z.string().min(1).max(1000)).min(1).max(12),
-          taskLocale: z.enum(['fr-FR', 'ar-MA', 'en-US']),
-          sourceVersion: z.literal('v1.2.1'),
-          essentialSkills: z.array(z.string().min(1).max(400)).max(12),
-          knowledge: z.array(z.string().min(1).max(400)).max(8),
-          iscoUri: z.string().url(),
-          occupationUri: z.string().url(),
-          sourceUrl: z.string().url(),
+      .min(3)
+      .max(240)
+      .regex(/^[A-Za-z0-9_-]+:.+$/)
+      .optional(),
+    pdfContent: z
+      .object({
+        text: z.string(),
+        name: z.string().trim().min(1).max(260).optional(),
+        images: z.array(
+          z.union([
+            z.string(),
+            z.object({
+              id: z.string().trim().min(1).max(120),
+              src: z.string(),
+              pageNumber: z.number().int().nonnegative(),
+              description: z.string().max(2000).optional(),
+              width: z.number().positive().optional(),
+              height: z.number().positive().optional(),
+            }),
+          ]),
+        ),
+      })
+      .optional(),
+    language: z.enum(['fr-FR', 'ar-MA', 'en-US']).optional(),
+    learningApproach: z.enum(['pedagogy', 'hybrid', 'andragogy']),
+    interactionLevel: z.enum(['guided', 'balanced', 'immersive']),
+    learningContext: z.object({
+      territory: z.string().trim().min(1).max(120),
+      currencyCode: z
+        .string()
+        .trim()
+        .refine(isIso4217CurrencyCode, 'currencyCode must be a valid ISO 4217 code'),
+    }),
+    enableWebSearch: z.boolean().optional(),
+    webSearchProviderId: z
+      .enum(['tavily', 'bocha', 'brave', 'baidu', 'minimax', 'serper'])
+      .optional(),
+    webSearchApiKey: z.string().optional(),
+    baiduSubSources: z
+      .object({
+        webSearch: z.boolean(),
+        baike: z.boolean(),
+        scholar: z.boolean(),
+      })
+      .optional(),
+    enableImageGeneration: z.boolean().optional(),
+    imageProviderId: z.string().min(1).max(80).optional(),
+    imageModelId: z.string().min(1).max(160).optional(),
+    enableVideoGeneration: z.boolean().optional(),
+    enableTTS: z.boolean().optional(),
+    interactiveMode: z.boolean().optional(),
+    agentMode: z.enum(['default', 'generate']).optional(),
+    selectedPersonaIds: z.array(z.string().min(1).max(80)).max(10).optional(),
+    contextualSpecialists: z
+      .array(
+        z.object({
+          id: z.string().regex(/^specialist-[A-Za-z0-9_-]+$/),
+          name: z.string().min(1).max(80),
+          occupationTitle: z.string().min(1).max(240),
+          iscoCode: z.string().regex(/^\d{4}$/),
+          escoUri: z.string().url(),
+          reason: z.string().min(1).max(800),
+          gender: z.enum(['female', 'male']),
+          avatar: z.string().startsWith('/avatars/'),
+          role: z.literal('assistant'),
+          persona: z.string().min(1).max(4000),
+          occupationalProfile: z.object({
+            standard: z.literal('ISCO-08'),
+            unitGroupCode: z.string().regex(/^\d{4}$/),
+            unitGroupTitle: z.string().min(1).max(240),
+            occupationDescription: z.string().min(1).max(4000),
+            tasks: z.array(z.string().min(1).max(1000)).min(1).max(12),
+            sourceTasks: z.array(z.string().min(1).max(1000)).min(1).max(12),
+            taskLocale: z.enum(['fr-FR', 'ar-MA', 'en-US']),
+            sourceVersion: z.literal('v1.2.1'),
+            essentialSkills: z.array(z.string().min(1).max(400)).max(12),
+            knowledge: z.array(z.string().min(1).max(400)).max(8),
+            iscoUri: z.string().url(),
+            occupationUri: z.string().url(),
+            sourceUrl: z.string().url(),
+          }),
+          voiceConfig: z.object({
+            providerId: z.string().min(1).max(80),
+            voiceId: z.string().min(1).max(160),
+          }),
         }),
-        voiceConfig: z.object({
-          providerId: z.string().min(1).max(80),
-          voiceId: z.string().min(1).max(160),
-        }),
-      }),
-    )
-    .max(3)
-    .optional(),
-  teacherVoiceConfig: z
-    .object({
-      providerId: z.string().min(1).max(80),
-      modelId: z.string().max(160).optional(),
-      voiceId: z.string().min(1).max(160),
-      voiceName: z.string().min(1).max(120).optional(),
-      gender: z.enum(['female', 'male', 'neutral']).optional(),
-    })
-    .optional(),
-  agentVoiceOverrides: z
-    .record(
-      z.string().min(1).max(120),
-      z.object({
+      )
+      .max(3)
+      .optional(),
+    teacherVoiceConfig: z
+      .object({
         providerId: z.string().min(1).max(80),
         modelId: z.string().max(160).optional(),
         voiceId: z.string().min(1).max(160),
-      }),
-    )
-    .refine((overrides) => Object.keys(overrides).length <= 20, {
-      message: 'agentVoiceOverrides must contain at most 20 agents',
-    })
-    .optional(),
-  activeSkillId: z.string().min(1).max(120).optional(),
-  approvedPlan: approvedClassroomPlanSchema.optional(),
-});
+        voiceName: z.string().min(1).max(120).optional(),
+        gender: z.enum(['female', 'male', 'neutral']).optional(),
+      })
+      .optional(),
+    agentVoiceOverrides: z
+      .record(
+        z.string().min(1).max(120),
+        z.object({
+          providerId: z.string().min(1).max(80),
+          modelId: z.string().max(160).optional(),
+          voiceId: z.string().min(1).max(160),
+        }),
+      )
+      .refine((overrides) => Object.keys(overrides).length <= 20, {
+        message: 'agentVoiceOverrides must contain at most 20 agents',
+      })
+      .optional(),
+    activeSkillId: z.string().min(1).max(120).optional(),
+    approvedPlan: approvedClassroomPlanSchema.optional(),
+  })
+  .refine((input) => !(input.sourceManifestId && input.pdfContent), {
+    message: 'sourceManifestId and pdfContent are mutually exclusive',
+    path: ['sourceManifestId'],
+  });
 
 // ---------------------------------------------------------------------------
 // PBL Chat

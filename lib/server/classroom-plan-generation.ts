@@ -21,8 +21,9 @@ import { assertSourceMaterialAlignment } from '@/lib/server/source-material-alig
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import type { GenerateClassroomInput } from '@/lib/server/classroom-generation';
 import { normalizePdfImages } from '@/lib/server/pdf-source';
+import { resolveFormationSources } from '@/lib/server/formation-source-library';
 
-export async function generateClassroomPlan(input: GenerateClassroomInput) {
+export async function generateClassroomPlan(input: GenerateClassroomInput, ownerId?: string) {
   const learningContext = normalizeLearningContext(
     input.learningContext ?? DEFAULT_LEARNING_CONTEXT,
   );
@@ -84,10 +85,23 @@ export async function generateClassroomPlan(input: GenerateClassroomInput) {
     return result.text;
   };
 
-  if (input.pdfContent) {
+  const resolvedSources = input.sourceManifestId
+    ? await resolveFormationSources({
+        orgId: input.orgId,
+        ownerId: ownerId ?? '',
+        sourceManifestId: input.sourceManifestId,
+      })
+    : await resolveFormationSources({
+        orgId: input.orgId,
+        ownerId: ownerId ?? '',
+        legacySource: input.pdfContent,
+      });
+  const combinedSource = resolvedSources.combinedContent;
+
+  if (combinedSource) {
     await assertSourceMaterialAlignment(
       input.requirement,
-      input.pdfContent.text,
+      combinedSource.text,
       aiCall,
       input.language ?? 'fr-FR',
     );
@@ -103,8 +117,8 @@ export async function generateClassroomPlan(input: GenerateClassroomInput) {
   const generatePlan = (nextRequirements: typeof requirements) =>
     generateSceneOutlinesFromRequirements(
       nextRequirements,
-      input.pdfContent?.text || undefined,
-      normalizePdfImages(input.pdfContent),
+      combinedSource?.text || undefined,
+      normalizePdfImages(combinedSource),
       aiCall,
       undefined,
       generationOptions,

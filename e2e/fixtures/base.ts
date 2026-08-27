@@ -18,27 +18,31 @@ export const test = base.extend<Fixtures>({
     },
     { auto: true },
   ],
-  mockApi: async ({ page }, use) => {
-    const mockApi = new MockApi(page);
-    // Always mock server-providers — called on every page load by root layout
-    await mockApi.mockServerProviders();
-    await page.route('**/api/account/is-admin', (route) =>
-      route.fulfill({ status: 200, contentType: 'application/json', body: '{"isAdmin":false}' }),
-    );
-    // The authoring home loads the current organisation's catalog on mount.
-    // Keep that background request inside the E2E boundary instead of letting
-    // it reach the deliberately fake Supabase configured by Playwright.
-    // Tests that exercise classroom persistence register a more specific route
-    // afterwards and therefore retain full control of their own fixture.
-    await page.route('**/api/classroom?orgId=*', (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: '{"success":true,"classrooms":[]}',
-      }),
-    );
-    await use(mockApi);
-  },
+  mockApi: [
+    async ({ page }, use) => {
+      const mockApi = new MockApi(page);
+      // Always mock server-providers — called on every page load by root layout
+      await mockApi.mockServerProviders();
+      await mockApi.mockSourceLibrary();
+      await page.route('**/api/account/is-admin', (route) =>
+        route.fulfill({ status: 200, contentType: 'application/json', body: '{"isAdmin":false}' }),
+      );
+      // The authoring home loads the current organisation's catalog on mount.
+      // Keep that background request inside the E2E boundary instead of letting
+      // it reach the deliberately fake Supabase configured by Playwright.
+      // Tests that exercise classroom persistence register a more specific route
+      // afterwards and therefore retain full control of their own fixture.
+      await page.route('**/api/classroom?orgId=*', (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: '{"success":true,"classrooms":[]}',
+        }),
+      );
+      await use(mockApi);
+    },
+    { auto: true },
+  ],
 });
 
 export { expect } from '@playwright/test';

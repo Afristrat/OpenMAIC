@@ -22,6 +22,7 @@ const SOURCE_CONFLICT_LOCALES = [
     locale: 'fr-FR',
     dir: 'ltr',
     suggestion: 'Reformulation proposée',
+    sourceLibrary: 'Bibliothèque de sources',
     accept: 'Utiliser cette reformulation',
     review: 'Refuser et revoir ma demande',
   },
@@ -29,6 +30,7 @@ const SOURCE_CONFLICT_LOCALES = [
     locale: 'ar-MA',
     dir: 'rtl',
     suggestion: 'إعادة الصياغة المقترحة',
+    sourceLibrary: 'مكتبة المصادر',
     accept: 'استخدام إعادة الصياغة هذه',
     review: 'رفض الاقتراح ومراجعة طلبي',
   },
@@ -36,6 +38,7 @@ const SOURCE_CONFLICT_LOCALES = [
     locale: 'en-US',
     dir: 'ltr',
     suggestion: 'Suggested reformulation',
+    sourceLibrary: 'Source library',
     accept: 'Use this reformulation',
     review: 'Reject and review my request',
   },
@@ -44,16 +47,19 @@ const SOURCE_CONFLICT_LOCALES = [
 const PDF_OCR_GUIDANCE_LOCALES = [
   {
     locale: 'fr-FR',
+    sourceLibrary: 'Bibliothèque de sources',
     guidance:
       'Aucun texte exploitable n’a été extrait. S’il s’agit d’un PDF numérisé, sélectionnez le parseur OCR MinerU dans les paramètres PDF.',
   },
   {
     locale: 'ar-MA',
+    sourceLibrary: 'مكتبة المصادر',
     guidance:
       'لم يُستخرج نص قابل للاستعمال. إذا كان ملف PDF ممسوحًا ضوئيًا، فاختر محلل OCR ‏MinerU من إعدادات PDF.',
   },
   {
     locale: 'en-US',
+    sourceLibrary: 'Source library',
     guidance:
       'No usable text was extracted. If this is a scanned PDF, select the MinerU OCR parser in PDF settings.',
   },
@@ -193,7 +199,7 @@ test.describe('Home → Generation', () => {
     expect(viewport.scrollWidth).toBeLessThanOrEqual(viewport.width);
   });
 
-  test('sends the selected PDF parser and preserves extracted text in the plan request', async ({
+  test('persists the parsed source and sends its immutable manifest in the plan request', async ({
     page,
     mockApi,
   }) => {
@@ -228,19 +234,91 @@ test.describe('Home → Generation', () => {
     await home.goto();
     await home.fillRequirement('Create a course from this source');
     await home.configureAnimation();
-    await page.getByRole('button', { name: 'Upload PDF' }).click();
+    await page.getByRole('button', { name: 'Source library' }).click();
     await page.locator('input[type="file"][accept*=".pdf"]').setInputFiles({
       name: 'source.pdf',
       mimeType: 'application/pdf',
       buffer: Buffer.from('%PDF-1.4 e2e'),
     });
+    await expect(page.getByRole('button', { name: 'Source library' })).toContainText('1');
     await home.submit();
 
     await expect(page.getByRole('heading', { name: 'Training plan' })).toBeVisible();
     expect(multipartBody).toContain('mineru');
     expect(multipartBody).toContain('https://mineru.e2e.test/v1');
     expect(generationJob.getPlanRequestBody()).toMatchObject({
-      pdfContent: { text: 'Source PDF validée', images: [] },
+      sourceManifestId: expect.stringMatching(/^20000000-/),
+    });
+  });
+
+  test('selects, reloads, removes and reuses three sources without losing valid documents', async ({
+    page,
+    mockApi,
+  }) => {
+    await page.route('**/api/parse-pdf', async (route) => {
+      const multipart = route.request().postDataBuffer()?.toString('utf8') ?? '';
+      if (multipart.includes('rejected.pdf')) {
+        await route.fulfill({
+          status: 422,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: false,
+            errorCode: 'NO_READABLE_PDF_TEXT',
+            error: 'No readable text',
+          }),
+        });
+        return;
+      }
+      const text = multipart.includes('source-b.pdf')
+        ? 'Politique B : marge cible 45 %.'
+        : multipart.includes('source-c.pdf')
+          ? 'Annexe opérationnelle stable.'
+          : 'Politique A : marge cible 30 %.';
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: { text, images: [] } }),
+      });
+    });
+    const generationJob = await mockApi.mockClassroomGenerationJob('e2e-multi-source-job');
+    const home = new HomePage(page);
+    await home.goto();
+    await home.fillRequirement('Compare three operational sources.');
+    await home.configureAnimation();
+    await page.getByRole('button', { name: 'Source library' }).click();
+    await page
+      .locator('input[type="file"][multiple]')
+      .setInputFiles(
+        ['source-a.pdf', 'source-b.pdf', 'source-c.pdf', 'duplicate-a.pdf', 'rejected.pdf'].map(
+          (name) => ({ name, mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 e2e') }),
+        ),
+      );
+
+    await expect(page.getByRole('button', { name: 'Source library' })).toContainText('3');
+    await expect(
+      page.getByText('Document already exists: the existing version is reused.'),
+    ).toBeVisible();
+    await expect(
+      page.getByText(
+        'No usable text was extracted. If this is a scanned PDF, select the MinerU OCR parser in PDF settings.',
+      ),
+    ).toBeVisible();
+
+    await page.reload();
+    await expect(page.getByRole('button', { name: 'Source library' })).toContainText('3');
+    await home.fillRequirement('Compare three operational sources.');
+    await home.configureAnimation();
+    await page.getByRole('button', { name: 'Source library' }).click();
+    await page.getByRole('button', { name: /source-b\.pdf/ }).click();
+    await expect(page.getByRole('button', { name: 'Source library' })).toContainText('2');
+    await page.getByRole('button', { name: /source-b\.pdf/ }).click();
+    await expect(page.getByRole('button', { name: 'Source library' })).toContainText('3');
+    await page.keyboard.press('Escape');
+
+    await home.submit();
+    await expect(page.getByRole('heading', { name: 'Training plan' })).toBeVisible();
+    expect(generationJob.getPlanRequestBody()).toMatchObject({
+      sourceManifestId: expect.stringMatching(/^20000000-/),
     });
   });
 
@@ -271,7 +349,7 @@ test.describe('Home → Generation', () => {
       await home.goto();
       await home.fillRequirement('Create a course from this scanned source.');
       await home.configureAnimation();
-      await page.getByRole('button', { name: /PDF/ }).click();
+      await page.getByRole('button', { name: localized.sourceLibrary }).click();
       await page.locator('input[type="file"][accept*=".pdf"]').setInputFiles({
         name: 'scanned-source.pdf',
         mimeType: 'application/pdf',
@@ -346,12 +424,13 @@ test.describe('Home → Generation', () => {
     await home.goto();
     await home.fillRequirement('Create five slides about time management.');
     await home.configureAnimation();
-    await page.getByRole('button', { name: 'Upload PDF' }).click();
+    await page.getByRole('button', { name: 'Source library' }).click();
     await page.locator('input[type="file"][accept*=".pdf"]').setInputFiles({
       name: 'process-improvement.pdf',
       mimeType: 'application/pdf',
       buffer: Buffer.from('%PDF-1.4 e2e'),
     });
+    await expect(page.getByRole('button', { name: 'Source library' })).toContainText('1');
     await home.submit();
 
     await expect(page.getByRole('alertdialog')).toBeVisible();
@@ -376,7 +455,9 @@ test.describe('Home → Generation', () => {
     await expect(home.textarea).toHaveValue(
       'Create five practical slides about Lean Six Sigma, Kaizen and continuous improvement.',
     );
-    await expect(page.getByText('process-improvement.pdf')).toBeVisible();
+    await page.getByRole('button', { name: 'Source library' }).click();
+    await expect(page.getByRole('button', { name: /process-improvement\.pdf/ })).toBeVisible();
+    await page.keyboard.press('Escape');
 
     await home.submit();
     await expect(page.getByRole('heading', { name: 'Training plan' })).toBeVisible();
@@ -435,12 +516,13 @@ test.describe('Home → Generation', () => {
       await home.goto();
       await home.fillRequirement('Create five slides about time management.');
       await home.configureAnimation();
-      await page.getByRole('button', { name: /PDF/ }).click();
+      await page.getByRole('button', { name: localized.sourceLibrary }).click();
       await page.locator('input[type="file"][accept*=".pdf"]').setInputFiles({
         name: 'source.pdf',
         mimeType: 'application/pdf',
         buffer: Buffer.from('%PDF-1.4 e2e'),
       });
+      await expect(page.getByRole('button', { name: localized.sourceLibrary })).toContainText('1');
       await home.submit();
 
       await expect(page.locator('html')).toHaveAttribute('lang', localized.locale);

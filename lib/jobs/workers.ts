@@ -124,7 +124,7 @@ export function startAllWorkers(): void {
           const { jobId } = job.data as ClassroomPlanJobData;
           const planJob = await readClassroomPlanJob(jobId);
           if (!planJob?.input) throw new Error(`Classroom plan job ${jobId} has no durable input`);
-          await runClassroomPlanJob(jobId, planJob.input);
+          await runClassroomPlanJob(jobId, planJob.input, planJob.ownerId);
           incrementCounter('qalem_jobs_processed_total', { queue: 'classroom-plan' });
           return;
         }
