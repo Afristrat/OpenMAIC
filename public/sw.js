@@ -2,11 +2,10 @@
  * Qalem — Comprehensive PWA service worker.
  *
  * Handles:
- * - App shell caching (HTML, CSS, JS bundles)
- * - Network-first strategy for API routes
- * - Cache-first strategy for static assets
- * - Offline fallback
- * - Push notifications (preserved from sw-notifications.js)
+ * - A public, credential-free offline shell
+ * - Cache-first delivery for explicitly public static assets
+ * - Network-only delivery for authenticated API and navigation responses
+ * - Local review-reminder notification clicks
  */
 
 /* global self, caches, fetch, URL */
@@ -14,29 +13,22 @@
 // Bump all cache namespaces whenever route ownership changes. The root route
 // used to host the creation studio, so keeping the v1 shell made installed
 // browsers serve that obsolete screen instead of the marketing landing page.
-const APP_SHELL_CACHE = 'qalem-shell-v2';
-const DATA_CACHE = 'qalem-data-v2';
-const STATIC_CACHE = 'qalem-static-v2';
+const APP_SHELL_CACHE = 'qalem-shell-v3';
+const STATIC_CACHE = 'qalem-static-v3';
 
 /** Pages to pre-cache on install for offline shell */
 const SHELL_URLS = ['/', '/manifest.json'];
 
-/** Static asset extensions that use cache-first */
-const STATIC_EXTENSIONS = [
-  '.js',
-  '.css',
-  '.woff',
-  '.woff2',
-  '.ttf',
-  '.eot',
-  '.png',
-  '.jpg',
-  '.jpeg',
-  '.gif',
-  '.svg',
-  '.ico',
-  '.webp',
+/** Public paths that can never contain account-specific data. */
+const PUBLIC_STATIC_PREFIXES = [
+  '/_next/static/',
+  '/avatars/',
+  '/brand/',
+  '/logos/',
+  '/plugin-runtime/',
+  '/vendor/',
 ];
+const PUBLIC_STATIC_FILES = ['/manifest.json', '/robots.txt', '/favicon.ico'];
 
 // ────────────────────────── Install ──────────────────────────
 
@@ -46,7 +38,9 @@ self.addEventListener('install', (event) => {
       .open(APP_SHELL_CACHE)
       .then((cache) => {
         return Promise.all(
-          SHELL_URLS.map((url) => cache.add(new Request(url, { cache: 'reload' }))),
+          SHELL_URLS.map((url) =>
+            cache.add(new Request(url, { cache: 'reload', credentials: 'omit' })),
+          ),
         );
       })
       .then(() => {
@@ -59,7 +53,7 @@ self.addEventListener('install', (event) => {
 // ────────────────────────── Activate ──────────────────────────
 
 self.addEventListener('activate', (event) => {
-  const CURRENT_CACHES = [APP_SHELL_CACHE, DATA_CACHE, STATIC_CACHE];
+  const CURRENT_CACHES = [APP_SHELL_CACHE, STATIC_CACHE];
 
   event.waitUntil(
     caches
@@ -67,7 +61,7 @@ self.addEventListener('activate', (event) => {
       .then((cacheNames) => {
         return Promise.all(
           cacheNames
-            .filter((name) => !CURRENT_CACHES.includes(name))
+            .filter((name) => name.startsWith('qalem-') && !CURRENT_CACHES.includes(name))
             .map((name) => caches.delete(name)),
         );
       })
@@ -89,52 +83,41 @@ self.addEventListener('fetch', (event) => {
   // Skip non-GET requests (POST, PUT, etc.)
   if (event.request.method !== 'GET') return;
 
-  // API routes → network-first
+  // Authenticated API responses must never enter a shared browser cache.
   if (url.pathname.startsWith('/api/')) {
-    event.respondWith(networkFirst(event.request, DATA_CACHE));
+    event.respondWith(networkOnlyWithOfflineResponse(event.request));
     return;
   }
 
-  // Static assets → cache-first
-  if (isStaticAsset(url.pathname)) {
+  // Only explicitly public static assets are cacheable.
+  if (isPublicStaticAsset(url.pathname)) {
     event.respondWith(cacheFirst(event.request, STATIC_CACHE));
     return;
   }
 
-  // Next.js build assets (_next/) → cache-first
-  if (url.pathname.startsWith('/_next/')) {
-    event.respondWith(cacheFirst(event.request, STATIC_CACHE));
-    return;
-  }
-
-  // Navigation requests (HTML pages) → network-first with shell fallback
+  // Never cache navigations: authenticated HTML or RSC data can be private.
   if (event.request.mode === 'navigate') {
-    event.respondWith(networkFirstWithShellFallback(event.request));
+    event.respondWith(networkOnlyNavigationWithShellFallback(event.request));
     return;
   }
-
-  // Default → network-first
-  event.respondWith(networkFirst(event.request, DATA_CACHE));
 });
 
 /**
- * Network-first strategy: try network, fall back to cache.
+ * Network-only API strategy with a deterministic offline response.
  */
-async function networkFirst(request, cacheName) {
+async function networkOnlyWithOfflineResponse(request) {
   try {
-    const response = await fetch(request);
-    if (response.ok) {
-      const cache = await caches.open(cacheName);
-      cache.put(request, response.clone());
-    }
-    return response;
+    return await fetch(new Request(request, { cache: 'no-store' }));
   } catch {
-    const cached = await caches.match(request);
-    if (cached) return cached;
-    // Return a basic offline JSON for API requests
     return new Response(
       JSON.stringify({ error: 'offline', message: 'You are currently offline' }),
-      { status: 503, headers: { 'Content-Type': 'application/json' } },
+      {
+        status: 503,
+        headers: {
+          'Cache-Control': 'no-store',
+          'Content-Type': 'application/json',
+        },
+      },
     );
   }
 }
@@ -159,24 +142,13 @@ async function cacheFirst(request, cacheName) {
 }
 
 /**
- * Network-first for navigation with app shell fallback.
+ * Network-only navigation with a credential-free public shell fallback.
  */
-async function networkFirstWithShellFallback(request) {
+async function networkOnlyNavigationWithShellFallback(request) {
   try {
-    // A navigation must never be satisfied by the browser HTTP cache before
-    // the service worker can refresh its own shell cache.
-    const response = await fetch(new Request(request, { cache: 'no-store' }));
-    if (response.ok) {
-      const cache = await caches.open(APP_SHELL_CACHE);
-      cache.put(request, response.clone());
-    }
-    return response;
+    return await fetch(new Request(request, { cache: 'no-store' }));
   } catch {
-    // Try the exact URL first
-    const cached = await caches.match(request);
-    if (cached) return cached;
-    // Fall back to the cached root shell
-    const shell = await caches.match('/');
+    const shell = await caches.match(new Request('/', { credentials: 'omit' }));
     if (shell) return shell;
     return new Response('Offline — please reconnect to use Qalem.', {
       status: 503,
@@ -186,40 +158,14 @@ async function networkFirstWithShellFallback(request) {
 }
 
 /**
- * Check if a pathname points to a static asset.
+ * Check if a pathname is part of Qalem's immutable/public asset surface.
  */
-function isStaticAsset(pathname) {
-  return STATIC_EXTENSIONS.some((ext) => pathname.endsWith(ext));
+function isPublicStaticAsset(pathname) {
+  return (
+    PUBLIC_STATIC_FILES.includes(pathname) ||
+    PUBLIC_STATIC_PREFIXES.some((prefix) => pathname.startsWith(prefix))
+  );
 }
-
-// ────────────────────────── Push Notifications ──────────────────────────
-
-self.addEventListener('push', function (event) {
-  const fallback = { title: 'Qalem', body: 'Des cartes vous attendent !' };
-  let data = fallback;
-
-  try {
-    if (event.data) {
-      data = event.data.json();
-    }
-  } catch {
-    // If JSON parsing fails, use fallback
-  }
-
-  const title = data.title || fallback.title;
-  const options = {
-    body: data.body || fallback.body,
-    icon: '/favicon.ico',
-    badge: '/favicon.ico',
-    tag: 'review-reminder',
-    renotify: true,
-    data: {
-      url: '/review',
-    },
-  };
-
-  event.waitUntil(self.registration.showNotification(title, options));
-});
 
 self.addEventListener('notificationclick', function (event) {
   event.notification.close();

@@ -1,66 +1,63 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Bell, Mail, Smartphone, MessageCircle, Check, X, HelpCircle } from 'lucide-react';
-import { Switch } from '@/components/ui/switch';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useI18n } from '@/lib/hooks/use-i18n';
+import { useCallback, useEffect, useState } from 'react';
+import { Bell, Check, HelpCircle, Smartphone, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { useAuth } from '@/lib/hooks/use-auth';
+import { useI18n } from '@/lib/hooks/use-i18n';
 import {
-  loadPreferences,
-  savePreferences,
-  requestPushPermission,
+  checkAndNotifyDueCards,
   getPushPermissionState,
+  loadPreferences,
+  requestPushPermission,
+  savePreferences,
   type NotificationPreferences,
 } from '@/lib/notifications';
 
 type PushState = NotificationPermission | 'unsupported';
 
+const DISABLED_PREFERENCES: NotificationPreferences = { push: false };
+
 export function NotificationSettings(): React.ReactElement {
   const { t } = useI18n();
-  const [prefs, setPrefs] = useState<NotificationPreferences>({
-    email: false,
-    push: false,
-    whatsapp: false,
-  });
+  const { user, isLoading } = useAuth();
+  const [prefs, setPrefs] = useState<NotificationPreferences>(DISABLED_PREFERENCES);
   const [pushState, setPushState] = useState<PushState>('default');
   const [requesting, setRequesting] = useState(false);
 
   useEffect(() => {
-    setPrefs(loadPreferences());
+    setPrefs(user ? loadPreferences(user.id) : DISABLED_PREFERENCES);
     setPushState(getPushPermissionState());
-  }, []);
+  }, [user]);
 
-  const handleSave = useCallback(() => {
-    savePreferences(prefs);
-    toast.success(t('notifications.saved'));
-  }, [prefs, t]);
-
-  const handleToggle = useCallback(
-    (key: keyof NotificationPreferences, value: boolean) => {
-      const updated = { ...prefs, [key]: value };
+  const persist = useCallback(
+    (updated: NotificationPreferences) => {
+      if (!user) return;
       setPrefs(updated);
-      savePreferences(updated);
+      savePreferences(user.id, updated);
     },
-    [prefs],
+    [user],
   );
 
   const handleRequestPush = useCallback(async () => {
+    if (!user) return;
     setRequesting(true);
     try {
       const granted = await requestPushPermission();
       setPushState(getPushPermissionState());
       if (granted) {
-        handleToggle('push', true);
+        persist({ push: true });
+        void checkAndNotifyDueCards(user.id);
       }
     } finally {
       setRequesting(false);
     }
-  }, [handleToggle]);
+  }, [persist, user]);
 
-  const pushPermissionLabel = (): { text: string; icon: React.ReactNode } => {
+  const permissionInfo = (): { text: string; icon: React.ReactNode } => {
     switch (pushState) {
       case 'granted':
         return {
@@ -74,7 +71,7 @@ export function NotificationSettings(): React.ReactElement {
         };
       case 'unsupported':
         return {
-          text: 'Non supporté',
+          text: t('notifications.pushUnsupported'),
           icon: <HelpCircle className="h-4 w-4 text-muted-foreground" />,
         };
       default:
@@ -85,11 +82,19 @@ export function NotificationSettings(): React.ReactElement {
     }
   };
 
-  const pushInfo = pushPermissionLabel();
+  const pushInfo = permissionInfo();
+  const canToggle = Boolean(user) && pushState === 'granted';
+  const handleToggle = useCallback(
+    (push: boolean) => {
+      if (!user) return;
+      persist({ push });
+      if (push) void checkAndNotifyDueCards(user.id);
+    },
+    [persist, user],
+  );
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center gap-3">
         <Bell className="h-5 w-5 text-primary" />
         <div>
@@ -98,19 +103,6 @@ export function NotificationSettings(): React.ReactElement {
         </div>
       </div>
 
-      {/* Email toggle */}
-      <div className="flex items-center justify-between rounded-lg border p-4">
-        <div className="flex items-center gap-3">
-          <Mail className="h-5 w-5 text-muted-foreground" />
-          <div>
-            <Label className="text-sm font-medium">{t('notifications.email')}</Label>
-            <p className="text-xs text-muted-foreground">{t('notifications.emailDesc')}</p>
-          </div>
-        </div>
-        <Switch checked={prefs.email} onCheckedChange={(v) => handleToggle('email', v)} />
-      </div>
-
-      {/* Push toggle */}
       <div className="rounded-lg border p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -121,57 +113,37 @@ export function NotificationSettings(): React.ReactElement {
             </div>
           </div>
           <Switch
-            checked={prefs.push}
-            onCheckedChange={(v) => handleToggle('push', v)}
-            disabled={pushState === 'denied' || pushState === 'unsupported'}
+            aria-label={t('notifications.push')}
+            checked={prefs.push && canToggle}
+            onCheckedChange={handleToggle}
+            disabled={!canToggle}
           />
         </div>
 
-        {/* Push permission state */}
         <div className="flex items-center gap-2 text-sm">
           {pushInfo.icon}
-          <span className="text-muted-foreground">{pushInfo.text}</span>
+          <span className="text-muted-foreground">
+            {!isLoading && !user ? t('notifications.signInRequired') : pushInfo.text}
+          </span>
         </div>
 
-        {/* Enable push button if not yet granted */}
-        {pushState === 'default' && (
+        {user && pushState === 'default' && (
           <Button variant="outline" size="sm" onClick={handleRequestPush} disabled={requesting}>
-            {requesting ? '...' : t('notifications.pushEnable')}
+            {requesting ? t('notifications.enabling') : t('notifications.pushEnable')}
           </Button>
         )}
       </div>
 
-      {/* WhatsApp toggle */}
-      <div className="rounded-lg border p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <MessageCircle className="h-5 w-5 text-muted-foreground" />
-            <div>
-              <Label className="text-sm font-medium">{t('notifications.whatsapp')}</Label>
-              <p className="text-xs text-muted-foreground">{t('notifications.whatsappDesc')}</p>
-            </div>
-          </div>
-          <Switch checked={prefs.whatsapp} onCheckedChange={(v) => handleToggle('whatsapp', v)} />
-        </div>
-
-        {/* Phone number input shown only when WhatsApp is on */}
-        {prefs.whatsapp && (
-          <div className="ml-8 space-y-1">
-            <Label className="text-xs font-medium">{t('notifications.whatsappNumber')}</Label>
-            <Input
-              type="tel"
-              dir="ltr"
-              placeholder={t('notifications.whatsappPlaceholder')}
-              value={prefs.whatsappNumber ?? ''}
-              onChange={(e) => setPrefs((prev) => ({ ...prev, whatsappNumber: e.target.value }))}
-              className="max-w-xs"
-            />
-          </div>
-        )}
-      </div>
-
-      {/* Save button */}
-      <Button onClick={handleSave}>{t('notifications.savePreferences')}</Button>
+      <Button
+        onClick={() => {
+          if (!user) return;
+          savePreferences(user.id, prefs);
+          toast.success(t('notifications.saved'));
+        }}
+        disabled={!user}
+      >
+        {t('notifications.savePreferences')}
+      </Button>
     </div>
   );
 }

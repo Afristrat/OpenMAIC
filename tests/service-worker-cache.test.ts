@@ -11,7 +11,14 @@ describe('PWA shell cache', () => {
     );
     const rootLayout = readFileSync(resolve(process.cwd(), 'app/layout.tsx'), 'utf8');
 
-    expect(serviceWorker).toContain("const APP_SHELL_CACHE = 'qalem-shell-v2'");
+    expect(serviceWorker).toContain("const APP_SHELL_CACHE = 'qalem-shell-v3'");
+    expect(serviceWorker).toContain("const STATIC_CACHE = 'qalem-static-v3'");
+    expect(serviceWorker).not.toContain('DATA_CACHE');
+    expect(serviceWorker).toContain('networkOnlyWithOfflineResponse(event.request)');
+    expect(serviceWorker).not.toContain('networkFirst(');
+    expect(serviceWorker).toContain("credentials: 'omit'");
+    expect(serviceWorker).toContain("url.pathname.startsWith('/api/')");
+    expect(serviceWorker).not.toContain("addEventListener('push'");
     expect(serviceWorker).toContain("cache: 'no-store'");
     expect(registrar).toContain("updateViaCache: 'none'");
     expect(registrar).toContain('registration.update()');

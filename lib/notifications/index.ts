@@ -1,82 +1,82 @@
 /**
- * Notification manager for spaced-repetition review reminders.
+ * Browser notification manager for spaced-repetition reminders.
  *
- * Supports three channels:
- * - Email (placeholder — requires backend integration)
- * - Push (PWA service worker)
- * - WhatsApp via Evolution API (placeholder — config structure only)
+ * This module deliberately implements the in-app PWA trigger only. Remote
+ * delivery while Qalem is closed belongs to S3-002; email and WhatsApp belong
+ * to S6-011.
  */
 
-import { tryCreateClient } from '@/lib/supabase/client';
+import { getClientTranslation } from '@/lib/i18n';
 import { createLogger } from '@/lib/logger';
+import { tryCreateClient } from '@/lib/supabase/client';
 
 const log = createLogger('Notifications');
 
-// ────────────────────────── Types ──────────────────────────
-
 export interface NotificationPreferences {
-  email: boolean;
   push: boolean;
-  whatsapp: boolean;
-  whatsappNumber?: string;
 }
 
-export interface EvolutionAPIConfig {
-  /** Evolution API base URL (e.g. https://evo.example.com) */
-  baseUrl: string;
-  /** Instance name configured in Evolution API */
-  instanceName: string;
-  /** API key for the Evolution API instance */
-  apiKey: string;
-}
+export type DueCardCheckResult =
+  | 'disabled'
+  | 'throttled'
+  | 'unauthenticated'
+  | 'no-due-cards'
+  | 'notified'
+  | 'unavailable';
 
-const PREFS_STORAGE_KEY = 'qalem-notification-prefs';
-
-// ────────────────────────── Preferences ──────────────────────────
-
-/** Load notification preferences from localStorage. */
-export function loadPreferences(): NotificationPreferences {
-  const defaults: NotificationPreferences = {
-    email: false,
-    push: false,
-    whatsapp: false,
-  };
-
-  try {
-    const raw = localStorage.getItem(PREFS_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw) as Partial<NotificationPreferences>;
-      return { ...defaults, ...parsed };
-    }
-  } catch {
-    // localStorage unavailable or corrupt
-  }
-
-  return defaults;
-}
-
-/** Save notification preferences to localStorage. */
-export function savePreferences(prefs: NotificationPreferences): void {
-  try {
-    localStorage.setItem(PREFS_STORAGE_KEY, JSON.stringify(prefs));
-  } catch {
-    // localStorage unavailable
-  }
-}
-
-// ────────────────────────── Push notifications ──────────────────────────
-
+const PREFS_STORAGE_PREFIX = 'qalem-notification-prefs';
+const LAST_CHECK_STORAGE_PREFIX = 'qalem-review-reminder-last-check';
+const REMINDER_LOCK_PREFIX = 'qalem-review-reminder';
 const SW_PATH = '/sw.js';
 
+/** One successful check per authenticated user and browser every fifteen minutes. */
+export const REVIEW_REMINDER_INTERVAL_MS = 15 * 60 * 1000;
+
+function userStorageKey(prefix: string, userId: string): string {
+  return `${prefix}:${userId}`;
+}
+
+function defaultPreferences(): NotificationPreferences {
+  return { push: false };
+}
+
+/** Load notification preferences scoped to one authenticated account. */
+export function loadPreferences(userId: string): NotificationPreferences {
+  if (!userId) return defaultPreferences();
+
+  try {
+    const raw = localStorage.getItem(userStorageKey(PREFS_STORAGE_PREFIX, userId));
+    if (!raw) return defaultPreferences();
+    const parsed = JSON.parse(raw) as Partial<NotificationPreferences>;
+    return { push: parsed.push === true };
+  } catch {
+    return defaultPreferences();
+  }
+}
+
+/** Save notification preferences for exactly one authenticated account. */
+export function savePreferences(userId: string, prefs: NotificationPreferences): void {
+  if (!userId) return;
+
+  try {
+    localStorage.setItem(
+      userStorageKey(PREFS_STORAGE_PREFIX, userId),
+      JSON.stringify({ push: prefs.push === true }),
+    );
+  } catch {
+    // Storage can be unavailable in privacy-restricted browser contexts.
+  }
+}
+
 /**
- * Register the push notification service worker and request permission.
- * Returns true if push notifications are now enabled, false otherwise.
+ * Request browser permission after an explicit user gesture.
+ * The background reminder check never calls this function.
  */
 export async function requestPushPermission(): Promise<boolean> {
   if (
     typeof window === 'undefined' ||
-    !('serviceWorker' in navigator) ||
-    !('PushManager' in window)
+    !('Notification' in window) ||
+    !('serviceWorker' in navigator)
   ) {
     log.warn('Push notifications are not supported in this browser');
     return false;
@@ -84,108 +84,125 @@ export async function requestPushPermission(): Promise<boolean> {
 
   try {
     const permission = await Notification.requestPermission();
-    if (permission !== 'granted') {
-      log.info('Push notification permission denied');
-      return false;
-    }
+    if (permission !== 'granted') return false;
 
-    await navigator.serviceWorker.register(SW_PATH, { scope: '/' });
-    log.info('Service worker registered for push notifications');
+    await navigator.serviceWorker.register(SW_PATH, {
+      scope: '/',
+      updateViaCache: 'none',
+    });
     return true;
-  } catch (err) {
-    log.error('Failed to register service worker:', err);
+  } catch (error) {
+    log.error('Failed to enable browser notifications:', error);
     return false;
   }
 }
 
-/**
- * Get the current push permission state without prompting.
- * Returns 'granted' | 'denied' | 'default'.
- */
+/** Return the current permission without ever prompting the user. */
 export function getPushPermissionState(): NotificationPermission | 'unsupported' {
-  if (typeof window === 'undefined' || !('Notification' in window)) {
-    return 'unsupported';
-  }
+  if (typeof window === 'undefined' || !('Notification' in window)) return 'unsupported';
   return Notification.permission;
 }
 
-// ────────────────────────── Due card check ──────────────────────────
+function readLastSuccessfulCheck(userId: string): number {
+  try {
+    const raw = localStorage.getItem(userStorageKey(LAST_CHECK_STORAGE_PREFIX, userId));
+    const timestamp = raw === null ? Number.NaN : Number(raw);
+    return Number.isFinite(timestamp) ? timestamp : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function rememberSuccessfulCheck(userId: string, timestamp: number): void {
+  try {
+    localStorage.setItem(userStorageKey(LAST_CHECK_STORAGE_PREFIX, userId), String(timestamp));
+  } catch {
+    // The notification tag still prevents two visible reminders if storage fails.
+  }
+}
+
+async function withCrossTabLock<T>(userId: string, action: () => Promise<T>): Promise<T> {
+  const lockManager = typeof navigator === 'undefined' ? undefined : navigator.locks;
+  if (!lockManager) return action();
+
+  return lockManager.request(userStorageKey(REMINDER_LOCK_PREFIX, userId), action);
+}
+
+async function authenticatedUserId(): Promise<string | null> {
+  const supabase = tryCreateClient();
+  if (!supabase) return null;
+
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    return user?.id ?? null;
+  } catch {
+    return null;
+  }
+}
 
 /**
- * Check if the user has due review cards and trigger notifications
- * through the enabled channels.
+ * Check due cards and display at most one local PWA reminder per interval.
  *
- * Intended to be called periodically (e.g. on app load or via a cron job).
+ * The account-scoped preference and an already-granted browser permission are
+ * checked before any network request. Navigator Locks serializes concurrent
+ * tabs; the account-scoped timestamp bounds later checks and the stable
+ * notification tag replaces any residual duplicate at browser level.
  */
-export async function checkAndNotifyDueCards(userId: string): Promise<void> {
-  if (!userId) {
-    log.warn('checkAndNotifyDueCards called without userId');
-    return;
+export async function checkAndNotifyDueCards(
+  userId: string,
+  now: () => number = Date.now,
+): Promise<DueCardCheckResult> {
+  if (!userId) return 'unauthenticated';
+  if (!loadPreferences(userId).push || getPushPermissionState() !== 'granted') {
+    return 'disabled';
+  }
+  if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
+    return 'unavailable';
   }
 
-  // Verify auth state
-  const supabaseAuth = tryCreateClient();
-  if (!supabaseAuth) return;
-  const {
-    data: { user },
-  } = await supabaseAuth.auth.getUser();
-  if (!user || user.id !== userId) {
-    log.warn('Auth mismatch in notification check');
-    return;
-  }
-
-  const prefs = loadPreferences();
-
-  // Count due cards from Supabase
-  let dueCount = 0;
-  try {
-    const supabase = tryCreateClient();
-    if (!supabase) return;
-    const { count, error } = await supabase
-      .from('review_cards')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .lte('due_date', new Date().toISOString());
-
-    if (!error && count !== null) {
-      dueCount = count;
+  return withCrossTabLock(userId, async () => {
+    const checkedAt = now();
+    const lastCheckedAt = readLastSuccessfulCheck(userId);
+    if (checkedAt >= lastCheckedAt && checkedAt - lastCheckedAt < REVIEW_REMINDER_INTERVAL_MS) {
+      return 'throttled';
     }
-  } catch {
-    log.warn('Failed to check due cards from Supabase');
-    return;
-  }
 
-  if (dueCount === 0) return;
+    if ((await authenticatedUserId()) !== userId) return 'unauthenticated';
 
-  // ── Push notification ──
-  if (prefs.push && getPushPermissionState() === 'granted') {
+    const supabase = tryCreateClient();
+    if (!supabase) return 'unavailable';
+
     try {
+      const { count, error } = await supabase
+        .from('review_cards')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .lte('due_date', new Date(checkedAt).toISOString());
+
+      if (error || count === null) return 'unavailable';
+
+      if (count === 0) {
+        rememberSuccessfulCheck(userId, checkedAt);
+        return 'no-due-cards';
+      }
+
+      // The user may have signed out or switched accounts while the query ran.
+      if ((await authenticatedUserId()) !== userId) return 'unauthenticated';
+
       const registration = await navigator.serviceWorker.ready;
       await registration.showNotification('Qalem', {
-        body: `${dueCount} cartes à réviser`,
+        body: getClientTranslation('notifications.reviewDue', { count }),
         icon: '/favicon.ico',
         tag: 'review-reminder',
+        data: { url: '/review' },
       });
-    } catch (err) {
-      log.error('Failed to show push notification:', err);
+      rememberSuccessfulCheck(userId, checkedAt);
+      return 'notified';
+    } catch (error) {
+      log.warn('Failed to check or display due-card reminder:', error);
+      return 'unavailable';
     }
-  }
-
-  // ── Email notification (placeholder) ──
-  if (prefs.email) {
-    // TODO: Implement email notification via backend API route
-    // e.g. POST /api/notifications/email { userId, dueCount }
-    log.info(`Email notification placeholder: ${dueCount} cards due for user ${userId}`);
-  }
-
-  // ── WhatsApp via Evolution API (placeholder) ──
-  if (prefs.whatsapp && prefs.whatsappNumber) {
-    // TODO: Implement WhatsApp notification via Evolution API
-    // The config structure is defined in EvolutionAPIConfig.
-    // Example call:
-    //   POST ${config.baseUrl}/message/sendText/${config.instanceName}
-    //   Headers: { apikey: config.apiKey }
-    //   Body: { number: prefs.whatsappNumber, text: `Qalem: ${dueCount} cartes à réviser` }
-    log.info(`WhatsApp notification placeholder: ${dueCount} cards due → ${prefs.whatsappNumber}`);
-  }
+  });
 }

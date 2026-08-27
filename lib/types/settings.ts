@@ -9,6 +9,7 @@ export type SettingsSection =
   | 'pdf'
   | 'image'
   | 'video'
+  | 'notifications'
   | 'web-search';
 
 /**

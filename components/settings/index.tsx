@@ -27,6 +27,7 @@ import {
   Volume2,
   Mic,
   Plus,
+  Bell,
 } from 'lucide-react';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useSettingsStore } from '@/lib/store/settings';
@@ -56,6 +57,7 @@ import { WebSearchSettings } from './web-search-settings';
 import { WEB_SEARCH_PROVIDERS, getWebSearchProviderDisplayName } from '@/lib/web-search/constants';
 import type { WebSearchProviderId } from '@/lib/web-search/types';
 import { GeneralSettings } from './general-settings';
+import { NotificationSettings } from './notification-settings';
 import { ModelEditDialog } from './model-edit-dialog';
 import { AddProviderDialog, type NewProviderData } from './add-provider-dialog';
 import { AddAudioProviderDialog, type NewAudioProviderData } from './add-audio-provider-dialog';
@@ -552,6 +554,8 @@ export function SettingsDialog({ open, onOpenChange, initialSection }: SettingsD
     switch (activeSection) {
       case 'general':
         return <h2 className="text-lg font-semibold">{t('settings.systemSettings')}</h2>;
+      case 'notifications':
+        return <h2 className="text-lg font-semibold">{t('notifications.title')}</h2>;
       case 'providers':
         if (selectedProvider) {
           return (
@@ -821,6 +825,19 @@ export function SettingsDialog({ open, onOpenChange, initialSection }: SettingsD
             </button>
 
             <button
+              onClick={() => setActiveSection('notifications')}
+              className={cn(
+                'w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors text-left min-w-0',
+                activeSection === 'notifications'
+                  ? 'bg-primary/10 text-primary font-medium'
+                  : 'hover:bg-muted',
+              )}
+            >
+              <Bell className="h-4 w-4 shrink-0" />
+              <span className="truncate">{t('notifications.title')}</span>
+            </button>
+
+            <button
               onClick={() => setActiveSection('general')}
               className={cn(
                 'w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors text-left min-w-0',
@@ -1040,6 +1057,7 @@ export function SettingsDialog({ open, onOpenChange, initialSection }: SettingsD
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-5">
               {activeSection === 'general' && <GeneralSettings />}
+              {activeSection === 'notifications' && <NotificationSettings />}
 
               {activeSection === 'providers' && selectedProvider && (
                 <ProviderConfigPanel
