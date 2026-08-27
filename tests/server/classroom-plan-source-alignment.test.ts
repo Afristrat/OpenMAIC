@@ -175,7 +175,6 @@ describe('classroom plan source alignment gate', () => {
       alignment: {
         status: 'uncertain',
         sourceTopic: 'No usable content',
-        suggestedRequirement: undefined,
         references: [],
       },
     });
