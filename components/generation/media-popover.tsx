@@ -269,6 +269,7 @@ export function MediaPopover({ onSettingsOpen }: MediaPopoverProps) {
               onToggle={setImageGenerationEnabled}
             >
               <GroupedSelect
+                ariaLabel={t('media.imageCapability')}
                 groups={imageGroups}
                 selectedGroupId={imageProviderId}
                 selectedItemId={imageModelId}
@@ -288,6 +289,7 @@ export function MediaPopover({ onSettingsOpen }: MediaPopoverProps) {
               onToggle={setVideoGenerationEnabled}
             >
               <GroupedSelect
+                ariaLabel={t('media.videoCapability')}
                 groups={videoGroups}
                 selectedGroupId={videoProviderId}
                 selectedItemId={videoModelId}
@@ -316,6 +318,7 @@ export function MediaPopover({ onSettingsOpen }: MediaPopoverProps) {
               onToggle={setASREnabled}
             >
               <GroupedSelect
+                ariaLabel={t('media.asrCapability')}
                 groups={asrGroups}
                 selectedGroupId={asrProviderId}
                 selectedItemId={asrLanguage}
@@ -398,11 +401,13 @@ interface SelectGroupData {
 }
 
 function GroupedSelect({
+  ariaLabel,
   groups,
   selectedGroupId,
   selectedItemId,
   onSelect,
 }: {
+  ariaLabel: string;
   groups: SelectGroupData[];
   selectedGroupId: string;
   selectedItemId: string;
@@ -425,7 +430,10 @@ function GroupedSelect({
         onSelect(v.slice(0, sep), v.slice(sep + 2));
       }}
     >
-      <SelectTrigger className="h-8 w-full rounded-lg border-border/40 bg-background/80 hover:bg-muted/40 shadow-none text-xs focus:ring-1 focus:ring-ring/30 px-2.5">
+      <SelectTrigger
+        aria-label={ariaLabel}
+        className="h-8 w-full rounded-lg border-border/40 bg-background/80 hover:bg-muted/40 shadow-none text-xs focus:ring-1 focus:ring-ring/30 px-2.5"
+      >
         <span className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
           {selectedGroup?.groupIcon && (
             <img src={selectedGroup.groupIcon} alt="" className="size-4 rounded-sm shrink-0" />

@@ -251,13 +251,28 @@ export function SettingsDialog({ open, onOpenChange, initialSection }: SettingsD
     useState<ImageProviderId>(imageProviderId);
   const [selectedVideoProviderId, setSelectedVideoProviderId] =
     useState<VideoProviderId>(videoProviderId);
-  // Navigate to initialSection when dialog opens
+  // Navigate to the requested section and display the provider that is
+  // currently active in the store. The dialog stays mounted while closed, so
+  // its local selection may otherwise predate server-provider synchronization.
   useEffect(() => {
-    if (open && initialSection) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- Sync section from prop when dialog opens
-      setActiveSection(initialSection);
-    }
-  }, [open, initialSection]);
+    if (!open || !initialSection) return;
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Synchronize navigation from the opening action.
+    setActiveSection(initialSection);
+    if (initialSection === 'providers') setSelectedProviderId(providerId);
+    if (initialSection === 'pdf') setSelectedPdfProviderId(pdfProviderId);
+    if (initialSection === 'web-search') setSelectedWebSearchProviderId(webSearchProviderId);
+    if (initialSection === 'image') setSelectedImageProviderId(imageProviderId);
+    if (initialSection === 'video') setSelectedVideoProviderId(videoProviderId);
+  }, [
+    open,
+    initialSection,
+    providerId,
+    pdfProviderId,
+    webSearchProviderId,
+    imageProviderId,
+    videoProviderId,
+  ]);
 
   // Model editing state
   const [editingModel, setEditingModel] = useState<EditingModel | null>(null);
