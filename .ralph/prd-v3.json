@@ -1319,14 +1319,14 @@
       "epic": "6-RÉCONCILIATION",
       "priority": "P0",
       "status": "to_validate",
-      "passes": false,
+      "passes": true,
       "source": {
         "type": "request_or_observed_gap",
         "date": "2026-08-26"
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "L’accès SSH canonique a été rétabli le 27 août 2026. Le clone historique ServeurIA est divergent et sale ; la recertification doit donc utiliser un clone isolé neuf et identifier les déploiements effectifs avant toute clôture.",
+      "gap": "Soldé : le web, le worker principal et le capture-worker exécutent le même SHA livré sur refork-v030 ; leurs limites, montages, états de santé et parcours publics/authentifiés sont recertifiés sans exposition de secret.",
       "evidence": [
         ".ralph/prd-v2.json",
         "git:332941dc7f0727dc673c4364f78e122b879f2f96",
@@ -1339,7 +1339,14 @@
         "Vérifier les parcours publics et authentifiés critiques ainsi que les limites et montages persistants après déploiement.",
         "Vérifier que le PRD v3 et ses pointeurs sont suivis et poussés sur refork-v030 ; aucune clôture documentaire permanente avant preuve du remote."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-08-27 — Déploiement Coolify vn05etx36co4ytvedvjhub28 terminé sur 2ee074a59f6cc14b2697a38b591504418570011a après suppression de l’épinglage runtime 9212c98… au profit de HEAD sur refork-v030. Web, qalem-workers et capture-worker exposent chacun SOURCE_COMMIT=2ee074a… ; les trois conteneurs sont running/healthy, restartCount=0 et OOMKilled=false.",
+        "2026-08-27 — Configurations effectives recertifiées sans valeurs de secret : web 1,5 Gio/1,5 CPU, worker 3 Gio/3 CPU, capture-worker 1,5 Gio/1,5 CPU, politique unless-stopped ; le volume nommé a14gf0n3u719hnnd2yujrtmr_capture-storage-states reste monté en lecture-écriture sur /data/storage-states après remplacement du conteneur. Les healthchecks worker et worker → capture sortent avec le code 0.",
+        "2026-08-27 — Gate global au SHA de code 122066878de8a827e4aa7b55addfa7e8279bba57 dans trois conteneurs isolés ServeurIA : formatage, TypeScript et lint sans erreur ; Vitest 365/365 fichiers et 2 425/2 425 tests ; build 95/95 pages ; Playwright 71/71. Les trois conteneurs ont exit=0 et OOMKilled=false. Le SHA déployé 2ee074a… ne diffère de ce SHA testé que par .ralph/prd-v3.json et .ralph/progress.md.",
+        "2026-08-27 — Recette post-déploiement : /, /app, /api/health et /api/server-providers répondent 200 ; /api/profile anonyme répond 401. Un compte Supabase éphémère a obtenu login=200, pathname=/profile, /api/profile=200 et la zone de génération visible dans /app ; sa suppression a répondu 200.",
+        "2026-08-27 — .ralph/prd-v3.json, tasks/prd-v3.md, AGENTS.md et .ralph/certification-prd-v3-2026-08-26.json sont suivis par Git. origin/refork-v030 a été vérifié sur 2ee074a59f6cc14b2697a38b591504418570011a avant la clôture documentaire ; main n’a pas été touchée."
+      ],
+      "completedAt": "2026-08-27",
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
@@ -1394,7 +1401,10 @@
       "sourceDependencies": ["S0-013"],
       "dependencies": [],
       "gap": "Preuves historiques d’isolation et de persistance ; écoute finale et état courant non certifiés.",
-      "evidence": ["tests/api/classroom-access.test.ts", ".ralph/prd-v2.json#S0-015"],
+      "evidence": [
+        "tests/api/classroom-access.test.ts",
+        ".ralph/prd-v2.json#S0-015"
+      ],
       "acceptance": [
         "Génération + lecture d'une classroom non publiée exigent une session Supabase authentifiée (401 sinon)",
         "Génération limitée à super-admin OU admin de l'orgId ciblé (403 sinon) ; lecture ouverte à tout membre de l'org",
@@ -1431,7 +1441,10 @@
       "sourceDependencies": [],
       "dependencies": [],
       "gap": "Expositions de secrets signalées dans l’historique ; l’utilisateur a explicitement refusé les rotations dans ce chantier.",
-      "evidence": ["AGENTS.md#Règles du projet", "thread:01a005ad-360e-7710-aeb5-bf5fc84c67b6"],
+      "evidence": [
+        "AGENTS.md#Règles du projet",
+        "thread:01a005ad-360e-7710-aeb5-bf5fc84c67b6"
+      ],
       "acceptance": [
         "Conserver uniquement les catégories de secrets et services concernés, jamais leurs valeurs.",
         "Ne déclencher aucune rotation, révocation ou mutation sans nouvelle autorisation explicite d’Amine dans la session propriétaire.",
@@ -1747,7 +1760,10 @@
       "sourceDependencies": [],
       "dependencies": ["S6-003"],
       "gap": "Le formulaire porte pdfFile: File | null et le dépôt ne prend que files[0].",
-      "evidence": ["app/app/page.tsx:146", "components/generation/generation-toolbar.tsx:299"],
+      "evidence": [
+        "app/app/page.tsx:146",
+        "components/generation/generation-toolbar.tsx:299"
+      ],
       "acceptance": [
         "Permettre sélection, ajout, retrait et réutilisation de plusieurs documents autorisés, avec état individuel d’ingestion.",
         "Persister un manifeste versionné de sources par organisation et par formation ; un rechargement retrouve la sélection.",
@@ -1879,7 +1895,10 @@
       "sourceDependencies": ["S4-009"],
       "dependencies": [],
       "gap": "Soldé : devise réellement validée contre le registre ISO 4217 du runtime, contexte structuré porté par les trames et persisté dans la classroom, zone laser mesurée sur l’élément DOM positionné puis parcourue pendant la durée normalisée.",
-      "evidence": ["lib/formation-engine/learning-context.ts", ".ralph/prd-v2.json#S4-010"],
+      "evidence": [
+        "lib/formation-engine/learning-context.ts",
+        ".ralph/prd-v2.json#S4-010"
+      ],
       "acceptance": [
         "L’auteur choisit explicitement le territoire et la devise ISO 4217 avant la génération",
         "Une trame transmet son contexte structuré au formulaire au lieu de ne transmettre que son texte",
@@ -2271,7 +2290,10 @@
       "sourceDependencies": ["S0-008"],
       "dependencies": [],
       "gap": "Réouverture de preuve : la complétion Moodle historique a été simulée via PHP, pas déclenchée par le runtime navigateur. Le runtime a évolué vers des adaptateurs natifs.",
-      "evidence": ["lib/export/scorm/tracking-adapters.ts", ".ralph/prd-v2.json#S1-007"],
+      "evidence": [
+        "lib/export/scorm/tracking-adapters.ts",
+        ".ralph/prd-v2.json#S1-007"
+      ],
       "acceptance": [
         "export_jobs scorm12 → zip imsmanifest.xml valide",
         "Import Moodle docker réussi, completion trackée (preuve)",
@@ -2342,7 +2364,10 @@
       "sourceDependencies": ["S0-008"],
       "dependencies": [],
       "gap": "Réouverture de preuve : OOXML bien formé ne prouve pas l’ouverture sans réparation dans PowerPoint.",
-      "evidence": ["tests/edit/round-trip/ooxml-validity.test.ts", ".ralph/prd-v2.json#S1-010"],
+      "evidence": [
+        "tests/edit/round-trip/ooxml-validity.test.ts",
+        ".ralph/prd-v2.json#S1-010"
+      ],
       "acceptance": [
         "PPTX d'un course généré s'ouvre sans réparation dans PowerPoint",
         "Packages mathml2omml/pptxgenjs buildés au postinstall (preuve)",
@@ -2375,7 +2400,10 @@
       "sourceDependencies": ["S1-003"],
       "dependencies": [],
       "gap": "Catalogue, route et E2E présents : ne pas reconstruire ; terminer la recette de publication, visibilité et entrée en cours.",
-      "evidence": ["app/api/courses/catalog/route.ts", "e2e/tests/course-catalog.spec.ts"],
+      "evidence": [
+        "app/api/courses/catalog/route.ts",
+        "e2e/tests/course-catalog.spec.ts"
+      ],
       "acceptance": [
         "Liste des courses ready + catalog_visible",
         "Rejoindre la classe → classroom (e2e)",
@@ -2408,7 +2436,10 @@
       "sourceDependencies": ["S1-003"],
       "dependencies": [],
       "gap": "Persistance du verdict d’import présente ; le parcours complet dépôt conforme → édition → ready reste à prouver et compléter.",
-      "evidence": ["lib/server/course-import-storage.ts", "lib/server/course-storage.ts"],
+      "evidence": [
+        "lib/server/course-import-storage.ts",
+        "lib/server/course-storage.ts"
+      ],
       "acceptance": [
         "Contenu conforme → outline dans l'Editor natif v0.3.0",
         "e2e dépôt → validation → outline → ready",
@@ -2650,7 +2681,10 @@
       "sourceDependencies": ["S0-008", "S2-010"],
       "dependencies": [],
       "gap": "Protocole composite déterministe présent ; sidecar, budget mémoire, conformité et robustesse P2-C non soldés.",
-      "evidence": ["lib/transmissions/audio-watermark-protocol.ts", ".ralph/prd-v2.json#S2-008"],
+      "evidence": [
+        "lib/transmissions/audio-watermark-protocol.ts",
+        ".ralph/prd-v2.json#S2-008"
+      ],
       "acceptance": [
         "Worker invoque AudioSeal MIT dans un sidecar borné ; watermark_id opaque 128 bits reconstitué par protocole composite documenté",
         "Protocole P2-C automatisé : ID décodé après mp3 128k, ogg, extrait 30 s, normalisation",
@@ -2684,7 +2718,10 @@
       "sourceDependencies": ["S2-010"],
       "dependencies": [],
       "gap": "Dérivé FFmpeg et test présents ; preuve avec destinataire légitime et décodage depuis capture encore requise.",
-      "evidence": ["tests/transmissions/visual-watermark.test.ts", ".ralph/prd-v2.json#S2-009"],
+      "evidence": [
+        "tests/transmissions/visual-watermark.test.ts",
+        ".ralph/prd-v2.json#S2-009"
+      ],
       "acceptance": [
         "videowmark (ou incrustation périodique avec ADR) appliqué par le worker",
         "Identifiant décodable sur capture d'écran du flux (preuve documentée)"
@@ -2883,7 +2920,10 @@
       "sourceDependencies": ["S3-005"],
       "dependencies": ["S3-005", "S-025"],
       "gap": "Étendre le FSRS existant ; l’alimentation post-quiz manquante est isolée dans S-025 pour ne pas dépendre du replay.",
-      "evidence": ["lib/spaced-repetition/extractor.ts", "tasks/prd-3-ancrer.md"],
+      "evidence": [
+        "lib/spaced-repetition/extractor.ts",
+        "tasks/prd-3-ancrer.md"
+      ],
       "acceptance": [
         "Items de quiz de la session dans la file FSRS (extension, pas réécriture)",
         "Cycle testé : push → quiz → résultat re-nourrit FSRS",
@@ -3115,7 +3155,10 @@
       "sourceDependencies": [],
       "dependencies": ["S0-011"],
       "gap": "Bannière de consentement sans montage retrouvé ; ne pas activer une collecte pour justifier la bannière.",
-      "evidence": ["components/telemetry-consent-banner.tsx:10", "app/layout.tsx"],
+      "evidence": [
+        "components/telemetry-consent-banner.tsx:10",
+        "app/layout.tsx"
+      ],
       "acceptance": [
         "Inventorier les collectes réellement actives avant de décider de l’interface de consentement.",
         "Pour chaque collecte retenue, vérifier consentement explicite, refus, retrait et absence d’envoi avant opt-in.",
