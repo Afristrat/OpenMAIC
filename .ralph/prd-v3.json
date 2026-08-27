@@ -1893,7 +1893,8 @@
         "2026-08-27 — Le parcours Chromium Formation Design Pro prouve qu’une trame rétablit son contexte structuré, que l’auteur le remplace explicitement par Sénégal/XOF et que le job persistant reçoit exactement cet instantané. La génération et le stockage existants propagent learningContext et buildLearningContextDirective impose la devise à tous les montants sans conversion non sourcée.",
         "2026-08-27 — LaserPointerOverlay mesure désormais l’élément réellement positionné, et non son wrapper DOM nul, puis l’unit à son contenu rendu. Le parcours Chromium compare la géométrie calculée aux rectangles DOM, observe le déplacement du pointeur et vérifie la durée de 2 500 ms ; les tests unitaires couvrent le serpentin, la valeur par défaut de 8 secondes et les bornes 2–30 secondes.",
         "2026-08-27 — Formation Design Pro v3.8.0 publie les invariants territoire/devise et laser dans SKILL.md, le contrat et l’override ; tests/skills/formation-engine-platform-publication.test.ts recalcule avec succès chaque SHA-256 déclaré dans publication.json.",
-        "2026-08-27 — Gate complet exécuté sur ServeurIA dans le worktree isolé /tmp/qalem-s4010-44040ed au SHA 44040ed69c1ed6f761db7c6c7aafc637498f8963 : pnpm check, TypeScript, lint, 2 425/2 425 tests Vitest, build et 70/70 tests Playwright réussis ; OOMKilled=false pour le build et les E2E."
+        "2026-08-27 — Gate complet exécuté sur ServeurIA dans le worktree isolé /tmp/qalem-s4010-44040ed au SHA 44040ed69c1ed6f761db7c6c7aafc637498f8963 : pnpm check, TypeScript, lint, 2 425/2 425 tests Vitest, build et 70/70 tests Playwright réussis ; OOMKilled=false pour le build et les E2E.",
+        "2026-08-27 — La suite cumulée a révélé une course propre au test : le second locator pouvait être résolu après le retrait normal du laser à 2 500 ms. Le SHA 122066878de8a827e4aa7b55addfa7e8279bba57 résout l’élément une seule fois et mesure deux positions à 250 ms d’intervalle ; preuve ciblée 1/1 puis suite complète 71/71, sans augmentation de timeout."
       ],
       "completedAt": "2026-08-27",
       "historicalEvidence": {
@@ -1921,15 +1922,48 @@
       },
       "sourceDependencies": ["S0-007"],
       "dependencies": [],
-      "gap": "La story n’a pas de clôture ; vérifier les libellés et l’identifiant réellement envoyé en production.",
-      "evidence": [".ralph/prd-v2.json#S0-017", "components/generation/generation-toolbar.tsx"],
+      "gap": "Implémentation, gate et exposition publique prouvées ; seule la confirmation humaine de lisibilité dans le sélecteur de production reste ouverte.",
+      "evidence": [
+        ".ralph/prd-v2.json#S0-017",
+        "lib/media/image-providers.ts",
+        "components/generation/media-popover.tsx",
+        "components/settings/index.tsx",
+        "components/settings/image-settings.tsx",
+        "e2e/tests/managed-image-models.spec.ts",
+        "commit:cb5775667c0c4e3d14c2b39cbe2535b9c4dd8550"
+      ],
       "acceptance": [
         "Les modèles image administrés Gemini sont affichés avec un libellé compréhensible dans le popover média et les paramètres, tout en conservant leur identifiant de requête exact",
         "Un modèle image administré inconnu reste sélectionnable et s'affiche avec son identifiant, sans liste blanche fragile",
         "Test unitaire ciblé, TypeScript, lint et tests du projet verts sur ServeurAI",
         "La production expose les modèles administrés et une vérification humaine confirme leur lisibilité dans le sélecteur"
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-08-27 — getImageModelDisplayName traduit les identifiants Gemini connus et restitue byte-for-byte tout identifiant administré inconnu. Le même helper alimente le popover média et les paramètres ; le sélecteur possède désormais un nom accessible localisé.",
+        "2026-08-27 — Le dialogue avancé réaligne à son ouverture son fournisseur local sur le fournisseur réellement actif après synchronisation serveur. Le parcours Chromium sélectionne future-image-model, vérifie son affichage de repli et celui de Gemini 3.1 Flash Image, puis prouve imageProviderId=openai-image et imageModelId=future-image-model dans les requêtes de planification et de génération finale.",
+        "2026-08-27 — Gate ServeurIA au SHA exact 122066878de8a827e4aa7b55addfa7e8279bba57 dans /tmp/qalem-s0017-27e9dd9 : Prettier, TypeScript et lint verts ; 365/365 fichiers et 2 425/2 425 tests Vitest ; build Next.js réussi avec 95/95 pages ; 71/71 tests Playwright. Les trois conteneurs dédiés terminent exit=0 et OOMKilled=false.",
+        "2026-08-27 — Production re-vérifiée après l’indisponibilité 502 : /, /app, /api/health et /api/server-providers répondent HTTP 200 ; le web sain exécute 122066878de8a827e4aa7b55addfa7e8279bba57 et l’API publique expose openai-image avec gemini-3.1-flash-image."
+      ],
+      "validationDebt": {
+        "recordedAt": "2026-08-27",
+        "decision": "Code, gate et production prouvés ; maintenir passes=false jusqu’au verdict visuel explicite d’Amine dans le sélecteur live.",
+        "implementedButUncertified": [
+          "Libellés humains partagés pour les modèles Gemini connus dans le popover et les paramètres.",
+          "Repli sans liste blanche : un identifiant administré inconnu reste affiché et sélectionnable.",
+          "Propagation byte-for-byte du fournisseur et du modèle sélectionnés jusqu’aux deux requêtes persistantes.",
+          "Ouverture des paramètres avancés sur le fournisseur image réellement actif."
+        ],
+        "machineEvidence": {
+          "targeted": "83/83 tests Vitest ciblés et 1/1 parcours Chromium S0-017 réussis pendant l’itération.",
+          "qualityGate": "Prettier, TypeScript, lint, 2 425/2 425 tests Vitest, build 95/95 pages et 71/71 E2E au SHA 122066878de8a827e4aa7b55addfa7e8279bba57.",
+          "production": "Quatre routes publiques HTTP 200 ; web sain sur le SHA exact ; openai-image publie gemini-3.1-flash-image.",
+          "oom": "OOMKilled=false pour les conteneurs qualité, build et E2E ; le build de validation nécessite une enveloppe V8 explicite de 4 Gio, tandis que le Dockerfile de production fournit sa propre enveloppe et a construit le SHA déployé."
+        },
+        "stillRequired": [
+          "Amine ouvre le sélecteur Médias de https://qalem.ma/app et confirme explicitement que « Gemini 3.1 Flash Image (rapide) » est lisible et non ambigu dans le popover et les paramètres."
+        ],
+        "certified": false
+      },
       "historicalEvidence": {
         "completedAt": null,
         "note": null,
