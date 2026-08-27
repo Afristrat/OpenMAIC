@@ -122,13 +122,6 @@ export const test = base.extend<Fixtures>({
       await page.route('**/api/account/is-admin', (route) =>
         route.fulfill({ status: 200, contentType: 'application/json', body: '{"isAdmin":false}' }),
       );
-      await page.route('**/api/skills?*', (route) =>
-        route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: '{"success":true,"skills":[]}',
-        }),
-      );
       // The authoring home loads the current organisation's catalog on mount.
       // Keep that background request inside the E2E boundary instead of letting
       // it reach the deliberately fake Supabase configured by Playwright.

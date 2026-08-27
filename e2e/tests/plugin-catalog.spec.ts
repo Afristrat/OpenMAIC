@@ -2,7 +2,9 @@ import { expect, test } from '../fixtures/base';
 
 test.describe('Catalogue des expériences interactives', () => {
   test('présente les dix expériences installées', async ({ page }) => {
-    await page.addInitScript(() => localStorage.setItem('locale', 'fr-FR'));
+    await page.addInitScript(() => {
+      if (window.top === window.self) localStorage.setItem('locale', 'fr-FR');
+    });
     await page.goto('/plugins');
 
     await expect(page.locator('[data-testid^="plugin-card-"]')).toHaveCount(10);
@@ -18,7 +20,9 @@ test.describe('Catalogue des expériences interactives', () => {
   });
 
   test('ouvre un simulateur métier utilisable et recalcule ses résultats', async ({ page }) => {
-    await page.addInitScript(() => localStorage.setItem('locale', 'fr-FR'));
+    await page.addInitScript(() => {
+      if (window.top === window.self) localStorage.setItem('locale', 'fr-FR');
+    });
     await page.goto('/plugins');
 
     const card = page.getByTestId('plugin-card-cash-flow-simulator');
@@ -40,7 +44,9 @@ test.describe('Catalogue des expériences interactives', () => {
   });
 
   test('recalcule un tableur contrôlé sans formule utilisateur', async ({ page }) => {
-    await page.addInitScript(() => localStorage.setItem('locale', 'fr-FR'));
+    await page.addInitScript(() => {
+      if (window.top === window.self) localStorage.setItem('locale', 'fr-FR');
+    });
     await page.goto('/plugins');
 
     const card = page.getByTestId('plugin-card-controlled-spreadsheet');

@@ -40,6 +40,7 @@ const INTERACTIVE_HTML = `<!DOCTYPE html><html><head><meta charset="utf-8"></hea
 
 async function seedDatabase(page: import('@playwright/test').Page) {
   await page.addInitScript((settings) => {
+    if (window.top !== window.self) return;
     localStorage.setItem('settings-storage', settings);
   }, SETTINGS_STORAGE);
 

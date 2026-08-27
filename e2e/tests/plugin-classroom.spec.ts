@@ -6,6 +6,7 @@ const SETTINGS_STORAGE = createSettingsStorage({ sidebarCollapsed: false });
 
 async function seedPluginScene(page: import('@playwright/test').Page) {
   await page.addInitScript((settings) => {
+    if (window.top !== window.self) return;
     localStorage.setItem('settings-storage', settings);
     localStorage.setItem('locale', 'fr-FR');
   }, SETTINGS_STORAGE);

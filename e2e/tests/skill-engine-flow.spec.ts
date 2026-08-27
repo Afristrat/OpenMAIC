@@ -7,7 +7,7 @@ test.describe('Formation Design Pro — persistent generation path', () => {
     browserConsoleContract,
     page,
   }) => {
-    browserConsoleContract.expectHttpError('/api/classroom', 404);
+    browserConsoleContract.expectHttpError('/api/skills', 401);
     let submittedBody: Record<string, unknown> | undefined;
     let planBody: Record<string, unknown> | undefined;
 

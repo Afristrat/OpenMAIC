@@ -9,7 +9,7 @@ test('privilégie la classroom serveur et sa narration sur le cache local périm
   await page.addInitScript((settings) => {
     localStorage.setItem('settings-storage', settings);
   }, createSettingsStorage());
-  await page.goto('/app');
+  await page.goto('/app', { waitUntil: 'networkidle' });
   await page.evaluate(
     (stageId) =>
       new Promise<void>((resolve, reject) => {

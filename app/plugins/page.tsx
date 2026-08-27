@@ -254,7 +254,7 @@ export default function PluginsPage(): React.ReactElement {
               src={activePlugin.renderUrl}
               title={activePlugin.name}
               className="h-full w-full border-0"
-              sandbox="allow-scripts allow-same-origin"
+              sandbox="allow-scripts"
               onLoad={initialisePreview}
             />
           </div>
