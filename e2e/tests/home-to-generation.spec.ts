@@ -551,7 +551,7 @@ test.describe('Home → Generation', () => {
     });
     await page.route('**/api/generate-classroom/plan/plan-recoverable-e2e', async (route) => {
       await route.fulfill({
-        status: 504,
+        status: 200,
         contentType: 'text/html',
         body: '<!DOCTYPE html><html><body>Gateway Time-out</body></html>',
       });

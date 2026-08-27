@@ -52,7 +52,7 @@ export const test = base.extend<Fixtures>({
       // Always mock server-providers — called on every page load by root layout
       await mockApi.mockServerProviders();
       await mockApi.mockSourceLibrary();
-      await page.route('**/rest/v1/review_cards?*', async (route) => {
+      await page.route('**/rest/v1/review_cards*', async (route) => {
         if (route.request().method() !== 'GET') {
           await route.fallback();
           return;

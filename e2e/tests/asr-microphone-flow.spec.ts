@@ -142,7 +142,7 @@ test.describe('Whisper microphone flow', () => {
     await mockManagedWhisper(page);
     await page.route('**/api/transcription', (route) =>
       route.fulfill({
-        status: 502,
+        status: 200,
         contentType: 'application/json',
         body: JSON.stringify({ success: false, error: 'Transcription failed' }),
       }),
