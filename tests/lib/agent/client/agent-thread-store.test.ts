@@ -23,7 +23,10 @@ const thread = (text: string) => ({
 
 describe('useAgentThreadStore', () => {
   beforeAll(async () => {
-    vi.stubGlobal('localStorage', createMemoryStorage());
+    const localStorage = createMemoryStorage();
+    vi.stubGlobal('localStorage', localStorage);
+    vi.stubGlobal('window', { localStorage });
+    vi.resetModules();
     ({ useAgentThreadStore } = await import('@/lib/agent/client/agent-thread-store'));
   });
   afterAll(() => vi.unstubAllGlobals());

@@ -733,7 +733,7 @@ describe('media prompt condition wiring', () => {
   test('rejects a slide whose content-bearing elements overlap', async () => {
     expectConsoleMessages({
       warn: [
-        '[WARN] [Generation] Slide layout invalid for scene_overlap: [{"type":"overlap","elementIds":["text_1t0lxe_2","text_RU7aVD_E"]}]; retrying',
+        /^\[WARN\] \[Generation\] Slide layout invalid for scene_overlap: \[\{"type":"overlap","elementIds":\["text_[A-Za-z0-9_-]+","text_[A-Za-z0-9_-]+"\]\}\]; retrying$/,
       ],
     });
     const aiCall: AICallFn = async () =>
@@ -782,7 +782,7 @@ describe('media prompt condition wiring', () => {
   test('reports exact layout defects and injects them into the next prompt', async () => {
     expectConsoleMessages({
       warn: [
-        '[WARN] [Generation] Slide layout invalid for scene_retry_feedback: [{"type":"out-of-bounds","elementId":"text_8Qbhivr3"}]; retrying',
+        /^\[WARN\] \[Generation\] Slide layout invalid for scene_retry_feedback: \[\{"type":"out-of-bounds","elementId":"text_[A-Za-z0-9_-]+"\}\]; retrying$/,
       ],
     });
     let feedback = '';
