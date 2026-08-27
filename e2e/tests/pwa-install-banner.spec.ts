@@ -84,7 +84,15 @@ test.describe('PWA install banner', () => {
 });
 
 test.describe('PWA install banner on iOS', () => {
-  test.use({ ...devices['iPhone 13'] });
+  const iPhone = devices['iPhone 13'];
+  test.use({
+    userAgent: iPhone.userAgent,
+    viewport: iPhone.viewport,
+    screen: iPhone.screen,
+    deviceScaleFactor: iPhone.deviceScaleFactor,
+    isMobile: iPhone.isMobile,
+    hasTouch: iPhone.hasTouch,
+  });
 
   test('shows manual instructions in browser mode and respects dismissal', async ({ page }) => {
     await page.addInitScript((key) => {
