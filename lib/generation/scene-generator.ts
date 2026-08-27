@@ -61,10 +61,7 @@ import type {
 import type { ThinkingConfig } from '@/lib/types/provider';
 import { auditSlideLayout } from '@/lib/edit/slide-layout-audit';
 import { createLogger } from '@/lib/logger';
-import {
-  formatSourceGroundingForPrompt,
-  type SceneSourceGrounding,
-} from './source-grounding';
+import { formatSourceGroundingForPrompt, type SceneSourceGrounding } from './source-grounding';
 const log = createLogger('Generation');
 
 const INTERACTIVE_WIDGET_ACTIONS = [
@@ -74,10 +71,7 @@ const INTERACTIVE_WIDGET_ACTIONS = [
   'widget_reveal',
 ];
 
-function withSourceGrounding(
-  prompt: string,
-  grounding: SceneSourceGrounding | undefined,
-): string {
+function withSourceGrounding(prompt: string, grounding: SceneSourceGrounding | undefined): string {
   const sourceBlock = formatSourceGroundingForPrompt(grounding);
   return sourceBlock ? `${prompt}\n\n${sourceBlock}` : prompt;
 }

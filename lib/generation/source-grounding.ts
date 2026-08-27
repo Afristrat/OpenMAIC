@@ -178,7 +178,9 @@ export function buildSceneSourceGrounding(
     .flatMap(chunkDocument)
     .map((passage) => ({ passage, score: passageScore(passage, outlineTokens) }))
     .filter(({ score }) => score > 0)
-    .sort((left, right) => right.score - left.score || left.passage.id.localeCompare(right.passage.id))
+    .sort(
+      (left, right) => right.score - left.score || left.passage.id.localeCompare(right.passage.id),
+    )
     .slice(0, MAX_PASSAGES_PER_SCENE)
     .map(({ passage }) => passage);
 

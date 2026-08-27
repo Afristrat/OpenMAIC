@@ -194,15 +194,8 @@ export function makeRegenerateSceneActionsTool(
         };
       }
 
-      const {
-        outline,
-        allOutlines,
-        content,
-        stageId,
-        agents,
-        languageDirective,
-        sourceGrounding,
-      } = ctxData;
+      const { outline, allOutlines, content, stageId, agents, languageDirective, sourceGrounding } =
+        ctxData;
 
       // Suppress unused variable — stageId is part of the context contract and
       // may be needed by future tool logic (e.g. quota checks, audit logging).

@@ -171,15 +171,8 @@ export function makeRegenerateSceneTool(
         };
       }
 
-      const {
-        outline,
-        allOutlines,
-        content,
-        stageId,
-        agents,
-        languageDirective,
-        sourceGrounding,
-      } = ctxData;
+      const { outline, allOutlines, content, stageId, agents, languageDirective, sourceGrounding } =
+        ctxData;
       void stageId;
 
       // slide-only this release — refuse non-slide outlines AND any scene whose

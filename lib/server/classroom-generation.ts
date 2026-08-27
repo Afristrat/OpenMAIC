@@ -897,13 +897,7 @@ export async function generateClassroom(
         action.type === 'speech' ? [action.text] : [],
       );
 
-      const sceneId = createSceneWithActions(
-        safeOutline,
-        content,
-        actions,
-        api,
-        sourceGrounding,
-      );
+      const sceneId = createSceneWithActions(safeOutline, content, actions, api, sourceGrounding);
       if (!sceneId) {
         throw new Error(`Required scene creation failed: ${safeOutline.title}`);
       }
