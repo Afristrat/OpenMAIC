@@ -14,11 +14,7 @@ interface BeforeInstallPromptEvent extends Event {
 
 type InstallMode = 'prompt' | 'ios' | null;
 
-export function isIosDevice(
-  userAgent: string,
-  platform: string,
-  maxTouchPoints: number,
-): boolean {
+export function isIosDevice(userAgent: string, platform: string, maxTouchPoints: number): boolean {
   return /iPad|iPhone|iPod/.test(userAgent) || (platform === 'MacIntel' && maxTouchPoints > 1);
 }
 
@@ -33,7 +29,9 @@ export function PwaInstallBanner(): React.ReactNode {
 
   useEffect(() => {
     const navigatorStandalone = (navigator as Navigator & { standalone?: boolean }).standalone;
-    if (isStandalone(window.matchMedia('(display-mode: standalone)').matches, navigatorStandalone)) {
+    if (
+      isStandalone(window.matchMedia('(display-mode: standalone)').matches, navigatorStandalone)
+    ) {
       return;
     }
 

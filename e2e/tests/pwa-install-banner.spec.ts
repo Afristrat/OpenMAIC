@@ -11,8 +11,9 @@ async function dispatchInstallPrompt(
     const event = Object.assign(new Event('beforeinstallprompt', { cancelable: true }), {
       prompt: async () => {
         Object.assign(window, {
-          __installPromptCalls: ((window as typeof window & { __installPromptCalls: number })
-            .__installPromptCalls ?? 0) + 1,
+          __installPromptCalls:
+            ((window as typeof window & { __installPromptCalls: number }).__installPromptCalls ??
+              0) + 1,
         });
       },
       userChoice: Promise.resolve({ outcome: choice }),
