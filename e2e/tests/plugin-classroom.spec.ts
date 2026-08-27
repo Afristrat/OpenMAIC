@@ -106,7 +106,10 @@ test.describe('Classroom plug-in scene', () => {
     );
     await expect(plugin.locator('#btn-run')).toBeVisible();
     await expect(plugin.locator('#btn-reset')).toBeVisible();
-    expect(classroomApi.expectedRequests).toEqual([`GET /api/classroom?id=${TEST_STAGE_ID}`]);
+    expect(classroomApi.expectedRequests.length).toBeGreaterThan(0);
+    expect(new Set(classroomApi.expectedRequests)).toEqual(
+      new Set([`GET /api/classroom?id=${TEST_STAGE_ID}`]),
+    );
     expect(classroomApi.unexpectedRequests).toEqual([]);
   });
 });

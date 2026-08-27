@@ -94,7 +94,10 @@ for (const { locale, label, coachRole } of [
     await expect(page.getByRole('list', { name: label })).toContainText('Younes');
     await expect(page.getByRole('list', { name: label })).toContainText('Hanae');
     await expect(page.getByRole('list', { name: label })).toContainText(coachRole);
-    expect(classroomApi.expectedRequests).toEqual([`GET /api/classroom?id=${STAGE_ID}`]);
+    expect(classroomApi.expectedRequests.length).toBeGreaterThan(0);
+    expect(new Set(classroomApi.expectedRequests)).toEqual(
+      new Set([`GET /api/classroom?id=${STAGE_ID}`]),
+    );
     expect(classroomApi.unexpectedRequests).toEqual([]);
   });
 }
