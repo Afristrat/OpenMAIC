@@ -1661,7 +1661,11 @@
       "evidence": [
         "app/api/transcription/route.ts",
         "lib/audio/asr-providers.ts",
+        "lib/audio/asr-utils.ts",
+        "lib/hooks/use-audio-recorder.ts",
+        "e2e/tests/asr-microphone-flow.spec.ts",
         "tests/audio/openai-whisper-asr.test.ts",
+        "commit:f124ac7602d02c9a964fdac9a106f44bb1193735",
         "thread:01a005ad-360e-7710-aeb5-bf5fc84c67b6/2026-08-20"
       ],
       "acceptance": [
@@ -1672,6 +1676,24 @@
         "Ne pas confondre résultat ASR et qualité de synthèse TTS."
       ],
       "closureEvidence": [],
+      "validationDebt": {
+        "recordedAt": "2026-08-27",
+        "decision": "Validation différée à la demande d’Amine ; passer à la prochaine US.",
+        "implementedCommit": "f124ac7602d02c9a964fdac9a106f44bb1193735",
+        "implementedButUncertified": [
+          "Normalisation des locales FR/AR/EN pour les fournisseurs ASR serveur.",
+          "Sélection du format MediaRecorder réellement supporté et libération des pistes en erreur.",
+          "Validation des fichiers audio et conservation du modèle Whisper administré face à un ancien modèle client.",
+          "Tests permanents du parcours microphone, du refus de permission et de la panne amont."
+        ],
+        "stillRequired": [
+          "Exécuter les tests ciblés et la gate qualité complète sur ServeurIA au SHA exact.",
+          "Mesurer erreurs et latences sur un corpus autorisé de parole réelle FR/AR/EN, court et long.",
+          "Faire accepter humainement les résultats mesurés sans seuil inventé.",
+          "Re-prouver la chaîne persistante Qalem → LiteLLM Hostinger → tunnel Cloudflare → DGX, sans endpoint LAN."
+        ],
+        "certified": false
+      },
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
