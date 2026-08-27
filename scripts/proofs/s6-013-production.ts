@@ -324,7 +324,12 @@ async function login(page: Page): Promise<void> {
 async function waitForClassroom(page: Page, classroomId: string): Promise<void> {
   await page.goto(`${BASE_URL}/classroom/${classroomId}`, { waitUntil: 'domcontentloaded' });
   await page.getByText('Loading classroom...').waitFor({ state: 'hidden', timeout: 30_000 });
-  await page.locator('[data-testid="scene-item"]').first().waitFor({ timeout: 30_000 });
+  const firstScene = page.locator('[data-testid="scene-item"]').first();
+  await firstScene.waitFor({ state: 'attached', timeout: 30_000 });
+  if (!(await firstScene.isVisible())) {
+    await page.getByRole('button', { name: 'Toggle sidebar' }).click();
+  }
+  await firstScene.waitFor({ state: 'visible', timeout: 30_000 });
 }
 
 async function main(): Promise<void> {
