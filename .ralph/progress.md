@@ -3,8 +3,8 @@
 ## État de référence — 26 août 2026
 
 La source active est désormais `.ralph/prd-v3.json` ; vue de lecture : `tasks/prd-v3.md`.
-Réconciliation documentaire sur `332941dc7f0727dc673c4364f78e122b879f2f96` : 65 stories v2 et 72 stories v1/UI inventoriées ; 18 ensembles de demandes rattachés à leurs US.
-Le registre actif comporte 64 US : 26 ouvertes v2 reprises, 3 v2 rouvertes sur défaut de preuve/couverture, 18 capacités héritées remises en suivi et 17 nouveaux restes transverses.
+Réconciliation documentaire sur `332941dc7f0727dc673c4364f78e122b879f2f96` : 65 stories v2 et 72 stories v1/UI inventoriées ; 19 ensembles de demandes rattachés à leurs US.
+Le registre actif comporte 65 US : 26 ouvertes v2 reprises, 3 v2 rouvertes sur défaut de preuve/couverture, 18 capacités héritées remises en suivi et 18 nouveaux restes transverses.
 Aucune livraison de fonctionnalité n’est certifiée par cette entrée. L’accès SSH canonique a été rétabli le 27 août ; le clone historique ServeurIA est divergent et sale, donc la recertification utilise des clones isolés neufs. Le PRD v3 et ses pointeurs sont publiés sur `origin/refork-v030` au SHA `76c54d2a7b60022d145141e6c090dd01dc15468c`.
 Les logs ci-dessous sont des archives datées ; leurs chiffres et mentions « vert », « fait » ou « en production » ne font pas autorité pour l’état présent.
 
@@ -34,6 +34,7 @@ Les logs ci-dessous sont des archives datées ; leurs chiffres et mentions « ve
 - Voir les motifs d’ouverture, preuves et critères de chaque US de `.ralph/prd-v3.json` ; aucune liste active parallèle.
 - Priorité produit : fidélité documentaire, reformulation, visuels originaux, restitution monétaire, ASR réel et rappels réellement déclenchés.
 - S6-017 est ouverte en P0 exécutable après l’audit JSON frais du SHA `e59eb8af4378c51efe35709f3f1f346d8733f77f` : 1 650 dépendances de production, 216 avis et 232 occurrences, dont 2 critiques et 88 hautes. `web-push` ne figure dans aucun champ ; le résiduel doit être ramené à zéro critique et zéro haute, sans le confondre avec la rotation de secrets bloquée dans S6-014.
+- S6-018 trace trois erreurs serveur inattendues du gate S3-002 : une dans `plugin-classroom.spec.ts` et deux dans les variantes FR/ar-MA de `team-of-the-day.spec.ts`. Ces parcours sèment uniquement IndexedDB, puis la page appelle encore l’API classroom réelle avant son fallback local ; la frontière réseau doit devenir déterministe sans filtrer les logs ni masquer une panne Supabase réelle.
 - La copie `QALEM_SUPABASE_SERVICE_ROLE_KEY` du coffre local diffère de la clé valide injectée dans le runtime. `add-secret.ps1` a restauré automatiquement le coffre après l’échec de sa sonde enfant (`Microsoft.PowerShell.Security` non chargeable dans le broker) ; aucune valeur n’a été affichée ni modifiée. Réparer cette frontière d’outillage avant la prochaine opération administrative automatisée, sans contourner le broker.
 
 ## Session Log
