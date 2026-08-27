@@ -147,9 +147,7 @@ describe('sceneEditorRegistry', () => {
     const first = makeSurface('slide', 'A');
     const second = makeSurface('slide', 'B');
     expectConsoleMessages({
-      warn: [
-        'overwriting existing surface for "slide". If this is HMR, call unregister first.',
-      ],
+      warn: ['overwriting existing surface for "slide". If this is HMR, call unregister first.'],
     });
 
     sceneEditorRegistry.register(first);
