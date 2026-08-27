@@ -257,6 +257,16 @@ export function getDueCards(cards: ReviewCard[], now?: Date): ReviewCard[] {
   return cards.filter((c) => c.dueDate <= reference);
 }
 
+/** Move a push-targeted card first while preserving every other card's order. */
+export function prioritizeReviewCard<T extends { card: Pick<ReviewCard, 'id'> }>(
+  cards: T[],
+  targetCardId: string | null,
+): T[] {
+  const targetIndex = targetCardId ? cards.findIndex(({ card }) => card.id === targetCardId) : -1;
+  if (targetIndex <= 0) return cards;
+  return [cards[targetIndex], ...cards.slice(0, targetIndex), ...cards.slice(targetIndex + 1)];
+}
+
 /**
  * Compute aggregate statistics for a collection of review cards.
  */

@@ -5,7 +5,7 @@
  * - A public, credential-free offline shell
  * - Cache-first delivery for explicitly public static assets
  * - Network-only delivery for authenticated API and navigation responses
- * - Local review-reminder notification clicks
+ * - Local and remote review-reminder notifications
  */
 
 /* global self, caches, fetch, URL */
@@ -167,16 +167,51 @@ function isPublicStaticAsset(pathname) {
   );
 }
 
+function safeNotificationTarget(value) {
+  return typeof value === 'string' && value.startsWith('/') && !value.startsWith('//')
+    ? value
+    : '/review';
+}
+
+self.addEventListener('push', function (event) {
+  const fallback = {
+    title: 'Qalem',
+    body: 'Qalem',
+    targetUrl: '/review',
+    tag: 'review-reminder',
+  };
+  let payload = fallback;
+  try {
+    if (event.data) payload = { ...fallback, ...event.data.json() };
+  } catch {
+    // A malformed upstream payload must still produce a safe, useful reminder.
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(
+      typeof payload.title === 'string' ? payload.title.slice(0, 120) : fallback.title,
+      {
+        body: typeof payload.body === 'string' ? payload.body.slice(0, 240) : fallback.body,
+        icon: '/icon-192.png',
+        badge: '/icon-192.png',
+        tag: typeof payload.tag === 'string' ? payload.tag.slice(0, 120) : fallback.tag,
+        data: { url: safeNotificationTarget(payload.targetUrl) },
+      },
+    ),
+  );
+});
+
 self.addEventListener('notificationclick', function (event) {
   event.notification.close();
 
-  const targetUrl = event.notification.data?.url || '/review';
+  const targetUrl = safeNotificationTarget(event.notification.data?.url);
+  const absoluteTarget = new URL(targetUrl, self.location.origin).href;
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (clients) {
       // Focus an existing tab if one is open
       for (const client of clients) {
-        if (client.url.includes(targetUrl) && 'focus' in client) {
+        if (client.url === absoluteTarget && 'focus' in client) {
           return client.focus();
         }
       }

@@ -14,6 +14,7 @@ import {
   loadPreferences,
   requestPushPermission,
   savePreferences,
+  unsubscribeFromPush,
   type NotificationPreferences,
 } from '@/lib/notifications';
 
@@ -22,11 +23,12 @@ type PushState = NotificationPermission | 'unsupported';
 const DISABLED_PREFERENCES: NotificationPreferences = { push: false };
 
 export function NotificationSettings(): React.ReactElement {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { user, isLoading } = useAuth();
   const [prefs, setPrefs] = useState<NotificationPreferences>(DISABLED_PREFERENCES);
   const [pushState, setPushState] = useState<PushState>('default');
   const [requesting, setRequesting] = useState(false);
+  const [testing, setTesting] = useState(false);
 
   useEffect(() => {
     setPrefs(user ? loadPreferences(user.id) : DISABLED_PREFERENCES);
@@ -85,13 +87,42 @@ export function NotificationSettings(): React.ReactElement {
   const pushInfo = permissionInfo();
   const canToggle = Boolean(user) && pushState === 'granted';
   const handleToggle = useCallback(
-    (push: boolean) => {
+    async (push: boolean) => {
       if (!user) return;
-      persist({ push });
-      if (push) void checkAndNotifyDueCards(user.id);
+      setRequesting(true);
+      try {
+        if (!push) {
+          persist({ push: false });
+          await unsubscribeFromPush();
+          return;
+        }
+        const granted = await requestPushPermission();
+        setPushState(getPushPermissionState());
+        persist({ push: granted });
+        if (granted) void checkAndNotifyDueCards(user.id);
+      } finally {
+        setRequesting(false);
+      }
     },
     [persist, user],
   );
+
+  const handleTestPush = useCallback(async () => {
+    setTesting(true);
+    try {
+      const response = await fetch('/api/push-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept-Language': locale },
+        body: '{}',
+      });
+      if (!response.ok) throw new Error('Push test failed');
+      toast.success(t('notifications.testPushSent'));
+    } catch {
+      toast.error(t('notifications.testPushFailed'));
+    } finally {
+      setTesting(false);
+    }
+  }, [locale, t]);
 
   return (
     <div className="space-y-6">
@@ -116,7 +147,7 @@ export function NotificationSettings(): React.ReactElement {
             aria-label={t('notifications.push')}
             checked={prefs.push && canToggle}
             onCheckedChange={handleToggle}
-            disabled={!canToggle}
+            disabled={!canToggle || requesting}
           />
         </div>
 
@@ -130,6 +161,12 @@ export function NotificationSettings(): React.ReactElement {
         {user && pushState === 'default' && (
           <Button variant="outline" size="sm" onClick={handleRequestPush} disabled={requesting}>
             {requesting ? t('notifications.enabling') : t('notifications.pushEnable')}
+          </Button>
+        )}
+
+        {user && prefs.push && pushState === 'granted' && (
+          <Button variant="outline" size="sm" onClick={handleTestPush} disabled={testing}>
+            {testing ? t('notifications.testingPush') : t('notifications.testPush')}
           </Button>
         )}
       </div>

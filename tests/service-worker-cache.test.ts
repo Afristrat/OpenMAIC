@@ -18,7 +18,9 @@ describe('PWA shell cache', () => {
     expect(serviceWorker).not.toContain('networkFirst(');
     expect(serviceWorker).toContain("credentials: 'omit'");
     expect(serviceWorker).toContain("url.pathname.startsWith('/api/')");
-    expect(serviceWorker).not.toContain("addEventListener('push'");
+    expect(serviceWorker).toContain("addEventListener('push'");
+    expect(serviceWorker).toContain('safeNotificationTarget(payload.targetUrl)');
+    expect(serviceWorker).toContain("icon: '/icon-192.png'");
     expect(serviceWorker).toContain("cache: 'no-store'");
     expect(registrar).toContain("updateViaCache: 'none'");
     expect(registrar).toContain('registration.update()');

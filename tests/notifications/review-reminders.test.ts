@@ -12,6 +12,7 @@ import {
   checkAndNotifyDueCards,
   loadPreferences,
   REVIEW_REMINDER_INTERVAL_MS,
+  requestPushPermission,
   savePreferences,
 } from '@/lib/notifications';
 
@@ -59,6 +60,20 @@ function serializedLocks(): LockManager {
 
 function installBrowser(permission: NotificationPermission = 'granted') {
   const showNotification = vi.fn().mockResolvedValue(undefined);
+  const subscription = {
+    endpoint: 'https://push.example/subscription',
+    toJSON: () => ({
+      endpoint: 'https://push.example/subscription',
+      expirationTime: null,
+      keys: { p256dh: 'p'.repeat(65), auth: 'a'.repeat(22) },
+    }),
+    unsubscribe: vi.fn().mockResolvedValue(true),
+  } as unknown as PushSubscription;
+  const pushManager = {
+    getSubscription: vi.fn().mockResolvedValue(null),
+    subscribe: vi.fn().mockResolvedValue(subscription),
+  } as unknown as PushManager;
+  const registration = { showNotification, pushManager } as unknown as ServiceWorkerRegistration;
   const notificationApi = {
     permission,
     requestPermission: vi.fn().mockResolvedValue(permission),
@@ -67,8 +82,8 @@ function installBrowser(permission: NotificationPermission = 'granted') {
     locks: serializedLocks(),
     onLine: true,
     serviceWorker: {
-      ready: Promise.resolve({ showNotification }),
-      register: vi.fn(),
+      ready: Promise.resolve(registration),
+      register: vi.fn().mockResolvedValue(registration),
     },
   } as unknown as Navigator;
 
@@ -79,8 +94,10 @@ function installBrowser(permission: NotificationPermission = 'granted') {
 
   return {
     navigatorValue,
+    pushManager,
     requestPermission: notificationApi.requestPermission,
     showNotification,
+    subscription,
   };
 }
 
@@ -126,6 +143,27 @@ describe('review reminders', () => {
     expect(showNotification).toHaveBeenCalledWith(
       'Qalem',
       expect.objectContaining({ tag: 'review-reminder' }),
+    );
+  });
+
+  it('creates a real PushManager subscription and persists it for the authenticated account', async () => {
+    const browser = installBrowser();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ publicKey: 'B'.repeat(87) }) })
+      .mockResolvedValueOnce({ ok: true });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(requestPushPermission()).resolves.toBe(true);
+
+    expect(browser.pushManager.subscribe).toHaveBeenCalledWith(
+      expect.objectContaining({ userVisibleOnly: true }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/push-subscriptions');
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      '/api/push-subscriptions',
+      expect.objectContaining({ method: 'POST' }),
     );
   });
 

@@ -1,9 +1,8 @@
 /**
  * Browser notification manager for spaced-repetition reminders.
  *
- * This module deliberately implements the in-app PWA trigger only. Remote
- * delivery while Qalem is closed belongs to S3-002; email and WhatsApp belong
- * to S6-011.
+ * Local reminders and authenticated Web Push subscription management.
+ * Email and WhatsApp remain outside this module and belong to S6-011.
  */
 
 import { getClientTranslation } from '@/lib/i18n';
@@ -28,6 +27,7 @@ const PREFS_STORAGE_PREFIX = 'qalem-notification-prefs';
 const LAST_CHECK_STORAGE_PREFIX = 'qalem-review-reminder-last-check';
 const REMINDER_LOCK_PREFIX = 'qalem-review-reminder';
 const SW_PATH = '/sw.js';
+const PUSH_SUBSCRIPTION_PATH = '/api/push-subscriptions';
 
 /** One successful check per authenticated user and browser every fifteen minutes. */
 export const REVIEW_REMINDER_INTERVAL_MS = 15 * 60 * 1000;
@@ -72,11 +72,27 @@ export function savePreferences(userId: string, prefs: NotificationPreferences):
  * Request browser permission after an explicit user gesture.
  * The background reminder check never calls this function.
  */
+function base64UrlToUint8Array(value: string): Uint8Array<ArrayBuffer> {
+  const padding = '='.repeat((4 - (value.length % 4)) % 4);
+  const binary = atob((value + padding).replace(/-/g, '+').replace(/_/g, '/'));
+  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+}
+
+async function persistBrowserSubscription(subscription: PushSubscription): Promise<boolean> {
+  const response = await fetch(PUSH_SUBSCRIPTION_PATH, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(subscription.toJSON()),
+  });
+  return response.ok;
+}
+
 export async function requestPushPermission(): Promise<boolean> {
   if (
     typeof window === 'undefined' ||
     !('Notification' in window) ||
-    !('serviceWorker' in navigator)
+    !('serviceWorker' in navigator) ||
+    !('PushManager' in window)
   ) {
     log.warn('Push notifications are not supported in this browser');
     return false;
@@ -86,11 +102,25 @@ export async function requestPushPermission(): Promise<boolean> {
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') return false;
 
-    await navigator.serviceWorker.register(SW_PATH, {
+    const registration = await navigator.serviceWorker.register(SW_PATH, {
       scope: '/',
       updateViaCache: 'none',
     });
-    return true;
+    const keyResponse = await fetch(PUSH_SUBSCRIPTION_PATH);
+    if (!keyResponse.ok) return false;
+    const keyBody = (await keyResponse.json()) as { publicKey?: unknown };
+    if (typeof keyBody.publicKey !== 'string') return false;
+
+    const existing = await registration.pushManager.getSubscription();
+    const subscription =
+      existing ??
+      (await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: base64UrlToUint8Array(keyBody.publicKey),
+      }));
+    const persisted = await persistBrowserSubscription(subscription);
+    if (!persisted && !existing) await subscription.unsubscribe();
+    return persisted;
   } catch (error) {
     log.error('Failed to enable browser notifications:', error);
     return false;
@@ -99,8 +129,33 @@ export async function requestPushPermission(): Promise<boolean> {
 
 /** Return the current permission without ever prompting the user. */
 export function getPushPermissionState(): NotificationPermission | 'unsupported' {
-  if (typeof window === 'undefined' || !('Notification' in window)) return 'unsupported';
+  if (
+    typeof window === 'undefined' ||
+    !('Notification' in window) ||
+    !('serviceWorker' in navigator) ||
+    !('PushManager' in window)
+  ) {
+    return 'unsupported';
+  }
   return Notification.permission;
+}
+
+/** Remove the current browser subscription locally and from the authenticated account. */
+export async function unsubscribeFromPush(): Promise<void> {
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+    if (!subscription) return;
+    await fetch(PUSH_SUBSCRIPTION_PATH, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint: subscription.endpoint }),
+    });
+    await subscription.unsubscribe();
+  } catch (error) {
+    log.warn('Failed to disable browser notifications:', error);
+  }
 }
 
 function readLastSuccessfulCheck(userId: string): number {

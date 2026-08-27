@@ -4,6 +4,7 @@ import {
   getNextReviewDate,
   getDueCards,
   getReviewStats,
+  prioritizeReviewCard,
   retrievability,
 } from '@/lib/spaced-repetition/fsrs';
 import { extractReviewCards, type ReviewCard } from '@/lib/spaced-repetition/extractor';
@@ -51,6 +52,15 @@ function makeReviewedCard(overrides: Partial<ReviewCard> = {}): ReviewCard {
     ...overrides,
   };
 }
+
+describe('prioritizeReviewCard', () => {
+  it('opens the card targeted by a push without dropping or reordering the others', () => {
+    const cards = ['a', 'b', 'c'].map((id) => ({ card: makeNewCard({ id }) }));
+
+    expect(prioritizeReviewCard(cards, 'c').map(({ card }) => card.id)).toEqual(['c', 'a', 'b']);
+    expect(prioritizeReviewCard(cards, 'missing')).toBe(cards);
+  });
+});
 
 // ────────────────────────── Tests ──────────────────────────
 

@@ -9,7 +9,11 @@ import { useAuth } from '@/lib/hooks/use-auth';
 import { tryCreateClient } from '@/lib/supabase/client';
 import { db } from '@/lib/utils/database';
 import type { ReviewCardRecord } from '@/lib/utils/database';
-import { getNextReviewDate, type Rating } from '@/lib/spaced-repetition/fsrs';
+import {
+  getNextReviewDate,
+  prioritizeReviewCard,
+  type Rating,
+} from '@/lib/spaced-repetition/fsrs';
 import type { ReviewCard } from '@/lib/spaced-repetition/extractor';
 import { cn } from '@/lib/utils';
 
@@ -204,7 +208,9 @@ function ReviewPage() {
       // IndexedDB unavailable
     }
 
-    setDueCards(cards);
+    const targetCardId = new URL(window.location.href).searchParams.get('card');
+    const orderedCards = prioritizeReviewCard(cards, targetCardId);
+    setDueCards(orderedCards);
     setTotalCount(cards.length);
     setCurrentIndex(0);
     setPhase(cards.length > 0 ? 'question' : 'empty');
