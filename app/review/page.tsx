@@ -9,11 +9,7 @@ import { useAuth } from '@/lib/hooks/use-auth';
 import { tryCreateClient } from '@/lib/supabase/client';
 import { db } from '@/lib/utils/database';
 import type { ReviewCardRecord } from '@/lib/utils/database';
-import {
-  getNextReviewDate,
-  prioritizeReviewCard,
-  type Rating,
-} from '@/lib/spaced-repetition/fsrs';
+import { getNextReviewDate, prioritizeReviewCard, type Rating } from '@/lib/spaced-repetition/fsrs';
 import type { ReviewCard } from '@/lib/spaced-repetition/extractor';
 import { cn } from '@/lib/utils';
 

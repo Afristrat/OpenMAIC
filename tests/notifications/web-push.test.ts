@@ -23,8 +23,18 @@ import {
 } from '@/lib/server/web-push';
 
 const subscriptions = [
-  { id: 'subscription-a', endpoint: 'https://push.example/a', p256dh: 'p'.repeat(65), auth: 'a'.repeat(22) },
-  { id: 'subscription-b', endpoint: 'https://push.example/b', p256dh: 'q'.repeat(65), auth: 'b'.repeat(22) },
+  {
+    id: 'subscription-a',
+    endpoint: 'https://push.example/a',
+    p256dh: 'p'.repeat(65),
+    auth: 'a'.repeat(22),
+  },
+  {
+    id: 'subscription-b',
+    endpoint: 'https://push.example/b',
+    p256dh: 'q'.repeat(65),
+    auth: 'b'.repeat(22),
+  },
 ];
 
 function installDatabaseMock() {
@@ -114,7 +124,11 @@ describe('Web Push', () => {
       'p'.repeat(43),
     );
     expect(mocks.sendNotification).toHaveBeenCalledTimes(2);
-    expect(writes.filter(({ table, operation }) => table === 'web_push_deliveries' && operation === 'insert')).toHaveLength(2);
+    expect(
+      writes.filter(
+        ({ table, operation }) => table === 'web_push_deliveries' && operation === 'insert',
+      ),
+    ).toHaveLength(2);
     expect(writes).toContainEqual({ table: 'push_subscriptions', operation: 'delete' });
   });
 });

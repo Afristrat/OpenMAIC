@@ -1,15 +1,11 @@
 import { type NextRequest } from 'next/server';
 import { requireAuth } from '@/lib/api/auth';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
-import {
-  sendWebPushToUser,
-  WebPushConfigurationError,
-} from '@/lib/server/web-push';
+import { sendWebPushToUser, WebPushConfigurationError } from '@/lib/server/web-push';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { translate, type Locale } from '@/lib/i18n';
 
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function requestLocale(request: NextRequest): Locale {
   const language = request.headers.get('accept-language')?.toLowerCase() ?? '';
@@ -22,15 +18,15 @@ export async function POST(request: NextRequest): Promise<Response> {
   const auth = await requireAuth(request);
   if (auth.response) return auth.response;
   const body = (await request.json().catch(() => null)) as { cardId?: unknown } | null;
-  if (body?.cardId !== undefined && (typeof body.cardId !== 'string' || !UUID_PATTERN.test(body.cardId))) {
+  if (
+    body?.cardId !== undefined &&
+    (typeof body.cardId !== 'string' || !UUID_PATTERN.test(body.cardId))
+  ) {
     return apiError('INVALID_REQUEST', 400, 'Carte cible invalide');
   }
 
   const service = createServiceSupabaseClient();
-  let cardQuery = service
-    .from('review_cards')
-    .select('id')
-    .eq('user_id', auth.user.id);
+  let cardQuery = service.from('review_cards').select('id').eq('user_id', auth.user.id);
   cardQuery =
     typeof body?.cardId === 'string'
       ? cardQuery.eq('id', body.cardId)
