@@ -1,6 +1,8 @@
 import { expect, test } from '../fixtures/base';
 
 test.describe('Catalogue des expériences interactives', () => {
+  test.use({ serviceWorkers: 'allow' });
+
   test('présente les dix expériences installées', async ({ page }) => {
     await page.addInitScript(() => {
       if (window.top === window.self) localStorage.setItem('locale', 'fr-FR');

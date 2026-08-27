@@ -89,6 +89,8 @@ async function seedPluginScene(page: import('@playwright/test').Page) {
 }
 
 test.describe('Classroom plug-in scene', () => {
+  test.use({ serviceWorkers: 'allow' });
+
   test('persists and renders a generated code exercise inside the classroom', async ({
     page,
     mockApi,

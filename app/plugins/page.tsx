@@ -104,7 +104,7 @@ export default function PluginsPage(): React.ReactElement {
           theme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',
         },
       },
-      window.location.origin,
+      '*',
     );
   };
 

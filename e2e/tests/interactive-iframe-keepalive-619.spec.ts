@@ -140,6 +140,8 @@ const resetMutations = (page: import('@playwright/test').Page) =>
   });
 
 test.describe('#619 interactive iframe keep-alive', () => {
+  test.use({ serviceWorkers: 'allow' });
+
   test('iframe survives Pro-mode toggle and scene switch without reloading', async ({
     browserConsoleContract,
     page,
