@@ -2080,8 +2080,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Extraire les items de révision depuis les quiz » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P1",
-      "status": "to_implement",
-      "passes": false,
+      "status": "to_validate",
+      "passes": true,
       "source": {
         "file": ".ralph/prd.json",
         "id": "S-025",
@@ -2089,8 +2089,19 @@
       },
       "sourceDependencies": ["S-022"],
       "dependencies": [],
-      "gap": "extractReviewCards ne possède aucun appelant dans app/components/lib hors sa définition.",
-      "evidence": ["lib/spaced-repetition/extractor.ts:80"],
+      "gap": "Soldé : la soumission réelle du quiz extrait les erreurs et hésitations, puis persiste des cartes déterministes et isolées dans IndexedDB et Supabase sans file concurrente.",
+      "evidence": [
+        "lib/spaced-repetition/extractor.ts",
+        "lib/quiz/sync.ts",
+        "components/scene-renderers/quiz-view.tsx",
+        "app/review/page.tsx",
+        "supabase/migrations/00041_review_card_sources.sql",
+        "tests/quiz/sync.test.ts",
+        "tests/spaced-repetition/fsrs.test.ts",
+        "e2e/tests/quiz-content-surface-657.spec.ts",
+        "commit:02d840aeb153e09219351c014205d2dccc8c4759",
+        "commit:b4d74e7fa2c9719231bc802f66be00bbef658340"
+      ],
       "acceptance": [
         "lib/spaced-repetition/extractor.ts",
         "Items ratés/hésitants extraits après chaque quiz",
@@ -2099,7 +2110,17 @@
         "Relier la soumission réelle de quiz à l’extracteur et à la persistance sans créer une seconde file concurrente.",
         "Tester idempotence, bonne réponse, erreur, hésitation et isolation utilisateur ; une carte due doit apparaître dans la page de révision après rechargement."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-08-27 — Les commits 02d840aeb153e09219351c014205d2dccc8c4759 et b4d74e7fa2c9719231bc802f66be00bbef658340 relient QuizView à persistQuizCompletion au point réel de soumission. L’extracteur crée des UUIDv8 déterministes par utilisateur, stage, scène et question ; aucune seconde file n’est ajoutée.",
+        "2026-08-27 — Les cartes contiennent question, correctAnswer, userAnswer, difficulty, tags et la chaîne sourceIds [stage, scène, question]. Les bonnes réponses sont ignorées ; erreurs et réponses partielles/hésitantes sont dues immédiatement. Une nouvelle soumission conserve identifiants et état FSRS existant.",
+        "2026-08-27 — IndexedDB persiste ownerId et sourceIds, filtre strictement par utilisateur et reconstruit sourceIds pour les anciennes cartes. Supabase n’insère que les cartes absentes sous RLS et quiz_results est upserté sur un identifiant stable.",
+        "2026-08-27 — La migration 00041 ajoute review_cards.source_ids non nul, rétroalimente les anciennes provenances et borne la chaîne à 16 identifiants. Contrat PostgreSQL 17 isolé réussi ; en production, sauvegarde de schéma de 139 176 octets puis migration transactionnelle appliquée sans perte : 0 carte avant/après, colonne et contrainte vérifiées.",
+        "2026-08-27 — Gate complet frais au SHA exact b4d74e7fa2c9719231bc802f66be00bbef658340 : Prettier, TypeScript et lint verts, 370/370 fichiers et 2 451/2 451 tests Vitest, build de 97/97 pages et 76/76 tests Playwright en 3,8 minutes. Le clone suivi est propre ; le conteneur termine exit=0 et OOMKilled=false. FFmpeg est explicitement provisionné et le heap Node du gate est fixé à 8 Gio après reproduction du plafond V8 à 2 Gio.",
+        "2026-08-27 — Déploiement séquentiel runtime puis web sur le SHA exact b4d74e7fa2c9719231bc802f66be00bbef658340. Web, worker de génération et capture-worker sont healthy, à zéro redémarrage et OOMKilled=false ; https://qalem.ma/ et /api/health répondent 200.",
+        "2026-08-27 — Preuve authentifiée en production : API classroom 200 avec une scène, quiz réel noté 2/4, deux cartes Supabase et deux cartes IndexedDB pour l’erreur et l’hésitation seulement, sourceIds stables, mêmes identifiants après Retry, un seul quiz_result, RLS limitée aux deux cartes du bon utilisateur, aucune carte étrangère serveur ou locale, et carte due visible après rechargement de /review.",
+        "2026-08-27 — Nettoyage vérifié après la preuve : zéro stage, scène, organisation, membre, carte primaire, carte étrangère, résultat de quiz ou profil temporaire ; les deux comptes Auth temporaires et le contexte Chromium ont été supprimés."
+      ],
+      "completedAt": "2026-08-27",
       "historicalEvidence": {
         "completedAt": "2026-03-29T10:33:12.008Z",
         "status": "legacy_claim_not_delivery_proof"
