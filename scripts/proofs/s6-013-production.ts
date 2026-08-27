@@ -384,6 +384,7 @@ async function main(): Promise<void> {
       'Autres décaissements : 4000, 3000, 5000, 4000, 6000, 3000, 4000, 5000, 3500, 4500, 4000, 5000, 6000.',
       'La formation comporte un exercice PBL : l’apprenant complète le vrai fichier, le dépose, reçoit le diagnostic Python puis justifie une décision liée au point bas calculé.',
       'L’évaluation finale comporte cinq questions à choix unique fondées uniquement sur ces données et décisions.',
+      'La scène d’introduction comporte une illustration explicative originale créée pour ce cas ; aucune image du document ne doit être reprise.',
     ].join('\n');
     const sourceResponse = await jsonResponse(request, 'POST', '/api/source-library', {
       data: {
@@ -409,6 +410,7 @@ async function main(): Promise<void> {
       'Crée exactement cinq scènes cohérentes à partir du document autorisé.',
       'Inclure une introduction au cas marocain, une scène de calcul, une scène livrant le véritable classeur Excel modifiable demandé, une scène PBL de diagnostic et un quiz final de cinq questions à choix unique.',
       'Utilise exclusivement les montants, la devise, le seuil de sécurité et les décisions décrits dans la source.',
+      'Crée pour l’introduction l’illustration explicative originale demandée par la source.',
     ].join(' ');
     const generationRequest = {
       orgId: organizationId,

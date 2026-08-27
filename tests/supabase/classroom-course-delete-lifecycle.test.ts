@@ -10,6 +10,13 @@ const lifecycleMigration = readFileSync(
   resolve(process.cwd(), 'supabase/migrations/00039_multi_tenant_classroom_lifecycle.sql'),
   'utf8',
 );
+const sourceLifecycleMigration = readFileSync(
+  resolve(
+    process.cwd(),
+    'supabase/migrations/00044_course_source_manifest_delete_lifecycle.sql',
+  ),
+  'utf8',
+);
 
 describe('classroom and course deletion lifecycle', () => {
   it('bootstraps the organization and its first admin atomically from auth.uid()', () => {
@@ -34,6 +41,14 @@ describe('classroom and course deletion lifecycle', () => {
     expect(lifecycleMigration).toMatch(/BEFORE DELETE ON public\.stages/i);
     expect(lifecycleMigration).toMatch(
       /UPDATE public\.courses\s+SET status = 'archived', catalog_visible = false\s+WHERE stage_id = OLD\.id AND status = 'ready'/i,
+    );
+  });
+
+  it('clears the organization-specific source manifest during organization deletion', () => {
+    expect(sourceLifecycleMigration).toMatch(/IF NEW\.org_id IS NULL THEN/i);
+    expect(sourceLifecycleMigration).toMatch(/NEW\.source_manifest_id := NULL/i);
+    expect(sourceLifecycleMigration).toMatch(
+      /WHERE id = NEW\.source_manifest_id AND org_id = NEW\.org_id/i,
     );
   });
 
