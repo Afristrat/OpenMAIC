@@ -37,8 +37,7 @@ function loadPdfjs(): Promise<PdfjsLib> {
   pdfjsPromise ??= import('pdfjs-dist/legacy/build/pdf.mjs').then((module) => {
     const pdfjs = module as unknown as PdfjsLib;
     const version = pdfjs.version || '4.8.69';
-    pdfjs.GlobalWorkerOptions.workerSrc =
-      `https://cdn.jsdelivr.net/npm/pdfjs-dist@${version}/legacy/build/pdf.worker.min.mjs`;
+    pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${version}/legacy/build/pdf.worker.min.mjs`;
     return pdfjs;
   });
   return pdfjsPromise;
