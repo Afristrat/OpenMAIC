@@ -71,6 +71,7 @@ interface Evidence {
   };
   browser?: { consoleSignals: string[]; pageErrors: string[]; httpErrors: string[] };
   cleanup: { classroom: boolean; organization: boolean; account: boolean };
+  cleanupErrors?: string[];
   error?: string;
 }
 
@@ -849,7 +850,9 @@ async function main(): Promise<void> {
           `/api/classroom?id=${encodeURIComponent(classroomId)}`,
         );
         evidence.cleanup.classroom = true;
-      } catch {
+      } catch (error) {
+        evidence.cleanupErrors ??= [];
+        evidence.cleanupErrors.push(error instanceof Error ? error.message : String(error));
         // The external coordinator performs a service-role fallback cleanup.
       }
     }
@@ -861,7 +864,9 @@ async function main(): Promise<void> {
           `/api/organizations/${encodeURIComponent(organizationId)}`,
         );
         evidence.cleanup.organization = true;
-      } catch {
+      } catch (error) {
+        evidence.cleanupErrors ??= [];
+        evidence.cleanupErrors.push(error instanceof Error ? error.message : String(error));
         // The external coordinator performs a service-role fallback cleanup.
       }
     }
@@ -869,7 +874,9 @@ async function main(): Promise<void> {
       try {
         await jsonResponse(page.context().request, 'DELETE', '/api/account/delete');
         evidence.cleanup.account = true;
-      } catch {
+      } catch (error) {
+        evidence.cleanupErrors ??= [];
+        evidence.cleanupErrors.push(error instanceof Error ? error.message : String(error));
         // The external coordinator always removes the temporary Auth identity.
       }
     }
