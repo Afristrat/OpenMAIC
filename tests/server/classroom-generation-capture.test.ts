@@ -188,24 +188,28 @@ describe('classroom generation — web capture injection', () => {
     mocks.applyOutlineFallbacks.mockImplementation((value) => value);
     mocks.generateSceneContent.mockResolvedValue(slideContent);
     mocks.generateSceneActions.mockResolvedValue(completeRosterActions);
-    mocks.createSceneWithActions.mockImplementation((sceneOutline, content, actions, api) => {
-      const sceneResult = api.scene.create({
-        type: sceneOutline.type,
-        title: sceneOutline.title,
-        order: sceneOutline.order,
-        content: {
-          type: 'slide',
-          canvas: {
-            id: 'slide-1',
-            viewportSize: 1000,
-            viewportRatio: 0.5625,
-            elements: content.elements,
+    mocks.createSceneWithActions.mockImplementation(
+      (sceneOutline, content, actions, api, sourceGrounding) => {
+        const sceneResult = api.scene.create({
+          type: sceneOutline.type,
+          title: sceneOutline.title,
+          order: sceneOutline.order,
+          content: {
+            type: 'slide',
+            canvas: {
+              id: 'slide-1',
+              viewportSize: 1000,
+              viewportRatio: 0.5625,
+              elements: content.elements,
+            },
           },
-        },
-        actions,
-      });
-      return sceneResult.success ? (sceneResult.data ?? null) : null;
-    });
+          actions,
+        });
+        const sceneId = sceneResult.success ? (sceneResult.data ?? null) : null;
+        if (sceneId && sourceGrounding) api.scene.update(sceneId, { sourceGrounding });
+        return sceneId;
+      },
+    );
     mocks.persistClassroom.mockImplementation(async ({ id, scenes }) => ({
       id,
       url: `http://localhost/classroom/${id}`,
@@ -265,6 +269,37 @@ describe('classroom generation — web capture injection', () => {
     expect(mocks.requestWebCapture).not.toHaveBeenCalled();
     const optionsArg = mocks.generateSceneContent.mock.calls[0][2];
     expect(optionsArg.assignedImages).toBeUndefined();
+  });
+
+  it('threads one bounded, versioned source contract through content, narration and persistence', async () => {
+    await generateWithProgress({
+      pdfContent: {
+        name: 'litellm-guide.pdf',
+        text: [
+          'Introduction générale.',
+          'Dans le panel LiteLLM, la clé virtuelle réservée aux formateurs porte le quota exact de 37,5 unités.',
+          'Annexe sans rapport.',
+        ].join('\n\n'),
+        images: [],
+      },
+    });
+
+    const contentGrounding = mocks.generateSceneContent.mock.calls[0][2].sourceGrounding;
+    const narrationGrounding = mocks.generateSceneActions.mock.calls[0][3].sourceGrounding;
+    const creationGrounding = mocks.createSceneWithActions.mock.calls[0][4];
+
+    expect(contentGrounding).toMatchObject({ status: 'grounded', schemaVersion: 1 });
+    expect(contentGrounding.passages).toEqual([
+      expect.objectContaining({
+        sourceVersion: expect.stringMatching(/^v1-/),
+        text: expect.stringContaining('37,5 unités'),
+      }),
+    ]);
+    expect(narrationGrounding).toEqual(contentGrounding);
+    expect(creationGrounding).toEqual(contentGrounding);
+    expect(mocks.persistClassroom.mock.calls[0][0].scenes[0].sourceGrounding).toEqual(
+      contentGrounding,
+    );
   });
 
   it('persists the animation constitution when the author uses the preset roster', async () => {
