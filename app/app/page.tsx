@@ -637,17 +637,17 @@ function HomePage() {
         const parsed = await parseResponse.json();
         const parsedText = typeof parsed.data?.text === 'string' ? parsed.data.text.trim() : '';
         if (!parseResponse.ok || !parsed.success || !parsedText) {
+          const noReadablePdfText =
+            isPdf &&
+            (parsed.errorCode === 'NO_READABLE_PDF_TEXT' ||
+              (parseResponse.ok && parsed.success && !parsedText));
           const parserDetails =
             typeof parsed.details === 'string'
               ? parsed.details
               : typeof parsed.error === 'string'
                 ? parsed.error
                 : t('generation.pdfParseFailed');
-          throw new Error(
-            isPdf && !parsedText
-              ? `${t('generation.pdfNoTextExtracted')} ${parserDetails}`
-              : parserDetails,
-          );
+          throw new Error(noReadablePdfText ? t('generation.pdfNoTextExtracted') : parserDetails);
         }
         const richImages = Array.isArray(parsed.data?.metadata?.pdfImages)
           ? (parsed.data.metadata.pdfImages as PdfImage[])

@@ -31,6 +31,24 @@ const SOURCE_CONFLICT_LOCALES = [
   },
 ] as const;
 
+const PDF_OCR_GUIDANCE_LOCALES = [
+  {
+    locale: 'fr-FR',
+    guidance:
+      'Aucun texte exploitable n’a été extrait. S’il s’agit d’un PDF numérisé, sélectionnez le parseur OCR MinerU dans les paramètres PDF.',
+  },
+  {
+    locale: 'ar-MA',
+    guidance:
+      'لم يُستخرج نص قابل للاستعمال. إذا كان ملف PDF ممسوحًا ضوئيًا، فاختر محلل OCR ‏MinerU من إعدادات PDF.',
+  },
+  {
+    locale: 'en-US',
+    guidance:
+      'No usable text was extracted. If this is a scanned PDF, select the MinerU OCR parser in PDF settings.',
+  },
+] as const;
+
 interface BodySpacing {
   paddingRight: string;
   marginRight: string;
@@ -211,6 +229,49 @@ test.describe('Home → Generation', () => {
       pdfContent: { text: 'Source PDF validée', images: [] },
     });
   });
+
+  for (const localized of PDF_OCR_GUIDANCE_LOCALES) {
+    test(`localizes unreadable PDF OCR guidance in ${localized.locale}`, async ({ page }) => {
+      await page.addInitScript(
+        (locale) => localStorage.setItem('locale', locale),
+        localized.locale,
+      );
+      let planRequests = 0;
+      await page.route('**/api/parse-pdf', async (route) => {
+        await route.fulfill({
+          status: 422,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: false,
+            errorCode: 'NO_READABLE_PDF_TEXT',
+            error: 'No configured PDF parser returned readable text, including OCR fallback',
+          }),
+        });
+      });
+      await page.route('**/api/generate-classroom/plan', async (route) => {
+        planRequests += 1;
+        await route.abort();
+      });
+
+      const home = new HomePage(page);
+      await home.goto();
+      await home.fillRequirement('Create a course from this scanned source.');
+      await home.configureAnimation();
+      await page.getByRole('button', { name: /PDF/ }).click();
+      await page.locator('input[type="file"][accept*=".pdf"]').setInputFiles({
+        name: 'scanned-source.pdf',
+        mimeType: 'application/pdf',
+        buffer: Buffer.from('%PDF-1.4 image-only e2e'),
+      });
+      await home.submit();
+
+      await expect(page.getByText(localized.guidance, { exact: true })).toBeVisible();
+      await expect(
+        page.getByText('No configured PDF parser returned readable text, including OCR fallback'),
+      ).toHaveCount(0);
+      expect(planRequests).toBe(0);
+    });
+  }
 
   test('blocks a contradictory attachment before showing a syllabus', async ({ page, mockApi }) => {
     const acceptedJob = await mockApi.mockClassroomGenerationJob('source-reformulation-e2e');

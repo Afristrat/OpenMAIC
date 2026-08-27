@@ -9,9 +9,16 @@ import type { ParsedPdfContent } from '@/lib/types/pdf';
 import { documentArtifactToParsedPdfContent, extractDocument } from '@/lib/document';
 import { shouldUseOcrFallback } from '@/lib/document/pdf-text-quality';
 import { createLogger } from '@/lib/logger';
-import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 const log = createLogger('Parse PDF');
+
+class NoReadablePdfTextError extends Error {
+  constructor() {
+    super('No configured PDF parser returned readable text, including OCR fallback');
+    this.name = 'NoReadablePdfTextError';
+  }
+}
 
 export async function POST(req: NextRequest) {
   let pdfFileName: string | undefined;
@@ -107,7 +114,7 @@ export async function POST(req: NextRequest) {
 
     if (!result) throw primaryError ?? new Error('No PDF parser returned usable content');
     if (shouldUseOcrFallback(result.text)) {
-      throw new Error('No configured PDF parser returned readable text, including OCR fallback');
+      throw new NoReadablePdfTextError();
     }
 
     // Add file metadata
@@ -127,6 +134,13 @@ export async function POST(req: NextRequest) {
       `PDF parsing failed [provider=${resolvedProviderId ?? 'unknown'}, file="${pdfFileName ?? 'unknown'}"]:`,
       error,
     );
-    return apiError('PARSE_FAILED', 500, error instanceof Error ? error.message : 'Unknown error');
+    if (error instanceof NoReadablePdfTextError) {
+      return apiError(API_ERROR_CODES.NO_READABLE_PDF_TEXT, 422, error.message);
+    }
+    return apiError(
+      API_ERROR_CODES.PARSE_FAILED,
+      500,
+      error instanceof Error ? error.message : 'Unknown error',
+    );
   }
 }
