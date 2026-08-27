@@ -23,10 +23,7 @@ export const test = base.extend<Fixtures>({
       }) => {
         if (message.type() === 'warning' || message.type() === 'error') {
           const location = message.location();
-          if (
-            message.type() === 'error' &&
-            message.text().startsWith('Failed to load resource:')
-          ) {
+          if (message.type() === 'error' && message.text().startsWith('Failed to load resource:')) {
             resourceErrors.push({ text: message.text(), url: location.url });
             return;
           }
@@ -58,7 +55,8 @@ export const test = base.extend<Fixtures>({
         const matchingResponses = failedResponses.filter((response) => {
           const url = new URL(response.url);
           return (
-            url.pathname === expectedHttpError.pathname && response.status === expectedHttpError.status
+            url.pathname === expectedHttpError.pathname &&
+            response.status === expectedHttpError.status
           );
         });
         expect(
@@ -68,7 +66,9 @@ export const test = base.extend<Fixtures>({
       }
       for (const resourceError of resourceErrors) {
         const pathname = resourceError.url ? new URL(resourceError.url).pathname : '';
-        if (!expectedHttpErrors.some((expectedHttpError) => expectedHttpError.pathname === pathname)) {
+        if (
+          !expectedHttpErrors.some((expectedHttpError) => expectedHttpError.pathname === pathname)
+        ) {
           unexpected.push(`error: ${resourceError.text} @ ${resourceError.url}`);
         }
       }
