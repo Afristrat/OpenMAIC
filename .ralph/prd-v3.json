@@ -1822,7 +1822,8 @@
         "tests/audio/qualified-voice-catalog.test.ts",
         "commit:b3f5552cdbfc691b7debe015adf2df9bd3790d52",
         "commit:f03381c2cea114780704159f7b953d57002873a5",
-        "commit:d8c782fe4de54eb9ffa48b9a8bdc10005708fcbb"
+        "commit:d8c782fe4de54eb9ffa48b9a8bdc10005708fcbb",
+        "commit:2ed4715ed9bd23f4ce7add2456d0f1cb26734c8d"
       ],
       "acceptance": [
         "Établir le catalogue cible de dix voix FR et dix EN, avec genre déclaré, langue, fournisseur, identifiant et aperçu réel.",
@@ -1830,28 +1831,34 @@
         "Contrôler la cohérence prénom, avatar, voix et langue pour les agents ; une indisponibilité ne doit pas déclencher un changement silencieux d’identité.",
         "Consigner l’écoute et l’acceptation humaine du catalogue ; ne pas rouvrir S1-011 pour cette extension."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-08-27 — Correctif poussé au SHA exact 2ed4715ed9bd23f4ce7add2456d0f1cb26734c8d : le choix agentVoiceOverrides traverse l’interface, les routes de planification et de génération, le job durable et le casting serveur ; le professeur conserve son contrat teacherVoiceConfig distinct et une voix connue incompatible avec le genre est refusée.",
+        "2026-08-27 — Gate complet dans le clone ServeurIA isolé /tmp/qalem-s6012-1ZDurx au SHA exact : formatage, TypeScript et lint réussis ; 368/368 fichiers et 2 441/2 441 tests Vitest ; build 95/95 ; 74/74 tests Playwright.",
+        "2026-08-27 — Web, worker de génération et capture-worker Coolify déployés sur le même SHA 2ed4715ed9bd23f4ce7add2456d0f1cb26734c8d. Les trois conteneurs sont healthy, à zéro redémarrage et OOMKilled=false ; cinq contrôles consécutifs de qalem.ma et /api/health répondent 200 après la charge réelle.",
+        "2026-08-27 — Le /health Higgs réel répond 200 et expose 16 profils. Dix identités déclarées sont qualifiées pour FR et EN ; les vingt appels séquentiels à /api/generate/tts répondent 200 et produisent vingt WAV RIFF de 4,86 à 6,18 s, avec tailles et SHA-256 consignés dans docs/evidence/s6-012-voice-preview-manifest.json.",
+        "2026-08-27 — Aller-retour production éphémère : Salma reçoit Rim (higgs-tts/higgs/rim) ; le choix est identique dans le job durable, la classroom générée et après rechargement Chromium, sans changement du prénom Salma, de l’avatar /avatars/assist.png ni du genre female.",
+        "2026-08-27 — Régénération TTS production HTTP 200 : huit pistes sur huit régénérées sans modifier la voix persistée. Le WAV contrôlé répond 200, mesure 559 724 octets et 11,66 s, avec volume moyen −19,5 dB et crête −4,9 dB.",
+        "2026-08-27 — Nettoyage re-vérifié après la preuve : zéro job, stage, scène, cours et objet Storage résiduels. L’écoute humaine des vingt aperçus n’est pas auto-déclarée et reste le seul critère ouvert."
+      ],
       "validationDebt": {
         "recordedAt": "2026-08-27",
-        "decision": "Implémentation et preuves machine conservées ; story non certifiée tant que l’écoute humaine et le gate E2E final ne sont pas soldés.",
+        "decision": "Implémentation et preuves machine intégralement certifiées ; story non certifiée tant que l’écoute humaine des vingt aperçus n’est pas consignée.",
         "implementedButUncertified": [
           "Catalogue de dix identités Higgs utilisables en français et en anglais, avec fournisseur, identifiant, genre déclaré et textes d’aperçu.",
-          "Vingt WAV réels générés via Qalem, tous non vides et consignés avec taille et SHA-256 dans le manifeste de preuve.",
+          "Vingt WAV réels régénérés via Qalem au SHA déployé, tous non vides et consignés avec taille et SHA-256 dans le manifeste de preuve.",
           "Filtrage des voix incompatibles avec le genre déclaré et conservation déterministe de l’identité entre FR et EN.",
-          "Prévisualisation TTS avec la langue effective de l’interface."
+          "Conservation production prouvée lors de la génération, du rechargement Chromium et de la régénération de huit pistes TTS."
         ],
         "machineEvidence": {
-          "targeted": "19/19 tests audio initiaux, puis 6/6 tests ciblés export/catalogue sur les SHA de diagnostic.",
-          "unitSuite": "2417/2417 tests Vitest au SHA d8c782fe4de54eb9ffa48b9a8bdc10005708fcbb.",
+          "targeted": "38/38 tests ciblés des schémas, routes, casting et génération, plus le parcours Home → Generation ciblé.",
+          "unitSuite": "2441/2441 tests Vitest au SHA 2ed4715ed9bd23f4ce7add2456d0f1cb26734c8d.",
           "build": "Build Next.js réussi, 95/95 pages générées.",
-          "e2e": "67/69 parcours Playwright réussis avec Chromium 145 ; les trois parcours microphone/Whisper sont verts.",
-          "oom": "OOMKilled=false sur tous les conteneurs de validation observés."
+          "e2e": "74/74 parcours Playwright réussis, dont la réhydratation et la transmission des choix vocaux vers le plan et la génération.",
+          "production": "20/20 aperçus réels, génération réussie, rechargement conservé et 8/8 pistes régénérées ; nettoyage à zéro.",
+          "oom": "OOMKilled=false et zéro redémarrage sur web, worker de génération et capture-worker après la charge réelle."
         },
         "stillRequired": [
-          "Faire écouter et accepter humainement les vingt aperçus FR/EN ; le manifeste conserve humanAcceptance=false.",
-          "Re-prouver la conservation du choix vocal lors de génération, régénération et rechargement dans le navigateur.",
-          "Résoudre ou cadrer explicitement l’incompatibilité Chromium 145 des deux E2E d’export : le téléchargement blob asynchrone est bien déclenché, mais Playwright reçoit le nom générique download au lieu de l’extension attendue.",
-          "Rejouer le gate complet au SHA exact après résolution ; ne pas marquer passes=true avant un résultat intégralement vert."
+          "Faire écouter et accepter humainement les vingt aperçus FR/EN ; le manifeste conserve humanAcceptance=false."
         ]
       },
       "historicalDependencies": [],
