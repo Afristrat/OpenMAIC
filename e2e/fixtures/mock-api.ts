@@ -138,12 +138,12 @@ export class MockApi {
           return;
         }
         tracker.expectedRequests.push(label);
-          await route.fulfill({
-            status: request.method() === 'GET' || request.method() === 'HEAD' ? 200 : 201,
-            contentType: 'application/json',
-            headers: { 'content-range': '0-0/0' },
-            body: request.method() === 'HEAD' ? '' : '[]',
-          });
+        await route.fulfill({
+          status: request.method() === 'GET' || request.method() === 'HEAD' ? 200 : 201,
+          contentType: 'application/json',
+          headers: { 'content-range': '0-0/0' },
+          body: request.method() === 'HEAD' ? '' : '[]',
+        });
       });
     };
 

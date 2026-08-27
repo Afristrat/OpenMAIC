@@ -13,42 +13,42 @@ test('privilégie la classroom serveur et sa narration sur le cache local périm
   await page.evaluate(
     (stageId) =>
       new Promise<void>((resolve, reject) => {
-      const request = indexedDB.open('MAIC-Database');
-      request.onsuccess = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-        const tx = db.transaction(['stages', 'scenes', 'stageOutlines'], 'readwrite');
-        const now = Date.now();
-        tx.objectStore('stages').put({
-          id: stageId,
-          name: 'Cache périmé',
-          createdAt: now,
-          updatedAt: now,
-        });
-        tx.objectStore('scenes').put({
-          id: 'cached-scene',
-          stageId,
-          type: 'slide',
-          title: 'Version sans narration',
-          order: 1,
-          content: { type: 'slide', canvas: { id: 'cached-slide', elements: [] } },
-          actions: [],
-          createdAt: now,
-          updatedAt: now,
-        });
-        tx.objectStore('stageOutlines').put({
-          stageId,
-          outlines: [],
-          createdAt: now,
-          updatedAt: now,
-        });
-        tx.oncomplete = () => {
-          db.close();
-          resolve();
+        const request = indexedDB.open('MAIC-Database');
+        request.onsuccess = (event) => {
+          const db = (event.target as IDBOpenDBRequest).result;
+          const tx = db.transaction(['stages', 'scenes', 'stageOutlines'], 'readwrite');
+          const now = Date.now();
+          tx.objectStore('stages').put({
+            id: stageId,
+            name: 'Cache périmé',
+            createdAt: now,
+            updatedAt: now,
+          });
+          tx.objectStore('scenes').put({
+            id: 'cached-scene',
+            stageId,
+            type: 'slide',
+            title: 'Version sans narration',
+            order: 1,
+            content: { type: 'slide', canvas: { id: 'cached-slide', elements: [] } },
+            actions: [],
+            createdAt: now,
+            updatedAt: now,
+          });
+          tx.objectStore('stageOutlines').put({
+            stageId,
+            outlines: [],
+            createdAt: now,
+            updatedAt: now,
+          });
+          tx.oncomplete = () => {
+            db.close();
+            resolve();
+          };
+          tx.onerror = () => reject(tx.error);
         };
-        tx.onerror = () => reject(tx.error);
-      };
-      request.onerror = () => reject(request.error);
-    }),
+        request.onerror = () => reject(request.error);
+      }),
     STAGE_ID,
   );
 
