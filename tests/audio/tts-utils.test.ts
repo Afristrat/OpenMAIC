@@ -79,9 +79,7 @@ describe('French dirham speech preparation', () => {
   it('removes only the written plural s from the provider copy', () => {
     const displayed = '1 dirham, 2 dirhams et 12 500 Dirhams.';
 
-    expect(prepareTextForTTS(displayed, 'fr-FR')).toBe(
-      '1 dirham, 2 dirham et 12 500 Dirham.',
-    );
+    expect(prepareTextForTTS(displayed, 'fr-FR')).toBe('1 dirham, 2 dirham et 12 500 Dirham.');
     expect(displayed).toBe('1 dirham, 2 dirhams et 12 500 Dirhams.');
   });
 
