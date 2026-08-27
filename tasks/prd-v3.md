@@ -16,8 +16,8 @@ Aucune fonctionnalité n’est implémentée par cette opération documentaire.
 - 65 stories v2 inventoriées : 26 ouvertes reprises, 3 rouvertes, 36 acceptations historiques conservées sans recertification.
 - 72 stories v1/UI rattachées à une décision de conservation et à leurs US de suivi ; 18 capacités héritées sont explicitement remises en suivi.
 - 17 demandes/ensembles d’engagements rattachés à des US.
-- 63 US actives : 15 à implémenter, 22 à valider, 21 avec décision préalable, 5 bloquées.
-- Huit US sont soldées sur preuves actuelles. Une décision de retrait n’est jamais une réussite d’implémentation.
+- 63 US au registre : 11 à implémenter, 15 à valider, 21 avec décision préalable, 5 bloquées et 11 soldées.
+- Onze US sont soldées sur preuves actuelles. Une décision de retrait n’est jamais une réussite d’implémentation.
 - S0-015 est entièrement certifiée côté machine sur le SHA déployé `6ea54d9` ; seule l’écoute humaine SOP-011 maintient son état « À valider ».
 
 ## Limites de preuve
@@ -89,7 +89,7 @@ Les descriptions et critères exécutables complets sont dans le JSON canonique.
 | 17   | S6-013 | P1       | À valider        | Recetter une formation complète avec ressources et exports réels                      |
 | 18   | S-025  | P1       | Soldée           | Extraire les items de révision depuis les quiz                                        |
 | 19   | S6-010 | P1       | Soldée           | Déclencher les rappels de révision et vérifier le cache PWA                           |
-| 20   | U-020  | P1       | À implémenter    | Bannière installer PWA                                                                |
+| 20   | U-020  | P1       | À valider        | Bannière installer PWA                                                                |
 | 21   | S3-002 | P1       | À valider        | Push PWA re-vérifié sur appareils réels iOS + Android                                 |
 | 22   | S0-012 | P1       | À valider        | [CHECKPOINT AMINE] Parcours guidé passe RTL ar-MA [UI]                                |
 | 23   | S1-012 | P1       | À valider        | Capacité capture web réutilisable — service Playwright dédié + injection scène        |

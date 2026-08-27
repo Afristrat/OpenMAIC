@@ -2185,7 +2185,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Bannière installer PWA » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P1",
-      "status": "to_implement",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "file": ".ralph/prd-ui.json",
@@ -2194,13 +2194,50 @@
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Bannière d’installation présente mais sans montage retrouvé ; distincte du service worker monté.",
-      "evidence": ["components/pwa-install-banner.tsx:15", "app/layout.tsx"],
+      "gap": "Implémentation, gate machine et déploiement production soldés au SHA 3b209d9ff6f921fef3d58c0031a33f933432807a. Reste exclusivement la vérification sur iOS et Android physiques, menée conjointement avec S3-002 ; passes demeure donc false.",
+      "evidence": [
+        "components/pwa-install-banner.tsx",
+        "app/layout.tsx",
+        "public/manifest.json",
+        "public/icon-192.png",
+        "public/icon-512.png",
+        "tests/pwa-install-banner.test.ts",
+        "e2e/tests/pwa-install-banner.spec.ts",
+        "commit:3b209d9ff6f921fef3d58c0031a33f933432807a"
+      ],
       "acceptance": [
         "Brancher la proposition d’installation seulement si applicable ; respecter refus et app déjà installée.",
         "Vérifier les instructions iOS et le parcours Android sur appareils réels conjointement avec S3-002."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-08-27 — Le SHA exact 3b209d9ff6f921fef3d58c0031a33f933432807a monte PwaInstallBanner dans le layout global. Chromium ne reçoit la proposition qu’après beforeinstallprompt ; le refus du prompt ou le bouton de fermeture sont persistés, appinstalled masque la proposition et les modes display-mode standalone ou navigator.standalone la suppriment.",
+        "2026-08-27 — Le même SHA ajoute le parcours manuel iOS localisé en fr-FR, ar-MA et en-US ainsi que de vraies icônes PNG 192 × 192 et 512 × 512 déclarées dans le manifeste. Deux tests Vitest contrôlent la détection de plateforme et les dimensions binaires des icônes ; quatre E2E couvrent applicabilité, refus, installation externe, mode autonome et instructions iOS.",
+        "2026-08-27 — Gate complet dans un clone isolé monté directement à /workspace sur ServeurIA : pnpm check, TypeScript et lint zéro avertissement ; 372/372 fichiers et 2 460/2 460 tests Vitest ; build 97/97 ; 82/82 tests Playwright sans retry. Le conteneur de validation était borné à 12 Gio, avec zéro redémarrage et OOMKilled=false.",
+        "2026-08-27 — Déploiement Coolify di0v5dtumayvdhageudcr6wa terminé sur Qalem web au commit exact. Le conteneur bcx5pxyuc9z3lt4jtyjipcqu-153258966984 est healthy, restartCount=0 et OOMKilled=false ; qalem.ma, /api/health, /manifest.json et les deux icônes répondent 200. Les SHA-256 servis pour le manifeste et les deux PNG correspondent octet pour octet aux fichiers du commit.",
+        "2026-08-27 — Preuve Chromium sur qalem.ma : bannière française réellement montée, prompt synthétique appelé exactement une fois et bannière masquée après acceptation. Preuve profil iPhone : instructions « Partager » puis « Sur l’écran d’accueil » visibles et aucun faux bouton Installer. Ces preuves navigateur ne remplacent pas les gestes sur appareils physiques exigés par le second critère."
+      ],
+      "validationDebt": {
+        "recordedAt": "2026-08-27",
+        "decision": "Implémentation et preuves machine intégralement certifiées ; story non certifiée tant que les parcours d’installation sur appareils iOS et Android physiques ne sont pas consignés avec S3-002.",
+        "implementedButUncertified": [
+          "Proposition Chromium déclenchée uniquement par le signal natif d’installabilité et prompt appelé depuis un geste utilisateur.",
+          "Instructions manuelles iOS localisées, masquage en mode autonome et respect persistant du refus.",
+          "Manifeste installable avec icônes réelles 192 × 192 et 512 × 512.",
+          "Déploiement production et parcours navigateur headless au SHA exact."
+        ],
+        "machineEvidence": {
+          "unitSuite": "2460/2460 tests Vitest au SHA 3b209d9ff6f921fef3d58c0031a33f933432807a.",
+          "build": "Build Next.js réussi, 97/97 pages générées.",
+          "e2e": "82/82 parcours Playwright sans retry, dont quatre scénarios U-020.",
+          "production": "Déploiement exact healthy ; manifeste et icônes servis en 200 avec SHA-256 identiques ; preuves Chromium et profil iPhone réussies.",
+          "oom": "Validation et production à zéro redémarrage, OOMKilled=false."
+        },
+        "stillRequired": [
+          "Installer Qalem et vérifier les instructions sur un iPhone ou iPad physique compatible.",
+          "Installer Qalem et vérifier le prompt natif sur un appareil Android physique.",
+          "Consigner les deux résultats conjointement avec la recette push S3-002."
+        ]
+      },
       "historicalEvidence": {
         "completedAt": "2026-03-29T23:34:34.182Z",
         "status": "legacy_claim_not_delivery_proof"
