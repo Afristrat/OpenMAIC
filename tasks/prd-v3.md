@@ -74,7 +74,7 @@ Les descriptions et critères exécutables complets sont dans le JSON canonique.
 | 2    | S6-002 | P0       | Bloquée          | Terminer le diagnostic mémoire propre à Qalem                                         |
 | 3    | S0-015 | P0       | À valider        | Auth multi-tenant + persistance Storage sur le flux classroom (P0)                    |
 | 4    | S6-017 | P0       | Soldée           | Éliminer les vulnérabilités critiques et hautes des dépendances de production         |
-| 5    | S6-019 | P0       | À implémenter    | Éliminer les avis modérés et faibles des dépendances de production                    |
+| 5    | S6-019 | P0       | Soldée           | Éliminer les avis modérés et faibles des dépendances de production                    |
 | 6    | S6-014 | P0       | Bloquée          | Conserver la dette de sécurité Qalem sous autorisation explicite                      |
 | 7    | S6-018 | P1       | À implémenter    | Supprimer les erreurs serveur parasites des E2E à fallback IndexedDB                  |
 | 8    | S6-005 | P1       | Soldée           | Proposer une reformulation fondée sur les sources en cas de conflit                   |

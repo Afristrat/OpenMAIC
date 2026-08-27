@@ -1511,21 +1511,25 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que le graphe de dépendances de production soit exempt de tout avis connu afin qu’aucun risque modéré ou faible ne demeure une dette passive.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P0",
-      "status": "to_implement",
-      "passes": false,
+      "status": "to_validate",
+      "passes": true,
       "source": {
         "type": "request_or_observed_gap",
         "date": "2026-08-27"
       },
       "sourceDependencies": [],
       "dependencies": ["S6-017"],
-      "gap": "Après la clôture de S6-017 au SHA a9f26a30a74b6ed868c77d474f7ae8c2ee6b2f71, l’audit production contient encore 20 avis et 22 occurrences : 17 modérées et 5 faibles sur 12 paquets. Le sous-graphe omml2mathml → get-dom → jsdom → request est non maintenu et request n’a aucune version corrigée.",
+      "gap": "Soldé : les 20 avis et 22 occurrences résiduels ont été éliminés sans désactiver l’audit. Le sous-graphe non maintenu omml2mathml → get-dom → jsdom → request a été retiré à la racine ; le SHA exact déployé passe l’audit entièrement à zéro et le gate complet.",
       "evidence": [
         "docs/security/S6-017-production-dependency-audit.md",
         "packages/@openmaic/importer/src/serializer/mathSerializer.ts",
         "package.json",
         "pnpm-lock.yaml",
-        "command:pnpm audit --prod --json@a9f26a30a74b6ed868c77d474f7ae8c2ee6b2f71"
+        "command:pnpm audit --prod --json@a9f26a30a74b6ed868c77d474f7ae8c2ee6b2f71",
+        "docs/security/S6-019-production-dependency-audit.md",
+        "packages/@openmaic/omml2mathml",
+        "command:pnpm audit --prod --json@0cf0d94e6b40538e378e22b2bec928464ceb8def",
+        "commit:0cf0d94e6b40538e378e22b2bec928464ceb8def"
       ],
       "acceptance": [
         "Inventorier les 12 paquets résiduels, leurs 20 avis, leurs 22 occurrences, leurs appelants Qalem et leurs versions corrigées sans confondre avis et occurrences.",
@@ -1534,7 +1538,14 @@
         "Vérifier les frontières MCP, Markdown/Mermaid, graphiques ECharts, Sentry, Google GenAI, LangChain et import PPTX concernées par les montées.",
         "Obtenir un audit de production à zéro info, zéro faible, zéro modéré, zéro haut et zéro critique, puis réussir le gate complet au SHA exact et recertifier les conteneurs déployés, leurs redémarrages et leur état OOM."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-08-27 — L’inventaire permanent docs/security/S6-019-production-dependency-audit.md réconcilie les 12 paquets, 20 avis uniques et 22 occurrences du SHA de départ avec leurs appelants Qalem, versions atteintes, versions corrigées et avis GitHub ; les nombres d’avis et d’occurrences restent explicitement distincts.",
+        "2026-08-27 — Le SHA 0cf0d94e6b40538e378e22b2bec928464ceb8def met à niveau les dépendances corrigées et conserve exactement 18 overrides, chacun borné dans la plage majeure déclarée par son sélecteur. audit:prod exécute pnpm audit --prod sans seuil ni exclusion : tout futur avis connu fait échouer le contrôle.",
+        "2026-08-27 — Le fork interne attribué packages/@openmaic/omml2mathml remplace get-dom/jsdom/request par @xmldom/xmldom au point de création du DOM. request, get-dom, jsdom 9, uuid 3 et tough-cookie 2 sont absents du graphe de production ; le fallback TexMath et sept structures OMML réelles restent couverts. Le chargement à la demande de pdfjs conserve le chemin PDF embarqué sans polyfills DOM parasites dans les tests Node.js.",
+        "2026-08-27 — Les frontières MCP, Markdown, ECharts, Sentry, Google GenAI, LangChain et import PPTX/OMML sont couvertes par les suites permanentes. Dans le clone ServeurIA isolé /tmp/qalem-s6019-final-0cf0d94 : audit 0/0/0/0/0, Prettier, TypeScript et lint verts, 376/376 fichiers et 2 474/2 474 tests racine, 10/10 fichiers et 31/31 tests importer, build Next 99/99 et 82/82 Playwright sans retry ni flaky.",
+        "2026-08-27 — Coolify a terminé les déploiements web gvshnq1m02nmqatnbx9dgi0y et runtime irkisgmudkfy9fc8p82iq6b8 au SHA exact. Web 1fd349d1068e, worker b631f0a8c9a3 et capture-worker 07f741b5f3e7 sont running/healthy, restartCount=0 et OOMKilled=false ; leurs limites sont 1,5/3 Gio, 3/6 Gio et 1,5/3 Gio mémoire/swap. Le volume /data/storage-states est persistant et RW, worker→capture répond 200, et https://qalem.ma/api/health répond 200 status=ok avec les quatre capacités actives."
+      ],
+      "completedAt": "2026-08-27",
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
@@ -1555,7 +1566,10 @@
       "sourceDependencies": [],
       "dependencies": [],
       "gap": "Expositions de secrets signalées dans l’historique ; l’utilisateur a explicitement refusé les rotations dans ce chantier.",
-      "evidence": ["AGENTS.md#Règles du projet", "thread:01a005ad-360e-7710-aeb5-bf5fc84c67b6"],
+      "evidence": [
+        "AGENTS.md#Règles du projet",
+        "thread:01a005ad-360e-7710-aeb5-bf5fc84c67b6"
+      ],
       "acceptance": [
         "Conserver uniquement les catégories de secrets et services concernés, jamais leurs valeurs.",
         "Ne déclencher aucune rotation, révocation ou mutation sans nouvelle autorisation explicite d’Amine dans la session propriétaire.",
@@ -2075,7 +2089,10 @@
       "sourceDependencies": ["S4-009"],
       "dependencies": [],
       "gap": "Soldé : devise réellement validée contre le registre ISO 4217 du runtime, contexte structuré porté par les trames et persisté dans la classroom, zone laser mesurée sur l’élément DOM positionné puis parcourue pendant la durée normalisée.",
-      "evidence": ["lib/formation-engine/learning-context.ts", ".ralph/prd-v2.json#S4-010"],
+      "evidence": [
+        "lib/formation-engine/learning-context.ts",
+        ".ralph/prd-v2.json#S4-010"
+      ],
       "acceptance": [
         "L’auteur choisit explicitement le territoire et la devise ISO 4217 avant la génération",
         "Une trame transmet son contexte structuré au formulaire au lieu de ne transmettre que son texte",
@@ -2585,7 +2602,10 @@
       "sourceDependencies": ["S0-008"],
       "dependencies": [],
       "gap": "Réouverture de preuve : la complétion Moodle historique a été simulée via PHP, pas déclenchée par le runtime navigateur. Le runtime a évolué vers des adaptateurs natifs.",
-      "evidence": ["lib/export/scorm/tracking-adapters.ts", ".ralph/prd-v2.json#S1-007"],
+      "evidence": [
+        "lib/export/scorm/tracking-adapters.ts",
+        ".ralph/prd-v2.json#S1-007"
+      ],
       "acceptance": [
         "export_jobs scorm12 → zip imsmanifest.xml valide",
         "Import Moodle docker réussi, completion trackée (preuve)",
@@ -2656,7 +2676,10 @@
       "sourceDependencies": ["S0-008"],
       "dependencies": [],
       "gap": "Réouverture de preuve : OOXML bien formé ne prouve pas l’ouverture sans réparation dans PowerPoint.",
-      "evidence": ["tests/edit/round-trip/ooxml-validity.test.ts", ".ralph/prd-v2.json#S1-010"],
+      "evidence": [
+        "tests/edit/round-trip/ooxml-validity.test.ts",
+        ".ralph/prd-v2.json#S1-010"
+      ],
       "acceptance": [
         "PPTX d'un course généré s'ouvre sans réparation dans PowerPoint",
         "Packages mathml2omml/pptxgenjs buildés au postinstall (preuve)",
@@ -2689,7 +2712,10 @@
       "sourceDependencies": ["S1-003"],
       "dependencies": [],
       "gap": "Catalogue, route et E2E présents : ne pas reconstruire ; terminer la recette de publication, visibilité et entrée en cours.",
-      "evidence": ["app/api/courses/catalog/route.ts", "e2e/tests/course-catalog.spec.ts"],
+      "evidence": [
+        "app/api/courses/catalog/route.ts",
+        "e2e/tests/course-catalog.spec.ts"
+      ],
       "acceptance": [
         "Liste des courses ready + catalog_visible",
         "Rejoindre la classe → classroom (e2e)",
@@ -2722,7 +2748,10 @@
       "sourceDependencies": ["S1-003"],
       "dependencies": [],
       "gap": "Persistance du verdict d’import présente ; le parcours complet dépôt conforme → édition → ready reste à prouver et compléter.",
-      "evidence": ["lib/server/course-import-storage.ts", "lib/server/course-storage.ts"],
+      "evidence": [
+        "lib/server/course-import-storage.ts",
+        "lib/server/course-storage.ts"
+      ],
       "acceptance": [
         "Contenu conforme → outline dans l'Editor natif v0.3.0",
         "e2e dépôt → validation → outline → ready",
@@ -2964,7 +2993,10 @@
       "sourceDependencies": ["S0-008", "S2-010"],
       "dependencies": [],
       "gap": "Protocole composite déterministe présent ; sidecar, budget mémoire, conformité et robustesse P2-C non soldés.",
-      "evidence": ["lib/transmissions/audio-watermark-protocol.ts", ".ralph/prd-v2.json#S2-008"],
+      "evidence": [
+        "lib/transmissions/audio-watermark-protocol.ts",
+        ".ralph/prd-v2.json#S2-008"
+      ],
       "acceptance": [
         "Worker invoque AudioSeal MIT dans un sidecar borné ; watermark_id opaque 128 bits reconstitué par protocole composite documenté",
         "Protocole P2-C automatisé : ID décodé après mp3 128k, ogg, extrait 30 s, normalisation",
@@ -2998,7 +3030,10 @@
       "sourceDependencies": ["S2-010"],
       "dependencies": [],
       "gap": "Dérivé FFmpeg et test présents ; preuve avec destinataire légitime et décodage depuis capture encore requise.",
-      "evidence": ["tests/transmissions/visual-watermark.test.ts", ".ralph/prd-v2.json#S2-009"],
+      "evidence": [
+        "tests/transmissions/visual-watermark.test.ts",
+        ".ralph/prd-v2.json#S2-009"
+      ],
       "acceptance": [
         "videowmark (ou incrustation périodique avec ADR) appliqué par le worker",
         "Identifiant décodable sur capture d'écran du flux (preuve documentée)"
@@ -3197,7 +3232,10 @@
       "sourceDependencies": ["S3-005"],
       "dependencies": ["S3-005", "S-025"],
       "gap": "Étendre le FSRS existant ; l’alimentation post-quiz manquante est isolée dans S-025 pour ne pas dépendre du replay.",
-      "evidence": ["lib/spaced-repetition/extractor.ts", "tasks/prd-3-ancrer.md"],
+      "evidence": [
+        "lib/spaced-repetition/extractor.ts",
+        "tasks/prd-3-ancrer.md"
+      ],
       "acceptance": [
         "Items de quiz de la session dans la file FSRS (extension, pas réécriture)",
         "Cycle testé : push → quiz → résultat re-nourrit FSRS",
@@ -3429,7 +3467,10 @@
       "sourceDependencies": [],
       "dependencies": ["S0-011"],
       "gap": "Bannière de consentement sans montage retrouvé ; ne pas activer une collecte pour justifier la bannière.",
-      "evidence": ["components/telemetry-consent-banner.tsx:10", "app/layout.tsx"],
+      "evidence": [
+        "components/telemetry-consent-banner.tsx:10",
+        "app/layout.tsx"
+      ],
       "acceptance": [
         "Inventorier les collectes réellement actives avant de décider de l’interface de consentement.",
         "Pour chaque collecte retenue, vérifier consentement explicite, refus, retrait et absence d’envoi avant opt-in.",
