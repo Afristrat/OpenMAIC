@@ -57,6 +57,14 @@ export async function POST(request: NextRequest) {
         },
       })),
       teacherVoiceConfig: parsed.teacherVoiceConfig,
+      agentVoiceOverrides: parsed.agentVoiceOverrides
+        ? Object.fromEntries(
+            Object.entries(parsed.agentVoiceOverrides).map(([agentId, voice]) => [
+              agentId,
+              { ...voice, providerId: voice.providerId as TTSProviderId },
+            ]),
+          )
+        : undefined,
       activeSkillId: parsed.activeSkillId,
     };
 

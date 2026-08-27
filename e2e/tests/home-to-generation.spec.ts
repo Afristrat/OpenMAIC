@@ -5,7 +5,17 @@ import { mockOutlines } from '../fixtures/test-data/scene-outlines';
 import type { Page } from '@playwright/test';
 
 // Inject settings with modelId so the "enter classroom" button works
-const SETTINGS_STORAGE = createSettingsStorage();
+const PERSISTED_AGENT_VOICE_OVERRIDES = {
+  'persona-teaching-assistant': {
+    providerId: 'higgs-tts',
+    modelId: 'higgs',
+    voiceId: 'hanae',
+  },
+};
+const SETTINGS_STORAGE = createSettingsStorage(
+  { agentVoiceOverrides: PERSISTED_AGENT_VOICE_OVERRIDES },
+  4,
+);
 
 const SOURCE_CONFLICT_LOCALES = [
   {
@@ -144,10 +154,14 @@ test.describe('Home → Generation', () => {
     await expect(page.getByRole('heading', { name: 'Generating course' })).toBeVisible();
     expect(generationJob.getSubmittedBody()).toMatchObject({
       agentMode: 'default',
+      agentVoiceOverrides: PERSISTED_AGENT_VOICE_OVERRIDES,
       approvedPlan: {
         courseTitle: 'Editable E2E syllabus',
         syllabus: { audience: 'Retail team leaders' },
       },
+    });
+    expect(generationJob.getPlanRequestBody()).toMatchObject({
+      agentVoiceOverrides: PERSISTED_AGENT_VOICE_OVERRIDES,
     });
   });
 

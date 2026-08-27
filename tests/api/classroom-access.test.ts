@@ -173,6 +173,45 @@ describe('classroom tenant boundary', () => {
     expect(mocks.enqueueGeneration).not.toHaveBeenCalled();
   });
 
+  it('persists per-agent voice choices in the durable generation job', async () => {
+    mocks.createGenerationJob.mockResolvedValue({
+      status: 'queued',
+      step: 'queued',
+      message: 'Queued',
+    });
+    mocks.enqueueGeneration.mockResolvedValue('bull-generation-job');
+
+    const agentVoiceOverrides = {
+      assistant: { providerId: 'higgs-tts', modelId: 'higgs', voiceId: 'hanae' },
+    };
+    const response = await generateClassroom(
+      new NextRequest('https://qalem.ma/api/generate-classroom', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          orgId: ORG_ID,
+          requirement: 'Former une cohorte au pilotage budgétaire',
+          learningApproach: 'andragogy',
+          interactionLevel: 'balanced',
+          learningContext: { territory: 'Maroc', currencyCode: 'mad' },
+          agentVoiceOverrides,
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(202);
+    expect(mocks.createGenerationJob).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        orgId: ORG_ID,
+        learningContext: { territory: 'Maroc', currencyCode: 'MAD' },
+        agentVoiceOverrides,
+      }),
+      'session-owner',
+    );
+    expect(mocks.enqueueGeneration).toHaveBeenCalledOnce();
+  });
+
   it('returns the authorization failure before reading a private cross-org classroom', async () => {
     mocks.requireMember.mockResolvedValue({ response: forbidden() });
 

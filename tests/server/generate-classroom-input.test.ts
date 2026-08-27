@@ -54,6 +54,13 @@ describe('generateClassroomSchema', () => {
         voiceName: 'Hanae',
         gender: 'female',
       },
+      agentVoiceOverrides: {
+        'persona-teaching-assistant': {
+          providerId: 'higgs-tts',
+          modelId: 'higgs',
+          voiceId: 'hanae',
+        },
+      },
       contextualSpecialists: [
         {
           id: 'specialist-Ab12Cd34',
@@ -76,7 +83,25 @@ describe('generateClassroomSchema', () => {
     if (result.success) {
       expect(result.data.imageProviderId).toBe('openai-image');
       expect(result.data.imageModelId).toBe('gemini-3-pro-image');
+      expect(result.data.agentVoiceOverrides?.['persona-teaching-assistant']).toEqual({
+        providerId: 'higgs-tts',
+        modelId: 'higgs',
+        voiceId: 'hanae',
+      });
     }
+  });
+
+  test('bounds the number of persisted per-agent voice choices', () => {
+    const agentVoiceOverrides = Object.fromEntries(
+      Array.from({ length: 21 }, (_, index) => [
+        `agent-${index}`,
+        { providerId: 'higgs-tts', voiceId: 'hanae' },
+      ]),
+    );
+
+    expect(generateClassroomSchema.safeParse({ ...baseInput, agentVoiceOverrides }).success).toBe(
+      false,
+    );
   });
 
   test('preserves the language model explicitly selected by the author', () => {

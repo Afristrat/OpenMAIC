@@ -29,6 +29,9 @@ const body = {
   interactionLevel: 'balanced',
   learningContext: { territory: 'Maroc', currencyCode: 'MAD' },
   pdfContent: { text: 'Process improvement and Lean Six Sigma.', images: [] },
+  agentVoiceOverrides: {
+    assistant: { providerId: 'higgs-tts', modelId: 'higgs', voiceId: 'hanae' },
+  },
 };
 
 describe('POST /api/generate-classroom/plan', () => {
@@ -64,6 +67,7 @@ describe('POST /api/generate-classroom/plan', () => {
         orgId: body.orgId,
         requirement: body.requirement,
         pdfContent: body.pdfContent,
+        agentVoiceOverrides: body.agentVoiceOverrides,
       }),
       'author-1',
     );

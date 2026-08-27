@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { ClassroomCastingError, normalizeClassroomCasting } from '@/lib/agents/classroom-casting';
+import {
+  applyClassroomVoiceOverrides,
+  ClassroomCastingError,
+  normalizeClassroomCasting,
+} from '@/lib/agents/classroom-casting';
 import type { GeneratedAgentConfig, Scene, Stage } from '@/lib/types/stage';
 
 const hanae: GeneratedAgentConfig = {
@@ -53,6 +57,47 @@ function scenes(agentId?: string): Scene[] {
 }
 
 describe('casting vocal canonique d’une classroom', () => {
+  it('applique une voix compatible sans modifier le prénom, l’avatar ni le genre', () => {
+    const assistant: GeneratedAgentConfig = {
+      ...hanae,
+      id: 'persona-teaching-assistant',
+      name: 'Salma',
+      role: 'assistant',
+      avatar: '/avatars/assist.png',
+      voiceConfig: { providerId: 'higgs-tts', voiceId: 'salma' },
+    };
+
+    expect(
+      applyClassroomVoiceOverrides([assistant], {
+        'persona-teaching-assistant': {
+          providerId: 'higgs-tts',
+          modelId: 'higgs',
+          voiceId: 'hanae',
+        },
+      }),
+    ).toEqual([
+      {
+        ...assistant,
+        voiceConfig: { providerId: 'higgs-tts', modelId: 'higgs', voiceId: 'hanae' },
+      },
+    ]);
+  });
+
+  it('refuse une voix connue incompatible avec le genre et l’avatar du casting', () => {
+    expect(() =>
+      applyClassroomVoiceOverrides([hanae], {
+        'persona-professor': { providerId: 'higgs-tts', voiceId: 'younes' },
+      }),
+    ).not.toThrow();
+
+    const assistant = { ...hanae, id: 'persona-teaching-assistant', role: 'assistant' };
+    expect(() =>
+      applyClassroomVoiceOverrides([assistant], {
+        'persona-teaching-assistant': { providerId: 'higgs-tts', voiceId: 'younes' },
+      }),
+    ).toThrow(ClassroomCastingError);
+  });
+
   it('projette le professeur du casting sur le profil et attribue les paroles orphelines', () => {
     const result = normalizeClassroomCasting(
       stage({

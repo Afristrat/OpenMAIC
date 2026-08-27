@@ -200,6 +200,7 @@ function HomePage() {
   const agentMode = useSettingsStore((s) => s.agentMode);
   const selectedAgentIds = useSettingsStore((s) => s.selectedAgentIds);
   const contextualSpecialists = useSettingsStore((s) => s.contextualSpecialists);
+  const agentVoiceOverrides = useSettingsStore((s) => s.agentVoiceOverrides);
   const ttsProviderId = useSettingsStore((s) => s.ttsProviderId);
   const ttsVoice = useSettingsStore((s) => s.ttsVoice);
   const ttsProvidersConfig = useSettingsStore((s) => s.ttsProvidersConfig);
@@ -683,6 +684,7 @@ function HomePage() {
         contextualSpecialists: contextualSpecialists.filter((specialist) =>
           selectedAgentIds.includes(specialist.id),
         ),
+        agentVoiceOverrides,
         teacherVoiceConfig: {
           providerId: ttsProviderId,
           modelId: ttsProvidersConfig[ttsProviderId]?.modelId,

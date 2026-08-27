@@ -73,6 +73,16 @@ export async function POST(req: NextRequest) {
           }
         : {}),
       ...(parsed.teacherVoiceConfig ? { teacherVoiceConfig: parsed.teacherVoiceConfig } : {}),
+      ...(parsed.agentVoiceOverrides
+        ? {
+            agentVoiceOverrides: Object.fromEntries(
+              Object.entries(parsed.agentVoiceOverrides).map(([agentId, voice]) => [
+                agentId,
+                { ...voice, providerId: voice.providerId as TTSProviderId },
+              ]),
+            ),
+          }
+        : {}),
       ...(parsed.activeSkillId ? { activeSkillId: parsed.activeSkillId } : {}),
       ...(parsed.approvedPlan ? { approvedPlan: parsed.approvedPlan } : {}),
     };

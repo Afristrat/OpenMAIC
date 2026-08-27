@@ -458,6 +458,19 @@ export const generateClassroomSchema = z.object({
       gender: z.enum(['female', 'male', 'neutral']).optional(),
     })
     .optional(),
+  agentVoiceOverrides: z
+    .record(
+      z.string().min(1).max(120),
+      z.object({
+        providerId: z.string().min(1).max(80),
+        modelId: z.string().max(160).optional(),
+        voiceId: z.string().min(1).max(160),
+      }),
+    )
+    .refine((overrides) => Object.keys(overrides).length <= 20, {
+      message: 'agentVoiceOverrides must contain at most 20 agents',
+    })
+    .optional(),
   activeSkillId: z.string().min(1).max(120).optional(),
   approvedPlan: approvedClassroomPlanSchema.optional(),
 });

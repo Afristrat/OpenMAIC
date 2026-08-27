@@ -424,6 +424,41 @@ describe('classroom generation — web capture injection', () => {
     );
   });
 
+  it('persists a compatible per-agent voice choice in the generated classroom cast', async () => {
+    await generateWithProgress({
+      agentMode: 'default',
+      selectedPersonaIds: ['teaching-assistant', 'joker', 'curious'],
+      agentVoiceOverrides: {
+        'persona-teaching-assistant': {
+          providerId: 'higgs-tts',
+          modelId: 'higgs',
+          voiceId: 'hanae',
+        },
+      },
+    });
+
+    expect(mocks.persistClassroom).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stage: expect.objectContaining({
+          generatedAgentConfigs: expect.arrayContaining([
+            expect.objectContaining({
+              id: 'persona-teaching-assistant',
+              name: 'Salma',
+              avatar: '/avatars/assist.png',
+              gender: 'female',
+              voiceConfig: {
+                providerId: 'higgs-tts',
+                modelId: 'higgs',
+                voiceId: 'hanae',
+              },
+            }),
+          ]),
+        }),
+      }),
+      'http://localhost',
+    );
+  });
+
   it('never blocks scene generation when requestWebCapture returns null (capture failed)', async () => {
     mocks.decideCaptureForScene.mockResolvedValue({
       needsCapture: true,

@@ -1,4 +1,5 @@
 import { TTS_PROVIDERS } from '@/lib/audio/constants';
+import type { TTSProviderId } from '@/lib/audio/types';
 import { PERSONA_CATALOG } from '@/lib/agents/persona-catalog';
 import type { GeneratedAgentConfig, Scene, Stage } from '@/lib/types/stage';
 
@@ -18,6 +19,11 @@ export interface CanonicalClassroomCasting {
   agents: GeneratedAgentConfig[];
   changed: boolean;
 }
+
+export type ClassroomVoiceOverrides = Record<
+  string,
+  { providerId: TTSProviderId; modelId?: string; voiceId: string }
+>;
 
 function profileFromTeacher(teacher: GeneratedAgentConfig): TeacherProfile {
   if (!teacher.voiceConfig) {
@@ -92,6 +98,33 @@ function normalizedAgent(agent: GeneratedAgentConfig): GeneratedAgentConfig {
     );
   }
   return gender && candidate.gender !== gender ? { ...candidate, gender } : candidate;
+}
+
+/**
+ * Apply the author's persisted per-agent choices to the server casting before
+ * scene or media generation. The teacher remains governed by the dedicated
+ * teacherVoiceConfig contract, while every other known identity keeps its
+ * name/avatar/gender and is rejected if a known voice contradicts that cast.
+ */
+export function applyClassroomVoiceOverrides<T extends GeneratedAgentConfig>(
+  agents: T[],
+  overrides?: ClassroomVoiceOverrides,
+): T[] {
+  if (!overrides) return agents;
+  return agents.map((agent) => {
+    const override = overrides[agent.id];
+    if (!override || agent.role === 'teacher') return agent;
+    const candidate: T = {
+      ...agent,
+      voiceConfig: {
+        providerId: override.providerId,
+        ...(override.modelId ? { modelId: override.modelId } : {}),
+        voiceId: override.voiceId,
+      },
+    };
+    normalizedAgent(candidate);
+    return candidate;
+  });
 }
 
 function legacyTeacher(profile: TeacherProfile): GeneratedAgentConfig {

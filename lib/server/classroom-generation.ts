@@ -89,7 +89,11 @@ import {
   type OrganizationDesignSystem,
 } from '@/lib/branding/organization-design-system';
 import { normalizePdfImages, uploadedPdfSource } from '@/lib/server/pdf-source';
-import { teacherProfileFromClassroomCast } from '@/lib/agents/classroom-casting';
+import {
+  applyClassroomVoiceOverrides,
+  teacherProfileFromClassroomCast,
+  type ClassroomVoiceOverrides,
+} from '@/lib/agents/classroom-casting';
 import { shouldRunClassroomWebSearch } from '@/lib/server/web-search-policy';
 import {
   buildSceneSourceGrounding,
@@ -131,6 +135,7 @@ export interface GenerateClassroomInput {
     voiceName?: string;
     gender?: 'female' | 'male' | 'neutral';
   };
+  agentVoiceOverrides?: ClassroomVoiceOverrides;
   activeSkillId?: string;
   approvedPlan?: ClassroomPlan;
 }
@@ -623,7 +628,6 @@ export async function generateClassroom(
       log.info('All distinct castings were already used; reusing a valid lineup.');
     }
   }
-  tenantAgentConfigs = applyTeacherVoiceConfig(tenantAgentConfigs, input.teacherVoiceConfig);
   if (input.contextualSpecialists?.length) {
     tenantAgentConfigs = [
       ...tenantAgentConfigs,
@@ -653,10 +657,7 @@ export async function generateClassroom(
     log.info(`Instantiated ${agents.length} tenant pedagogical personas`);
   } else {
     const selectedIds = new Set(input.selectedPersonaIds ?? []);
-    const tenantRoster = applyTeacherVoiceConfig(
-      buildTenantAgentConfigs(learningDesign),
-      input.teacherVoiceConfig,
-    );
+    const tenantRoster = buildTenantAgentConfigs(learningDesign);
     const contextualAgents = (input.contextualSpecialists ?? []).map((specialist) => ({
       id: specialist.id,
       name: specialist.name,
@@ -682,6 +683,8 @@ export async function generateClassroom(
     tenantAgentConfigs = selectedRoster.length > 1 ? selectedRoster : tenantRoster.slice(0, 4);
     agents = tenantAgentConfigs.map(({ id, name, role, persona }) => ({ id, name, role, persona }));
   }
+  tenantAgentConfigs = applyClassroomVoiceOverrides(tenantAgentConfigs, input.agentVoiceOverrides);
+  tenantAgentConfigs = applyTeacherVoiceConfig(tenantAgentConfigs, input.teacherVoiceConfig);
   teachingProfile = teacherProfileFromClassroomCast(tenantAgentConfigs);
   try {
     const stageId = nanoid(10);
