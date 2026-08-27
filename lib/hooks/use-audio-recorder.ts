@@ -1,6 +1,7 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { ASR_PROVIDERS } from '@/lib/audio/constants';
 import { normalizeASRUploadAudio } from '@/lib/audio/wav-utils';
+import { selectASRRecordingMimeType } from '@/lib/audio/asr-utils';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('AudioRecorder');
@@ -83,11 +84,14 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
         });
 
         if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || 'Transcription failed');
+          throw new Error('upstream-failed');
         }
 
-        const result = await response.json();
+        const result = (await response.json()) as { text?: unknown };
+        if (typeof result.text !== 'string' || !result.text.trim()) {
+          onError?.('no-speech');
+          return;
+        }
         onTranscription?.(result.text);
       } catch (error) {
         log.error('Transcription error:', error);
@@ -105,6 +109,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
     // Synchronous lock — React state is async so isRecording may be stale
     if (busyRef.current) return;
     busyRef.current = true;
+    let stream: MediaStream | undefined;
     try {
       // Get current ASR configuration
       if (typeof window !== 'undefined') {
@@ -217,12 +222,11 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
 
       // Use MediaRecorder for server-side ASR
       // Request microphone permission
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
       // Create MediaRecorder
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm',
-      });
+      const mimeType = selectASRRecordingMimeType(MediaRecorder.isTypeSupported?.bind(MediaRecorder));
+      const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
 
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
@@ -239,7 +243,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
 
         // Merge audio chunks
         const audioBlob = new Blob(audioChunksRef.current, {
-          type: 'audio/webm',
+          type: mediaRecorder.mimeType || mimeType || audioChunksRef.current[0]?.type,
         });
 
         // Send to server for transcription
@@ -257,6 +261,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
         setRecordingTime((prev) => prev + 1);
       }, 1000);
     } catch (error) {
+      stream?.getTracks().forEach((track) => track.stop());
       busyRef.current = false;
       log.error('Failed to start recording:', error);
       onError?.('microphone-access-failed');
@@ -279,7 +284,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
     }
 
     // Stop MediaRecorder if active
-    if (mediaRecorderRef.current && isRecording) {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop();
       busyRef.current = false;
       setIsRecording(false);
@@ -289,7 +294,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
         timerRef.current = null;
       }
     }
-  }, [isRecording]);
+  }, []);
 
   // Cancel recording
   const cancelRecording = useCallback(() => {
@@ -310,7 +315,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
     }
 
     // Cancel MediaRecorder if active
-    if (mediaRecorderRef.current && isRecording) {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       // Stop recording without transcription
       mediaRecorderRef.current.ondataavailable = null;
       mediaRecorderRef.current.onstop = null;
@@ -332,7 +337,9 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
 
       audioChunksRef.current = [];
     }
-  }, [isRecording]);
+  }, []);
+
+  useEffect(() => cancelRecording, [cancelRecording]);
 
   return {
     isRecording,

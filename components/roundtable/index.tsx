@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import type { AudioIndicatorState } from './audio-indicator';
 import { CanvasToolbar } from '@/components/canvas/canvas-toolbar';
 import { useAudioRecorder } from '@/lib/hooks/use-audio-recorder';
+import { useASRAvailable } from '@/lib/hooks/use-asr-available';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { toast } from 'sonner';
 import { useSettingsStore, PLAYBACK_SPEEDS } from '@/lib/store/settings';
@@ -181,7 +182,7 @@ export function Roundtable({
   const ttsMuted = useSettingsStore((s) => s.ttsMuted);
   const setTTSMuted = useSettingsStore((s) => s.setTTSMuted);
   const ttsEnabled = useSettingsStore((state) => state.ttsEnabled);
-  const asrEnabled = useSettingsStore((state) => state.asrEnabled);
+  const asrAvailable = useASRAvailable();
   const chatAreaWidth = useSettingsStore((s) => s.chatAreaWidth);
   const ttsVolume = useSettingsStore((s) => s.ttsVolume);
   const setTTSVolume = useSettingsStore((s) => s.setTTSVolume);
@@ -448,7 +449,7 @@ export function Roundtable({
         case 'v':
         case 'V':
           e.preventDefault();
-          if (asrEnabled) handleToggleVoice();
+          if (asrAvailable) handleToggleVoice();
           break;
 
         default:
@@ -465,7 +466,7 @@ export function Roundtable({
     currentSpeech,
     onDiscussionPause,
     onDiscussionResume,
-    asrEnabled,
+    asrAvailable,
     isInputOpen,
     isVoiceOpen,
     isRecording,
@@ -832,10 +833,14 @@ export function Roundtable({
                 className="pointer-events-auto"
               >
                 <button
-                  onClick={() => (asrEnabled ? handleToggleVoice() : handleToggleInput())}
+                  onClick={() => (asrAvailable ? handleToggleVoice() : handleToggleInput())}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/70 dark:bg-black/50 backdrop-blur-xl border border-amber-400/50 dark:border-amber-500/50 shadow-[0_0_16px_rgba(245,158,11,0.2),0_8px_32px_rgba(0,0,0,0.06)] dark:shadow-[0_0_16px_rgba(245,158,11,0.25),0_8px_32px_rgba(0,0,0,0.4)] text-amber-600 dark:text-amber-400 text-sm font-semibold tracking-wide hover:bg-gray-100/80 dark:hover:bg-black/60 hover:border-amber-500/70 dark:hover:border-amber-400/70 hover:shadow-[0_0_24px_rgba(245,158,11,0.25)] dark:hover:shadow-[0_0_24px_rgba(245,158,11,0.35)] transition-all active:scale-95 animate-pulse"
                 >
-                  {asrEnabled ? <Mic className="w-4 h-4" /> : <MessageSquare className="w-4 h-4" />}
+                  {asrAvailable ? (
+                    <Mic className="w-4 h-4" />
+                  ) : (
+                    <MessageSquare className="w-4 h-4" />
+                  )}
                   {t('roundtable.yourTurn')}
                 </button>
               </motion.div>
@@ -956,25 +961,29 @@ export function Roundtable({
                     <>
                       <button
                         aria-label={
-                          asrEnabled
+                          asrAvailable
                             ? t('roundtable.voiceInput')
                             : t('roundtable.voiceInputDisabled')
                         }
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (asrEnabled) handleToggleVoice();
+                          if (asrAvailable) handleToggleVoice();
                         }}
-                        disabled={!asrEnabled}
+                        disabled={!asrAvailable}
                         className={cn(
                           'w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-95',
-                          !asrEnabled
+                          !asrAvailable
                             ? 'text-gray-500 cursor-not-allowed'
                             : isVoiceOpen
                               ? 'bg-purple-600 text-white'
                               : 'text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-white/10',
                         )}
                       >
-                        {asrEnabled ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
+                        {asrAvailable ? (
+                          <Mic className="w-4 h-4" />
+                        ) : (
+                          <MicOff className="w-4 h-4" />
+                        )}
                       </button>
                       <button
                         aria-label={t('roundtable.textInput')}
@@ -1401,7 +1410,7 @@ export function Roundtable({
                     <div
                       className={cn(
                         'absolute w-24 h-24 rounded-full blur-2xl',
-                        asrEnabled
+                        asrAvailable
                           ? 'bg-amber-400/[0.08] dark:bg-amber-500/[0.06]'
                           : 'bg-purple-400/[0.08] dark:bg-purple-500/[0.06]',
                       )}
@@ -1417,7 +1426,7 @@ export function Roundtable({
                       }}
                       className={cn(
                         'absolute w-11 h-11 rounded-full border',
-                        asrEnabled
+                        asrAvailable
                           ? 'border-amber-400/50 dark:border-amber-500/35'
                           : 'border-purple-400/50 dark:border-purple-500/35',
                       )}
@@ -1433,7 +1442,7 @@ export function Roundtable({
                       }}
                       className={cn(
                         'absolute w-11 h-11 rounded-full border',
-                        asrEnabled
+                        asrAvailable
                           ? 'border-amber-300/40 dark:border-amber-400/25'
                           : 'border-purple-300/40 dark:border-purple-400/25',
                       )}
@@ -1443,7 +1452,7 @@ export function Roundtable({
                     <motion.button
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (asrEnabled) handleToggleVoice();
+                        if (asrAvailable) handleToggleVoice();
                         else handleToggleInput();
                       }}
                       animate={{ scale: [1, 1.05, 1] }}
@@ -1454,12 +1463,12 @@ export function Roundtable({
                       }}
                       className={cn(
                         'relative w-11 h-11 rounded-full flex items-center justify-center shadow-lg cursor-pointer hover:shadow-xl active:scale-95 z-10 bg-gradient-to-br',
-                        asrEnabled
+                        asrAvailable
                           ? 'from-amber-400 to-orange-500 dark:from-amber-500 dark:to-orange-600 shadow-amber-400/30 dark:shadow-amber-600/20 hover:shadow-amber-400/40 dark:hover:shadow-amber-600/30'
                           : 'from-purple-400 to-indigo-500 dark:from-purple-500 dark:to-indigo-600 shadow-purple-400/30 dark:shadow-purple-600/20 hover:shadow-purple-400/40 dark:hover:shadow-purple-600/30',
                       )}
                     >
-                      {asrEnabled ? (
+                      {asrAvailable ? (
                         <Mic className="w-[18px] h-[18px] text-white drop-shadow-sm" />
                       ) : (
                         <MessageSquare className="w-[18px] h-[18px] text-white drop-shadow-sm" />
@@ -1468,7 +1477,7 @@ export function Roundtable({
                   </div>
 
                   {/* Visual indicator below button */}
-                  {asrEnabled ? (
+                  {asrAvailable ? (
                     <div className="flex items-center justify-center gap-[3px] h-3">
                       {[0, 1, 2, 3, 4, 3, 2, 1, 0].map((intensity, i) => (
                         <motion.div
@@ -1518,7 +1527,7 @@ export function Roundtable({
                     }}
                     className={cn(
                       'text-[10px] font-medium tracking-wider',
-                      asrEnabled
+                      asrAvailable
                         ? 'text-amber-600/70 dark:text-amber-400/60'
                         : 'text-purple-600/70 dark:text-purple-400/60',
                     )}
@@ -2003,23 +2012,25 @@ export function Roundtable({
                 <>
                   <button
                     aria-label={
-                      asrEnabled ? t('roundtable.voiceInput') : t('roundtable.voiceInputDisabled')
+                      asrAvailable
+                        ? t('roundtable.voiceInput')
+                        : t('roundtable.voiceInputDisabled')
                     }
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (asrEnabled) handleToggleVoice();
+                      if (asrAvailable) handleToggleVoice();
                     }}
-                    disabled={!asrEnabled}
+                    disabled={!asrAvailable}
                     className={cn(
                       'w-8 h-8 rounded-full border flex items-center justify-center transition-all active:scale-95 shadow-sm',
-                      !asrEnabled
+                      !asrAvailable
                         ? 'bg-gray-100 dark:bg-gray-800/50 text-gray-300 dark:text-gray-600 border-gray-200 dark:border-gray-700 cursor-not-allowed'
                         : isVoiceOpen
                           ? 'bg-purple-600 dark:bg-purple-500 border-purple-600 dark:border-purple-500 text-white shadow-purple-200 dark:shadow-purple-800'
                           : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:text-purple-600 dark:hover:text-purple-400 hover:border-purple-200 dark:hover:border-purple-700',
                     )}
                   >
-                    {asrEnabled ? (
+                    {asrAvailable ? (
                       <Mic className="w-3.5 h-3.5" />
                     ) : (
                       <MicOff className="w-3.5 h-3.5" />

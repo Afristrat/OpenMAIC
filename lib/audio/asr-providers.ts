@@ -148,6 +148,7 @@
 import type { ASRModelConfig } from './types';
 import { isCustomASRProvider } from './types';
 import { ASR_PROVIDERS } from './constants';
+import { normalizeASRLanguage } from './asr-utils';
 
 /**
  * Result of ASR transcription
@@ -163,34 +164,38 @@ export async function transcribeAudio(
   config: ASRModelConfig,
   audioBuffer: Buffer | Blob,
 ): Promise<ASRTranscriptionResult> {
-  const provider = ASR_PROVIDERS[config.providerId as keyof typeof ASR_PROVIDERS];
+  const normalizedConfig = {
+    ...config,
+    language: normalizeASRLanguage(config.language),
+  };
+  const provider = ASR_PROVIDERS[normalizedConfig.providerId as keyof typeof ASR_PROVIDERS];
 
   // Validate API key if required (only for built-in providers with known config)
-  if (provider?.requiresApiKey && !config.apiKey) {
-    throw new Error(`API key required for ASR provider: ${config.providerId}`);
+  if (provider?.requiresApiKey && !normalizedConfig.apiKey) {
+    throw new Error(`API key required for ASR provider: ${normalizedConfig.providerId}`);
   }
 
-  switch (config.providerId) {
+  switch (normalizedConfig.providerId) {
     case 'openai-whisper':
-      return await transcribeOpenAIWhisper(config, audioBuffer);
+      return await transcribeOpenAIWhisper(normalizedConfig, audioBuffer);
 
     case 'browser-native':
       throw new Error('Browser Native ASR must be handled client-side using useBrowserASR hook');
 
     case 'qwen-asr':
-      return await transcribeQwenASR(config, audioBuffer);
+      return await transcribeQwenASR(normalizedConfig, audioBuffer);
 
     case 'azure-asr':
-      return await transcribeAzureASR(config, audioBuffer);
+      return await transcribeAzureASR(normalizedConfig, audioBuffer);
 
     case 'lemonade-asr':
-      return await transcribeLemonadeASR(config, audioBuffer);
+      return await transcribeLemonadeASR(normalizedConfig, audioBuffer);
 
     default:
-      if (isCustomASRProvider(config.providerId)) {
-        return await transcribeOpenAIWhisper(config, audioBuffer);
+      if (isCustomASRProvider(normalizedConfig.providerId)) {
+        return await transcribeOpenAIWhisper(normalizedConfig, audioBuffer);
       }
-      throw new Error(`Unsupported ASR provider: ${config.providerId}`);
+      throw new Error(`Unsupported ASR provider: ${normalizedConfig.providerId}`);
   }
 }
 

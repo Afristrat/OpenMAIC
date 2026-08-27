@@ -31,6 +31,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { createLogger } from '@/lib/logger';
 import { normalizeASRUploadAudio } from '@/lib/audio/wav-utils';
+import { selectASRRecordingMimeType } from '@/lib/audio/asr-utils';
 
 const log = createLogger('ASRSettings');
 
@@ -117,11 +118,15 @@ export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {
         recognition.start();
         setIsRecording(true);
       } else {
+        let stream: MediaStream | undefined;
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({
+          stream = await navigator.mediaDevices.getUserMedia({
             audio: true,
           });
-          const mediaRecorder = new MediaRecorder(stream);
+          const mimeType = selectASRRecordingMimeType(
+            MediaRecorder.isTypeSupported?.bind(MediaRecorder),
+          );
+          const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
           mediaRecorderRef.current = mediaRecorder;
           const audioChunks: Blob[] = [];
           mediaRecorder.ondataavailable = (event) => {
@@ -132,7 +137,9 @@ export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {
             setIsProcessing(true);
 
             try {
-              const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+              const audioBlob = new Blob(audioChunks, {
+                type: mediaRecorder.mimeType || mimeType || audioChunks[0]?.type,
+              });
               const uploadAudio = await normalizeASRUploadAudio(selectedProviderId, audioBlob);
               const formData = new FormData();
               formData.append('audio', uploadAudio.blob, uploadAudio.fileName);
@@ -188,6 +195,7 @@ export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {
           mediaRecorder.start();
           setIsRecording(true);
         } catch (error) {
+          stream?.getTracks().forEach((track) => track.stop());
           log.error('Failed to access microphone:', error);
           setTestStatus('error');
           setTestMessage(t('settings.microphoneAccessFailed'));

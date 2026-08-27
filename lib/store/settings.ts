@@ -14,6 +14,7 @@ import type { TTSProviderId, ASRProviderId, BuiltInTTSProviderId } from '@/lib/a
 import type { AgentVoiceOverride } from '@/lib/audio/voice-resolver';
 import { isCustomTTSProvider, isCustomASRProvider } from '@/lib/audio/types';
 import { ASR_PROVIDERS, DEFAULT_TTS_VOICES, TTS_PROVIDERS } from '@/lib/audio/constants';
+import { resolveASRLanguageSelection } from '@/lib/audio/asr-utils';
 import { DEFAULT_VOXCPM_BACKEND, VOXCPM_MODEL_ID, VOXCPM_VLLM_MODEL_ID } from '@/lib/audio/voxcpm';
 import { PDF_PROVIDERS } from '@/lib/pdf/constants';
 import type { PDFProviderId } from '@/lib/pdf/types';
@@ -1018,10 +1019,9 @@ export const useSettingsStore = create<SettingsState>()(
               supportedLanguages =
                 ASR_PROVIDERS[providerId as keyof typeof ASR_PROVIDERS]?.supportedLanguages || [];
             }
-            const isLanguageValid = supportedLanguages.includes(state.asrLanguage);
             return {
               asrProviderId: providerId,
-              ...(isLanguageValid ? {} : { asrLanguage: supportedLanguages[0] || 'auto' }),
+              asrLanguage: resolveASRLanguageSelection(state.asrLanguage, supportedLanguages),
             };
           }),
 
@@ -1645,6 +1645,15 @@ export const useSettingsStore = create<SettingsState>()(
                 }
               }
 
+              const selectedASRProvider = autoAsrProvider ?? validASRProvider;
+              const selectedASRLanguages = selectedASRProvider
+                ? ASR_PROVIDERS[selectedASRProvider as keyof typeof ASR_PROVIDERS]
+                    ?.supportedLanguages
+                : undefined;
+              const validASRLanguage = selectedASRLanguages
+                ? resolveASRLanguageSelection(state.asrLanguage, selectedASRLanguages)
+                : state.asrLanguage;
+
               // (LLM first-load auto-select removed: the symmetric provider
               // recovery + resolveSelectedModel above now resolve LLM provider
               // and model atomically at the source, covering server-configured
@@ -1677,6 +1686,9 @@ export const useSettingsStore = create<SettingsState>()(
                 }),
                 ...(validASRProvider !== state.asrProviderId && {
                   asrProviderId: validASRProvider as ASRProviderId,
+                }),
+                ...(validASRLanguage !== state.asrLanguage && {
+                  asrLanguage: validASRLanguage,
                 }),
                 ...(validPDFProvider !== state.pdfProviderId && {
                   pdfProviderId: validPDFProvider as PDFProviderId,

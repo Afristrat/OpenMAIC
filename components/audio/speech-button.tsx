@@ -52,6 +52,10 @@ export function SpeechButton({
         'not-allowed': t('settings.microphoneAccessDenied'),
         'audio-capture': t('settings.microphoneAccessFailed'),
         'microphone-access-failed': t('settings.microphoneAccessFailed'),
+        'upstream-failed': t('settings.asrTestFailed'),
+        'transcription-failed': t('settings.asrTestFailed'),
+        'speech-recognition-failed': t('settings.asrTestFailed'),
+        network: t('settings.asrTestFailed'),
       };
       toast.error(translatedErrors[error] ?? t('settings.microphoneAccessFailed'));
     },
@@ -98,6 +102,13 @@ export function SpeechButton({
       <TooltipTrigger asChild>
         <button
           type="button"
+          aria-label={
+            isProcessing
+              ? t('roundtable.processing')
+              : isRecording
+                ? t('voice.stopListening')
+                : t('voice.startListening')
+          }
           disabled={isDisabled || isProcessing}
           onClick={handleClick}
           className={cn(

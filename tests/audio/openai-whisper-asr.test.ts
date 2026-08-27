@@ -67,4 +67,24 @@ describe('OpenAI-compatible Whisper ASR', () => {
     expect(formData.get('response_format')).toBe('json');
     expect(formData.get('file')).toBeInstanceOf(Blob);
   });
+
+  it.each([
+    ['fr-FR', 'fr'],
+    ['ar-MA', 'ar'],
+    ['en-US', 'en'],
+  ])('sends locale %s as Whisper language %s', async (locale, expectedLanguage) => {
+    await transcribeAudio(
+      {
+        providerId: 'openai-whisper',
+        apiKey: 'test-key',
+        baseUrl: 'https://proxy.example.com/v1',
+        modelId: 'whisper-1',
+        language: locale,
+      },
+      wavBuffer(),
+    );
+
+    const formData = mockFetch.mock.calls[0][1].body as FormData;
+    expect(formData.get('language')).toBe(expectedLanguage);
+  });
 });

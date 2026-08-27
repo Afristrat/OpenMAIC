@@ -33,6 +33,12 @@ describe('normalizeASRUploadAudio', () => {
     expect(result.fileName).toBe('recording.webm');
   });
 
+  it('keeps the filename consistent with the format recorded by the browser', async () => {
+    const input = new Blob([new Uint8Array([1, 2, 3])], { type: 'audio/mp4' });
+    const result = await normalizeASRUploadAudio('openai-whisper', input);
+    expect(result.fileName).toBe('recording.m4a');
+  });
+
   it('keeps WAV blobs unchanged for lemonade-asr', async () => {
     const input = new Blob([new Uint8Array([1, 2, 3])], { type: 'audio/wav' });
     const result = await normalizeASRUploadAudio('lemonade-asr', input);

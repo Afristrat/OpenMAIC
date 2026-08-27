@@ -690,11 +690,13 @@ describe('fetchServerProviders — ASR stale selection', () => {
     await store.getState().fetchServerProviders();
     store.getState().setASRProvider('openai-whisper');
     expect(store.getState().asrProviderId).toBe('openai-whisper');
+    expect(store.getState().asrLanguage).toBe('fr');
 
     mockServerResponse({});
     await store.getState().fetchServerProviders();
 
     expect(store.getState().asrProviderId).toBe('browser-native');
+    expect(store.getState().asrLanguage).toBe('fr-FR');
   });
 
   it('keeps ASR provider when it is still server-configured', async () => {

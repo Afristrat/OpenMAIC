@@ -1,5 +1,7 @@
 'use client';
 
+import { getASRAudioFileName } from './asr-utils';
+
 function writeAscii(view: DataView, offset: number, value: string): void {
   for (let i = 0; i < value.length; i++) {
     view.setUint8(offset + i, value.charCodeAt(i));
@@ -78,7 +80,7 @@ export async function normalizeASRUploadAudio(
   audioBlob: Blob,
 ): Promise<{ blob: Blob; fileName: string }> {
   if (providerId !== 'lemonade-asr') {
-    return { blob: audioBlob, fileName: 'recording.webm' };
+    return { blob: audioBlob, fileName: getASRAudioFileName(audioBlob) };
   }
   return { blob: await audioBlobToWav(audioBlob), fileName: 'recording.wav' };
 }
