@@ -229,10 +229,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
       const mimeType = selectASRRecordingMimeType(
         MediaRecorder.isTypeSupported?.bind(MediaRecorder),
       );
-      const mediaRecorder = new MediaRecorder(
-        recordingStream,
-        mimeType ? { mimeType } : undefined,
-      );
+      const mediaRecorder = new MediaRecorder(recordingStream, mimeType ? { mimeType } : undefined);
 
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
