@@ -405,11 +405,8 @@ async function main(): Promise<void> {
     const requirement = [
       'Réponds exclusivement en français impeccable.',
       'Crée exactement cinq scènes cohérentes à partir du document autorisé.',
-      'Inclure une introduction illustrée, une scène de calcul, une scène livrant la ressource, une scène PBL de diagnostic et un quiz final de cinq questions à choix unique.',
-      'Génère un véritable classeur Excel modifiable pour une prévision glissante de trésorerie sur 13 semaines.',
-      'Affiche un lien court et un QR code, puis fais déposer ce même fichier pour un diagnostic Python fondé sur les valeurs réellement saisies.',
-      'Chaque scène de contenu doit comporter une illustration originale pertinente ; ne réutilise aucune image source.',
-      'Chaque agent sélectionné doit intervenir canoniquement avec son identité et sa voix.',
+      'Inclure une introduction au cas marocain, une scène de calcul, une scène livrant le véritable classeur Excel modifiable demandé, une scène PBL de diagnostic et un quiz final de cinq questions à choix unique.',
+      'Utilise exclusivement les montants, la devise, le seuil de sécurité et les décisions décrits dans la source.',
     ].join(' ');
     const generationRequest = {
       orgId: organizationId,
