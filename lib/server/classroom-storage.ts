@@ -423,11 +423,65 @@ async function listClassroomMediaPaths(prefix: string): Promise<string[]> {
   return paths.flat();
 }
 
+export function shortLinkStoragePathsFromActions(actions: unknown): string[] {
+  if (!Array.isArray(actions)) return [];
+  const paths = new Set<string>();
+  for (const action of actions) {
+    if (
+      !action ||
+      typeof action !== 'object' ||
+      !('type' in action) ||
+      action.type !== 'resource_pause' ||
+      !('downloadUrl' in action) ||
+      typeof action.downloadUrl !== 'string'
+    ) {
+      continue;
+    }
+    try {
+      const pathname = new URL(action.downloadUrl, 'https://qalem.invalid').pathname;
+      const code = pathname.match(/^\/([a-zA-Z0-9]{5})$/)?.[1];
+      if (code) paths.add(`short-links/${code}.json`);
+    } catch {
+      // An invalid edited URL cannot identify a Storage object safely.
+    }
+  }
+  return [...paths];
+}
+
+async function listVerifiedClassroomShortLinkPaths(id: string): Promise<string[]> {
+  const supabase = createServiceSupabaseClient();
+  const { data: scenes, error } = await supabase
+    .from('scenes')
+    .select('actions')
+    .eq('stage_id', id);
+  if (error) throw new Error(`Failed to list classroom short links ${id}: ${error.message}`);
+  const candidates = new Set(
+    (scenes ?? []).flatMap((scene) => shortLinkStoragePathsFromActions(scene.actions)),
+  );
+  const bucket = supabase.storage.from('classroom-media');
+  const verified: string[] = [];
+  for (const candidate of candidates) {
+    const { data, error: downloadError } = await bucket.download(candidate);
+    if (downloadError || !data) continue;
+    try {
+      const metadata = JSON.parse(await data.text()) as { classroomId?: unknown };
+      if (metadata.classroomId === id) verified.push(candidate);
+    } catch {
+      log.warn(`Invalid classroom short-link metadata ignored: ${candidate}`);
+    }
+  }
+  return verified;
+}
+
 export async function deleteClassroom(id: string): Promise<void> {
   const supabase = createServiceSupabaseClient();
-  const mediaPaths = await listClassroomMediaPaths(id);
-  const { error: mediaError } = mediaPaths.length
-    ? await supabase.storage.from('classroom-media').remove(mediaPaths)
+  const [mediaPaths, shortLinkPaths] = await Promise.all([
+    listClassroomMediaPaths(id),
+    listVerifiedClassroomShortLinkPaths(id),
+  ]);
+  const storagePaths = [...mediaPaths, ...shortLinkPaths];
+  const { error: mediaError } = storagePaths.length
+    ? await supabase.storage.from('classroom-media').remove(storagePaths)
     : { error: null };
   if (mediaError) throw new Error(`Failed to delete classroom media ${id}: ${mediaError.message}`);
   const { error } = await supabase.from('stages').delete().eq('id', id);
