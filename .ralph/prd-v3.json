@@ -1585,21 +1585,27 @@
       "description": "En tant que mainteneur de Qalem, je veux que les E2E à données locales modélisent explicitement leur frontière API afin que leur succès ne masque aucune erreur serveur inattendue.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P1",
-      "status": "to_implement",
-      "passes": false,
+      "status": "to_validate",
+      "passes": true,
       "source": {
         "type": "request_or_observed_gap",
         "date": "2026-08-27"
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Le gate S3-002 termine 82/82 Playwright mais plugin-classroom et les deux variantes team-of-the-day provoquent des logs [ERROR] Classroom API : readClassroomOwnership tente Supabase pour des stages semés uniquement dans IndexedDB, puis le client réussit par fallback local. Le résultat fonctionnel est vert, mais la fixture réseau est incohérente et rend le signal d’erreur du gate non fiable.",
+      "gap": "Soldé : les classrooms locales conservent leur fallback IndexedDB derrière une réponse API 404 explicite et déterministe. La fixture commune refuse toute requête divergente ; le gate exact ne contient plus aucune erreur Classroom API parasite.",
       "evidence": [
         "e2e/tests/plugin-classroom.spec.ts",
         "e2e/tests/team-of-the-day.spec.ts",
         "app/api/classroom/route.ts",
         "lib/server/classroom-storage.ts",
-        "command:pnpm test:e2e@b9c4ad59eb54383ccd3a970bd1707b6ffc009b25"
+        "command:pnpm test:e2e@b9c4ad59eb54383ccd3a970bd1707b6ffc009b25",
+        "e2e/fixtures/mock-api.ts",
+        "components/service-worker-registrar.tsx",
+        "tests/service-worker-cache.test.ts",
+        "e2e/tests/pwa-review-reminders.spec.ts",
+        "docs/validation/S6-018-indexeddb-e2e-boundary.md",
+        "commit:7f589d69ce1f4bd3607f56a6b254d4f04508f64c"
       ],
       "acceptance": [
         "Tracer les requêtes émises par ces trois parcours et corriger la frontière au parent commun : fixture API déterministe ou amorçage serveur cohérent ; ne pas ajouter un try/catch qui masquerait une vraie panne Supabase.",
@@ -1607,7 +1613,13 @@
         "Ne désactiver ni filtrer globalement console, stderr ou le logger applicatif ; faire échouer le gate si une erreur serveur inattendue réapparaît dans les parcours concernés.",
         "Vérifier plugin-classroom et team-of-the-day en FR et ar-MA, puis exécuter le gate complet au SHA exact avec zéro erreur serveur inattendue et zéro régression du chargement de classrooms persistées."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-08-27 — La fixture commune mockLocalClassroomFallback(stageId) intercepte /api/classroom?* au parent partagé : seul le GET portant exactement l’identifiant attendu reçoit un 404 déterministe ; toute méthode, URL ou requête divergente est enregistrée puis interrompue. Aucun try/catch Supabase ni changement de la route de production n’a été ajouté.",
+        "2026-08-27 — plugin-classroom et team-of-the-day conservent leur amorçage IndexedDB, prouvent la réponse réseau 404 attendue et exigent un ensemble d’URL strictement égal à la cible ainsi qu’une liste unexpected vide. Les deux appels identiques possibles sous React StrictMode sont admis sans autoriser aucun appel sortant accidentel.",
+        "2026-08-27 — Aucun filtre global de console, stderr ou du logger n’existe. Le harnais bloque les service workers pour préserver page.route ; l’enregistrement automatique est évité uniquement sous NEXT_PUBLIC_E2E_TEST_MODE=true, tandis que le test PWA autorisé enregistre explicitement /sw.js. Le test permanent service-worker-cache protège cette frontière et le chemin de production reste inchangé lorsque le drapeau est absent.",
+        "2026-08-27 — Sur ServeurIA au SHA exact 7f589d69ce1f4bd3607f56a6b254d4f04508f64c : ciblage PWA + plugin + équipe FR/ar-MA + catalogue 8/8 ; gate complet Prettier, TypeScript et lint verts, Vitest 376/376 fichiers et 2 474/2 474 tests, build Next 99/99, Playwright 82/82 sans échec ni flaky. Le journal contient zéro « Classroom retrieval failed », zéro « [SW] Registration failed » et zéro « Failed to fetch server providers ». Synthèse permanente : docs/validation/S6-018-indexeddb-e2e-boundary.md."
+      ],
+      "completedAt": "2026-08-27",
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],

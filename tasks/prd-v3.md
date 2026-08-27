@@ -76,7 +76,7 @@ Les descriptions et critères exécutables complets sont dans le JSON canonique.
 | 4    | S6-017 | P0       | Soldée           | Éliminer les vulnérabilités critiques et hautes des dépendances de production         |
 | 5    | S6-019 | P0       | Soldée           | Éliminer les avis modérés et faibles des dépendances de production                    |
 | 6    | S6-014 | P0       | Bloquée          | Conserver la dette de sécurité Qalem sous autorisation explicite                      |
-| 7    | S6-018 | P1       | À implémenter    | Supprimer les erreurs serveur parasites des E2E à fallback IndexedDB                  |
+| 7    | S6-018 | P1       | Soldée           | Supprimer les erreurs serveur parasites des E2E à fallback IndexedDB                  |
 | 8    | S6-005 | P1       | Soldée           | Proposer une reformulation fondée sur les sources en cas de conflit                   |
 | 9    | S6-006 | P1       | Soldée           | Maintenir l’ancrage documentaire jusqu’aux scènes et à leur édition                   |
 | 10   | S6-007 | P1       | Soldée           | Créer les illustrations sans réutiliser les images du document source                 |
