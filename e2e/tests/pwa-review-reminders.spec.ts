@@ -8,6 +8,12 @@ test.describe('PWA review reminders', () => {
     page,
   }) => {
     await page.goto('/');
+    await page.evaluate(async () => {
+      await navigator.serviceWorker.register('/sw.js', {
+        scope: '/',
+        updateViaCache: 'none',
+      });
+    });
     await page.evaluate(() => navigator.serviceWorker.ready);
 
     await page.evaluate(async () => {
