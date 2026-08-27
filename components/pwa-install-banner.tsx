@@ -56,7 +56,6 @@ export function PwaInstallBanner(): React.ReactNode {
     window.addEventListener('appinstalled', handleInstalled);
 
     if (isIosDevice(navigator.userAgent, navigator.platform, navigator.maxTouchPoints)) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- iOS exposes no installability event; browser state is only available after hydration.
       setMode('ios');
     }
 
