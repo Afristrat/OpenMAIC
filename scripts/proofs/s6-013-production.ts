@@ -41,6 +41,7 @@ interface Evidence {
   classroom?: {
     agentCount: number;
     speechCount: number;
+    preparedInterventionAgentCount: number;
     audioDurationSeconds: number;
     imageCount: number;
     reloadedSceneCount: number;
@@ -523,6 +524,11 @@ async function main(): Promise<void> {
       (item, index) => object(item, `stage.generatedAgentConfigs[${index}]`),
     );
     const agentIds = new Set(agents.map((agent) => string(agent.id, 'agent.id')));
+    const nonTeacherAgentIds = new Set(
+      agents
+        .filter((agent) => agent.role !== 'teacher')
+        .map((agent) => string(agent.id, 'agent.id')),
+    );
     const speechByScene = scenes.map((scene) =>
       array(scene.actions ?? [], 'scene.actions')
         .map((action, index) => object(action, `scene.action[${index}]`))
@@ -531,6 +537,7 @@ async function main(): Promise<void> {
     const speeches = speechByScene.flat();
     assert(speeches.length > 0, 'The classroom contains no canonical speech');
     const speakingAgentIds = new Set<string>();
+    const preparedInterventionAgentIds = new Set<string>();
     const sceneAudioDurations: number[] = [];
     let audioDurationSeconds = 0;
     for (const [sceneIndex, sceneSpeeches] of speechByScene.entries()) {
@@ -540,7 +547,11 @@ async function main(): Promise<void> {
         const agentId = string(speech.agentId, 'speech.agentId');
         assert(agentIds.has(agentId), `Unknown speech agent ${agentId}`);
         speakingAgentIds.add(agentId);
-        string(speech.interventionId, 'speech.interventionId');
+        if (speech.interventionId !== undefined || speech.interventionForm !== undefined) {
+          string(speech.interventionId, 'speech.interventionId');
+          string(speech.interventionForm, 'speech.interventionForm');
+          preparedInterventionAgentIds.add(agentId);
+        }
         const audioUrl = string(speech.audioUrl, 'speech.audioUrl');
         const audioResponse = await request.get(new URL(audioUrl, BASE_URL).toString());
         assert.equal(audioResponse.status(), 200, `Audio unavailable: ${audioUrl}`);
@@ -554,6 +565,10 @@ async function main(): Promise<void> {
       sceneAudioDurations[sceneIndex] = sceneDuration || 5;
     }
     assert.deepEqual([...speakingAgentIds].sort(), [...agentIds].sort());
+    assert.deepEqual(
+      [...preparedInterventionAgentIds].filter((id) => nonTeacherAgentIds.has(id)).sort(),
+      [...nonTeacherAgentIds].sort(),
+    );
 
     const allStrings = collectStrings(classroom);
     const imageUrls = [...allStrings].filter((value) =>
@@ -582,6 +597,7 @@ async function main(): Promise<void> {
     evidence.classroom = {
       agentCount: agents.length,
       speechCount: speeches.length,
+      preparedInterventionAgentCount: preparedInterventionAgentIds.size,
       audioDurationSeconds,
       imageCount: imageUrls.length,
       reloadedSceneCount,
