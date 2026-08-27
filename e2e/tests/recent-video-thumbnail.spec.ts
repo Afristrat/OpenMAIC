@@ -74,6 +74,12 @@ async function mockPersistentClassrooms(page: Page, classrooms: Array<Record<str
 
 test.describe('Home persistent video thumbnails', () => {
   test('renders a durable video thumbnail and opens its classroom', async ({ page }) => {
+    await page.route('**/api/classroom-media/persistent-video-stage/poster.png', (route) =>
+      route.fulfill({ status: 200, contentType: 'image/png', body: Buffer.from([]) }),
+    );
+    await page.route('**/api/classroom-media/persistent-video-stage/video.mp4', (route) =>
+      route.fulfill({ status: 200, contentType: 'video/mp4', body: Buffer.from([]) }),
+    );
     await mockPersistentClassrooms(page, [
       {
         id: 'persistent-video-stage',

@@ -134,16 +134,16 @@ export class MockApi {
           return;
         }
         tracker.expectedRequests.push(label);
-        await route.fulfill({
-          status: request.method() === 'GET' ? 200 : 201,
-          contentType: 'application/json',
-          headers: { 'content-range': '0-0/0' },
-          body: '[]',
-        });
+          await route.fulfill({
+            status: request.method() === 'GET' || request.method() === 'HEAD' ? 200 : 201,
+            contentType: 'application/json',
+            headers: { 'content-range': '0-0/0' },
+            body: request.method() === 'HEAD' ? '' : '[]',
+          });
       });
     };
 
-    await routeTable('review_cards', ['GET', 'POST']);
+    await routeTable('review_cards', ['GET', 'HEAD', 'POST']);
     await routeTable('quiz_results', ['POST']);
     return tracker;
   }

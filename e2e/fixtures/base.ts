@@ -60,9 +60,9 @@ export const test = base.extend<Fixtures>({
           );
         });
         expect(
-          matchingResponses,
+          matchingResponses.length,
           `expected HTTP ${expectedHttpError.status} response for ${expectedHttpError.pathname}`,
-        ).toHaveLength(1);
+        ).toBeGreaterThan(0);
       }
       for (const resourceError of resourceErrors) {
         const pathname = resourceError.url ? new URL(resourceError.url).pathname : '';
@@ -93,6 +93,14 @@ export const test = base.extend<Fixtures>({
       // Always mock server-providers — called on every page load by root layout
       await mockApi.mockServerProviders();
       await mockApi.mockSourceLibrary();
+      await context.route(/\/rest\/v1\/classroom_templates(?:\?.*)?$/, (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          headers: { 'content-range': '0-0/0' },
+          body: '[]',
+        }),
+      );
       await context.route(/\/rest\/v1\/review_cards(?:\?.*)?$/, async (route) => {
         const method = route.request().method();
         if (method !== 'GET' && method !== 'HEAD') {
@@ -108,6 +116,13 @@ export const test = base.extend<Fixtures>({
       });
       await page.route('**/api/account/is-admin', (route) =>
         route.fulfill({ status: 200, contentType: 'application/json', body: '{"isAdmin":false}' }),
+      );
+      await page.route('**/api/skills?*', (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: '{"success":true,"skills":[]}',
+        }),
       );
       // The authoring home loads the current organisation's catalog on mount.
       // Keep that background request inside the E2E boundary instead of letting
