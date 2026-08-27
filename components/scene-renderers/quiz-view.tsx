@@ -32,7 +32,7 @@ import {
   writeSubmittedResults,
   type SubmittedState,
 } from '@/lib/quiz/persistence';
-import { syncQuizResultToSupabase } from '@/lib/quiz/sync';
+import { persistQuizCompletion } from '@/lib/quiz/sync';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -755,28 +755,20 @@ export function QuizView({ questions, sceneId, stageId }: QuizViewProps) {
       setPhase('reviewing');
       writeSubmittedResults(sceneId, ordered);
 
-      if (user) {
-        const earned = ordered.reduce((sum, r) => sum + r.earned, 0);
-        const score = totalPoints > 0 ? Math.round((earned / totalPoints) * 100) : 0;
-        void syncQuizResultToSupabase({
-          userId: user.id,
-          stageId,
-          sceneId,
-          answers: ordered.map((r) => ({
-            questionId: r.questionId,
-            userAnswer: String(answers[r.questionId] ?? ''),
-            correct: r.correct ?? false,
-            timestamp: new Date().toISOString(),
-          })),
-          score,
-        });
-      }
+      void persistQuizCompletion({
+        ...(user ? { userId: user.id } : {}),
+        stageId,
+        sceneId,
+        questions,
+        answers,
+        results: ordered,
+      }).catch((error: unknown) => log.error('Failed to persist quiz completion:', error));
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [phase, questions, answers, locale, sceneId, stageId, user, totalPoints]);
+  }, [phase, questions, answers, locale, sceneId, stageId, user]);
 
   const handleRetry = useCallback(() => {
     setPhase('not_started');

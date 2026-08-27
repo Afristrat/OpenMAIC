@@ -255,4 +255,136 @@ test.describe('Quiz content surface (#657)', () => {
       contentType: 'image/png',
     });
   });
+
+  test('failed and hesitant answers become isolated due cards after reload', async ({ page }) => {
+    const STAGE = 'e2e-quiz-review-cards';
+    await seedQuiz(page, STAGE, [
+      {
+        id: 'q-correct',
+        type: 'single',
+        question: 'Capital of France?',
+        options: [
+          { label: 'Paris', value: 'A' },
+          { label: 'Lyon', value: 'B' },
+        ],
+        answer: ['A'],
+        points: 1,
+      },
+      {
+        id: 'q-error',
+        type: 'single',
+        question: 'Capital of Morocco?',
+        options: [
+          { label: 'Casablanca', value: 'A' },
+          { label: 'Rabat', value: 'B' },
+        ],
+        answer: ['B'],
+        points: 1,
+      },
+      {
+        id: 'q-hesitant',
+        type: 'short_answer',
+        question: 'Explain spaced repetition.',
+        answer: ['Review information at expanding intervals.'],
+        points: 2,
+      },
+    ]);
+    await page.route('**/api/quiz-grade', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ score: 1, comment: 'Partially correct.' }),
+      }),
+    );
+
+    const classroom = new ClassroomPage(page);
+    await classroom.goto(STAGE);
+    await classroom.waitForLoaded();
+    await page.getByRole('button', { name: 'Start Quiz' }).click();
+    await page.getByRole('button', { name: /Paris/ }).click();
+    await page.getByRole('button', { name: /Casablanca/ }).click();
+    await page.getByPlaceholder('Type your answer here...').fill('Review it sometimes.');
+    await page.getByRole('button', { name: 'Submit Answers' }).click();
+    await expect(page.getByText('/ 4')).toBeVisible({ timeout: 10_000 });
+
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            new Promise<number>((resolve, reject) => {
+              const request = indexedDB.open('MAIC-Database');
+              request.onsuccess = () => {
+                const database = request.result;
+                const tx = database.transaction('reviewCards', 'readonly');
+                const getAll = tx.objectStore('reviewCards').getAll();
+                getAll.onsuccess = () => {
+                  const own = getAll.result.filter(
+                    (card) => card.ownerId === '00000000-0000-4000-8000-000000000001',
+                  );
+                  database.close();
+                  resolve(own.length);
+                };
+                getAll.onerror = () => reject(getAll.error);
+              };
+              request.onerror = () => reject(request.error);
+            }),
+        ),
+      )
+      .toBe(2);
+
+    await page.evaluate(
+      () =>
+        new Promise<void>((resolve, reject) => {
+          const request = indexedDB.open('MAIC-Database');
+          request.onsuccess = () => {
+            const database = request.result;
+            const tx = database.transaction('reviewCards', 'readwrite');
+            tx.objectStore('reviewCards').put({
+              id: '00000000-0000-8000-8000-000000000099',
+              ownerId: '00000000-0000-4000-8000-000000000099',
+              question: 'Foreign learner card',
+              correctAnswer: 'Never visible',
+              userAnswer: 'Private',
+              difficulty: 1,
+              stability: 0.4,
+              dueDate: Date.now(),
+              lastReview: null,
+              reps: 0,
+              lapses: 0,
+              tags: ['single'],
+              sourceIds: ['foreign-stage', 'foreign-scene', 'foreign-question'],
+              sourceStageId: 'foreign-stage',
+              sourceSceneId: 'foreign-scene',
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+            });
+            tx.oncomplete = () => {
+              database.close();
+              resolve();
+            };
+            tx.onerror = () => reject(tx.error);
+          };
+          request.onerror = () => reject(request.error);
+        }),
+    );
+
+    await page.route('**/rest/v1/review_cards*', (route) =>
+      route.fulfill({
+        status: route.request().method() === 'GET' ? 200 : 201,
+        contentType: 'application/json',
+        body: '[]',
+        headers: { 'content-range': '0-0/0' },
+      }),
+    );
+    await page.goto('/review');
+    await page.reload();
+    await expect(page.getByRole('heading', { name: 'Review queue' })).toBeVisible();
+    await expect(page.getByText(/Capital of Morocco\?|Explain spaced repetition\./)).toBeVisible();
+    await expect(page.getByText('Foreign learner card')).toHaveCount(0);
+    for (let index = 0; index < 2; index += 1) {
+      await page.getByRole('button', { name: 'Show answer' }).click();
+      await page.getByRole('button', { name: 'Good' }).click();
+    }
+    await expect(page.getByText('Review complete', { exact: true })).toBeVisible();
+  });
 });

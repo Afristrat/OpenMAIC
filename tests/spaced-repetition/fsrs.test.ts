@@ -24,6 +24,7 @@ function makeNewCard(overrides: Partial<ReviewCard> = {}): ReviewCard {
     reps: 0,
     lapses: 0,
     tags: ['single'],
+    sourceIds: ['stage-1', 'scene-1', 'question-1'],
     sourceStageId: 'stage-1',
     sourceSceneId: 'scene-1',
     ...overrides,
@@ -44,6 +45,7 @@ function makeReviewedCard(overrides: Partial<ReviewCard> = {}): ReviewCard {
     reps: 3,
     lapses: 0,
     tags: ['short_answer'],
+    sourceIds: ['stage-1', 'scene-2', 'question-2'],
     sourceStageId: 'stage-1',
     sourceSceneId: 'scene-2',
     ...overrides,
@@ -349,14 +351,15 @@ describe('getReviewStats', () => {
 });
 
 describe('extractReviewCards', () => {
-  it('extracts only questions with score < 0.6', () => {
+  it('extracts only errors and hesitant partial answers', async () => {
     const questions: QuizQuestion[] = [
       { id: 'q1', type: 'single', question: 'Q1?', options: [], answer: ['A'] },
       { id: 'q2', type: 'single', question: 'Q2?', options: [], answer: ['B'] },
       { id: 'q3', type: 'single', question: 'Q3?', options: [], answer: ['C'] },
     ];
 
-    const cards = extractReviewCards({
+    const cards = await extractReviewCards({
+      ownerId: 'user-1',
       stageId: 'stage-1',
       sceneId: 'scene-1',
       answeredQuestions: [
@@ -367,13 +370,18 @@ describe('extractReviewCards', () => {
     });
 
     expect(cards).toHaveLength(2);
-    expect(cards.map((c) => c.id)).toEqual([
-      'review-stage-1-scene-1-q2',
-      'review-stage-1-scene-1-q3',
+    expect(cards.map((card) => card.id)).toEqual([
+      expect.stringMatching(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-8[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+      ),
+      expect.stringMatching(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-8[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+      ),
     ]);
+    expect(cards.map((card) => card.difficulty)).toEqual([1, 0.5]);
   });
 
-  it('sets correct fields on extracted card', () => {
+  it('sets the complete card format and stable source identifiers', async () => {
     const q: QuizQuestion = {
       id: 'q1',
       type: 'short_answer',
@@ -381,7 +389,8 @@ describe('extractReviewCards', () => {
       answer: ['Photosynthesis'],
     };
 
-    const [card] = extractReviewCards({
+    const [card] = await extractReviewCards({
+      ownerId: 'user-1',
       stageId: 's1',
       sceneId: 'sc1',
       answeredQuestions: [{ question: q, userAnswers: ['Respiration'], score: 0 }],
@@ -397,19 +406,41 @@ describe('extractReviewCards', () => {
     expect(card.lastReview).toBeNull();
     expect(card.tags).toContain('biology');
     expect(card.tags).toContain('short_answer');
+    expect(card.sourceIds).toEqual(['s1', 'sc1', 'q1']);
     expect(card.sourceStageId).toBe('s1');
     expect(card.sourceSceneId).toBe('sc1');
   });
 
-  it('returns empty array when all questions are correct', () => {
+  it('returns empty array when all questions are correct', async () => {
     const q: QuizQuestion = { id: 'q1', type: 'single', question: 'Q?', answer: ['A'] };
-    const cards = extractReviewCards({
+    const cards = await extractReviewCards({
+      ownerId: 'user-1',
       stageId: 's1',
       sceneId: 'sc1',
       answeredQuestions: [{ question: q, userAnswers: ['A'], score: 1.0 }],
     });
 
     expect(cards).toHaveLength(0);
+  });
+
+  it('is idempotent for one user and isolated across users', async () => {
+    const input = {
+      stageId: 's1',
+      sceneId: 'sc1',
+      answeredQuestions: [
+        {
+          question: { id: 'q1', type: 'single', question: 'Q?', answer: ['A'] } as QuizQuestion,
+          userAnswers: ['B'],
+          score: 0,
+        },
+      ],
+    };
+    const [first] = await extractReviewCards({ ...input, ownerId: 'user-1' });
+    const [repeated] = await extractReviewCards({ ...input, ownerId: 'user-1' });
+    const [otherUser] = await extractReviewCards({ ...input, ownerId: 'user-2' });
+
+    expect(repeated.id).toBe(first.id);
+    expect(otherUser.id).not.toBe(first.id);
   });
 });
 

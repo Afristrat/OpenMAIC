@@ -123,6 +123,7 @@ export interface ReviewCard {
   reps: number; // default 0
   lapses: number; // default 0
   tags: string[] | null;
+  source_ids: string[];
   source_stage_id: string | null; // FK → stages.id
   source_scene_id: string | null;
   created_at: string;
@@ -287,9 +288,7 @@ export type SceneInsert = Pick<Scene, 'id' | 'stage_id' | 'type' | 'order'> &
   Partial<Omit<Scene, 'id' | 'stage_id' | 'type' | 'order' | 'created_at'>>;
 
 export type QuizResultInsert = Pick<QuizResult, 'user_id' | 'stage_id' | 'scene_id' | 'answers'> &
-  Partial<
-    Omit<QuizResult, 'id' | 'user_id' | 'stage_id' | 'scene_id' | 'answers' | 'completed_at'>
-  >;
+  Partial<Pick<QuizResult, 'id' | 'score'>>;
 
 export type ReviewCardInsert = Pick<ReviewCard, 'user_id' | 'question' | 'correct_answer'> &
   Partial<

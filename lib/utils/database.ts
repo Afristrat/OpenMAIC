@@ -226,6 +226,7 @@ export interface AutoVoiceCacheRecord {
 /** ReviewCard table - Spaced repetition review cards (guest / offline mode) */
 export interface ReviewCardRecord {
   id: string;
+  ownerId: string;
   question: string;
   correctAnswer: string;
   userAnswer: string;
@@ -236,6 +237,7 @@ export interface ReviewCardRecord {
   reps: number;
   lapses: number;
   tags: string[];
+  sourceIds: string[];
   sourceStageId: string;
   sourceSceneId: string;
   createdAt: number;

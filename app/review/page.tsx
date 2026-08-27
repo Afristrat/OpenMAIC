@@ -28,6 +28,7 @@ function supabaseRowToFsrs(row: {
   reps: number;
   lapses: number;
   tags: string[] | null;
+  source_ids: string[];
   source_stage_id: string | null;
   source_scene_id: string | null;
 }): ReviewCard {
@@ -43,6 +44,7 @@ function supabaseRowToFsrs(row: {
     reps: row.reps,
     lapses: row.lapses,
     tags: row.tags ?? [],
+    sourceIds: row.source_ids,
     sourceStageId: row.source_stage_id ?? '',
     sourceSceneId: row.source_scene_id ?? '',
   };
@@ -62,6 +64,7 @@ function dexieRecordToFsrs(rec: ReviewCardRecord): ReviewCard {
     reps: rec.reps,
     lapses: rec.lapses,
     tags: rec.tags,
+    sourceIds: rec.sourceIds,
     sourceStageId: rec.sourceStageId,
     sourceSceneId: rec.sourceSceneId,
   };
@@ -149,8 +152,12 @@ function ReviewPage() {
     // Load from IndexedDB (guest mode, or as supplement for authenticated users)
     try {
       const records = await db.reviewCards.where('dueDate').belowOrEqual(now.getTime()).toArray();
+      const localOwnerId = user?.id ?? 'guest';
 
       for (const rec of records) {
+        // Records created before S-025 belong to the guest namespace; never
+        // expose them after a different user signs in on the same browser.
+        if ((rec.ownerId ?? 'guest') !== localOwnerId) continue;
         // Deduplicate: Supabase takes precedence over IndexedDB
         const alreadyLoaded = cards.some((c) => c.card.id === rec.id);
         if (!alreadyLoaded) {
@@ -180,6 +187,7 @@ function ReviewPage() {
                   reps: card.reps,
                   lapses: card.lapses,
                   tags: card.tags,
+                  source_ids: card.sourceIds,
                   source_stage_id: card.sourceStageId || null,
                   source_scene_id: card.sourceSceneId || null,
                 },

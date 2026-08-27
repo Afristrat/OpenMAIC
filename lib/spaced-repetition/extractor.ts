@@ -4,6 +4,7 @@
  */
 
 import type { QuizQuestion } from '@/lib/types/stage';
+import { stableUuid } from '@/lib/utils/stable-uuid';
 
 // ────────────────────────────── Types ──────────────────────────────
 
@@ -19,6 +20,7 @@ export interface ReviewCard {
   reps: number;
   lapses: number;
   tags: string[];
+  sourceIds: string[];
   sourceStageId: string;
   sourceSceneId: string;
 }
@@ -34,6 +36,8 @@ export interface AnsweredQuestion {
 
 /** Input bundle passed to the extractor. */
 export interface QuizResult {
+  /** Authenticated user id, or the stable `guest` namespace for local-only use. */
+  ownerId: string;
   stageId: string;
   sceneId: string;
   answeredQuestions: AnsweredQuestion[];
@@ -52,10 +56,6 @@ const INITIAL_STABILITY = 0.4;
 function formatAnswer(answers: string[] | undefined): string {
   if (!answers || answers.length === 0) return '';
   return answers.join(', ');
-}
-
-function generateCardId(stageId: string, sceneId: string, questionId: string): string {
-  return `review-${stageId}-${sceneId}-${questionId}`;
 }
 
 /**
@@ -77,29 +77,39 @@ function scoreToDifficulty(score: number): number {
  * Only questions answered incorrectly or with low confidence
  * (score < {@link EXTRACTION_SCORE_THRESHOLD}) are extracted.
  */
-export function extractReviewCards(result: QuizResult): ReviewCard[] {
+export async function extractReviewCards(result: QuizResult): Promise<ReviewCard[]> {
   const now = new Date();
   const baseTags = result.tags ?? [];
 
-  return result.answeredQuestions
-    .filter((aq) => aq.score < EXTRACTION_SCORE_THRESHOLD)
-    .map((aq): ReviewCard => {
-      const { question, userAnswers, score } = aq;
+  return Promise.all(
+    result.answeredQuestions
+      .filter((aq) => aq.score < EXTRACTION_SCORE_THRESHOLD)
+      .map(async (aq): Promise<ReviewCard> => {
+        const { question, userAnswers, score } = aq;
+        const sourceIds = [result.stageId, result.sceneId, question.id];
 
-      return {
-        id: generateCardId(result.stageId, result.sceneId, question.id),
-        question: question.question,
-        correctAnswer: formatAnswer(question.answer),
-        userAnswer: formatAnswer(userAnswers),
-        difficulty: scoreToDifficulty(score),
-        stability: INITIAL_STABILITY,
-        dueDate: now, // Due immediately — first review right away
-        lastReview: null,
-        reps: 0,
-        lapses: 0,
-        tags: [...baseTags, question.type],
-        sourceStageId: result.stageId,
-        sourceSceneId: result.sceneId,
-      };
-    });
+        return {
+          id: await stableUuid([
+            'qalem-review-card',
+            result.ownerId,
+            result.stageId,
+            result.sceneId,
+            question.id,
+          ]),
+          question: question.question,
+          correctAnswer: formatAnswer(question.answer),
+          userAnswer: formatAnswer(userAnswers),
+          difficulty: scoreToDifficulty(score),
+          stability: INITIAL_STABILITY,
+          dueDate: now, // Due immediately — first review right away
+          lastReview: null,
+          reps: 0,
+          lapses: 0,
+          tags: [...baseTags, question.type],
+          sourceIds,
+          sourceStageId: result.stageId,
+          sourceSceneId: result.sceneId,
+        };
+      }),
+  );
 }
