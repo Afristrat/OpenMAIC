@@ -179,7 +179,9 @@ def build_workbook(spec: dict[str, object], profile: str | None) -> bytes:
         archive.writestr("[Content_Types].xml", f'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>{overrides}</Types>')
         archive.writestr("_rels/.rels", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>')
         sheet_entries = "".join(
-            f'<sheet name={quoteattr(str(sheet["name"]))} sheetId="{index}" r:id="rId{index}"{(" state=\"hidden\"" if sheet.get("hidden") else "")}/>'
+            f'<sheet name={quoteattr(str(sheet["name"]))} sheetId="{index}" r:id="rId{index}"'
+            + (' state="hidden"' if sheet.get("hidden") else "")
+            + "/>"
             for index, sheet in enumerate(sheets, 1)
         )
         archive.writestr("xl/workbook.xml", f'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="{NS}" xmlns:r="{REL_NS}"><sheets>{sheet_entries}</sheets><calcPr calcId="0" fullCalcOnLoad="1" forceFullCalc="1"/></workbook>')
