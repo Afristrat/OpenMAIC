@@ -1,10 +1,11 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { useCanvasStore, useStageStore } from '@/lib/store';
 import { PENDING_SCENE_ID } from '@/lib/store/stage';
 import { isCurrentSceneEditable } from '@/lib/edit/stage-mode';
 import { sceneEditorRegistry } from '@/lib/edit/scene-editor-registry';
 import type { SceneEditorSurface } from '@/lib/edit/scene-editor-surface';
 import type { SceneType } from '@/lib/types/stage';
+import { expectConsoleMessages } from '@/tests/helpers/expected-console';
 
 describe('stage edit mode store', () => {
   beforeEach(() => {
@@ -136,26 +137,25 @@ describe('sceneEditorRegistry', () => {
 
   test('re-registering the identical surface instance does not warn (HMR-safe)', () => {
     const surface = makeSurface('slide');
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expectConsoleMessages({});
 
     sceneEditorRegistry.register(surface);
     sceneEditorRegistry.register(surface);
-
-    expect(warn).not.toHaveBeenCalled();
-    warn.mockRestore();
   });
 
   test('registering a different surface for the same sceneType warns in dev', () => {
     const first = makeSurface('slide', 'A');
     const second = makeSurface('slide', 'B');
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expectConsoleMessages({
+      warn: [
+        '[sceneEditorRegistry] overwriting existing surface for "slide". If this is HMR, call unregister first.',
+      ],
+    });
 
     sceneEditorRegistry.register(first);
     sceneEditorRegistry.register(second);
 
-    expect(warn).toHaveBeenCalledOnce();
     expect(sceneEditorRegistry.resolve('slide')).toBe(second);
-    warn.mockRestore();
   });
 
   test('unregister removes the surface', () => {

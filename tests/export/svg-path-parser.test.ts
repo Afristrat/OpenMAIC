@@ -1,12 +1,8 @@
-import { describe, test, expect, vi, beforeEach } from 'vitest';
+import { describe, test, expect } from 'vitest';
 import { toPoints, getSvgPathRange } from '@/lib/export/svg-path-parser';
+import { expectConsoleMessages } from '@/tests/helpers/expected-console';
 
 describe('toPoints', () => {
-  beforeEach(() => {
-    // Silence the parser's warn log for malformed-path cases.
-    vi.spyOn(console, 'warn').mockImplementation(() => {});
-  });
-
   test('parses a valid M/L/Z path', () => {
     const points = toPoints('M 0 0 L 1 0 L 1 1 L 0 1 Z');
     expect(points.length).toBeGreaterThan(0);
@@ -17,6 +13,11 @@ describe('toPoints', () => {
     // Real-world malformed path observed in an imported course manifest:
     // upstream LLM produced "alert" instead of an "A" arc command.
     const malformed = 'M 1 0.5 alert 0.5 0.5 0 1 1 0 0.5 A 0.5 0.5 0 1 1 1 0.5 Z';
+    expectConsoleMessages({
+      warn: [
+        `[WARN] [SvgPathParser] Failed to parse SVG path "${malformed}": SyntaxError: Unexpected character "a" at index 8.`,
+      ],
+    });
     expect(toPoints(malformed)).toEqual([]);
   });
 

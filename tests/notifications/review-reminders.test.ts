@@ -16,6 +16,7 @@ import {
   savePreferences,
   unsubscribeFromPush,
 } from '@/lib/notifications';
+import { expectConsoleMessages } from '@/tests/helpers/expected-console';
 
 class MemoryStorage implements Storage {
   private readonly values = new Map<string, string>();
@@ -189,12 +190,15 @@ describe('review reminders', () => {
     const browser = installBrowser();
     vi.mocked(browser.pushManager.getSubscription).mockResolvedValue(browser.subscription);
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
-    const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    expectConsoleMessages({
+      warn: [
+        '[WARN] [Notifications] Failed to disable browser notifications: Error: offline',
+      ],
+    });
 
     await expect(unsubscribeFromPush()).resolves.toBeUndefined();
 
     expect(browser.subscription.unsubscribe).toHaveBeenCalledOnce();
-    warning.mockRestore();
   });
 
   it('records a bounded successful check without notifying when no card is due', async () => {
