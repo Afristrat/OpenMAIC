@@ -31,7 +31,9 @@ export async function captureExpectedBrowserConsole(
 
       target[expectedLevel] = (...data: unknown[]) => {
         const message = data
-          .map((value) => (value instanceof Error ? `${value.name}: ${value.message}` : String(value)))
+          .map((value) =>
+            value instanceof Error ? `${value.name}: ${value.message}` : String(value),
+          )
           .join(' ');
         if (message.includes(substring)) {
           messages.push(message);
