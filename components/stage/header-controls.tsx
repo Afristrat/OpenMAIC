@@ -94,6 +94,9 @@ export function HeaderControls({
   // across mode swaps (was previously in `Header` only, missing from
   // CommandBar's right cluster).
   const scenes = useStageStore((s) => s.scenes);
+  const sceneGrounding = useStageStore(
+    (s) => s.scenes.find((scene) => scene.id === s.currentSceneId)?.sourceGrounding,
+  );
   const researchSources = useStageStore((s) => s.stage?.researchSources ?? EMPTY_RESEARCH_SOURCES);
   const generatingOutlines = useStageStore((s) => s.generatingOutlines);
   const failedOutlines = useStageStore((s) => s.failedOutlines);
@@ -409,6 +412,42 @@ export function HeaderControls({
               <DialogTitle>{t('classroom.researchSourcesTitle')}</DialogTitle>
               <DialogDescription>{t('classroom.researchSourcesDescription')}</DialogDescription>
             </DialogHeader>
+            {sceneGrounding && (
+              <section
+                data-testid="scene-source-grounding"
+                className="space-y-3 rounded-lg border border-border/70 bg-muted/30 p-3"
+              >
+                <div>
+                  <h3 className="font-medium text-foreground">
+                    {t('classroom.sceneGroundingTitle')}
+                  </h3>
+                  <p
+                    className={cn(
+                      'mt-1 text-xs font-medium',
+                      sceneGrounding.status === 'grounded'
+                        ? 'text-emerald-700 dark:text-emerald-300'
+                        : 'text-amber-700 dark:text-amber-300',
+                    )}
+                  >
+                    {t(`classroom.sceneGrounding.${sceneGrounding.status}`)}
+                  </p>
+                </div>
+                {sceneGrounding.passages.length > 0 && (
+                  <ol className="space-y-2">
+                    {sceneGrounding.passages.map((passage) => (
+                      <li key={passage.id} className="rounded-md bg-background/80 p-2 text-xs">
+                        <p className="font-mono text-[10px] text-muted-foreground">
+                          {passage.sourceTitle} · {passage.sourceVersion} · {passage.id}
+                        </p>
+                        <p className="mt-1 line-clamp-4 leading-relaxed text-foreground">
+                          {passage.text}
+                        </p>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </section>
+            )}
             {researchSources.length > 0 ? (
               <ol className="space-y-3">
                 {researchSources.map((source, index) => (

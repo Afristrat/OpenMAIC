@@ -198,7 +198,22 @@ describe('classroom tenant boundary', () => {
           { title: 'Private source', url: 'https://source.example', excerpt: 'Private' },
         ],
       },
-      scenes: [],
+      scenes: [
+        {
+          id: 'public-scene',
+          stageId: 'published_classroom',
+          type: 'slide',
+          title: 'Public scene',
+          order: 0,
+          content: { type: 'slide', canvas: { id: 'canvas', elements: [] } },
+          sourceGrounding: {
+            schemaVersion: 1,
+            status: 'grounded',
+            issues: [],
+            passages: [{ id: 'private-passage', text: 'Private source text' }],
+          },
+        },
+      ],
       createdAt: '2026-07-22T00:00:00.000Z',
       ownerId: 'session-owner',
       orgId: ORG_ID,
@@ -216,6 +231,7 @@ describe('classroom tenant boundary', () => {
     expect(body.canEdit).toBe(false);
     expect(body.canViewSources).toBe(false);
     expect(body.classroom.stage).not.toHaveProperty('researchSources');
+    expect(body.classroom.scenes[0]).not.toHaveProperty('sourceGrounding');
     expect(mocks.requireEditor).toHaveBeenCalledWith(
       expect.any(NextRequest),
       ORG_ID,
@@ -234,7 +250,22 @@ describe('classroom tenant boundary', () => {
           { title: 'Author source', url: 'https://source.example', excerpt: 'Visible' },
         ],
       },
-      scenes: [],
+      scenes: [
+        {
+          id: 'author-scene',
+          stageId: 'authored_classroom',
+          type: 'slide',
+          title: 'Author scene',
+          order: 0,
+          content: { type: 'slide', canvas: { id: 'canvas', elements: [] } },
+          sourceGrounding: {
+            schemaVersion: 1,
+            status: 'grounded',
+            issues: [],
+            passages: [{ id: 'author-passage', text: 'Author source text' }],
+          },
+        },
+      ],
       createdAt: '2026-07-22T00:00:00.000Z',
       ownerId: 'session-owner',
       orgId: ORG_ID,
@@ -249,6 +280,7 @@ describe('classroom tenant boundary', () => {
     expect(body.canEdit).toBe(true);
     expect(body.canViewSources).toBe(true);
     expect(body.classroom.stage.researchSources).toHaveLength(1);
+    expect(body.classroom.scenes[0].sourceGrounding.passages[0].id).toBe('author-passage');
     expect(mocks.requireEditor).toHaveBeenCalledWith(
       expect.any(NextRequest),
       ORG_ID,

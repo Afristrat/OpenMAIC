@@ -136,7 +136,7 @@ export function extractStageLiveContext(extra: unknown): {
   };
 }
 
-function buildSceneExtra(scene: Scene): SceneExtra {
+export function buildSceneExtra(scene: Scene): SceneExtra {
   return {
     createdAt: scene.createdAt,
     updatedAt: scene.updatedAt,

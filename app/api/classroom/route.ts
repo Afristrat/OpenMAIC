@@ -243,11 +243,15 @@ export async function GET(request: NextRequest) {
     // ownerId/orgId are internal authorization state — never exposed to the client.
     const { ownerId: _ownerId, orgId: _orgId, ...publicClassroom } = classroom;
     const { researchSources, ...learnerStage } = publicClassroom.stage;
+    const learnerScenes = canViewSources
+      ? publicClassroom.scenes
+      : publicClassroom.scenes.map(({ sourceGrounding: _sourceGrounding, ...scene }) => scene);
     return apiSuccess({
       canEdit,
       canViewSources,
       classroom: {
         ...publicClassroom,
+        scenes: learnerScenes,
         stage: {
           ...learnerStage,
           ...(canViewSources && researchSources?.length ? { researchSources } : {}),
