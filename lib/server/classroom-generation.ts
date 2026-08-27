@@ -88,10 +88,7 @@ import {
   organizationDesignSystemFromSettings,
   type OrganizationDesignSystem,
 } from '@/lib/branding/organization-design-system';
-import {
-  normalizePdfImages,
-  uploadedPdfSource,
-} from '@/lib/server/pdf-source';
+import { normalizePdfImages, uploadedPdfSource } from '@/lib/server/pdf-source';
 import { teacherProfileFromClassroomCast } from '@/lib/agents/classroom-casting';
 import { shouldRunClassroomWebSearch } from '@/lib/server/web-search-policy';
 import {
