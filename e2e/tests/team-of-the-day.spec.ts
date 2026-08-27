@@ -85,13 +85,16 @@ for (const { locale, label, coachRole } of [
   { locale: 'fr-FR' as const, label: 'Votre équipe du jour', coachRole: 'La Coach' },
   { locale: 'ar-MA' as const, label: 'فريقك اليوم', coachRole: 'المدرّبة' },
 ]) {
-  test(`affiche l'équipe de session en ${locale}`, async ({ page }) => {
+  test(`affiche l'équipe de session en ${locale}`, async ({ page, mockApi }) => {
     await seedClassroom(page, locale);
+    const classroomApi = await mockApi.mockLocalClassroomFallback(STAGE_ID);
     await page.goto(`/classroom/${STAGE_ID}`);
 
     await page.getByRole('button', { name: label }).click();
     await expect(page.getByRole('list', { name: label })).toContainText('Younes');
     await expect(page.getByRole('list', { name: label })).toContainText('Hanae');
     await expect(page.getByRole('list', { name: label })).toContainText(coachRole);
+    expect(classroomApi.expectedRequests).toEqual([`GET /api/classroom?id=${STAGE_ID}`]);
+    expect(classroomApi.unexpectedRequests).toEqual([]);
   });
 }

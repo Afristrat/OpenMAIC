@@ -90,9 +90,11 @@ async function seedPluginScene(page: import('@playwright/test').Page) {
 test.describe('Classroom plug-in scene', () => {
   test('persists and renders a generated code exercise inside the classroom', async ({
     page,
+    mockApi,
   }, testInfo) => {
     testInfo.setTimeout(60_000);
     await seedPluginScene(page);
+    const classroomApi = await mockApi.mockLocalClassroomFallback(TEST_STAGE_ID);
     await page.goto(`/classroom/${TEST_STAGE_ID}`);
 
     await expect(page.getByRole('heading', { name: 'Fonction somme' })).toBeVisible();
@@ -104,5 +106,7 @@ test.describe('Classroom plug-in scene', () => {
     );
     await expect(plugin.locator('#btn-run')).toBeVisible();
     await expect(plugin.locator('#btn-reset')).toBeVisible();
+    expect(classroomApi.expectedRequests).toEqual([`GET /api/classroom?id=${TEST_STAGE_ID}`]);
+    expect(classroomApi.unexpectedRequests).toEqual([]);
   });
 });

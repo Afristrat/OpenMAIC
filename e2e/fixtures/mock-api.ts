@@ -3,12 +3,55 @@ import { mockOutlines } from './test-data/scene-outlines';
 import { mockSceneContentResponse } from './test-data/scene-content';
 import { createMockSceneActionsResponse } from './test-data/scene-actions';
 
+export interface LocalClassroomFallbackTracker {
+  expectedRequests: string[];
+  unexpectedRequests: string[];
+}
+
 /**
  * Wraps Playwright's page.route() to mock OpenMAIC API endpoints.
  * Supports both JSON and SSE (text/event-stream) responses.
  */
 export class MockApi {
   constructor(private page: Page) {}
+
+  /**
+   * Model a classroom that exists only in IndexedDB. The production client
+   * must still probe its authoritative API first, receive an explicit 404,
+   * then retain the local snapshot. Any other classroom request is recorded
+   * and blocked so the test cannot pass after leaking into fake Supabase.
+   */
+  async mockLocalClassroomFallback(stageId: string): Promise<LocalClassroomFallbackTracker> {
+    const tracker: LocalClassroomFallbackTracker = {
+      expectedRequests: [],
+      unexpectedRequests: [],
+    };
+
+    await this.page.route('**/api/classroom?*', async (route) => {
+      const request = route.request();
+      const url = new URL(request.url());
+      const requestLabel = `${request.method()} ${url.pathname}${url.search}`;
+      const isExpected =
+        request.method() === 'GET' &&
+        url.searchParams.size === 1 &&
+        url.searchParams.get('id') === stageId;
+
+      if (!isExpected) {
+        tracker.unexpectedRequests.push(requestLabel);
+        await route.abort('blockedbyclient');
+        return;
+      }
+
+      tracker.expectedRequests.push(requestLabel);
+      await route.fulfill({
+        status: 404,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: false, error: 'Local E2E classroom' }),
+      });
+    });
+
+    return tracker;
+  }
 
   /** Mock the SSE outline streaming endpoint */
   async mockSceneOutlinesStream(outlines = mockOutlines) {
