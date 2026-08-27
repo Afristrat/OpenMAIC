@@ -25,6 +25,10 @@ describe('PWA shell cache', () => {
     expect(serviceWorker).toContain("cache: 'no-store'");
     expect(registrar).toContain("updateViaCache: 'none'");
     expect(registrar).toContain('registration.update()');
+    expect(registrar).toContain(
+      "const E2E_TEST_MODE = process.env.NEXT_PUBLIC_E2E_TEST_MODE === 'true'",
+    );
+    expect(registrar).toContain("if (E2E_TEST_MODE || typeof window === 'undefined'");
     expect(rootLayout).toContain('<ServiceWorkerRegistrar />');
   });
 });

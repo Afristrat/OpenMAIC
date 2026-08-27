@@ -4,6 +4,8 @@ import { useEffect } from 'react';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { checkAndNotifyDueCards, REVIEW_REMINDER_INTERVAL_MS } from '@/lib/notifications';
 
+const E2E_TEST_MODE = process.env.NEXT_PUBLIC_E2E_TEST_MODE === 'true';
+
 /**
  * Registers the PWA service worker on mount.
  * Renders nothing — purely a side-effect component.
@@ -12,7 +14,11 @@ export function ServiceWorkerRegistrar(): null {
   const { user, isLoading } = useAuth();
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+    // Playwright deliberately blocks service workers so page.route() remains
+    // authoritative. Do not manufacture a registration failure in that
+    // explicit test environment; production and ordinary development retain
+    // the complete registration/update path below.
+    if (E2E_TEST_MODE || typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
 
     void navigator.serviceWorker
       .register('/sw.js', { scope: '/', updateViaCache: 'none' })
