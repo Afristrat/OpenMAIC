@@ -12,16 +12,31 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+type InstallMode = 'prompt' | 'ios' | null;
+
+export function isIosDevice(
+  userAgent: string,
+  platform: string,
+  maxTouchPoints: number,
+): boolean {
+  return /iPad|iPhone|iPod/.test(userAgent) || (platform === 'MacIntel' && maxTouchPoints > 1);
+}
+
+export function isStandalone(displayModeStandalone: boolean, navigatorStandalone = false): boolean {
+  return displayModeStandalone || navigatorStandalone;
+}
+
 export function PwaInstallBanner(): React.ReactNode {
   const { t } = useI18n();
-  const [show, setShow] = useState(false);
+  const [mode, setMode] = useState<InstallMode>(null);
   const deferredPromptRef = useRef<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
-    // Don't show if already installed (standalone mode)
-    if (window.matchMedia('(display-mode: standalone)').matches) return;
+    const navigatorStandalone = (navigator as Navigator & { standalone?: boolean }).standalone;
+    if (isStandalone(window.matchMedia('(display-mode: standalone)').matches, navigatorStandalone)) {
+      return;
+    }
 
-    // Don't show if previously dismissed
     try {
       if (localStorage.getItem(DISMISSED_KEY) === 'true') return;
     } catch {
@@ -31,33 +46,50 @@ export function PwaInstallBanner(): React.ReactNode {
     const handler = (e: Event): void => {
       e.preventDefault();
       deferredPromptRef.current = e as BeforeInstallPromptEvent;
+      setMode('prompt');
+    };
 
-      // Only show on mobile/tablet (< 768px) or non-standalone
-      const isMobileOrTablet = window.innerWidth < 768;
-      if (isMobileOrTablet) {
-        setShow(true);
-      }
+    const handleInstalled = (): void => {
+      deferredPromptRef.current = null;
+      setMode(null);
     };
 
     window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+    window.addEventListener('appinstalled', handleInstalled);
+
+    if (isIosDevice(navigator.userAgent, navigator.platform, navigator.maxTouchPoints)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- iOS exposes no installability event; browser state is only available after hydration.
+      setMode('ios');
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('appinstalled', handleInstalled);
+    };
   }, []);
 
   const handleInstall = useCallback(async () => {
     const prompt = deferredPromptRef.current;
     if (!prompt) return;
 
-    await prompt.prompt();
-    const { outcome } = await prompt.userChoice;
-
-    if (outcome === 'accepted') {
-      setShow(false);
+    try {
+      await prompt.prompt();
+      const { outcome } = await prompt.userChoice;
+      if (outcome === 'dismissed') {
+        try {
+          localStorage.setItem(DISMISSED_KEY, 'true');
+        } catch {
+          // localStorage unavailable
+        }
+      }
+    } finally {
+      deferredPromptRef.current = null;
+      setMode(null);
     }
-    deferredPromptRef.current = null;
   }, []);
 
   const handleDismiss = useCallback(() => {
-    setShow(false);
+    setMode(null);
     try {
       localStorage.setItem(DISMISSED_KEY, 'true');
     } catch {
@@ -65,26 +97,31 @@ export function PwaInstallBanner(): React.ReactNode {
     }
   }, []);
 
-  if (!show) return null;
+  if (!mode) return null;
 
   return (
     <div
+      data-testid="pwa-install-banner"
       className={cn(
         'fixed top-0 inset-x-0 z-[60] flex items-center justify-between gap-3',
         'bg-purple-600 text-white px-4 py-2.5 text-sm shadow-md',
       )}
+      role="region"
+      aria-label={t('pwa.banner')}
     >
       <div className="flex items-center gap-2 min-w-0">
         <Download className="size-4 shrink-0" />
-        <span className="truncate">{t('pwa.banner')}</span>
+        <span>{mode === 'ios' ? t('pwa.iosInstructions') : t('pwa.banner')}</span>
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <button
-          onClick={handleInstall}
-          className="rounded-md bg-white/20 px-3 py-1 text-xs font-semibold hover:bg-white/30 transition-colors"
-        >
-          {t('pwa.install')}
-        </button>
+        {mode === 'prompt' && (
+          <button
+            onClick={handleInstall}
+            className="rounded-md bg-white/20 px-3 py-1 text-xs font-semibold hover:bg-white/30 transition-colors"
+          >
+            {t('pwa.install')}
+          </button>
+        )}
         <button
           onClick={handleDismiss}
           className="rounded-md p-1 hover:bg-white/20 transition-colors"

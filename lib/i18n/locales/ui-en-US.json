@@ -2078,6 +2078,7 @@
   "profile.save": "Save profile",
   "profile.saved": "Profile saved.",
   "pwa.banner": "Install Qalem for faster access and a more reliable learning experience.",
+  "pwa.iosInstructions": "To install Qalem, open the browser Share menu, then choose “Add to Home Screen”.",
   "pwa.install": "Install app",
   "reports.activeClassrooms": "Active learning rooms",
   "reports.avgScore": "Average score",

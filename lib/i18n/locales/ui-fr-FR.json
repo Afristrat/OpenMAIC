@@ -2078,6 +2078,7 @@
   "profile.save": "Enregistrer le profil",
   "profile.saved": "Profil enregistré.",
   "pwa.banner": "Installez Qalem pour un accès plus rapide et une expérience d\u0027apprentissage plus fiable.",
+  "pwa.iosInstructions": "Pour installer Qalem, ouvrez le menu Partager du navigateur, puis choisissez « Sur l’écran d’accueil ».",
   "pwa.install": "Installer l\u0027application",
   "reports.activeClassrooms": "Salles d’apprentissage actif",
   "reports.avgScore": "Note moyenne",

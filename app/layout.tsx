@@ -15,6 +15,7 @@ import { AccessCodeGuard } from '@/components/access-code-guard';
 import { HtmlDirectionManager } from '@/components/html-direction-manager';
 import { SidebarLayout } from '@/components/sidebar-layout';
 import { ServiceWorkerRegistrar } from '@/components/service-worker-registrar';
+import { PwaInstallBanner } from '@/components/pwa-install-banner';
 
 const inter = localFont({
   src: '../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2',
@@ -54,6 +55,7 @@ export default function RootLayout({
             <HtmlDirectionManager />
             <ServerProvidersInit />
             <ServiceWorkerRegistrar />
+            <PwaInstallBanner />
             <AccessCodeGuard>
               <SidebarLayout>{children}</SidebarLayout>
             </AccessCodeGuard>
