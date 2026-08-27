@@ -7,5 +7,8 @@ export async function downloadExport(url: string, filename: string): Promise<voi
   if (!response.ok) {
     throw new Error(`Export download failed with HTTP ${response.status}`);
   }
-  saveAs(await response.blob(), filename);
+  const blob = await response.blob();
+  // Preserve the name in both channels understood by browser download
+  // implementations: File.name and the explicit saveAs argument.
+  saveAs(new File([blob], filename, { type: blob.type }), filename);
 }
