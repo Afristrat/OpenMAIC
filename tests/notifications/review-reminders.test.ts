@@ -189,10 +189,12 @@ describe('review reminders', () => {
     const browser = installBrowser();
     vi.mocked(browser.pushManager.getSubscription).mockResolvedValue(browser.subscription);
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
     await expect(unsubscribeFromPush()).resolves.toBeUndefined();
 
     expect(browser.subscription.unsubscribe).toHaveBeenCalledOnce();
+    warning.mockRestore();
   });
 
   it('records a bounded successful check without notifying when no card is due', async () => {
