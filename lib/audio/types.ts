@@ -146,7 +146,7 @@ export interface TTSModelConfig {
   speed?: number;
   format?: string;
   providerOptions?: Record<string, unknown>;
-  /** Per-call language override (currently only honored by higgs-tts). */
+  /** Per-call language used by speech normalization and honored by higgs-tts. */
   language?: string;
 }
 

@@ -105,6 +105,7 @@ import {
   type VoxCPMProviderOptions,
 } from './voxcpm';
 import { assertAboveNoiseFloor, assertArabicTachkilReady } from './audio-gate';
+import { prepareTextForTTS } from './tts-utils';
 
 /**
  * Result of TTS generation
@@ -166,11 +167,12 @@ export async function generateTTS(
 
   // Browser-native TTS always throws below (client-side only) regardless of
   // text content, so the tachkil gate doesn't need to run for it.
+  const speechText = prepareTextForTTS(text, config.language);
   if (config.providerId !== 'browser-native-tts') {
-    assertArabicTachkilReady(text, config.providerId);
+    assertArabicTachkilReady(speechText, config.providerId);
   }
 
-  const result = await dispatchTTSProvider(config, text);
+  const result = await dispatchTTSProvider(config, speechText);
   assertAboveNoiseFloor(result.audio, result.format);
   return result;
 }

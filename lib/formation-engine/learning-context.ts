@@ -59,7 +59,10 @@ export function buildLearningContextDirective(
   return [
     'CONTEXTE D’USAGE OBLIGATOIRE :',
     `Pays ou territoire : ${context.territory}.`,
-    `Devise de référence : ${context.currencyCode}.`,
-    `Utiliser ${context.currencyCode} pour tous les montants, budgets, exemples et exercices. N’utiliser une autre devise que dans une comparaison explicitement signalée. Ne jamais convertir un montant existant sans taux de change actuel et sourcé.`,
+    `Code ISO 4217 interne de la devise de référence : ${context.currencyCode}.`,
+    context.currencyCode === 'MAD'
+      ? 'Dans tous les textes pédagogiques destinés à l’apprenant, écrire « dirham » pour un montant exactement égal à 1 et « dirhams » dans les autres cas ; ne jamais afficher le code MAD à la place du nom de la devise.'
+      : `Utiliser ${context.currencyCode} pour tous les montants, budgets, exemples et exercices.`,
+    'N’utiliser une autre devise que dans une comparaison explicitement signalée. Ne jamais convertir un montant existant sans taux de change actuel et sourcé.',
   ].join('\n');
 }

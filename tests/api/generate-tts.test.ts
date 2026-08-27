@@ -60,4 +60,22 @@ describe('POST /api/generate/tts — ttsLanguageOverride passthrough', () => {
     const [config] = generateTTSMock.mock.calls[0];
     expect(config.language).toBe('en');
   });
+
+  it('forwards the classroom language independently of provider-specific overrides', async () => {
+    generateTTSMock.mockResolvedValue({ audio: new Uint8Array([1]), format: 'wav' });
+    const req = new Request('http://localhost/api/generate/tts', {
+      method: 'POST',
+      body: JSON.stringify({
+        text: 'Un budget de 250 dirhams.',
+        audioId: 'a2',
+        ttsProviderId: 'openai-tts',
+        ttsVoice: 'alloy',
+        ttsLanguage: 'fr',
+      }),
+    });
+
+    await POST(req as unknown as Parameters<typeof POST>[0]);
+
+    expect(generateTTSMock.mock.calls[0]?.[0]?.language).toBe('fr');
+  });
 });

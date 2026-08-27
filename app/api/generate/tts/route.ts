@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
       ttsApiKey,
       ttsBaseUrl,
       ttsProviderOptions,
+      ttsLanguage,
       ttsLanguageOverride,
     } = body;
     ttsProviderId = body.ttsProviderId;
@@ -105,7 +106,7 @@ export async function POST(req: NextRequest) {
       apiKey,
       baseUrl,
       providerOptions: ttsProviderOptions,
-      language: ttsLanguageOverride,
+      language: ttsLanguageOverride ?? ttsLanguage,
     };
 
     log.info(

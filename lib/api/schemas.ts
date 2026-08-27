@@ -177,6 +177,7 @@ export const generateTTSSchema = z.object({
   ttsApiKey: z.string().optional(),
   ttsBaseUrl: z.string().optional(),
   ttsProviderOptions: z.record(z.string(), z.unknown()).optional(),
+  ttsLanguage: z.enum(['fr', 'en', 'ar']).optional(),
   ttsLanguageOverride: z.enum(['fr', 'en']).optional(),
 });
 

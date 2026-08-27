@@ -15,7 +15,11 @@ import type {
 import type { AgentInfo } from '@/lib/generation/generation-pipeline';
 import type { Scene } from '@/lib/types/stage';
 import type { SpeechAction } from '@/lib/types/action';
-import { splitLongSpeechActions, splitSpeechActionsByAnglicisms } from '@/lib/audio/tts-utils';
+import {
+  resolveSpeechLanguage,
+  splitLongSpeechActions,
+  splitSpeechActionsByAnglicisms,
+} from '@/lib/audio/tts-utils';
 import { isTTSProviderEnabled } from '@/lib/audio/provider-enablement';
 import { resolveAgentVoiceOptions, pickNarratorAgent } from '@/lib/audio/agent-voice';
 import { useAgentRegistry } from '@/lib/orchestration/registry/store';
@@ -259,6 +263,7 @@ export async function generateAndStoreTTS(
           ttsBaseUrl:
             ttsProviderConfig?.baseUrl || ttsProviderConfig?.customDefaultBaseUrl || undefined,
           ttsProviderOptions: providerOptions,
+          ttsLanguage: resolveSpeechLanguage(language),
           ttsLanguageOverride,
         }),
         signal,

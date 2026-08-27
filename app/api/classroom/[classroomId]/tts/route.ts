@@ -55,6 +55,8 @@ export async function POST(
     classroomId,
     casting.teacherProfile,
     casting.agents,
+    undefined,
+    casting.stage.languageDirective,
   );
   if (!generatedScene.actions?.every((item: Action) => item.type !== 'speech' || item.audioUrl)) {
     return apiError('INTERNAL_ERROR', 502, 'La synthèse vocale a échoué');

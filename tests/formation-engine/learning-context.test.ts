@@ -11,8 +11,27 @@ describe('learning context', () => {
 
     expect(context).toEqual({ territory: 'Maroc', currencyCode: 'MAD' });
     expect(directive).toContain('Pays ou territoire : Maroc');
-    expect(directive).toContain('Devise de référence : MAD');
+    expect(directive).toContain('Code ISO 4217 interne de la devise de référence : MAD');
+    expect(directive).toContain('« dirham » pour un montant exactement égal à 1');
+    expect(directive).toContain('« dirhams » dans les autres cas');
+    expect(directive).toContain('ne jamais afficher le code MAD');
     expect(directive).toContain('taux de change actuel et sourcé');
+  });
+
+  it('keeps MAD internal and leaves other locales and currencies unchanged', () => {
+    const english = buildLearningContextDirective(
+      { territory: 'Morocco', currencyCode: 'MAD' },
+      'en-US',
+    );
+    const frenchEuro = buildLearningContextDirective(
+      { territory: 'France', currencyCode: 'EUR' },
+      'fr-FR',
+    );
+
+    expect(english).toContain('Use MAD for every amount');
+    expect(english).not.toContain('dirhams');
+    expect(frenchEuro).toContain('Utiliser EUR pour tous les montants');
+    expect(frenchEuro).not.toContain('dirhams');
   });
 
   it('rejects a missing territory or malformed ISO code', () => {

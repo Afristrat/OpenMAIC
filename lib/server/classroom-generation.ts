@@ -1016,6 +1016,7 @@ export async function generateClassroom(
             totalScenes: outlines.length,
           });
         },
+        languageDirective,
       );
       if (ttsReport.generated !== ttsReport.requested) {
         throw new Error(

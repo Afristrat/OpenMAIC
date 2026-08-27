@@ -265,7 +265,7 @@ When a learner genuinely needs a reusable workbook to complete an exercise, appl
     "title": "Budget de trésorerie sur 13 semaines",
     "fileName": "tresorerie-13-semaines.xlsx",
     "evaluationProfile": "cash-flow-13-week",
-    "prompt": "Create a rolling 13-week direct cash-flow exercise in MAD with weekly receipts, payments, opening and closing cash, a safety threshold, one scenario decision, and clear learner instructions."
+    "prompt": "Create a rolling 13-week direct cash-flow exercise using internal ISO currency code MAD, with learner-facing French labels written as dirham/dirhams, weekly receipts, payments, opening and closing cash, a safety threshold, one scenario decision, and clear learner instructions."
   }
 ]
 ```

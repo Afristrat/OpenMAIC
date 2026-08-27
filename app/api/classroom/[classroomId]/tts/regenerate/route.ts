@@ -77,6 +77,8 @@ export async function POST(
     classroomId,
     casting.teacherProfile,
     casting.agents,
+    undefined,
+    casting.stage.languageDirective,
   );
   const generatedAudioCount = countSpeechAudio(regeneratedScenes);
   if (generatedAudioCount === 0) {

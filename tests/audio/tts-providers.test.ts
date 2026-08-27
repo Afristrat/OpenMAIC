@@ -74,4 +74,29 @@ describe('generateTTS — higgs-tts language passthrough', () => {
       expect(body.language).toBeUndefined();
     },
   );
+
+  it('sends a French pronunciation copy without mutating or converting the displayed amount', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      arrayBuffer: async () => new ArrayBuffer(8),
+      headers: new Headers({ 'content-type': 'audio/wav' }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const displayed = 'Le budget passe de 1 dirham à 250 dirhams, sans conversion.';
+
+    await generateTTS(
+      {
+        providerId: 'openai-tts',
+        voice: 'alloy',
+        apiKey: 'test-key',
+        language: 'fr',
+      },
+      displayed,
+    );
+
+    const [, requestInit] = fetchMock.mock.calls[0];
+    const body = JSON.parse(requestInit.body as string);
+    expect(body.input).toBe('Le budget passe de 1 dirham à 250 dirham, sans conversion.');
+    expect(displayed).toBe('Le budget passe de 1 dirham à 250 dirhams, sans conversion.');
+  });
 });

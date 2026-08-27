@@ -71,7 +71,7 @@ function workbookRequest(
       prompt: [
         'Créer un classeur Excel professionnel, modifiable et directement utilisable.',
         'Prévoir treize colonnes hebdomadaires, les hypothèses, les encaissements, les décaissements, le solde initial, le solde final, les alertes et plusieurs scénarios.',
-        'Utiliser exclusivement le MAD et conserver les formules nécessaires au contrôle automatisé.',
+        'Conserver MAD comme code ISO 4217 interne, afficher dirham au singulier et dirhams au pluriel dans les libellés français destinés à l’apprenant, et conserver les formules nécessaires au contrôle automatisé.',
         requirement,
       ].join(' '),
       evaluationProfile: 'cash-flow-13-week',
@@ -235,7 +235,7 @@ export function enforceExecutableObligations(
       outline.description =
         'Vérifiez le classeur téléchargé précédemment, complétez les hypothèses et conservez son nom avant le dépôt.';
       outline.keyPoints = [
-        'Contrôler les treize semaines et la devise MAD.',
+        'Contrôler les treize semaines et la devise en dirhams.',
         'Vérifier les formules et le seuil configurable.',
         'Enregistrer le classeur avant de passer à son analyse.',
       ];

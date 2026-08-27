@@ -122,4 +122,17 @@ describe('buildMarketAdaptationInstruction', () => {
       ].join(' '),
     );
   });
+
+  it('keeps MAD as metadata while requiring French learner labels in dirhams', () => {
+    const plan = planMarketAdaptation(
+      { ...stage, learningContext: { territory: 'France', currencyCode: 'EUR' } },
+      scenes,
+      { territory: 'Maroc', currencyCode: 'MAD' },
+    );
+    const instruction = buildMarketAdaptationInstruction(plan);
+
+    expect(instruction).toContain('Conserve MAD comme code ISO 4217 interne');
+    expect(instruction).toContain('« dirham » au singulier et « dirhams » au pluriel');
+    expect(instruction).toContain('Ne convertis aucun montant existant');
+  });
 });

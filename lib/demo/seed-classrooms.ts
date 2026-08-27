@@ -271,7 +271,7 @@ const demo1Scene1Slides: Slide[] = [
     ),
     textEl(
       'd1s1-s2-p3',
-      '<strong>Email marketing</strong><br/>Le canal avec le meilleur ROI (36 MAD pour 1 MAD investi). Construisez votre liste d\u00e8s le jour 1.',
+      '<strong>Email marketing</strong><br/>Le canal avec le meilleur ROI (36 dirhams pour 1 dirham investi). Construisez votre liste d\u00e8s le jour 1.',
       {
         left: 80,
         top: 310,
@@ -283,7 +283,7 @@ const demo1Scene1Slides: Slide[] = [
     ),
     textEl(
       'd1s1-s2-p4',
-      '<strong>Publicit\u00e9 cibl\u00e9e</strong><br/>Meta Ads et Google Ads permettent de cibler pr\u00e9cis\u00e9ment vos clients id\u00e9aux avec un budget de 50 MAD/jour.',
+      '<strong>Publicit\u00e9 cibl\u00e9e</strong><br/>Meta Ads et Google Ads permettent de cibler pr\u00e9cis\u00e9ment vos clients id\u00e9aux avec un budget de 50 dirhams par jour.',
       {
         left: 520,
         top: 310,
@@ -624,7 +624,7 @@ const BUDGET_CALCULATOR_HTML = `<!DOCTYPE html>
   <p class="subtitle">R\u00e9partissez votre budget et estimez le ROI par canal</p>
 
   <div class="card">
-    <h2>Budget mensuel total (MAD)</h2>
+    <h2>Budget mensuel total (dirhams)</h2>
     <input type="number" class="total-input" id="totalBudget" value="5000" min="500" step="500">
   </div>
 
@@ -705,7 +705,7 @@ const BUDGET_CALCULATOR_HTML = `<!DOCTYPE html>
     }
   }
 
-  function fmt(n) { return n.toLocaleString('fr-FR') + ' MAD'; }
+  function fmt(n) { return n.toLocaleString('fr-FR') + (n === 1 ? ' dirham' : ' dirhams'); }
 
   function calculate() {
     var budget = parseInt(getEl('totalBudget').value) || 0;
@@ -869,7 +869,7 @@ const demo1Scene4Slides = {
     }),
     textEl(
       'd1s4-s2-tasks',
-      '<strong>Semaine 5-6 :</strong><br/>Lancer votre premi\u00e8re campagne Meta Ads (budget : 50 MAD/jour)<br/>Cr\u00e9er un lead magnet gratuit (guide PDF, checklist, mini-cours)<br/>Analyser les donn\u00e9es du mois 1 et ajuster la strat\u00e9gie<br/><br/><strong>Semaine 7-8 :</strong><br/>Collaborer avec 2-3 micro-influenceurs locaux<br/>Envoyer 2 newsletters \u00e0 votre liste email<br/>Publier 8 posts suppl\u00e9mentaires (tester les Reels/vid\u00e9os courtes)<br/>A/B tester vos publicit\u00e9s (2 variantes minimum)',
+      '<strong>Semaine 5-6 :</strong><br/>Lancer votre premi\u00e8re campagne Meta Ads (budget : 50 dirhams par jour)<br/>Cr\u00e9er un lead magnet gratuit (guide PDF, checklist, mini-cours)<br/>Analyser les donn\u00e9es du mois 1 et ajuster la strat\u00e9gie<br/><br/><strong>Semaine 7-8 :</strong><br/>Collaborer avec 2-3 micro-influenceurs locaux<br/>Envoyer 2 newsletters \u00e0 votre liste email<br/>Publier 8 posts suppl\u00e9mentaires (tester les Reels/vid\u00e9os courtes)<br/>A/B tester vos publicit\u00e9s (2 variantes minimum)',
       {
         left: 80,
         top: 155,

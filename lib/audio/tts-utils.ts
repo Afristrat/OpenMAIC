@@ -10,6 +10,34 @@ import { ANGLICISM_TERMS } from './anglicism-dictionary';
 
 const log = createLogger('TTS');
 
+export type SpeechLanguage = 'fr' | 'en' | 'ar';
+
+/** Resolve locale codes and generated language directives to a stable TTS language. */
+export function resolveSpeechLanguage(value?: string): SpeechLanguage | undefined {
+  const normalized = value?.trim().toLocaleLowerCase('fr-FR');
+  if (!normalized) return undefined;
+  if (/\b(?:fr(?:[-_]fr)?|français|francais|french)\b/u.test(normalized)) return 'fr';
+  if (/\b(?:en(?:[-_]us)?|anglais|english)\b/u.test(normalized)) return 'en';
+  if (/\b(?:ar(?:[-_]ma)?|arabe|arabic)\b/u.test(normalized)) return 'ar';
+  return undefined;
+}
+
+function singularizeFrenchDirhams(match: string): string {
+  if (match === match.toLocaleUpperCase('fr-FR')) return 'DIRHAM';
+  if (match[0] === match[0]?.toLocaleUpperCase('fr-FR')) return 'Dirham';
+  return 'dirham';
+}
+
+/**
+ * Build the provider-only speech copy without mutating learner-visible text.
+ * French plural `dirhams` is written normally on screen, while the TTS receives
+ * `dirham` so a provider cannot vocalize the final `s`.
+ */
+export function prepareTextForTTS(text: string, language?: string): string {
+  if (resolveSpeechLanguage(language) !== 'fr') return text;
+  return text.replace(/\bdirhams\b/giu, singularizeFrenchDirhams);
+}
+
 /** Provider-specific max text length limits. */
 export const TTS_MAX_TEXT_LENGTH: Partial<Record<TTSProviderId, number>> = {
   'glm-tts': 1024,

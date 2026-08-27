@@ -68,6 +68,11 @@ export function buildMarketAdaptationInstruction(plan: MarketAdaptationPlan): st
     `Adapte uniquement les diapositives suivantes au territoire ${plan.target.territory} et à la devise ${plan.target.currencyCode} : ${sceneIds}.`,
     'Conserve leurs objectifs, leur ordre, leur structure pédagogique et les éléments sans rapport avec le marché.',
     `Adapte les exemples, contraintes, budgets, textes visibles et notes de présentation qui dépendent du ${plan.source.territory} ou de ${plan.source.currencyCode}.`,
+    ...(plan.target.currencyCode === 'MAD'
+      ? [
+          'Conserve MAD comme code ISO 4217 interne, mais écris « dirham » au singulier et « dirhams » au pluriel dans tout texte français visible ou narré destiné à l’apprenant.',
+        ]
+      : []),
     'Ne convertis aucun montant existant sans taux de change actuel et sourcé. Sans source suffisante, reformule le montant comme une hypothèse illustrative explicite dans la devise cible.',
     'N’utilise jamais de tiret cadratin.',
   ].join(' ');

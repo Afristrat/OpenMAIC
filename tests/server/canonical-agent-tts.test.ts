@@ -87,6 +87,38 @@ describe('canonical classroom agent TTS', () => {
     });
   });
 
+  test('forwards the classroom French directive to the shared TTS chokepoint', async () => {
+    const scene = {
+      id: 'scene-dirhams',
+      stageId: 'classroom-1',
+      type: 'slide',
+      title: 'Budget',
+      order: 1,
+      content: { type: 'slide', canvas: { id: 'canvas-1', elements: [] } },
+      actions: [
+        {
+          id: 'speech-dirhams',
+          type: 'speech',
+          text: 'Le budget est de 250 dirhams.',
+        },
+      ],
+    } as unknown as Scene;
+
+    await generateTTSForClassroom(
+      [scene],
+      'classroom-1',
+      { providerId: 'higgs-tts', voiceId: 'teacher-voice' },
+      [],
+      undefined,
+      'Use French for all narration.',
+    );
+
+    expect(mocks.generateTTS).toHaveBeenCalledWith(
+      expect.objectContaining({ language: 'fr' }),
+      'Le budget est de 250 dirhams.',
+    );
+  });
+
   test('refuse de remplacer silencieusement un agent inconnu par la voix du professeur', async () => {
     const scene = {
       id: 'scene-1',

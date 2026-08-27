@@ -34,7 +34,11 @@ import type { SpeechAction } from '@/lib/types/action';
 import type { ImageProviderId } from '@/lib/media/types';
 import type { VideoProviderId } from '@/lib/media/types';
 import type { TTSProviderId } from '@/lib/audio/types';
-import { splitLongSpeechActions, splitSpeechActionsByAnglicisms } from '@/lib/audio/tts-utils';
+import {
+  resolveSpeechLanguage,
+  splitLongSpeechActions,
+  splitSpeechActionsByAnglicisms,
+} from '@/lib/audio/tts-utils';
 import { VOXCPM_AUTO_VOICE_ID, VOXCPM_TTS_PROVIDER_ID } from '@/lib/audio/voxcpm';
 import {
   buildOrganizationImagePrompt,
@@ -424,6 +428,7 @@ export async function generateTTSForClassroom(
   preferredVoice?: { providerId: string; voiceId: string },
   agents: CanonicalSpeechAgentVoice[] = [],
   onProgress?: (progress: { completed: number; total: number }) => Promise<void> | void,
+  language?: string,
 ): Promise<ClassroomTTSGenerationReport> {
   const report: ClassroomTTSGenerationReport = { requested: 0, generated: 0 };
   // Resolve TTS provider (exclude browser-native-tts and operator force-disabled
@@ -533,7 +538,7 @@ export async function generateTTSForClassroom(
             baseUrl: ttsBaseUrl,
             voice,
             speed: speechAction.speed,
-            language: speechAction.ttsLanguageOverride,
+            language: speechAction.ttsLanguageOverride ?? resolveSpeechLanguage(language),
           },
           speechAction.text,
         );

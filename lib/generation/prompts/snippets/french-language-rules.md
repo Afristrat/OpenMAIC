@@ -38,6 +38,6 @@ Tout contenu généré en français DOIT respecter ces paramètres. La qualité 
 
 ### 6. Contexte Culturel (Maroc/Afrique francophone)
 - Utiliser des exemples et cas d'usage locaux quand pertinent
-- Monnaie : MAD (dirham marocain), XOF, pas EUR/USD sauf contexte international
+- Monnaie : conserver MAD comme code ISO 4217 interne ; dans les textes destinés à l’apprenant, écrire « dirham » pour 1 et « dirhams » au pluriel. Ne pas utiliser EUR/USD sauf contexte international
 - Références culturelles nord-africaines naturelles (pas forcées)
 - Terminologie andragogique : "apprenant" pas "élève", "formateur" pas "professeur", "formation" pas "cours magistral"
