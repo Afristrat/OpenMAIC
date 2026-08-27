@@ -1,14 +1,18 @@
 'use client';
 
-import { saveAs } from 'file-saver';
-
 export async function downloadExport(url: string, filename: string): Promise<void> {
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`Export download failed with HTTP ${response.status}`);
   }
   const blob = await response.blob();
-  // Preserve the name in both channels understood by browser download
-  // implementations: File.name and the explicit saveAs argument.
-  saveAs(new File([blob], filename, { type: blob.type }), filename);
+  const objectUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = objectUrl;
+  anchor.download = filename;
+  anchor.rel = 'noopener';
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 40_000);
 }
