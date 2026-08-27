@@ -38,6 +38,32 @@ RESET ROLE;
 
 DO $$
 BEGIN
+  IF (
+    SELECT prosecdef
+    FROM pg_proc
+    WHERE oid = 'public.replace_formation_source_manifest(uuid,uuid,uuid[],integer)'::regprocedure
+  ) THEN
+    RAISE EXCEPTION 'Manifest replacement must remain SECURITY INVOKER';
+  END IF;
+  IF has_function_privilege(
+    'authenticated',
+    'public.replace_formation_source_manifest(uuid,uuid,uuid[],integer)',
+    'EXECUTE'
+  ) THEN
+    RAISE EXCEPTION 'Authenticated role must not execute manifest replacement';
+  END IF;
+  IF NOT has_function_privilege(
+    'service_role',
+    'public.replace_formation_source_manifest(uuid,uuid,uuid[],integer)',
+    'EXECUTE'
+  ) THEN
+    RAISE EXCEPTION 'Service role must execute manifest replacement';
+  END IF;
+END;
+$$;
+
+DO $$
+BEGIN
   BEGIN
     INSERT INTO public.formation_source_manifests (org_id, owner_id, version, source_ids)
     VALUES (

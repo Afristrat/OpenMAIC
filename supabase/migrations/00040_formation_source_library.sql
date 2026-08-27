@@ -119,16 +119,13 @@ CREATE OR REPLACE FUNCTION public.replace_formation_source_manifest(
 )
 RETURNS SETOF public.formation_source_manifests
 LANGUAGE plpgsql
-SECURITY DEFINER
+SECURITY INVOKER
 SET search_path = ''
 AS $$
 DECLARE
   latest_manifest public.formation_source_manifests;
   created_manifest public.formation_source_manifests;
 BEGIN
-  IF auth.role() <> 'service_role' THEN
-    RAISE EXCEPTION 'Service role required' USING ERRCODE = '42501';
-  END IF;
   IF cardinality(p_source_ids) > 20 THEN
     RAISE EXCEPTION 'At most 20 sources may be selected' USING ERRCODE = '22023';
   END IF;
@@ -166,33 +163,44 @@ REVOKE ALL ON FUNCTION public.replace_formation_source_manifest(UUID, UUID, UUID
 GRANT EXECUTE ON FUNCTION public.replace_formation_source_manifest(UUID, UUID, UUID[], INTEGER)
   TO service_role;
 
+-- Data API grants are explicit so this migration remains valid when Supabase
+-- stops exposing new public tables automatically. Browser clients can only
+-- read through RLS; all mutations remain confined to the trusted server.
+REVOKE ALL ON TABLE public.organization_sources, public.formation_source_manifests
+  FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON TABLE public.organization_sources, public.formation_source_manifests
+  TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE
+  ON TABLE public.organization_sources, public.formation_source_manifests
+  TO service_role;
+
 ALTER TABLE public.organization_sources ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.formation_source_manifests ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "organization_sources_select_org_member"
-  ON public.organization_sources FOR SELECT USING (
+  ON public.organization_sources FOR SELECT TO authenticated USING (
     EXISTS (
       SELECT 1 FROM public.org_members
       WHERE org_id = organization_sources.org_id AND user_id = auth.uid()
     )
   );
 CREATE POLICY "organization_sources_insert_service_only"
-  ON public.organization_sources FOR INSERT WITH CHECK (false);
+  ON public.organization_sources FOR INSERT TO authenticated WITH CHECK (false);
 CREATE POLICY "organization_sources_update_service_only"
-  ON public.organization_sources FOR UPDATE USING (false);
+  ON public.organization_sources FOR UPDATE TO authenticated USING (false) WITH CHECK (false);
 CREATE POLICY "organization_sources_delete_service_only"
-  ON public.organization_sources FOR DELETE USING (false);
+  ON public.organization_sources FOR DELETE TO authenticated USING (false);
 
 CREATE POLICY "formation_source_manifests_select_org_member"
-  ON public.formation_source_manifests FOR SELECT USING (
+  ON public.formation_source_manifests FOR SELECT TO authenticated USING (
     EXISTS (
       SELECT 1 FROM public.org_members
       WHERE org_id = formation_source_manifests.org_id AND user_id = auth.uid()
     )
   );
 CREATE POLICY "formation_source_manifests_insert_service_only"
-  ON public.formation_source_manifests FOR INSERT WITH CHECK (false);
+  ON public.formation_source_manifests FOR INSERT TO authenticated WITH CHECK (false);
 CREATE POLICY "formation_source_manifests_update_service_only"
-  ON public.formation_source_manifests FOR UPDATE USING (false);
+  ON public.formation_source_manifests FOR UPDATE TO authenticated USING (false) WITH CHECK (false);
 CREATE POLICY "formation_source_manifests_delete_service_only"
-  ON public.formation_source_manifests FOR DELETE USING (false);
+  ON public.formation_source_manifests FOR DELETE TO authenticated USING (false);
