@@ -15,9 +15,7 @@ describe('auth profile bootstrap', () => {
   });
 
   it('backfills existing identities and locks down the trigger function', () => {
-    expect(migration).toMatch(
-      /INSERT INTO public\.profiles \(id\)\s+SELECT id FROM auth\.users/i,
-    );
+    expect(migration).toMatch(/INSERT INTO public\.profiles \(id\)\s+SELECT id FROM auth\.users/i);
     expect(migration).toMatch(/SECURITY DEFINER\s+SET search_path = ''/i);
     expect(migration).toMatch(
       /REVOKE ALL ON FUNCTION public\.create_profile_for_auth_user\(\) FROM PUBLIC, anon, authenticated/i,
