@@ -5,6 +5,7 @@
  */
 
 import { z } from 'zod/v4';
+import { isIso4217CurrencyCode } from '@/lib/formation-engine/learning-context';
 
 // ---------------------------------------------------------------------------
 // Organizations
@@ -390,7 +391,7 @@ export const generateClassroomSchema = z.object({
     currencyCode: z
       .string()
       .trim()
-      .regex(/^[A-Za-z]{3}$/),
+      .refine(isIso4217CurrencyCode, 'currencyCode must be a valid ISO 4217 code'),
   }),
   enableWebSearch: z.boolean().optional(),
   webSearchProviderId: z

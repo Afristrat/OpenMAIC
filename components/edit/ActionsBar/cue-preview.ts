@@ -1,5 +1,6 @@
 import type { Action } from '@/lib/types/action';
 import { useCanvasStore } from '@/lib/store/canvas';
+import { visualEffectDurationMs } from '@/lib/action/engine';
 
 /**
  * Which canvas effect a cue glyph replays on hover.
@@ -7,7 +8,7 @@ import { useCanvasStore } from '@/lib/store/canvas';
  */
 export type CuePreview =
   | { kind: 'spotlight'; elementId: string }
-  | { kind: 'laser'; elementId: string }
+  | { kind: 'laser'; elementId: string; duration: number }
   | { kind: 'none' };
 
 /**
@@ -22,7 +23,13 @@ export type CuePreview =
 export function cuePreviewFor(action: Action): CuePreview {
   const elementId = (action as { elementId?: string }).elementId;
   if (!elementId) return { kind: 'none' };
-  if (action.type === 'laser') return { kind: 'laser', elementId };
+  if (action.type === 'laser') {
+    return {
+      kind: 'laser',
+      elementId,
+      duration: visualEffectDurationMs(action.durationMs),
+    };
+  }
   return { kind: 'spotlight', elementId };
 }
 
@@ -40,11 +47,15 @@ export function clearCuePreview(): void {
  * the sibling effect first so a previous hover never lingers. `laser` drives the
  * laser pointer, anything else drives the spotlight.
  */
-export function previewCueEffect(cueType: string, elementId: string): void {
+export function previewCueEffect(cueType: string, elementId: string, duration?: number): void {
   clearCuePreview();
   if (!elementId) return;
-  if (cueType === 'laser') useCanvasStore.getState().setLaser(elementId);
-  else useCanvasStore.getState().setSpotlight(elementId);
+  if (cueType === 'laser') {
+    if (duration === undefined) useCanvasStore.getState().setLaser(elementId);
+    else useCanvasStore.getState().setLaser(elementId, { duration });
+  } else {
+    useCanvasStore.getState().setSpotlight(elementId);
+  }
 }
 
 /** Apply the preview decided by {@link cuePreviewFor}. */
@@ -53,5 +64,9 @@ export function applyCuePreview(preview: CuePreview): void {
     clearCuePreview();
     return;
   }
-  previewCueEffect(preview.kind, preview.elementId);
+  previewCueEffect(
+    preview.kind,
+    preview.elementId,
+    preview.kind === 'laser' ? preview.duration : undefined,
+  );
 }

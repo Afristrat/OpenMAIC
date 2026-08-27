@@ -122,6 +122,18 @@ describe('generateClassroomSchema', () => {
         learningContext: { territory: 'Maroc', currencyCode: 'euro' },
       }).success,
     ).toBe(false);
+    expect(
+      generateClassroomSchema.safeParse({
+        ...baseInput,
+        learningContext: { territory: 'Maroc', currencyCode: 'ZZZ' },
+      }).success,
+    ).toBe(false);
+    expect(
+      generateClassroomSchema.safeParse({
+        ...baseInput,
+        learningContext: { territory: 'Sénégal', currencyCode: 'xof' },
+      }).success,
+    ).toBe(true);
   });
 
   test('preserves the syllabus explicitly approved by the author', () => {

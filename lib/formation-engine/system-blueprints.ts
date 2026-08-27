@@ -1,4 +1,5 @@
 import type { ClassroomTemplate } from '@/lib/supabase/types';
+import { DEFAULT_LEARNING_CONTEXT } from './learning-context';
 
 type SupportedLocale = 'fr-FR' | 'ar-MA' | 'en-US';
 
@@ -186,6 +187,7 @@ export function getSystemBlueprints(locale: string): ClassroomTemplate[] {
       requirements: {
         requirement: copy.requirement,
         learningApproach: blueprint.approach,
+        learningContext: { ...DEFAULT_LEARNING_CONTEXT },
       },
       agent_config_ids: null,
       skill_ids: ['formation-design-pro'],

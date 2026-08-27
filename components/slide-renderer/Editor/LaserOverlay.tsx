@@ -62,6 +62,12 @@ export function LaserOverlay({ geometry, color = '#ff3b30', duration = 8000 }: L
   return (
     <motion.div
       key={`laser-${centerX}-${centerY}`}
+      data-testid="laser-guidance"
+      data-duration-ms={duration}
+      data-geometry-x={geometry.x}
+      data-geometry-y={geometry.y}
+      data-geometry-width={geometry.w}
+      data-geometry-height={geometry.h}
       initial={{
         opacity: 0,
         left: `${startPos.x}%`,

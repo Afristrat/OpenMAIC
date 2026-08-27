@@ -22,6 +22,12 @@ export const COMMON_LEARNING_CURRENCIES = [
   'SAR',
 ] as const;
 
+const ISO_4217_CURRENCY_CODES = new Set(Intl.supportedValuesOf('currency'));
+
+export function isIso4217CurrencyCode(value: string): boolean {
+  return ISO_4217_CURRENCY_CODES.has(value.trim().toUpperCase());
+}
+
 export function normalizeLearningContext(value: LearningContext): LearningContext {
   return {
     territory: value.territory.trim(),
@@ -34,7 +40,7 @@ export function buildLearningContextDirective(
   locale: 'fr-FR' | 'ar-MA' | 'en-US' = 'fr-FR',
 ): string {
   const context = normalizeLearningContext(rawContext);
-  if (!context.territory || !/^[A-Z]{3}$/.test(context.currencyCode)) {
+  if (!context.territory || !isIso4217CurrencyCode(context.currencyCode)) {
     throw new Error('A territory and a three-letter ISO 4217 currency code are required');
   }
 

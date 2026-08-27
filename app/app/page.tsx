@@ -75,6 +75,7 @@ import type { LearningContext } from '@/lib/types/stage';
 import {
   COMMON_LEARNING_CURRENCIES,
   DEFAULT_LEARNING_CONTEXT,
+  isIso4217CurrencyCode,
   normalizeLearningContext,
 } from '@/lib/formation-engine/learning-context';
 import { buildDocumentParseFormData } from '@/lib/document/upload-request';
@@ -839,7 +840,7 @@ function HomePage() {
     !!form.learningApproach &&
     !!form.interactionLevel &&
     !!form.learningContext.territory.trim() &&
-    /^[A-Za-z]{3}$/.test(form.learningContext.currencyCode.trim()) &&
+    isIso4217CurrencyCode(form.learningContext.currencyCode) &&
     !!user &&
     !!currentOrg &&
     canAuthor;

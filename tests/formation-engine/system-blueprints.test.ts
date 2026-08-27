@@ -8,6 +8,13 @@ describe('getSystemBlueprints', () => {
       expect(templates).toHaveLength(6);
       expect(new Set(templates.map((template) => template.id)).size).toBe(6);
       expect(templates.every((template) => template.requirements.requirement)).toBe(true);
+      expect(
+        templates.every(
+          (template) =>
+            JSON.stringify(template.requirements.learningContext) ===
+            JSON.stringify({ territory: 'Maroc', currencyCode: 'MAD' }),
+        ),
+      ).toBe(true);
     }
   });
 

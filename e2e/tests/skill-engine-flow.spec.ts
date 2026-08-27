@@ -84,6 +84,16 @@ test.describe('Formation Design Pro — persistent generation path', () => {
     await expect(page).toHaveURL(/\/app\?skill=formation-design-pro$/);
     await expect(page.getByTestId('learning-territory')).toHaveValue('Maroc');
     await expect(page.getByTestId('learning-currency')).toHaveValue('MAD');
+
+    await page.getByTestId('learning-territory').fill('France');
+    await page.getByTestId('learning-currency').fill('EUR');
+    await page.getByRole('button', { name: 'Trames', exact: true }).click();
+    await page.getByRole('button', { name: /Réussir une performance professionnelle/ }).click();
+    await expect(page.getByTestId('learning-territory')).toHaveValue('Maroc');
+    await expect(page.getByTestId('learning-currency')).toHaveValue('MAD');
+
+    await page.getByTestId('learning-territory').fill('Sénégal');
+    await page.getByTestId('learning-currency').fill('XOF');
     await page.locator('textarea').fill('Concevoir une formation aux entretiens difficiles');
     await page.getByTestId('learning-approach-andragogy').click();
     await page.getByRole('button', { name: 'Équilibré', exact: true }).click();
@@ -102,8 +112,8 @@ test.describe('Formation Design Pro — persistent generation path', () => {
     expect(submittedBody?.learningApproach).toBe('andragogy');
     expect(submittedBody?.interactionLevel).toBe('balanced');
     expect(submittedBody?.learningContext).toEqual({
-      territory: 'Maroc',
-      currencyCode: 'MAD',
+      territory: 'Sénégal',
+      currencyCode: 'XOF',
     });
   });
 });

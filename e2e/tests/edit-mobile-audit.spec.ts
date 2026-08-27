@@ -213,6 +213,80 @@ test.describe('Mobile Pro editor audit', () => {
     }
   });
 
+  test('measures and sweeps the complete laser target for the authored duration', async ({
+    page,
+  }) => {
+    const stageId = 'e2e-laser-guidance';
+    await seedScene(page, stageId, {
+      id: 'scene-laser',
+      type: 'slide',
+      title: 'Laser guidance',
+      content: {
+        type: 'slide',
+        canvas: {
+          id: 'laser-canvas',
+          viewportSize: 1000,
+          viewportRatio: 0.5625,
+          theme: {
+            backgroundColor: '#ffffff',
+            themeColors: ['#5b8def', '#8b5cf6', '#10b981', '#f59e0b'],
+            fontColor: '#111827',
+            fontName: 'Inter',
+          },
+          background: { type: 'solid', color: '#ffffff' },
+          elements: [
+            {
+              id: 'laser-text',
+              type: 'text',
+              content: 'Read the complete target area',
+              left: 100,
+              top: 100,
+              width: 800,
+              height: 120,
+            },
+          ],
+        },
+      },
+      actions: [
+        {
+          id: 'laser-action',
+          type: 'laser',
+          elementId: 'laser-text',
+          durationMs: 2500,
+        },
+      ],
+    });
+    await enterProMode(page, stageId);
+
+    const laserCue = page.getByTestId('actions-bar').getByLabel('Laser').last();
+    await laserCue.hover();
+    const laser = page.getByTestId('laser-guidance');
+    await expect(laser).toBeVisible();
+    await expect(laser).toHaveAttribute('data-duration-ms', '2500');
+
+    const geometry = await laser.evaluate((element) => ({
+      x: Number(element.getAttribute('data-geometry-x')),
+      y: Number(element.getAttribute('data-geometry-y')),
+      width: Number(element.getAttribute('data-geometry-width')),
+      height: Number(element.getAttribute('data-geometry-height')),
+    }));
+    expect(geometry.x).toBeGreaterThan(8);
+    expect(geometry.x).toBeLessThan(12);
+    expect(geometry.y).toBeGreaterThan(8);
+    expect(geometry.y).toBeLessThan(12);
+    expect(geometry.width).toBeGreaterThan(75);
+    expect(geometry.width).toBeLessThan(85);
+    expect(geometry.height).toBeGreaterThan(8);
+
+    const firstPosition = await laser.boundingBox();
+    await page.waitForTimeout(700);
+    const sweptPosition = await laser.boundingBox();
+    expect(
+      Math.abs((sweptPosition?.x ?? 0) - (firstPosition?.x ?? 0)) > 3 ||
+        Math.abs((sweptPosition?.y ?? 0) - (firstPosition?.y ?? 0)) > 3,
+    ).toBe(true);
+  });
+
   test('previews the scenes affected by a market adaptation before applying it', async ({
     page,
   }) => {

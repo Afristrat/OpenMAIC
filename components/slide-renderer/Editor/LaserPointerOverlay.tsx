@@ -62,9 +62,13 @@ export function LaserPointerOverlay({
     // Measure the union of the authored box and its rendered content. Text can
     // grow beyond an auto-height box, while grouped/table elements can occupy
     // the full outer box. Picking either rectangle alone loses part of a target.
-    const contentEl = domElement.querySelector('.element-content');
+    const contentEl = domElement.querySelector<HTMLElement>('.element-content');
+    const authoredEl =
+      contentEl?.closest<HTMLElement>('[class*="base-element-"], [class*="editable-element-"]') ??
+      contentEl ??
+      domElement;
     const containerRect = containerRef.current.getBoundingClientRect();
-    const outerRect = domElement.getBoundingClientRect();
+    const outerRect = authoredEl.getBoundingClientRect();
     const contentRect = contentEl?.getBoundingClientRect();
     const targetRect = contentRect
       ? {
