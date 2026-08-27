@@ -42,6 +42,7 @@ import {
   VOXCPM_TTS_PROVIDER_ID,
   VOXCPM_VLLM_MODEL_ID,
 } from './voxcpm';
+import { HIGGS_QUALIFIED_VOICE_CATALOG } from './qualified-voice-catalog';
 
 /**
  * Default supported languages for custom OpenAI-compatible ASR providers.
@@ -794,16 +795,7 @@ export const TTS_PROVIDERS: Record<BuiltInTTSProviderId, TTSProviderConfig> = {
     models: [{ id: 'higgs', name: 'Higgs Audio v3' }],
     defaultModelId: 'higgs',
     voices: [
-      { id: 'hanae', name: 'Hanae', language: 'fr-FR', gender: 'female' },
-      { id: 'mehdi', name: 'Mehdi', language: 'fr-FR', gender: 'male' },
-      { id: 'rim', name: 'Rim', language: 'fr-FR', gender: 'female' },
-      { id: 'salma', name: 'Salma', language: 'fr-FR', gender: 'female' },
-      { id: 'younes', name: 'Younes', language: 'fr-FR', gender: 'male' },
-      { id: 'hamza', name: 'Hamza', language: 'ar-MA', gender: 'male' },
-      { id: 'khalid', name: 'Khalid', language: 'ar-MA', gender: 'male' },
-      { id: 'layla', name: 'Layla', language: 'ar-MA', gender: 'female' },
-      { id: 'maryam', name: 'Maryam', language: 'ar-MA', gender: 'female' },
-      { id: 'sana', name: 'Sana', language: 'ar-MA', gender: 'female' },
+      ...HIGGS_QUALIFIED_VOICE_CATALOG,
       { id: 'tariq', name: 'Tariq', language: 'ar-MA', gender: 'male' },
       { id: 'anasdarija', name: 'Anas (Darija)', language: 'ary', gender: 'male' },
       { id: 'bilal', name: 'Bilal (Darija)', language: 'ary', gender: 'male' },

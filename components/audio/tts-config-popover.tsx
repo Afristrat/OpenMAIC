@@ -18,6 +18,7 @@ import { useI18n } from '@/lib/hooks/use-i18n';
 import { useSettingsStore } from '@/lib/store/settings';
 import { getTTSVoices } from '@/lib/audio/constants';
 import { useTTSPreview } from '@/lib/audio/use-tts-preview';
+import { resolveSpeechLanguage } from '@/lib/audio/tts-utils';
 import {
   getVoxCPMProviderOptions,
   getVoxCPMVoiceOptions,
@@ -111,6 +112,7 @@ export function TtsConfigPopover() {
         // client's own base URL (custom providers).
         baseUrl: providerConfig?.baseUrl || providerConfig?.customDefaultBaseUrl,
         providerOptions,
+        language: resolveSpeechLanguage(locale),
       });
     } catch (error) {
       const message =

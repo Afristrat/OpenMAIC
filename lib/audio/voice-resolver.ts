@@ -30,6 +30,13 @@ export interface AgentVoiceOverride {
 /** Persisted per-agent voice picks, keyed by agent id (settings store). */
 export type AgentVoiceOverrides = Record<string, AgentVoiceOverride>;
 
+export function isVoiceGenderCompatible(
+  agentGender: AgentConfig['gender'],
+  voiceGender?: 'male' | 'female' | 'neutral',
+): boolean {
+  return !agentGender || !voiceGender || voiceGender === 'neutral' || voiceGender === agentGender;
+}
+
 /**
  * Resolve the TTS provider + voice for an agent, choosing only among ENABLED
  * providers (`enabledProviders` is the output of getEnabledProvidersWithVoices,
@@ -77,7 +84,11 @@ export function resolveAgentVoice(
     if (!fromEnabled) continue;
     const list = getServerVoiceList(choice.providerId);
     const allVoiceIds = new Set([...list, ...fromEnabled.voices.map((v) => v.id)]);
-    if (allVoiceIds.has(choice.voiceId)) {
+    const selectedVoice = fromEnabled.voices.find((voice) => voice.id === choice.voiceId);
+    if (
+      allVoiceIds.has(choice.voiceId) &&
+      isVoiceGenderCompatible(agent.gender, selectedVoice?.gender)
+    ) {
       return { providerId: choice.providerId, modelId: choice.modelId, voiceId: choice.voiceId };
     }
   }
@@ -88,7 +99,12 @@ export function resolveAgentVoice(
   if (locale && enabledProviders.length > 0) {
     const langPrefix = locale.split('-')[0];
     for (const provider of enabledProviders) {
-      const localeVoices = provider.voices.filter((v) => v.language?.split('-')[0] === langPrefix);
+      const localeVoices = provider.voices.filter((voice) =>
+        isVoiceGenderCompatible(agent.gender, voice.gender) &&
+        (voice.languages ?? (voice.language ? [voice.language] : [])).some(
+          (language) => language.split('-')[0] === langPrefix,
+        ),
+      );
       if (localeVoices.length > 0) {
         return {
           providerId: provider.providerId,
@@ -100,11 +116,14 @@ export function resolveAgentVoice(
 
   // Fallback: deterministic pick among enabled providers (canonical order).
   if (enabledProviders.length > 0) {
-    const first = enabledProviders[0];
-    if (first.voices.length > 0) {
+    for (const provider of enabledProviders) {
+      const compatibleVoices = provider.voices.filter((voice) =>
+        isVoiceGenderCompatible(agent.gender, voice.gender),
+      );
+      if (compatibleVoices.length === 0) continue;
       return {
-        providerId: first.providerId,
-        voiceId: first.voices[agentIndex % first.voices.length].id,
+        providerId: provider.providerId,
+        voiceId: compatibleVoices[agentIndex % compatibleVoices.length].id,
       };
     }
   }
@@ -141,6 +160,7 @@ export interface ModelVoiceGroup {
     id: string;
     name: string;
     language?: string;
+    languages?: string[];
     gender?: 'male' | 'female' | 'neutral';
   }>;
 }
@@ -152,6 +172,7 @@ export interface ProviderWithVoices {
     id: string;
     name: string;
     language?: string;
+    languages?: string[];
     gender?: 'male' | 'female' | 'neutral';
   }>;
   modelGroups: ModelVoiceGroup[]; // voices grouped by model
@@ -204,6 +225,7 @@ export function getEnabledProvidersWithVoices(
           id: v.id,
           name: v.name,
           language: v.language,
+          languages: v.languages,
           gender: v.gender,
         })),
         ...(providerId === VOXCPM_TTS_PROVIDER_ID
@@ -226,6 +248,7 @@ export function getEnabledProvidersWithVoices(
               id: v.id,
               name: v.name,
               language: v.language,
+              languages: v.languages,
               gender: v.gender,
             }));
           if (providerId === VOXCPM_TTS_PROVIDER_ID) {

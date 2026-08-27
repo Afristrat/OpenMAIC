@@ -104,7 +104,10 @@ export type TTSProviderId = BuiltInTTSProviderId | `custom-tts-${string}`;
 export interface TTSVoiceInfo {
   id: string;
   name: string;
+  /** Primary locale used for display and legacy provider integrations. */
   language: string;
+  /** All locales explicitly qualified for multilingual voices. */
+  languages?: string[];
   localeName?: string; // Language name in its native script (e.g., "中文（简体，中国）", "日本語")
   gender?: 'male' | 'female' | 'neutral';
   description?: string;

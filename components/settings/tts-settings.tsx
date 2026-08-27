@@ -49,6 +49,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { createLogger } from '@/lib/logger';
 import { useTTSPreview } from '@/lib/audio/use-tts-preview';
+import { resolveSpeechLanguage } from '@/lib/audio/tts-utils';
 import { isTTSProviderConfigured, isTTSProviderEnabled } from '@/lib/audio/provider-enablement';
 import { isCustomTTSProvider } from '@/lib/audio/types';
 import {
@@ -181,6 +182,7 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
           providerConfig?.customDefaultBaseUrl ||
           '',
         providerOptions,
+        language: resolveSpeechLanguage(locale),
       });
       setTestStatus('success');
       setTestMessage(t('settings.ttsTestSuccess'));
@@ -838,6 +840,7 @@ function VoxCPMVoiceManager() {
           ...(providerConfig?.providerOptions || {}),
           ...providerOptions,
         },
+        language: resolveSpeechLanguage(locale),
       });
     } catch (error) {
       setPreviewingVoiceId(null);

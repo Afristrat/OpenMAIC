@@ -6,6 +6,7 @@ import {
   isBrowserTTSAbortError,
   playBrowserTTSPreview,
 } from '@/lib/audio/browser-tts-preview';
+import type { SpeechLanguage } from '@/lib/audio/tts-utils';
 
 export interface TTSPreviewOptions {
   text: string;
@@ -16,6 +17,7 @@ export interface TTSPreviewOptions {
   apiKey?: string;
   baseUrl?: string;
   providerOptions?: unknown;
+  language?: SpeechLanguage;
 }
 
 /**
@@ -104,6 +106,7 @@ export function useTTSPreview() {
         if (options.apiKey?.trim()) body.ttsApiKey = options.apiKey;
         if (options.baseUrl?.trim()) body.ttsBaseUrl = options.baseUrl;
         if (options.providerOptions) body.ttsProviderOptions = options.providerOptions;
+        if (options.language) body.ttsLanguage = options.language;
 
         const res = await fetch('/api/generate/tts', {
           method: 'POST',

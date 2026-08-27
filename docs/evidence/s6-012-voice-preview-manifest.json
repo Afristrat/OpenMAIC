@@ -1,0 +1,76 @@
+{
+  "story": "S6-012",
+  "generatedAt": "2026-08-27",
+  "provider": "higgs-tts",
+  "model": "higgs",
+  "qalemRuntimeImage": "332941dc7f0727dc673c4364f78e122b879f2f96",
+  "route": "/api/generate/tts",
+  "healthVoiceCount": 16,
+  "targetVoiceCount": 10,
+  "languagePreviewCount": 20,
+  "format": "wav",
+  "humanAcceptance": false,
+  "note": "Chaque aperçu a été généré séquentiellement avec ttsLanguageOverride=fr ou en. Les fichiers d’écoute sont des artefacts de recette non versionnés ; leurs métadonnées et empreintes sont permanentes dans ce manifeste.",
+  "voices": [
+    {
+      "id": "hanae",
+      "gender": "female",
+      "fr": { "bytes": 277484, "sha256": "1621f560df34abb47e0fb9e3b9b61db984d08d9223c5450cd2c073b592ee9d95" },
+      "en": { "bytes": 267884, "sha256": "0928c9fa6ea407a4658ddbd96fa8c336e216ca97cb42c40bc757b55c5a5d9e7f" }
+    },
+    {
+      "id": "mehdi",
+      "gender": "male",
+      "fr": { "bytes": 248684, "sha256": "ff9e158c9e0ae37b5089a4f04316032a687b50cc86a60899dc9347256f78eb6a" },
+      "en": { "bytes": 269804, "sha256": "311d94c59591ec462606e4d9b9c9677d9f67bd7dea36906483f82a91eaa0b209" }
+    },
+    {
+      "id": "rim",
+      "gender": "female",
+      "fr": { "bytes": 241004, "sha256": "db1b3e66e2e0af16c814821394225ef81decf9c274189616628647495f546008" },
+      "en": { "bytes": 248684, "sha256": "dbdf1d7dc55f77ac39db70988ef9a715152099f37910894a57e4a7c0a0838158" }
+    },
+    {
+      "id": "salma",
+      "gender": "female",
+      "fr": { "bytes": 250604, "sha256": "44c5fb80369d11785eb41d6e21d12983ef2dfb23c3ab875ead702f22816a2a37" },
+      "en": { "bytes": 256364, "sha256": "7d5ec932aa48f72f9c6135e410f4edcdd9ef2bfe626a89156a47a625807a7004" }
+    },
+    {
+      "id": "younes",
+      "gender": "male",
+      "fr": { "bytes": 271724, "sha256": "16630dc2c848aed7e7f50184473ae184cd860c1606ab338edb25d2400f6f29fc" },
+      "en": { "bytes": 281324, "sha256": "6da0d7d0657e879d34a42d5a07747ed597d145849770409a53877e551c922ee0" }
+    },
+    {
+      "id": "hamza",
+      "gender": "male",
+      "fr": { "bytes": 252524, "sha256": "f3bbed8eb0f4b0274ad3d8e506ed33d509f58554caa681ffceb793988b3fd043" },
+      "en": { "bytes": 242924, "sha256": "01e2829b8f98869e47821ac306aea931d0c68048122d0baf615b38c1225a3773" }
+    },
+    {
+      "id": "khalid",
+      "gender": "male",
+      "fr": { "bytes": 279404, "sha256": "ef81790fbfb37b71594bc411af758026c4731fe37b87f9614f8ca9a74cec8356" },
+      "en": { "bytes": 279404, "sha256": "4cb4ec770bbb38e490ea2dd0ac54c80d3f3a53304ff87289cc45bbd2ae5056ff" }
+    },
+    {
+      "id": "layla",
+      "gender": "female",
+      "fr": { "bytes": 283244, "sha256": "04e24573193b02dbc3ed81dd8879d11e719b435c781b411aad5eb9e5e7a1e41a" },
+      "en": { "bytes": 267884, "sha256": "47ec127aa66921024fe5f8c8e5bea6d29ecc4b1eaec0ccc986bdf2d1447cac26" }
+    },
+    {
+      "id": "maryam",
+      "gender": "female",
+      "fr": { "bytes": 258284, "sha256": "3dad81e4cc38f4561459d8dbc3e110f40d4637a4154f12027f632d7cd4dc30bf" },
+      "en": { "bytes": 250604, "sha256": "3524f16478193223ef3a566856195ca467ffdc3c4ce5d5084f853174f76a1360" }
+    },
+    {
+      "id": "sana",
+      "gender": "female",
+      "fr": { "bytes": 273644, "sha256": "5f9e37f3e0d1e430ba026621539632d556edea8252696325270f9a50ecdd855a" },
+      "en": { "bytes": 304364, "sha256": "0fc0512b79c5b57fe7e0f8678f52318c74488f3ce9a1eb0e8c33a5eee4ac3e45" }
+    }
+  ]
+}

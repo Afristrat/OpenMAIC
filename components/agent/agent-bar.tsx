@@ -10,10 +10,15 @@ import { useSettingsStore } from '@/lib/store/settings';
 import { useAgentRegistry } from '@/lib/orchestration/registry/store';
 import { getActionsForRole } from '@/lib/orchestration/registry/types';
 import { buildTenantAgentConfigs, learningDesignFromSettings } from '@/lib/agents/persona-catalog';
-import { resolveAgentVoice, getSelectableProvidersWithVoices } from '@/lib/audio/voice-resolver';
+import {
+  resolveAgentVoice,
+  getSelectableProvidersWithVoices,
+  isVoiceGenderCompatible,
+} from '@/lib/audio/voice-resolver';
 import { playBrowserTTSPreview } from '@/lib/audio/browser-tts-preview';
 import { useVoxCPMVoiceProfiles } from '@/lib/audio/voxcpm-voices';
 import { resolveAgentVoiceOptions } from '@/lib/audio/agent-voice';
+import { resolveSpeechLanguage } from '@/lib/audio/tts-utils';
 import { VOXCPM_AUTO_VOICE_ID, VOXCPM_TTS_PROVIDER_ID } from '@/lib/audio/voxcpm';
 import {
   Sparkles,
@@ -39,25 +44,30 @@ function getFilteredModelGroups(
   provider: ProviderWithVoices,
   query: string,
   autoVoiceLabel?: string,
+  agentGender?: AgentConfig['gender'],
 ) {
   const normalizedQuery = query.trim().toLowerCase();
-  if (!normalizedQuery) return provider.modelGroups;
 
   return provider.modelGroups
     .map((group) => {
       const groupMatches =
-        matchesVoiceQuery(provider.providerName, normalizedQuery) ||
-        matchesVoiceQuery(provider.providerId, normalizedQuery) ||
-        matchesVoiceQuery(group.modelName, normalizedQuery) ||
-        matchesVoiceQuery(group.modelId, normalizedQuery);
+        !!normalizedQuery &&
+        (matchesVoiceQuery(provider.providerName, normalizedQuery) ||
+          matchesVoiceQuery(provider.providerId, normalizedQuery) ||
+          matchesVoiceQuery(group.modelName, normalizedQuery) ||
+          matchesVoiceQuery(group.modelId, normalizedQuery));
       const voices = group.voices.filter(
         (voice) =>
-          groupMatches ||
-          matchesVoiceQuery(voice.name, normalizedQuery) ||
-          matchesVoiceQuery(voice.id, normalizedQuery) ||
-          matchesVoiceQuery(voice.language, normalizedQuery) ||
-          // Auto Voice is shown by its localized label, not voice.name — match it too.
-          (voice.id === VOXCPM_AUTO_VOICE_ID && matchesVoiceQuery(autoVoiceLabel, normalizedQuery)),
+          isVoiceGenderCompatible(agentGender, voice.gender) &&
+          (!normalizedQuery ||
+            groupMatches ||
+            matchesVoiceQuery(voice.name, normalizedQuery) ||
+            matchesVoiceQuery(voice.id, normalizedQuery) ||
+            matchesVoiceQuery(voice.language, normalizedQuery) ||
+            voice.languages?.some((language) => matchesVoiceQuery(language, normalizedQuery)) ||
+            // Auto Voice is shown by its localized label, not voice.name — match it too.
+            (voice.id === VOXCPM_AUTO_VOICE_ID &&
+              matchesVoiceQuery(autoVoiceLabel, normalizedQuery))),
       );
       return { ...group, voices };
     })
@@ -99,7 +109,12 @@ function AgentVoicePill({
   const visibleProviderGroups = availableProviders
     .map((provider) => ({
       provider,
-      groups: getFilteredModelGroups(provider, voiceQuery, t('settings.voxcpmAutoVoice')),
+      groups: getFilteredModelGroups(
+        provider,
+        voiceQuery,
+        t('settings.voxcpmAutoVoice'),
+        agent.gender,
+      ),
     }))
     .filter(({ groups }) => groups.length > 0);
 
@@ -177,6 +192,7 @@ function AgentVoicePill({
             // the client's own base URL (custom providers).
             ttsBaseUrl: providerConfig?.baseUrl || providerConfig?.customDefaultBaseUrl,
             ttsProviderOptions: providerOptions,
+            ttsLanguage: resolveSpeechLanguage(locale),
           }),
           signal: controller.signal,
         });
@@ -449,6 +465,7 @@ function TeacherVoicePill({
             // the client's own base URL (custom providers).
             ttsBaseUrl: providerConfig?.baseUrl || providerConfig?.customDefaultBaseUrl,
             ttsProviderOptions: providerOptions,
+            ttsLanguage: resolveSpeechLanguage(locale),
           }),
           signal: controller.signal,
         });
