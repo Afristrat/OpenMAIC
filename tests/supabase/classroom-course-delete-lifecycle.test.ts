@@ -11,10 +11,7 @@ const lifecycleMigration = readFileSync(
   'utf8',
 );
 const sourceLifecycleMigration = readFileSync(
-  resolve(
-    process.cwd(),
-    'supabase/migrations/00044_course_source_manifest_delete_lifecycle.sql',
-  ),
+  resolve(process.cwd(), 'supabase/migrations/00044_course_source_manifest_delete_lifecycle.sql'),
   'utf8',
 );
 
