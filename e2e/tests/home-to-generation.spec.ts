@@ -188,10 +188,7 @@ test.describe('Home → Generation', () => {
     });
   });
 
-  test('blocks a contradictory attachment before showing a syllabus', async ({
-    page,
-    mockApi,
-  }) => {
+  test('blocks a contradictory attachment before showing a syllabus', async ({ page, mockApi }) => {
     const acceptedJob = await mockApi.mockClassroomGenerationJob('source-reformulation-e2e');
     await page.route('**/api/parse-pdf', async (route) => {
       await route.fulfill({
