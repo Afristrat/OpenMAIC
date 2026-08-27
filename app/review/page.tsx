@@ -64,7 +64,8 @@ function dexieRecordToFsrs(rec: ReviewCardRecord): ReviewCard {
     reps: rec.reps,
     lapses: rec.lapses,
     tags: rec.tags,
-    sourceIds: rec.sourceIds,
+    sourceIds:
+      rec.sourceIds ?? [rec.sourceStageId, rec.sourceSceneId].filter((sourceId) => sourceId !== ''),
     sourceStageId: rec.sourceStageId,
     sourceSceneId: rec.sourceSceneId,
   };
