@@ -1488,15 +1488,15 @@
       "description": "En tant qu’utilisateur de Qalem, je veux maintenir l’ancrage documentaire jusqu’aux scènes et à leur édition afin que le parcours promis soit réellement utilisable.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P1",
-      "status": "to_implement",
-      "passes": false,
+      "status": "to_validate",
+      "passes": true,
       "source": {
         "type": "request_or_observed_gap",
         "date": "2026-08-26"
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Le texte source est passé à l’étage plan, pas à generateSceneContent ; le résumé ne suffit pas à certifier la fidélité.",
+      "gap": "Soldé : chaque scène reçoit un ensemble borné de passages pertinents, versionnés et persistés ; le même contrat encadre son contenu, sa narration et ses régénérations.",
       "evidence": [
         "lib/server/classroom-generation.ts:390",
         "lib/server/classroom-generation.ts:834",
@@ -1509,7 +1509,14 @@
         "Conserver le mode source unique dès cette story ; étendre ensuite au manifeste multi-source sans seconde logique concurrente.",
         "Recetter plan → scènes → narration et références sur un corpus autorisé ; HTTP 200 ne suffit pas."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-08-27 — SHA validé 190a60f64d155d4f8323f6d1ed5d06644979b9a2, présent sur origin/refork-v030 ; clone isolé ServeurIA /tmp/qalem-s6005-a344577-1.",
+        "2026-08-27 — Sélection bornée et générique dans lib/generation/source-grounding.ts : identifiant stable, version dérivée du contenu, maximum quatre passages pertinents par scène, statut grounded/unsupported/contradictory ; tests d’information absente du résumé, document sans rapport et deux sources contradictoires.",
+        "2026-08-27 — Intégration plan → contenu → narration → scène → JSONB prouvée dans tests/server/classroom-generation-capture.test.ts et tests/server/classroom-source-grounding-persistence.test.ts ; la régénération conserve exactement le contrat dans tests/lib/agent/tools/regenerate-scene.test.ts.",
+        "2026-08-27 — Frontière d’accès prouvée dans tests/api/classroom-access.test.ts : passages visibles pour l’auteur, retirés de l’API apprenant ; parcours Chromium e2e/tests/scene-source-grounding.spec.ts 1/1 avec version, identifiant et extrait visibles.",
+        "2026-08-27 — Gates ServeurIA au SHA exact : pnpm check, npx tsc --noEmit et pnpm lint sans erreur ni avertissement ; pnpm test 2 380/2 380 ; pnpm build réussi ; pnpm test:e2e 66/66 ; conteneur qalem-s6006-190a60f-full exit 0, OOMKilled=false."
+      ],
+      "completedAt": "2026-08-27",
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],

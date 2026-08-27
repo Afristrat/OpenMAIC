@@ -73,7 +73,7 @@ Les descriptions et critères exécutables complets sont dans le JSON canonique.
 | 3 | S0-015 | P0 | À valider | Auth multi-tenant + persistance Storage sur le flux classroom (P0) |
 | 4 | S6-014 | P0 | Bloquée | Conserver la dette de sécurité Qalem sous autorisation explicite |
 | 5 | S6-005 | P1 | Soldée | Proposer une reformulation fondée sur les sources en cas de conflit |
-| 6 | S6-006 | P1 | À implémenter | Maintenir l’ancrage documentaire jusqu’aux scènes et à leur édition |
+| 6 | S6-006 | P1 | Soldée | Maintenir l’ancrage documentaire jusqu’aux scènes et à leur édition |
 | 7 | S6-007 | P1 | À implémenter | Créer les illustrations sans réutiliser les images du document source |
 | 8 | S6-008 | P1 | À implémenter | Afficher dirhams et prononcer le mot sans s final |
 | 9 | S5-004 | P1 | À valider | Plan auteur obligatoire et ingestion documentaire fiable [UI] |
