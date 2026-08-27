@@ -404,7 +404,7 @@ test.describe('Classroom Interaction', () => {
     const downloadPromise = page.waitForEvent('download');
     await mp4Export.click();
     const download = await downloadPromise;
-    expect(download.suggestedFilename()).toContain('.mp4');
+    expect(download.suggestedFilename(), download.url()).toContain('.mp4');
   });
 
   test('exports every downloadable format from the current editable classroom', async ({
@@ -504,7 +504,7 @@ test.describe('Classroom Interaction', () => {
       await classroom.goto(TEST_STAGE_ID);
       await classroom.waitForLoaded();
       const learningPackage = await downloadFromMenu(testId);
-      expect(learningPackage.suggestedFilename()).toMatch(
+      expect(learningPackage.suggestedFilename(), learningPackage.url()).toMatch(
         new RegExp(`${suffix.replaceAll('.', '\\.').replace('+', '\\+')}$`, 'i'),
       );
     }
