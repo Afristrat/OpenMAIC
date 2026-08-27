@@ -109,7 +109,7 @@ export class MockApi {
     });
   }
 
-  /** Mock the server providers endpoint (returns empty — client-side config only) */
+  /** Mock one usable managed LLM while keeping every unrelated modality empty. */
   async mockServerProviders() {
     await this.page.route('**/api/server-providers', (route) => {
       route.fulfill({
@@ -117,7 +117,7 @@ export class MockApi {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           success: true,
-          providers: {},
+          providers: { openai: { models: ['gpt-4o-mini'] } },
           tts: {},
           asr: {},
           pdf: {},
