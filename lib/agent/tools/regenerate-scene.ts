@@ -240,7 +240,6 @@ export function makeRegenerateSceneTool(
         baseline: editBaseline,
         assignedImages,
         imageMapping,
-        sourceGrounding,
       } = buildImageResources(slideBase);
 
       const newContent = await generateSceneContent(outline, contentAiCall, {

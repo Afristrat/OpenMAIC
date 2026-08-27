@@ -1788,6 +1788,7 @@ async function generatePBLSceneContent(
 
   const v2Disabled = process.env.PBL_V2_DISABLED === 'true';
   const scenarioRoleplay = pblConfig.scenarioRoleplay === true;
+  const sourceBlock = formatSourceGroundingForPrompt(sourceGrounding);
 
   if (v2Disabled && scenarioRoleplay) {
     log.error(
@@ -1797,7 +1798,6 @@ async function generatePBLSceneContent(
   }
 
   if (!v2Disabled) {
-    const sourceBlock = formatSourceGroundingForPrompt(sourceGrounding);
     const plannerInput: PBLPlannerV2Input = {
       outline,
       courseContext: {
