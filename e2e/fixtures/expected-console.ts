@@ -22,7 +22,7 @@ export async function captureExpectedBrowserConsole(
   level: ConsoleLevel,
   expectedSubstring: string,
 ): Promise<BrowserConsoleCapture> {
-  await page.addInitScript(
+  await page.evaluate(
     ({ expectedLevel, substring }) => {
       const captureWindow = window as CaptureWindow;
       const target = console as unknown as Record<ConsoleLevel, (...data: unknown[]) => void>;

@@ -538,11 +538,6 @@ test.describe('Home → Generation', () => {
   test('keeps an asynchronous plan recoverable when its status endpoint returns HTML', async ({
     page,
   }) => {
-    const consoleCapture = await captureExpectedBrowserConsole(
-      page,
-      'warn',
-      '[Home] Unable to read classroom plan job:',
-    );
     await page.route('**/api/generate-classroom/plan', async (route) => {
       await route.fulfill({
         status: 202,
@@ -564,6 +559,11 @@ test.describe('Home → Generation', () => {
 
     const home = new HomePage(page);
     await home.goto();
+    const consoleCapture = await captureExpectedBrowserConsole(
+      page,
+      'warn',
+      '[Home] Unable to read classroom plan job:',
+    );
     await home.fillRequirement('Create five practical slides about process improvement.');
     await home.configureAnimation('andragogy', 'immersive');
     await home.submit();

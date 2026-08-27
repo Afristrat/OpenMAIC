@@ -121,14 +121,14 @@ test.describe('Whisper microphone flow', () => {
   test('reports a microphone permission refusal without sending audio', async ({ page }) => {
     await installMicrophone(page, false);
     await mockManagedWhisper(page);
+
+    const home = new HomePage(page);
+    await home.goto();
     const consoleCapture = await captureExpectedBrowserConsole(
       page,
       'error',
       '[AudioRecorder] Failed to start recording:',
     );
-
-    const home = new HomePage(page);
-    await home.goto();
     await page.getByRole('button', { name: 'Voice input' }).click();
 
     await expect(page.getByText('Failed to access microphone')).toBeVisible();
@@ -140,11 +140,6 @@ test.describe('Whisper microphone flow', () => {
   test('reports an upstream transcription failure after recording', async ({ page }) => {
     await installMicrophone(page);
     await mockManagedWhisper(page);
-    const consoleCapture = await captureExpectedBrowserConsole(
-      page,
-      'error',
-      '[AudioRecorder] Transcription error:',
-    );
     await page.route('**/api/transcription', (route) =>
       route.fulfill({
         status: 502,
@@ -155,6 +150,11 @@ test.describe('Whisper microphone flow', () => {
 
     const home = new HomePage(page);
     await home.goto();
+    const consoleCapture = await captureExpectedBrowserConsole(
+      page,
+      'error',
+      '[AudioRecorder] Transcription error:',
+    );
     await page.getByRole('button', { name: 'Voice input' }).click();
     await page.getByRole('button', { name: 'Stop recording' }).click();
 

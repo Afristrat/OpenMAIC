@@ -52,6 +52,18 @@ export const test = base.extend<Fixtures>({
       // Always mock server-providers — called on every page load by root layout
       await mockApi.mockServerProviders();
       await mockApi.mockSourceLibrary();
+      await page.route('**/rest/v1/review_cards?*', async (route) => {
+        if (route.request().method() !== 'GET') {
+          await route.fallback();
+          return;
+        }
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          headers: { 'content-range': '0-0/0' },
+          body: '[]',
+        });
+      });
       await page.route('**/api/account/is-admin', (route) =>
         route.fulfill({ status: 200, contentType: 'application/json', body: '{"isAdmin":false}' }),
       );
