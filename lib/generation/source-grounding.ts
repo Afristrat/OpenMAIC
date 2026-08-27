@@ -89,7 +89,6 @@ function chunkDocument(source: SourceDocument): SourcePassage[] {
   if (!normalized) return [];
 
   const passages: SourcePassage[] = [];
-  let cursor = 0;
   for (let start = 0; start < normalized.length; start += MAX_PASSAGE_LENGTH) {
     let end = Math.min(start + MAX_PASSAGE_LENGTH, normalized.length);
     if (end < normalized.length) {
@@ -105,8 +104,8 @@ function chunkDocument(source: SourceDocument): SourcePassage[] {
         sourceVersion: source.version,
         sourceTitle: source.title,
         text,
-        start: cursor + start,
-        end: cursor + end,
+        start,
+        end,
       });
     }
     start = end - MAX_PASSAGE_LENGTH;
