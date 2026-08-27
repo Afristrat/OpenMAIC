@@ -1870,7 +1870,7 @@
       "epic": "4-MOTEUR",
       "priority": "P1",
       "status": "to_validate",
-      "passes": false,
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S4-010",
@@ -1878,7 +1878,7 @@
       },
       "sourceDependencies": ["S4-009"],
       "dependencies": [],
-      "gap": "Contexte et laser implémentés avec traces historiques ; passes=false conservé, validation ciblée encore à solder.",
+      "gap": "Soldé : devise réellement validée contre le registre ISO 4217 du runtime, contexte structuré porté par les trames et persisté dans la classroom, zone laser mesurée sur l’élément DOM positionné puis parcourue pendant la durée normalisée.",
       "evidence": ["lib/formation-engine/learning-context.ts", ".ralph/prd-v2.json#S4-010"],
       "acceptance": [
         "L’auteur choisit explicitement le territoire et la devise ISO 4217 avant la génération",
@@ -1888,7 +1888,14 @@
         "Formation Design Pro publie ces invariants avec des empreintes vérifiées",
         "Quality gates complets verts sur ServeurAI et parcours navigateur validé"
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-08-27 — La frontière API et le formulaire utilisent isIso4217CurrencyCode fondé sur Intl.supportedValuesOf('currency') : ZZZ est refusé, XOF accepté et les six trames système transmettent { territory: 'Maroc', currencyCode: 'MAD' } comme structure distincte du texte.",
+        "2026-08-27 — Le parcours Chromium Formation Design Pro prouve qu’une trame rétablit son contexte structuré, que l’auteur le remplace explicitement par Sénégal/XOF et que le job persistant reçoit exactement cet instantané. La génération et le stockage existants propagent learningContext et buildLearningContextDirective impose la devise à tous les montants sans conversion non sourcée.",
+        "2026-08-27 — LaserPointerOverlay mesure désormais l’élément réellement positionné, et non son wrapper DOM nul, puis l’unit à son contenu rendu. Le parcours Chromium compare la géométrie calculée aux rectangles DOM, observe le déplacement du pointeur et vérifie la durée de 2 500 ms ; les tests unitaires couvrent le serpentin, la valeur par défaut de 8 secondes et les bornes 2–30 secondes.",
+        "2026-08-27 — Formation Design Pro v3.8.0 publie les invariants territoire/devise et laser dans SKILL.md, le contrat et l’override ; tests/skills/formation-engine-platform-publication.test.ts recalcule avec succès chaque SHA-256 déclaré dans publication.json.",
+        "2026-08-27 — Gate complet exécuté sur ServeurIA dans le worktree isolé /tmp/qalem-s4010-44040ed au SHA 44040ed69c1ed6f761db7c6c7aafc637498f8963 : pnpm check, TypeScript, lint, 2 425/2 425 tests Vitest, build et 70/70 tests Playwright réussis ; OOMKilled=false pour le build et les E2E."
+      ],
+      "completedAt": "2026-08-27",
       "historicalEvidence": {
         "completedAt": null,
         "note": "Cause laser corrigée au parent commun : suppression du calque décalé de 5 %, mesure de l’union entre la boîte DOM externe et son contenu, parcours serpentin de toute la zone au lieu d’un point central, durée d’action honorée et valeur par défaut portée à 8 secondes. Le contexte d’apprentissage territoire/devise est désormais explicite dans le formulaire, transmis par les trames structurées, injecté dans la recherche et les prompts, puis persisté dans le Stage de la classroom. Une adaptation ultérieure peut donc cibler les exemples monétaires, tableaux, fichiers et narrations concernés sans reconstruire la structure pédagogique. Formation Design Pro 3.4.0 publie les mêmes invariants avec empreintes vérifiées. Validation isolée ServeurAI : Prettier, TypeScript, ESLint et suite Vitest complète à code de sortie 0 ; Playwright Chromium 50/50, puis preuve ciblée du contrat Maroc/MAD 1/1. Production : web, qalem-workers et capture-worker healthy sur 9fb64e79513af41c9c5870e0d88a0902caf0fbf6 ; /api/health répond 200 ; navigateur public /app affiche Territoire=Maroc et Devise=MAD sans erreur console.",
