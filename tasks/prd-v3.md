@@ -5,7 +5,7 @@
 ## Référence active
 
 La source unique des US, critères, dépendances et statuts est [`.ralph/prd-v3.json`](../.ralph/prd-v3.json).
-Ce document est une vue de lecture du registre au 26 août 2026, pas un second backlog.
+Ce document est une vue de lecture du registre mise à jour le 27 août 2026, pas un second backlog.
 Le chantier 3 ANCRER conserve sa spécification dans `tasks/prd-3-ancrer.md` ; « v3 » désigne ici la version consolidée du PRD.
 
 ## Objectif et portée
@@ -16,8 +16,8 @@ Aucune fonctionnalité n’est implémentée par cette opération documentaire.
 - 65 stories v2 inventoriées : 26 ouvertes reprises, 3 rouvertes, 36 acceptations historiques conservées sans recertification.
 - 72 stories v1/UI rattachées à une décision de conservation et à leurs US de suivi ; 18 capacités héritées sont explicitement remises en suivi.
 - 17 demandes/ensembles d’engagements rattachés à des US.
-- 63 US actives : 21 à implémenter, 15 à valider, 21 avec décision préalable, 6 bloquées.
-- Zéro US nouvellement déclarée livrée. Une décision de retrait n’est jamais une réussite d’implémentation.
+- 63 US actives : 15 à implémenter, 22 à valider, 21 avec décision préalable, 5 bloquées.
+- Huit US sont soldées sur preuves actuelles. Une décision de retrait n’est jamais une réussite d’implémentation.
 
 ## Limites de preuve
 
@@ -76,14 +76,14 @@ Les descriptions et critères exécutables complets sont dans le JSON canonique.
 | 5    | S6-005 | P1       | Soldée           | Proposer une reformulation fondée sur les sources en cas de conflit                   |
 | 6    | S6-006 | P1       | Soldée           | Maintenir l’ancrage documentaire jusqu’aux scènes et à leur édition                   |
 | 7    | S6-007 | P1       | Soldée           | Créer les illustrations sans réutiliser les images du document source                 |
-| 8    | S6-008 | P1       | À implémenter    | Afficher dirhams et prononcer le mot sans s final                                     |
-| 9    | S5-004 | P1       | À valider        | Plan auteur obligatoire et ingestion documentaire fiable [UI]                         |
+| 8    | S6-008 | P1       | Soldée           | Afficher dirhams et prononcer le mot sans s final                                     |
+| 9    | S5-004 | P1       | Soldée           | Plan auteur obligatoire et ingestion documentaire fiable [UI]                         |
 | 10   | S6-009 | P1       | À valider        | Recetter Whisper sur de la parole réelle et le parcours microphone                    |
 | 11   | S6-003 | P1       | Bloquée          | Consommer Diwan par un contrat documentaire autonome                                  |
 | 12   | S6-004 | P1       | À implémenter    | Bibliothèque et sélection de plusieurs sources par formation                          |
 | 13   | S6-012 | P1       | À implémenter    | Qualifier le catalogue vocal français et anglais                                      |
-| 14   | S1-009 | P1       | À implémenter    | Gate audio : tachkil AR + plancher de bruit -50 dB sur toutes les sorties TTS         |
-| 15   | S4-010 | P1       | À valider        | Contexte territorial réutilisable et guidage laser lisible [UI]                       |
+| 14   | S1-009 | P1       | Soldée           | Gate audio : tachkil AR + plancher de bruit -50 dB sur toutes les sorties TTS         |
+| 15   | S4-010 | P1       | Soldée           | Contexte territorial réutilisable et guidage laser lisible [UI]                       |
 | 16   | S0-017 | P1       | À valider        | Modèles image LiteLLM administrés : libellés, sélection et preuve UI [UI]             |
 | 17   | S6-013 | P1       | À valider        | Recetter une formation complète avec ressources et exports réels                      |
 | 18   | S-025  | P1       | À implémenter    | Extraire les items de révision depuis les quiz                                        |
