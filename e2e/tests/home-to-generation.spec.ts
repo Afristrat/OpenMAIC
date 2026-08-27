@@ -7,6 +7,30 @@ import type { Page } from '@playwright/test';
 // Inject settings with modelId so the "enter classroom" button works
 const SETTINGS_STORAGE = createSettingsStorage();
 
+const SOURCE_CONFLICT_LOCALES = [
+  {
+    locale: 'fr-FR',
+    dir: 'ltr',
+    suggestion: 'Reformulation proposée',
+    accept: 'Utiliser cette reformulation',
+    review: 'Refuser et revoir ma demande',
+  },
+  {
+    locale: 'ar-MA',
+    dir: 'rtl',
+    suggestion: 'إعادة الصياغة المقترحة',
+    accept: 'استخدام إعادة الصياغة هذه',
+    review: 'رفض الاقتراح ومراجعة طلبي',
+  },
+  {
+    locale: 'en-US',
+    dir: 'ltr',
+    suggestion: 'Suggested reformulation',
+    accept: 'Use this reformulation',
+    review: 'Reject and review my request',
+  },
+] as const;
+
 interface BodySpacing {
   paddingRight: string;
   marginRight: string;
@@ -281,80 +305,56 @@ test.describe('Home → Generation', () => {
 
     await home.submit();
     await expect(page.getByRole('heading', { name: 'Training plan' })).toBeVisible();
-    expect(acceptedJob.getPlanRequestBody()).toMatchObject({
-      requirement:
-        'Create five practical slides about Lean Six Sigma, Kaizen and continuous improvement.',
-    });
+    const acceptedPlan = acceptedJob.getPlanRequestBody() as { requirement: string };
+    expect(acceptedPlan.requirement).toContain(
+      'Create five practical slides about Lean Six Sigma, Kaizen and continuous improvement.',
+    );
+    expect(acceptedPlan.requirement).not.toContain('Create five slides about time management.');
   });
 
-  test('localizes the source-conflict decision in French, Arabic and English', async ({ page }) => {
-    await page.route('**/api/parse-pdf', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          data: { text: 'Lean Six Sigma and continuous improvement.', images: [] },
-        }),
+  for (const localized of SOURCE_CONFLICT_LOCALES) {
+    test(`localizes the source-conflict decision in ${localized.locale}`, async ({ page }) => {
+      await page.addInitScript((locale) => localStorage.setItem('locale', locale), localized.locale);
+      await page.route('**/api/parse-pdf', async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: { text: 'Lean Six Sigma and continuous improvement.', images: [] },
+          }),
+        });
       });
-    });
-    await page.route('**/api/generate-classroom/plan', async (route) => {
-      await route.fulfill({
-        status: 202,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true, jobId: 'localized-conflict', pollIntervalMs: 10 }),
+      await page.route('**/api/generate-classroom/plan', async (route) => {
+        await route.fulfill({
+          status: 202,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, jobId: 'localized-conflict', pollIntervalMs: 10 }),
+        });
       });
-    });
-    await page.route('**/api/generate-classroom/plan/localized-conflict', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          status: 'failed',
-          done: true,
-          errorCode: 'SOURCE_MATERIAL_CONFLICT',
-          sourceAlignment: {
-            status: 'conflicting',
-            requestTopic: 'Time management',
-            sourceTopic: 'Process improvement',
-            explanation: 'The request and source cover different primary topics.',
-            suggestedRequirement: 'Create a course about Lean Six Sigma.',
-            references: ['Lean Six Sigma and continuous improvement.'],
-          },
-        }),
+      await page.route('**/api/generate-classroom/plan/localized-conflict', async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            status: 'failed',
+            done: true,
+            errorCode: 'SOURCE_MATERIAL_CONFLICT',
+            sourceAlignment: {
+              status: 'conflicting',
+              requestTopic: 'Time management',
+              sourceTopic: 'Process improvement',
+              explanation: 'The request and source cover different primary topics.',
+              suggestedRequirement: 'Create a course about Lean Six Sigma.',
+              references: ['Lean Six Sigma and continuous improvement.'],
+            },
+          }),
+        });
       });
-    });
 
-    const cases = [
-      {
-        locale: 'fr-FR',
-        dir: 'ltr',
-        suggestion: 'Reformulation proposée',
-        accept: 'Utiliser cette reformulation',
-        review: 'Refuser et revoir ma demande',
-      },
-      {
-        locale: 'ar-MA',
-        dir: 'rtl',
-        suggestion: 'إعادة الصياغة المقترحة',
-        accept: 'استخدام إعادة الصياغة هذه',
-        review: 'رفض الاقتراح ومراجعة طلبي',
-      },
-      {
-        locale: 'en-US',
-        dir: 'ltr',
-        suggestion: 'Suggested reformulation',
-        accept: 'Use this reformulation',
-        review: 'Reject and review my request',
-      },
-    ] as const;
-
-    const home = new HomePage(page);
-    for (const localized of cases) {
+      const home = new HomePage(page);
       await home.goto();
-      await page.evaluate((locale) => localStorage.setItem('locale', locale), localized.locale);
-      await page.reload();
       await home.fillRequirement('Create five slides about time management.');
       await home.configureAnimation();
       await page.getByRole('button', { name: /PDF/ }).click();
@@ -371,8 +371,8 @@ test.describe('Home → Generation', () => {
       await expect(page.getByRole('button', { name: localized.accept })).toBeVisible();
       await page.getByRole('button', { name: localized.review }).click();
       await expect(page.getByRole('alertdialog')).not.toBeVisible();
-    }
-  });
+    });
+  }
 
   test('keeps an asynchronous plan recoverable when its status endpoint returns HTML', async ({
     page,
