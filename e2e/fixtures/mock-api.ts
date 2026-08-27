@@ -253,7 +253,6 @@ export class MockApi {
         status: 200,
         headers: {
           'Content-Type': 'video/mp4',
-          'Content-Disposition': `attachment; filename="${id}.mp4"`,
         },
         body: 'MP4',
       }),

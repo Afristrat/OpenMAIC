@@ -445,12 +445,10 @@ test.describe('Classroom Interaction', () => {
       });
     });
     await page.route('https://example.com/e2e-export.*', (route) => {
-      const filename = route.request().url().split('/').pop()!;
       return route.fulfill({
         status: 200,
         headers: {
           'Content-Type': 'application/zip',
-          'Content-Disposition': `attachment; filename="${filename}"`,
         },
         body: 'PK',
       });
