@@ -79,9 +79,11 @@ describe('requirements-to-outlines media prompt conditions', () => {
   test('includes image generation instructions without video instructions when only images are enabled', () => {
     const text = combined(buildOutlinePrompt({ hasSourceImages: true, imageEnabled: true }));
 
-    expect(text).toContain('suggestedImageIds');
+    expect(text).not.toContain('suggestedImageIds');
     expect(text).toContain('mediaGenerations');
     expect(text).toContain('gen_img_1');
+    expect(text).toContain('new explanatory illustration');
+    expect(text).toContain('Never reproduce');
     expect(text).not.toContain('gen_vid_');
     expect(text).not.toContain('{{');
   });
@@ -101,7 +103,7 @@ describe('requirements-to-outlines media prompt conditions', () => {
       buildOutlinePrompt({ hasSourceImages: true, imageEnabled: true, videoEnabled: true }),
     );
 
-    expect(text).toContain('suggestedImageIds');
+    expect(text).not.toContain('suggestedImageIds');
     expect(text).toContain('mediaGenerations');
     expect(text).toContain('gen_img_1');
     expect(text).toContain('gen_vid_1');

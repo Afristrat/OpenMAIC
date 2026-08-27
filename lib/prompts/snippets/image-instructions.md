@@ -1,9 +1,9 @@
 ### AI-Generated Image Requests
 
-Use image generation only for slide scenes that need a static visual and have no suitable source image.
+Use image generation only for slide scenes that need a static visual.
 
-- Prefer `suggestedImageIds` when a suitable source/PDF image exists
 - Add a `mediaGenerations` entry only when a generated image genuinely enhances the content
+- Every requested image must be a new explanatory illustration. Never reproduce, trace, imitate, or reuse an image from the supplied documents
 - Use `type: "image"`
 - Each image request specifies: `prompt` (description for the generation model), `elementId` (unique placeholder), and optionally `aspectRatio` (default "16:9") and `style`
 - **Image IDs**: use `"gen_img_1"`, `"gen_img_2"`, etc. IDs are globally unique across the entire course, not reset per scene
@@ -24,7 +24,7 @@ Image example:
 "mediaGenerations": [
   {
     "type": "image",
-    "prompt": "A colorful diagram showing the water cycle with evaporation, condensation, and precipitation arrows",
+    "prompt": "A new original diagram showing the water cycle with evaporation, condensation, and precipitation arrows; do not reproduce any supplied image",
     "elementId": "gen_img_1",
     "aspectRatio": "16:9"
   }

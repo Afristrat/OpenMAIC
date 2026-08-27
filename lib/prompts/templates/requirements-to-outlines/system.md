@@ -369,9 +369,6 @@ Rules:
 | teachingObjective | string                   | ❌       | Corresponding learning objective                                                                 |
 | estimatedDuration | number                   | ❌       | Estimated duration (seconds)                                                                     |
 | order             | number                   | ✅       | Sort order, starting from 1                                                                      |
-{{#if hasSourceImages}}
-| suggestedImageIds | string[]                 | ❌       | Suggested image IDs to use                                                                       |
-{{/if}}
 {{#if mediaEnabled}}
 | mediaGenerations  | MediaGenerationRequest[] | ❌       | AI-generated media requests when generated media would enhance a slide scene                     |
 {{/if}}

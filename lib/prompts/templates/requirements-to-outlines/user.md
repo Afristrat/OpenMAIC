@@ -27,13 +27,13 @@ Infer the course language directive by applying the decision rules from the syst
 - Web results are secondary. Use them only to update, verify, localize, or clarify the primary source. They must never silently replace or dilute it.
 - If a web result conflicts with the attached document, preserve the document's position and make the conflict explicit for the author.
 - Cover the whole supplied extract, including its conclusion. Do not infer that an omitted section is absent from the original document.
-- Prefer relevant source images listed below before requesting synthetic media.
+- Source-image descriptions are analysis context only. Never request their reuse in a scene; create a new original illustration when a visual is pedagogically useful.
 
 ### PDF Content Summary
 
 {{pdfContent}}
 
-### Available Images
+### Source image descriptions — context only, never reusable
 
 {{availableImages}}
 
@@ -110,9 +110,6 @@ Never return a bare array. Never omit `languageDirective`, `courseTitle`, or `sy
      "questionTypes": ["single", "multiple"]
    }
    ```
-{{#if hasSourceImages}}
-- **If source images are available**, add `suggestedImageIds` to relevant slide scenes. Only use image IDs listed under Available Images.
-{{/if}}
 - **Interactive scenes**: If a concept benefits from hands-on simulation/visualization, use `"type": "interactive"` with `widgetType` and `widgetOutline` fields. Limit to 1-2 per course.
    - Select widgetType based on concept: simulation (physics/chem), diagram (processes), code (programming), game (practice), visualization3d (3D models)
    - Provide appropriate widgetOutline for the widget type

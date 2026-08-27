@@ -419,4 +419,100 @@ describe('classroom scene generation retries', () => {
     );
     expect(mocks.persistClassroom).not.toHaveBeenCalled();
   });
+
+  it('converts a PDF image suggestion into an original illustration without assigning the source', async () => {
+    mocks.generateSceneOutlinesFromRequirements.mockResolvedValue({
+      success: true,
+      data: {
+        languageDirective: 'Use English.',
+        outlines: [{ ...outline, suggestedImageIds: ['img_pdf_1'] }],
+      },
+    });
+    mocks.generateSceneContent.mockResolvedValue({
+      elements: [
+        {
+          id: 'image-1',
+          type: 'image',
+          src: 'gen_img_original_outline-1',
+        },
+      ],
+      remark: 'Retry transient failures',
+    });
+    mocks.generateMediaForClassroom.mockResolvedValue({
+      'gen_img_original_outline-1':
+        '/api/classroom-media/classroom-1/media/gen_img_original_outline-1.png',
+    });
+    mocks.replaceMediaPlaceholders.mockImplementation((scenes) => {
+      scenes[0].content.canvas.elements[0].src =
+        '/api/classroom-media/classroom-1/media/gen_img_original_outline-1.png';
+    });
+
+    const { result } = await generateWithProgress({
+      enableImageGeneration: true,
+      pdfSource: {
+        text: 'Retry source document',
+        images: [
+          {
+            id: 'img_pdf_1',
+            src: 'data:image/png;base64,c291cmNl',
+            pageNumber: 1,
+          },
+        ],
+      },
+    });
+
+    expect(result.scenesCount).toBe(1);
+    const normalizedOutline = mocks.generateMediaForClassroom.mock.calls[0]?.[0]?.[0];
+    expect(normalizedOutline).toEqual(
+      expect.objectContaining({
+        mediaGenerations: [
+          expect.objectContaining({
+            type: 'image',
+            elementId: 'gen_img_original_outline-1',
+            prompt: expect.stringContaining('Do not reproduce, trace, imitate, or reuse'),
+          }),
+        ],
+      }),
+    );
+    expect(normalizedOutline).not.toHaveProperty('suggestedImageIds');
+    const sceneOptions = mocks.generateSceneContent.mock.calls[0]?.[2];
+    expect(sceneOptions).not.toHaveProperty('requiredSourceImageIds');
+    expect(sceneOptions?.assignedImages ?? []).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: 'img_pdf_1' })]),
+    );
+  });
+
+  it('rejects a source-media URL returned for a generated illustration', async () => {
+    mocks.generateSceneOutlinesFromRequirements.mockResolvedValue({
+      success: true,
+      data: {
+        languageDirective: 'Use English.',
+        outlines: [
+          {
+            ...outline,
+            mediaGenerations: [
+              {
+                type: 'image',
+                prompt: 'Illustrate retry backoff.',
+                elementId: 'gen_img_retry',
+                aspectRatio: '16:9',
+              },
+            ],
+          },
+        ],
+      },
+    });
+    mocks.generateSceneContent.mockResolvedValue({
+      elements: [{ id: 'image-1', type: 'image', src: 'gen_img_retry' }],
+      remark: 'Retry transient failures',
+    });
+    mocks.generateMediaForClassroom.mockResolvedValue({
+      gen_img_retry: '/api/classroom-media/classroom-1/media/source-img_pdf_1.png',
+    });
+
+    await expect(generateWithProgress({ enableImageGeneration: true })).rejects.toThrow(
+      'Generated illustration provenance invalid: gen_img_retry',
+    );
+    expect(mocks.persistClassroom).not.toHaveBeenCalled();
+  });
 });

@@ -106,9 +106,10 @@ export interface SceneOutline {
   estimatedDuration?: number; // seconds
   order: number;
   languageNote?: string; // LLM-inferred language note for this scene
-  // Suggested image IDs (from PDF-extracted images)
+  // Legacy analysis hints from PDF extraction. The classroom pipeline strips these
+  // before scene generation and never reuses source images as teaching visuals.
   suggestedImageIds?: string[]; // e.g., ["img_1", "img_3"]
-  // AI-generated media requests (when PDF images are insufficient)
+  // AI-generated media requests for new original teaching visuals.
   mediaGenerations?: MediaGenerationRequest[]; // e.g., [{ type: 'image', prompt: '...', elementId: 'gen_img_1' }]
   /** Downloadable learning resources that must be generated before this scene is rendered. */
   resourceGenerations?: ResourceGenerationRequest[];

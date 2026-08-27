@@ -35,6 +35,10 @@ import {
 import { withGenerationRetry } from '@/lib/generation/generation-retry';
 import { buildVideoManifestFromOutlines } from '@/lib/media/video-manifest';
 import { placeGeneratedMediaOnSlides } from '@/lib/generation/media-placement';
+import {
+  enforceOriginalIllustrations,
+  isGeneratedIllustrationUrl,
+} from '@/lib/generation/original-illustration-policy';
 import { decideCaptureForScene } from '@/lib/generation/web-capture-plan';
 import { requestWebCapture } from '@/lib/server/capture-client';
 import type {
@@ -86,7 +90,6 @@ import {
 } from '@/lib/branding/organization-design-system';
 import {
   normalizePdfImages,
-  persistSelectedPdfImages,
   uploadedPdfSource,
 } from '@/lib/server/pdf-source';
 import { teacherProfileFromClassroomCast } from '@/lib/agents/classroom-casting';
@@ -536,7 +539,12 @@ export async function generateClassroom(
   }
 
   const { languageDirective, courseTitle } = outlinesResult.data;
-  const outlines = placeGeneratedMediaOnSlides(outlinesResult.data.outlines);
+  const outlines = placeGeneratedMediaOnSlides(
+    enforceOriginalIllustrations(
+      outlinesResult.data.outlines,
+      input.enableImageGeneration === true,
+    ),
+  );
   log.info(
     `Generated ${outlines.length} scene outlines (languageDirective: ${languageDirective}, courseTitle: ${courseTitle ?? 'n/a'})`,
   );
@@ -703,15 +711,6 @@ export async function generateClassroom(
       generatedAgentConfigs: tenantAgentConfigs,
     };
 
-    const selectedPdfImageIds = new Set(
-      outlines.flatMap((outline) => outline.suggestedImageIds ?? []),
-    );
-    const persistedPdfImageMapping = await persistSelectedPdfImages(
-      stageId,
-      pdfImages,
-      selectedPdfImageIds,
-    );
-
     const store = createInMemoryStore(stage);
     const api = createStageAPI(store);
 
@@ -774,19 +773,6 @@ export async function generateClassroom(
       // image (decideCaptureForScene/requestWebCapture never throw).
       let assignedImages: PdfImage[] | undefined;
       let imageMapping: ImageMapping | undefined;
-      const sourceImageIds = new Set(safeOutline.suggestedImageIds ?? []);
-      const sourceImages = pdfImages.filter((image) => sourceImageIds.has(image.id));
-      if (sourceImages.length > 0) {
-        assignedImages = sourceImages.map((image) => ({
-          ...image,
-          src: persistedPdfImageMapping[image.id] ?? image.src,
-        }));
-        imageMapping = Object.fromEntries(
-          sourceImages
-            .filter((image) => persistedPdfImageMapping[image.id])
-            .map((image) => [image.id, persistedPdfImageMapping[image.id]]),
-        );
-      }
       if (safeOutline.generatedResources?.length) {
         assignedImages = [
           ...(assignedImages ?? []),
@@ -850,8 +836,6 @@ export async function generateClassroom(
             sourceGrounding,
             assignedImages,
             imageMapping,
-            requiredSourceImageIds:
-              safeOutline.type === 'slide' ? sourceImages.map((image) => image.id) : undefined,
             validationDirective: sceneValidationDirective,
             onValidationFailure: (directive) => {
               sceneValidationDirective = directive;
@@ -984,6 +968,20 @@ export async function generateClassroom(
       if (generatedMediaCount !== requestedMediaIds.size) {
         throw new Error(
           `Enabled media generation produced ${generatedMediaCount}/${requestedMediaIds.size} requested files. Disable the failing media capability or ask its administrator to restore provider capacity.`,
+        );
+      }
+      const invalidIllustrations = outlines.flatMap((outline) =>
+        (outline.mediaGenerations ?? []).flatMap((request) =>
+          request.type === 'image' &&
+          mediaMap[request.elementId] &&
+          !isGeneratedIllustrationUrl(request.elementId, mediaMap[request.elementId])
+            ? [request.elementId]
+            : [],
+        ),
+      );
+      if (invalidIllustrations.length > 0) {
+        throw new Error(
+          `Generated illustration provenance invalid: ${invalidIllustrations.join(', ')}`,
         );
       }
       replaceMediaPlaceholders(scenes, mediaMap);
