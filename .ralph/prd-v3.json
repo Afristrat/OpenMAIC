@@ -2582,13 +2582,14 @@
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Partie machine recertifiée : décision, double garde SSRF, isolation de panne, worker, volume, santé, build reproductible et gates sont verts. Le storageState proxy.ai-mpower.com est prouvé absent ; le test navigateur spécifiquement nommé web-capture-failure-isolation n’existe pas encore et la capture du cours F6G9W_LPT8 reste interdite sans choix explicite d’Amine puis confirmation visuelle.",
+      "gap": "Partie machine recertifiée : décision, double garde SSRF, isolation de panne, test navigateur nommé, worker, volume, santé, build reproductible et gates sont verts. Le storageState proxy.ai-mpower.com est prouvé absent et la capture du cours F6G9W_LPT8 reste interdite sans choix explicite d’Amine puis confirmation visuelle.",
       "evidence": [
         "infra/coolify/qalem-runtime.yml",
         "services/capture-worker/package-lock.json",
         "tests/generation/web-capture-plan.test.ts",
         "tests/server/capture-client.test.ts",
         "tests/server/classroom-generation-capture.test.ts",
+        "e2e/tests/web-capture-failure-isolation.spec.ts",
         "docs/foundation/5-illustration/S1-012-capture-worker-persistence-proof.md"
       ],
       "acceptance": [
@@ -2604,7 +2605,8 @@
         "2026-08-28 — Inspection au SHA b6311f97f03716a8d39dd4e1c42da8be742da2d3 : decideCaptureForScene appelle validateUrlForSSRF avant toute capture demandée ; le worker réapplique sa propre garde SSRF ; requestWebCapture absorbe toute panne et le test d’intégration classroom-generation-capture confirme que la scène continue sans assignedImages lorsque la capture retourne null.",
         "2026-08-28 — État live ServeurIA : capture-worker sur l’image f37767998c418ec4b5e3ad9cb385d946c2f47288, actif depuis dix heures et healthy ; /health retourne ok=true, activeCaptures=0, maxConcurrency=1 ; le volume a14gf0n3u719hnnd2yujrtmr_capture-storage-states est monté en lecture-écriture sur /data/storage-states. Le fichier proxy-ai-mpower-com.json est absent. Journal /tmp/qalem-s1012-live-infra-20260828.log, SHA-256 1800d2262f92331a33077fad196d7ecf80d85b8b55c105f1b6f33efdb6fb1522.",
         "2026-08-28 — Le package autonome révélait cinq avis de développement, dont un critique via Vitest 2.1.x. Le SHA b6311f9 l’aligne sur Vitest 4.1.11, ajoute un package-lock v3 et remplace les installations Docker non déterministes par npm ci. npm audit retourne zéro vulnérabilité, TypeScript compile, 5/5 fichiers et 20/20 tests passent ; l’image Docker se construit et son /health réel répond. Journal /tmp/qalem-s1012-worker-proof-b6311f9/worker.log, SHA-256 16c880315056fb34271e79c3690ecb50b173976f0754e35255fe2800910e1ae4.",
-        "2026-08-28 — Gate monorepo complet au SHA b6311f9 sur ServeurIA : Prettier, TypeScript et lint passent ; 385/385 fichiers et 2 505/2 505 tests Vitest, build 100/100 pages et 83/83 Playwright en 3,7 minutes. Journal /tmp/qalem-s1012-full-gate-b6311f9.log, SHA-256 e9e8fed0d37268d2bb1ec7b360bb74b0330db585698c541418af0a483a02968b. S1-012 reste passes=false : storageState absent, E2E nommé manquant et décision/validation visuelle non obtenues."
+        "2026-08-28 — Gate monorepo complet au SHA b6311f9 sur ServeurIA : Prettier, TypeScript et lint passent ; 385/385 fichiers et 2 505/2 505 tests Vitest, build 100/100 pages et 83/83 Playwright en 3,7 minutes. Journal /tmp/qalem-s1012-full-gate-b6311f9.log, SHA-256 e9e8fed0d37268d2bb1ec7b360bb74b0330db585698c541418af0a483a02968b.",
+        "2026-08-28 — Le SHA 8cd328868759a78a4695f2bdd7e6267c563d6cee ajoute e2e/tests/web-capture-failure-isolation.spec.ts. Le navigateur vérifie que l’état running à 72 % reste non terminal, puis que le succès ouvre le cours malgré l’absence d’image de capture ; le test serveur classroom-generation-capture couvre la panne réelle du worker, son absorption en null et la persistance de la scène sans assignedImages. Ciblage : 15/15 Vitest et 1/1 Playwright. Gate complet ServeurIA : Prettier, TypeScript et lint verts ; 385/385 fichiers et 2 505/2 505 tests Vitest, build 100/100 pages et 84/84 Playwright en 3,7 minutes. Journal /tmp/qalem-s1012-full-gate-8cd3288.log, SHA-256 3288b2193ea546797336ca11f80d1311bbe0e6aebc14360e309747a494831eba. S1-012 reste passes=false exclusivement pour le storageState absent, la décision de capturer réellement et la confirmation visuelle humaine."
       ],
       "historicalEvidence": {
         "completedAt": null,

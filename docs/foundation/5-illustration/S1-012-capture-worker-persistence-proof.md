@@ -60,4 +60,8 @@ Au même SHA, `npm audit` retourne zéro vulnérabilité, le build TypeScript pa
 
 Le gate monorepo passe également : Prettier, TypeScript, lint, 385 fichiers et 2 505 tests Vitest, build de 100 pages et 83 tests Playwright. Journal : `/tmp/qalem-s1012-full-gate-b6311f9.log`, SHA-256 `e9e8fed0d37268d2bb1ec7b360bb74b0330db585698c541418af0a483a02968b`.
 
-La story n’est pas fermée : le `storageState` est absent, le scénario Playwright spécifiquement exigé `web-capture-failure-isolation` n’existe pas encore, et aucune régénération du cours `F6G9W_LPT8` ne peut être lancée sans décision explicite sur l’usage d’une capture réelle puis validation visuelle.
+Le SHA `8cd328868759a78a4695f2bdd7e6267c563d6cee` ajoute le scénario permanent `e2e/tests/web-capture-failure-isolation.spec.ts`. Il vérifie dans le navigateur qu’un job encore `running` à 72 % ne déclenche pas de faux échec, puis que la génération terminée ouvre le cours. Le test serveur `tests/server/classroom-generation-capture.test.ts` prouve séparément que la panne réelle du worker est absorbée en `null` et que la scène persiste sans `assignedImages`. Ce découpage exerce chaque frontière sans simuler un succès de capture.
+
+Validation ciblée : 15/15 tests Vitest et 1/1 test Playwright. Le gate complet du même SHA passe Prettier, TypeScript, lint, 385 fichiers et 2 505 tests Vitest, build de 100 pages et 84 tests Playwright en 3,7 minutes. Journal : `/tmp/qalem-s1012-full-gate-8cd3288.log`, SHA-256 `3288b2193ea546797336ca11f80d1311bbe0e6aebc14360e309747a494831eba`.
+
+La story n’est pas fermée : le `storageState` est absent et aucune régénération du cours `F6G9W_LPT8` ne peut être lancée sans décision explicite sur l’usage d’une capture réelle puis validation visuelle.
