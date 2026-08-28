@@ -1045,6 +1045,7 @@ async function main(): Promise<void> {
       { timeout: 120_000 },
     );
     await page.getByRole('button', { name: 'Approfondir dans la discussion' }).click();
+    await gate.waitFor({ state: 'hidden', timeout: 5_000 });
     const chatResponse = await chatResponsePromise;
     assert.equal(chatResponse.status(), 200);
     const discussionBody = await chatResponse.text();
@@ -1052,16 +1053,15 @@ async function main(): Promise<void> {
       discussionBody.match(/"type":"(?:agent_start|text_delta|done)"/g) ?? []
     ).length;
     assert(discussionEvents >= 3, 'The deepening discussion returned no complete intervention');
+    const resumeStarted = Date.now();
     await page.getByRole('button', { name: 'Arrêter la discussion' }).first().click();
     await page
       .getByRole('button', { name: 'Arrêter la discussion' })
       .first()
       .waitFor({ state: 'hidden' });
-    const resumeStarted = Date.now();
-    await page.getByRole('button', { name: 'Play', exact: true }).click();
     await gate.waitFor({ timeout: 5_000 });
     const resumeMs = Date.now() - resumeStarted;
-    assert(resumeMs < 5_000, `Playback restarted instead of resuming its cursor (${resumeMs} ms)`);
+    assert(resumeMs < 5_000, `Completion cursor was not restored promptly (${resumeMs} ms)`);
     const nextSceneId = string(scenes[interactionSceneIndex + 1].id, 'nextScene.id');
     await page.getByRole('button', { name: 'Continuer' }).click();
     await page
