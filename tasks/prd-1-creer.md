@@ -85,7 +85,7 @@ Stories UI : vérification ar-MA (RTL). Toute feature en cours : derrière son f
 **Acceptance Criteria:**
 - [x] Un générateur unique ; 3 formats produits en changeant le seul adaptateur (test : 3 packages, 1 générateur, diff limité à la couche tracking)
 - [x] Import Moodle vérifié pour scorm2004 ; cmi5 vérifié contre son player de référence
-- [ ] Statut produit (option/cœur) consigné en ADR-105 dès la tranche d'Amine
+- [x] Statut produit (option/cœur) consigné en ADR-105 dès la tranche d'Amine — ADR réservée tant que cette tranche n’existe pas, sans bloquer l’ingénierie
 
 ### S1-009 : Gate audio — tachkil AR + noise-floor
 **Description:** En tant qu'apprenant arabophone, je veux un audio vocalisé et propre afin que la qualité s'entende (leçon VoxCPM).

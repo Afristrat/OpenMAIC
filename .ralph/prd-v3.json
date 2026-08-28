@@ -2693,7 +2693,7 @@
       "epic": "1-CRÉER",
       "priority": "P2",
       "status": "to_validate",
-      "passes": false,
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S1-008",
@@ -2701,7 +2701,7 @@
       },
       "sourceDependencies": ["S1-007"],
       "dependencies": ["S1-007"],
-      "gap": "Les trois adaptateurs et leurs tests existent ; restent les preuves LMS/lecteur de référence et la décision option/cœur.",
+      "gap": "Soldé : un générateur unique produit les trois formats avec les mêmes captures statiques et narrations persistées ; Moodle exécute et persiste la complétion SCORM 2004, ADL CATAPULT déclare le paquet cmi5 Conformant. ADR-105 reste réservée jusqu’à la tranche commerciale d’Amine, explicitement non bloquante pour l’ingénierie.",
       "evidence": [
         "lib/export/scorm/tracking-adapters.ts",
         "tests/export/learning-package-formats.test.ts"
@@ -2712,7 +2712,15 @@
         "Statut option/cœur consigné ADR-105 dès la tranche d'Amine",
         "Réconcilier le choix NP Q3 : export honnêtement utilisable avec contenu, audio et captures statiques de widgets ; ne pas promettre le runtime interactif Qalem dans le LMS."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-08-28 — Le SHA de code 64d499686ede712b0ad5da93c7b144917c3dcca7 conserve un générateur unique pour scorm12, scorm2004 et cmi5. Les trois paquets ont le même index après neutralisation du seul bloc de suivi ; chaque scène reçoit une capture PNG, les narrations persistées sont téléchargées et recontrôlées au plancher de bruit, et toute parole sans audio persistant fait échouer l’export. Le HTML exécutable des widgets n’est jamais présenté comme un runtime Qalem dans le LMS. Tests ciblés : 19/19, TypeScript, Prettier et ESLint verts.",
+        "2026-08-28 — Paquets issus de la même fixture : SCORM 2004, 7 678 octets, SHA-256 bbc94e32cc74e84ee694542d9ab1de41433f8065ae4227ed097506881e513343 ; cmi5, 11 490 octets, SHA-256 e61048fa67961368913892021076e84443c65ad31742e75a66260ffa3c85b879. Tous deux contiennent index.html, assets/scenes/scene-1.png et assets/audio/scene-1-1.wav.",
+        "2026-08-28 — Moodle 5.0.1 importe le paquet SCORM 2004 comme SCORM_1.3, crée deux SCO et lance index.html. Chromium observe API_1484_11 comme objet et l’API 1.2 absente, affiche la capture, l’audio et le contenu statique, puis le clic Qalem confirme la fin sans erreur. Les tables Moodle relisent cmi.location=0, cmi.completion_status=completed et cmi.success_status=passed pour la tentative 1.",
+        "2026-08-28 — Le dépôt officiel ADL CATAPULT au commit 806c0baaa0fa99c9cb4f398ad7eb21fc5461c6e4 importe le paquet cmi5 final et déclare l’AU Conformant. La session 13 émet exactement trois PUT avec statementId concordant : initialized, completed (completion=true, progression=1, PT7.00S), terminated (PT7.03S) ; aucune erreur. Le jeton et le LRS viennent du lancement CATAPULT, jamais du paquet.",
+        "2026-08-28 — Moodle, MariaDB, CATAPULT Player, CTS, LRS et proxy finissent running, RestartCount=0 et OOMKilled=false. Les sept conteneurs de recette, deux réseaux, quatre volumes et deux répertoires temporaires exacts sont ensuite supprimés ; contrôle final sans résidu. Les conteneurs préexistants scorm-test-moodle et scorm-test-mariadb restent intacts. Preuve permanente : docs/validation/S1-008-scorm2004-cmi5.md.",
+        "2026-08-28 — Gate complet ServeurIA au SHA 8497b977806632161f70b930447072e9775f450d avec NODE_OPTIONS=--max-old-space-size=6144 : pnpm check, TypeScript et lint passent ; 378/378 fichiers et 2 490/2 490 tests Vitest, build 99/99 et 82/82 Playwright en 4,0 minutes. Journal SHA-256 b58710123a89c09f8b4d82c267407070ae89c21d0fbe1217fd66a42704fcc6b0 : /tmp/qalem-s1008-gate/s1-008-full-gate-8497b97-node6g.log. Le premier build avait atteint la limite heap V8 par défaut vers 2 Gio ; ce n’était pas un OOM Docker et aucun code n’a changé entre les deux exécutions.",
+        "2026-08-28 — ADR-105 consigne toujours fidèlement l’absence de tranche option/cœur. Son texte précise que cette décision commerciale ne bloque aucune story S1-007/S1-008 ; aucune décision d’Amine n’est inventée. ADR-106 relie désormais les recettes SCORM 1.2, SCORM 2004 et cmi5 aux preuves permanentes."
+      ],
       "historicalEvidence": {
         "completedAt": null,
         "note": null,
