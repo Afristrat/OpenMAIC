@@ -8,7 +8,7 @@ describe('buildScorm12Manifest', () => {
       identifier: 'com.qalem.export.stage-1',
       title: "Introduction à l'algèbre",
       launchUrl: 'index.html',
-      resourceFiles: ['index.html', 'scorm12.min.js'],
+      resourceFiles: ['index.html', 'course.css'],
     });
 
     expect(xml).toContain('<?xml version="1.0" standalone="no" ?>');
@@ -16,7 +16,7 @@ describe('buildScorm12Manifest', () => {
     expect(xml).toContain('manifest identifier="com.qalem.export.stage-1"');
     expect(xml).toContain('adlcp:scormtype="sco" href="index.html"');
     expect(xml).toContain('<file href="index.html"/>');
-    expect(xml).toContain('<file href="scorm12.min.js"/>');
+    expect(xml).toContain('<file href="course.css"/>');
     // XML-escaped, not raw — guards against a broken manifest on titles with apostrophes.
     expect(xml).toContain('Introduction à l&apos;algèbre');
   });
@@ -40,7 +40,7 @@ describe('buildScorm12Manifest', () => {
       identifier: 'com.qalem.export.stage-3',
       title: 'Cours de test',
       launchUrl: 'index.html',
-      resourceFiles: ['index.html', 'scorm12.min.js'],
+      resourceFiles: ['index.html', 'course.css'],
     });
 
     const opened = [...xml.matchAll(/<([a-zA-Z:]+)(?:\s[^>]*)?(?<!\/)>/g)].map((m) => m[1]);

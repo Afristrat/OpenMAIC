@@ -14,4 +14,4 @@
 
 1. **Dīwān n'est PAS une dépendance runtime** : on copie-adapte ses CONCEPTS prouvés (tachkil `vocalization.py`, `noise_floor_db()` -50 dB, profils podcasts) dans le code Qalem — lecture seule sur son repo, zéro appel réseau vers lui.
 2. **Mishkāt** : intégration par interface de fichiers (brief JSON déposé, mp4 récupéré) tant que S1-006 ne prouve pas qu'un couplage plus fort est indispensable — toute évolution du repo mishkat se demande à SA session propriétaire.
-3. Chaque nouvelle dépendance npm de ce chantier (scorm-again incluse) = entrée ADR avec preuve Ponytail (échelon inférieur insuffisant).
+3. Chaque nouvelle dépendance npm de ce chantier exige une entrée ADR avec preuve Ponytail que les échelons inférieurs sont insuffisants. Les adaptateurs SCORM natifs n'ajoutent aucune dépendance et ne génèrent donc aucune notice tierce fictive (ADR-106).

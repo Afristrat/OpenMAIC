@@ -77,7 +77,7 @@ Stories UI : vérification ar-MA (RTL). Toute feature en cours : derrière son f
 **Acceptance Criteria:**
 - [ ] `export_jobs` format `scorm12` → zip avec `imsmanifest.xml` valide
 - [ ] Import réussi dans un Moodle docker local : cours visible, completion trackée (preuve consignée)
-- [ ] Runtime embarqué : scorm-again (notices MIT conservées dans le package)
+- [ ] Runtime embarqué : adaptateurs natifs appelant l'API du LMS ; aucune notice `scorm-again`, car aucun code de cette dépendance n'est distribué (ADR-106 supplante ADR-102)
 
 ### S1-008 : Export couche 2 — adaptateurs interchangeables
 **Description:** En tant que client, je veux le même contenu en SCORM 1.2, SCORM 2004 ou cmi5 afin de coller à MON LMS sans double production.

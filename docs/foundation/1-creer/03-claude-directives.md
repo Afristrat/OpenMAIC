@@ -15,4 +15,4 @@
 
 ## Pointeurs
 
-`02-data-dictionary.md` (courses/course_imports/export_jobs) · `04-feature-backlog.md` (v1 gelée) · `05-integrations.md` (Hyperframes, scorm-again, MinerU) · ADR transverses : `0-socle/08-decisions-log.md`.
+`02-data-dictionary.md` (courses/course_imports/export_jobs) · `04-feature-backlog.md` (v1 gelée) · `05-integrations.md` (Hyperframes, adaptateurs SCORM natifs, MinerU) · ADR transverses : `0-socle/08-decisions-log.md`.

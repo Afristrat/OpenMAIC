@@ -9,12 +9,12 @@
 - **Sources** : adlnet.gov (SCORM 2004 4th ed. 2009, statut cmi5) ; recherche 2026-07-09 consignée np-cadrage §3 (session 75931808).
 - **Alternatives rejetées** : SCORM 1.2 seul (ferme cmi5/xAPI) ; cmi5 seul (adoption insuffisante des LMS cibles) ; double implémentation séparée (duplication).
 
-## ADR-102 — Runtime SCORM : `scorm-again` en premier choix (ACTÉE, réversible S1-007)
+## ADR-102 — Runtime SCORM : `scorm-again` en premier choix (SUPPLANTÉE PAR ADR-106)
 
-- **Quoi** : runtime TS `jcputney/scorm-again` pour la couche d'exécution des packages.
-- **Pourquoi** : TypeScript moderne, SCORM 1.2 + 2004 avec séquencement complet, iframes sandboxées, offline, LMS-agnostique, MIT — le seul candidat couvrant les deux versions dans notre langage.
-- **Sources** : lecture du repo GitHub 2026-07-09 (README, licence) ; comparé à `EscolaLMS/Scorm-player`, `mlgarrido/node-scorm-player`, `gamestdio/scorm`.
-- **Alternatives rejetées** : implémentation maison de l'API SCORM (réinventer une roue de 25 ans — interdit par la consigne d'Amine « check ce qui s'est déjà fait sur GH ») ; EscolaLMS en second si S1-007 échoue.
+- **Décision historique** : `jcputney/scorm-again` avait d'abord été retenu comme runtime embarqué.
+- **Motif de la supersession** : `scorm-again` implémente le côté LMS de l'API. L'embarquer dans le SCO lui faisait créer sa propre API locale au lieu d'appeler celle du LMS hôte ; un statut pouvait alors sembler suivi sans quitter le package.
+- **État effectif depuis ADR-106** : Qalem recherche l'API exposée par le LMS et appelle directement son contrat SCORM 1.2 ou SCORM 2004. La dépendance `scorm-again` et son runtime ont été supprimés du paquet et du graphe npm.
+- **Notices** : aucune notice `scorm-again` n'est jointe au zip, puisqu'aucun code de cette dépendance n'y est distribué. Les notices générales du produit restent régies par ADR-002.
 
 ## ADR-103 — Vidéo : Hyperframes (déterministe, souverain), pas de génération vidéo IA (ACTÉE)
 
@@ -41,3 +41,4 @@
 - **Limites vérifiées** : le paquet SCORM 2004 est conforme côté contenu, mais Moodle standard n’est pas un oracle de conformité SCORM 2004 complet ; son lecteur historique ne couvre pas tout le séquencement. La preuve SCORM 2004 doit donc passer par un lecteur compatible. cmi5 exige un LMS disposant d’un LRS et de son protocole de lancement : les paramètres et le jeton viennent du LMS, jamais de Qalem.
 - **Sources** : [ADL, exigences SCORM 2004 4e édition](https://www.adlnet.gov/assets/uploads/SCORM_2004_4ED_v1_1_TR_20090814.pdf) ; [spécification cmi5 Quartz](https://github.com/AICC/CMI-5_Spec_Current/blob/master/cmi5_spec.md) ; [documentation Moodle App 5.0](https://docs.moodle.org/502/en/Moodle_app_SCORM_player).
 - **Conséquence produit** : ADR-105 reste réservée. « Format générable » ne signifie pas encore « format commercialement promu » tant que les validations des lecteurs de référence ne sont pas enregistrées.
+- **Preuve SCORM 1.2** : la recette S1-007 du 28 août 2026 déclenche le runtime depuis le navigateur Moodle, puis relit `completed` et le score `100` dans les API et tables du LMS ; voir `docs/validation/S1-007-scorm12-moodle-browser.md`.
