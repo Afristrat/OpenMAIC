@@ -158,6 +158,8 @@ test('privilégie la classroom serveur et sa narration sur le cache local périm
   await page.goto(`/classroom/${STAGE_ID}`);
   await serverRefreshStarted;
   await expect(page.getByTestId('scene-item')).toHaveCount(2);
+  await page.getByRole('button', { name: 'Toggle sidebar' }).click();
+  await expect(page.getByTestId('scene-item').nth(1)).toBeVisible();
   await page.getByTestId('scene-item').nth(1).click();
   await expect(page.getByRole('button', { name: 'Démarrer le quiz' })).toBeVisible();
   releaseServerRefresh();
