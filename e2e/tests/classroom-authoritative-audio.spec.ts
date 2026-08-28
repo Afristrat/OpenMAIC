@@ -1,5 +1,6 @@
 import { expect, test } from '../fixtures/base';
 import { createSettingsStorage } from '../fixtures/test-data/settings';
+import { buildPcm16Wav } from '../../tests/audio/pcm16-wav-fixture';
 
 const STAGE_ID = 'e2e-authoritative-audio';
 
@@ -154,6 +155,12 @@ test('privilégie la classroom serveur et sa narration sur le cache local périm
       }),
     });
   });
+  await page.route(`**/api/classroom-media/${STAGE_ID}/audio/server-speech.wav`, (route) =>
+    route.fulfill({
+      contentType: 'audio/wav',
+      body: Buffer.from(buildPcm16Wav(new Array(12_000).fill(0))),
+    }),
+  );
 
   await page.goto(`/classroom/${STAGE_ID}`);
   await serverRefreshStarted;
@@ -169,4 +176,10 @@ test('privilégie la classroom serveur et sa narration sur le cache local périm
   await expect(serverSceneItems.first()).not.toContainText('Version sans narration');
   await expect(serverSceneItems.nth(1)).toContainText('Quiz depuis le serveur');
   await expect(page.getByRole('button', { name: 'Start Quiz' })).toBeVisible();
+
+  await serverSceneItems.first().click();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await expect(page.locator('[data-scene-completion-gate="true"]')).toBeVisible({
+    timeout: 10_000,
+  });
 });
