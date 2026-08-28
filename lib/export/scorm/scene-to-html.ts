@@ -4,11 +4,9 @@
  * cross a trust boundary — every field is narrowed at runtime instead of
  * trusted as the app's `SceneContent` union.
  *
- * Scope (couche 1): readable, self-contained text rendering — not the
- * pixel-perfect slide/PBL rendering the live app does (ProseMirror/ECharts/
- * canvas layout). `interactive` scenes are the exception: their `html` field
- * is already a complete standalone document fragment, reused as-is. Full
- * layout fidelity for slide/quiz/pbl is out of scope here; tracked for S1-008.
+ * This is an accessible transcript next to the package's static scene image.
+ * It never embeds the live Qalem runtime or executable widget HTML: an LMS
+ * export must remain honest about being a static representation.
  */
 
 function escapeHtml(value: string): string {
@@ -41,33 +39,36 @@ function renderQuizQuestion(question: unknown, index: number): string {
 function renderSlideElement(element: unknown): string {
   if (!isRecord(element)) return '';
   if (element.type === 'text' && typeof element.content === 'string') {
-    // `content` is already HTML produced by the app's own slide editor
-    // (ProseMirror), not external user input — safe to embed unescaped,
-    // consistent with how the live slide renderer treats it.
-    return `<div class="scorm-slide-text">${element.content}</div>`;
-  }
-  if (element.type === 'image' && typeof element.src === 'string') {
-    return `<img class="scorm-slide-image" src="${escapeHtml(element.src)}" alt="" />`;
+    const text = element.content
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return text ? `<p>${escapeHtml(text)}</p>` : '';
   }
   return '';
 }
 
-export function renderSceneContent(content: unknown): string {
+export function renderSceneContent(
+  content: unknown,
+  options: { staticWidgetNotice?: string } = {},
+): string {
   if (!isRecord(content)) return '';
 
   switch (content.type) {
     case 'interactive':
-      return typeof content.html === 'string' ? content.html : '';
+      return `<p class="scorm-scene-transcript">${escapeHtml(
+        options.staticWidgetNotice ?? 'Widget présenté sous forme de capture statique.',
+      )}</p>`;
 
     case 'quiz': {
       const questions = Array.isArray(content.questions) ? content.questions : [];
-      return questions.map((q, i) => renderQuizQuestion(q, i)).join('\n');
+      return `<div class="scorm-scene-transcript">${questions.map((q, i) => renderQuizQuestion(q, i)).join('\n')}</div>`;
     }
 
     case 'slide': {
       const canvas = isRecord(content.canvas) ? content.canvas : undefined;
       const elements = Array.isArray(canvas?.elements) ? canvas.elements : [];
-      return elements.map(renderSlideElement).filter(Boolean).join('\n');
+      return `<div class="scorm-scene-transcript">${elements.map(renderSlideElement).filter(Boolean).join('\n')}</div>`;
     }
 
     case 'pbl': {
@@ -75,7 +76,7 @@ export function renderSceneContent(content: unknown): string {
       const title = typeof projectConfig?.title === 'string' ? projectConfig.title : '';
       const description =
         typeof projectConfig?.description === 'string' ? projectConfig.description : '';
-      return `<h3>${escapeHtml(title)}</h3><p>${escapeHtml(description)}</p>`;
+      return `<div class="scorm-scene-transcript"><h3>${escapeHtml(title)}</h3><p>${escapeHtml(description)}</p></div>`;
     }
 
     default:

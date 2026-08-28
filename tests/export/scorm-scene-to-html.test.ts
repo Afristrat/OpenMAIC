@@ -2,9 +2,19 @@ import { describe, expect, it } from 'vitest';
 import { renderSceneContent } from '@/lib/export/scorm/scene-to-html';
 
 describe('renderSceneContent', () => {
-  it('returns the interactive scene html as-is (already self-contained)', () => {
-    const html = renderSceneContent({ type: 'interactive', html: '<p>Hello <b>world</b></p>' });
-    expect(html).toBe('<p>Hello <b>world</b></p>');
+  it('renders an honest static-widget notice without embedding executable HTML', () => {
+    const html = renderSceneContent({
+      type: 'interactive',
+      html: '<script>window.liveQalem = true</script>',
+    });
+    expect(html).toContain('capture statique');
+    expect(html).not.toContain('window.liveQalem');
+    expect(
+      renderSceneContent(
+        { type: 'interactive', html: '<p>تفاعلي</p>' },
+        { staticWidgetNotice: 'يُعرض المحتوى التفاعلي في صورة ثابتة.' },
+      ),
+    ).toContain('يُعرض المحتوى التفاعلي في صورة ثابتة.');
   });
 
   it('renders quiz questions and options, escaping question/option text', () => {
@@ -38,10 +48,8 @@ describe('renderSceneContent', () => {
         ],
       },
     });
-    expect(html).toContain('<div class="scorm-slide-text"><p>Titre</p></div>');
-    expect(html).toContain(
-      '<img class="scorm-slide-image" src="https://example.com/a.png" alt="" />',
-    );
+    expect(html).toContain('<p>Titre</p>');
+    expect(html).not.toContain('https://example.com/a.png');
     expect(html).not.toContain('chart');
   });
 

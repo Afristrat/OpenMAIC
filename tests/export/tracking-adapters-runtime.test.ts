@@ -86,7 +86,7 @@ describe('learning package tracking adapters at runtime', () => {
     });
     const windowLike = {
       location: {
-        search: `?endpoint=${encodeURIComponent('https://lrs.example/xapi/')}&fetch=${encodeURIComponent('https://lms.example/fetch')}&actor=${encodeURIComponent(actor)}&registration=registration-1&activityId=${encodeURIComponent('https://qalem.ma/activity/1')}`,
+        search: `?endpoint=${encodeURIComponent('https://lrs.example/xapi')}&fetch=${encodeURIComponent('https://lms.example/fetch')}&actor=${encodeURIComponent(actor)}&registration=registration-1&activityId=${encodeURIComponent('https://qalem.ma/activity/1')}`,
       },
       crypto: { randomUUID: () => '00000000-0000-4000-8000-000000000001' },
       fetch: async (url: string, init?: RequestInit) => {
@@ -129,8 +129,16 @@ describe('learning package tracking adapters at runtime', () => {
       init: { method: 'POST' },
     });
     expect(requests[1]?.url).toContain('stateId=LMS.LaunchData');
+    expect(requests[1]?.url).toContain('https://lrs.example/xapi/activities/state');
     expect(requests[2]?.url).toContain('profileId=cmi5LearnerPreferences');
     expect(statementRequests).toHaveLength(3);
+    expect(statementRequests.every(({ init }) => init?.method === 'PUT')).toBe(true);
+    expect(
+      statementRequests.every(({ url, init }) => {
+        const statement = JSON.parse(String(init?.body));
+        return new URL(url).searchParams.get('statementId') === statement.id;
+      }),
+    ).toBe(true);
     expect(statementRequests.map(({ init }) => JSON.parse(String(init?.body)).verb.id)).toEqual([
       'http://adlnet.gov/expapi/verbs/initialized',
       'http://adlnet.gov/expapi/verbs/completed',

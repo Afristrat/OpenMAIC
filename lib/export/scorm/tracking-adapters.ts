@@ -80,7 +80,11 @@ function buildCmi5TrackingScript(): string {
     return value;
   }
   function endpointUrl(path, query) {
-    var url = new URL(path, required(endpoint, 'endpoint'));
+    var base = required(endpoint, 'endpoint');
+    if (base.slice(-1) !== '/') base += '/';
+    var relativePath = String(path);
+    while (relativePath.charAt(0) === '/') relativePath = relativePath.slice(1);
+    var url = new URL(base + relativePath);
     Object.keys(query || {}).forEach(function (key) { url.searchParams.set(key, query[key]); });
     return url.toString();
   }
@@ -107,8 +111,9 @@ function buildCmi5TrackingScript(): string {
     return initializedAt === null ? undefined : 'PT' + Math.max(0, (Date.now() - initializedAt) / 1000).toFixed(2) + 'S';
   }
   function send(verb, result, keepalive, completes) {
+    var id = statementId();
     var payload = {
-      id: statementId(),
+      id: id,
       actor: JSON.parse(required(actor, 'actor')),
       verb: { id: verb, display: { en: verb.split('/').pop() } },
       object: { id: required(activityId, 'activityId') },
@@ -116,7 +121,7 @@ function buildCmi5TrackingScript(): string {
       timestamp: new Date().toISOString()
     };
     if (result) payload.result = result;
-    return window.fetch(endpointUrl('statements'), { method: 'POST', headers: headers(), body: JSON.stringify(payload), keepalive: Boolean(keepalive) }).then(function (response) {
+    return window.fetch(endpointUrl('statements', { statementId: id }), { method: 'PUT', headers: headers(), body: JSON.stringify(payload), keepalive: Boolean(keepalive) }).then(function (response) {
       if (!response.ok) throw new Error('Statement cmi5 refusé par le LMS.');
       return response;
     });
