@@ -2245,14 +2245,14 @@
       "epic": "6-RÉCONCILIATION",
       "priority": "P1",
       "status": "to_validate",
-      "passes": false,
+      "passes": true,
       "source": {
         "type": "request_or_observed_gap",
         "date": "2026-08-26"
       },
       "sourceDependencies": [],
       "dependencies": ["S5-004", "S6-005", "S6-006", "S6-007", "S6-008"],
-      "gap": "Les corrections des 11–13 août existent ; aucune recette actuelle ne certifie ensemble toutes les promesses. Réutiliser les parcours existants.",
+      "gap": "Soldé : une recette authentifiée de production certifie désormais le parcours complet, ses ressources et son véritable export MP4 ; les défauts de reprise audio, de capture RUM et les dettes révélées par le gate ont été corrigés à la racine.",
       "evidence": [
         "e2e/tests",
         "lib/server/classroom-resource-generation.ts",
@@ -2266,7 +2266,15 @@
         "Lire un export MP4 réel jusqu’à la fin et contrôler toutes les prises de parole, les scènes, les images et la synchronisation ; ne pas remplacer cette preuve par la collecte unitaire des segments.",
         "Consigner les défauts corrigés et les preuves ; SCORM et PPTX conservent leurs recettes spécialisées S1-007/008/010."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-08-28 — Le SHA f2369883af3afcef2e6da3905169b9096cc43d1b préserve l’identité des objets scène inchangés lors du rafraîchissement serveur autoritatif : la deuxième narration n’est plus interrompue en cours de lecture. Le test unitaire stage-storage-atomic et l’E2E classroom-authoritative-audio couvrent définitivement cette course.",
+        "2026-08-28 — Le SHA produit 2123640917d365c15eb9ecc51723bc43d6483e2b exclut les scripts du clone html2canvas via son option native ignoreElements. Le test MP4 injecte un script tiers et prouve qu’il n’est chargé qu’une fois ; Cloudflare RUM n’est plus réexécuté dans l’iframe à origine nulle.",
+        "2026-08-28 — Recette authentifiée complète sur https://qalem.ma, marqueur s6013-20260828T083821Z-19232, produit et harnais au SHA 2123640917d365c15eb9ecc51723bc43d6483e2b : document autorisé et manifeste persistés, syllabus validé, cinq scènes générées (slide, slide, slide, PBL, quiz), quatre agents, 29 paroles canoniques et 558,62 secondes d’audio réel, deux images et cinq scènes retrouvées après rechargement.",
+        "2026-08-28 — La même recette ouvre le lien court /up5W1, décode son QR vers l’URL exacte, télécharge un véritable XLSX, le complète puis le recalcule avec Python : score 100 et point bas en semaine 11 conforme. Le quiz réel comporte cinq questions, obtient 5/5 et conserve son résultat après rechargement.",
+        "2026-08-28 — La lecture réelle prouve l’approfondissement explicite et la reprise au curseur à 853 ms. L’export formation-complete.mp4 est décodé scène par scène : cinq images, 1 920 × 1 080, piste audio présente, durée 561,861 secondes contre 558,62 secondes attendues. consoleSignals, pageErrors et httpErrors sont tous vides.",
+        "2026-08-28 — Artefacts persistants : /tmp/qalem-s6013-artifacts/s6013-20260828T083821Z-19232/evidence.json, formation-complete.mp4, cinq captures MP4, classeurs original/complété, QR et captures quiz/reprise. Le nettoyage final prouve zéro compte, organisation, stage, lien court ou fichier résiduel. Le conteneur web exact reste running/healthy, restart=0, OOMKilled=false ; /, /api/health et /app répondent 200. Le pointeur Coolify a été restauré à 8e22dc59d0c798ffbaae8a9d2e46cdc3d69713bb sans redéploiement.",
+        "2026-08-28 — Gate complet final dans le worktree isolé ServeurIA /tmp/qalem-s6013-155f9b3 au SHA 990def7a9d6ff937168865f6bfcf7a73b4d52c20 : pnpm check, TypeScript, lint, 378/378 fichiers et 2 484/2 484 tests Vitest, build compilé en 37,9 s et 82/82 Playwright en 3,6 minutes ; zéro collision de clé, zéro marqueur d’échec. Journal intégral : /tmp/qalem-s6013-full-gate-990def7.log. Les cinq fichiers modifiés après le SHA produit sont exclusivement des tests ou fixtures E2E, donc le binaire de production recetté est inchangé."
+      ],
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
