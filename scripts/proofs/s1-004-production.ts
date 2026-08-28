@@ -81,8 +81,8 @@ async function main(): Promise<void> {
     evidence.classroomReached = true;
     await page.screenshot({ path: join(ARTIFACT_DIR!, 'catalog-to-classroom.png'), fullPage: true });
 
-    await page.evaluate(() => localStorage.setItem('locale', 'ar-MA'));
     await page.goto(`${BASE_URL}/catalog`, { waitUntil: 'domcontentloaded' });
+    await page.getByRole('button', { name: 'FR', exact: true }).click();
     await page.getByRole('heading', { name: 'دليل التكوينات' }).waitFor();
     assert.equal(await page.locator('html').getAttribute('dir'), 'rtl');
     evidence.arabicRtl = true;
