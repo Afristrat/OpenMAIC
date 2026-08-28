@@ -355,7 +355,11 @@ async function main(): Promise<void> {
 
   try {
     browser = await chromium.launch({ headless: true });
-    const context = await browser.newContext({ acceptDownloads: true, locale: 'fr-FR' });
+    const context = await browser.newContext({
+      acceptDownloads: true,
+      locale: 'fr-FR',
+      serviceWorkers: process.env.PROOF_QUIZ_ONLY === '1' ? 'block' : 'allow',
+    });
     page = await context.newPage();
     page.on('console', (message) => {
       if (message.type() === 'warning' || message.type() === 'error') {
@@ -473,7 +477,15 @@ async function main(): Promise<void> {
       });
       await page.reload({ waitUntil: 'domcontentloaded' });
       await page.getByText('Loading classroom...').waitFor({ state: 'hidden', timeout: 30_000 });
-      await authoritativeRefreshStarted;
+      await Promise.race([
+        authoritativeRefreshStarted,
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error('Authoritative classroom refresh was not intercepted')),
+            10_000,
+          ),
+        ),
+      ]);
       await page.locator('[data-testid="scene-item"]').nth(1).click();
       const startQuizButton = page.getByRole('button', { name: 'Démarrer le quiz' });
       const submitQuizButton = page.getByRole('button', { name: 'Soumettre les réponses' });
