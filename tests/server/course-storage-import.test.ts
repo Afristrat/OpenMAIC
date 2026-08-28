@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { SceneOutline } from '@/lib/types/generation';
 
 const mocks = vi.hoisted(() => ({
   from: vi.fn(),
@@ -17,14 +18,14 @@ vi.mock('@/lib/supabase/service', () => ({
 
 import { persistGeneratedCourse, persistImportedCourseDraft } from '@/lib/server/course-storage';
 
-const outline = {
+const outline: SceneOutline = {
   id: 'scene-1',
   type: 'slide',
   title: 'Décider',
   description: 'Apprendre à décider.',
   keyPoints: ['Comparer les options'],
   order: 1,
-} as const;
+};
 
 describe('course storage import lifecycle', () => {
   beforeEach(() => {
