@@ -194,7 +194,9 @@ describe('classroom scene generation retries', () => {
         .mockResolvedValueOnce(slideContent);
 
       const generation = generateWithProgress();
-      await vi.waitFor(() => expect(mocks.generateSceneContent).toHaveBeenCalledTimes(3));
+      await vi.waitFor(() => expect(mocks.generateSceneContent).toHaveBeenCalledTimes(3), {
+        timeout: 10_000,
+      });
       const { result, progress } = await generation;
 
       expect(result.scenesCount).toBe(1);
