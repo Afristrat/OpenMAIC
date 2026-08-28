@@ -1024,14 +1024,16 @@ function HomePage() {
           </div>
         </div>
       )}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".md,text/markdown,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.pdf,application/pdf"
-        onChange={handleFileChange}
-        className="hidden"
-        data-testid="course-canvas-file-input"
-      />
+      {importEnabled && (
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".md,text/markdown,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.pdf,application/pdf"
+          onChange={handleFileChange}
+          className="hidden"
+          data-testid="course-canvas-file-input"
+        />
+      )}
       {PPTX_IMPORT_ENABLED && (
         <input
           ref={pptxFileInputRef}
