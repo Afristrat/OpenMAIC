@@ -182,12 +182,13 @@ function xmlNumber(xml: string, ref: string): number {
 }
 
 function replaceCell(xml: string, ref: string, innerXml: string): string {
-  const pattern = new RegExp(`<c\\b([^>]*\\br="${ref}"[^>]*)(?:/>|>[\\s\\S]*?</c>)`);
+  const pattern = new RegExp(
+    `<c r="${ref}"([^>]*)\\s*/>|<c r="${ref}"([^>]*)>[\\s\\S]*?<\\/c>`,
+  );
   const match = xml.match(pattern);
   assert(match, `Missing writable cell ${ref}`);
-  const attributes = match[1];
-  assert(attributes, `Missing attributes for cell ${ref}`);
-  return xml.replace(pattern, `<c${attributes}>${innerXml}</c>`);
+  const attributes = match[1] ?? match[2] ?? '';
+  return xml.replace(pattern, `<c r="${ref}"${attributes}>${innerXml}</c>`);
 }
 
 function escapeXml(value: string): string {
