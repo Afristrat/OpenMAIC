@@ -3122,7 +3122,7 @@
       "epic": "2-VIVRE",
       "priority": "P2",
       "status": "to_validate",
-      "passes": false,
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S2-009",
@@ -3130,13 +3130,20 @@
       },
       "sourceDependencies": ["S2-010"],
       "dependencies": [],
-      "gap": "Dérivé FFmpeg et test présents ; preuve avec destinataire légitime et décodage depuis capture encore requise.",
-      "evidence": ["tests/transmissions/visual-watermark.test.ts", ".ralph/prd-v2.json#S2-009"],
+      "gap": "Soldé : la dérivée a été produite par le worker de production pour une transmission temporaire entre deux membres légitimes ; l’identifiant opaque complet est lisible sur une image extraite du flux et tous les résidus ont été supprimés.",
+      "evidence": [
+        "tests/transmissions/visual-watermark.test.ts",
+        "docs/validation/S2-009-visual-watermark-production.md",
+        "docs/validation/artifacts/S2-009-capture.png",
+        ".ralph/prd-v2.json#S2-009"
+      ],
       "acceptance": [
         "videowmark (ou incrustation périodique avec ADR) appliqué par le worker",
         "Identifiant décodable sur capture d'écran du flux (preuve documentée)"
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-08-28 — Recette sur serveuria-MS-7D98 avec le worker de production f37767998c418ec4b5e3ad9cb385d946c2f47288, dont les fichiers S2-009 sont identiques au SHA de clôture : deux comptes techniques membres d’une même organisation, une scène et une transmission privée ont été créés temporairement. La file BullMQ transmission-visual-watermark a produit une dérivée MP4 done de 31 668 octets avec vidéo 1 280 × 720 et audio ; la source est restée bit à bit identique. L’identifiant a5a4b355 ec9d274b 53756b17 aae64dea correspond à la ligne de transmission et se lit intégralement sur la capture PNG, SHA-256 c03ec0c6b4a28d6dda9af4ffe504fe973dce94a7965cdf553957bde569d61ed5. Bucket, job, transmission, scène, organisation, membres et deux comptes supprimés ; recomptages ciblés à zéro. Preuve : docs/validation/S2-009-visual-watermark-production.md."
+      ],
       "historicalEvidence": {
         "completedAt": null,
         "note": "État certifié le 2026-07-23, sans déclaration de complétude : l'incrustation FFmpeg rend un dérivé MP4 avec audio et identifiant opaque de 128 bits, le worker ne publie l'état done qu'après l'upload du dérivé, et la route de consultation refuse la source brute. Le test d'intégration tests/transmissions/visual-watermark.test.ts crée un MP4 réel, extrait les images source/dérivée et vérifie l'altération visuelle ainsi que le flux audio ; la CI GitHub 30045186118 est entièrement verte (formatage, lint, TypeScript, 2 066 tests unitaires, build, migrations et E2E). La preuve d'acceptation finale reste volontairement ouverte : la base Qalem ne contient aucune transmission et chaque organisation ne compte actuellement qu'un seul membre, donc aucun destinataire légitime ne peut recevoir une transmission réelle sans provisionnement explicite d'un second membre.",

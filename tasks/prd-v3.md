@@ -16,8 +16,8 @@ Aucune fonctionnalité n’est implémentée par cette opération documentaire.
 - 65 stories v2 inventoriées : 26 ouvertes reprises, 3 rouvertes, 36 acceptations historiques conservées sans recertification.
 - 72 stories v1/UI rattachées à une décision de conservation et à leurs US de suivi ; 18 capacités héritées sont explicitement remises en suivi.
 - 20 demandes/ensembles d’engagements rattachés à des US.
-- 67 US au registre : 10 à implémenter, 10 à valider, 21 avec décision préalable et 5 bloquées ; 21 sont soldées.
-- Vingt et une US sont soldées sur preuves actuelles. Une décision de retrait n’est jamais une réussite d’implémentation.
+- 67 US au registre : 10 à implémenter, 9 à valider, 21 avec décision préalable et 5 bloquées ; 22 sont soldées.
+- Vingt-deux US sont soldées sur preuves actuelles. Une décision de retrait n’est jamais une réussite d’implémentation.
 - S0-015 est entièrement certifiée côté machine sur le SHA déployé `6ea54d9` ; seule l’écoute humaine SOP-011 maintient son état « À valider ».
 
 ## Limites de preuve
@@ -109,7 +109,7 @@ Les descriptions et critères exécutables complets sont dans le JSON canonique.
 | 37   | S2-005 | P2       | À implémenter    | Replay fidèle « comme un vrai webinaire » (streaming, jamais de téléchargement)       |
 | 38   | S2-006 | P2       | À implémenter    | Bibliothèque de replays (reprise, suppression effective) [UI]                         |
 | 39   | S2-008 | P2       | Bloquée          | Watermark sonore AudioSeal MIT en job BullMQ (protocole de robustesse)                |
-| 40   | S2-009 | P2       | À valider        | Watermark visuel indélébile                                                           |
+| 40   | S2-009 | P2       | Soldée           | Watermark visuel indélébile                                                           |
 | 41   | S2-011 | P2       | Décision requise | [CHECKPOINT AMINE] Référentiels culture → prénoms validés                             |
 | 42   | S3-001 | P2       | À implémenter    | Tables d'ancrage (seeds, anchor_plans, anchor_deliveries, evaluations, xapi_outbox)   |
 | 43   | S3-003 | P2       | À implémenter    | Évaluation à chaud en fin de session [UI]                                             |
