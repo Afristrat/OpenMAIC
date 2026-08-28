@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod/v4';
 import { requireSuperAdminOrOrgAuthor } from '@/lib/api/auth';
 import { isFeatureEnabled } from '@/lib/flags';
 import { PDF_PROVIDERS } from '@/lib/pdf/constants';
@@ -11,6 +12,7 @@ import {
 
 const MAX_IMPORT_BYTES = 25 * 1024 * 1024;
 const SUPPORTED_EXTENSIONS = new Set(['md', 'docx', 'pdf']);
+const orgIdSchema = z.string().uuid();
 
 export const maxDuration = 300;
 
@@ -19,10 +21,11 @@ function extensionOf(fileName: string): string {
 }
 
 async function authorize(request: NextRequest, orgId: FormDataEntryValue | string | null) {
-  if (typeof orgId !== 'string' || !/^[0-9a-f-]{36}$/i.test(orgId)) {
+  const parsed = orgIdSchema.safeParse(orgId);
+  if (!parsed.success) {
     return { response: NextResponse.json({ error: 'A valid orgId is required' }, { status: 400 }) };
   }
-  return requireSuperAdminOrOrgAuthor(request, orgId);
+  return requireSuperAdminOrOrgAuthor(request, parsed.data);
 }
 
 export async function GET(request: NextRequest) {
