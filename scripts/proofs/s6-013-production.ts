@@ -8,6 +8,7 @@ import { binarize, Decoder, Detector, grayscale } from '@nuintun/qrcode';
 import { chromium, type APIRequestContext, type Page } from '@playwright/test';
 import JSZip from 'jszip';
 import sharp from 'sharp';
+import { buildPcm16Wav } from '../../tests/audio/pcm16-wav-fixture';
 
 const execFileAsync = promisify(execFile);
 const BASE_URL = process.env.PROOF_BASE_URL ?? 'https://qalem.ma';
@@ -454,6 +455,7 @@ async function main(): Promise<void> {
     if (process.env.PROOF_QUIZ_ONLY === '1') {
       classroomId = `${MARKER}-quiz`.replace(/[^A-Za-z0-9_-]/g, '_');
       const questionText = 'Quel montant constitue le seuil de sécurité du cas ?';
+      const targetedAudioUrl = `/api/classroom-media/${classroomId}/audio/targeted.wav`;
       const fixture = await jsonResponse(request, 'POST', '/api/classroom', {
         data: {
           orgId: organizationId,
@@ -483,7 +485,21 @@ async function main(): Promise<void> {
                   background: { type: 'solid', color: '#ffffff' },
                 },
               },
-              actions: [],
+              actions: [
+                { id: `${classroomId}-spotlight`, type: 'spotlight', elementId: 'target' },
+                {
+                  id: `${classroomId}-speech-1`,
+                  type: 'speech',
+                  text: 'Première prise de parole ciblée.',
+                  audioUrl: targetedAudioUrl,
+                },
+                {
+                  id: `${classroomId}-speech-2`,
+                  type: 'speech',
+                  text: 'Deuxième prise de parole ciblée.',
+                  audioUrl: targetedAudioUrl,
+                },
+              ],
               createdAt: Date.now(),
               updatedAt: Date.now(),
             },
@@ -526,6 +542,12 @@ async function main(): Promise<void> {
         sceneCount: 2,
         durationMs: 0,
       };
+      await page.route(`**${targetedAudioUrl}*`, (route) =>
+        route.fulfill({
+          contentType: 'audio/wav',
+          body: Buffer.from(buildPcm16Wav(new Array(12_000).fill(0))),
+        }),
+      );
       await waitForClassroom(page, classroomId);
 
       let releaseAuthoritativeRefresh!: () => void;
@@ -585,8 +607,13 @@ async function main(): Promise<void> {
       const persistedAfterReload = await page.getByText('100%', { exact: true }).isVisible();
       assert(persistedAfterReload, 'Targeted quiz result did not survive reload');
       evidence.quiz = { questionCount: 1, correctCount: 1, persistedAfterReload };
+      await page.locator('[data-testid="scene-item"]').first().click();
+      await page.getByRole('button', { name: 'Play', exact: true }).click();
+      await page
+        .locator('[data-scene-completion-gate="true"]')
+        .waitFor({ state: 'visible', timeout: 10_000 });
       evidence.browser = { consoleSignals, pageErrors, httpErrors };
-      progress('Transition et persistance ciblées du quiz certifiées');
+      progress('Transition du quiz et lecture multi-actions ciblées certifiées');
       return;
     }
 
