@@ -911,7 +911,7 @@ async function main(): Promise<void> {
       await speedButton.click();
     }
     assert.equal(await speedButton.textContent(), '2x');
-    await page.getByRole('button', { name: 'Play' }).click();
+    await page.getByRole('button', { name: 'Play', exact: true }).click();
     const gate = page.locator('[data-scene-completion-gate="true"]');
     await gate.waitFor({ timeout: 15 * 60_000 });
     const chatResponsePromise = page.waitForResponse(
@@ -932,7 +932,7 @@ async function main(): Promise<void> {
       .first()
       .waitFor({ state: 'hidden' });
     const resumeStarted = Date.now();
-    await page.getByRole('button', { name: 'Play' }).click();
+    await page.getByRole('button', { name: 'Play', exact: true }).click();
     await gate.waitFor({ timeout: 5_000 });
     const resumeMs = Date.now() - resumeStarted;
     assert(resumeMs < 5_000, `Playback restarted instead of resuming its cursor (${resumeMs} ms)`);
