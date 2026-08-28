@@ -56,4 +56,37 @@ describe('validateImportCanvas', () => {
       true,
     );
   });
+
+  it('rejects required headings whose body is empty', () => {
+    const result = validateImportCanvas({
+      originalFilename: 'atelier.md',
+      mimeType: 'text/markdown',
+      text: validDocument.replace(
+        '### Contenu essentiel\nUne tâche stable et vérifiable est une meilleure candidate.',
+        '### Contenu essentiel',
+      ),
+      rightsAttested: true,
+    });
+
+    expect(result.status).toBe('rejected');
+    expect(result.issues).toContainEqual(
+      expect.objectContaining({
+        rule: 'CI-09',
+        path: 'Chapitre 1 — Choisir une tâche utile',
+      }),
+    );
+  });
+
+  it('rejects duplicate main titles and required subsections outside chapters', () => {
+    const result = validateImportCanvas({
+      originalFilename: 'atelier.md',
+      mimeType: 'text/markdown',
+      text: `${validDocument}\n\n# Deuxième titre\n### Objectif observable\nHors chapitre.`,
+      rightsAttested: true,
+    });
+
+    expect(result.issues.map((entry) => entry.rule)).toEqual(
+      expect.arrayContaining(['CI-04', 'CI-13']),
+    );
+  });
 });

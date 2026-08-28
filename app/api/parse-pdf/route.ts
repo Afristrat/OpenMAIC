@@ -1,24 +1,13 @@
 import { NextRequest } from 'next/server';
-import {
-  isServerConfiguredProvider,
-  resolvePDFApiKey,
-  resolvePDFBaseUrl,
-} from '@/lib/server/provider-config';
 import type { PDFProviderId } from '@/lib/pdf/types';
-import type { ParsedPdfContent } from '@/lib/types/pdf';
-import { documentArtifactToParsedPdfContent, extractDocument } from '@/lib/document';
-import { shouldUseOcrFallback } from '@/lib/document/pdf-text-quality';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
-import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
+import {
+  extractReadablePdf,
+  InvalidPdfProviderUrlError,
+  NoReadablePdfTextError,
+} from '@/lib/server/pdf-document-extraction';
 const log = createLogger('Parse PDF');
-
-class NoReadablePdfTextError extends Error {
-  constructor() {
-    super('No configured PDF parser returned readable text, including OCR fallback');
-    this.name = 'NoReadablePdfTextError';
-  }
-}
 
 export async function POST(req: NextRequest) {
   let pdfFileName: string | undefined;
@@ -49,86 +38,16 @@ export async function POST(req: NextRequest) {
     pdfFileName = pdfFile?.name;
     resolvedProviderId = effectiveProviderId;
 
-    // Managed providers are admin-owned: ignore any client-sent key/baseUrl.
-    const managed = isServerConfiguredProvider('pdf', effectiveProviderId);
-    const clientBaseUrl = managed ? undefined : baseUrl || undefined;
-    if (clientBaseUrl && process.env.NODE_ENV === 'production') {
-      const ssrfError = await validateUrlForSSRF(clientBaseUrl);
-      if (ssrfError) {
-        return apiError('INVALID_URL', 403, ssrfError);
-      }
-    }
-
-    const config = {
+    const extracted = await extractReadablePdf({
+      buffer: Buffer.from(await pdfFile.arrayBuffer()),
+      fileName: pdfFile.name,
+      fileSize: pdfFile.size,
       providerId: effectiveProviderId,
-      apiKey: resolvePDFApiKey(effectiveProviderId, managed ? undefined : apiKey || undefined),
-      baseUrl: resolvePDFBaseUrl(effectiveProviderId, clientBaseUrl),
-    };
-
-    // Convert PDF to buffer
-    const arrayBuffer = await pdfFile.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    const extract = async (parserConfig: typeof config) =>
-      documentArtifactToParsedPdfContent(
-        await extractDocument({
-          buffer,
-          fileName: pdfFile.name,
-          fileSize: pdfFile.size,
-          mimeType: 'application/pdf',
-          config: parserConfig,
-        }),
-      );
-
-    let result: ParsedPdfContent | undefined;
-    let primaryError: unknown;
-    try {
-      result = await extract(config);
-    } catch (error) {
-      primaryError = error;
-      if (effectiveProviderId !== 'unpdf') throw error;
-    }
-
-    if (effectiveProviderId === 'unpdf' && (!result || shouldUseOcrFallback(result.text))) {
-      for (const ocrProviderId of ['mineru', 'mineru-cloud'] as const) {
-        if (!isServerConfiguredProvider('pdf', ocrProviderId)) continue;
-        try {
-          const ocrResult = await extract({
-            providerId: ocrProviderId,
-            apiKey: resolvePDFApiKey(ocrProviderId),
-            baseUrl: resolvePDFBaseUrl(ocrProviderId),
-          });
-          if (!shouldUseOcrFallback(ocrResult.text)) {
-            result = ocrResult;
-            resolvedProviderId = ocrProviderId;
-            break;
-          }
-        } catch (ocrError) {
-          log.warn(
-            `OCR fallback failed [provider=${ocrProviderId}, file="${pdfFile.name}"]`,
-            ocrError,
-          );
-        }
-      }
-    }
-
-    if (!result) throw primaryError ?? new Error('No PDF parser returned usable content');
-    if (shouldUseOcrFallback(result.text)) {
-      throw new NoReadablePdfTextError();
-    }
-
-    // Add file metadata
-    const resultWithMetadata: ParsedPdfContent = {
-      ...result,
-      metadata: {
-        ...result.metadata,
-        pageCount: result.metadata?.pageCount ?? 0, // Ensure pageCount is always a number
-        fileName: pdfFile.name,
-        fileSize: pdfFile.size,
-      },
-    };
-
-    return apiSuccess({ data: resultWithMetadata });
+      apiKey: apiKey || undefined,
+      baseUrl: baseUrl || undefined,
+    });
+    resolvedProviderId = extracted.providerId;
+    return apiSuccess({ data: extracted.content });
   } catch (error) {
     log.error(
       `PDF parsing failed [provider=${resolvedProviderId ?? 'unknown'}, file="${pdfFileName ?? 'unknown'}"]:`,
@@ -136,6 +55,9 @@ export async function POST(req: NextRequest) {
     );
     if (error instanceof NoReadablePdfTextError) {
       return apiError(API_ERROR_CODES.NO_READABLE_PDF_TEXT, 422, error.message);
+    }
+    if (error instanceof InvalidPdfProviderUrlError) {
+      return apiError('INVALID_URL', 403, error.message);
     }
     return apiError(
       API_ERROR_CODES.PARSE_FAILED,

@@ -14,6 +14,21 @@ export interface CanvasValidationResult {
   outlinePreview?: { title: string; chapters: string[] };
 }
 
+export interface ParsedImportCanvasChapter {
+  title: string;
+  objective: string;
+  essentialContent: string;
+  practice: string;
+}
+
+export interface ParsedImportCanvas {
+  title: string;
+  outcome: string;
+  audience: string;
+  chapters: ParsedImportCanvasChapter[];
+  finalEvidence: string;
+}
+
 const ACCEPTED_EXTENSIONS = new Map([
   ['md', ['text/markdown', 'text/plain']],
   ['docx', ['application/vnd.openxmlformats-officedocument.wordprocessingml.document']],
@@ -67,6 +82,121 @@ function hasSection(headings: string[], aliases: readonly string[]): boolean {
   return headings.some((heading) => normalizedAliases.includes(normalizeHeading(heading)));
 }
 
+interface CanvasHeading {
+  level: number;
+  text: string;
+  index: number;
+}
+
+function parseHeadings(lines: string[]): CanvasHeading[] {
+  return lines
+    .map((line, index) => ({ line: line.trim(), index }))
+    .filter(({ line }) => /^#{1,3}\s+\S/.test(line))
+    .map(({ line, index }) => ({
+      level: line.match(/^#+/)?.[0].length ?? 0,
+      text: line.replace(/^#+\s*/, ''),
+      index,
+    }));
+}
+
+function headingBody(lines: string[], headings: CanvasHeading[], heading?: CanvasHeading): string {
+  if (!heading) return '';
+  const end =
+    headings.find(
+      (candidate) => candidate.index > heading.index && candidate.level <= heading.level,
+    )?.index ?? lines.length;
+  return lines
+    .slice(heading.index + 1, end)
+    .join('\n')
+    .trim();
+}
+
+function findHeading(
+  headings: CanvasHeading[],
+  level: number,
+  aliases: readonly string[],
+): CanvasHeading | undefined {
+  const normalizedAliases = aliases.map(normalizeHeading);
+  return headings.find(
+    (heading) =>
+      heading.level === level && normalizedAliases.includes(normalizeHeading(heading.text)),
+  );
+}
+
+function parseCanvas(text: string): {
+  lines: string[];
+  headings: CanvasHeading[];
+  titleHeadings: CanvasHeading[];
+  outcomeHeading?: CanvasHeading;
+  audienceHeading?: CanvasHeading;
+  evidenceHeading?: CanvasHeading;
+  chapters: Array<{
+    heading: CanvasHeading;
+    objectiveHeading?: CanvasHeading;
+    essentialHeading?: CanvasHeading;
+    practiceHeading?: CanvasHeading;
+  }>;
+} {
+  const lines = text.split(/\r?\n/);
+  const headings = parseHeadings(lines);
+  const levelTwoHeadings = headings.filter((heading) => heading.level === 2);
+  const chapterHeadings = levelTwoHeadings.filter((heading) =>
+    /^(chapitre|chapter|الفصل)\b/i.test(normalizeHeading(heading.text)),
+  );
+  const chapters = chapterHeadings.map((heading) => {
+    const end =
+      chapterHeadings.find((candidate) => candidate.index > heading.index)?.index ?? lines.length;
+    const children = headings.filter(
+      (candidate) =>
+        candidate.level === 3 && candidate.index > heading.index && candidate.index < end,
+    );
+    return {
+      heading,
+      objectiveHeading: findHeading(children, 3, SECTION_ALIASES.objective),
+      essentialHeading: findHeading(children, 3, SECTION_ALIASES.essential),
+      practiceHeading: findHeading(children, 3, SECTION_ALIASES.practice),
+    };
+  });
+
+  return {
+    lines,
+    headings,
+    titleHeadings: headings.filter((heading) => heading.level === 1),
+    outcomeHeading: findHeading(levelTwoHeadings, 2, SECTION_ALIASES.outcome),
+    audienceHeading: findHeading(levelTwoHeadings, 2, SECTION_ALIASES.audience),
+    evidenceHeading: findHeading(levelTwoHeadings, 2, SECTION_ALIASES.evidence),
+    chapters,
+  };
+}
+
+export function parseImportCanvas(text: string): ParsedImportCanvas | null {
+  const parsed = parseCanvas(text.trim());
+  const title = parsed.titleHeadings[0]?.text.trim() ?? '';
+  const outcome = headingBody(parsed.lines, parsed.headings, parsed.outcomeHeading);
+  const audience = headingBody(parsed.lines, parsed.headings, parsed.audienceHeading);
+  const finalEvidence = headingBody(parsed.lines, parsed.headings, parsed.evidenceHeading);
+  const chapters = parsed.chapters.map((chapter) => ({
+    title: chapter.heading.text.trim(),
+    objective: headingBody(parsed.lines, parsed.headings, chapter.objectiveHeading),
+    essentialContent: headingBody(parsed.lines, parsed.headings, chapter.essentialHeading),
+    practice: headingBody(parsed.lines, parsed.headings, chapter.practiceHeading),
+  }));
+  if (
+    parsed.titleHeadings.length !== 1 ||
+    !title ||
+    !outcome ||
+    !audience ||
+    !finalEvidence ||
+    chapters.length === 0 ||
+    chapters.some(
+      (chapter) => !chapter.objective || !chapter.essentialContent || !chapter.practice,
+    )
+  ) {
+    return null;
+  }
+  return { title, outcome, audience, chapters, finalEvidence };
+}
+
 function detectLanguage(text: string): SupportedCourseLanguage | undefined {
   const arabicCharacters = (text.match(/[\u0600-\u06ff]/g) ?? []).length;
   const latinCharacters = (text.match(/[A-Za-zÀ-ÿ]/g) ?? []).length;
@@ -113,51 +243,35 @@ export function validateImportCanvas(input: {
     issues.push(issue('CI-03', 'Règle CI-03 : Qalem n’identifie pas une langue prise en charge.'));
   }
 
-  const lines = text.split(/\r?\n/);
-  const headings = lines
-    .map((line, index) => ({ line: line.trim(), index }))
-    .filter(({ line }) => /^#{1,3}\s+\S/.test(line))
-    .map(({ line, index }) => ({
-      level: line.match(/^#+/)?.[0].length ?? 0,
-      text: line.replace(/^#+\s*/, ''),
-      index,
-    }));
-  const title = headings.find((heading) => heading.level === 1)?.text;
-  if (!title) {
+  const parsed = parseCanvas(text);
+  const title = parsed.titleHeadings[0]?.text;
+  const firstChapterIndex = parsed.chapters[0]?.heading.index ?? Number.POSITIVE_INFINITY;
+  if (
+    parsed.titleHeadings.length !== 1 ||
+    !title ||
+    parsed.titleHeadings[0].index > firstChapterIndex
+  ) {
     issues.push(
       issue('CI-04', 'Règle CI-04 : ajoutez un titre principal unique au début du document.'),
     );
   }
 
-  const levelTwoHeadings = headings.filter((heading) => heading.level === 2);
-  const topLevelSections = levelTwoHeadings.map((heading) => heading.text);
-  if (!hasSection(topLevelSections, SECTION_ALIASES.outcome)) {
+  if (!headingBody(parsed.lines, parsed.headings, parsed.outcomeHeading)) {
     issues.push(issue('CI-05', 'Règle CI-05 : indiquez le résultat professionnel visé.'));
   }
-  if (!hasSection(topLevelSections, SECTION_ALIASES.audience)) {
+  if (!headingBody(parsed.lines, parsed.headings, parsed.audienceHeading)) {
     issues.push(
       issue('CI-06', 'Règle CI-06 : précisez le public, son niveau et son contexte de travail.'),
     );
   }
 
-  const chapters = levelTwoHeadings.filter((heading) =>
-    /^(chapitre|chapter|الفصل)\b/i.test(normalizeHeading(heading.text)),
-  );
-  if (chapters.length === 0) {
+  if (parsed.chapters.length === 0) {
     issues.push(issue('CI-07', 'Règle CI-07 : aucun chapitre n’a été trouvé.'));
   }
 
-  for (const chapter of chapters) {
-    const nextChapterIndex =
-      chapters.find((candidate) => candidate.index > chapter.index)?.index ?? lines.length;
-    const chapterHeadings = headings
-      .filter(
-        (heading) =>
-          heading.level === 3 && heading.index > chapter.index && heading.index < nextChapterIndex,
-      )
-      .map((heading) => heading.text);
-    const chapterPath = chapter.text;
-    if (!hasSection(chapterHeadings, SECTION_ALIASES.objective)) {
+  for (const chapter of parsed.chapters) {
+    const chapterPath = chapter.heading.text;
+    if (!headingBody(parsed.lines, parsed.headings, chapter.objectiveHeading)) {
       issues.push(
         issue(
           'CI-08',
@@ -166,7 +280,7 @@ export function validateImportCanvas(input: {
         ),
       );
     }
-    if (!hasSection(chapterHeadings, SECTION_ALIASES.essential)) {
+    if (!headingBody(parsed.lines, parsed.headings, chapter.essentialHeading)) {
       issues.push(
         issue(
           'CI-09',
@@ -175,7 +289,7 @@ export function validateImportCanvas(input: {
         ),
       );
     }
-    if (!hasSection(chapterHeadings, SECTION_ALIASES.practice)) {
+    if (!headingBody(parsed.lines, parsed.headings, chapter.practiceHeading)) {
       issues.push(
         issue(
           'CI-10',
@@ -186,7 +300,7 @@ export function validateImportCanvas(input: {
     }
   }
 
-  if (!hasSection(topLevelSections, SECTION_ALIASES.evidence)) {
+  if (!headingBody(parsed.lines, parsed.headings, parsed.evidenceHeading)) {
     issues.push(issue('CI-11', 'Règle CI-11 : ajoutez une preuve finale d’application.'));
   }
   if (!input.rightsAttested || PII_PATTERNS.some((pattern) => pattern.test(text))) {
@@ -197,11 +311,19 @@ export function validateImportCanvas(input: {
       ),
     );
   }
-  if (
-    chapters.some((chapter) =>
-      headings.some((heading) => heading.level === 3 && heading.index < chapter.index),
-    )
-  ) {
+  const requiredSubsectionAliases = [
+    ...SECTION_ALIASES.objective,
+    ...SECTION_ALIASES.essential,
+    ...SECTION_ALIASES.practice,
+  ];
+  const requiredSubsectionsOutsideChapter = parsed.headings.some((heading) => {
+    if (heading.level !== 3 || !hasSection([heading.text], requiredSubsectionAliases)) return false;
+    return !parsed.chapters.some((chapter, index) => {
+      const end = parsed.chapters[index + 1]?.heading.index ?? parsed.lines.length;
+      return heading.index > chapter.heading.index && heading.index < end;
+    });
+  });
+  if (requiredSubsectionsOutsideChapter) {
     issues.push(
       issue('CI-13', 'Règle CI-13 : placez chaque sous-section sous le chapitre concerné.'),
     );
@@ -214,6 +336,9 @@ export function validateImportCanvas(input: {
     status: 'conform',
     language,
     issues: [],
-    outlinePreview: { title: title!, chapters: chapters.map((chapter) => chapter.text) },
+    outlinePreview: {
+      title: title!,
+      chapters: parsed.chapters.map((chapter) => chapter.heading.text),
+    },
   };
 }

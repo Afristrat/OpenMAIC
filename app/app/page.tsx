@@ -103,6 +103,18 @@ type ClassroomPlanJobStatusResponse = {
   sourceAlignment?: SourceConflict;
 };
 
+type CourseImportResponse = {
+  importId?: string;
+  courseId?: string;
+  sourceManifestId?: string;
+  plan?: ClassroomPlan;
+  validation?: {
+    status: 'conform' | 'rejected';
+    issues: Array<{ rule: string; path?: string; message: string }>;
+  };
+  error?: string;
+};
+
 async function readJsonResponse<T extends object>(
   response: Response,
   fallbackMessage: string,
@@ -196,6 +208,8 @@ function HomePage() {
   const ttsProviderId = useSettingsStore((s) => s.ttsProviderId);
   const ttsVoice = useSettingsStore((s) => s.ttsVoice);
   const ttsProvidersConfig = useSettingsStore((s) => s.ttsProvidersConfig);
+  const pdfProviderId = useSettingsStore((s) => s.pdfProviderId);
+  const pdfProvidersConfig = useSettingsStore((s) => s.pdfProvidersConfig);
   const [recentOpen, setRecentOpen] = useState(true);
   const persistRecentOpen = (next: boolean) => {
     setRecentOpen(next);
@@ -345,15 +359,17 @@ function HomePage() {
   > | null>(null);
   const planPollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [classrooms, setClassrooms] = useState<StageListItem[]>([]);
-  // Imports remain disabled until their payloads are persisted through the
-  // organization-scoped API, rather than silently creating browser-only courses.
-  const importing = true;
+  const [importAvailability, setImportAvailability] = useState<{
+    orgId: string;
+    enabled: boolean;
+  } | null>(null);
+  const importEnabled =
+    !!currentOrg && importAvailability?.orgId === currentOrg.id && importAvailability.enabled;
+  const [importing, setImporting] = useState(false);
   const pptxImporting = true;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pptxFileInputRef = useRef<HTMLInputElement>(null);
-  const triggerFileSelect = () => undefined;
   const triggerPptxFileSelect = () => undefined;
-  const handleFileChange = () => undefined;
   const handlePptxFileChange = () => undefined;
   const [thumbnails, setThumbnails] = useState<Record<string, Slide>>({});
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -383,6 +399,26 @@ function HomePage() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [themeOpen]);
+
+  useEffect(() => {
+    if (!currentOrg || !user || !canAuthor) return;
+    const controller = new AbortController();
+    const orgId = currentOrg.id;
+    void fetch(`/api/courses/import?orgId=${encodeURIComponent(currentOrg.id)}`, {
+      signal: controller.signal,
+      cache: 'no-store',
+    })
+      .then(async (response) => {
+        if (!response.ok) return setImportAvailability({ orgId, enabled: false });
+        const result = (await response.json()) as { enabled?: boolean };
+        setImportAvailability({ orgId, enabled: result.enabled === true });
+      })
+      .catch((requestError: unknown) => {
+        if (requestError instanceof DOMException && requestError.name === 'AbortError') return;
+        setImportAvailability({ orgId, enabled: false });
+      });
+    return () => controller.abort();
+  }, [canAuthor, currentOrg, user]);
 
   const loadClassrooms = async () => {
     if (!currentOrg) {
@@ -585,6 +621,142 @@ function HomePage() {
     };
   }, []);
 
+  const buildGenerationRequest = (input: {
+    requirement: string;
+    courseId?: string;
+    sourceManifestId?: string;
+    learningApproach?: LearningApproach;
+    interactionLevel?: InteractionLevel;
+  }) => {
+    if (!currentOrg) throw new Error(t('upload.generateFailed'));
+    const learningApproach = input.learningApproach ?? form.learningApproach;
+    const interactionLevel = input.interactionLevel ?? form.interactionLevel;
+    if (!learningApproach || !interactionLevel) throw new Error(t('animation.selectionRequired'));
+    return {
+      orgId: currentOrg.id,
+      ...(input.courseId ? { courseId: input.courseId } : {}),
+      ...(input.sourceManifestId ? { sourceManifestId: input.sourceManifestId } : {}),
+      language: locale,
+      modelString: `${languageProviderId}:${languageModelId}`,
+      learningApproach,
+      interactionLevel,
+      learningContext: normalizeLearningContext(form.learningContext),
+      requirement: input.requirement,
+      enableWebSearch: form.webSearch,
+      enableImageGeneration: imageGenerationEnabled,
+      imageProviderId,
+      imageModelId,
+      enableVideoGeneration: videoGenerationEnabled,
+      enableTTS: ttsEnabled,
+      interactiveMode: form.vocationalTestMode ? true : form.interactiveMode,
+      agentMode: agentMode === 'auto' ? 'generate' : 'default',
+      selectedPersonaIds: selectedAgentIds
+        .map((id) => id.replace(/^persona-/, ''))
+        .filter((id) => !id.startsWith('default-') && !id.startsWith('specialist-')),
+      contextualSpecialists: contextualSpecialists.filter((specialist) =>
+        selectedAgentIds.includes(specialist.id),
+      ),
+      agentVoiceOverrides,
+      teacherVoiceConfig: {
+        providerId: ttsProviderId,
+        modelId: ttsProvidersConfig[ttsProviderId]?.modelId,
+        voiceId: ttsVoice,
+        voiceName: TTS_PROVIDERS[ttsProviderId as BuiltInTTSProviderId]?.voices.find(
+          (voice) => voice.id === ttsVoice,
+        )?.name,
+        gender: TTS_PROVIDERS[ttsProviderId as BuiltInTTSProviderId]?.voices.find(
+          (voice) => voice.id === ttsVoice,
+        )?.gender,
+      },
+      ...(activeSkillId ? { activeSkillId } : {}),
+    };
+  };
+
+  const triggerFileSelect = () => {
+    if (!user) {
+      const returnPath = `${window.location.pathname}${window.location.search}`;
+      router.push(`/auth?next=${encodeURIComponent(returnPath)}`);
+      return;
+    }
+    if (!currentOrg || !canAuthor || !importEnabled || importing) return;
+    if (!window.confirm(t('import.canvasRightsAttestation'))) return;
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = '';
+    if (!file || !currentOrg || !user || !canAuthor || importing) return;
+    setImporting(true);
+    setError(null);
+    try {
+      const formData = new FormData();
+      formData.set('file', file);
+      formData.set('orgId', currentOrg.id);
+      formData.set('rightsAttested', 'true');
+      if (file.name.toLowerCase().endsWith('.pdf')) {
+        const preferredProviderId = pdfProvidersConfig.mineru?.isServerConfigured
+          ? 'mineru'
+          : pdfProvidersConfig['mineru-cloud']?.isServerConfigured
+            ? 'mineru-cloud'
+            : pdfProviderId;
+        const providerConfig = pdfProvidersConfig[preferredProviderId];
+        formData.set('providerId', preferredProviderId);
+        if (!providerConfig?.isServerConfigured && providerConfig?.apiKey.trim()) {
+          formData.set('apiKey', providerConfig.apiKey.trim());
+        }
+        if (!providerConfig?.isServerConfigured && providerConfig?.baseUrl.trim()) {
+          formData.set('baseUrl', providerConfig.baseUrl.trim());
+        }
+      }
+      const response = await fetch('/api/courses/import', { method: 'POST', body: formData });
+      const result = await readJsonResponse<CourseImportResponse>(
+        response,
+        t('import.canvasFailed'),
+      );
+      if (
+        !response.ok ||
+        result.validation?.status !== 'conform' ||
+        !result.plan ||
+        !result.courseId ||
+        !result.sourceManifestId
+      ) {
+        const diagnostics = result.validation?.issues
+          .map((issue) =>
+            t(`import.canvas.${issue.rule.toLowerCase()}`, {
+              chapter: issue.path ?? '',
+            }),
+          )
+          .join('\n');
+        throw new Error(diagnostics || result.error || t('import.canvasFailed'));
+      }
+      const learningApproach = form.learningApproach ?? 'andragogy';
+      const interactionLevel = form.interactionLevel ?? 'balanced';
+      const requirement = `${result.plan.languageDirective}\n\n${result.plan.syllabus.overallObjective}\n\n${result.plan.syllabus.expectedDeliverable}`;
+      setForm((previous) => ({
+        ...previous,
+        requirement: result.plan!.syllabus.overallObjective,
+        learningApproach,
+        interactionLevel,
+      }));
+      setPendingGenerationRequest(
+        buildGenerationRequest({
+          requirement,
+          courseId: result.courseId,
+          sourceManifestId: result.sourceManifestId,
+          learningApproach,
+          interactionLevel,
+        }),
+      );
+      setDraftPlan(result.plan);
+      toast.success(t('import.canvasReady'));
+    } catch (importError) {
+      setError(importError instanceof Error ? importError.message : t('import.canvasFailed'));
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const handleGenerate = async () => {
     // No model/provider guard here: generation is gated by `canGenerate`
     // (requires a usable provider), and under the #580 invariant a usable
@@ -628,43 +800,10 @@ function HomePage() {
       };
 
       setIsPlanning(true);
-      const generationRequest = {
-        orgId: currentOrg.id,
-        ...(sourceManifestId ? { sourceManifestId } : {}),
-        language: locale,
-        modelString: `${languageProviderId}:${languageModelId}`,
-        learningApproach: form.learningApproach,
-        interactionLevel: form.interactionLevel,
-        learningContext: normalizeLearningContext(form.learningContext),
+      const generationRequest = buildGenerationRequest({
         requirement: requirements.requirement,
-        enableWebSearch: form.webSearch,
-        enableImageGeneration: imageGenerationEnabled,
-        imageProviderId,
-        imageModelId,
-        enableVideoGeneration: videoGenerationEnabled,
-        enableTTS: ttsEnabled,
-        interactiveMode: form.vocationalTestMode ? true : form.interactiveMode,
-        agentMode: agentMode === 'auto' ? 'generate' : 'default',
-        selectedPersonaIds: selectedAgentIds
-          .map((id) => id.replace(/^persona-/, ''))
-          .filter((id) => !id.startsWith('default-') && !id.startsWith('specialist-')),
-        contextualSpecialists: contextualSpecialists.filter((specialist) =>
-          selectedAgentIds.includes(specialist.id),
-        ),
-        agentVoiceOverrides,
-        teacherVoiceConfig: {
-          providerId: ttsProviderId,
-          modelId: ttsProvidersConfig[ttsProviderId]?.modelId,
-          voiceId: ttsVoice,
-          voiceName: TTS_PROVIDERS[ttsProviderId as BuiltInTTSProviderId]?.voices.find(
-            (voice) => voice.id === ttsVoice,
-          )?.name,
-          gender: TTS_PROVIDERS[ttsProviderId as BuiltInTTSProviderId]?.voices.find(
-            (voice) => voice.id === ttsVoice,
-          )?.gender,
-        },
-        ...(requirements.activeSkillId ? { activeSkillId: requirements.activeSkillId } : {}),
-      };
+        sourceManifestId,
+      });
       const response = await fetch('/api/generate-classroom/plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -888,9 +1027,10 @@ function HomePage() {
       <input
         ref={fileInputRef}
         type="file"
-        accept=".zip"
+        accept=".md,text/markdown,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.pdf,application/pdf"
         onChange={handleFileChange}
         className="hidden"
+        data-testid="course-canvas-file-input"
       />
       {PPTX_IMPORT_ENABLED && (
         <input
@@ -1410,21 +1550,23 @@ function HomePage() {
               exit={{ opacity: 0, height: 0 }}
               className="mt-3 w-full p-3 bg-destructive/10 border border-destructive/20 rounded-lg"
             >
-              <p className="text-sm text-destructive">{error}</p>
+              <p className="whitespace-pre-line text-sm text-destructive">{error}</p>
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* ── Import buttons (empty state) ── */}
-        {classrooms.length === 0 && !importing && (
+        {classrooms.length === 0 && importEnabled && (
           <div className="relative z-10 mt-4 flex items-center gap-4">
             <button
+              type="button"
               onClick={triggerFileSelect}
               disabled={importing}
+              data-testid="course-canvas-import"
               className="flex items-center gap-1.5 text-[12px] text-muted-foreground/40 hover:text-foreground/60 transition-colors"
             >
               <Upload className="size-3.5" />
-              <span>{t('import.classroom')}</span>
+              <span>{importing ? t('import.canvasProcessing') : t('import.canvas')}</span>
             </button>
             {PPTX_IMPORT_ENABLED && (
               <button
@@ -1574,15 +1716,17 @@ function HomePage() {
                 )}
               </AnimatePresence>
 
-              {!importing && (
+              {importEnabled && (
                 <button
+                  type="button"
                   onClick={triggerFileSelect}
                   disabled={importing}
+                  data-testid="course-canvas-import"
                   className="group/import grid grid-cols-[auto_0fr] hover:grid-cols-[auto_1fr] items-center gap-1 rounded-full px-1.5 py-0.5 text-[12px] text-muted-foreground/35 hover:text-muted-foreground/70 hover:bg-muted/50 transition-all duration-200 cursor-pointer"
                 >
                   <Upload className="size-3" />
                   <span className="overflow-hidden opacity-0 group-hover/import:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-                    {t('import.classroom')}
+                    {importing ? t('import.canvasProcessing') : t('import.canvas')}
                   </span>
                 </button>
               )}
