@@ -360,6 +360,73 @@ async function main(): Promise<void> {
       locale: 'fr-FR',
       serviceWorkers: process.env.PROOF_QUIZ_ONLY === '1' ? 'block' : 'allow',
     });
+    await context.addInitScript(() => {
+      const NativeAudio = window.Audio;
+      const records: Array<{
+        src: string;
+        events: Array<{
+          type: string;
+          at: number;
+          currentTime: number;
+          duration: number | null;
+          readyState: number;
+          networkState: number;
+          paused: boolean;
+          playbackRate: number;
+          errorCode: number | null;
+        }>;
+      }> = [];
+      const snapshot = (audio: HTMLAudioElement, type: string) => ({
+        type,
+        at: Date.now(),
+        currentTime: audio.currentTime,
+        duration: Number.isFinite(audio.duration) ? audio.duration : null,
+        readyState: audio.readyState,
+        networkState: audio.networkState,
+        paused: audio.paused,
+        playbackRate: audio.playbackRate,
+        errorCode: audio.error?.code ?? null,
+      });
+      const TrackedAudio = function (src?: string): HTMLAudioElement {
+        const audio = new NativeAudio(src);
+        const record = { src: src ?? '', events: [] as ReturnType<typeof snapshot>[] };
+        records.push(record);
+        for (const type of [
+          'loadstart',
+          'loadedmetadata',
+          'canplay',
+          'playing',
+          'waiting',
+          'stalled',
+          'suspend',
+          'error',
+          'ended',
+          'pause',
+          'abort',
+          'emptied',
+        ]) {
+          audio.addEventListener(type, () => {
+            record.src = audio.currentSrc || audio.src;
+            record.events.push(snapshot(audio, type));
+          });
+        }
+        const nativePlay = audio.play.bind(audio);
+        audio.play = () => {
+          record.src = audio.currentSrc || audio.src;
+          record.events.push(snapshot(audio, 'play-called'));
+          const result = nativePlay();
+          void result.then(
+            () => record.events.push(snapshot(audio, 'play-resolved')),
+            () => record.events.push(snapshot(audio, 'play-rejected')),
+          );
+          return result;
+        };
+        return audio;
+      } as unknown as typeof Audio;
+      TrackedAudio.prototype = NativeAudio.prototype;
+      Object.defineProperty(window, 'Audio', { configurable: true, value: TrackedAudio });
+      Object.defineProperty(window, '__s6013AudioRecords', { configurable: true, value: records });
+    });
     page = await context.newPage();
     page.on('console', (message) => {
       if (message.type() === 'warning' || message.type() === 'error') {
@@ -1058,6 +1125,23 @@ async function main(): Promise<void> {
   } catch (error) {
     evidence.browser = { consoleSignals, pageErrors, httpErrors };
     evidence.error = error instanceof Error ? (error.stack ?? error.message) : String(error);
+    if (page) {
+      await page
+        .screenshot({ path: join(ARTIFACT_DIR, 'failure.png'), fullPage: true })
+        .catch(() => undefined);
+      const diagnostics = await page
+        .evaluate(() =>
+          (window as typeof window & { __s6013AudioRecords?: unknown }).__s6013AudioRecords ?? [],
+        )
+        .catch((diagnosticError) => ({
+          unavailable:
+            diagnosticError instanceof Error ? diagnosticError.message : String(diagnosticError),
+        }));
+      await writeFile(
+        join(ARTIFACT_DIR, 'playback-diagnostics.json'),
+        JSON.stringify(diagnostics, null, 2),
+      );
+    }
     throw error;
   } finally {
     if (page && classroomId) {
