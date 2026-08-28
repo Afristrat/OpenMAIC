@@ -360,84 +360,56 @@ async function main(): Promise<void> {
       locale: 'fr-FR',
       serviceWorkers: process.env.PROOF_QUIZ_ONLY === '1' ? 'block' : 'allow',
     });
-    await context.addInitScript(() => {
-      const records: Array<{
-        src: string;
-        events: Array<{
-          type: string;
-          at: number;
-          currentTime: number;
-          duration: number | null;
-          readyState: number;
-          networkState: number;
-          paused: boolean;
-          playbackRate: number;
-          errorCode: number | null;
-        }>;
-      }> = [];
-      const diagnosticWindow = window as typeof window & {
-        __s6013AudioRecords?: typeof records;
-        __s6013AudioInitError?: string;
-      };
-      Object.defineProperty(diagnosticWindow, '__s6013AudioRecords', {
-        configurable: true,
-        value: records,
-      });
-      try {
-        const recordByMedia = new WeakMap<HTMLMediaElement, (typeof records)[number]>();
-        const snapshot = (audio: HTMLMediaElement, type: string) => ({
-          type,
-          at: Date.now(),
-          currentTime: audio.currentTime,
-          duration: Number.isFinite(audio.duration) ? audio.duration : null,
-          readyState: audio.readyState,
-          networkState: audio.networkState,
-          paused: audio.paused,
-          playbackRate: audio.playbackRate,
-          errorCode: audio.error?.code ?? null,
+    await context.addInitScript({
+      content: `(() => {
+        const records = [];
+        Object.defineProperty(window, '__s6013AudioRecords', {
+          configurable: true,
+          value: records,
         });
-        const nativePlay = HTMLMediaElement.prototype.play;
-        HTMLMediaElement.prototype.play = function () {
-          let record = recordByMedia.get(this);
-          if (!record) {
-            record = { src: this.currentSrc || this.src, events: [] };
-            recordByMedia.set(this, record);
-            records.push(record);
-          }
-          for (const type of [
-            'loadstart',
-            'loadedmetadata',
-            'canplay',
-            'playing',
-            'waiting',
-            'stalled',
-            'suspend',
-            'error',
-            'ended',
-            'pause',
-            'abort',
-            'emptied',
-          ]) {
-            if (record.events.length === 0) {
-              this.addEventListener(type, () => {
-                record!.src = this.currentSrc || this.src;
-                record!.events.push(snapshot(this, type));
-              });
+        try {
+          const recordByMedia = new WeakMap();
+          const snapshot = (audio, type) => ({
+            type,
+            at: Date.now(),
+            currentTime: audio.currentTime,
+            duration: Number.isFinite(audio.duration) ? audio.duration : null,
+            readyState: audio.readyState,
+            networkState: audio.networkState,
+            paused: audio.paused,
+            playbackRate: audio.playbackRate,
+            errorCode: audio.error?.code ?? null,
+          });
+          const nativePlay = HTMLMediaElement.prototype.play;
+          HTMLMediaElement.prototype.play = function () {
+            let record = recordByMedia.get(this);
+            if (!record) {
+              record = { src: this.currentSrc || this.src, events: [] };
+              recordByMedia.set(this, record);
+              records.push(record);
+              for (const type of [
+                'loadstart', 'loadedmetadata', 'canplay', 'playing', 'waiting',
+                'stalled', 'suspend', 'error', 'ended', 'pause', 'abort', 'emptied',
+              ]) {
+                this.addEventListener(type, () => {
+                  record.src = this.currentSrc || this.src;
+                  record.events.push(snapshot(this, type));
+                });
+              }
             }
-          }
-          record.src = this.currentSrc || this.src;
-          record.events.push(snapshot(this, 'play-called'));
-          const result = nativePlay.call(this);
-          void result.then(
-            () => record!.events.push(snapshot(this, 'play-resolved')),
-            () => record!.events.push(snapshot(this, 'play-rejected')),
-          );
-          return result;
-        };
-      } catch (error) {
-        diagnosticWindow.__s6013AudioInitError =
-          error instanceof Error ? error.message : String(error);
-      }
+            record.src = this.currentSrc || this.src;
+            record.events.push(snapshot(this, 'play-called'));
+            const result = nativePlay.call(this);
+            void result.then(
+              () => record.events.push(snapshot(this, 'play-resolved')),
+              () => record.events.push(snapshot(this, 'play-rejected')),
+            );
+            return result;
+          };
+        } catch (error) {
+          window.__s6013AudioInitError = error instanceof Error ? error.message : String(error);
+        }
+      })();`,
     });
     page = await context.newPage();
     page.on('console', (message) => {
