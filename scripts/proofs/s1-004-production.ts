@@ -79,7 +79,10 @@ async function main(): Promise<void> {
     await page.getByText('Loading classroom...').waitFor({ state: 'hidden', timeout: 30_000 });
     await page.locator('[data-testid="scene-item"]').first().waitFor({ state: 'attached' });
     evidence.classroomReached = true;
-    await page.screenshot({ path: join(ARTIFACT_DIR!, 'catalog-to-classroom.png'), fullPage: true });
+    await page.screenshot({
+      path: join(ARTIFACT_DIR!, 'catalog-to-classroom.png'),
+      fullPage: true,
+    });
 
     await page.goto(`${BASE_URL}/catalog`, { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: 'FR', exact: true }).click();
