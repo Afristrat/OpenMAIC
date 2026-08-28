@@ -145,7 +145,8 @@ function parseCanvas(text: string): {
   );
   const chapters = chapterHeadings.map((heading) => {
     const end =
-      chapterHeadings.find((candidate) => candidate.index > heading.index)?.index ?? lines.length;
+      headings.find((candidate) => candidate.index > heading.index && candidate.level <= 2)?.index ??
+      lines.length;
     const children = headings.filter(
       (candidate) =>
         candidate.level === 3 && candidate.index > heading.index && candidate.index < end,
@@ -316,8 +317,11 @@ export function validateImportCanvas(input: {
   ];
   const requiredSubsectionsOutsideChapter = parsed.headings.some((heading) => {
     if (heading.level !== 3 || !hasSection([heading.text], requiredSubsectionAliases)) return false;
-    return !parsed.chapters.some((chapter, index) => {
-      const end = parsed.chapters[index + 1]?.heading.index ?? parsed.lines.length;
+    return !parsed.chapters.some((chapter) => {
+      const end =
+        parsed.headings.find(
+          (candidate) => candidate.index > chapter.heading.index && candidate.level <= 2,
+        )?.index ?? parsed.lines.length;
       return heading.index > chapter.heading.index && heading.index < end;
     });
   });

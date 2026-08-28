@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   insert: vi.fn(),
   update: vi.fn(),
   select: vi.fn(),
+  eqId: vi.fn(),
   eqOwner: vi.fn(),
   eqOrg: vi.fn(),
   single: vi.fn(),
@@ -34,7 +35,8 @@ describe('course storage import lifecycle', () => {
     mocks.maybeSingle.mockResolvedValue({ data: { id: 'course-imported' }, error: null });
     mocks.select.mockReturnValue({ single: mocks.single, maybeSingle: mocks.maybeSingle });
     mocks.insert.mockReturnValue({ select: mocks.select });
-    mocks.update.mockReturnValue({ eq: mocks.eqOwner });
+    mocks.update.mockReturnValue({ eq: mocks.eqId });
+    mocks.eqId.mockReturnValue({ eq: mocks.eqOwner });
     mocks.eqOwner.mockReturnValue({ eq: mocks.eqOrg });
     mocks.eqOrg.mockReturnValue({ select: mocks.select });
     mocks.from.mockReturnValue({ insert: mocks.insert, update: mocks.update });
