@@ -428,9 +428,9 @@ async function main(): Promise<void> {
       Object.defineProperty(window, '__s6013AudioRecords', { configurable: true, value: records });
     });
     page = await context.newPage();
-    const audioInstrumentationReady = await page.evaluate(async () => {
+    const audioInstrumentationReady = await page.evaluate(() => {
       const audio = new Audio();
-      await audio.play().catch(() => undefined);
+      void audio.play().catch(() => undefined);
       const records = (window as typeof window & { __s6013AudioRecords?: unknown[] })
         .__s6013AudioRecords;
       const ready = records?.some((record) => JSON.stringify(record).includes('play-called'));
