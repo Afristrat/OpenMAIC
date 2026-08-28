@@ -215,6 +215,10 @@ export async function slideToPng(
       height,
       scale: pixelRatio,
       useCORS: true,
+      // The clone runs in a sandboxed null-origin iframe. Page scripts are not
+      // needed for rasterization and third-party beacons (for example
+      // Cloudflare RUM) would otherwise execute again and fail CORS there.
+      ignoreElements: (element) => element.tagName === 'SCRIPT',
       // Skip walking the page's stylesheets; the cloned DOM already inherits
       // computed styles. This also avoids CORS errors when the document has
       // cross-origin stylesheets.

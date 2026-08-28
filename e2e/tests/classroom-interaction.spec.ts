@@ -395,9 +395,20 @@ test.describe('Classroom Interaction', () => {
 
   test('exports the complete classroom as an MP4 download', async ({ page, mockApi }) => {
     await mockApi.mockMp4ExportDone();
+    let snapshotScriptRequests = 0;
+    await page.route('**/snapshot-clone-probe.js', (route) => {
+      snapshotScriptRequests += 1;
+      return route.fulfill({ contentType: 'application/javascript', body: 'void 0;' });
+    });
     const classroom = new ClassroomPage(page);
     await classroom.goto(TEST_STAGE_ID);
     await classroom.waitForLoaded();
+    await page.evaluate(() => {
+      const script = document.createElement('script');
+      script.src = '/snapshot-clone-probe.js';
+      document.head.appendChild(script);
+    });
+    await expect.poll(() => snapshotScriptRequests).toBe(1);
 
     await page.getByRole('button', { name: 'Export PPTX' }).click();
     const mp4Export = page.getByTestId('export-mp4');
@@ -406,6 +417,7 @@ test.describe('Classroom Interaction', () => {
     await mp4Export.click();
     const download = await downloadPromise;
     expect(download.suggestedFilename(), download.url()).toContain('.mp4');
+    expect(snapshotScriptRequests).toBe(1);
   });
 
   test('exports every downloadable format from the current editable classroom', async ({
