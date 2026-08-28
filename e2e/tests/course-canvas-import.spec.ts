@@ -34,6 +34,8 @@ const plan = {
       title: 'Preuve finale d’application',
       description: 'Produire une fiche d’expérimentation.',
       keyPoints: ['Définir un critère d’arrêt.'],
+      teachingObjective: 'Produire une preuve d’application utilisable.',
+      estimatedDuration: 900,
       order: 2,
     },
   ],
