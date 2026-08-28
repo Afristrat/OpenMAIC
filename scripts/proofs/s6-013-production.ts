@@ -715,7 +715,10 @@ async function main(): Promise<void> {
       const questionGroup = page.getByRole('group', { name: questionText, exact: true });
       await questionGroup.waitFor();
       const answerButton = questionGroup.getByRole('button').nth(optionIndex);
-      assert((await answerButton.textContent())?.includes(label), `Displayed option differs: ${label}`);
+      assert(
+        (await answerButton.textContent())?.includes(label),
+        `Displayed option differs: ${label}`,
+      );
       await answerButton.click();
     }
     await page.getByRole('button', { name: 'Soumettre les réponses' }).click();
