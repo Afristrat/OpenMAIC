@@ -397,11 +397,31 @@ async function main(): Promise<void> {
           },
           scenes: [
             {
+              id: `${classroomId}-intro`,
+              stageId: classroomId,
+              type: 'slide',
+              title: 'Introduction ciblée',
+              order: 0,
+              content: {
+                type: 'slide',
+                canvas: {
+                  id: `${classroomId}-canvas`,
+                  viewportSize: 1000,
+                  viewportRatio: 0.5625,
+                  elements: [],
+                  background: { type: 'solid', color: '#ffffff' },
+                },
+              },
+              actions: [],
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+            },
+            {
               id: `${classroomId}-scene`,
               stageId: classroomId,
               type: 'quiz',
               title: 'Quiz ciblé',
-              order: 0,
+              order: 1,
               content: {
                 type: 'quiz',
                 questions: [
@@ -432,11 +452,11 @@ async function main(): Promise<void> {
       evidence.generation = {
         jobId: 'deterministic-quiz-fixture',
         classroomId,
-        sceneCount: 1,
+        sceneCount: 2,
         durationMs: 0,
       };
       await waitForClassroom(page, classroomId);
-      await page.locator('[data-testid="scene-item"]').first().click();
+      await page.locator('[data-testid="scene-item"]').nth(1).click();
       const startQuizButton = page.getByRole('button', { name: 'Démarrer le quiz' });
       const submitQuizButton = page.getByRole('button', { name: 'Soumettre les réponses' });
       await startQuizButton.waitFor();
@@ -457,7 +477,7 @@ async function main(): Promise<void> {
       await page.getByText('100%', { exact: true }).waitFor();
       await page.reload({ waitUntil: 'domcontentloaded' });
       await page.getByText('Loading classroom...').waitFor({ state: 'hidden', timeout: 30_000 });
-      await page.locator('[data-testid="scene-item"]').first().click();
+      await page.locator('[data-testid="scene-item"]').nth(1).click();
       const persistedAfterReload = await page.getByText('100%', { exact: true }).isVisible();
       assert(persistedAfterReload, 'Targeted quiz result did not survive reload');
       evidence.quiz = { questionCount: 1, correctCount: 1, persistedAfterReload };
