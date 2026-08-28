@@ -16,8 +16,8 @@ Aucune fonctionnalité n’est implémentée par cette opération documentaire.
 - 65 stories v2 inventoriées : 26 ouvertes reprises, 3 rouvertes, 36 acceptations historiques conservées sans recertification.
 - 72 stories v1/UI rattachées à une décision de conservation et à leurs US de suivi ; 18 capacités héritées sont explicitement remises en suivi.
 - 20 demandes/ensembles d’engagements rattachés à des US.
-- 67 US au registre : 11 à implémenter, 11 à valider, 21 avec décision préalable et 5 bloquées ; 19 sont soldées.
-- Dix-neuf US sont soldées sur preuves actuelles. Une décision de retrait n’est jamais une réussite d’implémentation.
+- 67 US au registre : 10 à implémenter, 11 à valider, 21 avec décision préalable et 5 bloquées ; 20 sont soldées.
+- Vingt US sont soldées sur preuves actuelles. Une décision de retrait n’est jamais une réussite d’implémentation.
 - S0-015 est entièrement certifiée côté machine sur le SHA déployé `6ea54d9` ; seule l’écoute humaine SOP-011 maintient son état « À valider ».
 
 ## Limites de preuve
@@ -101,7 +101,7 @@ Les descriptions et critères exécutables complets sont dans le JSON canonique.
 | 29   | S1-008 | P2       | Soldée           | Export couche 2 : adaptateurs scorm12/scorm2004/cmi5 interchangeables                 |
 | 30   | S1-010 | P2       | À valider        | Export PPTX re-vérifié sur la nouvelle base                                           |
 | 31   | S1-004 | P2       | Soldée           | Catalogue interne (porte 2) [UI]                                                      |
-| 32   | S1-005 | P2       | À implémenter    | Import → outline éditable (porte 3)                                                   |
+| 32   | S1-005 | P2       | Soldée           | Import → outline éditable (porte 3)                                                   |
 | 33   | S6-016 | P2       | Décision requise | Clore le cadrage NP des widgets à partir du produit actuel                            |
 | 34   | S6-015 | P2       | Décision requise | Composer et publier des widgets déterministes sans redéploiement                      |
 | 35   | S6-011 | P2       | Décision requise | Réconcilier puis livrer les canaux de rappel e-mail et WhatsApp retenus               |

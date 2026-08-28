@@ -2809,8 +2809,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Import → outline éditable (porte 3) » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "1-CRÉER",
       "priority": "P2",
-      "status": "to_implement",
-      "passes": false,
+      "status": "to_validate",
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S1-005",
@@ -2818,14 +2818,28 @@
       },
       "sourceDependencies": ["S1-003"],
       "dependencies": [],
-      "gap": "Persistance du verdict d’import présente ; le parcours complet dépôt conforme → édition → ready reste à prouver et compléter.",
-      "evidence": ["lib/server/course-import-storage.ts", "lib/server/course-storage.ts"],
+      "gap": "Soldé : le dépôt MD/DOCX/PDF conforme produit un plan natif éditable, le même cours importé passe de draft à ready sans perdre sa provenance et le PDF réutilise le provider existant. L’activation publique reste volontairement fermée par le flag import_pipeline jusqu’à validation des prérequis juridiques de conservation.",
+      "evidence": [
+        "app/api/courses/import/route.ts",
+        "app/app/page.tsx",
+        "lib/courses/import-canvas-to-plan.ts",
+        "lib/server/course-import-document.ts",
+        "lib/server/course-import-pipeline.ts",
+        "lib/server/course-storage.ts",
+        "e2e/tests/course-canvas-import.spec.ts",
+        "docs/validation/S1-005-course-import.md"
+      ],
       "acceptance": [
         "Contenu conforme → outline dans l'Editor natif v0.3.0",
         "e2e dépôt → validation → outline → ready",
         "Parsing PDF via provider existant"
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-08-28 — Au SHA d7f570ea99ade95f924dcdb28ac49e0ac16958ce, le validateur impose un H1 unique, la hiérarchie et des sections obligatoires non vides ; importCanvasToClassroomPlan transforme ensuite le canevas conforme en ClassroomPlan natif chargé dans OutlinesEditor. Les tests permanents couvrent validation, hiérarchie et mapping de toutes les sections.",
+        "2026-08-28 — Le pipeline persiste le fichier privé, le verdict, la source d’organisation, le manifeste immuable et un cours imported/draft ; la génération réutilise le même courseId et le rend ready sans écraser source_kind, import_id ni source_manifest_id. Le Playwright dépôt conforme → validation → modification du titre → génération → classroom passe, et les 15 scénarios ciblés import + bibliothèque de sources passent au SHA validé.",
+        "2026-08-28 — Les PDF passent par extractPdfDocumentText, extraction partagée avec /api/parse-pdf : routage du provider existant, garde SSRF et repli unpdf vers MinerU/MinerU Cloud conservés. Le test permanent vérifie explicitement la délégation de l’import PDF au provider MinerU existant.",
+        "2026-08-28 — Gate complet sur ServeurIA dans le worktree isolé /tmp/qalem-s6013-155f9b3 et l’image qalem-validation:playwright-1.58.2-ffmpeg : Prettier, TypeScript et lint passent ; 385/385 fichiers et 2 505/2 505 tests Vitest, build 100/100 pages et 83/83 Playwright en 3,6 minutes. Journal /tmp/qalem-s1005-full-gate-d7f570e.log, SHA-256 77d98a4b43dfca7335867accb4de1760c86f32a51e296476c3fee62a3591f132."
+      ],
       "historicalEvidence": {
         "completedAt": null,
         "note": null,
