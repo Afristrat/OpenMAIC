@@ -175,6 +175,7 @@ docker run --rm --init --shm-size=2g \
   -e PROOF_ARTIFACT_DIR="$PROOF_ARTIFACT_DIR" \
   -e PROOF_SHA="$PROOF_APP_SHA" \
   -e PROOF_HARNESS_SHA="$PROOF_HARNESS_SHA" \
+  -e PROOF_QUIZ_ONLY="${PROOF_QUIZ_ONLY:-}" \
   "$PROOF_GATE_IMAGE" sh -lc \
   'mkdir -p /tmp/corepack-bin; corepack enable --install-directory /tmp/corepack-bin >/dev/null; export PATH=/tmp/corepack-bin:/usr/bin:/bin; pnpm exec tsx scripts/proofs/s6-013-production.ts'
 proof_exit=$?

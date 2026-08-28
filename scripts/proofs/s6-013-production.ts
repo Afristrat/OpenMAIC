@@ -380,6 +380,92 @@ async function main(): Promise<void> {
     );
     progress('Organisation temporaire créée');
 
+    if (process.env.PROOF_QUIZ_ONLY === '1') {
+      classroomId = `${MARKER}-quiz`.replace(/[^A-Za-z0-9_-]/g, '_');
+      const questionText = 'Quel montant constitue le seuil de sécurité du cas ?';
+      const fixture = await jsonResponse(request, 'POST', '/api/classroom', {
+        data: {
+          orgId: organizationId,
+          stage: {
+            id: classroomId,
+            name: 'Preuve ciblée de transition du quiz',
+            description: 'Fixture déterministe S6-013',
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            language: 'fr-FR',
+            style: 'professional',
+          },
+          scenes: [
+            {
+              id: `${classroomId}-scene`,
+              stageId: classroomId,
+              type: 'quiz',
+              title: 'Quiz ciblé',
+              order: 0,
+              content: {
+                type: 'quiz',
+                questions: [
+                  {
+                    id: `${classroomId}-question`,
+                    type: 'single',
+                    question: questionText,
+                    options: [
+                      { label: '35 000 dirhams', value: 'A' },
+                      { label: '45 000 dirhams', value: 'B' },
+                    ],
+                    answer: ['B'],
+                    analysis: 'Le seuil fixé dans le cas est de 45 000 dirhams.',
+                    hasAnswer: true,
+                    points: 1,
+                  },
+                ],
+              },
+              actions: [],
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+            },
+          ],
+        },
+        expected: [201],
+      });
+      assert.equal(string(fixture.id, 'fixture.id'), classroomId);
+      evidence.generation = {
+        jobId: 'deterministic-quiz-fixture',
+        classroomId,
+        sceneCount: 1,
+        durationMs: 0,
+      };
+      await waitForClassroom(page, classroomId);
+      await page.locator('[data-testid="scene-item"]').first().click();
+      const startQuizButton = page.getByRole('button', { name: 'Démarrer le quiz' });
+      const submitQuizButton = page.getByRole('button', { name: 'Soumettre les réponses' });
+      await startQuizButton.waitFor();
+      await startQuizButton.click().catch(() => undefined);
+      await page.waitForTimeout(1_000);
+      await page.screenshot({
+        path: join(ARTIFACT_DIR, 'quiz-transition.png'),
+        fullPage: true,
+      });
+      await writeFile(
+        join(ARTIFACT_DIR, 'quiz-transition-body.txt'),
+        await page.locator('body').innerText(),
+      );
+      assert(await submitQuizButton.isVisible(), 'Quiz did not enter its answering phase');
+      const questionGroup = page.getByRole('group', { name: questionText, exact: true });
+      await questionGroup.getByRole('button').nth(1).click();
+      await submitQuizButton.click();
+      await page.getByText('100%', { exact: true }).waitFor();
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.getByText('Loading classroom...').waitFor({ state: 'hidden', timeout: 30_000 });
+      await page.locator('[data-testid="scene-item"]').first().click();
+      const persistedAfterReload = await page.getByText('100%', { exact: true }).isVisible();
+      assert(persistedAfterReload, 'Targeted quiz result did not survive reload');
+      evidence.quiz = { questionCount: 1, correctCount: 1, persistedAfterReload };
+      evidence.browser = { consoleSignals, pageErrors, httpErrors };
+      progress('Transition et persistance ciblées du quiz certifiées');
+      return;
+    }
+
     const sourceText = [
       'DOCUMENT INTERNE AUTORISÉ — Cas fictif de formation à la trésorerie.',
       'Public : responsables de petites entreprises marocaines. Devise : MAD ; dans les textes français, écrire dirham ou dirhams.',
