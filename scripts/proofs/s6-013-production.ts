@@ -433,9 +433,7 @@ async function main(): Promise<void> {
       await audio.play().catch(() => undefined);
       const records = (window as typeof window & { __s6013AudioRecords?: unknown[] })
         .__s6013AudioRecords;
-      const ready = records?.some((record) =>
-        JSON.stringify(record).includes('play-called'),
-      );
+      const ready = records?.some((record) => JSON.stringify(record).includes('play-called'));
       if (records) records.length = 0;
       return ready;
     });
