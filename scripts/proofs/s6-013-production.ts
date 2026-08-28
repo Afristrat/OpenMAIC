@@ -56,6 +56,8 @@ interface Evidence {
   };
   workbook?: {
     shortCode: string;
+    shortLinkStatus: number;
+    contentType: string;
     qrDecoded: string;
     score: number;
     minimumCashWeek: number;
@@ -624,10 +626,16 @@ async function main(): Promise<void> {
     const shortUrl = string(resourcePauses[0].downloadUrl, 'resource.downloadUrl');
     const shortPath = new URL(shortUrl, BASE_URL).pathname;
     assert(/^\/[A-Za-z0-9]{5}$/.test(shortPath), `Invalid short link ${shortPath}`);
-    const redirect = await request.get(new URL(shortUrl, BASE_URL).toString(), { maxRedirects: 0 });
-    assert([302, 307, 308].includes(redirect.status()), `Short link returned ${redirect.status()}`);
-    const workbookResponse = await request.get(new URL(shortUrl, BASE_URL).toString());
+    const workbookResponse = await request.get(new URL(shortUrl, BASE_URL).toString(), {
+      maxRedirects: 0,
+    });
     assert.equal(workbookResponse.status(), 200);
+    const contentType = workbookResponse.headers()['content-type'] ?? '';
+    assert(contentType.includes('spreadsheetml.sheet'), `Unexpected workbook MIME: ${contentType}`);
+    assert(
+      (workbookResponse.headers()['content-disposition'] ?? '').startsWith('attachment;'),
+      'The short link does not trigger a file download',
+    );
     const workbook = await workbookResponse.body();
     assert.equal(workbook.subarray(0, 2).toString(), 'PK');
     await writeFile(join(ARTIFACT_DIR, 'workbook-original.xlsx'), workbook);
@@ -671,6 +679,8 @@ async function main(): Promise<void> {
     assert(pblContract.includes('cash-flow-13-week') || pblContract.includes('13 semaines'));
     evidence.workbook = {
       shortCode: shortPath.slice(1),
+      shortLinkStatus: workbookResponse.status(),
+      contentType,
       qrDecoded,
       score: number(assessment.score, 'assessment.score'),
       minimumCashWeek: number(metrics.minimumCashWeek, 'metrics.minimumCashWeek'),
