@@ -16,6 +16,7 @@ import { migrateScene } from '@/lib/edit/slide-schema';
 import type { Scene } from '@/lib/types/stage';
 import {
   resolveCurrentSceneId,
+  reuseUnchangedSceneReferences,
   saveStageData,
   type StageStoreData,
 } from '@/lib/utils/stage-storage';
@@ -91,12 +92,17 @@ export default function ClassroomDetailPage() {
               // setStage intentionally clears the previous classroom, including
               // currentSceneId. Capture the live selection first so a late
               // authoritative refresh cannot send the learner back to scene 1.
-              const preferredSceneId = useStageStore.getState().currentSceneId;
+              const currentState = useStageStore.getState();
+              const preferredSceneId = currentState.currentSceneId;
+              const currentScenes = currentState.scenes;
               useStageStore.getState().setStage(stage);
               // Normalize legacy slide content (missing schemaVersion) on the
               // way in, same as the store's setScenes/loadFromStorage paths —
               // server snapshots predate the schema field.
-              const migrated = (scenes as Scene[]).map(migrateScene);
+              const migrated = reuseUnchangedSceneReferences(
+                currentScenes,
+                (scenes as Scene[]).map(migrateScene),
+              );
               const currentSceneId = resolveCurrentSceneId(migrated, preferredSceneId);
               useStageStore.setState({
                 scenes: migrated,

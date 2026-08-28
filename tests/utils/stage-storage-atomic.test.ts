@@ -28,6 +28,7 @@ vi.mock('@/lib/quiz/persistence', () => ({ clearAllForScene: vi.fn() }));
 
 import {
   resolveCurrentSceneId,
+  reuseUnchangedSceneReferences,
   saveStageData,
   type StageStoreData,
 } from '@/lib/utils/stage-storage';
@@ -39,6 +40,27 @@ describe('resolveCurrentSceneId', () => {
     expect(resolveCurrentSceneId(scenes, 'scene-2')).toBe('scene-2');
     expect(resolveCurrentSceneId(scenes, 'deleted-scene')).toBe('scene-1');
     expect(resolveCurrentSceneId([], 'deleted-scene')).toBeNull();
+  });
+});
+
+describe('reuseUnchangedSceneReferences', () => {
+  const current = [
+    { id: 'same', title: 'Stable', actions: [{ id: 'a', type: 'speech', text: 'Bonjour' }] },
+    { id: 'changed', title: 'Ancien titre', actions: [] },
+  ] as unknown as StageStoreData['scenes'];
+
+  it('keeps only byte-equivalent scene identities across an authoritative refresh', () => {
+    const incoming = [
+      structuredClone(current[0]),
+      { ...structuredClone(current[1]), title: 'Nouveau titre' },
+      { id: 'new', title: 'Nouvelle scène', actions: [] },
+    ] as unknown as StageStoreData['scenes'];
+
+    const reconciled = reuseUnchangedSceneReferences(current, incoming);
+
+    expect(reconciled[0]).toBe(current[0]);
+    expect(reconciled[1]).toBe(incoming[1]);
+    expect(reconciled[2]).toBe(incoming[2]);
   });
 });
 

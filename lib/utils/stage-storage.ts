@@ -12,6 +12,7 @@ import { saveChatSessions, loadChatSessions, deleteChatSessions } from './chat-s
 import { clearPlaybackState } from './playback-storage';
 import { clearAllForScene } from '@/lib/quiz/persistence';
 import { createLogger } from '@/lib/logger';
+import { isEqual } from 'lodash';
 
 const log = createLogger('StageStorage');
 
@@ -41,6 +42,18 @@ export function resolveCurrentSceneId(
   return preferredSceneId && scenes.some((scene) => scene.id === preferredSceneId)
     ? preferredSceneId
     : (scenes[0]?.id ?? null);
+}
+
+/** Preserve React identity when an authoritative refresh did not change a scene. */
+export function reuseUnchangedSceneReferences(
+  currentScenes: readonly Scene[],
+  incomingScenes: readonly Scene[],
+): Scene[] {
+  const currentById = new Map(currentScenes.map((scene) => [scene.id, scene]));
+  return incomingScenes.map((scene) => {
+    const current = currentById.get(scene.id);
+    return current && isEqual(current, scene) ? current : scene;
+  });
 }
 
 /**
