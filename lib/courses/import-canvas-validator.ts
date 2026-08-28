@@ -145,8 +145,8 @@ function parseCanvas(text: string): {
   );
   const chapters = chapterHeadings.map((heading) => {
     const end =
-      headings.find((candidate) => candidate.index > heading.index && candidate.level <= 2)?.index ??
-      lines.length;
+      headings.find((candidate) => candidate.index > heading.index && candidate.level <= 2)
+        ?.index ?? lines.length;
     const children = headings.filter(
       (candidate) =>
         candidate.level === 3 && candidate.index > heading.index && candidate.index < end,
