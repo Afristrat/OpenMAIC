@@ -612,6 +612,9 @@ async function main(): Promise<void> {
       await page
         .locator('[data-scene-completion-gate="true"]')
         .waitFor({ state: 'visible', timeout: 10_000 });
+      await page.getByLabel('Exporter PPTX').click();
+      await page.getByTestId('export-mp4').waitFor({ state: 'visible' });
+      await page.keyboard.press('Escape');
       evidence.browser = { consoleSignals, pageErrors, httpErrors };
       progress('Transition du quiz et lecture multi-actions ciblées certifiées');
       return;
@@ -1082,7 +1085,7 @@ async function main(): Promise<void> {
     };
     progress('Approfondissement explicite et reprise au curseur certifiés');
 
-    await page.getByLabel('Export PPTX').click();
+    await page.getByLabel('Exporter PPTX').click();
     const downloadPromise = page.waitForEvent('download', { timeout: EXPORT_TIMEOUT_MS });
     await page.getByTestId('export-mp4').click();
     const download = await downloadPromise;
