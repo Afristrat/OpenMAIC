@@ -161,11 +161,11 @@ test('privilégie la classroom serveur et sa narration sur le cache local périm
   await page.getByRole('button', { name: 'Toggle sidebar' }).click();
   await expect(page.getByTestId('scene-item').nth(1)).toBeVisible();
   await page.getByTestId('scene-item').nth(1).click();
-  await expect(page.getByRole('button', { name: 'Démarrer le quiz' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Start Quiz' })).toBeVisible();
   releaseServerRefresh();
 
   await expect(page.getByTestId('scene-item')).toContainText('Narration serveur disponible');
   await expect(page.getByTestId('scene-item')).not.toContainText('Version sans narration');
   await expect(page.getByTestId('scene-item')).toContainText('Quiz depuis le serveur');
-  await expect(page.getByRole('button', { name: 'Démarrer le quiz' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Start Quiz' })).toBeVisible();
 });
