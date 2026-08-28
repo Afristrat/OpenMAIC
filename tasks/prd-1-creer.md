@@ -83,8 +83,8 @@ Stories UI : vérification ar-MA (RTL). Toute feature en cours : derrière son f
 **Description:** En tant que client, je veux le même contenu en SCORM 1.2, SCORM 2004 ou cmi5 afin de coller à MON LMS sans double production.
 
 **Acceptance Criteria:**
-- [ ] Un générateur unique ; 3 formats produits en changeant le seul adaptateur (test : 3 packages, 1 générateur, diff limité à la couche tracking)
-- [ ] Import Moodle vérifié pour scorm2004 ; cmi5 vérifié contre son player de référence
+- [x] Un générateur unique ; 3 formats produits en changeant le seul adaptateur (test : 3 packages, 1 générateur, diff limité à la couche tracking)
+- [x] Import Moodle vérifié pour scorm2004 ; cmi5 vérifié contre son player de référence
 - [ ] Statut produit (option/cœur) consigné en ADR-105 dès la tranche d'Amine
 
 ### S1-009 : Gate audio — tachkil AR + noise-floor
