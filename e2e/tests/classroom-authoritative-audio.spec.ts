@@ -35,6 +35,34 @@ test('privilégie la classroom serveur et sa narration sur le cache local périm
             createdAt: now,
             updatedAt: now,
           });
+          tx.objectStore('scenes').put({
+            id: 'quiz-scene',
+            stageId,
+            type: 'quiz',
+            title: 'Quiz depuis le cache',
+            order: 2,
+            content: {
+              type: 'quiz',
+              questions: [
+                {
+                  id: 'cached-question',
+                  type: 'single',
+                  question: 'Quelle scène doit rester sélectionnée ?',
+                  options: [
+                    { label: 'La première', value: 'A' },
+                    { label: 'Le quiz', value: 'B' },
+                  ],
+                  answer: ['B'],
+                  analysis: 'Le rafraîchissement ne doit pas déplacer la lecture.',
+                  hasAnswer: true,
+                  points: 1,
+                },
+              ],
+            },
+            actions: [],
+            createdAt: now,
+            updatedAt: now,
+          });
           tx.objectStore('stageOutlines').put({
             stageId,
             outlines: [],
@@ -52,8 +80,18 @@ test('privilégie la classroom serveur et sa narration sur le cache local périm
     STAGE_ID,
   );
 
-  await page.route(`**/api/classroom?id=${STAGE_ID}`, (route) =>
-    route.fulfill({
+  let releaseServerRefresh!: () => void;
+  let markServerRefreshStarted!: () => void;
+  const serverRefreshReleased = new Promise<void>((resolve) => {
+    releaseServerRefresh = resolve;
+  });
+  const serverRefreshStarted = new Promise<void>((resolve) => {
+    markServerRefreshStarted = resolve;
+  });
+  await page.route(`**/api/classroom?id=${STAGE_ID}`, async (route) => {
+    markServerRefreshStarted();
+    await serverRefreshReleased;
+    await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({
         success: true,
@@ -83,14 +121,49 @@ test('privilégie la classroom serveur et sa narration sur le cache local périm
               createdAt: Date.now(),
               updatedAt: Date.now(),
             },
+            {
+              id: 'quiz-scene',
+              stageId: STAGE_ID,
+              type: 'quiz',
+              title: 'Quiz depuis le serveur',
+              order: 2,
+              content: {
+                type: 'quiz',
+                questions: [
+                  {
+                    id: 'server-question',
+                    type: 'single',
+                    question: 'Quelle scène doit rester sélectionnée ?',
+                    options: [
+                      { label: 'La première', value: 'A' },
+                      { label: 'Le quiz', value: 'B' },
+                    ],
+                    answer: ['B'],
+                    analysis: 'Le rafraîchissement ne doit pas déplacer la lecture.',
+                    hasAnswer: true,
+                    points: 1,
+                  },
+                ],
+              },
+              actions: [],
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+            },
           ],
         },
       }),
-    }),
-  );
+    });
+  });
 
   await page.goto(`/classroom/${STAGE_ID}`);
+  await serverRefreshStarted;
+  await expect(page.getByTestId('scene-item')).toHaveCount(2);
+  await page.getByTestId('scene-item').nth(1).click();
+  await expect(page.getByRole('button', { name: 'Démarrer le quiz' })).toBeVisible();
+  releaseServerRefresh();
 
   await expect(page.getByTestId('scene-item')).toContainText('Narration serveur disponible');
   await expect(page.getByTestId('scene-item')).not.toContainText('Version sans narration');
+  await expect(page.getByTestId('scene-item')).toContainText('Quiz depuis le serveur');
+  await expect(page.getByRole('button', { name: 'Démarrer le quiz' })).toBeVisible();
 });

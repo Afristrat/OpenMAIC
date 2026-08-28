@@ -88,6 +88,10 @@ export default function ClassroomDetailPage() {
               log.info('Preserved unsynced local classroom:', classroomId);
             } else {
               if (!localSnapshot) clearUnsyncedClassroom(classroomId);
+              // setStage intentionally clears the previous classroom, including
+              // currentSceneId. Capture the live selection first so a late
+              // authoritative refresh cannot send the learner back to scene 1.
+              const preferredSceneId = useStageStore.getState().currentSceneId;
               useStageStore.getState().setStage(stage);
               // Normalize legacy slide content (missing schemaVersion) on the
               // way in, same as the store's setScenes/loadFromStorage paths —
@@ -95,7 +99,7 @@ export default function ClassroomDetailPage() {
               const migrated = (scenes as Scene[]).map(migrateScene);
               const currentSceneId = resolveCurrentSceneId(
                 migrated,
-                useStageStore.getState().currentSceneId,
+                preferredSceneId,
               );
               useStageStore.setState({
                 scenes: migrated,

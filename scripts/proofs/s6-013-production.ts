@@ -456,9 +456,34 @@ async function main(): Promise<void> {
         durationMs: 0,
       };
       await waitForClassroom(page, classroomId);
+
+      let releaseAuthoritativeRefresh!: () => void;
+      let markAuthoritativeRefreshStarted!: () => void;
+      const authoritativeRefreshReleased = new Promise<void>((resolve) => {
+        releaseAuthoritativeRefresh = resolve;
+      });
+      const authoritativeRefreshStarted = new Promise<void>((resolve) => {
+        markAuthoritativeRefreshStarted = resolve;
+      });
+      const classroomApiPath = `/api/classroom?id=${encodeURIComponent(classroomId)}`;
+      await page.route(`**${classroomApiPath}`, async (route) => {
+        markAuthoritativeRefreshStarted();
+        await authoritativeRefreshReleased;
+        await route.continue();
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.getByText('Loading classroom...').waitFor({ state: 'hidden', timeout: 30_000 });
+      await authoritativeRefreshStarted;
       await page.locator('[data-testid="scene-item"]').nth(1).click();
       const startQuizButton = page.getByRole('button', { name: 'Démarrer le quiz' });
       const submitQuizButton = page.getByRole('button', { name: 'Soumettre les réponses' });
+      await startQuizButton.waitFor();
+      const authoritativeRefreshResponse = page.waitForResponse(
+        (response) =>
+          response.url().includes(classroomApiPath) && response.request().method() === 'GET',
+      );
+      releaseAuthoritativeRefresh();
+      await authoritativeRefreshResponse;
       await startQuizButton.waitFor();
       await startQuizButton.click().catch(() => undefined);
       await page.waitForTimeout(1_000);
