@@ -97,10 +97,7 @@ export default function ClassroomDetailPage() {
               // way in, same as the store's setScenes/loadFromStorage paths —
               // server snapshots predate the schema field.
               const migrated = (scenes as Scene[]).map(migrateScene);
-              const currentSceneId = resolveCurrentSceneId(
-                migrated,
-                preferredSceneId,
-              );
+              const currentSceneId = resolveCurrentSceneId(migrated, preferredSceneId);
               useStageStore.setState({
                 scenes: migrated,
                 currentSceneId,
