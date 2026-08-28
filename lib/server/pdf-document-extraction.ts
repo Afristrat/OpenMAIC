@@ -1,7 +1,4 @@
-import {
-  documentArtifactToParsedPdfContent,
-  extractDocument,
-} from '@/lib/document';
+import { documentArtifactToParsedPdfContent, extractDocument } from '@/lib/document';
 import { shouldUseOcrFallback } from '@/lib/document/pdf-text-quality';
 import { createLogger } from '@/lib/logger';
 import type { PDFProviderId } from '@/lib/pdf/types';
@@ -85,7 +82,10 @@ export async function extractReadablePdf(input: {
           break;
         }
       } catch (error) {
-        log.warn(`OCR fallback failed [provider=${ocrProviderId}, file="${input.fileName}"]`, error);
+        log.warn(
+          `OCR fallback failed [provider=${ocrProviderId}, file="${input.fileName}"]`,
+          error,
+        );
       }
     }
   }

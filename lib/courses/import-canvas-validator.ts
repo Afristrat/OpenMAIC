@@ -188,9 +188,7 @@ export function parseImportCanvas(text: string): ParsedImportCanvas | null {
     !audience ||
     !finalEvidence ||
     chapters.length === 0 ||
-    chapters.some(
-      (chapter) => !chapter.objective || !chapter.essentialContent || !chapter.practice,
-    )
+    chapters.some((chapter) => !chapter.objective || !chapter.essentialContent || !chapter.practice)
   ) {
     return null;
   }

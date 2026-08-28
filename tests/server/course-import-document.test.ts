@@ -14,7 +14,9 @@ describe('extractStructuredDocx', () => {
       `<w:document><w:body>${paragraph('Ma formation', 'Titre1')}${paragraph('Résultat professionnel visé', 'Titre2')}${paragraph('Décider.')}${paragraph('Objectif observable', 'Titre3')}${paragraph('Produire un plan.')}</w:body></w:document>`,
     );
 
-    await expect(extractStructuredDocx(await zip.generateAsync({ type: 'nodebuffer' }))).resolves.toBe(
+    await expect(
+      extractStructuredDocx(await zip.generateAsync({ type: 'nodebuffer' })),
+    ).resolves.toBe(
       '# Ma formation\n\n## Résultat professionnel visé\n\nDécider.\n\n### Objectif observable\n\nProduire un plan.',
     );
   });

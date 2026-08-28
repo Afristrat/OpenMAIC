@@ -41,7 +41,10 @@ export async function extractCourseImportDocument(input: {
 }): Promise<{ content: PdfSourceContent; parserId: string }> {
   const extension = extensionOf(input.fileName);
   if (extension === 'md') {
-    return { content: { text: input.buffer.toString('utf8').trim(), images: [] }, parserId: 'utf8' };
+    return {
+      content: { text: input.buffer.toString('utf8').trim(), images: [] },
+      parserId: 'utf8',
+    };
   }
   if (extension === 'docx') {
     return {

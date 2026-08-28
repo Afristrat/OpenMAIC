@@ -102,7 +102,9 @@ test('dépôt conforme → validation → outline éditable → cours prêt', as
   const chooser = page.waitForEvent('filechooser');
   page.once('dialog', (dialog) => dialog.accept());
   await page.getByTestId('course-canvas-import').click();
-  await (await chooser).setFiles({
+  await (
+    await chooser
+  ).setFiles({
     name: 'canevas.md',
     mimeType: 'text/markdown',
     buffer: Buffer.from('# Canevas conforme'),

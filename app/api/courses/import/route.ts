@@ -47,10 +47,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'A course file is required' }, { status: 400 });
   }
   if (file.size === 0 || file.size > MAX_IMPORT_BYTES) {
-    return NextResponse.json({ error: 'Course imports must be between 1 byte and 25 MB' }, { status: 413 });
+    return NextResponse.json(
+      { error: 'Course imports must be between 1 byte and 25 MB' },
+      { status: 413 },
+    );
   }
   if (!SUPPORTED_EXTENSIONS.has(extensionOf(file.name))) {
-    return NextResponse.json({ error: 'Supported formats: Markdown, DOCX and text PDF' }, { status: 415 });
+    return NextResponse.json(
+      { error: 'Supported formats: Markdown, DOCX and text PDF' },
+      { status: 415 },
+    );
   }
   if (form.get('rightsAttested') !== 'true') {
     return NextResponse.json({ error: 'Rights attestation is required' }, { status: 400 });
@@ -70,11 +76,14 @@ export async function POST(request: NextRequest) {
       buffer: Buffer.from(await file.arrayBuffer()),
       rightsAttested: true,
       pdfProviderId: providerId as PDFProviderId | undefined,
-      pdfApiKey: typeof form.get('apiKey') === 'string' ? (form.get('apiKey') as string) : undefined,
+      pdfApiKey:
+        typeof form.get('apiKey') === 'string' ? (form.get('apiKey') as string) : undefined,
       pdfBaseUrl:
         typeof form.get('baseUrl') === 'string' ? (form.get('baseUrl') as string) : undefined,
     });
-    return NextResponse.json(result, { status: result.validation.status === 'conform' ? 201 : 422 });
+    return NextResponse.json(result, {
+      status: result.validation.status === 'conform' ? 201 : 422,
+    });
   } catch (error) {
     if (error instanceof InvalidPdfProviderUrlError) {
       return NextResponse.json({ error: error.message }, { status: 403 });
