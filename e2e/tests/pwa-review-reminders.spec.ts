@@ -1,9 +1,10 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from '../fixtures/base';
 
 test.describe('PWA review reminders', () => {
   test.use({ serviceWorkers: 'allow' });
 
   test('updates caches and never replays an API response while offline', async ({
+    browserConsoleContract,
     context,
     page,
   }) => {
@@ -63,6 +64,7 @@ test.describe('PWA review reminders', () => {
     expect(online.status).toBe(200);
 
     await context.setOffline(true);
+    browserConsoleContract.expectHttpError('/api/health', 503);
     const offlineApi = await page.evaluate(async () => {
       const response = await fetch('/api/health?owner=user-a');
       return { body: await response.json(), status: response.status };
@@ -75,6 +77,7 @@ test.describe('PWA review reminders', () => {
     const offlineNavigation = await page.goto('/review', { waitUntil: 'domcontentloaded' });
     expect(offlineNavigation?.status()).toBe(200);
     expect(await page.title()).toBe('Qalem');
+    await expect(page.getByText('Hors connexion — reconnectez-vous pour continuer.')).toBeVisible();
     await context.setOffline(false);
   });
 

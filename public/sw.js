@@ -148,12 +148,15 @@ async function networkOnlyNavigationWithShellFallback(request) {
   try {
     return await fetch(new Request(request, { cache: 'no-store' }));
   } catch {
-    const shell = await caches.match(new Request('/', { credentials: 'omit' }));
-    if (shell) return shell;
-    return new Response('Offline — please reconnect to use Qalem.', {
-      status: 503,
-      headers: { 'Content-Type': 'text/html' },
-    });
+    const url = new URL(request.url);
+    if (url.pathname === '/') {
+      const shell = await caches.match(new Request('/', { credentials: 'omit' }));
+      if (shell) return shell;
+    }
+    return new Response(
+      '<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Qalem</title></head><body><main><h1>Qalem</h1><p>Hors connexion — reconnectez-vous pour continuer.</p></main></body></html>',
+      { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } },
+    );
   }
 }
 

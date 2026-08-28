@@ -23,6 +23,8 @@ describe('PWA shell cache', () => {
     expect(serviceWorker).toContain("icon: '/icon-192.png'");
     expect(serviceWorker).toContain('client.navigate(absoluteTarget)');
     expect(serviceWorker).toContain("cache: 'no-store'");
+    expect(serviceWorker).toContain('Hors connexion — reconnectez-vous pour continuer.');
+    expect(serviceWorker).toContain('text/html; charset=utf-8');
     expect(registrar).toContain("updateViaCache: 'none'");
     expect(registrar).toContain('registration.update()');
     expect(registrar).toContain(
