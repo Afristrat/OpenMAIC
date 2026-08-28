@@ -1130,8 +1130,9 @@ async function main(): Promise<void> {
         .screenshot({ path: join(ARTIFACT_DIR, 'failure.png'), fullPage: true })
         .catch(() => undefined);
       const diagnostics = await page
-        .evaluate(() =>
-          (window as typeof window & { __s6013AudioRecords?: unknown }).__s6013AudioRecords ?? [],
+        .evaluate(
+          () =>
+            (window as typeof window & { __s6013AudioRecords?: unknown }).__s6013AudioRecords ?? [],
         )
         .catch((diagnosticError) => ({
           unavailable:
