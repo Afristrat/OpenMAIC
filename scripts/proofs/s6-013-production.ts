@@ -375,7 +375,16 @@ async function main(): Promise<void> {
           errorCode: number | null;
         }>;
       }> = [];
-      const recordByMedia = new WeakMap<HTMLMediaElement, (typeof records)[number]>();
+      const diagnosticWindow = window as typeof window & {
+        __s6013AudioRecords?: typeof records;
+        __s6013AudioInitError?: string;
+      };
+      Object.defineProperty(diagnosticWindow, '__s6013AudioRecords', {
+        configurable: true,
+        value: records,
+      });
+      try {
+        const recordByMedia = new WeakMap<HTMLMediaElement, (typeof records)[number]>();
       const snapshot = (audio: HTMLMediaElement, type: string) => ({
         type,
         at: Date.now(),
@@ -425,7 +434,10 @@ async function main(): Promise<void> {
         );
         return result;
       };
-      Object.defineProperty(window, '__s6013AudioRecords', { configurable: true, value: records });
+      } catch (error) {
+        diagnosticWindow.__s6013AudioInitError =
+          error instanceof Error ? error.message : String(error);
+      }
     });
     page = await context.newPage();
     page.on('console', (message) => {
@@ -438,16 +450,22 @@ async function main(): Promise<void> {
       if (response.status() >= 400) httpErrors.push(`${response.status()} ${response.url()}`);
     });
     await login(page);
-    const audioInstrumentationReady = await page.evaluate(() => {
+    const audioInstrumentation = await page.evaluate(() => {
       const audio = new Audio();
       void audio.play().catch(() => undefined);
-      const records = (window as typeof window & { __s6013AudioRecords?: unknown[] })
-        .__s6013AudioRecords;
+      const diagnosticWindow = window as typeof window & {
+        __s6013AudioRecords?: unknown[];
+        __s6013AudioInitError?: string;
+      };
+      const records = diagnosticWindow.__s6013AudioRecords;
       const ready = records?.some((record) => JSON.stringify(record).includes('play-called'));
       if (records) records.length = 0;
-      return ready;
+      return { ready, error: diagnosticWindow.__s6013AudioInitError };
     });
-    assert(audioInstrumentationReady, 'Audio playback instrumentation is unavailable');
+    assert(
+      audioInstrumentation.ready,
+      `Audio playback instrumentation is unavailable: ${audioInstrumentation.error ?? 'no error reported'}`,
+    );
     progress('Authentification temporaire réussie');
     const request = context.request;
 
