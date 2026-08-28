@@ -79,7 +79,10 @@ describe('runCourseImportPipeline', () => {
       { contentType: 'application/pdf', upsert: false },
     );
     expect(mocks.ingest).toHaveBeenCalledWith(
-      expect.objectContaining({ parserId: 'mineru', content: { text: '# Canevas conforme', images: [] } }),
+      expect.objectContaining({
+        parserId: 'mineru',
+        content: { text: '# Canevas conforme', images: [] },
+      }),
     );
     expect(mocks.persistDraft).toHaveBeenCalledWith(
       expect.objectContaining({
