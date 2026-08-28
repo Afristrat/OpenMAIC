@@ -901,10 +901,39 @@ async function main(): Promise<void> {
       return (
         index < scenes.length - 1 &&
         content.type === 'slide' &&
-        !actions.some((action) => action.type === 'resource_pause')
+        actions.some((action) => action.type === 'speech') &&
+        actions.every(
+          (action) =>
+            action.type === 'speech' || action.type === 'spotlight' || action.type === 'laser',
+        )
       );
     });
     assert(interactionSceneIndex >= 0, 'No scene is eligible for the deepening proof');
+    const interactionScene = scenes[interactionSceneIndex];
+    const interactionActionTypes = array(
+      interactionScene.actions ?? [],
+      'interactionScene.actions',
+    ).map((action) => string(object(action, 'interactionAction').type, 'interactionAction.type'));
+    const interactionAudioSeconds = sceneAudioDurations[interactionSceneIndex];
+    const gateTimeoutMs = Math.min(
+      15 * 60_000,
+      Math.max(120_000, Math.ceil((interactionAudioSeconds * 1_000) / 2) + 120_000),
+    );
+    await writeFile(
+      join(ARTIFACT_DIR, 'interaction-selection.json'),
+      JSON.stringify(
+        {
+          sceneId: string(interactionScene.id, 'interactionScene.id'),
+          title: string(interactionScene.title, 'interactionScene.title'),
+          actionTypes: interactionActionTypes,
+          audioDurationSeconds: interactionAudioSeconds,
+          playbackSpeed: 2,
+          gateTimeoutMs,
+        },
+        null,
+        2,
+      ),
+    );
     await page.locator('[data-testid="scene-item"]').nth(interactionSceneIndex).click();
     const speedButton = page.getByRole('button', { name: 'Playback speed' });
     for (let attempt = 0; attempt < 3 && (await speedButton.textContent()) !== '2x'; attempt += 1) {
@@ -913,7 +942,7 @@ async function main(): Promise<void> {
     assert.equal(await speedButton.textContent(), '2x');
     await page.getByRole('button', { name: 'Play', exact: true }).click();
     const gate = page.locator('[data-scene-completion-gate="true"]');
-    await gate.waitFor({ timeout: 15 * 60_000 });
+    await gate.waitFor({ timeout: gateTimeoutMs });
     const chatResponsePromise = page.waitForResponse(
       (response) => response.url().includes('/api/chat') && response.request().method() === 'POST',
       { timeout: 120_000 },
