@@ -2652,7 +2652,7 @@
       "epic": "1-CRÉER",
       "priority": "P2",
       "status": "to_validate",
-      "passes": false,
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S1-007",
@@ -2660,7 +2660,7 @@
       },
       "sourceDependencies": ["S0-008"],
       "dependencies": [],
-      "gap": "Réouverture de preuve : la complétion Moodle historique a été simulée via PHP, pas déclenchée par le runtime navigateur. Le runtime a évolué vers des adaptateurs natifs.",
+      "gap": "Soldé : un vrai export_jobs produit le zip SCORM 1.2, Moodle l'importe, le JavaScript Qalem exécuté dans le lecteur LMS déclenche la complétion, puis les API et tables Moodle relisent completed et le score 100. ADR-106 et les notices sont alignés sur le runtime natif réellement distribué.",
       "evidence": ["lib/export/scorm/tracking-adapters.ts", ".ralph/prd-v2.json#S1-007"],
       "acceptance": [
         "export_jobs scorm12 → zip imsmanifest.xml valide",
@@ -2668,7 +2668,14 @@
         "Runtime scorm-again, notices MIT conservées",
         "Déclencher le tracking depuis le navigateur du LMS et relire la complétion ; documenter le remplacement de scorm-again par le runtime réellement utilisé et mettre en cohérence les notices."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-08-28 — Le SHA a2c034303f08e4cc494b1a33711561d817e8228d aligne ADR-102, ADR-106, le registre des intégrations, le PRD de chantier et les fixtures de manifeste : scorm-again est supprimé parce qu’il implémente le côté LMS, tandis que le SCO Qalem doit appeler l’API du LMS hôte. package.json et pnpm-lock.yaml ne contiennent aucune dépendance scorm-again ; le zip ne distribue donc ni son runtime ni une notice fictive.",
+        "2026-08-28 — Preuve fraîche de la chaîne export_jobs → BullMQ → worker → Storage : job 5908c455-8694-422a-b668-e9aa65d178e6, job BullMQ 14, statut done, deux scènes, archive 5 894 octets au SHA-256 b42e46db3f1d1063ea47f18a9be0b36431042f8d35358749b4d8cc5fe66173ab. imsmanifest.xml est SCORM 1.2, lance index.html, le runtime natif est présent et scorm-again absent. Les trois fichiers SCORM/worker du conteneur sont octet pour octet identiques au worktree validé. Stage, scènes, job, Storage et entrée BullMQ supprimés ; audits finaux à zéro.",
+        "2026-08-28 — Moodle 5.0.1 et MariaDB utf8mb4 isolés sur ServeurIA importent le paquet Qalem de deux scènes, SHA-256 af49a70ec5f630e625b8a3088992d5b19bf3f19720cd87d57e3e2299615421f5. Le parseur Moodle crée deux SCO. Chromium headless ouvre mod/scorm/player.php, charge index.html dans scorm_object et observe window.qalemTracking avec location, complete et terminate.",
+        "2026-08-28 — Le clic navigateur « Marquer comme terminé » émet les POST Moodle d’initialisation, position, complétion et terminaison ; la requête de complétion contient lesson_status et completed. Le SCO affiche la confirmation, sans erreur Qalem ni pageerror. scorm_get_tracks relit status=completed et score_raw=100 ; les tables normalisées relisent cmi.core.lesson_status=completed et cmi.core.score.raw=100. Le 404 d’image YUI appartient au thème Moodle et est documenté séparément.",
+        "2026-08-28 — Les conteneurs Moodle et MariaDB terminent running, restart=0 et OOMKilled=false, puis conteneurs, volumes anonymes et réseau qalem-s1007 sont supprimés avec contrôle CLEANUP_OK. Preuve permanente : docs/validation/S1-007-scorm12-moodle-browser.md.",
+        "2026-08-28 — Gate complet ServeurIA au SHA a2c034303f08e4cc494b1a33711561d817e8228d : pnpm check, TypeScript, lint, 378/378 fichiers et 2 484/2 484 tests Vitest, build 99/99 et 82/82 Playwright en 3,7 minutes. Journal : /tmp/qalem-s1007-artifacts/s1-007-full-gate-a2c0343.log."
+      ],
       "historicalEvidence": {
         "completedAt": "2026-07-11",
         "note": "Validé sur serveuria (commits 10be27f..089950c). tsc --noEmit 0 erreur, pnpm lint 0 problème, pnpm test 1810/1810 (baseline 1799 S1-006 + 11 nouveaux tests scorm-*, zéro régression). export_jobs (migration 00021, format discriminant scorm12 pour anticiper scorm2004/cmi5 de S1-008, RLS owner-select + service-only write, bucket Storage privé `exports` deny-all client) → zip généré via lib/export/scorm/build-scorm-package.ts (imsmanifest.xml SCORM 1.2 standard + index.html scorm-again + runtime vendorisé + THIRD-PARTY-NOTICES.txt), job BullMQ export-job (pattern identique à video-capsule S1-006), API POST/GET /api/export-jobs. Preuve d'import Moodle réelle et complète, obtenue SANS AUCUNE automatisation de navigateur (interdiction stricte respectée) : bitnamilegacy/moodle + bitnamilegacy/mariadb montés sur serveuria (image bitnami/moodle officielle retirée depuis la migration Bitnami d'août 2025, vérifié sur Docker Hub/GitHub) ; imsmanifest.xml validé par un vrai parseur XML (python3 xml.dom.minidom) ; import réel via les fonctions backend PHP exactes que le formulaire Moodle d'ajout d'activité SCORM appelle (create_module()/scorm_add_instance(), lues dans le code source réel de ce Moodle pour ne rien deviner) — MANIFEST_PARSED launch_scoes=1 confirme que le parseur SCORM natif de Moodle a walké le manifeste et trouvé le SCO index.html ; complétion trackée en simulant l'effet serveur exact du bouton \"Marquer comme terminé\" (LMSSetValue cmi.core.lesson_status=completed + LMSCommit) via scorm_insert_track() (fonction backend appelée par l'endpoint AJAX de tracking de Moodle), relu via scorm_get_tracks() (API Moodle) ET vérifié en base brute (mdl_scorm_scoes_value/mdl_scorm_attempt/mdl_scorm_element, schéma normalisé de Moodle 5.2) pour 2 apprenants de test distincts. Limite assumée : le JS embarqué (scorm-again) n'a pas été exercé par un vrai navigateur — reproduit au niveau backend Moodle pour respecter l'interdiction stricte d'automatisation navigateur ; le pipeline zip→manifest→import→tracking est prouvé de bout en bout côté serveur Moodle réel. Environnement Moodle de test démonté après la preuve (conteneurs + réseau docker supprimés), scripts ad-hoc PHP/TS jamais commités. Notices MIT scorm-again (^3.0.5, vérifié sur le registre npm réel) conservées dans le zip généré (THIRD-PARTY-NOTICES.txt) — package.json/pnpm-lock.yaml mis à jour (pnpm install --no-frozen-lockfile sur serveuria). Aucune UI ajoutée (story sans tag [UI], acceptance ne le demandant pas).",

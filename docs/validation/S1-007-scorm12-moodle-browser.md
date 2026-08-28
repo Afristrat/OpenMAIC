@@ -4,7 +4,9 @@ Date : 28 août 2026
 
 Branche : `refork-v030`
 
-SHA du code recetté : `e7e79ffd748548db5278c28f38146b394931cc89`
+SHA du paquet recetté : `e7e79ffd748548db5278c28f38146b394931cc89`
+
+SHA de l'alignement documentaire et du gate final : `a2c034303f08e4cc494b1a33711561d817e8228d`
 
 ## Contrat recetté
 
@@ -32,6 +34,19 @@ Les limites de ressources étaient de 3 Gio pour Moodle et 2 Gio pour MariaDB. L
 - import Moodle : activité `Qalem SCORM Runtime Proof`, `cmId=2`, `scormId=1` ;
 - parseur Moodle : 2 SCO trouvés.
 
+## Job d'export réel
+
+Un second paquet a été produit par la chaîne déployée `export_jobs → BullMQ → qalem-workers → Storage`, et non par un appel direct au constructeur :
+
+- job `5908c455-8694-422a-b668-e9aa65d178e6`, job BullMQ `14` ;
+- statut final `done`, 2 scènes ;
+- archive : 5 894 octets, SHA-256 `b42e46db3f1d1063ea47f18a9be0b36431042f8d35358749b4d8cc5fe66173ab` ;
+- fichiers : `imsmanifest.xml` et `index.html` ;
+- manifeste SCORM 1.2 et lancement `index.html` confirmés ;
+- runtime natif présent, `scorm-again`, `scorm12.min.js` et sa notice absents.
+
+Avant l'exécution, les empreintes SHA-256 de `build-scorm-package.ts`, `tracking-adapters.ts` et `workers.ts` ont été comparées entre le worktree validé et le conteneur worker : les trois paires sont identiques. Après téléchargement et contrôle de l'archive, le stage, ses scènes, le job, le fichier Storage et le job BullMQ terminés ont été supprimés ; les quatre audits finaux retournent zéro résidu.
+
 ## Preuve navigateur
 
 Le navigateur s'est authentifié dans Moodle, a ouvert l'activité via `mod/scorm/player.php`, puis a chargé le SCO Qalem dans l'iframe `scorm_object`. Dans cette iframe :
@@ -53,3 +68,7 @@ Après la sortie de l'activité, deux lectures concordent :
 - tables normalisées Moodle : `cmi.core.lesson_status=completed` et `cmi.core.score.raw=100` pour l'utilisateur 2, la tentative 1 et le SCO 2.
 
 La complétion provient donc bien du JavaScript Qalem exécuté dans le navigateur du LMS ; elle n'est ni injectée ni simulée côté PHP.
+
+## Gate final
+
+Dans le worktree ServeurIA isolé `/tmp/qalem-s6013-155f9b3`, au SHA `a2c034303f08e4cc494b1a33711561d817e8228d` : formatage, TypeScript et lint passent ; Vitest passe 378 fichiers et 2 484 tests ; le build produit 99 pages ; Playwright passe 82 tests sur 82 en 3,7 minutes. Journal intégral : `/tmp/qalem-s1007-artifacts/s1-007-full-gate-a2c0343.log`.
