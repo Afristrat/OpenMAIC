@@ -385,55 +385,55 @@ async function main(): Promise<void> {
       });
       try {
         const recordByMedia = new WeakMap<HTMLMediaElement, (typeof records)[number]>();
-      const snapshot = (audio: HTMLMediaElement, type: string) => ({
-        type,
-        at: Date.now(),
-        currentTime: audio.currentTime,
-        duration: Number.isFinite(audio.duration) ? audio.duration : null,
-        readyState: audio.readyState,
-        networkState: audio.networkState,
-        paused: audio.paused,
-        playbackRate: audio.playbackRate,
-        errorCode: audio.error?.code ?? null,
-      });
-      const nativePlay = HTMLMediaElement.prototype.play;
-      HTMLMediaElement.prototype.play = function () {
-        let record = recordByMedia.get(this);
-        if (!record) {
-          record = { src: this.currentSrc || this.src, events: [] };
-          recordByMedia.set(this, record);
-          records.push(record);
-        }
-        for (const type of [
-          'loadstart',
-          'loadedmetadata',
-          'canplay',
-          'playing',
-          'waiting',
-          'stalled',
-          'suspend',
-          'error',
-          'ended',
-          'pause',
-          'abort',
-          'emptied',
-        ]) {
-          if (record.events.length === 0) {
-            this.addEventListener(type, () => {
-              record!.src = this.currentSrc || this.src;
-              record!.events.push(snapshot(this, type));
-            });
+        const snapshot = (audio: HTMLMediaElement, type: string) => ({
+          type,
+          at: Date.now(),
+          currentTime: audio.currentTime,
+          duration: Number.isFinite(audio.duration) ? audio.duration : null,
+          readyState: audio.readyState,
+          networkState: audio.networkState,
+          paused: audio.paused,
+          playbackRate: audio.playbackRate,
+          errorCode: audio.error?.code ?? null,
+        });
+        const nativePlay = HTMLMediaElement.prototype.play;
+        HTMLMediaElement.prototype.play = function () {
+          let record = recordByMedia.get(this);
+          if (!record) {
+            record = { src: this.currentSrc || this.src, events: [] };
+            recordByMedia.set(this, record);
+            records.push(record);
           }
-        }
-        record.src = this.currentSrc || this.src;
-        record.events.push(snapshot(this, 'play-called'));
-        const result = nativePlay.call(this);
-        void result.then(
-          () => record!.events.push(snapshot(this, 'play-resolved')),
-          () => record!.events.push(snapshot(this, 'play-rejected')),
-        );
-        return result;
-      };
+          for (const type of [
+            'loadstart',
+            'loadedmetadata',
+            'canplay',
+            'playing',
+            'waiting',
+            'stalled',
+            'suspend',
+            'error',
+            'ended',
+            'pause',
+            'abort',
+            'emptied',
+          ]) {
+            if (record.events.length === 0) {
+              this.addEventListener(type, () => {
+                record!.src = this.currentSrc || this.src;
+                record!.events.push(snapshot(this, type));
+              });
+            }
+          }
+          record.src = this.currentSrc || this.src;
+          record.events.push(snapshot(this, 'play-called'));
+          const result = nativePlay.call(this);
+          void result.then(
+            () => record!.events.push(snapshot(this, 'play-resolved')),
+            () => record!.events.push(snapshot(this, 'play-rejected')),
+          );
+          return result;
+        };
       } catch (error) {
         diagnosticWindow.__s6013AudioInitError =
           error instanceof Error ? error.message : String(error);
