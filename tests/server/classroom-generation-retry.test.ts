@@ -180,35 +180,42 @@ describe('classroom scene generation retries', () => {
   });
 
   it('accumulates exact validation feedback across scene content attempts', async () => {
-    mocks.generateSceneContent
-      .mockImplementationOnce(async (_outline, _aiCall, options) => {
-        options.onValidationFailure('Move the title fully inside the slide.');
-        return null;
-      })
-      .mockImplementationOnce(async (_outline, _aiCall, options) => {
-        options.onValidationFailure('Reserve LaTeX for compact mathematical symbols.');
-        return null;
-      })
-      .mockResolvedValueOnce(slideContent);
+    vi.useFakeTimers();
+    try {
+      mocks.generateSceneContent
+        .mockImplementationOnce(async (_outline, _aiCall, options) => {
+          options.onValidationFailure('Move the title fully inside the slide.');
+          return null;
+        })
+        .mockImplementationOnce(async (_outline, _aiCall, options) => {
+          options.onValidationFailure('Reserve LaTeX for compact mathematical symbols.');
+          return null;
+        })
+        .mockResolvedValueOnce(slideContent);
 
-    const { result, progress } = await generateWithProgress();
+      const generation = generateWithProgress();
+      await vi.runAllTimersAsync();
+      const { result, progress } = await generation;
 
-    expect(result.scenesCount).toBe(1);
-    expect(mocks.generateSceneContent).toHaveBeenCalledTimes(3);
-    expect(mocks.generateSceneContent.mock.calls[1]?.[2]).toEqual(
-      expect.objectContaining({
-        validationDirective: 'Move the title fully inside the slide.',
-      }),
-    );
-    expect(mocks.generateSceneContent.mock.calls[2]?.[2]).toEqual(
-      expect.objectContaining({
-        validationDirective:
-          'Move the title fully inside the slide.\nReserve LaTeX for compact mathematical symbols.',
-      }),
-    );
-    expect(progress.some((event) => event.message.includes('Retrying scene 1/1 content'))).toBe(
-      true,
-    );
+      expect(result.scenesCount).toBe(1);
+      expect(mocks.generateSceneContent).toHaveBeenCalledTimes(3);
+      expect(mocks.generateSceneContent.mock.calls[1]?.[2]).toEqual(
+        expect.objectContaining({
+          validationDirective: 'Move the title fully inside the slide.',
+        }),
+      );
+      expect(mocks.generateSceneContent.mock.calls[2]?.[2]).toEqual(
+        expect.objectContaining({
+          validationDirective:
+            'Move the title fully inside the slide.\nReserve LaTeX for compact mathematical symbols.',
+        }),
+      );
+      expect(progress.some((event) => event.message.includes('Retrying scene 1/1 content'))).toBe(
+        true,
+      );
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('rejects an approved plan that violates the explicit author scene count', async () => {
