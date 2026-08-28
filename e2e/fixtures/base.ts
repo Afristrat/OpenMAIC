@@ -134,6 +134,15 @@ export const test = base.extend<Fixtures>({
           body: '{"success":true,"classrooms":[]}',
         }),
       );
+      // Import is legally gated and therefore closed by default. Individual
+      // import journeys override this route explicitly when exercising it.
+      await page.route('**/api/courses/import?*', (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: '{"enabled":false}',
+        }),
+      );
       await use(mockApi);
     },
     { auto: true },
