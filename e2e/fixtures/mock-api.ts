@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import { mockOutlines } from './test-data/scene-outlines';
-import { mockSceneContentResponse } from './test-data/scene-content';
+import { createMockSceneContentResponse } from './test-data/scene-content';
 import { createMockSceneActionsResponse } from './test-data/scene-actions';
 import type { SceneOutline } from '../../lib/types/generation';
 
@@ -87,12 +87,22 @@ export class MockApi {
   }
 
   /** Mock the scene content generation endpoint */
-  async mockSceneContent(response = mockSceneContentResponse) {
+  async mockSceneContent(response?: ReturnType<typeof createMockSceneContentResponse>) {
     await this.page.route('**/api/generate/scene-content', (route) => {
+      let payload = response;
+      if (!payload) {
+        let outline: SceneOutline | undefined;
+        try {
+          outline = (route.request().postDataJSON() as { outline?: SceneOutline }).outline;
+        } catch {
+          // The default fixture remains valid when a malformed request has no outline.
+        }
+        payload = createMockSceneContentResponse(outline);
+      }
       route.fulfill({
         status: 200,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(response),
+        body: JSON.stringify(payload),
       });
     });
   }

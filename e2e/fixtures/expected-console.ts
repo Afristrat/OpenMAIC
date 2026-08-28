@@ -3,6 +3,7 @@ import type { Page } from '@playwright/test';
 type ConsoleLevel = 'error' | 'warn';
 
 interface BrowserConsoleCapture {
+  waitForCount: (count: number) => Promise<void>;
   stop: () => Promise<string[]>;
 }
 
@@ -47,6 +48,13 @@ export async function captureExpectedBrowserConsole(
   );
 
   return {
+    waitForCount: async (count) => {
+      await page.waitForFunction(
+        (expectedCount) =>
+          (window as CaptureWindow).__qalemExpectedConsole?.messages.length === expectedCount,
+        count,
+      );
+    },
     stop: () =>
       page.evaluate(() => {
         const captureWindow = window as CaptureWindow;

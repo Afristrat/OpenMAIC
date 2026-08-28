@@ -576,6 +576,7 @@ test.describe('Home → Generation', () => {
 
     await expect(page).toHaveURL(/planJobId=plan-recoverable-e2e/);
     await expect(page.getByText(/Unexpected token/)).not.toBeVisible();
+    await consoleCapture.waitForCount(1);
     const messages = await consoleCapture.stop();
     expect(messages).toHaveLength(1);
     expect(messages[0]).toContain('The training plan could not be prepared');
