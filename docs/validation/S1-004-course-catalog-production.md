@@ -4,7 +4,9 @@ Date : 28 août 2026
 
 Branche : `refork-v030`
 
-SHA du code et du harnais recettés : `1b41590969e196f495c7613f4658c824f0638d6e`
+SHA du catalogue et du harnais de production : `1b41590969e196f495c7613f4658c824f0638d6e`
+
+SHA final regaté : `e8de078a08e673e5a6780767b7572235c888a706`
 
 SHA de l’application de production : `2123640917d365c15eb9ecc51723bc43d6483e2b`
 
@@ -37,11 +39,13 @@ Artefacts ServeurIA :
 
 Avant nettoyage, l’audit retrouve exactement le compte, le cours, la classroom et l’organisation de recette. Après suppression, il retourne `authExists=false` et les trois compteurs à zéro.
 
-Le gate complet au SHA `1b41590969e196f495c7613f4658c824f0638d6e`, dans `qalem-validation:playwright-1.58.2-ffmpeg` sur ServeurIA avec `NODE_OPTIONS=--max-old-space-size=6144`, passe :
+Le premier gate de clôture a révélé une erreur d’hydratation réelle dans le scénario PWA hors ligne : le service worker servait le HTML React de la page commerciale `/` sous l’URL privée `/review`. Le SHA final réserve le shell commercial à sa propre URL et retourne, pour les autres navigations hors ligne, un document autonome sans runtime React. Le scénario PWA utilise désormais le contrat console global et vérifie le message hors ligne visible. Son ciblage passe 1/1 Vitest et 2/2 Playwright ; journal SHA-256 `18a324f614c3ac0529e80e3ec1a4203592b6040765f25c420c12103d708fd85e`.
+
+Le gate complet au SHA `e8de078a08e673e5a6780767b7572235c888a706`, dans `qalem-validation:playwright-1.58.2-ffmpeg` sur ServeurIA avec `NODE_OPTIONS=--max-old-space-size=6144`, passe :
 
 - Prettier, TypeScript et ESLint ;
 - 379 fichiers et 2 491 tests Vitest ;
 - build Next.js, 99 pages statiques ;
 - 82 tests Playwright en 3,6 minutes.
 
-Journal : `/tmp/qalem-s1004-full-gate-1b41590.log`, SHA-256 `29feb29757f421566bce0c1ad24350413930078afa2e9e8a6644bd984ef95774`.
+Le journal final contient zéro erreur ou mismatch d’hydratation et zéro erreur WebServer inattendue. Journal : `/tmp/qalem-s1004-full-gate-e8de078.log`, SHA-256 `d2b31abf817379b9daaf03a410829139a83bc90613efef51cba4828635d7154d`.
