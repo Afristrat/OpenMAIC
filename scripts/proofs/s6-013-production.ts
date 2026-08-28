@@ -804,17 +804,21 @@ async function main(): Promise<void> {
     assert.equal(questions.length, 5);
     assert(questions.every((question) => question.type === 'single'));
     await page.locator('[data-testid="scene-item"]').nth(quizSceneIndex).click();
+    const startQuizButton = page.getByRole('button', { name: 'Démarrer le quiz' });
     const submitQuizButton = page.getByRole('button', { name: 'Soumettre les réponses' });
+    await startQuizButton.waitFor();
+    await page.waitForTimeout(1_000);
     try {
-      await page.getByRole('button', { name: 'Démarrer le quiz' }).click();
+      await startQuizButton.click();
+      await submitQuizButton.waitFor({ timeout: 10_000 });
     } catch (error) {
-      try {
-        await submitQuizButton.waitFor({ timeout: 5_000 });
-      } catch {
-        throw error;
-      }
+      await page.screenshot({ path: join(ARTIFACT_DIR, 'quiz-transition-failed.png'), fullPage: true });
+      await writeFile(
+        join(ARTIFACT_DIR, 'quiz-transition-failed-body.txt'),
+        await page.locator('body').innerText(),
+      );
+      throw error;
     }
-    await submitQuizButton.waitFor();
     for (const question of questions) {
       const questionText = string(question.question, 'quiz.question');
       const answers = array(question.answer, 'quiz.answer').map((answer) =>
@@ -983,6 +987,7 @@ async function main(): Promise<void> {
     assert.deepEqual(pageErrors, [], `Unexpected page errors: ${pageErrors.join('\n')}`);
     assert.deepEqual(httpErrors, [], `Unexpected HTTP errors: ${httpErrors.join('\n')}`);
   } catch (error) {
+    evidence.browser = { consoleSignals, pageErrors, httpErrors };
     evidence.error = error instanceof Error ? (error.stack ?? error.message) : String(error);
     throw error;
   } finally {
