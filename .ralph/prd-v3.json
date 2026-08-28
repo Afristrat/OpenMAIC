@@ -2747,7 +2747,7 @@
       "epic": "1-CRÉER",
       "priority": "P2",
       "status": "to_validate",
-      "passes": false,
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S1-010",
@@ -2755,14 +2755,25 @@
       },
       "sourceDependencies": ["S0-008"],
       "dependencies": [],
-      "gap": "Réouverture de preuve : OOXML bien formé ne prouve pas l’ouverture sans réparation dans PowerPoint.",
-      "evidence": ["tests/edit/round-trip/ooxml-validity.test.ts", ".ralph/prd-v2.json#S1-010"],
+      "gap": "Soldé : un cours FR/AR produit par l’exporteur Qalem est ouvert, relu et rendu par Microsoft PowerPoint 16 ; le postinstall est reproductible et ne crée plus de cache au chemin littéral `undefined`.",
+      "evidence": [
+        "tests/edit/round-trip/ooxml-validity.test.ts",
+        "scripts/proofs/generate-s1-010-pptx.ts",
+        "packages/pptxgenjs/rollup.config.mjs",
+        "docs/validation/S1-010-powerpoint.md",
+        ".ralph/prd-v2.json#S1-010"
+      ],
       "acceptance": [
-        "PPTX d'un course généré s'ouvre sans réparation dans PowerPoint",
+        "PPTX d'un cours généré s'ouvre sans réparation dans PowerPoint",
         "Packages mathml2omml/pptxgenjs buildés au postinstall (preuve)",
         "Consigner une ouverture réelle du fichier généré dans PowerPoint, sans réparation et avec contrôle FR/AR des éléments ; si cette application est inaccessible, garder la story ouverte."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-08-28 — Au SHA f9af878774704666a055f12d91d27cbe56d47414, le générateur permanent scripts/proofs/generate-s1-010-pptx.ts produit sur ServeurIA un PPTX Qalem de 54 793 octets et deux diapositives FR/AR. Les 10 fichiers et 17 tests du round-trip passent ; journal ciblé /tmp/qalem-s1010-targeted-f9af878.log, SHA-256 b217511a8a90ebd9fcea7eb69b0404c82bbfdfe1b247c2cc08ea6fd4173a421d.",
+        "2026-08-28 — Le fichier transféré conserve le SHA-256 a9bd5216d968c8e00c507eba71945f9c4a9cf13f9fcdf6e89d39acf0420b03b9. Microsoft PowerPoint 16.0 l’ouvre en lecture seule sans exception, retrouve les quatre textes visibles et les deux notes de présentation FR/AR, puis rend les deux diapositives en PNG. Les bornes Office de chaque texte restent dans le canevas ; preuve locale C:\\projets\\Qalem\\proofs\\S1-010-f9af878\\powerpoint-open-evidence.json, SHA-256 bceff58068c6f7af39cf2680e44b8b187ac176c77e1e2bd06f5537c049b93273.",
+        "2026-08-28 — Un postinstall racine complet sur ServeurIA régénère mathml2omml et pptxgenjs avec des artefacts non vides et datés après le lancement. Le contrôle a découvert puis corrigé la création parasite de packages/pptxgenjs/undefined : le cache rollup-plugin-typescript2 possède désormais un chemin explicite sous node_modules. Nouvelle exécution verte et worktree propre hors packages/omml2mathml/node_modules/ préexistant ; journal /tmp/qalem-s1010-postinstall-f9af878.log, SHA-256 7851bbdee6eaa441c992efc2d12d0c6f4d6f493872ec65ab2f8f9d9c095f7ab7.",
+        "2026-08-28 — Gate complet au SHA f9af878774704666a055f12d91d27cbe56d47414 dans qalem-validation:playwright-1.58.2-ffmpeg sur ServeurIA : Prettier, TypeScript et lint passent ; 385/385 fichiers et 2 505/2 505 tests Vitest, build 100/100 pages et 83/83 Playwright en 3,7 minutes. Le dossier undefined reste absent. Journal /tmp/qalem-s1010-full-gate-f9af878.log, SHA-256 c489ef0438f825852e4b57cdebcecdbbab0c5447817739a4ba6c27a5b9337473. Preuve permanente : docs/validation/S1-010-powerpoint.md."
+      ],
       "historicalEvidence": {
         "completedAt": "2026-07-12",
         "note": "FR-1 vérifié : `buildPptxBlob` (lib/export/use-export-pptx.ts) était déjà exporté explicitement pour un harnais de tests round-trip (tests/edit/round-trip/*.test.ts, 8 fichiers) qui vérifiait la survie de chaque op de slide-ops à la sérialisation, mais aucun test n'auditait la bien-formation OOXML globale du zip généré. Nouveau test permanent `tests/edit/round-trip/ooxml-validity.test.ts` : construit une fixture hostile (texte avec `&`/`<script>`/guillemets/apostrophes + arabe injecté dans un élément texte, une cellule de tableau et une note de discours SpeechAction, plus une formule LaTeX réelle passant par le chemin OMML de `latexToOmml`, une image en data URL) puis (1) vérifie la présence des parties OOXML obligatoires ([Content_Types].xml, _rels/.rels, ppt/presentation.xml+rels, ppt/slides/slide1.xml+rels, docProps/core.xml, docProps/app.xml), (2) pour CHAQUE fichier .xml/.rels du zip vérifie l'équilibre des balises (même technique regex que le test SCORM existant, indépendant de mes propres helpers) et l'absence de `&` brut non échappé, (3) vérifie que le contenu hostile ressort échappé (jamais `<script>` brut) et que la formule est bien passée par `<m:oMath` (pas le fallback SVG). Zéro nouvelle dépendance (jszip déjà présent). Preuve indépendante forte (comme SCORM S1-007) : script tsx jetable générant un vrai .pptx multi-slides (2 chapitres, formule, tableau, image, lien inter-slides, contenu hostile FR/AR) exécuté sur serveuria — validé par un vrai parseur XML Python (`xml.dom.minidom`, indépendant de mon propre code) : 44 entrées zip, 10/10 parties OOXML requises présentes, 24 parties XML/rels bien formées, contenu hostile confirmé échappé, arabe préservé, formule OMML confirmée présente. Preuve postinstall : `packages/mathml2omml/dist` et `packages/pptxgenjs/dist` supprimés puis régénérés via `npm run build` (rollup) dans chacun des 2 packages sur serveuria, timestamps confirmés après rebuild — les deux dossiers `dist/` sont gitignorés localement à chaque package (vérifié `git check-ignore`), rebuild sans impact git. Validation gate sur serveuria (exécutée par le chef d'équipe suite à un blocage bash-guard bloquant toute commande contenant npx/vitest/pnpm/python même via SSH légitime dans cette session, escaladé plutôt que contourné) : `pnpm check` (Prettier) 0 problème, `npx tsc --noEmit` 0 erreur, `pnpm lint` 0 problème, `pnpm test` complet 1827/1830 verts — les 3 échecs sont exclusivement dans `tests/audio/audio-gate.test.ts`/`tts-audio-gate.test.ts`, domaine strictement disjoint de S1-009 (travail en cours d'un autre agent sur le même workspace serveuria partagé), confirmé par une ré-exécution isolée de `tests/edit/round-trip/` seul : 10 fichiers, 16 tests, tous verts. `main` non touché. **e2e non relancé** : le workspace serveuria partagé était dans un état transitoire (S1-009 non finalisé) au moment de la validation ; reporté à la stabilisation du workspace, jugé acceptable car cette story n'ajoute/modifie aucun test e2e et ne touche aucun code de production (uniquement un fichier de test vitest ajouté), risque de régression e2e nul.",
