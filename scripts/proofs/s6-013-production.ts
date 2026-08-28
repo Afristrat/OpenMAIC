@@ -698,7 +698,17 @@ async function main(): Promise<void> {
     assert.equal(questions.length, 5);
     assert(questions.every((question) => question.type === 'single'));
     await page.locator('[data-testid="scene-item"]').nth(quizSceneIndex).click();
-    await page.getByRole('button', { name: 'Démarrer le quiz' }).click();
+    const submitQuizButton = page.getByRole('button', { name: 'Soumettre les réponses' });
+    try {
+      await page.getByRole('button', { name: 'Démarrer le quiz' }).click();
+    } catch (error) {
+      try {
+        await submitQuizButton.waitFor({ timeout: 5_000 });
+      } catch {
+        throw error;
+      }
+    }
+    await submitQuizButton.waitFor();
     for (const question of questions) {
       const questionText = string(question.question, 'quiz.question');
       const answers = array(question.answer, 'quiz.answer').map((answer) =>
@@ -721,7 +731,7 @@ async function main(): Promise<void> {
       );
       await answerButton.click();
     }
-    await page.getByRole('button', { name: 'Soumettre les réponses' }).click();
+    await submitQuizButton.click();
     await page.getByText('100%', { exact: true }).waitFor({ timeout: 30_000 });
     await page.getByText('5 bonnes réponses', { exact: true }).waitFor({ timeout: 30_000 });
     await page.screenshot({ path: join(ARTIFACT_DIR, 'quiz-100.png'), fullPage: true });
