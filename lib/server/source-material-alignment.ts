@@ -96,11 +96,16 @@ function normalizeReference(value: string): string {
   return value.replace(/\s+/g, ' ').trim();
 }
 
+interface ParsedVerdict {
+  verdict: SourceAlignmentVerdict;
+  retryableContractFailure: boolean;
+}
+
 function parseVerdict(
   response: string,
   sourceText: string,
   locale: SupportedLocale,
-): SourceAlignmentVerdict {
+): ParsedVerdict {
   const parsed = parseJsonResponse<Partial<SourceAlignmentVerdict>>(response);
   const status = parsed?.status;
   if (
@@ -113,7 +118,7 @@ function parseVerdict(
     !parsed.sourceTopic.trim() ||
     !parsed.explanation.trim()
   ) {
-    return uncertainVerdict(locale);
+    return { verdict: uncertainVerdict(locale), retryableContractFailure: true };
   }
 
   const suggestedRequirement = parsed.suggestedRequirement?.trim().slice(0, 12_000);
@@ -133,16 +138,19 @@ function parseVerdict(
     : [];
 
   if (status !== 'aligned' && (!suggestedRequirement || references.length === 0)) {
-    return uncertainVerdict(locale);
+    return { verdict: uncertainVerdict(locale), retryableContractFailure: true };
   }
 
   return {
-    status,
-    requestTopic: parsed.requestTopic.trim().slice(0, 240),
-    sourceTopic: parsed.sourceTopic.trim().slice(0, 240),
-    explanation: parsed.explanation.trim().slice(0, 1000),
-    ...(status === 'aligned' ? {} : { suggestedRequirement }),
-    references,
+    verdict: {
+      status,
+      requestTopic: parsed.requestTopic.trim().slice(0, 240),
+      sourceTopic: parsed.sourceTopic.trim().slice(0, 240),
+      explanation: parsed.explanation.trim().slice(0, 1000),
+      ...(status === 'aligned' ? {} : { suggestedRequirement }),
+      references,
+    },
+    retryableContractFailure: false,
   };
 }
 
@@ -172,6 +180,17 @@ Return only this JSON object:
     authorRequest: requirement,
     attachedSourceSample: sampleSource(sourceText),
   });
-  const verdict = parseVerdict(await aiCall(system, user), sourceText, locale);
+  let parsed = parseVerdict(await aiCall(system, user), sourceText, locale);
+  if (parsed.retryableContractFailure) {
+    parsed = parseVerdict(
+      await aiCall(
+        `${system}\n\nYour previous response did not satisfy the required JSON contract. Return every required field and no surrounding text. This is the only retry.`,
+        user,
+      ),
+      sourceText,
+      locale,
+    );
+  }
+  const { verdict } = parsed;
   if (verdict.status !== 'aligned') throw new SourceMaterialConflictError(verdict);
 }

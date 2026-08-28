@@ -163,6 +163,67 @@ describe('classroom plan source alignment gate', () => {
     expect(mocks.callLLM).toHaveBeenCalledTimes(2);
   });
 
+  test('retries one malformed alignment response without weakening a valid verdict', async () => {
+    mocks.callLLM
+      .mockResolvedValueOnce({ text: 'Réponse momentanément inexploitable' })
+      .mockResolvedValueOnce({
+        text: JSON.stringify({
+          status: 'aligned',
+          requestTopic: 'Amélioration des processus',
+          sourceTopic: 'Amélioration des processus',
+          explanation: 'Le document étaye directement la demande.',
+          suggestedRequirement: '',
+          references: [],
+        }),
+      })
+      .mockResolvedValueOnce({ text: generatedPlan });
+
+    await generateClassroomPlan({
+      ...input,
+      requirement: 'Créer une formation sur l’amélioration continue et Lean Six Sigma.',
+    });
+
+    expect(mocks.callLLM).toHaveBeenCalledTimes(3);
+    const retryMessages = mocks.callLLM.mock.calls[1]?.[0]?.messages as Array<{
+      content: string;
+    }>;
+    expect(retryMessages[0]?.content).toContain('This is the only retry');
+  });
+
+  test('does not retry a structurally valid uncertain verdict', async () => {
+    mocks.callLLM.mockResolvedValueOnce({
+      text: JSON.stringify({
+        status: 'uncertain',
+        requestTopic: 'Gestion opérationnelle',
+        sourceTopic: 'Amélioration des processus',
+        explanation: 'La portée de la demande reste ambiguë.',
+        suggestedRequirement:
+          'Créer une formation sur l’analyse des causes racines et l’amélioration continue.',
+        references: ['Root cause analysis, Lean Six Sigma'],
+      }),
+    });
+
+    await expect(generateClassroomPlan(input)).rejects.toMatchObject({
+      name: 'SourceMaterialConflictError',
+      alignment: { status: 'uncertain' },
+    });
+    expect(mocks.callLLM).toHaveBeenCalledTimes(1);
+  });
+
+  test('fails closed after two malformed alignment responses', async () => {
+    mocks.callLLM.mockResolvedValue({ text: 'Réponse momentanément inexploitable' });
+
+    await expect(generateClassroomPlan(input)).rejects.toMatchObject({
+      name: 'SourceMaterialConflictError',
+      alignment: {
+        status: 'uncertain',
+        requestTopic: 'Demande non déterminée',
+        sourceTopic: 'Document non déterminé',
+      },
+    });
+    expect(mocks.callLLM).toHaveBeenCalledTimes(2);
+  });
+
   test('rejects a document without usable text without inventing a topic from metadata', async () => {
     await expect(
       generateClassroomPlan({
