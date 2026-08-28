@@ -2771,7 +2771,7 @@
       "epic": "1-CRÉER",
       "priority": "P2",
       "status": "to_validate",
-      "passes": false,
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S1-004",
@@ -2779,14 +2779,20 @@
       },
       "sourceDependencies": ["S1-003"],
       "dependencies": [],
-      "gap": "Catalogue, route et E2E présents : ne pas reconstruire ; terminer la recette de publication, visibilité et entrée en cours.",
+      "gap": "Soldé : le flag global est créé durablement, la publication et la visibilité sont recettées contre la production, puis le cours ouvre sa classroom réelle ; le catalogue arabe rend le document en RTL.",
       "evidence": ["app/api/courses/catalog/route.ts", "e2e/tests/course-catalog.spec.ts"],
       "acceptance": [
         "Liste des courses ready + catalog_visible",
         "Rejoindre la classe → classroom (e2e)",
         "Flag course_catalog, rendu ar-MA vérifié"
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-08-28 — Le SHA b7556d9061b0629ca7f29f90a4866b2b5e247ac5 ajoute la migration idempotente 00045_enable_course_catalog.sql : upsert du flag course_catalog actif, global et décrit. Le test permanent dédié vérifie ces quatre invariants ; la route et l’interface existantes sont réutilisées sans reconstruction.",
+        "2026-08-28 — Dans la base Qalem de production, l’absence initiale du flag a été prouvée, puis l’état de la migration a été appliqué et relu : HTTP 201, une ligne course_catalog, enabled=true, scope=global et description exacte. Aucun secret n’a été affiché.",
+        "2026-08-28 — Recette authentifiée sans interception réseau sur https://qalem.ma avec l’application 2123640917d365c15eb9ecc51723bc43d6483e2b et le harnais 1b41590969e196f495c7613f4658c824f0638d6e : cours ready non publié visible, PATCH de publication HTTP 200, cours publié visible, navigation vers la classroom persistée et première scène chargée. Le contrôle réel FR→AR affiche دليل التكوينات et html dir=rtl ; console et HTTP 5xx restent vides. Preuve JSON SHA-256 16889b4f3983a5aa5d8f6d8414a22979f2b89348b72d213b90ee77b98e191485.",
+        "2026-08-28 — Le harnais préfixe toutes les données temporaires. L’audit avant nettoyage retrouve exactement compte, cours, stage et organisation ; l’audit final retourne authExists=false, courseCount=0, stageCount=0 et organizationCount=0. Journal de production SHA-256 f31ab59615d9b645e654aeaa102f0537931b9ed8e900f50f0fe49bfbb25e5560. Preuve permanente : docs/validation/S1-004-course-catalog-production.md.",
+        "2026-08-28 — Gate complet ServeurIA au SHA 1b41590969e196f495c7613f4658c824f0638d6e avec NODE_OPTIONS=--max-old-space-size=6144 : Prettier, TypeScript et lint passent ; 379/379 fichiers et 2 491/2 491 tests Vitest, build 99/99 et 82/82 Playwright en 3,6 minutes. Journal /tmp/qalem-s1004-full-gate-1b41590.log, SHA-256 29feb29757f421566bce0c1ad24350413930078afa2e9e8a6644bd984ef95774."
+      ],
       "historicalEvidence": {
         "completedAt": null,
         "note": null,

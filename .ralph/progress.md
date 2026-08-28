@@ -12,7 +12,7 @@ Les logs ci-dessous sont des archives datées ; leurs chiffres et mentions « ve
 
 - Le service worker v3 et les rappels locaux authentifiés sont soldés par S6-010 ; la délivrance distante application fermée reste S3-002 et e-mail/WhatsApp restent soumis à la décision S6-011.
 - L’éditeur complet de syllabus et les adaptateurs SCORM 2004/cmi5 existent : S5-004 et S1-008 demandent une recette, pas une réimplémentation.
-- Le catalogue dispose d’une route et d’un E2E : S1-004 reste une validation à terminer.
+- Le catalogue est soldé par S1-004 : flag persistant, publication et classroom réelles, rendu arabe RTL et nettoyage de production prouvés.
 - Les mentions anciennes d’Azure `xml:lang` figé sont contredites par le code dynamique actuel. Les anciens comptes de strings chinoises ou d’imports MCP ne sont pas reconduits sans nouveau comptage.
 - S1-011 conserve son acceptation humaine historique ; elle ne ferme ni le catalogue vocal S6-012, ni la prononciation de dirhams S6-008, ni la recette Whisper S6-009.
 - La règle de zéro rotation reste en vigueur : S6-014 est bloquée, pas une action à exécuter automatiquement.
@@ -42,6 +42,8 @@ Les logs ci-dessous sont des archives datées ; leurs chiffres et mentions « ve
 ## Session Log
 
 ### Dernière clôture certifiée
+
+- **2026-08-28 — S1-004 Catalogue interne (porte 2) [UI]** — La cause racine était l’absence de toute migration créant `course_catalog`, alors que la route échouait correctement en mode fermé. La migration `00045` rend le flag global durable et son état actif a été relu en production. La recette authentifiée sans interception réseau publie un vrai cours `ready`, le retrouve dans le catalogue, ouvre sa classroom persistée et contrôle le basculement réel FR→AR avec `dir=rtl`, sans erreur console ni HTTP 5xx. Compte, cours, stage et organisation temporaires sont supprimés et l’audit final est nul. Gate au SHA `1b41590969e196f495c7613f4658c824f0638d6e` : formatage, TypeScript, lint, 379/379 fichiers et 2 491/2 491 tests Vitest, build 99/99 et 82/82 Playwright. Référence : `docs/validation/S1-004-course-catalog-production.md`.
 
 - **2026-08-28 — S1-008 Export couche 2 : adaptateurs scorm12/scorm2004/cmi5 interchangeables** — Le SHA de code `64d499686ede712b0ad5da93c7b144917c3dcca7` produit les trois formats depuis un générateur unique, avec captures statiques, narrations persistées regatées et aucun runtime interactif fictif. Moodle 5.0.1 importe le SCORM 2004, expose `API_1484_11`, exécute le JavaScript Qalem et persiste `completed`/`passed`. ADL CATAPULT officiel au commit `806c0baaa0fa99c9cb4f398ad7eb21fc5461c6e4` déclare le cmi5 final `Conformant` après les trois `PUT` `initialized` → `completed` → `terminated`. Tous les bancs finissent sans redémarrage ni OOM, puis sont supprimés sans résidu. Gate final au SHA `8497b977806632161f70b930447072e9775f450d` : formatage, TypeScript, lint, 2 490/2 490 Vitest, build 99/99 et 82/82 Playwright ; la limite heap V8 du premier essai est résolue dans le banc avec `NODE_OPTIONS=--max-old-space-size=6144`, sans changement de code. ADR-105 reste réservée jusqu’à la tranche d’Amine et ne bloque pas cette clôture. Référence : `docs/validation/S1-008-scorm2004-cmi5.md`.
 

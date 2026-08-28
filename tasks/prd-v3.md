@@ -5,7 +5,7 @@
 ## Référence active
 
 La source unique des US, critères, dépendances et statuts est [`.ralph/prd-v3.json`](../.ralph/prd-v3.json).
-Ce document est une vue de lecture du registre mise à jour le 27 août 2026, pas un second backlog.
+Ce document est une vue de lecture du registre mise à jour le 28 août 2026, pas un second backlog.
 Le chantier 3 ANCRER conserve sa spécification dans `tasks/prd-3-ancrer.md` ; « v3 » désigne ici la version consolidée du PRD.
 
 ## Objectif et portée
@@ -16,8 +16,8 @@ Aucune fonctionnalité n’est implémentée par cette opération documentaire.
 - 65 stories v2 inventoriées : 26 ouvertes reprises, 3 rouvertes, 36 acceptations historiques conservées sans recertification.
 - 72 stories v1/UI rattachées à une décision de conservation et à leurs US de suivi ; 18 capacités héritées sont explicitement remises en suivi.
 - 20 demandes/ensembles d’engagements rattachés à des US.
-- 66 US au registre : 13 à implémenter, 27 à valider, 21 avec décision préalable et 5 bloquées ; 12 sont soldées.
-- Douze US sont soldées sur preuves actuelles. Une décision de retrait n’est jamais une réussite d’implémentation.
+- 67 US au registre : 11 à implémenter, 11 à valider, 21 avec décision préalable et 5 bloquées ; 19 sont soldées.
+- Dix-neuf US sont soldées sur preuves actuelles. Une décision de retrait n’est jamais une réussite d’implémentation.
 - S0-015 est entièrement certifiée côté machine sur le SHA déployé `6ea54d9` ; seule l’écoute humaine SOP-011 maintient son état « À valider ».
 
 ## Limites de preuve
@@ -89,7 +89,7 @@ Les descriptions et critères exécutables complets sont dans le JSON canonique.
 | 17   | S1-009 | P1       | Soldée           | Gate audio : tachkil AR + plancher de bruit -50 dB sur toutes les sorties TTS         |
 | 18   | S4-010 | P1       | Soldée           | Contexte territorial réutilisable et guidage laser lisible [UI]                       |
 | 19   | S0-017 | P1       | À valider        | Modèles image LiteLLM administrés : libellés, sélection et preuve UI [UI]             |
-| 20   | S6-013 | P1       | À valider        | Recetter une formation complète avec ressources et exports réels                      |
+| 20   | S6-013 | P1       | Soldée           | Recetter une formation complète avec ressources et exports réels                      |
 | 21   | S-025  | P1       | Soldée           | Extraire les items de révision depuis les quiz                                        |
 | 22   | S6-010 | P1       | Soldée           | Déclencher les rappels de révision et vérifier le cache PWA                           |
 | 23   | U-020  | P1       | À valider        | Bannière installer PWA                                                                |
@@ -97,10 +97,10 @@ Les descriptions et critères exécutables complets sont dans le JSON canonique.
 | 25   | S0-012 | P1       | À valider        | [CHECKPOINT AMINE] Parcours guidé passe RTL ar-MA [UI]                                |
 | 26   | S1-012 | P1       | À valider        | Capacité capture web réutilisable — service Playwright dédié + injection scène        |
 | 27   | S0-011 | P2       | Décision requise | [CHECKPOINT AMINE] Checklist garder/abandonner des 72 stories                         |
-| 28   | S1-007 | P2       | À valider        | Export SCORM couche 1 : package autonome importé dans Moodle                          |
-| 29   | S1-008 | P2       | À valider        | Export couche 2 : adaptateurs scorm12/scorm2004/cmi5 interchangeables                 |
+| 28   | S1-007 | P2       | Soldée           | Export SCORM couche 1 : package autonome importé dans Moodle                          |
+| 29   | S1-008 | P2       | Soldée           | Export couche 2 : adaptateurs scorm12/scorm2004/cmi5 interchangeables                 |
 | 30   | S1-010 | P2       | À valider        | Export PPTX re-vérifié sur la nouvelle base                                           |
-| 31   | S1-004 | P2       | À valider        | Catalogue interne (porte 2) [UI]                                                      |
+| 31   | S1-004 | P2       | Soldée           | Catalogue interne (porte 2) [UI]                                                      |
 | 32   | S1-005 | P2       | À implémenter    | Import → outline éditable (porte 3)                                                   |
 | 33   | S6-016 | P2       | Décision requise | Clore le cadrage NP des widgets à partir du produit actuel                            |
 | 34   | S6-015 | P2       | Décision requise | Composer et publier des widgets déterministes sans redéploiement                      |
