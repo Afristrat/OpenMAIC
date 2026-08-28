@@ -86,7 +86,9 @@ async function main(): Promise<void> {
   const absoluteOutput = resolve(outputPath!);
   await mkdir(dirname(absoluteOutput), { recursive: true });
   await writeFile(absoluteOutput, Buffer.from(await blob.arrayBuffer()));
-  console.log(JSON.stringify({ output: absoluteOutput, bytes: blob.size, slides: fixtures.length }));
+  console.log(
+    JSON.stringify({ output: absoluteOutput, bytes: blob.size, slides: fixtures.length }),
+  );
 }
 
 main().catch((error: unknown) => {
