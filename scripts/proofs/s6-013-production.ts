@@ -361,7 +361,6 @@ async function main(): Promise<void> {
       serviceWorkers: process.env.PROOF_QUIZ_ONLY === '1' ? 'block' : 'allow',
     });
     await context.addInitScript(() => {
-      const NativeAudio = window.Audio;
       const records: Array<{
         src: string;
         events: Array<{
@@ -376,7 +375,8 @@ async function main(): Promise<void> {
           errorCode: number | null;
         }>;
       }> = [];
-      const snapshot = (audio: HTMLAudioElement, type: string) => ({
+      const recordByMedia = new WeakMap<HTMLMediaElement, (typeof records)[number]>();
+      const snapshot = (audio: HTMLMediaElement, type: string) => ({
         type,
         at: Date.now(),
         currentTime: audio.currentTime,
@@ -387,10 +387,14 @@ async function main(): Promise<void> {
         playbackRate: audio.playbackRate,
         errorCode: audio.error?.code ?? null,
       });
-      const TrackedAudio = function (src?: string): HTMLAudioElement {
-        const audio = new NativeAudio(src);
-        const record = { src: src ?? '', events: [] as ReturnType<typeof snapshot>[] };
-        records.push(record);
+      const nativePlay = HTMLMediaElement.prototype.play;
+      HTMLMediaElement.prototype.play = function () {
+        let record = recordByMedia.get(this);
+        if (!record) {
+          record = { src: this.currentSrc || this.src, events: [] };
+          recordByMedia.set(this, record);
+          records.push(record);
+        }
         for (const type of [
           'loadstart',
           'loadedmetadata',
@@ -405,26 +409,22 @@ async function main(): Promise<void> {
           'abort',
           'emptied',
         ]) {
-          audio.addEventListener(type, () => {
-            record.src = audio.currentSrc || audio.src;
-            record.events.push(snapshot(audio, type));
-          });
+          if (record.events.length === 0) {
+            this.addEventListener(type, () => {
+              record!.src = this.currentSrc || this.src;
+              record!.events.push(snapshot(this, type));
+            });
+          }
         }
-        const nativePlay = audio.play.bind(audio);
-        audio.play = () => {
-          record.src = audio.currentSrc || audio.src;
-          record.events.push(snapshot(audio, 'play-called'));
-          const result = nativePlay();
-          void result.then(
-            () => record.events.push(snapshot(audio, 'play-resolved')),
-            () => record.events.push(snapshot(audio, 'play-rejected')),
-          );
-          return result;
-        };
-        return audio;
-      } as unknown as typeof Audio;
-      TrackedAudio.prototype = NativeAudio.prototype;
-      Object.defineProperty(window, 'Audio', { configurable: true, value: TrackedAudio });
+        record.src = this.currentSrc || this.src;
+        record.events.push(snapshot(this, 'play-called'));
+        const result = nativePlay.call(this);
+        void result.then(
+          () => record!.events.push(snapshot(this, 'play-resolved')),
+          () => record!.events.push(snapshot(this, 'play-rejected')),
+        );
+        return result;
+      };
       Object.defineProperty(window, '__s6013AudioRecords', { configurable: true, value: records });
     });
     page = await context.newPage();
