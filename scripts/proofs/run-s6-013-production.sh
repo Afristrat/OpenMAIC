@@ -6,7 +6,7 @@ set -Eeuo pipefail
 
 PROOF_BASE_URL="${PROOF_BASE_URL:-https://qalem.ma}"
 PROOF_WORKTREE="${PROOF_WORKTREE:-/tmp/qalem-s6013-155f9b3}"
-PROOF_GATE_IMAGE="${PROOF_GATE_IMAGE:-qalem-s6017-gate:ffmpeg}"
+PROOF_GATE_IMAGE="${PROOF_GATE_IMAGE:-qalem-validation:playwright-1.58.2-ffmpeg}"
 PROOF_HARNESS_SHA="${PROOF_HARNESS_SHA:-$(git -C "$PROOF_WORKTREE" rev-parse HEAD)}"
 PROOF_MARKER="${PROOF_MARKER:-s6013-$(date -u +%Y%m%dT%H%M%SZ)-$RANDOM}"
 PROOF_ARTIFACT_DIR="${PROOF_ARTIFACT_DIR:-/tmp/qalem-s6013-artifacts/$PROOF_MARKER}"
