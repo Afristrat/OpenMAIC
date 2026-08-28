@@ -26,7 +26,21 @@ vi.mock('@/lib/utils/chat-storage', () => ({
 vi.mock('@/lib/utils/playback-storage', () => ({ clearPlaybackState: vi.fn() }));
 vi.mock('@/lib/quiz/persistence', () => ({ clearAllForScene: vi.fn() }));
 
-import { saveStageData, type StageStoreData } from '@/lib/utils/stage-storage';
+import {
+  resolveCurrentSceneId,
+  saveStageData,
+  type StageStoreData,
+} from '@/lib/utils/stage-storage';
+
+describe('resolveCurrentSceneId', () => {
+  const scenes = [{ id: 'scene-1' }, { id: 'scene-2' }];
+
+  it('preserves a valid selection and otherwise falls back to the first scene', () => {
+    expect(resolveCurrentSceneId(scenes, 'scene-2')).toBe('scene-2');
+    expect(resolveCurrentSceneId(scenes, 'deleted-scene')).toBe('scene-1');
+    expect(resolveCurrentSceneId([], 'deleted-scene')).toBeNull();
+  });
+});
 
 describe('saveStageData', () => {
   beforeEach(() => {

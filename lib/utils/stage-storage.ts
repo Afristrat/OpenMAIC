@@ -34,6 +34,15 @@ export interface StageListItem {
   thumbnail?: ThumbnailSlide;
 }
 
+export function resolveCurrentSceneId(
+  scenes: readonly Pick<Scene, 'id'>[],
+  preferredSceneId: string | null | undefined,
+): string | null {
+  return preferredSceneId && scenes.some((scene) => scene.id === preferredSceneId)
+    ? preferredSceneId
+    : (scenes[0]?.id ?? null);
+}
+
 /**
  * Save stage data to IndexedDB
  */
@@ -107,7 +116,7 @@ export async function loadStageData(stageId: string): Promise<StageStoreData | n
     return {
       stage,
       scenes,
-      currentSceneId: stage.currentSceneId || scenes[0]?.id || null,
+      currentSceneId: resolveCurrentSceneId(scenes, stage.currentSceneId),
       chats,
     };
   } catch (error) {

@@ -14,7 +14,11 @@ import { MediaStageProvider } from '@/lib/contexts/media-stage-context';
 import { generateMediaForOutlines } from '@/lib/media/media-orchestrator';
 import { migrateScene } from '@/lib/edit/slide-schema';
 import type { Scene } from '@/lib/types/stage';
-import { saveStageData, type StageStoreData } from '@/lib/utils/stage-storage';
+import {
+  resolveCurrentSceneId,
+  saveStageData,
+  type StageStoreData,
+} from '@/lib/utils/stage-storage';
 import {
   activateClassroomPersistence,
   ClassroomPersistence,
@@ -89,9 +93,13 @@ export default function ClassroomDetailPage() {
               // way in, same as the store's setScenes/loadFromStorage paths —
               // server snapshots predate the schema field.
               const migrated = (scenes as Scene[]).map(migrateScene);
+              const currentSceneId = resolveCurrentSceneId(
+                migrated,
+                useStageStore.getState().currentSceneId,
+              );
               useStageStore.setState({
                 scenes: migrated,
-                currentSceneId: migrated[0]?.id ?? null,
+                currentSceneId,
                 // Match `loadFromStorage` semantics: mode is transient UI
                 // state, not persisted with the stage. Reset on every
                 // classroom load so SPA navigation doesn't carry Pro
