@@ -428,6 +428,18 @@ async function main(): Promise<void> {
       Object.defineProperty(window, '__s6013AudioRecords', { configurable: true, value: records });
     });
     page = await context.newPage();
+    const audioInstrumentationReady = await page.evaluate(async () => {
+      const audio = new Audio();
+      await audio.play().catch(() => undefined);
+      const records = (window as typeof window & { __s6013AudioRecords?: unknown[] })
+        .__s6013AudioRecords;
+      const ready = records?.some((record) =>
+        JSON.stringify(record).includes('play-called'),
+      );
+      if (records) records.length = 0;
+      return ready;
+    });
+    assert(audioInstrumentationReady, 'Audio playback instrumentation is unavailable');
     page.on('console', (message) => {
       if (message.type() === 'warning' || message.type() === 'error') {
         consoleSignals.push(`${message.type()}: ${message.text()}`);
