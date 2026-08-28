@@ -812,7 +812,10 @@ async function main(): Promise<void> {
       await startQuizButton.click();
       await submitQuizButton.waitFor({ timeout: 10_000 });
     } catch (error) {
-      await page.screenshot({ path: join(ARTIFACT_DIR, 'quiz-transition-failed.png'), fullPage: true });
+      await page.screenshot({
+        path: join(ARTIFACT_DIR, 'quiz-transition-failed.png'),
+        fullPage: true,
+      });
       await writeFile(
         join(ARTIFACT_DIR, 'quiz-transition-failed-body.txt'),
         await page.locator('body').innerText(),
