@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useState, useMemo, useCallback, useEffect, useId, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   PieChart,
@@ -469,11 +469,14 @@ function QuestionCard({
   children: React.ReactNode;
 }) {
   const { t } = useI18n();
+  const labelId = useId();
   const isReview = !!result;
   const pts = question.points ?? 1;
 
   return (
     <motion.div
+      role="group"
+      aria-labelledby={labelId}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
@@ -517,7 +520,10 @@ function QuestionCard({
             {index + 1}
           </span>
           <div>
-            <p className="text-sm font-medium text-gray-800 dark:text-gray-100 leading-relaxed">
+            <p
+              id={labelId}
+              className="text-sm font-medium text-gray-800 dark:text-gray-100 leading-relaxed"
+            >
               {question.question}
             </p>
             <p className="text-xs text-gray-400 mt-0.5">

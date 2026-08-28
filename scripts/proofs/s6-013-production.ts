@@ -700,6 +700,7 @@ async function main(): Promise<void> {
     await page.locator('[data-testid="scene-item"]').nth(quizSceneIndex).click();
     await page.getByRole('button', { name: 'Démarrer le quiz' }).click();
     for (const question of questions) {
+      const questionText = string(question.question, 'quiz.question');
       const answers = array(question.answer, 'quiz.answer').map((answer) =>
         string(answer, 'answer'),
       );
@@ -707,10 +708,15 @@ async function main(): Promise<void> {
       const options = array(question.options, 'quiz.options').map((item) =>
         object(item, 'quiz.option'),
       );
-      const option = options.find((item) => item.value === answers[0]);
+      const optionIndex = options.findIndex((item) => item.value === answers[0]);
+      const option = options[optionIndex];
       assert(option, `Correct option ${answers[0]} is missing`);
       const label = string(option.label, 'quiz.option.label');
-      await page.getByRole('button').filter({ hasText: label }).first().click();
+      const questionGroup = page.getByRole('group', { name: questionText, exact: true });
+      await questionGroup.waitFor();
+      const answerButton = questionGroup.getByRole('button').nth(optionIndex);
+      assert((await answerButton.textContent())?.includes(label), `Displayed option differs: ${label}`);
+      await answerButton.click();
     }
     await page.getByRole('button', { name: 'Soumettre les réponses' }).click();
     await page.getByText('100%', { exact: true }).waitFor({ timeout: 30_000 });
