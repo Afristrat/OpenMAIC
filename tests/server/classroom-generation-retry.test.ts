@@ -179,10 +179,14 @@ describe('classroom scene generation retries', () => {
     mocks.generateTTSForClassroom.mockResolvedValue({ requested: 0, generated: 0 });
   });
 
-  it('feeds exact validation feedback into the next scene content attempt', async () => {
+  it('accumulates exact validation feedback across scene content attempts', async () => {
     mocks.generateSceneContent
       .mockImplementationOnce(async (_outline, _aiCall, options) => {
         options.onValidationFailure('Move the title fully inside the slide.');
+        return null;
+      })
+      .mockImplementationOnce(async (_outline, _aiCall, options) => {
+        options.onValidationFailure('Reserve LaTeX for compact mathematical symbols.');
         return null;
       })
       .mockResolvedValueOnce(slideContent);
@@ -190,10 +194,16 @@ describe('classroom scene generation retries', () => {
     const { result, progress } = await generateWithProgress();
 
     expect(result.scenesCount).toBe(1);
-    expect(mocks.generateSceneContent).toHaveBeenCalledTimes(2);
+    expect(mocks.generateSceneContent).toHaveBeenCalledTimes(3);
     expect(mocks.generateSceneContent.mock.calls[1]?.[2]).toEqual(
       expect.objectContaining({
         validationDirective: 'Move the title fully inside the slide.',
+      }),
+    );
+    expect(mocks.generateSceneContent.mock.calls[2]?.[2]).toEqual(
+      expect.objectContaining({
+        validationDirective:
+          'Move the title fully inside the slide.\nReserve LaTeX for compact mathematical symbols.',
       }),
     );
     expect(progress.some((event) => event.message.includes('Retrying scene 1/1 content'))).toBe(
