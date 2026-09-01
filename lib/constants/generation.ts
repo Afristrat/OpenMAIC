@@ -13,7 +13,7 @@ export const MAX_VISION_IMAGES = 20;
  * BCP-47 locale code → natural-language directive for the LLM prompt.
  * Single source of truth: consumed both by the Dexie `languageDirective`
  * migration (lib/utils/database.ts) and by the course-generation UI
- * (app/app/page.tsx), which need the exact same mapping.
+ * (app/(private)/app/page.tsx), which need the exact same mapping.
  */
 export const LOCALE_TO_LANGUAGE_DIRECTIVE: Record<string, string> = {
   'fr-FR': 'Deliver the entire course in French (fr-FR).',

@@ -12,7 +12,7 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 vi.mock('next/navigation', () => ({ redirect: mocks.redirect }));
 
-import PrivateApplicationLayout, { dynamic } from '@/app/app/layout';
+import PrivateApplicationLayout, { dynamic } from '@/app/(private)/layout';
 
 describe('private application layout', () => {
   it('forces a runtime authentication decision for every request', () => {

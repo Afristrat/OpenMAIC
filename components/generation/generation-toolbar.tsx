@@ -40,7 +40,7 @@ import { SourceLibraryPopover } from '@/components/generation/source-library-pop
 export interface GenerationToolbarProps {
   // Optional: some hosts (app/page.tsx) derive the generation language
   // straight from the current UI locale via useI18n() and don't need a
-  // separate override pill. When provided (app/app/page.tsx), the pill
+  // separate override pill. When provided (app/(private)/app/page.tsx), the pill
   // renders and lets the user pick a language independent of the UI locale.
   language?: 'zh-CN' | 'en-US' | 'fr-FR' | 'ar-MA';
   onLanguageChange?: (lang: 'zh-CN' | 'en-US' | 'fr-FR' | 'ar-MA') => void;
