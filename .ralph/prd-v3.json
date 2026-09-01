@@ -1439,15 +1439,15 @@
       "description": "En tant que super-administrateur Qalem, je veux créditer chaque tenant et décompter chaque usage facturable de manière fiable afin de maîtriser sa capacité de consommation indépendamment de son nombre de sièges.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P0",
-      "status": "to_implement",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "type": "explicit_request",
         "date": "2026-09-01"
       },
       "sourceDependencies": [],
       "dependencies": ["S6-022"],
-      "gap": "usage_records mesure quelques volumes, mais aucun portefeuille transactionnel par tenant ne gère allocations, débits, remboursements, idempotence, solde disponible et refus avant dépassement.",
+      "gap": "Soldé : chaque tenant possède un portefeuille rapproché avec un ledger immuable pour allocations, débits, remboursements et corrections, sérialisé et idempotent côté PostgreSQL.",
       "evidence": [
         "supabase/migrations/00015_usage_tracking.sql",
         "lib/billing/plans.ts",
@@ -1463,7 +1463,16 @@
         "Une recette de production vérifie allocation, débit, retry idempotent, refus pour solde insuffisant, remboursement et nettoyage intégral.",
         "Le quality gate complet est vert au SHA exact sur ServeurIA, sans erreur ni avertissement inattendu."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-01 — SHA fonctionnel exact 9ce8a4635f47ec1498b9808e09459a66711b3186 poussé sur origin/refork-v030 ; migrations 00053 et 00054 appliquées à la base Qalem. Les montants utilisent des millionièmes entiers et les unités couvrent LLM entrée/sortie, TTS, ASR, image, vidéo, stockage et opération.",
+        "2026-09-01 — Smoke PostgreSQL transactionnel : allocation, retry idempotent, débit, retry, insuffisance, conflit d’idempotence, remboursement unique, arrondi, rapprochement, protection contre la réécriture et cascade sans résidu sont verts.",
+        "2026-09-01 — Concurrence réelle : deux débits simultanés de 0,75 sur un solde de 1 produisent exactement un succès et un refus INSUFFICIENT_TENANT_CREDITS ; solde 0,25, un débit, rapprochement vrai et zéro résidu après nettoyage.",
+        "2026-09-01 — Isolation réelle : un administrateur authentifié voit uniquement le portefeuille et le ledger de son tenant ; l’insertion directe est refusée. Privilèges effectifs authenticated relus : SELECT=true, INSERT=false.",
+        "2026-09-01 — Déploiement Coolify npxe5bj41o6idx8uv96bd9bz terminé sur le SHA exact ; conteneur bcx5pxyuc9z3lt4jtyjipcqu-151239730731 healthy, image taguée 9ce8a4635f47ec1498b9808e09459a66711b3186.",
+        "2026-09-01 — Recette finale sur le conteneur exact : administrateur invité, allocation 10, débit 3, retries sans doublon, insuffisance refusée, remboursement, correction à 9, API tenant authentifiée et historique RLS de 4 écritures ; tenant, identité, audit, portefeuille et ledger supprimés sans résidu.",
+        "2026-09-01 — Gate complet ServeurIA au SHA exact : formatage, TypeScript et lint verts ; 395/395 fichiers et 2 539/2 539 tests Vitest ; build 102/102 pages ; 88/88 Playwright en 4,0 minutes. Journal /tmp/qalem-gate-logs/s6023-9ce8a46-full-gate.log, SHA-256 fa121fb87ee76f11062db179cba3d6fec5fde3d39b13bfa39d9dcf6fc022d50c.",
+        "2026-09-01 — Administration centrale et consultation tenant localisées FR/EN/AR, RTL couvertes ; synthèse dans docs/validation/S6-023-tenant-credit-ledger.md."
+      ],
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": [
@@ -1471,7 +1480,8 @@
         "fresh_evidence_per_acceptance",
         "production_credit_ledger_smoke_test"
       ],
-      "priorityRank": 0.2
+      "priorityRank": 0.2,
+      "completedAt": "2026-09-01"
     },
     {
       "id": "S6-024",
