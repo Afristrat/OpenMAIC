@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { toast } from 'sonner';
+import { EconomicsCockpit, TenantEconomics } from '@/components/admin/economics-panel';
 
 type Tenant = {
   id: string;
@@ -185,6 +186,7 @@ export function TenantsTab(): React.ReactElement {
 
   return (
     <div className="space-y-6" dir="auto">
+      <EconomicsCockpit />
       <form onSubmit={createTenant} className="rounded-xl border bg-card p-5 space-y-4">
         <div>
           <h3 className="font-semibold">{t('admin.tenants.createTitle')}</h3>
@@ -318,6 +320,7 @@ export function TenantsTab(): React.ReactElement {
                   </Button>
                 </div>
                 <TenantCredits tenant={tenant} disabled={saving} onSaved={loadTenants} />
+                <TenantEconomics tenantId={tenant.id} />
               </article>
             );
           })

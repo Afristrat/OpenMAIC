@@ -102,6 +102,81 @@ export const adminTenantCreditSchema = z
     { message: 'Credit amount supports at most six decimals', path: ['amountCredits'] },
   );
 
+const billableUnits = [
+  'llm_input_token',
+  'llm_output_token',
+  'tts_second',
+  'asr_second',
+  'image',
+  'video_second',
+  'storage_byte',
+  'operation',
+] as const;
+const currencyCodeSchema = z
+  .string()
+  .trim()
+  .regex(/^[A-Za-z]{3}$/)
+  .transform((value) => value.toUpperCase());
+const positiveDecimalSchema = z
+  .string()
+  .trim()
+  .regex(/^\d{1,9}(?:\.\d{1,6})?$/);
+
+export const adminTenantSellPriceSchema = z.object({
+  billableUnit: z.enum(billableUnits),
+  currency: currencyCodeSchema,
+  priceAmount: positiveDecimalSchema.refine(
+    (value) => /[1-9]/.test(value),
+    'Price must be positive',
+  ),
+  quantityBasis: positiveDecimalSchema.refine(
+    (value) => /[1-9]/.test(value),
+    'Basis must be positive',
+  ),
+  validFrom: z.string().datetime({ offset: true }),
+  commercialRationale: z.string().trim().min(1).max(1000),
+});
+
+export const adminEconomicConfigurationSchema = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('providerCost'),
+    providerId: z.string().trim().min(1).max(120),
+    modelId: z.string().trim().min(1).max(200),
+    billableUnit: z.enum(billableUnits),
+    currency: currencyCodeSchema,
+    costAmount: positiveDecimalSchema,
+    quantityBasis: positiveDecimalSchema.refine(
+      (value) => /[1-9]/.test(value),
+      'Basis must be positive',
+    ),
+    costSource: z.enum(['actual', 'estimate']),
+    provenance: z.string().trim().min(1).max(1000),
+    validFrom: z.string().datetime({ offset: true }),
+  }),
+  z
+    .object({
+      action: z.literal('exchangeRate'),
+      baseCurrency: currencyCodeSchema,
+      quoteCurrency: currencyCodeSchema,
+      rate: z
+        .string()
+        .trim()
+        .regex(/^\d{1,6}(?:\.\d{1,9})?$/)
+        .refine((value) => /[1-9]/.test(value), 'Rate must be positive'),
+      provenance: z.string().trim().min(1).max(1000),
+      validFrom: z.string().datetime({ offset: true }),
+    })
+    .refine((value) => value.baseCurrency !== value.quoteCurrency, {
+      message: 'Currencies must differ',
+      path: ['quoteCurrency'],
+    }),
+  z.object({
+    action: z.literal('marginTarget'),
+    targetMarginBps: z.number().int().min(0).max(10_000),
+    rationale: z.string().trim().min(1).max(500),
+  }),
+]);
+
 // ---------------------------------------------------------------------------
 // Curriculum Links
 // ---------------------------------------------------------------------------

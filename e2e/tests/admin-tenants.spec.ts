@@ -9,6 +9,44 @@ test.describe('Administration des tenants (S6-022)', () => {
         body: JSON.stringify({ isAdmin: true }),
       }),
     );
+    await page.route('**/api/admin/economics', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          margin: {
+            revenueMicrounits: 0,
+            costMicrounits: 0,
+            grossMarginMicrounits: 0,
+            marginBps: 0,
+            targetMarginBps: 9500,
+            belowTarget: false,
+          },
+          providerCosts: [],
+          exchangeRates: [],
+        }),
+      }),
+    );
+    await page.route('**/api/admin/tenants/*/economics', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          margin: {
+            revenueMicrounits: 0,
+            costMicrounits: 0,
+            grossMarginMicrounits: 0,
+            marginBps: 0,
+            targetMarginBps: 9500,
+            belowTarget: false,
+          },
+          breakdown: [],
+          sellPrices: [],
+        }),
+      }),
+    );
   });
 
   test('provisionne un tenant, réserve ses sièges et permet sa suspension', async ({ page }) => {
@@ -120,5 +158,96 @@ test.describe('Administration des tenants (S6-022)', () => {
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     await expect(page.getByRole('heading', { name: 'إنشاء مؤسسة' })).toBeVisible();
     await expect(page.getByLabel('الحد الأقصى للمقاعد')).toBeVisible();
+  });
+
+  test('sépare le prix à la valeur du coût et affiche seulement une alerte de marge', async ({
+    page,
+  }) => {
+    await page.addInitScript(() => localStorage.setItem('locale', 'fr-FR'));
+    await page.route('**/api/admin/tenants', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          tenants: [
+            {
+              id: 'tenant-value',
+              name: 'Académie Valeur',
+              sector: 'education',
+              default_locale: 'fr-FR',
+              status: 'active',
+              seat_limit: 20,
+              memberCount: 2,
+              pendingInvitationCount: 0,
+              creditBalanceMicrounits: 1_000_000,
+            },
+          ],
+        }),
+      }),
+    );
+    await page.route('**/api/admin/economics', (route) => {
+      if (route.request().method() === 'POST') {
+        return route.fulfill({ status: 201, body: JSON.stringify({ success: true, version: {} }) });
+      }
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          margin: {
+            revenueMicrounits: 100_000_000,
+            costMicrounits: 10_000_000,
+            grossMarginMicrounits: 90_000_000,
+            marginBps: 9000,
+            targetMarginBps: 9500,
+            belowTarget: true,
+          },
+          providerCosts: [],
+          exchangeRates: [],
+        }),
+      });
+    });
+    let submittedPrice: Record<string, unknown> | null = null;
+    await page.route('**/api/admin/tenants/tenant-value/economics', (route) => {
+      if (route.request().method() === 'POST') {
+        submittedPrice = route.request().postDataJSON() as Record<string, unknown>;
+        return route.fulfill({ status: 201, body: JSON.stringify({ success: true, version: {} }) });
+      }
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          margin: {
+            revenueMicrounits: 100_000_000,
+            costMicrounits: 10_000_000,
+            grossMarginMicrounits: 90_000_000,
+            marginBps: 9000,
+            targetMarginBps: 9500,
+            belowTarget: true,
+          },
+          breakdown: [],
+          sellPrices: [],
+        }),
+      });
+    });
+
+    await page.goto('/admin?tab=tenants');
+    await expect(page.getByRole('heading', { name: 'Pilotage économique' })).toBeVisible();
+    await expect(page.getByText(/aucun prix, crédit ou droit/)).toBeVisible();
+
+    const priceForm = page.getByRole('button', { name: 'Enregistrer le prix' }).locator('..');
+    await priceForm.getByLabel('Prix de vente et devise').first().fill('125');
+    await priceForm.getByLabel('Justification commerciale').fill('Valeur du programme livré');
+    await page.getByRole('button', { name: 'Enregistrer le prix' }).click();
+
+    expect(submittedPrice).toMatchObject({
+      priceAmount: '125',
+      currency: 'MAD',
+      commercialRationale: 'Valeur du programme livré',
+    });
+    expect(submittedPrice).not.toHaveProperty('costAmount');
+    expect(submittedPrice).not.toHaveProperty('targetMarginBps');
   });
 });
