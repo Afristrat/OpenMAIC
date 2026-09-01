@@ -10,6 +10,10 @@ const auditCorrection = readFileSync(
   join(process.cwd(), 'supabase/migrations/00050_tenant_audit_polymorphic_row.sql'),
   'utf8',
 );
+const deletionCorrection = readFileSync(
+  join(process.cwd(), 'supabase/migrations/00051_tenant_audit_survives_deletion.sql'),
+  'utf8',
+);
 
 describe('tenant provisioning migration (S6-022)', () => {
   it('defines active/suspended tenants, positive seat limits and valid invitation roles', () => {
@@ -40,6 +44,8 @@ describe('tenant provisioning migration (S6-022)', () => {
       migration.indexOf('REVOKE ALL ON FUNCTION public.audit_tenant_administration'),
     );
     expect(migration).toMatch(/CREATE TABLE public\.tenant_admin_audit/i);
+    expect(migration).toMatch(/tenant_id UUID,/i);
+    expect(migration).not.toMatch(/tenant_id UUID REFERENCES/i);
     expect(migration).toMatch(/ENABLE ROW LEVEL SECURITY/i);
     expect(migration).toMatch(/CREATE POLICY "Service role only"/i);
     expect(migration).toMatch(/AFTER INSERT OR UPDATE OF status, seat_limit/i);
@@ -47,6 +53,7 @@ describe('tenant provisioning migration (S6-022)', () => {
     expect(auditFunction).not.toMatch(/NEW\.org_id|OLD\.org_id/);
     expect(auditCorrection).toMatch(/to_jsonb\(NEW\) ->> 'org_id'/i);
     expect(auditCorrection).toMatch(/to_jsonb\(OLD\) ->> 'org_id'/i);
+    expect(deletionCorrection).toMatch(/DROP CONSTRAINT tenant_admin_audit_tenant_id_fkey/i);
   });
 
   it('exposes provisioning controls to the service role only', () => {

@@ -12,7 +12,7 @@ ALTER TABLE public.org_invitations
 
 CREATE TABLE public.tenant_admin_audit (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID REFERENCES public.organizations(id) ON DELETE SET NULL,
+  tenant_id UUID,
   actor_user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   action TEXT NOT NULL,
   previous_value JSONB,
