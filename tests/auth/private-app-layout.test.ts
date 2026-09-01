@@ -12,9 +12,13 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 vi.mock('next/navigation', () => ({ redirect: mocks.redirect }));
 
-import PrivateApplicationLayout from '@/app/app/layout';
+import PrivateApplicationLayout, { dynamic } from '@/app/app/layout';
 
 describe('private application layout', () => {
+  it('forces a runtime authentication decision for every request', () => {
+    expect(dynamic).toBe('force-dynamic');
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubEnv('NEXT_PUBLIC_E2E_TEST_MODE', 'false');
