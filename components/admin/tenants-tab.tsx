@@ -14,7 +14,99 @@ type Tenant = {
   seat_limit: number;
   memberCount: number;
   pendingInvitationCount: number;
+  creditBalanceMicrounits: number;
 };
+
+function TenantCredits({
+  tenant,
+  disabled,
+  onSaved,
+}: {
+  tenant: Tenant;
+  disabled: boolean;
+  onSaved: () => Promise<void>;
+}): React.ReactElement {
+  const { locale, t } = useI18n();
+  const [entryType, setEntryType] = useState<'allocation' | 'correction'>('allocation');
+  const [amount, setAmount] = useState('');
+  const [reason, setReason] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    setSubmitting(true);
+    try {
+      const response = await fetch(`/api/admin/tenants/${tenant.id}/credits`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          entryType,
+          amountCredits: Number(amount),
+          reason,
+          idempotencyKey: crypto.randomUUID(),
+        }),
+      });
+      if (!response.ok) throw new Error('credit-entry');
+      setAmount('');
+      setReason('');
+      toast.success(t('admin.tenants.credits.updated'));
+      await onSaved();
+    } catch {
+      toast.error(t('admin.tenants.credits.updateFailed'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const balance = (tenant.creditBalanceMicrounits ?? 0) / 1_000_000;
+  return (
+    <form onSubmit={submit} className="space-y-3 rounded-lg border bg-muted/30 p-3">
+      <p className="text-sm font-medium">
+        {t('admin.tenants.credits.balance')}:{' '}
+        {new Intl.NumberFormat(locale, { maximumFractionDigits: 6 }).format(balance)}
+      </p>
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="space-y-1 text-sm">
+          <span>{t('admin.tenants.credits.operation')}</span>
+          <select
+            value={entryType}
+            onChange={(event) => setEntryType(event.target.value as 'allocation' | 'correction')}
+            className="rounded-md border bg-background px-3 py-2"
+          >
+            <option value="allocation">{t('admin.tenants.credits.allocation')}</option>
+            <option value="correction">{t('admin.tenants.credits.correction')}</option>
+          </select>
+        </label>
+        <label className="space-y-1 text-sm">
+          <span>{t('admin.tenants.credits.amount')}</span>
+          <input
+            required
+            type="number"
+            step="0.000001"
+            min={entryType === 'allocation' ? '0.000001' : '-1000000'}
+            max="1000000"
+            value={amount}
+            onChange={(event) => setAmount(event.target.value)}
+            className="w-36 rounded-md border bg-background px-3 py-2"
+          />
+        </label>
+        <label className="min-w-56 flex-1 space-y-1 text-sm">
+          <span>{t('admin.tenants.credits.reason')}</span>
+          <input
+            required
+            maxLength={500}
+            value={reason}
+            onChange={(event) => setReason(event.target.value)}
+            className="w-full rounded-md border bg-background px-3 py-2"
+          />
+        </label>
+        <Button type="submit" disabled={disabled || submitting}>
+          {t('admin.tenants.credits.apply')}
+        </Button>
+      </div>
+    </form>
+  );
+}
 
 export function TenantsTab(): React.ReactElement {
   const { t } = useI18n();
@@ -225,6 +317,7 @@ export function TenantsTab(): React.ReactElement {
                       : t('admin.tenants.activate')}
                   </Button>
                 </div>
+                <TenantCredits tenant={tenant} disabled={saving} onSaved={loadTenants} />
               </article>
             );
           })

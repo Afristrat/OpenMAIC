@@ -40,6 +40,7 @@ import {
   type LearningDesignSettings,
 } from '@/lib/agents/persona-catalog';
 import { AgentRosterSettings } from '@/components/org/agent-roster-settings';
+import { TenantCreditLedger } from '@/components/org/tenant-credit-ledger';
 import {
   presentationBrandingFromOrganization,
   presentationBrandingSettings,
@@ -784,6 +785,8 @@ export default function OrgAdminPage() {
           </div>
         </section>
       )}
+
+      {(isAdmin || org.userRole === 'manager') && <TenantCreditLedger orgId={orgId} />}
 
       {/* Members Section */}
       <section className="mb-10 rounded-lg border bg-card p-6">

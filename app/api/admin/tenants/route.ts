@@ -10,7 +10,12 @@ export async function GET(request: NextRequest): Promise<Response> {
   if (auth.response) return auth.response;
 
   const supabase = createServiceSupabaseClient();
-  const [{ data: tenants, error }, { data: members }, { data: invitations }] = await Promise.all([
+  const [
+    { data: tenants, error },
+    { data: members },
+    { data: invitations },
+    { data: wallets },
+  ] = await Promise.all([
     supabase
       .from('organizations')
       .select('id, name, sector, default_locale, status, seat_limit, created_at, updated_at')
@@ -21,6 +26,7 @@ export async function GET(request: NextRequest): Promise<Response> {
       .select('org_id')
       .is('used_at', null)
       .gt('expires_at', new Date().toISOString()),
+    supabase.from('tenant_credit_wallets').select('org_id, balance_microunits'),
   ]);
 
   if (error) {
@@ -29,11 +35,15 @@ export async function GET(request: NextRequest): Promise<Response> {
 
   const memberCounts = new Map<string, number>();
   const invitationCounts = new Map<string, number>();
+  const creditBalances = new Map<string, number>();
   for (const member of members ?? []) {
     memberCounts.set(member.org_id, (memberCounts.get(member.org_id) ?? 0) + 1);
   }
   for (const invitation of invitations ?? []) {
     invitationCounts.set(invitation.org_id, (invitationCounts.get(invitation.org_id) ?? 0) + 1);
+  }
+  for (const wallet of wallets ?? []) {
+    creditBalances.set(wallet.org_id, Number(wallet.balance_microunits));
   }
 
   return apiSuccess({
@@ -41,6 +51,7 @@ export async function GET(request: NextRequest): Promise<Response> {
       ...tenant,
       memberCount: memberCounts.get(tenant.id) ?? 0,
       pendingInvitationCount: invitationCounts.get(tenant.id) ?? 0,
+      creditBalanceMicrounits: creditBalances.get(tenant.id) ?? 0,
     })),
   });
 }

@@ -14,6 +14,7 @@ test.describe('Administration des tenants (S6-022)', () => {
   test('provisionne un tenant, réserve ses sièges et permet sa suspension', async ({ page }) => {
     let tenantCreated = false;
     let tenantStatus: 'active' | 'suspended' = 'active';
+    let creditBalanceMicrounits = 0;
 
     await page.addInitScript(() => localStorage.setItem('locale', 'fr-FR'));
     await page.route('**/api/admin/tenants', async (route) => {
@@ -53,6 +54,7 @@ test.describe('Administration des tenants (S6-022)', () => {
                   seat_limit: 12,
                   memberCount: 0,
                   pendingInvitationCount: 1,
+                  creditBalanceMicrounits,
                 },
               ]
             : [],
@@ -79,6 +81,25 @@ test.describe('Administration des tenants (S6-022)', () => {
       'https://qalem.ma/auth?invite=tenant-token',
     );
     await expect(page.getByText('Sièges occupés ou réservés: 1/12')).toBeVisible();
+
+    await page.route('**/api/admin/tenants/tenant-atlas/credits', async (route) => {
+      const body = route.request().postDataJSON() as Record<string, unknown>;
+      expect(body).toMatchObject({
+        entryType: 'allocation',
+        amountCredits: 250,
+        reason: 'Crédit pilote',
+      });
+      creditBalanceMicrounits = 250_000_000;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, balanceCredits: 250 }),
+      });
+    });
+    await page.getByLabel('Montant en crédits').fill('250');
+    await page.getByLabel('Motif auditable').fill('Crédit pilote');
+    await page.getByRole('button', { name: 'Appliquer' }).click();
+    await expect(page.getByText('Solde de crédits: 250')).toBeVisible();
 
     await page.getByRole('button', { name: 'Suspendre' }).click();
     await expect(page.getByText('Suspendu')).toBeVisible();

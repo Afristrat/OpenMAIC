@@ -80,6 +80,28 @@ export const adminTenantPatchSchema = z
     message: 'At least one tenant control is required',
   });
 
+export const adminTenantCreditSchema = z
+  .object({
+    entryType: z.enum(['allocation', 'correction']),
+    amountCredits: z.number().finite().min(-1_000_000).max(1_000_000),
+    reason: z.string().trim().min(1).max(500),
+    idempotencyKey: z.string().uuid(),
+  })
+  .refine((value) => value.amountCredits !== 0, {
+    message: 'Credit amount must not be zero',
+    path: ['amountCredits'],
+  })
+  .refine((value) => value.entryType === 'correction' || value.amountCredits > 0, {
+    message: 'Allocations must be positive',
+    path: ['amountCredits'],
+  })
+  .refine(
+    (value) =>
+      Math.abs(value.amountCredits * 1_000_000 - Math.round(value.amountCredits * 1_000_000)) <
+      1e-7,
+    { message: 'Credit amount supports at most six decimals', path: ['amountCredits'] },
+  );
+
 // ---------------------------------------------------------------------------
 // Curriculum Links
 // ---------------------------------------------------------------------------
