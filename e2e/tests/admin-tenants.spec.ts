@@ -1,6 +1,16 @@
 import { expect, test } from '../fixtures/base';
 
 test.describe('Administration des tenants (S6-022)', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.route('**/api/account/is-admin', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ isAdmin: true }),
+      }),
+    );
+  });
+
   test('provisionne un tenant, réserve ses sièges et permet sa suspension', async ({ page }) => {
     let tenantCreated = false;
     let tenantStatus: 'active' | 'suspended' = 'active';
