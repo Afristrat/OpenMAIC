@@ -61,9 +61,7 @@ describe('platform tenant administration (S6-022)', () => {
       tenant_seat_limit: 12,
       administrator_email: 'admin@atlas.ma',
     });
-    expect(body.administratorInvitationUrl).toBe(
-      'https://qalem.ma/auth?invite=one-time-token',
-    );
+    expect(body.administratorInvitationUrl).toBe('https://qalem.ma/auth?invite=one-time-token');
     expect(body.tenant).not.toHaveProperty('invitation_token');
   });
 

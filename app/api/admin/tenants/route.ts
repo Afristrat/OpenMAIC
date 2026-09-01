@@ -33,10 +33,7 @@ export async function GET(request: NextRequest): Promise<Response> {
     memberCounts.set(member.org_id, (memberCounts.get(member.org_id) ?? 0) + 1);
   }
   for (const invitation of invitations ?? []) {
-    invitationCounts.set(
-      invitation.org_id,
-      (invitationCounts.get(invitation.org_id) ?? 0) + 1,
-    );
+    invitationCounts.set(invitation.org_id, (invitationCounts.get(invitation.org_id) ?? 0) + 1);
   }
 
   return apiSuccess({

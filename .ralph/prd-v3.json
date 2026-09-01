@@ -1398,9 +1398,7 @@
         "date": "2026-09-01"
       },
       "sourceDependencies": [],
-      "dependencies": [
-        "S6-021"
-      ],
+      "dependencies": ["S6-021"],
       "gap": "L’invitation nominative existe, mais Qalem ne possède pas encore de contrat administrable de tenant regroupant statut, plafond de sièges, rôles attribuables et contrôles d’administration centrale.",
       "evidence": [
         "supabase/migrations/00001_initial_schema.sql",
@@ -1441,9 +1439,7 @@
         "date": "2026-09-01"
       },
       "sourceDependencies": [],
-      "dependencies": [
-        "S6-022"
-      ],
+      "dependencies": ["S6-022"],
       "gap": "usage_records mesure quelques volumes, mais aucun portefeuille transactionnel par tenant ne gère allocations, débits, remboursements, idempotence, solde disponible et refus avant dépassement.",
       "evidence": [
         "supabase/migrations/00015_usage_tracking.sql",
@@ -1483,9 +1479,7 @@
         "date": "2026-09-01"
       },
       "sourceDependencies": [],
-      "dependencies": [
-        "S6-023"
-      ],
+      "dependencies": ["S6-023"],
       "gap": "Qalem ne possède ni catalogue de prix vendu par tenant et par usage, ni ledger de coûts fournisseurs, ni calcul vérifiable de marge. Les prix statiques des plans sont nuls et ne représentent pas une tarification à la valeur.",
       "evidence": [
         "lib/billing/plans.ts",
