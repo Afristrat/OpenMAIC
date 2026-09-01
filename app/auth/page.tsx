@@ -20,9 +20,7 @@ function AuthPageContent(): React.ReactElement {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState<'login' | 'signup'>(
-    inviteToken ? 'signup' : 'login',
-  );
+  const [activeTab, setActiveTab] = useState<'login' | 'signup'>(inviteToken ? 'signup' : 'login');
 
   const isRTL = locale === 'ar-MA';
 

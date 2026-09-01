@@ -19,7 +19,9 @@ test.describe('Invitation-only authentication (S6-021)', () => {
     await page.goto('/auth?invite=one-time-token');
 
     await expect(page.getByRole('tab', { name: 'Créer un compte' })).toBeVisible();
-    await expect(page.locator('[role="tabpanel"]:visible').getByLabel('Adresse e-mail')).toBeVisible();
+    await expect(
+      page.locator('[role="tabpanel"]:visible').getByLabel('Adresse e-mail'),
+    ).toBeVisible();
     await expect(page.getByRole('button', { name: 'Créer un compte' })).toBeVisible();
   });
 });
