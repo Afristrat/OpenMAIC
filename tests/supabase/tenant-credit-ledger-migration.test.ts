@@ -18,6 +18,7 @@ describe('tenant credit ledger migration (S6-023)', () => {
     expect(migration).toMatch(/Tenant admins read credit ledger/i);
     expect(migration).toMatch(/CREDIT_LEDGER_IMMUTABLE/i);
     expect(migration).toMatch(/CREATE TRIGGER enforce_credit_wallet_balance/i);
+    expect(migration).toMatch(/CREDIT_WALLET_MUST_START_EMPTY/i);
     expect(migration).toMatch(/NEW\.balance_microunits <> ledger_balance/i);
   });
 

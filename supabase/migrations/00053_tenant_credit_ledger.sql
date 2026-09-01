@@ -100,11 +100,23 @@ BEGIN
     IF pg_trigger_depth() > 1 THEN RETURN OLD; END IF;
     RAISE EXCEPTION 'CREDIT_WALLET_IMMUTABLE' USING ERRCODE = '55000';
   END IF;
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.balance_microunits <> 0 THEN
+      RAISE EXCEPTION 'CREDIT_WALLET_MUST_START_EMPTY' USING ERRCODE = '55000';
+    END IF;
+    RETURN NEW;
+  END IF;
   SELECT COALESCE(sum(delta_microunits), 0)::BIGINT INTO ledger_balance
   FROM public.tenant_credit_ledger
   WHERE tenant_credit_ledger.org_id = NEW.org_id;
   IF NEW.balance_microunits <> ledger_balance THEN
-    RAISE EXCEPTION 'CREDIT_LEDGER_DIVERGENCE' USING ERRCODE = '55000';
+    RAISE EXCEPTION 'CREDIT_LEDGER_DIVERGENCE'
+      USING ERRCODE = '55000',
+      DETAIL = format(
+        'wallet balance %s differs from ledger balance %s',
+        NEW.balance_microunits,
+        ledger_balance
+      );
   END IF;
   RETURN NEW;
 END;
