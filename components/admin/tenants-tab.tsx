@@ -115,13 +115,11 @@ export function TenantsTab(): React.ReactElement {
               onChange={(event) => setSector(event.target.value)}
               className="w-full rounded-md border bg-background px-3 py-2"
             >
-              {['education', 'healthcare', 'legal', 'tech', 'finance', 'industry'].map(
-                (value) => (
-                  <option key={value} value={value}>
-                    {value}
-                  </option>
-                ),
-              )}
+              {['education', 'healthcare', 'legal', 'tech', 'finance', 'industry'].map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
             </select>
           </label>
           <label className="space-y-1 text-sm">
