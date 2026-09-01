@@ -1,6 +1,10 @@
 import { expect, test } from '../fixtures/base';
 
 test.describe('Invitation-only authentication (S6-021)', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('locale', 'fr-FR'));
+  });
+
   test('offers existing-account login only without an invitation', async ({ page }) => {
     await page.goto('/auth');
 
