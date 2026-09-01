@@ -6,6 +6,10 @@ const migration = readFileSync(
   resolve(process.cwd(), 'supabase/migrations/00053_tenant_credit_ledger.sql'),
   'utf8',
 );
+const privileges = readFileSync(
+  resolve(process.cwd(), 'supabase/migrations/00054_tenant_credit_privileges.sql'),
+  'utf8',
+);
 
 describe('tenant credit ledger migration (S6-023)', () => {
   it('keeps wallets and an immutable, idempotent ledger under RLS', () => {
@@ -20,6 +24,8 @@ describe('tenant credit ledger migration (S6-023)', () => {
     expect(migration).toMatch(/CREATE TRIGGER enforce_credit_wallet_balance/i);
     expect(migration).toMatch(/CREDIT_WALLET_MUST_START_EMPTY/i);
     expect(migration).toMatch(/NEW\.balance_microunits <> ledger_balance/i);
+    expect(privileges).toMatch(/REVOKE ALL[\s\S]+FROM anon, authenticated/gi);
+    expect(privileges).toMatch(/GRANT SELECT[\s\S]+TO authenticated/gi);
   });
 
   it('covers every requested billable unit', () => {
