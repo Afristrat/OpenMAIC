@@ -1391,15 +1391,15 @@
       "description": "En tant que super-administrateur Qalem, je veux créer et administrer chaque tenant sur invitation avec un plafond de sièges et des privilèges explicites afin de contrôler précisément qui accède à quoi.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P0",
-      "status": "to_implement",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "type": "explicit_request",
         "date": "2026-09-01"
       },
       "sourceDependencies": [],
       "dependencies": ["S6-021"],
-      "gap": "L’invitation nominative existe, mais Qalem ne possède pas encore de contrat administrable de tenant regroupant statut, plafond de sièges, rôles attribuables et contrôles d’administration centrale.",
+      "gap": "Soldé : Qalem provisionne et administre chaque tenant avec statut, plafond de sièges partagé entre membres et invitations, rôles contrôlés côté serveur et audit expurgé des jetons.",
       "evidence": [
         "supabase/migrations/00001_initial_schema.sql",
         "supabase/migrations/00013_org_invitations.sql",
@@ -1416,7 +1416,13 @@
         "Une recette de production crée un tenant temporaire, attribue plusieurs rôles jusqu’au plafond, vérifie les refus attendus et supprime toutes les données de recette.",
         "Le quality gate complet est vert au SHA exact sur ServeurIA, sans erreur ni avertissement inattendu."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-01 — SHA fonctionnel exact 2cf11cd989c8f47ebd84cf8b4ffc8f1e31262eec poussé sur origin/refork-v030 ; migrations 00049 à 00052 appliquées à la base Qalem. La migration finale, exécutée sous le propriétaire effectif supabase_admin, a été vérifiée dans une transaction annulée : une invitation produit exactement un audit sans champ token.",
+        "2026-09-01 — Recette réelle sur le conteneur de production final : tenant temporaire de 3 sièges, inscriptions admin/manager/author, occupation 3/3, refus du quatrième siège, refus de baisse à 2 et refus d’invitation après suspension. Onze audits sans jeton ; tenant, audits et trois identités supprimés, zéro résidu.",
+        "2026-09-01 — Déploiement Coolify euk21siw1rwqwz19hndvqona terminé sur le SHA exact ; conteneur bcx5pxyuc9z3lt4jtyjipcqu-142317288006 healthy, image taguée 2cf11cd989c8f47ebd84cf8b4ffc8f1e31262eec.",
+        "2026-09-01 — Gate complet ServeurIA au SHA exact : formatage, TypeScript et lint verts ; 390/390 fichiers et 2 523/2 523 tests Vitest ; build de production 101/101 pages ; 88/88 Playwright en 3,8 minutes. Journal /tmp/qalem-gate-logs/s6022-2cf11cd-full-gate.log, SHA-256 6ddeed6c7290c793b017a4a506f15ad6b95674e08315632df5d5cda14c1b3c8d.",
+        "2026-09-01 — Interface d’administration FR et AR RTL couverte par les E2E permanents ; synthèse complète dans docs/validation/S6-022-tenant-provisioning.md."
+      ],
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": [
@@ -1424,7 +1430,8 @@
         "fresh_evidence_per_acceptance",
         "production_tenant_smoke_test"
       ],
-      "priorityRank": 0.1
+      "priorityRank": 0.1,
+      "completedAt": "2026-09-01"
     },
     {
       "id": "S6-023",
