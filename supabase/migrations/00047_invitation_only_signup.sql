@@ -5,7 +5,7 @@
 
 UPDATE public.org_invitations
 SET
-  email = 'revoked-anonymous+' || id::text || '@invalid.qalem',
+  email = 'revoked-anonymous+' || id::text || '@qalem.invalid',
   used_at = COALESCE(used_at, now())
 WHERE email IS NULL;
 
