@@ -1336,15 +1336,15 @@
       "description": "En tant que propriétaire de Qalem, je veux qu’aucun tiers ne puisse créer un compte ou entrer dans l’application sans invitation nominative afin que les tests restent strictement privés jusqu’à l’ouverture décidée du produit.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P0",
-      "status": "to_implement",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "type": "request_and_production_incident",
         "date": "2026-09-01"
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "La production autorise actuellement l’inscription e-mail auto-confirmée, affiche Google malgré l’absence d’URL de retour, affiche GitHub malgré son désarmement et propose un mode invité local. Le code 400 « Unsupported provider: missing redirect URI » rapporté par un contact prouve que la page publique est atteignable et que l’OAuth exposé n’est pas une barrière d’accès.",
+      "gap": "Soldé : GoTrue refuse toute inscription publique, l’interface n’expose plus OAuth, l’inscription libre ni le mode invité, /app est protégé côté serveur et seule une invitation nominative valide crée atomiquement le compte et son adhésion au tenant.",
       "evidence": [
         "production:https://qalem.ma/auth",
         "production:https://qalem.ma/api/access-code/status",
@@ -1364,7 +1364,17 @@
         "La configuration persistante du runtime de production est vérifiée après déploiement : disable_signup=true, parcours invité réel réussi puis données de recette intégralement supprimées.",
         "Le quality gate complet est vert au SHA exact sur ServeurIA, sans erreur ni avertissement inattendu."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-01 — SHA fonctionnel d9d869c4810604763ce5b9ca1f1d4559433914de présent sur origin/refork-v030 ; migrations 00047 et 00048 appliquées transactionnellement à la base Qalem.",
+        "2026-09-01 — Configuration persistante et runtime GoTrue recertifiés : disable_signup=true ; la tentative brute /auth/v1/signup répond 422 avec error_code=signup_disabled.",
+        "2026-09-01 — Déploiement Coolify nd1cgx3w1uvb6hgcomknkety terminé sur le SHA exact ; conteneur bcx5pxyuc9z3lt4jtyjipcqu-121408921150, image d9d869c4810604763ce5b9ca1f1d4559433914de, état healthy.",
+        "2026-09-01 — Vérification directe du runtime : / et /auth répondent 200 ; /app répond 307 vers /auth?next=/app. L’assertion permanente scripts/assert-standalone-route-isolation.mjs empêche la régression de collision des layouts standalone.",
+        "2026-09-01 — Recette navigateur de production : /auth expose un seul onglet de connexion, zéro bouton Google/GitHub, zéro mode invité ; /app sans session aboutit à https://qalem.ma/auth?next=/app.",
+        "2026-09-01 — Recette réelle d’invitation : propriétaire 200, organisation 201, adhésion admin 201, invitation nominative manager 201, inscription 201, connexion 200, adhésion manager atomique présente et invitation consommée ; organisation et deux utilisateurs temporaires supprimés, résidu final nul.",
+        "2026-09-01 — Gate exact au SHA d9d869c : formatage, TypeScript et lint verts ; Vitest 388/388 fichiers et 2 514/2 514 tests ; build et assertion des routes standalone verts ; Playwright 86/86 en 4,4 min. Journal /tmp/qalem-gate-logs/s6021-d9d869c-full-gate.log, SHA-256 cb88aafb210470d7e98f0df8f8b607c0fd4e34149a5e0eabe4245cc673a0d539, code 0.",
+        "2026-09-01 — Détail consolidé : docs/validation/S6-021-invitation-only-access.md."
+      ],
+      "completedAt": "2026-09-01",
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": [
