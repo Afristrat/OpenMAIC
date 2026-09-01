@@ -27,7 +27,7 @@ import type { VideoCapsuleStatus, VideoCapsuleVariant } from '@/lib/supabase/typ
 import { buildLearningPackage } from '@/lib/export/scorm/build-scorm-package';
 import { isLearningPackageFormat, trackingAdapters } from '@/lib/export/scorm/tracking-adapters';
 import { buildClassroomVideo } from '@/lib/export/mp4/build-classroom-video';
-import { generateVideo } from '@/lib/media/video-providers';
+import { generateMeteredVideo } from '@/lib/server/metered-media-providers';
 import type { VideoGenerationOptions, VideoProviderId } from '@/lib/media/types';
 import {
   isServerConfiguredProvider,
@@ -285,7 +285,7 @@ export function startAllWorkers(): void {
             throw new Error(`Video provider ${providerId} is not managed by the server`);
           }
 
-          const result = await generateVideo(
+          const result = await generateMeteredVideo(
             {
               providerId,
               apiKey: resolveVideoApiKey(providerId),

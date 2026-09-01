@@ -16,11 +16,8 @@
  */
 
 import { NextRequest } from 'next/server';
-import {
-  generateImage,
-  aspectRatioToDimensions,
-  IMAGE_PROVIDERS,
-} from '@/lib/media/image-providers';
+import { aspectRatioToDimensions, IMAGE_PROVIDERS } from '@/lib/media/image-providers';
+import { generateMeteredImage } from '@/lib/server/metered-media-providers';
 import {
   isServerConfiguredProvider,
   resolveImageApiKey,
@@ -114,7 +111,10 @@ export async function POST(request: NextRequest) {
         `prompt="${body.prompt.slice(0, 80)}...", size=${body.width ?? 'auto'}x${body.height ?? 'auto'}`,
     );
 
-    const result = await generateImage({ providerId, apiKey, baseUrl, model: clientModel }, body);
+    const result = await generateMeteredImage(
+      { providerId, apiKey, baseUrl, model: clientModel },
+      body,
+    );
 
     if (classroomId) {
       const bytes = result.base64

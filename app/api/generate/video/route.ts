@@ -17,7 +17,8 @@
  */
 
 import { NextRequest } from 'next/server';
-import { generateVideo, normalizeVideoOptions, VIDEO_PROVIDERS } from '@/lib/media/video-providers';
+import { normalizeVideoOptions, VIDEO_PROVIDERS } from '@/lib/media/video-providers';
+import { generateMeteredVideo } from '@/lib/server/metered-media-providers';
 import {
   isServerConfiguredProvider,
   resolveVideoApiKey,
@@ -118,7 +119,7 @@ export async function POST(request: NextRequest) {
         `aspect=${options.aspectRatio ?? 'auto'}, resolution=${options.resolution ?? 'auto'}`,
     );
 
-    const result = await generateVideo(
+    const result = await generateMeteredVideo(
       { providerId, apiKey, baseUrl, model: clientModel },
       options,
     );

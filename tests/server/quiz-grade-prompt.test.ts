@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildQuizGradePrompts } from '@/app/api/quiz-grade/route';
+import { buildQuizGradePrompts } from '@/lib/server/quiz-grade-prompts';
 
 describe('quiz grading prompt', () => {
   it('impose la langue de la classroom et interdit les montants absents de la question', () => {

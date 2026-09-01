@@ -10,8 +10,8 @@ import { createHash } from 'node:crypto';
 import { createLogger } from '@/lib/logger';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { classroomMediaContentType } from '@/lib/server/classroom-storage';
-import { generateImage } from '@/lib/media/image-providers';
-import { generateVideo, normalizeVideoOptions } from '@/lib/media/video-providers';
+import { normalizeVideoOptions } from '@/lib/media/video-providers';
+import { generateMeteredImage, generateMeteredVideo } from '@/lib/server/metered-media-providers';
 import { generateTTS } from '@/lib/audio/tts-providers';
 import { DEFAULT_TTS_VOICES, DEFAULT_TTS_MODELS, TTS_PROVIDERS } from '@/lib/audio/constants';
 import { IMAGE_PROVIDERS } from '@/lib/media/image-providers';
@@ -269,7 +269,7 @@ export async function generateMediaForClassroom(
           imageSelection?.modelId,
         );
 
-        const result = await generateImage(
+        const result = await generateMeteredImage(
           { providerId, apiKey, baseUrl: resolveImageBaseUrl(providerId), model },
           {
             prompt: buildOrganizationImagePrompt(req.prompt, designSystem),
@@ -323,7 +323,7 @@ export async function generateMediaForClassroom(
           aspectRatio: (req.aspectRatio as '16:9' | '4:3' | '1:1' | '9:16') || '16:9',
         });
 
-        const result = await generateVideo(
+        const result = await generateMeteredVideo(
           { providerId, apiKey, baseUrl: resolveVideoBaseUrl(providerId), model },
           normalized,
         );
