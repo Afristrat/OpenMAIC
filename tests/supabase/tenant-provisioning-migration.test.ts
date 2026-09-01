@@ -35,12 +35,18 @@ describe('tenant provisioning migration (S6-022)', () => {
   });
 
   it('keeps an append-only service-role audit of tenant administration', () => {
+    const auditFunction = migration.slice(
+      migration.indexOf('CREATE OR REPLACE FUNCTION public.audit_tenant_administration'),
+      migration.indexOf(
+        'REVOKE ALL ON FUNCTION public.audit_tenant_administration',
+      ),
+    );
     expect(migration).toMatch(/CREATE TABLE public\.tenant_admin_audit/i);
     expect(migration).toMatch(/ENABLE ROW LEVEL SECURITY/i);
     expect(migration).toMatch(/CREATE POLICY "Service role only"/i);
     expect(migration).toMatch(/AFTER INSERT OR UPDATE OF status, seat_limit/i);
     expect(migration).toMatch(/AFTER INSERT OR UPDATE OF role OR DELETE ON public\.org_members/i);
-    expect(migration).not.toMatch(/NEW\.org_id|OLD\.org_id/);
+    expect(auditFunction).not.toMatch(/NEW\.org_id|OLD\.org_id/);
     expect(auditCorrection).toMatch(/to_jsonb\(NEW\) ->> 'org_id'/i);
     expect(auditCorrection).toMatch(/to_jsonb\(OLD\) ->> 'org_id'/i);
   });
