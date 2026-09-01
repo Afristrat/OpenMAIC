@@ -1386,6 +1386,135 @@
       "priorityRank": 0
     },
     {
+      "id": "S6-022",
+      "title": "Provisionner les tenants, leurs rôles et leurs plafonds de sièges",
+      "description": "En tant que super-administrateur Qalem, je veux créer et administrer chaque tenant sur invitation avec un plafond de sièges et des privilèges explicites afin de contrôler précisément qui accède à quoi.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P0",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "type": "explicit_request",
+        "date": "2026-09-01"
+      },
+      "sourceDependencies": [],
+      "dependencies": [
+        "S6-021"
+      ],
+      "gap": "L’invitation nominative existe, mais Qalem ne possède pas encore de contrat administrable de tenant regroupant statut, plafond de sièges, rôles attribuables et contrôles d’administration centrale.",
+      "evidence": [
+        "supabase/migrations/00001_initial_schema.sql",
+        "supabase/migrations/00013_org_invitations.sql",
+        "app/api/organizations/[orgId]/invite/route.ts",
+        "app/admin/page.tsx"
+      ],
+      "acceptance": [
+        "Un super-administrateur authentifié peut créer, activer, suspendre et consulter un tenant sans pouvoir agir depuis un simple compte membre ; toutes les mutations sont auditées.",
+        "Chaque tenant possède un plafond de sièges entier strictement positif, modifiable explicitement, distinct du nombre courant de membres et appliqué également aux invitations nominatives actives.",
+        "Une invitation attribue exactement un rôle autorisé ; les rôles et capacités effectives sont validés côté serveur et aucune élévation de privilège n’est possible depuis le client.",
+        "Toute création ou consommation d’invitation dépassant le plafond est refusée transactionnellement sans compte, adhésion ou invitation partiellement créée.",
+        "La suspension d’un tenant bloque ses accès applicatifs sans supprimer ses données ; sa réactivation restaure les accès autorisés.",
+        "Les tables nouvelles ont RLS activée, politiques testées et index adaptés ; les parcours d’administration, plafond atteint, concurrence et isolation inter-tenant disposent de tests permanents.",
+        "Une recette de production crée un tenant temporaire, attribue plusieurs rôles jusqu’au plafond, vérifie les refus attendus et supprime toutes les données de recette.",
+        "Le quality gate complet est vert au SHA exact sur ServeurIA, sans erreur ni avertissement inattendu."
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "production_tenant_smoke_test"
+      ],
+      "priorityRank": 0.1
+    },
+    {
+      "id": "S6-023",
+      "title": "Allouer les crédits et décompter chaque usage facturable",
+      "description": "En tant que super-administrateur Qalem, je veux créditer chaque tenant et décompter chaque usage facturable de manière fiable afin de maîtriser sa capacité de consommation indépendamment de son nombre de sièges.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P0",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "type": "explicit_request",
+        "date": "2026-09-01"
+      },
+      "sourceDependencies": [],
+      "dependencies": [
+        "S6-022"
+      ],
+      "gap": "usage_records mesure quelques volumes, mais aucun portefeuille transactionnel par tenant ne gère allocations, débits, remboursements, idempotence, solde disponible et refus avant dépassement.",
+      "evidence": [
+        "supabase/migrations/00015_usage_tracking.sql",
+        "lib/billing/plans.ts",
+        "app/api/billing/status/route.ts"
+      ],
+      "acceptance": [
+        "Chaque tenant possède un portefeuille de crédits avec un ledger immuable pour allocations, débits, remboursements et corrections administratives, tous rattachés à un acteur, un motif et une clé d’idempotence.",
+        "Les unités facturables couvertes incluent au minimum les jetons LLM entrants et sortants, la synthèse vocale, la transcription, l’image, la vidéo, le stockage et les opérations explicitement tarifées par la suite.",
+        "Un débit atomique refuse tout solde insuffisant et ne peut être appliqué deux fois lors d’un retry ; un échec fournisseur ne consomme pas définitivement de crédits.",
+        "Le solde courant est dérivé ou réconciliable avec le ledger, jamais modifié sans trace ; les divergences échouent fermées et sont signalées.",
+        "Le super-administrateur peut allouer et corriger des crédits ; les administrateurs du tenant ne peuvent que consulter leur solde et leur historique autorisé.",
+        "RLS, concurrence, idempotence, arrondis, isolation inter-tenant et compensation d’échec sont testés de façon permanente.",
+        "Une recette de production vérifie allocation, débit, retry idempotent, refus pour solde insuffisant, remboursement et nettoyage intégral.",
+        "Le quality gate complet est vert au SHA exact sur ServeurIA, sans erreur ni avertissement inattendu."
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "production_credit_ledger_smoke_test"
+      ],
+      "priorityRank": 0.2
+    },
+    {
+      "id": "S6-024",
+      "title": "Tarifer à la valeur et piloter une marge moyenne cible de 95 %",
+      "description": "En tant que propriétaire de Qalem, je veux fixer librement les prix vendus selon la valeur perçue pour chaque tenant et mesurer les coûts réels séparément afin de piloter une marge moyenne cible de 95 % sans tarification automatique fondée sur les coûts.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P0",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "type": "explicit_request_and_correction",
+        "date": "2026-09-01"
+      },
+      "sourceDependencies": [],
+      "dependencies": [
+        "S6-023"
+      ],
+      "gap": "Qalem ne possède ni catalogue de prix vendu par tenant et par usage, ni ledger de coûts fournisseurs, ni calcul vérifiable de marge. Les prix statiques des plans sont nuls et ne représentent pas une tarification à la valeur.",
+      "evidence": [
+        "lib/billing/plans.ts",
+        "supabase/migrations/00015_usage_tracking.sql",
+        "app/api/billing/status/route.ts",
+        "app/admin/page.tsx"
+      ],
+      "acceptance": [
+        "Le super-administrateur saisit explicitement, par tenant, devise, période de validité et unité facturable, le prix vendu issu de la valeur commerciale ; aucun coût fournisseur, multiplicateur ou formule de marge ne peut modifier automatiquement ce prix.",
+        "Les coûts fournisseurs réels ou estimés sont enregistrés séparément par fournisseur, modèle, unité et période de validité, avec provenance et devise, uniquement pour mesurer le coût de revient et la marge.",
+        "Chaque usage valorisé conserve les versions du prix vendu et du coût appliqués afin qu’une modification future ne réécrive jamais l’historique facturable.",
+        "Le chiffre d’affaires, le coût, la marge brute et le taux de marge sont calculés par tenant, usage et période ; la vue consolidée affiche une moyenne pondérée par le chiffre d’affaires et une cible configurable fixée par défaut à 95 %.",
+        "Une marge sous la cible produit une alerte et un diagnostic lisibles, jamais un changement automatique des tarifs, des crédits ou des droits du tenant.",
+        "Les devises et arrondis sont déterministes ; une conversion éventuelle utilise un taux versionné et auditable, jamais un taux implicite courant.",
+        "Les droits, RLS, versions temporelles, calculs de marge, périodes qui se chevauchent et isolation inter-tenant sont couverts par des tests permanents.",
+        "Une recette de production fixe un prix à la valeur, enregistre un coût indépendant, valorise un usage, vérifie la marge et l’alerte sous 95 %, puis supprime toutes les données temporaires.",
+        "Le quality gate complet est vert au SHA exact sur ServeurIA, sans erreur ni avertissement inattendu."
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "production_value_pricing_smoke_test"
+      ],
+      "priorityRank": 0.3
+    },
+    {
       "id": "S6-001",
       "title": "Recertifier le SHA livré et solder le contrôle qualité global",
       "description": "En tant qu’utilisateur de Qalem, je veux recertifier le sha livré et solder le contrôle qualité global afin que le parcours promis soit réellement utilisable.",

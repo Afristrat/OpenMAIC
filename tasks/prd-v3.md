@@ -16,7 +16,7 @@ Aucune fonctionnalité n’est implémentée par cette opération documentaire.
 - 65 stories v2 inventoriées : 26 ouvertes reprises, 3 rouvertes, 36 acceptations historiques conservées sans recertification.
 - 72 stories v1/UI rattachées à une décision de conservation et à leurs US de suivi ; 18 capacités héritées sont explicitement remises en suivi.
 - 21 demandes/ensembles d’engagements rattachés à des US.
-- 68 US au registre : 10 à implémenter, 9 à valider, 21 avec décision préalable et 5 bloquées ; 23 sont soldées.
+- 71 US au registre : 13 à implémenter, 9 à valider, 21 avec décision préalable et 5 bloquées ; 23 sont soldées.
 - Vingt-trois US sont soldées sur preuves actuelles. Une décision de retrait n’est jamais une réussite d’implémentation.
 - S0-015 est entièrement certifiée côté machine sur le SHA déployé `6ea54d9` ; seule l’écoute humaine SOP-011 maintient son état « À valider ».
 
@@ -71,6 +71,9 @@ Les descriptions et critères exécutables complets sont dans le JSON canonique.
 | Rang | US     | Priorité | État             | Livrable                                                                              |
 | ---- | ------ | -------- | ---------------- | ------------------------------------------------------------------------------------- |
 | 0    | S6-021 | P0       | Soldée           | Fermer l’accès public et réserver l’inscription aux invitations nominatives           |
+| 0,1  | S6-022 | P0       | À implémenter    | Provisionner les tenants, leurs rôles et leurs plafonds de sièges                     |
+| 0,2  | S6-023 | P0       | À implémenter    | Allouer les crédits et décompter chaque usage facturable                              |
+| 0,3  | S6-024 | P0       | À implémenter    | Tarifer à la valeur et piloter une marge moyenne cible de 95 %                        |
 | 1    | S6-001 | P0       | Soldée           | Recertifier le SHA livré et solder le contrôle qualité global                         |
 | 2    | S6-002 | P0       | Bloquée          | Terminer le diagnostic mémoire propre à Qalem                                         |
 | 3    | S0-015 | P0       | À valider        | Auth multi-tenant + persistance Storage sur le flux classroom (P0)                    |
