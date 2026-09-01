@@ -14,6 +14,10 @@ const deletionCorrection = readFileSync(
   join(process.cwd(), 'supabase/migrations/00051_tenant_audit_survives_deletion.sql'),
   'utf8',
 );
+const tokenRedaction = readFileSync(
+  join(process.cwd(), 'supabase/migrations/00052_redact_invitation_tokens_from_audit.sql'),
+  'utf8',
+);
 
 describe('tenant provisioning migration (S6-022)', () => {
   it('defines active/suspended tenants, positive seat limits and valid invitation roles', () => {
@@ -54,6 +58,9 @@ describe('tenant provisioning migration (S6-022)', () => {
     expect(auditCorrection).toMatch(/to_jsonb\(NEW\) ->> 'org_id'/i);
     expect(auditCorrection).toMatch(/to_jsonb\(OLD\) ->> 'org_id'/i);
     expect(deletionCorrection).toMatch(/DROP CONSTRAINT tenant_admin_audit_tenant_id_fkey/i);
+    expect(tokenRedaction).toMatch(/previous_record := previous_record - 'token'/i);
+    expect(tokenRedaction).toMatch(/next_record := next_record - 'token'/i);
+    expect(tokenRedaction).toMatch(/UPDATE public\.tenant_admin_audit/i);
   });
 
   it('exposes provisioning controls to the service role only', () => {

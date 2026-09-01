@@ -1,7 +1,11 @@
--- S6-022 — a generic trigger cannot reference a column absent from one of its
--- target tables, even inside a CASE branch. Extract the tenant identifier from
--- the row JSON so the same audited function works for organizations,
--- org_members and org_invitations.
+-- S6-022 — invitation tokens are credentials, not audit attributes. Remove
+-- them from existing snapshots and redact them before every future insert.
+
+UPDATE public.tenant_admin_audit
+SET
+  previous_value = previous_value - 'token',
+  next_value = next_value - 'token'
+WHERE action LIKE 'org_invitations.%';
 
 CREATE OR REPLACE FUNCTION public.audit_tenant_administration()
 RETURNS TRIGGER
