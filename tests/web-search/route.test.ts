@@ -5,6 +5,11 @@ const mocks = vi.hoisted(() => ({
   searchWeb: vi.fn(),
   formatSearchResultsAsContext: vi.fn(() => 'formatted context'),
   resolveModelFromRequest: vi.fn(),
+  requireOrgMember: vi.fn(),
+}));
+
+vi.mock('@/lib/api/auth', () => ({
+  requireOrgMember: mocks.requireOrgMember,
 }));
 
 vi.mock('@/lib/web-search', async (importOriginal) => {
@@ -33,12 +38,12 @@ vi.mock('@/lib/logger', () => ({
   }),
 }));
 
-async function postWebSearch(body: Record<string, unknown>) {
+async function postWebSearch(body: Record<string, unknown>, includeOrgId = true) {
   const { POST } = await import('@/app/api/web-search/route');
   const request = new Request('http://localhost/api/web-search', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    body: JSON.stringify({ ...(includeOrgId ? { orgId: 'org-1' } : {}), ...body }),
   });
   return POST(request as unknown as NextRequest);
 }
@@ -58,6 +63,8 @@ describe('POST /api/web-search', () => {
     delete process.env.WEB_SEARCH_MINIMAX_API_KEY;
     delete process.env.WEB_SEARCH_MINIMAX_BASE_URL;
     mocks.searchWeb.mockReset();
+    mocks.requireOrgMember.mockReset();
+    mocks.requireOrgMember.mockResolvedValue({ user: { id: 'user-1', email: 'a@example.com' } });
     mocks.formatSearchResultsAsContext.mockClear();
     mocks.resolveModelFromRequest.mockReset();
     mocks.resolveModelFromRequest.mockRejectedValue(new Error('model unavailable'));
@@ -67,6 +74,20 @@ describe('POST /api/web-search', () => {
       query: 'test query',
       responseTime: 0.1,
     });
+  });
+
+  it('fails closed without a tenant and verifies membership before provider work', async () => {
+    const missingTenant = await postWebSearch({ query: 'test query', providerId: 'brave' }, false);
+    expect(missingTenant.status).toBe(400);
+    expect(mocks.requireOrgMember).not.toHaveBeenCalled();
+    expect(mocks.searchWeb).not.toHaveBeenCalled();
+
+    mocks.requireOrgMember.mockResolvedValueOnce({
+      response: new Response(null, { status: 403 }),
+    });
+    const forbidden = await postWebSearch({ query: 'test query', providerId: 'brave' });
+    expect(forbidden.status).toBe(403);
+    expect(mocks.searchWeb).not.toHaveBeenCalled();
   });
 
   it('rejects client-controlled base URLs outside the provider allowlist (unmanaged provider)', async () => {

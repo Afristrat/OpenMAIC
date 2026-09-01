@@ -40,6 +40,7 @@ import { createLogger } from '@/lib/logger';
 import { type GenerationSessionState, ALL_STEPS, getActiveSteps } from './types';
 import { StepVisualizer } from './components/visualizers';
 import { resolveTaskEngineModeFromOutlineDoneEvent } from './vocational-mode';
+import { getCurrentOrganizationId } from '@/lib/hooks/use-organizations';
 
 const log = createLogger('GenerationPreview');
 const OUTLINE_REVIEW_AUTO_CONTINUE_MS = 2500;
@@ -403,6 +404,7 @@ function GenerationPreviewContent() {
           headers: getApiHeaders(),
           body: JSON.stringify(
             withThinkingConfig({
+              orgId: getCurrentOrganizationId(),
               query: currentSession.requirements.requirement,
               pdfText: currentSession.pdfText || undefined,
               providerId: wsProviderId,

@@ -21,6 +21,7 @@ import { WEB_SEARCH_PROVIDERS } from '@/lib/web-search/constants';
 import type { BaiduSubSources, WebSearchProviderId } from '@/lib/web-search/types';
 import { resolveWebSearchRouteBaseUrl } from '@/lib/server/web-search-config';
 import { enrichSourcesWithCrawl4AI } from '@/lib/server/crawl4ai';
+import { requireOrgMember } from '@/lib/api/auth';
 
 const log = createLogger('WebSearch');
 
@@ -35,6 +36,7 @@ export async function POST(req: NextRequest) {
       apiKey: bodyApiKey,
       baseUrl: bodyBaseUrl,
       baiduSubSources,
+      orgId,
     } = body as {
       query?: string;
       pdfText?: string;
@@ -42,8 +44,15 @@ export async function POST(req: NextRequest) {
       apiKey?: string;
       baseUrl?: string;
       baiduSubSources?: BaiduSubSources;
+      orgId?: string;
     };
     query = requestQuery;
+
+    if (!orgId) {
+      return apiError('MISSING_REQUIRED_FIELD', 400, 'orgId is required');
+    }
+    const auth = await requireOrgMember(req, orgId);
+    if (auth.response) return auth.response;
 
     if (!query || !query.trim()) {
       return apiError('MISSING_REQUIRED_FIELD', 400, 'query is required');

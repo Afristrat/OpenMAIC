@@ -6,6 +6,10 @@ const migration = readFileSync(
   resolve(process.cwd(), 'supabase/migrations/00056_real_usage_metering.sql'),
   'utf8',
 );
+const cascadeCleanupMigration = readFileSync(
+  resolve(process.cwd(), 'supabase/migrations/00057_tenant_billing_cascade_cleanup.sql'),
+  'utf8',
+);
 
 describe('real provider usage metering migration (S6-025)', () => {
   it('keeps credit burn rates independent from sell prices and provider costs', () => {
@@ -108,5 +112,11 @@ describe('real provider usage metering migration (S6-025)', () => {
         ),
       );
     }
+  });
+
+  it('allows only cascading tenant deletion to remove immutable burn-rate history', () => {
+    expect(cascadeCleanupMigration).toMatch(/tenant_credit_burn_rates/i);
+    expect(cascadeCleanupMigration).toMatch(/pg_trigger_depth\(\) > 1/i);
+    expect(cascadeCleanupMigration).toMatch(/ECONOMIC_VERSION_IMMUTABLE/i);
   });
 });
