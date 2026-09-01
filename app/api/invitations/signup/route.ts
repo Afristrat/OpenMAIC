@@ -32,7 +32,9 @@ export async function POST(request: NextRequest): Promise<Response> {
       email,
       password,
       email_confirm: true,
-      app_metadata: { qalem_invitation_token: token },
+      // GoTrue persists user metadata in the initial auth.users INSERT, so the
+      // database trigger can claim the invitation in that same transaction.
+      user_metadata: { qalem_invitation_token: token },
     });
 
     if (error || !data.user) {

@@ -44,7 +44,7 @@ describe('POST /api/invitations/signup', () => {
     mocks.createUser.mockResolvedValue({ data: { user: { id: 'recipient-1' } }, error: null });
   });
 
-  it('creates a confirmed user carrying only the validated invitation token', async () => {
+  it('creates a confirmed user carrying the token in initial insert metadata', async () => {
     const response = await signup({ email: 'Recipient@Qalem.ma' });
 
     expect(response.status).toBe(201);
@@ -52,7 +52,7 @@ describe('POST /api/invitations/signup', () => {
       email: 'recipient@qalem.ma',
       password: 'correct-password',
       email_confirm: true,
-      app_metadata: { qalem_invitation_token: 'named-invite' },
+      user_metadata: { qalem_invitation_token: 'named-invite' },
     });
   });
 

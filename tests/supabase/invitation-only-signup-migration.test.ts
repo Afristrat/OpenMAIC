@@ -6,6 +6,10 @@ const migration = readFileSync(
   resolve(process.cwd(), 'supabase/migrations/00047_invitation_only_signup.sql'),
   'utf8',
 );
+const metadataCorrection = readFileSync(
+  resolve(process.cwd(), 'supabase/migrations/00048_invitation_token_insert_metadata.sql'),
+  'utf8',
+);
 
 describe('invitation-only signup migration', () => {
   it('revokes legacy anonymous invitations and requires an email', () => {
@@ -26,5 +30,13 @@ describe('invitation-only signup migration', () => {
     expect(migration).toMatch(
       /ON CONFLICT ON CONSTRAINT org_members_user_id_org_id_key DO NOTHING/i,
     );
+  });
+
+  it('reads the token from metadata persisted in the initial GoTrue insert', () => {
+    expect(metadataCorrection).toMatch(/CREATE OR REPLACE FUNCTION public\.claim_invitation/i);
+    expect(metadataCorrection).toMatch(/NEW\.raw_user_meta_data\s*->>\s*'qalem_invitation_token'/i);
+    expect(metadataCorrection).toMatch(/COALESCE\(/i);
+    expect(metadataCorrection).toMatch(/FOR UPDATE/i);
+    expect(metadataCorrection).toMatch(/lower\(invitation\.email\) <> lower\(NEW\.email\)/i);
   });
 });
