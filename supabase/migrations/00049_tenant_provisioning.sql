@@ -40,9 +40,9 @@ DECLARE
   );
 BEGIN
   IF TG_OP = 'DELETE' THEN
-    tenant := CASE WHEN TG_TABLE_NAME = 'organizations' THEN OLD.id ELSE OLD.org_id END;
+    tenant := COALESCE(to_jsonb(OLD) ->> 'org_id', to_jsonb(OLD) ->> 'id')::UUID;
   ELSE
-    tenant := CASE WHEN TG_TABLE_NAME = 'organizations' THEN NEW.id ELSE NEW.org_id END;
+    tenant := COALESCE(to_jsonb(NEW) ->> 'org_id', to_jsonb(NEW) ->> 'id')::UUID;
   END IF;
 
   INSERT INTO public.tenant_admin_audit (

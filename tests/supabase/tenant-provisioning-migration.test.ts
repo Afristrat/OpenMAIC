@@ -6,6 +6,10 @@ const migration = readFileSync(
   join(process.cwd(), 'supabase/migrations/00049_tenant_provisioning.sql'),
   'utf8',
 );
+const auditCorrection = readFileSync(
+  join(process.cwd(), 'supabase/migrations/00050_tenant_audit_polymorphic_row.sql'),
+  'utf8',
+);
 
 describe('tenant provisioning migration (S6-022)', () => {
   it('defines active/suspended tenants, positive seat limits and valid invitation roles', () => {
@@ -36,6 +40,9 @@ describe('tenant provisioning migration (S6-022)', () => {
     expect(migration).toMatch(/CREATE POLICY "Service role only"/i);
     expect(migration).toMatch(/AFTER INSERT OR UPDATE OF status, seat_limit/i);
     expect(migration).toMatch(/AFTER INSERT OR UPDATE OF role OR DELETE ON public\.org_members/i);
+    expect(migration).not.toMatch(/NEW\.org_id|OLD\.org_id/);
+    expect(auditCorrection).toMatch(/to_jsonb\(NEW\) ->> 'org_id'/i);
+    expect(auditCorrection).toMatch(/to_jsonb\(OLD\) ->> 'org_id'/i);
   });
 
   it('exposes provisioning controls to the service role only', () => {
