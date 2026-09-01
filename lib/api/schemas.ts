@@ -63,6 +63,23 @@ export const invitationSignupSchema = z.object({
   password: z.string().min(8).max(72),
 });
 
+export const adminTenantCreateSchema = z.object({
+  name: z.string().trim().min(1).max(160),
+  sector: z.enum(orgSectors),
+  defaultLocale: z.enum(['fr-FR', 'ar-MA', 'en-US']).default('fr-FR'),
+  seatLimit: z.number().int().min(1).max(100_000),
+  administratorEmail: z.string().trim().email(),
+});
+
+export const adminTenantPatchSchema = z
+  .object({
+    status: z.enum(['active', 'suspended']).optional(),
+    seatLimit: z.number().int().min(1).max(100_000).optional(),
+  })
+  .refine((value) => value.status !== undefined || value.seatLimit !== undefined, {
+    message: 'At least one tenant control is required',
+  });
+
 // ---------------------------------------------------------------------------
 // Curriculum Links
 // ---------------------------------------------------------------------------

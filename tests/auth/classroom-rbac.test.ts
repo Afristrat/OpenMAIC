@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 
 const mocks = vi.hoisted(() => ({
   user: null as { id: string; email: string } | null,
-  membership: null as { role: string } | null,
+  membership: null as { role: string; organizations: { status: string } } | null,
   from: vi.fn(),
   single: vi.fn(),
 }));
@@ -43,7 +43,7 @@ describe('classroom RBAC', () => {
     vi.clearAllMocks();
     vi.stubEnv('SUPER_ADMIN_EMAILS', 'root@qalem.ma');
     mocks.user = { id: 'user-1', email: 'member@qalem.ma' };
-    mocks.membership = { role: 'apprenant' };
+    mocks.membership = { role: 'apprenant', organizations: { status: 'active' } };
     mocks.single.mockImplementation(async () => ({ data: mocks.membership, error: null }));
   });
 
@@ -68,7 +68,7 @@ describe('classroom RBAC', () => {
   });
 
   it.each(['admin', 'manager'])('lets the %s role generate for its organization', async (role) => {
-    mocks.membership = { role };
+    mocks.membership = { role, organizations: { status: 'active' } };
 
     const result = await requireSuperAdminOrOrgAdmin(request, 'org-target');
 
@@ -77,7 +77,7 @@ describe('classroom RBAC', () => {
   });
 
   it('refuses classroom generation to a trainer without an admin role', async () => {
-    mocks.membership = { role: 'formateur' };
+    mocks.membership = { role: 'formateur', organizations: { status: 'active' } };
 
     const result = await requireSuperAdminOrOrgAdmin(request, 'org-target');
 
@@ -85,7 +85,7 @@ describe('classroom RBAC', () => {
   });
 
   it.each(['admin', 'manager', 'author'])('lets the %s role author a classroom', async (role) => {
-    mocks.membership = { role };
+    mocks.membership = { role, organizations: { status: 'active' } };
 
     const result = await requireSuperAdminOrOrgAuthor(request, 'org-target');
 
@@ -103,7 +103,7 @@ describe('classroom RBAC', () => {
   });
 
   it('lets an author edit a classroom they own', async () => {
-    mocks.membership = { role: 'author' };
+    mocks.membership = { role: 'author', organizations: { status: 'active' } };
 
     const result = await requireSuperAdminOrOrgEditor(request, 'org-target', 'user-1');
 
@@ -111,7 +111,7 @@ describe('classroom RBAC', () => {
   });
 
   it('refuses an author access to another author’s classroom', async () => {
-    mocks.membership = { role: 'author' };
+    mocks.membership = { role: 'author', organizations: { status: 'active' } };
 
     const result = await requireSuperAdminOrOrgEditor(request, 'org-target', 'other-author');
 
@@ -121,7 +121,7 @@ describe('classroom RBAC', () => {
   it.each(['admin', 'manager'])(
     'lets the %s edit every classroom in its organization',
     async (role) => {
-      mocks.membership = { role };
+      mocks.membership = { role, organizations: { status: 'active' } };
 
       const result = await requireSuperAdminOrOrgEditor(request, 'org-target', 'other-author');
 
@@ -142,6 +142,17 @@ describe('classroom RBAC', () => {
     const result = await requireSuperAdminOrOrgMember(request, 'org-target');
 
     expect(result.user?.id).toBe('user-1');
+  });
+
+  it('blocks every tenant-scoped access while the organization is suspended', async () => {
+    mocks.membership = {
+      role: 'admin',
+      organizations: { status: 'suspended' },
+    };
+
+    const result = await requireSuperAdminOrOrgMember(request, 'org-target');
+
+    expect(result.response?.status).toBe(403);
   });
 
   it('returns 403 to an authenticated user outside the organization', async () => {

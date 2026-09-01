@@ -19,6 +19,19 @@ type AuthResult = AuthSuccess | AuthFailure;
 type AuthorAuthSuccess = AuthSuccess & { authoredByRole: 'author' | 'super-admin' };
 type AuthorAuthResult = AuthorAuthSuccess | AuthFailure;
 
+type MembershipWithTenant = {
+  role: string;
+  organizations: { status: string } | { status: string }[] | null;
+};
+
+function hasActiveTenant(membership: MembershipWithTenant | null): boolean {
+  if (!membership) return false;
+  const tenant = Array.isArray(membership.organizations)
+    ? membership.organizations[0]
+    : membership.organizations;
+  return tenant?.status === 'active';
+}
+
 // ---------------------------------------------------------------------------
 // requireAuth — any authenticated user
 // ---------------------------------------------------------------------------
@@ -105,12 +118,12 @@ export async function requireOrgMember(req: NextRequest, orgId: string): Promise
     const supabase = await createServerSupabaseClient();
     const { data: membership } = await supabase
       .from('org_members')
-      .select('role')
+      .select('role, organizations!inner(status)')
       .eq('org_id', orgId)
       .eq('user_id', auth.user.id)
       .single();
 
-    if (!membership) {
+    if (!hasActiveTenant(membership as MembershipWithTenant | null)) {
       return {
         response: NextResponse.json(
           { error: 'Not a member of this organization', code: 'FORBIDDEN', status: 403 },
@@ -143,12 +156,15 @@ export async function requireOrgAdmin(req: NextRequest, orgId: string): Promise<
     const supabase = await createServerSupabaseClient();
     const { data: membership } = await supabase
       .from('org_members')
-      .select('role')
+      .select('role, organizations!inner(status)')
       .eq('org_id', orgId)
       .eq('user_id', auth.user.id)
       .single();
 
-    if (!membership || !['admin', 'manager'].includes(membership.role)) {
+    if (
+      !hasActiveTenant(membership as MembershipWithTenant | null) ||
+      !['admin', 'manager'].includes(membership.role)
+    ) {
       return {
         response: NextResponse.json(
           { error: 'Admin or manager access required', code: 'FORBIDDEN', status: 403 },
@@ -203,12 +219,15 @@ export async function requireSuperAdminOrOrgAuthor(
     const supabase = await createServerSupabaseClient();
     const { data: membership } = await supabase
       .from('org_members')
-      .select('role')
+      .select('role, organizations!inner(status)')
       .eq('org_id', orgId)
       .eq('user_id', auth.user.id)
       .single();
 
-    if (!membership || !['admin', 'manager', 'author'].includes(membership.role)) {
+    if (
+      !hasActiveTenant(membership as MembershipWithTenant | null) ||
+      !['admin', 'manager', 'author'].includes(membership.role)
+    ) {
       return {
         response: NextResponse.json(
           { error: 'Author access required', code: 'FORBIDDEN', status: 403 },
@@ -246,11 +265,12 @@ export async function requireSuperAdminOrOrgEditor(
     const supabase = await createServerSupabaseClient();
     const { data: membership } = await supabase
       .from('org_members')
-      .select('role')
+      .select('role, organizations!inner(status)')
       .eq('org_id', orgId)
       .eq('user_id', auth.user.id)
       .single();
     const canEdit =
+      hasActiveTenant(membership as MembershipWithTenant | null) &&
       membership &&
       (['admin', 'manager'].includes(membership.role) ||
         (membership.role === 'author' && auth.user.id === ownerId));

@@ -2,15 +2,15 @@
  * Organizations API
  *
  * GET  /api/organizations — list user's organizations (via org_members)
- * POST /api/organizations — create new org (user becomes admin)
+ * POST /api/organizations — legacy endpoint; tenant provisioning is centralized
  */
 
 import { NextRequest } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
-import type { OrgSector } from '@/lib/supabase/types';
 import { validateBody } from '@/lib/api/validate';
 import { organizationsCreateSchema } from '@/lib/api/schemas';
+import { requireSuperAdmin } from '@/lib/api/auth';
 
 export async function GET(): Promise<Response> {
   const supabase = await createServerSupabaseClient();
@@ -46,7 +46,8 @@ export async function GET(): Promise<Response> {
   const { data: organizations, error: orgError } = await supabase
     .from('organizations')
     .select('*')
-    .in('id', orgIds);
+    .in('id', orgIds)
+    .eq('status', 'active');
 
   if (orgError) {
     return apiError(
@@ -68,15 +69,8 @@ export async function GET(): Promise<Response> {
 }
 
 export async function POST(request: NextRequest): Promise<Response> {
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return apiError(API_ERROR_CODES.INVALID_REQUEST, 401, 'Authentication required');
-  }
+  const auth = await requireSuperAdmin(request);
+  if (auth.response) return auth.response;
 
   let rawBody: unknown;
   try {
@@ -87,34 +81,10 @@ export async function POST(request: NextRequest): Promise<Response> {
 
   const validation = validateBody(organizationsCreateSchema, rawBody);
   if (!validation.success) return validation.response;
-  const { data } = validation;
-
-  const name = data.name.trim();
-  if (!name) {
-    return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, 'Organization name is required');
-  }
-
-  const sector: OrgSector | null = data.sector ?? null;
-  const defaultLocale = data.default_locale ?? 'fr-FR';
-
-  // The first membership cannot satisfy the normal admin RLS policy yet. The
-  // RPC creates both rows atomically and derives the member id from auth.uid().
-  const { data: org, error: orgError } = await supabase
-    .rpc('create_organization_with_admin', {
-      organization_name: name,
-      organization_sector: sector,
-      organization_default_locale: defaultLocale,
-    })
-    .single();
-
-  if (orgError || !org) {
-    return apiError(
-      API_ERROR_CODES.INTERNAL_ERROR,
-      500,
-      'Failed to create organization',
-      orgError?.message,
-    );
-  }
-
-  return apiSuccess({ organization: { ...org, userRole: 'admin' } }, 201);
+  return apiError(
+    API_ERROR_CODES.INVALID_REQUEST,
+    409,
+    'Tenant provisioning requires an administrator invitation',
+    'Use POST /api/admin/tenants with a seat limit and administrator email',
+  );
 }

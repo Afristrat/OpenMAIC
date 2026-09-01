@@ -49,6 +49,10 @@ export async function POST(
       body.role && VALID_ROLES.includes(body.role as OrgMemberRole) ? body.role : 'apprenant';
     const email = body.email.trim().toLowerCase();
 
+    if (membership.role === 'manager' && role === 'admin') {
+      return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Managers cannot invite admins');
+    }
+
     const { data: invitation, error } = await supabase
       .from('org_invitations')
       .insert({
@@ -61,10 +65,18 @@ export async function POST(
       .single();
 
     if (error || !invitation) {
+      const seatLimitReached = /TENANT_SEAT_LIMIT_REACHED/i.test(error?.message ?? '');
+      const tenantInactive = /TENANT_INACTIVE/i.test(error?.message ?? '');
       return apiError(
-        API_ERROR_CODES.INTERNAL_ERROR,
-        500,
-        'Failed to create invitation',
+        seatLimitReached || tenantInactive
+          ? API_ERROR_CODES.INVALID_REQUEST
+          : API_ERROR_CODES.INTERNAL_ERROR,
+        seatLimitReached ? 409 : tenantInactive ? 423 : 500,
+        seatLimitReached
+          ? 'Tenant seat limit reached'
+          : tenantInactive
+            ? 'Tenant is suspended'
+            : 'Failed to create invitation',
         error?.message,
       );
     }

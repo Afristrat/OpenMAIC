@@ -56,6 +56,8 @@ export interface Organization {
   logo: string | null;
   default_locale: string; // default 'fr-FR'
   settings: Record<string, unknown>;
+  status: 'active' | 'suspended';
+  seat_limit: number;
   created_at: string;
   updated_at: string;
 }
