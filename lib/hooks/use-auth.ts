@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { tryCreateClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
 
-const GUEST_MODE_KEY = 'qalem-guest-mode';
 const E2E_TEST_MODE = process.env.NEXT_PUBLIC_E2E_TEST_MODE === 'true';
 const E2E_USER = {
   id: '00000000-0000-4000-8000-000000000001',
@@ -21,40 +20,27 @@ interface AuthState {
   isLoading: boolean;
   isGuest: boolean;
   signOut: () => Promise<void>;
-  setGuestMode: (enabled: boolean) => void;
 }
 
 export type { AuthState };
 
 /**
  * Hook that wraps Supabase auth state.
- * Provides user, loading state, guest mode, and sign-out.
+ * Provides the authenticated user, loading state, and sign-out.
  * Listens to onAuthStateChange for real-time updates.
- * Stores guest mode preference in localStorage.
  */
 export function useAuth(): AuthState {
   const [user, setUser] = useState<User | null>(E2E_TEST_MODE ? E2E_USER : null);
   const [isLoading, setIsLoading] = useState(!E2E_TEST_MODE);
-  const [isGuest, setIsGuest] = useState(false);
+  const isGuest = false;
 
-  /* eslint-disable react-hooks/set-state-in-effect -- Hydration from localStorage + auth listener must happen in effect */
+  /* eslint-disable react-hooks/set-state-in-effect -- Auth hydration and listener registration must happen in an effect. */
   useEffect(() => {
     if (E2E_TEST_MODE) return;
     const supabase = tryCreateClient();
 
-    // Check guest mode from localStorage
-    try {
-      const guestStored = localStorage.getItem(GUEST_MODE_KEY);
-      if (guestStored === 'true') {
-        setIsGuest(true);
-      }
-    } catch {
-      // localStorage unavailable
-    }
-
-    // No Supabase configured — run in guest/local-only mode
+    // A missing auth backend must never become anonymous application access.
     if (!supabase) {
-      setIsGuest(true);
       setIsLoading(false);
       return;
     }
@@ -73,7 +59,7 @@ export function useAuth(): AuthState {
       })
       .catch(() => {
         clearTimeout(timeout);
-        setIsLoading(false); // Supabase unreachable — proceed as guest
+        setIsLoading(false);
       });
 
     // Listen for auth state changes
@@ -81,15 +67,6 @@ export function useAuth(): AuthState {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      if (session?.user) {
-        // Clear guest mode when user authenticates
-        try {
-          localStorage.removeItem(GUEST_MODE_KEY);
-        } catch {
-          // localStorage unavailable
-        }
-        setIsGuest(false);
-      }
       setIsLoading(false);
     });
 
@@ -103,26 +80,7 @@ export function useAuth(): AuthState {
     const supabase = tryCreateClient();
     await supabase?.auth.signOut();
     setUser(null);
-    try {
-      localStorage.removeItem(GUEST_MODE_KEY);
-    } catch {
-      // localStorage unavailable
-    }
-    setIsGuest(false);
   }, []);
 
-  const setGuestMode = useCallback((enabled: boolean) => {
-    setIsGuest(enabled);
-    try {
-      if (enabled) {
-        localStorage.setItem(GUEST_MODE_KEY, 'true');
-      } else {
-        localStorage.removeItem(GUEST_MODE_KEY);
-      }
-    } catch {
-      // localStorage unavailable
-    }
-  }, []);
-
-  return { user, isLoading, isGuest, signOut, setGuestMode };
+  return { user, isLoading, isGuest, signOut };
 }

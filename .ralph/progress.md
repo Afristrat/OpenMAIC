@@ -4,7 +4,7 @@
 
 La source active est désormais `.ralph/prd-v3.json` ; vue de lecture : `tasks/prd-v3.md`.
 Réconciliation documentaire sur `332941dc7f0727dc673c4364f78e122b879f2f96` : 65 stories v2 et 72 stories v1/UI inventoriées ; 20 ensembles de demandes rattachés à leurs US.
-Le registre actif comporte 67 US : 26 ouvertes v2 reprises, 3 v2 rouvertes sur défaut de preuve/couverture, 18 capacités héritées remises en suivi et 20 nouveaux restes transverses.
+Le registre actif comporte 68 US : 26 ouvertes v2 reprises, 3 v2 rouvertes sur défaut de preuve/couverture, 18 capacités héritées remises en suivi et 21 nouveaux restes transverses.
 Aucune livraison de fonctionnalité n’est certifiée par cette entrée. L’accès SSH canonique a été rétabli le 27 août ; le clone historique ServeurIA est divergent et sale, donc la recertification utilise des clones isolés neufs. Le PRD v3 et ses pointeurs sont publiés sur `origin/refork-v030` au SHA `76c54d2a7b60022d145141e6c090dd01dc15468c`.
 Les logs ci-dessous sont des archives datées ; leurs chiffres et mentions « vert », « fait » ou « en production » ne font pas autorité pour l’état présent.
 
@@ -32,6 +32,7 @@ Les logs ci-dessous sont des archives datées ; leurs chiffres et mentions « ve
 ## Known Issues
 
 - Voir les motifs d’ouverture, preuves et critères de chaque US de `.ralph/prd-v3.json` ; aucune liste active parallèle.
+- S6-021 est prioritaire depuis le 1er septembre : la production autorise l’inscription e-mail auto-confirmée et expose un OAuth Google incomplet, GitHub désarmé et un mode invité. L’accès doit devenir strictement nominatif par invitation, puis être recetté en production avant clôture.
 - Priorité produit : fidélité documentaire, reformulation, visuels originaux, restitution monétaire, ASR réel et rappels réellement déclenchés.
 - S6-017 a ramené l’audit de production à zéro critique et zéro haut sur le SHA déployé `a9f26a30a74b6ed868c77d474f7ae8c2ee6b2f71`. Le résiduel exact, non déclaré résolu, est de 17 avis modérés et 5 faibles ; il doit être traité séparément sans rouvrir la rotation de secrets bloquée dans S6-014.
 - S6-019 est soldée au SHA déployé `0cf0d94e6b40538e378e22b2bec928464ceb8def` : les 12 paquets, 20 avis et 22 occurrences résiduels ont été réconciliés puis éliminés ; l’audit de production est entièrement nul. Le registre permanent est `docs/security/S6-019-production-dependency-audit.md`.

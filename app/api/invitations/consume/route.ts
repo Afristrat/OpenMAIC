@@ -7,17 +7,18 @@
 
 import { NextRequest } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 import { validateBody } from '@/lib/api/validate';
 import { invitationConsumeSchema } from '@/lib/api/schemas';
 
 export async function POST(request: NextRequest): Promise<Response> {
   try {
-    const supabase = await createServerSupabaseClient();
+    const authClient = await createServerSupabaseClient();
 
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await authClient.auth.getUser();
     if (!user) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 401, 'Not authenticated');
     }
@@ -27,66 +28,25 @@ export async function POST(request: NextRequest): Promise<Response> {
     if (!bodyValidation.success) return bodyValidation.response;
     const body = bodyValidation.data;
 
-    // Find the invitation
-    const { data: invitation, error: findError } = await supabase
-      .from('org_invitations')
-      .select('id, org_id, role, email, expires_at, used_at')
-      .eq('token', body.token)
+    if (!user.email) {
+      return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Authenticated email is required');
+    }
+
+    // The invitee is not an organization member yet. A service-only database
+    // function locks and consumes the invitation in the same transaction as
+    // the membership insertion.
+    const supabase = createServiceSupabaseClient();
+    const { data: invitation, error } = await supabase
+      .rpc('claim_invitation_for_existing_user', {
+        invitation_token: body.token,
+        invited_user_id: user.id,
+        invited_email: user.email.trim().toLowerCase(),
+      })
       .single();
 
-    if (findError || !invitation) {
-      return apiError(API_ERROR_CODES.INVALID_REQUEST, 404, 'Invitation not found');
+    if (error || !invitation) {
+      return apiError(API_ERROR_CODES.INVALID_REQUEST, 410, 'Invitation unavailable');
     }
-
-    // Check if already used
-    if (invitation.used_at) {
-      return apiError(API_ERROR_CODES.INVALID_REQUEST, 410, 'Invitation already used');
-    }
-
-    // Check if expired
-    if (new Date(invitation.expires_at) < new Date()) {
-      return apiError(API_ERROR_CODES.INVALID_REQUEST, 410, 'Invitation expired');
-    }
-
-    // A named invitation is not a transferable bearer credential. The invite
-    // link may travel by email, but only the account at that address can join.
-    const invitationEmail = invitation.email?.trim().toLowerCase();
-    const userEmail = user.email?.trim().toLowerCase();
-    if (invitationEmail && invitationEmail !== userEmail) {
-      return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Invitation email does not match');
-    }
-
-    // Check if user is already a member
-    const { data: existingMember } = await supabase
-      .from('org_members')
-      .select('id')
-      .eq('org_id', invitation.org_id)
-      .eq('user_id', user.id)
-      .single();
-
-    if (!existingMember) {
-      // Add user to org with the invited role
-      const { error: insertError } = await supabase.from('org_members').insert({
-        org_id: invitation.org_id,
-        user_id: user.id,
-        role: invitation.role,
-      });
-
-      if (insertError) {
-        return apiError(
-          API_ERROR_CODES.INTERNAL_ERROR,
-          500,
-          'Failed to add member',
-          insertError.message,
-        );
-      }
-    }
-
-    // Mark invitation as used
-    await supabase
-      .from('org_invitations')
-      .update({ used_at: new Date().toISOString() })
-      .eq('id', invitation.id);
 
     return apiSuccess({ orgId: invitation.org_id, role: invitation.role });
   } catch (err) {

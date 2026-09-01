@@ -5,7 +5,7 @@
 ## Référence active
 
 La source unique des US, critères, dépendances et statuts est [`.ralph/prd-v3.json`](../.ralph/prd-v3.json).
-Ce document est une vue de lecture du registre mise à jour le 28 août 2026, pas un second backlog.
+Ce document est une vue de lecture du registre mise à jour le 1er septembre 2026, pas un second backlog.
 Le chantier 3 ANCRER conserve sa spécification dans `tasks/prd-3-ancrer.md` ; « v3 » désigne ici la version consolidée du PRD.
 
 ## Objectif et portée
@@ -15,8 +15,8 @@ Aucune fonctionnalité n’est implémentée par cette opération documentaire.
 
 - 65 stories v2 inventoriées : 26 ouvertes reprises, 3 rouvertes, 36 acceptations historiques conservées sans recertification.
 - 72 stories v1/UI rattachées à une décision de conservation et à leurs US de suivi ; 18 capacités héritées sont explicitement remises en suivi.
-- 20 demandes/ensembles d’engagements rattachés à des US.
-- 67 US au registre : 10 à implémenter, 9 à valider, 21 avec décision préalable et 5 bloquées ; 22 sont soldées.
+- 21 demandes/ensembles d’engagements rattachés à des US.
+- 68 US au registre : 11 à implémenter, 9 à valider, 21 avec décision préalable et 5 bloquées ; 22 sont soldées.
 - Vingt-deux US sont soldées sur preuves actuelles. Une décision de retrait n’est jamais une réussite d’implémentation.
 - S0-015 est entièrement certifiée côté machine sur le SHA déployé `6ea54d9` ; seule l’écoute humaine SOP-011 maintient son état « À valider ».
 
@@ -70,6 +70,7 @@ Les descriptions et critères exécutables complets sont dans le JSON canonique.
 
 | Rang | US     | Priorité | État             | Livrable                                                                              |
 | ---- | ------ | -------- | ---------------- | ------------------------------------------------------------------------------------- |
+| 0    | S6-021 | P0       | À implémenter    | Fermer l’accès public et réserver l’inscription aux invitations nominatives           |
 | 1    | S6-001 | P0       | Soldée           | Recertifier le SHA livré et solder le contrôle qualité global                         |
 | 2    | S6-002 | P0       | Bloquée          | Terminer le diagnostic mémoire propre à Qalem                                         |
 | 3    | S0-015 | P0       | À valider        | Auth multi-tenant + persistance Storage sur le flux classroom (P0)                    |

@@ -28,7 +28,6 @@ import {
   Settings,
   Users,
   Building2,
-  Link2,
   BarChart3,
   CheckCircle2,
   Palette,
@@ -118,7 +117,6 @@ export default function OrgAdminPage() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<OrgMemberRole>('apprenant');
   const [inviting, setInviting] = useState(false);
-  const [copyingLink, setCopyingLink] = useState(false);
 
   // Dashboard metrics
   const [metrics, setMetrics] = useState<{
@@ -368,9 +366,10 @@ export default function OrgAdminPage() {
         body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
       });
       if (res.ok) {
-        toast.success(t('org.inviteSent'));
+        const data = (await res.json()) as { inviteUrl: string };
+        await navigator.clipboard.writeText(data.inviteUrl);
+        toast.success(t('org.inviteLinkCopied'));
         setInviteEmail('');
-        await fetchMembers();
       } else {
         const err = await res.json();
         toast.error(err.error ?? 'Error');
@@ -379,29 +378,6 @@ export default function OrgAdminPage() {
       toast.error('Network error');
     } finally {
       setInviting(false);
-    }
-  };
-
-  const handleCopyInviteLink = async () => {
-    setCopyingLink(true);
-    try {
-      const res = await fetch(`/api/organizations/${orgId}/invite`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: inviteRole }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        await navigator.clipboard.writeText(data.inviteUrl);
-        toast.success(t('org.inviteLinkCopied'));
-      } else {
-        const err = await res.json();
-        toast.error(err.error ?? 'Error');
-      }
-    } catch {
-      toast.error('Network error');
-    } finally {
-      setCopyingLink(false);
     }
   };
 
@@ -848,15 +824,6 @@ export default function OrgAdminPage() {
               </Select>
               <Button onClick={handleInvite} disabled={inviting || !inviteEmail.trim()}>
                 {inviting ? t('common.loading') : t('org.invite')}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleCopyInviteLink}
-                disabled={copyingLink}
-                className="gap-1.5"
-              >
-                <Link2 className="h-4 w-4" />
-                {copyingLink ? t('common.loading') : t('org.copyInviteLink')}
               </Button>
             </div>
           </div>

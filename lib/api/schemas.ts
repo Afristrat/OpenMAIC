@@ -53,8 +53,14 @@ export const orgMembersDeleteSchema = z.object({
 // ---------------------------------------------------------------------------
 
 export const orgInviteSchema = z.object({
-  email: z.string().email().optional(),
+  email: z.string().trim().email(),
   role: z.enum(orgMemberRoles).optional(),
+});
+
+export const invitationSignupSchema = z.object({
+  token: z.string().trim().min(1),
+  email: z.string().trim().email(),
+  password: z.string().min(8).max(72),
 });
 
 // ---------------------------------------------------------------------------

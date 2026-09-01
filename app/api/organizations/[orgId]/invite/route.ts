@@ -47,7 +47,7 @@ export async function POST(
 
     const role =
       body.role && VALID_ROLES.includes(body.role as OrgMemberRole) ? body.role : 'apprenant';
-    const email = body.email?.trim() || null;
+    const email = body.email.trim().toLowerCase();
 
     const { data: invitation, error } = await supabase
       .from('org_invitations')

@@ -12,7 +12,7 @@
       "26 stories v2 déjà ouvertes",
       "3 stories v2 rouvertes sur défaut de preuve ou couverture",
       "18 capacités héritées remises explicitement en suivi",
-      "20 engagements ou gaps transverses non représentés dans la v2",
+      "21 engagements ou gaps transverses non représentés dans la v2",
       "Inventaire complet des 65 stories v2 et des 72 stories v1/UI"
     ],
     "notIncluded": [
@@ -1330,6 +1330,51 @@
     ]
   },
   "stories": [
+    {
+      "id": "S6-021",
+      "title": "Fermer l’accès public et réserver l’inscription aux invitations nominatives",
+      "description": "En tant que propriétaire de Qalem, je veux qu’aucun tiers ne puisse créer un compte ou entrer dans l’application sans invitation nominative afin que les tests restent strictement privés jusqu’à l’ouverture décidée du produit.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P0",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "type": "request_and_production_incident",
+        "date": "2026-09-01"
+      },
+      "sourceDependencies": [],
+      "dependencies": [],
+      "gap": "La production autorise actuellement l’inscription e-mail auto-confirmée, affiche Google malgré l’absence d’URL de retour, affiche GitHub malgré son désarmement et propose un mode invité local. Le code 400 « Unsupported provider: missing redirect URI » rapporté par un contact prouve que la page publique est atteignable et que l’OAuth exposé n’est pas une barrière d’accès.",
+      "evidence": [
+        "production:https://qalem.ma/auth",
+        "production:https://qalem.ma/api/access-code/status",
+        "production:supabase-auth-settings@2026-09-01",
+        "app/auth/page.tsx",
+        "lib/hooks/use-auth.ts",
+        "app/api/organizations/[orgId]/invite/route.ts",
+        "app/api/invitations/consume/route.ts"
+      ],
+      "acceptance": [
+        "Supabase refuse toute inscription publique tandis qu’un administrateur de service peut encore créer le compte d’une invitation nominative valide.",
+        "Une invitation doit porter une adresse e-mail ; son jeton est inutilisable s’il est inconnu, expiré, déjà consommé ou présenté pour une autre adresse.",
+        "Le parcours d’inscription invité crée le compte confirmé et l’adhésion à l’organisation de façon atomique ou compensée ; aucun compte orphelin ni invitation consommée à moitié ne subsiste après une erreur.",
+        "Sans jeton d’invitation, la page d’authentification expose uniquement la connexion des comptes existants ; Google, GitHub, l’inscription libre et le mode invité ne sont plus proposés.",
+        "L’accès direct à /app sans session est refusé côté serveur, sans flash de contenu ni repli local anonyme ; le mode E2E explicitement configuré reste isolé de la production.",
+        "Les interfaces et erreurs sont localisées en français, arabe et anglais, et les parcours connexion, invitation valide et refus des inscriptions publiques sont couverts par des tests permanents.",
+        "La configuration persistante du runtime de production est vérifiée après déploiement : disable_signup=true, parcours invité réel réussi puis données de recette intégralement supprimées.",
+        "Le quality gate complet est vert au SHA exact sur ServeurIA, sans erreur ni avertissement inattendu."
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "production_auth_configuration",
+        "production_invitation_smoke_test"
+      ],
+      "priorityRank": 0
+    },
     {
       "id": "S6-001",
       "title": "Recertifier le SHA livré et solder le contrôle qualité global",
