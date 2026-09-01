@@ -162,7 +162,8 @@ export async function requireOrgAdmin(req: NextRequest, orgId: string): Promise<
       .single();
 
     if (
-      !hasActiveTenant(membership as MembershipWithTenant | null) ||
+      !membership ||
+      !hasActiveTenant(membership as MembershipWithTenant) ||
       !['admin', 'manager'].includes(membership.role)
     ) {
       return {
@@ -225,7 +226,8 @@ export async function requireSuperAdminOrOrgAuthor(
       .single();
 
     if (
-      !hasActiveTenant(membership as MembershipWithTenant | null) ||
+      !membership ||
+      !hasActiveTenant(membership as MembershipWithTenant) ||
       !['admin', 'manager', 'author'].includes(membership.role)
     ) {
       return {
@@ -270,8 +272,8 @@ export async function requireSuperAdminOrOrgEditor(
       .eq('user_id', auth.user.id)
       .single();
     const canEdit =
-      hasActiveTenant(membership as MembershipWithTenant | null) &&
       membership &&
+      hasActiveTenant(membership as MembershipWithTenant) &&
       (['admin', 'manager'].includes(membership.role) ||
         (membership.role === 'author' && auth.user.id === ownerId));
     if (!canEdit) {

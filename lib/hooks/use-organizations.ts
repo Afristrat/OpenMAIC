@@ -28,6 +28,8 @@ const E2E_ORGANIZATION: OrganizationWithRole = {
   logo: null,
   default_locale: 'fr-FR',
   settings: {},
+  status: 'active',
+  seat_limit: 100,
   created_at: '2026-01-01T00:00:00.000Z',
   updated_at: '2026-01-01T00:00:00.000Z',
   userRole: 'admin',

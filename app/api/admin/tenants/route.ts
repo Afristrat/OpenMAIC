@@ -81,7 +81,11 @@ export async function POST(request: NextRequest): Promise<Response> {
   }
 
   const origin = request.headers.get('origin') ?? request.nextUrl.origin;
-  const { invitation_token: invitationToken, ...tenant } = data;
+  const provisioned = data as {
+    invitation_token: string;
+    [key: string]: unknown;
+  };
+  const { invitation_token: invitationToken, ...tenant } = provisioned;
   return apiSuccess(
     { tenant, administratorInvitationUrl: `${origin}/auth?invite=${invitationToken}` },
     201,
