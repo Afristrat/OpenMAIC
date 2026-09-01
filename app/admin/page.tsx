@@ -26,6 +26,7 @@ import {
   KeyRound,
   Brain,
   Activity,
+  Building2,
 } from 'lucide-react';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useIsSuperAdmin } from '@/lib/hooks/use-super-admin';
@@ -61,10 +62,12 @@ import { MCPTab } from '@/components/admin/mcp-tab';
 import { LTITab } from '@/components/admin/lti-tab';
 import { PedagogyTab } from '@/components/admin/pedagogy-tab';
 import { XAPITab } from '@/components/admin/xapi-tab';
+import { TenantsTab } from '@/components/admin/tenants-tab';
 import type { EditingModel } from '@/lib/types/settings';
 
 type AdminSection =
   | 'overview'
+  | 'tenants'
   | 'providers'
   | 'image'
   | 'video'
@@ -77,7 +80,7 @@ type AdminSection =
   | 'pedagogy'
   | 'xapi';
 
-const PLATFORM_ADMIN_SECTIONS = ['overview', 'mcp', 'lti', 'pedagogy', 'xapi'] as const;
+const PLATFORM_ADMIN_SECTIONS = ['overview', 'tenants', 'mcp', 'lti', 'pedagogy', 'xapi'] as const;
 
 function isPlatformAdminSection(value: string | null): value is AdminSection {
   return PLATFORM_ADMIN_SECTIONS.includes(value as (typeof PLATFORM_ADMIN_SECTIONS)[number]);
@@ -534,6 +537,13 @@ function AdminPageContent(): React.ReactElement {
             </div>
           </>
         );
+      case 'tenants':
+        return (
+          <>
+            <Building2 className="h-6 w-6 text-primary" />
+            <h2 className="text-lg font-semibold">{t('admin.tenants.title')}</h2>
+          </>
+        );
       case 'providers':
         if (selectedProvider) {
           return (
@@ -773,6 +783,19 @@ function AdminPageContent(): React.ReactElement {
           >
             <Shield className="h-4 w-4 shrink-0" />
             <span className="truncate">{t('admin.overview')}</span>
+          </button>
+
+          <button
+            onClick={() => setActiveSection('tenants')}
+            className={cn(
+              'w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors text-left min-w-0',
+              activeSection === 'tenants'
+                ? 'bg-primary/10 text-primary font-medium'
+                : 'hover:bg-muted',
+            )}
+          >
+            <Building2 className="h-4 w-4 shrink-0" />
+            <span className="truncate">{t('admin.tenants.title')}</span>
           </button>
 
           <button
@@ -1018,6 +1041,7 @@ function AdminPageContent(): React.ReactElement {
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {(
                   [
+                    ['tenants', Building2, 'admin.tenants.title'],
                     ['mcp', Server, 'admin.mcp.title'],
                     ['lti', KeyRound, 'admin.lti.title'],
                     ['pedagogy', Brain, 'admin.pedagogy.title'],
@@ -1057,6 +1081,8 @@ function AdminPageContent(): React.ReactElement {
                 isBuiltIn={providersConfig[selectedProviderId]?.isBuiltIn ?? true}
               />
             )}
+
+            {activeSection === 'tenants' && <TenantsTab />}
 
             {activeSection === 'pdf' && <PDFSettings selectedProviderId={selectedPdfProviderId} />}
             {activeSection === 'web-search' && (
