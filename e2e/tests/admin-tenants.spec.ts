@@ -47,6 +47,13 @@ test.describe('Administration des tenants (S6-022)', () => {
         }),
       }),
     );
+    await page.route('**/api/admin/tenants/*/usage-billing', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, control: null, burnRates: [] }),
+      }),
+    );
   });
 
   test('provisionne un tenant, réserve ses sièges et permet sa suspension', async ({ page }) => {
