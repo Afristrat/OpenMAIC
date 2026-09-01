@@ -34,3 +34,14 @@ L’artefact local complet reste sous `C:\projets\Qalem\proofs\S2-009-20260828\`
 ## Portée de l’expression « indélébile »
 
 Conformément à l’ADR-206, le filigrane est brûlé dans toutes les images de la dérivée MP4 servie. Il ne constitue ni un DRM ni une résistance garantie à un recadrage malveillant ; aucune promesse cryptographique supplémentaire n’est formulée.
+
+## Gate du SHA de clôture
+
+Le SHA `101adef0210fa31168fd436774e58ade62b511bc` passe sur ServeurIA :
+
+- Prettier, TypeScript et lint sans erreur ;
+- 385/385 fichiers et 2 505/2 505 tests Vitest ;
+- build Next.js de 100/100 pages ;
+- 84/84 tests Playwright en 3,6 minutes, code de sortie distant `0`.
+
+Le journal de la chaîne jusqu’au build, puis des 74 premiers scénarios avant une coupure du transport SSH, porte le SHA-256 `f26814b76619768425ed99b9cd12e5b699b1d0bf187897829fd45015d0b90b4c`. La suite Playwright complète a ensuite été relancée en tâche détachée afin que son verdict ne dépende plus de la connexion SSH : `/tmp/qalem-s2009-e2e-101adef.log`, SHA-256 `4fef92d205a4e38c66840a0cb6710a98ca2b31c1530361be1cef9239c65b0e64`, statut `/tmp/qalem-s2009-e2e-101adef.status` égal à `0`.
