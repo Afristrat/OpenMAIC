@@ -40,7 +40,8 @@ describe('tenant credits', () => {
       referenceId: 'provider-request-id',
     });
 
-    expect(mocks.rpc).toHaveBeenCalledWith('post_tenant_credit_entry',
+    expect(mocks.rpc).toHaveBeenCalledWith(
+      'post_tenant_credit_entry',
       expect.objectContaining({
         credit_entry_type: 'debit',
         credit_delta_microunits: -125_000,
@@ -61,7 +62,8 @@ describe('tenant credits', () => {
       reversalOf: 'debit-ledger-id',
     });
 
-    expect(mocks.rpc).toHaveBeenCalledWith('post_tenant_credit_entry',
+    expect(mocks.rpc).toHaveBeenCalledWith(
+      'post_tenant_credit_entry',
       expect.objectContaining({
         credit_entry_type: 'refund',
         credit_delta_microunits: 125_000,

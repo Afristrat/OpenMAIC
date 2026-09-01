@@ -10,24 +10,20 @@ export async function GET(request: NextRequest): Promise<Response> {
   if (auth.response) return auth.response;
 
   const supabase = createServiceSupabaseClient();
-  const [
-    { data: tenants, error },
-    { data: members },
-    { data: invitations },
-    { data: wallets },
-  ] = await Promise.all([
-    supabase
-      .from('organizations')
-      .select('id, name, sector, default_locale, status, seat_limit, created_at, updated_at')
-      .order('created_at', { ascending: false }),
-    supabase.from('org_members').select('org_id'),
-    supabase
-      .from('org_invitations')
-      .select('org_id')
-      .is('used_at', null)
-      .gt('expires_at', new Date().toISOString()),
-    supabase.from('tenant_credit_wallets').select('org_id, balance_microunits'),
-  ]);
+  const [{ data: tenants, error }, { data: members }, { data: invitations }, { data: wallets }] =
+    await Promise.all([
+      supabase
+        .from('organizations')
+        .select('id, name, sector, default_locale, status, seat_limit, created_at, updated_at')
+        .order('created_at', { ascending: false }),
+      supabase.from('org_members').select('org_id'),
+      supabase
+        .from('org_invitations')
+        .select('org_id')
+        .is('used_at', null)
+        .gt('expires_at', new Date().toISOString()),
+      supabase.from('tenant_credit_wallets').select('org_id, balance_microunits'),
+    ]);
 
   if (error) {
     return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to list tenants', error.message);

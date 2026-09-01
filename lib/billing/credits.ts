@@ -51,16 +51,11 @@ export function microunitsToCredits(microunits: number | string): number {
   return Number(microunits) / CREDIT_MICROUNITS;
 }
 
-export async function postTenantCreditEntry(
-  input: PostCreditEntry,
-): Promise<CreditEntryResult> {
+export async function postTenantCreditEntry(input: PostCreditEntry): Promise<CreditEntryResult> {
   if (!Number.isSafeInteger(input.deltaMicrounits) || input.deltaMicrounits === 0) {
     throw new Error('Invalid credit microunits');
   }
-  if (
-    input.quantity !== undefined &&
-    (!Number.isFinite(input.quantity) || input.quantity <= 0)
-  ) {
+  if (input.quantity !== undefined && (!Number.isFinite(input.quantity) || input.quantity <= 0)) {
     throw new Error('Invalid billable quantity');
   }
   const { data, error } = await createServiceSupabaseClient()
