@@ -15,7 +15,7 @@ test('web capture failure remains non-terminal and opens the completed course', 
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify(
-        polls === 1
+        polls <= 2
           ? { success: true, status: 'running', progress: 72 }
           : { success: true, status: 'succeeded', progress: 100, result: { url: '/app' } },
       ),
@@ -27,5 +27,5 @@ test('web capture failure remains non-terminal and opens the completed course', 
 
   await expect(page).toHaveURL(/\/app$/, { timeout: 7_000 });
   await expect(new HomePage(page).textarea).toBeVisible();
-  expect(polls).toBeGreaterThanOrEqual(2);
+  expect(polls).toBeGreaterThanOrEqual(3);
 });
