@@ -10,7 +10,7 @@
     "postinstall": "pnpm --dir packages/mathml2omml run build && pnpm --dir packages/pptxgenjs run build && pnpm --dir packages/@openmaic/dsl run build && pnpm --dir packages/@openmaic/importer run build && pnpm --dir packages/@openmaic/renderer run build && node scripts/sync-maic-importer.mjs",
     "sync:maic-importer": "node scripts/sync-maic-importer.mjs",
     "dev": "next dev",
-    "build": "node scripts/clean-next-output.mjs && node scripts/assert-vendor-maic-importer.mjs && next build --webpack",
+    "build": "node scripts/clean-next-output.mjs && node scripts/assert-vendor-maic-importer.mjs && next build --webpack && node scripts/assert-standalone-route-isolation.mjs",
     "start": "node scripts/start-production.mjs",
     "start:web": "next start",
     "start:workers": "tsx scripts/start-workers.ts",
