@@ -37,9 +37,7 @@ describe('tenant provisioning migration (S6-022)', () => {
   it('keeps an append-only service-role audit of tenant administration', () => {
     const auditFunction = migration.slice(
       migration.indexOf('CREATE OR REPLACE FUNCTION public.audit_tenant_administration'),
-      migration.indexOf(
-        'REVOKE ALL ON FUNCTION public.audit_tenant_administration',
-      ),
+      migration.indexOf('REVOKE ALL ON FUNCTION public.audit_tenant_administration'),
     );
     expect(migration).toMatch(/CREATE TABLE public\.tenant_admin_audit/i);
     expect(migration).toMatch(/ENABLE ROW LEVEL SECURITY/i);
