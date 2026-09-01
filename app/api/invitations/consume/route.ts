@@ -36,13 +36,14 @@ export async function POST(request: NextRequest): Promise<Response> {
     // function locks and consumes the invitation in the same transaction as
     // the membership insertion.
     const supabase = createServiceSupabaseClient();
-    const { data: invitation, error } = await supabase
+    const { data: claimResult, error } = await supabase
       .rpc('claim_invitation_for_existing_user', {
         invitation_token: body.token,
         invited_user_id: user.id,
         invited_email: user.email.trim().toLowerCase(),
       })
       .single();
+    const invitation = claimResult as { org_id: string; role: string } | null;
 
     if (error || !invitation) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 410, 'Invitation unavailable');
