@@ -75,7 +75,9 @@ test.describe('Administration des tenants (S6-022)', () => {
     await page.getByLabel('E-mail de l’administrateur').fill('admin@atlas.ma');
     await page.getByRole('button', { name: 'Créer et inviter' }).click();
 
-    await expect(page.getByDisplayValue('https://qalem.ma/auth?invite=tenant-token')).toBeVisible();
+    await expect(page.getByLabel('Lien d’invitation administrateur à transmettre')).toHaveValue(
+      'https://qalem.ma/auth?invite=tenant-token',
+    );
     await expect(page.getByText('Sièges occupés ou réservés: 1/12')).toBeVisible();
 
     await page.getByRole('button', { name: 'Suspendre' }).click();
