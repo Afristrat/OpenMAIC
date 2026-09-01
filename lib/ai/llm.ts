@@ -5,7 +5,13 @@
  */
 
 import { generateText, streamText } from 'ai';
-import type { GenerateTextResult, JSONValue, LanguageModel, StreamTextResult } from 'ai';
+import type {
+  GenerateTextResult,
+  JSONValue,
+  LanguageModel,
+  LanguageModelUsage,
+  StreamTextResult,
+} from 'ai';
 import { createLogger } from '@/lib/logger';
 import { PROVIDERS } from './providers';
 import { thinkingContext } from './thinking-context';
@@ -17,6 +23,13 @@ import {
   pickThinkingEffort,
   pickThinkingLevel,
 } from '@/lib/ai/thinking-config';
+import { nextUsageOperationContext } from '@/lib/billing/usage-context';
+import {
+  finalizeTenantUsages,
+  releaseTenantUsages,
+  resolveProviderCostCurrency,
+  reserveTenantUsage,
+} from '@/lib/billing/usage-metering';
 const log = createLogger('LLM');
 
 // Re-export for external use
@@ -25,6 +38,9 @@ export type { ThinkingConfig } from '@/lib/types/provider';
 // Re-export the parameter types accepted by AI SDK
 type GenerateTextParams = Parameters<typeof generateText>[0];
 type StreamTextParams = Parameters<typeof streamText>[0];
+type StreamTextFinish = NonNullable<StreamTextParams['onFinish']>;
+type StreamTextError = NonNullable<StreamTextParams['onError']>;
+type StreamTextAbort = NonNullable<StreamTextParams['onAbort']>;
 
 function _extractRequestInfo(params: GenerateTextParams | StreamTextParams) {
   const tools = params.tools ? Object.keys(params.tools as Record<string, unknown>) : undefined;
@@ -130,6 +146,106 @@ function getModelProviderId(params: GenerateTextParams | StreamTextParams): stri
   const provider = (m as { provider?: string }).provider;
   const modelId = 'modelId' in m ? (m as { modelId?: string }).modelId : undefined;
   return normalizeProviderId(provider, modelId);
+}
+
+type LLMUsageReservations = {
+  actorUserId: string;
+  reservationIds: [string, string];
+};
+
+const DEFAULT_METERED_MAX_OUTPUT_TOKENS = 32_768;
+
+function maxInputTokens(params: GenerateTextParams | StreamTextParams): number {
+  const serialized = JSON.stringify(_extractRequestInfo(params));
+  return new TextEncoder().encode(serialized).byteLength * 2 + 8192;
+}
+
+async function prepareLLMUsage<T extends GenerateTextParams | StreamTextParams>(
+  params: T,
+  source: string,
+): Promise<{ params: T; reservations: LLMUsageReservations | null }> {
+  const inputContext = nextUsageOperationContext(source, 'llm_input_token');
+  if (!inputContext) return { params, reservations: null };
+  const outputContext = nextUsageOperationContext(source, 'llm_output_token');
+  if (!outputContext) throw new Error('Incomplete LLM usage context');
+
+  const boundedParams = (
+    params.maxOutputTokens === undefined
+      ? { ...params, maxOutputTokens: DEFAULT_METERED_MAX_OUTPUT_TOKENS }
+      : params
+  ) as T;
+  const providerId = getModelProviderId(boundedParams) ?? 'unknown';
+  const modelId = getModelId(boundedParams);
+  const currency = resolveProviderCostCurrency(providerId);
+  const inputReservation = await reserveTenantUsage({
+    actorUserId: inputContext.actorUserId,
+    tenantId: inputContext.tenantId,
+    operationKey: inputContext.operationKey,
+    billableUnit: 'llm_input_token',
+    maxQuantity: maxInputTokens(boundedParams),
+    providerId,
+    modelId,
+    providerCostCurrency: currency,
+    idempotencyStable: inputContext.idempotencyStable,
+  });
+  if (!inputReservation.enforcementEnabled) return { params, reservations: null };
+  if (!inputReservation.reservationId) throw new Error('Missing input-token reservation');
+
+  try {
+    const outputReservation = await reserveTenantUsage({
+      actorUserId: outputContext.actorUserId,
+      tenantId: outputContext.tenantId,
+      operationKey: outputContext.operationKey,
+      billableUnit: 'llm_output_token',
+      maxQuantity: boundedParams.maxOutputTokens ?? DEFAULT_METERED_MAX_OUTPUT_TOKENS,
+      providerId,
+      modelId,
+      providerCostCurrency: currency,
+      idempotencyStable: outputContext.idempotencyStable,
+    });
+    if (!outputReservation.reservationId) throw new Error('Missing output-token reservation');
+    return {
+      params: boundedParams,
+      reservations: {
+        actorUserId: inputContext.actorUserId,
+        reservationIds: [inputReservation.reservationId, outputReservation.reservationId],
+      },
+    };
+  } catch (error) {
+    await releaseTenantUsages(
+      inputContext.actorUserId,
+      [inputReservation.reservationId],
+      'Réservation LLM incomplète',
+    );
+    throw error;
+  }
+}
+
+async function finalizeLLMUsage(
+  reservations: LLMUsageReservations | null,
+  usage: LanguageModelUsage,
+): Promise<void> {
+  if (!reservations) return;
+  if (usage.inputTokens === undefined || usage.inputTokens <= 0) {
+    await releaseTenantUsages(
+      reservations.actorUserId,
+      reservations.reservationIds,
+      'Mesure LLM absente',
+    );
+    throw new Error('Provider returned no input-token usage');
+  }
+  await finalizeTenantUsages(reservations.actorUserId, [
+    { reservationId: reservations.reservationIds[0], actualQuantity: usage.inputTokens },
+    { reservationId: reservations.reservationIds[1], actualQuantity: usage.outputTokens ?? 0 },
+  ]);
+}
+
+async function releaseLLMUsage(
+  reservations: LLMUsageReservations | null,
+  reason: string,
+): Promise<void> {
+  if (!reservations) return;
+  await releaseTenantUsages(reservations.actorUserId, reservations.reservationIds, reason);
 }
 
 /**
@@ -291,17 +407,20 @@ export async function callLLM<T extends GenerateTextParams>(
   let lastError: unknown;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    // Resolve effective thinking config: per-call > global env > undefined
+    const effectiveThinking = thinking ?? getGlobalThinkingConfig();
+    const injectedParams = injectProviderOptions(params, effectiveThinking);
+    const metered = await prepareLLMUsage(injectedParams, `${source}:attempt:${attempt}`);
+    let usageFinalized = false;
     try {
-      // Resolve effective thinking config: per-call > global env > undefined
-      const effectiveThinking = thinking ?? getGlobalThinkingConfig();
-      const injectedParams = injectProviderOptions(params, effectiveThinking);
-
       // Wrap in thinkingContext so the custom fetch wrapper in providers.ts
       // can read the config and inject vendor-specific body params for
       // OpenAI-compatible providers.
       const result = await thinkingContext.run(effectiveThinking, () =>
-        generateText(injectedParams),
+        generateText(metered.params),
       );
+      await finalizeLLMUsage(metered.reservations, result.totalUsage);
+      usageFinalized = true;
 
       // Validate result (only when retries are configured)
       if (validate && !validate(result.text)) {
@@ -314,6 +433,16 @@ export async function callLLM<T extends GenerateTextParams>(
 
       return result;
     } catch (error) {
+      if (!usageFinalized) {
+        try {
+          await releaseLLMUsage(metered.reservations, 'Échec de l’appel LLM');
+        } catch (releaseError) {
+          throw new AggregateError(
+            [error, releaseError],
+            'LLM call failed and its credit reservation could not be released',
+          );
+        }
+      }
       lastError = error;
 
       if (attempt < maxAttempts) {
@@ -337,16 +466,44 @@ export async function callLLM<T extends GenerateTextParams>(
  * @param source - A short label for log grouping
  * @param thinking - Optional per-call thinking config (overrides global LLM_THINKING_DISABLED)
  */
-export function streamLLM<T extends StreamTextParams>(
+export async function streamLLM<T extends StreamTextParams>(
   params: T,
   source: string,
   thinking?: ThinkingConfig,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): StreamTextResult<any, any> {
+): Promise<StreamTextResult<any, any>> {
   // Resolve effective thinking config and wrap in thinkingContext
   const effectiveThinking = thinking ?? getGlobalThinkingConfig();
   const injectedParams = injectProviderOptions(params, effectiveThinking);
-  const result = thinkingContext.run(effectiveThinking, () => streamText(injectedParams));
+  const metered = await prepareLLMUsage(injectedParams, source);
+  const originalOnFinish = metered.params.onFinish as StreamTextFinish | undefined;
+  const originalOnError = metered.params.onError as StreamTextError | undefined;
+  const originalOnAbort = metered.params.onAbort as StreamTextAbort | undefined;
+  let usageFinalized = false;
+
+  const onFinish: StreamTextFinish = async (event) => {
+    await finalizeLLMUsage(metered.reservations, event.totalUsage);
+    usageFinalized = true;
+    await originalOnFinish?.(event);
+  };
+  const onError: StreamTextError = async (event) => {
+    if (!usageFinalized) await releaseLLMUsage(metered.reservations, 'Échec du flux LLM');
+    await originalOnError?.(event);
+  };
+  const onAbort: StreamTextAbort = async (event) => {
+    if (!usageFinalized) await releaseLLMUsage(metered.reservations, 'Flux LLM interrompu');
+    await originalOnAbort?.(event);
+  };
+
+  let result: StreamTextResult<any, any>;
+  try {
+    result = thinkingContext.run(effectiveThinking, () =>
+      streamText({ ...metered.params, onFinish, onError, onAbort }),
+    );
+  } catch (error) {
+    await releaseLLMUsage(metered.reservations, 'Échec du démarrage du flux LLM');
+    throw error;
+  }
 
   return result;
 }

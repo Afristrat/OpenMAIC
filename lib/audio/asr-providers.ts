@@ -149,6 +149,8 @@ import type { ASRModelConfig } from './types';
 import { isCustomASRProvider } from './types';
 import { ASR_PROVIDERS } from './constants';
 import { normalizeASRLanguage } from './asr-utils';
+import { measureAudioDurationSeconds } from './duration';
+import { runMeteredTenantUsage } from '@/lib/billing/usage-metering';
 
 /**
  * Result of ASR transcription
@@ -175,28 +177,45 @@ export async function transcribeAudio(
     throw new Error(`API key required for ASR provider: ${normalizedConfig.providerId}`);
   }
 
-  switch (normalizedConfig.providerId) {
-    case 'openai-whisper':
-      return await transcribeOpenAIWhisper(normalizedConfig, audioBuffer);
+  let durationSeconds: number | undefined;
+  const getDurationSeconds = async (): Promise<number> => {
+    durationSeconds ??= await measureAudioDurationSeconds(audioBuffer);
+    return durationSeconds;
+  };
+  const execute = async (): Promise<ASRTranscriptionResult> => {
+    switch (normalizedConfig.providerId) {
+      case 'openai-whisper':
+        return transcribeOpenAIWhisper(normalizedConfig, audioBuffer);
 
-    case 'browser-native':
-      throw new Error('Browser Native ASR must be handled client-side using useBrowserASR hook');
+      case 'browser-native':
+        throw new Error('Browser Native ASR must be handled client-side using useBrowserASR hook');
 
-    case 'qwen-asr':
-      return await transcribeQwenASR(normalizedConfig, audioBuffer);
+      case 'qwen-asr':
+        return transcribeQwenASR(normalizedConfig, audioBuffer);
 
-    case 'azure-asr':
-      return await transcribeAzureASR(normalizedConfig, audioBuffer);
+      case 'azure-asr':
+        return transcribeAzureASR(normalizedConfig, audioBuffer);
 
-    case 'lemonade-asr':
-      return await transcribeLemonadeASR(normalizedConfig, audioBuffer);
+      case 'lemonade-asr':
+        return transcribeLemonadeASR(normalizedConfig, audioBuffer);
 
-    default:
-      if (isCustomASRProvider(normalizedConfig.providerId)) {
-        return await transcribeOpenAIWhisper(normalizedConfig, audioBuffer);
-      }
-      throw new Error(`Unsupported ASR provider: ${normalizedConfig.providerId}`);
-  }
+      default:
+        if (isCustomASRProvider(normalizedConfig.providerId)) {
+          return transcribeOpenAIWhisper(normalizedConfig, audioBuffer);
+        }
+        throw new Error(`Unsupported ASR provider: ${normalizedConfig.providerId}`);
+    }
+  };
+
+  return runMeteredTenantUsage({
+    source: 'asr',
+    billableUnit: 'asr_second',
+    maxQuantity: getDurationSeconds,
+    providerId: normalizedConfig.providerId,
+    modelId: normalizedConfig.modelId || provider?.defaultModelId || 'default',
+    execute,
+    measureActualQuantity: getDurationSeconds,
+  });
 }
 
 /**

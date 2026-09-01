@@ -31,7 +31,10 @@ import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { randomUUID } from 'node:crypto';
-import { requireSuperAdminOrOrgEditor } from '@/lib/api/auth';
+import {
+  requireSuperAdminOrOrgAuthor,
+  requireSuperAdminOrOrgEditor,
+} from '@/lib/api/auth';
 import { uploadClassroomMedia } from '@/lib/server/classroom-media-generation';
 import { isValidClassroomId, readClassroomOwnership } from '@/lib/server/classroom-storage';
 
@@ -41,8 +44,11 @@ export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   try {
-    const requestBody = (await request.json()) as ImageGenerationOptions & { classroomId?: string };
-    const { classroomId, ...body } = requestBody;
+    const requestBody = (await request.json()) as ImageGenerationOptions & {
+      classroomId?: string;
+      orgId?: string;
+    };
+    const { classroomId, orgId, ...body } = requestBody;
 
     if (!body.prompt) {
       return apiError('MISSING_REQUIRED_FIELD', 400, 'Missing prompt');
@@ -53,9 +59,24 @@ export async function POST(request: NextRequest) {
         return apiError('INVALID_REQUEST', 400, 'Invalid classroom id');
       }
       const ownership = await readClassroomOwnership(classroomId);
-      if (!ownership) return apiError('INVALID_REQUEST', 404, 'Classroom not found');
-      const auth = await requireSuperAdminOrOrgEditor(request, ownership.orgId, ownership.ownerId);
+      if (ownership) {
+        const auth = await requireSuperAdminOrOrgEditor(
+          request,
+          ownership.orgId,
+          ownership.ownerId,
+        );
+        if (auth.response) return auth.response;
+      } else if (orgId) {
+        const auth = await requireSuperAdminOrOrgAuthor(request, orgId);
+        if (auth.response) return auth.response;
+      } else {
+        return apiError('INVALID_REQUEST', 404, 'Classroom not found');
+      }
+    } else if (orgId) {
+      const auth = await requireSuperAdminOrOrgAuthor(request, orgId);
       if (auth.response) return auth.response;
+    } else {
+      return apiError('MISSING_REQUIRED_FIELD', 400, 'Organization is required');
     }
 
     const providerId = (request.headers.get('x-image-provider') || 'seedream') as ImageProviderId;

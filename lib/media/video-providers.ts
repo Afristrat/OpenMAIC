@@ -9,6 +9,7 @@ import type {
   VideoGenerationResult,
   VideoProviderConfig,
 } from './types';
+import { runMeteredTenantUsage } from '@/lib/billing/usage-metering';
 import { generateWithSeedance, testSeedanceConnectivity } from './adapters/seedance-adapter';
 import { generateWithKling, testKlingConnectivity } from './adapters/kling-adapter';
 import { generateWithVeo, testVeoConnectivity } from './adapters/veo-adapter';
@@ -208,22 +209,36 @@ export async function generateVideo(
   config: VideoGenerationConfig,
   options: VideoGenerationOptions,
 ): Promise<VideoGenerationResult> {
-  switch (config.providerId) {
-    case 'comfyui-video':
-      return generateWithComfyUIVideo(config, options);
-    case 'seedance':
-      return generateWithSeedance(config, options);
-    case 'kling':
-      return generateWithKling(config, options);
-    case 'veo':
-      return generateWithVeo(config, options);
-    case 'minimax-video':
-      return generateWithMiniMaxVideo(config, options);
-    case 'grok-video':
-      return generateWithGrokVideo(config, options);
-    case 'happyhorse':
-      return generateWithHappyHorse(config, options);
-    default:
-      throw new Error(`Unsupported video provider: ${config.providerId}`);
-  }
+  const provider = VIDEO_PROVIDERS[config.providerId];
+  const execute = async (): Promise<VideoGenerationResult> => {
+    switch (config.providerId) {
+      case 'comfyui-video':
+        return generateWithComfyUIVideo(config, options);
+      case 'seedance':
+        return generateWithSeedance(config, options);
+      case 'kling':
+        return generateWithKling(config, options);
+      case 'veo':
+        return generateWithVeo(config, options);
+      case 'minimax-video':
+        return generateWithMiniMaxVideo(config, options);
+      case 'grok-video':
+        return generateWithGrokVideo(config, options);
+      case 'happyhorse':
+        return generateWithHappyHorse(config, options);
+      default:
+        throw new Error(`Unsupported video provider: ${config.providerId}`);
+    }
+  };
+  return runMeteredTenantUsage({
+    source: 'video',
+    billableUnit: 'video_second',
+    maxQuantity:
+      provider?.maxDuration ??
+      Math.max(...(provider?.supportedDurations ?? [options.duration ?? 1])),
+    providerId: config.providerId,
+    modelId: config.model || provider?.models[0]?.id || 'default',
+    execute,
+    measureActualQuantity: (result) => result.duration,
+  });
 }

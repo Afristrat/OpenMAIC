@@ -42,6 +42,19 @@ type MarginBreakdown = {
   marginBps: number;
 };
 
+type CreditBurnRate = {
+  id: string;
+  billable_unit: (typeof UNITS)[number];
+  credit_microunits: number;
+  quantity_basis: string;
+};
+
+type UsageBillingControl = {
+  enforcement_enabled: boolean;
+  sell_currency: string;
+  required_units: Array<(typeof UNITS)[number]>;
+};
+
 function localNow(): string {
   const date = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000);
   return date.toISOString().slice(0, 16);
@@ -376,19 +389,37 @@ export function TenantEconomics({ tenantId }: { tenantId: string }): React.React
   const [rationale, setRationale] = useState('');
   const [validFrom, setValidFrom] = useState(localNow);
   const [saving, setSaving] = useState(false);
+  const [burnRates, setBurnRates] = useState<CreditBurnRate[]>([]);
+  const [billingControl, setBillingControl] = useState<UsageBillingControl | null>(null);
+  const [burnUnit, setBurnUnit] = useState<(typeof UNITS)[number]>('llm_input_token');
+  const [burnCredits, setBurnCredits] = useState('');
+  const [burnBasis, setBurnBasis] = useState('1000000');
+  const [burnRationale, setBurnRationale] = useState('');
+  const [burnValidFrom, setBurnValidFrom] = useState(localNow);
+  const [requiredUnits, setRequiredUnits] = useState<Array<(typeof UNITS)[number]>>([...UNITS]);
 
   const load = useCallback(async () => {
     try {
-      const response = await fetch(`/api/admin/tenants/${tenantId}/economics`);
-      if (!response.ok) throw new Error('economics');
-      const body = (await response.json()) as {
+      const [economicsResponse, billingResponse] = await Promise.all([
+        fetch(`/api/admin/tenants/${tenantId}/economics`),
+        fetch(`/api/admin/tenants/${tenantId}/usage-billing`),
+      ]);
+      if (!economicsResponse.ok || !billingResponse.ok) throw new Error('economics');
+      const body = (await economicsResponse.json()) as {
         margin: Margin;
         breakdown: MarginBreakdown[];
         sellPrices: SellPrice[];
       };
+      const billing = (await billingResponse.json()) as {
+        control: UsageBillingControl | null;
+        burnRates: CreditBurnRate[];
+      };
       setMargin(body.margin);
       setBreakdown(body.breakdown);
       setPrices(body.sellPrices);
+      setBillingControl(billing.control);
+      setBurnRates(billing.burnRates);
+      if (billing.control) setRequiredUnits(billing.control.required_units);
     } catch {
       toast.error(t('admin.economics.loadFailed'));
     }
@@ -420,6 +451,58 @@ export function TenantEconomics({ tenantId }: { tenantId: string }): React.React
       await load();
     } catch {
       toast.error(t('admin.economics.saveFailed'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const submitBurnRate = async (event: FormEvent) => {
+    event.preventDefault();
+    setSaving(true);
+    try {
+      const creditMicrounits = Math.round(Number(burnCredits) * 1_000_000);
+      const response = await fetch(`/api/admin/tenants/${tenantId}/usage-billing`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          action: 'burnRate',
+          billableUnit: burnUnit,
+          creditMicrounits,
+          quantityBasis: Number(burnBasis),
+          validFrom: new Date(burnValidFrom).toISOString(),
+          rationale: burnRationale,
+        }),
+      });
+      if (!response.ok) throw new Error('burn-rate');
+      setBurnCredits('');
+      setBurnRationale('');
+      toast.success(t('admin.economics.burnRateSaved'));
+      await load();
+    } catch {
+      toast.error(t('admin.economics.saveFailed'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const toggleBilling = async () => {
+    setSaving(true);
+    try {
+      const response = await fetch(`/api/admin/tenants/${tenantId}/usage-billing`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          action: 'control',
+          enabled: !billingControl?.enforcement_enabled,
+          sellCurrency: billingControl?.sell_currency ?? currency,
+          requiredUnits,
+        }),
+      });
+      if (!response.ok) throw new Error('billing-control');
+      toast.success(t('admin.economics.billingControlSaved'));
+      await load();
+    } catch {
+      toast.error(t('admin.economics.billingCoverageMissing'));
     } finally {
       setSaving(false);
     }
@@ -534,6 +617,109 @@ export function TenantEconomics({ tenantId }: { tenantId: string }): React.React
           {t('admin.economics.savePrice')}
         </Button>
       </form>
+      <section className="space-y-3 border-t pt-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium">{t('admin.economics.creditBurnTitle')}</p>
+            <p className="text-xs text-muted-foreground">{t('admin.economics.creditBurnNotice')}</p>
+          </div>
+          <Button type="button" variant="outline" disabled={saving} onClick={toggleBilling}>
+            {billingControl?.enforcement_enabled
+              ? t('admin.economics.disableBilling')
+              : t('admin.economics.enableBilling')}
+          </Button>
+        </div>
+        <div className="flex flex-wrap gap-2 text-xs">
+          {UNITS.map((value) => (
+            <label key={value} className="flex items-center gap-1 rounded-full border px-2 py-1">
+              <input
+                type="checkbox"
+                checked={requiredUnits.includes(value)}
+                onChange={(event) =>
+                  setRequiredUnits((current) =>
+                    event.target.checked
+                      ? [...new Set([...current, value])]
+                      : current.filter((unitValue) => unitValue !== value),
+                  )
+                }
+              />
+              {t(`admin.economics.units.${value}`)}
+            </label>
+          ))}
+        </div>
+        {burnRates.length > 0 && (
+          <ul className="flex flex-wrap gap-2 text-xs">
+            {burnRates.map((rate) => (
+              <li key={rate.id} className="rounded-full border px-3 py-1">
+                {t(`admin.economics.units.${rate.billable_unit}`)} ·{' '}
+                {rate.credit_microunits / 1_000_000} / {rate.quantity_basis}
+              </li>
+            ))}
+          </ul>
+        )}
+        <form
+          onSubmit={submitBurnRate}
+          className="grid items-end gap-3 md:grid-cols-2 xl:grid-cols-6"
+        >
+          <label className="space-y-1 text-sm">
+            <span>{t('admin.economics.unit')}</span>
+            <select
+              value={burnUnit}
+              onChange={(event) => setBurnUnit(event.target.value as (typeof UNITS)[number])}
+              className="w-full rounded-md border bg-background px-3 py-2"
+            >
+              {UNITS.map((value) => (
+                <option key={value} value={value}>
+                  {t(`admin.economics.units.${value}`)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="space-y-1 text-sm">
+            <span>{t('admin.economics.creditBurn')}</span>
+            <input
+              required
+              inputMode="decimal"
+              value={burnCredits}
+              onChange={(event) => setBurnCredits(event.target.value)}
+              className="w-full rounded-md border bg-background px-3 py-2"
+            />
+          </label>
+          <label className="space-y-1 text-sm">
+            <span>{t('admin.economics.basis')}</span>
+            <input
+              required
+              inputMode="decimal"
+              value={burnBasis}
+              onChange={(event) => setBurnBasis(event.target.value)}
+              className="w-full rounded-md border bg-background px-3 py-2"
+            />
+          </label>
+          <label className="space-y-1 text-sm">
+            <span>{t('admin.economics.validFrom')}</span>
+            <input
+              required
+              type="datetime-local"
+              value={burnValidFrom}
+              onChange={(event) => setBurnValidFrom(event.target.value)}
+              className="w-full rounded-md border bg-background px-3 py-2"
+            />
+          </label>
+          <label className="space-y-1 text-sm">
+            <span>{t('admin.economics.rationale')}</span>
+            <input
+              required
+              maxLength={1000}
+              value={burnRationale}
+              onChange={(event) => setBurnRationale(event.target.value)}
+              className="w-full rounded-md border bg-background px-3 py-2"
+            />
+          </label>
+          <Button type="submit" variant="outline" disabled={saving}>
+            {t('admin.economics.saveBurnRate')}
+          </Button>
+        </form>
+      </section>
     </div>
   );
 }

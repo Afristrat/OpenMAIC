@@ -635,6 +635,7 @@ export type VideoGenerationJobStatus = 'queued' | 'generating' | 'done' | 'error
 export interface VideoGenerationJobRow {
   id: string;
   owner_id: string;
+  org_id: string | null;
   provider_id: string;
   model_id: string | null;
   request: Record<string, unknown>;
@@ -648,7 +649,7 @@ export interface VideoGenerationJobRow {
 
 export type VideoGenerationJobInsert = Pick<
   VideoGenerationJobRow,
-  'owner_id' | 'provider_id' | 'request'
+  'owner_id' | 'org_id' | 'provider_id' | 'request'
 > &
   Partial<Pick<VideoGenerationJobRow, 'model_id' | 'status'>>;
 

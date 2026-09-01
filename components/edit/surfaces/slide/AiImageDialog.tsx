@@ -65,6 +65,7 @@ export function AiImageDialog() {
           signal: controller.signal,
           headers: {
             'Content-Type': 'application/json',
+            'Idempotency-Key': crypto.randomUUID(),
             'x-model': model.modelString || '',
             'x-api-key': model.apiKey || '',
             'x-base-url': model.baseUrl || '',
@@ -111,6 +112,7 @@ export function AiImageDialog() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Idempotency-Key': crypto.randomUUID(),
           'x-image-provider': settings.imageProviderId || '',
           'x-image-model': settings.imageModelId || '',
           'x-api-key': provider?.apiKey || '',

@@ -11,6 +11,7 @@ import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { isSupportedASRAudioUpload, normalizeASRLanguage } from '@/lib/audio/asr-utils';
+import { requireSuperAdminOrOrgMember } from '@/lib/api/auth';
 const log = createLogger('Transcription');
 
 export const maxDuration = 60;
@@ -26,6 +27,13 @@ export async function POST(req: NextRequest) {
     const language = formData.get('language') as string | null;
     const apiKey = formData.get('apiKey') as string | null;
     const baseUrl = formData.get('baseUrl') as string | null;
+    const orgId = formData.get('orgId');
+
+    if (typeof orgId !== 'string' || orgId.length === 0) {
+      return apiError('MISSING_REQUIRED_FIELD', 400, 'Organization is required');
+    }
+    const auth = await requireSuperAdminOrOrgMember(req, orgId);
+    if (auth.response) return auth.response;
 
     if (!(audioEntry instanceof File)) {
       return apiError('MISSING_REQUIRED_FIELD', 400, 'Audio file is required');

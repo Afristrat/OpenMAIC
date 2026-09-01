@@ -82,11 +82,13 @@ function AgentVoicePill({
   agent,
   agentIndex,
   availableProviders,
+  orgId,
   disabled,
 }: {
   agent: AgentConfig;
   agentIndex: number;
   availableProviders: ProviderWithVoices[];
+  orgId?: string;
   disabled?: boolean;
 }) {
   const { t, locale } = useI18n();
@@ -179,8 +181,12 @@ function AgentVoicePill({
         });
         const res = await fetch('/api/generate/tts', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Idempotency-Key': crypto.randomUUID(),
+          },
           body: JSON.stringify({
+            orgId,
             text: previewText,
             audioId: 'voice-preview',
             ttsProviderId: providerId,
@@ -365,9 +371,11 @@ function AgentVoicePill({
  */
 function TeacherVoicePill({
   availableProviders,
+  orgId,
   disabled,
 }: {
   availableProviders: ProviderWithVoices[];
+  orgId?: string;
   disabled?: boolean;
 }) {
   const { t, locale } = useI18n();
@@ -452,8 +460,12 @@ function TeacherVoicePill({
         });
         const res = await fetch('/api/generate/tts', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Idempotency-Key': crypto.randomUUID(),
+          },
           body: JSON.stringify({
+            orgId,
             text: previewText,
             audioId: 'voice-preview',
             ttsProviderId: providerId,
@@ -805,7 +817,10 @@ export function AgentBar({
     try {
       const response = await fetch('/api/generate/contextual-specialists', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': crypto.randomUUID(),
+        },
         body: JSON.stringify({ orgId, topic: topic.trim(), locale, territory: territory.trim() }),
       });
       const result = (await response.json()) as {
@@ -965,6 +980,7 @@ export function AgentBar({
           agent={agent}
           agentIndex={agentIndex}
           availableProviders={availableProviders}
+          orgId={orgId}
           disabled={!ttsEnabled || availableProviders.length === 0}
         />
       </div>
@@ -1028,6 +1044,7 @@ export function AgentBar({
                   </span>
                   <TeacherVoicePill
                     availableProviders={availableProviders}
+                    orgId={orgId}
                     disabled={!ttsEnabled || availableProviders.length === 0}
                   />
                 </div>

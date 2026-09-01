@@ -20,6 +20,15 @@ interface UseOrganizationsReturn {
 }
 
 const CURRENT_ORG_KEY = 'qalem-current-org-id';
+
+export function getCurrentOrganizationId(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return localStorage.getItem(CURRENT_ORG_KEY);
+  } catch {
+    return null;
+  }
+}
 const E2E_TEST_MODE = process.env.NEXT_PUBLIC_E2E_TEST_MODE === 'true';
 const E2E_ORGANIZATION: OrganizationWithRole = {
   id: '00000000-0000-4000-8000-000000000002',

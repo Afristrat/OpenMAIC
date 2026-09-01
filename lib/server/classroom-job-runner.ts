@@ -7,6 +7,7 @@ import {
   touchClassroomGenerationJob,
   updateClassroomGenerationJobProgress,
 } from '@/lib/server/classroom-job-store';
+import { activateUsageMeteringJob } from '@/lib/billing/usage-context';
 
 const log = createLogger('ClassroomJob');
 const runningJobs = new Map<string, Promise<void>>();
@@ -31,6 +32,7 @@ export function runClassroomGenerationJob(
     heartbeat.unref();
     try {
       await markClassroomGenerationJobRunning(jobId);
+      activateUsageMeteringJob(ownerId, input.orgId, `classroom-${jobId}`);
 
       const result = await generateClassroom(input, {
         baseUrl,

@@ -176,6 +176,7 @@ function GenerationPreviewContent() {
     const videoProviderConfig = settings.videoProvidersConfig?.[settings.videoProviderId];
     return {
       'Content-Type': 'application/json',
+      'Idempotency-Key': crypto.randomUUID(),
       'x-model': modelConfig.modelString,
       'x-api-key': modelConfig.apiKey,
       'x-base-url': modelConfig.baseUrl,

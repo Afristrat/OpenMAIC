@@ -137,6 +137,23 @@ export const adminTenantSellPriceSchema = z.object({
   commercialRationale: z.string().trim().min(1).max(1000),
 });
 
+export const adminTenantUsageBillingSchema = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('burnRate'),
+    billableUnit: z.enum(billableUnits),
+    creditMicrounits: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+    quantityBasis: z.number().positive(),
+    validFrom: z.string().datetime({ offset: true }),
+    rationale: z.string().trim().min(1).max(1000),
+  }),
+  z.object({
+    action: z.literal('control'),
+    enabled: z.boolean(),
+    sellCurrency: currencyCodeSchema,
+    requiredUnits: z.array(z.enum(billableUnits)).min(1).max(billableUnits.length),
+  }),
+]);
+
 export const adminEconomicConfigurationSchema = z.discriminatedUnion('action', [
   z.object({
     action: z.literal('providerCost'),
@@ -289,6 +306,7 @@ export const chatSchema = z.object({
 // ---------------------------------------------------------------------------
 
 export const generateTTSSchema = z.object({
+  orgId: z.string().uuid(),
   text: z.string().min(1, 'text is required'),
   audioId: z.string().min(1, 'audioId is required'),
   ttsProviderId: z.string().min(1, 'ttsProviderId is required'),

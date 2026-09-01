@@ -46,6 +46,7 @@ import {
 } from '@/lib/branding/organization-design-system';
 import { withGenerationRetry } from '@/lib/generation/generation-retry';
 import { ClassroomCastingError } from '@/lib/agents/classroom-casting';
+import { runMeteredTenantUsage } from '@/lib/billing/usage-metering';
 
 const log = createLogger('ClassroomMedia');
 
@@ -162,22 +163,29 @@ export async function uploadClassroomMedia(
   subPath: string,
   buf: Buffer | Uint8Array,
 ): Promise<void> {
-  await withGenerationRetry(
-    async () => {
-      const supabase = createServiceSupabaseClient();
-      const { error } = await supabase.storage
-        .from('classroom-media')
-        .upload(`${classroomId}/${subPath}`, buf, {
-          contentType: classroomMediaContentType(subPath),
-          upsert: true,
-        });
-      if (error) {
-        throw new Error(`Failed to upload classroom media ${subPath}: ${error.message}`, {
-          cause: error,
-        });
-      }
-    },
-    {
+  await runMeteredTenantUsage({
+    source: `classroom-storage:${subPath}`,
+    billableUnit: 'storage_byte',
+    maxQuantity: buf.byteLength,
+    providerId: 'supabase-storage',
+    modelId: 'classroom-media',
+    execute: () =>
+      withGenerationRetry(
+        async () => {
+          const supabase = createServiceSupabaseClient();
+          const { error } = await supabase.storage
+            .from('classroom-media')
+            .upload(`${classroomId}/${subPath}`, buf, {
+              contentType: classroomMediaContentType(subPath),
+              upsert: true,
+            });
+          if (error) {
+            throw new Error(`Failed to upload classroom media ${subPath}: ${error.message}`, {
+              cause: error,
+            });
+          }
+        },
+        {
       label: `classroom media upload ${subPath}`,
       maxRetries: 3,
       baseDelayMs: 500,
@@ -187,8 +195,10 @@ export async function uploadClassroomMedia(
           `Retrying classroom media upload ${subPath} (${attempt + 1}/${maxAttempts}): ${reason}`,
         );
       },
-    },
-  );
+        },
+      ),
+    measureActualQuantity: () => buf.byteLength,
+  });
 }
 
 const DOWNLOAD_TIMEOUT_MS = 120_000; // 2 minutes

@@ -7,6 +7,7 @@ import {
 } from '@/lib/server/classroom-plan-job-store';
 import type { GenerateClassroomInput } from '@/lib/server/classroom-generation';
 import { SourceMaterialConflictError } from '@/lib/server/source-material-alignment';
+import { activateUsageMeteringJob } from '@/lib/billing/usage-context';
 
 export async function runClassroomPlanJob(
   jobId: string,
@@ -15,6 +16,7 @@ export async function runClassroomPlanJob(
 ): Promise<void> {
   await markClassroomPlanJobRunning(jobId);
   try {
+    if (ownerId) activateUsageMeteringJob(ownerId, input.orgId, jobId);
     await markClassroomPlanJobSucceeded(jobId, await generateClassroomPlan(input, ownerId));
   } catch (error) {
     if (error instanceof SourceMaterialConflictError) {

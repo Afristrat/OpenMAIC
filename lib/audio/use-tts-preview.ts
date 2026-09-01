@@ -7,6 +7,7 @@ import {
   playBrowserTTSPreview,
 } from '@/lib/audio/browser-tts-preview';
 import type { SpeechLanguage } from '@/lib/audio/tts-utils';
+import { getCurrentOrganizationId } from '@/lib/hooks/use-organizations';
 
 export interface TTSPreviewOptions {
   text: string;
@@ -96,6 +97,7 @@ export function useTTSPreview() {
 
         // API-based TTS
         const body: Record<string, unknown> = {
+          orgId: getCurrentOrganizationId(),
           text: options.text,
           audioId: 'preview',
           ttsProviderId: options.providerId,
@@ -110,7 +112,10 @@ export function useTTSPreview() {
 
         const res = await fetch('/api/generate/tts', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Idempotency-Key': crypto.randomUUID(),
+          },
           body: JSON.stringify(body),
         });
         if (isStale()) return;

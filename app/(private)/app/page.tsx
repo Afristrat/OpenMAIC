@@ -806,7 +806,10 @@ function HomePage() {
       });
       const response = await fetch('/api/generate-classroom/plan', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': crypto.randomUUID(),
+        },
         body: JSON.stringify(generationRequest),
       });
       const result = await readJsonResponse<ClassroomPlanJobCreationResponse>(
@@ -840,7 +843,10 @@ function HomePage() {
     try {
       const response = await fetch('/api/generate-classroom', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': crypto.randomUUID(),
+        },
         body: JSON.stringify({ ...pendingGenerationRequest, approvedPlan: draftPlan }),
       });
       const result = await response.json();
@@ -872,7 +878,10 @@ function HomePage() {
     try {
       const response = await fetch('/api/generate/assist-syllabus', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': crypto.randomUUID(),
+        },
         body: JSON.stringify({
           orgId: currentOrg.id,
           locale,
@@ -910,7 +919,10 @@ function HomePage() {
     try {
       const response = await fetch('/api/generate/refine-requirement', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': crypto.randomUUID(),
+        },
         body: JSON.stringify({
           orgId: currentOrg.id,
           requirement,

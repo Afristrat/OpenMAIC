@@ -9,6 +9,7 @@ import type {
   ImageGenerationResult,
   ImageProviderConfig,
 } from './types';
+import { runMeteredTenantUsage } from '@/lib/billing/usage-metering';
 import { generateWithSeedream, testSeedreamConnectivity } from './adapters/seedream-adapter';
 import {
   generateWithOpenAIImage,
@@ -182,24 +183,35 @@ export async function generateImage(
   config: ImageGenerationConfig,
   options: ImageGenerationOptions,
 ): Promise<ImageGenerationResult> {
-  switch (config.providerId) {
-    case 'seedream':
-      return generateWithSeedream(config, options);
-    case 'openai-image':
-      return generateWithOpenAIImage(config, options);
-    case 'qwen-image':
-      return generateWithQwenImage(config, options);
-    case 'nano-banana':
-      return generateWithNanoBanana(config, options);
-    case 'minimax-image':
-      return generateWithMiniMaxImage(config, options);
-    case 'grok-image':
-      return generateWithGrokImage(config, options);
-    case 'lemonade':
-      return generateWithLemonadeImage(config, options);
-    default:
-      throw new Error(`Unsupported image provider: ${config.providerId}`);
-  }
+  const execute = async (): Promise<ImageGenerationResult> => {
+    switch (config.providerId) {
+      case 'seedream':
+        return generateWithSeedream(config, options);
+      case 'openai-image':
+        return generateWithOpenAIImage(config, options);
+      case 'qwen-image':
+        return generateWithQwenImage(config, options);
+      case 'nano-banana':
+        return generateWithNanoBanana(config, options);
+      case 'minimax-image':
+        return generateWithMiniMaxImage(config, options);
+      case 'grok-image':
+        return generateWithGrokImage(config, options);
+      case 'lemonade':
+        return generateWithLemonadeImage(config, options);
+      default:
+        throw new Error(`Unsupported image provider: ${config.providerId}`);
+    }
+  };
+  return runMeteredTenantUsage({
+    source: 'image',
+    billableUnit: 'image',
+    maxQuantity: 1,
+    providerId: config.providerId,
+    modelId: config.model || IMAGE_PROVIDERS[config.providerId]?.models[0]?.id || 'default',
+    execute,
+    measureActualQuantity: () => 1,
+  });
 }
 
 export function aspectRatioToDimensions(

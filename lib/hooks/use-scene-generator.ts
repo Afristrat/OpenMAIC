@@ -26,6 +26,7 @@ import { useAgentRegistry } from '@/lib/orchestration/registry/store';
 import { generateMediaForOutlines } from '@/lib/media/media-orchestrator';
 import { lazyBoundedMap } from '@/lib/utils/concurrency';
 import { createLogger } from '@/lib/logger';
+import { getCurrentOrganizationId } from '@/lib/hooks/use-organizations';
 import {
   isAbortError,
   withGenerationRetry,
@@ -60,6 +61,7 @@ function getApiHeaders(): HeadersInit {
 
   return {
     'Content-Type': 'application/json',
+    'Idempotency-Key': crypto.randomUUID(),
     'x-model': config.modelString || '',
     'x-api-key': config.apiKey || '',
     'x-base-url': config.baseUrl || '',
@@ -249,8 +251,12 @@ export async function generateAndStoreTTS(
     async () => {
       const response = await fetch('/api/generate/tts', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': crypto.randomUUID(),
+        },
         body: JSON.stringify({
+          orgId: getCurrentOrganizationId(),
           text,
           audioId,
           ttsProviderId: settings.ttsProviderId,

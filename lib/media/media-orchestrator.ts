@@ -12,6 +12,7 @@ import { db, mediaFileKey } from '@/lib/utils/database';
 import type { SceneOutline } from '@/lib/types/generation';
 import type { MediaGenerationRequest } from '@/lib/media/types';
 import { createLogger } from '@/lib/logger';
+import { getCurrentOrganizationId } from '@/lib/hooks/use-organizations';
 
 const log = createLogger('MediaOrchestrator');
 
@@ -115,11 +116,11 @@ async function generateSingleMedia(
     let mimeType: string;
 
     if (req.type === 'image') {
-      const result = await callImageApi(req, abortSignal);
+      const result = await callImageApi(req, stageId, abortSignal);
       resultUrl = result.url;
       mimeType = 'image/png';
     } else {
-      const result = await callVideoApi(req, abortSignal);
+      const result = await callVideoApi(req, stageId, abortSignal);
       resultUrl = result.url;
       posterUrl = result.poster;
       mimeType = 'video/mp4';
@@ -185,6 +186,7 @@ async function generateSingleMedia(
 
 async function callImageApi(
   req: MediaGenerationRequest,
+  stageId: string,
   abortSignal?: AbortSignal,
 ): Promise<{ url: string }> {
   const settings = useSettingsStore.getState();
@@ -198,11 +200,14 @@ async function callImageApi(
       'x-image-model': settings.imageModelId || '',
       'x-api-key': providerConfig?.apiKey || '',
       'x-base-url': providerConfig?.baseUrl || '',
+      'Idempotency-Key': crypto.randomUUID(),
     },
     body: JSON.stringify({
       prompt: req.prompt,
       aspectRatio: req.aspectRatio,
       style: req.style,
+      classroomId: stageId,
+      orgId: getCurrentOrganizationId(),
     }),
     signal: abortSignal,
   });
@@ -225,6 +230,7 @@ async function callImageApi(
 
 async function callVideoApi(
   req: MediaGenerationRequest,
+  stageId: string,
   abortSignal?: AbortSignal,
 ): Promise<{ url: string; poster?: string }> {
   const settings = useSettingsStore.getState();
@@ -238,10 +244,13 @@ async function callVideoApi(
       'x-video-model': settings.videoModelId || '',
       'x-api-key': providerConfig?.apiKey || '',
       'x-base-url': providerConfig?.baseUrl || '',
+      'Idempotency-Key': crypto.randomUUID(),
     },
     body: JSON.stringify({
       prompt: req.prompt,
       aspectRatio: req.aspectRatio,
+      classroomId: stageId,
+      orgId: getCurrentOrganizationId(),
     }),
     signal: abortSignal,
   });

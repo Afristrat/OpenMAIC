@@ -3,6 +3,7 @@ import { ASR_PROVIDERS } from '@/lib/audio/constants';
 import { normalizeASRUploadAudio } from '@/lib/audio/wav-utils';
 import { selectASRRecordingMimeType } from '@/lib/audio/asr-utils';
 import { createLogger } from '@/lib/logger';
+import { getCurrentOrganizationId } from '@/lib/hooks/use-organizations';
 
 const log = createLogger('AudioRecorder');
 
@@ -46,6 +47,8 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
 
       try {
         const formData = new FormData();
+        const orgId = getCurrentOrganizationId();
+        if (orgId) formData.append('orgId', orgId);
 
         // Get current ASR configuration from settings store
         // Note: This requires importing useSettingsStore in browser context
@@ -80,6 +83,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
 
         const response = await fetch('/api/transcription', {
           method: 'POST',
+          headers: { 'Idempotency-Key': crypto.randomUUID() },
           body: formData,
         });
 

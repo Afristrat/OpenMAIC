@@ -106,6 +106,8 @@ import {
 } from './voxcpm';
 import { assertAboveNoiseFloor, assertArabicTachkilReady } from './audio-gate';
 import { prepareTextForTTS } from './tts-utils';
+import { measureAudioDurationSeconds } from './duration';
+import { runMeteredTenantUsage } from '@/lib/billing/usage-metering';
 
 /**
  * Result of TTS generation
@@ -172,9 +174,20 @@ export async function generateTTS(
     assertArabicTachkilReady(speechText, config.providerId);
   }
 
-  const result = await dispatchTTSProvider(config, speechText);
-  await assertAboveNoiseFloor(result.audio, result.format);
-  return result;
+  const maxDurationSeconds = Math.max(1, Number((speechText.length * 0.5 + 30).toFixed(6)));
+  return runMeteredTenantUsage({
+    source: 'tts',
+    billableUnit: 'tts_second',
+    maxQuantity: maxDurationSeconds,
+    providerId: config.providerId,
+    modelId: config.modelId || provider?.defaultModelId || 'default',
+    execute: async () => {
+      const result = await dispatchTTSProvider(config, speechText);
+      await assertAboveNoiseFloor(result.audio, result.format);
+      return result;
+    },
+    measureActualQuantity: ({ audio }) => measureAudioDurationSeconds(audio),
+  });
 }
 
 async function dispatchTTSProvider(

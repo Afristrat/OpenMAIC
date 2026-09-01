@@ -32,6 +32,7 @@ import { toast } from 'sonner';
 import { createLogger } from '@/lib/logger';
 import { normalizeASRUploadAudio } from '@/lib/audio/wav-utils';
 import { selectASRRecordingMimeType } from '@/lib/audio/asr-utils';
+import { getCurrentOrganizationId } from '@/lib/hooks/use-organizations';
 
 const log = createLogger('ASRSettings');
 
@@ -146,6 +147,8 @@ export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {
               });
               const uploadAudio = await normalizeASRUploadAudio(selectedProviderId, audioBlob);
               const formData = new FormData();
+              const orgId = getCurrentOrganizationId();
+              if (orgId) formData.append('orgId', orgId);
               formData.append('audio', uploadAudio.blob, uploadAudio.fileName);
               formData.append('providerId', selectedProviderId);
               formData.append(
@@ -165,6 +168,7 @@ export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {
 
               const response = await fetch('/api/transcription', {
                 method: 'POST',
+                headers: { 'Idempotency-Key': crypto.randomUUID() },
                 body: formData,
               });
               if (response.ok) {

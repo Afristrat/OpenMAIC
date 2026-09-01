@@ -44,6 +44,7 @@ import { PermitPool } from '@/lib/jobs/permit-pool';
 import { enqueueTransmissionVisualWatermark } from '@/lib/jobs/queue';
 import { applyVisualWatermark } from '@/lib/transmissions/visual-watermark';
 import { dispatchWebhook } from '@/lib/webhooks/dispatcher';
+import { activateUsageMeteringJob } from '@/lib/billing/usage-context';
 
 const log = createLogger('Workers');
 
@@ -255,7 +256,7 @@ export function startAllWorkers(): void {
         const supabase = createServiceSupabaseClient();
         const { data: generationJob, error: readError } = await supabase
           .from('video_generation_jobs')
-          .select('id, owner_id, provider_id, model_id, request')
+          .select('id, owner_id, org_id, provider_id, model_id, request')
           .eq('id', videoGenerationJobId)
           .single();
 
@@ -264,6 +265,14 @@ export function startAllWorkers(): void {
             `Video generation job ${videoGenerationJobId} not found: ${readError?.message ?? 'no row'}`,
           );
         }
+        if (!generationJob.org_id) {
+          throw new Error(`Video generation job ${videoGenerationJobId} has no tenant`);
+        }
+        activateUsageMeteringJob(
+          generationJob.owner_id,
+          generationJob.org_id,
+          `video-job-${videoGenerationJobId}`,
+        );
 
         try {
           await supabase

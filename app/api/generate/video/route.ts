@@ -27,24 +27,39 @@ import type { VideoProviderId, VideoGenerationOptions } from '@/lib/media/types'
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
-import { requireAuth } from '@/lib/api/auth';
+import {
+  requireSuperAdminOrOrgAuthor,
+  requireSuperAdminOrOrgEditor,
+} from '@/lib/api/auth';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { enqueueVideoGeneration } from '@/lib/jobs/queue';
+import { isValidClassroomId, readClassroomOwnership } from '@/lib/server/classroom-storage';
 
 const log = createLogger('VideoGeneration API');
 
 export const maxDuration = 300;
 
 export async function POST(request: NextRequest) {
-  const auth = await requireAuth(request);
-  if (auth.response) return auth.response;
-
   try {
-    const body = (await request.json()) as VideoGenerationOptions;
+    const requestBody = (await request.json()) as VideoGenerationOptions & {
+      classroomId?: string;
+      orgId?: string;
+    };
+    const { classroomId, orgId, ...body } = requestBody;
 
     if (!body.prompt) {
       return apiError('MISSING_REQUIRED_FIELD', 400, 'Missing prompt');
     }
+    const ownership =
+      classroomId && isValidClassroomId(classroomId)
+        ? await readClassroomOwnership(classroomId)
+        : null;
+    const tenantId = ownership?.orgId ?? orgId;
+    if (!tenantId) return apiError('MISSING_REQUIRED_FIELD', 400, 'Organization is required');
+    const auth = ownership
+      ? await requireSuperAdminOrOrgEditor(request, ownership.orgId, ownership.ownerId)
+      : await requireSuperAdminOrOrgAuthor(request, tenantId);
+    if (auth.response) return auth.response;
 
     const providerId = (request.headers.get('x-video-provider') || 'seedance') as VideoProviderId;
     // Managed providers are admin-owned: ignore any client-sent key/baseUrl.
@@ -71,6 +86,7 @@ export async function POST(request: NextRequest) {
         .from('video_generation_jobs')
         .insert({
           owner_id: auth.user.id,
+          org_id: tenantId,
           provider_id: providerId,
           model_id: clientModel,
           request: options as unknown as Record<string, unknown>,

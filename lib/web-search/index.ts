@@ -6,6 +6,7 @@ import { searchWithTavily } from './tavily';
 import { searchWithSerper } from './serper';
 import type { WebSearchResult } from '@/lib/types/web-search';
 import type { BaiduSubSources, WebSearchProviderId } from './types';
+import { runMeteredTenantUsage } from '@/lib/billing/usage-metering';
 
 export { formatSearchResultsAsContext } from './format';
 
@@ -19,22 +20,33 @@ export async function searchWeb(params: {
 }): Promise<WebSearchResult> {
   const { providerId, query, apiKey = '', maxResults, baseUrl, baiduSubSources } = params;
 
-  switch (providerId) {
-    case 'baidu':
-      return searchWithBaidu({ query, apiKey, maxResults, baseUrl, subSources: baiduSubSources });
-    case 'bocha':
-      return searchWithBocha({ query, apiKey, maxResults, baseUrl });
-    case 'brave':
-      return searchWithBrave({ query, apiKey: apiKey || undefined, maxResults, baseUrl });
-    case 'minimax':
-      return searchWithMiniMax({ query, apiKey, maxResults, baseUrl });
-    case 'tavily':
-      return searchWithTavily({ query, apiKey, maxResults, baseUrl });
-    case 'serper':
-      return searchWithSerper({ query, apiKey, maxResults, baseUrl });
-    default: {
-      const exhaustive: never = providerId;
-      throw new Error(`Unsupported web search provider: ${exhaustive}`);
+  const execute = async (): Promise<WebSearchResult> => {
+    switch (providerId) {
+      case 'baidu':
+        return searchWithBaidu({ query, apiKey, maxResults, baseUrl, subSources: baiduSubSources });
+      case 'bocha':
+        return searchWithBocha({ query, apiKey, maxResults, baseUrl });
+      case 'brave':
+        return searchWithBrave({ query, apiKey: apiKey || undefined, maxResults, baseUrl });
+      case 'minimax':
+        return searchWithMiniMax({ query, apiKey, maxResults, baseUrl });
+      case 'tavily':
+        return searchWithTavily({ query, apiKey, maxResults, baseUrl });
+      case 'serper':
+        return searchWithSerper({ query, apiKey, maxResults, baseUrl });
+      default: {
+        const exhaustive: never = providerId;
+        throw new Error(`Unsupported web search provider: ${exhaustive}`);
+      }
     }
-  }
+  };
+  return runMeteredTenantUsage({
+    source: 'web-search',
+    billableUnit: 'operation',
+    maxQuantity: 1,
+    providerId,
+    modelId: providerId,
+    execute,
+    measureActualQuantity: () => 1,
+  });
 }

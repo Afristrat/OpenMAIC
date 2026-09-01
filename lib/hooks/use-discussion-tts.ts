@@ -15,6 +15,7 @@ import type { AgentConfig } from '@/lib/orchestration/registry/types';
 import type { TTSProviderId } from '@/lib/audio/types';
 import type { AudioIndicatorState } from '@/components/roundtable/audio-indicator';
 import { useI18n } from '@/lib/hooks/use-i18n';
+import { getCurrentOrganizationId } from '@/lib/hooks/use-organizations';
 
 interface DiscussionTTSOptions {
   enabled: boolean;
@@ -192,8 +193,12 @@ export function useDiscussionTTS({ enabled, agents, onAudioStateChange }: Discus
       });
       const res = await fetch('/api/generate/tts', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': crypto.randomUUID(),
+        },
         body: JSON.stringify({
+          orgId: getCurrentOrganizationId(),
           text: item.text,
           audioId: item.partId,
           ttsProviderId: item.providerId,

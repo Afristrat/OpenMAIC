@@ -23,6 +23,7 @@ import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { VOXCPM_AUTO_VOICE_ID, VOXCPM_TTS_PROVIDER_ID } from '@/lib/audio/voxcpm';
 import { generateTTSSchema } from '@/lib/api/schemas';
 import { validateBody } from '@/lib/api/validate';
+import { requireSuperAdminOrOrgMember } from '@/lib/api/auth';
 
 const log = createLogger('TTS API');
 
@@ -36,6 +37,8 @@ export async function POST(req: NextRequest) {
     const validation = validateBody(generateTTSSchema, await req.json().catch(() => null));
     if (!validation.success) return validation.response;
     const body = validation.data;
+    const auth = await requireSuperAdminOrOrgMember(req, body.orgId);
+    if (auth.response) return auth.response;
     const {
       text,
       ttsModelId,

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createLogger } from '@/lib/logger';
+import { activateUsageMeteringContext } from '@/lib/billing/usage-context';
 
 const log = createLogger('Auth');
 
@@ -132,6 +133,7 @@ export async function requireOrgMember(req: NextRequest, orgId: string): Promise
       };
     }
 
+    activateUsageMeteringContext(req.headers, auth.user.id, orgId);
     return auth;
   } catch (err) {
     log.error('Org membership check error:', err instanceof Error ? err.message : String(err));
@@ -174,6 +176,7 @@ export async function requireOrgAdmin(req: NextRequest, orgId: string): Promise<
       };
     }
 
+    activateUsageMeteringContext(req.headers, auth.user.id, orgId);
     return auth;
   } catch (err) {
     log.error('Org admin check error:', err instanceof Error ? err.message : String(err));
@@ -199,7 +202,10 @@ export async function requireSuperAdminOrOrgAdmin(
   const auth = await requireAuth(req);
   if (auth.response) return auth;
 
-  if (isSuperAdminEmail(auth.user.email)) return auth;
+  if (isSuperAdminEmail(auth.user.email)) {
+    activateUsageMeteringContext(req.headers, auth.user.id, orgId);
+    return auth;
+  }
 
   return requireOrgAdmin(req, orgId);
 }
@@ -213,6 +219,7 @@ export async function requireSuperAdminOrOrgAuthor(
   if (auth.response) return auth;
 
   if (isSuperAdminEmail(auth.user.email)) {
+    activateUsageMeteringContext(req.headers, auth.user.id, orgId);
     return { ...auth, authoredByRole: 'super-admin' };
   }
 
@@ -237,6 +244,7 @@ export async function requireSuperAdminOrOrgAuthor(
         ),
       };
     }
+    activateUsageMeteringContext(req.headers, auth.user.id, orgId);
     return { ...auth, authoredByRole: 'author' };
   } catch (err) {
     log.error('Org author check error:', err instanceof Error ? err.message : String(err));
@@ -261,7 +269,10 @@ export async function requireSuperAdminOrOrgEditor(
 ): Promise<AuthResult> {
   const auth = await requireAuth(req);
   if (auth.response) return auth;
-  if (isSuperAdminEmail(auth.user.email)) return auth;
+  if (isSuperAdminEmail(auth.user.email)) {
+    activateUsageMeteringContext(req.headers, auth.user.id, orgId);
+    return auth;
+  }
 
   try {
     const supabase = await createServerSupabaseClient();
@@ -284,6 +295,7 @@ export async function requireSuperAdminOrOrgEditor(
         ),
       };
     }
+    activateUsageMeteringContext(req.headers, auth.user.id, orgId);
     return auth;
   } catch (err) {
     log.error('Classroom editor check error:', err instanceof Error ? err.message : String(err));
@@ -309,7 +321,10 @@ export async function requireSuperAdminOrOrgMember(
   const auth = await requireAuth(req);
   if (auth.response) return auth;
 
-  if (isSuperAdminEmail(auth.user.email)) return auth;
+  if (isSuperAdminEmail(auth.user.email)) {
+    activateUsageMeteringContext(req.headers, auth.user.id, orgId);
+    return auth;
+  }
 
   return requireOrgMember(req, orgId);
 }

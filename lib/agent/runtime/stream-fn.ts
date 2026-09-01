@@ -231,7 +231,7 @@ async function pump(
   };
 
   try {
-    const result = streamLLM(
+    const result = await streamLLM(
       {
         model: opts.languageModel,
         system: context.systemPrompt,
