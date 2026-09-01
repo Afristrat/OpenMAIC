@@ -461,11 +461,9 @@ export async function POST(req: NextRequest) {
               languageDirective = null;
               courseTitle = null;
               const usedOutlineIds = new Set<string>();
-              const textStream = (await streamLLM(
-                streamParams,
-                'scene-outlines-stream',
-                thinkingConfig,
-              )).textStream;
+              const textStream = (
+                await streamLLM(streamParams, 'scene-outlines-stream', thinkingConfig)
+              ).textStream;
 
               for await (const chunk of textStream) {
                 // Stop doing work the moment the client goes away — otherwise

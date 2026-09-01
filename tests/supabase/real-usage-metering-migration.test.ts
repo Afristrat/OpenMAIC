@@ -15,7 +15,9 @@ describe('real provider usage metering migration (S6-025)', () => {
     );
     expect(burnRateFunction).toMatch(/credit_microunits/i);
     expect(burnRateFunction).toMatch(/quantity_basis/i);
-    expect(burnRateFunction).not.toMatch(/tenant_sell_prices|provider_cost_rates|price_microunits/i);
+    expect(burnRateFunction).not.toMatch(
+      /tenant_sell_prices|provider_cost_rates|price_microunits/i,
+    );
     expect(migration).toMatch(/CREDIT_BURN_PERIOD_OVERLAP/i);
   });
 
@@ -83,7 +85,9 @@ describe('real provider usage metering migration (S6-025)', () => {
       'tenant_credit_burn_rates',
       'tenant_usage_reservations',
     ]) {
-      expect(migration).toMatch(new RegExp(`ALTER TABLE public\\.${table} ENABLE ROW LEVEL SECURITY`, 'i'));
+      expect(migration).toMatch(
+        new RegExp(`ALTER TABLE public\\.${table} ENABLE ROW LEVEL SECURITY`, 'i'),
+      );
       expect(migration).toMatch(
         new RegExp(`REVOKE ALL ON TABLE public\\.${table} FROM anon, authenticated`, 'i'),
       );

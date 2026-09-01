@@ -134,21 +134,18 @@ describe('admin economics API (S6-024)', () => {
   });
 
   it('records credit consumption without deriving or changing the sell price', async () => {
-    const request = new NextRequest(
-      'https://qalem.ma/api/admin/tenants/tenant/usage-billing',
-      {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          action: 'burnRate',
-          billableUnit: 'llm_input_token',
-          creditMicrounits: 250000,
-          quantityBasis: 1000000,
-          validFrom: '2026-09-01T00:00:00.000Z',
-          rationale: 'Politique explicite de consommation',
-        }),
-      },
-    );
+    const request = new NextRequest('https://qalem.ma/api/admin/tenants/tenant/usage-billing', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        action: 'burnRate',
+        billableUnit: 'llm_input_token',
+        creditMicrounits: 250000,
+        quantityBasis: 1000000,
+        validFrom: '2026-09-01T00:00:00.000Z',
+        rationale: 'Politique explicite de consommation',
+      }),
+    });
     const response = await configureTenantUsageBilling(request, {
       params: Promise.resolve({ tenantId: 'tenant' }),
     });
@@ -160,19 +157,16 @@ describe('admin economics API (S6-024)', () => {
   });
 
   it('activates only the explicitly selected billable units', async () => {
-    const request = new NextRequest(
-      'https://qalem.ma/api/admin/tenants/tenant/usage-billing',
-      {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          action: 'control',
-          enabled: true,
-          sellCurrency: 'MAD',
-          requiredUnits: ['llm_input_token', 'llm_output_token'],
-        }),
-      },
-    );
+    const request = new NextRequest('https://qalem.ma/api/admin/tenants/tenant/usage-billing', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        action: 'control',
+        enabled: true,
+        sellCurrency: 'MAD',
+        requiredUnits: ['llm_input_token', 'llm_output_token'],
+      }),
+    });
     expect(
       (
         await configureTenantUsageBilling(request, {

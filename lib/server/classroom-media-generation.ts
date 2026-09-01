@@ -186,15 +186,15 @@ export async function uploadClassroomMedia(
           }
         },
         {
-      label: `classroom media upload ${subPath}`,
-      maxRetries: 3,
-      baseDelayMs: 500,
-      maxDelayMs: 4_000,
-      onRetry: ({ attempt, maxAttempts, reason }) => {
-        log.warn(
-          `Retrying classroom media upload ${subPath} (${attempt + 1}/${maxAttempts}): ${reason}`,
-        );
-      },
+          label: `classroom media upload ${subPath}`,
+          maxRetries: 3,
+          baseDelayMs: 500,
+          maxDelayMs: 4_000,
+          onRetry: ({ attempt, maxAttempts, reason }) => {
+            log.warn(
+              `Retrying classroom media upload ${subPath} (${attempt + 1}/${maxAttempts}): ${reason}`,
+            );
+          },
         },
       ),
     measureActualQuantity: () => buf.byteLength,

@@ -31,10 +31,7 @@ import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { randomUUID } from 'node:crypto';
-import {
-  requireSuperAdminOrOrgAuthor,
-  requireSuperAdminOrOrgEditor,
-} from '@/lib/api/auth';
+import { requireSuperAdminOrOrgAuthor, requireSuperAdminOrOrgEditor } from '@/lib/api/auth';
 import { uploadClassroomMedia } from '@/lib/server/classroom-media-generation';
 import { isValidClassroomId, readClassroomOwnership } from '@/lib/server/classroom-storage';
 

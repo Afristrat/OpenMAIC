@@ -27,10 +27,7 @@ import type { VideoProviderId, VideoGenerationOptions } from '@/lib/media/types'
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
-import {
-  requireSuperAdminOrOrgAuthor,
-  requireSuperAdminOrOrgEditor,
-} from '@/lib/api/auth';
+import { requireSuperAdminOrOrgAuthor, requireSuperAdminOrOrgEditor } from '@/lib/api/auth';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { enqueueVideoGeneration } from '@/lib/jobs/queue';
 import { isValidClassroomId, readClassroomOwnership } from '@/lib/server/classroom-storage';

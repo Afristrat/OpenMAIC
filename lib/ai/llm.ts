@@ -5,13 +5,7 @@
  */
 
 import { generateText, streamText } from 'ai';
-import type {
-  GenerateTextResult,
-  JSONValue,
-  LanguageModel,
-  LanguageModelUsage,
-  StreamTextResult,
-} from 'ai';
+import type { GenerateTextResult, JSONValue, LanguageModel, LanguageModelUsage } from 'ai';
 import { createLogger } from '@/lib/logger';
 import { PROVIDERS } from './providers';
 import { thinkingContext } from './thinking-context';
@@ -470,8 +464,7 @@ export async function streamLLM<T extends StreamTextParams>(
   params: T,
   source: string,
   thinking?: ThinkingConfig,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): Promise<StreamTextResult<any, any>> {
+): Promise<ReturnType<typeof streamText>> {
   // Resolve effective thinking config and wrap in thinkingContext
   const effectiveThinking = thinking ?? getGlobalThinkingConfig();
   const injectedParams = injectProviderOptions(params, effectiveThinking);
@@ -495,7 +488,7 @@ export async function streamLLM<T extends StreamTextParams>(
     await originalOnAbort?.(event);
   };
 
-  let result: StreamTextResult<any, any>;
+  let result: ReturnType<typeof streamText>;
   try {
     result = thinkingContext.run(effectiveThinking, () =>
       streamText({ ...metered.params, onFinish, onError, onAbort }),

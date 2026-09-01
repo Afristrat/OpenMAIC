@@ -215,7 +215,7 @@ function AgentVoicePill({
         setPreviewingId(null);
       }
     },
-    [agent, locale, previewingId, stopPreview, t, ttsProvidersConfig],
+    [agent, locale, orgId, previewingId, stopPreview, t, ttsProvidersConfig],
   );
 
   // Cleanup on unmount
@@ -493,7 +493,7 @@ function TeacherVoicePill({
         setPreviewingId(null);
       }
     },
-    [locale, previewingId, stopPreview, t, ttsProvidersConfig],
+    [locale, orgId, previewingId, stopPreview, t, ttsProvidersConfig],
   );
 
   useEffect(() => () => stopPreview(), [stopPreview]);
