@@ -10,8 +10,11 @@ export async function GET(request: NextRequest): Promise<Response> {
   if (auth.response) return auth.response;
 
   const supabase = createServiceSupabaseClient();
-  const [{ data: tenants, error }, { data: members }, { data: invitations }, { data: wallets }] =
-    await Promise.all([
+  const [
+    { data: tenants, error },
+    { data: members, error: membersError },
+    { data: invitations, error: invitationsError },
+  ] = await Promise.all([
       supabase
         .from('organizations')
         .select('id, name, sector, default_locale, status, seat_limit, created_at, updated_at')
@@ -22,11 +25,36 @@ export async function GET(request: NextRequest): Promise<Response> {
         .select('org_id')
         .is('used_at', null)
         .gt('expires_at', new Date().toISOString()),
-      supabase.from('tenant_credit_wallets').select('org_id, balance_microunits'),
     ]);
 
-  if (error) {
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to list tenants', error.message);
+  if (error || membersError || invitationsError) {
+    return apiError(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      500,
+      'Failed to list tenants',
+      error?.message ?? membersError?.message ?? invitationsError?.message,
+    );
+  }
+
+  // ponytail: one reconciliation RPC per tenant; replace with a set-returning
+  // RPC only if measured tenant volume makes this administration view slow.
+  const creditStates = await Promise.all(
+    (tenants ?? []).map(async (tenant) => {
+      const { data, error: creditError } = await supabase
+        .rpc('reconcile_tenant_credit_wallet', { tenant_id: tenant.id })
+        .single();
+      return {
+        tenantId: tenant.id,
+        state: data as { balance_microunits: number | string; consistent: boolean } | null,
+        error: creditError,
+      };
+    }),
+  );
+  if (creditStates.some((credit) => credit.error || !credit.state)) {
+    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to reconcile tenant credits');
+  }
+  if (creditStates.some((credit) => !credit.state?.consistent)) {
+    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 409, 'Credit ledger divergence');
   }
 
   const memberCounts = new Map<string, number>();
@@ -38,8 +66,8 @@ export async function GET(request: NextRequest): Promise<Response> {
   for (const invitation of invitations ?? []) {
     invitationCounts.set(invitation.org_id, (invitationCounts.get(invitation.org_id) ?? 0) + 1);
   }
-  for (const wallet of wallets ?? []) {
-    creditBalances.set(wallet.org_id, Number(wallet.balance_microunits));
+  for (const credit of creditStates) {
+    creditBalances.set(credit.tenantId, Number(credit.state?.balance_microunits ?? 0));
   }
 
   return apiSuccess({
