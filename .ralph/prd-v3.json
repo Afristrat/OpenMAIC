@@ -1535,6 +1535,49 @@
       "completedAt": "2026-09-01"
     },
     {
+      "id": "S6-025",
+      "title": "Raccorder les usages fournisseurs réels au débit et à la valorisation",
+      "description": "En tant que propriétaire de Qalem, je veux que chaque usage réel d’un fournisseur soit réservé, mesuré, décompté et valorisé sans doublon afin que les crédits et marges correspondent effectivement aux consommations de production.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P0",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "type": "reconciliation_gap",
+        "date": "2026-09-01"
+      },
+      "sourceDependencies": [],
+      "dependencies": ["S6-023", "S6-024"],
+      "gap": "Le ledger de crédits et la valorisation économique sont certifiés, mais leurs fonctions serveur n’ont encore aucun appelant dans les chemins LLM, TTS, ASR, image, vidéo, stockage ou opération ; une génération réelle ne produit donc actuellement aucun débit automatique.",
+      "evidence": [
+        "lib/billing/credits.ts",
+        "lib/billing/value-pricing.ts",
+        "lib/usage/tracker.ts",
+        "lib/ai/llm.ts"
+      ],
+      "acceptance": [
+        "Chaque chemin fournisseur réellement facturable transmet une organisation, un acteur, une référence d’opération et une unité issus du contexte serveur authentifié, jamais d’un identifiant client non vérifié.",
+        "LLM entrée/sortie, TTS, ASR, image, vidéo, stockage et opération utilisent la quantité réelle renvoyée ou mesurée ; aucune estimation silencieuse ne remplace une mesure disponible.",
+        "Le taux de consommation des crédits est explicite, versionné et indépendant du coût fournisseur comme du prix vendu ; aucune formule fondée sur le coût ou la marge ne peut le modifier automatiquement.",
+        "Une réservation atomique précède l’appel lorsque le coût maximal est bornable ; la consommation réelle est rapprochée ensuite et le reliquat est libéré. Un échec fournisseur ne laisse aucun débit définitif.",
+        "Les retries et reprises de flux réutilisent une référence d’idempotence stable : une même consommation ne peut être débitée ou valorisée deux fois.",
+        "Un tenant n’est soumis au décompte obligatoire qu’après activation explicite par le super-administrateur et validation de la couverture complète de ses tarifs ; l’activation échoue fermée si une unité requise n’est pas configurée.",
+        "Les usages réels alimentent le ledger de crédits et les snapshots économiques de S6-023/S6-024 dans une transaction cohérente ; les tableaux de bord reflètent ensuite ces écritures sans rapprochement manuel.",
+        "Les échecs, réservations concurrentes, flux interrompus, arrondis, versions temporelles, isolation inter-tenant et absence de double débit sont couverts par des tests permanents.",
+        "Une recette de production active un tenant temporaire entièrement tarifé, exécute au moins un usage réel, vérifie crédit, valorisation et marge, simule un échec compensé, puis supprime toutes les données temporaires.",
+        "Le quality gate complet est vert au SHA exact sur ServeurIA, sans erreur ni avertissement inattendu."
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "production_real_usage_metering_smoke_test"
+      ],
+      "priorityRank": 0.4
+    },
+    {
       "id": "S6-001",
       "title": "Recertifier le SHA livré et solder le contrôle qualité global",
       "description": "En tant qu’utilisateur de Qalem, je veux recertifier le sha livré et solder le contrôle qualité global afin que le parcours promis soit réellement utilisable.",
