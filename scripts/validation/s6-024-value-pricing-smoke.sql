@@ -165,3 +165,22 @@ $$;
 RESET ROLE;
 
 ROLLBACK;
+
+SELECT
+  to_regclass('public.valued_billable_usage') IS NOT NULL AS schema_present,
+  (SELECT target_margin_bps FROM public.margin_target_versions
+    ORDER BY effective_at DESC LIMIT 1) = 9500 AS default_target_is_95_percent,
+  NOT has_table_privilege(
+    'authenticated', 'public.tenant_sell_prices', 'SELECT'
+  ) AS browser_table_access_revoked,
+  NOT has_function_privilege(
+    'authenticated',
+    'public.create_tenant_sell_price(uuid,uuid,text,text,bigint,numeric,timestamptz,text)',
+    'EXECUTE'
+  ) AS browser_rpc_access_revoked,
+  (SELECT count(*) FROM public.organizations
+    WHERE name = 'S6-024 temporary value pricing tenant') = 0 AS no_temporary_tenant,
+  (SELECT count(*) FROM public.provider_cost_rates
+    WHERE provider_id = 's6-024-provider') = 0 AS no_temporary_cost,
+  (SELECT count(*) FROM public.currency_exchange_rates
+    WHERE provenance LIKE '%S6-024%') = 0 AS no_temporary_fx;

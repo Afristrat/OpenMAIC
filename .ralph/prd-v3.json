@@ -1489,15 +1489,15 @@
       "description": "En tant que propriétaire de Qalem, je veux fixer librement les prix vendus selon la valeur perçue pour chaque tenant et mesurer les coûts réels séparément afin de piloter une marge moyenne cible de 95 % sans tarification automatique fondée sur les coûts.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P0",
-      "status": "to_implement",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "type": "explicit_request_and_correction",
         "date": "2026-09-01"
       },
       "sourceDependencies": [],
       "dependencies": ["S6-023"],
-      "gap": "Qalem ne possède ni catalogue de prix vendu par tenant et par usage, ni ledger de coûts fournisseurs, ni calcul vérifiable de marge. Les prix statiques des plans sont nuls et ne représentent pas une tarification à la valeur.",
+      "gap": "Soldé : Qalem possède un catalogue de prix à la valeur par tenant et usage, un référentiel de coûts fournisseurs totalement séparé et un calcul de marge vérifiable sans tarification automatique fondée sur les coûts.",
       "evidence": [
         "lib/billing/plans.ts",
         "supabase/migrations/00015_usage_tracking.sql",
@@ -1515,7 +1515,15 @@
         "Une recette de production fixe un prix à la valeur, enregistre un coût indépendant, valorise un usage, vérifie la marge et l’alerte sous 95 %, puis supprime toutes les données temporaires.",
         "Le quality gate complet est vert au SHA exact sur ServeurIA, sans erreur ni avertissement inattendu."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-01 — SHA fonctionnel exact ea301224966b0f5d0be3f0f7f5b79634419a0707 poussé sur origin/refork-v030 ; la migration 00055 sépare strictement prix vendus, coûts fournisseurs, taux FX, cible de marge et snapshots de valorisation immuables.",
+        "2026-09-01 — Le prix vendu est saisi explicitement par tenant, devise, unité et date d’effet avec justification commerciale. Le coût réel ou estimé possède fournisseur, modèle, unité, devise et provenance ; aucune fonction de création de prix ne lit un coût ou une cible de marge.",
+        "2026-09-01 — Recette PostgreSQL de production : prix explicite 100 MAD, coût indépendant 10 MAD, valorisation atomique à 100/10/90 MAD, marge 90 % et alerte sous la cible par défaut de 95 %. Une nouvelle version de prix ne réécrit pas le snapshot ; le taux USD→MAD est versionné et sourcé ; les chevauchements prix/coût/FX sont rejetés.",
+        "2026-09-01 — Isolation effective : RLS activée, tables et RPC économiques révoqués à anon/authenticated, snapshot immuable. Après rollback, schéma et cible 95 % présents, accès navigateur refusés et aucun tenant, coût ou taux temporaire résiduel ; sept contrôles finaux vrais.",
+        "2026-09-01 — Déploiement Coolify z9v96w1wpz2y8074bjvqm3qr terminé au SHA exact ; conteneur bcx5pxyuc9z3lt4jtyjipcqu-164243671478 healthy, restart=0, OOMKilled=false ; / et /api/health répondent 200, l’API économique anonyme répond 401.",
+        "2026-09-01 — Gate complet ServeurIA au SHA exact : formatage, TypeScript et lint verts ; 398/398 fichiers et 2 553/2 553 tests Vitest ; build 103 pages ; 89/89 Playwright en 3,8 minutes. Journal /tmp/qalem-gate-logs/s6024-ea30122-full-gate.log, SHA-256 9e3b81bae9d903d75b15de38a93f3b7bd99ecce0a5ff1a3c79ba75a155564996.",
+        "2026-09-01 — Cockpit économique et tarification tenant localisés FR/EN/AR, RTL couvert ; l’alerte sous cible est diagnostique uniquement. Synthèse : docs/validation/S6-024-value-pricing-and-margin.md."
+      ],
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": [
@@ -1523,7 +1531,8 @@
         "fresh_evidence_per_acceptance",
         "production_value_pricing_smoke_test"
       ],
-      "priorityRank": 0.3
+      "priorityRank": 0.3,
+      "completedAt": "2026-09-01"
     },
     {
       "id": "S6-001",
