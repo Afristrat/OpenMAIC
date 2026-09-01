@@ -15,17 +15,17 @@ export async function GET(request: NextRequest): Promise<Response> {
     { data: members, error: membersError },
     { data: invitations, error: invitationsError },
   ] = await Promise.all([
-      supabase
-        .from('organizations')
-        .select('id, name, sector, default_locale, status, seat_limit, created_at, updated_at')
-        .order('created_at', { ascending: false }),
-      supabase.from('org_members').select('org_id'),
-      supabase
-        .from('org_invitations')
-        .select('org_id')
-        .is('used_at', null)
-        .gt('expires_at', new Date().toISOString()),
-    ]);
+    supabase
+      .from('organizations')
+      .select('id, name, sector, default_locale, status, seat_limit, created_at, updated_at')
+      .order('created_at', { ascending: false }),
+    supabase.from('org_members').select('org_id'),
+    supabase
+      .from('org_invitations')
+      .select('org_id')
+      .is('used_at', null)
+      .gt('expires_at', new Date().toISOString()),
+  ]);
 
   if (error || membersError || invitationsError) {
     return apiError(
