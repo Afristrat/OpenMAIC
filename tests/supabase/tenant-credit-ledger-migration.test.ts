@@ -40,9 +40,7 @@ describe('tenant credit ledger migration (S6-023)', () => {
   it('serializes the wallet before checking idempotence and balance', () => {
     const posting = migration.slice(migration.indexOf('public.post_tenant_credit_entry'));
     const walletLock = posting.indexOf('FOR UPDATE;');
-    const idempotencyLookup = posting.indexOf(
-      'WHERE tenant_credit_ledger.org_id = tenant_id',
-    );
+    const idempotencyLookup = posting.indexOf('WHERE tenant_credit_ledger.org_id = tenant_id');
     const balanceCheck = posting.indexOf('CREDIT_LEDGER_DIVERGENCE');
     const walletUpdate = posting.indexOf('UPDATE public.tenant_credit_wallets');
     expect(walletLock).toBeGreaterThan(0);
