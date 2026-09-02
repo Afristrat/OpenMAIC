@@ -34,16 +34,19 @@ async function seedDatabase(
   certificateEligible = false,
 ) {
   // Inject settings before navigating so it's available immediately on load
-  await page.addInitScript(({ settings, certificateEligible }) => {
-    localStorage.setItem('settings-storage', settings);
-    localStorage.setItem('locale', 'en-US');
-    if (certificateEligible) {
-      localStorage.setItem(
-        'quizAnswers:certificate-quiz-scene',
-        JSON.stringify({ 'certificate-question': 'a' }),
-      );
-    }
-  }, { settings: settingsStorage, certificateEligible });
+  await page.addInitScript(
+    ({ settings, certificateEligible }) => {
+      localStorage.setItem('settings-storage', settings);
+      localStorage.setItem('locale', 'en-US');
+      if (certificateEligible) {
+        localStorage.setItem(
+          'quizAnswers:certificate-quiz-scene',
+          JSON.stringify({ 'certificate-question': 'a' }),
+        );
+      }
+    },
+    { settings: settingsStorage, certificateEligible },
+  );
 
   // Navigate to the app page first — this causes Dexie to open/create the DB at v8
   // with the correct schema. We wait for network idle to ensure Dexie is done.
