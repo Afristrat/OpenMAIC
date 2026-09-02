@@ -35,7 +35,7 @@ test.describe('Page Mes certificats (U-008)', () => {
     await page.reload();
     await expect(page.getByRole('button', { name: /Pilotage budgétaire/ })).toBeVisible();
     await page.getByRole('button', { name: /Pilotage budgétaire/ }).click();
-    await expect(page.getByText('QAL-2026-PERSIST1')).toBeVisible();
+    await expect(page.locator('.cert-verify-code')).toHaveText('QAL-2026-PERSIST1');
   });
 
   for (const { locale, dir, heading, empty } of [
