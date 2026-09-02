@@ -190,6 +190,23 @@ export async function POST(request: NextRequest) {
       .select()
       .single();
 
+    if (insertError?.code === '23505') {
+      const { data: concurrent } = await supabase
+        .from('certificates')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('stage_id', stageId)
+        .maybeSingle();
+
+      if (concurrent) {
+        const baseUrl = buildBaseUrl(request);
+        return apiSuccess({
+          certificate: certificateFromRow(concurrent as CertificateRow, baseUrl),
+          alreadyExisted: true,
+        });
+      }
+    }
+
     if (insertError || !inserted) {
       return apiError(
         API_ERROR_CODES.INTERNAL_ERROR,
