@@ -18,6 +18,7 @@ import { useSettingsStore } from '@/lib/store/settings';
 import { useUserProfileStore } from '@/lib/store/user-profile';
 import { useAgentRegistry } from '@/lib/orchestration/registry/store';
 import { useI18n } from '@/lib/hooks/use-i18n';
+import { getCurrentOrganizationId } from '@/lib/hooks/use-organizations';
 import { getCurrentModelConfig } from '@/lib/utils/model-config';
 import { USER_AVATAR } from '@/lib/types/roundtable';
 import { StreamBuffer } from '@/lib/buffer/stream-buffer';
@@ -506,7 +507,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
             fetch('/api/chat', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(body),
+              body: JSON.stringify({ ...body, orgId: getCurrentOrganizationId() }),
               signal,
             }),
 

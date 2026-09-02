@@ -26,10 +26,11 @@ import {
   readClassroomSkillPromptContext,
 } from '@/lib/server/classroom-storage';
 import { resolveOrganizationSkillId } from '@/lib/server/skill-resolution';
-import { requireAuth, requireSuperAdminOrOrgMember } from '@/lib/api/auth';
+import { requireSuperAdminOrOrgMember } from '@/lib/api/auth';
 import { latestExplicitLearnerMessage } from '@/lib/webhooks/classroom-interaction';
 import { enqueueClassroomInteraction } from '@/lib/jobs/queue';
 import { getActionsForRole } from '@/lib/orchestration/registry/types';
+import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
 const log = createLogger('Chat API');
 
 // Allow streaming responses up to 60 seconds
@@ -58,9 +59,6 @@ export async function POST(req: NextRequest) {
   let liveOrgId: string | null = null;
 
   try {
-    const authentication = await requireAuth(req);
-    if (authentication.response) return authentication.response;
-
     const body: StatelessChatRequest = await req.json();
     chatModel = body.model;
     chatMessageCount = body.messages?.length;
@@ -77,6 +75,11 @@ export async function POST(req: NextRequest) {
     if (!body.config || !body.config.agentIds || body.config.agentIds.length === 0) {
       return apiError('MISSING_REQUIRED_FIELD', 400, 'Missing required field: config.agentIds');
     }
+    const orgId = body.orgId?.trim();
+    if (!orgId) return apiError('MISSING_REQUIRED_FIELD', 400, 'Organization is required');
+    const authentication = await requireSuperAdminOrOrgMember(req, orgId);
+    if (authentication.response) return authentication.response;
+    liveOrgId = orgId;
 
     // The browser sends the stage back on every stateless turn, so prompt
     // activation must be re-established from server-owned state. This also
@@ -91,9 +94,9 @@ export async function POST(req: NextRequest) {
         log.warn('Persisted live skill context is unavailable; using the core engine', error);
       }
       if (persisted) {
-        liveOrgId = persisted.orgId;
-        const access = await requireSuperAdminOrOrgMember(req, persisted.orgId);
-        if (access.response) return access.response;
+        if (persisted.orgId !== orgId) {
+          return apiError('INVALID_REQUEST', 403, 'Classroom organization mismatch');
+        }
 
         if (persisted.animationConstitution) {
           const allowedIds = new Set(
@@ -200,7 +203,7 @@ export async function POST(req: NextRequest) {
 
     // Stream generation in background with heartbeat to prevent connection timeout
     const HEARTBEAT_INTERVAL_MS = 15_000;
-    (async () => {
+    void runWithUsageMeteringContext(req.headers, authentication.user.id, orgId, async () => {
       // Heartbeat: periodically send SSE comments to keep the connection alive.
       // Proxies / browsers may close idle SSE connections after 30-120s of silence.
       let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
@@ -291,7 +294,7 @@ export async function POST(req: NextRequest) {
           // Writer may already be closed
         }
       }
-    })();
+    });
 
     return new Response(readable, {
       headers: {

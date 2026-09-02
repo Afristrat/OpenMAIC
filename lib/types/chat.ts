@@ -245,6 +245,8 @@ export interface DirectorState {
  * All state is sent from the client on each request
  */
 export interface StatelessChatRequest {
+  /** Active tenant asserted by the client and verified by the API. */
+  orgId?: string;
   /** Conversation history (client-maintained) */
   messages: UIMessage<ChatMessageMetadata>[];
   /** Current application state */
