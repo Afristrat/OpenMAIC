@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   buildCompleteScene: vi.fn(),
   buildVisionUserContent: vi.fn(),
   resolveVocationalActive: vi.fn(),
+  requireOrgAuthor: vi.fn(),
 }));
 
 vi.mock('@/lib/ai/llm', () => ({
@@ -22,6 +23,10 @@ vi.mock('@/lib/server/resolve-model', () => ({
 
 vi.mock('@/lib/config/feature-flags', () => ({
   resolveVocationalActive: mocks.resolveVocationalActive,
+}));
+
+vi.mock('@/lib/api/auth', () => ({
+  requireSuperAdminOrOrgAuthor: mocks.requireOrgAuthor,
 }));
 
 vi.mock('@/lib/flags', () => ({
@@ -68,6 +73,21 @@ describe('scene API retry boundary', () => {
     mocks.applyOutlineFallbacks.mockImplementation((value) => value);
     mocks.callLLM.mockResolvedValue({ text: 'ok' });
     mocks.resolveVocationalActive.mockReturnValue(false);
+    mocks.requireOrgAuthor.mockResolvedValue({
+      user: { id: 'user-1', email: 'a@example.com' },
+      authoredByRole: 'author',
+    });
+  });
+
+  it('rejects scene generation without a tenant before model resolution', async () => {
+    vi.resetModules();
+    const { POST } = await import('@/app/api/generate/scene-content/route');
+
+    const response = await POST(mockRequest({ orgId: undefined }));
+
+    expect(response.status).toBe(400);
+    expect(mocks.requireOrgAuthor).not.toHaveBeenCalled();
+    expect(mocks.resolveModelFromRequest).not.toHaveBeenCalled();
   });
 
   it('disables AI SDK retries for scene-content model calls', async () => {
@@ -203,6 +223,7 @@ function mockRequest(extraBody: Record<string, unknown> = {}) {
       outline,
       allOutlines: [outline],
       stageId: 'stage-1',
+      orgId: 'org-1',
       stageInfo: { name: 'Retry Course' },
       ...extraBody,
     }),
