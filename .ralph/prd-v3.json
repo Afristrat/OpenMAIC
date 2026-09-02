@@ -3196,8 +3196,8 @@
       "description": "En tant que super-administrateur Qalem, je veux une grammaire déclarative sûre afin de composer des widgets sans générer de code exécutable.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P2",
-      "status": "in_progress",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "type": "split_from_story",
         "id": "S6-015",
@@ -3205,7 +3205,7 @@
       },
       "sourceDependencies": ["S6-016"],
       "dependencies": ["S6-016"],
-      "gap": "Le runtime partagé contient des contrôles et calculs bornés, mais ses variantes sont codées en dur et aucun contrat de composition générique n'est publiable.",
+      "gap": "Soldé : un contrat strict et générique décrit, valide et évalue les compositions v1 sans code exécutable, avec bornes structurelles, références contrôlées et détection des cycles.",
       "evidence": [
         "public/plugin-runtime/business-simulator.js",
         "lib/plugins/schema-validator.ts",
@@ -3218,7 +3218,14 @@
         "Refuser les briques inconnues, références invalides, cycles, profondeurs et nombres de nœuds hors bornes.",
         "Valider des cas de référence littéraux en français et en arabe RTL ; aucune nouvelle brique 3D ou vidéo."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-02 — TDD prouvé : e888c06 introduit le test avant le module ; 7212f3e rend le module importable mais laisse cinq assertions comportementales rouges ; les commits be10e87, 27773cd, 18ff236 et 0608486 apportent ensuite l'implémentation minimale, le formatage, le raffinement TypeScript et la correction d'une fixture de cycle.",
+        "2026-09-02 — SHA fonctionnel exact 0608486e679bf9725d0d323d4df20bc76adc3b84 poussé sur origin/refork-v030. Le schéma Zod strict accepte seulement texte, entrée numérique, valeur calculée, condition, tableau, graphique en barres et layout ; toute brique ou propriété inconnue est refusée.",
+        "2026-09-02 — L'AST numérique est limité aux littéraux, références, addition, multiplication, minimum, maximum, soustraction, division et arrondi. Le runtime n'accepte ni expression textuelle, ni HTML, ni JavaScript, ni eval, ni Function ; il refuse division par zéro et résultat non fini.",
+        "2026-09-02 — Les garde-fous bornent profondeur, nombre d'expressions, entrées, calculs, nœuds, racines et cas de référence ; ils refusent identifiants dupliqués, références absentes, cycles de calcul ou de layout, largeurs de tableaux invalides et direction incohérente avec ar-MA.",
+        "2026-09-02 — Six tests de référence couvrent calculs composés, valeurs saisies, erreurs de frontière, cycles, français littéral et arabe ar-MA en RTL ; aucune brique 3D ou vidéo n'existe dans l'union autorisée.",
+        "2026-09-02 — Gate complet ServeurIA dans le clone isolé au SHA exact : Prettier, TypeScript et ESLint verts ; 413/413 fichiers et 2 606/2 606 tests Vitest ; build 104/104 pages ; 97/97 Playwright sous Chromium avec --retries=0 en 4,3 minutes. Synthèse : docs/validation/S6-026-widget-composition.md."
+      ],
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
