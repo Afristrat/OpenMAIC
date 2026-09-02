@@ -55,7 +55,7 @@ async function seedDatabase(
   // onupgradeneeded, so we can safely write to the already-initialized schema.
   const seedStageData = () =>
     page.evaluate(
-      ({ stageId, theme, generationComplete }) => {
+      ({ stageId, theme, generationComplete, certificateEligible }) => {
         return new Promise<void>((resolve, reject) => {
           // Open without specifying version — uses current DB version, no upgrade event
           const request = indexedDB.open('MAIC-Database');
