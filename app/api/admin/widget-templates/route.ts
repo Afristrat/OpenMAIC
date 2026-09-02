@@ -22,11 +22,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       })
       .single();
     if (error || !data) {
-      return apiError(
-        API_ERROR_CODES.INTERNAL_ERROR,
-        500,
-        'Failed to create widget template',
-      );
+      return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to create widget template');
     }
     return apiSuccess(data, 201);
   } catch {

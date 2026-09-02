@@ -26,18 +26,10 @@ export async function PATCH(
       })
       .single();
     if (error || !data) {
-      return apiError(
-        API_ERROR_CODES.INTERNAL_ERROR,
-        500,
-        'Failed to revise widget template',
-      );
+      return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to revise widget template');
     }
     return apiSuccess(data);
   } catch {
-    return apiError(
-      API_ERROR_CODES.INVALID_REQUEST,
-      400,
-      'Invalid widget template revision',
-    );
+    return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid widget template revision');
   }
 }

@@ -24,11 +24,7 @@ export async function POST(
       .eq('id', versionId)
       .single();
     if (error || !data) {
-      return apiError(
-        API_ERROR_CODES.INVALID_REQUEST,
-        404,
-        'Widget template version not found',
-      );
+      return apiError(API_ERROR_CODES.INVALID_REQUEST, 404, 'Widget template version not found');
     }
     const composition = parseWidgetComposition(data.composition);
     return apiSuccess({
