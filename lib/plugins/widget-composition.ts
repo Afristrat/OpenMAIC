@@ -200,7 +200,7 @@ function inspectExpression(
     inspectExpression(expression.value, validReferences, state, depth + 1);
     return;
   }
-  if (expression.op === 'subtract' || expression.op === 'divide') {
+  if ('left' in expression) {
     inspectExpression(expression.left, validReferences, state, depth + 1);
     inspectExpression(expression.right, validReferences, state, depth + 1);
     return;
