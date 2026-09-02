@@ -1637,19 +1637,21 @@
       "description": "En tant qu’utilisateur de Qalem, je veux terminer le diagnostic mémoire propre à qalem afin que le parcours promis soit réellement utilisable.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P0",
-      "status": "blocked",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "type": "request_or_observed_gap",
         "date": "2026-08-26"
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Le dimensionnement du build est commité ; la stabilité actuelle des conteneurs Qalem et la fermeture de la demande OOM restent à re-prouver. Ne pas transférer ce chantier à Saqr.",
+      "gap": "Soldé : aucun OOM historique ou courant n’est imputable aux conteneurs Qalem ; les limites persistantes, la séparation web/worker/capture et un scénario borné génération + exports sont re-prouvés.",
       "evidence": [
         "Dockerfile",
         "next.config.ts",
         "infra/coolify/qalem-runtime.yml",
+        "lib/jobs/workers.ts",
+        "docs/validation/S6-002-qalem-memory-diagnostic.md",
         "git:53bc4ad"
       ],
       "acceptance": [
@@ -1658,11 +1660,19 @@
         "Vérifier les limites persistantes après recréation d’un conteneur de test ; documenter toute intervention Qalem encore nécessaire.",
         "Ne modifier ni swap global ni conteneur d’un autre projet ; signaler séparément toute cause externe."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-02 — Journal noyau ServeurIA depuis le 20 août : les OOM récurrents ciblent le cgroup 3d8d363f… identifié comme supabase-edge-functions-r11y…, hors stack Qalem ; aucun cgroup Qalem n’apparaît dans les événements OOM.",
+        "2026-09-02 — L’OOM Python du 26 août cible le cgroup supprimé 38fb2357… limité à 5 Gio. Son arbre npm backend/frontend, Vite, uv, Gunicorn, Python et esbuild correspond exactement à l’incarnation MiroShark actuelle et à aucun runner Qalem ; l’attribution au projet externe est fondée sur cette signature système conservée.",
+        "2026-09-02 — Après recréation au SHA cd3109a9c2f1a64de8e99be6676fe7564163dac4 : web 1,5 Gio/2 CPU, worker 3 Gio/3 CPU, capture 1,5 Gio/1,5 CPU. Tous healthy, restart=0, OOMKilled=false ; mémoire au repos 149,5 Mio, 197,6 Mio et 100,2 Mio.",
+        "2026-09-02 — Scénario borné à 4 Gio, sans swap et 2 CPU : génération et exports MP4/tous formats, 10/10 Playwright en 1,6 minute, exit=0, OOM=false. Pic anonyme 4 080 427 008 octets, cache fichier 1 108 103 168, noyau 87 724 032 ; l’isolation production du navigateur reste nécessaire.",
+        "2026-09-02 — Les limites correspondent au manifeste persistant, au plafond V8 et à WORKER_HEAVY_CONCURRENCY=1 ; le build Next reste borné à deux workers. Aucun changement de swap global ni d’un autre projet n’a été effectué. Harnais supprimé avec CLEANUP_OK.",
+        "2026-09-02 — Gate du code de production inchangé et exact, exécuté le même jour : Prettier, TypeScript et ESLint verts ; 408/408 fichiers, 2 591/2 591 Vitest, build 103/103 pages et 89/89 Playwright. Synthèse : docs/validation/S6-002-qalem-memory-diagnostic.md."
+      ],
       "historicalDependencies": [],
-      "executionAllowed": false,
+      "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 2
+      "priorityRank": 2,
+      "completedAt": "2026-09-02"
     },
     {
       "id": "S0-015",
