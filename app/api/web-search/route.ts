@@ -22,6 +22,7 @@ import type { BaiduSubSources, WebSearchProviderId } from '@/lib/web-search/type
 import { resolveWebSearchRouteBaseUrl } from '@/lib/server/web-search-config';
 import { enrichSourcesWithCrawl4AI } from '@/lib/server/crawl4ai';
 import { requireOrgMember } from '@/lib/api/auth';
+import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
 
 const log = createLogger('WebSearch');
 
@@ -54,91 +55,93 @@ export async function POST(req: NextRequest) {
     const auth = await requireOrgMember(req, orgId);
     if (auth.response) return auth.response;
 
-    if (!query || !query.trim()) {
-      return apiError('MISSING_REQUIRED_FIELD', 400, 'query is required');
-    }
+    return await runWithUsageMeteringContext(req.headers, auth.user.id, orgId, async () => {
+      if (!query || !query.trim()) {
+        return apiError('MISSING_REQUIRED_FIELD', 400, 'query is required');
+      }
 
-    const providerId: WebSearchProviderId =
-      requestProviderId && WEB_SEARCH_PROVIDERS[requestProviderId] ? requestProviderId : 'tavily';
-    const provider = WEB_SEARCH_PROVIDERS[providerId];
-    // Managed providers are admin-owned: ignore (don't reject) any client-sent
-    // key/baseUrl. The server config is authoritative, so a stale client base
-    // URL is dropped rather than failing the request.
-    const managed = isServerConfiguredProvider('webSearch', providerId);
-    const clientApiKey = managed ? undefined : bodyApiKey;
-    const clientBaseUrl = managed ? undefined : bodyBaseUrl;
-    const apiKey = resolveWebSearchApiKey(providerId, clientApiKey);
-    if (provider.requiresApiKey && !apiKey) {
-      return apiError(
-        'MISSING_API_KEY',
-        400,
-        `${provider.name} API key is not configured. Set it in Settings -> Web Search or configure ${getWebSearchEnvKey(providerId)} on the server.`,
-      );
-    }
-    let baseUrl: string | undefined;
-    try {
-      baseUrl = resolveWebSearchRouteBaseUrl(providerId, clientBaseUrl);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Invalid web search base URL';
-      return apiError('INVALID_REQUEST', 400, message);
-    }
-
-    // Clamp rewrite input at the route boundary; framework body limits still apply to total request size.
-    const boundedPdfText = pdfText?.slice(0, SEARCH_QUERY_REWRITE_EXCERPT_LENGTH);
-
-    let aiCall: AICallFn | undefined;
-    try {
-      const { model: languageModel, thinkingConfig } = await resolveModelFromRequest(
-        req,
-        body,
-        'web-search-query-rewrite',
-      );
-      aiCall = async (systemPrompt, userPrompt) => {
-        const result = await callLLM(
-          {
-            model: languageModel,
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: userPrompt },
-            ],
-            maxOutputTokens: 256,
-          },
-          'web-search-query-rewrite',
-          undefined,
-          thinkingConfig,
+      const providerId: WebSearchProviderId =
+        requestProviderId && WEB_SEARCH_PROVIDERS[requestProviderId] ? requestProviderId : 'tavily';
+      const provider = WEB_SEARCH_PROVIDERS[providerId];
+      // Managed providers are admin-owned: ignore (don't reject) any client-sent
+      // key/baseUrl. The server config is authoritative, so a stale client base
+      // URL is dropped rather than failing the request.
+      const managed = isServerConfiguredProvider('webSearch', providerId);
+      const clientApiKey = managed ? undefined : bodyApiKey;
+      const clientBaseUrl = managed ? undefined : bodyBaseUrl;
+      const apiKey = resolveWebSearchApiKey(providerId, clientApiKey);
+      if (provider.requiresApiKey && !apiKey) {
+        return apiError(
+          'MISSING_API_KEY',
+          400,
+          `${provider.name} API key is not configured. Set it in Settings -> Web Search or configure ${getWebSearchEnvKey(providerId)} on the server.`,
         );
-        return result.text;
-      };
-    } catch (error) {
-      log.warn('Search query rewrite model unavailable, falling back to raw requirement:', error);
-    }
+      }
+      let baseUrl: string | undefined;
+      try {
+        baseUrl = resolveWebSearchRouteBaseUrl(providerId, clientBaseUrl);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Invalid web search base URL';
+        return apiError('INVALID_REQUEST', 400, message);
+      }
 
-    const searchQuery = await buildSearchQuery(query, boundedPdfText, aiCall);
+      // Clamp rewrite input at the route boundary; framework body limits still apply to total request size.
+      const boundedPdfText = pdfText?.slice(0, SEARCH_QUERY_REWRITE_EXCERPT_LENGTH);
 
-    log.info('Running web search API request', {
-      hasPdfContext: searchQuery.hasPdfContext,
-      rawRequirementLength: searchQuery.rawRequirementLength,
-      rewriteAttempted: searchQuery.rewriteAttempted,
-      finalQueryLength: searchQuery.finalQueryLength,
-    });
+      let aiCall: AICallFn | undefined;
+      try {
+        const { model: languageModel, thinkingConfig } = await resolveModelFromRequest(
+          req,
+          body,
+          'web-search-query-rewrite',
+        );
+        aiCall = async (systemPrompt, userPrompt) => {
+          const result = await callLLM(
+            {
+              model: languageModel,
+              messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: userPrompt },
+              ],
+              maxOutputTokens: 256,
+            },
+            'web-search-query-rewrite',
+            undefined,
+            thinkingConfig,
+          );
+          return result.text;
+        };
+      } catch (error) {
+        log.warn('Search query rewrite model unavailable, falling back to raw requirement:', error);
+      }
 
-    const result = await searchWeb({
-      providerId,
-      query: searchQuery.query,
-      apiKey,
-      baseUrl,
-      ...(providerId === 'baidu' && baiduSubSources ? { baiduSubSources } : {}),
-    });
-    const enrichedSources = await enrichSourcesWithCrawl4AI(result.sources, searchQuery.query);
-    const enrichedResult = { ...result, sources: enrichedSources };
-    const context = formatSearchResultsAsContext(enrichedResult);
+      const searchQuery = await buildSearchQuery(query, boundedPdfText, aiCall);
 
-    return apiSuccess({
-      answer: enrichedResult.answer,
-      sources: enrichedResult.sources,
-      context,
-      query: enrichedResult.query,
-      responseTime: enrichedResult.responseTime,
+      log.info('Running web search API request', {
+        hasPdfContext: searchQuery.hasPdfContext,
+        rawRequirementLength: searchQuery.rawRequirementLength,
+        rewriteAttempted: searchQuery.rewriteAttempted,
+        finalQueryLength: searchQuery.finalQueryLength,
+      });
+
+      const result = await searchWeb({
+        providerId,
+        query: searchQuery.query,
+        apiKey,
+        baseUrl,
+        ...(providerId === 'baidu' && baiduSubSources ? { baiduSubSources } : {}),
+      });
+      const enrichedSources = await enrichSourcesWithCrawl4AI(result.sources, searchQuery.query);
+      const enrichedResult = { ...result, sources: enrichedSources };
+      const context = formatSearchResultsAsContext(enrichedResult);
+
+      return apiSuccess({
+        answer: enrichedResult.answer,
+        sources: enrichedResult.sources,
+        context,
+        query: enrichedResult.query,
+        responseTime: enrichedResult.responseTime,
+      });
     });
   } catch (err) {
     log.error(`Web search failed [query="${query?.substring(0, 60) ?? 'unknown'}"]:`, err);

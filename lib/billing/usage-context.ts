@@ -17,20 +17,37 @@ export type UsageOperationContext = Omit<UsageRequestContext, 'sequence'> & {
 const usageContext = new AsyncLocalStorage<UsageRequestContext>();
 const IDEMPOTENCY_KEY = /^[A-Za-z0-9][A-Za-z0-9._:-]{7,95}$/;
 
-export function activateUsageMeteringContext(
+function createRequestContext(
   headers: Headers,
   actorUserId: string,
   tenantId: string,
-): void {
+): UsageRequestContext {
   const suppliedKey = headers.get('idempotency-key')?.trim();
   const idempotencyStable = suppliedKey !== undefined && IDEMPOTENCY_KEY.test(suppliedKey);
-  usageContext.enterWith({
+  return {
     actorUserId,
     tenantId,
     requestKey: idempotencyStable ? suppliedKey : `request-${randomUUID()}`,
     idempotencyStable,
     sequence: 0,
-  });
+  };
+}
+
+export function activateUsageMeteringContext(
+  headers: Headers,
+  actorUserId: string,
+  tenantId: string,
+): void {
+  usageContext.enterWith(createRequestContext(headers, actorUserId, tenantId));
+}
+
+export function runWithUsageMeteringContext<T>(
+  headers: Headers,
+  actorUserId: string,
+  tenantId: string,
+  callback: () => T,
+): T {
+  return usageContext.run(createRequestContext(headers, actorUserId, tenantId), callback);
 }
 
 export function activateUsageMeteringJob(
