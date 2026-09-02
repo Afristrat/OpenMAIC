@@ -3822,8 +3822,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Page Mes certificats » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P2",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd-ui.json",
         "id": "U-008",
@@ -3831,13 +3831,32 @@
       },
       "sourceDependencies": ["U-007"],
       "dependencies": ["U-007"],
-      "gap": "Page existante ; parcours amont du certificat non soldé.",
-      "evidence": ["app/certificates/page.tsx"],
+      "gap": "Résolu : liste authentifiée côté serveur, erreur récupérable, RLS propriétaire et vérification publique confinée à l’endpoint dédié.",
+      "evidence": [
+        "app/certificates/page.tsx",
+        "app/api/certificates/route.ts",
+        "app/api/certificates/verify/[code]/route.ts",
+        "supabase/migrations/00058_secure_certificate_visibility.sql",
+        "tests/api/certificates-list.test.ts",
+        "tests/api/certificates-verify.test.ts",
+        "tests/security/certificates-rls-migration.test.ts",
+        "e2e/tests/certificates-page.spec.ts",
+        "docs/validation/U-008-my-certificates.md"
+      ],
       "acceptance": [
         "Un certificat obtenu via le parcours U-007 apparaît après rechargement et n’est visible que par son bénéficiaire autorisé.",
         "Vérifier les états vide, erreur et consultation FR/AR/EN."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-02 — SHA fonctionnel b987a5d020cd9c52727374370ed2333084797665 poussé sur origin/refork-v030 : liste authentifiée côté serveur, états vide/erreur/consultation FR/AR/EN et vérification publique confinée.",
+        "2026-09-02 — TDD : RED navigateur au SHA 5347bf4d522fd4177ea782675e8a63526a6cea3e, RED API au SHA a0796ad1b47a365ab5139ebd70823b70d902745d et RED migration au SHA 55a771da89399da2881ca190dff486afb7a5ee8b ; mêmes preuves GREEN au SHA fonctionnel.",
+        "2026-09-02 — Gate ServeurIA exact : Prettier, TypeScript et ESLint verts ; 412/412 fichiers et 2 600/2 600 tests Vitest ; build 104/104 pages ; 97/97 scénarios Playwright en 4,2 minutes.",
+        "2026-09-02 — Base Qalem réelle : politique Public verification lookup|true observée avant migration ; migration 00058 appliquée avec arrêt sur erreur ; relecture finale limitée à la création authentifiée et à la lecture propriétaire.",
+        "2026-09-02 — Déploiement Coolify hozt48kbaou5bz0qpsffweir terminé au SHA exact ; conteneur bcx5pxyuc9z3lt4jtyjipcqu-181158388780 healthy, RestartCount=0, OOMKilled=false et /api/health=200.",
+        "2026-09-02 — Recette production sans mock : lecture anonyme directe zéro ligne, liste anonyme 401, vérification publique 200, bénéficiaire visible après rechargement et consultation, FR/EN/AR avec RTL, utilisateur extérieur zéro certificat.",
+        "2026-09-02 — Nettoyage certifié : zéro certificat, stage et compte Auth u008-* ; scripts et clone temporaires supprimés.",
+        "Artefact : docs/validation/U-008-my-certificates.md"
+      ],
       "historicalEvidence": {
         "completedAt": "2026-03-29T23:48:14.366Z",
         "status": "legacy_claim_not_delivery_proof"
