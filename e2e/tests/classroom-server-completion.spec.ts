@@ -26,6 +26,7 @@ test('offers course completion for an authoritative server classroom', async ({ 
         classroom: {
           id: STAGE_ID,
           url: `/classroom/${STAGE_ID}`,
+          generationComplete: true,
           stage: {
             id: STAGE_ID,
             name: 'Authoritative server course',
