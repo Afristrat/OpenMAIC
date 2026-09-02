@@ -74,19 +74,17 @@ export function ModelEditDialog({
       const response = await fetch('/api/verify-model', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(
-          {
-            ...createVerifyModelRequest({
-              providerId,
-              modelId: editingModel.model.id,
-              apiKey,
-              baseUrl,
-              providerType,
-              requiresApiKey,
-            }),
-            orgId: getCurrentOrganizationId(),
-          },
-        ),
+        body: JSON.stringify({
+          ...createVerifyModelRequest({
+            providerId,
+            modelId: editingModel.model.id,
+            apiKey,
+            baseUrl,
+            providerType,
+            requiresApiKey,
+          }),
+          orgId: getCurrentOrganizationId(),
+        }),
       });
 
       const data = await response.json();

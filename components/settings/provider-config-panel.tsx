@@ -126,19 +126,17 @@ export function ProviderConfigPanel({
       const response = await fetch('/api/verify-model', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(
-          {
-            ...createVerifyModelRequest({
-              providerId: provider.id,
-              modelId: testModelId,
-              apiKey,
-              baseUrl,
-              providerType: provider.type,
-              requiresApiKey,
-            }),
-            orgId: getCurrentOrganizationId(),
-          },
-        ),
+        body: JSON.stringify({
+          ...createVerifyModelRequest({
+            providerId: provider.id,
+            modelId: testModelId,
+            apiKey,
+            baseUrl,
+            providerType: provider.type,
+            requiresApiKey,
+          }),
+          orgId: getCurrentOrganizationId(),
+        }),
       });
 
       const data = await response.json();
