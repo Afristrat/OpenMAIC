@@ -4,6 +4,7 @@ import type { NextRequest } from 'next/server';
 const mocks = vi.hoisted(() => ({
   resolveModel: vi.fn(),
   callLLM: vi.fn(),
+  requireOrgMember: vi.fn(),
 }));
 
 vi.mock('@/lib/server/resolve-model', () => ({
@@ -13,6 +14,8 @@ vi.mock('@/lib/server/resolve-model', () => ({
 vi.mock('@/lib/ai/llm', () => ({
   callLLM: mocks.callLLM,
 }));
+
+vi.mock('@/lib/api/auth', () => ({ requireOrgMember: mocks.requireOrgMember }));
 
 vi.mock('@/lib/logger', () => ({
   createLogger: () => ({
@@ -38,8 +41,20 @@ describe('POST /api/verify-model', () => {
     vi.resetModules();
     mocks.resolveModel.mockReset();
     mocks.callLLM.mockReset();
+    mocks.requireOrgMember.mockReset().mockResolvedValue({
+      user: { id: 'user-1', email: 'a@example.com' },
+    });
     mocks.resolveModel.mockResolvedValue({ model: { id: 'language-model' } });
     mocks.callLLM.mockResolvedValue({ text: 'OK' });
+  });
+
+  it('rejects a model check without a tenant before resolving the provider', async () => {
+    const res = await postVerifyModel({ model: 'xiaomi:mimo-v2.5-pro' });
+
+    expect(res.status).toBe(400);
+    expect(mocks.requireOrgMember).not.toHaveBeenCalled();
+    expect(mocks.resolveModel).not.toHaveBeenCalled();
+    expect(mocks.callLLM).not.toHaveBeenCalled();
   });
 
   it('rejects requests without a model name', async () => {
@@ -57,6 +72,7 @@ describe('POST /api/verify-model', () => {
 
   it('uses the unified LLM wrapper with thinking disabled for connection checks', async () => {
     const res = await postVerifyModel({
+      orgId: 'org-1',
       model: 'xiaomi:mimo-v2.5-pro',
       apiKey: 'tp-test',
       baseUrl: 'https://token-plan-cn.xiaomimimo.com/v1',
