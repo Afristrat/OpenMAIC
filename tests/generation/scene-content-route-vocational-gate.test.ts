@@ -121,6 +121,7 @@ describe('scene-content vocational gate', () => {
 
 function mockRequest(outline: SceneOutline, requirements?: { taskEngineMode?: boolean }) {
   return {
+    headers: new Headers({ 'Idempotency-Key': 'scene-test-001' }),
     json: async () => ({
       outline,
       allOutlines: [outline],

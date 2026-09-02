@@ -219,6 +219,7 @@ describe('scene API retry boundary', () => {
 
 function mockRequest(extraBody: Record<string, unknown> = {}) {
   return {
+    headers: new Headers({ 'Idempotency-Key': 'scene-test-001' }),
     json: async () => ({
       outline,
       allOutlines: [outline],
