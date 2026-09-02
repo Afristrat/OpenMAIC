@@ -26,13 +26,20 @@ const certificate = {
   created_at: '2026-09-02T12:00:00.000Z',
 };
 
-function query(result: { data: unknown; error: { message: string } | null }) {
+function query(
+  result: { data: unknown; error: { message: string } | null },
+  expectedUserId?: string,
+) {
   const builder: Record<string, unknown> = {};
-  for (const method of ['select', 'eq', 'order']) {
-    builder[method] = vi.fn(() => builder);
-  }
+  let userScoped = !expectedUserId;
+  builder.select = vi.fn(() => builder);
+  builder.eq = vi.fn((column: string, value: string) => {
+    if (column === 'user_id' && value === expectedUserId) userScoped = true;
+    return builder;
+  });
+  builder.order = vi.fn(() => builder);
   builder.then = (resolve: (value: typeof result) => unknown, reject: (reason: unknown) => unknown) =>
-    Promise.resolve(result).then(resolve, reject);
+    Promise.resolve(userScoped ? result : { data: [], error: null }).then(resolve, reject);
   return builder;
 }
 
@@ -57,7 +64,7 @@ describe('GET /api/certificates', () => {
       auth: {
         getUser: vi.fn(async () => ({ data: { user: { id: USER_ID } }, error: null })),
       },
-      from: vi.fn(() => query({ data: [certificate], error: null })),
+      from: vi.fn(() => query({ data: [certificate], error: null }, USER_ID)),
     });
 
     const response = await GET();

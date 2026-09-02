@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Award, Calendar, Hash, ChevronRight } from 'lucide-react';
+import { AlertCircle, Award, Calendar, Hash, ChevronRight } from 'lucide-react';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useAuth } from '@/lib/hooks/use-auth';
-import { tryCreateClient } from '@/lib/supabase/client';
 import { renderCertificateHTML } from '@/lib/certificates/generator';
 import { cn } from '@/lib/utils';
 import {
@@ -12,7 +11,7 @@ import {
   loadGuestCertificates,
   type GuestCertificateData,
 } from '@/components/certificate-prompt';
-import type { Certificate } from '@/lib/certificates/types';
+import type { Certificate, CertificateRow } from '@/lib/certificates/types';
 import type { Locale } from '@/lib/i18n';
 
 // ---------------------------------------------------------------------------
@@ -39,12 +38,14 @@ export default function CertificatesPage(): React.ReactElement {
 
   const [certificates, setCertificates] = useState<CertificateCardData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [selectedCert, setSelectedCert] = useState<CertificateCardData | null>(null);
 
   const isRtl = locale === 'ar-MA';
 
   const loadCertificates = useCallback(async () => {
     setLoading(true);
+    setLoadError(false);
     try {
       if (isGuest || !user) {
         // Load from localStorage for guests
@@ -60,24 +61,19 @@ export default function CertificatesPage(): React.ReactElement {
         }));
         setCertificates(cards);
       } else {
-        // Load from Supabase for authenticated users
-        const supabase = tryCreateClient();
-        if (!supabase) return;
-
-        const { data, error } = await supabase
-          .from('certificates')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('completion_date', { ascending: false });
-
-        if (error) {
-          console.error('Failed to load certificates:', error);
-          return;
+        const response = await fetch('/api/certificates', { cache: 'no-store' });
+        if (!response.ok) throw new Error(`Certificate request failed: ${response.status}`);
+        const body = (await response.json()) as {
+          success: boolean;
+          certificates?: CertificateRow[];
+        };
+        if (!body.success || !Array.isArray(body.certificates)) {
+          throw new Error('Invalid certificate response');
         }
 
-        if (data) {
+        if (body.certificates) {
           const baseUrl = `${window.location.protocol}//${window.location.host}`;
-          const cards: CertificateCardData[] = data.map((row) => {
+          const cards: CertificateCardData[] = body.certificates.map((row) => {
             const cert: Certificate = {
               id: row.id,
               userId: row.user_id,
@@ -105,8 +101,9 @@ export default function CertificatesPage(): React.ReactElement {
           setCertificates(cards);
         }
       }
-    } catch (error) {
-      console.error('Failed to load certificates:', error);
+    } catch {
+      setCertificates([]);
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -157,6 +154,20 @@ export default function CertificatesPage(): React.ReactElement {
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="size-8 border-2 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
+          </div>
+        ) : loadError ? (
+          <div role="alert" className="flex flex-col items-center justify-center py-20 text-center">
+            <AlertCircle className="size-10 text-red-500 mb-4" />
+            <p className="text-base text-gray-600 dark:text-gray-300 mb-5">
+              {t('certificate.loadError')}
+            </p>
+            <button
+              type="button"
+              onClick={() => void loadCertificates()}
+              className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700"
+            >
+              {t('certificate.retry')}
+            </button>
           </div>
         ) : certificates.length === 0 ? (
           /* Empty state */

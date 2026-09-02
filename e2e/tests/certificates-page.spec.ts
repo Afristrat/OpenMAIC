@@ -93,7 +93,7 @@ test.describe('Page Mes certificats (U-008)', () => {
 
     await page.goto('/certificates');
 
-    await expect(page.getByRole('alert')).toContainText(
+    await expect(page.locator('main [role="alert"]')).toContainText(
       'Impossible de charger vos certificats.',
     );
     await expect(page.getByRole('button', { name: 'Réessayer' })).toBeVisible();

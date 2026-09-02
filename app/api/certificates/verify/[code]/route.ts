@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServiceSupabaseClient } from '@/lib/supabase/service';
 
 /**
  * GET /api/certificates/verify/[code]
@@ -21,7 +21,7 @@ export async function GET(
       );
     }
 
-    const supabase = await createServerSupabaseClient();
+    const supabase = createServiceSupabaseClient();
 
     const { data: cert, error } = await supabase
       .from('certificates')
