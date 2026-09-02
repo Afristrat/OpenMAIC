@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
 const callLLM = vi.fn();
+const requireOrgAuthor = vi.fn();
 
 vi.mock('@/lib/ai/llm', () => ({
   callLLM: (...args: unknown[]) => callLLM(...args),
@@ -15,13 +16,18 @@ vi.mock('@/lib/server/resolve-model', () => ({
   }),
 }));
 
+vi.mock('@/lib/api/auth', () => ({
+  requireSuperAdminOrOrgAuthor: (...args: unknown[]) => requireOrgAuthor(...args),
+}));
+
 import { POST } from '@/app/api/generate/agent-profiles/route';
 
-function makeRequest(): NextRequest {
+function makeRequest(includeOrgId = true): NextRequest {
   return new NextRequest('http://localhost/api/generate/agent-profiles', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
+      ...(includeOrgId ? { orgId: 'org-1' } : {}),
       stageInfo: { name: 'Intro to Algebra' },
       languageDirective: 'Respond in English.',
       availableAvatars: ['/a.png', '/b.png'],
@@ -54,7 +60,21 @@ function llmAgents(extra: Record<string, unknown>) {
 }
 
 describe('agent-profiles route — voiceDesign', () => {
-  beforeEach(() => callLLM.mockReset());
+  beforeEach(() => {
+    callLLM.mockReset();
+    requireOrgAuthor.mockReset().mockResolvedValue({
+      user: { id: 'user-1', email: 'a@example.com' },
+      authoredByRole: 'author',
+    });
+  });
+
+  it('rejects profile generation without a tenant before the provider call', async () => {
+    const response = await POST(makeRequest(false));
+
+    expect(response.status).toBe(400);
+    expect(requireOrgAuthor).not.toHaveBeenCalled();
+    expect(callLLM).not.toHaveBeenCalled();
+  });
 
   it('attaches a normalized voiceDesign when the LLM emits one', async () => {
     callLLM.mockResolvedValue({
