@@ -3237,8 +3237,8 @@
       "description": "En tant que super-administrateur Qalem, je veux enregistrer des templates validés en base afin qu'ils survivent aux rechargements et aux redéploiements.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P2",
-      "status": "in_progress",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "type": "split_from_story",
         "id": "S6-015",
@@ -3246,12 +3246,13 @@
       },
       "sourceDependencies": ["S6-026"],
       "dependencies": ["S6-026"],
-      "gap": "Le chargeur actuel ne lit que les manifests du dépôt ; aucun template global versionné n'est persisté en base.",
+      "gap": "Soldé : les templates globaux et leurs versions sont persistés, publiés atomiquement, audités et protégés par immutabilité et RLS ; les routes de gestion sont réservées au super-administrateur.",
       "evidence": [
         "lib/plugins/loader.ts",
         "tests/api/admin-widget-templates.test.ts",
         "tests/supabase/widget-templates-migration.test.ts",
-        "docs/validation/S6-016-widget-framing.md"
+        "docs/validation/S6-016-widget-framing.md",
+        "docs/validation/S6-027-widget-template-persistence.md"
       ],
       "acceptance": [
         "Créer une migration persistante pour les templates globaux, leurs versions immuables, leur état brouillon ou publié et leurs cas de référence.",
@@ -3259,7 +3260,15 @@
         "Exposer des routes serveur de création, mise à jour de brouillon, prévisualisation et publication réservées au super-administrateur.",
         "Relire après rechargement la version publiée exacte et conserver l'audit de publication."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-02 — TDD prouvé au commit 106a6a2 : les deux suites échouent d'abord sur la migration 00059 et les quatre routes absentes. Le SHA fonctionnel exact 04db143d49e455d54c59c7d3dd45624aea731c26 est poussé sur origin/refork-v030.",
+        "2026-09-02 — La migration crée templates globaux, versions numérotées, pointeurs brouillon/publié et audit de publication. Une version publiée refuse toute modification avec WIDGET_TEMPLATE_VERSION_IMMUTABLE ; une révision insère une nouvelle version au lieu d'écraser la précédente.",
+        "2026-09-02 — RLS de production : le rôle authenticated voit un template et uniquement sa version publiée sur deux ; une écriture directe authenticated échoue avec permission denied. Les fonctions atomiques sont retirées à PUBLIC et accordées au seul service_role.",
+        "2026-09-02 — Recette de persistance : création version 1, révision version 2, publication version 2, une ligne d'audit ; une nouvelle connexion retrouve exactement la version publiée 2. La même preuve réussit après redémarrage d'une base éphémère indépendante.",
+        "2026-09-02 — Nettoyage certifié : tables templates, versions et publications revenues à 0|0|0 en production ; conteneur PostgreSQL éphémère, fichiers SQL et journaux de recette supprimés.",
+        "2026-09-02 — Gate complet ServeurIA au SHA exact : Prettier, TypeScript et ESLint verts ; 415/415 fichiers et 2 615/2 615 tests Vitest ; build 105/105 pages ; 97/97 Playwright avec --retries=0 en 4,0 minutes.",
+        "2026-09-02 — Déploiement Coolify szqaapqsmve5qa4huvfasrqi terminé au SHA exact. Conteneur bcx5pxyuc9z3lt4jtyjipcqu-215609092390 healthy, RestartCount=0, OOMKilled=false ; /api/health=200 et les quatre opérations d'administration refusent l'anonyme en 401. Synthèse : docs/validation/S6-027-widget-template-persistence.md."
+      ],
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
