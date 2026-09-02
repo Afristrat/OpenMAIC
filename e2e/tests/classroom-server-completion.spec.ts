@@ -1,18 +1,21 @@
 import { expect, test } from '../fixtures/base';
+import { createSettingsStorage } from '../fixtures/test-data/settings';
 
 const STAGE_ID = 'server-complete-certificate-stage';
 const QUIZ_SCENE_ID = 'server-complete-certificate-quiz';
+const SETTINGS_STORAGE = createSettingsStorage({ sidebarCollapsed: false });
 
 test('offers course completion for an authoritative server classroom', async ({ page }) => {
   await page.addInitScript(
-    ({ quizSceneId }) => {
+    ({ quizSceneId, settingsStorage }) => {
       localStorage.setItem('locale', 'en-US');
+      localStorage.setItem('settings-storage', settingsStorage);
       localStorage.setItem(
         `quizAnswers:${quizSceneId}`,
         JSON.stringify({ 'server-certificate-question': 'a' }),
       );
     },
-    { quizSceneId: QUIZ_SCENE_ID },
+    { quizSceneId: QUIZ_SCENE_ID, settingsStorage: SETTINGS_STORAGE },
   );
 
   await page.route('**/api/classroom?*', async (route) => {
