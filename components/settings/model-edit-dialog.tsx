@@ -12,6 +12,7 @@ import type { EditingModel } from '@/lib/types/settings';
 import type { ProviderId } from '@/lib/ai/providers';
 import { cn } from '@/lib/utils';
 import { createVerifyModelRequest } from './utils';
+import { getCurrentOrganizationId } from '@/lib/hooks/use-organizations';
 
 interface ModelEditDialogProps {
   open: boolean;
@@ -74,14 +75,17 @@ export function ModelEditDialog({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(
-          createVerifyModelRequest({
-            providerId,
-            modelId: editingModel.model.id,
-            apiKey,
-            baseUrl,
-            providerType,
-            requiresApiKey,
-          }),
+          {
+            ...createVerifyModelRequest({
+              providerId,
+              modelId: editingModel.model.id,
+              apiKey,
+              baseUrl,
+              providerType,
+              requiresApiKey,
+            }),
+            orgId: getCurrentOrganizationId(),
+          },
         ),
       });
 

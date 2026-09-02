@@ -3,6 +3,8 @@ import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { resolveModel } from '@/lib/server/resolve-model';
 import { callLLM } from '@/lib/ai/llm';
+import { requireOrgMember } from '@/lib/api/auth';
+import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
 const log = createLogger('Verify Model');
 
 export async function POST(req: NextRequest) {
@@ -10,11 +12,17 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { apiKey, baseUrl, providerType } = body;
+    const orgId = typeof body.orgId === 'string' ? body.orgId.trim() : '';
     model = body.model;
 
     if (!model) {
       return apiError('MISSING_REQUIRED_FIELD', 400, 'Model name is required');
     }
+    if (!orgId) {
+      return apiError('MISSING_REQUIRED_FIELD', 400, 'Organization is required');
+    }
+    const auth = await requireOrgMember(req, orgId);
+    if (auth.response) return auth.response;
 
     // Parse model string and resolve server-side fallback
     let languageModel;
@@ -36,15 +44,17 @@ export async function POST(req: NextRequest) {
 
     // Send a minimal test message. Use the unified wrapper so compatible
     // providers can receive provider-specific request options.
-    const { text } = await callLLM(
-      {
-        model: languageModel,
-        prompt: 'Say "OK" if you can hear me.',
-        maxOutputTokens: 64,
-      },
-      'verify-model',
-      undefined,
-      { mode: 'disabled', enabled: false },
+    const { text } = await runWithUsageMeteringContext(req.headers, auth.user.id, orgId, () =>
+      callLLM(
+        {
+          model: languageModel,
+          prompt: 'Say "OK" if you can hear me.',
+          maxOutputTokens: 64,
+        },
+        'verify-model',
+        undefined,
+        { mode: 'disabled', enabled: false },
+      ),
     );
 
     return apiSuccess({

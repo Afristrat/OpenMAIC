@@ -35,6 +35,7 @@ import { useI18n } from '@/lib/hooks/use-i18n';
 import type { ProviderConfig } from '@/lib/ai/providers';
 import type { ProvidersConfig } from '@/lib/types/settings';
 import { createVerifyModelRequest, formatContextWindow } from './utils';
+import { getCurrentOrganizationId } from '@/lib/hooks/use-organizations';
 import { cn } from '@/lib/utils';
 
 interface ProviderConfigPanelProps {
@@ -126,14 +127,17 @@ export function ProviderConfigPanel({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(
-          createVerifyModelRequest({
-            providerId: provider.id,
-            modelId: testModelId,
-            apiKey,
-            baseUrl,
-            providerType: provider.type,
-            requiresApiKey,
-          }),
+          {
+            ...createVerifyModelRequest({
+              providerId: provider.id,
+              modelId: testModelId,
+              apiKey,
+              baseUrl,
+              providerType: provider.type,
+              requiresApiKey,
+            }),
+            orgId: getCurrentOrganizationId(),
+          },
         ),
       });
 
