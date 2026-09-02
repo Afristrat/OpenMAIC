@@ -120,11 +120,8 @@ export async function POST(request: NextRequest) {
         `aspect=${options.aspectRatio ?? 'auto'}, resolution=${options.resolution ?? 'auto'}`,
     );
 
-    const result = await runWithUsageMeteringContext(
-      request.headers,
-      auth.user.id,
-      tenantId,
-      () => generateMeteredVideo({ providerId, apiKey, baseUrl, model: clientModel }, options),
+    const result = await runWithUsageMeteringContext(request.headers, auth.user.id, tenantId, () =>
+      generateMeteredVideo({ providerId, apiKey, baseUrl, model: clientModel }, options),
     );
 
     log.info(

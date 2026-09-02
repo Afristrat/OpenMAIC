@@ -68,26 +68,22 @@ export async function POST(request: NextRequest) {
 ${targetMarkup}
 <current_plan>${JSON.stringify(planValidation.data)}</current_plan>`;
 
-    const response = await runWithUsageMeteringContext(
-      request.headers,
-      auth.user.id,
-      orgId,
-      () =>
-        callLLM(
-          {
-            model,
-        system: `You improve an editable Qalem training plan for its author.
+    const response = await runWithUsageMeteringContext(request.headers, auth.user.id, orgId, () =>
+      callLLM(
+        {
+          model,
+          system: `You improve an editable Qalem training plan for its author.
 The learning approach and interaction level are already validated decisions. They govern the plan and must not be changed or ignored.
 Revise only the requested target. Preserve every explicit constraint, source requirement, learning resource, media request, scene identifier, scene type and all content outside the target.
 Every scene must have a non-empty title, description, observable teachingObjective and estimatedDuration of at least 30 seconds. Keep the total timing coherent with totalDurationMinutes.
 Use observable action verbs and measurable evidence. Do not add generic filler, chat language, fabricated facts, fake files or fake URLs. Never use em dashes.
 Return only the complete plan as one valid JSON object with courseTitle, languageDirective, syllabus and outlines.`,
-            prompt,
-          },
-          'assist-syllabus',
-          { retries: 1, validate: (text) => parseCompletePlan(text) !== null },
-          thinkingConfig,
-        ),
+          prompt,
+        },
+        'assist-syllabus',
+        { retries: 1, validate: (text) => parseCompletePlan(text) !== null },
+        thinkingConfig,
+      ),
     );
     const plan = parseCompletePlan(response.text);
     if (!plan) return apiError('PARSE_FAILED', 502, 'The assisted plan is incomplete');

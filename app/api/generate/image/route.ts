@@ -101,11 +101,8 @@ export async function POST(request: NextRequest) {
         `prompt="${body.prompt.slice(0, 80)}...", size=${body.width ?? 'auto'}x${body.height ?? 'auto'}`,
     );
 
-    const result = await runWithUsageMeteringContext(
-      request.headers,
-      auth.user.id,
-      tenantId,
-      () => generateMeteredImage({ providerId, apiKey, baseUrl, model: clientModel }, body),
+    const result = await runWithUsageMeteringContext(request.headers, auth.user.id, tenantId, () =>
+      generateMeteredImage({ providerId, apiKey, baseUrl, model: clientModel }, body),
     );
 
     if (classroomId) {
