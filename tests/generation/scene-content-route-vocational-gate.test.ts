@@ -5,6 +5,7 @@ import type { SceneOutline } from '@/lib/types/generation';
 
 const callLLMMock = vi.hoisted(() => vi.fn());
 const resolveModelFromRequestMock = vi.hoisted(() => vi.fn());
+const requireOrgAuthorMock = vi.hoisted(() => vi.fn());
 const VOCATIONAL_FLAG = 'OPENMAIC_ENABLE_VOCATIONAL';
 let originalVocationalFlag: string | undefined;
 
@@ -14,6 +15,10 @@ vi.mock('@/lib/ai/llm', () => ({
 
 vi.mock('@/lib/server/resolve-model', () => ({
   resolveModelFromRequest: resolveModelFromRequestMock,
+}));
+
+vi.mock('@/lib/api/auth', () => ({
+  requireSuperAdminOrOrgAuthor: requireOrgAuthorMock,
 }));
 
 vi.mock('@/lib/flags', () => ({
@@ -31,6 +36,10 @@ describe('scene-content vocational gate', () => {
       modelInfo: { outputWindow: 4096, capabilities: {} },
       modelString: 'test:test-model',
       thinkingConfig: undefined,
+    });
+    requireOrgAuthorMock.mockReset().mockResolvedValue({
+      user: { id: 'user-1', email: 'a@example.com' },
+      authoredByRole: 'author',
     });
   });
 
@@ -116,6 +125,7 @@ function mockRequest(outline: SceneOutline, requirements?: { taskEngineMode?: bo
       outline,
       allOutlines: [outline],
       stageId: 'stage-1',
+      orgId: 'org-1',
       stageInfo: { name: 'Test Stage' },
       requirements,
     }),

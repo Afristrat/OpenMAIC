@@ -27,6 +27,8 @@ import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { llmApiError } from '@/lib/server/llm-error-response';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
+import { requireSuperAdminOrOrgAuthor } from '@/lib/api/auth';
+import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
 
 const log = createLogger('Scene Actions API');
 
@@ -46,6 +48,7 @@ export async function POST(req: NextRequest) {
       previousSpeeches: incomingPreviousSpeeches,
       userProfile,
       languageDirective,
+      orgId,
     } = body as {
       outline: SceneOutline;
       allOutlines: SceneOutline[];
@@ -59,6 +62,7 @@ export async function POST(req: NextRequest) {
       previousSpeeches?: string[];
       userProfile?: string;
       languageDirective?: string;
+      orgId?: string;
     };
 
     // Validate required fields
@@ -78,6 +82,11 @@ export async function POST(req: NextRequest) {
     if (!stageId) {
       return apiError('MISSING_REQUIRED_FIELD', 400, 'stageId is required');
     }
+    if (!orgId?.trim()) {
+      return apiError('MISSING_REQUIRED_FIELD', 400, 'Organization is required');
+    }
+    const auth = await requireSuperAdminOrOrgAuthor(req, orgId);
+    if (auth.response) return auth.response;
 
     // ── Model resolution from request headers/body ──
     const {
@@ -146,12 +155,14 @@ export async function POST(req: NextRequest) {
     // ── Generate actions ──
     log.info(`Generating actions: "${outline.title}" (${outline.type}) [model=${modelString}]`);
 
-    const actions = await generateSceneActions(outline, content, aiCall, {
-      ctx,
-      agents,
-      userProfile,
-      languageDirective,
-    });
+    const actions = await runWithUsageMeteringContext(req.headers, auth.user.id, orgId, () =>
+      generateSceneActions(outline, content, aiCall, {
+        ctx,
+        agents,
+        userProfile,
+        languageDirective,
+      }),
+    );
 
     log.info(`Generated ${actions.length} actions for: "${outline.title}"`);
 

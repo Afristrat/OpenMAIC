@@ -26,6 +26,8 @@ import { llmApiError } from '@/lib/server/llm-error-response';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
 import { resolveVocationalActive } from '@/lib/config/feature-flags';
 import { isFeatureEnabled } from '@/lib/flags';
+import { requireSuperAdminOrOrgAuthor } from '@/lib/api/auth';
+import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
 
 const log = createLogger('Scene Content API');
 
@@ -46,6 +48,7 @@ export async function POST(req: NextRequest) {
       agents,
       languageDirective,
       requirements,
+      orgId,
     } = body as {
       outline: SceneOutline;
       allOutlines: SceneOutline[];
@@ -60,6 +63,7 @@ export async function POST(req: NextRequest) {
       agents?: AgentInfo[];
       languageDirective?: string;
       requirements?: UserRequirements;
+      orgId?: string;
     };
 
     // Validate required fields
@@ -76,6 +80,11 @@ export async function POST(req: NextRequest) {
     if (!stageId) {
       return apiError('MISSING_REQUIRED_FIELD', 400, 'stageId is required');
     }
+    if (!orgId?.trim()) {
+      return apiError('MISSING_REQUIRED_FIELD', 400, 'Organization is required');
+    }
+    const auth = await requireSuperAdminOrOrgAuthor(req, orgId);
+    if (auth.response) return auth.response;
 
     const outline: SceneOutline = { ...rawOutline };
 
@@ -167,21 +176,23 @@ export async function POST(req: NextRequest) {
     const userLocale = req.headers?.get('x-user-locale') ?? '';
     const skillEngineEnabled = await isFeatureEnabled('skill_engine');
 
-    const content = await generateSceneContent(effectiveOutline, aiCall, {
-      assignedImages,
-      imageMapping,
-      languageModel: effectiveOutline.type === 'pbl' ? languageModel : undefined,
-      visionEnabled: hasVision,
-      generatedMediaMapping,
-      agents,
-      languageDirective,
-      thinkingConfig,
-      targetLanguage: userLocale || undefined,
-      userRequirements: requirements,
-      allowProceduralSkill: vocationalActive,
-      skillEngineEnabled,
-      activeSkillId: requirements?.activeSkillId,
-    });
+    const content = await runWithUsageMeteringContext(req.headers, auth.user.id, orgId, () =>
+      generateSceneContent(effectiveOutline, aiCall, {
+        assignedImages,
+        imageMapping,
+        languageModel: effectiveOutline.type === 'pbl' ? languageModel : undefined,
+        visionEnabled: hasVision,
+        generatedMediaMapping,
+        agents,
+        languageDirective,
+        thinkingConfig,
+        targetLanguage: userLocale || undefined,
+        userRequirements: requirements,
+        allowProceduralSkill: vocationalActive,
+        skillEngineEnabled,
+        activeSkillId: requirements?.activeSkillId,
+      }),
+    );
 
     if (!content) {
       log.error(`Failed to generate content for: "${effectiveOutline.title}"`);

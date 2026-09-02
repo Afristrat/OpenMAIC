@@ -140,7 +140,9 @@ export async function fetchSceneContent(
         const response = await fetch('/api/generate/scene-content', {
           method: 'POST',
           headers: getApiHeaders(),
-          body: JSON.stringify(withThinkingConfig(params)),
+          body: JSON.stringify(
+            withThinkingConfig({ ...params, orgId: getCurrentOrganizationId() }),
+          ),
           signal,
         });
 
@@ -185,7 +187,9 @@ export async function fetchSceneActions(
         const response = await fetch('/api/generate/scene-actions', {
           method: 'POST',
           headers: getApiHeaders(),
-          body: JSON.stringify(withThinkingConfig(params)),
+          body: JSON.stringify(
+            withThinkingConfig({ ...params, orgId: getCurrentOrganizationId() }),
+          ),
           signal,
         });
 
