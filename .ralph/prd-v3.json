@@ -1540,20 +1540,25 @@
       "description": "En tant que propriétaire de Qalem, je veux que chaque usage réel d’un fournisseur soit réservé, mesuré, décompté et valorisé sans doublon afin que les crédits et marges correspondent effectivement aux consommations de production.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P0",
-      "status": "to_implement",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "type": "reconciliation_gap",
         "date": "2026-09-01"
       },
       "sourceDependencies": [],
       "dependencies": ["S6-023", "S6-024"],
-      "gap": "Le ledger de crédits et la valorisation économique sont certifiés, mais leurs fonctions serveur n’ont encore aucun appelant dans les chemins LLM, TTS, ASR, image, vidéo, stockage ou opération ; une génération réelle ne produit donc actuellement aucun débit automatique.",
+      "gap": "Soldé : les chemins fournisseurs réels propagent désormais un contexte tenant authentifié et idempotent jusqu’à la réservation, la mesure, le débit, la valorisation ou la compensation d’échec.",
       "evidence": [
-        "lib/billing/credits.ts",
-        "lib/billing/value-pricing.ts",
-        "lib/usage/tracker.ts",
-        "lib/ai/llm.ts"
+        "lib/billing/usage-context.ts",
+        "lib/billing/usage-metering.ts",
+        "lib/ai/llm.ts",
+        "lib/web-search/index.ts",
+        "lib/audio/tts-providers.ts",
+        "lib/audio/asr-providers.ts",
+        "lib/server/metered-media-providers.ts",
+        "supabase/migrations/00056_real_usage_metering.sql",
+        "docs/validation/S6-025-real-provider-usage-metering.md"
       ],
       "acceptance": [
         "Chaque chemin fournisseur réellement facturable transmet une organisation, un acteur, une référence d’opération et une unité issus du contexte serveur authentifié, jamais d’un identifiant client non vérifié.",
@@ -1567,7 +1572,15 @@
         "Une recette de production active un tenant temporaire entièrement tarifé, exécute au moins un usage réel, vérifie crédit, valorisation et marge, simule un échec compensé, puis supprime toutes les données temporaires.",
         "Le quality gate complet est vert au SHA exact sur ServeurIA, sans erreur ni avertissement inattendu."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-02 — SHA fonctionnel exact cd3109a9c2f1a64de8e99be6676fe7564163dac4 poussé sur origin/refork-v030. Le contexte tenant est ouvert autour de la continuation asynchrone complète après authentification, et non dans un helper dont le retour await perdait l’AsyncLocalStorage.",
+        "2026-09-02 — LLM, chat live, TTS, ASR, image, vidéo, stockage média et recherche web transmettent acteur, tenant, clé d’opération et unité depuis une frontière serveur vérifiée. Les jobs persistants utilisent leur identifiant stable ; les routes exigent une organisation autorisée.",
+        "2026-09-02 — Recette Serper réelle en production : HTTP 200, huit sources, une réservation settled, quantité réelle 1, débit 1 000, revenu à la valeur 20 000 000, coût indépendant 1 000, marge 10 000 bps et wallet 9 000. Le rejeu de la même clé conserve une réservation, une valorisation et le même solde.",
+        "2026-09-02 — Compensation de production : réservation de 1 000 faisant passer le wallet de 9 000 à 8 000, puis release pour échec restaurant exactement 9 000 ; statut released, aucune quantité réelle et aucune valorisation.",
+        "2026-09-02 — Nettoyage certifié : organisation, membre, contrôle, burn rate, wallet, ledger, prix, réservations, valorisations, profil et utilisateur Auth temporaires tous à zéro ; aucun fichier S6-025 temporaire restant sur ServeurIA ; le coût Serper permanent reste présent.",
+        "2026-09-02 — Gate complet ServeurIA au SHA exact : Prettier, TypeScript et ESLint verts ; 408/408 fichiers et 2 591/2 591 tests Vitest ; build 103/103 pages ; 89/89 Playwright en 3,8 minutes.",
+        "2026-09-02 — Déploiements Coolify arckml35j5utbchkt6gwu23k et k2j24a03pji503r88a9gkpaw terminés au SHA exact. Web, worker et capture-worker healthy, restart=0, OOMKilled=false, SOURCE_COMMIT exact ; santé publique 200. Synthèse : docs/validation/S6-025-real-provider-usage-metering.md."
+      ],
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": [
@@ -1575,7 +1588,8 @@
         "fresh_evidence_per_acceptance",
         "production_real_usage_metering_smoke_test"
       ],
-      "priorityRank": 0.4
+      "priorityRank": 0.4,
+      "completedAt": "2026-09-02"
     },
     {
       "id": "S6-001",
