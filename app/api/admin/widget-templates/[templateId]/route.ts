@@ -1,6 +1,9 @@
 import { NextRequest } from 'next/server';
 import { requireSuperAdmin } from '@/lib/api/auth';
-import { reviseWidgetTemplateSchema, validateComposition } from '@/lib/server/widget-template-admin';
+import {
+  reviseWidgetTemplateSchema,
+  validateComposition,
+} from '@/lib/server/widget-template-admin';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 
@@ -23,10 +26,18 @@ export async function PATCH(
       })
       .single();
     if (error || !data) {
-      return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to revise widget template');
+      return apiError(
+        API_ERROR_CODES.INTERNAL_ERROR,
+        500,
+        'Failed to revise widget template',
+      );
     }
     return apiSuccess(data);
   } catch {
-    return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid widget template revision');
+    return apiError(
+      API_ERROR_CODES.INVALID_REQUEST,
+      400,
+      'Invalid widget template revision',
+    );
   }
 }

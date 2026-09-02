@@ -24,14 +24,17 @@ const actorId = '00000000-0000-4000-8000-000000000001';
 const templateId = '00000000-0000-4000-8000-000000000059';
 const versionId = '00000000-0000-4000-8000-000000000060';
 const composition = {
-  schemaVersion: 1,
+  version: 1,
   locale: 'fr-FR',
   direction: 'ltr',
+  title: 'Calcul simple',
   inputs: [],
-  computations: [{ id: 'total', expression: { type: 'literal', value: 42 } }],
+  computations: [
+    { id: 'total', label: 'Total', expression: { op: 'literal', value: 42 } },
+  ],
   nodes: [{ id: 'result', type: 'computed_value', label: 'Résultat', computationId: 'total' }],
-  roots: ['result'],
-  goldenCases: [{ inputs: {}, expected: { total: 42 } }],
+  rootNodeIds: ['result'],
+  goldenCases: [{ name: 'cas nominal', inputs: {}, expected: { total: 42 } }],
 };
 
 function request(path: string, method: 'POST' | 'PATCH', body: unknown): NextRequest {
@@ -109,8 +112,8 @@ describe('super-admin widget template routes (S6-027)', () => {
 
     expect(response.status).toBe(200);
     expect(mocks.from).toHaveBeenCalledWith('widget_template_versions');
-    expect(body.data.version.id).toBe(versionId);
-    expect(body.data.evaluation.values.total).toBe(42);
+    expect(body.version.id).toBe(versionId);
+    expect(body.evaluation.values.total).toBe(42);
   });
 
   it('publishes the selected immutable version with the authenticated actor', async () => {
@@ -153,7 +156,11 @@ describe('super-admin widget template routes (S6-027)', () => {
       request('/api/admin/widget-templates', 'POST', {
         slug: 'dangereux',
         title: 'Dangereux',
-        composition: { ...composition, nodes: [{ id: 'x', type: 'video' }], roots: ['x'] },
+        composition: {
+          ...composition,
+          nodes: [{ id: 'x', type: 'video' }],
+          rootNodeIds: ['x'],
+        },
       }),
     );
 

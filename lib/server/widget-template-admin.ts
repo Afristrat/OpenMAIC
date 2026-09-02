@@ -1,5 +1,8 @@
 import { z } from 'zod';
-import { parseWidgetComposition, widgetCompositionSchema } from '@/lib/plugins/widget-composition';
+import {
+  parseWidgetComposition,
+  widgetCompositionSchema,
+} from '@/lib/plugins/widget-composition';
 
 export const createWidgetTemplateSchema = z
   .object({
@@ -10,7 +13,9 @@ export const createWidgetTemplateSchema = z
   .strict();
 
 export const reviseWidgetTemplateSchema = createWidgetTemplateSchema.omit({ slug: true });
-export const widgetTemplateVersionSchema = z.object({ versionId: z.string().uuid() }).strict();
+export const widgetTemplateVersionSchema = z
+  .object({ versionId: z.string().uuid() })
+  .strict();
 
 export function validateComposition(value: unknown) {
   return parseWidgetComposition(value);

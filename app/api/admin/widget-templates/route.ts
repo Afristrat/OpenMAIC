@@ -1,6 +1,9 @@
 import { NextRequest } from 'next/server';
 import { requireSuperAdmin } from '@/lib/api/auth';
-import { createWidgetTemplateSchema, validateComposition } from '@/lib/server/widget-template-admin';
+import {
+  createWidgetTemplateSchema,
+  validateComposition,
+} from '@/lib/server/widget-template-admin';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 
@@ -19,7 +22,11 @@ export async function POST(request: NextRequest): Promise<Response> {
       })
       .single();
     if (error || !data) {
-      return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to create widget template');
+      return apiError(
+        API_ERROR_CODES.INTERNAL_ERROR,
+        500,
+        'Failed to create widget template',
+      );
     }
     return apiSuccess(data, 201);
   } catch {
