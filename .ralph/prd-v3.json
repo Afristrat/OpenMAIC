@@ -3196,7 +3196,7 @@
       "description": "En tant que super-administrateur Qalem, je veux une grammaire déclarative sûre afin de composer des widgets sans générer de code exécutable.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P2",
-      "status": "to_implement",
+      "status": "in_progress",
       "passes": false,
       "source": {
         "type": "split_from_story",
@@ -3209,6 +3209,7 @@
       "evidence": [
         "public/plugin-runtime/business-simulator.js",
         "lib/plugins/schema-validator.ts",
+        "tests/plugins/widget-composition.test.ts",
         "docs/validation/S6-016-widget-framing.md"
       ],
       "acceptance": [
