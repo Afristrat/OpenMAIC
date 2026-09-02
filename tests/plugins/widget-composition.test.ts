@@ -159,6 +159,8 @@ describe('widget composition grammar', () => {
           { id: 'a', label: 'A', expression: { op: 'ref', id: 'b' } },
           { id: 'b', label: 'B', expression: { op: 'ref', id: 'a' } },
         ],
+        nodes: [{ id: 'cycle-label', type: 'text', text: 'Cycle' }],
+        rootNodeIds: ['cycle-label'],
       }),
     ).toThrow(/cycle/i);
   });
