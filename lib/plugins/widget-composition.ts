@@ -379,9 +379,7 @@ function validateSemantics(composition: WidgetComposition): void {
 
   const nodeIds = new Set(composition.nodes.map((node) => node.id));
   const inputIds = new Set(composition.inputs.map((input) => input.id));
-  const computationIds = new Set(
-    composition.computations.map((computation) => computation.id),
-  );
+  const computationIds = new Set(composition.computations.map((computation) => computation.id));
   const layouts = new Map<string, string[]>();
   for (const node of composition.nodes) {
     if (node.type === 'number_input' && !inputIds.has(node.inputId)) {
