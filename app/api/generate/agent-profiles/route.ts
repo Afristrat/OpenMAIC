@@ -13,12 +13,15 @@ import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
 import { AGENT_COLOR_PALETTE } from '@/lib/constants/agent-defaults';
 import { normalizeVoiceDesign } from '@/lib/audio/voice-design';
+import { requireSuperAdminOrOrgAuthor } from '@/lib/api/auth';
+import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
 
 const log = createLogger('Agent Profiles API');
 
 export const maxDuration = 120;
 
 interface RequestBody {
+  orgId?: string;
   stageInfo: { name: string; description?: string };
   sceneOutlines?: { title: string; description?: string }[];
   languageDirective: string;
@@ -54,6 +57,7 @@ export async function POST(req: NextRequest) {
       avatarDescriptions,
       availableVoices,
     } = body;
+    const orgId = body.orgId?.trim();
     stageName = stageInfo?.name;
 
     // ── Validate required fields ──
@@ -70,6 +74,11 @@ export async function POST(req: NextRequest) {
         'availableAvatars is required and must not be empty',
       );
     }
+    if (!orgId) {
+      return apiError('MISSING_REQUIRED_FIELD', 400, 'Organization is required');
+    }
+    const auth = await requireSuperAdminOrOrgAuthor(req, orgId);
+    if (auth.response) return auth.response;
 
     // ── Model resolution from request headers/body ──
     const {
@@ -158,15 +167,17 @@ Return a JSON object with this exact structure:
     log.info(`Generating agent profiles for "${stageInfo.name}" [model=${modelString}]`);
 
     const rawResult = (
-      await callLLM(
-        {
-          model: languageModel,
-          system: systemPrompt,
-          prompt: userPrompt,
-        },
-        'agent-profiles',
-        undefined,
-        thinkingConfig,
+      await runWithUsageMeteringContext(req.headers, auth.user.id, orgId, () =>
+        callLLM(
+          {
+            model: languageModel,
+            system: systemPrompt,
+            prompt: userPrompt,
+          },
+          'agent-profiles',
+          undefined,
+          thinkingConfig,
+        ),
       )
     ).text;
 

@@ -739,6 +739,7 @@ function GenerationPreviewContent() {
             headers: getApiHeaders(),
             body: JSON.stringify(
               withThinkingConfig({
+                orgId: getCurrentOrganizationId(),
                 stageInfo: { name: stage.name, description: stage.description },
                 sceneOutlines: outlines.map((o) => ({
                   title: o.title,
