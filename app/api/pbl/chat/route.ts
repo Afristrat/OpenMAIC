@@ -11,9 +11,12 @@ import type { PBLAgent, PBLIssue } from '@/lib/pbl/types';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
+import { requireOrgMember } from '@/lib/api/auth';
+import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
 const log = createLogger('PBL Chat');
 
 interface PBLChatRequest {
+  orgId?: string;
   message: string;
   agent: PBLAgent;
   currentIssue: PBLIssue | null;
@@ -28,12 +31,18 @@ export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as PBLChatRequest;
     const { message, agent, currentIssue, recentMessages, userRole, agentType } = body;
+    const orgId = body.orgId?.trim();
     agentName = agent?.name;
     resolvedAgentType = agentType;
 
     if (!message || !agent) {
       return apiError('MISSING_REQUIRED_FIELD', 400, 'Message and agent are required');
     }
+    if (!orgId) {
+      return apiError('MISSING_REQUIRED_FIELD', 400, 'Organization is required');
+    }
+    const auth = await requireOrgMember(req, orgId);
+    if (auth.response) return auth.response;
 
     // Get model config from request headers/body
     const { model, thinkingConfig } = await resolveModelFromRequest(req, body, 'pbl-chat');
@@ -61,15 +70,17 @@ export async function POST(req: NextRequest) {
 
     const systemPrompt = `${agent.system_prompt}${issueContext}${recentContext}${userRole ? `\n\nThe student's role is: ${userRole}` : ''}`;
 
-    const result = await callLLM(
-      {
-        model,
-        system: systemPrompt,
-        prompt: message,
-      },
-      'pbl-chat',
-      undefined,
-      thinkingConfig,
+    const result = await runWithUsageMeteringContext(req.headers, auth.user.id, orgId, () =>
+      callLLM(
+        {
+          model,
+          system: systemPrompt,
+          prompt: message,
+        },
+        'pbl-chat',
+        undefined,
+        thinkingConfig,
+      ),
     );
 
     return apiSuccess({ message: result.text, agentName: agent.name });

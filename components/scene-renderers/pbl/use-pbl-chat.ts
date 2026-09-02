@@ -9,6 +9,7 @@ import type { PBLProjectConfig, PBLChatMessage, PBLAgent, PBLIssue } from '@/lib
 import { getCurrentModelConfig } from '@/lib/utils/model-config';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { createLogger } from '@/lib/logger';
+import { getCurrentOrganizationId } from '@/lib/hooks/use-organizations';
 
 const log = createLogger('PBLChat');
 
@@ -70,11 +71,13 @@ export function usePBLChat({ projectConfig, userRole, onConfigUpdate }: UsePBLCh
         const cleanMessage = text.replace(/^@\w+\s*/i, '').trim() || text;
 
         const isJudgeAgent = currentIssue && targetAgent.name === currentIssue.judge_agent_name;
+        const orgId = getCurrentOrganizationId();
 
         const response = await fetch('/api/pbl/chat', {
           method: 'POST',
           headers,
           body: JSON.stringify({
+            orgId,
             message: cleanMessage,
             agent: targetAgent,
             currentIssue,
@@ -111,7 +114,7 @@ export function usePBLChat({ projectConfig, userRole, onConfigUpdate }: UsePBLCh
             msgUpper.includes('COMPLETE') &&
             !msgUpper.includes('NEEDS_REVISION')
           ) {
-            await handleIssueComplete(afterConfig, currentIssue, headers, t);
+            await handleIssueComplete(afterConfig, currentIssue, headers, orgId, t);
           }
 
           onConfigUpdate(afterConfig);
@@ -165,6 +168,7 @@ async function handleIssueComplete(
   config: PBLProjectConfig,
   completedIssue: PBLIssue,
   headers: Record<string, string>,
+  orgId: string,
   t: (key: string, options?: Record<string, unknown>) => string,
 ) {
   // Mark current issue as done
@@ -210,6 +214,7 @@ async function handleIssueComplete(
           method: 'POST',
           headers,
           body: JSON.stringify({
+            orgId,
             message: questionPrompt,
             agent: questionAgent,
             currentIssue: nextIssue,
