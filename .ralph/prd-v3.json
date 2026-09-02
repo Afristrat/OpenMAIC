@@ -2147,7 +2147,7 @@
       "completedAt": "2026-08-27",
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 67
+      "priorityRank": 71
     },
     {
       "id": "S6-009",
@@ -3154,7 +3154,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux clore le cadrage np des widgets à partir du produit actuel afin que le parcours promis soit réellement utilisable.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P2",
-      "status": "decision_required",
+      "status": "in_progress",
       "passes": false,
       "source": {
         "type": "request_or_observed_gap",
@@ -3162,11 +3162,12 @@
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Le stress-test NP est resté en attente ; plusieurs prémisses ont changé depuis juillet, notamment les plugins et les choix pédagogiques.",
+      "gap": "Décision explicite reçue le 2 septembre 2026 et réconciliée avec le produit actuel ; les gates exactes restent à exécuter avant clôture.",
       "evidence": [
         "../docs/np-cadrage.md:43",
         ".ralph/prd-v2.json#S5-001",
-        ".ralph/prd-v2.json#S4-008"
+        ".ralph/prd-v2.json#S4-008",
+        "docs/validation/S6-016-widget-framing.md"
       ],
       "acceptance": [
         "Confronter les décisions Q1–Q4 au moteur actuel et présenter les seuls écarts non couverts, sans restaurer les anciens modèles ou endpoints.",
@@ -3176,13 +3177,137 @@
       ],
       "closureEvidence": [],
       "historicalDependencies": [],
-      "executionAllowed": false,
+      "executionAllowed": true,
       "validationRequires": [
         "qualityGates",
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
       "priorityRank": 33
+    },
+    {
+      "id": "S6-026",
+      "title": "Définir la grammaire bornée des compositions de widgets",
+      "description": "En tant que super-administrateur Qalem, je veux une grammaire déclarative sûre afin de composer des widgets sans générer de code exécutable.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P2",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "type": "split_from_story",
+        "id": "S6-015",
+        "date": "2026-09-02"
+      },
+      "sourceDependencies": ["S6-016"],
+      "dependencies": ["S6-016"],
+      "gap": "Le runtime partagé contient des contrôles et calculs bornés, mais ses variantes sont codées en dur et aucun contrat de composition générique n'est publiable.",
+      "evidence": [
+        "public/plugin-runtime/business-simulator.js",
+        "lib/plugins/schema-validator.ts",
+        "docs/validation/S6-016-widget-framing.md"
+      ],
+      "acceptance": [
+        "Définir par schéma strict une composition bornée réutilisant uniquement les briques v1 : texte, entrée numérique, valeur calculée, condition, tableau, graphique en barres et layout.",
+        "Évaluer les calculs par un AST d'opérateurs en liste blanche, sans eval, Function, HTML, JavaScript ni expression textuelle exécutable.",
+        "Refuser les briques inconnues, références invalides, cycles, profondeurs et nombres de nœuds hors bornes.",
+        "Valider des cas de référence littéraux en français et en arabe RTL ; aucune nouvelle brique 3D ou vidéo."
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
+      "priorityRank": 34
+    },
+    {
+      "id": "S6-027",
+      "title": "Persister et versionner les templates de widgets globaux",
+      "description": "En tant que super-administrateur Qalem, je veux enregistrer des templates validés en base afin qu'ils survivent aux rechargements et aux redéploiements.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P2",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "type": "split_from_story",
+        "id": "S6-015",
+        "date": "2026-09-02"
+      },
+      "sourceDependencies": ["S6-026"],
+      "dependencies": ["S6-026"],
+      "gap": "Le chargeur actuel ne lit que les manifests du dépôt ; aucun template global versionné n'est persisté en base.",
+      "evidence": ["lib/plugins/loader.ts", "docs/validation/S6-016-widget-framing.md"],
+      "acceptance": [
+        "Créer une migration persistante pour les templates globaux, leurs versions immuables, leur état brouillon ou publié et leurs cas de référence.",
+        "Activer et tester la RLS : lecture des versions publiées par les utilisateurs authentifiés, aucune mutation directe par un tenant.",
+        "Exposer des routes serveur de création, mise à jour de brouillon, prévisualisation et publication réservées au super-administrateur.",
+        "Relire après rechargement la version publiée exacte et conserver l'audit de publication."
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
+      "priorityRank": 35
+    },
+    {
+      "id": "S6-028",
+      "title": "Générer, prévisualiser et publier un widget depuis l'administration",
+      "description": "En tant que super-administrateur Qalem, je veux décrire un widget en langage naturel puis le prévisualiser et le publier sans rédiger de JSON.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P2",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "type": "split_from_story",
+        "id": "S6-015",
+        "date": "2026-09-02"
+      },
+      "sourceDependencies": ["S6-027"],
+      "dependencies": ["S6-027"],
+      "gap": "Il n'existe ni builder IA super-administrateur, ni prévisualisation d'une composition générique, ni publication sans redéploiement.",
+      "evidence": ["app/admin/page.tsx", "lib/server/provider-config.ts"],
+      "acceptance": [
+        "Générer la composition structurée avec le fournisseur LLM administré courant, sans modèle ni endpoint codé en dur.",
+        "Valider schéma, sémantique et cas de référence avant d'autoriser la prévisualisation puis la publication.",
+        "Permettre au super-administrateur de corriger la demande, régénérer, prévisualiser et publier sans manipuler de JSON ni utiliser un builder drag-and-drop.",
+        "Refuser le parcours aux administrateurs tenant et localiser l'interface en français, arabe RTL et anglais."
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
+      "priorityRank": 36
+    },
+    {
+      "id": "S6-029",
+      "title": "Consommer les widgets publiés et les exporter statiquement",
+      "description": "En tant qu'auteur Qalem, je veux utiliser un template publié dans une formation tout en conservant un export LMS statique et sûr.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P2",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "type": "split_from_story",
+        "id": "S6-015",
+        "date": "2026-09-02"
+      },
+      "sourceDependencies": ["S6-028"],
+      "dependencies": ["S6-028"],
+      "gap": "La génération ne consomme que les plugins du dépôt et l'export n'a jamais été recetté avec un template publié dynamiquement.",
+      "evidence": [
+        "lib/generation/scene-generator.ts",
+        "lib/export/scorm/build-scorm-package.ts",
+        "lib/export/scorm/scene-to-html.ts"
+      ],
+      "acceptance": [
+        "Sélectionner et consommer une version publiée dans une formation sans redéploiement, tout en figeant la version utilisée par la scène.",
+        "Rendre le widget interactif sur Qalem dans les trois locales, avec RTL arabe et validation des données à la frontière.",
+        "Inclure une capture statique dans les exports SCORM 1.2, SCORM 2004 et cmi5 sans embarquer le runtime interactif ni du code exécutable.",
+        "Prouver en navigateur la publication, le rechargement, la consommation, l'export et le refus cross-tenant, puis nettoyer les données de recette."
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
+      "priorityRank": 37
     },
     {
       "id": "S6-015",
@@ -3197,7 +3322,7 @@
         "date": "2026-08-26"
       },
       "sourceDependencies": [],
-      "dependencies": ["S6-016"],
+      "dependencies": ["S6-016", "S6-026", "S6-027", "S6-028", "S6-029"],
       "gap": "Le cadrage NP exige une composition par le super-admin ; les plugins métier livrés ne prouvent pas ce builder. Le cadrage est resté en phase 2.1.",
       "evidence": [
         "../docs/np-cadrage.md",
@@ -3207,20 +3332,22 @@
       ],
       "acceptance": [
         "Après validation du cadrage actualisé, réutiliser le moteur borné existant pour composer un nouveau template à partir d’une demande, sans générer de code exécutable.",
-        "Valider structure et calculs par schéma strict et cas de référence avant prévisualisation et publication.",
-        "Autoriser création/publication au seul super-admin si la décision v1 est confirmée ; vérifier le refus aux administrateurs tenant.",
+        "Utiliser le fournisseur LLM administré courant sans restaurer ni coder en dur un ancien modèle ou endpoint.",
+        "Valider structure et calculs par schéma strict et cas de référence avant prévisualisation et publication ; refuser toute brique inconnue ou tout code exécutable.",
+        "Autoriser création et publication au seul super-administrateur ; vérifier le refus aux administrateurs tenant.",
         "Publier une nouvelle composition, la retrouver après rechargement et la consommer dans une formation sans déploiement.",
+        "Exporter la scène en SCORM 1.2, SCORM 2004 et cmi5 sous forme de capture statique, sans embarquer le runtime interactif.",
         "Scinder en US d’exécution bornées avant implémentation ; aucune nouvelle brique atomique ni constructeur drag-and-drop implicite."
       ],
       "closureEvidence": [],
       "historicalDependencies": [],
-      "executionAllowed": false,
+      "executionAllowed": true,
       "validationRequires": [
         "qualityGates",
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 34
+      "priorityRank": 38
     },
     {
       "id": "S6-011",
@@ -3256,7 +3383,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 35
+      "priorityRank": 39
     },
     {
       "id": "S2-004",
@@ -3290,7 +3417,7 @@
       "historicalDependencies": ["S2-001"],
       "executionAllowed": false,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 36
+      "priorityRank": 40
     },
     {
       "id": "S2-005",
@@ -3323,7 +3450,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 37
+      "priorityRank": 41
     },
     {
       "id": "S2-006",
@@ -3355,7 +3482,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 38
+      "priorityRank": 42
     },
     {
       "id": "S2-008",
@@ -3389,7 +3516,7 @@
       "historicalDependencies": ["S0-008", "S2-010"],
       "executionAllowed": false,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 39
+      "priorityRank": 43
     },
     {
       "id": "S2-009",
@@ -3429,7 +3556,7 @@
       "historicalDependencies": ["S2-010"],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 40
+      "priorityRank": 44
     },
     {
       "id": "S2-011",
@@ -3465,7 +3592,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 41
+      "priorityRank": 45
     },
     {
       "id": "S3-001",
@@ -3497,7 +3624,7 @@
       "historicalDependencies": ["S0-008", "S0-009"],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 42
+      "priorityRank": 46
     },
     {
       "id": "S3-003",
@@ -3530,7 +3657,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 43
+      "priorityRank": 47
     },
     {
       "id": "S3-004",
@@ -3563,7 +3690,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 44
+      "priorityRank": 48
     },
     {
       "id": "S3-005",
@@ -3596,7 +3723,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 45
+      "priorityRank": 49
     },
     {
       "id": "S3-006",
@@ -3629,7 +3756,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 46
+      "priorityRank": 50
     },
     {
       "id": "S3-007",
@@ -3661,7 +3788,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 47
+      "priorityRank": 51
     },
     {
       "id": "S3-008",
@@ -3697,7 +3824,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 48
+      "priorityRank": 52
     },
     {
       "id": "S3-009",
@@ -3729,7 +3856,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 49
+      "priorityRank": 53
     },
     {
       "id": "S3-010",
@@ -3762,7 +3889,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 50
+      "priorityRank": 54
     },
     {
       "id": "U-007",
@@ -3814,7 +3941,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 51
+      "priorityRank": 55
     },
     {
       "id": "U-008",
@@ -3864,7 +3991,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 52
+      "priorityRank": 56
     },
     {
       "id": "U-021",
@@ -3900,7 +4027,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 53
+      "priorityRank": 57
     },
     {
       "id": "S-018",
@@ -3941,7 +4068,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 54
+      "priorityRank": 58
     },
     {
       "id": "S-019",
@@ -3981,7 +4108,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 55
+      "priorityRank": 59
     },
     {
       "id": "S-020",
@@ -4021,7 +4148,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 56
+      "priorityRank": 60
     },
     {
       "id": "S-021",
@@ -4061,7 +4188,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 57
+      "priorityRank": 61
     },
     {
       "id": "S-034",
@@ -4101,7 +4228,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 58
+      "priorityRank": 62
     },
     {
       "id": "S-035",
@@ -4141,7 +4268,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 59
+      "priorityRank": 63
     },
     {
       "id": "S-036",
@@ -4182,7 +4309,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 60
+      "priorityRank": 64
     },
     {
       "id": "S-037",
@@ -4222,7 +4349,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 61
+      "priorityRank": 65
     },
     {
       "id": "S-047",
@@ -4261,7 +4388,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 62
+      "priorityRank": 66
     },
     {
       "id": "S-048",
@@ -4301,7 +4428,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 63
+      "priorityRank": 67
     },
     {
       "id": "U-011",
@@ -4336,7 +4463,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 64
+      "priorityRank": 68
     },
     {
       "id": "U-015",
@@ -4371,7 +4498,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 65
+      "priorityRank": 69
     },
     {
       "id": "U-018",
@@ -4406,7 +4533,7 @@
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 66
+      "priorityRank": 70
     }
   ]
 }
