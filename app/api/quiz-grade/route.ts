@@ -11,6 +11,8 @@ import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
 import { buildQuizGradePrompts, type GradeRequest } from '@/lib/server/quiz-grade-prompts';
+import { requireOrgMember } from '@/lib/api/auth';
+import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
 const log = createLogger('Quiz Grade');
 
 interface GradeResponse {
@@ -22,14 +24,20 @@ export async function POST(req: NextRequest) {
   let questionSnippet: string | undefined;
   let resolvedPoints: number | undefined;
   try {
-    const body = (await req.json()) as GradeRequest;
+    const body = (await req.json()) as GradeRequest & { orgId?: string };
     const { question, userAnswer, points, language } = body;
+    const orgId = body.orgId?.trim();
     questionSnippet = question?.substring(0, 60);
     resolvedPoints = points;
 
     if (!question || !userAnswer) {
       return apiError('MISSING_REQUIRED_FIELD', 400, 'question and userAnswer are required');
     }
+    if (!orgId) {
+      return apiError('MISSING_REQUIRED_FIELD', 400, 'Organization is required');
+    }
+    const auth = await requireOrgMember(req, orgId);
+    if (auth.response) return auth.response;
 
     // Validate points is a positive finite number
     if (!points || !Number.isFinite(points) || points <= 0) {
@@ -45,15 +53,17 @@ export async function POST(req: NextRequest) {
 
     const { system: systemPrompt, user: userPrompt } = buildQuizGradePrompts(body);
 
-    const result = await callLLM(
-      {
-        model: languageModel,
-        system: systemPrompt,
-        prompt: userPrompt,
-      },
-      'quiz-grade',
-      undefined,
-      thinkingConfig,
+    const result = await runWithUsageMeteringContext(req.headers, auth.user.id, orgId, () =>
+      callLLM(
+        {
+          model: languageModel,
+          system: systemPrompt,
+          prompt: userPrompt,
+        },
+        'quiz-grade',
+        undefined,
+        thinkingConfig,
+      ),
     );
 
     // Parse the LLM response as JSON

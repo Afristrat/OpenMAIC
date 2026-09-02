@@ -18,6 +18,7 @@ import { useI18n } from '@/lib/hooks/use-i18n';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { getCurrentModelConfig } from '@/lib/utils/model-config';
 import { createLogger } from '@/lib/logger';
+import { getCurrentOrganizationId } from '@/lib/hooks/use-organizations';
 
 const log = createLogger('QuizView');
 import type { QuizQuestion } from '@/lib/types/stage';
@@ -65,6 +66,7 @@ async function gradeShortAnswerQuestion(
       method: 'POST',
       headers,
       body: JSON.stringify({
+        orgId: getCurrentOrganizationId(),
         question: q.question,
         userAnswer,
         points: pts,
