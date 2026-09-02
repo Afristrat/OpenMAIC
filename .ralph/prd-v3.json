@@ -3770,8 +3770,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Bouton certificat dans classroom » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P2",
-      "status": "decision_required",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd-ui.json",
         "id": "U-007",
@@ -3779,19 +3779,36 @@
       },
       "sourceDependencies": [],
       "dependencies": ["S0-011"],
-      "gap": "CertificatePrompt existe sans montage retrouvé.",
-      "evidence": ["components/certificate-prompt.tsx:181"],
+      "gap": "Résolu : le bouton est monté sur la page de fin et le signal de complétude est restauré pour les classrooms persistées.",
+      "evidence": [
+        "components/certificate-prompt.tsx:181",
+        "components/scene-renderers/classroom-complete.tsx",
+        "app/classroom/[id]/page.tsx",
+        "app/api/certificates/generate/route.ts",
+        "e2e/tests/classroom-interaction.spec.ts",
+        "e2e/tests/classroom-server-completion.spec.ts",
+        "docs/validation/U-007-classroom-certificate.md"
+      ],
       "acceptance": [
         "Après conservation, rendre l’action accessible au moment autorisé de fin de cours.",
         "Tester émission idempotente, refus hors droits et accès au certificat depuis le parcours réel."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-02 — La décision explicite S0-011 conserve les 72 capacités héritées ; l’exécution U-007 est autorisée et la capacité n’est pas retirée.",
+        "2026-09-02 — SHA fonctionnel f82f3927413a0177cc549865efd9411e643edac0 poussé sur origin/refork-v030 : bouton monté, éligibilité alignée sur les quiz, contrat JSON corrigé, émission concurrente idempotente et complétude restaurée pour le chemin serveur.",
+        "2026-09-02 — TDD serveur : RED aux SHA d29e7cf071bcca6cec4c3ff9f833f252163cc624 et e74d5ffb3b51bab4544a5d054b3c96e7761015ab sur l’absence de Course complete ; GREEN au SHA fonctionnel exact.",
+        "2026-09-02 — Gate ServeurIA exact : Prettier, TypeScript et ESLint verts ; 409/409 fichiers et 2 595/2 595 tests Vitest ; build 103/103 pages ; 92/92 scénarios Playwright en 5,0 minutes.",
+        "2026-09-02 — Déploiement Coolify gh853y7iazoe466izp1kkfk8 terminé au SHA exact ; conteneur bcx5pxyuc9z3lt4jtyjipcqu-172952217823 healthy, RestartCount=0, OOMKilled=false et /api/health=200.",
+        "2026-09-02 — Recette production sans mock : action visible sur classroom persistée, émission 201, deux replays 200 sur le même certificat, Mes certificats et vérification publique accessibles, utilisateur hors droits 404, anonyme 401.",
+        "2026-09-02 — Nettoyage certifié : zéro stage, scène, résultat de quiz, certificat, organisation, adhésion et profil temporaires ; deux utilisateurs Auth supprimés et fichiers de recette retirés.",
+        "Artefact : docs/validation/U-007-classroom-certificate.md"
+      ],
       "historicalEvidence": {
         "completedAt": "2026-03-29T23:48:14.366Z",
         "status": "legacy_claim_not_delivery_proof"
       },
       "historicalDependencies": [],
-      "executionAllowed": false,
+      "executionAllowed": true,
       "validationRequires": [
         "qualityGates",
         "fresh_evidence_per_acceptance",
