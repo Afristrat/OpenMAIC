@@ -27,3 +27,7 @@ Verdict : cadrage confirmé explicitement dans la session propriétaire Qalem.
 S6-015 est scindée dans le PRD 3 en quatre US d'exécution bornées : S6-026 pour la grammaire et l'évaluateur, S6-027 pour la persistance et les droits, S6-028 pour le builder IA et la publication, puis S6-029 pour la consommation et l'export. Toute réponse contenant du code exécutable ou une brique inconnue est refusée fermée.
 
 Cette décision n'autorise aucune écriture dans un autre projet et n'étend pas les privilèges des administrateurs tenant.
+
+## Certification
+
+Le SHA `306b20894f435ff690b426645dea985710d96c72` a été validé sur ServeurIA : Prettier, TypeScript et lint verts ; 412 fichiers et 2 600 tests Vitest ; build de 104 pages avec contrôle d'isolation des routes ; 97 parcours Playwright sans retry. Une course de rechargement détectée au premier passage dans le test de reprise du quiz a été corrigée à la source puis reproduite cinq fois avant le gate complet.

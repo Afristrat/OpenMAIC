@@ -3154,15 +3154,15 @@
       "description": "En tant qu’utilisateur de Qalem, je veux clore le cadrage np des widgets à partir du produit actuel afin que le parcours promis soit réellement utilisable.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P2",
-      "status": "in_progress",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "type": "request_or_observed_gap",
         "date": "2026-08-26"
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Décision explicite reçue le 2 septembre 2026 et réconciliée avec le produit actuel ; les gates exactes restent à exécuter avant clôture.",
+      "gap": "Résolu : cadrage confirmé, réconcilié avec le produit actuel et scindé en quatre US d'exécution bornées dans le PRD 3.",
       "evidence": [
         "../docs/np-cadrage.md:43",
         ".ralph/prd-v2.json#S5-001",
@@ -3175,7 +3175,12 @@
         "Mettre à jour les critères du builder et de l’export statique retenus ; ne pas imposer l’ancienne restriction andragogie seule qui a été remplacée par un choix explicite.",
         "Documenter le verdict et les livrables de cadrage encore demandés ; aucune écriture dans un autre projet."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-02 — Amine confirme explicitement le cadrage S6-016 dans la session propriétaire Qalem : builder IA réservé au super-administrateur, templates déclaratifs persistés sans redéploiement, export LMS statique, aucune création par les administrateurs tenant, aucun builder drag-and-drop ni nouvelle brique 3D/vidéo en v1.",
+        "2026-09-02 — docs/validation/S6-016-widget-framing.md confronte Q1–Q4 au produit actuel : authentification multi-tenant et import PPTX désormais livrés, plugins encore chargés depuis le dépôt, SCORM déjà borné aux captures et contenus statiques. Aucun ancien modèle ou endpoint n'est restauré ; le fournisseur administré courant et le choix pédagogique explicite restent la règle.",
+        "2026-09-02 — Le PRD 3 contient désormais les quatre tranches dépendantes S6-026 à S6-029 : grammaire sûre, persistance/RLS, builder IA super-administrateur, puis consommation et export statique. S6-015 les agrège sans masquer une implémentation monolithique.",
+        "2026-09-02 — Gate exact au SHA 306b20894f435ff690b426645dea985710d96c72 sur ServeurIA : Prettier, TypeScript et lint verts ; 412/412 fichiers et 2 600/2 600 tests Vitest ; build 104/104 pages et isolation des routes ; 97/97 Playwright avec retries désactivés. Le premier passage avait révélé une course de rechargement du test quiz ; la synchronisation a été corrigée puis prouvée 5/5 avant le gate complet sans retry."
+      ],
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": [
@@ -3315,7 +3320,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux composer et publier des widgets déterministes sans redéploiement afin que le parcours promis soit réellement utilisable.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P2",
-      "status": "decision_required",
+      "status": "in_progress",
       "passes": false,
       "source": {
         "type": "request_or_observed_gap",
@@ -3323,7 +3328,7 @@
       },
       "sourceDependencies": [],
       "dependencies": ["S6-016", "S6-026", "S6-027", "S6-028", "S6-029"],
-      "gap": "Le cadrage NP exige une composition par le super-admin ; les plugins métier livrés ne prouvent pas ce builder. Le cadrage est resté en phase 2.1.",
+      "gap": "Cadrage confirmé et scindé : S6-026 à S6-029 doivent maintenant livrer la grammaire, la persistance, le builder super-administrateur, la consommation et l'export statique.",
       "evidence": [
         "../docs/np-cadrage.md",
         "lib/plugins",

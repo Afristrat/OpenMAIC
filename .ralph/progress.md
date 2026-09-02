@@ -17,6 +17,8 @@ Les logs ci-dessous sont des archives datées ; leurs chiffres et mentions « ve
 - S1-011 conserve son acceptation humaine historique ; elle ne ferme ni le catalogue vocal S6-012, ni la prononciation de dirhams S6-008, ni la recette Whisper S6-009.
 - La règle de zéro rotation reste en vigueur : S6-014 est bloquée, pas une action à exécuter automatiquement.
 
+- **2026-09-02 — S6-016 Cadrage du moteur de widgets déterministes** — Amine a confirmé explicitement le cadrage actualisé : builder IA et publication réservés au super-administrateur, compositions déclaratives persistées sans redéploiement, export LMS statique, aucun builder drag-and-drop ni création par les administrateurs tenant en v1. Q1–Q4 ont été confrontées au produit actuel et le reste a été scindé dans le même PRD en S6-026 à S6-029. Le gate exact au SHA `306b20894f435ff690b426645dea985710d96c72` passe sur ServeurIA : Prettier, TypeScript, lint, 2 600 tests Vitest, build 104 pages et 97/97 Playwright sans retry. Le premier passage avait révélé une course dans le test de rechargement du quiz ; sa synchronisation a été corrigée puis prouvée 5/5 avant le gate complet.
+
 ## Codebase Patterns
 
 - **i18n** : catalogues localisés dans `lib/i18n/locales/` ; contrôler les clés sur les catalogues actuels, pas sur les anciens modules du portage.
