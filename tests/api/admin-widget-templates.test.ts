@@ -30,7 +30,7 @@ const composition = {
   title: 'Calcul simple',
   inputs: [],
   computations: [{ id: 'total', label: 'Total', expression: { op: 'literal', value: 42 } }],
-  nodes: [{ id: 'result', type: 'computed_value', label: 'Résultat', computationId: 'total' }],
+  nodes: [{ id: 'result', type: 'computed_value', computationId: 'total' }],
   rootNodeIds: ['result'],
   goldenCases: [{ name: 'cas nominal', inputs: {}, expected: { total: 42 } }],
 };
