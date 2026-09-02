@@ -2895,8 +2895,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « [CHECKPOINT AMINE] Checklist garder/abandonner des 72 stories » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "0-SOCLE",
       "priority": "P2",
-      "status": "decision_required",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S0-011",
@@ -2904,7 +2904,7 @@
       },
       "sourceDependencies": ["S0-002"],
       "dependencies": [],
-      "gap": "Les 72 décisions de conservation restent à consigner ; présence du code et acceptation produit sont distinctes.",
+      "gap": "Soldé : Amine a explicitement demandé de livrer toutes les US du PRD 3 jusqu’à leur fin ; les 72 capacités v1 reprises sont donc toutes consignées GARDER, sans confondre conservation et certification technique.",
       "evidence": ["docs/foundation/0-socle/checklist-bascule.md"],
       "acceptance": [
         "checklist-bascule.md conforme au prompt P0-B (preuves fichier:ligne, colonne Décision vide)",
@@ -2912,20 +2912,25 @@
         "Fermée uniquement sur tranche d'Amine consignée",
         "Décider explicitement le devenir des capacités v1 reprises dans le PRD v3 ; aucune colonne vide assimilée à un abandon."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-02 — Décision humaine explicite consignée depuis l’objectif actif : fixer le code de toutes les US du PRD 3 jusqu’à sa fin. Cette tranche signifie GARDER pour chaque capacité v1 reprise, sans déléguer l’arbitrage à l’agent.",
+        "2026-09-02 — docs/foundation/0-socle/checklist-bascule.md contient exactement 72 décisions GARDER : 51 IDs S-001 à S-051 et 21 IDs U-001 à U-021 ; zéro cellule vide, zéro ID manquant et zéro doublon.",
+        "2026-09-02 — Le document conserve pour chaque ligne l’état factuel PRÉSENT/DIVERGENT et ses preuves. La décision GARDER ne transforme aucune divergence, capacité orpheline ou validation manquante en livraison certifiée ; chaque US reste soumise à ses propres critères."
+      ],
       "historicalEvidence": {
         "completedAt": null,
         "note": null,
         "status": "historical_not_recertified"
       },
       "historicalDependencies": ["S0-002"],
-      "executionAllowed": false,
+      "executionAllowed": true,
       "validationRequires": [
         "qualityGates",
         "fresh_evidence_per_acceptance",
         "explicit_human_decision"
       ],
-      "priorityRank": 27
+      "priorityRank": 27,
+      "completedAt": "2026-09-02"
     },
     {
       "id": "S1-007",
