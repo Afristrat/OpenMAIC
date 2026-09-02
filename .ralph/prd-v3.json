@@ -3237,7 +3237,7 @@
       "description": "En tant que super-administrateur Qalem, je veux enregistrer des templates validés en base afin qu'ils survivent aux rechargements et aux redéploiements.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P2",
-      "status": "to_implement",
+      "status": "in_progress",
       "passes": false,
       "source": {
         "type": "split_from_story",
@@ -3247,7 +3247,12 @@
       "sourceDependencies": ["S6-026"],
       "dependencies": ["S6-026"],
       "gap": "Le chargeur actuel ne lit que les manifests du dépôt ; aucun template global versionné n'est persisté en base.",
-      "evidence": ["lib/plugins/loader.ts", "docs/validation/S6-016-widget-framing.md"],
+      "evidence": [
+        "lib/plugins/loader.ts",
+        "tests/api/admin-widget-templates.test.ts",
+        "tests/supabase/widget-templates-migration.test.ts",
+        "docs/validation/S6-016-widget-framing.md"
+      ],
       "acceptance": [
         "Créer une migration persistante pour les templates globaux, leurs versions immuables, leur état brouillon ou publié et leurs cas de référence.",
         "Activer et tester la RLS : lecture des versions publiées par les utilisateurs authentifiés, aucune mutation directe par un tenant.",
