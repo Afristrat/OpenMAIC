@@ -17,6 +17,7 @@ export interface PersistedClassroomData {
   id: string;
   stage: Stage;
   scenes: Scene[];
+  generationComplete: true;
   createdAt: string;
   ownerId: string;
   orgId: string;
@@ -281,6 +282,7 @@ export async function readClassroom(id: string): Promise<PersistedClassroomData 
     id: stageRow.id,
     stage,
     scenes,
+    generationComplete: true,
     createdAt: new Date(stageRow.created_at).toISOString(),
     ownerId: stageRow.owner_id,
     orgId: stageRow.org_id,

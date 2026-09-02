@@ -83,7 +83,7 @@ export default function ClassroomDetailPage() {
           if (json.success && json.classroom) {
             setCanEdit(Boolean(json.canEdit));
             setCanViewSources(Boolean(json.canViewSources));
-            const { stage, scenes } = json.classroom;
+            const { stage, scenes, generationComplete } = json.classroom;
             if (protectUnsyncedLocal && localSnapshot) {
               serverBackedRef.current = true;
               log.info('Preserved unsynced local classroom:', classroomId);
@@ -107,6 +107,7 @@ export default function ClassroomDetailPage() {
               useStageStore.setState({
                 scenes: migrated,
                 currentSceneId,
+                generationComplete: generationComplete === true,
                 // Match `loadFromStorage` semantics: mode is transient UI
                 // state, not persisted with the stage. Reset on every
                 // classroom load so SPA navigation doesn't carry Pro
