@@ -11,6 +11,7 @@ import {
 } from '@/lib/server/classroom-storage';
 import { ClassroomCastingError, normalizeClassroomCasting } from '@/lib/agents/classroom-casting';
 import type { Action } from '@/lib/types/action';
+import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
 
 export async function POST(
   request: NextRequest,
@@ -50,13 +51,15 @@ export async function POST(
     ...scene,
     actions: [{ ...action, text: body.text.trim(), audioId: undefined, audioUrl: undefined }],
   };
-  await generateTTSForClassroom(
-    [generatedScene],
-    classroomId,
-    casting.teacherProfile,
-    casting.agents,
-    undefined,
-    casting.stage.languageDirective,
+  await runWithUsageMeteringContext(request.headers, auth.user.id, ownership.orgId, () =>
+    generateTTSForClassroom(
+      [generatedScene],
+      classroomId,
+      casting.teacherProfile,
+      casting.agents,
+      undefined,
+      casting.stage.languageDirective,
+    ),
   );
   if (!generatedScene.actions?.every((item: Action) => item.type !== 'speech' || item.audioUrl)) {
     return apiError('INTERNAL_ERROR', 502, 'La synthèse vocale a échoué');

@@ -12,6 +12,7 @@ import {
 import { ClassroomCastingError, normalizeClassroomCasting } from '@/lib/agents/classroom-casting';
 import type { Action } from '@/lib/types/action';
 import type { Scene } from '@/lib/types/stage';
+import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
 
 function countSpeechAudio(scenes: Scene[]): number {
   return scenes.reduce(
@@ -72,13 +73,15 @@ export async function POST(
   }
 
   const regeneratedScenes = structuredClone(selectedScenes);
-  await generateTTSForClassroom(
-    regeneratedScenes,
-    classroomId,
-    casting.teacherProfile,
-    casting.agents,
-    undefined,
-    casting.stage.languageDirective,
+  await runWithUsageMeteringContext(request.headers, auth.user.id, ownership.orgId, () =>
+    generateTTSForClassroom(
+      regeneratedScenes,
+      classroomId,
+      casting.teacherProfile,
+      casting.agents,
+      undefined,
+      casting.stage.languageDirective,
+    ),
   );
   const generatedAudioCount = countSpeechAudio(regeneratedScenes);
   if (generatedAudioCount === 0) {

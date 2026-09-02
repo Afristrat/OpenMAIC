@@ -12,6 +12,7 @@ import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { isSupportedASRAudioUpload, normalizeASRLanguage } from '@/lib/audio/asr-utils';
 import { requireSuperAdminOrOrgMember } from '@/lib/api/auth';
+import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
 const log = createLogger('Transcription');
 
 export const maxDuration = 60;
@@ -70,7 +71,9 @@ export async function POST(req: NextRequest) {
     };
 
     // Transcribe using the provider system
-    const result = await transcribeAudio(config, audioFile);
+    const result = await runWithUsageMeteringContext(req.headers, auth.user.id, orgId, () =>
+      transcribeAudio(config, audioFile),
+    );
 
     return apiSuccess({ text: result.text });
   } catch (error) {

@@ -9,6 +9,7 @@ import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { isValidClassroomId, readClassroomOwnership } from '@/lib/server/classroom-storage';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
+import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
 
 const log = createLogger('EditorImageBrief');
 
@@ -57,11 +58,17 @@ export async function POST(req: NextRequest) {
       body as unknown as Record<string, unknown>,
       'generate-classroom',
     );
-    const response = await callLLM(
-      { model, system: request.system, prompt: request.source },
-      'editor-image-brief',
-      { retries: 1, validate: (text) => parseEditorImageBrief(text, transcript) !== null },
-      thinkingConfig,
+    const response = await runWithUsageMeteringContext(
+      req.headers,
+      auth.user.id,
+      ownership.orgId,
+      () =>
+        callLLM(
+          { model, system: request.system, prompt: request.source },
+          'editor-image-brief',
+          { retries: 1, validate: (text) => parseEditorImageBrief(text, transcript) !== null },
+          thinkingConfig,
+        ),
     );
     const brief = parseEditorImageBrief(response.text, transcript);
     if (!brief) return apiError('PARSE_FAILED', 502, 'Image brief was invalid');

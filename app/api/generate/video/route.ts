@@ -32,6 +32,7 @@ import { requireSuperAdminOrOrgAuthor, requireSuperAdminOrOrgEditor } from '@/li
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { enqueueVideoGeneration } from '@/lib/jobs/queue';
 import { isValidClassroomId, readClassroomOwnership } from '@/lib/server/classroom-storage';
+import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
 
 const log = createLogger('VideoGeneration API');
 
@@ -119,9 +120,11 @@ export async function POST(request: NextRequest) {
         `aspect=${options.aspectRatio ?? 'auto'}, resolution=${options.resolution ?? 'auto'}`,
     );
 
-    const result = await generateMeteredVideo(
-      { providerId, apiKey, baseUrl, model: clientModel },
-      options,
+    const result = await runWithUsageMeteringContext(
+      request.headers,
+      auth.user.id,
+      tenantId,
+      () => generateMeteredVideo({ providerId, apiKey, baseUrl, model: clientModel }, options),
     );
 
     log.info(

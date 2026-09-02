@@ -24,6 +24,7 @@ import { VOXCPM_AUTO_VOICE_ID, VOXCPM_TTS_PROVIDER_ID } from '@/lib/audio/voxcpm
 import { generateTTSSchema } from '@/lib/api/schemas';
 import { validateBody } from '@/lib/api/validate';
 import { requireSuperAdminOrOrgMember } from '@/lib/api/auth';
+import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
 
 const log = createLogger('TTS API');
 
@@ -118,7 +119,12 @@ export async function POST(req: NextRequest) {
     );
 
     // Generate audio
-    const { audio, format } = await generateTTS(config, text);
+    const { audio, format } = await runWithUsageMeteringContext(
+      req.headers,
+      auth.user.id,
+      body.orgId,
+      () => generateTTS(config, text),
+    );
 
     // Convert to base64
     const base64 = Buffer.from(audio).toString('base64');

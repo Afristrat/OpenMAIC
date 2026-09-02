@@ -16,6 +16,7 @@ import {
   type EscoOccupationResource,
 } from '@/lib/agents/isco-profile';
 import { buildContextualSpecialistSystemPrompt } from '@/lib/agents/contextual-specialist-prompt';
+import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
 
 const log = createLogger('ContextualSpecialists');
 const ESCO_SEARCH_URL = 'https://ec.europa.eu/esco/api/search';
@@ -245,35 +246,43 @@ export async function POST(req: NextRequest) {
       body as unknown as Record<string, unknown>,
       'generate-classroom',
     );
-    const locale = body.locale ?? 'fr-FR';
-    const result = await callLLM(
-      {
-        model,
-        system: buildContextualSpecialistSystemPrompt({ locale, territory }),
-        prompt: topic,
+    const specialists = await runWithUsageMeteringContext(
+      req.headers,
+      auth.user.id,
+      orgId,
+      async () => {
+        const locale = body.locale ?? 'fr-FR';
+        const result = await callLLM(
+          {
+            model,
+            system: buildContextualSpecialistSystemPrompt({ locale, territory }),
+            prompt: topic,
+          },
+          'contextual-specialists',
+          undefined,
+          thinkingConfig,
+        );
+        const proposals = parseProposals(result.text);
+        const resolved = await Promise.all(
+          proposals.map((proposal) =>
+            resolveOccupation(
+              proposal,
+              locale === 'fr-FR' ? 'fr' : 'en',
+              locale === 'fr-FR' ? 'fr' : locale === 'ar-MA' ? 'ar' : 'en',
+            ),
+          ),
+        );
+        const groundedSpecialists = resolved.filter(
+          (specialist): specialist is ContextualSpecialist => specialist !== null,
+        );
+        const specialists = await localizeSpecialistTasks(
+          groundedSpecialists,
+          locale,
+          model,
+          thinkingConfig,
+        );
+        return specialists;
       },
-      'contextual-specialists',
-      undefined,
-      thinkingConfig,
-    );
-    const proposals = parseProposals(result.text);
-    const resolved = await Promise.all(
-      proposals.map((proposal) =>
-        resolveOccupation(
-          proposal,
-          locale === 'fr-FR' ? 'fr' : 'en',
-          locale === 'fr-FR' ? 'fr' : locale === 'ar-MA' ? 'ar' : 'en',
-        ),
-      ),
-    );
-    const groundedSpecialists = resolved.filter(
-      (specialist): specialist is ContextualSpecialist => specialist !== null,
-    );
-    const specialists = await localizeSpecialistTasks(
-      groundedSpecialists,
-      locale,
-      model,
-      thinkingConfig,
     );
     return apiSuccess({ specialists, reference: `ISCO-08 via ESCO ${ESCO_SOURCE_VERSION}` });
   } catch (error) {

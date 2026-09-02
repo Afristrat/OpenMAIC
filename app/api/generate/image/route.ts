@@ -31,6 +31,7 @@ import { randomUUID } from 'node:crypto';
 import { requireSuperAdminOrOrgAuthor, requireSuperAdminOrOrgEditor } from '@/lib/api/auth';
 import { uploadClassroomMedia } from '@/lib/server/classroom-media-generation';
 import { isValidClassroomId, readClassroomOwnership } from '@/lib/server/classroom-storage';
+import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
 
 const log = createLogger('ImageGeneration API');
 
@@ -48,30 +49,19 @@ export async function POST(request: NextRequest) {
       return apiError('MISSING_REQUIRED_FIELD', 400, 'Missing prompt');
     }
 
-    if (classroomId) {
-      if (!isValidClassroomId(classroomId)) {
-        return apiError('INVALID_REQUEST', 400, 'Invalid classroom id');
-      }
-      const ownership = await readClassroomOwnership(classroomId);
-      if (ownership) {
-        const auth = await requireSuperAdminOrOrgEditor(
-          request,
-          ownership.orgId,
-          ownership.ownerId,
-        );
-        if (auth.response) return auth.response;
-      } else if (orgId) {
-        const auth = await requireSuperAdminOrOrgAuthor(request, orgId);
-        if (auth.response) return auth.response;
-      } else {
-        return apiError('INVALID_REQUEST', 404, 'Classroom not found');
-      }
-    } else if (orgId) {
-      const auth = await requireSuperAdminOrOrgAuthor(request, orgId);
-      if (auth.response) return auth.response;
-    } else {
-      return apiError('MISSING_REQUIRED_FIELD', 400, 'Organization is required');
+    if (classroomId && !isValidClassroomId(classroomId)) {
+      return apiError('INVALID_REQUEST', 400, 'Invalid classroom id');
     }
+    const ownership = classroomId ? await readClassroomOwnership(classroomId) : null;
+    if (classroomId && !ownership && !orgId) {
+      return apiError('INVALID_REQUEST', 404, 'Classroom not found');
+    }
+    const tenantId = ownership?.orgId ?? orgId;
+    if (!tenantId) return apiError('MISSING_REQUIRED_FIELD', 400, 'Organization is required');
+    const auth = ownership
+      ? await requireSuperAdminOrOrgEditor(request, ownership.orgId, ownership.ownerId)
+      : await requireSuperAdminOrOrgAuthor(request, tenantId);
+    if (auth.response) return auth.response;
 
     const providerId = (request.headers.get('x-image-provider') || 'seedream') as ImageProviderId;
     // Managed providers are admin-owned: ignore any client-sent key/baseUrl.
@@ -111,9 +101,11 @@ export async function POST(request: NextRequest) {
         `prompt="${body.prompt.slice(0, 80)}...", size=${body.width ?? 'auto'}x${body.height ?? 'auto'}`,
     );
 
-    const result = await generateMeteredImage(
-      { providerId, apiKey, baseUrl, model: clientModel },
-      body,
+    const result = await runWithUsageMeteringContext(
+      request.headers,
+      auth.user.id,
+      tenantId,
+      () => generateMeteredImage({ providerId, apiKey, baseUrl, model: clientModel }, body),
     );
 
     if (classroomId) {
