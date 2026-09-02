@@ -382,12 +382,10 @@ test.describe('Quiz content surface (#657)', () => {
         }),
     );
 
-    const initialProviders = page.waitForResponse('**/api/server-providers');
     await page.goto('/review');
-    await initialProviders;
-    const reloadedProviders = page.waitForResponse('**/api/server-providers');
+    await page.waitForLoadState('networkidle');
     await page.reload();
-    await reloadedProviders;
+    await page.waitForLoadState('networkidle');
     await expect(page.getByRole('heading', { name: 'Review queue' })).toBeVisible();
     await expect(page.getByText(/Capital of Morocco\?|Explain spaced repetition\./)).toBeVisible();
     await expect(page.getByText('Foreign learner card')).toHaveCount(0);
