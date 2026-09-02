@@ -119,7 +119,9 @@ export async function POST(request: NextRequest) {
         return apiError('GENERATION_FAILED', 502, 'Image generation returned no media');
       }
       const filename = `editor-${randomUUID()}.png`;
-      await uploadClassroomMedia(classroomId, `media/${filename}`, bytes);
+      await runWithUsageMeteringContext(request.headers, auth.user.id, tenantId, () =>
+        uploadClassroomMedia(classroomId, `media/${filename}`, bytes),
+      );
       result.url = `/api/classroom-media/${classroomId}/media/${filename}`;
       result.base64 = undefined;
     }
