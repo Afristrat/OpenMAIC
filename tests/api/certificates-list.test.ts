@@ -38,8 +38,10 @@ function query(
     return builder;
   });
   builder.order = vi.fn(() => builder);
-  builder.then = (resolve: (value: typeof result) => unknown, reject: (reason: unknown) => unknown) =>
-    Promise.resolve(userScoped ? result : { data: [], error: null }).then(resolve, reject);
+  builder.then = (
+    resolve: (value: typeof result) => unknown,
+    reject: (reason: unknown) => unknown,
+  ) => Promise.resolve(userScoped ? result : { data: [], error: null }).then(resolve, reject);
   return builder;
 }
 

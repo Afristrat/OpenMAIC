@@ -59,7 +59,10 @@ test.describe('Page Mes certificats (U-008)', () => {
     },
   ] as const) {
     test(`affiche l’état vide en ${locale}`, async ({ page }) => {
-      await page.addInitScript((activeLocale) => localStorage.setItem('locale', activeLocale), locale);
+      await page.addInitScript(
+        (activeLocale) => localStorage.setItem('locale', activeLocale),
+        locale,
+      );
       await page.route('**/api/certificates', (route) =>
         route.fulfill({
           status: 200,
