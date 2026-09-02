@@ -72,6 +72,7 @@ export function usePBLChat({ projectConfig, userRole, onConfigUpdate }: UsePBLCh
 
         const isJudgeAgent = currentIssue && targetAgent.name === currentIssue.judge_agent_name;
         const orgId = getCurrentOrganizationId();
+        if (!orgId) throw new Error('No active organization');
 
         const response = await fetch('/api/pbl/chat', {
           method: 'POST',
