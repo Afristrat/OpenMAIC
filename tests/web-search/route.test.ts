@@ -90,6 +90,29 @@ describe('POST /api/web-search', () => {
     expect(mocks.searchWeb).not.toHaveBeenCalled();
   });
 
+  it('keeps the trusted tenant context after the asynchronous auth boundary', async () => {
+    const { activateUsageMeteringContext, nextUsageOperationContext } =
+      await import('@/lib/billing/usage-context');
+    let providerContext: ReturnType<typeof nextUsageOperationContext> = null;
+    mocks.requireOrgMember.mockImplementationOnce(async (request: NextRequest, orgId: string) => {
+      await Promise.resolve();
+      activateUsageMeteringContext(request.headers, 'user-1', orgId);
+      return { user: { id: 'user-1', email: 'a@example.com' } };
+    });
+    mocks.searchWeb.mockImplementationOnce(async () => {
+      providerContext = nextUsageOperationContext('web-search', 'operation');
+      return { answer: '', sources: [], query: 'test query', responseTime: 0.1 };
+    });
+
+    const response = await postWebSearch({ query: 'test query', providerId: 'brave' });
+
+    expect(response.status).toBe(200);
+    expect(providerContext).toMatchObject({
+      actorUserId: 'user-1',
+      tenantId: 'org-1',
+    });
+  });
+
   it('rejects client-controlled base URLs outside the provider allowlist (unmanaged provider)', async () => {
     // No server config ⇒ unmanaged ⇒ the client base URL is actually used, so it
     // must be validated against the allowlist.
