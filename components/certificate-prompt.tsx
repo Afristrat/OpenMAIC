@@ -193,9 +193,9 @@ export function CertificatePrompt({
 
   // Check if average quiz score meets threshold
   const avgScore =
-    quizScores.length > 0 ? quizScores.reduce((sum, s) => sum + s, 0) / quizScores.length : 100; // No quizzes = auto-pass
+    quizScores.length > 0 ? quizScores.reduce((sum, s) => sum + s, 0) / quizScores.length : 0;
 
-  const meetsThreshold = avgScore >= 60;
+  const meetsThreshold = quizScores.length > 0 && avgScore >= 60;
   const shouldShow = allScenesCompleted && meetsThreshold;
 
   // Check for existing guest certificate

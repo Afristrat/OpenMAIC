@@ -261,7 +261,7 @@ test.describe('Classroom Interaction', () => {
     await page.getByRole('button', { name: 'Get certificate' }).click();
 
     await expect(page.getByRole('heading', { name: '光合作用' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Download' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Download certificate' })).toBeVisible();
     expect(issuanceRequests).toBe(1);
   });
 
