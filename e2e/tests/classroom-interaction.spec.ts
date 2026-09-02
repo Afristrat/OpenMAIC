@@ -7,6 +7,7 @@ import { defaultTheme } from '../fixtures/test-data/scene-content';
 
 const TEST_STAGE_ID = 'e2e-test-stage';
 const LIVE_SPEECH_TEST = 'speaks a live agent intervention after a learner message';
+const CERTIFICATE_PROMPT_TEST = 'offers the certificate from the completed classroom';
 
 const SETTINGS_STORAGE = createSettingsStorage({ sidebarCollapsed: false });
 const LIVE_TTS_SETTINGS_STORAGE = createSettingsStorage(
@@ -28,6 +29,7 @@ const LIVE_TTS_SETTINGS_STORAGE = createSettingsStorage(
 async function seedDatabase(
   page: import('@playwright/test').Page,
   settingsStorage = SETTINGS_STORAGE,
+  generationComplete = false,
 ) {
   // Inject settings before navigating so it's available immediately on load
   await page.addInitScript((settings) => {
@@ -45,7 +47,7 @@ async function seedDatabase(
   // onupgradeneeded, so we can safely write to the already-initialized schema.
   const seedStageData = () =>
     page.evaluate(
-      ({ stageId, theme }) => {
+      ({ stageId, theme, generationComplete }) => {
         return new Promise<void>((resolve, reject) => {
           // Open without specifying version — uses current DB version, no upgrade event
           const request = indexedDB.open('MAIC-Database');
@@ -136,6 +138,7 @@ async function seedDatabase(
             tx.objectStore('stageOutlines').put({
               stageId,
               outlines: [],
+              generationComplete,
               createdAt: now,
               updatedAt: now,
             });
@@ -150,7 +153,7 @@ async function seedDatabase(
           request.onerror = () => reject(request.error);
         });
       },
-      { stageId: TEST_STAGE_ID, theme: defaultTheme },
+      { stageId: TEST_STAGE_ID, theme: defaultTheme, generationComplete },
     );
 
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -175,7 +178,18 @@ test.describe('Classroom Interaction', () => {
     await seedDatabase(
       page,
       testInfo.title === LIVE_SPEECH_TEST ? LIVE_TTS_SETTINGS_STORAGE : SETTINGS_STORAGE,
+      testInfo.title === CERTIFICATE_PROMPT_TEST,
     );
+  });
+
+  test(CERTIFICATE_PROMPT_TEST, async ({ page }) => {
+    const classroom = new ClassroomPage(page);
+    await classroom.goto(TEST_STAGE_ID);
+    await classroom.waitForLoaded();
+
+    await page.getByText('Course complete', { exact: true }).click();
+
+    await expect(page.getByRole('button', { name: 'Get certificate' })).toBeVisible();
   });
 
   test('loads classroom and switches scenes', async ({ page }) => {
