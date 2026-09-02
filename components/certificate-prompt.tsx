@@ -224,8 +224,8 @@ export function CertificatePrompt({
 
       const json = await res.json();
 
-      if (json.success && json.data?.certificate) {
-        const cert = json.data.certificate as Certificate;
+      if (json.success && json.certificate) {
+        const cert = json.certificate as Certificate;
         cert.completionDate = new Date(cert.completionDate);
         setCertData(cert);
         setHasExisting(true);
