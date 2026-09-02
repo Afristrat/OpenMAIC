@@ -24,6 +24,7 @@ import {
 import type { AgentEvent } from '@earendil-works/pi-agent-core';
 import { useStageStore } from '@/lib/store/stage';
 import { getCurrentModelConfig } from '@/lib/utils/model-config';
+import { getCurrentOrganizationId } from '@/lib/hooks/use-organizations';
 import type { SceneContextMap } from '@/lib/agent/scene-context-map';
 import { mergeAssistantParts, type PiPart } from './merge-assistant-parts';
 import { planRegenerateApply, type RegenerateDetails } from './apply-regenerate';
@@ -357,6 +358,7 @@ export function useAgentRuntime(opts: UseAgentRuntimeOptions) {
             'x-provider-type': cfg.providerType || '',
           },
           body: JSON.stringify({
+            orgId: getCurrentOrganizationId(),
             message: userText,
             scene: opts.scene,
             history,

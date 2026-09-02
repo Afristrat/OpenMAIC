@@ -16,6 +16,8 @@ import { buildToolset } from '@/lib/agent/tools/registry';
 import { callLLM } from '@/lib/ai/llm';
 import { createLogger } from '@/lib/logger';
 import type { SceneContextMap } from '@/lib/agent/scene-context-map';
+import { requireSuperAdminOrOrgAuthor } from '@/lib/api/auth';
+import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
 
 const log = createLogger('MAIC Agent');
 
@@ -31,6 +33,7 @@ export const maxDuration = 300;
  * server never has to access a (non-existent) server-side scene store.
  */
 interface AgentEditBody {
+  orgId?: string;
   message: string;
   scene?: { id: string; title: string };
   /**
@@ -84,6 +87,10 @@ export async function POST(req: NextRequest) {
   if (!message) {
     return new Response('message is required', { status: 400 });
   }
+  const orgId = typeof body.orgId === 'string' ? body.orgId.trim() : '';
+  if (!orgId) return new Response('Organization is required', { status: 400 });
+  const auth = await requireSuperAdminOrOrgAuthor(req, orgId);
+  if (auth.response) return auth.response;
 
   // Resolve via the 'maic-agent' stage so operators can route the editor agent
   // to a dedicated model via MODEL_ROUTES (per-stage config). When unrouted it
@@ -164,38 +171,44 @@ export async function POST(req: NextRequest) {
   log.info(`agent edit turn [model=${modelString}] scene=${body.scene?.id ?? 'none'}`);
 
   const encoder = new TextEncoder();
-  const stream = new ReadableStream({
-    async start(controller) {
-      const send = (event: AgentEvent) => {
-        try {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
-        } catch {
-          /* controller closed */
-        }
-      };
-      const unsubscribe = agent.subscribe((event) => {
-        send(event);
-      });
-      try {
-        await agent.prompt(message);
-        await agent.waitForIdle();
-      } catch (err) {
-        log.error(`agent run failed: ${err instanceof Error ? err.message : String(err)}`);
-      } finally {
-        unsubscribe();
-        try {
-          controller.enqueue(encoder.encode('event: close\ndata: {}\n\n'));
-        } catch {
-          /* ignore */
-        }
-        controller.close();
-      }
-    },
-    cancel() {
-      agent.abort();
-      abortController.abort();
-    },
-  });
+  const stream = runWithUsageMeteringContext(
+    req.headers,
+    auth.user.id,
+    orgId,
+    () =>
+      new ReadableStream({
+        async start(controller) {
+          const send = (event: AgentEvent) => {
+            try {
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+            } catch {
+              /* controller closed */
+            }
+          };
+          const unsubscribe = agent.subscribe((event) => {
+            send(event);
+          });
+          try {
+            await agent.prompt(message);
+            await agent.waitForIdle();
+          } catch (err) {
+            log.error(`agent run failed: ${err instanceof Error ? err.message : String(err)}`);
+          } finally {
+            unsubscribe();
+            try {
+              controller.enqueue(encoder.encode('event: close\ndata: {}\n\n'));
+            } catch {
+              /* ignore */
+            }
+            controller.close();
+          }
+        },
+        cancel() {
+          agent.abort();
+          abortController.abort();
+        },
+      }),
+  );
 
   return new Response(stream, {
     headers: {
