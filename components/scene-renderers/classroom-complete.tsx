@@ -9,6 +9,7 @@ import { useStageStore } from '@/lib/store';
 import type { Scene, SceneType } from '@/lib/types/stage';
 import { summarizeScenes } from '@/lib/classroom/complete-summary';
 import { readAnswersForSummary } from '@/lib/quiz/persistence';
+import { CertificatePrompt } from '@/components/certificate-prompt';
 
 const SCENE_TYPE_ICONS: Record<SceneType, typeof FileText> = {
   slide: FileText,
@@ -302,11 +303,12 @@ function QuizRing({ pct, delay = 0 }: { pct: number; delay?: number }) {
 }
 
 interface ClassroomCompletePageProps {
+  readonly stageId: string;
   readonly scenes: Scene[];
   readonly title: string;
 }
 
-export function ClassroomCompletePage({ scenes, title }: ClassroomCompletePageProps) {
+export function ClassroomCompletePage({ stageId, scenes, title }: ClassroomCompletePageProps) {
   const { t, locale } = useI18n();
   const prefersReducedMotion = useReducedMotion();
 
@@ -491,6 +493,12 @@ export function ClassroomCompletePage({ scenes, title }: ClassroomCompletePagePr
               </div>
             </motion.div>
           )}
+
+          <CertificatePrompt
+            stageId={stageId}
+            allScenesCompleted
+            quizScores={summary.quiz ? [summary.quiz.pct] : []}
+          />
         </div>
       </section>
     </MotionConfig>
@@ -500,5 +508,6 @@ export function ClassroomCompletePage({ scenes, title }: ClassroomCompletePagePr
 export function ClassroomCompletePageConnected() {
   const stage = useStageStore((s) => s.stage);
   const scenes = useStageStore((s) => s.scenes);
-  return <ClassroomCompletePage scenes={scenes} title={stage?.name ?? ''} />;
+  if (!stage) return null;
+  return <ClassroomCompletePage stageId={stage.id} scenes={scenes} title={stage.name ?? ''} />;
 }
