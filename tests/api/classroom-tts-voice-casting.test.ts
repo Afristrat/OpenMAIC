@@ -98,7 +98,9 @@ describe('régénération TTS et casting persistant', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.readOwnership.mockResolvedValue({ ownerId: 'owner-1', orgId: 'org-1' });
-    mocks.requireEditor.mockResolvedValue({ response: null });
+    mocks.requireEditor.mockResolvedValue({
+      user: { id: 'session-owner', email: 'author@qalem.ma' },
+    });
     mocks.readClassroom.mockImplementation(async () => classroom());
     mocks.persistClassroom.mockResolvedValue({});
     mocks.generateTTS.mockImplementation(async (scenes: Array<{ actions?: unknown[] }>) => {
