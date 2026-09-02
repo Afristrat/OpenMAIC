@@ -8,6 +8,7 @@ import { defaultTheme } from '../fixtures/test-data/scene-content';
 const TEST_STAGE_ID = 'e2e-test-stage';
 const LIVE_SPEECH_TEST = 'speaks a live agent intervention after a learner message';
 const CERTIFICATE_PROMPT_TEST = 'offers the certificate from the completed classroom';
+const CERTIFICATE_WITHOUT_QUIZ_TEST = 'does not offer a certificate without a completed quiz';
 
 const SETTINGS_STORAGE = createSettingsStorage({ sidebarCollapsed: false });
 const LIVE_TTS_SETTINGS_STORAGE = createSettingsStorage(
@@ -30,12 +31,19 @@ async function seedDatabase(
   page: import('@playwright/test').Page,
   settingsStorage = SETTINGS_STORAGE,
   generationComplete = false,
+  certificateEligible = false,
 ) {
   // Inject settings before navigating so it's available immediately on load
-  await page.addInitScript((settings) => {
+  await page.addInitScript(({ settings, certificateEligible }) => {
     localStorage.setItem('settings-storage', settings);
     localStorage.setItem('locale', 'en-US');
-  }, settingsStorage);
+    if (certificateEligible) {
+      localStorage.setItem(
+        'quizAnswers:certificate-quiz-scene',
+        JSON.stringify({ 'certificate-question': 'a' }),
+      );
+    }
+  }, { settings: settingsStorage, certificateEligible });
 
   // Navigate to the app page first — this causes Dexie to open/create the DB at v8
   // with the correct schema. We wait for network idle to ensure Dexie is done.
@@ -128,6 +136,36 @@ async function seedDatabase(
                 createdAt: now,
                 updatedAt: now,
               },
+              ...(certificateEligible
+                ? [
+                    {
+                      id: 'certificate-quiz-scene',
+                      stageId,
+                      type: 'quiz',
+                      title: 'Certificate quiz',
+                      order: 3,
+                      content: {
+                        type: 'quiz',
+                        questions: [
+                          {
+                            id: 'certificate-question',
+                            type: 'single',
+                            question: 'Choose the correct answer',
+                            options: [
+                              { value: 'a', label: 'Correct' },
+                              { value: 'b', label: 'Incorrect' },
+                            ],
+                            answer: ['a'],
+                            hasAnswer: true,
+                            points: 1,
+                          },
+                        ],
+                      },
+                      createdAt: now,
+                      updatedAt: now,
+                    },
+                  ]
+                : []),
             ];
             for (const scene of scenes) {
               tx.objectStore('scenes').put(scene);
@@ -153,7 +191,12 @@ async function seedDatabase(
           request.onerror = () => reject(request.error);
         });
       },
-      { stageId: TEST_STAGE_ID, theme: defaultTheme, generationComplete },
+      {
+        stageId: TEST_STAGE_ID,
+        theme: defaultTheme,
+        generationComplete,
+        certificateEligible,
+      },
     );
 
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -178,18 +221,58 @@ test.describe('Classroom Interaction', () => {
     await seedDatabase(
       page,
       testInfo.title === LIVE_SPEECH_TEST ? LIVE_TTS_SETTINGS_STORAGE : SETTINGS_STORAGE,
+      testInfo.title === CERTIFICATE_PROMPT_TEST ||
+        testInfo.title === CERTIFICATE_WITHOUT_QUIZ_TEST,
       testInfo.title === CERTIFICATE_PROMPT_TEST,
     );
   });
 
   test(CERTIFICATE_PROMPT_TEST, async ({ page }) => {
+    let issuanceRequests = 0;
+    await page.route('**/api/certificates/generate', async (route) => {
+      issuanceRequests += 1;
+      expect(route.request().postDataJSON()).toEqual({ stageId: TEST_STAGE_ID });
+      await route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          certificate: {
+            id: '00000000-0000-4000-8000-000000000009',
+            userId: '00000000-0000-4000-8000-000000000001',
+            stageId: TEST_STAGE_ID,
+            courseName: '光合作用',
+            learnerName: 'E2E learner',
+            completionDate: '2026-09-02T12:00:00.000Z',
+            score: 100,
+            skills: ['Certificate quiz'],
+            verificationCode: 'QAL-2026-TEST0001',
+            verificationUrl: 'https://qalem.ma/verify/QAL-2026-TEST0001',
+            issuedBy: 'Qalem',
+          },
+        }),
+      });
+    });
+    const classroom = new ClassroomPage(page);
+    await classroom.goto(TEST_STAGE_ID);
+    await classroom.waitForLoaded();
+
+    await page.getByText('Course complete', { exact: true }).click();
+    await page.getByRole('button', { name: 'Get certificate' }).click();
+
+    await expect(page.getByRole('heading', { name: '光合作用' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Download' })).toBeVisible();
+    expect(issuanceRequests).toBe(1);
+  });
+
+  test(CERTIFICATE_WITHOUT_QUIZ_TEST, async ({ page }) => {
     const classroom = new ClassroomPage(page);
     await classroom.goto(TEST_STAGE_ID);
     await classroom.waitForLoaded();
 
     await page.getByText('Course complete', { exact: true }).click();
 
-    await expect(page.getByRole('button', { name: 'Get certificate' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Get certificate' })).toHaveCount(0);
   });
 
   test('loads classroom and switches scenes', async ({ page }) => {

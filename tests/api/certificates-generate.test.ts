@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
 const mocks = vi.hoisted(() => ({
@@ -79,6 +79,88 @@ function certificateRaceClient() {
 }
 
 describe('POST /api/certificates/generate', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('refuses an unauthenticated issuance before querying certificate data', async () => {
+    const from = vi.fn();
+    mocks.createServerSupabaseClient.mockResolvedValue({
+      auth: {
+        getUser: vi.fn(async () => ({ data: { user: null }, error: null })),
+      },
+      from,
+    });
+
+    const response = await POST(
+      new NextRequest('https://qalem.ma/api/certificates/generate', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ stageId: STAGE_ID }),
+      }),
+    );
+
+    expect(response.status).toBe(401);
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it('refuses issuance when row-level security hides a stage outside the learner rights', async () => {
+    const queues: Record<string, Array<ReturnType<typeof query>>> = {
+      certificates: [query({ data: null, error: null })],
+      stages: [query({ data: null, error: { code: 'PGRST116', message: 'not found' } })],
+    };
+    mocks.createServerSupabaseClient.mockResolvedValue({
+      auth: {
+        getUser: vi.fn(async () => ({
+          data: { user: { id: USER_ID, email: 'amina@example.test' } },
+          error: null,
+        })),
+      },
+      from: vi.fn((table: string) => queues[table].shift()),
+    });
+
+    const response = await POST(
+      new NextRequest('https://qalem.ma/api/certificates/generate', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ stageId: 'stage-outside-rights' }),
+      }),
+    );
+
+    expect(response.status).toBe(404);
+  });
+
+  it('returns one existing issuance unchanged when the learner retries', async () => {
+    mocks.createServerSupabaseClient.mockResolvedValue({
+      auth: {
+        getUser: vi.fn(async () => ({
+          data: { user: { id: USER_ID, email: 'amina@example.test' } },
+          error: null,
+        })),
+      },
+      from: vi.fn(() => query({ data: existingCertificate, error: null })),
+    });
+
+    const response = await POST(
+      new NextRequest('https://qalem.ma/api/certificates/generate', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ stageId: STAGE_ID }),
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({
+      success: true,
+      alreadyExisted: true,
+      certificate: {
+        id: existingCertificate.id,
+        verificationCode: existingCertificate.verification_code,
+      },
+    });
+  });
+
   it('returns the existing certificate when a concurrent issuance wins the unique constraint', async () => {
     mocks.createServerSupabaseClient.mockResolvedValue(certificateRaceClient());
 
