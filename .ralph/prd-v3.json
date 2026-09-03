@@ -2024,7 +2024,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux afficher dirhams et prononcer le mot sans s final afin que le parcours promis soit réellement utilisable.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P1",
-      "status": "to_validate",
+      "status": "completed",
       "passes": true,
       "source": {
         "type": "request_or_observed_gap",
@@ -2032,11 +2032,13 @@
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Soldé : MAD reste le code ISO interne ; les contenus pédagogiques français affichent dirham/dirhams et le texte envoyé au TTS neutralise uniquement le s final de dirhams en français.",
+      "gap": "Soldé et recertifié le 2026-09-03 : MAD reste le code ISO interne ; les contenus français affichent dirham/dirhams et le TTS neutralise uniquement le s final de dirhams en français.",
       "evidence": [
         "lib/formation-engine/learning-context.ts:62",
         "lib/audio/tts-utils.ts",
-        "thread:019f6d49-52ed-7ee2-aca0-466c8b675d00/019ffbfb-139a-7b01-81f5-657ac8e48174"
+        "docs/validation/S6-008-dirham-recertification.md",
+        "command:pnpm exec vitest run tests/audio/tts-utils.test.ts tests/audio/tts-providers.test.ts tests/api/generate-tts.test.ts tests/server/canonical-agent-tts.test.ts tests/formation-engine/learning-context.test.ts tests/formation-engine/market-adaptation.test.ts@9935016ced2aedbc4a633eeec4179c449952a002",
+        "commit:9935016ced2aedbc4a633eeec4179c449952a002"
       ],
       "acceptance": [
         "Conserver MAD comme code ISO interne ; employer dirham/dirhams dans les textes pédagogiques français destinés à l’apprenant.",
@@ -2045,14 +2047,12 @@
         "Faire écouter un extrait réel français et consigner le verdict d’Amine avant clôture."
       ],
       "closureEvidence": [
-        "2026-08-27 — SHA validé 71a737c01d3b9ac1ec29449ab1e4e56e15444c52, présent sur origin/refork-v030 ; clone isolé ServeurIA /tmp/qalem-s6005-a344577-1.",
-        "2026-08-27 — MAD reste la valeur interne ; learning-context et les démonstrations imposent dirham au singulier et dirhams au pluriel dans les textes pédagogiques français, sans conversion de montant ni modification des autres devises ou langues.",
-        "2026-08-27 — Le point commun generateTTS prépare une copie vocale française où le mot entier dirhams devient dirham, sans modifier le texte affiché. La langue est propagée par l’API live, la génération classroom persistée et les deux routes de régénération.",
-        "2026-08-27 — Tests ciblés 48/48 : singulier/pluriel, casse, montants inchangés, codes MAD et mots voisins non altérés, anglais/arabe inchangés, corps de requête fournisseur et propagation de langue.",
-        "2026-08-27 — Gates ServeurIA au SHA exact : pnpm check, npx tsc --noEmit et pnpm lint sans erreur ni avertissement ; pnpm test 2 394/2 394 ; pnpm build réussi (95/95 pages statiques) ; pnpm test:e2e 66/66 ; conteneur qalem-s6008-71a737c-full exit 0, OOMKilled=false.",
-        "2026-08-27 — Preuve audio réelle Higgs TTS, voix française Hanae, WAV 250 604 octets : C:/Users/amans/.codex/visualizations/2026/08/15/01a005ad-360e-7710-aeb5-bf5fc84c67b6/s6-008/dirhams-fr.wav. Verdict d’Amine : conforme pour une locutrice française prononçant dirham dans un contexte marocain."
+        "2026-09-03 — MAD reste le code ISO interne ; learning-context et market-adaptation imposent dirham au singulier et dirhams au pluriel dans le texte français visible, sans conversion de montant ni modification des autres devises/langues.",
+        "2026-09-03 — Le point commun TTS remplace uniquement le mot entier français dirhams par dirham dans une copie vocale. Sur ServeurIA, 35/35 tests ciblés couvrent casse, montants, sigles voisins, corps fournisseur, API, persistance et propagation de langue ; journal SHA-256 2d2e92cf431965ce07ded65ed87252bc00b626efa3d3a5d1e260272b9cca4fc4.",
+        "2026-09-03 — lib/audio/tts-utils.ts est inchangé depuis le commit S6-008 écouté. Le WAV accepté existe, mesure 250 604 octets et a pour SHA-256 7e012f539668ae50477dfbbd068d1140c232ba705c665cffb916284a8749a932. Verdict d’Amine conservé : conforme pour une locutrice française prononçant dirham dans un contexte marocain.",
+        "2026-09-03 — Au SHA fonctionnel déployé 9935016ced2aedbc4a633eeec4179c449952a002, le gate complet passe Prettier, TypeScript, ESLint, 420/420 fichiers et 2 640/2 640 tests Vitest, build 107 routes et 105/105 Playwright."
       ],
-      "completedAt": "2026-08-27",
+      "completedAt": "2026-09-03",
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
