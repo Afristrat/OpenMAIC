@@ -131,6 +131,7 @@ export const LLM_STAGES = [
   'web-search-query-rewrite',
   'maic-agent',
   'capture-decision',
+  'widget-composition',
 ] as const;
 
 export type LlmStage = (typeof LLM_STAGES)[number];

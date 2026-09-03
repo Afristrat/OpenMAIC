@@ -108,4 +108,16 @@ describe('super-admin widget generation route (S6-028)', () => {
     expect(body.errorCode).toBe('PARSE_FAILED');
     expect(body.composition).toBeUndefined();
   });
+
+  it('rejects a composition generated for a different locale or direction', async () => {
+    mocks.callLLM.mockResolvedValue({
+      output: { ...composition, locale: 'en-US', direction: 'rtl' },
+    });
+
+    const response = await POST(
+      request({ request: 'Crée un widget qui affiche la réponse à un calcul simple.', locale: 'fr-FR' }),
+    );
+
+    expect(response.status).toBe(502);
+  });
 });
