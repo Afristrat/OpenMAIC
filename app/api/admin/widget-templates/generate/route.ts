@@ -33,7 +33,9 @@ function hasExpectedLocale(
   composition: WidgetComposition,
   locale: keyof typeof languageByLocale,
 ): boolean {
-  return composition.locale === locale && composition.direction === (locale === 'ar-MA' ? 'rtl' : 'ltr');
+  return (
+    composition.locale === locale && composition.direction === (locale === 'ar-MA' ? 'rtl' : 'ltr')
+  );
 }
 
 export async function POST(request: NextRequest): Promise<Response> {

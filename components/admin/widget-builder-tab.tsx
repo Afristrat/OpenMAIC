@@ -19,20 +19,26 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function requireResponseIds(payload: unknown): { templateId: string; versionId: string } {
-  if (!isRecord(payload) || typeof payload.id !== 'string' || typeof payload.template_id !== 'string') {
+  if (
+    !isRecord(payload) ||
+    typeof payload.id !== 'string' ||
+    typeof payload.template_id !== 'string'
+  ) {
     throw new Error('invalid-draft-response');
   }
   return { templateId: payload.template_id, versionId: payload.id };
 }
 
 function requireEvaluation(payload: unknown): WidgetEvaluation {
-  if (!isRecord(payload) || !isRecord(payload.evaluation)) throw new Error('invalid-preview-response');
+  if (!isRecord(payload) || !isRecord(payload.evaluation))
+    throw new Error('invalid-preview-response');
   const { values, conditions, charts } = payload.evaluation;
   if (!isRecord(values) || !isRecord(conditions) || !isRecord(charts)) {
     throw new Error('invalid-preview-response');
   }
   for (const value of Object.values(values)) {
-    if (typeof value !== 'number' || !Number.isFinite(value)) throw new Error('invalid-preview-value');
+    if (typeof value !== 'number' || !Number.isFinite(value))
+      throw new Error('invalid-preview-value');
   }
   for (const value of Object.values(conditions)) {
     if (typeof value !== 'boolean') throw new Error('invalid-preview-condition');
@@ -100,7 +106,8 @@ function WidgetPreview({
           <div key={node.id} className="rounded-lg border bg-muted/40 p-3">
             <p className="text-xs text-muted-foreground">{computation.label}</p>
             <p className="text-lg font-semibold">
-              {evaluation.values[computation.id]}{computation.unit ? ` ${computation.unit}` : ''}
+              {evaluation.values[computation.id]}
+              {computation.unit ? ` ${computation.unit}` : ''}
             </p>
           </div>
         ) : null;
@@ -116,12 +123,22 @@ function WidgetPreview({
           <div key={node.id} className="overflow-x-auto">
             <table className="w-full border-collapse text-sm">
               <thead>
-                <tr>{node.columns.map((column) => <th key={column} className="border p-2 text-start">{column}</th>)}</tr>
+                <tr>
+                  {node.columns.map((column) => (
+                    <th key={column} className="border p-2 text-start">
+                      {column}
+                    </th>
+                  ))}
+                </tr>
               </thead>
               <tbody>
                 {node.rows.map((row, rowIndex) => (
                   <tr key={`${node.id}-${rowIndex}`}>
-                    {row.map((cell, cellIndex) => <td key={`${node.id}-${rowIndex}-${cellIndex}`} className="border p-2">{cell}</td>)}
+                    {row.map((cell, cellIndex) => (
+                      <td key={`${node.id}-${rowIndex}-${cellIndex}`} className="border p-2">
+                        {cell}
+                      </td>
+                    ))}
                   </tr>
                 ))}
               </tbody>
@@ -134,10 +151,16 @@ function WidgetPreview({
         return (
           <div key={node.id} className="space-y-2">
             {node.bars.map((bar, index) => (
-              <div key={`${node.id}-${bar.label}`} className="grid grid-cols-[8rem_1fr_auto] items-center gap-2 text-sm">
+              <div
+                key={`${node.id}-${bar.label}`}
+                className="grid grid-cols-[8rem_1fr_auto] items-center gap-2 text-sm"
+              >
                 <span className="truncate">{bar.label}</span>
                 <span className="h-3 rounded bg-muted">
-                  <span className="block h-3 rounded bg-primary" style={{ width: `${Math.abs(values[index] ?? 0) / maximum * 100}%` }} />
+                  <span
+                    className="block h-3 rounded bg-primary"
+                    style={{ width: `${(Math.abs(values[index] ?? 0) / maximum) * 100}%` }}
+                  />
                 </span>
                 <span>{values[index] ?? 0}</span>
               </div>
@@ -147,14 +170,21 @@ function WidgetPreview({
       }
       case 'layout':
         return (
-          <div key={node.id} className={node.columns === 2 ? 'grid gap-4 md:grid-cols-2' : 'grid gap-4'}>
+          <div
+            key={node.id}
+            className={node.columns === 2 ? 'grid gap-4 md:grid-cols-2' : 'grid gap-4'}
+          >
             {node.children.map(renderNode)}
           </div>
         );
     }
   };
 
-  return <div className="space-y-4" dir={composition.direction}>{composition.rootNodeIds.map(renderNode)}</div>;
+  return (
+    <div className="space-y-4" dir={composition.direction}>
+      {composition.rootNodeIds.map(renderNode)}
+    </div>
+  );
 }
 
 export function WidgetBuilderTab(): React.ReactElement {
@@ -210,14 +240,11 @@ export function WidgetBuilderTab(): React.ReactElement {
       );
       if (!draftResponse.ok) throw new Error('draft-failed');
       const ids = requireResponseIds(await draftResponse.json());
-      const previewResponse = await fetch(
-        `/api/admin/widget-templates/${ids.templateId}/preview`,
-        {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ versionId: ids.versionId }),
-        },
-      );
+      const previewResponse = await fetch(`/api/admin/widget-templates/${ids.templateId}/preview`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ versionId: ids.versionId }),
+      });
       if (!previewResponse.ok) throw new Error('preview-failed');
       const nextEvaluation = requireEvaluation(await previewResponse.json());
       setTemplateId(ids.templateId);
@@ -281,7 +308,9 @@ export function WidgetBuilderTab(): React.ReactElement {
       {composition && (
         <Card>
           <CardHeader>
-            <CardTitle><h3>{composition.title}</h3></CardTitle>
+            <CardTitle>
+              <h3>{composition.title}</h3>
+            </CardTitle>
             <CardDescription>
               {t('admin.widgets.summary')
                 .replace('{inputs}', String(composition.inputs.length))
@@ -302,13 +331,19 @@ export function WidgetBuilderTab(): React.ReactElement {
                 {action === 'preview' ? <Loader2 className="animate-spin" /> : <Eye />}
                 {t('admin.widgets.preview')}
               </Button>
-              <Button onClick={publish} disabled={!evaluation || !versionId || action !== null || published}>
+              <Button
+                onClick={publish}
+                disabled={!evaluation || !versionId || action !== null || published}
+              >
                 {action === 'publish' ? <Loader2 className="animate-spin" /> : <Upload />}
                 {t('admin.widgets.publish')}
               </Button>
             </div>
             {published && (
-              <p className="flex items-center gap-2 text-sm font-medium text-emerald-700" role="status">
+              <p
+                className="flex items-center gap-2 text-sm font-medium text-emerald-700"
+                role="status"
+              >
                 <CheckCircle2 className="h-4 w-4" />
                 {t('admin.widgets.published')}
               </p>
@@ -317,7 +352,11 @@ export function WidgetBuilderTab(): React.ReactElement {
         </Card>
       )}
 
-      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

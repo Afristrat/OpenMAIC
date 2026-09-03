@@ -5,9 +5,7 @@ const composition = {
   locale: 'fr-FR',
   direction: 'ltr',
   title: 'Calculateur de marge',
-  inputs: [
-    { id: 'prix', label: 'Prix', initial: 100, min: 0, max: 10_000, step: 1, unit: 'MAD' },
-  ],
+  inputs: [{ id: 'prix', label: 'Prix', initial: 100, min: 0, max: 10_000, step: 1, unit: 'MAD' }],
   computations: [
     { id: 'total', label: 'Total', expression: { op: 'literal', value: 42 }, unit: 'MAD' },
   ],
