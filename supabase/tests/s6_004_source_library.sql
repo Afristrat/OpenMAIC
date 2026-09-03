@@ -5,7 +5,8 @@ INSERT INTO auth.users (id, email) VALUES
   ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2', 'author-b@example.test');
 INSERT INTO public.profiles (id, nickname) VALUES
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', 'Auteur A'),
-  ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2', 'Auteur B');
+  ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2', 'Auteur B')
+ON CONFLICT (id) DO UPDATE SET nickname = EXCLUDED.nickname;
 INSERT INTO public.organizations (id, name) VALUES
   ('11111111-1111-4111-8111-111111111111', 'Organisation A'),
   ('22222222-2222-4222-8222-222222222222', 'Organisation B');
