@@ -1900,7 +1900,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux proposer une reformulation fondée sur les sources en cas de conflit afin que le parcours promis soit réellement utilisable.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P1",
-      "status": "to_validate",
+      "status": "completed",
       "passes": true,
       "source": {
         "type": "request_or_observed_gap",
@@ -1908,11 +1908,14 @@
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Soldé : la divergence transporte une reformulation éditable et des extraits dont la présence dans la source est vérifiée ; seule la demande explicitement acceptée alimente le plan.",
+      "gap": "Soldé et recertifié le 2026-09-03 : la divergence transporte une reformulation éditable et des extraits vérifiés dans la source ; seule la demande explicitement acceptée alimente le plan.",
       "evidence": [
         "app/app/page.tsx:810",
         "app/app/page.tsx:876",
-        "components/generation/source-conflict-dialog.tsx"
+        "components/generation/source-conflict-dialog.tsx",
+        "docs/validation/S6-005-source-conflict-recertification.md",
+        "command:pnpm exec playwright test e2e/tests/home-to-generation.spec.ts@9935016ced2aedbc4a633eeec4179c449952a002",
+        "commit:9935016ced2aedbc4a633eeec4179c449952a002"
       ],
       "acceptance": [
         "Analyser le contenu disponible et la demande ; afficher la divergence et une proposition de reformulation précise, avec références.",
@@ -1921,12 +1924,12 @@
         "Éprouver le dialogue FR/AR/EN et vérifier que seule la demande acceptée alimente le plan."
       ],
       "closureEvidence": [
-        "2026-08-27 — SHA validé ba8c5a20dd539ee62030d07fff0e9abea8bfb977, présent sur origin/refork-v030 ; clone isolé ServeurIA /tmp/qalem-s6005-a344577-1.",
-        "2026-08-27 — Conteneur ciblé qalem-s6005-ba8c5a2-targeted2 : pnpm check, npx tsc --noEmit et pnpm lint sans erreur ni avertissement ; e2e/tests/home-to-generation.spec.ts 10/10, couvrant divergence, alignement, document vide, acceptation modifiée et dialogue FR/AR/EN dont RTL arabe.",
-        "2026-08-27 — Conteneur global qalem-s6005-ba8c5a2-full : pnpm test 2 372/2 372, pnpm build réussi, pnpm test:e2e 65/65 ; exit 0 et OOMKilled=false.",
-        "2026-08-27 — Preuves de code : lib/server/source-material-alignment.ts et ses tests valident les extraits contre le contenu réel ; components/generation/source-conflict-dialog.tsx rend la proposition modifiable ; app/app/page.tsx transmet uniquement la reformulation acceptée. Référence de synthèse : .ralph/progress.md, entrée S6-005."
+        "2026-09-03 — lib/server/source-material-alignment.ts compare la demande au texte extrait, n’utilise aucun nom de fichier, filtre chaque référence par présence littérale dans la source et échoue fermée si une divergence n’a pas de proposition et de référence valides.",
+        "2026-09-03 — components/generation/source-conflict-dialog.tsx affiche divergence, références et proposition éditable ; le parcours permet retour, retrait/changement de source ou acceptation explicite, et app/(private)/app/page.tsx transmet uniquement la demande acceptée.",
+        "2026-09-03 — Sur ServeurIA : 7/7 tests serveur et 14/14 home-to-generation couvrent désalignement, alignement, document vide, acceptation modifiée et FR/ar-MA RTL/en-US. Journaux SHA-256 2f29eea48798a46821f8a03da2895631a56a3b2c26e69919abd65e6a7413ce5f et 6e9f69ad3df6f2d743da206332d9faf7aa83fc7e4429bd0c447d43f23f8951b0.",
+        "2026-09-03 — Au SHA fonctionnel déployé 9935016ced2aedbc4a633eeec4179c449952a002, le gate complet passe Prettier, TypeScript, ESLint, 420/420 fichiers et 2 640/2 640 tests Vitest, build 107 routes et 105/105 Playwright."
       ],
-      "completedAt": "2026-08-27",
+      "completedAt": "2026-09-03",
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
