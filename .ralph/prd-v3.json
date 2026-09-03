@@ -1597,7 +1597,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux recertifier le sha livré et solder le contrôle qualité global afin que le parcours promis soit réellement utilisable.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P0",
-      "status": "to_validate",
+      "status": "completed",
       "passes": true,
       "source": {
         "type": "request_or_observed_gap",
@@ -1623,9 +1623,13 @@
         "2026-08-27 — Configurations effectives recertifiées sans valeurs de secret : web 1,5 Gio/1,5 CPU, worker 3 Gio/3 CPU, capture-worker 1,5 Gio/1,5 CPU, politique unless-stopped ; le volume nommé a14gf0n3u719hnnd2yujrtmr_capture-storage-states reste monté en lecture-écriture sur /data/storage-states après remplacement du conteneur. Les healthchecks worker et worker → capture sortent avec le code 0.",
         "2026-08-27 — Gate global au SHA de code 122066878de8a827e4aa7b55addfa7e8279bba57 dans trois conteneurs isolés ServeurIA : formatage, TypeScript et lint sans erreur ; Vitest 365/365 fichiers et 2 425/2 425 tests ; build 95/95 pages ; Playwright 71/71. Les trois conteneurs ont exit=0 et OOMKilled=false. Le SHA déployé 2ee074a… ne diffère de ce SHA testé que par .ralph/prd-v3.json et .ralph/progress.md.",
         "2026-08-27 — Recette post-déploiement : /, /app, /api/health et /api/server-providers répondent 200 ; /api/profile anonyme répond 401. Un compte Supabase éphémère a obtenu login=200, pathname=/profile, /api/profile=200 et la zone de génération visible dans /app ; sa suppression a répondu 200.",
-        "2026-08-27 — .ralph/prd-v3.json, tasks/prd-v3.md, AGENTS.md et .ralph/certification-prd-v3-2026-08-26.json sont suivis par Git. origin/refork-v030 a été vérifié sur 2ee074a59f6cc14b2697a38b591504418570011a avant la clôture documentaire ; main n’a pas été touchée."
+        "2026-08-27 — .ralph/prd-v3.json, tasks/prd-v3.md, AGENTS.md et .ralph/certification-prd-v3-2026-08-26.json sont suivis par Git. origin/refork-v030 a été vérifié sur 2ee074a59f6cc14b2697a38b591504418570011a avant la clôture documentaire ; main n’a pas été touchée.",
+        "2026-09-03 — Recertification fraîche du code fonctionnel 8d359949492b6dfa44fbf3f92c82ec8312d250f8 : Prettier, TypeScript et ESLint sortent à zéro ; Vitest 420/420 fichiers et 2640/2640 tests ; build 107 routes ; Playwright 105/105. Le build final réussit avec le plafond V8 explicite de 8 Gio et le conteneur de validation n'est pas OOMKilled.",
+        "2026-09-03 — Le web et les deux workers ont été réalignés sur le commit distant final d2797fbd2e1e50e0580595bd1879cce014816273 par les déploiements yoxk9dw2s1doftqj2l3cr0cw et obhun398kxwg55snr3d9mdh1. Les trois conteneurs sont healthy, restart=0 et OOMKilled=false ; limites effectives : web 1,5 Gio/2 CPU, worker 3 Gio/3 CPU, capture 1,5 Gio/1,5 CPU.",
+        "2026-09-03 — Le volume a14gf0n3u719hnnd2yujrtmr_capture-storage-states reste monté RW sur /data/storage-states et les cinq derniers healthchecks de chaque worker sortent à zéro. /, /api/health et /api/server-providers répondent 200 ; /app répond 307 vers l'authentification et /api/profile anonyme 401. La recette S6-029 a simultanément prouvé connexion, catalogue, génération autorisée 200 et refus intertenant 403, puis nettoyé comptes, tenants et sessions à zéro.",
+        "2026-09-03 — git rev-parse HEAD et git ls-remote origin refs/heads/refork-v030 retournent tous deux d2797fbd2e1e50e0580595bd1879cce014816273 avant cette clôture. Référence : docs/validation/S6-001-recertification-2026-09-03.md"
       ],
-      "completedAt": "2026-08-27",
+      "completedAt": "2026-09-03",
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
