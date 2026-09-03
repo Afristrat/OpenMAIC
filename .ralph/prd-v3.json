@@ -3280,7 +3280,7 @@
       "description": "En tant que super-administrateur Qalem, je veux décrire un widget en langage naturel puis le prévisualiser et le publier sans rédiger de JSON.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P2",
-      "status": "to_implement",
+      "status": "in_progress",
       "passes": false,
       "source": {
         "type": "split_from_story",
@@ -3290,7 +3290,15 @@
       "sourceDependencies": ["S6-027"],
       "dependencies": ["S6-027"],
       "gap": "Il n'existe ni builder IA super-administrateur, ni prévisualisation d'une composition générique, ni publication sans redéploiement.",
-      "evidence": ["app/admin/page.tsx", "lib/server/provider-config.ts"],
+      "evidence": [
+        "app/admin/page.tsx",
+        "components/admin/widget-builder-tab.tsx",
+        "app/api/admin/widget-templates/generate/route.ts",
+        "lib/server/provider-config.ts",
+        "lib/server/model-routes.ts",
+        "tests/api/admin-widget-generation.test.ts",
+        "e2e/tests/admin-widget-builder.spec.ts"
+      ],
       "acceptance": [
         "Générer la composition structurée avec le fournisseur LLM administré courant, sans modèle ni endpoint codé en dur.",
         "Valider schéma, sémantique et cas de référence avant d'autoriser la prévisualisation puis la publication.",

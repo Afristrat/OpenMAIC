@@ -43,6 +43,17 @@ describe('model-routes', () => {
     expect(getStageModel('maic-agent')).toBe('anthropic:claude-opus-4');
   });
 
+  it('routes widget generation through its administered stage', async () => {
+    process.env.MODEL_ROUTES = JSON.stringify({
+      'widget-composition': { model: 'managed:widget-model', thinking: { effort: 'high' } },
+    });
+    const { getStageRoute } = await import('@/lib/server/model-routes');
+    expect(getStageRoute('widget-composition')).toEqual({
+      model: 'managed:widget-model',
+      thinking: { effort: 'high' },
+    });
+  });
+
   it('returns undefined for a routable stage that is not listed', async () => {
     process.env.MODEL_ROUTES = JSON.stringify({ 'scene-content': 'openai:gpt-5.4' });
     const { getStageModel } = await import('@/lib/server/model-routes');
@@ -217,6 +228,7 @@ describe('model-routes', () => {
         'chat-adapter',
         'generate-classroom',
         'web-search-query-rewrite',
+        'widget-composition',
       ]),
     );
   });
