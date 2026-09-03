@@ -63,11 +63,13 @@ import { LTITab } from '@/components/admin/lti-tab';
 import { PedagogyTab } from '@/components/admin/pedagogy-tab';
 import { XAPITab } from '@/components/admin/xapi-tab';
 import { TenantsTab } from '@/components/admin/tenants-tab';
+import { WidgetBuilderTab } from '@/components/admin/widget-builder-tab';
 import type { EditingModel } from '@/lib/types/settings';
 
 type AdminSection =
   | 'overview'
   | 'tenants'
+  | 'widgets'
   | 'providers'
   | 'image'
   | 'video'
@@ -80,7 +82,15 @@ type AdminSection =
   | 'pedagogy'
   | 'xapi';
 
-const PLATFORM_ADMIN_SECTIONS = ['overview', 'tenants', 'mcp', 'lti', 'pedagogy', 'xapi'] as const;
+const PLATFORM_ADMIN_SECTIONS = [
+  'overview',
+  'tenants',
+  'widgets',
+  'mcp',
+  'lti',
+  'pedagogy',
+  'xapi',
+] as const;
 
 function isPlatformAdminSection(value: string | null): value is AdminSection {
   return PLATFORM_ADMIN_SECTIONS.includes(value as (typeof PLATFORM_ADMIN_SECTIONS)[number]);
@@ -544,6 +554,13 @@ function AdminPageContent(): React.ReactElement {
             <h2 className="text-lg font-semibold">{t('admin.tenants.title')}</h2>
           </>
         );
+      case 'widgets':
+        return (
+          <>
+            <Box className="h-6 w-6 text-primary" />
+            <h2 className="text-lg font-semibold">{t('admin.widgets.title')}</h2>
+          </>
+        );
       case 'providers':
         if (selectedProvider) {
           return (
@@ -799,6 +816,19 @@ function AdminPageContent(): React.ReactElement {
           </button>
 
           <button
+            onClick={() => setActiveSection('widgets')}
+            className={cn(
+              'w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors text-left min-w-0',
+              activeSection === 'widgets'
+                ? 'bg-primary/10 text-primary font-medium'
+                : 'hover:bg-muted',
+            )}
+          >
+            <Box className="h-4 w-4 shrink-0" />
+            <span className="truncate">{t('admin.widgets.title')}</span>
+          </button>
+
+          <button
             onClick={() => setActiveSection('mcp')}
             className={cn(
               'w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors text-left min-w-0',
@@ -1042,6 +1072,7 @@ function AdminPageContent(): React.ReactElement {
                 {(
                   [
                     ['tenants', Building2, 'admin.tenants.title'],
+                    ['widgets', Box, 'admin.widgets.title'],
                     ['mcp', Server, 'admin.mcp.title'],
                     ['lti', KeyRound, 'admin.lti.title'],
                     ['pedagogy', Brain, 'admin.pedagogy.title'],
@@ -1083,6 +1114,7 @@ function AdminPageContent(): React.ReactElement {
             )}
 
             {activeSection === 'tenants' && <TenantsTab />}
+            {activeSection === 'widgets' && <WidgetBuilderTab />}
 
             {activeSection === 'pdf' && <PDFSettings selectedProviderId={selectedPdfProviderId} />}
             {activeSection === 'web-search' && (
