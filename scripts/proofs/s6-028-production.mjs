@@ -2,20 +2,37 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { chromium } from '@playwright/test';
 
-const [magicLinkPath, baseUrl = 'https://qalem.ma'] = process.argv.slice(2);
-if (!magicLinkPath) throw new Error('Magic-link file path is required');
+const [sessionPath, baseUrl = 'https://qalem.ma'] = process.argv.slice(2);
+if (!sessionPath) throw new Error('Session file path is required');
 
-const magicLink = (await readFile(magicLinkPath, 'utf8')).trim();
-if (!magicLink.startsWith('http')) throw new Error('Magic-link file is invalid');
+const session = JSON.parse(await readFile(sessionPath, 'utf8'));
+assert.equal(typeof session.access_token, 'string', 'Session access token is required');
+assert.equal(typeof session.refresh_token, 'string', 'Session refresh token is required');
+assert.equal(typeof session.user?.id, 'string', 'Session user is required');
+
+const storageKey = 'sb-db-auth-token';
+const encodedSession = `base64-${Buffer.from(JSON.stringify(session), 'utf8').toString('base64url')}`;
+const cookieValues = [];
+for (let offset = 0; offset < encodedSession.length; offset += 3180) {
+  cookieValues.push(encodedSession.slice(offset, offset + 3180));
+}
+const authCookies = cookieValues.map((value, index) => ({
+  name: cookieValues.length === 1 ? storageKey : `${storageKey}.${index}`,
+  value,
+  domain: new URL(baseUrl).hostname,
+  path: '/',
+  httpOnly: false,
+  secure: true,
+  sameSite: 'Lax',
+}));
 
 const browser = await chromium.launch({ headless: true });
 try {
   const context = await browser.newContext({ serviceWorkers: 'block' });
+  await context.addCookies(authCookies);
   const page = await context.newPage();
   await page.addInitScript(() => localStorage.setItem('locale', 'fr-FR'));
 
-  await page.goto(magicLink, { waitUntil: 'domcontentloaded', timeout: 60_000 });
-  await page.waitForTimeout(2_000);
   await page.goto(`${baseUrl}/admin?tab=widgets`, {
     waitUntil: 'domcontentloaded',
     timeout: 60_000,
