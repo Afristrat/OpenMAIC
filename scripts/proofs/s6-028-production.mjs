@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { chromium } from 'playwright';
+import { chromium } from '@playwright/test';
 
 const [magicLinkPath, baseUrl = 'https://qalem.ma'] = process.argv.slice(2);
 if (!magicLinkPath) throw new Error('Magic-link file path is required');
