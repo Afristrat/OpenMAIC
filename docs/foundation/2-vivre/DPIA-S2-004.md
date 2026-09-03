@@ -1,13 +1,15 @@
 # DPIA — S2-004 Enregistrement des sessions live
 
-> **Statut : DRAFT — décisions de conception renseignées le 27 juillet 2026, non
-> approuvé pour production.** Ce dossier interdit tout build d’enregistrement tant
-> que la formalité CNDP applicable et l’approbation explicite du DPO ne sont pas
-> consignées.
+> **Statut : GO DPO POUR DÉVELOPPEMENT — activation en production interdite.**
+> Décision explicite de Med Amine MANSOURI IDRISSI, DPO et gérant d’AIMPower
+> SARL A.U., consignée le 3 septembre 2026 à 22 h 18 (UTC+1). La formalité CNDP
+> applicable et les preuves techniques de la section 3 restent obligatoires avant
+> toute activation en production.
 
 ## 1. Décision de gate
 
-**Décision actuelle : NO-GO pour la persistance des interventions utilisateur.**
+**Décision actuelle : GO pour construire et tester la persistance des interventions
+utilisateur ; NO-GO pour l’activer en production.**
 Le replay envisagé traite texte, voix et métadonnées d’activité. La loi marocaine
 09-08 définit expressément les données personnelles comme toute information,
 « y compris le son et l’image », concernant une personne identifiable. La CNDP
@@ -15,7 +17,8 @@ indique que les traitements dont le responsable ou les moyens sont situés au Ma
 doivent respecter cette loi. Le RGPD, lorsqu’applicable, impose une analyse
 d’impact avant un traitement susceptible d’engendrer un risque élevé.
 
-Sources primaires, vérifiées le 2026-07-22 :
+Sources primaires vérifiées le 22 juillet 2026, à revalider avant l’activation en
+production :
 
 - [Loi marocaine 09-08 — CNDP](https://www.cndp.ma/wp-content/uploads/2023/11/Loi-09-08-Fr.pdf)
 - [Cadre CNDP des traitements au Maroc](https://www.cndp.ma/traitement-des-donnees-personnelles-au-maroc/)
@@ -52,8 +55,9 @@ Sources primaires, vérifiées le 2026-07-22 :
 2. **Durée de conservation par défaut** : 30 jours, avec suppression effective à la
    demande de l’utilisateur.
 3. **Cadre CNDP applicable et formalité nécessaire avant production** : à confirmer
-   par le DPO ou un conseil compétent, au regard de l’état réglementaire applicable
-   le jour du lancement. Cette décision ne peut pas être inférée du code.
+   au regard de l’état réglementaire applicable le jour du lancement. Le GO DPO du
+   3 septembre 2026 autorise le développement, pas l’ouverture du traitement aux
+   utilisateurs réels ni le franchissement de cette formalité externe.
 4. **Territoires et sous-traitants** : traitement exclusivement auto-hébergé sous le
    contrôle d’AIMPower ; aucun fournisseur cloud ne traite les données d’un replay.
    Le détail d’infrastructure ne figure pas dans la DPIA publique.
@@ -62,8 +66,15 @@ Sources primaires, vérifiées le 2026-07-22 :
 
 ## 5. Conditions de sortie de gate
 
-S2-004 peut commencer uniquement lorsque la formalité CNDP applicable est datée et
-approuvée explicitement par le DPO, et lorsque les mesures de la section 3 sont
-traduites en critères testables. Une modification de la finalité, de la durée de
+S2-004 peut être développée et testée depuis le GO DPO consigné le 3 septembre
+2026. Le flag d’enregistrement reste désactivé en production tant que la formalité
+CNDP applicable n’est pas datée et que les mesures de la section 3 ne sont pas
+implémentées et prouvées. Une modification de la finalité, de la durée de
 rétention, des sous-traitants ou du risque impose une révision de ce dossier avant
 traitement.
+
+## 6. Registre d’approbation
+
+| Date et heure | Décideur | Décision | Portée |
+|---|---|---|---|
+| 2026-09-03 22:18 UTC+1 | Med Amine MANSOURI IDRISSI, DPO et gérant d’AIMPower SARL A.U. | « Go DPO » | Développement et tests de S2-004 à S3-010 sous les mesures du présent dossier ; aucune activation de l’enregistrement en production avant la formalité CNDP applicable. |

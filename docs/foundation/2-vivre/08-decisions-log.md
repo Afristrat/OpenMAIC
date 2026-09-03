@@ -44,3 +44,10 @@
 - **Pourquoi** : cette option emploie FFmpeg et Sharp déjà présents dans l’image Qalem, n’ajoute ni service tiers ni dépendance sous licence à trancher, et rend l’identifiant décodable depuis une capture normale du flux. Le traitement reste borné, asynchrone et idempotent par transmission.
 - **Limite explicite** : « indélébile » signifie ici incrusté dans le MP4 servi, pas DRM ni résistance cryptographique à un recadrage malveillant. Toute promesse de robustesse contre des attaques de transformation doit passer le protocole P2-C avant d’être revendiquée.
 - **Alternatives rejetées** : `videowmark`, car sa compatibilité et sa licence doivent être instruites avec le même niveau d’exigence qu’audiowmark ; texte injecté dans le lecteur, car il disparaîtrait d’une capture ou d’un téléchargement ; QR code, car aucune dépendance QR n’est nécessaire pour décoder un identifiant textuel opaque sur une capture.
+
+## ADR-207 — Enregistrement : GO DPO pour développement, production désarmée (ACTÉE)
+
+- **Décision** : Med Amine MANSOURI IDRISSI, DPO et gérant d’AIMPower SARL A.U., a donné son « Go DPO » le 3 septembre 2026 à 22 h 18 (UTC+1).
+- **Portée** : S2-004 et ses dépendantes peuvent être développées et testées avec consentement explicite non précoché, conservation par défaut de 30 jours, stockage privé auto-hébergé, absence d’usage biométrique, streaming sans téléchargement et suppression effective.
+- **Limite** : le flag d’enregistrement reste désactivé en production jusqu’à la confirmation et à la consignation de la formalité CNDP applicable, puis jusqu’aux preuves de toutes les mesures exigées par la DPIA.
+- **Source de vérité** : `docs/foundation/2-vivre/DPIA-S2-004.md`.

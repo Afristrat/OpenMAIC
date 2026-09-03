@@ -3469,7 +3469,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « [GATE DPIA] Enregistrement du live : flux d'événements complet (agents + utilisateur) » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "2-VIVRE",
       "priority": "P2",
-      "status": "blocked",
+      "status": "to_implement",
       "passes": false,
       "source": {
         "file": ".ralph/prd-v2.json",
@@ -3478,22 +3478,24 @@
       },
       "sourceDependencies": ["S2-001"],
       "dependencies": [],
-      "gap": "Le dossier DPIA reste DRAFT/NO-GO ; aucun enregistrement d’intervention utilisateur avant décision formelle.",
-      "evidence": ["docs/foundation/2-vivre/DPIA-S2-004-DRAFT.md"],
+      "gap": "GO DPO de développement consigné le 3 septembre 2026 ; implémenter les contrôles de la DPIA. Le flag de production reste désactivé jusqu’à la formalité CNDP applicable et aux preuves techniques.",
+      "evidence": ["docs/foundation/2-vivre/DPIA-S2-004.md"],
       "acceptance": [
         "DPIA instruite et consignée AVANT tout commit",
         "Consentement UI explicite → live_sessions.recorded",
         "session_events capture agents ET interventions utilisateur, append-only (zéro UPDATE)",
         "Pistes TTS persistées, coût Mo/session mesuré et consigné"
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-03 — Med Amine MANSOURI IDRISSI, DPO et gérant d’AIMPower SARL A.U., donne explicitement son « Go DPO ». La DPIA autorise désormais développement et tests sous six contrôles ; l’activation production reste interdite avant formalité CNDP applicable et preuves techniques."
+      ],
       "historicalEvidence": {
         "completedAt": null,
         "note": null,
         "status": "historical_not_recertified"
       },
       "historicalDependencies": ["S2-001"],
-      "executionAllowed": false,
+      "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 40
     },

@@ -20,7 +20,7 @@
 
 | Dette | Pourquoi acceptable | Déclencheur |
 |---|---|---|
-| DPIA non encore instruite | Aucune story d'enregistrement démarrée | GATE : avant S2-004 — instruire (délégation `rgpd-bounty-hunter`, module DPIA) |
+| GO DPO de développement consigné ; formalité CNDP de production non encore datée | Le traitement reste désactivé pour les utilisateurs réels | GATE : avant activation production de S2-004 — confirmer la formalité applicable et consigner sa référence |
 | Politique de rétention des replays non fixée | Préprod sans utilisateurs réels | Avant le flag `recording` en prod |
 | CGU sans clauses enregistrement/watermark | idem | Avant ouverture publique du chantier |
 | Qualification juridique voix (biométrie ou non) | Tranchée par la DPIA | Instruction DPIA |

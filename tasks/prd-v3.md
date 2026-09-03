@@ -109,7 +109,7 @@ Les descriptions et critères exécutables complets sont dans le JSON canonique.
 | 33   | S6-016 | P2       | Décision requise | Clore le cadrage NP des widgets à partir du produit actuel                            |
 | 34   | S6-015 | P2       | Décision requise | Composer et publier des widgets déterministes sans redéploiement                      |
 | 35   | S6-011 | P2       | Décision requise | Réconcilier puis livrer les canaux de rappel e-mail et WhatsApp retenus               |
-| 36   | S2-004 | P2       | Bloquée          | [GATE DPIA] Enregistrement du live : flux d'événements complet (agents + utilisateur) |
+| 36   | S2-004 | P2       | À implémenter    | [GATE DPIA] Enregistrement du live : flux d'événements complet (agents + utilisateur) |
 | 37   | S2-005 | P2       | À implémenter    | Replay fidèle « comme un vrai webinaire » (streaming, jamais de téléchargement)       |
 | 38   | S2-006 | P2       | À implémenter    | Bibliothèque de replays (reprise, suppression effective) [UI]                         |
 | 39   | S2-008 | P2       | Bloquée          | Watermark sonore AudioSeal MIT en job BullMQ (protocole de robustesse)                |
