@@ -88,6 +88,28 @@ describe('super-admin widget generation route (S6-028)', () => {
     ]);
   });
 
+  it('repairs an invalid first composition using deterministic validation feedback', async () => {
+    mocks.callLLM
+      .mockResolvedValueOnce({
+        text: JSON.stringify({
+          ...composition,
+          goldenCases: [{ name: 'cas invalide', inputValues: {}, expected: { total: 42 } }],
+        }),
+      })
+      .mockResolvedValueOnce({ text: JSON.stringify(composition) });
+
+    const response = await POST(
+      request({
+        request: 'Crée un widget qui affiche la réponse à un calcul simple.',
+        locale: 'fr-FR',
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.callLLM).toHaveBeenCalledTimes(2);
+    expect(mocks.callLLM.mock.calls[1]?.[0].prompt).toContain('<validation_errors>');
+  });
+
   it('rejects tenant administrators before resolving or calling a model', async () => {
     mocks.requireSuperAdmin.mockResolvedValue({ response: new Response(null, { status: 403 }) });
 
