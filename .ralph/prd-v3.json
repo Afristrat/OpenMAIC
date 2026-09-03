@@ -3280,7 +3280,7 @@
       "description": "En tant que super-administrateur Qalem, je veux décrire un widget en langage naturel puis le prévisualiser et le publier sans rédiger de JSON.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P2",
-      "status": "complete",
+      "status": "completed",
       "passes": true,
       "source": {
         "type": "split_from_story",
