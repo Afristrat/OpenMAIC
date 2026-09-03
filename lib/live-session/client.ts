@@ -24,16 +24,17 @@ export function getActiveLiveSessionId(): string | null {
   return activeSession?.id ?? null;
 }
 
-export async function stopLiveSession(): Promise<void> {
+export async function stopLiveSession(): Promise<string | null> {
   const session = activeSession;
-  activeSession = null;
-  if (!session) return;
+  if (!session) return null;
   const response = await fetch(`/api/live-sessions/${encodeURIComponent(session.id)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ended: true }),
   });
   await requireSuccess(response, 'Impossible de terminer l’enregistrement');
+  activeSession = null;
+  return session.id;
 }
 
 export async function recordLiveSessionEvent(

@@ -2458,5 +2458,13 @@
   "replay.timeline": "Session timeline",
   "replay.actor.agent": "Agent",
   "replay.actor.user": "You",
-  "replay.actor.system": "Qalem"
+  "replay.actor.system": "Qalem",
+  "anchoring.hotEvaluationTitle": "Your immediate feedback",
+  "anchoring.hotEvaluationDescription": "Two answers are enough. You may also skip this step.",
+  "anchoring.hotEvaluationUseful": "Was this session useful to you?",
+  "anchoring.hotEvaluationConfidence": "Do you feel able to apply what you learned?",
+  "anchoring.hotEvaluationChoose": "Choose a rating from 1 to 5",
+  "anchoring.hotEvaluationSkip": "Skip",
+  "anchoring.hotEvaluationSubmit": "Submit",
+  "anchoring.hotEvaluationFailed": "Your evaluation could not be submitted."
 }

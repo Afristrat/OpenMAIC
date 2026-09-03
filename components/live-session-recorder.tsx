@@ -29,6 +29,11 @@ export function LiveSessionRecorder() {
   const [recording, setRecording] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [evaluationSessionId, setEvaluationSessionId] = useState<string | null>(null);
+  const [useful, setUseful] = useState(0);
+  const [confidence, setConfidence] = useState(0);
+  const [evaluationBusy, setEvaluationBusy] = useState(false);
+  const [evaluationError, setEvaluationError] = useState<string | null>(null);
   const recordingRef = useRef(false);
 
   useEffect(() => {
@@ -69,10 +74,11 @@ export function LiveSessionRecorder() {
     setError(null);
     try {
       await recordLiveSessionEvent('system', 'recording_stopped', { stageId });
-      await stopLiveSession();
+      const completedSessionId = await stopLiveSession();
       recordingRef.current = false;
       setRecording(false);
       setConsented(false);
+      setEvaluationSessionId(completedSessionId);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t('replay.recordingFailed'));
     } finally {
@@ -80,64 +86,152 @@ export function LiveSessionRecorder() {
     }
   };
 
-  if (recording) {
-    return (
-      <button
-        type="button"
-        onClick={() => void stop()}
-        disabled={busy}
-        className="inline-flex h-9 items-center gap-2 rounded-full border border-red-300 bg-red-50 px-3 text-xs font-semibold text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300"
-        aria-label={t('replay.stopRecording')}
-      >
-        {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Square className="size-3.5" />}
-        {t('replay.recording')}
-      </button>
-    );
-  }
+  const submitEvaluation = async () => {
+    if (!evaluationSessionId || !useful || !confidence) return;
+    setEvaluationBusy(true);
+    setEvaluationError(null);
+    try {
+      const response = await fetch(
+        `/api/live-sessions/${encodeURIComponent(evaluationSessionId)}/evaluations`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ useful, confidence }),
+        },
+      );
+      if (!response.ok) throw new Error(t('anchoring.hotEvaluationFailed'));
+      setEvaluationSessionId(null);
+      setUseful(0);
+      setConfidence(0);
+    } catch (cause) {
+      setEvaluationError(
+        cause instanceof Error ? cause.message : t('anchoring.hotEvaluationFailed'),
+      );
+    } finally {
+      setEvaluationBusy(false);
+    }
+  };
 
-  return (
+  const evaluationDialog = (
     <Dialog
-      open={open}
+      open={evaluationSessionId !== null}
       onOpenChange={(next) => {
-        setOpen(next);
-        if (!next) setConsented(false);
+        if (!next) setEvaluationSessionId(null);
       }}
     >
-      <DialogTrigger asChild>
-        <button
-          type="button"
-          className="inline-flex size-9 items-center justify-center rounded-full border border-gray-100/50 bg-white/60 text-gray-400 shadow-sm backdrop-blur-md transition-colors hover:text-red-600 dark:border-gray-700/50 dark:bg-gray-800/60"
-          aria-label={t('replay.startRecording')}
-        >
-          <Circle className="size-4 fill-current" />
-        </button>
-      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('replay.consentTitle')}</DialogTitle>
-          <DialogDescription>{t('replay.consentDescription')}</DialogDescription>
+          <DialogTitle>{t('anchoring.hotEvaluationTitle')}</DialogTitle>
+          <DialogDescription>{t('anchoring.hotEvaluationDescription')}</DialogDescription>
         </DialogHeader>
-        <label className="flex items-start gap-3 rounded-lg border p-3 text-sm">
-          <Checkbox
-            checked={consented}
-            onCheckedChange={(checked) => setConsented(checked === true)}
-            aria-label={t('replay.consentCheckbox')}
-          />
-          <span>{t('replay.consentCheckbox')}</span>
-        </label>
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {[
+          ['useful', t('anchoring.hotEvaluationUseful'), useful, setUseful],
+          ['confidence', t('anchoring.hotEvaluationConfidence'), confidence, setConfidence],
+        ].map(([name, label, value, setter]) => (
+          <label key={String(name)} className="grid gap-2 text-sm font-medium">
+            <span>{String(label)}</span>
+            <select
+              value={Number(value) || ''}
+              onChange={(event) => (setter as (next: number) => void)(Number(event.target.value))}
+              className="h-10 rounded-md border bg-background px-3"
+              aria-label={String(label)}
+            >
+              <option value="">{t('anchoring.hotEvaluationChoose')}</option>
+              {[1, 2, 3, 4, 5].map((rating) => (
+                <option key={rating} value={rating}>
+                  {rating}
+                </option>
+              ))}
+            </select>
+          </label>
+        ))}
+        {evaluationError && <p className="text-sm text-destructive">{evaluationError}</p>}
         <DialogFooter>
           <button
             type="button"
-            onClick={() => void start()}
-            disabled={!consented || busy}
+            onClick={() => setEvaluationSessionId(null)}
+            className="inline-flex h-10 items-center justify-center rounded-md border px-4 text-sm font-medium"
+          >
+            {t('anchoring.hotEvaluationSkip')}
+          </button>
+          <button
+            type="button"
+            onClick={() => void submitEvaluation()}
+            disabled={!useful || !confidence || evaluationBusy}
             className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50"
           >
-            {busy && <Loader2 className="me-2 size-4 animate-spin" />}
-            {t('replay.confirmRecording')}
+            {evaluationBusy && <Loader2 className="me-2 size-4 animate-spin" />}
+            {t('anchoring.hotEvaluationSubmit')}
           </button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+
+  if (recording) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => void stop()}
+          disabled={busy}
+          className="inline-flex h-9 items-center gap-2 rounded-full border border-red-300 bg-red-50 px-3 text-xs font-semibold text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300"
+          aria-label={t('replay.stopRecording')}
+        >
+          {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Square className="size-3.5" />}
+          {t('replay.recording')}
+        </button>
+        {evaluationDialog}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Dialog
+        open={open}
+        onOpenChange={(next) => {
+          setOpen(next);
+          if (!next) setConsented(false);
+        }}
+      >
+        <DialogTrigger asChild>
+          <button
+            type="button"
+            className="inline-flex size-9 items-center justify-center rounded-full border border-gray-100/50 bg-white/60 text-gray-400 shadow-sm backdrop-blur-md transition-colors hover:text-red-600 dark:border-gray-700/50 dark:bg-gray-800/60"
+            aria-label={t('replay.startRecording')}
+          >
+            <Circle className="size-4 fill-current" />
+          </button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('replay.consentTitle')}</DialogTitle>
+            <DialogDescription>{t('replay.consentDescription')}</DialogDescription>
+          </DialogHeader>
+          <label className="flex items-start gap-3 rounded-lg border p-3 text-sm">
+            <Checkbox
+              checked={consented}
+              onCheckedChange={(checked) => setConsented(checked === true)}
+              aria-label={t('replay.consentCheckbox')}
+            />
+            <span>{t('replay.consentCheckbox')}</span>
+          </label>
+          {error && <p className="text-sm text-destructive">{error}</p>}
+          <DialogFooter>
+            <button
+              type="button"
+              onClick={() => void start()}
+              disabled={!consented || busy}
+              className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50"
+            >
+              {busy && <Loader2 className="me-2 size-4 animate-spin" />}
+              {t('replay.confirmRecording')}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {evaluationDialog}
+    </>
   );
 }

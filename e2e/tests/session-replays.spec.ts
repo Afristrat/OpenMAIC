@@ -104,6 +104,7 @@ test('liste, reprend et supprime effectivement un replay consenti', async ({ pag
 test('exige une case de consentement non précochée avant tout enregistrement', async ({ page }) => {
   const stageId = 'recording-consent-e2e';
   let startBody: Record<string, unknown> | null = null;
+  let evaluationBody: Record<string, unknown> | null = null;
   const events: Record<string, unknown>[] = [];
   await page.route('**/api/live-sessions/capability', (route) =>
     route.fulfill({ contentType: 'application/json', body: '{"success":true,"enabled":true}' }),
@@ -119,6 +120,17 @@ test('exige une case de consentement non précochée avant tout enregistrement',
   await page.route(`**/api/live-sessions/${SESSION_ID}/events`, async (route) => {
     events.push(route.request().postDataJSON() as Record<string, unknown>);
     await route.fulfill({ status: 201, contentType: 'application/json', body: '{"success":true}' });
+  });
+  await page.route(`**/api/live-sessions/${SESSION_ID}`, (route) =>
+    route.fulfill({ contentType: 'application/json', body: '{"success":true}' }),
+  );
+  await page.route(`**/api/live-sessions/${SESSION_ID}/evaluations`, async (route) => {
+    evaluationBody = route.request().postDataJSON() as Record<string, unknown>;
+    await route.fulfill({
+      status: 201,
+      contentType: 'application/json',
+      body: '{"success":true,"evaluation":{"id":"evaluation-1","phase":"hot","score":90}}',
+    });
   });
   await page.route(`**/api/classroom?id=${stageId}`, (route) =>
     route.fulfill({
@@ -172,4 +184,34 @@ test('exige une case de consentement non précochée avant tout enregistrement',
   expect(events).toContainEqual(
     expect.objectContaining({ actor: 'system', eventType: 'recording_started' }),
   );
+
+  await page.getByRole('button', { name: 'Arrêter l’enregistrement' }).click();
+  await expect(page.getByRole('heading', { name: 'Votre ressenti à chaud' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Passer' })).toBeVisible();
+  const submit = page.getByRole('button', { name: 'Envoyer' });
+  await expect(submit).toBeDisabled();
+  await page
+    .getByRole('combobox', { name: 'Cette session vous a-t-elle été utile ?' })
+    .selectOption('5');
+  await page
+    .getByRole('combobox', {
+      name: 'Vous sentez-vous capable d’appliquer ce que vous avez appris ?',
+    })
+    .selectOption('4');
+  await submit.click();
+  await expect(page.getByRole('heading', { name: 'Votre ressenti à chaud' })).toBeHidden();
+  expect(evaluationBody).toEqual({ useful: 5, confidence: 4 });
+
+  await page.addInitScript(() => localStorage.setItem('locale', 'ar-MA'));
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  await page.getByRole('button', { name: 'تسجيل هذه الجلسة' }).click();
+  await page
+    .getByRole('checkbox', { name: 'أوافق صراحةً على تسجيل هذه الجلسة، بما في ذلك صوتي.' })
+    .click();
+  await page.getByRole('button', { name: 'بدء التسجيل' }).click();
+  await page.getByRole('button', { name: 'إيقاف التسجيل' }).click();
+  await expect(page.getByRole('heading', { name: 'انطباعك مباشرة بعد الجلسة' })).toBeVisible();
+  await page.getByRole('button', { name: 'تخطي' }).click();
+  await expect(page.getByRole('heading', { name: 'انطباعك مباشرة بعد الجلسة' })).toBeHidden();
 });

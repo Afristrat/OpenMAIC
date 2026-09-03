@@ -2458,5 +2458,13 @@
   "replay.timeline": "التسلسل الزمني للجلسة",
   "replay.actor.agent": "الوكيل",
   "replay.actor.user": "أنت",
-  "replay.actor.system": "قلم"
+  "replay.actor.system": "قلم",
+  "anchoring.hotEvaluationTitle": "انطباعك مباشرة بعد الجلسة",
+  "anchoring.hotEvaluationDescription": "يكفي جوابان، ويمكنك أيضًا تخطي هذه الخطوة.",
+  "anchoring.hotEvaluationUseful": "هل كانت هذه الجلسة مفيدة لك؟",
+  "anchoring.hotEvaluationConfidence": "هل تشعر أنك قادر على تطبيق ما تعلمته؟",
+  "anchoring.hotEvaluationChoose": "اختر تقييماً من 1 إلى 5",
+  "anchoring.hotEvaluationSkip": "تخطي",
+  "anchoring.hotEvaluationSubmit": "إرسال",
+  "anchoring.hotEvaluationFailed": "تعذر إرسال تقييمك."
 }

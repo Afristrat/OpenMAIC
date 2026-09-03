@@ -81,4 +81,42 @@ describe('live session client', () => {
     expect(form.get('audio')).toBeInstanceOf(Blob);
     expect((form.get('audio') as Blob).size).toBe(5);
   });
+
+  it('returns the completed session id and clears it only after persistence succeeds', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ success: true, session: { id: 'session-1' } }), {
+          status: 201,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+      .mockResolvedValueOnce(new Response('{"success":true}', { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getActiveLiveSessionId, startLiveSession, stopLiveSession } =
+      await import('@/lib/live-session/client');
+    await startLiveSession('classroom-1');
+
+    await expect(stopLiveSession()).resolves.toBe('session-1');
+    expect(getActiveLiveSessionId()).toBeNull();
+  });
+
+  it('keeps the active session recoverable when completion persistence fails', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ success: true, session: { id: 'session-1' } }), {
+          status: 201,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+      .mockResolvedValueOnce(new Response('{"error":"offline"}', { status: 503 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getActiveLiveSessionId, startLiveSession, stopLiveSession } =
+      await import('@/lib/live-session/client');
+    await startLiveSession('classroom-1');
+
+    await expect(stopLiveSession()).rejects.toThrow('offline');
+    expect(getActiveLiveSessionId()).toBe('session-1');
+  });
 });

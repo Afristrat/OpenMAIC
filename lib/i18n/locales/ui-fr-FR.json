@@ -2458,5 +2458,13 @@
   "replay.timeline": "Chronologie de la session",
   "replay.actor.agent": "Agent",
   "replay.actor.user": "Vous",
-  "replay.actor.system": "Qalem"
+  "replay.actor.system": "Qalem",
+  "anchoring.hotEvaluationTitle": "Votre ressenti à chaud",
+  "anchoring.hotEvaluationDescription": "Deux réponses suffisent. Vous pouvez aussi passer cette étape.",
+  "anchoring.hotEvaluationUseful": "Cette session vous a-t-elle été utile ?",
+  "anchoring.hotEvaluationConfidence": "Vous sentez-vous capable d’appliquer ce que vous avez appris ?",
+  "anchoring.hotEvaluationChoose": "Choisir une note de 1 à 5",
+  "anchoring.hotEvaluationSkip": "Passer",
+  "anchoring.hotEvaluationSubmit": "Envoyer",
+  "anchoring.hotEvaluationFailed": "Impossible d’envoyer votre évaluation."
 }
