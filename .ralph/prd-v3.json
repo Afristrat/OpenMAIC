@@ -1941,7 +1941,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux maintenir l’ancrage documentaire jusqu’aux scènes et à leur édition afin que le parcours promis soit réellement utilisable.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P1",
-      "status": "to_validate",
+      "status": "completed",
       "passes": true,
       "source": {
         "type": "request_or_observed_gap",
@@ -1949,11 +1949,14 @@
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Soldé : chaque scène reçoit un ensemble borné de passages pertinents, versionnés et persistés ; le même contrat encadre son contenu, sa narration et ses régénérations.",
+      "gap": "Soldé et recertifié le 2026-09-03 : chaque scène reçoit un ensemble borné de passages pertinents, versionnés et persistés ; le même contrat encadre contenu, narration et régénérations.",
       "evidence": [
         "lib/server/classroom-generation.ts:390",
         "lib/server/classroom-generation.ts:834",
-        "lib/generation/scene-generator.ts"
+        "lib/generation/scene-generator.ts",
+        "docs/validation/S6-006-source-grounding-recertification.md",
+        "command:pnpm exec vitest run tests/generation/source-grounding.test.ts tests/server/classroom-generation-capture.test.ts tests/server/classroom-source-grounding-persistence.test.ts tests/lib/agent/tools/regenerate-scene.test.ts tests/api/classroom-access.test.ts tests/server/formation-source-library.test.ts@9935016ced2aedbc4a633eeec4179c449952a002",
+        "commit:9935016ced2aedbc4a633eeec4179c449952a002"
       ],
       "acceptance": [
         "Transmettre à chaque scène les passages pertinents avec identifiants de source et version ; ne pas injecter aveuglément tous les documents.",
@@ -1963,13 +1966,12 @@
         "Recetter plan → scènes → narration et références sur un corpus autorisé ; HTTP 200 ne suffit pas."
       ],
       "closureEvidence": [
-        "2026-08-27 — SHA validé 190a60f64d155d4f8323f6d1ed5d06644979b9a2, présent sur origin/refork-v030 ; clone isolé ServeurIA /tmp/qalem-s6005-a344577-1.",
-        "2026-08-27 — Sélection bornée et générique dans lib/generation/source-grounding.ts : identifiant stable, version dérivée du contenu, maximum quatre passages pertinents par scène, statut grounded/unsupported/contradictory ; tests d’information absente du résumé, document sans rapport et deux sources contradictoires.",
-        "2026-08-27 — Intégration plan → contenu → narration → scène → JSONB prouvée dans tests/server/classroom-generation-capture.test.ts et tests/server/classroom-source-grounding-persistence.test.ts ; la régénération conserve exactement le contrat dans tests/lib/agent/tools/regenerate-scene.test.ts.",
-        "2026-08-27 — Frontière d’accès prouvée dans tests/api/classroom-access.test.ts : passages visibles pour l’auteur, retirés de l’API apprenant ; parcours Chromium e2e/tests/scene-source-grounding.spec.ts 1/1 avec version, identifiant et extrait visibles.",
-        "2026-08-27 — Gates ServeurIA au SHA exact : pnpm check, npx tsc --noEmit et pnpm lint sans erreur ni avertissement ; pnpm test 2 380/2 380 ; pnpm build réussi ; pnpm test:e2e 66/66 ; conteneur qalem-s6006-190a60f-full exit 0, OOMKilled=false."
+        "2026-09-03 — La sélection partagée dans lib/generation/source-grounding.ts borne chaque scène à quatre passages pertinents avec identifiant/version stables et états grounded/unsupported/contradictory ; le même chemin traite source unique et manifeste multi-source.",
+        "2026-09-03 — Sur ServeurIA, 38/38 tests ciblés couvrent information absente du résumé, source hors sujet, contradiction multi-source, plan→contenu→narration→persistance, régénération et contrôle d’accès auteur/apprenant. Journal SHA-256 fb8630f1b360abb95835322b0fab64956a8c70581b1e15a6a00462ca87e64543.",
+        "2026-09-03 — Chromium scene-source-grounding passe 1/1 et montre à l’auteur la version, l’identifiant et l’extrait exacts ; journal SHA-256 9e2643fd967ca6393692035f32c1d150ac23340df636458655c37e1450abf154.",
+        "2026-09-03 — Au SHA fonctionnel déployé 9935016ced2aedbc4a633eeec4179c449952a002, le gate complet passe Prettier, TypeScript, ESLint, 420/420 fichiers et 2 640/2 640 tests Vitest, build 107 routes et 105/105 Playwright."
       ],
-      "completedAt": "2026-08-27",
+      "completedAt": "2026-09-03",
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],

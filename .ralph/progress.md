@@ -45,6 +45,8 @@ Les logs ci-dessous sont des archives datées ; leurs chiffres et mentions « ve
 
 ### Dernière clôture certifiée
 
+- **2026-09-03 — S6-006 Ancrage documentaire des scènes recertifié** — Le contrat partagé borne les passages pertinents, conserve identifiants/versions et états jusqu’au contenu, à la narration, à la persistance et aux régénérations, puis masque les passages aux apprenants. Sur ServeurIA : 38/38 tests ciblés et 1/1 Chromium avec version et extrait exacts, puis gate complet du même graphe à 2 640/2 640 Vitest, build 107 routes et 105/105 Playwright. Référence : `docs/validation/S6-006-source-grounding-recertification.md`.
+
 - **2026-09-03 — S6-005 Reformulation fondée sur les sources recertifiée** — La frontière serveur compare la demande au texte réellement extrait, vérifie littéralement les références et échoue fermée sans proposition sourcée. Le dialogue garde la proposition éditable et n’alimente le plan qu’après acceptation explicite. Sur ServeurIA : 7/7 tests serveur, 14/14 `home-to-generation` avec conflit, alignement, source vide et FR/AR/EN, puis gate complet du même graphe à 2 640/2 640 Vitest, build 107 routes et 105/105 Playwright. Référence : `docs/validation/S6-005-source-conflict-recertification.md`.
 
 - **2026-09-03 — S6-018 Frontière E2E du fallback IndexedDB recertifiée** — Les 11 scénarios ciblés catalogue, plug-ins FR/AR/EN, équipe FR/AR et PWA passent sur ServeurIA. Le journal SHA-256 `9b1a7b06738983cd04bb5908524cd4a70a8ad25913d45c9add1d6a097cd83aab` contient zéro erreur Classroom, service worker, fournisseurs ou flaky. Le gate complet du même graphe passe 2 640/2 640 Vitest, build 107 routes et 105/105 Playwright ; aucun filtre global ni changement de production n’a été ajouté.
