@@ -3280,8 +3280,8 @@
       "description": "En tant que super-administrateur Qalem, je veux décrire un widget en langage naturel puis le prévisualiser et le publier sans rédiger de JSON.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P2",
-      "status": "in_progress",
-      "passes": false,
+      "status": "complete",
+      "passes": true,
       "source": {
         "type": "split_from_story",
         "id": "S6-015",
@@ -3305,7 +3305,15 @@
         "Permettre au super-administrateur de corriger la demande, régénérer, prévisualiser et publier sans manipuler de JSON ni utiliser un builder drag-and-drop.",
         "Refuser le parcours aux administrateurs tenant et localiser l'interface en français, arabe RTL et anglais."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "Le SHA fonctionnel 669e49f19a9ecbc72d8f0ce59f9884b3d7a21606 utilise exclusivement resolveModel({ stage: 'widget-composition' }) et refuse les modèles ou endpoints fournis par le client.",
+        "Le validateur strict contrôle schéma, références, cycles, bornes, calculs et direction ; un cas de référence omis est calculé côté serveur et une unique réparation guidée précède tout rejet final HTTP 502.",
+        "Le builder permet correction, régénération, prévisualisation et publication sans JSON ni glisser-déposer ; les tests Playwright couvrent français, arabe RTL, anglais et refus administrateur tenant.",
+        "La recette réelle qalem.ma a retourné 200 pour génération, prévisualisation et publication ; le widget de marge a été publié puis ses trois familles de données supprimées avec contrôle résiduel à zéro.",
+        "Gate ServeurIA exact : Prettier, TypeScript et ESLint verts ; 416/416 fichiers et 2626/2626 tests Vitest ; build 106 routes ; 101/101 Playwright sans retry.",
+        "Déploiement Coolify vzsdj7j3r54j3qbjybnkej14 terminé ; conteneur bcx5pxyuc9z3lt4jtyjipcqu-170113034300 healthy, restart=0, OOMKilled=false et santé publique HTTP 200.",
+        "Référence complète : docs/validation/S6-028-widget-builder.md"
+      ],
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
