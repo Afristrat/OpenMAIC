@@ -1983,7 +1983,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux créer les illustrations sans réutiliser les images du document source afin que le parcours promis soit réellement utilisable.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P1",
-      "status": "to_validate",
+      "status": "completed",
       "passes": true,
       "source": {
         "type": "request_or_observed_gap",
@@ -1991,11 +1991,14 @@
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Soldé : les images extraites du document restent un contexte d’analyse et ne sont plus persistées ni injectées dans les scènes ; toute demande visuelle devient une illustration originale avec provenance contrôlée.",
+      "gap": "Soldé et recertifié le 2026-09-03 : les images extraites restent un contexte d’analyse et ne sont ni persistées ni injectées ; toute demande visuelle devient une illustration originale avec provenance contrôlée.",
       "evidence": [
         "lib/server/classroom-generation.ts:772",
         "lib/generation/scene-generator.ts:1208",
-        "thread:019f6d49-52ed-7ee2-aca0-466c8b675d00/019ffbf7-eef1-71a1-9101-430197ccba1b"
+        "docs/validation/S6-007-original-illustrations-recertification.md",
+        "docs/validation/artifacts/S6-007-original-photosynthesis-illustration.png",
+        "command:pnpm exec playwright test e2e/tests/slide-content-surface-647.spec.ts@9935016ced2aedbc4a633eeec4179c449952a002",
+        "commit:9935016ced2aedbc4a633eeec4179c449952a002"
       ],
       "acceptance": [
         "Supprimer l’obligation de réutiliser une image de PDF au parent commun du pipeline ; créer une illustration nouvelle et pertinente.",
@@ -2004,14 +2007,12 @@
         "Préserver les QR codes fonctionnels ; les captures web explicitement demandées restent un cas distinct de S1-012 à faire accepter."
       ],
       "closureEvidence": [
-        "2026-08-27 — SHA validé d0e5b2abe68c1f654cf466536b368770fdfbbddf, présent sur origin/refork-v030 ; clone isolé ServeurIA /tmp/qalem-s6005-a344577-1.",
-        "2026-08-27 — Parent commun corrigé dans lib/server/classroom-generation.ts et lib/generation/original-illustration-policy.ts : suggestedImageIds est supprimé, aucune image PDF n’est persistée ou assignée à une scène, et une suggestion source devient une requête d’illustration originale lorsque la génération d’images est active.",
-        "2026-08-27 — Aucun repli silencieux : une génération absente interrompt le job avec son compteur, une URL de provenance source est refusée, et un média non intégré empêche la persistance ; preuves dans tests/server/classroom-generation-retry.test.ts et tests/generation/original-illustration-policy.test.ts.",
-        "2026-08-27 — Provenance et géométrie : 66/66 tests ciblés vérifient l’URL /media/<elementId>.*, l’absence de chevauchement et le repositionnement des éléments hors cadre. La recette Chromium e2e/tests/slide-content-surface-647.spec.ts rend une illustration originale de photosynthèse, contrôle une zone supérieure à 100 × 100 px et joint la capture original-photosynthesis-illustration ; inspection visuelle : soleil, feuille, oxygène et glucose lisibles, image entièrement dans la diapositive, sans coupe ni chevauchement.",
-        "2026-08-27 — QR codes et captures web préservés : tests/server/classroom-generation-capture.test.ts 10/10 dans la sélection ciblée ; la capture explicitement demandée reste assignée par son chemin distinct et S1-012 n’est pas fermée par cette story.",
-        "2026-08-27 — Gates ServeurIA au SHA exact : pnpm check, npx tsc --noEmit et pnpm lint sans erreur ni avertissement ; pnpm test 2 386/2 386 ; pnpm build réussi (95/95 pages statiques) ; pnpm test:e2e 66/66 ; conteneur qalem-s6007-d0e5b2a-full exit 0, OOMKilled=false."
+        "2026-09-03 — lib/generation/original-illustration-policy.ts retire suggestedImageIds au parent commun, durcit toute requête visuelle vers une illustration originale et interdit reproduction, traçage, imitation ou réutilisation d’images source.",
+        "2026-09-03 — Sur ServeurIA, 68/68 tests ciblés couvrent absence de repli silencieux, provenance persistée, géométrie, QR codes et séparation des captures web ; journal SHA-256 a36d31b011f4e482abf4a37e6565c5384c190091304ae2a3ac4a6ec4e422fec3.",
+        "2026-09-03 — Chromium slide-content-surface passe 1/1. La capture versionnée S6-007-original-photosynthesis-illustration.png, SHA-256 2b72a88b5442e5f596096e0cd7ce18fe81119f28ef6c10d4d206b69b7d25136e, montre un schéma de photosynthèse lisible, pertinent, entièrement dans la diapositive, sans coupe ni chevauchement.",
+        "2026-09-03 — Au SHA fonctionnel déployé 9935016ced2aedbc4a633eeec4179c449952a002, le gate complet passe Prettier, TypeScript, ESLint, 420/420 fichiers et 2 640/2 640 tests Vitest, build 107 routes et 105/105 Playwright."
       ],
-      "completedAt": "2026-08-27",
+      "completedAt": "2026-09-03",
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
