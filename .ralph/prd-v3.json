@@ -3325,8 +3325,8 @@
       "description": "En tant qu'auteur Qalem, je veux utiliser un template publié dans une formation tout en conservant un export LMS statique et sûr.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P2",
-      "status": "in_progress",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "type": "split_from_story",
         "id": "S6-015",
@@ -3336,9 +3336,19 @@
       "dependencies": ["S6-028"],
       "gap": "La génération ne consomme que les plugins du dépôt et l'export n'a jamais été recetté avec un template publié dynamiquement.",
       "evidence": [
+        "app/api/widget-templates/route.ts",
+        "components/generation/outlines-editor.tsx",
+        "components/scene-renderers/published-widget-renderer.tsx",
+        "lib/server/published-widget-template.ts",
         "lib/generation/scene-generator.ts",
         "lib/export/scorm/build-scorm-package.ts",
-        "lib/export/scorm/scene-to-html.ts"
+        "lib/export/scorm/scene-to-html.ts",
+        "tests/api/published-widget-consumption-auth.test.ts",
+        "tests/api/widget-templates-catalog.test.ts",
+        "tests/export/scorm-build-package.test.ts",
+        "tests/generation/published-widget-template.test.ts",
+        "e2e/tests/plugin-classroom.spec.ts",
+        "e2e/tests/published-widget-selection.spec.ts"
       ],
       "acceptance": [
         "Sélectionner et consommer une version publiée dans une formation sans redéploiement, tout en figeant la version utilisée par la scène.",
@@ -3346,7 +3356,16 @@
         "Inclure une capture statique dans les exports SCORM 1.2, SCORM 2004 et cmi5 sans embarquer le runtime interactif ni du code exécutable.",
         "Prouver en navigateur la publication, le rechargement, la consommation, l'export et le refus cross-tenant, puis nettoyer les données de recette."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "Le SHA fonctionnel 8d359949492b6dfa44fbf3f92c82ec8312d250f8 expose le catalogue authentifié des seules versions publiées, épingle templateId et versionId dans l'outline, puis recharge et valide exactement cette version côté serveur sans appel LLM.",
+        "Le rendu Qalem valide de nouveau la composition à la frontière cliente et n'exécute que l'AST déclaratif borné ; Playwright prouve les calculs interactifs en français, arabe RTL et anglais, sans iframe pour un widget publié.",
+        "Les trois adaptateurs SCORM 1.2, SCORM 2004 et cmi5 conservent la même capture et le même avis statiques ; aucun identifiant, AST, HTML, script ou runtime du widget n'est sérialisé dans l'archive.",
+        "La recette authentifiée réelle qalem.ma a publié la version 52952599-11d6-43d1-ba4f-788cb80ac979, l'a retrouvée au catalogue (200), conservée après rechargement, consommée par le tenant autorisé (200), refusée vers un second tenant (403) et rendue sans iframe avec recalcul de 20 à 40 MAD.",
+        "Les deux tenants de preuve, leur utilisateur Auth, le template, sa version, sa publication, les invitations, les sessions et les fichiers temporaires ont été supprimés ; les quatre contrôles agrégés de résidu sont à zéro et les fichiers sont absents de l'hôte et du conteneur.",
+        "Gate ServeurIA exact : Prettier, TypeScript et ESLint verts ; 420/420 fichiers et 2640/2640 tests Vitest ; build 107 routes ; 105/105 Playwright sans échec.",
+        "Déploiement Coolify j3uzw1ebax4s57ubhkgi44up terminé ; conteneur bcx5pxyuc9z3lt4jtyjipcqu-174302462067 healthy, restart=0, OOMKilled=false et santé publique HTTP 200.",
+        "Référence complète : docs/validation/S6-029-published-widget-consumption.md"
+      ],
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
@@ -3358,8 +3377,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux composer et publier des widgets déterministes sans redéploiement afin que le parcours promis soit réellement utilisable.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P2",
-      "status": "in_progress",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "type": "request_or_observed_gap",
         "date": "2026-08-26"
@@ -3382,7 +3401,14 @@
         "Exporter la scène en SCORM 1.2, SCORM 2004 et cmi5 sous forme de capture statique, sans embarquer le runtime interactif.",
         "Scinder en US d’exécution bornées avant implémentation ; aucune nouvelle brique atomique ni constructeur drag-and-drop implicite."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "Le cadrage explicitement confirmé par Amine a été exécuté dans les US bornées S6-026 à S6-029, toutes désormais completed/passes=true, avec S6-016 comme cadrage fonctionnel préalable.",
+        "S6-026 livre et certifie la grammaire déclarative bornée et ses cas de référence, sans code exécutable ni nouvelle brique implicite.",
+        "S6-027 livre versions immuables, brouillon/publié, audit, RLS et exclusivité super-administrateur ; S6-028 livre le builder LLM administré, la validation, la prévisualisation et la publication sans JSON ni drag-and-drop.",
+        "S6-029 livre le catalogue publié, l'épinglage de version, la consommation en formation, le rendu FR/ar-MA RTL/EN et les exports statiques SCORM 1.2, SCORM 2004 et cmi5.",
+        "La recette production finale au SHA 8d359949492b6dfa44fbf3f92c82ec8312d250f8 prouve publication sans redéploiement supplémentaire, rechargement, consommation autorisée, refus intertenant, rendu interactif et nettoyage intégral.",
+        "Références : docs/validation/S6-026-widget-composition.md, docs/validation/S6-027-widget-template-persistence.md, docs/validation/S6-028-widget-builder.md et docs/validation/S6-029-published-widget-consumption.md"
+      ],
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": [
