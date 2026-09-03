@@ -17,6 +17,33 @@ describe('renderSceneContent', () => {
     ).toContain('يُعرض المحتوى التفاعلي في صورة ثابتة.');
   });
 
+  it('renders a published widget as a static notice without serializing its runtime payload', () => {
+    const html = renderSceneContent({
+      type: 'plugin',
+      pluginType: 'published-widget',
+      data: {
+        templateId: '00000000-0000-4000-8000-000000000059',
+        versionId: '00000000-0000-4000-8000-000000000060',
+        composition: {
+          title: '<script>window.hostile = true</script>',
+          nodes: [{ type: 'text', text: 'DO_NOT_EXPORT_RUNTIME' }],
+        },
+      },
+    });
+
+    expect(html).toContain('data-static-widget="true"');
+    expect(html).toContain('capture statique');
+    expect(html).not.toContain('window.hostile');
+    expect(html).not.toContain('DO_NOT_EXPORT_RUNTIME');
+    expect(html).not.toContain('00000000-0000-4000-8000-000000000060');
+  });
+
+  it('does not treat an ordinary plug-in as a published widget', () => {
+    expect(
+      renderSceneContent({ type: 'plugin', pluginType: 'cash-flow-simulator', data: {} }),
+    ).toBe('');
+  });
+
   it('renders quiz questions and options, escaping question/option text', () => {
     const html = renderSceneContent({
       type: 'quiz',

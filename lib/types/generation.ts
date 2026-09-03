@@ -147,6 +147,9 @@ export interface SceneOutline {
   widgetOutline?: WidgetOutline;
   /** Registered Scene Genome plug-in type used when `type === 'plugin'`. */
   pluginType?: string;
+  /** Published dynamic widget selected by an author; both IDs pin the exact version. */
+  widgetTemplateId?: string;
+  widgetTemplateVersionId?: string;
 }
 
 export interface ResourceGenerationRequest {

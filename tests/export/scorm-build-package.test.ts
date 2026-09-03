@@ -182,10 +182,21 @@ describe('buildScormPackage', () => {
     const scenes = [
       {
         id: 'scene-widget',
-        type: 'interactive',
+        type: 'plugin',
         title: 'Widget',
         order: 0,
-        content: { type: 'interactive', html: '<script>window.liveQalem = true</script>' },
+        content: {
+          type: 'plugin',
+          pluginType: 'published-widget',
+          data: {
+            templateId: '00000000-0000-4000-8000-000000000059',
+            versionId: '00000000-0000-4000-8000-000000000060',
+            composition: {
+              title: '<script>window.liveQalem = true</script>',
+              nodes: [{ text: 'DO_NOT_EXPORT_RUNTIME' }],
+            },
+          },
+        },
         actions: [],
       },
     ];
@@ -226,6 +237,8 @@ describe('buildScormPackage', () => {
       expect(index).toContain('assets/scenes/scene-1.png');
       expect(index).toContain('assets/audio/scene-1-1.wav');
       expect(index).not.toContain('window.liveQalem');
+      expect(index).not.toContain('DO_NOT_EXPORT_RUNTIME');
+      expect(index).not.toContain('00000000-0000-4000-8000-000000000060');
     }
   });
 

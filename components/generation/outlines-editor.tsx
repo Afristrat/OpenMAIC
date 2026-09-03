@@ -1463,6 +1463,13 @@ interface PluginOption {
   name: string;
 }
 
+interface PublishedWidgetOption {
+  templateId: string;
+  versionId: string;
+  versionNumber: number;
+  title: string;
+}
+
 function PluginConfigSelect({
   outline,
   onUpdate,
@@ -1474,30 +1481,101 @@ function PluginConfigSelect({
 }) {
   const { t, locale } = useI18n();
   const [plugins, setPlugins] = useState<PluginOption[]>([]);
+  const [widgets, setWidgets] = useState<PublishedWidgetOption[]>([]);
 
   useEffect(() => {
     const controller = new AbortController();
-    void fetch(`/api/plugins?locale=${encodeURIComponent(locale)}`, { signal: controller.signal })
-      .then(async (response) => {
-        if (!response.ok) return [];
-        const payload = (await response.json()) as { plugins?: PluginOption[] };
-        return payload.plugins ?? [];
+    void Promise.all([
+      fetch(`/api/plugins?locale=${encodeURIComponent(locale)}`, { signal: controller.signal }),
+      fetch('/api/widget-templates', { signal: controller.signal }),
+    ])
+      .then(async ([pluginResponse, widgetResponse]) => {
+        const pluginPayload: unknown = pluginResponse.ok ? await pluginResponse.json() : null;
+        const widgetPayload: unknown = widgetResponse.ok ? await widgetResponse.json() : null;
+        const pluginCandidates =
+          pluginPayload &&
+          typeof pluginPayload === 'object' &&
+          'plugins' in pluginPayload &&
+          Array.isArray(pluginPayload.plugins)
+            ? pluginPayload.plugins
+            : [];
+        const widgetCandidates =
+          widgetPayload &&
+          typeof widgetPayload === 'object' &&
+          'templates' in widgetPayload &&
+          Array.isArray(widgetPayload.templates)
+            ? widgetPayload.templates
+            : [];
+        const nextPlugins = pluginCandidates.filter(
+          (plugin): plugin is PluginOption =>
+            !!plugin &&
+            typeof plugin === 'object' &&
+            'type' in plugin &&
+            typeof plugin.type === 'string' &&
+            'name' in plugin &&
+            typeof plugin.name === 'string',
+        );
+        const nextWidgets = widgetCandidates.filter(
+          (widget): widget is PublishedWidgetOption =>
+            !!widget &&
+            typeof widget === 'object' &&
+            'templateId' in widget &&
+            typeof widget.templateId === 'string' &&
+            'versionId' in widget &&
+            typeof widget.versionId === 'string' &&
+            'versionNumber' in widget &&
+            typeof widget.versionNumber === 'number' &&
+            'title' in widget &&
+            typeof widget.title === 'string',
+        );
+        return { nextPlugins, nextWidgets };
       })
-      .then(setPlugins)
+      .then(({ nextPlugins, nextWidgets }) => {
+        setPlugins(nextPlugins);
+        setWidgets(nextWidgets);
+      })
       .catch((error: unknown) => {
-        if (!(error instanceof DOMException && error.name === 'AbortError')) setPlugins([]);
+        if (!(error instanceof DOMException && error.name === 'AbortError')) {
+          setPlugins([]);
+          setWidgets([]);
+        }
       });
     return () => controller.abort();
   }, [locale]);
 
-  const current = outline.pluginType ?? '';
-  const hasCurrent = plugins.some((plugin) => plugin.type === current);
+  const current =
+    outline.pluginType === 'published-widget' &&
+    outline.widgetTemplateId &&
+    outline.widgetTemplateVersionId
+      ? `widget:${outline.widgetTemplateId}:${outline.widgetTemplateVersionId}`
+      : (outline.pluginType ?? '');
+  const hasCurrent =
+    plugins.some((plugin) => plugin.type === current) ||
+    widgets.some((widget) => `widget:${widget.templateId}:${widget.versionId}` === current);
 
   return (
     <select
       aria-label={t('nav.plugins')}
       value={current}
-      onChange={(event) => onUpdate({ pluginType: event.target.value })}
+      onChange={(event) => {
+        const selected = event.target.value;
+        const widget = widgets.find(
+          (candidate) => `widget:${candidate.templateId}:${candidate.versionId}` === selected,
+        );
+        onUpdate(
+          widget
+            ? {
+                pluginType: 'published-widget',
+                widgetTemplateId: widget.templateId,
+                widgetTemplateVersionId: widget.versionId,
+              }
+            : {
+                pluginType: selected,
+                widgetTemplateId: undefined,
+                widgetTemplateVersionId: undefined,
+              },
+        );
+      }}
       className={cn(
         'h-8 max-w-48 border-0 border-r border-background/60 px-3 text-xs font-medium outline-none',
         theme.chip,
@@ -1505,11 +1583,25 @@ function PluginConfigSelect({
     >
       {!hasCurrent && current && <option value={current}>{current}</option>}
       {!current && <option value="">{t('common.loading')}</option>}
-      {plugins.map((plugin) => (
-        <option key={plugin.type} value={plugin.type}>
-          {plugin.name}
-        </option>
-      ))}
+      <optgroup label={t('nav.plugins')}>
+        {plugins.map((plugin) => (
+          <option key={plugin.type} value={plugin.type}>
+            {plugin.name}
+          </option>
+        ))}
+      </optgroup>
+      {widgets.length > 0 && (
+        <optgroup label={t('admin.widgets.title')}>
+          {widgets.map((widget) => (
+            <option
+              key={`${widget.templateId}:${widget.versionId}`}
+              value={`widget:${widget.templateId}:${widget.versionId}`}
+            >
+              {widget.title} · v{widget.versionNumber}
+            </option>
+          ))}
+        </optgroup>
+      )}
     </select>
   );
 }

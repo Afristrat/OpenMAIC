@@ -60,6 +60,12 @@ export function renderSceneContent(
         options.staticWidgetNotice ?? 'Widget présenté sous forme de capture statique.',
       )}</p>`;
 
+    case 'plugin':
+      if (content.pluginType !== 'published-widget' || !isRecord(content.data)) return '';
+      return `<p class="scorm-scene-transcript" data-static-widget="true">${escapeHtml(
+        options.staticWidgetNotice ?? 'Widget présenté sous forme de capture statique.',
+      )}</p>`;
+
     case 'quiz': {
       const questions = Array.isArray(content.questions) ? content.questions : [];
       return `<div class="scorm-scene-transcript">${questions.map((q, i) => renderQuizQuestion(q, i)).join('\n')}</div>`;

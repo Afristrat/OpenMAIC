@@ -3325,7 +3325,7 @@
       "description": "En tant qu'auteur Qalem, je veux utiliser un template publié dans une formation tout en conservant un export LMS statique et sûr.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P2",
-      "status": "to_implement",
+      "status": "in_progress",
       "passes": false,
       "source": {
         "type": "split_from_story",

@@ -4,6 +4,7 @@ import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 // The central scene dispatcher routes persisted `plugin` scenes here.
 import type { PluginSceneContent as PluginContent } from '@/lib/plugins/scene-sdk';
 import type { StageMode } from '@/lib/types/stage';
+import { PublishedWidgetRenderer } from './published-widget-renderer';
 
 // ---------------------------------------------------------------------------
 // PostMessage protocol between parent and plugin iframe
@@ -38,6 +39,13 @@ interface PluginRendererProps {
 // ---------------------------------------------------------------------------
 
 export function PluginRenderer({ content, mode: _mode, sceneId }: PluginRendererProps) {
+  if (content.pluginType === 'published-widget') {
+    return <PublishedWidgetRenderer data={content.data} />;
+  }
+  return <IframePluginRenderer content={content} sceneId={sceneId} />;
+}
+
+function IframePluginRenderer({ content, sceneId }: Omit<PluginRendererProps, 'mode'>) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [iframeHeight, setIframeHeight] = useState<number | undefined>(undefined);
   const [ready, setReady] = useState(false);

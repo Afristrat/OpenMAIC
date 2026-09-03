@@ -39,6 +39,7 @@ import { parseActionsFromStructuredOutput } from './action-parser';
 import { parseJsonResponse } from './json-repair';
 import { loadPlugins } from '@/lib/plugins/loader';
 import { validatePluginData } from '@/lib/plugins/schema-validator';
+import { loadPublishedWidgetTemplate } from '@/lib/server/published-widget-template';
 import {
   buildCourseContext,
   formatAgentsForPrompt,
@@ -444,6 +445,29 @@ async function generatePluginContent(
   if (!pluginType) {
     log.error(`Plugin outline "${outline.title}" has no pluginType`);
     return null;
+  }
+
+  if (pluginType === 'published-widget') {
+    if (!outline.widgetTemplateId || !outline.widgetTemplateVersionId) {
+      log.error(`Published widget outline "${outline.title}" has no pinned template version`);
+      return null;
+    }
+    const published = await loadPublishedWidgetTemplate(
+      outline.widgetTemplateId,
+      outline.widgetTemplateVersionId,
+    );
+    if (!published) {
+      log.error(`Published widget selected for "${outline.title}" is unavailable`);
+      return null;
+    }
+    return {
+      pluginType: 'published-widget',
+      data: {
+        templateId: published.templateId,
+        versionId: published.versionId,
+        composition: published.composition,
+      },
+    };
   }
 
   const plugin = loadPlugins().find(
