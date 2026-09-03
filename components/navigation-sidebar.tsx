@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Home,
+  History,
   BookOpen,
   Brain,
   Award,
@@ -105,6 +106,12 @@ export function NavigationSidebar(): React.ReactElement {
       labelKey: 'nav.myCertificates',
       icon: <Award className="size-5" />,
       show: true,
+    },
+    {
+      href: '/replays',
+      labelKey: 'nav.replays',
+      icon: <History className="size-5" />,
+      show: isAuthenticated,
     },
     {
       href: '/marketplace/agents',
