@@ -54,6 +54,7 @@ import {
 import { SceneCompletionGate } from '@/components/playback/scene-completion-gate';
 import { scheduleAfterVisualCommit } from '@/lib/playback/visual-transition';
 import type { LectureNoteItem } from '@/lib/types/chat';
+import { recordLiveSessionEvent } from '@/lib/live-session/client';
 
 /**
  * Imperative handle exposed via `ref` so the parent (`Stage`) can tear
@@ -452,6 +453,13 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
       resetSceneState();
       setResourcePause(null);
 
+      if (currentScene) {
+        void recordLiveSessionEvent('system', 'scene_change', {
+          sceneId: currentScene.id,
+          title: currentScene.title,
+        });
+      }
+
       if (!currentScene || !currentScene.actions || currentScene.actions.length === 0) {
         engineRef.current = null;
         setEngineMode('idle');
@@ -492,6 +500,17 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
           // Scene change handled by engine
         },
         onSpeechStart: (text, speechAction) => {
+          void recordLiveSessionEvent(
+            'agent',
+            'speech',
+            {
+              sceneId: currentScene.id,
+              actionId: speechAction.id,
+              agentId: speechAction.agentId ?? null,
+              text,
+            },
+            speechAction.audioUrl,
+          );
           setLectureSpeech(text);
           const teacherAgentId = stage?.generatedAgentConfigs?.find(
             (agent) => agent.role === 'teacher',
@@ -514,6 +533,10 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
           setActiveBubbleId(null);
         },
         onEffectFire: (effect: Effect) => {
+          void recordLiveSessionEvent('system', 'stage_action', {
+            sceneId: currentScene.id,
+            effect,
+          });
           // Add to lecture session with incrementing index
           if (
             lectureSessionIdRef.current &&
@@ -1242,7 +1265,16 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
                 thinkingState={thinkingState}
                 isCueUser={isCueUser}
                 isTopicPending={isTopicPending}
-                onMessageSend={async (msg) => {
+                onMessageSend={async (msg, audio) => {
+                  void recordLiveSessionEvent(
+                    'user',
+                    'user_message',
+                    {
+                      sceneId: currentSceneId,
+                      text: msg,
+                    },
+                    audio,
+                  );
                   // Always clear Level-1 pause state — the closure may hold a stale
                   // isDiscussionPaused value (e.g. voice input's onTranscription callback
                   // captures onMessageSend before React re-renders with the updated state).
@@ -1404,7 +1436,16 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
             }}
             onLiveSessionError={handleLiveSessionError}
             onStopSession={doSessionCleanup}
-            onSegmentSealed={discussionTTS.handleSegmentSealed}
+            onSegmentSealed={(messageId, partId, fullText, agentId) => {
+              discussionTTS.handleSegmentSealed(messageId, partId, fullText, agentId);
+              void recordLiveSessionEvent('agent', 'speech', {
+                sceneId: currentSceneId,
+                messageId,
+                partId,
+                agentId,
+                text: fullText,
+              });
+            }}
             shouldHoldAfterReveal={discussionTTS.shouldHold}
           />
         </div>

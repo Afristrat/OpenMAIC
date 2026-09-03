@@ -44,6 +44,7 @@ import {
 import { cn } from '@/lib/utils';
 import type { StageMode } from '@/lib/types/stage';
 import type { ResearchSource } from '@openmaic/dsl';
+import { LiveSessionRecorder } from '@/components/live-session-recorder';
 
 // Zustand selectors must return the same reference when the selected value has
 // not changed. An inline `?? []` allocates on every store read and causes React
@@ -129,6 +130,7 @@ export function HeaderControls({
   // anchors identically too.
   return (
     <div className="flex items-center gap-4">
+      {mode !== 'edit' && <LiveSessionRecorder />}
       <div
         className={cn(
           'shrink-0 flex items-center gap-1 backdrop-blur-md shadow-sm rounded-full',

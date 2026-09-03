@@ -19,7 +19,7 @@ declare global {
 }
 
 export interface UseAudioRecorderOptions {
-  onTranscription?: (text: string) => void;
+  onTranscription?: (text: string, audio?: Blob) => void;
   onError?: (error: string) => void;
   /** When true and using browser-native ASR, recognition stays active until explicitly stopped. */
   continuous?: boolean;
@@ -96,7 +96,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
           onError?.('no-speech');
           return;
         }
-        onTranscription?.(result.text);
+        onTranscription?.(result.text, audioBlob);
       } catch (error) {
         log.error('Transcription error:', error);
         onError?.(error instanceof Error ? error.message : 'transcription-failed');

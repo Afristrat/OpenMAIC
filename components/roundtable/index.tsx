@@ -63,7 +63,7 @@ interface RoundtableProps {
   readonly thinkingState?: { stage: string; agentId?: string } | null;
   readonly isCueUser?: boolean;
   readonly isTopicPending?: boolean;
-  readonly onMessageSend?: (message: string) => void;
+  readonly onMessageSend?: (message: string, audio?: Blob) => void;
   readonly onDiscussionStart?: (request: DiscussionAction) => void;
   readonly onDiscussionSkip?: () => void;
   readonly onStopDiscussion?: () => void;
@@ -333,7 +333,7 @@ export function Roundtable({
   // Audio recording
   const { isRecording, isProcessing, startRecording, stopRecording, cancelRecording } =
     useAudioRecorder({
-      onTranscription: (text) => {
+      onTranscription: (text, audio) => {
         if (!text.trim()) {
           toast.info(t('roundtable.noSpeechDetected'));
           setIsVoiceOpen(false);
@@ -345,7 +345,7 @@ export function Roundtable({
           return;
         }
         showLocalUserMessage(text);
-        onMessageSend?.(text);
+        onMessageSend?.(text, audio);
         setIsSendCooldown(true);
         isSendCooldownRef.current = true;
         setIsVoiceOpen(false);
