@@ -2367,7 +2367,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Gate audio : tachkil AR + plancher de bruit -50 dB sur toutes les sorties TTS » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "1-CRÉER",
       "priority": "P1",
-      "status": "to_validate",
+      "status": "completed",
       "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
@@ -2377,7 +2377,11 @@
       "sourceDependencies": ["S0-006"],
       "dependencies": [],
       "gap": "Soldé : WAV PCM16 et MP3 sont mesurés, tout format non contrôlable est refusé, les variantes de capsules doivent franchir la gate Mishkāt et les pistes persistées sont recontrôlées avant export MP4.",
-      "evidence": ["lib/audio/audio-gate.ts", ".ralph/prd-v2.json#S1-009"],
+      "evidence": [
+        "lib/audio/audio-gate.ts",
+        "docs/validation/S1-009-audio-gate-recertification.md",
+        ".ralph/prd-v2.json#S1-009"
+      ],
       "acceptance": [
         "Tachkil appliqué avant synthèse AR (fixture)",
         "Piste < -50 dB rejetée avec erreur explicite (fixture bruitée)",
@@ -2385,13 +2389,13 @@
         "Tester les formats réellement servis et les capsules/exports réellement audio ; une sortie ignorée par le contrôle ne peut pas être déclarée validée."
       ],
       "closureEvidence": [
-        "2026-08-27 — Le point unique generateTTS applique assertArabicTachkilReady avant tout appel réseau : une fixture arabe non vocalisée est refusée pour un fournisseur sans tachkil natif, tandis que Higgs/VoxCPM restent les seuls fournisseurs autorisés à l’appliquer côté synthèse.",
-        "2026-08-27 — lib/audio/audio-gate.ts mesure le WAV PCM16 nativement et décode le MP3 avec le FFmpeg déjà requis par l’export MP4 ; fixtures WAV/MP3 au-dessus et sous −50 dB couvertes, silence rejeté, format non contrôlable refusé explicitement au lieu d’être ignoré.",
-        "2026-08-27 — Le live app/api/generate/tts/route.ts et la narration persistée lib/server/classroom-media-generation.ts convergent vers generateTTS. Les capsules ne passent à done que si chaque variante porte gatePassed=true ; une variante absente ou refusée place le job en erreur.",
-        "2026-08-27 — L’export MP4 retélécharge chaque piste persistée, retire correctement le paramètre de version de son chemin, détecte WAV/MP3 et rejoue assertAboveNoiseFloor avant assemblage. SCORM/cmi5 ne contiennent aucun audio et ne sont donc pas artificiellement déclarés contrôlés.",
-        "2026-08-27 — Gate complet exécuté dans un clone isolé au SHA exact sur ServeurIA : pnpm check, npx tsc --noEmit, pnpm lint, pnpm test, pnpm build et pnpm test:e2e intégralement réussis ; référence détaillée dans .ralph/progress.md, entrée S1-009."
+        "2026-09-03 — Les 57/57 tests ciblés frais couvrent le refus pré-réseau de l’arabe non vocalisé sur un fournisseur non compatible, l’acceptation native Higgs/VoxCPM, les WAV PCM16 et MP3 au-dessus/sous −50 dBFS, le silence, les formats inconnus, la route live, la narration persistée, les capsules Mishkāt et le recontrôle MP4.",
+        "2026-09-03 — Preuve production authentifiée : Higgs est le seul TTS administré actif et annonce tachkil=true, tachkil_engine=jais2. Le français réel produit un WAV de 178 604 octets, 3,72 s et −12,2 dBFS ; l’arabe non vocalisé produit un WAV de 236 204 octets, 4,92 s et −8,4 dBFS. Les deux pistes sont décodées par FFmpeg et dépassent le seuil de −50 dBFS.",
+        "2026-09-03 — La même route de production refuse l’arabe non vocalisé avec Tachkil requis pour un fournisseur non compatible avant synthèse. Le tenant et le compte éphémères sont supprimés ; un inventaire indépendant recompte zéro utilisateur et zéro organisation S1-009.",
+        "2026-09-03 — La recette a détecté un conteneur Higgs vivant mais privé de CUDA : OOMKilled=false, puis torch.cuda.is_available=false. Le redémarrage isolé de higgs-tts a restauré NVIDIA GB10 et le calcul CUDA ; aucun redémarrage du DGX, de Whisper, du tunnel ou de Qalem n’a été effectué.",
+        "2026-09-03 — Gate complet frais sur ServeurIA au SHA df6023a879d76eb6468ff317b1cff26027702b93 : audit de production nul, Prettier, TypeScript et ESLint verts, 420/420 fichiers et 2 641/2 641 tests Vitest, build de 151 routes et 105/105 Playwright ; conteneur sorti 0, OOMKilled=false. Journal SHA-256 201093cb6c5389a1cd02072d0fe3224804590cd02ea1330deaff037b043b7509."
       ],
-      "completedAt": "2026-08-27",
+      "completedAt": "2026-09-03",
       "historicalEvidence": {
         "completedAt": null,
         "note": "lib/audio/audio-gate.ts créé et branché au point de synthèse unique generateTTS() (lib/audio/tts-providers.ts) : assertArabicTachkilReady() rejette (TachkilRequiredError) tout texte en écriture arabe sans diacritiques tachkil sur un fournisseur non listé comme tachkil-aware (seul voxcpm-tts l'est, vérifié via le /health du studio Higgs en S0-006) ; assertAboveNoiseFloor() décode le WAV PCM16 retourné et rejette (NoiseFloorError) tout pic sous -50 dBFS. 19 tests dédiés (tests/audio/audio-gate.test.ts + tests/audio/tts-audio-gate.test.ts), 0 régression (1830/1830 vert). Limite du décodage dB documentée en commentaire ponytail : seul le WAV PCM16 est décodé sans dépendance nouvelle ; les formats compressés (mp3/opus/flac) passent sans vérification de niveau (aucune lib de décodage audio dans le repo, pas d'ajout justifié pour cette story). Sur le 3e critère (\"branché sur live, capsules et exports\") : vérifié par lecture de code que SEUL le chat live (app/api/generate/tts/route.ts) et la pré-génération de narration (lib/server/classroom-media-generation.ts) appellent réellement generateTTS() aujourd'hui — les deux sont donc protégés par construction. Les capsules Hyperframes (S1-006) délèguent la voix off à Mishkāt, un studio externe qui n'expose aucun contrat de synthèse vers notre code (lib/video/hyperframes-brief.ts n'envoie qu'un brief texte, HyperframesSound.voiceover est un simple booléen) : aucun fournisseur TTS Qalem n'est sélectionnable à ce point, donc aucune assertion honnête basée sur TACHKIL_AWARE_TTS_PROVIDERS n'y est applicable sans deviner le comportement interne de Mishkāt. L'export SCORM couche 1 (S1-007, lib/export/scorm/scene-to-html.ts, lib/export/scorm/build-scorm-package.ts) ne gère aucun audio (confirmé par lecture : ni audioUrl ni generateTTS, rendu texte/quiz/slide/pbl uniquement, gap documenté et tracké pour S1-008). Plutôt que fabriquer un branchement fictif dans ces deux fichiers, le choix a été de gater le point de synthèse unique et réel — toute future consommation audio de S1-008/capsules réutilisant generateTTS() hérite automatiquement de la gate. Limite honnêtement assumée, signalée à Amine plutôt que devinée.",
