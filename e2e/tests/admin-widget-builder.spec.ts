@@ -124,7 +124,7 @@ test.describe('Générateur de widgets administré (S6-028)', () => {
     await page.addInitScript(() => localStorage.setItem('locale', 'fr-FR'));
     await page.goto('/admin?tab=widgets');
 
-    await expect(page.getByText('Vous n’êtes pas autorisé à visualiser cette zone.')).toBeVisible();
+    await expect(page).toHaveURL('/');
     await expect(page.getByLabel('Description du widget')).toHaveCount(0);
   });
 });

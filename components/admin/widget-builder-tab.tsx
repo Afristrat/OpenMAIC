@@ -283,7 +283,9 @@ export function WidgetBuilderTab(): React.ReactElement {
     <div className="mx-auto max-w-4xl space-y-5">
       <Card>
         <CardHeader>
-          <CardTitle>{t('admin.widgets.builderTitle')}</CardTitle>
+          <CardTitle>
+            <h3>{t('admin.widgets.builderTitle')}</h3>
+          </CardTitle>
           <CardDescription>{t('admin.widgets.hint')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
