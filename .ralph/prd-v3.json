@@ -1743,7 +1743,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que le graphe de dépendances de production ne contienne plus de vulnérabilité critique ou haute afin que la plateforme et sa chaîne de livraison restent défendables.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P0",
-      "status": "to_validate",
+      "status": "completed",
       "passes": true,
       "source": {
         "type": "request_or_observed_gap",
@@ -1751,13 +1751,13 @@
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Soldé : le graphe de production du SHA déployé ne contient plus aucune occurrence critique ou haute. Les dépendances CopilotKit inutilisées et image-size ont été retirées ; les dépendances atteignables ont été mises à niveau ou contraintes par des overrides bornés.",
+      "gap": "Soldé et recertifié le 2026-09-03 : le graphe de production déployé ne contient aucun avis critique ou haut connu.",
       "evidence": [
         "package.json",
         "pnpm-lock.yaml",
         "docs/security/S6-017-production-dependency-audit.md",
-        "command:pnpm audit --prod --json@a9f26a30a74b6ed868c77d474f7ae8c2ee6b2f71",
-        "commit:a9f26a30a74b6ed868c77d474f7ae8c2ee6b2f71"
+        "command:pnpm audit --prod --json@9935016ced2aedbc4a633eeec4179c449952a002",
+        "commit:9935016ced2aedbc4a633eeec4179c449952a002"
       ],
       "acceptance": [
         "Rejouer l’audit JSON sur un clone ServeurIA isolé et inventorier chaque chemin critique ou haut : dépendance directe/transitive, appelant Qalem, version corrigée et caractère atteignable.",
@@ -1767,14 +1767,11 @@
         "Obtenir audit production critical=0 et high=0, puis réussir le gate complet au SHA exact et recertifier les conteneurs déployés, leurs redémarrages et leur état OOM."
       ],
       "closureEvidence": [
-        "2026-08-27 — L’inventaire permanent docs/security/S6-017-production-dependency-audit.md rattache chacun des 22 paquets critiques ou hauts au chemin transitif, à l’appelant Qalem, à son atteignabilité et à sa correction. Les trois dépendances CopilotKit n’avaient aucun import dans le dépôt ; leur retrait supprime notamment les anciennes branches LangChain, axios, tar, expr-eval et ws.",
-        "2026-08-27 — Le commit a9f26a30a74b6ed868c77d474f7ae8c2ee6b2f71 retire également openai direct et image-size inutilisés, met à niveau Next 16.2.11, js-yaml 4.3.1, lodash 4.18.1, nanoid 5.1.16, sharp 0.35.4 et undici 7.29.0, puis borne quinze transitifs vulnérables par des overrides explicites. Le graphe passe de 1 650 à 1 380 dépendances de production.",
-        "2026-08-27 — Audit JSON frais au SHA exact : critical=0, high=0, moderate=17 et low=5. Le contrôle permanent pnpm audit:prod sort 0 au seuil haut. Le JSON contient zéro mention de web-push ; web-push 3.6.7 reste présent dans le manifeste et le lockfile.",
-        "2026-08-27 — Gate complet dans un clone ServeurIA isolé, image Playwright 1.58.2 noble complétée uniquement par FFmpeg 6.1.1 : Prettier, TypeScript et lint sans erreur ni avertissement, 376/376 fichiers et 2 474/2 474 tests Vitest, build Next 99/99 et 82/82 tests Playwright en 3,9 minutes. Les trois traces Classroom API déjà enregistrées dans S6-018 sont reproduites à l’identique, sans nouvelle erreur serveur.",
-        "2026-08-27 — Coolify a terminé le déploiement web l9gc0rg47o98y64vzm36qtp6 sur le SHA exact. Le conteneur web a4d3f1135c2c et le capture-worker b8aa3b426e2b exécutent tous deux une image taguée a9f26a30a74b6ed868c77d474f7ae8c2ee6b2f71 ; ils sont running/healthy, restartCount=0, OOMKilled=false, avec 1,5 Gio de mémoire et 3 Gio mémoire+swap.",
-        "2026-08-27 — https://qalem.ma/api/health répond HTTP 200 avec success=true et status=ok après déploiement. Les 17 avis modérés et 5 faibles ne sont pas présentés comme résolus par cette US, dont le critère explicite est zéro critique et zéro haut."
+        "2026-09-03 — L’audit frais du lockfile exact a détecté 6 avis hauts : 2 dans browserslist 4.28.1 et 4 dans fast-uri 3.1.5. Les chemins réels sont respectivement Sentry/Babel et SDK MCP/AJV ; web-push 3.6.7 est présent et absent des avis.",
+        "2026-09-03 — Le commit 9935016ced2aedbc4a633eeec4179c449952a002 relève les deux transitifs dans leur contrat majeur vers browserslist 4.28.7 et fast-uri 3.1.6. L’audit ServeurIA final porte sur 1 232 dépendances et retourne critical=0 et high=0, sans exclusion.",
+        "2026-09-03 — Au SHA exact : Prettier, TypeScript et ESLint verts, 420/420 fichiers et 2 640/2 640 tests Vitest, build 107 routes et 105/105 Playwright. Les déploiements web thiqhhb8prnpwgfblhzmwqmy et runtime wgis2h4x6w3siwwtinrz7r70 sont terminés sur ce SHA ; web, worker et capture-worker sont healthy, restart=0 et OOMKilled=false."
       ],
-      "completedAt": "2026-08-27",
+      "completedAt": "2026-09-03",
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
@@ -1786,7 +1783,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que le graphe de dépendances de production soit exempt de tout avis connu afin qu’aucun risque modéré ou faible ne demeure une dette passive.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P0",
-      "status": "to_validate",
+      "status": "completed",
       "passes": true,
       "source": {
         "type": "request_or_observed_gap",
@@ -1794,17 +1791,16 @@
       },
       "sourceDependencies": [],
       "dependencies": ["S6-017"],
-      "gap": "Soldé : les 20 avis et 22 occurrences résiduels ont été éliminés sans désactiver l’audit. Le sous-graphe non maintenu omml2mathml → get-dom → jsdom → request a été retiré à la racine ; le SHA exact déployé passe l’audit entièrement à zéro et le gate complet.",
+      "gap": "Soldé et recertifié le 2026-09-03 : le graphe de production déployé passe l’audit entièrement à zéro, sans exclusion ni acceptation de risque.",
       "evidence": [
         "docs/security/S6-017-production-dependency-audit.md",
         "packages/@openmaic/importer/src/serializer/mathSerializer.ts",
         "package.json",
         "pnpm-lock.yaml",
-        "command:pnpm audit --prod --json@a9f26a30a74b6ed868c77d474f7ae8c2ee6b2f71",
         "docs/security/S6-019-production-dependency-audit.md",
         "packages/@openmaic/omml2mathml",
-        "command:pnpm audit --prod --json@0cf0d94e6b40538e378e22b2bec928464ceb8def",
-        "commit:0cf0d94e6b40538e378e22b2bec928464ceb8def"
+        "command:pnpm audit --prod --json@9935016ced2aedbc4a633eeec4179c449952a002",
+        "commit:9935016ced2aedbc4a633eeec4179c449952a002"
       ],
       "acceptance": [
         "Inventorier les 12 paquets résiduels, leurs 20 avis, leurs 22 occurrences, leurs appelants Qalem et leurs versions corrigées sans confondre avis et occurrences.",
@@ -1814,13 +1810,12 @@
         "Obtenir un audit de production à zéro info, zéro faible, zéro modéré, zéro haut et zéro critique, puis réussir le gate complet au SHA exact et recertifier les conteneurs déployés, leurs redémarrages et leur état OOM."
       ],
       "closureEvidence": [
-        "2026-08-27 — L’inventaire permanent docs/security/S6-019-production-dependency-audit.md réconcilie les 12 paquets, 20 avis uniques et 22 occurrences du SHA de départ avec leurs appelants Qalem, versions atteintes, versions corrigées et avis GitHub ; les nombres d’avis et d’occurrences restent explicitement distincts.",
-        "2026-08-27 — Le SHA 0cf0d94e6b40538e378e22b2bec928464ceb8def met à niveau les dépendances corrigées et conserve exactement 18 overrides, chacun borné dans la plage majeure déclarée par son sélecteur. audit:prod exécute pnpm audit --prod sans seuil ni exclusion : tout futur avis connu fait échouer le contrôle.",
-        "2026-08-27 — Le fork interne attribué packages/@openmaic/omml2mathml remplace get-dom/jsdom/request par @xmldom/xmldom au point de création du DOM. request, get-dom, jsdom 9, uuid 3 et tough-cookie 2 sont absents du graphe de production ; le fallback TexMath et sept structures OMML réelles restent couverts. Le chargement à la demande de pdfjs conserve le chemin PDF embarqué sans polyfills DOM parasites dans les tests Node.js.",
-        "2026-08-27 — Les frontières MCP, Markdown, ECharts, Sentry, Google GenAI, LangChain et import PPTX/OMML sont couvertes par les suites permanentes. Dans le clone ServeurIA isolé /tmp/qalem-s6019-final-0cf0d94 : audit 0/0/0/0/0, Prettier, TypeScript et lint verts, 376/376 fichiers et 2 474/2 474 tests racine, 10/10 fichiers et 31/31 tests importer, build Next 99/99 et 82/82 Playwright sans retry ni flaky.",
-        "2026-08-27 — Coolify a terminé les déploiements web gvshnq1m02nmqatnbx9dgi0y et runtime irkisgmudkfy9fc8p82iq6b8 au SHA exact. Web 1fd349d1068e, worker b631f0a8c9a3 et capture-worker 07f741b5f3e7 sont running/healthy, restartCount=0 et OOMKilled=false ; leurs limites sont 1,5/3 Gio, 3/6 Gio et 1,5/3 Gio mémoire/swap. Le volume /data/storage-states est persistant et RW, worker→capture répond 200, et https://qalem.ma/api/health répond 200 status=ok avec les quatre capacités actives."
+        "2026-09-03 — L’audit frais initial a invalidé la clôture historique : 11 avis uniques sur 5 paquets, soit 1 faible, 4 modérés, 6 hauts et 0 critique. Les chaînes transitives exactes étaient shadcn, Sentry/Babel, SDK MCP/Express, importeur/mathml-to-latex et SDK MCP/AJV.",
+        "2026-09-03 — Le commit 9935016ced2aedbc4a633eeec4179c449952a002 relève postcss-selector-parser, browserslist, qs, les deux branches @xmldom/xmldom et fast-uri dans leurs contrats majeurs. Aucun paquet, seuil, silence ou risque accepté n’est ajouté. L’audit final retourne 0/0/0/0/0 sur 1 232 dépendances ; JSON SHA-256 350381e5c20e7f44c5a51468504bd9f5501551f62d3691b8fd9cc6e2ff0a1474.",
+        "2026-09-03 — Le gate exact passe Prettier, TypeScript, ESLint, 420/420 fichiers et 2 640/2 640 tests Vitest, build 107 routes et 105/105 Playwright. Les déploiements Coolify web thiqhhb8prnpwgfblhzmwqmy et runtime wgis2h4x6w3siwwtinrz7r70 sont terminés sur le SHA exact.",
+        "2026-09-03 — Web, worker et capture-worker exécutent l’image 9935016, sont healthy, restart=0 et OOMKilled=false. Le volume capture est persistant/RW ; worker→capture, /, /api/health et /api/server-providers répondent 200, /app redirige 307 et /api/profile anonyme refuse 401."
       ],
-      "completedAt": "2026-08-27",
+      "completedAt": "2026-09-03",
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],

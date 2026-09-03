@@ -1,6 +1,25 @@
 # S6-017 — Audit des dépendances de production
 
-## Périmètre et verdict
+## Recertification du 3 septembre 2026
+
+Le commit fonctionnel `9935016ced2aedbc4a633eeec4179c449952a002` corrige
+les six avis hauts réapparus depuis la certification initiale : deux avis
+`browserslist` et quatre avis `fast-uri`. Les deux versions restent dans le
+contrat majeur de leurs appelants : `browserslist` 4.28.7 et `fast-uri` 3.1.6.
+
+L’audit frais exécuté sur ServeurIA contient 1 232 dépendances de production et
+zéro avis à tous les niveaux. Son fichier JSON a pour SHA-256
+`350381e5c20e7f44c5a51468504bd9f5501551f62d3691b8fd9cc6e2ff0a1474`.
+`web-push` 3.6.7 reste installé, absent des avis et couvert par ses tests
+unitaires, sa migration RLS et les parcours PWA du gate complet.
+
+Le même SHA passe Prettier, TypeScript, ESLint, 420 fichiers et 2 640 tests
+Vitest, le build Next.js de 107 routes et 105 tests Playwright. Les déploiements
+Coolify web `thiqhhb8prnpwgfblhzmwqmy` et runtime
+`wgis2h4x6w3siwwtinrz7r70` sont terminés sur ce SHA. Web, worker et
+capture-worker sont healthy, avec zéro redémarrage et `OOMKilled=false`.
+
+## Certification initiale du 27 août 2026
 
 Audit exécuté le 27 août 2026 sur ServeurIA, dans un clone isolé au commit
 `a9f26a30a74b6ed868c77d474f7ae8c2ee6b2f71` :

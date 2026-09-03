@@ -1,6 +1,35 @@
 # S6-019 — Audit des dépendances de production
 
-## Verdict certifié
+## Recertification du 3 septembre 2026
+
+Un audit frais du lockfile courant a d’abord invalidé l’ancienne clôture : 11
+avis uniques étaient réapparus, soit 1 faible, 4 modérés, 6 hauts et 0 critique.
+Ils provenaient de cinq chaînes transitives seulement.
+
+| Paquet | Appelant | Version vulnérable | Version corrigée |
+| --- | --- | ---: | ---: |
+| `postcss-selector-parser` | `shadcn` | 7.1.1 | 7.1.3 |
+| `browserslist` | Sentry/Babel | 4.28.1 | 4.28.7 |
+| `qs` | SDK MCP/Express | 6.15.3 | 6.16.0 |
+| `@xmldom/xmldom` | importeur et `mathml-to-latex` | 0.8.13 et 0.9.10 | 0.8.15 et 0.9.12 |
+| `fast-uri` | SDK MCP/AJV | 3.1.5 | 3.1.6 |
+
+Le commit `9935016ced2aedbc4a633eeec4179c449952a002` borne ces
+correctifs dans leurs branches majeures, sans ajout de dépendance, exclusion ni
+acceptation de risque. L’audit ServeurIA final porte sur 1 232 dépendances de
+production et retourne exactement 0 information, 0 faible, 0 modérée, 0 haute
+et 0 critique. Le JSON exact a pour SHA-256
+`350381e5c20e7f44c5a51468504bd9f5501551f62d3691b8fd9cc6e2ff0a1474`.
+
+La porte qualité du même graphe est intégralement verte : Prettier, TypeScript,
+ESLint, 420/420 fichiers et 2 640/2 640 tests Vitest, build Next.js de 107
+routes et 105/105 tests Playwright. Les déploiements Coolify web
+`thiqhhb8prnpwgfblhzmwqmy` et runtime `wgis2h4x6w3siwwtinrz7r70`
+sont terminés sur le SHA exact. Les trois conteneurs sont healthy, sans
+redémarrage ni OOM ; le volume capture est persistant et RW, worker→capture
+répond 200, tout comme `/`, `/api/health` et `/api/server-providers`.
+
+## Certification initiale du 27 août 2026
 
 Le SHA fonctionnel `0cf0d94e6b40538e378e22b2bec928464ceb8def` passe
 `pnpm audit --prod` avec **1 231 dépendances de production** et exactement :
