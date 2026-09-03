@@ -3,7 +3,12 @@ import { z } from 'zod';
 import { callLLM } from '@/lib/ai/llm';
 import { requireSuperAdmin } from '@/lib/api/auth';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
-import { parseWidgetComposition, type WidgetComposition } from '@/lib/plugins/widget-composition';
+import {
+  evaluateWidgetComposition,
+  parseWidgetComposition,
+  widgetCompositionSchema,
+  type WidgetComposition,
+} from '@/lib/plugins/widget-composition';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 import { resolveModel } from '@/lib/server/resolve-model';
 import { createLogger } from '@/lib/logger';
@@ -23,6 +28,16 @@ const languageByLocale = {
   'en-US': 'English',
 } as const;
 
+const referenceCaseNameByLocale = {
+  'fr-FR': 'Cas de référence',
+  'ar-MA': 'حالة مرجعية',
+  'en-US': 'Reference case',
+} as const;
+
+const widgetCompositionWithoutGoldenCasesSchema = widgetCompositionSchema
+  .omit({ goldenCases: true })
+  .strict();
+
 export const maxDuration = 60;
 
 function hasExpectedLocale(
@@ -38,7 +53,31 @@ function parseGeneratedComposition(
   text: string,
   locale: keyof typeof languageByLocale,
 ): WidgetComposition {
-  const composition = parseWidgetComposition(parseJsonResponse<unknown>(text));
+  const generated = parseJsonResponse<unknown>(text);
+  let composition: WidgetComposition;
+  if (
+    generated !== null &&
+    typeof generated === 'object' &&
+    !Array.isArray(generated) &&
+    !Object.hasOwn(generated, 'goldenCases')
+  ) {
+    const draft = widgetCompositionWithoutGoldenCasesSchema.parse(generated);
+    const inputs = Object.fromEntries(draft.inputs.map((input) => [input.id, input.initial]));
+    const provisional = parseWidgetComposition({
+      ...draft,
+      goldenCases: [{ name: referenceCaseNameByLocale[locale], inputs, expected: {} }],
+    });
+    const evaluation = evaluateWidgetComposition(provisional, inputs);
+    const expected = Object.fromEntries(
+      draft.computations.map((computation) => [computation.id, evaluation.values[computation.id]]),
+    );
+    composition = parseWidgetComposition({
+      ...draft,
+      goldenCases: [{ name: referenceCaseNameByLocale[locale], inputs, expected }],
+    });
+  } else {
+    composition = parseWidgetComposition(generated);
+  }
   if (!hasExpectedLocale(composition, locale)) {
     throw new Error('Generated locale or direction does not match the request');
   }

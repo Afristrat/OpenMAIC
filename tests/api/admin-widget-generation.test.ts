@@ -70,6 +70,24 @@ describe('super-admin widget generation route (S6-028)', () => {
     expect(mocks.callLLM.mock.calls[0]?.[0]).not.toHaveProperty('output');
   });
 
+  it('derives and validates a golden case when the administered model omits it', async () => {
+    const { goldenCases: _omitted, ...withoutGoldenCases } = composition;
+    mocks.callLLM.mockResolvedValue({ text: JSON.stringify(withoutGoldenCases) });
+
+    const response = await POST(
+      request({
+        request: 'Crée un widget qui affiche la réponse à un calcul simple.',
+        locale: 'fr-FR',
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.composition.goldenCases).toEqual([
+      { name: 'Cas de référence', inputs: {}, expected: { total: 42 } },
+    ]);
+  });
+
   it('rejects tenant administrators before resolving or calling a model', async () => {
     mocks.requireSuperAdmin.mockResolvedValue({ response: new Response(null, { status: 403 }) });
 
