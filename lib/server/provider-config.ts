@@ -403,9 +403,20 @@ function resolveSectionBaseUrl(
 export function getServerProviders(): Record<string, { models?: string[] }> {
   const cfg = getConfig();
   const result: Record<string, { models?: string[] }> = {};
+  const configuredDefault = process.env.DEFAULT_MODEL?.trim() ?? '';
+  const separatorIndex = configuredDefault.indexOf(':');
+  const defaultProviderId =
+    separatorIndex > 0 ? configuredDefault.slice(0, separatorIndex) : 'openai';
+  const defaultModelId =
+    separatorIndex > 0 ? configuredDefault.slice(separatorIndex + 1) : configuredDefault;
   for (const [id, entry] of Object.entries(cfg.providers)) {
     result[id] = {};
-    if (entry.models && entry.models.length > 0) result[id].models = entry.models;
+    if (entry.models && entry.models.length > 0) {
+      result[id].models =
+        id === defaultProviderId && entry.models.includes(defaultModelId)
+          ? [defaultModelId, ...entry.models.filter((model) => model !== defaultModelId)]
+          : entry.models;
+    }
   }
   return result;
 }

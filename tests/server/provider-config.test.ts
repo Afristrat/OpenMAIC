@@ -66,6 +66,7 @@ function clearProviderEnv() {
   delete process.env.BOCHA_API_KEY;
   delete process.env.BOCHA_BASE_URL;
   delete process.env.QALEM_VIDEO_SIDECAR_SECRET;
+  delete process.env.DEFAULT_MODEL;
 }
 
 vi.mock('fs', async (importOriginal) => {
@@ -234,6 +235,19 @@ providers:
       // Neither the API key nor the base URL may leak to the client.
       expect((providers.openai as Record<string, unknown>).apiKey).toBeUndefined();
       expect((providers.openai as Record<string, unknown>).baseUrl).toBeUndefined();
+    });
+
+    it('presents the administered default model first for a fresh client selection', async () => {
+      vi.stubEnv('OPENAI_API_KEY', 'sk-secret');
+      vi.stubEnv('OPENAI_MODELS', 'kimi-k2.5,deepseek-v4-flash,deepseek-chat');
+      vi.stubEnv('DEFAULT_MODEL', 'openai:deepseek-v4-flash');
+      const { getServerProviders } = await import('@/lib/server/provider-config');
+
+      expect(getServerProviders().openai.models).toEqual([
+        'deepseek-v4-flash',
+        'kimi-k2.5',
+        'deepseek-chat',
+      ]);
     });
 
     it('lists multiple providers', async () => {
