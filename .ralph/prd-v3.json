@@ -3791,10 +3791,7 @@
       "sourceDependencies": ["S3-001", "S2-004"],
       "dependencies": ["S3-001", "S2-004"],
       "gap": "Aucun reste propre au générateur : stock P3-B, appel unique, références de session et coût réel sont certifiés ; l’acceptation humaine du ton demeure isolée dans S3-008.",
-      "evidence": [
-        "tasks/prd-3-ancrer.md",
-        "docs/evidence/s3-004-seed-sample.json"
-      ],
+      "evidence": ["tasks/prd-3-ancrer.md", "docs/evidence/s3-004-seed-sample.json"],
       "acceptance": [
         "≥ 12 graines typées via P3-B, chacune citant scene_ref et persona de LA session",
         "UN appel LLM par session (grep : aucun dans le chemin d'envoi)",

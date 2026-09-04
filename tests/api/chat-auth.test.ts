@@ -96,5 +96,4 @@ describe('POST /api/chat tenant boundary', () => {
     expect(mocks.requireOrgMember).toHaveBeenCalledWith(expect.anything(), 'org-1');
     expect(mocks.resolveModel).not.toHaveBeenCalled();
   });
-
 });
