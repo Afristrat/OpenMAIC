@@ -7,14 +7,6 @@ interface ReportMetrics {
   completionRate: number;
 }
 
-interface ReportLearner {
-  nickname: string;
-  classrooms_completed: number;
-  avg_score: number;
-  time_spent: number;
-  last_active: string;
-}
-
 interface ReportFormation {
   name: string;
   learner_count: number;
@@ -28,18 +20,11 @@ function safeDate(value: string): string {
   return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('fr-FR');
 }
 
-function duration(seconds: number): string {
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes} min`;
-  return `${Math.floor(minutes / 60)} h ${minutes % 60} min`;
-}
-
 export async function createInstitutionalReportPdf(input: {
   organizationName: string;
   dateFrom: string | null;
   dateTo: string | null;
   metrics: ReportMetrics;
-  learners: ReportLearner[];
   formations: ReportFormation[];
 }): Promise<Buffer> {
   const document = new PDFDocument({ size: 'A4', margin: 46, bufferPages: true });
@@ -129,28 +114,6 @@ export async function createInstitutionalReportPdf(input: {
       { text: formation.learner_count.toString(), width: 75 },
       { text: `${formation.avg_score.toFixed(1)} %`, width: 70 },
       { text: `${formation.completion_rate.toFixed(1)} %`, width: 90 },
-    ]),
-  );
-
-  document.moveDown(0.8);
-  section('Progression des apprenants');
-  row(
-    [
-      { text: 'Apprenant', width: 180 },
-      { text: 'Terminées', width: 65 },
-      { text: 'Score', width: 65 },
-      { text: 'Temps', width: 90 },
-      { text: 'Dernière activité', width: 95 },
-    ],
-    true,
-  );
-  input.learners.forEach((learner) =>
-    row([
-      { text: learner.nickname, width: 180 },
-      { text: learner.classrooms_completed.toString(), width: 65 },
-      { text: `${learner.avg_score.toFixed(1)} %`, width: 65 },
-      { text: duration(learner.time_spent), width: 90 },
-      { text: safeDate(learner.last_active), width: 95 },
     ]),
   );
 

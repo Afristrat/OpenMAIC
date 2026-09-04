@@ -13,7 +13,6 @@ describe('institutional report PDF', () => {
         avgScore: 84.5,
         completionRate: 72.25,
       },
-      learners: [],
       formations: [],
     });
 

@@ -25,15 +25,6 @@ async function getUserMembership(
   return data as { role: OrgMemberRole } | null;
 }
 
-interface LearnerRow {
-  user_id: string;
-  nickname: string;
-  classrooms_completed: number;
-  avg_score: number;
-  time_spent: number;
-  last_active: string;
-}
-
 interface FormationRow {
   stage_id: string;
   name: string;
@@ -42,19 +33,8 @@ interface FormationRow {
   completion_rate: number;
 }
 
-function toCsv(learners: LearnerRow[], formations: FormationRow[]): string {
-  const lines: string[] = [];
-
-  lines.push('=== Learners ===');
-  lines.push('user_id,nickname,classrooms_completed,avg_score,time_spent,last_active');
-  for (const l of learners) {
-    lines.push(
-      `${csvCell(l.user_id)},${csvCell(l.nickname)},${l.classrooms_completed},${l.avg_score.toFixed(1)},${l.time_spent},${csvCell(l.last_active)}`,
-    );
-  }
-
-  lines.push('');
-  lines.push('=== Formations ===');
+function toCsv(formations: FormationRow[]): string {
+  const lines = ['=== Formations ==='];
   lines.push('stage_id,name,learner_count,avg_score,completion_rate');
   for (const f of formations) {
     lines.push(
@@ -103,12 +83,6 @@ export async function GET(
   const dateFrom = url.searchParams.get('dateFrom');
   const dateTo = url.searchParams.get('dateTo');
   const format = url.searchParams.get('format') ?? 'json';
-  const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1', 10));
-  const perPage = Math.min(
-    500,
-    Math.max(1, parseInt(url.searchParams.get('perPage') ?? '100', 10)),
-  );
-
   // 1. Get org members (apprenants)
   const { data: members } = await supabase
     .from('org_members')
@@ -116,8 +90,6 @@ export async function GET(
     .eq('org_id', orgId);
 
   const learnerIds = (members ?? []).filter((m) => m.role === 'apprenant').map((m) => m.user_id);
-
-  const allMemberIds = (members ?? []).map((m) => m.user_id);
 
   // 2. Get org stages (via shared_classrooms)
   const { data: sharedClassrooms } = await supabase
@@ -140,45 +112,37 @@ export async function GET(
   }
 
   // 4. Fetch quiz results for these stages in the date range
-  let quizQuery = supabase.from('quiz_results').select('*');
-
+  let quizResults: Array<{ user_id: string; stage_id: string; score: number | null }> = [];
   if (allStageIds.length > 0) {
-    quizQuery = quizQuery.in('stage_id', allStageIds);
+    let quizQuery = supabase
+      .from('quiz_results')
+      .select('user_id, stage_id, score')
+      .in('stage_id', allStageIds);
+    if (dateFrom) {
+      quizQuery = quizQuery.gte('completed_at', dateFrom);
+    }
+    if (dateTo) {
+      quizQuery = quizQuery.lte('completed_at', dateTo);
+    }
+    const { data } = await quizQuery.limit(10000);
+    quizResults = data ?? [];
   }
-  if (dateFrom) {
-    quizQuery = quizQuery.gte('completed_at', dateFrom);
-  }
-  if (dateTo) {
-    quizQuery = quizQuery.lte('completed_at', dateTo);
-  }
-
-  const { data: quizResults } = await quizQuery.limit(10000);
 
   // 5. Fetch telemetry data
-  let telemetryQuery = supabase.from('pedagogy_telemetry').select('*');
-
+  let telemetry: Array<{ stage_id: string; completion_rate: number | null }> = [];
   if (allStageIds.length > 0) {
-    telemetryQuery = telemetryQuery.in('stage_id', allStageIds);
-  }
-  if (dateFrom) {
-    telemetryQuery = telemetryQuery.gte('created_at', dateFrom);
-  }
-  if (dateTo) {
-    telemetryQuery = telemetryQuery.lte('created_at', dateTo);
-  }
-
-  const { data: telemetry } = await telemetryQuery.limit(10000);
-
-  // 6. Get profiles for names
-  let profileMap: Record<string, string> = {};
-  if (allMemberIds.length > 0) {
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('id, nickname')
-      .in('id', allMemberIds);
-    profileMap = Object.fromEntries(
-      (profiles ?? []).map((p) => [p.id, p.nickname ?? p.id.slice(0, 8)]),
-    );
+    let telemetryQuery = supabase
+      .from('pedagogy_telemetry')
+      .select('stage_id, completion_rate')
+      .in('stage_id', allStageIds);
+    if (dateFrom) {
+      telemetryQuery = telemetryQuery.gte('created_at', dateFrom);
+    }
+    if (dateTo) {
+      telemetryQuery = telemetryQuery.lte('created_at', dateTo);
+    }
+    const { data } = await telemetryQuery.limit(10000);
+    telemetry = data ?? [];
   }
 
   // ---- Compute metrics ----
@@ -187,11 +151,11 @@ export async function GET(
   const activeClassrooms = allStageIds.length;
 
   // Average score across all quiz results
-  const scores = (quizResults ?? []).map((qr) => qr.score).filter((s): s is number => s !== null);
+  const scores = quizResults.map((qr) => qr.score).filter((s): s is number => s !== null);
   const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
 
   // Completion rate from telemetry
-  const completionRates = (telemetry ?? [])
+  const completionRates = telemetry
     .map((t) => t.completion_rate)
     .filter((c): c is number => c !== null);
   const overallCompletionRate =
@@ -199,41 +163,13 @@ export async function GET(
       ? completionRates.reduce((a, b) => a + b, 0) / completionRates.length
       : 0;
 
-  // Per-learner stats
-  const learnerStats: LearnerRow[] = learnerIds.map((uid) => {
-    const userQuizzes = (quizResults ?? []).filter((qr) => qr.user_id === uid);
-    const userScores = userQuizzes.map((qr) => qr.score).filter((s): s is number => s !== null);
-    const completedStages = new Set(userQuizzes.map((qr) => qr.stage_id)).size;
-
-    // Time from telemetry (approximate via user_hash — imperfect but best available)
-    const userTelemetry = (telemetry ?? []).filter((t) => t.user_hash === uid);
-    const totalDuration = userTelemetry.reduce((sum, t) => sum + (t.total_duration ?? 0), 0);
-
-    const lastQuiz =
-      userQuizzes.length > 0
-        ? userQuizzes.sort(
-            (a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime(),
-          )[0].completed_at
-        : '';
-
-    return {
-      user_id: uid,
-      nickname: profileMap[uid] ?? uid.slice(0, 8),
-      classrooms_completed: completedStages,
-      avg_score:
-        userScores.length > 0 ? userScores.reduce((a, b) => a + b, 0) / userScores.length : 0,
-      time_spent: Math.round(totalDuration),
-      last_active: lastQuiz,
-    };
-  });
-
   // Per-formation stats
   const formationStats: FormationRow[] = allStageIds.map((stageId) => {
-    const stageQuizzes = (quizResults ?? []).filter((qr) => qr.stage_id === stageId);
+    const stageQuizzes = quizResults.filter((qr) => qr.stage_id === stageId);
     const stageScores = stageQuizzes.map((qr) => qr.score).filter((s): s is number => s !== null);
     const uniqueLearners = new Set(stageQuizzes.map((qr) => qr.user_id)).size;
 
-    const stageTelemetry = (telemetry ?? []).filter((t) => t.stage_id === stageId);
+    const stageTelemetry = telemetry.filter((t) => t.stage_id === stageId);
     const stageCompletions = stageTelemetry
       .map((t) => t.completion_rate)
       .filter((c): c is number => c !== null);
@@ -251,10 +187,6 @@ export async function GET(
     };
   });
 
-  // Paginate learnerStats
-  const totalLearnerRows = learnerStats.length;
-  const startIdx = (page - 1) * perPage;
-  const paginatedLearners = learnerStats.slice(startIdx, startIdx + perPage);
   const metrics = {
     totalLearners,
     activeClassrooms,
@@ -263,7 +195,7 @@ export async function GET(
   };
 
   if (format === 'csv') {
-    const csvContent = toCsv(paginatedLearners, formationStats);
+    const csvContent = toCsv(formationStats);
     return new Response(csvContent, {
       status: 200,
       headers: {
@@ -279,7 +211,6 @@ export async function GET(
       dateFrom,
       dateTo,
       metrics,
-      learners: learnerStats,
       formations: formationStats,
     });
     return new Response(new Uint8Array(pdf), {
@@ -294,13 +225,6 @@ export async function GET(
 
   return apiSuccess({
     metrics,
-    learners: paginatedLearners,
     formations: formationStats,
-    pagination: {
-      page,
-      perPage,
-      total: totalLearnerRows,
-      totalPages: Math.ceil(totalLearnerRows / perPage),
-    },
   });
 }

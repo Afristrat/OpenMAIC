@@ -3,8 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useI18n } from '@/lib/hooks/use-i18n';
-import { useAuth } from '@/lib/hooks/use-auth';
-import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -20,13 +18,11 @@ import {
   BarChart3,
   Download,
   FileText,
-  GraduationCap,
   Layers,
   Percent,
   Target,
   Users,
 } from 'lucide-react';
-import type { OrgMemberRole } from '@/lib/supabase/types';
 
 // --- Types ---
 
@@ -43,15 +39,6 @@ interface AnchoringMetrics {
   cold_30_average_score: number | null;
   cold_60_retention_delta: number | null;
   delivery_open_rate: number | null;
-}
-
-interface LearnerRow {
-  user_id: string;
-  nickname: string;
-  classrooms_completed: number;
-  avg_score: number;
-  time_spent: number;
-  last_active: string;
 }
 
 interface FormationRow {
@@ -84,56 +71,24 @@ function getDateRange(preset: DatePreset): { from: string; to: string } {
   return { from: from.toISOString(), to };
 }
 
-function formatDuration(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`;
-  const mins = Math.floor(seconds / 60);
-  if (mins < 60) return `${mins}m`;
-  const hours = Math.floor(mins / 60);
-  const remainMins = mins % 60;
-  return `${hours}h ${remainMins}m`;
-}
-
-function formatDate(iso: string): string {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString();
-}
-
 // --- Component ---
 
 export default function ReportsPage() {
   const { orgId } = useParams<{ orgId: string }>();
   const router = useRouter();
   const { t } = useI18n();
-  const { user } = useAuth();
 
   const [metrics, setMetrics] = useState<Metrics | null>(null);
-  const [learners, setLearners] = useState<LearnerRow[]>([]);
   const [formations, setFormations] = useState<FormationRow[]>([]);
   const [anchoring, setAnchoring] = useState<AnchoringMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [datePreset, setDatePreset] = useState<DatePreset>('30d');
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
-  // Fetched for future admin/manager-gated report actions — not yet wired.
-  const [_userRole, setUserRole] = useState<OrgMemberRole | null>(null);
 
   const fetchReport = useCallback(
     async (preset: DatePreset) => {
       setIsLoading(true);
-
-      // Check membership
-      if (user) {
-        const supabase = createClient();
-        const { data: membership } = await supabase
-          .from('org_members')
-          .select('role')
-          .eq('org_id', orgId)
-          .eq('user_id', user.id)
-          .single();
-        if (membership) {
-          setUserRole(membership.role as OrgMemberRole);
-        }
-      }
 
       let dateFrom: string;
       let dateTo: string;
@@ -158,7 +113,6 @@ export default function ReportsPage() {
 
       const json = await res.json();
       setMetrics(json.metrics ?? null);
-      setLearners(json.learners ?? []);
       setFormations(json.formations ?? []);
       if (anchoringRes.ok) {
         const anchoringJson = (await anchoringRes.json()) as { anchoring?: AnchoringMetrics };
@@ -168,7 +122,7 @@ export default function ReportsPage() {
       }
       setIsLoading(false);
     },
-    [orgId, user, customFrom, customTo, t],
+    [orgId, customFrom, customTo, t],
   );
 
   /* eslint-disable react-hooks/set-state-in-effect -- Async data loading on mount */
@@ -350,42 +304,6 @@ export default function ReportsPage() {
           </div>
         </section>
       )}
-
-      {/* Learners Table */}
-      <div className="mb-8">
-        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
-          <GraduationCap className="h-5 w-5" />
-          {t('reports.totalLearners')}
-        </h2>
-        {learners.length === 0 ? (
-          <p className="text-muted-foreground">{t('reports.noData')}</p>
-        ) : (
-          <div className="overflow-x-auto rounded-lg border">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-muted/50">
-                  <th className="px-4 py-3 text-left font-medium">{t('reports.learnerName')}</th>
-                  <th className="px-4 py-3 text-right font-medium">{t('reports.completed')}</th>
-                  <th className="px-4 py-3 text-right font-medium">{t('reports.avgScoreCol')}</th>
-                  <th className="px-4 py-3 text-right font-medium">{t('reports.timeSpent')}</th>
-                  <th className="px-4 py-3 text-right font-medium">{t('reports.lastActive')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {learners.map((l) => (
-                  <tr key={l.user_id} className="border-b last:border-b-0 hover:bg-muted/30">
-                    <td className="px-4 py-3 font-medium">{l.nickname}</td>
-                    <td className="px-4 py-3 text-right">{l.classrooms_completed}</td>
-                    <td className="px-4 py-3 text-right">{l.avg_score.toFixed(1)}%</td>
-                    <td className="px-4 py-3 text-right">{formatDuration(l.time_spent)}</td>
-                    <td className="px-4 py-3 text-right">{formatDate(l.last_active)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
 
       {/* Formations Table */}
       <div className="mb-8">
