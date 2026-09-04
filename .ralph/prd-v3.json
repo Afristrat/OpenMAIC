@@ -3744,8 +3744,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Évaluation à chaud en fin de session [UI] » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "3-ANCRER",
       "priority": "P2",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S3-003",
@@ -3753,7 +3753,7 @@
       },
       "sourceDependencies": ["S3-001", "S2-004"],
       "dependencies": ["S3-001", "S2-004"],
-      "gap": "Évaluation à chaud skippable et unicité implémentées ; recette authentifiée FR/AR/EN et RTL encore requise.",
+      "gap": "Aucun reste ouvert : consentement, évaluation à chaud skippable, unicité, trois locales et RTL sont certifiés sur le bundle de production avec les vraies API métier.",
       "evidence": ["tasks/prd-3-ancrer.md"],
       "acceptance": [
         "Hook fin de session : 2 questions, skippable",
@@ -3761,6 +3761,7 @@
         "3 locales, RTL vérifié"
       ],
       "closureEvidence": [
+        "2026-09-04 — Recette Chromium authentifiée sur qalem.ma avec trois sessions isolées FR/AR/EN. Chaque locale affiche son libellé d’enregistrement et son dialogue d’évaluation exacts ; le consentement est décoché par défaut. Les six événements recording_started/recording_stopped répondent 201 et les trois clôtures de session répondent PATCH 200 via les vraies API de production, seul le flag de capacité étant intercepté pour ne pas activer globalement l’enregistrement verrouillé par S2-004. En FR, les réponses 5/4 créent une unique évaluation hot HTTP 201, score 90 et réponses persistées ; une seconde soumission identique est refusée HTTP 409. En arabe et en anglais, « passer » ferme le dialogue sans créer d’évaluation. Le document racine est ltr en FR/EN et rtl en ar-MA. Contrôle base avant nettoyage : trois sessions terminées, deux événements chacune et exactement une évaluation hot ; contrôle final : zéro compte, session, événement, évaluation ou fixture temporaire. Le commit ac119c7 est ancêtre du SHA fonctionnel déployé et intégralement gaté 0f4a3532be0a9ad3f4c476a03382ba20c64ff330 : formatage, TypeScript, lint, 435/435 fichiers et 2 681/2 681 tests Vitest, build 112 routes et 110/110 Playwright sans retry.",
         "2026-09-04 — Le commit ac119c7 livre le hook de fin de session, les deux questions skippables et l’écriture unique de phase hot dans les trois locales. Le gate global du lot passe sur ServeurIA ; la recette authentifiée RTL reste ouverte."
       ],
       "historicalEvidence": {
@@ -3771,7 +3772,8 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 47
+      "priorityRank": 47,
+      "completedAt": "2026-09-04"
     },
     {
       "id": "S3-004",
