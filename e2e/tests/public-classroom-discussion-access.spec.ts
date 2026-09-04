@@ -133,7 +133,7 @@ test('requires an invited account before a public classroom can start', async ({
 
   await page.goto(`/classroom/${STAGE_ID}`);
   await accessCheckStarted;
-  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeHidden();
   await expect.poll(() => chatRequests).toBe(0);
 
   releaseAccessCheck();
