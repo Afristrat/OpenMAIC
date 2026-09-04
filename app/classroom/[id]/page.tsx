@@ -90,7 +90,7 @@ export default function ClassroomDetailPage() {
             setCanEdit(Boolean(json.canEdit));
             setCanViewSources(Boolean(json.canViewSources));
             setInteractionOrganizationId(
-              json.interactionOrganizationId === null
+              json.canInteract === false || json.interactionOrganizationId === null
                 ? null
                 : typeof json.interactionOrganizationId === 'string'
                   ? json.interactionOrganizationId
