@@ -1336,8 +1336,8 @@
       "description": "En tant que propriétaire de Qalem, je veux qu’aucun tiers ne puisse créer un compte ou entrer dans l’application sans invitation nominative afin que les tests restent strictement privés jusqu’à l’ouverture décidée du produit.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P0",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "type": "request_and_production_incident",
         "date": "2026-09-01"
@@ -1372,9 +1372,11 @@
         "2026-09-01 — Recette navigateur de production : /auth expose un seul onglet de connexion, zéro bouton Google/GitHub, zéro mode invité ; /app sans session aboutit à https://qalem.ma/auth?next=/app.",
         "2026-09-01 — Recette réelle d’invitation : propriétaire 200, organisation 201, adhésion admin 201, invitation nominative manager 201, inscription 201, connexion 200, adhésion manager atomique présente et invitation consommée ; organisation et deux utilisateurs temporaires supprimés, résidu final nul.",
         "2026-09-01 — Gate exact au SHA d9d869c : formatage, TypeScript et lint verts ; Vitest 388/388 fichiers et 2 514/2 514 tests ; build et assertion des routes standalone verts ; Playwright 86/86 en 4,4 min. Journal /tmp/qalem-gate-logs/s6021-d9d869c-full-gate.log, SHA-256 cb88aafb210470d7e98f0df8f8b607c0fd4e34149a5e0eabe4245cc673a0d539, code 0.",
-        "2026-09-01 — Détail consolidé : docs/validation/S6-021-invitation-only-access.md."
+        "2026-09-01 — Détail consolidé : docs/validation/S6-021-invitation-only-access.md.",
+        "2026-09-04 — Réconciliation fraîche après redéploiement : l’endpoint GoTrue a révélé disable_signup=false, contredisant la preuve antérieure. La variable persistante Coolify DISABLE_SIGNUP a été remise à true et la stack Supabase Qalem recréée. Le conteneur Auth et /auth/v1/settings confirment désormais disable_signup=true ; une tentative brute réelle répond 422 signup_disabled et zéro compte de recette n’existe.",
+        "2026-09-04 — Après recréation, Auth, DB, Storage, Kong, MinIO et imgproxy sont healthy, restart=0 et OOMKilled=false sur les composants inspectés. https://qalem.ma/auth répond 200 et /app répond 307 vers /auth?next=/app. Le web courant cea34e0084d92510b42b68f4f904069ac70b87c2 a passé le gate complet : Prettier, TypeScript, ESLint, 2 681/2 681 Vitest, build et 110/110 Playwright."
       ],
-      "completedAt": "2026-09-01",
+      "completedAt": "2026-09-04",
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": [

@@ -1,5 +1,11 @@
 # S6-021 — Accès sur invitation uniquement
 
+## Recertification du 2026-09-04
+
+Une relecture directe de `/auth/v1/settings` après le déploiement du PRD a révélé une régression de configuration : `disable_signup=false`. La variable persistante Coolify `DISABLE_SIGNUP` a été rétablie à `true`, puis la stack Supabase Qalem a été recréée.
+
+La preuve après recréation est convergente : le conteneur Auth expose `GOTRUE_DISABLE_SIGNUP=true`, l’endpoint public expose `disable_signup=true`, une tentative d’inscription réelle répond HTTP 422 avec `signup_disabled`, et aucun compte portant le marqueur de recette n’a été créé. Auth, DB, Storage et Kong sont healthy, sans redémarrage ni OOM. La route `/auth` répond 200 et l’accès anonyme à `/app` répond 307 vers `/auth?next=/app`.
+
 ## Verdict
 
 L’accès public est fermé au SHA `d9d869c4810604763ce5b9ca1f1d4559433914de`. Un visiteur peut uniquement se connecter avec un compte existant. La création d’un compte exige une invitation nominative valide et produit l’adhésion au tenant dans la transaction d’insertion de l’identité.
