@@ -40,7 +40,13 @@ test('requires an invited account before a public classroom can start', async ({
               type: 'slide',
               canvas: { id: 'cached-discussion-canvas', theme, elements: [] },
             },
-            actions: [],
+            actions: [
+              {
+                id: 'cached-public-discussion',
+                type: 'discussion',
+                topic: 'A cached protected discussion',
+              },
+            ],
             createdAt: now,
             updatedAt: now,
           });
@@ -128,7 +134,6 @@ test('requires an invited account before a public classroom can start', async ({
   await page.goto(`/classroom/${STAGE_ID}`);
   await accessCheckStarted;
   await page.getByRole('button', { name: 'Play', exact: true }).click();
-  await page.getByRole('button', { name: 'Explore in the discussion' }).click();
   await expect.poll(() => chatRequests).toBe(0);
 
   releaseAccessCheck();
