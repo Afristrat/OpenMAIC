@@ -215,6 +215,12 @@ function ReviewPage() {
   useEffect(() => {
     if (!authLoading) {
       loadDueCards();
+      const deliveryId = new URL(window.location.href).searchParams.get('delivery');
+      if (deliveryId) {
+        void fetch(`/api/anchor-deliveries/${encodeURIComponent(deliveryId)}/open`, {
+          method: 'POST',
+        });
+      }
     }
   }, [authLoading, loadDueCards]);
 
