@@ -52,3 +52,11 @@
 - **Quoi** : la spec np prévoit UN CLAUDE.md racine par projet ; avec 5 dossiers de chantier, le doc n°3 de chaque dossier devient `03-claude-directives.md`, le CLAUDE.md racine du repo restant le tronc commun.
 - **Pourquoi** : Claude Code ne charge automatiquement qu'un CLAUDE.md par répertoire ; 5 CLAUDE.md de chantier seraient morts ou en conflit.
 - **Alternatives rejetées** : tout fusionner dans le CLAUDE.md racine (dépasserait 150 lignes et mélangerait les chantiers).
+
+## ADR-008 — E-mail et WhatsApp pour les révisions historiques, Web Push pour ANCRER (ACTÉE)
+
+- **Quoi** : les trois canaux promis par S-028 sont conservés. L’e-mail et WhatsApp envoient au maximum un lot quotidien de cartes de révision arrivées à échéance, après opt-in distinct et révocable. Les graines et évaluations du chantier ANCRER restent exclusivement en Web Push conformément à l’ADR-303.
+- **Pourquoi** : Amine a explicitement demandé de garder puis de coder toutes les capacités du PRD v1. La séparation évite d’étendre silencieusement le consentement ANCRER à deux canaux que son propre cadrage exclut, tout en livrant la promesse historique de révision multicanale.
+- **Garanties** : préférences persistantes par compte, numéro international explicite, une livraison unique par utilisateur/canal/jour, e-mail idempotent chez Resend, aucune relance WhatsApp après une panne réseau ambiguë et erreurs enregistrées sous forme de codes sans contenu personnel.
+- **Sources** : `.ralph/prd.json#S-028`, `tasks/prd-3-ancrer.md#Non-Goals`, mandat d’Amine du 2 septembre 2026 conservé dans `.ralph/progress.md`, réaffirmé le 4 septembre 2026.
+- **Alternative rejetée** : envoyer également les graines ANCRER par e-mail et WhatsApp, ce qui contredirait l’opt-in borné déjà approuvé et l’ADR-303.

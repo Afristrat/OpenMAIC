@@ -38,16 +38,29 @@ import { runClassroomGenerationJob } from '@/lib/server/classroom-job-runner';
 import { runClassroomPlanJob } from '@/lib/server/classroom-plan-job-runner';
 import { readClassroomPlanJob } from '@/lib/server/classroom-plan-job-store';
 import { readClassroomGenerationJob } from '@/lib/server/classroom-job-store';
-import type { ClassroomGenerationJobData, ClassroomPlanJobData } from '@/lib/jobs/queue';
-import type { ClassroomInteractionJobData } from '@/lib/jobs/queue';
+import type {
+  ClassroomGenerationJobData,
+  ClassroomInteractionJobData,
+  ClassroomPlanJobData,
+  ReviewNotificationJobData,
+} from '@/lib/jobs/queue';
 import { PermitPool } from '@/lib/jobs/permit-pool';
-import { enqueueTransmissionVisualWatermark, enqueueXapiDelivery } from '@/lib/jobs/queue';
+import {
+  configureReviewNotificationScheduler,
+  enqueueReviewNotificationDelivery,
+  enqueueTransmissionVisualWatermark,
+  enqueueXapiDelivery,
+} from '@/lib/jobs/queue';
 import { applyVisualWatermark } from '@/lib/transmissions/visual-watermark';
 import { dispatchWebhook } from '@/lib/webhooks/dispatcher';
 import { activateUsageMeteringJob } from '@/lib/billing/usage-context';
 import { sendWebPushToUser } from '@/lib/server/web-push';
 import { readOrganizationLrsConfig } from '@/lib/server/org-lrs-config';
 import { sendStatement, type XAPIStatement } from '@/lib/telemetry/xapi';
+import {
+  claimDueReviewNotifications,
+  deliverReviewNotification,
+} from '@/lib/server/review-notifications';
 
 const log = createLogger('Workers');
 
@@ -199,6 +212,25 @@ export function startAllWorkers(): void {
         });
         throw deliveryError;
       }
+    },
+    workerOptions(),
+  );
+
+  const reviewNotificationWorker = new Worker(
+    'review-notification',
+    async (job: Job) => {
+      if (job.name === 'scan') {
+        const deliveries = await claimDueReviewNotifications();
+        await Promise.all(
+          deliveries.map((delivery) => enqueueReviewNotificationDelivery(delivery)),
+        );
+        incrementCounter('qalem_jobs_processed_total', { queue: 'review-notification-scan' });
+        return;
+      }
+
+      const { deliveryId } = job.data as ReviewNotificationJobData;
+      await deliverReviewNotification(deliveryId);
+      incrementCounter('qalem_jobs_processed_total', { queue: 'review-notification' });
     },
     workerOptions(),
   );
@@ -678,6 +710,7 @@ export function startAllWorkers(): void {
   workers = [
     webhookDeliveryWorker,
     anchorDeliveryWorker,
+    reviewNotificationWorker,
     xapiDeliveryWorker,
     classroomWorker,
     videoCapsuleWorker,
@@ -689,6 +722,12 @@ export function startAllWorkers(): void {
   void recoverPendingXapiDeliveries().catch((error: unknown) => {
     log.error(
       'xAPI outbox recovery failed:',
+      error instanceof Error ? error.message : String(error),
+    );
+  });
+  void configureReviewNotificationScheduler().catch((error: unknown) => {
+    log.error(
+      'Review notification scheduler configuration failed:',
       error instanceof Error ? error.message : String(error),
     );
   });

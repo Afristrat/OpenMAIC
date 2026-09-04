@@ -2,7 +2,7 @@
  * Browser notification manager for spaced-repetition reminders.
  *
  * Local reminders and authenticated Web Push subscription management.
- * Email and WhatsApp remain outside this module and belong to S6-011.
+ * Server-side email and WhatsApp preferences are merged by the settings UI.
  */
 
 import { getClientTranslation } from '@/lib/i18n';

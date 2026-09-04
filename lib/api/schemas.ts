@@ -694,6 +694,15 @@ export const profilePatchSchema = z.object({
     .optional(),
 });
 
+export const notificationPreferencesSchema = z
+  .object({
+    email: z.boolean(),
+    whatsapp: z.boolean(),
+    whatsappNumber: z.string().trim().max(32).nullable(),
+    locale: z.enum(['fr-FR', 'ar-MA', 'en-US']),
+  })
+  .strict();
+
 // ---------------------------------------------------------------------------
 // LTI Platforms (add)
 // ---------------------------------------------------------------------------

@@ -3440,7 +3440,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux réconcilier puis livrer les canaux de rappel e-mail et whatsapp retenus afin que le parcours promis soit réellement utilisable.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P2",
-      "status": "decision_required",
+      "status": "to_implement",
       "passes": false,
       "source": {
         "type": "request_or_observed_gap",
@@ -3448,11 +3448,15 @@
       },
       "sourceDependencies": [],
       "dependencies": ["S6-010"],
-      "gap": "Le PRD v1 promet les trois canaux ; tasks/prd-3-ancrer.md les exclut et le code contient des placeholders. Décision de portée nécessaire.",
+      "gap": "Décision actée par ADR-008 : e-mail et WhatsApp sont conservés pour les cartes de révision historiques ; ANCRER reste en Web Push. L’implémentation est en cours et ne sera pas déclarée livrée avant migration, gate et envois réels autorisés.",
       "evidence": [
         ".ralph/prd.json#S-028",
         "tasks/prd-3-ancrer.md#Non-Goals",
-        "lib/notifications/index.ts:176"
+        "docs/foundation/0-socle/08-decisions-log.md#adr-008--e-mail-et-whatsapp-pour-les-révisions-historiques-web-push-pour-ancrer-actée",
+        "supabase/migrations/00070_review_notification_channels.sql",
+        "app/api/notification-preferences/route.ts",
+        "lib/server/review-notifications.ts",
+        "components/settings/notification-settings.tsx"
       ],
       "acceptance": [
         "Consigner la décision explicite : rappels de révision historiques versus ancrage ; préciser quels canaux sont conservés ou retirés.",
@@ -3462,7 +3466,7 @@
       ],
       "closureEvidence": [],
       "historicalDependencies": [],
-      "executionAllowed": false,
+      "executionAllowed": true,
       "validationRequires": [
         "qualityGates",
         "fresh_evidence_per_acceptance",

@@ -82,6 +82,19 @@ test.describe('PWA review reminders', () => {
   });
 
   test('writes no preference when browser permission is denied', async ({ page }) => {
+    await page.route('**/api/notification-preferences', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          email: false,
+          whatsapp: false,
+          whatsappNumber: null,
+          locale: 'en-US',
+        }),
+      }),
+    );
     await page.goto('/settings');
     await page.getByRole('button', { name: 'Notifications' }).click();
 

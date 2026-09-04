@@ -11,6 +11,7 @@
 
 import { Queue, type JobsOptions } from 'bullmq';
 import type { StatelessChatRequest } from '@/lib/types/chat';
+import type { ReviewNotificationChannel } from '@/lib/server/review-notifications';
 
 // ---------------------------------------------------------------------------
 // Connection
@@ -68,6 +69,7 @@ export type JobType =
   | 'export-job'
   | 'webhook-delivery'
   | 'anchor-delivery'
+  | 'review-notification'
   | 'xapi-delivery'
   | 'transmission'
   | 'transmission-visual-watermark';
@@ -88,6 +90,11 @@ export interface AnchorDeliveryJobData {
 
 export interface XapiDeliveryJobData {
   outboxId: number;
+}
+
+export interface ReviewNotificationJobData {
+  deliveryId: string;
+  channel: ReviewNotificationChannel;
 }
 
 export interface ClassroomInteractionJobData {
@@ -121,6 +128,7 @@ export interface JobQueues {
   transmissionVisualWatermark: Queue;
   webhookDelivery: Queue;
   anchorDelivery: Queue;
+  reviewNotification: Queue;
   xapiDelivery: Queue;
 }
 
@@ -141,6 +149,7 @@ export function getJobQueues(): JobQueues {
     transmissionVisualWatermark: new Queue('transmission-visual-watermark', { connection }),
     webhookDelivery: new Queue('webhook-delivery', { connection }),
     anchorDelivery: new Queue('anchor-delivery', { connection }),
+    reviewNotification: new Queue('review-notification', { connection }),
     xapiDelivery: new Queue('xapi-delivery', { connection }),
   };
   return queues;
@@ -232,6 +241,34 @@ export async function enqueueAnchorDelivery(
     attempts: 5,
     backoff: { type: 'exponential', delay: 30_000 },
     delay: Math.max(0, scheduledFor.getTime() - Date.now()),
+    jobId,
+  });
+  return job.id!;
+}
+
+export async function configureReviewNotificationScheduler(): Promise<void> {
+  const queue = getJobQueues().reviewNotification;
+  await queue.upsertJobScheduler(
+    'review-notification-hourly',
+    { every: 60 * 60 * 1000 },
+    { name: 'scan', data: {}, opts: durableJobOptions },
+  );
+  await queue.add('scan', {}, {
+    ...durableJobOptions,
+    jobId: `review-notification-scan-${Math.floor(Date.now() / (60 * 60 * 1000))}`,
+  });
+}
+
+export async function enqueueReviewNotificationDelivery(
+  data: ReviewNotificationJobData,
+): Promise<string> {
+  const queue = getJobQueues().reviewNotification;
+  const jobId = `review-notification-${data.deliveryId}`;
+  await removeFinishedJob(queue, jobId);
+  const job = await queue.add('deliver', data, {
+    ...durableJobOptions,
+    attempts: data.channel === 'email' ? 5 : 1,
+    backoff: { type: 'exponential', delay: 30_000 },
     jobId,
   });
   return job.id!;
