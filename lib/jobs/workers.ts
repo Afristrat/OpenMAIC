@@ -41,10 +41,13 @@ import { readClassroomGenerationJob } from '@/lib/server/classroom-job-store';
 import type { ClassroomGenerationJobData, ClassroomPlanJobData } from '@/lib/jobs/queue';
 import type { ClassroomInteractionJobData } from '@/lib/jobs/queue';
 import { PermitPool } from '@/lib/jobs/permit-pool';
-import { enqueueTransmissionVisualWatermark } from '@/lib/jobs/queue';
+import { enqueueTransmissionVisualWatermark, enqueueXapiDelivery } from '@/lib/jobs/queue';
 import { applyVisualWatermark } from '@/lib/transmissions/visual-watermark';
 import { dispatchWebhook } from '@/lib/webhooks/dispatcher';
 import { activateUsageMeteringJob } from '@/lib/billing/usage-context';
+import { sendWebPushToUser } from '@/lib/server/web-push';
+import { readOrganizationLrsConfig } from '@/lib/server/org-lrs-config';
+import { sendStatement, type XAPIStatement } from '@/lib/telemetry/xapi';
 
 const log = createLogger('Workers');
 
@@ -94,6 +97,20 @@ function workerOptions() {
   return { connection, concurrency: 1 };
 }
 
+async function recoverPendingXapiDeliveries(): Promise<void> {
+  if (!(await isFeatureEnabled('xapi_emission'))) return;
+  const supabase = createServiceSupabaseClient();
+  const { data, error } = await supabase
+    .from('xapi_outbox')
+    .select('id')
+    .neq('status', 'sent')
+    .lte('next_attempt_at', new Date().toISOString())
+    .order('id', { ascending: true })
+    .limit(500);
+  if (error) throw new Error(`xAPI outbox recovery failed: ${error.message}`);
+  await Promise.all((data ?? []).map((item) => enqueueXapiDelivery({ outboxId: item.id })));
+}
+
 // ---------------------------------------------------------------------------
 // Lifecycle
 // ---------------------------------------------------------------------------
@@ -112,6 +129,119 @@ export function startAllWorkers(): void {
       const data = job.data as ClassroomInteractionJobData;
       await dispatchWebhook(data.event, data.payload, data.orgId);
       incrementCounter('qalem_jobs_processed_total', { queue: 'webhook-delivery' });
+    },
+    workerOptions(),
+  );
+
+  const anchorDeliveryWorker = new Worker(
+    'anchor-delivery',
+    async (job: Job) => {
+      const { deliveryId } = job.data as { deliveryId: string };
+      const supabase = createServiceSupabaseClient();
+      const { data: delivery, error } = await supabase
+        .from('anchor_deliveries')
+        .select(
+          'id, delivery_kind, payload, sent_at, seeds(content), anchor_plans(id, user_id, paused, ends_at)',
+        )
+        .eq('id', deliveryId)
+        .maybeSingle();
+      if (error) throw new Error(`Anchor delivery lookup failed: ${error.message}`);
+      if (!delivery || delivery.sent_at) return;
+
+      const planValue = delivery.anchor_plans;
+      const plan = Array.isArray(planValue) ? planValue[0] : planValue;
+      if (!plan || plan.paused || new Date(plan.ends_at).getTime() < Date.now()) return;
+
+      const seedValue = delivery.seeds;
+      const seed = Array.isArray(seedValue) ? seedValue[0] : seedValue;
+      const content = (seed?.content ?? {}) as Record<string, unknown>;
+      const payload = (delivery.payload ?? {}) as Record<string, unknown>;
+      const isColdEvaluation = delivery.delivery_kind === 'cold_eval';
+      const title = isColdEvaluation ? 'Votre point d’ancrage' : 'Un souvenir de votre session';
+      const body = isColdEvaluation
+        ? 'Deux questions rapides pour mesurer ce qui est resté.'
+        : typeof content.push_hook === 'string'
+          ? content.push_hook
+          : typeof content.body === 'string'
+            ? content.body
+            : 'Retrouvez un moment clé de votre session.';
+      const phase = typeof payload.phase === 'string' ? `&phase=${payload.phase}` : '';
+      const reviewCardId =
+        typeof payload.review_card_id === 'string' ? payload.review_card_id : null;
+      const targetUrl = reviewCardId
+        ? `/review?card=${encodeURIComponent(reviewCardId)}&delivery=${delivery.id}`
+        : `/anchor-plans/${plan.id}?delivery=${delivery.id}${phase}`;
+
+      try {
+        const results = await sendWebPushToUser(plan.user_id, {
+          title,
+          body,
+          targetUrl,
+          tag: `anchor-delivery-${delivery.id}`,
+        });
+        if (!results.some((result) => result.status === 'accepted')) {
+          throw new Error('No active Web Push subscription accepted the delivery');
+        }
+        const { error: updateError } = await supabase
+          .from('anchor_deliveries')
+          .update({ sent_at: new Date().toISOString(), last_error: null })
+          .eq('id', deliveryId)
+          .is('sent_at', null);
+        if (updateError)
+          throw new Error(`Anchor delivery completion failed: ${updateError.message}`);
+        incrementCounter('qalem_jobs_processed_total', { queue: 'anchor-delivery' });
+      } catch (deliveryError) {
+        const message =
+          deliveryError instanceof Error ? deliveryError.message : String(deliveryError);
+        await supabase.rpc('record_anchor_delivery_failure', {
+          target_delivery_id: deliveryId,
+          failure_message: message,
+        });
+        throw deliveryError;
+      }
+    },
+    workerOptions(),
+  );
+
+  const xapiDeliveryWorker = new Worker(
+    'xapi-delivery',
+    async (job: Job) => {
+      const { outboxId } = job.data as { outboxId: number };
+      const supabase = createServiceSupabaseClient();
+      const { data: item, error } = await supabase
+        .from('xapi_outbox')
+        .select('id, org_id, statement, status')
+        .eq('id', outboxId)
+        .maybeSingle();
+      if (error) throw new Error(`xAPI outbox lookup failed: ${error.message}`);
+      if (!item || item.status === 'sent') return;
+      if (!(await isFeatureEnabled('xapi_emission'))) return;
+
+      try {
+        const config = await readOrganizationLrsConfig(item.org_id);
+        if (!config?.enabled) throw new Error('Organization LRS is disabled');
+        const sent = await sendStatement(item.statement as unknown as XAPIStatement, config);
+        if (!sent) throw new Error('LRS rejected or did not answer the xAPI statement');
+        const { error: updateError } = await supabase
+          .from('xapi_outbox')
+          .update({ status: 'sent', sent_at: new Date().toISOString(), last_error: null })
+          .eq('id', outboxId);
+        if (updateError) throw new Error(`xAPI outbox completion failed: ${updateError.message}`);
+        incrementCounter('qalem_jobs_processed_total', { queue: 'xapi-delivery' });
+      } catch (deliveryError) {
+        const message =
+          deliveryError instanceof Error ? deliveryError.message : String(deliveryError);
+        await supabase
+          .from('xapi_outbox')
+          .update({
+            status: 'failed',
+            attempt_count: job.attemptsMade + 1,
+            next_attempt_at: new Date(Date.now() + 60_000 * 2 ** job.attemptsMade).toISOString(),
+            last_error: message.slice(0, 1000),
+          })
+          .eq('id', outboxId);
+        throw deliveryError;
+      }
     },
     workerOptions(),
   );
@@ -547,6 +677,8 @@ export function startAllWorkers(): void {
 
   workers = [
     webhookDeliveryWorker,
+    anchorDeliveryWorker,
+    xapiDeliveryWorker,
     classroomWorker,
     videoCapsuleWorker,
     videoGenerationWorker,
@@ -554,6 +686,12 @@ export function startAllWorkers(): void {
     transmissionWorker,
     transmissionVisualWatermarkWorker,
   ];
+  void recoverPendingXapiDeliveries().catch((error: unknown) => {
+    log.error(
+      'xAPI outbox recovery failed:',
+      error instanceof Error ? error.message : String(error),
+    );
+  });
 
   // Attach default error handlers to all workers so unhandled failures
   // get logged (and counted) rather than silently swallowed.

@@ -67,6 +67,8 @@ export type JobType =
   | 'video-generation'
   | 'export-job'
   | 'webhook-delivery'
+  | 'anchor-delivery'
+  | 'xapi-delivery'
   | 'transmission'
   | 'transmission-visual-watermark';
 
@@ -78,6 +80,14 @@ export interface ClassroomGenerationJobData {
 
 export interface ClassroomPlanJobData {
   jobId: string;
+}
+
+export interface AnchorDeliveryJobData {
+  deliveryId: string;
+}
+
+export interface XapiDeliveryJobData {
+  outboxId: number;
 }
 
 export interface ClassroomInteractionJobData {
@@ -110,6 +120,8 @@ export interface JobQueues {
   transmission: Queue;
   transmissionVisualWatermark: Queue;
   webhookDelivery: Queue;
+  anchorDelivery: Queue;
+  xapiDelivery: Queue;
 }
 
 let queues: JobQueues | undefined;
@@ -128,6 +140,8 @@ export function getJobQueues(): JobQueues {
     transmission: new Queue('transmission', { connection }),
     transmissionVisualWatermark: new Queue('transmission-visual-watermark', { connection }),
     webhookDelivery: new Queue('webhook-delivery', { connection }),
+    anchorDelivery: new Queue('anchor-delivery', { connection }),
+    xapiDelivery: new Queue('xapi-delivery', { connection }),
   };
   return queues;
 }
@@ -201,6 +215,37 @@ export async function enqueueClassroomInteraction(
   const job = await getJobQueues().webhookDelivery.add('deliver', data, {
     ...durableJobOptions,
     jobId: `classroom-interaction-${data.interactionId}`,
+  });
+  return job.id!;
+}
+
+export async function enqueueAnchorDelivery(
+  data: AnchorDeliveryJobData,
+  scheduledFor: Date,
+): Promise<string> {
+  if (Number.isNaN(scheduledFor.getTime())) throw new Error('Invalid anchoring delivery date');
+  const queue = getJobQueues().anchorDelivery;
+  const jobId = `anchor-delivery-${data.deliveryId}`;
+  await removeFinishedJob(queue, jobId);
+  const job = await queue.add('deliver', data, {
+    ...durableJobOptions,
+    attempts: 5,
+    backoff: { type: 'exponential', delay: 30_000 },
+    delay: Math.max(0, scheduledFor.getTime() - Date.now()),
+    jobId,
+  });
+  return job.id!;
+}
+
+export async function enqueueXapiDelivery(data: XapiDeliveryJobData): Promise<string> {
+  const queue = getJobQueues().xapiDelivery;
+  const jobId = `xapi-delivery-${data.outboxId}`;
+  await removeFinishedJob(queue, jobId);
+  const job = await queue.add('deliver', data, {
+    ...durableJobOptions,
+    attempts: 8,
+    backoff: { type: 'exponential', delay: 60_000 },
+    jobId,
   });
   return job.id!;
 }
