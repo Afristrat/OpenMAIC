@@ -47,6 +47,7 @@ export default function ClassroomDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [canEdit, setCanEdit] = useState(false);
   const [canViewSources, setCanViewSources] = useState(false);
+  const [interactionAccessResolved, setInteractionAccessResolved] = useState(false);
   const [interactionOrganizationId, setInteractionOrganizationId] = useState<
     string | null | undefined
   >(undefined);
@@ -64,10 +65,9 @@ export default function ClassroomDetailPage() {
   const loadClassroom = useCallback(async () => {
     try {
       await loadFromStorage(classroomId);
-      // A valid local snapshot is immediately usable. The authoritative
-      // server refresh below may wait on an unavailable network connection;
-      // keeping the whole classroom behind that request made cached
-      // classrooms (including plug-in scenes) appear to load forever.
+      // A valid local snapshot can hydrate immediately, but its interactive
+      // controls remain hidden until the server resolves access. Otherwise a
+      // stale mobile cache can start a discussion before tenant authorization.
       if (useStageStore.getState().stage) setLoading(false);
       const localSnapshot = currentSnapshot();
       const protectUnsyncedLocal =
@@ -211,6 +211,7 @@ export default function ClassroomDetailPage() {
       log.error('Failed to load classroom:', error);
       setError(error instanceof Error ? error.message : 'Failed to load classroom');
     } finally {
+      setInteractionAccessResolved(true);
       setLoading(false);
     }
   }, [classroomId, loadFromStorage]);
@@ -274,6 +275,7 @@ export default function ClassroomDetailPage() {
     // preventing stale data from syncing back to the new course
     setLoading(true);
     setError(null);
+    setInteractionAccessResolved(false);
     generationStartedRef.current = false;
 
     // Clear previous classroom's media tasks to prevent cross-classroom contamination.
@@ -361,7 +363,7 @@ export default function ClassroomDetailPage() {
     <ThemeProvider>
       <MediaStageProvider value={classroomId}>
         <div className="h-screen flex flex-col overflow-hidden">
-          {loading ? (
+          {loading || !interactionAccessResolved ? (
             <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-900">
               <div className="text-center text-muted-foreground">
                 <p>Loading classroom...</p>
