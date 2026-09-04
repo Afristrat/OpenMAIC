@@ -93,8 +93,8 @@ export default function ClassroomDetailPage() {
               json.interactionOrganizationId === null
                 ? null
                 : typeof json.interactionOrganizationId === 'string'
-                ? json.interactionOrganizationId
-                : undefined,
+                  ? json.interactionOrganizationId
+                  : undefined,
             );
             const { stage, scenes, generationComplete } = json.classroom;
             if (protectUnsyncedLocal && localSnapshot) {
