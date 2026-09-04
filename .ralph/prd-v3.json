@@ -3515,7 +3515,7 @@
       },
       "sourceDependencies": ["S2-004"],
       "dependencies": ["S2-004"],
-      "gap": "Replay de session, audio streamé, reprise temporelle et interdiction de téléchargement implémentés ; recette authentifiée plateforme/PWA encore requise.",
+      "gap": "Replay de session, scène visuelle synchronisée, audio streamé, reprise temporelle et interdiction de téléchargement implémentés ; recette authentifiée plateforme/PWA encore requise.",
       "evidence": [".ralph/prd-v2.json#S2-005"],
       "acceptance": [
         "Session rejouée intégralement, audio inclus, via extension de lib/playback/ porté",
@@ -3523,7 +3523,7 @@
         "Test affirmatif : aucune route en Content-Disposition: attachment"
       ],
       "closureEvidence": [
-        "2026-09-04 — Le commit 7f737fe livre le replay temporel des événements et pistes audio via lib/playback/session-replay, avec route audio en streaming sans Content-Disposition attachment. Le gate global du lot passe sur ServeurIA ; la recette authentifiée plateforme et PWA reste ouverte, donc passes reste faux."
+        "2026-09-04 — Le commit 7f737fe livre le replay temporel des événements et pistes audio via lib/playback/session-replay, avec route audio en streaming sans Content-Disposition attachment. Le complément du 4 septembre restitue la scène visuelle active depuis le classroom canonique et la synchronise sur les événements scene_change. Le gate global du lot passe sur ServeurIA et le contrôle TypeScript du complément est vert ; la recette authentifiée plateforme et PWA reste ouverte, donc passes reste faux."
       ],
       "historicalEvidence": {
         "completedAt": null,
