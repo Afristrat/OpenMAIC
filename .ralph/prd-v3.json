@@ -3525,8 +3525,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Replay fidèle « comme un vrai webinaire » (streaming, jamais de téléchargement) » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "2-VIVRE",
       "priority": "P2",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S2-005",
@@ -3534,7 +3534,7 @@
       },
       "sourceDependencies": ["S2-004"],
       "dependencies": ["S2-004"],
-      "gap": "Replay de session, scène visuelle synchronisée, audio streamé, reprise temporelle et interdiction de téléchargement implémentés ; recette authentifiée plateforme/PWA encore requise.",
+      "gap": "Aucun reste propre au replay : lecture authentifiée, synchronisation visuelle, audio privé streamé et fonctionnement sous contrôle PWA sont certifiés en production.",
       "evidence": [".ralph/prd-v2.json#S2-005"],
       "acceptance": [
         "Session rejouée intégralement, audio inclus, via extension de lib/playback/ porté",
@@ -3542,6 +3542,7 @@
         "Test affirmatif : aucune route en Content-Disposition: attachment"
       ],
       "closureEvidence": [
+        "2026-09-04 — Recette authentifiée réelle sur qalem.ma avec une session isolée à deux scènes, quatre événements et un WAV privé de 288 044 octets. La bibliothèque ouvre la reprise à 1 500 ms ; la lecture fait progresser la timeline de 1 500 à 2 300 ms et l’audio à 1,23 s. Le navigateur décode le WAV RIFF mono de 6 s, reçoit HTTP 200, Content-Type audio/wav et Content-Disposition inline sans attachment. Un seek à 4 200 ms persiste par PATCH 200 et remplace visuellement « Ouverture du replay » par « Decision synchronisee ». Le même parcours s’exécute avec manifest /manifest.json et navigator.serviceWorker.controller actif, ce qui prouve la surface PWA sans activer le flag d’enregistrement soumis à S2-004. Les commits replay sont ancêtres du SHA fonctionnel déployé et intégralement gaté 0f4a3532be0a9ad3f4c476a03382ba20c64ff330 : formatage, TypeScript, lint, 435/435 fichiers et 2 681/2 681 tests Vitest, build 112 routes et 110/110 Playwright sans retry. Après la recette, session, événements, WAV, classroom, cours, casting, tenant, compte et fichiers temporaires sont tous recontrôlés à zéro.",
         "2026-09-04 — Le commit 7f737fe livre le replay temporel des événements et pistes audio via lib/playback/session-replay, avec route audio en streaming sans Content-Disposition attachment. Le complément du 4 septembre restitue la scène visuelle active depuis le classroom canonique et la synchronise sur les événements scene_change. Le gate global du lot passe sur ServeurIA et le contrôle TypeScript du complément est vert ; la recette authentifiée plateforme et PWA reste ouverte, donc passes reste faux."
       ],
       "historicalEvidence": {
@@ -3552,7 +3553,8 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 41
+      "priorityRank": 41,
+      "completedAt": "2026-09-04"
     },
     {
       "id": "S2-006",
