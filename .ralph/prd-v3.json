@@ -3469,7 +3469,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « [GATE DPIA] Enregistrement du live : flux d'événements complet (agents + utilisateur) » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "2-VIVRE",
       "priority": "P2",
-      "status": "to_implement",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "file": ".ralph/prd-v2.json",
@@ -3478,7 +3478,7 @@
       },
       "sourceDependencies": ["S2-001"],
       "dependencies": [],
-      "gap": "GO DPO de développement consigné le 3 septembre 2026 ; implémenter les contrôles de la DPIA. Le flag de production reste désactivé jusqu’à la formalité CNDP applicable et aux preuves techniques.",
+      "gap": "Implémentation livrée ; restent la mesure réelle Mo/session et la recette de production. Le flag de production reste désactivé jusqu’à la formalité CNDP applicable et aux preuves techniques.",
       "evidence": ["docs/foundation/2-vivre/DPIA-S2-004.md"],
       "acceptance": [
         "DPIA instruite et consignée AVANT tout commit",
@@ -3487,7 +3487,8 @@
         "Pistes TTS persistées, coût Mo/session mesuré et consigné"
       ],
       "closureEvidence": [
-        "2026-09-03 — Med Amine MANSOURI IDRISSI, DPO et gérant d’AIMPower SARL A.U., donne explicitement son « Go DPO ». La DPIA autorise désormais développement et tests sous six contrôles ; l’activation production reste interdite avant formalité CNDP applicable et preuves techniques."
+        "2026-09-03 — Med Amine MANSOURI IDRISSI, DPO et gérant d’AIMPower SARL A.U., donne explicitement son « Go DPO ». La DPIA autorise désormais développement et tests sous six contrôles ; l’activation production reste interdite avant formalité CNDP applicable et preuves techniques.",
+        "2026-09-04 — Le commit 3c4d82f implémente le consentement explicite, le flux append-only agents/utilisateur/système et la persistance des pistes audio. Gate du lot sur ServeurIA : formatage, TypeScript, lint, 2 664/2 664 Vitest, build 111 pages et 107/107 Playwright. La mesure réelle Mo/session et la recette de production restent à produire ; passes reste donc faux."
       ],
       "historicalEvidence": {
         "completedAt": null,
@@ -3505,7 +3506,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Replay fidèle « comme un vrai webinaire » (streaming, jamais de téléchargement) » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "2-VIVRE",
       "priority": "P2",
-      "status": "to_implement",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "file": ".ralph/prd-v2.json",
@@ -3514,14 +3515,16 @@
       },
       "sourceDependencies": ["S2-004"],
       "dependencies": ["S2-004"],
-      "gap": "Dépend de la levée effective du gate d’enregistrement ; playback canonique ne signifie pas replay de session utilisateur.",
+      "gap": "Replay de session, audio streamé, reprise temporelle et interdiction de téléchargement implémentés ; recette authentifiée plateforme/PWA encore requise.",
       "evidence": [".ralph/prd-v2.json#S2-005"],
       "acceptance": [
         "Session rejouée intégralement, audio inclus, via extension de lib/playback/ porté",
         "Plateforme ET PWA",
         "Test affirmatif : aucune route en Content-Disposition: attachment"
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-04 — Le commit 7f737fe livre le replay temporel des événements et pistes audio via lib/playback/session-replay, avec route audio en streaming sans Content-Disposition attachment. Le gate global du lot passe sur ServeurIA ; la recette authentifiée plateforme et PWA reste ouverte, donc passes reste faux."
+      ],
       "historicalEvidence": {
         "completedAt": null,
         "note": null,
@@ -3538,7 +3541,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Bibliothèque de replays (reprise, suppression effective) [UI] » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "2-VIVRE",
       "priority": "P2",
-      "status": "to_implement",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "file": ".ralph/prd-v2.json",
@@ -3547,13 +3550,15 @@
       },
       "sourceDependencies": ["S2-005"],
       "dependencies": ["S2-005"],
-      "gap": "Bibliothèque et suppression effective des événements/pistes à livrer après le replay.",
+      "gap": "Bibliothèque, reprise et suppression transactionnelle des données et objets Storage implémentées ; preuve de suppression sur données réelles encore requise.",
       "evidence": [".ralph/prd-v2.json#S2-006"],
       "acceptance": [
         "Liste mes sessions + reprise à l'horodatage",
         "Suppression = effacement réel des événements ET pistes audio (vérifié en base)"
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-04 — Le commit 64a6378 livre la bibliothèque personnelle, la reprise à l’horodatage et la suppression des événements avec leurs pistes Storage. Le gate global du lot passe sur ServeurIA ; l’effacement réel doit encore être constaté sur une session de recette en base et Storage, donc passes reste faux."
+      ],
       "historicalEvidence": {
         "completedAt": null,
         "note": null,
@@ -3680,7 +3685,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Tables d'ancrage (seeds, anchor_plans, anchor_deliveries, evaluations, xapi_outbox) » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "3-ANCRER",
       "priority": "P2",
-      "status": "to_implement",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "file": ".ralph/prd-v2.json",
@@ -3689,13 +3694,15 @@
       },
       "sourceDependencies": ["S0-008", "S0-009", "S2-004"],
       "dependencies": ["S2-004"],
-      "gap": "Le schéma dépend de live_sessions et donc du gate S2-004.",
+      "gap": "Schéma et politiques RLS implémentés et appliqués durablement en production ; recette d’isolation inter-utilisateurs et inter-organisations encore requise.",
       "evidence": ["docs/foundation/3-ancrer/02-data-dictionary.md"],
       "acceptance": [
         "5 migrations conformes à 3-ancrer/02 (borne J+90, unicité par phase)",
         "RLS testées (user seul, agrégats org)"
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-04 — Le commit 0a219f1 crée les cinq tables d’ancrage, leurs contraintes d’unicité et de borne J+90 ainsi que leurs politiques RLS. Les migrations 00067 à 00069 ont été validées dans une transaction PostgreSQL annulée puis appliquées durablement à la base Qalem de production sur ServeurIA. Contrôle post-application : quatre nouvelles colonnes anchor_deliveries, quatre colonnes de retry xapi_outbox, fonction anchor_org_report présente, RLS actif sur organization_lrs_configs ; anchoring=false et xapi_emission=false. La recette d’isolation RLS reste ouverte."
+      ],
       "historicalEvidence": {
         "completedAt": null,
         "note": "Dépendance S2-004 ajoutée le 2026-07-26 : le data dictionary impose des clés étrangères vers live_sessions, table qui porte l’enregistrement du live et ne peut être créée avant l’instruction DPIA. Cette dépendance empêche de fabriquer un schéma d’ancrage incomplet ou de contourner le gate de protection des voix et interventions utilisateur.",
@@ -3712,7 +3719,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Évaluation à chaud en fin de session [UI] » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "3-ANCRER",
       "priority": "P2",
-      "status": "to_implement",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "file": ".ralph/prd-v2.json",
@@ -3721,14 +3728,16 @@
       },
       "sourceDependencies": ["S3-001", "S2-004"],
       "dependencies": ["S3-001", "S2-004"],
-      "gap": "Évaluation à chaud et unicité à livrer sur la source de vérité de session.",
+      "gap": "Évaluation à chaud skippable et unicité implémentées ; recette authentifiée FR/AR/EN et RTL encore requise.",
       "evidence": ["tasks/prd-3-ancrer.md"],
       "acceptance": [
         "Hook fin de session : 2 questions, skippable",
         "evaluations(phase='hot') écrite, unicité prouvée",
         "3 locales, RTL vérifié"
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-04 — Le commit ac119c7 livre le hook de fin de session, les deux questions skippables et l’écriture unique de phase hot dans les trois locales. Le gate global du lot passe sur ServeurIA ; la recette authentifiée RTL reste ouverte."
+      ],
       "historicalEvidence": {
         "completedAt": null,
         "note": null,
@@ -3745,7 +3754,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Générateur de graines : stock complet à la fin de session » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "3-ANCRER",
       "priority": "P2",
-      "status": "to_implement",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "file": ".ralph/prd-v2.json",
@@ -3754,14 +3763,16 @@
       },
       "sourceDependencies": ["S3-001", "S2-004"],
       "dependencies": ["S3-001", "S2-004"],
-      "gap": "Stock de graines de la session et coût réel non soldés.",
+      "gap": "Générateur à appel LLM unique et stock minimal de douze graines implémentés ; coût réel et échantillon de recette restent à produire.",
       "evidence": ["tasks/prd-3-ancrer.md"],
       "acceptance": [
         "≥ 12 graines typées via P3-B, chacune citant scene_ref et persona de LA session",
         "UN appel LLM par session (grep : aucun dans le chemin d'envoi)",
         "Coût consigné"
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-04 — Le commit 0e020cc génère en un appel LLM au moins douze graines typées, rattachées aux scènes et personas de la session, puis les persiste. Le coût réel et l’échantillon humain de S3-008 restent ouverts ; passes reste faux."
+      ],
       "historicalEvidence": {
         "completedAt": null,
         "note": null,
@@ -3778,7 +3789,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Plan d'ancrage opt-in + planification BullMQ ≤ J+90 » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "3-ANCRER",
       "priority": "P2",
-      "status": "to_implement",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "file": ".ralph/prd-v2.json",
@@ -3787,14 +3798,16 @@
       },
       "sourceDependencies": ["S3-004"],
       "dependencies": ["S3-004"],
-      "gap": "Opt-in, pause, arrêt et planification bornée J+90 non soldés.",
+      "gap": "Opt-in, pause, arrêt et planification BullMQ bornée J+90 implémentés ; recette avec Web Push réel encore requise.",
       "evidence": ["tasks/prd-3-ancrer.md"],
       "acceptance": [
         "Opt-in explicite → deliveries à espacement croissant",
         "Pause un tap ; arrêt = suppression des deliveries futures",
         "Jobs rejouables, flag anchoring"
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-04 — Les commits af8cdaa et 31d5021 livrent le calendrier borné, l’opt-in explicite, la pause/reprise, l’arrêt et les jobs BullMQ rejouables sous flag anchoring maintenu désactivé. Gate global ServeurIA vert ; l’envoi Web Push réel reste à recetter."
+      ],
       "historicalEvidence": {
         "completedAt": null,
         "note": null,
@@ -3811,7 +3824,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Rappels quiz espacés via FSRS porté (cycle complet) » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "3-ANCRER",
       "priority": "P2",
-      "status": "to_implement",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "file": ".ralph/prd-v2.json",
@@ -3820,14 +3833,16 @@
       },
       "sourceDependencies": ["S3-005"],
       "dependencies": ["S3-005", "S-025"],
-      "gap": "Étendre le FSRS existant ; l’alimentation post-quiz manquante est isolée dans S-025 pour ne pas dépendre du replay.",
+      "gap": "Les rappels ciblent les cartes existantes et leur notation renourrit le FSRS porté ; cycle Web Push authentifié encore à recetter.",
       "evidence": ["lib/spaced-repetition/extractor.ts", "tasks/prd-3-ancrer.md"],
       "acceptance": [
         "Items de quiz de la session dans la file FSRS (extension, pas réécriture)",
         "Cycle testé : push → quiz → résultat re-nourrit FSRS",
         "Limite Bloom consignée au parking lot si constatée"
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-04 — Le commit 1257173 relie les deliveries de quiz aux review_cards existantes et au parcours /review, dont la notation met déjà à jour FSRS. Aucun second moteur n’a été créé. Le cycle Web Push → quiz → nouvelle échéance doit encore être prouvé sur données réelles."
+      ],
       "historicalEvidence": {
         "completedAt": null,
         "note": null,
@@ -3844,7 +3859,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Évaluations à froid J+30 / J+60 » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "3-ANCRER",
       "priority": "P2",
-      "status": "to_implement",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "file": ".ralph/prd-v2.json",
@@ -3853,13 +3868,15 @@
       },
       "sourceDependencies": ["S3-005"],
       "dependencies": ["S3-005"],
-      "gap": "Évaluations froides et unicité à livrer.",
+      "gap": "Deliveries J+30/J+60, réponses cold_30/cold_60 et rejet des doublons implémentés ; recette temporelle réelle encore requise.",
       "evidence": ["tasks/prd-3-ancrer.md"],
       "acceptance": [
         "Deliveries cold_eval planifiées, réponses en phase cold_30/cold_60",
         "Unicité par phase prouvée (doublon rejeté)"
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-04 — Le commit 417ed5f livre la saisie des évaluations froides rattachées aux deliveries possédées ; la contrainte SQL unique par session, utilisateur et phase rejette les doublons. Gate global ServeurIA vert ; la recette réelle des deux échéances reste ouverte."
+      ],
       "historicalEvidence": {
         "completedAt": null,
         "note": null,
@@ -3912,7 +3929,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Reporting ancrage : agrégats org uniquement [UI] » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "3-ANCRER",
       "priority": "P2",
-      "status": "to_implement",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "file": ".ralph/prd-v2.json",
@@ -3921,13 +3938,15 @@
       },
       "sourceDependencies": ["S3-003", "S3-007"],
       "dependencies": ["S3-003", "S3-007"],
-      "gap": "Agrégats d’ancrage et absence de drill-down individuel à prouver.",
+      "gap": "Agrégats organisationnels et UI sans identifiant apprenant implémentés ; recette d’accès croisée et mesures réelles encore requises.",
       "evidence": ["tasks/prd-3-ancrer.md"],
       "acceptance": [
         "Participation, à chaud vs à froid, rétention dans le temps (e2e)",
         "Lecture seule org, AUCUN drill-down individuel (test d'accès)"
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-04 — Le commit dedf576 livre une fonction SQL SECURITY DEFINER bornée aux rôles autorisés, une API et quatre indicateurs agrégés sans user_id ni drill-down individuel. Gate global ServeurIA vert ; la recette inter-tenant et les agrégats sur données réelles restent ouverts."
+      ],
       "historicalEvidence": {
         "completedAt": null,
         "note": null,
@@ -3944,7 +3963,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Émission xAPI via outbox (retry, acteur pseudonymisé) » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "3-ANCRER",
       "priority": "P2",
-      "status": "to_implement",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "file": ".ralph/prd-v2.json",
@@ -3953,14 +3972,16 @@
       },
       "sourceDependencies": ["S3-001"],
       "dependencies": ["S3-001"],
-      "gap": "Outbox et LRS de référence à livrer ; le client xAPI hérité sans appelant n’est pas une preuve de livraison.",
+      "gap": "Outbox durable, retry, acteur pseudonymisé et configuration LRS chiffrée implémentés ; clés runtime, LRS P3-C et panne contrôlée restent à valider.",
       "evidence": ["lib/telemetry/xapi.ts", "tasks/prd-3-ancrer.md"],
       "acceptance": [
         "Statements conformes vérifiés contre un LRS de test (P3-C)",
         "Retry prouvé LRS coupé ; zéro e-mail/nom en clair",
         "Flag xapi_emission, credentials LRS par org chiffrés"
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-04 — Le commit c33f9f5 livre l’outbox xAPI durable, huit tentatives exponentielles, la reprise au démarrage, un acteur HMAC sans nom/e-mail réel et des credentials LRS chiffrés AES-256-GCM par organisation. Le flag xapi_emission reste désactivé. Les clés runtime, la conformité contre un LRS P3-C et le retry LRS coupé restent volontairement non certifiés."
+      ],
       "historicalEvidence": {
         "completedAt": null,
         "note": null,
