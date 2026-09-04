@@ -3781,8 +3781,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Générateur de graines : stock complet à la fin de session » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "3-ANCRER",
       "priority": "P2",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S3-004",
@@ -3790,14 +3790,18 @@
       },
       "sourceDependencies": ["S3-001", "S2-004"],
       "dependencies": ["S3-001", "S2-004"],
-      "gap": "Générateur à appel LLM unique et stock minimal de douze graines implémentés ; coût réel et échantillon de recette restent à produire.",
-      "evidence": ["tasks/prd-3-ancrer.md"],
+      "gap": "Aucun reste propre au générateur : stock P3-B, appel unique, références de session et coût réel sont certifiés ; l’acceptation humaine du ton demeure isolée dans S3-008.",
+      "evidence": [
+        "tasks/prd-3-ancrer.md",
+        "docs/evidence/s3-004-seed-sample.json"
+      ],
       "acceptance": [
         "≥ 12 graines typées via P3-B, chacune citant scene_ref et persona de LA session",
         "UN appel LLM par session (grep : aucun dans le chemin d'envoi)",
         "Coût consigné"
       ],
       "closureEvidence": [
+        "2026-09-04 — Un unique appel réel borné à 8 192 tokens, sans retry, a exécuté le contrat P3-B-v1 avec le modèle actif LiteLLM deepseek-v4-flash. Résultat en 9 593 ms : 522 tokens d’entrée, 1 267 de sortie, 1 789 au total et exactement 12 graines valides, distribuées en 4 anecdotes, 4 highlights, 2 jokes et 2 quiz_reminder. Les trois personas autorisés Hanae/Youssef/Salma et les trois scene_ref de la session sont effectivement utilisés ; chaque accroche respecte 90 caractères et chaque corps 60 mots. Le grep frais ne trouve callLLM que dans la route de génération, jamais dans le chemin de livraison. LiteLLM rapporte x-litellm-response-cost=0,00190212 USD ; /model/info annonce 0,00000014/0,00000028 USD par token, soit une estimation de 0,00042784 USD et un écart ×4,445868 conservé explicitement dans l’artefact plutôt que masqué. Le ton reste humanAcceptance=false et relève de S3-008. Le commit 0e020cc est ancêtre du SHA fonctionnel déployé et intégralement gaté 0f4a3532be0a9ad3f4c476a03382ba20c64ff330 : formatage, TypeScript, lint, 435/435 fichiers et 2 681/2 681 tests Vitest, build 112 routes et 110/110 Playwright sans retry.",
         "2026-09-04 — Le commit 0e020cc génère en un appel LLM au moins douze graines typées, rattachées aux scènes et personas de la session, puis les persiste. Le coût réel et l’échantillon humain de S3-008 restent ouverts ; passes reste faux."
       ],
       "historicalEvidence": {
@@ -3808,7 +3812,8 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 48
+      "priorityRank": 48,
+      "completedAt": "2026-09-04"
     },
     {
       "id": "S3-005",

@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 1,
+  "storyId": "S3-004",
+  "generatedAt": "2026-09-04T14:04:14.235Z",
+  "promptVersion": "P3-B-v1",
+  "execution": {
+    "attempts": 1,
+    "maxOutputTokens": 8192,
+    "elapsedMs": 9593
+  },
+  "model": {
+    "alias": "deepseek-v4-flash",
+    "upstream": "deepseek/deepseek-v4-flash"
+  },
+  "usage": {
+    "inputTokens": 522,
+    "outputTokens": 1267,
+    "totalTokens": 1789
+  },
+  "cost": {
+    "currency": "USD",
+    "proxyReported": 0.00190212,
+    "modelInfoInputPerToken": 0.00000014,
+    "modelInfoOutputPerToken": 0.00000028,
+    "modelInfoEstimate": 0.00042784,
+    "proxyToEstimateRatio": 4.445868,
+    "authority": "Le coût proxyReported provient de l’en-tête x-litellm-response-cost de la réponse réelle. L’estimation est conservée séparément : son écart ne doit pas être masqué ni assimilé au coût facturé."
+  },
+  "count": 12,
+  "distribution": {
+    "anecdote": 4,
+    "highlight": 4,
+    "joke": 2,
+    "quiz_reminder": 2
+  },
+  "allowedPersonas": ["Hanae", "Youssef", "Salma"],
+  "allowedSceneRefs": ["scene-budget", "scene-risques", "scene-actions"],
+  "humanAcceptance": false,
+  "humanAcceptanceTrackedBy": "S3-008",
+  "seeds": [
+    {
+      "persona": "Hanae",
+      "kind": "anecdote",
+      "content": {
+        "push_hook": "Sous-estimer les frais récurrents ?",
+        "body": "Tu l'as toi-même admis : les frais récurrents sont souvent négligés. C'est le piège classique du budget. Ta prise de conscience est le premier pas vers une vraie maîtrise financière.",
+        "scene_ref": "scene-budget"
+      }
+    },
+    {
+      "persona": "Youssef",
+      "kind": "anecdote",
+      "content": {
+        "push_hook": "Le risque de trésorerie n'attend pas.",
+        "body": "Tu as identifié le risque de trésorerie après une hésitation. C'est normal : ces risques sont sournois. Ta vigilance à ce moment précis a fait toute la différence.",
+        "scene_ref": "scene-risques"
+      }
+    },
+    {
+      "persona": "Salma",
+      "kind": "anecdote",
+      "content": {
+        "push_hook": "Hypothèse basse et haute : ton bouclier.",
+        "body": "Tu t'es engagé à vérifier chaque poste avec une hypothèse basse et haute. C'est une méthode concrète et puissante pour anticiper les imprévus. Garde-la précieusement.",
+        "scene_ref": "scene-actions"
+      }
+    },
+    {
+      "persona": "Hanae",
+      "kind": "anecdote",
+      "content": {
+        "push_hook": "Le budget n'est pas une contrainte.",
+        "body": "Distinguer l'essentiel du différé, c'est déjà un réflexe. Ta remarque sur les frais récurrents montre que tu cherches à affiner ta vision. Cet œil critique est un atout.",
+        "scene_ref": "scene-budget"
+      }
+    },
+    {
+      "persona": "Salma",
+      "kind": "highlight",
+      "content": {
+        "push_hook": "Tu as identifié le risque clé.",
+        "body": "Après une brève hésitation, tu as su repérer le risque de trésorerie. C'est un signe de maturité financière. Cette compétence te servira dans chaque projet.",
+        "scene_ref": "scene-risques"
+      }
+    },
+    {
+      "persona": "Youssef",
+      "kind": "highlight",
+      "content": {
+        "push_hook": "Un engagement fort et clair.",
+        "body": "Ton engagement à tester chaque poste avec des hypothèses basses et hautes montre une vraie rigueur. Tu passes de la théorie à la pratique. Continue sur cette lancée.",
+        "scene_ref": "scene-actions"
+      }
+    },
+    {
+      "persona": "Hanae",
+      "kind": "highlight",
+      "content": {
+        "push_hook": "De la difficulté à l'action.",
+        "body": "Tu es passé de 'je sous-estime' à un plan concret. Cette transition montre que la formation t'a permis de transformer un obstacle en stratégie. Bravo.",
+        "scene_ref": "scene-budget"
+      }
+    },
+    {
+      "persona": "Youssef",
+      "kind": "highlight",
+      "content": {
+        "push_hook": "Anticiper, c'est déjà gagner.",
+        "body": "En distinguant essentiel, sécurité et différé, tu as posé les bases d'une gestion solide. Tu ne subis plus : tu anticipes. C'est exactement l'esprit de cette session.",
+        "scene_ref": "scene-budget"
+      }
+    },
+    {
+      "persona": "Salma",
+      "kind": "joke",
+      "content": {
+        "push_hook": "Le budget, un casse-tête ?",
+        "body": "Si les frais récurrents étaient des invités surprise, tu leur demanderais de repartir ! Mais avec l'astuce des hypothèses haute et basse, tu les accueilles sans stress.",
+        "scene_ref": "scene-budget"
+      }
+    },
+    {
+      "persona": "Youssef",
+      "kind": "joke",
+      "content": {
+        "push_hook": "Hésitation fatale ? Non, juste humaine.",
+        "body": "Cette hésitation devant le risque de trésorerie ? C'était le suspense d'un film policier. Tu as finalement démasqué le coupable. Prochaine étape : le coffre-fort.",
+        "scene_ref": "scene-risques"
+      }
+    },
+    {
+      "persona": "Hanae",
+      "kind": "quiz_reminder",
+      "content": {
+        "push_hook": "Trois catégories dans le budget ?",
+        "body": "Pour vérifier tes acquis : comment distinguer besoins essentiels, marge de sécurité et dépenses différées ? Revois la scène budget et teste-toi.",
+        "scene_ref": "scene-budget"
+      }
+    },
+    {
+      "persona": "Salma",
+      "kind": "quiz_reminder",
+      "content": {
+        "push_hook": "Risque de trésorerie, c'est quoi ?",
+        "body": "Sais-tu définir le risque de trésorerie ? Reviens sur la scène des risques pour consolider ta compréhension. Petit rappel, grande confiance.",
+        "scene_ref": "scene-risques"
+      }
+    }
+  ]
+}

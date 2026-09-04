@@ -13,9 +13,9 @@ Le chantier 3 ANCRER conserve sa spécification dans `tasks/prd-3-ancrer.md` ; �
 Réconcilier les demandes explicites avec les registres et le code inspecté au commit `332941dc7f0727dc673c4364f78e122b879f2f96`, puis fermer chaque reste sur preuve.
 Aucune fonctionnalité n’est implémentée par cette opération documentaire.
 
-- Le registre actif contient 76 US : 42 sont acceptées sur preuve et 34 restent réellement ouvertes.
-- Le reliquat réel se répartit en 15 validations, 16 décisions préalables et 3 blocages ; aucune US ne reste en `to_implement`.
-- Dix des 25 US encore étiquetées `to_validate` portent déjà `passes=true` et doivent uniquement être normalisées en `completed` après contrôle de cohérence.
+- Le registre actif contient 76 US : 43 sont acceptées sur preuve et 33 restent réellement ouvertes.
+- Le reliquat réel se répartit en 14 validations, 16 décisions préalables et 3 blocages ; aucune US ne reste en `to_implement`.
+- Dix des 24 US encore étiquetées `to_validate` portent déjà `passes=true` et doivent uniquement être normalisées en `completed` après contrôle de cohérence.
 - Une décision de retrait n’est jamais une réussite d’implémentation.
 - S0-015 est soldée : l’écoute humaine SOP-011, le refus anonyme malgré un cache mobile, la progression authentifiée par slider et l’avatar féminin persistant sont certifiés en production.
 
@@ -116,7 +116,7 @@ Les descriptions et critères exécutables complets sont dans le JSON canonique.
 | 41   | S2-011 | P2       | Décision requise | [CHECKPOINT AMINE] Référentiels culture → prénoms validés                             |
 | 42   | S3-001 | P2       | Soldée           | Tables d'ancrage (seeds, anchor_plans, anchor_deliveries, evaluations, xapi_outbox)   |
 | 43   | S3-003 | P2       | Soldée           | Évaluation à chaud en fin de session [UI]                                             |
-| 44   | S3-004 | P2       | À implémenter    | Générateur de graines : stock complet à la fin de session                             |
+| 44   | S3-004 | P2       | Soldée           | Générateur de graines : stock complet à la fin de session                             |
 | 45   | S3-005 | P2       | À implémenter    | Plan d'ancrage opt-in + planification BullMQ ≤ J+90                                   |
 | 46   | S3-006 | P2       | À implémenter    | Rappels quiz espacés via FSRS porté (cycle complet)                                   |
 | 47   | S3-007 | P2       | À implémenter    | Évaluations à froid J+30 / J+60                                                       |
