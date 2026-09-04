@@ -17,7 +17,7 @@ Aucune fonctionnalité n’est implémentée par cette opération documentaire.
 - Le reliquat réel se répartit en 19 validations, 17 décisions préalables et 3 blocages ; aucune US ne reste en `to_implement`.
 - Dix des 28 US encore étiquetées `to_validate` portent déjà `passes=true` et doivent uniquement être normalisées en `completed` après contrôle de cohérence.
 - Une décision de retrait n’est jamais une réussite d’implémentation.
-- S0-015 a franchi l’écoute humaine SOP-011, mais reste ouverte jusqu’au déploiement et à la recette live des trois défauts révélés ensuite (discussion sans organisation, progression non navigable et avatar incohérent).
+- S0-015 a franchi l’écoute humaine SOP-011 et les discussions anonymes sont bloquées en production, y compris pendant l’hydratation d’un cache mobile. Elle reste ouverte uniquement jusqu’à la recette authentifiée live de la progression navigable et de l’avatar féminin persistant.
 
 ## Limites de preuve
 
