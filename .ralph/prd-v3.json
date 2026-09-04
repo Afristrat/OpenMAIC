@@ -3708,8 +3708,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Tables d'ancrage (seeds, anchor_plans, anchor_deliveries, evaluations, xapi_outbox) » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "3-ANCRER",
       "priority": "P2",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S3-001",
@@ -3717,13 +3717,14 @@
       },
       "sourceDependencies": ["S0-008", "S0-009", "S2-004"],
       "dependencies": ["S2-004"],
-      "gap": "Schéma et politiques RLS implémentés et appliqués durablement en production ; recette d’isolation inter-utilisateurs et inter-organisations encore requise.",
+      "gap": "Aucun reste ouvert : schéma, contraintes et isolation RLS inter-utilisateurs/inter-organisations sont certifiés directement sur la base de production.",
       "evidence": ["docs/foundation/3-ancrer/02-data-dictionary.md"],
       "acceptance": [
         "5 migrations conformes à 3-ancrer/02 (borne J+90, unicité par phase)",
         "RLS testées (user seul, agrégats org)"
       ],
       "closureEvidence": [
+        "2026-09-04 — Recette PostgreSQL transactionnelle sur deux utilisateurs et deux organisations de production. Les cinq tables seeds, anchor_plans, anchor_deliveries, evaluations et xapi_outbox ont relrowsecurity=true. Sous le rôle authenticated et le JWT de chaque utilisateur, les quatre premières tables exposent exactement sa ligne et aucune ligne adverse ; xapi_outbox reste inaccessible, l’insertion directe d’une seed est refusée et anchor_org_metrics retourne uniquement l’agrégat de son organisation tout en rejetant l’organisation adverse. Les violations de la borne J+90 et de l’unicité (session_id,user_id,phase) sont rejetées par PostgreSQL. La transaction complète est annulée ; les deux identités Auth sont ensuite supprimées et un audit frais confirme zéro utilisateur codex-s3-001, zéro organisation, session et seed de fixture, ainsi que l’absence du fichier temporaire. Le commit 0a219f1 est ancêtre du SHA fonctionnel déployé et intégralement gaté 0f4a3532be0a9ad3f4c476a03382ba20c64ff330 : formatage, TypeScript, lint, 435/435 fichiers et 2 681/2 681 tests Vitest, build 112 routes et 110/110 Playwright sans retry.",
         "2026-09-04 — Le commit 0a219f1 crée les cinq tables d’ancrage, leurs contraintes d’unicité et de borne J+90 ainsi que leurs politiques RLS. Les migrations 00067 à 00069 ont été validées dans une transaction PostgreSQL annulée puis appliquées durablement à la base Qalem de production sur ServeurIA. Contrôle post-application : quatre nouvelles colonnes anchor_deliveries, quatre colonnes de retry xapi_outbox, fonction anchor_org_report présente, RLS actif sur organization_lrs_configs ; anchoring=false et xapi_emission=false. La recette d’isolation RLS reste ouverte."
       ],
       "historicalEvidence": {
@@ -3734,7 +3735,8 @@
       "historicalDependencies": ["S0-008", "S0-009"],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 46
+      "priorityRank": 46,
+      "completedAt": "2026-09-04"
     },
     {
       "id": "S3-003",
