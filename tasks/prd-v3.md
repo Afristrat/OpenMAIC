@@ -13,11 +13,11 @@ Le chantier 3 ANCRER conserve sa spécification dans `tasks/prd-3-ancrer.md` ; �
 Réconcilier les demandes explicites avec les registres et le code inspecté au commit `332941dc7f0727dc673c4364f78e122b879f2f96`, puis fermer chaque reste sur preuve.
 Aucune fonctionnalité n’est implémentée par cette opération documentaire.
 
-- Le registre actif contient 76 US : 37 sont acceptées sur preuve et 39 restent réellement ouvertes.
-- Le reliquat réel se répartit en 19 validations, 17 décisions préalables et 3 blocages ; aucune US ne reste en `to_implement`.
-- Dix des 28 US encore étiquetées `to_validate` portent déjà `passes=true` et doivent uniquement être normalisées en `completed` après contrôle de cohérence.
+- Le registre actif contient 76 US : 38 sont acceptées sur preuve et 38 restent réellement ouvertes.
+- Le reliquat réel se répartit en 19 validations, 16 décisions préalables et 3 blocages ; aucune US ne reste en `to_implement`.
+- Dix des 29 US encore étiquetées `to_validate` portent déjà `passes=true` et doivent uniquement être normalisées en `completed` après contrôle de cohérence.
 - Une décision de retrait n’est jamais une réussite d’implémentation.
-- S0-015 a franchi l’écoute humaine SOP-011 et les discussions anonymes sont bloquées en production, y compris pendant l’hydratation d’un cache mobile. Elle reste ouverte uniquement jusqu’à la recette authentifiée live de la progression navigable et de l’avatar féminin persistant.
+- S0-015 est soldée : l’écoute humaine SOP-011, le refus anonyme malgré un cache mobile, la progression authentifiée par slider et l’avatar féminin persistant sont certifiés en production.
 
 ## Limites de preuve
 
@@ -75,7 +75,7 @@ Les descriptions et critères exécutables complets sont dans le JSON canonique.
 | 0,3  | S6-024 | P0       | À implémenter    | Tarifer à la valeur et piloter une marge moyenne cible de 95 %                        |
 | 1    | S6-001 | P0       | Soldée           | Recertifier le SHA livré et solder le contrôle qualité global                         |
 | 2    | S6-002 | P0       | Bloquée          | Terminer le diagnostic mémoire propre à Qalem                                         |
-| 3    | S0-015 | P0       | À valider        | Auth multi-tenant + persistance Storage sur le flux classroom (P0)                    |
+| 3    | S0-015 | P0       | Soldée           | Auth multi-tenant + persistance Storage sur le flux classroom (P0)                    |
 | 4    | S6-017 | P0       | Soldée           | Éliminer les vulnérabilités critiques et hautes des dépendances de production         |
 | 5    | S6-019 | P0       | Soldée           | Éliminer les avis modérés et faibles des dépendances de production                    |
 | 6    | S6-014 | P0       | Bloquée          | Conserver la dette de sécurité Qalem sous autorisation explicite                      |

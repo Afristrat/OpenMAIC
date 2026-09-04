@@ -1686,8 +1686,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Auth multi-tenant + persistance Storage sur le flux classroom (P0) » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "0-SOCLE",
       "priority": "P0",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S0-015",
@@ -1695,7 +1695,7 @@
       },
       "sourceDependencies": ["S0-013"],
       "dependencies": [],
-      "gap": "L’écoute humaine SOP-011 est validée. Les discussions anonymes, y compris depuis un cache mobile chargé avant la réponse d’autorisation, sont bloquées puis orientées vers la connexion au SHA déployé 0f4a3532be0a9ad3f4c476a03382ba20c64ff330. La clôture globale reste suspendue uniquement à une recette authentifiée live du slider de progression et de l’avatar féminin persistant.",
+      "gap": "Aucun reste ouvert : l’écoute humaine SOP-011, le refus des interactions anonymes, la navigation authentifiée et l’avatar féminin persistant sont certifiés en production.",
       "evidence": [
         "tests/api/classroom-access.test.ts",
         "tests/api/organizations-create.test.ts",
@@ -1724,6 +1724,7 @@
         "vérifié dans un vrai navigateur connecté pour le contenu privé et en fenêtre anonyme pour le contenu publié : scènes affichées + audio TTS audible (SOP-011)"
       ],
       "closureEvidence": [
+        "2026-09-04 — Clôture authentifiée en production sur https://qalem.ma/classroom/9H4k970HIy : une session apprenant membre du tenant reçoit HTTP 200, canInteract=true et l’interactionOrganizationId attendu. Le slider natif est visible et passe réellement de value=0 à value=1, avec changement de scène de « Introduction & Objectifs » vers « Les 4 Piliers du Use of Funds ». L’avatar persistant /avatars/teacher-2.png du profil Hanae est visible. Cette recette complète l’écoute humaine SOP-011 déjà validée et le refus anonyme certifié au SHA fonctionnel déployé 0f4a3532be0a9ad3f4c476a03382ba20c64ff330, dont le gate exact reste vert : formatage, TypeScript, lint, 435/435 fichiers et 2 681/2 681 tests Vitest, build 112 routes et 110/110 Playwright sans retry. Nettoyage post-recette recontrôlé directement en base : seat_limit=1, members=1, active_invitations=0, temp_auth_users=0 et temp_members=0 ; les deux fichiers temporaires de credentials sont absents de l’hôte et du conteneur.",
         "2026-09-04 — La récidive mobile du défaut de discussion est reproduite par un cache IndexedDB rendu pendant que l’autorisation serveur reste en attente : avant correction, le contrôle Play est visible. Le parent classroom masque désormais tous les contrôles interactifs jusqu’à résolution de l’accès. Le test échoue d’abord sur ce contrôle visible, puis passe après correction ; les trois scénarios cache/anonyme/apprenant autorisé passent ensemble. Gate exact au SHA 0f4a3532be0a9ad3f4c476a03382ba20c64ff330 : formatage, TypeScript, lint, 435/435 fichiers et 2 681/2 681 tests Vitest, build 112 routes et 110/110 Playwright sans retry. Déploiement Coolify o11mcshge98ah9avf0zvrcku terminé ; unique conteneur web exact healthy, restart=0, OOMKilled=false et santé HTTP 200. En Chromium réel sur qalem.ma avec le cache de 9H4k970HIy et la réponse API retardée, zéro contrôle Play et zéro appel /api/chat avant l’autorisation, puis sas de connexion visible. La recette authentifiée live du slider et de l’avatar reste ouverte ; passes demeure false.",
         "2026-09-04 — Correctif déployé sur qalem.ma via Coolify (déploiement ay34scrln3hp1k4ji8rkushf) au SHA exact 18b8606ca892b3146f6c8708da3bc1bcbf5485e0. Le conteneur qalem-web est healthy, OOMKilled=false et restart=0. GET /api/classroom?id=9H4k970HIy répond 200 avec canInteract=false sans interactionOrganizationId en contexte anonyme. Chromium réel affiche le sas de connexion avec retour vers la formation, n’émet aucune requête /api/chat et n’affiche plus Organization is required. Le profil public persistant est Hanae avec /avatars/teacher-2.png. La recette authentifiée live du slider et de l’avatar reste ouverte ; passes demeure false.",
         "2026-09-04 — L’écoute humaine du WAV est validée par Amine. La recette révèle ensuite un POST /api/chat avec orgId=null (HTTP 400), l’absence de slider de progression et un avatar masculin malgré une formatrice. Les trois corrections passent 27 tests ciblés, lint, TypeScript, build 111/111 et 2 E2E Chromium ; la formation 9H4k970HIy reçoit le profil persistant Hanae sans régénération audio. Déploiement et recette live encore requis ; passes reste false.",
@@ -1745,7 +1746,8 @@
       "historicalDependencies": ["S0-013"],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 3
+      "priorityRank": 3,
+      "completedAt": "2026-09-04"
     },
     {
       "id": "S6-017",
