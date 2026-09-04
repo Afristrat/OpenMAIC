@@ -3562,8 +3562,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Bibliothèque de replays (reprise, suppression effective) [UI] » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "2-VIVRE",
       "priority": "P2",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S2-006",
@@ -3571,13 +3571,14 @@
       },
       "sourceDependencies": ["S2-005"],
       "dependencies": ["S2-005"],
-      "gap": "Bibliothèque, reprise et suppression transactionnelle des données et objets Storage implémentées ; preuve de suppression sur données réelles encore requise.",
+      "gap": "Aucun reste ouvert : liste personnelle, reprise persistée et suppression effective des données et pistes privées sont certifiées en production.",
       "evidence": [".ralph/prd-v2.json#S2-006"],
       "acceptance": [
         "Liste mes sessions + reprise à l'horodatage",
         "Suppression = effacement réel des événements ET pistes audio (vérifié en base)"
       ],
       "closureEvidence": [
+        "2026-09-04 — Recette authentifiée sur une session réelle isolée : la bibliothèque personnelle liste uniquement la carte « Replay production S2-005 », le détail reprend exactement à 4 200 ms après persistance PATCH, puis le bouton de suppression permanente déclenche DELETE HTTP 200 et ramène l’interface à « Aucune session enregistrée ». Le contrôle direct post-suppression prouve sessions=0, events=0 et storage=0 pour l’identifiant et le chemin audio exacts. Le nettoyage étendu confirme également zéro cours, classroom, scène, casting, tenant et utilisateur temporaires, ainsi que l’absence des fichiers de credentials sur l’hôte et dans le conteneur. Le commit bibliothèque 64a6378 est ancêtre du SHA fonctionnel déployé et intégralement gaté 0f4a3532be0a9ad3f4c476a03382ba20c64ff330 : formatage, TypeScript, lint, 435/435 fichiers et 2 681/2 681 tests Vitest, build 112 routes et 110/110 Playwright sans retry.",
         "2026-09-04 — Le commit 64a6378 livre la bibliothèque personnelle, la reprise à l’horodatage et la suppression des événements avec leurs pistes Storage. Le gate global du lot passe sur ServeurIA ; l’effacement réel doit encore être constaté sur une session de recette en base et Storage, donc passes reste faux."
       ],
       "historicalEvidence": {
@@ -3588,7 +3589,8 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 42
+      "priorityRank": 42,
+      "completedAt": "2026-09-04"
     },
     {
       "id": "S2-008",

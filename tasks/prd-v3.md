@@ -13,9 +13,9 @@ Le chantier 3 ANCRER conserve sa spécification dans `tasks/prd-3-ancrer.md` ; �
 Réconcilier les demandes explicites avec les registres et le code inspecté au commit `332941dc7f0727dc673c4364f78e122b879f2f96`, puis fermer chaque reste sur preuve.
 Aucune fonctionnalité n’est implémentée par cette opération documentaire.
 
-- Le registre actif contient 76 US : 39 sont acceptées sur preuve et 37 restent réellement ouvertes.
-- Le reliquat réel se répartit en 18 validations, 16 décisions préalables et 3 blocages ; aucune US ne reste en `to_implement`.
-- Dix des 28 US encore étiquetées `to_validate` portent déjà `passes=true` et doivent uniquement être normalisées en `completed` après contrôle de cohérence.
+- Le registre actif contient 76 US : 40 sont acceptées sur preuve et 36 restent réellement ouvertes.
+- Le reliquat réel se répartit en 17 validations, 16 décisions préalables et 3 blocages ; aucune US ne reste en `to_implement`.
+- Dix des 27 US encore étiquetées `to_validate` portent déjà `passes=true` et doivent uniquement être normalisées en `completed` après contrôle de cohérence.
 - Une décision de retrait n’est jamais une réussite d’implémentation.
 - S0-015 est soldée : l’écoute humaine SOP-011, le refus anonyme malgré un cache mobile, la progression authentifiée par slider et l’avatar féminin persistant sont certifiés en production.
 
@@ -110,7 +110,7 @@ Les descriptions et critères exécutables complets sont dans le JSON canonique.
 | 35   | S6-011 | P2       | À valider        | Réconcilier puis livrer les canaux de rappel e-mail et WhatsApp retenus               |
 | 36   | S2-004 | P2       | À implémenter    | [GATE DPIA] Enregistrement du live : flux d'événements complet (agents + utilisateur) |
 | 37   | S2-005 | P2       | Soldée           | Replay fidèle « comme un vrai webinaire » (streaming, jamais de téléchargement)       |
-| 38   | S2-006 | P2       | À implémenter    | Bibliothèque de replays (reprise, suppression effective) [UI]                         |
+| 38   | S2-006 | P2       | Soldée           | Bibliothèque de replays (reprise, suppression effective) [UI]                         |
 | 39   | S2-008 | P2       | Bloquée          | Watermark sonore AudioSeal MIT en job BullMQ (protocole de robustesse)                |
 | 40   | S2-009 | P2       | Soldée           | Watermark visuel indélébile                                                           |
 | 41   | S2-011 | P2       | Décision requise | [CHECKPOINT AMINE] Référentiels culture → prénoms validés                             |
