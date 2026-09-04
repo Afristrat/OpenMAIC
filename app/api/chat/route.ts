@@ -23,6 +23,7 @@ import type { ThinkingConfig } from '@/lib/types/provider';
 import { isFeatureEnabled } from '@/lib/flags';
 import {
   persistInterventionDecision,
+  readClassroomOwnership,
   readClassroomSkillPromptContext,
 } from '@/lib/server/classroom-storage';
 import { resolveOrganizationSkillId } from '@/lib/server/skill-resolution';
@@ -75,7 +76,10 @@ export async function POST(req: NextRequest) {
     if (!body.config || !body.config.agentIds || body.config.agentIds.length === 0) {
       return apiError('MISSING_REQUIRED_FIELD', 400, 'Missing required field: config.agentIds');
     }
-    const orgId = body.orgId?.trim();
+    const assertedOrgId = body.orgId?.trim();
+    const stageId = body.storeState.stage?.id?.trim();
+    const orgId =
+      assertedOrgId || (stageId ? (await readClassroomOwnership(stageId))?.orgId : undefined);
     if (!orgId) return apiError('MISSING_REQUIRED_FIELD', 400, 'Organization is required');
     const authentication = await requireSuperAdminOrOrgMember(req, orgId);
     if (authentication.response) return authentication.response;
