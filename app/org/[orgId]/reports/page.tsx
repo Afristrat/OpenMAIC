@@ -37,6 +37,14 @@ interface Metrics {
   completionRate: number;
 }
 
+interface AnchoringMetrics {
+  participation_rate: number | null;
+  hot_average_score: number | null;
+  cold_30_average_score: number | null;
+  cold_60_retention_delta: number | null;
+  delivery_open_rate: number | null;
+}
+
 interface LearnerRow {
   user_id: string;
   nickname: string;
@@ -101,6 +109,7 @@ export default function ReportsPage() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [learners, setLearners] = useState<LearnerRow[]>([]);
   const [formations, setFormations] = useState<FormationRow[]>([]);
+  const [anchoring, setAnchoring] = useState<AnchoringMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [datePreset, setDatePreset] = useState<DatePreset>('30d');
   const [customFrom, setCustomFrom] = useState('');
@@ -139,6 +148,7 @@ export default function ReportsPage() {
 
       const params = new URLSearchParams({ dateFrom, dateTo });
       const res = await fetch(`/api/organizations/${orgId}/reports?${params.toString()}`);
+      const anchoringRes = await fetch(`/api/organizations/${orgId}/anchoring-report`);
 
       if (!res.ok) {
         toast.error(t('reports.loadFailed'));
@@ -150,6 +160,12 @@ export default function ReportsPage() {
       setMetrics(json.metrics ?? null);
       setLearners(json.learners ?? []);
       setFormations(json.formations ?? []);
+      if (anchoringRes.ok) {
+        const anchoringJson = (await anchoringRes.json()) as { anchoring?: AnchoringMetrics };
+        setAnchoring(anchoringJson.anchoring ?? null);
+      } else {
+        setAnchoring(null);
+      }
       setIsLoading(false);
     },
     [orgId, user, customFrom, customTo, t],
@@ -303,6 +319,36 @@ export default function ReportsPage() {
             value={`${metrics.completionRate}%`}
           />
         </div>
+      )}
+
+      {anchoring && (
+        <section className="mb-8" aria-labelledby="anchoring-report-title">
+          <h2 id="anchoring-report-title" className="mb-4 text-lg font-semibold">
+            {t('reports.anchoringTitle')}
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <MetricCard
+              icon={<Users className="h-5 w-5" />}
+              label={t('reports.anchoringParticipation')}
+              value={`${anchoring.participation_rate ?? 0}%`}
+            />
+            <MetricCard
+              icon={<Target className="h-5 w-5" />}
+              label={t('reports.anchoringHotCold30')}
+              value={`${anchoring.hot_average_score ?? 0}% → ${anchoring.cold_30_average_score ?? 0}%`}
+            />
+            <MetricCard
+              icon={<Percent className="h-5 w-5" />}
+              label={t('reports.anchoringRetention60')}
+              value={`${anchoring.cold_60_retention_delta ?? 0} pts`}
+            />
+            <MetricCard
+              icon={<BarChart3 className="h-5 w-5" />}
+              label={t('reports.anchoringOpenRate')}
+              value={`${anchoring.delivery_open_rate ?? 0}%`}
+            />
+          </div>
+        </section>
       )}
 
       {/* Learners Table */}
