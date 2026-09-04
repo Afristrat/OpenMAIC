@@ -1,6 +1,6 @@
 # S6-011 — Canaux de rappel e-mail et WhatsApp
 
-Date de preuve : 2026-09-04  
+Date de preuve : 2026-09-04
 SHA fonctionnel et déployé : `cea34e0084d92510b42b68f4f904069ac70b87c2`
 
 ## Décision produit
