@@ -127,9 +127,10 @@ export async function sendReviewWhatsApp(input: {
   if (!response.ok) {
     throw new ReviewNotificationProviderError(`EVOLUTION_HTTP_${response.status}`);
   }
-  const body = (await response.json().catch(() => null)) as
-    | { key?: { id?: unknown }; message?: { key?: { id?: unknown } } }
-    | null;
+  const body = (await response.json().catch(() => null)) as {
+    key?: { id?: unknown };
+    message?: { key?: { id?: unknown } };
+  } | null;
   const messageId = body?.key?.id ?? body?.message?.key?.id;
   return typeof messageId === 'string' ? messageId : null;
 }

@@ -253,10 +253,14 @@ export async function configureReviewNotificationScheduler(): Promise<void> {
     { every: 60 * 60 * 1000 },
     { name: 'scan', data: {}, opts: durableJobOptions },
   );
-  await queue.add('scan', {}, {
-    ...durableJobOptions,
-    jobId: `review-notification-scan-${Math.floor(Date.now() / (60 * 60 * 1000))}`,
-  });
+  await queue.add(
+    'scan',
+    {},
+    {
+      ...durableJobOptions,
+      jobId: `review-notification-scan-${Math.floor(Date.now() / (60 * 60 * 1000))}`,
+    },
+  );
 }
 
 export async function enqueueReviewNotificationDelivery(

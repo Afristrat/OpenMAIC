@@ -40,12 +40,14 @@ test('persists explicit email and WhatsApp opt-ins without accepting an ambiguou
 
   await number.fill('+212 600-000-000');
   await page.getByRole('button', { name: 'Save preferences' }).click();
-  await expect.poll(() => writes).toEqual([
-    {
-      email: true,
-      whatsapp: true,
-      whatsappNumber: '+212600000000',
-      locale: 'en-US',
-    },
-  ]);
+  await expect
+    .poll(() => writes)
+    .toEqual([
+      {
+        email: true,
+        whatsapp: true,
+        whatsappNumber: '+212600000000',
+        locale: 'en-US',
+      },
+    ]);
 });

@@ -9,8 +9,12 @@ describe('review notification persistence migration', () => {
       'utf8',
     );
 
-    expect(sql).toContain('ALTER TABLE public.review_notification_preferences ENABLE ROW LEVEL SECURITY');
-    expect(sql).toContain('ALTER TABLE public.review_notification_deliveries ENABLE ROW LEVEL SECURITY');
+    expect(sql).toContain(
+      'ALTER TABLE public.review_notification_preferences ENABLE ROW LEVEL SECURITY',
+    );
+    expect(sql).toContain(
+      'ALTER TABLE public.review_notification_deliveries ENABLE ROW LEVEL SECURITY',
+    );
     expect(sql).toContain('UNIQUE (user_id, channel, batch_key)');
     expect(sql).toContain("channel IN ('email', 'whatsapp')");
     expect(sql).toContain("whatsapp_number ~ '^\\+[1-9][0-9]{7,14}$'");

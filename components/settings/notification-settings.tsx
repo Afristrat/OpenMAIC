@@ -45,7 +45,9 @@ export function NotificationSettings(): React.ReactElement {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    setPrefs(user ? { ...DISABLED_PREFERENCES, ...loadPreferences(user.id) } : DISABLED_PREFERENCES);
+    setPrefs(
+      user ? { ...DISABLED_PREFERENCES, ...loadPreferences(user.id) } : DISABLED_PREFERENCES,
+    );
     setPushState(getPushPermissionState());
     if (!user) return;
 
@@ -273,17 +275,13 @@ export function NotificationSettings(): React.ReactElement {
             <MessageCircle className="h-5 w-5 text-muted-foreground" />
             <div>
               <Label className="text-sm font-medium">{t('notifications.whatsapp')}</Label>
-              <p className="text-xs text-muted-foreground">
-                {t('notifications.whatsappDesc')}
-              </p>
+              <p className="text-xs text-muted-foreground">{t('notifications.whatsappDesc')}</p>
             </div>
           </div>
           <Switch
             aria-label={t('notifications.whatsapp')}
             checked={prefs.whatsapp}
-            onCheckedChange={(whatsapp) =>
-              setPrefs((current) => ({ ...current, whatsapp }))
-            }
+            onCheckedChange={(whatsapp) => setPrefs((current) => ({ ...current, whatsapp }))}
             disabled={!user || loadingChannels}
           />
         </div>
@@ -310,18 +308,13 @@ export function NotificationSettings(): React.ReactElement {
               className="max-w-xs"
             />
             {whatsappInvalid && (
-              <p className="text-xs text-destructive">
-                {t('notifications.whatsappInvalid')}
-              </p>
+              <p className="text-xs text-destructive">{t('notifications.whatsappInvalid')}</p>
             )}
           </div>
         )}
       </div>
 
-      <Button
-        onClick={handleSave}
-        disabled={!user || loadingChannels || saving || whatsappInvalid}
-      >
+      <Button onClick={handleSave} disabled={!user || loadingChannels || saving || whatsappInvalid}>
         {saving ? t('notifications.saving') : t('notifications.savePreferences')}
       </Button>
     </div>
