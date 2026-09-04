@@ -90,9 +90,11 @@ export default function ClassroomDetailPage() {
             setCanEdit(Boolean(json.canEdit));
             setCanViewSources(Boolean(json.canViewSources));
             setInteractionOrganizationId(
-              typeof json.interactionOrganizationId === 'string'
+              json.interactionOrganizationId === null
+                ? null
+                : typeof json.interactionOrganizationId === 'string'
                 ? json.interactionOrganizationId
-                : null,
+                : undefined,
             );
             const { stage, scenes, generationComplete } = json.classroom;
             if (protectUnsyncedLocal && localSnapshot) {
