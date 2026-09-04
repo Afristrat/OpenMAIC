@@ -226,6 +226,7 @@ describe('classroom tenant boundary', () => {
 
   it('allows anonymous reads only after explicit publication and hides ownership state', async () => {
     mocks.isClassroomPublic.mockResolvedValue(true);
+    mocks.requireMember.mockResolvedValue({ response: forbidden() });
     mocks.requireEditor.mockResolvedValue({ response: forbidden() });
     mocks.requireAuthor.mockResolvedValue({ response: forbidden() });
     mocks.readClassroom.mockResolvedValue({
@@ -264,9 +265,11 @@ describe('classroom tenant boundary', () => {
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(mocks.requireMember).not.toHaveBeenCalled();
+    expect(mocks.requireMember).toHaveBeenCalledWith(expect.any(NextRequest), ORG_ID);
     expect(body.classroom).not.toHaveProperty('ownerId');
     expect(body.classroom).not.toHaveProperty('orgId');
+    expect(body.canInteract).toBe(false);
+    expect(body).not.toHaveProperty('interactionOrganizationId');
     expect(body.canEdit).toBe(false);
     expect(body.canViewSources).toBe(false);
     expect(body.classroom.stage).not.toHaveProperty('researchSources');
@@ -276,6 +279,30 @@ describe('classroom tenant boundary', () => {
       ORG_ID,
       'session-owner',
     );
+  });
+
+  it('returns the interaction organization to an authenticated member on a published classroom', async () => {
+    mocks.isClassroomPublic.mockResolvedValue(true);
+    mocks.requireEditor.mockResolvedValue({ response: forbidden() });
+    mocks.requireAuthor.mockResolvedValue({ response: forbidden() });
+    mocks.readClassroom.mockResolvedValue({
+      id: 'member_classroom',
+      stage: { id: 'member_classroom', name: 'Member classroom' },
+      scenes: [],
+      createdAt: '2026-07-22T00:00:00.000Z',
+      ownerId: 'session-owner',
+      orgId: ORG_ID,
+    });
+
+    const response = await getClassroom(
+      new NextRequest('https://qalem.ma/api/classroom?id=member_classroom'),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.canInteract).toBe(true);
+    expect(body.interactionOrganizationId).toBe(ORG_ID);
+    expect(body.classroom).not.toHaveProperty('orgId');
   });
 
   it('exposes the editor to the classroom author after ownership verification', async () => {

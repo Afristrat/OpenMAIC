@@ -73,6 +73,7 @@ interface PlaybackChromeRootProps {
   /** Whether the Pro Switch in Header should be enabled. */
   readonly canEnterProMode?: boolean;
   readonly canViewSources?: boolean;
+  readonly interactionOrganizationId?: string | null;
   /** Pro Switch click handler — parent coordinates editLock + teardown. */
   readonly onEnterProMode?: () => void;
 }
@@ -86,7 +87,7 @@ interface PlaybackChromeRootProps {
  */
 export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackChromeRootProps>(
   function PlaybackChromeRoot(
-    { onRetryOutline, canEnterProMode, canViewSources, onEnterProMode },
+    { onRetryOutline, canEnterProMode, canViewSources, interactionOrganizationId, onEnterProMode },
     ref,
   ) {
     const { t } = useI18n();
@@ -682,6 +683,11 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
     const handleDiscussionSSE = useCallback(
       async (topic: string, prompt?: string, agentId?: string) => {
         setChatAreaCollapsed(false);
+        // Establish the optimistic state before dispatch. A synchronous access
+        // refusal then resets it through onLiveSessionError.
+        setChatIsStreaming(true);
+        setChatSessionType('discussion');
+        setThinkingState({ stage: 'director' });
         // Start discussion display in ChatArea (lecture speech is preserved independently)
         chatAreaRef.current?.startDiscussion({
           topic,
@@ -690,11 +696,6 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
         });
         // Auto-switch to chat tab when discussion starts
         chatAreaRef.current?.switchToTab('chat');
-        // Immediately mark streaming for synchronized stop button
-        setChatIsStreaming(true);
-        setChatSessionType('discussion');
-        // Optimistic thinking: show thinking dots immediately (same as onMessageSend)
-        setThinkingState({ stage: 'director' });
       },
       [setChatAreaCollapsed],
     );
@@ -890,6 +891,18 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
       scenes,
       setCurrentSceneId,
     ]);
+
+    const handleSeekScene = useCallback(
+      (sceneIndex: number) => {
+        const targetSceneId = scenes[sceneIndex]?.id;
+        if (targetSceneId) {
+          gatedSceneSwitch(targetSceneId);
+        } else if (canAdvanceToPendingSlot && sceneIndex === scenes.length) {
+          gatedSceneSwitch(PENDING_SCENE_ID);
+        }
+      },
+      [canAdvanceToPendingSlot, gatedSceneSwitch, scenes],
+    );
 
     const handleContinueAfterScene = useCallback(() => {
       setShowSceneCompletionGate(false);
@@ -1185,6 +1198,7 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
               onToggleChat={() => setChatAreaCollapsed(!chatAreaCollapsed)}
               onPrevSlide={handlePreviousScene}
               onNextSlide={handleNextScene}
+              onSeekScene={handleSeekScene}
               onPlayPause={handlePlayPause}
               onWhiteboardClose={handleWhiteboardToggle}
               isPresenting={isPresenting}
@@ -1370,6 +1384,7 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
                 onToggleChat={() => setChatAreaCollapsed(!chatAreaCollapsed)}
                 onPrevSlide={handlePreviousScene}
                 onNextSlide={handleNextScene}
+                onSeekScene={handleSeekScene}
                 onWhiteboardClose={handleWhiteboardToggle}
                 isPresenting={isPresenting}
                 controlsVisible={controlsVisible}
@@ -1394,6 +1409,7 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
             activeBubbleId={activeBubbleId}
             onActiveBubble={(id) => setActiveBubbleId(id)}
             currentSceneId={currentSceneId}
+            interactionOrganizationId={interactionOrganizationId}
             onDeepenIntervention={handleDeepenIntervention}
             onLiveSpeech={(text, agentId) => {
               // Capture epoch at call time — discard if scene has changed since

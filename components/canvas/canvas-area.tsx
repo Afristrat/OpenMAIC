@@ -39,6 +39,7 @@ export function CanvasArea({
   onToggleChat,
   onPrevSlide,
   onNextSlide,
+  onSeekScene,
   onPlayPause,
   onWhiteboardClose,
   isPresenting,
@@ -285,6 +286,7 @@ export function CanvasArea({
           onToggleChat={onToggleChat}
           onPrevSlide={onPrevSlide}
           onNextSlide={onNextSlide}
+          onSeekScene={onSeekScene}
           onPlayPause={onPlayPause}
           onWhiteboardClose={onWhiteboardClose}
           isPresenting={isPresenting}

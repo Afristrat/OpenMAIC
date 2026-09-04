@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useSettingsStore } from '@/lib/store/settings';
+import { useStageStore } from '@/lib/store';
 import { useAgentRegistry } from '@/lib/orchestration/registry/store';
 import { getActionsForRole } from '@/lib/orchestration/registry/types';
 import { buildTenantAgentConfigs, learningDesignFromSettings } from '@/lib/agents/persona-catalog';
@@ -35,6 +36,7 @@ import type { AgentConfig } from '@/lib/orchestration/registry/types';
 import type { TTSProviderId } from '@/lib/audio/types';
 import type { ProviderWithVoices } from '@/lib/audio/voice-resolver';
 import type { ContextualSpecialist } from '@/lib/agents/contextual-specialist';
+import { resolveTeacherDisplay } from '@/lib/agents/teacher-display';
 
 function matchesVoiceQuery(value: string | undefined, query: string): boolean {
   return !!value?.toLowerCase().includes(query);
@@ -739,18 +741,39 @@ export function AgentBar({
     .find((provider) => provider.providerId === ttsProviderId)
     ?.voices.find((voice) => voice.id === ttsVoice);
   const teacherVoiceGender = teacherVoice?.gender;
+  const classroomTeacherProfile = useStageStore((state) => state.stage?.teacherProfile);
+  const classroomTeacherGender = useStageStore(
+    (state) =>
+      state.stage?.generatedAgentConfigs?.find((agent) => agent.role === 'teacher')?.gender,
+  );
   const teacherAgent = baseTeacherAgent
     ? {
         ...baseTeacherAgent,
-        ...(teacherVoice?.name ? { name: teacherVoice.name } : {}),
-        avatar:
-          teacherVoiceGender === 'female'
-            ? '/avatars/teacher-2.png'
-            : teacherVoiceGender === 'male'
-              ? '/avatars/teacher.png'
-              : baseTeacherAgent.avatar,
-        ...(teacherVoiceGender === 'female' || teacherVoiceGender === 'male'
-          ? { gender: teacherVoiceGender }
+        ...resolveTeacherDisplay(
+          {
+            name: teacherVoice?.name || baseTeacherAgent.name,
+            avatar:
+              teacherVoiceGender === 'female'
+                ? '/avatars/teacher-2.png'
+                : teacherVoiceGender === 'male'
+                  ? '/avatars/teacher.png'
+                  : baseTeacherAgent.avatar,
+            ...(teacherVoiceGender === 'female' || teacherVoiceGender === 'male'
+              ? { gender: teacherVoiceGender }
+              : {}),
+          },
+          classroomTeacherProfile,
+          classroomTeacherGender === 'female' || classroomTeacherGender === 'male'
+            ? classroomTeacherGender
+            : undefined,
+        ),
+        ...(classroomTeacherProfile
+          ? {
+              voiceConfig: {
+                providerId: classroomTeacherProfile.providerId as TTSProviderId,
+                voiceId: classroomTeacherProfile.voiceId,
+              },
+            }
           : {}),
       }
     : undefined;

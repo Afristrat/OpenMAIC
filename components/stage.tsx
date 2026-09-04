@@ -34,10 +34,12 @@ export function Stage({
   onRetryOutline,
   canEdit = true,
   canViewSources = false,
+  interactionOrganizationId,
 }: {
   onRetryOutline?: (outlineId: string) => Promise<void>;
   canEdit?: boolean;
   canViewSources?: boolean;
+  interactionOrganizationId?: string | null;
 }) {
   const { mode, setMode, scenes, currentSceneId, generatingOutlines, stage } = useStageStore();
   const currentScene = useStageStore((s) => s.getCurrentScene());
@@ -156,6 +158,7 @@ export function Stage({
               onRetryOutline={onRetryOutline}
               canEnterProMode={isEditable}
               canViewSources={canViewSources}
+              interactionOrganizationId={interactionOrganizationId}
               onEnterProMode={toggleHandler}
             />
           </motion.div>

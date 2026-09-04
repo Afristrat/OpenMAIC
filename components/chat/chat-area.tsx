@@ -37,6 +37,7 @@ interface ChatAreaProps {
   /** When provided and returns true, StreamBuffer holds on the current text item after reveal. */
   shouldHoldAfterReveal?: () => { holding: boolean; segmentDone: number } | boolean;
   currentSceneId?: string | null;
+  interactionOrganizationId?: string | null;
   onDeepenIntervention?: (speech: Extract<LectureNoteItem, { kind: 'speech' }>) => void;
 }
 
@@ -83,6 +84,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
       onSegmentSealed,
       shouldHoldAfterReveal,
       currentSceneId,
+      interactionOrganizationId,
       onDeepenIntervention,
     },
     ref,
@@ -115,6 +117,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
       pauseActiveLiveBuffer,
       resumeActiveLiveBuffer,
     } = useChatSessions({
+      interactionOrganizationId,
       onLiveSpeech,
       onSpeechProgress,
       onThinking,

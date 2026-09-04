@@ -86,6 +86,7 @@ interface RoundtableProps {
   readonly onToggleChat?: () => void;
   readonly onPrevSlide?: () => void;
   readonly onNextSlide?: () => void;
+  readonly onSeekScene?: (sceneIndex: number) => void;
   readonly onWhiteboardClose?: () => void;
   readonly isPresenting?: boolean;
   readonly controlsVisible?: boolean;
@@ -171,6 +172,7 @@ export function Roundtable({
   onToggleChat,
   onPrevSlide,
   onNextSlide,
+  onSeekScene,
   onWhiteboardClose,
   isPresenting,
   controlsVisible,
@@ -645,6 +647,7 @@ export function Roundtable({
       onToggleChat={onToggleChat}
       onPrevSlide={onPrevSlide ?? (() => {})}
       onNextSlide={onNextSlide ?? (() => {})}
+      onSeekScene={onSeekScene}
       onPlayPause={onPlayPause ?? (() => {})}
       onWhiteboardClose={onWhiteboardClose ?? (() => {})}
       isPresenting={isPresenting}

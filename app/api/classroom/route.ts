@@ -195,10 +195,10 @@ export async function GET(request: NextRequest) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 404, 'Classroom not found');
     }
 
-    if (!(await isClassroomPublic(id))) {
-      const auth = await requireSuperAdminOrOrgMember(request, ownership.orgId);
-      if (auth.response) return auth.response;
-    }
+    const isPublic = await isClassroomPublic(id);
+    const interactionAuth = await requireSuperAdminOrOrgMember(request, ownership.orgId);
+    if (!isPublic && interactionAuth.response) return interactionAuth.response;
+    const canInteract = !interactionAuth.response;
 
     const classroom = await readClassroom(id);
     if (!classroom) {
@@ -240,7 +240,8 @@ export async function GET(request: NextRequest) {
       log.warn(`Presentation branding lookup failed for classroom ${id}:`, error);
     }
 
-    // ownerId/orgId are internal authorization state — never exposed to the client.
+    // Ownership remains hidden. The organization ID is returned separately only
+    // when this request proved membership, so a fresh device can use interactive chat.
     const { ownerId: _ownerId, orgId: _orgId, ...publicClassroom } = classroom;
     const { researchSources, ...learnerStage } = publicClassroom.stage;
     const learnerScenes = canViewSources
@@ -249,6 +250,8 @@ export async function GET(request: NextRequest) {
     return apiSuccess({
       canEdit,
       canViewSources,
+      canInteract,
+      ...(canInteract ? { interactionOrganizationId: ownership.orgId } : {}),
       classroom: {
         ...publicClassroom,
         scenes: learnerScenes,

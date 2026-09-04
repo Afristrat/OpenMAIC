@@ -32,6 +32,7 @@ export interface CanvasToolbarProps {
   readonly onToggleChat?: () => void;
   readonly onPrevSlide: () => void;
   readonly onNextSlide: () => void;
+  readonly onSeekScene?: (sceneIndex: number) => void;
   readonly onPlayPause: () => void;
   readonly onWhiteboardClose: () => void;
   readonly showStopDiscussion?: boolean;
@@ -55,6 +56,11 @@ const ctrlBtn = cn(
   'transition-all duration-150 outline-none cursor-pointer',
   'hover:bg-gray-500/[0.08] dark:hover:bg-gray-400/[0.08] active:scale-90',
 );
+
+export function sceneIndexFromSliderValue(value: string, scenesCount: number): number {
+  const lastIndex = Math.max(0, scenesCount - 1);
+  return Math.min(lastIndex, Math.max(0, Number.parseInt(value, 10) || 0));
+}
 
 /* Subtle separator */
 function CtrlDivider() {
@@ -89,6 +95,7 @@ export function CanvasToolbar({
   onToggleChat,
   onPrevSlide,
   onNextSlide,
+  onSeekScene,
   onPlayPause,
   onWhiteboardClose,
   showStopDiscussion,
@@ -161,6 +168,28 @@ export function CanvasToolbar({
       </div>
 
       <CtrlDivider />
+
+      {scenesCount > 1 && onSeekScene && (
+        <input
+          type="range"
+          min={0}
+          max={scenesCount - 1}
+          step={1}
+          value={Math.min(Math.max(currentSceneIndex, 0), scenesCount - 1)}
+          onChange={(event) =>
+            onSeekScene(sceneIndexFromSliderValue(event.currentTarget.value, scenesCount))
+          }
+          aria-label={t('stage.courseProgress')}
+          aria-valuetext={t('stage.courseProgressValue', {
+            current: currentSceneIndex + 1,
+            total: scenesCount,
+          })}
+          dir="ltr"
+          className="h-1.5 min-w-16 flex-1 cursor-pointer accent-violet-600 sm:max-w-48"
+        />
+      )}
+
+      {scenesCount > 1 && onSeekScene && <CtrlDivider />}
 
       {/* ── Center: unified playback controls ── */}
       <div className="flex-1 flex items-center justify-center min-w-0">

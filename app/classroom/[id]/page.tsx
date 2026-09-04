@@ -6,6 +6,7 @@ import { useStageStore } from '@/lib/store';
 import { loadImageMapping } from '@/lib/utils/image-storage';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
+import { useI18n } from '@/lib/hooks/use-i18n';
 import { useSceneGenerator } from '@/lib/hooks/use-scene-generator';
 import { useMediaGenerationStore } from '@/lib/store/media-generation';
 import { useWhiteboardHistoryStore } from '@/lib/store/whiteboard-history';
@@ -36,6 +37,7 @@ function currentSnapshot(): StageStoreData | null {
 }
 
 export default function ClassroomDetailPage() {
+  const { t } = useI18n();
   const params = useParams();
   const classroomId = params?.id as string;
 
@@ -45,6 +47,9 @@ export default function ClassroomDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [canEdit, setCanEdit] = useState(false);
   const [canViewSources, setCanViewSources] = useState(false);
+  const [interactionOrganizationId, setInteractionOrganizationId] = useState<
+    string | null | undefined
+  >(undefined);
 
   const generationStartedRef = useRef(false);
   const serverBackedRef = useRef(false);
@@ -76,6 +81,7 @@ export default function ClassroomDetailPage() {
       // silently omit its newly persisted narration after a refresh.
       serverBackedRef.current = false;
       setCanEdit(false);
+      setInteractionOrganizationId(undefined);
       try {
         const res = await fetch(`/api/classroom?id=${encodeURIComponent(classroomId)}`);
         if (res.ok) {
@@ -83,6 +89,11 @@ export default function ClassroomDetailPage() {
           if (json.success && json.classroom) {
             setCanEdit(Boolean(json.canEdit));
             setCanViewSources(Boolean(json.canViewSources));
+            setInteractionOrganizationId(
+              typeof json.interactionOrganizationId === 'string'
+                ? json.interactionOrganizationId
+                : null,
+            );
             const { stage, scenes, generationComplete } = json.classroom;
             if (protectUnsyncedLocal && localSnapshot) {
               serverBackedRef.current = true;
@@ -370,11 +381,29 @@ export default function ClassroomDetailPage() {
                 </button>
               </div>
             </div>
+          ) : interactionOrganizationId === null ? (
+            <div className="flex flex-1 items-center justify-center bg-gray-50 px-4 dark:bg-gray-900">
+              <div className="w-full max-w-md space-y-5 rounded-2xl border border-border bg-card p-6 text-center shadow-sm">
+                <h1 className="text-xl font-semibold text-foreground">
+                  {t('classroom.access.signInTitle')}
+                </h1>
+                <p className="text-sm leading-6 text-muted-foreground">
+                  {t('classroom.access.signInDescription')}
+                </p>
+                <a
+                  href={`/auth?next=${encodeURIComponent(`/classroom/${classroomId}`)}`}
+                  className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                >
+                  {t('auth.login')}
+                </a>
+              </div>
+            </div>
           ) : (
             <Stage
               onRetryOutline={retrySingleOutline}
               canEdit={canEdit}
               canViewSources={canViewSources}
+              interactionOrganizationId={interactionOrganizationId}
             />
           )}
         </div>

@@ -1336,8 +1336,8 @@
       "description": "En tant que propriétaire de Qalem, je veux qu’aucun tiers ne puisse créer un compte ou entrer dans l’application sans invitation nominative afin que les tests restent strictement privés jusqu’à l’ouverture décidée du produit.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P0",
-      "status": "completed",
-      "passes": true,
+      "status": "to_validate",
+      "passes": false,
       "source": {
         "type": "request_and_production_incident",
         "date": "2026-09-01"
@@ -1684,8 +1684,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Auth multi-tenant + persistance Storage sur le flux classroom (P0) » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "0-SOCLE",
       "priority": "P0",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S0-015",
@@ -1693,7 +1693,7 @@
       },
       "sourceDependencies": ["S0-013"],
       "dependencies": [],
-      "gap": "Partie machine soldée sur le SHA 6ea54d92eeb95dde70247f70e345ef9a234641b0 : gates complets, migration, déploiement, isolation multi-tenant, persistance après redéploiement, suppression transactionnelle, scènes privées/publiques et décodage audio Chromium sont prouvés. Reste exclusivement l’écoute humaine exigée par SOP-011 ; passes demeure donc false.",
+      "gap": "L’écoute humaine SOP-011 a été validée le 4 septembre 2026. Trois défauts révélés pendant la recette — discussion sans organisation, absence de navigation directe dans la progression et avatar masculin pour une formatrice — sont corrigés localement et couverts par tests ; le déploiement et la recette live du SHA restent requis avant clôture.",
       "evidence": [
         "tests/api/classroom-access.test.ts",
         "tests/api/organizations-create.test.ts",
@@ -1718,6 +1718,7 @@
         "vérifié dans un vrai navigateur connecté pour le contenu privé et en fenêtre anonyme pour le contenu publié : scènes affichées + audio TTS audible (SOP-011)"
       ],
       "closureEvidence": [
+        "2026-09-04 — L’écoute humaine du WAV est validée par Amine. La recette révèle ensuite un POST /api/chat avec orgId=null (HTTP 400), l’absence de slider de progression et un avatar masculin malgré une formatrice. Les trois corrections passent 27 tests ciblés, lint, TypeScript, build 111/111 et 2 E2E Chromium ; la formation 9H4k970HIy reçoit le profil persistant Hanae sans régénération audio. Déploiement et recette live encore requis ; passes reste false.",
         "2026-09-04 — Revalidation autonome live de la preuve audio publique : GET /api/classroom?id=9H4k970HIy répond 200 et expose toujours 9 scènes et 52 médias WAV. Le média tts_s1_action_a5FwXEud.wav répond 200 audio/wav, mesure 596 204 octets et conserve le SHA-256 32cf59755410adccb9da6de56bb0620e62624535211be679553c016593cd9f7e. FFprobe confirme PCM 16 bits mono, 24 kHz et 12,42 s ; volumedetect mesure −30,5 dB moyen et −14,0 dB crête. Chromium réel décode le fichier, atteint readyState=4 et progresse jusqu’à 1,726 s sans erreur de lecture. Cette preuve ferme la revalidation machine actuelle mais ne se substitue pas à l’écoute humaine explicitement exigée par SOP-011 ; passes reste false.",
         "2026-08-27 — SHA exact 6ea54d92eeb95dde70247f70e345ef9a234641b0 certifié dans le clone isolé /tmp/qalem-s0015-6ea54d9 sur ServeurIA : pnpm check, TypeScript, lint, 368/368 fichiers et 2 436/2 436 tests Vitest, build 95/95 et 74/74 tests Playwright réussis ; build et E2E sans OOM.",
         "2026-08-27 — Migration 00039 appliquée atomiquement à la base Qalem : RPC create_organization_with_admin et trigger archive_courses_before_classroom_delete présents et activés. Le web Coolify a été redéployé sur le même SHA ; conteneur healthy, zéro redémarrage, OOMKilled=false et cinq requêtes consécutives vers qalem.ma répondent 200.",

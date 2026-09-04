@@ -19,6 +19,7 @@ import { useUserProfileStore } from '@/lib/store/user-profile';
 import { useAgentRegistry } from '@/lib/orchestration/registry/store';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { getCurrentOrganizationId } from '@/lib/hooks/use-organizations';
+import { resolveInteractionOrganizationId } from '@/lib/chat/interaction-organization';
 import { getCurrentModelConfig } from '@/lib/utils/model-config';
 import { USER_AVATAR } from '@/lib/types/roundtable';
 import { StreamBuffer } from '@/lib/buffer/stream-buffer';
@@ -31,6 +32,7 @@ import { createLogger } from '@/lib/logger';
 const log = createLogger('ChatSessions');
 
 interface UseChatSessionsOptions {
+  interactionOrganizationId?: string | null;
   onLiveSpeech?: (text: string | null, agentId?: string | null) => void;
   onSpeechProgress?: (ratio: number | null) => void;
   onThinking?: (state: { stage: string; agentId?: string } | null) => void;
@@ -81,6 +83,14 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
     options.shouldHoldAfterReveal,
   ]);
   const { t } = useI18n();
+  const interactionOrganizationId = resolveInteractionOrganizationId(
+    options.interactionOrganizationId,
+    getCurrentOrganizationId(),
+  );
+  const refuseUnauthorizedInteraction = useCallback(() => {
+    toast.error(t('chat.interactionRequiresInvitation'));
+    onLiveSessionErrorRef.current?.();
+  }, [t]);
 
   // Track current stageId for data isolation
   const stageId = useStageStore((s) => s.stage?.id);
@@ -507,7 +517,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
             fetch('/api/chat', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ ...body, orgId: getCurrentOrganizationId() }),
+              body: JSON.stringify({ ...body, orgId: interactionOrganizationId }),
               signal,
             }),
 
@@ -636,7 +646,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
         }
       }
     },
-    [createBufferForSession, clearLiveSessionAfterError, t],
+    [createBufferForSession, clearLiveSessionAfterError, interactionOrganizationId, t],
   );
 
   /**
@@ -953,6 +963,10 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
    */
   const sendMessage = useCallback(
     async (content: string): Promise<void> => {
+      if (!interactionOrganizationId) {
+        refuseUnauthorizedInteraction();
+        return;
+      }
       let sessionId = activeSessionId;
 
       // Interrupt active generation: abort stream and append "..." to the last agent message
@@ -1153,6 +1167,8 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
       createSession,
       endSession,
       runAgentLoopFn,
+      interactionOrganizationId,
+      refuseUnauthorizedInteraction,
       t,
     ],
   );
@@ -1162,6 +1178,10 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
    */
   const startDiscussion = useCallback(
     async (request: DiscussionRequest): Promise<void> => {
+      if (!interactionOrganizationId) {
+        refuseUnauthorizedInteraction();
+        return;
+      }
       log.info(`[ChatArea] Starting discussion: "${request.topic}"`);
       // Explicitly clear buffer-pause intent (also cleared transitively via endSession,
       // but being explicit guards against future refactors)
@@ -1289,8 +1309,14 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
         }
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- t is stable from i18n context
-    [clearLiveSessionAfterError, endSession, runAgentLoopFn],
+    [
+      clearLiveSessionAfterError,
+      endSession,
+      interactionOrganizationId,
+      refuseUnauthorizedInteraction,
+      runAgentLoopFn,
+      t,
+    ],
   );
 
   /**

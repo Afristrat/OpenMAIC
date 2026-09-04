@@ -13,12 +13,11 @@ Le chantier 3 ANCRER conserve sa spécification dans `tasks/prd-3-ancrer.md` ; �
 Réconcilier les demandes explicites avec les registres et le code inspecté au commit `332941dc7f0727dc673c4364f78e122b879f2f96`, puis fermer chaque reste sur preuve.
 Aucune fonctionnalité n’est implémentée par cette opération documentaire.
 
-- 65 stories v2 inventoriées : 26 ouvertes reprises, 3 rouvertes, 36 acceptations historiques conservées sans recertification.
-- 72 stories v1/UI rattachées à une décision de conservation et à leurs US de suivi ; 18 capacités héritées sont explicitement remises en suivi.
-- 21 demandes/ensembles d’engagements rattachés à des US.
-- 71 US au registre : 11 à implémenter, 9 à valider, 21 avec décision préalable et 5 bloquées ; 25 sont soldées.
-- Vingt-cinq US sont soldées sur preuves actuelles. Une décision de retrait n’est jamais une réussite d’implémentation.
-- S0-015 est entièrement certifiée côté machine sur le SHA déployé `6ea54d9` ; seule l’écoute humaine SOP-011 maintient son état « À valider ».
+- Le registre actif contient 76 US : 37 sont acceptées sur preuve et 39 restent réellement ouvertes.
+- Le reliquat réel se répartit en 19 validations, 17 décisions préalables et 3 blocages ; aucune US ne reste en `to_implement`.
+- Dix des 28 US encore étiquetées `to_validate` portent déjà `passes=true` et doivent uniquement être normalisées en `completed` après contrôle de cohérence.
+- Une décision de retrait n’est jamais une réussite d’implémentation.
+- S0-015 a franchi l’écoute humaine SOP-011, mais reste ouverte jusqu’au déploiement et à la recette live des trois défauts révélés ensuite (discussion sans organisation, progression non navigable et avatar incohérent).
 
 ## Limites de preuve
 
