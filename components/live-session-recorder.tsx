@@ -34,6 +34,10 @@ export function LiveSessionRecorder() {
   const [confidence, setConfidence] = useState(0);
   const [evaluationBusy, setEvaluationBusy] = useState(false);
   const [evaluationError, setEvaluationError] = useState<string | null>(null);
+  const [anchoringEnabled, setAnchoringEnabled] = useState(false);
+  const [anchoringSessionId, setAnchoringSessionId] = useState<string | null>(null);
+  const [anchoringBusy, setAnchoringBusy] = useState(false);
+  const [anchoringError, setAnchoringError] = useState<string | null>(null);
   const recordingRef = useRef(false);
 
   useEffect(() => {
@@ -42,6 +46,12 @@ export function LiveSessionRecorder() {
       .then((response) => response.json())
       .then((body: { enabled?: boolean }) => {
         if (current) setEnabled(body.enabled === true);
+      })
+      .catch(() => undefined);
+    void fetch('/api/anchoring/capability')
+      .then((response) => response.json())
+      .then((body: { enabled?: boolean }) => {
+        if (current) setAnchoringEnabled(body.enabled === true);
       })
       .catch(() => undefined);
     return () => {
@@ -100,9 +110,11 @@ export function LiveSessionRecorder() {
         },
       );
       if (!response.ok) throw new Error(t('anchoring.hotEvaluationFailed'));
+      const completedSessionId = evaluationSessionId;
       setEvaluationSessionId(null);
       setUseful(0);
       setConfidence(0);
+      if (anchoringEnabled) setAnchoringSessionId(completedSessionId);
     } catch (cause) {
       setEvaluationError(
         cause instanceof Error ? cause.message : t('anchoring.hotEvaluationFailed'),
@@ -112,11 +124,46 @@ export function LiveSessionRecorder() {
     }
   };
 
+  const skipEvaluation = () => {
+    const completedSessionId = evaluationSessionId;
+    setEvaluationSessionId(null);
+    setUseful(0);
+    setConfidence(0);
+    if (anchoringEnabled && completedSessionId) setAnchoringSessionId(completedSessionId);
+  };
+
+  const activateAnchoring = async () => {
+    if (!anchoringSessionId) return;
+    setAnchoringBusy(true);
+    setAnchoringError(null);
+    try {
+      const seedResponse = await fetch(
+        `/api/live-sessions/${encodeURIComponent(anchoringSessionId)}/seeds`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' },
+      );
+      if (!seedResponse.ok) throw new Error(t('anchoring.optInFailed'));
+      const planResponse = await fetch(
+        `/api/live-sessions/${encodeURIComponent(anchoringSessionId)}/anchor-plan`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ optedIn: true }),
+        },
+      );
+      if (!planResponse.ok) throw new Error(t('anchoring.optInFailed'));
+      setAnchoringSessionId(null);
+    } catch (cause) {
+      setAnchoringError(cause instanceof Error ? cause.message : t('anchoring.optInFailed'));
+    } finally {
+      setAnchoringBusy(false);
+    }
+  };
+
   const evaluationDialog = (
     <Dialog
       open={evaluationSessionId !== null}
       onOpenChange={(next) => {
-        if (!next) setEvaluationSessionId(null);
+        if (!next) skipEvaluation();
       }}
     >
       <DialogContent>
@@ -149,7 +196,7 @@ export function LiveSessionRecorder() {
         <DialogFooter>
           <button
             type="button"
-            onClick={() => setEvaluationSessionId(null)}
+            onClick={skipEvaluation}
             className="inline-flex h-10 items-center justify-center rounded-md border px-4 text-sm font-medium"
           >
             {t('anchoring.hotEvaluationSkip')}
@@ -162,6 +209,39 @@ export function LiveSessionRecorder() {
           >
             {evaluationBusy && <Loader2 className="me-2 size-4 animate-spin" />}
             {t('anchoring.hotEvaluationSubmit')}
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
+  const anchoringDialog = (
+    <Dialog
+      open={anchoringSessionId !== null}
+      onOpenChange={(next) => !next && setAnchoringSessionId(null)}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('anchoring.optInTitle')}</DialogTitle>
+          <DialogDescription>{t('anchoring.optInDescription')}</DialogDescription>
+        </DialogHeader>
+        {anchoringError && <p className="text-sm text-destructive">{anchoringError}</p>}
+        <DialogFooter>
+          <button
+            type="button"
+            onClick={() => setAnchoringSessionId(null)}
+            className="inline-flex h-10 items-center justify-center rounded-md border px-4 text-sm font-medium"
+          >
+            {t('anchoring.optInDecline')}
+          </button>
+          <button
+            type="button"
+            onClick={() => void activateAnchoring()}
+            disabled={anchoringBusy}
+            className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50"
+          >
+            {anchoringBusy && <Loader2 className="me-2 size-4 animate-spin" />}
+            {t('anchoring.optInAccept')}
           </button>
         </DialogFooter>
       </DialogContent>
@@ -182,6 +262,7 @@ export function LiveSessionRecorder() {
           {t('replay.recording')}
         </button>
         {evaluationDialog}
+        {anchoringDialog}
       </>
     );
   }
@@ -232,6 +313,7 @@ export function LiveSessionRecorder() {
         </DialogContent>
       </Dialog>
       {evaluationDialog}
+      {anchoringDialog}
     </>
   );
 }
