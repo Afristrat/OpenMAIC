@@ -15,8 +15,65 @@ test('requires an invited account before a public classroom can start', async ({
     createSettingsStorage({ sidebarCollapsed: false }),
   );
 
-  await page.route(`**/api/classroom?id=${STAGE_ID}`, (route) =>
-    route.fulfill({
+  await page.goto('/app', { waitUntil: 'networkidle' });
+  await page.evaluate(
+    ({ stageId, theme }) =>
+      new Promise<void>((resolve, reject) => {
+        const request = indexedDB.open('MAIC-Database');
+        request.onsuccess = (event) => {
+          const db = (event.target as IDBOpenDBRequest).result;
+          const tx = db.transaction(['stages', 'scenes', 'stageOutlines'], 'readwrite');
+          const now = Date.now();
+          tx.objectStore('stages').put({
+            id: stageId,
+            name: 'Cached public course',
+            createdAt: now,
+            updatedAt: now,
+          });
+          tx.objectStore('scenes').put({
+            id: 'cached-discussion-scene',
+            stageId,
+            type: 'slide',
+            title: 'Cached public lesson',
+            order: 0,
+            content: {
+              type: 'slide',
+              canvas: { id: 'cached-discussion-canvas', theme, elements: [] },
+            },
+            actions: [],
+            createdAt: now,
+            updatedAt: now,
+          });
+          tx.objectStore('stageOutlines').put({
+            stageId,
+            outlines: [],
+            createdAt: now,
+            updatedAt: now,
+          });
+          tx.oncomplete = () => {
+            db.close();
+            resolve();
+          };
+          tx.onerror = () => reject(tx.error);
+        };
+        request.onerror = () => reject(request.error);
+      }),
+    { stageId: STAGE_ID, theme: defaultTheme },
+  );
+
+  let releaseAccessCheck!: () => void;
+  let markAccessCheckStarted!: () => void;
+  const accessCheckReleased = new Promise<void>((resolve) => {
+    releaseAccessCheck = resolve;
+  });
+  const accessCheckStarted = new Promise<void>((resolve) => {
+    markAccessCheckStarted = resolve;
+  });
+
+  await page.route(`**/api/classroom?id=${STAGE_ID}`, async (route) => {
+    markAccessCheckStarted();
+    await accessCheckReleased;
+    await route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
@@ -59,8 +116,8 @@ test('requires an invited account before a public classroom can start', async ({
           ],
         },
       }),
-    }),
-  );
+    });
+  });
 
   let chatRequests = 0;
   await page.route('**/api/chat', (route) => {
@@ -69,6 +126,12 @@ test('requires an invited account before a public classroom can start', async ({
   });
 
   await page.goto(`/classroom/${STAGE_ID}`);
+  await accessCheckStarted;
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await page.getByRole('button', { name: 'Explore in the discussion' }).click();
+  await expect.poll(() => chatRequests).toBe(0);
+
+  releaseAccessCheck();
   await page.getByText('Loading classroom...').waitFor({ state: 'hidden', timeout: 15_000 });
   await expect(page.getByRole('heading', { name: 'Sign in before you begin' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Sign in' })).toHaveAttribute(
