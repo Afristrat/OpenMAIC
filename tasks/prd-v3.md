@@ -88,7 +88,7 @@ Les descriptions et critères exécutables complets sont dans le JSON canonique.
 | 13   | S6-009 | P1       | À valider        | Recetter Whisper sur de la parole réelle et le parcours microphone                    |
 | 14   | S6-003 | P1       | Bloquée          | Consommer Diwan par un contrat documentaire autonome                                  |
 | 15   | S6-004 | P1       | Soldée           | Bibliothèque et sélection de plusieurs sources par formation                          |
-| 16   | S6-012 | P1       | À valider        | Qualifier le catalogue vocal français et anglais                                      |
+| 16   | S6-012 | P1       | Soldée           | Qualifier le catalogue vocal français et anglais                                      |
 | 17   | S1-009 | P1       | Soldée           | Gate audio : tachkil AR + plancher de bruit -50 dB sur toutes les sorties TTS         |
 | 18   | S4-010 | P1       | Soldée           | Contexte territorial réutilisable et guidage laser lisible [UI]                       |
 | 19   | S0-017 | P1       | À valider        | Modèles image LiteLLM administrés : libellés, sélection et preuve UI [UI]             |

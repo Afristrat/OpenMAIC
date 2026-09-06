@@ -16,8 +16,10 @@
   "languagePreviewCount": 20,
   "format": "wav",
   "previewDurationSeconds": { "minimum": 4.86, "maximum": 6.18 },
-  "humanAcceptance": false,
-  "note": "Les vingt WAV ont été régénérés séquentiellement sur la production exacte avec ttsLanguageOverride=fr ou en. Les fichiers d’écoute sont des artefacts non versionnés ; leurs tailles et empreintes permanentes figurent ci-dessous. L’écoute humaine reste le seul verrou ouvert.",
+  "humanAcceptance": true,
+  "humanAcceptedAt": "2026-09-06T14:19:39Z",
+  "humanAcceptedBy": "Amine",
+  "note": "Les vingt WAV ont été régénérés séquentiellement sur la production exacte avec ttsLanguageOverride=fr ou en. Les fichiers d’écoute sont des artefacts non versionnés ; leurs tailles et empreintes permanentes figurent ci-dessous. Amine a confirmé leur écoute et leur acceptation dans la session Qalem le 2026-09-06.",
   "productionRoundtrip": {
     "jobId": "ygCzS4I3pS",
     "classroomId": "dT5_NjPz3D",

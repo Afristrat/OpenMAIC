@@ -2312,15 +2312,15 @@
       "description": "En tant qu’utilisateur de Qalem, je veux qualifier le catalogue vocal français et anglais afin que le parcours promis soit réellement utilisable.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P1",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "type": "request_or_observed_gap",
         "date": "2026-08-26"
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "La dette d’environ dix voix FR et dix EN est encore explicite dans le journal ; elle est distincte de la prononciation des anglicismes déjà acceptée.",
+      "gap": null,
       "evidence": [
         ".ralph/progress.md:18",
         "lib/audio/constants.ts",
@@ -2331,7 +2331,8 @@
         "commit:b3f5552cdbfc691b7debe015adf2df9bd3790d52",
         "commit:f03381c2cea114780704159f7b953d57002873a5",
         "commit:d8c782fe4de54eb9ffa48b9a8bdc10005708fcbb",
-        "commit:2ed4715ed9bd23f4ce7add2456d0f1cb26734c8d"
+        "commit:2ed4715ed9bd23f4ce7add2456d0f1cb26734c8d",
+        "docs/validation/S6-012-voice-catalog-human-acceptance.md"
       ],
       "acceptance": [
         "Établir le catalogue cible de dix voix FR et dix EN, avec genre déclaré, langue, fournisseur, identifiant et aperçu réel.",
@@ -2346,11 +2347,14 @@
         "2026-08-27 — Le /health Higgs réel répond 200 et expose 16 profils. Dix identités déclarées sont qualifiées pour FR et EN ; les vingt appels séquentiels à /api/generate/tts répondent 200 et produisent vingt WAV RIFF de 4,86 à 6,18 s, avec tailles et SHA-256 consignés dans docs/evidence/s6-012-voice-preview-manifest.json.",
         "2026-08-27 — Aller-retour production éphémère : Salma reçoit Rim (higgs-tts/higgs/rim) ; le choix est identique dans le job durable, la classroom générée et après rechargement Chromium, sans changement du prénom Salma, de l’avatar /avatars/assist.png ni du genre female.",
         "2026-08-27 — Régénération TTS production HTTP 200 : huit pistes sur huit régénérées sans modifier la voix persistée. Le WAV contrôlé répond 200, mesure 559 724 octets et 11,66 s, avec volume moyen −19,5 dB et crête −4,9 dB.",
-        "2026-08-27 — Nettoyage re-vérifié après la preuve : zéro job, stage, scène, cours et objet Storage résiduels. L’écoute humaine des vingt aperçus n’est pas auto-déclarée et reste le seul critère ouvert."
+        "2026-08-27 — Nettoyage re-vérifié après la preuve : zéro job, stage, scène, cours et objet Storage résiduels. L’écoute humaine des vingt aperçus n’est pas auto-déclarée et reste le seul critère ouvert.",
+        "2026-09-06 — Amine confirme dans la session Qalem l’écoute et l’acceptation humaine des vingt aperçus. Revalidation fraîche : /health Higgs répond 200 avec 16 profils, dont 10/10 identités qualifiées présentes ; le gate du SHA 01ac44b549f14cf3221b6649abd87ede9747dc1d passe 439/439 fichiers et 2 697/2 697 tests Vitest, build 113 pages et 112/112 Playwright sans retry. Référence : docs/validation/S6-012-voice-catalog-human-acceptance.md."
       ],
+      "completedAt": "2026-09-06T14:19:39Z",
       "validationDebt": {
         "recordedAt": "2026-08-27",
-        "decision": "Implémentation et preuves machine intégralement certifiées ; story non certifiée tant que l’écoute humaine des vingt aperçus n’est pas consignée.",
+        "decision": "Dette levée : l’implémentation, les preuves machine et l’écoute humaine des vingt aperçus sont certifiées.",
+        "resolvedAt": "2026-09-06T14:19:39Z",
         "implementedButUncertified": [
           "Catalogue de dix identités Higgs utilisables en français et en anglais, avec fournisseur, identifiant, genre déclaré et textes d’aperçu.",
           "Vingt WAV réels régénérés via Qalem au SHA déployé, tous non vides et consignés avec taille et SHA-256 dans le manifeste de preuve.",
@@ -2365,9 +2369,7 @@
           "production": "20/20 aperçus réels, génération réussie, rechargement conservé et 8/8 pistes régénérées ; nettoyage à zéro.",
           "oom": "OOMKilled=false et zéro redémarrage sur web, worker de génération et capture-worker après la charge réelle."
         },
-        "stillRequired": [
-          "Faire écouter et accepter humainement les vingt aperçus FR/EN ; le manifeste conserve humanAcceptance=false."
-        ]
+        "stillRequired": []
       },
       "historicalDependencies": [],
       "executionAllowed": true,
