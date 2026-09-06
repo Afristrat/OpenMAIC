@@ -7,6 +7,11 @@ const mocks = vi.hoisted(() => ({
   audioPaths: vi.fn(),
   remove: vi.fn(),
   deleteSession: vi.fn(),
+  queueXapi: vi.fn(),
+}));
+
+vi.mock('@/lib/anchoring/xapi-outbox', () => ({
+  enqueueAnchorSessionStatement: mocks.queueXapi,
 }));
 
 vi.mock('@/lib/logger', () => ({
@@ -63,12 +68,21 @@ describe('live session detail API', () => {
     });
     mocks.remove.mockResolvedValue({ error: null });
     mocks.deleteSession.mockResolvedValue({ data: { id: 'session-1' }, error: null });
+    mocks.queueXapi.mockResolvedValue(true);
   });
 
   it('persists a valid replay position and rejects negative positions', async () => {
     expect((await patch({ positionMs: -1 })).status).toBe(400);
     expect((await patch({ positionMs: 4200 })).status).toBe(200);
     expect(mocks.update).toHaveBeenCalledWith({ last_position_ms: 4200 });
+  });
+
+  it('queues the completed session once its end is persisted', async () => {
+    expect((await patch({ ended: true })).status).toBe(200);
+    expect(mocks.queueXapi).toHaveBeenCalledWith({
+      sessionId: 'session-1',
+      userId: 'user-1',
+    });
   });
 
   it('removes every private audio track before deleting the replay rows', async () => {

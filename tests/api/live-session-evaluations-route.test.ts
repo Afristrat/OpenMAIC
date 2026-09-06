@@ -5,6 +5,11 @@ const mocks = vi.hoisted(() => ({
   user: vi.fn(),
   session: vi.fn(),
   insert: vi.fn(),
+  queueXapi: vi.fn(),
+}));
+
+vi.mock('@/lib/anchoring/xapi-outbox', () => ({
+  enqueueAnchorEvaluationStatement: mocks.queueXapi,
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -46,6 +51,7 @@ describe('live session hot evaluation API', () => {
       error: null,
     });
     mocks.insert.mockImplementation(async (value) => ({ data: value, error: null }));
+    mocks.queueXapi.mockResolvedValue(true);
   });
 
   it('writes exactly two hot answers and their normalized score', async () => {
@@ -57,6 +63,12 @@ describe('live session hot evaluation API', () => {
       user_id: 'user-1',
       phase: 'hot',
       answers: { useful: 5, confidence: 4 },
+      score: 90,
+    });
+    expect(mocks.queueXapi).toHaveBeenCalledWith({
+      sessionId: 'session-1',
+      userId: 'user-1',
+      phase: 'hot',
       score: 90,
     });
   });
