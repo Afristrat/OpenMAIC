@@ -4024,8 +4024,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Émission xAPI via outbox (retry, acteur pseudonymisé) » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "3-ANCRER",
       "priority": "P2",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S3-010",
@@ -4033,16 +4033,24 @@
       },
       "sourceDependencies": ["S3-001"],
       "dependencies": ["S3-001"],
-      "gap": "Outbox durable, retry, acteur pseudonymisé et configuration LRS chiffrée implémentés ; clés runtime, LRS P3-C et panne contrôlée restent à valider.",
-      "evidence": ["lib/telemetry/xapi.ts", "tasks/prd-3-ancrer.md"],
+      "gap": null,
+      "evidence": [
+        "lib/telemetry/xapi.ts",
+        "lib/anchoring/xapi-outbox.ts",
+        "tests/anchoring/xapi-statements.test.ts",
+        "tests/api/xapi-events-route.test.ts",
+        "docs/validation/S3-010-xapi-outbox.md"
+      ],
       "acceptance": [
         "Statements conformes vérifiés contre un LRS de test (P3-C)",
         "Retry prouvé LRS coupé ; zéro e-mail/nom en clair",
         "Flag xapi_emission, credentials LRS par org chiffrés"
       ],
       "closureEvidence": [
-        "2026-09-04 — Le commit c33f9f5 livre l’outbox xAPI durable, huit tentatives exponentielles, la reprise au démarrage, un acteur HMAC sans nom/e-mail réel et des credentials LRS chiffrés AES-256-GCM par organisation. Le flag xapi_emission reste désactivé. Les clés runtime, la conformité contre un LRS P3-C et le retry LRS coupé restent volontairement non certifiés."
+        "2026-09-04 — Le commit c33f9f5 livre l’outbox xAPI durable, huit tentatives exponentielles, la reprise au démarrage, un acteur HMAC sans nom/e-mail réel et des credentials LRS chiffrés AES-256-GCM par organisation. Le flag xapi_emission reste désactivé. Les clés runtime, la conformité contre un LRS P3-C et le retry LRS coupé restent volontairement non certifiés.",
+        "2026-09-06 — Certification au SHA 01ac44b549f14cf3221b6649abd87ede9747dc1d : les cinq événements P3-C sont acceptés par un LRS externe réel, la panne puis la reprise du LRS prouvent le retry, les cinq acteurs sont pseudonymisés, le rejeu reste dédupliqué à cinq lignes et les credentials par organisation sont chiffrés AES-256-GCM. Gate complet : 439/439 fichiers et 2 697/2 697 tests Vitest, build 113 pages et 112/112 Playwright sans retry. Web et worker exacts, healthy, restart=0, OOMKilled=false ; nettoyage production à zéro. Référence : docs/validation/S3-010-xapi-outbox.md."
       ],
+      "completedAt": "2026-09-06T14:00:00Z",
       "historicalEvidence": {
         "completedAt": null,
         "note": null,

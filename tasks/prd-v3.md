@@ -122,7 +122,7 @@ Les descriptions et critères exécutables complets sont dans le JSON canonique.
 | 47   | S3-007 | P2       | Soldée           | Évaluations à froid J+30 / J+60                                                       |
 | 48   | S3-008 | P2       | Décision requise | [CHECKPOINT AMINE] Ton des graines + fréquences validés sur échantillon               |
 | 49   | S3-009 | P2       | Soldée           | Reporting ancrage : agrégats org uniquement [UI]                                      |
-| 50   | S3-010 | P2       | À implémenter    | Émission xAPI via outbox (retry, acteur pseudonymisé)                                 |
+| 50   | S3-010 | P2       | Soldée           | Émission xAPI via outbox (retry, acteur pseudonymisé)                                 |
 | 51   | U-007  | P2       | Décision requise | Bouton certificat dans classroom                                                      |
 | 52   | U-008  | P2       | À valider        | Page Mes certificats                                                                  |
 | 53   | U-021  | P2       | Décision requise | Bannière consentement télémétrie RGPD                                                 |
