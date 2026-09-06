@@ -771,6 +771,20 @@ export function QuizView({ questions, sceneId, stageId }: QuizViewProps) {
           answers,
           results: ordered,
         });
+        if (user) {
+          const correct = ordered.filter((result) => result.correct).length;
+          void fetch('/api/xapi/events', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'quiz_answered',
+              stageId,
+              sceneId,
+              score: ordered.length ? (correct / ordered.length) * 100 : 0,
+            }),
+            keepalive: true,
+          }).catch(() => undefined);
+        }
       } catch (error: unknown) {
         log.error('Failed to persist quiz completion:', error);
       }

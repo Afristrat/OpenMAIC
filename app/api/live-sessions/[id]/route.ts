@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { parseReplayPosition } from '@/lib/live-session/contracts';
+import { enqueueAnchorSessionStatement } from '@/lib/anchoring/xapi-outbox';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
@@ -30,7 +31,11 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ id
     return apiError('INTERNAL_ERROR', 500, 'Impossible de lire la session');
   }
   if (!data) return apiError('INVALID_REQUEST', 404, 'Session introuvable');
-  return apiSuccess({ session: data });
+  const xapiQueued =
+    body?.ended === true
+      ? await enqueueAnchorSessionStatement({ sessionId: id, userId: user.id }).catch(() => false)
+      : false;
+  return apiSuccess({ session: data, xapiQueued });
 }
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {

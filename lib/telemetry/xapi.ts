@@ -33,6 +33,10 @@ export interface XAPIStatement {
 // ---------------------------------------------------------------------------
 
 export const VERBS = {
+  answered: {
+    id: 'http://adlnet.gov/expapi/verbs/answered',
+    display: { 'en-US': 'answered' },
+  },
   attempted: {
     id: 'http://adlnet.gov/expapi/verbs/attempted',
     display: { 'en-US': 'attempted' },

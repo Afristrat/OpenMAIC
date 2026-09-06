@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { enqueueAnchorEvaluationStatement } from '@/lib/anchoring/xapi-outbox';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 const hotEvaluationSchema = z.object({
@@ -48,5 +49,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return apiError('INVALID_REQUEST', 409, 'Cette évaluation a déjà été envoyée');
   }
   if (error || !data) return apiError('INTERNAL_ERROR', 500, 'Échec de l’évaluation');
-  return apiSuccess({ evaluation: data }, 201);
+  const xapiQueued = await enqueueAnchorEvaluationStatement({
+    sessionId: id,
+    userId: user.id,
+    phase: 'hot',
+    score,
+  }).catch(() => false);
+  return apiSuccess({ evaluation: data, xapiQueued }, 201);
 }
