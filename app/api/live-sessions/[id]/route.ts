@@ -31,11 +31,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ id
     return apiError('INTERNAL_ERROR', 500, 'Impossible de lire la session');
   }
   if (!data) return apiError('INVALID_REQUEST', 404, 'Session introuvable');
-  const xapiQueued =
-    body?.ended === true
-      ? await enqueueAnchorSessionStatement({ sessionId: id, userId: user.id }).catch(() => false)
-      : false;
-  return apiSuccess({ session: data, xapiQueued });
+  return apiSuccess({ session: data });
 }
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
@@ -63,7 +59,11 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     return apiError('INTERNAL_ERROR', 500, 'Impossible de mettre à jour la session');
   }
   if (!data) return apiError('INVALID_REQUEST', 404, 'Session introuvable');
-  return apiSuccess({ session: data });
+  const xapiQueued =
+    body?.ended === true
+      ? await enqueueAnchorSessionStatement({ sessionId: id, userId: user.id }).catch(() => false)
+      : false;
+  return apiSuccess({ session: data, xapiQueued });
 }
 
 export async function DELETE(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
