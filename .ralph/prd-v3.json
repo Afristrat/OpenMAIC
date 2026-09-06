@@ -3456,7 +3456,7 @@
       },
       "sourceDependencies": [],
       "dependencies": ["S6-010"],
-      "gap": "Décision et code livrés : e-mail et WhatsApp sont conservés pour les cartes de révision historiques ; ANCRER reste en Web Push. Le runtime e-mail est configuré et déployé. Restent les réceptions réelles autorisées e-mail/WhatsApp et une instance Evolution dédiée à Qalem avant passes=true.",
+      "gap": "Décision, code, e-mail réel et instance Evolution dédiée sont livrés. WhatsApp reste à appairer par QR avec le compte retenu, puis à recevoir réellement avant passes=true ; ANCRER reste en Web Push.",
       "evidence": [
         ".ralph/prd.json#S-028",
         "tasks/prd-3-ancrer.md#Non-Goals",
@@ -3474,7 +3474,8 @@
       ],
       "closureEvidence": [
         "2026-09-04 — Le SHA cea34e0084d92510b42b68f4f904069ac70b87c2 livre opt-in et désinscription e-mail/WhatsApp, batch quotidien dédupliqué, Resend idempotent avec reprise bornée, Evolution sans rejeu automatique ambigu et erreurs expurgées. La migration 00070 est appliquée durablement ; le gate exact passe Prettier, TypeScript, ESLint, 2 681/2 681 Vitest, build et 110/110 Playwright.",
-        "2026-09-04 — Web et runtime Coolify servent le SHA exact. Le déploiement runtime agigrjbydu9qdzkxew68td6m est terminé ; worker et capture-worker sont healthy, restart=0 et OOMKilled=false. RESEND_API_KEY et SMTP_FROM sont configurés au runtime et la file review-notification démarre. Evolution reste non configuré : envois réels autorisés et réception des deux canaux restent ouverts, donc passes=false. Référence : docs/validation/S6-011-review-notification-channels.md."
+        "2026-09-04 — Web et runtime Coolify servent le SHA exact. Le déploiement runtime agigrjbydu9qdzkxew68td6m est terminé ; worker et capture-worker sont healthy, restart=0 et OOMKilled=false. RESEND_API_KEY et SMTP_FROM sont configurés au runtime et la file review-notification démarre. Evolution reste non configuré : envois réels autorisés et réception des deux canaux restent ouverts, donc passes=false. Référence : docs/validation/S6-011-review-notification-channels.md.",
+        "2026-09-06 — Le SHA 6f13b77167f6f589c1bc938f32a6439879a0e9bc versionne une stack Evolution v2.3.7 dédiée, identique au compose actif et persistant sur Hostinger. Le tunnel Cloudflare et l’API répondent 200 ; les trois variables Evolution et l’expéditeur Qalem corrigé sont injectés dans web/worker/capture-worker, tous healthy, restart=0, OOMKilled=false. La recette e-mail obtient une livraison unique, un événement Resend delivered, une désinscription, puis trois compteurs à zéro. Gate exact : 439/439 fichiers, 2 697/2 697 Vitest, build 113 pages et 112/112 Playwright. L’instance qalem-reminders reste connecting jusqu’au scan humain du QR et la réception WhatsApp ; passes demeure donc faux. Référence : docs/validation/S6-011-review-notification-channels.md."
       ],
       "historicalDependencies": [],
       "executionAllowed": true,

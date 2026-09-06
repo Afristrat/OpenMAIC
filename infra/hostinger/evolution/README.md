@@ -20,6 +20,7 @@ Le fichier `.env` du serveur est créé avec le mode `0600` et n’est jamais ve
 - `QALEM_EVOLUTION_API_URL`
 - `QALEM_EVOLUTION_API_KEY`
 - `QALEM_EVOLUTION_INSTANCE_NAME`
+- `QALEM_SMTP_FROM` pour l’expéditeur e-mail propre à Qalem ; ne pas réutiliser le `SMTP_FROM` global d’un autre projet.
 
 Le mot de passe PostgreSQL doit être une chaîne hexadécimale afin de rester valide sans échappement dans l’URI Prisma.
 
