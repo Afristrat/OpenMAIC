@@ -760,17 +760,21 @@ export function QuizView({ questions, sceneId, stageId }: QuizViewProps) {
       const ordered = questions.map((q) => allResultsMap.get(q.id)!).filter(Boolean);
 
       setResults(ordered);
-      setPhase('reviewing');
       writeSubmittedResults(sceneId, ordered);
 
-      void persistQuizCompletion({
-        ...(user ? { userId: user.id } : {}),
-        stageId,
-        sceneId,
-        questions,
-        answers,
-        results: ordered,
-      }).catch((error: unknown) => log.error('Failed to persist quiz completion:', error));
+      try {
+        await persistQuizCompletion({
+          ...(user ? { userId: user.id } : {}),
+          stageId,
+          sceneId,
+          questions,
+          answers,
+          results: ordered,
+        });
+      } catch (error: unknown) {
+        log.error('Failed to persist quiz completion:', error);
+      }
+      if (!cancelled) setPhase('reviewing');
     })();
 
     return () => {

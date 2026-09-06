@@ -395,4 +395,51 @@ test.describe('Quiz content surface (#657)', () => {
     }
     await expect(page.getByText('Review complete', { exact: true })).toBeVisible();
   });
+
+  test('waits for the FSRS card write before exposing the quiz result', async ({ page }) => {
+    const STAGE = 'e2e-quiz-fsrs-persistence-gate';
+    await seedQuiz(page, STAGE, [
+      {
+        id: 'q-fsrs-gate',
+        type: 'single',
+        question: 'Capital of Morocco?',
+        options: [
+          { label: 'Casablanca', value: 'A' },
+          { label: 'Rabat', value: 'B' },
+        ],
+        answer: ['B'],
+        points: 1,
+      },
+    ]);
+
+    let releaseCardWrite!: () => void;
+    let markCardWriteStarted!: () => void;
+    const cardWriteReleased = new Promise<void>((resolve) => {
+      releaseCardWrite = resolve;
+    });
+    const cardWriteStarted = new Promise<void>((resolve) => {
+      markCardWriteStarted = resolve;
+    });
+    await page.route('**/rest/v1/review_cards*', async (route) => {
+      if (route.request().method() !== 'POST') {
+        await route.fallback();
+        return;
+      }
+      markCardWriteStarted();
+      await cardWriteReleased;
+      await route.fulfill({ status: 201, contentType: 'application/json', body: '[]' });
+    });
+
+    const classroom = new ClassroomPage(page);
+    await classroom.goto(STAGE);
+    await classroom.waitForLoaded();
+    await page.getByRole('button', { name: 'Start Quiz' }).click();
+    await page.getByRole('button', { name: /Casablanca/ }).click();
+    await page.getByRole('button', { name: 'Submit Answers' }).click();
+    await cardWriteStarted;
+
+    await expect(page.getByText(/0\s+correct/i)).toBeHidden();
+    releaseCardWrite();
+    await expect(page.getByText(/0\s+correct/i)).toBeVisible();
+  });
 });
