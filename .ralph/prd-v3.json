@@ -3959,8 +3959,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Reporting ancrage : agrégats org uniquement [UI] » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "3-ANCRER",
       "priority": "P2",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S3-009",
@@ -3968,13 +3968,20 @@
       },
       "sourceDependencies": ["S3-003", "S3-007"],
       "dependencies": ["S3-003", "S3-007"],
-      "gap": "Agrégats organisationnels et UI sans identifiant apprenant implémentés ; recette d’accès croisée et mesures réelles encore requises.",
-      "evidence": ["tasks/prd-3-ancrer.md"],
+      "gap": "Aucun reste ouvert : les agrégats temporels, l’absence de drill-down individuel et l’isolation inter-tenant sont certifiés en production.",
+      "evidence": [
+        "tasks/prd-3-ancrer.md",
+        "tests/api/organization-reports-privacy.test.ts",
+        "tests/reports/pdf.test.ts",
+        "e2e/tests/anchoring-report.spec.ts",
+        "docs/validation/S3-009-aggregate-anchoring-report.md"
+      ],
       "acceptance": [
         "Participation, à chaud vs à froid, rétention dans le temps (e2e)",
         "Lecture seule org, AUCUN drill-down individuel (test d'accès)"
       ],
       "closureEvidence": [
+        "2026-09-06 — Le SHA fonctionnel 140a37f99c7a8ab3bf6f9c1c2fcb1478de95a4f8 supprime toutes les lignes individuelles du JSON, du CSV, du PDF et de l’UI, borne les requêtes aux formations du tenant et refuse un non-membre avant toute lecture métier. Gate exact ServeurIA : Prettier, TypeScript et ESLint verts, 436/436 fichiers et 2 686/2 686 tests Vitest, build 112 routes et 111/111 Playwright sans retry. Déploiement Coolify tery04pgnhstod8zx0ug8ohe : conteneur exact healthy, restart=0, OOMKilled=false et santé 200. Recette authentifiée à deux tenants sur qalem.ma : participation 100 %, chaud 80 %, froid J+30 70 %, rétention J+60 −20 points, ouverture 50 %, aucune donnée individuelle dans UI/JSON/CSV et accès croisé refusé 403. Deux organisations, deux comptes Auth, audits et fichiers de credentials nettoyés sans résidu. Référence : docs/validation/S3-009-aggregate-anchoring-report.md.",
         "2026-09-04 — Le commit dedf576 livre une fonction SQL SECURITY DEFINER bornée aux rôles autorisés, une API et quatre indicateurs agrégés sans user_id ni drill-down individuel. Gate global ServeurIA vert ; la recette inter-tenant et les agrégats sur données réelles restent ouverts."
       ],
       "historicalEvidence": {
@@ -3985,7 +3992,8 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 53
+      "priorityRank": 53,
+      "completedAt": "2026-09-06"
     },
     {
       "id": "S3-010",
