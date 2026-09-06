@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  buildAnchorXapiStatement,
-  type AnchorXapiEvent,
-} from '@/lib/anchoring/xapi-outbox';
+import { buildAnchorXapiStatement, type AnchorXapiEvent } from '@/lib/anchoring/xapi-outbox';
 
 const ACTOR_ID = 'a'.repeat(64);
 const SESSION_ID = '00000000-0000-4000-8000-000000000010';
