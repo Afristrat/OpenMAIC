@@ -16,11 +16,12 @@
 - **Sources** : `app/api/generate/agent-profiles/route.ts` (casting actuel dérivé du contenu seul) ; np-cadrage §6.
 - **Alternatives rejetées** : aléatoire sans état (répétitions possibles = promesse trahie) ; casting figé par formation (contredit « toujours inédite »).
 
-## ADR-203 — Audio du replay : pistes TTS PERSISTÉES, pas re-synthétisées (PROPOSÉE — à confirmer par la mesure S2-004)
+## ADR-203 — Audio du replay : pistes TTS PERSISTÉES, pas re-synthétisées (ACTÉE)
 
 - **Quoi** : les pistes audio générées en live sont stockées (`audio_path`) et rejouées telles quelles au replay.
 - **Pourquoi** : fidélité totale (« comme un vrai webinaire » — la même voix dit la même chose) ; la re-synthèse dépend de la disponibilité GPU (contention `.7` documentée) et peut différer (non-déterminisme TTS) ; l'angle mort « replay ≠ capture du TTS réel » (stress-test) se ferme par la persistance.
-- **Coût accepté** : stockage (à mesurer en Mo/session dès S2-004 — si prohibitif, compression agressive avant de reconsidérer).
+- **Mesure S2-004** : la session contrôlée du 2026-09-06, composée de cinq événements et d’une piste Higgs TTS, occupe réellement 173 890 octets, soit 0,165834 Mio : 172 844 octets d’audio et 1 046 octets de JSON. Cette valeur est un plancher à une piste, pas une projection d’une formation complète ; le suivi d’exploitation doit agréger `audio_bytes` avant tout dimensionnement commercial.
+- **Coût accepté** : persister les pistes reste retenu pour la fidélité. Une compression ou un quota ne sera introduit que si les mesures de sessions longues le justifient.
 - **Alternatives rejetées** : re-synthèse au replay (infidèle + fragile) ; pas d'audio au replay (ce ne serait plus un webinaire).
 
 ## ADR-204 — Watermarking : traitement asynchrone par transmission, conformité à décider (EN ATTENTE)

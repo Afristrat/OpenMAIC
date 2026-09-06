@@ -3491,8 +3491,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « [GATE DPIA] Enregistrement du live : flux d'événements complet (agents + utilisateur) » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "2-VIVRE",
       "priority": "P2",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S2-004",
@@ -3500,8 +3500,12 @@
       },
       "sourceDependencies": ["S2-001"],
       "dependencies": [],
-      "gap": "Implémentation livrée ; restent la mesure réelle Mo/session et la recette de production. Le flag de production reste désactivé jusqu’à la formalité CNDP applicable et aux preuves techniques.",
-      "evidence": ["docs/foundation/2-vivre/DPIA-S2-004.md"],
+      "gap": null,
+      "evidence": [
+        "docs/foundation/2-vivre/DPIA-S2-004.md",
+        "docs/foundation/2-vivre/08-decisions-log.md#adr-203--audio-du-replay--pistes-tts-persistées-pas-re-synthétisées-actée",
+        "docs/validation/S2-004-live-recording-production.md"
+      ],
       "acceptance": [
         "DPIA instruite et consignée AVANT tout commit",
         "Consentement UI explicite → live_sessions.recorded",
@@ -3510,8 +3514,10 @@
       ],
       "closureEvidence": [
         "2026-09-03 — Med Amine MANSOURI IDRISSI, DPO et gérant d’AIMPower SARL A.U., donne explicitement son « Go DPO ». La DPIA autorise désormais développement et tests sous six contrôles ; l’activation production reste interdite avant formalité CNDP applicable et preuves techniques.",
-        "2026-09-04 — Le commit 3c4d82f implémente le consentement explicite, le flux append-only agents/utilisateur/système et la persistance des pistes audio. Gate du lot sur ServeurIA : formatage, TypeScript, lint, 2 664/2 664 Vitest, build 111 pages et 107/107 Playwright. La mesure réelle Mo/session et la recette de production restent à produire ; passes reste donc faux."
+        "2026-09-04 — Le commit 3c4d82f implémente le consentement explicite, le flux append-only agents/utilisateur/système et la persistance des pistes audio. Gate du lot sur ServeurIA : formatage, TypeScript, lint, 2 664/2 664 Vitest, build 111 pages et 107/107 Playwright. La mesure réelle Mo/session et la recette de production restent à produire ; passes reste donc faux.",
+        "2026-09-06 — Recette authentifiée au SHA 01ac44b549f14cf3221b6649abd87ede9747dc1d sous activation temporaire autorisée par le GO DPO : consentement décoché, démarrage bloqué avant opt-in, cinq événements couvrant agent/system/user, vraie piste Higgs TTS de 172 844 octets, total session 0,165834 Mio, UPDATE refusé 403, streaming privé 200 inline et anonyme 401. La suppression utilisateur ramène session, événements et piste à zéro ; compte et organisation temporaires sont supprimés et live_recording est relu false. Gate complet : 439/439 fichiers et 2 697/2 697 tests Vitest, build 113 pages, 112/112 Playwright sans retry. Référence : docs/validation/S2-004-live-recording-production.md."
       ],
+      "completedAt": "2026-09-06T14:33:33Z",
       "historicalEvidence": {
         "completedAt": null,
         "note": null,
