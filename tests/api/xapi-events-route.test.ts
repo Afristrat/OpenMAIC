@@ -55,7 +55,7 @@ describe('anchoring xAPI event API', () => {
     mocks.queueQuiz.mockResolvedValue(true);
   });
 
-  it('rejects malformed and unauthenticated events', async () => {
+  it('rejects malformed events and ignores unauthenticated telemetry', async () => {
     expect((await submit({ type: 'quiz_answered' })).status).toBe(400);
     mocks.getUser.mockResolvedValueOnce({ data: { user: null } });
     expect(
@@ -67,7 +67,8 @@ describe('anchoring xAPI event API', () => {
           score: 80,
         })
       ).status,
-    ).toBe(401);
+    ).toBe(202);
+    expect(mocks.queueQuiz).not.toHaveBeenCalled();
   });
 
   it('binds a quiz answer to the learner latest session', async () => {

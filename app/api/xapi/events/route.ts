@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
   const {
     data: { user },
   } = await auth.auth.getUser();
-  if (!user) return apiError('UNAUTHORIZED', 401, 'Authentification requise');
+  if (!user) return apiSuccess({ queued: false }, 202);
 
   const { data: course, error: courseError } = await auth
     .from('courses')
