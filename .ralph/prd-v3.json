@@ -3861,8 +3861,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Rappels quiz espacés via FSRS porté (cycle complet) » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "3-ANCRER",
       "priority": "P2",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S3-006",
@@ -3870,14 +3870,21 @@
       },
       "sourceDependencies": ["S3-005"],
       "dependencies": ["S3-005", "S-025"],
-      "gap": "Les rappels ciblent les cartes existantes et leur notation renourrit le FSRS porté ; cycle Web Push authentifié encore à recetter.",
-      "evidence": ["lib/spaced-repetition/extractor.ts", "tasks/prd-3-ancrer.md"],
+      "gap": "Aucun reste ouvert : l’alimentation de la file existante, le rappel Web Push ciblé et la mise à jour FSRS après notation sont certifiés en production.",
+      "evidence": [
+        "lib/spaced-repetition/extractor.ts",
+        "components/scene-renderers/quiz-view.tsx",
+        "e2e/tests/quiz-content-surface-657.spec.ts",
+        "tasks/prd-3-ancrer.md",
+        "docs/validation/S3-006-fsrs-push-cycle.md"
+      ],
       "acceptance": [
         "Items de quiz de la session dans la file FSRS (extension, pas réécriture)",
         "Cycle testé : push → quiz → résultat re-nourrit FSRS",
         "Limite Bloom consignée au parking lot si constatée"
       ],
       "closureEvidence": [
+        "2026-09-06 — Une recette authentifiée sur qalem.ma prouve le cycle complet sans second moteur : une réponse incorrecte crée exactement une review_card due ; une delivery quiz_reminder la cible ; le job BullMQ reste intact pendant la pause puis un Web Push chiffré est accepté en HTTPS 201 après reprise ; /review ouvre la carte exacte et la notation « Bien » fait passer reps de 0 à 1, avance échéance et stabilité, renseigne last_review et marque la delivery ouverte. La recette a révélé puis le SHA ce051179677d0933ec23cc08ba28b8d530989c17 a corrigé une course en attendant la persistance de la carte avant d’afficher le résultat ; un test Playwright bloque l’écriture et couvre cette frontière. Gate exact ServeurIA : Prettier, TypeScript et ESLint verts, 436/436 fichiers et 2 686/2 686 tests Vitest, build 112 routes, 112/112 Playwright sans retry. Web et worker déployés sur ce SHA, healthy, restart=0, OOMKilled=false, santé publique 200 ; toutes les données, credentials et terminaisons temporaires ont été supprimés. La limite Bloom reste consignée dans le journal d’erreurs et le parking lot. Référence : docs/validation/S3-006-fsrs-push-cycle.md.",
         "2026-09-04 — Le commit 1257173 relie les deliveries de quiz aux review_cards existantes et au parcours /review, dont la notation met déjà à jour FSRS. Aucun second moteur n’a été créé. Le cycle Web Push → quiz → nouvelle échéance doit encore être prouvé sur données réelles."
       ],
       "historicalEvidence": {
@@ -3888,7 +3895,8 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 50
+      "priorityRank": 50,
+      "completedAt": "2026-09-06"
     },
     {
       "id": "S3-007",
