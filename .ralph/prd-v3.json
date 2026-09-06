@@ -3904,8 +3904,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Évaluations à froid J+30 / J+60 » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "3-ANCRER",
       "priority": "P2",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S3-007",
@@ -3913,13 +3913,20 @@
       },
       "sourceDependencies": ["S3-005"],
       "dependencies": ["S3-005"],
-      "gap": "Deliveries J+30/J+60, réponses cold_30/cold_60 et rejet des doublons implémentés ; recette temporelle réelle encore requise.",
-      "evidence": ["tasks/prd-3-ancrer.md"],
+      "gap": "Aucun reste ouvert : échéances J+30/J+60, interdiction d’anticipation, émission Push, réponses par phase et unicité sont certifiées en production.",
+      "evidence": [
+        "app/api/anchor-deliveries/[id]/evaluation/route.ts",
+        "tests/api/anchor-delivery-evaluation-route.test.ts",
+        "tests/anchoring/schedule.test.ts",
+        "tasks/prd-3-ancrer.md",
+        "docs/validation/S3-007-cold-evaluations.md"
+      ],
       "acceptance": [
         "Deliveries cold_eval planifiées, réponses en phase cold_30/cold_60",
         "Unicité par phase prouvée (doublon rejeté)"
       ],
       "closureEvidence": [
+        "2026-09-06 — Le SHA 512d86eeacef74689e61f2d7039564a0d1e192c6 ferme une anticipation découverte pendant la validation : l’API exige désormais sent_at et refuse en 409 toute évaluation dont le rappel n’a pas été livré. La recette authentifiée sur qalem.ma crée 14 livraisons, dont exactement deux cold_eval à J+30 et J+60 ; une soumission précoce répond 409 sans écriture. Après accélération contrôlée des deux jobs, deux Push chiffrés atteignent une terminaison HTTPS externe en HTTP 200 avec leurs cibles exactes ; les formulaires réels enregistrent cold_30=90 et cold_60=70, marquent les deux livraisons ouvertes, puis le doublon cold_30 répond 409. Gate exact ServeurIA : Prettier, TypeScript, ESLint, Vitest complet et build verts, 112/112 Playwright sans retry ; le test ciblé ajouté réussit 2/2 cas. Web et worker sont déployés au SHA exact, healthy, restart=0, OOMKilled=false, santé publique 200. Flag restauré, données, compte, terminaison et fichiers de recette supprimés avec contrôles à zéro/404. Référence : docs/validation/S3-007-cold-evaluations.md.",
         "2026-09-04 — Le commit 417ed5f livre la saisie des évaluations froides rattachées aux deliveries possédées ; la contrainte SQL unique par session, utilisateur et phase rejette les doublons. Gate global ServeurIA vert ; la recette réelle des deux échéances reste ouverte."
       ],
       "historicalEvidence": {
@@ -3930,7 +3937,8 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 51
+      "priorityRank": 51,
+      "completedAt": "2026-09-06"
     },
     {
       "id": "S3-008",

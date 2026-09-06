@@ -119,7 +119,7 @@ Les descriptions et critères exécutables complets sont dans le JSON canonique.
 | 44   | S3-004 | P2       | Soldée           | Générateur de graines : stock complet à la fin de session                             |
 | 45   | S3-005 | P2       | Soldée           | Plan d'ancrage opt-in + planification BullMQ ≤ J+90                                   |
 | 46   | S3-006 | P2       | Soldée           | Rappels quiz espacés via FSRS porté (cycle complet)                                   |
-| 47   | S3-007 | P2       | À implémenter    | Évaluations à froid J+30 / J+60                                                       |
+| 47   | S3-007 | P2       | Soldée           | Évaluations à froid J+30 / J+60                                                       |
 | 48   | S3-008 | P2       | Décision requise | [CHECKPOINT AMINE] Ton des graines + fréquences validés sur échantillon               |
 | 49   | S3-009 | P2       | Soldée           | Reporting ancrage : agrégats org uniquement [UI]                                      |
 | 50   | S3-010 | P2       | À implémenter    | Émission xAPI via outbox (retry, acteur pseudonymisé)                                 |
