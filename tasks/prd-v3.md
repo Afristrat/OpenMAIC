@@ -117,7 +117,7 @@ Les descriptions et critères exécutables complets sont dans le JSON canonique.
 | 42   | S3-001 | P2       | Soldée           | Tables d'ancrage (seeds, anchor_plans, anchor_deliveries, evaluations, xapi_outbox)   |
 | 43   | S3-003 | P2       | Soldée           | Évaluation à chaud en fin de session [UI]                                             |
 | 44   | S3-004 | P2       | Soldée           | Générateur de graines : stock complet à la fin de session                             |
-| 45   | S3-005 | P2       | À implémenter    | Plan d'ancrage opt-in + planification BullMQ ≤ J+90                                   |
+| 45   | S3-005 | P2       | Soldée           | Plan d'ancrage opt-in + planification BullMQ ≤ J+90                                   |
 | 46   | S3-006 | P2       | À implémenter    | Rappels quiz espacés via FSRS porté (cycle complet)                                   |
 | 47   | S3-007 | P2       | À implémenter    | Évaluations à froid J+30 / J+60                                                       |
 | 48   | S3-008 | P2       | Décision requise | [CHECKPOINT AMINE] Ton des graines + fréquences validés sur échantillon               |

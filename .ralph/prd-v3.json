@@ -3819,8 +3819,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Plan d'ancrage opt-in + planification BullMQ ≤ J+90 » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "3-ANCRER",
       "priority": "P2",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S3-005",
@@ -3828,14 +3828,20 @@
       },
       "sourceDependencies": ["S3-004"],
       "dependencies": ["S3-004"],
-      "gap": "Opt-in, pause, arrêt et planification BullMQ bornée J+90 implémentés ; recette avec Web Push réel encore requise.",
-      "evidence": ["tasks/prd-3-ancrer.md"],
+      "gap": "Aucun reste ouvert : opt-in, calendrier J+90, pause/reprise, arrêt, rejeu idempotent et émission Web Push HTTPS sont certifiés en production.",
+      "evidence": [
+        "tasks/prd-3-ancrer.md",
+        "tests/anchoring/schedule.test.ts",
+        "tests/jobs/queue-lifecycle.test.ts",
+        "docs/validation/S3-005-anchor-plan-web-push.md"
+      ],
       "acceptance": [
         "Opt-in explicite → deliveries à espacement croissant",
         "Pause un tap ; arrêt = suppression des deliveries futures",
         "Jobs rejouables, flag anchoring"
       ],
       "closureEvidence": [
+        "2026-09-06 — Le runtime worker f96bdc4 reçoit désormais durablement les trois variables VAPID depuis Coolify (longueurs 87/43 et sujet valide), reste healthy, restart=0 et OOMKilled=false. Recette authentifiée sur qalem.ma : opt-in explicite, 14 livraisons strictement croissantes, 14 clés de déduplication uniques et borne J+90 ; pause et reprise effectuées par les boutons UI ; un job BullMQ arrivé à échéance reste intact pendant la pause, puis part à la reprise vers une terminaison HTTPS externe qui répond 201 avec requête chiffrée et autorisation VAPID ; le rejeu de la livraison envoyée ne produit aucun POST supplémentaire ; l’arrêt UI supprime le plan et ses livraisons. Gate exact ServeurIA au SHA f96bdc4c8d635e9855a9ef1600d9a5eaa5c095ad : Prettier, TypeScript et ESLint verts, 436/436 fichiers et 2 686/2 686 tests Vitest, build 112 routes et 111/111 Playwright sans retry. Flag anchoring restauré à false ; compte, tenant, données, abonnements, audits, terminaison et fichiers temporaires supprimés sans résidu. Référence : docs/validation/S3-005-anchor-plan-web-push.md.",
         "2026-09-04 — Les commits af8cdaa et 31d5021 livrent le calendrier borné, l’opt-in explicite, la pause/reprise, l’arrêt et les jobs BullMQ rejouables sous flag anchoring maintenu désactivé. Gate global ServeurIA vert ; l’envoi Web Push réel reste à recetter."
       ],
       "historicalEvidence": {
@@ -3846,7 +3852,8 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
-      "priorityRank": 49
+      "priorityRank": 49,
+      "completedAt": "2026-09-06"
     },
     {
       "id": "S3-006",
