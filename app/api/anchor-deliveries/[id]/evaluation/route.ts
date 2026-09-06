@@ -22,7 +22,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { id } = await params;
   const { data: delivery, error: deliveryError } = await auth
     .from('anchor_deliveries')
-    .select('id, delivery_kind, payload, anchor_plans(session_id, user_id)')
+    .select('id, delivery_kind, payload, sent_at, anchor_plans(session_id, user_id)')
     .eq('id', id)
     .maybeSingle();
   if (deliveryError) return apiError('INTERNAL_ERROR', 500, 'Échec de lecture du rappel');
@@ -38,6 +38,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     (phase !== 'cold_30' && phase !== 'cold_60')
   ) {
     return apiError('INVALID_REQUEST', 404, 'Évaluation froide introuvable');
+  }
+  if (!delivery.sent_at) {
+    return apiError('INVALID_REQUEST', 409, 'Cette évaluation n’est pas encore disponible');
   }
   const score = ((parsed.data.useful + parsed.data.confidence) / 10) * 100;
   const { data: evaluation, error } = await auth
