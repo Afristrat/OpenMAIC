@@ -367,6 +367,11 @@ export function getConnectedServers(): {
 export async function checkMCPHealth(): Promise<ReturnType<typeof getConnectedServers>> {
   await Promise.all(
     [...connectedServers.values()].map(async (server) => {
+      if (server.status === 'error') {
+        await server.transport.close().catch(() => undefined);
+        connectedServers.set(server.config.id, await connectToServer(server.config));
+        return;
+      }
       try {
         await server.client.ping({ timeout: server.config.timeoutMs ?? DEFAULT_TIMEOUT_MS });
         server.status = 'connected';

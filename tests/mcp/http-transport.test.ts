@@ -1,11 +1,15 @@
 import { createServer } from 'node:http';
 import { once } from 'node:events';
 import { expect, it } from 'vitest';
+import { MockLanguageModelV3 } from 'ai/test';
+import { HumanMessage } from '@langchain/core/messages';
+import { AISdkLangGraphAdapter } from '@/lib/orchestration/ai-sdk-adapter';
 import {
   callExternalTool,
   checkMCPHealth,
   disconnectAll,
   getConnectedServers,
+  getExternalTools,
   initMCPClients,
 } from '@/lib/mcp/client';
 
@@ -74,6 +78,30 @@ it('uses the real HTTP SDK, rejects invalid results and bounds a silent tool', a
     await expect(callExternalTool('http-test', 'echo', {}, 'tenant-a')).resolves.toBe(
       'résultat réel',
     );
+    // Only the model is scripted: the adapter, AI SDK loop and HTTP tool execute for real.
+    let modelCalls = 0;
+    const model = new MockLanguageModelV3({
+      doGenerate: async ({ prompt }) => {
+        modelCalls++;
+        const first = modelCalls === 1;
+        if (!first) expect(JSON.stringify(prompt)).toContain('résultat réel');
+        return {
+          content: first
+            ? [{ type: 'tool-call', toolCallId: 'call-1', toolName: 'http-test__echo', input: '{}' }]
+            : [{ type: 'text', text: 'Réponse après consultation' }],
+          finishReason: { unified: first ? 'tool-calls' : 'stop', raw: 'stop' },
+          usage: {
+            inputTokens: { total: 0, noCache: 0, cacheRead: 0, cacheWrite: 0 },
+            outputTokens: { total: 0, text: 0, reasoning: 0 },
+          },
+          warnings: [],
+        };
+      },
+    });
+    const adapter = new AISdkLangGraphAdapter(model, undefined, getExternalTools('tenant-a'));
+    const answer = await adapter.invoke([new HumanMessage('Consulte les documents.')]);
+    expect(answer.content).toBe('Réponse après consultation');
+    expect(modelCalls).toBe(2);
     await expect(callExternalTool('http-test', 'invalid', {}, 'tenant-a')).rejects.toThrow(
       'MCP tool call failed',
     );
@@ -82,7 +110,7 @@ it('uses the real HTTP SDK, rejects invalid results and bounds a silent tool', a
       'MCP tool call failed',
     );
     expect(performance.now() - started).toBeLessThan(2_000);
-    expect(calls).toEqual(['echo', 'invalid', 'silent']);
+    expect(calls).toEqual(['echo', 'echo', 'invalid', 'silent']);
     expect(await checkMCPHealth()).toEqual([expect.objectContaining({ status: 'connected' })]);
     healthy = false;
     expect(await checkMCPHealth()).toEqual([
