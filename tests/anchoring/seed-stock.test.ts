@@ -22,7 +22,6 @@ describe('anchoring seed stock', () => {
       buildSeedStockPrompt({
         language: 'fr-FR',
         learningApproach: 'andragogy',
-        events: [],
         casting: [
           {
             name: 'Hanae',
@@ -41,7 +40,6 @@ describe('anchoring seed stock', () => {
       buildSeedStockPrompt({
         language: 'fr-FR',
         learningApproach: 'andragogy',
-        events: [],
         casting: [
           {
             name: 'Hanae',
