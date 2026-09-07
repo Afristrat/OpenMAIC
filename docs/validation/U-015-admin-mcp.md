@@ -1,5 +1,11 @@
 # U-015 — Administration MCP
 
+## Résultat actualisé et publication — 7 septembre 2026
+
+Le gate fonctionnel `a6420b992d8a8f1871d358a524b003a5233c8fb0` passe format, TypeScript à 4 Gio, lint sans avertissement, 446 fichiers / 2 714 Vitest et build. Les défauts du harnais ont ensuite été corrigés sans changement applicatif : sondes de capacité explicites et lecture classroom du test replay interceptée. Le navigateur final au SHA `1a51683deda94eeb6e200839a6c12b22db0bae9e` passe 116/116 sans retry en 3,2 minutes, zéro WARN/ERROR. Journal `/tmp/qalem-u015-browser-final.log`, SHA-256 `8c646a5ed48f47137b4e9819b0f654dc124d11116e59dbe9c28cc6c20f443550`.
+
+Le déploiement web `kiutnirsb31t1itbm1bq5bah` est en cours depuis 17:21 UTC sur ce SHA. Aucun déploiement worker, aucune migration ni modification de secret. La recette authentifiée UI et le suivi post-déploiement restent requis ; les constats ci-dessous retracent les étapes antérieures, pas des processus encore actifs.
+
 ## État au 7 septembre 2026
 
 Code fonctionnel `b6f42a5`, format et harnais corrigés dans `474ceb5` puis complément de format uniquement. Les exemples statiques et la temporisation simulée disparaissent. Le composant consulte l’API privée existante avec no-store et annulation au démontage, valide sa réponse et ne rend que les métadonnées publiques. Un clic redemande une sonde réelle ; chargement, refus 401/403, échec/invalide et registre vide ne sont pas confondus. Aucune URL ni clé n’est transmise par la route. Le texte annonce le périmètre du processus web et la configuration sécurisée côté serveur.
