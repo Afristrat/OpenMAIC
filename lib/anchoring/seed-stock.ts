@@ -2,7 +2,10 @@ import { z } from 'zod';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
 import type { LearningApproach } from '@/lib/agents/persona-catalog';
 
-export const ANCHOR_SEED_PROMPT_VERSION = 'P3-B-v2';
+export const ANCHOR_SEED_PROMPT_VERSION = 'P3-B-v3';
+
+const ANDRAGOGY_EVALUATIVE_LANGUAGE =
+  /\b(bravo|bien joué|sage décision|continue sur cette lancée|mieux que (?:la plupart|les autres)|exactement (?:le bon|la bonne)|bon niveau d['’]engagement)\b/iu;
 
 const seedSchema = z.object({
   persona: z.string().trim().min(1),
@@ -22,7 +25,11 @@ export type AnchorSeed = z.infer<typeof seedSchema>;
 
 export function parseSeedStock(
   text: string,
-  context: { personas: string[]; sceneRefs: string[] },
+  context: {
+    learningApproach: LearningApproach;
+    personas: string[];
+    sceneRefs: string[];
+  },
 ): AnchorSeed[] {
   const parsed = z.array(seedSchema).min(12).parse(parseJsonResponse<unknown>(text));
   const personas = new Set(context.personas);
@@ -33,6 +40,12 @@ export function parseSeedStock(
     if (!personas.has(seed.persona)) throw new Error(`Unknown casting persona: ${seed.persona}`);
     if (!sceneRefs.has(seed.content.scene_ref)) {
       throw new Error(`Unknown session scene: ${seed.content.scene_ref}`);
+    }
+    if (
+      context.learningApproach === 'andragogy' &&
+      ANDRAGOGY_EVALUATIVE_LANGUAGE.test(`${seed.content.push_hook} ${seed.content.body}`)
+    ) {
+      throw new Error('Evaluative or comparative language is forbidden in andragogy');
     }
     counts[seed.kind] += 1;
   }
@@ -66,4 +79,5 @@ Produis au minimum 4 anecdotes, 4 highlights, 2 jokes et 2 quiz_reminder.
 Accroche push de 90 caractères maximum, corps de 60 mots maximum, dans la langue fournie.
 En arabe, utilise l'arabe standard moderne. En français, emploie des accents irréprochables.
 Toute promotion commerciale, culpabilisation ou comparaison à d'autres apprenants est interdite.
+En andragogie, ne félicite et n'évalue jamais l'adulte, même sous forme d'humour. Sont notamment interdits : « bravo », « bien joué », « sage décision », « mieux que les autres », « bon niveau d'engagement ». L'humour vise uniquement la situation, jamais la personne. N'invente ni devise, ni pays, ni contexte absent des événements.
 Retourne uniquement un tableau JSON conforme à [{"persona":"...","kind":"anecdote|highlight|joke|quiz_reminder","content":{"push_hook":"...","body":"...","scene_ref":"..."}}].`;

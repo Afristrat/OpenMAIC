@@ -106,7 +106,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         thinkingConfig,
       ),
     );
-    const seeds = parseSeedStock(result.text, { personas, sceneRefs });
+    const seeds = parseSeedStock(result.text, { learningApproach, personas, sceneRefs });
     const { error: insertError } = await service.from('seeds').insert(
       seeds.map((seed) => ({
         session_id: id,

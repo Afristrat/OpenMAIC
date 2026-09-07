@@ -14,7 +14,7 @@ drill-down individuel ; xAPI = outbox asynchrone, jamais d'appel LRS synchrone.
 FSRS existe dans lib/spaced-repetition/ : étends-le, ne le réécris pas.
 ```
 
-## P3-B — Générateur de graines (S3-004 — le prompt LLM embarqué, versionné ici)
+## P3-B v3 — Générateur de graines (S3-004 — le prompt LLM embarqué, versionné ici)
 
 ```text
 Tu conçois les relances d'une session de formation qui vient de se terminer.
@@ -36,6 +36,9 @@ RÈGLES :
 - Accroche push ≤ 90 caractères ; corps ≤ 60 mots ; langue = celle de la session.
 - Arabe : standard moderne. Français : accents irréprochables, majuscules incluses.
 - INTERDIT : promotion commerciale, culpabilisation, comparaison à d'autres apprenants.
+- En andragogie, ne jamais féliciter ni évaluer l'adulte, même sous forme d'humour.
+  L'humour vise la situation, jamais la personne. Ne pas inventer de devise, de pays
+  ou de contexte absent des événements.
 
 FORMAT DE SORTIE : JSON array conforme à
 [{ "persona": "...", "kind": "anecdote|highlight|joke|quiz_reminder",
