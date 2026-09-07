@@ -38,3 +38,11 @@ Images de référence relevées avant déploiement : web `88e499b09bf35ac9bcbacf
 Le déploiement web est confirmé `finished` à 14 h 51 UTC. Le conteneur `bcx5pxyuc9z3lt4jtyjipcqu-144633420992` sert l’image `555d8b9f92a1e347fc4c0df1d9152fb898dba0aa`, est healthy, avec zéro redémarrage et `OOMKilled=false`. Il a démarré à 14:50:26 UTC. La santé publique répond 200 ; la route `/api/admin/mcp` répond 401 sans authentification, contre 404 avant cette publication. Cette vérification prouve le déploiement de la route et son refus anonyme, pas son parcours authentifié.
 
 Le déploiement runtime `trobepn3twhqylemt27pbz7q` a été lancé seulement après la fin du web pour éviter deux builds simultanés. Son verdict reste à relever, ainsi que la recette authentifiée et le suivi après déploiement ; S-018 demeure ouverte.
+
+### Runtime et recette authentifiée
+
+Le runtime est confirmé `finished` à 14:59:05 UTC sur `528723a4b1da6feaefea320fcf669ffbcc8b82ce` ; seules les pièces documentaires diffèrent du code validé. Le worker `qalem-workers-a14gf0n3u719hnnd2yujrtmr-145306064687` est healthy, sans redémarrage ni OOM signalé, démarré à 14:59:04 UTC. Le web reste healthy et la santé publique répond 200.
+
+Le harnais `scripts/proofs/s018-admin-mcp.mjs` (`e623a66`) a ouvert la vraie route de production dans Chromium headless avec une session temporaire du super-administrateur existant. Résultat : `authenticatedStatus=200`, `serverCount=0`, `proofSessionRevoked=true`, `sessionFileCreated=false`. Les champs du registre et l’en-tête no-store sont contrôlés. Le rafraîchissement de la session après révocation est refusé. Aucun compte, droit, connecteur ou secret de configuration n’a été créé/modifié ; la seule session de recette a été révoquée.
+
+Le registre vide correspond à l’absence de connecteurs activés, pas à une validation des intégrations NotebookLM/Notion/Drive, qui restent des stories distinctes. Un suivi de quinze minutes des deux conteneurs et de la santé publique a commencé à 15:03:33 UTC et reste à terminer avant clôture.

@@ -4229,7 +4229,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Implémenter le MCP Client pour serveurs externes » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "to_implement",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "file": ".ralph/prd.json",
@@ -4238,7 +4238,7 @@
       },
       "sourceDependencies": ["S-017"],
       "dependencies": ["S0-011"],
-      "gap": "Accord explicite d’Amine sur les connecteurs directs (réponse 4 : ok). Configuration validée, secrets serveur et isolation tenant codés. Initialisation partagée et injection Director/PBL v1/v2, y compris le planificateur nominal au SHA 786f447, raccordées au contexte serveur. Les 35 tests ciblés passent avec TypeScript et lint : transport HTTP SDK, boucle réelle de l’adaptateur avec modèle scripté, consultation puis hydratation PBL, réponse invalide, timeout, reprise après panne et santé super-administrateur. Configuration YAML/JSON et montages web/worker documentés. Restent les parcours navigateur applicables, la preuve du déploiement et le verdict du gate global corrigé. Référence : docs/validation/S-018-mcp-client.md. Cette tranche ne vaut pas livraison complète.",
+      "gap": "Code raccordé et gate global vert au SHA 786f447 : 2713 Vitest, build 113 pages, 112 Playwright sans retry. Web 555d8b9 et worker 528723a déployés avec code identique au SHA validé, tous deux healthy sans redémarrage ni OOM au contrôle. Recette Chromium authentifiée de /api/admin/mcp : HTTP 200, registre vide conforme aux connecteurs désactivés, métadonnées seules et session de preuve révoquée sans fichier persistant. Complément YAML 12fad90 vert avec TypeScript, lint et format. Reste le suivi post-déploiement de quinze minutes lancé à 15:03:33 UTC. Référence : docs/validation/S-018-mcp-client.md. Aucun connecteur documentaire réel activé par cette story.",
       "evidence": ["lib/mcp/client.ts:198"],
       "acceptance": [
         "lib/mcp/client.ts : MCP Client via SDK",
