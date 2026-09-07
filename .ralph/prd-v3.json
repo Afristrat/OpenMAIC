@@ -3682,8 +3682,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « [CHECKPOINT AMINE] Référentiels culture → prénoms validés » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "2-VIVRE",
       "priority": "P2",
-      "status": "decision_required",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S2-011",
@@ -3691,20 +3691,31 @@
       },
       "sourceDependencies": ["S2-002"],
       "dependencies": [],
-      "gap": "Aucune clôture humaine dans le registre ; ne pas activer automatiquement les référentiels.",
-      "evidence": [".ralph/prd-v2.json#S2-011"],
+      "gap": "Résolu : référentiels validés explicitement, contrat structurel exécutable et flag rich_profile activé durablement.",
+      "evidence": [
+        "lib/agents/culture-references.ts",
+        "tests/agents/culture-references.test.ts",
+        "tests/agents/cast-selection.test.ts",
+        "supabase/migrations/00071_enable_rich_profile.sql",
+        "tests/flags/rich-profile-feature-flag-migration.test.ts"
+      ],
       "acceptance": [
         "Fichiers conformes P2-B (≥ 20 prénoms/genre/culture, graphie AR + romanisation)",
         "Validation explicite d'Amine consignée avant activation du flag rich_profile en préprod"
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-07 — Décision humaine explicite : Amine répond « oui » à la validation des référentiels culturels et autorise leur mise en service.",
+        "2026-09-07 — Le contrat exécutable vérifie trois cultures, exactement vingt prénoms uniques par genre et par culture, ainsi que la graphie arabe et la romanisation non vide des quarante prénoms ma-ar. Le casting ne remplace les prénoms qu’après approbation versionnée propre à l’organisation.",
+        "2026-09-07 — La migration 00071 provisionne durablement rich_profile=true avec un upsert idempotent. Application réelle puis relecture Supabase : rich_profile=true, scope=global, updated_at=2026-09-07T11:45:00.204237+00:00.",
+        "2026-09-07 — Gate exact au SHA c47c03e : Prettier, TypeScript et ESLint verts ; 440/440 fichiers et 2 703/2 703 tests Vitest ; build 113 pages ; 112/112 scénarios Playwright. Le premier build a seulement atteint la limite de tas Node par défaut ; sa reprise avec NODE_OPTIONS=--max-old-space-size=4096, prescrite par le PRD, a réussi sans arrêt ni OOM du conteneur."
+      ],
       "historicalEvidence": {
-        "completedAt": null,
-        "note": null,
-        "status": "historical_not_recertified"
+        "completedAt": "2026-09-07",
+        "note": "Recertification fraîche après décision humaine, contrat exécutable, gate complet et activation relue en base.",
+        "status": "recertified"
       },
       "historicalDependencies": ["S2-002"],
-      "executionAllowed": false,
+      "executionAllowed": true,
       "validationRequires": [
         "qualityGates",
         "fresh_evidence_per_acceptance",
