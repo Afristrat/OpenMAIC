@@ -72,9 +72,9 @@ export function parseSeedStock(
     ) {
       throw new Error('Evaluative or comparative language is forbidden in andragogy');
     }
-    const inventedNumber = [...numericTokensFromStrings(seed.content)].find(
-      (token) => !sessionNumbers.has(token),
-    );
+    const inventedNumber = [
+      ...numericTokensFromStrings([seed.content.push_hook, seed.content.body]),
+    ].find((token) => !sessionNumbers.has(token));
     if (inventedNumber) {
       throw new Error(`Numeric claim absent from session: ${inventedNumber}`);
     }
