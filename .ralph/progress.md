@@ -1,5 +1,9 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 7 septembre 2026 — S-037, réconciliation du seuil
+
+La demande utilisateur présente dans cette conversation — « aucun minimum de session comparables » pour l’optimisation et le Director — contredit le critère historique de 100 sessions/sujet. S-037 ne réclame plus cet arbitrage déjà donné : son contrat exige un fallback pour absence/invalidité/erreur et permet une suggestion dès la première observation exploitable, avec volume et limites visibles. Le code `lib/generation/data-optimizer.ts` contient toujours `MIN_SESSIONS=100` et ne filtre pas la requête par organisation ; ces écarts restent à corriger lors de l’implémentation. Le prérequis S-036 est ouvert : `executionAllowed=false` est conservé, statut `blocked` par dépendance, sans activer de collecte. Le suivi autonome S-018 `34120` reste distinct et actif.
+
 ## 7 septembre 2026 — S-018, raccordement MCP en cours
 
 Complément YAML `12fad90` terminé : trois tests de configuration passent, dont lecture YAML réelle par le parseur, liste de tenants, priorité sur JSON et refus d’un YAML mal formé sans repli permissif ; format, TypeScript et lint ciblé passent. Le handle `92941` est terminé. Seul le suivi post-déploiement `34120` reste actif.

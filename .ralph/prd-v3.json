@@ -4511,7 +4511,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Optimisation pipeline de génération par les données » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "decision_required",
+      "status": "blocked",
       "passes": false,
       "source": {
         "file": ".ralph/prd.json",
@@ -4520,15 +4520,15 @@
       },
       "sourceDependencies": ["S-036"],
       "dependencies": ["S0-011", "S-036"],
-      "gap": "getOptimizationSuggestion sans appelant ; bénéfice produit non démontré.",
+      "gap": "Décision utilisateur explicite : aucun minimum de sessions comparables pour l’optimisation. Le seuil historique de 100 sessions est donc retiré du contrat ; MIN_SESSIONS=100 subsiste dans le code et doit être supprimé lors du raccordement. Le traitement commence dès la première observation exploitable, sans présenter son score comme une preuve statistique. L’implémentation reste dépendante de S-036, encore ouverte ; aucune collecte activée par cette réconciliation. getOptimizationSuggestion reste sans appelant et le bénéfice produit reste à mesurer.",
       "evidence": ["lib/generation/data-optimizer.ts:84"],
       "acceptance": [
         "lib/generation/data-optimizer.ts",
         "Ordonnancement optimal basé sur données historiques",
         "Difficulté quiz calibrée par performances passées",
-        "Fallback si pas assez de données",
-        "Seuil minimum 100 sessions/sujet",
-        "Après conservation explicite, tester le fallback en dessous du seuil et la sélection au-dessus du seuil.",
+      "Fallback uniquement en l’absence de données exploitables, en cas d’erreur ou de données invalides ; aucun minimum arbitraire de sessions.",
+      "Appliquer la décision utilisateur « aucun minimum de session comparables » : proposer un ajustement dès la première observation exploitable, en exposant le volume observé et ses limites.",
+      "Tester zéro observation, une observation exploitable et plusieurs observations, sans seuil caché dans le calcul ou chez l’appelant.",
         "Mesurer l’effet sur un protocole d’évaluation défini avant l’expérience ; aucune amélioration pédagogique déclarée sur simple présence du module."
       ],
       "closureEvidence": [],
