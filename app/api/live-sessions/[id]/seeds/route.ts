@@ -34,11 +34,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { id } = await params;
   const { data: session, error: sessionError } = await auth
     .from('live_sessions')
-    .select('id, ended_at, courses(org_id, language), castings(lineup)')
+    .select('id, ended_at, courses(org_id, language, outline), castings(lineup)')
     .eq('id', id)
     .eq('user_id', user.id)
     .maybeSingle();
-  const course = first(session?.courses as Related<{ org_id: string; language: string }>);
+  const course = first(
+    session?.courses as Related<{
+      org_id: string;
+      language: string;
+      outline: Record<string, unknown>;
+    }>,
+  );
   const casting = first(session?.castings as Related<{ lineup: Record<string, unknown>[] }>);
   if (sessionError || !session || !course?.org_id || !casting || !session.ended_at) {
     return apiError('INVALID_REQUEST', 409, 'Session terminée et casting requis');
@@ -77,6 +83,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (sceneRefs.length === 0 || personas.length === 0) {
       throw new Error('Session events and casting personas are required');
     }
+    const storedApproach = course.outline?.learningApproach;
+    const learningApproach =
+      storedApproach === 'pedagogy' || storedApproach === 'hybrid' ? storedApproach : 'andragogy';
 
     const body = await request.json().catch(() => ({}));
     const { model, thinkingConfig } = await resolveModelFromRequest(request, body);
@@ -87,6 +96,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           system: ANCHOR_SEED_SYSTEM_PROMPT,
           prompt: buildSeedStockPrompt({
             language: course.language,
+            learningApproach,
             personas,
             events: events ?? [],
           }),

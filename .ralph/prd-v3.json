@@ -3955,7 +3955,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « [CHECKPOINT AMINE] Ton des graines + fréquences validés sur échantillon » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "3-ANCRER",
       "priority": "P2",
-      "status": "decision_required",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "file": ".ralph/prd-v2.json",
@@ -3964,20 +3964,22 @@
       },
       "sourceDependencies": ["S3-004"],
       "dependencies": ["S3-004"],
-      "gap": "Échantillon réel et fréquence à produire avant décision humaine ; pas de validation présumée.",
+      "gap": "Amine a levé le gate d’exécution le 2026-09-07 et exige vingt graines réelles immédiatement, avec une distinction stricte entre andragogie et pédagogie. L’échantillon et le plan de fréquence restent à produire puis à lui soumettre ; le flag anchoring ne doit pas être activé avant son verdict sur ces artefacts.",
       "evidence": ["tasks/prd-3-ancrer.md"],
       "acceptance": [
         "20 graines réelles + plan de fréquence proposé (gabarit 3-ancrer/06)",
         "Validation explicite avant activation du flag anchoring en préprod"
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-07 — Amine autorise la production de l’échantillon et demande vingt graines le jour même. Il précise que Qalem est d’abord andragogique : les graines doivent partir de l’expérience, des problèmes réels, de l’autonomie et du transfert de l’adulte, sans confondre ce registre avec un guidage pédagogique. Cette tranche lève l’interdiction d’exécution mais ne vaut pas encore acceptation du ton ni activation du flag."
+      ],
       "historicalEvidence": {
         "completedAt": null,
         "note": null,
         "status": "historical_not_recertified"
       },
       "historicalDependencies": [],
-      "executionAllowed": false,
+      "executionAllowed": true,
       "validationRequires": [
         "qualityGates",
         "fresh_evidence_per_acceptance",

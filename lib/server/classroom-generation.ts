@@ -1070,6 +1070,7 @@ export async function generateClassroom(
       stageId,
       title: stage.name,
       language: input.language ?? 'fr-FR',
+      learningApproach: input.learningApproach,
       outlines,
       sourceManifestId: resolvedSources.manifest?.id,
     });

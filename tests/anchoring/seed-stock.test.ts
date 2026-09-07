@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { parseSeedStock } from '@/lib/anchoring/seed-stock';
+import {
+  ANCHOR_SEED_SYSTEM_PROMPT,
+  buildSeedStockPrompt,
+  parseSeedStock,
+} from '@/lib/anchoring/seed-stock';
 
 const valid = [
   ...Array.from({ length: 4 }, (_, index) => ({ kind: 'anecdote', index })),
@@ -13,6 +17,19 @@ const valid = [
 }));
 
 describe('anchoring seed stock', () => {
+  it('transmet l’approche et distingue explicitement l’andragogie', () => {
+    expect(
+      buildSeedStockPrompt({
+        language: 'fr-FR',
+        learningApproach: 'andragogy',
+        personas: ['Hanae'],
+        events: [],
+      }),
+    ).toContain('<learning_approach>andragogy</learning_approach>');
+    expect(ANCHOR_SEED_SYSTEM_PROMPT).toContain('adulte traité en pair autonome');
+    expect(ANCHOR_SEED_SYSTEM_PROMPT).toContain('pedagogy : guidage explicite');
+  });
+
   it('accepts the complete P3-B distribution bound to the actual session', () => {
     expect(
       parseSeedStock(JSON.stringify(valid), {

@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
+import type { LearningApproach } from '@/lib/agents/persona-catalog';
 
-export const ANCHOR_SEED_PROMPT_VERSION = 'P3-B-v1';
+export const ANCHOR_SEED_PROMPT_VERSION = 'P3-B-v2';
 
 const seedSchema = z.object({
   persona: z.string().trim().min(1),
@@ -43,18 +44,24 @@ export function parseSeedStock(
 
 export function buildSeedStockPrompt(input: {
   language: string;
+  learningApproach: LearningApproach;
   personas: string[];
   events: unknown[];
 }): string {
   return `<prompt_version>${ANCHOR_SEED_PROMPT_VERSION}</prompt_version>
 <language>${input.language}</language>
+<learning_approach>${input.learningApproach}</learning_approach>
 <casting>${JSON.stringify(input.personas)}</casting>
 <session_events>${JSON.stringify(input.events)}</session_events>`;
 }
 
-export const ANCHOR_SEED_SYSTEM_PROMPT = `Tu es l'équipe pédagogique d'une session de formation qui vient de se terminer.
+export const ANCHOR_SEED_SYSTEM_PROMPT = `Tu conçois les relances d'une session de formation qui vient de se terminer.
 À partir du résumé de session fourni, génère un stock de graines d'ancrage mémoriel.
 Chaque graine est signée par une personnalité du casting et cite une scene_ref fournie.
+Respecte strictement learning_approach :
+- andragogy : adulte traité en pair autonome ; partir de son expérience, de ses problèmes réels et d'un transfert immédiatement applicable ; bannir tout ton scolaire, infantilisant ou toute félicitation vague ;
+- pedagogy : guidage explicite, progression structurée et étayage adapté à un apprenant qui a besoin d'être accompagné ;
+- hybrid : partir de l'expérience tout en apportant seulement le guidage nécessaire.
 Produis au minimum 4 anecdotes, 4 highlights, 2 jokes et 2 quiz_reminder.
 Accroche push de 90 caractères maximum, corps de 60 mots maximum, dans la langue fournie.
 En arabe, utilise l'arabe standard moderne. En français, emploie des accents irréprochables.

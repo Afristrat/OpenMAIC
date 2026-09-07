@@ -1,4 +1,5 @@
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
+import type { LearningApproach } from '@/lib/agents/persona-catalog';
 import type { SceneOutline } from '@/lib/types/generation';
 
 export type CourseLocale = 'fr-FR' | 'ar-MA' | 'en-US';
@@ -38,6 +39,7 @@ export async function persistGeneratedCourse(input: {
   stageId: string;
   title: string;
   language: CourseLocale;
+  learningApproach: LearningApproach;
   outlines: SceneOutline[];
   sourceManifestId?: string;
 }): Promise<string> {
@@ -48,7 +50,7 @@ export async function persistGeneratedCourse(input: {
     stage_id: input.stageId,
     title: input.title,
     language: input.language,
-    outline: { scenes: input.outlines },
+    outline: { scenes: input.outlines, learningApproach: input.learningApproach },
     source_manifest_id: input.sourceManifestId ?? null,
     status: 'ready' as const,
   };

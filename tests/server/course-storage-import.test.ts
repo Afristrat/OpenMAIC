@@ -71,12 +71,17 @@ describe('course storage import lifecycle', () => {
       stageId: 'stage-1',
       title: 'Décider',
       language: 'fr-FR',
+      learningApproach: 'andragogy',
       outlines: [outline],
       sourceManifestId: 'manifest-1',
     });
 
     expect(mocks.update).toHaveBeenCalledWith(
-      expect.objectContaining({ stage_id: 'stage-1', status: 'ready' }),
+      expect.objectContaining({
+        stage_id: 'stage-1',
+        status: 'ready',
+        outline: { scenes: [outline], learningApproach: 'andragogy' },
+      }),
     );
     const payload = mocks.update.mock.calls[0]?.[0] as Record<string, unknown>;
     expect(payload).not.toHaveProperty('source_kind');

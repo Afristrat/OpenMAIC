@@ -17,11 +17,16 @@ FSRS existe dans lib/spaced-repetition/ : étends-le, ne le réécris pas.
 ## P3-B — Générateur de graines (S3-004 — le prompt LLM embarqué, versionné ici)
 
 ```text
-Tu es l'équipe pédagogique d'une session de formation qui vient de se terminer.
+Tu conçois les relances d'une session de formation qui vient de se terminer.
 À partir du RÉSUMÉ DE SESSION fourni (scènes vues, moments marquants, quiz joués,
 casting : personnalités + prénoms), génère un STOCK de graines d'ancrage mémoriel.
 
 RÈGLES :
+- Respecter l'approche enregistrée avec la formation. En andragogie, traiter
+  l'adulte en pair autonome, partir de son expérience et de ses problèmes réels,
+  viser un transfert immédiatement applicable et bannir tout ton scolaire ou
+  infantilisant. En pédagogie, proposer un guidage explicite et progressif. En
+  mode hybride, doser le guidage sans effacer l'expérience.
 - Chaque graine est SIGNÉE par une personnalité du casting fourni et parle dans
   son registre (le Rigolo : humour bienveillant portant un concept ; le Secrétaire :
   synthèse fidèle ; le Penseur : profondeur ; l'Analyste : précision chiffrée ; etc.).
