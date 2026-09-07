@@ -57,7 +57,8 @@ test('MCP distinguishes empty, forbidden and invalid responses', async ({
   browserConsoleContract.expectHttpError('/api/admin/mcp', 403);
   await page.route('**/api/admin/mcp', (route) => {
     if (phase === 'empty') return route.fulfill({ json: { success: true, servers: [] } });
-    if (phase === 'forbidden') return route.fulfill({ status: 403, json: { error: 'private diagnostics' } });
+    if (phase === 'forbidden')
+      return route.fulfill({ status: 403, json: { error: 'private diagnostics' } });
     return route.fulfill({ json: { success: true, servers: [{ name: 'Invalid configuration' }] } });
   });
   await page.goto('/admin?tab=mcp');

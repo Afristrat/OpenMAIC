@@ -2,6 +2,8 @@
 
 ## 7 septembre 2026 — U-015, interface MCP raccordée
 
+Validation ciblée terminée sur ServeurIA : TypeScript vert, deux tests API, ESLint explicitement appliqué au fichier E2E avec zéro avertissement, quatre Chromium FR/AR/EN dont RTL et gestion vide/refus/invalide. Le premier scénario dépendait du nombre de montages React dev ; il a été corrigé pour changer la réponse au clic, sans modifier le code produit. Le serveur de développement émet un avertissement de racine workspace, conservé comme limite du run (pas un gate global silencieux). S-018 reste clôturée ; Whisper S6-009 reste ouverte. U-015 est `to_validate/passes=false` : gate final et production restent à faire. Aucun processus de test ne reste actif.
+
 La conservation explicite S0-011 et la clôture S-018 lèvent les prérequis de l’interface. Les exemples statiques et le délai simulé sont supprimés au profit de GET /api/admin/mcp : chargement, accès refusé, réponse invalide, registre vide et résultats de sondes distincts. Les URL et secrets restent absents ; l’interface annonce son périmètre web, sans prétendre sonder les workers. FR/AR/EN et quatre scénarios navigateur sont ajoutés. Validation à exécuter sur ServeurIA ; aucun déploiement ni passes=true U-015 à ce stade.
 
 ## 7 septembre 2026 — S-018 clôturée

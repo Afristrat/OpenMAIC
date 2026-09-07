@@ -4670,7 +4670,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Configuration MCP dans admin » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "to_implement",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "file": ".ralph/prd-ui.json",
@@ -4679,7 +4679,7 @@
       },
       "sourceDependencies": ["U-002"],
       "dependencies": ["S0-011", "S-018"],
-      "gap": "Gate levé le 7 septembre 2026 : conservation explicite déjà consignée par S0-011 et client S-018 clôturé. Raccorder l’administration à la configuration effective et aux sondes de son API privée, supprimer les exemples et temporisations simulées ; aucune activation de connecteur ni édition de secrets navigateur autorisée par ce raccordement.",
+      "gap": "Gate levé le 7 septembre 2026 par conservation S0-011 et clôture S-018. UI raccordée à GET /api/admin/mcp, exemples et délais simulés supprimés. Validation ciblée ServeurIA : TypeScript, ESLint sans avertissement après ciblage explicite des E2E, 2 tests API et 4 Chromium FR/AR/EN dont RTL, refus 403 et réponse invalide. Aucun connecteur activé ni secret navigateur. Restent gate global au SHA final et publication/recette production ; référence docs/validation/U-015-admin-mcp.md.",
       "evidence": ["components/admin/mcp-tab.tsx:9"],
       "acceptance": [
         "Afficher la configuration effective autorisée et un résultat réel de connexion, jamais un délai simulé.",

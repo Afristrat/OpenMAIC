@@ -1,0 +1,20 @@
+# U-015 — Administration MCP
+
+## État au 7 septembre 2026
+
+Code fonctionnel `b6f42a5`, format et harnais corrigés dans `474ceb5` puis complément de format uniquement. Les exemples statiques et la temporisation simulée disparaissent. Le composant consulte l’API privée existante avec no-store et annulation au démontage, valide sa réponse et ne rend que les métadonnées publiques. Un clic redemande une sonde réelle ; chargement, refus 401/403, échec/invalide et registre vide ne sont pas confondus. Aucune URL ni clé n’est transmise par la route. Le texte annonce le périmètre du processus web et la configuration sécurisée côté serveur.
+
+## Validation ciblée
+
+ServeurIA, `qalem-refork-exec`, clone `/workspace/.codex-gate-s3-008-fe6ebba` :
+
+- `pnpm exec tsc --noEmit` : succès sur le code fonctionnel.
+- `pnpm exec vitest run tests/mcp/admin-health.test.ts` : 2/2. Refus avant initialisation et route réservée au super-administrateur, absence de diagnostics distants.
+- `pnpm exec eslint --no-ignore --max-warnings 0 components/admin/mcp-tab.tsx e2e/tests/admin-mcp.spec.ts` : succès. Le ciblage initial sans `--no-ignore` ignorait les E2E et émettait un avertissement ; ce passage ne constitue pas la preuve retenue.
+- `E2E_PORT=3018 pnpm exec playwright test e2e/tests/admin-mcp.spec.ts --retries=0` : 4/4 en 8,8 secondes, session 44084 terminée avec code 0. FR/AR/EN, RTL arabe, métadonnées reçues, changement connecté→erreur au clic, vide, 403 et réponse invalide. Les réponses MCP sont interceptées ici ; le protocole réel relève des preuves S-018.
+
+Le premier harnais faisait varier la réponse sur le nombre de requêtes, ce qui assimilait à tort le double montage React de développement à un second test utilisateur. La version corrigée change la réponse explicitement au clic et vérifie une nouvelle requête. Aucun contournement produit ajouté.
+
+## Restes avant clôture
+
+Gate global au SHA final, déploiement et recette authentifiée de l’onglet en production. Le serveur Next de développement signale un workspace parent ignoré ; ce run ciblé n’est pas présenté comme un gate global sans avertissement. Aucune activation documentaire ni garantie mémoire sous charge. `passes=false` maintenu.
