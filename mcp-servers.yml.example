@@ -1,7 +1,7 @@
 # MCP External Server Configuration
 #
 # Copy this file to mcp-servers.yml and enable the servers you want to use.
-# API keys can be set here or via environment variables:
+# API keys must ONLY be set via environment variables (inline keys are ignored):
 #   MCP_{SERVER_ID_UPPER}_API_KEY  (e.g. MCP_NOTION_API_KEY)
 #
 # Supported transports:
@@ -10,6 +10,12 @@
 #
 # Each server exposes tools that Qalem agents can call during PBL sessions
 # and classroom generation. Tools are auto-discovered via MCP protocol.
+# Each server MUST have an explicit organizationIds UUID allowlist before activation.
+# An absent or empty allowlist denies access to every tenant.
+# Docker: mount /app/mcp-servers.yml read-only on both web and worker.
+# Alternatively use MCP_SERVERS JSON when no YAML file is present.
+# Restart each process after changes; GET /api/admin/mcp probes web connections
+# and is restricted to authenticated super-administrators.
 
 servers:
   # ── NotebookLM ──
@@ -20,6 +26,7 @@ servers:
     name: NotebookLM
     url: http://localhost:3001/mcp
     enabled: false
+    organizationIds: []
 
   # ── Notion ──
   # Source: https://github.com/makenotion/notion-mcp-server
@@ -30,6 +37,7 @@ servers:
     name: Notion
     url: http://localhost:3002/mcp
     enabled: false
+    organizationIds: []
 
   # ── Google Drive ──
   # Source: https://github.com/anthropics/anthropic-quickstarts (gdrive MCP)
@@ -40,3 +48,4 @@ servers:
     name: Google Drive
     url: http://localhost:3003/mcp
     enabled: false
+    organizationIds: []
