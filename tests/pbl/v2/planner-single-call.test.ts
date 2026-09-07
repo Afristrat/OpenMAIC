@@ -35,7 +35,14 @@ it('consults authorized MCP tools before hydrating the normal single-output proj
       if (!first) expect(JSON.stringify(prompt)).toContain('CSV reference verified');
       return {
         content: first
-          ? [{ type: 'tool-call', toolCallId: 'lookup-1', toolName: 'docs__lookup', input: '{}' }]
+          ? [
+              {
+                type: 'tool-call',
+                toolCallId: 'lookup-1',
+                toolName: 'docs__lookup',
+                input: '{}',
+              },
+            ]
           : [{ type: 'text', text: validOutput() }],
         finishReason: { unified: first ? 'tool-calls' : 'stop', raw: 'stop' },
         usage: USAGE,
