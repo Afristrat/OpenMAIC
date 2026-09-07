@@ -8,6 +8,13 @@ test.beforeEach(async ({ page }) => {
 
 test('liste, reprend et supprime effectivement un replay consenti', async ({ page }) => {
   let deleted = false;
+  let classroomReads = 0;
+  // This library fixture exercises replay events, not a visual course. Its
+  // explicit empty scene list must still be loaded without reaching real storage.
+  await page.route('**/api/classroom?id=classroom-1', (route) => {
+    classroomReads++;
+    return route.fulfill({ json: { success: true, classroom: { scenes: [] } } });
+  });
   await page.route('**/api/live-sessions', (route) =>
     route.fulfill({
       contentType: 'application/json',
@@ -94,6 +101,7 @@ test('liste, reprend et supprime effectivement un replay consenti', async ({ pag
   await expect(page.getByText('Bienvenue dans cette session.')).toBeVisible();
   await expect(page.getByText('Je souhaite approfondir.')).toBeVisible();
   await expect(page.getByRole('slider', { name: 'Position du replay' })).toHaveValue('4200');
+  await expect.poll(() => classroomReads).toBeGreaterThan(0);
 
   await page.goto('/replays');
   await page.getByRole('button', { name: 'Supprimer définitivement' }).click();
