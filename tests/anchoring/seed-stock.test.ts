@@ -13,7 +13,7 @@ const valid = [
 ].map(({ kind, index }) => ({
   persona: index % 2 ? 'Analyste' : 'Penseur',
   kind,
-  content: { push_hook: `Accroche ${kind} ${index}`, body: 'Corps ancré.', scene_ref: 'scene-1' },
+  content: { push_hook: `Accroche ${kind}`, body: 'Corps ancré.', scene_ref: 'scene-1' },
 }));
 
 describe('anchoring seed stock', () => {
@@ -22,6 +22,7 @@ describe('anchoring seed stock', () => {
       buildSeedStockPrompt({
         language: 'fr-FR',
         learningApproach: 'andragogy',
+        events: [],
         casting: [
           {
             name: 'Hanae',
@@ -40,6 +41,7 @@ describe('anchoring seed stock', () => {
       buildSeedStockPrompt({
         language: 'fr-FR',
         learningApproach: 'andragogy',
+        events: [],
         casting: [
           {
             name: 'Hanae',
@@ -57,6 +59,7 @@ describe('anchoring seed stock', () => {
     expect(
       parseSeedStock(JSON.stringify(valid), {
         learningApproach: 'andragogy',
+        events: [],
         personas: ['Penseur', 'Analyste'],
         sceneRefs: ['scene-1'],
       }),
@@ -67,6 +70,7 @@ describe('anchoring seed stock', () => {
     expect(() =>
       parseSeedStock(JSON.stringify(valid.slice(0, 11)), {
         learningApproach: 'andragogy',
+        events: [],
         personas: ['Penseur', 'Analyste'],
         sceneRefs: ['scene-1'],
       }),
@@ -74,6 +78,7 @@ describe('anchoring seed stock', () => {
     expect(() =>
       parseSeedStock(JSON.stringify([{ ...valid[0], persona: 'Inconnue' }, ...valid.slice(1)]), {
         learningApproach: 'andragogy',
+        events: [],
         personas: ['Penseur', 'Analyste'],
         sceneRefs: ['scene-1'],
       }),
@@ -86,6 +91,7 @@ describe('anchoring seed stock', () => {
         ]),
         {
           learningApproach: 'andragogy',
+          events: [],
           personas: ['Penseur', 'Analyste'],
           sceneRefs: ['scene-1'],
         },
@@ -103,6 +109,7 @@ describe('anchoring seed stock', () => {
     expect(() =>
       parseSeedStock(JSON.stringify(evaluative), {
         learningApproach: 'andragogy',
+        events: [],
         personas: ['Penseur', 'Analyste'],
         sceneRefs: ['scene-1'],
       }),
@@ -110,9 +117,25 @@ describe('anchoring seed stock', () => {
     expect(
       parseSeedStock(JSON.stringify(evaluative), {
         learningApproach: 'pedagogy',
+        events: [],
         personas: ['Penseur', 'Analyste'],
         sceneRefs: ['scene-1'],
       }),
     ).toHaveLength(12);
+  });
+
+  it('refuse un nombre absent des paroles de la session', () => {
+    const invented = valid.map((seed, index) =>
+      index === 0 ? { ...seed, content: { ...seed.content, body: 'Simule un retard de 45 jours.' } } : seed,
+    );
+
+    expect(() =>
+      parseSeedStock(JSON.stringify(invented), {
+        learningApproach: 'andragogy',
+        events: [{ payload: { utterance: 'Le délai observé était de 30 jours.' }, ts_ms: 45 }],
+        personas: ['Penseur', 'Analyste'],
+        sceneRefs: ['scene-1'],
+      }),
+    ).toThrow('Numeric claim absent from session: 45');
   });
 });

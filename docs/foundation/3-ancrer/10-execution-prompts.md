@@ -14,7 +14,7 @@ drill-down individuel ; xAPI = outbox asynchrone, jamais d'appel LRS synchrone.
 FSRS existe dans lib/spaced-repetition/ : étends-le, ne le réécris pas.
 ```
 
-## P3-B v5 — Générateur de graines (S3-004 — le prompt LLM embarqué, versionné ici)
+## P3-B v6 — Générateur de graines (S3-004 — le prompt LLM embarqué, versionné ici)
 
 ```text
 Tu conçois les relances d'une session de formation qui vient de se terminer.
@@ -41,7 +41,8 @@ RÈGLES :
 - En andragogie, ne jamais féliciter ni évaluer l'adulte, son choix, sa compétence ou
   son réflexe. Décrire le fait sans le qualifier, puis poser une question ouverte ou
   proposer une action exécutable. L'humour vise la situation, jamais la personne. Ne
-  pas inventer de devise, de pays ou de contexte absent des événements.
+  pas inventer de devise, de pays, de contexte, de chiffre, de durée ou de seuil
+  absent des événements. Ne pas appeler « écart type » une simple amplitude.
 
 FORMAT DE SORTIE : JSON array conforme à
 [{ "persona": "...", "kind": "anecdote|highlight|joke|quiz_reminder",

@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
 import type { LearningApproach } from '@/lib/agents/persona-catalog';
 
-export const ANCHOR_SEED_PROMPT_VERSION = 'P3-B-v5';
+export const ANCHOR_SEED_PROMPT_VERSION = 'P3-B-v6';
 
 export interface AnchorSeedCastingMember {
   name: string;
@@ -12,7 +12,23 @@ export interface AnchorSeedCastingMember {
 }
 
 const ANDRAGOGY_EVALUATIVE_LANGUAGE =
-  /\b(bravo|bien joué|sage décision|continue sur cette lancée|mieux que (?:la plupart|les autres)|exactement (?:le bon|la bonne)|(?:bon|vrai) (?:réflexe|levier|choix|niveau d['’]engagement)|pilote aguerri|tu as su|tu as montré|c['’]est déjà)\b/iu;
+  /\b(bravo|bien joué|sage décision|continue sur cette lancée|mieux que (?:la plupart|les autres)|exactement (?:le bon|la bonne)|(?:bon|vrai) (?:réflexe|levier|choix|niveau d['’]engagement)|pilote aguerri|tu as su|tu as montré|c['’]est déjà|écart type)\b/iu;
+const NUMERIC_TOKEN = /\p{N}+(?:[.,]\p{N}+)?%?/gu;
+
+function numericTokensFromStrings(value: unknown, output = new Set<string>()): Set<string> {
+  if (typeof value === 'string') {
+    for (const token of value.match(NUMERIC_TOKEN) ?? []) output.add(token);
+    return output;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) numericTokensFromStrings(item, output);
+    return output;
+  }
+  if (value && typeof value === 'object') {
+    for (const item of Object.values(value)) numericTokensFromStrings(item, output);
+  }
+  return output;
+}
 
 const seedSchema = z.object({
   persona: z.string().trim().min(1),
@@ -34,6 +50,7 @@ export function parseSeedStock(
   text: string,
   context: {
     learningApproach: LearningApproach;
+    events: unknown[];
     personas: string[];
     sceneRefs: string[];
   },
@@ -41,6 +58,7 @@ export function parseSeedStock(
   const parsed = z.array(seedSchema).min(12).parse(parseJsonResponse<unknown>(text));
   const personas = new Set(context.personas);
   const sceneRefs = new Set(context.sceneRefs);
+  const sessionNumbers = numericTokensFromStrings(context.events);
   const counts = { anecdote: 0, highlight: 0, joke: 0, quiz_reminder: 0 };
 
   for (const seed of parsed) {
@@ -53,6 +71,12 @@ export function parseSeedStock(
       ANDRAGOGY_EVALUATIVE_LANGUAGE.test(`${seed.content.push_hook} ${seed.content.body}`)
     ) {
       throw new Error('Evaluative or comparative language is forbidden in andragogy');
+    }
+    const inventedNumber = [...numericTokensFromStrings(seed.content)].find(
+      (token) => !sessionNumbers.has(token),
+    );
+    if (inventedNumber) {
+      throw new Error(`Numeric claim absent from session: ${inventedNumber}`);
     }
     counts[seed.kind] += 1;
   }
@@ -86,5 +110,5 @@ Produis au minimum 4 anecdotes, 4 highlights, 2 jokes et 2 quiz_reminder.
 Accroche push de 90 caractères maximum, corps de 60 mots maximum, dans la langue fournie.
 En arabe, utilise l'arabe standard moderne. En français, emploie des accents irréprochables.
 Toute promotion commerciale, culpabilisation ou comparaison à d'autres apprenants est interdite.
-En andragogie, ne félicite et n'évalue jamais l'adulte, son choix, sa compétence ou son réflexe, même sous forme d'humour. Décris le fait observé sans le qualifier, puis pose une question ouverte ou propose une action immédiatement exécutable. Sont notamment interdits : « bravo », « bien joué », « sage décision », « bon réflexe », « vrai levier », « pilote aguerri », « tu as su », « tu as montré », « c'est déjà », « mieux que les autres ». L'humour vise uniquement la situation, jamais la personne. N'invente ni devise, ni pays, ni contexte absent des événements.
+En andragogie, ne félicite et n'évalue jamais l'adulte, son choix, sa compétence ou son réflexe, même sous forme d'humour. Décris le fait observé sans le qualifier, puis pose une question ouverte ou propose une action immédiatement exécutable. Sont notamment interdits : « bravo », « bien joué », « sage décision », « bon réflexe », « vrai levier », « pilote aguerri », « tu as su », « tu as montré », « c'est déjà », « mieux que les autres ». L'humour vise uniquement la situation, jamais la personne. N'invente ni devise, ni pays, ni contexte, ni chiffre, ni durée, ni seuil absent des événements. Ne présente jamais une simple amplitude entre deux hypothèses comme un écart type.
 Retourne uniquement un tableau JSON conforme à [{"persona":"...","kind":"anecdote|highlight|joke|quiz_reminder","content":{"push_hook":"...","body":"...","scene_ref":"..."}}].`;
