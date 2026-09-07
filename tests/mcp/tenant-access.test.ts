@@ -48,4 +48,24 @@ it('hides tools and refuses direct execution outside the configured tenant', asy
     'authorized result',
   );
   expect(calls.tool).toHaveBeenCalledTimes(1);
+  expect(calls.tool).toHaveBeenLastCalledWith(
+    { name: 'search', arguments: {} },
+    expect.anything(),
+    { timeout: 30_000 },
+  );
+  await expect(callExternalTool('docs', 'unknown', {}, 'tenant-a')).rejects.toThrow(
+    'not registered',
+  );
+  expect(calls.tool).toHaveBeenCalledTimes(1);
+
+  for (const response of [
+    { content: [{ type: 'text', text: 'provider error' }], isError: true },
+    { content: [{ type: 'text', text: 42 }] },
+    { unexpected: 'invalid response' },
+  ]) {
+    calls.tool.mockResolvedValueOnce(response);
+    await expect(callExternalTool('docs', 'search', {}, 'tenant-a')).rejects.toThrow(
+      'MCP tool call failed (docs/search)',
+    );
+  }
 });

@@ -9,6 +9,7 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import { CallToolResultSchema } from '@modelcontextprotocol/sdk/types.js';
 import { jsonSchema } from 'ai';
 import { createLogger } from '@/lib/logger';
 
@@ -116,13 +117,13 @@ async function connectToServer(config: MCPServerConfig): Promise<ConnectedServer
     const timeoutId = setTimeout(() => abortController.abort(), timeoutMs);
 
     try {
-      await client.connect(transport, { signal: abortController.signal });
+      await client.connect(transport, { signal: abortController.signal, timeout: timeoutMs });
     } finally {
       clearTimeout(timeoutId);
     }
 
     // List available tools
-    const toolsResult = await client.listTools();
+    const toolsResult = await client.listTools(undefined, { timeout: timeoutMs });
     const tools = toolsResult.tools as MCPToolDefinition[];
 
     log.info(
@@ -136,15 +137,16 @@ async function connectToServer(config: MCPServerConfig): Promise<ConnectedServer
       tools,
       status: 'connected',
     };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+  } catch {
+    await transport.close().catch(() => undefined);
+    const message = 'MCP connection or tool discovery failed';
     log.error(`Failed to connect to MCP server "${config.name}" (${config.id}): ${message}`);
 
     // If Streamable HTTP failed and wasn't explicitly set to SSE, retry with SSE
     if (config.transport !== 'sse') {
       log.info(`Retrying "${config.name}" with SSE transport...`);
+      const sseTransport = createTransport({ ...config, transport: 'sse' });
       try {
-        const sseTransport = createTransport({ ...config, transport: 'sse' });
 
         const abortController = new AbortController();
         const timeoutId = setTimeout(() => abortController.abort(), timeoutMs);
@@ -155,12 +157,12 @@ async function connectToServer(config: MCPServerConfig): Promise<ConnectedServer
         );
 
         try {
-          await sseClient.connect(sseTransport, { signal: abortController.signal });
+          await sseClient.connect(sseTransport, { signal: abortController.signal, timeout: timeoutMs });
         } finally {
           clearTimeout(timeoutId);
         }
 
-        const toolsResult = await sseClient.listTools();
+        const toolsResult = await sseClient.listTools(undefined, { timeout: timeoutMs });
         const tools = toolsResult.tools as MCPToolDefinition[];
 
         log.info(
@@ -174,9 +176,9 @@ async function connectToServer(config: MCPServerConfig): Promise<ConnectedServer
           tools,
           status: 'connected',
         };
-      } catch (sseError) {
-        const sseMessage = sseError instanceof Error ? sseError.message : String(sseError);
-        log.error(`SSE fallback also failed for "${config.name}": ${sseMessage}`);
+      } catch {
+        await sseTransport.close().catch(() => undefined);
+        log.error(`SSE fallback also failed for "${config.name}"`);
       }
     }
 
@@ -293,13 +295,19 @@ export async function callExternalTool(
     throw new Error(`MCP server "${serverId}" is not connected (status: ${server.status})`);
   }
 
+  if (!server.tools.some((tool) => tool.name === toolName)) {
+    throw new Error('MCP tool is not registered');
+  }
+
   log.info(`Calling tool "${toolName}" on server "${server.config.name}"`);
 
   try {
-    const result = await server.client.callTool({
-      name: toolName,
-      arguments: args as Record<string, unknown>,
-    });
+    const result = CallToolResultSchema.parse(await server.client.callTool(
+      { name: toolName, arguments: args as Record<string, unknown> },
+      CallToolResultSchema,
+      { timeout: server.config.timeoutMs ?? DEFAULT_TIMEOUT_MS },
+    ));
+    if (result.isError) throw new Error('MCP server reported a tool failure');
 
     // Extract text content from MCP result for simpler downstream consumption
     if ('content' in result && Array.isArray(result.content)) {
@@ -317,7 +325,7 @@ export async function callExternalTool(
     return result;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    log.error(`Tool call failed: "${toolName}" on "${serverId}": ${message}`);
+    log.error(`Tool call failed: "${toolName}" on "${serverId}"`);
 
     // Attempt reconnection on transport errors
     if (
@@ -328,7 +336,7 @@ export async function callExternalTool(
       await attemptReconnect(serverId);
     }
 
-    throw new Error(`MCP tool call failed (${serverId}/${toolName}): ${message}`);
+    throw new Error(`MCP tool call failed (${serverId}/${toolName})`);
   }
 }
 
