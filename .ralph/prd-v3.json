@@ -4526,9 +4526,9 @@
         "lib/generation/data-optimizer.ts",
         "Ordonnancement optimal basé sur données historiques",
         "Difficulté quiz calibrée par performances passées",
-      "Fallback uniquement en l’absence de données exploitables, en cas d’erreur ou de données invalides ; aucun minimum arbitraire de sessions.",
-      "Appliquer la décision utilisateur « aucun minimum de session comparables » : proposer un ajustement dès la première observation exploitable, en exposant le volume observé et ses limites.",
-      "Tester zéro observation, une observation exploitable et plusieurs observations, sans seuil caché dans le calcul ou chez l’appelant.",
+        "Fallback uniquement en l’absence de données exploitables, en cas d’erreur ou de données invalides ; aucun minimum arbitraire de sessions.",
+        "Appliquer la décision utilisateur « aucun minimum de session comparables » : proposer un ajustement dès la première observation exploitable, en exposant le volume observé et ses limites.",
+        "Tester zéro observation, une observation exploitable et plusieurs observations, sans seuil caché dans le calcul ou chez l’appelant.",
         "Mesurer l’effet sur un protocole d’évaluation défini avant l’expérience ; aucune amélioration pédagogique déclarée sur simple présence du module."
       ],
       "closureEvidence": [],
