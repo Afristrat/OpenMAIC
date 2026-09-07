@@ -363,6 +363,23 @@ export function getConnectedServers(): {
   }));
 }
 
+/** Probe the protocol, not just the last connection status. No tool is replayed. */
+export async function checkMCPHealth(): Promise<ReturnType<typeof getConnectedServers>> {
+  await Promise.all(
+    [...connectedServers.values()].map(async (server) => {
+      try {
+        await server.client.ping({ timeout: server.config.timeoutMs ?? DEFAULT_TIMEOUT_MS });
+        server.status = 'connected';
+        server.errorMessage = undefined;
+      } catch {
+        server.status = 'error';
+        server.errorMessage = 'MCP health check failed';
+      }
+    }),
+  );
+  return getConnectedServers();
+}
+
 /**
  * Attempt to reconnect to a server that has errored.
  * Uses exponential backoff with a maximum number of attempts.
@@ -392,9 +409,9 @@ async function attemptReconnect(serverId: string): Promise<void> {
         log.info(`Reconnected to "${server.config.name}" on attempt ${attempt}`);
         return;
       }
-    } catch (error) {
+    } catch {
       log.warn(
-        `Reconnection attempt ${attempt}/${MAX_RECONNECT_ATTEMPTS} failed for "${server.config.name}": ${error instanceof Error ? error.message : String(error)}`,
+        `Reconnection attempt ${attempt}/${MAX_RECONNECT_ATTEMPTS} failed for "${server.config.name}"`,
       );
     }
   }
@@ -415,10 +432,8 @@ export async function disconnectAll(): Promise<void> {
       (async () => {
         try {
           await server.transport.close();
-        } catch (error) {
-          log.warn(
-            `Error closing transport for "${server.config.name}": ${error instanceof Error ? error.message : String(error)}`,
-          );
+        } catch {
+          log.warn(`Error closing transport for "${server.config.name}"`);
         }
       })(),
     );
@@ -438,10 +453,8 @@ export async function disconnectServer(serverId: string): Promise<void> {
 
   try {
     await server.transport.close();
-  } catch (error) {
-    log.warn(
-      `Error closing transport for "${server.config.name}": ${error instanceof Error ? error.message : String(error)}`,
-    );
+  } catch {
+    log.warn(`Error closing transport for "${server.config.name}"`);
   }
 
   connectedServers.delete(serverId);

@@ -3,6 +3,7 @@ import { once } from 'node:events';
 import { expect, it } from 'vitest';
 import {
   callExternalTool,
+  checkMCPHealth,
   disconnectAll,
   getConnectedServers,
   initMCPClients,
@@ -10,6 +11,7 @@ import {
 
 it('uses the real HTTP SDK, rejects invalid results and bounds a silent tool', async () => {
   const calls: string[] = [];
+  let healthy = true;
   const server = createServer(async (request, response) => {
     if (request.method !== 'POST') {
       response.writeHead(405).end();
@@ -22,6 +24,7 @@ it('uses the real HTTP SDK, rejects invalid results and bounds a silent tool', a
       response.writeHead(202).end();
       return;
     }
+    if (message.method === 'ping' && !healthy) return;
     let result: unknown = {};
     if (message.method === 'initialize') {
       result = {
@@ -80,6 +83,18 @@ it('uses the real HTTP SDK, rejects invalid results and bounds a silent tool', a
     );
     expect(performance.now() - started).toBeLessThan(2_000);
     expect(calls).toEqual(['echo', 'invalid', 'silent']);
+    expect(await checkMCPHealth()).toEqual([expect.objectContaining({ status: 'connected' })]);
+    healthy = false;
+    expect(await checkMCPHealth()).toEqual([
+      expect.objectContaining({ status: 'error', errorMessage: 'MCP health check failed' }),
+    ]);
+    await expect(callExternalTool('http-test', 'echo', {}, 'tenant-a')).rejects.toThrow(
+      'not connected',
+    );
+    healthy = true;
+    expect(await checkMCPHealth()).toEqual([
+      expect.objectContaining({ status: 'connected', errorMessage: undefined }),
+    ]);
   } finally {
     await disconnectAll();
     server.closeAllConnections();
