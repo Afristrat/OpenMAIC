@@ -1,5 +1,9 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 7 septembre 2026 — S-018 clôturée
+
+Le suivi `34120` est terminé, exit 0, dernier relevé 15:18:40 UTC : 31 contrôles réussis depuis 15:03:33. Les logs web et worker depuis ce début contiennent zéro ligne ERROR/FATAL/heap out of memory. L’empreinte du gate a été relue et confirmée. S-018 passe à `completed/passes=true` avec les preuves du code, des contrôles, du déploiement et de Chromium authentifié dans le PRD. Les mentions « actif »/« en cours » ci-dessous sont historiques : aucun suivi S-018 ne reste à attendre. Le risque OOM sous charge n’est pas certifié par cette surveillance.
+
 ## 7 septembre 2026 — S-037, réconciliation du seuil
 
 La demande utilisateur présente dans cette conversation — « aucun minimum de session comparables » pour l’optimisation et le Director — contredit le critère historique de 100 sessions/sujet. S-037 ne réclame plus cet arbitrage déjà donné : son contrat exige un fallback pour absence/invalidité/erreur et permet une suggestion dès la première observation exploitable, avec volume et limites visibles. Le code `lib/generation/data-optimizer.ts` contient toujours `MIN_SESSIONS=100` et ne filtre pas la requête par organisation ; ces écarts restent à corriger lors de l’implémentation. Le prérequis S-036 est ouvert : `executionAllowed=false` est conservé, statut `blocked` par dépendance, sans activer de collecte. Le suivi autonome S-018 `34120` reste distinct et actif.

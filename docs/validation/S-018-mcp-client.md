@@ -1,5 +1,11 @@
 # S-018 — Connecteurs MCP externes
 
+## Verdict final — 7 septembre 2026
+
+S-018 est clôturée. Le suivi `34120` s’est terminé avec le code 0 : 31 contrôles réussis entre 15:03:33 et 15:18:40 UTC (15 minutes et 7 secondes), portant chacun sur la santé web/worker, l’absence de redémarrage/OOM et la santé HTTP publique. La relecture finale des logs depuis 15:03:33 compte zéro ligne `[ERROR]`, `FATAL` ou `heap out of memory` sur les deux conteneurs. L’empreinte du journal de gate ci-dessous a été recontrôlée et correspond.
+
+Les paragraphes de déploiement ci-dessous retracent les étapes historiques, désormais terminées. La clôture couvre le client et son injection, pas les intégrations documentaires ni l’interface U-015. Aucune preuve de résistance à une charge concurrente n’est revendiquée.
+
 ## Périmètre codé au 7 septembre 2026
 
 Le SHA `786f44746c9cbecbbfe04e83778f0fc287bd218b` raccorde les outils externes au Director, au générateur PBL v1, au planificateur PBL v2 agentique et au planificateur PBL v2 nominal. Ce dernier conserve une sortie JSON unique et permet au maximum cinq étapes de consultation lorsqu’il dispose d’outils autorisés. Sans outil externe, son comportement mono-appel reste inchangé.
