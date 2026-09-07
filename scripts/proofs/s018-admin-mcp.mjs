@@ -77,8 +77,15 @@ try {
       (item) => new URL(item.url()).pathname === '/api/admin/mcp',
     );
     await page.goto(`${baseUrl}/admin?tab=mcp`, { timeout: 60_000 });
-    assert.equal((await initialProbe).status(), 200, 'Administration must call the real health route');
-    const refreshButton = page.getByRole('button', { name: 'Vérifier les connexions', exact: true });
+    assert.equal(
+      (await initialProbe).status(),
+      200,
+      'Administration must call the real health route',
+    );
+    const refreshButton = page.getByRole('button', {
+      name: 'Vérifier les connexions',
+      exact: true,
+    });
     await refreshButton.waitFor({ state: 'visible' });
     const refreshed = page.waitForResponse(
       (item) => new URL(item.url()).pathname === '/api/admin/mcp',
