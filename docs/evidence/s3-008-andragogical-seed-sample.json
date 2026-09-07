@@ -1,52 +1,54 @@
 {
   "schemaVersion": 1,
   "storyId": "S3-008",
-  "generatedAt": "2026-09-07T10:15:19.380Z",
-  "promptVersion": "P3-B-v4",
+  "generatedAt": "2026-09-07T10:36:08.159Z",
+  "promptVersion": "P3-B-v5",
   "learningApproach": "andragogy",
   "source": {
-    "type": "certified-session-fixture",
-    "reference": "docs/evidence/s3-004-seed-sample.json",
-    "note": "Événements issus de la session réelle déjà certifiée en S3-004 ; reformulés sans donnée personnelle pour rejouer le prompt P3-B-v4."
+    "eventType": "certified-session-fixture",
+    "eventReference": "docs/evidence/s3-004-seed-sample.json",
+    "castingType": "catalog-backed-review-fixture",
+    "castingReference": "lib/agents/persona-catalog.ts",
+    "note": "Les événements proviennent de la session réelle déjà certifiée en S3-004 et sont reformulés sans donnée personnelle. Les rôles/personas sont les définitions produit réelles du catalogue ; les prénoms illustrent le renommage culturel."
   },
   "execution": {
-    "totalAttempts": 4,
-    "promptV4Attempts": 1,
+    "totalAttempts": 5,
+    "promptV5Attempts": 1,
     "maxOutputTokens": 8192,
-    "elapsedMs": 17713,
+    "elapsedMs": 16330,
     "priorAttempts": [
       {
         "promptVersion": "P3-B-v2",
-        "outcome": "JSON valide entouré d'une clôture Markdown ; le premier harnais ad hoc n'appliquait pas le parseur applicatif."
+        "outcome": "JSON valide entouré d'une clôture Markdown ; premier harnais sans le parseur applicatif."
       },
       {
         "promptVersion": "P3-B-v2",
-        "outcome": "Structure valide, échantillon rejeté à l'audit préparatoire pour quatre formulations évaluatives ou comparatives."
+        "outcome": "Échantillon rejeté pour quatre formulations évaluatives ou comparatives."
       },
       {
         "promptVersion": "P3-B-v3",
-        "outcome": "Structure valide, échantillon rejeté à l'audit préparatoire pour des jugements implicites tels que « bon réflexe » et « pilote aguerri »."
+        "outcome": "Échantillon rejeté pour des jugements implicites tels que « bon réflexe » et « pilote aguerri »."
+      },
+      {
+        "promptVersion": "P3-B-v4",
+        "outcome": "Échantillon rejeté : les seuls prénoms ne permettaient pas de différencier les voix et une formulation confondait hypothèse basse et marge de sécurité."
       }
     ]
-  },
-  "runtime": {
-    "webCommit": "681ecd7d5725f9cc96ca6ceb712a3deba310f5f3",
-    "note": "Le prompt P3-B-v4 a été exécuté depuis le runtime Qalem sain avec la configuration LiteLLM de production ; le code P3-B-v4 exact a ensuite été déployé au SHA f31e670a5d50a5ee55a925943157cbfe69b8cef2."
   },
   "model": {
     "alias": "deepseek-v4-flash",
     "upstream": "deepseek-v4-flash"
   },
   "usage": {
-    "inputTokens": 797,
-    "outputTokens": 2614,
-    "totalTokens": 3411
+    "inputTokens": 1014,
+    "outputTokens": 2346,
+    "totalTokens": 3360
   },
   "cost": {
     "currency": "USD",
-    "proxyReportedV4Attempt": 0.0036921040000000003,
+    "proxyReportedV5Attempt": 0.0035428800000000004,
     "priorAttemptTotalUnavailable": true,
-    "authority": "Le coût P3-B-v4 provient de l'en-tête x-litellm-response-cost ; le premier appel P3-B-v2 n'avait pas persisté son coût."
+    "authority": "Le coût P3-B-v5 provient de l'en-tête x-litellm-response-cost ; le premier appel P3-B-v2 n'avait pas persisté son coût."
   },
   "count": 20,
   "distribution": {
@@ -55,20 +57,60 @@
     "joke": 4,
     "quiz_reminder": 4
   },
-  "allowedPersonas": ["Hanae", "Youssef", "Salma"],
-  "allowedSceneRefs": ["scene-budget", "scene-risques", "scene-actions"],
+  "casting": [
+    {
+      "name": "Hanae",
+      "role": "assistant",
+      "mechanismId": "coach",
+      "persona": "Encourage avec exigence. Elle demande un prochain pas concret, donne un retour précis sur ce qui est formulé et évite l'enthousiasme creux ou infantilisant."
+    },
+    {
+      "name": "Youssef",
+      "role": "assistant",
+      "mechanismId": "analyst",
+      "persona": "Met les affirmations à l'épreuve des faits. Il compare, quantifie, recherche les causes, distingue corrélation et causalité et aide l'apprenant à décider sur des critères explicites."
+    },
+    {
+      "name": "Salma",
+      "role": "student",
+      "mechanismId": "joker",
+      "persona": "Énergise le groupe par une remarque brève, une analogie mémorable ou un décalage humoristique pertinent. Son humour ne vise jamais une personne et se retire dans les moments sensibles."
+    }
+  ],
+  "allowedSceneRefs": [
+    "scene-budget",
+    "scene-risques",
+    "scene-actions"
+  ],
   "proposedFrequency": {
     "scheduledSeedCount": 12,
     "coldEvaluationCount": 2,
     "totalDeliveryCount": 14,
-    "seedDays": [2, 5, 9, 14, 20, 27, 35, 44, 54, 65, 77, 90],
-    "coldEvaluationDays": [30, 60],
+    "seedDays": [
+      2,
+      5,
+      9,
+      14,
+      20,
+      27,
+      35,
+      44,
+      54,
+      65,
+      77,
+      90
+    ],
+    "coldEvaluationDays": [
+      30,
+      60
+    ],
     "horizonDays": 90,
     "note": "Les 20 graines forment le stock de revue. Le plan produit sélectionne 12 graines et ajoute deux évaluations à froid, soit 14 livraisons jusqu'à J+90."
   },
   "automatedAcceptance": {
     "structure": true,
-    "andragogyLanguageGuard": true
+    "andragogyLanguageGuard": true,
+    "personaVoiceBinding": true
   },
   "humanAcceptance": false,
   "seeds": [
@@ -76,8 +118,8 @@
       "persona": "Hanae",
       "kind": "anecdote",
       "content": {
-        "push_hook": "Le coût caché qui plombe les budgets",
-        "body": "Tu as évoqué tes projets où les coûts récurrents dépassent toujours le prévu. C'est un classique : on chiffre l'investissement initial avec soin, puis on découvre les abonnements, la maintenance, les frais annexes. Sur ton prochain budget, quels postes récurrents pourrais-tu lister dès maintenant ?",
+        "push_hook": "Budget sous-estimé : et maintenant ?",
+        "body": "Tu as évoqué tes projets où les coûts récurrents dépassent le prévu. Prends le dernier exemple cité. Ouvre son budget réel et liste les lignes mensuelles. Laquelle n'apparaissait pas au départ ?",
         "scene_ref": "scene-budget"
       }
     },
@@ -85,17 +127,8 @@
       "persona": "Youssef",
       "kind": "anecdote",
       "content": {
-        "push_hook": "Quand le scénario tendu révèle l'essentiel",
-        "body": "Face au scénario tendu, tu as identifié le risque de trésorerie comme prioritaire. Dans la réalité, c'est souvent ce risque qui met fin à un projet, même rentable sur le papier. Quel indicateur de trésorerie surveilles-tu concrètement dans tes activités actuelles ?",
-        "scene_ref": "scene-risques"
-      }
-    },
-    {
-      "persona": "Salma",
-      "kind": "anecdote",
-      "content": {
-        "push_hook": "L'écart entre le budget prévu et le réel",
-        "body": "Tu as constaté que tes budgets réels s'écartent des prévisions, surtout sur les coûts récurrents. Cet écart, une fois identifié, devient une donnée précieuse pour calibrer tes prochaines estimations. Quel a été le poste le plus sous-estimé dans ton dernier projet ?",
+        "push_hook": "Écart budget réel vs prévu",
+        "body": "Tu as identifié une tendance : sous-estimation des coûts récurrents. Sur tes trois derniers projets, quel a été l'écart moyen en pourcentage entre le prévisionnel et le réel sur ces postes ? Ce chiffre devient ta marge de référence.",
         "scene_ref": "scene-budget"
       }
     },
@@ -103,8 +136,26 @@
       "persona": "Hanae",
       "kind": "anecdote",
       "content": {
-        "push_hook": "Le risque qui change toute la donne",
-        "body": "Dans l'exercice, le risque de trésorerie est apparu comme le point critique. Dans un projet réel, ce risque peut surgir à tout moment : un retard de paiement, une dépense imprévue. Comment anticipes-tu actuellement les variations de trésorerie dans tes projets ?",
+        "push_hook": "Prochain budget : une action concrète",
+        "body": "Tu as décidé de tester chaque poste avec une hypothèse basse et haute. Pour concrétiser, ouvre ton prochain budget et ajoute deux colonnes. Renseigne-les pour les trois premiers postes. Quel écart constates-tu entre les deux scénarios ?",
+        "scene_ref": "scene-actions"
+      }
+    },
+    {
+      "persona": "Youssef",
+      "kind": "anecdote",
+      "content": {
+        "push_hook": "Risque prioritaire : trésorerie",
+        "body": "Tu as classé le risque de trésorerie en tête. Pour vérifier cette priorité, compare-le à un scénario où un client paie à 60 jours au lieu de 30. Quel impact cela a-t-il sur ta capacité à couvrir les charges fixes du mois ?",
+        "scene_ref": "scene-risques"
+      }
+    },
+    {
+      "persona": "Hanae",
+      "kind": "anecdote",
+      "content": {
+        "push_hook": "Scénario tendu : ta priorité",
+        "body": "Face au scénario tendu, tu as nommé le risque de trésorerie comme critique. Reprends ce scénario et identifie le premier signal d'alerte objectif qui déclencherait une action de ta part. Quel indicateur choisis-tu ?",
         "scene_ref": "scene-risques"
       }
     },
@@ -112,17 +163,8 @@
       "persona": "Youssef",
       "kind": "anecdote",
       "content": {
-        "push_hook": "L'hypothèse qui change la fiabilité d'un budget",
-        "body": "Tu as choisi de tester chaque poste avec une hypothèse basse et haute. Cette approche par fourchette transforme un budget unique en outil de pilotage. Sur quel poste de ton prochain budget l'écart entre hypothèse basse et haute sera-t-il le plus grand ?",
-        "scene_ref": "scene-actions"
-      }
-    },
-    {
-      "persona": "Salma",
-      "kind": "anecdote",
-      "content": {
-        "push_hook": "La sous-estimation chronique des coûts récurrents",
-        "body": "Tu as remarqué que les coûts récurrents sont systématiquement sous-estimés dans tes projets. C'est un phénomène fréquent : on retient le coût d'acquisition, on oublie le coût de possession. Quels coûts récurrents pourraient apparaître dans les 6 mois suivant le lancement de ton prochain projet ?",
+        "push_hook": "Coûts récurrents : les mesurer",
+        "body": "Tu as constaté une sous-estimation récurrente. Pour objectiver, sors ton dernier budget et calcule la part des coûts récurrents dans le total. Est-elle supérieure à 50 % ? Si oui, quelle marge de sécurité appliques-tu désormais ?",
         "scene_ref": "scene-budget"
       }
     },
@@ -130,26 +172,35 @@
       "persona": "Hanae",
       "kind": "highlight",
       "content": {
-        "push_hook": "Le risque prioritaire : la trésorerie",
-        "body": "Tu as confronté ton expérience au scénario et identifié le risque de trésorerie comme prioritaire. Cette hiérarchisation est une étape clé : elle oriente toute la stratégie de mitigation. Quelle action concrète peux-tu mettre en place cette semaine pour sécuriser ta trésorerie ?",
-        "scene_ref": "scene-risques"
+        "push_hook": "Hypothèses basses et hautes",
+        "body": "Tu as formulé une méthode : tester chaque poste avec deux hypothèses. Applique-la dès maintenant sur un poste variable de ton budget. Note les deux montants. Lequel est le plus difficile à estimer ? Pourquoi ?",
+        "scene_ref": "scene-actions"
       }
     },
     {
       "persona": "Youssef",
       "kind": "highlight",
       "content": {
-        "push_hook": "La méthode basse/haute pour fiabiliser",
-        "body": "Tu as décidé d'appliquer une hypothèse basse et une hypothèse haute à chaque poste budgétaire. Cette fourchette de valeurs te donne une vision claire du pire et du meilleur cas. Quel poste de ton budget actuel mérite le plus cette double hypothèse ?",
-        "scene_ref": "scene-actions"
+        "push_hook": "Risque de trésorerie : le tester",
+        "body": "Tu as identifié le risque de trésorerie comme prioritaire. Pour le valider, simule un retard de paiement de 45 jours sur ton prochain budget. Ta trésorerie résiste-t-elle ? Si non, quelle ligne ajustes-tu en premier ?",
+        "scene_ref": "scene-risques"
       }
     },
     {
-      "persona": "Salma",
+      "persona": "Hanae",
       "kind": "highlight",
       "content": {
-        "push_hook": "Le déclic sur les coûts récurrents",
-        "body": "Tu as pris conscience que tes budgets sous-estiment les coûts récurrents. Cette prise de conscience est le premier pas vers des prévisions plus réalistes. Quels sont les trois coûts récurrents les plus fréquents dans ton secteur d'activité ?",
+        "push_hook": "Budget fiable : prochaine étape",
+        "body": "Tu as défini un objectif : fiabiliser tes budgets. Pour avancer, choisis un projet à venir et liste ses coûts récurrents probables. Compare avec un projet similaire passé. Quelle ligne manquait la dernière fois ?",
+        "scene_ref": "scene-budget"
+      }
+    },
+    {
+      "persona": "Youssef",
+      "kind": "highlight",
+      "content": {
+        "push_hook": "Corrélation ou causalité ?",
+        "body": "Tu as relié sous-estimation des coûts et difficultés budgétaires. Pour distinguer corrélation et causalité, demande-toi : la sous-estimation est-elle la cause ou la conséquence d'un manque de données historiques ? Quelles données te manquent ?",
         "scene_ref": "scene-budget"
       }
     },
@@ -157,8 +208,8 @@
       "persona": "Hanae",
       "kind": "highlight",
       "content": {
-        "push_hook": "La priorisation des risques en action",
-        "body": "Dans le scénario tendu, tu as classé le risque de trésorerie en tête. Cette priorisation permet de concentrer les efforts là où l'impact est maximal. Quel serait ton plan d'action immédiat si ta trésorerie passait sous un seuil critique demain ?",
+        "push_hook": "Scénario tendu : prochain pas",
+        "body": "Tu as priorisé le risque de trésorerie dans un scénario tendu. Pour passer à l'action, définis un seuil de trésorerie minimal. En dessous de ce seuil, quelle décision prends-tu immédiatement ?",
         "scene_ref": "scene-risques"
       }
     },
@@ -166,80 +217,62 @@
       "persona": "Youssef",
       "kind": "highlight",
       "content": {
-        "push_hook": "L'engagement vers un budget plus fiable",
-        "body": "Tu t'es engagé à tester chaque poste avec deux hypothèses. Cette méthode transforme ton budget en outil d'aide à la décision. Quel poste de ton prochain budget est le plus difficile à estimer et pourquoi ?",
+        "push_hook": "Hypothèses : les quantifier",
+        "body": "Tu as choisi de tester des hypothèses basses et hautes. Pour rendre cela opérationnel, fixe un écart type entre les deux : 10 %, 20 % ou 30 % ? Quel écart reflète le mieux l'incertitude de tes projets ?",
         "scene_ref": "scene-actions"
-      }
-    },
-    {
-      "persona": "Salma",
-      "kind": "highlight",
-      "content": {
-        "push_hook": "Le lien entre expérience et méthode",
-        "body": "Tu as relié ton expérience de sous-estimation à une méthode concrète : les hypothèses basse et haute. Ce lien entre vécu et outil est ce qui rend la méthode applicable. Quel budget en cours pourrais-tu réviser avec cette approche dès aujourd'hui ?",
-        "scene_ref": "scene-actions"
-      }
-    },
-    {
-      "persona": "Hanae",
-      "kind": "joke",
-      "content": {
-        "push_hook": "Le budget qui se venge après coup",
-        "body": "Les coûts récurrents, c'est comme les mauvaises surprises : ils arrivent toujours après qu'on ait signé. La différence, c'est qu'on peut les anticiper avec une hypothèse haute. Quel est le coût récurrent que tu aimerais pouvoir oublier dans ton prochain budget ?",
-        "scene_ref": "scene-budget"
-      }
-    },
-    {
-      "persona": "Youssef",
-      "kind": "joke",
-      "content": {
-        "push_hook": "La trésorerie, ce sport extrême",
-        "body": "La trésorerie, c'est un peu comme un fil tendu : on avance, on avance, et il suffit d'un imprévu pour perdre l'équilibre. L'avantage, c'est qu'on peut installer un filet avec des hypothèses basses. Quel imprévu pourrait bien te faire perdre l'équilibre ce mois-ci ?",
-        "scene_ref": "scene-risques"
       }
     },
     {
       "persona": "Salma",
       "kind": "joke",
       "content": {
-        "push_hook": "L'hypothèse basse, cette optimiste",
-        "body": "L'hypothèse basse, c'est celle qui dit que tout va bien se passer. L'hypothèse haute, c'est celle qui connaît la vraie vie. Entre les deux, il y a ton budget réaliste. Quelle est la part d'optimisme dans ton dernier budget ?",
+        "push_hook": "Coûts récurrents, les invités surprise",
+        "body": "Les coûts récurrents, c'est comme les invités surprise : on les oublie toujours, puis ils arrivent avec une bouteille… et repartent avec le budget. Quelle ligne fantôme vas-tu traquer en premier ?",
+        "scene_ref": "scene-budget"
+      }
+    },
+    {
+      "persona": "Salma",
+      "kind": "joke",
+      "content": {
+        "push_hook": "Hypothèses hautes et basses",
+        "body": "Hypothèse basse, hypothèse haute : on dirait un régime, sauf que là, c'est le budget qui fait des écarts. Entre tes deux scénarios, lequel te fait le plus transpirer ?",
         "scene_ref": "scene-actions"
       }
     },
     {
-      "persona": "Hanae",
+      "persona": "Salma",
       "kind": "joke",
       "content": {
-        "push_hook": "Le risque de trésorerie, ce cache-cache",
-        "body": "Le risque de trésorerie aime jouer à cache-cache : il se cache dans les retards de paiement, les factures imprévues, les charges qui grimpent. Le repérer en premier, c'est gagner la partie. Où pourrait-il bien se cacher dans ton activité actuelle ?",
+        "push_hook": "Trésorerie, le funambule",
+        "body": "La trésorerie, c'est un funambule : ça tient tant qu'on ne regarde pas en bas. Toi, tu as regardé, et tu as vu le vide. Quelle corde de sécurité ajoutes-tu à ton prochain budget ?",
         "scene_ref": "scene-risques"
+      }
+    },
+    {
+      "persona": "Salma",
+      "kind": "joke",
+      "content": {
+        "push_hook": "Budget : le régime éternel",
+        "body": "Un budget fiable, c'est comme un régime : on commence avec des bonnes résolutions, puis on craque sur les imprévus. Quelle gourmandise budgétaire vas-tu anticiper cette fois ?",
+        "scene_ref": "scene-budget"
       }
     },
     {
       "persona": "Youssef",
       "kind": "quiz_reminder",
       "content": {
-        "push_hook": "Test : quel est ton risque prioritaire ?",
-        "body": "Dans un scénario tendu, tu as identifié le risque de trésorerie comme prioritaire. Question : quels sont les signes avant-coureurs d'un problème de trésorerie dans un projet ? Observe ton projet actuel et note les signaux que tu peux repérer.",
+        "push_hook": "Quiz : risque prioritaire",
+        "body": "Dans un scénario tendu, quel risque as-tu classé en premier ? Si c'est la trésorerie, vérifie : quel indicateur financier mesure directement ce risque ? Réponds en un mot, puis compare avec ton budget.",
         "scene_ref": "scene-risques"
-      }
-    },
-    {
-      "persona": "Salma",
-      "kind": "quiz_reminder",
-      "content": {
-        "push_hook": "Vérification : tes coûts récurrents",
-        "body": "Tu as constaté que les coûts récurrents sont souvent sous-estimés. Question : quels sont les coûts récurrents que tu as identifiés dans ton dernier projet ? Compare-les avec ce que tu avais budgété initialement et note l'écart.",
-        "scene_ref": "scene-budget"
       }
     },
     {
       "persona": "Hanae",
       "kind": "quiz_reminder",
       "content": {
-        "push_hook": "Application : hypothèse basse ou haute ?",
-        "body": "Tu as décidé de tester chaque poste avec deux hypothèses. Question : pour quel poste de ton budget l'hypothèse haute est-elle la plus difficile à estimer ? Prends ton budget actuel et applique cette double hypothèse à un poste précis.",
+        "push_hook": "Quiz : méthode budget",
+        "body": "Quelle méthode as-tu choisie pour fiabiliser tes budgets ? Si c'est l'hypothèse basse/haute, applique-la sur un poste. Quel montant retiens-tu pour ton scénario prudent ?",
         "scene_ref": "scene-actions"
       }
     },
@@ -247,8 +280,17 @@
       "persona": "Youssef",
       "kind": "quiz_reminder",
       "content": {
-        "push_hook": "Réflexion : ton prochain budget",
-        "body": "Tu as identifié le risque de trésorerie comme prioritaire et choisi une méthode pour fiabiliser tes budgets. Question : quel est le premier poste que tu vas tester avec une hypothèse basse et haute sur ton prochain budget ? Note-le et fixe-toi une échéance.",
+        "push_hook": "Quiz : coûts récurrents",
+        "body": "Quelle catégorie de coûts sous-estimes-tu régulièrement ? Si ce sont les récurrents, combien de postes de ce type ton dernier budget contenait-il ? Compare avec la réalité.",
+        "scene_ref": "scene-budget"
+      }
+    },
+    {
+      "persona": "Hanae",
+      "kind": "quiz_reminder",
+      "content": {
+        "push_hook": "Quiz : prochaine action",
+        "body": "Quelle action concrète as-tu décidée en fin de session ? Si c'est tester deux hypothèses, ouvre ton budget et ajoute les colonnes. Quel poste traites-tu en premier ?",
         "scene_ref": "scene-actions"
       }
     }
