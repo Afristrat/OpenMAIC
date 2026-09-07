@@ -14,7 +14,7 @@ drill-down individuel ; xAPI = outbox asynchrone, jamais d'appel LRS synchrone.
 FSRS existe dans lib/spaced-repetition/ : étends-le, ne le réécris pas.
 ```
 
-## P3-B v4 — Générateur de graines (S3-004 — le prompt LLM embarqué, versionné ici)
+## P3-B v5 — Générateur de graines (S3-004 — le prompt LLM embarqué, versionné ici)
 
 ```text
 Tu conçois les relances d'une session de formation qui vient de se terminer.
@@ -30,6 +30,8 @@ RÈGLES :
 - Chaque graine est SIGNÉE par une personnalité du casting fourni et parle dans
   son registre (le Rigolo : humour bienveillant portant un concept ; le Secrétaire :
   synthèse fidèle ; le Penseur : profondeur ; l'Analyste : précision chiffrée ; etc.).
+  Le générateur reçoit le rôle, le mécanisme et la persona persistés, pas seulement
+  le prénom de la personnalité.
 - Chaque graine CITE un moment précis de la session (référence scene_ref fournie) —
   rien de générique réutilisable dans une autre session.
 - Types à produire : anecdote (4+), highlight (4+), joke (2+), quiz_reminder (2+).

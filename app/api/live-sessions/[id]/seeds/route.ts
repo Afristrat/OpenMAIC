@@ -77,10 +77,26 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           .filter((value): value is string => typeof value === 'string'),
       ),
     ];
-    const personas = casting.lineup
-      .map((agent) => agent.name ?? agent.id)
-      .filter((value): value is string => typeof value === 'string' && value.length > 0);
-    if (sceneRefs.length === 0 || personas.length === 0) {
+    const seedCasting = casting.lineup.flatMap((agent) => {
+      const name = agent.name ?? agent.id;
+      if (typeof name !== 'string' || name.trim().length === 0) return [];
+      const optionalText = (key: 'role' | 'mechanismId' | 'persona') => {
+        const value = agent[key];
+        return typeof value === 'string' && value.trim().length > 0
+          ? value.trim().slice(0, 1_000)
+          : undefined;
+      };
+      return [
+        {
+          name: name.trim(),
+          role: optionalText('role'),
+          mechanismId: optionalText('mechanismId'),
+          persona: optionalText('persona'),
+        },
+      ];
+    });
+    const personas = seedCasting.map((agent) => agent.name);
+    if (sceneRefs.length === 0 || seedCasting.length === 0) {
       throw new Error('Session events and casting personas are required');
     }
     const storedApproach = course.outline?.learningApproach;
@@ -97,7 +113,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           prompt: buildSeedStockPrompt({
             language: course.language,
             learningApproach,
-            personas,
+            casting: seedCasting,
             events: events ?? [],
           }),
         },

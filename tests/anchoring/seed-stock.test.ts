@@ -22,12 +22,35 @@ describe('anchoring seed stock', () => {
       buildSeedStockPrompt({
         language: 'fr-FR',
         learningApproach: 'andragogy',
-        personas: ['Hanae'],
+        casting: [
+          {
+            name: 'Hanae',
+            role: 'assistant',
+            mechanismId: 'coach',
+            persona: 'Demande un prochain pas concret.',
+          },
+        ],
         events: [],
       }),
     ).toContain('<learning_approach>andragogy</learning_approach>');
     expect(ANCHOR_SEED_SYSTEM_PROMPT).toContain('adulte traité en pair autonome');
     expect(ANCHOR_SEED_SYSTEM_PROMPT).toContain('pedagogy : guidage explicite');
+    expect(ANCHOR_SEED_SYSTEM_PROMPT).toContain('respecte son rôle, son mécanisme et sa persona');
+    expect(
+      buildSeedStockPrompt({
+        language: 'fr-FR',
+        learningApproach: 'andragogy',
+        casting: [
+          {
+            name: 'Hanae',
+            role: 'assistant',
+            mechanismId: 'coach',
+            persona: 'Demande un prochain pas concret.',
+          },
+        ],
+        events: [],
+      }),
+    ).toContain('"mechanismId":"coach"');
   });
 
   it('accepts the complete P3-B distribution bound to the actual session', () => {
