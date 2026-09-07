@@ -4238,7 +4238,7 @@
       },
       "sourceDependencies": ["S-017"],
       "dependencies": ["S0-011"],
-      "gap": "Client MCP sans appelant de production retrouvé ; arbitrer les connecteurs directs face au contrat Diwan.",
+      "gap": "Accord explicite d’Amine sur les connecteurs directs (réponse 4 : ok). Configuration validée, secrets chargés depuis l’environnement et contrôle de tenant à la découverte comme à l’appel codés. Restent l’initialisation unique, le raccordement PBL/Director avec organisation authentifiée, les délais bornés, le contrôle des réponses et la recette réelle. Cette tranche ne vaut pas livraison complète.",
       "evidence": ["lib/mcp/client.ts:198"],
       "acceptance": [
         "lib/mcp/client.ts : MCP Client via SDK",

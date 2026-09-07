@@ -39,9 +39,7 @@ it('hides tools and refuses direct execution outside the configured tenant', asy
   ]);
   expect(getExternalTools()).toEqual({});
   expect(getExternalTools('tenant-b')).toEqual({});
-  await expect(callExternalTool('docs', 'search', {}, 'tenant-b')).rejects.toThrow(
-    'access denied',
-  );
+  await expect(callExternalTool('docs', 'search', {}, 'tenant-b')).rejects.toThrow('access denied');
   await expect(callExternalTool('docs', 'search', {})).rejects.toThrow('access denied');
   expect(calls.tool).not.toHaveBeenCalled();
   expect(getExternalTools('tenant-a').docs__search.inputSchema).toBeDefined();
