@@ -1,5 +1,13 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 7 septembre 2026 — S-018, raccordement MCP en cours
+
+Le SHA `1ef3704` sur `origin/refork-v030` comprend l’initialisation paresseuse unique, la transmission du tenant par le contexte serveur existant et l’injection des outils externes dans le Director et les boucles PBL v1/v2. Les outils internes conservent leur priorité. Le registre dispose désormais d’une sonde `ping` bornée ; ses erreurs ne recopient pas les messages distants dans les logs.
+
+Validation ciblée dans `qalem-refork-exec`, clone isolé `/workspace/.codex-gate-s3-008-fe6ebba` : format des fichiers touchés, TypeScript et lint passent ; 5 fichiers / 39 tests passent. Le test HTTP utilise réellement le SDK client et un serveur de protocole contrôlé : succès, refus inter-tenant sans appel réseau, résultat invalide, outil silencieux expirant, santé dégradée puis rétablie. Aucun fournisseur externe de production n’a été activé par cette recette.
+
+S-018 reste ouverte : preuve des consommateurs de bout en bout, exposition opérationnelle de la santé, configuration de déploiement et gate complet encore requis. Le planificateur PBL mono-appel sans outils n’a pas été transformé en boucle agentique. Aucun `passes=true` ajouté.
+
 ## État de référence — 26 août 2026
 
 La source active est désormais `.ralph/prd-v3.json` ; vue de lecture : `tasks/prd-v3.md`.
