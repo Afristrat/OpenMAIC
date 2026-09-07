@@ -4238,7 +4238,7 @@
       },
       "sourceDependencies": ["S-017"],
       "dependencies": ["S0-011"],
-      "gap": "Accord explicite d’Amine sur les connecteurs directs (réponse 4 : ok). Configuration validée, secrets serveur et isolation tenant codés. Initialisation unique par processus et injection dans Director/PBL v1/v2 raccordées au contexte serveur. Au SHA 1ef3704, 39 contrôles ciblés passent avec TypeScript et lint sur ServeurIA, dont un vrai transport HTTP SDK : appel, réponse invalide, timeout, santé en panne puis rétablie. Restent la preuve des consommateurs de bout en bout, le raccordement opérationnel de la santé et la configuration de déploiement, puis le gate complet. Cette tranche ne vaut pas livraison complète.",
+      "gap": "Accord explicite d’Amine sur les connecteurs directs (réponse 4 : ok). Configuration validée, secrets serveur et isolation tenant codés. Initialisation unique par processus et injection dans Director/PBL v1/v2 raccordées au contexte serveur. Au SHA 8e462a6, huit tests MCP ciblés passent avec TypeScript et lint sur ServeurIA : transport HTTP SDK, boucle réelle de l’adaptateur Director avec modèle scripté, réponse invalide, timeout, reprise après panne et route de santé super-administrateur. La configuration documente les listes de tenants, secrets par environnement et montages web/worker. Restent les parcours complets PBL/classroom, la preuve du déploiement applicable et le gate complet. Cette tranche ne vaut pas livraison complète.",
       "evidence": ["lib/mcp/client.ts:198"],
       "acceptance": [
         "lib/mcp/client.ts : MCP Client via SDK",

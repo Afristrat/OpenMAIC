@@ -126,7 +126,7 @@ Les descriptions et critères exécutables complets sont dans le JSON canonique.
 | 51   | U-007  | P2       | Décision requise | Bouton certificat dans classroom                                                      |
 | 52   | U-008  | P2       | À valider        | Page Mes certificats                                                                  |
 | 53   | U-021  | P2       | Décision requise | Bannière consentement télémétrie RGPD                                                 |
-| 54   | S-018  | P3       | Décision requise | Implémenter le MCP Client pour serveurs externes                                      |
+| 54   | S-018  | P3       | En cours        | Implémenter le MCP Client pour serveurs externes                                      |
 | 55   | S-019  | P3       | Décision requise | Connecter NotebookLM via MCP                                                          |
 | 56   | S-020  | P3       | Décision requise | Connecter Notion via MCP                                                              |
 | 57   | S-021  | P3       | Décision requise | Connecter Google Drive via MCP                                                        |

@@ -2,6 +2,8 @@
 
 ## 7 septembre 2026 — S-018, raccordement MCP en cours
 
+Suite au SHA `8e462a6` : route privée `GET /api/admin/mcp` protégée par `requireSuperAdmin`, sans cache ni diagnostics distants ; initialisation partagée avec les consommateurs. Un serveur en erreur est reconnecté et ses outils redécouverts avant de redevenir disponible. L’exemple YAML impose désormais des listes d’organisations et des secrets par environnement ; la priorité YAML sur JSON et les montages web/worker sont explicités. Huit tests MCP passent sur ServeurIA avec format, TypeScript et lint : la recette HTTP traverse aussi le véritable adaptateur LangGraph et la boucle AI SDK, seul le modèle étant scripté. Aucun déploiement de ce lot ni parcours navigateur complet n’est certifié.
+
 Le SHA `1ef3704` sur `origin/refork-v030` comprend l’initialisation paresseuse unique, la transmission du tenant par le contexte serveur existant et l’injection des outils externes dans le Director et les boucles PBL v1/v2. Les outils internes conservent leur priorité. Le registre dispose désormais d’une sonde `ping` bornée ; ses erreurs ne recopient pas les messages distants dans les logs.
 
 Validation ciblée dans `qalem-refork-exec`, clone isolé `/workspace/.codex-gate-s3-008-fe6ebba` : format des fichiers touchés, TypeScript et lint passent ; 5 fichiers / 39 tests passent. Le test HTTP utilise réellement le SDK client et un serveur de protocole contrôlé : succès, refus inter-tenant sans appel réseau, résultat invalide, outil silencieux expirant, santé dégradée puis rétablie. Aucun fournisseur externe de production n’a été activé par cette recette.
