@@ -34,16 +34,11 @@ describe('Qalem build memory configuration', () => {
     }
   });
 
-  it('bounds Node memory in the Docker builder before compilation', () => {
+  it('routes Docker compilation through the shared build command', () => {
     const dockerfile = readFileSync(resolve('Dockerfile'), 'utf8');
     const builderStart = dockerfile.indexOf('FROM base AS builder');
     const buildStart = dockerfile.indexOf('RUN pnpm build', builderStart);
-    const memoryLimit = dockerfile.indexOf(
-      'ENV NODE_OPTIONS=--max-old-space-size=2560',
-      builderStart,
-    );
-
-    expect(memoryLimit).toBeGreaterThan(builderStart);
-    expect(memoryLimit).toBeLessThan(buildStart);
+    expect(buildStart).toBeGreaterThan(builderStart);
+    expect(dockerfile.slice(builderStart, buildStart)).not.toContain('ENV NODE_OPTIONS=');
   });
 });
