@@ -21,4 +21,14 @@ Sur ServeurIA, conteneur `qalem-refork-exec`, clone isolé `/workspace/.codex-ga
 
 Le test HTTP utilise le véritable SDK MCP et un serveur de protocole contrôlé. Il prouve appel autorisé, refus inter-tenant sans appel réseau, réponse invalide, expiration d’un outil silencieux, santé en erreur puis reconnexion. Il traverse aussi l’adaptateur LangGraph et la boucle AI SDK, avec un modèle scripté. Le test du planificateur nominal prouve consultation puis hydratation du projet JSON ; son outil et son modèle sont contrôlés.
 
-Ces preuves ne sont ni une recette de fournisseur externe réel ni une validation navigateur d’une classroom de production. Le gate complet et la recette du déploiement restent à consigner avant clôture. Aucun connecteur de production n’est activé par ces tests.
+Ces preuves ne sont ni une recette de fournisseur externe réel ni une validation navigateur d’une classroom de production. Aucun connecteur de production n’est activé par ces tests.
+
+## Gate global et déploiement en cours
+
+Le gate corrigé au SHA `786f44746c9cbecbbfe04e83778f0fc287bd218b` est terminé : format global, TypeScript et lint passent ; 446 fichiers / 2 713 tests Vitest passent ; build de 113 pages ; 112 tests Playwright passent sans retry en 3,2 minutes. Le build E2E désactive la sortie standalone : son contrôle d’isolation a donc été explicitement sauté, et ne doit pas être présenté comme une preuve Docker.
+
+Journal ServeurIA : `/tmp/qalem-s018-full-corrected-786f447.log`, SHA-256 `e810112ef9edfd58eaede3dd2fe236dbf35b77e7086987a3bcec4e96bd33429c`. La connexion SSH de suivi a été coupée, mais le PID Playwright `116513` a été retrouvé vivant ; aucun redémarrage du gate n’a eu lieu. Le journal final rapporte ensuite les 112 succès et le processus a disparu.
+
+Déploiement web Coolify `cfytkra9vx7g077a15jy2ek8`, application Qalem `bcx5pxyuc9z3lt4jtyjipcqu`, lancé le 7 septembre 2026 à 14 h 46 UTC. La cible est `555d8b9f92a1e347fc4c0df1d9152fb898dba0aa` ; la comparaison avec le SHA validé ne trouve que les deux registres Ralph et ce document. Au dernier contrôle, le déploiement est `in_progress` : aucune livraison en production n’est encore certifiée.
+
+Images de référence relevées avant déploiement : web `88e499b09bf35ac9bcbacfea7bddcd3d6a74ad72`, worker `6f13b77167f6f589c1bc938f32a6439879a0e9bc`, tous deux healthy. Le worker n’a pas encore été redéployé. Restent le verdict Docker, la recette du service déployé et le suivi après déploiement ; S-018 demeure ouverte.
