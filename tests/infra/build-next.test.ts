@@ -17,8 +17,8 @@ it('passes the build heap to Next and its workers while preserving options and f
   vi.mocked(spawnSync).mockReturnValue({
     pid: 1,
     output: [],
-    stdout: null,
-    stderr: null,
+    stdout: '',
+    stderr: '',
     status: 7,
     signal: null,
   });
