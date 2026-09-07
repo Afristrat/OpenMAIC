@@ -134,6 +134,13 @@ export const test = base.extend<Fixtures>({
           body: '{"success":true,"classrooms":[]}',
         }),
       );
+      // Capability probes must not reach the intentionally absent test DB.
+      // Recording/anchoring journeys override these defaults with their own contract.
+      for (const capability of ['live-sessions', 'anchoring']) {
+        await page.route(`**/api/${capability}/capability`, (route) =>
+          route.fulfill({ json: { success: true, enabled: false } }),
+        );
+      }
       // Import is legally gated and therefore closed by default. Individual
       // import journeys override this route explicitly when exercising it.
       await page.route('**/api/courses/import?*', (route) =>
