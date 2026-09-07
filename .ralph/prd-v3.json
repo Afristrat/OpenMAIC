@@ -4229,7 +4229,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Implémenter le MCP Client pour serveurs externes » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "decision_required",
+      "status": "to_implement",
       "passes": false,
       "source": {
         "file": ".ralph/prd.json",
@@ -4256,7 +4256,7 @@
         "status": "legacy_claim_not_delivery_proof"
       },
       "historicalDependencies": [],
-      "executionAllowed": false,
+      "executionAllowed": true,
       "validationRequires": [
         "qualityGates",
         "fresh_evidence_per_acceptance",
