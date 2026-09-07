@@ -1,5 +1,9 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 7 septembre 2026 — U-015, interface MCP raccordée
+
+La conservation explicite S0-011 et la clôture S-018 lèvent les prérequis de l’interface. Les exemples statiques et le délai simulé sont supprimés au profit de GET /api/admin/mcp : chargement, accès refusé, réponse invalide, registre vide et résultats de sondes distincts. Les URL et secrets restent absents ; l’interface annonce son périmètre web, sans prétendre sonder les workers. FR/AR/EN et quatre scénarios navigateur sont ajoutés. Validation à exécuter sur ServeurIA ; aucun déploiement ni passes=true U-015 à ce stade.
+
 ## 7 septembre 2026 — S-018 clôturée
 
 Le suivi `34120` est terminé, exit 0, dernier relevé 15:18:40 UTC : 31 contrôles réussis depuis 15:03:33. Les logs web et worker depuis ce début contiennent zéro ligne ERROR/FATAL/heap out of memory. L’empreinte du gate a été relue et confirmée. S-018 passe à `completed/passes=true` avec les preuves du code, des contrôles, du déploiement et de Chromium authentifié dans le PRD. Les mentions « actif »/« en cours » ci-dessous sont historiques : aucun suivi S-018 ne reste à attendre. Le risque OOM sous charge n’est pas certifié par cette surveillance.

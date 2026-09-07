@@ -4670,7 +4670,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Configuration MCP dans admin » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "decision_required",
+      "status": "to_implement",
       "passes": false,
       "source": {
         "file": ".ralph/prd-ui.json",
@@ -4679,7 +4679,7 @@
       },
       "sourceDependencies": ["U-002"],
       "dependencies": ["S0-011", "S-018"],
-      "gap": "L’administration MCP affiche des exemples et simule le test de connexion.",
+      "gap": "Gate levé le 7 septembre 2026 : conservation explicite déjà consignée par S0-011 et client S-018 clôturé. Raccorder l’administration à la configuration effective et aux sondes de son API privée, supprimer les exemples et temporisations simulées ; aucune activation de connecteur ni édition de secrets navigateur autorisée par ce raccordement.",
       "evidence": ["components/admin/mcp-tab.tsx:9"],
       "acceptance": [
         "Afficher la configuration effective autorisée et un résultat réel de connexion, jamais un délai simulé.",
@@ -4691,7 +4691,7 @@
         "status": "legacy_claim_not_delivery_proof"
       },
       "historicalDependencies": [],
-      "executionAllowed": false,
+      "executionAllowed": true,
       "validationRequires": [
         "qualityGates",
         "fresh_evidence_per_acceptance",
