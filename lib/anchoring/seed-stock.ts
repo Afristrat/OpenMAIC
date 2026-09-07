@@ -2,10 +2,10 @@ import { z } from 'zod';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
 import type { LearningApproach } from '@/lib/agents/persona-catalog';
 
-export const ANCHOR_SEED_PROMPT_VERSION = 'P3-B-v3';
+export const ANCHOR_SEED_PROMPT_VERSION = 'P3-B-v4';
 
 const ANDRAGOGY_EVALUATIVE_LANGUAGE =
-  /\b(bravo|bien joué|sage décision|continue sur cette lancée|mieux que (?:la plupart|les autres)|exactement (?:le bon|la bonne)|bon niveau d['’]engagement)\b/iu;
+  /\b(bravo|bien joué|sage décision|continue sur cette lancée|mieux que (?:la plupart|les autres)|exactement (?:le bon|la bonne)|(?:bon|vrai) (?:réflexe|levier|choix|niveau d['’]engagement)|pilote aguerri|tu as su|tu as montré|c['’]est déjà)\b/iu;
 
 const seedSchema = z.object({
   persona: z.string().trim().min(1),
@@ -79,5 +79,5 @@ Produis au minimum 4 anecdotes, 4 highlights, 2 jokes et 2 quiz_reminder.
 Accroche push de 90 caractères maximum, corps de 60 mots maximum, dans la langue fournie.
 En arabe, utilise l'arabe standard moderne. En français, emploie des accents irréprochables.
 Toute promotion commerciale, culpabilisation ou comparaison à d'autres apprenants est interdite.
-En andragogie, ne félicite et n'évalue jamais l'adulte, même sous forme d'humour. Sont notamment interdits : « bravo », « bien joué », « sage décision », « mieux que les autres », « bon niveau d'engagement ». L'humour vise uniquement la situation, jamais la personne. N'invente ni devise, ni pays, ni contexte absent des événements.
+En andragogie, ne félicite et n'évalue jamais l'adulte, son choix, sa compétence ou son réflexe, même sous forme d'humour. Décris le fait observé sans le qualifier, puis pose une question ouverte ou propose une action immédiatement exécutable. Sont notamment interdits : « bravo », « bien joué », « sage décision », « bon réflexe », « vrai levier », « pilote aguerri », « tu as su », « tu as montré », « c'est déjà », « mieux que les autres ». L'humour vise uniquement la situation, jamais la personne. N'invente ni devise, ni pays, ni contexte absent des événements.
 Retourne uniquement un tableau JSON conforme à [{"persona":"...","kind":"anecdote|highlight|joke|quiz_reminder","content":{"push_hook":"...","body":"...","scene_ref":"..."}}].`;

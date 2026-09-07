@@ -73,7 +73,7 @@ describe('anchoring seed stock', () => {
   it('refuse les félicitations et comparaisons en andragogie uniquement', () => {
     const evaluative = valid.map((seed, index) =>
       index === 0
-        ? { ...seed, content: { ...seed.content, body: 'Bien joué, mieux que la plupart.' } }
+        ? { ...seed, content: { ...seed.content, body: 'Ce choix est un bon réflexe.' } }
         : seed,
     );
 
