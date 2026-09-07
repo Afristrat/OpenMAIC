@@ -766,7 +766,7 @@
         "source": ".ralph/prd.json#S-017"
       },
       {
-    "id": "S-018",
+        "id": "S-018",
         "title": "Implémenter le MCP Client pour serveurs externes",
         "previousPasses": true,
         "disposition": "explicit_open_story",
@@ -2172,8 +2172,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux recetter whisper sur de la parole réelle et le parcours microphone afin que le parcours promis soit réellement utilisable.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P1",
-    "status": "completed",
-    "passes": true,
+      "status": "to_validate",
+      "passes": false,
       "source": {
         "type": "request_or_observed_gap",
         "date": "2026-08-26"
@@ -4229,8 +4229,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Implémenter le MCP Client pour serveurs externes » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd.json",
         "id": "S-018",
