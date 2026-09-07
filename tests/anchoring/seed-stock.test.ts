@@ -124,7 +124,9 @@ describe('anchoring seed stock', () => {
 
   it('refuse un nombre absent des paroles de la session', () => {
     const invented = valid.map((seed, index) =>
-      index === 0 ? { ...seed, content: { ...seed.content, body: 'Simule un retard de 45 jours.' } } : seed,
+      index === 0
+        ? { ...seed, content: { ...seed.content, body: 'Simule un retard de 45 jours.' } }
+        : seed,
     );
 
     expect(() =>
