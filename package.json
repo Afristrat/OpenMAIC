@@ -15,6 +15,7 @@
     "start:web": "next start",
     "start:workers": "tsx scripts/start-workers.ts",
     "lint": "eslint",
+    "typecheck": "node --max-old-space-size=4096 node_modules/typescript/bin/tsc --noEmit",
     "check:i18n-keys": "node scripts/check-i18n-keys.mjs",
     "check:provenance": "node scripts/check-audit-provenance.mjs",
     "check": "prettier . --check",

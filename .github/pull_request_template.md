@@ -39,7 +39,7 @@
 
 <!-- Attach at least one: logs, screenshots, recordings, or before/after comparisons. -->
 
-- [ ] CI passes (`pnpm check && pnpm lint && npx tsc --noEmit`)
+- [ ] CI passes (`pnpm check && pnpm lint && pnpm typecheck`)
 - [ ] Manually tested locally
 - [ ] Screenshots / recordings attached (if UI changes)
 

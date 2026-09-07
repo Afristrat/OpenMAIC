@@ -5,7 +5,13 @@ import { chromium } from '@playwright/test';
 // Credentials arrive through a private stdin pipe, never command arguments or files.
 let input = '';
 for await (const chunk of process.stdin) input += chunk;
-const { supabaseUrl, serviceKey, adminEmail, baseUrl = 'https://qalem.ma' } = JSON.parse(input);
+const {
+  supabaseUrl,
+  serviceKey,
+  adminEmail,
+  baseUrl = 'https://qalem.ma',
+  verifyAdminUi = false,
+} = JSON.parse(input);
 input = '';
 assert.equal(new URL(baseUrl).hostname, 'qalem.ma', 'Unexpected proof target');
 assert.ok(supabaseUrl && serviceKey && adminEmail, 'Proof configuration required');
@@ -65,6 +71,33 @@ try {
   }
   assert.equal(response.headers()['cache-control'], 'no-store, max-age=0');
   result = { authenticatedStatus: response.status(), serverCount: body.servers.length };
+  if (verifyAdminUi) {
+    await page.addInitScript(() => localStorage.setItem('locale', 'fr-FR'));
+    const initialProbe = page.waitForResponse(
+      (item) => new URL(item.url()).pathname === '/api/admin/mcp',
+    );
+    await page.goto(`${baseUrl}/admin?tab=mcp`, { timeout: 60_000 });
+    assert.equal((await initialProbe).status(), 200, 'Administration must call the real health route');
+    const refreshButton = page.getByRole('button', { name: 'Vérifier les connexions', exact: true });
+    await refreshButton.waitFor({ state: 'visible' });
+    const refreshed = page.waitForResponse(
+      (item) => new URL(item.url()).pathname === '/api/admin/mcp',
+    );
+    await refreshButton.click();
+    const refreshResponse = await refreshed;
+    assert.equal(refreshResponse.status(), 200, 'Explicit health refresh must succeed');
+    const refreshedBody = await refreshResponse.json();
+    if (refreshedBody.servers.length === 0) {
+      await page.getByRole('status').filter({ hasText: 'Aucune connexion MCP activée.' }).waitFor();
+    } else {
+      for (const server of refreshedBody.servers) {
+        await page.getByRole('rowheader', { name: server.name, exact: true }).waitFor();
+      }
+    }
+    assert.equal(await page.getByText('http://localhost:3001/mcp').count(), 0, 'No example server');
+    result.adminUiVerified = true;
+    result.refreshStatus = refreshResponse.status();
+  }
 } finally {
   try {
     if (session) {

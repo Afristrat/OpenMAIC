@@ -41,7 +41,7 @@ Toute exécution se fait sur `serveuria` via SSH :
 ## Quality Gates (à exécuter sur serveuria, jamais en local)
 
 ```bash
-pnpm check && npx tsc --noEmit && pnpm lint && pnpm test && pnpm build && pnpm test:e2e
+pnpm check && pnpm typecheck && pnpm lint && pnpm test && pnpm build && pnpm test:e2e
 ```
 
 ## Conventions spécifiques Qalem

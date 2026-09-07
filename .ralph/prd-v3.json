@@ -43,7 +43,7 @@
       "blocked": "Condition externe ou autorisation absente ; inspection sûre possible, mutation interdite."
     }
   },
-  "qualityGates": "pnpm check && npx tsc --noEmit && pnpm lint && pnpm test && pnpm build && pnpm test:e2e",
+  "qualityGates": "pnpm check && pnpm typecheck && pnpm lint && pnpm test && pnpm build && pnpm test:e2e",
   "validationPolicy": {
     "execution": "ServeurIA via SSH/Docker, clone isolé du SHA visé ; jamais d’exécution du code sur le poste Windows.",
     "format": "Formatage global sans erreur, pas seulement les fichiers ciblés.",
