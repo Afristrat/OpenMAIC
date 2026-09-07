@@ -147,7 +147,6 @@ async function connectToServer(config: MCPServerConfig): Promise<ConnectedServer
       log.info(`Retrying "${config.name}" with SSE transport...`);
       const sseTransport = createTransport({ ...config, transport: 'sse' });
       try {
-
         const abortController = new AbortController();
         const timeoutId = setTimeout(() => abortController.abort(), timeoutMs);
 
@@ -157,7 +156,10 @@ async function connectToServer(config: MCPServerConfig): Promise<ConnectedServer
         );
 
         try {
-          await sseClient.connect(sseTransport, { signal: abortController.signal, timeout: timeoutMs });
+          await sseClient.connect(sseTransport, {
+            signal: abortController.signal,
+            timeout: timeoutMs,
+          });
         } finally {
           clearTimeout(timeoutId);
         }
@@ -302,11 +304,13 @@ export async function callExternalTool(
   log.info(`Calling tool "${toolName}" on server "${server.config.name}"`);
 
   try {
-    const result = CallToolResultSchema.parse(await server.client.callTool(
-      { name: toolName, arguments: args as Record<string, unknown> },
-      CallToolResultSchema,
-      { timeout: server.config.timeoutMs ?? DEFAULT_TIMEOUT_MS },
-    ));
+    const result = CallToolResultSchema.parse(
+      await server.client.callTool(
+        { name: toolName, arguments: args as Record<string, unknown> },
+        CallToolResultSchema,
+        { timeout: server.config.timeoutMs ?? DEFAULT_TIMEOUT_MS },
+      ),
+    );
     if (result.isError) throw new Error('MCP server reported a tool failure');
 
     // Extract text content from MCP result for simpler downstream consumption

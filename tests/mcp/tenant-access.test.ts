@@ -61,7 +61,7 @@ it('hides tools and refuses direct execution outside the configured tenant', asy
   for (const response of [
     { content: [{ type: 'text', text: 'provider error' }], isError: true },
     { content: [{ type: 'text', text: 42 }] },
-    { unexpected: 'invalid response' },
+    { content: 'invalid response' },
   ]) {
     calls.tool.mockResolvedValueOnce(response);
     await expect(callExternalTool('docs', 'search', {}, 'tenant-a')).rejects.toThrow(
