@@ -17,6 +17,8 @@ Le premier harnais faisait varier la réponse sur le nombre de requêtes, ce qui
 
 ## Restes avant clôture
 
+Le gate corrigé s’est terminé avec code 0, 2 714 Vitest et 116 Playwright, mais le journal comportait des sondes de capacité vers la base fictive et une erreur classroom. La fixture commune `bc56211` intercepte explicitement les capacités inactives, sans masquer les journaux. Le ciblage MCP+éditeur répété deux fois passe 10/10 ; la fuite classroom n’y est pas reproduite. Une suite navigateur complète sur le même build est en cours (`38221`, `/tmp/qalem-u015-browser-boundary.log`). La publication demeure en attente ; ce constat n’est pas une garantie de disparition de la fuite intermittente.
+
 Le gate `8ff48aa` a échoué sur le plafond V8 de TypeScript à environ 2 Gio, avant Vitest : SIGABRT, sans arrêt ni OOMKilled du conteneur de validation ou des conteneurs de production. La commande persistante `pnpm typecheck` utilise maintenant 4 Gio, et les références CI/PRD/AGENTS ont été mises à jour. Le SHA corrigé `a6420b992d8a8f1871d358a524b003a5233c8fb0` a passé format, TypeScript et ESLint global ; la suite continue sous le handle `2504`, journal `/tmp/qalem-u015-full-corrected.log`. Cette correction ne garantit pas l’absence de fuite mémoire en exploitation.
 
 Gate global au SHA final, déploiement et recette authentifiée de l’onglet en production. Le serveur Next de développement signale un workspace parent ignoré ; ce run ciblé n’est pas présenté comme un gate global sans avertissement. Aucune activation documentaire ni garantie mémoire sous charge. `passes=false` maintenu.
