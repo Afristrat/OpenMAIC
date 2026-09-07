@@ -17,6 +17,11 @@ export type UsageOperationContext = Omit<UsageRequestContext, 'sequence'> & {
 const usageContext = new AsyncLocalStorage<UsageRequestContext>();
 const IDEMPOTENCY_KEY = /^[A-Za-z0-9][A-Za-z0-9._:-]{7,95}$/;
 
+/** Server-established tenant, shared by request and background-job consumers. */
+export function getActiveTenantId(): string | undefined {
+  return usageContext.getStore()?.tenantId;
+}
+
 function createRequestContext(
   headers: Headers,
   actorUserId: string,

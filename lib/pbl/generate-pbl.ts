@@ -10,6 +10,7 @@
 
 import { tool, stepCountIs } from 'ai';
 import { callLLM } from '@/lib/ai/llm';
+import { getRequestMCPTools } from '@/lib/mcp/runtime';
 import { z } from 'zod';
 import type { LanguageModel } from 'ai';
 import type { PBLProjectConfig } from './types';
@@ -290,7 +291,7 @@ export async function generatePBLContent(
       model,
       system: systemPrompt,
       prompt: `Design a PBL project. Start in project_info mode by setting the project title and description.`,
-      tools: pblTools,
+      tools: { ...(await getRequestMCPTools()), ...pblTools },
       stopWhen: stepCountIs(30),
       onStepFinish: ({ toolCalls, text }) => {
         if (text) {

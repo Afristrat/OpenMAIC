@@ -27,6 +27,7 @@ import type { LangGraphRunnableConfig } from '@langchain/langgraph';
 import type { LanguageModel } from 'ai';
 
 import { AISdkLangGraphAdapter } from './ai-sdk-adapter';
+import { getRequestMCPTools } from '@/lib/mcp/runtime';
 import type { StatelessEvent } from '@/lib/types/chat';
 import type { StatelessChatRequest } from '@/lib/types/chat';
 import type { ThinkingConfig } from '@/lib/types/provider';
@@ -192,7 +193,11 @@ async function directorNode(
     state.explicitTrigger,
   );
 
-  const adapter = new AISdkLangGraphAdapter(state.languageModel, state.thinkingConfig ?? undefined);
+  const adapter = new AISdkLangGraphAdapter(
+    state.languageModel,
+    state.thinkingConfig ?? undefined,
+    await getRequestMCPTools(),
+  );
 
   try {
     const result = await adapter._generate(
@@ -339,7 +344,11 @@ async function runAgentGeneration(
     state.animationConstitution,
   );
   const openaiMessages = convertMessagesToOpenAI(state.messages, agentId);
-  const adapter = new AISdkLangGraphAdapter(state.languageModel, state.thinkingConfig ?? undefined);
+  const adapter = new AISdkLangGraphAdapter(
+    state.languageModel,
+    state.thinkingConfig ?? undefined,
+    await getRequestMCPTools(),
+  );
 
   const lcMessages = [
     new SystemMessage(systemPrompt),

@@ -10,7 +10,7 @@ import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { BaseMessage, HumanMessage, AIMessage, SystemMessage } from '@langchain/core/messages';
 import { CallbackManagerForLLMRun } from '@langchain/core/callbacks/manager';
 import { ChatResult } from '@langchain/core/outputs';
-import type { LanguageModel } from 'ai';
+import { stepCountIs, type LanguageModel, type Tool } from 'ai';
 
 import { callLLM, streamLLM } from '@/lib/ai/llm';
 import type { ThinkingConfig } from '@/lib/types/provider';
@@ -43,11 +43,17 @@ export type StreamChunk =
 export class AISdkLangGraphAdapter extends BaseChatModel {
   private languageModel: LanguageModel;
   private thinking?: ThinkingConfig;
+  private externalTools?: Record<string, Tool>;
 
-  constructor(languageModel: LanguageModel, thinking?: ThinkingConfig) {
+  constructor(
+    languageModel: LanguageModel,
+    thinking?: ThinkingConfig,
+    externalTools?: Record<string, Tool>,
+  ) {
     super({});
     this.languageModel = languageModel;
     this.thinking = thinking;
+    this.externalTools = externalTools;
   }
 
   _llmType(): string {
@@ -89,6 +95,10 @@ export class AISdkLangGraphAdapter extends BaseChatModel {
         {
           model: this.languageModel,
           messages: aiMessages,
+          abortSignal: _options?.signal,
+          ...(this.externalTools && Object.keys(this.externalTools).length
+            ? { tools: this.externalTools, stopWhen: stepCountIs(5) }
+            : {}),
         },
         'chat-adapter',
         undefined,
@@ -136,6 +146,9 @@ export class AISdkLangGraphAdapter extends BaseChatModel {
         model: this.languageModel,
         messages: aiMessages,
         abortSignal: options?.signal,
+        ...(this.externalTools && Object.keys(this.externalTools).length
+          ? { tools: this.externalTools, stopWhen: stepCountIs(5) }
+          : {}),
       },
       'chat-adapter-stream',
       this.thinking,

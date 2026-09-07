@@ -23,6 +23,7 @@ import { tool, stepCountIs } from 'ai';
 import { z } from 'zod';
 
 import { callLLM } from '@/lib/ai/llm';
+import { getRequestMCPTools } from '@/lib/mcp/runtime';
 import { createLogger } from '@/lib/logger';
 import { loadPBLV2Prompt } from '../prompts/loader';
 import { computeInitialAssessment, reseatAssessmentTier } from '../operations/proficiency';
@@ -174,7 +175,7 @@ export async function generatePBLV2Project(
         system: systemPrompt,
         prompt:
           'Design the PBL project now. Call the tools in the documented order; do not write narrative text.',
-        tools,
+        tools: { ...(await getRequestMCPTools()), ...tools },
         stopWhen: [plannerDesignAccepted(), stepCountIs(MAX_PLANNER_STEPS)],
         onStepFinish: ({ toolCalls }) => {
           // Optional verbose log. Keep at debug-level so production
