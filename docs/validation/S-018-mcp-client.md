@@ -31,4 +31,10 @@ Journal ServeurIA : `/tmp/qalem-s018-full-corrected-786f447.log`, SHA-256 `e8101
 
 Déploiement web Coolify `cfytkra9vx7g077a15jy2ek8`, application Qalem `bcx5pxyuc9z3lt4jtyjipcqu`, lancé le 7 septembre 2026 à 14 h 46 UTC. La cible est `555d8b9f92a1e347fc4c0df1d9152fb898dba0aa` ; la comparaison avec le SHA validé ne trouve que les deux registres Ralph et ce document. Au dernier contrôle, le déploiement est `in_progress` : aucune livraison en production n’est encore certifiée.
 
-Images de référence relevées avant déploiement : web `88e499b09bf35ac9bcbacfea7bddcd3d6a74ad72`, worker `6f13b77167f6f589c1bc938f32a6439879a0e9bc`, tous deux healthy. Le worker n’a pas encore été redéployé. Restent le verdict Docker, la recette du service déployé et le suivi après déploiement ; S-018 demeure ouverte.
+Images de référence relevées avant déploiement : web `88e499b09bf35ac9bcbacfea7bddcd3d6a74ad72`, worker `6f13b77167f6f589c1bc938f32a6439879a0e9bc`, tous deux healthy.
+
+### Bascule web vérifiée
+
+Le déploiement web est confirmé `finished` à 14 h 51 UTC. Le conteneur `bcx5pxyuc9z3lt4jtyjipcqu-144633420992` sert l’image `555d8b9f92a1e347fc4c0df1d9152fb898dba0aa`, est healthy, avec zéro redémarrage et `OOMKilled=false`. Il a démarré à 14:50:26 UTC. La santé publique répond 200 ; la route `/api/admin/mcp` répond 401 sans authentification, contre 404 avant cette publication. Cette vérification prouve le déploiement de la route et son refus anonyme, pas son parcours authentifié.
+
+Le déploiement runtime `trobepn3twhqylemt27pbz7q` a été lancé seulement après la fin du web pour éviter deux builds simultanés. Son verdict reste à relever, ainsi que la recette authentifiée et le suivi après déploiement ; S-018 demeure ouverte.
