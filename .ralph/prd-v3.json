@@ -4238,7 +4238,7 @@
       },
       "sourceDependencies": ["S-017"],
       "dependencies": ["S0-011"],
-    "gap": "Soldé pour le client MCP : injection PBL/Director, configuration, isolation et sondes réelles prouvées. Suivi post-déploiement terminé avec succès de 15:03:33 à 15:18:40 UTC. Les fournisseurs documentaires et l’interface d’administration restent des stories distinctes ; aucune garantie de résistance mémoire sous charge n’est inférée.",
+      "gap": "Soldé pour le client MCP : injection PBL/Director, configuration, isolation et sondes réelles prouvées. Suivi post-déploiement terminé avec succès de 15:03:33 à 15:18:40 UTC. Les fournisseurs documentaires et l’interface d’administration restent des stories distinctes ; aucune garantie de résistance mémoire sous charge n’est inférée.",
       "evidence": ["lib/mcp/client.ts:198"],
       "acceptance": [
         "lib/mcp/client.ts : MCP Client via SDK",
@@ -4250,12 +4250,12 @@
         "Après conservation explicite, brancher une seule initialisation serveur et injecter réellement les outils dans les consommateurs approuvés.",
         "Prouver un appel réel, un timeout et une réponse invalide ; isolation tenant et secrets serveur obligatoires."
       ],
-    "closureEvidence": [
-      "2026-09-07 — SHA fonctionnel 786f44746c9cbecbbfe04e83778f0fc287bd218b : SDK MCP réel, configuration YAML/JSON stricte, secrets serveur, contexte tenant, initialisation partagée, injection Director et PBL v1/v2 dont le planificateur nominal. Tests HTTP réels : appel, timeout, réponse invalide, refus inter-tenant, ping et reconnexion ; référence docs/validation/S-018-mcp-client.md.",
-      "2026-09-07 — Gate ServeurIA : format, TypeScript, lint, 446 fichiers / 2713 Vitest, build 113 pages, 112 Playwright sans retry. Journal /tmp/qalem-s018-full-corrected-786f447.log relu par SHA-256 e810112ef9edfd58eaede3dd2fe236dbf35b77e7086987a3bcec4e96bd33429c. Complément YAML 12fad90 : trois tests et contrôles statiques verts.",
-      "2026-09-07 — Web 555d8b9f92a1e347fc4c0df1d9152fb898dba0aa et worker 528723a4b1da6feaefea320fcf669ffbcc8b82ce déployés avec code fonctionnel identique. Chromium production authentifié : HTTP 200, registre vide attendu, métadonnées seules, session révoquée sans fichier ; accès anonyme 401.",
-      "2026-09-07 — Suivi SSH 34120 terminé avec exit 0 : 31 contrôles web+worker healthy, restart=0, OOMKilled=false et santé publique réussie entre 15:03:33 et 15:18:40 UTC. Relecture finale des logs depuis le début : zéro ligne ERROR/FATAL/heap out of memory pour les deux conteneurs. Ce suivi n’est pas un test de charge."
-    ],
+      "closureEvidence": [
+        "2026-09-07 — SHA fonctionnel 786f44746c9cbecbbfe04e83778f0fc287bd218b : SDK MCP réel, configuration YAML/JSON stricte, secrets serveur, contexte tenant, initialisation partagée, injection Director et PBL v1/v2 dont le planificateur nominal. Tests HTTP réels : appel, timeout, réponse invalide, refus inter-tenant, ping et reconnexion ; référence docs/validation/S-018-mcp-client.md.",
+        "2026-09-07 — Gate ServeurIA : format, TypeScript, lint, 446 fichiers / 2713 Vitest, build 113 pages, 112 Playwright sans retry. Journal /tmp/qalem-s018-full-corrected-786f447.log relu par SHA-256 e810112ef9edfd58eaede3dd2fe236dbf35b77e7086987a3bcec4e96bd33429c. Complément YAML 12fad90 : trois tests et contrôles statiques verts.",
+        "2026-09-07 — Web 555d8b9f92a1e347fc4c0df1d9152fb898dba0aa et worker 528723a4b1da6feaefea320fcf669ffbcc8b82ce déployés avec code fonctionnel identique. Chromium production authentifié : HTTP 200, registre vide attendu, métadonnées seules, session révoquée sans fichier ; accès anonyme 401.",
+        "2026-09-07 — Suivi SSH 34120 terminé avec exit 0 : 31 contrôles web+worker healthy, restart=0, OOMKilled=false et santé publique réussie entre 15:03:33 et 15:18:40 UTC. Relecture finale des logs depuis le début : zéro ligne ERROR/FATAL/heap out of memory pour les deux conteneurs. Ce suivi n’est pas un test de charge."
+      ],
       "historicalEvidence": {
         "completedAt": "2026-03-29T09:22:14.993Z",
         "status": "legacy_claim_not_delivery_proof"
