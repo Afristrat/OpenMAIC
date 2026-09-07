@@ -8,7 +8,8 @@
  * normalization / completion gate) runs for real, so these assert the
  * full parse → hydrate → normalize path without a live LLM.
  */
-import { describe, it, expect } from 'vitest';
+import { afterEach, describe, it, expect, vi } from 'vitest';
+import { tool, jsonSchema, type Tool } from 'ai';
 import { expectConsoleMessages } from '@/tests/helpers/expected-console';
 import { MockLanguageModelV3 } from 'ai/test';
 
@@ -17,6 +18,37 @@ import { PlannerV2Error } from '@/lib/pbl/v2/agents/planner';
 import { PBL_SIMULATOR_AGENT_ID } from '@/lib/pbl/v2/operations/progress';
 import type { SceneOutline } from '@/lib/types/generation';
 import type { PBLPlannerV2Input } from '@/lib/pbl/v2/types';
+
+const mcp = vi.hoisted(() => vi.fn<() => Promise<Record<string, Tool>>>(async () => ({})));
+vi.mock('@/lib/mcp/runtime', () => ({ getRequestMCPTools: mcp }));
+afterEach(() => mcp.mockReset());
+
+it('consults authorized MCP tools before hydrating the normal single-output project', async () => {
+  const execute = vi.fn(async () => 'CSV reference verified');
+  mcp.mockResolvedValueOnce({
+    docs__lookup: tool({ inputSchema: jsonSchema({ type: 'object' }), execute }),
+  });
+  let calls = 0;
+  const model = new MockLanguageModelV3({
+    doGenerate: async ({ prompt }) => {
+      const first = calls++ === 0;
+      if (!first) expect(JSON.stringify(prompt)).toContain('CSV reference verified');
+      return {
+        content: first
+          ? [{ type: 'tool-call', toolCallId: 'lookup-1', toolName: 'docs__lookup', input: '{}' }]
+          : [{ type: 'text', text: validOutput() }],
+        finishReason: { unified: first ? 'tool-calls' : 'stop', raw: 'stop' },
+        usage: USAGE,
+        warnings: [],
+      };
+    },
+  });
+  const project = await generatePBLV2ProjectSingleCall(plannerInput(), model);
+  expect(project.title).toBe('CSV Data Analyzer project');
+  expect(project.milestones.length).toBeGreaterThan(0);
+  expect(execute).toHaveBeenCalledTimes(1);
+  expect(calls).toBe(2);
+});
 
 const USAGE = {
   inputTokens: { total: 0, noCache: 0, cacheRead: 0, cacheWrite: 0 },

@@ -4,14 +4,16 @@
  * A single-shot alternative to the agentic tool-calling loop in
  * `./planner.ts`. The LLM is asked to emit ONE JSON object describing the
  * whole project (mirroring the slide-content generation pattern:
- * `callLLM` with no tools → `parseJsonResponse` → deterministic
+ * `callLLM` → `parseJsonResponse` → deterministic
  * post-processing). The same `PBLProjectV2` is produced, so this is a
  * drop-in replacement for `generatePBLV2Project`.
  *
  * Why: the loop needs ~20-40 ordered, mutually-gated tool calls to
  * succeed; any stall, stray narrative turn, or skipped
  * `mark_design_complete` aborts the whole run. A single structured
- * output collapses that failure surface to one call + one JSON parse.
+ * output collapses that failure surface to one final JSON parse. Authorized
+ * MCP tools may supply context in a bounded lookup loop before that output;
+ * without external tools the original single-call behavior is unchanged.
  *
  * All the deterministic hydration (ids / status / order / assignee /
  * thread bootstrap / proficiency re-seat) and post-processing
@@ -19,9 +21,10 @@
  * gate) is shared with the loop via exported helpers in `./planner.ts`.
  */
 
-import type { LanguageModel } from 'ai';
+import { stepCountIs, type LanguageModel } from 'ai';
 
 import { callLLM } from '@/lib/ai/llm';
+import { getRequestMCPTools } from '@/lib/mcp/runtime';
 import { createLogger } from '@/lib/logger';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
 import { normalizeProjectRuntime, normalizeScenario } from '../operations/progress';
@@ -501,7 +504,7 @@ function hydrateProject(project: PBLProjectV2, parsed: PlannerLLMOutput): void {
  * Single-call variant of `generatePBLV2Project`. Same signature and same
  * `PBLProjectV2` output / `PlannerV2Error` failure contract.
  *
- * Strategy: one `callLLM` (no tools) → `parseJsonResponse` → validate
+ * Strategy: one final JSON (optional authorized MCP lookups) → parse → validate
  * (structure + topic + language) with at most one targeted retry → hydrate
  * → deterministic post-processing → completion-gate. Throws
  * `PlannerV2Error` if the model never produces a usable project; the
@@ -537,10 +540,18 @@ export async function generatePBLV2ProjectSingleCall(
   );
 
   const basePrompt = buildSingleCallUserPrompt(scenarioRoleplay);
+  const externalTools = await getRequestMCPTools();
 
   const callModel = async (prompt: string): Promise<PlannerLLMOutput | null> => {
     const result = await callLLM(
-      { model, system: systemPrompt, prompt },
+      {
+        model,
+        system: systemPrompt,
+        prompt,
+        ...(Object.keys(externalTools).length
+          ? { tools: externalTools, stopWhen: stepCountIs(5) }
+          : {}),
+      },
       'pbl-v2-planner-single',
       undefined,
       thinkingConfig,
