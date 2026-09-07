@@ -87,7 +87,14 @@ it('uses the real HTTP SDK, rejects invalid results and bounds a silent tool', a
         if (!first) expect(JSON.stringify(prompt)).toContain('résultat réel');
         return {
           content: first
-            ? [{ type: 'tool-call', toolCallId: 'call-1', toolName: 'http-test__echo', input: '{}' }]
+            ? [
+                {
+                  type: 'tool-call',
+                  toolCallId: 'call-1',
+                  toolName: 'http-test__echo',
+                  input: '{}',
+                },
+              ]
             : [{ type: 'text', text: 'Réponse après consultation' }],
           finishReason: { unified: first ? 'tool-calls' : 'stop', raw: 'stop' },
           usage: {
