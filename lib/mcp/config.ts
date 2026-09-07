@@ -11,6 +11,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import yaml from 'js-yaml';
+import { z } from 'zod/v4';
 import { createLogger } from '@/lib/logger';
 
 import type { MCPServerConfig } from './client';
@@ -18,8 +19,25 @@ import type { MCPServerConfig } from './client';
 const log = createLogger('MCPConfig');
 
 /** Shape of the YAML config file */
-interface MCPConfigFile {
-  servers: MCPServerConfig[];
+const configSchema = z.object({
+  id: z.string().regex(/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$/),
+  name: z.string().trim().min(1).optional(),
+  url: z.url().refine((value) => {
+    const url = new URL(value);
+    return ['https:', 'http:'].includes(url.protocol) && !url.username && !url.password;
+  }),
+  enabled: z.boolean().default(false),
+  organizationIds: z.array(z.uuid()).default([]),
+  transport: z.enum(['sse', 'streamable-http']).default('streamable-http'),
+  timeoutMs: z.number().int().min(100).max(120_000).default(30_000),
+});
+
+function normalizeConfigs(raw: unknown[]): MCPServerConfig[] {
+  const configs = raw.map(normalizeConfig).filter((value) => value !== null);
+  const counts = new Map<string, number>();
+  for (const config of configs) counts.set(config.id, (counts.get(config.id) ?? 0) + 1);
+  // Ambiguous IDs must not select whichever tenant credentials happened to load last.
+  return configs.filter((config) => counts.get(config.id) === 1);
 }
 
 /**
@@ -61,22 +79,18 @@ function loadFromYaml(): MCPServerConfig[] | null {
 
   try {
     const content = fs.readFileSync(configPath, 'utf-8');
-    const parsed = yaml.load(content) as MCPConfigFile;
+    const parsed = yaml.load(content) as { servers?: unknown } | null;
 
     if (!parsed?.servers || !Array.isArray(parsed.servers)) {
       log.warn('mcp-servers.yml exists but has no valid "servers" array');
       return [];
     }
 
-    const configs = parsed.servers
-      .map(normalizeConfig)
-      .filter((c): c is MCPServerConfig => c !== null);
+    const configs = normalizeConfigs(parsed.servers);
     log.info(`Loaded ${configs.length} MCP server config(s) from mcp-servers.yml`);
     return configs;
-  } catch (error) {
-    log.error(
-      `Failed to parse mcp-servers.yml: ${error instanceof Error ? error.message : String(error)}`,
-    );
+  } catch {
+    log.error('Failed to parse mcp-servers.yml');
     return [];
   }
 }
@@ -101,15 +115,11 @@ function loadFromEnv(): MCPServerConfig[] | null {
       return [];
     }
 
-    const configs = (parsed as MCPServerConfig[])
-      .map(normalizeConfig)
-      .filter((c): c is MCPServerConfig => c !== null);
+    const configs = normalizeConfigs(parsed);
     log.info(`Loaded ${configs.length} MCP server config(s) from MCP_SERVERS env var`);
     return configs;
-  } catch (error) {
-    log.error(
-      `Failed to parse MCP_SERVERS env var: ${error instanceof Error ? error.message : String(error)}`,
-    );
+  } catch {
+    log.error('Failed to parse MCP_SERVERS env var');
     return [];
   }
 }
@@ -117,22 +127,16 @@ function loadFromEnv(): MCPServerConfig[] | null {
 /**
  * Normalize and validate a server config, applying defaults.
  */
-function normalizeConfig(raw: MCPServerConfig): MCPServerConfig | null {
-  if (typeof raw.id !== 'string' || !raw.id) {
-    log.warn('Invalid MCP server config: missing or invalid id');
+function normalizeConfig(raw: unknown): MCPServerConfig | null {
+  const parsed = configSchema.safeParse(raw);
+  if (!parsed.success) {
+    log.warn('Invalid MCP server configuration');
     return null;
   }
-  if (typeof raw.url !== 'string' || !raw.url) {
-    log.warn('Invalid MCP server config: missing or invalid url');
-    return null;
-  }
+  const config = parsed.data;
   return {
-    id: raw.id,
-    name: raw.name || raw.id,
-    url: raw.url,
-    apiKey: raw.apiKey ?? process.env[`MCP_${raw.id.toUpperCase().replace(/-/g, '_')}_API_KEY`],
-    enabled: raw.enabled ?? false,
-    transport: raw.transport ?? 'streamable-http',
-    timeoutMs: raw.timeoutMs ?? 30_000,
+    ...config,
+    name: config.name ?? config.id,
+    apiKey: process.env[`MCP_${config.id.toUpperCase().replace(/-/g, '_')}_API_KEY`],
   };
 }

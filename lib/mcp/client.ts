@@ -26,6 +26,8 @@ export interface MCPServerConfig {
   url: string;
   apiKey?: string;
   enabled: boolean;
+  /** Explicit tenant allowlist. An absent or empty list grants no access. */
+  organizationIds?: string[];
   /**
    * Transport type to use. Defaults to 'streamable-http'.
    * Falls back to 'sse' automatically if streamable-http connection fails.
@@ -244,11 +246,12 @@ export async function initMCPClients(configs: MCPServerConfig[]): Promise<void> 
  * Tool names are prefixed with the server ID to avoid collisions:
  * `{serverId}__{toolName}`
  */
-export function getExternalTools(): Record<string, Tool> {
+export function getExternalTools(organizationId?: string): Record<string, Tool> {
   const tools: Record<string, Tool> = {};
 
   for (const [serverId, server] of connectedServers) {
     if (server.status !== 'connected') continue;
+    if (!organizationId || !server.config.organizationIds?.includes(organizationId)) continue;
 
     for (const mcpTool of server.tools) {
       const qualifiedName = `${serverId}__${mcpTool.name}`;
@@ -256,9 +259,9 @@ export function getExternalTools(): Record<string, Tool> {
       tools[qualifiedName] = {
         description:
           mcpTool.description ?? `Tool "${mcpTool.name}" from MCP server "${server.config.name}"`,
-        parameters: jsonSchema(mcpTool.inputSchema),
+        inputSchema: jsonSchema(mcpTool.inputSchema),
         execute: async (args: Record<string, unknown>) => {
-          return callExternalTool(serverId, mcpTool.name, args);
+          return callExternalTool(serverId, mcpTool.name, args, organizationId);
         },
       } as unknown as Tool; // MCP tool schemas are dynamic, cannot satisfy static Tool type
     }
@@ -274,11 +277,16 @@ export async function callExternalTool(
   serverId: string,
   toolName: string,
   args: unknown,
+  organizationId?: string,
 ): Promise<unknown> {
   const server = connectedServers.get(serverId);
 
   if (!server) {
     throw new Error(`MCP server "${serverId}" not found`);
+  }
+
+  if (!organizationId || !server.config.organizationIds?.includes(organizationId)) {
+    throw new Error('MCP server access denied for this organization');
   }
 
   if (server.status !== 'connected') {
