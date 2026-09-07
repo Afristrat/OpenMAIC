@@ -60,4 +60,32 @@ Ce harnais additionne dans un seul cgroup le serveur Next, le navigateur Chromiu
 
 ## Quality gate associé
 
+### Complément du 7 septembre 2026 : tas V8 du build
+
+Le build de validation a échoué sur la limite V8 par défaut d’environ 2 Gio.
+Cette observation complète le diagnostic runtime du 2 septembre ; elle ne
+permet pas de réattribuer les incidents noyau historiques.
+
+Le SHA `8991e4d03202713c48307b2f20d898e4346641f5` centralise la limite
+de compilation dans `scripts/build-next.mjs`, appelé par `pnpm build` en CI
+et dans le builder Docker. Il transmet `--max-old-space-size=4096` via
+`NODE_OPTIONS` à Next et à ses enfants, conserve les autres options et
+propage les échecs. L’ancienne valeur du builder Docker est supprimée.
+Les plafonds des processus web et BullMQ restent indépendants.
+
+Preuve fraîche sur ServeurIA : trois tests ciblés réussis, formatage des
+fichiers modifiés, TypeScript et lint réussis. La commande
+`env -u NODE_OPTIONS pnpm build` termine avec le code 0, le typecheck Next,
+113 pages et la vérification des routes standalone. Aucun réglage mémoire
+manuel n’est nécessaire pour ce parcours. Le conteneur de validation
+dispose de 10 Gio ; avant cette exécution, Docker indiquait zéro redémarrage
+et `OOMKilled=false`.
+
+Cette preuve couvre le lanceur de compilation, pas un nouveau déploiement
+Docker ni une nouvelle recette de charge runtime. Les limites de ressources
+et les builds simultanés restent des contraintes ; un risque nul d’OOM
+n’est pas garanti.
+
+### Gate historique du 2 septembre
+
 Le code de production exact, inchangé pendant ce diagnostic, a été certifié le même jour : Prettier, TypeScript et ESLint verts ; 408/408 fichiers et 2 591/2 591 tests Vitest ; build 103/103 pages ; 89/89 tests Playwright.

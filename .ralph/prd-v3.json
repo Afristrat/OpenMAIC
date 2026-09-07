@@ -1651,7 +1651,7 @@
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Soldé : aucun OOM historique ou courant n’est imputable aux conteneurs Qalem ; les limites persistantes, la séparation web/worker/capture et un scénario borné génération + exports sont re-prouvés.",
+      "gap": "Diagnostic runtime daté du 2 septembre conservé. Le 7 septembre, un épuisement du tas V8 du build de validation a été constaté ; le lanceur commun versionné fixe désormais 4 Gio pour Next et ses processus enfants. Build sans NODE_OPTIONS externe réussi au SHA 8991e4d. Aucune garantie générale d’absence future d’OOM n’est déduite de cette preuve.",
       "evidence": [
         "Dockerfile",
         "next.config.ts",
