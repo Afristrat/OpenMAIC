@@ -2,13 +2,15 @@
 
 ## 7 septembre 2026 — S-018, raccordement MCP en cours
 
+Au SHA `786f447`, le planificateur PBL nominal dispose également des outils MCP autorisés, avec cinq étapes maximum avant sa sortie JSON ; son chemin sans outils reste mono-appel. Les 35 tests ciblés (MCP, planificateur nominal, routage PBL), TypeScript, lint et format passent. Le premier gate global a révélé une erreur dans la commande de validation : les variables Supabase fictives du navigateur étaient aussi injectées dans Vitest, provoquant 12 expirations dans `classroom-generation-retry.test.ts` ; les 13 tests de ce fichier passent après retrait de ces variables. Aucune temporisation ni logique métier n’a été modifiée. Un gate corrigé est lancé dans le même clone au SHA exact ; journal `/tmp/qalem-s018-full-corrected-786f447.log`, résultat encore à relever. Détail du périmètre et des limites : `docs/validation/S-018-mcp-client.md`.
+
 Suite au SHA `8e462a6` : route privée `GET /api/admin/mcp` protégée par `requireSuperAdmin`, sans cache ni diagnostics distants ; initialisation partagée avec les consommateurs. Un serveur en erreur est reconnecté et ses outils redécouverts avant de redevenir disponible. L’exemple YAML impose désormais des listes d’organisations et des secrets par environnement ; la priorité YAML sur JSON et les montages web/worker sont explicités. Huit tests MCP passent sur ServeurIA avec format, TypeScript et lint : la recette HTTP traverse aussi le véritable adaptateur LangGraph et la boucle AI SDK, seul le modèle étant scripté. Aucun déploiement de ce lot ni parcours navigateur complet n’est certifié.
 
 Le SHA `1ef3704` sur `origin/refork-v030` comprend l’initialisation paresseuse unique, la transmission du tenant par le contexte serveur existant et l’injection des outils externes dans le Director et les boucles PBL v1/v2. Les outils internes conservent leur priorité. Le registre dispose désormais d’une sonde `ping` bornée ; ses erreurs ne recopient pas les messages distants dans les logs.
 
 Validation ciblée dans `qalem-refork-exec`, clone isolé `/workspace/.codex-gate-s3-008-fe6ebba` : format des fichiers touchés, TypeScript et lint passent ; 5 fichiers / 39 tests passent. Le test HTTP utilise réellement le SDK client et un serveur de protocole contrôlé : succès, refus inter-tenant sans appel réseau, résultat invalide, outil silencieux expirant, santé dégradée puis rétablie. Aucun fournisseur externe de production n’a été activé par cette recette.
 
-S-018 reste ouverte : preuve des consommateurs de bout en bout, exposition opérationnelle de la santé, configuration de déploiement et gate complet encore requis. Le planificateur PBL mono-appel sans outils n’a pas été transformé en boucle agentique. Aucun `passes=true` ajouté.
+S-018 reste ouverte : preuve des parcours navigateur applicables, déploiement et gate complet encore requis. Aucun `passes=true` ajouté.
 
 ## État de référence — 26 août 2026
 
