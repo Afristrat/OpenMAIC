@@ -1,7 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { requireAuth } from '@/lib/api/auth';
 import { LtiAccessDenied } from '@/lib/lti/context';
-import { ltiSubmissionSchema, LtiSubmissionConflict, submitLtiQuiz } from '@/lib/lti/quiz-submission';
+import {
+  ltiSubmissionSchema,
+  LtiSubmissionConflict,
+  submitLtiQuiz,
+} from '@/lib/lti/quiz-submission';
 
 export const maxDuration = 300;
 
@@ -39,9 +43,13 @@ export async function POST(req: NextRequest) {
         }
         chunks.push(value);
       }
-    } finally { reader.releaseLock(); }
+    } finally {
+      reader.releaseLock();
+    }
     raw = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-  } catch { return reply({ success: false, error: 'Invalid JSON submission' }, 400); }
+  } catch {
+    return reply({ success: false, error: 'Invalid JSON submission' }, 400);
+  }
   const parsed = ltiSubmissionSchema.safeParse(raw);
   if (!parsed.success) return reply({ success: false, error: 'Invalid quiz submission' }, 400);
   try {
@@ -51,9 +59,13 @@ export async function POST(req: NextRequest) {
       response.headers.set('Retry-After', '3');
       return response;
     }
-    return reply({ success: true, status: 'queued', ...result.result, deliveryId: result.outboxId }, 200);
+    return reply(
+      { success: true, status: 'queued', ...result.result, deliveryId: result.outboxId },
+      200,
+    );
   } catch (error) {
-    const status = error instanceof LtiAccessDenied ? 403 : error instanceof LtiSubmissionConflict ? 409 : 503;
+    const status =
+      error instanceof LtiAccessDenied ? 403 : error instanceof LtiSubmissionConflict ? 409 : 503;
     return reply({ success: false, error: 'LTI quiz submission unavailable' }, status);
   }
 }
