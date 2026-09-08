@@ -3,9 +3,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { enqueueLtiGrade } from '@/lib/lti/outbox';
 
 const mocks = vi.hoisted(() => ({ rpc: vi.fn() }));
-vi.mock('@/lib/supabase/service', () => ({ createServiceSupabaseClient: () => ({ rpc: mocks.rpc }) }));
+vi.mock('@/lib/supabase/service', () => ({
+  createServiceSupabaseClient: () => ({ rpc: mocks.rpc }),
+}));
 const id = '00000000-0034-4000-8000-000000000001';
-const input = { contextToken: 'a'.repeat(64), userId: id, stageId: 'stage', sceneId: 'quiz', requestId: id, score: 80 };
+const input = {
+  contextToken: 'a'.repeat(64),
+  userId: id,
+  stageId: 'stage',
+  sceneId: 'quiz',
+  requestId: id,
+  score: 80,
+};
 
 describe('durable LTI enqueue boundary', () => {
   beforeEach(() => mocks.rpc.mockReset());
@@ -14,7 +23,11 @@ describe('durable LTI enqueue boundary', () => {
     expect(await enqueueLtiGrade(input)).toBe(id);
     expect(mocks.rpc).toHaveBeenCalledWith('enqueue_lti_grade', {
       p_token_hash: createHash('sha256').update(input.contextToken).digest('hex'),
-      p_user_id: id, p_stage_id: 'stage', p_scene_id: 'quiz', p_score: 80, p_request_id: id,
+      p_user_id: id,
+      p_stage_id: 'stage',
+      p_scene_id: 'quiz',
+      p_score: 80,
+      p_request_id: id,
     });
   });
   it.each([NaN, Infinity, -1, 101])('rejects an invalid score %s before writing', async (score) => {
