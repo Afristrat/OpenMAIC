@@ -12,7 +12,11 @@ const subscribe = () => () => {};
 export function MarketplacePublicationTools({ onChange }: { onChange: () => void }) {
   const { t } = useI18n();
   // Native selects must not accept choices before React attaches their handlers.
-  const hydrated = useSyncExternalStore(subscribe, () => true, () => false);
+  const hydrated = useSyncExternalStore(
+    subscribe,
+    () => true,
+    () => false,
+  );
   const { organizations, isLoading } = useOrganizations();
   const agents = useAgentRegistry((state) => state.agents);
   const [orgId, setOrgId] = useState('');
