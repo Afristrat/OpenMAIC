@@ -94,7 +94,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       throw new Error('Invalid LTI application origin');
     }
     const response = NextResponse.redirect(
-      new URL(`/classroom/${encodeURIComponent(binding.stageId)}`, app), 303,
+      new URL(`/classroom/${encodeURIComponent(binding.stageId)}`, app),
+      303,
     );
     await establishLaunchSession(req, response, binding, launchContext);
     response.cookies.delete('lti_state');
