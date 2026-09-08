@@ -3,7 +3,7 @@ import { isDeepStrictEqual } from 'node:util';
 import { NextRequest } from 'next/server';
 import { requireSuperAdminOrOrgAuthor } from '@/lib/api/auth';
 import { validateBody } from '@/lib/api/validate';
-import { marketplaceDraftSchema } from '@/lib/marketplace/draft-schema';
+import { agentProfileExtensionsSchema, marketplaceDraftSchema } from '@/lib/marketplace/draft-schema';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
@@ -19,6 +19,9 @@ export async function POST(request: NextRequest): Promise<Response> {
     .update(JSON.stringify([auth.user.id, orgId, requestId]))
     .digest('hex')}`;
   const supabase = await createServerSupabaseClient();
+  const profileExtensions = Object.fromEntries(
+    Object.entries(agentProfileExtensionsSchema.parse(agent)).filter(([, value]) => value !== undefined),
+  );
   const { error } = await supabase.from('agent_configs').upsert(
     {
       id,
@@ -32,6 +35,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       priority: agent.priority,
       allowed_actions: [...new Set(agent.allowedActions)],
       voice_config: agent.voiceConfig ?? null,
+      profile_extensions: profileExtensions,
       is_published: false,
     },
     { onConflict: 'id', ignoreDuplicates: true },
@@ -42,7 +46,7 @@ export async function POST(request: NextRequest): Promise<Response> {
   const { data: saved, error: readError } = await supabase
     .from('agent_configs')
     .select(
-      'id, is_published, name, role, persona, avatar, color, priority, allowed_actions, voice_config',
+      'id, is_published, name, role, persona, avatar, color, priority, allowed_actions, voice_config, profile_extensions',
     )
     .eq('id', id)
     .eq('owner_id', auth.user.id)
@@ -59,6 +63,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     priority: agent.priority,
     allowed_actions: [...new Set(agent.allowedActions)],
     voice_config: agent.voiceConfig ?? null,
+    profile_extensions: profileExtensions,
   };
   const { id: savedId, is_published: published, ...actual } = saved;
   if (!isDeepStrictEqual(actual, expected)) {

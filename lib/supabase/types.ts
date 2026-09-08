@@ -144,6 +144,7 @@ export interface AgentConfig {
   priority: number; // default 5
   allowed_actions: string[] | null;
   voice_config: Record<string, unknown> | null;
+  profile_extensions?: Record<string, unknown>;
   is_published: boolean; // default false
   usage_count: number; // default 0
   avg_rating: number; // default 0
