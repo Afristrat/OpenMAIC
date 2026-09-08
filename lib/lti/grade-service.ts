@@ -1,6 +1,6 @@
 import * as jose from 'jose';
 import { z } from 'zod';
-import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
+import { LtiNetworkPolicyError, requestLtiEndpoint, type LtiRequest } from './network';
 import type { LTIPlatformConfig, LTIGradePayload } from './types';
 import { getKeyPair } from './index';
 
@@ -34,19 +34,12 @@ class AGSRequestError extends Error {
   }
 }
 
-async function request(endpoint: string, init: RequestInit): Promise<Response> {
-  const url = new URL(endpoint);
-  if (
-    url.protocol !== 'https:' ||
-    url.username ||
-    url.password ||
-    url.hash ||
-    (await validateUrlForSSRF(endpoint))
-  ) {
-    throw new AGSRequestError('AGS endpoint rejected', false);
+async function request(endpoint: string, init: LtiRequest): Promise<Response> {
+  try { return await requestLtiEndpoint(endpoint, init, 32768); }
+  catch (error) {
+    if (error instanceof LtiNetworkPolicyError) throw new AGSRequestError('AGS endpoint rejected', false);
+    throw error;
   }
-  // Never forward assertions or bearer tokens through a redirect.
-  return fetch(url, { ...init, redirect: 'error', signal: AbortSignal.timeout(15000) });
 }
 
 async function readToken(response: Response): Promise<string> {

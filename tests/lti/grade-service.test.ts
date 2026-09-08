@@ -1,19 +1,22 @@
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { generateKeyPair } from 'jose';
 import { AGS_SCORE_SCOPE, submitGrade } from '@/lib/lti/grade-service';
 import type { LTIGradePayload } from '@/lib/lti/types';
+import { LtiNetworkPolicyError } from '@/lib/lti/network';
 
 const mocks = vi.hoisted(() => ({
   insert: vi.fn(),
   fetch: vi.fn(),
   keyPair: vi.fn(),
-  guard: vi.fn(),
 }));
 vi.mock('@/lib/supabase/service', () => ({
   createServiceSupabaseClient: () => ({ from: () => ({ insert: mocks.insert }) }),
 }));
 vi.mock('@/lib/lti/index', () => ({ getKeyPair: mocks.keyPair }));
-vi.mock('@/lib/server/ssrf-guard', () => ({ validateUrlForSSRF: mocks.guard }));
+vi.mock('@/lib/lti/network', async (original) => ({
+  ...(await original<typeof import('@/lib/lti/network')>()),
+  requestLtiEndpoint: mocks.fetch,
+}));
 const platform = {
   id: 'platform',
   clientId: 'client',
@@ -46,10 +49,7 @@ describe('AGS delivery contract', () => {
   beforeEach(() => {
     mocks.fetch.mockReset();
     mocks.insert.mockReset().mockResolvedValue({ error: null });
-    mocks.guard.mockReset().mockResolvedValue(null);
-    vi.stubGlobal('fetch', mocks.fetch);
   });
-  afterEach(() => vi.unstubAllGlobals());
 
   it('returns a retryable outcome and preserves the score body when called again', async () => {
     mocks.fetch
@@ -75,8 +75,7 @@ describe('AGS delivery contract', () => {
       userId: grade.userId,
       timestamp: context.timestamp,
     });
-    expect(first[1].redirect).toBe('error');
-    expect(first[1].signal).toBeInstanceOf(AbortSignal);
+    expect(first[2]).toBe(32768);
     expect(new URLSearchParams(mocks.fetch.mock.calls[0][1].body).get('scope')).toBe(
       AGS_SCORE_SCOPE,
     );
@@ -110,12 +109,12 @@ describe('AGS delivery contract', () => {
     expect(mocks.fetch).not.toHaveBeenCalled();
   });
   it('refuses a blocked endpoint before sending credentials', async () => {
-    mocks.guard.mockResolvedValue('blocked');
+    mocks.fetch.mockRejectedValueOnce(new LtiNetworkPolicyError());
     expect(await submitGrade(platform, lineItem, grade, context)).toMatchObject({
       success: false,
       retryable: false,
     });
-    expect(mocks.fetch).not.toHaveBeenCalled();
+    expect(mocks.fetch).toHaveBeenCalledTimes(1);
   });
   it('bounds OAuth response size and stops without submitting a score', async () => {
     mocks.fetch.mockResolvedValueOnce(new Response('x'.repeat(32769)));

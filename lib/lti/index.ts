@@ -8,6 +8,7 @@ import * as jose from 'jose';
 import { createLogger } from '@/lib/logger';
 import type { LTIPlatformConfig, LTILaunchContext } from './types';
 import { parseVerifiedLaunchClaims } from './launch-claims';
+import { requestLtiEndpoint } from './network';
 
 const log = createLogger('LTI');
 
@@ -59,8 +60,10 @@ export async function verifyLTIToken(
   idToken: string,
   platform: LTIPlatformConfig,
 ): Promise<LTILaunchContext> {
-  // Fetch the platform's JWKS for signature verification
-  const jwks = jose.createRemoteJWKSet(new URL(platform.jwksUrl));
+  // The registered URL is still untrusted network input. Do not let jose fetch it directly.
+  const response = await requestLtiEndpoint(platform.jwksUrl, { method: 'GET' }, 262144);
+  if (response.status !== 200) throw new Error('LTI public keys unavailable');
+  const jwks = jose.createLocalJWKSet(await response.json());
 
   const { payload } = await jose.jwtVerify(idToken, jwks, {
     issuer: platform.issuer,
