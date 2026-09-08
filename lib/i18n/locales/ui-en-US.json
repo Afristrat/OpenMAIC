@@ -1,4 +1,10 @@
 {
+  "marketplace.authorRequired": "An authoring role in an active organization is required.",
+  "marketplace.publicationOrg": "Publishing organization",
+  "marketplace.chooseOrg": "Choose an organization",
+  "marketplace.localAgent": "Local agent",
+  "marketplace.chooseAgent": "Choose an agent",
+  "marketplace.noLocalAgent": "Import or create a custom agent before sharing it.",
   "marketplace.ownedTitle": "My shared agents",
   "marketplace.refreshOwned": "Refresh my agents",
   "marketplace.ownedError": "The operation could not be confirmed. Refresh the list before trying again.",

@@ -1,4 +1,10 @@
 {
+  "marketplace.authorRequired": "يلزم دور تأليف في مؤسسة نشطة.",
+  "marketplace.publicationOrg": "مؤسسة النشر",
+  "marketplace.chooseOrg": "اختر مؤسسة",
+  "marketplace.localAgent": "وكيل محلي",
+  "marketplace.chooseAgent": "اختر وكيلًا",
+  "marketplace.noLocalAgent": "استورد أو أنشئ وكيلًا مخصصًا قبل مشاركته.",
   "marketplace.ownedTitle": "وكلائي المشتركون",
   "marketplace.refreshOwned": "تحديث وكلائي",
   "marketplace.ownedError": "تعذر تأكيد العملية. حدّث القائمة قبل المحاولة مجددًا.",

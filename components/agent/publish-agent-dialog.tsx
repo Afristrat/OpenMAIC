@@ -6,7 +6,8 @@
 
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useId } from 'react';
+import { marketplaceDraftSchema } from '@/lib/marketplace/draft-schema';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,14 +27,18 @@ import type { AgentConfig } from '@/lib/orchestration/registry/types';
 
 interface PublishAgentDialogProps {
   agent: AgentConfig;
+  orgId: string;
+  onPublished: () => void;
 }
 
-export function PublishAgentDialog({ agent }: PublishAgentDialogProps) {
+export function PublishAgentDialog({ agent, orgId, onPublished }: PublishAgentDialogProps) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [tagsInput, setTagsInput] = useState('');
   const [description, setDescription] = useState('');
   const [isPublishing, setIsPublishing] = useState(false);
+  const attempt = useRef<{ fingerprint: string; requestId: string } | null>(null);
+  const fieldId = useId();
 
   const handleSubmit = useCallback(async () => {
     setIsPublishing(true);
@@ -43,11 +48,27 @@ export function PublishAgentDialog({ agent }: PublishAgentDialogProps) {
         .map((tag) => tag.trim())
         .filter(Boolean);
 
+      // Strip local metadata, but validate every shared field including nested voice data.
+      const configuration = marketplaceDraftSchema.shape.agent.strip().parse(agent);
+      const fingerprint = JSON.stringify({ orgId, configuration });
+      if (attempt.current?.fingerprint !== fingerprint) {
+        attempt.current = { fingerprint, requestId: crypto.randomUUID() };
+      }
+      const draftResponse = await fetch('/api/marketplace/agents/drafts', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orgId, requestId: attempt.current.requestId, agent: configuration }),
+      });
+      const draft = await draftResponse.json();
+      if (!draftResponse.ok || draft.success !== true || typeof draft.agentId !== 'string') {
+        throw new Error('Private snapshot not confirmed');
+      }
+
       const res = await fetch('/api/marketplace/agents', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          agentId: agent.id,
+          agentId: draft.agentId,
+          isPublished: true,
           tags,
           description: description.trim() || null,
         }),
@@ -55,23 +76,25 @@ export function PublishAgentDialog({ agent }: PublishAgentDialogProps) {
 
       const json = await res.json();
 
-      if (json.success || json.published) {
+      if (res.ok && json.success === true && json.published === true && json.agentId === draft.agentId) {
         toast.success(t('marketplace.published'));
         setOpen(false);
         setTagsInput('');
         setDescription('');
+        attempt.current = null;
+        onPublished();
       } else {
-        toast.error(json.error ?? t('payment.failed'));
+        toast.error(t('marketplace.ownedError'));
       }
     } catch {
-      toast.error(t('payment.failed'));
+      toast.error(t('marketplace.ownedError'));
     } finally {
       setIsPublishing(false);
     }
-  }, [agent.id, tagsInput, description, t]);
+  }, [agent, orgId, onPublished, tagsInput, description, t]);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(value) => { if (!isPublishing) setOpen(value); }}>
       <DialogTrigger asChild>
         <Button size="sm" variant="outline" className="gap-1">
           <Upload className="h-3 w-3" />
@@ -86,9 +109,9 @@ export function PublishAgentDialog({ agent }: PublishAgentDialogProps) {
 
         <div className="space-y-4 py-2">
           <div className="space-y-2">
-            <Label htmlFor="publish-tags">{t('marketplace.tags')}</Label>
+            <Label htmlFor={`${fieldId}-tags`}>{t('marketplace.tags')}</Label>
             <Input
-              id="publish-tags"
+              id={`${fieldId}-tags`}
               placeholder={t('marketplace.tagsPlaceholder')}
               value={tagsInput}
               onChange={(e) => setTagsInput(e.target.value)}
@@ -96,9 +119,10 @@ export function PublishAgentDialog({ agent }: PublishAgentDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="publish-description">{t('marketplace.publicDescription')}</Label>
+            <Label htmlFor={`${fieldId}-description`}>{t('marketplace.publicDescription')}</Label>
             <Textarea
-              id="publish-description"
+              id={`${fieldId}-description`}
+              maxLength={4000}
               placeholder={t('marketplace.publicDescriptionPlaceholder')}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -108,7 +132,7 @@ export function PublishAgentDialog({ agent }: PublishAgentDialogProps) {
         </div>
 
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" disabled={isPublishing} onClick={() => setOpen(false)}>
             {t('common.cancel')}
           </Button>
           <Button onClick={handleSubmit} disabled={isPublishing}>

@@ -1,4 +1,10 @@
 {
+  "marketplace.authorRequired": "Un rôle d’auteur dans une organisation active est nécessaire.",
+  "marketplace.publicationOrg": "Organisation de publication",
+  "marketplace.chooseOrg": "Choisir une organisation",
+  "marketplace.localAgent": "Agent local",
+  "marketplace.chooseAgent": "Choisir un agent",
+  "marketplace.noLocalAgent": "Importez ou créez un agent personnalisé avant de le partager.",
   "marketplace.ownedTitle": "Mes agents partagés",
   "marketplace.refreshOwned": "Actualiser mes agents",
   "marketplace.ownedError": "Impossible de confirmer l’opération. Actualisez la liste avant de réessayer.",
