@@ -357,9 +357,17 @@ export function LTITab(): React.ReactElement {
                 <p className="text-xs text-muted-foreground">
                   {t('admin.lti.orgId')}: {platform.orgId ?? t('admin.lti.unbound')}
                 </p>
-                <LtiBindings platformId={platform.id} orgId={platform.orgId} onAssigned={(orgId) =>
-                  setPlatforms((previous) => previous.map((entry) => entry.id === platform.id ? { ...entry, orgId } : entry))
-                } />
+                <LtiBindings
+                  platformId={platform.id}
+                  orgId={platform.orgId}
+                  onAssigned={(orgId) =>
+                    setPlatforms((previous) =>
+                      previous.map((entry) =>
+                        entry.id === platform.id ? { ...entry, orgId } : entry,
+                      ),
+                    )
+                  }
+                />
               </div>
             ))}
           </div>

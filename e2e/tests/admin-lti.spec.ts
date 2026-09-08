@@ -4,10 +4,15 @@ import ar from '../../lib/i18n/locales/ui-ar-MA.json';
 import en from '../../lib/i18n/locales/ui-en-US.json';
 
 for (const [locale, labels] of Object.entries({ 'fr-FR': fr, 'ar-MA': ar, 'en-US': en })) {
-  test(`LTI bindings require confirmed tenant, existing identities and explicit revocation (${locale})`, async ({ page, browserConsoleContract }) => {
+  test(`LTI bindings require confirmed tenant, existing identities and explicit revocation (${locale})`, async ({
+    page,
+    browserConsoleContract,
+  }) => {
     browserConsoleContract.expectHttpError('/api/lti/bindings', 409);
     await page.addInitScript((language) => localStorage.setItem('locale', language), locale);
-    await page.route('**/api/account/is-admin', (route) => route.fulfill({ json: { isAdmin: true } }));
+    await page.route('**/api/account/is-admin', (route) =>
+      route.fulfill({ json: { isAdmin: true } }),
+    );
     await page.route('**/api/lti/config', (route) => route.fulfill({ json: { title: 'Qalem' } }));
     const platformId = '00000000-0034-4000-8000-000000000001';
     const orgId = '00000000-0034-4000-8000-000000000002';
@@ -18,7 +23,17 @@ for (const [locale, labels] of Object.entries({ 'fr-FR': fr, 'ar-MA': ar, 'en-US
         assigned = orgId;
         return route.fulfill({ json: { id: platformId, orgId } });
       }
-      return route.fulfill({ json: [{ id: platformId, clientId: 'lms-test', issuer: 'https://lms.example', deploymentId: 'deployment', orgId: assigned }] });
+      return route.fulfill({
+        json: [
+          {
+            id: platformId,
+            clientId: 'lms-test',
+            issuer: 'https://lms.example',
+            deploymentId: 'deployment',
+            orgId: assigned,
+          },
+        ],
+      });
     });
     const bindings: Record<string, Array<Record<string, string>>> = { resource: [], user: [] };
     let creates = 0;
@@ -27,7 +42,9 @@ for (const [locale, labels] of Object.entries({ 'fr-FR': fr, 'ar-MA': ar, 'en-US
       if (route.request().method() === 'GET') {
         const params = new URL(route.request().url()).searchParams;
         expect(params.get('platformId')).toBe(platformId);
-        return route.fulfill({ json: { orgId: assigned, bindings: bindings[params.get('kind')!], nextOffset: null } });
+        return route.fulfill({
+          json: { orgId: assigned, bindings: bindings[params.get('kind')!], nextOffset: null },
+        });
       }
       const body = route.request().postDataJSON();
       expect(body).not.toHaveProperty('orgId');
@@ -40,16 +57,19 @@ for (const [locale, labels] of Object.entries({ 'fr-FR': fr, 'ar-MA': ar, 'en-US
       }
       creates++;
       if (creates === 1) return route.fulfill({ status: 409, json: { success: false } });
-      const binding = body.kind === 'resource'
-        ? { id: platformId, resource_link_id: body.resourceLinkId, stage_id: body.stageId }
-        : { id: orgId, lms_subject: body.lmsSubject, user_id: body.userId };
+      const binding =
+        body.kind === 'resource'
+          ? { id: platformId, resource_link_id: body.resourceLinkId, stage_id: body.stageId }
+          : { id: orgId, lms_subject: body.lmsSubject, user_id: body.userId };
       bindings[body.kind].push(binding);
       return route.fulfill({ status: 201, json: binding });
     });
     await page.goto('/admin?tab=lti');
     await page.getByRole('button', { name: labels['admin.lti.manageBindings'] }).click();
     await expect(page.getByText(labels['admin.lti.assignHint'])).toBeVisible();
-    await expect(page.getByLabel(labels['admin.lti.resourceLinkId'], { exact: true })).toHaveCount(0);
+    await expect(page.getByLabel(labels['admin.lti.resourceLinkId'], { exact: true })).toHaveCount(
+      0,
+    );
     await page.getByLabel(labels['admin.lti.orgId'], { exact: true }).fill(orgId);
     await page.getByRole('button', { name: labels['admin.lti.assignTenant'] }).click();
     const courses = page.getByRole('region', { name: labels['admin.lti.resourceBindings'] });
@@ -75,10 +95,20 @@ for (const [locale, labels] of Object.entries({ 'fr-FR': fr, 'ar-MA': ar, 'en-US
       expect(dialog.message()).toContain(labels['admin.lti.revokeConfirm']);
       await dialog.dismiss();
     });
-    await courses.getByRole('button', { name: `${labels['admin.lti.revokeBinding']} assignment-1`, exact: true }).click();
+    await courses
+      .getByRole('button', {
+        name: `${labels['admin.lti.revokeBinding']} assignment-1`,
+        exact: true,
+      })
+      .click();
     expect(deletes).toBe(0);
     page.once('dialog', (dialog) => dialog.accept());
-    await courses.getByRole('button', { name: `${labels['admin.lti.revokeBinding']} assignment-1`, exact: true }).click();
+    await courses
+      .getByRole('button', {
+        name: `${labels['admin.lti.revokeBinding']} assignment-1`,
+        exact: true,
+      })
+      .click();
     await expect(courses.getByText(labels['admin.lti.noBindings'])).toBeVisible();
     await expect(members.getByRole('listitem')).toContainText('opaque-subject');
     expect(deletes).toBe(1);
