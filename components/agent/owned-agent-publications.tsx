@@ -7,11 +7,14 @@ import { useI18n } from '@/lib/hooks/use-i18n';
 
 const responseSchema = z.object({
   success: z.literal(true),
-  agents: z.array(z.object({ id: z.string(), name: z.string(), published: z.boolean() })),
+  agents: z.array(z.object({ id: z.string(), name: z.string(), orgId: z.string().nullable(), published: z.boolean() })),
   pagination: z.object({ totalPages: z.number().int().nonnegative() }),
 });
 
-export function OwnedAgentPublications({ onWithdraw }: { onWithdraw: () => void }) {
+export function OwnedAgentPublications({ onChange, publishableOrgIds }: {
+  onChange: () => void;
+  publishableOrgIds: string[];
+}) {
   const { t } = useI18n();
   const [page, setPage] = useState(1);
   const [revision, setRevision] = useState(0);
@@ -46,35 +49,35 @@ export function OwnedAgentPublications({ onWithdraw }: { onWithdraw: () => void 
     return () => controller.abort();
   }, [page, revision]);
 
-  async function withdraw(id: string) {
+  async function changePublication(id: string, published: boolean) {
     setPending(id);
     setError(false);
     try {
       const response = await fetch('/api/marketplace/agents', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agentId: id, isPublished: false }),
+        body: JSON.stringify({ agentId: id, isPublished: published }),
       });
       const result = await response.json();
       if (
         !response.ok ||
         result.success !== true ||
-        result.published !== false ||
+        result.published !== published ||
         result.agentId !== id
       ) {
-        throw new Error('Withdrawal not confirmed');
+        throw new Error('Publication change not confirmed');
       }
       setData((current) =>
         current
           ? {
               ...current,
               agents: current.agents.map((agent) =>
-                agent.id === id ? { ...agent, published: false } : agent,
+                agent.id === id ? { ...agent, published } : agent,
               ),
             }
           : current,
       );
-      onWithdraw();
+      onChange();
     } catch {
       setError(true);
     } finally {
@@ -111,13 +114,13 @@ export function OwnedAgentPublications({ onWithdraw }: { onWithdraw: () => void 
                     {agent.name} —{' '}
                     {t(agent.published ? 'marketplace.published' : 'marketplace.privateAgent')}
                   </span>
-                  {agent.published && (
+                  {(agent.published || (agent.orgId !== null && publishableOrgIds.includes(agent.orgId))) && (
                     <Button
                       variant="outline"
                       disabled={pending !== null}
-                      onClick={() => withdraw(agent.id)}
+                      onClick={() => changePublication(agent.id, !agent.published)}
                     >
-                      {t('marketplace.withdraw')}
+                      {t(agent.published ? 'marketplace.withdraw' : 'marketplace.publish')}
                     </Button>
                   )}
                 </li>

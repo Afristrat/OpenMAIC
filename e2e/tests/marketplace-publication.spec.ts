@@ -34,17 +34,19 @@ test('publishes a private snapshot explicitly and withdraws it after reload', as
     );
   }, configuration);
   let saved = false;
+  let draftCount = 0;
   let published = false;
   await page.route('**/api/marketplace/agents/owned?*', (route) =>
     route.fulfill({
       json: {
         success: true,
-        agents: saved ? [{ id: 'server-snapshot', name: configuration.name, published }] : [],
+        agents: saved ? [{ id: 'server-snapshot', orgId: '00000000-0000-4000-8000-000000000002', name: configuration.name, published }] : [],
         pagination: { totalPages: saved ? 1 : 0 },
       },
     }),
   );
   await page.route('**/api/marketplace/agents/drafts', async (route) => {
+    draftCount++;
     const body = route.request().postDataJSON();
     expect(body.orgId).toBe('00000000-0000-4000-8000-000000000002');
     expect(body.requestId).toMatch(/^[0-9a-f-]{36}$/);
@@ -91,4 +93,9 @@ test('publishes a private snapshot explicitly and withdraws it after reload', as
   await owned.getByRole('button', { name: 'Retirer de la marketplace' }).click();
   await expect(owned.getByText('Analyste de recette — Privé', { exact: true })).toBeVisible();
   expect(published).toBe(false);
+  await page.reload();
+  await expect(owned.getByText('Analyste de recette — Privé', { exact: true })).toBeVisible();
+  await owned.getByRole('button', { name: 'Publier', exact: true }).click();
+  await expect(owned.getByText('Analyste de recette — Publié', { exact: true })).toBeVisible();
+  expect(draftCount).toBe(1);
 });

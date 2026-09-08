@@ -86,7 +86,7 @@ export function MarketplacePublicationTools({ onChange }: { onChange: () => void
           </div>
         )}
       </section>
-      <OwnedAgentPublications key={revision} onWithdraw={onChange} />
+      <OwnedAgentPublications key={revision} onChange={onChange} publishableOrgIds={authorized.map((org) => org.id)} />
     </>
   );
 }
