@@ -1,13 +1,15 @@
 import { startAllWorkers, stopAllWorkers } from '../lib/jobs/workers';
+import { startLtiGradeWorker } from '../lib/lti/worker';
 
 startAllWorkers();
+const stopLtiGrades = startLtiGradeWorker();
 
 let stopping = false;
 async function stop(signal: NodeJS.Signals) {
   if (stopping) return;
   stopping = true;
   console.info(`[Workers] Arrêt demandé par ${signal}`);
-  await stopAllWorkers();
+  await Promise.all([stopAllWorkers(), stopLtiGrades()]);
   process.exit(0);
 }
 

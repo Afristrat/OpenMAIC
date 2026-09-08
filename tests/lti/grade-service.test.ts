@@ -51,13 +51,14 @@ describe('AGS delivery contract', () => {
   });
   afterEach(() => vi.unstubAllGlobals());
 
-  it('retries the same score body and audits the Qalem UUID and real resource', async () => {
+  it('returns a retryable outcome and preserves the score body when called again', async () => {
     mocks.fetch
       .mockResolvedValueOnce(token())
       .mockResolvedValueOnce(new Response('not logged', { status: 503 }))
       .mockResolvedValueOnce(token())
       .mockResolvedValueOnce(new Response(null, { status: 204 }));
-    expect(await submitGrade(platform, lineItem, grade, context)).toBe(true);
+    expect(await submitGrade(platform, lineItem, grade, context)).toEqual({ success:false,retryable:true,error:'AGS score HTTP 503' });
+    expect(await submitGrade(platform, lineItem, grade, context)).toEqual({ success:true,retryable:false,error:null });
     const first = mocks.fetch.mock.calls[1];
     const second = mocks.fetch.mock.calls[3];
     expect(String(first[0])).toBe('https://lms.example.org/items/1/scores?course=2');
@@ -71,32 +72,20 @@ describe('AGS delivery contract', () => {
     expect(new URLSearchParams(mocks.fetch.mock.calls[0][1].body).get('scope')).toBe(
       AGS_SCORE_SCOPE,
     );
-    expect(mocks.insert).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        user_id: context.qalemUserId,
-        resource_link_id: 'assignment',
-        success: true,
-      }),
-    );
-    expect(JSON.stringify(mocks.insert.mock.calls)).not.toContain('not logged');
+    expect(mocks.insert).not.toHaveBeenCalled();
   });
-  it('does not send again or claim success if auditing an accepted grade fails', async () => {
+  it('leaves audit and acknowledgement to the durable worker', async () => {
     mocks.fetch
       .mockResolvedValueOnce(token())
       .mockResolvedValueOnce(new Response(null, { status: 204 }));
-    mocks.insert.mockResolvedValue({ error: { code: 'unavailable' } });
-    await expect(submitGrade(platform, lineItem, grade, context)).rejects.toThrow(
-      'audit persistence failed',
-    );
+    expect(await submitGrade(platform, lineItem, grade, context)).toEqual({ success:true,retryable:false,error:null });
+    expect(mocks.insert).not.toHaveBeenCalled();
     expect(mocks.fetch).toHaveBeenCalledTimes(2);
   });
   it('does not retry permanent OAuth failures', async () => {
     mocks.fetch.mockResolvedValueOnce(new Response('private provider body', { status: 401 }));
-    expect(await submitGrade(platform, lineItem, grade, context)).toBe(false);
+    expect(await submitGrade(platform, lineItem, grade, context)).toEqual({ success:false,retryable:false,error:'AGS token HTTP 401' });
     expect(mocks.fetch).toHaveBeenCalledTimes(1);
-    expect(mocks.insert).toHaveBeenCalledWith(
-      expect.objectContaining({ error_message: 'AGS token HTTP 401' }),
-    );
   });
   it('rejects missing score permission before any network request', async () => {
     await expect(
@@ -106,12 +95,12 @@ describe('AGS delivery contract', () => {
   });
   it('refuses a blocked endpoint before sending credentials', async () => {
     mocks.guard.mockResolvedValue('blocked');
-    expect(await submitGrade(platform, lineItem, grade, context)).toBe(false);
+    expect(await submitGrade(platform, lineItem, grade, context)).toMatchObject({ success:false,retryable:false });
     expect(mocks.fetch).not.toHaveBeenCalled();
   });
   it('bounds OAuth response size and stops without submitting a score', async () => {
     mocks.fetch.mockResolvedValueOnce(new Response('x'.repeat(32769)));
-    expect(await submitGrade(platform, lineItem, grade, context)).toBe(false);
+    expect(await submitGrade(platform, lineItem, grade, context)).toMatchObject({ success:false,retryable:false });
     expect(mocks.fetch).toHaveBeenCalledTimes(1);
   });
 });

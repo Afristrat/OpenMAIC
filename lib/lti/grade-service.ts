@@ -1,6 +1,5 @@
 import * as jose from 'jose';
 import { z } from 'zod';
-import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import type { LTIPlatformConfig, LTIGradePayload } from './types';
 import { getKeyPair } from './index';
@@ -106,16 +105,19 @@ async function getAccessToken(platform: LTIPlatformConfig): Promise<string> {
   return readToken(response);
 }
 
-/** Server-only delivery; caller must provide the persisted, authorized context.
- * Transient failures retry at 1s/2s. Audit failure is thrown outside the retry
- * block: it must never turn an accepted score into another network submission.
- */
+export interface GradeDeliveryResult {
+  success: boolean;
+  retryable: boolean;
+  error: string | null;
+}
+
+/** One network attempt. The durable worker owns retry and atomic audit writes. */
 export async function submitGrade(
   platform: LTIPlatformConfig,
   lineItemUrl: string,
   grade: LTIGradePayload,
   context: GradeDeliveryContext,
-): Promise<boolean> {
+): Promise<GradeDeliveryResult> {
   const validatedGrade = gradeSchema.safeParse(grade);
   const validatedContext = contextSchema.safeParse(context);
   if (!validatedGrade.success || !validatedContext.success) throw new Error('Invalid AGS delivery');
@@ -125,45 +127,24 @@ export async function submitGrade(
     ...validatedGrade.data,
     timestamp: validatedContext.data.timestamp,
   });
-  const service = createServiceSupabaseClient();
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    let success = false;
-    let retryable = false;
-    let errorMessage: string | null = null;
-    try {
-      const token = await getAccessToken(platform);
-      const response = await request(scoreUrl.href, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/vnd.ims.lis.v1.score+json',
-        },
-        body: payload,
-      });
-      await response.body?.cancel();
-      if (!response.ok) throw httpError('AGS score', response.status);
-      success = true;
-    } catch (error) {
-      // Never persist raw provider bodies, URLs, credentials or exception text.
-      retryable = !(error instanceof AGSRequestError) || error.retryable;
-      errorMessage = error instanceof AGSRequestError ? error.message : 'AGS transport failure';
-    }
-    const audit = await service.from('lti_grade_submissions').insert({
-      user_id: context.qalemUserId,
-      client_id: platform.clientId,
-      resource_link_id: context.resourceLinkId,
-      line_item_url: lineItemUrl,
-      score_given: grade.scoreGiven,
-      score_maximum: grade.scoreMaximum,
-      activity_progress: grade.activityProgress,
-      grading_progress: grade.gradingProgress,
-      success,
-      error_message: errorMessage,
+  try {
+    const token = await getAccessToken(platform);
+    const response = await request(scoreUrl.href, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/vnd.ims.lis.v1.score+json',
+      },
+      body: payload,
     });
-    if (audit.error) throw new Error('AGS audit persistence failed');
-    if (success) return true;
-    if (!retryable) return false;
-    if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, 1000 * 2 ** (attempt - 1)));
+    await response.body?.cancel();
+    if (!response.ok) throw httpError('AGS score', response.status);
+    return { success: true, retryable: false, error: null };
+  } catch (error) {
+    return {
+      success: false,
+      retryable: !(error instanceof AGSRequestError) || error.retryable,
+      error: error instanceof AGSRequestError ? error.message : 'AGS transport failure',
+    };
   }
-  return false;
 }

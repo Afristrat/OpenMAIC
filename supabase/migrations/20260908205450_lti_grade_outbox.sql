@@ -98,3 +98,26 @@ LANGUAGE sql SECURITY INVOKER SET search_path = '' AS $$
 $$;
 REVOKE ALL ON FUNCTION public.claim_lti_grade() FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.claim_lti_grade() TO service_role;
+
+-- Acknowledgement and audit share a transaction. Stale workers cannot rewrite
+-- a newer lease or mark an unrelated delivery as sent.
+CREATE FUNCTION public.finish_lti_grade(p_id UUID,p_lease UUID,p_success BOOLEAN,p_retryable BOOLEAN,p_error TEXT)
+RETURNS BOOLEAN LANGUAGE plpgsql SECURITY INVOKER SET search_path = '' AS $$
+DECLARE job public.lti_grade_outbox; learner public.lti_user_bindings; resource public.lti_resource_bindings;
+BEGIN
+  SELECT * INTO job FROM public.lti_grade_outbox WHERE id=p_id AND lease_id=p_lease AND status='processing' AND lease_expires_at>now() FOR UPDATE;
+  IF NOT FOUND THEN RETURN false; END IF;
+  SELECT * INTO STRICT learner FROM public.lti_user_bindings WHERE id=job.user_binding_id;
+  SELECT * INTO STRICT resource FROM public.lti_resource_bindings WHERE id=job.resource_binding_id;
+  INSERT INTO public.lti_grade_submissions(user_id,client_id,resource_link_id,line_item_url,score_given,score_maximum,activity_progress,grading_progress,success,error_message)
+    VALUES(learner.user_id,job.client_id,resource.resource_link_id,job.line_item_url,job.score,100,'Completed','FullyGraded',p_success,left(p_error,256));
+  UPDATE public.lti_grade_outbox SET
+    status=CASE WHEN p_success THEN 'sent' WHEN p_retryable AND attempt_count<8 THEN 'pending' ELSE 'failed' END,
+    sent_at=CASE WHEN p_success THEN now() ELSE NULL END,
+    next_attempt_at=now()+least(300,power(2,least(attempt_count,8))::integer)*interval '1 second',
+    last_error=left(p_error,256),lease_id=NULL,lease_expires_at=NULL
+    WHERE id=job.id;
+  RETURN true;
+END $$;
+REVOKE ALL ON FUNCTION public.finish_lti_grade(UUID,UUID,BOOLEAN,BOOLEAN,TEXT) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.finish_lti_grade(UUID,UUID,BOOLEAN,BOOLEAN,TEXT) TO service_role;

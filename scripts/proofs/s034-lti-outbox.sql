@@ -34,7 +34,9 @@ BEGIN
   UPDATE public.lti_grade_outbox SET lease_expires_at=now()-interval '1 second' WHERE id=first_id;
   SELECT * INTO claimed FROM public.claim_lti_grade();
   IF claimed.id<>first_id OR claimed.attempt_count<>2 OR claimed.lease_id=previous_lease THEN RAISE EXCEPTION 'Expired lease not recovered'; END IF;
-  UPDATE public.lti_grade_outbox SET status='sent',sent_at=now(),lease_id=NULL,lease_expires_at=NULL WHERE id=first_id;
+  IF public.finish_lti_grade(first_id,previous_lease,true,false,NULL) THEN RAISE EXCEPTION 'Stale acknowledgement accepted'; END IF;
+  IF NOT public.finish_lti_grade(first_id,claimed.lease_id,true,false,NULL) THEN RAISE EXCEPTION 'Acknowledgement failed'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.lti_grade_submissions WHERE client_id='s034-client' AND user_id='00000000-0034-4000-8000-000000000001' AND resource_link_id='assignment' AND score_given=80 AND success) THEN RAISE EXCEPTION 'Audit missing'; END IF;
   SELECT * INTO claimed FROM public.claim_lti_grade();
   IF claimed.id<>second_id THEN RAISE EXCEPTION 'Next ordered grade unavailable'; END IF;
   IF has_column_privilege('service_role','public.lti_grade_outbox','score','UPDATE') THEN RAISE EXCEPTION 'Worker can change the score'; END IF;
