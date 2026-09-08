@@ -15,35 +15,19 @@ const log = createLogger('LTI');
 // Platform config lookup (from Supabase via service role)
 // ---------------------------------------------------------------------------
 
-/**
- * Fetch an LTI platform registration by client_id using the Supabase service
- * role client. This runs server-side only.
- */
-export async function getPlatformConfig(clientId: string): Promise<LTIPlatformConfig | null> {
-  // Dynamic import to avoid pulling Supabase into edge bundles unnecessarily
-  const { createClient } = await import('@supabase/supabase-js');
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    log.error('Missing SUPABASE env vars for LTI platform lookup');
-    return null;
-  }
-
-  const supabase = createClient(supabaseUrl, serviceRoleKey);
-
-  const { data, error } = await supabase
+async function readPlatform(
+  field: 'client_id' | 'issuer',
+  value: string,
+): Promise<LTIPlatformConfig | null> {
+  const { createServiceSupabaseClient } = await import('@/lib/supabase/service');
+  const { data, error } = await createServiceSupabaseClient()
     .from('lti_registrations')
-    .select('*')
-    .eq('client_id', clientId)
-    .single();
-
-  if (error || !data) {
-    log.warn(`LTI platform not found for client_id=${clientId}`, error?.message);
-    return null;
-  }
-
+    .select('id, client_id, issuer, jwks_url, auth_url, token_url, deployment_id')
+    .eq(field, value)
+    .maybeSingle();
+  // No row is different from a failed lookup (including ambiguous issuers).
+  if (error) throw new Error('LTI platform lookup unavailable');
+  if (!data) return null;
   return {
     id: data.id as string,
     clientId: data.client_id as string,
@@ -55,42 +39,12 @@ export async function getPlatformConfig(clientId: string): Promise<LTIPlatformCo
   };
 }
 
-/**
- * Fetch an LTI platform registration by issuer URI.
- */
-export async function getPlatformConfigByIssuer(issuer: string): Promise<LTIPlatformConfig | null> {
-  const { createClient } = await import('@supabase/supabase-js');
+export function getPlatformConfig(clientId: string): Promise<LTIPlatformConfig | null> {
+  return readPlatform('client_id', clientId);
+}
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    log.error('Missing SUPABASE env vars for LTI platform lookup');
-    return null;
-  }
-
-  const supabase = createClient(supabaseUrl, serviceRoleKey);
-
-  const { data, error } = await supabase
-    .from('lti_registrations')
-    .select('*')
-    .eq('issuer', issuer)
-    .single();
-
-  if (error || !data) {
-    log.warn(`LTI platform not found for issuer=${issuer}`, error?.message);
-    return null;
-  }
-
-  return {
-    id: data.id as string,
-    clientId: data.client_id as string,
-    issuer: data.issuer as string,
-    jwksUrl: data.jwks_url as string,
-    authUrl: data.auth_url as string,
-    tokenUrl: data.token_url as string,
-    deploymentId: data.deployment_id as string,
-  };
+export function getPlatformConfigByIssuer(issuer: string): Promise<LTIPlatformConfig | null> {
+  return readPlatform('issuer', issuer);
 }
 
 // ---------------------------------------------------------------------------

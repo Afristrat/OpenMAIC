@@ -29,6 +29,12 @@ function lookup(data: unknown) {
   return query;
 }
 describe('LTI durable worker', () => {
+  it('keeps the lease recoverable on a platform lookup outage', async () => {
+    mocks.platform.mockRejectedValue(new Error('LTI platform lookup unavailable'));
+    await expect(deliverNextLtiGrade()).rejects.toThrow('lookup unavailable');
+    expect(mocks.send).not.toHaveBeenCalled();
+    expect(mocks.rpc).toHaveBeenCalledTimes(1);
+  });
   beforeEach(() => {
     vi.resetAllMocks();
     mocks.rpc
