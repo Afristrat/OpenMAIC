@@ -2,6 +2,8 @@ import type { NextConfig } from 'next';
 import { withSentryConfig } from '@sentry/nextjs';
 
 const nextConfig: NextConfig = {
+  // All workspace packages live in this repository, never in its host parent.
+  outputFileTracingRoot: __dirname,
   output:
     process.env.VERCEL || process.env.NEXT_PUBLIC_E2E_TEST_MODE === 'true'
       ? undefined
