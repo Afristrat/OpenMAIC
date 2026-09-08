@@ -1,5 +1,9 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 8 septembre 2026 — U-011, contrat de publication en cours
+
+La conservation explicite S0-011 lève le gate U-011. Inspection : PublishAgentDialog et AgentConfigPanel sont sans montage, les agents importés sont locaux et aucun insert agent_configs n’a été retrouvé. Premier lot serveur : description null acceptée, métadonnées bornées, publication soumise au propriétaire et au droit d’auteur dans l’organisation stockée, mutation bornée au propriétaire/tenant, retrait explicite possible par le propriétaire, absence de ligne mise à jour refusée au lieu d’un faux succès. Quatre tests ciblés ajoutés ; validation à exécuter. Restent persistance des agents locaux, RLS du tenant à renforcer, action UI visible, parcours réel publication/retrait et gate final. Aucun contenu utilisateur publié, aucune migration ni mise en production de ce lot.
+
 ## 8 septembre 2026 — U-015 clôturée en production
 
 Déploiement `kiutnirsb31t1itbm1bq5bah` confirmé finished sur `1a51683deda94eeb6e200839a6c12b22db0bae9e`. Recette Chromium réelle : registre authentifié 200, onglet vérifié, bouton de rafraîchissement 200, zéro connecteur activé ; session de preuve révoquée sans fichier. À 18:16:04 UTC, web healthy depuis le 7 septembre 17:25:08 UTC, restart=0, OOMKilled=false, santé publique 200. Logs depuis la bascule relus : zéro WARN/ERROR/FATAL/heap out of memory. C’est une vérification rétrospective de plus de 24 heures, pas une surveillance continue ni une preuve de tenue sous charge. U-015 est `completed/passes=true` avec preuves datées ; aucun déploiement, test ou suivi U-015 ne reste actif. Worker non redéployé. Les états « en cours » ci-dessous sont historiques.

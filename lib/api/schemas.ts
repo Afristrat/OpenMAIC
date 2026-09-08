@@ -240,9 +240,10 @@ export const certificateGenerateSchema = z.object({
 // ---------------------------------------------------------------------------
 
 export const marketplacePublishSchema = z.object({
-  agentId: z.string().min(1, 'agentId is required'),
-  description: z.string().optional(),
-  tags: z.array(z.string()).optional(),
+  agentId: z.string().trim().min(1, 'agentId is required').max(128),
+  description: z.string().trim().max(4000).nullable().optional(),
+  tags: z.array(z.string().trim().min(1).max(50)).max(20).optional(),
+  isPublished: z.boolean().default(true),
 });
 
 export const marketplaceReviewSchema = z.object({

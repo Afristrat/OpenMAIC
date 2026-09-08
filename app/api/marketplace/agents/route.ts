@@ -12,6 +12,7 @@ import { computeAgentScore, isTopAgent } from '@/lib/marketplace/ranking';
 import { validateBody } from '@/lib/api/validate';
 import { marketplacePublishSchema } from '@/lib/api/schemas';
 import { getSystemAgents } from '@/lib/marketplace/system-agents';
+import { requireSuperAdminOrOrgAuthor } from '@/lib/api/auth';
 
 export async function GET(request: NextRequest): Promise<Response> {
   const supabase = await createServerSupabaseClient();
@@ -181,7 +182,7 @@ export async function POST(request: NextRequest): Promise<Response> {
   // Verify ownership
   const { data: agent, error: fetchErr } = await supabase
     .from('agent_configs')
-    .select('id, owner_id')
+    .select('id, owner_id, org_id')
     .eq('id', agentId)
     .single();
 
@@ -193,24 +194,42 @@ export async function POST(request: NextRequest): Promise<Response> {
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'You can only publish your own agents');
   }
 
+  // Withdrawing one's own publication remains possible after leaving a tenant.
+  // Publishing requires current authoring rights in the stored organization.
+  if (body.isPublished) {
+    if (!agent.org_id) {
+      return apiError(API_ERROR_CODES.INVALID_REQUEST, 409, 'Agent organization is required');
+    }
+    const access = await requireSuperAdminOrOrgAuthor(request, agent.org_id);
+    if (access.response) return access.response;
+  }
+
   // Optional metadata updates
-  const updates: Record<string, unknown> = { is_published: true };
+  const updates: Record<string, unknown> = { is_published: body.isPublished };
   if (body.description !== undefined) updates.description = body.description;
   if (body.tags !== undefined) updates.tags = body.tags;
 
-  const { error: updateErr } = await supabase
+  let mutation = supabase
     .from('agent_configs')
     .update(updates)
-    .eq('id', agentId);
+    .eq('id', agentId)
+    .eq('owner_id', user.id);
+  if (body.isPublished) mutation = mutation.eq('org_id', agent.org_id!);
+  const { data: updated, error: updateErr } = await mutation
+    .select('id, is_published')
+    .maybeSingle();
 
   if (updateErr) {
     return apiError(
       API_ERROR_CODES.INTERNAL_ERROR,
       500,
       'Failed to publish agent',
-      updateErr.message,
     );
   }
 
-  return apiSuccess({ published: true, agentId });
+  if (!updated) {
+    return apiError(API_ERROR_CODES.INVALID_REQUEST, 409, 'Agent publication was not updated');
+  }
+
+  return apiSuccess({ published: updated.is_published, agentId: updated.id });
 }

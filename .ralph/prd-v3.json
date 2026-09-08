@@ -4635,7 +4635,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Publier un agent sur la marketplace » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "decision_required",
+      "status": "to_implement",
       "passes": false,
       "source": {
         "file": ".ralph/prd-ui.json",
@@ -4644,7 +4644,7 @@
       },
       "sourceDependencies": [],
       "dependencies": ["S0-011"],
-      "gap": "PublishAgentDialog sans montage retrouvé.",
+      "gap": "Gate levé le 8 septembre 2026 par conservation explicite S0-011. PublishAgentDialog sans montage ; agents locaux non persistés dans agent_configs, description null incompatible avec le schéma et retrait absent. Relier une action autorisée à une publication persistante, isolée par propriétaire et organisation, puis prouver publication/retrait réels. Aucune publication de contenu utilisateur sans action explicite dans l’interface.",
       "evidence": ["components/agent/publish-agent-dialog.tsx:31"],
       "acceptance": [
         "Après conservation du marketplace, brancher publication depuis une action visible et autorisée.",
@@ -4656,7 +4656,7 @@
         "status": "legacy_claim_not_delivery_proof"
       },
       "historicalDependencies": [],
-      "executionAllowed": false,
+      "executionAllowed": true,
       "validationRequires": [
         "qualityGates",
         "fresh_evidence_per_acceptance",
