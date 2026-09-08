@@ -1,5 +1,9 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 8 septembre 2026 — Réconciliation du contrat S-048
+
+Lecture fraîche pendant le suivi U-011 : le PRD exigeait encore 1 000 discussions et data-driven-director.ts filtre à MIN_SAMPLE_SIZE=50. La décision explicite d’Amine « aucun minimum de session comparables […] aussi bien pour l’optimisation que pour le director » s’applique aux deux. Le contrat S-048 est aligné sur S-037 : première observation exploitable, volume et limites exposés, fallback pour absence/invalidité/incompatibilité, tests zéro/une/plusieurs observations. Le plafond de lecture limit(1000) n’est pas confondu avec un minimum. Aucun code ni flag de collecte changé ; executionAllowed=false, dépendance S-047 et protocole A/B à approuver demeurent. Il s’agit d’une correction de contrat, pas d’une livraison du Director.
+
 ## 8 septembre 2026 — U-011, contrat de publication en cours
 
 Déploiement icqwdtj4bruc9197m5pg8bxh terminé `finished`, updated_at=2026-09-08T19:53:06Z. Image réelle 00f1c3eab8bf0e627cf6d078a74c1754df7fc6c2 sur bcx5pxyuc9z3lt4jtyjipcqu-194756876048, startedAt=19:52:24.823303424Z, healthy/restart=0/OOMKilled=false et santé publique 200. Le PRD est réconcilié en to_validate, pas completed (c82a618).
