@@ -41,8 +41,8 @@ test('publishes a private snapshot explicitly and withdraws it after reload', as
     return route.fulfill({ json: { success: true, agents: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 0 } } });
   });
   await page.goto('/marketplace/agents');
-  await page.getByLabel('Organisation de publication').selectOption('00000000-0000-4000-8000-000000000002');
-  await page.getByLabel('Agent local', { exact: true }).selectOption('local-agent');
+  await page.getByRole('combobox', { name: 'Organisation de publication', exact: true }).selectOption('00000000-0000-4000-8000-000000000002');
+  await page.getByRole('combobox', { name: 'Agent local', exact: true }).selectOption('local-agent');
   expect(saved).toBe(false);
   await page.getByRole('button', { name: 'Publier', exact: true }).click();
   const dialog = page.getByRole('dialog');
