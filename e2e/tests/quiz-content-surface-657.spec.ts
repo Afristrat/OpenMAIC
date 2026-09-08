@@ -4,6 +4,9 @@ import { ClassroomPage } from '../pages/classroom.page';
 import { createSettingsStorage } from '../fixtures/test-data/settings';
 import type { QuizQuestion } from '../../lib/types/stage';
 import type { RequestBoundaryTracker } from '../fixtures/mock-api';
+import fr from '../../lib/i18n/locales/ui-fr-FR.json';
+import ar from '../../lib/i18n/locales/ui-ar-MA.json';
+import en from '../../lib/i18n/locales/ui-en-US.json';
 
 const SETTINGS_STORAGE = createSettingsStorage({ sidebarCollapsed: false });
 
@@ -87,50 +90,120 @@ test.describe('Quiz content surface (#657)', () => {
     expect(persistence.unexpectedRequests).toEqual([]);
   });
 
-  test('LTI submission resumes after failure and reload without local grading', async ({ page, browserConsoleContract }) => {
+  for (const [locale, labels] of Object.entries({ 'fr-FR': fr, 'ar-MA': ar, 'en-US': en })) {
+  test(`${locale} LTI submission resumes after failure and reload without local grading`, async ({
+    page,
+    browserConsoleContract,
+  }) => {
     browserConsoleContract.expectHttpError('/api/lti/quiz', 503);
     const stage = 'e2e-lti-quiz';
+    await page.addInitScript((language) => localStorage.setItem('locale', language), locale);
     await seedQuiz(page, stage, [
-      { id: 'choice', type: 'single', question: 'Choose an option', points: 1,
-        options: [{ label: 'Option Alpha', value: 'A' }, { label: 'Option Beta', value: 'B' }], answer: ['A'] },
+      {
+        id: 'choice',
+        type: 'single',
+        question: 'Choose an option',
+        points: 1,
+        options: [
+          { label: 'Option Alpha', value: 'A' },
+          { label: 'Option Beta', value: 'B' },
+        ],
+        answer: ['A'],
+      },
       { id: 'text', type: 'short_answer', question: 'Explain your choice', points: 3 },
     ]);
-    await page.route('**/api/lti/context?*', (route) => route.fulfill({ status: 200, contentType: 'application/json',
-      body: JSON.stringify({ success: true, active: true, gradingEnabled: true, launchId: '00000000-0034-4000-8000-000000000001' }) }));
-    const submissions: Array<{ requestId: string; answers: Record<string, string>; score?: number; questions?: unknown }> = [];
+    await page.route('**/api/lti/context?*', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          active: true,
+          gradingEnabled: true,
+          launchId: '00000000-0034-4000-8000-000000000001',
+        }),
+      }),
+    );
+    const submissions: Array<{
+      requestId: string;
+      answers: Record<string, string>;
+      score?: number;
+      questions?: unknown;
+    }> = [];
     let localGrades = 0;
-    await page.route('**/api/quiz-grade', (route) => { localGrades++; return route.fulfill({ status: 200, contentType: 'application/json', body: '{"score":3,"comment":"local"}' }); });
+    await page.route('**/api/quiz-grade', (route) => {
+      localGrades++;
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: '{"score":3,"comment":"local"}',
+      });
+    });
     await page.route('**/api/lti/quiz', async (route) => {
       submissions.push(route.request().postDataJSON());
-      if (submissions.length === 1) { await route.fulfill({ status: 503, contentType: 'application/json', body: '{"success":false}' }); return; }
-      if (submissions.length === 2) { await route.fulfill({ status: 202, contentType: 'application/json', body: '{"success":true,"status":"grading"}' }); return; }
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, status: 'queued', score: 75,
-        deliveryId: '00000000-0034-4000-8000-000000000002', results: [
-          { questionId: 'choice', correct: false, status: 'incorrect', earned: 0 },
-          { questionId: 'text', correct: true, status: 'correct', earned: 3, aiComment: 'Server correction' },
-        ] }) });
+      if (submissions.length === 1) {
+        await route.fulfill({
+          status: 503,
+          contentType: 'application/json',
+          body: '{"success":false}',
+        });
+        return;
+      }
+      if (submissions.length === 2) {
+        await route.fulfill({
+          status: 202,
+          contentType: 'application/json',
+          body: '{"success":true,"status":"grading"}',
+        });
+        return;
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          status: 'queued',
+          score: 75,
+          deliveryId: '00000000-0034-4000-8000-000000000002',
+          results: [
+            { questionId: 'choice', correct: false, status: 'incorrect', earned: 0 },
+            {
+              questionId: 'text',
+              correct: true,
+              status: 'correct',
+              earned: 3,
+              aiComment: 'Server correction',
+            },
+          ],
+        }),
+      });
     });
     const classroom = new ClassroomPage(page);
     await classroom.goto(stage);
-    await page.getByRole('button', { name: 'Start Quiz' }).click();
+    await page.getByRole('button', { name: labels['quiz.startQuiz'] }).click();
+    await expect(page.locator('html')).toHaveAttribute('dir', locale === 'ar-MA' ? 'rtl' : 'ltr');
     await page.getByRole('button', { name: /Option Alpha/ }).click();
-    await page.getByPlaceholder('Type your answer here...').fill('Saved explanation');
-    await page.getByRole('button', { name: 'Submit Answers' }).click();
-    await expect(page.getByRole('button', { name: 'Resume submission' })).toBeVisible();
+    await page.getByPlaceholder(labels['quiz.inputPlaceholder']).fill('Saved explanation');
+    await page.getByRole('button', { name: labels['quiz.submitAnswers'] }).click();
+    await expect(page.getByRole('button', { name: labels['quiz.resumeSubmission'] })).toBeVisible();
     await expect(page.getByText('/ 100', { exact: true })).toBeHidden();
-    await page.getByRole('button', { name: 'Resume submission' }).click();
-    await expect(page.getByText('Grade saved; delivery to the LMS is queued.')).toBeVisible({ timeout: 15000 });
+    await page.getByRole('button', { name: labels['quiz.resumeSubmission'] }).click();
+    await expect(page.getByText(labels['quiz.ltiQueued'])).toBeVisible({
+      timeout: 15000,
+    });
     await expect(page.getByText('75', { exact: true })).toBeVisible();
     await page.reload();
-    await expect(page.getByText('Grade saved; delivery to the LMS is queued.')).toBeVisible();
+    await expect(page.getByText(labels['quiz.ltiQueued'])).toBeVisible();
     expect(submissions.length).toBeGreaterThanOrEqual(4);
     expect(new Set(submissions.map((submission) => submission.requestId)).size).toBe(1);
     for (const submission of submissions) {
       expect(submission.answers).toEqual({ choice: 'A', text: 'Saved explanation' });
-      expect(submission).not.toHaveProperty('score'); expect(submission).not.toHaveProperty('questions');
+      expect(submission).not.toHaveProperty('score');
+      expect(submission).not.toHaveProperty('questions');
     }
     expect(localGrades).toBe(0);
   });
+  }
 
   test('authoring: add every question type, edit, and delete', async ({ page }, testInfo) => {
     const STAGE = 'e2e-quiz-authoring';

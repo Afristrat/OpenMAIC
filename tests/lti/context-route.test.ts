@@ -34,7 +34,12 @@ describe('LTI context route', () => {
       sessionId: 'private',
     });
     const result = await GET(request());
-    expect(await result.json()).toEqual({ success: true, active: true, gradingEnabled: true, launchId: 'private' });
+    expect(await result.json()).toEqual({
+      success: true,
+      active: true,
+      gradingEnabled: true,
+      launchId: 'private',
+    });
     expect(result.headers.get('cache-control')).toBe('private, no-store');
     expect(mocks.resolve).toHaveBeenCalledWith({
       token: 'a'.repeat(64),
