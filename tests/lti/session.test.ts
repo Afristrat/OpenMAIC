@@ -44,7 +44,12 @@ describe('LTI SSO and durable context', () => {
   it('revokes the new session on a thrown persistence failure', async () => {
     mocks.insert.mockRejectedValue(new Error('Network unavailable'));
     await expect(
-      establishLaunchSession(new NextRequest('https://qalem.ma'), NextResponse.next(), binding, launch),
+      establishLaunchSession(
+        new NextRequest('https://qalem.ma'),
+        NextResponse.next(),
+        binding,
+        launch,
+      ),
     ).rejects.toThrow('persistence failed');
     expect(mocks.signOut).toHaveBeenCalledWith({ scope: 'local' });
   });
