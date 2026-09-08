@@ -61,7 +61,11 @@ ALTER TABLE public.lti_launch_sessions ENABLE ROW LEVEL SECURITY;
 -- routes must authenticate and authorize before using the service client.
 REVOKE ALL ON public.lti_resource_bindings, public.lti_user_bindings,
   public.lti_launch_sessions FROM PUBLIC, anon, authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.lti_resource_bindings,
+REVOKE ALL ON public.lti_resource_bindings, public.lti_user_bindings,
+  public.lti_launch_sessions FROM service_role;
+-- Rebinding means delete + insert: cascading invalidation prevents an old
+-- launch from silently acquiring a different classroom or LMS identity.
+GRANT SELECT, INSERT, DELETE ON public.lti_resource_bindings,
   public.lti_user_bindings, public.lti_launch_sessions TO service_role;
 
 -- Existing tables also had broad default grants despite deny-all policies.

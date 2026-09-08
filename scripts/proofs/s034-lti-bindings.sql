@@ -27,6 +27,9 @@ DO $$ DECLARE tab text; role_name text; privilege_name text; BEGIN
       END LOOP;
     END LOOP;
   END LOOP;
+  FOREACH tab IN ARRAY ARRAY['lti_resource_bindings','lti_user_bindings','lti_launch_sessions'] LOOP
+    IF has_table_privilege('service_role','public.'||tab,'UPDATE') THEN RAISE EXCEPTION 'Mutable launch identity: %',tab; END IF;
+  END LOOP;
   BEGIN
     UPDATE public.lti_resource_bindings SET stage_id='s034-foreign' WHERE resource_link_id='assignment' AND client_id='s034-client';
     RAISE EXCEPTION 'Foreign stage accepted';
