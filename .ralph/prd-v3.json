@@ -4635,7 +4635,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Publier un agent sur la marketplace » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "to_implement",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "file": ".ralph/prd-ui.json",
@@ -4644,8 +4644,19 @@
       },
       "sourceDependencies": [],
       "dependencies": ["S0-011"],
-      "gap": "Gate levé le 8 septembre 2026 par conservation explicite S0-011. PublishAgentDialog sans montage ; agents locaux non persistés dans agent_configs, description null incompatible avec le schéma et retrait absent. Relier une action autorisée à une publication persistante, isolée par propriétaire et organisation, puis prouver publication/retrait réels. Aucune publication de contenu utilisateur sans action explicite dans l’interface.",
-      "evidence": ["components/agent/publish-agent-dialog.tsx:31"],
+      "gap": "Code livré : action UI autorisée, snapshot privé avec profil avancé conservé, publication/retrait/republication persistants et isolation propriétaire/tenant. Migrations appliquées et contrôlées en base le 8 septembre 2026 ; build et 119/119 scénarios navigateur passent. Restent fin du déploiement web icqwdtj4bruc9197m5pg8bxh, recette authentifiée réelle sans API simulée, relecture du nettoyage et contrôle de santé. Aucun contenu utilisateur publié sans confirmation explicite.",
+      "evidence": [
+        "components/agent/publish-agent-dialog.tsx",
+        "components/agent/marketplace-publication-tools.tsx",
+        "components/agent/owned-agent-publications.tsx",
+        "app/api/marketplace/agents/drafts/route.ts",
+        "app/api/marketplace/agents/owned/route.ts",
+        "supabase/migrations/20260908182819_agent_profile_snapshot.sql",
+        "supabase/migrations/20260908190053_agent_publication_rls.sql",
+        "scripts/proofs/u011-publication-rls.sql",
+        "scripts/proofs/u011-marketplace-production.mjs",
+        "e2e/tests/marketplace-publication.spec.ts"
+      ],
       "acceptance": [
         "Après conservation du marketplace, brancher publication depuis une action visible et autorisée.",
         "Tester validation, publication réelle, refus inter-tenant et retrait selon le contrat produit."
