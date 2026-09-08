@@ -1,6 +1,6 @@
 # U-011 — Publication des agents
 
-État au 8 septembre 2026 : code déployé et recette authentifiée réussie ; suivi de santé post-déploiement encore en cours. Ne pas interpréter ce document comme une clôture avant la fin du suivi.
+État au 8 septembre 2026 à 20:13:52 UTC : U-011 clôturée après déploiement, recette authentifiée et suivi de santé réussis. Cette clôture ne couvre pas les autres US du PRD.
 
 ## Périmètre et preuves
 
@@ -37,7 +37,7 @@ Les données PostgreSQL vivent dans le volume nommé `lkqqmwsn5zydykuv3gd6q7ws_s
 
 ## Limites et suite
 
-Le suivi 5525, commencé à 19:58:43 UTC, doit produire 31 contrôles espacés de 30 secondes, puis un comptage des erreurs des logs. Tant qu’il n’est pas terminé, `passes=false` reste requis. Ce suivi ne certifie pas une capacité maximale ni l’absence future d’OOM.
+Le suivi 5525 est terminé avec code de sortie 0 : du 19:58:43 au 20:13:52 UTC, 31 contrôles réussis (healthy, zéro redémarrage, OOMKilled=false, HTTP 200), puis zéro erreur détectée dans les logs depuis son début. U-011 passe à completed/passes=true. Ce suivi ne certifie pas une capacité maximale ni l’absence future d’OOM.
 
 L’audit Supabase après migration ne signale pas `agent_configs`. Il laisse cinq avertissements de search_path sur d’autres fonctions : `update_updated_at`, `get_user_org_ids`, `assert_transmission_tenant_membership`, `assert_course_tenant_integrity`, `prevent_widget_template_version_mutation`. Onze tables avec RLS sans policy sont également signalées au niveau INFO ; leur rôle serveur doit être audité avant de conclure à un défaut. Ces constats restent ouverts au niveau du projet, sans modifier leurs droits dans U-011.
 

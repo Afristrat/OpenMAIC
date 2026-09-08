@@ -1,5 +1,9 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 8 septembre 2026 — U-011 clôturée
+
+Le suivi 5525 est terminé exit 0, dernier contrôle à 20:13:52 UTC : 31/31 contrôles depuis 19:58:43, healthy/restart=0/OOMKilled=false, HTTP 200, zéro erreur détectée dans les logs. Avec le déploiement exact 00f1c3e, la recette réelle 37468 et le nettoyage indépendant à zéro, U-011 passe completed/passes=true. Référence : docs/validation/U-011-marketplace-publication.md ; closureEvidence datée dans le PRD. Aucun test, déploiement ni suivi U-011 ne reste actif. Les mentions de suivi en cours ci-dessous sont historiques. Le PRD global reste ouvert, notamment les cinq avertissements SQL identifiés, les checkpoints humains et les gates de collecte/connecteurs ; aucune autorisation n’est inférée de cette clôture.
+
 ## 8 septembre 2026 — Réconciliation du contrat S-048
 
 Lecture fraîche pendant le suivi U-011 : le PRD exigeait encore 1 000 discussions et data-driven-director.ts filtre à MIN_SAMPLE_SIZE=50. La décision explicite d’Amine « aucun minimum de session comparables […] aussi bien pour l’optimisation que pour le director » s’applique aux deux. Le contrat S-048 est aligné sur S-037 : première observation exploitable, volume et limites exposés, fallback pour absence/invalidité/incompatibilité, tests zéro/une/plusieurs observations. Le plafond de lecture limit(1000) n’est pas confondu avec un minimum. Aucun code ni flag de collecte changé ; executionAllowed=false, dépendance S-047 et protocole A/B à approuver demeurent. Il s’agit d’une correction de contrat, pas d’une livraison du Director.

@@ -4636,8 +4636,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Publier un agent sur la marketplace » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd-ui.json",
         "id": "U-011",
@@ -4645,7 +4645,7 @@
       },
       "sourceDependencies": [],
       "dependencies": ["S0-011"],
-      "gap": "Code, migrations et déploiement web livrés le 8 septembre 2026. Build et 119/119 scénarios navigateur passent ; recette authentifiée réelle publication/retrait/rechargement/republication et refus tenant étranger 403 réussie, nettoyage indépendant à zéro. Seule la fin du suivi de santé 5525 reste à consigner avant clôture. Aucun contenu utilisateur publié sans confirmation explicite.",
+      "gap": null,
       "evidence": [
         "components/agent/publish-agent-dialog.tsx",
         "components/agent/marketplace-publication-tools.tsx",
@@ -4663,7 +4663,13 @@
         "Après conservation du marketplace, brancher publication depuis une action visible et autorisée.",
         "Tester validation, publication réelle, refus inter-tenant et retrait selon le contrat produit."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-08 — Conservation acquise via S0-011. Action de publication montée pour les auteurs d’un tenant actif ; snapshot privé et profil avancé validés, publication/retrait/republication persistants. Les deux migrations versionnées passent la preuve SQL en transaction annulée puis sont appliquées durablement dans le volume PostgreSQL Qalem. Refus inter-tenant, retrait après départ/suspension et retrait des privilèges hors ligne vérifiés.",
+        "2026-09-08 — Gate global add6ce4 : Prettier, TypeScript, ESLint, 451 fichiers / 2 727 Vitest, build et 119 Playwright. Après correction de racine Next et renforcement SQL, TypeScript/lint/ciblage navigateur verts, puis build 115 pages et 119/119 Playwright sans retry au SHA b87c3a7. Journal SHA-256 cce78956125e8da3082e5be8ac2ec2f37c7643c74b8dcb112f67d019ef729409.",
+        "2026-09-08 — Déploiement icqwdtj4bruc9197m5pg8bxh finished, image web 00f1c3eab8bf0e627cf6d078a74c1754df7fc6c2 vérifiée. Recette Chromium authentifiée réelle 37468 exit 0 : publication, profil exact, rechargement, retrait/404, republication du même snapshot, tenant étranger refusé 403. Révocation vérifiée et relecture indépendante à zéro compte, organisation et agent temporaire.",
+        "2026-09-08 — Suivi 5525 terminé exit 0, du 19:58:43 au 20:13:52 UTC : 31/31 contrôles healthy, restart=0, OOMKilled=false, HTTP 200 ; zéro erreur détectée dans les logs de la période. Ne constitue pas une garantie de capacité ou d’absence future d’OOM. Preuve détaillée : docs/validation/U-011-marketplace-publication.md."
+      ],
+      "completedAt": "2026-09-08T20:13:52Z",
       "historicalEvidence": {
         "completedAt": "2026-03-29T23:48:14.366Z",
         "status": "legacy_claim_not_delivery_proof"
