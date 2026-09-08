@@ -8,6 +8,13 @@ INSERT INTO public.org_members (user_id, org_id, role) VALUES
   ('00000000-0011-4000-8000-000000000001', '00000000-0011-4000-8000-000000000002', 'author');
 SELECT set_config('request.jwt.claim.sub', '00000000-0011-4000-8000-000000000001', true);
 SET LOCAL ROLE authenticated;
+DO $$ BEGIN
+  IF has_table_privilege(current_user, 'public.agent_configs', 'TRUNCATE')
+    OR has_table_privilege(current_user, 'public.agent_configs', 'REFERENCES')
+    OR has_table_privilege(current_user, 'public.agent_configs', 'TRIGGER') THEN
+    RAISE EXCEPTION 'Non-row privileges exposed to authenticated';
+  END IF;
+END $$;
 INSERT INTO public.agent_configs (id, owner_id, org_id, name, role, is_published, profile_extensions)
 VALUES ('u011-proof', '00000000-0011-4000-8000-000000000001', '00000000-0011-4000-8000-000000000002', 'Fixture', 'student', false, '{"gender":"female"}');
 UPDATE public.agent_configs SET is_published=true WHERE id='u011-proof';
