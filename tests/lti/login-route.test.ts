@@ -42,16 +42,23 @@ describe('LTI login registration boundary', () => {
   });
   afterEach(() => vi.unstubAllEnvs());
 
-  it.each(['GET', 'POST'])('rejects duplicate client parameters before lookup (%s)', async (method) => {
-    const params = new URLSearchParams(defaults);
-    params.append('client_id', 'another');
-    const req = new NextRequest(`https://qalem.ma/api/lti/login${method === 'GET' ? `?${params}` : ''}`, {
-      method, ...(method === 'POST' ? { body: params } : {}),
-    });
-    expect((await (method === 'GET' ? GET(req) : POST(req))).status).toBe(400);
-    expect(getPlatformConfig).not.toHaveBeenCalled();
-    expect(storeNonce).not.toHaveBeenCalled();
-  });
+  it.each(['GET', 'POST'])(
+    'rejects duplicate client parameters before lookup (%s)',
+    async (method) => {
+      const params = new URLSearchParams(defaults);
+      params.append('client_id', 'another');
+      const req = new NextRequest(
+        `https://qalem.ma/api/lti/login${method === 'GET' ? `?${params}` : ''}`,
+        {
+          method,
+          ...(method === 'POST' ? { body: params } : {}),
+        },
+      );
+      expect((await (method === 'GET' ? GET(req) : POST(req))).status).toBe(400);
+      expect(getPlatformConfig).not.toHaveBeenCalled();
+      expect(storeNonce).not.toHaveBeenCalled();
+    },
+  );
 
   it.each([
     'https://qalem.ma.evil.example/course',

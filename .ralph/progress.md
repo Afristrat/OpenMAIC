@@ -1,5 +1,13 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-034, requêtes de connexion et lancement bornées
+
+readLtiForm commun aux routes publiques : GET borné avant parsing, POST application/x-www-form-urlencoded exact (paramètres MIME admis), octets réellement lus limités à 64 Kio au login et 256 Kio au launch, délai total 15 s, annulation/libération du lecteur en finally. Content-Length non utilisé comme preuve de taille ; corps UTF-8 invalide refusé. Paramètres répétés après décodage, noms trop longs et caractères de contrôle refusés ; champs login limités à 4096 caractères et state à 256. Codes 400/408/413/415 explicites sans exposer le contenu. Logs login assainis : plus d’issuer/client fournis par l’appelant ni d’objet erreur brut. Aucun ajout de dépendance selon Ponytail.
+
+ServeurIA au SHA 7303d82 puis formatage transféré : TypeScript et ESLint zéro avertissement, 179/179 tests LTI dans 19 fichiers, session 25278 exit 0, 8 septembre 23:05:40 UTC. Quatorze tests du lecteur couvrent UTF-8 FR/AR, Content-Length absent/faux, GET trop long, MIME rejeté, doublons encodés, contrôles et annulation du flux sur taille/délai ; deux tests login vérifient le refus des doublons avant lookup/nonce. Flux Request natifs, horloge simulée pour le délai. Aucun navigateur/LMS réel, déploiement ou migration durable sur ce lot ; aucune clôture revendiquée.
+
+Suite : aligner la validation précoce des URLs sur le transport strict ; traiter la durée de correction (gradeLtiQuiz effectue jusqu’à 100 appels courts séquentiels dans une requête maxDuration=300, bail 10 min) sans perdre les réponses/notes ; terminer migrations, worker/web et recette LMS. Quatre diffs distants de formatage transférés ici : lib/lti/request.ts, app/api/lti/login/route.ts, tests/lti/login-route.test.ts, tests/lti/request.test.ts ; stasher ces chemins exacts avant pull. Aucun processus actif de validation. Le PRD 3 et S-034 restent ouverts.
+
 ## 9 septembre 2026 — S-034, liaison de la connexion au lancement signé
 
 Le nonce émis est désormais SHA-256 du triplet sérialisé [state aléatoire, client enregistré, target_link_uri exact]. Le lancement vérifie ce triplet depuis le state du navigateur et les claims signés, avant consommation atomique du nonce existant, résolution des bindings et création de session. Le digest seul ne suffit jamais : le nonce doit avoir été effectivement enregistré et ne pas avoir été consommé. Pas de nouveau secret, cookie ou stockage. Comparaison sans normalisation de la cible conformément à LTI 1.3 §5.3.4 (https://www.imsglobal.org/spec/lti/v1p3/#target-link-uri).

@@ -27,9 +27,12 @@ async function handleLoginInitiation(req: NextRequest): Promise<NextResponse> {
     const ltiMessageHint = params.get('lti_message_hint');
     const ltiDeploymentId = params.get('lti_deployment_id');
 
-    if ([iss, loginHint, targetLinkUri, clientId, ltiMessageHint, ltiDeploymentId].some(
-      (value) => value !== null && (value.length === 0 || value.length > 4096),
-    )) throw new LtiFormError(400);
+    if (
+      [iss, loginHint, targetLinkUri, clientId, ltiMessageHint, ltiDeploymentId].some(
+        (value) => value !== null && (value.length === 0 || value.length > 4096),
+      )
+    )
+      throw new LtiFormError(400);
 
     // Validate target_link_uri against allowed app URL
     const appUrl =

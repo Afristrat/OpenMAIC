@@ -44,9 +44,13 @@ export async function readLtiForm(req: NextRequest, maxBytes: number): Promise<U
   const params = new URLSearchParams(body);
   const names = new Set<string>();
   for (const [name, value] of params) {
-    if (names.has(name) || name.length > 256 || [...name + value].some(
-      (character) => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127,
-    ))
+    if (
+      names.has(name) ||
+      name.length > 256 ||
+      [...(name + value)].some(
+        (character) => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127,
+      )
+    )
       throw new LtiFormError(400);
     names.add(name);
   }
