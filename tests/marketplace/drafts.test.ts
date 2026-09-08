@@ -42,7 +42,11 @@ it('persists a private snapshot idempotently with server-derived owner and tenan
     eq: vi.fn().mockReturnThis(),
     maybeSingle: vi
       .fn()
-      .mockResolvedValue({ data: { id: 'saved', is_published: false }, error: null }),
+      .mockResolvedValue({ data: {
+        id: 'saved', is_published: false, name: payload.agent.name, role: payload.agent.role,
+        persona: payload.agent.persona, color: payload.agent.color, priority: payload.agent.priority,
+        avatar: payload.agent.avatar, allowed_actions: payload.agent.allowedActions, voice_config: null,
+      }, error: null }),
   };
   mocks.client.mockResolvedValue({ from: () => ({ upsert: insert, ...query }) });
   expect((await POST(request())).status).toBe(200);
@@ -52,9 +56,10 @@ it('persists a private snapshot idempotently with server-derived owner and tenan
   expect(row).toMatchObject({ owner_id: 'owner', org_id: payload.orgId, is_published: false });
   expect(insert.mock.calls[0][1]).toEqual({ onConflict: 'id', ignoreDuplicates: true });
   expect(query.eq).toHaveBeenCalledWith('owner_id', 'owner');
+  expect((await POST(request({ ...payload, agent: { ...payload.agent, name: 'Changed' } }))).status).toBe(409);
   mocks.auth.mockResolvedValue({ user: { id: 'other' } });
   await POST(request());
-  expect(insert.mock.calls[2][0].id).not.toBe(row.id);
+  expect(insert.mock.calls[3][0].id).not.toBe(row.id);
   query.maybeSingle.mockResolvedValue({ data: null, error: null });
   expect((await POST(request())).status).toBe(500);
 });

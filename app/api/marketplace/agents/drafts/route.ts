@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { isDeepStrictEqual } from 'node:util';
 import { NextRequest } from 'next/server';
 import { requireSuperAdminOrOrgAuthor } from '@/lib/api/auth';
 import { validateBody } from '@/lib/api/validate';
@@ -40,12 +41,21 @@ export async function POST(request: NextRequest): Promise<Response> {
   // A successful INSERT with ignored conflicts is not proof of an accessible row.
   const { data: saved, error: readError } = await supabase
     .from('agent_configs')
-    .select('id, is_published')
+    .select('id, is_published, name, role, persona, avatar, color, priority, allowed_actions, voice_config')
     .eq('id', id)
     .eq('owner_id', auth.user.id)
     .eq('org_id', orgId)
     .maybeSingle();
   if (readError || !saved)
     return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Unable to verify private agent');
-  return apiSuccess({ agentId: saved.id, published: saved.is_published });
+  const expected = {
+    name: agent.name, role: agent.role, persona: agent.persona, avatar: agent.avatar ?? null,
+    color: agent.color, priority: agent.priority,
+    allowed_actions: [...new Set(agent.allowedActions)], voice_config: agent.voiceConfig ?? null,
+  };
+  const { id: savedId, is_published: published, ...actual } = saved;
+  if (!isDeepStrictEqual(actual, expected)) {
+    return apiError(API_ERROR_CODES.INVALID_REQUEST, 409, 'Request ID already used for a different agent');
+  }
+  return apiSuccess({ agentId: savedId, published });
 }
