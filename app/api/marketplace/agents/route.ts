@@ -220,11 +220,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     .maybeSingle();
 
   if (updateErr) {
-    return apiError(
-      API_ERROR_CODES.INTERNAL_ERROR,
-      500,
-      'Failed to publish agent',
-    );
+    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to publish agent');
   }
 
   if (!updated) {

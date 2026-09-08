@@ -12,11 +12,15 @@ beforeEach(() => vi.resetAllMocks());
 function fixture(owner = 'owner', org: string | null = 'org') {
   const update = vi.fn();
   const read = { id: 'agent', owner_id: owner, org_id: org };
-  const result = vi.fn().mockResolvedValue({ data: { id: 'agent', is_published: true }, error: null });
+  const result = vi
+    .fn()
+    .mockResolvedValue({ data: { id: 'agent', is_published: true }, error: null });
   const query = {
-    select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(),
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue({ data: read, error: null }),
-    maybeSingle: result, update: update.mockReturnThis(),
+    maybeSingle: result,
+    update: update.mockReturnThis(),
   };
   mocks.client.mockResolvedValue({
     auth: { getUser: async () => ({ data: { user: { id: 'owner' } } }) },
@@ -28,14 +32,20 @@ function fixture(owner = 'owner', org: string | null = 'org') {
 
 function request(body: unknown) {
   return new NextRequest('https://qalem.ma/api/marketplace/agents', {
-    method: 'POST', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' },
+    method: 'POST',
+    body: JSON.stringify(body),
+    headers: { 'Content-Type': 'application/json' },
   });
 }
 
 it('accepts the empty description emitted by the UI and bounds metadata', () => {
-  expect(marketplacePublishSchema.parse({ agentId: 'agent', description: null }).isPublished).toBe(true);
+  expect(marketplacePublishSchema.parse({ agentId: 'agent', description: null }).isPublished).toBe(
+    true,
+  );
   expect(marketplacePublishSchema.safeParse({ agentId: ' ', tags: [''] }).success).toBe(false);
-  expect(marketplacePublishSchema.safeParse({ agentId: 'agent', tags: Array(21).fill('tag') }).success).toBe(false);
+  expect(
+    marketplacePublishSchema.safeParse({ agentId: 'agent', tags: Array(21).fill('tag') }).success,
+  ).toBe(false);
 });
 
 it('publishes only the owned agent after checking its stored tenant', async () => {

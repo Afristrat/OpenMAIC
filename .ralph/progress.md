@@ -2,6 +2,8 @@
 
 ## 8 septembre 2026 — U-011, contrat de publication en cours
 
+Le ciblage ServeurIA `59532` est terminé avec code 0 sur `028d3dd` puis formatage transféré localement : TypeScript à 4 Gio et lint zéro avertissement passent, 4/4 tests publication passent. La validation couvre métadonnées, autorisation propriétaire/tenant, retrait et absence de mutation effective. Aucun navigateur ni déploiement U-011 encore certifié. Le clone de validation conserve uniquement les modifications de format de ce lot, transférées dans le commit local suivant ; les préserver ou les mettre en stash ciblé avant le prochain pull, sans reset global.
+
 La conservation explicite S0-011 lève le gate U-011. Inspection : PublishAgentDialog et AgentConfigPanel sont sans montage, les agents importés sont locaux et aucun insert agent_configs n’a été retrouvé. Premier lot serveur : description null acceptée, métadonnées bornées, publication soumise au propriétaire et au droit d’auteur dans l’organisation stockée, mutation bornée au propriétaire/tenant, retrait explicite possible par le propriétaire, absence de ligne mise à jour refusée au lieu d’un faux succès. Quatre tests ciblés ajoutés ; validation à exécuter. Restent persistance des agents locaux, RLS du tenant à renforcer, action UI visible, parcours réel publication/retrait et gate final. Aucun contenu utilisateur publié, aucune migration ni mise en production de ce lot.
 
 ## 8 septembre 2026 — U-015 clôturée en production
