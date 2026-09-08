@@ -29,18 +29,30 @@ export async function PATCH(req: NextRequest) {
     if (!parsed.success) return failure(400);
     const { platformId, orgId } = parsed.data;
     const service = createServiceSupabaseClient();
-    const org = await service.from('organizations').select('id')
-      .eq('id', orgId).eq('status', 'active').maybeSingle();
+    const org = await service
+      .from('organizations')
+      .select('id')
+      .eq('id', orgId)
+      .eq('status', 'active')
+      .maybeSingle();
     if (org.error) return failure(503);
     if (!org.data) return failure(403);
     // The NULL predicate is part of the UPDATE, not a racy read-before-write check.
-    const updated = await service.from('lti_registrations').update({ org_id: orgId })
-      .eq('id', platformId).is('org_id', null).select(LTI_PLATFORM_FIELDS).maybeSingle();
+    const updated = await service
+      .from('lti_registrations')
+      .update({ org_id: orgId })
+      .eq('id', platformId)
+      .is('org_id', null)
+      .select(LTI_PLATFORM_FIELDS)
+      .maybeSingle();
     if (updated.error) return failure(503);
     if (updated.data)
       return NextResponse.json(platformView(ltiPlatformRow.parse(updated.data)), { headers });
-    const current = await service.from('lti_registrations').select(LTI_PLATFORM_FIELDS)
-      .eq('id', platformId).maybeSingle();
+    const current = await service
+      .from('lti_registrations')
+      .select(LTI_PLATFORM_FIELDS)
+      .eq('id', platformId)
+      .maybeSingle();
     if (current.error) return failure(503);
     if (!current.data) return failure(404);
     const row = ltiPlatformRow.parse(current.data);

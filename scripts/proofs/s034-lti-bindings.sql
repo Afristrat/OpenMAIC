@@ -47,6 +47,23 @@ DO $$ DECLARE tab text; role_name text; privilege_name text; BEGIN
     RAISE EXCEPTION 'Unbounded lifetime accepted';
   EXCEPTION WHEN check_violation THEN NULL; END;
 END $$;
+-- The administration route attaches legacy rows under the service role and
+-- includes IS NULL in the UPDATE itself, so a second tenant cannot replace it.
+SET LOCAL ROLE service_role;
+INSERT INTO public.lti_registrations(client_id,issuer,jwks_url,auth_url,token_url,deployment_id)
+VALUES ('s034-legacy','https://lms.example.org','https://lms.example.org/jwks','https://lms.example.org/auth','https://lms.example.org/token','legacy');
+DO $$ DECLARE registration_id uuid; affected integer; BEGIN
+  SELECT id INTO STRICT registration_id FROM public.lti_registrations WHERE client_id='s034-legacy';
+  UPDATE public.lti_registrations SET org_id='00000000-0034-4000-8000-000000000002'
+    WHERE id=registration_id AND org_id IS NULL;
+  GET DIAGNOSTICS affected = ROW_COUNT;
+  IF affected <> 1 THEN RAISE EXCEPTION 'Legacy attachment failed'; END IF;
+  UPDATE public.lti_registrations SET org_id='00000000-0034-4000-8000-000000000003'
+    WHERE id=registration_id AND org_id IS NULL;
+  GET DIAGNOSTICS affected = ROW_COUNT;
+  IF affected <> 0 THEN RAISE EXCEPTION 'Tenant reassignment accepted'; END IF;
+END $$;
+RESET ROLE;
 DELETE FROM public.org_members WHERE user_id='00000000-0034-4000-8000-000000000001';
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM public.lti_user_bindings WHERE client_id='s034-client') OR EXISTS (SELECT 1 FROM public.lti_launch_sessions WHERE client_id='s034-client') THEN RAISE EXCEPTION 'Removed membership retained LTI access'; END IF;

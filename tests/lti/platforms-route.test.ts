@@ -132,22 +132,33 @@ describe('persistent LTI platform administration', () => {
     { current: row, status: 200 },
     { current: { ...row, org_id: '00000000-0034-4000-8000-000000000002' }, status: 409 },
     { current: null, status: 404 },
-  ])('handles replay, concurrent foreign assignment and absence: $status', async ({ current, status }) => {
-    mocks.from.mockReturnValueOnce(query({ id: orgId }))
-      .mockReturnValueOnce(query(null)).mockReturnValueOnce(query(current));
-    expect((await PATCH(request({ platformId: row.id, orgId }))).status).toBe(status);
-    expect(mocks.from).toHaveBeenCalledTimes(3);
-  });
+  ])(
+    'handles replay, concurrent foreign assignment and absence: $status',
+    async ({ current, status }) => {
+      mocks.from
+        .mockReturnValueOnce(query({ id: orgId }))
+        .mockReturnValueOnce(query(null))
+        .mockReturnValueOnce(query(current));
+      expect((await PATCH(request({ platformId: row.id, orgId }))).status).toBe(status);
+      expect(mocks.from).toHaveBeenCalledTimes(3);
+    },
+  );
   it('refuses invalid assignment, extra fields and foreign origins before persistence', async () => {
-    for (const body of [{ platformId: 'invalid', orgId }, { platformId: row.id, orgId, clientId: 'other' }])
+    for (const body of [
+      { platformId: 'invalid', orgId },
+      { platformId: row.id, orgId, clientId: 'other' },
+    ])
       expect((await PATCH(request(body))).status).toBe(400);
-    expect((await PATCH(request({ platformId: row.id, orgId }, 'https://other.example'))).status).toBe(403);
+    expect(
+      (await PATCH(request({ platformId: row.id, orgId }, 'https://other.example'))).status,
+    ).toBe(403);
     expect(mocks.from).not.toHaveBeenCalled();
   });
   it('does not attach to an inactive tenant or claim success after a database error', async () => {
     mocks.from.mockReturnValueOnce(query(null));
     expect((await PATCH(request({ platformId: row.id, orgId }))).status).toBe(403);
-    mocks.from.mockReturnValueOnce(query({ id: orgId }))
+    mocks.from
+      .mockReturnValueOnce(query({ id: orgId }))
       .mockReturnValueOnce(query(null, { message: 'private database details' }));
     const response = await PATCH(request({ platformId: row.id, orgId }));
     expect(response.status).toBe(503);
