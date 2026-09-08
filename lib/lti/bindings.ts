@@ -9,12 +9,21 @@ const identitySchema = z.object({ id: z.uuid(), org_id: z.uuid(), user_id: z.uui
 export async function resolveLaunchBindings(platform: LTIPlatformConfig, launch: LTILaunchContext) {
   const service = createServiceSupabaseClient();
   const [resourceResult, identityResult] = await Promise.all([
-    service.from('lti_resource_bindings').select('id, org_id, stage_id')
-      .eq('client_id', platform.clientId).eq('resource_link_id', launch.resourceLinkId).maybeSingle(),
-    service.from('lti_user_bindings').select('id, org_id, user_id')
-      .eq('client_id', platform.clientId).eq('lms_subject', launch.userId).maybeSingle(),
+    service
+      .from('lti_resource_bindings')
+      .select('id, org_id, stage_id')
+      .eq('client_id', platform.clientId)
+      .eq('resource_link_id', launch.resourceLinkId)
+      .maybeSingle(),
+    service
+      .from('lti_user_bindings')
+      .select('id, org_id, user_id')
+      .eq('client_id', platform.clientId)
+      .eq('lms_subject', launch.userId)
+      .maybeSingle(),
   ]);
-  if (resourceResult.error || identityResult.error) throw new Error('LTI binding lookup unavailable');
+  if (resourceResult.error || identityResult.error)
+    throw new Error('LTI binding lookup unavailable');
   const resource = resourceSchema.safeParse(resourceResult.data);
   const identity = identitySchema.safeParse(identityResult.data);
   if (!resource.success || !identity.success || resource.data.org_id !== identity.data.org_id) {
@@ -24,8 +33,12 @@ export async function resolveLaunchBindings(platform: LTIPlatformConfig, launch:
   // Recheck active membership, even though the FK prevents orphaned bindings.
   const [organization, membership] = await Promise.all([
     service.from('organizations').select('id').eq('id', orgId).eq('status', 'active').maybeSingle(),
-    service.from('org_members').select('user_id').eq('org_id', orgId)
-      .eq('user_id', identity.data.user_id).maybeSingle(),
+    service
+      .from('org_members')
+      .select('user_id')
+      .eq('org_id', orgId)
+      .eq('user_id', identity.data.user_id)
+      .maybeSingle(),
   ]);
   if (organization.error || membership.error) throw new Error('LTI membership lookup unavailable');
   if (!organization.data || !membership.data) throw new Error('LTI learner access is inactive');
