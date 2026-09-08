@@ -1,14 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { useOrganizations } from '@/lib/hooks/use-organizations';
 import { useAgentRegistry } from '@/lib/orchestration/registry/store';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { PublishAgentDialog } from './publish-agent-dialog';
 import { OwnedAgentPublications } from './owned-agent-publications';
 
+const subscribe = () => () => {};
+
 export function MarketplacePublicationTools({ onChange }: { onChange: () => void }) {
   const { t } = useI18n();
+  // Native selects must not accept choices before React attaches their handlers.
+  const hydrated = useSyncExternalStore(subscribe, () => true, () => false);
   const { organizations, isLoading } = useOrganizations();
   const agents = useAgentRegistry((state) => state.agents);
   const [orgId, setOrgId] = useState('');
@@ -34,6 +38,7 @@ export function MarketplacePublicationTools({ onChange }: { onChange: () => void
             <label className="flex flex-col gap-1">
               {t('marketplace.publicationOrg')}
               <select
+                disabled={!hydrated}
                 className="rounded border bg-background p-2"
                 value={orgId}
                 onChange={(event) => setOrgId(event.target.value)}
@@ -49,6 +54,7 @@ export function MarketplacePublicationTools({ onChange }: { onChange: () => void
             <label className="flex flex-col gap-1">
               {t('marketplace.localAgent')}
               <select
+                disabled={!hydrated}
                 className="rounded border bg-background p-2"
                 value={agentId}
                 onChange={(event) => setAgentId(event.target.value)}
