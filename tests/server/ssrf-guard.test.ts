@@ -16,6 +16,11 @@ const ALLOW_LOCAL_NETWORKS_GUIDANCE = 'ALLOW_LOCAL_NETWORKS=true';
 const originalAllowLocalNetworks = process.env.ALLOW_LOCAL_NETWORKS;
 
 describe('validateUrlForSSRF', () => {
+  it('lets a trust boundary disable the global local-network exception', async () => {
+    process.env.ALLOW_LOCAL_NETWORKS = 'true';
+    const { validateUrlForSSRF } = await import('@/lib/server/ssrf-guard');
+    await expect(validateUrlForSSRF('https://127.0.0.1', { allowLocalNetworks: false })).resolves.toBe(PRIVATE_NETWORK_BLOCK_MESSAGE);
+  });
   beforeEach(() => {
     vi.resetModules();
     lookupMock.mockReset();

@@ -169,7 +169,7 @@ const LOCAL_NETWORK_BLOCK_MESSAGE =
  * Validate a URL against SSRF attacks.
  * Returns null if the URL is safe, or an error message string if blocked.
  */
-export async function validateUrlForSSRF(url: string): Promise<string | null> {
+export async function validateUrlForSSRF(url: string, options: { allowLocalNetworks?: boolean } = {}): Promise<string | null> {
   let parsed: URL;
   try {
     parsed = new URL(url);
@@ -183,7 +183,7 @@ export async function validateUrlForSSRF(url: string): Promise<string | null> {
 
   // Self-hosted deployments can set ALLOW_LOCAL_NETWORKS=true to skip private-IP checks
   const allowLocal = process.env.ALLOW_LOCAL_NETWORKS;
-  if (allowLocal === 'true' || allowLocal === '1') {
+  if (options.allowLocalNetworks ?? (allowLocal === 'true' || allowLocal === '1')) {
     return null;
   }
 
