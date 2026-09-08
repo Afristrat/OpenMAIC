@@ -41,7 +41,9 @@ export async function POST(request: NextRequest): Promise<Response> {
   // A successful INSERT with ignored conflicts is not proof of an accessible row.
   const { data: saved, error: readError } = await supabase
     .from('agent_configs')
-    .select('id, is_published, name, role, persona, avatar, color, priority, allowed_actions, voice_config')
+    .select(
+      'id, is_published, name, role, persona, avatar, color, priority, allowed_actions, voice_config',
+    )
     .eq('id', id)
     .eq('owner_id', auth.user.id)
     .eq('org_id', orgId)
@@ -49,13 +51,22 @@ export async function POST(request: NextRequest): Promise<Response> {
   if (readError || !saved)
     return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Unable to verify private agent');
   const expected = {
-    name: agent.name, role: agent.role, persona: agent.persona, avatar: agent.avatar ?? null,
-    color: agent.color, priority: agent.priority,
-    allowed_actions: [...new Set(agent.allowedActions)], voice_config: agent.voiceConfig ?? null,
+    name: agent.name,
+    role: agent.role,
+    persona: agent.persona,
+    avatar: agent.avatar ?? null,
+    color: agent.color,
+    priority: agent.priority,
+    allowed_actions: [...new Set(agent.allowedActions)],
+    voice_config: agent.voiceConfig ?? null,
   };
   const { id: savedId, is_published: published, ...actual } = saved;
   if (!isDeepStrictEqual(actual, expected)) {
-    return apiError(API_ERROR_CODES.INVALID_REQUEST, 409, 'Request ID already used for a different agent');
+    return apiError(
+      API_ERROR_CODES.INVALID_REQUEST,
+      409,
+      'Request ID already used for a different agent',
+    );
   }
   return apiSuccess({ agentId: savedId, published });
 }
