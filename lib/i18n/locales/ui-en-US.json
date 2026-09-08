@@ -1,4 +1,5 @@
 {
+  "marketplace.importFailed": "This agent could not be imported because its profile is invalid.",
   "marketplace.authorRequired": "An authoring role in an active organization is required.",
   "marketplace.publicationOrg": "Publishing organization",
   "marketplace.chooseOrg": "Choose an organization",

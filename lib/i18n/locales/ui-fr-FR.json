@@ -1,4 +1,5 @@
 {
+  "marketplace.importFailed": "Impossible d’importer cet agent : son profil est invalide.",
   "marketplace.authorRequired": "Un rôle d’auteur dans une organisation active est nécessaire.",
   "marketplace.publicationOrg": "Organisation de publication",
   "marketplace.chooseOrg": "Choisir une organisation",

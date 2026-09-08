@@ -142,7 +142,7 @@ export default function AgentDetailPage() {
     const importedId = `imported-${agent.id}-${Date.now()}`;
     const newAgent = importMarketplaceAgent(agent.configuration, importedId);
     if (!newAgent) {
-      toast.error(t('common.error'));
+      toast.error(t('marketplace.importFailed'));
       return;
     }
     addAgent(newAgent);

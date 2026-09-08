@@ -1,4 +1,5 @@
 {
+  "marketplace.importFailed": "تعذر استيراد هذا الوكيل: ملفه غير صالح.",
   "marketplace.authorRequired": "يلزم دور تأليف في مؤسسة نشطة.",
   "marketplace.publicationOrg": "مؤسسة النشر",
   "marketplace.chooseOrg": "اختر مؤسسة",
