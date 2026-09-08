@@ -1618,7 +1618,7 @@
   "admin.lti.orgId": "Identifiant du tenant",
   "admin.lti.unbound": "Non rattaché",
   "admin.lti.saved": "Plateforme enregistrée sur le serveur.",
-  "admin.lti.saveFailed": "La plateforme n’a pas été enregistrée. Vérifiez le tenant actif, les adresses HTTPS et l’absence de doublon.",
+  "admin.lti.saveFailed": "Enregistrement non confirmé. Rechargez la liste avant de réessayer ; vérifiez le tenant actif, les adresses HTTPS et l’absence de doublon.",
   "admin.lti.loadFailed": "Impossible de charger la configuration LTI. Rechargez la page pour réessayer.",
   "admin.lti.copyFailed": "Impossible de copier dans le presse-papiers.",
   "admin.lti.title": "LTI1.3",

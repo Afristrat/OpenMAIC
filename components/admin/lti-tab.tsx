@@ -47,7 +47,10 @@ export function LTITab(): React.ReactElement {
   // Fetch LTI config
   useEffect(() => {
     fetch('/api/lti/config')
-      .then((res) => { if (!res.ok) throw new Error('Configuration unavailable'); return res.json(); })
+      .then((res) => {
+        if (!res.ok) throw new Error('Configuration unavailable');
+        return res.json();
+      })
       .then((data) => {
         if (data) setLtiConfig(JSON.stringify(data, null, 2));
       })
@@ -59,7 +62,10 @@ export function LTITab(): React.ReactElement {
   // Fetch registered platforms
   useEffect(() => {
     fetch('/api/lti/platforms')
-      .then((res) => { if (!res.ok) throw new Error('Platforms unavailable'); return res.json(); })
+      .then((res) => {
+        if (!res.ok) throw new Error('Platforms unavailable');
+        return res.json();
+      })
       .then((data) => {
         if (!Array.isArray(data)) throw new Error('Invalid platform response');
         setPlatforms(data);
@@ -86,17 +92,23 @@ export function LTITab(): React.ReactElement {
     setSaveFailed(false);
     try {
       const response = await fetch('/api/lti/platforms', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData),
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
       });
       if (!response.ok) throw new Error('Platform not saved');
-      const platform = await response.json() as LTIPlatform;
-      if (typeof platform.id !== 'string' || platform.orgId !== formData.orgId) throw new Error('Invalid saved platform');
+      const platform = (await response.json()) as LTIPlatform;
+      if (typeof platform.id !== 'string' || platform.orgId?.toLowerCase() !== formData.orgId?.toLowerCase())
+        throw new Error('Invalid saved platform');
       setPlatforms((previous) => [...previous, platform]);
       setFormData(EMPTY_PLATFORM);
       setShowForm(false);
       toast.success(t('admin.lti.saved'));
-    } catch { setSaveFailed(true); }
-    finally { setSaving(false); }
+    } catch {
+      setSaveFailed(true);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const renderCopyButton = (text: string, field: string): React.ReactElement => (
@@ -194,14 +206,32 @@ export function LTITab(): React.ReactElement {
 
         {/* Add Platform Form */}
         {showForm && (
-          <fieldset disabled={saving} aria-label={t('admin.lti.addPlatform')} className="rounded-lg border p-4 mb-4 space-y-3 bg-muted/10">
+          <fieldset
+            disabled={saving}
+            aria-label={t('admin.lti.addPlatform')}
+            className="rounded-lg border p-4 mb-4 space-y-3 bg-muted/10"
+          >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label htmlFor={`${formId}-org`} className="text-xs font-medium text-muted-foreground">{t('admin.lti.orgId')}</label>
-                <Input id={`${formId}-org`} value={formData.orgId ?? ''} onChange={(event) => setFormData({ ...formData, orgId: event.target.value })} className="h-8 mt-1 text-sm" required />
+                <label
+                  htmlFor={`${formId}-org`}
+                  className="text-xs font-medium text-muted-foreground"
+                >
+                  {t('admin.lti.orgId')}
+                </label>
+                <Input
+                  id={`${formId}-org`}
+                  value={formData.orgId ?? ''}
+                  onChange={(event) => setFormData({ ...formData, orgId: event.target.value })}
+                  className="h-8 mt-1 text-sm"
+                  required
+                />
               </div>
               <div>
-                <label htmlFor={`${formId}-client`} className="text-xs font-medium text-muted-foreground">
+                <label
+                  htmlFor={`${formId}-client`}
+                  className="text-xs font-medium text-muted-foreground"
+                >
                   {t('admin.lti.clientId')}
                 </label>
                 <Input
@@ -213,7 +243,10 @@ export function LTITab(): React.ReactElement {
                 />
               </div>
               <div>
-                <label htmlFor={`${formId}-issuer`} className="text-xs font-medium text-muted-foreground">
+                <label
+                  htmlFor={`${formId}-issuer`}
+                  className="text-xs font-medium text-muted-foreground"
+                >
                   {t('admin.lti.issuer')}
                 </label>
                 <Input
@@ -225,7 +258,10 @@ export function LTITab(): React.ReactElement {
                 />
               </div>
               <div>
-                <label htmlFor={`${formId}-jwks`} className="text-xs font-medium text-muted-foreground">
+                <label
+                  htmlFor={`${formId}-jwks`}
+                  className="text-xs font-medium text-muted-foreground"
+                >
                   {t('admin.lti.jwksUrlField')}
                 </label>
                 <Input
@@ -237,7 +273,10 @@ export function LTITab(): React.ReactElement {
                 />
               </div>
               <div>
-                <label htmlFor={`${formId}-auth`} className="text-xs font-medium text-muted-foreground">
+                <label
+                  htmlFor={`${formId}-auth`}
+                  className="text-xs font-medium text-muted-foreground"
+                >
                   {t('admin.lti.authUrl')}
                 </label>
                 <Input
@@ -249,7 +288,10 @@ export function LTITab(): React.ReactElement {
                 />
               </div>
               <div>
-                <label htmlFor={`${formId}-token`} className="text-xs font-medium text-muted-foreground">
+                <label
+                  htmlFor={`${formId}-token`}
+                  className="text-xs font-medium text-muted-foreground"
+                >
                   {t('admin.lti.tokenUrl')}
                 </label>
                 <Input
@@ -261,7 +303,10 @@ export function LTITab(): React.ReactElement {
                 />
               </div>
               <div>
-                <label htmlFor={`${formId}-deployment`} className="text-xs font-medium text-muted-foreground">
+                <label
+                  htmlFor={`${formId}-deployment`}
+                  className="text-xs font-medium text-muted-foreground"
+                >
                   {t('admin.lti.deploymentId')}
                 </label>
                 <Input
@@ -274,7 +319,12 @@ export function LTITab(): React.ReactElement {
               </div>
             </div>
             <div className="flex justify-end">
-              <Button size="sm" className="h-7 text-xs" disabled={saving} onClick={() => void handleAddPlatform()}>
+              <Button
+                size="sm"
+                className="h-7 text-xs"
+                disabled={saving}
+                onClick={() => void handleAddPlatform()}
+              >
                 {t('admin.lti.save')}
               </Button>
             </div>
@@ -282,10 +332,12 @@ export function LTITab(): React.ReactElement {
         )}
 
         {/* Platform List */}
-        {platforms.length === 0 ? loadFailed ? null : (
-          <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-            {t('admin.lti.noPlatforms')}
-          </div>
+        {platforms.length === 0 ? (
+          loadFailed ? null : (
+            <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+              {t('admin.lti.noPlatforms')}
+            </div>
+          )
         ) : (
           <div className="rounded-lg border divide-y">
             {platforms.map((platform) => (
@@ -298,7 +350,9 @@ export function LTITab(): React.ReactElement {
                 <p className="text-xs text-muted-foreground pl-5.5">
                   {t('admin.lti.deploymentId')}: {platform.deploymentId}
                 </p>
-                <p className="text-xs text-muted-foreground">{t('admin.lti.orgId')}: {platform.orgId ?? t('admin.lti.unbound')}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t('admin.lti.orgId')}: {platform.orgId ?? t('admin.lti.unbound')}
+                </p>
               </div>
             ))}
           </div>

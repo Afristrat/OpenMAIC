@@ -1618,7 +1618,7 @@
   "admin.lti.orgId": "Tenant identifier",
   "admin.lti.unbound": "Not assigned",
   "admin.lti.saved": "Platform saved on the server.",
-  "admin.lti.saveFailed": "The platform was not saved. Check the active tenant, HTTPS addresses and duplicate registrations.",
+  "admin.lti.saveFailed": "Saving was not confirmed. Reload the list before retrying; check the active tenant, HTTPS addresses and duplicate registrations.",
   "admin.lti.loadFailed": "LTI configuration could not be loaded. Reload the page to retry.",
   "admin.lti.copyFailed": "Unable to copy to the clipboard.",
   "admin.lti.title": "LTI 1.3",
