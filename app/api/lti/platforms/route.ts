@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { requireSuperAdmin } from '@/lib/api/auth';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
-import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
+import { LtiNetworkPolicyError, resolveLtiEndpoint } from '@/lib/lti/network';
 import {
   LtiAdminRequestError,
   ltiPlatformInput,
@@ -84,12 +84,12 @@ export async function POST(req: NextRequest) {
     const parsed = ltiPlatformInput.safeParse(await readLtiAdminBody(req));
     if (!parsed.success) return failure(400);
     const input = parsed.data;
-    const unsafe = await Promise.all(
+    const signal = AbortSignal.timeout(15000);
+    await Promise.all(
       [input.issuer, input.authUrl, input.tokenUrl, input.jwksUrl].map((url) =>
-        validateUrlForSSRF(url, { allowLocalNetworks: false }),
+        resolveLtiEndpoint(url, signal),
       ),
     );
-    if (unsafe.some(Boolean)) return failure(400);
     const service = createServiceSupabaseClient();
     const org = await service
       .from('organizations')
@@ -115,6 +115,7 @@ export async function POST(req: NextRequest) {
     if (error) return failure(error.code === '23505' ? 409 : 503);
     return NextResponse.json(platformView(ltiPlatformRow.parse(data)), { status: 201, headers });
   } catch (error) {
+    if (error instanceof LtiNetworkPolicyError) return failure(400);
     return failure(error instanceof LtiAdminRequestError ? error.status : 503);
   }
 }

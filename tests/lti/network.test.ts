@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { requestLtiEndpoint } from '@/lib/lti/network';
+import { requestLtiEndpoint, resolveLtiEndpoint } from '@/lib/lti/network';
 
 const mocks = vi.hoisted(() => ({
   fetch: vi.fn(),
@@ -34,6 +34,26 @@ describe('LTI pinned public HTTPS transport', () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.useRealTimers();
+  });
+  it('validates registration without HTTP and rechecks DNS at delivery time', async () => {
+    const signal = new AbortController().signal;
+    const remove = vi.spyOn(signal, 'removeEventListener');
+    const resolved = await resolveLtiEndpoint('https://lms.example/token', signal);
+    expect(resolved.addresses).toEqual([{ address: '93.184.216.34', family: 4 }]);
+    expect(remove).toHaveBeenCalledWith('abort', expect.any(Function));
+    expect(mocks.fetch).not.toHaveBeenCalled();
+    expect(mocks.options).toBeUndefined();
+    mocks.lookup.mockResolvedValue([{ address: '100.64.0.1', family: 4 }]);
+    await expect(requestLtiEndpoint('https://lms.example/token', { method: 'POST' }, 100))
+      .rejects.toThrow('LTI endpoint');
+    expect(mocks.lookup).toHaveBeenCalledTimes(2);
+    expect(mocks.fetch).not.toHaveBeenCalled();
+  });
+  it('does not start DNS when registration validation is already aborted', async () => {
+    const controller = new AbortController();
+    controller.abort(new Error('expired'));
+    await expect(resolveLtiEndpoint('https://lms.example', controller.signal)).rejects.toThrow('expired');
+    expect(mocks.lookup).not.toHaveBeenCalled();
   });
   it.each([
     'http://lms.example/key',

@@ -49,12 +49,12 @@ export type LtiRequest = {
   body?: string;
 };
 
-/** Resolve once, pin the TLS connection, bound decoded bytes, and release every socket. */
-export async function requestLtiEndpoint(
+/** Shared by registration and each real request; never cache a registration-time DNS decision. */
+export async function resolveLtiEndpoint(
   endpoint: string,
-  init: LtiRequest,
-  maxBytes: number,
-): Promise<Response> {
+  signal: AbortSignal,
+) {
+  signal.throwIfAborted();
   if (!URL.canParse(endpoint)) throw new LtiNetworkPolicyError();
   const url = new URL(endpoint);
   const hostname = url.hostname
@@ -71,23 +71,37 @@ export async function requestLtiEndpoint(
     hostname.endsWith('.local')
   )
     throw new LtiNetworkPolicyError();
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(new Error('LTI request timed out')), 15000);
-  let agent: Agent | undefined;
+  let rejectAborted: (() => void) | undefined;
   try {
     const family = isIP(hostname);
     const addresses = family
       ? [{ address: hostname, family }]
       : await Promise.race([
           dns.lookup(hostname, { all: true, verbatim: true }),
-          new Promise<never>((_, reject) =>
-            controller.signal.addEventListener('abort', () => reject(controller.signal.reason), {
-              once: true,
-            }),
-          ),
+          new Promise<never>((_, reject) => {
+            rejectAborted = () => reject(signal.reason);
+            signal.addEventListener('abort', rejectAborted, { once: true });
+          }),
         ]);
     if (addresses.length === 0 || addresses.some(({ address }) => !publicAddress(address)))
       throw new LtiNetworkPolicyError();
+    return { url, addresses };
+  } finally {
+    if (rejectAborted) signal.removeEventListener('abort', rejectAborted);
+  }
+}
+
+/** Resolve once, pin the TLS connection, bound decoded bytes, and release every socket. */
+export async function requestLtiEndpoint(
+  endpoint: string,
+  init: LtiRequest,
+  maxBytes: number,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(new Error('LTI request timed out')), 15000);
+  let agent: Agent | undefined;
+  try {
+    const { url, addresses } = await resolveLtiEndpoint(endpoint, controller.signal);
     agent = new Agent({
       autoSelectFamily: true,
       connect: {

@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GET, POST, PATCH } from '@/app/api/lti/platforms/route';
+import { LtiNetworkPolicyError } from '@/lib/lti/network';
 
 const mocks = vi.hoisted(() => ({ auth: vi.fn(), from: vi.fn(), ssrf: vi.fn() }));
 vi.mock('@/lib/api/auth', () => ({ requireSuperAdmin: mocks.auth }));
 vi.mock('@/lib/supabase/service', () => ({
   createServiceSupabaseClient: () => ({ from: mocks.from }),
 }));
-vi.mock('@/lib/server/ssrf-guard', () => ({ validateUrlForSSRF: mocks.ssrf }));
+vi.mock('@/lib/lti/network', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/lti/network')>()),
+  resolveLtiEndpoint: mocks.ssrf,
+}));
 const orgId = '00000000-0034-4000-8000-000000000001';
 const input = {
   orgId,
@@ -97,9 +101,16 @@ describe('persistent LTI platform administration', () => {
     expect(mocks.from).not.toHaveBeenCalled();
   });
   it('rejects private network endpoints even on a self-hosted instance', async () => {
-    mocks.ssrf.mockResolvedValue('blocked');
+    mocks.ssrf.mockRejectedValue(new LtiNetworkPolicyError());
     expect((await POST(request())).status).toBe(400);
-    expect(mocks.ssrf).toHaveBeenCalledWith(input.jwksUrl, { allowLocalNetworks: false });
+    expect(mocks.ssrf).toHaveBeenCalledWith(input.jwksUrl, expect.any(AbortSignal));
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
+  it('reports DNS unavailability without persisting an unverified registration', async () => {
+    mocks.ssrf.mockRejectedValue(new Error('private resolver details'));
+    const response = await POST(request());
+    expect(response.status).toBe(503);
+    expect(await response.text()).not.toContain('private resolver details');
     expect(mocks.from).not.toHaveBeenCalled();
   });
   it('rejects unknown or inactive tenants', async () => {
