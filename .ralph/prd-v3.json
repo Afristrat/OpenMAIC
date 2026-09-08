@@ -4645,7 +4645,7 @@
       },
       "sourceDependencies": [],
       "dependencies": ["S0-011"],
-      "gap": "Code livré : action UI autorisée, snapshot privé avec profil avancé conservé, publication/retrait/republication persistants et isolation propriétaire/tenant. Migrations appliquées et contrôlées en base le 8 septembre 2026 ; build et 119/119 scénarios navigateur passent. Restent fin du déploiement web icqwdtj4bruc9197m5pg8bxh, recette authentifiée réelle sans API simulée, relecture du nettoyage et contrôle de santé. Aucun contenu utilisateur publié sans confirmation explicite.",
+      "gap": "Code, migrations et déploiement web livrés le 8 septembre 2026. Build et 119/119 scénarios navigateur passent ; recette authentifiée réelle publication/retrait/rechargement/republication et refus tenant étranger 403 réussie, nettoyage indépendant à zéro. Seule la fin du suivi de santé 5525 reste à consigner avant clôture. Aucun contenu utilisateur publié sans confirmation explicite.",
       "evidence": [
         "components/agent/publish-agent-dialog.tsx",
         "components/agent/marketplace-publication-tools.tsx",
@@ -4656,7 +4656,8 @@
         "supabase/migrations/20260908190053_agent_publication_rls.sql",
         "scripts/proofs/u011-publication-rls.sql",
         "scripts/proofs/u011-marketplace-production.mjs",
-        "e2e/tests/marketplace-publication.spec.ts"
+        "e2e/tests/marketplace-publication.spec.ts",
+        "docs/validation/U-011-marketplace-publication.md"
       ],
       "acceptance": [
         "Après conservation du marketplace, brancher publication depuis une action visible et autorisée.",
