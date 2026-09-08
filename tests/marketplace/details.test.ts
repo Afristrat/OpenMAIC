@@ -7,17 +7,27 @@ import { importMarketplaceAgent } from '@/lib/marketplace/import-agent';
 
 it('round-trips a stored publication through the details route and shared importer', async () => {
   const row = {
-    id: 'published', name: 'Analyste', role: 'student', persona: 'Analyse les situations.',
-    avatar: '/avatars/teacher-2.png', color: '#112233', priority: 9,
-    allowed_actions: ['wb_open'], voice_config: { providerId: 'higgs-tts', voiceId: 'voice' },
+    id: 'published',
+    name: 'Analyste',
+    role: 'student',
+    persona: 'Analyse les situations.',
+    avatar: '/avatars/teacher-2.png',
+    color: '#112233',
+    priority: 9,
+    allowed_actions: ['wb_open'],
+    voice_config: { providerId: 'higgs-tts', voiceId: 'voice' },
     profile_extensions: {
-      gender: 'female', interactionWeight: 37, mechanismId: 'reflection',
+      gender: 'female',
+      interactionWeight: 37,
+      mechanismId: 'reflection',
       voiceDesign: { identity: 'Analyste', texture: 'Claire', delivery: 'Posée' },
     },
-    is_published: true, owner_id: null,
+    is_published: true,
+    owner_id: null,
   };
   const query = {
-    select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(),
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
     single: vi.fn().mockImplementation(async () => ({ data: row, error: null })),
     order: vi.fn().mockResolvedValue({ data: [], error: null }),
   };
@@ -28,8 +38,12 @@ it('round-trips a stored publication through the details route and shared import
   expect(response.status).toBe(200);
   const body = await response.json();
   expect(importMarketplaceAgent(body.agent.configuration, 'copy')).toMatchObject({
-    ...row.profile_extensions, name: row.name, persona: row.persona, priority: 9,
-    allowedActions: row.allowed_actions, voiceConfig: row.voice_config,
+    ...row.profile_extensions,
+    name: row.name,
+    persona: row.persona,
+    priority: 9,
+    allowedActions: row.allowed_actions,
+    voiceConfig: row.voice_config,
   });
   expect(body.agent.configuration).not.toHaveProperty('owner_id');
   row.is_published = false;
