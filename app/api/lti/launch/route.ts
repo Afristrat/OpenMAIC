@@ -14,16 +14,17 @@ import { getPlatformConfig, verifyLTIToken, consumeNonce } from '@/lib/lti';
 import { resolveLaunchBindings } from '@/lib/lti/bindings';
 import { establishLaunchSession } from '@/lib/lti/session';
 import { loginContextNonce } from '@/lib/lti/login-context';
+import { LtiFormError, readLtiForm } from '@/lib/lti/request';
 
 const log = createLogger('LTI-Launch');
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
-    const body = await req.text();
-    const params = new URLSearchParams(body);
+    const params = await readLtiForm(req, 262144);
 
     const idToken = params.get('id_token');
     const state = params.get('state');
+    if (state && state.length > 256) throw new LtiFormError(400);
 
     if (!idToken || !state) {
       log.warn('Missing id_token or state in launch request');
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    if (!storedClientId) {
+    if (!storedClientId || storedClientId.length > 4096) {
       log.warn('Missing lti_client_id cookie');
       return NextResponse.json(
         { success: false, error: 'Missing platform context' },
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // Look up the platform configuration
     const platform = await getPlatformConfig(storedClientId);
     if (!platform) {
-      log.error(`Platform not found for client_id=${storedClientId}`);
+      log.error('LTI platform not found');
       return NextResponse.json({ success: false, error: 'Unknown LTI platform' }, { status: 403 });
     }
 
@@ -115,6 +116,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     response.cookies.delete('lti_client_id');
     return response;
   } catch (error) {
+    if (error instanceof LtiFormError)
+      return NextResponse.json({ success: false, error: error.message }, { status: error.status });
     log.error('LTI launch failed', error instanceof Error ? error.name : 'UnknownError');
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }

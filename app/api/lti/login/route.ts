@@ -12,19 +12,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createLogger } from '@/lib/logger';
 import { getPlatformConfig, getPlatformConfigByIssuer, storeNonce } from '@/lib/lti';
 import { loginContextNonce } from '@/lib/lti/login-context';
+import { LtiFormError, readLtiForm } from '@/lib/lti/request';
 
 const log = createLogger('LTI-Login');
 
 async function handleLoginInitiation(req: NextRequest): Promise<NextResponse> {
   try {
-    // Extract params from either GET query or POST body
-    let params: URLSearchParams;
-    if (req.method === 'POST') {
-      const body = await req.text();
-      params = new URLSearchParams(body);
-    } else {
-      params = req.nextUrl.searchParams;
-    }
+    const params = await readLtiForm(req, 65536);
 
     const iss = params.get('iss');
     const loginHint = params.get('login_hint');
@@ -32,6 +26,10 @@ async function handleLoginInitiation(req: NextRequest): Promise<NextResponse> {
     const clientId = params.get('client_id');
     const ltiMessageHint = params.get('lti_message_hint');
     const ltiDeploymentId = params.get('lti_deployment_id');
+
+    if ([iss, loginHint, targetLinkUri, clientId, ltiMessageHint, ltiDeploymentId].some(
+      (value) => value !== null && (value.length === 0 || value.length > 4096),
+    )) throw new LtiFormError(400);
 
     // Validate target_link_uri against allowed app URL
     const appUrl =
@@ -71,7 +69,7 @@ async function handleLoginInitiation(req: NextRequest): Promise<NextResponse> {
       : await getPlatformConfigByIssuer(iss);
 
     if (!platform) {
-      log.warn(`Unknown LTI platform: iss=${iss}, client_id=${clientId}`);
+      log.warn('Unknown LTI platform');
       return NextResponse.json({ success: false, error: 'Unknown LTI platform' }, { status: 403 });
     }
 
@@ -127,13 +125,13 @@ async function handleLoginInitiation(req: NextRequest): Promise<NextResponse> {
       path: '/',
     });
 
-    log.info(
-      `OIDC login initiation: redirecting to ${platform.issuer} for client_id=${platform.clientId}`,
-    );
+    log.info('OIDC login initiation accepted');
 
     return response;
   } catch (error) {
-    log.error('OIDC login initiation failed:', error);
+    if (error instanceof LtiFormError)
+      return NextResponse.json({ success: false, error: error.message }, { status: error.status });
+    log.error('OIDC login initiation failed');
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
