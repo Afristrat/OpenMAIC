@@ -39,13 +39,13 @@ describe('LTI pinned public HTTPS transport', () => {
   it('pins the socket lookup to the verified answer, preserving hostname and TLS validation', async () => {
     await requestLtiEndpoint('https://lms.example/key', { method: 'GET' }, 100);
     const connect = mocks.options?.connect;
-    if (!connect || typeof connect !== 'object' || !connect.lookup) throw new Error('Missing pinned lookup');
+    if (!connect || typeof connect !== 'object' || !('lookup' in connect) || !connect.lookup) throw new Error('Missing pinned lookup');
     mocks.lookup.mockResolvedValue([{ address: '127.0.0.1', family: 4 }]);
     const callback = vi.fn();
     connect.lookup('lms.example', { all: true }, callback);
     expect(callback).toHaveBeenCalledWith(null, [{ address: '93.184.216.34', family: 4 }]);
     expect(mocks.lookup).toHaveBeenCalledTimes(1);
-    expect(connect.rejectUnauthorized).toBe(true);
+    expect('rejectUnauthorized' in connect && connect.rejectUnauthorized).toBe(true);
     expect(String(mocks.fetch.mock.calls[0][0])).toBe('https://lms.example/key');
     expect(mocks.fetch.mock.calls[0][1].redirect).toBe('manual');
     expect(mocks.destroyed).toHaveBeenCalledOnce();
