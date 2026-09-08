@@ -3,16 +3,16 @@
  *
  * POST: Receives the id_token from the platform after OIDC auth.
  * Verifies the JWT signature, validates nonce + state, extracts LTI claims,
- * provisions or updates the user in Supabase, and redirects to the classroom.
+ * resolves registered identities and opens the mapped classroom with SSO.
  *
  * @see https://www.imsglobal.org/spec/security/v1p0/#step-3-authentication-response
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { createLogger } from '@/lib/logger';
 import { getPlatformConfig, verifyLTIToken, consumeNonce } from '@/lib/lti';
-import { LTI_ROLE_MAPPINGS } from '@/lib/lti/types';
+import { resolveLaunchBindings } from '@/lib/lti/bindings';
+import { establishLaunchSession } from '@/lib/lti/session';
 
 const log = createLogger('LTI-Launch');
 
@@ -71,10 +71,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     try {
       launchContext = await verifyLTIToken(idToken, platform);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown verification error';
-      log.error(`JWT verification failed: ${message}`);
+      log.error('JWT verification failed', err instanceof Error ? err.name : 'UnknownError');
       return NextResponse.json(
-        { success: false, error: `Token verification failed: ${message}` },
+        { success: false, error: 'Token verification failed' },
         { status: 401 },
       );
     }
@@ -89,182 +88,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Provision or update user in Supabase
-    const userId = await provisionUser(launchContext);
-
-    // Build redirect URL to the classroom
-    const appUrl =
-      process.env.LTI_APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
-
-    const redirectParams = new URLSearchParams({
-      lti: 'true',
-      resourceLink: launchContext.resourceLinkId,
-    });
-
-    if (launchContext.courseId) {
-      redirectParams.set('courseId', launchContext.courseId);
+    const binding = await resolveLaunchBindings(platform, launchContext);
+    const app = new URL(process.env.LTI_APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? '');
+    if (app.protocol !== 'https:' || app.username || app.password) {
+      throw new Error('Invalid LTI application origin');
     }
-    if (launchContext.lineItemUrl) {
-      redirectParams.set('lineItem', launchContext.lineItemUrl);
-    }
-
-    const redirectUrl = `${appUrl}/classroom?${redirectParams.toString()}`;
-
-    log.info(
-      `LTI launch successful: user=${launchContext.userId}, ` +
-        `resourceLink=${launchContext.resourceLinkId}, ` +
-        `roles=${launchContext.roles.length}`,
+    const response = NextResponse.redirect(
+      new URL(`/classroom/${encodeURIComponent(binding.stageId)}`, app), 303,
     );
-
-    // Clear the LTI cookies and redirect
-    const response = NextResponse.redirect(redirectUrl);
+    await establishLaunchSession(req, response, binding, launchContext);
     response.cookies.delete('lti_state');
     response.cookies.delete('lti_client_id');
-
-    // Set a session cookie with LTI context for the classroom to read
-    response.cookies.set(
-      'lti_context',
-      JSON.stringify({
-        userId,
-        ltiUserId: launchContext.userId,
-        resourceLinkId: launchContext.resourceLinkId,
-        courseId: launchContext.courseId,
-        lineItemUrl: launchContext.lineItemUrl,
-        returnUrl: launchContext.returnUrl,
-        clientId: storedClientId,
-      }),
-      {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 86400, // 24 hours
-        path: '/',
-      },
-    );
-
     return response;
   } catch (error) {
-    log.error('LTI launch error:', error);
+    log.error('LTI launch failed', error instanceof Error ? error.name : 'UnknownError');
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
-}
-
-// ---------------------------------------------------------------------------
-// User provisioning
-// ---------------------------------------------------------------------------
-
-/**
- * Create or update a user profile in Supabase based on LTI launch claims.
- * Returns the Supabase user ID (profile id).
- */
-async function provisionUser(launchContext: {
-  userId: string;
-  email?: string;
-  name?: string;
-  givenName?: string;
-  familyName?: string;
-  roles: string[];
-}): Promise<string> {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error('Missing SUPABASE env vars');
-  }
-
-  const supabase = createClient(supabaseUrl, serviceRoleKey);
-
-  // Determine Qalem role from LTI roles
-  const isInstructor = launchContext.roles.some(
-    (r) =>
-      r === LTI_ROLE_MAPPINGS.INSTRUCTOR ||
-      r.includes('Instructor') ||
-      r.includes('TeachingAssistant'),
-  );
-
-  // Build display name for upsert
-  const displayName =
-    launchContext.name ??
-    ([launchContext.givenName, launchContext.familyName].filter(Boolean).join(' ') ||
-      `LTI User ${launchContext.userId.slice(0, 8)}`);
-
-  const email = launchContext.email ?? `lti-${launchContext.userId}@qalem.local`;
-
-  // Try to create the user directly — if a duplicate exists, handle the error
-  const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
-    email,
-    email_confirm: true,
-    user_metadata: {
-      lti_user_id: launchContext.userId,
-      full_name: displayName,
-      is_instructor: isInstructor,
-    },
-  });
-
-  if (createError) {
-    // User already exists — look up by email via profiles table
-    if (
-      createError.message?.includes('already been registered') ||
-      createError.message?.includes('already exists') ||
-      createError.status === 422
-    ) {
-      const { data: existingProfile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', email)
-        .limit(1)
-        .single();
-
-      if (existingProfile) {
-        // Update profile with latest LTI info
-        if (displayName) {
-          await supabase
-            .from('profiles')
-            .update({ nickname: displayName })
-            .eq('id', existingProfile.id);
-        }
-        return existingProfile.id;
-      }
-
-      // Fallback: paginated search through auth.users
-      let page = 1;
-      const perPage = 50;
-      while (true) {
-        const { data: usersPage } = await supabase.auth.admin.listUsers({
-          page,
-          perPage,
-        });
-        const match = usersPage?.users?.find((u) => u.email === email);
-        if (match) {
-          if (displayName) {
-            await supabase.from('profiles').update({ nickname: displayName }).eq('id', match.id);
-          }
-          return match.id;
-        }
-        if (!usersPage?.users || usersPage.users.length < perPage) break;
-        page++;
-      }
-
-      log.error('User exists but could not be found:', email);
-      throw new Error('User provisioning failed: duplicate user not found');
-    }
-
-    log.error('Failed to create LTI user:', createError.message);
-    throw new Error(`User provisioning failed: ${createError.message}`);
-  }
-
-  if (!newUser.user) {
-    throw new Error('User provisioning failed: no user returned');
-  }
-
-  // The profiles table trigger should auto-create the profile row,
-  // but update it with the display name just in case
-  await supabase.from('profiles').upsert({
-    id: newUser.user.id,
-    nickname: displayName,
-  });
-
-  log.info(`Provisioned LTI user: ${newUser.user.id} (${displayName}, instructor=${isInstructor})`);
-
-  return newUser.user.id;
 }
