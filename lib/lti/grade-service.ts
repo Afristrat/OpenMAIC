@@ -27,12 +27,23 @@ const tokenSchema = z.object({
 });
 
 class AGSRequestError extends Error {
-  constructor(message: string, readonly retryable: boolean) { super(message); }
+  constructor(
+    message: string,
+    readonly retryable: boolean,
+  ) {
+    super(message);
+  }
 }
 
 async function request(endpoint: string, init: RequestInit): Promise<Response> {
   const url = new URL(endpoint);
-  if (url.protocol !== 'https:' || url.username || url.password || url.hash || await validateUrlForSSRF(endpoint)) {
+  if (
+    url.protocol !== 'https:' ||
+    url.username ||
+    url.password ||
+    url.hash ||
+    (await validateUrlForSSRF(endpoint))
+  ) {
     throw new AGSRequestError('AGS endpoint rejected', false);
   }
   // Never forward assertions or bearer tokens through a redirect.
@@ -55,24 +66,38 @@ async function readToken(response: Response): Promise<string> {
     const parsed = tokenSchema.safeParse(JSON.parse(Buffer.concat(chunks).toString('utf8')));
     if (!parsed.success) throw new AGSRequestError('Invalid AGS token response', false);
     return parsed.data.access_token;
-  } finally { await reader.cancel(); }
+  } finally {
+    await reader.cancel();
+  }
 }
 
 function httpError(phase: string, status: number): AGSRequestError {
-  return new AGSRequestError(`${phase} HTTP ${status}`, status === 408 || status === 429 || status >= 500);
+  return new AGSRequestError(
+    `${phase} HTTP ${status}`,
+    status === 408 || status === 429 || status >= 500,
+  );
 }
 
 async function getAccessToken(platform: LTIPlatformConfig): Promise<string> {
   const { privateKey, kid } = await getKeyPair();
   const assertion = await new jose.SignJWT({})
     .setProtectedHeader({ alg: 'RS256', kid, typ: 'JWT' })
-    .setIssuer(platform.clientId).setSubject(platform.clientId).setAudience(platform.tokenUrl)
-    .setIssuedAt().setExpirationTime('5m').setJti(crypto.randomUUID()).sign(privateKey);
+    .setIssuer(platform.clientId)
+    .setSubject(platform.clientId)
+    .setAudience(platform.tokenUrl)
+    .setIssuedAt()
+    .setExpirationTime('5m')
+    .setJti(crypto.randomUUID())
+    .sign(privateKey);
   const response = await request(platform.tokenUrl, {
-    method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ grant_type: 'client_credentials',
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'client_credentials',
       client_assertion_type: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
-      client_assertion: assertion, scope: AGS_SCORE_SCOPE }).toString(),
+      client_assertion: assertion,
+      scope: AGS_SCORE_SCOPE,
+    }).toString(),
   });
   if (!response.ok) {
     await response.body?.cancel();
@@ -96,7 +121,10 @@ export async function submitGrade(
   if (!validatedGrade.success || !validatedContext.success) throw new Error('Invalid AGS delivery');
   const scoreUrl = new URL(lineItemUrl);
   scoreUrl.pathname = `${scoreUrl.pathname.replace(/\/$/, '')}/scores`;
-  const payload = JSON.stringify({ ...validatedGrade.data, timestamp: validatedContext.data.timestamp });
+  const payload = JSON.stringify({
+    ...validatedGrade.data,
+    timestamp: validatedContext.data.timestamp,
+  });
   const service = createServiceSupabaseClient();
   for (let attempt = 1; attempt <= 3; attempt++) {
     let success = false;
@@ -104,9 +132,14 @@ export async function submitGrade(
     let errorMessage: string | null = null;
     try {
       const token = await getAccessToken(platform);
-      const response = await request(scoreUrl.href, { method: 'POST', headers: {
-        Authorization: `Bearer ${token}`, 'Content-Type': 'application/vnd.ims.lis.v1.score+json',
-      }, body: payload });
+      const response = await request(scoreUrl.href, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/vnd.ims.lis.v1.score+json',
+        },
+        body: payload,
+      });
       await response.body?.cancel();
       if (!response.ok) throw httpError('AGS score', response.status);
       success = true;
@@ -116,11 +149,16 @@ export async function submitGrade(
       errorMessage = error instanceof AGSRequestError ? error.message : 'AGS transport failure';
     }
     const audit = await service.from('lti_grade_submissions').insert({
-      user_id: context.qalemUserId, client_id: platform.clientId,
-      resource_link_id: context.resourceLinkId, line_item_url: lineItemUrl,
-      score_given: grade.scoreGiven, score_maximum: grade.scoreMaximum,
-      activity_progress: grade.activityProgress, grading_progress: grade.gradingProgress,
-      success, error_message: errorMessage,
+      user_id: context.qalemUserId,
+      client_id: platform.clientId,
+      resource_link_id: context.resourceLinkId,
+      line_item_url: lineItemUrl,
+      score_given: grade.scoreGiven,
+      score_maximum: grade.scoreMaximum,
+      activity_progress: grade.activityProgress,
+      grading_progress: grade.gradingProgress,
+      success,
+      error_message: errorMessage,
     });
     if (audit.error) throw new Error('AGS audit persistence failed');
     if (success) return true;
