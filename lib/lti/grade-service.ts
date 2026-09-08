@@ -1,202 +1,131 @@
-// =============================================================================
-// LTI 1.3 Assignment and Grade Services (AGS)
-// Sends grades back to the LMS via the LTI AGS protocol.
-// =============================================================================
-
 import * as jose from 'jose';
-import { createLogger } from '@/lib/logger';
+import { z } from 'zod';
+import { createServiceSupabaseClient } from '@/lib/supabase/service';
+import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import type { LTIPlatformConfig, LTIGradePayload } from './types';
 import { getKeyPair } from './index';
 
-const log = createLogger('LTI-AGS');
+export const AGS_SCORE_SCOPE = 'https://purl.imsglobal.org/spec/lti-ags/scope/score';
+const contextSchema = z.object({
+  qalemUserId: z.uuid(),
+  resourceLinkId: z.string().min(1).max(4096),
+  // Persisted score-change time, never the time of a delivery retry.
+  timestamp: z.iso.datetime({ offset: true }),
+  scopes: z.array(z.string()).refine((scopes) => scopes.includes(AGS_SCORE_SCOPE)),
+});
+export type GradeDeliveryContext = z.infer<typeof contextSchema>;
+const gradeSchema = z.object({
+  userId: z.string().min(1).max(4096),
+  scoreGiven: z.number().min(0).max(100),
+  scoreMaximum: z.literal(100),
+  activityProgress: z.enum(['Initialized', 'Started', 'InProgress', 'Submitted', 'Completed']),
+  gradingProgress: z.enum(['FullyGraded', 'Pending', 'PendingManual', 'Failed', 'NotReady']),
+});
+const tokenSchema = z.object({
+  access_token: z.string().min(1).max(16384),
+  token_type: z.string().refine((value) => value.toLowerCase() === 'bearer'),
+});
 
-// ---------------------------------------------------------------------------
-// OAuth2 client_credentials token for AGS
-// ---------------------------------------------------------------------------
-
-interface AccessTokenResponse {
-  access_token: string;
-  token_type: string;
-  expires_in: number;
+class AGSRequestError extends Error {
+  constructor(message: string, readonly retryable: boolean) { super(message); }
 }
 
-/**
- * Obtain an OAuth2 access token from the platform's token endpoint
- * using the client_credentials grant with a signed JWT assertion.
- */
+async function request(endpoint: string, init: RequestInit): Promise<Response> {
+  const url = new URL(endpoint);
+  if (url.protocol !== 'https:' || url.username || url.password || url.hash || await validateUrlForSSRF(endpoint)) {
+    throw new AGSRequestError('AGS endpoint rejected', false);
+  }
+  // Never forward assertions or bearer tokens through a redirect.
+  return fetch(url, { ...init, redirect: 'error', signal: AbortSignal.timeout(15000) });
+}
+
+async function readToken(response: Response): Promise<string> {
+  const reader = response.body?.getReader();
+  if (!reader) throw new AGSRequestError('Invalid AGS token response', false);
+  const chunks: Uint8Array[] = [];
+  let length = 0;
+  try {
+    while (true) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      length += chunk.value.byteLength;
+      if (length > 32768) throw new AGSRequestError('Oversized AGS token response', false);
+      chunks.push(chunk.value);
+    }
+    const parsed = tokenSchema.safeParse(JSON.parse(Buffer.concat(chunks).toString('utf8')));
+    if (!parsed.success) throw new AGSRequestError('Invalid AGS token response', false);
+    return parsed.data.access_token;
+  } finally { await reader.cancel(); }
+}
+
+function httpError(phase: string, status: number): AGSRequestError {
+  return new AGSRequestError(`${phase} HTTP ${status}`, status === 408 || status === 429 || status >= 500);
+}
+
 async function getAccessToken(platform: LTIPlatformConfig): Promise<string> {
   const { privateKey, kid } = await getKeyPair();
-
-  // Build the client assertion JWT (RFC 7523)
-  const clientAssertion = await new jose.SignJWT({})
+  const assertion = await new jose.SignJWT({})
     .setProtectedHeader({ alg: 'RS256', kid, typ: 'JWT' })
-    .setIssuer(platform.clientId)
-    .setSubject(platform.clientId)
-    .setAudience(platform.tokenUrl)
-    .setIssuedAt()
-    .setExpirationTime('5m')
-    .setJti(crypto.randomUUID())
-    .sign(privateKey);
-
-  const body = new URLSearchParams({
-    grant_type: 'client_credentials',
-    client_assertion_type: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
-    client_assertion: clientAssertion,
-    scope: [
-      'https://purl.imsglobal.org/spec/lti-ags/scope/lineitem',
-      'https://purl.imsglobal.org/spec/lti-ags/scope/result.readonly',
-      'https://purl.imsglobal.org/spec/lti-ags/scope/score',
-    ].join(' '),
+    .setIssuer(platform.clientId).setSubject(platform.clientId).setAudience(platform.tokenUrl)
+    .setIssuedAt().setExpirationTime('5m').setJti(crypto.randomUUID()).sign(privateKey);
+  const response = await request(platform.tokenUrl, {
+    method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ grant_type: 'client_credentials',
+      client_assertion_type: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
+      client_assertion: assertion, scope: AGS_SCORE_SCOPE }).toString(),
   });
-
-  const response = await fetch(platform.tokenUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: body.toString(),
-  });
-
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Token request failed (${response.status}): ${errorText}`);
+    await response.body?.cancel();
+    throw httpError('AGS token', response.status);
   }
-
-  const tokenData = (await response.json()) as AccessTokenResponse;
-  return tokenData.access_token;
+  return readToken(response);
 }
 
-// ---------------------------------------------------------------------------
-// Grade submission
-// ---------------------------------------------------------------------------
-
-/**
- * Submit a grade to the LMS via the LTI AGS score endpoint.
- *
- * Retries up to 3 times with exponential backoff on transient failures.
- * Logs every submission attempt to `lti_grade_submissions` for audit.
+/** Server-only delivery; caller must provide the persisted, authorized context.
+ * Transient failures retry at 1s/2s. Audit failure is thrown outside the retry
+ * block: it must never turn an accepted score into another network submission.
  */
 export async function submitGrade(
-  platformConfig: LTIPlatformConfig,
+  platform: LTIPlatformConfig,
   lineItemUrl: string,
   grade: LTIGradePayload,
+  context: GradeDeliveryContext,
 ): Promise<boolean> {
-  const maxRetries = 3;
-  let lastError: string | undefined;
-
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+  const validatedGrade = gradeSchema.safeParse(grade);
+  const validatedContext = contextSchema.safeParse(context);
+  if (!validatedGrade.success || !validatedContext.success) throw new Error('Invalid AGS delivery');
+  const scoreUrl = new URL(lineItemUrl);
+  scoreUrl.pathname = `${scoreUrl.pathname.replace(/\/$/, '')}/scores`;
+  const payload = JSON.stringify({ ...validatedGrade.data, timestamp: validatedContext.data.timestamp });
+  const service = createServiceSupabaseClient();
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    let success = false;
+    let retryable = false;
+    let errorMessage: string | null = null;
     try {
-      const accessToken = await getAccessToken(platformConfig);
-
-      // AGS score endpoint is lineItemUrl + "/scores"
-      const scoreUrl = lineItemUrl.endsWith('/') ? `${lineItemUrl}scores` : `${lineItemUrl}/scores`;
-
-      const scorePayload = {
-        userId: grade.userId,
-        scoreGiven: grade.scoreGiven,
-        scoreMaximum: grade.scoreMaximum,
-        activityProgress: grade.activityProgress,
-        gradingProgress: grade.gradingProgress,
-        timestamp: new Date().toISOString(),
-      };
-
-      const response = await fetch(scoreUrl, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/vnd.ims.lis.v1.score+json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify(scorePayload),
-      });
-
-      if (response.ok) {
-        log.info(
-          `Grade submitted successfully for user=${grade.userId} ` +
-            `score=${grade.scoreGiven}/${grade.scoreMaximum}`,
-        );
-
-        await logGradeSubmission(platformConfig.clientId, grade, lineItemUrl, true);
-
-        return true;
-      }
-
-      // Non-retryable client errors (4xx except 429)
-      if (response.status >= 400 && response.status < 500 && response.status !== 429) {
-        const errorText = await response.text();
-        lastError = `HTTP ${response.status}: ${errorText}`;
-        log.error(`Grade submission failed (non-retryable): ${lastError}`);
-        break;
-      }
-
-      // Retryable error
-      const errorText = await response.text();
-      lastError = `HTTP ${response.status}: ${errorText}`;
-      log.warn(`Grade submission attempt ${attempt}/${maxRetries} failed: ${lastError}`);
-    } catch (err) {
-      lastError = err instanceof Error ? err.message : 'Unknown error';
-      log.warn(`Grade submission attempt ${attempt}/${maxRetries} error: ${lastError}`);
+      const token = await getAccessToken(platform);
+      const response = await request(scoreUrl.href, { method: 'POST', headers: {
+        Authorization: `Bearer ${token}`, 'Content-Type': 'application/vnd.ims.lis.v1.score+json',
+      }, body: payload });
+      await response.body?.cancel();
+      if (!response.ok) throw httpError('AGS score', response.status);
+      success = true;
+    } catch (error) {
+      // Never persist raw provider bodies, URLs, credentials or exception text.
+      retryable = !(error instanceof AGSRequestError) || error.retryable;
+      errorMessage = error instanceof AGSRequestError ? error.message : 'AGS transport failure';
     }
-
-    // Exponential backoff: 1s, 2s, 4s
-    if (attempt < maxRetries) {
-      const delay = Math.pow(2, attempt - 1) * 1000;
-      await new Promise((resolve) => setTimeout(resolve, delay));
-    }
-  }
-
-  // All retries exhausted
-  log.error(
-    `Grade submission failed after ${maxRetries} attempts for user=${grade.userId}: ${lastError}`,
-  );
-
-  await logGradeSubmission(platformConfig.clientId, grade, lineItemUrl, false, lastError);
-
-  return false;
-}
-
-// ---------------------------------------------------------------------------
-// Audit logging
-// ---------------------------------------------------------------------------
-
-/**
- * Log a grade submission attempt to Supabase for audit purposes.
- */
-async function logGradeSubmission(
-  clientId: string,
-  grade: LTIGradePayload,
-  lineItemUrl: string,
-  success: boolean,
-  errorMessage?: string,
-): Promise<void> {
-  try {
-    const { createClient } = await import('@supabase/supabase-js');
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!supabaseUrl || !serviceRoleKey) {
-      log.warn('Cannot log grade submission: missing SUPABASE env vars');
-      return;
-    }
-
-    const supabase = createClient(supabaseUrl, serviceRoleKey);
-
-    const { error } = await supabase.from('lti_grade_submissions').insert({
-      user_id: grade.userId,
-      client_id: clientId,
-      resource_link_id: '', // Caller should provide, omitted here for simplicity
-      line_item_url: lineItemUrl,
-      score_given: grade.scoreGiven,
-      score_maximum: grade.scoreMaximum,
-      activity_progress: grade.activityProgress,
-      grading_progress: grade.gradingProgress,
-      success,
-      error_message: errorMessage ?? null,
+    const audit = await service.from('lti_grade_submissions').insert({
+      user_id: context.qalemUserId, client_id: platform.clientId,
+      resource_link_id: context.resourceLinkId, line_item_url: lineItemUrl,
+      score_given: grade.scoreGiven, score_maximum: grade.scoreMaximum,
+      activity_progress: grade.activityProgress, grading_progress: grade.gradingProgress,
+      success, error_message: errorMessage,
     });
-
-    if (error) {
-      log.warn('Failed to log grade submission:', error.message);
-    }
-  } catch (err) {
-    log.warn('Exception logging grade submission:', err instanceof Error ? err.message : 'unknown');
+    if (audit.error) throw new Error('AGS audit persistence failed');
+    if (success) return true;
+    if (!retryable) return false;
+    if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, 1000 * 2 ** (attempt - 1)));
   }
+  return false;
 }
