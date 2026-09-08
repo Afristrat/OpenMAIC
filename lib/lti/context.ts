@@ -85,20 +85,3 @@ export async function resolveLtiContext(input: z.infer<typeof inputSchema>) {
     gradingEnabled: Boolean(data.line_item_url) && data.ags_scopes.includes(AGS_SCORE_SCOPE),
   };
 }
-
-/** Authorize before reading the persisted answer key or invoking a paid model. */
-export async function loadLtiQuiz(input: z.infer<typeof inputSchema>, sceneId: string) {
-  if (!z.string().min(1).max(4096).safeParse(sceneId).success) throw new LtiAccessDenied();
-  const context = await resolveLtiContext(input);
-  if (!context.gradingEnabled) throw new LtiAccessDenied();
-  const { data, error } = await createServiceSupabaseClient()
-    .from('scenes')
-    .select('content')
-    .eq('id', sceneId)
-    .eq('stage_id', context.stageId)
-    .eq('type', 'quiz')
-    .maybeSingle();
-  if (error) throw new Error('LTI quiz lookup unavailable');
-  if (!data) throw new LtiAccessDenied();
-  return { context, content: data.content as unknown };
-}

@@ -98,6 +98,9 @@ export const test = base.extend<Fixtures>({
       // Always mock server-providers — called on every page load by root layout
       await mockApi.mockServerProviders();
       await mockApi.mockSourceLibrary();
+      await page.route('**/api/lti/context?*', (route) =>
+        route.fulfill({ status: 200, contentType: 'application/json', body: '{"success":true,"active":false}' }),
+      );
       await context.route(/\/rest\/v1\/classroom_templates(?:\?.*)?$/, (route) =>
         route.fulfill({
           status: 200,

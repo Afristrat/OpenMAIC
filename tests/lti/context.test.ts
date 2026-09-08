@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { LtiAccessDenied, loadLtiQuiz, resolveLtiContext } from '@/lib/lti/context';
+import { LtiAccessDenied, resolveLtiContext } from '@/lib/lti/context';
 
 const mocks = vi.hoisted(() => ({ from: vi.fn() }));
 vi.mock('@/lib/supabase/service', () => ({
@@ -62,7 +62,7 @@ describe('LTI classroom capability authorization', () => {
     async (index) => {
       const { checks } = allow();
       checks[index].maybeSingle.mockResolvedValue({ data: null, error: null });
-      await expect(loadLtiQuiz(input, 'quiz')).rejects.toBeInstanceOf(LtiAccessDenied);
+      await expect(resolveLtiContext(input)).rejects.toBeInstanceOf(LtiAccessDenied);
       expect(mocks.from).not.toHaveBeenCalledWith('scenes');
     },
   );
@@ -70,21 +70,10 @@ describe('LTI classroom capability authorization', () => {
     mocks.from.mockReturnValueOnce(query(null, { message: 'private detail' }));
     await expect(resolveLtiContext(input)).rejects.toThrow('LTI session lookup unavailable');
   });
-  it('reads only the quiz scene of the authorized classroom', async () => {
-    allow();
-    const scene = query({ content: { type: 'quiz', questions: [] } });
-    mocks.from.mockReturnValueOnce(scene);
-    expect((await loadLtiQuiz(input, 'quiz')).content).toEqual({ type: 'quiz', questions: [] });
-    expect(scene.eq.mock.calls).toEqual([
-      ['id', 'quiz'],
-      ['stage_id', 'bound-stage'],
-      ['type', 'quiz'],
-    ]);
-  });
-  it('refuses score correction without the launch scope', async () => {
+  it('reports score correction unavailable without the launch scope', async () => {
     const { lookup } = allow();
     lookup.maybeSingle.mockResolvedValue({ data: { ...session, ags_scopes: [] }, error: null });
-    await expect(loadLtiQuiz(input, 'quiz')).rejects.toBeInstanceOf(LtiAccessDenied);
+    expect(await resolveLtiContext(input)).toMatchObject({ gradingEnabled: false });
     expect(mocks.from).not.toHaveBeenCalledWith('scenes');
   });
 });

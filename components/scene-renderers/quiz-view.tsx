@@ -34,10 +34,11 @@ import {
   type SubmittedState,
 } from '@/lib/quiz/persistence';
 import { persistQuizCompletion } from '@/lib/quiz/sync';
+import { clearLtiAttempt, readLtiAttempt, readLtiClassroomContext, saveLtiAttempt, sendLtiQuizAttempt } from '@/lib/quiz/lti-client';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-type Phase = 'not_started' | 'answering' | 'grading' | 'reviewing';
+type Phase = 'not_started' | 'answering' | 'grading' | 'grading_error' | 'reviewing';
 
 interface QuizViewProps {
   readonly questions: QuizQuestion[];
@@ -659,24 +660,61 @@ function ScoreBanner({
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 
-export function QuizView({ questions, sceneId, stageId }: QuizViewProps) {
+export function QuizView(props: QuizViewProps) {
+  const { t } = useI18n();
+  const { user, isLoading } = useAuth();
+  const userId = user?.id;
+  const [reload, setReload] = useState(0);
+  const [context, setContext] = useState<{ owner: string; scope: string | null } | null>(null);
+  const [failed, setFailed] = useState(false);
+  const owner = JSON.stringify([userId, props.stageId, reload]);
+  useEffect(() => {
+    if (isLoading || !userId) return;
+    const controller = new AbortController();
+    readLtiClassroomContext(props.stageId, controller.signal).then((result) => {
+      if (controller.signal.aborted) return;
+      setFailed(false);
+      setContext({ owner, scope: result.active ? JSON.stringify([userId, result.launchId, props.stageId]) : null });
+    }).catch(() => { if (!controller.signal.aborted) setFailed(true); });
+    return () => controller.abort();
+  }, [isLoading, userId, props.stageId, owner]);
+  if (isLoading || (!failed && userId && context?.owner !== owner)) {
+    return <div role="status" className="p-6">{t('quiz.checkingAccess')}</div>;
+  }
+  if (!userId || failed || context?.owner !== owner) {
+    return <div role="alert" className="p-6 space-y-4">
+      <p>{t('quiz.accessFailed')}</p>
+      <button className="rounded-lg border px-4 py-2" onClick={() => { setFailed(false); setReload((value) => value + 1); }}>{t('quiz.resumeSubmission')}</button>
+    </div>;
+  }
+  return <QuizSession key={`${owner}:${props.sceneId}:${context.scope}`} {...props} ltiScope={context.scope ? `${context.scope}:${props.sceneId}` : null} />;
+}
+
+function QuizSession({ questions, sceneId, stageId, ltiScope }: QuizViewProps & { ltiScope: string | null }) {
   const { t, locale } = useI18n();
   const { user } = useAuth();
 
   // Rehydrate submitted state from localStorage on first mount. Runs once.
-  const [initialSubmitted] = useState<SubmittedState>(() => readSubmittedState(sceneId));
+  const [savedLti] = useState(() => {
+    try { return { attempt: ltiScope ? readLtiAttempt(ltiScope) : null, error: false }; }
+    catch { return { attempt: null, error: true }; }
+  });
+  const [initialSubmitted] = useState<SubmittedState>(() => ltiScope ? null : readSubmittedState(sceneId));
 
   const [phase, setPhase] = useState<Phase>(() => {
+    if (savedLti.error) return 'grading_error';
+    if (savedLti.attempt) return 'grading';
     if (initialSubmitted?.kind === 'reviewing') return 'reviewing';
     if (initialSubmitted?.kind === 'answering') return 'answering';
     return 'not_started';
   });
   const [answers, setAnswers] = useState<Record<string, string | string[]>>(
-    () => initialSubmitted?.answers ?? {},
+    () => savedLti.attempt?.answers ?? initialSubmitted?.answers ?? {},
   );
   const [results, setResults] = useState<QuestionResult[]>(() =>
     initialSubmitted?.kind === 'reviewing' ? initialSubmitted.results : [],
   );
+  const [serverScore, setServerScore] = useState<number | null>(null);
 
   // Draft cache for quiz answers, keyed by sceneId to isolate across classrooms
   const {
@@ -684,7 +722,7 @@ export function QuizView({ questions, sceneId, stageId }: QuizViewProps) {
     updateCache: updateAnswersCache,
     clearCache: clearAnswersCache,
   } = useDraftCache<Record<string, string | string[]>>({
-    key: draftKey(sceneId),
+    key: draftKey(ltiScope ?? sceneId),
   });
 
   // Restore cached draft answers (only when there is no submitted state).
@@ -728,18 +766,31 @@ export function QuizView({ questions, sceneId, stageId }: QuizViewProps) {
   );
 
   const handleSubmit = useCallback(() => {
+    if (ltiScope) {
+      try { saveLtiAttempt(ltiScope, answers, locale); }
+      catch { setPhase('grading_error'); return; }
+    }
     setPhase('grading');
     clearAnswersCache();
-    writeSubmittedAnswers(sceneId, answers);
-  }, [clearAnswersCache, answers, sceneId]);
+    if (!ltiScope) writeSubmittedAnswers(sceneId, answers);
+  }, [clearAnswersCache, answers, sceneId, ltiScope, locale]);
 
   // When entering grading phase, grade choice questions locally + call API for short-answer
   useEffect(() => {
     if (phase !== 'grading') return;
     let cancelled = false;
+    const controller = new AbortController();
 
     (async () => {
-      // 1. Grade choice questions locally (instant)
+      let ordered: QuestionResult[];
+      if (ltiScope) {
+        const attempt = saveLtiAttempt(ltiScope, answers, locale);
+        const graded = await sendLtiQuizAttempt(stageId, sceneId, attempt, controller.signal);
+        if (cancelled) return;
+        ordered = graded.results;
+        setServerScore(graded.score);
+      } else {
+      // Ordinary classroom grading is separate from the authoritative LMS path.
       const choiceResults = gradeChoiceQuestions(questions, answers);
 
       // 2. Grade short-answer questions via AI API (parallel)
@@ -757,9 +808,12 @@ export function QuizView({ questions, sceneId, stageId }: QuizViewProps) {
       for (const r of [...choiceResults, ...aiResults]) {
         allResultsMap.set(r.questionId, r);
       }
-      const ordered = questions.map((q) => allResultsMap.get(q.id)!).filter(Boolean);
+      ordered = questions.map((q) => allResultsMap.get(q.id)!).filter(Boolean);
+      }
 
       setResults(ordered);
+      // Local summaries are not an authority for the LMS, but retain existing classroom reporting.
+      writeSubmittedAnswers(sceneId, answers);
       writeSubmittedResults(sceneId, ordered);
 
       try {
@@ -789,20 +843,26 @@ export function QuizView({ questions, sceneId, stageId }: QuizViewProps) {
         log.error('Failed to persist quiz completion:', error);
       }
       if (!cancelled) setPhase('reviewing');
-    })();
+    })().catch(() => { if (!cancelled) setPhase('grading_error'); });
 
     return () => {
       cancelled = true;
+      controller.abort();
     };
-  }, [phase, questions, answers, locale, sceneId, stageId, user]);
+  }, [phase, questions, answers, locale, sceneId, stageId, user, ltiScope]);
 
   const handleRetry = useCallback(() => {
+    if (ltiScope) {
+      try { clearLtiAttempt(ltiScope); }
+      catch { setPhase('grading_error'); return; }
+    }
+    setServerScore(null);
     setPhase('not_started');
     setAnswers({});
     setResults([]);
     clearAnswersCache();
     clearSubmitted(sceneId);
-  }, [clearAnswersCache, sceneId]);
+  }, [clearAnswersCache, sceneId, ltiScope]);
 
   const earnedScore = useMemo(() => results.reduce((sum, r) => sum + r.earned, 0), [results]);
 
@@ -817,6 +877,12 @@ export function QuizView({ questions, sceneId, stageId }: QuizViewProps) {
   return (
     <div className="w-full h-full bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-900 overflow-hidden flex flex-col">
       <AnimatePresence mode="wait">
+        {phase === 'grading_error' && (
+          <div key="grading-error" role="alert" className="p-6 space-y-4">
+            <p>{t('quiz.submissionFailed')}</p>
+            <button className="rounded-lg border px-4 py-2" onClick={handleSubmit}>{t('quiz.resumeSubmission')}</button>
+          </div>
+        )}
         {phase === 'not_started' && (
           <motion.div
             key="cover"
@@ -975,7 +1041,8 @@ export function QuizView({ questions, sceneId, stageId }: QuizViewProps) {
 
             {/* Results */}
             <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-              <ScoreBanner score={earnedScore} total={totalPoints} results={results} />
+              {ltiScope && <p role="status" className="text-sm">{t('quiz.ltiQueued')}</p>}
+              <ScoreBanner score={serverScore ?? earnedScore} total={serverScore === null ? totalPoints : 100} results={results} />
 
               {questions.map((q, i) => {
                 const r = resultMap[q.id];

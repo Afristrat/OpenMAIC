@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
       stageId: req.nextUrl.searchParams.get('stageId') ?? '',
     });
     return NextResponse.json(
-      { success: true, active: true, gradingEnabled: context.gradingEnabled },
+      { success: true, active: true, gradingEnabled: context.gradingEnabled, launchId: context.sessionId },
       { headers },
     );
   } catch (error) {
