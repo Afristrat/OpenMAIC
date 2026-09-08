@@ -22,6 +22,9 @@ test.describe('System learning catalogs', () => {
   });
 
   test('serves and displays the ten canonical agents', async ({ page, request }) => {
+    await page.route('**/api/marketplace/agents/owned?*', (route) => route.fulfill({ json: {
+      success: true, agents: [], pagination: { totalPages: 0 },
+    } }));
     const response = await request.get('/api/marketplace/agents?limit=20');
     expect(response.status()).toBe(200);
     const payload = (await response.json()) as {
