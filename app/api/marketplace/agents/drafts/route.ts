@@ -3,7 +3,10 @@ import { isDeepStrictEqual } from 'node:util';
 import { NextRequest } from 'next/server';
 import { requireSuperAdminOrOrgAuthor } from '@/lib/api/auth';
 import { validateBody } from '@/lib/api/validate';
-import { agentProfileExtensionsSchema, marketplaceDraftSchema } from '@/lib/marketplace/draft-schema';
+import {
+  agentProfileExtensionsSchema,
+  marketplaceDraftSchema,
+} from '@/lib/marketplace/draft-schema';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
@@ -20,7 +23,9 @@ export async function POST(request: NextRequest): Promise<Response> {
     .digest('hex')}`;
   const supabase = await createServerSupabaseClient();
   const profileExtensions = Object.fromEntries(
-    Object.entries(agentProfileExtensionsSchema.parse(agent)).filter(([, value]) => value !== undefined),
+    Object.entries(agentProfileExtensionsSchema.parse(agent)).filter(
+      ([, value]) => value !== undefined,
+    ),
   );
   const { error } = await supabase.from('agent_configs').upsert(
     {

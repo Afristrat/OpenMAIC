@@ -100,14 +100,27 @@ it('preserves advanced profiles and refuses nested secrets or unsafe source URLs
   };
   const body = { ...payload, agent: { ...payload.agent, ...extensions } };
   expect(marketplaceDraftSchema.parse(body).agent).toMatchObject(extensions);
-  expect(marketplaceDraftSchema.safeParse({
-    ...body,
-    agent: { ...body.agent, voiceConfig: { providerId: 'higgs', voiceId: 'voice', apiKey: 'forbidden' } },
-  }).success).toBe(false);
-  expect(marketplaceDraftSchema.safeParse({
-    ...body,
-    agent: { ...body.agent, occupationalProfile: { ...extensions.occupationalProfile, sourceUrl: 'javascript:alert(1)' } },
-  }).success).toBe(false);
+  expect(
+    marketplaceDraftSchema.safeParse({
+      ...body,
+      agent: {
+        ...body.agent,
+        voiceConfig: { providerId: 'higgs', voiceId: 'voice', apiKey: 'forbidden' },
+      },
+    }).success,
+  ).toBe(false);
+  expect(
+    marketplaceDraftSchema.safeParse({
+      ...body,
+      agent: {
+        ...body.agent,
+        occupationalProfile: {
+          ...extensions.occupationalProfile,
+          sourceUrl: 'javascript:alert(1)',
+        },
+      },
+    }).success,
+  ).toBe(false);
 
   mocks.auth.mockResolvedValue({ user: { id: 'owner' } });
   let saved: Record<string, unknown> = {};
