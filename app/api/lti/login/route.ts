@@ -55,8 +55,11 @@ async function handleLoginInitiation(req: NextRequest): Promise<NextResponse> {
     const target = new URL(targetLinkUri);
     const app = new URL(appUrl);
     if (
-      target.origin !== app.origin || target.protocol !== 'https:' ||
-      target.username || target.password || target.hash
+      target.origin !== app.origin ||
+      target.protocol !== 'https:' ||
+      target.username ||
+      target.password ||
+      target.hash
     ) {
       return NextResponse.json({ error: 'Invalid target_link_uri' }, { status: 400 });
     }
