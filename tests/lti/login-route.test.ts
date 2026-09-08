@@ -58,13 +58,13 @@ describe('LTI login registration boundary', () => {
     expect(getPlatformConfigByIssuer).not.toHaveBeenCalled();
     expect(storeNonce).not.toHaveBeenCalled();
   });
-  it.each<Record<string, string>>([{ iss: 'https://other.example.org' }, { lti_deployment_id: 'other' }])(
-    'rejects contradictory registration fields',
-    async (overrides) => {
-      expect((await GET(request(overrides))).status).toBe(403);
-      expect(storeNonce).not.toHaveBeenCalled();
-    },
-  );
+  it.each<Record<string, string>>([
+    { iss: 'https://other.example.org' },
+    { lti_deployment_id: 'other' },
+  ])('rejects contradictory registration fields', async (overrides) => {
+    expect((await GET(request(overrides))).status).toBe(403);
+    expect(storeNonce).not.toHaveBeenCalled();
+  });
   it('uses a GET redirect after POST and preserves registered authorization parameters', async () => {
     const response = await POST(request({}, 'POST'));
     expect(response.status).toBe(303);
