@@ -33,6 +33,7 @@ import {
 import Link from 'next/link';
 import type { RankedAgent } from '@/lib/marketplace/ranking';
 import { getSystemAgents } from '@/lib/marketplace/system-agents';
+import { OwnedAgentPublications } from '@/components/agent/owned-agent-publications';
 
 interface PaginationInfo {
   page: number;
@@ -223,6 +224,7 @@ export default function MarketplacePage() {
       </div>
 
       {/* Search & Filters */}
+      {user && <OwnedAgentPublications key={user.id} onWithdraw={() => { void fetchAgents(pagination.page); }} />}
       <div className="mb-6 space-y-3">
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative min-w-[240px] flex-1">

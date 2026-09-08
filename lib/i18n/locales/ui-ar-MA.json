@@ -1,4 +1,12 @@
 {
+  "marketplace.ownedTitle": "وكلائي المشتركون",
+  "marketplace.refreshOwned": "تحديث وكلائي",
+  "marketplace.ownedError": "تعذر تأكيد العملية. حدّث القائمة قبل المحاولة مجددًا.",
+  "marketplace.ownedEmpty": "لا يوجد وكلاء محفوظون للمشاركة.",
+  "marketplace.privateAgent": "خاص",
+  "marketplace.withdraw": "سحب من السوق",
+  "marketplace.previousPage": "الصفحة السابقة",
+  "marketplace.nextPage": "الصفحة التالية",
   "common.you": "أنت",
   "common.confirm": "تأكيد",
   "common.cancel": "إلغاء",

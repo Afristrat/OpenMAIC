@@ -1,4 +1,12 @@
 {
+  "marketplace.ownedTitle": "My shared agents",
+  "marketplace.refreshOwned": "Refresh my agents",
+  "marketplace.ownedError": "The operation could not be confirmed. Refresh the list before trying again.",
+  "marketplace.ownedEmpty": "No agents saved for sharing.",
+  "marketplace.privateAgent": "Private",
+  "marketplace.withdraw": "Withdraw from marketplace",
+  "marketplace.previousPage": "Previous page",
+  "marketplace.nextPage": "Next page",
   "common.you": "You",
   "common.confirm": "Confirm",
   "common.cancel": "Cancel",
