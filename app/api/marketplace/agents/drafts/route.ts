@@ -15,7 +15,7 @@ export async function POST(request: NextRequest): Promise<Response> {
   const validation = validateBody(marketplaceDraftSchema, await request.json().catch(() => null));
   if (!validation.success) return validation.response;
   const { orgId, requestId, agent } = validation.data;
-  const auth = await requireSuperAdminOrOrgAuthor(request, orgId);
+  const auth = await requireSuperAdminOrOrgAuthor(request, orgId, { requireMembership: true });
   if (auth.response) return auth.response;
 
   const id = `publication-${createHash('sha256')

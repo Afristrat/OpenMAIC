@@ -210,11 +210,12 @@ export async function requireSuperAdminOrOrgAdmin(
 export async function requireSuperAdminOrOrgAuthor(
   req: NextRequest,
   orgId: string,
+  options: { requireMembership?: boolean } = {},
 ): Promise<AuthorAuthResult> {
   const auth = await requireAuth(req);
   if (auth.response) return auth;
 
-  if (isSuperAdminEmail(auth.user.email)) {
+  if (!options.requireMembership && isSuperAdminEmail(auth.user.email)) {
     return { ...auth, authoredByRole: 'super-admin' };
   }
 

@@ -110,6 +110,16 @@ describe('classroom RBAC', () => {
     expect(result.user?.id).toBe('user-1');
   });
 
+  it('requires active author membership for marketplace even for a global administrator', async () => {
+    mocks.user = { id: 'root-1', email: 'ROOT@qalem.ma' };
+    mocks.membership = null;
+    expect((await requireSuperAdminOrOrgAuthor(request, 'org-target', { requireMembership: true })).response?.status).toBe(403);
+    mocks.membership = { role: 'author', organizations: { status: 'active' } };
+    expect((await requireSuperAdminOrOrgAuthor(request, 'org-target', { requireMembership: true })).user?.id).toBe('root-1');
+    mocks.membership = { role: 'admin', organizations: { status: 'suspended' } };
+    expect((await requireSuperAdminOrOrgAuthor(request, 'org-target', { requireMembership: true })).response?.status).toBe(403);
+  });
+
   it('refuses an author access to another author’s classroom', async () => {
     mocks.membership = { role: 'author', organizations: { status: 'active' } };
 

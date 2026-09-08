@@ -51,7 +51,7 @@ it('accepts the empty description emitted by the UI and bounds metadata', () => 
 it('publishes only the owned agent after checking its stored tenant', async () => {
   const { update, query } = fixture();
   expect((await POST(request({ agentId: 'agent', description: null }))).status).toBe(200);
-  expect(mocks.authorize).toHaveBeenCalledWith(expect.any(NextRequest), 'org');
+  expect(mocks.authorize).toHaveBeenCalledWith(expect.any(NextRequest), 'org', { requireMembership: true });
   expect(update).toHaveBeenCalledWith({ is_published: true, description: null });
   expect(query.eq).toHaveBeenCalledWith('owner_id', 'owner');
   expect(query.eq).toHaveBeenCalledWith('org_id', 'org');

@@ -200,7 +200,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     if (!agent.org_id) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 409, 'Agent organization is required');
     }
-    const access = await requireSuperAdminOrOrgAuthor(request, agent.org_id);
+    const access = await requireSuperAdminOrOrgAuthor(request, agent.org_id, { requireMembership: true });
     if (access.response) return access.response;
   }
 
