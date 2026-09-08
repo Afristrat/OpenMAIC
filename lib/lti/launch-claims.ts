@@ -3,6 +3,7 @@ import { LTI_CLAIMS, type LTILaunchContext, type LTIPlatformConfig } from './typ
 
 const text = z.string().min(1).max(4096);
 const endpoint = text.url().refine((value) => {
+  if (!URL.canParse(value)) return false;
   const url = new URL(value);
   return url.protocol === 'https:' && !url.username && !url.password && !url.hash;
 }, 'HTTPS endpoint required');
@@ -22,13 +23,17 @@ const claimsSchema = z.object({
   [LTI_CLAIMS.TARGET_LINK_URI]: endpoint,
   [LTI_CLAIMS.RESOURCE_LINK]: z.object({ id: text, title: text.optional() }),
   [LTI_CLAIMS.ROLES]: z.array(text).max(100),
-  [LTI_CLAIMS.CONTEXT]: z.object({ id: text, title: text.optional(), label: text.optional() }).optional(),
+  [LTI_CLAIMS.CONTEXT]: z
+    .object({ id: text, title: text.optional(), label: text.optional() })
+    .optional(),
   [LTI_CLAIMS.LAUNCH_PRESENTATION]: z.object({ return_url: endpoint.optional() }).optional(),
-  [LTI_CLAIMS.AGS]: z.object({
-    lineitem: endpoint.optional(),
-    lineitems: endpoint.optional(),
-    scope: z.array(text).max(20),
-  }).optional(),
+  [LTI_CLAIMS.AGS]: z
+    .object({
+      lineitem: endpoint.optional(),
+      lineitems: endpoint.optional(),
+      scope: z.array(text).max(20),
+    })
+    .optional(),
 });
 
 /** Only call after JWT signature, issuer, audience and expiry verification. */
@@ -44,9 +49,11 @@ export function parseVerifiedLaunchClaims(
     throw new Error('LTI deployment mismatch');
   }
   const audiences = typeof claims.aud === 'string' ? [claims.aud] : claims.aud;
-  if (!audiences.includes(platform.clientId) ||
+  if (
+    !audiences.includes(platform.clientId) ||
     (claims.azp !== undefined && claims.azp !== platform.clientId) ||
-    (audiences.length > 1 && claims.azp !== platform.clientId)) {
+    (audiences.length > 1 && claims.azp !== platform.clientId)
+  ) {
     throw new Error('LTI authorized party mismatch');
   }
   const resource = claims[LTI_CLAIMS.RESOURCE_LINK];
