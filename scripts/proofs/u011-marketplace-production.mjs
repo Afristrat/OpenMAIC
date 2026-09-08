@@ -26,6 +26,7 @@ let session;
 let browser;
 let snapshotId;
 let complete = false;
+let phase = 'setup';
 const configuration = {
   name: 'Recette U-011 — agent temporaire',
   role: 'student',
@@ -99,10 +100,12 @@ try {
       }),
     );
   }, configuration);
+  phase = 'foreign-tenant';
   const foreign = await context.request.post(`${baseUrl}/api/marketplace/agents/drafts`, {
     data: { orgId: foreignOrgId, requestId: randomUUID(), agent: configuration },
   });
   assert.equal(foreign.status(), 403, 'Foreign tenant must be denied');
+  phase = 'publication-ui';
   await page.goto(`${baseUrl}/marketplace/agents`, { timeout: 60_000 });
   await page
     .getByRole('combobox', { name: labels['marketplace.publicationOrg'], exact: true })
@@ -163,12 +166,20 @@ try {
     'Republication must reuse exactly one tenant snapshot',
   );
   complete = true;
+} catch (error) {
+  // Preserve the failing phase even if cleanup subsequently fails.
+  console.error(JSON.stringify({ phase, message: error.message }));
+  throw error;
 } finally {
   const cleanupErrors = [];
   if (session) {
     try {
       const logout = await client.auth.signOut({ scope: 'local' });
       const refresh = await client.auth.refreshSession({ refresh_token: session.refresh_token });
+      console.error(JSON.stringify({
+        phase: 'session-cleanup', logoutStatus: logout.error?.status ?? 200,
+        refreshStatus: refresh.error?.status ?? 200, refreshHasSession: !!refresh.data.session,
+      }));
       if (logout.error || !refresh.error || refresh.data.session)
         cleanupErrors.push('session revocation');
     } catch {
