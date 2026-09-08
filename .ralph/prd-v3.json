@@ -4395,7 +4395,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « LTI Assignment and Grade Services (AGS) » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "decision_required",
+      "status": "to_implement",
       "passes": false,
       "source": {
         "file": ".ralph/prd.json",
@@ -4404,7 +4404,7 @@
       },
       "sourceDependencies": ["S-033"],
       "dependencies": ["S0-011"],
-      "gap": "submitGrade ne possède aucun appelant de production retrouvé.",
+      "gap": "Gate de conservation réconcilié le 8 septembre : S0-011 consigne GARDER pour les 72 capacités, dont LTI AGS, sur le mandat utilisateur de livrer toutes les US. Implémentation autorisée, sans autoriser l’envoi de notes à un LMS non enregistré. Inspection : submitGrade sans appelant, cookie lti_context JSON non signé, lancement sans session Supabase ni rattachement tenant/classroom, resource_link_id vide dans l’audit et reprise non durable. Sécuriser le contexte vérifié, rattacher le score réel, persister l’envoi et prouver le trajet dans un LMS de test avant clôture.",
       "evidence": ["lib/lti/grade-service.ts:77"],
       "acceptance": [
         "lib/lti/grade-service.ts : client LTI AGS",
@@ -4421,7 +4421,7 @@
         "status": "legacy_claim_not_delivery_proof"
       },
       "historicalDependencies": [],
-      "executionAllowed": false,
+      "executionAllowed": true,
       "validationRequires": [
         "qualityGates",
         "fresh_evidence_per_acceptance",
