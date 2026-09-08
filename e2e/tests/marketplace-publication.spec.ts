@@ -1,6 +1,10 @@
 import { test, expect } from '../fixtures/base';
+import fr from '../../lib/i18n/locales/ui-fr-FR.json';
+import ar from '../../lib/i18n/locales/ui-ar-MA.json';
+import en from '../../lib/i18n/locales/ui-en-US.json';
 
-test('publishes a private snapshot explicitly and withdraws it after reload', async ({ page }) => {
+for (const [locale, labels] of Object.entries({ 'fr-FR': fr, 'ar-MA': ar, 'en-US': en })) {
+test(`publishes and recovers the same snapshot (${locale})`, async ({ page }) => {
   const configuration = {
     name: 'Analyste de recette',
     role: 'student',
@@ -13,8 +17,8 @@ test('publishes a private snapshot explicitly and withdraws it after reload', as
     interactionWeight: 37,
     voiceConfig: { providerId: 'higgs-tts', voiceId: 'hanae' },
   };
-  await page.addInitScript((agent) => {
-    localStorage.setItem('locale', 'fr-FR');
+  await page.addInitScript(({ agent, locale }) => {
+    localStorage.setItem('locale', locale);
     localStorage.setItem(
       'agent-registry-storage',
       JSON.stringify({
@@ -32,7 +36,7 @@ test('publishes a private snapshot explicitly and withdraws it after reload', as
         },
       }),
     );
-  }, configuration);
+  }, { agent: configuration, locale });
   let saved = false;
   let draftCount = 0;
   let published = false;
@@ -80,31 +84,35 @@ test('publishes a private snapshot explicitly and withdraws it after reload', as
     });
   });
   await page.goto('/marketplace/agents');
+  if (locale === 'ar-MA') await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   await page
-    .getByRole('combobox', { name: 'Organisation de publication', exact: true })
+    .getByRole('combobox', { name: labels['marketplace.publicationOrg'], exact: true })
     .selectOption('00000000-0000-4000-8000-000000000002');
   await page
-    .getByRole('combobox', { name: 'Agent local', exact: true })
+    .getByRole('combobox', { name: labels['marketplace.localAgent'], exact: true })
     .selectOption('local-agent');
   expect(saved).toBe(false);
-  await page.getByRole('button', { name: 'Publier', exact: true }).click();
+  await page.getByRole('button', { name: labels['marketplace.publish'], exact: true }).click();
   const dialog = page.getByRole('dialog');
   await dialog
-    .getByLabel('Description publique', { exact: true })
+    .getByLabel(labels['marketplace.publicDescription'], { exact: true })
     .fill('Analyse de situations professionnelles.');
   expect(saved).toBe(false);
-  await dialog.getByRole('button', { name: 'Confirmer la publication' }).click();
+  await dialog.getByRole('button', { name: labels['marketplace.submitPublish'] }).click();
   await expect(dialog).not.toBeVisible();
-  const owned = page.getByRole('region', { name: 'Mes agents partagés' });
-  await expect(owned.getByText('Analyste de recette — Publié', { exact: true })).toBeVisible();
+  const owned = page.getByRole('region', { name: labels['marketplace.ownedTitle'] });
+  const publishedName = `Analyste de recette — ${labels['marketplace.published']}`;
+  const privateName = `Analyste de recette — ${labels['marketplace.privateAgent']}`;
+  await expect(owned.getByText(publishedName, { exact: true })).toBeVisible();
   await page.reload();
-  await expect(owned.getByText('Analyste de recette — Publié', { exact: true })).toBeVisible();
-  await owned.getByRole('button', { name: 'Retirer de la marketplace' }).click();
-  await expect(owned.getByText('Analyste de recette — Privé', { exact: true })).toBeVisible();
+  await expect(owned.getByText(publishedName, { exact: true })).toBeVisible();
+  await owned.getByRole('button', { name: labels['marketplace.withdraw'] }).click();
+  await expect(owned.getByText(privateName, { exact: true })).toBeVisible();
   expect(published).toBe(false);
   await page.reload();
-  await expect(owned.getByText('Analyste de recette — Privé', { exact: true })).toBeVisible();
-  await owned.getByRole('button', { name: 'Publier', exact: true }).click();
-  await expect(owned.getByText('Analyste de recette — Publié', { exact: true })).toBeVisible();
+  await expect(owned.getByText(privateName, { exact: true })).toBeVisible();
+  await owned.getByRole('button', { name: labels['marketplace.publish'], exact: true }).click();
+  await expect(owned.getByText(publishedName, { exact: true })).toBeVisible();
   expect(draftCount).toBe(1);
 });
+}
