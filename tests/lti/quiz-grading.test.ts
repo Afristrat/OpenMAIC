@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { gradeLtiQuiz } from '@/lib/lti/quiz-grading';
+import { gradeLtiQuiz, LtiGradingYield } from '@/lib/lti/quiz-grading';
+import type { QuestionResult } from '@/lib/quiz/grading';
 
 const mocks = vi.hoisted(() => ({ call: vi.fn(), resolve: vi.fn() }));
 vi.mock('@/lib/ai/llm', () => ({ callLLM: mocks.call }));
@@ -66,5 +67,33 @@ describe('server-authoritative LTI quiz grading', () => {
   it('propagates provider failure instead of producing a grade', async () => {
     mocks.call.mockRejectedValue(new Error('unavailable'));
     await expect(gradeLtiQuiz(content, { text: 'answer' }, 'fr-FR')).rejects.toThrow('unavailable');
+  });
+  it('checkpoints three answers then resumes the remaining answer without regrading', async () => {
+    const quiz = { type: 'quiz', questions: Array.from({ length: 4 }, (_, index) => ({ ...short, id: `q${index}` })) };
+    const answers = { q0: 'a', q1: 'b', q2: 'c', q3: 'd' };
+    const saved: Record<string, QuestionResult> = {};
+    const save = vi.fn(async (result: QuestionResult) => { saved[result.questionId] = result; });
+    mocks.call.mockResolvedValue({ text: '{"score":3,"comment":"Correct."}' });
+    await expect(gradeLtiQuiz(quiz, answers, 'fr-FR', { results: saved, save })).rejects.toBeInstanceOf(LtiGradingYield);
+    expect(save).toHaveBeenCalledTimes(3);
+    expect(mocks.call).toHaveBeenCalledTimes(3);
+    expect(mocks.call.mock.calls[0][0].abortSignal).toBeInstanceOf(AbortSignal);
+    const grade = await gradeLtiQuiz(quiz, answers, 'fr-FR', { results: saved, save });
+    expect(grade.score).toBe(100);
+    expect(grade.results.map((result) => result.questionId)).toEqual(['q0', 'q1', 'q2', 'q3']);
+    expect(mocks.call).toHaveBeenCalledTimes(4);
+  });
+  it('does not continue or return a score after an unacknowledged checkpoint', async () => {
+    mocks.call.mockResolvedValue({ text: '{"score":3,"comment":"Correct."}' });
+    await expect(gradeLtiQuiz(content, { text: 'answer' }, 'fr-FR', {
+      results: {}, save: async () => { throw new Error('storage unavailable'); },
+    })).rejects.toThrow('storage unavailable');
+  });
+  it('rejects a checkpoint inconsistent with the immutable question before AI', async () => {
+    await expect(gradeLtiQuiz(content, { text: 'answer' }, 'fr-FR', {
+      results: { text: { questionId: 'text', earned: 4, correct: true, status: 'correct' } },
+      save: vi.fn(),
+    })).rejects.toThrow('Invalid LTI checkpoint');
+    expect(mocks.call).not.toHaveBeenCalled();
   });
 });

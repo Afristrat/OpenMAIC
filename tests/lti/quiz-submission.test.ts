@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { submitLtiQuiz } from '@/lib/lti/quiz-submission';
+import { LtiGradingYield } from '@/lib/lti/quiz-grading';
 
 const mocks = vi.hoisted(() => ({ rpc: vi.fn(), from: vi.fn(), resolve: vi.fn(), grade: vi.fn() }));
 vi.mock('@/lib/supabase/service', () => ({
@@ -9,7 +10,14 @@ vi.mock('@/lib/lti/context', async (original) => ({
   ...(await original<typeof import('@/lib/lti/context')>()),
   resolveLtiContext: mocks.resolve,
 }));
-vi.mock('@/lib/lti/quiz-grading', () => ({ gradeLtiQuiz: mocks.grade }));
+vi.mock('@/lib/lti/quiz-grading', async (original) => ({
+  ...(await original<typeof import('@/lib/lti/quiz-grading')>()), gradeLtiQuiz: mocks.grade,
+}));
+function checkpointsQuery() {
+  const query = { select: vi.fn(), eq: vi.fn(), single: vi.fn().mockResolvedValue({ data: { partial_results: {} }, error: null }) };
+  query.select.mockReturnValue(query); query.eq.mockReturnValue(query);
+  return query;
+}
 const id = '00000000-0034-4000-8000-000000000001';
 const body = {
   stageId: 'stage',
@@ -34,6 +42,7 @@ describe('durable LTI quiz submission', () => {
     vi.resetAllMocks();
     mocks.resolve.mockResolvedValue({ orgId: id, gradingEnabled: true });
     mocks.grade.mockResolvedValue(grade);
+    mocks.from.mockReturnValue(checkpointsQuery());
   });
   it('grades only the database snapshot and atomically completes the correction', async () => {
     mocks.rpc
@@ -44,7 +53,9 @@ describe('durable LTI quiz submission', () => {
       result: grade,
       outboxId: id,
     });
-    expect(mocks.grade).toHaveBeenCalledWith(claim.content, claim.answers, 'fr-FR');
+    expect(mocks.grade).toHaveBeenCalledWith(claim.content, claim.answers, 'fr-FR', {
+      results: {}, save: expect.any(Function),
+    });
     expect(mocks.rpc.mock.calls[1][0]).toBe('complete_lti_quiz_attempt');
     expect(mocks.rpc.mock.calls[1][1]).toMatchObject({ p_id: id, p_lease: id, p_result: grade });
   });
@@ -69,7 +80,7 @@ describe('durable LTI quiz submission', () => {
     const update = { update: vi.fn(), eq: vi.fn() };
     update.update.mockReturnValue(update);
     update.eq.mockReturnValueOnce(update).mockResolvedValueOnce({ error: null });
-    mocks.from.mockReturnValue(update);
+    mocks.from.mockReturnValueOnce(checkpointsQuery()).mockReturnValueOnce(update);
     await expect(submitLtiQuiz(id, 'a'.repeat(64), body)).rejects.toThrow(
       'LTI quiz correction unavailable',
     );
@@ -86,6 +97,17 @@ describe('durable LTI quiz submission', () => {
     await expect(submitLtiQuiz(id, 'a'.repeat(64), body)).rejects.toThrow(
       'LTI submission storage unavailable',
     );
-    expect(mocks.from).not.toHaveBeenCalled();
+    expect(mocks.from).toHaveBeenCalledTimes(1); // Read checkpoints, never release an uncertain completion.
+  });
+  it('yields without a final score and releases only its own lease for the next slice', async () => {
+    mocks.rpc.mockResolvedValue({ data: claim, error: null });
+    mocks.grade.mockRejectedValue(new LtiGradingYield());
+    const update = { update: vi.fn(), eq: vi.fn() };
+    update.update.mockReturnValue(update);
+    update.eq.mockReturnValueOnce(update).mockResolvedValueOnce({ error: null });
+    mocks.from.mockReturnValueOnce(checkpointsQuery()).mockReturnValueOnce(update);
+    expect(await submitLtiQuiz(id, 'a'.repeat(64), body)).toEqual({ status: 'busy' });
+    expect(mocks.rpc).toHaveBeenCalledTimes(1);
+    expect(update.eq.mock.calls).toEqual([['id', id], ['lease_id', id]]);
   });
 });

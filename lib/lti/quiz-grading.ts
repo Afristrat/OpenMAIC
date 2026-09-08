@@ -46,13 +46,31 @@ const answersSchema = z.record(
   z.union([z.string().max(20000), z.array(z.string().max(20000)).max(100)]),
 );
 
+export class LtiGradingYield extends Error {}
+const checkpointSchema = z.record(z.string(), z.object({
+  questionId: z.string(), earned: z.number().finite().nonnegative(),
+  correct: z.boolean(), status: z.enum(['correct', 'incorrect']),
+  aiComment: z.string().max(4000).optional(),
+}).strict());
+type GradingCheckpoints = {
+  results: unknown;
+  save: (result: QuestionResult) => Promise<void>;
+};
+
 /** Caller must authorize and load persisted content, and provide the usage-metering context. */
-export async function gradeLtiQuiz(content: unknown, submittedAnswers: unknown, language: string) {
+export async function gradeLtiQuiz(content: unknown, submittedAnswers: unknown, language: string, checkpoints?: GradingCheckpoints) {
   const quiz = quizSchema.safeParse(content);
   const submitted = answersSchema.safeParse(submittedAnswers);
   if (!quiz.success || !submitted.success) throw new Error('Invalid LTI quiz submission');
   const { questions } = quiz.data;
   const answers = submitted.data;
+  const saved = new Map(Object.entries(checkpointSchema.parse(checkpoints?.results ?? {})));
+  for (const [id, result] of saved) {
+    const question = questions.find((item) => item.id === id && item.type === 'short_answer');
+    if (!question || result.questionId !== id || result.earned > question.points ||
+      result.correct !== (result.earned >= question.points * 0.8) ||
+      result.status !== (result.correct ? 'correct' : 'incorrect')) throw new Error('Invalid LTI checkpoint');
+  }
   if (Object.keys(answers).some((id) => !questions.some((question) => question.id === id))) {
     throw new Error('Unknown LTI quiz question');
   }
@@ -76,11 +94,20 @@ export async function gradeLtiQuiz(content: unknown, submittedAnswers: unknown, 
   const results = new Map(
     gradeChoiceQuestions(questions, answers).map((result) => [result.questionId, result]),
   );
+  let modelCalls = 0;
   for (const question of questions.filter((item) => item.type === 'short_answer')) {
+    const previous = saved.get(question.id);
+    if (previous) {
+      results.set(question.id, previous);
+      continue;
+    }
     const answer = answers[question.id] as string | undefined; // Validated above before any model call.
     let earned = 0;
     let aiComment: string | undefined;
     if (answer?.trim()) {
+      // Three bounded calls per HTTP slice; completed answers are reused on the next 202 poll.
+      if (checkpoints && modelCalls >= 3) throw new LtiGradingYield();
+      modelCalls++;
       const { model, thinkingConfig } = await resolveModel({ stage: 'quiz-grade' });
       const prompts = buildQuizGradePrompts({
         question: question.question,
@@ -95,7 +122,7 @@ export async function gradeLtiQuiz(content: unknown, submittedAnswers: unknown, 
         language,
       });
       const result = await callLLM(
-        { model, system: prompts.system, prompt: prompts.user },
+        { model, system: prompts.system, prompt: prompts.user, abortSignal: AbortSignal.timeout(60000) },
         'quiz-grade',
         undefined,
         thinkingConfig,
@@ -114,13 +141,15 @@ export async function gradeLtiQuiz(content: unknown, submittedAnswers: unknown, 
       }
     }
     const correct = earned >= question.points * 0.8;
-    results.set(question.id, {
+    const correction: QuestionResult = {
       questionId: question.id,
       earned,
       correct,
       status: correct ? 'correct' : 'incorrect',
       ...(aiComment === undefined ? {} : { aiComment }),
-    });
+    };
+    if (checkpoints && answer?.trim()) await checkpoints.save(correction);
+    results.set(question.id, correction);
   }
   const ordered: QuestionResult[] = questions.map((question) => results.get(question.id)!);
   const total = questions.reduce((sum, question) => sum + question.points, 0);

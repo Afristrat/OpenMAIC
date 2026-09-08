@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
 import { LtiAccessDenied, resolveLtiContext } from './context';
-import { gradeLtiQuiz } from './quiz-grading';
+import { gradeLtiQuiz, LtiGradingYield } from './quiz-grading';
 
 export const ltiSubmissionSchema = z
   .object({
@@ -82,14 +82,26 @@ export async function submitLtiQuiz(
   if (claim.status !== 'claimed') return claim;
   let grade: z.infer<typeof gradeSchema>;
   try {
+    const saved = await service.from('lti_quiz_attempts').select('partial_results')
+      .eq('id', claim.id).eq('lease_id', claim.leaseId).single();
+    if (saved.error || !saved.data) throw new Error('LTI checkpoint unavailable');
     // A server-issued lease identifies actual model work. Completed replays never enter this block.
     const headers = new Headers({ 'idempotency-key': `lti-${claim.id}-${claim.leaseId}` });
     grade = gradeSchema.parse(
       await runWithUsageMeteringContext(headers, userId, context.orgId, () =>
-        gradeLtiQuiz(claim.content, claim.answers, body.language),
+        gradeLtiQuiz(claim.content, claim.answers, body.language, {
+          results: saved.data.partial_results,
+          save: async (result) => {
+            const checkpoint = await service.rpc('checkpoint_lti_quiz_answer', {
+              p_id: claim.id, p_lease: claim.leaseId, p_question_id: result.questionId, p_result: result,
+            });
+            checkRpc(checkpoint.error);
+            if (checkpoint.data !== true) throw new Error('LTI checkpoint not acknowledged');
+          },
+        }),
       ),
     );
-  } catch {
+  } catch (error) {
     // Retain the immutable answers/snapshot, but allow the learner to retry a failed correction.
     const released = await service
       .from('lti_quiz_attempts')
@@ -97,6 +109,7 @@ export async function submitLtiQuiz(
       .eq('id', claim.id)
       .eq('lease_id', claim.leaseId);
     if (released.error) throw new Error('LTI submission storage unavailable');
+    if (error instanceof LtiGradingYield) return { status: 'busy' as const };
     throw new Error('LTI quiz correction unavailable');
   }
   const completed = await service.rpc('complete_lti_quiz_attempt', {
