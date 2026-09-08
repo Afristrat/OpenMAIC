@@ -13,6 +13,7 @@ import { createLogger } from '@/lib/logger';
 import { getPlatformConfig, verifyLTIToken, consumeNonce } from '@/lib/lti';
 import { resolveLaunchBindings } from '@/lib/lti/bindings';
 import { establishLaunchSession } from '@/lib/lti/session';
+import { loginContextNonce } from '@/lib/lti/login-context';
 
 const log = createLogger('LTI-Launch');
 
@@ -78,7 +79,19 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Consume only the nonce returned by signature and claim verification.
+    // Bind the signed target to this browser's original login, before consuming or opening a session.
+    if (
+      !launchContext.targetLinkUri ||
+      launchContext.nonce !==
+        loginContextNonce(storedState, platform.clientId, launchContext.targetLinkUri)
+    ) {
+      return NextResponse.json(
+        { success: false, error: 'LTI login context mismatch' },
+        { status: 401 },
+      );
+    }
+
+    // The matching digest is not sufficient: it must also be an issued, unconsumed nonce.
     const nonceValid = await consumeNonce(launchContext.nonce, storedClientId);
     if (!nonceValid) {
       log.warn('Invalid or already consumed nonce');

@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createLogger } from '@/lib/logger';
 import { getPlatformConfig, getPlatformConfigByIssuer, storeNonce } from '@/lib/lti';
+import { loginContextNonce } from '@/lib/lti/login-context';
 
 const log = createLogger('LTI-Login');
 
@@ -79,8 +80,8 @@ async function handleLoginInitiation(req: NextRequest): Promise<NextResponse> {
     }
 
     // Generate nonce and state
-    const nonce = crypto.randomUUID();
     const state = crypto.randomUUID();
+    const nonce = loginContextNonce(state, platform.clientId, targetLinkUri);
 
     // Store the nonce for later verification
     await storeNonce(nonce, platform.clientId);

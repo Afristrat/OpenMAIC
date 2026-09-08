@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { GET, POST } from '@/app/api/lti/login/route';
 import { getPlatformConfig, getPlatformConfigByIssuer, storeNonce } from '@/lib/lti';
+import { loginContextNonce } from '@/lib/lti/login-context';
 
 vi.mock('@/lib/lti', () => ({
   getPlatformConfig: vi.fn(),
@@ -73,5 +74,8 @@ describe('LTI login registration boundary', () => {
     expect(location.searchParams.get('redirect_uri')).toBe('https://qalem.ma/api/lti/launch');
     expect(location.searchParams.get('client_id')).toBe('client');
     expect(storeNonce).toHaveBeenCalledWith(location.searchParams.get('nonce'), 'client');
+    expect(location.searchParams.get('nonce')).toBe(
+      loginContextNonce(location.searchParams.get('state')!, 'client', defaults.target_link_uri),
+    );
   });
 });
