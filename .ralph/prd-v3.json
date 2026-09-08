@@ -4395,7 +4395,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « LTI Assignment and Grade Services (AGS) » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "to_implement",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "file": ".ralph/prd.json",
@@ -4404,8 +4404,8 @@
       },
       "sourceDependencies": ["S-033"],
       "dependencies": ["S0-011"],
-      "gap": "Gate de conservation réconcilié le 8 septembre : S0-011 consigne GARDER pour les 72 capacités, dont LTI AGS, sur le mandat utilisateur de livrer toutes les US. Implémentation autorisée, sans autoriser l’envoi de notes à un LMS non enregistré. Inspection : submitGrade sans appelant, cookie lti_context JSON non signé, lancement sans session Supabase ni rattachement tenant/classroom, resource_link_id vide dans l’audit et reprise non durable. Sécuriser le contexte vérifié, rattacher le score réel, persister l’envoi et prouver le trajet dans un LMS de test avant clôture.",
-      "evidence": ["lib/lti/grade-service.ts:77"],
+      "gap": "Code intégré au SHA 674e6cc : lancement signé lié au nonce/state/cible, Auth et bindings tenant, correction serveur avec checkpoints, outbox et worker AGS, administration FR/AR/EN. Gate global du 9 septembre : formatage, TypeScript, lint, 2920 tests et build de production suivi de 128 Playwright sans retry réussis. La production ne contient aucune plateforme LTI ni les nouvelles tables ; clés RSA absentes dans web/workers et origine applicative non conforme au flux qalem.ma. Restent quatre migrations après advisors, configuration persistante clés/origine, déploiement coordonné et recette réelle LMS (score, destinataire, retry, absence de doublon). Accord demandé pour un Moodle de test isolé ou désignation d’un LMS existant. Aucune clôture ni ouverture publique implicite.",
+      "evidence": ["docs/validation/S-034-lti-delivery.md"],
       "acceptance": [
         "lib/lti/grade-service.ts : client LTI AGS",
         "Score envoyé au LMS après chaque quiz",

@@ -1,5 +1,13 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-034, gate global vert et prérequis réels de déploiement
+
+Code applicatif 674e6cc : formatage, TypeScript, lint et 471 fichiers / 2920 tests unitaires verts, session 77654 exit 0 ; build de production puis 128/128 Chromium sans retry en 5,2 min, session 67801 exit 0. Conteneur de validation après le cycle : aucun OOM ni redémarrage, compteur max cumulatif 18292 (pas une garantie de capacité future).
+
+Production lue, non modifiée : zéro plateforme LTI, aucune nouvelle table LTI ; clés privées/publiques absentes dans le web et les workers, origine configurée/fallback non égale à qalem.ma. S-034 passe à to_validate, passes=false conservé, gap obsolète remplacé ; preuve docs/validation/S-034-lti-delivery.md. Accord demandé par question asynchrone pour un Moodle isolé/limité ou un LMS existant. Ne pas créer cette infrastructure ni inventer la recette réelle sans décision. Quatre migrations, configuration persistante et déploiement restent ouverts.
+
+Tous les processus de validation de ce lot sont terminés. Aucun diff applicatif de formatage distant après pull de 674e6cc. Reprendre par la décision LMS et les prérequis de déploiement ; les autres US avec executionAllowed=false ne sont pas autorisées par ce passage à to_validate.
+
 ## 9 septembre 2026 — S-034, correction par lots avec points de reprise persistés
 
 Migration 20260908231447_lti_quiz_checkpoints.sql créée via Supabase CLI : partial_results dans lti_quiz_attempts (JSON borné), RPC checkpoint_lti_quiz_answer SECURITY INVOKER/search_path vide, EXECUTE service_role seul, bail actif verrouillé, score/statut cohérents avec la question du snapshot, rejeu identique permis et changement refusé. RLS et réponses immuables conservées. Le moteur relit les checkpoints validés, corrige au maximum trois réponses textuelles par passage (signal d’abandon 60 s par appel IA), sauvegarde chacune avant de poursuivre, puis rend la main via LtiGradingYield. submitLtiQuiz libère son seul bail et répond busy/202 ; le polling existant reprend le même requestId. La note finale et l’outbox ne sont créées qu’après correction complète. Aucun second système de jobs ; Ponytail a conduit à réutiliser tentatives, baux et polling. Une interruption entre réponse IA et sauvegarde peut encore nécessiter le recalcul de cette seule réponse, pas une garantie exactly-once du modèle.
