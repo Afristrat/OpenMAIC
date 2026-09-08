@@ -15,7 +15,7 @@ import Link from 'next/link';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useAgentRegistry } from '@/lib/orchestration/registry/store';
-import { createAgentFromTemplate } from '@/lib/orchestration/registry/types';
+import { importMarketplaceAgent } from '@/lib/marketplace/import-agent';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
@@ -23,6 +23,7 @@ import { toast } from 'sonner';
 import { ArrowLeft, Download, Star, User, Users } from 'lucide-react';
 
 interface AgentDetail {
+  configuration: unknown;
   id: string;
   name: string;
   role: string;
@@ -139,28 +140,12 @@ export default function AgentDetailPage() {
   const handleImport = useCallback(async () => {
     if (!agent) return;
     const importedId = `imported-${agent.id}-${Date.now()}`;
-    const newAgent = createAgentFromTemplate(
-      {
-        name: agent.name,
-        role: agent.role,
-        persona: agent.persona ?? '',
-        avatar: agent.avatar ?? '/avatars/teacher.png',
-        color: agent.color ?? '#6366f1',
-        allowedActions: [],
-        priority: 5,
-      },
-      importedId,
-    );
+    const newAgent = importMarketplaceAgent(agent.configuration, importedId);
+    if (!newAgent) {
+      toast.error(t('common.error'));
+      return;
+    }
     addAgent(newAgent);
-
-    // Increment usage (fire-and-forget)
-    fetch(`/api/marketplace/agents/${agent.id}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rating: undefined, _incrementUsage: true }),
-    }).catch(() => {
-      /* best effort */
-    });
 
     setImported(true);
     toast.success(t('marketplace.imported'));

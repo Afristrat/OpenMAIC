@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { TTS_PROVIDERS } from '@/lib/audio/constants';
+import type { TTSProviderId } from '@/lib/audio/types';
 import { SLIDE_ACTIONS, WHITEBOARD_ACTIONS } from '@/lib/orchestration/registry/types';
 
 const actions = new Set([...SLIDE_ACTIONS, ...WHITEBOARD_ACTIONS]);
@@ -55,7 +57,9 @@ export const marketplaceDraftSchema = z
         allowedActions: z.array(z.string().refine((value) => actions.has(value))).max(actions.size),
         voiceConfig: z
           .object({
-            providerId: z.string().min(1).max(100),
+            providerId: z.string().min(1).max(100)
+              .refine((id) => Object.hasOwn(TTS_PROVIDERS, id) || /^custom-tts-[a-zA-Z0-9_-]+$/.test(id))
+              .transform((id) => id as TTSProviderId),
             modelId: z.string().min(1).max(200).optional(),
             voiceId: z.string().min(1).max(300),
           })

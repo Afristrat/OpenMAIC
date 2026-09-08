@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useAgentRegistry } from '@/lib/orchestration/registry/store';
-import { createAgentFromTemplate } from '@/lib/orchestration/registry/types';
+import { importMarketplaceAgent } from '@/lib/marketplace/import-agent';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -151,28 +151,12 @@ export default function MarketplacePage() {
 
         const detail = json.agent;
         const importedId = `imported-${agent.id}-${Date.now()}`;
-        const newAgent = createAgentFromTemplate(
-          {
-            name: detail.name,
-            role: detail.role,
-            persona: detail.persona ?? '',
-            avatar: detail.avatar ?? '/avatars/teacher.png',
-            color: detail.color ?? '#6366f1',
-            allowedActions: [],
-            priority: 5,
-          },
-          importedId,
-        );
+        const newAgent = importMarketplaceAgent(detail.configuration, importedId);
+        if (!newAgent) {
+          toast.error(t('common.error'));
+          return;
+        }
         addAgent(newAgent);
-
-        // Increment usage count (fire-and-forget)
-        fetch(`/api/marketplace/agents/${agent.id}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ rating: undefined, _incrementUsage: true }),
-        }).catch(() => {
-          /* best effort */
-        });
 
         setImportedIds((prev) => new Set(prev).add(agent.id));
         toast.success(t('marketplace.imported'));

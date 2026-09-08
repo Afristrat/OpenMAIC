@@ -11,6 +11,7 @@ import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response
 import { validateBody } from '@/lib/api/validate';
 import { marketplaceReviewSchema } from '@/lib/api/schemas';
 import { getSystemAgent } from '@/lib/marketplace/system-agents';
+import { marketplaceDraftSchema } from '@/lib/marketplace/draft-schema';
 
 interface RouteParams {
   params: Promise<{ agentId: string }>;
@@ -26,7 +27,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams): Promi
   const { data: agent, error: agentErr } = await supabase
     .from('agent_configs')
     .select(
-      'id, name, role, description, avatar, color, tags, avg_rating, usage_count, owner_id, persona, created_at, is_published',
+      'id, name, role, description, avatar, color, tags, avg_rating, usage_count, owner_id, persona, created_at, is_published, priority, allowed_actions, voice_config, profile_extensions',
     )
     .eq('id', agentId)
     .single();
@@ -37,6 +38,21 @@ export async function GET(_request: NextRequest, { params }: RouteParams): Promi
 
   if (!agent.is_published) {
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 404, 'Agent not found');
+  }
+
+  const configuration = marketplaceDraftSchema.shape.agent.safeParse({
+    ...agent.profile_extensions,
+    name: agent.name,
+    role: agent.role,
+    persona: agent.persona,
+    avatar: agent.avatar ?? undefined,
+    color: agent.color,
+    priority: agent.priority,
+    allowedActions: agent.allowed_actions,
+    voiceConfig: agent.voice_config ?? undefined,
+  });
+  if (!configuration.success) {
+    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Invalid published agent profile');
   }
 
   // Fetch reviews
@@ -99,6 +115,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams): Promi
       avgRating: agent.avg_rating,
       usageCount: agent.usage_count,
       persona: agent.persona,
+      configuration: configuration.data,
       ownerNickname,
       createdAt: agent.created_at,
     },
