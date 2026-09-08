@@ -98,7 +98,10 @@ export function LTITab(): React.ReactElement {
       });
       if (!response.ok) throw new Error('Platform not saved');
       const platform = (await response.json()) as LTIPlatform;
-      if (typeof platform.id !== 'string' || platform.orgId?.toLowerCase() !== formData.orgId?.toLowerCase())
+      if (
+        typeof platform.id !== 'string' ||
+        platform.orgId?.toLowerCase() !== formData.orgId?.toLowerCase()
+      )
         throw new Error('Invalid saved platform');
       setPlatforms((previous) => [...previous, platform]);
       setFormData(EMPTY_PLATFORM);
