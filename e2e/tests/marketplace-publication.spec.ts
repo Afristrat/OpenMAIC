@@ -40,7 +40,16 @@ test('publishes a private snapshot explicitly and withdraws it after reload', as
     route.fulfill({
       json: {
         success: true,
-        agents: saved ? [{ id: 'server-snapshot', orgId: '00000000-0000-4000-8000-000000000002', name: configuration.name, published }] : [],
+        agents: saved
+          ? [
+              {
+                id: 'server-snapshot',
+                orgId: '00000000-0000-4000-8000-000000000002',
+                name: configuration.name,
+                published,
+              },
+            ]
+          : [],
         pagination: { totalPages: saved ? 1 : 0 },
       },
     }),

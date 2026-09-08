@@ -7,11 +7,21 @@ import { useI18n } from '@/lib/hooks/use-i18n';
 
 const responseSchema = z.object({
   success: z.literal(true),
-  agents: z.array(z.object({ id: z.string(), name: z.string(), orgId: z.string().nullable(), published: z.boolean() })),
+  agents: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      orgId: z.string().nullable(),
+      published: z.boolean(),
+    }),
+  ),
   pagination: z.object({ totalPages: z.number().int().nonnegative() }),
 });
 
-export function OwnedAgentPublications({ onChange, publishableOrgIds }: {
+export function OwnedAgentPublications({
+  onChange,
+  publishableOrgIds,
+}: {
   onChange: () => void;
   publishableOrgIds: string[];
 }) {
@@ -114,7 +124,8 @@ export function OwnedAgentPublications({ onChange, publishableOrgIds }: {
                     {agent.name} —{' '}
                     {t(agent.published ? 'marketplace.published' : 'marketplace.privateAgent')}
                   </span>
-                  {(agent.published || (agent.orgId !== null && publishableOrgIds.includes(agent.orgId))) && (
+                  {(agent.published ||
+                    (agent.orgId !== null && publishableOrgIds.includes(agent.orgId))) && (
                     <Button
                       variant="outline"
                       disabled={pending !== null}
