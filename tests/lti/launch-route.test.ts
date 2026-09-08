@@ -7,26 +7,37 @@ import { establishLaunchSession } from '@/lib/lti/session';
 import { loginContextNonce } from '@/lib/lti/login-context';
 
 vi.mock('@/lib/lti', () => ({
-  consumeNonce: vi.fn(), getPlatformConfig: vi.fn(), verifyLTIToken: vi.fn(),
+  consumeNonce: vi.fn(),
+  getPlatformConfig: vi.fn(),
+  verifyLTIToken: vi.fn(),
 }));
 vi.mock('@/lib/lti/bindings', () => ({ resolveLaunchBindings: vi.fn() }));
 vi.mock('@/lib/lti/session', () => ({ establishLaunchSession: vi.fn() }));
 
 const platform = {
-  id: 'registration', clientId: 'client', issuer: 'https://lms.example.org',
-  deploymentId: 'deployment', authUrl: 'https://lms.example.org/auth',
-  jwksUrl: 'https://lms.example.org/jwks', tokenUrl: 'https://lms.example.org/token',
+  id: 'registration',
+  clientId: 'client',
+  issuer: 'https://lms.example.org',
+  deploymentId: 'deployment',
+  authUrl: 'https://lms.example.org/auth',
+  jwksUrl: 'https://lms.example.org/jwks',
+  tokenUrl: 'https://lms.example.org/token',
 };
 const target = 'https://qalem.ma/api/lti/launch';
 const state = 'random-browser-state';
 const launch = {
-  userId: 'subject', resourceLinkId: 'resource', deploymentId: 'deployment',
-  roles: [], agsScopes: [], targetLinkUri: target,
+  userId: 'subject',
+  resourceLinkId: 'resource',
+  deploymentId: 'deployment',
+  roles: [],
+  agsScopes: [],
+  targetLinkUri: target,
   nonce: loginContextNonce(state, platform.clientId, target),
 };
 function request() {
   return new NextRequest('https://qalem.ma/api/lti/launch', {
-    method: 'POST', headers: { cookie: `lti_state=${state}; lti_client_id=client` },
+    method: 'POST',
+    headers: { cookie: `lti_state=${state}; lti_client_id=client` },
     body: new URLSearchParams({ state, id_token: 'signed.jwt.token' }),
   });
 }
@@ -39,8 +50,13 @@ describe('LTI launch login context', () => {
     vi.mocked(verifyLTIToken).mockResolvedValue(launch);
     vi.mocked(consumeNonce).mockResolvedValue(true);
     vi.mocked(resolveLaunchBindings).mockResolvedValue({
-      clientId: 'client', orgId: 'org', stageId: 'course', userId: 'user',
-      lmsSubject: 'subject', resourceBindingId: 'resource', userBindingId: 'binding',
+      clientId: 'client',
+      orgId: 'org',
+      stageId: 'course',
+      userId: 'user',
+      lmsSubject: 'subject',
+      resourceBindingId: 'resource',
+      userBindingId: 'binding',
     });
   });
   afterEach(() => vi.unstubAllEnvs());

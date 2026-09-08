@@ -1,5 +1,13 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-034, liaison de la connexion au lancement signé
+
+Le nonce émis est désormais SHA-256 du triplet sérialisé [state aléatoire, client enregistré, target_link_uri exact]. Le lancement vérifie ce triplet depuis le state du navigateur et les claims signés, avant consommation atomique du nonce existant, résolution des bindings et création de session. Le digest seul ne suffit jamais : le nonce doit avoir été effectivement enregistré et ne pas avoir été consommé. Pas de nouveau secret, cookie ou stockage. Comparaison sans normalisation de la cible conformément à LTI 1.3 §5.3.4 (https://www.imsglobal.org/spec/lti/v1p3/#target-link-uri).
+
+ServeurIA au SHA 9a96113 puis formatage transféré : TypeScript vert, ESLint zéro avertissement, 163/163 tests LTI dans 18 fichiers, session 83296 terminée exit 0 à 22:59:35 UTC le 8 septembre. Sept nouveaux tests de route couvrent substitution cible/state/client, absence de cible, URI équivalente mais différente, nonce non émis/rejoué et succès avec suppression des cookies initiaux ; JWT, persistance et Auth sont simulés dans ces tests de route. Ce n’est pas une recette LMS ni un déploiement. Aucun statut de clôture modifié.
+
+Prochain code : borner les corps login/launch et les paramètres ambigus, assainir les logs de connexion, puis aligner la validation précoce des URLs et terminer durée/concurrence de correction. Restent application durable des trois migrations, worker/web et vraie recette LMS. Deux diffs distants de formatage transférés : lib/lti/login-context.ts et tests/lti/launch-route.test.ts ; stasher ces seuls chemins avant prochain pull. Aucun processus de validation actif.
+
 ## 8 septembre 2026 — S-034, transport public HTTPS fixé et signatures RSA
 
 lib/lti/network.ts mutualise AGS et récupération JWKS : HTTPS sans credentials/fragment, exclusion LAN et plages spéciales IPv4/IPv6 (dont CGNAT, multicast, traduction/tunnels) indépendante de ALLOW_LOCAL_NETWORKS, résolution DNS unique/all et rejet si un seul résultat est interdit. Agent Undici déjà installé, lookup fixé aux adresses vérifiées, URL/hostname inchangés pour TLS/SNI et rejectUnauthorized=true explicite. Aucun proxy global ni modification des fournisseurs IA locaux. Redirections 3xx refusées avant suivi, délai total DNS/connexion/lecture de 15 s, octets décodés bornés et dispatcher détruit en finally. AGS borne à 32 Kio et classe les refus de politique comme définitifs ; JWKS borne à 256 Kio et jose.createLocalJWKSet vérifie les clés récupérées au lieu de laisser jose effectuer son propre fetch non protégé.
