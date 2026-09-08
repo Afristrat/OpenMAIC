@@ -35,9 +35,11 @@ class AGSRequestError extends Error {
 }
 
 async function request(endpoint: string, init: LtiRequest): Promise<Response> {
-  try { return await requestLtiEndpoint(endpoint, init, 32768); }
-  catch (error) {
-    if (error instanceof LtiNetworkPolicyError) throw new AGSRequestError('AGS endpoint rejected', false);
+  try {
+    return await requestLtiEndpoint(endpoint, init, 32768);
+  } catch (error) {
+    if (error instanceof LtiNetworkPolicyError)
+      throw new AGSRequestError('AGS endpoint rejected', false);
     throw error;
   }
 }
