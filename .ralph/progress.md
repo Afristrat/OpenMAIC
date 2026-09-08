@@ -1,5 +1,11 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 8 septembre 2026 — S-034, contexte classroom autorisé côté serveur
+
+Ajout de resolveLtiContext/loadLtiQuiz et GET /api/lti/context : cookie opaque haché, session non expirée, ressource liée au stage demandé, identité liée au compte Auth vérifié, tenant actif et adhésion relus avant accès aux questions. La lecture des questions reste serveur, limitée à la scène quiz du stage autorisé et au scope AGS score. L’API ne renvoie que active/gradingEnabled, avec private/no-store ; cookie absent = parcours ordinaire, cookie présent mais refusé = 403, panne = 503, jamais un repli silencieux vers une note locale. Documentation Supabase getUser/changelog consultée ; aucune modification de schéma ou production.
+
+Au SHA a73eeb5 puis formatage transféré, commande ServeurIA terminée exit 0 à 21:23:34 UTC : TypeScript, lint zéro avertissement, 84/84 tests LTI (15 nouveaux). Auth et base sont simulées ici : la requête réelle et le parcours navigateur restent à vérifier après préparation du contexte de recette. Aucun déploiement ni migration appliquée, aucune note LMS envoyée. Prochain code : persistance idempotente d’une tentative de correction (réponses/empreinte/résultats et lease), route POST authentifiée avec usage metering, puis raccordement QuizView. Le calcul serveur et loadLtiQuiz ne sont pas encore appelés par une remise réelle ; S-034 reste ouverte. Aucun processus actif ; quatre diffs distants de formatage context.ts/context-route et leurs tests transférés dans ce commit, à stasher exactement avant pull.
+
 ## 8 septembre 2026 — S-034, calcul serveur strict des notes
 
 Ajout de lib/lti/quiz-grading.ts : validation des questions persistées, points positifs, identifiants uniques, clés de QCM non vides et cohérentes ; validation intégrale des réponses avant appel au modèle. Réutilisation de gradeChoiceQuestions pour les choix, correction des réponses libres via le modèle serveur quiz-grade, score pondéré sur 100. Réponses absentes : zéro sans appel IA. Sortie modèle invalide, hors barème ou échec fournisseur : exception, jamais demi-note de secours. Tests ciblés sur ServeurIA au SHA c0995cc puis formatage transféré : TypeScript, ESLint zéro avertissement et 69/69 tests LTI (dont 14 nouveaux) réussis à 21:19:25 UTC, commande terminée exit 0. Modèle simulé dans ces tests, aucune note envoyée à un LMS.

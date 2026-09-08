@@ -4,7 +4,9 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { AGS_SCORE_SCOPE } from './grade-service';
 
 export class LtiAccessDenied extends Error {
-  constructor() { super('LTI launch access is unavailable'); }
+  constructor() {
+    super('LTI launch access is unavailable');
+  }
 }
 
 const inputSchema = z.object({
@@ -13,10 +15,14 @@ const inputSchema = z.object({
   stageId: z.string().min(1).max(4096),
 });
 const sessionSchema = z.object({
-  id: z.uuid(), org_id: z.uuid(), client_id: z.string().min(1),
-  resource_binding_id: z.uuid(), user_binding_id: z.uuid(),
+  id: z.uuid(),
+  org_id: z.uuid(),
+  client_id: z.string().min(1),
+  resource_binding_id: z.uuid(),
+  user_binding_id: z.uuid(),
   expires_at: z.iso.datetime({ offset: true }),
-  line_item_url: z.string().nullable(), ags_scopes: z.array(z.string()),
+  line_item_url: z.string().nullable(),
+  ags_scopes: z.array(z.string()),
 });
 
 /** userId must come from verified Auth, never request JSON or the LTI cookie. */
@@ -25,28 +31,57 @@ export async function resolveLtiContext(input: z.infer<typeof inputSchema>) {
   if (!parsed.success) throw new LtiAccessDenied();
   const { token, userId, stageId } = parsed.data;
   const service = createServiceSupabaseClient();
-  const lookup = await service.from('lti_launch_sessions')
-    .select('id, org_id, client_id, resource_binding_id, user_binding_id, expires_at, line_item_url, ags_scopes')
-    .eq('token_hash', createHash('sha256').update(token).digest('hex')).maybeSingle();
+  const lookup = await service
+    .from('lti_launch_sessions')
+    .select(
+      'id, org_id, client_id, resource_binding_id, user_binding_id, expires_at, line_item_url, ags_scopes',
+    )
+    .eq('token_hash', createHash('sha256').update(token).digest('hex'))
+    .maybeSingle();
   if (lookup.error) throw new Error('LTI session lookup unavailable');
   const session = sessionSchema.safeParse(lookup.data);
-  if (!session.success || Date.parse(session.data.expires_at) <= Date.now()) throw new LtiAccessDenied();
+  if (!session.success || Date.parse(session.data.expires_at) <= Date.now())
+    throw new LtiAccessDenied();
   const data = session.data;
   const checks = await Promise.all([
-    service.from('lti_resource_bindings').select('id')
-      .eq('id', data.resource_binding_id).eq('client_id', data.client_id)
-      .eq('org_id', data.org_id).eq('stage_id', stageId).maybeSingle(),
-    service.from('lti_user_bindings').select('id')
-      .eq('id', data.user_binding_id).eq('client_id', data.client_id)
-      .eq('org_id', data.org_id).eq('user_id', userId).maybeSingle(),
-    service.from('organizations').select('id').eq('id', data.org_id).eq('status', 'active').maybeSingle(),
-    service.from('org_members').select('user_id').eq('org_id', data.org_id).eq('user_id', userId).maybeSingle(),
+    service
+      .from('lti_resource_bindings')
+      .select('id')
+      .eq('id', data.resource_binding_id)
+      .eq('client_id', data.client_id)
+      .eq('org_id', data.org_id)
+      .eq('stage_id', stageId)
+      .maybeSingle(),
+    service
+      .from('lti_user_bindings')
+      .select('id')
+      .eq('id', data.user_binding_id)
+      .eq('client_id', data.client_id)
+      .eq('org_id', data.org_id)
+      .eq('user_id', userId)
+      .maybeSingle(),
+    service
+      .from('organizations')
+      .select('id')
+      .eq('id', data.org_id)
+      .eq('status', 'active')
+      .maybeSingle(),
+    service
+      .from('org_members')
+      .select('user_id')
+      .eq('org_id', data.org_id)
+      .eq('user_id', userId)
+      .maybeSingle(),
   ]);
   if (checks.some((check) => check.error)) throw new Error('LTI access lookup unavailable');
   if (checks.some((check) => !check.data)) throw new LtiAccessDenied();
   return {
-    sessionId: data.id, orgId: data.org_id, stageId, userId,
-    resourceBindingId: data.resource_binding_id, userBindingId: data.user_binding_id,
+    sessionId: data.id,
+    orgId: data.org_id,
+    stageId,
+    userId,
+    resourceBindingId: data.resource_binding_id,
+    userBindingId: data.user_binding_id,
     gradingEnabled: Boolean(data.line_item_url) && data.ags_scopes.includes(AGS_SCORE_SCOPE),
   };
 }
@@ -56,8 +91,13 @@ export async function loadLtiQuiz(input: z.infer<typeof inputSchema>, sceneId: s
   if (!z.string().min(1).max(4096).safeParse(sceneId).success) throw new LtiAccessDenied();
   const context = await resolveLtiContext(input);
   if (!context.gradingEnabled) throw new LtiAccessDenied();
-  const { data, error } = await createServiceSupabaseClient().from('scenes')
-    .select('content').eq('id', sceneId).eq('stage_id', context.stageId).eq('type', 'quiz').maybeSingle();
+  const { data, error } = await createServiceSupabaseClient()
+    .from('scenes')
+    .select('content')
+    .eq('id', sceneId)
+    .eq('stage_id', context.stageId)
+    .eq('type', 'quiz')
+    .maybeSingle();
   if (error) throw new Error('LTI quiz lookup unavailable');
   if (!data) throw new LtiAccessDenied();
   return { context, content: data.content as unknown };

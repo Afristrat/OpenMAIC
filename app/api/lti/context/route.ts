@@ -14,12 +14,21 @@ export async function GET(req: NextRequest) {
   if (!token) return NextResponse.json({ success: true, active: false }, { headers });
   try {
     const context = await resolveLtiContext({
-      token, userId: auth.user.id, stageId: req.nextUrl.searchParams.get('stageId') ?? '',
+      token,
+      userId: auth.user.id,
+      stageId: req.nextUrl.searchParams.get('stageId') ?? '',
     });
-    return NextResponse.json({ success: true, active: true, gradingEnabled: context.gradingEnabled }, { headers });
+    return NextResponse.json(
+      { success: true, active: true, gradingEnabled: context.gradingEnabled },
+      { headers },
+    );
   } catch (error) {
-    return NextResponse.json({ success: false, error: 'LTI context unavailable' }, {
-      status: error instanceof LtiAccessDenied ? 403 : 503, headers,
-    });
+    return NextResponse.json(
+      { success: false, error: 'LTI context unavailable' },
+      {
+        status: error instanceof LtiAccessDenied ? 403 : 503,
+        headers,
+      },
+    );
   }
 }
