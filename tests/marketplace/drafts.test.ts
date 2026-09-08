@@ -31,7 +31,9 @@ beforeEach(() => vi.resetAllMocks());
 it('refuses tenant access before writing and rejects ownership injected by the browser', async () => {
   mocks.auth.mockResolvedValue({ response: new Response(null, { status: 403 }) });
   expect((await POST(request())).status).toBe(403);
-  expect(mocks.auth).toHaveBeenCalledWith(expect.any(NextRequest), payload.orgId, { requireMembership: true });
+  expect(mocks.auth).toHaveBeenCalledWith(expect.any(NextRequest), payload.orgId, {
+    requireMembership: true,
+  });
   expect(mocks.client).not.toHaveBeenCalled();
   expect((await POST(request({ ...payload, owner_id: 'foreign' }))).status).toBe(400);
 });
