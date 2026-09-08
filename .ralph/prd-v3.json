@@ -4670,8 +4670,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Configuration MCP dans admin » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd-ui.json",
         "id": "U-015",
@@ -4679,13 +4679,18 @@
       },
       "sourceDependencies": ["U-002"],
       "dependencies": ["S0-011", "S-018"],
-      "gap": "Gate levé le 7 septembre 2026 par conservation S0-011 et clôture S-018. UI raccordée à GET /api/admin/mcp, exemples et délais simulés supprimés. Validation ciblée ServeurIA : TypeScript, ESLint sans avertissement après ciblage explicite des E2E, 2 tests API et 4 Chromium FR/AR/EN dont RTL, refus 403 et réponse invalide. Aucun connecteur activé ni secret navigateur. Restent gate global au SHA final et publication/recette production ; référence docs/validation/U-015-admin-mcp.md.",
+      "gap": "Soldé le 8 septembre 2026 : UI réelle publiée, sans exemples ni tests simulés. Registre et rafraîchissement authentifiés HTTP 200, aucune connexion externe activée. Journaux depuis déploiement contrôlés rétrospectivement sur plus de 24 heures, zéro signal WARN/ERROR/FATAL/OOM, web healthy sans redémarrage. Référence : docs/validation/U-015-admin-mcp.md. Aucune garantie de tenue mémoire sous charge inférée.",
       "evidence": ["components/admin/mcp-tab.tsx:9"],
       "acceptance": [
         "Afficher la configuration effective autorisée et un résultat réel de connexion, jamais un délai simulé.",
         "Ne jamais exposer les secrets au navigateur ; tester refus aux rôles non autorisés."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-08 — Conservation S0-011 et client S-018 acquis. Code fonctionnel a6420b992d8a8f1871d358a524b003a5233c8fb0 : UI GET /api/admin/mcp, validation de réponse, accès refusé, vide et erreur distincts, aucune URL ni clé rendue. Tests API refusent avant toute sonde ; Chromium FR/AR/EN vérifie aussi RTL, refus 403 et réponse invalide.",
+        "2026-09-08 — Gate ServeurIA : format, TypeScript à 4 Gio, ESLint sans avertissement, 446 fichiers / 2714 Vitest et build réussis. Fixtures corrigées au SHA 1a51683deda94eeb6e200839a6c12b22db0bae9e : 116/116 Chromium sans retry, zéro WARN/ERROR ; journal /tmp/qalem-u015-browser-final.log, SHA-256 8c646a5ed48f47137b4e9819b0f654dc124d11116e59dbe9c28cc6c20f443550.",
+        "2026-09-08 — Déploiement kiutnirsb31t1itbm1bq5bah finished, image web 1a51683deda94eeb6e200839a6c12b22db0bae9e. Recette réelle scripts/proofs/s018-admin-mcp.mjs : authenticatedStatus=200, serverCount=0, adminUiVerified=true, refreshStatus=200, proofSessionRevoked=true, sessionFileCreated=false. Aucun compte ni droit ajouté.",
+        "2026-09-08 à 18:16:04 UTC — Web démarré le 7 septembre à 17:25:08 UTC, healthy, restart=0, OOMKilled=false, santé publique 200. Relecture des logs depuis la bascule : zéro WARN/ERROR/FATAL/heap out of memory. Couverture rétrospective supérieure à 24 heures, pas une série continue de sondes ni un test de charge."
+      ],
       "historicalEvidence": {
         "completedAt": "2026-03-29T23:58:12.356Z",
         "status": "legacy_claim_not_delivery_proof"

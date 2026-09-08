@@ -1,5 +1,9 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 8 septembre 2026 — U-015 clôturée en production
+
+Déploiement `kiutnirsb31t1itbm1bq5bah` confirmé finished sur `1a51683deda94eeb6e200839a6c12b22db0bae9e`. Recette Chromium réelle : registre authentifié 200, onglet vérifié, bouton de rafraîchissement 200, zéro connecteur activé ; session de preuve révoquée sans fichier. À 18:16:04 UTC, web healthy depuis le 7 septembre 17:25:08 UTC, restart=0, OOMKilled=false, santé publique 200. Logs depuis la bascule relus : zéro WARN/ERROR/FATAL/heap out of memory. C’est une vérification rétrospective de plus de 24 heures, pas une surveillance continue ni une preuve de tenue sous charge. U-015 est `completed/passes=true` avec preuves datées ; aucun déploiement, test ou suivi U-015 ne reste actif. Worker non redéployé. Les états « en cours » ci-dessous sont historiques.
+
 ## 7 septembre 2026 — U-015, interface MCP raccordée
 
 Le navigateur final `29403` est terminé, exit 0, 116/116 sans retry en 3,2 minutes ; journal `/tmp/qalem-u015-browser-final.log`, zéro WARN/ERROR et SHA-256 `8c646a5ed48f47137b4e9819b0f654dc124d11116e59dbe9c28cc6c20f443550`. La correction de la fixture replay a supprimé la lecture serveur parasite. Le déploiement web `kiutnirsb31t1itbm1bq5bah` est confirmé `in_progress` à 17:21:05 UTC sur `1a51683deda94eeb6e200839a6c12b22db0bae9e`. Le code applicatif est identique au SHA global `a6420b9` ; seuls docs/fixtures diffèrent. Reprendre ce déploiement existant, aucun autre à lancer. Rollback de référence : image web `555d8b9f92a1e347fc4c0df1d9152fb898dba0aa`, healthy/restart=0/OOM=false avant bascule. Après finished : recette `scripts/proofs/s018-admin-mcp.mjs` avec `verifyAdminUi=true` et suivi de santé quinze minutes. Worker non redéployé, aucun secret/connector modifié. U-015 reste ouverte jusqu’à ces preuves.

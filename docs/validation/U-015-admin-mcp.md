@@ -1,5 +1,13 @@
 # U-015 — Administration MCP
 
+## Clôture — 8 septembre 2026
+
+Le déploiement `kiutnirsb31t1itbm1bq5bah` est confirmé finished depuis le 7 septembre à 17:25:50 UTC. L’image servie est `1a51683deda94eeb6e200839a6c12b22db0bae9e`. Le harnais authentifié a obtenu `{authenticatedStatus:200, serverCount:0, adminUiVerified:true, refreshStatus:200, proofSessionRevoked:true, sessionFileCreated:false}` : ouverture réelle de l’onglet et clic sur le bouton, sans interception réseau. Le registre vide correspond à la configuration effective sans connecteurs activés.
+
+Au 8 septembre 18:16:04 UTC, le conteneur web `bcx5pxyuc9z3lt4jtyjipcqu-172102346494` est healthy, restart=0, OOMKilled=false, démarré le 7 septembre à 17:25:08 UTC. La santé publique répond 200. Les logs depuis cette mise en service ne contiennent aucune ligne WARN/ERROR/FATAL/heap out of memory. Cette couverture rétrospective de plus de 24 heures dépasse la fenêtre post-déploiement demandée, mais ne prétend pas être une série continue de sondes et ne démontre pas la tenue sous charge.
+
+U-015 est clôturée. Les sections suivantes conservent l’historique des contrôles et corrections ; leurs anciennes mentions d’attente ne sont plus actives. Aucun fournisseur documentaire activé, aucun worker redéployé, aucune clé modifiée.
+
 ## Résultat actualisé et publication — 7 septembre 2026
 
 Le gate fonctionnel `a6420b992d8a8f1871d358a524b003a5233c8fb0` passe format, TypeScript à 4 Gio, lint sans avertissement, 446 fichiers / 2 714 Vitest et build. Les défauts du harnais ont ensuite été corrigés sans changement applicatif : sondes de capacité explicites et lecture classroom du test replay interceptée. Le navigateur final au SHA `1a51683deda94eeb6e200839a6c12b22db0bae9e` passe 116/116 sans retry en 3,2 minutes, zéro WARN/ERROR. Journal `/tmp/qalem-u015-browser-final.log`, SHA-256 `8c646a5ed48f47137b4e9819b0f654dc124d11116e59dbe9c28cc6c20f443550`.

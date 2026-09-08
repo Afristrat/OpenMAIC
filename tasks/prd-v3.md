@@ -137,7 +137,7 @@ Les descriptions et critères exécutables complets sont dans le JSON canonique.
 | 62   | S-047  | P3       | Décision requise | Collecte des patterns de discussion multi-agent                                       |
 | 63   | S-048  | P3       | Décision requise | Director data-driven                                                                  |
 | 64   | U-011  | P3       | Décision requise | Publier un agent sur la marketplace                                                   |
-| 65   | U-015  | P3       | À valider       | Configuration MCP dans admin                                                          |
+| 65   | U-015  | P3       | Soldé           | Configuration MCP dans admin                                                          |
 | 66   | U-018  | P3       | Décision requise | Widget xAPI status                                                                    |
 | 67   | S5-004 | P1       | Soldée           | Plan auteur obligatoire et ingestion documentaire fiable [UI]                         |
 
