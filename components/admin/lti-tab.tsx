@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { KeyRound, Copy, Check, Plus, X, Info, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
+import { LtiBindings } from './lti-bindings';
 
 interface LTIPlatform {
   id: string;
@@ -356,6 +357,9 @@ export function LTITab(): React.ReactElement {
                 <p className="text-xs text-muted-foreground">
                   {t('admin.lti.orgId')}: {platform.orgId ?? t('admin.lti.unbound')}
                 </p>
+                <LtiBindings platformId={platform.id} orgId={platform.orgId} onAssigned={(orgId) =>
+                  setPlatforms((previous) => previous.map((entry) => entry.id === platform.id ? { ...entry, orgId } : entry))
+                } />
               </div>
             ))}
           </div>
