@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { submitLtiQuiz } from '@/lib/lti/quiz-submission';
 import { LtiGradingYield } from '@/lib/lti/quiz-grading';
+import type { QuestionResult } from '@/lib/quiz/grading';
 
 const mocks = vi.hoisted(() => ({ rpc: vi.fn(), from: vi.fn(), resolve: vi.fn(), grade: vi.fn() }));
 vi.mock('@/lib/supabase/service', () => ({
@@ -11,11 +12,17 @@ vi.mock('@/lib/lti/context', async (original) => ({
   resolveLtiContext: mocks.resolve,
 }));
 vi.mock('@/lib/lti/quiz-grading', async (original) => ({
-  ...(await original<typeof import('@/lib/lti/quiz-grading')>()), gradeLtiQuiz: mocks.grade,
+  ...(await original<typeof import('@/lib/lti/quiz-grading')>()),
+  gradeLtiQuiz: mocks.grade,
 }));
 function checkpointsQuery() {
-  const query = { select: vi.fn(), eq: vi.fn(), single: vi.fn().mockResolvedValue({ data: { partial_results: {} }, error: null }) };
-  query.select.mockReturnValue(query); query.eq.mockReturnValue(query);
+  const query = {
+    select: vi.fn(),
+    eq: vi.fn(),
+    single: vi.fn().mockResolvedValue({ data: { partial_results: {} }, error: null }),
+  };
+  query.select.mockReturnValue(query);
+  query.eq.mockReturnValue(query);
   return query;
 }
 const id = '00000000-0034-4000-8000-000000000001';
@@ -54,7 +61,8 @@ describe('durable LTI quiz submission', () => {
       outboxId: id,
     });
     expect(mocks.grade).toHaveBeenCalledWith(claim.content, claim.answers, 'fr-FR', {
-      results: {}, save: expect.any(Function),
+      results: {},
+      save: expect.any(Function),
     });
     expect(mocks.rpc.mock.calls[1][0]).toBe('complete_lti_quiz_attempt');
     expect(mocks.rpc.mock.calls[1][1]).toMatchObject({ p_id: id, p_lease: id, p_result: grade });
@@ -108,6 +116,25 @@ describe('durable LTI quiz submission', () => {
     mocks.from.mockReturnValueOnce(checkpointsQuery()).mockReturnValueOnce(update);
     expect(await submitLtiQuiz(id, 'a'.repeat(64), body)).toEqual({ status: 'busy' });
     expect(mocks.rpc).toHaveBeenCalledTimes(1);
-    expect(update.eq.mock.calls).toEqual([['id', id], ['lease_id', id]]);
+    expect(update.eq.mock.calls).toEqual([
+      ['id', id],
+      ['lease_id', id],
+    ]);
+  });
+  it('requires the checkpoint acknowledgement before completing the final grade', async () => {
+    const correction: QuestionResult = { questionId: 'q', earned: 0.8, correct: true, status: 'correct' };
+    mocks.grade.mockImplementation(async (_content: unknown, _answers: unknown, _language: string,
+      checkpoints: { save: (result: QuestionResult) => Promise<void> }) => {
+      await checkpoints.save(correction);
+      return grade;
+    });
+    mocks.rpc.mockResolvedValueOnce({ data: claim, error: null })
+      .mockResolvedValueOnce({ data: true, error: null })
+      .mockResolvedValueOnce({ data: id, error: null });
+    await submitLtiQuiz(id, 'a'.repeat(64), body);
+    expect(mocks.rpc.mock.calls.map(([name]) => name)).toEqual([
+      'begin_lti_quiz_attempt', 'checkpoint_lti_quiz_answer', 'complete_lti_quiz_attempt',
+    ]);
+    expect(mocks.rpc.mock.calls[1][1]).toEqual({ p_id: id, p_lease: id, p_question_id: 'q', p_result: correction });
   });
 });

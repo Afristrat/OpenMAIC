@@ -82,8 +82,12 @@ export async function submitLtiQuiz(
   if (claim.status !== 'claimed') return claim;
   let grade: z.infer<typeof gradeSchema>;
   try {
-    const saved = await service.from('lti_quiz_attempts').select('partial_results')
-      .eq('id', claim.id).eq('lease_id', claim.leaseId).single();
+    const saved = await service
+      .from('lti_quiz_attempts')
+      .select('partial_results')
+      .eq('id', claim.id)
+      .eq('lease_id', claim.leaseId)
+      .single();
     if (saved.error || !saved.data) throw new Error('LTI checkpoint unavailable');
     // A server-issued lease identifies actual model work. Completed replays never enter this block.
     const headers = new Headers({ 'idempotency-key': `lti-${claim.id}-${claim.leaseId}` });
@@ -93,7 +97,10 @@ export async function submitLtiQuiz(
           results: saved.data.partial_results,
           save: async (result) => {
             const checkpoint = await service.rpc('checkpoint_lti_quiz_answer', {
-              p_id: claim.id, p_lease: claim.leaseId, p_question_id: result.questionId, p_result: result,
+              p_id: claim.id,
+              p_lease: claim.leaseId,
+              p_question_id: result.questionId,
+              p_result: result,
             });
             checkRpc(checkpoint.error);
             if (checkpoint.data !== true) throw new Error('LTI checkpoint not acknowledged');

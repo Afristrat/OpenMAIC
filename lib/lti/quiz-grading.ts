@@ -47,18 +47,30 @@ const answersSchema = z.record(
 );
 
 export class LtiGradingYield extends Error {}
-const checkpointSchema = z.record(z.string(), z.object({
-  questionId: z.string(), earned: z.number().finite().nonnegative(),
-  correct: z.boolean(), status: z.enum(['correct', 'incorrect']),
-  aiComment: z.string().max(4000).optional(),
-}).strict());
+const checkpointSchema = z.record(
+  z.string(),
+  z
+    .object({
+      questionId: z.string(),
+      earned: z.number().finite().nonnegative(),
+      correct: z.boolean(),
+      status: z.enum(['correct', 'incorrect']),
+      aiComment: z.string().max(4000).optional(),
+    })
+    .strict(),
+);
 type GradingCheckpoints = {
   results: unknown;
   save: (result: QuestionResult) => Promise<void>;
 };
 
 /** Caller must authorize and load persisted content, and provide the usage-metering context. */
-export async function gradeLtiQuiz(content: unknown, submittedAnswers: unknown, language: string, checkpoints?: GradingCheckpoints) {
+export async function gradeLtiQuiz(
+  content: unknown,
+  submittedAnswers: unknown,
+  language: string,
+  checkpoints?: GradingCheckpoints,
+) {
   const quiz = quizSchema.safeParse(content);
   const submitted = answersSchema.safeParse(submittedAnswers);
   if (!quiz.success || !submitted.success) throw new Error('Invalid LTI quiz submission');
@@ -67,9 +79,14 @@ export async function gradeLtiQuiz(content: unknown, submittedAnswers: unknown, 
   const saved = new Map(Object.entries(checkpointSchema.parse(checkpoints?.results ?? {})));
   for (const [id, result] of saved) {
     const question = questions.find((item) => item.id === id && item.type === 'short_answer');
-    if (!question || result.questionId !== id || result.earned > question.points ||
-      result.correct !== (result.earned >= question.points * 0.8) ||
-      result.status !== (result.correct ? 'correct' : 'incorrect')) throw new Error('Invalid LTI checkpoint');
+    if (
+      !question ||
+      result.questionId !== id ||
+      result.earned > question.points ||
+      result.correct !== result.earned >= question.points * 0.8 ||
+      result.status !== (result.correct ? 'correct' : 'incorrect')
+    )
+      throw new Error('Invalid LTI checkpoint');
   }
   if (Object.keys(answers).some((id) => !questions.some((question) => question.id === id))) {
     throw new Error('Unknown LTI quiz question');
@@ -122,7 +139,12 @@ export async function gradeLtiQuiz(content: unknown, submittedAnswers: unknown, 
         language,
       });
       const result = await callLLM(
-        { model, system: prompts.system, prompt: prompts.user, abortSignal: AbortSignal.timeout(60000) },
+        {
+          model,
+          system: prompts.system,
+          prompt: prompts.user,
+          abortSignal: AbortSignal.timeout(60000),
+        },
         'quiz-grade',
         undefined,
         thinkingConfig,
