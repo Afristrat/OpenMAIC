@@ -176,10 +176,14 @@ try {
     try {
       const logout = await client.auth.signOut({ scope: 'local' });
       const refresh = await client.auth.refreshSession({ refresh_token: session.refresh_token });
-      console.error(JSON.stringify({
-        phase: 'session-cleanup', logoutStatus: logout.error?.status ?? 200,
-        refreshStatus: refresh.error?.status ?? 200, refreshHasSession: !!refresh.data.session,
-      }));
+      console.error(
+        JSON.stringify({
+          phase: 'session-cleanup',
+          logoutStatus: logout.error?.status ?? 200,
+          refreshStatus: refresh.error?.status ?? 200,
+          refreshHasSession: !!refresh.data.session,
+        }),
+      );
       if (logout.error || !refresh.error || refresh.data.session)
         cleanupErrors.push('session revocation');
     } catch {
