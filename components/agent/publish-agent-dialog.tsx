@@ -55,7 +55,8 @@ export function PublishAgentDialog({ agent, orgId, onPublished }: PublishAgentDi
         attempt.current = { fingerprint, requestId: crypto.randomUUID() };
       }
       const draftResponse = await fetch('/api/marketplace/agents/drafts', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orgId, requestId: attempt.current.requestId, agent: configuration }),
       });
       const draft = await draftResponse.json();
@@ -76,7 +77,12 @@ export function PublishAgentDialog({ agent, orgId, onPublished }: PublishAgentDi
 
       const json = await res.json();
 
-      if (res.ok && json.success === true && json.published === true && json.agentId === draft.agentId) {
+      if (
+        res.ok &&
+        json.success === true &&
+        json.published === true &&
+        json.agentId === draft.agentId
+      ) {
         toast.success(t('marketplace.published'));
         setOpen(false);
         setTagsInput('');
@@ -94,7 +100,12 @@ export function PublishAgentDialog({ agent, orgId, onPublished }: PublishAgentDi
   }, [agent, orgId, onPublished, tagsInput, description, t]);
 
   return (
-    <Dialog open={open} onOpenChange={(value) => { if (!isPublishing) setOpen(value); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(value) => {
+        if (!isPublishing) setOpen(value);
+      }}
+    >
       <DialogTrigger asChild>
         <Button size="sm" variant="outline" className="gap-1">
           <Upload className="h-3 w-3" />
