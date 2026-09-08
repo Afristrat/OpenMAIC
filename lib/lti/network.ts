@@ -50,10 +50,7 @@ export type LtiRequest = {
 };
 
 /** Shared by registration and each real request; never cache a registration-time DNS decision. */
-export async function resolveLtiEndpoint(
-  endpoint: string,
-  signal: AbortSignal,
-) {
+export async function resolveLtiEndpoint(endpoint: string, signal: AbortSignal) {
   signal.throwIfAborted();
   if (!URL.canParse(endpoint)) throw new LtiNetworkPolicyError();
   const url = new URL(endpoint);

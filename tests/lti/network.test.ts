@@ -44,15 +44,18 @@ describe('LTI pinned public HTTPS transport', () => {
     expect(mocks.fetch).not.toHaveBeenCalled();
     expect(mocks.options).toBeUndefined();
     mocks.lookup.mockResolvedValue([{ address: '100.64.0.1', family: 4 }]);
-    await expect(requestLtiEndpoint('https://lms.example/token', { method: 'POST' }, 100))
-      .rejects.toThrow('LTI endpoint');
+    await expect(
+      requestLtiEndpoint('https://lms.example/token', { method: 'POST' }, 100),
+    ).rejects.toThrow('LTI endpoint');
     expect(mocks.lookup).toHaveBeenCalledTimes(2);
     expect(mocks.fetch).not.toHaveBeenCalled();
   });
   it('does not start DNS when registration validation is already aborted', async () => {
     const controller = new AbortController();
     controller.abort(new Error('expired'));
-    await expect(resolveLtiEndpoint('https://lms.example', controller.signal)).rejects.toThrow('expired');
+    await expect(resolveLtiEndpoint('https://lms.example', controller.signal)).rejects.toThrow(
+      'expired',
+    );
     expect(mocks.lookup).not.toHaveBeenCalled();
   });
   it.each([
