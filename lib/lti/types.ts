@@ -21,6 +21,7 @@ export interface LTIPlatformConfig {
  */
 export interface LTILaunchContext {
   userId: string;
+  nonce: string;
   email?: string;
   name?: string;
   givenName?: string;
@@ -32,6 +33,7 @@ export interface LTILaunchContext {
   resourceLinkTitle?: string;
   returnUrl?: string;
   lineItemUrl?: string; // AGS lineitem for grade passback
+  agsScopes: string[];
   deploymentId: string;
   targetLinkUri?: string;
 }

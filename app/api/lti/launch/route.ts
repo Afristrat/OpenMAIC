@@ -79,22 +79,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Decode JWT to get the nonce claim for verification
-    const [, payloadB64] = tokenParts;
-    const tokenPayload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf-8')) as {
-      nonce?: string;
-    };
-
-    if (!tokenPayload.nonce) {
-      log.warn('Missing nonce in id_token');
-      return NextResponse.json(
-        { success: false, error: 'Missing nonce in token' },
-        { status: 401 },
-      );
-    }
-
-    // Verify and consume the nonce
-    const nonceValid = await consumeNonce(tokenPayload.nonce, storedClientId);
+    // Consume only the nonce returned by signature and claim verification.
+    const nonceValid = await consumeNonce(launchContext.nonce, storedClientId);
     if (!nonceValid) {
       log.warn('Invalid or already consumed nonce');
       return NextResponse.json(

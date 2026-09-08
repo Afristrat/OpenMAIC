@@ -7,7 +7,7 @@
 import * as jose from 'jose';
 import { createLogger } from '@/lib/logger';
 import type { LTIPlatformConfig, LTILaunchContext } from './types';
-import { LTI_CLAIMS } from './types';
+import { parseVerifiedLaunchClaims } from './launch-claims';
 
 const log = createLogger('LTI');
 
@@ -111,68 +111,11 @@ export async function verifyLTIToken(
   const { payload } = await jose.jwtVerify(idToken, jwks, {
     issuer: platform.issuer,
     audience: platform.clientId,
+    algorithms: ['RS256'],
+    requiredClaims: ['sub', 'iat', 'exp', 'nonce'],
   });
 
-  // Validate required LTI claims
-  const messageType = payload[LTI_CLAIMS.MESSAGE_TYPE] as string | undefined;
-  if (messageType !== 'LtiResourceLinkRequest') {
-    throw new Error(`Unsupported LTI message type: ${messageType ?? 'missing'}`);
-  }
-
-  const version = payload[LTI_CLAIMS.VERSION] as string | undefined;
-  if (version !== '1.3.0') {
-    throw new Error(`Unsupported LTI version: ${version ?? 'missing'}`);
-  }
-
-  const deploymentId = payload[LTI_CLAIMS.DEPLOYMENT_ID] as string | undefined;
-  if (!deploymentId) {
-    throw new Error('Missing deployment_id claim');
-  }
-
-  // Extract resource link
-  const resourceLink = payload[LTI_CLAIMS.RESOURCE_LINK] as
-    | { id?: string; title?: string }
-    | undefined;
-  if (!resourceLink?.id) {
-    throw new Error('Missing resource_link.id claim');
-  }
-
-  // Extract roles
-  const roles = (payload[LTI_CLAIMS.ROLES] as string[] | undefined) ?? [];
-
-  // Extract context (course)
-  const context = payload[LTI_CLAIMS.CONTEXT] as
-    | { id?: string; label?: string; title?: string }
-    | undefined;
-
-  // Extract launch presentation
-  const launchPresentation = payload[LTI_CLAIMS.LAUNCH_PRESENTATION] as
-    | { return_url?: string }
-    | undefined;
-
-  // Extract AGS endpoint (for grade passback)
-  const agsEndpoint = payload[LTI_CLAIMS.AGS] as
-    | { lineitem?: string; lineitems?: string; scope?: string[] }
-    | undefined;
-
-  const targetLinkUri = payload[LTI_CLAIMS.TARGET_LINK_URI] as string | undefined;
-
-  return {
-    userId: payload.sub ?? '',
-    email: payload.email as string | undefined,
-    name: payload.name as string | undefined,
-    givenName: payload.given_name as string | undefined,
-    familyName: payload.family_name as string | undefined,
-    roles,
-    courseId: context?.id,
-    courseName: context?.title ?? context?.label,
-    resourceLinkId: resourceLink.id,
-    resourceLinkTitle: resourceLink.title,
-    returnUrl: launchPresentation?.return_url,
-    lineItemUrl: agsEndpoint?.lineitem,
-    deploymentId,
-    targetLinkUri,
-  };
+  return parseVerifiedLaunchClaims(payload, platform);
 }
 
 // ---------------------------------------------------------------------------
@@ -237,7 +180,7 @@ export async function consumeNonce(nonce: string, clientId: string): Promise<boo
     .single();
 
   if (error || !data) {
-    log.warn(`LTI nonce invalid or already consumed: ${nonce}`);
+    log.warn('LTI nonce invalid or already consumed');
     return false;
   }
 
