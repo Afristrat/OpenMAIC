@@ -8,9 +8,9 @@ const mocks = vi.hoisted(() => ({
 vi.mock('node:dns', () => ({ promises: { lookup: mocks.lookup } }));
 vi.mock('undici', async (original) => {
   const actual = await original<typeof import('undici')>();
-  return { ...actual, fetch: mocks.fetch, Agent: class extends actual.Agent {
-    constructor(options: import('undici').Agent.Options) { super(options); mocks.options = options; }
-    async destroy() { mocks.destroyed(); return super.destroy(); }
+  return { ...actual, fetch: mocks.fetch, Agent: class {
+    constructor(options: import('undici').Agent.Options) { mocks.options = options; }
+    async destroy() { mocks.destroyed(); }
   } };
 });
 describe('LTI pinned public HTTPS transport', () => {
