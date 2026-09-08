@@ -1,5 +1,11 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 8 septembre 2026 — S-034, calcul serveur strict des notes
+
+Ajout de lib/lti/quiz-grading.ts : validation des questions persistées, points positifs, identifiants uniques, clés de QCM non vides et cohérentes ; validation intégrale des réponses avant appel au modèle. Réutilisation de gradeChoiceQuestions pour les choix, correction des réponses libres via le modèle serveur quiz-grade, score pondéré sur 100. Réponses absentes : zéro sans appel IA. Sortie modèle invalide, hors barème ou échec fournisseur : exception, jamais demi-note de secours. Tests ciblés sur ServeurIA au SHA c0995cc puis formatage transféré : TypeScript, ESLint zéro avertissement et 69/69 tests LTI (dont 14 nouveaux) réussis à 21:19:25 UTC, commande terminée exit 0. Modèle simulé dans ces tests, aucune note envoyée à un LMS.
+
+Ce calcul n’a pas encore de route appelante : il exige que le futur appelant autorise le contexte LTI, charge les questions en base et encadre la consommation avec runWithUsageMeteringContext. Prochain lot : remise authentifiée des réponses, idempotence persistée avant nouvelle correction IA, raccordement QuizView et erreurs réessayables. Le score ne doit jamais provenir du navigateur. Aucun déploiement ni migration appliquée ; S-034 reste ouverte. Les deux seuls diffs distants de formatage quiz-grading.ts/quiz-grading.test.ts sont transférés ici ; les stasher sur ces chemins avant le prochain pull. Aucun processus de validation actif.
+
 ## 8 septembre 2026 — S-034, indisponibilité de configuration distincte d’une absence
 
 Les deux lookups de plateforme utilisent maintenant readPlatform et le client service existant : maybeSingle retourne null uniquement sans ligne ; erreur de base, émetteur ambigu ou configuration d’accès absente remontent une exception. Le worker conserve donc son lease récupérable sur panne au lieu d’acquitter failed comme une plateforme inconnue. Requête restreinte aux sept champs nécessaires. Au SHA 2a4662b puis formatage transféré : TypeScript, lint zéro avertissement et 55/55 tests LTI verts sur ServeurIA à 21:10:13 UTC (56048 terminée exit 0). Ajout de trois cas plateforme et du cas worker sans envoi/acquittement en cas de lookup indisponible. Aucun déploiement ni processus actif.
