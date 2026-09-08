@@ -8,12 +8,21 @@ import { POST } from '@/app/api/marketplace/agents/drafts/route';
 const payload = {
   orgId: '00000000-0000-4000-8000-000000000002',
   requestId: '00000000-0000-4000-8000-000000000003',
-  agent: { name: 'Analyste', role: 'student', persona: 'Analyse les situations.',
-    color: '#112233', priority: 5, allowedActions: ['wb_open'], avatar: '/avatars/teacher-2.png' },
+  agent: {
+    name: 'Analyste',
+    role: 'student',
+    persona: 'Analyse les situations.',
+    color: '#112233',
+    priority: 5,
+    allowedActions: ['wb_open'],
+    avatar: '/avatars/teacher-2.png',
+  },
 };
 function request(body: unknown = payload) {
   return new NextRequest('https://qalem.ma/api/marketplace/agents/drafts', {
-    method: 'POST', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' },
+    method: 'POST',
+    body: JSON.stringify(body),
+    headers: { 'Content-Type': 'application/json' },
   });
 }
 beforeEach(() => vi.resetAllMocks());
@@ -28,8 +37,13 @@ it('refuses tenant access before writing and rejects ownership injected by the b
 it('persists a private snapshot idempotently with server-derived owner and tenant', async () => {
   mocks.auth.mockResolvedValue({ user: { id: 'owner' } });
   const insert = vi.fn().mockResolvedValue({ error: null });
-  const query = { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(),
-    maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'saved', is_published: false }, error: null }) };
+  const query = {
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    maybeSingle: vi
+      .fn()
+      .mockResolvedValue({ data: { id: 'saved', is_published: false }, error: null }),
+  };
   mocks.client.mockResolvedValue({ from: () => ({ upsert: insert, ...query }) });
   expect((await POST(request())).status).toBe(200);
   expect((await POST(request())).status).toBe(200);
