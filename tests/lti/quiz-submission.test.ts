@@ -122,19 +122,38 @@ describe('durable LTI quiz submission', () => {
     ]);
   });
   it('requires the checkpoint acknowledgement before completing the final grade', async () => {
-    const correction: QuestionResult = { questionId: 'q', earned: 0.8, correct: true, status: 'correct' };
-    mocks.grade.mockImplementation(async (_content: unknown, _answers: unknown, _language: string,
-      checkpoints: { save: (result: QuestionResult) => Promise<void> }) => {
-      await checkpoints.save(correction);
-      return grade;
-    });
-    mocks.rpc.mockResolvedValueOnce({ data: claim, error: null })
+    const correction: QuestionResult = {
+      questionId: 'q',
+      earned: 0.8,
+      correct: true,
+      status: 'correct',
+    };
+    mocks.grade.mockImplementation(
+      async (
+        _content: unknown,
+        _answers: unknown,
+        _language: string,
+        checkpoints: { save: (result: QuestionResult) => Promise<void> },
+      ) => {
+        await checkpoints.save(correction);
+        return grade;
+      },
+    );
+    mocks.rpc
+      .mockResolvedValueOnce({ data: claim, error: null })
       .mockResolvedValueOnce({ data: true, error: null })
       .mockResolvedValueOnce({ data: id, error: null });
     await submitLtiQuiz(id, 'a'.repeat(64), body);
     expect(mocks.rpc.mock.calls.map(([name]) => name)).toEqual([
-      'begin_lti_quiz_attempt', 'checkpoint_lti_quiz_answer', 'complete_lti_quiz_attempt',
+      'begin_lti_quiz_attempt',
+      'checkpoint_lti_quiz_answer',
+      'complete_lti_quiz_attempt',
     ]);
-    expect(mocks.rpc.mock.calls[1][1]).toEqual({ p_id: id, p_lease: id, p_question_id: 'q', p_result: correction });
+    expect(mocks.rpc.mock.calls[1][1]).toEqual({
+      p_id: id,
+      p_lease: id,
+      p_question_id: 'q',
+      p_result: correction,
+    });
   });
 });
