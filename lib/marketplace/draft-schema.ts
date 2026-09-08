@@ -57,8 +57,13 @@ export const marketplaceDraftSchema = z
         allowedActions: z.array(z.string().refine((value) => actions.has(value))).max(actions.size),
         voiceConfig: z
           .object({
-            providerId: z.string().min(1).max(100)
-              .refine((id) => Object.hasOwn(TTS_PROVIDERS, id) || /^custom-tts-[a-zA-Z0-9_-]+$/.test(id))
+            providerId: z
+              .string()
+              .min(1)
+              .max(100)
+              .refine(
+                (id) => Object.hasOwn(TTS_PROVIDERS, id) || /^custom-tts-[a-zA-Z0-9_-]+$/.test(id),
+              )
               .transform((id) => id as TTSProviderId),
             modelId: z.string().min(1).max(200).optional(),
             voiceId: z.string().min(1).max(300),

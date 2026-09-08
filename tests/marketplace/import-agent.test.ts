@@ -22,10 +22,22 @@ it('refuses malformed profiles, unknown voice providers and injected credentials
   const configuration = getSystemAgents()[0].configuration;
   expect(importMarketplaceAgent(undefined, 'copy')).toBeNull();
   expect(importMarketplaceAgent({ ...configuration, priority: 100 }, 'copy')).toBeNull();
-  expect(importMarketplaceAgent({
-    ...configuration, voiceConfig: { providerId: 'unknown', voiceId: 'voice' },
-  }, 'copy')).toBeNull();
-  expect(importMarketplaceAgent({
-    ...configuration, voiceConfig: { ...configuration.voiceConfig, apiKey: 'forbidden' },
-  }, 'copy')).toBeNull();
+  expect(
+    importMarketplaceAgent(
+      {
+        ...configuration,
+        voiceConfig: { providerId: 'unknown', voiceId: 'voice' },
+      },
+      'copy',
+    ),
+  ).toBeNull();
+  expect(
+    importMarketplaceAgent(
+      {
+        ...configuration,
+        voiceConfig: { ...configuration.voiceConfig, apiKey: 'forbidden' },
+      },
+      'copy',
+    ),
+  ).toBeNull();
 });
