@@ -77,6 +77,7 @@ describe('data optimizer without minimum observations', () => {
 });
 
 describe('authorized observation query', () => {
+  const orgId = '00000000-0036-4000-8000-000000000201';
   const chain: Record<string, ReturnType<typeof vi.fn>> = {};
   beforeEach(() => {
     vi.clearAllMocks();
@@ -87,14 +88,15 @@ describe('authorized observation query', () => {
     mocks.query.mockResolvedValue({ data: [observation(0.8)], error: null });
   });
   it('never queries without authorized stages', async () => {
-    expect(await getOptimizationSuggestion('SIPOC', 'adult', 'fr-FR', [])).toBeNull();
+    expect(await getOptimizationSuggestion('SIPOC', 'adult', 'fr-FR', [], orgId)).toBeNull();
     expect(mocks.client).not.toHaveBeenCalled();
   });
   it('scopes stages and context, bounds the query, and uses one result', async () => {
-    expect(await getOptimizationSuggestion(' SIPOC ', 'adult', 'fr-FR', ['stage:1'])).toMatchObject(
-      { sampleSize: 1 },
-    );
+    expect(
+      await getOptimizationSuggestion(' SIPOC ', 'adult', 'fr-FR', ['stage:1'], orgId),
+    ).toMatchObject({ sampleSize: 1 });
     expect(chain.in).toHaveBeenCalledWith('stage_id', ['stage:1']);
+    expect(chain.eq).toHaveBeenCalledWith('org_id', orgId);
     expect(chain.contains).toHaveBeenCalledWith('subject_tags', ['SIPOC']);
     expect(chain.eq).toHaveBeenCalledWith('level', 'adult');
     expect(chain.eq).toHaveBeenCalledWith('language', 'fr-FR');
@@ -103,12 +105,37 @@ describe('authorized observation query', () => {
   });
   it('falls back on database, transport and configuration errors', async () => {
     mocks.query.mockResolvedValueOnce({ data: null, error: { message: 'private detail' } });
-    expect(await getOptimizationSuggestion('SIPOC', 'adult', 'fr-FR', ['stage:1'])).toBeNull();
+    expect(
+      await getOptimizationSuggestion('SIPOC', 'adult', 'fr-FR', ['stage:1'], orgId),
+    ).toBeNull();
     mocks.query.mockRejectedValueOnce(new Error('network'));
-    expect(await getOptimizationSuggestion('SIPOC', 'adult', 'fr-FR', ['stage:1'])).toBeNull();
+    expect(
+      await getOptimizationSuggestion('SIPOC', 'adult', 'fr-FR', ['stage:1'], orgId),
+    ).toBeNull();
     mocks.client.mockImplementationOnce(() => {
       throw new Error('configuration');
     });
-    expect(await getOptimizationSuggestion('SIPOC', 'adult', 'fr-FR', ['stage:1'])).toBeNull();
+    expect(
+      await getOptimizationSuggestion('SIPOC', 'adult', 'fr-FR', ['stage:1'], orgId),
+    ).toBeNull();
+  });
+  it.each(['', 'invalid', undefined, null])(
+    'refuses an invalid tenant before service access: %s',
+    async (org) => {
+      expect(
+        await getOptimizationSuggestion('SIPOC', 'adult', 'fr-FR', ['stage:1'], org as string),
+      ).toBeNull();
+      expect(mocks.client).not.toHaveBeenCalled();
+    },
+  );
+  it('does not reuse observations across calls for the same stage in different tenants', async () => {
+    const otherOrg = '00000000-0036-4000-8000-000000000202';
+    await getOptimizationSuggestion('SIPOC', 'adult', 'fr-FR', ['stage:1'], orgId);
+    await getOptimizationSuggestion('SIPOC', 'adult', 'fr-FR', ['stage:1'], otherOrg);
+    expect(chain.eq.mock.calls.filter(([column]) => column === 'org_id')).toEqual([
+      ['org_id', orgId],
+      ['org_id', otherOrg],
+    ]);
+    expect(mocks.client).toHaveBeenCalledTimes(2);
   });
 });

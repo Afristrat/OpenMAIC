@@ -68,13 +68,16 @@ export function buildOptimizationSuggestion(rows: unknown): OptimizationSuggesti
   };
 }
 
-/** Server-side candidate; callers must supply authorized stages, never all tenants. */
+/** Server-side candidate; callers must authorize both the tenant and its stages. */
 export async function getOptimizationSuggestion(
   subject: string,
   level: string,
   language: string,
   authorizedStageIds: string[],
+  authorizedOrgId: string,
 ): Promise<OptimizationSuggestion | null> {
+  const org = z.string().uuid().safeParse(authorizedOrgId);
+  if (!org.success) return null;
   if (!subject.trim() || !level.trim() || !language.trim() || !authorizedStageIds.length)
     return null;
   const stages = z.array(z.string().trim().min(1).max(256)).max(1000).safeParse(authorizedStageIds);
@@ -83,6 +86,8 @@ export async function getOptimizationSuggestion(
     const { data, error } = await createServiceSupabaseClient()
       .from('pedagogy_telemetry')
       .select('scene_sequence, quiz_scores')
+      // Stage IDs alone are insufficient after a transfer or cross-tenant sharing.
+      .eq('org_id', org.data)
       .in('stage_id', [...new Set(stages.data)])
       .contains('subject_tags', [subject.trim()])
       .eq('level', level.trim())

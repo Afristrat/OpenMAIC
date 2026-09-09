@@ -1,5 +1,11 @@
 # S-036 — Collecte consentie : serveur et stockage
 
+## Complément : scope tenant de l’optimiseur
+
+Paramètre authorizedOrgId obligatoire, UUID validé avant client service, filtre org_id ET stage_id. Une formation transférée/partagée ne suffit plus à sélectionner les observations des autres organisations. Les lignes historiques sans org_id ne sont pas attribuées arbitrairement. Les règles de suggestion restent sans minimum d’observations.
+
+73846 exit 0 : 13 tests, TypeScript/lint global et format. scripts/validation/s036-optimizer-tenant.sql exécuté sous service_role et ROLLBACK après la candidate 20260909185224 : deux tenants, même stage, exclusion croisée et historique null. Zéro fixture et absence de la colonne candidate revérifiés. Aucun changement durable de DB ni déploiement. Seuls appelants trouvés : tests ; raccordement génération S-037 non livré. Cette preuve porte sur le filtre SQL et le helper, pas sur une optimisation réelle ni un contrôle d’autorisation des futurs appelants. Ponytail : filtre natif ; checklist Supabase appliquée.
+
 ## Complément : téléchargement depuis le profil
 
 Lien natif vers l’API d’export, sans identifiant client, sans prefetch ni Buffer/Blob de l’export côté application. Content-Disposition du serveur décide du téléchargement ; l’erreur reste consultable dans une nouvelle fenêtre et le profil demeure disponible. Textes FR/AR/EN indiquent explicitement que les médias et l’inventaire intégral du produit ne sont pas inclus.

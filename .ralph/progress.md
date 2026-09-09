@@ -1,5 +1,11 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-036, frontière tenant de l’optimiseur
+
+getOptimizationSuggestion exige désormais un UUID de tenant autorisé et filtre org_id en plus des stage_id autorisés. Sans tenant valide : aucun client privilégié ni requête. Aucun minimum de sessions ajouté ; fenêtre maximale de 1000 conservée. Recherche des appelants : seulement les tests, pas de raccordement métier actuel ; ne pas annoncer une optimisation active (S-037 reste à intégrer).
+
+73846 exit 0 : 13 tests, TypeScript/lint global et Prettier. SQL réel service_role sous BEGIN/ROLLBACK avec la migration candidate de collecte : deux tenants, même stage, trois observations dont une historique sans tenant ; sélection A/B exacte et exclusion de l’historique. Zéro organisation/observation de fixture et colonne candidate absente après rollback recontrôlés. Aucun nouveau schéma durable, activation, navigateur ou déploiement. Ponytail/Supabase : filtre natif sur le helper existant. Restent contexte serveur des mesures, autres consommateurs, Storage/sessions et critères S-036.
+
 ## 9 septembre 2026 — S-036, export depuis le profil
 
 Section FR/AR/EN raccordée au GET /api/account/export. Lien natif dans une nouvelle fenêtre, téléchargement décidé par Content-Disposition serveur ; aucune récupération Blob/JSON intégrale côté application et aucun succès affiché avant la fin. Description accessible précisant les sections couvertes et l’exclusion des médias/inventaire intégral. Aucun identifiant fourni par le client. Le profil reste ouvert en cas de réponse d’erreur.
