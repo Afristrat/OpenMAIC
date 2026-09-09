@@ -53,11 +53,21 @@ Deux fichiers serveur persistants, non versionnés : `secrets/db_password` et
 `secrets/admin_password`, dans le dossier `0700`. Le second n’est pas monté
 dans le serveur web permanent. L’identifiant administrateur est `qalem-lti-admin`.
 
-L’import de `QALEM_MOODLE_ADMIN_PASSWORD` dans le coffre DPAPI a échoué le
-9 septembre : le presse-papier de la session est inaccessible. La purge du
-presse-papier et de son historique n’a pas pu être certifiée non plus. Aucun
-secret n’a été affiché et aucun contournement du mécanisme d’écriture du coffre
-n’a été utilisé. Reprendre l’import officiel quand le presse-papier est disponible.
+L’import DPAPI est terminé le 9 septembre, après autorisation explicite d’Amine
+d’utiliser `add-secret.ps1 -Value` alimenté en mémoire. Le presse-papier,
+inaccessible lors du premier essai, n’a pas été utilisé pour cet import ; aucune
+valeur affichée, aucun remplacement ni rotation. Six entrées relues par le
+broker et comparées exactement aux fichiers serveur :
+
+- `QALEM_MOODLE_ADMIN_PASSWORD` et `QALEM_MOODLE_DB_PASSWORD` ;
+- `QALEM_MOODLE_LEARNER_A_PASSWORD` et `QALEM_MOODLE_LEARNER_B_PASSWORD` ;
+- `QALEM_LTI_PRIVATE_KEY_B64` et `QALEM_LTI_PUBLIC_KEY_B64`.
+
+Les deux PEM sont encodés en base64 pour rester sur une ligne dans le coffre
+chiffré. Décoder une seule fois en mémoire avant utilisation comme PEM ; le
+base64 n’est pas le chiffrement. La clé publique n’est pas confidentielle.
+Les variables Coolify runtime restent les PEM, avec `LTI_KEY_ID=qalem-lti-20260909`
+et `LTI_APP_URL=https://qalem.ma`. Aucun redéploiement n’est requis pour cet import.
 
 Les volumes assurent la persistance, pas une sauvegarde indépendante. Ne pas
 utiliser cette instance pour des données irremplaçables.

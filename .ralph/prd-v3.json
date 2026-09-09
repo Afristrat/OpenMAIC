@@ -4395,8 +4395,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « LTI Assignment and Grade Services (AGS) » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd.json",
         "id": "S-034",
@@ -4404,7 +4404,7 @@
       },
       "sourceDependencies": ["S-033"],
       "dependencies": ["S0-011"],
-      "gap": "Code et infrastructure déployés au SHA 8b995bd sur web et worker, clés RSA et origine effectives vérifiées. Gate du 9 septembre : formatage, TypeScript, lint, 2920 tests et build réussis ; premier E2E 126/128 (deux délais PWA), diagnostic ciblé 6/6 puis suite complète du même build 128/128 sans retry. Cause de l’intermittence PWA non établie. Moodle 4.5.13 isolé autorisé sur lms-test.qalem.ma, cinq migrations LTI appliquées durablement. Recette navigateur réelle : notes 25 et 100 au bon apprenant ; nouvelle note 0 pendant une panne volontaire du seul Moodle, échec de transport puis livraison automatique à la deuxième tentative. Audit indépendant : trois tentatives, trois livraisons, trois changements de note Moodle, aucun doublon après rechargement. Observation finale terminée : session 63893 exit 0, 31 relevés sains sur cinq conteneurs de 10:31:37 à 10:46:53 UTC, aucun OOM/redémarrage. Reste l’import officiel des nouveaux secrets dans le coffre DPAPI, empêché par le presse-papier inaccessible ; fichiers serveur protégés et variables Coolify persistantes conservés. Dérogation ciblée pour utiliser -Value en mémoire demandée à Amine, non encore reçue. Aucune ouverture publique de Qalem ni garantie universelle d’absence d’OOM.",
+      "gap": "Soldée le 9 septembre 2026 au SHA déployé 8b995bda7b732be8af95fba8953461e449301d5a : recette Moodle réelle, notes 0/25/100 au bon destinataire, panne et reprise automatique, audit Supabase, absence de doublon et observation saine de quinze minutes. Après le second feu vert explicite d’Amine, six entrées Moodle/LTI ajoutées au coffre par add-secret.ps1 -Value en mémoire, sans affichage, remplacement ni rotation ; relecture par broker et égalité exacte avec les sources serveur prouvées. La clé publique figure parmi les six entrées et n’est pas un secret. Gate du même SHA consigné dans la preuve ; aucun code applicatif modifié depuis. L’intermittence PWA initiale n’est pas déclarée résolue et aucune garantie d’absence future d’OOM n’est formulée.",
       "evidence": ["docs/validation/S-034-lti-delivery.md"],
       "acceptance": [
         "lib/lti/grade-service.ts : client LTI AGS",
@@ -4415,7 +4415,10 @@
         "Après confirmation du périmètre LTI, relier le score réel au contexte du lancement LMS.",
         "Vérifier en LMS de test score, destinataire, retry et absence de doublon ; aucune preuve par appel backend manuel seul."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-09 — SHA 8b995bda7b732be8af95fba8953461e449301d5a déployé sur web et worker : cinq migrations durables, clés RSA runtime identiques, Moodle 4.5.13 isolé autorisé. Navigateur réel : 25/100 pour A, 100/100 pour B ; rechargement sans nouvel identifiant de livraison. Troisième quiz A=0 pendant une panne volontaire du seul Moodle : échec réseau puis succès à la deuxième tentative, sans appel manuel au backend d’émission. SQL Qalem et Moodle : trois tentatives/livraisons/changements de note, un échec et trois succès d’audit, aucun doublon. Observation session 63893 exit 0 : 31 relevés sains sur cinq conteneurs, 10:31:37–10:46:53 UTC, aucun OOM/redémarrage. Gate du SHA : formatage, TypeScript, lint, 2920 Vitest et build réussis ; 128 Playwright sans retry après diagnostic des deux délais PWA initiaux, cause non établie. Référence : docs/validation/S-034-lti-delivery.md.",
+        "2026-09-09 — Feu vert ciblé d’Amine pour -Value : session 93305 exit 0, six ajouts via l’outil officiel, sauvegarde et revalidation loader. Processus frais via broker : six égalités exactes avec les fichiers serveur, sans impression des valeurs. Nouvelle lecture navigateur du carnet et SQL : A=0, B=100, trois livraisons sent (1/1/2 tentatives) et quatre événements d’audit. Conteneurs web/worker au SHA exact, sains sans OOM/redémarrage ; arbre du runner sans diff applicatif et dernier résultat Playwright passé, zéro test échoué. Aucun redéploiement ni rotation pour l’import."
+      ],
       "historicalEvidence": {
         "completedAt": "2026-03-29T11:34:06.346Z",
         "status": "legacy_claim_not_delivery_proof"

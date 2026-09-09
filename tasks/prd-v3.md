@@ -130,7 +130,7 @@ Les descriptions et critères exécutables complets sont dans le JSON canonique.
 | 55   | S-019  | P3       | Décision requise | Connecter NotebookLM via MCP                                                          |
 | 56   | S-020  | P3       | Décision requise | Connecter Notion via MCP                                                              |
 | 57   | S-021  | P3       | Décision requise | Connecter Google Drive via MCP                                                        |
-| 58   | S-034  | P3       | Décision requise | LTI Assignment and Grade Services (AGS)                                               |
+| 58   | S-034  | P3       | Soldée           | LTI Assignment and Grade Services (AGS)                                               |
 | 59   | S-035  | P3       | Décision requise | Télémétrie xAPI                                                                       |
 | 60   | S-036  | P3       | Décision requise | Pipeline de collecte de données pédagogiques                                          |
 | 61   | S-037  | P3       | Décision requise | Optimisation pipeline de génération par les données                                   |
