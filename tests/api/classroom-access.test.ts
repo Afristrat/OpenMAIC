@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   requireAuthor: vi.fn(),
   requireEditor: vi.fn(),
   requireMember: vi.fn(),
+  hasShareAccess: vi.fn(),
   download: vi.fn(),
   createGenerationJob: vi.fn(),
   enqueueGeneration: vi.fn(),
@@ -41,6 +42,9 @@ vi.mock('@/lib/api/auth', () => ({
   requireSuperAdminOrOrgEditor: mocks.requireEditor,
   requireSuperAdminOrOrgMember: mocks.requireMember,
 }));
+vi.mock('@/lib/server/classroom-share-access', () => ({
+  hasClassroomShareAccess: mocks.hasShareAccess,
+}));
 
 vi.mock('@/lib/supabase/service', () => ({
   createServiceSupabaseClient: () => ({
@@ -57,6 +61,7 @@ vi.mock('@/lib/jobs/queue', () => ({ enqueueClassroomGeneration: mocks.enqueueGe
 
 import { GET as getClassroom, POST as postClassroom } from '@/app/api/classroom/route';
 import { GET as getClassroomMedia } from '@/app/api/classroom-media/[classroomId]/[...path]/route';
+import { GET as getClassroomResource } from '@/app/r/[classroomId]/[resourceId]/[fileName]/route';
 import { POST as generateClassroom } from '@/app/api/generate-classroom/route';
 
 function forbidden() {
@@ -66,6 +71,7 @@ function forbidden() {
 describe('classroom tenant boundary', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.hasShareAccess.mockResolvedValue(false);
     mocks.requireAdmin.mockResolvedValue({
       user: { id: 'session-owner', email: 'admin@qalem.ma' },
     });
@@ -305,6 +311,27 @@ describe('classroom tenant boundary', () => {
     expect(body.classroom).not.toHaveProperty('orgId');
   });
 
+  it.each([true, false])(
+    'requires a verified share for an explicitly selected recipient tenant: %s',
+    async (allowed) => {
+      mocks.hasShareAccess.mockResolvedValue(allowed);
+      mocks.requireEditor.mockResolvedValue({ response: forbidden() });
+      mocks.requireAuthor.mockResolvedValue({ response: forbidden() });
+      mocks.readClassroom.mockResolvedValue({ stage: { id: 'shared_classroom' }, scenes: [] });
+      const response = await getClassroom(
+        new NextRequest('https://qalem.ma/api/classroom?id=shared_classroom&orgId=recipient-org'),
+      );
+      expect(response.status).toBe(allowed ? 200 : 403);
+      expect(mocks.hasShareAccess).toHaveBeenCalledWith('shared_classroom', 'recipient-org');
+      if (allowed) {
+        const body = await response.json();
+        expect(body.interactionOrganizationId).toBe('recipient-org');
+        expect(body.canEdit).toBe(false);
+        expect(body.canViewSources).toBe(false);
+      }
+    },
+  );
+
   it('exposes the editor to the classroom author after ownership verification', async () => {
     mocks.isClassroomPublic.mockResolvedValue(true);
     mocks.readClassroom.mockResolvedValue({
@@ -368,6 +395,7 @@ describe('classroom tenant boundary', () => {
 describe('classroom media tenant boundary', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.hasShareAccess.mockResolvedValue(false);
     mocks.readClassroomOwnership.mockResolvedValue({ ownerId: 'session-owner', orgId: ORG_ID });
     mocks.isClassroomPublic.mockResolvedValue(false);
     mocks.requireMember.mockResolvedValue({ response: forbidden() });
@@ -387,6 +415,29 @@ describe('classroom media tenant boundary', () => {
     expect(response.status).toBe(403);
     expect(mocks.download).not.toHaveBeenCalled();
   });
+
+  it.each([true, false])(
+    'checks recipient access before downloading a resource: %s',
+    async (allowed) => {
+      mocks.hasShareAccess.mockResolvedValue(allowed);
+      mocks.download.mockResolvedValue({ data: new Blob(['resource']), error: null });
+      const response = await getClassroomResource(
+        new NextRequest('https://qalem.ma/r/shared/resource/file.docx'),
+        {
+          params: Promise.resolve({
+            classroomId: 'shared',
+            resourceId: 'resource',
+            fileName: 'file.docx',
+          }),
+        },
+      );
+      expect(response.status).toBe(allowed ? 200 : 403);
+      if (allowed) {
+        expect(mocks.download).toHaveBeenCalledWith('shared/resources/resource.docx');
+        expect(response.headers.get('cache-control')).toBe('private, no-store');
+      } else expect(mocks.download).not.toHaveBeenCalled();
+    },
+  );
 
   it('streams published media without authentication from the scoped Storage path', async () => {
     mocks.isClassroomPublic.mockResolvedValue(true);
@@ -408,6 +459,20 @@ describe('classroom media tenant boundary', () => {
     expect(mocks.download).toHaveBeenCalledWith('published_classroom/audio/voice.wav');
   });
 
+  it('serves private media to a verified recipient without shared caching', async () => {
+    mocks.hasShareAccess.mockResolvedValue(true);
+    mocks.download.mockResolvedValue({ data: new Blob(['voice']), error: null });
+    const response = await getClassroomMedia(
+      new NextRequest('https://qalem.ma/api/classroom-media/shared/audio/voice.wav'),
+      {
+        params: Promise.resolve({ classroomId: 'shared', path: ['audio', 'voice.wav'] }),
+      },
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get('cache-control')).toBe('private, no-store');
+    expect(mocks.hasShareAccess).toHaveBeenCalledWith('shared');
+  });
+
   it('never serves replaceable narration audio as immutable', async () => {
     mocks.isClassroomPublic.mockResolvedValue(true);
     mocks.download.mockResolvedValue({ data: new Blob(['regenerated voice']), error: null });
@@ -423,7 +488,7 @@ describe('classroom media tenant boundary', () => {
     );
 
     expect(response.status).toBe(200);
-    expect(response.headers.get('cache-control')).toBe('no-store');
+    expect(response.headers.get('cache-control')).toBe('private, no-store');
   });
 });
 vi.mock('@/lib/server/course-generation-access', async (importOriginal) => ({

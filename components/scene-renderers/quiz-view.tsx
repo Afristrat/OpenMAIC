@@ -18,7 +18,7 @@ import { useI18n } from '@/lib/hooks/use-i18n';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { getCurrentModelConfig } from '@/lib/utils/model-config';
 import { createLogger } from '@/lib/logger';
-import { getCurrentOrganizationId } from '@/lib/hooks/use-organizations';
+import { useClassroomOrganizationId } from '@/lib/contexts/classroom-organization';
 
 const log = createLogger('QuizView');
 import type { QuizQuestion } from '@/lib/types/stage';
@@ -57,6 +57,7 @@ async function gradeShortAnswerQuestion(
   q: QuizQuestion,
   userAnswer: string,
   language: string,
+  orgId: string | null,
 ): Promise<QuestionResult> {
   const pts = q.points ?? 1;
   try {
@@ -73,7 +74,7 @@ async function gradeShortAnswerQuestion(
       method: 'POST',
       headers,
       body: JSON.stringify({
-        orgId: getCurrentOrganizationId(),
+        orgId,
         question: q.question,
         userAnswer,
         points: pts,
@@ -731,6 +732,7 @@ function QuizSession({
 }: QuizViewProps & { ltiScope: string | null }) {
   const { t, locale } = useI18n();
   const { user } = useAuth();
+  const orgId = useClassroomOrganizationId();
 
   // Rehydrate submitted state from localStorage on first mount. Runs once.
   const [savedLti] = useState(() => {
@@ -827,7 +829,7 @@ function QuizSession({
     if (phase !== 'grading') return;
     let cancelled = false;
     // Capture once before asynchronous grading; LTI provenance comes from its server launch.
-    const quizOrgId = ltiScope ? null : getCurrentOrganizationId();
+    const quizOrgId = ltiScope ? null : orgId;
     const controller = new AbortController();
 
     (async () => {
@@ -846,7 +848,7 @@ function QuizSession({
         const shortAnswerQs = questions.filter(isShortAnswer);
         const aiResults = await Promise.all(
           shortAnswerQs.map((q) =>
-            gradeShortAnswerQuestion(q, (answers[q.id] as string) ?? '', locale),
+            gradeShortAnswerQuestion(q, (answers[q.id] as string) ?? '', locale, quizOrgId),
           ),
         );
 
@@ -902,7 +904,7 @@ function QuizSession({
       cancelled = true;
       controller.abort();
     };
-  }, [phase, questions, answers, locale, sceneId, stageId, user, ltiScope]);
+  }, [phase, questions, answers, locale, sceneId, stageId, user, ltiScope, orgId]);
 
   const handleRetry = useCallback(() => {
     if (ltiScope) {

@@ -146,89 +146,92 @@ test('requires an invited account before a public classroom can start', async ({
   await expect.poll(() => chatRequests).toBe(0);
 });
 
-test('lets an authorized learner seek through scenes and shows the persisted female teacher', async ({
-  page,
-}) => {
-  test.setTimeout(60_000);
-  await page.addInitScript(
-    (settings) => {
-      localStorage.setItem('locale', 'en-US');
-      localStorage.setItem('settings-storage', settings);
-    },
-    createSettingsStorage({ sidebarCollapsed: false }),
-  );
+for (const recipient of [false, true]) {
+  test(`lets an authorized learner seek through scenes and shows the persisted female teacher (recipient=${recipient})`, async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+    await page.addInitScript(
+      (settings) => {
+        localStorage.setItem('locale', 'en-US');
+        localStorage.setItem('settings-storage', settings);
+      },
+      createSettingsStorage({ sidebarCollapsed: false }),
+    );
 
-  const scene = (id: string, title: string, order: number) => ({
-    id,
-    stageId: STAGE_ID,
-    type: 'slide',
-    title,
-    order,
-    content: {
+    const scene = (id: string, title: string, order: number) => ({
+      id,
+      stageId: STAGE_ID,
       type: 'slide',
-      canvas: { id: `${id}-canvas`, theme: defaultTheme, elements: [] },
-    },
-    actions: [],
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  });
+      title,
+      order,
+      content: {
+        type: 'slide',
+        canvas: { id: `${id}-canvas`, theme: defaultTheme, elements: [] },
+      },
+      actions: [],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
 
-  await page.route(`**/api/classroom?id=${STAGE_ID}`, (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        success: true,
-        canEdit: false,
-        canViewSources: false,
-        canInteract: true,
-        interactionOrganizationId: 'authorized-organization',
-        classroom: {
-          id: STAGE_ID,
-          generationComplete: true,
-          stage: {
+    const recipientQuery = recipient ? '&orgId=authorized-organization' : '';
+    await page.route(`**/api/classroom?id=${STAGE_ID}${recipientQuery}`, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          canEdit: false,
+          canViewSources: false,
+          canInteract: true,
+          interactionOrganizationId: 'authorized-organization',
+          classroom: {
             id: STAGE_ID,
-            name: 'Seekable course',
-            language: 'en-US',
-            style: 'professional',
-            teacherProfile: {
-              name: 'Hanae',
-              avatar: '/avatars/teacher-2.png',
-              providerId: 'higgs-tts',
-              voiceId: 'hanae',
-            },
-            generatedAgentConfigs: [
-              {
-                id: 'persona-professor',
+            generationComplete: true,
+            stage: {
+              id: STAGE_ID,
+              name: 'Seekable course',
+              language: 'en-US',
+              style: 'professional',
+              teacherProfile: {
                 name: 'Hanae',
-                role: 'teacher',
-                persona: 'Lead teacher',
                 avatar: '/avatars/teacher-2.png',
-                color: '#3b82f6',
-                priority: 10,
-                interactionWeight: 100,
-                gender: 'female',
-                voiceConfig: { providerId: 'higgs-tts', voiceId: 'hanae' },
+                providerId: 'higgs-tts',
+                voiceId: 'hanae',
               },
+              generatedAgentConfigs: [
+                {
+                  id: 'persona-professor',
+                  name: 'Hanae',
+                  role: 'teacher',
+                  persona: 'Lead teacher',
+                  avatar: '/avatars/teacher-2.png',
+                  color: '#3b82f6',
+                  priority: 10,
+                  interactionWeight: 100,
+                  gender: 'female',
+                  voiceConfig: { providerId: 'higgs-tts', voiceId: 'hanae' },
+                },
+              ],
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+            },
+            scenes: [
+              scene('first-scene', 'First lesson', 0),
+              scene('second-scene', 'Second lesson', 1),
             ],
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
           },
-          scenes: [
-            scene('first-scene', 'First lesson', 0),
-            scene('second-scene', 'Second lesson', 1),
-          ],
-        },
+        }),
       }),
-    }),
-  );
+    );
 
-  await page.goto(`/classroom/${STAGE_ID}`);
-  await page.getByText('Loading classroom...').waitFor({ state: 'hidden', timeout: 15_000 });
+    await page.goto(`/classroom/${STAGE_ID}${recipient ? '?orgId=authorized-organization' : ''}`);
+    await page.getByText('Loading classroom...').waitFor({ state: 'hidden', timeout: 15_000 });
 
-  const progress = page.getByRole('slider', { name: 'Course progress' });
-  await expect(progress).toBeVisible();
-  await progress.fill('1');
-  await expect(page.getByText('Second lesson', { exact: true }).first()).toBeVisible();
-  await expect(page.locator('img[src="/avatars/teacher-2.png"]').first()).toBeVisible();
-});
+    const progress = page.getByRole('slider', { name: 'Course progress' });
+    await expect(progress).toBeVisible();
+    await progress.fill('1');
+    await expect(page.getByText('Second lesson', { exact: true }).first()).toBeVisible();
+    await expect(page.locator('img[src="/avatars/teacher-2.png"]').first()).toBeVisible();
+  });
+}

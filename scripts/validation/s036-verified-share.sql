@@ -37,6 +37,14 @@ SELECT set_config('request.jwt.claim.sub','00000000-0036-4000-8000-000000000261'
 UPDATE public.shared_classrooms SET visibility='organization' WHERE id='00000000-0036-4000-8000-000000000266';
 SELECT set_config('request.jwt.claim.sub','00000000-0036-4000-8000-000000000262',true);
 DO $$ DECLARE affected integer; BEGIN
+  IF NOT EXISTS (SELECT 1 FROM public.shared_classrooms c
+    JOIN public.organizations o ON o.id=c.org_id
+    JOIN public.org_members m ON m.org_id=o.id
+    WHERE c.stage_id='s036-verified-share' AND c.org_id='00000000-0036-4000-8000-000000000265'
+      AND c.authorization_verified AND c.visibility IN ('organization','public')
+      AND o.status='active' AND m.user_id=auth.uid()) THEN
+    RAISE EXCEPTION 'HTTP recipient join denied';
+  END IF;
   IF NOT EXISTS(SELECT 1 FROM public.stages WHERE id='s036-verified-share')
     OR NOT EXISTS(SELECT 1 FROM public.scenes WHERE id='s036-verified-quiz') THEN RAISE EXCEPTION 'Recipient cannot read'; END IF;
   UPDATE public.scenes SET "order"=99 WHERE id='s036-verified-quiz';
@@ -45,6 +53,32 @@ DO $$ DECLARE affected integer; BEGIN
 END $$;
 INSERT INTO public.quiz_results(user_id,stage_id,scene_id,org_id,answers,score) VALUES
  ('00000000-0036-4000-8000-000000000262','s036-verified-share','s036-verified-quiz','00000000-0036-4000-8000-000000000265','[]',80);
+RESET ROLE;
+SET LOCAL ROLE service_role;
+INSERT INTO public.classroom_intervention_decisions(decision_id,classroom_id,org_id,learner_user_id,
+ interaction_id,scene_id,turn_index,agent_id,agent_name,trigger,form,reason) VALUES
+ ('s036-share-decision','s036-verified-share','00000000-0036-4000-8000-000000000265',
+ '00000000-0036-4000-8000-000000000262','s036-shared-question','s036-verified-quiz',1,
+ 'teacher','Teacher','learner-question','clarification','Clarify the learner question');
+DO $$ BEGIN
+  BEGIN
+    UPDATE public.classroom_intervention_decisions SET org_id='00000000-0036-4000-8000-000000000264'
+      WHERE decision_id='s036-share-decision';
+    RAISE EXCEPTION 'Decision reattributed';
+  EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+END $$;
+RESET ROLE;
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub','00000000-0036-4000-8000-000000000261',true);
+DO $$ BEGIN
+  IF EXISTS(SELECT 1 FROM public.classroom_intervention_decisions WHERE decision_id='s036-share-decision')
+    THEN RAISE EXCEPTION 'Source author reads recipient journal'; END IF;
+END $$;
+SELECT set_config('request.jwt.claim.sub','00000000-0036-4000-8000-000000000262',true);
+DO $$ BEGIN
+  IF NOT EXISTS(SELECT 1 FROM public.classroom_intervention_decisions WHERE decision_id='s036-share-decision')
+    THEN RAISE EXCEPTION 'Recipient admin cannot read journal'; END IF;
+END $$;
 SELECT set_config('request.jwt.claim.sub','00000000-0036-4000-8000-000000000263',true);
 DO $$ BEGIN
   IF EXISTS(SELECT 1 FROM public.stages WHERE id='s036-verified-share')

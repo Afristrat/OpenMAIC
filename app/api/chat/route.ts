@@ -32,6 +32,7 @@ import { latestExplicitLearnerMessage } from '@/lib/webhooks/classroom-interacti
 import { enqueueClassroomInteraction } from '@/lib/jobs/queue';
 import { getActionsForRole } from '@/lib/orchestration/registry/types';
 import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
+import { hasClassroomShareAccess } from '@/lib/server/classroom-share-access';
 const log = createLogger('Chat API');
 
 // Allow streaming responses up to 60 seconds
@@ -78,11 +79,15 @@ export async function POST(req: NextRequest) {
     }
     const assertedOrgId = body.orgId?.trim();
     const stageId = body.storeState.stage?.id?.trim();
-    const orgId =
-      assertedOrgId || (stageId ? (await readClassroomOwnership(stageId))?.orgId : undefined);
+    const ownership = stageId ? await readClassroomOwnership(stageId) : null;
+    const orgId = assertedOrgId || ownership?.orgId;
     if (!orgId) return apiError('MISSING_REQUIRED_FIELD', 400, 'Organization is required');
     const authentication = await requireSuperAdminOrOrgMember(req, orgId);
     if (authentication.response) return authentication.response;
+    const sharedParticipation = Boolean(ownership && ownership.orgId !== orgId);
+    if (sharedParticipation && !(await hasClassroomShareAccess(stageId!, orgId))) {
+      return apiError('INVALID_REQUEST', 403, 'Classroom sharing denied');
+    }
     liveOrgId = orgId;
 
     // The browser sends the stage back on every stateless turn, so prompt
@@ -98,7 +103,10 @@ export async function POST(req: NextRequest) {
         log.warn('Persisted live skill context is unavailable; using the core engine', error);
       }
       if (persisted) {
-        if (persisted.orgId !== orgId) {
+        if (
+          persisted.orgId !== orgId &&
+          !(sharedParticipation && persisted.orgId === ownership?.orgId)
+        ) {
           return apiError('INVALID_REQUEST', 403, 'Classroom organization mismatch');
         }
 
@@ -143,7 +151,7 @@ export async function POST(req: NextRequest) {
         if (learnerMessage) {
           await enqueueClassroomInteraction({
             event: 'classroom.interaction',
-            orgId: persisted.orgId,
+            orgId,
             interactionId: learnerMessage.id,
             payload: {
               classroomId: body.storeState.stage.id,

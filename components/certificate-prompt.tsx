@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { Award, Download, Linkedin, Link2, Check, X, Loader2 } from 'lucide-react';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useAuth } from '@/lib/hooks/use-auth';
-import { getCurrentOrganizationId } from '@/lib/hooks/use-organizations';
+import { useClassroomOrganizationId } from '@/lib/contexts/classroom-organization';
 import { cn } from '@/lib/utils';
 import type { Certificate } from '@/lib/certificates/types';
 
@@ -186,6 +186,7 @@ export function CertificatePrompt({
 }: CertificatePromptProps): React.ReactElement | null {
   const { t, locale } = useI18n();
   const { isGuest } = useAuth();
+  const orgId = useClassroomOrganizationId();
   const [loading, setLoading] = useState(false);
   const [certHtml, setCertHtml] = useState<string | null>(null);
   const [certData, setCertData] = useState<Certificate | null>(null);
@@ -220,7 +221,7 @@ export function CertificatePrompt({
       const res = await fetch('/api/certificates/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stageId, orgId: getCurrentOrganizationId() }),
+        body: JSON.stringify({ stageId, orgId }),
       });
 
       const json = await res.json();
@@ -254,7 +255,7 @@ export function CertificatePrompt({
     } finally {
       setLoading(false);
     }
-  }, [stageId, isGuest, locale]);
+  }, [stageId, isGuest, locale, orgId]);
 
   const handleView = useCallback(async () => {
     if (certHtml) {

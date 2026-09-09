@@ -5,7 +5,7 @@ import { ThemeProvider } from '@/lib/hooks/use-theme';
 import { useStageStore } from '@/lib/store';
 import { loadImageMapping } from '@/lib/utils/image-storage';
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useSceneGenerator } from '@/lib/hooks/use-scene-generator';
 import { useMediaGenerationStore } from '@/lib/store/media-generation';
@@ -40,6 +40,7 @@ export default function ClassroomDetailPage() {
   const { t } = useI18n();
   const params = useParams();
   const classroomId = params?.id as string;
+  const selectedOrgId = useSearchParams().get('orgId');
 
   const { loadFromStorage } = useStageStore();
 
@@ -55,6 +56,7 @@ export default function ClassroomDetailPage() {
   const generationStartedRef = useRef(false);
   const serverBackedRef = useRef(false);
   const persistenceRef = useRef<ClassroomPersistence | null>(null);
+  const loadAbortRef = useRef<AbortController | null>(null);
 
   const { generateRemaining, retrySingleOutline, stop } = useSceneGenerator({
     onComplete: () => {
@@ -63,8 +65,14 @@ export default function ClassroomDetailPage() {
   });
 
   const loadClassroom = useCallback(async () => {
+    loadAbortRef.current?.abort();
+    const controller = new AbortController();
+    loadAbortRef.current = controller;
+    setInteractionAccessResolved(false);
+    setCanViewSources(false);
     try {
       await loadFromStorage(classroomId);
+      if (controller.signal.aborted) return;
       // A valid local snapshot can hydrate immediately, but its interactive
       // controls remain hidden until the server resolves access. Otherwise a
       // stale mobile cache can start a discussion before tenant authorization.
@@ -83,9 +91,12 @@ export default function ClassroomDetailPage() {
       setCanEdit(false);
       setInteractionOrganizationId(undefined);
       try {
-        const res = await fetch(`/api/classroom?id=${encodeURIComponent(classroomId)}`);
+        const query = new URLSearchParams({ id: classroomId });
+        if (selectedOrgId) query.set('orgId', selectedOrgId);
+        const res = await fetch(`/api/classroom?${query}`, { signal: controller.signal });
         if (res.ok) {
           const json = await res.json();
+          if (controller.signal.aborted) return;
           if (json.success && json.classroom) {
             setCanEdit(Boolean(json.canEdit));
             setCanViewSources(Boolean(json.canViewSources));
@@ -152,10 +163,11 @@ export default function ClassroomDetailPage() {
           }
         }
       } catch (fetchErr) {
+        if (controller.signal.aborted) return;
         // Local classrooms remain usable offline. A server-backed classroom
         // always refreshes when reachable, which prevents stale media refs.
         log.warn('Authoritative classroom fetch failed:', fetchErr);
-        if (useStageStore.getState().stage) setCanEdit(true);
+        // A cached snapshot is not proof of current server editing rights.
       }
 
       // Restore completed media generation tasks from IndexedDB
@@ -211,10 +223,12 @@ export default function ClassroomDetailPage() {
       log.error('Failed to load classroom:', error);
       setError(error instanceof Error ? error.message : 'Failed to load classroom');
     } finally {
-      setInteractionAccessResolved(true);
-      setLoading(false);
+      if (!controller.signal.aborted) {
+        setInteractionAccessResolved(true);
+        setLoading(false);
+      }
     }
-  }, [classroomId, loadFromStorage]);
+  }, [classroomId, loadFromStorage, selectedOrgId]);
 
   useEffect(() => {
     if (E2E_TEST_MODE) return;
@@ -395,7 +409,7 @@ export default function ClassroomDetailPage() {
                   {t('classroom.access.signInDescription')}
                 </p>
                 <a
-                  href={`/auth?next=${encodeURIComponent(`/classroom/${classroomId}`)}`}
+                  href={`/auth?next=${encodeURIComponent(`/classroom/${classroomId}${selectedOrgId ? `?orgId=${encodeURIComponent(selectedOrgId)}` : ''}`)}`}
                   className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
                 >
                   {t('auth.login')}

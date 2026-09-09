@@ -249,7 +249,7 @@ export default function LibraryPage() {
   const copyPublicLink = async (classroom: SharedClassroom) => {
     try {
       await navigator.clipboard.writeText(
-        `${window.location.origin}/classroom/${encodeURIComponent(classroom.stage_id)}`,
+        `${window.location.origin}/classroom/${encodeURIComponent(classroom.stage_id)}?orgId=${encodeURIComponent(orgId)}`,
       );
       toast.success(t('org.linkCopied'));
     } catch {
@@ -332,6 +332,13 @@ export default function LibraryPage() {
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
+                <Button variant="outline" size="sm" asChild>
+                  <a
+                    href={`/classroom/${encodeURIComponent(classroom.stage_id)}?orgId=${encodeURIComponent(orgId)}`}
+                  >
+                    {t('toolbar.enterClassroom')}
+                  </a>
+                </Button>
                 {canShare && (
                   <Select
                     value={classroom.visibility}

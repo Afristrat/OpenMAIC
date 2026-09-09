@@ -23,6 +23,7 @@ import { createLogger } from '@/lib/logger';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import type { Scene, Stage } from '@/lib/types/stage';
 import { presentationBrandingFromOrganization } from '@/lib/branding/presentation-branding';
+import { hasClassroomShareAccess } from '@/lib/server/classroom-share-access';
 
 const log = createLogger('Classroom API');
 
@@ -196,7 +197,15 @@ export async function GET(request: NextRequest) {
     }
 
     const isPublic = await isClassroomPublic(id);
-    const interactionAuth = await requireSuperAdminOrOrgMember(request, ownership.orgId);
+    const interactionOrgId = request.nextUrl.searchParams.get('orgId') || ownership.orgId;
+    const interactionAuth = await requireSuperAdminOrOrgMember(request, interactionOrgId);
+    if (
+      interactionOrgId !== ownership.orgId &&
+      !interactionAuth.response &&
+      !(await hasClassroomShareAccess(id, interactionOrgId))
+    ) {
+      return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Classroom sharing denied');
+    }
     if (!isPublic && interactionAuth.response) return interactionAuth.response;
     const canInteract = !interactionAuth.response;
 
@@ -251,7 +260,7 @@ export async function GET(request: NextRequest) {
       canEdit,
       canViewSources,
       canInteract,
-      ...(canInteract ? { interactionOrganizationId: ownership.orgId } : {}),
+      ...(canInteract ? { interactionOrganizationId: interactionOrgId } : {}),
       classroom: {
         ...publicClassroom,
         scenes: learnerScenes,

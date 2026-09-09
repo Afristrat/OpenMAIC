@@ -7,6 +7,7 @@ import {
 } from '@/lib/server/classroom-storage';
 import { requireSuperAdminOrOrgMember } from '@/lib/api/auth';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
+import { hasClassroomShareAccess } from '@/lib/server/classroom-share-access';
 
 export async function GET(
   req: NextRequest,
@@ -41,7 +42,7 @@ export async function GET(
 
   if (!(await isClassroomPublic(classroomId))) {
     const auth = await requireSuperAdminOrOrgMember(req, ownership.orgId);
-    if (auth.response) return auth.response;
+    if (auth.response && !(await hasClassroomShareAccess(classroomId))) return auth.response;
   }
 
   const supabase = createServiceSupabaseClient();
@@ -60,7 +61,7 @@ export async function GET(
       'Content-Length': String(blob.size),
       // Narration is replaced in place after an author edits a speech line.
       // Caching that stable URL as immutable replays the previous recording.
-      'Cache-Control': subDir === 'audio' ? 'no-store' : 'public, max-age=86400, immutable',
+      'Cache-Control': 'private, no-store',
     },
   });
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireSuperAdminOrOrgMember } from '@/lib/api/auth';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
+import { hasClassroomShareAccess } from '@/lib/server/classroom-share-access';
 import {
   classroomMediaContentType,
   isClassroomPublic,
@@ -24,7 +25,7 @@ export async function GET(
   if (!ownership) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   if (!(await isClassroomPublic(classroomId))) {
     const auth = await requireSuperAdminOrOrgMember(req, ownership.orgId);
-    if (auth.response) return auth.response;
+    if (auth.response && !(await hasClassroomShareAccess(classroomId))) return auth.response;
   }
   const { data, error } = await createServiceSupabaseClient()
     .storage.from('classroom-media')
@@ -36,7 +37,7 @@ export async function GET(
       'Content-Type': classroomMediaContentType(downloadName),
       'Content-Length': String(data.size),
       'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(downloadName)}`,
-      'Cache-Control': 'private, max-age=3600',
+      'Cache-Control': 'private, no-store',
     },
   });
 }

@@ -15,6 +15,7 @@ import { MultiTabEditConflictPrompt } from '@/components/edit/MultiTabEditConfli
 import { InteractiveIframeHost } from '@/components/scene-renderers/InteractiveIframeHost';
 import { CHROME_EASE } from '@/lib/edit/transitions';
 import { preloadEditor } from '@/lib/edit/preload-editor';
+import { ClassroomOrganizationContext } from '@/lib/contexts/classroom-organization';
 
 /**
  * Stage — top-level classroom container. Dispatches between the two
@@ -126,52 +127,54 @@ export function Stage({
   // would repaint its backdrop-filter every frame while translating. A
   // pure fade keeps layout static so the shared elements land precisely.
   return (
-    <div className="relative flex flex-1 overflow-hidden">
-      <AnimatePresence initial={false}>
-        {mode === 'edit' && currentScene ? (
-          <motion.div
-            key="edit"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.28, ease: CHROME_EASE }}
-            className="absolute inset-0 flex"
-          >
-            <EditChromeRoot
-              scene={currentScene}
-              isEditable={isEditable}
-              canViewSources={canViewSources}
-              onToggleEditMode={toggleHandler}
-            />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="playback"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.28, ease: CHROME_EASE }}
-            className="absolute inset-0 flex"
-          >
-            <PlaybackChromeRoot
-              ref={playbackRef}
-              onRetryOutline={onRetryOutline}
-              canEnterProMode={isEditable}
-              canViewSources={canViewSources}
-              interactionOrganizationId={interactionOrganizationId}
-              onEnterProMode={toggleHandler}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <MultiTabEditConflictPrompt
-        open={editLock.conflictOpen}
-        onDismiss={editLock.dismissConflict}
-      />
-      {/* Keep-alive host for interactive scene iframes (#619). Lives here, above
+    <ClassroomOrganizationContext.Provider value={interactionOrganizationId}>
+      <div className="relative flex flex-1 overflow-hidden">
+        <AnimatePresence initial={false}>
+          {mode === 'edit' && currentScene ? (
+            <motion.div
+              key="edit"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.28, ease: CHROME_EASE }}
+              className="absolute inset-0 flex"
+            >
+              <EditChromeRoot
+                scene={currentScene}
+                isEditable={isEditable}
+                canViewSources={canViewSources}
+                onToggleEditMode={toggleHandler}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="playback"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.28, ease: CHROME_EASE }}
+              className="absolute inset-0 flex"
+            >
+              <PlaybackChromeRoot
+                ref={playbackRef}
+                onRetryOutline={onRetryOutline}
+                canEnterProMode={isEditable}
+                canViewSources={canViewSources}
+                interactionOrganizationId={interactionOrganizationId}
+                onEnterProMode={toggleHandler}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <MultiTabEditConflictPrompt
+          open={editLock.conflictOpen}
+          onDismiss={editLock.dismissConflict}
+        />
+        {/* Keep-alive host for interactive scene iframes (#619). Lives here, above
           the mode-swap subtree, so its iframes survive Pro mode toggles and
           scene switches instead of reloading on every remount. */}
-      <InteractiveIframeHost />
-    </div>
+        <InteractiveIframeHost />
+      </div>
+    </ClassroomOrganizationContext.Provider>
   );
 }
