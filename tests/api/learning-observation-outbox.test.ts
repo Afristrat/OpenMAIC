@@ -28,6 +28,20 @@ function observation() {
   return buffer.snapshot(['scene'], 1)!;
 }
 describe('persistent learning outbox', () => {
+  it('captures the tenant and refuses reattribution, including for legacy entries', () => {
+    const disk = storage();
+    const queue = new LearningObservationOutbox(owner, disk);
+    const buffer = new LearningObservationBuffer('stage', other, sessionId, () => 0, owner);
+    buffer.scene('scene', 'slide');
+    const sample = buffer.snapshot(['scene'], 1)!;
+    queue.put(sample);
+    expect(new LearningObservationOutbox(owner, disk).read()[0].orgId).toBe(owner);
+    expect(() => queue.put({ ...sample, orgId: other })).toThrow('immutable');
+    queue.clear();
+    queue.put(observation());
+    expect(queue.read()[0]).not.toHaveProperty('orgId');
+    expect(() => queue.put({ ...observation(), orgId: owner })).toThrow('immutable');
+  });
   it('survives a new instance, keeps retries immutable and isolates accounts', () => {
     const disk = storage();
     const queue = new LearningObservationOutbox(owner, disk);

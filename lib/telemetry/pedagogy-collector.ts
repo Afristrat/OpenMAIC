@@ -66,6 +66,7 @@ export async function collectPedagogyData(
       p_session: session.sessionId,
       p_stage: session.stageId,
       p_epoch: session.consentEpoch,
+      p_org: session.orgId ?? null,
       p_payload: {
         scene_sequence: session.sceneSequence,
         scene_durations: session.sceneDurations,

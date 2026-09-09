@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { useClassroomOrganizationId } from '@/lib/contexts/classroom-organization';
 import { useStageStore } from '@/lib/store/stage';
 import { LearningObservationBuffer } from '@/lib/telemetry/learning-observation-buffer';
 import { LearningObservationOutbox } from '@/lib/telemetry/learning-observation-outbox';
@@ -18,13 +19,21 @@ type Observer = {
 export function useLearningObservations(stageId: string | undefined) {
   const { user } = useAuth();
   const userId = user?.id;
+  const orgId = useClassroomOrganizationId();
   const observer = useRef<Observer | null>(null);
-  const [failedScope, setFailedScope] = useState<{ stageId: string; userId: string } | null>(null);
+  const [failedScope, setFailedScope] = useState<{
+    stageId: string;
+    userId: string;
+    orgId: string;
+  } | null>(null);
   const error =
-    failedScope !== null && failedScope.stageId === stageId && failedScope.userId === userId;
+    failedScope !== null &&
+    failedScope.stageId === stageId &&
+    failedScope.userId === userId &&
+    failedScope.orgId === orgId;
 
   useEffect(() => {
-    if (!stageId || !userId) return;
+    if (!stageId || !userId || !orgId) return;
     let buffer: LearningObservationBuffer | null = null;
     let activeEpoch: string | null = null;
     // Retain only a write that failed locally; accepted writes live in the durable outbox.
@@ -39,7 +48,7 @@ export function useLearningObservations(stageId: string | undefined) {
     const channel =
       typeof BroadcastChannel === 'undefined' ? null : new BroadcastChannel('qalem-consent');
     const showError = (value: boolean) => {
-      if (!disposed) setFailedScope(value ? { stageId, userId } : null);
+      if (!disposed) setFailedScope(value ? { stageId, userId, orgId } : null);
     };
     const consent = async (): Promise<string | null> => {
       const response = await fetch('/api/telemetry-consent', {
@@ -117,7 +126,13 @@ export function useLearningObservations(stageId: string | undefined) {
       const scene = state.scenes.find((item) => item.id === state.currentSceneId);
       if (scene) {
         if (!buffer && activeEpoch && !pending) {
-          buffer = new LearningObservationBuffer(stageId, activeEpoch, crypto.randomUUID());
+          buffer = new LearningObservationBuffer(
+            stageId,
+            activeEpoch,
+            crypto.randomUUID(),
+            undefined,
+            orgId,
+          );
           buffer.visibility(document.visibilityState === 'visible');
         }
         buffer?.scene(scene.id, scene.type);
@@ -216,7 +231,7 @@ export function useLearningObservations(stageId: string | undefined) {
       document.removeEventListener('visibilitychange', visibility);
       channel?.close();
     };
-  }, [stageId, userId]);
+  }, [stageId, userId, orgId]);
 
   return useMemo(
     () => ({

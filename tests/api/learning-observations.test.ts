@@ -56,6 +56,12 @@ describe('learning collection boundary', () => {
   it('rejects mismatched scene measures', async () => {
     expect((await POST(request({ ...sample, sceneDurations: [] }))).status).toBe(400);
   });
+  it('preserves explicit tenant scope and rejects malformed tenant identifiers', async () => {
+    const scoped = { ...sample, orgId: '00000000-0036-4000-8000-000000000002' };
+    expect((await POST(request(scoped))).status).toBe(200);
+    expect(mocks.collect).toHaveBeenCalledWith('verified-user', scoped);
+    expect((await POST(request({ ...sample, orgId: 'forged' }))).status).toBe(400);
+  });
   it('does not fabricate acknowledgement after an atomic refusal', async () => {
     mocks.collect.mockResolvedValue(false);
     expect(await (await POST(request(sample))).json()).toEqual({ recorded: false });

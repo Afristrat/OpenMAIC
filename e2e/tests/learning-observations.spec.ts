@@ -65,6 +65,8 @@ for (const scenario of [
         json: {
           success: true,
           canEdit: false,
+          canInteract: true,
+          interactionOrganizationId: '00000000-0000-4000-8000-000000000088',
           canViewSources: false,
           classroom: {
             id: stageId,
@@ -166,7 +168,7 @@ for (const scenario of [
       await expect(page.getByText('Quiz Report', { exact: true })).toBeVisible();
       expect(quizWrites).toHaveLength(1);
       expect(quizWrites[0]).toMatchObject({
-        org_id: '00000000-0000-4000-8000-000000000002',
+        org_id: '00000000-0000-4000-8000-000000000088',
         stage_id: stageId,
         scene_id: 'observed-quiz',
         score: 25,
@@ -180,6 +182,7 @@ for (const scenario of [
       expect(observations[0]).toMatchObject({
         stageId,
         consentEpoch: epoch,
+        orgId: '00000000-0000-4000-8000-000000000088',
         sceneSequence: withQuiz ? ['slide', 'quiz'] : ['slide'],
         completionRate: scenario === 'skipped' ? 0 : 1,
         quizScores: withQuiz ? [0.25] : [],

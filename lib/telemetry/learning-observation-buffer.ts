@@ -16,6 +16,7 @@ export class LearningObservationBuffer {
     readonly consentEpoch: string,
     readonly sessionId: string,
     private readonly now: () => number = () => performance.now(),
+    readonly orgId?: string,
   ) {
     this.lastTime = now();
   }
@@ -71,6 +72,7 @@ export class LearningObservationBuffer {
     return {
       sessionId: this.sessionId,
       consentEpoch: this.consentEpoch,
+      ...(this.orgId ? { orgId: this.orgId } : {}),
       stageId: this.stageId,
       sceneSequence: this.visits.map((visit) => visit.type),
       sceneDurations: durations,

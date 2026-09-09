@@ -5,6 +5,8 @@ export const learningSessionSchema = z
   .object({
     sessionId: z.string().uuid(),
     consentEpoch: z.string().uuid(),
+    // Older durable entries keep their original source-only scope; never relabel them.
+    orgId: z.string().uuid().optional(),
     stageId: z.string().regex(/^[a-zA-Z0-9_-]{1,128}$/),
     sceneSequence: z
       .array(z.enum(['slide', 'quiz', 'interactive', 'pbl', 'plugin']))
