@@ -1,5 +1,9 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-048, calcul du Director corrigé
+
+Candidat sans MIN_SAMPLE_SIZE : premier pattern valide et compatible utilisable, sélection du meilleur indépendante du tri initial, distinction des séquences d’interventions, score et nombre d’observations retournés. Requête limitée aux formations autorisées, client partagé, délai cinq secondes et fallback sans détail privé. Cohortes SHA-256 v1 stables, pas d’A/B activé. Session ServeurIA 67933 exit 0 : 18 tests ciblés optimiseur/Director, TypeScript et lint global verts. Requêtes de compatibilité Supabase des deux modules : HTTP 200, zéro ligne sur sentinelles, aucune donnée écrite. Preuve docs/validation/S-048-data-driven-director.md. Aucun appelant actuel : priorité au raccordement S-036/S-047 consentement, droits, suppression puis consommateurs réels. Pas de clôture, déploiement ni nouveau gate global pour ces modules isolés.
+
 ## 9 septembre 2026 — Feu vert des douze US, premier correctif S-037
 
 Amine autorise explicitement le reste et délègue les choix. Les douze executionAllowed=false deviennent true ; décisions dans docs/decisions/2026-09-09-unblock-prd.md. Consentement explicite retenu, connecteurs via Diwan, xAPI partagé avec l’outbox existante, aucun minimum de sessions et A/B stable. Rotations autorisées mais à exécuter séparément dans Qalem avec contrôle des consommateurs ; aucun secret changé dans ce lot. Ne plus redemander l’autorisation de coder S-037/S-048. Les checkpoints humains restent distincts de cette autorisation.

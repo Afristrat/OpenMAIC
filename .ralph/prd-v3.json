@@ -4199,7 +4199,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Bannière consentement télémétrie RGPD » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P2",
-      "status": "decision_required",
+      "status": "planned",
       "passes": false,
       "source": {
         "file": ".ralph/prd-ui.json",
@@ -4282,7 +4282,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Connecter NotebookLM via MCP » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "decision_required",
+      "status": "planned",
       "passes": false,
       "source": {
         "file": ".ralph/prd.json",
@@ -4323,7 +4323,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Connecter Notion via MCP » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "decision_required",
+      "status": "planned",
       "passes": false,
       "source": {
         "file": ".ralph/prd.json",
@@ -4364,7 +4364,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Connecter Google Drive via MCP » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "decision_required",
+      "status": "planned",
       "passes": false,
       "source": {
         "file": ".ralph/prd.json",
@@ -4448,7 +4448,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Télémétrie xAPI » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "decision_required",
+      "status": "planned",
       "passes": false,
       "source": {
         "file": ".ralph/prd.json",
@@ -4489,7 +4489,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Pipeline de collecte de données pédagogiques » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "decision_required",
+      "status": "planned",
       "passes": false,
       "source": {
         "file": ".ralph/prd.json",
@@ -4572,7 +4572,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Collecte des patterns de discussion multi-agent » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "decision_required",
+      "status": "planned",
       "passes": false,
       "source": {
         "file": ".ralph/prd.json",
@@ -4612,7 +4612,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Director data-driven » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "decision_required",
+      "status": "planned",
       "passes": false,
       "source": {
         "file": ".ralph/prd.json",
@@ -4621,7 +4621,7 @@
       },
       "sourceDependencies": ["S-047"],
       "dependencies": ["S0-011", "S-047"],
-      "gap": "Feu vert reçu le 9 septembre 2026 : supprimer MIN_SAMPLE_SIZE=50, utiliser le premier pattern exploitable et raccorder les données consenties de S-047. La limite de lecture de 1 000 lignes reste un plafond, pas un minimum. A/B 50/50 à cohortes stables retenu ; détailler les mesures et conditions d’arrêt avant activation. suggestNextAgent et shouldUseDataDriven restent sans appelant ; aucun gain mesuré à ce stade.",
+      "gap": "Candidat du 9 septembre : aucun minimum, patterns valides et compatibles dès une observation, score et volume exposés, sélection indépendante de l’ordre, query bornée aux formations autorisées, cohortes SHA-256 stables. Session 67933 exit 0 : 18 tests optimiseur/Director, TypeScript et lint global verts. Restent S-047, points d’appel du Director, protocole A/B détaillé et recette navigateur ; aucune activation ni gain mesuré.",
       "evidence": ["lib/orchestration/data-driven-director.ts"],
       "acceptance": [
         "lib/orchestration/data-driven-director.ts",
@@ -4747,7 +4747,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Widget xAPI status » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "decision_required",
+      "status": "planned",
       "passes": false,
       "source": {
         "file": ".ralph/prd-ui.json",
