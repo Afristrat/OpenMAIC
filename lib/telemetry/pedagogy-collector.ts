@@ -102,15 +102,22 @@ export async function collectPedagogyData(session: PedagogySession): Promise<voi
  * Check whether a user has given pedagogy telemetry consent.
  */
 export async function hasConsent(userId: string): Promise<boolean> {
+  return (await readConsent(userId)) === true;
+}
+
+/** null means no choice yet; storage errors must not masquerade as refusal. */
+export async function readConsent(userId: string): Promise<boolean | null> {
   const supabase = getServiceClient();
 
   const { data, error } = await supabase
     .from('telemetry_consent')
     .select('pedagogy_consent')
     .eq('user_id', userId)
-    .single();
+    .abortSignal(AbortSignal.timeout(5000))
+    .maybeSingle();
 
-  if (error || !data) return false;
+  if (error) throw new Error('Consent storage unavailable');
+  if (!data) return null;
   return data.pedagogy_consent === true;
 }
 
@@ -120,16 +127,19 @@ export async function hasConsent(userId: string): Promise<boolean> {
 export async function setConsent(userId: string, consent: boolean): Promise<void> {
   const supabase = getServiceClient();
 
-  const { error } = await supabase.from('telemetry_consent').upsert(
-    {
-      user_id: userId,
-      pedagogy_consent: consent,
-      consented_at: new Date().toISOString(),
-    },
-    { onConflict: 'user_id' },
-  );
+  const { error } = await supabase
+    .from('telemetry_consent')
+    .upsert(
+      {
+        user_id: userId,
+        pedagogy_consent: consent,
+        consented_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id' },
+    )
+    .abortSignal(AbortSignal.timeout(5000));
 
   if (error) {
-    console.error('[PedagogyCollector] Failed to set consent:', error.message);
+    throw new Error('Consent storage unavailable');
   }
 }

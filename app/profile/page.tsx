@@ -23,6 +23,7 @@ import {
 import { KeyRound, Trash2, Loader2, Mail, User, Save, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { RichProfileSection } from '@/components/profile/rich-profile-section';
+import { TelemetryConsentBanner } from '@/components/telemetry-consent-banner';
 
 export default function ProfilePage(): React.ReactElement {
   const { t } = useI18n();
@@ -256,6 +257,7 @@ export default function ProfilePage(): React.ReactElement {
         <RichProfileSection />
 
         {/* Actions */}
+        <TelemetryConsentBanner inline />
         <div className="flex flex-wrap gap-3 pt-4 border-t border-border">
           <Button variant="outline" onClick={() => setShowPasswordDialog(true)} className="gap-2">
             <KeyRound className="size-4" />

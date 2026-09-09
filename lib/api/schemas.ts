@@ -270,10 +270,11 @@ export const mcpCallSchema = z.object({
 // Telemetry Consent
 // ---------------------------------------------------------------------------
 
-export const telemetryConsentSchema = z.object({
-  userId: z.string().min(1, 'userId is required'),
-  consent: z.boolean(),
-});
+export const telemetryConsentSchema = z
+  .object({
+    consent: z.boolean(),
+  })
+  .strict();
 
 // ---------------------------------------------------------------------------
 // Invitations Consume

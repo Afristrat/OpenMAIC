@@ -1,5 +1,9 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — U-021, prérequis de collecte sécurisé
+
+API consentement : identité de session, refus des identifiants client, JSON/origine/taille contrôlés, erreurs de stockage visibles. Bannière montée dans l’application privée, retrait dans le profil, préférence par compte et persistée au serveur, traductions FR/AR/EN sans promesse d’anonymat. Session 71033 exit 0 : TypeScript/lint global et quatre parcours navigateur ciblés. Seize tests API/stockage verts ; preuve SQL réelle accord/refus sous ROLLBACK, RLS active. Voir docs/validation/U-021-consent-boundary.md. Collecteurs apprentissage/discussion encore sans appelants ; xAPI possède déjà son outbox distincte à réconcilier. Aucun déploiement, aucune collecte activée, passes=false conservé. Prochaine implémentation : S-036/S-047, contrôle de consentement atomique et suppression, puis consommateurs de S-037/S-048.
+
 ## 9 septembre 2026 — S-048, calcul du Director corrigé
 
 Candidat sans MIN_SAMPLE_SIZE : premier pattern valide et compatible utilisable, sélection du meilleur indépendante du tri initial, distinction des séquences d’interventions, score et nombre d’observations retournés. Requête limitée aux formations autorisées, client partagé, délai cinq secondes et fallback sans détail privé. Cohortes SHA-256 v1 stables, pas d’A/B activé. Session ServeurIA 67933 exit 0 : 18 tests ciblés optimiseur/Director, TypeScript et lint global verts. Requêtes de compatibilité Supabase des deux modules : HTTP 200, zéro ligne sur sentinelles, aucune donnée écrite. Preuve docs/validation/S-048-data-driven-director.md. Aucun appelant actuel : priorité au raccordement S-036/S-047 consentement, droits, suppression puis consommateurs réels. Pas de clôture, déploiement ni nouveau gate global pour ces modules isolés.

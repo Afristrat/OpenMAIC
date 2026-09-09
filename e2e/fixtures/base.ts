@@ -98,6 +98,9 @@ export const test = base.extend<Fixtures>({
       // Always mock server-providers — called on every page load by root layout
       await mockApi.mockServerProviders();
       await mockApi.mockSourceLibrary();
+      await page.route('**/api/telemetry-consent', (route) =>
+        route.fulfill({ json: { choice: false, hasConsent: false } }),
+      );
       await page.route('**/api/lti/context?*', (route) =>
         route.fulfill({
           status: 200,

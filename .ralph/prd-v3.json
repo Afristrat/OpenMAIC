@@ -4208,7 +4208,7 @@
       },
       "sourceDependencies": [],
       "dependencies": ["S0-011"],
-      "gap": "Bannière de consentement sans montage retrouvé ; ne pas activer une collecte pour justifier la bannière.",
+      "gap": "2026-09-09 : candidat API authentifiée et persistance sans faux succès, bannière privée et retrait dans le profil FR/AR/EN. Recettes ciblées dans docs/validation/U-021-consent-boundary.md. Restent raccordement atomique des collecteurs S-036/S-047, périmètre xAPI, gate global et recette publiée ; aucune collecte activée pour justifier la bannière.",
       "evidence": ["components/telemetry-consent-banner.tsx:10", "app/layout.tsx"],
       "acceptance": [
         "Inventorier les collectes réellement actives avant de décider de l’interface de consentement.",

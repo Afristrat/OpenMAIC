@@ -1,43 +1,75 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { hasConsent, setConsent } from '@/lib/telemetry/pedagogy-collector';
+import { readConsent, setConsent } from '@/lib/telemetry/pedagogy-collector';
+import { requireAuth } from '@/lib/api/auth';
 import { validateBody } from '@/lib/api/validate';
 import { telemetryConsentSchema } from '@/lib/api/schemas';
 
-/**
- * GET /api/telemetry-consent?userId=...
- * Check whether a user has given pedagogy telemetry consent.
- */
+const headers = { 'Cache-Control': 'private, no-store' };
+
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  const userId = request.nextUrl.searchParams.get('userId');
-  if (!userId) {
-    return NextResponse.json({ hasConsent: false });
+  const auth = await requireAuth(request);
+  if (auth.response) return auth.response;
+  const requestedUser = request.nextUrl.searchParams.get('userId');
+  if (requestedUser && requestedUser !== auth.user.id) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403, headers });
   }
 
   try {
-    const consented = await hasConsent(userId);
-    return NextResponse.json({ hasConsent: consented });
+    const choice = await readConsent(auth.user.id);
+    return NextResponse.json({ choice, hasConsent: choice === true }, { headers });
   } catch {
-    // If Supabase is not configured, treat as no consent recorded
-    return NextResponse.json({ hasConsent: false });
+    return NextResponse.json({ error: 'Consent storage unavailable' }, { status: 503, headers });
   }
 }
 
-/**
- * POST /api/telemetry-consent
- * Set or update a user's pedagogy telemetry consent.
- * Body: { userId: string, consent: boolean }
- */
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const rawBody = await request.json();
+  const auth = await requireAuth(request);
+  if (auth.response) return auth.response;
+  const origin = request.headers.get('origin');
+  const expectedOrigin = new URL(process.env.NEXT_PUBLIC_APP_URL || request.url).origin;
+  if (origin !== expectedOrigin) {
+    return NextResponse.json({ error: 'Forbidden origin' }, { status: 403, headers });
+  }
+  if (request.headers.get('content-type')?.split(';')[0].trim() !== 'application/json') {
+    return NextResponse.json({ error: 'JSON required' }, { status: 415, headers });
+  }
+  const reader = request.body?.getReader();
+  if (!reader) return NextResponse.json({ error: 'Invalid JSON' }, { status: 400, headers });
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  let expired = false;
+  const timeout = setTimeout(() => {
+    expired = true;
+    void reader.cancel().catch(() => {});
+  }, 5000);
+  let rawBody: unknown;
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (expired) throw new Error('Body timeout');
+      if (done) break;
+      size += value.byteLength;
+      if (size > 1024) {
+        return NextResponse.json({ error: 'Body too large' }, { status: 413, headers });
+      }
+      chunks.push(value);
+    }
+    rawBody = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400, headers });
+  } finally {
+    clearTimeout(timeout);
+    await reader.cancel().catch(() => {});
+    reader.releaseLock();
+  }
   const validation = validateBody(telemetryConsentSchema, rawBody);
   if (!validation.success) return validation.response;
-  const { userId, consent } = validation.data;
+  const { consent } = validation.data;
 
   try {
-    await setConsent(userId, consent);
-    return NextResponse.json({ ok: true });
+    await setConsent(auth.user.id, consent);
+    return NextResponse.json({ ok: true, choice: consent }, { headers });
   } catch {
-    // If Supabase is not configured, silently succeed
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ error: 'Consent storage unavailable' }, { status: 503, headers });
   }
 }
