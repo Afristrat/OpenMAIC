@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
+  authorize: vi.fn(),
   resolveModel: vi.fn(),
   isProviderKeyRequired: vi.fn(),
   generateSceneOutlinesFromRequirements: vi.fn(),
@@ -17,6 +18,9 @@ const mocks = vi.hoisted(() => ({
   removeUnresolvedMediaPlaceholders: vi.fn(),
   replaceMediaPlaceholders: vi.fn(),
   generateTTSForClassroom: vi.fn(),
+}));
+vi.mock('@/lib/server/course-generation-access', () => ({
+  assertCourseGenerationAccess: mocks.authorize,
 }));
 
 vi.mock('@/lib/server/resolve-model', () => ({
@@ -131,6 +135,7 @@ describe('classroom scene generation retries', () => {
     for (const mock of Object.values(mocks)) {
       mock.mockReset();
     }
+    mocks.authorize.mockResolvedValue(undefined);
     mocks.resolveModel.mockResolvedValue({
       model: { id: 'language-model' },
       modelInfo: {},
@@ -210,6 +215,17 @@ describe('classroom scene generation retries', () => {
       true,
     );
   }, 10_000);
+
+  it('does not persist after authorization is revoked during TTS', async () => {
+    mocks.generateSceneContent.mockResolvedValue(slideContent);
+    mocks.generateTTSForClassroom.mockImplementationOnce(async () => {
+      mocks.authorize.mockRejectedValue(new Error('Access revoked'));
+      return { requested: 4, generated: 4 };
+    });
+    await expect(generateWithProgress({ enableTTS: true })).rejects.toThrow('Access revoked');
+    expect(mocks.persistClassroom).not.toHaveBeenCalled();
+    expect(mocks.persistGeneratedCourse).not.toHaveBeenCalled();
+  });
 
   it('rejects an approved plan that violates the explicit author scene count', async () => {
     mocks.extractRequestedSceneCount.mockReturnValue(2);

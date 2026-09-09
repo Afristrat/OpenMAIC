@@ -1,5 +1,13 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-036, autorisation pendant la génération
+
+La garde commune ne contourne plus l’appartenance pour un nouveau cours sans courseId : acteur obligatoire, auteur/admin/manager réel dans une organisation active. Reprise : contrôle propriétaire/manifeste conservé. Plan et classroom revérifient avant/après leurs appels LLM ; classroom revérifie à chaque progression, même sans callback appelant, et avant le stockage du cours. Réemploi de la garde existante, aucune nouvelle dépendance ni migration.
+
+Session 65838 exit 0 : 61 tests ciblés, TypeScript et lint global sans avertissement, Prettier vert. Scénarios nouveaux : nouveau cours refusé sans acteur/après retrait, réponse LLM rejetée après révocation, aucun persistClassroom/persistGeneratedCourse après révocation pendant TTS. Tests spécialisés existants isolent explicitement la garde ; ses requêtes réelles restent couvertes séparément. SQL s036-generation-author.sql sous Auth et BEGIN/ROLLBACK confirme rétrogradation exclue, appartenance/job supprimés et tenant conservé ; zéro fixture ensuite. Premier essai avait employé learner au lieu du rôle natif apprenant, fixture corrigée après lecture de la contrainte. Runner avec overlays, pas de gate global ni déploiement.
+
+Limites : contrôles ponctuels, pas de transaction couvrant fournisseur et Storage ; appel déjà envoyé potentiellement facturé, artefacts médias intermédiaires et fenêtre contrôle/écriture encore à traiter. Worker vidéo géré, interruptions intra-lot médias, purge Redis/Storage et sessions/UI restent ouverts. Ne pas déclarer l’annulation intégrale livrée.
+
 ## 9 septembre 2026 — S-036, agents conservés et purge personnelle bornée
 
 Migration CLI candidate 20260909211350 : auteur SET NULL, agents publiés ou rattachés au tenant conservés sans changement de publication. Trigger BEFORE invoker limité à NEW : marque les seuls agents personnels détachés ; aucun privilège supplémentaire pour Auth. Purge invoker service-only, index partiel, lot de 1000 avec SKIP LOCKED et recontrôle propriété/tenant/publication. Worker de rétention existant : deux tâches indépendantes, dix lots chacune au boot puis chaque heure, délai RPC cinq secondes et arrêt attendu. Pas d’effacement instantané garanti ni de reprise administrative des agents privés du tenant.

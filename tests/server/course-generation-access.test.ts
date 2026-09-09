@@ -37,9 +37,19 @@ describe('course generation access', () => {
         },
       });
   });
-  it('does not query for a new course', async () => {
-    await assertCourseGenerationAccess({ orgId: 'tenant' });
-    expect(mocks.from).not.toHaveBeenCalled();
+  it('checks membership even for a new course', async () => {
+    await assertCourseGenerationAccess({ orgId: 'tenant' }, 'owner');
+    expect(mocks.from).toHaveBeenCalledWith('org_members');
+    expect(mocks.from).not.toHaveBeenCalledWith('courses');
+  });
+  it('refuses a new course without an actor or after membership deletion', async () => {
+    await expect(assertCourseGenerationAccess({ orgId: 'tenant' })).rejects.toBeInstanceOf(
+      CourseAccessError,
+    );
+    mocks.result.mockReset().mockResolvedValue({ data: null });
+    await expect(
+      assertCourseGenerationAccess({ orgId: 'tenant' }, 'deleted-owner'),
+    ).rejects.toBeInstanceOf(CourseAccessError);
   });
   it('requires a verified owner', async () => {
     await expect(assertCourseGenerationAccess(input)).rejects.toBeInstanceOf(CourseAccessError);

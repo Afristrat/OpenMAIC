@@ -93,3 +93,7 @@ describe('POST /api/generate-classroom/plan', () => {
     );
   });
 });
+vi.mock('@/lib/server/course-generation-access', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/server/course-generation-access')>()),
+  assertCourseGenerationAccess: vi.fn().mockResolvedValue(undefined),
+}));

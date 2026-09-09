@@ -426,3 +426,7 @@ describe('classroom media tenant boundary', () => {
     expect(response.headers.get('cache-control')).toBe('no-store');
   });
 });
+vi.mock('@/lib/server/course-generation-access', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/server/course-generation-access')>()),
+  assertCourseGenerationAccess: vi.fn().mockResolvedValue(undefined),
+}));

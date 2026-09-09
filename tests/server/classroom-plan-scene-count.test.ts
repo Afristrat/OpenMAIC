@@ -1,8 +1,12 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
+  authorize: vi.fn(),
   callLLM: vi.fn(),
   resolveModel: vi.fn(),
+}));
+vi.mock('@/lib/server/course-generation-access', () => ({
+  assertCourseGenerationAccess: mocks.authorize,
 }));
 
 vi.mock('@/lib/ai/llm', () => ({ callLLM: mocks.callLLM }));
@@ -55,6 +59,7 @@ function planWithCount(count: number) {
 describe('explicit classroom scene count invariant', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.authorize.mockReset().mockResolvedValue(undefined);
     mocks.resolveModel.mockResolvedValue({
       providerId: 'test-provider',
       model: {},
@@ -86,6 +91,15 @@ describe('explicit classroom scene count invariant', () => {
     const retryMessages = mocks.callLLM.mock.calls[1]?.[0]?.messages as Array<{ content: string }>;
     expect(retryMessages[1]?.content).toContain('Return exactly 12 complete');
     expect(retryMessages[1]?.content).toContain('Do not truncate');
+  });
+
+  test('discards a provider response after authorization is revoked', async () => {
+    mocks.callLLM.mockImplementationOnce(async () => {
+      mocks.authorize.mockRejectedValue(new Error('Access revoked'));
+      return { text: planWithCount(12) };
+    });
+    await expect(generateClassroomPlan(input, 'owner')).rejects.toThrow('Access revoked');
+    expect(mocks.callLLM).toHaveBeenCalledTimes(1);
   });
 
   test('fails explicitly after one corrective regeneration instead of showing a wrong plan', async () => {

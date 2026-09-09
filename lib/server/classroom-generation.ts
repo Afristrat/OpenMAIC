@@ -254,6 +254,10 @@ export async function generateClassroom(
   },
 ): Promise<GenerateClassroomResult> {
   await assertCourseGenerationAccess(input, options.ownerId);
+  const reportProgress = async (progress: ClassroomGenerationProgress) => {
+    await assertCourseGenerationAccess(input, options.ownerId);
+    await options.onProgress?.(progress);
+  };
   const { requirement } = input;
   const learningContext = normalizeLearningContext(
     input.learningContext ?? DEFAULT_LEARNING_CONTEXT,
@@ -296,7 +300,7 @@ export async function generateClassroom(
     log.warn('Tenant learning design unavailable; using coherent defaults:', error);
   }
 
-  await options.onProgress?.({
+  await reportProgress({
     step: 'initializing',
     progress: 5,
     message: 'Initializing classroom generation',
@@ -332,6 +336,7 @@ export async function generateClassroom(
   let searchQueryThinking = classroomThinking;
 
   const aiCall: AICallFn = async (systemPrompt, userPrompt, _images) => {
+    await assertCourseGenerationAccess(input, options.ownerId);
     const result = await callLLM(
       {
         model: languageModel,
@@ -345,10 +350,12 @@ export async function generateClassroom(
       undefined,
       classroomThinking,
     );
+    await assertCourseGenerationAccess(input, options.ownerId);
     return result.text;
   };
 
   const sceneAiCall: AICallFn = async (systemPrompt, userPrompt, _images) => {
+    await assertCourseGenerationAccess(input, options.ownerId);
     const result = await callLLM(
       {
         model: languageModel,
@@ -363,10 +370,12 @@ export async function generateClassroom(
       undefined,
       classroomThinking,
     );
+    await assertCourseGenerationAccess(input, options.ownerId);
     return result.text;
   };
 
   const searchQueryAiCall: AICallFn = async (systemPrompt, userPrompt, _images) => {
+    await assertCourseGenerationAccess(input, options.ownerId);
     const result = await callLLM(
       {
         model: searchQueryModel,
@@ -380,6 +389,7 @@ export async function generateClassroom(
       undefined,
       searchQueryThinking,
     );
+    await assertCourseGenerationAccess(input, options.ownerId);
     return result.text;
   };
 
@@ -408,7 +418,7 @@ export async function generateClassroom(
   const pdfImages = normalizePdfImages(combinedSource);
   const sourceDocuments = resolvedSources.documents;
 
-  await options.onProgress?.({
+  await reportProgress({
     step: 'researching',
     progress: 10,
     message: 'Researching topic',
@@ -498,7 +508,7 @@ export async function generateClassroom(
     }
   }
 
-  await options.onProgress?.({
+  await reportProgress({
     step: 'generating_outlines',
     progress: 15,
     message: 'Generating scene outlines',
@@ -567,7 +577,7 @@ export async function generateClassroom(
     `Generated ${outlines.length} scene outlines (languageDirective: ${languageDirective}, courseTitle: ${courseTitle ?? 'n/a'})`,
   );
 
-  await options.onProgress?.({
+  await reportProgress({
     step: 'generating_outlines',
     progress: 30,
     message: `Generated ${outlines.length} scene outlines`,
@@ -760,7 +770,7 @@ export async function generateClassroom(
       const sourceGrounding = buildSceneSourceGrounding(safeOutline, sourceDocuments);
       const progressStart = 30 + Math.floor((index / Math.max(outlines.length, 1)) * 60);
 
-      await options.onProgress?.({
+      await reportProgress({
         step: 'generating_scenes',
         progress: Math.max(progressStart, 31),
         message: `Generating scene ${index + 1}/${outlines.length}: ${safeOutline.title}`,
@@ -775,7 +785,7 @@ export async function generateClassroom(
         const nextAttempt = Math.min(event.attempt + 1, event.maxAttempts);
         const message = `Retrying scene ${index + 1}/${outlines.length} ${phase} (${nextAttempt}/${event.maxAttempts}): ${safeOutline.title}`;
         log.warn(`${message} — ${event.reason}`);
-        await options.onProgress?.({
+        await reportProgress({
           step: 'generating_scenes',
           progress: Math.max(progressStart, 31),
           message,
@@ -906,7 +916,7 @@ export async function generateClassroom(
 
       generatedScenes += 1;
       const progressEnd = 30 + Math.floor(((index + 1) / Math.max(outlines.length, 1)) * 60);
-      await options.onProgress?.({
+      await reportProgress({
         step: 'generating_scenes',
         progress: Math.min(progressEnd, 90),
         message: `Generated ${generatedScenes}/${outlines.length} scenes`,
@@ -954,7 +964,7 @@ export async function generateClassroom(
 
     // Phase: Media generation (after all scenes generated)
     if (input.enableImageGeneration || input.enableVideoGeneration) {
-      await options.onProgress?.({
+      await reportProgress({
         step: 'generating_media',
         progress: 90,
         message: 'Generating media files',
@@ -1015,7 +1025,7 @@ export async function generateClassroom(
 
     // Phase: TTS generation
     if (input.enableTTS) {
-      await options.onProgress?.({
+      await reportProgress({
         step: 'generating_tts',
         progress: 90,
         message: 'Generating TTS audio',
@@ -1029,7 +1039,7 @@ export async function generateClassroom(
         teachingProfile,
         tenantAgentConfigs,
         async ({ completed, total }) => {
-          await options.onProgress?.({
+          await reportProgress({
             step: 'generating_tts',
             progress: total > 0 ? 90 + Math.floor((completed / total) * 8) : 98,
             message: `Generating TTS audio (${completed}/${total})`,
@@ -1047,7 +1057,7 @@ export async function generateClassroom(
       log.info(`TTS generation complete: ${ttsReport.generated}/${ttsReport.requested} files`);
     }
 
-    await options.onProgress?.({
+    await reportProgress({
       step: 'persisting',
       progress: 98,
       message: 'Persisting classroom data',
@@ -1066,6 +1076,7 @@ export async function generateClassroom(
       },
       options.baseUrl,
     );
+    await assertCourseGenerationAccess(input, options.ownerId);
     await persistGeneratedCourse({
       courseId: input.courseId,
       ownerId: options.ownerId,
@@ -1081,7 +1092,7 @@ export async function generateClassroom(
 
     log.info(`Classroom persisted: ${persisted.id}, URL: ${persisted.url}`);
 
-    await options.onProgress?.({
+    await reportProgress({
       step: 'completed',
       progress: 100,
       message: 'Classroom generation completed',

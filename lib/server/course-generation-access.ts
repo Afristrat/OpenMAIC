@@ -25,18 +25,8 @@ export async function loadOwnedCourseForGeneration(
   ownerId?: string,
 ) {
   if (!ownerId) throw new CourseAccessError();
+  await assertGenerationAuthor(orgId, ownerId);
   const db = createServiceSupabaseClient();
-  const membership = await db
-    .from('org_members')
-    .select('role, organizations!inner(status)')
-    .eq('user_id', ownerId)
-    .eq('org_id', orgId)
-    .eq('organizations.status', 'active')
-    .in('role', ['admin', 'manager', 'author'])
-    .abortSignal(AbortSignal.timeout(5000))
-    .maybeSingle();
-  if (membership.error) throw new Error('Course authorization unavailable');
-  if (!membership.data) throw new CourseAccessError();
   const result = await db
     .from('courses')
     .select('id, title, language, source_manifest_id, outline, status, source_kind, import_id')
@@ -51,11 +41,27 @@ export async function loadOwnedCourseForGeneration(
   return courseSchema.parse(result.data);
 }
 
+async function assertGenerationAuthor(orgId: string, ownerId?: string) {
+  if (!ownerId) throw new CourseAccessError();
+  const db = createServiceSupabaseClient();
+  const membership = await db
+    .from('org_members')
+    .select('role, organizations!inner(status)')
+    .eq('user_id', ownerId)
+    .eq('org_id', orgId)
+    .eq('organizations.status', 'active')
+    .in('role', ['admin', 'manager', 'author'])
+    .abortSignal(AbortSignal.timeout(5000))
+    .maybeSingle();
+  if (membership.error) throw new Error('Course authorization unavailable');
+  if (!membership.data) throw new CourseAccessError();
+}
+
 export async function assertCourseGenerationAccess(
   input: { courseId?: string; orgId: string; sourceManifestId?: string },
   ownerId?: string,
 ) {
-  if (!input.courseId) return;
+  if (!input.courseId) return assertGenerationAuthor(input.orgId, ownerId);
   const course = await loadOwnedCourseForGeneration(input.courseId, input.orgId, ownerId);
   if (course.source_manifest_id !== (input.sourceManifestId ?? null)) throw new CourseAccessError();
 }

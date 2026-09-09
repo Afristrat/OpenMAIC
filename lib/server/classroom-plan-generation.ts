@@ -71,6 +71,7 @@ export async function generateClassroomPlan(input: GenerateClassroomInput, owner
     throw new Error(`No API key configured for provider "${resolved.providerId}".`);
   }
   const aiCall: AICallFn = async (systemPrompt, userPrompt) => {
+    await assertCourseGenerationAccess(input, ownerId);
     const result = await callLLM(
       {
         model: resolved.model,
@@ -84,6 +85,7 @@ export async function generateClassroomPlan(input: GenerateClassroomInput, owner
       undefined,
       resolved.thinkingConfig,
     );
+    await assertCourseGenerationAccess(input, ownerId);
     return result.text;
   };
 
@@ -137,5 +139,6 @@ export async function generateClassroomPlan(input: GenerateClassroomInput, owner
   if (!result.success || !result.data) {
     throw new Error(result.error || 'Failed to generate classroom plan');
   }
+  await assertCourseGenerationAccess(input, ownerId);
   return enforceExecutableObligations(result.data, input.requirement);
 }

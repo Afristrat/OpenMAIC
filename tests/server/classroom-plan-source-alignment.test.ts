@@ -243,3 +243,7 @@ describe('classroom plan source alignment gate', () => {
     expect(mocks.callLLM).not.toHaveBeenCalled();
   });
 });
+vi.mock('@/lib/server/course-generation-access', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/server/course-generation-access')>()),
+  assertCourseGenerationAccess: vi.fn().mockResolvedValue(undefined),
+}));

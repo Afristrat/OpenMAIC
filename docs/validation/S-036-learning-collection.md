@@ -1,5 +1,13 @@
 # S-036 — Collecte consentie : serveur et stockage
 
+## Complément : révocation pendant la génération
+
+La garde partagée exige maintenant un acteur et une appartenance auteur/admin/manager au tenant actif même sans courseId. Les cours existants gardent leurs contrôles propriétaire/tenant/manifeste. Le plan et la classroom recontrôlent avant/après les appels LLM ; chaque progression classroom recontrôle même sans callback externe, puis un contrôle précède persistGeneratedCourse. Aucun changement de schéma. Ponytail : garde existante réutilisée, pas de nouvelle infrastructure.
+
+Session 65838 exit 0 sur ServeurIA : 61 tests ciblés, TypeScript et lint global sans avertissement, format vérifié. Refus sans acteur ou après suppression d’appartenance, réponse de plan rejetée après révocation dans le fournisseur simulé, aucun stockage final après révocation pendant le TTS simulé. Scripts/validation/s036-generation-author.sql exécuté sous BEGIN/ROLLBACK : rôle apprenant exclu, suppression Auth cascade sur appartenance et job durable, tenant conservé ; zéro fixture recontrôlé. La fixture initiale learner était invalide, remplacée par apprenant après inspection de la contrainte. Runner avec overlays ; pas de navigateur supplémentaire, build/gate global ou déploiement.
+
+Ces gardes sont des points de contrôle, pas une annulation atomique fournisseur/DB/Storage. Un appel déjà parti peut être facturé ; médias intermédiaires, fenêtre entre contrôle et écriture, worker vidéo, purge Redis et Storage restent à réconcilier. Ne pas extrapoler les preuves à une interruption immédiate de tous les traitements. Documentation consultée : [observabilité Supabase](https://supabase.com/docs/guides/observability).
+
 ## Complément : agents après suppression de compte
 
 Candidate CLI 20260909211350, dépendante de la RLS U-011 20260908190053 : owner_id devient SET NULL. Les agents publiés et ceux du tenant sont conservés sans publier de brouillon ; seuls les agents sans organisation et non publiés sont marqués au détachement. Aucun balayage des agents système déjà sans propriétaire. Le trigger BEFORE SECURITY INVOKER modifie uniquement NEW ; la tentative initiale AFTER lisant profiles échouait sous Auth à cause de la RLS org_members et a été remplacée sans nouveaux privilèges.
