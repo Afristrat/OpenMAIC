@@ -1,5 +1,13 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-036, nettoyage durable des vidéos détachées
+
+Migration CLI candidate 20260909214619 : RPC de lecture invoker réservé à service_role, noms stricts du worker dans exports (ancienne/nouvelle forme), ancienneté création/modification supérieure à une heure, exclusion de tout job présent par id ou chemin. Lot de 100 ; aucune suppression SQL Storage. Worker horaire existant : troisième tâche indépendante, dix lots maximum, validation des noms/réponses puis remove via API Storage. Rescan de métadonnées à chaque cycle, donc pas de file locale perdue au redémarrage ; les fichiers arrivés tard restent découvrables.
+
+76657 exit 0 : dix tests, TypeScript/lint global et Prettier. Tests d’exclusion, erreur/reprise, lot invalide/surdimensionné, indépendance de la tâche ; suppression API simulée. SQL réel sous BEGIN/ROLLBACK : sept métadonnées synthétiques, jobs/fichiers liés conservés, formats ancien/nouveau éligibles, modification récente/autre préfixe/nom malformé exclus, suppression Auth rendant la vidéo orpheline. Zéro fixture/RPC absent recontrôlés. Pas de vrai fichier créé/supprimé, pas de migration durable, navigateur/gate global ou déploiement. Advisors local indisponibles faute de base CLI. Runner avec overlays.
+
+Un job encore présent, même generating après crash, protège toujours ses fichiers : réconciliation de ces états ambigus non livrée. Restent médias classroom, imports privés/Storage, Redis/sessions/UI et critères S-036. Aucune garantie d’effacement instantané ; le nettoyage dépend du worker et de Storage. Aucun passes=true.
+
 ## 9 septembre 2026 — S-036, worker vidéo géré
 
 Traitement extrait de workers.ts dans managed-video-job : claim PostgreSQL conditionnel queued→generating, aucun rejeu fournisseur automatique d’un job déjà commencé. Vérification acteur/tenant et présence/état du job avant fournisseur, après réponse et autour du dépôt. Nom d’objet unique, upsert=false, tampon décodé limité à 100 Mio. Finalisation conditionnelle avec accusé contrôlé ; si réponse perdue, relecture préserve un fichier déjà lié. Si issue inconnue, fichier retenu avec erreur explicite ; si job supprimé, retrait du seul objet tenté via API Storage. Refus d’accès après claim marqué error, pas laissé queued.

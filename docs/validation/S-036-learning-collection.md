@@ -1,5 +1,15 @@
 # S-036 — Collecte consentie : serveur et stockage
 
+## Complément : vidéos sans job, purge par Storage
+
+Candidate CLI 20260909214619 : lecture de métadonnées uniquement, RPC invoker service-only. Bucket exports, chemins UUID stricts propres au worker, création et dernière modification de plus d’une heure ; aucun job correspondant à l’id ou au chemin. Les jobs encore présents restent protecteurs quel que soit leur état. Lot de 100 ordonné par UUID, index public sur storage_path ; aucun changement de tables/politiques Storage. Schéma des résultats revérifié côté serveur, noms dupliqués et lots surdimensionnés refusés avant remove.
+
+Ponytail : troisième tâche du worker de rétention existant, dix lots au boot/par heure, aucun nouveau service. Après erreur, aucune file locale n’est acquittée ; les métadonnées restantes seront relues. Le délai d’une heure est une marge opérationnelle déléguée, pas une obligation légale. Les vidéos sont téléchargées en Blob par media-orchestrator ; le fichier exports reste celui du job personnel, distinct des fichiers de classroom.
+
+76657 exit 0 : dix tests, TypeScript/lint global et Prettier. SQL sous ROLLBACK : acteurs/jobs et sept métadonnées synthétiques, exclusions nom/préfixe/récence/job/chemin référencé et inclusion après suppression Auth. Aucun fichier réel créé ou supprimé ; zéro fixture et fonction absente après rollback. API Storage simulée dans les tests ; recette réelle, advisors complets, gate global et déploiement restent ouverts. Référence : [suppression d’objets Supabase](https://supabase.com/docs/guides/storage/management/delete-objects).
+
+Ce lot ne nettoie pas les fichiers protégés par un job bloqué après crash, ni les médias de classroom ou imports privés. L’effacement est différé et dépend des services ; aucune clôture S-036.
+
 ## Complément : worker vidéo géré
 
 Prise en charge native conditionnelle dans PostgreSQL, puis contrôles auteur/tenant et job actif avant/après fournisseur et dépôt. Un job déjà commencé n’est pas rejoué automatiquement ; job absent/terminé ignoré. Fichier unique sans écrasement, borne de décodage 100 Mio, formats embarqués mp4/webm seulement. Accusé de finalisation vérifié. En cas d’erreur après dépôt : fichier déjà lié conservé, issue inconnue signalée sans suppression, sinon retrait du seul objet tenté par l’API Storage. Ponytail : extraction du traitement existant pour le tester, sans service ni dépendance supplémentaire.

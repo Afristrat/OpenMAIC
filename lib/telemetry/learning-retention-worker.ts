@@ -1,5 +1,6 @@
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
+import { purgeOrphanedManagedVideos } from '@/lib/server/managed-video-cleanup';
 
 const log = createLogger('LearningRetention');
 
@@ -30,11 +31,15 @@ export function startLearningRetentionWorker(): () => Promise<void> {
   const tick = () => {
     if (stopped || running) return;
     running = (async () => {
-      for (const purge of [purgeExpiredLearningObservations, purgeDetachedPersonalAgents]) {
+      for (const [purge, batchSize] of [
+        [purgeExpiredLearningObservations, 1000],
+        [purgeDetachedPersonalAgents, 1000],
+        [purgeOrphanedManagedVideos, 100],
+      ] as const) {
         try {
-          // ponytail: 10,000 rows/hour/task/worker; increase cadence if monitored backlog grows.
+          // ponytail: ten batches/hour/task/worker; increase cadence if monitored backlog grows.
           for (let batch = 0; batch < 10 && !stopped; batch++) {
-            if ((await purge()) < 1000) break;
+            if ((await purge()) < batchSize) break;
           }
         } catch {
           // Keep independent cleanup queues progressing when one RPC fails.
