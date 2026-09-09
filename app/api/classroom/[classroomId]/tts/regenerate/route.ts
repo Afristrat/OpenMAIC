@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { assertClassroomEditAccess } from '@/lib/server/classroom-edit-access';
 import { requireSuperAdminOrOrgEditor } from '@/lib/api/auth';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { generateTTSForClassroom } from '@/lib/server/classroom-media-generation';
@@ -73,21 +74,31 @@ export async function POST(
   }
 
   const regeneratedScenes = structuredClone(selectedScenes);
-  await runWithUsageMeteringContext(request.headers, auth.user.id, ownership.orgId, () =>
-    generateTTSForClassroom(
-      regeneratedScenes,
-      classroomId,
-      casting.teacherProfile,
-      casting.agents,
-      undefined,
-      casting.stage.languageDirective,
-    ),
+  const report = await runWithUsageMeteringContext(
+    request.headers,
+    auth.user.id,
+    ownership.orgId,
+    () =>
+      generateTTSForClassroom(
+        regeneratedScenes,
+        classroomId,
+        () => assertClassroomEditAccess(request, classroomId, ownership, auth.user.id),
+        casting.teacherProfile,
+        casting.agents,
+        undefined,
+        casting.stage.languageDirective,
+      ),
   );
   const generatedAudioCount = countSpeechAudio(regeneratedScenes);
-  if (generatedAudioCount === 0) {
-    return apiError('GENERATION_FAILED', 502, 'Aucune piste audio n’a pu être générée');
+  if (
+    report.requested === 0 ||
+    report.generated !== report.requested ||
+    generatedAudioCount === 0
+  ) {
+    return apiError('GENERATION_FAILED', 502, 'La synthèse vocale a échoué');
   }
 
+  await assertClassroomEditAccess(request, classroomId, ownership, auth.user.id);
   await persistClassroom(
     {
       id: classroomId,

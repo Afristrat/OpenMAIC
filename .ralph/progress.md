@@ -1,5 +1,13 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-036, interruption des lots médias
+
+Garde obligatoire pour generateMediaForClassroom et generateTTSForClassroom, raccordée à la génération et aux deux routes de régénération vocale. Vérification avant chaque élément, avant chaque tentative de dépôt et après dépôt ; refus mémorisé pour le lot. Les branches image/vidéo attendent toutes deux leur terminaison (allSettled), sans tâche sœur continuant après le retour. Régénération d’une classroom : propriétaire/tenant et identité/autorisation d’édition relus avant les effets et la persistance. La régénération complète compare le rapport requested/generated : anciennes audioUrl ne valent plus réussite d’un nouveau TTS.
+
+Session 35900 exit 0 : 38 tests ciblés, TypeScript et lint global sans avertissement ; première passe 24953 arrêtée sur un import de type erroné dans le test, corrigé. Scénarios : refus au retour TTS/image sans upload ni élément suivant, refus restant effectif après réaccord, propriétaire changé interdisant la sauvegarde et anciennes pistes ne masquant pas un échec. Runner avec overlays ; pas de nouveau SQL, navigateur/gate global, migration ou déploiement. Ponytail : callbacks sur les helpers existants, aucune dépendance supplémentaire.
+
+Restent worker vidéo géré, fichiers déjà déposés avant révocation/Storage, fenêtre entre contrôle et dépôt, persistance atomique, Redis/sessions/UI et critères S-036. Ne pas promettre l’annulation d’un appel déjà envoyé ni l’absence de coût fournisseur. Aucun passes=true.
+
 ## 9 septembre 2026 — S-036, autorisation pendant la génération
 
 La garde commune ne contourne plus l’appartenance pour un nouveau cours sans courseId : acteur obligatoire, auteur/admin/manager réel dans une organisation active. Reprise : contrôle propriétaire/manifeste conservé. Plan et classroom revérifient avant/après leurs appels LLM ; classroom revérifie à chaque progression, même sans callback appelant, et avant le stockage du cours. Réemploi de la garde existante, aucune nouvelle dépendance ni migration.

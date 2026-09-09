@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { assertClassroomEditAccess } from '@/lib/server/classroom-edit-access';
 import { requireSuperAdminOrOrgEditor } from '@/lib/api/auth';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { generateTTSForClassroom } from '@/lib/server/classroom-media-generation';
@@ -55,6 +56,7 @@ export async function POST(
     generateTTSForClassroom(
       [generatedScene],
       classroomId,
+      () => assertClassroomEditAccess(request, classroomId, ownership, auth.user.id),
       casting.teacherProfile,
       casting.agents,
       undefined,
@@ -69,6 +71,7 @@ export async function POST(
     ...(generatedScene.actions ?? []),
     ...(scene.actions ?? []).slice(actionIndex + 1),
   ];
+  await assertClassroomEditAccess(request, classroomId, ownership, auth.user.id);
   await persistClassroom(
     {
       id: classroomId,

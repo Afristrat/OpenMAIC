@@ -1,5 +1,13 @@
 # S-036 — Collecte consentie : serveur et stockage
 
+## Complément : lots médias et régénération vocale
+
+Garde explicite obligatoire sur les deux générateurs de lots, raccordée aux trois appelants métier. Refus mémorisé jusqu’à la fin du lot ; vérification entre éléments, avant dépôt/retry et après dépôt. Les deux branches image/vidéo sont attendues avec allSettled avant propagation d’un échec. Les routes TTS d’édition relisent ressource/propriétaire/tenant et identité autorisée via la garde existante. Régénération complète : rapport réel exigé intégral, anciennes pistes non comptées comme preuve de génération.
+
+35900 exit 0 : 38 tests, TypeScript et lint global sans avertissement, Prettier ; correction préalable d’un import de type de test. Fournisseurs/Storage simulés : résultat image/TTS après révocation non déposé, aucun élément suivant, refus conservé malgré réaccord, reprise propriétaire refusée, échec TTS non masqué par anciennes audioUrl. Pas de SQL modifié, navigateur supplémentaire, build/gate global ou déploiement ; runner avec overlays. Ponytail : réemploi des helpers, pas de nouveau service.
+
+Limites : contrôles ponctuels non atomiques avec Storage, fichiers précédemment déposés non purgés dans ce lot, appels déjà partis potentiellement facturés ; worker vidéo géré distinct et purge Redis/sessions restent ouverts. Aucun effacement intégral revendiqué.
+
 ## Complément : révocation pendant la génération
 
 La garde partagée exige maintenant un acteur et une appartenance auteur/admin/manager au tenant actif même sans courseId. Les cours existants gardent leurs contrôles propriétaire/tenant/manifeste. Le plan et la classroom recontrôlent avant/après les appels LLM ; chaque progression classroom recontrôle même sans callback externe, puis un contrôle précède persistGeneratedCourse. Aucun changement de schéma. Ponytail : garde existante réutilisée, pas de nouvelle infrastructure.

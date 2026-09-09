@@ -162,7 +162,9 @@ export async function uploadClassroomMedia(
   classroomId: string,
   subPath: string,
   buf: Buffer | Uint8Array,
+  assertAccess?: () => Promise<void>,
 ): Promise<void> {
+  await assertAccess?.();
   await runMeteredTenantUsage({
     source: `classroom-storage:${subPath}`,
     billableUnit: 'storage_byte',
@@ -172,6 +174,7 @@ export async function uploadClassroomMedia(
     execute: () =>
       withGenerationRetry(
         async () => {
+          await assertAccess?.();
           const supabase = createServiceSupabaseClient();
           const { error } = await supabase.storage
             .from('classroom-media')
@@ -230,9 +233,12 @@ function mediaServingUrl(classroomId: string, subPath: string): string {
 export async function generateMediaForClassroom(
   outlines: SceneOutline[],
   classroomId: string,
+  assertAccess: () => Promise<void>,
   designSystem?: OrganizationDesignSystem,
   imageSelection?: { providerId?: string; modelId?: string },
 ): Promise<Record<string, string>> {
+  const checkAccess = latchMediaAccess(assertAccess);
+  await checkAccess();
   // Collect all media generation requests from outlines
   const requests = outlines.flatMap((o) => o.mediaGenerations ?? []);
   if (requests.length === 0) return {};
@@ -255,6 +261,7 @@ export async function generateMediaForClassroom(
 
   const generateImages = async () => {
     for (const req of imageRequests) {
+      await checkAccess();
       try {
         const providerId = imageProviderId!;
         const apiKey = resolveImageApiKey(providerId);
@@ -278,6 +285,7 @@ export async function generateMediaForClassroom(
         );
 
         let buf: Buffer;
+        await checkAccess();
         let ext: string;
         if (result.base64) {
           buf = Buffer.from(result.base64, 'base64');
@@ -292,10 +300,12 @@ export async function generateMediaForClassroom(
         }
 
         const filename = `${req.elementId}.${ext}`;
-        await uploadClassroomMedia(classroomId, `media/${filename}`, buf);
+        await uploadClassroomMedia(classroomId, `media/${filename}`, buf, checkAccess);
+        await checkAccess();
         mediaMap[req.elementId] = mediaServingUrl(classroomId, `media/${filename}`);
         log.info(`Generated image: ${filename}`);
       } catch (err) {
+        await checkAccess();
         log.warn(`Image generation failed for ${req.elementId}:`, err);
         failures.push({
           type: 'image',
@@ -308,6 +318,7 @@ export async function generateMediaForClassroom(
 
   const generateVideos = async () => {
     for (const req of videoRequests) {
+      await checkAccess();
       try {
         const providerId = videoProviderIds[0] as VideoProviderId;
         const apiKey = resolveVideoApiKey(providerId);
@@ -328,12 +339,15 @@ export async function generateMediaForClassroom(
           normalized,
         );
 
+        await checkAccess();
         const buf = await downloadToBuffer(result.url);
         const filename = `${req.elementId}.mp4`;
-        await uploadClassroomMedia(classroomId, `media/${filename}`, buf);
+        await uploadClassroomMedia(classroomId, `media/${filename}`, buf, checkAccess);
+        await checkAccess();
         mediaMap[req.elementId] = mediaServingUrl(classroomId, `media/${filename}`);
         log.info(`Generated video: ${filename}`);
       } catch (err) {
+        await checkAccess();
         log.warn(`Video generation failed for ${req.elementId}:`, err);
         failures.push({
           type: 'video',
@@ -344,7 +358,11 @@ export async function generateMediaForClassroom(
     }
   };
 
-  await Promise.all([generateImages(), generateVideos()]);
+  // Wait for both in-flight providers: a rejected branch must not leave its
+  // sibling writing after this function has returned to the caller.
+  const batches = await Promise.allSettled([generateImages(), generateVideos()]);
+  for (const batch of batches) if (batch.status === 'rejected') throw batch.reason;
+  await checkAccess();
 
   if (failures.length > 0) {
     const summary = failures
@@ -435,11 +453,14 @@ export function removeUnresolvedMediaPlaceholders(
 export async function generateTTSForClassroom(
   scenes: Scene[],
   classroomId: string,
+  assertAccess: () => Promise<void>,
   preferredVoice?: { providerId: string; voiceId: string },
   agents: CanonicalSpeechAgentVoice[] = [],
   onProgress?: (progress: { completed: number; total: number }) => Promise<void> | void,
   language?: string,
 ): Promise<ClassroomTTSGenerationReport> {
+  const checkAccess = latchMediaAccess(assertAccess);
+  await checkAccess();
   const report: ClassroomTTSGenerationReport = { requested: 0, generated: 0 };
   // Resolve TTS provider (exclude browser-native-tts and operator force-disabled
   // providers — server precedence, #665).
@@ -515,6 +536,7 @@ export async function generateTTSForClassroom(
     for (const action of scene.actions) {
       if (action.type !== 'speech' || !(action as SpeechAction).text) continue;
       const speechAction = action as SpeechAction;
+      await checkAccess();
       report.requested += 1;
       // Include scene order in audioId to prevent collision across scenes
       const audioId = `tts_s${sceneOrder}_${action.id}`;
@@ -554,7 +576,8 @@ export async function generateTTSForClassroom(
         );
 
         const filename = `${audioId}.${result.format || format}`;
-        await uploadClassroomMedia(classroomId, `audio/${filename}`, result.audio);
+        await uploadClassroomMedia(classroomId, `audio/${filename}`, result.audio, checkAccess);
+        await checkAccess();
         const audioVersion = createHash('sha256').update(result.audio).digest('hex').slice(0, 12);
 
         speechAction.audioId = audioId;
@@ -563,9 +586,25 @@ export async function generateTTSForClassroom(
         log.info(`Generated TTS: ${filename} (${result.audio.length} bytes)`);
         await onProgress?.({ completed: report.generated, total: totalSpeechActions });
       } catch (err) {
+        await checkAccess();
         log.warn(`TTS generation failed for action ${action.id}:`, err);
       }
     }
   }
   return report;
+}
+
+/** Once denied, a batch stays stopped even if access is restored later. */
+function latchMediaAccess(assertAccess: () => Promise<void>): () => Promise<void> {
+  let denied = false;
+  return async () => {
+    if (denied) throw new Error('Media generation access unavailable');
+    try {
+      await assertAccess();
+      if (denied) throw new Error('Media generation access unavailable');
+    } catch {
+      denied = true;
+      throw new Error('Media generation access unavailable');
+    }
+  };
 }

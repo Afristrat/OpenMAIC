@@ -1,9 +1,15 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import type { Scene } from '@/lib/types/stage';
+import type { SceneOutline } from '@/lib/types/generation';
 
 const mocks = vi.hoisted(() => ({
   generateTTS: vi.fn(),
+  generateImage: vi.fn(),
   upload: vi.fn(),
+}));
+vi.mock('@/lib/server/metered-media-providers', () => ({
+  generateMeteredImage: mocks.generateImage,
+  generateMeteredVideo: vi.fn(),
 }));
 
 vi.mock('@/lib/audio/tts-providers', () => ({
@@ -11,10 +17,10 @@ vi.mock('@/lib/audio/tts-providers', () => ({
 }));
 
 vi.mock('@/lib/server/provider-config', () => ({
-  getServerImageProviders: vi.fn(() => ({})),
+  getServerImageProviders: vi.fn(() => ({ 'openai-image': { models: ['gpt-image-1'] } })),
   getServerVideoProviders: vi.fn(() => ({})),
   getServerTTSProviders: vi.fn(() => ({ 'higgs-tts': { disabled: false } })),
-  resolveImageApiKey: vi.fn(),
+  resolveImageApiKey: vi.fn(() => 'test-key'),
   resolveImageBaseUrl: vi.fn(),
   resolveVideoApiKey: vi.fn(),
   resolveVideoBaseUrl: vi.fn(),
@@ -31,12 +37,53 @@ vi.mock('@/lib/supabase/service', () => ({
 }));
 
 import {
+  generateMediaForClassroom,
   generateTTSForClassroom,
   removeAgentNamesFromSpeech,
   removeUnresolvedMediaPlaceholders,
 } from '@/lib/server/classroom-media-generation';
 
 describe('canonical classroom agent TTS', () => {
+  test('stops after revocation during synthesis without uploading or starting another line', async () => {
+    const check = vi.fn().mockResolvedValue(undefined);
+    const scene = {
+      order: 1,
+      actions: [
+        { id: 'one', type: 'speech', text: 'Première phrase.' },
+        { id: 'two', type: 'speech', text: 'Deuxième phrase.' },
+      ],
+    } as unknown as Scene;
+    mocks.generateTTS.mockImplementationOnce(async () => {
+      check.mockRejectedValueOnce(new Error('revoked')).mockResolvedValue(undefined);
+      return { audio: Buffer.from('wav'), format: 'wav' };
+    });
+    await expect(generateTTSForClassroom([scene], 'classroom-1', check)).rejects.toThrow(
+      'Media generation access unavailable',
+    );
+    expect(mocks.generateTTS).toHaveBeenCalledTimes(1);
+    expect(mocks.upload).not.toHaveBeenCalled();
+  });
+
+  test('discards an image received after revocation and does not request the next image', async () => {
+    const check = vi.fn().mockResolvedValue(undefined);
+    mocks.generateImage.mockImplementationOnce(async () => {
+      check.mockRejectedValue(new Error('revoked'));
+      return { base64: Buffer.from('image').toString('base64') };
+    });
+    const outlines = [
+      {
+        mediaGenerations: [
+          { type: 'image', elementId: 'one', prompt: 'One' },
+          { type: 'image', elementId: 'two', prompt: 'Two' },
+        ],
+      },
+    ] as SceneOutline[];
+    await expect(generateMediaForClassroom(outlines, 'classroom-1', check)).rejects.toThrow(
+      'Media generation access unavailable',
+    );
+    expect(mocks.generateImage).toHaveBeenCalledTimes(1);
+    expect(mocks.upload).not.toHaveBeenCalled();
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.generateTTS.mockResolvedValue({ audio: Buffer.from('wav'), format: 'wav' });
@@ -66,6 +113,7 @@ describe('canonical classroom agent TTS', () => {
     await generateTTSForClassroom(
       [scene],
       'classroom-1',
+      async () => {},
       { providerId: 'higgs-tts', voiceId: 'teacher-voice' },
       [
         {
@@ -107,6 +155,7 @@ describe('canonical classroom agent TTS', () => {
     await generateTTSForClassroom(
       [scene],
       'classroom-1',
+      async () => {},
       { providerId: 'higgs-tts', voiceId: 'teacher-voice' },
       [],
       undefined,
@@ -141,6 +190,7 @@ describe('canonical classroom agent TTS', () => {
       generateTTSForClassroom(
         [scene],
         'classroom-1',
+        async () => {},
         { providerId: 'higgs-tts', voiceId: 'teacher-voice' },
         [
           {
@@ -171,6 +221,7 @@ describe('canonical classroom agent TTS', () => {
     await generateTTSForClassroom(
       [scene],
       'classroom-1',
+      async () => {},
       { providerId: 'higgs-tts', voiceId: 'teacher-voice' },
       [],
       onProgress,
@@ -209,6 +260,7 @@ describe('canonical classroom agent TTS', () => {
     await generateTTSForClassroom(
       [scene],
       'classroom-1',
+      async () => {},
       { providerId: 'higgs-tts', voiceId: 'teacher-voice' },
       [
         {

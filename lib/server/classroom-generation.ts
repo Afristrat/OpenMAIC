@@ -975,6 +975,7 @@ export async function generateClassroom(
       const mediaMap = await generateMediaForClassroom(
         outlines,
         stageId,
+        () => assertCourseGenerationAccess(input, options.ownerId),
         organizationDesignSystem,
         {
           ...(input.imageProviderId ? { providerId: input.imageProviderId } : {}),
@@ -1036,6 +1037,7 @@ export async function generateClassroom(
       const ttsReport = await generateTTSForClassroom(
         scenes,
         stageId,
+        () => assertCourseGenerationAccess(input, options.ownerId),
         teachingProfile,
         tenantAgentConfigs,
         async ({ completed, total }) => {

@@ -95,6 +95,41 @@ function classroom(options?: { withoutCasting?: boolean; legacyProfileOnly?: boo
 }
 
 describe('régénération TTS et casting persistant', () => {
+  it('ne présente pas les anciennes pistes comme une régénération réussie', async () => {
+    const saved = classroom();
+    Object.assign(saved.scenes[0].actions[0], { audioUrl: '/old-audio.wav' });
+    mocks.readClassroom.mockResolvedValueOnce(saved);
+    mocks.generateTTS.mockResolvedValueOnce({ requested: 1, generated: 0 });
+    const response = await regenerateClassroomSpeech(
+      new NextRequest('https://qalem.ma/api/classroom/classroom-1/tts/regenerate', {
+        method: 'POST',
+        body: JSON.stringify({}),
+      }),
+      { params: Promise.resolve({ classroomId: 'classroom-1' }) },
+    );
+    expect(response.status).toBe(502);
+    expect(mocks.persistClassroom).not.toHaveBeenCalled();
+  });
+  it('refuse la sauvegarde si le propriétaire change pendant le TTS', async () => {
+    mocks.generateTTS.mockImplementationOnce(
+      async (scenes: Array<{ actions: Array<{ audioUrl?: string }> }>) => {
+        for (const scene of scenes)
+          for (const action of scene.actions) action.audioUrl = '/audio.wav';
+        mocks.readOwnership.mockResolvedValue({ ownerId: 'another-owner', orgId: 'org-1' });
+        return { requested: 1, generated: 1 };
+      },
+    );
+    await expect(
+      regenerateClassroomSpeech(
+        new NextRequest('https://qalem.ma/api/classroom/classroom-1/tts/regenerate', {
+          method: 'POST',
+          body: JSON.stringify({}),
+        }),
+        { params: Promise.resolve({ classroomId: 'classroom-1' }) },
+      ),
+    ).rejects.toThrow('Classroom edit access unavailable');
+    expect(mocks.persistClassroom).not.toHaveBeenCalled();
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.readOwnership.mockResolvedValue({ ownerId: 'owner-1', orgId: 'org-1' });
@@ -131,6 +166,7 @@ describe('régénération TTS et casting persistant', () => {
     expect(mocks.generateTTS).toHaveBeenCalledWith(
       expect.any(Array),
       'classroom-1',
+      expect.any(Function),
       canonicalTeacherProfile,
       generatedAgentConfigs,
       undefined,
@@ -162,6 +198,7 @@ describe('régénération TTS et casting persistant', () => {
     expect(mocks.generateTTS).toHaveBeenCalledWith(
       expect.any(Array),
       'classroom-1',
+      expect.any(Function),
       canonicalTeacherProfile,
       generatedAgentConfigs,
       undefined,
@@ -199,6 +236,7 @@ describe('régénération TTS et casting persistant', () => {
     expect(mocks.generateTTS).toHaveBeenCalledWith(
       expect.any(Array),
       'classroom-1',
+      expect.any(Function),
       canonicalTeacherProfile,
       [
         expect.objectContaining({
