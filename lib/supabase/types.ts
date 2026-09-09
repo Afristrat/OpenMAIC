@@ -237,6 +237,7 @@ export interface FormationSourceManifest {
   owner_id: string;
   version: number;
   source_ids: string[];
+  diwan_references?: import('@/lib/diwan/references').DiwanReference[];
   previous_manifest_id: string | null;
   created_at: string;
 }
@@ -882,6 +883,7 @@ export interface Database {
           p_owner_id: string;
           p_source_ids: string[];
           p_expected_version?: number | null;
+          p_diwan_references?: import('@/lib/diwan/references').DiwanReference[];
         };
         Returns: FormationSourceManifest[];
       };

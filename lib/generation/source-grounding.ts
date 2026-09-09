@@ -30,6 +30,7 @@ export interface SourceDocument {
   version: string;
   title: string;
   text: string;
+  passages?: SourcePassage[];
 }
 
 export interface SourcePassage {
@@ -40,6 +41,9 @@ export interface SourcePassage {
   text: string;
   start: number;
   end: number;
+  checksumSha256?: string;
+  contentHash?: string | null;
+  pageNumber?: number | null;
 }
 
 export interface SourceGroundingIssue {
@@ -85,6 +89,7 @@ function normalizedTokens(value: string): Set<string> {
 }
 
 function chunkDocument(source: SourceDocument): SourcePassage[] {
+  if (source.passages) return source.passages;
   const normalized = source.text.replace(/\r\n?/g, '\n').trim();
   if (!normalized) return [];
 

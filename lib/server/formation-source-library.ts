@@ -3,6 +3,12 @@ import { uploadedSourceDocument, type SourceDocument } from '@/lib/generation/so
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import type { FormationSourceManifest, OrganizationSource } from '@/lib/supabase/types';
 import type { PdfImage, PdfSourceContent } from '@/lib/types/generation';
+import {
+  diwanReferences,
+  pinDiwanSelection,
+  resolveDiwanReferences,
+  type DiwanReference,
+} from '@/lib/diwan/references';
 
 const MAX_SELECTED_SOURCES = 20;
 
@@ -22,6 +28,7 @@ export interface SourceManifestSnapshot {
   id: string;
   version: number;
   sourceIds: string[];
+  diwanReferences: DiwanReference[];
   previousManifestId: string | null;
   createdAt: string;
 }
@@ -52,6 +59,7 @@ function toManifestSnapshot(manifest: FormationSourceManifest): SourceManifestSn
     id: manifest.id,
     version: manifest.version,
     sourceIds: manifest.source_ids,
+    diwanReferences: diwanReferences.parse(manifest.diwan_references ?? []),
     previousManifestId: manifest.previous_manifest_id,
     createdAt: manifest.created_at,
   };
@@ -145,7 +153,9 @@ export async function readLatestSourceManifest(
 ): Promise<SourceManifestSnapshot | null> {
   const { data, error } = await createServiceSupabaseClient()
     .from('formation_source_manifests')
-    .select('id, org_id, owner_id, version, source_ids, previous_manifest_id, created_at')
+    .select(
+      'id, org_id, owner_id, version, source_ids, diwan_references, previous_manifest_id, created_at',
+    )
     .eq('org_id', orgId)
     .eq('owner_id', ownerId)
     .order('version', { ascending: false })
@@ -160,6 +170,7 @@ export async function replaceSourceManifest(input: {
   ownerId: string;
   sourceIds: string[];
   expectedVersion?: number;
+  diwanSources?: Array<{ corpusId: string; sourceId: string }>;
 }): Promise<SourceManifestSnapshot> {
   if (input.sourceIds.length > MAX_SELECTED_SOURCES) {
     throw new Error(`At most ${MAX_SELECTED_SOURCES} sources may be selected`);
@@ -167,6 +178,12 @@ export async function replaceSourceManifest(input: {
   if (new Set(input.sourceIds).size !== input.sourceIds.length) {
     throw new Error('Selected source identifiers must be unique');
   }
+  const references =
+    input.diwanSources === undefined
+      ? undefined
+      : await pinDiwanSelection(input.orgId, input.diwanSources);
+  if (references && references.length + input.sourceIds.length > MAX_SELECTED_SOURCES)
+    throw new Error(`At most ${MAX_SELECTED_SOURCES} sources may be selected`);
   const { data, error } = await createServiceSupabaseClient().rpc(
     'replace_formation_source_manifest',
     {
@@ -174,6 +191,7 @@ export async function replaceSourceManifest(input: {
       p_owner_id: input.ownerId,
       p_source_ids: input.sourceIds,
       p_expected_version: input.expectedVersion ?? null,
+      ...(references === undefined ? {} : { p_diwan_references: references }),
     },
   );
   if (error) throw new Error(`Failed to replace source manifest: ${error.message}`);
@@ -202,6 +220,7 @@ export async function resolveFormationSources(input: {
   ownerId: string;
   sourceManifestId?: string;
   legacySource?: PdfSourceContent;
+  requirement?: string;
 }): Promise<ResolvedFormationSources> {
   if (!input.sourceManifestId) {
     if (!input.legacySource) return { contents: [], documents: [] };
@@ -215,7 +234,9 @@ export async function resolveFormationSources(input: {
   const supabase = createServiceSupabaseClient();
   const { data: manifest, error: manifestError } = await supabase
     .from('formation_source_manifests')
-    .select('id, org_id, owner_id, version, source_ids, previous_manifest_id, created_at')
+    .select(
+      'id, org_id, owner_id, version, source_ids, diwan_references, previous_manifest_id, created_at',
+    )
     .eq('id', input.sourceManifestId)
     .eq('org_id', input.orgId)
     .eq('owner_id', input.ownerId)
@@ -225,17 +246,25 @@ export async function resolveFormationSources(input: {
 
   const typedManifest = manifest as FormationSourceManifest;
   const selectedIds: string[] = typedManifest.source_ids;
-  if (selectedIds.length === 0) {
+  const externalDocuments = await resolveDiwanReferences(
+    input.orgId,
+    typedManifest.diwan_references ?? [],
+    input.requirement,
+  );
+  if (selectedIds.length === 0 && externalDocuments.length === 0) {
     return { manifest: toManifestSnapshot(typedManifest), contents: [], documents: [] };
   }
-  const { data: sourceRows, error: sourcesError } = await supabase
-    .from('organization_sources')
-    .select(
-      'id, org_id, owner_id, name, mime_type, size_bytes, content_hash, parser_id, text_content, images, status, rejection_reason, created_at, updated_at',
-    )
-    .eq('org_id', input.orgId)
-    .eq('status', 'ready')
-    .in('id', selectedIds);
+  const { data: sourceRows, error: sourcesError } =
+    selectedIds.length > 0
+      ? await supabase
+          .from('organization_sources')
+          .select(
+            'id, org_id, owner_id, name, mime_type, size_bytes, content_hash, parser_id, text_content, images, status, rejection_reason, created_at, updated_at',
+          )
+          .eq('org_id', input.orgId)
+          .eq('status', 'ready')
+          .in('id', selectedIds)
+      : { data: [], error: null };
   if (sourcesError) throw new Error(`Failed to resolve selected sources: ${sourcesError.message}`);
   if ((sourceRows?.length ?? 0) !== selectedIds.length) {
     throw new Error('One or more selected sources are unavailable in the current organization');
@@ -243,20 +272,30 @@ export async function resolveFormationSources(input: {
 
   const byId = new Map((sourceRows as OrganizationSource[]).map((source) => [source.id, source]));
   const ordered = selectedIds.map((sourceId) => byId.get(sourceId)!);
-  const contents = ordered.map((source) => ({
+  const contents: PdfSourceContent[] = ordered.map((source) => ({
     name: source.name,
     text: source.text_content,
     images: source.images as Array<string | PdfImage>,
   }));
+  contents.push(
+    ...externalDocuments.map((document) => ({
+      name: document.title,
+      text: document.text,
+      images: [],
+    })),
+  );
   return {
     manifest: toManifestSnapshot(typedManifest),
     contents,
     combinedContent: combineSourceContents(contents),
-    documents: ordered.map((source) => ({
-      id: source.id,
-      version: `sha256-${source.content_hash}`,
-      title: source.name,
-      text: source.text_content,
-    })),
+    documents: [
+      ...ordered.map((source) => ({
+        id: source.id,
+        version: `sha256-${source.content_hash}`,
+        title: source.name,
+        text: source.text_content,
+      })),
+      ...externalDocuments,
+    ],
   };
 }

@@ -399,6 +399,7 @@ export async function generateClassroom(
     ownerId: options.ownerId,
     sourceManifestId: input.sourceManifestId,
     legacySource: input.pdfContent,
+    requirement: input.requirement,
   });
   const combinedSource = resolvedSources.combinedContent;
   const pdfText = combinedSource?.text || undefined;

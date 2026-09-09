@@ -90,6 +90,7 @@ export async function generateClassroomPlan(input: GenerateClassroomInput, owner
         orgId: input.orgId,
         ownerId: ownerId ?? '',
         sourceManifestId: input.sourceManifestId,
+        requirement: input.requirement,
       })
     : await resolveFormationSources({
         orgId: input.orgId,

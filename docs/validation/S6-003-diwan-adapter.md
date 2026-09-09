@@ -72,8 +72,9 @@ fournisseur, rejet des mutations inter-origines et fichier multipart natif.
    indisponibilité et révocation d’un corpus de recette autorisé.
 4. Gate complet du lot, build et navigateur ; publication vérifiée ensuite.
    Aucun déploiement ni nouveau gate global annoncé pour ce candidat.
-5. Le raccordement à une interface de sélection de sources et aux étapes de
-   génération n’est pas encore livré par cet adaptateur d’API.
+5. L’interface de sélection Diwan reste à raccorder. Le raccordement serveur aux
+   manifestes et à la génération est codé dans le complément ci-dessous, mais
+   sa migration n’est pas encore appliquée durablement.
 
 ## Complément — Alignement et contradictions
 
@@ -98,5 +99,51 @@ Point d’intégration identifié : le popover existant utilise
 `formation_source_manifests` et `resolveFormationSources`. Il faudra y conserver
 les références/version/empreinte Diwan, pas recopier des documents complets
 dans Qalem ou remplacer le parcours local déjà opérationnel.
+
+## Complément — Manifestes et génération
+
+Migration candidate `20260909121728_diwan_source_references.sql`, créée par
+Supabase CLI 2.117.0 sur ServeurIA après lecture de son aide. Elle ajoute au
+manifeste existant des références corpus/source/version/empreinte/titre, limitées
+avec les sources locales à vingt éléments. Le RPC reste SECURITY INVOKER avec
+search_path vide et EXECUTE réservé à service_role. La RLS existante reste active.
+Les versions deviennent immuables au niveau SQL ; le lien historique peut toujours
+être mis à NULL par la suppression de la version précédente.
+
+Le PUT de sélection accepte seulement corpusId/sourceId ; le serveur obtient
+version et empreinte par le manifeste Diwan autorisé. Un ancien appel sans
+sélection Diwan conserve les références précédentes ; une liste vide les retire.
+Le contrôle optimiste de version évite d’écraser une sélection concurrente.
+
+`resolveFormationSources`, utilisé par le plan et la génération de classroom,
+recherche maintenant les extraits pour la demande courante et les sources choisies.
+Une version ou empreinte changée, une source non étayée ou une erreur du fournisseur
+interrompt la résolution, sans substitution Web. Les vrais chunkId et métadonnées
+de page traversent le moteur de citations sans redécoupage en faux identifiants.
+Seuls les extraits sont transmis au contexte de génération, pas les fichiers
+originaux ou les vecteurs Diwan.
+
+Vérifications du 9 septembre :
+
+- 52/52 tests ciblés (Diwan + bibliothèque + API des manifestes) et TypeScript
+  verts, commande terminée exit 0. Lint global vert, session 62020 exit 0.
+- Premier échec du test d’indisponibilité corrigé dans son hook : le hook
+  retournait le mock, interprété comme fonction de nettoyage ; aucun résultat
+  de production n’était concerné. La propagation de l’erreur reste testée.
+- PostgreSQL Qalem réel, transaction avec délais de verrouillage et d’exécution
+  bornés : migration, `scripts/proofs/s6003-manifest.sql`,
+  `S6003_MANIFEST_PROOF_OK`, puis **ROLLBACK**, exit 0. Références, conservation,
+  retrait, conflit de version, immutabilité, doublons, empreinte invalide,
+  privilèges RPC et refus RLS hors tenant vérifiés avec le tenant synthétique
+  S-034. Aucun changement durable de schéma ou de données.
+- Advisors complets et gate global du lot restent à exécuter avant publication.
+  La preuve SQL ciblée ne les remplace pas.
+
+La skill Supabase a conduit à conserver les permissions explicites et à vérifier
+SQL et RLS réellement. Documentation consultée :
+[fonctions](https://supabase.com/docs/guides/database/functions),
+[RLS](https://supabase.com/docs/guides/database/postgres/row-level-security),
+[changelog](https://supabase.com/changelog). Aucun changement de version de la
+stack ou de passerelle n’est effectué.
 
 `passes=false` est conservé. Aucun autre gate du PRD n’est levé automatiquement.

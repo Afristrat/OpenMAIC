@@ -2,6 +2,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod/v4';
 import { requireSuperAdminOrOrgAuthor, requireSuperAdminOrOrgMember } from '@/lib/api/auth';
 import { validateBody } from '@/lib/api/validate';
+import { diwanSelection } from '@/lib/diwan/references';
+import { DiwanError } from '@/lib/diwan/client';
 import {
   readLatestSourceManifest,
   replaceSourceManifest,
@@ -17,6 +19,7 @@ const replaceManifestSchema = z.object({
       message: 'Source identifiers must be unique',
     }),
   expectedVersion: z.number().int().nonnegative().optional(),
+  diwanSources: diwanSelection.optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -52,9 +55,12 @@ export async function PUT(request: NextRequest) {
         ownerId: auth.user.id,
         sourceIds: validation.data.sourceIds,
         expectedVersion: validation.data.expectedVersion,
+        diwanSources: validation.data.diwanSources,
       }),
     });
   } catch (error) {
+    if (error instanceof DiwanError)
+      return NextResponse.json({ error: error.code, code: error.code }, { status: error.status });
     const message = error instanceof Error ? error.message : 'Failed to replace source manifest';
     const status = /version conflict/i.test(message)
       ? 409

@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildSceneSourceGrounding } from '@/lib/generation/source-grounding';
 
-const mocks = vi.hoisted(() => ({ createClient: vi.fn() }));
+const mocks = vi.hoisted(() => ({ createClient: vi.fn(), diwan: vi.fn() }));
+vi.mock('@/lib/diwan/client', async (original) => ({
+  ...(await original<typeof import('@/lib/diwan/client')>()),
+  executeDiwanCommand: mocks.diwan,
+}));
 vi.mock('@/lib/supabase/service', () => ({
   createServiceSupabaseClient: mocks.createClient,
 }));
@@ -146,5 +150,54 @@ describe('formation source resolution', () => {
     expect(single.combinedContent?.name).toBe('guide.pdf');
     expect(single.documents[0]?.id).toMatch(/^uploaded-/);
     expect(single.documents[0]?.version).toMatch(/^v1-[0-9a-f]{8}$/);
+  });
+  it('resolves a Diwan-only persisted manifest without reading or storing complete source documents', async () => {
+    const reference = {
+      corpusId: 'corpus:1',
+      sourceId: 'source:1',
+      sourceVersion: 'version:1',
+      checksumSha256: `sha256:${'a'.repeat(64)}`,
+      title: 'SIPOC',
+    };
+    const manifest = {
+      id: 'manifest',
+      org_id: 'org',
+      owner_id: 'owner',
+      version: 1,
+      source_ids: [],
+      diwan_references: [reference],
+      previous_manifest_id: null,
+      created_at: '',
+    };
+    const manifestQuery = selectChain({ data: manifest, error: null });
+    const from = vi.fn(() => manifestQuery);
+    mocks.createClient.mockReturnValue({ from });
+    mocks.diwan.mockResolvedValue({
+      status: 'ok',
+      evidence: [
+        {
+          sourceId: reference.sourceId,
+          sourceVersion: reference.sourceVersion,
+          sourceChecksumSha256: reference.checksumSha256,
+          chunkId: 'chunk:actual',
+          content: 'Extrait SIPOC',
+          contentHash: null,
+          pageNumber: 4,
+        },
+      ],
+    });
+    const result = await resolveFormationSources({
+      orgId: 'org',
+      ownerId: 'owner',
+      sourceManifestId: 'manifest',
+      requirement: 'SIPOC',
+    });
+    expect(result.manifest?.diwanReferences).toEqual([reference]);
+    expect(result.contents).toEqual([{ name: 'SIPOC', text: 'Extrait SIPOC', images: [] }]);
+    expect(result.documents[0].passages?.[0].id).toBe('chunk:actual');
+    expect(from).toHaveBeenCalledTimes(1);
+    expect(from).toHaveBeenCalledWith('formation_source_manifests');
+    expect(manifestQuery.eq).toHaveBeenCalledWith('org_id', 'org');
+    expect(manifestQuery.eq).toHaveBeenCalledWith('owner_id', 'owner');
   });
 });

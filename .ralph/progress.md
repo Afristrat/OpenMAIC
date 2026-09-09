@@ -1,5 +1,11 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S6-003, références persistantes et résolution serveur
+
+Migration candidate créée par Supabase CLI 2.117.0 : 20260909121728_diwan_source_references.sql. Références Diwan dans le manifeste existant, vingt sources au total, immutabilité SQL, RPC invoker réservé au service, conservation de l’ancienne sélection pour les anciens clients, retrait explicite par []. Le serveur épingle version/empreinte depuis Diwan, pas depuis le navigateur. resolveFormationSources est raccordé au plan et à la génération avec la demande courante ; extraits natifs et chunkId conservés, changement de version/empreinte ou absence de preuve refusés sans fallback Web. Pas de document intégral ni de vecteur importé.
+
+52/52 tests ciblés et TypeScript verts ; lint global session 62020 exit 0. Premier test d’erreur échouait à cause du hook retournant un mock, pris comme nettoyage : hook corrigé, propagation de l’erreur maintenue. Preuve PostgreSQL réelle en transaction : S6003_MANIFEST_PROOF_OK puis ROLLBACK, aucune migration durable. Isolation tenant, RPC, versions, doublons et empreinte vérifiés. Aucun déploiement. Advisors complets, gate global, interface de sélection, jeton/mapping et recette Diwan authentifiée restent ouverts ; passes=false. Suite prioritaire : compléter SourceLibraryPopover avec sélection/import/suivi Diwan et passage diwanSources au PUT, afficher les refus sans convertir l’absence de configuration en bibliothèque vide.
+
 ## 9 septembre 2026 — S6-003, analyses documentaires câblées à l’API
 
 Les commandes alignment/conflicts sont ajoutées au transport existant et donc à la route auteur. Contrôle de version, schéma, sources autorisées, deux sources/blocs distincts par conflit, exigences citées et arbitrage obligatoire en cas de contradiction. Lecture du service propriétaire : detect_conflicts transforme certaines erreurs d’analyse en no_material_conflict ; le contrat ne restitue pas non plus les extraits avec les citations. Résultats rendus advisoryOnly=true, jamais autorisation automatique de génération. Défaut signalé, aucune mutation Diwan. Session ServeurIA 72557 exit 0 : 37 tests ciblés, TypeScript et lint global verts ; réseau/auth simulés. Aucune clôture ni déploiement.
