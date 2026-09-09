@@ -1,5 +1,11 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S6-003, sélecteur Diwan FR/AR/EN raccordé
+
+Le popover de sources existant propose désormais liste paginée, sélection/retrait, import et suivi Diwan. Compteur et manifeste restauré incluent les références externes ; passage du manifeste au plan vérifié dans les trois langues, RTL compris. Un changement de version/empreinte d’une référence conservée est refusé plutôt qu’actualisé silencieusement. Le job accepté est enregistré dans sessionStorage même si le panneau a été fermé pendant la requête ; reprise après rechargement testée. Ponytail : HTML natif, popover/persistance existants, aucune dépendance ajoutée.
+
+ServeurIA : session 58387 exit 0, 18/18 parcours ciblés Diwan et sources locales sans retry ; session finale 13788 exit 0, TypeScript, lint global sans avertissement, 53/53 tests ciblés et 4/4 parcours Diwan. Réseau/auth simulés. L’échec intermittent initial à l’ouverture du panneau français n’a pas de cause établie ; le garde-fou d’organisation n’en est pas une preuve de correction. Voir docs/validation/S6-003-diwan-adapter.md. Aucun build global, migration durable ou déploiement. S6-003 reste passes=false ; 21 US ouvertes au recomptage. Suite : jeton/mapping dédiés et recette réelle à obtenir dans le périmètre autorisé, puis gate global/publication ; ne pas multiplier les tests simulés pour remplacer ces preuves externes.
+
 ## 9 septembre 2026 — S6-003, références persistantes et résolution serveur
 
 Migration candidate créée par Supabase CLI 2.117.0 : 20260909121728_diwan_source_references.sql. Références Diwan dans le manifeste existant, vingt sources au total, immutabilité SQL, RPC invoker réservé au service, conservation de l’ancienne sélection pour les anciens clients, retrait explicite par []. Le serveur épingle version/empreinte depuis Diwan, pas depuis le navigateur. resolveFormationSources est raccordé au plan et à la génération avec la demande courante ; extraits natifs et chunkId conservés, changement de version/empreinte ou absence de preuve refusés sans fallback Web. Pas de document intégral ni de vecteur importé.

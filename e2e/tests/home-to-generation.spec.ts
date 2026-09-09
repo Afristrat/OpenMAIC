@@ -290,7 +290,7 @@ test.describe('Home → Generation', () => {
     await home.configureAnimation();
     await page.getByRole('button', { name: 'Source library' }).click();
     await page
-      .locator('input[type="file"][multiple]')
+      .getByTestId('local-source-file-input')
       .setInputFiles(
         ['source-a.pdf', 'source-b.pdf', 'source-c.pdf', 'duplicate-a.pdf', 'rejected.pdf'].map(
           (name) => ({ name, mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 e2e') }),

@@ -10,7 +10,10 @@ vi.mock('@/lib/supabase/service', () => ({
   createServiceSupabaseClient: mocks.createClient,
 }));
 
-import { resolveFormationSources } from '@/lib/server/formation-source-library';
+import {
+  replaceSourceManifest,
+  resolveFormationSources,
+} from '@/lib/server/formation-source-library';
 
 function selectChain(result: unknown) {
   const chain: Record<string, ReturnType<typeof vi.fn>> = {};
@@ -24,6 +27,44 @@ function selectChain(result: unknown) {
 
 describe('formation source resolution', () => {
   beforeEach(() => vi.clearAllMocks());
+  it('does not silently refresh an already pinned source while editing the selection', async () => {
+    const ref = {
+      corpusId: 'corpus:1',
+      sourceId: 'source:1',
+      sourceVersion: 'version:1',
+      checksumSha256: `sha256:${'a'.repeat(64)}`,
+      title: 'SIPOC',
+    };
+    const rpc = vi.fn();
+    mocks.createClient.mockReturnValue({
+      rpc,
+      from: () =>
+        selectChain({
+          data: {
+            id: 'manifest',
+            version: 1,
+            source_ids: [],
+            diwan_references: [ref],
+            previous_manifest_id: null,
+            created_at: '',
+          },
+          error: null,
+        }),
+    });
+    mocks.diwan.mockResolvedValue({
+      sources: [{ ...ref, sourceVersion: 'version:2', status: 'ready' }],
+    });
+    await expect(
+      replaceSourceManifest({
+        orgId: 'org',
+        ownerId: 'owner',
+        sourceIds: [],
+        expectedVersion: 1,
+        diwanSources: [{ corpusId: ref.corpusId, sourceId: ref.sourceId }],
+      }),
+    ).rejects.toMatchObject({ code: 'DIWAN_SOURCE_VERSION_CHANGED' });
+    expect(rpc).not.toHaveBeenCalled();
+  });
 
   it('restores three sources in manifest order with stable identities and visible contradictions', async () => {
     const orgId = '432f141e-f1d3-4ed9-bad3-6768100802a4';

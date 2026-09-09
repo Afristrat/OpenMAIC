@@ -160,6 +160,7 @@ export function GenerationToolbar({
         <div className="w-px h-4 bg-border/60 mx-1" />
 
         <SourceLibraryPopover
+          key={orgId ?? 'no-organization'}
           orgId={orgId}
           clearRequestToken={sourceClearRequestToken}
           onManifestChange={onSourceManifestChange}

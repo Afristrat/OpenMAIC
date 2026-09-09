@@ -17,6 +17,8 @@ import type { PDFProviderId } from '@/lib/pdf/types';
 import { useSettingsStore } from '@/lib/store/settings';
 import type { PdfImage } from '@/lib/types/generation';
 import { cn } from '@/lib/utils';
+import { DiwanSourcePicker } from './diwan-source-picker';
+import type { DiwanReference } from '@/lib/diwan/references';
 
 const MAX_DOCUMENT_SIZE_BYTES = 50 * 1024 * 1024;
 const SUPPORTED_DOCUMENT_EXTENSIONS = new Set(['pdf', 'pptx', 'docx', 'txt', 'md']);
@@ -33,6 +35,7 @@ interface Manifest {
   id: string;
   version: number;
   sourceIds: string[];
+  diwanReferences?: DiwanReference[];
 }
 
 interface IngestionEntry {
@@ -65,6 +68,14 @@ export function SourceLibraryPopover({
   const setPDFProvider = useSettingsStore((state) => state.setPDFProvider);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previousClearToken = useRef(clearRequestToken);
+  const lifecycle = useRef(0);
+  const saving = useRef(false);
+  useEffect(
+    () => () => {
+      lifecycle.current += 1;
+    },
+    [],
+  );
   const [sources, setSources] = useState<LibrarySource[]>([]);
   const [manifest, setManifest] = useState<Manifest | null>(null);
   const [ingestions, setIngestions] = useState<IngestionEntry[]>([]);
@@ -73,6 +84,7 @@ export function SourceLibraryPopover({
   const [isSaving, setIsSaving] = useState(false);
 
   const loadLibrary = useCallback(async () => {
+    const ticket = lifecycle.current;
     if (!orgId) {
       setSources([]);
       setManifest(null);
@@ -90,18 +102,23 @@ export function SourceLibraryPopover({
         libraryResponse.json(),
         manifestResponse.json(),
       ]);
+      if (ticket !== lifecycle.current) return;
       if (!libraryResponse.ok) throw new Error(libraryResult.error || t('sources.loadFailed'));
       if (!manifestResponse.ok) throw new Error(manifestResult.error || t('sources.loadFailed'));
       const nextSources = Array.isArray(libraryResult.sources) ? libraryResult.sources : [];
       const nextManifest = manifestResult.manifest ?? null;
       setSources(nextSources);
       setManifest(nextManifest);
-      onManifestChange(nextManifest?.id, nextManifest?.sourceIds?.length ?? 0);
+      onManifestChange(
+        nextManifest?.id,
+        (nextManifest?.sourceIds?.length ?? 0) + (nextManifest?.diwanReferences?.length ?? 0),
+      );
       onError(null);
     } catch (error) {
+      if (ticket !== lifecycle.current) return;
       onError(error instanceof Error ? error.message : t('sources.loadFailed'));
     } finally {
-      setIsLoading(false);
+      if (ticket === lifecycle.current) setIsLoading(false);
     }
   }, [onError, onManifestChange, orgId, t]);
 
@@ -110,29 +127,41 @@ export function SourceLibraryPopover({
   }, [loadLibrary]);
 
   const persistSelection = useCallback(
-    async (sourceIds: string[], expectedVersion = manifest?.version ?? 0) => {
-      if (!orgId) return null;
+    async (
+      sourceIds: string[],
+      expectedVersion = manifest?.version ?? 0,
+      diwanSources?: Array<Pick<DiwanReference, 'corpusId' | 'sourceId'>>,
+    ) => {
+      if (!orgId || saving.current) return null;
+      const ticket = lifecycle.current;
+      saving.current = true;
       setIsSaving(true);
       try {
         const response = await fetch('/api/source-manifests', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ orgId, sourceIds, expectedVersion }),
+          body: JSON.stringify({ orgId, sourceIds, expectedVersion, diwanSources }),
         });
         const result = await response.json();
+        if (ticket !== lifecycle.current) return null;
         if (!response.ok || !result.manifest) {
           throw new Error(result.error || t('sources.saveFailed'));
         }
         setManifest(result.manifest);
-        onManifestChange(result.manifest.id, result.manifest.sourceIds.length);
+        onManifestChange(
+          result.manifest.id,
+          result.manifest.sourceIds.length + (result.manifest.diwanReferences?.length ?? 0),
+        );
         onError(null);
         return result.manifest as Manifest;
       } catch (error) {
-        onError(error instanceof Error ? error.message : t('sources.saveFailed'));
+        if (ticket !== lifecycle.current) return null;
         await loadLibrary();
+        onError(error instanceof Error ? error.message : t('sources.saveFailed'));
         return null;
       } finally {
-        setIsSaving(false);
+        saving.current = false;
+        if (ticket === lifecycle.current) setIsSaving(false);
       }
     },
     [loadLibrary, manifest?.version, onError, onManifestChange, orgId, t],
@@ -142,10 +171,11 @@ export function SourceLibraryPopover({
     if (previousClearToken.current === clearRequestToken) return;
     previousClearToken.current = clearRequestToken;
     setIngestions([]);
-    void persistSelection([]);
+    void persistSelection([], undefined, []);
   }, [clearRequestToken, persistSelection]);
 
   const ingestFiles = async (files: File[]) => {
+    const ticket = lifecycle.current;
     if (!orgId || files.length === 0) return;
     const validFiles: File[] = [];
     const initialEntries = files.map((file, index): IngestionEntry => {
@@ -243,6 +273,7 @@ export function SourceLibraryPopover({
     );
 
     const accepted = persisted.filter((source): source is LibrarySource => source !== null);
+    if (ticket !== lifecycle.current) return;
     if (accepted.length === 0) return;
     const nextSourceIds = [
       ...new Set([...(manifest?.sourceIds ?? []), ...accepted.map((source) => source.id)]),
@@ -252,7 +283,7 @@ export function SourceLibraryPopover({
   };
 
   const selectedIds = new Set(manifest?.sourceIds ?? []);
-  const selectedCount = selectedIds.size;
+  const selectedCount = selectedIds.size + (manifest?.diwanReferences?.length ?? 0);
 
   useEffect(() => {
     onIngestionBlockChange(
@@ -265,6 +296,8 @@ export function SourceLibraryPopover({
     <Popover>
       <PopoverTrigger asChild>
         <button
+          type="button"
+          disabled={!orgId}
           className={selectedCount > 0 ? activeTriggerClassName : triggerClassName}
           aria-label={t('sources.library')}
         >
@@ -273,7 +306,10 @@ export function SourceLibraryPopover({
           {(isLoading || isSaving) && <LoaderCircle className="size-3 animate-spin" />}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-96 max-w-[calc(100vw-2rem)] p-0">
+      <PopoverContent
+        align="start"
+        className="max-h-[80dvh] w-96 max-w-[calc(100vw-2rem)] overflow-y-auto p-0"
+      >
         <div className="flex items-center gap-2 border-b px-3 py-2">
           <span className="min-w-0 flex-1 text-sm font-semibold">{t('sources.library')}</span>
           <button
@@ -317,6 +353,7 @@ export function SourceLibraryPopover({
             ref={fileInputRef}
             type="file"
             multiple
+            data-testid="local-source-file-input"
             className="hidden"
             accept=".pdf,.pptx,.docx,.txt,.md"
             onChange={(event) => {
@@ -398,9 +435,9 @@ export function SourceLibraryPopover({
                 <button
                   type="button"
                   key={source.id}
-                  disabled={isSaving}
+                  disabled={isSaving || (!selected && selectedCount >= 20)}
                   className={cn(
-                    'mb-1 flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-xs hover:bg-muted',
+                    'mb-1 flex w-full items-center gap-2 rounded-md px-2 py-2 text-start text-xs hover:bg-muted',
                     selected && 'bg-violet-50 dark:bg-violet-950/25',
                   )}
                   onClick={() =>
@@ -429,6 +466,18 @@ export function SourceLibraryPopover({
             })
           )}
         </div>
+        {orgId && (
+          <DiwanSourcePicker
+            key={orgId}
+            orgId={orgId}
+            selected={manifest?.diwanReferences ?? []}
+            disabled={isSaving || isLoading}
+            remaining={20 - selectedCount}
+            onSelectionChange={async (selection) =>
+              !!(await persistSelection(manifest?.sourceIds ?? [], undefined, selection))
+            }
+          />
+        )}
         <div className="border-t px-3 py-2 text-[10px] text-muted-foreground">
           {t('sources.selectionVersion', { count: selectedCount, version: manifest?.version ?? 0 })}
         </div>

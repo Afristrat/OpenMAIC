@@ -3,6 +3,7 @@ import { uploadedSourceDocument, type SourceDocument } from '@/lib/generation/so
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import type { FormationSourceManifest, OrganizationSource } from '@/lib/supabase/types';
 import type { PdfImage, PdfSourceContent } from '@/lib/types/generation';
+import { DiwanError } from '@/lib/diwan/client';
 import {
   diwanReferences,
   pinDiwanSelection,
@@ -184,6 +185,19 @@ export async function replaceSourceManifest(input: {
       : await pinDiwanSelection(input.orgId, input.diwanSources);
   if (references && references.length + input.sourceIds.length > MAX_SELECTED_SOURCES)
     throw new Error(`At most ${MAX_SELECTED_SOURCES} sources may be selected`);
+  if (references?.length) {
+    const previous = await readLatestSourceManifest(input.orgId, input.ownerId);
+    for (const reference of references) {
+      const pinned = previous?.diwanReferences.find((item) => item.sourceId === reference.sourceId);
+      if (
+        pinned &&
+        (pinned.corpusId !== reference.corpusId ||
+          pinned.sourceVersion !== reference.sourceVersion ||
+          pinned.checksumSha256 !== reference.checksumSha256)
+      )
+        throw new DiwanError(409, 'DIWAN_SOURCE_VERSION_CHANGED');
+    }
+  }
   const { data, error } = await createServiceSupabaseClient().rpc(
     'replace_formation_source_manifest',
     {

@@ -72,9 +72,9 @@ fournisseur, rejet des mutations inter-origines et fichier multipart natif.
    indisponibilité et révocation d’un corpus de recette autorisé.
 4. Gate complet du lot, build et navigateur ; publication vérifiée ensuite.
    Aucun déploiement ni nouveau gate global annoncé pour ce candidat.
-5. L’interface de sélection Diwan reste à raccorder. Le raccordement serveur aux
-   manifestes et à la génération est codé dans le complément ci-dessous, mais
-   sa migration n’est pas encore appliquée durablement.
+5. Le sélecteur, l’import et le suivi Diwan sont maintenant raccordés côté Qalem
+   (complément ci-dessous). Leur recette authentifiée reste ouverte et la
+   migration des manifestes n’est pas encore appliquée durablement.
 
 ## Complément — Alignement et contradictions
 
@@ -95,10 +95,10 @@ aux analyses : aucune autorisation automatique de génération ne doit être
 déduite d’un résultat négatif. Ce défaut de contrat a été signalé à Amine ;
 aucune correction transfrontalière n’a été effectuée.
 
-Point d’intégration identifié : le popover existant utilise
-`formation_source_manifests` et `resolveFormationSources`. Il faudra y conserver
-les références/version/empreinte Diwan, pas recopier des documents complets
-dans Qalem ou remplacer le parcours local déjà opérationnel.
+Point d’intégration retenu : le popover existant utilise
+`formation_source_manifests` et `resolveFormationSources`. Le complément suivant
+y conserve les références/version/empreinte Diwan, sans recopier des documents
+complets dans Qalem ou remplacer le parcours local déjà opérationnel.
 
 ## Complément — Manifestes et génération
 
@@ -147,3 +147,38 @@ SQL et RLS réellement. Documentation consultée :
 stack ou de passerelle n’est effectué.
 
 `passes=false` est conservé. Aucun autre gate du PRD n’est levé automatiquement.
+
+## Complément — Parcours auteur FR/AR/EN
+
+Le popover existant accueille `DiwanSourcePicker` : liste paginée, sélection et
+retrait de références, import multipart et consultation explicite du statut.
+Le compteur et le manifeste restauré incluent les sources locales et Diwan,
+avec vingt sources au total. Les versions des références déjà sélectionnées
+ne sont pas rafraîchies silencieusement lors d’une nouvelle sélection.
+L’absence de configuration affiche une erreur, pas une fausse bibliothèque vide.
+
+Le suivi garde uniquement l’identifiant opaque du job dans sessionStorage,
+par organisation et par onglet, y compris lorsque le panneau est fermé pendant
+la réponse d’import. Ce stockage n’est pas une conservation inter-appareils ;
+le champ manuel permet de consulter un identifiant connu. L’autorisation reste
+contrôlée côté serveur à chaque requête. Aucun nouvel import automatique.
+
+Le composant est réinitialisé au changement d’organisation et ignore les réponses
+de bibliothèque devenues obsolètes après démontage. Le bouton attend une
+organisation disponible. Ponytail : réemploi du popover et de la persistance
+existants, contrôles HTML natifs, aucune dépendance ajoutée.
+
+Session ServeurIA 58387, exit 0 : 18/18 parcours navigateur ciblés, sans retry,
+dont sélection/restauration/génération Diwan FR/AR/EN, direction RTL et parcours
+de sources locales. Réponses API simulées, pas une recette du service Diwan réel.
+Les premières tentatives ont échoué sur l’assertion immédiate d’une case dont
+la persistance est asynchrone : le test attend désormais l’accusé de réception.
+Un échec ultérieur à l’ouverture du panneau français n’a pas été reproduit dans
+la suite de 18 parcours ; sa cause n’est pas établie. Ne pas présenter le
+garde-fou d’organisation comme preuve de correction de cette intermittence.
+
+Vérification finale du complément, session 13788 terminée exit 0 : TypeScript,
+lint global sans avertissement, 53/53 tests ciblés et 4/4 parcours Diwan sans
+retry. Le dernier parcours ferme le panneau avant l’accusé de réception,
+recharge la page, retrouve le job et consulte son statut. Aucun build global,
+déploiement ou appel Diwan authentifié réalisé dans ce complément.
