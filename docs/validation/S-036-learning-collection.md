@@ -1,5 +1,13 @@
 # S-036 — Collecte consentie : serveur et stockage
 
+## Complément : interface de reprise des cours orphelins
+
+GET courses/orphaned : admin réel du tenant actif, client utilisateur soumis à RLS, filtre tenant et owner_id NULL, pages de cinquante ordonnées par UUID, curseur, no-store et délais bornés. Aucun droit supplémentaire accordé. Composant dédié intégré au catalogue suivant Ponytail : réutilisation du bouton de reprise et de la navigation classroom, sans second système de gestion. Liste des brouillons/prêts/archivés, confirmation explicite, erreurs visibles, FR/AR/EN/RTL, aucune génération ni publication automatique. Montage indexé par tenant et annulation des requêtes à la sortie.
+
+ServeurIA, runner avec overlays : quatorze tests API verts ; TypeScript/lint global verts (12966). La première passe navigateur échouait uniquement sur un sélecteur alert ambigu avec l’annonceur Next. Sélecteur limité à la section, puis six Chromium verts sans retry (62569) : catalogue existant, trois langues et reprise non confirmée. API simulées : cette recette ne prouve pas une connexion de bout en bout à la production. Preuve SQL réelle enrichie et ROLLBACK : visibilité du cours prêt et du brouillon sans auteur via rôle authenticated de l’administrateur ; zéro fixture et RPC absent ensuite. Aucun déploiement ni gate global/build. Documentation consultée : [RLS Supabase](https://supabase.com/docs/guides/database/postgres/row-level-security).
+
+Reste explicite : l’interface reprend la responsabilité, mais ne relance pas encore la génération d’un brouillon. Le ClassroomPlan complet n’est pas stocké dans courses.outline ; il faut réconcilier ce parcours sans fabriquer ses objectifs à partir des seules scènes. Fichiers d’import, sessions/suppression et reste du PRD toujours ouverts.
+
 ## Complément : cours orphelins et reprise administrateur
 
 Migration 20260909203617_course_author_erasure.sql : courses/course_imports préservés, attribution retirée et insertion sans auteur refusée. RPC reclaim_orphaned_course invoker réservé au service ; vérification de l’administrateur réel du tenant actif sous verrou, refus de reprise d’un cours encore attribué, import et stage orphelins réattribués. Nouveau manifeste pour l’administrateur reprenant le cours, ancienne version immuable conservée. POST courses/[courseId]/reclaim n’accepte pas d’identité fournie par le client, impose l’origine et valide le résultat.

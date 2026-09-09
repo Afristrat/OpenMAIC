@@ -6,6 +6,7 @@ import { useI18n } from '@/lib/hooks/use-i18n';
 import { useOrganizations } from '@/lib/hooks/use-organizations';
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { OrphanedCourses } from '@/components/courses/orphaned-courses';
 
 interface CatalogCourse {
   id: string;
@@ -179,6 +180,7 @@ export default function CatalogPage() {
           </div>
         </section>
       )}
+      {isAdmin && currentOrg && <OrphanedCourses key={currentOrg.id} orgId={currentOrg.id} />}
     </main>
   );
 }

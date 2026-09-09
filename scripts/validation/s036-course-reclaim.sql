@@ -12,6 +12,7 @@ DECLARE
  import_id uuid;
  manifest_id uuid;
  course_id uuid;
+ draft_id uuid;
  result jsonb;
 BEGIN
  INSERT INTO public.organizations(id,name,status,seat_limit) VALUES(org,'S036 course rollback','active',3);
@@ -22,6 +23,8 @@ BEGIN
  INSERT INTO public.formation_source_manifests(owner_id,org_id,version) VALUES(a,org,1) RETURNING id INTO manifest_id;
  INSERT INTO public.courses(owner_id,org_id,stage_id,title,language,source_kind,import_id,source_manifest_id,status)
    VALUES(a,org,'s036-course-reclaim','Test','fr-FR','imported',import_id,manifest_id,'ready') RETURNING id INTO course_id;
+ INSERT INTO public.courses(owner_id,org_id,title,language,source_kind,status)
+   VALUES(a,org,'Orphaned draft','fr-FR','generated','draft') RETURNING id INTO draft_id;
  BEGIN
    PERFORM public.reclaim_orphaned_course(b,course_id);
    RAISE EXCEPTION 'Live owner takeover accepted';
@@ -32,6 +35,13 @@ BEGIN
  IF NOT EXISTS(SELECT 1 FROM public.courses WHERE id=course_id AND owner_id IS NULL AND source_kind='imported')
    OR NOT EXISTS(SELECT 1 FROM public.course_imports WHERE id=import_id AND owner_id IS NULL)
  THEN RAISE EXCEPTION 'Course or import not preserved'; END IF;
+ PERFORM set_config('request.jwt.claims',json_build_object('sub',b,'role','authenticated')::text,true);
+ SET LOCAL ROLE authenticated;
+ IF (SELECT count(*) FROM public.courses WHERE org_id=org AND owner_id IS NULL AND id IN(course_id,draft_id))<>2
+ THEN RAISE EXCEPTION 'Admin cannot discover ready course and draft via RLS'; END IF;
+ IF EXISTS(SELECT 1 FROM public.courses WHERE org_id='00000000-0036-4000-8000-000000000145' AND owner_id IS NULL AND id IN(course_id,draft_id))
+ THEN RAISE EXCEPTION 'Tenant filter ineffective'; END IF;
+ RESET ROLE;
  BEGIN
    PERFORM public.reclaim_orphaned_course(c,course_id);
    RAISE EXCEPTION 'Learner takeover accepted';

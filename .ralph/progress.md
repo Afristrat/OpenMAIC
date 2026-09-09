@@ -1,5 +1,13 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-036, découverte et reprise dans le catalogue
+
+GET courses/orphaned vérifie l’identité et une appartenance admin réelle au tenant actif, lit avec le client RLS et filtre org_id/owner_id NULL. Pagination par UUID, cinquante lignes et curseur explicite ; brouillons/prêts/archivés inclus. Composant OrphanedCourses intégré au catalogue, indépendant du flag de publication, requêtes annulées au changement de tenant, réponse validée, succès seulement après confirmation. FR/AR/EN ; aucune publication ni génération implicite, erreur visible et actualisation possible.
+
+Session 12966 : quatorze tests API verts, TypeScript et lint global sans avertissement ; cinq Chromium verts et une assertion ambiguë avec l’annonceur Next. Assertion limitée à la section concernée, puis session 62569 exit 0 : six Chromium sans retry, dont FR/AR/EN/RTL et erreur 503. Réseau simulé au navigateur, runner avec overlays ; pas de preuve déployée. SQL réel de reprise enrichi : administrateur authenticated retrouve cours prêt et brouillon après suppression ; filtre tenant contrôlé. BEGIN/ROLLBACK terminé, zéro utilisateur fixture et RPC absent recontrôlés. Aucun changement de RLS/migration dans ce lot.
+
+Prochaine action : reprise de génération des brouillons, avec plan/sources autorisés et garde de propriété avant les appels facturables. Le champ courses.outline conserve les scènes, pas le ClassroomPlan complet : ne pas inventer un plan depuis ce seul champ. Restent imports privés/Storage, agent_configs/jobs, sessions/UI de suppression et autres critères S-036. Aucun passes=true. Mnemo identify_active_project : fetch failed, aucune sauvegarde revendiquée.
+
 ## 9 septembre 2026 — S-036, reprise serveur des cours orphelins
 
 Migration CLI 20260909203617 : courses/course_imports conservés avec auteur nullable après suppression ; auteur obligatoire à la création. RPC service-only invoker avec verrouillage du cours et de l’appartenance : seul un administrateur du tenant actif peut reprendre un cours orphelin. Import et stage orphelins réattribués, nouveau manifeste créé pour cet administrateur sans modifier l’ancienne version. Route POST courses/[courseId]/reclaim : identité vérifiée, origine obligatoire, réponse validée et erreurs opaques.

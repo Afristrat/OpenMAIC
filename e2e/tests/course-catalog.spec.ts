@@ -6,6 +6,11 @@ const CLASSROOM_ID = 'e2e-catalog-classroom';
 const PUBLISHED_CLASSROOM_ID = 'e2e-unpublished-classroom';
 
 test.describe('Catalogue de formations', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.route('**/api/courses/orphaned?*', (route) =>
+      route.fulfill({ json: { courses: [], nextCursor: null } }),
+    );
+  });
   test('affiche la formation publiée de l’organisation et rejoint sa classroom', async ({
     page,
   }) => {
