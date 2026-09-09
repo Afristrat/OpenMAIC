@@ -217,7 +217,7 @@ export interface Course {
 export interface OrganizationSource {
   id: string;
   org_id: string;
-  owner_id: string;
+  owner_id: string | null;
   name: string;
   mime_type: string;
   size_bytes: number;
@@ -234,7 +234,7 @@ export interface OrganizationSource {
 export interface FormationSourceManifest {
   id: string;
   org_id: string;
-  owner_id: string;
+  owner_id: string | null;
   version: number;
   source_ids: string[];
   diwan_references?: import('@/lib/diwan/references').DiwanReference[];
@@ -338,22 +338,15 @@ export type CourseInsert = Pick<
 
 export type OrganizationSourceInsert = Pick<
   OrganizationSource,
-  | 'org_id'
-  | 'owner_id'
-  | 'name'
-  | 'mime_type'
-  | 'size_bytes'
-  | 'content_hash'
-  | 'parser_id'
-  | 'text_content'
-> &
-  Partial<Pick<OrganizationSource, 'images' | 'status' | 'rejection_reason'>>;
+  'org_id' | 'name' | 'mime_type' | 'size_bytes' | 'content_hash' | 'parser_id' | 'text_content'
+> & { owner_id: string } & Partial<
+    Pick<OrganizationSource, 'images' | 'status' | 'rejection_reason'>
+  >;
 
 export type FormationSourceManifestInsert = Pick<
   FormationSourceManifest,
-  'org_id' | 'owner_id' | 'version' | 'source_ids'
-> &
-  Partial<Pick<FormationSourceManifest, 'previous_manifest_id'>>;
+  'org_id' | 'version' | 'source_ids'
+> & { owner_id: string } & Partial<Pick<FormationSourceManifest, 'previous_manifest_id'>>;
 
 export type ClassroomTemplateInsert = Pick<ClassroomTemplate, 'name' | 'sector' | 'requirements'> &
   Partial<Omit<ClassroomTemplate, 'id' | 'name' | 'sector' | 'requirements' | 'created_at'>>;

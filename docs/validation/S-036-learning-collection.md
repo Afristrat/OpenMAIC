@@ -1,5 +1,11 @@
 # S-036 — Collecte consentie : serveur et stockage
 
+## Complément : sources et manifestes conservés
+
+Migration CLI 20260909203142_organization_source_author_erasure.sql, après la candidate Diwan 20260909121728. Retrait de l’auteur sans destruction des sources ni des versions de manifeste ; création de source sans auteur toujours refusée. Triggers invoker, search_path vide, exécution publique révoquée ; exception de mutation limitée au profil réellement supprimé et à la seule attribution. Les types de lecture admettent null, ceux d’insertion exigent un auteur.
+
+scripts/validation/s036-source-author-erasure.sql exécuté sur PostgreSQL réel sous rôle Auth, dans BEGIN/ROLLBACK : comparaison du contenu, accès du membre restant et exclusion après retrait, manifeste toujours immuable. Aucun utilisateur persistant, ancienne FK CASCADE recontrôlée. TypeScript/lint global verts, 28246 exit 0. Quatre tests de résolution verts après formatage, dont source sans auteur utilisée dans une sélection courante. Aucun navigateur ni déploiement. La reprise d’un ancien manifeste dans resolveFormationSources demeure limitée à son owner_id : à traiter avec l’autorisation de reprise du cours, pas en ouvrant aveuglément tous les manifestes au client. Advisors complets et gate global restent ouverts.
+
 ## Complément : acteurs des transmissions
 
 Migration 20260909202303 : retrait des FK personnelles par SET NULL sous condition de profil réellement absent ; les nouvelles transmissions restent liées à deux membres du tenant. API détail sans recherche de profil nul, libellé neutre traduit FR/AR/EN et types distinguant lecture nullable/création obligatoire. Le lecteur utilise une section nommée, dans le main du layout existant. Worker inspecté : artefact filigrané par watermark_id, sans dépendance aux champs d’identité.

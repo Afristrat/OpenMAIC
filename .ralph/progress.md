@@ -1,5 +1,13 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-036, bibliothèque préservée après départ de l’auteur
+
+Migration CLI 20260909203142 : organization_sources et formation_source_manifests passent à SET NULL ; insertion de source sans auteur refusée. Les deux triggers de manifeste (intégrité et références Diwan) acceptent uniquement le retrait du profil disparu, tous les autres champs inchangés. La migration dépend de 20260909121728 Diwan. Types Row nullables et Insert stricts. Aucune modification de RLS ni de permission de lecture.
+
+Preuve SQL réelle sous supabase_auth_admin et ROLLBACK : source et manifeste conservés hors auteur/horodatage source, membre restant autorisé, membre retiré exclu, mutation du manifeste refusée. Zéro utilisateur de fixture et FK de production encore CASCADE recontrôlés. TypeScript/lint global 28246 exit 0 ; quatre tests de résolution verts, dont une source sans auteur dans un manifeste courant. Format TypeScript corrigé par Prettier. Pas de recette navigateur, advisor complet, build/gate global ni déploiement.
+
+Reste important : resolveFormationSources filtre encore les manifestes par owner_id ; ne pas l’élargir sans rattachement au cours et autorisation explicite dans le service. Les sources conservées sont réutilisables dans une nouvelle sélection, mais la reprise d’un ancien cours nécessite le traitement coordonné des courses/course_imports. Ensuite agent_configs, jobs, Storage, sessions, UI et autres critères S-036. Aucun passes=true.
+
 ## 9 septembre 2026 — S-036, acteurs des transmissions détachables
 
 Migration CLI 20260909202303 : sender/recipient nullables lors de la suppression du profil, exception étroite dans le trigger invoker d’appartenance. Création sans partie et retrait d’un acteur vivant refusés. RLS inchangée : la partie restante voit la transmission, un tiers et le compte supprimé ne la voient pas. Worker inspecté : filigrane fondé sur watermark_id, pas sur une identité supprimée. API détail ne recherche plus de profil nul ; nom indisponible traduit FR/AR/EN, types Row nullables et Insert toujours stricts. Double main détecté au navigateur et remplacé par une section nommée dans le composant.

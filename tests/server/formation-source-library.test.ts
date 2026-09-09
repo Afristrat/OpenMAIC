@@ -83,7 +83,7 @@ describe('formation source resolution', () => {
       {
         id: 'source-c',
         org_id: orgId,
-        owner_id: ownerId,
+        owner_id: null, // A tenant source survives deletion of its uploader.
         name: 'Annexe.md',
         mime_type: 'text/markdown',
         size_bytes: 80,
