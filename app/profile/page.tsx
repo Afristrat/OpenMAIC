@@ -20,7 +20,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
-import { KeyRound, Trash2, Loader2, Mail, User, Save, Check } from 'lucide-react';
+import { KeyRound, Trash2, Loader2, Mail, User, Save, Check, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { RichProfileSection } from '@/components/profile/rich-profile-section';
 import { TelemetryConsentBanner } from '@/components/telemetry-consent-banner';
@@ -292,6 +292,26 @@ export default function ProfilePage(): React.ReactElement {
 
         {/* Actions */}
         <TelemetryConsentBanner inline />
+        <section aria-labelledby="account-export-title" className="space-y-3">
+          <h2 id="account-export-title" className="text-lg font-medium">
+            {t('profile.exportTitle')}
+          </h2>
+          <p id="account-export-description" className="text-sm text-muted-foreground">
+            {t('profile.exportDescription')}
+          </p>
+          {/* Native download streams to disk without buffering the entire export in JavaScript. */}
+          <Button asChild variant="outline" className="gap-2">
+            <a
+              href="/api/account/export"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-describedby="account-export-description"
+            >
+              <Download className="size-4" aria-hidden="true" />
+              {t('profile.exportDownload')}
+            </a>
+          </Button>
+        </section>
         <div className="flex flex-wrap gap-3 pt-4 border-t border-border">
           <Button variant="outline" onClick={() => setShowPasswordDialog(true)} className="gap-2">
             <KeyRound className="size-4" />

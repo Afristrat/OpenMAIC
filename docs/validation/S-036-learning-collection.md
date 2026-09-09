@@ -1,5 +1,11 @@
 # S-036 — Collecte consentie : serveur et stockage
 
+## Complément : téléchargement depuis le profil
+
+Lien natif vers l’API d’export, sans identifiant client, sans prefetch ni Buffer/Blob de l’export côté application. Content-Disposition du serveur décide du téléchargement ; l’erreur reste consultable dans une nouvelle fenêtre et le profil demeure disponible. Textes FR/AR/EN indiquent explicitement que les médias et l’inventaire intégral du produit ne sont pas inclus.
+
+99895 : quatre tests API verts ; E2E initial annulé, second essai 51525 arrêté intentionnellement après diagnostic d’interception de popup. Simulation corrigée au contexte navigateur, attribut download forcé retiré. 65602 exit 0 : quatre Chromium avec fichier effectivement reçu et relu (JSON/UTF-8), nom serveur, absence de paramètres/préchargement, FR/AR/EN/RTL et erreur 503 séparée. 88964 exit 0 : TypeScript/lint global et Prettier. APIs simulées, pas d’export réel ou déploiement, pas de gate global. Ponytail : téléchargement natif sans dépendance. [Interception des requêtes de nouvelles fenêtres](https://playwright.dev/docs/api/class-page#page-route).
+
 ## Complément : suppression depuis le profil
 
 L’ancien updateUser(data.deleted) sans suppression a été retiré. Confirmation utilisateur → DELETE serveur → validation stricte success/accountDeleted → purge outbox du compte, profil local réinitialisé, fermeture locale puis redirection. Échec serveur ou réponse malformée : dialogue conservé, erreur traduite, aucune purge locale. Requête en cours verrouillée, délai 30 s sans retry automatique. Échec local après suppression : avertissement distinct, aucune nouvelle demande destructive. Textes FR/AR/EN corrigés pour les ressources partagées et fichiers différés.

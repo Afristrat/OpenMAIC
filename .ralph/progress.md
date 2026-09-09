@@ -1,5 +1,11 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-036, export depuis le profil
+
+Section FR/AR/EN raccordée au GET /api/account/export. Lien natif dans une nouvelle fenêtre, téléchargement décidé par Content-Disposition serveur ; aucune récupération Blob/JSON intégrale côté application et aucun succès affiché avant la fin. Description accessible précisant les sections couvertes et l’exclusion des médias/inventaire intégral. Aucun identifiant fourni par le client. Le profil reste ouvert en cas de réponse d’erreur.
+
+Quatre tests API verts dans 99895 ; premier E2E annulé avec download forcé puis second essai interrompu explicitement (51525) après identification d’une interception limitée à la page et non à la nouvelle fenêtre. Correction : Content-Disposition natif, simulation browserContext.route. 65602 exit 0 : quatre Chromium, téléchargement relu octet/contenu JSON en FR/AR/EN, RTL, absence de préchargement et HTTP 503 visible sans quitter le profil. 88964 exit 0 : TypeScript et lint global, Prettier. Réseau simulé, aucun export réel de données utilisateur, migration ou déploiement. Ponytail : lien natif, pas de tampon applicatif supplémentaire. Restent inventaire intégral de l’export, Storage/imports, sessions réelles et autres critères S-036. Aucun passes=true.
+
 ## 9 septembre 2026 — S-036, suppression du compte depuis le profil
 
 Faux succès retiré : l’ancien bouton mettait deleted dans user_metadata sans supprimer le compte. Le dialogue appelle désormais DELETE /api/account/delete sans identifiant client, exige success=true et accountDeleted=true, reste ouvert en cas d’échec/accusé invalide et empêche une seconde requête pendant l’attente. Délai client 30 s, sans rejeu automatique. Après confirmation uniquement : purge de la file d’observations du compte, remise à zéro du profil local, signOut local contrôlé et redirection auth. Une erreur de nettoyage local est distincte d’un échec de suppression serveur. Textes FR/AR/EN précisent conservation des ressources partagées et nettoyage différé ; aucune promesse d’effacement intégral ou de révocation immédiate des JWT.
