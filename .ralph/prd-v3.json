@@ -4498,7 +4498,7 @@
       },
       "sourceDependencies": ["S-022"],
       "dependencies": ["S0-011", "U-021"],
-      "gap": "collectPedagogyData sans appelant ; un schéma existant ne prouve aucune collecte utile.",
+      "gap": "2026-09-09 : collectPedagogyData appelé par POST learning-observations ; RPC candidat verrouillant consentement et tenant, pseudonyme privé effaçable et agrégats de rapports corrigés. Preuve SQL réelle sous ROLLBACK et tests ciblés dans docs/validation/S-036-learning-collection.md. Restent producteur navigateur, époque consentement, rétention, export/suppression compte, concurrence, gate global et publication. Aucune collecte réelle activée.",
       "evidence": ["lib/telemetry/pedagogy-collector.ts:74"],
       "acceptance": [
         "lib/telemetry/pedagogy-collector.ts",

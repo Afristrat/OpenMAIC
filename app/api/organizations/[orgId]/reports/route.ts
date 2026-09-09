@@ -7,6 +7,7 @@
 
 import { NextRequest } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 import type { OrgMemberRole } from '@/lib/supabase/types';
 import { createInstitutionalReportPdf } from '@/lib/reports/pdf';
@@ -131,9 +132,12 @@ export async function GET(
   // 5. Fetch telemetry data
   let telemetry: Array<{ stage_id: string; completion_rate: number | null }> = [];
   if (allStageIds.length > 0) {
-    let telemetryQuery = supabase
+    // Telemetry rows are service-only. Authorization above precedes this query;
+    // the explicit tenant filter prevents shared/transferred stages leaking data.
+    let telemetryQuery = createServiceSupabaseClient()
       .from('pedagogy_telemetry')
       .select('stage_id, completion_rate')
+      .eq('org_id', orgId)
       .in('stage_id', allStageIds);
     if (dateFrom) {
       telemetryQuery = telemetryQuery.gte('created_at', dateFrom);
@@ -141,7 +145,8 @@ export async function GET(
     if (dateTo) {
       telemetryQuery = telemetryQuery.lte('created_at', dateTo);
     }
-    const { data } = await telemetryQuery.limit(10000);
+    const { data, error } = await telemetryQuery.limit(10000);
+    if (error) return apiError(API_ERROR_CODES.INTERNAL_ERROR, 503, 'Learning report unavailable');
     telemetry = data ?? [];
   }
 
@@ -182,7 +187,7 @@ export async function GET(
         stageScores.length > 0 ? stageScores.reduce((a, b) => a + b, 0) / stageScores.length : 0,
       completion_rate:
         stageCompletions.length > 0
-          ? stageCompletions.reduce((a, b) => a + b, 0) / stageCompletions.length
+          ? (100 * stageCompletions.reduce((a, b) => a + b, 0)) / stageCompletions.length
           : 0,
     };
   });
@@ -191,7 +196,7 @@ export async function GET(
     totalLearners,
     activeClassrooms,
     avgScore: Math.round(avgScore * 10) / 10,
-    completionRate: Math.round(overallCompletionRate * 10) / 10,
+    completionRate: Math.round(overallCompletionRate * 1000) / 10,
   };
 
   if (format === 'csv') {

@@ -1,43 +1,53 @@
 // =============================================================================
 // Qalem — Pedagogy Genome Data Collector
-// Collects anonymized session telemetry for the Pedagogy Genome pipeline.
+// Collects consented, pseudonymized learning observations.
 // =============================================================================
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { z } from 'zod';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-export interface PedagogySession {
-  userHash: string;
-  stageId: string;
-  sceneSequence: string[];
-  sceneDurations: number[];
-  quizScores: number[];
-  completionRate: number;
-  totalDuration: number;
-  subjectTags: string[];
-  language: string;
-  level: string;
-  agentCount: number;
-}
+export const learningSessionSchema = z
+  .object({
+    sessionId: z.string().uuid(),
+    stageId: z.string().regex(/^[a-zA-Z0-9_-]{1,128}$/),
+    sceneSequence: z
+      .array(z.enum(['slide', 'quiz', 'interactive', 'pbl', 'plugin']))
+      .min(1)
+      .max(256),
+    sceneDurations: z.array(z.number().int().min(0).max(86400)).min(1).max(256),
+    quizScores: z.array(z.number().min(0).max(1)).max(512),
+    completionRate: z.number().min(0).max(1),
+    totalDuration: z.number().int().min(0).max(86400),
+    subjectTags: z.array(z.string().max(100)).max(20),
+    language: z.enum(['fr-FR', 'ar-MA', 'en-US']),
+    level: z.enum(['beginner', 'intermediate', 'advanced']),
+    agentCount: z.number().int().min(0).max(32),
+    actionCounts: z
+      .object({
+        play: z.number().int().min(0).max(10000),
+        pause: z.number().int().min(0).max(10000),
+        seek: z.number().int().min(0).max(10000),
+      })
+      .strict(),
+  })
+  .strict()
+  .refine(
+    (session) => session.sceneSequence.length === session.sceneDurations.length,
+    'Scene measures must align',
+  );
+
+export type PedagogySession = z.infer<typeof learningSessionSchema>;
 
 // ---------------------------------------------------------------------------
-// Anonymization
+// Pseudonymization
 // ---------------------------------------------------------------------------
 
-/**
- * Hash a user ID with the configured salt using SHA-256.
- * Uses the Web Crypto API (available in Node 18+ and all modern browsers).
- */
-export async function hashUserId(userId: string): Promise<string> {
-  const salt = process.env.TELEMETRY_HASH_SALT ?? '';
-  const data = new TextEncoder().encode(`${userId}:${salt}`);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-}
+// The database creates a random hashed subject per user/organization. Its private
+// mapping is erased on withdrawal; a raw user ID never enters the observation.
 
 // ---------------------------------------------------------------------------
 // Supabase service client (server-side only)
@@ -66,32 +76,43 @@ function getServiceClient(): SupabaseClient {
 // ---------------------------------------------------------------------------
 
 /**
- * Persist an anonymized pedagogy session to the database.
- * Called at the end of a classroom session when the user has given consent.
+ * Persist a validated learning observation. The actor must come from requireAuth.
+ * Consent and tenant membership are checked under lock by the database RPC.
  *
  * Uses the Supabase service role — this function must only run server-side.
  */
-export async function collectPedagogyData(session: PedagogySession): Promise<void> {
+export async function collectPedagogyData(
+  actorId: string,
+  input: PedagogySession,
+): Promise<boolean> {
+  z.string().uuid().parse(actorId);
+  const session = learningSessionSchema.parse(input);
   const supabase = getServiceClient();
 
-  const { error } = await supabase.from('pedagogy_telemetry').insert({
-    user_hash: session.userHash,
-    stage_id: session.stageId,
-    scene_sequence: session.sceneSequence,
-    scene_durations: session.sceneDurations,
-    quiz_scores: session.quizScores,
-    completion_rate: session.completionRate,
-    total_duration: session.totalDuration,
-    subject_tags: session.subjectTags,
-    language: session.language,
-    level: session.level,
-    agent_count: session.agentCount,
-  });
+  const { data, error } = await supabase
+    .rpc('record_consented_learning', {
+      p_actor: actorId,
+      p_session: session.sessionId,
+      p_stage: session.stageId,
+      p_payload: {
+        scene_sequence: session.sceneSequence,
+        scene_durations: session.sceneDurations,
+        quiz_scores: session.quizScores,
+        completion_rate: session.completionRate,
+        total_duration: session.totalDuration,
+        subject_tags: session.subjectTags,
+        language: session.language,
+        level: session.level,
+        agent_count: session.agentCount,
+        action_counts: session.actionCounts,
+      },
+    })
+    .abortSignal(AbortSignal.timeout(5000));
 
   if (error) {
-    // Log but do not throw — telemetry must never break the application
-    console.error('[PedagogyCollector] Failed to persist session:', error.message);
+    throw new Error('Learning observation could not be recorded');
   }
+  return data === true;
 }
 
 // ---------------------------------------------------------------------------

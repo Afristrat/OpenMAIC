@@ -1,5 +1,9 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-036, frontière serveur et suppression atomique
+
+POST learning-observations et collectPedagogyData raccordés au RPC candidat record_consented_learning : identité vérifiée, mesures bornées, verrou consentement, organisation active/membre, pseudonyme privé par tenant, déduplication et effacement en cascade au retrait. Migration 20260909185224 créée par CLI et exécutée avec preuve SQL sous ROLLBACK seulement, y compris appels service_role et retrait authenticated. Rapports : filtre tenant serveur, pourcentages corrigés et erreurs visibles. Sessions 45084/53785 exit 0, tests ciblés et TypeScript/lint global verts. Preuve docs/validation/S-036-learning-collection.md. Suite impérative : producteur navigateur/époque de consentement, rétention, compte/export/delete, filtre tenant des consommateurs, concurrence puis gate/publication. Pas de migration durable ni collecte activée, US non close.
+
 ## 9 septembre 2026 — U-021, prérequis de collecte sécurisé
 
 API consentement : identité de session, refus des identifiants client, JSON/origine/taille contrôlés, erreurs de stockage visibles. Bannière montée dans l’application privée, retrait dans le profil, préférence par compte et persistée au serveur, traductions FR/AR/EN sans promesse d’anonymat. Session 71033 exit 0 : TypeScript/lint global et quatre parcours navigateur ciblés. Seize tests API/stockage verts ; preuve SQL réelle accord/refus sous ROLLBACK, RLS active. Voir docs/validation/U-021-consent-boundary.md. Collecteurs apprentissage/discussion encore sans appelants ; xAPI possède déjà son outbox distincte à réconcilier. Aucun déploiement, aucune collecte activée, passes=false conservé. Prochaine implémentation : S-036/S-047, contrôle de consentement atomique et suppression, puis consommateurs de S-037/S-048.

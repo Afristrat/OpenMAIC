@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   createInstitutionalReportPdf: vi.fn().mockResolvedValue(Buffer.from('%PDF-private-free')),
   tableCalls: [] as string[],
   membershipRole: 'admin' as string | null,
+  telemetryFilters: [] as unknown[][],
 }));
 
 function queryResult<T>(result: T) {
@@ -53,7 +54,7 @@ function createSupabaseFixture() {
           {
             user_hash: 'learner-secret-id',
             stage_id: 'stage-1',
-            completion_rate: 75,
+            completion_rate: 0.75,
             total_duration: 600,
           },
         ],
@@ -80,6 +81,18 @@ function createSupabaseFixture() {
 vi.mock('@/lib/supabase/server', () => ({
   createServerSupabaseClient: vi.fn(async () => createSupabaseFixture()),
 }));
+vi.mock('@/lib/supabase/service', () => ({
+  createServiceSupabaseClient: () => ({
+    from: (table: string) => {
+      const query = createSupabaseFixture().from(table);
+      query.eq = (...args: unknown[]) => {
+        mocks.telemetryFilters.push(args);
+        return query;
+      };
+      return query;
+    },
+  }),
+}));
 vi.mock('@/lib/reports/pdf', () => ({
   createInstitutionalReportPdf: mocks.createInstitutionalReportPdf,
 }));
@@ -89,6 +102,7 @@ describe('institutional report privacy boundary', () => {
     vi.clearAllMocks();
     mocks.tableCalls.length = 0;
     mocks.membershipRole = 'admin';
+    mocks.telemetryFilters.length = 0;
   });
 
   it('refuses a user who is not a member of the requested organization', async () => {
@@ -114,6 +128,8 @@ describe('institutional report privacy boundary', () => {
 
     expect(response.status).toBe(200);
     expect(body.metrics.totalLearners).toBe(1);
+    expect(body.metrics.completionRate).toBe(75);
+    expect(mocks.telemetryFilters).toContainEqual(['org_id', 'org-1']);
     expect(body.formations).toEqual([
       {
         stage_id: 'stage-1',
