@@ -11,18 +11,20 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 import type { OrgMemberRole } from '@/lib/supabase/types';
 import { createInstitutionalReportPdf } from '@/lib/reports/pdf';
+import { readReportPages } from '@/lib/reports/read-report-pages';
 
 async function getUserMembership(
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
   orgId: string,
   userId: string,
 ): Promise<{ role: OrgMemberRole } | null> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('org_members')
     .select('role')
     .eq('org_id', orgId)
     .eq('user_id', userId)
-    .single();
+    .maybeSingle();
+  if (error) throw new Error('Membership unavailable');
   return data as { role: OrgMemberRole } | null;
 }
 
@@ -52,6 +54,21 @@ function csvCell(value: string): string {
 
 export async function GET(
   request: NextRequest,
+  context: { params: Promise<{ orgId: string }> },
+): Promise<Response> {
+  try {
+    const response = await readReport(request, context);
+    response.headers.set('Cache-Control', 'private, no-store');
+    return response;
+  } catch {
+    const response = apiError(API_ERROR_CODES.INTERNAL_ERROR, 503, 'Learning report unavailable');
+    response.headers.set('Cache-Control', 'private, no-store');
+    return response;
+  }
+}
+
+async function readReport(
+  request: NextRequest,
   { params }: { params: Promise<{ orgId: string }> },
 ): Promise<Response> {
   const { orgId } = await params;
@@ -74,121 +91,170 @@ export async function GET(
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Insufficient role');
   }
 
-  const { data: organization } = await supabase
+  const signal = AbortSignal.timeout(30000);
+  const { data: organization, error: organizationError } = await supabase
     .from('organizations')
     .select('name')
     .eq('id', orgId)
     .single();
+  if (organizationError || !organization) throw new Error('Organization unavailable');
 
   const url = new URL(request.url);
   const dateFrom = url.searchParams.get('dateFrom');
   const dateTo = url.searchParams.get('dateTo');
   const format = url.searchParams.get('format') ?? 'json';
-  // 1. Get org members (apprenants)
-  const { data: members } = await supabase
-    .from('org_members')
-    .select('user_id, role')
-    .eq('org_id', orgId);
-
-  const learnerIds = (members ?? []).filter((m) => m.role === 'apprenant').map((m) => m.user_id);
-
-  // 2. Get org stages (via shared_classrooms)
-  const { data: sharedClassrooms } = await supabase
-    .from('shared_classrooms')
-    .select('stage_id')
-    .eq('org_id', orgId);
-
-  const orgStageIds = (sharedClassrooms ?? []).map((sc) => sc.stage_id);
-
-  // Also get stages owned by the org
-  const { data: ownedStages } = await supabase.from('stages').select('id').eq('org_id', orgId);
-
-  const allStageIds = [...new Set([...orgStageIds, ...(ownedStages ?? []).map((s) => s.id)])];
-
-  // 3. Get stage details
-  let stageMap: Record<string, string> = {};
-  if (allStageIds.length > 0) {
-    const { data: stages } = await supabase.from('stages').select('id, name').in('id', allStageIds);
-    stageMap = Object.fromEntries((stages ?? []).map((s) => [s.id, s.name]));
+  let totalLearners = 0;
+  for await (const member of readReportPages((from, to) =>
+    supabase
+      .from('org_members')
+      .select('user_id, role', { count: 'exact' })
+      .eq('org_id', orgId)
+      .order('user_id')
+      .range(from, to)
+      .abortSignal(signal),
+  )) {
+    if (member.role === 'apprenant') totalLearners++;
   }
 
+  // 2. Get org stages (via shared_classrooms)
+  const stageIds = new Set<string>();
+  for await (const classroom of readReportPages((from, to) =>
+    supabase
+      .from('shared_classrooms')
+      .select('stage_id', { count: 'exact' })
+      .eq('org_id', orgId)
+      .order('stage_id')
+      .range(from, to)
+      .abortSignal(signal),
+  )) {
+    stageIds.add(classroom.stage_id);
+  }
+
+  // Also get stages owned by the org
+  for await (const stage of readReportPages((from, to) =>
+    supabase
+      .from('stages')
+      .select('id', { count: 'exact' })
+      .eq('org_id', orgId)
+      .order('id')
+      .range(from, to)
+      .abortSignal(signal),
+  ))
+    stageIds.add(stage.id);
+  const allStageIds = [...stageIds].sort();
+
+  // 3. Get stage details
+  const stageMap = new Map<string, string>();
+  for (let index = 0; index < allStageIds.length; index += 100) {
+    const ids = allStageIds.slice(index, index + 100);
+    for await (const stage of readReportPages((from, to) =>
+      supabase
+        .from('stages')
+        .select('id, name', { count: 'exact' })
+        .in('id', ids)
+        .order('id')
+        .range(from, to)
+        .abortSignal(signal),
+    ))
+      stageMap.set(stage.id, stage.name);
+  }
+  if (stageMap.size !== allStageIds.length) throw new Error('Stage details unavailable');
+
   // 4. Fetch quiz results for these stages in the date range
-  let quizResults: Array<{ user_id: string; stage_id: string; score: number | null }> = [];
-  if (allStageIds.length > 0) {
-    let quizQuery = supabase
-      .from('quiz_results')
-      .select('user_id, stage_id, score')
-      .in('stage_id', allStageIds);
-    if (dateFrom) {
-      quizQuery = quizQuery.gte('completed_at', dateFrom);
+  const stats = new Map(
+    allStageIds.map((id) => [
+      id,
+      {
+        learners: new Set<string>(),
+        scoreSum: 0,
+        scoreCount: 0,
+        completionSum: 0,
+        completionCount: 0,
+      },
+    ]),
+  );
+  let scoreSum = 0,
+    scoreCount = 0,
+    completionSum = 0,
+    completionCount = 0;
+  for (let index = 0; index < allStageIds.length; index += 100) {
+    const ids = allStageIds.slice(index, index + 100);
+    for await (const row of readReportPages((from, to) => {
+      let quizQuery = supabase
+        .from('quiz_results')
+        .select('user_id, stage_id, score', { count: 'exact' })
+        .in('stage_id', ids);
+      if (dateFrom) {
+        quizQuery = quizQuery.gte('completed_at', dateFrom);
+      }
+      if (dateTo) {
+        quizQuery = quizQuery.lte('completed_at', dateTo);
+      }
+      return quizQuery.order('id').range(from, to).abortSignal(signal);
+    })) {
+      const stat = stats.get(row.stage_id);
+      if (!stat) throw new Error('Unexpected report stage');
+      stat.learners.add(row.user_id);
+      if (row.score !== null) {
+        stat.scoreSum += row.score;
+        stat.scoreCount++;
+        scoreSum += row.score;
+        scoreCount++;
+      }
     }
-    if (dateTo) {
-      quizQuery = quizQuery.lte('completed_at', dateTo);
-    }
-    const { data } = await quizQuery.limit(10000);
-    quizResults = data ?? [];
   }
 
   // 5. Fetch telemetry data
-  let telemetry: Array<{ stage_id: string; completion_rate: number | null }> = [];
-  if (allStageIds.length > 0) {
+  const service = allStageIds.length ? createServiceSupabaseClient() : null;
+  for (let index = 0; service && index < allStageIds.length; index += 100) {
+    const ids = allStageIds.slice(index, index + 100);
     // Telemetry rows are service-only. Authorization above precedes this query;
     // the explicit tenant filter prevents shared/transferred stages leaking data.
-    let telemetryQuery = createServiceSupabaseClient()
-      .from('pedagogy_telemetry')
-      .select('stage_id, completion_rate')
-      .eq('org_id', orgId)
-      .in('stage_id', allStageIds);
-    if (dateFrom) {
-      telemetryQuery = telemetryQuery.gte('created_at', dateFrom);
+    for await (const row of readReportPages((from, to) => {
+      let telemetryQuery = service
+        .from('pedagogy_telemetry')
+        .select('stage_id, completion_rate', { count: 'exact' })
+        .eq('org_id', orgId)
+        .in('stage_id', ids);
+      if (dateFrom) {
+        telemetryQuery = telemetryQuery.gte('created_at', dateFrom);
+      }
+      if (dateTo) {
+        telemetryQuery = telemetryQuery.lte('created_at', dateTo);
+      }
+      return telemetryQuery.order('id').range(from, to).abortSignal(signal);
+    })) {
+      const stat = stats.get(row.stage_id);
+      if (!stat) throw new Error('Unexpected report stage');
+      if (row.completion_rate !== null) {
+        stat.completionSum += row.completion_rate;
+        stat.completionCount++;
+        completionSum += row.completion_rate;
+        completionCount++;
+      }
     }
-    if (dateTo) {
-      telemetryQuery = telemetryQuery.lte('created_at', dateTo);
-    }
-    const { data, error } = await telemetryQuery.limit(10000);
-    if (error) return apiError(API_ERROR_CODES.INTERNAL_ERROR, 503, 'Learning report unavailable');
-    telemetry = data ?? [];
   }
 
   // ---- Compute metrics ----
 
-  const totalLearners = learnerIds.length;
   const activeClassrooms = allStageIds.length;
 
   // Average score across all quiz results
-  const scores = quizResults.map((qr) => qr.score).filter((s): s is number => s !== null);
-  const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+  const avgScore = scoreCount ? scoreSum / scoreCount : 0;
 
   // Completion rate from telemetry
-  const completionRates = telemetry
-    .map((t) => t.completion_rate)
-    .filter((c): c is number => c !== null);
-  const overallCompletionRate =
-    completionRates.length > 0
-      ? completionRates.reduce((a, b) => a + b, 0) / completionRates.length
-      : 0;
+  const overallCompletionRate = completionCount ? completionSum / completionCount : 0;
 
   // Per-formation stats
   const formationStats: FormationRow[] = allStageIds.map((stageId) => {
-    const stageQuizzes = quizResults.filter((qr) => qr.stage_id === stageId);
-    const stageScores = stageQuizzes.map((qr) => qr.score).filter((s): s is number => s !== null);
-    const uniqueLearners = new Set(stageQuizzes.map((qr) => qr.user_id)).size;
-
-    const stageTelemetry = telemetry.filter((t) => t.stage_id === stageId);
-    const stageCompletions = stageTelemetry
-      .map((t) => t.completion_rate)
-      .filter((c): c is number => c !== null);
+    const stat = stats.get(stageId)!;
 
     return {
       stage_id: stageId,
-      name: stageMap[stageId] ?? stageId,
-      learner_count: uniqueLearners,
-      avg_score:
-        stageScores.length > 0 ? stageScores.reduce((a, b) => a + b, 0) / stageScores.length : 0,
-      completion_rate:
-        stageCompletions.length > 0
-          ? (100 * stageCompletions.reduce((a, b) => a + b, 0)) / stageCompletions.length
-          : 0,
+      name: stageMap.get(stageId)!,
+      learner_count: stat.learners.size,
+      avg_score: stat.scoreCount ? stat.scoreSum / stat.scoreCount : 0,
+      completion_rate: stat.completionCount ? (100 * stat.completionSum) / stat.completionCount : 0,
     };
   });
 

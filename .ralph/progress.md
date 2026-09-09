@@ -1,5 +1,11 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-036, fiabilité des rapports
+
+Pagination ordonnée/count exact pour toutes les lectures de listes, agrégation au fil des pages, erreurs et incohérences refusées en 503 sans données partielles ; scope telemetry org_id conservé. UI : valeurs périmées supprimées, requêtes obsolètes annulées, erreur persistante et exports désactivés. 30948 exit 0 : dix-sept tests dont 10001 observations et plafond serveur inférieur, TypeScript/lint. Avertissements React puis sélecteur E2E ambigu corrigés ; 88781 TypeScript/lint verts et 51464 exit 0 deux Chromium. Pas de déploiement, migration ou clôture. Ponytail/Supabase : pagination native, aucune dépendance.
+
+Point bloquant fonctionnel découvert par lecture réelle de pg_policies : quiz_results_select_own ne renvoie que les scores du compte connecté. Aucun élargissement privilégié effectué car les quiz n’ont pas de provenance tenant. Prochaine action : attribuer les nouveaux résultats au tenant autorisé et corriger l’agrégat sans mélanger les formations partagées ; anciennes lignes non attribuables explicitement distinctes. Les pages ne forment pas un snapshot transactionnel.
+
 ## 9 septembre 2026 — S-036, quiz réellement soumis
 
 Deux parcours ajoutés au contrat navigateur existant : diapositive jouée puis quiz pondéré répondu depuis l’UI, avec ou sans consentement. Score final 0,25, séquence slide/quiz, complétion 1 ; aucune observation avant fin du cours ni après refus. Pas d’événement de score fabriqué, APIs fonctionnelles simulées. 71407 exit 0 : TypeScript/lint globaux, Prettier et neuf Chromium. Aucun changement métier nécessaire ni déploiement ; passes=false conservé. Ponytail : réutilisation du parcours et des frontières de simulation existantes. Prochain point identifié : les requêtes du rapport agrégé ignorent encore certaines erreurs et bornent silencieusement les résultats ; vérifier et corriger avant certification.

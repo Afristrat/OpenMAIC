@@ -1,6 +1,49 @@
 import { test, expect } from '../fixtures/base';
 
 test.describe('Reporting d’ancrage agrégé (S3-009)', () => {
+  test('removes old figures when loading another period fails', async ({
+    page,
+    browserConsoleContract,
+  }) => {
+    await page.addInitScript(() => localStorage.setItem('locale', 'en-US'));
+    let fail = false;
+    browserConsoleContract.expectHttpError('/api/organizations/org-report/reports', 503);
+    await page.route('**/api/organizations/org-report/reports?*', (route) =>
+      route.fulfill({
+        status: fail ? 503 : 200,
+        json: fail
+          ? { success: false }
+          : {
+              success: true,
+              metrics: { totalLearners: 2, activeClassrooms: 1, avgScore: 75, completionRate: 60 },
+              formations: [
+                {
+                  stage_id: 'proof',
+                  name: 'Previous period formation',
+                  learner_count: 2,
+                  avg_score: 75,
+                  completion_rate: 60,
+                },
+              ],
+            },
+      }),
+    );
+    await page.route('**/api/organizations/org-report/anchoring-report', (route) =>
+      route.fulfill({ json: { anchoring: null } }),
+    );
+    await page.goto('/org/org-report/reports');
+    await expect(page.getByText('Previous period formation')).toBeVisible();
+    fail = true;
+    await page.getByRole('combobox').click();
+    await page.getByRole('option').first().click();
+    await expect(
+      page.getByRole('alert').filter({ hasText: 'Reporting data could not be loaded.' }),
+    ).toBeVisible();
+    await expect(page.getByText('Previous period formation')).toHaveCount(0);
+    await expect(page.getByText('75%', { exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /PDF/ })).toBeDisabled();
+    await expect(page.getByRole('button', { name: /CSV/ })).toBeDisabled();
+  });
   test('affiche les indicateurs dans le temps sans donnée individuelle', async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem('locale', 'fr-FR'));
 

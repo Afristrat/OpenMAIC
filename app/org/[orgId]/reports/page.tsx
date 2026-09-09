@@ -82,54 +82,71 @@ export default function ReportsPage() {
   const [formations, setFormations] = useState<FormationRow[]>([]);
   const [anchoring, setAnchoring] = useState<AnchoringMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [datePreset, setDatePreset] = useState<DatePreset>('30d');
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
 
   const fetchReport = useCallback(
-    async (preset: DatePreset) => {
+    async (preset: DatePreset, signal: AbortSignal) => {
       setIsLoading(true);
+      setLoadFailed(false);
+      setMetrics(null);
+      setFormations([]);
+      setAnchoring(null);
+      try {
+        let dateFrom: string;
+        let dateTo: string;
+        if (preset === 'custom' && customFrom && customTo) {
+          dateFrom = new Date(customFrom).toISOString();
+          dateTo = new Date(customTo).toISOString();
+        } else {
+          const range = getDateRange(preset);
+          dateFrom = range.from;
+          dateTo = range.to;
+        }
 
-      let dateFrom: string;
-      let dateTo: string;
-      if (preset === 'custom' && customFrom && customTo) {
-        dateFrom = new Date(customFrom).toISOString();
-        dateTo = new Date(customTo).toISOString();
-      } else {
-        const range = getDateRange(preset);
-        dateFrom = range.from;
-        dateTo = range.to;
+        const params = new URLSearchParams({ dateFrom, dateTo });
+        const res = await fetch(`/api/organizations/${orgId}/reports?${params.toString()}`, {
+          signal,
+        });
+
+        if (!res.ok) {
+          throw new Error('Report unavailable');
+        }
+
+        const json = await res.json();
+        if (signal.aborted) return;
+        setMetrics(json.metrics ?? null);
+        setFormations(json.formations ?? []);
+        const anchoringRes = await fetch(`/api/organizations/${orgId}/anchoring-report`, {
+          signal,
+        });
+        if (anchoringRes.ok) {
+          const anchoringJson = (await anchoringRes.json()) as { anchoring?: AnchoringMetrics };
+          if (!signal.aborted) setAnchoring(anchoringJson.anchoring ?? null);
+        } else {
+          setAnchoring(null);
+        }
+      } catch {
+        if (!signal.aborted) {
+          setMetrics(null);
+          setFormations([]);
+          setAnchoring(null);
+          setLoadFailed(true);
+        }
+      } finally {
+        if (!signal.aborted) setIsLoading(false);
       }
-
-      const params = new URLSearchParams({ dateFrom, dateTo });
-      const res = await fetch(`/api/organizations/${orgId}/reports?${params.toString()}`);
-      const anchoringRes = await fetch(`/api/organizations/${orgId}/anchoring-report`);
-
-      if (!res.ok) {
-        toast.error(t('reports.loadFailed'));
-        setIsLoading(false);
-        return;
-      }
-
-      const json = await res.json();
-      setMetrics(json.metrics ?? null);
-      setFormations(json.formations ?? []);
-      if (anchoringRes.ok) {
-        const anchoringJson = (await anchoringRes.json()) as { anchoring?: AnchoringMetrics };
-        setAnchoring(anchoringJson.anchoring ?? null);
-      } else {
-        setAnchoring(null);
-      }
-      setIsLoading(false);
     },
-    [orgId, customFrom, customTo, t],
+    [orgId, customFrom, customTo],
   );
 
-  /* eslint-disable react-hooks/set-state-in-effect -- Async data loading on mount */
   useEffect(() => {
-    fetchReport(datePreset);
+    const controller = new AbortController();
+    void fetchReport(datePreset, controller.signal);
+    return () => controller.abort();
   }, [datePreset, fetchReport]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleExportCsv = useCallback(async () => {
     const range =
@@ -238,11 +255,11 @@ export default function ReportsPage() {
         )}
 
         <div className="ml-auto flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleExportPdf}>
+          <Button variant="outline" size="sm" onClick={handleExportPdf} disabled={loadFailed}>
             <FileText className="mr-2 h-4 w-4" />
             {t('reports.exportPdf')}
           </Button>
-          <Button variant="outline" size="sm" onClick={handleExportCsv}>
+          <Button variant="outline" size="sm" onClick={handleExportCsv} disabled={loadFailed}>
             <Download className="mr-2 h-4 w-4" />
             {t('reports.exportCsv')}
           </Button>
@@ -250,6 +267,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Metrics Cards */}
+      {loadFailed && <p role="alert">{t('reports.loadFailed')}</p>}
       {metrics && (
         <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
           <MetricCard
@@ -311,7 +329,7 @@ export default function ReportsPage() {
           <Layers className="h-5 w-5" />
           {t('reports.activeClassrooms')}
         </h2>
-        {formations.length === 0 ? (
+        {loadFailed ? null : formations.length === 0 ? (
           <p className="text-muted-foreground">{t('reports.noData')}</p>
         ) : (
           <div className="overflow-x-auto rounded-lg border">

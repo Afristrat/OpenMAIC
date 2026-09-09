@@ -1,5 +1,13 @@
 # S-036 — Collecte consentie : serveur et stockage
 
+## Complément : rapports sans troncature silencieuse
+
+Lectures ordonnées par pages de 100 avec count exact ; progression selon le nombre réellement reçu, donc un plafond serveur inférieur ne termine pas la lecture prématurément. Erreur, compte absent/changeant ou page incohérente : réponse 503 générique, aucun export partiel. Agrégats calculés au fil des pages ; pas de tableau intégral des observations, mais les identifiants uniques nécessaires au comptage restent en mémoire serveur. Métadonnées paginées et filtres de formations découpés par cent. Cache-Control privé/no-store pour tous les formats. Références : [select et comptage Supabase](https://supabase.com/docs/reference/javascript/select).
+
+Interface : anciennes valeurs effacées à chaque chargement, annulation des requêtes obsolètes, erreur persistante traduite et exports désactivés en cas d’échec. 30948 exit 0 : dix-sept tests, TypeScript/lint global. 37977 a détecté deux avertissements React, corrigés ; 88781 passe TypeScript/lint puis détecte un sélecteur de test ambigu avec l’annonceur Next. Sélecteur resserré ; 51464 exit 0 : deux Chromium. APIs simulées, runner avec overlays ; pas de build/gate global, migration ou déploiement.
+
+Lecture PostgreSQL fraîche : quiz_results_select_own impose user_id=auth.uid(). Les scores actuels restent donc ceux visibles par le compte connecté, pas un agrégat organisationnel complet. Ne pas élargir aveuglément au rôle service : quiz_results ne porte pas de provenance tenant et une formation peut être partagée. Prochaine correction : provenance organisationnelle des résultats, collecte et agrégats autorisés correspondants, sans attribution arbitraire des anciennes lignes. Les comptes exacts contrôlés ne constituent pas un snapshot transactionnel des mises à jour concurrentes ; aucune garantie de snapshot n’est revendiquée.
+
 ## Complément : quiz réellement soumis dans Chromium
 
 Le parcours existant couvre désormais une diapositive jouée puis un quiz répondu dans l’interface (aucun événement de score injecté). Deux questions de poids 3 et 1, seule la seconde correcte : observation finale à 0,25, séquence slide/quiz et complétion 1. Aucun envoi avant la sortie vers la fin du cours ; avec consentement refusé, le quiz reste utilisable et aucune observation d’apprentissage n’est envoyée. Les écritures fonctionnelles du quiz sont distinctes de cette collecte.
