@@ -199,4 +199,116 @@ describe('Diwan v1 tenant-scoped adapter', () => {
       message: 'DIWAN_UNAVAILABLE_OR_INVALID',
     });
   });
+  const alignment = {
+    ...envelope,
+    status: 'aligned',
+    coverageScore: 0.8,
+    requestTopic: 'SIPOC',
+    sourceTopics: [{ sourceId: 'source:1', topic: 'SIPOC' }],
+    coveredRequirements: [{ requirement: 'Décrire le SIPOC', evidenceChunkIds: ['chunk:1'] }],
+    missingRequirements: [],
+    conflicts: [],
+    recommendedAction: 'use_reformulated_request',
+    suggestedRequirement: 'Décrire le SIPOC selon la source.',
+  };
+  const alignmentCommand = {
+    operation: 'alignment',
+    corpusId: 'corpus:1',
+    sourceIds: ['source:1', 'source:2'],
+    authorRequest: 'Expliquer le SIPOC',
+  };
+  const finding = {
+    topic: 'Périmètre',
+    explanation: 'Les positions diffèrent.',
+    positions: [
+      { sourceId: 'source:1', chunkIds: ['chunk:1'] },
+      { sourceId: 'source:2', chunkIds: ['chunk:2'] },
+    ],
+  };
+  it('forwards the alignment contract and preserves citations as advisory information', async () => {
+    fetchMock.mockResolvedValue(reply(alignment));
+    await expect(executeDiwanCommand(org, alignmentCommand)).resolves.toMatchObject({
+      advisoryOnly: true,
+      coveredRequirements: alignment.coveredRequirements,
+    });
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      'https://diwan.ai-mpower.com/api/v1/consumers/qalem/alignment',
+    );
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      corpusId: 'corpus:1',
+      sourceIds: ['source:1', 'source:2'],
+      authorRequest: 'Expliquer le SIPOC',
+      expectedLanguage: 'fr-FR',
+    });
+  });
+  it.each([
+    { ...alignment, coveredRequirements: [] },
+    { ...alignment, coverageScore: 1.1 },
+    { ...alignment, sourceTopics: [{ sourceId: 'foreign', topic: 'Autre' }] },
+    { ...alignment, conflicts: [finding] },
+    { ...alignment, status: 'conflicting', conflicts: [finding] },
+    { ...alignment, suggestedRequirement: '' },
+  ])('rejects unsupported or inconsistent alignment claims', async (body) => {
+    fetchMock.mockResolvedValue(reply(body));
+    await expect(executeDiwanCommand(org, alignmentCommand)).rejects.toMatchObject({ status: 502 });
+  });
+  it('requires author arbitration for a supported conflict', async () => {
+    fetchMock.mockResolvedValue(
+      reply({
+        ...alignment,
+        status: 'conflicting',
+        conflicts: [finding],
+        recommendedAction: 'author_arbitration',
+      }),
+    );
+    await expect(executeDiwanCommand(org, alignmentCommand)).resolves.toMatchObject({
+      status: 'conflicting',
+      recommendedAction: 'author_arbitration',
+      advisoryOnly: true,
+    });
+  });
+  it('does not treat no_material_conflict as permission to generate', async () => {
+    fetchMock.mockResolvedValue(
+      reply({ ...envelope, status: 'no_material_conflict', conflicts: [] }),
+    );
+    await expect(
+      executeDiwanCommand(org, {
+        operation: 'conflicts',
+        corpusId: 'corpus:1',
+        sourceIds: ['source:1'],
+      }),
+    ).resolves.toMatchObject({ advisoryOnly: true });
+  });
+  it.each([
+    { conflicts: [] },
+    { conflicts: [{ ...finding, positions: [finding.positions[0], finding.positions[0]] }] },
+    {
+      conflicts: [
+        {
+          ...finding,
+          positions: [finding.positions[0], { sourceId: 'foreign', chunkIds: ['chunk:2'] }],
+        },
+      ],
+    },
+    {
+      conflicts: [
+        {
+          ...finding,
+          positions: [finding.positions[0], { sourceId: 'source:2', chunkIds: ['chunk:1'] }],
+        },
+      ],
+    },
+  ])(
+    'rejects conflicts without distinct authorized sources and citations',
+    async ({ conflicts }) => {
+      fetchMock.mockResolvedValue(reply({ ...envelope, status: 'conflicts_detected', conflicts }));
+      await expect(
+        executeDiwanCommand(org, {
+          operation: 'conflicts',
+          corpusId: 'corpus:1',
+          sourceIds: ['source:1', 'source:2'],
+        }),
+      ).rejects.toMatchObject({ status: 502 });
+    },
+  );
 });

@@ -33,6 +33,20 @@ const evidence = z.object({
   sourceChecksumSha256: z.string().nullable(),
 });
 const sourceIds = z.array(id).min(1).max(100);
+const conflict = z
+  .object({
+    topic: z.string().trim().min(1).max(300),
+    explanation: z.string().trim().min(1).max(1500),
+    positions: z
+      .array(z.object({ sourceId: id, chunkIds: z.array(id).min(1).max(100) }))
+      .min(2)
+      .max(100),
+  })
+  .refine(
+    (value) =>
+      new Set(value.positions.map((position) => position.sourceId)).size >= 2 &&
+      new Set(value.positions.flatMap((position) => position.chunkIds)).size >= 2,
+  );
 export const diwanCommand = z.discriminatedUnion('operation', [
   z.object({ operation: z.literal('status'), jobId: id }).strict(),
   z.object({ operation: z.literal('manifest'), sourceIds }).strict(),
@@ -48,6 +62,16 @@ export const diwanCommand = z.discriminatedUnion('operation', [
     })
     .strict(),
   z.object({ operation: z.literal('revoke'), corpusId: id }).strict(),
+  z
+    .object({
+      operation: z.literal('alignment'),
+      corpusId: id,
+      sourceIds,
+      authorRequest: z.string().trim().min(1).max(16000),
+      expectedLanguage: z.enum(['fr-FR', 'ar-MA', 'en-US']).default('fr-FR'),
+    })
+    .strict(),
+  z.object({ operation: z.literal('conflicts'), corpusId: id, sourceIds }).strict(),
 ]);
 export const diwanListQuery = z
   .object({
@@ -275,6 +299,85 @@ export async function executeDiwanCommand(organizationId: string, input: unknown
     )
       throw new DiwanError(502, 'DIWAN_INVALID_RESPONSE');
     return result;
+  }
+  if (command.operation === 'alignment' || command.operation === 'conflicts') {
+    const scopedConflict = conflict.refine((value) =>
+      value.positions.every((position) => command.sourceIds.includes(position.sourceId)),
+    );
+    const { operation, ...body } = command;
+    if (operation === 'conflicts') {
+      const result = await request(
+        organizationId,
+        '/conflicts',
+        envelope
+          .extend({
+            status: z.enum(['no_material_conflict', 'conflicts_detected']),
+            conflicts: z.array(scopedConflict).max(100),
+          })
+          .refine((value) => value.status !== 'conflicts_detected' || value.conflicts.length > 0),
+        'POST',
+        body,
+      );
+      // v1 also returns no_material_conflict after an analysis failure; never use it as clearance.
+      return { ...result, advisoryOnly: true as const };
+    }
+    const result = await request(
+      organizationId,
+      '/alignment',
+      envelope
+        .extend({
+          status: z.enum(['aligned', 'partially_aligned', 'conflicting', 'insufficient_evidence']),
+          coverageScore: z.number().min(0).max(1),
+          requestTopic: z.string().max(500),
+          sourceTopics: z
+            .array(
+              z.object({
+                sourceId: z
+                  .string()
+                  .max(512)
+                  .refine((value) => value === '' || command.sourceIds.includes(value)),
+                topic: z.string().max(500),
+              }),
+            )
+            .max(100),
+          coveredRequirements: z
+            .array(
+              z.object({
+                requirement: z.string().trim().min(1).max(500),
+                evidenceChunkIds: z.array(id).min(1).max(100),
+              }),
+            )
+            .max(100),
+          missingRequirements: z.array(z.string().max(500)).max(100),
+          conflicts: z.array(scopedConflict).max(100),
+          recommendedAction: z.enum([
+            'use_reformulated_request',
+            'add_or_replace_sources',
+            'author_arbitration',
+          ]),
+          suggestedRequirement: z.string().max(4000),
+        })
+        .refine((value) => {
+          if (value.conflicts.length > 0 || value.status === 'conflicting')
+            return (
+              value.recommendedAction === 'author_arbitration' &&
+              value.conflicts.length > 0 &&
+              value.status !== 'aligned'
+            );
+          if (value.status === 'insufficient_evidence')
+            return value.recommendedAction === 'add_or_replace_sources';
+          return (
+            value.coveredRequirements.length > 0 &&
+            value.coverageScore > 0 &&
+            (value.recommendedAction !== 'use_reformulated_request' ||
+              value.suggestedRequirement.trim().length > 0)
+          );
+        }),
+      'POST',
+      body,
+    );
+    // The v1 response cites chunk IDs but does not include their text; Diwan owns that verification.
+    return { ...result, advisoryOnly: true as const };
   }
   const { operation: _operation, ...body } = command;
   const result = await request(

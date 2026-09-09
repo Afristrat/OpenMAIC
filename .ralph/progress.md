@@ -1,5 +1,11 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S6-003, analyses documentaires câblées à l’API
+
+Les commandes alignment/conflicts sont ajoutées au transport existant et donc à la route auteur. Contrôle de version, schéma, sources autorisées, deux sources/blocs distincts par conflit, exigences citées et arbitrage obligatoire en cas de contradiction. Lecture du service propriétaire : detect_conflicts transforme certaines erreurs d’analyse en no_material_conflict ; le contrat ne restitue pas non plus les extraits avec les citations. Résultats rendus advisoryOnly=true, jamais autorisation automatique de génération. Défaut signalé, aucune mutation Diwan. Session ServeurIA 72557 exit 0 : 37 tests ciblés, TypeScript et lint global verts ; réseau/auth simulés. Aucune clôture ni déploiement.
+
+Suite de la même US : intégrer la sélection au popover existant components/generation/source-library-popover.tsx, aux manifestes persistants et à lib/server/formation-source-library.ts (resolveFormationSources, appelé par generate-classroom/plan). Les sources locales utilisent actuellement des UUID Qalem et du texte stocké ; les références opaques/version/empreinte Diwan doivent être conservées séparément, sans copie de document intégral ni faux manifeste. Jeton interservice et mapping toujours nécessaires à la recette réelle. Ne pas déclarer le parcours auteur déjà livré.
+
 ## 9 septembre 2026 — S6-003, contrat retrouvé et adaptateur candidat
 
 Le mandat « Go alors pour les 21US » autorise le code côté Qalem ; le gate de S6-003 est levé pour ce périmètre seulement. Contrat Diwan Markdown/OpenAPI retrouvé et lu dans le dépôt propriétaire, refus anonyme réel HTTP 401 depuis ServeurIA. Adaptateur et route auteur multi-tenant ajoutés : ingestion multipart, suivi, sources, manifeste, recherche bornée à une liste blanche et révocation. Origine HTTPS fixe, redirections interdites, 15 s, réponse 2 Mio, import 50 Mio et un tampon d’import par processus. Aucun partage de code/base, aucune mutation de Diwan, aucun secret créé ou rotaté. Ponytail : réemploi du contrôle auteur et de Zod, aucune dépendance supplémentaire.

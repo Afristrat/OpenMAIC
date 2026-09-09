@@ -23,9 +23,10 @@ Aucun fichier Diwan modifié ou importé dans Qalem.
 ## Code candidat
 
 - `lib/diwan/client.ts` : ingestion multipart, statut durable, bibliothèque,
-  manifeste, recherche avec liste blanche et révocation du corpus.
+  manifeste, recherche avec liste blanche, révocation du corpus, alignement
+  de la demande et analyse des contradictions.
 - `/api/documents/diwan/[organizationId]` : GET bibliothèque ; POST commande JSON
-  `status`, `manifest`, `retrieve`, `revoke`, ou import multipart.
+  `status`, `manifest`, `retrieve`, `revoke`, `alignment`, `conflicts`, ou import multipart.
 - L’organisation sélectionnée dans le chemin est vérifiée par la session serveur :
   appartenance active et rôle auteur/manager/admin obligatoires, sans exemption
   super-administrateur. Elle sélectionne ensuite un jeton dédié côté serveur.
@@ -72,7 +73,30 @@ fournisseur, rejet des mutations inter-origines et fichier multipart natif.
 4. Gate complet du lot, build et navigateur ; publication vérifiée ensuite.
    Aucun déploiement ni nouveau gate global annoncé pour ce candidat.
 5. Le raccordement à une interface de sélection de sources et aux étapes de
-   génération n’est pas livré par cet adaptateur d’API. Les endpoints d’analyse
-   `/alignment` et `/conflicts` ne sont pas encore exposés côté Qalem.
+   génération n’est pas encore livré par cet adaptateur d’API.
+
+## Complément — Alignement et contradictions
+
+Session ServeurIA 72557 terminée avec code 0 : **37/37 tests ciblés**, TypeScript
+et lint global sans avertissement. Les deux opérations d’analyse utilisent
+le même transport, les mêmes permissions de route et la même liste blanche.
+Les conflits doivent citer au moins deux sources autorisées et deux blocs
+distincts. Une réponse contradictoire sans arbitrage auteur est refusée.
+Une réponse déclarée alignée sans exigence étayée est également refusée.
+
+Limite constatée par lecture du code propriétaire
+`open_notebook/consumers/analysis.py`, fonction `detect_conflicts` : une erreur
+de parsing/analyse peut être transformée en `no_material_conflict` avec une liste
+vide. De plus, les réponses v1 ne joignent pas les extraits aux identifiants de
+blocs cités ; leur authenticité reste une garantie du fournisseur, pas une
+preuve reconstituable par ce client seul. Qalem ajoute donc `advisoryOnly=true`
+aux analyses : aucune autorisation automatique de génération ne doit être
+déduite d’un résultat négatif. Ce défaut de contrat a été signalé à Amine ;
+aucune correction transfrontalière n’a été effectuée.
+
+Point d’intégration identifié : le popover existant utilise
+`formation_source_manifests` et `resolveFormationSources`. Il faudra y conserver
+les références/version/empreinte Diwan, pas recopier des documents complets
+dans Qalem ou remplacer le parcours local déjà opérationnel.
 
 `passes=false` est conservé. Aucun autre gate du PRD n’est levé automatiquement.
