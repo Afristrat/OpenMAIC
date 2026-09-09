@@ -4498,7 +4498,7 @@
       },
       "sourceDependencies": ["S-022"],
       "dependencies": ["S0-011", "U-021"],
-      "gap": "2026-09-09 : producteur navigateur et outbox locale persistante raccordés ; fermeture/réouverture, rejeu identique et abandon après changement d’accord prouvés dans Chromium. Purge locale au retrait, comptes séparés, schéma partagé et erreurs de stockage visibles. Sept parcours de collecte et quatre de consentement FR/AR/EN verts, 35 tests ciblés et TS/lint global. Restent purge serveur, contexte serveur, export/suppression compte, concurrence, filtre tenant des consommateurs, recette quiz, gate global et publication. Voir docs/validation/S-036-learning-collection.md, notamment les limites de stockage navigateur. Aucune collecte réelle activée.",
+      "gap": "2026-09-09 : producteur navigateur/outbox et purge serveur candidate raccordés. Purge des nouvelles mesures liées après 180 jours, lots 1000, worker horaire borné ; SQL réel sous ROLLBACK valide frontière, déduplication de purge, lot 1000+1 et accès service seul. Tests worker et TS/lint verts (9957). Restent export/suppression compte, contexte serveur, concurrence, filtre tenant consommateurs, recette quiz, traitement des anciennes lignes non liées, gate global et publication. Voir docs/validation/S-036-learning-collection.md et limites navigateur. Aucune collecte réelle activée, migrations non appliquées durablement.",
       "evidence": ["lib/telemetry/pedagogy-collector.ts:74"],
       "acceptance": [
         "lib/telemetry/pedagogy-collector.ts",
