@@ -1,82 +1,117 @@
-// ---------------------------------------------------------------------------
-// GET /api/account/export
-// Export all user data as JSON (CNDP/RGPD data portability).
-// Returns a downloadable JSON file with data from all tables.
-// ---------------------------------------------------------------------------
-
 import { NextResponse, type NextRequest } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { z } from 'zod';
 import { requireAuth } from '@/lib/api/auth';
-import { createLogger } from '@/lib/logger';
+import { createServiceSupabaseClient } from '@/lib/supabase/service';
 
-const log = createLogger('AccountExport');
+const sections = [
+  'profiles',
+  'org_members',
+  'stages',
+  'scenes',
+  'quiz_results',
+  'review_cards',
+  'certificates',
+  'payments',
+  'usage_records',
+  'telemetry_consent',
+  'pedagogy_telemetry',
+] as const;
+const pageSchema = z
+  .array(
+    z
+      .object({
+        cursor: z.string().min(1),
+        value: z.record(z.string(), z.unknown()),
+      })
+      .strict(),
+  )
+  .max(100);
 
-function getSupabaseAdmin(): ReturnType<typeof createClient> | null {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return null;
-  return createClient(url, key);
-}
-
-// Tables to export: [table_name, column_name]
-const TABLES_TO_EXPORT: [string, string][] = [
-  ['profiles', 'id'],
-  ['org_members', 'user_id'],
-  ['stages', 'user_id'],
-  ['scenes', 'user_id'],
-  ['quiz_results', 'user_id'],
-  ['review_cards', 'user_id'],
-  ['certificates', 'user_id'],
-  ['payments', 'user_id'],
-  ['usage_records', 'user_id'],
-  ['telemetry_consent', 'user_id'],
-  ['pedagogy_telemetry', 'user_id'],
-];
-
+/** Personal JSON export of the explicitly listed sections; not a database backup. */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const auth = await requireAuth(request);
   if (auth.response) return auth.response;
-
-  const userId = auth.user.id;
-  const supabase = getSupabaseAdmin();
-
-  if (!supabase) {
-    return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
-  }
-
+  const user = auth.user;
+  const cancelled = new AbortController();
   try {
-    const exportData: Record<string, unknown> = {
-      exportedAt: new Date().toISOString(),
-      userId,
-      email: auth.user.email,
-    };
-
-    for (const [table, column] of TABLES_TO_EXPORT) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Untyped service-role client for dynamic table access
-      const { data, error } = await (supabase as any).from(table).select('*').eq(column, userId);
-
-      if (error) {
-        // Table may not exist — skip gracefully
-        log.warn(`Export: skipping ${table} — ${error.message}`);
-        exportData[table] = { error: 'Table not accessible' };
-      } else {
-        exportData[table] = data ?? [];
+    const service = createServiceSupabaseClient();
+    const read = async (section: string, cursor: string | null) => {
+      const result = await service
+        .rpc('read_account_export_page', {
+          p_actor: user.id,
+          p_section: section,
+          p_after: cursor,
+        })
+        .abortSignal(
+          AbortSignal.any([request.signal, cancelled.signal, AbortSignal.timeout(5000)]),
+        );
+      if (result.error) throw new Error('Account export unavailable');
+      const page = pageSchema.parse(result.data);
+      let previous = cursor;
+      for (const row of page) {
+        if (previous !== null && row.cursor <= previous) throw new Error('Invalid export cursor');
+        previous = row.cursor;
       }
+      return page;
+    };
+    // Detect an unavailable schema/backend before sending successful response headers.
+    const firstPage = await read(sections[0], null);
+    async function* chunks(): AsyncGenerator<string> {
+      const metadata = {
+        exportedAt: new Date().toISOString(),
+        userId: user.id,
+        email: user.email,
+        includedSections: sections,
+      };
+      yield JSON.stringify(metadata).slice(0, -1);
+      for (const section of sections) {
+        yield `,${JSON.stringify(section)}:[`;
+        let cursor: string | null = null;
+        let first = true;
+        let page = section === sections[0] ? firstPage : await read(section, cursor);
+        while (true) {
+          for (const row of page) {
+            yield (first ? '' : ',') + JSON.stringify(row.value);
+            first = false;
+          }
+          if (page.length < 100) break;
+          cursor = page[page.length - 1].cursor;
+          page = await read(section, cursor);
+        }
+        yield ']';
+      }
+      yield `,"complete":true,"completedAt":${JSON.stringify(new Date().toISOString())}}`;
     }
-
-    const jsonString = JSON.stringify(exportData, null, 2);
-    const filename = `qalem-data-export-${userId.slice(0, 8)}-${Date.now()}.json`;
-
-    return new NextResponse(jsonString, {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Disposition': `attachment; filename="${filename}"`,
+    const iterator = chunks();
+    const encoder = new TextEncoder();
+    const body = new ReadableStream<Uint8Array>({
+      async pull(controller) {
+        try {
+          const chunk = await iterator.next();
+          if (chunk.done) controller.close();
+          else controller.enqueue(encoder.encode(chunk.value));
+        } catch {
+          cancelled.abort();
+          controller.error(new Error('Account export interrupted'));
+        }
+      },
+      async cancel() {
+        cancelled.abort();
+        await iterator.return(undefined);
       },
     });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    log.error('Account export error:', message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return new NextResponse(body, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store',
+        'Content-Disposition': `attachment; filename="qalem-data-export-${auth.user.id.slice(0, 8)}-${Date.now()}.json"`,
+      },
+    });
+  } catch {
+    cancelled.abort();
+    return NextResponse.json(
+      { error: 'Account export unavailable' },
+      { status: 503, headers: { 'Cache-Control': 'no-store' } },
+    );
   }
 }
