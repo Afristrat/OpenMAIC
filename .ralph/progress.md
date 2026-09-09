@@ -1,5 +1,9 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-036, refus du rejeu après retrait/réaccord
+
+Migration candidate enrichie de collection_epoch, version serveur imposée par trigger et vérifiée atomiquement dans record_consented_learning. GET consentement expose cette version ; schéma et collecteur la requièrent. SQL réel sous ROLLBACK : ancien envoi refusé après retrait/réaccord, restauration forcée de version impossible, accord inchangé stable, suppression via authenticated conservée. Session 51447 exit 0 : 24 tests ciblés + TypeScript/lint global. Producteur navigateur NON raccordé encore ; PlaybackChromeRoot inspecté, points directs onComplete/onModeChange et quiz/sync identifiés. Ne pas confondre fin de génération et fin d’apprentissage. pg_cron absent : prochaine purge à raccorder au worker. Pas de déploiement ni de clôture.
+
 ## 9 septembre 2026 — S-036, frontière serveur et suppression atomique
 
 POST learning-observations et collectPedagogyData raccordés au RPC candidat record_consented_learning : identité vérifiée, mesures bornées, verrou consentement, organisation active/membre, pseudonyme privé par tenant, déduplication et effacement en cascade au retrait. Migration 20260909185224 créée par CLI et exécutée avec preuve SQL sous ROLLBACK seulement, y compris appels service_role et retrait authenticated. Rapports : filtre tenant serveur, pourcentages corrigés et erreurs visibles. Sessions 45084/53785 exit 0, tests ciblés et TypeScript/lint global verts. Preuve docs/validation/S-036-learning-collection.md. Suite impérative : producteur navigateur/époque de consentement, rétention, compte/export/delete, filtre tenant des consommateurs, concurrence puis gate/publication. Pas de migration durable ni collecte activée, US non close.

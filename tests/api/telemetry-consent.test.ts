@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 const mocks = vi.hoisted(() => ({ auth: vi.fn(), read: vi.fn(), write: vi.fn() }));
 vi.mock('@/lib/api/auth', () => ({ requireAuth: mocks.auth }));
 vi.mock('@/lib/telemetry/pedagogy-collector', () => ({
-  readConsent: mocks.read,
+  readConsentState: mocks.read,
   setConsent: mocks.write,
 }));
 import { GET, POST } from '@/app/api/telemetry-consent/route';
@@ -27,7 +27,7 @@ describe('consent identity and persistence boundary', () => {
     vi.clearAllMocks();
     vi.stubEnv('NEXT_PUBLIC_APP_URL', 'http://localhost');
     mocks.auth.mockResolvedValue({ user: { id: 'session-user' } });
-    mocks.read.mockResolvedValue(null);
+    mocks.read.mockResolvedValue({ choice: null, epoch: null });
     mocks.write.mockResolvedValue(undefined);
   });
   it.each([GET, POST])('requires a verified session', async (handler) => {
@@ -37,9 +37,9 @@ describe('consent identity and persistence boundary', () => {
     expect(mocks.write).not.toHaveBeenCalled();
   });
   it.each([null, false, true])('distinguishes stored choice %s', async (choice) => {
-    mocks.read.mockResolvedValue(choice);
+    mocks.read.mockResolvedValue({ choice, epoch: null });
     const response = await GET(request());
-    expect(await response.json()).toEqual({ choice, hasConsent: choice === true });
+    expect(await response.json()).toEqual({ choice, epoch: null, hasConsent: choice === true });
     expect(response.headers.get('cache-control')).toContain('no-store');
     expect(mocks.read).toHaveBeenCalledWith('session-user');
   });

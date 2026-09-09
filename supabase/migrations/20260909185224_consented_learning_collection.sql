@@ -4,6 +4,25 @@ CREATE SCHEMA IF NOT EXISTS qalem_telemetry_private;
 REVOKE ALL ON SCHEMA qalem_telemetry_private FROM PUBLIC, anon, authenticated;
 GRANT USAGE ON SCHEMA qalem_telemetry_private TO service_role;
 
+ALTER TABLE public.telemetry_consent ADD COLUMN collection_epoch uuid NOT NULL DEFAULT gen_random_uuid();
+CREATE FUNCTION qalem_telemetry_private.version_consent()
+RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path = '' AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    NEW.collection_epoch := gen_random_uuid();
+  ELSIF NEW.pedagogy_consent IS DISTINCT FROM OLD.pedagogy_consent THEN
+    NEW.collection_epoch := gen_random_uuid();
+  ELSE
+    -- Even a direct RLS update cannot restore a previously issued epoch.
+    NEW.collection_epoch := OLD.collection_epoch;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+REVOKE ALL ON FUNCTION qalem_telemetry_private.version_consent() FROM PUBLIC, anon, authenticated;
+CREATE TRIGGER version_learning_consent BEFORE INSERT OR UPDATE ON public.telemetry_consent
+  FOR EACH ROW EXECUTE FUNCTION qalem_telemetry_private.version_consent();
+
 CREATE TABLE qalem_telemetry_private.subjects (
   user_id uuid NOT NULL REFERENCES public.telemetry_consent(user_id) ON DELETE CASCADE,
   org_id uuid NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
@@ -40,10 +59,11 @@ CREATE TRIGGER erase_learning_on_withdrawal
   FOR EACH ROW EXECUTE FUNCTION qalem_telemetry_private.erase_on_consent_withdrawal();
 
 -- Only the authenticated API's service client may supply the verified actor.
-CREATE FUNCTION public.record_consented_learning(p_actor uuid, p_session uuid, p_stage text, p_payload jsonb)
+CREATE FUNCTION public.record_consented_learning(p_actor uuid, p_session uuid, p_stage text, p_payload jsonb, p_epoch uuid)
 RETURNS boolean LANGUAGE plpgsql SECURITY INVOKER SET search_path = '' AS $$
 DECLARE
   v_consent boolean;
+  v_epoch uuid;
   v_org uuid;
   v_hash text;
   v_row public.pedagogy_telemetry;
@@ -52,9 +72,9 @@ BEGIN
     RAISE EXCEPTION 'Invalid learning identity' USING ERRCODE = '22023';
   END IF;
   -- Serializes against consent UPDATE/DELETE, including direct RLS writes.
-  SELECT pedagogy_consent INTO v_consent FROM public.telemetry_consent
+  SELECT pedagogy_consent, collection_epoch INTO v_consent, v_epoch FROM public.telemetry_consent
     WHERE user_id = p_actor FOR UPDATE;
-  IF v_consent IS DISTINCT FROM true THEN RETURN false; END IF;
+  IF v_consent IS DISTINCT FROM true OR p_epoch IS DISTINCT FROM v_epoch THEN RETURN false; END IF;
 
   SELECT s.org_id INTO v_org FROM public.stages s
     JOIN public.organizations o ON o.id = s.org_id AND o.status = 'active'
@@ -88,5 +108,5 @@ BEGIN
   RETURN true;
 END;
 $$;
-REVOKE ALL ON FUNCTION public.record_consented_learning(uuid, uuid, text, jsonb) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.record_consented_learning(uuid, uuid, text, jsonb) TO service_role;
+REVOKE ALL ON FUNCTION public.record_consented_learning(uuid, uuid, text, jsonb, uuid) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.record_consented_learning(uuid, uuid, text, jsonb, uuid) TO service_role;

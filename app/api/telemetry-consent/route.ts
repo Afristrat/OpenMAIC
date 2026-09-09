@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readConsent, setConsent } from '@/lib/telemetry/pedagogy-collector';
+import { readConsentState, setConsent } from '@/lib/telemetry/pedagogy-collector';
 import { requireAuth } from '@/lib/api/auth';
 import { validateBody } from '@/lib/api/validate';
 import { telemetryConsentSchema } from '@/lib/api/schemas';
@@ -15,8 +15,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    const choice = await readConsent(auth.user.id);
-    return NextResponse.json({ choice, hasConsent: choice === true }, { headers });
+    const { choice, epoch } = await readConsentState(auth.user.id);
+    return NextResponse.json({ choice, epoch, hasConsent: choice === true }, { headers });
   } catch {
     return NextResponse.json({ error: 'Consent storage unavailable' }, { status: 503, headers });
   }

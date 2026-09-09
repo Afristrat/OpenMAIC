@@ -9,6 +9,7 @@ vi.mock('@/lib/telemetry/pedagogy-collector', async (importOriginal) => ({
 }));
 import { POST } from '@/app/api/learning-observations/route';
 const sample = {
+  consentEpoch: '00000000-0036-4000-8000-000000000099',
   sessionId: '00000000-0036-4000-8000-000000000001',
   stageId: 'stage-1',
   sceneSequence: ['slide'],

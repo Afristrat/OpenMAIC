@@ -8,7 +8,7 @@ const mocks = vi.hoisted(() => ({
   upsert: vi.fn(),
 }));
 vi.mock('@supabase/supabase-js', () => ({ createClient: () => mocks }));
-import { readConsent, setConsent } from '@/lib/telemetry/pedagogy-collector';
+import { readConsent, readConsentState, setConsent } from '@/lib/telemetry/pedagogy-collector';
 
 describe('consent storage failures', () => {
   beforeEach(() => {
@@ -34,5 +34,15 @@ describe('consent storage failures', () => {
       expect.objectContaining({ user_id: 'user', pedagogy_consent: false }),
       { onConflict: 'user_id' },
     );
+  });
+  it('returns the database epoch and fails closed if it is absent', async () => {
+    const epoch = '00000000-0036-4000-8000-000000000099';
+    mocks.maybeSingle.mockResolvedValue({
+      data: { pedagogy_consent: true, collection_epoch: epoch },
+      error: null,
+    });
+    expect(await readConsentState('user')).toEqual({ choice: true, epoch });
+    mocks.maybeSingle.mockResolvedValue({ data: { pedagogy_consent: true }, error: null });
+    await expect(readConsentState('user')).rejects.toThrow('Consent storage unavailable');
   });
 });

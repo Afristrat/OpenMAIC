@@ -13,6 +13,7 @@ import { z } from 'zod';
 export const learningSessionSchema = z
   .object({
     sessionId: z.string().uuid(),
+    consentEpoch: z.string().uuid(),
     stageId: z.string().regex(/^[a-zA-Z0-9_-]{1,128}$/),
     sceneSequence: z
       .array(z.enum(['slide', 'quiz', 'interactive', 'pbl', 'plugin']))
@@ -94,6 +95,7 @@ export async function collectPedagogyData(
       p_actor: actorId,
       p_session: session.sessionId,
       p_stage: session.stageId,
+      p_epoch: session.consentEpoch,
       p_payload: {
         scene_sequence: session.sceneSequence,
         scene_durations: session.sceneDurations,
@@ -128,18 +130,26 @@ export async function hasConsent(userId: string): Promise<boolean> {
 
 /** null means no choice yet; storage errors must not masquerade as refusal. */
 export async function readConsent(userId: string): Promise<boolean | null> {
+  return (await readConsentState(userId)).choice;
+}
+
+export async function readConsentState(
+  userId: string,
+): Promise<{ choice: boolean | null; epoch: string | null }> {
   const supabase = getServiceClient();
 
   const { data, error } = await supabase
     .from('telemetry_consent')
-    .select('pedagogy_consent')
+    .select('pedagogy_consent, collection_epoch')
     .eq('user_id', userId)
     .abortSignal(AbortSignal.timeout(5000))
     .maybeSingle();
 
   if (error) throw new Error('Consent storage unavailable');
-  if (!data) return null;
-  return data.pedagogy_consent === true;
+  if (!data) return { choice: null, epoch: null };
+  const epoch = z.string().uuid().safeParse(data.collection_epoch);
+  if (!epoch.success) throw new Error('Consent storage unavailable');
+  return { choice: data.pedagogy_consent === true, epoch: epoch.data };
 }
 
 /**
