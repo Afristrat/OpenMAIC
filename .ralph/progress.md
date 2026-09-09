@@ -1,5 +1,17 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-034, Moodle isolé autorisé et installé
+
+Amine a répondu « Oui feu vert » à la création du Moodle de test isolé. L’autorisation concerne cette instance et la suite de la recette LTI ; aucune levée des autres gates, aucune rotation ni modification de LiteLLM Hostinger.
+
+Moodle officiel 4.5.13, SHA 8cbae18a2898cfd8266ec91ac206e12004f0ff5f, dans /home/serveuria/qalem-lti-moodle ; stack Compose dédiée, source en lecture seule, deux volumes persistants, secrets serveur hors git et dossier 0700. Web 2 Gio/1,5 CPU et PostgreSQL 16 512 Mio/0,5 CPU, sans swap ; DB sur réseau interne, web exposé uniquement sur 127.0.0.1:8096. Route Cloudflare lms-test.qalem.ma ajoutée au tunnel déjà utilisé par Qalem, autres ingress comparés et conservés ; aucun redémarrage du connecteur partagé. Ancien scorm-test-moodle arrêté laissé intact. Installation officielle terminée exit 0 (session 7883), HTTPS Moodle et santé Qalem HTTP 200.
+
+Navigateur distant réel, sans mocks : scripts/proofs/s034-moodle-login.mjs, session 52105 exit 0, S034_MOODLE_LOGIN_OK, accès administrateur et absence de lien d’inscription. Premier démarrage corrigé : activation persistante de mod_headers ; puis APACHE_DOCUMENT_ROOT fixé dans Compose pour que les commandes Apache hors entrypoint aient la même configuration. Conteneur web recréé avec sa base conservée, syntaxe Apache désormais sans avertissement. Pas d’OOM observé ; cette preuve ne garantit pas la capacité sous charge.
+
+Deux secrets créés uniquement pour Moodle, jamais affichés. Import DPAPI via add-secret impossible : presse-papier inaccessible, y compris PowerShell Windows STA ; sa purge et celle de Win+V ne sont pas certifiées. Ne pas contourner le coffre ni renouveler les secrets pour cette raison. Valeurs persistantes dans les fichiers protégés du serveur ; inventaire et procédure dans infra/moodle/README.md. Mnemo identify_active_project échoue fetch failed.
+
+Suite sans nouvelle décision LMS : terminer l’observation de santé et les vérifications de persistance, puis clés RSA Qalem web/workers, advisors et quatre migrations, déploiement coordonné, véritable lancement Moodle→Qalem→score AGS et panne/retry sans doublon. S-034 reste to_validate et passes=false ; les autres gates sont inchangés.
+
 ## 9 septembre 2026 — S-034, gate global vert et prérequis réels de déploiement
 
 Code applicatif 674e6cc : formatage, TypeScript, lint et 471 fichiers / 2920 tests unitaires verts, session 77654 exit 0 ; build de production puis 128/128 Chromium sans retry en 5,2 min, session 67801 exit 0. Conteneur de validation après le cycle : aucun OOM ni redémarrage, compteur max cumulatif 18292 (pas une garantie de capacité future).

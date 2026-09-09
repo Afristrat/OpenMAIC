@@ -18,7 +18,7 @@ Recherche dans l’index des noms du coffre : aucune clé dédiée LTI/Moodle tr
 
 ## Conditions restantes
 
-1. Choisir un LMS réel de test. Accord demandé pour un Moodle isolé et limité en ressources sur ServeurIA, ou un LMS existant. Aucun service ni compte LMS créé sur ce lot.
+1. LMS choisi et installé après le « Oui feu vert » d’Amine du 9 septembre : Moodle 4.5.13, https://lms-test.qalem.ma. Installation officielle exit 0 (session 7883) et connexion administrateur réelle dans Chromium distant exit 0 (session 52105, `S034_MOODLE_LOGIN_OK`), sans inscription libre. Source officielle figée au SHA `8cbae18a2898cfd8266ec91ac206e12004f0ff5f`, images par digest, base/réseau/volumes dédiés ; web 2 Gio et DB 512 Mio sans swap. Procédure : `infra/moodle/README.md`. Cela ne prouve pas encore le trajet LTI. Nouveaux secrets conservés dans un dossier serveur `0700` ; import DPAPI et purge du presse-papier non certifiés, car presse-papier inaccessible dans cette session.
 2. Configurer des clés RSA persistantes identiques côté web/workers, leur identifiant public et l’origine LTI. Pas de clés éphémères de développement ni de rotation non autorisée.
 3. Vérifier les advisors et appliquer dans l’ordre les migrations `20260908203735_lti_launch_bindings`, `20260908205450_lti_grade_outbox`, `20260908212516_lti_quiz_attempts`, `20260908231447_lti_quiz_checkpoints`. Les preuves SQL précédentes ont été annulées par rollback.
 4. Déployer web/workers avec le schéma compatible ; re-vérifier versions, santé et persistance.
