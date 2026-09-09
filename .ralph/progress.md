@@ -1,5 +1,9 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-036, quiz réellement soumis
+
+Deux parcours ajoutés au contrat navigateur existant : diapositive jouée puis quiz pondéré répondu depuis l’UI, avec ou sans consentement. Score final 0,25, séquence slide/quiz, complétion 1 ; aucune observation avant fin du cours ni après refus. Pas d’événement de score fabriqué, APIs fonctionnelles simulées. 71407 exit 0 : TypeScript/lint globaux, Prettier et neuf Chromium. Aucun changement métier nécessaire ni déploiement ; passes=false conservé. Ponytail : réutilisation du parcours et des frontières de simulation existantes. Prochain point identifié : les requêtes du rapport agrégé ignorent encore certaines erreurs et bornent silencieusement les résultats ; vérifier et corriger avant certification.
+
 ## 9 septembre 2026 — S-036, contexte de collecte issu du cours
 
 La génération persiste outline.analyticsContext : niveau effectif et identifiant canonique de skill résolu (pas le texte libre de l’apprenant). Le collecteur ne transmet plus langue/niveau/tags/nombre d’agents du navigateur au RPC. Candidate CLI 20260909221821 : trigger BEFORE INSERT invoker privé, contexte repris depuis le cours ready du même stage/tenant, langue du cours et nombre d’agents du stage. Contexte absent/ambigu : valeurs inconnues, pas d’inférence. Les tags désignent ici la skill canonique, pas une taxonomie de sujets déjà livrée.

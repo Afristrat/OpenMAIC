@@ -1,5 +1,11 @@
 # S-036 — Collecte consentie : serveur et stockage
 
+## Complément : quiz réellement soumis dans Chromium
+
+Le parcours existant couvre désormais une diapositive jouée puis un quiz répondu dans l’interface (aucun événement de score injecté). Deux questions de poids 3 et 1, seule la seconde correcte : observation finale à 0,25, séquence slide/quiz et complétion 1. Aucun envoi avant la sortie vers la fin du cours ; avec consentement refusé, le quiz reste utilisable et aucune observation d’apprentissage n’est envoyée. Les écritures fonctionnelles du quiz sont distinctes de cette collecte.
+
+71407 exit 0 sur ServeurIA : TypeScript et lint globaux, Prettier, neuf Chromium incluant refus, collecte, reprise, révocation, saut de scène et fermeture/réouverture. Auth/API simulées ; pas de preuve de persistance réelle ni de durée exacte par ce complément. Runner avec overlays, pas de gate global sur clone propre. Aucun changement métier nécessaire, déploiement ou clôture. Suite : fiabilité du rapport agrégé, puis critères restants de S-036.
+
 ## Complément : contexte serveur à l’insertion
 
 analyticsContext du cours généré contient le niveau effectif et l’identifiant canonique de skill résolu (borné à 256 pour les identifiants tenant). Langue reprise de courses.language ; agents de stages.agent_ids. Candidate CLI 20260909221821 : trigger privé invoker avant insertion, sélection du même stage/tenant et cours ready sous verrou partagé ; absence/ambiguïté sans contexte inventé. Le collecteur n’envoie plus les quatre champs de contexte fournis par le navigateur. Aucune reprise du texte libre dans les tags, aucune taxonomie de sujets revendiquée.

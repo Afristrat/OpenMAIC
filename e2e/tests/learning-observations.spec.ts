@@ -14,15 +14,23 @@ for (const scenario of [
   'skipped',
   'closed',
   'closed-revoked',
+  'quiz-allowed',
+  'quiz-refused',
 ]) {
   test(`classroom collection: ${scenario}`, async ({
     page: initialPage,
     context,
     browserConsoleContract,
+    mockApi,
   }) => {
     let page = initialPage;
     await page.unroute('**/api/telemetry-consent');
-    const allowed = scenario !== 'refused';
+    const allowed = !scenario.endsWith('refused');
+    const withQuiz = scenario.startsWith('quiz-');
+    if (withQuiz) {
+      await mockApi.mockQuizPersistence();
+      await page.route('**/api/xapi/events', (route) => route.fulfill({ json: { success: true } }));
+    }
     const failedFirst =
       scenario === 'retry' || scenario === 'revoked' || scenario.startsWith('closed');
     let currentEpoch = epoch;
@@ -83,6 +91,48 @@ for (const scenario of [
                 createdAt: Date.now(),
                 updatedAt: Date.now(),
               },
+              ...(withQuiz
+                ? [
+                    {
+                      id: 'observed-quiz',
+                      stageId,
+                      type: 'quiz',
+                      title: 'Observed quiz',
+                      order: 1,
+                      content: {
+                        type: 'quiz',
+                        questions: [
+                          {
+                            id: 'weighted-question',
+                            type: 'single',
+                            question: 'Capital of Morocco?',
+                            options: [
+                              { value: 'a', label: 'Casablanca' },
+                              { value: 'b', label: 'Rabat' },
+                            ],
+                            answer: ['b'],
+                            hasAnswer: true,
+                            points: 3,
+                          },
+                          {
+                            id: 'second-question',
+                            type: 'single',
+                            question: 'Two plus two?',
+                            options: [
+                              { value: 'a', label: 'Four' },
+                              { value: 'b', label: 'Five' },
+                            ],
+                            answer: ['a'],
+                            hasAnswer: true,
+                            points: 1,
+                          },
+                        ],
+                      },
+                      createdAt: Date.now(),
+                      updatedAt: Date.now(),
+                    },
+                  ]
+                : []),
             ],
           },
         },
@@ -103,21 +153,30 @@ for (const scenario of [
       await expect(gate).toBeVisible({ timeout: 10000 });
       await gate.getByRole('button').last().click();
     }
+    if (withQuiz) {
+      await page.getByRole('button', { name: 'Start Quiz', exact: true }).click();
+      await page.getByRole('button', { name: /Casablanca/ }).click();
+      await page.getByRole('button', { name: /Four/ }).click();
+      await page.getByRole('button', { name: 'Submit Answers', exact: true }).click();
+      await expect(page.getByText('Quiz Report', { exact: true })).toBeVisible();
+      expect(observations).toEqual([]);
+      await page.getByText('Course complete', { exact: true }).click();
+    }
     await expect(page.getByRole('region', { name: 'Course complete' })).toBeVisible();
     if (allowed) {
       await expect.poll(() => observations.length).toBe(1);
       expect(observations[0]).toMatchObject({
         stageId,
         consentEpoch: epoch,
-        sceneSequence: ['slide'],
+        sceneSequence: withQuiz ? ['slide', 'quiz'] : ['slide'],
         completionRate: scenario === 'skipped' ? 0 : 1,
-        quizScores: [],
+        quizScores: withQuiz ? [0.25] : [],
         language: null,
         level: null,
         actionCounts: {
           play: scenario === 'skipped' ? 0 : 1,
           pause: 0,
-          seek: scenario === 'skipped' ? 1 : 0,
+          seek: scenario === 'skipped' || withQuiz ? 1 : 0,
         },
       });
       expect(observations[0]).not.toHaveProperty('userId');
