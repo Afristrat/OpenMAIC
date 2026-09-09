@@ -1,5 +1,13 @@
 # S-036 — Collecte consentie : serveur et stockage
 
+## Complément : frontière de suppression du compte
+
+Le candidat retire la purge multi-requêtes de account/delete : un seul appel Auth dur, identité vérifiée et origine contrôlée. Le script de recette transmet Origin. Succès limité à accountDeleted ; erreurs opaques, aucun retry automatique ni affirmation de rollback après une réponse réseau perdue.
+
+ServeurIA : six tests API verts (auth, deux origines refusées, acteur serveur, refus SQL simulé, panne ambiguë), TypeScript/lint global sans avertissement, session 58947 exit 0. Complément après modification du script de recette : format, TypeScript/lint global, 94386 exit 0. SQL scripts/validation/s036-account-delete.sql exécuté avec migration collection candidate dans BEGIN/ROLLBACK : FK restrictive sans perte partielle, puis cascade des mesures et conservation de stage/scenes. Fixture requirements corrigée en jsonb après premier refus ; seconde preuve réussie. Zéro utilisateur de fixture et absence du schéma candidat recontrôlés.
+
+Limites : preuve SQL directe, pas appel Auth HTTP ni parcours navigateur de suppression ; aucune donnée utilisateur réelle supprimée. Les références métier restrictives, Storage, autres biens partagés et jetons déjà émis restent ouverts. Supabase confirme que la suppression Auth bloque les renouvellements mais ne révoque pas rétroactivement les JWT et peut être empêchée par la propriété Storage : [gestion des utilisateurs](https://supabase.com/docs/guides/auth/managing-user-data), [deleteUser](https://supabase.com/docs/reference/javascript/auth-admin-deleteuser). Pas de clôture, migration durable ou déploiement.
+
 ## Candidat du 9 septembre 2026
 
 Autorisation : feu vert et délégation consignés dans `docs/decisions/2026-09-09-unblock-prd.md`. Aucun déploiement, migration durable ou branchement navigateur dans cette itération. `passes=false`.

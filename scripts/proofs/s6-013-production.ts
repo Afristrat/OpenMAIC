@@ -116,6 +116,7 @@ async function jsonResponse(
 ): Promise<JsonObject> {
   const response = await request.fetch(`${BASE_URL}${path}`, {
     method,
+    headers: { origin: new URL(BASE_URL).origin },
     ...(options.data === undefined ? {} : { data: options.data }),
     ...(options.multipart === undefined ? {} : { multipart: options.multipart }),
   });
