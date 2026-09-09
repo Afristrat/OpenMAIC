@@ -1,5 +1,11 @@
 # S-036 — Collecte consentie : serveur et stockage
 
+## Complément : auteurs des widgets
+
+Migration candidate CLI 20260909201746 : quatre attributions Auth détachables ; création sans auteur toujours refusée. Trigger invoker avec search_path vide, exécution publique révoquée. Une version ne peut changer que lors de sa première publication ou pour retirer une attribution dont le compte Auth est effectivement supprimé ; tous les autres champs doivent rester égaux. Les consommateurs published-widget-template.ts lisent composition et publication, pas l’identité de l’auteur.
+
+SQL réel sous ROLLBACK : auteur et publicateur distincts supprimés avec SET ROLE supabase_auth_admin, contenu et publication conservés, brouillon sans auteur publiable, filtre RLS authenticated publié/brouillon inchangé. Attaques sur attribution vivante, composition, identité de version et suppression refusées ; création sans auteur refusée. Le harnais initial postgres ne pouvait pas adopter ce rôle ; supabase_admin l’a permis sans GRANT ajouté. Contrôle séparé : zéro fixture et fonction candidate absente. Tests existants ciblés 18/18, TypeScript/lint global sans avertissement, session ServeurIA 38085 exit 0. Pas d’appel Auth HTTP ni de recette navigateur dans ce lot. Les advisors complets restent ouverts (base CLI locale absente), aucune migration durable ni clôture. Référence consultée : [fonctions Supabase et droits invoker](https://supabase.com/docs/guides/database/functions).
+
 ## Complément : préservation des ressources partagées
 
 Migration créée par Supabase CLI : 20260909201309_account_shared_references.sql. Cinq références déjà nullables (classroom_templates.created_by, curriculum_links.created_by, org_invitations.created_by, payments.user_id, shared_classrooms.shared_by) deviennent ON DELETE SET NULL. Les contenus, montants et invitations du tenant sont conservés ; aucun nouveau privilège ni changement de politique RLS. Ce détachement ne prétend pas nettoyer les champs libres ou métadonnées pouvant contenir des informations personnelles.

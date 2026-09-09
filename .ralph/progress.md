@@ -1,5 +1,11 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-036, auteurs de widgets effaçables
+
+Migration CLI 20260909201746_widget_author_erasure : quatre FK Auth passent à SET NULL ; auteur toujours obligatoire à la création via trigger invoker. Le trigger d’immutabilité accepte uniquement le retrait d’une attribution dont le compte Auth a disparu, à contenu strictement inchangé. Publication initiale conservée, identité de version désormais comparée également. Pas de nouveau SECURITY DEFINER ni privilège public.
+
+Preuve scripts/validation/s036-widget-author-erasure.sql sous ROLLBACK : suppression auteur puis publicateur sous supabase_auth_admin, versions/publications conservées, brouillon sans auteur encore publiable, lecture authenticated limitée aux versions publiées ; création sans auteur, retrait d’auteur vivant, mutation et suppression de version refusés. Harnais initial postgres ne pouvait pas SET ROLE supabase_auth_admin : exécuté ensuite via supabase_admin, sans octroyer de droit. Zéro fixture et fonction candidate absente recontrôlés. Session 38085 exit 0 : 18 tests existants ciblés, TypeScript/lint global sans avertissement. Advisors complets, gate global, recette navigateur et déploiement non effectués. Prochaine action : transmissions, puis autres cascades partagées, Storage/sessions/UI et reste S-036. Aucun passes=true.
+
 ## 9 septembre 2026 — S-036, références partagées détachables
 
 Validation complémentaire ServeurIA : TypeScript et lint global sans avertissement, session 56535 exit 0. Aucun code TypeScript modifié dans ce lot SQL.
