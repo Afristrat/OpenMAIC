@@ -12,6 +12,8 @@ Deux secrets créés uniquement pour Moodle, jamais affichés. Import DPAPI via 
 
 Suite sans nouvelle décision LMS : terminer l’observation de santé et les vérifications de persistance, puis clés RSA Qalem web/workers, advisors et quatre migrations, déploiement coordonné, véritable lancement Moodle→Qalem→score AGS et panne/retry sans doublon. S-034 reste to_validate et passes=false ; les autres gates sont inchangés.
 
+Complément de preuve : session 98998 exit 0, recréation saine, Apache Syntax OK sans avertissement, Prettier ciblé, TypeScript et lint complets verts. Nouvelle connexion navigateur après recréation et contrôle du générateur de secrets sur tmpfs : S034_MOODLE_LOGIN_OK et S034_SECRET_NO_OVERWRITE_OK, session de commande sortie 0. Source Git vérifiée ; dossier secrets 0700 ; métadonnées .git inaccessibles par HTTPS (403). Infrastructure et preuve poussées dans 4ef5e61. Observation de santé de quinze minutes lancée à 09:47:23 UTC, session exec 41637 encore active (ne pas la relancer : attendre son résultat). Les trois premiers relevés sont sains, aucune conclusion finale sur la fenêtre tant que son processus n’est pas terminé. Copie de validation distante des nouveaux fichiers préservée par stash sur ces seuls chemins avant pull ; node_modules préexistant laissé intact.
+
 ## 9 septembre 2026 — S-034, gate global vert et prérequis réels de déploiement
 
 Code applicatif 674e6cc : formatage, TypeScript, lint et 471 fichiers / 2920 tests unitaires verts, session 77654 exit 0 ; build de production puis 128/128 Chromium sans retry en 5,2 min, session 67801 exit 0. Conteneur de validation après le cycle : aucun OOM ni redémarrage, compteur max cumulatif 18292 (pas une garantie de capacité future).
