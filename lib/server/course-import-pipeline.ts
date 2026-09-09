@@ -90,6 +90,7 @@ export async function runCourseImportPipeline(input: {
       title: plan.courseTitle,
       language,
       outlines: plan.outlines,
+      plan,
     });
     return {
       ...persisted,

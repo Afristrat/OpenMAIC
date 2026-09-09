@@ -14,6 +14,7 @@ DECLARE
  course_id uuid;
  draft_id uuid;
  result jsonb;
+ saved_outline jsonb := '{"scenes":[],"plan":{"courseTitle":"Test","languageDirective":"Français","syllabus":{"audience":"Adultes","prerequisites":"Aucun","overallObjective":"Décider","learningObjectives":["Comparer"],"totalDurationMinutes":15,"deliveryMode":"Classe","assessmentStrategy":"Cas","expectedDeliverable":"Décision"},"outlines":[{"id":"one","type":"slide","title":"Cas","description":"Décider","keyPoints":["Comparer"],"order":1}]}}';
 BEGIN
  INSERT INTO public.organizations(id,name,status,seat_limit) VALUES(org,'S036 course rollback','active',3);
  INSERT INTO public.org_members(user_id,org_id,role) VALUES(a,org,'admin'),(b,org,'admin'),(c,org,'apprenant');
@@ -23,8 +24,8 @@ BEGIN
  INSERT INTO public.formation_source_manifests(owner_id,org_id,version) VALUES(a,org,1) RETURNING id INTO manifest_id;
  INSERT INTO public.courses(owner_id,org_id,stage_id,title,language,source_kind,import_id,source_manifest_id,status)
    VALUES(a,org,'s036-course-reclaim','Test','fr-FR','imported',import_id,manifest_id,'ready') RETURNING id INTO course_id;
- INSERT INTO public.courses(owner_id,org_id,title,language,source_kind,status)
-   VALUES(a,org,'Orphaned draft','fr-FR','generated','draft') RETURNING id INTO draft_id;
+ INSERT INTO public.courses(owner_id,org_id,title,language,source_kind,status,outline)
+   VALUES(a,org,'Orphaned draft','fr-FR','generated','draft',saved_outline) RETURNING id INTO draft_id;
  BEGIN
    PERFORM public.reclaim_orphaned_course(b,course_id);
    RAISE EXCEPTION 'Live owner takeover accepted';
@@ -48,9 +49,17 @@ BEGIN
  EXCEPTION WHEN insufficient_privilege THEN NULL; END;
  SET LOCAL ROLE service_role;
  result := public.reclaim_orphaned_course(b,course_id);
+ PERFORM public.reclaim_orphaned_course(b,draft_id);
  IF result IS DISTINCT FROM public.reclaim_orphaned_course(b,course_id) THEN
    RAISE EXCEPTION 'Retry created another manifest';
  END IF;
+ RESET ROLE;
+ IF NOT EXISTS(SELECT 1 FROM public.courses WHERE id=draft_id AND owner_id=b AND outline=saved_outline)
+ THEN RAISE EXCEPTION 'Saved plan lost during takeover'; END IF;
+ PERFORM set_config('request.jwt.claims',json_build_object('sub',b,'role','authenticated')::text,true);
+ SET LOCAL ROLE authenticated;
+ IF NOT EXISTS(SELECT 1 FROM public.courses WHERE org_id=org AND (owner_id IS NULL OR (owner_id=b AND status='draft')) AND id=draft_id)
+ THEN RAISE EXCEPTION 'Owned draft lost from resume list'; END IF;
  RESET ROLE;
  IF NOT EXISTS(SELECT 1 FROM public.courses WHERE id=course_id AND owner_id=b AND source_manifest_id=(result->>'sourceManifestId')::uuid)
    OR NOT EXISTS(SELECT 1 FROM public.course_imports WHERE id=import_id AND owner_id=b)

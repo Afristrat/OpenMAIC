@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useMemo, useRef, useDeferredValue, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { z } from 'zod';
+import { approvedClassroomPlanSchema } from '@/lib/api/schemas';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -222,7 +224,26 @@ function HomePage() {
 
   // Auth + due review count
   const { user } = useAuth();
-  const { currentOrg, canAuthor } = useOrganizations();
+  const { currentOrg, canAuthor, organizations, setCurrentOrg } = useOrganizations();
+  const [resumeTarget, setResumeTarget] = useState<{ courseId: string; orgId: string } | null>(
+    null,
+  );
+  const [resuming, setResuming] = useState(false);
+  const resumeOrgRef = useRef(currentOrg?.id);
+  resumeOrgRef.current = currentOrg?.id;
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const target = z.object({ courseId: z.string().uuid(), orgId: z.string().uuid() }).safeParse({
+      courseId: params.get('resumeCourseId'),
+      orgId: params.get('resumeOrgId'),
+    });
+    if (target.success) setResumeTarget(target.data);
+  }, []);
+  useEffect(() => {
+    if (!resumeTarget || currentOrg?.id === resumeTarget.orgId) return;
+    const organization = organizations.find((item) => item.id === resumeTarget.orgId);
+    if (organization) setCurrentOrg(organization);
+  }, [resumeTarget, currentOrg?.id, organizations, setCurrentOrg]);
   const [dueReviewCount, setDueReviewCount] = useState(0);
   const [sourceManifestId, setSourceManifestId] = useState<string>();
   const [selectedSourceCount, setSelectedSourceCount] = useState(0);
@@ -670,6 +691,60 @@ function HomePage() {
       },
       ...(activeSkillId ? { activeSkillId } : {}),
     };
+  };
+
+  const resumeCourse = async () => {
+    if (!resumeTarget || resuming || currentOrg?.id !== resumeTarget.orgId || !canAuthor) return;
+    setResuming(true);
+    setError(null);
+    try {
+      const response = await fetch(
+        `/api/courses/${resumeTarget.courseId}/resume?orgId=${resumeTarget.orgId}`,
+        { cache: 'no-store' },
+      );
+      if (response.status === 409) throw new Error(t('catalog.resumePlanUnavailable'));
+      if (!response.ok) throw new Error(t('catalog.resumeFailed'));
+      const saved = z
+        .object({
+          courseId: z.string().uuid(),
+          orgId: z.string().uuid(),
+          sourceManifestId: z.string().uuid().nullable(),
+          language: z.enum(['fr-FR', 'ar-MA', 'en-US']),
+          plan: approvedClassroomPlanSchema,
+        })
+        .parse(await response.json());
+      if (resumeOrgRef.current !== resumeTarget.orgId) return;
+      if (saved.courseId !== resumeTarget.courseId || saved.orgId !== resumeTarget.orgId)
+        throw new Error(t('catalog.resumeFailed'));
+      const learningApproach = form.learningApproach ?? 'andragogy';
+      const interactionLevel = form.interactionLevel ?? 'balanced';
+      setPendingGenerationRequest({
+        ...buildGenerationRequest({
+          requirement: `${saved.plan.languageDirective}\n\n${saved.plan.syllabus.overallObjective}\n\n${saved.plan.syllabus.expectedDeliverable}`,
+          courseId: saved.courseId,
+          sourceManifestId: saved.sourceManifestId ?? undefined,
+          learningApproach,
+          interactionLevel,
+        }),
+        language: saved.language,
+      });
+      setForm((previous) => ({
+        ...previous,
+        requirement: saved.plan.syllabus.overallObjective,
+        learningApproach,
+        interactionLevel,
+      }));
+      setDraftPlan(saved.plan);
+    } catch (failure) {
+      setError(
+        failure instanceof Error &&
+          [t('catalog.resumePlanUnavailable'), t('catalog.resumeFailed')].includes(failure.message)
+          ? failure.message
+          : t('catalog.resumeFailed'),
+      );
+    } finally {
+      setResuming(false);
+    }
   };
 
   const triggerFileSelect = () => {
@@ -1551,6 +1626,17 @@ function HomePage() {
         )}
 
         {/* ── Error ── */}
+        {resumeTarget && (
+          <section className="mt-4 w-full rounded-xl border p-4" aria-label={t('catalog.resume')}>
+            <p className="mb-3 text-sm">{t('catalog.resumeDescription')}</p>
+            <Button
+              disabled={resuming || !user || !canAuthor || currentOrg?.id !== resumeTarget.orgId}
+              onClick={() => void resumeCourse()}
+            >
+              {resuming ? t('common.loading') : t('catalog.resume')}
+            </Button>
+          </section>
+        )}
         {isPlanning && (
           <p className="mt-3 w-full text-sm text-muted-foreground" role="status">
             {t('generation.planAsyncHint')}

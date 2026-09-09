@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   from: vi.fn(),
   eq: vi.fn(),
   is: vi.fn(),
+  or: vi.fn(),
   gt: vi.fn(),
   result: vi.fn(),
 }));
@@ -22,11 +23,12 @@ const request = (after?: string) =>
 describe('orphaned course discovery', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.auth.mockResolvedValue({ user: { id: 'verified' } });
+    mocks.auth.mockResolvedValue({ user: { id } });
     const query = {
       select: () => query,
       eq: mocks.eq,
       is: mocks.is,
+      or: mocks.or,
       gt: mocks.gt,
       order: () => query,
       limit: () => query,
@@ -35,7 +37,8 @@ describe('orphaned course discovery', () => {
       then: (resolve: (value: unknown) => unknown, reject: (error: unknown) => unknown) =>
         mocks.result().then(resolve, reject),
     };
-    for (const mock of [mocks.from, mocks.eq, mocks.is, mocks.gt]) mock.mockReturnValue(query);
+    for (const mock of [mocks.from, mocks.eq, mocks.is, mocks.or, mocks.gt])
+      mock.mockReturnValue(query);
     mocks.result.mockReset();
     mocks.result
       .mockResolvedValueOnce({ data: { role: 'admin' } })
@@ -49,7 +52,7 @@ describe('orphaned course discovery', () => {
   it('requires an actual active tenant admin, not a client role', async () => {
     mocks.result.mockReset().mockResolvedValue({ data: null });
     expect((await GET(request())).status).toBe(403);
-    expect(mocks.eq).toHaveBeenCalledWith('user_id', 'verified');
+    expect(mocks.eq).toHaveBeenCalledWith('user_id', id);
     expect(mocks.eq).toHaveBeenCalledWith('role', 'admin');
     expect(mocks.eq).toHaveBeenCalledWith('organizations.status', 'active');
     expect(mocks.from).not.toHaveBeenCalledWith('courses');
@@ -59,7 +62,9 @@ describe('orphaned course discovery', () => {
     expect(response.status).toBe(200);
     expect((await response.json()).courses[0].status).toBe('draft');
     expect(mocks.eq).toHaveBeenCalledWith('org_id', orgId);
-    expect(mocks.is).toHaveBeenCalledWith('owner_id', null);
+    expect(mocks.or).toHaveBeenCalledWith(
+      `owner_id.is.null,and(owner_id.eq.${id},status.eq.draft)`,
+    );
     expect(mocks.gt).toHaveBeenCalledWith('id', id);
     expect(response.headers.get('cache-control')).toContain('no-store');
   });

@@ -89,6 +89,7 @@ describe('runCourseImportPipeline', () => {
         importId: 'import-1',
         sourceManifestId: 'manifest-1',
         language: 'fr-FR',
+        plan: mocks.toPlan.mock.results[0]?.value,
       }),
     );
   });

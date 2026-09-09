@@ -13,6 +13,10 @@ import { generateClassroomSchema } from '@/lib/api/schemas';
 import { createLogger } from '@/lib/logger';
 import type { TTSProviderId } from '@/lib/audio/types';
 import { enqueueClassroomGeneration } from '@/lib/jobs/queue';
+import {
+  assertCourseGenerationAccess,
+  CourseAccessError,
+} from '@/lib/server/course-generation-access';
 
 const log = createLogger('GenerateClassroom API');
 
@@ -30,6 +34,7 @@ export async function POST(req: NextRequest) {
 
     const auth = await requireSuperAdminOrOrgAuthor(req, parsed.orgId);
     if (auth.response) return auth.response;
+    await assertCourseGenerationAccess(parsed, auth.user.id);
 
     const body: GenerateClassroomInput = {
       orgId: parsed.orgId,
@@ -115,6 +120,7 @@ export async function POST(req: NextRequest) {
       202,
     );
   } catch (error) {
+    if (error instanceof CourseAccessError) return apiError('INVALID_REQUEST', 403, error.message);
     log.error(
       `Classroom generation job creation failed [requirement="${requirementSnippet ?? 'unknown'}..."]:`,
       error,

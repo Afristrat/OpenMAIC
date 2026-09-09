@@ -27,6 +27,7 @@ import { enrichSourcesWithCrawl4AI } from '@/lib/server/crawl4ai';
 import type { BaiduSubSources, WebSearchProviderId } from '@/lib/web-search/types';
 import { persistClassroom } from '@/lib/server/classroom-storage';
 import { persistGeneratedCourse, type CourseLocale } from '@/lib/server/course-storage';
+import { assertCourseGenerationAccess } from '@/lib/server/course-generation-access';
 import {
   generateMediaForClassroom,
   replaceMediaPlaceholders,
@@ -252,6 +253,7 @@ export async function generateClassroom(
     onProgress?: (progress: ClassroomGenerationProgress) => Promise<void> | void;
   },
 ): Promise<GenerateClassroomResult> {
+  await assertCourseGenerationAccess(input, options.ownerId);
   const { requirement } = input;
   const learningContext = normalizeLearningContext(
     input.learningContext ?? DEFAULT_LEARNING_CONTEXT,
@@ -1074,6 +1076,7 @@ export async function generateClassroom(
       learningApproach: input.learningApproach,
       outlines,
       sourceManifestId: resolvedSources.manifest?.id,
+      plan: { ...outlinesResult.data, outlines },
     });
 
     log.info(`Classroom persisted: ${persisted.id}, URL: ${persisted.url}`);

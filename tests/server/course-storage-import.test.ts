@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { SceneOutline } from '@/lib/types/generation';
+import type { ClassroomPlan, SceneOutline } from '@/lib/types/generation';
 
 const mocks = vi.hoisted(() => ({
   from: vi.fn(),
@@ -28,6 +28,22 @@ const outline: SceneOutline = {
   order: 1,
 };
 
+const plan: ClassroomPlan = {
+  courseTitle: 'Décider',
+  languageDirective: 'Répondre en français.',
+  outlines: [outline],
+  syllabus: {
+    audience: 'Adultes',
+    prerequisites: 'Aucun',
+    overallObjective: 'Décider.',
+    learningObjectives: ['Comparer'],
+    totalDurationMinutes: 15,
+    deliveryMode: 'Classe virtuelle',
+    assessmentStrategy: 'Cas pratique',
+    expectedDeliverable: 'Décision argumentée',
+  },
+};
+
 describe('course storage import lifecycle', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -51,6 +67,7 @@ describe('course storage import lifecycle', () => {
       title: 'Décider',
       language: 'fr-FR',
       outlines: [outline],
+      plan,
     });
 
     expect(mocks.insert).toHaveBeenCalledWith(
@@ -59,6 +76,7 @@ describe('course storage import lifecycle', () => {
         source_manifest_id: 'manifest-1',
         source_kind: 'imported',
         status: 'draft',
+        outline: { scenes: [outline], plan },
       }),
     );
   });
@@ -73,6 +91,7 @@ describe('course storage import lifecycle', () => {
       language: 'fr-FR',
       learningApproach: 'andragogy',
       outlines: [outline],
+      plan,
       sourceManifestId: 'manifest-1',
     });
 
@@ -80,7 +99,7 @@ describe('course storage import lifecycle', () => {
       expect.objectContaining({
         stage_id: 'stage-1',
         status: 'ready',
-        outline: { scenes: [outline], learningApproach: 'andragogy' },
+        outline: { scenes: [outline], plan, learningApproach: 'andragogy' },
       }),
     );
     const payload = mocks.update.mock.calls[0]?.[0] as Record<string, unknown>;

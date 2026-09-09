@@ -1,5 +1,36 @@
 import { expect, test } from '../fixtures/base';
 const id = '00000000-0036-4000-8000-000000000149';
+test('keeps an owned draft resumable after reloading the catalog', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('locale', 'fr-FR'));
+  await page.route('**/api/courses/catalog?*', (route) => route.fulfill({ json: { courses: [] } }));
+  await page.route('**/api/courses/orphaned?*', (route) =>
+    route.fulfill({
+      json: {
+        courses: [
+          {
+            id,
+            title: 'Owned draft',
+            owned: true,
+            status: 'draft',
+            stage_id: null,
+            language: 'fr-FR',
+          },
+        ],
+        nextCursor: null,
+      },
+    }),
+  );
+  await page.goto('/catalog');
+  await expect(page.getByRole('link', { name: 'Reprendre le plan enregistré' })).toHaveAttribute(
+    'href',
+    `/app?resumeCourseId=${id}&resumeOrgId=00000000-0000-4000-8000-000000000002`,
+  );
+  await page.reload();
+  await expect(page.getByRole('link', { name: 'Reprendre le plan enregistré' })).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Reprendre la responsabilité', exact: true }),
+  ).toHaveCount(0);
+});
 const labels = [
   { locale: 'fr-FR', button: 'Reprendre la responsabilité', done: 'Responsabilité reprise.' },
   { locale: 'ar-MA', button: 'تولّي المسؤولية', done: 'تمّ تولّي المسؤولية.' },
@@ -66,7 +97,7 @@ test('shows an unconfirmed takeover without removing the draft', async ({
   await page.goto('/catalog');
   await page.getByRole('button', { name: 'Reprendre la responsabilité', exact: true }).click();
   await expect(
-    page.getByRole('region', { name: 'Formations sans responsable' }).getByRole('alert'),
+    page.getByRole('region', { name: 'Formations à reprendre' }).getByRole('alert'),
   ).toContainText('L’opération n’a pas pu être confirmée');
   await expect(page.getByText('Draft retained')).toBeVisible();
   await expect(

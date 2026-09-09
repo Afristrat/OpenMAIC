@@ -11,6 +11,10 @@ import {
 } from '@/lib/server/classroom-plan-job-store';
 import { enqueueClassroomPlan } from '@/lib/jobs/queue';
 import type { TTSProviderId } from '@/lib/audio/types';
+import {
+  assertCourseGenerationAccess,
+  CourseAccessError,
+} from '@/lib/server/course-generation-access';
 
 export const maxDuration = 30;
 
@@ -25,9 +29,11 @@ export async function POST(request: NextRequest) {
     const parsed = validation.data;
     const auth = await requireSuperAdminOrOrgAuthor(request, parsed.orgId);
     if (auth.response) return auth.response;
+    await assertCourseGenerationAccess(parsed, auth.user.id);
 
     const input: GenerateClassroomInput = {
       orgId: parsed.orgId,
+      courseId: parsed.courseId,
       sourceManifestId: parsed.sourceManifestId,
       authorRole: auth.authoredByRole,
       requirement: parsed.requirement,
@@ -91,6 +97,7 @@ export async function POST(request: NextRequest) {
       202,
     );
   } catch (error) {
+    if (error instanceof CourseAccessError) return apiError('INVALID_REQUEST', 403, error.message);
     return apiError(
       'INTERNAL_ERROR',
       500,

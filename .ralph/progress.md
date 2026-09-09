@@ -1,5 +1,15 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-036, plan enregistré et relance autorisée
+
+course-storage conserve désormais le ClassroomPlan complet dans outline.plan à l’import et après génération, avec les scènes existantes. Pas de nouvelle colonne ni migration. GET courses/[courseId]/resume : identité vérifiée, propriétaire du cours dans le tenant actif avec rôle auteur, plan validé, refus 409 si ancien plan absent/invalide. Lien catalogue vers /app, sélection du tenant connu, ouverture du vrai plan dans OutlinesEditor et confirmation avant génération ; courseId/sourceManifestId/langue conservés. Catalogue incluant les propres brouillons de l’administrateur pour garder la reprise accessible après rechargement. Les orphelins des autres états restent listés.
+
+Garde commune course-generation-access appelée avant création des jobs et au début des deux workers : appartenance auteur active, cours exact dans le tenant/propriétaire, état non archivé et manifeste courant correspondant. La route plan transporte maintenant courseId. Aucun verrou tenu pendant toute la génération : une révocation pendant les appels reste un sujet distinct.
+
+Session 46098 : 63 tests ciblés verts et TypeScript/lint global verts ; premier E2E révèle ouverture bloquée par canGenerate (formulaire encore vide). Condition corrigée pour la lecture du plan. Session 17268 exit 0 : 14 tests ciblés complémentaires, TypeScript/lint global sans avertissement, sept Chromium verts sans retry (reprise confirmée, import existant, rechargement catalogue, FR/AR/EN de responsabilité et erreur). APIs navigateur simulées, runner avec overlays. SQL réel sous ROLLBACK : plan complet conservé à la reprise et brouillon attribué encore visible ; zéro utilisateur de fixture/RPC absent recontrôlés. Pas de build/gate global ni déploiement.
+
+Suite : récupérer les anciens plans depuis les sources exactes conservées lorsque possible, plutôt que fabriquer un syllabus depuis les scènes. Puis imports privés/Storage, agent_configs/jobs, sessions/UI de suppression et autres critères S-036. Aucune US close.
+
 ## 9 septembre 2026 — S-036, découverte et reprise dans le catalogue
 
 GET courses/orphaned vérifie l’identité et une appartenance admin réelle au tenant actif, lit avec le client RLS et filtre org_id/owner_id NULL. Pagination par UUID, cinquante lignes et curseur explicite ; brouillons/prêts/archivés inclus. Composant OrphanedCourses intégré au catalogue, indépendant du flag de publication, requêtes annulées au changement de tenant, réponse validée, succès seulement après confirmation. FR/AR/EN ; aucune publication ni génération implicite, erreur visible et actualisation possible.

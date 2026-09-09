@@ -1,5 +1,15 @@
 # S-036 — Collecte consentie : serveur et stockage
 
+## Complément : plan persistant et génération après reprise
+
+Ponytail : réutilisation du JSONB outline et de l’éditeur de plan existant. ClassroomPlan complet conservé à l’import et après génération, scènes existantes maintenues ; pas de migration. Endpoint resume avec vérification de propriété/tenant/auteur actif et validation du plan. Interface : lien depuis le brouillon attribué, choix du tenant connu, lecture avant confirmation explicite, identifiants cours/manifeste et langue conservés. Catalogue : filtre tenant ET (orphelin OU propre brouillon), pagination inchangée et booléen owned sans exposition de l’identité du propriétaire. La reprise reste accessible après rechargement.
+
+Contrôle commun avant mise en file ET au démarrage des workers plan/génération : état draft/ready, propriétaire exact, rôle auteur dans un tenant actif, manifeste correspondant. Ancien plan absent/invalide = 409, pas de plan inventé. Pas de garantie contre une révocation après ce contrôle et pendant un appel fournisseur déjà lancé.
+
+Preuves ServeurIA : session 46098, 63 tests ciblés et TypeScript/lint verts ; échec navigateur dû à une condition de formulaire vide appliquée à tort à l’ouverture. Correction puis 17268 exit 0 : 14 tests complémentaires, TypeScript/lint global sans avertissement et sept Chromium verts, réseau simulé (import et reprise jusqu’à confirmation, rechargement, responsabilités FR/AR/EN, erreur). Le nouveau parcours complet de plan est testé en FR ; les parcours AR/EN portent sur la reprise de responsabilité. SQL réel enrichi sous BEGIN/ROLLBACK : JSON du plan inchangé après reprise, lecture du brouillon attribué ; zéro fixture/RPC absent après la transaction. Runner avec overlays, pas un checkout propre ni une preuve déployée.
+
+Reste : récupération des anciens plans à partir des sources conservées, fichiers privés/Storage, autres références et sessions/suppression. Pas de clôture, de build/gate global ni de nouvelle migration durable. Documentation consultée : [JSONB Supabase](https://supabase.com/docs/guides/database/json).
+
 ## Complément : interface de reprise des cours orphelins
 
 GET courses/orphaned : admin réel du tenant actif, client utilisateur soumis à RLS, filtre tenant et owner_id NULL, pages de cinquante ordonnées par UUID, curseur, no-store et délais bornés. Aucun droit supplémentaire accordé. Composant dédié intégré au catalogue suivant Ponytail : réutilisation du bouton de reprise et de la navigation classroom, sans second système de gestion. Liste des brouillons/prêts/archivés, confirmation explicite, erreurs visibles, FR/AR/EN/RTL, aucune génération ni publication automatique. Montage indexé par tenant et annulation des requêtes à la sortie.

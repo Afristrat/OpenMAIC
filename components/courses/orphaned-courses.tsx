@@ -11,6 +11,7 @@ const courseSchema = z.object({
   language: z.string(),
   status: z.enum(['draft', 'ready', 'archived']),
   stage_id: z.string().nullable(),
+  owned: z.boolean().default(false),
 });
 const listSchema = z.object({
   courses: z.array(courseSchema),
@@ -111,7 +112,7 @@ export function OrphanedCourses({ orgId }: { orgId: string }) {
             <p className="mt-1 text-sm text-muted-foreground">
               {course.language} · {t(`catalog.courseStatus.${course.status}`)}
             </p>
-            {reclaimed.includes(course.id) ? (
+            {course.owned || reclaimed.includes(course.id) ? (
               <p role="status" className="mt-3">
                 {t('catalog.reclaimed')}
               </p>
@@ -130,6 +131,14 @@ export function OrphanedCourses({ orgId }: { orgId: string }) {
                 href={`/classroom/${encodeURIComponent(course.stage_id)}`}
               >
                 {t('catalog.openClassroom')}
+              </a>
+            )}
+            {course.status === 'draft' && (course.owned || reclaimed.includes(course.id)) && (
+              <a
+                className="mt-3 block underline"
+                href={`/app?resumeCourseId=${course.id}&resumeOrgId=${orgId}`}
+              >
+                {t('catalog.resume')}
               </a>
             )}
           </article>

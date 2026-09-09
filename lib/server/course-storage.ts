@@ -1,6 +1,6 @@
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import type { LearningApproach } from '@/lib/agents/persona-catalog';
-import type { SceneOutline } from '@/lib/types/generation';
+import type { ClassroomPlan, SceneOutline } from '@/lib/types/generation';
 
 export type CourseLocale = 'fr-FR' | 'ar-MA' | 'en-US';
 
@@ -12,6 +12,7 @@ export async function persistImportedCourseDraft(input: {
   title: string;
   language: CourseLocale;
   outlines: SceneOutline[];
+  plan: ClassroomPlan;
 }): Promise<string> {
   const { data, error } = await createServiceSupabaseClient()
     .from('courses')
@@ -23,7 +24,7 @@ export async function persistImportedCourseDraft(input: {
       title: input.title,
       language: input.language,
       source_kind: 'imported',
-      outline: { scenes: input.outlines },
+      outline: { scenes: input.outlines, plan: input.plan },
       status: 'draft',
     })
     .select('id')
@@ -41,6 +42,7 @@ export async function persistGeneratedCourse(input: {
   language: CourseLocale;
   learningApproach: LearningApproach;
   outlines: SceneOutline[];
+  plan: ClassroomPlan;
   sourceManifestId?: string;
 }): Promise<string> {
   const supabase = createServiceSupabaseClient();
@@ -50,7 +52,7 @@ export async function persistGeneratedCourse(input: {
     stage_id: input.stageId,
     title: input.title,
     language: input.language,
-    outline: { scenes: input.outlines, learningApproach: input.learningApproach },
+    outline: { scenes: input.outlines, plan: input.plan, learningApproach: input.learningApproach },
     source_manifest_id: input.sourceManifestId ?? null,
     status: 'ready' as const,
   };

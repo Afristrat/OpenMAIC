@@ -22,8 +22,10 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import type { GenerateClassroomInput } from '@/lib/server/classroom-generation';
 import { normalizePdfImages } from '@/lib/server/pdf-source';
 import { resolveFormationSources } from '@/lib/server/formation-source-library';
+import { assertCourseGenerationAccess } from '@/lib/server/course-generation-access';
 
 export async function generateClassroomPlan(input: GenerateClassroomInput, ownerId?: string) {
+  await assertCourseGenerationAccess(input, ownerId);
   const learningContext = normalizeLearningContext(
     input.learningContext ?? DEFAULT_LEARNING_CONTEXT,
   );

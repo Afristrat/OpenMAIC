@@ -41,6 +41,62 @@ const plan = {
   ],
 };
 
+test('reprend le plan enregistré sans génération avant confirmation', async ({ page }) => {
+  const orgId = '00000000-0000-4000-8000-000000000002';
+  await page.addInitScript((settings) => {
+    localStorage.setItem('settings-storage', settings);
+    localStorage.setItem('locale', 'fr-FR');
+  }, createSettingsStorage());
+  await page.route(`**/api/courses/${COURSE_ID}/resume?*`, (route) =>
+    route.fulfill({
+      json: {
+        courseId: COURSE_ID,
+        orgId,
+        sourceManifestId: MANIFEST_ID,
+        language: 'fr-FR',
+        plan,
+      },
+    }),
+  );
+  let submitted: Record<string, unknown> | undefined;
+  await page.route('**/api/generate-classroom', async (route) => {
+    submitted = route.request().postDataJSON();
+    await route.fulfill({ status: 202, json: { jobId: 'resume-e2e' } });
+  });
+  await page.route('**/api/generate-classroom/resume-e2e', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        status: 'succeeded',
+        progress: 100,
+        result: { url: '/classroom/resume-e2e' },
+      },
+    }),
+  );
+  await page.route('**/api/classroom?id=resume-e2e', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        stage: { id: 'resume-e2e', name: 'Resumed', createdAt: Date.now(), updatedAt: Date.now() },
+        scenes: [],
+      },
+    }),
+  );
+  await page.goto(`/app?resumeCourseId=${COURSE_ID}&resumeOrgId=${orgId}`);
+  await page.getByRole('button', { name: 'Reprendre le plan enregistré', exact: true }).click();
+  await expect(page.getByLabel('Intitulé de la formation')).toHaveValue(plan.courseTitle);
+  expect(submitted).toBeUndefined();
+  await page.getByRole('button', { name: 'Confirmer et générer le cours' }).click();
+  await expect(page).toHaveURL(/\/classroom\/resume-e2e$/);
+  expect(submitted).toMatchObject({
+    courseId: COURSE_ID,
+    orgId,
+    sourceManifestId: MANIFEST_ID,
+    approvedPlan: plan,
+    learningApproach: 'andragogy',
+  });
+});
+
 test('dépôt conforme → validation → outline éditable → cours prêt', async ({ page }) => {
   let submittedBody: Record<string, unknown> | undefined;
   await page.addInitScript((settings) => {
