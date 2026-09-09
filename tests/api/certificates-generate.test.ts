@@ -3,12 +3,18 @@ import { NextRequest } from 'next/server';
 
 const mocks = vi.hoisted(() => ({
   createServerSupabaseClient: vi.fn(),
+  resolveLtiContext: vi.fn(),
   filters: [] as unknown[][],
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
   createServerSupabaseClient: mocks.createServerSupabaseClient,
 }));
+vi.mock('@/lib/lti/context', async (original) => ({
+  ...(await original<typeof import('@/lib/lti/context')>()),
+  resolveLtiContext: mocks.resolveLtiContext,
+}));
+import { LtiAccessDenied } from '@/lib/lti/context';
 
 import { POST } from '@/app/api/certificates/generate/route';
 
@@ -99,6 +105,41 @@ describe('POST /api/certificates/generate', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.filters.length = 0;
+  });
+
+  it('uses the verified LMS tenant instead of the browser selection', async () => {
+    mocks.createServerSupabaseClient.mockResolvedValue(certificateRaceClient());
+    mocks.resolveLtiContext.mockResolvedValue({ orgId: ORG_ID });
+    const response = await POST(
+      new NextRequest('https://qalem.ma/api/certificates/generate', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', cookie: `lti_context=${'b'.repeat(64)}` },
+        body: JSON.stringify({ stageId: STAGE_ID, orgId: '00000000-0000-4000-8000-000000000099' }),
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(mocks.resolveLtiContext).toHaveBeenCalledWith({
+      token: 'b'.repeat(64),
+      userId: USER_ID,
+      stageId: STAGE_ID,
+    });
+    expect(mocks.filters).toContainEqual(['eq', 'issuance_org_id', ORG_ID]);
+    expect(JSON.stringify(mocks.filters)).not.toContain('00000000-0000-4000-8000-000000000099');
+  });
+
+  it('does not fall back to browser tenant after a rejected LMS launch', async () => {
+    const client = certificateRaceClient();
+    mocks.createServerSupabaseClient.mockResolvedValue(client);
+    mocks.resolveLtiContext.mockRejectedValue(new LtiAccessDenied());
+    const response = await POST(
+      new NextRequest('https://qalem.ma/api/certificates/generate', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', cookie: `lti_context=${'b'.repeat(64)}` },
+        body: JSON.stringify({ stageId: STAGE_ID, orgId: ORG_ID }),
+      }),
+    );
+    expect(response.status).toBe(403);
+    expect(client.from).not.toHaveBeenCalled();
   });
 
   it('refuses an unauthenticated issuance before querying certificate data', async () => {

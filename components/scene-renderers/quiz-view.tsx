@@ -867,6 +867,7 @@ function QuizSession({
 
       try {
         await persistQuizCompletion({
+          serverPersisted: Boolean(ltiScope),
           orgId: quizOrgId,
           ...(user ? { userId: user.id } : {}),
           stageId,

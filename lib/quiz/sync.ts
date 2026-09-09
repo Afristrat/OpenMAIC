@@ -20,6 +20,8 @@ export interface QuizResultToSync {
 }
 
 export interface QuizCompletionToPersist {
+  /** LTI already writes its result in the server completion transaction. */
+  serverPersisted?: boolean;
   orgId?: string | null;
   userId?: string;
   stageId: string;
@@ -181,19 +183,20 @@ export async function persistQuizCompletion(input: QuizCompletionToPersist): Pro
 
   if (input.userId) {
     await syncReviewCardsToSupabase(cards, input.userId);
-    await syncQuizResultToSupabase({
-      orgId: input.orgId,
-      userId: input.userId,
-      stageId: input.stageId,
-      sceneId: input.sceneId,
-      answers: input.results.map((result) => ({
-        questionId: result.questionId,
-        userAnswer: toArray(input.answers[result.questionId]).join(', '),
-        correct: result.correct ?? false,
-        timestamp: new Date().toISOString(),
-      })),
-      score: possiblePoints > 0 ? Math.round((earnedPoints / possiblePoints) * 100) : 0,
-    });
+    if (!input.serverPersisted)
+      await syncQuizResultToSupabase({
+        orgId: input.orgId,
+        userId: input.userId,
+        stageId: input.stageId,
+        sceneId: input.sceneId,
+        answers: input.results.map((result) => ({
+          questionId: result.questionId,
+          userAnswer: toArray(input.answers[result.questionId]).join(', '),
+          correct: result.correct ?? false,
+          timestamp: new Date().toISOString(),
+        })),
+        score: possiblePoints > 0 ? Math.round((earnedPoints / possiblePoints) * 100) : 0,
+      });
   }
 
   return cards;

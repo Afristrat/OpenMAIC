@@ -1,5 +1,15 @@
 # S-036 — Collecte consentie : serveur et stockage
 
+## 10 septembre 2026 — Résultats LTI intégrés aux rapports
+
+Candidate CLI 20260909225810, dépendante de la candidate quiz tenant : trigger privé SECURITY INVOKER projetant le premier résultat dans quiz_results. Acteur résolu depuis le binding LTI, tenant/formation/scène et score issus de la tentative serveur. La projection participe à la transaction existante de correction et de mise en file LMS. Lien lti_attempt_id unique avec cascade ; insertion/modification d’une ligne LTI interdite au rôle authenticated. La permission DELETE personnelle existante demeure ; aucune garantie anti-fraude globale n’est revendiquée.
+
+Le client ne duplique plus ce résultat, mais conserve les cartes de révision. L’émission de certificat avec cookie LTI vérifie le lancement et reprend son organisation ; un lancement invalide donne 403, sans repli sur le tenant client. Aucun changement de l’API publique de contexte LTI.
+
+Preuve SQL scripts/validation/s036-lti-reporting.sql sous BEGIN/ROLLBACK : collision volontaire après mise en file, annulation simultanée de l’outbox et du résultat ; réussite puis rejeu avec une seule projection et une seule entrée outbox ; lecture personnelle autorisée et modification du score refusée. Relecture après rollback : zéro utilisateur/organisation/formation/outbox de fixture et colonnes org_id/lti_attempt_id candidates absentes.
+
+6426 exit 0 : 40 tests dans cinq fichiers, TypeScript (tas 4 Gio), lint global sans avertissement, trois Chromium FR/AR/EN incluant échec/rechargement/rejeu et absence de POST quiz_results client. APIs navigateur simulées, runner avec overlays. Advisors local indisponibles : connexion refusée 127.0.0.1:54322. Aucun build/gate global, déploiement, migration durable ou échange LMS réel. Les tentatives déjà terminées ne sont pas reprises : couverture historique encore ouverte, comme les destinataires de partage. S-036 reste passes=false.
+
 ## Complément : certificats et tenant d’émission
 
 Le POST de certificat reçoit orgId explicite depuis la formation (nullable pour le périmètre personnel). Une nouvelle émission exige appartenance, organisation active et formation liée au tenant ; les lectures restent sous RLS. Quiz filtrés par utilisateur/formation/tenant et paginés ; un seul résultat par scène, le plus récent selon completed_at/id, entre dans la moyenne. Aucun score null/invalide n’est transformé en réussite. Recherche existante et reprise après conflit utilisent le même tenant d’émission.

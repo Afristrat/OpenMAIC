@@ -204,6 +204,7 @@ test.describe('Quiz content surface (#657)', () => {
         expect(submission).not.toHaveProperty('questions');
       }
       expect(localGrades).toBe(0);
+      expect(persistence.expectedRequests).not.toContain('POST /rest/v1/quiz_results');
     });
   }
 

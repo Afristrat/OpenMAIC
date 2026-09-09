@@ -10,6 +10,7 @@ import {
 import { validateBody } from '@/lib/api/validate';
 import { certificateGenerateSchema } from '@/lib/api/schemas';
 import { readReportPages } from '@/lib/reports/read-report-pages';
+import { LtiAccessDenied, resolveLtiContext } from '@/lib/lti/context';
 
 /**
  * POST /api/certificates/generate
@@ -41,7 +42,11 @@ export async function POST(request: NextRequest) {
     const rawBody = await request.json();
     const validation = validateBody(certificateGenerateSchema, rawBody);
     if (!validation.success) return validation.response;
-    const { stageId, orgId } = validation.data;
+    const { stageId } = validation.data;
+    const launchToken = request.cookies.get('lti_context')?.value;
+    const orgId = launchToken
+      ? (await resolveLtiContext({ token: launchToken, userId: user.id, stageId })).orgId
+      : validation.data.orgId;
     const signal = AbortSignal.timeout(30000);
     const lookupCertificate = () => {
       const query = supabase
@@ -264,7 +269,9 @@ export async function POST(request: NextRequest) {
       { certificate: certificateFromRow(inserted as CertificateRow, baseUrl) },
       201,
     );
-  } catch {
+  } catch (error) {
+    if (error instanceof LtiAccessDenied)
+      return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'LTI launch denied');
     return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to generate certificate');
   }
 }

@@ -193,6 +193,9 @@ describe('persistQuizCompletion', () => {
     const quizIds = upsertQuizResult.mock.calls.map(([row]) => row.id);
     expect(quizIds).toHaveLength(2);
     expect(quizIds[1]).toBe(quizIds[0]);
+    await persistQuizCompletion({ ...input, serverPersisted: true });
+    expect(upsertQuizResult).toHaveBeenCalledTimes(2);
+    expect(localCards.size).toBe(2);
   });
 
   it('stores guest cards locally without touching Supabase', async () => {

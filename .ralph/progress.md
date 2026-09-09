@@ -1,5 +1,11 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 10 septembre 2026 — S-036, résultats LTI et rapports tenant
+
+Candidate CLI 20260909225810 : projection quiz_results au premier résultat LTI, acteur/tenant issus des bindings serveur, dans la transaction de correction et d’outbox LMS. Collision provoquée : les trois écritures sont annulées ; rejeu sans doublon. Mise à jour des lignes LTI refusée au navigateur ; sa permission DELETE existante n’est pas modifiée. Client conserve les cartes de révision mais n’insère plus un second résultat. Certificat LTI : tenant dérivé du lancement vérifié, jamais du corps client ; lancement invalide refusé sans repli.
+
+6426 exit 0 : 40 tests dans cinq fichiers, TypeScript à 4 Gio, lint global sans avertissement, trois Chromium FR/AR/EN avec APIs simulées. SQL scripts/validation/s036-lti-reporting.sql sous BEGIN/ROLLBACK, puis zéro utilisateur/organisation/formation/outbox et colonnes candidates absentes. Advisors local indisponibles (54322). Aucun déploiement, migration durable, build/gate global ou échange LMS réel. Pas de reprise des résultats LTI déjà terminés. Ponytail/Supabase : transaction et triggers natifs, sans dépendance. S-036 reste ouverte ; suite : autorisation des partages pour les membres uniquement du tenant receveur, couverture historique et autres critères.
+
 ## 9 septembre 2026 — S-036, périmètre tenant des certificats
 
 Client transmet orgId explicite ; API contrôle tenant actif/appartenance/formation, filtre quiz par tenant et utilisateur, pagine, garde le dernier résultat par scène et refuse tout score absent. Rejeu/conflit limités au tenant d’émission. Candidate CLI 20260909225020 : issuance_org_id immuable, unicité utilisateur/stage/tenant NULLS NOT DISTINCT. FK org_id peut être annulée lors de suppression d’organisation sans collisions entre trois certificats. SQL Auth sous ROLLBACK, doublons/provenance/conservation vérifiés, zéro fixture et ancien index restauré. 6364 exit 0 : sept tests, TS/lint et deux Chromium ; 48078 exit 0 après complément de provenance : sept tests et TS/lint. Advisors local indisponibles. Aucun déploiement/clôture. Ponytail/Supabase : helper de pagination existant et contrainte native, pas de nouvelle dépendance. Suite : LTI, destinataires de partage, couverture historique et autres critères S-036.

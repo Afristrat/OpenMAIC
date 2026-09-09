@@ -104,6 +104,7 @@ export interface QuizAnswer {
 
 export interface QuizResult {
   id: string; // UUID
+  lti_attempt_id: string | null;
   org_id: string | null; // Verified provenance; null for legacy/personal results.
   user_id: string; // FK → profiles.id
   stage_id: string; // FK → stages.id
