@@ -234,7 +234,10 @@ test.describe('Classroom Interaction', () => {
     let issuanceRequests = 0;
     await page.route('**/api/certificates/generate', async (route) => {
       issuanceRequests += 1;
-      expect(route.request().postDataJSON()).toEqual({ stageId: TEST_STAGE_ID });
+      expect(route.request().postDataJSON()).toEqual({
+        stageId: TEST_STAGE_ID,
+        orgId: '00000000-0000-4000-8000-000000000002',
+      });
       await route.fulfill({
         status: 201,
         contentType: 'application/json',

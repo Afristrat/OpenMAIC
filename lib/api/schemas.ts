@@ -233,6 +233,7 @@ export const paymentInitiateSchema = z.object({
 
 export const certificateGenerateSchema = z.object({
   stageId: z.string().min(1, 'stageId is required'),
+  orgId: z.uuid().nullable(),
 });
 
 // ---------------------------------------------------------------------------

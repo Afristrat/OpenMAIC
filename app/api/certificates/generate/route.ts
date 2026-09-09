@@ -9,13 +9,14 @@ import {
 } from '@/lib/certificates';
 import { validateBody } from '@/lib/api/validate';
 import { certificateGenerateSchema } from '@/lib/api/schemas';
+import { readReportPages } from '@/lib/reports/read-report-pages';
 
 /**
  * POST /api/certificates/generate
  *
  * Generate a certificate for a learner who completed a classroom stage.
  *
- * Body: { stageId: string }
+ * Body: { stageId: string, orgId: string | null }
  *
  * Requirements:
  *  - Authenticated user
@@ -40,15 +41,22 @@ export async function POST(request: NextRequest) {
     const rawBody = await request.json();
     const validation = validateBody(certificateGenerateSchema, rawBody);
     if (!validation.success) return validation.response;
-    const { stageId } = validation.data;
+    const { stageId, orgId } = validation.data;
+    const signal = AbortSignal.timeout(30000);
+    const lookupCertificate = () => {
+      const query = supabase
+        .from('certificates')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('stage_id', stageId);
+      return (
+        orgId ? query.eq('issuance_org_id', orgId) : query.is('issuance_org_id', null)
+      ).maybeSingle();
+    };
 
     // --- Check if certificate already exists ----------------------------
-    const { data: existing } = await supabase
-      .from('certificates')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('stage_id', stageId)
-      .maybeSingle();
+    const { data: existing, error: lookupError } = await lookupCertificate();
+    if (lookupError) throw new Error('Certificate lookup unavailable');
 
     if (existing) {
       const baseUrl = buildBaseUrl(request);
@@ -69,11 +77,52 @@ export async function POST(request: NextRequest) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 404, 'Stage not found');
     }
 
+    let issuedBy = 'Qalem';
+    if (orgId) {
+      const { data: membership, error: memberError } = await supabase
+        .from('org_members')
+        .select('id')
+        .eq('org_id', orgId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (memberError) throw new Error('Membership unavailable');
+      if (!membership) return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Organization denied');
+      const { data: org, error: orgError } = await supabase
+        .from('organizations')
+        .select('name, status')
+        .eq('id', orgId)
+        .single();
+      if (orgError) throw new Error('Organization unavailable');
+      if (!org || org.status !== 'active')
+        return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Organization inactive');
+      issuedBy = org.name;
+      if (stage.org_id !== orgId) {
+        const { data: shared, error: sharedError } = await supabase
+          .from('shared_classrooms')
+          .select('id')
+          .eq('stage_id', stageId)
+          .eq('org_id', orgId)
+          .in('visibility', ['organization', 'public'])
+          .maybeSingle();
+        if (sharedError) throw new Error('Sharing unavailable');
+        if (!shared) return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Stage tenant denied');
+      }
+    } else if (stage.org_id !== null) {
+      return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Organization required for this stage');
+    }
+
     // --- Fetch all scenes for this stage --------------------------------
-    const { data: scenes } = await supabase
-      .from('scenes')
-      .select('id, type, title')
-      .eq('stage_id', stageId);
+    const scenes: Array<{ id: string; type: string; title: string | null }> = [];
+    for await (const scene of readReportPages((from, to) =>
+      supabase
+        .from('scenes')
+        .select('id, type, title', { count: 'exact' })
+        .eq('stage_id', stageId)
+        .order('id')
+        .range(from, to)
+        .abortSignal(signal),
+    ))
+      scenes.push(scene);
 
     if (!scenes || scenes.length === 0) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Stage has no scenes');
@@ -93,12 +142,25 @@ export async function POST(request: NextRequest) {
 
     const quizSceneIds = quizScenes.map((s) => s.id);
 
-    const { data: quizResults } = await supabase
-      .from('quiz_results')
-      .select('scene_id, score')
-      .eq('user_id', user.id)
-      .eq('stage_id', stageId)
-      .in('scene_id', quizSceneIds);
+    const resultsByScene = new Map<string, number | null>();
+    for (let offset = 0; offset < quizSceneIds.length; offset += 100) {
+      const ids = quizSceneIds.slice(offset, offset + 100);
+      for await (const result of readReportPages((from, to) => {
+        const query = supabase
+          .from('quiz_results')
+          .select('scene_id, score', { count: 'exact' })
+          .eq('user_id', user.id)
+          .eq('stage_id', stageId)
+          .in('scene_id', ids);
+        return (orgId ? query.eq('org_id', orgId) : query.is('org_id', null))
+          .order('completed_at', { ascending: false })
+          .order('id', { ascending: false })
+          .range(from, to)
+          .abortSignal(signal);
+      }))
+        if (!resultsByScene.has(result.scene_id)) resultsByScene.set(result.scene_id, result.score);
+    }
+    const quizResults = [...resultsByScene].map(([scene_id, score]) => ({ scene_id, score }));
 
     if (!quizResults || quizResults.length === 0) {
       return apiError(
@@ -126,12 +188,14 @@ export async function POST(request: NextRequest) {
     let count = 0;
 
     for (const result of quizResults) {
-      const s = Number(result.score);
-      if (!isNaN(s)) {
+      const s = result.score;
+      if (s !== null && Number.isFinite(s) && s >= 0 && s <= 100) {
         totalScore += s;
         count += 1;
       }
     }
+    if (count !== quizSceneIds.length)
+      return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'A quiz score is unavailable');
 
     const avgScore = count > 0 ? totalScore / count : 0;
 
@@ -144,11 +208,12 @@ export async function POST(request: NextRequest) {
     }
 
     // --- Learner profile ------------------------------------------------
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('nickname')
       .eq('id', user.id)
       .single();
+    if (profileError) throw new Error('Profile unavailable');
 
     const learnerName = profile?.nickname || user.email || 'Learner';
 
@@ -157,19 +222,6 @@ export async function POST(request: NextRequest) {
       .filter((s) => s.type === 'quiz' || s.type === 'interactive')
       .map((s) => s.title)
       .filter((title): title is string => typeof title === 'string' && title.length > 0);
-
-    // --- Organization name (if applicable) -----------------------------
-    let issuedBy = 'Qalem';
-    if (stage.org_id) {
-      const { data: org } = await supabase
-        .from('organizations')
-        .select('name')
-        .eq('id', stage.org_id)
-        .single();
-      if (org?.name) {
-        issuedBy = org.name;
-      }
-    }
 
     // --- Generate & insert ---------------------------------------------
     const verificationCode = generateVerificationCode();
@@ -185,18 +237,14 @@ export async function POST(request: NextRequest) {
         skills,
         verification_code: verificationCode,
         issued_by: issuedBy,
-        org_id: stage.org_id ?? null,
+        org_id: orgId,
       })
       .select()
       .single();
 
     if (insertError?.code === '23505') {
-      const { data: concurrent } = await supabase
-        .from('certificates')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('stage_id', stageId)
-        .maybeSingle();
+      const { data: concurrent, error: concurrentError } = await lookupCertificate();
+      if (concurrentError) throw new Error('Certificate lookup unavailable');
 
       if (concurrent) {
         const baseUrl = buildBaseUrl(request);
@@ -208,12 +256,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (insertError || !inserted) {
-      return apiError(
-        API_ERROR_CODES.INTERNAL_ERROR,
-        500,
-        'Failed to create certificate',
-        insertError?.message,
-      );
+      return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to create certificate');
     }
 
     const baseUrl = buildBaseUrl(request);
@@ -221,13 +264,8 @@ export async function POST(request: NextRequest) {
       { certificate: certificateFromRow(inserted as CertificateRow, baseUrl) },
       201,
     );
-  } catch (error) {
-    return apiError(
-      API_ERROR_CODES.INTERNAL_ERROR,
-      500,
-      'Failed to generate certificate',
-      error instanceof Error ? error.message : String(error),
-    );
+  } catch {
+    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to generate certificate');
   }
 }
 

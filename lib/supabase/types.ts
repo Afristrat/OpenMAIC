@@ -491,6 +491,7 @@ export type LtiGradeSubmissionInsert = Omit<LtiGradeSubmission, 'id' | 'created_
 // ---------------------------------------------------------------------------
 
 export interface CertificateDbRow {
+  issuance_org_id: string | null;
   id: string;
   user_id: string;
   stage_id: string;
@@ -505,7 +506,10 @@ export interface CertificateDbRow {
   created_at: string;
 }
 
-export type CertificateInsert = Omit<CertificateDbRow, 'id' | 'completion_date' | 'created_at'> &
+export type CertificateInsert = Omit<
+  CertificateDbRow,
+  'id' | 'completion_date' | 'created_at' | 'issuance_org_id'
+> &
   Partial<Pick<CertificateDbRow, 'completion_date'>>;
 
 // ---------------------------------------------------------------------------

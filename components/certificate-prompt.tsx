@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { Award, Download, Linkedin, Link2, Check, X, Loader2 } from 'lucide-react';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { getCurrentOrganizationId } from '@/lib/hooks/use-organizations';
 import { cn } from '@/lib/utils';
 import type { Certificate } from '@/lib/certificates/types';
 
@@ -219,7 +220,7 @@ export function CertificatePrompt({
       const res = await fetch('/api/certificates/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stageId }),
+        body: JSON.stringify({ stageId, orgId: getCurrentOrganizationId() }),
       });
 
       const json = await res.json();

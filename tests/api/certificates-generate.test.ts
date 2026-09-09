@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server';
 
 const mocks = vi.hoisted(() => ({
   createServerSupabaseClient: vi.fn(),
+  filters: [] as unknown[][],
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -34,17 +35,25 @@ type QueryResult = { data: unknown; error?: { code?: string; message: string } |
 
 function query(result: QueryResult) {
   const builder: Record<string, unknown> = {};
-  for (const method of ['select', 'eq', 'in', 'insert']) {
+  for (const method of ['select', 'in', 'insert', 'order', 'range', 'abortSignal']) {
     builder[method] = vi.fn(() => builder);
   }
+  for (const method of ['eq', 'is'])
+    builder[method] = vi.fn((...args: unknown[]) => {
+      mocks.filters.push([method, ...args]);
+      return builder;
+    });
   builder.single = vi.fn(async () => result);
   builder.maybeSingle = vi.fn(async () => result);
   builder.then = (resolve: (value: QueryResult) => unknown, reject: (reason: unknown) => unknown) =>
-    Promise.resolve(result).then(resolve, reject);
+    Promise.resolve({
+      ...result,
+      count: Array.isArray(result.data) ? result.data.length : null,
+    }).then(resolve, reject);
   return builder;
 }
 
-function certificateRaceClient() {
+function certificateRaceClient(options: { member?: boolean; score?: number | null } = {}) {
   const queues: Record<string, Array<ReturnType<typeof query>>> = {
     certificates: [
       query({ data: null, error: null }),
@@ -58,9 +67,17 @@ function certificateRaceClient() {
         error: null,
       }),
     ],
-    quiz_results: [query({ data: [{ scene_id: 'quiz-scene', score: 80 }], error: null })],
+    quiz_results: [
+      query({
+        data: [{ scene_id: 'quiz-scene', score: options.score === undefined ? 80 : options.score }],
+        error: null,
+      }),
+    ],
+    org_members: [
+      query({ data: options.member === false ? null : { id: 'membership' }, error: null }),
+    ],
     profiles: [query({ data: { nickname: 'Amina' }, error: null })],
-    organizations: [query({ data: { name: 'Organisation test' }, error: null })],
+    organizations: [query({ data: { name: 'Organisation test', status: 'active' }, error: null })],
   };
 
   return {
@@ -81,6 +98,7 @@ function certificateRaceClient() {
 describe('POST /api/certificates/generate', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.filters.length = 0;
   });
 
   it('refuses an unauthenticated issuance before querying certificate data', async () => {
@@ -96,7 +114,7 @@ describe('POST /api/certificates/generate', () => {
       new NextRequest('https://qalem.ma/api/certificates/generate', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ stageId: STAGE_ID }),
+        body: JSON.stringify({ stageId: STAGE_ID, orgId: ORG_ID }),
       }),
     );
 
@@ -123,7 +141,7 @@ describe('POST /api/certificates/generate', () => {
       new NextRequest('https://qalem.ma/api/certificates/generate', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ stageId: 'stage-outside-rights' }),
+        body: JSON.stringify({ stageId: 'stage-outside-rights', orgId: ORG_ID }),
       }),
     );
 
@@ -145,7 +163,7 @@ describe('POST /api/certificates/generate', () => {
       new NextRequest('https://qalem.ma/api/certificates/generate', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ stageId: STAGE_ID }),
+        body: JSON.stringify({ stageId: STAGE_ID, orgId: ORG_ID }),
       }),
     );
     const body = await response.json();
@@ -168,7 +186,7 @@ describe('POST /api/certificates/generate', () => {
       new NextRequest('https://qalem.ma/api/certificates/generate', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ stageId: STAGE_ID }),
+        body: JSON.stringify({ stageId: STAGE_ID, orgId: ORG_ID }),
       }),
     );
     const body = await response.json();
@@ -184,5 +202,30 @@ describe('POST /api/certificates/generate', () => {
         verificationCode: existingCertificate.verification_code,
       },
     });
+    expect(mocks.filters.filter((filter) => filter[1] === 'org_id')).toEqual([
+      ['eq', 'org_id', ORG_ID],
+      ['eq', 'org_id', ORG_ID],
+    ]);
+    expect(mocks.filters.filter((filter) => filter[1] === 'issuance_org_id')).toEqual([
+      ['eq', 'issuance_org_id', ORG_ID],
+      ['eq', 'issuance_org_id', ORG_ID],
+    ]);
+  });
+
+  it.each([
+    { member: false, status: 403 },
+    { score: null, status: 400 },
+    { score: 20, status: 400 },
+  ])('refuses incomplete authorization or scoring: %j', async (options) => {
+    mocks.createServerSupabaseClient.mockResolvedValue(certificateRaceClient(options));
+    const response = await POST(
+      new NextRequest('https://qalem.ma/api/certificates/generate', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ stageId: STAGE_ID, orgId: ORG_ID }),
+      }),
+    );
+    expect(response.status).toBe(options.status);
+    expect((await response.json()).success).toBe(false);
   });
 });

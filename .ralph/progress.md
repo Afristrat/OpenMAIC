@@ -1,5 +1,9 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-036, périmètre tenant des certificats
+
+Client transmet orgId explicite ; API contrôle tenant actif/appartenance/formation, filtre quiz par tenant et utilisateur, pagine, garde le dernier résultat par scène et refuse tout score absent. Rejeu/conflit limités au tenant d’émission. Candidate CLI 20260909225020 : issuance_org_id immuable, unicité utilisateur/stage/tenant NULLS NOT DISTINCT. FK org_id peut être annulée lors de suppression d’organisation sans collisions entre trois certificats. SQL Auth sous ROLLBACK, doublons/provenance/conservation vérifiés, zéro fixture et ancien index restauré. 6364 exit 0 : sept tests, TS/lint et deux Chromium ; 48078 exit 0 après complément de provenance : sept tests et TS/lint. Advisors local indisponibles. Aucun déploiement/clôture. Ponytail/Supabase : helper de pagination existant et contrainte native, pas de nouvelle dépendance. Suite : LTI, destinataires de partage, couverture historique et autres critères S-036.
+
 ## 9 septembre 2026 — S-036, provenance des quiz ordinaires
 
 Candidate CLI 20260909224147 : org_id nullable, historique non attribué, provenance immuable et validations par trigger privé invoker. Organisation capturée avant grading ; UUID de rejeu distinct par tenant. Rapport service filtré tenant ET stages après rôle et organisation active, sans élargir la RLS personnelle. SQL authenticated/service sous ROLLBACK : deux tenants/20 et 80, null exclu, tiers et réattributions refusés, zéro fixture/colonne. 17818 : 17 tests puis tas Node 2 Gio épuisé ; conteneur non OOM/restart 0, plafond 10 Gio. 66842 exit 0 à 4 Gio : TypeScript/lint et neuf Chromium, org_id/score réel côté UI vérifiés avec réseau simulé. Complément organisation inactive : 18 tests dans 63160. Advisors local indisponibles. Aucun déploiement/clôture.

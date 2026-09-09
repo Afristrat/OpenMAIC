@@ -1,5 +1,13 @@
 # S-036 — Collecte consentie : serveur et stockage
 
+## Complément : certificats et tenant d’émission
+
+Le POST de certificat reçoit orgId explicite depuis la formation (nullable pour le périmètre personnel). Une nouvelle émission exige appartenance, organisation active et formation liée au tenant ; les lectures restent sous RLS. Quiz filtrés par utilisateur/formation/tenant et paginés ; un seul résultat par scène, le plus récent selon completed_at/id, entre dans la moyenne. Aucun score null/invalide n’est transformé en réussite. Recherche existante et reprise après conflit utilisent le même tenant d’émission.
+
+Candidate CLI 20260909225020 : issuance_org_id copie la provenance déjà stockée, puis reste immuable ; l’insertion la dérive de org_id. Index unique utilisateur/formation/tenant d’émission, NULLS NOT DISTINCT pour les personnels. La FK vivante org_id peut devenir null sans collision ni perte du tenant d’émission. Aucun certificat historique réattribué à un nouveau tenant. [Unicité PostgreSQL 15](https://www.postgresql.org/docs/15/indexes-unique.html).
+
+6364 exit 0 : sept tests API, TypeScript/lint globaux et deux Chromium vérifiant le tenant envoyé. Après ajout de la provenance persistante, 48078 exit 0 : sept tests, TypeScript/lint/format. SQL scripts/validation/s036-certificate-tenant.sql sous BEGIN/ROLLBACK : trois émissions distinctes, doublons refusés dans chacun des trois périmètres, suppression de deux organisations conservant les trois certificats et leurs provenances, modification de provenance refusée. Zéro fixture/colonne après rollback, ancien index restauré. Advisors local indisponibles. APIs navigateur simulées, pas de certificat utilisateur réel émis, de migration durable, build/global gate ou déploiement. LTI et destinataires de partage restent à raccorder ; aucune preuve anti-fraude des notes déclaratives revendiquée.
+
 ## Complément : provenance tenant des quiz ordinaires
 
 Candidate CLI 20260909224147 : org_id nullable sur quiz_results, sans reprise historique ; trigger privé SECURITY INVOKER vérifiant organisation active, appartenance de l’auteur, formation et scène quiz. Provenance utilisateur/tenant/formation/scène immuable après insertion. Les règles RLS de lecture personnelle ne sont pas élargies. Le parcours ordinaire capture l’organisation avant la correction asynchrone et l’identité de rejeu inclut ce tenant. Le rapport autorisé lit désormais les scores au rôle service avec org_id ET stages explicites ; organisation inactive refusée avant cette lecture. Scores toujours déclaratifs, pas une certification anti-fraude.
