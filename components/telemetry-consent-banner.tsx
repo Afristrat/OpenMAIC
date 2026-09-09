@@ -5,15 +5,16 @@ import { useI18n } from '@/lib/hooks/use-i18n';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { cn } from '@/lib/utils';
 import { publishConsentChange } from '@/lib/telemetry/learning-events';
+import { LearningObservationOutbox } from '@/lib/telemetry/learning-observation-outbox';
 
 export function TelemetryConsentBanner({ inline = false }: { inline?: boolean }): React.ReactNode {
   const { user, isGuest } = useAuth();
   if (!user || isGuest) return null;
   // Remount on account change: neither a choice nor an in-flight acknowledgement crosses accounts.
-  return <ConsentControl key={user.id} inline={inline} />;
+  return <ConsentControl key={user.id} userId={user.id} inline={inline} />;
 }
 
-function ConsentControl({ inline }: { inline: boolean }): React.ReactNode {
+function ConsentControl({ inline, userId }: { inline: boolean; userId: string }): React.ReactNode {
   const { t } = useI18n();
   const [choice, setChoice] = useState<boolean | null | undefined>(undefined);
   const [expanded, setExpanded] = useState(false);
@@ -55,8 +56,12 @@ function ConsentControl({ inline }: { inline: boolean }): React.ReactNode {
       const data = await response.json();
       if (data.ok !== true || data.choice !== consent) throw new Error('Invalid acknowledgement');
       setChoice(consent);
+      try {
+        if (!consent) new LearningObservationOutbox(userId, window.localStorage).clear();
+      } finally {
+        publishConsentChange();
+      }
       setSaved(true);
-      publishConsentChange();
     } catch {
       setError(true);
     } finally {

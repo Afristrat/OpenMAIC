@@ -8,6 +8,14 @@ for (const locale of ['fr-FR', 'ar-MA', 'en-US']) {
     await page.addInitScript((value) => {
       localStorage.setItem('locale', value);
       localStorage.setItem('qalem-telemetry-dismissed', 'true');
+      localStorage.setItem(
+        'qalem-learning-outbox:v1:00000000-0000-4000-8000-000000000001:proof',
+        '{}',
+      );
+      localStorage.setItem(
+        'qalem-learning-outbox:v1:00000000-0000-4000-8000-000000000002:proof',
+        '{}',
+      );
     }, locale);
     await page.route('**/api/telemetry-consent', async (route) => {
       if (route.request().method() === 'POST') {
@@ -33,6 +41,16 @@ for (const locale of ['fr-FR', 'ar-MA', 'en-US']) {
     expect(writes).toEqual([]);
     await control.getByRole('button').nth(1).click();
     await expect(control).not.toBeVisible();
+    expect(
+      await page.evaluate(() =>
+        localStorage.getItem('qalem-learning-outbox:v1:00000000-0000-4000-8000-000000000001:proof'),
+      ),
+    ).toBeNull();
+    expect(
+      await page.evaluate(() =>
+        localStorage.getItem('qalem-learning-outbox:v1:00000000-0000-4000-8000-000000000002:proof'),
+      ),
+    ).toBe('{}');
     await Promise.all([
       page.waitForResponse((response) => response.url().includes('/api/server-providers')),
       page.waitForResponse(

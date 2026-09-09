@@ -4,7 +4,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useStageStore } from '@/lib/store/stage';
 import { LearningObservationBuffer } from '@/lib/telemetry/learning-observation-buffer';
-import type { PedagogySession } from '@/lib/telemetry/pedagogy-collector';
+import { LearningObservationOutbox } from '@/lib/telemetry/learning-observation-outbox';
+import type { PedagogySession } from '@/lib/telemetry/learning-observation-schema';
 import type { EngineMode } from '@/lib/playback';
 
 type Observer = {
@@ -25,6 +26,8 @@ export function useLearningObservations(stageId: string | undefined) {
   useEffect(() => {
     if (!stageId || !userId) return;
     let buffer: LearningObservationBuffer | null = null;
+    let activeEpoch: string | null = null;
+    // Retain only a write that failed locally; accepted writes live in the durable outbox.
     let pending: PedagogySession | null = null;
     let mode: EngineMode = 'idle';
     let disposed = false;
@@ -32,6 +35,7 @@ export function useLearningObservations(stageId: string | undefined) {
     let sending = false;
     let sceneIds: string[] = [];
     let agentCount = 0;
+    const outbox = () => new LearningObservationOutbox(userId, window.localStorage);
     const channel =
       typeof BroadcastChannel === 'undefined' ? null : new BroadcastChannel('qalem-consent');
     const showError = (value: boolean) => {
@@ -51,34 +55,43 @@ export function useLearningObservations(stageId: string | undefined) {
         : null;
     };
     const send = async () => {
-      if (!pending || sending) return;
+      if (sending) return;
       sending = true;
-      const payload = pending;
       try {
-        // Never relabel a pending observation with a newly granted consent epoch.
-        if ((await consent()) !== payload.consentEpoch || pending !== payload) {
-          if (pending === payload) {
+        while (true) {
+          const payload = outbox().read()[0] ?? pending;
+          if (!payload) break;
+          if (payload === pending) {
+            outbox().put(payload);
             pending = null;
-            showError(false);
           }
-          return;
+          // Never relabel a persisted observation with a newly granted consent epoch.
+          if ((await consent()) !== payload.consentEpoch) {
+            outbox().remove(payload.sessionId);
+            continue;
+          }
+          // Withdrawal or another tab's acknowledgement may have removed it during GET.
+          if (
+            !outbox()
+              .read()
+              .some((item) => item.sessionId === payload.sessionId)
+          )
+            continue;
+          const response = await fetch('/api/learning-observations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            keepalive: true,
+            signal: AbortSignal.timeout(10000),
+          });
+          if (!response.ok) throw new Error('Observation not saved');
+          const result = await response.json();
+          if (typeof result.recorded !== 'boolean') throw new Error('Invalid acknowledgement');
+          outbox().remove(payload.sessionId);
         }
-        const response = await fetch('/api/learning-observations', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-          keepalive: true,
-          signal: AbortSignal.timeout(10000),
-        });
-        if (!response.ok) throw new Error('Observation not saved');
-        const result = await response.json();
-        if (typeof result.recorded !== 'boolean') throw new Error('Invalid acknowledgement');
-        if (pending === payload) {
-          pending = null;
-          showError(false);
-        }
+        showError(false);
       } catch {
-        if (pending === payload) showError(true);
+        showError(true);
       } finally {
         sending = false;
       }
@@ -87,6 +100,13 @@ export function useLearningObservations(stageId: string | undefined) {
       if (!buffer || pending) return;
       pending = buffer.snapshot(sceneIds, agentCount);
       buffer = null;
+      // Synchronous write before any awaited network operation, including pagehide.
+      try {
+        if (pending) outbox().put(pending);
+        pending = null;
+      } catch {
+        showError(true);
+      }
       void send();
     };
     const syncScene = () => {
@@ -95,8 +115,13 @@ export function useLearningObservations(stageId: string | undefined) {
       sceneIds = state.scenes.map((scene) => scene.id);
       agentCount = state.stage.agentIds?.length ?? state.stage.generatedAgentConfigs?.length ?? 0;
       const scene = state.scenes.find((item) => item.id === state.currentSceneId);
-      if (scene) buffer?.scene(scene.id, scene.type);
-      else if (state.currentSceneId === '__pending__' && state.generationComplete) finish();
+      if (scene) {
+        if (!buffer && activeEpoch && !pending) {
+          buffer = new LearningObservationBuffer(stageId, activeEpoch, crypto.randomUUID());
+          buffer.visibility(document.visibilityState === 'visible');
+        }
+        buffer?.scene(scene.id, scene.type);
+      } else if (state.currentSceneId === '__pending__' && state.generationComplete) finish();
     };
     const refresh = async () => {
       const ticket = ++revision;
@@ -104,22 +129,25 @@ export function useLearningObservations(stageId: string | undefined) {
         const epoch = await consent();
         if (disposed || ticket !== revision) return;
         if (!epoch) {
+          activeEpoch = null;
           buffer = null;
           pending = null;
+          outbox().clear();
           showError(false);
           return;
         }
         if (pending && pending.consentEpoch !== epoch) pending = null;
-        if (!pending && buffer?.consentEpoch !== epoch) {
-          buffer = new LearningObservationBuffer(stageId, epoch, crypto.randomUUID());
-          buffer.visibility(document.visibilityState === 'visible');
-          syncScene();
-        }
+        if (buffer?.consentEpoch !== epoch) buffer = null;
+        activeEpoch = epoch;
+        syncScene();
+        void send();
       } catch {
+        activeEpoch = null;
         buffer = null;
       }
     };
     const changed = () => {
+      activeEpoch = null;
       buffer = null;
       pending = null;
       showError(false);
@@ -128,6 +156,10 @@ export function useLearningObservations(stageId: string | undefined) {
     const visibility = () => {
       buffer?.visibility(document.visibilityState === 'visible');
       if (document.visibilityState === 'visible') void refresh();
+    };
+    const leaving = () => {
+      finish();
+      activeEpoch = null;
     };
     const quiz = (event: Event) => {
       const detail = (event as CustomEvent<unknown>).detail;
@@ -164,7 +196,8 @@ export function useLearningObservations(stageId: string | undefined) {
     const unsubscribe = useStageStore.subscribe(syncScene);
     window.addEventListener('qalem-consent-change', changed);
     window.addEventListener('qalem-learning-quiz', quiz);
-    window.addEventListener('pagehide', finish);
+    window.addEventListener('pagehide', leaving);
+    window.addEventListener('pageshow', refresh);
     window.addEventListener('online', send);
     document.addEventListener('visibilitychange', visibility);
     channel?.addEventListener('message', changed);
@@ -177,7 +210,8 @@ export function useLearningObservations(stageId: string | undefined) {
       unsubscribe();
       window.removeEventListener('qalem-consent-change', changed);
       window.removeEventListener('qalem-learning-quiz', quiz);
-      window.removeEventListener('pagehide', finish);
+      window.removeEventListener('pagehide', leaving);
+      window.removeEventListener('pageshow', refresh);
       window.removeEventListener('online', send);
       document.removeEventListener('visibilitychange', visibility);
       channel?.close();
