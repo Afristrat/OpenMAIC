@@ -2301,6 +2301,8 @@
   "skills.changeActive": "Change",
   "skills.removeActive": "Deactivate expertise",
   "telemetry.accept": "Allow analytics",
+  "telemetry.collectionError": "The measurements for this journey could not be saved. You can retry without interrupting your learning.",
+  "telemetry.retry": "Retry",
   "telemetry.banner": "Do you allow analysis of your learning journeys to improve adult learning and the Qalem interface?",
   "telemetry.detail1": "This choice covers sequences, durations, results and structured interactions in learning journeys and discussions.",
   "telemetry.detail2": "Identifiers are pseudonymized; this does not make the data anonymous. Raw messages are not included in this collection.",

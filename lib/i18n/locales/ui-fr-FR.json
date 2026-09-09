@@ -2301,6 +2301,8 @@
   "skills.changeActive": "Changer",
   "skills.removeActive": "Désactiver l’expertise",
   "telemetry.accept": "Autoriser les analyses",
+  "telemetry.collectionError": "Les mesures de ce parcours n’ont pas pu être enregistrées. Vous pouvez réessayer sans interrompre votre formation.",
+  "telemetry.retry": "Réessayer",
   "telemetry.banner": "Autorisez-vous l’analyse de vos parcours pour améliorer l’apprentissage des adultes et l’interface de Qalem ?",
   "telemetry.detail1": "Ce choix concerne les séquences, durées, résultats et interactions structurées des parcours et discussions.",
   "telemetry.detail2": "Les identifiants sont pseudonymisés ; cela ne rend pas les données anonymes. Les messages bruts ne sont pas inclus dans cette collecte.",

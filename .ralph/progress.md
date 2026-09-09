@@ -1,5 +1,9 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-036, producteur navigateur raccordé
+
+Lecteur et quiz raccordés à useLearningObservations : accord et époque vérifiés avant mesure/envoi, durée au premier plan, scènes terminées distinctes de la navigation, quiz non passé distinct du zéro, contexte inconnu laissé null. Échec visible et reprise en mémoire du même sessionId, ancien envoi abandonné après changement d’époque ; notification locale/inter-onglets au changement de consentement. Session 91105 exit 0 : cinq parcours Chromium réels avec API simulées (refus, accord, erreur/reprise, époque changée, scène sautée). Session 49535 exit 0 : 47 tests ciblés et TypeScript/lint global. Aucun gate global/build/déploiement, aucune clôture. Suite prioritaire S-036 : persistance/reprise après fermeture (tampon actuellement en mémoire), purge worker, contexte serveur, compte/export/delete, concurrence et filtre tenant des consommateurs. Voir docs/validation/S-036-learning-collection.md.
+
 ## 9 septembre 2026 — S-036, refus du rejeu après retrait/réaccord
 
 Migration candidate enrichie de collection_epoch, version serveur imposée par trigger et vérifiée atomiquement dans record_consented_learning. GET consentement expose cette version ; schéma et collecteur la requièrent. SQL réel sous ROLLBACK : ancien envoi refusé après retrait/réaccord, restauration forcée de version impossible, accord inchangé stable, suppression via authenticated conservée. Session 51447 exit 0 : 24 tests ciblés + TypeScript/lint global. Producteur navigateur NON raccordé encore ; PlaybackChromeRoot inspecté, points directs onComplete/onModeChange et quiz/sync identifiés. Ne pas confondre fin de génération et fin d’apprentissage. pg_cron absent : prochaine purge à raccorder au worker. Pas de déploiement ni de clôture.

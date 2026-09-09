@@ -24,8 +24,8 @@ export const learningSessionSchema = z
     completionRate: z.number().min(0).max(1),
     totalDuration: z.number().int().min(0).max(86400),
     subjectTags: z.array(z.string().max(100)).max(20),
-    language: z.enum(['fr-FR', 'ar-MA', 'en-US']),
-    level: z.enum(['beginner', 'intermediate', 'advanced']),
+    language: z.enum(['fr-FR', 'ar-MA', 'en-US']).nullable(),
+    level: z.enum(['beginner', 'intermediate', 'advanced']).nullable(),
     agentCount: z.number().int().min(0).max(32),
     actionCounts: z
       .object({

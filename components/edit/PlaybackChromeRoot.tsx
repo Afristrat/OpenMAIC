@@ -55,6 +55,7 @@ import { SceneCompletionGate } from '@/components/playback/scene-completion-gate
 import { scheduleAfterVisualCommit } from '@/lib/playback/visual-transition';
 import type { LectureNoteItem } from '@/lib/types/chat';
 import { recordLiveSessionEvent } from '@/lib/live-session/client';
+import { useLearningObservations } from '@/lib/hooks/use-learning-observations';
 
 /**
  * Imperative handle exposed via `ref` so the parent (`Stage`) can tear
@@ -105,6 +106,7 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
     const generationComplete = useStageStore.use.generationComplete();
 
     const currentScene = getCurrentScene();
+    const learningObservations = useLearningObservations(stage?.id);
 
     // Layout state from settings store (persisted via localStorage)
     const sidebarCollapsed = useSettingsStore((s) => s.sidebarCollapsed);
@@ -493,6 +495,7 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
       // Create new PlaybackEngine
       const engine = new PlaybackEngine([currentScene], actionEngine, audioPlayerRef.current, {
         onModeChange: (mode) => {
+          learningObservations.mode(mode);
           setEngineMode(mode);
         },
         onResourcePause: setResourcePause,
@@ -590,6 +593,7 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
           // If all actions are exhausted (discussion was the last action), mark
           // playback as completed so the bubble shows reset instead of play.
           if (engineRef.current?.isExhausted()) {
+            learningObservations.complete(currentScene.id);
             setPlaybackCompleted(true);
             setShowSceneCompletionGate(true);
           }
@@ -604,6 +608,7 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
         },
         getPlaybackSpeed: () => useSettingsStore.getState().playbackSpeed || 1,
         onComplete: () => {
+          learningObservations.complete(currentScene.id);
           // lectureSpeech intentionally NOT cleared — last sentence stays visible
           // until scene transition (auto-play) or user restarts. Scene change
           // effect handles the reset.
@@ -762,10 +767,11 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
           setPendingSceneId(targetSceneId);
           return false;
         }
+        learningObservations.seek();
         setCurrentSceneId(targetSceneId);
         return true;
       },
-      [currentSceneId, isTopicActive, setCurrentSceneId],
+      [currentSceneId, isTopicActive, setCurrentSceneId, learningObservations],
     );
 
     /** User confirmed scene switch via AlertDialog */
@@ -773,9 +779,10 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
       if (!pendingSceneId) return;
       chatAreaRef.current?.endActiveSession();
       doSessionCleanup();
+      learningObservations.seek();
       setCurrentSceneId(pendingSceneId);
       setPendingSceneId(null);
-    }, [pendingSceneId, setCurrentSceneId, doSessionCleanup]);
+    }, [pendingSceneId, setCurrentSceneId, doSessionCleanup, learningObservations]);
 
     /** User cancelled scene switch via AlertDialog */
     const cancelSceneSwitch = useCallback(() => {
@@ -1144,6 +1151,17 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
           isPresenting && !controlsVisible && 'cursor-none',
         )}
       >
+        {learningObservations.error && (
+          <div
+            role="alert"
+            className="absolute top-2 start-2 z-50 rounded-lg border bg-background p-3 text-sm"
+          >
+            {t('telemetry.collectionError')}
+            <button type="button" onClick={learningObservations.retry} className="ms-2 underline">
+              {t('telemetry.retry')}
+            </button>
+          </div>
+        )}
         <SceneSidebar
           collapsed={sidebarCollapsed}
           onCollapseChange={setSidebarCollapsed}

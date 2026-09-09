@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { cn } from '@/lib/utils';
+import { publishConsentChange } from '@/lib/telemetry/learning-events';
 
 export function TelemetryConsentBanner({ inline = false }: { inline?: boolean }): React.ReactNode {
   const { user, isGuest } = useAuth();
@@ -55,6 +56,7 @@ function ConsentControl({ inline }: { inline: boolean }): React.ReactNode {
       if (data.ok !== true || data.choice !== consent) throw new Error('Invalid acknowledgement');
       setChoice(consent);
       setSaved(true);
+      publishConsentChange();
     } catch {
       setError(true);
     } finally {

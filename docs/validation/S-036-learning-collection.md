@@ -29,7 +29,7 @@ Le 9 septembre, la migration candidate ajoute `collection_epoch`, générée cô
 
 Preuve SQL réelle enrichie, toujours sous ROLLBACK : refus de l’ancienne époque, tentative de restauration rejetée, époque conservée lors d’un accord inchangé, nouvelle collecte puis effacement via le rôle authenticated. Session 51447 exit 0 : 24 tests ciblés, TypeScript et lint global. La lecture échoue explicitement si la migration/époque manque ; appliquer la migration avant la future version applicative, jamais présenter ce candidat comme déployé. Pas de nouveau parcours navigateur dans ce complément. `pg_cron` absent de la base au contrôle système : prévoir la purge via le worker existant, pas une tâche SQL supposée installée.
 
-1. Producteur navigateur : temps réellement observés, séquence, scores/actions et fin de parcours ; aucun envoi avant opt-in, reprise fiable et arrêt au retrait. Utiliser l’époque désormais fournie par le serveur, sans relire une nouvelle époque pour réétiqueter d’anciennes mesures.
+1. Producteur navigateur désormais raccordé (complément ci-dessous). Reste la reprise durable après fermeture/rechargement ; le tampon et l’envoi échoué sont actuellement en mémoire, et l’envoi à la fermeture reste best-effort. Ne pas le présenter comme une outbox durable.
 2. Politique de conservation et purge périodique ; contexte de sujet à dériver côté serveur plutôt que faire confiance à des textes du navigateur. Ne pas présenter les mesures client comme des résultats certifiés.
 3. Épreuve de concurrence à deux transactions ; le verrou est codé mais le test actuel est séquentiel.
 4. Vérification navigateur, gate global, migration durable et recette de l’API déployée.
@@ -37,3 +37,15 @@ Preuve SQL réelle enrichie, toujours sous ROLLBACK : refus de l’ancienne épo
 6. Les consommateurs optimiseur/Director doivent conserver un filtre de tenant même si une formation change d’organisation. Le raccordement discussion S-047 reste séparé.
 
 Ponytail : tables, consentement et rapports réutilisés ; contraintes/cascades PostgreSQL avant mécanisme applicatif de suppression. Références : [fonctions Supabase](https://supabase.com/docs/guides/database/functions), [sécurité des produits](https://supabase.com/docs/guides/security/product-security), [changelog](https://supabase.com/changelog).
+
+## Complément navigateur du 9 septembre 2026
+
+Contrôle final après correction du périmètre d’erreur par compte/formation et du compteur de navigation confirmée : session 59064 exit 0, formatage ciblé, TypeScript et lint global sans avertissement.
+
+Le lecteur transmet les changements de mode, les fins de scènes et les navigations ; le quiz transmet seulement son score calculé. La collecte démarre après réponse positive du serveur avec époque valide et revérifie cette époque avant chaque tentative d’envoi. Le retrait notifié dans la page ou un autre onglet supprime immédiatement les tampons ; la base reste la frontière atomique pour une révocation concurrente.
+
+Mesures : temps de présence au premier plan (pas temps d’écoute certifié), séquence de types de scènes, scores réellement disponibles, compteurs play/pause/seek et proportion de scènes terminées. Une navigation vers la page finale ne produit pas 100 % de complétion. Langue et niveau non établis restent null, sans profil débutant inventé ; aucun message brut ni identifiant utilisateur dans le corps. Mesures bornées à 256 visites, 24 heures cumulées et 10 000 actions par type.
+
+L’envoi échoué reste visible et peut être rejoué avec le même identifiant et le même corps. Une ancienne époque ne devient jamais une nouvelle autorisation par réétiquetage. La reprise après fermeture, le renouvellement des tampons sur parcours multiples et la recette réelle du quiz restent à compléter avant clôture.
+
+Preuves ServeurIA : session 91105 exit 0, cinq parcours Chromium sans retry automatique : refus (zéro POST), accord (une observation après narration terminée), erreur 503 puis reprise identique, changement d’époque sans nouvel envoi, scène sautée sans fausse complétion. Le premier scénario de certificat était inadéquat pour une formation sans quiz ; corrigé pour vérifier la région de fin. Les essais d’erreur ont révélé une clé de traduction absente, remplacée par un libellé de collecte dédié FR/AR/EN. Session 49535 exit 0 : 47 tests ciblés, TypeScript et lint global. APIs/auth simulées, pas de recette de production ; vérification UI effectuée en anglais dans ce complément, FR/AR restent à couvrir pour l’alerte. Aucun nouveau déploiement ni migration durable.

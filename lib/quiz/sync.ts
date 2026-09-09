@@ -6,6 +6,7 @@ import { toArray, type QuestionResult } from '@/lib/quiz/grading';
 import type { QuizQuestion } from '@/lib/types/stage';
 import { stableUuid } from '@/lib/utils/stable-uuid';
 import type { QuizAnswer } from '@/lib/supabase/types';
+import { publishQuizObservation } from '@/lib/telemetry/learning-events';
 
 const log = createLogger('QuizSync');
 
@@ -146,6 +147,8 @@ export async function syncQuizResultToSupabase(result: QuizResultToSync): Promis
 
 /** Extract once at the real submission boundary, then persist directly to both stores. */
 export async function persistQuizCompletion(input: QuizCompletionToPersist): Promise<ReviewCard[]> {
+  const earnedPoints = input.results.reduce((sum, result) => sum + result.earned, 0);
+  const possiblePoints = input.questions.reduce((sum, question) => sum + (question.points ?? 1), 0);
   const resultByQuestionId = new Map(input.results.map((result) => [result.questionId, result]));
   const answeredQuestions = input.questions.map((question) => {
     const result = resultByQuestionId.get(question.id);
@@ -157,6 +160,8 @@ export async function persistQuizCompletion(input: QuizCompletionToPersist): Pro
     };
   });
   const ownerId = input.userId ?? 'guest';
+  if (possiblePoints > 0)
+    publishQuizObservation(input.stageId, input.sceneId, earnedPoints / possiblePoints);
   const cards = await extractReviewCards({
     ownerId,
     stageId: input.stageId,
@@ -173,8 +178,6 @@ export async function persistQuizCompletion(input: QuizCompletionToPersist): Pro
 
   if (input.userId) {
     await syncReviewCardsToSupabase(cards, input.userId);
-    const earned = input.results.reduce((sum, result) => sum + result.earned, 0);
-    const total = input.questions.reduce((sum, question) => sum + (question.points ?? 1), 0);
     await syncQuizResultToSupabase({
       userId: input.userId,
       stageId: input.stageId,
@@ -185,7 +188,7 @@ export async function persistQuizCompletion(input: QuizCompletionToPersist): Pro
         correct: result.correct ?? false,
         timestamp: new Date().toISOString(),
       })),
-      score: total > 0 ? Math.round((earned / total) * 100) : 0,
+      score: possiblePoints > 0 ? Math.round((earnedPoints / possiblePoints) * 100) : 0,
     });
   }
 

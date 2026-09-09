@@ -4498,7 +4498,7 @@
       },
       "sourceDependencies": ["S-022"],
       "dependencies": ["S0-011", "U-021"],
-      "gap": "2026-09-09 : collectPedagogyData appelé par POST learning-observations ; RPC candidat verrouillant consentement et tenant, pseudonyme privé effaçable et agrégats de rapports corrigés. Preuve SQL réelle sous ROLLBACK et tests ciblés dans docs/validation/S-036-learning-collection.md. Restent producteur navigateur, époque consentement, rétention, export/suppression compte, concurrence, gate global et publication. Aucune collecte réelle activée.",
+      "gap": "2026-09-09 : producteur navigateur raccordé au lecteur et aux quiz, accord/version vérifiés, reprise en mémoire avec identifiant stable, mesures manquantes distinctes du zéro. Cinq parcours Chromium ciblés et 47 tests verts ; serveur/RPC candidat déjà prouvé sous ROLLBACK. Restent reprise durable après fermeture, rétention, contexte serveur, export/suppression compte, concurrence, filtre tenant des consommateurs, gate global et publication. Voir docs/validation/S-036-learning-collection.md. Aucune collecte réelle activée.",
       "evidence": ["lib/telemetry/pedagogy-collector.ts:74"],
       "acceptance": [
         "lib/telemetry/pedagogy-collector.ts",
