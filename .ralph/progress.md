@@ -1,5 +1,11 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 10 septembre 2026 — S-036, lecture des partages vérifiés
+
+Candidate CLI 20260909231458 : authorization_verified=false pour l’historique, sans backfill. Trigger invoker après le contrôle d’autorité : une publication/revalidation authentifiée autorisée marque le partage ; réduction par destinataire conserve l’ancien marqueur même si le client en fournit un autre. Policies SELECT stages/scenes ajoutées pour membres du seul tenant destinataire actif, partage vérifié organization/public. Pas de droit d’écriture ajouté. Validation du résultat quiz et certificat exige le partage vérifié ; helper public exige aussi vérification et tenant actif.
+
+SQL scripts/validation/s036-verified-share.sql sous ROLLBACK : historique refusé, marqueur falsifié neutralisé/refusé, revalidation propriétaire, lecture destinataire et insertion quiz 80, édition interdite, tiers/suspension/retrait membre refusés. Zéro comptes/tenants/stage/quiz et colonne candidate absente recontrôlés. 48673 exit 0 : 26 tests API/helpers, TypeScript 4 Gio et lint globaux, format. Advisors local indisponibles. Pas de nouveau navigateur, build/gate global, migration durable ni déploiement ; runner avec overlays. Prochain : raccorder explicitement le lecteur HTTP, médias et discussion au tenant destinataire (ils restent actuellement attachés au tenant source), UI de revalidation et réconciliation des cinq lignes historiques. Pas de prétention de parcours complet ni de clôture S-036. Ponytail/Supabase : marqueur et policies natifs, sans dépendance.
+
 ## 10 septembre 2026 — S-036, autorité des partages
 
 Lecture fraîche des policies : insertion réservée aux rôles du tenant destinataire mais sans autorisation source ; UPDATE permettait de changer les identifiants. Candidate CLI 20260909230843 : trigger privé invoker, acteur serveur, provenance stage/org/auteur immuable pour les clients, tenant destinataire actif et rôle de publication requis. Publication/élargissement : propriétaire source ou administrateur/manager source, organisation source active. Réduction de visibilité autorisée à l’administrateur destinataire sans droits source ; suppression existante inchangée. Écritures privilégiées et détachement FK conservés.

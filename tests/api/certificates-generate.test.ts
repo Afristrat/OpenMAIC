@@ -59,14 +59,25 @@ function query(result: QueryResult) {
   return builder;
 }
 
-function certificateRaceClient(options: { member?: boolean; score?: number | null } = {}) {
+function certificateRaceClient(
+  options: { member?: boolean; score?: number | null; shared?: boolean } = {},
+) {
   const queues: Record<string, Array<ReturnType<typeof query>>> = {
     certificates: [
       query({ data: null, error: null }),
       query({ data: null, error: { code: '23505', message: 'duplicate key' } }),
       query({ data: existingCertificate, error: null }),
     ],
-    stages: [query({ data: { id: STAGE_ID, name: 'Pilotage budgétaire', org_id: ORG_ID } })],
+    stages: [
+      query({
+        data: {
+          id: STAGE_ID,
+          name: 'Pilotage budgétaire',
+          org_id: options.shared === undefined ? ORG_ID : 'source-org',
+        },
+      }),
+    ],
+    shared_classrooms: [query({ data: options.shared ? { id: 'approved-share' } : null })],
     scenes: [
       query({
         data: [{ id: 'quiz-scene', type: 'quiz', title: 'Arbitrage' }],
@@ -106,6 +117,22 @@ describe('POST /api/certificates/generate', () => {
     vi.clearAllMocks();
     mocks.filters.length = 0;
   });
+
+  it.each([true, false])(
+    'requires verified sharing for a recipient certificate: %s',
+    async (shared) => {
+      mocks.createServerSupabaseClient.mockResolvedValue(certificateRaceClient({ shared }));
+      const response = await POST(
+        new NextRequest('https://qalem.ma/api/certificates/generate', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ stageId: STAGE_ID, orgId: ORG_ID }),
+        }),
+      );
+      expect(response.status).toBe(shared ? 200 : 403);
+      expect(mocks.filters).toContainEqual(['eq', 'authorization_verified', true]);
+    },
+  );
 
   it('uses the verified LMS tenant instead of the browser selection', async () => {
     mocks.createServerSupabaseClient.mockResolvedValue(certificateRaceClient());

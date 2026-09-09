@@ -105,6 +105,7 @@ export async function POST(request: NextRequest) {
         const { data: shared, error: sharedError } = await supabase
           .from('shared_classrooms')
           .select('id')
+          .eq('authorization_verified', true)
           .eq('stage_id', stageId)
           .eq('org_id', orgId)
           .in('visibility', ['organization', 'public'])

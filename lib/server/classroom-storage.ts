@@ -520,9 +520,11 @@ export async function isClassroomPublic(id: string): Promise<boolean> {
   const supabase = createServiceSupabaseClient();
   const { data, error } = await supabase
     .from('shared_classrooms')
-    .select('id')
+    .select('id, organizations!inner(status)')
     .eq('stage_id', id)
     .eq('visibility', 'public')
+    .eq('authorization_verified', true)
+    .eq('organizations.status', 'active')
     .limit(1)
     .maybeSingle();
   if (error) throw new Error(`Failed to read classroom visibility for ${id}: ${error.message}`);

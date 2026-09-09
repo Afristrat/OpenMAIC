@@ -176,6 +176,7 @@ export interface CurriculumLink {
 }
 
 export interface SharedClassroom {
+  authorization_verified: boolean;
   id: string; // UUID
   stage_id: string; // FK → stages.id
   org_id: string; // FK → organizations.id
