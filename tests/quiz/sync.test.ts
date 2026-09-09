@@ -46,6 +46,7 @@ describe('syncQuizResultToSupabase', () => {
           /^[0-9a-f]{8}-[0-9a-f]{4}-8[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
         ),
         user_id: 'u1',
+        org_id: null,
         stage_id: 's1',
         scene_id: 'sc1',
         answers,
@@ -61,6 +62,19 @@ describe('syncQuizResultToSupabase', () => {
     await expect(
       syncQuizResultToSupabase({ userId: 'u1', stageId: 's1', sceneId: 'sc1', answers, score: 80 }),
     ).resolves.toBeUndefined();
+  });
+
+  it('separates the same quiz in two tenants and preserves retry identity', async () => {
+    const upsert = vi.fn().mockResolvedValue({ error: null });
+    vi.mocked(tryCreateClient).mockReturnValue({ from: () => ({ upsert }) } as never);
+    const input = { userId: 'u1', stageId: 's1', sceneId: 'sc1', answers, score: 80 };
+    for (const orgId of ['tenant-a', 'tenant-b', 'tenant-a'])
+      await syncQuizResultToSupabase({ ...input, orgId });
+    const rows = upsert.mock.calls.map(([row]) => row);
+    expect(rows[0].org_id).toBe('tenant-a');
+    expect(rows[1].org_id).toBe('tenant-b');
+    expect(rows[0].id).not.toBe(rows[1].id);
+    expect(rows[0].id).toBe(rows[2].id);
   });
 
   it('never throws when the upsert fails', async () => {

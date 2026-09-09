@@ -11,6 +11,7 @@ import { publishQuizObservation } from '@/lib/telemetry/learning-events';
 const log = createLogger('QuizSync');
 
 export interface QuizResultToSync {
+  orgId?: string | null;
   userId: string;
   stageId: string;
   sceneId: string;
@@ -19,6 +20,7 @@ export interface QuizResultToSync {
 }
 
 export interface QuizCompletionToPersist {
+  orgId?: string | null;
   userId?: string;
   stageId: string;
   sceneId: string;
@@ -109,8 +111,7 @@ async function syncReviewCardsToSupabase(cards: ReviewCard[], userId: string): P
 
 /**
  * Writes a completed quiz's results to Supabase `quiz_results`, the table
- * organization reports (`/api/organizations/[orgId]/reports`) already read
- * from. Mirrors the review page's pattern: direct client write, RLS-scoped
+ * organization reports read with verified tenant provenance. Direct client write, RLS-scoped
  * to the user's own row, silent failure — guest/offline users simply don't
  * contribute to org reporting, same tradeoff as review card sync.
  */
@@ -124,10 +125,12 @@ export async function syncQuizResultToSupabase(result: QuizResultToSync): Promis
       result.userId,
       result.stageId,
       result.sceneId,
+      ...(result.orgId ? [result.orgId] : []),
     ]);
     const { error } = await supabase.from('quiz_results').upsert(
       {
         id,
+        org_id: result.orgId ?? null,
         user_id: result.userId,
         stage_id: result.stageId,
         scene_id: result.sceneId,
@@ -179,6 +182,7 @@ export async function persistQuizCompletion(input: QuizCompletionToPersist): Pro
   if (input.userId) {
     await syncReviewCardsToSupabase(cards, input.userId);
     await syncQuizResultToSupabase({
+      orgId: input.orgId,
       userId: input.userId,
       stageId: input.stageId,
       sceneId: input.sceneId,

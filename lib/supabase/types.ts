@@ -104,6 +104,7 @@ export interface QuizAnswer {
 
 export interface QuizResult {
   id: string; // UUID
+  org_id: string | null; // Verified provenance; null for legacy/personal results.
   user_id: string; // FK → profiles.id
   stage_id: string; // FK → stages.id
   scene_id: string;
@@ -292,7 +293,7 @@ export type SceneInsert = Pick<Scene, 'id' | 'stage_id' | 'type' | 'order'> &
   Partial<Omit<Scene, 'id' | 'stage_id' | 'type' | 'order' | 'created_at'>>;
 
 export type QuizResultInsert = Pick<QuizResult, 'user_id' | 'stage_id' | 'scene_id' | 'answers'> &
-  Partial<Pick<QuizResult, 'id' | 'score'>>;
+  Partial<Pick<QuizResult, 'id' | 'score' | 'org_id'>>;
 
 export type ReviewCardInsert = Pick<ReviewCard, 'user_id' | 'question' | 'correct_answer'> &
   Partial<

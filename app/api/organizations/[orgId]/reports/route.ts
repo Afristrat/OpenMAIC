@@ -94,10 +94,12 @@ async function readReport(
   const signal = AbortSignal.timeout(30000);
   const { data: organization, error: organizationError } = await supabase
     .from('organizations')
-    .select('name')
+    .select('name, status')
     .eq('id', orgId)
     .single();
   if (organizationError || !organization) throw new Error('Organization unavailable');
+  if (organization.status !== 'active')
+    return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Organization inactive');
 
   const url = new URL(request.url);
   const dateFrom = url.searchParams.get('dateFrom');
@@ -177,12 +179,14 @@ async function readReport(
     scoreCount = 0,
     completionSum = 0,
     completionCount = 0;
-  for (let index = 0; index < allStageIds.length; index += 100) {
+  const service = allStageIds.length ? createServiceSupabaseClient() : null;
+  for (let index = 0; service && index < allStageIds.length; index += 100) {
     const ids = allStageIds.slice(index, index + 100);
     for await (const row of readReportPages((from, to) => {
-      let quizQuery = supabase
+      let quizQuery = service
         .from('quiz_results')
         .select('user_id, stage_id, score', { count: 'exact' })
+        .eq('org_id', orgId)
         .in('stage_id', ids);
       if (dateFrom) {
         quizQuery = quizQuery.gte('completed_at', dateFrom);
@@ -205,7 +209,6 @@ async function readReport(
   }
 
   // 5. Fetch telemetry data
-  const service = allStageIds.length ? createServiceSupabaseClient() : null;
   for (let index = 0; service && index < allStageIds.length; index += 100) {
     const ids = allStageIds.slice(index, index + 100);
     // Telemetry rows are service-only. Authorization above precedes this query;

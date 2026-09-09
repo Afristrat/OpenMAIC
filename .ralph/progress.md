@@ -1,5 +1,11 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-036, provenance des quiz ordinaires
+
+Candidate CLI 20260909224147 : org_id nullable, historique non attribué, provenance immuable et validations par trigger privé invoker. Organisation capturée avant grading ; UUID de rejeu distinct par tenant. Rapport service filtré tenant ET stages après rôle et organisation active, sans élargir la RLS personnelle. SQL authenticated/service sous ROLLBACK : deux tenants/20 et 80, null exclu, tiers et réattributions refusés, zéro fixture/colonne. 17818 : 17 tests puis tas Node 2 Gio épuisé ; conteneur non OOM/restart 0, plafond 10 Gio. 66842 exit 0 à 4 Gio : TypeScript/lint et neuf Chromium, org_id/score réel côté UI vérifiés avec réseau simulé. Complément organisation inactive : 18 tests dans 63160. Advisors local indisponibles. Aucun déploiement/clôture.
+
+Suite obligatoire : LTI doit dériver son tenant du lancement ; partage vers membre uniquement du tenant receveur encore refusé par la RLS des scènes dans le trigger invoker ; certificats doivent choisir le périmètre tenant plutôt que mélanger les nouvelles identités de quiz ; historique non attribué à rendre explicite dans le rapport. Aucun élargissement aveugle des policies pour contourner ces cas.
+
 ## 9 septembre 2026 — S-036, fiabilité des rapports
 
 Pagination ordonnée/count exact pour toutes les lectures de listes, agrégation au fil des pages, erreurs et incohérences refusées en 503 sans données partielles ; scope telemetry org_id conservé. UI : valeurs périmées supprimées, requêtes obsolètes annulées, erreur persistante et exports désactivés. 30948 exit 0 : dix-sept tests dont 10001 observations et plafond serveur inférieur, TypeScript/lint. Avertissements React puis sélecteur E2E ambigu corrigés ; 88781 TypeScript/lint verts et 51464 exit 0 deux Chromium. Pas de déploiement, migration ou clôture. Ponytail/Supabase : pagination native, aucune dépendance.

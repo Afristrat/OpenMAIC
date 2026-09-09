@@ -5,7 +5,9 @@ const mocks = vi.hoisted(() => ({
   createInstitutionalReportPdf: vi.fn().mockResolvedValue(Buffer.from('%PDF-private-free')),
   tableCalls: [] as string[],
   membershipRole: 'admin' as string | null,
+  organizationStatus: 'active',
   telemetryFilters: [] as unknown[][],
+  quizFilters: [] as unknown[][],
   failedTable: null as string | null,
   telemetryRows: null as Array<{ stage_id: string; completion_rate: number }> | null,
   ranges: [] as number[][],
@@ -51,7 +53,7 @@ function createSupabaseFixture() {
       { data: mocks.membershipRole ? { role: mocks.membershipRole } : null },
       { data: [{ user_id: 'learner-secret-id', role: 'apprenant' }] },
     ],
-    organizations: [{ data: { name: 'Organisation A' } }],
+    organizations: [{ data: { name: 'Organisation A', status: mocks.organizationStatus } }],
     shared_classrooms: [{ data: [] }],
     stages: [
       { data: [{ id: 'stage-1' }] },
@@ -112,7 +114,7 @@ vi.mock('@/lib/supabase/service', () => ({
     from: (table: string) => {
       const query = createSupabaseFixture().from(table);
       query.eq = (...args: unknown[]) => {
-        mocks.telemetryFilters.push(args);
+        (table === 'quiz_results' ? mocks.quizFilters : mocks.telemetryFilters).push(args);
         return query;
       };
       return query;
@@ -128,7 +130,9 @@ describe('institutional report privacy boundary', () => {
     vi.clearAllMocks();
     mocks.tableCalls.length = 0;
     mocks.membershipRole = 'admin';
+    mocks.organizationStatus = 'active';
     mocks.telemetryFilters.length = 0;
+    mocks.quizFilters.length = 0;
     mocks.failedTable = null;
     mocks.telemetryRows = null;
     mocks.ranges.length = 0;
@@ -159,6 +163,7 @@ describe('institutional report privacy boundary', () => {
     expect(body.metrics.totalLearners).toBe(1);
     expect(body.metrics.completionRate).toBe(75);
     expect(mocks.telemetryFilters).toContainEqual(['org_id', 'org-1']);
+    expect(mocks.quizFilters).toContainEqual(['org_id', 'org-1']);
     expect(body.formations).toEqual([
       {
         stage_id: 'stage-1',
@@ -172,6 +177,17 @@ describe('institutional report privacy boundary', () => {
     expect(body).not.toHaveProperty('pagination');
     expect(serialized).not.toContain('learner-secret-id');
     expect(mocks.tableCalls).not.toContain('profiles');
+  });
+
+  it('does not read privileged scores for a suspended organization', async () => {
+    mocks.organizationStatus = 'suspended';
+    const { GET } = await import('@/app/api/organizations/[orgId]/reports/route');
+    const response = await GET(new Request('http://localhost/reports') as NextRequest, {
+      params: Promise.resolve({ orgId: 'org-1' }),
+    });
+    expect(response.status).toBe(403);
+    expect(mocks.quizFilters).toEqual([]);
+    expect(mocks.tableCalls).toEqual(['org_members', 'organizations']);
   });
 
   it('exports only formation aggregates to CSV', async () => {

@@ -1,5 +1,13 @@
 # S-036 — Collecte consentie : serveur et stockage
 
+## Complément : provenance tenant des quiz ordinaires
+
+Candidate CLI 20260909224147 : org_id nullable sur quiz_results, sans reprise historique ; trigger privé SECURITY INVOKER vérifiant organisation active, appartenance de l’auteur, formation et scène quiz. Provenance utilisateur/tenant/formation/scène immuable après insertion. Les règles RLS de lecture personnelle ne sont pas élargies. Le parcours ordinaire capture l’organisation avant la correction asynchrone et l’identité de rejeu inclut ce tenant. Le rapport autorisé lit désormais les scores au rôle service avec org_id ET stages explicites ; organisation inactive refusée avant cette lecture. Scores toujours déclaratifs, pas une certification anti-fraude.
+
+scripts/validation/s036-quiz-tenant.sql : rôle authenticated, même auteur membre de deux tenants, scores 20/80 sur la même formation, historique null à 100 ; refus de réattribution et d’auteur extérieur, RLS personnelle conservée, agrégats service séparés. BEGIN/ROLLBACK réussi et zéro compte/organisation/formation/colonne candidate ensuite. Advisors local indisponibles (127.0.0.1:54322). Aucune migration durable ni publication.
+
+17818 : dix-sept tests puis échec du tas Node à 2 Gio pendant TypeScript. Conteneur OOMKilled=false, restart=0, plafond 10 Gio ; reprise prescrite à 4 Gio : 66842 exit 0, TypeScript/lint et neuf Chromium, dont soumission vérifiant org_id et score 25. APIs simulées. Le complément organisation inactive passe dix-huit tests dans 63160. Restent LTI (provenance du lancement serveur, volontairement null ici), partage vers un destinataire membre uniquement du tenant receveur (RLS des scènes empêche encore le trigger invoker de valider ce cas), périmètre des certificats et visibilité de la couverture historique. Ne pas déclarer le reporting intégralement livré.
+
 ## Complément : rapports sans troncature silencieuse
 
 Lectures ordonnées par pages de 100 avec count exact ; progression selon le nombre réellement reçu, donc un plafond serveur inférieur ne termine pas la lecture prématurément. Erreur, compte absent/changeant ou page incohérente : réponse 503 générique, aucun export partiel. Agrégats calculés au fil des pages ; pas de tableau intégral des observations, mais les identifiants uniques nécessaires au comptage restent en mémoire serveur. Métadonnées paginées et filtres de formations découpés par cent. Cache-Control privé/no-store pour tous les formats. Références : [select et comptage Supabase](https://supabase.com/docs/reference/javascript/select).

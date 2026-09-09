@@ -27,8 +27,13 @@ for (const scenario of [
     await page.unroute('**/api/telemetry-consent');
     const allowed = !scenario.endsWith('refused');
     const withQuiz = scenario.startsWith('quiz-');
+    const quizWrites: Record<string, unknown>[] = [];
     if (withQuiz) {
       await mockApi.mockQuizPersistence();
+      await page.route('**/rest/v1/quiz_results*', async (route) => {
+        quizWrites.push(route.request().postDataJSON());
+        await route.fallback();
+      });
       await page.route('**/api/xapi/events', (route) => route.fulfill({ json: { success: true } }));
     }
     const failedFirst =
@@ -159,6 +164,13 @@ for (const scenario of [
       await page.getByRole('button', { name: /Four/ }).click();
       await page.getByRole('button', { name: 'Submit Answers', exact: true }).click();
       await expect(page.getByText('Quiz Report', { exact: true })).toBeVisible();
+      expect(quizWrites).toHaveLength(1);
+      expect(quizWrites[0]).toMatchObject({
+        org_id: '00000000-0000-4000-8000-000000000002',
+        stage_id: stageId,
+        scene_id: 'observed-quiz',
+        score: 25,
+      });
       expect(observations).toEqual([]);
       await page.getByText('Course complete', { exact: true }).click();
     }

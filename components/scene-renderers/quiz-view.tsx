@@ -826,6 +826,8 @@ function QuizSession({
   useEffect(() => {
     if (phase !== 'grading') return;
     let cancelled = false;
+    // Capture once before asynchronous grading; LTI provenance comes from its server launch.
+    const quizOrgId = ltiScope ? null : getCurrentOrganizationId();
     const controller = new AbortController();
 
     (async () => {
@@ -865,6 +867,7 @@ function QuizSession({
 
       try {
         await persistQuizCompletion({
+          orgId: quizOrgId,
           ...(user ? { userId: user.id } : {}),
           stageId,
           sceneId,
