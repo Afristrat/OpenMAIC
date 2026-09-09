@@ -1848,17 +1848,18 @@
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Expositions de secrets signalées dans l’historique ; l’utilisateur a explicitement refusé les rotations dans ce chantier.",
+      "gap": "Le feu vert explicite du 9 septembre 2026 lève le refus antérieur. Restent l’inventaire des catégories et consommateurs Qalem, la rotation contrôlée via le coffre et la vérification avant révocation. Aucune rotation réalisée par la seule mise à jour du PRD.",
       "evidence": ["AGENTS.md#Règles du projet", "thread:01a005ad-360e-7710-aeb5-bf5fc84c67b6"],
       "acceptance": [
         "Conserver uniquement les catégories de secrets et services concernés, jamais leurs valeurs.",
-        "Ne déclencher aucune rotation, révocation ou mutation sans nouvelle autorisation explicite d’Amine dans la session propriétaire.",
+        "Autorisation obtenue le 9 septembre 2026 ; exécuter les rotations exclusivement dans Qalem avec le coffre et les contrôles des consommateurs.",
         "Si autorisation ultérieure : utiliser le broker/coffre prévu, vérifier les consommateurs Qalem et consigner la clôture réelle.",
-        "Une priorité P0 exprime le risque, pas une permission d’exécution ; garder cette US bloquée tant que le refus s’applique."
+        "Une priorité P0 exprime le risque ; seule l’autorisation explicite du 9 septembre permet désormais l’exécution. Ne pas fermer sans preuve réelle."
       ],
       "closureEvidence": [],
       "historicalDependencies": [],
-      "executionAllowed": false,
+      "executionAllowed": true,
+      "executionDecision": "2026-09-09 — Feu vert explicite pour les douze US et délégation des choix. Voir docs/decisions/2026-09-09-unblock-prd.md. Autorisation de travail, pas preuve de livraison ni activation automatique.",
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 6
     },
@@ -3636,7 +3637,8 @@
         "status": "historical_not_recertified"
       },
       "historicalDependencies": ["S0-008", "S2-010"],
-      "executionAllowed": false,
+      "executionAllowed": true,
+      "executionDecision": "2026-09-09 — Feu vert explicite pour les douze US et délégation des choix. Voir docs/decisions/2026-09-09-unblock-prd.md. Autorisation de travail, pas preuve de livraison ni activation automatique.",
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 43
     },
@@ -4219,7 +4221,8 @@
         "status": "legacy_claim_not_delivery_proof"
       },
       "historicalDependencies": [],
-      "executionAllowed": false,
+      "executionAllowed": true,
+      "executionDecision": "2026-09-09 — Feu vert explicite pour les douze US et délégation des choix. Voir docs/decisions/2026-09-09-unblock-prd.md. Autorisation de travail, pas preuve de livraison ni activation automatique.",
       "validationRequires": [
         "qualityGates",
         "fresh_evidence_per_acceptance",
@@ -4305,7 +4308,8 @@
         "status": "legacy_claim_not_delivery_proof"
       },
       "historicalDependencies": [],
-      "executionAllowed": false,
+      "executionAllowed": true,
+      "executionDecision": "2026-09-09 — Feu vert explicite pour les douze US et délégation des choix. Voir docs/decisions/2026-09-09-unblock-prd.md. Autorisation de travail, pas preuve de livraison ni activation automatique.",
       "validationRequires": [
         "qualityGates",
         "fresh_evidence_per_acceptance",
@@ -4345,7 +4349,8 @@
         "status": "legacy_claim_not_delivery_proof"
       },
       "historicalDependencies": [],
-      "executionAllowed": false,
+      "executionAllowed": true,
+      "executionDecision": "2026-09-09 — Feu vert explicite pour les douze US et délégation des choix. Voir docs/decisions/2026-09-09-unblock-prd.md. Autorisation de travail, pas preuve de livraison ni activation automatique.",
       "validationRequires": [
         "qualityGates",
         "fresh_evidence_per_acceptance",
@@ -4385,7 +4390,8 @@
         "status": "legacy_claim_not_delivery_proof"
       },
       "historicalDependencies": [],
-      "executionAllowed": false,
+      "executionAllowed": true,
+      "executionDecision": "2026-09-09 — Feu vert explicite pour les douze US et délégation des choix. Voir docs/decisions/2026-09-09-unblock-prd.md. Autorisation de travail, pas preuve de livraison ni activation automatique.",
       "validationRequires": [
         "qualityGates",
         "fresh_evidence_per_acceptance",
@@ -4468,7 +4474,8 @@
         "status": "legacy_claim_not_delivery_proof"
       },
       "historicalDependencies": [],
-      "executionAllowed": false,
+      "executionAllowed": true,
+      "executionDecision": "2026-09-09 — Feu vert explicite pour les douze US et délégation des choix. Voir docs/decisions/2026-09-09-unblock-prd.md. Autorisation de travail, pas preuve de livraison ni activation automatique.",
       "validationRequires": [
         "qualityGates",
         "fresh_evidence_per_acceptance",
@@ -4509,7 +4516,8 @@
         "status": "legacy_claim_not_delivery_proof"
       },
       "historicalDependencies": [],
-      "executionAllowed": false,
+      "executionAllowed": true,
+      "executionDecision": "2026-09-09 — Feu vert explicite pour les douze US et délégation des choix. Voir docs/decisions/2026-09-09-unblock-prd.md. Autorisation de travail, pas preuve de livraison ni activation automatique.",
       "validationRequires": [
         "qualityGates",
         "fresh_evidence_per_acceptance",
@@ -4532,7 +4540,7 @@
       },
       "sourceDependencies": ["S-036"],
       "dependencies": ["S0-011", "S-036"],
-      "gap": "Décision utilisateur explicite : aucun minimum de sessions comparables pour l’optimisation. Le seuil historique de 100 sessions est donc retiré du contrat ; MIN_SESSIONS=100 subsiste dans le code et doit être supprimé lors du raccordement. Le traitement commence dès la première observation exploitable, sans présenter son score comme une preuve statistique. L’implémentation reste dépendante de S-036, encore ouverte ; aucune collecte activée par cette réconciliation. getOptimizationSuggestion reste sans appelant et le bénéfice produit reste à mesurer.",
+      "gap": "Feu vert reçu le 9 septembre 2026. Candidat corrigé : aucun minimum de sessions, scores absents/invalides ignorés, volume observé explicite sans fausse confiance, requête bornée et liste de formations autorisées obligatoire. Huit tests ciblés verts. Restent le raccordement avec les données consenties de S-036, l’application au pipeline, la recette navigateur et la mesure d’effet ; aucune collecte activée ni US clôturée.",
       "evidence": ["lib/generation/data-optimizer.ts:84"],
       "acceptance": [
         "lib/generation/data-optimizer.ts",
@@ -4549,7 +4557,8 @@
         "status": "legacy_claim_not_delivery_proof"
       },
       "historicalDependencies": [],
-      "executionAllowed": false,
+      "executionAllowed": true,
+      "executionDecision": "2026-09-09 — Feu vert explicite pour les douze US et délégation des choix. Voir docs/decisions/2026-09-09-unblock-prd.md. Autorisation de travail, pas preuve de livraison ni activation automatique.",
       "validationRequires": [
         "qualityGates",
         "fresh_evidence_per_acceptance",
@@ -4588,7 +4597,8 @@
         "status": "legacy_claim_not_delivery_proof"
       },
       "historicalDependencies": [],
-      "executionAllowed": false,
+      "executionAllowed": true,
+      "executionDecision": "2026-09-09 — Feu vert explicite pour les douze US et délégation des choix. Voir docs/decisions/2026-09-09-unblock-prd.md. Autorisation de travail, pas preuve de livraison ni activation automatique.",
       "validationRequires": [
         "qualityGates",
         "fresh_evidence_per_acceptance",
@@ -4611,7 +4621,7 @@
       },
       "sourceDependencies": ["S-047"],
       "dependencies": ["S0-011", "S-047"],
-      "gap": "Décision utilisateur explicite : aucun minimum de sessions comparables, y compris pour le Director. Le seuil contractuel historique de 1 000 discussions est retiré ; le code conserve MIN_SAMPLE_SIZE=50 et doit être aligné lors du raccordement autorisé. La limite de lecture de 1 000 lignes est un plafond de requête, pas un minimum de sessions. suggestNextAgent et shouldUseDataDriven restent sans appelant. S-047 et l’approbation du protocole A/B restent nécessaires ; cette réconciliation n’active ni collecte ni expérimentation.",
+      "gap": "Feu vert reçu le 9 septembre 2026 : supprimer MIN_SAMPLE_SIZE=50, utiliser le premier pattern exploitable et raccorder les données consenties de S-047. La limite de lecture de 1 000 lignes reste un plafond, pas un minimum. A/B 50/50 à cohortes stables retenu ; détailler les mesures et conditions d’arrêt avant activation. suggestNextAgent et shouldUseDataDriven restent sans appelant ; aucun gain mesuré à ce stade.",
       "evidence": ["lib/orchestration/data-driven-director.ts"],
       "acceptance": [
         "lib/orchestration/data-driven-director.ts",
@@ -4620,7 +4630,7 @@
         "Fallback sur Director classique en l’absence de pattern exploitable et compatible avec les agents disponibles, en cas d’erreur ou de données invalides ; aucun seuil minimal arbitraire.",
         "Proposer le prochain agent dès le premier pattern exploitable ; exposer le nombre d’observations et ne pas présenter un score observé comme un gain établi.",
         "Tester zéro observation, une observation exploitable et plusieurs observations, sans seuil caché dans le module ou chez ses appelants.",
-        "Faire approuver le protocole A/B avant branchement ; la décision sans minimum de sessions est déjà acquise et ne doit pas être redemandée.",
+        "Élaborer et consigner avant activation le protocole A/B délégué par le feu vert du 9 septembre ; aucun minimum de sessions, cohortes stables et mesures prédéfinies.",
         "Tester fallback, séparation des cohortes et résultat observable sans promettre un gain non mesuré."
       ],
       "closureEvidence": [],
@@ -4629,7 +4639,8 @@
         "status": "legacy_claim_not_delivery_proof"
       },
       "historicalDependencies": [],
-      "executionAllowed": false,
+      "executionAllowed": true,
+      "executionDecision": "2026-09-09 — Feu vert explicite pour les douze US et délégation des choix. Voir docs/decisions/2026-09-09-unblock-prd.md. Autorisation de travail, pas preuve de livraison ni activation automatique.",
       "validationRequires": [
         "qualityGates",
         "fresh_evidence_per_acceptance",
@@ -4757,7 +4768,8 @@
         "status": "legacy_claim_not_delivery_proof"
       },
       "historicalDependencies": [],
-      "executionAllowed": false,
+      "executionAllowed": true,
+      "executionDecision": "2026-09-09 — Feu vert explicite pour les douze US et délégation des choix. Voir docs/decisions/2026-09-09-unblock-prd.md. Autorisation de travail, pas preuve de livraison ni activation automatique.",
       "validationRequires": [
         "qualityGates",
         "fresh_evidence_per_acceptance",

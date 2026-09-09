@@ -1,174 +1,103 @@
-// =============================================================================
-// Qalem — Data-driven Generation Optimizer
-// Queries aggregated pedagogy telemetry to suggest scene ordering and
-// difficulty adjustments for the generation pipeline.
-// =============================================================================
+import { z } from 'zod';
+import { createServiceSupabaseClient } from '@/lib/supabase/service';
+import { createLogger } from '@/lib/logger';
 
-import { createClient } from '@supabase/supabase-js';
-import type { Database } from '@/lib/supabase/types';
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+const log = createLogger('DataOptimizer');
+const TARGET_SCORE = 0.7;
+// ponytail: latest 1,000 observations, not a minimum; move aggregation to SQL
+// when measured volume requires a larger historical window.
+const OBSERVATION_LIMIT = 1000;
+const sessionSchema = z.object({
+  scene_sequence: z.array(z.string().trim().min(1).max(100)).min(1).max(256),
+  quiz_scores: z.array(z.number().min(0).max(1)).min(1).max(512),
+});
 
 export interface OptimizationSuggestion {
-  /** Recommended scene type ordering for highest quiz performance */
   recommendedSceneOrder: string[];
-  /** Difficulty modifier to apply to quizzes (-0.2 to +0.2) */
+  /** Bounded heuristic, not a measured improvement. */
   difficultyModifier: number;
-  /** Confidence score (0.0–1.0) based on available data volume */
-  confidence: number;
+  sampleSize: number;
+  selectedSequenceSampleSize: number;
+  observedMeanQuizScore: number;
+  selectedSequenceMeanQuizScore: number;
+  evidence: 'observational';
+  observationWindowLimit: number;
 }
 
-/** Minimum number of matching sessions required before we make suggestions */
-const MIN_SESSIONS = 100;
+const round = (value: number) => Math.round(value * 1000) / 1000;
 
-/** Target average quiz score the optimizer tries to converge towards */
-const TARGET_SCORE = 0.7;
-
-// ---------------------------------------------------------------------------
-// Service client
-// ---------------------------------------------------------------------------
-
-function getServiceClient(): ReturnType<typeof createClient<Database>> {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!url || !serviceKey) {
-    throw new Error(
-      'Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY for data optimizer',
-    );
+/** Missing/invalid scores are not zero scores. One usable observation suffices. */
+export function buildOptimizationSuggestion(rows: unknown): OptimizationSuggestion | null {
+  if (!Array.isArray(rows) || rows.length > OBSERVATION_LIMIT) return null;
+  const groups = new Map<string, { sequence: string[]; scoreSum: number; count: number }>();
+  let scoreSum = 0;
+  let scoreCount = 0;
+  let sampleSize = 0;
+  for (const row of rows) {
+    const parsed = sessionSchema.safeParse(row);
+    if (!parsed.success) continue;
+    const { scene_sequence: sequence, quiz_scores: scores } = parsed.data;
+    const sum = scores.reduce((total, score) => total + score, 0);
+    const key = JSON.stringify(sequence);
+    const group = groups.get(key) ?? { sequence, scoreSum: 0, count: 0 };
+    group.scoreSum += sum / scores.length;
+    group.count += 1;
+    groups.set(key, group);
+    scoreSum += sum;
+    scoreCount += scores.length;
+    sampleSize += 1;
   }
-
-  return createClient<Database>(url, serviceKey, {
-    auth: { persistSession: false },
-  });
+  if (!sampleSize) return null;
+  // Deterministic ties: more observations, then the serialized sequence.
+  const best = [...groups.entries()].sort(
+    ([keyA, a], [keyB, b]) =>
+      b.scoreSum / b.count - a.scoreSum / a.count ||
+      b.count - a.count ||
+      (keyA < keyB ? -1 : keyA > keyB ? 1 : 0),
+  )[0][1];
+  const observedMean = scoreSum / scoreCount;
+  return {
+    recommendedSceneOrder: best.sequence,
+    difficultyModifier: round(Math.max(-0.2, Math.min(0.2, observedMean - TARGET_SCORE))),
+    sampleSize,
+    selectedSequenceSampleSize: best.count,
+    observedMeanQuizScore: round(observedMean),
+    selectedSequenceMeanQuizScore: round(best.scoreSum / best.count),
+    evidence: 'observational',
+    observationWindowLimit: OBSERVATION_LIMIT,
+  };
 }
 
-// ---------------------------------------------------------------------------
-// Internal helpers
-// ---------------------------------------------------------------------------
-
-interface TelemetryRow {
-  scene_sequence: string[];
-  quiz_scores: number[];
-  completion_rate: number;
-}
-
-/**
- * Compute the average of an array of numbers. Returns 0 for empty arrays.
- */
-function mean(values: number[]): number {
-  if (values.length === 0) return 0;
-  return values.reduce((sum, v) => sum + v, 0) / values.length;
-}
-
-/**
- * Serialize a scene sequence into a stable key for grouping.
- */
-function sequenceKey(seq: string[]): string {
-  return seq.join(',');
-}
-
-// ---------------------------------------------------------------------------
-// Public API
-// ---------------------------------------------------------------------------
-
-/**
- * Query aggregated pedagogy telemetry and return an optimization suggestion
- * for the given subject / level / language combination.
- *
- * Returns `null` when fewer than {@link MIN_SESSIONS} matching sessions exist
- * (not enough data to be statistically meaningful).
- */
+/** Server-side candidate; callers must supply authorized stages, never all tenants. */
 export async function getOptimizationSuggestion(
   subject: string,
   level: string,
   language: string,
+  authorizedStageIds: string[],
 ): Promise<OptimizationSuggestion | null> {
-  const supabase = getServiceClient();
-
-  // -----------------------------------------------------------------------
-  // 1. Fetch matching sessions
-  // -----------------------------------------------------------------------
-  const { data: rows, error } = await supabase
-    .from('pedagogy_telemetry')
-    .select('scene_sequence, quiz_scores, completion_rate')
-    .contains('subject_tags', [subject])
-    .eq('level', level)
-    .eq('language', language);
-
-  if (error) {
-    console.error('[DataOptimizer] Query failed:', error.message);
+  if (!subject.trim() || !level.trim() || !language.trim() || !authorizedStageIds.length)
+    return null;
+  const stages = z.array(z.string().trim().min(1).max(256)).max(1000).safeParse(authorizedStageIds);
+  if (!stages.success) return null;
+  try {
+    const { data, error } = await createServiceSupabaseClient()
+      .from('pedagogy_telemetry')
+      .select('scene_sequence, quiz_scores')
+      .in('stage_id', [...new Set(stages.data)])
+      .contains('subject_tags', [subject.trim()])
+      .eq('level', level.trim())
+      .eq('language', language.trim())
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
+      .limit(OBSERVATION_LIMIT)
+      .abortSignal(AbortSignal.timeout(5000));
+    if (error) {
+      log.warn('Observation query unavailable');
+      return null;
+    }
+    return buildOptimizationSuggestion(data);
+  } catch {
+    log.warn('Observation query unavailable');
     return null;
   }
-
-  const sessions = (rows ?? []) as TelemetryRow[];
-
-  if (sessions.length < MIN_SESSIONS) {
-    return null;
-  }
-
-  // -----------------------------------------------------------------------
-  // 2. Group sessions by scene sequence and compute average quiz score
-  // -----------------------------------------------------------------------
-  const groups = new Map<string, { sequence: string[]; avgScores: number[] }>();
-
-  for (const session of sessions) {
-    const key = sequenceKey(session.scene_sequence ?? []);
-    if (!groups.has(key)) {
-      groups.set(key, {
-        sequence: session.scene_sequence ?? [],
-        avgScores: [],
-      });
-    }
-    const group = groups.get(key)!; // safe — just set above
-    const sessionAvg = mean(session.quiz_scores ?? []);
-    if (!Number.isNaN(sessionAvg)) {
-      group.avgScores.push(sessionAvg);
-    }
-  }
-
-  // -----------------------------------------------------------------------
-  // 3. Find the sequence with the highest average quiz score
-  // -----------------------------------------------------------------------
-  let bestSequence: string[] = [];
-  let bestScore = -Infinity;
-
-  for (const group of groups.values()) {
-    if (group.avgScores.length === 0) continue;
-    const avg = mean(group.avgScores);
-    if (avg > bestScore) {
-      bestScore = avg;
-      bestSequence = group.sequence;
-    }
-  }
-
-  // Fallback: if no valid sequence was found, return null
-  if (bestSequence.length === 0 || !Number.isFinite(bestScore)) {
-    return null;
-  }
-
-  // -----------------------------------------------------------------------
-  // 4. Compute difficulty modifier
-  //    - If average scores are above target → increase difficulty (positive)
-  //    - If below target → decrease difficulty (negative)
-  //    Clamped to [-0.2, +0.2]
-  // -----------------------------------------------------------------------
-  const allQuizScores = sessions.flatMap((s) => s.quiz_scores ?? []);
-  const globalAvg = mean(allQuizScores);
-  const rawModifier = globalAvg - TARGET_SCORE;
-  const difficultyModifier = Math.max(-0.2, Math.min(0.2, rawModifier));
-
-  // -----------------------------------------------------------------------
-  // 5. Confidence: proportional to data volume, capped at 1.0
-  //    100 sessions → 0.1, 500 → 0.5, 1000+ → 1.0
-  // -----------------------------------------------------------------------
-  const confidence = Math.min(1, sessions.length / 1000);
-
-  return {
-    recommendedSceneOrder: bestSequence,
-    difficultyModifier: Math.round(difficultyModifier * 1000) / 1000,
-    confidence: Math.round(confidence * 100) / 100,
-  };
 }

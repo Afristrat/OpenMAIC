@@ -1,5 +1,11 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — Feu vert des douze US, premier correctif S-037
+
+Amine autorise explicitement le reste et délègue les choix. Les douze executionAllowed=false deviennent true ; décisions dans docs/decisions/2026-09-09-unblock-prd.md. Consentement explicite retenu, connecteurs via Diwan, xAPI partagé avec l’outbox existante, aucun minimum de sessions et A/B stable. Rotations autorisées mais à exécuter séparément dans Qalem avec contrôle des consommateurs ; aucun secret changé dans ce lot. Ne plus redemander l’autorisation de coder S-037/S-048. Les checkpoints humains restent distincts de cette autorisation.
+
+S-037 candidat corrigé : huit tests, TypeScript et lint global verts (45654 exit 0). Première observation valide utilisable, absence de score distincte du score zéro, pas de fausse confiance statistique, volume et scores observés exposés. Requête bornée et liste de formations autorisées obligatoire ; aucun appelant de génération branché encore. Preuve docs/validation/S-037-data-optimizer.md. S-036/raccordement/UI/mesure restent ouverts ; pas de collecte ni déploiement. Suite autorisée : aligner S-048 sans minimum puis raccorder la collecte consentie ; ne pas présenter ces modules seuls comme des US livrées.
+
 ## 9 septembre 2026 — S6-003, compilation complémentaire
 
 Session ServeurIA 92949 exit 0 : build Next.js réussi avec configuration E2E factice et 119/119 pages. Empreintes des sources applicatives alignées sur origin/refork-v030 4b8bc584e7b9be4f8ea17bbe636171affaa29ae3 ; preuves et migration synchronisées dans le runner, pas dans la base. Tas Node 4 Gio, runner 10 Gio, OOMKilled=false et zéro redémarrage après terminaison. Le contrôle standalone est ignoré car ce mode n’est pas activé : aucune certification d’image déployable ni de gate global. Aucun déploiement. Les gates S-037/S-048 restent executionAllowed=false ; confirmation explicite demandée avant leur modification, sans collecte ni A/B. Ne pas assimiler une continuation automatique à cette confirmation.
