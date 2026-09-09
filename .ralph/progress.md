@@ -1,5 +1,13 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-036, agents conservés et purge personnelle bornée
+
+Migration CLI candidate 20260909211350 : auteur SET NULL, agents publiés ou rattachés au tenant conservés sans changement de publication. Trigger BEFORE invoker limité à NEW : marque les seuls agents personnels détachés ; aucun privilège supplémentaire pour Auth. Purge invoker service-only, index partiel, lot de 1000 avec SKIP LOCKED et recontrôle propriété/tenant/publication. Worker de rétention existant : deux tâches indépendantes, dix lots chacune au boot puis chaque heure, délai RPC cinq secondes et arrêt attendu. Pas d’effacement instantané garanti ni de reprise administrative des agents privés du tenant.
+
+Première approche AFTER avec lecture de profiles refusée sous Auth (RLS org_members) ; remplacée, sans SECURITY DEFINER ni élargissement des droits. SQL réel sous BEGIN/ROLLBACK : suppression Auth, conservation partagée/avis, frontière privée, refus de reprise arbitraire, agent personnel inaccessible puis purgé, agents jamais possédés conservés, marqueurs obsolètes sans effet et lot 1000+1. Zéro fixture et absence du RPC recontrôlés ; FK de production encore CASCADE. Session 95007 exit 0 : 17 tests ciblés, TypeScript et lint global sans avertissement, format corrigé ; runner avec overlays, pas un checkout propre certifié. Advisors local indisponibles sans base CLI ; pas de navigateur supplémentaire, build/gate global ni déploiement. Mnemo identify échoue (fetch failed).
+
+Suite : jobs en cours, imports privés/Storage, sessions/UI de suppression et critères restants S-036. Aucun passes=true.
+
 ## 9 septembre 2026 — S-036, récupération des canevas anciens
 
 GET resume récupère désormais un plan absent pour un brouillon importé : import conform appartenant au responsable courant, manifeste exact du cours dans le tenant/propriétaire, un seul source_id local et aucune référence externe, source prête dont le nom correspond au fichier d’import. Réemploi du convertisseur de canevas, puis conservation du titre et des scènes déjà enregistrés et validation du résultat. Aucun appel IA/Diwan ni écriture lors du GET. Un plan existant invalide n’est pas écrasé ; absence de données ou sélection ambiguë = 409, erreur de lecture = 503 opaque. planOrigin=linked_canvas affiche une notice de relecture FR/AR/EN. Le plan récupéré est persisté à la génération confirmée, pas à la seule consultation.
