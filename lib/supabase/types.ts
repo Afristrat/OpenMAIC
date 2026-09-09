@@ -188,7 +188,7 @@ export type CourseImportValidationStatus = 'pending' | 'conform' | 'rejected';
 
 export interface CourseImport {
   id: string;
-  owner_id: string;
+  owner_id: string | null;
   original_filename: string;
   storage_path: string;
   canvas_version: 'v1';
@@ -199,7 +199,7 @@ export interface CourseImport {
 
 export interface Course {
   id: string;
-  owner_id: string;
+  owner_id: string | null;
   org_id: string | null;
   stage_id: string | null;
   title: string;
@@ -319,17 +319,13 @@ export type CurriculumLinkInsert = Pick<
 export type SharedClassroomInsert = Pick<SharedClassroom, 'stage_id' | 'org_id'> &
   Partial<Omit<SharedClassroom, 'id' | 'stage_id' | 'org_id' | 'created_at'>>;
 
-export type CourseImportInsert = Pick<
-  CourseImport,
-  'owner_id' | 'original_filename' | 'storage_path'
-> &
-  Partial<Pick<CourseImport, 'canvas_version' | 'validation_status' | 'validation_report'>>;
+export type CourseImportInsert = Pick<CourseImport, 'original_filename' | 'storage_path'> & {
+  owner_id: string;
+} & Partial<Pick<CourseImport, 'canvas_version' | 'validation_status' | 'validation_report'>>;
 
-export type CourseInsert = Pick<
-  Course,
-  'owner_id' | 'title' | 'language' | 'source_kind' | 'outline'
-> &
-  Partial<
+export type CourseInsert = Pick<Course, 'title' | 'language' | 'source_kind' | 'outline'> & {
+  owner_id: string;
+} & Partial<
     Pick<
       Course,
       'org_id' | 'stage_id' | 'import_id' | 'source_manifest_id' | 'status' | 'catalog_visible'

@@ -1,5 +1,13 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-036, reprise serveur des cours orphelins
+
+Migration CLI 20260909203617 : courses/course_imports conservés avec auteur nullable après suppression ; auteur obligatoire à la création. RPC service-only invoker avec verrouillage du cours et de l’appartenance : seul un administrateur du tenant actif peut reprendre un cours orphelin. Import et stage orphelins réattribués, nouveau manifeste créé pour cet administrateur sans modifier l’ancienne version. Route POST courses/[courseId]/reclaim : identité vérifiée, origine obligatoire, réponse validée et erreurs opaques.
+
+Preuve s036-course-reclaim.sql avec les candidates Diwan et sources, sous supabase_auth_admin/service_role dans BEGIN/ROLLBACK : conservation après suppression Auth, reprise administrateur, refus apprenant et cours encore attribué, répétition idempotente et droits publics révoqués. Zéro utilisateur de fixture et RPC absent après rollback. Session 8356 exit 0 : cinq tests API, TypeScript et lint global sans avertissement sur le runner avec overlays, pas une certification d’un checkout propre. Aucun déploiement ni clôture.
+
+Prochaine action : découverte et bouton de reprise administrateur, y compris brouillons, puis génération avec le nouveau manifeste. Aucun appelant UI encore livré. Les imports privés et chemins Storage préfixés par l’ancien compte ne sont pas réconciliés ; restent agent_configs/jobs, Storage, sessions/UI de suppression, contexte/consommateurs et critères globaux S-036. Ne pas présenter ce lot comme une suppression intégrale ni une reprise utilisateur livrée.
+
 ## 9 septembre 2026 — S-036, bibliothèque préservée après départ de l’auteur
 
 Migration CLI 20260909203142 : organization_sources et formation_source_manifests passent à SET NULL ; insertion de source sans auteur refusée. Les deux triggers de manifeste (intégrité et références Diwan) acceptent uniquement le retrait du profil disparu, tous les autres champs inchangés. La migration dépend de 20260909121728 Diwan. Types Row nullables et Insert stricts. Aucune modification de RLS ni de permission de lecture.

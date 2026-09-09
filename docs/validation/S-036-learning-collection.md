@@ -1,5 +1,13 @@
 # S-036 — Collecte consentie : serveur et stockage
 
+## Complément : cours orphelins et reprise administrateur
+
+Migration 20260909203617_course_author_erasure.sql : courses/course_imports préservés, attribution retirée et insertion sans auteur refusée. RPC reclaim_orphaned_course invoker réservé au service ; vérification de l’administrateur réel du tenant actif sous verrou, refus de reprise d’un cours encore attribué, import et stage orphelins réattribués. Nouveau manifeste pour l’administrateur reprenant le cours, ancienne version immuable conservée. POST courses/[courseId]/reclaim n’accepte pas d’identité fournie par le client, impose l’origine et valide le résultat.
+
+Preuve scripts/validation/s036-course-reclaim.sql avec candidates Diwan/sources, exécutée sous transaction et ROLLBACK sur PostgreSQL Qalem : suppression via rôle Auth, conservation des contenus, reprise via service_role, refus apprenant/cours attribué, répétition sans nouveau manifeste et exécution publique interdite. Zéro fixture Auth et RPC absent ensuite. Session 8356 terminée avec code 0 : cinq tests API, TypeScript et lint global sans avertissement. Runner ancien avec overlays ciblés, pas un checkout propre du SHA final.
+
+Limites ouvertes : pas d’appelant UI ni de parcours navigateur de reprise ; brouillons à rendre découvrables aux administrateurs. Pas de traitement des imports privés ni du chemin Storage portant l’ancien auteur. Pas de gate global/build, d’advisors complets ou de déploiement durable. Cette preuve n’est pas une clôture S-036.
+
 ## Complément : sources et manifestes conservés
 
 Migration CLI 20260909203142_organization_source_author_erasure.sql, après la candidate Diwan 20260909121728. Retrait de l’auteur sans destruction des sources ni des versions de manifeste ; création de source sans auteur toujours refusée. Triggers invoker, search_path vide, exécution publique révoquée ; exception de mutation limitée au profil réellement supprimé et à la seule attribution. Les types de lecture admettent null, ceux d’insertion exigent un auteur.
