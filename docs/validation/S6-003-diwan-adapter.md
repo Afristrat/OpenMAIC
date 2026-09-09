@@ -182,3 +182,20 @@ lint global sans avertissement, 53/53 tests ciblés et 4/4 parcours Diwan sans
 retry. Le dernier parcours ferme le panneau avant l’accusé de réception,
 recharge la page, retrouve le job et consulte son statut. Aucun build global,
 déploiement ou appel Diwan authentifié réalisé dans ce complément.
+
+## Compilation complémentaire du candidat
+
+9 septembre 2026, session ServeurIA 92949 terminée exit 0 : `pnpm build`
+réussit, TypeScript intégré compris, 119/119 pages générées. Source applicative
+comparée par empreintes Git au commit poussé
+`4b8bc584e7b9be4f8ea17bbe636171affaa29ae3` ; les fichiers de preuve, le PRD et
+la migration candidate sont ensuite synchronisés dans le runner. Le checkout
+du runner reste fondé sur son ancien SHA : il ne faut pas le présenter comme
+un checkout propre du candidat.
+
+Compilation avec configuration E2E factice, éditeur activé et tas Node limité
+à 4 Gio, dans le runner plafonné à 10 Gio. Relecture après terminaison :
+OOMKilled=false, RestartCount=0. Le contrôle standalone est explicitement
+ignoré par le script puisque ce mode de sortie n’est pas activé dans ce build ;
+la qualification de l’image de déploiement reste ouverte. Aucune migration
+appliquée à la base, aucun déploiement, aucune preuve d’accès Diwan authentifié.

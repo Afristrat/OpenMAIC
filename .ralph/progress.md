@@ -1,5 +1,9 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S6-003, compilation complémentaire
+
+Session ServeurIA 92949 exit 0 : build Next.js réussi avec configuration E2E factice et 119/119 pages. Empreintes des sources applicatives alignées sur origin/refork-v030 4b8bc584e7b9be4f8ea17bbe636171affaa29ae3 ; preuves et migration synchronisées dans le runner, pas dans la base. Tas Node 4 Gio, runner 10 Gio, OOMKilled=false et zéro redémarrage après terminaison. Le contrôle standalone est ignoré car ce mode n’est pas activé : aucune certification d’image déployable ni de gate global. Aucun déploiement. Les gates S-037/S-048 restent executionAllowed=false ; confirmation explicite demandée avant leur modification, sans collecte ni A/B. Ne pas assimiler une continuation automatique à cette confirmation.
+
 ## 9 septembre 2026 — S6-003, sélecteur Diwan FR/AR/EN raccordé
 
 Le popover de sources existant propose désormais liste paginée, sélection/retrait, import et suivi Diwan. Compteur et manifeste restauré incluent les références externes ; passage du manifeste au plan vérifié dans les trois langues, RTL compris. Un changement de version/empreinte d’une référence conservée est refusé plutôt qu’actualisé silencieusement. Le job accepté est enregistré dans sessionStorage même si le panneau a été fermé pendant la requête ; reprise après rechargement testée. Ponytail : HTML natif, popover/persistance existants, aucune dépendance ajoutée.
