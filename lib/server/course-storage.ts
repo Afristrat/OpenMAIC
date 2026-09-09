@@ -1,4 +1,5 @@
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
+import { z } from 'zod';
 import type { LearningApproach } from '@/lib/agents/persona-catalog';
 import type { ClassroomPlan, SceneOutline } from '@/lib/types/generation';
 
@@ -41,18 +42,31 @@ export async function persistGeneratedCourse(input: {
   title: string;
   language: CourseLocale;
   learningApproach: LearningApproach;
+  analyticsContext: { level: 'beginner' | 'intermediate' | 'advanced'; subjectTags: string[] };
   outlines: SceneOutline[];
   plan: ClassroomPlan;
   sourceManifestId?: string;
 }): Promise<string> {
   const supabase = createServiceSupabaseClient();
+  const analyticsContext = z
+    .object({
+      level: z.enum(['beginner', 'intermediate', 'advanced']),
+      subjectTags: z.array(z.string().regex(/^[A-Za-z0-9_:-]{1,256}$/)).max(20),
+    })
+    .strict()
+    .parse(input.analyticsContext);
   const readyPayload = {
     owner_id: input.ownerId,
     org_id: input.orgId,
     stage_id: input.stageId,
     title: input.title,
     language: input.language,
-    outline: { scenes: input.outlines, plan: input.plan, learningApproach: input.learningApproach },
+    outline: {
+      scenes: input.outlines,
+      plan: input.plan,
+      learningApproach: input.learningApproach,
+      analyticsContext,
+    },
     source_manifest_id: input.sourceManifestId ?? null,
     status: 'ready' as const,
   };

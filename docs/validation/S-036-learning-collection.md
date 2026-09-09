@@ -1,5 +1,11 @@
 # S-036 — Collecte consentie : serveur et stockage
 
+## Complément : contexte serveur à l’insertion
+
+analyticsContext du cours généré contient le niveau effectif et l’identifiant canonique de skill résolu (borné à 256 pour les identifiants tenant). Langue reprise de courses.language ; agents de stages.agent_ids. Candidate CLI 20260909221821 : trigger privé invoker avant insertion, sélection du même stage/tenant et cours ready sous verrou partagé ; absence/ambiguïté sans contexte inventé. Le collecteur n’envoie plus les quatre champs de contexte fournis par le navigateur. Aucune reprise du texte libre dans les tags, aucune taxonomie de sujets revendiquée.
+
+5781 exit 0 : 34 tests, TypeScript/lint global ; preuve SQL scripts/validation/s036-learning-context.sql sous service_role via record_consented_learning et ROLLBACK. Substitution du contexte falsifié, cas ancien sans metadata, retrait du consentement préservé. Regex PostgreSQL {1,256} initialement refusée, corrigée avec contrôle length indépendant ; preuve finale rejouée, zéro fixture et fonction absente. Advisors CLI local indisponibles sans base locale. Pas d’IA réelle, de migration durable, navigateur/gate global ou déploiement. Le contexte reflète les données persistées lors de la collecte, pas une version historique immuable ; scores/durées restent des mesures déclarées. [Triggers PostgreSQL](https://supabase.com/docs/guides/database/postgres/triggers).
+
 ## Complément : scope tenant de l’optimiseur
 
 Paramètre authorizedOrgId obligatoire, UUID validé avant client service, filtre org_id ET stage_id. Une formation transférée/partagée ne suffit plus à sélectionner les observations des autres organisations. Les lignes historiques sans org_id ne sont pas attribuées arbitrairement. Les règles de suggestion restent sans minimum d’observations.

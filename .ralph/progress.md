@@ -1,5 +1,11 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-036, contexte de collecte issu du cours
+
+La génération persiste outline.analyticsContext : niveau effectif et identifiant canonique de skill résolu (pas le texte libre de l’apprenant). Le collecteur ne transmet plus langue/niveau/tags/nombre d’agents du navigateur au RPC. Candidate CLI 20260909221821 : trigger BEFORE INSERT invoker privé, contexte repris depuis le cours ready du même stage/tenant, langue du cours et nombre d’agents du stage. Contexte absent/ambigu : valeurs inconnues, pas d’inférence. Les tags désignent ici la skill canonique, pas une taxonomie de sujets déjà livrée.
+
+59941 : neuf tests et TS/lint verts. 5781 exit 0 : 34 tests incluant génération/persistance/collecte, TypeScript/lint global, format. SQL service_role via RPC sous BEGIN/ROLLBACK : contexte falsifié remplacé, ancien cours sans metadata conservant un contexte inconnu, retrait du consentement effaçant les observations. Limite regex PostgreSQL rencontrée à 256 puis corrigée par length séparé ; preuve finale verte et cinq contrôles de zéro fixture/fonction absente. Advisors local indisponible (127.0.0.1:54322). Aucun déploiement, migration durable, appel IA réel ou nouveau navigateur/gate global. Les mesures restent déclaratives côté client ; contexte historique avant modification/versionnement et autres critères S-036 restent à traiter. Aucun passes=true.
+
 ## 9 septembre 2026 — S-036, frontière tenant de l’optimiseur
 
 getOptimizationSuggestion exige désormais un UUID de tenant autorisé et filtre org_id en plus des stage_id autorisés. Sans tenant valide : aucun client privilégié ni requête. Aucun minimum de sessions ajouté ; fenêtre maximale de 1000 conservée. Recherche des appelants : seulement les tests, pas de raccordement métier actuel ; ne pas annoncer une optimisation active (S-037 reste à intégrer).

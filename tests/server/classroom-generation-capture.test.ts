@@ -242,6 +242,14 @@ describe('classroom generation — web capture injection', () => {
 
     await generateWithProgress();
 
+    expect(mocks.persistGeneratedCourse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        analyticsContext: {
+          level: expect.stringMatching(/^(beginner|intermediate|advanced)$/),
+          subjectTags: [],
+        },
+      }),
+    );
     expect(mocks.requestWebCapture).toHaveBeenCalledWith(
       expect.objectContaining({ needsCapture: true }),
       expect.any(String),

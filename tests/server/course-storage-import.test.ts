@@ -90,6 +90,7 @@ describe('course storage import lifecycle', () => {
       title: 'Décider',
       language: 'fr-FR',
       learningApproach: 'andragogy',
+      analyticsContext: { level: 'intermediate', subjectTags: ['formation-design-pro'] },
       outlines: [outline],
       plan,
       sourceManifestId: 'manifest-1',
@@ -99,7 +100,12 @@ describe('course storage import lifecycle', () => {
       expect.objectContaining({
         stage_id: 'stage-1',
         status: 'ready',
-        outline: { scenes: [outline], plan, learningApproach: 'andragogy' },
+        outline: {
+          scenes: [outline],
+          plan,
+          learningApproach: 'andragogy',
+          analyticsContext: { level: 'intermediate', subjectTags: ['formation-design-pro'] },
+        },
       }),
     );
     const payload = mocks.update.mock.calls[0]?.[0] as Record<string, unknown>;

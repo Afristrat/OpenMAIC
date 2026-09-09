@@ -1088,6 +1088,11 @@ export async function generateClassroom(
       language: input.language ?? 'fr-FR',
       learningApproach: input.learningApproach,
       outlines,
+      analyticsContext: {
+        level: learningDesign.expertiseLevel,
+        // Resolved registry identifier, never the learner's free-text request.
+        subjectTags: skillEngineEnabled && activeSkillId ? [activeSkillId] : [],
+      },
       sourceManifestId: resolvedSources.manifest?.id,
       plan: { ...outlinesResult.data, outlines },
     });
