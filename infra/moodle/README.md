@@ -76,5 +76,24 @@ cibler exclusivement le DNS et l’ingress `lms-test.qalem.ma`.
 - https://github.com/moodlehq/moodle-php-apache
 - https://docs.moodle.org/405/en/External_tool_settings
 
-La preuve LMS complète reste dans `docs/validation/S-034-lti-delivery.md` :
-installer Moodle n’applique pas les migrations Qalem et ne prouve pas AGS.
+## Recette fonctionnelle du 9 septembre
+
+`fixture.php` utilise les API natives de Moodle pour créer le cours
+`QALEM-LTI-S034`, l’activité `Quiz Qalem S034` et deux apprenants fictifs. Il
+conserve leurs identifiants et mots de passe lors d’une nouvelle exécution.
+Les credentials apprenants sont dans le volume Moodledata, sous
+`.qalem-lti-secrets/learner_a` et `learner_b` (dossier 0700, fichiers 0600).
+La fixture Qalem SQL correspondante est **à appliquer une seule fois**, après
+création explicite des deux utilisateurs Auth ; elle ne fabrique aucune note.
+
+Les scripts `scripts/proofs/s034-moodle-quiz.mjs` et
+`s034-moodle-gradebook.mjs` pilotent le vrai navigateur distant. La recette a
+constaté les scores 25 et 100, puis 0 après une panne volontaire avec reprise.
+`s034-moodle-outage.sh` suspend uniquement ce Moodle après le lancement signé,
+contrôle l’échec réel du worker, puis réactive le conteneur par un trap. Les
+marqueurs `/tmp/s034-lti-outage-ready` et `/tmp/s034-lti-outage-submit` dans le
+runner empêchent une relance accidentelle de ce scénario déjà exécuté.
+
+Les données sont synthétiques, dédiées et conservées pour rendre la preuve
+inspectable. Ne pas réutiliser ces comptes pour une formation réelle. Le bilan
+daté et les limites figurent dans `docs/validation/S-034-lti-delivery.md`.
