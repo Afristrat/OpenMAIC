@@ -1,5 +1,11 @@
 # S-036 — Collecte consentie : serveur et stockage
 
+## Complément : suppression depuis le profil
+
+L’ancien updateUser(data.deleted) sans suppression a été retiré. Confirmation utilisateur → DELETE serveur → validation stricte success/accountDeleted → purge outbox du compte, profil local réinitialisé, fermeture locale puis redirection. Échec serveur ou réponse malformée : dialogue conservé, erreur traduite, aucune purge locale. Requête en cours verrouillée, délai 30 s sans retry automatique. Échec local après suppression : avertissement distinct, aucune nouvelle demande destructive. Textes FR/AR/EN corrigés pour les ressources partagées et fichiers différés.
+
+90210 : six tests API et TypeScript/lint verts ; 18925 exit 0 : TypeScript/lint puis quatre Chromium FR/AR/EN et accusé incomplet. Tests prouvent également la purge du seul outbox concerné et sa conservation après échec. APIs simulées, utilisateur E2E, runner avec overlays ; aucune suppression de compte réel, certification de révocation JWT, migration, build global ou publication. Ponytail : réemploi des composants existants. La skill Supabase a guidé le scope local et la distinction des garanties ; [référence signOut](https://supabase.com/docs/reference/javascript/auth-signout).
+
 ## Complément : rapprochement des échecs vidéo
 
 Lecture des 500 échecs retenus par BullMQ au démarrage/chaque heure, recontrôle failed et UUID du payload métier (pas d’identifiant BullMQ deviné). Transition PostgreSQL conditionnelle generating→error seulement. Aucun fournisseur relancé, aucun fichier supprimé ; succès concurrents protégés par le statut. Redis indisponible : prochain cycle, autres purges maintenues.

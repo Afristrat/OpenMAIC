@@ -19,7 +19,7 @@ interface AuthState {
   user: User | null;
   isLoading: boolean;
   isGuest: boolean;
-  signOut: () => Promise<void>;
+  signOut: (scope?: 'local' | 'global') => Promise<void>;
 }
 
 export type { AuthState };
@@ -76,9 +76,11 @@ export function useAuth(): AuthState {
   }, []);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  const signOut = useCallback(async () => {
+  const signOut = useCallback(async (scope: 'local' | 'global' = 'global') => {
     const supabase = tryCreateClient();
-    await supabase?.auth.signOut();
+    if (!supabase) throw new Error('Authentication unavailable');
+    const { error } = await supabase.auth.signOut({ scope });
+    if (error) throw error;
     setUser(null);
   }, []);
 

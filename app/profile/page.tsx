@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useAuth } from '@/lib/hooks/use-auth';
@@ -24,6 +24,7 @@ import { KeyRound, Trash2, Loader2, Mail, User, Save, Check } from 'lucide-react
 import { cn } from '@/lib/utils';
 import { RichProfileSection } from '@/components/profile/rich-profile-section';
 import { TelemetryConsentBanner } from '@/components/telemetry-consent-banner';
+import { LearningObservationOutbox } from '@/lib/telemetry/learning-observation-outbox';
 
 export default function ProfilePage(): React.ReactElement {
   const { t } = useI18n();
@@ -100,6 +101,8 @@ export default function ProfilePage(): React.ReactElement {
   // Account deletion
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const deletionPending = useRef(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const handleChangePassword = useCallback(async () => {
     if (!newPassword || newPassword.length < 6) return;
@@ -121,24 +124,55 @@ export default function ProfilePage(): React.ReactElement {
   }, [newPassword, t]);
 
   const handleDeleteAccount = useCallback(async () => {
+    if (deletionPending.current) return;
+    deletionPending.current = true;
     setDeleting(true);
+    setDeleteError('');
     try {
-      const supabase = tryCreateClient();
-      if (!supabase) throw new Error('Supabase not configured');
-      // Mark user metadata as deleted (actual deletion requires admin/server-side)
-      await supabase.auth.updateUser({
-        data: { deleted: true, deleted_at: new Date().toISOString() },
+      const response = await fetch('/api/account/delete', {
+        method: 'DELETE',
+        credentials: 'same-origin',
+        cache: 'no-store',
+        signal: AbortSignal.timeout(30000),
       });
+      const result: unknown = await response.json();
+      if (
+        !response.ok ||
+        !result ||
+        typeof result !== 'object' ||
+        !('accountDeleted' in result) ||
+        result.accountDeleted !== true ||
+        !('success' in result) ||
+        result.success !== true
+      ) {
+        throw new Error('Deletion not confirmed');
+      }
+      try {
+        if (user) new LearningObservationOutbox(user.id, window.localStorage).clear();
+        setStoreAvatar(AVATAR_OPTIONS[0]);
+        setStoreNickname('');
+        setStoreBio('');
+      } catch {
+        toast.error(t('profile.deletedSessionWarning'));
+      }
+      try {
+        await signOut('local');
+      } catch {
+        // Auth deletion succeeded; a separate local-session failure must not
+        // invite another destructive request or pretend all sessions are revoked.
+        toast.error(t('profile.deletedSessionWarning'));
+      }
+      setShowDeleteDialog(false);
       toast.success(t('profile.accountDeleted'));
-      await signOut();
-      router.push('/app');
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Error';
-      toast.error(message);
+      router.replace('/auth');
+      router.refresh();
+    } catch {
+      setDeleteError(t('profile.deleteUnconfirmed'));
     } finally {
+      deletionPending.current = false;
       setDeleting(false);
     }
-  }, [signOut, router, t]);
+  }, [signOut, router, t, user, setStoreAvatar, setStoreNickname, setStoreBio]);
 
   if (!user) {
     // The rich profile section (culture/langue/préférences, S2-001) is gated
@@ -300,16 +334,32 @@ export default function ProfilePage(): React.ReactElement {
       </AlertDialog>
 
       {/* Delete account dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      <AlertDialog
+        open={showDeleteDialog}
+        onOpenChange={(open) => {
+          if (!deletionPending.current) {
+            setShowDeleteDialog(open);
+            setDeleteError('');
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t('profile.deleteAccount')}</AlertDialogTitle>
             <AlertDialogDescription>{t('profile.deleteConfirm')}</AlertDialogDescription>
+            {deleteError && (
+              <p role="alert" className="text-sm text-destructive">
+                {deleteError}
+              </p>
+            )}
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleting}>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDeleteAccount}
+              onClick={(event) => {
+                event.preventDefault();
+                void handleDeleteAccount();
+              }}
               disabled={deleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >

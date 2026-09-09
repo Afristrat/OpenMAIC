@@ -1,5 +1,11 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-036, suppression du compte depuis le profil
+
+Faux succès retiré : l’ancien bouton mettait deleted dans user_metadata sans supprimer le compte. Le dialogue appelle désormais DELETE /api/account/delete sans identifiant client, exige success=true et accountDeleted=true, reste ouvert en cas d’échec/accusé invalide et empêche une seconde requête pendant l’attente. Délai client 30 s, sans rejeu automatique. Après confirmation uniquement : purge de la file d’observations du compte, remise à zéro du profil local, signOut local contrôlé et redirection auth. Une erreur de nettoyage local est distincte d’un échec de suppression serveur. Textes FR/AR/EN précisent conservation des ressources partagées et nettoyage différé ; aucune promesse d’effacement intégral ou de révocation immédiate des JWT.
+
+90210 exit 0 : six tests API existants, TypeScript/lint global, trois Chromium. 18925 exit 0 : TypeScript/lint global puis quatre Chromium, avec vérification de conservation locale après échec, purge du seul compte après succès et refus d’un HTTP 200 sans accusé complet. APIs simulées et mode utilisateur E2E ; pas de vraie suppression Auth/session, migration ni déploiement. Ponytail : dialogue/hook/outbox réutilisés. Skill Supabase : scope local explicite et erreur SDK contrôlée. Restent Storage/imports, sessions réelles/JWT, export navigateur et autres critères S-036. Aucun passes=true.
+
 ## 9 septembre 2026 — S-036, réconciliation des échecs vidéo confirmés
 
 Le worker existant relit au démarrage puis chaque heure les 500 échecs conservés par la file vidéo. UUID métier validé depuis le payload réel, compatible avec les anciens identifiants BullMQ numériques ; état failed revérifié. Mise à jour conditionnelle des seules lignes generating vers error, sans appel fournisseur ni suppression de fichier. États non terminaux, jobs introuvables et identifiants invalides ne sont pas assimilés à des échecs. Une panne Redis n’empêche pas les purges indépendantes.
