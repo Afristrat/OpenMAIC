@@ -8,6 +8,8 @@ const courseSchema = z.object({
   source_manifest_id: z.string().uuid().nullable(),
   outline: z.record(z.string(), z.unknown()),
   status: z.enum(['draft', 'ready']),
+  source_kind: z.enum(['imported', 'generated', 'catalog_copy']),
+  import_id: z.string().uuid().nullable(),
 });
 
 export class CourseAccessError extends Error {
@@ -37,7 +39,7 @@ export async function loadOwnedCourseForGeneration(
   if (!membership.data) throw new CourseAccessError();
   const result = await db
     .from('courses')
-    .select('id, title, language, source_manifest_id, outline, status')
+    .select('id, title, language, source_manifest_id, outline, status, source_kind, import_id')
     .eq('id', courseId)
     .eq('org_id', orgId)
     .eq('owner_id', ownerId)

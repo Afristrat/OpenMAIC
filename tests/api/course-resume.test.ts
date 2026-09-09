@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
-const mocks = vi.hoisted(() => ({ auth: vi.fn(), load: vi.fn() }));
+const mocks = vi.hoisted(() => ({ auth: vi.fn(), load: vi.fn(), recover: vi.fn() }));
+vi.mock('@/lib/server/course-plan-recovery', () => ({ recoverImportedCoursePlan: mocks.recover }));
 vi.mock('@/lib/api/auth', () => ({ requireAuth: mocks.auth }));
 vi.mock('@/lib/server/course-generation-access', () => ({
   loadOwnedCourseForGeneration: mocks.load,
@@ -18,6 +19,7 @@ describe('course resume', () => {
     vi.clearAllMocks();
     mocks.auth.mockResolvedValue({ user: { id: 'verified' } });
     mocks.load.mockResolvedValue({ id: courseId, outline: { scenes: [] } });
+    mocks.recover.mockResolvedValue(null);
   });
   it('requires authentication', async () => {
     mocks.auth.mockResolvedValue({ response: NextResponse.json({}, { status: 401 }) });
@@ -36,5 +38,16 @@ describe('course resume', () => {
     const response = await request();
     expect(response.status).toBe(503);
     expect(await response.text()).not.toContain('secret detail');
+  });
+  it('labels a recovered plan and scopes recovery to the verified actor', async () => {
+    mocks.recover.mockResolvedValue({ courseTitle: 'Recovered' });
+    const response = await request();
+    expect(response.status).toBe(200);
+    expect((await response.json()).planOrigin).toBe('linked_canvas');
+    expect(mocks.recover).toHaveBeenCalledWith(
+      expect.objectContaining({ id: courseId }),
+      orgId,
+      'verified',
+    );
   });
 });

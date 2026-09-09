@@ -1,5 +1,13 @@
 # S-036 — Collecte consentie : serveur et stockage
 
+## Complément : récupération d’un plan depuis son canevas lié
+
+Ponytail : réutilisation de importCanvasToClassroomPlan, pas de générateur supplémentaire. Pour un brouillon importé sans propriété outline.plan : import validé et détenu par l’acteur, manifeste exact dans son tenant/propriétaire, source locale unique prête correspondant au nom du fichier. Pas d’appel Diwan/IA, pas de mutation GET. Syllabus/directive récupérés depuis le canevas lié ; titre et scènes enregistrés conservés. Résultat validé par le schéma de plan ; planOrigin=linked_canvas et notice de relecture FR/AR/EN. Pas de prétention de retrouver d’anciennes retouches du syllabus jamais enregistrées. Les valeurs par défaut sont celles du convertisseur d’import existant.
+
+Session ServeurIA 74080 exit 0 : dix-huit tests ciblés, TypeScript/lint global sans avertissement, cinq Chromium sans retry (notice FR/AR/EN/RTL, reprise après confirmation et import initial). API simulées au navigateur ; SQL séparé réel sous BEGIN/ROLLBACK confirmant accès au lien cours/import/manifeste/source après reprise, zéro utilisateur fixture/RPC absent ensuite. Pas de nouveau schéma, d’advisors complets, de build/gate global ou de déploiement. Documentation relue : [stockage JSONB Supabase](https://supabase.com/docs/guides/database/json).
+
+Plan récupéré conservé par le stockage existant après génération confirmée, non écrit à la lecture. Ambiguïté, canevas absent/invalide, plan déjà présent mais invalide ou brouillon non importé sans plan = 409 sans modification. Échec de lecture = 503, distinct d’une absence de plan. Suite : autres références d’auteur, jobs/Storage/sessions et critères S-036 non clos.
+
 ## Complément : plan persistant et génération après reprise
 
 Ponytail : réutilisation du JSONB outline et de l’éditeur de plan existant. ClassroomPlan complet conservé à l’import et après génération, scènes existantes maintenues ; pas de migration. Endpoint resume avec vérification de propriété/tenant/auteur actif et validation du plan. Interface : lien depuis le brouillon attribué, choix du tenant connu, lecture avant confirmation explicite, identifiants cours/manifeste et langue conservés. Catalogue : filtre tenant ET (orphelin OU propre brouillon), pagination inchangée et booléen owned sans exposition de l’identité du propriétaire. La reprise reste accessible après rechargement.

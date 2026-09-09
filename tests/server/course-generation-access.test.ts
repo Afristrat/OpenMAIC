@@ -32,6 +32,8 @@ describe('course generation access', () => {
           source_manifest_id: manifestId,
           outline: {},
           status: 'draft',
+          source_kind: 'generated',
+          import_id: null,
         },
       });
   });

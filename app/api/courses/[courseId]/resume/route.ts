@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/api/auth';
 import { approvedClassroomPlanSchema } from '@/lib/api/schemas';
+import { recoverImportedCoursePlan } from '@/lib/server/course-plan-recovery';
 import {
   CourseAccessError,
   loadOwnedCourseForGeneration,
@@ -24,8 +25,11 @@ export async function GET(
       ids.data.orgId,
       auth.user.id,
     );
-    const plan = approvedClassroomPlanSchema.safeParse(course.outline.plan);
-    if (!plan.success)
+    const savedPlan = approvedClassroomPlanSchema.safeParse(course.outline.plan);
+    const plan = savedPlan.success
+      ? savedPlan.data
+      : await recoverImportedCoursePlan(course, ids.data.orgId, auth.user.id);
+    if (!plan)
       return NextResponse.json(
         { error: 'Saved plan unavailable', code: 'PLAN_UNAVAILABLE' },
         { status: 409, headers },
@@ -36,7 +40,8 @@ export async function GET(
         orgId: ids.data.orgId,
         sourceManifestId: course.source_manifest_id,
         language: course.language,
-        plan: plan.data,
+        plan,
+        planOrigin: savedPlan.success ? 'saved' : 'linked_canvas',
       },
       { headers },
     );

@@ -4,6 +4,60 @@ import { createSettingsStorage } from '../fixtures/test-data/settings';
 const COURSE_ID = '00000000-0000-4000-8000-000000000031';
 const MANIFEST_ID = '00000000-0000-4000-8000-000000000032';
 
+for (const labels of [
+  {
+    locale: 'fr-FR',
+    resume: 'Reprendre le plan enregistré',
+    title: 'Intitulé de la formation',
+    notice: 'Plan récupéré depuis le canevas',
+  },
+  {
+    locale: 'ar-MA',
+    resume: 'استئناف الخطة المحفوظة',
+    title: 'عنوان التكوين',
+    notice: 'استُعيدت الخطة من القالب',
+  },
+  {
+    locale: 'en-US',
+    resume: 'Resume saved plan',
+    title: 'Course title',
+    notice: 'Plan recovered from this course',
+  },
+]) {
+  test(`signale un plan récupéré sans lancement implicite : ${labels.locale}`, async ({ page }) => {
+    const orgId = '00000000-0000-4000-8000-000000000002';
+    await page.addInitScript(
+      ({ settings, locale }) => {
+        localStorage.setItem('settings-storage', settings);
+        localStorage.setItem('locale', locale);
+      },
+      { settings: createSettingsStorage(), locale: labels.locale },
+    );
+    await page.route(`**/api/courses/${COURSE_ID}/resume?*`, (route) =>
+      route.fulfill({
+        json: {
+          courseId: COURSE_ID,
+          orgId,
+          sourceManifestId: MANIFEST_ID,
+          language: 'fr-FR',
+          plan,
+          planOrigin: 'linked_canvas',
+        },
+      }),
+    );
+    let generated = false;
+    page.on('request', (request) => {
+      if (request.url().includes('/api/generate-classroom')) generated = true;
+    });
+    await page.goto(`/app?resumeCourseId=${COURSE_ID}&resumeOrgId=${orgId}`);
+    await page.getByRole('button', { name: labels.resume, exact: true }).click();
+    await expect(page.getByRole('dialog').getByRole('status')).toContainText(labels.notice);
+    await expect(page.getByLabel(labels.title, { exact: true })).toHaveValue(plan.courseTitle);
+    if (labels.locale === 'ar-MA') await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    expect(generated).toBe(false);
+  });
+}
+
 const plan = {
   courseTitle: 'Décider quelles tâches automatiser',
   languageDirective: 'Deliver the entire course in French (fr-FR).',

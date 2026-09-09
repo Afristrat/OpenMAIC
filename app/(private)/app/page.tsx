@@ -229,6 +229,7 @@ function HomePage() {
     null,
   );
   const [resuming, setResuming] = useState(false);
+  const [resumePlanRecovered, setResumePlanRecovered] = useState(false);
   const resumeOrgRef = useRef(currentOrg?.id);
   resumeOrgRef.current = currentOrg?.id;
   useEffect(() => {
@@ -711,6 +712,7 @@ function HomePage() {
           sourceManifestId: z.string().uuid().nullable(),
           language: z.enum(['fr-FR', 'ar-MA', 'en-US']),
           plan: approvedClassroomPlanSchema,
+          planOrigin: z.enum(['saved', 'linked_canvas']).optional(),
         })
         .parse(await response.json());
       if (resumeOrgRef.current !== resumeTarget.orgId) return;
@@ -735,6 +737,7 @@ function HomePage() {
         interactionLevel,
       }));
       setDraftPlan(saved.plan);
+      setResumePlanRecovered(saved.planOrigin === 'linked_canvas');
     } catch (failure) {
       setError(
         failure instanceof Error &&
@@ -1085,6 +1088,11 @@ function HomePage() {
           className="fixed inset-0 z-[100] overflow-y-auto bg-background"
         >
           <div className="h-full w-full">
+            {resumePlanRecovered && (
+              <p role="status" className="border-b bg-muted p-4 text-sm">
+                {t('catalog.planRecovered')}
+              </p>
+            )}
             <OutlinesEditor
               courseTitle={draftPlan.courseTitle}
               syllabus={draftPlan.syllabus}
@@ -1100,6 +1108,7 @@ function HomePage() {
               onBack={() => {
                 setDraftPlan(null);
                 setPendingGenerationRequest(null);
+                setResumePlanRecovered(false);
               }}
               alwaysReview
               isLoading={isStartingGeneration}

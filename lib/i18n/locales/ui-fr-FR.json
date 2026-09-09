@@ -1,7 +1,8 @@
 {
   "catalog.resume": "Reprendre le plan enregistré",
   "catalog.resumeDescription": "Relisez le plan avant de confirmer la génération. Son ouverture ne consomme aucun crédit de génération.",
-  "catalog.resumePlanUnavailable": "Ce brouillon ancien ne contient pas de plan complet enregistré. Réimportez son canevas avant de générer.",
+  "catalog.resumePlanUnavailable": "Le plan ne peut pas être récupéré automatiquement à partir des données conservées. Aucune formation n’a été modifiée.",
+  "catalog.planRecovered": "Plan récupéré depuis le canevas lié à cette formation, sans IA. Le titre et les scènes enregistrés ont été conservés. Relisez le syllabus avant de confirmer la génération.",
   "catalog.resumeFailed": "Le plan n’a pas pu être chargé. Vérifiez votre accès à la formation.",
   "catalog.orphanedTitle": "Formations à reprendre",
   "catalog.orphanedDescription": "Retrouvez vos brouillons et les formations dont le compte du responsable a été supprimé. La reprise de responsabilité ne publie pas la formation et ne lance pas de génération.",

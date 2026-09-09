@@ -1,5 +1,13 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-036, récupération des canevas anciens
+
+GET resume récupère désormais un plan absent pour un brouillon importé : import conform appartenant au responsable courant, manifeste exact du cours dans le tenant/propriétaire, un seul source_id local et aucune référence externe, source prête dont le nom correspond au fichier d’import. Réemploi du convertisseur de canevas, puis conservation du titre et des scènes déjà enregistrés et validation du résultat. Aucun appel IA/Diwan ni écriture lors du GET. Un plan existant invalide n’est pas écrasé ; absence de données ou sélection ambiguë = 409, erreur de lecture = 503 opaque. planOrigin=linked_canvas affiche une notice de relecture FR/AR/EN. Le plan récupéré est persisté à la génération confirmée, pas à la seule consultation.
+
+Session 74080 exit 0 : dix-huit tests ciblés, TypeScript/lint global sans avertissement et cinq Chromium verts sans retry (notice FR/AR/EN/RTL, reprise confirmée et import existant). Navigateur avec API simulées, runner avec overlays. SQL réel enrichi sous ROLLBACK : import/source/manifeste restent reliés après départ et reprise, requête de récupération avec filtre tenant/propriétaire réalisable ; zéro utilisateur de fixture et RPC absent recontrôlés. Pas de migration ni déploiement de ce lot. Mnemo identify_active_project fetch failed.
+
+Limite explicite : pas de récupération automatique d’un brouillon généré sans canevas, d’un plan déjà présent mais invalide ni de sources ambiguës/incomplètes. Ces cas ne sont pas présentés comme récupérés. Suite S-036 : références agent_configs (publication/lecture privée à préserver), jobs, imports privés/Storage, sessions/UI de suppression et autres critères. Aucun passes=true.
+
 ## 9 septembre 2026 — S-036, plan enregistré et relance autorisée
 
 course-storage conserve désormais le ClassroomPlan complet dans outline.plan à l’import et après génération, avec les scènes existantes. Pas de nouvelle colonne ni migration. GET courses/[courseId]/resume : identité vérifiée, propriétaire du cours dans le tenant actif avec rôle auteur, plan validé, refus 409 si ancien plan absent/invalide. Lien catalogue vers /app, sélection du tenant connu, ouverture du vrai plan dans OutlinesEditor et confirmation avant génération ; courseId/sourceManifestId/langue conservés. Catalogue incluant les propres brouillons de l’administrateur pour garder la reprise accessible après rechargement. Les orphelins des autres états restent listés.
