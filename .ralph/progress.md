@@ -1,5 +1,13 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-036, références partagées détachables
+
+Validation complémentaire ServeurIA : TypeScript et lint global sans avertissement, session 56535 exit 0. Aucun code TypeScript modifié dans ce lot SQL.
+
+Migration CLI 20260909201309_account_shared_references : cinq FK déjà nullables passent à ON DELETE SET NULL (classroom_templates, curriculum_links, org_invitations, payments, shared_classrooms). Aucun changement de droits/RLS, aucune suppression de ressource. Preuve SQL réelle combinée à la collecte et au test d’atomicité, sous ROLLBACK : cinq lignes conservées intégralement hors attribution, autres acteur/formation préservés, RLS active. Fixtures corrigées : FK de table temporaire interdite vers table persistante, puis trois sièges nécessaires pour deux membres et une invitation. Dernière exécution verte ; zéro utilisateur de fixture et anciennes contraintes encore actives recontrôlés. Advisors --local non exécutables : aucune base CLI sur 127.0.0.1:54322 ; ne pas confondre avec la base Docker Qalem ni démarrer une nouvelle stack.
+
+Prochaine action : transmissions (deux identités NOT NULL, trigger d’appartenance) et widgets (auteurs NOT NULL, immutabilité des versions). Le retrait d’un auteur doit rester compatible avec l’intégrité des versions, pas un simple SET NULL aveugle. Restent également cascades des autres biens partagés, Storage, sessions, UI et reste S-036. Aucun déploiement ni clôture.
+
 ## 9 septembre 2026 — S-036, suppression sans purge partielle
 
 DELETE account/delete remplace la boucle destructive par un seul auth.admin.deleteUser lié à l’identité vérifiée, suppression dure et origine obligatoire. Aucun effacement de table préalable, aucune promesse d’effacement externe/intégral, erreur opaque et absence de retry après résultat réseau ambigu. Le script de recette transmet désormais Origin. Six tests API verts et TypeScript/lint global 58947 exit 0 ; contrôle complémentaire du script, TypeScript/lint global 94386 exit 0. Preuve PostgreSQL réelle scripts/validation/s036-account-delete.sql sous ROLLBACK : une FK restrictive conserve compte/profil/membre/mesures/propriété ; sans ce blocage, les cascades retirent les observations personnelles et préservent formation/scènes du tenant. Première fixture corrigée (requirements est jsonb) ; seconde exécution verte, zéro utilisateur persistant et schéma candidat absent recontrôlés.

@@ -1,5 +1,9 @@
 -- After the collection migration, inside BEGIN ... ROLLBACK only.
 INSERT INTO auth.users(id) VALUES ('00000000-0036-4000-8000-000000000091');
+CREATE TABLE qalem_telemetry_private.s036_delete_blocker (
+  user_id uuid REFERENCES public.profiles(id) ON DELETE RESTRICT
+);
+ALTER TABLE qalem_telemetry_private.s036_delete_blocker ENABLE ROW LEVEL SECURITY;
 DO $$
 DECLARE
   actor uuid := '00000000-0036-4000-8000-000000000091';
@@ -18,8 +22,7 @@ BEGIN
     VALUES(actor,org) RETURNING subject_hash INTO subject;
   INSERT INTO public.pedagogy_telemetry(user_hash,subject_hash,session_id)
     VALUES(subject,subject,gen_random_uuid());
-  INSERT INTO public.classroom_templates(name,sector,requirements,org_id,created_by)
-    VALUES('S-036 restrictive reference','test','{}'::jsonb,org,actor);
+  INSERT INTO qalem_telemetry_private.s036_delete_blocker(user_id) VALUES(actor);
   BEGIN
     DELETE FROM auth.users WHERE id=actor;
     RAISE EXCEPTION 'Restrictive reference did not protect the transaction';
@@ -34,7 +37,7 @@ BEGIN
   THEN RAISE EXCEPTION 'Failed deletion left partial data loss'; END IF;
 
   -- Fixture-only removal of the blocker; not a production cleanup strategy.
-  DELETE FROM public.classroom_templates WHERE org_id=org;
+  DELETE FROM qalem_telemetry_private.s036_delete_blocker WHERE user_id=actor;
   DELETE FROM auth.users WHERE id=actor;
   IF EXISTS(SELECT 1 FROM public.profiles WHERE id=actor)
     OR EXISTS(SELECT 1 FROM public.org_members WHERE user_id=actor)

@@ -1,5 +1,11 @@
 # S-036 — Collecte consentie : serveur et stockage
 
+## Complément : préservation des ressources partagées
+
+Migration créée par Supabase CLI : 20260909201309_account_shared_references.sql. Cinq références déjà nullables (classroom_templates.created_by, curriculum_links.created_by, org_invitations.created_by, payments.user_id, shared_classrooms.shared_by) deviennent ON DELETE SET NULL. Les contenus, montants et invitations du tenant sont conservés ; aucun nouveau privilège ni changement de politique RLS. Ce détachement ne prétend pas nettoyer les champs libres ou métadonnées pouvant contenir des informations personnelles.
+
+Preuve scripts/validation/s036-shared-references.sql sur PostgreSQL réel, avec la migration de collecte et le test d’atomicité : suppression Auth directe, comparaison JSON avant/après de chaque ressource hors référence, isolation de l’autre acteur, formations préservées, RLS active. Tout sous ROLLBACK. Deux erreurs de fixture corrigées (FK temporaire/persistante et capacité de sièges pour invitation) ; dernière exécution réussie. Vérification séparée : zéro utilisateur de recette, cinq FK de production inchangées (NO ACTION). Advisors CLI --local indisponibles : connexion refusée à 127.0.0.1:54322, pas un avis de sécurité favorable. Aucune migration appliquée durablement. Transmissions, widgets, Storage, autres cascades et sessions restent ouverts.
+
 ## Complément : frontière de suppression du compte
 
 Le candidat retire la purge multi-requêtes de account/delete : un seul appel Auth dur, identité vérifiée et origine contrôlée. Le script de recette transmet Origin. Succès limité à accountDeleted ; erreurs opaques, aucun retry automatique ni affirmation de rollback après une réponse réseau perdue.
