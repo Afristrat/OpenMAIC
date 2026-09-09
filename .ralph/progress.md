@@ -1,5 +1,11 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-036, réconciliation des échecs vidéo confirmés
+
+Le worker existant relit au démarrage puis chaque heure les 500 échecs conservés par la file vidéo. UUID métier validé depuis le payload réel, compatible avec les anciens identifiants BullMQ numériques ; état failed revérifié. Mise à jour conditionnelle des seules lignes generating vers error, sans appel fournisseur ni suppression de fichier. États non terminaux, jobs introuvables et identifiants invalides ne sont pas assimilés à des échecs. Une panne Redis n’empêche pas les purges indépendantes.
+
+8666 exit 0 : 17 tests ciblés, TypeScript et ESLint global sans avertissement, Prettier. Redis et PostgreSQL simulés pour ce lot ; runner avec overlays, pas de gate global ni déploiement. Ponytail : cycle existant, aucune migration/dépendance. Échecs évincés de Redis et fichiers ambigus toujours à réconcilier ; error ne libère pas les fichiers protégés par un job. Aucune clôture S-036.
+
 ## 9 septembre 2026 — S-036, nettoyage durable des vidéos détachées
 
 Migration CLI candidate 20260909214619 : RPC de lecture invoker réservé à service_role, noms stricts du worker dans exports (ancienne/nouvelle forme), ancienneté création/modification supérieure à une heure, exclusion de tout job présent par id ou chemin. Lot de 100 ; aucune suppression SQL Storage. Worker horaire existant : troisième tâche indépendante, dix lots maximum, validation des noms/réponses puis remove via API Storage. Rescan de métadonnées à chaque cycle, donc pas de file locale perdue au redémarrage ; les fichiers arrivés tard restent découvrables.

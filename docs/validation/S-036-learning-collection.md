@@ -1,5 +1,11 @@
 # S-036 — Collecte consentie : serveur et stockage
 
+## Complément : rapprochement des échecs vidéo
+
+Lecture des 500 échecs retenus par BullMQ au démarrage/chaque heure, recontrôle failed et UUID du payload métier (pas d’identifiant BullMQ deviné). Transition PostgreSQL conditionnelle generating→error seulement. Aucun fournisseur relancé, aucun fichier supprimé ; succès concurrents protégés par le statut. Redis indisponible : prochain cycle, autres purges maintenues.
+
+8666 exit 0 : 17 tests ciblés, TypeScript et ESLint global, Prettier. Scénarios simulés : ancien identifiant numérique, doublons, état changé, payload invalide, erreur Redis/DB, zéro ligne après concurrence. Pas de rapprochement Redis/PostgreSQL réel, navigateur/build/gate global ou déploiement. Échecs évincés de Redis et artefacts ambigus conservés ; aucune clôture. Ponytail : réemploi du worker existant.
+
 ## Complément : vidéos sans job, purge par Storage
 
 Candidate CLI 20260909214619 : lecture de métadonnées uniquement, RPC invoker service-only. Bucket exports, chemins UUID stricts propres au worker, création et dernière modification de plus d’une heure ; aucun job correspondant à l’id ou au chemin. Les jobs encore présents restent protecteurs quel que soit leur état. Lot de 100 ordonné par UUID, index public sur storage_path ; aucun changement de tables/politiques Storage. Schéma des résultats revérifié côté serveur, noms dupliqués et lots surdimensionnés refusés avant remove.

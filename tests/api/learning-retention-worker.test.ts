@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ rpc: vi.fn(), abortSignal: vi.fn(), error: vi.fn() }));
 const videoCleanup = vi.hoisted(() => vi.fn().mockResolvedValue(0));
+const reconcileVideos = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+vi.mock('@/lib/server/managed-video-reconciliation', () => ({
+  reconcileFailedManagedVideos: reconcileVideos,
+}));
 vi.mock('@/lib/server/managed-video-cleanup', () => ({ purgeOrphanedManagedVideos: videoCleanup }));
 vi.mock('@/lib/supabase/service', () => ({
   createServiceSupabaseClient: () => ({ rpc: mocks.rpc }),
@@ -45,11 +49,13 @@ describe('learning retention worker', () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(mocks.rpc).toHaveBeenCalledTimes(20);
     expect(videoCleanup).toHaveBeenCalledTimes(1);
+    expect(reconcileVideos).toHaveBeenCalledTimes(1);
     mocks.abortSignal.mockRejectedValue(new Error('database offline'));
     await vi.advanceTimersByTimeAsync(3600000);
     expect(mocks.rpc).toHaveBeenCalledTimes(22);
     expect(mocks.error).toHaveBeenCalledTimes(2);
     expect(videoCleanup).toHaveBeenCalledTimes(2);
+    expect(reconcileVideos).toHaveBeenCalledTimes(2);
     await stop();
     await vi.advanceTimersByTimeAsync(3600000);
     expect(mocks.rpc).toHaveBeenCalledTimes(22);
@@ -66,6 +72,18 @@ describe('learning retention worker', () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(mocks.rpc).toHaveBeenCalledTimes(2);
     expect(mocks.rpc).toHaveBeenLastCalledWith('purge_detached_personal_agents');
+    expect(mocks.error).toHaveBeenCalledTimes(1);
+    await stop();
+  });
+  it('continues retention when Redis reconciliation is unavailable', async () => {
+    vi.useFakeTimers();
+    reconcileVideos.mockRejectedValueOnce(new Error('Redis unavailable'));
+    mocks.rpc.mockReturnValue({ abortSignal: mocks.abortSignal });
+    mocks.abortSignal.mockResolvedValue({ data: 0, error: null });
+    const stop = startLearningRetentionWorker();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(mocks.rpc).toHaveBeenCalledTimes(2);
+    expect(videoCleanup).toHaveBeenCalledTimes(1);
     expect(mocks.error).toHaveBeenCalledTimes(1);
     await stop();
   });

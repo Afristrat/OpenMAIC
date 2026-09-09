@@ -1,6 +1,7 @@
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 import { purgeOrphanedManagedVideos } from '@/lib/server/managed-video-cleanup';
+import { reconcileFailedManagedVideos } from '@/lib/server/managed-video-reconciliation';
 
 const log = createLogger('LearningRetention');
 
@@ -31,6 +32,11 @@ export function startLearningRetentionWorker(): () => Promise<void> {
   const tick = () => {
     if (stopped || running) return;
     running = (async () => {
+      try {
+        await reconcileFailedManagedVideos();
+      } catch {
+        log.error('Video reconciliation failed; retry on the next hourly cycle');
+      }
       for (const [purge, batchSize] of [
         [purgeExpiredLearningObservations, 1000],
         [purgeDetachedPersonalAgents, 1000],
