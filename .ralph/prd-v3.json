@@ -2236,11 +2236,13 @@
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Le contrat a été demandé le 13 août ; aucun adaptateur documentaire Qalem retrouvé. L’état du service Diwan n’est pas audité ici.",
+      "gap": "Le contrat v1 Markdown/OpenAPI a été retrouvé et lu le 9 septembre dans le dépôt propriétaire Diwan ; refus anonyme réel HTTP 401. Le mandat « Go alors pour les 21US » autorise l’adaptateur côté Qalem, pas une mutation de Diwan. Implémentation en cours ; jeton interservice dédié et mapping tenant non retrouvés dans l’index du coffre consulté, recette authentifiée et validation complète encore requises.",
       "evidence": [
         "thread:019f6d49-52ed-7ee2-aca0-466c8b675d00/019ffc8f-65d2-77d0-90bf-f0f4315d4fd1",
         "app/api/parse-document/route.ts",
-        "lib/server/course-import-storage.ts"
+        "lib/server/course-import-storage.ts",
+        "lib/diwan/client.ts",
+        "app/api/documents/diwan/[organizationId]/route.ts"
       ],
       "acceptance": [
         "Obtenir le contrat versionné auprès du service propriétaire : ingestion, statut, recherche, provenance et effacement ; aucun endpoint inventé.",
@@ -2251,7 +2253,7 @@
       ],
       "closureEvidence": [],
       "historicalDependencies": [],
-      "executionAllowed": false,
+      "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 14
     },

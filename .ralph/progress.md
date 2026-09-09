@@ -1,5 +1,11 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S6-003, contrat retrouvé et adaptateur candidat
+
+Le mandat « Go alors pour les 21US » autorise le code côté Qalem ; le gate de S6-003 est levé pour ce périmètre seulement. Contrat Diwan Markdown/OpenAPI retrouvé et lu dans le dépôt propriétaire, refus anonyme réel HTTP 401 depuis ServeurIA. Adaptateur et route auteur multi-tenant ajoutés : ingestion multipart, suivi, sources, manifeste, recherche bornée à une liste blanche et révocation. Origine HTTPS fixe, redirections interdites, 15 s, réponse 2 Mio, import 50 Mio et un tampon d’import par processus. Aucun partage de code/base, aucune mutation de Diwan, aucun secret créé ou rotaté. Ponytail : réemploi du contrôle auteur et de Zod, aucune dépendance supplémentaire.
+
+Session ServeurIA 61337 exit 0 : 24/24 tests ciblés, TypeScript et lint global sans avertissement. Réseau/auth simulés dans les tests, pas une recette authentifiée. Mapping et jeton de service dédiés absents de l’index consulté ; configuration, recette réelle, UI de sélection/génération, analyse d’alignement et gate complet restent ouverts. Preuve : docs/validation/S6-003-diwan-adapter.md. S6-003 reste passes=false, comme les 20 autres US ouvertes ; aucun déploiement de ce candidat. Ne pas refaire de tests globaux pour affirmer une recette externe inexistante.
+
 ## 9 septembre 2026 — S-034 clôturée, Moodle/AGS et coffre vérifiés
 
 Le second « Go feu vert » d’Amine autorise exclusivement l’import des nouveaux secrets Moodle/LTI par le paramètre -Value de l’outil officiel, en mémoire. Session 93305 exit 0 : six entrées ajoutées (quatre mots de passe Moodle, PEM privé et public en base64), sauvegarde et revalidation loader ; aucune rotation ni clé existante remplacée. Processus frais via broker : six égalités exactes avec les sources serveur. Nouvelle lecture réelle du carnet Moodle (A=0, B=100) et SQL (trois livraisons sent, tentatives 1/1/2, quatre audits dont trois succès). Web/worker au SHA 8b995bd toujours sains, zéro OOM/redémarrage. Le runner conserve ce SHA sans diff applicatif et le résultat Playwright passed. S-034 devient completed/passes=true avec preuves datées ; les autres gates ne changent pas. Aucun nouveau build ni gate global pour cet import opérationnel.
