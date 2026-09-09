@@ -27,11 +27,13 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
   }
   if (!transmission) return apiError('INVALID_REQUEST', 404, 'Transmission introuvable');
 
-  const recipient = await createServiceSupabaseClient()
-    .from('profiles')
-    .select('nickname')
-    .eq('id', transmission.recipient_user_id)
-    .maybeSingle();
+  const recipient = transmission.recipient_user_id
+    ? await createServiceSupabaseClient()
+        .from('profiles')
+        .select('nickname')
+        .eq('id', transmission.recipient_user_id)
+        .maybeSingle()
+    : { data: null, error: null };
   if (recipient.error) {
     log.error('Transmission recipient lookup failed', recipient.error.message);
     return apiError('INTERNAL_ERROR', 500, 'Impossible de lire le destinataire');
@@ -40,7 +42,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
   return apiSuccess({
     transmission: {
       ...transmission,
-      recipientName: recipient.data?.nickname?.trim() || 'vous',
+      recipientName: recipient.data?.nickname?.trim() || null,
       isRecipient: transmission.recipient_user_id === user.id,
     },
   });

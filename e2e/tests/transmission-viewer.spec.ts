@@ -2,7 +2,10 @@ import { test, expect } from '../fixtures/base';
 
 const TRANSMISSION_ID = 'e2e-transmission-ready';
 
-async function mockDeliveredTransmission(page: import('@playwright/test').Page) {
+async function mockDeliveredTransmission(
+  page: import('@playwright/test').Page,
+  recipientName: string | null = 'Amina',
+) {
   await page.route(`**/api/transmissions/${TRANSMISSION_ID}`, (route) =>
     route.fulfill({
       status: 200,
@@ -13,7 +16,7 @@ async function mockDeliveredTransmission(page: import('@playwright/test').Page) 
           id: TRANSMISSION_ID,
           status: 'done',
           error: null,
-          recipientName: 'Amina',
+          recipientName,
         },
       }),
     }),
@@ -32,6 +35,22 @@ async function mockDeliveredTransmission(page: import('@playwright/test').Page) 
 }
 
 test.describe('Transmission privée', () => {
+  for (const [locale, label] of [
+    ['fr-FR', 'un destinataire dont le nom n’est plus disponible'],
+    ['en-US', 'a recipient whose name is no longer available'],
+    ['ar-MA', 'مستلم لم يعد اسمه متاحًا'],
+  ]) {
+    test(`destinataire supprimé : ${locale}`, async ({ page }) => {
+      await page.addInitScript((value) => localStorage.setItem('locale', value), locale);
+      await mockDeliveredTransmission(page, null);
+      await page.goto(`/transmissions/${TRANSMISSION_ID}`);
+      await expect(page.getByText(label, { exact: false })).toBeVisible();
+      await expect(page.locator('[aria-labelledby="transmission-title"]')).toHaveAttribute(
+        'dir',
+        locale === 'ar-MA' ? 'rtl' : 'ltr',
+      );
+    });
+  }
   test('présente le destinataire et lit le support en ligne sans lien de téléchargement', async ({
     page,
   }) => {

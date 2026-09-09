@@ -1,5 +1,11 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-036, acteurs des transmissions détachables
+
+Migration CLI 20260909202303 : sender/recipient nullables lors de la suppression du profil, exception étroite dans le trigger invoker d’appartenance. Création sans partie et retrait d’un acteur vivant refusés. RLS inchangée : la partie restante voit la transmission, un tiers et le compte supprimé ne la voient pas. Worker inspecté : filigrane fondé sur watermark_id, pas sur une identité supprimée. API détail ne recherche plus de profil nul ; nom indisponible traduit FR/AR/EN, types Row nullables et Insert toujours stricts. Double main détecté au navigateur et remplacé par une section nommée dans le composant.
+
+SQL réel sous rôle supabase_auth_admin et ROLLBACK : deux transmissions inversées, retrait des deux parties, visibilité des trois acteurs prouvée. Preuve combinée collecte + cinq références partagées + widgets + transmissions réussie. Correction de syntaxe CASE dans la fixture avant cette preuve. Zéro fixture et contraintes de production encore RESTRICT recontrôlés. Dix tests API verts ; première passe navigateur révélait le double main. Session 42167 exit 0 : TypeScript/lint global sans avertissement et quatre parcours Chromium verts (FR/AR/EN/RTL et lecture existante), sans retry, réseau simulé. Aucun déploiement ni clôture. Prochaine action : sept cascades owner_id au profil, notamment courses/organization_sources/formation_source_manifests/agent_configs ; distinguer biens du tenant et jobs privés avant de modifier les FK, puis Storage/sessions/UI et reste S-036.
+
 ## 9 septembre 2026 — S-036, auteurs de widgets effaçables
 
 Migration CLI 20260909201746_widget_author_erasure : quatre FK Auth passent à SET NULL ; auteur toujours obligatoire à la création via trigger invoker. Le trigger d’immutabilité accepte uniquement le retrait d’une attribution dont le compte Auth a disparu, à contenu strictement inchangé. Publication initiale conservée, identité de version désormais comparée également. Pas de nouveau SECURITY DEFINER ni privilège public.

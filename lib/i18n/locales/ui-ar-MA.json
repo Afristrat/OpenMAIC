@@ -2349,6 +2349,7 @@
   "videoCapsule.tone": "النبرة",
   "transmission.title": "المورد الخاص بك جاهز",
   "transmission.deliveredTo": "تم تسليم الجلسة إلى {{name}}",
+  "transmission.recipientUnavailable": "مستلم لم يعد اسمه متاحًا",
   "transmission.loading": "جارٍ تحميل الإرسال…",
   "transmission.queued": "المورد في قائمة انتظار التحضير.",
   "transmission.processing": "يجري تحضير المورد.",

@@ -7,7 +7,7 @@ type Transmission = {
   id: string;
   status: 'queued' | 'processing' | 'done' | 'failed';
   error: string | null;
-  recipientName: string;
+  recipientName: string | null;
 };
 
 export function TransmissionViewer({ id }: { id: string }) {
@@ -26,7 +26,7 @@ export function TransmissionViewer({ id }: { id: string }) {
           error?: string;
         };
         if (!response.ok || !payload.transmission) {
-          throw new Error(payload.message ?? payload.error ?? 'Transmission introuvable');
+          throw new Error(payload.message ?? payload.error ?? t('transmission.unavailable'));
         }
         if (active) setTransmission(payload.transmission);
       } catch (loadError) {
@@ -42,16 +42,21 @@ export function TransmissionViewer({ id }: { id: string }) {
 
   const isRtl = locale === 'ar-MA';
   return (
-    <main
+    <section
+      aria-labelledby="transmission-title"
       className="mx-auto flex min-h-screen max-w-5xl flex-col justify-center gap-6 px-6 py-12"
       dir={isRtl ? 'rtl' : 'ltr'}
     >
       <div className="space-y-2">
         <p className="text-sm font-semibold text-primary">Qalem</p>
-        <h1 className="text-3xl font-bold tracking-tight">{t('transmission.title')}</h1>
+        <h1 id="transmission-title" className="text-3xl font-bold tracking-tight">
+          {t('transmission.title')}
+        </h1>
         {transmission && (
           <p className="text-lg text-muted-foreground">
-            {t('transmission.deliveredTo', { name: transmission.recipientName })}
+            {t('transmission.deliveredTo', {
+              name: transmission.recipientName ?? t('transmission.recipientUnavailable'),
+            })}
           </p>
         )}
       </div>
@@ -75,6 +80,6 @@ export function TransmissionViewer({ id }: { id: string }) {
           {t('transmission.videoUnsupported')}
         </video>
       )}
-    </main>
+    </section>
   );
 }

@@ -1,5 +1,11 @@
 # S-036 — Collecte consentie : serveur et stockage
 
+## Complément : acteurs des transmissions
+
+Migration 20260909202303 : retrait des FK personnelles par SET NULL sous condition de profil réellement absent ; les nouvelles transmissions restent liées à deux membres du tenant. API détail sans recherche de profil nul, libellé neutre traduit FR/AR/EN et types distinguant lecture nullable/création obligatoire. Le lecteur utilise une section nommée, dans le main du layout existant. Worker inspecté : artefact filigrané par watermark_id, sans dépendance aux champs d’identité.
+
+SQL réel sous supabase_auth_admin et ROLLBACK : deux transmissions en sens opposés, acteur supprimé exclu par RLS, autre partie conservant ses deux accès, tiers sans accès, seconde suppression réussie ; création sans destinataire et effacement manuel d’un acteur vivant refusés. Preuves combinées avec les migrations de collecte, références partagées et widgets réussies. CASE de fixture corrigé avant la réussite. Vérification séparée : zéro fixture, deux FK de production encore RESTRICT. Dix tests API ciblés verts. Les premiers E2E ont relevé les deux main imbriqués ; correction validée : session 42167 exit 0, TypeScript/lint global sans avertissement et quatre parcours Chromium sans retry (FR/AR/EN/RTL et lecture existante), API simulées. Pas de purge des fichiers externes, de gate global, d’advisors complets ou de déploiement. Référence : [sécurité par ligne Supabase](https://supabase.com/docs/guides/database/postgres/row-level-security).
+
 ## Complément : auteurs des widgets
 
 Migration candidate CLI 20260909201746 : quatre attributions Auth détachables ; création sans auteur toujours refusée. Trigger invoker avec search_path vide, exécution publique révoquée. Une version ne peut changer que lors de sa première publication ou pour retirer une attribution dont le compte Auth est effectivement supprimé ; tous les autres champs doivent rester égaux. Les consommateurs published-widget-template.ts lisent composition et publication, pas l’identité de l’auteur.

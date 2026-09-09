@@ -2349,6 +2349,7 @@
   "videoCapsule.tone": "Ton",
   "transmission.title": "Votre support est prêt",
   "transmission.deliveredTo": "Session remise à {{name}}",
+  "transmission.recipientUnavailable": "un destinataire dont le nom n’est plus disponible",
   "transmission.loading": "Chargement de la transmission…",
   "transmission.queued": "La préparation du support est en file d’attente.",
   "transmission.processing": "Le support est en cours de préparation.",

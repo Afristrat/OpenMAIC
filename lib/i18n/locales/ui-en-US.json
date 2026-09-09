@@ -2349,6 +2349,7 @@
   "videoCapsule.tone": "Tone",
   "transmission.title": "Your resource is ready",
   "transmission.deliveredTo": "Session delivered to {{name}}",
+  "transmission.recipientUnavailable": "a recipient whose name is no longer available",
   "transmission.loading": "Loading transmission…",
   "transmission.queued": "The resource is queued for preparation.",
   "transmission.processing": "The resource is being prepared.",

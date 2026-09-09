@@ -668,8 +668,8 @@ export type TransmissionStatus = 'queued' | 'processing' | 'done' | 'failed';
 export interface TransmissionRow {
   id: string;
   stage_id: string;
-  sender_user_id: string;
-  recipient_user_id: string;
+  sender_user_id: string | null;
+  recipient_user_id: string | null;
   watermark_id: string;
   status: TransmissionStatus;
   source_artifact_path: string | null;
@@ -680,11 +680,11 @@ export interface TransmissionRow {
   updated_at: string;
 }
 
-export type TransmissionInsert = Pick<
-  TransmissionRow,
-  'stage_id' | 'sender_user_id' | 'recipient_user_id'
-> &
-  Partial<Pick<TransmissionRow, 'watermark_id' | 'status'>>;
+export type TransmissionInsert = {
+  stage_id: string;
+  sender_user_id: string;
+  recipient_user_id: string;
+} & Partial<Pick<TransmissionRow, 'watermark_id' | 'status'>>;
 
 export type TransmissionUpdate = Partial<
   Pick<
