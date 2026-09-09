@@ -1,5 +1,11 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 10 septembre 2026 — S-036, autorité des partages
+
+Lecture fraîche des policies : insertion réservée aux rôles du tenant destinataire mais sans autorisation source ; UPDATE permettait de changer les identifiants. Candidate CLI 20260909230843 : trigger privé invoker, acteur serveur, provenance stage/org/auteur immuable pour les clients, tenant destinataire actif et rôle de publication requis. Publication/élargissement : propriétaire source ou administrateur/manager source, organisation source active. Réduction de visibilité autorisée à l’administrateur destinataire sans droits source ; suppression existante inchangée. Écritures privilégiées et détachement FK conservés.
+
+Preuve scripts/validation/s036-share-authority.sql sous ROLLBACK : refus formation étrangère, auteur usurpé, réattributions et organisation inactive ; propriétaire et administrateur source autorisés ; réduction possible mais republication refusée au seul administrateur destinataire. Premier essai arrêté par le plafond de sièges des fixtures ; fixtures corrigées à dix sièges, preuve finale verte. Zéro utilisateur/organisation/formation/partage/schéma candidat après rollback. 96215 exit 0 : TypeScript 4 Gio et lint globaux. SQL uniquement, pas de nouveau navigateur ni build/gate global ou déploiement. SELECT non élargi : les cinq partages constatés en base ne constituent pas, par leur attribution historique, une preuve d’autorisation. Prochain : réconciliation et accès des destinataires, puis couverture historique. Ponytail/Supabase : contrôle natif au point commun d’écriture. S-036 non clôturée.
+
 ## 10 septembre 2026 — S-036, résultats LTI et rapports tenant
 
 Candidate CLI 20260909225810 : projection quiz_results au premier résultat LTI, acteur/tenant issus des bindings serveur, dans la transaction de correction et d’outbox LMS. Collision provoquée : les trois écritures sont annulées ; rejeu sans doublon. Mise à jour des lignes LTI refusée au navigateur ; sa permission DELETE existante n’est pas modifiée. Client conserve les cartes de révision mais n’insère plus un second résultat. Certificat LTI : tenant dérivé du lancement vérifié, jamais du corps client ; lancement invalide refusé sans repli.
