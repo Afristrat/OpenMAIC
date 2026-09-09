@@ -1,5 +1,13 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 septembre 2026 — S-036, worker vidéo géré
+
+Traitement extrait de workers.ts dans managed-video-job : claim PostgreSQL conditionnel queued→generating, aucun rejeu fournisseur automatique d’un job déjà commencé. Vérification acteur/tenant et présence/état du job avant fournisseur, après réponse et autour du dépôt. Nom d’objet unique, upsert=false, tampon décodé limité à 100 Mio. Finalisation conditionnelle avec accusé contrôlé ; si réponse perdue, relecture préserve un fichier déjà lié. Si issue inconnue, fichier retenu avec erreur explicite ; si job supprimé, retrait du seul objet tenté via API Storage. Refus d’accès après claim marqué error, pas laissé queued.
+
+8381 exit 0 : huit tests ciblés, Prettier, TypeScript et lint global sans avertissement (97307/55018 également verts avant derniers ajustements). Concurrence simulée : un seul appel ; suppression pendant fournisseur/dépôt ; refus/rejeu ; accusé perdu connu ou invérifiable. SQL service_role/Auth sous ROLLBACK : claim unique puis cascade du job vidéo, zéro fixture recontrôlé. Pas de migration, navigateur/gate global ou déploiement ; runner avec overlays. Suppression Storage uniquement simulée, aucun vrai fichier supprimé.
+
+Restent réconciliation durable des issues inconnues/arrêts brutaux, fichiers après succès puis suppression du compte, médias classroom/imports privés, Redis/sessions/UI et critères S-036. Pas de promesse d’absence de coût pour l’appel déjà parti ni de zéro OOM : la borne intervient après réception du résultat fournisseur. Aucun passes=true.
+
 ## 9 septembre 2026 — S-036, interruption des lots médias
 
 Garde obligatoire pour generateMediaForClassroom et generateTTSForClassroom, raccordée à la génération et aux deux routes de régénération vocale. Vérification avant chaque élément, avant chaque tentative de dépôt et après dépôt ; refus mémorisé pour le lot. Les branches image/vidéo attendent toutes deux leur terminaison (allSettled), sans tâche sœur continuant après le retour. Régénération d’une classroom : propriétaire/tenant et identité/autorisation d’édition relus avant les effets et la persistance. La régénération complète compare le rapport requested/generated : anciennes audioUrl ne valent plus réussite d’un nouveau TTS.

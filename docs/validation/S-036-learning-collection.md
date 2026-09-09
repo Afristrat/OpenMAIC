@@ -1,5 +1,13 @@
 # S-036 — Collecte consentie : serveur et stockage
 
+## Complément : worker vidéo géré
+
+Prise en charge native conditionnelle dans PostgreSQL, puis contrôles auteur/tenant et job actif avant/après fournisseur et dépôt. Un job déjà commencé n’est pas rejoué automatiquement ; job absent/terminé ignoré. Fichier unique sans écrasement, borne de décodage 100 Mio, formats embarqués mp4/webm seulement. Accusé de finalisation vérifié. En cas d’erreur après dépôt : fichier déjà lié conservé, issue inconnue signalée sans suppression, sinon retrait du seul objet tenté par l’API Storage. Ponytail : extraction du traitement existant pour le tester, sans service ni dépendance supplémentaire.
+
+8381 exit 0 : huit tests, Prettier, TypeScript et ESLint global. Cas simulés : deux runners/un seul fournisseur, rejeu refusé, suppression pendant fournisseur sans upload, suppression pendant upload avec nettoyage exact, accusé de finalisation perdu mais commit retrouvé, base indisponible/fichier retenu, auteur refusé/job error. SQL enrichi s036-generation-author.sql, BEGIN/ROLLBACK sous service_role/Auth : claim conditionnel unique, cascade vidéo après suppression ; zéro fixture ensuite. Pas de fichier réel supprimé. Runner avec overlays, pas de recette navigateur/gate global ni déploiement. Référence : [suppression d’objets par API Storage](https://supabase.com/docs/guides/storage/management/delete-objects).
+
+Réconciliation durable des issues ambiguës et crashs encore ouverte ; un fichier après succès peut devenir orphelin si le compte est supprimé ensuite. Borne mémoire appliquée au résultat déjà reçu, pas une garantie sur les buffers internes du fournisseur. Redis, imports privés/Storage et sessions/UI restent à traiter.
+
 ## Complément : lots médias et régénération vocale
 
 Garde explicite obligatoire sur les deux générateurs de lots, raccordée aux trois appelants métier. Refus mémorisé jusqu’à la fin du lot ; vérification entre éléments, avant dépôt/retry et après dépôt. Les deux branches image/vidéo sont attendues avec allSettled avant propagation d’un échec. Les routes TTS d’édition relisent ressource/propriétaire/tenant et identité autorisée via la garde existante. Régénération complète : rapport réel exigé intégral, anciennes pistes non comptées comme preuve de génération.

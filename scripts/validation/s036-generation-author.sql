@@ -10,6 +10,18 @@ BEGIN
  INSERT INTO public.org_members(user_id,org_id,role) VALUES(actor,tenant,'author');
  INSERT INTO public.classroom_generation_jobs(id,owner_id,org_id,status,payload)
  VALUES('s036-author-job',actor,tenant,'queued','{}');
+ INSERT INTO public.video_generation_jobs(id,owner_id,org_id,provider_id,request)
+ VALUES('00000000-0036-4000-8000-000000000181',actor,tenant,'test','{}');
+ SET LOCAL ROLE service_role;
+ UPDATE public.video_generation_jobs SET status='generating'
+ WHERE id='00000000-0036-4000-8000-000000000181'
+ AND owner_id=actor AND org_id=tenant AND status='queued';
+ IF NOT FOUND THEN RAISE EXCEPTION 'Video not claimed'; END IF;
+ UPDATE public.video_generation_jobs SET status='generating'
+ WHERE id='00000000-0036-4000-8000-000000000181'
+ AND owner_id=actor AND org_id=tenant AND status='queued';
+ IF FOUND THEN RAISE EXCEPTION 'Video claimed twice'; END IF;
+ RESET ROLE;
  IF NOT EXISTS(SELECT 1 FROM public.org_members m
  JOIN public.organizations o ON o.id=m.org_id
  WHERE m.user_id=actor AND m.org_id=tenant AND o.status='active'
@@ -26,6 +38,7 @@ BEGIN
  RESET ROLE;
  IF EXISTS(SELECT 1 FROM public.org_members WHERE user_id=actor)
  OR EXISTS(SELECT 1 FROM public.classroom_generation_jobs WHERE id='s036-author-job')
+ OR EXISTS(SELECT 1 FROM public.video_generation_jobs WHERE id='00000000-0036-4000-8000-000000000181')
  THEN RAISE EXCEPTION 'Deleted actor retains membership or durable job'; END IF;
  IF NOT EXISTS(SELECT 1 FROM public.organizations WHERE id=tenant)
  THEN RAISE EXCEPTION 'Tenant removed'; END IF;

@@ -27,13 +27,7 @@ import type { VideoCapsuleStatus, VideoCapsuleVariant } from '@/lib/supabase/typ
 import { buildLearningPackage } from '@/lib/export/scorm/build-scorm-package';
 import { isLearningPackageFormat, trackingAdapters } from '@/lib/export/scorm/tracking-adapters';
 import { buildClassroomVideo } from '@/lib/export/mp4/build-classroom-video';
-import { generateMeteredVideo } from '@/lib/server/metered-media-providers';
-import type { VideoGenerationOptions, VideoProviderId } from '@/lib/media/types';
-import {
-  isServerConfiguredProvider,
-  resolveVideoApiKey,
-  resolveVideoBaseUrl,
-} from '@/lib/server/provider-config';
+import { runManagedVideoJob } from '@/lib/server/managed-video-job';
 import { runClassroomGenerationJob } from '@/lib/server/classroom-job-runner';
 import { runClassroomPlanJob } from '@/lib/server/classroom-plan-job-runner';
 import { readClassroomPlanJob } from '@/lib/server/classroom-plan-job-store';
@@ -53,7 +47,6 @@ import {
 } from '@/lib/jobs/queue';
 import { applyVisualWatermark } from '@/lib/transmissions/visual-watermark';
 import { dispatchWebhook } from '@/lib/webhooks/dispatcher';
-import { activateUsageMeteringJob } from '@/lib/billing/usage-context';
 import { sendWebPushToUser } from '@/lib/server/web-push';
 import { readOrganizationLrsConfig } from '@/lib/server/org-lrs-config';
 import { sendStatement, type XAPIStatement } from '@/lib/telemetry/xapi';
@@ -415,81 +408,8 @@ export function startAllWorkers(): void {
     async (job: Job) =>
       heavyTasks.run(async () => {
         const { videoGenerationJobId } = job.data as { videoGenerationJobId: string };
-        const supabase = createServiceSupabaseClient();
-        const { data: generationJob, error: readError } = await supabase
-          .from('video_generation_jobs')
-          .select('id, owner_id, org_id, provider_id, model_id, request')
-          .eq('id', videoGenerationJobId)
-          .single();
-
-        if (readError || !generationJob) {
-          throw new Error(
-            `Video generation job ${videoGenerationJobId} not found: ${readError?.message ?? 'no row'}`,
-          );
-        }
-        if (!generationJob.org_id) {
-          throw new Error(`Video generation job ${videoGenerationJobId} has no tenant`);
-        }
-        activateUsageMeteringJob(
-          generationJob.owner_id,
-          generationJob.org_id,
-          `video-job-${videoGenerationJobId}`,
-        );
-
-        try {
-          await supabase
-            .from('video_generation_jobs')
-            .update({ status: 'generating' })
-            .eq('id', videoGenerationJobId);
-
-          const providerId = generationJob.provider_id as VideoProviderId;
-          if (!isServerConfiguredProvider('video', providerId)) {
-            throw new Error(`Video provider ${providerId} is not managed by the server`);
-          }
-
-          const result = await generateMeteredVideo(
-            {
-              providerId,
-              apiKey: resolveVideoApiKey(providerId),
-              baseUrl: resolveVideoBaseUrl(providerId),
-              model: generationJob.model_id ?? undefined,
-            },
-            generationJob.request as unknown as VideoGenerationOptions,
-          );
-
-          const match = result.url.match(/^data:(video\/[a-z0-9.+-]+);base64,(.+)$/i);
-          if (!match) throw new Error('Managed video provider returned no embedded video');
-          const [, contentType, encodedVideo] = match;
-          const extension = contentType === 'video/webm' ? 'webm' : 'mp4';
-          const video = Buffer.from(encodedVideo, 'base64');
-          const storagePath = `generated-video/${generationJob.owner_id}/${videoGenerationJobId}.${extension}`;
-          const { error: uploadError } = await supabase.storage
-            .from('exports')
-            .upload(storagePath, video, { contentType, upsert: true });
-          if (uploadError) throw new Error(`Video upload failed: ${uploadError.message}`);
-
-          await supabase
-            .from('video_generation_jobs')
-            .update({
-              status: 'done',
-              storage_path: storagePath,
-              result_metadata: {
-                width: result.width,
-                height: result.height,
-                duration: result.duration,
-                contentType,
-              },
-            })
-            .eq('id', videoGenerationJobId);
+        if (await runManagedVideoJob(videoGenerationJobId)) {
           incrementCounter('qalem_jobs_processed_total', { queue: 'video-generation' });
-        } catch (err) {
-          const message = err instanceof Error ? err.message : String(err);
-          await supabase
-            .from('video_generation_jobs')
-            .update({ status: 'error', error: message })
-            .eq('id', videoGenerationJobId);
-          incrementCounter('qalem_jobs_failed_total', { queue: 'video-generation' });
-          throw err;
         }
       }),
     workerOptions(),
