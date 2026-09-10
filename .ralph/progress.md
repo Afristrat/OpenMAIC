@@ -1,5 +1,9 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 10 septembre 2026 — S-047, persistance consentie transactionnelle
+
+INSERT hérité remplacé par RPC invoker réservée au service : acteur serveur, epoch/consentement verrouillés, tenant actif/membre, stage/scène/agents/partage vérifiés, pseudonyme révocable par tenant, contexte du cours persisté, rejeu immuable. Score quiz client refusé, score et engagement NULL ; ancienne heuristique d’engagement inutilisée supprimée. Candidate CLI 20260910033146, aucune application durable. 9502 exit 0 : huit tests, TypeScript/lint ; SQL BEGIN/ROLLBACK valide admission/rejets/partage/rejeu/retrait RLS. Première tentative interrompue car prérequis vides dans le runner, reprise avec sources versionnées ; relecture zéro fixtures/discussion/colonne. Advisor local indisponible. Pas d’API/appelant chat, de navigateur, d’export, de build global ou de déploiement. PROCHAIN : raccordement HTTP/chat consenti, quiz persisté, outbox/export/agrégats, puis gate intégré. S-047 ouverte. Ponytail/Supabase : réemploi client/pseudonyme/cascade.
+
 ## 10 septembre 2026 — S-047, schéma et buffer des tours
 
 Module pur discussion-observation : séquence agent/type/durée monotone en millisecondes/état, score reçu après fin (premier seul, zéro distinct de null), aucun texte retenu. Doublons, chevauchements, horloge reculant et capacité 256 explicites ; snapshots détachés. Classificateur partagé avec héritage, aucun « rôle = plaisanterie », question arabe reconnue, texte absent/inachevé inconnu. 68633 exit 0 : cinq tests, TypeScript/lint. Pas encore instancié par le chat, aucun réseau/DB/consentement effectif revendiqué. Prochain : raccordement sous epoch vérifié, événements StreamBuffer réels et persistance transactionnelle ; ne pas brancher l’INSERT direct hérité. Recettes navigateur/agrégats/retrait/export et S-048 restent ouvertes. Ponytail : module local borné, pas de dépendance.
