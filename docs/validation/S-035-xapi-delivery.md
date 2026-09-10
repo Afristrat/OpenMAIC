@@ -1,5 +1,11 @@
 # S-035 — Transport commun xAPI
 
+## 10 septembre 2026 — Prérequis de recette externe vérifié
+
+Lecture directe PostgreSQL, sans déchiffrement : organization_lrs_configs contient zéro configuration, dont zéro active ; xapi_outbox contient zéro ligne ; xapi_emission=false. La preuve historique S3-010 documente une terminaison HTTPS temporaire supprimée après recette ; elle ne prouve pas qu’un LRS est disponible aujourd’hui. L’index de secrets au chemin fourni C:/Users/amans/.Codex/secrets.index est absent lors de ce contrôle ; aucune conclusion sur le contenu des autres coffres.
+
+Il n’y a donc pas de destinataire concret permettant d’implémenter puis de prouver son API d’effacement. Ne pas substituer le voiding xAPI à une suppression physique : [cycle des statements ADL](https://github.com/adlnet/xAPI-Spec/blob/master/xAPI-Data.md#23-statement-lifecycle). La configuration d’un LRS réel et son contrat de suppression restent nécessaires avant activation. Aucun service installé, aucun consentement activé ni envoi effectué. S-035 reste ouverte ; poursuite des autres US codables du PRD, notamment les connecteurs documentaires S-019/S-020/S-021 dont les critères restent présents.
+
 ## 10 septembre 2026 — Choix xAPI distinct dans le profil
 
 21025 exit 0 : vingt tests ciblés après ajout des checks de stockage xAPI (écriture ciblée, refus par défaut, erreurs), TypeScript/lint verts.

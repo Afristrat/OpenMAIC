@@ -1,5 +1,9 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 10 septembre 2026 — S-035, destinataire externe absent
+
+Preuve système fraîche : zéro configuration LRS (zéro active), outbox vide, flag false. La recette S3-010 utilisait une terminaison temporaire supprimée, pas un service actuellement disponible. Index de secrets au chemin fourni absent, sans conclusion sur d’autres coffres. Pas d’installation ou activation arbitraire, pas d’effacement distant inventé ni de voiding présenté comme suppression physique. S-035 reste ouverte pour LRS réel/effacement/gate/publication. Objectif global actif : poursuivre les autres US codables, dont S-019/S-020/S-021 à cadrer selon leurs critères directs ou Diwan, sans double connecteur.
+
 ## 10 septembre 2026 — S-035, choix xAPI et harmonisation du cours
 
 Profil et API existants : choix xAPI distinct FR/AR/EN/RTL, refus par défaut, identité serveur/écriture ciblée, avertissement effacement distant. Candidate 20260910025207 exige accord xAPI à la projection/envoi cours, étend retrait local et renouvelle epoch au changement de choix. Analyses internes persistées conservées ; buffers d’ancien epoch invalidés, pas de backfill. 7299 : dix-huit tests/TypeScript/lint/quatre Chromium verts, API simulées. SQL ROLLBACK quiz/discussion/retrait/conservation analyses/ancien epoch/refus projection vert ; zéro compte/outbox/colonne, flag false. Non déployé, pas de LRS ni de gate intégré. Suite : recette LRS réelle et effacement distant. S-035 ouverte.
