@@ -22,16 +22,9 @@ servers:
   # not a direct MCP server. Do not configure a second NotebookLM connection here.
   # See docs/guides/notebooklm-via-diwan.md for prerequisites and current limits.
 
-  # ── Notion ──
-  # Source: https://github.com/makenotion/notion-mcp-server
-  # Tools: search_pages, get_page_content, query_database
-  # Setup: npx @notionhq/mcp-server --port 3002
-  # Requires: MCP_NOTION_API_KEY (Notion integration token)
-  - id: notion
-    name: Notion
-    url: http://localhost:3002/mcp
-    enabled: false
-    organizationIds: []
+  # Notion: the selected integration is through the Diwan document API,
+  # not a direct MCP server. Do not configure a second Notion connection here.
+  # See docs/guides/notion-via-diwan.md for prerequisites and current limits.
 
   # ── Google Drive ──
   # Source: https://github.com/anthropics/anthropic-quickstarts (gdrive MCP)
