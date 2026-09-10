@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense, type FormEvent } from 'react';
+import { useEffect, useState, Suspense, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { tryCreateClient } from '@/lib/supabase/client';
 import { useI18n } from '@/lib/hooks/use-i18n';
@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { resolveAuthReturnPath } from '@/lib/auth/return-path';
+import { isSupabaseInvitationCallback } from '@/lib/auth/invitation-callback';
 
 function AuthPageContent(): React.ReactElement {
   const { t, locale } = useI18n();
@@ -16,6 +17,13 @@ function AuthPageContent(): React.ReactElement {
   const searchParams = useSearchParams();
   const inviteToken = searchParams.get('invite');
   const returnPath = resolveAuthReturnPath(searchParams.get('next'));
+  const [authInviteState, setAuthInviteState] = useState<'none' | 'checking' | 'ready' | 'invalid'>(
+    () =>
+      typeof window !== 'undefined' &&
+      isSupabaseInvitationCallback(window.location.search, window.location.hash)
+        ? 'checking'
+        : 'none',
+  );
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -25,6 +33,25 @@ function AuthPageContent(): React.ReactElement {
   const isRTL = locale === 'ar-MA';
 
   const supabaseAvailable = tryCreateClient() !== null;
+
+  useEffect(() => {
+    if (authInviteState !== 'checking') return;
+
+    const supabase = tryCreateClient();
+    if (!supabase) {
+      setAuthInviteState('invalid');
+      return;
+    }
+
+    void supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session?.user.email) {
+        setAuthInviteState('invalid');
+        return;
+      }
+      setEmail(session.user.email);
+      setAuthInviteState('ready');
+    });
+  }, [authInviteState]);
 
   async function consumeInvitation(token: string): Promise<boolean> {
     const res = await fetch('/api/invitations/consume', {
@@ -43,6 +70,16 @@ function AuthPageContent(): React.ReactElement {
     try {
       const supabase = tryCreateClient();
       if (!supabase) return;
+
+      if (authInviteState === 'ready') {
+        const { error: authError } = await supabase.auth.updateUser({ password });
+        if (authError) {
+          setError(authError.message);
+          return;
+        }
+        router.push(returnPath);
+        return;
+      }
 
       if (activeTab === 'login') {
         const { error: authError } = await supabase.auth.signInWithPassword({
@@ -111,13 +148,46 @@ function AuthPageContent(): React.ReactElement {
           </div>
         ) : (
           <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-6">
-            <Tabs
-              value={activeTab}
-              onValueChange={(v) => {
-                setActiveTab(v as 'login' | 'signup');
-                setError('');
-              }}
-            >
+            {authInviteState === 'checking' ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
+              </div>
+            ) : authInviteState === 'ready' ? (
+              <form onSubmit={handleEmailAuth} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="invited-email">{t('auth.email')}</Label>
+                  <Input id="invited-email" type="email" value={email} disabled dir="ltr" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="invited-password">{t('auth.password')}</Label>
+                  <Input
+                    id="invited-password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    autoComplete="new-password"
+                    minLength={6}
+                    dir="ltr"
+                  />
+                </div>
+                {error && <p className="text-sm text-destructive">{error}</p>}
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? t('auth.signingUp') : t('auth.signupButton')}
+                </Button>
+              </form>
+            ) : authInviteState === 'invalid' ? (
+              <p className="text-center text-sm text-destructive">{t('auth.invitationUnavailable')}</p>
+            ) : (
+              <>
+                <Tabs
+                  value={activeTab}
+                  onValueChange={(v) => {
+                    setActiveTab(v as 'login' | 'signup');
+                    setError('');
+                  }}
+                >
               <TabsList className="w-full">
                 <TabsTrigger value="login" className="flex-1">
                   {t('auth.login')}
@@ -199,12 +269,14 @@ function AuthPageContent(): React.ReactElement {
                   </Button>
                 </form>
               </TabsContent>
-            </Tabs>
+                </Tabs>
 
-            {!inviteToken && (
-              <p className="text-center text-sm text-muted-foreground">
-                {t('auth.invitationRequired')}
-              </p>
+                {!inviteToken && (
+                  <p className="text-center text-sm text-muted-foreground">
+                    {t('auth.invitationRequired')}
+                  </p>
+                )}
+              </>
             )}
           </div>
         )}
