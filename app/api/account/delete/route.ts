@@ -16,10 +16,9 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
   try {
     // Auth deletion and its database cascades are one transaction. Never purge
     // application tables first: a restrictive reference must roll everything back.
-    const { error } = await createServiceSupabaseClient().auth.admin.deleteUser(
-      auth.user.id,
-      false,
-    );
+    const { error } = await createServiceSupabaseClient(
+      AbortSignal.any([request.signal, AbortSignal.timeout(15000)]),
+    ).auth.admin.deleteUser(auth.user.id, false);
     if (error) throw new Error('Account deletion not confirmed');
     // Acknowledge Auth deletion, not erasure of external files, retained business
     // records, or immediate invalidation of already-issued JWTs.

@@ -1,5 +1,13 @@
 # S-036 — Inventaire de l’export personnel
 
+## Complément — Auth réelle et propriété Storage, 10 septembre 2026
+
+Lecture SQL réelle : 1 644 objets classroom-media, 12 exports ; zéro owner et owner_id renseignés, aucun objet dans session-audio/transmissions. Aucune réattribution ni suppression de fichier nécessaire pour le blocage de propriété à cet instant ; revérifier avant publication, car la policy d’upload replay déployée n’est pas encore la candidate serveur.
+
+`scripts/validation/s036-auth-deletion.mjs` exécuté dans le worker Qalem avec ses variables injectées, sans impression de credentials : création administrative du seul compte synthétique `ee6270ff-9b47-406f-ad72-b6e01a43281f`, email example.invalid confirmé sans envoi ; connexion par mot de passe aléatoire, vérification Auth 200, hard-delete 200, ancien jeton sur /user 403, refresh 400, lecture administrative 404. Connexion SQL neuve : zéro users/sessions/refresh_tokens/profiles de ce UUID. Compte de test supprimé définitivement ; aucune donnée utilisateur réelle supprimée. Ne prouve ni la révocation cryptographique du JWT ni le refus universel des appels PostgREST/Storage ni les cascades d’un compte chargé ; ces vérifications restent distinctes.
+
+Route candidate DELETE : délai natif de 15 s combiné à l’annulation HTTP via le client service existant ; échec ambigu sans rejeu et sans faux accusé conservé. Pas de purge anticipée de tables ou fichiers. 12776 exit 0 : six tests API, TypeScript 4 Gio/lint globaux, quatre Chromium FR/AR/EN/RTL (API navigateur simulée). La preuve HTTP Auth ci-dessus est réelle et séparée. Runner avec overlays, pas de build/gate au SHA propre ni de déploiement. Mnemo fetch failed ; preuve versionnée, sans certification de persistance Mnemo.
+
 ## Complément — Cycle de vie des replays, 10 septembre 2026
 
 Candidate `20260910005801_replay_audio_lifecycle.sql` : lecture Storage liée à la session enregistrée encore existante, uploads serveur sans propriété individuelle nouvelle, références audio canoniques imposées en DB et interdites dans le JSON client. Suppression logique atomique de la session, accusé `audioCleanup=pending`, puis worker commun réessayable (100 objets, sans session ni référence, plus d’une heure). Les anciens fichiers possédés par les comptes ne sont pas réconciliés par cette seule modification ; aucune révocation instantanée d’URL déjà signée ou de flux engagé n’est certifiée.

@@ -40,6 +40,7 @@ describe('account deletion boundary', () => {
     expect(await response.json()).toEqual({ success: true, accountDeleted: true });
     expect(response.headers.get('cache-control')).toContain('no-store');
     expect(mocks.deleteUser).toHaveBeenCalledExactlyOnceWith('verified-user', false);
+    expect(mocks.service).toHaveBeenCalledWith(expect.any(AbortSignal));
   });
 
   it('does not certify deletion after a database restriction', async () => {
