@@ -11,7 +11,10 @@ vi.mock('@/lib/supabase/service', () => ({
     storage: { from: mocks.from },
   }),
 }));
-import { purgeOrphanedManagedVideos } from '@/lib/server/managed-video-cleanup';
+import {
+  purgeOrphanedManagedVideos,
+  purgeOrphanedCourseImports,
+} from '@/lib/server/managed-video-cleanup';
 const candidate = {
   object_id: '00000000-0036-4000-8000-000000000193',
   object_name:
@@ -52,4 +55,16 @@ it('does not call Storage for an empty or unavailable selection', async () => {
   mocks.abortSignal.mockResolvedValueOnce({ data: [candidate], error: {} });
   await expect(purgeOrphanedManagedVideos()).rejects.toThrow('selection');
   expect(mocks.remove).not.toHaveBeenCalled();
+});
+it('uses the import policy and fixed private bucket without mixing video paths', async () => {
+  const object_name =
+    '00000000-0036-4000-8000-000000000191/course-imports/00000000-0036-4000-8000-000000000193.pdf';
+  mocks.abortSignal.mockResolvedValue({ data: [{ ...candidate, object_name }] });
+  expect(await purgeOrphanedCourseImports()).toBe(1);
+  expect(mocks.rpc).toHaveBeenCalledWith('list_orphaned_course_import_files');
+  expect(mocks.from).toHaveBeenCalledWith('classroom-media');
+  expect(mocks.remove).toHaveBeenCalledWith([object_name]);
+  mocks.abortSignal.mockResolvedValue({ data: [candidate] });
+  await expect(purgeOrphanedCourseImports()).rejects.toThrow('selection');
+  expect(mocks.remove).toHaveBeenCalledTimes(1);
 });

@@ -1,6 +1,9 @@
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
-import { purgeOrphanedManagedVideos } from '@/lib/server/managed-video-cleanup';
+import {
+  purgeOrphanedManagedVideos,
+  purgeOrphanedCourseImports,
+} from '@/lib/server/managed-video-cleanup';
 import { reconcileFailedManagedVideos } from '@/lib/server/managed-video-reconciliation';
 
 const log = createLogger('LearningRetention');
@@ -41,6 +44,7 @@ export function startLearningRetentionWorker(): () => Promise<void> {
         [purgeExpiredLearningObservations, 1000],
         [purgeDetachedPersonalAgents, 1000],
         [purgeOrphanedManagedVideos, 100],
+        [purgeOrphanedCourseImports, 100],
       ] as const) {
         try {
           // ponytail: ten batches/hour/task/worker; increase cadence if monitored backlog grows.

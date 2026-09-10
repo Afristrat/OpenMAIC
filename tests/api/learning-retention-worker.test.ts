@@ -1,11 +1,15 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ rpc: vi.fn(), abortSignal: vi.fn(), error: vi.fn() }));
 const videoCleanup = vi.hoisted(() => vi.fn().mockResolvedValue(0));
+const importCleanup = vi.hoisted(() => vi.fn().mockResolvedValue(0));
 const reconcileVideos = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
 vi.mock('@/lib/server/managed-video-reconciliation', () => ({
   reconcileFailedManagedVideos: reconcileVideos,
 }));
-vi.mock('@/lib/server/managed-video-cleanup', () => ({ purgeOrphanedManagedVideos: videoCleanup }));
+vi.mock('@/lib/server/managed-video-cleanup', () => ({
+  purgeOrphanedManagedVideos: videoCleanup,
+  purgeOrphanedCourseImports: importCleanup,
+}));
 vi.mock('@/lib/supabase/service', () => ({
   createServiceSupabaseClient: () => ({ rpc: mocks.rpc }),
 }));
@@ -49,12 +53,14 @@ describe('learning retention worker', () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(mocks.rpc).toHaveBeenCalledTimes(20);
     expect(videoCleanup).toHaveBeenCalledTimes(1);
+    expect(importCleanup).toHaveBeenCalledTimes(1);
     expect(reconcileVideos).toHaveBeenCalledTimes(1);
     mocks.abortSignal.mockRejectedValue(new Error('database offline'));
     await vi.advanceTimersByTimeAsync(3600000);
     expect(mocks.rpc).toHaveBeenCalledTimes(22);
     expect(mocks.error).toHaveBeenCalledTimes(2);
     expect(videoCleanup).toHaveBeenCalledTimes(2);
+    expect(importCleanup).toHaveBeenCalledTimes(2);
     expect(reconcileVideos).toHaveBeenCalledTimes(2);
     await stop();
     await vi.advanceTimersByTimeAsync(3600000);

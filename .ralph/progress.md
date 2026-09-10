@@ -1,5 +1,13 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 10 septembre 2026 — S-036, rattrapage des fichiers d’import sans référence
+
+Candidate CLI 20260910003925 : registre privé RLS des suppressions Auth, hash SHA-256 du UUID (pseudonyme, pas anonymisation), alimenté dans la transaction Auth par trigger invoker ; recréation du UUID efface le marqueur. Service limité à SELECT, sans lecture auth.users ni écriture des marqueurs. Première preuve refusée sur auth.users ; modèle corrigé par événement causal, aucun privilège Auth élargi. Pas de backfill des suppressions anciennes supposées.
+
+Sélection service-only de 100 objets classroom-media au chemin canonique course-imports, compte marqué supprimé, aucune référence course_imports, création/mise à jour antérieures à une heure. Tous les imports persistés, notamment repris/tenant, conservés. Worker existant réutilisé, purge Storage partagée avec vidéos, délai natif de 15 s par lot ; dix lots par tâche/cycle, relecture à chaque cycle, échec indépendant et réessayable. Aucune suppression SQL de fichiers.
+
+61915 exit 0 : douze tests, TypeScript 4 Gio et lint globaux. SQL s036-import-cleanup sous ROLLBACK : compte actif/supprimé/restauré, référence reprise, récent, autre bucket/chemin refusés et plafond 100 sur 101+ objets ; aucun fichier réel, fixtures annulées. Advisors local indisponibles (54322). Non déployé, pas de build/gate global ni recette Auth/Storage HTTP réelle. Restent les imports persistés personnels sans cours (provenance tenant à expliciter avant purge), autres fichiers, historique sans marqueur, sessions/concurrence et recette intégrée. Ponytail/Supabase : worker, helper et index UNIQUE existants réutilisés ; registre causal privé, sans dépendance. S-036 non clôturée.
+
 ## 10 septembre 2026 — S-036, téléchargement des imports privés
 
 Export JSON : lien relatif protégé par compte pour chaque import. Candidate CLI 20260910002903 read_account_import_download : propriétaire courant, appartenance au tenant actif de chaque cours lié, service-only/invoker. Ancien préfixe utilisateur ne donne aucun droit ; chemin conservé après reprise, chemin canonique et identifiant contrôlés. Livraison directe Storage 303, téléchargement forcé et lien signé 60 s ; pas de fichier bufferisé dans le web. Lien déjà signé valide jusqu’à expiration, pas de révocation instantanée. Course_imports reste non modifiable par les clients.
