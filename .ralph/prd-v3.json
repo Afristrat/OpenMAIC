@@ -3613,7 +3613,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Watermark sonore AudioSeal MIT en job BullMQ (protocole de robustesse) » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "2-VIVRE",
       "priority": "P2",
-      "status": "blocked",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "file": ".ralph/prd-v2.json",
@@ -3622,15 +3622,18 @@
       },
       "sourceDependencies": ["S0-008", "S2-010"],
       "dependencies": [],
-      "gap": "Protocole composite déterministe présent ; sidecar, budget mémoire, conformité et robustesse P2-C non soldés.",
-      "evidence": ["lib/transmissions/audio-watermark-protocol.ts", ".ralph/prd-v2.json#S2-008"],
+      "gap": "Le sidecar AudioSeal MIT, le worker BullMQ et P2-C sont désormais codés et P2-C passe sous limites bornées. Restent le déploiement sur la cible GPU retenue, le raccordement runtime persistant et une recette authentifiée de transmission ; watermarking demeure désactivé.",
+      "evidence": ["lib/transmissions/audio-watermark-protocol.ts", "services/audioseal-sidecar/app.py", "services/audioseal-sidecar/p2c.py", "docs/validation/S2-008-audioseal-p2c.md", ".ralph/prd-v2.json#S2-008"],
       "acceptance": [
         "Worker invoque AudioSeal MIT dans un sidecar borné ; watermark_id opaque 128 bits reconstitué par protocole composite documenté",
         "Protocole P2-C automatisé : ID décodé après mp3 128k, ogg, extrait 30 s, normalisation",
         "Flag watermarking, jamais dans le chemin de lecture",
         "Aucune image distribuée ni décision de licence n'est implicitement déduite de l'isolation de processus : la décision de conformité documentée est un prérequis de livraison"
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-10 — Le SHA 5140085122cd87e7910a1fd7b3cbc8a6d6825726 ajoute un sidecar AudioSeal MIT authentifié, séquentiel, sans port public, borné à 3 Gio / 1,5 CPU / 128 PID, ainsi que le harnais P2-C. La compilation Torch à chaud est explicitement désactivée car elle demandait un compilateur C++ et augmentait le risque mémoire.",
+        "2026-09-10 — Dans un clone isolé ServeurIA, le modèle officiel audioseal_wm_16bits démarre et P2-C reconstitue exactement les 128 bits après MP3 128 kbit/s, OGG, loudnorm et un extrait décalé de 30 secondes. Rejeu sous limites : OOMKilled=false, RestartCount=0. Référence : docs/validation/S2-008-audioseal-p2c.md. Le flag reste désactivé et aucune recette de transmission déployée n’est revendiquée."
+      ],
       "historicalEvidence": {
         "completedAt": null,
         "note": "Décision de licence mise à jour le 2026-07-23 après choix explicite MIT : AudioSeal remplace audiowmark, qui était GPL-3.0. L'ADR-001 documente la base factuelle : AudioSeal est MIT, y compris ses poids, mais son message natif est limité à 16 bits. Il ne peut donc pas être présenté comme un encodeur 128 bits direct. Qalem conserve son watermark_id de 128 bits par un cycle composite de onze segments de deux secondes (index + tranche de données + contrôle), à valider par P2-C sur MP3 128 kbit/s, OGG, normalisation et extrait de 30 secondes non aligné. La brique déterministe est maintenant implémentée dans lib/transmissions/audio-watermark-protocol.ts : elle recompose les 128 bits sur onze messages 16 bits, accepte seulement les répétitions cohérentes et échoue fermement sur segment absent, contradictoire ou corrompu. La CI GitHub 30054875307 est entièrement verte (formatage, lint, TypeScript, tests unitaires, build, migrations et E2E). Aucun sidecar, poids ou image n'est distribué avant la preuve P2-C mesurée et une décision explicite de budget mémoire. La transmission est nécessairement rattachée à un destinataire : S2-010 crée d'abord la source de vérité et l'artefact non marqué ; S2-008 publie ensuite le dérivé audio marqué.",
