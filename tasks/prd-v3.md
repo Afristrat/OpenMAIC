@@ -135,7 +135,7 @@ Les descriptions et critères exécutables complets sont dans le JSON canonique.
 | 60   | S-036  | P3       | Décision requise | Pipeline de collecte de données pédagogiques                                          |
 | 61   | S-037  | P3       | Décision requise | Optimisation pipeline de génération par les données                                   |
 | 62   | S-047  | P3       | Décision requise | Collecte des patterns de discussion multi-agent                                       |
-| 63   | S-048  | P3       | Code en cours, autorisé le 9 septembre | Director data-driven — encart Chat, reçus liés aux quiz et API de comparaison codés ; interface du rapport et validation intégrée restent ouvertes |
+| 63   | S-048  | P3       | À valider, autorisé le 9 septembre | Director data-driven — encart Chat, reçus liés aux quiz et rapport de comparaison FR/AR/EN codés ; recette serveur intégrée et gate propre restent ouverts |
 | 64   | U-011  | P3       | Décision requise | Publier un agent sur la marketplace                                                   |
 | 65   | U-015  | P3       | Soldé           | Configuration MCP dans admin                                                          |
 | 66   | U-018  | P3       | Décision requise | Widget xAPI status                                                                    |

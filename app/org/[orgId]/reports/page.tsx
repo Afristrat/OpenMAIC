@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DirectorExperimentReport } from '@/components/org/director-experiment-report';
 import {
   Select,
   SelectContent,
@@ -86,6 +87,7 @@ export default function ReportsPage() {
   const [datePreset, setDatePreset] = useState<DatePreset>('30d');
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
+  const [directorStage, setDirectorStage] = useState<string | null>(null);
 
   const fetchReport = useCallback(
     async (preset: DatePreset, signal: AbortSignal) => {
@@ -347,6 +349,9 @@ export default function ReportsPage() {
                   <th className="px-4 py-3 text-right font-medium">
                     {t('reports.completionRate')}
                   </th>
+                  <th className="px-4 py-3 text-start font-medium print:hidden">
+                    {t('directorReport.title')}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -360,6 +365,16 @@ export default function ReportsPage() {
                     <td className="px-4 py-3 text-right">
                       {f.completion_rate === null ? '—' : `${f.completion_rate.toFixed(1)}%`}
                     </td>
+                    <td className="px-4 py-3 print:hidden">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="ms-3 print:hidden"
+                        onClick={() => setDirectorStage(f.stage_id)}
+                      >
+                        {t('directorReport.open')}
+                      </Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -367,6 +382,14 @@ export default function ReportsPage() {
           </div>
         )}
       </div>
+      {!loadFailed && directorStage && formations.some((f) => f.stage_id === directorStage) && (
+        <DirectorExperimentReport
+          key={`${orgId}:${directorStage}`}
+          orgId={orgId}
+          stageId={directorStage}
+          stageName={formations.find((f) => f.stage_id === directorStage)?.name ?? directorStage}
+        />
+      )}
     </div>
   );
 }

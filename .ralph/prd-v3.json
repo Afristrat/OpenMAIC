@@ -1006,8 +1006,8 @@
         "source": ".ralph/prd.json#S-047"
       },
       {
-        "id": "S-048",
-        "title": "Director data-driven",
+  "id": "S-048",
+  "title": "Director data-driven",
         "previousPasses": true,
         "disposition": "explicit_open_story",
         "trackedBy": ["S-048", "S0-011"],
@@ -4199,7 +4199,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Bannière consentement télémétrie RGPD » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P2",
-      "status": "planned",
+  "status": "to_validate",
       "passes": false,
       "source": {
         "file": ".ralph/prd-ui.json",
@@ -4652,7 +4652,7 @@
       },
       "sourceDependencies": ["S-047"],
       "dependencies": ["S0-011", "S-047"],
-  "gap": "10 septembre : nœud réel, encart Chat et registre serveur raccordés. Candidate 20260910051111 lie reçus/discussions/quiz natifs et agrège par apprenant/tenant/formation ; première soumission même en attente, scores manquants distincts de zéro. API de rapport admin/manager, comparaison descriptive à langue identique, aucun minimum. 67326 exit 0 : quatre tests/TypeScript/lint ; SQL BEGIN/ROLLBACK renforcé vert, deux cohortes, refus et retrait, candidate absente/zéro fixture relus. Restent restitution du rapport dans l’interface, recette intégrée navigateur, gate au SHA propre et activation contrôlée. Protocole/preuves dans docs/validation/S-048-data-driven-director.md. Non déployé, aucun gain mesuré.",
+  "gap": "10 septembre : nœud réel, encart Chat, registre, liaison quiz et comparaison par participant codés. Rapport organisationnel FR/AR/EN : action par formation, effectifs/manquants/compteurs/limites, actualisation, refus et erreur, aucun minimum. 79154 exit 0 : quatre tests API/rapport, TypeScript/lint et huit Chromium dont trois Director FR/AR/EN RTL, réponses simulées ; SQL candidat déjà vérifié sous ROLLBACK. Restent recette intégrée S-047/S-048 sur données serveur, gate complet au SHA propre et activation contrôlée. Détails docs/validation/S-048-data-driven-director.md. Non déployé, passes=false, aucun gain mesuré.",
       "evidence": ["lib/orchestration/data-driven-director.ts"],
       "acceptance": [
         "lib/orchestration/data-driven-director.ts",

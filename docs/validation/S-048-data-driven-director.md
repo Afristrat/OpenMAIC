@@ -130,7 +130,28 @@ ROLLBACK. Aucun changement durable. Advisors local toujours indisponible sur
 127.0.0.1:54322 ; aucune certification advisor. Documentation :
 [triggers Supabase](https://supabase.com/docs/guides/database/postgres/triggers).
 
-Restent restitution du rapport dans l’interface, recette intégrée navigateur,
-gate complet au SHA propre et activation. Ce lot n’ajoute pas encore de page
-de rapport visible. Runner antérieur avec superposition, aucune publication.
+## Rapport dans l’interface — 10 septembre
+
+Action par formation dans le rapport organisationnel existant, tableau FR/AR/EN
+avec nom de formation, groupes/langues, participants avec et sans score,
+compteurs de décisions/générations/tours et délai de recherche. Différence
+des moyennes en points de pourcentage, jamais qualifiée de gain. Aucun minimum.
+Périmètre toutes données conservées explicite, indépendant des dates du rapport
+général ; non inclus dans ses exports CSV/PDF. Droits admin/manager expliqués.
+
+Actualisation explicite, état de chargement, vide, refus ou erreur distincts.
+Changement de tenant/formation démonte le composant et annule sa requête ; pas
+de réponse ancienne réutilisée dans un nouveau périmètre. Schéma partagé et
+version/unité/résultat attendus validés avant affichage, différences recalculées
+à partir des agrégats validés. Pas de données persistées dans le navigateur.
+Ponytail : composants, fetch, AbortController et Intl existants, aucune dépendance.
+
+23245 exit 0 : TypeScript/lint et trois Chromium FR/AR/EN RTL, zéro/absence,
+plusieurs décisions, changement de formation et refus. APIs simulées.
+79154 exit 0 : quatre tests API/rapport, TypeScript/lint et huit Chromium sans
+retry : trois Director FR/AR/EN RTL avec actualisation/réponse invalide/vide/refus,
+cinq parcours de non-régression du rapport existant. Aucun processus actif.
+
+Restent recette intégrée S-047/S-048 sur données serveur, gate complet au SHA
+propre et activation contrôlée. Runner antérieur avec superposition, aucune publication.
 S-048 reste ouverte, passes=false. Aucun gain mesuré.
