@@ -16,7 +16,6 @@ import {
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useAuth } from '@/lib/hooks/use-auth';
-import { getCurrentModelConfig } from '@/lib/utils/model-config';
 import { createLogger } from '@/lib/logger';
 import { useClassroomOrganizationId } from '@/lib/contexts/classroom-organization';
 
@@ -24,7 +23,8 @@ const log = createLogger('QuizView');
 import type { QuizQuestion } from '@/lib/types/stage';
 import { useDraftCache } from '@/lib/hooks/use-draft-cache';
 import { SpeechButton } from '@/components/audio/speech-button';
-import { gradeChoiceQuestions, isShortAnswer, type QuestionResult } from '@/lib/quiz/grading';
+import type { QuestionResult } from '@/lib/quiz/grading';
+import { sendClassroomQuizAttempt } from '@/lib/quiz/classroom-client';
 import {
   clearSubmitted,
   draftKey,
@@ -50,63 +50,6 @@ interface QuizViewProps {
   readonly questions: QuizQuestion[];
   readonly sceneId: string;
   readonly stageId: string;
-}
-
-/** Call /api/quiz-grade for a single short-answer question. */
-async function gradeShortAnswerQuestion(
-  q: QuizQuestion,
-  userAnswer: string,
-  language: string,
-  orgId: string | null,
-): Promise<QuestionResult> {
-  const pts = q.points ?? 1;
-  try {
-    const modelConfig = getCurrentModelConfig();
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'x-model': modelConfig.modelString,
-      'x-api-key': modelConfig.apiKey,
-    };
-    if (modelConfig.baseUrl) headers['x-base-url'] = modelConfig.baseUrl;
-    if (modelConfig.providerType) headers['x-provider-type'] = modelConfig.providerType;
-
-    const res = await fetch('/api/quiz-grade', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        orgId,
-        question: q.question,
-        userAnswer,
-        points: pts,
-        commentPrompt: q.commentPrompt,
-        language,
-      }),
-    });
-
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = (await res.json()) as { score: number; comment: string };
-    const earned = Math.max(0, Math.min(pts, data.score));
-    return {
-      questionId: q.id,
-      correct: earned >= pts * 0.8,
-      status: earned >= pts * 0.8 ? 'correct' : 'incorrect',
-      earned,
-      aiComment: data.comment,
-    };
-  } catch (err) {
-    log.error('[quiz-view] AI grading failed for', q.id, err);
-    // Fallback: give half credit
-    return {
-      questionId: q.id,
-      correct: null,
-      status: 'incorrect',
-      earned: Math.round(pts * 0.5),
-      aiComment:
-        language === 'zh-CN'
-          ? '评分服务暂时不可用，已给予基础分。'
-          : 'Grading service unavailable. Base score given.',
-    };
-  }
 }
 
 // ─── Sub-components ─────────────────────────────────────────────────────────
@@ -671,6 +614,7 @@ export function QuizView(props: QuizViewProps) {
   const { t } = useI18n();
   const { user, isLoading } = useAuth();
   const userId = user?.id;
+  const quizOrganizationId = useClassroomOrganizationId();
   const [reload, setReload] = useState(0);
   const [context, setContext] = useState<{ owner: string; scope: string | null } | null>(null);
   const [failed, setFailed] = useState(false);
@@ -717,7 +661,7 @@ export function QuizView(props: QuizViewProps) {
   }
   return (
     <QuizSession
-      key={`${owner}:${props.sceneId}:${context.scope}`}
+      key={`${owner}:${props.sceneId}:${context.scope}:${quizOrganizationId}`}
       {...props}
       ltiScope={context.scope ? `${context.scope}:${props.sceneId}` : null}
     />
@@ -733,17 +677,21 @@ function QuizSession({
   const { t, locale } = useI18n();
   const { user } = useAuth();
   const orgId = useClassroomOrganizationId();
+  // Reuse the durable attempt format, with a distinct account/tenant/stage/scene namespace.
+  const attemptScope =
+    ltiScope ??
+    (user && orgId ? `classroom:${JSON.stringify([user.id, orgId, stageId, sceneId])}` : null);
 
   // Rehydrate submitted state from localStorage on first mount. Runs once.
   const [savedLti] = useState(() => {
     try {
-      return { attempt: ltiScope ? readLtiAttempt(ltiScope) : null, error: false };
+      return { attempt: attemptScope ? readLtiAttempt(attemptScope) : null, error: false };
     } catch {
       return { attempt: null, error: true };
     }
   });
   const [initialSubmitted] = useState<SubmittedState>(() =>
-    ltiScope ? null : readSubmittedState(sceneId),
+    attemptScope ? null : readSubmittedState(sceneId),
   );
 
   const [phase, setPhase] = useState<Phase>(() => {
@@ -767,7 +715,7 @@ function QuizSession({
     updateCache: updateAnswersCache,
     clearCache: clearAnswersCache,
   } = useDraftCache<Record<string, string | string[]>>({
-    key: draftKey(ltiScope ?? sceneId),
+    key: draftKey(attemptScope ?? sceneId),
   });
 
   // Restore cached draft answers (only when there is no submitted state).
@@ -811,9 +759,13 @@ function QuizSession({
   );
 
   const handleSubmit = useCallback(() => {
-    if (ltiScope) {
+    if (!attemptScope) {
+      setPhase('grading_error');
+      return;
+    }
+    if (attemptScope) {
       try {
-        saveLtiAttempt(ltiScope, answers, locale);
+        saveLtiAttempt(attemptScope, answers, locale);
       } catch {
         setPhase('grading_error');
         return;
@@ -822,9 +774,9 @@ function QuizSession({
     setPhase('grading');
     clearAnswersCache();
     if (!ltiScope) writeSubmittedAnswers(sceneId, answers);
-  }, [clearAnswersCache, answers, sceneId, ltiScope, locale]);
+  }, [clearAnswersCache, answers, sceneId, ltiScope, attemptScope, locale]);
 
-  // When entering grading phase, grade choice questions locally + call API for short-answer
+  // Both paths grade the persisted quiz on the server; no browser-authored answer key or score.
   useEffect(() => {
     if (phase !== 'grading') return;
     let cancelled = false;
@@ -841,26 +793,25 @@ function QuizSession({
         ordered = graded.results;
         setServerScore(graded.score);
       } else {
-        // Ordinary classroom grading is separate from the authoritative LMS path.
-        const choiceResults = gradeChoiceQuestions(questions, answers);
-
-        // 2. Grade short-answer questions via AI API (parallel)
-        const shortAnswerQs = questions.filter(isShortAnswer);
-        const aiResults = await Promise.all(
-          shortAnswerQs.map((q) =>
-            gradeShortAnswerQuestion(q, (answers[q.id] as string) ?? '', locale, quizOrgId),
-          ),
+        if (!attemptScope || !quizOrgId) throw new Error('Quiz organization required');
+        const attempt = saveLtiAttempt(attemptScope, answers, locale);
+        const graded = await sendClassroomQuizAttempt(
+          quizOrgId,
+          stageId,
+          sceneId,
+          attempt,
+          controller.signal,
         );
-
         if (cancelled) return;
-
-        // 3. Merge results in original question order
-        const allResultsMap = new Map<string, QuestionResult>();
-        for (const r of [...choiceResults, ...aiResults]) {
-          allResultsMap.set(r.questionId, r);
-        }
-        ordered = questions.map((q) => allResultsMap.get(q.id)!).filter(Boolean);
+        ordered = graded.results;
+        setServerScore(graded.score);
       }
+      if (
+        ordered.length !== questions.length ||
+        new Set(ordered.map((result) => result.questionId)).size !== questions.length ||
+        questions.some((question) => !ordered.some((result) => result.questionId === question.id))
+      )
+        throw new Error('Quiz content changed');
 
       setResults(ordered);
       // Local summaries are not an authority for the LMS, but retain existing classroom reporting.
@@ -904,12 +855,12 @@ function QuizSession({
       cancelled = true;
       controller.abort();
     };
-  }, [phase, questions, answers, locale, sceneId, stageId, user, ltiScope, orgId]);
+  }, [phase, questions, answers, locale, sceneId, stageId, user, ltiScope, attemptScope, orgId]);
 
   const handleRetry = useCallback(() => {
-    if (ltiScope) {
+    if (attemptScope) {
       try {
-        clearLtiAttempt(ltiScope);
+        clearLtiAttempt(attemptScope);
       } catch {
         setPhase('grading_error');
         return;
@@ -921,7 +872,7 @@ function QuizSession({
     setResults([]);
     clearAnswersCache();
     clearSubmitted(sceneId);
-  }, [clearAnswersCache, sceneId, ltiScope]);
+  }, [clearAnswersCache, sceneId, attemptScope]);
 
   const earnedScore = useMemo(() => results.reduce((sum, r) => sum + r.earned, 0), [results]);
 

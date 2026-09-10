@@ -129,3 +129,66 @@ prouverait ni une tentative postérieure ni une notation recalculée côté serv
 Il faut résoudre cette provenance avant d’associer les scores aux discussions.
 Restent aussi export personnel/agrégats, recette intégrée, gate au SHA propre et
 publication. Aucune migration durable ni activation effectuée dans ce complément.
+
+## 10 septembre — Tentatives de quiz ordinaires vérifiées par le serveur
+
+Le parcours ordinaire appelle désormais `/api/quiz-attempts`. L’acteur vient de
+`requireAuth`, et le client ne fournit que l’organisation, le stage, la scène,
+un UUID de requête et ses réponses. Aucun corrigé, score ou choix de langue
+client n’est accepté. Le contenu et la langue sont lus dans la base après
+vérification de la scène quiz, du tenant actif, de son membre et du partage
+vérifié si nécessaire ; une source suspendue est refusée aussi.
+
+La candidate CLI `20260910035605_classroom_quiz_attempts.sql` conserve une ligne
+par requête utilisateur, avec snapshot du contenu, réponses et dates serveur.
+Une requête identique reprend la même tentative ; une requête modifiée est
+refusée. Un bail de quatre minutes empêche la correction simultanée du même
+identifiant. Les corrections de réponses libres sont checkpointées ; le moteur
+LTI existant traite au plus trois appels bornés à une minute par tranche HTTP.
+Un rejeu terminé renvoie le résultat enregistré. Une erreur ne vaut jamais
+demi-score. Un appel modèle interrompu avant son checkpoint peut devoir être
+répété : ce dispositif ne garantit pas un appel fournisseur exactement unique.
+
+La table a RLS active, sans privilèges navigateur ; les RPC invoker sont
+réservées au service. L’identité, le contenu et les dates initiales ne sont pas
+modifiables par les privilèges UPDATE accordés au service. Le client réemploie
+le cache durable et le transport LTI sous un scope distinct compte/tenant/
+stage/scène. Le résultat affiché est le pourcentage serveur. Aucun historique
+client n’a été rétroactivement certifié. Les résumés `quiz_results`, cartes FSRS
+et événements hérités restent distincts du nouveau registre faisant autorité.
+
+ServeurIA 60984 exit 0 : 63 tests ciblés (quiz natif, route HTTP, transport,
+notation et soumission LTI, persistance et synchronisation), TypeScript et lint.
+La première passe navigateur 31837 : neuf parcours observations réussis et
+deux échecs du fichier quiz, dus à l’ancien dénominateur attendu et à une route
+de recette non simulée. Les attentes ont été alignées sur le reçu serveur,
+sans retirer le contrôle FSRS. Les trois nouvelles recettes natives FR/AR/EN
+prouvent un 503 sans note, le rechargement, le même UUID et les mêmes réponses.
+Les appels HTTP de navigateur sont simulés, pas une recette du modèle réel.
+
+66210 exit 0 : TypeScript/lint et dix parcours Chromium quiz passent sans retry,
+dont reprises natives et LTI en FR/AR/EN, arabe RTL, édition, cartes FSRS et
+attente de leur persistance. L’étape précédente 26479 avait neuf réussites et
+un sélecteur ambigu entre le score 100 et le volume audio 100 ; le contrôle est
+désormais restreint au bloc résultat, pas affaibli par un choix arbitraire.
+Le correcteur commun accepte aussi une consigne facultative vidée dans
+l’éditeur (`commentPrompt=''`), sans accepter une question vide ; ce cas porte
+le lot ciblé à 64 tests réussis (95255 exit 0, TypeScript et lint également verts).
+
+Le script `scripts/validation/s047-classroom-quiz-attempts.sql` a passé sur
+PostgreSQL réel sous BEGIN/ROLLBACK : bail/reprise, checkpoint immuable,
+tentatives distinctes, reçu stable, contenu modifié, tenant/source suspendus,
+partage non vérifié/révoqué, membre retiré, privilèges et cascade après
+suppression du compte. Les premières exécutions du script ont révélé un
+prérequis omis et deux contraintes de nettoyage de la fixture ; elles ont été
+annulées, puis corrigées. Relecture fraîche : table candidate absente, zéro
+utilisateur, organisation ou stage synthétique. Advisor CLI local indisponible
+(connexion 54322 refusée), donc aucun audit advisor déclaré vert.
+
+Ponytail a conduit au réemploi du correcteur, des checkpoints et du transport
+existants. La checklist Supabase a guidé les privilèges et les RPC invoker ;
+[documentation de diagnostic consultée](https://supabase.com/docs/guides/observability).
+Aucune activation, migration durable ou publication. Le runner est une ancienne
+base avec overlays, pas un SHA propre : ce n’est pas un gate intégré. Restent
+le rattachement vérifié de ces tentatives aux discussions, l’export personnel,
+les agrégats, la recette intégrée et la publication. S-047 reste ouverte.

@@ -91,6 +91,67 @@ test.describe('Quiz content surface (#657)', () => {
   });
 
   for (const [locale, labels] of Object.entries({ 'fr-FR': fr, 'ar-MA': ar, 'en-US': en })) {
+    test(`${locale} native quiz retains its attempt through failure and reload`, async ({
+      page,
+      browserConsoleContract,
+    }) => {
+      browserConsoleContract.expectHttpError('/api/quiz-attempts', 503);
+      await page.addInitScript((language) => localStorage.setItem('locale', language), locale);
+      const stage = 'e2e-native-retry';
+      await seedQuiz(page, stage, [
+        {
+          id: 'q',
+          type: 'single',
+          question: 'Choose',
+          points: 1,
+          options: [
+            { label: 'Alpha', value: 'A' },
+            { label: 'Beta', value: 'B' },
+          ],
+          answer: ['A'],
+        },
+      ]);
+      const submissions: Array<{ requestId: string; answers: Record<string, string> }> = [];
+      await page.route('**/api/quiz-attempts', async (route) => {
+        const payload = route.request().postDataJSON();
+        expect(payload.stageId).toBe(stage);
+        expect(payload.sceneId).toBe('scene-quiz');
+        expect(payload.orgId).toMatch(/^[a-f0-9-]{36}$/);
+        expect(payload).not.toHaveProperty('score');
+        expect(payload).not.toHaveProperty('questions');
+        submissions.push(payload);
+        await route.fulfill({
+          status: submissions.length === 1 ? 503 : 200,
+          contentType: 'application/json',
+          body: JSON.stringify(
+            submissions.length === 1
+              ? { error: 'Unavailable' }
+              : {
+                  success: true,
+                  status: 'completed',
+                  attemptId: '00000000-0047-4000-8000-000000000019',
+                  score: 0,
+                  results: [{ questionId: 'q', earned: 0, correct: false, status: 'incorrect' }],
+                },
+          ),
+        });
+      });
+      await new ClassroomPage(page).goto(stage);
+      await page.getByRole('button', { name: labels['quiz.startQuiz'] }).click();
+      await page.getByRole('button', { name: /Alpha/ }).click();
+      await page.getByRole('button', { name: labels['quiz.submitAnswers'] }).click();
+      await expect(
+        page.getByRole('button', { name: labels['quiz.resumeSubmission'] }),
+      ).toBeVisible();
+      await expect(page.getByText('/ 100', { exact: true })).toBeHidden();
+      await page.reload();
+      await expect(page.getByText('/ 100', { exact: true })).toBeVisible();
+      await expect(page.locator('html')).toHaveAttribute('dir', locale === 'ar-MA' ? 'rtl' : 'ltr');
+      expect(submissions.length).toBeGreaterThanOrEqual(2);
+      expect(new Set(submissions.map((item) => item.requestId)).size).toBe(1);
+      expect(submissions.every((item) => item.answers.q === 'A')).toBe(true);
+    });
+
     test(`${locale} LTI submission resumes after failure and reload without local grading`, async ({
       page,
       browserConsoleContract,
@@ -306,12 +367,24 @@ test.describe('Quiz content surface (#657)', () => {
       },
     ]);
 
-    // Deterministic AI grading for the short-answer question.
-    await page.route('**/api/quiz-grade', (route) =>
+    // Server receipt for the whole persisted quiz, not a client-supplied correction.
+    await page.route('**/api/quiz-attempts', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ score: 1, comment: 'Well phrased.' }),
+        body: JSON.stringify({
+          success: true,
+          status: 'completed',
+          attemptId: '00000000-0047-4000-8000-000000000007',
+          score: 100,
+          results: ['q-single', 'q-multi', 'q-short'].map((questionId) => ({
+            questionId,
+            correct: true,
+            status: 'correct',
+            earned: 1,
+            ...(questionId === 'q-short' ? { aiComment: 'Well phrased.' } : {}),
+          })),
+        }),
       }),
     );
 
@@ -381,8 +454,11 @@ test.describe('Quiz content surface (#657)', () => {
     await expect(submit).toBeEnabled();
     await submit.click();
 
-    // Grading completes → reviewing. All three correct → 3 / 3.
-    await expect(page.getByText('/ 3')).toBeVisible({ timeout: 10_000 });
+    // Server receipt exposes the weighted percentage, not a locally recomputed score.
+    await expect(page.getByText('/ 100', { exact: true })).toBeVisible({ timeout: 10_000 });
+    await expect(
+      page.getByText('/ 100', { exact: true }).locator('..').getByText('100', { exact: true }),
+    ).toBeVisible();
     await expect(page.getByText(/3\s+correct/i)).toBeVisible();
 
     await testInfo.attach('playback-results', {
@@ -424,11 +500,27 @@ test.describe('Quiz content surface (#657)', () => {
         points: 2,
       },
     ]);
-    await page.route('**/api/quiz-grade', (route) =>
+    await page.route('**/api/quiz-attempts', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ score: 1, comment: 'Partially correct.' }),
+        body: JSON.stringify({
+          success: true,
+          status: 'completed',
+          attemptId: '00000000-0047-4000-8000-000000000008',
+          score: 50,
+          results: [
+            { questionId: 'q-correct', correct: true, status: 'correct', earned: 1 },
+            { questionId: 'q-error', correct: false, status: 'incorrect', earned: 0 },
+            {
+              questionId: 'q-hesitant',
+              correct: false,
+              status: 'incorrect',
+              earned: 1,
+              aiComment: 'Partially correct.',
+            },
+          ],
+        }),
       }),
     );
 
@@ -440,7 +532,8 @@ test.describe('Quiz content surface (#657)', () => {
     await page.getByRole('button', { name: /Casablanca/ }).click();
     await page.getByPlaceholder('Type your answer here...').fill('Review it sometimes.');
     await page.getByRole('button', { name: 'Submit Answers' }).click();
-    await expect(page.getByText('/ 4')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText('/ 100', { exact: true })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText('50', { exact: true })).toBeVisible();
 
     await expect
       .poll(() =>
@@ -519,6 +612,19 @@ test.describe('Quiz content surface (#657)', () => {
 
   test('waits for the FSRS card write before exposing the quiz result', async ({ page }) => {
     const STAGE = 'e2e-quiz-fsrs-persistence-gate';
+    await page.route('**/api/quiz-attempts', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          status: 'completed',
+          attemptId: '00000000-0047-4000-8000-000000000018',
+          score: 0,
+          results: [{ questionId: 'q-fsrs-gate', correct: false, status: 'incorrect', earned: 0 }],
+        }),
+      }),
+    );
     await seedQuiz(page, STAGE, [
       {
         id: 'q-fsrs-gate',

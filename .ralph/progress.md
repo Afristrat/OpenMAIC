@@ -1,5 +1,11 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 10 septembre 2026 — S-047, autorité serveur des tentatives quiz natives
+
+66210 exit 0 : TypeScript/lint et dix Chromium quiz sans retry (natif/LTI FR/AR/EN, RTL, édition, cartes FSRS et attente de persistance). 31837 avait validé les neuf parcours observations ; ses deux anciennes attentes quiz ont été corrigées, puis un sélecteur score/volume ambigu a été ciblé sur le résultat. Consigne facultative vidée dans l’éditeur acceptée par le correcteur commun ; lot ciblé porté à 64 tests réussis (95255).
+
+API native et registre candidat 20260910035605 : acteur authentifié, contenu/langue persistés, droits tenant/partage verrouillés, UUID immuable, bail et checkpoints, reprise sans score inventé. Réemploi du correcteur et du transport LTI ; UI native raccordée, cache par compte/tenant/stage/scène, anciens résumés non requalifiés. 60984 exit 0 : 63 tests ciblés, TypeScript/lint. SQL réel BEGIN/ROLLBACK vert (admission, rejets, reprise, reçu stable, suppression) ; relecture table absente et zéro fixture. Advisor local indisponible. Pas de migration durable, activation, build global, gate au SHA propre ou publication. Restent association quiz/discussion, export personnel, agrégats et recette intégrée. S-047 ouverte ; aucune régression LTI revendiquée sans les preuves ciblées consignées dans docs/validation/S-047-discussion-observations.md.
+
 ## 10 septembre 2026 — S-047, raccordement réel chat et file de reprise
 
 40818 exit 0 : TypeScript/lint et deux Chromium renforcés, attente du signal end avant verdict d’absence d’envoi sans consentement. Aucun processus de validation restant actif.

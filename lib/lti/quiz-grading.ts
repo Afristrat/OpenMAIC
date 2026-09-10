@@ -16,7 +16,8 @@ const questionSchema = z
       .max(100)
       .optional(),
     answer: z.array(text).max(100).optional(),
-    commentPrompt: text.optional(),
+    // Clearing this optional editor field persists an empty string.
+    commentPrompt: z.string().trim().max(20000).optional(),
   })
   .superRefine((question, ctx) => {
     if (question.type === 'short_answer') return;

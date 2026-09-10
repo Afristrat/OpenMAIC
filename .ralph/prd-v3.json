@@ -4609,7 +4609,7 @@
       },
       "sourceDependencies": ["S-036"],
       "dependencies": ["S0-011", "U-021"],
-      "gap": "10 septembre 2026 : chat QA/discussion raccordé via callbacks StreamBuffer, signaux sans texte, buffers sous consentement/epoch, outbox/API existantes et RPC consentie. Écritures parent/enfants idempotentes mais non globalement transactionnelles ; échec partiel non acquitté. Score client refusé. 16724 exit 0 : 29 tests/TypeScript/lint et deux Chromium question/deux agents avec ou sans consentement ; 62710 exit 0 : 31 tests/TypeScript/lint et neuf Chromium de non-régression. SQL candidate 20260910033146 précédemment prouvée sous ROLLBACK, non déployée. Restent provenance des tentatives de quiz (upsert client actuel insuffisant), liaison des scores, export/agrégats tenant, gate intégré/publication. Aucune migration durable ni activation. S-047 ouverte.",
+      "gap": "10 septembre 2026 : chat consenti/outbox/RPC raccordés. Nouvelle API native quiz et candidate 20260910035605 : snapshot serveur, droits tenant/partage, tentative UUID immuable, bail/checkpoints et reprise, correcteur LTI réemployé. UI native utilise le reçu serveur ; anciens résumés client non requalifiés. 60984 exit 0 : 63 tests, TypeScript/lint. SQL réel BEGIN/ROLLBACK valide droits, reprise, reçus et cascade ; zéro fixture après annulation. Restent rattachement vérifié des tentatives aux discussions, export personnel, agrégats tenant, recette intégrée/gate au SHA propre/publication. Aucune migration durable ni activation ; S-047 ouverte. Preuves et limites : docs/validation/S-047-discussion-observations.md.",
       "evidence": [
         "lib/telemetry/discussion-collector.ts",
         "docs/validation/S-047-discussion-observations.md"

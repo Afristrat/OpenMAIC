@@ -76,18 +76,29 @@ export async function sendLtiQuizAttempt(
   attempt: LtiQuizAttempt,
   signal: AbortSignal,
 ) {
+  return resultSchema.parse(
+    await sendQuizSubmission('/api/lti/quiz', { stageId, sceneId, ...attempt }, signal),
+  );
+}
+
+/** Shared resumable HTTP protocol; each caller validates its own final acknowledgement. */
+export async function sendQuizSubmission(
+  endpoint: '/api/lti/quiz' | '/api/quiz-attempts',
+  body: Record<string, unknown>,
+  signal: AbortSignal,
+): Promise<unknown> {
   for (let poll = 0; poll < 220; poll++) {
     signal.throwIfAborted();
-    const response = await fetch('/api/lti/quiz', {
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'same-origin',
-      body: JSON.stringify({ stageId, sceneId, ...attempt }),
+      body: JSON.stringify(body),
       signal: AbortSignal.any([signal, AbortSignal.timeout(305000)]),
     });
-    if (!response.ok) throw new Error('LTI quiz submission unavailable');
+    if (!response.ok) throw new Error('Quiz submission unavailable');
     const data: unknown = await response.json();
-    if (response.status !== 202) return resultSchema.parse(data);
+    if (response.status !== 202) return data;
     z.object({ success: z.literal(true), status: z.literal('grading') }).parse(data);
     await new Promise<void>((resolve, reject) => {
       const abort = () => {
@@ -102,5 +113,5 @@ export async function sendLtiQuizAttempt(
       if (signal.aborted) abort();
     });
   }
-  throw new Error('LTI quiz correction still pending');
+  throw new Error('Quiz correction still pending');
 }

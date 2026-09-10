@@ -30,6 +30,29 @@ for (const scenario of [
     const quizWrites: Record<string, unknown>[] = [];
     if (withQuiz) {
       await mockApi.mockQuizPersistence();
+      await page.route('**/api/quiz-attempts', (route) => {
+        const submitted = route.request().postDataJSON();
+        expect(submitted).toMatchObject({
+          stageId,
+          sceneId: 'observed-quiz',
+          orgId: '00000000-0000-4000-8000-000000000088',
+          answers: { 'weighted-question': 'a', 'second-question': 'a' },
+        });
+        expect(submitted).not.toHaveProperty('score');
+        expect(submitted).not.toHaveProperty('questions');
+        return route.fulfill({
+          json: {
+            success: true,
+            status: 'completed',
+            attemptId: '00000000-0047-4000-8000-000000000088',
+            score: 25,
+            results: [
+              { questionId: 'weighted-question', earned: 0, correct: false, status: 'incorrect' },
+              { questionId: 'second-question', earned: 1, correct: true, status: 'correct' },
+            ],
+          },
+        });
+      });
       await page.route('**/rest/v1/quiz_results*', async (route) => {
         quizWrites.push(route.request().postDataJSON());
         await route.fallback();

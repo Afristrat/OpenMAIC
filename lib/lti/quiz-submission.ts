@@ -4,6 +4,7 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
 import { LtiAccessDenied, resolveLtiContext } from './context';
 import { gradeLtiQuiz, LtiGradingYield } from './quiz-grading';
+import { quizGradeSchema as gradeSchema } from '@/lib/quiz/grading';
 
 export const ltiSubmissionSchema = z
   .object({
@@ -19,21 +20,6 @@ export const ltiSubmissionSchema = z
       .refine((answers) => Object.keys(answers).length <= 100),
   })
   .strict();
-const gradeSchema = z.object({
-  score: z.number().finite().min(0).max(100),
-  results: z
-    .array(
-      z.object({
-        questionId: z.string(),
-        correct: z.boolean().nullable(),
-        status: z.enum(['correct', 'incorrect']),
-        earned: z.number().finite().nonnegative(),
-        aiComment: z.string().optional(),
-      }),
-    )
-    .min(1)
-    .max(100),
-});
 const claimSchema = z.discriminatedUnion('status', [
   z.object({ status: z.literal('busy') }),
   z.object({ status: z.literal('completed'), result: gradeSchema, outboxId: z.uuid() }),

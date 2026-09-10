@@ -1,4 +1,21 @@
 import type { QuizQuestion } from '@/lib/types/stage';
+import { z } from 'zod';
+
+export const quizGradeSchema = z.object({
+  score: z.number().finite().min(0).max(100),
+  results: z
+    .array(
+      z.object({
+        questionId: z.string(),
+        correct: z.boolean().nullable(),
+        status: z.enum(['correct', 'incorrect']),
+        earned: z.number().finite().nonnegative(),
+        aiComment: z.string().optional(),
+      }),
+    )
+    .min(1)
+    .max(100),
+});
 
 export interface QuestionResult {
   questionId: string;

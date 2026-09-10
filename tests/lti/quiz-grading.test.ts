@@ -35,6 +35,14 @@ describe('server-authoritative LTI quiz grading', () => {
     expect((await gradeLtiQuiz(content, {}, 'ar-MA')).score).toBe(0);
     expect(mocks.call).not.toHaveBeenCalled();
   });
+  it('accepts a cleared optional editor instruction without relaxing question validation', async () => {
+    mocks.call.mockResolvedValue({ text: '{"score":3,"comment":"Correct."}' });
+    const quiz = { type: 'quiz', questions: [{ ...short, commentPrompt: '' }] };
+    expect((await gradeLtiQuiz(quiz, { text: 'Explanation' }, 'fr-FR')).score).toBe(100);
+    await expect(
+      gradeLtiQuiz({ ...quiz, questions: [{ ...short, question: '' }] }, {}, 'fr-FR'),
+    ).rejects.toThrow();
+  });
   it.each([
     'not JSON',
     '{"score":"2","comment":"x"}',
