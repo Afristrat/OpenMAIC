@@ -4285,7 +4285,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Connecter NotebookLM via MCP » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "planned",
+      "status": "blocked",
       "passes": false,
       "source": {
         "file": ".ralph/prd.json",
@@ -4294,7 +4294,7 @@
       },
       "sourceDependencies": ["S-018"],
       "dependencies": ["S0-011", "S-018"],
-      "gap": "10 septembre 2026 : choix via Diwan confirmé dans la décision du 9 septembre, sans connecteur direct. Exemple MCP NotebookLM retiré et guide livré. Résolution documentaire générique déjà raccordée au plan et à la génération ; contrat Diwan v1 relu sans opérations de connexion/authentification NotebookLM. Restent contrat fournisseur et correspondance des sources, jeton dédié par tenant, recette réelle avec refus hors droits/retrait, gate intégré et publication. Refus anonyme Diwan 401 recontrôlé ; index Claude ne contient pas le mapping dédié sous le nom attendu. Aucune intégration NotebookLM déclarée livrée.",
+      "gap": "10 septembre 2026 : choix via Diwan confirmé dans la décision du 9 septembre, sans connecteur direct. Exemple MCP NotebookLM retiré et guide livré. Le consommateur Qalem est déjà raccordé au plan et à la génération : sélection épinglée, version et empreinte contrôlées, récupération de passages bornée et échec fermé. Le contrat Diwan v1 relu ne définit toutefois aucune connexion/authentification NotebookLM, recherche de notebook ni résolution d’identifiant natif. Restent donc un contrat fournisseur, la correspondance notebook/source → corpus/source/version, un jeton dédié par tenant, une recette réelle avec refus hors droits/retrait, le gate intégré et la publication. Refus anonyme Diwan 401 recontrôlé ; aucun mapping dédié QALEM_DIWAN_TENANT_TOKENS n’est disponible à Qalem. Aucune intégration NotebookLM déclarée livrée.",
       "evidence": [
         "docs/guides/notebooklm-via-diwan.md",
         "docs/decisions/2026-09-09-unblock-prd.md",
