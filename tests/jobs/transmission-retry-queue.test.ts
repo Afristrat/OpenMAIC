@@ -22,6 +22,7 @@ describe('transmission retry queues', () => {
 
   it.each([
     ['transmission', 'transmission-tx_1'],
+    ['transmission audio watermark', 'transmission-audio-watermark-tx_1'],
     ['transmission visual watermark', 'transmission-visual-watermark-tx_1'],
   ])('replaces a failed %s job with the same deterministic id', async (kind, jobId) => {
     mocks.getState.mockResolvedValue('failed');
@@ -29,6 +30,8 @@ describe('transmission retry queues', () => {
 
     const queue = await import('@/lib/jobs/queue');
     if (kind === 'transmission') await queue.enqueueTransmission({ transmissionId: 'tx_1' });
+    else if (kind === 'transmission audio watermark')
+      await queue.enqueueTransmissionAudioWatermark({ transmissionId: 'tx_1' });
     else await queue.enqueueTransmissionVisualWatermark({ transmissionId: 'tx_1' });
 
     expect(mocks.getJob).toHaveBeenCalledWith(jobId);

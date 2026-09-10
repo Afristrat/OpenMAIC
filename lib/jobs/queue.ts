@@ -72,6 +72,7 @@ export type JobType =
   | 'review-notification'
   | 'xapi-delivery'
   | 'transmission'
+  | 'transmission-audio-watermark'
   | 'transmission-visual-watermark';
 
 export interface ClassroomGenerationJobData {
@@ -125,6 +126,7 @@ export interface JobQueues {
   videoGeneration: Queue;
   exportJob: Queue;
   transmission: Queue;
+  transmissionAudioWatermark: Queue;
   transmissionVisualWatermark: Queue;
   webhookDelivery: Queue;
   anchorDelivery: Queue;
@@ -146,6 +148,7 @@ export function getJobQueues(): JobQueues {
     videoGeneration: new Queue('video-generation', { connection }),
     exportJob: new Queue('export-job', { connection }),
     transmission: new Queue('transmission', { connection }),
+    transmissionAudioWatermark: new Queue('transmission-audio-watermark', { connection }),
     transmissionVisualWatermark: new Queue('transmission-visual-watermark', { connection }),
     webhookDelivery: new Queue('webhook-delivery', { connection }),
     anchorDelivery: new Queue('anchor-delivery', { connection }),
@@ -212,6 +215,19 @@ export async function enqueueTransmissionVisualWatermark(data: {
   const jobId = `transmission-visual-watermark-${data.transmissionId}`;
   await removeFinishedJob(queue, jobId);
   const job = await queue.add('burn-visual-watermark', data, {
+    ...durableJobOptions,
+    jobId,
+  });
+  return job.id!;
+}
+
+export async function enqueueTransmissionAudioWatermark(data: {
+  transmissionId: string;
+}): Promise<string> {
+  const queue = getJobQueues().transmissionAudioWatermark;
+  const jobId = `transmission-audio-watermark-${data.transmissionId}`;
+  await removeFinishedJob(queue, jobId);
+  const job = await queue.add('embed-audioseal-watermark', data, {
     ...durableJobOptions,
     jobId,
   });

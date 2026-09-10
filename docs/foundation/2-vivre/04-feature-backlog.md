@@ -14,7 +14,7 @@
 | S2-006 | Bibliothèque de replays | Liste « mes sessions », reprise à l'horodatage, suppression par l'utilisateur (droit effacement) ; e2e |
 | S2-007 | Andragogie dans le live | Les interventions des agents consomment les overrides du moteur (interface chantier 4) ; test : un override actif change observablement le comportement d'une personnalité |
 | S2-010 | Fondation de transmission de support | Table `transmissions`, RLS émetteur + destinataire, artefact source asynchrone consultable en ligne uniquement ; l'original reste intact pour les traitements dérivés |
-| S2-008 | Watermark sonore : audiowmark en job BullMQ | Après S2-010 et une décision de conformité GPL explicite : artefact audio marqué (128 bits) → ré-encodé mp3 128k → `watermark_id` décodé avec succès (test automatisé) ; flag `watermarking` |
+| S2-008 | Watermark sonore : AudioSeal MIT en job BullMQ | Après S2-010 : artefact audio privé marqué par onze segments composant 128 bits → ré-encodé MP3 128 kbit/s → `watermark_id` décodé avec succès (test automatisé) ; flag `watermarking` |
 | S2-009 | Watermark visuel | Après S2-010 : identifiant visuel indélébile (videowmark ou incrustation périodique avec ADR) sur le support transmis ; décodable sur capture d'écran du flux (test manuel documenté) |
 | S2-011 | **[CHECKPOINT AMINE]** Référentiels culture → prénoms | Fichiers de données proposés (cultures couvertes, prénoms mixtes par culture) ; validation explicite d'Amine AVANT le flag `rich_profile` en préprod |
 

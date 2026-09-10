@@ -60,6 +60,19 @@ describe('visual transmission watermark', () => {
     expect(args.at(-1)).toBe('/tmp/output.mp4');
   });
 
+  it('replaces the source track when the isolated audio derivative is supplied', () => {
+    const args = buildVisualWatermarkFfmpegArgs({
+      sourcePath: '/tmp/source.mp4',
+      overlayPath: '/tmp/watermark.png',
+      audioPath: '/tmp/watermarked.mp3',
+      outputPath: '/tmp/output.mp4',
+    });
+
+    expect(args).toContain('/tmp/watermarked.mp3');
+    expect(args).toContain('2:a:0');
+    expect(args).not.toContain('0:a?');
+  });
+
   it('renders a real private MP4 derivative with its readable watermark and audio', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'qalem-visual-watermark-proof-'));
     temporaryDirectories.push(directory);

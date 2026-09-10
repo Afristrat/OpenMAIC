@@ -34,19 +34,22 @@ export function buildVisualWatermarkSvg(watermarkId: string): string {
 export function buildVisualWatermarkFfmpegArgs(params: {
   sourcePath: string;
   overlayPath: string;
+  audioPath?: string;
   outputPath: string;
 }): string[] {
+  const audioInput = params.audioPath ? ['-i', params.audioPath] : [];
+  const audioMap = params.audioPath ? ['-map', '2:a:0'] : ['-map', '0:a?'];
   return [
     '-i',
     params.sourcePath,
     '-i',
     params.overlayPath,
+    ...audioInput,
     '-filter_complex',
     '[0:v][1:v]overlay=x=W-w-32:y=H-h-32:format=auto[v]',
     '-map',
     '[v]',
-    '-map',
-    '0:a?',
+    ...audioMap,
     '-c:v',
     'libx264',
     '-crf',
@@ -75,11 +78,16 @@ async function runFfmpeg(args: string[]): Promise<void> {
  * Burns the opaque 128-bit delivery identifier into every video frame.
  * This is deliberately a derivative: callers must preserve the source artifact.
  */
-export async function applyVisualWatermark(source: Buffer, watermarkId: string): Promise<Buffer> {
+export async function applyVisualWatermark(
+  source: Buffer,
+  watermarkId: string,
+  watermarkedAudio?: Buffer,
+): Promise<Buffer> {
   assertWatermarkId(watermarkId);
   const directory = await mkdtemp(join(tmpdir(), 'qalem-visual-watermark-'));
   const sourcePath = join(directory, 'source.mp4');
   const overlayPath = join(directory, 'watermark.png');
+  const audioPath = join(directory, 'watermarked.mp3');
   const outputPath = join(directory, 'watermarked.mp4');
 
   try {
@@ -87,7 +95,15 @@ export async function applyVisualWatermark(source: Buffer, watermarkId: string):
     await sharp(Buffer.from(buildVisualWatermarkSvg(watermarkId)))
       .png()
       .toFile(overlayPath);
-    await runFfmpeg(buildVisualWatermarkFfmpegArgs({ sourcePath, overlayPath, outputPath }));
+    if (watermarkedAudio) await writeFile(audioPath, watermarkedAudio);
+    await runFfmpeg(
+      buildVisualWatermarkFfmpegArgs({
+        sourcePath,
+        overlayPath,
+        ...(watermarkedAudio ? { audioPath } : {}),
+        outputPath,
+      }),
+    );
     return await readFile(outputPath);
   } finally {
     await rm(directory, { recursive: true, force: true });

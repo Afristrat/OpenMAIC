@@ -25,13 +25,14 @@ describe('BullMQ queue lifecycle', () => {
     const second = getJobQueues();
 
     expect(second).toBe(first);
-    expect(mocks.Queue).toHaveBeenCalledTimes(10);
+    expect(mocks.Queue).toHaveBeenCalledTimes(11);
     expect(mocks.Queue.mock.calls.map(([name]) => name)).toEqual([
       'classroom-generation',
       'video-capsule',
       'video-generation',
       'export-job',
       'transmission',
+      'transmission-audio-watermark',
       'transmission-visual-watermark',
       'webhook-delivery',
       'anchor-delivery',

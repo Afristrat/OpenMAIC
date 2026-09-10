@@ -24,14 +24,14 @@
 - **Coût accepté** : persister les pistes reste retenu pour la fidélité. Une compression ou un quota ne sera introduit que si les mesures de sessions longues le justifient.
 - **Alternatives rejetées** : re-synthèse au replay (infidèle + fragile) ; pas d'audio au replay (ce ne serait plus un webinaire).
 
-## ADR-204 — Watermarking : traitement asynchrone par transmission, conformité à décider (EN ATTENTE)
+## ADR-204 — AudioSeal MIT : watermark asynchrone par transmission (ACTÉE)
 
-- **Faits établis** : audiowmark est sous GPL-3.0, encode un message opaque de 128 bits, se décode à l'aveugle et son protocole documenté vise notamment la résistance aux ré-encodages MP3/OGG. AudioSeal est publié sous licence MIT, mais son message optionnel est limité à 16 bits : il ne satisfait donc pas tel quel le protocole Qalem à 128 bits.
-- **Architecture retenue sous réserve** : après S2-010, un job borné et idempotent traite une copie de l'artefact source par transmission ; aucun marquage ne s'exécute dans le chemin de lecture. L'identifiant est généré côté serveur et son lien avec le destinataire reste exclusivement dans `transmissions`. Le binaire audiowmark, s'il est retenu, vit dans un sidecar local dédié avec clé de watermark injectée par coffre.
-- **Point non tranché** : invoquer un binaire GPL dans un processus séparé est une séparation technique ; ce n'est pas, à elle seule, une conclusion sur les obligations de licence. Avant toute distribution d'image, déploiement on-premise ou promesse commerciale incluant ce composant, une décision de conformité doit couvrir le modèle de distribution, les obligations applicables et le plan d'inventaire des licences.
-- **Options soumises à décision** : (A) audiowmark, après validation de conformité, pour conserver le protocole opaque à 128 bits ; (B) AudioSeal MIT, uniquement après modification explicite de l'exigence produit ou conception hybride démontrant une traçabilité équivalente ; (C) ne pas exposer le watermark tant que le prérequis de conformité n'est pas levé.
-- **Sources** : [audiowmark — licence et protocole](https://github.com/swesterfeld/audiowmark) ; [documentation audiowmark](https://uplex.de/audiowmark/README.html) ; [AudioSeal — licence et capacité de message](https://github.com/facebookresearch/audioseal).
-- **Alternatives rejetées à ce stade** : service cloud (souveraineté du traçage) ; watermark maison (non éprouvé) ; marquage synchrone (latence dans le chemin utilisateur).
+- **Décision** : Qalem retient AudioSeal sous licence MIT, exécuté dans un sidecar local isolé. Aucun artefact ne quitte l’infrastructure Qalem et aucun marquage ne se produit dans le chemin de lecture.
+- **Justification** : le dépôt officiel place le code et les poids AudioSeal sous MIT. Le canal de message natif est limité à 16 bits ; Qalem encode donc son `watermark_id` opaque de 128 bits dans onze segments de deux secondes, avec contrôle d’intégrité, et échoue fermement si la recomposition est incomplète ou contradictoire.
+- **Architecture** : le worker BullMQ télécharge la copie source privée, appelle le sidecar borné puis conserve l’audio dérivé privé. Le worker visuel remplace la piste sonore de la vidéo dérivée ; la source originale reste inchangée. Le flag global `watermarking` reste désactivé tant que le protocole P2-C n’est pas prouvé.
+- **Précondition de livraison** : le sidecar, sa limite mémoire, les onze segments et la résistance MP3 128 kbit/s, OGG, normalisation et extrait de trente secondes doivent être mesurés avant toute activation. Cette décision de licence ne vaut pas validation de robustesse.
+- **Sources** : [licence AudioSeal](https://github.com/facebookresearch/audioseal/blob/main/LICENSE) ; [README AudioSeal : message 16 bits et poids MIT](https://github.com/facebookresearch/audioseal).
+- **Alternatives rejetées** : audiowmark GPL-3.0 (périmètre de distribution à gouverner), service cloud (souveraineté du traçage), watermark maison (non éprouvé), marquage synchrone (latence utilisateur).
 
 ## ADR-205 — Multi-apprenants humains : HORS v1, chantier dédié (ACTÉE)
 

@@ -43,10 +43,12 @@ import {
   configureReviewNotificationScheduler,
   configureXapiDeliveryScheduler,
   enqueueReviewNotificationDelivery,
+  enqueueTransmissionAudioWatermark,
   enqueueTransmissionVisualWatermark,
   enqueueXapiDelivery,
 } from '@/lib/jobs/queue';
 import { applyVisualWatermark } from '@/lib/transmissions/visual-watermark';
+import { applyAudioSealWatermark } from '@/lib/transmissions/audio-watermark-sidecar';
 import { dispatchWebhook } from '@/lib/webhooks/dispatcher';
 import { sendWebPushToUser } from '@/lib/server/web-push';
 import { readOrganizationLrsConfig } from '@/lib/server/org-lrs-config';
@@ -548,7 +550,11 @@ export function startAllWorkers(): void {
               );
           }
 
-          await enqueueTransmissionVisualWatermark({ transmissionId });
+          if (await isFeatureEnabled('watermarking')) {
+            await enqueueTransmissionAudioWatermark({ transmissionId });
+          } else {
+            await enqueueTransmissionVisualWatermark({ transmissionId });
+          }
 
           incrementCounter('qalem_jobs_processed_total', { queue: 'transmission-source' });
         } catch (err) {
@@ -558,6 +564,77 @@ export function startAllWorkers(): void {
             .update({ status: 'failed', error: message })
             .eq('id', transmissionId);
           incrementCounter('qalem_jobs_failed_total', { queue: 'transmission' });
+          throw err;
+        }
+      }),
+    workerOptions(),
+  );
+
+  // ---- Transmission audio watermark worker (S2-008) ----
+  // This is the only boundary that calls the isolated AudioSeal sidecar.
+  const transmissionAudioWatermarkWorker = new Worker(
+    'transmission-audio-watermark',
+    async (job: Job) =>
+      heavyTasks.run(async () => {
+        const { transmissionId } = job.data as { transmissionId: string };
+        const supabase = createServiceSupabaseClient();
+        const { data: transmission, error: readError } = await supabase
+          .from('transmissions')
+          .select('id, source_artifact_path, audio_watermark_path, watermark_id')
+          .eq('id', transmissionId)
+          .single();
+
+        if (readError || !transmission) {
+          throw new Error(
+            `Transmission ${transmissionId} not found: ${readError?.message ?? 'no row'}`,
+          );
+        }
+        if (!transmission.source_artifact_path) {
+          throw new Error(`Transmission ${transmissionId} has no source artifact to watermark`);
+        }
+
+        try {
+          if (await isFeatureEnabled('watermarking')) {
+            if (!transmission.audio_watermark_path) {
+              const { data: source, error: sourceDownloadError } = await supabase.storage
+                .from('transmissions')
+                .download(transmission.source_artifact_path);
+              if (sourceDownloadError || !source) {
+                throw new Error(
+                  `Transmission source download failed: ${sourceDownloadError?.message ?? 'no file'}`,
+                );
+              }
+              const watermarkedAudio = await applyAudioSealWatermark(
+                Buffer.from(await source.arrayBuffer()),
+                transmission.watermark_id,
+              );
+              const audioWatermarkPath = `${transmissionId}/audio-watermark.mp3`;
+              const { error: uploadError } = await supabase.storage
+                .from('transmissions')
+                .upload(audioWatermarkPath, watermarkedAudio, {
+                  contentType: 'audio/mpeg',
+                  upsert: true,
+                });
+              if (uploadError)
+                throw new Error(`Audio watermark upload failed: ${uploadError.message}`);
+              const { error: updateError } = await supabase
+                .from('transmissions')
+                .update({ audio_watermark_path: audioWatermarkPath, error: null })
+                .eq('id', transmissionId);
+              if (updateError)
+                throw new Error(`Audio watermark completion failed: ${updateError.message}`);
+            }
+          }
+
+          await enqueueTransmissionVisualWatermark({ transmissionId });
+          incrementCounter('qalem_jobs_processed_total', { queue: 'transmission-audio-watermark' });
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          await supabase
+            .from('transmissions')
+            .update({ status: 'failed', error: message })
+            .eq('id', transmissionId);
+          incrementCounter('qalem_jobs_failed_total', { queue: 'transmission-audio-watermark' });
           throw err;
         }
       }),
@@ -574,7 +651,9 @@ export function startAllWorkers(): void {
         const supabase = createServiceSupabaseClient();
         const { data: transmission, error: readError } = await supabase
           .from('transmissions')
-          .select('id, status, source_artifact_path, visual_watermark_path, watermark_id')
+          .select(
+            'id, status, source_artifact_path, audio_watermark_path, visual_watermark_path, watermark_id',
+          )
           .eq('id', transmissionId)
           .single();
 
@@ -598,9 +677,22 @@ export function startAllWorkers(): void {
             );
           }
 
+          const watermarkedAudio = transmission.audio_watermark_path
+            ? await supabase.storage
+                .from('transmissions')
+                .download(transmission.audio_watermark_path)
+                .then(({ data, error }) => {
+                  if (error || !data)
+                    throw new Error(
+                      `Audio watermark download failed: ${error?.message ?? 'no file'}`,
+                    );
+                  return data.arrayBuffer();
+                })
+            : undefined;
           const watermarkedVideo = await applyVisualWatermark(
             Buffer.from(await source.arrayBuffer()),
             transmission.watermark_id,
+            watermarkedAudio ? Buffer.from(watermarkedAudio) : undefined,
           );
           const visualWatermarkPath = `${transmissionId}/visual-watermark.mp4`;
           const { error: uploadError } = await supabase.storage
@@ -646,6 +738,7 @@ export function startAllWorkers(): void {
     videoGenerationWorker,
     exportJobWorker,
     transmissionWorker,
+    transmissionAudioWatermarkWorker,
     transmissionVisualWatermarkWorker,
   ];
   void recoverPendingXapiDeliveries().catch((error: unknown) => {
