@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { apiError } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { createServiceSupabaseClient } from '@/lib/supabase/service';
+import { privateArtifactUrl } from '@/lib/server/private-artifact-url';
 
 const log = createLogger('TransmissionContentAPI');
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function GET(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
@@ -19,7 +19,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ id
   const { id } = await context.params;
   const { data: transmission, error } = await supabase
     .from('transmissions')
-    .select('status, source_artifact_path, visual_watermark_path')
+    .select('id, status, source_artifact_path, visual_watermark_path')
     .eq('id', id)
     .maybeSingle();
   if (error) {
@@ -35,21 +35,24 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ id
     return apiError('INVALID_REQUEST', 409, 'La transmission n’est pas encore prête');
   }
 
-  const { data: artifact, error: downloadError } = await createServiceSupabaseClient()
-    .storage.from('transmissions')
-    .download(transmission.visual_watermark_path);
-  if (downloadError || !artifact) {
-    log.error('Transmission visual watermark download failed', downloadError?.message);
-    return apiError('INTERNAL_ERROR', 500, 'Impossible de diffuser le support');
+  try {
+    if (transmission.visual_watermark_path !== `${transmission.id}/visual-watermark.mp4`)
+      throw new Error();
+    const target = await privateArtifactUrl(
+      'transmissions',
+      transmission.visual_watermark_path,
+      request.signal,
+      request.nextUrl.searchParams.get('download') === '1',
+    );
+    return new NextResponse(null, {
+      status: 307,
+      headers: {
+        Location: target,
+        'Cache-Control': 'private, no-store',
+        'Referrer-Policy': 'no-referrer',
+      },
+    });
+  } catch {
+    return apiError('INTERNAL_ERROR', 503, 'Impossible de diffuser le support');
   }
-
-  return new NextResponse(artifact, {
-    headers: {
-      'Cache-Control': 'private, no-store',
-      'Content-Disposition': 'inline',
-      'Content-Length': String(artifact.size),
-      'Content-Type': 'video/mp4',
-      'X-Content-Type-Options': 'nosniff',
-    },
-  });
 }

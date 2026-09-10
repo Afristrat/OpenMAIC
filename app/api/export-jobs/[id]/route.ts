@@ -8,15 +8,13 @@
  * une URL signée à courte durée de vie.
  */
 
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/api/auth';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { createServiceSupabaseClient } from '@/lib/supabase/service';
+import { privateArtifactUrl } from '@/lib/server/private-artifact-url';
 
 export const dynamic = 'force-dynamic';
-
-const SIGNED_URL_EXPIRY_S = 300;
 
 export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const auth = await requireAuth(request);
@@ -27,7 +25,9 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
 
   const { data: exportJob, error } = await supabase
     .from('export_jobs')
-    .select('id, format, status, storage_path, scene_count, error, created_at, updated_at')
+    .select(
+      'id, stage_id, format, status, storage_path, scene_count, error, created_at, updated_at',
+    )
     .eq('id', id)
     .single();
 
@@ -36,15 +36,34 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
   }
 
   let downloadUrl: string | null = null;
+  const download = request.nextUrl.searchParams.get('download') === '1';
   if (exportJob.status === 'done' && exportJob.storage_path) {
-    const serviceSupabase = createServiceSupabaseClient();
-    const { data: signed } = await serviceSupabase.storage
-      .from('exports')
-      .createSignedUrl(exportJob.storage_path as string, SIGNED_URL_EXPIRY_S);
-    downloadUrl = signed?.signedUrl ?? null;
+    try {
+      const extension = exportJob.format === 'mp4' ? 'mp4' : 'zip';
+      if (exportJob.storage_path !== `${exportJob.stage_id}/${exportJob.id}.${extension}`)
+        throw new Error();
+      downloadUrl = await privateArtifactUrl(
+        'exports',
+        exportJob.storage_path,
+        request.signal,
+        download,
+      );
+    } catch {
+      return apiError('INTERNAL_ERROR', 503, 'Export download unavailable');
+    }
   }
-
-  return apiSuccess({
+  if (download) {
+    if (!downloadUrl) return apiError('INVALID_REQUEST', 409, 'Export is not ready');
+    return new NextResponse(null, {
+      status: 307,
+      headers: {
+        Location: downloadUrl,
+        'Cache-Control': 'private, no-store',
+        'Referrer-Policy': 'no-referrer',
+      },
+    });
+  }
+  const response = apiSuccess({
     id: exportJob.id,
     format: exportJob.format,
     status: exportJob.status,
@@ -54,4 +73,6 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
     done: exportJob.status === 'done' || exportJob.status === 'error',
     pollIntervalMs: 5000,
   });
+  response.headers.set('Cache-Control', 'private, no-store');
+  return response;
 }

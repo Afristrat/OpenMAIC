@@ -1,5 +1,13 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 10 septembre 2026 — S-036, livraison protégée des artefacts
+
+Exports terminés, vidéos générées et transmissions avec filigrane disposent de liens relatifs protégés dans le JSON personnel. Les routes existantes relisent les droits du compte via RLS avant signature ; chemin canonique et origine Storage contrôlés, signature 60 s, redirection 307 sans buffer binaire Next.js, réponses privées/no-store. La transmission ne sert que visual-watermark.mp4, jamais la source. Les règles existantes propriétaire ou expéditeur/destinataire restent inchangées : aucune nouvelle garantie d’appartenance au tenant ni de révocation instantanée d’une URL signée.
+
+40698 exit 0 : 18 tests ciblés, TypeScript 4 Gio, lint global, quatre Chromium export FR/AR/EN et erreur ; API navigateur simulée. 29293 exit 0 : format du script et lint global incluant le script. Preuve Storage réelle scripts/validation/s036-artifact-delivery.mjs : objet synthétique de 128 octets, signature native, Range bytes=0-3 reçu en HTTP 206 avec quatre octets exacts et disposition attachment. Objet exports/s036-artifact-proof/2efe6876-f68f-4db4-8807-a38b9a1fb45b.bin supprimé par Storage ; liste vide puis SQL count=0 recontrôlé. Aucun contenu utilisateur supprimé. Cette preuve teste Storage directement, pas les routes Next.js déployées.
+
+Ponytail/Supabase : helper partagé par trois routes, livraison native, sans dépendance nouvelle. Pas de migration, de déploiement, de build ni de gate intégré au SHA propre ; runner sur base antérieure avec overlays. Restent autres fichiers Storage et journaux Auth à inventorier, purges intégrées, compte chargé/concurrence et ancien JWT PostgREST/Storage, migrations coordonnées et recette intégrée. S-036 reste ouverte.
+
 ## 10 septembre 2026 — S-036, reprise administrative des agents privés
 
 Candidate 20260910012846 : marqueur causal de perte de propriétaire pour privé tenant, pas d’inférence sur les agents système/historiques. Liste service-only 50/page, reprise par seul admin actif avec verrous et UPDATE conditionnel ; configuration/statut privé conservés, audit atomique existant. Client ne choisit pas le nouveau propriétaire, droits UPDATE owner_id inchangés. API Auth/origine/délai 5 s, accusé exact et pas de rejeu ambigu. UI FR/AR/EN dans marketplace après choix du tenant, chargement explicite, reprise et relecture owned, sans publication ni copie locale automatique.

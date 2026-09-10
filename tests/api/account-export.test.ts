@@ -132,6 +132,29 @@ describe('account export', () => {
       `/api/live-sessions/${session_id}/audio?path=${encodeURIComponent(audio_path)}&download=1`,
     );
   });
+  it('links completed packages, generated videos and watermarked transmissions only', async () => {
+    const id = '00000000-0036-4000-8000-000000000431';
+    mocks.read.mockImplementation(async (_name, args) => ({
+      error: null,
+      data: ['export_jobs', 'video_generation_jobs', 'transmissions'].includes(args.p_section)
+        ? [
+            {
+              cursor: id,
+              value: {
+                id,
+                status: 'done',
+                storage_path: 'file',
+                visual_watermark_path: 'watermarked',
+              },
+            },
+          ]
+        : [],
+    }));
+    const body = await (await GET(request())).json();
+    expect(body.export_jobs[0].downloadUrl).toBe(`/api/export-jobs/${id}?download=1`);
+    expect(body.video_generation_jobs[0].downloadUrl).toBe(`/api/generate/video/${id}?download=1`);
+    expect(body.transmissions[0].downloadUrl).toBe(`/api/transmissions/${id}/content?download=1`);
+  });
   it('aborts a partial download on a later failure instead of certifying an incomplete export', async () => {
     mocks.read.mockImplementation(async (_name, args) =>
       args.p_section === 'widget_template_publications'

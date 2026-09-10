@@ -158,7 +158,19 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
                       ...row.value,
                       downloadUrl: `/api/live-sessions/${z.string().uuid().parse(row.value.session_id)}/audio?path=${encodeURIComponent(row.value.audio_path)}&download=1`,
                     }
-                  : row.value;
+                  : row.value.status === 'done' &&
+                      ['export_jobs', 'video_generation_jobs', 'transmissions'].includes(section) &&
+                      typeof row.value[
+                        section === 'transmissions' ? 'visual_watermark_path' : 'storage_path'
+                      ] === 'string'
+                    ? {
+                        ...row.value,
+                        downloadUrl:
+                          section === 'transmissions'
+                            ? `/api/transmissions/${z.string().uuid().parse(row.value.id)}/content?download=1`
+                            : `${section === 'export_jobs' ? '/api/export-jobs' : '/api/generate/video'}/${z.string().uuid().parse(row.value.id)}?download=1`,
+                      }
+                    : row.value;
             yield (first ? '' : ',') + JSON.stringify(value);
             first = false;
           }
