@@ -69,6 +69,18 @@ export class LearningObservationBuffer {
     const durations = this.visits.map((visit) => Math.floor(visit.milliseconds / 1000));
     const actualIds = new Set(sceneIds);
     const completedCount = [...this.completed].filter((id) => actualIds.has(id)).length;
+    // One end-of-session summary per scene, not a fabricated attempt-by-attempt log.
+    const scenes = new Map<string, NonNullable<PedagogySession['sceneObservations']>[number]>();
+    this.visits.forEach((visit, index) => {
+      const previous = scenes.get(visit.id);
+      scenes.set(visit.id, {
+        id: visit.id,
+        type: visit.type,
+        seconds: (previous?.seconds ?? 0) + durations[index],
+        completed: this.completed.has(visit.id),
+        score: visit.type === 'quiz' ? (this.scores.get(visit.id) ?? null) : null,
+      });
+    });
     return {
       sessionId: this.sessionId,
       consentEpoch: this.consentEpoch,
@@ -77,6 +89,7 @@ export class LearningObservationBuffer {
       sceneSequence: this.visits.map((visit) => visit.type),
       sceneDurations: durations,
       quizScores: [...this.scores.values()],
+      sceneObservations: [...scenes.values()],
       completionRate: actualIds.size ? completedCount / actualIds.size : 0,
       totalDuration: Math.min(
         86400,

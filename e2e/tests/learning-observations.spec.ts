@@ -195,6 +195,17 @@ for (const scenario of [
         },
       });
       expect(observations[0]).not.toHaveProperty('userId');
+      if (withQuiz)
+        expect(observations[0].sceneObservations).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              id: 'observed-quiz',
+              type: 'quiz',
+              completed: true,
+              score: 0.25,
+            }),
+          ]),
+        );
       if (failedFirst) {
         const retry = page.getByRole('button', { name: 'Retry', exact: true });
         await expect(retry).toBeVisible();

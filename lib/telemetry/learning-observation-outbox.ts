@@ -28,7 +28,7 @@ export class LearningObservationOutbox {
       const raw = this.storage.getItem(key);
       let entry: z.infer<typeof entrySchema> | null = null;
       try {
-        if (raw && raw.length <= 32768) entry = entrySchema.parse(JSON.parse(raw));
+        if (raw && raw.length <= 65536) entry = entrySchema.parse(JSON.parse(raw));
       } catch {
         /* Invalid local storage is never sent to the server. */
       }
@@ -55,7 +55,7 @@ export class LearningObservationOutbox {
     // ponytail: at most 128 pending sessions/account; use IndexedDB if actual offline usage needs more.
     if (entries.length >= 128) throw new Error('Observation outbox full');
     const serialized = JSON.stringify({ createdAt: this.now(), observation: parsed });
-    if (new TextEncoder().encode(serialized).byteLength > 32768)
+    if (new TextEncoder().encode(serialized).byteLength > 65536)
       throw new Error('Observation too large');
     this.storage.setItem(this.prefix + parsed.sessionId, serialized);
   }

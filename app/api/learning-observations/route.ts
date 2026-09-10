@@ -42,7 +42,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       if (expired) throw new Error('Body timeout');
       if (done) break;
       size += value.byteLength;
-      if (size > 32768)
+      if (size > 65536)
         return NextResponse.json({ error: 'Body too large' }, { status: 413, headers });
       chunks.push(value);
     }

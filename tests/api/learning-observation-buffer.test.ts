@@ -30,6 +30,10 @@ describe('actual learning observations', () => {
       quizScores: [0],
       language: null,
       level: null,
+      sceneObservations: [
+        { id: 'a', type: 'slide', seconds: 5, completed: true, score: null },
+        { id: 'b', type: 'quiz', seconds: 2, completed: true, score: 0 },
+      ],
     });
   });
   it('does not equate navigation with completion or accept unseen quiz results', () => {

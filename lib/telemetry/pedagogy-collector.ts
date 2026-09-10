@@ -71,6 +71,7 @@ export async function collectPedagogyData(
         scene_sequence: session.sceneSequence,
         scene_durations: session.sceneDurations,
         quiz_scores: session.quizScores,
+        ...(session.sceneObservations ? { scene_observations: session.sceneObservations } : {}),
         completion_rate: session.completionRate,
         total_duration: session.totalDuration,
         // Context is derived from the persisted course/stage inside PostgreSQL.

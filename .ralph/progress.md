@@ -1,5 +1,9 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 10 septembre 2026 — S-035, provenance des scènes conservée
+
+Candidate CLI 20260910020547 et buffer/schema/API : résumé par identifiant de scène, durée cumulée/complétion/dernier score, null distinct de zéro. Anciennes entrées sans détails conservées, aucun backfill. RPC vérifie stage/type/mesures sous les verrous existants ; stockage immuable et export personnel raccordés, retrait cascade. Bornes API/outbox 64 Kio. 69771 exit 0 : 17 tests, TypeScript/lint, neuf Chromium. SQL service_role ROLLBACK : conservation/export/rejeu/refus/ancien format/retrait, zéro compte/stage/colonne recontrôlés. Erreur initiale de génération SQL corrigée ; advisors local indisponibles, Mnemo fetch failed. Non déployé, aucune livraison LRS ni clôture. Détails docs/validation/S-035-xapi-delivery.md ; suite projection xAPI, discussions/tentatives et contrôle transactionnel/revalidation d’envoi. Ponytail/Supabase : buffer/RPC/export existants, pas de nouvelle dépendance.
+
 ## 10 septembre 2026 — S-035, transport xAPI commun stabilisé
 
 Appelant worker ANCRER confirmé ; builders du cours non raccordés. UUIDv5 tenant/clé, PUT avec même ID query/corps, 204 exigé, délai 10 s et redirections refusées. Outbox ignoreDuplicates conserve premier payload/destination/statut ; récupération existante pour doublons. Worker refuse nouvelle destination non réconciliée. Configuration globale désactivée sauf true explicite. 73512 : 16 tests/TypeScript/lint ; 1655 trois Chromium diagnostic, exit 0. SQL service_role BEGIN/ROLLBACK prouve premier contenu conservé et zéro fixtures ; outbox réelle vide. Aucun LRS contacté ni flag activé, non déployé, pas de clôture. Preuves et limites docs/validation/S-035-xapi-delivery.md. Prochain : projection des événements cours dans le mécanisme commun avec consentement/tenant atomiques, puis recette réelle. Ponytail/Supabase : conflit unique natif, worker réutilisé, aucune nouvelle dépendance.

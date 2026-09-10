@@ -1,5 +1,17 @@
 # S-035 — Transport commun xAPI
 
+## 10 septembre 2026 — Provenance des observations de scène
+
+11032 exit 0 : SQL avec preuve d’export, TypeScript/lint puis Chromium quiz avec assertion explicite sceneObservations (identifiant observed-quiz et score 0,25). Réseau navigateur simulé.
+
+Candidate CLI 20260910020547 : le buffer conserve un résumé par scène (identifiant/type, durée cumulée de premier plan, complétion constatée et dernier score, zéro distinct de null). Les retours sur une scène cumulent la durée ; ce n’est pas un journal de chaque tentative. Schéma partagé strict, IDs uniques et somme des durées contrôlés ; ancienne outbox sans sceneObservations reste valide, aucune attribution historique inventée. API et stockage local bornés à 64 Kio au lieu de 32 pour ces mesures structurées.
+
+RPC existant étendu sans changer les verrous consentement/tenant/partage : appartenance scène→stage et type vérifiés, score uniquement sur quiz complété, plage/forme/somme et doublons contrôlés. Champ nullable scene_observations ajouté à la table déjà sous RLS ; insertion immuable et cascade au retrait conservées. Export personnel existant étendu à ce champ. Aucun nouvel endpoint public ni privilège client.
+
+69771 exit 0 : 17 tests API/buffer/outbox, TypeScript 4 Gio/lint et neuf Chromium (refus, accord, rejeu, fermeture, révocation, quiz). SQL réel service_role BEGIN/ROLLBACK : scène/score zéro conservés, export fidèle, rejeu sans changement, refus scène étrangère/type/score/durée invalides, ancienne observation sans détails reste null, retrait efface et refuse recollecte. Première génération du fichier SQL avait mal interprété un caractère de remplacement JavaScript ; syntaxe corrigée puis deux exécutions SQL vertes, sans mutation durable. Compte/stage/colonne candidats absents au recontrôle. Advisors local indisponibles (54322), Mnemo fetch failed.
+
+Reste la projection xAPI et son contrôle d’envoi : ce lot conserve les données nécessaires mais ne prétend pas les livrer au LRS. Discussion et tentatives détaillées restent à instrumenter ; les résumés ne doivent pas être présentés comme tous les événements. Non déployé, pas de build/gate intégré au SHA propre ; runner antérieur avec overlays.
+
 10 septembre 2026. Le traçage contredit le gap hérité : sendStatement possède un appelant réel dans le worker ANCRER. Les builders de télémétrie du cours restent non raccordés. Avant extension, correction du mécanisme commun : PUT avec UUIDv5 déterministe par tenant/clé d’événement, identifiant identique dans query et corps, accusé 204 obligatoire, délai dix secondes, HTTPS sans credentials dans URL, redirections refusées. Pas de nouvelle file ni dépendance. La configuration globale exige désormais XAPI_ENABLED=true ; les flags et réglages tenant restent inchangés.
 
 Insertion outbox native ON CONFLICT DO NOTHING via ignoreDuplicates : le premier contenu, timestamp, destination et statut sont conservés. Un doublon n’écrase plus le statement et laisse la récupération existante traiter une ligne restée en attente. Worker refuse une destination configurée différente de lrs_target persisté ; aucune réattribution automatique d’une donnée vers un autre LRS. Changement de destination à réconcilier explicitement avant reprise. Aucun événement de cours branché sans contrôle atomique du consentement.
