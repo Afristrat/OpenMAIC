@@ -1,5 +1,9 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { xapiDeliveryId } from '@/lib/telemetry/xapi-delivery';
+import { authorizeXapiDelivery, xapiDeliveryId } from '@/lib/telemetry/xapi-delivery';
+const database = vi.hoisted(() => ({ rpc: vi.fn(), abort: vi.fn() }));
+vi.mock('@/lib/supabase/service', () => ({
+  createServiceSupabaseClient: () => ({ rpc: database.rpc }),
+}));
 import { sendStatement, VERBS, type XAPIStatement } from '@/lib/telemetry/xapi';
 import { getXAPIConfig } from '@/lib/telemetry/config';
 const statement: XAPIStatement = {
@@ -9,6 +13,23 @@ const statement: XAPIStatement = {
   timestamp: '2026-09-10T00:00:00.000Z',
 };
 const config = { endpoint: 'https://lrs.example/xapi/', auth: 'synthetic', enabled: true };
+it('requires an exact fresh authorization and does not treat a storage failure as permission', async () => {
+  database.rpc.mockReturnValue({ abortSignal: database.abort });
+  for (const value of [false, null, 'true', {}]) {
+    database.abort.mockResolvedValue({ data: value, error: null });
+    expect(await authorizeXapiDelivery(12)).toBe(false);
+  }
+  database.abort.mockResolvedValue({ data: true, error: null });
+  expect(await authorizeXapiDelivery(12)).toBe(true);
+  expect(database.rpc).toHaveBeenCalledWith('authorize_xapi_delivery', { p_id: 12 });
+  database.abort.mockResolvedValue({ data: true, error: { message: 'private' } });
+  await expect(authorizeXapiDelivery(12)).rejects.toThrow(
+    'xAPI delivery authorization unavailable',
+  );
+  await expect(authorizeXapiDelivery(Number.MAX_SAFE_INTEGER + 1)).rejects.toThrow(
+    'Invalid xAPI outbox identity',
+  );
+});
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();

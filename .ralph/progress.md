@@ -1,5 +1,9 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 10 septembre 2026 — S-035, projection cours et reprise périodique
+
+Candidate 20260910021405 : résumés slide/quiz/PBL projetés dans l’outbox existante, pseudonyme tenant, contexte/résultat, consentement transactionnel, export et cascade locale. Revalidation avant HTTP et scan BullMQ natif chaque minute (100 éligibles, filtrées avant limite), absent auparavant hors démarrage. 86901 : six tests ciblés, TypeScript/lint verts. SQL service_role BEGIN/ROLLBACK vérifie flag, aucun backfill, rejeu, tenants, export, destination, suspension, partage, membre et retrait ; relecture zéro fixtures/colonne/outbox, flag false. Séquences consommées par INSERT annulés, pas de reset. Non déployé, ordonnanceur mocké, pas de LRS ni de gate intégré au SHA propre. Discussion/tentatives détaillées, ANCRER et effacement distant restent ouverts ; passes=false. Référence : docs/validation/S-035-xapi-delivery.md.
+
 ## 10 septembre 2026 — S-035, provenance des scènes conservée
 
 Candidate CLI 20260910020547 et buffer/schema/API : résumé par identifiant de scène, durée cumulée/complétion/dernier score, null distinct de zéro. Anciennes entrées sans détails conservées, aucun backfill. RPC vérifie stage/type/mesures sous les verrous existants ; stockage immuable et export personnel raccordés, retrait cascade. Bornes API/outbox 64 Kio. 69771 exit 0 : 17 tests, TypeScript/lint, neuf Chromium. SQL service_role ROLLBACK : conservation/export/rejeu/refus/ancien format/retrait, zéro compte/stage/colonne recontrôlés. Erreur initiale de génération SQL corrigée ; advisors local indisponibles, Mnemo fetch failed. Non déployé, aucune livraison LRS ni clôture. Détails docs/validation/S-035-xapi-delivery.md ; suite projection xAPI, discussions/tentatives et contrôle transactionnel/revalidation d’envoi. Ponytail/Supabase : buffer/RPC/export existants, pas de nouvelle dépendance.

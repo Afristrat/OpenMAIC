@@ -41,6 +41,7 @@ import type {
 import { PermitPool } from '@/lib/jobs/permit-pool';
 import {
   configureReviewNotificationScheduler,
+  configureXapiDeliveryScheduler,
   enqueueReviewNotificationDelivery,
   enqueueTransmissionVisualWatermark,
   enqueueXapiDelivery,
@@ -50,7 +51,7 @@ import { dispatchWebhook } from '@/lib/webhooks/dispatcher';
 import { sendWebPushToUser } from '@/lib/server/web-push';
 import { readOrganizationLrsConfig } from '@/lib/server/org-lrs-config';
 import { sendStatement, type XAPIStatement } from '@/lib/telemetry/xapi';
-import { xapiDeliveryId } from '@/lib/telemetry/xapi-delivery';
+import { authorizeXapiDelivery, xapiDeliveryId } from '@/lib/telemetry/xapi-delivery';
 import {
   claimDueReviewNotifications,
   deliverReviewNotification,
@@ -108,14 +109,10 @@ async function recoverPendingXapiDeliveries(): Promise<void> {
   if (!(await isFeatureEnabled('xapi_emission'))) return;
   const supabase = createServiceSupabaseClient();
   const { data, error } = await supabase
-    .from('xapi_outbox')
-    .select('id')
-    .neq('status', 'sent')
-    .lte('next_attempt_at', new Date().toISOString())
-    .order('id', { ascending: true })
-    .limit(500);
+    .rpc('list_due_xapi_deliveries')
+    .abortSignal(AbortSignal.timeout(5000));
   if (error) throw new Error(`xAPI outbox recovery failed: ${error.message}`);
-  await Promise.all((data ?? []).map((item) => enqueueXapiDelivery({ outboxId: item.id })));
+  for (const item of data ?? []) await enqueueXapiDelivery({ outboxId: item.id });
 }
 
 // ---------------------------------------------------------------------------
@@ -232,6 +229,10 @@ export function startAllWorkers(): void {
   const xapiDeliveryWorker = new Worker(
     'xapi-delivery',
     async (job: Job) => {
+      if (job.name === 'scan') {
+        await recoverPendingXapiDeliveries();
+        return;
+      }
       const { outboxId } = job.data as { outboxId: number };
       const supabase = createServiceSupabaseClient();
       const { data: item, error } = await supabase
@@ -248,6 +249,7 @@ export function startAllWorkers(): void {
         if (!config?.enabled) throw new Error('Organization LRS is disabled');
         if (config.endpoint !== item.lrs_target)
           throw new Error('LRS destination changed; pending delivery requires reconciliation');
+        if (!(await authorizeXapiDelivery(item.id))) return;
         const sent = await sendStatement(
           item.statement as unknown as XAPIStatement,
           config,
@@ -649,6 +651,12 @@ export function startAllWorkers(): void {
   void recoverPendingXapiDeliveries().catch((error: unknown) => {
     log.error(
       'xAPI outbox recovery failed:',
+      error instanceof Error ? error.message : String(error),
+    );
+  });
+  void configureXapiDeliveryScheduler().catch((error: unknown) => {
+    log.error(
+      'xAPI scheduler configuration failed:',
       error instanceof Error ? error.message : String(error),
     );
   });

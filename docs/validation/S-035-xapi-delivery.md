@@ -1,5 +1,17 @@
 # S-035 — Transport commun xAPI
 
+## 10 septembre 2026 — Projection du cours et reprise périodique
+
+Candidate `20260910021405_course_xapi_projection.sql` : projection transactionnelle depuis les résumés de scènes vers l’outbox existante, sous contrôles de consentement, tenant, flag et configuration. Slide vécue, quiz répondu puis réussi/échoué (seuil 0,7), PBL complété ; aucun sens inventé pour les plugins ou les discussions. Acteur pseudonyme propre au tenant, scène et formation en contexte, durée et dernier score. Identité de déduplication liée à l’observation immuable, pas au seul identifiant de session. Timestamp de collecte et mesure explicitement qualifiée de résumé de fin de session, pas de journal exhaustif des tentatives.
+
+Clé étrangère vers l’observation avec suppression en cascade ; export personnel retrouve les lignes pseudonymisées via le sujet privé. RPC service-only revalide l’autorisation juste avant HTTP. Une requête déjà partie n’est pas annulable ; la suppression locale ne supprime pas un statement déjà reçu par un LRS. Les événements ANCRER historiques sans observation conservent leur frontière antérieure : leur consentement spécifique n’est pas certifié par ce lot.
+
+Défaut découvert : récupération uniquement au démarrage du worker. Ordonnanceur BullMQ natif ajouté, identifiant stable `xapi-outbox-minute`, scan chaque minute, au plus 100 lignes éligibles. Configuration/destination et autorisation filtrées avant LIMIT ; reprise des jobs terminés avec l’identité existante, aucun second système de file. Ordonnanceur testé par mock, pas encore installé dans Redis en production.
+
+86901 exit 0 : six tests ciblés (transport/autorisation/ordonnanceur), TypeScript 4 Gio et lint global. SQL réel service_role sous BEGIN/ROLLBACK : flag désactivé, absence de backfill, quatre événements par tenant, score zéro, immutabilité au rejeu, huit lignes exportables, sélection des seules livraisons éligibles, changement de destination, suspension, retrait de partage/membre/consentement et cascade. Premier essai antérieur refusé faute de dépendance quiz privée ; chaîne complète corrigée puis exécutions vertes. Relecture fraîche : zéro compte et organisation synthétiques, zéro colonne candidate, outbox vide et flag false. Les INSERT annulés consomment néanmoins des valeurs de séquence PostgreSQL ; aucune remise à zéro effectuée.
+
+7996 exit 0 : trois Chromium de diagnostic FR/AR/EN ; API simulées, sans preuve d’émission LRS. Non déployé ; migrations seulement transactionnelles et annulées, aucune activation ni émission LRS. Runner antérieur avec overlays, pas de gate intégré/build au SHA propre. Restent discussion, granularité des tentatives, réconciliation ANCRER, cycle d’effacement distant et recette LRS réelle. S-035 reste ouverte.
+
 ## 10 septembre 2026 — Provenance des observations de scène
 
 11032 exit 0 : SQL avec preuve d’export, TypeScript/lint puis Chromium quiz avec assertion explicite sceneObservations (identifiant observed-quiz et score 0,25). Réseau navigateur simulé.

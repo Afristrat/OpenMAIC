@@ -291,6 +291,14 @@ export async function enqueueXapiDelivery(data: XapiDeliveryJobData): Promise<st
   return job.id!;
 }
 
+export async function configureXapiDeliveryScheduler(): Promise<void> {
+  await getJobQueues().xapiDelivery.upsertJobScheduler(
+    'xapi-outbox-minute',
+    { every: 60_000 },
+    { name: 'scan', data: {}, opts: durableJobOptions },
+  );
+}
+
 /**
  * A failed delivery is explicitly retriable by the sender. BullMQ keeps a
  * terminal job with its deterministic id, so remove only terminal jobs before
