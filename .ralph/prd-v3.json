@@ -4795,7 +4795,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Widget xAPI status » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "planned",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "file": ".ralph/prd-ui.json",
@@ -4805,7 +4805,13 @@
       "sourceDependencies": ["U-002"],
       "dependencies": ["S0-011", "S-035"],
       "gap": "2026-09-10 : routes statut/test codées, super-admin/origine/délai/redirections, aucune clé exposée. Test natif /about vérifie connexion et version 1.0.3, pas écriture ; widget FR/AR/EN distingue panne/configuration et annonce le périmètre global distinct des LRS tenant. 92691 : cinq tests et TypeScript/lint ; 74834 : trois Chromium, réseaux simulés. Restent S-035, recette LRS réelle et gate intégré/publication. Voir docs/validation/U-018-xapi-diagnostics.md ; aucune clôture.",
-      "evidence": ["components/admin/xapi-tab.tsx"],
+      "evidence": [
+        "components/admin/xapi-tab.tsx",
+        "app/api/xapi/status/route.ts",
+        "app/api/xapi/test/route.ts",
+        "docs/validation/U-018-xapi-diagnostics.md",
+        "commit:5277a32"
+      ],
       "acceptance": [
         "Après conservation, brancher statut/test réels avec contrôle de rôle et résultat observable.",
         "Ne pas exposer les credentials LRS ; tester erreur réseau et configuration absente."
