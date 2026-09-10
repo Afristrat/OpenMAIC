@@ -1,5 +1,11 @@
 # S-036 — Inventaire de l’export personnel
 
+## Complément — Cycle de vie des replays, 10 septembre 2026
+
+Candidate `20260910005801_replay_audio_lifecycle.sql` : lecture Storage liée à la session enregistrée encore existante, uploads serveur sans propriété individuelle nouvelle, références audio canoniques imposées en DB et interdites dans le JSON client. Suppression logique atomique de la session, accusé `audioCleanup=pending`, puis worker commun réessayable (100 objets, sans session ni référence, plus d’une heure). Les anciens fichiers possédés par les comptes ne sont pas réconciliés par cette seule modification ; aucune révocation instantanée d’URL déjà signée ou de flux engagé n’est certifiée.
+
+Preuve SQL `scripts/validation/s036-replay-audio-lifecycle.sql` sous BEGIN/ROLLBACK : accès RLS avant/après suppression, cascade, refus référence étrangère/upload client, exclusion récent/autre bucket/chemin arbitraire et plafond 100 sur 101+ objets. Zéro utilisateurs/sessions/objets/fonctions candidates dans une connexion neuve ensuite. Aucun fichier physique créé/supprimé. Exécution 50425 exit 0 : 26 tests, TypeScript 4 Gio/lint globaux et deux Chromium replays/consentement, APIs navigateur et Storage simulés. Non déployé, pas de build/gate au SHA propre ni de recette Auth/Storage réelle. Pagination des replays, livraison audio bufferisée et concurrence réelle restent ouvertes.
+
 ## Périmètre vérifié le 10 septembre 2026
 
 Lecture de information_schema.columns sur la base Qalem ServeurIA : 71 relations publiques (tables et vue). Migration candidate 20260910000245 : 53 sections de l’export applicatif, colonnes explicites, 100 lignes par page. Cet inventaire ne certifie pas une exportation exhaustive de toutes les données personnelles : les schémas Auth/Storage, fichiers, journaux et systèmes externes ne sont pas couverts par le décompte public.

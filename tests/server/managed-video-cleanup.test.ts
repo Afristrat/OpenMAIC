@@ -15,12 +15,25 @@ vi.mock('@/lib/supabase/service', () => ({
 import {
   purgeOrphanedManagedVideos,
   purgeOrphanedCourseImports,
+  purgeOrphanedSessionAudio,
 } from '@/lib/server/managed-video-cleanup';
 const candidate = {
   object_id: '00000000-0036-4000-8000-000000000193',
   object_name:
     'generated-video/00000000-0036-4000-8000-000000000191/00000000-0036-4000-8000-000000000193.mp4',
 };
+it('uses the replay policy and rejects paths outside its canonical session scope', async () => {
+  const object_name =
+    '00000000-0036-4000-8000-000000000191/00000000-0036-4000-8000-000000000192/00000000-0036-4000-8000-000000000193.wav';
+  mocks.abortSignal.mockResolvedValue({ data: [{ ...candidate, object_name }] });
+  expect(await purgeOrphanedSessionAudio()).toBe(1);
+  expect(mocks.rpc).toHaveBeenCalledWith('list_orphaned_session_audio');
+  expect(mocks.from).toHaveBeenCalledWith('session-audio');
+  expect(mocks.remove).toHaveBeenCalledWith([object_name]);
+  mocks.abortSignal.mockResolvedValue({ data: [candidate] });
+  await expect(purgeOrphanedSessionAudio()).rejects.toThrow('selection');
+  expect(mocks.remove).toHaveBeenCalledTimes(1);
+});
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.records.mockResolvedValue({ data: 0, error: null });

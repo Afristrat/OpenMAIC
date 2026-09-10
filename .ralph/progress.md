@@ -1,5 +1,11 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 10 septembre 2026 — S-036, cycle de vie des pistes de replay
+
+Candidate CLI 20260910005801 : accès Storage conditionné à une session existante, propriétaire et enregistrée ; upload direct client interdit, upload serveur après vérification Auth/RLS pour ne plus créer de propriété Storage individuelle. Chemin et taille ne sont plus acceptés depuis le JSON ; trigger invoker impose le chemin canonique utilisateur/session/fichier. DELETE retire d’abord la session et ses événements par cascade, sans liste plafonnée ni retrait prématuré de fichiers ; accusé audioCleanup=pending. Worker existant : objets canoniques sans session ni référence, anciens de plus d’une heure, lots 100, reprise après échec. Aucune promesse de révocation d’un téléchargement déjà engagé ou d’effacement instantané.
+
+50425 exit 0 : 26 tests ciblés, TypeScript 4 Gio et lint globaux, deux Chromium replay/consentement. APIs navigateur et Storage simulés. SQL s036-replay-audio-lifecycle sous ROLLBACK : accès vivant/supprimé, référence étrangère et upload client refusés, cascade, exclusions et plafond 100 sur 101+ objets ; zéro comptes/sessions/objets/fonctions candidates recontrôlés. Aucun fichier réel supprimé, aucune migration durable ou publication, pas de build/gate au SHA propre. Ponytail/Supabase : cascade, RLS et worker existants, sans dépendance. Restent ownership Storage historique, suppression Auth réelle/sessions/JWT/concurrence, autres fichiers, pagination des replays et livraison audio sans buffer complet, agents privés et recette intégrée. S-036 ouverte.
+
 ## 10 septembre 2026 — S-036, provenance et cycle de vie des imports
 
 Flux réel : orgId obligatoire dans l’API, pas de mode d’import personnel. Candidate CLI 20260910004751 : source_org_id immuable conservé sans FK après disparition du tenant ; aucun backfill supposé pour l’historique. Pipeline transmet le tenant dès l’enregistrement, y compris rejet sans cours. Trigger invoker : auteur membre éditeur du tenant actif, provenance et chemin immuables, rattachement de cours inter-tenant refusé, détachement FK conservé. RLS, export et téléchargement vérifient la provenance même sans cours associé. La suppression Auth retire l’auteur mais conserve le document organisationnel.

@@ -3,6 +3,12 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service';
 
 const uuid = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
 const filePolicies = {
+  replay: {
+    procedure: 'list_orphaned_session_audio',
+    bucket: 'session-audio',
+    pattern: new RegExp(`^${uuid}/${uuid}/${uuid}[.](wav|ogg|mp3|webm)$`),
+    label: 'Replay',
+  },
   video: {
     procedure: 'list_orphaned_managed_videos',
     bucket: 'exports',
@@ -20,6 +26,9 @@ const filePolicies = {
 /** Rescan metadata each cycle so even a late upload after account deletion is found. */
 export async function purgeOrphanedManagedVideos(): Promise<number> {
   return purgeOrphanedFiles('video');
+}
+export async function purgeOrphanedSessionAudio(): Promise<number> {
+  return purgeOrphanedFiles('replay');
 }
 
 export async function purgeOrphanedCourseImports(): Promise<number> {

@@ -3,6 +3,7 @@ import { parseLiveSessionEvent } from '@/lib/live-session/contracts';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServiceSupabaseClient } from '@/lib/supabase/service';
 
 const log = createLogger('LiveSessionEventsAPI');
 
@@ -77,7 +78,12 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
   }
 
   let audioPath: string | null = event.audioPath;
-  let audioBytes = event.audioBytes;
+  let audioBytes: number = event.audioBytes;
+  const storage = audio
+    ? createServiceSupabaseClient(
+        AbortSignal.any([request.signal, AbortSignal.timeout(30000)]),
+      ).storage.from('session-audio')
+    : null;
   if (audio) {
     const extension =
       audio.type === 'audio/wav'
@@ -88,9 +94,10 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
             ? 'mp3'
             : 'webm';
     audioPath = `${user.id}/${id}/${crypto.randomUUID()}.${extension}`;
-    const { error: uploadError } = await supabase.storage
-      .from('session-audio')
-      .upload(audioPath, audio, { contentType: audio.type, upsert: false });
+    const { error: uploadError } = await storage!.upload(audioPath, audio, {
+      contentType: audio.type,
+      upsert: false,
+    });
     if (uploadError) {
       log.error('Session audio upload failed', uploadError.message);
       return apiError('INTERNAL_ERROR', 500, 'Impossible d’enregistrer la piste audio');
@@ -112,7 +119,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     .select('id')
     .single();
   if (error || !data) {
-    if (audioPath && audio) await supabase.storage.from('session-audio').remove([audioPath]);
+    if (audioPath && storage) await storage.remove([audioPath]);
     log.error('Session event append failed', error?.message);
     return apiError('INTERNAL_ERROR', 500, 'Impossible d’enregistrer l’événement');
   }

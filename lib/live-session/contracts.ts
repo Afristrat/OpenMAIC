@@ -12,8 +12,9 @@ const liveSessionEventSchema = z.object({
   actor: z.enum(['agent', 'user', 'system']),
   eventType: z.string().trim().min(1).max(80),
   payload: z.record(z.string(), z.unknown()),
-  audioPath: z.string().trim().min(1).max(1024).nullable().default(null),
-  audioBytes: z.number().int().nonnegative().default(0),
+  // File references and sizes are assigned by the server after multipart upload.
+  audioPath: z.null().default(null),
+  audioBytes: z.literal(0).default(0),
 });
 
 const replayPositionSchema = z.object({

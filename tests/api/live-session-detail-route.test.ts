@@ -85,10 +85,22 @@ describe('live session detail API', () => {
     });
   });
 
-  it('removes every private audio track before deleting the replay rows', async () => {
+  it('deletes the session atomically without a capped audio listing or premature file removal', async () => {
     const response = await removeSession();
     expect(response.status).toBe(200);
-    expect(mocks.remove).toHaveBeenCalledWith(['user-1/session-1/agent.wav']);
+    expect(mocks.remove).not.toHaveBeenCalled();
+    expect(mocks.audioPaths).not.toHaveBeenCalled();
+    expect(await response.json()).toMatchObject({ audioCleanup: 'pending' });
     expect(mocks.deleteSession).toHaveBeenCalled();
+  });
+  it('preserves files on database failure and never acknowledges missing or unauthenticated sessions', async () => {
+    mocks.deleteSession.mockResolvedValueOnce({ error: { message: 'offline' } });
+    expect((await removeSession()).status).toBe(500);
+    mocks.deleteSession.mockResolvedValueOnce({ data: null, error: null });
+    expect((await removeSession()).status).toBe(404);
+    mocks.user.mockResolvedValueOnce({ data: { user: null } });
+    expect((await removeSession()).status).toBe(401);
+    expect(mocks.deleteSession).toHaveBeenCalledTimes(2);
+    expect(mocks.remove).not.toHaveBeenCalled();
   });
 });

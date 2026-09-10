@@ -70,24 +70,8 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
   const { supabase, user } = await authenticatedClient();
   if (!user) return apiError('UNAUTHORIZED', 401, 'Authentification requise');
   const { id } = await context.params;
-  const { data: tracks, error: tracksError } = await supabase
-    .from('session_events')
-    .select('audio_path')
-    .eq('session_id', id);
-  if (tracksError) {
-    log.error('Session audio listing failed', tracksError.message);
-    return apiError('INTERNAL_ERROR', 500, 'Impossible de supprimer la session');
-  }
-  const paths = (tracks ?? [])
-    .map((track) => track.audio_path)
-    .filter((path): path is string => typeof path === 'string');
-  if (paths.length > 0) {
-    const { error: removeError } = await supabase.storage.from('session-audio').remove(paths);
-    if (removeError) {
-      log.error('Session audio deletion failed', removeError.message);
-      return apiError('INTERNAL_ERROR', 500, 'Impossible de supprimer les pistes audio');
-    }
-  }
+  // The cascade revokes replay access atomically. The retention worker removes
+  // orphaned audio in bounded, retryable batches, including late uploads.
   const { data, error } = await supabase
     .from('live_sessions')
     .delete()
@@ -99,5 +83,5 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
     return apiError('INTERNAL_ERROR', 500, 'Impossible de supprimer la session');
   }
   if (!data) return apiError('INVALID_REQUEST', 404, 'Session introuvable');
-  return apiSuccess({ id });
+  return apiSuccess({ id, audioCleanup: 'pending' });
 }

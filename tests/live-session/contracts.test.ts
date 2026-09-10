@@ -6,6 +6,13 @@ import {
 } from '@/lib/live-session/contracts';
 
 describe('live session contracts', () => {
+  it('rejects client-supplied audio references and sizes', () => {
+    const event = { tsMs: 0, actor: 'user', eventType: 'message', payload: {} };
+    expect(() =>
+      parseLiveSessionEvent({ ...event, audioPath: 'another/session/file.wav' }),
+    ).toThrow();
+    expect(() => parseLiveSessionEvent({ ...event, audioBytes: 42 })).toThrow();
+  });
   it('requires an explicit recording consent when starting a session', () => {
     expect(parseCreateLiveSession({ stageId: 'course-42', recorded: true })).toEqual({
       stageId: 'course-42',

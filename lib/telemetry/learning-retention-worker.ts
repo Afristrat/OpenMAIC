@@ -3,6 +3,7 @@ import { createLogger } from '@/lib/logger';
 import {
   purgeOrphanedManagedVideos,
   purgeOrphanedCourseImports,
+  purgeOrphanedSessionAudio,
 } from '@/lib/server/managed-video-cleanup';
 import { reconcileFailedManagedVideos } from '@/lib/server/managed-video-reconciliation';
 
@@ -45,6 +46,7 @@ export function startLearningRetentionWorker(): () => Promise<void> {
         [purgeDetachedPersonalAgents, 1000],
         [purgeOrphanedManagedVideos, 100],
         [purgeOrphanedCourseImports, 100],
+        [purgeOrphanedSessionAudio, 100],
       ] as const) {
         try {
           // ponytail: ten batches/hour/task/worker; increase cadence if monitored backlog grows.
