@@ -29,8 +29,8 @@ import {
 interface Metrics {
   totalLearners: number;
   activeClassrooms: number;
-  avgScore: number;
-  completionRate: number;
+  avgScore: number | null;
+  completionRate: number | null;
 }
 
 interface AnchoringMetrics {
@@ -45,8 +45,8 @@ interface FormationRow {
   stage_id: string;
   name: string;
   learner_count: number;
-  avg_score: number;
-  completion_rate: number;
+  avg_score: number | null;
+  completion_rate: number | null;
 }
 
 type DatePreset = '7d' | '30d' | '90d' | 'custom';
@@ -269,6 +269,11 @@ export default function ReportsPage() {
       {/* Metrics Cards */}
       {loadFailed && <p role="alert">{t('reports.loadFailed')}</p>}
       {metrics && (
+        <p className="mb-6 rounded-md border p-3 text-sm" role="note">
+          {t('reports.coverage')}
+        </p>
+      )}
+      {metrics && (
         <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
           <MetricCard
             icon={<Users className="h-5 w-5" />}
@@ -283,12 +288,12 @@ export default function ReportsPage() {
           <MetricCard
             icon={<Target className="h-5 w-5" />}
             label={t('reports.avgScore')}
-            value={`${metrics.avgScore}%`}
+            value={metrics.avgScore === null ? '—' : `${metrics.avgScore}%`}
           />
           <MetricCard
             icon={<Percent className="h-5 w-5" />}
             label={t('reports.completionRate')}
-            value={`${metrics.completionRate}%`}
+            value={metrics.completionRate === null ? '—' : `${metrics.completionRate}%`}
           />
         </div>
       )}
@@ -349,8 +354,12 @@ export default function ReportsPage() {
                   <tr key={f.stage_id} className="border-b last:border-b-0 hover:bg-muted/30">
                     <td className="px-4 py-3 font-medium">{f.name}</td>
                     <td className="px-4 py-3 text-right">{f.learner_count}</td>
-                    <td className="px-4 py-3 text-right">{f.avg_score.toFixed(1)}%</td>
-                    <td className="px-4 py-3 text-right">{f.completion_rate.toFixed(1)}%</td>
+                    <td className="px-4 py-3 text-right">
+                      {f.avg_score === null ? '—' : `${f.avg_score.toFixed(1)}%`}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {f.completion_rate === null ? '—' : `${f.completion_rate.toFixed(1)}%`}
+                    </td>
                   </tr>
                 ))}
               </tbody>

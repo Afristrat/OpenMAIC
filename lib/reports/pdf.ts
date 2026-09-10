@@ -1,17 +1,18 @@
 import PDFDocument from 'pdfkit';
+import { REPORT_COVERAGE_NOTE } from './coverage';
 
 interface ReportMetrics {
   totalLearners: number;
   activeClassrooms: number;
-  avgScore: number;
-  completionRate: number;
+  avgScore: number | null;
+  completionRate: number | null;
 }
 
 interface ReportFormation {
   name: string;
   learner_count: number;
-  avg_score: number;
-  completion_rate: number;
+  avg_score: number | null;
+  completion_rate: number | null;
 }
 
 function safeDate(value: string): string {
@@ -43,13 +44,20 @@ export async function createInstitutionalReportPdf(input: {
   document.text(input.organizationName);
   document.text(`Période : ${safeDate(input.dateFrom ?? '')} au ${safeDate(input.dateTo ?? '')}`);
   document.text(`Généré le ${new Date().toLocaleString('fr-FR')}`);
+  document.moveDown(0.5).fontSize(9).text(REPORT_COVERAGE_NOTE);
   document.moveDown(1.4);
 
   const metricCards = [
     ['Apprenants', input.metrics.totalLearners.toString()],
     ['Classrooms actives', input.metrics.activeClassrooms.toString()],
-    ['Score moyen', `${input.metrics.avgScore.toFixed(1)} %`],
-    ['Taux de complétion', `${input.metrics.completionRate.toFixed(1)} %`],
+    [
+      'Score moyen',
+      input.metrics.avgScore === null ? '—' : `${input.metrics.avgScore.toFixed(1)} %`,
+    ],
+    [
+      'Taux de complétion',
+      input.metrics.completionRate === null ? '—' : `${input.metrics.completionRate.toFixed(1)} %`,
+    ],
   ];
   const cardWidth = 118;
   const cardY = document.y;
@@ -112,8 +120,15 @@ export async function createInstitutionalReportPdf(input: {
     row([
       { text: formation.name, width: 255 },
       { text: formation.learner_count.toString(), width: 75 },
-      { text: `${formation.avg_score.toFixed(1)} %`, width: 70 },
-      { text: `${formation.completion_rate.toFixed(1)} %`, width: 90 },
+      {
+        text: formation.avg_score === null ? '—' : `${formation.avg_score.toFixed(1)} %`,
+        width: 70,
+      },
+      {
+        text:
+          formation.completion_rate === null ? '—' : `${formation.completion_rate.toFixed(1)} %`,
+        width: 90,
+      },
     ]),
   );
 

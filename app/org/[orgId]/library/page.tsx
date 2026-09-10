@@ -32,6 +32,7 @@ interface SharedClassroom {
   org_id: string;
   shared_by: string | null;
   visibility: 'private' | 'organization' | 'public';
+  authorization_verified: boolean;
   created_at: string;
   stage?: {
     id: string;
@@ -63,8 +64,7 @@ export default function LibraryPage() {
   const [classrooms, setClassrooms] = useState<SharedClassroom[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  // Reserved for future scene-type filtering (see comment below) — not wired yet.
-  const [_filterType, _setFilterType] = useState<string>('all');
+  const [updatingShare, setUpdatingShare] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<OrgMemberRole | null>(null);
   const [shareTarget, setShareTarget] = useState<SharedClassroom | null>(null);
   const [members, setMembers] = useState<OrganizationMember[]>([]);
@@ -162,24 +162,53 @@ export default function LibraryPage() {
         const name = c.stage?.name?.toLowerCase() ?? '';
         if (!name.includes(searchQuery.toLowerCase())) return false;
       }
-      // filterType is for future scene-type filtering
       return true;
     });
   }, [classrooms, searchQuery]);
 
-  const handleChangeVisibility = async (classroomId: string, newVisibility: string) => {
-    const supabase = createClient();
-    const { error } = await supabase
-      .from('shared_classrooms')
-      .update({ visibility: newVisibility })
-      .eq('id', classroomId);
-
-    if (error) {
-      toast.error(error.message);
-      return;
+  const handleChangeVisibility = async (
+    classroom: SharedClassroom,
+    newVisibility: string,
+    revalidate = false,
+  ) => {
+    if (updatingShare || !VISIBILITY_OPTIONS.some((value) => value === newVisibility)) return;
+    setUpdatingShare(classroom.id);
+    try {
+      const { data, error } = await createClient()
+        .from('shared_classrooms')
+        .update({ visibility: newVisibility })
+        .eq('id', classroom.id)
+        .eq('org_id', orgId)
+        .eq('visibility', classroom.visibility)
+        .select('id, org_id, visibility, authorization_verified')
+        .single();
+      if (
+        error ||
+        !data ||
+        data.id !== classroom.id ||
+        data.org_id !== orgId ||
+        data.visibility !== newVisibility ||
+        (revalidate && data.authorization_verified !== true)
+      )
+        throw new Error('Share update not acknowledged');
+      setClassrooms((items) =>
+        items.map((item) =>
+          item.id === classroom.id
+            ? {
+                ...item,
+                visibility: data.visibility as SharedClassroom['visibility'],
+                authorization_verified: data.authorization_verified,
+              }
+            : item,
+        ),
+      );
+      toast.success(t('org.saved'));
+      await fetchLibrary();
+    } catch {
+      toast.error(t('org.shareUpdateFailed'));
+    } finally {
+      setUpdatingShare(null);
     }
-    toast.success(t('org.saved'));
-    await fetchLibrary();
   };
 
   const openTransmissionDialog = async (classroom: SharedClassroom) => {
@@ -331,18 +360,38 @@ export default function LibraryPage() {
                 <span>{new Date(classroom.created_at).toLocaleDateString()}</span>
               </div>
 
+              {!classroom.authorization_verified && classroom.visibility !== 'private' && (
+                <div className="mb-3 space-y-2 rounded-md border p-2 text-sm">
+                  <p role="status">{t('org.shareNeedsReview')}</p>
+                  <p className="text-xs text-muted-foreground">{t('org.shareReviewHint')}</p>
+                  {canShare && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={updatingShare !== null}
+                      onClick={() => handleChangeVisibility(classroom, classroom.visibility, true)}
+                    >
+                      {t('org.revalidateShare')}
+                    </Button>
+                  )}
+                </div>
+              )}
+
               <div className="flex flex-wrap items-center gap-2">
-                <Button variant="outline" size="sm" asChild>
-                  <a
-                    href={`/classroom/${encodeURIComponent(classroom.stage_id)}?orgId=${encodeURIComponent(orgId)}`}
-                  >
-                    {t('toolbar.enterClassroom')}
-                  </a>
-                </Button>
+                {classroom.authorization_verified && classroom.visibility !== 'private' && (
+                  <Button variant="outline" size="sm" asChild>
+                    <a
+                      href={`/classroom/${encodeURIComponent(classroom.stage_id)}?orgId=${encodeURIComponent(orgId)}`}
+                    >
+                      {t('toolbar.enterClassroom')}
+                    </a>
+                  </Button>
+                )}
                 {canShare && (
                   <Select
                     value={classroom.visibility}
-                    onValueChange={(v) => handleChangeVisibility(classroom.id, v)}
+                    disabled={updatingShare !== null}
+                    onValueChange={(v) => handleChangeVisibility(classroom, v)}
                   >
                     <SelectTrigger
                       className="h-7 w-auto gap-1 text-xs"
@@ -373,7 +422,7 @@ export default function LibraryPage() {
                   </Button>
                 )}
 
-                {classroom.visibility === 'public' && (
+                {classroom.visibility === 'public' && classroom.authorization_verified && (
                   <Button
                     variant="ghost"
                     size="sm"

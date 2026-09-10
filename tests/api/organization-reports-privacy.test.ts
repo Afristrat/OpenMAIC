@@ -8,12 +8,14 @@ const mocks = vi.hoisted(() => ({
   organizationStatus: 'active',
   telemetryFilters: [] as unknown[][],
   quizFilters: [] as unknown[][],
+  shareFilters: [] as unknown[][],
+  emptyMeasures: false,
   failedTable: null as string | null,
   telemetryRows: null as Array<{ stage_id: string; completion_rate: number }> | null,
   ranges: [] as number[][],
 }));
 
-function queryResult(result: { data: unknown; error?: unknown }) {
+function queryResult(result: { data: unknown; error?: unknown }, table?: string) {
   let from = 0,
     to = Number.MAX_SAFE_INTEGER;
   const response = () => ({
@@ -24,8 +26,14 @@ function queryResult(result: { data: unknown; error?: unknown }) {
   });
   const query = {
     select: () => query,
-    eq: () => query,
-    in: () => query,
+    eq: (...args: unknown[]) => {
+      if (table === 'shared_classrooms') mocks.shareFilters.push(args);
+      return query;
+    },
+    in: (...args: unknown[]) => {
+      if (table === 'shared_classrooms') mocks.shareFilters.push(args);
+      return query;
+    },
     gte: () => query,
     lte: () => query,
     order: () => query,
@@ -98,10 +106,12 @@ function createSupabaseFixture() {
       responseIndex.set(table, index + 1);
       if (mocks.failedTable === table)
         return queryResult({ data: null, error: { message: 'private DB failure' } });
+      if (mocks.emptyMeasures && ['quiz_results', 'pedagogy_telemetry'].includes(table))
+        return queryResult({ data: [] });
       if (table === 'pedagogy_telemetry' && mocks.telemetryRows)
         return queryResult({ data: mocks.telemetryRows });
       const options = responses[table] ?? [{ data: [] }];
-      return queryResult(options[Math.min(index, options.length - 1)]);
+      return queryResult(options[Math.min(index, options.length - 1)], table);
     }),
   };
 }
@@ -133,6 +143,8 @@ describe('institutional report privacy boundary', () => {
     mocks.organizationStatus = 'active';
     mocks.telemetryFilters.length = 0;
     mocks.quizFilters.length = 0;
+    mocks.shareFilters.length = 0;
+    mocks.emptyMeasures = false;
     mocks.failedTable = null;
     mocks.telemetryRows = null;
     mocks.ranges.length = 0;
@@ -164,6 +176,14 @@ describe('institutional report privacy boundary', () => {
     expect(body.metrics.completionRate).toBe(75);
     expect(mocks.telemetryFilters).toContainEqual(['org_id', 'org-1']);
     expect(mocks.quizFilters).toContainEqual(['org_id', 'org-1']);
+    expect(mocks.shareFilters).toContainEqual(['authorization_verified', true]);
+    expect(mocks.shareFilters).toContainEqual(['visibility', ['organization', 'public']]);
+    expect(body.coverage).toEqual({
+      scope: 'organization_attributed',
+      unattributedHistory: 'excluded',
+      quizResults: 1,
+      learningObservations: 1,
+    });
     expect(body.formations).toEqual([
       {
         stage_id: 'stage-1',
@@ -200,6 +220,7 @@ describe('institutional report privacy boundary', () => {
 
     expect(response.status).toBe(200);
     expect(csv).toContain('=== Formations ===');
+    expect(csv).toContain('données historiques sans organisation vérifiable sont exclues');
     expect(csv).not.toContain('learner-secret-id');
     expect(csv).not.toContain('nickname');
     expect(csv).not.toContain('user_id');
@@ -218,6 +239,29 @@ describe('institutional report privacy boundary', () => {
     expect(input).not.toHaveProperty('learners');
     expect(JSON.stringify(input)).not.toContain('learner-secret-id');
   });
+
+  it.each(['json', 'csv', 'pdf'])(
+    'keeps missing measures distinct from zero in %s',
+    async (format) => {
+      mocks.emptyMeasures = true;
+      const { GET } = await import('@/app/api/organizations/[orgId]/reports/route');
+      const response = await GET(
+        new Request(`http://localhost/reports?format=${format}`) as NextRequest,
+        { params: Promise.resolve({ orgId: 'org-1' }) },
+      );
+      expect(response.status).toBe(200);
+      if (format === 'csv') {
+        expect(await response.text()).toContain('"stage-1","Formation agrégée",0,,');
+      } else {
+        const body =
+          format === 'pdf'
+            ? mocks.createInstitutionalReportPdf.mock.calls[0][0]
+            : await response.json();
+        expect(body.metrics).toMatchObject({ avgScore: null, completionRate: null });
+        expect(body.formations[0]).toMatchObject({ avg_score: null, completion_rate: null });
+      }
+    },
+  );
 
   it.each([
     'org_members',

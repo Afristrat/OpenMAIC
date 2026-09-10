@@ -1,6 +1,46 @@
 import { test, expect } from '../fixtures/base';
 
 test.describe('Reporting d’ancrage agrégé (S3-009)', () => {
+  for (const [locale, note] of [
+    ['fr-FR', 'Une valeur absente ne signifie pas zéro.'],
+    ['ar-MA', 'القيمة الغائبة لا تعني صفرًا.'],
+    ['en-US', 'A missing value does not mean zero.'],
+  ]) {
+    test(`missing observations and coverage ${locale}`, async ({ page }) => {
+      await page.addInitScript((value) => localStorage.setItem('locale', value), locale);
+      await page.route('**/api/organizations/org-report/reports?*', (route) =>
+        route.fulfill({
+          json: {
+            metrics: {
+              totalLearners: 1,
+              activeClassrooms: 1,
+              avgScore: null,
+              completionRate: null,
+            },
+            formations: [
+              {
+                stage_id: 'empty',
+                name: 'No measures yet',
+                learner_count: 0,
+                avg_score: null,
+                completion_rate: null,
+              },
+            ],
+          },
+        }),
+      );
+      await page.route('**/api/organizations/org-report/anchoring-report', (route) =>
+        route.fulfill({ json: { anchoring: null } }),
+      );
+      await page.goto('/org/org-report/reports');
+      await expect(page.getByRole('note')).toContainText(note);
+      const row = page.getByRole('row').filter({ hasText: 'No measures yet' });
+      await expect(row).toContainText('—');
+      await expect(row).not.toContainText('%');
+      await expect(page.getByText('0%', { exact: true })).toHaveCount(0);
+      await expect(page.locator('html')).toHaveAttribute('dir', locale === 'ar-MA' ? 'rtl' : 'ltr');
+    });
+  }
   test('removes old figures when loading another period fails', async ({
     page,
     browserConsoleContract,

@@ -12,6 +12,7 @@ import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response
 import type { OrgMemberRole } from '@/lib/supabase/types';
 import { createInstitutionalReportPdf } from '@/lib/reports/pdf';
 import { readReportPages } from '@/lib/reports/read-report-pages';
+import { REPORT_COVERAGE_NOTE } from '@/lib/reports/coverage';
 
 async function getUserMembership(
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
@@ -32,16 +33,16 @@ interface FormationRow {
   stage_id: string;
   name: string;
   learner_count: number;
-  avg_score: number;
-  completion_rate: number;
+  avg_score: number | null;
+  completion_rate: number | null;
 }
 
 function toCsv(formations: FormationRow[]): string {
-  const lines = ['=== Formations ==='];
+  const lines = [csvCell(REPORT_COVERAGE_NOTE), '=== Formations ==='];
   lines.push('stage_id,name,learner_count,avg_score,completion_rate');
   for (const f of formations) {
     lines.push(
-      `${csvCell(f.stage_id)},${csvCell(f.name)},${f.learner_count},${f.avg_score.toFixed(1)},${f.completion_rate.toFixed(1)}`,
+      `${csvCell(f.stage_id)},${csvCell(f.name)},${f.learner_count},${f.avg_score?.toFixed(1) ?? ''},${f.completion_rate?.toFixed(1) ?? ''}`,
     );
   }
 
@@ -125,6 +126,8 @@ async function readReport(
       .from('shared_classrooms')
       .select('stage_id', { count: 'exact' })
       .eq('org_id', orgId)
+      .eq('authorization_verified', true)
+      .in('visibility', ['organization', 'public'])
       .order('stage_id')
       .range(from, to)
       .abortSignal(signal),
@@ -256,16 +259,18 @@ async function readReport(
       stage_id: stageId,
       name: stageMap.get(stageId)!,
       learner_count: stat.learners.size,
-      avg_score: stat.scoreCount ? stat.scoreSum / stat.scoreCount : 0,
-      completion_rate: stat.completionCount ? (100 * stat.completionSum) / stat.completionCount : 0,
+      avg_score: stat.scoreCount ? stat.scoreSum / stat.scoreCount : null,
+      completion_rate: stat.completionCount
+        ? (100 * stat.completionSum) / stat.completionCount
+        : null,
     };
   });
 
   const metrics = {
     totalLearners,
     activeClassrooms,
-    avgScore: Math.round(avgScore * 10) / 10,
-    completionRate: Math.round(overallCompletionRate * 1000) / 10,
+    avgScore: scoreCount ? Math.round(avgScore * 10) / 10 : null,
+    completionRate: completionCount ? Math.round(overallCompletionRate * 1000) / 10 : null,
   };
 
   if (format === 'csv') {
@@ -298,6 +303,12 @@ async function readReport(
   }
 
   return apiSuccess({
+    coverage: {
+      scope: 'organization_attributed',
+      unattributedHistory: 'excluded',
+      quizResults: scoreCount,
+      learningObservations: completionCount,
+    },
     metrics,
     formations: formationStats,
   });

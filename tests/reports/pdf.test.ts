@@ -2,6 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { createInstitutionalReportPdf } from '@/lib/reports/pdf';
 
 describe('institutional report PDF', () => {
+  it('renders missing scores without coercing them to zero', async () => {
+    const pdf = await createInstitutionalReportPdf({
+      organizationName: 'Mesures absentes',
+      dateFrom: null,
+      dateTo: null,
+      metrics: { totalLearners: 1, activeClassrooms: 1, avgScore: null, completionRate: null },
+      formations: [{ name: 'Formation', learner_count: 0, avg_score: null, completion_rate: null }],
+    });
+    expect(pdf.subarray(0, 5).toString('ascii')).toBe('%PDF-');
+  });
   it('creates a complete PDF with the built-in font assets', async () => {
     const pdf = await createInstitutionalReportPdf({
       organizationName: 'Qalem Démonstration',
