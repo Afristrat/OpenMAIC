@@ -1,5 +1,9 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 10 septembre 2026 — U-018, routes et widget xAPI raccordés
+
+Statut/test super-admin implémentés, origine POST, configuration globale serveur seulement, aucune clé/URL exposée, HTTPS/redirections refusées/délai 5 s. Test natif /about : connexion et compatibilité 1.0.3, pas écriture et pas faux événement apprenant. Widget distingue chargement/erreur/non configuré, exige accusé exact, FR/AR/EN et RTL ; différence avec LRS par tenant explicitée. 92691 exit 0 : cinq tests, TypeScript/lint ; 74834 exit 0 : trois Chromium. Réseau simulé, pas de déploiement ou clôture ; détails docs/validation/U-018-xapi-diagnostics.md. Ponytail : mécanismes existants sans dépendance. Suite : raccordement S-035, recette LRS réelle et gate intégré.
+
 ## 10 septembre 2026 — S-036, livraison protégée des artefacts
 
 Exports terminés, vidéos générées et transmissions avec filigrane disposent de liens relatifs protégés dans le JSON personnel. Les routes existantes relisent les droits du compte via RLS avant signature ; chemin canonique et origine Storage contrôlés, signature 60 s, redirection 307 sans buffer binaire Next.js, réponses privées/no-store. La transmission ne sert que visual-watermark.mp4, jamais la source. Les règles existantes propriétaire ou expéditeur/destinataire restent inchangées : aucune nouvelle garantie d’appartenance au tenant ni de révocation instantanée d’une URL signée.

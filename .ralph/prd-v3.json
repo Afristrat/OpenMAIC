@@ -4774,7 +4774,7 @@
       },
       "sourceDependencies": ["U-002"],
       "dependencies": ["S0-011", "S-035"],
-      "gap": "Le widget appelle /api/xapi/status et /api/xapi/test ; routes non retrouvées.",
+      "gap": "2026-09-10 : routes statut/test codées, super-admin/origine/délai/redirections, aucune clé exposée. Test natif /about vérifie connexion et version 1.0.3, pas écriture ; widget FR/AR/EN distingue panne/configuration et annonce le périmètre global distinct des LRS tenant. 92691 : cinq tests et TypeScript/lint ; 74834 : trois Chromium, réseaux simulés. Restent S-035, recette LRS réelle et gate intégré/publication. Voir docs/validation/U-018-xapi-diagnostics.md ; aucune clôture.",
       "evidence": ["components/admin/xapi-tab.tsx"],
       "acceptance": [
         "Après conservation, brancher statut/test réels avec contrôle de rôle et résultat observable.",
