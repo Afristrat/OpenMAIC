@@ -593,6 +593,8 @@ test.describe('Classroom Interaction', () => {
         await expect(notice).toContainText('not evidence of a learning gain');
         await page.getByRole('button', { name: 'EN', exact: true }).click();
         await page.getByRole('menuitem', { name: 'Français' }).click();
+        // Wait for Radix's closing transition before opening the same menu again.
+        await expect(page.getByRole('menu')).toBeHidden();
         await expect(notice).toContainText('Observations : 1.');
         await expect(notice).toContainText('pas preuve d’un gain');
         await page.getByRole('button', { name: 'FR', exact: true }).click();
