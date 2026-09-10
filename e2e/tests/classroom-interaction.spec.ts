@@ -220,10 +220,10 @@ async function seedDatabase(
 test.describe('Classroom Interaction', () => {
   test.beforeEach(async ({ browserConsoleContract, page }, testInfo) => {
     browserConsoleContract.expectHttpError('/api/classroom', 404);
-    if (testInfo.title === LIVE_SPEECH_TEST) testInfo.setTimeout(60_000);
+    if (testInfo.title.startsWith(LIVE_SPEECH_TEST)) testInfo.setTimeout(60_000);
     await seedDatabase(
       page,
-      testInfo.title === LIVE_SPEECH_TEST ? LIVE_TTS_SETTINGS_STORAGE : SETTINGS_STORAGE,
+      testInfo.title.startsWith(LIVE_SPEECH_TEST) ? LIVE_TTS_SETTINGS_STORAGE : SETTINGS_STORAGE,
       testInfo.title === CERTIFICATE_PROMPT_TEST ||
         testInfo.title === CERTIFICATE_WITHOUT_QUIZ_TEST,
       testInfo.title === CERTIFICATE_PROMPT_TEST,
@@ -347,172 +347,222 @@ test.describe('Classroom Interaction', () => {
     await expectBodyScrollState(true);
   });
 
-  test(LIVE_SPEECH_TEST, async ({ page }) => {
-    const teacherSpeech = 'Apply this idea to one decision you make at work.';
-    const analystSpeech = 'Which assumption would make that decision fail?';
+  for (const consented of [false, true])
+    test(`${LIVE_SPEECH_TEST} (collection=${consented})`, async ({ page }) => {
+      const observations: Array<{
+        discussions?: Array<{
+          turns: Array<{ agentId: string; durationMs: number; outcome: string }>;
+          postDiscussionQuiz: null;
+        }>;
+      }> = [];
+      await page.route('**/api/telemetry-consent', (route) =>
+        route.fulfill({
+          json: {
+            choice: consented,
+            hasConsent: consented,
+            epoch: '00000000-0047-4000-8000-000000000099',
+          },
+        }),
+      );
+      await page.route('**/api/learning-observations', (route) => {
+        observations.push(route.request().postDataJSON());
+        return route.fulfill({ json: { recorded: true } });
+      });
+      const teacherSpeech = 'Apply this idea to one decision you make at work.';
+      const analystSpeech = 'Which assumption would make that decision fail?';
 
-    await page.addInitScript(() => {
-      const spokenTexts: string[] = [];
-      Object.defineProperty(window, '__e2eSpokenTexts', { value: spokenTexts });
+      await page.addInitScript(() => {
+        const spokenTexts: string[] = [];
+        Object.defineProperty(window, '__e2eSpokenTexts', { value: spokenTexts });
 
-      class MockSpeechSynthesisUtterance {
-        readonly text: string;
-        rate = 1;
-        pitch = 1;
-        volume = 1;
-        lang = '';
-        voice: SpeechSynthesisVoice | null = null;
-        onstart: ((event: SpeechSynthesisEvent) => void) | null = null;
-        onend: ((event: SpeechSynthesisEvent) => void) | null = null;
-        onerror: ((event: SpeechSynthesisErrorEvent) => void) | null = null;
-        onpause: ((event: SpeechSynthesisEvent) => void) | null = null;
-        onresume: ((event: SpeechSynthesisEvent) => void) | null = null;
+        class MockSpeechSynthesisUtterance {
+          readonly text: string;
+          rate = 1;
+          pitch = 1;
+          volume = 1;
+          lang = '';
+          voice: SpeechSynthesisVoice | null = null;
+          onstart: ((event: SpeechSynthesisEvent) => void) | null = null;
+          onend: ((event: SpeechSynthesisEvent) => void) | null = null;
+          onerror: ((event: SpeechSynthesisErrorEvent) => void) | null = null;
+          onpause: ((event: SpeechSynthesisEvent) => void) | null = null;
+          onresume: ((event: SpeechSynthesisEvent) => void) | null = null;
 
-        constructor(text: string) {
-          this.text = text;
+          constructor(text: string) {
+            this.text = text;
+          }
         }
-      }
 
-      const voice = {
-        default: true,
-        lang: 'en-US',
-        localService: true,
-        name: 'E2E Voice',
-        voiceURI: 'e2e-voice',
-      } as SpeechSynthesisVoice;
-      const speechSynthesis = {
-        onvoiceschanged: null,
-        paused: false,
-        pending: false,
-        speaking: false,
-        getVoices: () => [voice],
-        cancel: () => undefined,
-        pause: () => undefined,
-        resume: () => undefined,
-        speak: (utterance: MockSpeechSynthesisUtterance) => {
-          spokenTexts.push(utterance.text);
-          queueMicrotask(() => {
-            utterance.onstart?.({} as SpeechSynthesisEvent);
-            utterance.onend?.({} as SpeechSynthesisEvent);
-          });
-        },
-        addEventListener: () => undefined,
-        removeEventListener: () => undefined,
-        dispatchEvent: () => true,
-      } as unknown as SpeechSynthesis;
-
-      Object.defineProperty(window, 'SpeechSynthesisUtterance', {
-        value: MockSpeechSynthesisUtterance,
-      });
-      Object.defineProperty(window, 'speechSynthesis', { value: speechSynthesis });
-    });
-
-    let adaptiveTurn = 0;
-    await page.addInitScript(() => {
-      const events: unknown[] = [];
-      Object.defineProperty(window, '__discussionObservations', { value: events });
-      window.addEventListener('qalem-learning-discussion', (event) => {
-        events.push((event as CustomEvent).detail);
-      });
-    });
-    await page.route('**/api/chat', async (route) => {
-      adaptiveTurn += 1;
-      const isTeacherTurn = adaptiveTurn === 1;
-      const agentId = isTeacherTurn ? 'persona-e2e-teacher' : 'persona-e2e-analyst';
-      const agentName = isTeacherTurn ? 'E2E Teacher' : 'E2E Analyst';
-      const speech = isTeacherTurn ? teacherSpeech : analystSpeech;
-      const events = [
-        {
-          type: 'intervention_decision',
-          data: {
-            decisionId: `decision-${adaptiveTurn}`,
-            classroomId: TEST_STAGE_ID,
-            interactionId: 'e2e-learner-message',
-            sceneId: 'scene-1',
-            turnIndex: adaptiveTurn - 1,
-            agentId,
-            agentName,
-            trigger: isTeacherTurn ? 'learner-question' : 'unaddressed-risk',
-            form: isTeacherTurn ? 'clarification' : 'blind-spot',
-            reason: isTeacherTurn
-              ? 'Répondre à la demande réelle de l’apprenant.'
-              : 'Faire apparaître une hypothèse qui limite le transfert.',
+        const voice = {
+          default: true,
+          lang: 'en-US',
+          localService: true,
+          name: 'E2E Voice',
+          voiceURI: 'e2e-voice',
+        } as SpeechSynthesisVoice;
+        const speechSynthesis = {
+          onvoiceschanged: null,
+          paused: false,
+          pending: false,
+          speaking: false,
+          getVoices: () => [voice],
+          cancel: () => undefined,
+          pause: () => undefined,
+          resume: () => undefined,
+          speak: (utterance: MockSpeechSynthesisUtterance) => {
+            spokenTexts.push(utterance.text);
+            queueMicrotask(() => {
+              utterance.onstart?.({} as SpeechSynthesisEvent);
+              utterance.onend?.({} as SpeechSynthesisEvent);
+            });
           },
-        },
-        {
-          type: 'agent_start',
-          data: {
-            messageId: `e2e-live-message-${adaptiveTurn}`,
-            agentId,
-            agentName,
-            agentAvatar: '/avatars/teacher.png',
-            agentColor: '#3b82f6',
-          },
-        },
-        {
-          type: 'text_delta',
-          data: { messageId: `e2e-live-message-${adaptiveTurn}`, content: speech },
-        },
-        {
-          type: 'agent_end',
-          data: { messageId: `e2e-live-message-${adaptiveTurn}`, agentId },
-        },
-        ...(isTeacherTurn ? [] : [{ type: 'cue_user', data: { fromAgentId: agentId } }]),
-        {
-          type: 'done',
-          data: {
-            totalActions: 0,
-            totalAgents: 1,
-            agentHadContent: true,
-            directorState: {
-              turnCount: adaptiveTurn,
-              agentResponses: [],
-              whiteboardLedger: [],
+          addEventListener: () => undefined,
+          removeEventListener: () => undefined,
+          dispatchEvent: () => true,
+        } as unknown as SpeechSynthesis;
+
+        Object.defineProperty(window, 'SpeechSynthesisUtterance', {
+          value: MockSpeechSynthesisUtterance,
+        });
+        Object.defineProperty(window, 'speechSynthesis', { value: speechSynthesis });
+      });
+
+      let adaptiveTurn = 0;
+      await page.addInitScript(() => {
+        const events: unknown[] = [];
+        const phases: string[] = [];
+        Object.defineProperty(window, '__discussionObservations', { value: events });
+        Object.defineProperty(window, '__discussionTurnPhases', { value: phases });
+        window.addEventListener('qalem-discussion-turn', (event) => {
+          phases.push((event as CustomEvent<{ phase: string }>).detail.phase);
+        });
+        window.addEventListener('qalem-learning-discussion', (event) => {
+          events.push((event as CustomEvent).detail);
+        });
+      });
+      await page.route('**/api/chat', async (route) => {
+        adaptiveTurn += 1;
+        const isTeacherTurn = adaptiveTurn === 1;
+        const agentId = isTeacherTurn ? 'persona-e2e-teacher' : 'persona-e2e-analyst';
+        const agentName = isTeacherTurn ? 'E2E Teacher' : 'E2E Analyst';
+        const speech = isTeacherTurn ? teacherSpeech : analystSpeech;
+        const events = [
+          {
+            type: 'intervention_decision',
+            data: {
+              decisionId: `decision-${adaptiveTurn}`,
+              classroomId: TEST_STAGE_ID,
+              interactionId: 'e2e-learner-message',
+              sceneId: 'scene-1',
+              turnIndex: adaptiveTurn - 1,
+              agentId,
+              agentName,
+              trigger: isTeacherTurn ? 'learner-question' : 'unaddressed-risk',
+              form: isTeacherTurn ? 'clarification' : 'blind-spot',
+              reason: isTeacherTurn
+                ? 'Répondre à la demande réelle de l’apprenant.'
+                : 'Faire apparaître une hypothèse qui limite le transfert.',
             },
           },
-        },
-      ];
-      await route.fulfill({
-        status: 200,
-        headers: { 'Content-Type': 'text/event-stream' },
-        body: events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join(''),
+          {
+            type: 'agent_start',
+            data: {
+              messageId: `e2e-live-message-${adaptiveTurn}`,
+              agentId,
+              agentName,
+              agentAvatar: '/avatars/teacher.png',
+              agentColor: '#3b82f6',
+            },
+          },
+          {
+            type: 'text_delta',
+            data: { messageId: `e2e-live-message-${adaptiveTurn}`, content: speech },
+          },
+          {
+            type: 'agent_end',
+            data: { messageId: `e2e-live-message-${adaptiveTurn}`, agentId },
+          },
+          ...(isTeacherTurn ? [] : [{ type: 'cue_user', data: { fromAgentId: agentId } }]),
+          {
+            type: 'done',
+            data: {
+              totalActions: 0,
+              totalAgents: 1,
+              agentHadContent: true,
+              directorState: {
+                turnCount: adaptiveTurn,
+                agentResponses: [],
+                whiteboardLedger: [],
+              },
+            },
+          },
+        ];
+        await route.fulfill({
+          status: 200,
+          headers: { 'Content-Type': 'text/event-stream' },
+          body: events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join(''),
+        });
       });
-    });
 
-    const classroom = new ClassroomPage(page);
-    await classroom.goto(TEST_STAGE_ID);
-    await classroom.waitForLoaded();
-    await page.getByRole('button', { name: 'Text input' }).click();
-    await page.getByPlaceholder('Type your message...').fill('How can I use this at work?');
-    await page.getByPlaceholder('Type your message...').press('Enter');
+      const classroom = new ClassroomPage(page);
+      await classroom.goto(TEST_STAGE_ID);
+      await classroom.waitForLoaded();
+      await page.getByRole('button', { name: 'Text input' }).click();
+      await page.getByPlaceholder('Type your message...').fill('How can I use this at work?');
+      await page.getByPlaceholder('Type your message...').press('Enter');
 
-    await expect
-      .poll(
+      await expect
+        .poll(
+          () =>
+            page.evaluate(() =>
+              (window as unknown as { __e2eSpokenTexts: string[] }).__e2eSpokenTexts.join(' '),
+            ),
+          { timeout: 15_000 },
+        )
+        .toContain(`${teacherSpeech} ${analystSpeech}`);
+      await page.getByRole('tab', { name: 'Chat' }).click();
+      const transcript = page.getByLabel('Chat', { exact: true });
+      await expect(transcript.getByText('E2E Teacher')).toBeVisible();
+      await expect(transcript.getByText('E2E Analyst')).toBeVisible();
+      await expect(transcript.getByText(teacherSpeech)).toBeVisible();
+      await expect(transcript.getByText(analystSpeech)).toBeVisible();
+      const discussionEvents = await page.evaluate(
         () =>
+          (
+            window as unknown as {
+              __discussionObservations: Array<{ phase: string; messageId: string }>;
+            }
+          ).__discussionObservations,
+      );
+      expect(discussionEvents.map((event) => event.phase)).toEqual(['submitted', 'accepted']);
+      expect(new Set(discussionEvents.map((event) => event.messageId)).size).toBe(1);
+      expect(JSON.stringify(discussionEvents)).not.toContain('How can I use this at work?');
+      await expect
+        .poll(() =>
           page.evaluate(() =>
-            (window as unknown as { __e2eSpokenTexts: string[] }).__e2eSpokenTexts.join(' '),
+            (window as unknown as { __discussionTurnPhases: string[] }).__discussionTurnPhases.at(
+              -1,
+            ),
           ),
-        { timeout: 15_000 },
-      )
-      .toContain(`${teacherSpeech} ${analystSpeech}`);
-    await page.getByRole('tab', { name: 'Chat' }).click();
-    const transcript = page.getByLabel('Chat', { exact: true });
-    await expect(transcript.getByText('E2E Teacher')).toBeVisible();
-    await expect(transcript.getByText('E2E Analyst')).toBeVisible();
-    await expect(transcript.getByText(teacherSpeech)).toBeVisible();
-    await expect(transcript.getByText(analystSpeech)).toBeVisible();
-    const discussionEvents = await page.evaluate(
-      () =>
-        (
-          window as unknown as {
-            __discussionObservations: Array<{ phase: string; messageId: string }>;
-          }
-        ).__discussionObservations,
-    );
-    expect(discussionEvents.map((event) => event.phase)).toEqual(['submitted', 'accepted']);
-    expect(new Set(discussionEvents.map((event) => event.messageId)).size).toBe(1);
-    expect(JSON.stringify(discussionEvents)).not.toContain('How can I use this at work?');
-  });
+        )
+        .toBe('end');
+      if (consented) {
+        await expect
+          .poll(() => observations.flatMap((item) => item.discussions ?? []).length)
+          .toBe(1);
+        const discussion = observations.flatMap((item) => item.discussions ?? [])[0];
+        expect(discussion.turns.map((turn) => turn.agentId)).toEqual([
+          'persona-e2e-teacher',
+          'persona-e2e-analyst',
+        ]);
+        expect(
+          discussion.turns.every((turn) => turn.outcome === 'completed' && turn.durationMs >= 0),
+        ).toBe(true);
+        expect(discussion.postDiscussionQuiz).toBeNull();
+        expect(JSON.stringify(observations)).not.toContain(teacherSpeech);
+        expect(JSON.stringify(observations)).not.toContain(analystSpeech);
+      } else expect(observations).toEqual([]);
+    });
 
   test('exports the complete classroom as an MP4 download', async ({ page, mockApi }) => {
     await mockApi.mockMp4ExportDone();

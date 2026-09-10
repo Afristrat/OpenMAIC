@@ -4609,7 +4609,7 @@
       },
       "sourceDependencies": ["S-036"],
       "dependencies": ["S0-011", "U-021"],
-      "gap": "10 septembre 2026 : buffer pur et collecteur RPC consentis codés, INSERT direct hérité remplacé. Candidate 20260910033146 : epoch/consentement verrouillés, tenant/membre/partage/stage/scène/agents vérifiés, pseudonyme révocable, contexte serveur, rejeu immuable. Score client refusé, score et engagement NULL. 9502 exit 0 : huit tests/TypeScript/lint ; SQL ROLLBACK admission/rejets/rejeu/partage/retrait RLS vert, zéro fixtures/discussion/colonne après recette. Aucun appelant HTTP/chat, migration durable, navigateur ou déploiement. Restent raccordement sous epoch, événements réels, envoi durable, liaison quiz persisté, export/agrégats tenant puis gate/publication. S-047 ouverte.",
+      "gap": "10 septembre 2026 : chat QA/discussion raccordé via callbacks StreamBuffer, signaux sans texte, buffers sous consentement/epoch, outbox/API existantes et RPC consentie. Écritures parent/enfants idempotentes mais non globalement transactionnelles ; échec partiel non acquitté. Score client refusé. 16724 exit 0 : 29 tests/TypeScript/lint et deux Chromium question/deux agents avec ou sans consentement ; 62710 exit 0 : 31 tests/TypeScript/lint et neuf Chromium de non-régression. SQL candidate 20260910033146 précédemment prouvée sous ROLLBACK, non déployée. Restent provenance des tentatives de quiz (upsert client actuel insuffisant), liaison des scores, export/agrégats tenant, gate intégré/publication. Aucune migration durable ni activation. S-047 ouverte.",
       "evidence": [
         "lib/telemetry/discussion-collector.ts",
         "docs/validation/S-047-discussion-observations.md"

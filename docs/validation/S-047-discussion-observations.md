@@ -28,12 +28,9 @@ Tests déterministes : ordre, durées, interruption, zéro/null, premier score,
 doublons, horloge, débordement, texte non retenu et champs étrangers refusés.
 Aucune recette navigateur, collecte, migration, activation ou publication.
 
-**Le buffer n’est pas encore instancié par le chat.** Ne pas le présenter comme
-une collecte livrée. Prochain travail : création uniquement sous consentement
-vérifié et destruction au changement d’epoch ; événements réels du StreamBuffer ;
-envoi durable, résultat de quiz vérifié et recette intégrée avec S-048.
-Le chemin de persistance décrit ci-dessous remplace désormais l’INSERT hérité,
-mais reste sans appelant HTTP/chat. S-047 reste ouverte.
+Au premier candidat, le buffer n’était pas instancié par le chat. Les compléments
+ci-dessous ont remplacé l’INSERT hérité puis raccordé le chat sous consentement.
+Le résultat de quiz vérifié et la recette intégrée avec S-048 restent ouverts.
 
 Ponytail : état local borné, Zod et classificateur existants réutilisés, aucune
 dépendance nouvelle. La lecture des callbacks a distingué le temps de révélation
@@ -76,8 +73,59 @@ déploiement. Le runner reste un ancien socle avec overlays, pas un gate intégr
 au SHA propre. Aucun test navigateur n’est revendiqué pour cette persistance.
 L’advisor CLI local est indisponible, ce qui ne constitue pas un audit vert.
 
-Prochain code : entrée HTTP et buffer sous consentement/epoch, branchement réel
-des tours, outbox, liaison à un quiz persisté puis export personnel et agrégats
-tenant. Ne pas activer la collecte avant ces raccordements et leur validation.
+À ce stade de la persistance seule, l’entrée HTTP/chat et l’outbox restaient à
+raccorder ; le complément suivant les apporte. Ne pas activer la collecte avant
+la liaison fiable au quiz, l’export personnel et les agrégats tenant validés.
 Ponytail/Supabase : client, pseudonyme et cascade existants réutilisés, aucune
 dépendance supplémentaire ni fonction publique à privilèges élevés.
+
+## Raccordement chat → observations → reprise → RPC
+
+Le chat QA/discussion émet maintenant des signaux structurés : début de boucle,
+début de tour, classification des segments entièrement révélés, fin de tour et
+fin de boucle. Un changement de scène sépare les discussions. La fin est émise
+aussi en cas d’erreur/abandon ; un tour non terminé devient interrompu, pas réussi.
+Les tours successifs des agents dans une boucle partagent un identifiant UUID.
+La mesure couvre la révélation, les délais et les éventuelles pauses de l’UI,
+jamais une durée de parole ni une preuve d’attention. Aucun texte supplémentaire
+n’est conservé ou émis dans ces signaux ; la classification reste heuristique.
+
+Le buffer d’apprentissage existant possède les buffers de discussion : sans
+consentement vérifié, aucun n’est créé ; après renouvellement d’epoch, des tours
+sans nouveau signal de début sont ignorés. Les contrôles stage/tenant/scène
+précèdent l’ajout. Plafond de 32 discussions par enveloppe, 256 tours chacune,
+et limite existante de 64 Kio : un dépassement produit une erreur, pas une
+troncature ni une conservation garantie au-delà du quota du navigateur.
+
+La fin ferme l’enveloppe et utilise la file localStorage existante, par compte,
+avec revalidation du consentement avant envoi et purge existante au retrait.
+`/api/learning-observations` reçoit le nouveau champ strict `discussions` ; aucun
+second endpoint ou format d’outbox n’a été ajouté. Le collecteur serveur appelle
+les RPC consenties avec l’acteur authentifié. Les écritures parent/enfants sont
+séquentielles et idempotentes, **pas une transaction globale** : un échec partiel
+renvoie une erreur, conservant l’enveloppe pour reprise. Le refus du consentement
+interrompt l’admission. Le score quiz soumis dans une discussion est refusé.
+
+ServeurIA 16724 exit 0 : 29 tests ciblés, TypeScript/lint et deux Chromium sur
+le vrai parcours de saisie d’une question, avec deux réponses d’agents. Sans
+consentement : aucun POST d’observation. Avec consentement : une discussion,
+deux agents dans l’ordre, tours terminés, durées non négatives, score NULL et
+aucun texte dans l’enveloppe. Chat, voix et persistance HTTP sont simulés : ce
+n’est pas une recette production ni une preuve du fournisseur vocal.
+
+La reprise locale avec les tours est testée par reconstruction de l’outbox ; les
+tests serveur vérifient erreur enfant/rejeu, refus parent et refus enfant. Le
+contrat HTTP refuse une discussion sans tenant ou avec un score client.
+62710 exit 0 : 31 tests ciblés, TypeScript/lint et neuf parcours Chromium existants
+d’observation (reprise, fermeture, retrait et quiz compris). Ces neuf parcours
+valident la non-régression du circuit commun, pas neuf recettes de discussion.
+40818 exit 0 : TypeScript/lint et deux Chromium renforcés attendent explicitement
+le signal final `end` avant de constater l’absence d’envoi sans consentement.
+
+Prochain point identifié dans `lib/quiz/sync.ts` : le quiz ordinaire écrit depuis
+le client par upsert, identifiant stable utilisateur/stage/scène/tenant, sans
+nouvel horodatage de tentative dans la charge. Relier ce seul enregistrement ne
+prouverait ni une tentative postérieure ni une notation recalculée côté serveur.
+Il faut résoudre cette provenance avant d’associer les scores aux discussions.
+Restent aussi export personnel/agrégats, recette intégrée, gate au SHA propre et
+publication. Aucune migration durable ni activation effectuée dans ce complément.

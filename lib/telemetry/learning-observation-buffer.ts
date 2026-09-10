@@ -1,4 +1,5 @@
-import type { PedagogySession } from './pedagogy-collector';
+import type { PedagogySession } from './learning-observation-schema';
+import { DiscussionObservationBuffer, type DiscussionSignal } from './discussion-observation';
 import type { SceneType } from '@/lib/types/stage';
 
 /** Foreground scene dwell time, not a claim that audio was heard or learning occurred. */
@@ -8,6 +9,7 @@ export class LearningObservationBuffer {
   private scores = new Map<string, number>();
   private attempts = new Map<string, number[]>();
   private discussionMessages = new Map<string, { sceneId: string; accepted: boolean }>();
+  private discussions = new Map<string, { sceneId: string; buffer: DiscussionObservationBuffer }>();
   private actions = { play: 0, pause: 0, seek: 0 };
   private lastTime: number;
   private visible = true;
@@ -92,6 +94,11 @@ export class LearningObservationBuffer {
         ...(visit.type === 'quiz' ? { attempts: [...(this.attempts.get(visit.id) ?? [])] } : {}),
       });
     });
+    const discussions = [...this.discussions.values()].flatMap(({ buffer }) => {
+      buffer.end();
+      const observation = buffer.snapshot();
+      return observation ? [observation] : [];
+    });
     return {
       sessionId: this.sessionId,
       consentEpoch: this.consentEpoch,
@@ -101,6 +108,7 @@ export class LearningObservationBuffer {
       sceneDurations: durations,
       quizScores: [...this.scores.values()],
       sceneObservations: [...scenes.values()],
+      ...(discussions.length ? { discussions } : {}),
       completionRate: actualIds.size ? completedCount / actualIds.size : 0,
       totalDuration: Math.min(
         86400,
@@ -123,6 +131,39 @@ export class LearningObservationBuffer {
       this.discussionMessages.set(messageId, { sceneId, accepted: false });
     } else if (phase === 'accepted' && previous?.sceneId === sceneId) {
       previous.accepted = true;
+    }
+  }
+
+  discussionTurn(signal: DiscussionSignal): void {
+    if (signal.stageId !== this.stageId || signal.orgId !== this.orgId) return;
+    if (signal.phase === 'begin' && !this.discussions.has(signal.discussionId)) {
+      if (
+        this.currentId !== signal.sceneId ||
+        !this.visits.some((visit) => visit.id === signal.sceneId)
+      )
+        return;
+      if (this.discussions.size >= 32) throw new Error('Discussion observation capacity exceeded');
+      this.discussions.set(signal.discussionId, {
+        sceneId: signal.sceneId,
+        buffer: new DiscussionObservationBuffer(signal.discussionId, signal.sceneId, this.now),
+      });
+    }
+    const entry = this.discussions.get(signal.discussionId);
+    if (!entry || entry.sceneId !== signal.sceneId) return;
+    // No begin in this consent epoch means no joining a pre-consent conversation.
+    switch (signal.phase) {
+      case 'start':
+        entry.buffer.startTurn(signal.messageId, signal.agentId);
+        break;
+      case 'segment':
+        entry.buffer.segment(signal.messageId, signal.interventionType);
+        break;
+      case 'turn-end':
+        entry.buffer.finishObservedTurn(signal.messageId, 'completed');
+        break;
+      case 'end':
+        entry.buffer.end();
+        break;
     }
   }
 }

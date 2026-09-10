@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LearningObservationBuffer } from '@/lib/telemetry/learning-observation-buffer';
 
-const mocks = vi.hoisted(() => ({ rpc: vi.fn(), abort: vi.fn() }));
+const mocks = vi.hoisted(() => ({ rpc: vi.fn(), abort: vi.fn(), discussion: vi.fn() }));
+vi.mock('@/lib/telemetry/discussion-collector', () => ({
+  collectDiscussionData: mocks.discussion,
+}));
 vi.mock('@supabase/supabase-js', () => ({ createClient: () => ({ rpc: mocks.rpc }) }));
 import { collectPedagogyData } from '@/lib/telemetry/pedagogy-collector';
 
@@ -17,8 +20,39 @@ describe('learning collector RPC boundary', () => {
     vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'test-only');
     mocks.rpc.mockReturnValue({ abortSignal: mocks.abort });
     mocks.abort.mockResolvedValue({ data: true, error: null });
+    mocks.discussion.mockResolvedValue(true);
   });
   afterEach(() => vi.unstubAllEnvs());
+
+  it('acknowledges only after child discussions and retains failures for whole-envelope replay', async () => {
+    const buffer = new LearningObservationBuffer('stage', epoch, session, () => 0, orgId);
+    buffer.scene('scene', 'slide');
+    const scope = {
+      stageId: 'stage',
+      sceneId: 'scene',
+      orgId,
+      discussionId: '00000000-0047-4000-8000-000000000003',
+    };
+    buffer.discussionTurn({ ...scope, phase: 'begin' });
+    buffer.discussionTurn({ ...scope, phase: 'start', messageId: 'one', agentId: 'agent' });
+    buffer.discussionTurn({ ...scope, phase: 'end' });
+    const payload = buffer.snapshot(['scene'], 1)!;
+    mocks.discussion.mockRejectedValueOnce(new Error('Discussion unavailable'));
+    await expect(collectPedagogyData(actor, payload)).rejects.toThrow('Discussion unavailable');
+    expect(await collectPedagogyData(actor, payload)).toBe(true);
+    expect(mocks.discussion).toHaveBeenLastCalledWith(actor, {
+      stageId: 'stage',
+      orgId,
+      consentEpoch: epoch,
+      observation: payload.discussions![0],
+    });
+    mocks.abort.mockResolvedValueOnce({ data: false, error: null });
+    mocks.discussion.mockClear();
+    expect(await collectPedagogyData(actor, payload)).toBe(false);
+    expect(mocks.discussion).not.toHaveBeenCalled();
+    mocks.discussion.mockResolvedValueOnce(false);
+    expect(await collectPedagogyData(actor, payload)).toBe(false);
+  });
 
   it.each([orgId, undefined])('forwards the captured scope unchanged (%s)', async (scope) => {
     const buffer = new LearningObservationBuffer('stage', epoch, session, () => 0, scope);

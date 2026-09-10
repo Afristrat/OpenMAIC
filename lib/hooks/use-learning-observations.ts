@@ -6,6 +6,7 @@ import { useClassroomOrganizationId } from '@/lib/contexts/classroom-organizatio
 import { useStageStore } from '@/lib/store/stage';
 import { LearningObservationBuffer } from '@/lib/telemetry/learning-observation-buffer';
 import { LearningObservationOutbox } from '@/lib/telemetry/learning-observation-outbox';
+import { discussionSignalSchema } from '@/lib/telemetry/discussion-observation';
 import type { PedagogySession } from '@/lib/telemetry/learning-observation-schema';
 import type { EngineMode } from '@/lib/playback';
 
@@ -219,6 +220,17 @@ export function useLearningObservations(stageId: string | undefined) {
         showError(true);
       }
     };
+    const discussionTurn = (event: Event) => {
+      const parsed = discussionSignalSchema.safeParse((event as CustomEvent<unknown>).detail);
+      if (!parsed.success || parsed.data.stageId !== stageId || parsed.data.orgId !== orgId) return;
+      try {
+        syncScene();
+        buffer?.discussionTurn(parsed.data);
+        if (parsed.data.phase === 'end') finish();
+      } catch {
+        showError(true);
+      }
+    };
     const api: Observer = {
       mode(next) {
         if (next !== mode) {
@@ -240,6 +252,7 @@ export function useLearningObservations(stageId: string | undefined) {
     window.addEventListener('qalem-consent-change', changed);
     window.addEventListener('qalem-learning-quiz', quiz);
     window.addEventListener('qalem-learning-discussion', discussion);
+    window.addEventListener('qalem-discussion-turn', discussionTurn);
     window.addEventListener('pagehide', leaving);
     window.addEventListener('pageshow', refresh);
     window.addEventListener('online', send);
@@ -255,6 +268,7 @@ export function useLearningObservations(stageId: string | undefined) {
       window.removeEventListener('qalem-consent-change', changed);
       window.removeEventListener('qalem-learning-quiz', quiz);
       window.removeEventListener('qalem-learning-discussion', discussion);
+      window.removeEventListener('qalem-discussion-turn', discussionTurn);
       window.removeEventListener('pagehide', leaving);
       window.removeEventListener('pageshow', refresh);
       window.removeEventListener('online', send);

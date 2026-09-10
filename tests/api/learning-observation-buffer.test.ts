@@ -2,6 +2,69 @@ import { describe, expect, it } from 'vitest';
 import { LearningObservationBuffer } from '@/lib/telemetry/learning-observation-buffer';
 
 describe('actual learning observations', () => {
+  it('retains revealed turns only after begin in the same consent buffer and tenant', () => {
+    let now = 0;
+    const orgId = '00000000-0047-4000-8000-000000000002';
+    const scope = {
+      stageId: 'stage',
+      sceneId: 'a',
+      orgId,
+      discussionId: '00000000-0047-4000-8000-000000000003',
+    };
+    const buffer = new LearningObservationBuffer('stage', 'epoch', 'session', () => now, orgId);
+    buffer.scene('a', 'slide');
+    buffer.discussionTurn({ ...scope, phase: 'start', messageId: 'pre-consent', agentId: 'a' });
+    buffer.discussionTurn({ ...scope, phase: 'begin', orgId: 'foreign' });
+    expect(buffer.snapshot(['a'], 2)!.discussions).toBeUndefined();
+    buffer.discussionTurn({ ...scope, phase: 'begin' });
+    buffer.discussionTurn({ ...scope, phase: 'start', messageId: 'one', agentId: 'a' });
+    buffer.discussionTurn({
+      ...scope,
+      phase: 'segment',
+      messageId: 'one',
+      interventionType: 'question',
+    });
+    buffer.discussionTurn({
+      ...scope,
+      phase: 'segment',
+      messageId: 'one',
+      interventionType: 'answer',
+    });
+    now = 1200;
+    buffer.discussionTurn({ ...scope, phase: 'turn-end', messageId: 'one' });
+    buffer.discussionTurn({ ...scope, phase: 'start', messageId: 'two', agentId: 'b' });
+    now = 1700;
+    buffer.discussionTurn({ ...scope, phase: 'end' });
+    expect(buffer.snapshot(['a'], 2)!.discussions?.[0]).toMatchObject({
+      postDiscussionQuiz: null,
+      turns: [
+        {
+          id: 'one',
+          agentId: 'a',
+          durationMs: 1200,
+          interventionType: 'question',
+          outcome: 'completed',
+        },
+        {
+          id: 'two',
+          agentId: 'b',
+          durationMs: 500,
+          interventionType: 'unknown',
+          outcome: 'interrupted',
+        },
+      ],
+    });
+    const renewed = new LearningObservationBuffer(
+      'stage',
+      'new-epoch',
+      'new-session',
+      () => now,
+      orgId,
+    );
+    renewed.scene('a', 'slide');
+    renewed.discussionTurn({ ...scope, phase: 'start', messageId: 'late', agentId: 'a' });
+    expect(renewed.snapshot(['a'], 2)!.discussions).toBeUndefined();
+  });
   it('counts only acknowledged messages submitted within the same observation', () => {
     const buffer = new LearningObservationBuffer('stage', 'epoch', 'session', () => 0);
     buffer.scene('a', 'slide');

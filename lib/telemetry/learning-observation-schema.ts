@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { discussionObservationSchema } from './discussion-observation';
 
 /** Shared trust boundary, without importing the server's service-role client. */
 export const learningSessionSchema = z
@@ -14,6 +15,10 @@ export const learningSessionSchema = z
       .max(256),
     sceneDurations: z.array(z.number().int().min(0).max(86400)).min(1).max(256),
     quizScores: z.array(z.number().min(0).max(1)).max(512),
+    discussions: z
+      .array(discussionObservationSchema.refine((item) => item.postDiscussionQuiz === null))
+      .max(32)
+      .optional(),
     // Absent on old durable entries: never infer which scene an old score belonged to.
     sceneObservations: z
       .array(
@@ -56,6 +61,17 @@ export const learningSessionSchema = z
       .strict(),
   })
   .strict()
+  .refine(
+    (session) =>
+      !session.discussions?.length ||
+      (!!session.orgId &&
+        new Set(session.discussions.map((item) => item.discussionId)).size ===
+          session.discussions.length &&
+        session.discussions.every((item) =>
+          session.sceneObservations?.some((scene) => scene.id === item.sceneId),
+        )),
+    'Discussion scope must be explicit and unique',
+  )
   .refine(
     (session) =>
       (session.sceneObservations?.reduce((sum, item) => sum + (item.attempts?.length ?? 0), 0) ??

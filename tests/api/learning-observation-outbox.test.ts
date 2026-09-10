@@ -28,6 +28,35 @@ function observation() {
   return buffer.snapshot(['scene'], 1)!;
 }
 describe('persistent learning outbox', () => {
+  it('preserves discussion turns through reload and rejects quiz claims before durable storage', () => {
+    const disk = storage();
+    const queue = new LearningObservationOutbox(owner, disk);
+    const buffer = new LearningObservationBuffer('stage', other, sessionId, () => 0, owner);
+    buffer.scene('scene', 'slide');
+    const scope = { stageId: 'stage', sceneId: 'scene', orgId: owner, discussionId: sessionId };
+    buffer.discussionTurn({ ...scope, phase: 'begin' });
+    buffer.discussionTurn({ ...scope, phase: 'start', messageId: 'turn', agentId: 'agent' });
+    buffer.discussionTurn({
+      ...scope,
+      phase: 'segment',
+      messageId: 'turn',
+      interventionType: 'example',
+    });
+    buffer.discussionTurn({ ...scope, phase: 'turn-end', messageId: 'turn' });
+    const sample = buffer.snapshot(['scene'], 1)!;
+    queue.put(sample);
+    expect(new LearningObservationOutbox(owner, disk).read()).toEqual([sample]);
+    expect(() =>
+      queue.put({
+        ...sample,
+        discussions: sample.discussions!.map((item) => ({
+          ...item,
+          postDiscussionQuiz: { sceneId: 'quiz', score: 1 },
+        })),
+      }),
+    ).toThrow();
+    expect(queue.read()).toEqual([sample]);
+  });
   it('captures the tenant and refuses reattribution, including for legacy entries', () => {
     const disk = storage();
     const queue = new LearningObservationOutbox(owner, disk);

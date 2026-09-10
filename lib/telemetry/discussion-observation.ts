@@ -66,12 +66,47 @@ export const discussionObservationSchema = z
 
 export type DiscussionObservation = z.infer<typeof discussionObservationSchema>;
 
+const signalScope = z.object({
+  stageId: identifier,
+  sceneId: identifier,
+  orgId: z.string().uuid(),
+  discussionId: z.string().uuid(),
+});
+export const discussionSignalSchema = z.discriminatedUnion('phase', [
+  signalScope.extend({ phase: z.literal('begin') }).strict(),
+  signalScope
+    .extend({ phase: z.literal('start'), messageId: identifier, agentId: identifier })
+    .strict(),
+  signalScope
+    .extend({
+      phase: z.literal('segment'),
+      messageId: identifier,
+      interventionType: interventionTypeSchema,
+    })
+    .strict(),
+  signalScope.extend({ phase: z.literal('turn-end'), messageId: identifier }).strict(),
+  signalScope.extend({ phase: z.literal('end') }).strict(),
+]);
+export type DiscussionSignal = z.infer<typeof discussionSignalSchema>;
+export type DiscussionScope = z.infer<typeof signalScope>;
+
+/** Structured local signals only: no text or learner identity is dispatched. */
+export function publishDiscussionSignal(signal: DiscussionSignal): void {
+  if (typeof window !== 'undefined')
+    window.dispatchEvent(new CustomEvent('qalem-discussion-turn', { detail: signal }));
+}
+
 /** Instantiate only after opt-in; discard the whole instance when its consent epoch changes.
  * This bounded local recorder makes no network calls and retains no message text.
  */
 export class DiscussionObservationBuffer {
   private turns: DiscussionObservation['turns'] = [];
-  private active: { id: string; agentId: string; started: number } | null = null;
+  private active: {
+    id: string;
+    agentId: string;
+    started: number;
+    type: DiscussionObservation['turns'][number]['interventionType'];
+  } | null = null;
   private ended = false;
   private quiz: DiscussionObservation['postDiscussionQuiz'] = null;
   private lastTime = -Infinity;
@@ -100,16 +135,37 @@ export class DiscussionObservationBuffer {
       return false;
     if (this.active) throw new Error('Previous discussion turn is unfinished');
     if (this.turns.length >= 256) throw new Error('Discussion observation capacity exceeded');
-    this.active = { id, agentId, started: this.time() };
+    this.active = { id, agentId, started: this.time(), type: 'unknown' };
     return true;
   }
 
   finishTurn(id: string, text: string, outcome: 'completed' | 'interrupted' | 'failed'): boolean {
+    this.segment(id, classifyIntervention(text));
+    return this.finishObservedTurn(id, outcome);
+  }
+
+  segment(id: string, type: DiscussionObservation['turns'][number]['interventionType']): void {
+    if (!this.active || this.active.id !== id || this.ended) return;
+    // Same precedence as the classifier, across fully revealed segments; no text retained.
+    const priority = [
+      'unknown',
+      'answer',
+      'joke',
+      'example',
+      'question',
+      'counter_argument',
+      'synthesis',
+    ];
+    interventionTypeSchema.parse(type);
+    if (priority.indexOf(type) > priority.indexOf(this.active.type)) this.active.type = type;
+  }
+
+  finishObservedTurn(id: string, outcome: 'completed' | 'interrupted' | 'failed'): boolean {
     if (!this.active || this.active.id !== id || this.ended) return false;
     const turn = turnSchema.parse({
       id,
       agentId: this.active.agentId,
-      interventionType: outcome === 'completed' ? classifyIntervention(text) : 'unknown',
+      interventionType: outcome === 'completed' ? this.active.type : 'unknown',
       durationMs: Math.floor(this.time() - this.active.started),
       outcome,
     });

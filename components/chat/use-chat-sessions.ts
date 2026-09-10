@@ -2,6 +2,11 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { publishDiscussionObservation } from '@/lib/telemetry/learning-events';
+import {
+  classifyIntervention,
+  publishDiscussionSignal,
+  type DiscussionScope,
+} from '@/lib/telemetry/discussion-observation';
 import type {
   ChatSession,
   SessionType,
@@ -24,7 +29,7 @@ import { resolveInteractionOrganizationId } from '@/lib/chat/interaction-organiz
 import { getCurrentModelConfig } from '@/lib/utils/model-config';
 import { USER_AVATAR } from '@/lib/types/roundtable';
 import { StreamBuffer } from '@/lib/buffer/stream-buffer';
-import type { AgentStartItem, ActionItem } from '@/lib/buffer/stream-buffer';
+import type { AgentStartItem, AgentEndItem, ActionItem } from '@/lib/buffer/stream-buffer';
 import { runAgentLoop, type AgentLoopStoreState } from '@/lib/chat/agent-loop';
 import { ActionEngine } from '@/lib/action/engine';
 import { toast } from 'sonner';
@@ -235,7 +240,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
    * Returns the buffer instance (also stored in buffersRef).
    */
   const createBufferForSession = useCallback(
-    (sessionId: string, type?: SessionType): StreamBuffer => {
+    (sessionId: string, type?: SessionType, observationScope?: DiscussionScope): StreamBuffer => {
       // Dispose previous buffer if any
       // Shutdown (not dispose) — avoids stale onLiveSpeech(null,null) callback
       const prev = buffersRef.current.get(sessionId);
@@ -249,6 +254,13 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
       const buffer = new StreamBuffer(
         {
           onAgentStart(data: AgentStartItem) {
+            if (observationScope)
+              publishDiscussionSignal({
+                ...observationScope,
+                phase: 'start',
+                messageId: data.messageId,
+                agentId: data.agentId,
+              });
             const now = Date.now();
             const agentConfig = useAgentRegistry.getState().getAgent(data.agentId);
             const newMsg: UIMessage<ChatMessageMetadata> = {
@@ -273,7 +285,13 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
             onActiveBubbleRef.current?.(data.messageId);
           },
 
-          onAgentEnd() {
+          onAgentEnd(data: AgentEndItem) {
+            if (observationScope)
+              publishDiscussionSignal({
+                ...observationScope,
+                phase: 'turn-end',
+                messageId: data.messageId,
+              });
             // Remove empty assistant messages (agent started but produced no content)
             setSessions((prev) =>
               prev.map((s) => {
@@ -290,8 +308,15 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
             messageId: string,
             partId: string,
             revealedText: string,
-            _isComplete: boolean,
+            isComplete: boolean,
           ) {
+            if (observationScope && isComplete)
+              publishDiscussionSignal({
+                ...observationScope,
+                phase: 'segment',
+                messageId,
+                interventionType: classifyIntervention(revealedText),
+              });
             setSessions((prev) =>
               prev.map((s) => {
                 if (s.id !== sessionId) return s;
@@ -488,6 +513,11 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
       // messageId can fall back to the current agent.
       let currentMessageId: string | null = null;
       let submissionObserved = false;
+      let discussionScope: DiscussionScope | undefined;
+      const closeObservation = () => {
+        if (discussionScope) publishDiscussionSignal({ ...discussionScope, phase: 'end' });
+        discussionScope = undefined;
+      };
 
       const outcome = await runAgentLoop(
         {
@@ -517,6 +547,29 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
           },
 
           fetchChat: async (body, signal) => {
+            // Match the actual request scene, not the initial template after a scene change.
+            const actualState = body.storeState as AgentLoopStoreState;
+            const actualStage = actualState.stage as { id?: string } | null;
+            if (
+              sessionType !== 'lecture' &&
+              actualStage?.id &&
+              actualState.currentSceneId &&
+              interactionOrganizationId
+            ) {
+              if (
+                discussionScope?.stageId !== actualStage.id ||
+                discussionScope?.sceneId !== actualState.currentSceneId
+              ) {
+                closeObservation();
+                discussionScope = {
+                  discussionId: crypto.randomUUID(),
+                  stageId: actualStage.id,
+                  sceneId: actualState.currentSceneId,
+                  orgId: interactionOrganizationId,
+                };
+                publishDiscussionSignal({ ...discussionScope, phase: 'begin' });
+              }
+            } else closeObservation();
             const state = requestTemplate.storeState;
             const stage = state.stage as { id?: string } | undefined;
             const sceneId = state.currentSceneId;
@@ -555,7 +608,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
           onEvent: (event) => {
             // Create buffer on first event of each iteration
             if (!currentBuffer) {
-              currentBuffer = createBufferForSession(sessionId, sessionType);
+              currentBuffer = createBufferForSession(sessionId, sessionType, discussionScope);
             }
 
             // Pipe SSE events into StreamBuffer.
@@ -644,7 +697,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
           },
         },
         controller.signal,
-      );
+      ).finally(closeObservation);
 
       // Handle loop completion (UI-specific). Map each outcome.reason to a
       // distinct session state — don't conflate error paths with completion.

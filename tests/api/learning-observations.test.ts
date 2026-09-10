@@ -56,6 +56,49 @@ describe('learning collection boundary', () => {
   it('rejects mismatched scene measures', async () => {
     expect((await POST(request({ ...sample, sceneDurations: [] }))).status).toBe(400);
   });
+  it('accepts scoped discussions through the existing route, without accepting a quiz claim', async () => {
+    const scoped = {
+      ...sample,
+      orgId: '00000000-0047-4000-8000-000000000001',
+      sceneObservations: [
+        { id: 'scene', type: 'slide', seconds: 4, completed: false, score: null },
+      ],
+      discussions: [
+        {
+          discussionId: '00000000-0047-4000-8000-000000000002',
+          sceneId: 'scene',
+          durationBasis: 'client-monotonic-elapsed',
+          classificationMethod: 'text-heuristic-v1',
+          turns: [
+            {
+              id: 'turn',
+              agentId: 'agent',
+              durationMs: 123,
+              interventionType: 'answer',
+              outcome: 'completed',
+            },
+          ],
+          postDiscussionQuiz: null,
+        },
+      ],
+    };
+    expect((await POST(request(scoped))).status).toBe(200);
+    expect(mocks.collect).toHaveBeenCalledWith('verified-user', scoped);
+    expect((await POST(request({ ...scoped, orgId: undefined }))).status).toBe(400);
+    expect(
+      (
+        await POST(
+          request({
+            ...scoped,
+            discussions: scoped.discussions.map((item) => ({
+              ...item,
+              postDiscussionQuiz: { sceneId: 'quiz', score: 1 },
+            })),
+          }),
+        )
+      ).status,
+    ).toBe(400);
+  });
   it('preserves explicit tenant scope and rejects malformed tenant identifiers', async () => {
     const scoped = { ...sample, orgId: '00000000-0036-4000-8000-000000000002' };
     expect((await POST(request(scoped))).status).toBe(200);

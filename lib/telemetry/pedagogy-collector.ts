@@ -5,6 +5,7 @@
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
+import { collectDiscussionData } from './discussion-collector';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -80,10 +81,25 @@ export async function collectPedagogyData(
     })
     .abortSignal(AbortSignal.timeout(5000));
 
-  if (error) {
+  if (error || typeof data !== 'boolean') {
     throw new Error('Learning observation could not be recorded');
   }
-  return data === true;
+  if (!data) return false;
+  // Each write is idempotent and repeats authorization under lock. A partial
+  // failure throws: the durable client entry is retried, never acknowledged early.
+  for (const observation of session.discussions ?? []) {
+    if (!session.orgId) throw new Error('Discussion organization required');
+    if (
+      !(await collectDiscussionData(actorId, {
+        stageId: session.stageId,
+        orgId: session.orgId,
+        consentEpoch: session.consentEpoch,
+        observation,
+      }))
+    )
+      return false;
+  }
+  return true;
 }
 
 // ---------------------------------------------------------------------------
