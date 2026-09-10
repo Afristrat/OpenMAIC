@@ -4507,7 +4507,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Pipeline de collecte de données pédagogiques » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "planned",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "file": ".ralph/prd.json",
