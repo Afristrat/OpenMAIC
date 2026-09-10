@@ -1,0 +1,285 @@
+// Real GoTrue cookies → Next routes → PostgREST/SQL, isolated synthetic data only.
+import assert from 'node:assert/strict';
+import { createHmac, randomUUID } from 'node:crypto';
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
+import { createServer, request } from 'node:http';
+import { setTimeout as delay } from 'node:timers/promises';
+import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@supabase/ssr';
+import { chromium, type Browser } from '@playwright/test';
+
+async function main() {
+  assert(process.argv.includes('--isolated-s048'));
+  assert.equal(process.env.S048_REST_URL, 'http://qalem-prd3-rest-20260910:3000');
+  assert.equal(process.env.S048_AUTH_URL, 'http://qalem-prd3-auth-20260910:9999');
+  const secret = process.env.S048_JWT_SECRET;
+  assert(secret && secret.length >= 32);
+  const token = (role: string) => {
+    const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
+    const payload = Buffer.from(
+      JSON.stringify({ role, exp: Math.floor(Date.now() / 1000) + 900 }),
+    ).toString('base64url');
+    const body = `${header}.${payload}`;
+    return `${body}.${createHmac('sha256', secret).update(body).digest('base64url')}`;
+  };
+  const gateway = createServer((incoming, outgoing) => {
+    const auth = incoming.url?.startsWith('/auth/v1/');
+    if (!auth && !incoming.url?.startsWith('/rest/v1/')) {
+      outgoing.writeHead(404).end();
+      return;
+    }
+    const upstream = request(
+      {
+        hostname: auth ? 'qalem-prd3-auth-20260910' : 'qalem-prd3-rest-20260910',
+        port: auth ? 9999 : 3000,
+        path: incoming.url!.slice(auth ? '/auth/v1'.length : '/rest/v1'.length),
+        method: incoming.method,
+        headers: incoming.headers,
+        timeout: 10000,
+      },
+      (response) => {
+        outgoing.writeHead(response.statusCode ?? 502, response.headers);
+        response.pipe(outgoing);
+      },
+    );
+    upstream.on('timeout', () => upstream.destroy());
+    upstream.on('error', () => outgoing.destroy());
+    incoming.pipe(upstream);
+  });
+  gateway.listen(3018, '127.0.0.1');
+  await once(gateway, 'listening');
+  const url = 'http://127.0.0.1:3018';
+  const app = 'http://127.0.0.1:3020';
+  const serviceKey = token('service_role');
+  const anonKey = token('anon');
+  const db = createClient(url, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const org = randomUUID();
+  const stage = `s048-auth-${randomUUID()}`;
+  const scene = `${stage}-quiz`;
+  const actors: string[] = [];
+  let browser: Browser | undefined;
+  const server = spawn(
+    'pnpm',
+    ['exec', 'next', 'dev', '--webpack', '--hostname', '127.0.0.1', '--port', '3020'],
+    {
+      detached: true,
+      stdio: 'ignore',
+      env: {
+        ...process.env,
+        NODE_ENV: 'development',
+        NEXT_PUBLIC_E2E_TEST_MODE: 'false',
+        NEXT_PUBLIC_SUPABASE_URL: url,
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: anonKey,
+        SUPABASE_SERVICE_ROLE_KEY: serviceKey,
+        NEXT_PUBLIC_APP_URL: app,
+        SUPER_ADMIN_EMAILS: '',
+        NEXT_TELEMETRY_DISABLED: '1',
+      },
+    },
+  );
+  // No payloads, sessions, headers or SDK errors enter the transcript.
+  const checked = (error: { code?: string } | null, operation: string) =>
+    assert(!error, `${operation} failed (${error?.code ?? 'unknown'})`);
+  try {
+    for (let attempt = 0; ; attempt++) {
+      assert(server.exitCode === null && attempt < 90, 'Next startup failed');
+      const ready = await fetch(
+        `${app}/api/organizations/${org}/director-experiment?stageId=${stage}`,
+        { signal: AbortSignal.timeout(5000) },
+      ).catch(() => null);
+      if (ready?.status === 401) break;
+      await delay(1000);
+    }
+    browser = await chromium.launch({ headless: true });
+    const sessions: { name: string; value: string }[][] = [];
+    for (let index = 0; index < 2; index++) {
+      const email = `s048-${randomUUID()}@example.invalid`;
+      const password = `Recipe-${randomUUID()}!`;
+      const created = await db.auth.admin.createUser({ email, password, email_confirm: true });
+      checked(created.error, 'create synthetic account');
+      assert(created.data.user);
+      actors.push(created.data.user.id);
+      const jar = new Map<string, string>();
+      const client = createServerClient(url, anonKey, {
+        cookies: {
+          getAll: () => [...jar].map(([name, value]) => ({ name, value })),
+          setAll: (cookies) => {
+            for (const cookie of cookies) jar.set(cookie.name, cookie.value);
+          },
+        },
+      });
+      const signed = await client.auth.signInWithPassword({ email, password });
+      checked(signed.error, 'real password sign-in');
+      assert.equal(signed.data.user?.id, actors[index]);
+      assert(jar.size > 0, 'SSR cookies absent');
+      sessions.push([...jar].map(([name, value]) => ({ name, value })));
+    }
+    checked(
+      (await db.from('organizations').insert({ id: org, name: 'S048 Auth recipe', seat_limit: 10 }))
+        .error,
+      'organization',
+    );
+    checked(
+      (
+        await db
+          .from('org_members')
+          .insert(
+            actors.map((id, index) => ({
+              user_id: id,
+              org_id: org,
+              role: index === 0 ? 'admin' : 'apprenant',
+            })),
+          )
+      ).error,
+      'memberships',
+    );
+    checked(
+      (
+        await db
+          .from('stages')
+          .insert({
+            id: stage,
+            owner_id: actors[0],
+            org_id: org,
+            name: 'Auth recipe',
+            language: 'fr-FR',
+            agent_ids: ['a'],
+          })
+      ).error,
+      'classroom',
+    );
+    checked(
+      (
+        await db
+          .from('scenes')
+          .insert({
+            id: scene,
+            stage_id: stage,
+            type: 'quiz',
+            order: 0,
+            content: {
+              type: 'quiz',
+              questions: [
+                {
+                  id: 'q',
+                  type: 'single',
+                  question: 'Choose',
+                  options: [{ label: 'A', value: 'a' }],
+                  answer: ['a'],
+                  points: 1,
+                },
+              ],
+            },
+          })
+      ).error,
+      'quiz',
+    );
+    const reportPath = `/api/organizations/${org}/director-experiment?stageId=${stage}`;
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    assert.equal(
+      (await page.goto(`${app}${reportPath}`))?.status(),
+      401,
+      'Anonymous report not denied',
+    );
+    await context.addCookies(sessions[0].map((cookie) => ({ ...cookie, url: app })));
+    assert.equal((await page.goto(`${app}${reportPath}`))?.status(), 200, 'Admin report denied');
+    const report = JSON.parse(await page.locator('body').innerText());
+    assert.equal(report.experiment, 'qalem-director-v1');
+    assert.deepEqual(report.cohorts, []);
+    const submission = {
+      requestId: randomUUID(),
+      orgId: org,
+      stageId: stage,
+      sceneId: scene,
+      answers: {},
+    };
+    const submit = (body: typeof submission) =>
+      page.evaluate(async (data) => {
+        const response = await fetch('/api/quiz-attempts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        return { status: response.status, body: await response.json() };
+      }, body);
+    const first = await submit(submission);
+    assert.equal(first.status, 200, 'Authenticated native quiz failed');
+    assert.equal(first.body.score, 0);
+    assert.equal(first.body.status, 'completed');
+    assert.deepEqual(await submit(submission), first, 'HTTP replay changed receipt');
+    const saved = await db
+      .from('classroom_quiz_attempts')
+      .select('user_id')
+      .eq('id', first.body.attemptId)
+      .single();
+    checked(saved.error, 'persisted receipt');
+    assert.equal(saved.data?.user_id, actors[0], 'Server used a different identity');
+    const foreign = randomUUID();
+    assert.equal(
+      (await submit({ ...submission, requestId: randomUUID(), orgId: foreign })).status,
+      403,
+      'Foreign tenant quiz admitted',
+    );
+    assert.equal(
+      (
+        await page.goto(`${app}/api/organizations/${foreign}/director-experiment?stageId=${stage}`)
+      )?.status(),
+      403,
+      'Foreign tenant report admitted',
+    );
+    await context.clearCookies();
+    await context.addCookies(sessions[1].map((cookie) => ({ ...cookie, url: app })));
+    assert.equal(
+      (await page.goto(`${app}${reportPath}`))?.status(),
+      403,
+      'Learner obtained admin report',
+    );
+    await context.clearCookies();
+    assert.equal(
+      (await submit({ ...submission, requestId: randomUUID() })).status,
+      401,
+      'Anonymous quiz admitted',
+    );
+    await context.close();
+    console.log(
+      'PASS: real Auth/SSR cookies/browser/Next/SQL; admin, learner, anonymous, foreign tenant, persisted actor, zero score and replay',
+    );
+  } finally {
+    await browser?.close();
+    if (server.pid) {
+      try {
+        process.kill(-server.pid, 'SIGTERM');
+      } catch {
+        /* Process already exited. */
+      }
+      await Promise.race([once(server, 'exit'), delay(5000)]);
+      try {
+        process.kill(-server.pid, 'SIGKILL');
+      } catch {
+        /* Process group already exited. */
+      }
+    }
+    try {
+      checked((await db.from('stages').delete().eq('id', stage)).error, 'cleanup classroom');
+      checked(
+        (await db.from('organizations').delete().eq('id', org)).error,
+        'cleanup organization',
+      );
+      for (const actor of actors)
+        checked((await db.auth.admin.deleteUser(actor)).error, 'cleanup account');
+      console.log('PASS: isolated recipe data removed');
+    } finally {
+      gateway.closeAllConnections();
+      await new Promise<void>((resolve) => gateway.close(() => resolve()));
+    }
+  }
+}
+main().catch((error: unknown) => {
+  // Assertions may embed response objects; do not dump them or auth sessions.
+  console.error('FAIL:', error instanceof Error ? error.message.split('\n')[0] : 'Recipe failed');
+  process.exitCode = 1;
+});
