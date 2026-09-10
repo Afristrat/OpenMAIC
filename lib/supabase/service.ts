@@ -8,7 +8,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-export function createServiceSupabaseClient() {
+export function createServiceSupabaseClient(signal?: AbortSignal) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -18,5 +18,23 @@ export function createServiceSupabaseClient() {
 
   return createClient(url, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
+    ...(signal
+      ? {
+          global: {
+            fetch: (input: RequestInfo | URL, init?: RequestInit) =>
+              fetch(input, {
+                ...init,
+                signal: AbortSignal.any([
+                  signal,
+                  ...(init?.signal
+                    ? [init.signal]
+                    : input instanceof Request
+                      ? [input.signal]
+                      : []),
+                ]),
+              }),
+          },
+        }
+      : {}),
   });
 }

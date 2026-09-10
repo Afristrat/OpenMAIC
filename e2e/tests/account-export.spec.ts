@@ -15,6 +15,7 @@ for (const [locale, label] of [
     await page.addInitScript((value) => localStorage.setItem('locale', value), locale);
     const payload = {
       formatVersion: 2,
+      accountIdentity: { email: 'export@example.test', providers: ['email'] },
       includedSections: ['profiles', 'session_events', 'evaluations', 'lti_quiz_attempts'],
       profiles: [{ nickname: 'Épreuve قلم' }],
       session_events: [{ id: '9007199254741300', payload: { text: 'Ma question' } }],

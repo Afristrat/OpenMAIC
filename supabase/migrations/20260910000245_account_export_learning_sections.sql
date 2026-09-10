@@ -107,6 +107,26 @@ BEGIN
       v_fields := string_to_array('id,tenant_id,actor_user_id,action,created_at',',');
     WHEN 'xapi_outbox' THEN v_table := 'xapi_outbox'; v_key := 'id'; v_scope := '(t.statement->''actor''->>''mbox'') IN (''mailto:'' || $1::text || ''@qalem.local'',''mailto:'' || $1::text || ''@qalem.invalid'')';
       v_fields := string_to_array('id,org_id,statement,status,created_at,updated_at,attempt_count,sent_at',',');
+    WHEN 'classroom_templates' THEN v_table := p_section;
+      v_scope := 't.created_by=$1 AND (t.org_id IS NULL OR EXISTS(SELECT 1 FROM public.org_members m JOIN public.organizations o ON o.id=m.org_id AND o.status=''active'' WHERE m.org_id=t.org_id AND m.user_id=$1))';
+      v_fields := string_to_array('id,name,sector,description,requirements,agent_config_ids,skill_ids,org_id,created_by,language,created_at',',');
+    WHEN 'curriculum_links' THEN v_table := p_section;
+      v_scope := 't.created_by=$1 AND EXISTS(SELECT 1 FROM public.org_members m JOIN public.organizations o ON o.id=m.org_id AND o.status=''active'' WHERE m.org_id=t.org_id AND m.user_id=$1)';
+      v_fields := string_to_array('id,from_stage_id,to_stage_id,relation_type,org_id,created_by,created_at',',');
+    WHEN 'org_invitations' THEN v_table := p_section;
+      v_scope := 't.created_by=$1 AND EXISTS(SELECT 1 FROM public.org_members m JOIN public.organizations o ON o.id=m.org_id AND o.status=''active'' WHERE m.org_id=t.org_id AND m.user_id=$1)';
+      -- Export the actor's invitation activity, not recipient coordinates or access tokens.
+      v_fields := string_to_array('id,org_id,role,expires_at,used_at,created_by,created_at',',');
+    WHEN 'organization_skills' THEN v_table := p_section;
+      v_scope := 't.installed_by=$1 AND EXISTS(SELECT 1 FROM public.org_members m JOIN public.organizations o ON o.id=m.org_id AND o.status=''active'' WHERE m.org_id=t.org_id AND m.user_id=$1)';
+      v_fields := string_to_array('id,org_id,skill_id,manifest,installed_by,created_at,updated_at',',');
+    WHEN 'widget_templates' THEN v_table := p_section; v_scope := 't.created_by=$1';
+      v_fields := string_to_array('id,slug,title,created_by,draft_version_id,published_version_id,created_at,updated_at',',');
+    WHEN 'widget_template_versions' THEN v_table := p_section;
+      v_scope := '(t.created_by=$1 OR (t.published_by=$1 AND t.published_at IS NOT NULL))';
+      v_fields := string_to_array('id,template_id,version_number,composition,created_by,created_at,published_at,published_by',',');
+    WHEN 'widget_template_publications' THEN v_table := p_section; v_scope := 't.published_by=$1';
+      v_fields := string_to_array('id,template_id,version_id,published_by,published_at',',');
     ELSE RAISE EXCEPTION 'Unsupported export section' USING ERRCODE='22023';
   END CASE;
   IF v_fields IS NULL THEN

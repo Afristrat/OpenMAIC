@@ -1,9 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
-const mocks = vi.hoisted(() => ({ auth: vi.fn(), rpc: vi.fn(), read: vi.fn() }));
+const mocks = vi.hoisted(() => ({ auth: vi.fn(), rpc: vi.fn(), read: vi.fn(), identity: vi.fn() }));
 vi.mock('@/lib/api/auth', () => ({ requireAuth: mocks.auth }));
 vi.mock('@/lib/supabase/service', () => ({
-  createServiceSupabaseClient: () => ({ rpc: mocks.rpc }),
+  createServiceSupabaseClient: () => ({
+    rpc: mocks.rpc,
+    auth: { admin: { getUserById: mocks.identity } },
+  }),
 }));
 import { GET } from '@/app/api/account/export/route';
 const request = () => new NextRequest('http://localhost/api/account/export?userId=attacker');
@@ -13,11 +16,29 @@ describe('account export', () => {
     mocks.auth.mockResolvedValue({ user: { id: 'verified-user', email: 'test@example.test' } });
     mocks.rpc.mockImplementation((name, args) => ({ abortSignal: () => mocks.read(name, args) }));
     mocks.read.mockResolvedValue({ data: [], error: null });
+    mocks.identity.mockResolvedValue({
+      error: null,
+      data: {
+        user: {
+          id: 'verified-user',
+          email: 'test@example.test',
+          created_at: '2026-09-10T00:00:00Z',
+          identities: [
+            { provider: 'email', identity_data: { secret: 'never-export' } },
+            { provider: 'email' },
+          ],
+          user_metadata: { secret: 'never-export' },
+          app_metadata: { secret: 'never-export' },
+          factors: [{ secret: 'never-export' }],
+        },
+      },
+    });
   });
   it('requires authentication before data access', async () => {
     mocks.auth.mockResolvedValue({ response: NextResponse.json({}, { status: 401 }) });
     expect((await GET(request())).status).toBe(401);
     expect(mocks.rpc).not.toHaveBeenCalled();
+    expect(mocks.identity).not.toHaveBeenCalled();
   });
   it('streams every page for the verified actor and finishes only after all sections', async () => {
     mocks.read.mockImplementation(async (_name, args) => ({
@@ -38,7 +59,20 @@ describe('account export', () => {
     const body = await response.json();
     expect(body.pedagogy_telemetry).toHaveLength(101);
     expect(body.complete).toBe(true);
-    expect(body.includedSections).toHaveLength(46);
+    expect(mocks.identity).toHaveBeenCalledWith('verified-user');
+    expect(body.accountIdentity).toEqual({
+      id: 'verified-user',
+      email: 'test@example.test',
+      phone: null,
+      createdAt: '2026-09-10T00:00:00Z',
+      updatedAt: null,
+      lastSignInAt: null,
+      emailConfirmedAt: null,
+      phoneConfirmedAt: null,
+      providers: ['email'],
+    });
+    expect(JSON.stringify(body)).not.toContain('never-export');
+    expect(body.includedSections).toHaveLength(53);
     expect(body.includedSections).toEqual(
       expect.arrayContaining([
         'session_events',
@@ -63,9 +97,22 @@ describe('account export', () => {
     expect(response.status).toBe(503);
     expect(await response.text()).not.toContain('private');
   });
+  it.each([
+    { error: { message: 'private auth detail' }, data: { user: null } },
+    { error: null, data: { user: null } },
+    { error: null, data: { user: { id: 'another-user' } } },
+  ])('fails closed when Auth cannot prove the same identity', async (result) => {
+    mocks.identity.mockResolvedValue(result);
+    const response = await GET(request());
+    expect(response.status).toBe(503);
+    expect(response.headers.get('content-disposition')).toBeNull();
+    expect(await response.json()).toEqual({ error: 'Account export unavailable' });
+  });
   it('aborts a partial download on a later failure instead of certifying an incomplete export', async () => {
     mocks.read.mockImplementation(async (_name, args) =>
-      args.p_section === 'xapi_outbox' ? { error: {}, data: null } : { error: null, data: [] },
+      args.p_section === 'widget_template_publications'
+        ? { error: {}, data: null }
+        : { error: null, data: [] },
     );
     const response = await GET(request());
     await expect(response.text()).rejects.toThrow('interrupted');

@@ -50,6 +50,13 @@ const sections = [
   'tenant_credit_ledger',
   'tenant_admin_audit',
   'xapi_outbox',
+  'classroom_templates',
+  'curriculum_links',
+  'org_invitations',
+  'organization_skills',
+  'widget_templates',
+  'widget_template_versions',
+  'widget_template_publications',
 ] as const;
 const pageSchema = z
   .array(
@@ -90,7 +97,30 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return page;
     };
     // Detect an unavailable schema/backend before sending successful response headers.
-    const firstPage = await read(sections[0], null);
+    // This deadline belongs only to Auth, not to the entire paginated download.
+    const identityService = createServiceSupabaseClient(
+      AbortSignal.any([request.signal, cancelled.signal, AbortSignal.timeout(5000)]),
+    );
+    const [firstPage, identityResult] = await Promise.all([
+      read(sections[0], null),
+      identityService.auth.admin.getUserById(user.id),
+    ]);
+    const identity = identityResult.data?.user;
+    if (identityResult.error || !identity || identity.id !== user.id) {
+      throw new Error('Account export unavailable');
+    }
+    // Never serialize the Auth response: metadata, MFA and future fields stay private.
+    const accountIdentity = {
+      id: identity.id,
+      email: identity.email ?? null,
+      phone: identity.phone ?? null,
+      createdAt: identity.created_at,
+      updatedAt: identity.updated_at ?? null,
+      lastSignInAt: identity.last_sign_in_at ?? null,
+      emailConfirmedAt: identity.email_confirmed_at ?? null,
+      phoneConfirmedAt: identity.phone_confirmed_at ?? null,
+      providers: [...new Set((identity.identities ?? []).map((entry) => entry.provider))],
+    };
     async function* chunks(): AsyncGenerator<string> {
       const metadata = {
         formatVersion: 2,
@@ -106,6 +136,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         exportedAt: new Date().toISOString(),
         userId: user.id,
         email: user.email,
+        accountIdentity,
         includedSections: sections,
       };
       yield JSON.stringify(metadata).slice(0, -1);
