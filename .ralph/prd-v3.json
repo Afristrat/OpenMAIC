@@ -4609,7 +4609,7 @@
       },
       "sourceDependencies": ["S-036"],
       "dependencies": ["S0-011", "U-021"],
-      "gap": "collectDiscussionData sans appelant ; le consentement doit précéder tout branchement.",
+      "gap": "10 septembre 2026 : schéma strict et buffer local des tours codés (agent/type heuristique/durée monotone/état, premier score reçu après fermeture, zéro distinct de null, aucun texte retenu). Classificateur partagé corrigé : rôle non assimilé à plaisanterie, question arabe reconnue. 68633 exit 0 : cinq tests, TypeScript/lint. Buffer pas encore instancié par le chat ; collectDiscussionData hérité toujours sans appelant et INSERT direct à remplacer avant branchement. Restent epoch/consentement, callbacks réels, envoi durable et persistance transactionnelle tenant/agents/quiz, agrégation/retrait/export, navigateur et gate/publication. Aucune collecte ou activation.",
       "evidence": ["lib/telemetry/discussion-collector.ts:195"],
       "acceptance": [
         "lib/telemetry/discussion-collector.ts",

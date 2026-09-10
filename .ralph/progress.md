@@ -1,5 +1,9 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 10 septembre 2026 — S-047, schéma et buffer des tours
+
+Module pur discussion-observation : séquence agent/type/durée monotone en millisecondes/état, score reçu après fin (premier seul, zéro distinct de null), aucun texte retenu. Doublons, chevauchements, horloge reculant et capacité 256 explicites ; snapshots détachés. Classificateur partagé avec héritage, aucun « rôle = plaisanterie », question arabe reconnue, texte absent/inachevé inconnu. 68633 exit 0 : cinq tests, TypeScript/lint. Pas encore instancié par le chat, aucun réseau/DB/consentement effectif revendiqué. Prochain : raccordement sous epoch vérifié, événements StreamBuffer réels et persistance transactionnelle ; ne pas brancher l’INSERT direct hérité. Recettes navigateur/agrégats/retrait/export et S-048 restent ouvertes. Ponytail : module local borné, pas de dépendance.
+
 ## 10 septembre 2026 — S-037, conseil visible dans le plan auteur
 
 Rapport validé dans le plan, schéma/reprise, encart FR/AR/EN dans l’éditeur existant : effectifs et scores, séquence, difficulté heuristique, limites et comparaison avec le plan courant. Rapport de présentation uniquement, jamais source d’autorisation/calcul ; pas une preuve signée après retour navigateur. Révision assistée : ignore statistiques du modèle et conserve le rapport préexistant. 62700 exit 0 : onze tests, TypeScript/lint et trois Chromium FR/AR/EN RTL ; API plan simulée à une observation. 89499 exit 0 : trois tests de révision, TypeScript/lint. Aucune activation, collecte, migration, build global ou publication. Restent recette intégrée zéro/une/plusieurs observations, retrait et effet réel, gate au SHA propre. S-037 ouverte ; prochain code S-047 patterns de discussion. Ponytail : réemploi de l’éditeur/schéma, sans dépendance.
