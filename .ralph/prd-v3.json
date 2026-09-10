@@ -4652,8 +4652,11 @@
       },
       "sourceDependencies": ["S-047"],
       "dependencies": ["S0-011", "S-047"],
-      "gap": "10 septembre : Director, encart Chat, registre, liaison quiz et rapport FR/AR/EN codés, aucun minimum. Barrière observation/quiz native vérifiée. Recette propre e829fa7 : 3 252 tests/520 fichiers et build production/standalone réussis (43009). Suite Chromium complète : 192 réussis/un échec de transition du menu de langue (44834), reproduit avec trace (39833). Test synchronisé sur fermeture effective ; format/TypeScript/lint et deux scénarios vocaux réussis (39443), pas de seconde suite complète après correction. Preuve docs/validation/PRD-v3-clean-gate-2026-09-10.md. Restent recette intégrée serveur S-047/S-048, gate final et activation contrôlée. SQL candidat sous ROLLBACK seulement, APIs navigateur simulées. Non déployé, passes=false, aucun gain mesuré.",
-      "evidence": ["lib/orchestration/data-driven-director.ts"],
+      "gap": "10 septembre : modules réels Director/collecte/correcteur natif/rapport vérifiés par HTTP/PostgREST/SQL dans une base isolée ; neuf migrations appliquées ensemble, zéro/une observation et score zéro, reçu lié, reprise quiz, cohortes, droits et retrait réussis. Script s048-director-integration.ts ; format/TypeScript/lint 4243 exit 0. Fixtures supprimées, conteneurs arrêtés, production inchangée. Advisor : une erreur usage_summary et cinq search_path mutables hérités à corriger, détails docs/validation/S-048-real-http-integration.md. Restent ces corrections, parcours Auth/Next/navigateur/DB, ensemble des migrations PRD, gate final et publication. Gate précédent : 3 252 tests/build réussis, 192/193 Chromium puis correctif ciblé vert. Non déployé, passes=false, aucun gain mesuré.",
+      "evidence": [
+        "lib/orchestration/data-driven-director.ts",
+        "docs/validation/S-048-real-http-integration.md"
+      ],
       "acceptance": [
         "lib/orchestration/data-driven-director.ts",
         "Director consomme patterns agrégés",
