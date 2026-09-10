@@ -1,5 +1,9 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 10 septembre 2026 — S-048, restitution du choix dans le chat
+
+Encart dernier choix FR/AR/EN, effectif/score localisés et limite observationnelle, contrôle/fallback explicites. Un état temporaire borné, filtré formation/tenant/session, aucune copie dans les messages persistés. Nom retenu fourni par le SSE, corrige l’identifiant technique détecté par 85946. 43799 : dix-neuf tests/TypeScript/lint verts ; navigateur arrêté par sélecteur devenu ambigu. Après ciblage exact, 40555 exit 0 : format et deux Chromium sans retry, contrôle/une observation à zéro, bascule EN/FR/AR et RTL. HTTP/voix/SSE simulés, pas de build global/gate au SHA propre, activation ou publication. Aucun processus actif. Mnemo fetch failed. Prochain : registre serveur consenti assignation/exposition et mesures par cohorte, puis recette intégrée S-047. S-048 ouverte. Ponytail : flux existant, pas de transport ni dépendance supplémentaires.
+
 ## 10 septembre 2026 — S-048, choix du Director raccordé
 
 Nœud réel, acteur/tenant authentifiés, contexte persisté, formation courante et RPC S-047. Cohorte stable apprenant/tenant/formation, attendue 50/50. Suggestion limitée aux agents autorisés par la constitution ; END/USER/agent explicite/plafond conservés. SSE effectif/score/cohorte et décision actualisée. Protocole consigné dans docs/validation/S-048-data-driven-director.md. 66609 exit 0 : quinze tests/TypeScript/lint ; 56375 exit 0 : seize tests/TypeScript/lint avec constitution réelle. Aucun processus actif, navigateur/build global/gate au SHA propre, activation, migration ou publication. Prochain code : restitution UI et registre consenti assignation/exposition/mesures, puis recette intégrée. S-048 ouverte ; Ponytail réemploie contexte et lecteur sans dépendance nouvelle.

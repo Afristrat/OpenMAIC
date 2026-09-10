@@ -1,4 +1,9 @@
 {
+  "chat.directorChoice": "آخر اختيار للمنسّق: {{agent}}",
+  "chat.directorEvidence": "عدد الملاحظات: {{count}}. متوسط نتائج الاختبارات المرتبطة: {{score}}.",
+  "chat.directorLimits": "تسلسل مُلاحظ، وليس دليلًا على تحسّن التعلّم. تبقى قواعد التيسير هي المرجع.",
+  "chat.directorControl": "مجموعة المقارنة: اختيار تقليدي دون استخدام الملاحظات.",
+  "chat.directorFallback": "اختيار تقليدي: لا تتوفر ملاحظة قابلة للاستخدام ومتوافقة.",
   "generation.optimizationTitle": "توصية مستندة إلى الملاحظات",
   "generation.optimizationEvidence": "{{count}} ملاحظة؛ منها {{selected}} للتسلسل المقترح. متوسط النتيجة الملحوظ: {{score}}؛ ولهذا التسلسل: {{selectedScore}}.",
   "generation.optimizationSequence": "التسلسل المقترح:",

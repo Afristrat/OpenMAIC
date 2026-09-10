@@ -309,6 +309,7 @@ export async function directorNode(
       data: {
         stage: 'agent_loading',
         agentId: selectedAgent.id,
+        agentName: selectedAgent.name,
         ...(observed ? { directorObservation: observed } : {}),
       },
     });

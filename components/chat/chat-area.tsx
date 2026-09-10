@@ -13,6 +13,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useChatSessions } from './use-chat-sessions';
 import { SessionList } from './session-list';
 import { LectureNotesView } from './lecture-notes-view';
+import { DirectorObservationNotice } from './director-observation-notice';
 
 interface ChatAreaProps {
   className?: string;
@@ -98,6 +99,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
     );
     const {
       sessions,
+      directorChoice,
       activeSessionType,
       expandedSessionIds,
       isStreaming,
@@ -322,6 +324,17 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
             {/* Chat Tab */}
             <TabsContent value="chat" className="flex-1 overflow-hidden flex flex-col">
               <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-2 scrollbar-hide">
+                {directorChoice?.directorObservation && (
+                  <DirectorObservationNotice
+                    observation={directorChoice.directorObservation}
+                    agentName={
+                      directorChoice.agentName ??
+                      agentNames.get(directorChoice.agentId ?? '') ??
+                      directorChoice.agentId ??
+                      ''
+                    }
+                  />
+                )}
                 {chatSessions.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center p-6 opacity-50">
                     <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-3 text-gray-300 dark:text-gray-600">

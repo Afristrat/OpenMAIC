@@ -1,4 +1,9 @@
 {
+  "chat.directorChoice": "Dernier choix du Director : {{agent}}",
+  "chat.directorEvidence": "Observations : {{count}}. Score moyen des quiz associés : {{score}}.",
+  "chat.directorLimits": "Séquence observée, pas preuve d’un gain d’apprentissage. Les règles d’animation restent prioritaires.",
+  "chat.directorControl": "Groupe de comparaison : choix classique, sans utilisation des observations.",
+  "chat.directorFallback": "Choix classique : aucune observation exploitable et compatible disponible.",
   "generation.optimizationTitle": "Conseil issu des observations",
   "generation.optimizationEvidence": "Observations : {{count}} ; pour la séquence proposée : {{selected}}. Score moyen observé : {{score}} ; pour cette séquence : {{selectedScore}}.",
   "generation.optimizationSequence": "Séquence conseillée :",

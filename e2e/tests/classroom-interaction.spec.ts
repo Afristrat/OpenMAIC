@@ -448,6 +448,26 @@ test.describe('Classroom Interaction', () => {
         const speech = isTeacherTurn ? teacherSpeech : analystSpeech;
         const events = [
           {
+            type: 'thinking',
+            data: {
+              stage: 'agent_loading',
+              agentId,
+              agentName,
+              directorObservation: consented
+                ? {
+                    cohort: 'data-driven',
+                    reason: 'observed-pattern',
+                    suggestion: {
+                      agentId,
+                      sampleSize: 1,
+                      observedMeanQuizScore: 0,
+                      evidence: 'observational',
+                    },
+                  }
+                : { cohort: 'classic', reason: 'control', suggestion: null },
+            },
+          },
+          {
             type: 'intervention_decision',
             data: {
               decisionId: `decision-${adaptiveTurn}`,
@@ -522,10 +542,17 @@ test.describe('Classroom Interaction', () => {
         .toContain(`${teacherSpeech} ${analystSpeech}`);
       await page.getByRole('tab', { name: 'Chat' }).click();
       const transcript = page.getByLabel('Chat', { exact: true });
-      await expect(transcript.getByText('E2E Teacher')).toBeVisible();
-      await expect(transcript.getByText('E2E Analyst')).toBeVisible();
+      await expect(transcript.getByText('E2E Teacher', { exact: true })).toBeVisible();
+      await expect(transcript.getByText('E2E Analyst', { exact: true })).toBeVisible();
       await expect(transcript.getByText(teacherSpeech)).toBeVisible();
       await expect(transcript.getByText(analystSpeech)).toBeVisible();
+      const notice = page.getByTestId('director-observation');
+      await expect(notice).toContainText('Latest Director choice: E2E Analyst');
+      await expect(notice).toContainText(
+        consented
+          ? 'Observations: 1. Mean associated quiz score: 0%'
+          : 'Comparison group: classic choice',
+      );
       const discussionEvents = await page.evaluate(
         () =>
           (
@@ -562,6 +589,18 @@ test.describe('Classroom Interaction', () => {
         expect(JSON.stringify(observations)).not.toContain(teacherSpeech);
         expect(JSON.stringify(observations)).not.toContain(analystSpeech);
       } else expect(observations).toEqual([]);
+      if (consented) {
+        await expect(notice).toContainText('not evidence of a learning gain');
+        await page.getByRole('button', { name: 'EN', exact: true }).click();
+        await page.getByRole('menuitem', { name: 'Français' }).click();
+        await expect(notice).toContainText('Observations : 1.');
+        await expect(notice).toContainText('pas preuve d’un gain');
+        await page.getByRole('button', { name: 'FR', exact: true }).click();
+        await page.getByRole('menuitem', { name: 'العربية' }).click();
+        await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+        await expect(notice).toContainText('عدد الملاحظات:');
+        await expect(notice).toContainText('وليس دليلًا');
+      }
     });
 
   test('exports the complete classroom as an MP4 download', async ({ page, mockApi }) => {

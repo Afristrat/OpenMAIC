@@ -1,4 +1,9 @@
 {
+  "chat.directorChoice": "Latest Director choice: {{agent}}",
+  "chat.directorEvidence": "Observations: {{count}}. Mean associated quiz score: {{score}}.",
+  "chat.directorLimits": "Observed sequence, not evidence of a learning gain. Facilitation rules remain authoritative.",
+  "chat.directorControl": "Comparison group: classic choice without using observations.",
+  "chat.directorFallback": "Classic choice: no usable, compatible observation available.",
   "generation.optimizationTitle": "Advice from observations",
   "generation.optimizationEvidence": "Observations: {{count}}; for the suggested sequence: {{selected}}. Observed mean score: {{score}}; for this sequence: {{selectedScore}}.",
   "generation.optimizationSequence": "Suggested sequence:",

@@ -11,8 +11,12 @@ Aucun minimum ; zéro utilisable. Erreur, absence ou incompatibilité : classiqu
 Le choix observé est borné aux agents autorisés pour la forme et le déclencheur
 classiques. END, USER, premier agent explicite et plafond de tours restent
 prioritaires. La constitution andragogique n’est pas remplacée.
-SSE thinking expose cohorte, motif, effectif et score ; décision structurée
-actualisée. Ce n’est pas encore une restitution UI ni un registre A/B durable.
+SSE thinking expose cohorte, motif, effectif, score et nom de l’agent retenu ;
+décision structurée actualisée. L’onglet Chat affiche le dernier choix, son
+effectif et son score localisés, ainsi que la limite observationnelle, ou le
+groupe classique/fallback. État React temporaire borné à un choix, filtré par
+formation/tenant/session, remplacé au prochain choix ; pas de copie dans les
+messages persistés. Aucun registre A/B durable n’est encore raccordé.
 
 ## Protocole préalable
 
@@ -46,6 +50,15 @@ nul, erreurs et cohortes déterministes. Pas de navigateur ni build global,
 runner antérieur avec superposition, pas de gate intégré au SHA propre.
 Aucune migration durable, activation ou publication.
 
-Restent restitution UI, registre consenti assignation/exposition et mesures
+10 septembre, restitution UI : 43799 valide dix-neuf tests, TypeScript et lint.
+Son navigateur échoue sur un sélecteur ambigu après ajout du nom dans l’encart.
+Sélecteur ciblé exactement, puis 40555 exit 0 : format et deux Chromium sans
+retry, groupe classique et une observation à score zéro ; bascule EN/FR/AR
+avec RTL et avertissement visible. SSE, voix et HTTP simulés : parcours UI
+réel, pas une preuve de collecte/effet en production. 85946 avait détecté le
+nom technique affiché ; corrigé à la source par le nom fourni dans le SSE.
+Trois tests de restitution couvrent aussi fallback et nombres invalides.
+
+Restent registre consenti assignation/exposition et mesures
 par cohorte, recette intégrée S-047/navigateur, gate complet et activation.
 S-048 reste ouverte, passes=false. Aucun gain mesuré.

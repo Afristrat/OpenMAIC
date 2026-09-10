@@ -1,4 +1,5 @@
 import type { DirectorState } from '@/lib/types/chat';
+import type { DirectorObservation } from '@/lib/orchestration/observed-director';
 
 /**
  * StreamBuffer — unified presentation pacing layer.
@@ -57,6 +58,8 @@ export interface ThinkingItem {
   kind: 'thinking';
   stage: string;
   agentId?: string;
+  agentName?: string;
+  directorObservation?: DirectorObservation;
 }
 
 export interface CueUserItem {
@@ -115,7 +118,7 @@ export interface StreamBufferCallbacks {
    * Called with null when buffer completes or is disposed.
    */
   onSpeechProgress(ratio: number | null): void;
-  onThinking(data: { stage: string; agentId?: string } | null): void;
+  onThinking(data: Omit<ThinkingItem, 'kind'> | null): void;
   onCueUser(fromAgentId?: string, prompt?: string): void;
   onDone(data: {
     totalActions: number;
@@ -253,7 +256,7 @@ export class StreamBuffer {
     this.items.push({ kind: 'action', ...data });
   }
 
-  pushThinking(data: { stage: string; agentId?: string }): void {
+  pushThinking(data: Omit<ThinkingItem, 'kind'>): void {
     if (this._disposed) return;
     this.items.push({ kind: 'thinking', ...data });
   }

@@ -356,6 +356,7 @@ export type StatelessEvent =
       data: {
         stage: 'director' | 'agent_loading';
         agentId?: string;
+        agentName?: string;
         directorObservation?: DirectorObservation;
       };
     }

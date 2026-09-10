@@ -29,7 +29,12 @@ import { resolveInteractionOrganizationId } from '@/lib/chat/interaction-organiz
 import { getCurrentModelConfig } from '@/lib/utils/model-config';
 import { USER_AVATAR } from '@/lib/types/roundtable';
 import { StreamBuffer } from '@/lib/buffer/stream-buffer';
-import type { AgentStartItem, AgentEndItem, ActionItem } from '@/lib/buffer/stream-buffer';
+import type {
+  AgentStartItem,
+  AgentEndItem,
+  ActionItem,
+  ThinkingItem,
+} from '@/lib/buffer/stream-buffer';
 import { runAgentLoop, type AgentLoopStoreState } from '@/lib/chat/agent-loop';
 import { ActionEngine } from '@/lib/action/engine';
 import { toast } from 'sonner';
@@ -112,6 +117,13 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [expandedSessionIds, setExpandedSessionIds] = useState<Set<string>>(new Set());
   const [isStreaming, setIsStreaming] = useState(false);
+  // Presentation only: one latest choice, never copied into persisted chat history.
+  const [directorChoice, setDirectorChoice] = useState<{
+    stageId: string | undefined;
+    orgId: string | null;
+    sessionId: string;
+    data: Omit<ThinkingItem, 'kind'>;
+  } | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const streamingSessionIdRef = useRef<string | null>(null);
   const sessionsRef = useRef<ChatSession[]>(sessions);
@@ -241,6 +253,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
    */
   const createBufferForSession = useCallback(
     (sessionId: string, type?: SessionType, observationScope?: DiscussionScope): StreamBuffer => {
+      const bufferStageId = useStageStore.getState().stage?.id;
       // Dispose previous buffer if any
       // Shutdown (not dispose) — avoids stale onLiveSpeech(null,null) callback
       const prev = buffersRef.current.get(sessionId);
@@ -399,7 +412,19 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
             onSpeechProgressRef.current?.(ratio);
           },
 
-          onThinking(data: { stage: string; agentId?: string } | null) {
+          onThinking(data: Omit<ThinkingItem, 'kind'> | null) {
+            if (data?.stage === 'director') setDirectorChoice(null);
+            if (data?.stage === 'agent_loading')
+              setDirectorChoice(
+                data.directorObservation
+                  ? {
+                      stageId: bufferStageId,
+                      orgId: interactionOrganizationId,
+                      sessionId,
+                      data,
+                    }
+                  : null,
+              );
             onThinkingRef.current?.(data);
           },
 
@@ -464,7 +489,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
 
       return buffer;
     },
-    [],
+    [interactionOrganizationId],
   );
 
   /**
@@ -1614,6 +1639,12 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
 
   return {
     sessions,
+    directorChoice:
+      directorChoice?.stageId === stageId &&
+      directorChoice?.orgId === interactionOrganizationId &&
+      sessions.some((session) => session.id === directorChoice.sessionId)
+        ? directorChoice.data
+        : null,
     activeSessionId,
     activeSessionType,
     expandedSessionIds,
