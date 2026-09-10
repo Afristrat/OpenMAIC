@@ -18,7 +18,8 @@ type AssistTarget = { kind: 'syllabus' } | { kind: 'scene'; sceneIndex: number }
 
 function parseCompletePlan(text: string): ClassroomPlan | null {
   const parsed = parseJsonResponse<unknown>(text);
-  const validated = approvedClassroomPlanSchema.safeParse(parsed);
+  // The model may revise content, but may not invent or rewrite observation metadata.
+  const validated = approvedClassroomPlanSchema.omit({ optimization: true }).safeParse(parsed);
   if (!validated.success) return null;
   if (getSyllabusValidationIssues(validated.data.syllabus, validated.data.outlines).length > 0) {
     return null;
@@ -87,6 +88,7 @@ Return only the complete plan as one valid JSON object with courseTitle, languag
     );
     const plan = parseCompletePlan(response.text);
     if (!plan) return apiError('PARSE_FAILED', 502, 'The assisted plan is incomplete');
+    if (planValidation.data.optimization) plan.optimization = planValidation.data.optimization;
     return apiSuccess({ plan });
   } catch (error) {
     log.error('Syllabus assistance failed:', error);

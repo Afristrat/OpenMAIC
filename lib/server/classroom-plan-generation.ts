@@ -23,6 +23,7 @@ import type { GenerateClassroomInput } from '@/lib/server/classroom-generation';
 import { normalizePdfImages } from '@/lib/server/pdf-source';
 import { resolveFormationSources } from '@/lib/server/formation-source-library';
 import { assertCourseGenerationAccess } from '@/lib/server/course-generation-access';
+import { optimizationReportSchema } from '@/lib/generation/optimization-report';
 import {
   loadGenerationOptimization,
   generationOptimizationDirective,
@@ -152,5 +153,7 @@ export async function generateClassroomPlan(input: GenerateClassroomInput, owner
     throw new Error(result.error || 'Failed to generate classroom plan');
   }
   await assertCourseGenerationAccess(input, ownerId);
-  return enforceExecutableObligations(result.data, input.requirement);
+  const plan = enforceExecutableObligations(result.data, input.requirement);
+  const report = optimizationReportSchema.safeParse(optimization);
+  return report.success ? { ...plan, optimization: report.data } : plan;
 }

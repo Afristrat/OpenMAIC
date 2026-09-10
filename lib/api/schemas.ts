@@ -5,6 +5,7 @@
  */
 
 import { z } from 'zod/v4';
+import { optimizationReportSchema } from '@/lib/generation/optimization-report';
 import { isIso4217CurrencyCode } from '@/lib/formation-engine/learning-context';
 
 // ---------------------------------------------------------------------------
@@ -480,6 +481,7 @@ export const approvedSceneOutlineSchema = z
   .passthrough();
 
 export const approvedClassroomPlanSchema = z.object({
+  optimization: optimizationReportSchema.optional(),
   courseTitle: z.string().trim().min(1).max(300),
   languageDirective: z.string().trim().min(1).max(2000),
   syllabus: z.object({

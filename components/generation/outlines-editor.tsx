@@ -39,11 +39,13 @@ import type { WidgetType } from '@/lib/types/widgets';
 import { changeOutlineType } from '@/lib/generation/outline-type';
 import type { InteractionLevel, LearningApproach } from '@/lib/agents/persona-catalog';
 import { getSyllabusValidationIssues } from '@/lib/generation/syllabus-validation';
+import { OptimizationAdvice } from './optimization-advice';
 
 type SceneType = SceneOutline['type'];
 export type SyllabusAssistTarget = { kind: 'syllabus' } | { kind: 'scene'; sceneIndex: number };
 
 interface OutlinesEditorProps {
+  optimization?: import('@/lib/generation/optimization-report').OptimizationReport;
   courseTitle?: string;
   syllabus?: ClassroomSyllabus;
   outlines: SceneOutline[];
@@ -135,6 +137,7 @@ function useSceneTypeLabel() {
 }
 
 export function OutlinesEditor({
+  optimization,
   courseTitle,
   syllabus,
   outlines,
@@ -409,6 +412,7 @@ export function OutlinesEditor({
         )}
       </div>
 
+      {optimization && <OptimizationAdvice report={optimization} outlines={outlines} />}
       {hasSyllabusWorkspace ? (
         <div
           data-testid="syllabus-workspace"

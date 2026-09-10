@@ -1094,6 +1094,7 @@ function HomePage() {
               </p>
             )}
             <OutlinesEditor
+              optimization={draftPlan.optimization}
               courseTitle={draftPlan.courseTitle}
               syllabus={draftPlan.syllabus}
               outlines={draftPlan.outlines}

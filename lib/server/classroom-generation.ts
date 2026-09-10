@@ -98,6 +98,7 @@ import {
 import { shouldRunClassroomWebSearch } from '@/lib/server/web-search-policy';
 import { buildSceneSourceGrounding } from '@/lib/generation/source-grounding';
 import { resolveFormationSources } from '@/lib/server/formation-source-library';
+import { optimizationReportSchema } from '@/lib/generation/optimization-report';
 import {
   loadGenerationOptimization,
   generationOptimizationDirective,
@@ -578,6 +579,10 @@ export async function generateClassroom(
   }
 
   const { languageDirective, courseTitle } = outlinesResult.data;
+  if (!input.approvedPlan) {
+    const report = optimizationReportSchema.safeParse(optimization);
+    if (report.success) outlinesResult.data.optimization = report.data;
+  }
   const outlines = placeGeneratedMediaOnSlides(
     enforceOriginalIllustrations(
       outlinesResult.data.outlines,

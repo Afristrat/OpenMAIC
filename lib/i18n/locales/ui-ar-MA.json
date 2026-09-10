@@ -1,4 +1,11 @@
 {
+  "generation.optimizationTitle": "توصية مستندة إلى الملاحظات",
+  "generation.optimizationEvidence": "{{count}} ملاحظة؛ منها {{selected}} للتسلسل المقترح. متوسط النتيجة الملحوظ: {{score}}؛ ولهذا التسلسل: {{selectedScore}}.",
+  "generation.optimizationSequence": "التسلسل المقترح:",
+  "generation.optimizationDifficulty": "التعديل التقريبي للصعوبة: {{value}} (بين ‎−0.2 و‎+0.2؛ الموجب: أكثر تحديًا، والسالب: دعم إضافي).",
+  "generation.optimizationMatched": "ترتيب أنواع المشاهد الحالي يطابق التوصية.",
+  "generation.optimizationDifferent": "ترتيب أنواع المشاهد الحالي يختلف عن التوصية.",
+  "generation.optimizationLimits": "أُرسلت هذه التوصية إلى مولّد المحتوى. لا تزال الصعوبة الفعلية بحاجة إلى مراجعة. لا تثبت هذه الملاحظات تحسنًا في التعلّم. تبقى اختياراتك الصريحة والمتطلبات السابقة هي الأولوية.",
   "marketplace.recoverableTitle": "وكلاء خاصون لإعادة تولي مسؤوليتهم",
   "marketplace.recoverableHint": "للمسؤولين: تولّوا مسؤولية وكلاء هذه المؤسسة الذين حذف مالكوهم حساباتهم. لا تؤدي هذه العملية إلى نشر الوكيل أو تغيير إعداداته.",
   "marketplace.recoverableEmpty": "لا يوجد وكيل خاص لإعادة تولي مسؤوليته.",

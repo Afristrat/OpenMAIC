@@ -1,5 +1,30 @@
 # S-037 — Optimiseur, candidat sans minimum de sessions
 
+## Restitution auteur du 10 septembre 2026
+
+Le plan renvoie un rapport d’observations validé, conservé par son schéma et
+affiché dans l’éditeur existant FR/AR/EN. Effectifs, scores total/séquence,
+séquence conseillée et ajustement heuristique sont explicites. La comparaison
+avec les types de scènes du plan courant est recalculée à chaque rendu ; elle
+ne prétend mesurer ni la difficulté réellement produite ni un gain d’apprentissage.
+Un rapport absent ou invalide n’affiche pas de faux résultat.
+
+Le rapport est une métadonnée de présentation, jamais une entrée d’autorisation,
+de collecte ou de calcul. Sa présence après retour du navigateur ne constitue
+pas une preuve signée. La révision assistée ignore toute statistique produite
+par le modèle et conserve seulement le rapport préexistant du plan validé.
+
+62700 exit 0 : onze tests ciblés, TypeScript/lint globaux et trois Chromium
+FR/AR/EN avec RTL. Les parcours navigateur utilisent une réponse de plan
+simulée avec une observation et une séquence correspondante ; pas une recette
+du calcul sur les données réelles. 89499 exit 0 : trois tests de révision,
+TypeScript/lint après protection des métadonnées contre l’invention par le modèle.
+Aucun build global, déploiement, collecte ou activation dans ce complément.
+Restent recette intégrée zéro/une/plusieurs observations, retrait réel et
+mesure d’effet selon le protocole ci-dessous, puis publication au SHA qualifié.
+S-037 reste ouverte ; poursuivre le code manquant S-047 avant la recette globale.
+Ponytail : éditeur et schéma de plan existants réutilisés, aucune dépendance ajoutée.
+
 ## Raccordement du 10 septembre 2026
 
 `loadGenerationOptimization` est maintenant appelé par la génération de plan

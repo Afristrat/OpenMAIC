@@ -1,4 +1,11 @@
 {
+  "generation.optimizationTitle": "Advice from observations",
+  "generation.optimizationEvidence": "Observations: {{count}}; for the suggested sequence: {{selected}}. Observed mean score: {{score}}; for this sequence: {{selectedScore}}.",
+  "generation.optimizationSequence": "Suggested sequence:",
+  "generation.optimizationDifficulty": "Difficulty heuristic: {{value}} (bounded to ±0.2; positive: more demanding, negative: more scaffolding).",
+  "generation.optimizationMatched": "The current scene-type order matches the advice.",
+  "generation.optimizationDifferent": "The current scene-type order differs from the advice.",
+  "generation.optimizationLimits": "This advice was sent to the generator. The difficulty actually produced still needs review. These observations do not prove a learning gain. Your explicit choices and prerequisites take priority.",
   "marketplace.recoverableTitle": "Private agents to recover",
   "marketplace.recoverableHint": "Administrators: take responsibility for this organization’s agents whose owners deleted their accounts. Recovery does not publish the agent or change its configuration.",
   "marketplace.recoverableEmpty": "No private agents to recover.",

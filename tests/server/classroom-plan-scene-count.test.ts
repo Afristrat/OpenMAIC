@@ -93,6 +93,7 @@ describe('explicit classroom scene count invariant', () => {
     const result = await generateClassroomPlan(input);
 
     expect(result.outlines).toHaveLength(12);
+    expect(result).not.toHaveProperty('optimization');
     expect(mocks.callLLM).toHaveBeenCalledTimes(2);
     const retryMessages = mocks.callLLM.mock.calls[1]?.[0]?.messages as Array<{ content: string }>;
     expect(retryMessages[1]?.content).toContain('Return exactly 12 complete');
@@ -116,6 +117,7 @@ describe('explicit classroom scene count invariant', () => {
     expect(messages[1].content).toContain('Observed sessions: 1');
     expect(messages[1].content).toContain(input.requirement);
     expect(messages[1].content).toContain('Do not copy unrelated scene content');
+    expect(result).toMatchObject({ optimization: { sampleSize: 1, evidence: 'observational' } });
     expect(result.outlines).toHaveLength(12);
   });
 

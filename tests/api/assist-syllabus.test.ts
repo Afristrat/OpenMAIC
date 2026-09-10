@@ -52,6 +52,43 @@ describe('POST /api/generate/assist-syllabus', () => {
     mocks.callLLM.mockResolvedValue({ text: JSON.stringify(plan) });
   });
 
+  test.each([true, false])(
+    'preserves only existing display evidence, present=%s',
+    async (present) => {
+      const optimization = {
+        recommendedSceneOrder: ['slide'],
+        difficultyModifier: -0.2,
+        sampleSize: 1,
+        selectedSequenceSampleSize: 1,
+        observedMeanQuizScore: 0.4,
+        selectedSequenceMeanQuizScore: 0.4,
+        evidence: 'observational',
+        observationWindowLimit: 1000,
+      };
+      mocks.callLLM.mockResolvedValue({
+        text: JSON.stringify({ ...plan, optimization: { sampleSize: 999, fabricated: true } }),
+      });
+      const response = await POST(
+        new NextRequest('http://localhost/api/generate/assist-syllabus', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            orgId: '432f141e-f1d3-4ed9-bad3-6768100802a4',
+            locale: 'fr-FR',
+            learningApproach: 'andragogy',
+            interactionLevel: 'immersive',
+            target: { kind: 'syllabus' },
+            plan: { ...plan, ...(present ? { optimization } : {}) },
+          }),
+        }),
+      );
+      expect(response.status).toBe(200);
+      const result = await response.json();
+      if (present) expect(result.plan.optimization).toEqual(optimization);
+      else expect(result.plan).not.toHaveProperty('optimization');
+    },
+  );
+
   test('grounds the revision in the validated approach and interaction level', async () => {
     const response = await POST(
       new NextRequest('http://localhost/api/generate/assist-syllabus', {

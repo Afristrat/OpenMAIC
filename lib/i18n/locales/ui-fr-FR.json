@@ -1,4 +1,11 @@
 {
+  "generation.optimizationTitle": "Conseil issu des observations",
+  "generation.optimizationEvidence": "Observations : {{count}} ; pour la séquence proposée : {{selected}}. Score moyen observé : {{score}} ; pour cette séquence : {{selectedScore}}.",
+  "generation.optimizationSequence": "Séquence conseillée :",
+  "generation.optimizationDifficulty": "Ajustement heuristique de difficulté : {{value}} (borné à ±0,2 ; positif : plus exigeant, négatif : davantage d’accompagnement).",
+  "generation.optimizationMatched": "L’ordre actuel des types de scènes correspond au conseil.",
+  "generation.optimizationDifferent": "L’ordre actuel des types de scènes diffère du conseil.",
+  "generation.optimizationLimits": "Ce conseil a été transmis au générateur. La difficulté effectivement produite reste à vérifier. Ces observations ne prouvent aucun gain d’apprentissage. Vos choix explicites et les prérequis restent prioritaires.",
   "marketplace.recoverableTitle": "Agents privés à reprendre",
   "marketplace.recoverableHint": "Administrateurs : reprenez les agents de cette organisation dont le propriétaire a supprimé son compte. La reprise ne publie pas l’agent et conserve sa configuration.",
   "marketplace.recoverableEmpty": "Aucun agent privé à reprendre.",

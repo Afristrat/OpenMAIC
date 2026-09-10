@@ -174,6 +174,8 @@ export interface ClassroomSyllabus {
 }
 
 export interface ClassroomPlan {
+  /** Display-only observational advice, never an authorization or a measured gain. */
+  optimization?: import('@/lib/generation/optimization-report').OptimizationReport;
   courseTitle: string;
   languageDirective: string;
   syllabus: ClassroomSyllabus;
