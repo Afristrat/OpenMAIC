@@ -10,6 +10,8 @@ requête sans jeton partagé avec le worker.
 - une requête à la fois ;
 - 150 Mio d’entrée, 180 secondes par défaut et 900 secondes au maximum ;
 - 3 Gio, 1,5 CPU et 128 PID dans le compose de production ;
+- `NO_TORCH_COMPILE=1` : aucune compilation Torch/Inductor à chaud, afin
+  d’éviter les processus et la pointe mémoire non bornés ;
 - CPU par défaut ; `QALEM_AUDIOSEAL_DEVICE=cuda` est un choix de déploiement
   explicite qui exige un runtime GPU compatible.
 
