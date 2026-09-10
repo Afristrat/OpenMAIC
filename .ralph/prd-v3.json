@@ -1006,8 +1006,8 @@
         "source": ".ralph/prd.json#S-047"
       },
       {
-  "id": "S-048",
-  "title": "Director data-driven",
+        "id": "S-048",
+        "title": "Director data-driven",
         "previousPasses": true,
         "disposition": "explicit_open_story",
         "trackedBy": ["S-048", "S0-011"],
@@ -4199,7 +4199,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Bannière consentement télémétrie RGPD » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P2",
-  "status": "to_validate",
+      "status": "planned",
       "passes": false,
       "source": {
         "file": ".ralph/prd-ui.json",
@@ -4643,7 +4643,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Director data-driven » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "planned",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "file": ".ralph/prd.json",
