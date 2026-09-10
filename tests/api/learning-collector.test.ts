@@ -36,7 +36,14 @@ describe('learning collector RPC boundary', () => {
         scene_durations: [0],
         quiz_scores: [],
         scene_observations: [
-          { id: 'scene', type: 'slide', seconds: 0, completed: false, score: null },
+          {
+            id: 'scene',
+            type: 'slide',
+            seconds: 0,
+            completed: false,
+            score: null,
+            discussionMessages: 0,
+          },
         ],
         completion_rate: 0,
         total_duration: 0,

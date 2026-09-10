@@ -1,4 +1,19 @@
 /** Local structured event only. The observer discards it without verified opt-in. */
+export function publishDiscussionObservation(
+  stageId: string,
+  sceneId: string,
+  orgId: string,
+  messageId: string,
+  phase: 'submitted' | 'accepted',
+): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(
+    new CustomEvent('qalem-learning-discussion', {
+      detail: { stageId, sceneId, orgId, messageId, phase },
+    }),
+  );
+}
+
 export function publishQuizObservation(stageId: string, sceneId: string, score: number): void {
   if (typeof window === 'undefined') return;
   window.dispatchEvent(

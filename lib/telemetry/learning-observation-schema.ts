@@ -25,6 +25,7 @@ export const learningSessionSchema = z
             completed: z.boolean(),
             score: z.number().min(0).max(1).nullable(),
             attempts: z.array(z.number().min(0).max(1)).max(512).optional(),
+            discussionMessages: z.number().int().min(0).max(512).optional(),
           })
           .strict()
           .refine((item) => item.score === null || (item.type === 'quiz' && item.completed))

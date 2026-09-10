@@ -195,6 +195,30 @@ export function useLearningObservations(stageId: string | undefined) {
         showError(true);
       }
     };
+    const discussion = (event: Event) => {
+      const detail = (event as CustomEvent<unknown>).detail;
+      if (
+        !detail ||
+        typeof detail !== 'object' ||
+        !('stageId' in detail) ||
+        detail.stageId !== stageId ||
+        !('orgId' in detail) ||
+        detail.orgId !== orgId ||
+        !('sceneId' in detail) ||
+        typeof detail.sceneId !== 'string' ||
+        !('messageId' in detail) ||
+        typeof detail.messageId !== 'string' ||
+        detail.messageId.length > 128 ||
+        !('phase' in detail) ||
+        (detail.phase !== 'submitted' && detail.phase !== 'accepted')
+      )
+        return;
+      try {
+        buffer?.discussion(detail.sceneId, detail.messageId, detail.phase);
+      } catch {
+        showError(true);
+      }
+    };
     const api: Observer = {
       mode(next) {
         if (next !== mode) {
@@ -215,6 +239,7 @@ export function useLearningObservations(stageId: string | undefined) {
     const unsubscribe = useStageStore.subscribe(syncScene);
     window.addEventListener('qalem-consent-change', changed);
     window.addEventListener('qalem-learning-quiz', quiz);
+    window.addEventListener('qalem-learning-discussion', discussion);
     window.addEventListener('pagehide', leaving);
     window.addEventListener('pageshow', refresh);
     window.addEventListener('online', send);
@@ -229,6 +254,7 @@ export function useLearningObservations(stageId: string | undefined) {
       unsubscribe();
       window.removeEventListener('qalem-consent-change', changed);
       window.removeEventListener('qalem-learning-quiz', quiz);
+      window.removeEventListener('qalem-learning-discussion', discussion);
       window.removeEventListener('pagehide', leaving);
       window.removeEventListener('pageshow', refresh);
       window.removeEventListener('online', send);

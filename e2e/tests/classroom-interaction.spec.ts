@@ -408,6 +408,13 @@ test.describe('Classroom Interaction', () => {
     });
 
     let adaptiveTurn = 0;
+    await page.addInitScript(() => {
+      const events: unknown[] = [];
+      Object.defineProperty(window, '__discussionObservations', { value: events });
+      window.addEventListener('qalem-learning-discussion', (event) => {
+        events.push((event as CustomEvent).detail);
+      });
+    });
     await page.route('**/api/chat', async (route) => {
       adaptiveTurn += 1;
       const isTeacherTurn = adaptiveTurn === 1;
@@ -494,6 +501,17 @@ test.describe('Classroom Interaction', () => {
     await expect(transcript.getByText('E2E Analyst')).toBeVisible();
     await expect(transcript.getByText(teacherSpeech)).toBeVisible();
     await expect(transcript.getByText(analystSpeech)).toBeVisible();
+    const discussionEvents = await page.evaluate(
+      () =>
+        (
+          window as unknown as {
+            __discussionObservations: Array<{ phase: string; messageId: string }>;
+          }
+        ).__discussionObservations,
+    );
+    expect(discussionEvents.map((event) => event.phase)).toEqual(['submitted', 'accepted']);
+    expect(new Set(discussionEvents.map((event) => event.messageId)).size).toBe(1);
+    expect(JSON.stringify(discussionEvents)).not.toContain('How can I use this at work?');
   });
 
   test('exports the complete classroom as an MP4 download', async ({ page, mockApi }) => {

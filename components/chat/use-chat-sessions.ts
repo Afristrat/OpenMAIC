@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { publishDiscussionObservation } from '@/lib/telemetry/learning-events';
 import type {
   ChatSession,
   SessionType,
@@ -468,6 +469,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
       },
       controller: AbortController,
       sessionType: SessionType,
+      submittedMessageId?: string,
     ): Promise<void> => {
       // Attach full configs for generated (non-default) agents so the server can use them.
       // The server-side registry only has default agents; generated agents exist only client-side.
@@ -485,6 +487,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
       // Tracks agent_start messageId so text_delta/action events with a missing
       // messageId can fall back to the current agent.
       let currentMessageId: string | null = null;
+      let submissionObserved = false;
 
       const outcome = await runAgentLoop(
         {
@@ -513,13 +516,41 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
             return currentSession?.messages ?? requestTemplate.messages;
           },
 
-          fetchChat: (body, signal) =>
-            fetch('/api/chat', {
+          fetchChat: async (body, signal) => {
+            const state = requestTemplate.storeState;
+            const stage = state.stage as { id?: string } | undefined;
+            const sceneId = state.currentSceneId;
+            const observe =
+              !submissionObserved &&
+              submittedMessageId &&
+              stage?.id &&
+              typeof sceneId === 'string' &&
+              interactionOrganizationId;
+            submissionObserved = true;
+            if (observe)
+              publishDiscussionObservation(
+                stage!.id!,
+                sceneId as string,
+                interactionOrganizationId!,
+                submittedMessageId!,
+                'submitted',
+              );
+            const response = await fetch('/api/chat', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ ...body, orgId: interactionOrganizationId }),
               signal,
-            }),
+            });
+            if (observe && response.ok)
+              publishDiscussionObservation(
+                stage!.id!,
+                sceneId as string,
+                interactionOrganizationId!,
+                submittedMessageId!,
+                'accepted',
+              );
+            return response;
+          },
 
           onEvent: (event) => {
             // Create buffer on first event of each iteration
@@ -1041,7 +1072,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
       setIsStreaming(true);
 
       const now = Date.now();
-      const userMessageId = `user-${now}`;
+      const userMessageId = `user-${crypto.randomUUID()}`;
 
       // Read all selected agent IDs from settings store
       const settingsState = useSettingsStore.getState();
@@ -1138,6 +1169,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
           },
           controller,
           sessionType,
+          userMessageId,
         );
       } catch (error) {
         // Ignore AbortError — it's intentional (user interrupted)

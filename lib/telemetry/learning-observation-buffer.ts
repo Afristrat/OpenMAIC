@@ -7,6 +7,7 @@ export class LearningObservationBuffer {
   private completed = new Set<string>();
   private scores = new Map<string, number>();
   private attempts = new Map<string, number[]>();
+  private discussionMessages = new Map<string, { sceneId: string; accepted: boolean }>();
   private actions = { play: 0, pause: 0, seek: 0 };
   private lastTime: number;
   private visible = true;
@@ -85,6 +86,9 @@ export class LearningObservationBuffer {
         seconds: (previous?.seconds ?? 0) + durations[index],
         completed: this.completed.has(visit.id),
         score: visit.type === 'quiz' ? (this.scores.get(visit.id) ?? null) : null,
+        discussionMessages: [...this.discussionMessages.values()].filter(
+          (message) => message.sceneId === visit.id && message.accepted,
+        ).length,
         ...(visit.type === 'quiz' ? { attempts: [...(this.attempts.get(visit.id) ?? [])] } : {}),
       });
     });
@@ -108,5 +112,17 @@ export class LearningObservationBuffer {
       agentCount: Math.min(32, Math.max(0, agentCount)),
       actionCounts: { ...this.actions },
     };
+  }
+
+  discussion(sceneId: string, messageId: string, phase: 'submitted' | 'accepted'): void {
+    if (!this.visits.some((visit) => visit.id === sceneId)) return;
+    const previous = this.discussionMessages.get(messageId);
+    if (phase === 'submitted' && !previous) {
+      if (this.discussionMessages.size >= 512)
+        throw new Error('Discussion observation capacity exceeded');
+      this.discussionMessages.set(messageId, { sceneId, accepted: false });
+    } else if (phase === 'accepted' && previous?.sceneId === sceneId) {
+      previous.accepted = true;
+    }
   }
 }

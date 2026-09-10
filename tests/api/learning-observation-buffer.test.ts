@@ -2,6 +2,21 @@ import { describe, expect, it } from 'vitest';
 import { LearningObservationBuffer } from '@/lib/telemetry/learning-observation-buffer';
 
 describe('actual learning observations', () => {
+  it('counts only acknowledged messages submitted within the same observation', () => {
+    const buffer = new LearningObservationBuffer('stage', 'epoch', 'session', () => 0);
+    buffer.scene('a', 'slide');
+    buffer.discussion('a', 'before-consent', 'accepted');
+    buffer.discussion('a', 'failed', 'submitted');
+    buffer.discussion('a', 'accepted', 'submitted');
+    buffer.discussion('a', 'accepted', 'accepted');
+    buffer.discussion('a', 'accepted', 'accepted');
+    buffer.discussion('unknown', 'foreign', 'submitted');
+    buffer.discussion('unknown', 'foreign', 'accepted');
+    const snapshot = buffer.snapshot(['a'], 1)!;
+    expect(snapshot.sceneObservations?.[0].discussionMessages).toBe(1);
+    expect(JSON.stringify(snapshot)).not.toContain('before-consent');
+    expect(snapshot.completionRate).toBe(0);
+  });
   it('preserves repeated quiz submissions in order without mutating earlier snapshots', () => {
     const buffer = new LearningObservationBuffer('stage', 'epoch', 'session', () => 0);
     buffer.scene('slide', 'slide');
