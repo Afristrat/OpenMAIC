@@ -4652,7 +4652,7 @@
       },
       "sourceDependencies": ["S-047"],
       "dependencies": ["S0-011", "S-047"],
-      "gap": "10 septembre : nœud réel raccordé au lecteur S-047, contexte serveur et cohorte stable apprenant/tenant/formation ; constitution, END/USER/agent explicite/plafond conservés, aucun minimum. Restitution Chat FR/AR/EN : nom serveur, effectif/score, limites et contrôle/fallback, état temporaire sans copie dans les messages. 43799 : dix-neuf tests/TypeScript/lint verts ; 40555 exit 0 : deux Chromium avec EN/FR/AR RTL après correction du sélecteur. Protocole dans docs/validation/S-048-data-driven-director.md. Restent registre consenti assignation/exposition et mesures par cohorte, recette intégrée S-047, gate au SHA propre et activation contrôlée. Non déployé, aucun gain mesuré.",
+      "gap": "10 septembre : nœud réel et restitution Chat FR/AR/EN raccordés, constitution conservée, aucun minimum. Registre candidat 20260910045739 : cohorte serveur, pseudonyme révocable/epoch, choix et résultat de génération distincts, UUID du reçu dans messageId, export. 5580 exit 0 : trente tests/TypeScript/lint et quatre Chromium export ; SQL BEGIN/ROLLBACK vert, candidate absente et zéro fixture relus. Restent association reçus/discussions/quiz S-047, mesures et comparaison par unité de cohorte, recette intégrée, gate au SHA propre et activation contrôlée. Protocole/preuves dans docs/validation/S-048-data-driven-director.md. Non déployé, aucun gain mesuré.",
       "evidence": ["lib/orchestration/data-driven-director.ts"],
       "acceptance": [
         "lib/orchestration/data-driven-director.ts",

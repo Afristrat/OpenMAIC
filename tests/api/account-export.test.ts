@@ -72,7 +72,7 @@ describe('account export', () => {
       providers: ['email'],
     });
     expect(JSON.stringify(body)).not.toContain('never-export');
-    expect(body.includedSections).toHaveLength(55);
+    expect(body.includedSections).toHaveLength(56);
     expect(body.includedSections).toEqual(
       expect.arrayContaining([
         'session_events',
@@ -80,6 +80,7 @@ describe('account export', () => {
         'lti_quiz_attempts',
         'classroom_quiz_attempts',
         'discussion_patterns',
+        'director_receipts',
         'review_notification_preferences',
       ]),
     );
@@ -88,6 +89,11 @@ describe('account export', () => {
     expect(body.session_events[0].id).toBe('9007199254741300');
     expect(response.headers.get('cache-control')).toBe('no-store');
     for (const call of mocks.rpc.mock.calls) expect(call[1].p_actor).toBe('verified-user');
+    expect(mocks.rpc).toHaveBeenCalledWith('read_account_director_export_page', {
+      p_actor: 'verified-user',
+      p_section: 'director_receipts',
+      p_after: null,
+    });
     for (const p_section of ['classroom_quiz_attempts', 'discussion_patterns']) {
       expect(mocks.rpc).toHaveBeenCalledWith('read_account_discussion_export_page', {
         p_actor: 'verified-user',

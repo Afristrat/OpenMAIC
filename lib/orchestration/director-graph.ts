@@ -38,6 +38,11 @@ import { summarizeConversation } from './summarizers/conversation-summary';
 import { convertMessagesToOpenAI } from './summarizers/message-converter';
 import { buildDirectorPrompt, parseDirectorDecision } from './director-prompt';
 import { observeDirectorChoice } from './observed-director';
+import {
+  beginDirectorReceipt,
+  selectDirectorReceipt,
+  finishDirectorReceipt,
+} from './director-receipts';
 import { getEffectiveActions } from './tool-schemas';
 import type { AgentTurnSummary, WhiteboardActionRecord } from './types';
 import { parseStructuredChunk, createParserState, finalizeParser } from './stateless-generate';
@@ -72,6 +77,7 @@ const OrchestratorState = Annotation.Root({
 
   // Mutable (updated by nodes)
   currentAgentId: Annotation<string | null>,
+  directorReceiptId: Annotation<string | null>,
   turnCount: Annotation<number>,
   agentResponses: Annotation<AgentTurnSummary[]>({
     reducer: (prev, update) => [...prev, ...update],
@@ -276,6 +282,15 @@ export async function directorNode(
             agentName: agent.name,
           }).success),
     );
+    const directorReceiptId =
+      state.turnCount === 0 && state.triggerAgentId
+        ? null
+        : await beginDirectorReceipt(
+            state.storeState.stage?.id,
+            state.storeState.currentSceneId,
+            selectedAgent.id,
+          );
+    const lookupStarted = performance.now();
     const observed =
       state.turnCount === 0 && state.triggerAgentId
         ? null
@@ -302,6 +317,12 @@ export async function directorNode(
           };
       }
     }
+    await selectDirectorReceipt(
+      directorReceiptId,
+      selectedAgent.id,
+      observed,
+      performance.now() - lookupStarted,
+    );
     if (interventionDecision) write({ type: 'intervention_decision', data: interventionDecision });
 
     write({
@@ -317,6 +338,7 @@ export async function directorNode(
     log.info(`[Director] Decision: dispatch agent "${selectedAgent.id}"`);
     return {
       currentAgentId: selectedAgent.id,
+      directorReceiptId,
       shouldEnd: false,
     };
   } catch (error) {
@@ -357,7 +379,9 @@ async function runAgentGeneration(
       log.warn(`[AgentGenerate] write failed for ${agentId}:`, e);
     }
   };
-  const messageId = `assistant-${agentId}-${Date.now()}`;
+  const messageId = state.directorReceiptId
+    ? `assistant-${state.directorReceiptId}`
+    : `assistant-${agentId}-${Date.now()}`;
 
   write({
     type: 'agent_start',
@@ -417,6 +441,7 @@ async function runAgentGeneration(
   let fullText = '';
   let actionCount = 0;
   const whiteboardActions: WhiteboardActionRecord[] = [];
+  let generationFailed = false;
 
   try {
     for await (const chunk of adapter.streamGenerate(lcMessages, {
@@ -515,8 +540,10 @@ async function runAgentGeneration(
     }
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
+      await finishDirectorReceipt(state.directorReceiptId, 'aborted');
       throw error;
     }
+    generationFailed = true;
     log.error(`[AgentGenerate] Error for ${agentConfig.name}:`, error);
     write({
       type: 'error',
@@ -524,6 +551,10 @@ async function runAgentGeneration(
     });
   }
 
+  await finishDirectorReceipt(
+    state.directorReceiptId,
+    generationFailed ? 'failed' : fullText || actionCount ? 'completed' : 'empty',
+  );
   write({
     type: 'agent_end',
     data: { messageId, agentId },
@@ -571,6 +602,7 @@ async function agentGenerateNode(
     ],
     whiteboardLedger: result.whiteboardActions,
     currentAgentId: null,
+    directorReceiptId: null,
   };
 }
 
@@ -659,6 +691,7 @@ export function buildInitialState(
     userProfile: request.userProfile || null,
     agentConfigOverrides,
     currentAgentId: null,
+    directorReceiptId: null,
     turnCount,
     agentResponses: incoming?.agentResponses ?? [],
     whiteboardLedger: incoming?.whiteboardLedger ?? [],

@@ -11,6 +11,7 @@ const sections = [
   'quiz_results',
   'classroom_quiz_attempts',
   'discussion_patterns',
+  'director_receipts',
   'review_cards',
   'certificates',
   'payments',
@@ -82,9 +83,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const read = async (section: string, cursor: string | null) => {
       const result = await service
         .rpc(
-          ['classroom_quiz_attempts', 'discussion_patterns'].includes(section)
-            ? 'read_account_discussion_export_page'
-            : 'read_account_export_page',
+          section === 'director_receipts'
+            ? 'read_account_director_export_page'
+            : ['classroom_quiz_attempts', 'discussion_patterns'].includes(section)
+              ? 'read_account_discussion_export_page'
+              : 'read_account_export_page',
           {
             p_actor: user.id,
             p_section: section,

@@ -31,7 +31,7 @@ export async function observeDirectorChoice(
     !/^[A-Za-z0-9_-]{1,128}$/.test(stageId)
   )
     return null;
-  if (!shouldUseDataDriven(JSON.stringify([actorId, orgId, stageId])))
+  if (!shouldUseDataDriven(JSON.stringify([actorId!.toLowerCase(), orgId!.toLowerCase(), stageId])))
     return { cohort: 'classic', suggestion: null, reason: 'control' };
   const fallback: DirectorObservation = {
     cohort: 'data-driven',

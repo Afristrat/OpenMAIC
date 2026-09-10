@@ -16,7 +16,8 @@ décision structurée actualisée. L’onglet Chat affiche le dernier choix, son
 effectif et son score localisés, ainsi que la limite observationnelle, ou le
 groupe classique/fallback. État React temporaire borné à un choix, filtré par
 formation/tenant/session, remplacé au prochain choix ; pas de copie dans les
-messages persistés. Aucun registre A/B durable n’est encore raccordé.
+messages persistés. Un registre serveur candidat est désormais raccordé au
+graphe ; sa migration n’est pas appliquée durablement.
 
 ## Protocole préalable
 
@@ -27,7 +28,8 @@ messages persistés. Aucun registre A/B durable n’est encore raccordé.
 - Contrôle : classique sans lecture. Traitement : suggestion compatible ou
   fallback, sans changement de cohorte. END/USER/agent explicite/plafond ne
   sont pas des expositions ; distinguer assignation et exposition réelle.
-- Population : comptes authentifiés, tenant et formation valides. Mesure
+- Population mesurée : comptes authentifiés ayant consenti à la collecte,
+  tenant et formation valides. Mesure
   principale prévue : premier score quiz natif associé selon S-047, comparé
   par cohorte assignée avec effectifs, scores manquants et taux d’exposition.
   Ne pas retenir uniquement les suggestions appliquées.
@@ -59,6 +61,39 @@ réel, pas une preuve de collecte/effet en production. 85946 avait détecté le
 nom technique affiché ; corrigé à la source par le nom fourni dans le SSE.
 Trois tests de restitution couvrent aussi fallback et nombres invalides.
 
-Restent registre consenti assignation/exposition et mesures
-par cohorte, recette intégrée S-047/navigateur, gate complet et activation.
+## Registre serveur candidat — 10 septembre
+
+Migration CLI 20260910045739, table privée director_receipts, RLS et droits
+réservés au service. Chaque décision éligible reçoit un UUID serveur, rattaché
+au pseudonyme révocable. La cohorte SQL reproduit la clé JavaScript canonique
+(UUID en minuscules). Consentement/epoch verrouillés, stage/scène/agent et
+tenant/source/partage vérifiés. Réservation avant lecture, sélection immuable,
+puis génération completed/empty/failed/aborted distincte. L’absence de retour
+de génération reste inconnue, jamais transformée en succès. Un contenu généré
+ne prouve ni sa réception ni son écoute par l’apprenant.
+
+Le message réel utilise assistant-UUID-du-reçu : point de liaison pour S-047,
+pas encore une association en base. Rejeux ne remplacent pas les choix ; retrait
+supprime les reçus via la cascade existante, réaccord ne les ressuscite pas.
+Export personnel paginé raccordé, sans pseudonyme ni epoch. Échec de collecte :
+avertissement technique, parcours conservé, aucun succès inventé. lookup_ms
+mesure seulement la recherche/sélection observée, pas toute la latence du chat.
+Les reçus sont par décision ; la comparaison devra agréger par unité assignée,
+pas traiter les tours d’un même apprenant comme des individus indépendants.
+
+52266 exit 0 : seize tests/TypeScript/lint. 5580 exit 0 : trente tests,
+TypeScript/lint et quatre Chromium d’export (FR/AR/EN RTL et indisponibilité).
+Graphe réel testé avec génération simulée réussie/échouée et identifiant du
+reçu dans le message. SQL service_role sous BEGIN/ROLLBACK : refus, rejeux,
+choix/génération immuables, zéro, deux vecteurs de cohorte comparés au SHA Node,
+refus de contamination du contrôle, export isolé, retrait sans toucher l’autre
+compte et absence de résurrection. Candidate absente et zéro compte de recette
+relus après annulation. Première recette interrompue par un prérequis quiz
+omis ; ajout du fichier de migration réel, aucune mutation durable.
+Advisor CLI local indisponible (54322 refusé) ; pas de certification advisor.
+Documentation consultée : [fonctions Supabase](https://supabase.com/docs/guides/database/functions)
+et [changelog](https://supabase.com/changelog). Aucun upgrade d’infrastructure.
+
+Restent liaison des reçus aux discussions/quiz S-047, mesures et comparaison
+par cohorte, recette intégrée, gate complet au SHA propre et activation.
 S-048 reste ouverte, passes=false. Aucun gain mesuré.
