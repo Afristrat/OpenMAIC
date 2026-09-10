@@ -11,10 +11,23 @@ export function TelemetryConsentBanner({ inline = false }: { inline?: boolean })
   const { user, isGuest } = useAuth();
   if (!user || isGuest) return null;
   // Remount on account change: neither a choice nor an in-flight acknowledgement crosses accounts.
-  return <ConsentControl key={user.id} userId={user.id} inline={inline} />;
+  return (
+    <>
+      <ConsentControl key={user.id} userId={user.id} inline={inline} />
+      {inline && <ConsentControl key={`${user.id}-xapi`} userId={user.id} inline xapi />}
+    </>
+  );
 }
 
-function ConsentControl({ inline, userId }: { inline: boolean; userId: string }): React.ReactNode {
+function ConsentControl({
+  inline,
+  userId,
+  xapi = false,
+}: {
+  inline: boolean;
+  userId: string;
+  xapi?: boolean;
+}): React.ReactNode {
   const { t } = useI18n();
   const [choice, setChoice] = useState<boolean | null | undefined>(undefined);
   const [expanded, setExpanded] = useState(false);
@@ -24,7 +37,10 @@ function ConsentControl({ inline, userId }: { inline: boolean; userId: string })
 
   useEffect(() => {
     let cancelled = false;
-    fetch('/api/telemetry-consent', { cache: 'no-store', signal: AbortSignal.timeout(10000) })
+    fetch(`/api/telemetry-consent${xapi ? '?purpose=xapi' : ''}`, {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(10000),
+    })
       .then(async (res) => {
         if (!res.ok) throw new Error('Consent unavailable');
         const data = await res.json();
@@ -39,7 +55,7 @@ function ConsentControl({ inline, userId }: { inline: boolean; userId: string })
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [xapi]);
 
   const handleConsent = async (consent: boolean) => {
     setLoading(true);
@@ -49,7 +65,7 @@ function ConsentControl({ inline, userId }: { inline: boolean; userId: string })
       const response = await fetch('/api/telemetry-consent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ consent }),
+        body: JSON.stringify({ consent, ...(xapi ? { purpose: 'xapi' } : {}) }),
         signal: AbortSignal.timeout(10000),
       });
       if (!response.ok) throw new Error('Consent not saved');
@@ -74,7 +90,7 @@ function ConsentControl({ inline, userId }: { inline: boolean; userId: string })
   return (
     <div
       role="region"
-      aria-label={t('telemetry.title')}
+      aria-label={t(xapi ? 'telemetry.xapiTitle' : 'telemetry.title')}
       className={cn(
         inline
           ? 'rounded-lg border border-border/40'
@@ -83,14 +99,20 @@ function ConsentControl({ inline, userId }: { inline: boolean; userId: string })
       )}
     >
       <div className="mx-auto max-w-4xl">
-        <p className="text-sm text-foreground">{t('telemetry.banner')}</p>
+        <p className="text-sm text-foreground">
+          {t(xapi ? 'telemetry.xapiBanner' : 'telemetry.banner')}
+        </p>
         {inline && (
           <p className="mt-2 text-sm">
             {t(
               choice === true
-                ? 'telemetry.enabled'
+                ? xapi
+                  ? 'telemetry.xapiEnabled'
+                  : 'telemetry.enabled'
                 : choice === false
-                  ? 'telemetry.disabled'
+                  ? xapi
+                    ? 'telemetry.xapiDisabled'
+                    : 'telemetry.disabled'
                   : 'telemetry.undecided',
             )}
           </p>
@@ -106,7 +128,7 @@ function ConsentControl({ inline, userId }: { inline: boolean; userId: string })
           </p>
         )}
 
-        {expanded && (
+        {expanded && !xapi && (
           <div className="mt-3 rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground space-y-1.5">
             <p>{t('telemetry.detail1')}</p>
             <p>{t('telemetry.detail2')}</p>
@@ -120,7 +142,7 @@ function ConsentControl({ inline, userId }: { inline: boolean; userId: string })
             disabled={loading || (choice === undefined && !error)}
             className="rounded-lg border px-4 py-2 text-sm font-semibold hover:bg-muted transition-colors disabled:opacity-50"
           >
-            {t('telemetry.accept')}
+            {t(xapi ? 'telemetry.xapiAccept' : 'telemetry.accept')}
           </button>
           <button
             onClick={() => handleConsent(false)}
@@ -129,13 +151,15 @@ function ConsentControl({ inline, userId }: { inline: boolean; userId: string })
           >
             {t(choice === true ? 'telemetry.withdraw' : 'telemetry.refuse')}
           </button>
-          <button
-            onClick={() => setExpanded((p) => !p)}
-            aria-expanded={expanded}
-            className="text-sm text-primary hover:underline"
-          >
-            {expanded ? t('telemetry.hidDetails') : t('telemetry.learnMore')}
-          </button>
+          {!xapi && (
+            <button
+              onClick={() => setExpanded((p) => !p)}
+              aria-expanded={expanded}
+              className="text-sm text-primary hover:underline"
+            >
+              {expanded ? t('telemetry.hidDetails') : t('telemetry.learnMore')}
+            </button>
+          )}
         </div>
       </div>
     </div>

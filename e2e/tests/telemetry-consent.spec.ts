@@ -4,6 +4,8 @@ for (const locale of ['fr-FR', 'ar-MA', 'en-US']) {
   test(`consent, persisted refusal and withdrawal — ${locale}`, async ({ page, mockApi }) => {
     await mockApi.mockRichProfileDisabled();
     let choice: boolean | null = null;
+    let xapiChoice = false;
+    const xapiWrites: unknown[] = [];
     const writes: unknown[] = [];
     await page.addInitScript((value) => {
       localStorage.setItem('locale', value);
@@ -17,7 +19,19 @@ for (const locale of ['fr-FR', 'ar-MA', 'en-US']) {
         '{}',
       );
     }, locale);
-    await page.route('**/api/telemetry-consent', async (route) => {
+    await page.route('**/api/telemetry-consent*', async (route) => {
+      const xapi =
+        new URL(route.request().url()).searchParams.get('purpose') === 'xapi' ||
+        (route.request().method() === 'POST' && route.request().postDataJSON().purpose === 'xapi');
+      if (xapi) {
+        if (route.request().method() === 'POST') {
+          const body = route.request().postDataJSON();
+          xapiWrites.push(body);
+          xapiChoice = body.consent;
+        }
+        await route.fulfill({ json: { choice: xapiChoice, ok: true } });
+        return;
+      }
       if (route.request().method() === 'POST') {
         const body = route.request().postDataJSON();
         writes.push(body);
@@ -68,6 +82,22 @@ for (const locale of ['fr-FR', 'ar-MA', 'en-US']) {
     await control.getByRole('button').nth(1).click();
     await expect.poll(() => choice).toBe(false);
     expect(writes).toEqual([{ consent: false }, { consent: true }, { consent: false }]);
+    const xapi = page.getByRole('region', {
+      name:
+        locale === 'fr-FR' ? 'Partage xAPI' : locale === 'ar-MA' ? 'مشاركة xAPI' : 'xAPI sharing',
+      exact: true,
+    });
+    await expect(xapi).toBeVisible();
+    expect(xapiWrites).toEqual([]);
+    await xapi.getByRole('button').nth(0).click();
+    await expect.poll(() => xapiChoice).toBe(true);
+    await xapi.getByRole('button').nth(1).click();
+    await expect.poll(() => xapiChoice).toBe(false);
+    expect(xapiWrites).toEqual([
+      { consent: true, purpose: 'xapi' },
+      { consent: false, purpose: 'xapi' },
+    ]);
+    expect(choice).toBe(false);
     await expect(page.locator('html')).toHaveAttribute('dir', locale === 'ar-MA' ? 'rtl' : 'ltr');
   });
 }

@@ -8,9 +8,33 @@ const mocks = vi.hoisted(() => ({
   upsert: vi.fn(),
 }));
 vi.mock('@supabase/supabase-js', () => ({ createClient: () => mocks }));
-import { readConsent, readConsentState, setConsent } from '@/lib/telemetry/pedagogy-collector';
+import {
+  readConsent,
+  readConsentState,
+  setConsent,
+  readXapiConsent,
+  setXapiConsent,
+} from '@/lib/telemetry/pedagogy-collector';
 
 describe('consent storage failures', () => {
+  it('writes only the xAPI choice and refuses false success on failure', async () => {
+    mocks.abortSignal.mockResolvedValue({ error: null });
+    await setXapiConsent('user', true);
+    expect(mocks.upsert).toHaveBeenCalledWith(
+      { user_id: 'user', xapi_consent: true, consented_at: expect.any(String) },
+      { onConflict: 'user_id' },
+    );
+    mocks.abortSignal.mockResolvedValue({ error: { message: 'private' } });
+    await expect(setXapiConsent('user', false)).rejects.toThrow('Consent storage unavailable');
+  });
+  it('defaults xAPI to false and propagates read errors', async () => {
+    mocks.maybeSingle.mockResolvedValue({ data: null, error: null });
+    expect(await readXapiConsent('user')).toBe(false);
+    mocks.maybeSingle.mockResolvedValue({ data: { xapi_consent: true }, error: null });
+    expect(await readXapiConsent('user')).toBe(true);
+    mocks.maybeSingle.mockResolvedValue({ data: null, error: { message: 'private' } });
+    await expect(readXapiConsent('user')).rejects.toThrow('Consent storage unavailable');
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://example.test');

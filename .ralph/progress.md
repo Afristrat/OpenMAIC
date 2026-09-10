@@ -1,5 +1,9 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 10 septembre 2026 — S-035, choix xAPI et harmonisation du cours
+
+Profil et API existants : choix xAPI distinct FR/AR/EN/RTL, refus par défaut, identité serveur/écriture ciblée, avertissement effacement distant. Candidate 20260910025207 exige accord xAPI à la projection/envoi cours, étend retrait local et renouvelle epoch au changement de choix. Analyses internes persistées conservées ; buffers d’ancien epoch invalidés, pas de backfill. 7299 : dix-huit tests/TypeScript/lint/quatre Chromium verts, API simulées. SQL ROLLBACK quiz/discussion/retrait/conservation analyses/ancien epoch/refus projection vert ; zéro compte/outbox/colonne, flag false. Non déployé, pas de LRS ni de gate intégré. Suite : recette LRS réelle et effacement distant. S-035 ouverte.
+
 ## 10 septembre 2026 — S-035, admission consentie ANCRER
 
 Candidate 20260910024337 : RPC xapi_consent sous verrou, provenance session/cours/tenant/membre/flag/destination, insertion premier contenu ; worker revalide et refuse historique sans provenance. FK session et trigger privé de retrait (élévation étroite pour RLS, OLD fixe/auth.uid) effacent localement, export par propriétaire de session. 63572 exit 0 : douze tests/TypeScript/lint. SQL ROLLBACK : refus/admission/rejeu/export/suspension/retrait direct authenticated ; compte/cours/outbox/colonne absents, flag false. Non déployé, aucun consentement activé. Suite : interface xAPI distincte et harmonisation du cours encore sous pedagogy_consent ; effacement distant/recette LRS/gate intégré. S-035 reste ouverte.

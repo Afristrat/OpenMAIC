@@ -1,11 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
 
-const mocks = vi.hoisted(() => ({ auth: vi.fn(), read: vi.fn(), write: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  auth: vi.fn(),
+  read: vi.fn(),
+  write: vi.fn(),
+  readXapi: vi.fn(),
+  writeXapi: vi.fn(),
+}));
 vi.mock('@/lib/api/auth', () => ({ requireAuth: mocks.auth }));
 vi.mock('@/lib/telemetry/pedagogy-collector', () => ({
   readConsentState: mocks.read,
   setConsent: mocks.write,
+  readXapiConsent: mocks.readXapi,
+  setXapiConsent: mocks.writeXapi,
 }));
 import { GET, POST } from '@/app/api/telemetry-consent/route';
 
@@ -23,6 +31,17 @@ function request(body?: unknown, origin = 'http://localhost') {
 }
 
 describe('consent identity and persistence boundary', () => {
+  it('keeps the xAPI choice distinct from analytics', async () => {
+    mocks.readXapi.mockResolvedValue(false);
+    const response = await GET(
+      new NextRequest('http://localhost/api/telemetry-consent?purpose=xapi'),
+    );
+    expect(await response.json()).toEqual({ choice: false, hasConsent: false });
+    expect(mocks.read).not.toHaveBeenCalled();
+    expect((await POST(request({ consent: true, purpose: 'xapi' }))).status).toBe(200);
+    expect(mocks.writeXapi).toHaveBeenCalledWith('session-user', true);
+    expect(mocks.write).not.toHaveBeenCalled();
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubEnv('NEXT_PUBLIC_APP_URL', 'http://localhost');

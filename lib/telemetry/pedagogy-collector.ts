@@ -143,3 +143,29 @@ export async function setConsent(userId: string, consent: boolean): Promise<void
     throw new Error('Consent storage unavailable');
   }
 }
+
+export async function readXapiConsent(userId: string): Promise<boolean> {
+  const { data, error } = await getServiceClient()
+    .from('telemetry_consent')
+    .select('xapi_consent')
+    .eq('user_id', userId)
+    .abortSignal(AbortSignal.timeout(5000))
+    .maybeSingle();
+  if (error) throw new Error('Consent storage unavailable');
+  return data?.xapi_consent === true;
+}
+
+export async function setXapiConsent(userId: string, consent: boolean): Promise<void> {
+  const { error } = await getServiceClient()
+    .from('telemetry_consent')
+    .upsert(
+      {
+        user_id: userId,
+        xapi_consent: consent,
+        consented_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id' },
+    )
+    .abortSignal(AbortSignal.timeout(5000));
+  if (error) throw new Error('Consent storage unavailable');
+}

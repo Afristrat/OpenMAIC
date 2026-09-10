@@ -1,5 +1,17 @@
 # S-035 — Transport commun xAPI
 
+## 10 septembre 2026 — Choix xAPI distinct dans le profil
+
+21025 exit 0 : vingt tests ciblés après ajout des checks de stockage xAPI (écriture ciblée, refus par défaut, erreurs), TypeScript/lint verts.
+
+Profil FR/AR/EN/RTL : contrôle xAPI séparé des analyses, refus par défaut, activation/retrait explicites et avertissement sur les données déjà reçues par le LRS. Route authentifiée existante étendue par purpose=xapi ; identité serveur, contrôles origine/JSON/taille conservés. Écriture ciblant uniquement xapi_consent, erreurs remontées sans faux succès. Aucun consentement attribué à un utilisateur existant.
+
+Candidate CLI 20260910025207 : projection cours exige xapi_consent sous verrou, en plus du consentement de collecte ; livraison cours revalidée. Retrait efface les lignes xAPI cours et ANCRER mais conserve les analyses internes autorisées. Changer le choix xAPI renouvelle collection_epoch : les buffers antérieurs ne sont ni réétiquetés ni envoyés rétroactivement ; ils sont invalidés, pas convertis en nouvel historique. Trigger privé existant réutilisé avec identité OLD et garde auth.uid ; pas de nouvelle table ni de droit client.
+
+7299 exit 0 : dix-huit tests, TypeScript/lint et quatre Chromium (choix séparés, activation/retrait dans trois langues, RTL, échec puis reprise). Réseau simulé. SQL réel service_role BEGIN/ROLLBACK : projection quiz/discussion autorisée, retrait efface outbox sans supprimer analyses, ancien epoch refusé, nouvelle collecte interne autorisée sans projection xAPI. Relecture compte synthétique/outbox/colonne à zéro, flag false ; séquences consommées par INSERT annulés. Advisors local indisponibles, Mnemo fetch failed. Non déployé, pas de build/gate intégré au SHA propre ; runner antérieur avec overlays. Référence : [upsert Supabase](https://supabase.com/docs/reference/javascript/upsert).
+
+Restent réception LRS réelle, effacement distant et validation intégrée/publication. Le retrait n’annule pas une requête HTTP déjà partie. S-035 reste ouverte.
+
 ## 10 septembre 2026 — Admission ANCRER sous consentement xAPI
 
 82789 exit 0 : trois Chromium diagnostic FR/AR/EN, API simulées. Pas une preuve du parcours complet de consentement ni de réception LRS.
