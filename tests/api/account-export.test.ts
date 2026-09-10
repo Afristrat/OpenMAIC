@@ -117,6 +117,21 @@ describe('account export', () => {
     expect(response.headers.get('content-disposition')).toBeNull();
     expect(await response.json()).toEqual({ error: 'Account export unavailable' });
   });
+  it('exports protected replay file links without embedding temporary signing tokens', async () => {
+    const session_id = '00000000-0036-4000-8000-000000000402';
+    const audio_path = `actor/${session_id}/file.wav`;
+    mocks.read.mockImplementation(async (_name, args) => ({
+      error: null,
+      data:
+        args.p_section === 'session_events'
+          ? [{ cursor: '1', value: { id: '1', session_id, audio_path } }]
+          : [],
+    }));
+    const body = await (await GET(request())).json();
+    expect(body.session_events[0].downloadUrl).toBe(
+      `/api/live-sessions/${session_id}/audio?path=${encodeURIComponent(audio_path)}&download=1`,
+    );
+  });
   it('aborts a partial download on a later failure instead of certifying an incomplete export', async () => {
     mocks.read.mockImplementation(async (_name, args) =>
       args.p_section === 'widget_template_publications'

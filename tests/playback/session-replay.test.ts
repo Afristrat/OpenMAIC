@@ -2,6 +2,21 @@ import { describe, expect, it } from 'vitest';
 import { buildSessionReplay, findReplayAudioAt } from '@/lib/playback/session-replay';
 
 describe('session replay timeline', () => {
+  it('orders adjacent bigint event IDs without numeric rounding', () => {
+    const events = ['9007199254740993', '9007199254740992'].map((id) => ({
+      id,
+      tsMs: 0,
+      actor: 'user' as const,
+      eventType: 'text',
+      payload: {},
+      audioPath: null,
+      audioBytes: 0,
+    }));
+    expect(buildSessionReplay(events).events.map((event) => event.id)).toEqual([
+      '9007199254740992',
+      '9007199254740993',
+    ]);
+  });
   it('orders concurrent events deterministically and reports persisted audio usage', () => {
     const replay = buildSessionReplay([
       {

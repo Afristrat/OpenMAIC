@@ -17,7 +17,7 @@ interface ReplayResponse {
   last_position_ms: number;
   courses: { title: string; stage_id: string } | { title: string; stage_id: string }[];
   session_events: Array<{
-    id: number;
+    id: number | string;
     ts_ms: number;
     actor: SessionReplayEvent['actor'];
     event_type: string;
@@ -33,8 +33,12 @@ function formatTime(milliseconds: number): string {
 }
 
 export default function ReplayPage() {
-  const { t } = useI18n();
   const { id } = useParams<{ id: string }>();
+  return <ReplaySession key={id} id={id} />;
+}
+
+function ReplaySession({ id }: { id: string }) {
+  const { t } = useI18n();
   const [session, setSession] = useState<ReplayResponse | null>(null);
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [position, setPosition] = useState(0);
@@ -44,12 +48,49 @@ export default function ReplayPage() {
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
-    void fetch(`/api/live-sessions/${encodeURIComponent(id)}`, { cache: 'no-store' })
+    const cancelled = new AbortController();
+    void fetch(`/api/live-sessions/${encodeURIComponent(id)}`, {
+      cache: 'no-store',
+      signal: cancelled.signal,
+    })
       .then(async (response) => {
         if (!response.ok) throw new Error();
-        return (await response.json()) as { session: ReplayResponse };
+        return (await response.json()) as {
+          session: ReplayResponse;
+          nextCursor?: string | null;
+          upperBound?: string;
+        };
       })
       .then(async (body) => {
+        const events = [...body.session.session_events];
+        let cursor = body.nextCursor;
+        while (cursor != null) {
+          if (!/^[0-9]+$/.test(cursor) || !body.upperBound || !/^[0-9]+$/.test(body.upperBound))
+            throw new Error();
+          const response = await fetch(
+            `/api/live-sessions/${encodeURIComponent(id)}/events?after=${cursor}&upper=${body.upperBound}`,
+            { cache: 'no-store', signal: cancelled.signal },
+          );
+          if (!response.ok) throw new Error();
+          const page = (await response.json()) as {
+            events: ReplayResponse['session_events'];
+            nextCursor: string | null;
+            upperBound: string;
+          };
+          if (
+            !('nextCursor' in page) ||
+            page.upperBound !== body.upperBound ||
+            !Array.isArray(page.events) ||
+            page.events.length > 100 ||
+            (page.nextCursor !== null &&
+              (!/^[0-9]+$/.test(page.nextCursor) || BigInt(page.nextCursor) <= BigInt(cursor)))
+          )
+            throw new Error();
+          events.push(...page.events);
+          cursor = page.nextCursor;
+        }
+        if (cancelled.signal.aborted) return;
+        body.session.session_events = events;
         setSession(body.session);
         setPosition(body.session.last_position_ms);
         const course = Array.isArray(body.session.courses)
@@ -58,15 +99,18 @@ export default function ReplayPage() {
         if (!course?.stage_id) return;
         const classroomResponse = await fetch(
           `/api/classroom?id=${encodeURIComponent(course.stage_id)}`,
-          { cache: 'no-store' },
+          { cache: 'no-store', signal: cancelled.signal },
         ).catch(() => null);
         if (!classroomResponse?.ok) return;
         const classroomBody = (await classroomResponse.json()) as {
           classroom?: { scenes?: Scene[] };
         };
-        setScenes(classroomBody.classroom?.scenes ?? []);
+        if (!cancelled.signal.aborted) setScenes(classroomBody.classroom?.scenes ?? []);
       })
-      .catch(() => setError(true));
+      .catch(() => {
+        if (!cancelled.signal.aborted) setError(true);
+      });
+    return () => cancelled.abort();
   }, [id]);
 
   const replay = useMemo(

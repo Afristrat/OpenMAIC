@@ -25,21 +25,31 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
     return apiError('INTERNAL_ERROR', 500, 'Impossible de lire la piste audio');
   }
   if (!event) return apiError('INVALID_REQUEST', 404, 'Piste audio introuvable');
-
-  const { data, error: downloadError } = await supabase.storage
-    .from('session-audio')
-    .download(path);
-  if (downloadError || !data) {
-    log.error('Session audio download failed', downloadError?.message);
-    return apiError('INTERNAL_ERROR', 500, 'Impossible de lire la piste audio');
+  try {
+    // Keep the user-scoped Storage client: its session policy is checked again.
+    // Direct delivery supports byte ranges without buffering the track in Next.js.
+    // Issued URLs remain valid for up to 60 seconds after access changes.
+    const { data, error: signError } = await supabase.storage
+      .from('session-audio')
+      .createSignedUrl(path, 60, {
+        download: new URL(request.url).searchParams.get('download') === '1',
+      });
+    if (signError || !data?.signedUrl) throw new Error('Audio signing unavailable');
+    const target = new URL(data.signedUrl);
+    if (
+      target.origin !== new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).origin ||
+      !['http:', 'https:'].includes(target.protocol)
+    )
+      throw new Error('Invalid storage origin');
+    return new NextResponse(null, {
+      status: 307,
+      headers: {
+        Location: target.href,
+        'Cache-Control': 'private, no-store',
+        'Referrer-Policy': 'no-referrer',
+      },
+    });
+  } catch {
+    return apiError('INTERNAL_ERROR', 503, 'Impossible de lire la piste audio');
   }
-  return new NextResponse(data, {
-    headers: {
-      'Cache-Control': 'private, no-store',
-      'Content-Disposition': 'inline',
-      'Content-Length': String(data.size),
-      'Content-Type': data.type || 'application/octet-stream',
-      'X-Content-Type-Options': 'nosniff',
-    },
-  });
 }

@@ -153,7 +153,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
                     ...row.value,
                     downloadUrl: `/api/account/export/imports/${z.string().uuid().parse(row.value.id)}`,
                   }
-                : row.value;
+                : section === 'session_events' && typeof row.value.audio_path === 'string'
+                  ? {
+                      ...row.value,
+                      downloadUrl: `/api/live-sessions/${z.string().uuid().parse(row.value.session_id)}/audio?path=${encodeURIComponent(row.value.audio_path)}&download=1`,
+                    }
+                  : row.value;
             yield (first ? '' : ',') + JSON.stringify(value);
             first = false;
           }

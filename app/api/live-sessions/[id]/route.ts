@@ -4,6 +4,7 @@ import { enqueueAnchorSessionStatement } from '@/lib/anchoring/xapi-outbox';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { readSessionReplayPage } from '@/lib/server/session-replay-page';
 
 const log = createLogger('LiveSessionDetailAPI');
 
@@ -15,15 +16,13 @@ async function authenticatedClient() {
   return { supabase, user };
 }
 
-export async function GET(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const { supabase, user } = await authenticatedClient();
   if (!user) return apiError('UNAUTHORIZED', 401, 'Authentification requise');
   const { id } = await context.params;
   const { data, error } = await supabase
     .from('live_sessions')
-    .select(
-      'id, recorded, started_at, ended_at, last_position_ms, courses(title, stage_id), session_events(id, ts_ms, actor, event_type, payload, audio_path, audio_bytes)',
-    )
+    .select('id, recorded, started_at, ended_at, last_position_ms, courses(title, stage_id)')
     .eq('id', id)
     .maybeSingle();
   if (error) {
@@ -31,7 +30,17 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ id
     return apiError('INTERNAL_ERROR', 500, 'Impossible de lire la session');
   }
   if (!data) return apiError('INVALID_REQUEST', 404, 'Session introuvable');
-  return apiSuccess({ session: data });
+  try {
+    const page = await readSessionReplayPage(supabase, id, request.signal);
+    if (!page) return apiError('INVALID_REQUEST', 404, 'Session introuvable');
+    return apiSuccess({
+      session: { ...data, session_events: page.events },
+      nextCursor: page.nextCursor,
+      upperBound: page.upperBound,
+    });
+  } catch {
+    return apiError('INTERNAL_ERROR', 503, 'Impossible de lire le replay');
+  }
 }
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {

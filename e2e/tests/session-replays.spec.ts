@@ -6,9 +6,62 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('locale', 'fr-FR'));
 });
 
+test('ne présente pas un replay partiel si une page suivante échoue', async ({
+  page,
+  browserConsoleContract,
+}) => {
+  browserConsoleContract.expectHttpError(`/api/live-sessions/${SESSION_ID}/events`, 503);
+  await page.route(`**/api/live-sessions/${SESSION_ID}`, (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        session: {
+          id: SESSION_ID,
+          last_position_ms: 0,
+          courses: { title: 'Replay incomplet', stage_id: '' },
+          session_events: [],
+        },
+        nextCursor: '100',
+        upperBound: '101',
+      },
+    }),
+  );
+  await page.route(`**/api/live-sessions/${SESSION_ID}/events?*`, (route) =>
+    route.fulfill({ status: 503, json: { error: 'unavailable' } }),
+  );
+  await page.goto(`/replays/${SESSION_ID}`);
+  await expect(
+    page.getByRole('alert').filter({ hasText: 'Impossible de charger les sessions enregistrées.' }),
+  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Replay incomplet' })).toHaveCount(0);
+});
+
 test('liste, reprend et supprime effectivement un replay consenti', async ({ page }) => {
   let deleted = false;
   let classroomReads = 0;
+  let pageReads = 0;
+  await page.route(`**/api/live-sessions/${SESSION_ID}/events?*`, (route) => {
+    pageReads++;
+    expect(new URL(route.request().url()).searchParams.get('after')).toBe('3');
+    return route.fulfill({
+      json: {
+        success: true,
+        upperBound: '4',
+        nextCursor: null,
+        events: [
+          {
+            id: '4',
+            ts_ms: 4200,
+            actor: 'user',
+            event_type: 'user_message',
+            payload: { text: 'Dernière page du replay.' },
+            audio_path: null,
+            audio_bytes: 0,
+          },
+        ],
+      },
+    });
+  });
   // This library fixture exercises replay events, not a visual course. Its
   // explicit empty scene list must still be loaded without reaching real storage.
   await page.route('**/api/classroom?id=classroom-1', (route) => {
@@ -82,6 +135,8 @@ test('liste, reprend et supprime effectivement un replay consenti', async ({ pag
             },
           ],
         },
+        nextCursor: '3',
+        upperBound: '4',
       }),
     });
   });
@@ -100,6 +155,8 @@ test('liste, reprend et supprime effectivement un replay consenti', async ({ pag
   await expect(page.getByRole('heading', { name: 'Finance durable' })).toBeVisible();
   await expect(page.getByText('Bienvenue dans cette session.')).toBeVisible();
   await expect(page.getByText('Je souhaite approfondir.')).toBeVisible();
+  await expect(page.getByText('Dernière page du replay.')).toBeVisible();
+  expect(pageReads).toBe(1);
   await expect(page.getByRole('slider', { name: 'Position du replay' })).toHaveValue('4200');
   await expect.poll(() => classroomReads).toBeGreaterThan(0);
 

@@ -4,27 +4,30 @@ import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
+import { readSessionReplayPage, replayCursor } from '@/lib/server/session-replay-page';
 
 const log = createLogger('LiveSessionEventsAPI');
 
-export async function GET(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return apiError('UNAUTHORIZED', 401, 'Authentification requise');
   const { id } = await context.params;
-  const { data, error } = await supabase
-    .from('session_events')
-    .select('id, ts_ms, actor, event_type, payload, audio_path, audio_bytes')
-    .eq('session_id', id)
-    .order('ts_ms', { ascending: true })
-    .order('id', { ascending: true });
-  if (error) {
-    log.error('Session event listing failed', error.message);
-    return apiError('INTERNAL_ERROR', 500, 'Impossible de lire le replay');
+  const params = new URL(request.url).searchParams;
+  const after = replayCursor.safeParse(params.get('after') ?? '0');
+  const upper = replayCursor.nullable().safeParse(params.get('upper'));
+  if (!after.success || !upper.success || (after.data !== '0' && upper.data === null)) {
+    return apiError('INVALID_REQUEST', 400, 'Curseur de replay invalide');
   }
-  return apiSuccess({ events: data ?? [] });
+  try {
+    const page = await readSessionReplayPage(supabase, id, request.signal, after.data, upper.data);
+    if (!page) return apiError('INVALID_REQUEST', 404, 'Session introuvable');
+    return apiSuccess(page);
+  } catch {
+    return apiError('INTERNAL_ERROR', 503, 'Impossible de lire le replay');
+  }
 }
 
 export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {

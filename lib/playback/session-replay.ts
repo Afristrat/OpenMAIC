@@ -1,5 +1,5 @@
 export interface SessionReplayEvent {
-  id: number;
+  id: number | string;
   tsMs: number;
   actor: 'agent' | 'user' | 'system';
   eventType: string;
@@ -16,7 +16,11 @@ export interface SessionReplay {
 }
 
 export function buildSessionReplay(events: SessionReplayEvent[]): SessionReplay {
-  const ordered = [...events].sort((left, right) => left.tsMs - right.tsMs || left.id - right.id);
+  const ordered = [...events].sort(
+    (left, right) =>
+      left.tsMs - right.tsMs ||
+      (BigInt(left.id) < BigInt(right.id) ? -1 : BigInt(left.id) > BigInt(right.id) ? 1 : 0),
+  );
   const audioBytes = ordered.reduce((total, event) => total + event.audioBytes, 0);
   return {
     events: ordered,

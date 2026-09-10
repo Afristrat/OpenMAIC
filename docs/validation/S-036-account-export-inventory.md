@@ -1,5 +1,15 @@
 # S-036 — Inventaire de l’export personnel
 
+## Complément — Replays paginés et fichiers audio, 10 septembre 2026
+
+`20260910011734_paginated_session_replay.sql` : invoker/RLS, session enregistrée du seul acteur, index (session_id,id), 100 lignes, bigint texte, borne haute fixée lors de la première page. Métadonnées et première page puis /events ; toutes les pages sont chargées avant affichage, refus d’un curseur qui n’avance pas ou d’une borne modifiée, annulation au démontage et clé React par session. Timeline complète encore conservée côté navigateur ; pas de snapshot transactionnel inter-pages, aucune promesse mémoire illimitée/OOM impossible.
+
+Route audio : autorisation événement RLS puis signature par le client utilisateur (policy Storage conservée), URL 60 s, origine vérifiée, 307 sans fichier bufferisé. Export session_events : downloadUrl relatif protégé avec download=1, pas de signature stockée dans le JSON ; liens déjà émis valides jusqu’à expiration. Le transport direct délègue les requêtes Range à Storage ; pas encore de preuve Range sur Storage réel dans ce lot.
+
+SQL `scripts/validation/s036-replay-pagination.sql` sous BEGIN/ROLLBACK : 1 001 événements avec IDs >2^53, 100/page, borne fixe, autre utilisateur et anon exclus. Connexion neuve : zéro compte/session/événements/fonction/index de test. Aucun fichier réel créé ou supprimé. Premiers contrôles : 32 tests verts, TS refuse le littéral bigint (corrigé via BigInt), lint refuse les resets dans l’effet (corrigés par clé React). Non déployé ; appliquer la candidate avec le nouveau lecteur/API, pas séparément. Aucun build/gate au SHA propre, aucune collecte activée.
+
+40593 : 32 tests et TypeScript/lint verts ; six Chromium verts, test d’erreur ambigu entre l’alerte métier et l’annonceur Next.js. Sélecteur resserré sur le message métier, sans masquer d’erreur console. 49452 exit 0 : TypeScript 4 Gio/lint globaux et sept Chromium (export FR/AR/EN/RTL, refus export, replay multi-page, refus page tardive, consentement). APIs/Storage simulés dans le navigateur. Mnemo fetch failed ; preuves locales/versionnées, pas de persistance Mnemo prétendue.
+
 ## Complément — Auth réelle et propriété Storage, 10 septembre 2026
 
 Lecture SQL réelle : 1 644 objets classroom-media, 12 exports ; zéro owner et owner_id renseignés, aucun objet dans session-audio/transmissions. Aucune réattribution ni suppression de fichier nécessaire pour le blocage de propriété à cet instant ; revérifier avant publication, car la policy d’upload replay déployée n’est pas encore la candidate serveur.
