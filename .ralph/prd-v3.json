@@ -4457,7 +4457,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Télémétrie xAPI » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "planned",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "file": ".ralph/prd.json",
@@ -4467,7 +4467,16 @@
       "sourceDependencies": ["S-022"],
       "dependencies": ["S0-011", "U-021"],
       "gap": "2026-09-10 : événements cours/ANCRER, transport et consentement distinct codés. Profil/API xAPI FR/AR/EN/RTL ; candidate 20260910025207 harmonise projection/envoi cours, retrait local sans effacer les analyses internes et renouvellement epoch (anciens buffers invalidés, aucun backfill). 7299 quatre Chromium ; 21025 vingt tests/TypeScript/lint ; SQL réel ROLLBACK retrait séparé, ancien epoch refusé et collecte interne sans xAPI, zéro compte/outbox/colonne et flag false. Restent réception LRS réelle, effacement distant, gate intégré au SHA propre et publication. Non déployé, aucune activation réelle ; docs/validation/S-035-xapi-delivery.md. Contrôle direct supplémentaire du 10 septembre : organization_lrs_configs=0 (dont enabled=0), outbox=0, xapi_emission=false. Aucun destinataire réel disponible pour recette/effacement ; preuve S3-010 historique utilisait une terminaison temporaire supprimée. Ne pas assimiler voiding xAPI à une suppression physique. Poursuivre les autres US codables sans activer de LRS arbitraire.",
-      "evidence": ["lib/telemetry/xapi.ts:106"],
+      "evidence": [
+        "lib/telemetry/xapi.ts",
+        "lib/telemetry/xapi-delivery.ts",
+        "lib/anchoring/xapi-outbox.ts",
+        "lib/jobs/workers.ts",
+        "components/telemetry-consent-banner.tsx",
+        "components/org/xapi-settings.tsx",
+        "docs/validation/S-035-xapi-delivery.md",
+        "commit:e73b852"
+      ],
       "acceptance": [
         "lib/telemetry/xapi.ts : client xAPI ADL conformant",
         "Statements : quiz tenté/réussi, slide vue, PBL résolu, discussion",
