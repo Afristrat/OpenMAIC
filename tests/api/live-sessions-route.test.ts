@@ -11,9 +11,12 @@ const mocks = vi.hoisted(() => ({
   upload: vi.fn(),
   remove: vi.fn(),
   isFeatureEnabled: vi.fn(),
+  service: vi.fn(),
+  bucket: vi.fn(),
 }));
 
 vi.mock('@/lib/flags', () => ({ isFeatureEnabled: mocks.isFeatureEnabled }));
+vi.mock('@/lib/supabase/service', () => ({ createServiceSupabaseClient: mocks.service }));
 
 vi.mock('@/lib/logger', () => ({
   createLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }),
@@ -21,7 +24,6 @@ vi.mock('@/lib/logger', () => ({
 vi.mock('@/lib/supabase/server', () => ({
   createServerSupabaseClient: async () => ({
     auth: { getUser: mocks.user },
-    storage: { from: () => ({ upload: mocks.upload, remove: mocks.remove }) },
     from: (table: string) => {
       if (table === 'courses') {
         return {
@@ -116,6 +118,8 @@ describe('live session API', () => {
     mocks.insertEvent.mockResolvedValue({ data: { id: 1 }, error: null });
     mocks.upload.mockResolvedValue({ data: { path: 'stored' }, error: null });
     mocks.remove.mockResolvedValue({ error: null });
+    mocks.service.mockReturnValue({ storage: { from: mocks.bucket } });
+    mocks.bucket.mockReturnValue({ upload: mocks.upload, remove: mocks.remove });
     mocks.isFeatureEnabled.mockResolvedValue(true);
   });
 
@@ -177,6 +181,8 @@ describe('live session API', () => {
   it('stores uploaded audio privately and measures its exact byte size', async () => {
     const response = await appendAudioEvent();
     expect(response.status).toBe(201);
+    expect(mocks.service).toHaveBeenCalledWith(expect.any(AbortSignal));
+    expect(mocks.bucket).toHaveBeenCalledWith('session-audio');
     expect(mocks.upload).toHaveBeenCalledWith(
       expect.stringMatching(/^user-1\/session-1\//),
       expect.any(Blob),
@@ -188,5 +194,14 @@ describe('live session API', () => {
         audio_bytes: 5,
       }),
     );
+  });
+  it('never opens privileged storage before authentication and session access succeed', async () => {
+    mocks.user.mockResolvedValueOnce({ data: { user: null } });
+    expect((await appendAudioEvent()).status).toBe(401);
+    expect(mocks.service).not.toHaveBeenCalled();
+    mocks.session.mockResolvedValueOnce({ data: null, error: null });
+    expect((await appendAudioEvent()).status).toBe(404);
+    expect(mocks.service).not.toHaveBeenCalled();
+    expect(mocks.upload).not.toHaveBeenCalled();
   });
 });

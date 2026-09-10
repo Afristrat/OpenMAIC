@@ -13,6 +13,7 @@ vi.mock('@/lib/supabase/server', () => ({
 vi.mock('next/navigation', () => ({ redirect: mocks.redirect }));
 
 import PrivateApplicationLayout, { dynamic } from '@/app/(private)/layout';
+import { TelemetryConsentBanner } from '@/components/telemetry-consent-banner';
 
 describe('private application layout', () => {
   it('forces a runtime authentication decision for every request', () => {
@@ -31,7 +32,9 @@ describe('private application layout', () => {
   it('returns authenticated application content', async () => {
     mocks.getUser.mockResolvedValue({ data: { user: { id: 'member-1' } } });
 
-    await expect(PrivateApplicationLayout({ children: 'private' })).resolves.toBe('private');
+    await expect(PrivateApplicationLayout({ children: 'private' })).resolves.toMatchObject({
+      props: { children: ['private', expect.objectContaining({ type: TelemetryConsentBanner })] },
+    });
     expect(mocks.redirect).not.toHaveBeenCalled();
   });
 
