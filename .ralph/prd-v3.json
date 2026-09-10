@@ -4564,8 +4564,12 @@
       },
       "sourceDependencies": ["S-036"],
       "dependencies": ["S0-011", "S-036"],
-      "gap": "Feu vert reçu le 9 septembre 2026. Candidat corrigé : aucun minimum de sessions, scores absents/invalides ignorés, volume observé explicite sans fausse confiance, requête bornée et liste de formations autorisées obligatoire. Huit tests ciblés verts. Restent le raccordement avec les données consenties de S-036, l’application au pipeline, la recette navigateur et la mesure d’effet ; aucune collecte activée ni US clôturée.",
-      "evidence": ["lib/generation/data-optimizer.ts:84"],
+      "gap": "10 septembre 2026 : optimiseur raccordé aux prompts du plan et de la génération directe. Contexte skill/niveau/langue résolu côté serveur, cours prêts de l’auteur dans son tenant bornés à 1000, observations sans subject_hash exclues, droits recontrôlés, aucun plan approuvé modifié. Conseil dès une observation, sans confiance ou gain inventé. 23418 exit 0 : 27 tests, TypeScript/lint ; 71958 exit 0 : complément logger/script, cinq tests et TypeScript/lint. Requête PostgREST réelle acceptée dans un périmètre synthétique vide, worker optimisation=false. Restent restitution auteur, application effectivement observée, recette navigateur/retrait et effet mesuré, migrations S-036 et gate intégré/publication. Aucun déploiement ni activation.",
+      "evidence": [
+        "lib/generation/data-optimizer.ts",
+        "lib/server/generation-optimization.ts",
+        "docs/validation/S-037-data-optimizer.md"
+      ],
       "acceptance": [
         "lib/generation/data-optimizer.ts",
         "Ordonnancement optimal basé sur données historiques",

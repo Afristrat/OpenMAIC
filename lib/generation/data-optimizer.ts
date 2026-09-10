@@ -88,6 +88,8 @@ export async function getOptimizationSuggestion(
       .select('scene_sequence, quiz_scores')
       // Stage IDs alone are insufficient after a transfer or cross-tenant sharing.
       .eq('org_id', org.data)
+      // Legacy rows without a revocable consent subject are not optimization evidence.
+      .not('subject_hash', 'is', null)
       .in('stage_id', [...new Set(stages.data)])
       .contains('subject_tags', [subject.trim()])
       .eq('level', level.trim())

@@ -1,5 +1,64 @@
 # S-037 — Optimiseur, candidat sans minimum de sessions
 
+## Raccordement du 10 septembre 2026
+
+`loadGenerationOptimization` est maintenant appelé par la génération de plan
+et par la génération directe de classroom. Le sujet est l’identifiant de skill
+résolu, le niveau vient des réglages de l’organisation et la langue du contexte
+de génération. Sans skill actif ou contexte comparable, aucun sujet n’est inventé.
+
+Le serveur vérifie les droits, sélectionne au maximum mille cours prêts de
+l’auteur dans l’organisation, filtrés par niveau/langue/skill, puis interroge
+l’optimiseur existant. Les observations sans `subject_hash` révocable sont
+exclues. Les droits sur la génération sont recontrôlés après la lecture ; aucun
+cache de suggestion n’est créé. Ce contrôle ne constitue pas une transaction
+unique avec un transfert concurrent de tous les cours sources.
+
+Le prompt reçoit la séquence de types, l’ajustement de difficulté et les volumes
+observés dès la première observation. Il conserve la priorité des prérequis,
+des objectifs, du nombre de scènes et de la difficulté demandés par l’auteur.
+Un plan déjà approuvé n’est ni relu pour optimisation ni modifié. L’application
+est un conseil au générateur, pas un tri mécanique qui pourrait casser les
+prérequis, ni une preuve que le modèle a suivi chaque recommandation.
+
+`QALEM_DATA_OPTIMIZATION_ENABLED=true` est requis pour activer le raccordement
+sur web et worker ; toute autre valeur le laisse inactif. Aucune activation
+effectuée. La vérification PostgREST réelle en lecture seule
+`scripts/validation/s037-history-query.mjs` accepte la requête de cours dans un
+périmètre synthétique vide (zéro ligne), et constate le worker inactif. Elle ne
+prouve ni la collecte consentie ni le calcul sur des observations de production.
+
+Tests ciblés : 27 tests verts, dont une suggestion à une observation transmise
+au véritable constructeur du prompt du plan ; modèle et base simulés.
+TypeScript et lint globaux verts, session ServeurIA 23418 terminée avec code 0.
+Complément logger et script : session 71958, cinq tests/TypeScript/lint verts,
+code 0. Le fichier de contrôle a été retiré du conteneur worker, puis son absence
+vérifiée ; sa source demeure versionnée dans le dépôt.
+Le runner reste une base antérieure avec fichiers superposés, pas un checkout
+propre du SHA candidat. Pas de build global, navigateur ou déploiement dans ce lot.
+
+### Protocole fixé avant activation
+
+Comparer une génération classique et une génération avec conseil sur la même
+demande, les mêmes sources versionnées, le même modèle et les mêmes contraintes
+d’auteur. Conserver le volume et les scores à l’origine du conseil. Mesurer
+séparément respect des contraintes, cohérence des prérequis, difficulté des quiz,
+latence, erreurs et coût ; ne pas assimiler une variation de quiz généré à un gain
+d’apprentissage. Pour mesurer ce dernier, utiliser des sessions d’apprentissage
+avec score avant/après et affectation documentée, sans minimum imposé, en exposant
+les effectifs et les limites de chaque observation. Ne pas basculer globalement
+sur une amélioration supposée ; désactiver en cas de régression technique.
+
+Restent à coder/valider : restitution auteur des conseils et de leur application,
+recette navigateur zéro/une/plusieurs observations, cycle réel de retrait,
+protocole exécuté, migrations S-036 coordonnées et gate intégré/publication.
+S-037 reste ouverte. Ponytail : optimiseur et circuit de prompts réutilisés.
+Supabase : filtres et autorisations explicites, requête native vérifiée sans
+mutation ; [documentation select](https://supabase.com/docs/reference/javascript/select)
+et [changelog](https://supabase.com/changelog) consultés, aucune mise à niveau.
+
+## État antérieur au raccordement
+
 Feu vert du 9 septembre 2026 consigné dans
 `docs/decisions/2026-09-09-unblock-prd.md`. Aucun passes=true à ce stade.
 

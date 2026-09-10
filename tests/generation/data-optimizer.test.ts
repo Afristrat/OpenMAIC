@@ -81,7 +81,7 @@ describe('authorized observation query', () => {
   const chain: Record<string, ReturnType<typeof vi.fn>> = {};
   beforeEach(() => {
     vi.clearAllMocks();
-    for (const name of ['from', 'select', 'in', 'contains', 'eq', 'order', 'limit'])
+    for (const name of ['from', 'select', 'in', 'contains', 'eq', 'not', 'order', 'limit'])
       chain[name] = vi.fn(() => chain);
     chain.abortSignal = mocks.query;
     mocks.client.mockReturnValue(chain);
@@ -97,6 +97,7 @@ describe('authorized observation query', () => {
     ).toMatchObject({ sampleSize: 1 });
     expect(chain.in).toHaveBeenCalledWith('stage_id', ['stage:1']);
     expect(chain.eq).toHaveBeenCalledWith('org_id', orgId);
+    expect(chain.not).toHaveBeenCalledWith('subject_hash', 'is', null);
     expect(chain.contains).toHaveBeenCalledWith('subject_tags', ['SIPOC']);
     expect(chain.eq).toHaveBeenCalledWith('level', 'adult');
     expect(chain.eq).toHaveBeenCalledWith('language', 'fr-FR');

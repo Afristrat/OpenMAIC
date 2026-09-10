@@ -23,6 +23,10 @@ import type { GenerateClassroomInput } from '@/lib/server/classroom-generation';
 import { normalizePdfImages } from '@/lib/server/pdf-source';
 import { resolveFormationSources } from '@/lib/server/formation-source-library';
 import { assertCourseGenerationAccess } from '@/lib/server/course-generation-access';
+import {
+  loadGenerationOptimization,
+  generationOptimizationDirective,
+} from './generation-optimization';
 
 export async function generateClassroomPlan(input: GenerateClassroomInput, ownerId?: string) {
   await assertCourseGenerationAccess(input, ownerId);
@@ -64,6 +68,14 @@ export async function generateClassroomPlan(input: GenerateClassroomInput, owner
     interactiveMode: input.interactiveMode ?? false,
     activeSkillId,
   };
+  const skillEngineEnabled = await isFeatureEnabled('skill_engine');
+  const optimization = await loadGenerationOptimization(input, ownerId, {
+    subject: skillEngineEnabled ? activeSkillId : undefined,
+    level: learningDesign.expertiseLevel,
+    language: input.language ?? 'fr-FR',
+  });
+  const optimizationDirective = generationOptimizationDirective(optimization);
+  if (optimizationDirective) requirements.requirement += `\n\n${optimizationDirective}`;
   const resolved = await resolveModel(
     input.modelString ? { modelString: input.modelString } : { stage: 'generate-classroom' },
   );
@@ -116,7 +128,7 @@ export async function generateClassroomPlan(input: GenerateClassroomInput, owner
   const generationOptions = {
     imageGenerationEnabled: input.enableImageGeneration,
     videoGenerationEnabled: input.enableVideoGeneration,
-    skillEngineEnabled: await isFeatureEnabled('skill_engine'),
+    skillEngineEnabled,
     expectedSceneCount,
   };
   const generatePlan = (nextRequirements: typeof requirements) =>

@@ -4,6 +4,11 @@ const mocks = vi.hoisted(() => ({
   authorize: vi.fn(),
   callLLM: vi.fn(),
   resolveModel: vi.fn(),
+  optimization: vi.fn(),
+}));
+vi.mock('@/lib/server/generation-optimization', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/server/generation-optimization')>()),
+  loadGenerationOptimization: mocks.optimization,
 }));
 vi.mock('@/lib/server/course-generation-access', () => ({
   assertCourseGenerationAccess: mocks.authorize,
@@ -60,6 +65,7 @@ describe('explicit classroom scene count invariant', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.authorize.mockReset().mockResolvedValue(undefined);
+    mocks.optimization.mockReset().mockResolvedValue(null);
     mocks.resolveModel.mockResolvedValue({
       providerId: 'test-provider',
       model: {},
@@ -91,6 +97,26 @@ describe('explicit classroom scene count invariant', () => {
     const retryMessages = mocks.callLLM.mock.calls[1]?.[0]?.messages as Array<{ content: string }>;
     expect(retryMessages[1]?.content).toContain('Return exactly 12 complete');
     expect(retryMessages[1]?.content).toContain('Do not truncate');
+  });
+
+  test('passes a single-observation suggestion to the real outline prompt without changing author constraints', async () => {
+    mocks.optimization.mockResolvedValue({
+      recommendedSceneOrder: ['slide', 'quiz'],
+      difficultyModifier: -0.2,
+      sampleSize: 1,
+      selectedSequenceSampleSize: 1,
+      observedMeanQuizScore: 0.4,
+      selectedSequenceMeanQuizScore: 0.4,
+      evidence: 'observational',
+      observationWindowLimit: 1000,
+    });
+    mocks.callLLM.mockResolvedValue({ text: planWithCount(12) });
+    const result = await generateClassroomPlan(input, 'owner');
+    const messages = mocks.callLLM.mock.calls[0][0].messages as Array<{ content: string }>;
+    expect(messages[1].content).toContain('Observed sessions: 1');
+    expect(messages[1].content).toContain(input.requirement);
+    expect(messages[1].content).toContain('Do not copy unrelated scene content');
+    expect(result.outlines).toHaveLength(12);
   });
 
   test('discards a provider response after authorization is revoked', async () => {

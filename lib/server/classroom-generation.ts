@@ -98,6 +98,10 @@ import {
 import { shouldRunClassroomWebSearch } from '@/lib/server/web-search-policy';
 import { buildSceneSourceGrounding } from '@/lib/generation/source-grounding';
 import { resolveFormationSources } from '@/lib/server/formation-source-library';
+import {
+  loadGenerationOptimization,
+  generationOptimizationDirective,
+} from './generation-optimization';
 
 const log = createLogger('Classroom');
 
@@ -405,6 +409,13 @@ export async function generateClassroom(
     activeSkillId,
   };
   const skillEngineEnabled = await isFeatureEnabled('skill_engine');
+  const optimization = await loadGenerationOptimization(input, options.ownerId, {
+    subject: skillEngineEnabled ? activeSkillId : undefined,
+    level: learningDesign.expertiseLevel,
+    language: input.language ?? 'fr-FR',
+  });
+  const optimizationDirective = generationOptimizationDirective(optimization);
+  if (optimizationDirective) requirements.requirement += `\n\n${optimizationDirective}`;
   const vocationalActive = resolveVocationalActive(requirements);
   const resolvedSources = await resolveFormationSources({
     orgId: input.orgId,
