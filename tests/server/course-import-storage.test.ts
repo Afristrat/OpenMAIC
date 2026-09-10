@@ -37,6 +37,7 @@ describe('validateAndPersistCourseImport', () => {
       validateAndPersistCourseImport(
         {
           ownerId,
+          orgId: '00000000-0036-4000-8000-000000000393',
           originalFilename: 'atelier.md',
           mimeType: 'text/markdown',
           text: validCanvas,
@@ -50,6 +51,7 @@ describe('validateAndPersistCourseImport', () => {
     expect(store.create).toHaveBeenCalledWith(
       expect.objectContaining({
         validation_status: 'conform',
+        source_org_id: '00000000-0036-4000-8000-000000000393',
         validation_report: [],
       }),
     );
@@ -62,6 +64,7 @@ describe('validateAndPersistCourseImport', () => {
       validateAndPersistCourseImport(
         {
           ownerId,
+          orgId: '00000000-0036-4000-8000-000000000393',
           originalFilename: 'notes.txt',
           mimeType: 'text/plain',
           text: '# Notes\n\nUne idée sans structure.',
@@ -75,6 +78,7 @@ describe('validateAndPersistCourseImport', () => {
     expect(store.create).toHaveBeenCalledWith(
       expect.objectContaining({
         validation_status: 'rejected',
+        source_org_id: '00000000-0036-4000-8000-000000000393',
         validation_report: expect.arrayContaining([expect.objectContaining({ rule: 'CI-01' })]),
       }),
     );
@@ -87,6 +91,7 @@ describe('validateAndPersistCourseImport', () => {
       validateAndPersistCourseImport(
         {
           ownerId,
+          orgId: '00000000-0036-4000-8000-000000000393',
           originalFilename: 'atelier.md',
           mimeType: 'text/markdown',
           text: validCanvas,

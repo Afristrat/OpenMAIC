@@ -78,6 +78,7 @@ describe('runCourseImportPipeline', () => {
       input.buffer,
       { contentType: 'application/pdf', upsert: false },
     );
+    expect(mocks.validate).toHaveBeenCalledWith(expect.objectContaining({ orgId: input.orgId }));
     expect(mocks.ingest).toHaveBeenCalledWith(
       expect.objectContaining({
         parserId: 'mineru',

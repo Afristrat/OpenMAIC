@@ -34,6 +34,7 @@ const serviceCourseImportRepository: CourseImportRepository = {
 export async function validateAndPersistCourseImport(
   input: {
     ownerId: string;
+    orgId: string;
     originalFilename: string;
     mimeType: string;
     text: string;
@@ -47,6 +48,7 @@ export async function validateAndPersistCourseImport(
   const validation = validateImportCanvas(input);
   const persisted = await repository.create({
     owner_id: input.ownerId,
+    source_org_id: input.orgId,
     original_filename: input.originalFilename,
     storage_path: input.storagePath,
     canvas_version: validation.canvasVersion,

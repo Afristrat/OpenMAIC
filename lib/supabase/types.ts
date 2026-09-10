@@ -194,6 +194,7 @@ export interface CourseImport {
   owner_id: string | null;
   original_filename: string;
   storage_path: string;
+  source_org_id: string | null;
   canvas_version: 'v1';
   validation_status: CourseImportValidationStatus;
   validation_report: Record<string, unknown>[];
@@ -324,6 +325,7 @@ export type SharedClassroomInsert = Pick<SharedClassroom, 'stage_id' | 'org_id'>
 
 export type CourseImportInsert = Pick<CourseImport, 'original_filename' | 'storage_path'> & {
   owner_id: string;
+  source_org_id: string;
 } & Partial<Pick<CourseImport, 'canvas_version' | 'validation_status' | 'validation_report'>>;
 
 export type CourseInsert = Pick<Course, 'title' | 'language' | 'source_kind' | 'outline'> & {

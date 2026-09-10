@@ -56,6 +56,7 @@ export async function runCourseImportPipeline(input: {
   try {
     const persisted = await validateAndPersistCourseImport({
       ownerId: input.ownerId,
+      orgId: input.orgId,
       originalFilename: input.originalFilename,
       mimeType: input.mimeType,
       text: extracted.content.text,

@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   abortSignal: vi.fn(),
   from: vi.fn(),
   remove: vi.fn(),
+  records: vi.fn(),
 }));
 vi.mock('@/lib/supabase/service', () => ({
   createServiceSupabaseClient: () => ({
@@ -22,7 +23,11 @@ const candidate = {
 };
 beforeEach(() => {
   vi.clearAllMocks();
-  mocks.rpc.mockReturnValue({ abortSignal: mocks.abortSignal });
+  mocks.records.mockResolvedValue({ data: 0, error: null });
+  mocks.rpc.mockImplementation((procedure) => ({
+    abortSignal:
+      procedure === 'purge_detached_course_import_records' ? mocks.records : mocks.abortSignal,
+  }));
   mocks.abortSignal.mockResolvedValue({ data: [candidate] });
   mocks.from.mockReturnValue({ remove: mocks.remove });
   mocks.remove.mockReset().mockResolvedValue({ error: null });
@@ -67,4 +72,15 @@ it('uses the import policy and fixed private bucket without mixing video paths',
   mocks.abortSignal.mockResolvedValue({ data: [candidate] });
   await expect(purgeOrphanedCourseImports()).rejects.toThrow('selection');
   expect(mocks.remove).toHaveBeenCalledTimes(1);
+});
+it('does not discard import records when Storage fails and retries failures', async () => {
+  const object_name =
+    '00000000-0036-4000-8000-000000000191/course-imports/00000000-0036-4000-8000-000000000193.pdf';
+  mocks.abortSignal.mockResolvedValue({ data: [{ ...candidate, object_name }] });
+  mocks.remove.mockResolvedValueOnce({ error: {} });
+  await expect(purgeOrphanedCourseImports()).rejects.toThrow('storage removal');
+  expect(mocks.records).not.toHaveBeenCalled();
+  mocks.records.mockResolvedValueOnce({ data: null, error: {} });
+  await expect(purgeOrphanedCourseImports()).rejects.toThrow('record removal');
+  expect(await purgeOrphanedCourseImports()).toBe(1);
 });

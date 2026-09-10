@@ -1,5 +1,11 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 10 septembre 2026 — S-036, provenance et cycle de vie des imports
+
+Flux réel : orgId obligatoire dans l’API, pas de mode d’import personnel. Candidate CLI 20260910004751 : source_org_id immuable conservé sans FK après disparition du tenant ; aucun backfill supposé pour l’historique. Pipeline transmet le tenant dès l’enregistrement, y compris rejet sans cours. Trigger invoker : auteur membre éditeur du tenant actif, provenance et chemin immuables, rattachement de cours inter-tenant refusé, détachement FK conservé. RLS, export et téléchargement vérifient la provenance même sans cours associé. La suppression Auth retire l’auteur mais conserve le document organisationnel.
+
+Purge candidate : auteur disparu ET organisation source disparue ET aucun cours associé ; Storage en premier, ligne import seulement après absence de l’objet vérifiée en DB. Historique sans provenance conservé. Worker/helper existants, lots 100, échecs Storage/DB réessayables. SQL s036-import-provenance sous ROLLBACK : rejet sans cours, refus mutation/cross-tenant/retrait/RLS, suppression Auth conservant provenance, tenant existant protégé, suppression tenant rendant fichier éligible et retrait seulement de la ligne sans objet. Fixture JWT résiduel corrigée avant passage au rôle Auth ; zéro comptes/imports/objets/tenants/colonne recontrôlés. 24090 : 22 tests/TS/lint ; validation complémentaire consignée dans l’inventaire. Non déployé, pas de purge physique réelle ni de gate/build au SHA propre. Ponytail/Supabase : provenance et contraintes natives, sans nouveau mode personnel ni dépendance. Suite : autres fichiers (notamment replays/session-audio), Auth/sessions/concurrence et recette intégrée ; S-036 ouverte.
+
 ## 10 septembre 2026 — S-036, rattrapage des fichiers d’import sans référence
 
 Candidate CLI 20260910003925 : registre privé RLS des suppressions Auth, hash SHA-256 du UUID (pseudonyme, pas anonymisation), alimenté dans la transaction Auth par trigger invoker ; recréation du UUID efface le marqueur. Service limité à SELECT, sans lecture auth.users ni écriture des marqueurs. Première preuve refusée sur auth.users ; modèle corrigé par événement causal, aucun privilège Auth élargi. Pas de backfill des suppressions anciennes supposées.

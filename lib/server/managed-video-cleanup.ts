@@ -23,7 +23,15 @@ export async function purgeOrphanedManagedVideos(): Promise<number> {
 }
 
 export async function purgeOrphanedCourseImports(): Promise<number> {
-  return purgeOrphanedFiles('import');
+  const files = await purgeOrphanedFiles('import');
+  // Records are removed only after Storage metadata proves their object absent.
+  const result = await createServiceSupabaseClient()
+    .rpc('purge_detached_course_import_records')
+    .abortSignal(AbortSignal.timeout(5000));
+  if (result.error || !Number.isInteger(result.data) || result.data < 0 || result.data > 100) {
+    throw new Error('Import cleanup record removal failed');
+  }
+  return Math.max(files, result.data);
 }
 
 async function purgeOrphanedFiles(kind: keyof typeof filePolicies): Promise<number> {
