@@ -178,7 +178,9 @@ function AuthPageContent(): React.ReactElement {
                 </Button>
               </form>
             ) : authInviteState === 'invalid' ? (
-              <p className="text-center text-sm text-destructive">{t('auth.invitationUnavailable')}</p>
+              <p className="text-center text-sm text-destructive">
+                {t('auth.invitationUnavailable')}
+              </p>
             ) : (
               <>
                 <Tabs
@@ -188,87 +190,87 @@ function AuthPageContent(): React.ReactElement {
                     setError('');
                   }}
                 >
-              <TabsList className="w-full">
-                <TabsTrigger value="login" className="flex-1">
-                  {t('auth.login')}
-                </TabsTrigger>
-                {inviteToken && (
-                  <TabsTrigger value="signup" className="flex-1">
-                    {t('auth.signup')}
-                  </TabsTrigger>
-                )}
-              </TabsList>
+                  <TabsList className="w-full">
+                    <TabsTrigger value="login" className="flex-1">
+                      {t('auth.login')}
+                    </TabsTrigger>
+                    {inviteToken && (
+                      <TabsTrigger value="signup" className="flex-1">
+                        {t('auth.signup')}
+                      </TabsTrigger>
+                    )}
+                  </TabsList>
 
-              <TabsContent value="login" className="mt-6">
-                <form onSubmit={handleEmailAuth} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="login-email">{t('auth.email')}</Label>
-                    <Input
-                      id="login-email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@example.com"
-                      required
-                      autoComplete="email"
-                      dir="ltr"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="login-password">{t('auth.password')}</Label>
-                    <Input
-                      id="login-password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      required
-                      autoComplete="current-password"
-                      dir="ltr"
-                    />
-                  </div>
-                  {error && <p className="text-sm text-destructive">{error}</p>}
-                  <Button type="submit" className="w-full" disabled={isSubmitting}>
-                    {isSubmitting ? t('auth.loggingIn') : t('auth.loginButton')}
-                  </Button>
-                </form>
-              </TabsContent>
+                  <TabsContent value="login" className="mt-6">
+                    <form onSubmit={handleEmailAuth} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="login-email">{t('auth.email')}</Label>
+                        <Input
+                          id="login-email"
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="you@example.com"
+                          required
+                          autoComplete="email"
+                          dir="ltr"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="login-password">{t('auth.password')}</Label>
+                        <Input
+                          id="login-password"
+                          type="password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="••••••••"
+                          required
+                          autoComplete="current-password"
+                          dir="ltr"
+                        />
+                      </div>
+                      {error && <p className="text-sm text-destructive">{error}</p>}
+                      <Button type="submit" className="w-full" disabled={isSubmitting}>
+                        {isSubmitting ? t('auth.loggingIn') : t('auth.loginButton')}
+                      </Button>
+                    </form>
+                  </TabsContent>
 
-              <TabsContent value="signup" className="mt-6">
-                <form onSubmit={handleEmailAuth} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">{t('auth.email')}</Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@example.com"
-                      required
-                      autoComplete="email"
-                      dir="ltr"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">{t('auth.password')}</Label>
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      required
-                      autoComplete="new-password"
-                      minLength={6}
-                      dir="ltr"
-                    />
-                  </div>
-                  {error && <p className="text-sm text-destructive">{error}</p>}
-                  <Button type="submit" className="w-full" disabled={isSubmitting}>
-                    {isSubmitting ? t('auth.signingUp') : t('auth.signupButton')}
-                  </Button>
-                </form>
-              </TabsContent>
+                  <TabsContent value="signup" className="mt-6">
+                    <form onSubmit={handleEmailAuth} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-email">{t('auth.email')}</Label>
+                        <Input
+                          id="signup-email"
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="you@example.com"
+                          required
+                          autoComplete="email"
+                          dir="ltr"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-password">{t('auth.password')}</Label>
+                        <Input
+                          id="signup-password"
+                          type="password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="••••••••"
+                          required
+                          autoComplete="new-password"
+                          minLength={6}
+                          dir="ltr"
+                        />
+                      </div>
+                      {error && <p className="text-sm text-destructive">{error}</p>}
+                      <Button type="submit" className="w-full" disabled={isSubmitting}>
+                        {isSubmitting ? t('auth.signingUp') : t('auth.signupButton')}
+                      </Button>
+                    </form>
+                  </TabsContent>
                 </Tabs>
 
                 {!inviteToken && (

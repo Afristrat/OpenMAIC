@@ -4,12 +4,10 @@ import { encodeAudioWatermarkMessages } from './audio-watermark-protocol';
 const MAX_SOURCE_BYTES = 150 * 1024 * 1024;
 const TIMEOUT_MS = 120_000;
 
-const sidecarUrl = z
-  .url()
-  .refine((value) => {
-    const url = new URL(value);
-    return ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password;
-  });
+const sidecarUrl = z.url().refine((value) => {
+  const url = new URL(value);
+  return ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password;
+});
 
 /**
  * Produces an MP3 derivative through the isolated AudioSeal process.

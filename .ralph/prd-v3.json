@@ -3623,7 +3623,13 @@
       "sourceDependencies": ["S0-008", "S2-010"],
       "dependencies": [],
       "gap": "Le sidecar AudioSeal MIT, le worker BullMQ et P2-C sont désormais codés et P2-C passe sous limites bornées. Restent le déploiement sur la cible GPU retenue, le raccordement runtime persistant et une recette authentifiée de transmission ; watermarking demeure désactivé.",
-      "evidence": ["lib/transmissions/audio-watermark-protocol.ts", "services/audioseal-sidecar/app.py", "services/audioseal-sidecar/p2c.py", "docs/validation/S2-008-audioseal-p2c.md", ".ralph/prd-v2.json#S2-008"],
+      "evidence": [
+        "lib/transmissions/audio-watermark-protocol.ts",
+        "services/audioseal-sidecar/app.py",
+        "services/audioseal-sidecar/p2c.py",
+        "docs/validation/S2-008-audioseal-p2c.md",
+        ".ralph/prd-v2.json#S2-008"
+      ],
       "acceptance": [
         "Worker invoque AudioSeal MIT dans un sidecar borné ; watermark_id opaque 128 bits reconstitué par protocole composite documenté",
         "Protocole P2-C automatisé : ID décodé après mp3 128k, ogg, extrait 30 s, normalisation",
@@ -4342,7 +4348,13 @@
       "sourceDependencies": ["S-018"],
       "dependencies": ["S0-011", "S-018"],
       "gap": "10 septembre 2026 : le choix via Diwan impose un seul accès documentaire côté Qalem. L’exemple de serveur MCP Notion direct a été retiré ; Qalem dispose déjà du consommateur Diwan tenant-scopé, avec sélection épinglée, version/empreinte et résolution bornée dans le plan et la génération. Le contrat Diwan v1 ne définit cependant ni connexion Notion, ni recherche/lecture de page, ni mapping page/version → corpus/source Diwan. Restent ce contrat fournisseur, le jeton dédié par tenant, une recette autorisée avec refus hors droits et retrait, le gate intégré et la publication. La story est bloquée côté fournisseur, non par un second connecteur Qalem manquant.",
-      "evidence": ["lib/diwan/client.ts", "lib/diwan/references.ts", "lib/server/formation-source-library.ts", "docs/guides/notion-via-diwan.md", "mcp-servers.yml.example"],
+      "evidence": [
+        "lib/diwan/client.ts",
+        "lib/diwan/references.ts",
+        "lib/server/formation-source-library.ts",
+        "docs/guides/notion-via-diwan.md",
+        "mcp-servers.yml.example"
+      ],
       "acceptance": [
         "Config serveur MCP Notion dans mcp-servers.yml",
         "search_notion(query) disponible",
@@ -4383,7 +4395,13 @@
       "sourceDependencies": ["S-018"],
       "dependencies": ["S0-011", "S-018"],
       "gap": "10 septembre 2026 : le choix via Diwan impose un seul accès documentaire côté Qalem. Le dernier exemple de serveur MCP Google Drive direct a été retiré ; la configuration d’exemple est désormais une liste vide valide et deny-by-default. Le consommateur Diwan tenant-scopé existant épingle version et empreinte puis résout des passages bornés dans le plan et la génération. Le contrat Diwan v1 ne définit toutefois ni connexion Drive, ni recherche/lecture Docs, Slides ou PDF, ni mapping fichier/version → corpus/source Diwan. Restent ce contrat fournisseur, le jeton dédié par tenant, une recette autorisée par format avec refus hors droits et retrait, le gate intégré et la publication. La story est bloquée côté fournisseur, non par un connecteur Qalem direct manquant.",
-      "evidence": ["lib/diwan/client.ts", "lib/diwan/references.ts", "lib/server/formation-source-library.ts", "docs/guides/google-drive-via-diwan.md", "mcp-servers.yml.example"],
+      "evidence": [
+        "lib/diwan/client.ts",
+        "lib/diwan/references.ts",
+        "lib/server/formation-source-library.ts",
+        "docs/guides/google-drive-via-diwan.md",
+        "mcp-servers.yml.example"
+      ],
       "acceptance": [
         "Config serveur MCP Google Drive dans mcp-servers.yml",
         "search_drive(query) disponible",
