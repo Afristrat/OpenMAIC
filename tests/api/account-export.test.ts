@@ -23,20 +23,33 @@ describe('account export', () => {
     mocks.read.mockImplementation(async (_name, args) => ({
       error: null,
       data:
-        args.p_section !== 'pedagogy_telemetry'
-          ? []
-          : args.p_after === null
-            ? Array.from({ length: 100 }, (_, i) => ({
-                cursor: String(i).padStart(4, '0'),
-                value: { id: i },
-              }))
-            : [{ cursor: '0100', value: { id: 100 } }],
+        args.p_section === 'session_events'
+          ? [{ cursor: '00009007199254741300', value: { id: '9007199254741300' } }]
+          : args.p_section !== 'pedagogy_telemetry'
+            ? []
+            : args.p_after === null
+              ? Array.from({ length: 100 }, (_, i) => ({
+                  cursor: String(i).padStart(4, '0'),
+                  value: { id: i },
+                }))
+              : [{ cursor: '0100', value: { id: 100 } }],
     }));
     const response = await GET(request());
     const body = await response.json();
     expect(body.pedagogy_telemetry).toHaveLength(101);
     expect(body.complete).toBe(true);
-    expect(body.includedSections).toHaveLength(11);
+    expect(body.includedSections).toHaveLength(46);
+    expect(body.includedSections).toEqual(
+      expect.arrayContaining([
+        'session_events',
+        'evaluations',
+        'lti_quiz_attempts',
+        'review_notification_preferences',
+      ]),
+    );
+    expect(body.formatVersion).toBe(2);
+    expect(body.bigintEncoding).toBe('decimal-string');
+    expect(body.session_events[0].id).toBe('9007199254741300');
     expect(response.headers.get('cache-control')).toBe('no-store');
     for (const call of mocks.rpc.mock.calls) expect(call[1].p_actor).toBe('verified-user');
     expect(mocks.rpc).toHaveBeenCalledWith(
@@ -52,7 +65,7 @@ describe('account export', () => {
   });
   it('aborts a partial download on a later failure instead of certifying an incomplete export', async () => {
     mocks.read.mockImplementation(async (_name, args) =>
-      args.p_section === 'scenes' ? { error: {}, data: null } : { error: null, data: [] },
+      args.p_section === 'xapi_outbox' ? { error: {}, data: null } : { error: null, data: [] },
     );
     const response = await GET(request());
     await expect(response.text()).rejects.toThrow('interrupted');

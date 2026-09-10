@@ -14,8 +14,12 @@ for (const [locale, label] of [
     await mockApi.mockRichProfileDisabled();
     await page.addInitScript((value) => localStorage.setItem('locale', value), locale);
     const payload = {
-      includedSections: ['profiles'],
+      formatVersion: 2,
+      includedSections: ['profiles', 'session_events', 'evaluations', 'lti_quiz_attempts'],
       profiles: [{ nickname: 'Épreuve قلم' }],
+      session_events: [{ id: '9007199254741300', payload: { text: 'Ma question' } }],
+      evaluations: [{ phase: 'hot', score: 80 }],
+      lti_quiz_attempts: [],
       complete: true,
     };
     let requests = 0;
