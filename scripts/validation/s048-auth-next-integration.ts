@@ -12,8 +12,12 @@ import { chromium, expect, type Browser } from '@playwright/test';
 
 async function main() {
   assert(process.argv.includes('--isolated-s048'));
-  assert.equal(process.env.S048_REST_URL, 'http://qalem-prd3-rest-20260910:3000');
-  assert.equal(process.env.S048_AUTH_URL, 'http://qalem-prd3-auth-20260910:9999');
+  const restHost = process.env.S048_REST_HOST;
+  const authHost = process.env.S048_AUTH_HOST;
+  assert(restHost && /^[a-z0-9][a-z0-9-]*$/.test(restHost));
+  assert(authHost && /^[a-z0-9][a-z0-9-]*$/.test(authHost));
+  assert.equal(process.env.S048_REST_URL, `http://${restHost}:3000`);
+  assert.equal(process.env.S048_AUTH_URL, `http://${authHost}:9999`);
   const secret = process.env.S048_JWT_SECRET;
   assert(secret && secret.length >= 32);
   const token = (role: string) => {
@@ -32,7 +36,7 @@ async function main() {
     }
     const upstream = request(
       {
-        hostname: auth ? 'qalem-prd3-auth-20260910' : 'qalem-prd3-rest-20260910',
+        hostname: auth ? authHost : restHost,
         port: auth ? 9999 : 3000,
         path: incoming.url!.slice(auth ? '/auth/v1'.length : '/rest/v1'.length),
         method: incoming.method,
