@@ -207,7 +207,27 @@ async function main() {
         { path, body },
       );
     const readReport = () => page.evaluate(async (path) => (await fetch(path)).json(), reportPath);
-    assert.equal((await post('/api/telemetry-consent', { consent: true })).status, 200);
+    const initialConsent = page.waitForResponse(
+      (response) =>
+        response.url().endsWith('/api/telemetry-consent') && response.request().method() === 'GET',
+    );
+    const appResponse = await page.goto(`${app}/app`);
+    assert.equal(appResponse?.status(), 200, 'Private application route unavailable');
+    assert.equal(new URL(page.url()).pathname, '/app', 'Private application route redirected');
+    assert.equal((await initialConsent).status(), 200, 'Initial consent state unavailable');
+    const banner = page.getByRole('region', { name: 'Analyses d’apprentissage', exact: true });
+    await expect(banner).toBeVisible();
+    await banner.getByRole('button', { name: 'En savoir plus', exact: true }).click();
+    await expect(
+      banner.getByText('Les identifiants sont pseudonymisés', { exact: false }),
+    ).toBeVisible();
+    const allow = page.waitForResponse(
+      (response) =>
+        response.url().endsWith('/api/telemetry-consent') && response.request().method() === 'POST',
+    );
+    await banner.getByRole('button', { name: 'Autoriser les analyses', exact: true }).click();
+    assert.equal((await allow).status(), 200, 'Consent banner did not persist');
+    await expect(banner).toHaveCount(0);
     const consent = await page.evaluate(async () => (await fetch('/api/telemetry-consent')).json());
     assert.equal(consent.choice, true);
     assert.equal(typeof consent.epoch, 'string');
@@ -372,7 +392,20 @@ async function main() {
       await visibleReport.getByRole('button').click();
       await expect(visibleReport.getByRole('table')).toBeVisible();
     }
-    assert.equal((await post('/api/telemetry-consent', { consent: false })).status, 200);
+    await page.goto(`${app}/profile`);
+    const profileConsent = page.getByRole('region', {
+      name: 'Analyses d’apprentissage',
+      exact: true,
+    });
+    await expect(profileConsent).toBeVisible();
+    await expect(profileConsent.getByText('Analyses autorisées', { exact: true })).toBeVisible();
+    const withdraw = page.waitForResponse(
+      (response) =>
+        response.url().endsWith('/api/telemetry-consent') && response.request().method() === 'POST',
+    );
+    await profileConsent.getByRole('button', { name: 'Retirer mon accord', exact: true }).click();
+    assert.equal((await withdraw).status(), 200, 'Profile withdrawal did not persist');
+    await expect(profileConsent.getByText('Analyses refusées', { exact: true })).toBeVisible();
     assert.deepEqual((await readReport()).cohorts, [], 'Withdrawal retained experiment data');
     assert.deepEqual(await post('/api/learning-observations', observation), {
       status: 200,

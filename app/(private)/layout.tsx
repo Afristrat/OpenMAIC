@@ -7,20 +7,20 @@ export const dynamic = 'force-dynamic';
 export default async function PrivateApplicationLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>): Promise<React.ReactNode> {
-  const content = (
+  const content = (userId?: string) => (
     <>
       {children}
-      <TelemetryConsentBanner />
+      <TelemetryConsentBanner userId={userId} />
     </>
   );
-  if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === 'true') return content;
+  if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === 'true') return content();
 
   try {
     const supabase = await createServerSupabaseClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (user) return content;
+    if (user) return content(user.id);
   } catch {
     // Fail closed if the authentication service or configuration is unavailable.
   }

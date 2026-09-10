@@ -33,7 +33,12 @@ describe('private application layout', () => {
     mocks.getUser.mockResolvedValue({ data: { user: { id: 'member-1' } } });
 
     await expect(PrivateApplicationLayout({ children: 'private' })).resolves.toMatchObject({
-      props: { children: ['private', expect.objectContaining({ type: TelemetryConsentBanner })] },
+      props: {
+        children: [
+          'private',
+          expect.objectContaining({ type: TelemetryConsentBanner, props: { userId: 'member-1' } }),
+        ],
+      },
     });
     expect(mocks.redirect).not.toHaveBeenCalled();
   });

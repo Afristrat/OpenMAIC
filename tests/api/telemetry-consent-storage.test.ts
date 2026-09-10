@@ -55,18 +55,34 @@ describe('consent storage failures', () => {
     mocks.abortSignal.mockResolvedValue({ error: { message: 'private detail' } });
     await expect(setConsent('user', false)).rejects.toThrow('Consent storage unavailable');
     expect(mocks.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({ user_id: 'user', pedagogy_consent: false }),
+      expect.objectContaining({
+        user_id: 'user',
+        pedagogy_consent: false,
+        pedagogy_consent_decided_at: expect.any(String),
+      }),
       { onConflict: 'user_id' },
     );
   });
-  it('returns the database epoch and fails closed if it is absent', async () => {
+  it('returns a stored choice only after an explicit decision', async () => {
     const epoch = '00000000-0036-4000-8000-000000000099';
     mocks.maybeSingle.mockResolvedValue({
-      data: { pedagogy_consent: true, collection_epoch: epoch },
+      data: {
+        pedagogy_consent: true,
+        pedagogy_consent_decided_at: '2026-09-10T00:00:00.000Z',
+        collection_epoch: epoch,
+      },
       error: null,
     });
     expect(await readConsentState('user')).toEqual({ choice: true, epoch });
-    mocks.maybeSingle.mockResolvedValue({ data: { pedagogy_consent: true }, error: null });
+    mocks.maybeSingle.mockResolvedValue({
+      data: { pedagogy_consent: false, pedagogy_consent_decided_at: null, collection_epoch: epoch },
+      error: null,
+    });
+    expect(await readConsentState('user')).toEqual({ choice: null, epoch });
+    mocks.maybeSingle.mockResolvedValue({
+      data: { pedagogy_consent: true, pedagogy_consent_decided_at: null },
+      error: null,
+    });
     await expect(readConsentState('user')).rejects.toThrow('Consent storage unavailable');
   });
 });

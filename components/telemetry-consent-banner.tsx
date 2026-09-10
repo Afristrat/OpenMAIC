@@ -7,14 +7,22 @@ import { cn } from '@/lib/utils';
 import { publishConsentChange } from '@/lib/telemetry/learning-events';
 import { LearningObservationOutbox } from '@/lib/telemetry/learning-observation-outbox';
 
-export function TelemetryConsentBanner({ inline = false }: { inline?: boolean }): React.ReactNode {
+export function TelemetryConsentBanner({
+  inline = false,
+  userId: verifiedUserId,
+}: {
+  inline?: boolean;
+  /** A server-verified identity avoids a second client-auth dependency in private layouts. */
+  userId?: string;
+}): React.ReactNode {
   const { user, isGuest } = useAuth();
-  if (!user || isGuest) return null;
+  const userId = verifiedUserId ?? user?.id;
+  if (!userId || isGuest) return null;
   // Remount on account change: neither a choice nor an in-flight acknowledgement crosses accounts.
   return (
     <>
-      <ConsentControl key={user.id} userId={user.id} inline={inline} />
-      {inline && <ConsentControl key={`${user.id}-xapi`} userId={user.id} inline xapi />}
+      <ConsentControl key={userId} userId={userId} inline={inline} />
+      {inline && <ConsentControl key={`${userId}-xapi`} userId={userId} inline xapi />}
     </>
   );
 }

@@ -4199,7 +4199,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Bannière consentement télémétrie RGPD » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P2",
-      "status": "planned",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "file": ".ralph/prd-ui.json",
@@ -4208,7 +4208,7 @@
       },
       "sourceDependencies": [],
       "dependencies": ["S0-011"],
-      "gap": "2026-09-09 : candidat API authentifiée et persistance sans faux succès, bannière privée et retrait dans le profil FR/AR/EN. Recettes ciblées dans docs/validation/U-021-consent-boundary.md. Restent raccordement atomique des collecteurs S-036/S-047, périmètre xAPI, gate global et recette publiée ; aucune collecte activée pour justifier la bannière.",
+      "gap": "2026-09-10 : état ternaire de consentement explicite, bannière alimentée par l’identité déjà vérifiée du layout privé et retrait profil FR/AR/EN codés au commit 6f50ff1. Tests ciblés, TypeScript et lint verts. Restent recette navigateur intégrale dans un environnement isolé neuf, raccordement atomique des collecteurs S-036/S-047, périmètre xAPI, gate global et publication ; aucune collecte activée.",
       "evidence": ["components/telemetry-consent-banner.tsx:10", "app/layout.tsx"],
       "acceptance": [
         "Inventorier les collectes réellement actives avant de décider de l’interface de consentement.",

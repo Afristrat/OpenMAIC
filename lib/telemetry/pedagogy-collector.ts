@@ -125,7 +125,7 @@ export async function readConsentState(
 
   const { data, error } = await supabase
     .from('telemetry_consent')
-    .select('pedagogy_consent, collection_epoch')
+    .select('pedagogy_consent, pedagogy_consent_decided_at, collection_epoch')
     .eq('user_id', userId)
     .abortSignal(AbortSignal.timeout(5000))
     .maybeSingle();
@@ -134,6 +134,9 @@ export async function readConsentState(
   if (!data) return { choice: null, epoch: null };
   const epoch = z.string().uuid().safeParse(data.collection_epoch);
   if (!epoch.success) throw new Error('Consent storage unavailable');
+  if (data.pedagogy_consent_decided_at === null) {
+    return { choice: null, epoch: epoch.data };
+  }
   return { choice: data.pedagogy_consent === true, epoch: epoch.data };
 }
 
@@ -149,6 +152,7 @@ export async function setConsent(userId: string, consent: boolean): Promise<void
       {
         user_id: userId,
         pedagogy_consent: consent,
+        pedagogy_consent_decided_at: new Date().toISOString(),
         consented_at: new Date().toISOString(),
       },
       { onConflict: 'user_id' },
