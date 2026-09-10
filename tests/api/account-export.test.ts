@@ -97,6 +97,15 @@ describe('account export', () => {
     expect(response.status).toBe(503);
     expect(await response.text()).not.toContain('private');
   });
+  it('includes a session-protected import download link, never a signed token', async () => {
+    const id = '00000000-0036-4000-8000-000000000354';
+    mocks.read.mockImplementation(async (_name, args) => ({
+      error: null,
+      data: args.p_section === 'course_imports' ? [{ cursor: id, value: { id } }] : [],
+    }));
+    const body = await (await GET(request())).json();
+    expect(body.course_imports[0].downloadUrl).toBe(`/api/account/export/imports/${id}`);
+  });
   it.each([
     { error: { message: 'private auth detail' }, data: { user: null } },
     { error: null, data: { user: null } },

@@ -101,6 +101,16 @@ Preuve combinée finale sous BEGIN/ROLLBACK : succès, puis zéro utilisateurs/�
 
 Suite : fichiers Storage, journaux Auth non inventoriés et recette intégrée. Cette liste est un reste à traiter, pas un retrait du périmètre utilisateur.
 
+## Complément — fichiers d’import
+
+5312 exit 0 : TypeScript 4 Gio/lint globaux et quatre Chromium, trois parcours FR/AR/EN/RTL avec JSON puis fichier importé reçu/relu via 303, et refus 503. Serveur de fichier éphémère fermé en finally ; première simulation 94710 échouait sur une 404 après redirection, corrigée sans masquer la console. API/Storage simulés ; aucune preuve de livraison Storage réelle inférée.
+
+Chaque entrée course_imports contient désormais downloadUrl, chemin applicatif sans jeton. GET /api/account/export/imports/[id] authentifie à nouveau, choisit le compte côté serveur et appelle le RPC invoker/service-only read_account_import_download (candidate CLI 20260910002903). Même sélection que l’export : propriétaire actuel et appartenance à tout tenant actif auquel l’import est rattaché. Le préfixe Storage d’un ancien auteur ne donne aucun droit et reste utilisable après reprise autorisée. Chemin canonique d’import et identifiant retourné validés avant signature ; aucune URL fournie par le navigateur n’est consommée.
+
+Livraison native Storage via redirection 303, URL valable 60 secondes, téléchargement forcé, réponse privée/no-store/no-referrer. Aucun fichier chargé en mémoire du web. Une URL déjà signée reste valide jusqu’à expiration, même après retrait des droits ; aucun effacement ou révocation instantanée revendiqué. Les binaires ne sont pas incorporés au JSON. [Contrat createSignedUrl](https://supabase.com/docs/reference/javascript/file-buckets-createsignedurl).
+
+Lecture réelle : exports/classroom-media/transmissions/session-audio privés ; zéro course_imports et zéro objet au préfixe course-imports avant recette. Aucune migration de fichiers historiques nécessaire sur cet état. s036-import-download.sql exécuté sous BEGIN/ROLLBACK : chemin ancien, propriétaire courant, refus ancien préfixe, suspension, retrait et privilèges RPC ; zéro comptes/imports/cours et fonction candidate absente après annulation. 68511 exit 0 : dix-sept tests API, TypeScript 4 Gio/lint globaux et quatre Chromium de l’export existant. Advisors local indisponibles sur 54322. Non déployé ; pas de build/gate au SHA propre ou de téléchargement d’un objet Storage réel. Suppression effective, autres fichiers et sessions/concurrence restent ouverts.
+
 ## Complément — contributions et identité Auth
 
 49957 exit 0 : onze tests API/annulation, TypeScript à 4 Gio, lint global sans avertissement et quatre Chromium FR/AR/EN/RTL (trois téléchargements relus et erreur 503). Réseau/Auth simulé, runner avec overlays, sans build global ni recette au SHA propre ; non déployé.

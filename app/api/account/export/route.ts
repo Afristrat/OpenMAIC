@@ -147,7 +147,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         let page = section === sections[0] ? firstPage : await read(section, cursor);
         while (true) {
           for (const row of page) {
-            yield (first ? '' : ',') + JSON.stringify(row.value);
+            const value =
+              section === 'course_imports'
+                ? {
+                    ...row.value,
+                    downloadUrl: `/api/account/export/imports/${z.string().uuid().parse(row.value.id)}`,
+                  }
+                : row.value;
+            yield (first ? '' : ',') + JSON.stringify(value);
             first = false;
           }
           if (page.length < 100) break;
