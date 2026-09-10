@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { quizGradeSchema } from './grading';
 import { sendQuizSubmission, type LtiQuizAttempt } from './lti-client';
+import { drainLearningObservations } from '@/lib/telemetry/learning-observation-drain';
 
 const resultSchema = quizGradeSchema.extend({
   success: z.literal(true),
@@ -14,6 +15,7 @@ export async function sendClassroomQuizAttempt(
   attempt: LtiQuizAttempt,
   signal: AbortSignal,
 ) {
+  await drainLearningObservations({ orgId, stageId }, signal);
   return resultSchema.parse(
     await sendQuizSubmission(
       '/api/quiz-attempts',

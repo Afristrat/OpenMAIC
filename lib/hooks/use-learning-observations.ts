@@ -9,6 +9,7 @@ import { LearningObservationOutbox } from '@/lib/telemetry/learning-observation-
 import { discussionSignalSchema } from '@/lib/telemetry/discussion-observation';
 import type { PedagogySession } from '@/lib/telemetry/learning-observation-schema';
 import type { EngineMode } from '@/lib/playback';
+import { registerLearningObservationDrain } from '@/lib/telemetry/learning-observation-drain';
 
 type Observer = {
   mode(mode: EngineMode): void;
@@ -43,6 +44,7 @@ export function useLearningObservations(stageId: string | undefined) {
     let disposed = false;
     let revision = 0;
     let sending = false;
+    let inFlight: Promise<void> | null = null;
     let sceneIds: string[] = [];
     let agentCount = 0;
     const outbox = () => new LearningObservationOutbox(userId, window.localStorage);
@@ -64,7 +66,7 @@ export function useLearningObservations(stageId: string | undefined) {
         ? data.epoch
         : null;
     };
-    const send = async () => {
+    const sendBatch = async () => {
       if (sending) return;
       sending = true;
       try {
@@ -106,6 +108,26 @@ export function useLearningObservations(stageId: string | undefined) {
         sending = false;
       }
     };
+    const send = (): Promise<void> => {
+      if (inFlight) return inFlight;
+      inFlight = sendBatch().finally(() => {
+        inFlight = null;
+      });
+      return inFlight;
+    };
+    const unregisterDrain = registerLearningObservationDrain({ orgId, stageId }, async () => {
+      await send();
+      // Never finish an active discussion just to grade a quiz. Only queued, ended
+      // discussions must be acknowledged before the native attempt is created.
+      if (
+        disposed ||
+        pending ||
+        outbox()
+          .read()
+          .some((item) => item.stageId === stageId && item.orgId === orgId)
+      )
+        throw new Error('Learning observations still pending');
+    });
     const finish = () => {
       if (!buffer || pending) return;
       pending = buffer.snapshot(sceneIds, agentCount);
@@ -260,6 +282,7 @@ export function useLearningObservations(stageId: string | undefined) {
     channel?.addEventListener('message', changed);
     void refresh();
     return () => {
+      unregisterDrain();
       finish();
       disposed = true;
       revision++;

@@ -4652,7 +4652,7 @@
       },
       "sourceDependencies": ["S-047"],
       "dependencies": ["S0-011", "S-047"],
-  "gap": "10 septembre : nœud réel, encart Chat, registre, liaison quiz et comparaison par participant codés. Rapport organisationnel FR/AR/EN : action par formation, effectifs/manquants/compteurs/limites, actualisation, refus et erreur, aucun minimum. 79154 exit 0 : quatre tests API/rapport, TypeScript/lint et huit Chromium dont trois Director FR/AR/EN RTL, réponses simulées ; SQL candidat déjà vérifié sous ROLLBACK. Restent recette intégrée S-047/S-048 sur données serveur, gate complet au SHA propre et activation contrôlée. Détails docs/validation/S-048-data-driven-director.md. Non déployé, passes=false, aucun gain mesuré.",
+      "gap": "10 septembre : nœud réel, encart Chat, registre, liaison quiz et rapport FR/AR/EN codés, aucun minimum. Course observation/quiz corrigée : soumission native attend la file du tenant/formation, quinze secondes et annulation, échec réessayable sans tentative prématurée. 17692 : trois tests/TypeScript/lint ; 28379 exit 0 : format/dix Chromium dont accusé retenu puis quiz, collecte/reprise/retrait. APIs simulées, SQL candidat antérieurement vérifié sous ROLLBACK. Restent recette intégrée S-047/S-048 sur données serveur, gate complet au SHA propre et activation contrôlée. Détails docs/validation/S-048-data-driven-director.md. Non déployé, passes=false, aucun gain mesuré.",
       "evidence": ["lib/orchestration/data-driven-director.ts"],
       "acceptance": [
         "lib/orchestration/data-driven-director.ts",

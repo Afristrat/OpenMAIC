@@ -152,6 +152,34 @@ plusieurs décisions, changement de formation et refus. APIs simulées.
 retry : trois Director FR/AR/EN RTL avec actualisation/réponse invalide/vide/refus,
 cinq parcours de non-régression du rapport existant. Aucun processus actif.
 
+## Ordre discussion → quiz — 10 septembre
+
+Écart trouvé en suivant les appelants : finish() déclenchait send() sans attente,
+et le transport natif envoyait immédiatement le quiz. Le trigger SQL ne peut
+lier une discussion pas encore reçue ; les recettes séparées ne prouvaient pas
+cet ordre réseau.
+
+Le transport natif attend désormais la file déjà constituée du tenant/formation.
+L’observateur authentifié enregistre un callback seulement pendant sa durée de
+vie ; les appels simultanés partagent la promesse d’envoi existante. Aucune
+discussion active n’est terminée artificiellement pour le quiz. Absence de
+collecte/file : progression immédiate. Échec, navigation ou délai quinze secondes :
+pas de tentative native prématurée ; erreur de correction réessayable et UUID/
+réponses conservés dans le mécanisme existant. LTI inchangé. Il ne s’agit pas
+d’une transaction inter-onglets, ni d’une liaison rétroactive de discussions reçues
+après un quiz déjà soumis.
+
+17692 : trois tests de transport/barrière, TypeScript/lint verts ; navigateur
+échoué car l’ancien unroute glob ne retirait pas la nouvelle fixture regexp de
+consentement. Fixture locale corrigée, aucun consentement réel modifié. La recette
+quiz-queued injecte les signaux sans texte dans le vrai observateur, bloque
+l’accusé HTTP, vérifie zéro requête quiz avant l’accusé, puis une seule après.
+Unitaires : erreur de stockage, filtrage tenant, annulation et délai avec timers
+nettoyés. Ponytail : outbox/reprise natives réemployées, aucune dépendance.
+28379 exit 0 : format et dix Chromium sans retry, dont quiz-queued et les neuf
+parcours de collecte/reprise/retrait existants. API simulée, pas de preuve de
+persistance Supabase bout en bout. Aucun processus actif ou déploiement.
+
 Restent recette intégrée S-047/S-048 sur données serveur, gate complet au SHA
 propre et activation contrôlée. Runner antérieur avec superposition, aucune publication.
 S-048 reste ouverte, passes=false. Aucun gain mesuré.

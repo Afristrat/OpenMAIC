@@ -16,6 +16,7 @@ for (const scenario of [
   'closed-revoked',
   'quiz-allowed',
   'quiz-refused',
+  'quiz-queued',
 ]) {
   test(`classroom collection: ${scenario}`, async ({
     page: initialPage,
@@ -24,13 +25,22 @@ for (const scenario of [
     mockApi,
   }) => {
     let page = initialPage;
-    await page.unroute('**/api/telemetry-consent');
+    await page.unroute(/\/api\/telemetry-consent(?:\?purpose=xapi)?$/);
     const allowed = !scenario.endsWith('refused');
     const withQuiz = scenario.startsWith('quiz-');
+    const queued = scenario === 'quiz-queued';
+    let acknowledged = false;
+    let releaseAck!: () => void;
+    const acknowledgement = new Promise<void>((resolve) => {
+      releaseAck = resolve;
+    });
+    let quizRequests = 0;
     const quizWrites: Record<string, unknown>[] = [];
     if (withQuiz) {
       await mockApi.mockQuizPersistence();
       await page.route('**/api/quiz-attempts', (route) => {
+        quizRequests++;
+        if (queued) expect(acknowledged).toBe(true);
         const submitted = route.request().postDataJSON();
         expect(submitted).toMatchObject({
           stageId,
@@ -71,13 +81,17 @@ for (const scenario of [
       },
       createSettingsStorage({ sidebarCollapsed: false }),
     );
-    await context.route('**/api/telemetry-consent', (route) =>
+    await context.route(/\/api\/telemetry-consent(?:\?purpose=xapi)?$/, (route) =>
       route.fulfill({
         json: { choice: allowed, hasConsent: allowed, epoch: currentEpoch },
       }),
     );
-    await context.route('**/api/learning-observations', (route) => {
+    await context.route('**/api/learning-observations', async (route) => {
       observations.push(route.request().postDataJSON());
+      if (queued && observations.length === 1) {
+        await acknowledgement;
+        acknowledged = true;
+      }
       return route.fulfill({
         status: failedFirst && observations.length === 1 ? 503 : 200,
         json: { recorded: true },
@@ -187,8 +201,37 @@ for (const scenario of [
       await page.getByRole('button', { name: 'Start Quiz', exact: true }).click();
       await page.getByRole('button', { name: /Casablanca/ }).click();
       await page.getByRole('button', { name: /Four/ }).click();
+      if (queued) {
+        await page.evaluate((stageId) => {
+          const scope = {
+            stageId,
+            sceneId: 'observed-quiz',
+            orgId: '00000000-0000-4000-8000-000000000088',
+            discussionId: '00000000-0048-4000-8000-000000000091',
+          };
+          const emit = (detail: object) =>
+            window.dispatchEvent(
+              new CustomEvent('qalem-discussion-turn', { detail: { ...scope, ...detail } }),
+            );
+          emit({ phase: 'begin' });
+          emit({ phase: 'start', messageId: 'assistant-proof', agentId: 'teacher' });
+          emit({ phase: 'turn-end', messageId: 'assistant-proof' });
+          emit({ phase: 'end' });
+        }, stageId);
+        await expect.poll(() => observations.length).toBe(1);
+      }
       await page.getByRole('button', { name: 'Submit Answers', exact: true }).click();
+      if (queued) {
+        // Keep the server acknowledgement blocked across browser event-loop turns.
+        await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 200)));
+        expect(quizRequests).toBe(0);
+        releaseAck();
+      }
       await expect(page.getByText('Quiz Report', { exact: true })).toBeVisible();
+      if (queued) {
+        expect(quizRequests).toBe(1);
+        return;
+      }
       expect(quizWrites).toHaveLength(1);
       expect(quizWrites[0]).toMatchObject({
         org_id: '00000000-0000-4000-8000-000000000088',
