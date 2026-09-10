@@ -26,23 +26,30 @@ it('preserves the first durable event on duplicate and lets recovery own its del
     select: vi.fn(),
     eq: vi.fn(),
     single: vi.fn(),
-    upsert: vi.fn(),
-    maybeSingle: vi.fn(),
+    rpc: vi.fn(),
+    abortSignal: vi.fn(),
   };
-  for (const name of ['select', 'eq', 'upsert'] as const) chain[name].mockReturnValue(chain);
+  for (const name of ['select', 'eq', 'rpc'] as const) chain[name].mockReturnValue(chain);
   chain.single.mockResolvedValue({ data: { courses: { org_id: 'tenant' } }, error: null });
-  chain.maybeSingle.mockResolvedValue({ data: null, error: null });
-  mocks.client.mockReturnValue({ from: () => chain });
+  chain.abortSignal.mockResolvedValue({ data: 0, error: null });
+  mocks.client.mockReturnValue({ from: () => chain, rpc: chain.rpc });
   expect(await enqueueAnchorSessionStatement({ sessionId: 'session', userId: 'user' })).toBe(true);
-  expect(chain.upsert.mock.calls[0][1]).toEqual({
-    onConflict: 'org_id,dedupe_key',
-    ignoreDuplicates: true,
-  });
+  expect(chain.rpc).toHaveBeenCalledWith(
+    'enqueue_consented_anchor_xapi',
+    expect.objectContaining({
+      p_actor: 'user',
+      p_session: 'session',
+      p_org: 'tenant',
+      p_key: 'anchor-session:session',
+    }),
+  );
   expect(mocks.enqueue).not.toHaveBeenCalled();
-  chain.maybeSingle.mockResolvedValue({ data: { id: 12 }, error: null });
+  chain.abortSignal.mockResolvedValue({ data: 12, error: null });
   expect(await enqueueAnchorSessionStatement({ sessionId: 'session', userId: 'user' })).toBe(true);
   expect(mocks.enqueue).toHaveBeenCalledWith({ outboxId: 12 });
-  chain.maybeSingle.mockResolvedValue({ data: null, error: { message: 'secret' } });
+  chain.abortSignal.mockResolvedValue({ data: null, error: null });
+  expect(await enqueueAnchorSessionStatement({ sessionId: 'session', userId: 'user' })).toBe(false);
+  chain.abortSignal.mockResolvedValue({ data: null, error: { message: 'secret' } });
   await expect(
     enqueueAnchorSessionStatement({ sessionId: 'session', userId: 'user' }),
   ).rejects.toThrow('xAPI outbox insert failed');

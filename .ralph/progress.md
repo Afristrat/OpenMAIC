@@ -1,5 +1,9 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 10 septembre 2026 — S-035, admission consentie ANCRER
+
+Candidate 20260910024337 : RPC xapi_consent sous verrou, provenance session/cours/tenant/membre/flag/destination, insertion premier contenu ; worker revalide et refuse historique sans provenance. FK session et trigger privé de retrait (élévation étroite pour RLS, OLD fixe/auth.uid) effacent localement, export par propriétaire de session. 63572 exit 0 : douze tests/TypeScript/lint. SQL ROLLBACK : refus/admission/rejeu/export/suspension/retrait direct authenticated ; compte/cours/outbox/colonne absents, flag false. Non déployé, aucun consentement activé. Suite : interface xAPI distincte et harmonisation du cours encore sous pedagogy_consent ; effacement distant/recette LRS/gate intégré. S-035 reste ouverte.
+
 ## 10 septembre 2026 — S-035, compteur de participation aux discussions
 
 87567 exit 0 : navigateur, question saisie et deux réponses d’agents, une seule paire submitted/accepted sans texte dans les signaux. Chat/TTS simulés ; pas de preuve LRS.

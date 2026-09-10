@@ -135,24 +135,23 @@ export async function enqueueAnchorXapiStatement(event: AnchorXapiEvent): Promis
 
   const statement = buildAnchorXapiStatement(event, pseudonym(event.userId, course.org_id));
   const { data: outbox, error: insertError } = await service
-    .from('xapi_outbox')
-    .upsert(
-      {
-        org_id: course.org_id,
-        dedupe_key: eventDedupeKey(event),
-        statement,
-        lrs_target: config.endpoint,
-      },
-      { onConflict: 'org_id,dedupe_key', ignoreDuplicates: true },
-    )
-    .select('id')
-    .maybeSingle();
+    .rpc('enqueue_consented_anchor_xapi', {
+      p_actor: event.userId,
+      p_session: event.sessionId,
+      p_org: course.org_id,
+      p_key: eventDedupeKey(event),
+      p_statement: statement,
+      p_target: config.endpoint,
+    })
+    .abortSignal(AbortSignal.timeout(5000));
   if (insertError) throw new Error('xAPI outbox insert failed');
+  if (outbox === null) return false;
+  if (!Number.isSafeInteger(outbox) || outbox < 0) throw new Error('Invalid xAPI outbox identity');
   // A duplicate preserves the original payload, timestamp, destination and status.
   // The existing recovery scan owns pending delivery if the first enqueue failed.
-  if (!outbox) return true;
+  if (outbox === 0) return true;
   try {
-    await enqueueXapiDelivery({ outboxId: outbox.id });
+    await enqueueXapiDelivery({ outboxId: outbox });
   } catch {
     // The durable row remains queued and is recoverable independently of the user request.
   }

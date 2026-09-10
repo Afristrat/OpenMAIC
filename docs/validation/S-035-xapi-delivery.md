@@ -1,5 +1,17 @@
 # S-035 — Transport commun xAPI
 
+## 10 septembre 2026 — Admission ANCRER sous consentement xAPI
+
+82789 exit 0 : trois Chromium diagnostic FR/AR/EN, API simulées. Pas une preuve du parcours complet de consentement ni de réception LRS.
+
+Candidate CLI 20260910024337 : RPC d’insertion sous verrou de telemetry_consent.xapi_consent, contrôle session→acteur→cours→tenant actif/membre, flag et destination LRS sous verrous. Clé étrangère anchor_session_id avec cascade ; aucun acteur brut ajouté au statement. Premier contenu conservé, retour null si refus et zéro si doublon. Worker commun revalide session/tenant/membre/consentement avant HTTP ; anciennes lignes sans provenance ne sont plus autorisées par défaut. Aucun backfill : inventaire réel de l’outbox vide à ce contrôle.
+
+Retrait xapi_consent ou suppression de consentement efface les lignes locales liées aux sessions ANCRER. Trigger privé à élévation étroite nécessaire pour un retrait direct RLS, identité OLD fixe et contrôle auth.uid, aucune RPC publique ni nouveau droit client. Export personnel étendu via propriétaire de session, sans décoder le pseudonyme HMAC. Une requête HTTP déjà partie n’est pas annulée, aucun effacement distant revendiqué.
+
+63572 exit 0 : douze tests ciblés, TypeScript 4 Gio et lint. SQL réel BEGIN/ROLLBACK : refus initial, admission, rejeu premier contenu, export personnel, suspension, retrait sous rôle authenticated et cascade. Relecture compte/cours synthétiques, outbox et colonne candidate à zéro ; flag false. INSERT annulés consomment des séquences, pas de remise à zéro. Advisors local indisponibles, Mnemo fetch failed. Non déployé, aucun consentement modifié durablement, runner antérieur avec overlays, pas de gate/build au SHA propre.
+
+Reste important avant activation : interface de choix xAPI distinct et harmonisation des événements du cours, actuellement contrôlés par pedagogy_consent. Le garde-fou ANCRER ne vaut pas livraison de tout le cycle de consentement. Recette LRS réelle et effacement distant restent ouverts. Ponytail : outbox/worker/export réutilisés ; [fonctions Supabase](https://supabase.com/docs/guides/database/functions).
+
 ## 10 septembre 2026 — Participation aux discussions du cours
 
 Candidate `20260910023423_course_discussion_observations.sql` et parcours chat : seul un nouveau message utilisateur donne un signal submitted puis accepted si le premier POST chat réussit. Ni ouverture agent-first, ni tours automatiques, ni reprise de boucle ne créent de nouveau message. Identifiant local UUID ; texte absent de la mesure. Le buffer compte une acceptation seulement s’il a lui-même observé la soumission dans le même périmètre de consentement, stage et tenant. Révocation ou changement d’observation entre les deux signaux empêche une attribution rétroactive. Les erreurs HTTP ne sont pas des acceptations ; HTTP 200 signifie acceptation de la requête, pas réussite ultérieure du modèle ni apprentissage acquis.
