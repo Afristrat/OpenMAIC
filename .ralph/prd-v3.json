@@ -4652,7 +4652,7 @@
       },
       "sourceDependencies": ["S-047"],
       "dependencies": ["S0-011", "S-047"],
-      "gap": "10 septembre : HTTP/SQL Director et six corrections SQL déjà vérifiés. Nouvelle preuve 57427 exit 0 : GoTrue réel, cookies SSR, Chromium sans interception, Next dev E2E=false, quiz zéro/rejeu/acteur persisté, rapport vide admin 200 et refus anonyme/apprenant/hors tenant. 73236 TypeScript/lint verts ; cinq compteurs de fixtures nuls. Détails docs/validation/S-048-auth-next-integration.md. Restent ensemble ordonné des migrations PRD en recette, collecte→quiz→rapport non vide sous Auth réel, interface complète, gate final/build production et publication. Aucun déploiement, activation ou gain mesuré ; passes=false.",
+      "gap": "10 septembre : 38 migrations candidates appliquées dans l’ordre sur copie de structure neuve, advisor sécurité zéro constat. 62503 puis 21413 exit 0 : Auth GoTrue/cookies SSR/Chromium/Next dev puis standalone production/PostgREST/SQL ; accord, collecte/discussion, quiz zéro/rejeu/acteur, rapport non vide, retrait/réaccord/ancien epoch et refus anonyme/apprenant/hors tenant. Reçu de génération synthétique, pas de LLM prouvé. 35758 TypeScript/lint verts ; 22220 3 252 tests/520 fichiers et build/isolation standalone verts. Neuf compteurs de recette nuls. Preuves S-048-auth-next-integration.md et PRD-v3-ordered-migrations-2026-09-10.md. Restent interface complète/gate UI, précontrôles des données et réconciliation du suivi de migrations production absent, publication coordonnée. Aucun déploiement, activation ou gain mesuré ; passes=false.",
       "evidence": [
         "lib/orchestration/data-driven-director.ts",
         "docs/validation/S-048-real-http-integration.md",
