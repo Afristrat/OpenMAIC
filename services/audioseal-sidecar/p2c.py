@@ -59,7 +59,7 @@ def run_ffmpeg(source: Path, destination: Path, args: list[str]) -> None:
     )
 
 
-def call_detect(url: str, token: str, source: Path) -> list[int]:
+def call_detect(url: str, token: str, source: Path) -> list[dict[str, float | int]]:
     with source.open("rb") as handle:
         response = requests.post(
             f"{url}/v1/detect",
@@ -69,9 +69,40 @@ def call_detect(url: str, token: str, source: Path) -> list[int]:
         )
     response.raise_for_status()
     payload = response.json()
-    if not isinstance(payload.get("messages"), list):
-        raise RuntimeError("sidecar detector returned no messages")
-    return [int(message) for message in payload["messages"]]
+    detections = payload.get("detections")
+    if not isinstance(detections, list):
+        raise RuntimeError("sidecar detector returned no detections")
+    parsed: list[dict[str, float | int]] = []
+    for detection in detections:
+        if not isinstance(detection, dict):
+            raise RuntimeError("sidecar detector returned an invalid detection")
+        message, confidence = detection.get("message"), detection.get("confidence")
+        if not isinstance(message, int) or not isinstance(confidence, (int, float)):
+            raise RuntimeError("sidecar detector returned an invalid detection")
+        parsed.append({"message": message, "confidence": float(confidence)})
+    return parsed
+
+
+def select_best_messages(detections: list[dict[str, float | int]]) -> list[int]:
+    """One two-second window may straddle a message boundary.
+
+    The detector gives every candidate a watermark probability; choosing the
+    highest-confidence candidate per embedded index preserves a failure on ties
+    or missing indices while allowing a non-aligned thirty-second crop.
+    """
+    best: dict[int, tuple[int, float]] = {}
+    for detection in detections:
+        message = int(detection["message"])
+        confidence = float(detection["confidence"])
+        index = message >> 12
+        if index >= SEGMENTS:
+            continue
+        previous = best.get(index)
+        if previous is None or confidence > previous[1]:
+            best[index] = (message, confidence)
+        elif confidence == previous[1] and message != previous[0]:
+            return []
+    return [best[index][0] for index in sorted(best)]
 
 
 def main() -> None:
@@ -115,10 +146,12 @@ def main() -> None:
 
         proof: dict[str, dict[str, object]] = {}
         for name, variant in variants.items():
-            detected = call_detect(args.url.rstrip("/"), token, variant)
+            detections = call_detect(args.url.rstrip("/"), token, variant)
+            detected = select_best_messages(detections)
             recovered = decode(detected)
             proof[name] = {
                 "sha256": hashlib.sha256(variant.read_bytes()).hexdigest(),
+                "detectionWindowCount": len(detections),
                 "detectedSegmentCount": len(detected),
                 "detectedMessages": detected,
                 "recoveredWatermarkId": recovered,

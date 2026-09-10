@@ -116,19 +116,20 @@ class Engine:
                 chunks.append(self.generator(chunk.to(self.device), message=message).cpu())
         return torch.cat(chunks, dim=-1)
 
-    def detect_messages(self, waveform: torch.Tensor) -> list[int]:
+    def detect_messages(self, waveform: torch.Tensor) -> list[dict[str, float | int]]:
         window = SAMPLE_RATE * SEGMENT_SECONDS
-        decoded: list[int] = []
+        decoded: list[dict[str, float | int]] = []
         with torch.inference_mode():
             for start in range(0, waveform.shape[-1] - window + 1, window // 2):
                 chunk = waveform[..., start : start + window].to(self.device)
                 probability, bits = self.detector.detect_watermark(chunk)
-                if float(probability.item()) < 0.5:
+                confidence = float(probability.item())
+                if confidence < 0.5:
                     continue
                 value = 0
                 for bit in bits[0].tolist():
                     value = (value << 1) | int(bit)
-                decoded.append(value)
+                decoded.append({"message": value, "confidence": confidence})
         return decoded
 
 
@@ -204,7 +205,7 @@ async def watermark(
 
 
 @app.post("/v1/detect", dependencies=[Depends(require_token)])
-async def detect(source: Annotated[UploadFile, File()]) -> dict[str, list[int]]:
+async def detect(source: Annotated[UploadFile, File()]) -> dict[str, list[dict[str, float | int]]]:
     """Private verification endpoint for the P2-C robustness harness."""
     if engine is None:
         raise HTTPException(status_code=503, detail="AudioSeal model is not ready")
@@ -213,4 +214,4 @@ async def detect(source: Annotated[UploadFile, File()]) -> dict[str, list[int]]:
             directory = Path(temporary)
             source_path = read_upload(source, directory)
             messages = engine.detect_messages(to_waveform(source_path, directory))
-    return {"messages": messages}
+    return {"detections": messages}
