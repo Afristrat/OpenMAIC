@@ -1,5 +1,11 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 10 septembre 2026 — S-036, reprise administrative des agents privés
+
+Candidate 20260910012846 : marqueur causal de perte de propriétaire pour privé tenant, pas d’inférence sur les agents système/historiques. Liste service-only 50/page, reprise par seul admin actif avec verrous et UPDATE conditionnel ; configuration/statut privé conservés, audit atomique existant. Client ne choisit pas le nouveau propriétaire, droits UPDATE owner_id inchangés. API Auth/origine/délai 5 s, accusé exact et pas de rejeu ambigu. UI FR/AR/EN dans marketplace après choix du tenant, chargement explicite, reprise et relecture owned, sans publication ni copie locale automatique.
+
+24855 exit 0 : dix tests, TypeScript 4 Gio/lint, six Chromium FR/AR/EN/RTL, APIs simulées. SQL ROLLBACK : Auth/détachement, refus manager/autre tenant/suspension/retrait/agents protégés, reprise unique/audit/lecture owner/réattribution directe refusée, 50+1 pages. Zéro comptes/agents/audit/colonne et zéro agent privé tenant réellement sans propriétaire recontrôlés. Pas de reprise réelle, concurrence multi-connexion, migration durable, build/gate au SHA propre ni déploiement. Advisors local indisponibles, Mnemo fetch failed. Ponytail/Supabase : marqueur, invoker, verrous/journal natifs ; sans dépendance. Suite : autres fichiers exportables et recette intégrée S-036, puis US suivantes selon le PRD ; aucune clôture anticipée.
+
 ## 10 septembre 2026 — S-036, replays paginés et fichiers exportables
 
 Candidate CLI 20260910011734 : RPC invoker sous RLS du compte, 100 événements par page, index (session_id,id), curseur bigint exact en texte et borne haute fixe. API détail renvoie la première page, /events les suivantes ; lecteur parcourt toutes les pages avant affichage, annule au démontage et réinitialise par clé React. Échec tardif explicite, tri des grands identifiants sans arrondi. La borne n’est pas un snapshot transactionnel global et le navigateur conserve encore la timeline complète.

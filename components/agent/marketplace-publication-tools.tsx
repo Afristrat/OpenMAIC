@@ -6,6 +6,7 @@ import { useAgentRegistry } from '@/lib/orchestration/registry/store';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { PublishAgentDialog } from './publish-agent-dialog';
 import { OwnedAgentPublications } from './owned-agent-publications';
+import { RecoverableTenantAgents } from './recoverable-tenant-agents';
 
 const subscribe = () => () => {};
 
@@ -91,6 +92,16 @@ export function MarketplacePublicationTools({ onChange }: { onChange: () => void
         onChange={onChange}
         publishableOrgIds={authorized.map((org) => org.id)}
       />
+      {selectedOrg?.userRole === 'admin' && (
+        <RecoverableTenantAgents
+          key={selectedOrg.id}
+          orgId={selectedOrg.id}
+          onChange={() => {
+            setRevision((value) => value + 1);
+            onChange();
+          }}
+        />
+      )}
     </>
   );
 }

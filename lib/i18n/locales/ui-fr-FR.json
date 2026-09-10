@@ -1,4 +1,7 @@
 {
+  "marketplace.recoverableTitle": "Agents privés à reprendre",
+  "marketplace.recoverableHint": "Administrateurs : reprenez les agents de cette organisation dont le propriétaire a supprimé son compte. La reprise ne publie pas l’agent et conserve sa configuration.",
+  "marketplace.recoverableEmpty": "Aucun agent privé à reprendre.",
   "catalog.resume": "Reprendre le plan enregistré",
   "catalog.resumeDescription": "Relisez le plan avant de confirmer la génération. Son ouverture ne consomme aucun crédit de génération.",
   "catalog.resumePlanUnavailable": "Le plan ne peut pas être récupéré automatiquement à partir des données conservées. Aucune formation n’a été modifiée.",

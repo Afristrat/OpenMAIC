@@ -1,4 +1,7 @@
 {
+  "marketplace.recoverableTitle": "Private agents to recover",
+  "marketplace.recoverableHint": "Administrators: take responsibility for this organization’s agents whose owners deleted their accounts. Recovery does not publish the agent or change its configuration.",
+  "marketplace.recoverableEmpty": "No private agents to recover.",
   "catalog.resume": "Resume saved plan",
   "catalog.resumeDescription": "Review the plan before confirming generation. Opening it uses no generation credits.",
   "catalog.resumePlanUnavailable": "The plan cannot be recovered automatically from the retained data. No course was changed.",
