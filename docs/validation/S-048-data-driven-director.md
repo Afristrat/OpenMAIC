@@ -72,13 +72,13 @@ puis génération completed/empty/failed/aborted distincte. L’absence de retou
 de génération reste inconnue, jamais transformée en succès. Un contenu généré
 ne prouve ni sa réception ni son écoute par l’apprenant.
 
-Le message réel utilise assistant-UUID-du-reçu : point de liaison pour S-047,
-pas encore une association en base. Rejeux ne remplacent pas les choix ; retrait
+Le message réel utilise assistant-UUID-du-reçu : liaison S-047 désormais
+implémentée dans la candidate 20260910051111 ci-dessous. Rejeux ne remplacent pas les choix ; retrait
 supprime les reçus via la cascade existante, réaccord ne les ressuscite pas.
 Export personnel paginé raccordé, sans pseudonyme ni epoch. Échec de collecte :
 avertissement technique, parcours conservé, aucun succès inventé. lookup_ms
 mesure seulement la recherche/sélection observée, pas toute la latence du chat.
-Les reçus sont par décision ; la comparaison devra agréger par unité assignée,
+Les reçus sont par décision ; la comparaison agrège désormais par unité assignée,
 pas traiter les tours d’un même apprenant comme des individus indépendants.
 
 52266 exit 0 : seize tests/TypeScript/lint. 5580 exit 0 : trente tests,
@@ -94,6 +94,43 @@ Advisor CLI local indisponible (54322 refusé) ; pas de certification advisor.
 Documentation consultée : [fonctions Supabase](https://supabase.com/docs/guides/database/functions)
 et [changelog](https://supabase.com/changelog). Aucun upgrade d’infrastructure.
 
-Restent liaison des reçus aux discussions/quiz S-047, mesures et comparaison
-par cohorte, recette intégrée, gate complet au SHA propre et activation.
+## Liaison et rapport candidat — 10 septembre
+
+Candidate CLI 20260910051111 : trigger après réception d’une discussion,
+correspondance exacte message/agent/compte/tenant/formation/scène/epoch et
+génération antérieure. Aucun backfill ni réaffectation d’un reçu déjà lié.
+Le résultat déclaré par le navigateur reste une déclaration, pas une preuve
+d’écoute. Suppression de la discussion ou retrait : cascade des reçus associés.
+
+RPC service seule read_director_experiment et GET
+/api/organizations/[orgId]/director-experiment?stageId=… : administrateur ou
+manager actuel, tenant/source actifs et partage vérifié, identité Auth serveur,
+réponse sans cache ni identité apprenante, délai cinq secondes. Une panne donne
+503, jamais un rapport vide présenté comme réussi.
+
+Une unité par apprenant/tenant/formation ; comptages de décisions séparés.
+Première soumission native liée parmi les données conservées, y compris si
+sa correction attend encore : une tentative ultérieure complète ne la remplace
+pas. Après suppression d’une tentative, le calcul porte sur le premier reçu
+restant ; ce rapport n’est pas une archive immuable. Moyenne des scores connus,
+effectifs avec/sans score toujours joints, zéro distinct de null. Aucun minimum.
+Langue inconnue ou mixte séparée ; différence traitement moins contrôle
+uniquement à langue identique, descriptive et non causale. Compteurs de choix,
+génération, tours déclarés et délai de recherche disponibles sans assimiler
+la génération à une exposition écoutée.
+
+67326 exit 0 : quatre tests API/rapport, TypeScript/lint. 51432 exit 0 :
+37 tests ciblés (rapport, Director et export), TypeScript/lint. SQL réel service_role
+sous BEGIN/ROLLBACK, puis recette renforcée : groupe classique à 100 %, traitement
+à zéro, deux participants dont un sans quiz, plusieurs décisions non dédoublées
+en participants, première correction en attente, refus autre compte/scène/reçu
+inachevé, association immuable, refus de lecture apprenant ou formation étrangère,
+export et retrait. Candidate absente et zéro compte synthétique relus après
+ROLLBACK. Aucun changement durable. Advisors local toujours indisponible sur
+127.0.0.1:54322 ; aucune certification advisor. Documentation :
+[triggers Supabase](https://supabase.com/docs/guides/database/postgres/triggers).
+
+Restent restitution du rapport dans l’interface, recette intégrée navigateur,
+gate complet au SHA propre et activation. Ce lot n’ajoute pas encore de page
+de rapport visible. Runner antérieur avec superposition, aucune publication.
 S-048 reste ouverte, passes=false. Aucun gain mesuré.
