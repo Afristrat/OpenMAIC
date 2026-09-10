@@ -1,0 +1,8 @@
+# AudioSeal 0.2 is the upstream MIT implementation. The CPU wheel keeps the
+# image deployable on a non-GPU worker; CUDA is an explicit deployment choice.
+audioseal==0.2.0
+fastapi==0.115.12
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+requests==2.32.3
+soundfile==0.13.1
