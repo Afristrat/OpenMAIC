@@ -84,7 +84,11 @@ Variables : `S048_REST_URL=http://qalem-prd3-rest-20260910:3000` et
 de recette uniquement. L’authenticator isolé doit avoir le mot de passe temporaire
 configuré dans son URI, pas le mot de passe initial implicite de l’image.
 
-## Contrôle de sécurité : non soldé
+## Contrôle de sécurité initial
+
+Les six constats ci-dessous ont depuis été corrigés et revérifiés dans la base
+isolée : voir [la preuve de durcissement](S-048-sql-hardening.md).
+Ils restent non publiés en production ; la liste décrit le passage initial.
 
 CLI `supabase db advisors --help` consultée, puis exécution `--type security`
 sur l’URI de la base jetable avec `sslmode=disable` (réseau Docker interne).
@@ -100,9 +104,10 @@ Le passage corrigé aboutit et retourne six constats sur le schéma restauré :
 | WARN | `public.update_updated_at` | search_path mutable |
 | WARN | `public.prevent_widget_template_version_mutation` | search_path mutable |
 
-Aucun de ces objets n’est créé par les neuf migrations ci-dessus. Ils restent
-à analyser et corriger avant une certification globale ; leur antériorité ne
-justifie pas de les ignorer. Cette recette ne prouve pas leur exploitabilité.
+Aucun de ces objets n’est créé par les neuf migrations ci-dessus. Trois corrections
+existaient dans d’autres migrations en attente ; les trois restantes ont été
+ajoutées dans la migration de durcissement. Cette recette initiale, à elle seule,
+ne prouvait pas leur exploitabilité.
 Références consultées : [sécurisation de l’API Supabase](https://supabase.com/docs/guides/api/securing-your-api),
 [configuration PostgREST](https://docs.postgrest.org/en/v14/references/configuration.html).
 
@@ -116,7 +121,7 @@ Docker, sans volume persistant dédié. Journaux et archive sous `/tmp` éphém�
 Relecture production : table candidate `director_receipts` absente et zéro compte
 portant les identifiants de recette. Aucune collecte activée ni migration publiée.
 
-Restent : correction des constats de sécurité, chaîne complète navigateur / Auth /
+Restent : publication du durcissement, chaîne complète navigateur / Auth /
 routes Next.js / DB, ensemble des migrations PRD et gate final au SHA poussé,
 puis publication contrôlée. Ce passage ne mesure aucun gain d’apprentissage.
 S-048 et l’objectif global restent ouverts. Mnemo : identification en échec réseau.
