@@ -77,27 +77,37 @@ it('assigns stable cohorts and keeps invalid sessions on the classic director', 
 });
 
 const chain: Record<string, ReturnType<typeof vi.fn>> = {};
+const scope = {
+  actorId: '00000000-0047-4000-8000-000000000021',
+  orgId: '00000000-0047-4000-8000-000000000022',
+  stageIds: ['stage:1'],
+};
 beforeEach(() => {
   vi.clearAllMocks();
-  for (const name of ['from', 'select', 'in', 'contains', 'eq', 'not', 'order', 'limit'])
-    chain[name] = vi.fn(() => chain);
+  for (const name of ['rpc']) chain[name] = vi.fn(() => chain);
   chain.abortSignal = mocks.query;
   mocks.client.mockReturnValue(chain);
   mocks.query.mockResolvedValue({ data: [row(0.5)], error: null });
 });
 it('does not read observations without an authorized scope', async () => {
-  expect(await getBestPatterns('SIPOC', 'fr-FR', [])).toEqual([]);
+  expect(await getBestPatterns('SIPOC', 'fr-FR', { ...scope, stageIds: [] })).toEqual([]);
+  expect(await getBestPatterns('SIPOC', 'fr-FR', { ...scope, actorId: 'forged' })).toEqual([]);
   expect(mocks.client).not.toHaveBeenCalled();
 });
 it('scopes and bounds the query without a sample minimum', async () => {
-  expect(await getBestPatterns('SIPOC', 'fr-FR', ['stage:1'])).toHaveLength(1);
-  expect(chain.in).toHaveBeenCalledWith('stage_id', ['stage:1']);
-  expect(chain.limit).toHaveBeenCalledWith(1000);
+  expect(await getBestPatterns('SIPOC', 'fr-FR', scope)).toHaveLength(1);
+  expect(chain.rpc).toHaveBeenCalledWith('read_authorized_discussion_patterns', {
+    p_actor: scope.actorId,
+    p_org: scope.orgId,
+    p_stages: ['stage:1'],
+    p_subject: 'SIPOC',
+    p_language: 'fr-FR',
+  });
   expect(mocks.query).toHaveBeenCalledWith(expect.any(AbortSignal));
 });
 it('falls back when querying fails', async () => {
   mocks.query.mockRejectedValueOnce(new Error('network'));
-  expect(await getBestPatterns('SIPOC', 'fr-FR', ['stage:1'])).toEqual([]);
+  expect(await getBestPatterns('SIPOC', 'fr-FR', scope)).toEqual([]);
   mocks.query.mockResolvedValueOnce({ data: null, error: { message: 'private' } });
-  expect(await getBestPatterns('SIPOC', 'fr-FR', ['stage:1'])).toEqual([]);
+  expect(await getBestPatterns('SIPOC', 'fr-FR', scope)).toEqual([]);
 });

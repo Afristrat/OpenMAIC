@@ -72,12 +72,14 @@ describe('account export', () => {
       providers: ['email'],
     });
     expect(JSON.stringify(body)).not.toContain('never-export');
-    expect(body.includedSections).toHaveLength(53);
+    expect(body.includedSections).toHaveLength(55);
     expect(body.includedSections).toEqual(
       expect.arrayContaining([
         'session_events',
         'evaluations',
         'lti_quiz_attempts',
+        'classroom_quiz_attempts',
+        'discussion_patterns',
         'review_notification_preferences',
       ]),
     );
@@ -86,6 +88,13 @@ describe('account export', () => {
     expect(body.session_events[0].id).toBe('9007199254741300');
     expect(response.headers.get('cache-control')).toBe('no-store');
     for (const call of mocks.rpc.mock.calls) expect(call[1].p_actor).toBe('verified-user');
+    for (const p_section of ['classroom_quiz_attempts', 'discussion_patterns']) {
+      expect(mocks.rpc).toHaveBeenCalledWith('read_account_discussion_export_page', {
+        p_actor: 'verified-user',
+        p_section,
+        p_after: null,
+      });
+    }
     expect(mocks.rpc).toHaveBeenCalledWith(
       'read_account_export_page',
       expect.objectContaining({ p_section: 'pedagogy_telemetry', p_after: '0099' }),

@@ -64,29 +64,34 @@ export function aggregateDiscussionPatterns(rows: unknown): DiscussionPattern[] 
   return [...groups.values()].map((group) => group.pattern).sort(comparePatterns);
 }
 
-/** Server-side caller supplies the authorized, consented stages. No global query. */
+/** Server actor and tenant required; the RPC rechecks consent, rights and quiz provenance. */
 export async function getBestPatterns(
   subject: string,
   language: string,
-  authorizedStageIds: string[],
+  scope: { actorId: string; orgId: string; stageIds: string[] },
 ): Promise<DiscussionPattern[]> {
   const stages = z
     .array(z.string().trim().min(1).max(256))
     .min(1)
     .max(1000)
-    .safeParse(authorizedStageIds);
-  if (!stages.success || !subject.trim() || !language.trim()) return [];
+    .safeParse(scope.stageIds);
+  if (
+    !stages.success ||
+    !z.uuid().safeParse(scope.actorId).success ||
+    !z.uuid().safeParse(scope.orgId).success ||
+    !subject.trim() ||
+    !language.trim()
+  )
+    return [];
   try {
     const { data, error } = await createServiceSupabaseClient()
-      .from('discussion_patterns')
-      .select('agent_sequence, intervention_types, post_discussion_quiz_score')
-      .in('stage_id', [...new Set(stages.data)])
-      .contains('subject_tags', [subject.trim()])
-      .eq('language', language.trim())
-      .not('post_discussion_quiz_score', 'is', null)
-      .order('created_at', { ascending: false })
-      .order('id', { ascending: false })
-      .limit(OBSERVATION_LIMIT)
+      .rpc('read_authorized_discussion_patterns', {
+        p_actor: scope.actorId,
+        p_org: scope.orgId,
+        p_stages: [...new Set(stages.data)],
+        p_subject: subject.trim(),
+        p_language: language.trim(),
+      })
       .abortSignal(AbortSignal.timeout(5000));
     if (error) {
       log.warn('Pattern query unavailable');

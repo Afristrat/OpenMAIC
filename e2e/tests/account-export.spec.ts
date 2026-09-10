@@ -22,6 +22,8 @@ for (const [locale, label] of [
       session_events: [{ id: '9007199254741300', payload: { text: 'Ma question' } }],
       evaluations: [{ phase: 'hot', score: 80 }],
       lti_quiz_attempts: [],
+      classroom_quiz_attempts: [{ id: 'verified-attempt', result: { score: 0 } }],
+      discussion_patterns: [{ quiz_attempt_id: 'verified-attempt', post_discussion_quiz_score: 0 }],
       course_imports: [
         {
           id: '00000000-0036-4000-8000-000000000354',

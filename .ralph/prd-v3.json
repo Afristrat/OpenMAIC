@@ -4600,7 +4600,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Collecte des patterns de discussion multi-agent » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "planned",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "file": ".ralph/prd.json",
@@ -4609,7 +4609,7 @@
       },
       "sourceDependencies": ["S-036"],
       "dependencies": ["S0-011", "U-021"],
-      "gap": "10 septembre 2026 : chat consenti/outbox/RPC raccordés. Nouvelle API native quiz et candidate 20260910035605 : snapshot serveur, droits tenant/partage, tentative UUID immuable, bail/checkpoints et reprise, correcteur LTI réemployé. UI native utilise le reçu serveur ; anciens résumés client non requalifiés. 60984 exit 0 : 63 tests, TypeScript/lint. SQL réel BEGIN/ROLLBACK valide droits, reprise, reçus et cascade ; zéro fixture après annulation. Restent rattachement vérifié des tentatives aux discussions, export personnel, agrégats tenant, recette intégrée/gate au SHA propre/publication. Aucune migration durable ni activation ; S-047 ouverte. Preuves et limites : docs/validation/S-047-discussion-observations.md.",
+      "gap": "10 septembre 2026 : chat consenti et quiz natif raccordés ; candidate 20260910042141 relie la première tentative à la dernière discussion reçue auparavant, publie sa note serveur et efface la liaison au retrait. Export personnel paginé et agrégats tenant depuis reçus vérifiés ajoutés, aucun minimum. SQL réel BEGIN/ROLLBACK vert (chronologie, zéro, non-substitution, droits, export/retrait), zéro fixture. 58 tests et TypeScript/lint verts ; preuves navigateur dans docs/validation/S-047-discussion-observations.md. Restent recette intégrée/gate au SHA propre et publication ; lecteur pas encore appelé par le Director actif (S-048). Historique non requalifié, aucune causalité revendiquée. Aucune migration durable ni activation ; S-047 ouverte.",
       "evidence": [
         "lib/telemetry/discussion-collector.ts",
         "docs/validation/S-047-discussion-observations.md"

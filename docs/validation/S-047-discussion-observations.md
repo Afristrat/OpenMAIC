@@ -192,3 +192,60 @@ Aucune activation, migration durable ou publication. Le runner est une ancienne
 base avec overlays, pas un SHA propre : ce n’est pas un gate intégré. Restent
 le rattachement vérifié de ces tentatives aux discussions, l’export personnel,
 les agrégats, la recette intégrée et la publication. S-047 reste ouverte.
+
+## 10 septembre — Liaison serveur, export et lecture des agrégats
+
+Candidate CLI `20260910042141_discussion_quiz_linkage.sql` : chaque nouvelle
+discussion reçoit une date de réception serveur, sans backfill historique.
+À l’insertion d’une tentative native, le consentement est verrouillé et la
+dernière discussion reçue avant sa soumission, du même compte/tenant/stage,
+est retenue. Une contrainte unique réserve cette discussion à la première
+tentative ; les suivantes ne remplacent pas sa note et ne remontent pas à une
+discussion plus ancienne. Aucun score ni identifiant d’association n’est fourni
+par le navigateur. La correction achevée publie la note serveur sur 0–1.
+
+La fermeture du quiz prend le verrou de consentement avant celui de la
+tentative ; le retrait supprime le pattern et annule sa référence dans la
+tentative. L’évaluation fonctionnelle reste corrigeable sans consentement aux
+analyses. La suppression d’une tentative efface son score analytique. La
+liaison décrit l’ordre de réception serveur, pas une causalité ni une durée de
+validité cognitive : une discussion transmise après la soumission ne peut pas
+lui être associée rétroactivement. Les quiz LTI restent hors de cette liaison
+native ; aucune réception LMS n’est inventée.
+
+L’export personnel existant comprend `classroom_quiz_attempts` et
+`discussion_patterns`, paginés par UUID. La projection exclut les baux et le
+contenu/corrigé intégral du cours ; elle inclut les réponses personnelles, le
+reçu final et la provenance de l’association. RPC invoker réservée au service,
+acteur issu de l’authentification, aucune lecture des observations étrangères.
+
+`getBestPatterns` appelle maintenant une RPC exigeant acteur, organisation et
+stages. Elle recontrôle membre/tenant actif, contexte/langue, partage vérifié,
+consentement et jointure avec la tentative native complète. La moyenne est
+calculée depuis le reçu, pas depuis un score historique isolé. Mille lignes
+récentes maximum, aucun minimum ; les groupes restent séparés par séquences
+d’agents et d’interventions. Le Director actif n’appelle pas encore ce lecteur :
+son raccordement reste S-048, sans activation ni promesse de gain causal.
+
+SQL réel BEGIN/ROLLBACK : discussion tardive non associée, première tentative,
+zéro conservé, seconde tentative non substituée, export propre/étranger,
+suppression, retrait pendant correction, maintien de l’évaluation fonctionnelle,
+agrégat à une observation et refus d’un acteur étranger. Relecture : zéro
+compte/stage synthétique, RPC et table candidates absentes. Advisor local
+indisponible (54322 refusé), pas un audit réussi.
+
+99791 exit 0 : 48 tests et TypeScript/lint. 91567 : 58 tests et TypeScript/lint
+verts ; trois échecs navigateur dus au mock du profil qui ignorait le paramètre
+`purpose=xapi`, corrigé dans la fixture commune sans tolérance ajoutée à la
+console. La recette navigateur simule la réponse d’export ; PostgreSQL est
+vérifié séparément, ce n’est pas une chaîne production bout en bout.
+
+56997 exit 0 : format de la fixture, TypeScript/lint et quatre Chromium verts
+sans retry (téléchargement FR/AR/EN, arabe RTL, et erreur d’export sans quitter
+le profil). Le contenu téléchargé conserve les nouvelles sections et le zéro.
+
+Ponytail : triggers, contraintes et export existant réemployés, pas de nouvelle
+file ou de score envoyé par le client. Supabase : privilèges/RLS et transactions
+revus avec la [documentation des triggers](https://supabase.com/docs/guides/database/postgres/triggers).
+Non déployé, aucune migration durable/activation/build global. Restent la recette
+intégrée au SHA propre, la publication et le raccordement effectif S-048.

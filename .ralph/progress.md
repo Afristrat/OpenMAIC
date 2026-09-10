@@ -1,5 +1,11 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 10 septembre 2026 — S-047, liaison quiz, export et agrégats vérifiés
+
+56997 exit 0 : format fixture, TypeScript/lint et quatre Chromium sans retry (export FR/AR/EN RTL et erreur sans navigation). Aucun processus encore actif. S-047 passe à to_validate, jamais à passes=true.
+
+Candidate 20260910042141 : réception serveur des discussions, première tentative native du même compte/tenant/stage, association immuable, note du reçu, retrait effaçant la liaison sans supprimer l’évaluation fonctionnelle. Export personnel paginé étendu sans baux/corrigé du cours. Lecteur d’agrégats exige acteur/tenant/stages, recontrôle consentement/droits/provenance, aucun minimum. SQL réel BEGIN/ROLLBACK vert pour ordre, zéro, non-substitution, export, retrait, suppression et lecture à une observation ; zéro fixture et candidate absente relus. 99791 : 48 tests/TypeScript/lint verts ; 91567 : 58 tests/TypeScript/lint verts, trois échecs navigateur de simulation xAPI corrigés dans la fixture commune. Pas de publication, migration durable, activation ou gate intégré au SHA propre. S-047 reste ouverte pour recette intégrée/publication ; prochain code : appel réel du lecteur dans S-048, sans prétendre qu’une corrélation prouve un gain. Preuves : docs/validation/S-047-discussion-observations.md.
+
 ## 10 septembre 2026 — S-047, autorité serveur des tentatives quiz natives
 
 66210 exit 0 : TypeScript/lint et dix Chromium quiz sans retry (natif/LTI FR/AR/EN, RTL, édition, cartes FSRS et attente de persistance). 31837 avait validé les neuf parcours observations ; ses deux anciennes attentes quiz ont été corrigées, puis un sélecteur score/volume ambigu a été ciblé sur le résultat. Consigne facultative vidée dans l’éditeur acceptée par le correcteur commun ; lot ciblé porté à 64 tests réussis (95255).
