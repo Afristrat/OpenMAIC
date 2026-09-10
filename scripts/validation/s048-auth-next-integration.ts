@@ -3,11 +3,12 @@ import assert from 'node:assert/strict';
 import { createHmac, randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
+import { cpSync } from 'node:fs';
 import { createServer, request } from 'node:http';
 import { setTimeout as delay } from 'node:timers/promises';
 import { createClient } from '@supabase/supabase-js';
 import { createServerClient } from '@supabase/ssr';
-import { chromium, type Browser } from '@playwright/test';
+import { chromium, expect, type Browser } from '@playwright/test';
 
 async function main() {
   assert(process.argv.includes('--isolated-s048'));
@@ -62,6 +63,10 @@ async function main() {
   const actors: string[] = [];
   let browser: Browser | undefined;
   const standalone = process.argv.includes('--standalone');
+  if (standalone) {
+    cpSync('.next/static', '.next/standalone/.next/static', { recursive: true });
+    cpSync('public', '.next/standalone/public', { recursive: true });
+  }
   const server = spawn(
     standalone ? process.execPath : 'pnpm',
     standalone
@@ -337,6 +342,36 @@ async function main() {
     assert.equal(linked.cohorts[0].unitsWithQuiz, 1);
     assert.equal(linked.cohorts[0].linkedTurns, 1);
     assert.equal(linked.cohorts[0].meanQuizScore, 0);
+    for (const [locale, open, title, assigned, score] of [
+      [
+        'fr-FR',
+        'Voir le Director',
+        'Comparaison du Director',
+        'Participants assignés',
+        'Score moyen des quiz',
+      ],
+      ['en-US', 'View Director', 'Director comparison', 'Assigned participants', 'Mean quiz score'],
+      ['ar-MA', 'عرض الموجّه', 'مقارنة الموجّه', 'المشاركون المعيّنون', 'متوسط درجات الاختبارات'],
+    ]) {
+      await page.evaluate((locale) => localStorage.setItem('locale', locale), locale);
+      const response = page.waitForResponse((r) =>
+        r.url().includes(`/api/organizations/${org}/reports?`),
+      );
+      await page.goto(`${app}/org/${org}/reports`);
+      assert.equal((await response).status(), 200, 'Real institutional report failed');
+      await page.getByRole('button', { name: open, exact: true }).click();
+      const visibleReport = page.getByRole('region', { name: title, exact: true });
+      await expect(
+        visibleReport.getByRole('row').filter({ hasText: assigned }).getByRole('cell').first(),
+      ).toHaveText(new Intl.NumberFormat(locale).format(1));
+      await expect(
+        visibleReport.getByRole('row').filter({ hasText: score }).getByRole('cell').first(),
+      ).toHaveText(new Intl.NumberFormat(locale, { style: 'percent' }).format(0));
+      await expect(page.locator('html')).toHaveAttribute('dir', locale === 'ar-MA' ? 'rtl' : 'ltr');
+      await expect(visibleReport.getByText('Auth recipe', { exact: true })).toBeVisible();
+      await visibleReport.getByRole('button').click();
+      await expect(visibleReport.getByRole('table')).toBeVisible();
+    }
     assert.equal((await post('/api/telemetry-consent', { consent: false })).status, 200);
     assert.deepEqual((await readReport()).cohorts, [], 'Withdrawal retained experiment data');
     assert.deepEqual(await post('/api/learning-observations', observation), {

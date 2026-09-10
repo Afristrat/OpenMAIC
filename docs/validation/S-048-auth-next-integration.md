@@ -8,7 +8,11 @@ La commande `pnpm exec tsx scripts/validation/s048-auth-next-integration.ts --is
 
 Session 22220, code zéro : 520 fichiers et 3 252 tests unitaires réussis, build de production réussi, assertion d’isolation des routes standalone réussie. Sentry avertit de l’absence de jeton de release ; aucune publication Sentry revendiquée. Puis session 21413, code zéro : **même scénario complet avec `--standalone`**, sur `.next/standalone/server.js`, `NODE_ENV=production` et `NEXT_PUBLIC_E2E_TEST_MODE=false`.
 
+Session 34676, code zéro : le même navigateur, connecté par cookies SSR réels, ouvre `/org/[orgId]/reports` et attend les réponses institutionnelles réelles. Pour `fr-FR`, `en-US` et `ar-MA`, il ouvre « Voir le Director »/« View Director »/« عرض الموجّه », lit une unité assignée et une note moyenne de 0 %, trouve le nom de la formation et rafraîchit le tableau. L’attribut `dir` est `rtl` seulement pour `ar-MA`. Aucune route n’est interceptée.
+
 Après ajout de l’option standalone au script : TypeScript et lint revérifiés, session 67604 code zéro. Neuf compteurs à nouveau nuls, aucun serveur Next restant ; Auth, REST et DB de recette arrêtés, runner détaché du réseau interne.
+
+Après ajout du parcours de rapport visuel : TypeScript et lint revalidés ; neuf compteurs à zéro, aucun serveur Next restant et services de recette arrêtés/détachés.
 
 Le script crée deux comptes synthétiques par l’API administrative GoTrue, les connecte avec de vrais mots de passe aléatoires et récupère les cookies SSR produits par Supabase. Chromium headless utilise ces cookies pour appeler les vraies routes Next.js, sans interception réseau ni identité substituée dans `requireAuth`.
 

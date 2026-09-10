@@ -18,6 +18,8 @@ Session 35758 : TypeScript et lint réussis. Advisor Supabase `db advisors --typ
 
 Session 22220 : 3 252 tests/520 fichiers et build production réussis, routes standalone correctement isolées. Session 21413 : même chaîne Auth/collecte/quiz/rapport/retrait/refus exécutée avec succès sur le build standalone de production. La suite complète des scénarios UI Playwright n’a pas été rejouée dans ce lot.
 
+Session 34676 : le parcours de rapport Director non intercepté a été ajouté à ce même scénario. Il exerce, avec l’utilisateur administrateur réellement connecté, la page `/org/[orgId]/reports`, les trois locales et RTL, l’ouverture puis l’actualisation du tableau. Ce n’est pas une validation humaine du design ni un remplacement de la suite E2E complète.
+
 Après nettoyage : neuf compteurs à zéro dans `qalem_recipe` — utilisateurs, sessions Auth, organisations, stages, cours, tentatives quiz, observations d’apprentissage, discussions et reçus Director.
 
 ## Publication : ne pas confondre ordre validé et migration déployée
