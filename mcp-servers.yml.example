@@ -17,22 +17,9 @@
 # Restart each process after changes; GET /api/admin/mcp probes web connections
 # and is restricted to authenticated super-administrators.
 
-servers:
-  # NotebookLM: the selected integration is through the Diwan document API,
-  # not a direct MCP server. Do not configure a second NotebookLM connection here.
-  # See docs/guides/notebooklm-via-diwan.md for prerequisites and current limits.
-
-  # Notion: the selected integration is through the Diwan document API,
-  # not a direct MCP server. Do not configure a second Notion connection here.
-  # See docs/guides/notion-via-diwan.md for prerequisites and current limits.
-
-  # ── Google Drive ──
-  # Source: https://github.com/anthropics/anthropic-quickstarts (gdrive MCP)
-  # Tools: search_drive, get_document, list_files
-  # Setup: npx @anthropic/mcp-server-gdrive --port 3003
-  # Requires: OAuth2 credentials configured
-  - id: google-drive
-    name: Google Drive
-    url: http://localhost:3003/mcp
-    enabled: false
-    organizationIds: []
+# NotebookLM, Notion and Google Drive use the Diwan document API. Direct MCP
+# servers for them are deliberately not configured here. See:
+# - docs/guides/notebooklm-via-diwan.md
+# - docs/guides/notion-via-diwan.md
+# - docs/guides/google-drive-via-diwan.md
+servers: []

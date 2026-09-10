@@ -4373,7 +4373,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Connecter Google Drive via MCP » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "planned",
+      "status": "blocked",
       "passes": false,
       "source": {
         "file": ".ralph/prd.json",
@@ -4382,8 +4382,8 @@
       },
       "sourceDependencies": ["S-018"],
       "dependencies": ["S0-011", "S-018"],
-      "gap": "Drive demeure une configuration d’exemple, pas une livraison prouvée.",
-      "evidence": ["components/admin/mcp-tab.tsx", "mcp-servers.yml.example"],
+      "gap": "10 septembre 2026 : le choix via Diwan impose un seul accès documentaire côté Qalem. Le dernier exemple de serveur MCP Google Drive direct a été retiré ; la configuration d’exemple est désormais une liste vide valide et deny-by-default. Le consommateur Diwan tenant-scopé existant épingle version et empreinte puis résout des passages bornés dans le plan et la génération. Le contrat Diwan v1 ne définit toutefois ni connexion Drive, ni recherche/lecture Docs, Slides ou PDF, ni mapping fichier/version → corpus/source Diwan. Restent ce contrat fournisseur, le jeton dédié par tenant, une recette autorisée par format avec refus hors droits et retrait, le gate intégré et la publication. La story est bloquée côté fournisseur, non par un connecteur Qalem direct manquant.",
+      "evidence": ["lib/diwan/client.ts", "lib/diwan/references.ts", "lib/server/formation-source-library.ts", "docs/guides/google-drive-via-diwan.md", "mcp-servers.yml.example"],
       "acceptance": [
         "Config serveur MCP Google Drive dans mcp-servers.yml",
         "search_drive(query) disponible",
