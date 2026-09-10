@@ -2,6 +2,26 @@ import { describe, expect, it } from 'vitest';
 import { LearningObservationBuffer } from '@/lib/telemetry/learning-observation-buffer';
 
 describe('actual learning observations', () => {
+  it('preserves repeated quiz submissions in order without mutating earlier snapshots', () => {
+    const buffer = new LearningObservationBuffer('stage', 'epoch', 'session', () => 0);
+    buffer.scene('slide', 'slide');
+    buffer.quiz('slide', 1);
+    buffer.scene('quiz', 'quiz');
+    buffer.quiz('quiz', 0);
+    const first = buffer.snapshot(['slide', 'quiz'], 1)!;
+    buffer.quiz('quiz', 1);
+    buffer.quiz('quiz', 1);
+    expect(first.sceneObservations?.[1].attempts).toEqual([0]);
+    expect(buffer.snapshot(['slide', 'quiz'], 1)).toMatchObject({
+      quizScores: [1],
+      sceneObservations: [
+        { id: 'slide', completed: false },
+        { id: 'quiz', score: 1, attempts: [0, 1, 1] },
+      ],
+    });
+    for (let i = 3; i < 512; i++) buffer.quiz('quiz', 1);
+    expect(() => buffer.quiz('quiz', 1)).toThrow('capacity');
+  });
   it('records foreground time, real completion and quiz zero distinctly from no quiz', () => {
     let now = 0;
     const buffer = new LearningObservationBuffer('stage', 'epoch', 'session', () => now);

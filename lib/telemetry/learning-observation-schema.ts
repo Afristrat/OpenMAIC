@@ -24,9 +24,18 @@ export const learningSessionSchema = z
             seconds: z.number().int().min(0).max(86400),
             completed: z.boolean(),
             score: z.number().min(0).max(1).nullable(),
+            attempts: z.array(z.number().min(0).max(1)).max(512).optional(),
           })
           .strict()
-          .refine((item) => item.score === null || (item.type === 'quiz' && item.completed)),
+          .refine((item) => item.score === null || (item.type === 'quiz' && item.completed))
+          .refine(
+            (item) =>
+              !item.attempts ||
+              (item.type === 'quiz' &&
+                (item.attempts.length === 0
+                  ? item.score === null
+                  : item.attempts.at(-1) === item.score)),
+          ),
       )
       .min(1)
       .max(256)
@@ -46,6 +55,12 @@ export const learningSessionSchema = z
       .strict(),
   })
   .strict()
+  .refine(
+    (session) =>
+      (session.sceneObservations?.reduce((sum, item) => sum + (item.attempts?.length ?? 0), 0) ??
+        0) <= 512,
+    'Too many quiz attempts',
+  )
   .refine(
     (session) => session.sceneSequence.length === session.sceneDurations.length,
     'Scene measures must align',

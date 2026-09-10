@@ -189,7 +189,11 @@ export function useLearningObservations(stageId: string | undefined) {
         typeof detail.score !== 'number'
       )
         return;
-      buffer?.quiz(detail.sceneId, detail.score);
+      try {
+        buffer?.quiz(detail.sceneId, detail.score);
+      } catch {
+        showError(true);
+      }
     };
     const api: Observer = {
       mode(next) {

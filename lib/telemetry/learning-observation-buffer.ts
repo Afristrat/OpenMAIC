@@ -6,6 +6,7 @@ export class LearningObservationBuffer {
   private visits: Array<{ id: string; type: SceneType; milliseconds: number }> = [];
   private completed = new Set<string>();
   private scores = new Map<string, number>();
+  private attempts = new Map<string, number[]>();
   private actions = { play: 0, pause: 0, seek: 0 };
   private lastTime: number;
   private visible = true;
@@ -56,8 +57,13 @@ export class LearningObservationBuffer {
       Number.isFinite(score) &&
       score >= 0 &&
       score <= 1 &&
-      this.visits.some((visit) => visit.id === sceneId)
+      this.visits.some((visit) => visit.id === sceneId && visit.type === 'quiz')
     ) {
+      if ([...this.attempts.values()].reduce((sum, values) => sum + values.length, 0) >= 512)
+        throw new Error('Quiz observation capacity exceeded');
+      const attempts = this.attempts.get(sceneId) ?? [];
+      attempts.push(score);
+      this.attempts.set(sceneId, attempts);
       this.scores.set(sceneId, score);
       this.complete(sceneId);
     }
@@ -79,6 +85,7 @@ export class LearningObservationBuffer {
         seconds: (previous?.seconds ?? 0) + durations[index],
         completed: this.completed.has(visit.id),
         score: visit.type === 'quiz' ? (this.scores.get(visit.id) ?? null) : null,
+        ...(visit.type === 'quiz' ? { attempts: [...(this.attempts.get(visit.id) ?? [])] } : {}),
       });
     });
     return {

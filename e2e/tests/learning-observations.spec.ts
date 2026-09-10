@@ -203,6 +203,7 @@ for (const scenario of [
               type: 'quiz',
               completed: true,
               score: 0.25,
+              attempts: [0.25],
             }),
           ]),
         );
