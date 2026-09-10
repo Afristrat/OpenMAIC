@@ -18,15 +18,9 @@
 # and is restricted to authenticated super-administrators.
 
 servers:
-  # ── NotebookLM ──
-  # Source: https://github.com/PleasePrompto/notebooklm-mcp
-  # Tools: search_notebook, get_source_content, create_audio_overview
-  # Setup: npx @notebooklm-mcp/server --port 3001
-  - id: notebooklm
-    name: NotebookLM
-    url: http://localhost:3001/mcp
-    enabled: false
-    organizationIds: []
+  # NotebookLM: the selected integration is through the Diwan document API,
+  # not a direct MCP server. Do not configure a second NotebookLM connection here.
+  # See docs/guides/notebooklm-via-diwan.md for prerequisites and current limits.
 
   # ── Notion ──
   # Source: https://github.com/makenotion/notion-mcp-server

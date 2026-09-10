@@ -1,5 +1,9 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 10 septembre 2026 — S-019, circuit documentaire réconcilié
+
+Décision existante via Diwan confirmée, pas de nouveau choix à demander. Exemple MCP NotebookLM direct retiré ; guide utilisateur/prérequis livré. Code générique déjà relié au plan et à la génération. Contrat propriétaire relu intégralement, empreinte 559952437d0802ae2150b3add557250c7aba5701aa245e05a525e0e1fdf952c2 ; aucune opération NotebookLM spécifique définie. GET anonyme depuis ServeurIA 401. Index et broker Claude présents contrairement aux chemins Codex fournis ; recherche ciblée des noms sans jeton interservice dédié, valeurs non lues. Mnemo fetch failed. Pas de code applicatif, de mutation Diwan, de recette authentifiée ou de déploiement ; S-019 ouverte pour fournisseur/authentification/provenance/retrait et validation intégrée. Ne pas compter un import manuel comme intégration NotebookLM.
+
 ## 10 septembre 2026 — S-035, destinataire externe absent
 
 Preuve système fraîche : zéro configuration LRS (zéro active), outbox vide, flag false. La recette S3-010 utilisait une terminaison temporaire supprimée, pas un service actuellement disponible. Index de secrets au chemin fourni absent, sans conclusion sur d’autres coffres. Pas d’installation ou activation arbitraire, pas d’effacement distant inventé ni de voiding présenté comme suppression physique. S-035 reste ouverte pour LRS réel/effacement/gate/publication. Objectif global actif : poursuivre les autres US codables, dont S-019/S-020/S-021 à cadrer selon leurs critères directs ou Diwan, sans double connecteur.

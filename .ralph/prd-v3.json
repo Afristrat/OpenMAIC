@@ -4291,8 +4291,14 @@
       },
       "sourceDependencies": ["S-018"],
       "dependencies": ["S0-011", "S-018"],
-      "gap": "NotebookLM demeure une configuration d’exemple désactivée, sans preuve d’intégration Qalem.",
-      "evidence": ["components/admin/mcp-tab.tsx", "mcp-servers.yml.example"],
+      "gap": "10 septembre 2026 : choix via Diwan confirmé dans la décision du 9 septembre, sans connecteur direct. Exemple MCP NotebookLM retiré et guide livré. Résolution documentaire générique déjà raccordée au plan et à la génération ; contrat Diwan v1 relu sans opérations de connexion/authentification NotebookLM. Restent contrat fournisseur et correspondance des sources, jeton dédié par tenant, recette réelle avec refus hors droits/retrait, gate intégré et publication. Refus anonyme Diwan 401 recontrôlé ; index Claude ne contient pas le mapping dédié sous le nom attendu. Aucune intégration NotebookLM déclarée livrée.",
+      "evidence": [
+        "docs/guides/notebooklm-via-diwan.md",
+        "docs/decisions/2026-09-09-unblock-prd.md",
+        "lib/diwan/references.ts",
+        "lib/server/formation-source-library.ts",
+        "mcp-servers.yml.example"
+      ],
       "acceptance": [
         "Config serveur MCP NotebookLM dans mcp-servers.yml",
         "Agents peuvent appeler search_notebook(query)",
