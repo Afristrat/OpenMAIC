@@ -143,11 +143,14 @@ export async function enqueueAnchorXapiStatement(event: AnchorXapiEvent): Promis
         statement,
         lrs_target: config.endpoint,
       },
-      { onConflict: 'org_id,dedupe_key' },
+      { onConflict: 'org_id,dedupe_key', ignoreDuplicates: true },
     )
     .select('id')
-    .single();
-  if (insertError || !outbox) throw new Error(`xAPI outbox insert failed: ${insertError?.message}`);
+    .maybeSingle();
+  if (insertError) throw new Error('xAPI outbox insert failed');
+  // A duplicate preserves the original payload, timestamp, destination and status.
+  // The existing recovery scan owns pending delivery if the first enqueue failed.
+  if (!outbox) return true;
   try {
     await enqueueXapiDelivery({ outboxId: outbox.id });
   } catch {

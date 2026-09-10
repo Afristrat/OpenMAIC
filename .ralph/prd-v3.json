@@ -4457,7 +4457,7 @@
       },
       "sourceDependencies": ["S-022"],
       "dependencies": ["S0-011", "U-021"],
-      "gap": "Client xAPI hérité sans appelant ; distinguer télémétrie du cours et événements d’ancrage.",
+      "gap": "2026-09-10 : appelant réel ANCRER confirmé dans le worker, builders du cours encore non raccordés. Transport commun corrigé : UUIDv5 tenant/clé, PUT/204, délai/redirections, outbox premier contenu conservé et changement de destination refusé ; global désactivé par défaut. 73512 : 16 tests/TypeScript/lint ; 1655 trois Chromium diagnostic. SQL service_role ROLLBACK prouve rejeu sans écrasement et zéro fixtures, outbox réelle vide. Restent événements cours quiz/slide/PBL/discussion et contexte, consentement atomique/retrait/tenant à l’insertion et à l’envoi, pseudonymisation/export/purge cohérents, recette LRS réelle et gate intégré/publication. Non déployé, aucune activation ; voir docs/validation/S-035-xapi-delivery.md.",
       "evidence": ["lib/telemetry/xapi.ts:106"],
       "acceptance": [
         "lib/telemetry/xapi.ts : client xAPI ADL conformant",

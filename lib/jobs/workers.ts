@@ -50,6 +50,7 @@ import { dispatchWebhook } from '@/lib/webhooks/dispatcher';
 import { sendWebPushToUser } from '@/lib/server/web-push';
 import { readOrganizationLrsConfig } from '@/lib/server/org-lrs-config';
 import { sendStatement, type XAPIStatement } from '@/lib/telemetry/xapi';
+import { xapiDeliveryId } from '@/lib/telemetry/xapi-delivery';
 import {
   claimDueReviewNotifications,
   deliverReviewNotification,
@@ -235,7 +236,7 @@ export function startAllWorkers(): void {
       const supabase = createServiceSupabaseClient();
       const { data: item, error } = await supabase
         .from('xapi_outbox')
-        .select('id, org_id, statement, status')
+        .select('id, org_id, statement, status, dedupe_key, lrs_target')
         .eq('id', outboxId)
         .maybeSingle();
       if (error) throw new Error(`xAPI outbox lookup failed: ${error.message}`);
@@ -245,7 +246,13 @@ export function startAllWorkers(): void {
       try {
         const config = await readOrganizationLrsConfig(item.org_id);
         if (!config?.enabled) throw new Error('Organization LRS is disabled');
-        const sent = await sendStatement(item.statement as unknown as XAPIStatement, config);
+        if (config.endpoint !== item.lrs_target)
+          throw new Error('LRS destination changed; pending delivery requires reconciliation');
+        const sent = await sendStatement(
+          item.statement as unknown as XAPIStatement,
+          config,
+          xapiDeliveryId(item.org_id, item.dedupe_key),
+        );
         if (!sent) throw new Error('LRS rejected or did not answer the xAPI statement');
         const { error: updateError } = await supabase
           .from('xapi_outbox')

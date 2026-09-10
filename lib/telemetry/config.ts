@@ -14,7 +14,7 @@ export interface XAPIConfig {
 /**
  * Build xAPI config from environment variables.
  * Returns null when the required env vars are missing or telemetry is
- * explicitly disabled via XAPI_ENABLED=false.
+ * explicitly enabled via XAPI_ENABLED=true (default: disabled).
  */
 export function getXAPIConfig(): XAPIConfig | null {
   const endpoint = process.env.XAPI_ENDPOINT;
@@ -24,7 +24,7 @@ export function getXAPIConfig(): XAPIConfig | null {
     return null;
   }
 
-  const enabled = process.env.XAPI_ENABLED !== 'false';
+  const enabled = process.env.XAPI_ENABLED === 'true';
 
   return { endpoint, auth, enabled };
 }

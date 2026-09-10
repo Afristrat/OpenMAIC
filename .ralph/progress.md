@@ -1,5 +1,9 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 10 septembre 2026 — S-035, transport xAPI commun stabilisé
+
+Appelant worker ANCRER confirmé ; builders du cours non raccordés. UUIDv5 tenant/clé, PUT avec même ID query/corps, 204 exigé, délai 10 s et redirections refusées. Outbox ignoreDuplicates conserve premier payload/destination/statut ; récupération existante pour doublons. Worker refuse nouvelle destination non réconciliée. Configuration globale désactivée sauf true explicite. 73512 : 16 tests/TypeScript/lint ; 1655 trois Chromium diagnostic, exit 0. SQL service_role BEGIN/ROLLBACK prouve premier contenu conservé et zéro fixtures ; outbox réelle vide. Aucun LRS contacté ni flag activé, non déployé, pas de clôture. Preuves et limites docs/validation/S-035-xapi-delivery.md. Prochain : projection des événements cours dans le mécanisme commun avec consentement/tenant atomiques, puis recette réelle. Ponytail/Supabase : conflit unique natif, worker réutilisé, aucune nouvelle dépendance.
+
 ## 10 septembre 2026 — U-018, routes et widget xAPI raccordés
 
 Statut/test super-admin implémentés, origine POST, configuration globale serveur seulement, aucune clé/URL exposée, HTTPS/redirections refusées/délai 5 s. Test natif /about : connexion et compatibilité 1.0.3, pas écriture et pas faux événement apprenant. Widget distingue chargement/erreur/non configuré, exige accusé exact, FR/AR/EN et RTL ; différence avec LRS par tenant explicitée. 92691 exit 0 : cinq tests, TypeScript/lint ; 74834 exit 0 : trois Chromium. Réseau simulé, pas de déploiement ou clôture ; détails docs/validation/U-018-xapi-diagnostics.md. Ponytail : mécanismes existants sans dépendance. Suite : raccordement S-035, recette LRS réelle et gate intégré.

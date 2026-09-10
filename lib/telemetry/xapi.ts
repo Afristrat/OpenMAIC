@@ -103,27 +103,43 @@ function activityId(stageId: string, sceneId?: string): string {
 // ---------------------------------------------------------------------------
 
 /**
- * POST a single xAPI statement to the configured LRS.
- * Returns true on success (2xx), false otherwise.
+ * PUT the durable statement identity to the configured LRS.
+ * Only the native 204 acknowledgement confirms delivery; retries reuse the ID.
  * Never throws — failures are swallowed so telemetry cannot break the app.
  */
 export async function sendStatement(
   statement: XAPIStatement,
   config: XAPIConfig,
+  statementId: string,
 ): Promise<boolean> {
   if (!config.enabled) return false;
 
   try {
-    const response = await fetch(`${config.endpoint}/statements`, {
-      method: 'POST',
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(statementId))
+      return false;
+    const endpoint = new URL(config.endpoint);
+    if (
+      endpoint.protocol !== 'https:' ||
+      endpoint.username ||
+      endpoint.password ||
+      endpoint.search ||
+      endpoint.hash
+    )
+      return false;
+    endpoint.pathname = `${endpoint.pathname.replace(/\/$/, '')}/statements`;
+    endpoint.searchParams.set('statementId', statementId);
+    const response = await fetch(endpoint, {
+      method: 'PUT',
+      redirect: 'error',
+      signal: AbortSignal.timeout(10000),
       headers: {
         'Content-Type': 'application/json',
         'X-Experience-API-Version': '1.0.3',
         Authorization: config.auth,
       },
-      body: JSON.stringify(statement),
+      body: JSON.stringify({ ...statement, id: statementId }),
     });
-    return response.ok;
+    return response.status === 204;
   } catch {
     // Telemetry must never crash the application
     return false;
