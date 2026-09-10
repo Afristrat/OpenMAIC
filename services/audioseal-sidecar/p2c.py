@@ -120,9 +120,11 @@ def main() -> None:
             proof[name] = {
                 "sha256": hashlib.sha256(variant.read_bytes()).hexdigest(),
                 "detectedSegmentCount": len(detected),
+                "detectedMessages": detected,
                 "recoveredWatermarkId": recovered,
             }
             if recovered != args.watermark_id:
+                print(json.dumps(proof, sort_keys=True))
                 raise RuntimeError(f"P2-C failed after {name}")
     print(json.dumps(proof, sort_keys=True))
 
