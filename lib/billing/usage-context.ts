@@ -22,6 +22,11 @@ export function getActiveTenantId(): string | undefined {
   return usageContext.getStore()?.tenantId;
 }
 
+/** Verified request/job actor, never a browser-supplied profile. */
+export function getActiveActorUserId(): string | undefined {
+  return usageContext.getStore()?.actorUserId;
+}
+
 function createRequestContext(
   headers: Headers,
   actorUserId: string,

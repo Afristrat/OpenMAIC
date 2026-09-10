@@ -8,6 +8,7 @@
 import type { UIMessage } from 'ai';
 import type { ThinkingConfig } from './provider';
 import type { SpeechAction } from './action';
+import type { DirectorObservation } from '@/lib/orchestration/observed-director';
 
 // Session Types
 export type SessionType = 'qa' | 'discussion' | 'lecture';
@@ -352,7 +353,11 @@ export type StatelessEvent =
     }
   | {
       type: 'thinking';
-      data: { stage: 'director' | 'agent_loading'; agentId?: string };
+      data: {
+        stage: 'director' | 'agent_loading';
+        agentId?: string;
+        directorObservation?: DirectorObservation;
+      };
     }
   | { type: 'intervention_decision'; data: InterventionDecision }
   | { type: 'cue_user'; data: { fromAgentId?: string; prompt?: string } }

@@ -1,5 +1,9 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 10 septembre 2026 — S-048, choix du Director raccordé
+
+Nœud réel, acteur/tenant authentifiés, contexte persisté, formation courante et RPC S-047. Cohorte stable apprenant/tenant/formation, attendue 50/50. Suggestion limitée aux agents autorisés par la constitution ; END/USER/agent explicite/plafond conservés. SSE effectif/score/cohorte et décision actualisée. Protocole consigné dans docs/validation/S-048-data-driven-director.md. 66609 exit 0 : quinze tests/TypeScript/lint ; 56375 exit 0 : seize tests/TypeScript/lint avec constitution réelle. Aucun processus actif, navigateur/build global/gate au SHA propre, activation, migration ou publication. Prochain code : restitution UI et registre consenti assignation/exposition/mesures, puis recette intégrée. S-048 ouverte ; Ponytail réemploie contexte et lecteur sans dépendance nouvelle.
+
 ## 10 septembre 2026 — S-047, liaison quiz, export et agrégats vérifiés
 
 56997 exit 0 : format fixture, TypeScript/lint et quatre Chromium sans retry (export FR/AR/EN RTL et erreur sans navigation). Aucun processus encore actif. S-047 passe à to_validate, jamais à passes=true.

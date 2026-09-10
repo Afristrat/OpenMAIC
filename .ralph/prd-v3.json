@@ -4652,7 +4652,7 @@
       },
       "sourceDependencies": ["S-047"],
       "dependencies": ["S0-011", "S-047"],
-      "gap": "Candidat du 9 septembre : aucun minimum, patterns valides et compatibles dès une observation, score et volume exposés, sélection indépendante de l’ordre, query bornée aux formations autorisées, cohortes SHA-256 stables. Session 67933 exit 0 : 18 tests optimiseur/Director, TypeScript et lint global verts. Restent S-047, points d’appel du Director, protocole A/B détaillé et recette navigateur ; aucune activation ni gain mesuré.",
+      "gap": "10 septembre : nœud réel raccordé au lecteur S-047 avec acteur/tenant authentifiés, contexte persisté et cohorte stable apprenant/tenant/formation. Constitution, END/USER/agent explicite/plafond conservés. SSE expose effectif/score/cohorte, aucun minimum. Protocole dans docs/validation/S-048-data-driven-director.md. 56375 exit 0 : seize tests, TypeScript/lint. Restent restitution UI, registre consenti assignation/exposition et mesures par cohorte, recette intégrée S-047/navigateur, gate au SHA propre et activation contrôlée. Non déployé, aucun gain mesuré.",
       "evidence": ["lib/orchestration/data-driven-director.ts"],
       "acceptance": [
         "lib/orchestration/data-driven-director.ts",

@@ -37,6 +37,7 @@ import { buildStructuredPrompt } from './prompt-builder';
 import { summarizeConversation } from './summarizers/conversation-summary';
 import { convertMessagesToOpenAI } from './summarizers/message-converter';
 import { buildDirectorPrompt, parseDirectorDecision } from './director-prompt';
+import { observeDirectorChoice } from './observed-director';
 import { getEffectiveActions } from './tool-schemas';
 import type { AgentTurnSummary, WhiteboardActionRecord } from './types';
 import { parseStructuredChunk, createParserState, finalizeParser } from './stateless-generate';
@@ -108,7 +109,7 @@ function resolveAgent(state: OrchestratorStateType, agentId: string): AgentConfi
  *     turn 0 + triggerAgentId: dispatch trigger agent (skip LLM)
  *     otherwise: LLM decides next agent / USER / END
  */
-async function directorNode(
+export async function directorNode(
   state: OrchestratorStateType,
   config: LangGraphRunnableConfig,
 ): Promise<Partial<OrchestratorStateType>> {
@@ -230,7 +231,7 @@ async function directorNode(
       return { shouldEnd: true };
     }
 
-    const selectedAgent = agents.find((agent) => agent.id === decision.nextAgentId)!;
+    let selectedAgent = agents.find((agent) => agent.id === decision.nextAgentId)!;
     let interventionDecision: InterventionDecision | null = null;
     if (state.animationConstitution) {
       if (!decision.trigger || !decision.form || !decision.reason) {
@@ -261,17 +262,60 @@ async function directorNode(
         log.warn(`[Director] Unauthorized intervention decision: ${validation.reason}`);
         return { shouldEnd: true };
       }
-      write({ type: 'intervention_decision', data: interventionDecision });
     }
+
+    // The classic director still controls END/USER, trigger, form and the right to speak.
+    // Evidence may only choose among agents permitted for that already valid intervention.
+    const eligible = agents.filter(
+      (agent) =>
+        !state.animationConstitution ||
+        (interventionDecision &&
+          validateInterventionDecision(state.animationConstitution, {
+            ...interventionDecision,
+            agentId: agent.id,
+            agentName: agent.name,
+          }).success),
+    );
+    const observed =
+      state.turnCount === 0 && state.triggerAgentId
+        ? null
+        : await observeDirectorChoice(
+            state.storeState.stage?.id,
+            state.agentResponses.map((turn) => turn.agentId),
+            eligible.map((agent) => agent.id),
+            config.signal,
+          );
+    if (observed?.suggestion) {
+      const candidate = eligible.find((agent) => agent.id === observed.suggestion!.agentId);
+      if (candidate) {
+        selectedAgent = candidate;
+        if (interventionDecision)
+          interventionDecision = {
+            ...interventionDecision,
+            agentId: candidate.id,
+            agentName: candidate.name,
+            reason:
+              `Observed sequence: ${observed.suggestion.sampleSize} observations; mean quiz score ${observed.suggestion.observedMeanQuizScore}. ${interventionDecision.reason}`.slice(
+                0,
+                2000,
+              ),
+          };
+      }
+    }
+    if (interventionDecision) write({ type: 'intervention_decision', data: interventionDecision });
 
     write({
       type: 'thinking',
-      data: { stage: 'agent_loading', agentId: decision.nextAgentId },
+      data: {
+        stage: 'agent_loading',
+        agentId: selectedAgent.id,
+        ...(observed ? { directorObservation: observed } : {}),
+      },
     });
 
-    log.info(`[Director] Decision: dispatch agent "${decision.nextAgentId}"`);
+    log.info(`[Director] Decision: dispatch agent "${selectedAgent.id}"`);
     return {
-      currentAgentId: decision.nextAgentId,
+      currentAgentId: selectedAgent.id,
       shouldEnd: false,
     };
   } catch (error) {

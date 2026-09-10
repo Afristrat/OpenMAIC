@@ -134,7 +134,7 @@ export function suggestNextAgent(
   };
 }
 
-/** Stable v1 cohort per server-generated session; expected 50/50, not an exact quota. */
+/** Stable v1 cohort for a server-derived assignment key; expected 50/50, not a quota. */
 export function shouldUseDataDriven(sessionId: string): boolean {
   if (!sessionId.trim() || sessionId.length > 256) return false;
   return (
