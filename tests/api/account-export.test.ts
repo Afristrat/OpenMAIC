@@ -72,7 +72,7 @@ describe('account export', () => {
       providers: ['email'],
     });
     expect(JSON.stringify(body)).not.toContain('never-export');
-    expect(body.includedSections).toHaveLength(56);
+    expect(body.includedSections).toHaveLength(57);
     expect(body.includedSections).toEqual(
       expect.arrayContaining([
         'session_events',
@@ -82,6 +82,7 @@ describe('account export', () => {
         'discussion_patterns',
         'director_receipts',
         'review_notification_preferences',
+        'anchor_reflections',
       ]),
     );
     expect(body.formatVersion).toBe(2);
