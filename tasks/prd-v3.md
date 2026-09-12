@@ -13,7 +13,7 @@ Le chantier ANCRER conserve sa spécification historique dans `tasks/prd-3-ancre
 Clôturer Qalem comme plateforme institutionnelle d’apprentissage adulte exploitable et commercialisable, web et mobile : invitations et tenants, formations multisources, andragogie FR/AR/EN, audio, progression et activités, ancrage personnalisé, données et optimiseur/Director, facturation, sécurité et exploitation.
 GTM et présentation restent annexes. Aucun engagement conservé ne disparaît faute de preuve.
 
-- Registre inspecté : 80 US ; 44 étiquetées `completed`, 26 `to_validate`, 4 `blocked`, 6 `to_implement`.
+- Registre inspecté : 80 US ; 45 étiquetées `completed`, 25 `to_validate`, 4 `blocked`, 6 `to_implement`.
 - 36 US portent `passes=false` ; ce ne sont pas 36 fonctionnalités à recoder. Le statut distingue travail restant et validation.
 - Les dix US auparavant `passes=true/to_validate` sont désormais `passes=false`, avec toutes les preuves historiques conservées. Aucune normalisation automatique en livraison.
 - Une étiquette `completed` ou un résultat historique ne certifie pas le déploiement actuel. La clôture finale exige les preuves au SHA livré.
@@ -94,7 +94,7 @@ Aucun gain d’apprentissage ou de marge n’est présumé ; la cible de marge m
 | 12 | S6-020 | P0 | `completed` | true | Rendre le gate silencieux sur toute erreur ou tout avertissement inattendu |
 | 13 | S6-009 | P1 | `to_validate` | false | Recetter Whisper sur de la parole réelle et le parcours microphone |
 | 14 | S6-003 | P1 | `blocked` | false | Consommer Diwan par un contrat documentaire autonome |
-| 15 | S6-004 | P1 | `to_validate` | false | Bibliothèque et sélection de plusieurs sources par formation |
+| 15 | S6-004 | P1 | `completed` | true | Bibliothèque et sélection de plusieurs sources par formation |
 | 16 | S6-012 | P1 | `completed` | true | Qualifier le catalogue vocal français et anglais |
 | 17 | S1-009 | P1 | `completed` | true | Gate audio : tachkil AR + plancher de bruit -50 dB sur toutes les sorties TTS |
 | 18 | S4-010 | P1 | `completed` | true | Contexte territorial réutilisable et guidage laser lisible [UI] |

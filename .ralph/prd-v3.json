@@ -2273,15 +2273,15 @@
       "description": "En tant qu’utilisateur de Qalem, je veux bibliothèque et sélection de plusieurs sources par formation afin que le parcours promis soit réellement utilisable.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P1",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "type": "request_or_observed_gap",
         "date": "2026-08-26"
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Réconciliation documentaire du 12 septembre 2026 : preuves historiques conservées ci-dessous, mais statut to_validate et passes=true étaient contradictoires. passes=false jusqu’à revue critère par critère au SHA livré, incluant activation effective et dépendances pertinentes ; ceci n’infère ni perte du code ni échec des recettes historiques.",
+      "gap": null,
       "evidence": [
         "components/generation/source-library-popover.tsx",
         "app/api/source-library/route.ts",
@@ -2291,6 +2291,8 @@
         "tests/api/source-library-api.test.ts",
         "tests/server/formation-source-library.test.ts",
         "e2e/tests/home-to-generation.spec.ts",
+        "scripts/proofs/s6-004-production.js",
+        "docs/validation/S6-004-multisource-production-2026-09-12.md",
         "commit:c6caa7f51f830999c187c4fde2f315c122d469a6",
         "commit:aa9ff9130e4ef9f313a548dd7a47df7ded848a8f"
       ],
@@ -2302,6 +2304,8 @@
         "Préserver le parcours à source unique et le parcours sans source."
       ],
       "closureEvidence": [
+        "2026-09-12 — Recette authentifiée sur qalem.ma au SHA déployé 9a24e105e79638e46b97c6f0109c47e097ca0000 : trois sources autorisées HTTP 201, doublon HTTP 200 réutilisant la même source, document vide HTTP 422, manifeste v1→v2→v3 après retrait puis réutilisation, et deux accès adverses refusés HTTP 403. Deux comptes et deux tenants de recette sont supprimés ; recomptages Auth, organisations, sources et manifestes à zéro. La recette n’émet aucun secret, identifiant personnel ni contenu métier. Référence : docs/validation/S6-004-multisource-production-2026-09-12.md.",
+        "2026-09-12 — Au SHA fonctionnel d7e231a60aa159c973eeeea855137a5af7b67a78, ancêtre du SHA déployé dont le diff fonctionnel est nul pour S6-004, les huit tests ciblés de bibliothèque et de route API passent sur ServeurIA ; ils couvrent références stables, contradiction explicite, source unique, absence de source et frontières API.",
         "2026-08-27 — Le code S6-004 est poussé sur origin/refork-v030 aux commits c6caa7f51f830999c187c4fde2f315c122d469a6 puis aa9ff9130e4ef9f313a548dd7a47df7ded848a8f. L’interface accepte plusieurs fichiers, affiche leur état individuel, restaure la bibliothèque et permet retrait puis réutilisation.",
         "2026-08-27 — La migration 00040 crée organization_sources et formation_source_manifests avec RLS, contraintes inter-tenant, manifestes immuables chaînés et remplacement atomique sérialisé. La fonction est SECURITY INVOKER, exécutable par service_role seulement ; authenticated ne dispose que de SELECT sous RLS.",
         "2026-08-27 — Contrat PostgreSQL exécuté sur une base Supabase PostgreSQL 17 neuve puis dans une transaction annulée sur la base Qalem PostgreSQL 15.8 : migrations 00001 à 00040 applicables, intégrité d’organisation, unicité, version concurrente, ACL et RLS toutes vérifiées. La migration de production conserve les 18 cours existants.",
@@ -2312,7 +2316,7 @@
         "2026-08-27 — Migration appliquée à db.qalem.ma et déploiement séquentiel runtime puis web sur le SHA exact aa9ff9130e4ef9f313a548dd7a47df7ded848a8f. Web, worker de génération et capture-worker sont healthy, à zéro redémarrage et OOMKilled=false ; le proxy répond 200 sur / et /api/health, et refuse l’accès anonyme à la bibliothèque en 401.",
         "2026-08-27 — Nettoyage indépendant après la preuve : zéro compte qalem-s6004 temporaire, zéro organisation S6-004 temporaire, zéro organization_sources et zéro formation_source_manifests résiduels en production."
       ],
-      "completedAt": "2026-08-27",
+      "completedAt": "2026-09-12",
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
