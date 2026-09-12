@@ -4,6 +4,10 @@ export interface DeliveryWindow {
   quietEnd: string | null;
 }
 
+export interface DeliveryPreferences extends DeliveryWindow {
+  pausedUntil: string | null;
+}
+
 function minutes(value: string): number | null {
   const match = /^(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/u.exec(value);
   if (!match) return null;
@@ -26,4 +30,11 @@ export function isWithinQuietWindow(at: Date, window: DeliveryWindow): boolean {
     Number(local.find((value) => value.type === type)?.value);
   const current = part('hour') * 60 + part('minute');
   return start < end ? current >= start && current < end : current >= start || current < end;
+}
+
+export function shouldDeferDelivery(at: Date, preferences: DeliveryPreferences): boolean {
+  if (preferences.pausedUntil && new Date(preferences.pausedUntil).getTime() > at.getTime()) {
+    return true;
+  }
+  return isWithinQuietWindow(at, preferences);
 }

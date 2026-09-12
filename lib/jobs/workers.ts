@@ -41,12 +41,15 @@ import type {
 import { PermitPool } from '@/lib/jobs/permit-pool';
 import {
   configureReviewNotificationScheduler,
+  configureAnchorDeliveryScheduler,
+  enqueueAnchorDelivery,
   configureXapiDeliveryScheduler,
   enqueueReviewNotificationDelivery,
   enqueueTransmissionAudioWatermark,
   enqueueTransmissionVisualWatermark,
   enqueueXapiDelivery,
 } from '@/lib/jobs/queue';
+import { shouldDeferDelivery } from '@/lib/notifications/delivery-window';
 import { applyVisualWatermark } from '@/lib/transmissions/visual-watermark';
 import { applyAudioSealWatermark } from '@/lib/transmissions/audio-watermark-sidecar';
 import { dispatchWebhook } from '@/lib/webhooks/dispatcher';
@@ -117,6 +120,26 @@ async function recoverPendingXapiDeliveries(): Promise<void> {
   for (const item of data ?? []) await enqueueXapiDelivery({ outboxId: item.id });
 }
 
+async function recoverDueAnchorDeliveries(): Promise<void> {
+  if (!(await isFeatureEnabled('anchoring'))) return;
+  const targetTime = new Date();
+  const supabase = createServiceSupabaseClient();
+  const { data, error } = await supabase
+    .from('anchor_deliveries')
+    .select('id, scheduled_for, anchor_plans!inner(paused, ends_at)')
+    .is('sent_at', null)
+    .lte('scheduled_for', targetTime.toISOString())
+    .eq('anchor_plans.paused', false)
+    .gte('anchor_plans.ends_at', targetTime.toISOString())
+    .order('scheduled_for', { ascending: true })
+    .limit(100)
+    .abortSignal(AbortSignal.timeout(5000));
+  if (error) throw new Error(`Anchor delivery recovery failed: ${error.message}`);
+  for (const delivery of data ?? []) {
+    await enqueueAnchorDelivery({ deliveryId: delivery.id }, new Date(delivery.scheduled_for));
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Lifecycle
 // ---------------------------------------------------------------------------
@@ -142,6 +165,12 @@ export function startAllWorkers(): void {
   const anchorDeliveryWorker = new Worker(
     'anchor-delivery',
     async (job: Job) => {
+      if (job.name === 'scan') {
+        await recoverDueAnchorDeliveries();
+        incrementCounter('qalem_jobs_processed_total', { queue: 'anchor-delivery-scan' });
+        return;
+      }
+      if (!(await isFeatureEnabled('anchoring'))) return;
       const { deliveryId } = job.data as { deliveryId: string };
       const supabase = createServiceSupabaseClient();
       const { data: delivery, error } = await supabase
@@ -157,6 +186,27 @@ export function startAllWorkers(): void {
       const planValue = delivery.anchor_plans;
       const plan = Array.isArray(planValue) ? planValue[0] : planValue;
       if (!plan || plan.paused || new Date(plan.ends_at).getTime() < Date.now()) return;
+
+      const { data: preferences, error: preferencesError } = await supabase
+        .from('review_notification_preferences')
+        .select('timezone, quiet_start, quiet_end, paused_until')
+        .eq('user_id', plan.user_id)
+        .maybeSingle();
+      if (preferencesError) {
+        throw new Error(`Anchor delivery preferences lookup failed: ${preferencesError.message}`);
+      }
+      if (
+        preferences &&
+        shouldDeferDelivery(new Date(), {
+          timezone: preferences.timezone ?? 'UTC',
+          quietStart: preferences.quiet_start,
+          quietEnd: preferences.quiet_end,
+          pausedUntil: preferences.paused_until,
+        })
+      ) {
+        // The periodic durable scan requeues this completed no-op after the boundary ends.
+        return;
+      }
 
       const seedValue = delivery.seeds;
       const seed = Array.isArray(seedValue) ? seedValue[0] : seedValue;
@@ -753,6 +803,12 @@ export function startAllWorkers(): void {
   void recoverPendingXapiDeliveries().catch((error: unknown) => {
     log.error(
       'xAPI outbox recovery failed:',
+      error instanceof Error ? error.message : String(error),
+    );
+  });
+  void configureAnchorDeliveryScheduler().catch((error: unknown) => {
+    log.error(
+      'Anchor delivery scheduler configuration failed:',
       error instanceof Error ? error.message : String(error),
     );
   });

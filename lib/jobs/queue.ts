@@ -262,6 +262,28 @@ export async function enqueueAnchorDelivery(
   return job.id!;
 }
 
+/**
+ * Requeues due anchoring deliveries after a learner pause, quiet hours, or a
+ * worker restart. Delivery jobs keep a deterministic id, so this scan cannot
+ * create a second job for the same delivery.
+ */
+export async function configureAnchorDeliveryScheduler(): Promise<void> {
+  const queue = getJobQueues().anchorDelivery;
+  await queue.upsertJobScheduler(
+    'anchor-delivery-quarter-hourly',
+    { every: 15 * 60 * 1000 },
+    { name: 'scan', data: {}, opts: durableJobOptions },
+  );
+  await queue.add(
+    'scan',
+    {},
+    {
+      ...durableJobOptions,
+      jobId: `anchor-delivery-scan-${Math.floor(Date.now() / (15 * 60 * 1000))}`,
+    },
+  );
+}
+
 export async function configureReviewNotificationScheduler(): Promise<void> {
   const queue = getJobQueues().reviewNotification;
   await queue.upsertJobScheduler(
