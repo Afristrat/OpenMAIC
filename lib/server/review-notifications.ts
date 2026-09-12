@@ -1,6 +1,7 @@
 import { translate, type Locale } from '@/lib/i18n';
 import { normalizeWhatsAppNumber } from '@/lib/notifications/whatsapp-number';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
+import { claimNotificationDeliverySlot } from '@/lib/server/notification-delivery-policy';
 
 export type ReviewNotificationChannel = 'email' | 'whatsapp';
 
@@ -143,12 +144,24 @@ export async function claimDueReviewNotifications(
     target_time: targetTime.toISOString(),
   });
   if (error) throw new Error('Review notification claim failed');
-  return ((data ?? []) as Array<{ delivery_id: string; delivery_channel: string }>).flatMap(
+  const claimed = ((data ?? []) as Array<{ delivery_id: string; delivery_channel: string }>).flatMap(
     (row) =>
       row.delivery_channel === 'email' || row.delivery_channel === 'whatsapp'
         ? [{ deliveryId: row.delivery_id, channel: row.delivery_channel }]
         : [],
   );
+  const { data: pending, error: pendingError } = await service
+    .from('review_notification_deliveries')
+    .select('id, channel')
+    .in('status', ['pending', 'failed'])
+    .lt('attempt_count', 5);
+  if (pendingError) throw new Error('Review notification recovery failed');
+  const recovered = ((pending ?? []) as Array<{ id: string; channel: string }>).flatMap((row) =>
+    row.channel === 'email' || row.channel === 'whatsapp'
+      ? [{ deliveryId: row.id, channel: row.channel }]
+      : [],
+  );
+  return [...new Map([...claimed, ...recovered].map((item) => [item.deliveryId, item])).values()];
 }
 
 export async function deliverReviewNotification(deliveryId: string): Promise<void> {
@@ -180,6 +193,15 @@ export async function deliverReviewNotification(deliveryId: string): Promise<voi
       .eq('id', delivery.id)
       .in('status', ['pending', 'failed']);
     if (error) throw new Error('Review notification cancellation failed');
+    return;
+  }
+  if (
+    !(await claimNotificationDeliverySlot({
+      userId: delivery.user_id,
+      source: 'review_notification',
+      sourceId: delivery.id,
+    }))
+  ) {
     return;
   }
 

@@ -50,6 +50,7 @@ import {
   enqueueXapiDelivery,
 } from '@/lib/jobs/queue';
 import { shouldDeferDelivery } from '@/lib/notifications/delivery-window';
+import { claimNotificationDeliverySlot } from '@/lib/server/notification-delivery-policy';
 import { applyVisualWatermark } from '@/lib/transmissions/visual-watermark';
 import { applyAudioSealWatermark } from '@/lib/transmissions/audio-watermark-sidecar';
 import { dispatchWebhook } from '@/lib/webhooks/dispatcher';
@@ -128,6 +129,7 @@ async function recoverDueAnchorDeliveries(): Promise<void> {
     .from('anchor_deliveries')
     .select('id, scheduled_for, anchor_plans!inner(paused, ends_at)')
     .is('sent_at', null)
+    .lt('attempt_count', 5)
     .lte('scheduled_for', targetTime.toISOString())
     .eq('anchor_plans.paused', false)
     .gte('anchor_plans.ends_at', targetTime.toISOString())
@@ -205,6 +207,15 @@ export function startAllWorkers(): void {
         })
       ) {
         // The periodic durable scan requeues this completed no-op after the boundary ends.
+        return;
+      }
+      if (
+        !(await claimNotificationDeliverySlot({
+          userId: plan.user_id,
+          source: 'anchor_delivery',
+          sourceId: delivery.id,
+        }))
+      ) {
         return;
       }
 
