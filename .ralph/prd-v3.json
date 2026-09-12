@@ -4,8 +4,9 @@
   "branch": "refork-v030",
   "title": "Réconciliation des engagements et clôture prouvée",
   "description": "Référence active unique pour tous les restes identifiés de Qalem. Les critères v2 et les capacités v1 sont tracés sans transformer une acceptation historique en certification actuelle. Ce PRD planifie ; il n’exécute ni n’autorise automatiquement les mutations bloquées.",
-  "reconciledAt": "2026-08-26",
-  "inspectedCommit": "332941dc7f0727dc673c4364f78e122b879f2f96",
+  "reconciledAt": "2026-09-12",
+  "inspectedCommit": "99631c44cc6a7b7475f465fb51307534e74da149",
+  "reconciliationNote": "Revue documentaire sur ce socle et le diff courant, pas recertification de production. Dix passes=true/to_validate remis à false en conservant les preuves historiques ; aucune fonctionnalité retirée. Arbitrages proposés, non décidés : docs/decisions/2026-09-12-prd-arbitrages.md.",
   "supersedes": ".ralph/prd-v2.json",
   "scope": {
     "included": [
@@ -13,13 +14,14 @@
       "3 stories v2 rouvertes sur défaut de preuve ou couverture",
       "18 capacités héritées remises explicitement en suivi",
       "21 engagements ou gaps transverses non représentés dans la v2",
-      "Inventaire complet des 65 stories v2 et des 72 stories v1/UI"
+      "Inventaire complet des 65 stories v2 et des 72 stories v1/UI",
+      "Compléments mobiles du 12 septembre 2026 : provenance des flashbacks/questions, reprise des formations inachevées, préférences inter-formations et recette intégrée — S3-011 à S3-014 ; multisources conservé dans S6-004/S6-006/S6-003"
     ],
     "notIncluded": [
-      "Implémentation des fonctionnalités durant la réconciliation",
+      "Aucune livraison applicative déduite de la seule réconciliation documentaire",
       "Mutation de Diwan, Saqr ou d’un autre projet",
       "Modification de main ou des fichiers utilisateur non suivis",
-      "Rotation de secrets sans nouvel accord explicite",
+      "Rotation hors du mandat Qalem explicite du 9 septembre 2026",
       "Activation d’un enregistrement, d’une collecte ou d’un canal avant son gate"
     ],
     "verificationLimits": [
@@ -31,7 +33,7 @@
     ]
   },
   "priorityPolicy": {
-    "P0": "Preuves d’exploitation, isolation et qualité ; sécurité bloquée tant que non autorisée.",
+    "P0": "Preuves d’exploitation, isolation et qualité ; sécurité Qalem autorisée le 9 septembre 2026 selon la décision versionnée, sans autorisation transfrontalière.",
     "P1": "Demandes explicites non soldées et défauts du parcours auteur/apprenant.",
     "P2": "Achèvement des capacités de création, diffusion, replay et ancrage ; décisions préalables respectées.",
     "P3": "Capacités héritées à conserver ou retirer explicitement avant intégration.",
@@ -53,7 +55,7 @@
     "completion": "passes=true uniquement avec chaque critère satisfait et closureEvidence non vide : date, SHA, environnement, commande/parcours, résultat et référence d’artefact ; confirmation humaine si requise.",
     "withdrawal": "Une capacité refusée devient explicitement retired avec décision datée, pas passes=true. Aucun retrait automatique.",
     "externalPrerequisites": "historicalDependencies désigne un prérequis précédemment déclaré acquis : le vérifier avant usage, sans créer d’US dupliquée.",
-    "secrets": "Métadonnées seulement ; aucune valeur ni dump de configuration. Refus de rotation maintenu."
+    "secrets": "Métadonnées seulement ; aucune valeur ni dump de configuration. Rotation Qalem autorisée par docs/decisions/2026-09-09-unblock-prd.md ; inventaire, sauvegarde et validation des consommateurs avant révocation."
   },
   "architectureConstraints": [
     "Qalem web/runtime : Coolify sur ServeurIA ; LiteLLM : Hostinger, sans Coolify. Vérifier les cibles avant toute commande.",
@@ -67,12 +69,12 @@
     {
       "id": "C-001",
       "topic": "PRD 3",
-      "resolution": "Aucun prd-v3.json trouvé. Le présent fichier est la version consolidée ; tasks/prd-3-ancrer.md reste la spécification du seul chantier ANCRER."
+      "resolution": "Le PRD v3 a été créé le 26 août et constitue la référence active. tasks/prd-3-ancrer.md est une spécification historique d’ANCRER, pas un second registre de statuts."
     },
     {
       "id": "C-002",
       "topic": "Rappels e-mail/WhatsApp",
-      "resolution": "Promesse v1 et exclusion ANCRER contradictoires ; S6-011 conserve les deux sources et impose une décision avant implémentation."
+      "resolution": "S6-011 conserve les rappels de révision e-mail/WhatsApp ; ANCRER reste Web Push selon les preuves versionnées. Toute extension des flashbacks à ces canaux doit être décidée, pas déduite du transport existant."
     },
     {
       "id": "C-003",
@@ -87,7 +89,7 @@
     {
       "id": "C-005",
       "topic": "SCORM",
-      "resolution": "Adaptateurs natifs présents ; ancien critère scorm-again et choix NP d’export statique à réconcilier explicitement dans S1-007/008."
+      "resolution": "ADR-106 et la preuve S1-007 actent le SCO natif sans scorm-again ; les exports restent statiques avec tracking. Le placement commercial cœur/option de S1-008 reste à trancher, pas le retour à l’ancien runtime."
     },
     {
       "id": "C-006",
@@ -1836,11 +1838,11 @@
     },
     {
       "id": "S6-014",
-      "title": "Conserver la dette de sécurité Qalem sous autorisation explicite",
-      "description": "En tant qu’utilisateur de Qalem, je veux conserver la dette de sécurité qalem sous autorisation explicite afin que le parcours promis soit réellement utilisable.",
+      "title": "Traiter la dette de sécurité Qalem avec rotation autorisée",
+      "description": "Inventorier les secrets et consommateurs Qalem, procéder à la rotation autorisée et vérifier le fonctionnement avant révocation, sans toucher aux autres projets.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P0",
-      "status": "blocked",
+      "status": "to_implement",
       "passes": false,
       "source": {
         "type": "request_or_observed_gap",
@@ -1853,7 +1855,7 @@
       "acceptance": [
         "Conserver uniquement les catégories de secrets et services concernés, jamais leurs valeurs.",
         "Autorisation obtenue le 9 septembre 2026 ; exécuter les rotations exclusivement dans Qalem avec le coffre et les contrôles des consommateurs.",
-        "Si autorisation ultérieure : utiliser le broker/coffre prévu, vérifier les consommateurs Qalem et consigner la clôture réelle.",
+        "Utiliser le broker/coffre prévu, sauvegarder, vérifier tous les consommateurs Qalem avant révocation et consigner la clôture réelle sans exposer les valeurs.",
         "Une priorité P0 exprime le risque ; seule l’autorisation explicite du 9 septembre permet désormais l’exécution. Ne pas fermer sans preuve réelle."
       ],
       "closureEvidence": [],
@@ -2267,14 +2269,14 @@
       "epic": "6-RÉCONCILIATION",
       "priority": "P1",
       "status": "to_validate",
-      "passes": true,
+      "passes": false,
       "source": {
         "type": "request_or_observed_gap",
         "date": "2026-08-26"
       },
       "sourceDependencies": [],
-      "dependencies": ["S6-003"],
-      "gap": "Soldé : Qalem possède une bibliothèque multi-source par organisation, des manifestes immuables versionnés par auteur et un pipeline de génération fondé sur l’instantané sélectionné.",
+      "dependencies": [],
+      "gap": "Réconciliation documentaire du 12 septembre 2026 : preuves historiques conservées ci-dessous, mais statut to_validate et passes=true étaient contradictoires. passes=false jusqu’à revue critère par critère au SHA livré, incluant activation effective et dépendances pertinentes ; ceci n’infère ni perte du code ni échec des recettes historiques.",
       "evidence": [
         "components/generation/source-library-popover.tsx",
         "app/api/source-library/route.ts",
@@ -2545,14 +2547,14 @@
       "epic": "6-RÉCONCILIATION",
       "priority": "P1",
       "status": "to_validate",
-      "passes": true,
+      "passes": false,
       "source": {
         "type": "request_or_observed_gap",
         "date": "2026-08-26"
       },
       "sourceDependencies": [],
       "dependencies": ["S5-004", "S6-005", "S6-006", "S6-007", "S6-008"],
-      "gap": "Soldé : une recette authentifiée de production certifie désormais le parcours complet, ses ressources et son véritable export MP4 ; les défauts de reprise audio, de capture RUM et les dettes révélées par le gate ont été corrigés à la racine.",
+      "gap": "Réconciliation documentaire du 12 septembre 2026 : preuves historiques conservées ci-dessous, mais statut to_validate et passes=true étaient contradictoires. passes=false jusqu’à revue critère par critère au SHA livré, incluant activation effective et dépendances pertinentes ; ceci n’infère ni perte du code ni échec des recettes historiques.",
       "evidence": [
         "e2e/tests",
         "lib/server/classroom-resource-generation.ts",
@@ -2587,7 +2589,7 @@
       "epic": "7-HÉRITAGE",
       "priority": "P1",
       "status": "to_validate",
-      "passes": true,
+      "passes": false,
       "source": {
         "file": ".ralph/prd.json",
         "id": "S-025",
@@ -2595,7 +2597,7 @@
       },
       "sourceDependencies": ["S-022"],
       "dependencies": [],
-      "gap": "Soldé : la soumission réelle du quiz extrait les erreurs et hésitations, puis persiste des cartes déterministes et isolées dans IndexedDB et Supabase sans file concurrente.",
+      "gap": "Réconciliation documentaire du 12 septembre 2026 : preuves historiques conservées ci-dessous, mais statut to_validate et passes=true étaient contradictoires. passes=false jusqu’à revue critère par critère au SHA livré, incluant activation effective et dépendances pertinentes ; ceci n’infère ni perte du code ni échec des recettes historiques.",
       "evidence": [
         "lib/spaced-repetition/extractor.ts",
         "lib/quiz/sync.ts",
@@ -2643,14 +2645,14 @@
       "epic": "6-RÉCONCILIATION",
       "priority": "P1",
       "status": "to_validate",
-      "passes": true,
+      "passes": false,
       "source": {
         "type": "request_or_observed_gap",
         "date": "2026-08-26"
       },
       "sourceDependencies": [],
       "dependencies": ["S-025"],
-      "gap": "Soldé : le rappel local PWA est déclenché pour l’utilisateur authentifié avec préférence et permission explicites, borné et dédupliqué entre onglets ; le cache ne conserve plus aucune réponse privée.",
+      "gap": "Réconciliation documentaire du 12 septembre 2026 : preuves historiques conservées ci-dessous, mais statut to_validate et passes=true étaient contradictoires. passes=false jusqu’à revue critère par critère au SHA livré, incluant activation effective et dépendances pertinentes ; ceci n’infère ni perte du code ni échec des recettes historiques.",
       "evidence": [
         "components/service-worker-registrar.tsx",
         "components/settings/notification-settings.tsx",
@@ -2968,7 +2970,7 @@
       "epic": "1-CRÉER",
       "priority": "P2",
       "status": "to_validate",
-      "passes": true,
+      "passes": false,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S1-007",
@@ -2976,12 +2978,12 @@
       },
       "sourceDependencies": ["S0-008"],
       "dependencies": [],
-      "gap": "Soldé : un vrai export_jobs produit le zip SCORM 1.2, Moodle l'importe, le JavaScript Qalem exécuté dans le lecteur LMS déclenche la complétion, puis les API et tables Moodle relisent completed et le score 100. ADR-106 et les notices sont alignés sur le runtime natif réellement distribué.",
+      "gap": "Réconciliation documentaire du 12 septembre 2026 : preuves historiques conservées ci-dessous, mais statut to_validate et passes=true étaient contradictoires. passes=false jusqu’à revue critère par critère au SHA livré, incluant activation effective et dépendances pertinentes ; ceci n’infère ni perte du code ni échec des recettes historiques.",
       "evidence": ["lib/export/scorm/tracking-adapters.ts", ".ralph/prd-v2.json#S1-007"],
       "acceptance": [
         "export_jobs scorm12 → zip imsmanifest.xml valide",
         "Import Moodle docker réussi, completion trackée (preuve)",
-        "Runtime scorm-again, notices MIT conservées",
+        "Runtime SCO natif de lib/export/scorm/tracking-adapters.ts selon ADR-106 ; notices correspondant exclusivement au code effectivement distribué.",
         "Déclencher le tracking depuis le navigateur du LMS et relire la complétion ; documenter le remplacement de scorm-again par le runtime réellement utilisé et mettre en cohérence les notices."
       ],
       "closureEvidence": [
@@ -3009,7 +3011,7 @@
       "epic": "1-CRÉER",
       "priority": "P2",
       "status": "to_validate",
-      "passes": true,
+      "passes": false,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S1-008",
@@ -3017,7 +3019,7 @@
       },
       "sourceDependencies": ["S1-007"],
       "dependencies": ["S1-007"],
-      "gap": "Soldé : un générateur unique produit les trois formats avec les mêmes captures statiques et narrations persistées ; Moodle exécute et persiste la complétion SCORM 2004, ADL CATAPULT déclare le paquet cmi5 Conformant. ADR-105 reste réservée jusqu’à la tranche commerciale d’Amine, explicitement non bloquante pour l’ingénierie.",
+      "gap": "Réconciliation documentaire du 12 septembre 2026 : preuves historiques conservées ci-dessous, mais statut to_validate et passes=true étaient contradictoires. passes=false jusqu’à revue critère par critère au SHA livré, incluant activation effective et dépendances pertinentes ; ceci n’infère ni perte du code ni échec des recettes historiques.",
       "evidence": [
         "lib/export/scorm/tracking-adapters.ts",
         "tests/export/learning-package-formats.test.ts"
@@ -3054,7 +3056,7 @@
       "epic": "1-CRÉER",
       "priority": "P2",
       "status": "to_validate",
-      "passes": true,
+      "passes": false,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S1-010",
@@ -3062,7 +3064,7 @@
       },
       "sourceDependencies": ["S0-008"],
       "dependencies": [],
-      "gap": "Soldé : un cours FR/AR produit par l’exporteur Qalem est ouvert, relu et rendu par Microsoft PowerPoint 16 ; le postinstall est reproductible et ne crée plus de cache au chemin littéral `undefined`.",
+      "gap": "Réconciliation documentaire du 12 septembre 2026 : preuves historiques conservées ci-dessous, mais statut to_validate et passes=true étaient contradictoires. passes=false jusqu’à revue critère par critère au SHA livré, incluant activation effective et dépendances pertinentes ; ceci n’infère ni perte du code ni échec des recettes historiques.",
       "evidence": [
         "tests/edit/round-trip/ooxml-validity.test.ts",
         "scripts/proofs/generate-s1-010-pptx.ts",
@@ -3098,7 +3100,7 @@
       "epic": "1-CRÉER",
       "priority": "P2",
       "status": "to_validate",
-      "passes": true,
+      "passes": false,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S1-004",
@@ -3106,7 +3108,7 @@
       },
       "sourceDependencies": ["S1-003"],
       "dependencies": [],
-      "gap": "Soldé : le flag global est créé durablement, la publication et la visibilité sont recettées contre la production, puis le cours ouvre sa classroom réelle ; le catalogue arabe rend le document en RTL.",
+      "gap": "Réconciliation documentaire du 12 septembre 2026 : preuves historiques conservées ci-dessous, mais statut to_validate et passes=true étaient contradictoires. passes=false jusqu’à revue critère par critère au SHA livré, incluant activation effective et dépendances pertinentes ; ceci n’infère ni perte du code ni échec des recettes historiques.",
       "evidence": ["app/api/courses/catalog/route.ts", "e2e/tests/course-catalog.spec.ts"],
       "acceptance": [
         "Liste des courses ready + catalog_visible",
@@ -3137,7 +3139,7 @@
       "epic": "1-CRÉER",
       "priority": "P2",
       "status": "to_validate",
-      "passes": true,
+      "passes": false,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S1-005",
@@ -3145,7 +3147,7 @@
       },
       "sourceDependencies": ["S1-003"],
       "dependencies": [],
-      "gap": "Soldé : le dépôt MD/DOCX/PDF conforme produit un plan natif éditable, le même cours importé passe de draft à ready sans perdre sa provenance et le PDF réutilise le provider existant. L’activation publique reste volontairement fermée par le flag import_pipeline jusqu’à validation des prérequis juridiques de conservation.",
+      "gap": "Réconciliation documentaire du 12 septembre 2026 : preuves historiques conservées ci-dessous, mais statut to_validate et passes=true étaient contradictoires. passes=false jusqu’à revue critère par critère au SHA livré, incluant activation effective et dépendances pertinentes ; ceci n’infère ni perte du code ni échec des recettes historiques.",
       "evidence": [
         "app/api/courses/import/route.ts",
         "app/app/page.tsx",
@@ -3658,7 +3660,7 @@
       "epic": "2-VIVRE",
       "priority": "P2",
       "status": "to_validate",
-      "passes": true,
+      "passes": false,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S2-009",
@@ -3666,7 +3668,7 @@
       },
       "sourceDependencies": ["S2-010"],
       "dependencies": [],
-      "gap": "Soldé : la dérivée a été produite par le worker de production pour une transmission temporaire entre deux membres légitimes ; l’identifiant opaque complet est lisible sur une image extraite du flux et tous les résidus ont été supprimés.",
+      "gap": "Réconciliation documentaire du 12 septembre 2026 : preuves historiques conservées ci-dessous, mais statut to_validate et passes=true étaient contradictoires. passes=false jusqu’à revue critère par critère au SHA livré, incluant activation effective et dépendances pertinentes ; ceci n’infère ni perte du code ni échec des recettes historiques.",
       "evidence": [
         "tests/transmissions/visual-watermark.test.ts",
         "docs/validation/S2-009-visual-watermark-production.md",
@@ -3854,8 +3856,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Plan d'ancrage opt-in + planification BullMQ ≤ J+90 » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "3-ANCRER",
       "priority": "P2",
-      "status": "completed",
-      "passes": true,
+      "status": "to_implement",
+      "passes": false,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S3-005",
@@ -3863,7 +3865,7 @@
       },
       "sourceDependencies": ["S3-004"],
       "dependencies": ["S3-004"],
-      "gap": "Aucun reste ouvert : opt-in, calendrier J+90, pause/reprise, arrêt, rejeu idempotent et émission Web Push HTTPS sont certifiés en production.",
+      "gap": "2026-09-12 — Rouverte sur incohérence statique : parseSeedStock autorise au moins douze graines sans maximum ; la route anchor-plan transmet tout le stock à buildAnchorSchedule, qui dépasse J+90 dès la treizième graine et lève une erreur avant le try de création des livraisons. La recette historique portait douze graines seulement. Découpler stock et sélection planifiée, préserver la borne actée, traiter les erreurs sans réponse serveur non maîtrisée ; reproduire puis vérifier 12/13/20 graines sur ServeurIA. Aucun incident production affirmé sans reproduction.",
       "evidence": [
         "tasks/prd-3-ancrer.md",
         "tests/anchoring/schedule.test.ts",
@@ -3873,7 +3875,8 @@
       "acceptance": [
         "Opt-in explicite → deliveries à espacement croissant",
         "Pause un tap ; arrêt = suppression des deliveries futures",
-        "Jobs rejouables, flag anchoring"
+        "Jobs rejouables, flag anchoring",
+        "Un stock valide de 12, 13 ou 20 graines permet un plan borné à J+90 selon une sélection explicite et traçable ; aucune erreur non gérée ni perte silencieuse du stock. Le nombre généré ne fixe pas automatiquement le nombre de notifications."
       ],
       "closureEvidence": [
         "2026-09-06 — Le runtime worker f96bdc4 reçoit désormais durablement les trois variables VAPID depuis Coolify (longueurs 87/43 et sujet valide), reste healthy, restart=0 et OOMKilled=false. Recette authentifiée sur qalem.ma : opt-in explicite, 14 livraisons strictement croissantes, 14 clés de déduplication uniques et borne J+90 ; pause et reprise effectuées par les boutons UI ; un job BullMQ arrivé à échéance reste intact pendant la pause, puis part à la reprise vers une terminaison HTTPS externe qui répond 201 avec requête chiffrée et autorisation VAPID ; le rejeu de la livraison envoyée ne produit aucun POST supplémentaire ; l’arrêt UI supprime le plan et ses livraisons. Gate exact ServeurIA au SHA f96bdc4c8d635e9855a9ef1600d9a5eaa5c095ad : Prettier, TypeScript et ESLint verts, 436/436 fichiers et 2 686/2 686 tests Vitest, build 112 routes et 111/111 Playwright sans retry. Flag anchoring restauré à false ; compte, tenant, données, abonnements, audits, terminaison et fichiers temporaires supprimés sans résidu. Référence : docs/validation/S3-005-anchor-plan-web-push.md.",
@@ -3888,7 +3891,7 @@
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 49,
-      "completedAt": "2026-09-06"
+      "historicalCompletedAt": "2026-09-06"
     },
     {
       "id": "S3-006",
@@ -4287,8 +4290,8 @@
     },
     {
       "id": "S-019",
-      "title": "Connecter NotebookLM via MCP",
-      "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Connecter NotebookLM via MCP » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
+      "title": "Connecter NotebookLM via Diwan",
+      "description": "En tant qu’auteur, je veux utiliser mes sources NotebookLM autorisées via Diwan pour produire une formation traçable sans multiplier les connecteurs documentaires Qalem.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
       "status": "blocked",
@@ -4299,7 +4302,7 @@
         "previousPasses": true
       },
       "sourceDependencies": ["S-018"],
-      "dependencies": ["S0-011", "S-018"],
+      "dependencies": ["S0-011", "S6-003"],
       "gap": "10 septembre 2026 : choix via Diwan confirmé dans la décision du 9 septembre, sans connecteur direct. Exemple MCP NotebookLM retiré et guide livré. Le consommateur Qalem est déjà raccordé au plan et à la génération : sélection épinglée, version et empreinte contrôlées, récupération de passages bornée et échec fermé. Le contrat Diwan v1 relu ne définit toutefois aucune connexion/authentification NotebookLM, recherche de notebook ni résolution d’identifiant natif. Restent donc un contrat fournisseur, la correspondance notebook/source → corpus/source/version, un jeton dédié par tenant, une recette réelle avec refus hors droits/retrait, le gate intégré et la publication. Refus anonyme Diwan 401 recontrôlé ; aucun mapping dédié QALEM_DIWAN_TENANT_TOKENS n’est disponible à Qalem. Aucune intégration NotebookLM déclarée livrée.",
       "evidence": [
         "docs/guides/notebooklm-via-diwan.md",
@@ -4309,13 +4312,11 @@
         "mcp-servers.yml.example"
       ],
       "acceptance": [
-        "Config serveur MCP NotebookLM dans mcp-servers.yml",
-        "Agents peuvent appeler search_notebook(query)",
-        "Agents peuvent appeler get_source_content(sourceId)",
-        "Pipeline de génération utilise sources NotebookLM comme input",
-        "Documentation utilisateur",
-        "Choisir explicitement connecteur direct ou via Diwan ; ne pas développer les deux.",
-        "Après choix, rechercher une source autorisée et produire une formation qui la référence réellement."
+        "Connexion NotebookLM via le contrat Diwan versionné, sans serveur MCP documentaire direct dans Qalem.",
+        "Rechercher un notebook et lire ses sources autorisées via Diwan ; préserver la correspondance notebook/source → corpus/source/version.",
+        "Utiliser les passages dans le plan puis la formation, avec références vérifiables, droits par tenant et échec explicite si la source est indisponible.",
+        "Documenter connexion, recherche, retrait et limites ; un import manuel n’est pas une intégration NotebookLM.",
+        "Recetter recherche, lecture, génération référencée, refus hors droits et révocation auprès du fournisseur réel."
       ],
       "closureEvidence": [],
       "historicalEvidence": {
@@ -4334,8 +4335,8 @@
     },
     {
       "id": "S-020",
-      "title": "Connecter Notion via MCP",
-      "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Connecter Notion via MCP » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
+      "title": "Connecter Notion via Diwan",
+      "description": "En tant qu’auteur, je veux utiliser mes sources Notion autorisées via Diwan pour produire une formation traçable sans multiplier les connecteurs documentaires Qalem.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
       "status": "blocked",
@@ -4346,7 +4347,7 @@
         "previousPasses": true
       },
       "sourceDependencies": ["S-018"],
-      "dependencies": ["S0-011", "S-018"],
+      "dependencies": ["S0-011", "S6-003"],
       "gap": "10 septembre 2026 : le choix via Diwan impose un seul accès documentaire côté Qalem. L’exemple de serveur MCP Notion direct a été retiré ; Qalem dispose déjà du consommateur Diwan tenant-scopé, avec sélection épinglée, version/empreinte et résolution bornée dans le plan et la génération. Le contrat Diwan v1 ne définit cependant ni connexion Notion, ni recherche/lecture de page, ni mapping page/version → corpus/source Diwan. Restent ce contrat fournisseur, le jeton dédié par tenant, une recette autorisée avec refus hors droits et retrait, le gate intégré et la publication. La story est bloquée côté fournisseur, non par un second connecteur Qalem manquant.",
       "evidence": [
         "lib/diwan/client.ts",
@@ -4356,13 +4357,10 @@
         "mcp-servers.yml.example"
       ],
       "acceptance": [
-        "Config serveur MCP Notion dans mcp-servers.yml",
-        "search_notion(query) disponible",
-        "get_page_content(pageId) disponible",
-        "Pipeline accepte source Notion comme input",
-        "Cours généré depuis Notion est cohérent",
-        "Choisir explicitement connecteur direct ou via Diwan.",
-        "Après choix, lire une page autorisée, respecter ses droits et prouver son utilisation dans le cours."
+        "Connexion Notion via le contrat Diwan versionné, sans serveur MCP documentaire direct dans Qalem.",
+        "Rechercher et lire une page autorisée ; conserver la correspondance page/version → corpus/source/version et les droits du tenant.",
+        "Produire une formation utilisant effectivement les passages de la page, avec références vérifiables et sans substitution silencieuse.",
+        "Recetter accès autorisé, refus hors droits, indisponibilité et révocation ; documenter le parcours réel."
       ],
       "closureEvidence": [],
       "historicalEvidence": {
@@ -4381,8 +4379,8 @@
     },
     {
       "id": "S-021",
-      "title": "Connecter Google Drive via MCP",
-      "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Connecter Google Drive via MCP » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
+      "title": "Connecter Google Drive via Diwan",
+      "description": "En tant qu’auteur, je veux utiliser mes sources Google Drive autorisées via Diwan pour produire une formation traçable sans multiplier les connecteurs documentaires Qalem.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
       "status": "blocked",
@@ -4393,7 +4391,7 @@
         "previousPasses": true
       },
       "sourceDependencies": ["S-018"],
-      "dependencies": ["S0-011", "S-018"],
+      "dependencies": ["S0-011", "S6-003"],
       "gap": "10 septembre 2026 : le choix via Diwan impose un seul accès documentaire côté Qalem. Le dernier exemple de serveur MCP Google Drive direct a été retiré ; la configuration d’exemple est désormais une liste vide valide et deny-by-default. Le consommateur Diwan tenant-scopé existant épingle version et empreinte puis résout des passages bornés dans le plan et la génération. Le contrat Diwan v1 ne définit toutefois ni connexion Drive, ni recherche/lecture Docs, Slides ou PDF, ni mapping fichier/version → corpus/source Diwan. Restent ce contrat fournisseur, le jeton dédié par tenant, une recette autorisée par format avec refus hors droits et retrait, le gate intégré et la publication. La story est bloquée côté fournisseur, non par un connecteur Qalem direct manquant.",
       "evidence": [
         "lib/diwan/client.ts",
@@ -4403,13 +4401,10 @@
         "mcp-servers.yml.example"
       ],
       "acceptance": [
-        "Config serveur MCP Google Drive dans mcp-servers.yml",
-        "search_drive(query) disponible",
-        "get_document(docId) disponible",
-        "Support Google Docs, Slides, PDF dans Drive",
-        "Pipeline accepte source Drive comme input",
-        "Choisir explicitement connecteur direct ou via Diwan.",
-        "Après choix, vérifier une source Docs/Slides/PDF autorisée et le refus d’un document non autorisé."
+        "Connexion Google Drive via le contrat Diwan versionné, sans serveur MCP documentaire direct dans Qalem.",
+        "Rechercher et lire les sources autorisées Google Docs, Slides et PDF ; conserver la correspondance fichier/version → corpus/source/version.",
+        "Utiliser les passages autorisés dans la formation et préserver les références et droits du tenant.",
+        "Recetter chaque format, un document interdit, une indisponibilité et la révocation ; documenter le parcours réel, distinct d’un import manuel."
       ],
       "closureEvidence": [],
       "historicalEvidence": {
@@ -4521,8 +4516,8 @@
     },
     {
       "id": "S-036",
-      "title": "Pipeline de collecte de données pédagogiques",
-      "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Pipeline de collecte de données pédagogiques » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
+      "title": "Collecter les données d’apprentissage et d’expérience utilisateur",
+      "description": "Collecter les événements autorisés utiles à l’apprentissage adulte et à l’expérience utilisateur, avec consentement, contrôle des accès, export et suppression vérifiables.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
       "status": "to_validate",
@@ -4557,7 +4552,7 @@
       "acceptance": [
         "lib/telemetry/pedagogy-collector.ts",
         "Collecte opt-in : séquences scènes, scores, temps, actions, complétion",
-        "Anonymisation : IDs hashés, aucune PII",
+        "Pseudonymisation des identifiants et réduction des données exposées ; les événements restent des données personnelles protégées, sans prétention d’anonymisation par simple hachage.",
         "Table pedagogy_telemetry",
         "Consentement RGPD/CNDP",
         "Dashboard admin données agrégées",
@@ -4585,7 +4580,7 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Optimisation pipeline de génération par les données » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "blocked",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "file": ".ralph/prd.json",
@@ -4602,8 +4597,8 @@
       ],
       "acceptance": [
         "lib/generation/data-optimizer.ts",
-        "Ordonnancement optimal basé sur données historiques",
-        "Difficulté quiz calibrée par performances passées",
+        "Proposer un ordonnancement ajusté aux observations historiques exploitables ; exposer justification, volume et limites sans garantir un optimum.",
+        "Proposer une difficulté de quiz ajustée aux performances observées ; distinguer heuristique, score observé et effet mesuré.",
         "Fallback uniquement en l’absence de données exploitables, en cas d’erreur ou de données invalides ; aucun minimum arbitraire de sessions.",
         "Appliquer la décision utilisateur « aucun minimum de session comparables » : proposer un ajustement dès la première observation exploitable, en exposant le volume observé et ses limites.",
         "Tester zéro observation, une observation exploitable et plusieurs observations, sans seuil caché dans le calcul ou chez l’appelant.",
@@ -4647,7 +4642,7 @@
       "acceptance": [
         "lib/telemetry/discussion-collector.ts",
         "Données : séquence agents, type intervention, durée, quiz score post-discussion",
-        "Stockage anonymisé Supabase",
+        "Stockage pseudonymisé dans Supabase avec isolation, accès contrôlé et suppression ; aucun anonymat garanti par un identifiant hashé.",
         "Pipeline agrégation séquence ↔ performance",
         "Décider la conservation de cette collecte et ses limites avant toute donnée réelle.",
         "Après choix, vérifier événements, agrégats, absence de collecte sans opt-in et contrôle d’accès."
@@ -4848,6 +4843,173 @@
         "explicit_human_decision"
       ],
       "priorityRank": 70
+    },
+    {
+      "epic": "3-ANCRER",
+      "priority": "P1",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "type": "explicit_user_request",
+        "date": "2026-09-12"
+      },
+      "sourceDependencies": [],
+      "closureEvidence": [],
+      "executionAllowed": true,
+      "executionDecision": "2026-09-12 — Objectif exhaustif demandé par Amine : compléments multisources et mobiles conservés, sans clôture ni activation déduite.",
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "id": "S3-011",
+      "title": "Ancrer les flashbacks et questions dans le vécu de chaque apprenant",
+      "description": "En tant qu’adulte en formation, je veux retrouver les moments et questions de mon propre parcours afin de réfléchir, expérimenter et transférer les acquis dans ma pratique.",
+      "dependencies": [
+        "S3-004",
+        "S2-004"
+      ],
+      "gap": "Lecture du 12 septembre : P3-B-v6 connaît quatre types, vérifie scènes/personas/nombres et reçoit les événements de session. Ces contrôles ne prouvent pas la provenance de chaque affirmation, la distinction paroles du participant/paroles des agents, ni le suivi des questions profondes. Étendre le stock existant, pas créer un second générateur.",
+      "evidence": [
+        "lib/anchoring/seed-stock.ts",
+        "app/api/live-sessions/[id]/seeds/route.ts"
+      ],
+      "acceptance": [
+        "Chaque flashback, moment marquant, intervention ludique, question profonde et question de suivi conserve un lien vérifiable vers les événements réellement consultés ou échangés par cet apprenant dans cette formation et leur version ; une référence inexistante ou appartenant à autrui est refusée.",
+        "Distinguer explicitement propos de l’apprenant, propos des agents, contenu présenté et question nouvelle proposée : ne jamais présenter une inférence ou une invention comme un souvenir de l’apprenant ; contexte insuffisant → absence expliquée ou proposition non autobiographique.",
+        "Permettre rappel actif, réponse à une question ouverte et mise en application professionnelle ; conserver la réponse dans le bon parcours autorisé et utiliser ce suivi lors d’une relance ultérieure pertinente, sans répéter une question déjà résolue.",
+        "Conserver le stock et FSRS existants, l’appel de génération hors chemin d’envoi, la mesure des coûts et le registre adulte autonome FR/AR/EN ; humour sur la situation, jamais culpabilisation ou évaluation de la personne.",
+        "Recetter deux apprenants d’une même formation ayant vécu des échanges différents, puis deux tenants ; prouver les références, la non-fuite et l’absence de souvenir inventé, y compris après retrait d’accès ou suppression de la source."
+      ],
+      "priorityRank": 24.1
+    },
+    {
+      "epic": "3-ANCRER",
+      "priority": "P1",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "type": "explicit_user_request",
+        "date": "2026-09-12"
+      },
+      "sourceDependencies": [],
+      "closureEvidence": [],
+      "executionAllowed": true,
+      "executionDecision": "2026-09-12 — Objectif exhaustif demandé par Amine : compléments multisources et mobiles conservés, sans clôture ni activation déduite.",
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "id": "S3-012",
+      "title": "Relancer les formations inachevées et reprendre au bon endroit",
+      "description": "En tant qu’apprenant ayant interrompu une formation, je veux une invitation contextualisée à reprendre exactement mon activité afin de continuer sans perdre mon travail.",
+      "dependencies": [
+        "S0-015",
+        "S3-005",
+        "S3-013"
+      ],
+      "gap": "La génération de graines exige ended_at dans la route inspectée ; le calendrier existant démarre à l’opt-in. Le parcours de relance d’une formation inachevée reste à raccorder à la progression réelle, sans confondre reprise auteur et reprise apprenant.",
+      "evidence": [
+        "app/api/live-sessions/[id]/seeds/route.ts",
+        "lib/anchoring/schedule.ts",
+        "app/api/courses/[courseId]/resume/route.ts"
+      ],
+      "acceptance": [
+        "Détecter une formation commencée mais inachevée à partir de progression serveur autorisée ; ne pas attendre une session terminée ou un stock de graines de fin de session pour proposer une reprise.",
+        "Persister par apprenant et formation le point de reprise exploitable : scène, activité, état de réponse sauvegardé et position média lorsque la lecture le permet ; une navigation volontaire est distinguée de l’achèvement.",
+        "Proposer une relance contextualisée fondée sur le dernier contenu réellement vu et l’activité restante, sans inventer une discussion ni culpabiliser ; paramètres de délai/fréquence visibles et respect des préférences S3-013.",
+        "Le clic conduit au bon tenant, à la bonne formation et à l’activité ciblée, même après connexion ; refuser URL externe, accès révoqué ou cible supprimée avec un état explicite et sûr.",
+        "Recontrôler progression et droits au moment d’envoyer : complétion, abandon explicite, pause ou retrait d’accès annulent les relances de reprise encore en attente ; la complétion n’annule pas un plan distinct d’ancrage accepté.",
+        "Recetter interruption/reprise web→mobile et mobile→web, deux onglets, sauvegarde retardée, worker redémarré, doublon de job et complétion concurrente à l’envoi ; aucun double envoi applicatif ni écrasement silencieux de progression."
+      ],
+      "priorityRank": 24.2
+    },
+    {
+      "epic": "3-ANCRER",
+      "priority": "P1",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "type": "explicit_user_request",
+        "date": "2026-09-12"
+      },
+      "sourceDependencies": [],
+      "closureEvidence": [],
+      "executionAllowed": true,
+      "executionDecision": "2026-09-12 — Objectif exhaustif demandé par Amine : compléments multisources et mobiles conservés, sans clôture ni activation déduite.",
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance"
+      ],
+      "id": "S3-013",
+      "title": "Maîtriser la pression et la confidentialité des relances mobiles",
+      "description": "En tant qu’apprenant suivant plusieurs formations, je veux contrôler les sollicitations de Qalem afin de recevoir des rappels utiles au moment choisi sans exposition de mes échanges privés.",
+      "dependencies": [
+        "S3-005",
+        "S6-010"
+      ],
+      "gap": "La route de préférences inspectée expose e-mail/WhatsApp/numéro/langue ; le calendrier d’ancrage suit des intervalles fixes. Les horaires, report, plafond commun et arbitrage inter-formations demandés restent à implémenter dans les préférences et workers existants.",
+      "evidence": [
+        "app/api/notification-preferences/route.ts",
+        "lib/anchoring/schedule.ts",
+        "lib/jobs/workers.ts",
+        "public/sw.js"
+      ],
+      "acceptance": [
+        "Permettre fréquence, plages horaires et fuseau, report ponctuel, pause/reprise et désactivation, globalement et pour une formation ; exposer le prochain rappel et l’effet des changements en FR/AR/EN RTL.",
+        "Appliquer un plafond partagé entre formations et les canaux retenus, des clés de déduplication et une priorité déterministe entre reprise, graines, quiz et évaluations ; éviter les rafales après reconnexion ou reprise d’un worker.",
+        "Recontrôler les préférences au départ réel du job ; tester modification concurrente, changement de fuseau et d’heure légale, plage traversant minuit, pause longue, annulation et retries bornés.",
+        "Ne pas afficher de propos privés, nom de tiers ou contenu sensible sur l’écran verrouillé par défaut ; le détail contextualisé est accessible après authentification et contrôle des droits.",
+        "Distinguer tentative fournisseur, acceptation, réception attestée, ouverture et réponse ; un HTTP 201 ou un clic ne prouve ni la réception physique ni l’apprentissage.",
+        "Mesurer par parcours la pertinence déclarée, le souhait de revenir, la reprise effective et l’application des acquis avec fenêtre et dénominateurs documentés ; conserver les refus et retours négatifs, aucun gain d’apprentissage annoncé sans comparaison adéquate."
+      ],
+      "priorityRank": 24.3
+    },
+    {
+      "epic": "3-ANCRER",
+      "priority": "P1",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "type": "explicit_user_request",
+        "date": "2026-09-12"
+      },
+      "sourceDependencies": [],
+      "closureEvidence": [],
+      "executionAllowed": true,
+      "executionDecision": "2026-09-12 — Objectif exhaustif demandé par Amine : compléments multisources et mobiles conservés, sans clôture ni activation déduite.",
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "explicit_human_decision"
+      ],
+      "id": "S3-014",
+      "title": "Prouver le parcours complet de formation et d’ancrage sur mobile",
+      "description": "En tant qu’apprenant mobile, je veux suivre, interrompre et reprendre mes formations et leurs activités d’ancrage dans la PWA afin que le téléphone soit un véritable support d’apprentissage.",
+      "dependencies": [
+        "U-020",
+        "S3-002",
+        "S3-006",
+        "S3-008",
+        "S3-011",
+        "S3-012",
+        "S3-013",
+        "S6-004",
+        "S6-013"
+      ],
+      "gap": "Les validations d’installation et de réception physiques existantes sont conservées dans U-020/S3-002. Aucune preuve actuelle ne clôt la chaîne multisources→formation→push contextualisé→interaction→reprise synchronisée demandée ; cette US porte la recette intégrée, pas un second moteur mobile.",
+      "evidence": [
+        "public/sw.js",
+        "tasks/prd-v3.md"
+      ],
+      "acceptance": [
+        "Sur iOS et Android physiques, PWA installée : suivre une formation multisource, écouter, naviguer, discuter, répondre au quiz, interrompre et reprendre avec progression persistante ; consigner appareil, OS, navigateur, SHA, date et résultats.",
+        "Prouver génération de relance→planification→réception application fermée→ouverture exacte→réponse ou reprise ; réutiliser les preuves physiques de S3-002 uniquement si le parcours et le SHA correspondent.",
+        "Recetter session expirée puis connexion, permissions refusées/révoquées, abonnement expiré, réseau perdu/rétabli et mise à jour du service worker ; conserver les travaux sauvegardés sans exposer de contenu protégé dans un cache anonyme.",
+        "Exécuter la chaîne avec deux tenants et les trois locales FR/AR/EN, dont RTL ; vérifier les parcours tactile, clavier et lecteur d’écran pertinents, sans déduire une validation humaine du seul émulateur.",
+        "Faire accepter le ton et la fréquence via S3-008 et consigner le retour sur pertinence/utilité ; une preuve d’envoi technique n’est pas une preuve d’expérience captivante.",
+        "La cible est la PWA existante ; publication native dans les stores non demandée. Aucun retrait d’une exigence conservée ni remplacement de la réception réelle par une terminaison HTTPS de recette."
+      ],
+      "priorityRank": 24.4
     }
   ]
 }

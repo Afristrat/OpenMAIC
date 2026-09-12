@@ -1,6 +1,15 @@
 [PRD]
 # PRD : Chantier 3 — ANCRER (post-formation 10-90 jours)
 
+> Spécification historique de chantier, conservée pour traçabilité. Depuis le
+> 12 septembre 2026, les critères actifs et statuts sont exclusivement dans
+> [le PRD3](../.ralph/prd-v3.json) et sa [vue lisible](prd-v3.md).
+> Les cases ci-dessous ne sont pas un verdict de livraison. Le rythme
+> documenté commence à J+2, pas J+10 ; S3-011 à S3-014 étendent le périmètre
+> aux questions contextualisées et formations inachevées. Le suivi ne se
+> limite plus aux ouvertures. Les rappels de révision e-mail/WhatsApp
+> relèvent de S6-011 ; leur exclusion historique ne les retire pas du PRD3.
+
 ## Overview
 
 La boucle d'ancrage : graines poussées 10-90 jours (stock généré à la fin de session, opt-in strict, borne J+90), rappels quiz FSRS, évaluations à chaud/à froid, reporting agrégé, émission xAPI optionnelle. Source produit : `docs/foundation/3-ancrer/`. Démarrage : S0-008 (données de test) ; matière réelle dès S2-004.
