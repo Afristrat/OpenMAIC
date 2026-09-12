@@ -1,6 +1,7 @@
 # PRD3 — Corrections et arbitrages du 12 septembre 2026
 
-État : **propositions en attente d’Amine**, aucun retrait ni report décidé.
+État : **décisions d’Amine consignées le 12 septembre 2026**. Aucun retrait
+automatique ; les engagements maintenus restent à livrer et à prouver.
 Périmètre de preuve : PRD, décisions, code et rapports versionnés lus sur le socle
 `99631c44cc6a7b7475f465fb51307534e74da149` et le diff documentaire courant.
 Les preuves de production datées ne sont pas présentées comme un nouveau contrôle du service.
@@ -63,7 +64,19 @@ conversion n’a été inventé pour les justifier.
 | A6 | S2-008/009 — AudioSeal et « indélébile » | La preuve visuelle montre un identifiant lisible sur une capture ; elle ne prouve pas une impossibilité de retrait. AudioSeal conserve un déploiement et une recette à finir. | Garder la traçabilité des exports/transmissions avec limites de robustesse explicites. Remplacer la promesse « indélébile » par une promesse testable ; décider si AudioSeal conditionne la première livraison. | Un filigrane n’empêche pas toute copie ; différer AudioSeal laisse ce canal de traçabilité non livré. Le conserver exige la chaîne de traitement et son exploitation. |
 | A7 | S3-004/005/007/008 et S3-011/013 — vingt graines, cadence, J+90 | Vingt graines sont l’échantillon humain ; le calendrier inspecté accepte douze graines avant J+90. L’ancien texte dit J+10–90, le rythme documenté commence J+2 ; le nouveau besoin exige adaptation et contrôle. | Garder vingt graines pour juger le ton, douze comme cadence initiale modifiable, J+90 comme plafond initial et J+30/J+60 pour les évaluations ; ne pas confondre stock, sélection et nombre de push. Trancher si le plafond doit devenir configurable. | Une adaptation complète exige arbitrage inter-formations et replanification. Lever J+90 implique de changer contraintes SQL et politique de conservation, pas seulement un paramètre UI. |
 
-## 3. Points déjà tranchés à ne pas rouvrir inutilement
+## 3. Décisions d’Amine — 12 septembre 2026
+
+| Arbitrage | Décision appliquée au PRD | Conséquence de clôture |
+|---|---|---|
+| A1 — Diwan et fournisseurs | Oui : multisource local cœur ; NotebookLM, Notion et Drive sont des modules via Diwan, sans connecteur direct parallèle. Ils ne bloquent pas la première livraison du cœur mais chaque module ne peut être proposé avant contrat, droits et recette réelle. | S6-003 et S-019/020/021 restent ouverts et explicitement externes ; leur report ne devient pas une livraison. |
+| A2 — SCORM/cmi5 | Oui : options institutionnelles, avec contenu/audio/captures statiques et suivi LMS, sans promesse de classroom multi-agent embarquée. | S1-007/008 restent à revalider avant commercialisation de l’option. |
+| A3 — xAPI/LRS | Oui : intégration institutionnelle activable par tenant, distincte du cœur et des rapports internes. | S-035/S3-010/U-018 restent ouverts jusqu’à LRS réel, effacement et diagnostic ; aucun tenant n’en reçoit l’option sans ces preuves. |
+| A4 — Canaux | Oui : Web Push pour ancrage, e-mail complémentaire pour rappels, WhatsApp optionnel par tenant. | WhatsApp reste à appairer et à recevoir réellement avant d’être offert ; son caractère optionnel ne masque pas la dette de livraison. |
+| A5 — Capture web | Oui : capacité conservée, mais `proxy.ai-mpower.com` est exclu des sources de cours et des recettes de capture. | S1-012 attend une source pédagogique autorisée et une validation visuelle ; aucune clé ni console de gestion n’est exposée à la capture. |
+| A6 — AudioSeal | Décision conditionnelle : garder AudioSeal si un blocage réel hors Qalem est techniquement prouvable. Constat actuel : AudioSeal seul ne le permet pas ; il identifie une copie. | Aucun blocage externe ne sera promis. Les replays/transmissions restent sans téléchargement et authentifiés Qalem. Une exigence de blocage d’un fichier copié nécessite une story distincte de contrôle de diffusion/DRM et un choix de client, car « fichier téléchargé localement » et « impossibilité d’usage depuis toute interface web » ne sont pas conciliables par filigrane. |
+| A7 — Graines et J+90 | Oui : vingt graines pour le jugement humain ; douze rappels initiaux équilibrés ; plafond J+90 initial, réglable seulement par une future décision explicite. | S3-005 est corrigée mais reste à valider en recette 12/13/20 puis en déploiement. |
+
+## 4. Points déjà tranchés à ne pas rouvrir inutilement
 
 - Andragogie d’abord ; FR, arabe standard dans l’interface, EN et RTL conservés.
 - Optimiseur et Director conservés sans minimum caché d’observations ; mesurer
@@ -78,7 +91,7 @@ conversion n’a été inventé pour les justifier.
 - Whisper réel, deux tenants, isolation, reprise, sécurité et recette mobile
   restent des engagements : les retirer pour obtenir un indicateur vert changerait le produit.
 
-## 4. Règle de décision
+## 5. Règle de décision
 
 Amine peut conserver un engagement obligatoire, le conserver comme option
 effectivement livrée, décider d’une livraison ultérieure, ou le retirer.
