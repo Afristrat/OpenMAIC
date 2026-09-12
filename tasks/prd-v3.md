@@ -13,8 +13,8 @@ Le chantier ANCRER conserve sa spécification historique dans `tasks/prd-3-ancre
 Clôturer Qalem comme plateforme institutionnelle d’apprentissage adulte exploitable et commercialisable, web et mobile : invitations et tenants, formations multisources, andragogie FR/AR/EN, audio, progression et activités, ancrage personnalisé, données et optimiseur/Director, facturation, sécurité et exploitation.
 GTM et présentation restent annexes. Aucun engagement conservé ne disparaît faute de preuve.
 
-- Registre inspecté : 80 US ; 45 étiquetées `completed`, 25 `to_validate`, 4 `blocked`, 6 `to_implement`.
-- 36 US portent `passes=false` ; ce ne sont pas 36 fonctionnalités à recoder. Le statut distingue travail restant et validation.
+- Registre inspecté : 81 US ; 45 étiquetées `completed`, 27 `to_validate`, 4 `blocked`, 5 `to_implement`.
+- 36 US portent `passes=false` ; ce ne sont pas 36 fonctionnalités à recoder. Le statut distingue travail restant et validation. La nouvelle S2-012 encadre la diffusion locale contrôlée, distincte d’AudioSeal.
 - Les dix US auparavant `passes=true/to_validate` sont désormais `passes=false`, avec toutes les preuves historiques conservées. Aucune normalisation automatique en livraison.
 - Une étiquette `completed` ou un résultat historique ne certifie pas le déploiement actuel. La clôture finale exige les preuves au SHA livré.
 - Une décision de retrait exige l’acceptation explicite d’Amine et n’est jamais une réussite d’implémentation.
@@ -134,11 +134,12 @@ Aucun gain d’apprentissage ou de marge n’est présumé ; la cible de marge m
 | 42 | S2-006 | P2 | `completed` | true | Bibliothèque de replays (reprise, suppression effective) [UI] |
 | 43 | S2-008 | P2 | `to_validate` | false | Watermark sonore AudioSeal MIT en job BullMQ (protocole de robustesse) |
 | 44 | S2-009 | P2 | `to_validate` | false | Watermark visuel indélébile |
+| 44.1 | S2-012 | P2 | `to_implement` | false | Diffusion locale contrôlée des contenus téléchargés |
 | 45 | S2-011 | P2 | `completed` | true | [CHECKPOINT AMINE] Référentiels culture → prénoms validés |
 | 46 | S3-001 | P2 | `completed` | true | Tables d'ancrage (seeds, anchor_plans, anchor_deliveries, evaluations, xapi_outbox) |
 | 47 | S3-003 | P2 | `completed` | true | Évaluation à chaud en fin de session [UI] |
 | 48 | S3-004 | P2 | `completed` | true | Générateur de graines : stock complet à la fin de session |
-| 49 | S3-005 | P2 | `to_implement` | false | Plan d'ancrage opt-in + planification BullMQ ≤ J+90 |
+| 49 | S3-005 | P2 | `to_validate` | false | Plan d'ancrage opt-in + planification BullMQ ≤ J+90 |
 | 50 | S3-006 | P2 | `completed` | true | Rappels quiz espacés via FSRS porté (cycle complet) |
 | 51 | S3-007 | P2 | `completed` | true | Évaluations à froid J+30 / J+60 |
 | 52 | S3-008 | P2 | `to_validate` | false | [CHECKPOINT AMINE] Ton des graines + fréquences validés sur échantillon |

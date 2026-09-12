@@ -13,7 +13,7 @@
       "26 stories v2 déjà ouvertes",
       "3 stories v2 rouvertes sur défaut de preuve ou couverture",
       "18 capacités héritées remises explicitement en suivi",
-      "21 engagements ou gaps transverses non représentés dans la v2",
+      "22 engagements ou gaps transverses non représentés dans la v2, dont la diffusion locale contrôlée S2-012",
       "Inventaire complet des 65 stories v2 et des 72 stories v1/UI",
       "Compléments mobiles du 12 septembre 2026 : provenance des flashbacks/questions, reprise des formations inachevées, préférences inter-formations et recette intégrée — S3-011 à S3-014 ; multisources conservé dans S6-004/S6-006/S6-003"
     ],
@@ -3707,6 +3707,42 @@
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 44
+    },
+    {
+      "id": "S2-012",
+      "title": "Diffusion locale contrôlée des contenus téléchargés",
+      "description": "En tant qu’organisation, je veux que tout contenu Qalem explicitement téléchargé ne soit lisible que par un client local contrôlé, jamais depuis une interface web, afin que la provenance AudioSeal soit complétée par une règle de diffusion réellement testable.",
+      "epic": "2-VIVRE",
+      "priority": "P2",
+      "status": "to_implement",
+      "passes": false,
+      "source": {
+        "type": "product_decision",
+        "date": "2026-09-12",
+        "decision": "A6"
+      },
+      "sourceDependencies": ["S2-008", "S2-010"],
+      "dependencies": ["S2-008", "S2-010"],
+      "gap": "AudioSeal établit la provenance mais ne contrôle pas un fichier copié. Décision du 12 septembre : les téléchargements doivent être réservés à un usage local, jamais via une interface web. Aucun client local contrôlé, conteneur chiffré, licence révocable ni recette de refus navigateur n’existe encore dans Qalem. Cette US ne promet pas d’empêcher universellement la copie ou la lecture après extraction : elle doit borner et prouver le contrôle de diffusion que Qalem peut réellement imposer.",
+      "evidence": [
+        "docs/decisions/2026-09-12-prd-arbitrages.md#A6",
+        "docs/foundation/2-vivre/08-decisions-log.md#ADR-204",
+        "lib/transmissions/audio-watermark-protocol.ts"
+      ],
+      "acceptance": [
+        "ADR de menace et de limites : distinguer provenance, chiffrement, contrôle de licence et DRM ; aucune promesse de blocage d’une copie déchiffrée ou d’enregistrement analogique",
+        "Un format de paquet chiffré, un manifeste signé et une licence liée à l’utilisateur, au tenant et au client local sont définis sans secret embarqué côté web",
+        "Les routes web Qalem refusent de servir un téléchargement déchiffré ou un lecteur navigateur pour ce paquet ; les replays et transmissions restent en streaming authentifié",
+        "Le client local contrôlé refuse un manifeste altéré, expiré, révoqué, d’un autre tenant ou ouvert depuis un navigateur ; les erreurs ne divulguent ni clé ni contenu",
+        "Recette authentifiée : lecture locale autorisée, refus des cinq cas négatifs, révocation vérifiable et nettoyage ; RLS, trois locales, RTL, gate complet et déploiement au SHA exact",
+        "Les conditions d’usage affichées précisent : téléchargement réservé à un usage local, jamais via une interface web ; cette règle n’est pas présentée comme une garantie d’impossibilité de copie"
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": ["S2-008", "S2-010"],
+      "executionAllowed": true,
+      "executionDecision": "2026-09-12 — Amine approuve le contrôle de diffusion local sous réserve d’une promesse techniquement démontrable. AudioSeal seul ne constitue pas ce contrôle.",
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance", "security_threat_model", "physical_or_controlled_client_validation"],
+      "priorityRank": 44.1
     },
     {
       "id": "S2-011",
