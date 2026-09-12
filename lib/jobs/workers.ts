@@ -160,7 +160,6 @@ export function startAllWorkers(): void {
 
       const seedValue = delivery.seeds;
       const seed = Array.isArray(seedValue) ? seedValue[0] : seedValue;
-      const content = (seed?.content ?? {}) as Record<string, unknown>;
       if (
         delivery.delivery_kind !== 'cold_eval' &&
         (!seed ||
@@ -178,14 +177,9 @@ export function startAllWorkers(): void {
       }
       const payload = (delivery.payload ?? {}) as Record<string, unknown>;
       const isColdEvaluation = delivery.delivery_kind === 'cold_eval';
-      const title = isColdEvaluation ? 'Votre point d’ancrage' : 'Un souvenir de votre session';
-      const body = isColdEvaluation
-        ? 'Deux questions rapides pour mesurer ce qui est resté.'
-        : typeof content.push_hook === 'string'
-          ? content.push_hook
-          : typeof content.body === 'string'
-            ? content.body
-            : 'Retrouvez un moment clé de votre session.';
+      // Lock screens are an untrusted surface: never reveal a course, an exchange or a third party.
+      const title = 'Qalem';
+      const body = 'Une activité vous attend.';
       const phase = typeof payload.phase === 'string' ? `&phase=${payload.phase}` : '';
       const reviewCardId =
         typeof payload.review_card_id === 'string' ? payload.review_card_id : null;

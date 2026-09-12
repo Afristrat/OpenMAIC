@@ -707,8 +707,16 @@ export const notificationPreferencesSchema = z
     whatsappNumber: z.string().trim().max(32).nullable(),
     locale: z.enum(['fr-FR', 'ar-MA', 'en-US']),
     timezone: z.string().trim().min(1).max(64).optional(),
-    quietStart: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/).nullable().optional(),
-    quietEnd: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/).nullable().optional(),
+    quietStart: z
+      .string()
+      .regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/)
+      .nullable()
+      .optional(),
+    quietEnd: z
+      .string()
+      .regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/)
+      .nullable()
+      .optional(),
     dailyCap: z.number().int().min(1).max(10).optional(),
     pausedUntil: z.string().datetime().nullable().optional(),
   })

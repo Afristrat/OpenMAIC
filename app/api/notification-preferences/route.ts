@@ -12,7 +12,9 @@ export async function GET(request: NextRequest): Promise<Response> {
   const service = createServiceSupabaseClient();
   const { data, error } = await service
     .from('review_notification_preferences')
-    .select('email_enabled, whatsapp_enabled, whatsapp_number, locale, timezone, quiet_start, quiet_end, daily_cap, paused_until')
+    .select(
+      'email_enabled, whatsapp_enabled, whatsapp_number, locale, timezone, quiet_start, quiet_end, daily_cap, paused_until',
+    )
     .eq('user_id', auth.user.id)
     .maybeSingle();
   if (error) return apiError('INTERNAL_ERROR', 500, 'Échec de lecture des préférences');
@@ -47,7 +49,11 @@ export async function PATCH(request: NextRequest): Promise<Response> {
   const quietStart = validation.data.quietStart ?? null;
   const quietEnd = validation.data.quietEnd ?? null;
   if ((quietStart === null) !== (quietEnd === null)) {
-    return apiError('INVALID_REQUEST', 400, 'Les deux bornes de la plage silencieuse sont requises');
+    return apiError(
+      'INVALID_REQUEST',
+      400,
+      'Les deux bornes de la plage silencieuse sont requises',
+    );
   }
   const normalizedNumber = whatsappNumber ? normalizeWhatsAppNumber(whatsappNumber) : null;
   if (whatsapp && !normalizedNumber) {
@@ -76,7 +82,9 @@ export async function PATCH(request: NextRequest): Promise<Response> {
       },
       { onConflict: 'user_id' },
     )
-    .select('email_enabled, whatsapp_enabled, whatsapp_number, locale, timezone, quiet_start, quiet_end, daily_cap, paused_until')
+    .select(
+      'email_enabled, whatsapp_enabled, whatsapp_number, locale, timezone, quiet_start, quiet_end, daily_cap, paused_until',
+    )
     .single();
   if (error || !data) {
     return apiError('INTERNAL_ERROR', 500, 'Échec d’enregistrement des préférences');

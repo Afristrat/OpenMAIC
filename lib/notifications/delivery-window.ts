@@ -5,7 +5,7 @@ export interface DeliveryWindow {
 }
 
 function minutes(value: string): number | null {
-  const match = /^(?:[01]\d|2[0-3]):[0-5]\d$/u.exec(value);
+  const match = /^(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/u.exec(value);
   if (!match) return null;
   const [hours, mins] = value.split(':').map(Number);
   return hours * 60 + mins;
@@ -22,7 +22,8 @@ export function isWithinQuietWindow(at: Date, window: DeliveryWindow): boolean {
     minute: '2-digit',
     hourCycle: 'h23',
   }).formatToParts(at);
-  const part = (type: 'hour' | 'minute') => Number(local.find((value) => value.type === type)?.value);
+  const part = (type: 'hour' | 'minute') =>
+    Number(local.find((value) => value.type === type)?.value);
   const current = part('hour') * 60 + part('minute');
   return start < end ? current >= start && current < end : current >= start || current < end;
 }
