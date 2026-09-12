@@ -4874,7 +4874,8 @@
         "lib/anchoring/seed-stock.ts",
         "app/api/live-sessions/[id]/seeds/route.ts",
         "supabase/migrations/20260912090000_anchor_seed_provenance.sql",
-        "app/api/anchor-deliveries/[id]/reflection/route.ts"
+        "app/api/anchor-deliveries/[id]/reflection/route.ts",
+        "docs/validation/S3-011-quality-gate-d7e231a.md"
       ],
       "acceptance": [
         "Chaque flashback, moment marquant, intervention ludique, question profonde et question de suivi conserve un lien vérifiable vers les événements réellement consultés ou échangés par cet apprenant dans cette formation et leur version ; une référence inexistante ou appartenant à autrui est refusée.",
