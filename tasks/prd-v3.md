@@ -46,11 +46,17 @@ Les anciens refus de rotation et demandes de décision ne sont plus les instruct
 Un statut `blocked` doit être relu avec `executionAllowed`, le motif technique et cette décision, et non interprété comme une nouvelle demande de permission.
 L’autorisation ne vaut ni activation automatique, ni clôture des checkpoints humains, ni droit d’écrire dans Diwan ou un autre projet.
 
-## Arbitrages réservés à Amine
+## Décisions produit actées
 
 Le [registre d’arbitrages du 12 septembre](../docs/decisions/2026-09-12-prd-arbitrages.md)
-distingue les corrections factuelles des sept propositions de décision.
-Aucun connecteur, canal, export ou filigrane n’a été retiré ni différé.
+consigne les sept décisions d’Amine et leurs conséquences de clôture.
+Aucun connecteur, canal, export ou filigrane n’a été retiré. Le cœur multisource
+reste livrable sans les modules Diwan externes ; SCORM/cmi5 et xAPI/LRS sont des
+options institutionnelles ; Web Push est le canal d’ancrage, l’e-mail le complément
+et WhatsApp une option tenant. `proxy.ai-mpower.com` est exclusivement le hub de
+clés LiteLLM, jamais une source de cours ni une cible de capture. AudioSeal reste
+une preuve de provenance : les téléchargements sont réservés au local, jamais à une
+interface web, sans prétendre empêcher techniquement une copie hors Qalem.
 S3-005 est rouverte après lecture du chemin générateur→planificateur :
 au-delà de douze graines, le calendrier fixe dépasse J+90. La reproduction
 d’exécution reste à faire ; la preuve historique avec douze graines est conservée.

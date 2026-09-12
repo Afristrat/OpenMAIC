@@ -6,7 +6,7 @@
   "description": "Référence active unique pour tous les restes identifiés de Qalem. Les critères v2 et les capacités v1 sont tracés sans transformer une acceptation historique en certification actuelle. Ce PRD planifie ; il n’exécute ni n’autorise automatiquement les mutations bloquées.",
   "reconciledAt": "2026-09-12",
   "inspectedCommit": "99631c44cc6a7b7475f465fb51307534e74da149",
-  "reconciliationNote": "Revue documentaire sur ce socle et le diff courant, pas recertification de production. Dix passes=true/to_validate remis à false en conservant les preuves historiques ; aucune fonctionnalité retirée. Arbitrages proposés, non décidés : docs/decisions/2026-09-12-prd-arbitrages.md.",
+  "reconciliationNote": "Revue documentaire sur ce socle et le diff courant, pas recertification de production. Dix passes=true/to_validate remis à false en conservant les preuves historiques ; aucune fonctionnalité retirée. Les sept arbitrages du 12 septembre sont décidés et versionnés dans docs/decisions/2026-09-12-prd-arbitrages.md ; ils cadrent la livraison sans valoir preuve de production.",
   "supersedes": ".ralph/prd-v2.json",
   "scope": {
     "included": [
@@ -60,6 +60,7 @@
   "architectureConstraints": [
     "Qalem web/runtime : Coolify sur ServeurIA ; LiteLLM : Hostinger, sans Coolify. Vérifier les cibles avant toute commande.",
     "La cible ASR attendue passe par le tunnel Cloudflare ; un endpoint LAN n’est pas accessible par hypothèse depuis Hostinger.",
+    "proxy.ai-mpower.com est exclusivement le hub LiteLLM de clés et de clés virtuelles ; il n’est jamais une source de cours, une cible de capture ni une origine documentaire.",
     "Diwan est un service documentaire autonome consommé par contrat ; aucun partage de code ou de base.",
     "Réutiliser les moteurs, adaptateurs et tests existants avant d’ajouter un composant ; pas de réécriture du catalogue, du syllabus ou de FSRS.",
     "UI FR/AR/EN, RTL, RLS et validation des frontières de confiance obligatoires.",
@@ -74,12 +75,12 @@
     {
       "id": "C-002",
       "topic": "Rappels e-mail/WhatsApp",
-      "resolution": "S6-011 conserve les rappels de révision e-mail/WhatsApp ; ANCRER reste Web Push selon les preuves versionnées. Toute extension des flashbacks à ces canaux doit être décidée, pas déduite du transport existant."
+      "resolution": "Décision du 12 septembre : Web Push porte l’ancrage personnalisé, l’e-mail complète les rappels et WhatsApp est une option par tenant. WhatsApp ne peut être proposé qu’après appairage, consentement, désinscription et réception réelle prouvée ; son caractère optionnel ne masque pas la dette S6-011."
     },
     {
       "id": "C-003",
       "topic": "Images originales et capture web",
-      "resolution": "S6-007 interdit la reprise des images PDF ; S1-012 reste une capture explicitement demandée, à confirmer avec Amine avant régénération."
+      "resolution": "S6-007 interdit la reprise des images PDF ; S1-012 conserve une capture explicitement demandée sur une source pédagogique autorisée. proxy.ai-mpower.com est exclu : c’est un hub de clés LiteLLM, non une source de cours."
     },
     {
       "id": "C-004",
@@ -89,7 +90,7 @@
     {
       "id": "C-005",
       "topic": "SCORM",
-      "resolution": "ADR-106 et la preuve S1-007 actent le SCO natif sans scorm-again ; les exports restent statiques avec tracking. Le placement commercial cœur/option de S1-008 reste à trancher, pas le retour à l’ancien runtime."
+      "resolution": "ADR-106 et la preuve S1-007 actent le SCO natif sans scorm-again ; les exports SCORM 1.2/2004/cmi5 sont des options institutionnelles, avec contenu statique et suivi LMS, jamais une classroom multi-agent embarquée. Leur revalidation reste obligatoire avant commercialisation."
     },
     {
       "id": "C-006",
@@ -105,6 +106,11 @@
       "id": "C-008",
       "topic": "Affirmation de complétude Whisper",
       "resolution": "Le test synthétique du 20 août ne mesure ni la transcription de parole ni le parcours microphone ; S6-009 garde cette dette ouverte."
+    },
+    {
+      "id": "C-009",
+      "topic": "AudioSeal, téléchargement et blocage hors Qalem",
+      "resolution": "Décision du 12 septembre : AudioSeal est une preuve de provenance. Les replays et transmissions Qalem restent en streaming authentifié ; un contenu explicitement téléchargé est réservé contractuellement à un usage local, jamais via une interface web. AudioSeal seul ne bloque pas une copie : toute prévention technique hors Qalem exige un client contrôlé et un contrôle de diffusion ou DRM distinct, démontré avant promesse commerciale."
     }
   ],
   "reconciliationInventory": {
