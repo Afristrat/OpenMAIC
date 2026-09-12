@@ -4851,14 +4851,16 @@
     {
       "epic": "3-ANCRER",
       "priority": "P1",
-      "status": "to_implement",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "type": "explicit_user_request",
         "date": "2026-09-12"
       },
       "sourceDependencies": [],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-12 — SHA e346fd4b6d8c87335647b3987ccbbb4a26d5ed9d ; clone isolé ServeurIA /tmp/qalem-s3011-b71a021 : Prettier et TypeScript verts, 9/9 Vitest ciblés. La migration, la recette authentifiée à deux apprenants/deux tenants, le retrait de source et le gate complet restent requis ; passes=false."
+      ],
       "executionAllowed": true,
       "executionDecision": "2026-09-12 — Objectif exhaustif demandé par Amine : compléments multisources et mobiles conservés, sans clôture ni activation déduite.",
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
@@ -4866,8 +4868,8 @@
       "title": "Ancrer les flashbacks et questions dans le vécu de chaque apprenant",
       "description": "En tant qu’adulte en formation, je veux retrouver les moments et questions de mon propre parcours afin de réfléchir, expérimenter et transférer les acquis dans ma pratique.",
       "dependencies": ["S3-004", "S2-004"],
-      "gap": "Lecture du 12 septembre : P3-B-v6 connaît quatre types, vérifie scènes/personas/nombres et reçoit les événements de session. Ces contrôles ne prouvent pas la provenance de chaque affirmation, la distinction paroles du participant/paroles des agents, ni le suivi des questions profondes. Étendre le stock existant, pas créer un second générateur.",
-      "evidence": ["lib/anchoring/seed-stock.ts", "app/api/live-sessions/[id]/seeds/route.ts"],
+      "gap": "Le code P3-B-v7 lie chaque graine à un événement immuable, à une catégorie recalculée côté serveur et à une version de source ; les réponses résolues sont bornées au rappel et à son événement. Reste la preuve intégrée sur Supabase, deux apprenants/deux tenants, retrait de source et gate complet.",
+      "evidence": ["lib/anchoring/seed-stock.ts", "app/api/live-sessions/[id]/seeds/route.ts", "supabase/migrations/20260912090000_anchor_seed_provenance.sql", "app/api/anchor-deliveries/[id]/reflection/route.ts"],
       "acceptance": [
         "Chaque flashback, moment marquant, intervention ludique, question profonde et question de suivi conserve un lien vérifiable vers les événements réellement consultés ou échangés par cet apprenant dans cette formation et leur version ; une référence inexistante ou appartenant à autrui est refusée.",
         "Distinguer explicitement propos de l’apprenant, propos des agents, contenu présenté et question nouvelle proposée : ne jamais présenter une inférence ou une invention comme un souvenir de l’apprenant ; contexte insuffisant → absence expliquée ou proposition non autobiographique.",

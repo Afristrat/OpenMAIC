@@ -104,7 +104,7 @@ Aucun gain d’apprentissage ou de marge n’est présumé ; la cible de marge m
 | 22 | S6-010 | P1 | `to_validate` | false | Déclencher les rappels de révision et vérifier le cache PWA |
 | 23 | U-020 | P1 | `to_validate` | false | Bannière installer PWA |
 | 24 | S3-002 | P1 | `to_validate` | false | Push PWA re-vérifié sur appareils réels iOS + Android |
-| 24.1 | S3-011 | P1 | `to_implement` | false | Ancrer les flashbacks et questions dans le vécu de chaque apprenant |
+| 24.1 | S3-011 | P1 | `to_validate` | false | Ancrer les flashbacks et questions dans le vécu de chaque apprenant |
 | 24.2 | S3-012 | P1 | `to_implement` | false | Relancer les formations inachevées et reprendre au bon endroit |
 | 24.3 | S3-013 | P1 | `to_implement` | false | Maîtriser la pression et la confidentialité des relances mobiles |
 | 24.4 | S3-014 | P1 | `to_implement` | false | Prouver le parcours complet de formation et d’ancrage sur mobile |

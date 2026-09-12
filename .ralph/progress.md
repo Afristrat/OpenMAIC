@@ -1,5 +1,9 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 12 septembre 2026 — S3-011, provenance vérifiable des relances individuelles
+
+Le SHA `e346fd4b6d8c87335647b3987ccbbb4a26d5ed9d` fait évoluer P3-B-v6 vers P3-B-v7 : chaque graine porte l’identifiant immuable de son événement, sa catégorie recalculée (proposition de l’apprenant, proposition d’agent, contenu présenté ou question nouvelle) et une version de source ; le serveur refuse toute référence ou requalification inventée. Une migration lie la graine à l’événement de la même session, rend les anciennes graines sans provenance inéligibles à un nouveau plan et ajoute des réponses autorisées, une seule fois par rappel et événement résolu. L’export individuel inclut ces réponses. Validation clone isolé ServeurIA `/tmp/qalem-s3011-b71a021` : Prettier, TypeScript et 9/9 Vitest ciblés verts. S3-011 passe à `to_validate`, jamais à `passes=true` : migration réelle, recette authentifiée deux apprenants/deux tenants, retrait d’accès/source, lint, suite complète, build, E2E et déploiement restent ouverts.
+
 ## 12 septembre 2026 — S6-014, inventaire de rotation sans secret
 
 Lecture seule des consommateurs Qalem et des noms déclarés `.env.example` : catégories Supabase, Web Push, rappels, IA/ASR/TTS/image/vidéo/recherche, paiement, queues/services internes, Diwan, xAPI/LTI et observabilité documentées dans docs/security/S6-014-secret-rotation-inventory.md. Aucune valeur, longueur, endpoint privé, fichier d’environnement ou runtime n’a été lu. Les variables publiques/configuration sont explicitement distinguées des secrets. `C:\Users\amans\.codex\scripts\invoke-secret.ps1`, `add-secret.ps1` et `secrets.index` sont absents au contrôle ; rotation sûre bloquée sans broker, aucun contournement tenté. Consommateurs versionnés relevés ; présence runtime et valeurs actives non affirmées. S6-014 reste to_implement. Commit/push de l’inventaire à faire.
