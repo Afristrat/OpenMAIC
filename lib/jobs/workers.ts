@@ -226,7 +226,6 @@ export function startAllWorkers(): void {
         throw new Error('Anchor seed has no verified provenance');
       }
       const payload = (delivery.payload ?? {}) as Record<string, unknown>;
-      const isColdEvaluation = delivery.delivery_kind === 'cold_eval';
       // Lock screens are an untrusted surface: never reveal a course, an exchange or a third party.
       const title = 'Qalem';
       const body = 'Une activité vous attend.';
