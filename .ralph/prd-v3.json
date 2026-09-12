@@ -4869,7 +4869,7 @@
       "title": "Ancrer les flashbacks et questions dans le vécu de chaque apprenant",
       "description": "En tant qu’adulte en formation, je veux retrouver les moments et questions de mon propre parcours afin de réfléchir, expérimenter et transférer les acquis dans ma pratique.",
       "dependencies": ["S3-004", "S2-004"],
-      "gap": "Le code P3-B-v7 lie chaque graine à un événement immuable, à une catégorie recalculée côté serveur et à une version de source ; les réponses résolues sont bornées au rappel et à son événement. Reste la preuve intégrée sur Supabase, deux apprenants/deux tenants, retrait de source et gate complet.",
+      "gap": "Le code P3-B-v7 lie chaque graine à un événement immuable, à une catégorie recalculée côté serveur et à une version de source ; les réponses résolues sont bornées au rappel et à son événement. Le schéma de provenance et les policies RLS sont présents dans la base Qalem. Restent le déploiement du SHA, la preuve intégrée sur Supabase avec deux apprenants/deux tenants et le retrait de source.",
       "evidence": [
         "lib/anchoring/seed-stock.ts",
         "app/api/live-sessions/[id]/seeds/route.ts",

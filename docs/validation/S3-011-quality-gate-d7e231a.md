@@ -24,3 +24,12 @@ Qalem avec FFmpeg : il ne masque donc aucun échec fonctionnel.
 Cette preuve couvre la qualité machine du code, y compris l’export personnel
 des réflexions d’ancrage. Elle ne remplace pas la recette S3-011 sur deux
 apprenants, deux tenants, retrait de source et production.
+
+## Schéma Qalem vérifié
+
+Le 12 septembre, la lecture PostgreSQL de la base Qalem a confirmé la présence
+des colonnes `source_event_id`, `source_kind` et `source_version` sur `seeds`,
+du trigger `guard_anchor_seed_provenance`, de la table
+`anchor_reflections` et de ses deux policies RLS. Aucun contenu apprenant n’a
+été lu ni modifié. Le schéma n’est donc pas le prérequis manquant ; l’API
+correspondante doit encore être déployée et recettée avec des acteurs réels.
