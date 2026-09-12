@@ -148,7 +148,12 @@ export async function claimDueReviewNotifications(
     (data ?? []) as Array<{ delivery_id: string; delivery_channel: string }>
   ).flatMap((row) =>
     row.delivery_channel === 'email' || row.delivery_channel === 'whatsapp'
-      ? [{ deliveryId: row.delivery_id, channel: row.delivery_channel as ReviewNotificationChannel }]
+      ? [
+          {
+            deliveryId: row.delivery_id,
+            channel: row.delivery_channel as ReviewNotificationChannel,
+          },
+        ]
       : [],
   );
   const { data: pending, error: pendingError } = await service
