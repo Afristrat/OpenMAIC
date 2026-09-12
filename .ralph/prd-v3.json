@@ -3741,7 +3741,12 @@
       "historicalDependencies": ["S2-008", "S2-010"],
       "executionAllowed": true,
       "executionDecision": "2026-09-12 — Amine approuve le contrôle de diffusion local sous réserve d’une promesse techniquement démontrable. AudioSeal seul ne constitue pas ce contrôle.",
-      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance", "security_threat_model", "physical_or_controlled_client_validation"],
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "security_threat_model",
+        "physical_or_controlled_client_validation"
+      ],
       "priorityRank": 44.1
     },
     {

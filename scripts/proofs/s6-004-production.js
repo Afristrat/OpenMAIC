@@ -106,10 +106,13 @@ async function createOrganization(userId, label) {
 }
 
 async function removeOrganization(id) {
-  const result = await json(`${supabaseUrl}/rest/v1/organizations?id=eq.${encodeURIComponent(id)}`, {
-    method: 'DELETE',
-    headers: { apikey: service, Authorization: `Bearer ${service}`, Prefer: 'return=minimal' },
-  });
+  const result = await json(
+    `${supabaseUrl}/rest/v1/organizations?id=eq.${encodeURIComponent(id)}`,
+    {
+      method: 'DELETE',
+      headers: { apikey: service, Authorization: `Bearer ${service}`, Prefer: 'return=minimal' },
+    },
+  );
   assert([200, 204].includes(result.status));
 }
 
