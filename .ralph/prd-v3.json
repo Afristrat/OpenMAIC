@@ -2187,7 +2187,7 @@
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Le test public historique utilisait dix secondes de son synthétique : routage prouvé à cette date, qualité et latence réelle non mesurées.",
+      "gap": "Le test public historique utilisait dix secondes de son synthétique : routage prouvé à cette date, qualité et latence réelle non mesurées. Le 12 septembre, un WAV de silence d’une seconde émis depuis le conteneur web Qalem a reçu HTTP 200 en 678 ms via une URL HTTPS à hôte non privé ; cela prouve une connectivité runtime partielle, pas la parole réelle, le microphone, LiteLLM Hostinger ou DGX.",
       "evidence": [
         "app/api/transcription/route.ts",
         "lib/audio/asr-providers.ts",
@@ -2196,7 +2196,8 @@
         "e2e/tests/asr-microphone-flow.spec.ts",
         "tests/audio/openai-whisper-asr.test.ts",
         "commit:f124ac7602d02c9a964fdac9a106f44bb1193735",
-        "thread:01a005ad-360e-7710-aeb5-bf5fc84c67b6/2026-08-20"
+        "thread:01a005ad-360e-7710-aeb5-bf5fc84c67b6/2026-08-20",
+        "docs/validation/S6-009-asr-chain-smoke.md"
       ],
       "acceptance": [
         "Utiliser des extraits de parole autorisés FR/AR/EN avec transcription de référence, plus silence, fichier invalide et ancien modèle client.",
