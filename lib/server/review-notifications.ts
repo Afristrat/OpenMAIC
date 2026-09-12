@@ -144,11 +144,12 @@ export async function claimDueReviewNotifications(
     target_time: targetTime.toISOString(),
   });
   if (error) throw new Error('Review notification claim failed');
-  const claimed = ((data ?? []) as Array<{ delivery_id: string; delivery_channel: string }>).flatMap(
-    (row) =>
-      row.delivery_channel === 'email' || row.delivery_channel === 'whatsapp'
-        ? [{ deliveryId: row.delivery_id, channel: row.delivery_channel }]
-        : [],
+  const claimed = (
+    (data ?? []) as Array<{ delivery_id: string; delivery_channel: string }>
+  ).flatMap((row) =>
+    row.delivery_channel === 'email' || row.delivery_channel === 'whatsapp'
+      ? [{ deliveryId: row.delivery_id, channel: row.delivery_channel }]
+      : [],
   );
   const { data: pending, error: pendingError } = await service
     .from('review_notification_deliveries')
