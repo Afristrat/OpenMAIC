@@ -1,7 +1,7 @@
 # S6-014 — Inventaire de rotation Qalem sans valeurs
 
 Date : 12 septembre 2026
-Statut : inventaire versionné et rotations partielles préparées ; les webhooks, le jeton capture, LTI, VAPID, le chiffrement LRS et la pseudonymisation xAPI ont été remplacés en configuration persistante le 12 septembre 2026. Aucun de ces remplacements n’est effectif avant redéploiement coordonné ; les clés fournisseurs restent ouvertes.
+Statut : inventaire versionné et rotations partielles effectives ; les webhooks, le jeton capture, LTI, VAPID, le chiffrement LRS et la pseudonymisation xAPI ont été remplacés en configuration persistante le 12 septembre 2026, puis activés par un redéploiement coordonné du runtime et du web au SHA `9a24e105e79638e46b97c6f0109c47e097ca0000`. Les clés fournisseurs restent ouvertes.
 
 ## Méthode et limite
 
@@ -77,3 +77,20 @@ fournisseur et la recette de tous les consommateurs Qalem.
   fournisseur non placé dans le périmètre Qalem n’est modifiée.
 - Le déploiement, les workers et les parcours sensibles sont sains après la
   révocation ; aucun secret n’apparaît dans les logs ou preuves.
+
+## Contrôle post-déploiement du 12 septembre 2026
+
+Les livraisons Coolify runtime et web ont terminé respectivement à 17:38:25 et
+17:51:37 sur le SHA indiqué ci-dessus. Capture-worker, worker BullMQ et web
+étaient `healthy`, avec zéro redémarrage et `OOMKilled=false`; le contrôle
+public `GET /api/health` répondait HTTP 200. Une tentative web antérieure a
+échoué avant construction : deux configurations `SUPER_ADMIN_EMAILS` non
+secrètes avaient été historiquement persistées en clair. Leur contenu a été
+réencodé en mémoire dans le format Laravel attendu, sans lecture ni sortie de
+valeur ; un contrôle exhaustif des variables du web ne trouve plus aucune
+enveloppe indéchiffrable.
+
+Cette preuve confirme l’activation des rotations internes et du routage HTTPS
+du LLM général. Elle ne clôt pas S6-014 : les clés fournisseurs partagées ou
+sans inventaire fournisseur sûr, ainsi que les recettes LTI, Web Push et xAPI,
+restent des conditions de clôture distinctes.
