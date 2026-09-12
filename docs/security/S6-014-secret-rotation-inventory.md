@@ -1,7 +1,7 @@
 # S6-014 — Inventaire de rotation Qalem sans valeurs
 
 Date : 12 septembre 2026
-Statut : inventaire versionné et rotations partielles préparées ; les webhooks, le jeton capture, LTI et VAPID ont été remplacés en configuration persistante le 12 septembre 2026. Aucun de ces remplacements n’est effectif avant redéploiement coordonné ; les clés fournisseurs restent ouvertes.
+Statut : inventaire versionné et rotations partielles préparées ; les webhooks, le jeton capture, LTI, VAPID, le chiffrement LRS et la pseudonymisation xAPI ont été remplacés en configuration persistante le 12 septembre 2026. Aucun de ces remplacements n’est effectif avant redéploiement coordonné ; les clés fournisseurs restent ouvertes.
 
 ## Méthode et limite
 
