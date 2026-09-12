@@ -1851,7 +1851,11 @@
       "sourceDependencies": [],
       "dependencies": [],
       "gap": "Le feu vert explicite du 9 septembre 2026 lève le refus antérieur. Restent l’inventaire des catégories et consommateurs Qalem, la rotation contrôlée via le coffre et la vérification avant révocation. Aucune rotation réalisée par la seule mise à jour du PRD.",
-      "evidence": ["AGENTS.md#Règles du projet", "thread:01a005ad-360e-7710-aeb5-bf5fc84c67b6"],
+      "evidence": [
+        "AGENTS.md#Règles du projet",
+        "thread:01a005ad-360e-7710-aeb5-bf5fc84c67b6",
+        "docs/security/S6-014-secret-rotation-inventory.md"
+      ],
       "acceptance": [
         "Conserver uniquement les catégories de secrets et services concernés, jamais leurs valeurs.",
         "Autorisation obtenue le 9 septembre 2026 ; exécuter les rotations exclusivement dans Qalem avec le coffre et les contrôles des consommateurs.",
