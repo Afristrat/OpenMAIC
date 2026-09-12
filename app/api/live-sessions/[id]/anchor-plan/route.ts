@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { buildAnchorSchedule } from '@/lib/anchoring/schedule';
+import { buildAnchorSchedule, selectAnchorSeedIds } from '@/lib/anchoring/schedule';
 import { isFeatureEnabled } from '@/lib/flags';
 import { enqueueAnchorDelivery } from '@/lib/jobs/queue';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
@@ -8,6 +8,12 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 const optInSchema = z.object({ optedIn: z.literal(true) }).strict();
+const anchorSeedCandidatesSchema = z.array(
+  z.object({
+    id: z.string().uuid(),
+    kind: z.enum(['anecdote', 'highlight', 'joke', 'quiz_reminder']),
+  }),
+);
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -57,7 +63,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     .eq('session_id', sessionId)
     .order('created_at', { ascending: true });
   if (seedError) return apiError('INTERNAL_ERROR', 500, 'Échec de lecture du stock d’ancrage');
-  if (!seeds || seeds.length < 12) {
+  const seedCandidates = anchorSeedCandidatesSchema.safeParse(seeds);
+  if (!seedCandidates.success || seedCandidates.data.length < 12) {
     return apiError(
       'INVALID_REQUEST',
       409,
@@ -66,10 +73,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   const optedInAt = new Date();
-  const schedule = buildAnchorSchedule(
-    optedInAt,
-    seeds.map((seed) => seed.id),
-  );
+  let selectedSeedIds: string[];
+  try {
+    selectedSeedIds = selectAnchorSeedIds(seedCandidates.data);
+  } catch {
+    return apiError('INVALID_REQUEST', 409, 'Le stock d’ancrage équilibré est incomplet');
+  }
+  const schedule = buildAnchorSchedule(optedInAt, selectedSeedIds);
   const { data: plan, error: planError } = await auth
     .from('anchor_plans')
     .insert({
@@ -87,7 +97,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return apiError('INTERNAL_ERROR', 500, 'Échec de création du plan d’ancrage');
 
   try {
-    const kinds = new Map(seeds.map((seed) => [seed.id, seed.kind]));
+    const kinds = new Map(seedCandidates.data.map((seed) => [seed.id, seed.kind]));
     let quizReminderIndex = 0;
     const { data: deliveries, error: deliveryError } = await service
       .from('anchor_deliveries')
@@ -120,7 +130,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         enqueueAnchorDelivery({ deliveryId: delivery.id }, new Date(delivery.scheduled_for)),
       ),
     );
-    return apiSuccess({ plan, deliveryCount: deliveries.length }, 201);
+    return apiSuccess({ plan, deliveryCount: deliveries.length, selectedSeedIds }, 201);
   } catch {
     await service.from('anchor_plans').delete().eq('id', plan.id);
     return apiError('INTERNAL_ERROR', 500, 'Échec de planification de l’ancrage');
