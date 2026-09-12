@@ -4936,12 +4936,15 @@
       "title": "Maîtriser la pression et la confidentialité des relances mobiles",
       "description": "En tant qu’apprenant suivant plusieurs formations, je veux contrôler les sollicitations de Qalem afin de recevoir des rappels utiles au moment choisi sans exposition de mes échanges privés.",
       "dependencies": ["S3-005", "S6-010"],
-      "gap": "La route de préférences inspectée expose e-mail/WhatsApp/numéro/langue ; le calendrier d’ancrage suit des intervalles fixes. Les horaires, report, plafond commun et arbitrage inter-formations demandés restent à implémenter dans les préférences et workers existants.",
+      "gap": "Le SHA b82b4a0 ajoute préférences temporelles, recontrôle au départ, scanner de reprise et budget transactionnel partagé ; ses migrations sont appliquées en production. Le SHA n’est pas déployé, et les recettes inter-formations/canaux, changements concurrents, mobile et réception physique restent ouvertes. Un incident Coolify impose la rotation des identifiants concernés avant tout déploiement.",
       "evidence": [
         "app/api/notification-preferences/route.ts",
         "lib/anchoring/schedule.ts",
         "lib/jobs/workers.ts",
-        "public/sw.js"
+        "public/sw.js",
+        "supabase/migrations/20260912100000_notification_delivery_preferences.sql",
+        "supabase/migrations/20260912110000_notification_delivery_budget.sql",
+        "docs/validation/S3-013-delivery-policy-migration.md"
       ],
       "acceptance": [
         "Permettre fréquence, plages horaires et fuseau, report ponctuel, pause/reprise et désactivation, globalement et pour une formation ; exposer le prochain rappel et l’effet des changements en FR/AR/EN RTL.",
