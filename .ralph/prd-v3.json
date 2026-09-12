@@ -2612,7 +2612,7 @@
       },
       "sourceDependencies": ["S-022"],
       "dependencies": [],
-      "gap": "Réconciliation documentaire du 12 septembre 2026 : preuves historiques conservées ci-dessous, mais statut to_validate et passes=true étaient contradictoires. passes=false jusqu’à revue critère par critère au SHA livré, incluant activation effective et dépendances pertinentes ; ceci n’infère ni perte du code ni échec des recettes historiques.",
+      "gap": "Réconciliation documentaire du 12 septembre 2026 : preuves historiques conservées ci-dessous, mais statut to_validate et passes=true étaient contradictoires. Une recette authentifiée du 12 septembre a révélé qu’une migration de partage jamais publiée rendait toute lecture de classroom en HTTP 500 ; le triplet 20260909224147→20260909231458 a été appliqué sous transaction après sauvegarde de schéma, et l’API classroom répond de nouveau 200. Les cinq partages publics historiques restent non vérifiés, donc non élargis. La même recette bloque désormais dans l’interface sur l’état de chargement après la réponse API 200 : la persistance quiz n’est pas encore prouvée. passes=false jusqu’à recette UI complète, idempotence, rechargement de /review, gate et déploiement au SHA livré ; ceci n’infère ni perte du code ni échec des recettes historiques.",
       "evidence": [
         "lib/spaced-repetition/extractor.ts",
         "lib/quiz/sync.ts",
