@@ -144,11 +144,11 @@ export async function claimDueReviewNotifications(
     target_time: targetTime.toISOString(),
   });
   if (error) throw new Error('Review notification claim failed');
-  const claimed = (
+  const claimed: ClaimedReviewNotification[] = (
     (data ?? []) as Array<{ delivery_id: string; delivery_channel: string }>
   ).flatMap((row) =>
     row.delivery_channel === 'email' || row.delivery_channel === 'whatsapp'
-      ? [{ deliveryId: row.delivery_id, channel: row.delivery_channel }]
+      ? [{ deliveryId: row.delivery_id, channel: row.delivery_channel as ReviewNotificationChannel }]
       : [],
   );
   const { data: pending, error: pendingError } = await service
@@ -157,9 +157,11 @@ export async function claimDueReviewNotifications(
     .in('status', ['pending', 'failed'])
     .lt('attempt_count', 5);
   if (pendingError) throw new Error('Review notification recovery failed');
-  const recovered = ((pending ?? []) as Array<{ id: string; channel: string }>).flatMap((row) =>
+  const recovered: ClaimedReviewNotification[] = (
+    (pending ?? []) as Array<{ id: string; channel: string }>
+  ).flatMap((row) =>
     row.channel === 'email' || row.channel === 'whatsapp'
-      ? [{ deliveryId: row.id, channel: row.channel }]
+      ? [{ deliveryId: row.id, channel: row.channel as ReviewNotificationChannel }]
       : [],
   );
   return [...new Map([...claimed, ...recovered].map((item) => [item.deliveryId, item])).values()];
