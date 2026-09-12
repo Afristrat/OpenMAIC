@@ -12,7 +12,7 @@ export async function GET(request: NextRequest): Promise<Response> {
   const service = createServiceSupabaseClient();
   const { data, error } = await service
     .from('review_notification_preferences')
-    .select('email_enabled, whatsapp_enabled, whatsapp_number, locale')
+    .select('email_enabled, whatsapp_enabled, whatsapp_number, locale, timezone, quiet_start, quiet_end, daily_cap, paused_until')
     .eq('user_id', auth.user.id)
     .maybeSingle();
   if (error) return apiError('INTERNAL_ERROR', 500, 'Échec de lecture des préférences');
@@ -21,6 +21,11 @@ export async function GET(request: NextRequest): Promise<Response> {
     whatsapp: data?.whatsapp_enabled === true,
     whatsappNumber: data?.whatsapp_number ?? null,
     locale: data?.locale ?? 'fr-FR',
+    timezone: data?.timezone ?? 'UTC',
+    quietStart: data?.quiet_start ?? null,
+    quietEnd: data?.quiet_end ?? null,
+    dailyCap: data?.daily_cap ?? 3,
+    pausedUntil: data?.paused_until ?? null,
   });
 }
 
@@ -33,6 +38,17 @@ export async function PATCH(request: NextRequest): Promise<Response> {
   );
   if (!validation.success) return validation.response;
   const { email, whatsapp, whatsappNumber, locale } = validation.data;
+  const timezone = validation.data.timezone ?? 'UTC';
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: timezone });
+  } catch {
+    return apiError('INVALID_REQUEST', 400, 'Fuseau horaire invalide');
+  }
+  const quietStart = validation.data.quietStart ?? null;
+  const quietEnd = validation.data.quietEnd ?? null;
+  if ((quietStart === null) !== (quietEnd === null)) {
+    return apiError('INVALID_REQUEST', 400, 'Les deux bornes de la plage silencieuse sont requises');
+  }
   const normalizedNumber = whatsappNumber ? normalizeWhatsAppNumber(whatsappNumber) : null;
   if (whatsapp && !normalizedNumber) {
     return apiError(
@@ -52,10 +68,15 @@ export async function PATCH(request: NextRequest): Promise<Response> {
         whatsapp_enabled: whatsapp,
         whatsapp_number: whatsapp ? normalizedNumber : null,
         locale,
+        timezone,
+        quiet_start: quietStart,
+        quiet_end: quietEnd,
+        daily_cap: validation.data.dailyCap ?? 3,
+        paused_until: validation.data.pausedUntil ?? null,
       },
       { onConflict: 'user_id' },
     )
-    .select('email_enabled, whatsapp_enabled, whatsapp_number, locale')
+    .select('email_enabled, whatsapp_enabled, whatsapp_number, locale, timezone, quiet_start, quiet_end, daily_cap, paused_until')
     .single();
   if (error || !data) {
     return apiError('INTERNAL_ERROR', 500, 'Échec d’enregistrement des préférences');
@@ -65,5 +86,10 @@ export async function PATCH(request: NextRequest): Promise<Response> {
     whatsapp: data.whatsapp_enabled,
     whatsappNumber: data.whatsapp_number,
     locale: data.locale,
+    timezone: data.timezone,
+    quietStart: data.quiet_start,
+    quietEnd: data.quiet_end,
+    dailyCap: data.daily_cap,
+    pausedUntil: data.paused_until,
   });
 }

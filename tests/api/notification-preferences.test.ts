@@ -121,4 +121,20 @@ describe('/api/notification-preferences', () => {
       { onConflict: 'user_id' },
     );
   });
+
+  it('rejects a partial quiet window before it can create an ambiguous delivery policy', async () => {
+    const response = await PATCH(
+      request('PATCH', {
+        email: false,
+        whatsapp: false,
+        whatsappNumber: null,
+        locale: 'fr-FR',
+        timezone: 'Africa/Casablanca',
+        quietStart: '22:00',
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
 });
