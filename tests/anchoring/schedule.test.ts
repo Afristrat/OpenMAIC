@@ -26,10 +26,22 @@ describe('anchor schedule', () => {
 describe('anchor seed selection', () => {
   it('keeps a balanced twelve-seed journey from a richer stock without extending J+90', () => {
     const candidates = [
-      ...Array.from({ length: 6 }, (_, index) => ({ id: `anecdote-${index + 1}`, kind: 'anecdote' as const })),
-      ...Array.from({ length: 6 }, (_, index) => ({ id: `highlight-${index + 1}`, kind: 'highlight' as const })),
-      ...Array.from({ length: 4 }, (_, index) => ({ id: `joke-${index + 1}`, kind: 'joke' as const })),
-      ...Array.from({ length: 4 }, (_, index) => ({ id: `quiz-${index + 1}`, kind: 'quiz_reminder' as const })),
+      ...Array.from({ length: 6 }, (_, index) => ({
+        id: `anecdote-${index + 1}`,
+        kind: 'anecdote' as const,
+      })),
+      ...Array.from({ length: 6 }, (_, index) => ({
+        id: `highlight-${index + 1}`,
+        kind: 'highlight' as const,
+      })),
+      ...Array.from({ length: 4 }, (_, index) => ({
+        id: `joke-${index + 1}`,
+        kind: 'joke' as const,
+      })),
+      ...Array.from({ length: 4 }, (_, index) => ({
+        id: `quiz-${index + 1}`,
+        kind: 'quiz_reminder' as const,
+      })),
     ];
 
     const selected = selectAnchorSeedIds(candidates);
@@ -55,8 +67,14 @@ describe('anchor seed selection', () => {
   it('refuses a stock that cannot keep the promised seed mix', () => {
     expect(() =>
       selectAnchorSeedIds([
-        ...Array.from({ length: 4 }, (_, index) => ({ id: `a-${index}`, kind: 'anecdote' as const })),
-        ...Array.from({ length: 4 }, (_, index) => ({ id: `h-${index}`, kind: 'highlight' as const })),
+        ...Array.from({ length: 4 }, (_, index) => ({
+          id: `a-${index}`,
+          kind: 'anecdote' as const,
+        })),
+        ...Array.from({ length: 4 }, (_, index) => ({
+          id: `h-${index}`,
+          kind: 'highlight' as const,
+        })),
         ...Array.from({ length: 2 }, (_, index) => ({ id: `j-${index}`, kind: 'joke' as const })),
         { id: 'q-1', kind: 'quiz_reminder' as const },
       ]),

@@ -4857,22 +4857,13 @@
       "closureEvidence": [],
       "executionAllowed": true,
       "executionDecision": "2026-09-12 — Objectif exhaustif demandé par Amine : compléments multisources et mobiles conservés, sans clôture ni activation déduite.",
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "id": "S3-011",
       "title": "Ancrer les flashbacks et questions dans le vécu de chaque apprenant",
       "description": "En tant qu’adulte en formation, je veux retrouver les moments et questions de mon propre parcours afin de réfléchir, expérimenter et transférer les acquis dans ma pratique.",
-      "dependencies": [
-        "S3-004",
-        "S2-004"
-      ],
+      "dependencies": ["S3-004", "S2-004"],
       "gap": "Lecture du 12 septembre : P3-B-v6 connaît quatre types, vérifie scènes/personas/nombres et reçoit les événements de session. Ces contrôles ne prouvent pas la provenance de chaque affirmation, la distinction paroles du participant/paroles des agents, ni le suivi des questions profondes. Étendre le stock existant, pas créer un second générateur.",
-      "evidence": [
-        "lib/anchoring/seed-stock.ts",
-        "app/api/live-sessions/[id]/seeds/route.ts"
-      ],
+      "evidence": ["lib/anchoring/seed-stock.ts", "app/api/live-sessions/[id]/seeds/route.ts"],
       "acceptance": [
         "Chaque flashback, moment marquant, intervention ludique, question profonde et question de suivi conserve un lien vérifiable vers les événements réellement consultés ou échangés par cet apprenant dans cette formation et leur version ; une référence inexistante ou appartenant à autrui est refusée.",
         "Distinguer explicitement propos de l’apprenant, propos des agents, contenu présenté et question nouvelle proposée : ne jamais présenter une inférence ou une invention comme un souvenir de l’apprenant ; contexte insuffisant → absence expliquée ou proposition non autobiographique.",
@@ -4895,18 +4886,11 @@
       "closureEvidence": [],
       "executionAllowed": true,
       "executionDecision": "2026-09-12 — Objectif exhaustif demandé par Amine : compléments multisources et mobiles conservés, sans clôture ni activation déduite.",
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "id": "S3-012",
       "title": "Relancer les formations inachevées et reprendre au bon endroit",
       "description": "En tant qu’apprenant ayant interrompu une formation, je veux une invitation contextualisée à reprendre exactement mon activité afin de continuer sans perdre mon travail.",
-      "dependencies": [
-        "S0-015",
-        "S3-005",
-        "S3-013"
-      ],
+      "dependencies": ["S0-015", "S3-005", "S3-013"],
       "gap": "La génération de graines exige ended_at dans la route inspectée ; le calendrier existant démarre à l’opt-in. Le parcours de relance d’une formation inachevée reste à raccorder à la progression réelle, sans confondre reprise auteur et reprise apprenant.",
       "evidence": [
         "app/api/live-sessions/[id]/seeds/route.ts",
@@ -4936,17 +4920,11 @@
       "closureEvidence": [],
       "executionAllowed": true,
       "executionDecision": "2026-09-12 — Objectif exhaustif demandé par Amine : compléments multisources et mobiles conservés, sans clôture ni activation déduite.",
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "id": "S3-013",
       "title": "Maîtriser la pression et la confidentialité des relances mobiles",
       "description": "En tant qu’apprenant suivant plusieurs formations, je veux contrôler les sollicitations de Qalem afin de recevoir des rappels utiles au moment choisi sans exposition de mes échanges privés.",
-      "dependencies": [
-        "S3-005",
-        "S6-010"
-      ],
+      "dependencies": ["S3-005", "S6-010"],
       "gap": "La route de préférences inspectée expose e-mail/WhatsApp/numéro/langue ; le calendrier d’ancrage suit des intervalles fixes. Les horaires, report, plafond commun et arbitrage inter-formations demandés restent à implémenter dans les préférences et workers existants.",
       "evidence": [
         "app/api/notification-preferences/route.ts",
@@ -4997,10 +4975,7 @@
         "S6-013"
       ],
       "gap": "Les validations d’installation et de réception physiques existantes sont conservées dans U-020/S3-002. Aucune preuve actuelle ne clôt la chaîne multisources→formation→push contextualisé→interaction→reprise synchronisée demandée ; cette US porte la recette intégrée, pas un second moteur mobile.",
-      "evidence": [
-        "public/sw.js",
-        "tasks/prd-v3.md"
-      ],
+      "evidence": ["public/sw.js", "tasks/prd-v3.md"],
       "acceptance": [
         "Sur iOS et Android physiques, PWA installée : suivre une formation multisource, écouter, naviguer, discuter, répondre au quiz, interrompre et reprendre avec progression persistante ; consigner appareil, OS, navigateur, SHA, date et résultats.",
         "Prouver génération de relance→planification→réception application fermée→ouverture exacte→réponse ou reprise ; réutiliser les preuves physiques de S3-002 uniquement si le parcours et le SHA correspondent.",
