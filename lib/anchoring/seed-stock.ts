@@ -2,7 +2,34 @@ import { z } from 'zod';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
 import type { LearningApproach } from '@/lib/agents/persona-catalog';
 
-export const ANCHOR_SEED_PROMPT_VERSION = 'P3-B-v6';
+export const ANCHOR_SEED_PROMPT_VERSION = 'P3-B-v7';
+
+export const anchorSeedSourceKinds = [
+  'learner_proposition',
+  'agent_proposition',
+  'content_presented',
+  'new_question',
+] as const;
+
+export type AnchorSeedSourceKind = (typeof anchorSeedSourceKinds)[number];
+
+export interface AnchorSeedEvent {
+  id: string;
+  actor: 'agent' | 'user' | 'system';
+  event_type: string;
+  payload: Record<string, unknown>;
+  ts_ms: number;
+}
+
+export function anchorSeedSourceKind(event: AnchorSeedEvent): AnchorSeedSourceKind {
+  if (event.actor === 'user') return 'learner_proposition';
+  const eventType = event.event_type.toLocaleLowerCase('en-US');
+  if (/(?:question|quiz|prompt)/u.test(eventType)) return 'new_question';
+  if (event.actor === 'system' || /(?:scene|content|slide|stage)/u.test(eventType)) {
+    return 'content_presented';
+  }
+  return 'agent_proposition';
+}
 
 export interface AnchorSeedCastingMember {
   name: string;
@@ -41,6 +68,10 @@ const seedSchema = z.object({
       .min(1)
       .refine((value) => value.split(/\s+/u).length <= 60, 'Seed body exceeds 60 words'),
     scene_ref: z.string().trim().min(1),
+    provenance: z.object({
+      event_id: z.string().regex(/^\d+$/),
+      source_kind: z.enum(anchorSeedSourceKinds),
+    }),
   }),
 });
 
@@ -50,7 +81,7 @@ export function parseSeedStock(
   text: string,
   context: {
     learningApproach: LearningApproach;
-    events: unknown[];
+    events: AnchorSeedEvent[];
     personas: string[];
     sceneRefs: string[];
   },
@@ -58,6 +89,7 @@ export function parseSeedStock(
   const parsed = z.array(seedSchema).min(12).parse(parseJsonResponse<unknown>(text));
   const personas = new Set(context.personas);
   const sceneRefs = new Set(context.sceneRefs);
+  const eventsById = new Map(context.events.map((event) => [event.id, event]));
   const sessionNumbers = numericTokensFromStrings(context.events);
   const counts = { anecdote: 0, highlight: 0, joke: 0, quiz_reminder: 0 };
 
@@ -65,6 +97,11 @@ export function parseSeedStock(
     if (!personas.has(seed.persona)) throw new Error(`Unknown casting persona: ${seed.persona}`);
     if (!sceneRefs.has(seed.content.scene_ref)) {
       throw new Error(`Unknown session scene: ${seed.content.scene_ref}`);
+    }
+    const sourceEvent = eventsById.get(seed.content.provenance.event_id);
+    if (!sourceEvent) throw new Error(`Unknown session event: ${seed.content.provenance.event_id}`);
+    if (seed.content.provenance.source_kind !== anchorSeedSourceKind(sourceEvent)) {
+      throw new Error('Seed provenance category does not match the recorded event');
     }
     if (
       context.learningApproach === 'andragogy' &&
@@ -90,7 +127,7 @@ export function buildSeedStockPrompt(input: {
   language: string;
   learningApproach: LearningApproach;
   casting: AnchorSeedCastingMember[];
-  events: unknown[];
+  events: AnchorSeedEvent[];
 }): string {
   return `<prompt_version>${ANCHOR_SEED_PROMPT_VERSION}</prompt_version>
 <language>${input.language}</language>
@@ -101,7 +138,7 @@ export function buildSeedStockPrompt(input: {
 
 export const ANCHOR_SEED_SYSTEM_PROMPT = `Tu conçois les relances d'une session de formation qui vient de se terminer.
 À partir du résumé de session fourni, génère un stock de graines d'ancrage mémoriel.
-Chaque graine est signée par une personnalité du casting, respecte son rôle, son mécanisme et sa persona, et cite une scene_ref fournie.
+Chaque graine est signée par une personnalité du casting, respecte son rôle, son mécanisme et sa persona, et cite une scene_ref fournie. Elle doit aussi déclarer l'identifiant exact de l'événement qui fonde la relance et la catégorie fournie par le serveur. N'évoque jamais un fait, une réponse ou une question qui n'est pas dans cet événement. La catégorie indique l'origine : learner_proposition est une parole de l'apprenant ; agent_proposition est une proposition d'agent ; content_presented est un contenu affiché ; new_question est une question nouvellement proposée. Ces quatre origines ne sont jamais interchangeables.
 Respecte strictement learning_approach :
 - andragogy : adulte traité en pair autonome ; partir de son expérience, de ses problèmes réels et d'un transfert immédiatement applicable ; bannir tout ton scolaire, infantilisant ou toute félicitation vague ;
 - pedagogy : guidage explicite, progression structurée et étayage adapté à un apprenant qui a besoin d'être accompagné ;
@@ -111,4 +148,4 @@ Accroche push de 90 caractères maximum, corps de 60 mots maximum, dans la langu
 En arabe, utilise l'arabe standard moderne. En français, emploie des accents irréprochables.
 Toute promotion commerciale, culpabilisation ou comparaison à d'autres apprenants est interdite.
 En andragogie, ne félicite et n'évalue jamais l'adulte, son choix, sa compétence ou son réflexe, même sous forme d'humour. Décris le fait observé sans le qualifier, puis pose une question ouverte ou propose une action immédiatement exécutable. Sont notamment interdits : « bravo », « bien joué », « sage décision », « bon réflexe », « vrai levier », « pilote aguerri », « tu as su », « tu as montré », « c'est déjà », « mieux que les autres ». L'humour vise uniquement la situation, jamais la personne. N'invente ni devise, ni pays, ni contexte, ni chiffre, ni durée, ni seuil absent des événements. Ne présente jamais une simple amplitude entre deux hypothèses comme un écart type.
-Retourne uniquement un tableau JSON conforme à [{"persona":"...","kind":"anecdote|highlight|joke|quiz_reminder","content":{"push_hook":"...","body":"...","scene_ref":"..."}}].`;
+Retourne uniquement un tableau JSON conforme à [{"persona":"...","kind":"anecdote|highlight|joke|quiz_reminder","content":{"push_hook":"...","body":"...","scene_ref":"...","provenance":{"event_id":"...","source_kind":"learner_proposition|agent_proposition|content_presented|new_question"}}}].`;

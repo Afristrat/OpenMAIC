@@ -147,7 +147,7 @@ export function startAllWorkers(): void {
       const { data: delivery, error } = await supabase
         .from('anchor_deliveries')
         .select(
-          'id, delivery_kind, payload, sent_at, seeds(content), anchor_plans(id, user_id, paused, ends_at)',
+          'id, delivery_kind, payload, sent_at, seeds(content, source_event_id, source_kind, source_version), anchor_plans(id, user_id, paused, ends_at)',
         )
         .eq('id', deliveryId)
         .maybeSingle();
@@ -161,6 +161,21 @@ export function startAllWorkers(): void {
       const seedValue = delivery.seeds;
       const seed = Array.isArray(seedValue) ? seedValue[0] : seedValue;
       const content = (seed?.content ?? {}) as Record<string, unknown>;
+      if (
+        delivery.delivery_kind !== 'cold_eval' &&
+        (!seed ||
+          (typeof seed.source_event_id !== 'string' && typeof seed.source_event_id !== 'number') ||
+          ![
+            'learner_proposition',
+            'agent_proposition',
+            'content_presented',
+            'new_question',
+          ].includes(String(seed.source_kind)) ||
+          typeof seed.source_version !== 'string' ||
+          seed.source_version.length === 0)
+      ) {
+        throw new Error('Anchor seed has no verified provenance');
+      }
       const payload = (delivery.payload ?? {}) as Record<string, unknown>;
       const isColdEvaluation = delivery.delivery_kind === 'cold_eval';
       const title = isColdEvaluation ? 'Votre point d’ancrage' : 'Un souvenir de votre session';

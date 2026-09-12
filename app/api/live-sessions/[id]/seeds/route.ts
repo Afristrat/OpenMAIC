@@ -34,15 +34,20 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { id } = await params;
   const { data: session, error: sessionError } = await auth
     .from('live_sessions')
-    .select('id, ended_at, courses(org_id, language, outline), castings(lineup)')
+    .select(
+      'id, ended_at, courses(id, org_id, language, outline, source_manifest_id, updated_at), castings(lineup)',
+    )
     .eq('id', id)
     .eq('user_id', user.id)
     .maybeSingle();
   const course = first(
     session?.courses as Related<{
+      id: string;
       org_id: string;
       language: string;
       outline: Record<string, unknown>;
+      source_manifest_id: string | null;
+      updated_at: string;
     }>,
   );
   const casting = first(session?.castings as Related<{ lineup: Record<string, unknown>[] }>);
@@ -65,14 +70,42 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   try {
     const { data: events, error: eventsError } = await service
       .from('session_events')
-      .select('ts_ms, actor, event_type, payload')
+      .select('id, ts_ms, actor, event_type, payload')
       .eq('session_id', id)
       .order('ts_ms', { ascending: true });
     if (eventsError) throw new Error(eventsError.message);
+    const anchorEvents = (events ?? []).flatMap((event) => {
+      const payload = event.payload as Record<string, unknown>;
+      if (
+        (event.actor !== 'agent' && event.actor !== 'user' && event.actor !== 'system') ||
+        typeof event.event_type !== 'string' ||
+        typeof event.ts_ms !== 'number' ||
+        !payload ||
+        Array.isArray(payload)
+      ) {
+        return [];
+      }
+      const idValue = event.id;
+      if (
+        (typeof idValue !== 'string' && typeof idValue !== 'number') ||
+        !/^\d+$/u.test(String(idValue))
+      ) {
+        return [];
+      }
+      return [
+        {
+          id: String(idValue),
+          actor: event.actor,
+          event_type: event.event_type,
+          payload,
+          ts_ms: event.ts_ms,
+        },
+      ];
+    });
     const sceneRefs = [
       ...new Set(
-        (events ?? [])
-          .map((event) => event.payload as Record<string, unknown>)
+        anchorEvents
+          .map((event) => event.payload)
           .map((payload) => payload.sceneId)
           .filter((value): value is string => typeof value === 'string'),
       ),
@@ -96,7 +129,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       ];
     });
     const personas = seedCasting.map((agent) => agent.name);
-    if (sceneRefs.length === 0 || seedCasting.length === 0) {
+    if (sceneRefs.length === 0 || seedCasting.length === 0 || anchorEvents.length === 0) {
       throw new Error('Session events and casting personas are required');
     }
     const storedApproach = course.outline?.learningApproach;
@@ -114,7 +147,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             language: course.language,
             learningApproach,
             casting: seedCasting,
-            events: events ?? [],
+            events: anchorEvents,
           }),
         },
         'anchor-seeds',
@@ -124,7 +157,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     );
     const seeds = parseSeedStock(result.text, {
       learningApproach,
-      events: events ?? [],
+      events: anchorEvents,
       personas,
       sceneRefs,
     });
@@ -134,6 +167,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         persona: seed.persona,
         kind: seed.kind,
         content: seed.content,
+        source_event_id: seed.content.provenance.event_id,
+        source_kind: seed.content.provenance.source_kind,
+        source_version: course.source_manifest_id
+          ? `manifest:${course.source_manifest_id}`
+          : `course:${course.id}@${course.updated_at}`,
       })),
     );
     if (insertError) throw new Error(insertError.message);

@@ -13,8 +13,23 @@ const valid = [
 ].map(({ kind, index }) => ({
   persona: index % 2 ? 'Analyste' : 'Penseur',
   kind,
-  content: { push_hook: `Accroche ${kind}`, body: 'Corps ancré.', scene_ref: 'scene-1' },
+  content: {
+    push_hook: `Accroche ${kind}`,
+    body: 'Corps ancré.',
+    scene_ref: 'scene-1',
+    provenance: { event_id: '1', source_kind: 'learner_proposition' },
+  },
 }));
+
+const recordedEvents = [
+  {
+    id: '1',
+    actor: 'user' as const,
+    event_type: 'learner_response',
+    payload: { sceneId: 'scene-1', utterance: 'Le délai observé était de 30 jours.' },
+    ts_ms: 30,
+  },
+];
 
 describe('anchoring seed stock', () => {
   it('transmet l’approche et distingue explicitement l’andragogie', () => {
@@ -57,7 +72,7 @@ describe('anchoring seed stock', () => {
     expect(
       parseSeedStock(JSON.stringify(valid), {
         learningApproach: 'andragogy',
-        events: [],
+        events: recordedEvents,
         personas: ['Penseur', 'Analyste'],
         sceneRefs: ['scene-1'],
       }),
@@ -68,7 +83,7 @@ describe('anchoring seed stock', () => {
     expect(() =>
       parseSeedStock(JSON.stringify(valid.slice(0, 11)), {
         learningApproach: 'andragogy',
-        events: [],
+        events: recordedEvents,
         personas: ['Penseur', 'Analyste'],
         sceneRefs: ['scene-1'],
       }),
@@ -76,7 +91,7 @@ describe('anchoring seed stock', () => {
     expect(() =>
       parseSeedStock(JSON.stringify([{ ...valid[0], persona: 'Inconnue' }, ...valid.slice(1)]), {
         learningApproach: 'andragogy',
-        events: [],
+        events: recordedEvents,
         personas: ['Penseur', 'Analyste'],
         sceneRefs: ['scene-1'],
       }),
@@ -107,7 +122,7 @@ describe('anchoring seed stock', () => {
     expect(() =>
       parseSeedStock(JSON.stringify(evaluative), {
         learningApproach: 'andragogy',
-        events: [],
+        events: recordedEvents,
         personas: ['Penseur', 'Analyste'],
         sceneRefs: ['scene-1'],
       }),
@@ -115,7 +130,7 @@ describe('anchoring seed stock', () => {
     expect(
       parseSeedStock(JSON.stringify(evaluative), {
         learningApproach: 'pedagogy',
-        events: [],
+        events: recordedEvents,
         personas: ['Penseur', 'Analyste'],
         sceneRefs: ['scene-1'],
       }),
@@ -132,10 +147,52 @@ describe('anchoring seed stock', () => {
     expect(() =>
       parseSeedStock(JSON.stringify(invented), {
         learningApproach: 'andragogy',
-        events: [{ payload: { utterance: 'Le délai observé était de 30 jours.' }, ts_ms: 45 }],
+        events: recordedEvents,
         personas: ['Penseur', 'Analyste'],
         sceneRefs: ['scene-1'],
       }),
     ).toThrow('Numeric claim absent from session: 45');
+  });
+
+  it('refuse une provenance absente ou requalifiée par le modèle', () => {
+    const unknownEvent = valid.map((seed, index) =>
+      index === 0
+        ? {
+            ...seed,
+            content: {
+              ...seed.content,
+              provenance: { event_id: '999', source_kind: 'learner_proposition' },
+            },
+          }
+        : seed,
+    );
+    expect(() =>
+      parseSeedStock(JSON.stringify(unknownEvent), {
+        learningApproach: 'andragogy',
+        events: recordedEvents,
+        personas: ['Penseur', 'Analyste'],
+        sceneRefs: ['scene-1'],
+      }),
+    ).toThrow('Unknown session event: 999');
+
+    const mismatchedKind = valid.map((seed, index) =>
+      index === 0
+        ? {
+            ...seed,
+            content: {
+              ...seed.content,
+              provenance: { event_id: '1', source_kind: 'agent_proposition' },
+            },
+          }
+        : seed,
+    );
+    expect(() =>
+      parseSeedStock(JSON.stringify(mismatchedKind), {
+        learningApproach: 'andragogy',
+        events: recordedEvents,
+        personas: ['Penseur', 'Analyste'],
+        sceneRefs: ['scene-1'],
+      }),
+    ).toThrow('Seed provenance category does not match the recorded event');
   });
 });

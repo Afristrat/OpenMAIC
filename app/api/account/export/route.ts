@@ -27,6 +27,7 @@ const sections = [
   'anchor_plans',
   'anchor_deliveries',
   'seeds',
+  'anchor_reflections',
   'seed_generation_runs',
   'classroom_intervention_decisions',
   'review_notification_preferences',
@@ -81,18 +82,20 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const service = createServiceSupabaseClient();
     const read = async (section: string, cursor: string | null) => {
-      const result = await service
-        .rpc(
-          section === 'director_receipts'
-            ? 'read_account_director_export_page'
+      const rpcName =
+        section === 'director_receipts'
+          ? 'read_account_director_export_page'
+          : section === 'anchor_reflections'
+            ? 'read_anchor_reflection_export_page'
             : ['classroom_quiz_attempts', 'discussion_patterns'].includes(section)
               ? 'read_account_discussion_export_page'
-              : 'read_account_export_page',
-          {
-            p_actor: user.id,
-            p_section: section,
-            p_after: cursor,
-          },
+              : 'read_account_export_page';
+      const result = await service
+        .rpc(
+          rpcName,
+          section === 'anchor_reflections'
+            ? { p_actor: user.id, p_after: cursor }
+            : { p_actor: user.id, p_section: section, p_after: cursor },
         )
         .abortSignal(
           AbortSignal.any([request.signal, cancelled.signal, AbortSignal.timeout(5000)]),

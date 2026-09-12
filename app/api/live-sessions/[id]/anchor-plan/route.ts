@@ -12,6 +12,14 @@ const anchorSeedCandidatesSchema = z.array(
   z.object({
     id: z.string().uuid(),
     kind: z.enum(['anecdote', 'highlight', 'joke', 'quiz_reminder']),
+    source_event_id: z.union([z.string().regex(/^\d+$/), z.number().int().nonnegative()]),
+    source_kind: z.enum([
+      'learner_proposition',
+      'agent_proposition',
+      'content_presented',
+      'new_question',
+    ]),
+    source_version: z.string().trim().min(1).max(512),
   }),
 );
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -59,7 +67,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (reviewCardError) return apiError('INTERNAL_ERROR', 500, 'Échec de lecture des quiz espacés');
   const { data: seeds, error: seedError } = await service
     .from('seeds')
-    .select('id, kind')
+    .select('id, kind, source_event_id, source_kind, source_version')
     .eq('session_id', sessionId)
     .order('created_at', { ascending: true });
   if (seedError) return apiError('INTERNAL_ERROR', 500, 'Échec de lecture du stock d’ancrage');
