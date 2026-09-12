@@ -1,6 +1,6 @@
 # S6-014 — Inventaire de rotation Qalem sans valeurs
 
-Date : 12 septembre 2026  
+Date : 12 septembre 2026
 Statut : préparation autorisée ; **aucune rotation exécutée**.
 
 ## Méthode et limite
