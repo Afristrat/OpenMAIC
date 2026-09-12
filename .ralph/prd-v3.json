@@ -1850,7 +1850,7 @@
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Après l’incident du 12 septembre, les secrets de webhooks des trois applications Qalem, les quatre enregistrements capture, les huit enregistrements LTI, la paire VAPID Web Push et les clés internes LRS/xAPI ont été remplacés en configuration persistante puis vérifiés par métadonnées. Les contrôles préalables ont confirmé zéro abonnement Push, zéro configuration LRS et zéro événement xAPI à préserver. Ces rotations restent inactives jusqu’au redéploiement coordonné. Restent l’inventaire complet des catégories et consommateurs, les rotations contrôlées des clés fournisseurs, puis les recettes de non-régression et la révocation vérifiable des anciennes valeurs. S6-014 n’est pas clôturée.",
+      "gap": "Après l’incident du 12 septembre, les secrets de webhooks des trois applications Qalem, les quatre enregistrements capture, les huit enregistrements LTI, la paire VAPID Web Push et les clés internes LRS/xAPI ont été remplacés en configuration persistante puis vérifiés par métadonnées. Les contrôles préalables ont confirmé zéro abonnement Push, zéro configuration LRS et zéro événement xAPI à préserver. Une comparaison de périmètre en mémoire identifie les catégories réemployées hors Qalem, sans exposer de valeur ; elle ne démontre pas l’exclusivité d’un compte fournisseur. Ces rotations restent inactives jusqu’au redéploiement coordonné. Restent les rotations contrôlées des clés fournisseurs, les recettes de non-régression et la révocation vérifiable des anciennes valeurs. S6-014 n’est pas clôturée.",
       "evidence": [
         "AGENTS.md#Règles du projet",
         "thread:01a005ad-360e-7710-aeb5-bf5fc84c67b6",

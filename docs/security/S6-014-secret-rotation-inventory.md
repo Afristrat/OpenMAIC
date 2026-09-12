@@ -48,6 +48,24 @@ ni substitution manuelle de valeurs.
    été confirmés ; consigner date, catégorie, consommateurs, résultat et
    rollback, jamais la valeur.
 
+## Comparaison de périmètre Coolify du 12 septembre 2026
+
+Une comparaison a été effectuée uniquement en mémoire dans Coolify : chaque
+valeur Qalem déchiffrée y a été comparée à des variables portant le même nom
+hors des trois applications Qalem, puis seul le nombre de correspondances a
+été produit. Aucune valeur, empreinte ou nom d’autre application n’a été
+conservé.
+
+Des réemplois hors Qalem ont été constatés pour les catégories ASR, Crawler,
+Mishkāt, Redis, Resend, Serper, rôle de service Supabase et TTS VoxCPM. Elles
+ne peuvent donc pas être révoquées depuis ce chantier.
+
+Aucun réemploi sous le même nom de variable n’a été constaté dans Coolify pour
+Evolution, les clés image OpenAI, la clé OpenAI générale et le secret du
+sidecar vidéo. Cela ne prouve pas l’exclusivité du compte fournisseur ni celle
+d’un consommateur hors Coolify : une rotation exige toujours la gestion du
+fournisseur et la recette de tous les consommateurs Qalem.
+
 ## Conditions de clôture S6-014
 
 - Le broker est à nouveau disponible et utilisé avec le moindre privilège.
