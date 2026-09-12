@@ -1,13 +1,14 @@
 # S6-014 — Inventaire de rotation Qalem sans valeurs
 
 Date : 12 septembre 2026
-Statut : préparation autorisée ; **aucune rotation exécutée**.
+Statut : inventaire versionné et rotations partielles préparées ; les webhooks, le jeton capture, LTI et VAPID ont été remplacés en configuration persistante le 12 septembre 2026. Aucun de ces remplacements n’est effectif avant redéploiement coordonné ; les clés fournisseurs restent ouvertes.
 
 ## Méthode et limite
 
-Cet inventaire provient exclusivement des noms de variables déclarés dans
-`.env.example` et de leurs consommateurs versionnés. Aucune valeur, longueur,
-endpoint privé, fichier d’environnement, conteneur ou coffre n’a été lu.
+L’inventaire initial provient exclusivement des noms de variables déclarés dans
+`.env.example` et de leurs consommateurs versionnés. Les contrôles ultérieurs
+de rotation se limitent à des métadonnées de lignes et d’enveloppes chiffrées.
+Aucune valeur, endpoint privé, fichier d’environnement ou coffre n’a été lu.
 La présence d’un nom ne prouve pas qu’il est configuré ou utilisé en production.
 Une clé déclarée mais non injectée ne doit pas être rotatée inutilement.
 
