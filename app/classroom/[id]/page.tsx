@@ -140,7 +140,14 @@ export default function ClassroomDetailPage() {
               });
               serverBackedRef.current = true;
               const serverSnapshot = currentSnapshot();
-              if (serverSnapshot) await saveStageData(classroomId, serverSnapshot);
+              // The server copy just became authoritative. IndexedDB is an offline cache,
+              // never an availability gate: an unavailable or stalled local database must
+              // not leave an authenticated learner on the classroom loading screen.
+              if (serverSnapshot) {
+                void saveStageData(classroomId, serverSnapshot).catch((cacheError) => {
+                  log.warn('Authoritative classroom cache write failed:', cacheError);
+                });
+              }
               log.info('Loaded authoritative server-side classroom:', classroomId);
             }
 
