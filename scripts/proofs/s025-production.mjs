@@ -360,8 +360,10 @@ try {
     if (cardCount === 2) break;
     await page.waitForTimeout(250);
   }
+  const quizResultCount = await count('quiz_results', resultQuery);
+  console.log(JSON.stringify({ stage: 'persistance-quiz', cardCount, quizResultCount }));
   assert.equal(cardCount, 2, 'Wrong and hesitant answers must create two cards');
-  assert.equal(await count('quiz_results', resultQuery), 1);
+  assert.equal(quizResultCount, 1);
   stage = 'idempotence';
   await page.getByRole('button', { name: /^(Réessayer|Retry)$/ }).click();
   await page.getByRole('button', { name: 'Démarrer le quiz', exact: true }).click();
