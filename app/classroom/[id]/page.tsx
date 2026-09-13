@@ -164,6 +164,12 @@ export default function ClassroomDetailPage() {
               log.info('Loaded authoritative server-side classroom:', classroomId);
             }
 
+            // The classroom is ready as soon as its authorized server snapshot
+            // is in the store. Cache and agent enrichments below are optional
+            // conveniences and must not hold the learner on the loading screen.
+            setInteractionAccessResolved(true);
+            setLoading(false);
+
             // Hydrate server-generated agents into IndexedDB + registry.
             // Don't set selectedAgentIds here — the general agent
             // restoration logic below (Path 2) handles it uniformly.
