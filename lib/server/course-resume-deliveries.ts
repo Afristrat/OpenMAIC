@@ -78,7 +78,10 @@ export async function deliverCourseResumeDelivery(deliveryId: string): Promise<v
     .eq('user_id', delivery.user_id)
     .maybeSingle();
   if (coursePreferencesError) throw new Error('Course notification preferences lookup failed');
-  if (coursePreferences?.paused_until && new Date(coursePreferences.paused_until).getTime() > Date.now()) {
+  if (
+    coursePreferences?.paused_until &&
+    new Date(coursePreferences.paused_until).getTime() > Date.now()
+  ) {
     return;
   }
   if (

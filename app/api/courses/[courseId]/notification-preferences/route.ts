@@ -49,7 +49,8 @@ export async function PUT(
   if (!trustedOrigin(request)) return apiError('INVALID_REQUEST', 403, 'Origine non autorisée');
   const params = paramsSchema.safeParse(await context.params);
   const body = bodySchema.safeParse(await request.json().catch(() => null));
-  if (!params.success || !body.success) return apiError('INVALID_REQUEST', 400, 'Préférences invalides');
+  if (!params.success || !body.success)
+    return apiError('INVALID_REQUEST', 400, 'Préférences invalides');
   const { data, error } = await createServiceSupabaseClient()
     .from('course_notification_preferences')
     .upsert(
