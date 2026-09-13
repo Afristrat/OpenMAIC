@@ -117,7 +117,7 @@ interface StageState {
 
   // Storage
   saveToStorage: () => Promise<boolean>;
-  loadFromStorage: (stageId: string) => Promise<void>;
+  loadFromStorage: (stageId: string, signal?: AbortSignal) => Promise<void>;
   clearStore: () => void;
 }
 
@@ -402,7 +402,7 @@ const useStageStoreBase = create<StageState>()((set, get) => ({
     }
   },
 
-  loadFromStorage: async (stageId: string) => {
+  loadFromStorage: async (stageId: string, signal?: AbortSignal) => {
     try {
       // Skip IndexedDB load if the store already has this stage with scenes
       // (e.g. navigated from generation-preview with fresh in-memory data)
@@ -414,14 +414,17 @@ const useStageStoreBase = create<StageState>()((set, get) => ({
 
       const { loadStageData } = await import('@/lib/utils/stage-storage');
       const data = await loadStageData(stageId);
+      if (signal?.aborted) return;
 
       // Load outlines for resume-on-refresh
       const { db } = await import('@/lib/utils/database');
       const outlinesRecord = await db.stageOutlines.get(stageId);
+      if (signal?.aborted) return;
       const outlines = outlinesRecord?.outlines || [];
       const persistedComplete = outlinesRecord?.generationComplete ?? false;
 
       if (data) {
+        if (signal?.aborted) return;
         // Normalize legacy slide content (missing schemaVersion) at the load
         // boundary, same as setScenes/addScene — IndexedDB snapshots predate
         // the schema field, so they must be migrated on the way in.

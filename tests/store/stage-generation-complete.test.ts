@@ -241,6 +241,36 @@ describe('generationComplete', () => {
     expect(useStageStore.getState().generatingOutlines).toEqual([]);
   });
 
+  it('does not hydrate a late cache read after the authoritative load aborts it', async () => {
+    let resolveCacheRead!: (value: {
+      stage: Stage;
+      scenes: Scene[];
+      currentSceneId: string;
+      chats: [];
+    }) => void;
+    loadStageDataMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveCacheRead = resolve;
+        }),
+    );
+    const controller = new AbortController();
+    const loading = useStageStore.getState().loadFromStorage('stage-1', controller.signal);
+
+    await vi.waitFor(() => expect(loadStageDataMock).toHaveBeenCalled());
+    controller.abort();
+    resolveCacheRead({
+      stage: makeStage(),
+      scenes: [makeSlideScene('cached', 1)],
+      currentSceneId: 'cached',
+      chats: [],
+    });
+    await loading;
+
+    expect(useStageStore.getState().stage).toBeNull();
+    expect(stageOutlinesGet).not.toHaveBeenCalled();
+  });
+
   // Backward-compat: a deck generated before the flag existed has no
   // generationComplete in its record. If every outline already has a scene it
   // is fully generated, so it must self-heal to complete (and persist) — else

@@ -68,10 +68,20 @@ export default function ClassroomDetailPage() {
     loadAbortRef.current?.abort();
     const controller = new AbortController();
     loadAbortRef.current = controller;
+    const cacheController = new AbortController();
+    controller.signal.addEventListener('abort', () => cacheController.abort(), { once: true });
     setInteractionAccessResolved(false);
     setCanViewSources(false);
     try {
-      await loadFromStorage(classroomId);
+      const cacheLoad = loadFromStorage(classroomId, cacheController.signal).catch((cacheError) => {
+        log.warn('Initial classroom cache read failed:', cacheError);
+      });
+      // Give a healthy local cache a brief head start for offline continuity, but
+      // never let an unavailable IndexedDB block the authoritative server read.
+      await Promise.race([
+        cacheLoad,
+        new Promise<void>((resolve) => window.setTimeout(resolve, 250)),
+      ]);
       if (controller.signal.aborted) return;
       // A valid local snapshot can hydrate immediately, but its interactive
       // controls remain hidden until the server resolves access. Otherwise a
@@ -98,6 +108,9 @@ export default function ClassroomDetailPage() {
           const json = await res.json();
           if (controller.signal.aborted) return;
           if (json.success && json.classroom) {
+            // The server snapshot is authoritative. A late IndexedDB read must
+            // not overwrite it after the learner has entered the classroom.
+            cacheController.abort();
             setCanEdit(Boolean(json.canEdit));
             setCanViewSources(Boolean(json.canViewSources));
             setInteractionOrganizationId(
