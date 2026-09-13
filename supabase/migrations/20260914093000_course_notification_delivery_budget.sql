@@ -33,7 +33,7 @@ DECLARE
   global_consumed INTEGER;
   course_consumed INTEGER;
 BEGIN
-  IF target_source <> 'course_resume_delivery' THEN
+  IF target_source NOT IN ('anchor_delivery', 'course_resume_delivery') THEN
     RAISE EXCEPTION 'Unsupported course notification delivery source' USING ERRCODE = '22023';
   END IF;
 

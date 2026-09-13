@@ -185,7 +185,7 @@ export function startAllWorkers(): void {
       const { data: delivery, error } = await supabase
         .from('anchor_deliveries')
         .select(
-          'id, delivery_kind, payload, sent_at, seeds(content, source_event_id, source_kind, source_version), anchor_plans(id, user_id, paused, ends_at)',
+          'id, delivery_kind, payload, sent_at, seeds(content, source_event_id, source_kind, source_version), anchor_plans(id, user_id, paused, ends_at, live_sessions(course_id))',
         )
         .eq('id', deliveryId)
         .maybeSingle();
@@ -195,6 +195,9 @@ export function startAllWorkers(): void {
       const planValue = delivery.anchor_plans;
       const plan = Array.isArray(planValue) ? planValue[0] : planValue;
       if (!plan || plan.paused || new Date(plan.ends_at).getTime() < Date.now()) return;
+      const sessionValue = plan.live_sessions;
+      const session = Array.isArray(sessionValue) ? sessionValue[0] : sessionValue;
+      const courseId = session && typeof session.course_id === 'string' ? session.course_id : undefined;
 
       const { data: preferences, error: preferencesError } = await supabase
         .from('review_notification_preferences')
@@ -219,6 +222,7 @@ export function startAllWorkers(): void {
       if (
         !(await claimNotificationDeliverySlot({
           userId: plan.user_id,
+          ...(courseId ? { courseId } : {}),
           source: 'anchor_delivery',
           sourceId: delivery.id,
         }))
