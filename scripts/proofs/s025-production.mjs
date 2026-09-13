@@ -173,7 +173,7 @@ async function count(table, query) {
   const response = await json(`${supabaseUrl}/rest/v1/${table}?${query}`, {
     headers: { ...headers(), Prefer: 'count=exact', Range: '0-0' },
   });
-  assert.equal(response.status, 200);
+  assert([200, 206].includes(response.status), `Unexpected ${table} count status: ${response.status}`);
   const range = response.headers.get('content-range') ?? '';
   const total = Number(range.split('/')[1]);
   assert(Number.isInteger(total), `Missing exact count for ${table}`);
