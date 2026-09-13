@@ -307,7 +307,7 @@ try {
     throw error;
   }
   stage = 'attente-démarrage-quiz';
-  const start = page.getByRole('button', { name: 'Démarrer le quiz', exact: true });
+  const start = page.getByRole('button', { name: /^(Démarrer le quiz|Start Quiz)$/ });
   try {
     await start.waitFor({ state: 'visible', timeout: 30_000 });
   } catch (error) {
@@ -318,7 +318,7 @@ try {
     throw error;
   }
   await start.click();
-  const submit = page.getByRole('button', { name: 'Soumettre les réponses', exact: true });
+  const submit = page.getByRole('button', { name: /^(Soumettre les réponses|Submit Answers)$/ });
   await submit.waitFor({ state: 'visible', timeout: 30_000 });
   await page
     .getByRole('group', { name: 'Quel choix est correct dans le cas de recette ?', exact: true })
@@ -347,7 +347,7 @@ try {
   assert.equal(cardCount, 2, 'Wrong and hesitant answers must create two cards');
   assert.equal(await count('quiz_results', resultQuery), 1);
   stage = 'idempotence';
-  await page.getByRole('button', { name: 'Réessayer', exact: true }).click();
+  await page.getByRole('button', { name: /^(Réessayer|Retry)$/ }).click();
   await page.getByRole('button', { name: 'Démarrer le quiz', exact: true }).click();
   await page
     .getByRole('group', { name: 'Quel choix est correct dans le cas de recette ?', exact: true })
