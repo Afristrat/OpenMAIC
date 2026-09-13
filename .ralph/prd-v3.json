@@ -2185,8 +2185,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux recetter whisper sur de la parole réelle et le parcours microphone afin que le parcours promis soit réellement utilisable.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P1",
-      "status": "completed",
-      "passes": true,
+      "status": "to_validate",
+      "passes": false,
       "source": {
         "type": "request_or_observed_gap",
         "date": "2026-08-26"
