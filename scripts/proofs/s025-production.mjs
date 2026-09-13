@@ -256,7 +256,7 @@ try {
     }
   });
   page.on('response', (response) => {
-    if (response.status() >= 500) {
+    if (response.status() >= 400) {
       failedResourcePaths.push(`${response.status()}:${new URL(response.url()).pathname}`);
     }
   });
