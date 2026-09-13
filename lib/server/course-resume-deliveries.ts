@@ -95,6 +95,7 @@ export async function deliverCourseResumeDelivery(deliveryId: string): Promise<v
   if (
     !(await claimNotificationDeliverySlot({
       userId: delivery.user_id,
+      courseId: delivery.course_id,
       source: 'course_resume_delivery',
       sourceId: delivery.id,
     }))

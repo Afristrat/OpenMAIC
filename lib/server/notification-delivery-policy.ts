@@ -13,18 +13,27 @@ export type NotificationDeliverySource =
  */
 export async function claimNotificationDeliverySlot(input: {
   userId: string;
+  courseId?: string;
   source: NotificationDeliverySource;
   sourceId: string;
   targetTime?: Date;
 }): Promise<boolean> {
   const targetTime = input.targetTime ?? new Date();
   const service = createServiceSupabaseClient();
-  const { data, error } = await service.rpc('claim_notification_delivery_slot', {
-    target_user_id: input.userId,
-    target_source: input.source,
-    target_source_id: input.sourceId,
-    target_time: targetTime.toISOString(),
-  });
+  const { data, error } = input.courseId
+    ? await service.rpc('claim_course_notification_delivery_slot', {
+        target_user_id: input.userId,
+        target_course_id: input.courseId,
+        target_source: input.source,
+        target_source_id: input.sourceId,
+        target_time: targetTime.toISOString(),
+      })
+    : await service.rpc('claim_notification_delivery_slot', {
+        target_user_id: input.userId,
+        target_source: input.source,
+        target_source_id: input.sourceId,
+        target_time: targetTime.toISOString(),
+      });
   if (error) throw new Error(`Notification delivery policy claim failed: ${error.message}`);
   return data === true;
 }

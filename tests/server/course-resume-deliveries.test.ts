@@ -117,6 +117,7 @@ describe('course resume deliveries', () => {
 
     expect(mocks.claimSlot).toHaveBeenCalledWith({
       userId: delivery.user_id,
+      courseId: delivery.course_id,
       source: 'course_resume_delivery',
       sourceId: delivery.id,
     });
@@ -130,5 +131,30 @@ describe('course resume deliveries', () => {
       }),
     );
     expect(complete.update).toHaveBeenCalledWith({ sent_at: expect.any(String) });
+  });
+
+  it('does not claim a shared budget while this formation is paused', async () => {
+    const lookup = query({ data: delivery, error: null });
+    const resume = query({
+      data: { ...delivery, org_id: '00000000-0000-4000-8000-000000000004' },
+      error: null,
+    });
+    const preferences = query({ data: null, error: null });
+    const coursePreferences = query({
+      data: { paused_until: '2999-01-01T00:00:00.000Z' },
+      error: null,
+    });
+    mocks.from.mockImplementation((table: string) => {
+      if (table === 'course_resume_deliveries' && mocks.from.mock.calls.length === 1) return lookup;
+      if (table === 'learner_course_resumes') return resume;
+      if (table === 'review_notification_preferences') return preferences;
+      if (table === 'course_notification_preferences') return coursePreferences;
+      throw new Error(`Unexpected table ${table}`);
+    });
+
+    await deliverCourseResumeDelivery(delivery.id);
+
+    expect(mocks.claimSlot).not.toHaveBeenCalled();
+    expect(mocks.push).not.toHaveBeenCalled();
   });
 });
