@@ -4952,7 +4952,9 @@
         "date": "2026-09-12"
       },
       "sourceDependencies": [],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-13 — SHA e4501980bdcd092d6426bdf07189ed2b36f00ff8 : pnpm check, typecheck, lint, test et build verts sur clone ServeurIA ; 192/193 E2E verts. L’unique échec est un délai intermittent du sélecteur Diwan fr-FR, reproduit ensuite vert isolément ; aucun déploiement ni migration de reprise appliqué. S3-012 reste ouverte : état riche par activité, réglage visible S3-013 et recette web/mobile réelle à produire."
+      ],
       "executionAllowed": true,
       "executionDecision": "2026-09-12 — Objectif exhaustif demandé par Amine : compléments multisources et mobiles conservés, sans clôture ni activation déduite.",
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
