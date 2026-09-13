@@ -22,9 +22,9 @@ function isTrustedQuizSubmissionOrigin(request: NextRequest): boolean {
   }
 
   // The public Qalem route is deliberately pinned: a stale deployment setting
-  // must not turn an authenticated browser submission into a 403, nor may an
-  // arbitrary Host header become an accepted CSRF origin.
-  return origin === 'https://qalem.ma' && new URL(request.url).origin === 'https://qalem.ma';
+  // or an internal reverse-proxy URL must not turn an authenticated browser
+  // submission into a 403, nor may an arbitrary origin be accepted for CSRF.
+  return origin === 'https://qalem.ma';
 }
 
 export async function POST(request: NextRequest) {
