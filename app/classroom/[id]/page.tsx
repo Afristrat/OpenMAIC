@@ -1,6 +1,7 @@
 'use client';
 
 import { Stage } from '@/components/stage';
+import { CourseNotificationPreferences } from '@/components/courses/course-notification-preferences';
 import { ThemeProvider } from '@/lib/hooks/use-theme';
 import { useStageStore } from '@/lib/store';
 import { loadImageMapping } from '@/lib/utils/image-storage';
@@ -490,12 +491,15 @@ export default function ClassroomDetailPage() {
               </div>
             </div>
           ) : (
-            <Stage
-              onRetryOutline={retrySingleOutline}
-              canEdit={canEdit}
-              canViewSources={canViewSources}
-              interactionOrganizationId={interactionOrganizationId}
-            />
+            <>
+              {learnerCourseId && <CourseNotificationPreferences courseId={learnerCourseId} />}
+              <Stage
+                onRetryOutline={retrySingleOutline}
+                canEdit={canEdit}
+                canViewSources={canViewSources}
+                interactionOrganizationId={interactionOrganizationId}
+              />
+            </>
           )}
         </div>
       </MediaStageProvider>
