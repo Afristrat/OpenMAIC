@@ -39,7 +39,10 @@ describe('learner course resume API', () => {
       activity_state: { draftAnswer: 'B' },
       position_ms: 12000,
     });
-    mocks.complete.mockResolvedValue({ course_id: courseId, completed_at: '2026-09-13T22:00:00.000Z' });
+    mocks.complete.mockResolvedValue({
+      course_id: courseId,
+      completed_at: '2026-09-13T22:00:00.000Z',
+    });
   });
 
   it('records only an authenticated, same-origin learner position', async () => {
