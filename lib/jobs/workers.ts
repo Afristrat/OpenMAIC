@@ -36,13 +36,16 @@ import type {
   ClassroomGenerationJobData,
   ClassroomInteractionJobData,
   ClassroomPlanJobData,
+  CourseResumeDeliveryJobData,
   ReviewNotificationJobData,
 } from '@/lib/jobs/queue';
 import { PermitPool } from '@/lib/jobs/permit-pool';
 import {
   configureReviewNotificationScheduler,
   configureAnchorDeliveryScheduler,
+  configureCourseResumeDeliveryScheduler,
   enqueueAnchorDelivery,
+  enqueueCourseResumeDelivery,
   configureXapiDeliveryScheduler,
   enqueueReviewNotificationDelivery,
   enqueueTransmissionAudioWatermark,
@@ -62,6 +65,10 @@ import {
   claimDueReviewNotifications,
   deliverReviewNotification,
 } from '@/lib/server/review-notifications';
+import {
+  claimDueCourseResumeDeliveries,
+  deliverCourseResumeDelivery,
+} from '@/lib/server/course-resume-deliveries';
 
 const log = createLogger('Workers');
 
@@ -293,6 +300,22 @@ export function startAllWorkers(): void {
       const { deliveryId } = job.data as ReviewNotificationJobData;
       await deliverReviewNotification(deliveryId);
       incrementCounter('qalem_jobs_processed_total', { queue: 'review-notification' });
+    },
+    workerOptions(),
+  );
+
+  const courseResumeDeliveryWorker = new Worker(
+    'course-resume-delivery',
+    async (job: Job) => {
+      if (job.name === 'scan') {
+        const deliveries = await claimDueCourseResumeDeliveries();
+        await Promise.all(deliveries.map((delivery) => enqueueCourseResumeDelivery({ deliveryId: delivery.id })));
+        incrementCounter('qalem_jobs_processed_total', { queue: 'course-resume-delivery-scan' });
+        return;
+      }
+      const { deliveryId } = job.data as CourseResumeDeliveryJobData;
+      await deliverCourseResumeDelivery(deliveryId);
+      incrementCounter('qalem_jobs_processed_total', { queue: 'course-resume-delivery' });
     },
     workerOptions(),
   );
@@ -800,6 +823,7 @@ export function startAllWorkers(): void {
   workers = [
     webhookDeliveryWorker,
     anchorDeliveryWorker,
+    courseResumeDeliveryWorker,
     reviewNotificationWorker,
     xapiDeliveryWorker,
     classroomWorker,
@@ -819,6 +843,12 @@ export function startAllWorkers(): void {
   void configureAnchorDeliveryScheduler().catch((error: unknown) => {
     log.error(
       'Anchor delivery scheduler configuration failed:',
+      error instanceof Error ? error.message : String(error),
+    );
+  });
+  void configureCourseResumeDeliveryScheduler().catch((error: unknown) => {
+    log.error(
+      'Course resume delivery scheduler configuration failed:',
       error instanceof Error ? error.message : String(error),
     );
   });

@@ -971,6 +971,10 @@ export interface Database {
         Args: { p_actor: string; p_course: string; p_org: string };
         Returns: LearnerCourseResume[];
       };
+      claim_due_course_resume_deliveries: {
+        Args: { p_now?: string };
+        Returns: CourseResumeDelivery[];
+      };
     };
     Enums: Record<string, never>;
   };

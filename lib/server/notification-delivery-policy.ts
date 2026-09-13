@@ -1,6 +1,9 @@
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 
-export type NotificationDeliverySource = 'anchor_delivery' | 'review_notification';
+export type NotificationDeliverySource =
+  | 'anchor_delivery'
+  | 'course_resume_delivery'
+  | 'review_notification';
 
 /**
  * Atomically reserves one learner-visible solicitation. The reservation is
