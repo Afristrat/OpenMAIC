@@ -69,6 +69,7 @@ export type JobType =
   | 'export-job'
   | 'webhook-delivery'
   | 'anchor-delivery'
+  | 'course-resume-delivery'
   | 'review-notification'
   | 'xapi-delivery'
   | 'transmission'
@@ -86,6 +87,10 @@ export interface ClassroomPlanJobData {
 }
 
 export interface AnchorDeliveryJobData {
+  deliveryId: string;
+}
+
+export interface CourseResumeDeliveryJobData {
   deliveryId: string;
 }
 
@@ -130,6 +135,7 @@ export interface JobQueues {
   transmissionVisualWatermark: Queue;
   webhookDelivery: Queue;
   anchorDelivery: Queue;
+  courseResumeDelivery: Queue;
   reviewNotification: Queue;
   xapiDelivery: Queue;
 }
@@ -152,6 +158,7 @@ export function getJobQueues(): JobQueues {
     transmissionVisualWatermark: new Queue('transmission-visual-watermark', { connection }),
     webhookDelivery: new Queue('webhook-delivery', { connection }),
     anchorDelivery: new Queue('anchor-delivery', { connection }),
+    courseResumeDelivery: new Queue('course-resume-delivery', { connection }),
     reviewNotification: new Queue('review-notification', { connection }),
     xapiDelivery: new Queue('xapi-delivery', { connection }),
   };
@@ -282,6 +289,42 @@ export async function configureAnchorDeliveryScheduler(): Promise<void> {
       jobId: `anchor-delivery-scan-${Math.floor(Date.now() / (15 * 60 * 1000))}`,
     },
   );
+}
+
+/**
+ * Requeues learner resume deliveries after a worker restart. The delivery id
+ * remains deterministic, so a scan cannot duplicate a pending solicitation.
+ */
+export async function configureCourseResumeDeliveryScheduler(): Promise<void> {
+  const queue = getJobQueues().courseResumeDelivery;
+  await queue.upsertJobScheduler(
+    'course-resume-delivery-quarter-hourly',
+    { every: 15 * 60 * 1000 },
+    { name: 'scan', data: {}, opts: durableJobOptions },
+  );
+  await queue.add(
+    'scan',
+    {},
+    {
+      ...durableJobOptions,
+      jobId: `course-resume-delivery-scan-${Math.floor(Date.now() / (15 * 60 * 1000))}`,
+    },
+  );
+}
+
+export async function enqueueCourseResumeDelivery(
+  data: CourseResumeDeliveryJobData,
+): Promise<string> {
+  const queue = getJobQueues().courseResumeDelivery;
+  const jobId = `course-resume-delivery-${data.deliveryId}`;
+  await removeFinishedJob(queue, jobId);
+  const job = await queue.add('deliver', data, {
+    ...durableJobOptions,
+    attempts: 5,
+    backoff: { type: 'exponential', delay: 30_000 },
+    jobId,
+  });
+  return job.id!;
 }
 
 export async function configureReviewNotificationScheduler(): Promise<void> {
