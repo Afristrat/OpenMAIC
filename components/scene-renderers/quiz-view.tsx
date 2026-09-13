@@ -717,7 +717,9 @@ function QuizSession({
   const [initialSubmitted] = useState<SubmittedState>(() =>
     attemptScope ? null : readSubmittedState(sceneId),
   );
-  const [resumeAnswers] = useState(() => readLearnerResumeQuizAnswers(learnerCourseId, sceneId));
+  const [resumeAnswers] = useState(() =>
+    readLearnerResumeQuizAnswers(learnerCourseId, sceneId),
+  );
 
   const [phase, setPhase] = useState<Phase>(() => {
     if (savedLti.error) return 'grading_error';
