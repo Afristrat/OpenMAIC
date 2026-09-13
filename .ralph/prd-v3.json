@@ -4995,7 +4995,9 @@
         "date": "2026-09-12"
       },
       "sourceDependencies": [],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-14 — SHA f63f9c3fa2bfd3f5f454d019a434edc21ef54c00 : l’interface authentifiée expose les réglages globaux existants (fuseau IANA, heures silencieuses, plafond quotidien, pause/reprise) en FR/AR/EN. ServeurIA : pnpm check, typecheck et lint verts ; 3/3 Vitest worker et 1/1 Playwright préférences verts. S3-013 reste ouverte : préférences par formation, réception réelle inter-canaux et recette mobile ne sont pas prouvées."
+      ],
       "executionAllowed": true,
       "executionDecision": "2026-09-12 — Objectif exhaustif demandé par Amine : compléments multisources et mobiles conservés, sans clôture ni activation déduite.",
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
@@ -5003,12 +5005,14 @@
       "title": "Maîtriser la pression et la confidentialité des relances mobiles",
       "description": "En tant qu’apprenant suivant plusieurs formations, je veux contrôler les sollicitations de Qalem afin de recevoir des rappels utiles au moment choisi sans exposition de mes échanges privés.",
       "dependencies": ["S3-005", "S6-010"],
-      "gap": "Le SHA b82b4a0 ajoute préférences temporelles, recontrôle au départ, scanner de reprise et budget transactionnel partagé ; ses migrations sont appliquées en production. Le SHA n’est pas déployé, et les recettes inter-formations/canaux, changements concurrents, mobile et réception physique restent ouvertes. Un incident Coolify impose la rotation des identifiants concernés avant tout déploiement.",
+      "gap": "Les réglages globaux existants sont désormais visibles et enregistrables. Restent les préférences par formation, l’exposition du prochain rappel et de l’effet des changements, les recettes inter-formations/canaux et concurrentes, la validation mobile et la réception physique. Aucune migration ou activation de ce parcours n’est déduite de cette preuve ; un déploiement demeure conditionné à la réconciliation des prérequis d’exploitation.",
       "evidence": [
         "app/api/notification-preferences/route.ts",
         "lib/anchoring/schedule.ts",
         "lib/jobs/workers.ts",
         "public/sw.js",
+        "components/settings/notification-settings.tsx",
+        "e2e/tests/review-notification-preferences.spec.ts",
         "supabase/migrations/20260912100000_notification_delivery_preferences.sql",
         "supabase/migrations/20260912110000_notification_delivery_budget.sql",
         "docs/validation/S3-013-delivery-policy-migration.md"
