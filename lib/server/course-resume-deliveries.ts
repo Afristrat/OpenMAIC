@@ -71,6 +71,16 @@ export async function deliverCourseResumeDelivery(deliveryId: string): Promise<v
     .eq('user_id', delivery.user_id)
     .maybeSingle();
   if (preferencesError) throw new Error('Course resume delivery preferences lookup failed');
+  const { data: coursePreferences, error: coursePreferencesError } = await service
+    .from('course_notification_preferences')
+    .select('paused_until')
+    .eq('course_id', delivery.course_id)
+    .eq('user_id', delivery.user_id)
+    .maybeSingle();
+  if (coursePreferencesError) throw new Error('Course notification preferences lookup failed');
+  if (coursePreferences?.paused_until && new Date(coursePreferences.paused_until).getTime() > Date.now()) {
+    return;
+  }
   if (
     preferences &&
     shouldDeferDelivery(new Date(), {
