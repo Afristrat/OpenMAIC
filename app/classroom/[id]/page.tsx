@@ -188,50 +188,50 @@ export default function ClassroomDetailPage() {
       void (async () => {
         // Restore completed media generation tasks from IndexedDB
         await useMediaGenerationStore.getState().restoreFromDB(classroomId);
-      // Restore agents for this stage
-      const { loadGeneratedAgentsForStage, useAgentRegistry } =
-        await import('@/lib/orchestration/registry/store');
-      const teacherProfile = useStageStore.getState().stage?.teacherProfile;
-      if (teacherProfile) {
-        useAgentRegistry.getState().updateAgent('default-1', {
-          name: teacherProfile.name,
-          avatar: teacherProfile.avatar,
-          voiceConfig: {
-            providerId: teacherProfile.providerId as import('@/lib/audio/types').TTSProviderId,
-            voiceId: teacherProfile.voiceId,
+        // Restore agents for this stage
+        const { loadGeneratedAgentsForStage, useAgentRegistry } =
+          await import('@/lib/orchestration/registry/store');
+        const teacherProfile = useStageStore.getState().stage?.teacherProfile;
+        if (teacherProfile) {
+          useAgentRegistry.getState().updateAgent('default-1', {
+            name: teacherProfile.name,
+            avatar: teacherProfile.avatar,
+            voiceConfig: {
+              providerId: teacherProfile.providerId as import('@/lib/audio/types').TTSProviderId,
+              voiceId: teacherProfile.voiceId,
+            },
+          });
+        }
+        const generatedAgentIds = await loadGeneratedAgentsForStage(classroomId);
+        const { useSettingsStore } = await import('@/lib/store/settings');
+        const { restoreAgentSelection } =
+          await import('@/lib/orchestration/registry/agent-selection');
+        // Keep the user's explicit AgentBar mode/selection when still valid for
+        // this stage instead of unconditionally forcing auto mode (which
+        // clobbered it on every classroom visit); fall back to the stage-derived
+        // defaults otherwise, marking them as NOT user-set so the next classroom
+        // never mistakes them for a choice. Stale generated IDs (from another
+        // stage / pre-bleed-fix) never validate, so they don't resolve against a
+        // leftover registry entry.
+        const settings = useSettingsStore.getState();
+        const registry = useAgentRegistry.getState();
+        const stage = useStageStore.getState().stage;
+        const { selection: next, isUserSet } = restoreAgentSelection({
+          persisted: { mode: settings.agentMode, selectedAgentIds: settings.selectedAgentIds },
+          persistedIsUserSet: settings.agentSelectionIsUserSet,
+          generatedAgentIds,
+          stageAgentIds: stage?.agentIds,
+          isPresetAgent: (id) => {
+            const a = registry.getAgent(id);
+            return !!a && !a.isGenerated;
           },
         });
-      }
-      const generatedAgentIds = await loadGeneratedAgentsForStage(classroomId);
-      const { useSettingsStore } = await import('@/lib/store/settings');
-      const { restoreAgentSelection } =
-        await import('@/lib/orchestration/registry/agent-selection');
-      // Keep the user's explicit AgentBar mode/selection when still valid for
-      // this stage instead of unconditionally forcing auto mode (which
-      // clobbered it on every classroom visit); fall back to the stage-derived
-      // defaults otherwise, marking them as NOT user-set so the next classroom
-      // never mistakes them for a choice. Stale generated IDs (from another
-      // stage / pre-bleed-fix) never validate, so they don't resolve against a
-      // leftover registry entry.
-      const settings = useSettingsStore.getState();
-      const registry = useAgentRegistry.getState();
-      const stage = useStageStore.getState().stage;
-      const { selection: next, isUserSet } = restoreAgentSelection({
-        persisted: { mode: settings.agentMode, selectedAgentIds: settings.selectedAgentIds },
-        persistedIsUserSet: settings.agentSelectionIsUserSet,
-        generatedAgentIds,
-        stageAgentIds: stage?.agentIds,
-        isPresetAgent: (id) => {
-          const a = registry.getAgent(id);
-          return !!a && !a.isGenerated;
-        },
-      });
-      // restoreAgentSelection returns the persisted object as-is when keeping
-      // it, so reference checks skip redundant store writes.
-      if (next.mode !== settings.agentMode) settings.setAgentMode(next.mode);
-      if (next.selectedAgentIds !== settings.selectedAgentIds) {
-        settings.setSelectedAgentIds(next.selectedAgentIds);
-      }
+        // restoreAgentSelection returns the persisted object as-is when keeping
+        // it, so reference checks skip redundant store writes.
+        if (next.mode !== settings.agentMode) settings.setAgentMode(next.mode);
+        if (next.selectedAgentIds !== settings.selectedAgentIds) {
+          settings.setSelectedAgentIds(next.selectedAgentIds);
+        }
         if (isUserSet !== settings.agentSelectionIsUserSet) {
           settings.setAgentSelectionIsUserSet(isUserSet);
         }
