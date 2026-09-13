@@ -213,6 +213,7 @@ let browser;
 let session;
 let uiDiagnostic = {};
 let classroomGetCount = 0;
+let browserErrorCount = 0;
 try {
   session = await createSession();
   await createOrganization(session.userId);
@@ -230,6 +231,12 @@ try {
   const context = await browser.newContext({ serviceWorkers: 'block' });
   await context.addCookies([session.cookie]);
   const page = await context.newPage();
+  page.on('pageerror', () => {
+    browserErrorCount += 1;
+  });
+  page.on('console', (message) => {
+    if (message.type() === 'error') browserErrorCount += 1;
+  });
   page.on('request', (request) => {
     if (new URL(request.url()).pathname === '/api/classroom' && request.method() === 'GET') {
       classroomGetCount += 1;
@@ -257,6 +264,7 @@ try {
       cookie.name.includes('-auth-token'),
     ).length,
     classroomGetCount,
+    browserErrorCount,
   };
   assert.equal(classroomApi.status(), 200, 'Authenticated classroom API must succeed');
   await page.getByText('Loading classroom...').waitFor({ state: 'hidden', timeout: 30_000 });
@@ -350,7 +358,7 @@ try {
     JSON.stringify({
       stage,
       error: error instanceof Error ? error.name : 'PROOF_FAILURE',
-      uiDiagnostic: { ...uiDiagnostic, classroomGetCount },
+      uiDiagnostic: { ...uiDiagnostic, classroomGetCount, browserErrorCount },
     }),
   );
   process.exitCode = 1;
