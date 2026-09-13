@@ -47,7 +47,10 @@ import {
 
 type Phase = 'not_started' | 'answering' | 'grading' | 'grading_error' | 'reviewing';
 
-function readLearnerResumeQuizAnswers(courseId: string | null, sceneId: string): Record<string, string | string[]> {
+function readLearnerResumeQuizAnswers(
+  courseId: string | null,
+  sceneId: string,
+): Record<string, string | string[]> {
   if (!courseId || typeof window === 'undefined') return {};
   try {
     const value = JSON.parse(

@@ -283,7 +283,10 @@ function HomePage() {
           .parse(await response.json());
         sessionStorage.setItem(
           `learner-course-resume:${learnerResumeTarget.courseId}:${payload.target.sceneId}`,
-          JSON.stringify({ activity: payload.target.activity, activityState: payload.target.activityState }),
+          JSON.stringify({
+            activity: payload.target.activity,
+            activityState: payload.target.activityState,
+          }),
         );
         router.replace(
           `/classroom/${encodeURIComponent(payload.target.stageId)}` +
