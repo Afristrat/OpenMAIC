@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
-import type { LearnerCourseResume } from '@/lib/supabase/types';
 
 const activitySchema = z.enum(['scene', 'discussion', 'quiz', 'resource']);
 const recordSchema = z.object({

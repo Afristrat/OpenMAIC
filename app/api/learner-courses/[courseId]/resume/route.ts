@@ -5,7 +5,7 @@ import {
   LearnerCourseResumeAccessError,
   saveLearnerCourseResume,
 } from '@/lib/server/learner-course-resume';
-import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { apiError } from '@/lib/server/api-response';
 
 const headers = { 'Cache-Control': 'private, no-store' };
 const paramsSchema = z.object({ courseId: z.string().uuid() });
