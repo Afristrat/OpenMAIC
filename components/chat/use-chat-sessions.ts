@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { publishDiscussionObservation } from '@/lib/telemetry/learning-events';
 import {
   classifyIntervention,
@@ -62,7 +63,44 @@ interface UseChatSessionsOptions {
   shouldHoldAfterReveal?: () => { holding: boolean; segmentDone: number } | boolean;
 }
 
+function readLearnerResumeDiscussion(courseId: string | null, sceneId: string | null): ChatSession | null {
+  if (!courseId || !sceneId || typeof window === 'undefined') return null;
+  try {
+    const stored = JSON.parse(
+      sessionStorage.getItem(`learner-course-resume:${courseId}:${sceneId}`) ?? 'null',
+    ) as {
+      activity?: unknown;
+      activityState?: { session?: unknown };
+    } | null;
+    const session = stored?.activityState?.session;
+    if (
+      stored?.activity !== 'discussion' ||
+      !session ||
+      typeof session !== 'object' ||
+      !('id' in session) ||
+      !('title' in session) ||
+      !('messages' in session) ||
+      !('config' in session) ||
+      typeof session.id !== 'string' ||
+      typeof session.title !== 'string' ||
+      !Array.isArray(session.messages) ||
+      !session.config ||
+      typeof session.config !== 'object'
+    )
+      return null;
+    return {
+      ...(session as ChatSession),
+      type: 'discussion',
+      status: 'active',
+      updatedAt: Date.now(),
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function useChatSessions(options: UseChatSessionsOptions = {}) {
+  const learnerCourseId = useSearchParams().get('learnerCourseId');
   const onLiveSpeechRef = useRef(options.onLiveSpeech);
   const onSpeechProgressRef = useRef(options.onSpeechProgress);
   const onThinkingRef = useRef(options.onThinking);
@@ -105,7 +143,9 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
 
   // Track current stageId for data isolation
   const stageId = useStageStore((s) => s.stage?.id);
+  const currentSceneId = useStageStore((s) => s.currentSceneId);
   const stageIdRef = useRef(stageId);
+  const restoredDiscussionIdRef = useRef<string | null>(null);
 
   const [sessions, setSessions] = useState<ChatSession[]>(() => {
     // Restore sessions from store (loaded from IndexedDB)
@@ -155,6 +195,17 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
     setActiveSessionId(null);
     setExpandedSessionIds(new Set());
   }, [stageId]);
+
+  useEffect(() => {
+    const session = readLearnerResumeDiscussion(learnerCourseId, currentSceneId);
+    if (!session || restoredDiscussionIdRef.current === session.id) return;
+    restoredDiscussionIdRef.current = session.id;
+    setSessions((previous) =>
+      previous.some((candidate) => candidate.id === session.id) ? previous : [...previous, session],
+    );
+    setActiveSessionId(session.id);
+    setExpandedSessionIds((previous) => new Set([...previous, session.id]));
+  }, [currentSceneId, learnerCourseId, stageId]);
 
   // Sync sessions back to store for persistence (debounced via store's debouncedSave)
   // Guard: only write to the currently active stage

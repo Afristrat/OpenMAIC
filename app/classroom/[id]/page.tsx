@@ -48,6 +48,7 @@ export default function ClassroomDetailPage() {
 
   const { loadFromStorage } = useStageStore();
   const currentSceneId = useStageStore((state) => state.currentSceneId);
+  const chats = useStageStore((state) => state.chats);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -275,6 +276,24 @@ export default function ClassroomDetailPage() {
 
   useEffect(() => {
     if (!learnerCourseId || !selectedOrgId || !currentSceneId || !serverBackedRef.current) return;
+    const activeDiscussion = chats.find(
+      (chat) => chat.type === 'discussion' && chat.status === 'active',
+    );
+    let activity: 'scene' | 'discussion' = activeDiscussion ? 'discussion' : 'scene';
+    let activityState: Record<string, unknown> = activeDiscussion ? { session: activeDiscussion } : {};
+    if (!activeDiscussion) {
+      try {
+        const stored = JSON.parse(
+          sessionStorage.getItem(`learner-course-resume:${learnerCourseId}:${currentSceneId}`) ?? 'null',
+        ) as { activity?: unknown; activityState?: unknown } | null;
+        if (stored?.activity === 'discussion' && stored.activityState) {
+          activity = 'discussion';
+          activityState = stored.activityState as Record<string, unknown>;
+        }
+      } catch {
+        // The generic scene checkpoint remains valid when a stale local hand-off cannot be read.
+      }
+    }
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
       void fetch(`/api/learner-courses/${encodeURIComponent(learnerCourseId)}/resume`, {
@@ -283,8 +302,8 @@ export default function ClassroomDetailPage() {
         body: JSON.stringify({
           orgId: selectedOrgId,
           sceneId: currentSceneId,
-          activity: 'scene',
-          activityState: {},
+          activity,
+          activityState,
           positionMs: 0,
         }),
         signal: controller.signal,
@@ -297,7 +316,7 @@ export default function ClassroomDetailPage() {
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [currentSceneId, learnerCourseId, selectedOrgId]);
+  }, [chats, currentSceneId, learnerCourseId, selectedOrgId]);
 
   useEffect(() => {
     if (E2E_TEST_MODE) return;
