@@ -214,6 +214,14 @@ let session;
 let uiDiagnostic = {};
 let classroomGetCount = 0;
 let browserErrorCount = 0;
+const browserErrors = [];
+
+function diagnosticMessage(value) {
+  return String(value)
+    .replace(/https?:\/\/\S+/g, '[URL]')
+    .replace(/bearer\s+\S+/gi, 'Bearer [REDACTED]')
+    .slice(0, 240);
+}
 try {
   session = await createSession();
   await createOrganization(session.userId);
@@ -231,11 +239,15 @@ try {
   const context = await browser.newContext({ serviceWorkers: 'block' });
   await context.addCookies([session.cookie]);
   const page = await context.newPage();
-  page.on('pageerror', () => {
+  page.on('pageerror', (error) => {
     browserErrorCount += 1;
+    browserErrors.push(diagnosticMessage(error.message));
   });
   page.on('console', (message) => {
-    if (message.type() === 'error') browserErrorCount += 1;
+    if (message.type() === 'error') {
+      browserErrorCount += 1;
+      browserErrors.push(diagnosticMessage(message.text()));
+    }
   });
   page.on('request', (request) => {
     if (new URL(request.url()).pathname === '/api/classroom' && request.method() === 'GET') {
@@ -265,6 +277,7 @@ try {
     ).length,
     classroomGetCount,
     browserErrorCount,
+    browserErrors,
   };
   assert.equal(classroomApi.status(), 200, 'Authenticated classroom API must succeed');
   await page.getByText('Loading classroom...').waitFor({ state: 'hidden', timeout: 30_000 });
@@ -358,7 +371,7 @@ try {
     JSON.stringify({
       stage,
       error: error instanceof Error ? error.name : 'PROOF_FAILURE',
-      uiDiagnostic: { ...uiDiagnostic, classroomGetCount, browserErrorCount },
+      uiDiagnostic: { ...uiDiagnostic, classroomGetCount, browserErrorCount, browserErrors },
     }),
   );
   process.exitCode = 1;
