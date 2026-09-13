@@ -9,6 +9,7 @@ const bodySchema = z
   .object({
     pausedUntil: z.string().datetime().nullable(),
     dailyCap: z.number().int().min(1).max(10).nullable(),
+    minimumIntervalHours: z.union([z.literal(24), z.literal(72), z.literal(168)]).nullable(),
   })
   .strict();
 
@@ -42,7 +43,7 @@ export async function GET(
   if (previewError) return apiError('INVALID_REQUEST', 403, 'Formation indisponible');
   const { data, error } = await service
     .from('course_notification_preferences')
-    .select('paused_until, daily_cap')
+    .select('paused_until, daily_cap, minimum_interval_hours')
     .eq('course_id', params.data.courseId)
     .eq('user_id', auth.user.id)
     .maybeSingle();
@@ -50,6 +51,7 @@ export async function GET(
   return apiSuccess({
     pausedUntil: data?.paused_until ?? null,
     dailyCap: data?.daily_cap ?? null,
+    minimumIntervalHours: data?.minimum_interval_hours ?? null,
     nextReminderAt: preview?.[0]?.next_reminder_at ?? null,
   });
 }
@@ -73,10 +75,11 @@ export async function PUT(
         user_id: auth.user.id,
         paused_until: body.data.pausedUntil,
         daily_cap: body.data.dailyCap,
+        minimum_interval_hours: body.data.minimumIntervalHours,
       },
       { onConflict: 'course_id,user_id' },
     )
-    .select('paused_until, daily_cap')
+    .select('paused_until, daily_cap, minimum_interval_hours')
     .single();
   if (error || !data) return apiError('INVALID_REQUEST', 403, 'Formation indisponible');
   const { data: preview, error: previewError } = await createServiceSupabaseClient().rpc(
@@ -91,6 +94,7 @@ export async function PUT(
   return apiSuccess({
     pausedUntil: data.paused_until,
     dailyCap: data.daily_cap,
+    minimumIntervalHours: data.minimum_interval_hours,
     nextReminderAt: preview?.[0]?.next_reminder_at ?? null,
   });
 }

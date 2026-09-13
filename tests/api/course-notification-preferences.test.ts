@@ -60,18 +60,31 @@ describe('/api/courses/[courseId]/notification-preferences', () => {
     const upsert = vi.fn().mockReturnValue({ select });
     mocks.from.mockReturnValue({ upsert });
 
-    const response = await PUT(request('PUT', { pausedUntil: null, dailyCap: 1 }), context);
+    const response = await PUT(
+      request('PUT', { pausedUntil: null, dailyCap: 1, minimumIntervalHours: 24 }),
+      context,
+    );
 
     expect(response.status).toBe(200);
     expect(upsert).toHaveBeenCalledWith(
-      { course_id: courseId, user_id: userId, paused_until: null, daily_cap: 1 },
+      {
+        course_id: courseId,
+        user_id: userId,
+        paused_until: null,
+        daily_cap: 1,
+        minimum_interval_hours: 24,
+      },
       { onConflict: 'course_id,user_id' },
     );
   });
 
   it('refuses a cross-site write before persistence', async () => {
     const response = await PUT(
-      request('PUT', { pausedUntil: null, dailyCap: 1 }, 'https://other.invalid'),
+      request(
+        'PUT',
+        { pausedUntil: null, dailyCap: 1, minimumIntervalHours: null },
+        'https://other.invalid',
+      ),
       context,
     );
 

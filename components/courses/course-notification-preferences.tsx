@@ -12,6 +12,7 @@ type Preferences = {
   pausedUntil: string | null;
   dailyCap: number | null;
   nextReminderAt: string | null;
+  minimumIntervalHours: 24 | 72 | 168 | null;
 };
 
 function toLocalDateTime(value: string | null): string {
@@ -34,6 +35,7 @@ export function CourseNotificationPreferences({
     pausedUntil: null,
     dailyCap: null,
     nextReminderAt: null,
+    minimumIntervalHours: null,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -50,6 +52,10 @@ export function CourseNotificationPreferences({
           pausedUntil: typeof body.pausedUntil === 'string' ? body.pausedUntil : null,
           dailyCap: typeof body.dailyCap === 'number' ? body.dailyCap : null,
           nextReminderAt: typeof body.nextReminderAt === 'string' ? body.nextReminderAt : null,
+          minimumIntervalHours:
+            body.minimumIntervalHours === 24 || body.minimumIntervalHours === 72 || body.minimumIntervalHours === 168
+              ? body.minimumIntervalHours
+              : null,
         });
       })
       .catch(() => {
@@ -79,6 +85,10 @@ export function CourseNotificationPreferences({
         pausedUntil: typeof body.pausedUntil === 'string' ? body.pausedUntil : null,
         dailyCap: typeof body.dailyCap === 'number' ? body.dailyCap : null,
         nextReminderAt: typeof body.nextReminderAt === 'string' ? body.nextReminderAt : null,
+        minimumIntervalHours:
+          body.minimumIntervalHours === 24 || body.minimumIntervalHours === 72 || body.minimumIntervalHours === 168
+            ? body.minimumIntervalHours
+            : null,
       }));
       toast.success(t('notifications.courseSaved'));
     } catch {
@@ -108,6 +118,29 @@ export function CourseNotificationPreferences({
                 })
               : t('notifications.courseNoReminder')}
         </p>
+        <div className="space-y-1">
+          <Label htmlFor="course-notification-interval" className="text-xs">
+            {t('notifications.courseFrequency')}
+          </Label>
+          <select
+            id="course-notification-interval"
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+            value={preferences.minimumIntervalHours ?? ''}
+            onChange={(event) => {
+              const value = Number(event.target.value);
+              setPreferences((current) => ({
+                ...current,
+                minimumIntervalHours: value === 24 || value === 72 || value === 168 ? value : null,
+              }));
+            }}
+            disabled={loading || saving}
+          >
+            <option value="">{t('notifications.courseFrequencyDefault')}</option>
+            <option value="24">{t('notifications.courseFrequencyDaily')}</option>
+            <option value="72">{t('notifications.courseFrequencyEveryThreeDays')}</option>
+            <option value="168">{t('notifications.courseFrequencyWeekly')}</option>
+          </select>
+        </div>
         <div className="space-y-1">
           <Label htmlFor="course-notification-daily-cap" className="text-xs">
             {t('notifications.courseDailyCap')}
