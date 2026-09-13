@@ -12,11 +12,13 @@ Aucune valeur, endpoint privé, fichier d’environnement ou coffre n’a été 
 La présence d’un nom ne prouve pas qu’il est configuré ou utilisé en production.
 Une clé déclarée mais non injectée ne doit pas être rotatée inutilement.
 
-Le broker et l’index DPAPI référencés par une ancienne passation étaient absents
-du poste au contrôle : `C:\Users\amans\.codex\scripts\invoke-secret.ps1`,
-`add-secret.ps1` et `secrets.index` n’existent pas. Cette absence interdit
-une rotation sûre ; elle n’autorise ni lecture directe de fichiers de secrets,
-ni substitution manuelle de valeurs.
+Le chemin Codex référencé par une ancienne passation est absent. Le contrôle
+frais du 13 septembre 2026 établit toutefois que le broker équivalent du coffre
+Claude et son loader existent et s’exécutent avec moindre privilège ; une
+invocation bornée de `RESEND_API_KEY` a répondu `secret_broker_ready`, sans
+afficher de valeur. L’index dérivé a été régénéré. Les rotations Qalem peuvent
+donc utiliser ce broker ; l’absence du chemin Codex n’autorise toujours ni
+lecture directe de fichiers de secrets, ni substitution manuelle de valeurs.
 
 ## Catégories et consommateurs Qalem
 
@@ -94,3 +96,14 @@ Cette preuve confirme l’activation des rotations internes et du routage HTTPS
 du LLM général. Elle ne clôt pas S6-014 : les clés fournisseurs partagées ou
 sans inventaire fournisseur sûr, ainsi que les recettes LTI, Web Push et xAPI,
 restent des conditions de clôture distinctes.
+
+## Contrôle frais du 13 septembre 2026
+
+La lecture des métadonnées Coolify, sans valeur, confirme que les applications
+`qalem-runtime` et `qalem-web-rolling-candidate` reçoivent les catégories
+attendues : Supabase, LLM/ASR/TTS/image, capture, LTI, Push, LRS/xAPI,
+communication, recherche et files. Ce contrôle ne démontre ni exclusivité
+fournisseur ni droit de révocation. Les familles déjà établies comme réemployées
+hors Qalem restent donc exclues de toute révocation depuis ce chantier ; une
+rotation fournisseur exige l’inventaire des consommateurs et une recette
+fonctionnelle par catégorie.
