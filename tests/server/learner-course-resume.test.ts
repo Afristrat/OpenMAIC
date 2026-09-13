@@ -8,6 +8,7 @@ vi.mock('@/lib/supabase/service', () => ({
 
 import {
   LearnerCourseResumeAccessError,
+  completeLearnerCourseResume,
   resolveLearnerCourseResume,
   saveLearnerCourseResume,
 } from '@/lib/server/learner-course-resume';
@@ -66,5 +67,25 @@ describe('learner course resume boundary', () => {
         orgId: input.orgId,
       }),
     ).resolves.toBeNull();
+  });
+
+  it('marks only the authenticated learner resume as completed', async () => {
+    mocks.abortSignal.mockResolvedValueOnce({
+      data: { course_id: input.courseId, completed_at: '2026-09-13T22:00:00.000Z' },
+      error: null,
+    });
+
+    await expect(
+      completeLearnerCourseResume({
+        actorId: input.actorId,
+        courseId: input.courseId,
+        orgId: input.orgId,
+      }),
+    ).resolves.toMatchObject({ course_id: input.courseId });
+    expect(mocks.rpc).toHaveBeenCalledWith('complete_learner_course_resume', {
+      p_actor: input.actorId,
+      p_course: input.courseId,
+      p_org: input.orgId,
+    });
   });
 });

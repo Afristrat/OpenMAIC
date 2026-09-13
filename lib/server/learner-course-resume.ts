@@ -52,3 +52,17 @@ export async function resolveLearnerCourseResume(input: z.input<typeof lookupSch
   const row = Array.isArray(result.data) ? result.data[0] : result.data;
   return row;
 }
+
+export async function completeLearnerCourseResume(input: z.input<typeof lookupSchema>) {
+  const value = lookupSchema.parse(input);
+  const result = await createServiceSupabaseClient()
+    .rpc('complete_learner_course_resume', {
+      p_actor: value.actorId,
+      p_course: value.courseId,
+      p_org: value.orgId,
+    })
+    .abortSignal(AbortSignal.timeout(5000));
+  if (result.error?.code === '42501') throw new LearnerCourseResumeAccessError();
+  if (result.error || !result.data) throw new Error('Learner resume could not be completed');
+  return result.data;
+}

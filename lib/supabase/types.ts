@@ -975,6 +975,10 @@ export interface Database {
         Args: { p_now?: string };
         Returns: CourseResumeDelivery[];
       };
+      complete_learner_course_resume: {
+        Args: { p_actor: string; p_course: string; p_org: string };
+        Returns: LearnerCourseResume;
+      };
     };
     Enums: Record<string, never>;
   };

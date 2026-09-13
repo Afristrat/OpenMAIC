@@ -29,6 +29,47 @@ CREATE TRIGGER sync_course_resume_delivery
   ON public.learner_course_resumes
   FOR EACH ROW EXECUTE FUNCTION public.sync_course_resume_delivery();
 
+CREATE FUNCTION public.complete_learner_course_resume(
+  p_actor UUID,
+  p_course UUID,
+  p_org UUID
+)
+RETURNS public.learner_course_resumes
+LANGUAGE plpgsql SECURITY INVOKER SET search_path = '' AS $$
+DECLARE
+  completed public.learner_course_resumes;
+BEGIN
+  UPDATE public.learner_course_resumes resume
+  SET completed_at = COALESCE(resume.completed_at, now()),
+      updated_at = now()
+  FROM public.courses course
+  JOIN public.organizations organization ON organization.id = course.org_id
+  WHERE resume.course_id = p_course
+    AND resume.user_id = p_actor
+    AND resume.org_id = p_org
+    AND course.id = resume.course_id
+    AND course.org_id = p_org
+    AND course.stage_id = resume.stage_id
+    AND course.status = 'ready'
+    AND course.catalog_visible
+    AND organization.status = 'active'
+    AND EXISTS (
+      SELECT 1
+      FROM public.org_members member
+      WHERE member.org_id = p_org AND member.user_id = p_actor
+    )
+  RETURNING resume.* INTO completed;
+  IF completed.course_id IS NULL THEN
+    RAISE EXCEPTION 'Learner resume target is unavailable' USING ERRCODE = '42501';
+  END IF;
+  RETURN completed;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.complete_learner_course_resume(UUID, UUID, UUID)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.complete_learner_course_resume(UUID, UUID, UUID) TO service_role;
+
 CREATE FUNCTION public.claim_due_course_resume_deliveries(p_now TIMESTAMPTZ DEFAULT now())
 RETURNS SETOF public.course_resume_deliveries
 LANGUAGE plpgsql SECURITY INVOKER SET search_path = '' AS $$

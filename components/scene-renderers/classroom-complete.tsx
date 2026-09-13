@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { animate, motion, MotionConfig, useReducedMotion } from 'motion/react';
 import { FileText, HelpCircle, Gamepad2, Puzzle } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -508,6 +509,25 @@ export function ClassroomCompletePage({ stageId, scenes, title }: ClassroomCompl
 export function ClassroomCompletePageConnected() {
   const stage = useStageStore((s) => s.stage);
   const scenes = useStageStore((s) => s.scenes);
+  const searchParams = useSearchParams();
+  const learnerCourseId = searchParams.get('learnerCourseId');
+  const orgId = searchParams.get('orgId');
+
+  useEffect(() => {
+    if (!learnerCourseId || !orgId) return;
+    const controller = new AbortController();
+    void fetch(`/api/learner-courses/${encodeURIComponent(learnerCourseId)}/complete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orgId }),
+      signal: controller.signal,
+    }).catch(() => {
+      // Completion remains visible if the learner goes offline; the next visit
+      // safely retries the idempotent server transition.
+    });
+    return () => controller.abort();
+  }, [learnerCourseId, orgId]);
+
   if (!stage) return null;
   return <ClassroomCompletePage stageId={stage.id} scenes={scenes} title={stage.name ?? ''} />;
 }
