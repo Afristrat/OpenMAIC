@@ -662,7 +662,7 @@ async function main(): Promise<void> {
       sourceManifestId: manifestId,
       requirement,
       language: 'fr-FR',
-      modelString: 'openai:kimi-k2.5',
+      modelString: 'openai:deepseek-v4-pro',
       learningApproach: 'andragogy',
       interactionLevel: 'immersive',
       learningContext: { territory: 'Maroc', currencyCode: 'MAD' },
