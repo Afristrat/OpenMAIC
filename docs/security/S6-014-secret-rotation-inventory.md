@@ -107,3 +107,11 @@ fournisseur ni droit de révocation. Les familles déjà établies comme réempl
 hors Qalem restent donc exclues de toute révocation depuis ce chantier ; une
 rotation fournisseur exige l’inventaire des consommateurs et une recette
 fonctionnelle par catégorie.
+
+Le contrôle Resend du même jour confirme que l’accès présent peut interroger
+l’inventaire de clés du compte, mais que cet inventaire ne fournit pas une
+attribution sûre entre la valeur injectée à Qalem et les consommateurs des
+autres produits. Aucune valeur ni identifiant de clé n’est consigné. Une
+révocation est donc interdite tant qu’une clé Resend dédiée à Qalem n’a pas été
+créée, injectée, recettée et que les dépendances de l’ancienne clé ne sont pas
+attribuées de façon vérifiable.
