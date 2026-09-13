@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
-const mocks = vi.hoisted(() => ({ requireAuth: vi.fn(), from: vi.fn() }));
+const mocks = vi.hoisted(() => ({ requireAuth: vi.fn(), from: vi.fn(), rpc: vi.fn() }));
 
 vi.mock('@/lib/api/auth', () => ({ requireAuth: mocks.requireAuth }));
 vi.mock('@/lib/supabase/service', () => ({
-  createServiceSupabaseClient: () => ({ from: mocks.from }),
+  createServiceSupabaseClient: () => ({ from: mocks.from, rpc: mocks.rpc }),
 }));
 
 import { GET, PUT } from '@/app/api/courses/[courseId]/notification-preferences/route';
@@ -26,6 +26,7 @@ describe('/api/courses/[courseId]/notification-preferences', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.requireAuth.mockResolvedValue({ user: { id: userId, email: 'learner@example.com' } });
+    mocks.rpc.mockResolvedValue({ data: [{ next_reminder_at: null }], error: null });
   });
 
   it('reads preferences only for the authenticated learner', async () => {
@@ -39,7 +40,15 @@ describe('/api/courses/[courseId]/notification-preferences', () => {
     expect(response.status).toBe(200);
     expect(firstEq).toHaveBeenCalledWith('course_id', courseId);
     expect(secondEq).toHaveBeenCalledWith('user_id', userId);
-    await expect(response.json()).resolves.toMatchObject({ pausedUntil: null, dailyCap: null });
+    expect(mocks.rpc).toHaveBeenCalledWith(
+      'get_course_notification_preview',
+      expect.objectContaining({ target_user_id: userId, target_course_id: courseId }),
+    );
+    await expect(response.json()).resolves.toMatchObject({
+      pausedUntil: null,
+      dailyCap: null,
+      nextReminderAt: null,
+    });
   });
 
   it('uses the session identity when it stores a course cap', async () => {

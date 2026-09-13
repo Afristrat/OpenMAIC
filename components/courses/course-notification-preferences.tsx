@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useI18n } from '@/lib/hooks/use-i18n';
 
-type Preferences = { pausedUntil: string | null; dailyCap: number | null };
+type Preferences = { pausedUntil: string | null; dailyCap: number | null; nextReminderAt: string | null };
 
 function toLocalDateTime(value: string | null): string {
   if (!value) return '';
@@ -25,10 +25,11 @@ export function CourseNotificationPreferences({
 }: {
   courseId: string;
 }): React.ReactElement {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [preferences, setPreferences] = useState<Preferences>({
     pausedUntil: null,
     dailyCap: null,
+    nextReminderAt: null,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -44,6 +45,7 @@ export function CourseNotificationPreferences({
         setPreferences({
           pausedUntil: typeof body.pausedUntil === 'string' ? body.pausedUntil : null,
           dailyCap: typeof body.dailyCap === 'number' ? body.dailyCap : null,
+          nextReminderAt: typeof body.nextReminderAt === 'string' ? body.nextReminderAt : null,
         });
       })
       .catch(() => {
@@ -67,6 +69,12 @@ export function CourseNotificationPreferences({
         },
       );
       if (!response.ok) throw new Error('Course preferences save failed');
+      const body = (await response.json()) as Partial<Preferences>;
+      setPreferences((current) => ({
+        ...current,
+        pausedUntil: typeof body.pausedUntil === 'string' ? body.pausedUntil : null,
+        dailyCap: typeof body.dailyCap === 'number' ? body.dailyCap : null,
+      }));
       toast.success(t('notifications.courseSaved'));
     } catch {
       toast.error(t('notifications.courseSaveFailed'));
@@ -83,6 +91,18 @@ export function CourseNotificationPreferences({
       </summary>
       <div className="mt-3 space-y-3">
         <p className="text-xs text-muted-foreground">{t('notifications.courseDescription')}</p>
+        <p className="text-xs text-muted-foreground">
+          {preferences.pausedUntil
+            ? t('notifications.coursePausedEffect')
+            : preferences.nextReminderAt
+              ? t('notifications.courseNextReminder', {
+                  date: new Intl.DateTimeFormat(locale, {
+                    dateStyle: 'medium',
+                    timeStyle: 'short',
+                  }).format(new Date(preferences.nextReminderAt)),
+                })
+              : t('notifications.courseNoReminder')}
+        </p>
         <div className="space-y-1">
           <Label htmlFor="course-notification-daily-cap" className="text-xs">
             {t('notifications.courseDailyCap')}

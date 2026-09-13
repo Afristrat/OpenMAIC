@@ -30,14 +30,28 @@ export async function GET(
   if (auth.response) return auth.response;
   const params = paramsSchema.safeParse(await context.params);
   if (!params.success) return apiError('INVALID_REQUEST', 400, 'Formation invalide');
-  const { data, error } = await createServiceSupabaseClient()
+  const service = createServiceSupabaseClient();
+  const { data: preview, error: previewError } = await service.rpc(
+    'get_course_notification_preview',
+    {
+      target_user_id: auth.user.id,
+      target_course_id: params.data.courseId,
+      target_time: new Date().toISOString(),
+    },
+  );
+  if (previewError) return apiError('INVALID_REQUEST', 403, 'Formation indisponible');
+  const { data, error } = await service
     .from('course_notification_preferences')
     .select('paused_until, daily_cap')
     .eq('course_id', params.data.courseId)
     .eq('user_id', auth.user.id)
     .maybeSingle();
   if (error) return apiError('INTERNAL_ERROR', 503, 'Préférences indisponibles');
-  return apiSuccess({ pausedUntil: data?.paused_until ?? null, dailyCap: data?.daily_cap ?? null });
+  return apiSuccess({
+    pausedUntil: data?.paused_until ?? null,
+    dailyCap: data?.daily_cap ?? null,
+    nextReminderAt: preview?.[0]?.next_reminder_at ?? null,
+  });
 }
 
 export async function PUT(
@@ -65,5 +79,18 @@ export async function PUT(
     .select('paused_until, daily_cap')
     .single();
   if (error || !data) return apiError('INVALID_REQUEST', 403, 'Formation indisponible');
-  return apiSuccess({ pausedUntil: data.paused_until, dailyCap: data.daily_cap });
+  const { data: preview, error: previewError } = await createServiceSupabaseClient().rpc(
+    'get_course_notification_preview',
+    {
+      target_user_id: auth.user.id,
+      target_course_id: params.data.courseId,
+      target_time: new Date().toISOString(),
+    },
+  );
+  if (previewError) return apiError('INTERNAL_ERROR', 503, 'Aperçu indisponible');
+  return apiSuccess({
+    pausedUntil: data.paused_until,
+    dailyCap: data.daily_cap,
+    nextReminderAt: preview?.[0]?.next_reminder_at ?? null,
+  });
 }
