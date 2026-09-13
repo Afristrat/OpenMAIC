@@ -366,7 +366,7 @@ try {
   assert.equal(quizResultCount, 1);
   stage = 'idempotence';
   await page.getByRole('button', { name: /^(Réessayer|Retry)$/ }).click();
-  await page.getByRole('button', { name: 'Démarrer le quiz', exact: true }).click();
+  await page.getByRole('button', { name: /^(Démarrer le quiz|Start Quiz)$/ }).click();
   await page
     .getByRole('group', { name: 'Quel choix est correct dans le cas de recette ?', exact: true })
     .getByRole('button')
