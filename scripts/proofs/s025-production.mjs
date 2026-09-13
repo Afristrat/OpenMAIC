@@ -380,7 +380,9 @@ try {
     .getByRole('button')
     .first()
     .click();
-  await page.getByRole('button', { name: 'Soumettre les réponses', exact: true }).click();
+  await page
+    .getByRole('button', { name: /^(Soumettre les réponses|Submit Answers)$/ })
+    .click();
   await page.getByText('0%', { exact: true }).waitFor({ timeout: 30_000 });
   assert.equal(await count('review_cards', cardQuery), 2, 'Repeat must not duplicate cards');
   assert.equal(
