@@ -197,7 +197,8 @@ export function startAllWorkers(): void {
       if (!plan || plan.paused || new Date(plan.ends_at).getTime() < Date.now()) return;
       const sessionValue = plan.live_sessions;
       const session = Array.isArray(sessionValue) ? sessionValue[0] : sessionValue;
-      const courseId = session && typeof session.course_id === 'string' ? session.course_id : undefined;
+      const courseId =
+        session && typeof session.course_id === 'string' ? session.course_id : undefined;
 
       const { data: preferences, error: preferencesError } = await supabase
         .from('review_notification_preferences')
