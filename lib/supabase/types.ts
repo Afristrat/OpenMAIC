@@ -692,6 +692,66 @@ export type TransmissionUpdate = Partial<
 >;
 
 // ---------------------------------------------------------------------------
+// Learner course resumption (S3-012)
+// ---------------------------------------------------------------------------
+
+export type LearnerCourseResumeActivity = 'scene' | 'discussion' | 'quiz' | 'resource';
+
+export interface LearnerCourseResume {
+  course_id: string;
+  org_id: string;
+  user_id: string;
+  stage_id: string;
+  scene_id: string;
+  activity: LearnerCourseResumeActivity;
+  activity_state: Record<string, unknown>;
+  position_ms: number;
+  completed_at: string | null;
+  abandoned_at: string | null;
+  updated_at: string;
+}
+
+export type LearnerCourseResumeInsert = Omit<
+  LearnerCourseResume,
+  'completed_at' | 'abandoned_at' | 'updated_at'
+> &
+  Partial<Pick<LearnerCourseResume, 'completed_at' | 'abandoned_at' | 'updated_at'>>;
+
+export type LearnerCourseResumeUpdate = Partial<
+  Pick<
+    LearnerCourseResume,
+    'scene_id' | 'activity' | 'activity_state' | 'position_ms' | 'completed_at' | 'abandoned_at'
+  >
+>;
+
+export interface CourseResumeDelivery {
+  id: string;
+  course_id: string;
+  user_id: string;
+  scheduled_for: string;
+  sent_at: string | null;
+  opened_at: string | null;
+  cancelled_at: string | null;
+  attempt_count: number;
+  created_at: string;
+}
+
+export type CourseResumeDeliveryInsert = Omit<
+  CourseResumeDelivery,
+  'id' | 'sent_at' | 'opened_at' | 'cancelled_at' | 'attempt_count' | 'created_at'
+> &
+  Partial<
+    Pick<
+      CourseResumeDelivery,
+      'id' | 'sent_at' | 'opened_at' | 'cancelled_at' | 'attempt_count' | 'created_at'
+    >
+  >;
+
+export type CourseResumeDeliveryUpdate = Partial<
+  Pick<CourseResumeDelivery, 'sent_at' | 'opened_at' | 'cancelled_at' | 'attempt_count'>
+>;
+
+// ---------------------------------------------------------------------------
 // Supabase Database type (for createClient<Database>)
 // ---------------------------------------------------------------------------
 
@@ -860,6 +920,16 @@ export interface Database {
         Insert: TransmissionInsert;
         Update: TransmissionUpdate;
       };
+      learner_course_resumes: {
+        Row: LearnerCourseResume;
+        Insert: LearnerCourseResumeInsert;
+        Update: LearnerCourseResumeUpdate;
+      };
+      course_resume_deliveries: {
+        Row: CourseResumeDelivery;
+        Insert: CourseResumeDeliveryInsert;
+        Update: CourseResumeDeliveryUpdate;
+      };
     };
     Views: {
       usage_summary: {
@@ -884,6 +954,22 @@ export interface Database {
           p_diwan_references?: import('@/lib/diwan/references').DiwanReference[];
         };
         Returns: FormationSourceManifest[];
+      };
+      record_learner_course_resume: {
+        Args: {
+          p_actor: string;
+          p_course: string;
+          p_org: string;
+          p_scene: string;
+          p_activity: LearnerCourseResumeActivity;
+          p_state: Record<string, unknown>;
+          p_position_ms: number;
+        };
+        Returns: LearnerCourseResume;
+      };
+      resolve_learner_course_resume: {
+        Args: { p_actor: string; p_course: string; p_org: string };
+        Returns: LearnerCourseResume[];
       };
     };
     Enums: Record<string, never>;
