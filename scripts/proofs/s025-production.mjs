@@ -287,7 +287,19 @@ try {
     failedResourcePaths,
   };
   assert.equal(classroomApi.status(), 200, 'Authenticated classroom API must succeed');
-  await page.getByText('Loading classroom...').waitFor({ state: 'hidden', timeout: 30_000 });
+  const loader = page.getByText('Loading classroom...');
+  try {
+    await loader.waitFor({ state: 'hidden', timeout: 30_000 });
+  } catch (error) {
+    uiDiagnostic = {
+      ...uiDiagnostic,
+      loader: {
+        loading: await loader.getAttribute('data-classroom-loading'),
+        accessResolved: await loader.getAttribute('data-classroom-access-resolved'),
+      },
+    };
+    throw error;
+  }
   const start = page.getByRole('button', { name: 'Démarrer le quiz', exact: true });
   await start.waitFor({ state: 'visible', timeout: 30_000 });
   await start.click();

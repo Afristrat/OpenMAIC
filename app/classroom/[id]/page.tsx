@@ -418,7 +418,12 @@ export default function ClassroomDetailPage() {
           {loading || !interactionAccessResolved ? (
             <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-900">
               <div className="text-center text-muted-foreground">
-                <p>Loading classroom...</p>
+                <p
+                  data-classroom-loading={loading ? 'true' : 'false'}
+                  data-classroom-access-resolved={interactionAccessResolved ? 'true' : 'false'}
+                >
+                  Loading classroom...
+                </p>
               </div>
             </div>
           ) : error ? (
