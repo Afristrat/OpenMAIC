@@ -32,7 +32,7 @@
 
 **Interfaces:**
 
-- Produces `public.record_learner_course_resume(p_course uuid, p_org uuid, p_scene uuid, p_activity text, p_state jsonb, p_position_ms integer)`.
+- Produces `public.record_learner_course_resume(p_course uuid, p_org uuid, p_scene text, p_activity text, p_state jsonb, p_position_ms integer)`.
 - Produces `public.resolve_learner_course_resume(p_course uuid, p_org uuid)`.
 - Produces `public.claim_due_course_resume_deliveries(p_now timestamptz)`.
 - Produces tables `learner_course_resumes` and `course_resume_deliveries`.
@@ -59,7 +59,7 @@ CREATE TABLE public.learner_course_resumes (
   course_id uuid NOT NULL REFERENCES public.courses(id) ON DELETE CASCADE,
   org_id uuid NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
   user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  scene_id uuid NOT NULL REFERENCES public.scenes(id) ON DELETE CASCADE,
+  scene_id text NOT NULL REFERENCES public.scenes(id) ON DELETE CASCADE,
   activity text NOT NULL CHECK (activity IN ('scene','discussion','quiz','resource')),
   activity_state jsonb NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(activity_state)='object'),
   position_ms integer NOT NULL DEFAULT 0 CHECK (position_ms >= 0),
@@ -128,7 +128,7 @@ Expected: failure because the module and routes do not exist.
 
 - [ ] **Step 3: Implement the server module and routes**
 
-Validate UUIDs and the four activity values with Zod. Require authentication and exact same-origin POSTs. Call the Task 1 RPCs through the service client only after binding `auth.user.id`; translate `42501` to 403 and absent/withdrawn targets to a non-revealing 404. Set `Cache-Control: private, no-store` on both responses.
+Validate course and organisation UUIDs, a non-empty scene text identifier, and the four activity values with Zod. Require authentication and exact same-origin POSTs. Call the Task 1 RPCs through the service client only after binding `auth.user.id`; each RPC verifies active organisation membership, a ready published course and that its `stage_id` owns the supplied scene. Translate `42501` to 403 and absent/withdrawn targets to a non-revealing 404. Set `Cache-Control: private, no-store` on both responses.
 
 - [ ] **Step 4: Re-run the focused test**
 
@@ -211,7 +211,7 @@ git commit -m "[S3-012] Relancer les formations inachevées et reprendre au bon 
 await page.goto(`/app?resumeCourseId=${courseId}&resumeOrgId=${orgId}`);
 await expect(page.getByRole('button', { name: 'Reprendre cette activité' })).toBeVisible();
 await page.getByRole('button', { name: 'Reprendre cette activité' }).click();
-await expect(page).toHaveURL(new RegExp(`/classroom/${classroomId}`));
+await expect(page).toHaveURL(new RegExp(`/classroom/${stageId}`));
 await expect(page.getByTestId(`scene-${sceneId}`)).toBeVisible();
 ```
 
@@ -223,7 +223,7 @@ Expected: failure because no learner resume route is consumed.
 
 - [ ] **Step 3: Implement explicit capture and restore**
 
-From the authenticated classroom only, debounce server progress writes after scene changes, discussion draft changes, resource pause/resume and media position updates. A completion event writes `completed_at`; an explicit “Ne plus relancer” writes `abandoned_at`. On restore, resolve the target server-side first; retain only the matching scene, activity state and position, then expose a user-clicked transition. If the target disappeared or access changed, show the localised safe state instead of guessing another scene.
+From the authenticated classroom only, debounce server progress writes after scene changes, discussion draft changes, resource pause/resume and media position updates. The browser resolves its current `course_id` from the public catalog entry whose `stage_id` equals the classroom id; it never accepts a caller-supplied course mapping. A completion event writes `completed_at`; an explicit “Ne plus relancer” writes `abandoned_at`. On restore, resolve the target server-side first; retain only the matching stage, scene, activity state and position, then expose a user-clicked transition. If the target disappeared or access changed, show the localised safe state instead of guessing another scene.
 
 - [ ] **Step 4: Add the three locale keys**
 
