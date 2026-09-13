@@ -32,6 +32,16 @@ it('requires authentication, same origin and only immutable answer input', async
   expect((await POST(request({ ...body, score: 100 }))).status).toBe(400);
   expect(mocks.submit).not.toHaveBeenCalled();
 });
+it('accepts the canonical Qalem origin when a deployment setting is stale', async () => {
+  vi.stubEnv('NEXT_PUBLIC_APP_URL', 'https://stale.example');
+  const productionRequest = new NextRequest('https://qalem.ma/api/quiz-attempts', {
+    method: 'POST',
+    headers: { origin: 'https://qalem.ma', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  expect((await POST(productionRequest)).status).toBe(202);
+  expect(mocks.submit).toHaveBeenCalledWith(id, body);
+});
 it('returns a resumable acknowledgement and only a persisted final receipt', async () => {
   const busy = await POST(request());
   expect(busy.status).toBe(202);

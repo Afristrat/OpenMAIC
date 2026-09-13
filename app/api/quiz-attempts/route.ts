@@ -7,6 +7,26 @@ import {
 } from '@/lib/quiz/classroom-submission';
 
 export const maxDuration = 300;
+
+function isTrustedQuizSubmissionOrigin(request: NextRequest): boolean {
+  const origin = request.headers.get('origin');
+  if (!origin) return false;
+
+  const configuredOrigin = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (configuredOrigin) {
+    try {
+      if (origin === new URL(configuredOrigin).origin) return true;
+    } catch {
+      // The canonical production origin below remains the fail-closed fallback.
+    }
+  }
+
+  // The public Qalem route is deliberately pinned: a stale deployment setting
+  // must not turn an authenticated browser submission into a 403, nor may an
+  // arbitrary Host header become an accepted CSRF origin.
+  return origin === 'https://qalem.ma' && new URL(request.url).origin === 'https://qalem.ma';
+}
+
 export async function POST(request: NextRequest) {
   const headers = { 'Cache-Control': 'private, no-store' };
   const reply = (body: object, status: number) => NextResponse.json(body, { status, headers });
@@ -15,10 +35,7 @@ export async function POST(request: NextRequest) {
     auth.response.headers.set('Cache-Control', headers['Cache-Control']);
     return auth.response;
   }
-  if (
-    request.headers.get('origin') !== new URL(process.env.NEXT_PUBLIC_APP_URL || request.url).origin
-  )
-    return reply({ error: 'Forbidden origin' }, 403);
+  if (!isTrustedQuizSubmissionOrigin(request)) return reply({ error: 'Forbidden origin' }, 403);
   if (request.headers.get('content-type')?.split(';')[0].trim() !== 'application/json')
     return reply({ error: 'JSON required' }, 415);
   const reader = request.body?.getReader();
