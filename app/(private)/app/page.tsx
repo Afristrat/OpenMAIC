@@ -261,12 +261,7 @@ function HomePage() {
     if (organization) setCurrentOrg(organization);
   }, [learnerResumeTarget, currentOrg?.id, organizations, setCurrentOrg]);
   useEffect(() => {
-    if (
-      !user ||
-      !learnerResumeTarget ||
-      currentOrg?.id !== learnerResumeTarget.orgId
-    )
-      return;
+    if (!user || !learnerResumeTarget || currentOrg?.id !== learnerResumeTarget.orgId) return;
     const controller = new AbortController();
     void fetch(
       `/api/learner-courses/${encodeURIComponent(learnerResumeTarget.courseId)}` +
