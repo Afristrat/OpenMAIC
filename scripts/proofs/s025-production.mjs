@@ -215,6 +215,7 @@ let uiDiagnostic = {};
 let classroomGetCount = 0;
 let browserErrorCount = 0;
 const browserErrors = [];
+const failedResourcePaths = [];
 
 function diagnosticMessage(value) {
   return String(value)
@@ -254,6 +255,11 @@ try {
       classroomGetCount += 1;
     }
   });
+  page.on('response', (response) => {
+    if (response.status() >= 500) {
+      failedResourcePaths.push(`${response.status()}:${new URL(response.url()).pathname}`);
+    }
+  });
   stage = 'chargement-classroom';
   const classroomResponse = page.waitForResponse(
     (response) =>
@@ -278,6 +284,7 @@ try {
     classroomGetCount,
     browserErrorCount,
     browserErrors,
+    failedResourcePaths,
   };
   assert.equal(classroomApi.status(), 200, 'Authenticated classroom API must succeed');
   await page.getByText('Loading classroom...').waitFor({ state: 'hidden', timeout: 30_000 });
@@ -371,7 +378,13 @@ try {
     JSON.stringify({
       stage,
       error: error instanceof Error ? error.name : 'PROOF_FAILURE',
-      uiDiagnostic: { ...uiDiagnostic, classroomGetCount, browserErrorCount, browserErrors },
+      uiDiagnostic: {
+        ...uiDiagnostic,
+        classroomGetCount,
+        browserErrorCount,
+        browserErrors,
+        failedResourcePaths,
+      },
     }),
   );
   process.exitCode = 1;
