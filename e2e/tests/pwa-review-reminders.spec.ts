@@ -32,15 +32,20 @@ test.describe('PWA review reminders', () => {
         scope: '/',
         updateViaCache: 'none',
       });
-      if (updated.installing) {
-        await new Promise<void>((resolve, reject) => {
-          updated.installing?.addEventListener('statechange', function listener() {
-            if (this.state === 'activated') resolve();
-            if (this.state === 'redundant')
-              reject(new Error('Updated service worker is redundant'));
-          });
+      await new Promise<void>((resolve, reject) => {
+        const worker = updated.installing ?? updated.waiting ?? updated.active;
+        if (!worker || worker.state === 'activated') {
+          resolve();
+          return;
+        }
+        worker.addEventListener('statechange', function listener() {
+          if (this.state === 'activated') resolve();
+          if (this.state === 'redundant') reject(new Error('Updated service worker is redundant'));
         });
-      }
+        // The worker may activate between the state check and listener registration.
+        if (worker.state === 'activated') resolve();
+        if (worker.state === 'redundant') reject(new Error('Updated service worker is redundant'));
+      });
     });
 
     await expect
