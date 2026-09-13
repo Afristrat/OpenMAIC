@@ -4,6 +4,7 @@ import { createSettingsStorage } from '../fixtures/test-data/settings';
 const ORG_ID = '00000000-0000-4000-8000-000000000002';
 const CLASSROOM_ID = 'e2e-catalog-classroom';
 const PUBLISHED_CLASSROOM_ID = 'e2e-unpublished-classroom';
+const PUBLISHED_COURSE_ID = '00000000-0000-4000-8000-000000000019';
 
 test.describe('Catalogue de formations', () => {
   test.beforeEach(async ({ page }) => {
@@ -75,8 +76,15 @@ test.describe('Catalogue de formations', () => {
     await expect(page.getByText('Formation à publier')).toBeVisible();
     await page.getByRole('button', { name: 'Publier au catalogue' }).click();
     await expect(page.getByRole('button', { name: 'Publier au catalogue' })).toHaveCount(0);
-    await page.locator(`a[href="/classroom/${PUBLISHED_CLASSROOM_ID}"]`).click();
-    await expect(page).toHaveURL(new RegExp(`/classroom/${PUBLISHED_CLASSROOM_ID}$`));
+    const classroomHref =
+      `/classroom/${PUBLISHED_CLASSROOM_ID}?orgId=${ORG_ID}` +
+      `&learnerCourseId=${PUBLISHED_COURSE_ID}`;
+    await page.locator(`a[href="${classroomHref}"]`).click();
+    await expect(page).toHaveURL(
+      new RegExp(
+        `/classroom/${PUBLISHED_CLASSROOM_ID}\\?orgId=${ORG_ID}&learnerCourseId=${PUBLISHED_COURSE_ID}$`,
+      ),
+    );
   });
 
   test('préserve une mise en page RTL en arabe', async ({ page }) => {
