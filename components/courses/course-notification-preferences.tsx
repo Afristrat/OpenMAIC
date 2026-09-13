@@ -53,7 +53,9 @@ export function CourseNotificationPreferences({
           dailyCap: typeof body.dailyCap === 'number' ? body.dailyCap : null,
           nextReminderAt: typeof body.nextReminderAt === 'string' ? body.nextReminderAt : null,
           minimumIntervalHours:
-            body.minimumIntervalHours === 24 || body.minimumIntervalHours === 72 || body.minimumIntervalHours === 168
+            body.minimumIntervalHours === 24 ||
+            body.minimumIntervalHours === 72 ||
+            body.minimumIntervalHours === 168
               ? body.minimumIntervalHours
               : null,
         });
@@ -86,7 +88,9 @@ export function CourseNotificationPreferences({
         dailyCap: typeof body.dailyCap === 'number' ? body.dailyCap : null,
         nextReminderAt: typeof body.nextReminderAt === 'string' ? body.nextReminderAt : null,
         minimumIntervalHours:
-          body.minimumIntervalHours === 24 || body.minimumIntervalHours === 72 || body.minimumIntervalHours === 168
+          body.minimumIntervalHours === 24 ||
+          body.minimumIntervalHours === 72 ||
+          body.minimumIntervalHours === 168
             ? body.minimumIntervalHours
             : null,
       }));
