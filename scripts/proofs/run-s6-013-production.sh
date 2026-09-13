@@ -51,6 +51,36 @@ if [[ ! "$PROOF_USER_ID" =~ ^[0-9a-f-]{36}$ ]]; then
   exit 1
 fi
 
+PROOF_ORG_ID="$({
+  docker exec -i \
+    -e PROOF_USER_ID="$PROOF_USER_ID" \
+    -e PROOF_MARKER="$PROOF_MARKER" \
+    "$PROOF_WEB_CONTAINER" node --input-type=module
+} <<'NODE'
+const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!baseUrl || !serviceKey) throw new Error('Supabase service configuration is unavailable');
+const headers = { apikey: serviceKey, authorization: `Bearer ${serviceKey}`, 'content-type': 'application/json' };
+const org = await fetch(`${baseUrl}/rest/v1/organizations`, {
+  method: 'POST', headers: { ...headers, prefer: 'return=representation' },
+  body: JSON.stringify({ name: `S6-013 ${process.env.PROOF_MARKER}`, default_locale: 'fr-FR', status: 'active', seat_limit: 2 }),
+});
+const rows = await org.json().catch(() => []);
+if (!org.ok || !Array.isArray(rows) || typeof rows[0]?.id !== 'string') throw new Error(`Temporary organization creation failed with HTTP ${org.status}`);
+const membership = await fetch(`${baseUrl}/rest/v1/org_members`, {
+  method: 'POST', headers: { ...headers, prefer: 'return=minimal' },
+  body: JSON.stringify({ user_id: process.env.PROOF_USER_ID, org_id: rows[0].id, role: 'author' }),
+});
+if (!membership.ok) throw new Error(`Temporary organization membership failed with HTTP ${membership.status}`);
+process.stdout.write(rows[0].id);
+NODE
+)"
+
+if [[ ! "$PROOF_ORG_ID" =~ ^[0-9a-f-]{36}$ ]]; then
+  echo '[COORDINATOR] Temporary organization did not return a UUID' >&2
+  exit 1
+fi
+
 audit_or_cleanup() {
   local mode="$1"
   docker exec -i \
@@ -172,6 +202,7 @@ docker run --rm --init --shm-size=2g \
   -e PROOF_EMAIL="$PROOF_EMAIL" \
   -e PROOF_PASSWORD="$PROOF_PASSWORD" \
   -e PROOF_MARKER="$PROOF_MARKER" \
+  -e PROOF_ORG_ID="$PROOF_ORG_ID" \
   -e PROOF_ARTIFACT_DIR="$PROOF_ARTIFACT_DIR" \
   -e PROOF_SHA="$PROOF_APP_SHA" \
   -e PROOF_HARNESS_SHA="$PROOF_HARNESS_SHA" \

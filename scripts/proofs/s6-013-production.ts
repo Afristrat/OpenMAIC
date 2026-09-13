@@ -15,6 +15,7 @@ const BASE_URL = process.env.PROOF_BASE_URL ?? 'https://qalem.ma';
 const EMAIL = process.env.PROOF_EMAIL;
 const PASSWORD = process.env.PROOF_PASSWORD;
 const MARKER = process.env.PROOF_MARKER ?? `s6013-${Date.now()}`;
+const PROVISIONED_ORG_ID = process.env.PROOF_ORG_ID;
 const ARTIFACT_DIR = process.env.PROOF_ARTIFACT_DIR ?? join(tmpdir(), MARKER);
 const SHA = process.env.PROOF_SHA ?? 'unknown';
 const HARNESS_SHA = process.env.PROOF_HARNESS_SHA ?? 'unknown';
@@ -24,6 +25,7 @@ const EXPORT_TIMEOUT_MS = 45 * 60_000;
 
 assert(EMAIL, 'PROOF_EMAIL is required');
 assert(PASSWORD, 'PROOF_PASSWORD is required');
+assert(PROVISIONED_ORG_ID, 'PROOF_ORG_ID is required');
 
 type JsonObject = Record<string, unknown>;
 type MultipartValue =
@@ -443,15 +445,8 @@ async function main(): Promise<void> {
     progress('Authentification temporaire réussie');
     const request = context.request;
 
-    const organization = await jsonResponse(request, 'POST', '/api/organizations', {
-      data: { name: `S6-013 ${MARKER}`, default_locale: 'fr-FR' },
-      expected: [201],
-    });
-    organizationId = string(
-      object(organization.organization, 'organization').id,
-      'organization.id',
-    );
-    progress('Organisation temporaire créée');
+    organizationId = string(PROVISIONED_ORG_ID, 'PROOF_ORG_ID');
+    progress('Organisation temporaire provisionnée avec un membership auteur');
 
     if (process.env.PROOF_QUIZ_ONLY === '1') {
       classroomId = `${MARKER}-quiz`.replace(/[^A-Za-z0-9_-]/g, '_');
