@@ -287,6 +287,7 @@ try {
     failedResourcePaths,
   };
   assert.equal(classroomApi.status(), 200, 'Authenticated classroom API must succeed');
+  stage = 'attente-chargeur';
   const loader = page.getByText('Loading classroom...');
   try {
     await loader.waitFor({ state: 'hidden', timeout: 30_000 });
@@ -305,8 +306,17 @@ try {
     };
     throw error;
   }
+  stage = 'attente-démarrage-quiz';
   const start = page.getByRole('button', { name: 'Démarrer le quiz', exact: true });
-  await start.waitFor({ state: 'visible', timeout: 30_000 });
+  try {
+    await start.waitFor({ state: 'visible', timeout: 30_000 });
+  } catch (error) {
+    uiDiagnostic = {
+      ...uiDiagnostic,
+      visibleButtons: (await page.getByRole('button').allTextContents()).slice(0, 20),
+    };
+    throw error;
+  }
   await start.click();
   const submit = page.getByRole('button', { name: 'Soumettre les réponses', exact: true });
   await submit.waitFor({ state: 'visible', timeout: 30_000 });
