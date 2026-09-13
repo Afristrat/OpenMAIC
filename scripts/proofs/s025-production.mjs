@@ -228,6 +228,18 @@ try {
   await createOrganization(session.userId);
   await createQuizClassroom(session);
   const persistedStageId = classroomId;
+  const quizRpcProbe = await json(`${supabaseUrl}/rest/v1/rpc/begin_classroom_quiz_attempt`, {
+    method: 'POST',
+    headers: headers(true),
+    body: JSON.stringify({
+      p_actor: session.userId,
+      p_org: organizationId,
+      p_stage: persistedStageId,
+      p_scene: `${persistedStageId}-scene`,
+      p_request: crypto.randomUUID(),
+      p_answers: { [`${persistedStageId}-wrong`]: 'A' },
+    }),
+  });
   const membershipProbe = await json(
     `${supabaseUrl}/rest/v1/org_members?select=role,organizations!inner(status)&org_id=eq.${encodeURIComponent(organizationId)}&user_id=eq.${encodeURIComponent(session.userId)}`,
     { headers: { apikey: anon, Authorization: `Bearer ${session.accessToken}` } },
@@ -281,6 +293,10 @@ try {
     sessionCookieCount: (await context.cookies(base)).filter((cookie) =>
       cookie.name.includes('-auth-token'),
     ).length,
+    quizRpcProbe: {
+      status: quizRpcProbe.status,
+      errorCode: typeof quizRpcProbe.payload?.code === 'string' ? quizRpcProbe.payload.code : null,
+    },
     classroomGetCount,
     browserErrorCount,
     browserErrors,
