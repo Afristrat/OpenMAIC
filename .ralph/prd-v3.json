@@ -4997,7 +4997,8 @@
       "sourceDependencies": [],
       "closureEvidence": [
         "2026-09-14 — SHA f63f9c3fa2bfd3f5f454d019a434edc21ef54c00 : l’interface authentifiée expose les réglages globaux existants (fuseau IANA, heures silencieuses, plafond quotidien, pause/reprise) en FR/AR/EN. ServeurIA : pnpm check, typecheck et lint verts ; 3/3 Vitest worker et 1/1 Playwright préférences verts. S3-013 reste ouverte : préférences par formation, réception réelle inter-canaux et recette mobile ne sont pas prouvées.",
-        "2026-09-14 — SHA d59221ccf0a3aad69b0a1df7df0b22c93c143fb3 : l’API authentifiée et la politique transactionnelle ajoutent pause et plafond quotidien par formation, comme limite additionnelle au budget commun, pour les reprises et les graines/évaluations rattachées à une formation. ServeurIA : pnpm check, typecheck et lint verts ; 7/7 tests ciblés. PostgreSQL de production : migrations validées sous BEGIN/ROLLBACK seulement, donc non appliquées. S3-013 reste ouverte : interface par formation, aperçu du prochain rappel et de l’effet des changements, recette complète inter-canaux/mobile et réception attestée."
+        "2026-09-14 — SHA d59221ccf0a3aad69b0a1df7df0b22c93c143fb3 : l’API authentifiée et la politique transactionnelle ajoutent pause et plafond quotidien par formation, comme limite additionnelle au budget commun, pour les reprises et les graines/évaluations rattachées à une formation. ServeurIA : pnpm check, typecheck et lint verts ; 7/7 tests ciblés. PostgreSQL de production : migrations validées sous BEGIN/ROLLBACK seulement, donc non appliquées.",
+        "2026-09-14 — SHA b1c64bde29af4a8ca7a36e7398e9528eef4d1c70 : la classroom d’un apprenant affiche les réglages de sa formation (plafond, pause datée, reprise), traduits en FR/AR/EN. ServeurIA : pnpm check, typecheck et lint verts ; 7/7 tests API/worker ciblés. S3-013 reste ouverte : aucun aperçu fiable du prochain rappel ou de l’effet calculé, aucune recette inter-canaux/mobile ni réception attestée ; les migrations ne sont pas appliquées."
       ],
       "executionAllowed": true,
       "executionDecision": "2026-09-12 — Objectif exhaustif demandé par Amine : compléments multisources et mobiles conservés, sans clôture ni activation déduite.",
@@ -5006,13 +5007,14 @@
       "title": "Maîtriser la pression et la confidentialité des relances mobiles",
       "description": "En tant qu’apprenant suivant plusieurs formations, je veux contrôler les sollicitations de Qalem afin de recevoir des rappels utiles au moment choisi sans exposition de mes échanges privés.",
       "dependencies": ["S3-005", "S6-010"],
-      "gap": "Les réglages globaux sont visibles et enregistrables ; l’API et la politique durable portent désormais pause et plafond additionnel par formation pour les reprises et l’ancrage. Restent l’interface par formation, l’exposition du prochain rappel et de l’effet des changements, les recettes inter-formations/canaux et concurrentes, la validation mobile et la réception physique. Les migrations ne sont pas appliquées : elles ont seulement été validées sous transaction annulée ; aucun déploiement ni activation n’est déduit de cette preuve.",
+      "gap": "Les réglages globaux sont visibles et enregistrables ; l’API, la politique durable et la classroom portent désormais pause et plafond additionnel par formation pour les reprises et l’ancrage. Restent l’exposition du prochain rappel et de l’effet des changements, les recettes inter-formations/canaux et concurrentes, la validation mobile et la réception physique. Les migrations ne sont pas appliquées : elles ont seulement été validées sous transaction annulée ; aucun déploiement ni activation n’est déduit de cette preuve.",
       "evidence": [
         "app/api/notification-preferences/route.ts",
         "lib/anchoring/schedule.ts",
         "lib/jobs/workers.ts",
         "public/sw.js",
         "components/settings/notification-settings.tsx",
+        "components/courses/course-notification-preferences.tsx",
         "e2e/tests/review-notification-preferences.spec.ts",
         "supabase/migrations/20260912100000_notification_delivery_preferences.sql",
         "supabase/migrations/20260912110000_notification_delivery_budget.sql",
