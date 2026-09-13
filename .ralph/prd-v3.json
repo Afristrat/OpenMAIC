@@ -2603,8 +2603,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Extraire les items de révision depuis les quiz » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P1",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd.json",
         "id": "S-025",
