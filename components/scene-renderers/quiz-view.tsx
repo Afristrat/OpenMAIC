@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback, useEffect, useId, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   PieChart,
@@ -45,6 +46,25 @@ import {
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 type Phase = 'not_started' | 'answering' | 'grading' | 'grading_error' | 'reviewing';
+
+function readLearnerResumeQuizAnswers(courseId: string | null, sceneId: string): Record<string, string | string[]> {
+  if (!courseId || typeof window === 'undefined') return {};
+  try {
+    const value = JSON.parse(
+      sessionStorage.getItem(`learner-course-resume:${courseId}:${sceneId}`) ?? 'null',
+    ) as { activity?: unknown; activityState?: { answers?: unknown } } | null;
+    if (value?.activity !== 'quiz' || !value.activityState?.answers) return {};
+    return Object.fromEntries(
+      Object.entries(value.activityState.answers).filter(
+        ([, answer]) =>
+          typeof answer === 'string' ||
+          (Array.isArray(answer) && answer.every((item) => typeof item === 'string')),
+      ),
+    ) as Record<string, string | string[]>;
+  } catch {
+    return {};
+  }
+}
 
 interface QuizViewProps {
   readonly questions: QuizQuestion[];
@@ -677,6 +697,7 @@ function QuizSession({
   const { t, locale } = useI18n();
   const { user } = useAuth();
   const orgId = useClassroomOrganizationId();
+  const learnerCourseId = useSearchParams().get('learnerCourseId');
   // Reuse the durable attempt format, with a distinct account/tenant/stage/scene namespace.
   const attemptScope =
     ltiScope ??
@@ -702,7 +723,10 @@ function QuizSession({
     return 'not_started';
   });
   const [answers, setAnswers] = useState<Record<string, string | string[]>>(
-    () => savedLti.attempt?.answers ?? initialSubmitted?.answers ?? {},
+    () =>
+      savedLti.attempt?.answers ??
+      initialSubmitted?.answers ??
+      readLearnerResumeQuizAnswers(learnerCourseId, sceneId),
   );
   const [results, setResults] = useState<QuestionResult[]>(() =>
     initialSubmitted?.kind === 'reviewing' ? initialSubmitted.results : [],
@@ -746,6 +770,31 @@ function QuizSession({
       return (a as string).trim().length > 0;
     });
   }, [questions, answers]);
+
+  useEffect(() => {
+    if (!learnerCourseId || !orgId || !user || Object.keys(answers).length === 0) return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      void fetch(`/api/learner-courses/${encodeURIComponent(learnerCourseId)}/resume`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orgId,
+          sceneId,
+          activity: 'quiz',
+          activityState: { answers, phase },
+          positionMs: 0,
+        }),
+        signal: controller.signal,
+      }).catch((error: unknown) => {
+        if (!controller.signal.aborted) log.warn('Quiz resume persistence failed:', error);
+      });
+    }, 800);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [answers, learnerCourseId, orgId, phase, sceneId, user]);
 
   const handleSetAnswer = useCallback(
     (questionId: string, value: string | string[]) => {

@@ -273,9 +273,18 @@ function HomePage() {
         const payload = z
           .object({
             success: z.literal(true),
-            target: z.object({ stageId: z.string().min(1), sceneId: z.string().min(1) }),
+            target: z.object({
+              stageId: z.string().min(1),
+              sceneId: z.string().min(1),
+              activity: z.enum(['scene', 'discussion', 'quiz', 'resource']),
+              activityState: z.record(z.string(), z.unknown()),
+            }),
           })
           .parse(await response.json());
+        sessionStorage.setItem(
+          `learner-course-resume:${learnerResumeTarget.courseId}:${payload.target.sceneId}`,
+          JSON.stringify({ activity: payload.target.activity, activityState: payload.target.activityState }),
+        );
         router.replace(
           `/classroom/${encodeURIComponent(payload.target.stageId)}` +
             `?orgId=${encodeURIComponent(learnerResumeTarget.orgId)}` +
