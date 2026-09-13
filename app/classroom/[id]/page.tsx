@@ -280,11 +280,14 @@ export default function ClassroomDetailPage() {
       (chat) => chat.type === 'discussion' && chat.status === 'active',
     );
     let activity: 'scene' | 'discussion' = activeDiscussion ? 'discussion' : 'scene';
-    let activityState: Record<string, unknown> = activeDiscussion ? { session: activeDiscussion } : {};
+    let activityState: Record<string, unknown> = activeDiscussion
+      ? { session: activeDiscussion }
+      : {};
     if (!activeDiscussion) {
       try {
         const stored = JSON.parse(
-          sessionStorage.getItem(`learner-course-resume:${learnerCourseId}:${currentSceneId}`) ?? 'null',
+          sessionStorage.getItem(`learner-course-resume:${learnerCourseId}:${currentSceneId}`) ??
+            'null',
         ) as { activity?: unknown; activityState?: unknown } | null;
         if (stored?.activity === 'discussion' && stored.activityState) {
           activity = 'discussion';

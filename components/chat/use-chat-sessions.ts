@@ -63,7 +63,10 @@ interface UseChatSessionsOptions {
   shouldHoldAfterReveal?: () => { holding: boolean; segmentDone: number } | boolean;
 }
 
-function readLearnerResumeDiscussion(courseId: string | null, sceneId: string | null): ChatSession | null {
+function readLearnerResumeDiscussion(
+  courseId: string | null,
+  sceneId: string | null,
+): ChatSession | null {
   if (!courseId || !sceneId || typeof window === 'undefined') return null;
   try {
     const stored = JSON.parse(
