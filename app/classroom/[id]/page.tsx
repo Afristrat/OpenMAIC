@@ -155,9 +155,14 @@ export default function ClassroomDetailPage() {
             // Don't set selectedAgentIds here — the general agent
             // restoration logic below (Path 2) handles it uniformly.
             if (stage.generatedAgentConfigs?.length) {
-              const { saveGeneratedAgents } = await import('@/lib/orchestration/registry/store');
-              await saveGeneratedAgents(stage.id, stage.generatedAgentConfigs);
-              log.info('Hydrated server-generated agents for stage:', stage.id);
+              void import('@/lib/orchestration/registry/store')
+                .then(({ saveGeneratedAgents }) =>
+                  saveGeneratedAgents(stage.id, stage.generatedAgentConfigs!),
+                )
+                .then(() => log.info('Hydrated server-generated agents for stage:', stage.id))
+                .catch((agentCacheError) => {
+                  log.warn('Authoritative generated-agent cache write failed:', agentCacheError);
+                });
             }
           }
         } else {
@@ -177,8 +182,12 @@ export default function ClassroomDetailPage() {
         // A cached snapshot is not proof of current server editing rights.
       }
 
-      // Restore completed media generation tasks from IndexedDB
-      await useMediaGenerationStore.getState().restoreFromDB(classroomId);
+      // IndexedDB enrichments must never delay access to a classroom the server
+      // has already authorized. They can restore after playback starts and may
+      // safely fail on a constrained or unavailable local database.
+      void (async () => {
+        // Restore completed media generation tasks from IndexedDB
+        await useMediaGenerationStore.getState().restoreFromDB(classroomId);
       // Restore agents for this stage
       const { loadGeneratedAgentsForStage, useAgentRegistry } =
         await import('@/lib/orchestration/registry/store');
@@ -223,9 +232,12 @@ export default function ClassroomDetailPage() {
       if (next.selectedAgentIds !== settings.selectedAgentIds) {
         settings.setSelectedAgentIds(next.selectedAgentIds);
       }
-      if (isUserSet !== settings.agentSelectionIsUserSet) {
-        settings.setAgentSelectionIsUserSet(isUserSet);
-      }
+        if (isUserSet !== settings.agentSelectionIsUserSet) {
+          settings.setAgentSelectionIsUserSet(isUserSet);
+        }
+      })().catch((restorationError) => {
+        log.warn('Non-critical classroom restoration failed:', restorationError);
+      });
     } catch (error) {
       log.error('Failed to load classroom:', error);
       setError(error instanceof Error ? error.message : 'Failed to load classroom');
