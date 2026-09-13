@@ -291,11 +291,13 @@ try {
   try {
     await loader.waitFor({ state: 'hidden', timeout: 30_000 });
   } catch (error) {
+    const loaderState = page.locator('[data-classroom-loading]');
     uiDiagnostic = {
       ...uiDiagnostic,
       loader: {
-        loading: await loader.getAttribute('data-classroom-loading'),
-        accessResolved: await loader.getAttribute('data-classroom-access-resolved'),
+        count: await loaderState.count(),
+        loading: await loaderState.getAttribute('data-classroom-loading'),
+        accessResolved: await loaderState.getAttribute('data-classroom-access-resolved'),
       },
     };
     throw error;
