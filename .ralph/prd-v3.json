@@ -4999,7 +4999,8 @@
         "2026-09-14 — SHA f63f9c3fa2bfd3f5f454d019a434edc21ef54c00 : l’interface authentifiée expose les réglages globaux existants (fuseau IANA, heures silencieuses, plafond quotidien, pause/reprise) en FR/AR/EN. ServeurIA : pnpm check, typecheck et lint verts ; 3/3 Vitest worker et 1/1 Playwright préférences verts. S3-013 reste ouverte : préférences par formation, réception réelle inter-canaux et recette mobile ne sont pas prouvées.",
         "2026-09-14 — SHA d59221ccf0a3aad69b0a1df7df0b22c93c143fb3 : l’API authentifiée et la politique transactionnelle ajoutent pause et plafond quotidien par formation, comme limite additionnelle au budget commun, pour les reprises et les graines/évaluations rattachées à une formation. ServeurIA : pnpm check, typecheck et lint verts ; 7/7 tests ciblés. PostgreSQL de production : migrations validées sous BEGIN/ROLLBACK seulement, donc non appliquées.",
         "2026-09-14 — SHA b1c64bde29af4a8ca7a36e7398e9528eef4d1c70 : la classroom d’un apprenant affiche les réglages de sa formation (plafond, pause datée, reprise), traduits en FR/AR/EN. ServeurIA : pnpm check, typecheck et lint verts ; 7/7 tests API/worker ciblés.",
-        "2026-09-14 — SHA c035589e1e6752e4eb0d3108fd5395067330d724 : la classroom affiche l’effet immédiat de la pause ou le prochain rappel réellement planifié, calculé côté PostgreSQL à partir des reprises et de l’ancrage de la formation ; le contrôle d’appartenance y est centralisé. ServeurIA : pnpm check, typecheck et lint verts ; 7/7 tests ciblés. PostgreSQL de production : migrations validées sous BEGIN/ROLLBACK seulement, donc non appliquées. S3-013 reste ouverte : fréquence par formation, recettes inter-formations/canaux et concurrentes, validation mobile et réception attestée."
+        "2026-09-14 — SHA c035589e1e6752e4eb0d3108fd5395067330d724 : la classroom affiche l’effet immédiat de la pause ou le prochain rappel réellement planifié, calculé côté PostgreSQL à partir des reprises et de l’ancrage de la formation ; le contrôle d’appartenance y est centralisé. ServeurIA : pnpm check, typecheck et lint verts ; 7/7 tests ciblés. PostgreSQL de production : migrations validées sous BEGIN/ROLLBACK seulement, donc non appliquées.",
+        "2026-09-14 — SHA 297d39c1fa0a17f672a37cbaf4ce688e9ae30105 : un espacement de 24 h, 3 jours ou 7 jours est réglable par formation et arbitré transactionnellement pour les reprises et l’ancrage, sans contournement du plafond global. ServeurIA : pnpm check, typecheck et lint verts ; 3/3 tests API ciblés. PostgreSQL de production : migration validée sous BEGIN/ROLLBACK seulement, donc non appliquée. S3-013 reste ouverte : recettes inter-formations/canaux et concurrentes, validation mobile et réception attestée."
       ],
       "executionAllowed": true,
       "executionDecision": "2026-09-12 — Objectif exhaustif demandé par Amine : compléments multisources et mobiles conservés, sans clôture ni activation déduite.",
@@ -5008,7 +5009,7 @@
       "title": "Maîtriser la pression et la confidentialité des relances mobiles",
       "description": "En tant qu’apprenant suivant plusieurs formations, je veux contrôler les sollicitations de Qalem afin de recevoir des rappels utiles au moment choisi sans exposition de mes échanges privés.",
       "dependencies": ["S3-005", "S6-010"],
-      "gap": "Les réglages globaux sont visibles et enregistrables ; l’API, la politique durable et la classroom portent pause et plafond additionnel par formation pour les reprises et l’ancrage, ainsi qu’un aperçu serveur de la prochaine échéance ou de l’effet de la pause. Restent la fréquence par formation, les recettes inter-formations/canaux et concurrentes, la validation mobile et la réception physique. Les migrations ne sont pas appliquées : elles ont seulement été validées sous transaction annulée ; aucun déploiement ni activation n’est déduit de cette preuve.",
+      "gap": "Les réglages globaux sont visibles et enregistrables ; l’API, la politique durable et la classroom portent pause, plafond et cadence additionnels par formation pour les reprises et l’ancrage, ainsi qu’un aperçu serveur de la prochaine échéance ou de l’effet de la pause. Restent les recettes inter-formations/canaux et concurrentes, la validation mobile et la réception physique. Les migrations ne sont pas appliquées : elles ont seulement été validées sous transaction annulée ; aucun déploiement ni activation n’est déduit de cette preuve.",
       "evidence": [
         "app/api/notification-preferences/route.ts",
         "lib/anchoring/schedule.ts",
@@ -5022,6 +5023,7 @@
         "supabase/migrations/20260914090000_course_notification_preferences.sql",
         "supabase/migrations/20260914093000_course_notification_delivery_budget.sql",
         "supabase/migrations/20260914094500_course_notification_preview.sql",
+        "supabase/migrations/20260914100000_course_notification_cadence.sql",
         "app/api/courses/[courseId]/notification-preferences/route.ts",
         "lib/server/notification-delivery-policy.ts",
         "lib/server/course-resume-deliveries.ts",
