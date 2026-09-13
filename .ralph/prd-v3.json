@@ -1868,7 +1868,9 @@
         "Utiliser le broker/coffre prévu, sauvegarder, vérifier tous les consommateurs Qalem avant révocation et consigner la clôture réelle sans exposer les valeurs.",
         "Une priorité P0 exprime le risque ; seule l’autorisation explicite du 9 septembre permet désormais l’exécution. Ne pas fermer sans preuve réelle."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-13 — Le SHA dd76937f9d50de23d22e58a336923a1352a3330f ajoute la progression apprenant par formation, les APIs de reprise et d’achèvement, la file BullMQ de relance et le raccordement catalogue→classroom→scène. Les deux migrations ont été exécutées dans une transaction PostgreSQL annulée sur la base Qalem : tables, fonctions de claim et d’achèvement présentes pendant la transaction, puis absentes après rollback. Tests ciblés : 4 fichiers, 13 tests verts ; Prettier, TypeScript et ESLint verts sur ServeurIA. Ce n’est pas une clôture : migrations non appliquées, déploiement, recette multi-appareils et réception physique restent requis."
+      ],
       "historicalDependencies": [],
       "executionAllowed": true,
       "executionDecision": "2026-09-09 — Feu vert explicite pour les douze US et délégation des choix. Voir docs/decisions/2026-09-09-unblock-prd.md. Autorisation de travail, pas preuve de livraison ni activation automatique.",
@@ -4958,11 +4960,16 @@
       "title": "Relancer les formations inachevées et reprendre au bon endroit",
       "description": "En tant qu’apprenant ayant interrompu une formation, je veux une invitation contextualisée à reprendre exactement mon activité afin de continuer sans perdre mon travail.",
       "dependencies": ["S0-015", "S3-005", "S3-013"],
-      "gap": "La génération de graines exige ended_at dans la route inspectée ; le calendrier existant démarre à l’opt-in. Le parcours de relance d’une formation inachevée reste à raccorder à la progression réelle, sans confondre reprise auteur et reprise apprenant.",
+      "gap": "Le parcours de reprise apprenant est désormais séparé de la reprise auteur : progression, ciblage de scène, annulation à l’achèvement et file de relance sont versionnés. Restent l’application de migration et le déploiement, la reprise d’état riche par activité, le réglage visible par formation S3-013 et la recette web/mobile concurrente sur appareils réels.",
       "evidence": [
         "app/api/live-sessions/[id]/seeds/route.ts",
         "lib/anchoring/schedule.ts",
-        "app/api/courses/[courseId]/resume/route.ts"
+        "app/api/courses/[courseId]/resume/route.ts",
+        "app/api/learner-courses/[courseId]/resume/route.ts",
+        "app/api/learner-courses/[courseId]/complete/route.ts",
+        "lib/server/course-resume-deliveries.ts",
+        "supabase/migrations/20260913120000_learner_course_resume.sql",
+        "supabase/migrations/20260913121500_course_resume_delivery_lifecycle.sql"
       ],
       "acceptance": [
         "Détecter une formation commencée mais inachevée à partir de progression serveur autorisée ; ne pas attendre une session terminée ou un stock de graines de fin de session pour proposer une reprise.",
