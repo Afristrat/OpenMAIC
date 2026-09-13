@@ -717,9 +717,7 @@ function QuizSession({
   const [initialSubmitted] = useState<SubmittedState>(() =>
     attemptScope ? null : readSubmittedState(sceneId),
   );
-  const [resumeAnswers] = useState(() =>
-    readLearnerResumeQuizAnswers(learnerCourseId, sceneId),
-  );
+  const [resumeAnswers] = useState(() => readLearnerResumeQuizAnswers(learnerCourseId, sceneId));
 
   const [phase, setPhase] = useState<Phase>(() => {
     if (savedLti.error) return 'grading_error';
@@ -730,10 +728,7 @@ function QuizSession({
     return 'not_started';
   });
   const [answers, setAnswers] = useState<Record<string, string | string[]>>(
-    () =>
-      savedLti.attempt?.answers ??
-      initialSubmitted?.answers ??
-      resumeAnswers,
+    () => savedLti.attempt?.answers ?? initialSubmitted?.answers ?? resumeAnswers,
   );
   const [results, setResults] = useState<QuestionResult[]>(() =>
     initialSubmitted?.kind === 'reviewing' ? initialSubmitted.results : [],
