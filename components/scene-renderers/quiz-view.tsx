@@ -717,19 +717,21 @@ function QuizSession({
   const [initialSubmitted] = useState<SubmittedState>(() =>
     attemptScope ? null : readSubmittedState(sceneId),
   );
+  const [resumeAnswers] = useState(() => readLearnerResumeQuizAnswers(learnerCourseId, sceneId));
 
   const [phase, setPhase] = useState<Phase>(() => {
     if (savedLti.error) return 'grading_error';
     if (savedLti.attempt) return 'grading';
     if (initialSubmitted?.kind === 'reviewing') return 'reviewing';
     if (initialSubmitted?.kind === 'answering') return 'answering';
+    if (Object.keys(resumeAnswers).length > 0) return 'answering';
     return 'not_started';
   });
   const [answers, setAnswers] = useState<Record<string, string | string[]>>(
     () =>
       savedLti.attempt?.answers ??
       initialSubmitted?.answers ??
-      readLearnerResumeQuizAnswers(learnerCourseId, sceneId),
+      resumeAnswers,
   );
   const [results, setResults] = useState<QuestionResult[]>(() =>
     initialSubmitted?.kind === 'reviewing' ? initialSubmitted.results : [],
