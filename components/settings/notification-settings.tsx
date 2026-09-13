@@ -26,13 +26,39 @@ type SettingsPreferences = NotificationPreferences & {
   email: boolean;
   whatsapp: boolean;
   whatsappNumber?: string;
+  timezone: string;
+  quietStart: string | null;
+  quietEnd: string | null;
+  dailyCap: number;
+  pausedUntil: string | null;
 };
 
 const DISABLED_PREFERENCES: SettingsPreferences = {
   email: false,
   push: false,
   whatsapp: false,
+  timezone: 'UTC',
+  quietStart: null,
+  quietEnd: null,
+  dailyCap: 3,
+  pausedUntil: null,
 };
+
+function toLocalDateTime(value: string | null): string {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const pad = (part: number) => String(part).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
+    date.getHours(),
+  )}:${pad(date.getMinutes())}`;
+}
+
+function toIsoDateTime(value: string): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
 
 export function NotificationSettings(): React.ReactElement {
   const { t, locale } = useI18n();
@@ -60,6 +86,11 @@ export function NotificationSettings(): React.ReactElement {
           email?: unknown;
           whatsapp?: unknown;
           whatsappNumber?: unknown;
+          timezone?: unknown;
+          quietStart?: unknown;
+          quietEnd?: unknown;
+          dailyCap?: unknown;
+          pausedUntil?: unknown;
         };
         if (!active) return;
         setPrefs((current) => ({
@@ -69,6 +100,11 @@ export function NotificationSettings(): React.ReactElement {
           ...(typeof body.whatsappNumber === 'string'
             ? { whatsappNumber: body.whatsappNumber }
             : { whatsappNumber: undefined }),
+          ...(typeof body.timezone === 'string' ? { timezone: body.timezone } : {}),
+          quietStart: typeof body.quietStart === 'string' ? body.quietStart.slice(0, 5) : null,
+          quietEnd: typeof body.quietEnd === 'string' ? body.quietEnd.slice(0, 5) : null,
+          ...(typeof body.dailyCap === 'number' ? { dailyCap: body.dailyCap } : {}),
+          pausedUntil: typeof body.pausedUntil === 'string' ? body.pausedUntil : null,
         }));
       })
       .catch(() => {
@@ -188,6 +224,11 @@ export function NotificationSettings(): React.ReactElement {
           whatsapp: prefs.whatsapp,
           whatsappNumber: prefs.whatsapp ? normalizedWhatsAppNumber : null,
           locale,
+          timezone: prefs.timezone,
+          quietStart: prefs.quietStart,
+          quietEnd: prefs.quietEnd,
+          dailyCap: prefs.dailyCap,
+          pausedUntil: prefs.pausedUntil,
         }),
       });
       if (!response.ok) throw new Error('Notification preferences save failed');
@@ -312,6 +353,106 @@ export function NotificationSettings(): React.ReactElement {
             )}
           </div>
         )}
+      </div>
+
+      <div className="space-y-4 rounded-lg border p-4">
+        <div>
+          <Label className="text-sm font-medium">{t('notifications.deliveryTiming')}</Label>
+          <p className="text-xs text-muted-foreground">{t('notifications.deliveryTimingDesc')}</p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1">
+            <Label htmlFor="notification-timezone" className="text-xs font-medium">
+              {t('notifications.timezone')}
+            </Label>
+            <Input
+              id="notification-timezone"
+              value={prefs.timezone}
+              onChange={(event) =>
+                setPrefs((current) => ({ ...current, timezone: event.target.value }))
+              }
+              disabled={!user || loadingChannels}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="notification-daily-cap" className="text-xs font-medium">
+              {t('notifications.dailyCap')}
+            </Label>
+            <Input
+              id="notification-daily-cap"
+              type="number"
+              min={1}
+              max={10}
+              value={prefs.dailyCap}
+              onChange={(event) => {
+                const dailyCap = Number(event.target.value);
+                if (Number.isInteger(dailyCap) && dailyCap >= 1 && dailyCap <= 10) {
+                  setPrefs((current) => ({ ...current, dailyCap }));
+                }
+              }}
+              disabled={!user || loadingChannels}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="notification-quiet-start" className="text-xs font-medium">
+              {t('notifications.quietStart')}
+            </Label>
+            <Input
+              id="notification-quiet-start"
+              type="time"
+              value={prefs.quietStart ?? ''}
+              onChange={(event) =>
+                setPrefs((current) => ({ ...current, quietStart: event.target.value || null }))
+              }
+              disabled={!user || loadingChannels}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="notification-quiet-end" className="text-xs font-medium">
+              {t('notifications.quietEnd')}
+            </Label>
+            <Input
+              id="notification-quiet-end"
+              type="time"
+              value={prefs.quietEnd ?? ''}
+              onChange={(event) =>
+                setPrefs((current) => ({ ...current, quietEnd: event.target.value || null }))
+              }
+              disabled={!user || loadingChannels}
+            />
+          </div>
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="notification-paused-until" className="text-xs font-medium">
+            {t('notifications.pauseUntil')}
+          </Label>
+          <div className="flex flex-wrap items-center gap-2">
+            <Input
+              id="notification-paused-until"
+              type="datetime-local"
+              value={toLocalDateTime(prefs.pausedUntil)}
+              onChange={(event) =>
+                setPrefs((current) => ({
+                  ...current,
+                  pausedUntil: toIsoDateTime(event.target.value),
+                }))
+              }
+              disabled={!user || loadingChannels}
+              className="max-w-xs"
+            />
+            {prefs.pausedUntil && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setPrefs((current) => ({ ...current, pausedUntil: null }))}
+                disabled={!user || loadingChannels}
+              >
+                {t('notifications.resumeNow')}
+              </Button>
+            )}
+          </div>
+        </div>
       </div>
 
       <Button onClick={handleSave} disabled={!user || loadingChannels || saving || whatsappInvalid}>
