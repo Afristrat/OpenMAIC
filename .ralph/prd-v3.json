@@ -4953,7 +4953,8 @@
       },
       "sourceDependencies": [],
       "closureEvidence": [
-        "2026-09-13 — SHA e4501980bdcd092d6426bdf07189ed2b36f00ff8 : pnpm check, typecheck, lint, test et build verts sur clone ServeurIA ; 192/193 E2E verts. L’unique échec est un délai intermittent du sélecteur Diwan fr-FR, reproduit ensuite vert isolément ; aucun déploiement ni migration de reprise appliqué. S3-012 reste ouverte : état riche par activité, réglage visible S3-013 et recette web/mobile réelle à produire."
+        "2026-09-13 — SHA e4501980bdcd092d6426bdf07189ed2b36f00ff8 : pnpm check, typecheck, lint, test et build verts sur clone ServeurIA ; 192/193 E2E verts. L’unique échec est un délai intermittent du sélecteur Diwan fr-FR, reproduit ensuite vert isolément ; aucun déploiement ni migration de reprise appliqué. S3-012 reste ouverte : état riche par activité, réglage visible S3-013 et recette web/mobile réelle à produire.",
+        "2026-09-13 — SHA 870c1b5 : migration additive testée dans une transaction sur PostgreSQL Qalem. La contrainte et la fonction de budget partagé acceptent course_resume_delivery, puis le rollback confirme l’absence de persistance. 3/3 tests ciblés du worker verts sur ServeurIA ; migration et déploiement de production toujours ouverts."
       ],
       "executionAllowed": true,
       "executionDecision": "2026-09-12 — Objectif exhaustif demandé par Amine : compléments multisources et mobiles conservés, sans clôture ni activation déduite.",
@@ -4971,7 +4972,8 @@
         "app/api/learner-courses/[courseId]/complete/route.ts",
         "lib/server/course-resume-deliveries.ts",
         "supabase/migrations/20260913120000_learner_course_resume.sql",
-        "supabase/migrations/20260913121500_course_resume_delivery_lifecycle.sql"
+        "supabase/migrations/20260913121500_course_resume_delivery_lifecycle.sql",
+        "supabase/migrations/20260913123000_course_resume_delivery_budget.sql"
       ],
       "acceptance": [
         "Détecter une formation commencée mais inachevée à partir de progression serveur autorisée ; ne pas attendre une session terminée ou un stock de graines de fin de session pour proposer une reprise.",
