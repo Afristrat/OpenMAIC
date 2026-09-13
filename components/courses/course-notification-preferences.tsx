@@ -20,9 +20,16 @@ function toLocalDateTime(value: string | null): string {
   )}:${pad(date.getMinutes())}`;
 }
 
-export function CourseNotificationPreferences({ courseId }: { courseId: string }): React.ReactElement {
+export function CourseNotificationPreferences({
+  courseId,
+}: {
+  courseId: string;
+}): React.ReactElement {
   const { t } = useI18n();
-  const [preferences, setPreferences] = useState<Preferences>({ pausedUntil: null, dailyCap: null });
+  const [preferences, setPreferences] = useState<Preferences>({
+    pausedUntil: null,
+    dailyCap: null,
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
