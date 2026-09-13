@@ -1,9 +1,11 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useAnimate } from 'motion/react';
 import type { PPTVideoElement } from '@openmaic/dsl';
 import { useCanvasStore } from '@/lib/store/canvas';
+import { useStageStore } from '@/lib/store';
 import { useMediaGenerationStore, isMediaPlaceholder } from '@/lib/store/media-generation';
 import { useSettingsStore } from '@/lib/store/settings';
 import { useMediaStageId } from '@/lib/contexts/media-stage-context';
@@ -31,6 +33,8 @@ function isLegacySequentialVideoRef(value: string | undefined): boolean {
 export function BaseVideoElement({ elementInfo }: BaseVideoElementProps) {
   const { t } = useI18n();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const learnerCourseId = useSearchParams().get('learnerCourseId');
+  const currentSceneId = useStageStore((state) => state.currentSceneId);
   const playingVideoElementId = useCanvasStore.use.playingVideoElementId();
   const prevPlayingRef = useRef('');
   const [scope, animate] = useAnimate<HTMLDivElement>();
@@ -67,6 +71,33 @@ export function BaseVideoElement({ elementInfo }: BaseVideoElementProps) {
     (!task || task.status === 'pending' || task.status === 'generating');
   const showError = isPlaceholder && !concreteSrc && task?.status === 'failed';
   const isReady = !!resolvedSrc;
+
+  const restoreResumePosition = useCallback(() => {
+    if (!learnerCourseId || !currentSceneId) return;
+    const video = videoRef.current;
+    if (!video || !Number.isFinite(video.duration)) return;
+    try {
+      const stored = JSON.parse(
+        sessionStorage.getItem(`learner-course-resume:${learnerCourseId}:${currentSceneId}`) ??
+          'null',
+      ) as {
+        activity?: unknown;
+        activityState?: { videoElementId?: unknown };
+        positionMs?: unknown;
+      } | null;
+      if (
+        stored?.activity !== 'resource' ||
+        stored.activityState?.videoElementId !== elementInfo.id ||
+        typeof stored.positionMs !== 'number' ||
+        !Number.isFinite(stored.positionMs) ||
+        stored.positionMs <= 0
+      )
+        return;
+      video.currentTime = Math.min(stored.positionMs / 1000, video.duration);
+    } catch {
+      // A malformed local hand-off must not prevent the media from playing.
+    }
+  }, [currentSceneId, elementInfo.id, learnerCourseId]);
 
   // Ensure video is paused on mount — prevents browser autoplay from user gesture context
   useEffect(() => {
@@ -107,6 +138,12 @@ export function BaseVideoElement({ elementInfo }: BaseVideoElementProps) {
     if (useCanvasStore.getState().playingVideoElementId === elementInfo.id) {
       useCanvasStore.getState().pauseVideo();
     }
+  };
+
+  const handlePlaybackPosition = (video: HTMLVideoElement) => {
+    useCanvasStore
+      .getState()
+      .setVideoPlaybackPosition(elementInfo.id, Math.max(0, Math.round(video.currentTime * 1000)));
   };
 
   return (
@@ -187,6 +224,9 @@ export function BaseVideoElement({ elementInfo }: BaseVideoElementProps) {
             poster={task?.poster || elementInfo.poster}
             preload="metadata"
             controls
+            onLoadedMetadata={restoreResumePosition}
+            onPlay={(event) => handlePlaybackPosition(event.currentTarget)}
+            onTimeUpdate={(event) => handlePlaybackPosition(event.currentTarget)}
             onEnded={handleEnded}
           />
         ) : (

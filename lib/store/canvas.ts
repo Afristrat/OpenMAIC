@@ -109,6 +109,7 @@ interface CanvasState {
 
   // ===== Video playback =====
   playingVideoElementId: string; // Video element currently playing
+  videoPlaybackPositionMs: number;
 
   // ===== Whiteboard =====
   whiteboardOpen: boolean; // Whether whiteboard is open
@@ -163,6 +164,7 @@ interface CanvasState {
   // ----- Video playback -----
   playVideo: (elementId: string) => void;
   pauseVideo: () => void;
+  setVideoPlaybackPosition: (elementId: string, positionMs: number) => void;
 
   // ----- Whiteboard -----
   setWhiteboardOpen: (open: boolean) => void;
@@ -237,6 +239,7 @@ const initialState = {
 
   // Video playback
   playingVideoElementId: '',
+  videoPlaybackPositionMs: 0,
 
   // Whiteboard
   whiteboardOpen: false,
@@ -348,9 +351,12 @@ const useCanvasStoreBase = create<CanvasState>((set, get) => ({
 
   // ===== Video Playback Actions =====
 
-  playVideo: (elementId) => set({ playingVideoElementId: elementId }),
+  playVideo: (elementId) => set({ playingVideoElementId: elementId, videoPlaybackPositionMs: 0 }),
 
-  pauseVideo: () => set({ playingVideoElementId: '' }),
+  pauseVideo: () => set({ playingVideoElementId: '', videoPlaybackPositionMs: 0 }),
+
+  setVideoPlaybackPosition: (elementId, positionMs) =>
+    set({ playingVideoElementId: elementId, videoPlaybackPositionMs: positionMs }),
 
   // ===== Whiteboard Actions =====
 

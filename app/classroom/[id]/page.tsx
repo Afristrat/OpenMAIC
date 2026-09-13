@@ -4,6 +4,7 @@ import { Stage } from '@/components/stage';
 import { CourseNotificationPreferences } from '@/components/courses/course-notification-preferences';
 import { ThemeProvider } from '@/lib/hooks/use-theme';
 import { useStageStore } from '@/lib/store';
+import { useCanvasStore } from '@/lib/store/canvas';
 import { loadImageMapping } from '@/lib/utils/image-storage';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
@@ -49,6 +50,8 @@ export default function ClassroomDetailPage() {
   const { loadFromStorage } = useStageStore();
   const currentSceneId = useStageStore((state) => state.currentSceneId);
   const chats = useStageStore((state) => state.chats);
+  const playingVideoElementId = useCanvasStore.use.playingVideoElementId();
+  const videoPlaybackPositionMs = useCanvasStore.use.videoPlaybackPositionMs();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -279,19 +282,30 @@ export default function ClassroomDetailPage() {
     const activeDiscussion = chats.find(
       (chat) => chat.type === 'discussion' && chat.status === 'active',
     );
-    let activity: 'scene' | 'discussion' = activeDiscussion ? 'discussion' : 'scene';
+    let activity: 'scene' | 'discussion' | 'resource' = activeDiscussion
+      ? 'discussion'
+      : playingVideoElementId
+        ? 'resource'
+        : 'scene';
     let activityState: Record<string, unknown> = activeDiscussion
       ? { session: activeDiscussion }
-      : {};
-    if (!activeDiscussion) {
+      : playingVideoElementId
+        ? { videoElementId: playingVideoElementId }
+        : {};
+    let positionMs = playingVideoElementId ? videoPlaybackPositionMs : 0;
+    if (!activeDiscussion && !playingVideoElementId) {
       try {
         const stored = JSON.parse(
           sessionStorage.getItem(`learner-course-resume:${learnerCourseId}:${currentSceneId}`) ??
             'null',
-        ) as { activity?: unknown; activityState?: unknown } | null;
-        if (stored?.activity === 'discussion' && stored.activityState) {
-          activity = 'discussion';
+        ) as { activity?: unknown; activityState?: unknown; positionMs?: unknown } | null;
+        if (
+          (stored?.activity === 'discussion' || stored?.activity === 'resource') &&
+          stored.activityState
+        ) {
+          activity = stored.activity;
           activityState = stored.activityState as Record<string, unknown>;
+          positionMs = typeof stored.positionMs === 'number' ? stored.positionMs : 0;
         }
       } catch {
         // The generic scene checkpoint remains valid when a stale local hand-off cannot be read.
@@ -307,7 +321,7 @@ export default function ClassroomDetailPage() {
           sceneId: currentSceneId,
           activity,
           activityState,
-          positionMs: 0,
+          positionMs,
         }),
         signal: controller.signal,
       }).catch((resumeError: unknown) => {
@@ -319,7 +333,14 @@ export default function ClassroomDetailPage() {
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [chats, currentSceneId, learnerCourseId, selectedOrgId]);
+  }, [
+    chats,
+    currentSceneId,
+    learnerCourseId,
+    playingVideoElementId,
+    selectedOrgId,
+    videoPlaybackPositionMs,
+  ]);
 
   useEffect(() => {
     if (E2E_TEST_MODE) return;
