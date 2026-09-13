@@ -8,7 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useI18n } from '@/lib/hooks/use-i18n';
 
-type Preferences = { pausedUntil: string | null; dailyCap: number | null; nextReminderAt: string | null };
+type Preferences = {
+  pausedUntil: string | null;
+  dailyCap: number | null;
+  nextReminderAt: string | null;
+};
 
 function toLocalDateTime(value: string | null): string {
   if (!value) return '';
@@ -74,6 +78,7 @@ export function CourseNotificationPreferences({
         ...current,
         pausedUntil: typeof body.pausedUntil === 'string' ? body.pausedUntil : null,
         dailyCap: typeof body.dailyCap === 'number' ? body.dailyCap : null,
+        nextReminderAt: typeof body.nextReminderAt === 'string' ? body.nextReminderAt : null,
       }));
       toast.success(t('notifications.courseSaved'));
     } catch {
