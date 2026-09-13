@@ -309,7 +309,9 @@ export function startAllWorkers(): void {
     async (job: Job) => {
       if (job.name === 'scan') {
         const deliveries = await claimDueCourseResumeDeliveries();
-        await Promise.all(deliveries.map((delivery) => enqueueCourseResumeDelivery({ deliveryId: delivery.id })));
+        await Promise.all(
+          deliveries.map((delivery) => enqueueCourseResumeDelivery({ deliveryId: delivery.id })),
+        );
         incrementCounter('qalem_jobs_processed_total', { queue: 'course-resume-delivery-scan' });
         return;
       }

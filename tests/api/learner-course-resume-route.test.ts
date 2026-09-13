@@ -66,7 +66,9 @@ describe('learner course resume API', () => {
   it('never reveals a resume target after access disappears', async () => {
     mocks.resolve.mockResolvedValueOnce(null);
     const response = await GET(
-      new NextRequest(`https://qalem.ma/api/learner-courses/${courseId}/resume-target?orgId=${orgId}`),
+      new NextRequest(
+        `https://qalem.ma/api/learner-courses/${courseId}/resume-target?orgId=${orgId}`,
+      ),
       { params: Promise.resolve({ courseId }) },
     );
     expect(response.status).toBe(404);

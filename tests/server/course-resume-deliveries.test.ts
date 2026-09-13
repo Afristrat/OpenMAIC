@@ -63,9 +63,14 @@ describe('course resume deliveries', () => {
   });
 
   it('claims only rows atomically returned by the database lifecycle', async () => {
-    mocks.rpc.mockResolvedValueOnce({ data: [{ ...delivery, scheduled_for: '2026-09-14T10:00:00Z' }], error: null });
+    mocks.rpc.mockResolvedValueOnce({
+      data: [{ ...delivery, scheduled_for: '2026-09-14T10:00:00Z' }],
+      error: null,
+    });
 
-    await expect(claimDueCourseResumeDeliveries(new Date('2026-09-14T10:00:00Z'))).resolves.toHaveLength(1);
+    await expect(
+      claimDueCourseResumeDeliveries(new Date('2026-09-14T10:00:00Z')),
+    ).resolves.toHaveLength(1);
     expect(mocks.rpc).toHaveBeenCalledWith('claim_due_course_resume_deliveries', {
       p_now: '2026-09-14T10:00:00.000Z',
     });
@@ -83,13 +88,20 @@ describe('course resume deliveries', () => {
 
     await expect(deliverCourseResumeDelivery(delivery.id)).resolves.toBeUndefined();
     expect(mocks.push).not.toHaveBeenCalled();
-    expect(cancel.update).toHaveBeenCalledWith(expect.objectContaining({ cancelled_at: expect.any(String) }));
+    expect(cancel.update).toHaveBeenCalledWith(
+      expect.objectContaining({ cancelled_at: expect.any(String) }),
+    );
   });
 
   it('pushes a neutral reminder only after scope and pressure checks pass', async () => {
     const lookup = query({ data: delivery, error: null });
     const resume = query({
-      data: { ...delivery, org_id: '00000000-0000-4000-8000-000000000004', completed_at: null, abandoned_at: null },
+      data: {
+        ...delivery,
+        org_id: '00000000-0000-4000-8000-000000000004',
+        completed_at: null,
+        abandoned_at: null,
+      },
       error: null,
     });
     const preferences = query({ data: null, error: null });
@@ -108,10 +120,13 @@ describe('course resume deliveries', () => {
       source: 'course_resume_delivery',
       sourceId: delivery.id,
     });
-    expect(mocks.push).toHaveBeenCalledWith(delivery.user_id, expect.objectContaining({
-      body: 'Une activité vous attend.',
-      targetUrl: `/app?learnerResumeCourseId=${delivery.course_id}`,
-    }));
+    expect(mocks.push).toHaveBeenCalledWith(
+      delivery.user_id,
+      expect.objectContaining({
+        body: 'Une activité vous attend.',
+        targetUrl: `/app?learnerResumeCourseId=${delivery.course_id}`,
+      }),
+    );
     expect(complete.update).toHaveBeenCalledWith({ sent_at: expect.any(String) });
   });
 });

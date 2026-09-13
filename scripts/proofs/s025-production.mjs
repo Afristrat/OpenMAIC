@@ -173,7 +173,10 @@ async function count(table, query) {
   const response = await json(`${supabaseUrl}/rest/v1/${table}?${query}`, {
     headers: { ...headers(), Prefer: 'count=exact', Range: '0-0' },
   });
-  assert([200, 206].includes(response.status), `Unexpected ${table} count status: ${response.status}`);
+  assert(
+    [200, 206].includes(response.status),
+    `Unexpected ${table} count status: ${response.status}`,
+  );
   const range = response.headers.get('content-range') ?? '';
   const total = Number(range.split('/')[1]);
   assert(Number.isInteger(total), `Missing exact count for ${table}`);
@@ -380,9 +383,7 @@ try {
     .getByRole('button')
     .first()
     .click();
-  await page
-    .getByRole('button', { name: /^(Soumettre les réponses|Submit Answers)$/ })
-    .click();
+  await page.getByRole('button', { name: /^(Soumettre les réponses|Submit Answers)$/ }).click();
   await page.getByText('0%', { exact: true }).waitFor({ timeout: 30_000 });
   assert.equal(await count('review_cards', cardQuery), 2, 'Repeat must not duplicate cards');
   assert.equal(

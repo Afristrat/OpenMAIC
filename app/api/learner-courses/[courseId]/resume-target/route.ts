@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/api/auth';
-import { LearnerCourseResumeAccessError, resolveLearnerCourseResume } from '@/lib/server/learner-course-resume';
+import {
+  LearnerCourseResumeAccessError,
+  resolveLearnerCourseResume,
+} from '@/lib/server/learner-course-resume';
 import { apiError } from '@/lib/server/api-response';
 
 const headers = { 'Cache-Control': 'private, no-store' };

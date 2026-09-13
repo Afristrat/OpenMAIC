@@ -1,5 +1,8 @@
 import { shouldDeferDelivery } from '@/lib/notifications/delivery-window';
-import { LearnerCourseResumeAccessError, resolveLearnerCourseResume } from '@/lib/server/learner-course-resume';
+import {
+  LearnerCourseResumeAccessError,
+  resolveLearnerCourseResume,
+} from '@/lib/server/learner-course-resume';
 import { claimNotificationDeliverySlot } from '@/lib/server/notification-delivery-policy';
 import { sendWebPushToUser } from '@/lib/server/web-push';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
