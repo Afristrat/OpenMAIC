@@ -39,6 +39,10 @@ test('persists explicit email and WhatsApp opt-ins without accepting an ambiguou
   await expect(page.getByRole('button', { name: 'Save preferences' })).toBeDisabled();
 
   await number.fill('+212 600-000-000');
+  await page.getByLabel('IANA time zone').fill('Africa/Casablanca');
+  await page.getByLabel('Maximum reminders per day').fill('2');
+  await page.getByLabel('Quiet hours start').fill('21:00');
+  await page.getByLabel('Quiet hours end').fill('08:00');
   await page.getByRole('button', { name: 'Save preferences' }).click();
   await expect
     .poll(() => writes)
@@ -48,6 +52,11 @@ test('persists explicit email and WhatsApp opt-ins without accepting an ambiguou
         whatsapp: true,
         whatsappNumber: '+212600000000',
         locale: 'en-US',
+        timezone: 'Africa/Casablanca',
+        quietStart: '21:00',
+        quietEnd: '08:00',
+        dailyCap: 2,
+        pausedUntil: null,
       },
     ]);
 });
