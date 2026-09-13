@@ -423,6 +423,7 @@ try {
     JSON.stringify({
       stage,
       error: error instanceof Error ? error.name : 'PROOF_FAILURE',
+      message: error instanceof Error ? error.message : null,
       uiDiagnostic: {
         ...uiDiagnostic,
         classroomGetCount,
