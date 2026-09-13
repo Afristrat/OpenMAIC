@@ -95,7 +95,9 @@ export async function deliverCourseResumeDelivery(deliveryId: string): Promise<v
   const results = await sendWebPushToUser(delivery.user_id, {
     title: 'Qalem',
     body: 'Une activité vous attend.',
-    targetUrl: `/app?learnerResumeCourseId=${encodeURIComponent(delivery.course_id)}`,
+    targetUrl:
+      `/app?learnerResumeCourseId=${encodeURIComponent(delivery.course_id)}` +
+      `&learnerResumeOrgId=${encodeURIComponent(resume.org_id)}`,
     tag: `course-resume-delivery-${delivery.id}`,
   });
   if (!results.some((result) => result.status === 'accepted')) {

@@ -138,7 +138,11 @@ export default function CatalogPage() {
                 </div>
               </dl>
               <a
-                href={`/classroom/${encodeURIComponent(course.classroomId)}`}
+                href={
+                  `/classroom/${encodeURIComponent(course.classroomId)}` +
+                  `?orgId=${encodeURIComponent(currentOrg.id)}` +
+                  `&learnerCourseId=${encodeURIComponent(course.id)}`
+                }
                 className={cn(buttonVariants(), 'mt-auto w-full')}
               >
                 {t('catalog.openClassroom')}

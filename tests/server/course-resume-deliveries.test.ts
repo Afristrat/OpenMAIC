@@ -124,7 +124,9 @@ describe('course resume deliveries', () => {
       delivery.user_id,
       expect.objectContaining({
         body: 'Une activité vous attend.',
-        targetUrl: `/app?learnerResumeCourseId=${delivery.course_id}`,
+        targetUrl:
+          `/app?learnerResumeCourseId=${delivery.course_id}` +
+          '&learnerResumeOrgId=00000000-0000-4000-8000-000000000004',
       }),
     );
     expect(complete.update).toHaveBeenCalledWith({ sent_at: expect.any(String) });

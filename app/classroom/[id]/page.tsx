@@ -40,9 +40,13 @@ export default function ClassroomDetailPage() {
   const { t } = useI18n();
   const params = useParams();
   const classroomId = params?.id as string;
-  const selectedOrgId = useSearchParams().get('orgId');
+  const searchParams = useSearchParams();
+  const selectedOrgId = searchParams.get('orgId');
+  const learnerCourseId = searchParams.get('learnerCourseId');
+  const requestedResumeSceneId = searchParams.get('resumeSceneId')?.trim() || null;
 
   const { loadFromStorage } = useStageStore();
+  const currentSceneId = useStageStore((state) => state.currentSceneId);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -130,7 +134,7 @@ export default function ClassroomDetailPage() {
               // currentSceneId. Capture the live selection first so a late
               // authoritative refresh cannot send the learner back to scene 1.
               const currentState = useStageStore.getState();
-              const preferredSceneId = currentState.currentSceneId;
+              const preferredSceneId = requestedResumeSceneId ?? currentState.currentSceneId;
               const currentScenes = currentState.scenes;
               useStageStore.getState().setStage(stage);
               // Normalize legacy slide content (missing schemaVersion) on the
@@ -266,7 +270,33 @@ export default function ClassroomDetailPage() {
         setLoading(false);
       }
     }
-  }, [classroomId, loadFromStorage, selectedOrgId]);
+  }, [classroomId, loadFromStorage, requestedResumeSceneId, selectedOrgId]);
+
+  useEffect(() => {
+    if (!learnerCourseId || !selectedOrgId || !currentSceneId || !serverBackedRef.current) return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      void fetch(`/api/learner-courses/${encodeURIComponent(learnerCourseId)}/resume`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orgId: selectedOrgId,
+          sceneId: currentSceneId,
+          activity: 'scene',
+          activityState: {},
+          positionMs: 0,
+        }),
+        signal: controller.signal,
+      }).catch((resumeError: unknown) => {
+        if (controller.signal.aborted) return;
+        log.warn('Learner progress persistence failed:', resumeError);
+      });
+    }, 800);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [currentSceneId, learnerCourseId, selectedOrgId]);
 
   useEffect(() => {
     if (E2E_TEST_MODE) return;

@@ -228,23 +228,72 @@ function HomePage() {
   const [resumeTarget, setResumeTarget] = useState<{ courseId: string; orgId: string } | null>(
     null,
   );
+  const [learnerResumeTarget, setLearnerResumeTarget] = useState<{
+    courseId: string;
+    orgId: string;
+  } | null>(null);
   const [resuming, setResuming] = useState(false);
   const [resumePlanRecovered, setResumePlanRecovered] = useState(false);
   const resumeOrgRef = useRef(currentOrg?.id);
   resumeOrgRef.current = currentOrg?.id;
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const target = z.object({ courseId: z.string().uuid(), orgId: z.string().uuid() }).safeParse({
+    const targetSchema = z.object({ courseId: z.string().uuid(), orgId: z.string().uuid() });
+    const authorTarget = targetSchema.safeParse({
       courseId: params.get('resumeCourseId'),
       orgId: params.get('resumeOrgId'),
     });
-    if (target.success) setResumeTarget(target.data);
+    if (authorTarget.success) setResumeTarget(authorTarget.data);
+    const learnerTarget = targetSchema.safeParse({
+      courseId: params.get('learnerResumeCourseId'),
+      orgId: params.get('learnerResumeOrgId'),
+    });
+    if (learnerTarget.success) setLearnerResumeTarget(learnerTarget.data);
   }, []);
   useEffect(() => {
     if (!resumeTarget || currentOrg?.id === resumeTarget.orgId) return;
     const organization = organizations.find((item) => item.id === resumeTarget.orgId);
     if (organization) setCurrentOrg(organization);
   }, [resumeTarget, currentOrg?.id, organizations, setCurrentOrg]);
+  useEffect(() => {
+    if (!learnerResumeTarget || currentOrg?.id === learnerResumeTarget.orgId) return;
+    const organization = organizations.find((item) => item.id === learnerResumeTarget.orgId);
+    if (organization) setCurrentOrg(organization);
+  }, [learnerResumeTarget, currentOrg?.id, organizations, setCurrentOrg]);
+  useEffect(() => {
+    if (
+      !user ||
+      !learnerResumeTarget ||
+      currentOrg?.id !== learnerResumeTarget.orgId
+    )
+      return;
+    const controller = new AbortController();
+    void fetch(
+      `/api/learner-courses/${encodeURIComponent(learnerResumeTarget.courseId)}` +
+        `/resume-target?orgId=${encodeURIComponent(learnerResumeTarget.orgId)}`,
+      { cache: 'no-store', signal: controller.signal },
+    )
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Learner resume target unavailable');
+        const payload = z
+          .object({
+            success: z.literal(true),
+            target: z.object({ stageId: z.string().min(1), sceneId: z.string().min(1) }),
+          })
+          .parse(await response.json());
+        router.replace(
+          `/classroom/${encodeURIComponent(payload.target.stageId)}` +
+            `?orgId=${encodeURIComponent(learnerResumeTarget.orgId)}` +
+            `&learnerCourseId=${encodeURIComponent(learnerResumeTarget.courseId)}` +
+            `&resumeSceneId=${encodeURIComponent(payload.target.sceneId)}`,
+        );
+      })
+      .catch((resumeError: unknown) => {
+        if (controller.signal.aborted) return;
+        log.warn('Learner resume navigation failed:', resumeError);
+      });
+    return () => controller.abort();
+  }, [currentOrg?.id, learnerResumeTarget, router, user]);
   const [dueReviewCount, setDueReviewCount] = useState(0);
   const [sourceManifestId, setSourceManifestId] = useState<string>();
   const [selectedSourceCount, setSelectedSourceCount] = useState(0);
