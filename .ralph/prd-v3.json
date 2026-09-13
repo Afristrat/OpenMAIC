@@ -2185,8 +2185,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux recetter whisper sur de la parole réelle et le parcours microphone afin que le parcours promis soit réellement utilisable.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P1",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "type": "request_or_observed_gap",
         "date": "2026-08-26"
@@ -2612,7 +2612,7 @@
       },
       "sourceDependencies": ["S-022"],
       "dependencies": [],
-      "gap": "Réconciliation documentaire du 12 septembre 2026 : preuves historiques conservées ci-dessous, mais statut to_validate et passes=true étaient contradictoires. Une recette authentifiée du 12 septembre a révélé qu’une migration de partage jamais publiée rendait toute lecture de classroom en HTTP 500 ; le triplet 20260909224147→20260909231458 a été appliqué sous transaction après sauvegarde de schéma, et l’API classroom répond de nouveau 200. Les cinq partages publics historiques restent non vérifiés, donc non élargis. La même recette bloque désormais dans l’interface sur l’état de chargement après la réponse API 200 : la persistance quiz n’est pas encore prouvée. passes=false jusqu’à recette UI complète, idempotence, rechargement de /review, gate et déploiement au SHA livré ; ceci n’infère ni perte du code ni échec des recettes historiques.",
+      "gap": "Aucun reste ouvert pour cette US : la migration de tentative est appliquée, le parcours UI authentifié est prouvé en production, et les cartes/résultats sont idempotents puis nettoyés. Les erreurs non bloquantes de télémétrie et xAPI observées dans cette recette relèvent de leurs US dédiées ; elles ne masquent ni n’interrompent la persistance du quiz.",
       "evidence": [
         "lib/spaced-repetition/extractor.ts",
         "lib/quiz/sync.ts",
@@ -2642,8 +2642,10 @@
         "2026-08-27 — Déploiement séquentiel runtime puis web sur le SHA exact b4d74e7fa2c9719231bc802f66be00bbef658340. Web, worker de génération et capture-worker sont healthy, à zéro redémarrage et OOMKilled=false ; https://qalem.ma/ et /api/health répondent 200.",
         "2026-08-27 — Preuve authentifiée en production : API classroom 200 avec une scène, quiz réel noté 2/4, deux cartes Supabase et deux cartes IndexedDB pour l’erreur et l’hésitation seulement, sourceIds stables, mêmes identifiants après Retry, un seul quiz_result, RLS limitée aux deux cartes du bon utilisateur, aucune carte étrangère serveur ou locale, et carte due visible après rechargement de /review.",
         "2026-08-27 — Nettoyage vérifié après la preuve : zéro stage, scène, organisation, membre, carte primaire, carte étrangère, résultat de quiz ou profil temporaire ; les deux comptes Auth temporaires et le contexte Chromium ont été supprimés."
+        ,"2026-09-13 — Après application transactionnelle de 20260910035605_classroom_quiz_attempts et rechargement du schéma PostgREST, les trois RPC de tentative existent et répondent. Le SHA applicatif 6805d0ed89a9a06ae8331d45aec7a90a673ccbab est déployé par Coolify, web healthy, restart=0, OOMKilled=false et /api/health=200. Gate ServeurIA au SHA exact : Prettier, TypeScript, ESLint, 524/524 fichiers Vitest (3 272 tests), build et 193/193 Playwright en 7,2 minutes.",
+        "2026-09-13 — Recette authentifiée de production : quiz réel à 0 %, deux cartes (erreur et hésitation) et un résultat sont écrits ; le rejeu ne crée aucun doublon, /review recharge les cartes, puis la suppression de la classroom ramène cartes et résultats à zéro. La fonction RPC de début répond 200. Référence : scripts/proofs/s025-production.mjs, commit de preuve 3100f4b."
       ],
-      "completedAt": "2026-08-27",
+      "completedAt": "2026-09-13",
       "historicalEvidence": {
         "completedAt": "2026-03-29T10:33:12.008Z",
         "status": "legacy_claim_not_delivery_proof"
