@@ -1,0 +1,18 @@
+[package]
+name = "qalem-local"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+publish = false
+build = "build.rs"
+
+[build-dependencies]
+tauri-build = "=2.6.3"
+
+[dependencies]
+keyring = "=4.2.0"
+qalem-local-core = { path = "../../qalem-local-core" }
+serde = { version = "=1.0.228", features = ["derive"] }
+serde_json = "=1.0.145"
+tauri = { version = "=2.11.5", features = [] }
+uuid = { version = "=1.18.1", features = ["v4"] }

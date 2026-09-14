@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Qalem Local</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">QALEM LOCAL</p>
+      <h1>Ouvrir un contenu téléchargé</h1>
+      <p>Les paquets Qalem sont réservés à un usage local, jamais via une interface web.</p>
+      <button id="create-device" type="button">Créer cet appareil</button>
+      <output id="device-result" aria-live="polite"></output>
+      <form id="open-package">
+        <label>Chemin du paquet <input name="path" required accept=".qalempkg" /></label>
+        <label>Utilisateur Qalem <input name="userId" required /></label>
+        <label>Organisation Qalem <input name="tenantId" required /></label>
+        <label>Identifiant de l’appareil <input name="deviceId" required /></label>
+        <label>Clé publique Qalem <input name="publicKey" required /></label>
+        <button type="submit">Ouvrir le paquet</button>
+      </form>
+      <pre id="package-result" aria-live="polite"></pre>
+    </main>
+    <script src="./main.js"></script>
+  </body>
+</html>

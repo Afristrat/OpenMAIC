@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "local-ui",
+  "description": "Code embarqué Qalem Local uniquement ; aucune origine distante.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}
