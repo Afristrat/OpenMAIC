@@ -587,7 +587,8 @@ async function main(): Promise<void> {
         .locator('[data-scene-completion-gate="true"]')
         .waitFor({ state: 'visible', timeout: 10_000 });
       const targetedChatResponsePromise = page.waitForResponse(
-        (response) => response.url().includes('/api/chat') && response.request().method() === 'POST',
+        (response) =>
+          response.url().includes('/api/chat') && response.request().method() === 'POST',
         { timeout: 120_000 },
       );
       await page.getByRole('button', { name: 'Approfondir dans la discussion' }).click();

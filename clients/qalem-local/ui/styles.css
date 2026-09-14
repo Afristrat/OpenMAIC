@@ -1,9 +1,47 @@
-:root { color: #14211f; background: #f7f5ef; font-family: system-ui, sans-serif; }
-body { margin: 0; }
-main { max-width: 720px; margin: 0 auto; padding: 4rem 1.5rem; }
-.eyebrow { color: #8e5524; font-weight: 700; letter-spacing: .12em; }
-form { display: grid; gap: 1rem; margin-top: 2rem; }
-label { display: grid; gap: .4rem; font-weight: 600; }
-input, button { font: inherit; padding: .7rem; }
-button { width: fit-content; background: #164f46; border: 0; color: white; cursor: pointer; }
-output, pre { display: block; margin-top: 1rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+:root {
+  color: #14211f;
+  background: #f7f5ef;
+  font-family: system-ui, sans-serif;
+}
+body {
+  margin: 0;
+}
+main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 4rem 1.5rem;
+}
+.eyebrow {
+  color: #8e5524;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+form {
+  display: grid;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+label {
+  display: grid;
+  gap: 0.4rem;
+  font-weight: 600;
+}
+input,
+button {
+  font: inherit;
+  padding: 0.7rem;
+}
+button {
+  width: fit-content;
+  background: #164f46;
+  border: 0;
+  color: white;
+  cursor: pointer;
+}
+output,
+pre {
+  display: block;
+  margin-top: 1rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
