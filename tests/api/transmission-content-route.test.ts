@@ -22,9 +22,9 @@ vi.mock('@/lib/supabase/service', () => ({
   }),
 }));
 
-async function getContent() {
+async function getContent(download = false) {
   const { GET } = await import('@/app/api/transmissions/[id]/content/route');
-  return GET(new NextRequest('https://qalem.ma/api/transmissions/tx_1/content'), {
+  return GET(new NextRequest(`https://qalem.ma/api/transmissions/tx_1/content${download ? '?download=1' : ''}`), {
     params: Promise.resolve({ id: 'tx_1' }),
   });
 }
@@ -55,6 +55,13 @@ describe('GET /api/transmissions/[id]/content', () => {
 
     expect(response.status).toBe(307);
     expect(await response.text()).toBe('');
+    expect(mocks.sign).toHaveBeenCalledWith('tx_1/visual-watermark.mp4', 60, { download: false });
+  });
+
+  it('keeps a transmission inline when a browser requests download', async () => {
+    const response = await getContent(true);
+
+    expect(response.status).toBe(307);
     expect(mocks.sign).toHaveBeenCalledWith('tx_1/visual-watermark.mp4', 60, { download: false });
   });
 

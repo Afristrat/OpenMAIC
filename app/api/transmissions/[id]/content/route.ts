@@ -42,7 +42,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       'transmissions',
       transmission.visual_watermark_path,
       request.signal,
-      request.nextUrl.searchParams.get('download') === '1',
+      false,
     );
     return new NextResponse(null, {
       status: 307,

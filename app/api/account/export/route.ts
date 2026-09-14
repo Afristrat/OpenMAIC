@@ -180,7 +180,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
                         ...row.value,
                         downloadUrl:
                           section === 'transmissions'
-                            ? `/api/transmissions/${z.string().uuid().parse(row.value.id)}/content?download=1`
+                            ? `/api/transmissions/${z.string().uuid().parse(row.value.id)}/content`
                             : `${section === 'export_jobs' ? '/api/export-jobs' : '/api/generate/video'}/${z.string().uuid().parse(row.value.id)}?download=1`,
                       }
                     : row.value;
