@@ -120,18 +120,21 @@ try {
       const registration = await navigator.serviceWorker.ready;
       const notifications = await registration.getNotifications({ tag: 'review-reminder' });
       if (notifications.length !== 1) return false;
-      window.__s6010ReminderSnapshot = {
+      document.documentElement.dataset.s6010ReminderSnapshot = JSON.stringify({
         count: notifications.length,
         tag: notifications[0]?.tag ?? null,
         target: notifications[0]?.data?.url ?? null,
         lastCheck: localStorage.getItem(`qalem-review-reminder-last-check:${accountId}`),
-      };
+      });
       return true;
     },
     { accountId: userId },
     { timeout: 30_000 },
   );
-  const first = await page.evaluate(() => window.__s6010ReminderSnapshot);
+  const first = await page.evaluate(() => {
+    const raw = document.documentElement.dataset.s6010ReminderSnapshot;
+    return raw ? JSON.parse(raw) : null;
+  });
   assert.equal(first?.count, 1, 'Expected exactly one due-card reminder');
   assert.equal(first?.tag, 'review-reminder', 'Reminder tag is not stable');
   assert.equal(first?.target, '/review', 'Reminder target is not the review surface');
