@@ -9,6 +9,7 @@ import {
 import { describe, expect, it } from 'vitest';
 import {
   issueLocalPackage,
+  localContentSigningKey,
   localContentVerifyingKey,
   type LocalPackageArtifact,
 } from '@/lib/server/local-content-crypto';
@@ -116,5 +117,18 @@ describe('local content crypto (S2-012)', () => {
         new Date('2029-01-01T00:00:00.000Z'),
       ),
     ).toThrow('Invalid device key');
+  });
+
+  it('loads the durable one-line base64 PKCS#8 signing key from the server environment', () => {
+    const previous = process.env.QALEM_LOCAL_SIGNING_PRIVATE_KEY;
+    const signing = generateKeyPairSync('ed25519').privateKey;
+    process.env.QALEM_LOCAL_SIGNING_PRIVATE_KEY = Buffer.from(
+      signing.export({ format: 'der', type: 'pkcs8' }),
+    ).toString('base64');
+
+    expect(localContentVerifyingKey(localContentSigningKey())).toHaveLength(43);
+
+    if (previous === undefined) delete process.env.QALEM_LOCAL_SIGNING_PRIVATE_KEY;
+    else process.env.QALEM_LOCAL_SIGNING_PRIVATE_KEY = previous;
   });
 });

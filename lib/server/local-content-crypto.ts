@@ -93,13 +93,20 @@ function rawX25519PublicKey(key: KeyObject): string {
 }
 
 export function localContentSigningKey(): KeyObject {
-  const pem = process.env.QALEM_LOCAL_SIGNING_PRIVATE_KEY?.trim();
-  if (!pem) {
+  const encoded = process.env.QALEM_LOCAL_SIGNING_PRIVATE_KEY?.trim();
+  if (!encoded) {
     throw new LocalContentSigningConfigurationError(
-      'QALEM_LOCAL_SIGNING_PRIVATE_KEY must be a durable Ed25519 PKCS#8 key',
+      'QALEM_LOCAL_SIGNING_PRIVATE_KEY must be a durable base64 PKCS#8 key',
     );
   }
-  const key = createPrivateKey(pem);
+  let key: KeyObject;
+  try {
+    key = createPrivateKey({ key: Buffer.from(encoded, 'base64'), format: 'der', type: 'pkcs8' });
+  } catch {
+    throw new LocalContentSigningConfigurationError(
+      'QALEM_LOCAL_SIGNING_PRIVATE_KEY must be a valid base64 PKCS#8 key',
+    );
+  }
   if (key.asymmetricKeyType !== 'ed25519') {
     throw new LocalContentSigningConfigurationError('Qalem Local signing key must be Ed25519');
   }
