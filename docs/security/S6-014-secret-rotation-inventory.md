@@ -115,3 +115,12 @@ autres produits. Aucune valeur ni identifiant de clé n’est consigné. Une
 révocation est donc interdite tant qu’une clé Resend dédiée à Qalem n’a pas été
 créée, injectée, recettée et que les dépendances de l’ancienne clé ne sont pas
 attribuées de façon vérifiable.
+
+## Contrôle de continuité du 14 septembre 2026
+
+La sonde publique `GET https://qalem.ma/api/health` répond HTTP 200 et retourne
+`success=true`. Les conteneurs actifs `qalem-workers` et `capture-worker` sont
+`healthy`, avec code de sortie nul, `OOMKilled=false` et `RestartCount=0` au
+moment du contrôle. Cette observation ne donne pas le SHA servi par le web et
+ne démontre pas une rotation fournisseur ; elle confirme seulement l’absence
+de régression opérationnelle visible après les rotations internes.
