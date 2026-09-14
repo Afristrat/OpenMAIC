@@ -1028,7 +1028,14 @@ function placeRequiredImages(
   return placedElements;
 }
 
-function buildRequiredMediaFallback(outline: SceneOutline, images: PPTElement[]): PPTElement[] {
+/**
+ * Preserve the model's learning content when its decorative geometry cannot
+ * pass the deterministic canvas audit. This is intentionally a complete,
+ * bounded slide rather than a coordinate clamp: clamping overlapping cards
+ * would make the content unreadable and an otherwise valid course would fail
+ * solely because a provider ignored the 1000×562.5 coordinate contract.
+ */
+function buildSafeSlideFallback(outline: SceneOutline, images: PPTElement[]): PPTElement[] {
   const learningContent = [
     `<p style="font-size:19px;line-height:1.35;margin:0 0 18px">${escapeResourceHtml(outline.description)}</p>`,
     outline.keyPoints.length > 0
@@ -1427,8 +1434,14 @@ async function generateSlideContent(
     viewportRatio: canvasHeight / canvasWidth,
   } as Slide);
   if (layoutIssues.length > 0) {
-    if (requiredImages.length > 0) {
-      const fallbackElements = buildRequiredMediaFallback(
+    // A parsed response has already supplied the pedagogical content. For an
+    // ordinary slide, or one with required still images, replace only invalid
+    // model geometry with the deterministic layout. Video scenes keep the
+    // retry path: a generic fallback cannot truthfully preserve a required
+    // video element and its media reference.
+    const requiresVideo = outline.mediaGenerations?.some((request) => request.type === 'video');
+    if (!requiresVideo) {
+      const fallbackElements = buildSafeSlideFallback(
         outline,
         processedElements.filter((element) => element.type === 'image'),
       ).map((element) => ({ ...element, id: `${element.type}_${nanoid(8)}`, rotate: 0 }));
