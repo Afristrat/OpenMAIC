@@ -979,7 +979,13 @@ async function main(): Promise<void> {
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.getByText('Loading classroom...').waitFor({ state: 'hidden', timeout: 30_000 });
     await page.locator('[data-testid="scene-item"]').nth(quizSceneIndex).click();
-    const persistedAfterReload = await page.getByText('100%', { exact: true }).isVisible();
+    // A reloaded classroom restores the durable attempt and replays its immutable
+    // request ID through the server before it renders the review.  Waiting for the
+    // terminal review prevents this proof from confusing that asynchronous resume
+    // with lost quiz data.
+    const persistedScore = page.getByText('100%', { exact: true });
+    await persistedScore.waitFor({ timeout: 30_000 });
+    const persistedAfterReload = await persistedScore.isVisible();
     assert(persistedAfterReload, 'Quiz correction did not survive reload');
     evidence.quiz = { questionCount: 5, correctCount: 5, persistedAfterReload };
     progress('Quiz réel corrigé à 100 % et rechargé');
