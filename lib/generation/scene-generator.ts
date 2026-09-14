@@ -1452,9 +1452,7 @@ async function generateSlideContent(
         viewportRatio: canvasHeight / canvasWidth,
       } as Slide);
       if (fallbackIssues.length === 0) {
-        log.warn(
-          `Replaced invalid model geometry with deterministic media layout for ${outline.id}`,
-        );
+        log.warn(`Replaced invalid model geometry with deterministic safe layout for ${outline.id}`);
         return {
           elements: fallbackElements,
           background,
