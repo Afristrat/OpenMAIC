@@ -248,16 +248,29 @@ export async function directorNode(
         log.warn('[Director] Play round returned another trigger, ending');
         return { shouldEnd: true };
       }
+      let agentId = decision.nextAgentId;
+      let form = decision.form;
+      if (state.explicitTrigger === 'play') {
+        const beat = state.animationConstitution.authoredBackbone.find(
+          (candidate) => candidate.sceneId === state.storeState.currentSceneId,
+        );
+        const beatAgent = beat && agents.find((agent) => agent.id === beat.eligibleAgentIds[0]);
+        if (beat && beatAgent) {
+          selectedAgent = beatAgent;
+          agentId = beatAgent.id;
+          form = beat.preferredForms[0];
+        }
+      }
       interventionDecision = {
         decisionId: `${state.animationConstitution.classroomId}:${state.interactionId}:${state.turnCount}`,
         classroomId: state.animationConstitution.classroomId,
         interactionId: state.interactionId,
         sceneId: state.storeState.currentSceneId,
         turnIndex: state.turnCount,
-        agentId: decision.nextAgentId,
+        agentId,
         agentName: selectedAgent.name,
         trigger: decision.trigger,
-        form: decision.form,
+        form,
         reason: decision.reason,
       };
       const validation = validateInterventionDecision(
