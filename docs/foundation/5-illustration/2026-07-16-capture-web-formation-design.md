@@ -1,13 +1,21 @@
 # Capacité "capture web" — illustrer une formation avec des captures d'un outil tiers
 
 Date : 2026-07-16
-Statut : validé par Amine (design), en attente d'implémentation
+Statut : historique remplacé pour les cibles de recette le 14 septembre 2026
+
+> Mise à jour normative — `proxy.ai-mpower.com` est exclusivement le hub LiteLLM
+> des clés et clés virtuelles. Il ne constitue ni une source de cours ni une
+> cible de capture. Toute référence historique ci-dessous à ce domaine est
+> remplacée par une source pédagogique autorisée, explicitement approuvée, sans
+> identifiant ni interface de gestion.
 
 ## Contexte
 
 Qalem génère des formations sur des sujets techniques (ex. « LiteLLM en production »). Quand le sujet est un outil/produit réel (LiteLLM, un SaaS, une plateforme), la formation gagne à illustrer des scènes avec de vraies captures de cet outil — statiques ou animées (scroll, zoom, clic simulé) — plutôt que des slides purement textuelles.
 
-Origine concrète : le cours `F6G9W_LPT8` (« LiteLLM en production ») devrait illustrer des scènes avec des captures de l'admin LiteLLM déployé par Amine (`proxy.ai-mpower.com`).
+Origine concrète historique : le cours `F6G9W_LPT8` (« LiteLLM en production »)
+devait illustrer des scènes avec une console LiteLLM. Cette cible est retirée :
+une démonstration ne peut provenir que d'une source pédagogique autorisée.
 
 ## Décision de portée
 

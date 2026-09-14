@@ -2932,7 +2932,7 @@
       ],
       "historicalEvidence": {
         "completedAt": null,
-        "note": "Le défaut de persistance du storageState est corrigé au commit fe065b6 : Coolify déploie désormais le volume capture-storage-states sur /data/storage-states, vérifié après déploiement par docker inspect avec le worker healthy et qalem.ma/health à HTTP 200. La session proxy.ai-mpower.com et la confirmation visuelle d'une vraie capture restent requises ; passes=false est volontaire. Voir docs/foundation/5-illustration/S1-012-capture-worker-persistence-proof.md.",
+        "note": "Le défaut de persistance du storageState est corrigé au commit fe065b6 : Coolify déploie désormais le volume capture-storage-states sur /data/storage-states, vérifié après déploiement par docker inspect avec le worker healthy et qalem.ma/health à HTTP 200. La recette attend désormais une source pédagogique autorisée, sans identifiant ni console de gestion ; proxy.ai-mpower.com est explicitement exclu. La confirmation visuelle d'une vraie capture reste requise ; passes=false est volontaire. Voir docs/foundation/5-illustration/S1-012-capture-worker-persistence-proof.md.",
         "status": "historical_not_recertified"
       },
       "historicalDependencies": [],

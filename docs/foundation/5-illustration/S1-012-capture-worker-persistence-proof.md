@@ -35,9 +35,11 @@ La modification est portée par le commit `fe065b6`.
 
 ## Ce qui reste volontairement ouvert
 
-La session authentifiée de `proxy.ai-mpower.com` n’est pas encore déposée dans
-ce volume. Le protocole S1-012 exige ensuite une vraie capture injectée dans
-une scène puis validée visuellement. La story reste donc `passes: false`.
+La session authentifiée de `proxy.ai-mpower.com` n’est pas déposée dans ce
+volume et ne doit jamais l’être : ce hub de clés LiteLLM est exclu de toute
+capture. Le protocole S1-012 exige ensuite une vraie capture d’une source
+pédagogique autorisée, injectée dans une scène puis validée visuellement. La
+story reste donc `passes: false`.
 
 ## Recertification du 28 août 2026
 

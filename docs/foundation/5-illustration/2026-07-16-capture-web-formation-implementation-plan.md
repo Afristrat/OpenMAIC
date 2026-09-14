@@ -1,4 +1,11 @@
-# Capacité "capture web" — Implementation Plan
+# Capacité « capture web » — plan d’implémentation
+
+> **AVIS DE REMPLACEMENT — 14 septembre 2026.** Les exemples historiques qui
+> visent `proxy.ai-mpower.com` sont invalides et ne doivent jamais être exécutés.
+> Ce domaine est le hub LiteLLM des clés et clés virtuelles, pas une source de
+> cours. Toute future recette doit utiliser une source pédagogique autorisée,
+> explicitement approuvée et dépourvue d’identifiant d’authentification ou
+> d’interface de gestion.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
