@@ -2570,15 +2570,15 @@
       "description": "En tant qu’utilisateur de Qalem, je veux recetter une formation complète avec ressources et exports réels afin que le parcours promis soit réellement utilisable.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P1",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "type": "request_or_observed_gap",
         "date": "2026-08-26"
       },
       "sourceDependencies": [],
       "dependencies": ["S5-004", "S6-005", "S6-006", "S6-007", "S6-008"],
-      "gap": "Réconciliation documentaire du 13 septembre 2026 : les preuves historiques sont conservées, mais la recette fraîche au SHA produit 6805d0ed89a9a06ae8331d45aec7a90a673ccbab a révélé une migration Diwan absente (appliquée puis contrôlée) et un fournisseur d’image réellement indisponible. La chaîne ne peut pas être certifiée tant qu’une image originale ne peut pas être produite avec la clé virtuelle Qalem et le fournisseur configuré ; passes=false.",
+      "gap": "Clôturé le 15 septembre 2026 : le routage image a été réconcilié, puis une recette authentifiée a généré, rechargé et exporté une formation complète avec ressources réelles. Aucun résidu de recette ne subsiste.",
       "evidence": [
         "e2e/tests",
         "lib/server/classroom-resource-generation.ts",
@@ -2601,8 +2601,10 @@
         "2026-08-28 — Artefacts persistants : /tmp/qalem-s6013-artifacts/s6013-20260828T083821Z-19232/evidence.json, formation-complete.mp4, cinq captures MP4, classeurs original/complété, QR et captures quiz/reprise. Le nettoyage final prouve zéro compte, organisation, stage, lien court ou fichier résiduel. Le conteneur web exact reste running/healthy, restart=0, OOMKilled=false ; /, /api/health et /app répondent 200. Le pointeur Coolify a été restauré à 8e22dc59d0c798ffbaae8a9d2e46cdc3d69713bb sans redéploiement.",
         "2026-08-28 — Gate complet final dans le worktree isolé ServeurIA /tmp/qalem-s6013-155f9b3 au SHA 990def7a9d6ff937168865f6bfcf7a73b4d52c20 : pnpm check, TypeScript, lint, 378/378 fichiers et 2 484/2 484 tests Vitest, build compilé en 37,9 s et 82/82 Playwright en 3,6 minutes ; zéro collision de clé, zéro marqueur d’échec. Journal intégral : /tmp/qalem-s6013-full-gate-990def7.log. Les cinq fichiers modifiés après le SHA produit sont exclusivement des tests ou fixtures E2E, donc le binaire de production recetté est inchangé.",
         "2026-09-13 — Recette fraîche de production au SHA 6805d0ed89a9a06ae8331d45aec7a90a673ccbab, marqueur s6013-20260913T211041Z-13117 : authentification temporaire, organisation avec membership auteur, source et manifeste autorisés, syllabus de cinq scènes et génération des cinq scènes ont réussi. La migration 20260909121728_diwan_source_references.sql manquante a été sauvegardée puis appliquée ; colonne et fonction ont été contrôlées présentes. La génération reste en échec contrôlé à 90 % car l’illustration demandée via proxy.ai-mpower.com/v1 et gemini-3.1-flash-image reçoit un rejet d’authentification du fournisseur. Le test direct de l’autre modèle image enregistré gemini-2.5-flash-image renvoie HTTP 403 avec la clé image Qalem. Chaque essai audite puis supprime compte, organisation, stage, lien court et fichiers : zéro résidu final.",
-        "2026-09-14 — Routage image réconcilié : la clé virtuelle LiteLLM Qalem a conservé ses vingt autorisations et reçu les deux modèles d’image réellement configurés. Les clés image de Qalem Runtime, production et prévisualisation, ont été remplacées par cette clé virtuelle ; le nouveau worker healthy charge désormais la même clé que le LLM général. Une génération d’image minimale depuis ce worker retourne HTTP 200 avec une image. Cette correction lève le refus fournisseur, mais ne remplace pas la recette complète authentifiée S6-013. Détail : docs/validation/S6-013-image-routing-reconciliation.md."
+        "2026-09-14 — Routage image réconcilié : la clé virtuelle LiteLLM Qalem a conservé ses vingt autorisations et reçu les deux modèles d’image réellement configurés. Les clés image de Qalem Runtime, production et prévisualisation, ont été remplacées par cette clé virtuelle ; le nouveau worker healthy charge désormais la même clé que le LLM général. Une génération d’image minimale depuis ce worker retourne HTTP 200 avec une image. Cette correction lève le refus fournisseur, mais ne remplace pas la recette complète authentifiée S6-013. Détail : docs/validation/S6-013-image-routing-reconciliation.md.",
+        "2026-09-15 — Recette authentifiée de production au SHA fonctionnel 04e9c203fbef086ac82f3daf6d4e147e73a945ce, marqueur s6013-20260914T225116Z-certified : source et manifeste autorisés, syllabus et cinq scènes, 32 segments TTS, agents, audios et images rechargés, lien court, QR, classeur recalculé par Python, quiz réel à 100 %, approfondissement puis reprise, et MP4 décodé scène par scène ont tous été validés. L'audit final après nettoyage confirme zéro compte, organisation, stage, lien court ou fichier résiduel. Le gate complet de la révision finale 488730e8dd93bd23ce1130c9a3d2fcabe0b7abd2 passe formatage, TypeScript, ESLint, 3 307 tests unitaires, build et 193 Playwright. Cette révision, déployée en production, est healthy, restart=0 et OOMKilled=false. Référence : docs/validation/S6-013-production-recertification-2026-09-15.md."
       ],
+      "completedAt": "2026-09-15",
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
