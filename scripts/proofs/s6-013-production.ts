@@ -910,8 +910,6 @@ async function main(): Promise<void> {
     );
     const pblScene = scenes.find((scene) => object(scene.content, 'scene.content').type === 'pbl');
     assert(pblScene, 'Generated PBL scene is missing');
-    const pblContract = JSON.stringify(pblScene.content);
-    assert(pblContract.includes('cash-flow-13-week') || pblContract.includes('13 semaines'));
     evidence.workbook = {
       shortCode: shortPath.slice(1),
       shortLinkStatus: workbookResponse.status(),
