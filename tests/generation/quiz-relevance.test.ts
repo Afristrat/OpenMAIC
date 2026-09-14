@@ -119,11 +119,13 @@ describe('quiz course relevance', () => {
       },
     );
 
-    expect(result?.questions[0]?.options?.[0]).toEqual({
+    expect(result).toBeTruthy();
+    if (!result || !('questions' in result)) throw new Error('Quiz content expected');
+    expect(result.questions[0]?.options?.[0]).toEqual({
       value: 'A',
       label: '125 000 dirhams',
     });
-    expect(result?.questions[0]?.answer).toEqual(['A']);
+    expect(result.questions[0]?.answer).toEqual(['A']);
   });
 
   it('rejects a choice answer absent from its options', async () => {
