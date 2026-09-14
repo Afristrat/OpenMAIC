@@ -69,7 +69,10 @@ describe('local package download route (S2-012)', () => {
   it('never downloads an artifact when no active license matches the user, tenant and device', async () => {
     const from = vi.fn().mockReturnValue(singleResult({ data: null, error: null }));
     const download = vi.fn();
-    mocks.createServiceSupabaseClient.mockReturnValue({ from, storage: { from: vi.fn(() => ({ download })) } });
+    mocks.createServiceSupabaseClient.mockReturnValue({
+      from,
+      storage: { from: vi.fn(() => ({ download })) },
+    });
 
     const response = await GET(request(), routeContext());
 
@@ -82,11 +85,15 @@ describe('local package download route (S2-012)', () => {
     const ciphertextSha256 = createHash('sha256').update(artifact).digest('hex');
     const from = vi
       .fn()
+      .mockReturnValueOnce(singleResult({ data: { device_id: 'device-row' }, error: null }))
       .mockReturnValueOnce(
-        singleResult({ data: { device_id: 'device-row' }, error: null }),
-      )
-      .mockReturnValueOnce(
-        singleResult({ data: { artifact_path: `${orgId}/${packageId}.qalempkg`, ciphertext_sha256: ciphertextSha256 }, error: null }),
+        singleResult({
+          data: {
+            artifact_path: `${orgId}/${packageId}.qalempkg`,
+            ciphertext_sha256: ciphertextSha256,
+          },
+          error: null,
+        }),
       )
       .mockReturnValueOnce(singleResult({ data: { id: 'device-row' }, error: null }));
     const download = vi.fn().mockResolvedValue({ data: new Blob([artifact]), error: null });
