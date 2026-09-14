@@ -122,8 +122,15 @@ export async function POST(req: NextRequest) {
           // retain only authorized requested agents, then fall back to the
           // enabled classroom roster rather than rejecting a valid learner.
           const authorizedAgentIds = body.config.agentIds.filter((id) => allowedIds.has(id));
+          // A Play intervention is authored against the full enabled roster.
+          // The browser may presently display one participant, but must not be
+          // able to make the Director select an unavailable backbone agent.
           const effectiveAgentIds =
-            authorizedAgentIds.length > 0 ? authorizedAgentIds : [...allowedIds];
+            body.config.explicitTrigger === 'play'
+              ? [...allowedIds]
+              : authorizedAgentIds.length > 0
+                ? authorizedAgentIds
+                : [...allowedIds];
           if (effectiveAgentIds.length === 0) {
             return apiError('INVALID_REQUEST', 400, 'No agent is enabled for this classroom');
           }
