@@ -129,6 +129,9 @@ describe('classroom plan source alignment gate', () => {
       messages: Array<{ content: string }>;
     };
     expect(alignmentCall.messages[0]?.content).toContain('exact, verbatim excerpts');
+    expect(alignmentCall.messages[0]?.content).toContain(
+      'does not already contain finished scenes',
+    );
     expect(alignmentCall.messages[1]?.content).toContain('"authorLocale":"fr-FR"');
     expect(alignmentCall.messages[1]?.content).toContain('Root cause analysis');
     expect(alignmentCall.messages[1]?.content).not.toContain('process-improvement.pdf');
