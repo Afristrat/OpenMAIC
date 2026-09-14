@@ -16,6 +16,15 @@ seul son code embarqué pourra demander l’ouverture d’un paquet. Le serveur
 une expiration et une révocation. Le client vérifiera la signature et ces
 liaisons avant de déchiffrer le paquet dans son stockage local protégé.
 
+Le paquet est chiffré en AES-256-GCM avec une clé de contenu aléatoire. Cette
+clé ne quitte jamais le serveur en clair : pour chaque appareil, elle est
+placée dans une enveloppe AES-GCM dont la clé est dérivée par HKDF-SHA-256 d’un
+échange X25519 éphémère. Le sel et les données authentifiées de l’enveloppe
+incluent la licence signée ; une enveloppe ne peut donc pas être réaffectée à
+un autre manifeste. Le client vérifie d’abord la signature Ed25519 Qalem, puis
+l’utilisateur, le tenant, l’appareil, l’échéance, la révocation et l’empreinte
+de sa clé X25519 avant toute ouverture.
+
 ## Portée et limites
 
 - Les replays, transmissions et contenus suivis restent des flux authentifiés
