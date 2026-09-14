@@ -27,6 +27,9 @@ describe('local controlled content migration (S2-012)', () => {
     expect(migration).toMatch(
       /payload_bytes INTEGER NOT NULL CHECK \(payload_bytes BETWEEN 1 AND 5242880\)/i,
     );
+    expect(migration).toMatch(
+      /content_sha256 TEXT NOT NULL CHECK \(content_sha256 ~ '\^\[0-9a-f\]\{64\}\$'\)/i,
+    );
     expect(migration).toMatch(/CREATE TABLE public\.local_content_licenses/i);
     expect(migration).toMatch(
       /package_id UUID NOT NULL REFERENCES public\.local_content_packages/i,
@@ -67,5 +70,8 @@ describe('local controlled content migration (S2-012)', () => {
     );
     expect(migration).toMatch(/VALUES \(\s*'local-content-packages'/i);
     expect(migration).toMatch(/local_content_packages_select_service_only/i);
+    expect(migration).toMatch(/assert_local_content_license_integrity/i);
+    expect(migration).toMatch(/device\.user_id = NEW\.user_id/i);
+    expect(migration).toMatch(/package\.content_sha256 = NEW\.content_sha256/i);
   });
 });

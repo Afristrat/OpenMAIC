@@ -723,6 +723,7 @@ export interface LocalContentPackage {
   source_id: string;
   source_manifest_id: string | null;
   source_content_sha256: string;
+  content_sha256: string;
   ciphertext_sha256: string;
   artifact_path: string;
   payload_bytes: number;
@@ -735,6 +736,7 @@ export type LocalContentPackageInsert = Pick<
   | 'org_id'
   | 'source_id'
   | 'source_content_sha256'
+  | 'content_sha256'
   | 'ciphertext_sha256'
   | 'artifact_path'
   | 'payload_bytes'

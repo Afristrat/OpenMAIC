@@ -31,6 +31,7 @@ CREATE TABLE public.local_content_packages (
   source_id UUID NOT NULL,
   source_manifest_id UUID,
   source_content_sha256 TEXT NOT NULL CHECK (source_content_sha256 ~ '^[0-9a-f]{64}$'),
+  content_sha256 TEXT NOT NULL CHECK (content_sha256 ~ '^[0-9a-f]{64}$'),
   ciphertext_sha256 TEXT NOT NULL CHECK (ciphertext_sha256 ~ '^[0-9a-f]{64}$'),
   artifact_path TEXT NOT NULL UNIQUE CHECK (
     artifact_path = org_id::text || '/' || id::text || '.qalempkg'
@@ -104,6 +105,54 @@ CREATE TABLE public.local_content_licenses (
 CREATE INDEX local_content_licenses_device_active_idx
   ON public.local_content_licenses (device_id, expires_at)
   WHERE revoked_at IS NULL;
+
+CREATE OR REPLACE FUNCTION public.assert_local_content_license_integrity()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM public.local_client_devices AS device
+    WHERE device.id = NEW.device_id
+      AND device.user_id = NEW.user_id
+      AND device.org_id = NEW.org_id
+      AND device.revoked_at IS NULL
+      AND device.device_id::text = (NEW.signed_manifest -> 'claims' ->> 'device_id')
+  ) THEN
+    RAISE EXCEPTION 'Local licence device must be active and belong to its user and organization'
+      USING ERRCODE = '23514';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM public.local_content_packages AS package
+    WHERE package.id = NEW.package_id
+      AND package.org_id = NEW.org_id
+      AND package.content_sha256 = NEW.content_sha256
+  ) THEN
+    RAISE EXCEPTION 'Local licence package must belong to its organization and content'
+      USING ERRCODE = '23514';
+  END IF;
+
+  IF (NEW.signed_manifest -> 'claims' ->> 'package_id') <> NEW.package_id::text
+     OR (NEW.signed_manifest -> 'claims' ->> 'content_sha256') <> NEW.content_sha256
+     OR (NEW.signed_manifest -> 'claims' ->> 'user_id') <> NEW.user_id::text
+     OR (NEW.signed_manifest -> 'claims' ->> 'tenant_id') <> NEW.org_id::text
+     OR (NEW.signed_manifest -> 'claims' ->> 'revoked') <> 'false' THEN
+    RAISE EXCEPTION 'Local licence columns must match its signed claims'
+      USING ERRCODE = '23514';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER assert_local_content_license_integrity
+  BEFORE INSERT OR UPDATE OF device_id, user_id, org_id, package_id, content_sha256, signed_manifest
+  ON public.local_content_licenses
+  FOR EACH ROW EXECUTE FUNCTION public.assert_local_content_license_integrity();
 
 ALTER TABLE public.local_client_devices ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.local_content_packages ENABLE ROW LEVEL SECURITY;
