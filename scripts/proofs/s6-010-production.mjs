@@ -107,6 +107,13 @@ try {
   await context.addCookies([session.cookie]);
   await context.addInitScript(({ accountId }) => {
     localStorage.setItem(`qalem-notification-prefs:${accountId}`, JSON.stringify({ push: true }));
+    const original = ServiceWorkerRegistration.prototype.showNotification;
+    const calls = [];
+    Object.defineProperty(window, '__s6010NotificationCalls', { value: calls, configurable: true });
+    ServiceWorkerRegistration.prototype.showNotification = function (title, options) {
+      calls.push({ title, tag: options?.tag ?? null, target: options?.data?.url ?? null });
+      return original.call(this, title, options);
+    };
   }, { accountId: userId });
   const page = await context.newPage();
   const failures = [];
@@ -115,28 +122,15 @@ try {
     if (message.type() === 'error') failures.push(`console:${message.text().slice(0, 160)}`);
   });
   await page.goto(`${base}/review`, { waitUntil: 'networkidle', timeout: 60_000 });
-  await page.waitForFunction(async () => {
-    const registration = await navigator.serviceWorker.ready;
-    return (await registration.getNotifications({ tag: 'review-reminder' })).length === 1;
-  }, undefined, { timeout: 30_000 });
-  const first = await page.evaluate(async () => {
-    const registration = await navigator.serviceWorker.ready;
-    const notifications = await registration.getNotifications({ tag: 'review-reminder' });
-    return {
-      count: notifications.length,
-      tag: notifications[0]?.tag ?? null,
-      target: notifications[0]?.data?.url ?? null,
-      lastCheck: localStorage.getItem(`qalem-review-reminder-last-check:${window.__proofUserId ?? ''}`),
-    };
+  await page.waitForFunction(() => window.__s6010NotificationCalls?.length === 1, undefined, {
+    timeout: 30_000,
   });
-  assert.equal(first.count, 1, 'Expected exactly one due-card reminder');
-  assert.equal(first.tag, 'review-reminder', 'Reminder tag is not stable');
-  assert.equal(first.target, '/review', 'Reminder target is not the review surface');
+  const first = await page.evaluate(() => window.__s6010NotificationCalls);
+  assert.equal(first.length, 1, 'Expected exactly one due-card reminder');
+  assert.equal(first[0]?.tag, 'review-reminder', 'Reminder tag is not stable');
+  assert.equal(first[0]?.target, '/review', 'Reminder target is not the review surface');
   await page.reload({ waitUntil: 'networkidle' });
-  const secondCount = await page.evaluate(async () => {
-    const registration = await navigator.serviceWorker.ready;
-    return (await registration.getNotifications({ tag: 'review-reminder' })).length;
-  });
+  const secondCount = await page.evaluate(() => window.__s6010NotificationCalls?.length ?? 0);
   assert.equal(secondCount, 1, 'Reload created a duplicate reminder');
   assert.deepEqual(failures, [], `Browser errors: ${failures.join(' | ')}`);
   await page.screenshot({ path: `${artifactDir}/review-reminder.png`, fullPage: true });
