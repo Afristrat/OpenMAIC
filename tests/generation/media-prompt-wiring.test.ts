@@ -540,7 +540,7 @@ describe('media prompt condition wiring', () => {
   test('uses one tall text flow in the required-media fallback so prose cannot cover bullets', async () => {
     expectConsoleMessages({
       warn: [
-        '[WARN] [Generation] Replaced invalid model geometry with deterministic media layout for scene_media_fallback_flow',
+        '[WARN] [Generation] Replaced invalid model geometry with deterministic safe layout for scene_media_fallback_flow',
       ],
     });
     const generatedUrl = '/api/classroom-media/classroom-1/generated-fallback.png';
@@ -730,10 +730,10 @@ describe('media prompt condition wiring', () => {
     ).toEqual([]);
   });
 
-  test('rejects a slide whose content-bearing elements overlap', async () => {
+  test('replaces overlapping content-bearing elements with a safe layout', async () => {
     expectConsoleMessages({
       warn: [
-        /^\[WARN\] \[Generation\] Slide layout invalid for scene_overlap: \[\{"type":"overlap","elementIds":\["text_[A-Za-z0-9_-]+","text_[A-Za-z0-9_-]+"\]\}\]; retrying$/,
+        '[WARN] [Generation] Replaced invalid model geometry with deterministic safe layout for scene_overlap',
       ],
     });
     const aiCall: AICallFn = async () =>
@@ -776,7 +776,17 @@ describe('media prompt condition wiring', () => {
       aiCall,
     );
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    if (!result || !('elements' in result)) throw new Error('Expected safe slide fallback');
+    expect(
+      auditSlideLayout({
+        id: 'scene_overlap',
+        elements: result.elements,
+        viewportSize: 1000,
+        viewportRatio: 0.5625,
+        theme: TEST_SLIDE_THEME,
+      }),
+    ).toEqual([]);
   });
 
   test('reports exact layout defects and injects them into the next prompt', async () => {
@@ -800,6 +810,15 @@ describe('media prompt condition wiring', () => {
             defaultFontName: '',
             defaultColor: '#333333',
           },
+          {
+            id: 'video',
+            type: 'video',
+            mediaRef: 'required_video',
+            left: 60,
+            top: 220,
+            width: 500,
+            height: 280,
+          },
         ],
       });
     const outline: SceneOutline = {
@@ -809,6 +828,14 @@ describe('media prompt condition wiring', () => {
       description: 'Keep content in bounds',
       keyPoints: ['Readable geometry'],
       order: 1,
+      mediaGenerations: [
+        {
+          type: 'video',
+          prompt: 'A short visual explanation',
+          elementId: 'required_video',
+          aspectRatio: '16:9',
+        },
+      ],
     };
 
     const first = await generateSceneContent(outline, invalidAiCall, {
@@ -834,6 +861,15 @@ describe('media prompt condition wiring', () => {
             content: '<p>Inside</p>',
             defaultFontName: '',
             defaultColor: '#333333',
+          },
+          {
+            id: 'video',
+            type: 'video',
+            mediaRef: 'required_video',
+            left: 60,
+            top: 220,
+            width: 500,
+            height: 280,
           },
         ],
       });
