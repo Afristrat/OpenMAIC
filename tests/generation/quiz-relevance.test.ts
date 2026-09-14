@@ -95,6 +95,64 @@ describe('quiz course relevance', () => {
     expect(result).toBeNull();
     expect(correction).toContain('exactly 5');
   });
+
+  it('maps a textual correct answer onto the generated choice identifier', async () => {
+    const outline: SceneOutline = {
+      ...cashFlowOutline,
+      quizConfig: { questionCount: 1, difficulty: 'medium', questionTypes: ['single'] },
+    };
+    const result = await generateSceneContent(
+      outline,
+      async () =>
+        JSON.stringify([
+          {
+            type: 'single',
+            question: 'Quel est le solde initial ?',
+            options: ['125 000 dirhams', '45 000 dirhams'],
+            correctAnswer: '125 000 dirhams',
+            analysis: 'Le solde initial est fourni par le cas.',
+          },
+        ]),
+      {
+        courseOutlines: [outline],
+        userRequirements: { requirement: 'Le solde initial de trésorerie est de 125 000 dirhams.' },
+      },
+    );
+
+    expect(result).toMatchObject({
+      questions: [{ options: [{ value: 'A', label: '125 000 dirhams' }], answer: ['A'] }],
+    });
+  });
+
+  it('rejects a choice answer absent from its options', async () => {
+    const outline: SceneOutline = {
+      ...cashFlowOutline,
+      quizConfig: { questionCount: 1, difficulty: 'medium', questionTypes: ['single'] },
+    };
+    let correction = '';
+    const result = await generateSceneContent(
+      outline,
+      async () =>
+        JSON.stringify([
+          {
+            type: 'single',
+            question: 'Quel est le solde initial ?',
+            options: ['125 000 dirhams', '45 000 dirhams'],
+            correctAnswer: '90 000 dirhams',
+            analysis: 'Le solde initial est fourni par le cas.',
+          },
+        ]),
+      {
+        courseOutlines: [outline],
+        onValidationFailure: (directive) => {
+          correction = directive;
+        },
+      },
+    );
+
+    expect(result).toBeNull();
+    expect(correction).toContain('correct answer');
+  });
 });
 
 describe('cash-flow simulator horizon', () => {

@@ -1640,14 +1640,24 @@ async function generateQuizContent(
   // Ensure each question has an ID and normalize options format
   const questions: QuizQuestion[] = generatedQuestions.map((q) => {
     const isText = q.type === 'short_answer';
+    const options = isText ? undefined : normalizeQuizOptions(q.options);
     return {
       ...q,
       id: q.id || `q_${nanoid(8)}`,
-      options: isText ? undefined : normalizeQuizOptions(q.options),
-      answer: isText ? undefined : normalizeQuizAnswer(q as unknown as Record<string, unknown>),
+      options,
+      answer: isText
+        ? undefined
+        : normalizeQuizAnswer(q as unknown as Record<string, unknown>, options),
       hasAnswer: isText ? false : true,
     };
   });
+
+  const answerIssue = findQuizAnswerIssue(questions);
+  if (answerIssue) {
+    log.warn(`Quiz answers rejected for ${outline.id}: ${answerIssue}`);
+    onValidationFailure?.(answerIssue);
+    return null;
+  }
 
   const relevanceIssue = findQuizRelevanceIssue(
     questions,
@@ -1744,6 +1754,17 @@ export function findQuizRelevanceIssue(
   ].join(' ');
 }
 
+function findQuizAnswerIssue(questions: QuizQuestion[]): string | null {
+  for (const question of questions) {
+    if (question.type === 'short_answer') continue;
+    const values = new Set(question.options?.map((option) => option.value) ?? []);
+    if (!question.answer?.length || question.answer.some((answer) => !values.has(answer))) {
+      return 'Every choice question must have at least one correct answer among its options.';
+    }
+  }
+  return null;
+}
+
 /**
  * Normalize quiz options from AI response.
  * AI may generate plain strings ["OptionA", "OptionB"] or QuizOption objects.
@@ -1778,7 +1799,10 @@ function normalizeQuizOptions(
  * AI may generate correctAnswer as string or string[], under various field names.
  * This normalizes to string[] format matching option values.
  */
-function normalizeQuizAnswer(question: Record<string, unknown>): string[] | undefined {
+function normalizeQuizAnswer(
+  question: Record<string, unknown>,
+  options: { value: string; label: string }[] | undefined,
+): string[] | undefined {
   // AI might use "correctAnswer", "answer", or "correct_answer"
   const raw =
     question.answer ??
@@ -1786,10 +1810,10 @@ function normalizeQuizAnswer(question: Record<string, unknown>): string[] | unde
     (question as Record<string, unknown>).correct_answer;
   if (!raw) return undefined;
 
-  if (Array.isArray(raw)) {
-    return raw.map(String);
-  }
-  return [String(raw)];
+  const answers = Array.isArray(raw) ? raw.map(String) : [String(raw)];
+  return answers.map((answer) =>
+    options?.find((option) => option.value === answer || option.label === answer)?.value ?? answer,
+  );
 }
 
 /**
