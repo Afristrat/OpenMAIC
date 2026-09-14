@@ -645,7 +645,7 @@ async function main(): Promise<void> {
       'Crée exactement cinq scènes cohérentes à partir du document autorisé.',
       'Inclure une introduction au cas marocain, une scène de calcul, une scène livrant le véritable classeur Excel modifiable demandé, une scène PBL de diagnostic et un quiz final de cinq questions à choix unique.',
       'Utilise exclusivement les montants, la devise, le seuil de sécurité et les décisions décrits dans la source.',
-      'Crée pour l’introduction l’illustration explicative originale demandée par la source.',
+      'Crée pour l’introduction une illustration explicative originale pour ce cas, sans réutiliser d’image du document.',
     ].join(' ');
     const generationRequest = {
       orgId: organizationId,
