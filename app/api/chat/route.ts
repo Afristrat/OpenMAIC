@@ -116,20 +116,24 @@ export async function POST(req: NextRequest) {
               .filter((agent) => agent.enabled)
               .map((agent) => agent.agentId),
           );
-          if (body.config.agentIds.some((id) => !allowedIds.has(id))) {
-            return apiError(
-              'INVALID_REQUEST',
-              400,
-              'An agent is not authorized for this classroom',
-            );
-          }
           const serverAgents = persisted.generatedAgentConfigs ?? [];
-          const requestedAgents = body.config.agentIds.map((id) =>
+          // Browser selection can briefly contain default agents while the
+          // generated roster is rehydrated.  The server remains authoritative:
+          // retain only authorized requested agents, then fall back to the
+          // enabled classroom roster rather than rejecting a valid learner.
+          const authorizedAgentIds = body.config.agentIds.filter((id) => allowedIds.has(id));
+          const effectiveAgentIds =
+            authorizedAgentIds.length > 0 ? authorizedAgentIds : [...allowedIds];
+          if (effectiveAgentIds.length === 0) {
+            return apiError('INVALID_REQUEST', 400, 'No agent is enabled for this classroom');
+          }
+          const requestedAgents = effectiveAgentIds.map((id) =>
             serverAgents.find((agent) => agent.id === id),
           );
           if (requestedAgents.some((agent) => !agent)) {
             return apiError('INVALID_REQUEST', 400, 'An agent identity is unavailable');
           }
+          body.config.agentIds = effectiveAgentIds;
           body.config.agentConfigs = requestedAgents.map((agent) => ({
             id: agent!.id,
             name: agent!.name,
