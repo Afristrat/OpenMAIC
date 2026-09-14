@@ -116,12 +116,15 @@ try {
   });
   await page.goto(`${base}/review`, { waitUntil: 'networkidle', timeout: 60_000 });
   await page.waitForFunction(
-    async () => {
+    async ({ accountId }) => {
       const registration = await navigator.serviceWorker.ready;
       const notifications = await registration.getNotifications({ tag: 'review-reminder' });
-      if (notifications.length !== 1) return false;
-      return true;
+      return (
+        notifications.length === 1 &&
+        typeof localStorage.getItem(`qalem-review-reminder-last-check:${accountId}`) === 'string'
+      );
     },
+    { accountId: userId },
     { timeout: 30_000 },
   );
   const firstLastCheck = await page.evaluate(
