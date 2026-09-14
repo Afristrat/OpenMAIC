@@ -185,6 +185,11 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
         selectedAgentIds.map((id) => agentsRecord[id]).filter((a): a is AgentConfig => a != null),
       [agentsRecord, selectedAgentIds],
     );
+    // A scene may dispatch an authorized backbone agent which is not currently
+    // selected in the visible strip. Discussion TTS must retain that agent's
+    // generated voice design instead of resolving VoxCPM Auto Voice without
+    // its required context.
+    const discussionAgents = useMemo(() => Object.values(agentsRecord), [agentsRecord]);
 
     // Discussion TTS: audio indicator state
     const [audioIndicatorState, setAudioIndicatorState] = useState<AudioIndicatorState>('idle');
@@ -192,7 +197,7 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
 
     const discussionTTS = useDiscussionTTS({
       enabled: ttsEnabled && !ttsMuted,
-      agents: selectedAgents,
+      agents: discussionAgents,
       onAudioStateChange: (agentId, state) => {
         setAudioAgentId(agentId);
         setAudioIndicatorState(state);
