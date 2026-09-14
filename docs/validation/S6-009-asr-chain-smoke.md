@@ -43,3 +43,23 @@ Cette observation prouve le relais ASR public configuré par Qalem et la santé
 de LiteLLM séparément. Elle ne prouve pas Qalem → LiteLLM → Cloudflare → DGX ;
 au contraire, elle impose de réconcilier le routage avant toute certification
 de cette chaîne.
+
+## Routage LiteLLM réconcilié le 14 septembre 2026
+
+LiteLLM dispose de trois modèles ASR. La clé virtuelle Qalem autorisait
+initialement dix-sept modèles, sans aucun ASR. Les dix-sept autorisations ont
+été conservées et les trois modèles ASR ont été ajoutés, soit vingt modèles
+autorisés. Les variables ASR des variantes production et prévisualisation de
+Qalem Runtime ont été remplacées par la base LiteLLM et cette clé virtuelle,
+puis le déploiement Coolify `zehz6jlpuglgwlaqaxzlqbbl` a terminé.
+
+Après déploiement, Qalem répond HTTP 200, worker et capture-worker sont
+`healthy`, sans OOM ni redémarrage. Depuis le capture-worker, les trois modèles
+ASR exposés par LiteLLM ont chacun accepté un WAV de silence PCM d’une seconde,
+avec des latences comprises entre 461 et 584 ms. Aucun texte transcrit ni
+configuration sensible n’a été conservé.
+
+Cette preuve établit Qalem → LiteLLM et l’exécution d’un appel audio sur les
+trois modèles. Elle ne remplace pas les extraits humains FR/AR/EN, le parcours
+microphone, l’acceptation humaine ou l’attestation explicite LiteLLM →
+Cloudflare → DGX.
