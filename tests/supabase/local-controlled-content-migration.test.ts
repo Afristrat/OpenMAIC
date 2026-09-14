@@ -18,7 +18,19 @@ describe('local controlled content migration (S2-012)', () => {
   });
 
   it('keeps an expirable and revocable licence for one enrolled device and package', () => {
+    expect(migration).toMatch(/CREATE TABLE public\.local_content_packages/i);
+    expect(migration).toMatch(
+      /FOREIGN KEY \(source_id, org_id\)\s+REFERENCES public\.organization_sources\(id, org_id\)/i,
+    );
+    expect(migration).toMatch(/source\.content_hash = NEW\.source_content_sha256/i);
+    expect(migration).toMatch(/NEW\.source_id = ANY \(manifest\.source_ids\)/i);
+    expect(migration).toMatch(
+      /payload_bytes INTEGER NOT NULL CHECK \(payload_bytes BETWEEN 1 AND 5242880\)/i,
+    );
     expect(migration).toMatch(/CREATE TABLE public\.local_content_licenses/i);
+    expect(migration).toMatch(
+      /package_id UUID NOT NULL REFERENCES public\.local_content_packages/i,
+    );
     expect(migration).toMatch(/device_id UUID NOT NULL REFERENCES public\.local_client_devices/i);
     expect(migration).toMatch(/content_sha256 ~ '\^\[0-9a-f\]\{64\}\$'/i);
     expect(migration).toMatch(/signed_manifest JSONB NOT NULL/i);
@@ -36,10 +48,16 @@ describe('local controlled content migration (S2-012)', () => {
       /ALTER TABLE public\.local_content_licenses ENABLE ROW LEVEL SECURITY/i,
     );
     expect(migration).toMatch(
+      /ALTER TABLE public\.local_content_packages ENABLE ROW LEVEL SECURITY/i,
+    );
+    expect(migration).toMatch(
       /REVOKE ALL ON TABLE public\.local_client_devices FROM anon, authenticated/i,
     );
     expect(migration).toMatch(
       /REVOKE ALL ON TABLE public\.local_content_licenses FROM anon, authenticated/i,
+    );
+    expect(migration).toMatch(
+      /REVOKE ALL ON TABLE public\.local_content_packages FROM anon, authenticated/i,
     );
     expect(migration).toMatch(
       /GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public\.local_client_devices TO service_role/i,
@@ -47,5 +65,7 @@ describe('local controlled content migration (S2-012)', () => {
     expect(migration).toMatch(
       /GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public\.local_content_licenses TO service_role/i,
     );
+    expect(migration).toMatch(/VALUES \(\s*'local-content-packages'/i);
+    expect(migration).toMatch(/local_content_packages_select_service_only/i);
   });
 });

@@ -717,6 +717,32 @@ export type LocalClientDeviceUpdate = Partial<
   Pick<LocalClientDevice, 'last_seen_at' | 'revoked_at'>
 >;
 
+export interface LocalContentPackage {
+  id: string;
+  org_id: string;
+  source_id: string;
+  source_manifest_id: string | null;
+  source_content_sha256: string;
+  ciphertext_sha256: string;
+  artifact_path: string;
+  payload_bytes: number;
+  format_version: 1;
+  created_at: string;
+}
+
+export type LocalContentPackageInsert = Pick<
+  LocalContentPackage,
+  | 'org_id'
+  | 'source_id'
+  | 'source_content_sha256'
+  | 'ciphertext_sha256'
+  | 'artifact_path'
+  | 'payload_bytes'
+> &
+  Partial<Pick<LocalContentPackage, 'source_manifest_id' | 'format_version'>>;
+
+export type LocalContentPackageUpdate = Record<string, never>;
+
 export interface LocalContentLicense {
   id: string;
   device_id: string;
@@ -979,6 +1005,11 @@ export interface Database {
         Row: LocalClientDevice;
         Insert: LocalClientDeviceInsert;
         Update: LocalClientDeviceUpdate;
+      };
+      local_content_packages: {
+        Row: LocalContentPackage;
+        Insert: LocalContentPackageInsert;
+        Update: LocalContentPackageUpdate;
       };
       local_content_licenses: {
         Row: LocalContentLicense;
