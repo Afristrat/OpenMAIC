@@ -2,7 +2,10 @@ import { randomUUID } from 'node:crypto';
 import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireOrgMember } from '@/lib/api/auth';
-import { issueLocalPackage, LocalContentSigningConfigurationError } from '@/lib/server/local-content-crypto';
+import {
+  issueLocalPackage,
+  LocalContentSigningConfigurationError,
+} from '@/lib/server/local-content-crypto';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 
 const PACKAGE_BUCKET = 'local-content-packages';
@@ -108,22 +111,23 @@ export async function POST(req: NextRequest) {
     };
     const upload = await service.storage
       .from(PACKAGE_BUCKET)
-      .upload(artifactPath, issued.artifact, { contentType: 'application/octet-stream', upsert: false });
+      .upload(artifactPath, issued.artifact, {
+        contentType: 'application/octet-stream',
+        upsert: false,
+      });
     if (upload.error) return failure(503);
 
-    const packageInsert = await service
-      .from('local_content_packages')
-      .insert({
-        id: packageId,
-        org_id: input.orgId,
-        source_id: input.sourceId,
-        source_manifest_id: input.sourceManifestId ?? null,
-        source_content_sha256: sourceResult.data.content_hash,
-        content_sha256: issued.contentSha256,
-        ciphertext_sha256: issued.ciphertextSha256,
-        artifact_path: artifactPath,
-        payload_bytes: payload.byteLength,
-      });
+    const packageInsert = await service.from('local_content_packages').insert({
+      id: packageId,
+      org_id: input.orgId,
+      source_id: input.sourceId,
+      source_manifest_id: input.sourceManifestId ?? null,
+      source_content_sha256: sourceResult.data.content_hash,
+      content_sha256: issued.contentSha256,
+      ciphertext_sha256: issued.ciphertextSha256,
+      artifact_path: artifactPath,
+      payload_bytes: payload.byteLength,
+    });
     if (packageInsert.error) {
       await service.storage.from(PACKAGE_BUCKET).remove([artifactPath]);
       return failure(503);

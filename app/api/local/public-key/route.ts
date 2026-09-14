@@ -8,6 +8,9 @@ export function GET() {
       { headers: { 'Cache-Control': 'public, max-age=3600' } },
     );
   } catch {
-    return NextResponse.json({ success: false, error: 'Local client signing unavailable' }, { status: 503 });
+    return NextResponse.json(
+      { success: false, error: 'Local client signing unavailable' },
+      { status: 503 },
+    );
   }
 }
