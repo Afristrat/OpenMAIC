@@ -1452,7 +1452,9 @@ async function generateSlideContent(
         viewportRatio: canvasHeight / canvasWidth,
       } as Slide);
       if (fallbackIssues.length === 0) {
-        log.warn(`Replaced invalid model geometry with deterministic safe layout for ${outline.id}`);
+        log.warn(
+          `Replaced invalid model geometry with deterministic safe layout for ${outline.id}`,
+        );
         return {
           elements: fallbackElements,
           background,
@@ -1811,8 +1813,10 @@ function normalizeQuizAnswer(
   if (!raw) return undefined;
 
   const answers = Array.isArray(raw) ? raw.map(String) : [String(raw)];
-  return answers.map((answer) =>
-    options?.find((option) => option.value === answer || option.label === answer)?.value ?? answer,
+  return answers.map(
+    (answer) =>
+      options?.find((option) => option.value === answer || option.label === answer)?.value ??
+      answer,
   );
 }
 
