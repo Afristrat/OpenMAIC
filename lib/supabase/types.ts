@@ -713,7 +713,9 @@ export type LocalClientDeviceInsert = Pick<
 > &
   Partial<Pick<LocalClientDevice, 'last_seen_at' | 'revoked_at'>>;
 
-export type LocalClientDeviceUpdate = Partial<Pick<LocalClientDevice, 'last_seen_at' | 'revoked_at'>>;
+export type LocalClientDeviceUpdate = Partial<
+  Pick<LocalClientDevice, 'last_seen_at' | 'revoked_at'>
+>;
 
 export interface LocalContentLicense {
   id: string;

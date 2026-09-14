@@ -29,11 +29,23 @@ describe('local controlled content migration (S2-012)', () => {
   });
 
   it('fails closed for the browser Data API while retaining service-side access', () => {
-    expect(migration).toMatch(/ALTER TABLE public\.local_client_devices ENABLE ROW LEVEL SECURITY/i);
-    expect(migration).toMatch(/ALTER TABLE public\.local_content_licenses ENABLE ROW LEVEL SECURITY/i);
-    expect(migration).toMatch(/REVOKE ALL ON TABLE public\.local_client_devices FROM anon, authenticated/i);
-    expect(migration).toMatch(/REVOKE ALL ON TABLE public\.local_content_licenses FROM anon, authenticated/i);
-    expect(migration).toMatch(/GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public\.local_client_devices TO service_role/i);
-    expect(migration).toMatch(/GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public\.local_content_licenses TO service_role/i);
+    expect(migration).toMatch(
+      /ALTER TABLE public\.local_client_devices ENABLE ROW LEVEL SECURITY/i,
+    );
+    expect(migration).toMatch(
+      /ALTER TABLE public\.local_content_licenses ENABLE ROW LEVEL SECURITY/i,
+    );
+    expect(migration).toMatch(
+      /REVOKE ALL ON TABLE public\.local_client_devices FROM anon, authenticated/i,
+    );
+    expect(migration).toMatch(
+      /REVOKE ALL ON TABLE public\.local_content_licenses FROM anon, authenticated/i,
+    );
+    expect(migration).toMatch(
+      /GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public\.local_client_devices TO service_role/i,
+    );
+    expect(migration).toMatch(
+      /GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public\.local_content_licenses TO service_role/i,
+    );
   });
 });
