@@ -1,11 +1,11 @@
 # S2-012 — Compilation du client Qalem Local
 
 Date : 14 septembre 2026
-SHA : `43fddd9b4194e4f371d2a8c7fd7fbb5f48fdd6e4`
+SHA : `9c1e73ec7215692c311dfc3d148f9b2519320315`
 
 ## Portée vérifiée
 
-Le client natif Tauri Qalem Local conserve la clé X25519 de l’appareil dans le trousseau du système. Il n’accepte qu’un fichier `.qalempkg` borné, vérifie la clé de signature Qalem, l’utilisateur, le tenant, l’appareil, l’échéance et le manifeste avant de déchiffrer le contenu. Son interface est une WebView locale à CSP sans connexion réseau ; aucun plugin d’accès générique au système de fichiers ou au réseau n’est déclaré.
+Le client natif Tauri Qalem Local conserve la clé X25519 de l’appareil dans le trousseau du système. Il n’accepte qu’un fichier `.qalempkg` borné, lit l’utilisateur, le tenant et l’appareil depuis le manifeste signé, puis vérifie la clé de signature Qalem, l’échéance et le manifeste avant de déchiffrer le contenu. Il ne demande donc pas ces trois identifiants à recopier. Son interface est une WebView locale à CSP sans connexion réseau ; aucun plugin d’accès générique au système de fichiers ou au réseau n’est déclaré.
 
 La dépendance Tauri est verrouillée à `2.11.5`, son outil de construction à `2.6.3`, et `Cargo.lock` est versionné. Le répertoire Tauri généré est ignoré par Git.
 
