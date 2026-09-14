@@ -362,7 +362,10 @@ async function main(): Promise<void> {
     const context = await browser.newContext({
       acceptDownloads: true,
       locale: 'fr-FR',
-      serviceWorkers: process.env.PROOF_QUIZ_ONLY === '1' ? 'block' : 'allow',
+      // The targeted proof must keep the same PWA execution model as the full
+      // production recipe.  Blocking the service worker here can prevent the
+      // classroom access resolver from completing, before the quiz is reached.
+      serviceWorkers: 'allow',
     });
     await context.addInitScript({
       content: `(() => {
