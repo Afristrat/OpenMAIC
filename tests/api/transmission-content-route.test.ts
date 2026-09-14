@@ -24,9 +24,14 @@ vi.mock('@/lib/supabase/service', () => ({
 
 async function getContent(download = false) {
   const { GET } = await import('@/app/api/transmissions/[id]/content/route');
-  return GET(new NextRequest(`https://qalem.ma/api/transmissions/tx_1/content${download ? '?download=1' : ''}`), {
-    params: Promise.resolve({ id: 'tx_1' }),
-  });
+  return GET(
+    new NextRequest(
+      `https://qalem.ma/api/transmissions/tx_1/content${download ? '?download=1' : ''}`,
+    ),
+    {
+      params: Promise.resolve({ id: 'tx_1' }),
+    },
+  );
 }
 
 describe('GET /api/transmissions/[id]/content', () => {
