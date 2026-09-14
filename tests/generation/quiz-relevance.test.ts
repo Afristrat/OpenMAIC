@@ -119,9 +119,11 @@ describe('quiz course relevance', () => {
       },
     );
 
-    expect(result).toMatchObject({
-      questions: [{ options: [{ value: 'A', label: '125 000 dirhams' }], answer: ['A'] }],
+    expect(result?.questions[0]?.options?.[0]).toEqual({
+      value: 'A',
+      label: '125 000 dirhams',
     });
+    expect(result?.questions[0]?.answer).toEqual(['A']);
   });
 
   it('rejects a choice answer absent from its options', async () => {
