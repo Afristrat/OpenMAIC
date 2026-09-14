@@ -7,9 +7,9 @@ CREATE TABLE public.local_client_devices (
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   org_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
   device_id UUID NOT NULL,
-  public_key TEXT NOT NULL CHECK (
-    char_length(public_key) = 43
-    AND public_key ~ '^[A-Za-z0-9_-]+$'
+  encryption_public_key TEXT NOT NULL CHECK (
+    char_length(encryption_public_key) = 43
+    AND encryption_public_key ~ '^[A-Za-z0-9_-]+$'
   ),
   label TEXT NOT NULL CHECK (char_length(btrim(label)) BETWEEN 1 AND 120),
   enrolled_at TIMESTAMPTZ NOT NULL DEFAULT now(),

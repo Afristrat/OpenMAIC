@@ -8,12 +8,12 @@ const migration = readFileSync(
 );
 
 describe('local controlled content migration (S2-012)', () => {
-  it('binds each local device to its user and tenant with an Ed25519 public key', () => {
+  it('binds each local device to its user and tenant with an X25519 encryption key', () => {
     expect(migration).toMatch(/CREATE TABLE public\.local_client_devices/i);
     expect(migration).toMatch(/user_id UUID NOT NULL REFERENCES public\.profiles/i);
     expect(migration).toMatch(/org_id UUID NOT NULL REFERENCES public\.organizations/i);
     expect(migration).toMatch(/device_id UUID NOT NULL/i);
-    expect(migration).toMatch(/char_length\(public_key\) = 43/i);
+    expect(migration).toMatch(/char_length\(encryption_public_key\) = 43/i);
     expect(migration).toMatch(/UNIQUE \(user_id, org_id, device_id\)/i);
   });
 

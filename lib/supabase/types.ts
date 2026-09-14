@@ -700,7 +700,7 @@ export interface LocalClientDevice {
   user_id: string;
   org_id: string;
   device_id: string;
-  public_key: string;
+  encryption_public_key: string;
   label: string;
   enrolled_at: string;
   last_seen_at: string;
@@ -709,7 +709,7 @@ export interface LocalClientDevice {
 
 export type LocalClientDeviceInsert = Pick<
   LocalClientDevice,
-  'user_id' | 'org_id' | 'device_id' | 'public_key' | 'label'
+  'user_id' | 'org_id' | 'device_id' | 'encryption_public_key' | 'label'
 > &
   Partial<Pick<LocalClientDevice, 'last_seen_at' | 'revoked_at'>>;
 

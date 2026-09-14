@@ -35,8 +35,10 @@ liaisons avant de déchiffrer le paquet dans son stockage local protégé.
 ## Critères d’implémentation S2-012
 
 1. Définir le format de paquet, le manifeste signé et la licence révocable.
-2. Enregistrer une clé d’appareil sans secret embarqué côté web ; lier les
-   autorisations au compte et au tenant contrôlés côté serveur.
+2. Enregistrer la clé publique X25519 de chiffrement de l’appareil, sans
+   secret embarqué côté web ; la clé Ed25519 distincte de Qalem signe les
+   licences. Lier les autorisations au compte et au tenant contrôlés côté
+   serveur.
 3. Créer Qalem Local dans un runner de build isolé, jamais sur l’hôte de
    production ; limiter ses capacités aux fichiers de paquets et à l’ouverture
    contrôlée.
