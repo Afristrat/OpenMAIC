@@ -48,6 +48,15 @@ pub struct EncryptedPackage {
     pub ciphertext: String,
 }
 
+/// Artefact opaque remis par Qalem au client local.
+/// Il ne contient jamais le contenu déchiffré ni la clé de contenu en clair.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct LocalPackageArtifact {
+    pub format_version: u8,
+    pub package: EncryptedPackage,
+    pub key_envelope: DeviceKeyEnvelope,
+}
+
 /// Clé de contenu chiffrée vers la clé X25519 d’un appareil enrôlé.
 /// La clé de signature Ed25519 du serveur ne sert jamais à ce chiffrement.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -300,6 +309,35 @@ pub fn open_package(
     Ok(content)
 }
 
+pub fn open_artifact(
+    verifying_key: &VerifyingKey,
+    device_secret: &StaticSecret,
+    artifact: &LocalPackageArtifact,
+    context: AccessContext<'_>,
+) -> Result<Vec<u8>, PackageError> {
+    if artifact.format_version != FORMAT_VERSION {
+        return Err(PackageError::UnsupportedFormat);
+    }
+    let content_key = open_content_key_for_device(
+        verifying_key,
+        device_secret,
+        &artifact.key_envelope,
+        &artifact.package.license,
+        context.clone(),
+    )?;
+    open_package(verifying_key, &content_key, &artifact.package, context)
+}
+
+pub fn open_artifact_bytes(
+    verifying_key: &VerifyingKey,
+    device_secret: &StaticSecret,
+    bytes: &[u8],
+    context: AccessContext<'_>,
+) -> Result<Vec<u8>, PackageError> {
+    let artifact = serde_json::from_slice(bytes).map_err(|_| PackageError::InvalidEncoding)?;
+    open_artifact(verifying_key, device_secret, &artifact, context)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -496,6 +534,38 @@ mod tests {
                 context(),
             ),
             Err(PackageError::InvalidSignature)
+        );
+    }
+
+    #[test]
+    fn opens_the_serialized_artifact_format_only_on_its_enrolled_device() {
+        let signing_key = SigningKey::generate(&mut OsRng);
+        let device_secret = StaticSecret::from([3_u8; 32]);
+        let device_public_key = X25519PublicKey::from(&device_secret);
+        let content_key = [4_u8; 32];
+        let content = b"contenu local Qalem";
+        let package = seal_package(&signing_key, &content_key, claims(content), content).unwrap();
+        let artifact = LocalPackageArtifact {
+            format_version: FORMAT_VERSION,
+            key_envelope: seal_content_key_for_device(
+                device_public_key.as_bytes(),
+                &content_key,
+                &package.license,
+            )
+            .unwrap(),
+            package,
+        };
+        let serialized = serde_json::to_vec(&artifact).unwrap();
+
+        assert_eq!(
+            open_artifact_bytes(
+                &signing_key.verifying_key(),
+                &device_secret,
+                &serialized,
+                context(),
+            )
+            .unwrap(),
+            content
         );
     }
 }
