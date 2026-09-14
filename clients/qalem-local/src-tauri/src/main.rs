@@ -7,7 +7,7 @@ use std::{
 use keyring::Entry;
 use qalem_local_core::{
     decode_device_secret, device_public_key, encode_device_secret, generate_device_secret,
-    open_artifact_bytes, verifying_key_from_base64, AccessContext,
+    open_artifact_bytes, verifying_key_from_base64, AccessContext, LocalPackageArtifact,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -26,9 +26,6 @@ struct DeviceIdentity {
 #[serde(rename_all = "camelCase")]
 struct OpenPackageRequest {
     path: String,
-    user_id: String,
-    tenant_id: String,
-    device_id: String,
     public_key: String,
 }
 
@@ -74,29 +71,32 @@ fn create_device_identity() -> Result<DeviceIdentity, String> {
 
 #[tauri::command]
 fn open_local_package(request: OpenPackageRequest) -> Result<OpenedPackage, String> {
-    validate_uuid(&request.user_id)?;
-    validate_uuid(&request.tenant_id)?;
-    validate_uuid(&request.device_id)?;
     let path = Path::new(&request.path);
     if path.extension().and_then(|extension| extension.to_str()) != Some("qalempkg") {
         return Err(local_error("Only Qalem Local packages are accepted"));
     }
-    let metadata = fs::metadata(path).map_err(|_| local_error("Local package unavailable"))?;
-    if metadata.len() == 0 || metadata.len() > MAX_PACKAGE_BYTES {
+    let artifact = fs::read(path).map_err(|_| local_error("Local package unavailable"))?;
+    if artifact.is_empty() || artifact.len() > MAX_PACKAGE_BYTES as usize {
         return Err(local_error("Invalid local package size"));
     }
-    let secret = device_entry(&request.device_id)?
+    let manifest: LocalPackageArtifact =
+        serde_json::from_slice(&artifact).map_err(|_| local_error("Invalid protected package"))?;
+    let claims = &manifest.package.license.claims;
+    validate_uuid(&claims.user_id)?;
+    validate_uuid(&claims.tenant_id)?;
+    validate_uuid(&claims.device_id)?;
+    let secret = device_entry(&claims.device_id)?
         .get_password()
         .map_err(|_| local_error("This device is not enrolled locally"))?;
     let content = open_artifact_bytes(
         &verifying_key_from_base64(&request.public_key)
             .map_err(|_| local_error("Invalid Qalem signing key"))?,
         &decode_device_secret(&secret).map_err(|_| local_error("Invalid local device key"))?,
-        &fs::read(path).map_err(|_| local_error("Local package unavailable"))?,
+        &artifact,
         AccessContext {
-            user_id: &request.user_id,
-            tenant_id: &request.tenant_id,
-            device_id: &request.device_id,
+            user_id: &claims.user_id,
+            tenant_id: &claims.tenant_id,
+            device_id: &claims.device_id,
             now: unix_timestamp()?,
         },
     )
