@@ -586,6 +586,18 @@ async function main(): Promise<void> {
       await page
         .locator('[data-scene-completion-gate="true"]')
         .waitFor({ state: 'visible', timeout: 10_000 });
+      const targetedChatResponsePromise = page.waitForResponse(
+        (response) => response.url().includes('/api/chat') && response.request().method() === 'POST',
+        { timeout: 120_000 },
+      );
+      await page.getByRole('button', { name: 'Approfondir dans la discussion' }).click();
+      const targetedChatResponse = await targetedChatResponsePromise;
+      const targetedDiscussionBody = await targetedChatResponse.text();
+      assert.equal(
+        targetedChatResponse.status(),
+        200,
+        `Targeted deepening discussion returned: ${targetedDiscussionBody.slice(0, 1_000)}`,
+      );
       await page.getByLabel('Exporter PPTX').click();
       await page.getByTestId('export-mp4').waitFor({ state: 'visible' });
       await page.keyboard.press('Escape');
