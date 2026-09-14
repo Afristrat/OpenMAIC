@@ -692,6 +692,59 @@ export type TransmissionUpdate = Partial<
 >;
 
 // ---------------------------------------------------------------------------
+// Qalem Local — appareils enrôlés et licences de contenus hors navigateur
+// ---------------------------------------------------------------------------
+
+export interface LocalClientDevice {
+  id: string;
+  user_id: string;
+  org_id: string;
+  device_id: string;
+  public_key: string;
+  label: string;
+  enrolled_at: string;
+  last_seen_at: string;
+  revoked_at: string | null;
+}
+
+export type LocalClientDeviceInsert = Pick<
+  LocalClientDevice,
+  'user_id' | 'org_id' | 'device_id' | 'public_key' | 'label'
+> &
+  Partial<Pick<LocalClientDevice, 'last_seen_at' | 'revoked_at'>>;
+
+export type LocalClientDeviceUpdate = Partial<Pick<LocalClientDevice, 'last_seen_at' | 'revoked_at'>>;
+
+export interface LocalContentLicense {
+  id: string;
+  device_id: string;
+  user_id: string;
+  org_id: string;
+  package_id: string;
+  content_sha256: string;
+  signed_manifest: Record<string, unknown>;
+  key_envelope: string;
+  issued_at: string;
+  expires_at: string;
+  revoked_at: string | null;
+}
+
+export type LocalContentLicenseInsert = Pick<
+  LocalContentLicense,
+  | 'device_id'
+  | 'user_id'
+  | 'org_id'
+  | 'package_id'
+  | 'content_sha256'
+  | 'signed_manifest'
+  | 'key_envelope'
+  | 'expires_at'
+> &
+  Partial<Pick<LocalContentLicense, 'issued_at' | 'revoked_at'>>;
+
+export type LocalContentLicenseUpdate = Partial<Pick<LocalContentLicense, 'revoked_at'>>;
+
+// ---------------------------------------------------------------------------
 // Learner course resumption (S3-012)
 // ---------------------------------------------------------------------------
 
@@ -919,6 +972,16 @@ export interface Database {
         Row: TransmissionRow;
         Insert: TransmissionInsert;
         Update: TransmissionUpdate;
+      };
+      local_client_devices: {
+        Row: LocalClientDevice;
+        Insert: LocalClientDeviceInsert;
+        Update: LocalClientDeviceUpdate;
+      };
+      local_content_licenses: {
+        Row: LocalContentLicense;
+        Insert: LocalContentLicenseInsert;
+        Update: LocalContentLicenseUpdate;
       };
       learner_course_resumes: {
         Row: LearnerCourseResume;
