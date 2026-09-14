@@ -63,3 +63,19 @@ Cette preuve établit Qalem → LiteLLM et l’exécution d’un appel audio sur
 trois modèles. Elle ne remplace pas les extraits humains FR/AR/EN, le parcours
 microphone, l’acceptation humaine ou l’attestation explicite LiteLLM →
 Cloudflare → DGX.
+
+## Attestation Cloudflare non disponible le 14 septembre 2026
+
+Deux jetons Cloudflare actifs ont été interrogés en lecture seule, sans
+afficher leur valeur ni celle d’un compte. Le jeton rattaché à Qalem ne voit
+aucun compte. Le jeton du hub voit un compte, mais ne retrouve pas l’UUID du
+tunnel référencé par la configuration Qalem. La valeur de configuration
+référencée n’est pas un document JSON et ne contient ni cet UUID, ni une
+déclaration `ingress` ou `service` exploitable.
+
+Ce contrôle ne démontre pas l’absence de tunnel : il démontre qu’aucun des
+droits actuellement disponibles ne permet d’attester sa configuration ou ses
+connecteurs. La preuve LiteLLM → Cloudflare → DGX reste donc indisponible ;
+elle exige un jeton Cloudflare ayant au minimum accès en lecture au compte et
+au tunnel réellement exploités, ou une preuve équivalente produite depuis
+l’administration Cloudflare. Aucune mutation Cloudflare n’a été effectuée.
