@@ -1025,8 +1025,12 @@ async function main(): Promise<void> {
     await page.getByRole('button', { name: 'Approfondir dans la discussion' }).click();
     await gate.waitFor({ state: 'hidden', timeout: 5_000 });
     const chatResponse = await chatResponsePromise;
-    assert.equal(chatResponse.status(), 200);
     const discussionBody = await chatResponse.text();
+    assert.equal(
+      chatResponse.status(),
+      200,
+      `Deepening discussion returned: ${discussionBody.slice(0, 1_000)}`,
+    );
     const discussionEvents = (
       discussionBody.match(/"type":"(?:agent_start|text_delta|done)"/g) ?? []
     ).length;
