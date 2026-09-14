@@ -108,7 +108,7 @@ describe('quiz course relevance', () => {
           {
             type: 'single',
             question: 'Quel est le solde initial ?',
-            options: ['125 000 dirhams', '45 000 dirhams'],
+            options: ['125 000 MAD', '45 000 MAD'],
             correctAnswer: '125 000 dirhams',
             analysis: 'Le solde initial est fourni par le cas.',
           },
@@ -123,7 +123,7 @@ describe('quiz course relevance', () => {
     if (!result || !('questions' in result)) throw new Error('Quiz content expected');
     expect(result.questions[0]?.options?.[0]).toEqual({
       value: 'A',
-      label: '125 000 dirhams',
+      label: '125 000 MAD',
     });
     expect(result.questions[0]?.answer).toEqual(['A']);
   });

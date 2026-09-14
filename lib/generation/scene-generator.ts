@@ -1813,11 +1813,27 @@ function normalizeQuizAnswer(
   if (!raw) return undefined;
 
   const answers = Array.isArray(raw) ? raw.map(String) : [String(raw)];
-  return answers.map(
-    (answer) =>
-      options?.find((option) => option.value === answer || option.label === answer)?.value ??
-      answer,
+  return answers.map((answer) => resolveQuizAnswer(answer, options) ?? answer);
+}
+
+function resolveQuizAnswer(
+  answer: string,
+  options: { value: string; label: string }[] | undefined,
+): string | undefined {
+  if (!options) return undefined;
+  const direct = options.find((option) => option.value === answer || option.label === answer);
+  if (direct) return direct.value;
+
+  const answerNumber = answer.match(/\d[\d\s,._]*/g)?.map((part) => part.replace(/\D/g, '')) ?? [];
+  if (answerNumber.length !== 1) return undefined;
+  const matches = options.filter((option) =>
+    [option.value, option.label].some((candidate) =>
+      (candidate.match(/\d[\d\s,._]*/g) ?? [])
+        .map((part) => part.replace(/\D/g, ''))
+        .includes(answerNumber[0]),
+    ),
   );
+  return matches.length === 1 ? matches[0].value : undefined;
 }
 
 /**
