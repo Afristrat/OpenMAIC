@@ -110,6 +110,28 @@ fn decode_32(value: &str) -> Result<[u8; 32], PackageError> {
     bytes.try_into().map_err(|_| PackageError::InvalidEncoding)
 }
 
+pub fn verifying_key_from_base64(value: &str) -> Result<VerifyingKey, PackageError> {
+    VerifyingKey::from_bytes(&decode_32(value)?).map_err(|_| PackageError::InvalidKey)
+}
+
+pub fn generate_device_secret() -> StaticSecret {
+    let mut bytes = [0_u8; 32];
+    OsRng.fill_bytes(&mut bytes);
+    StaticSecret::from(bytes)
+}
+
+pub fn encode_device_secret(device_secret: &StaticSecret) -> String {
+    URL_SAFE_NO_PAD.encode(device_secret.to_bytes())
+}
+
+pub fn decode_device_secret(value: &str) -> Result<StaticSecret, PackageError> {
+    Ok(StaticSecret::from(decode_32(value)?))
+}
+
+pub fn device_public_key(device_secret: &StaticSecret) -> String {
+    URL_SAFE_NO_PAD.encode(X25519PublicKey::from(device_secret).as_bytes())
+}
+
 fn derive_envelope_key(
     shared_secret: &[u8],
     license: &SignedLicense,
@@ -566,6 +588,30 @@ mod tests {
             )
             .unwrap(),
             content
+        );
+    }
+
+    #[test]
+    fn encodes_only_valid_device_and_signing_keys() {
+        let device_secret = generate_device_secret();
+        assert_eq!(
+            device_public_key(
+                &decode_device_secret(&encode_device_secret(&device_secret)).unwrap()
+            ),
+            device_public_key(&device_secret)
+        );
+        assert!(matches!(
+            decode_device_secret("not-a-key"),
+            Err(PackageError::InvalidEncoding)
+        ));
+
+        let signing_key = SigningKey::generate(&mut OsRng);
+        assert_eq!(
+            verifying_key_from_base64(
+                &URL_SAFE_NO_PAD.encode(signing_key.verifying_key().as_bytes())
+            )
+            .unwrap(),
+            signing_key.verifying_key()
         );
     }
 }
