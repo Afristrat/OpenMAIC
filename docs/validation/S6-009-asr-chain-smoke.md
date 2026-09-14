@@ -29,3 +29,17 @@ S6-009 reste ouverte jusqu’à la recette authentifiée suivante :
 Les jeux de données Mozilla Common Voice publiés sous CC0 peuvent fournir des
 échantillons autorisés, sous réserve de leur procédure d’accès et sans les
 repartager dans le dépôt. Source : https://commonvoice.mozilla.org/en/datasets
+
+## Contrôle de topologie du 14 septembre 2026
+
+Le conteneur Qalem actif charge une configuration ASR, en HTTPS, dont l’hôte
+est non privé. L’appel authentifié à son endpoint de modèles répond HTTP 200 et
+présente trois modèles ASR. Hostinger est accessible ; le conteneur LiteLLM y
+est `healthy`. En revanche, l’endpoint LiteLLM interrogé avec la clé virtuelle
+Qalem répond HTTP 200 mais n’expose aucun modèle dont l’identifiant correspond
+à Whisper, ASR ou transcription.
+
+Cette observation prouve le relais ASR public configuré par Qalem et la santé
+de LiteLLM séparément. Elle ne prouve pas Qalem → LiteLLM → Cloudflare → DGX ;
+au contraire, elle impose de réconcilier le routage avant toute certification
+de cette chaîne.

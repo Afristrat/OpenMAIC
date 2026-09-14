@@ -2217,7 +2217,9 @@
         "Re-prouver la route Qalem → LiteLLM Hostinger → tunnel Cloudflare → DGX et sa configuration persistante ; aucun endpoint LAN inaccessible depuis Hostinger.",
         "Ne pas confondre résultat ASR et qualité de synthèse TTS."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-14 — Contrôle de topologie : le conteneur Qalem actif charge un endpoint ASR HTTPS à hôte non privé ; son endpoint de modèles authentifié répond 200 et présente trois modèles ASR. LiteLLM Hostinger est healthy, mais /models avec la clé virtuelle Qalem répond 200 sans modèle Whisper, ASR ou transcription. La chaîne Qalem → LiteLLM Hostinger → Cloudflare → DGX n’est donc pas prouvée et le routage doit être réconcilié avant certification. Détail : docs/validation/S6-009-asr-chain-smoke.md."
+      ],
       "validationDebt": {
         "recordedAt": "2026-08-27",
         "decision": "Validation différée à la demande d’Amine ; passer à la prochaine US.",
