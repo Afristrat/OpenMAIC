@@ -3732,6 +3732,7 @@
       "gap": "AudioSeal établit la provenance mais ne contrôle pas un fichier copié. Décision du 12 septembre : les téléchargements doivent être réservés à un usage local, jamais via une interface web. Aucun client local contrôlé, conteneur chiffré, licence révocable ni recette de refus navigateur n’existe encore dans Qalem. Cette US ne promet pas d’empêcher universellement la copie ou la lecture après extraction : elle doit borner et prouver le contrôle de diffusion que Qalem peut réellement imposer.",
       "evidence": [
         "docs/decisions/2026-09-12-prd-arbitrages.md#A6",
+        "docs/decisions/ADR-205-local-controlled-downloads.md",
         "docs/foundation/2-vivre/08-decisions-log.md#ADR-204",
         "lib/transmissions/audio-watermark-protocol.ts"
       ],
