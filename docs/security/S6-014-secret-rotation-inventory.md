@@ -1,7 +1,7 @@
 # S6-014 — Inventaire de rotation Qalem sans valeurs
 
-Date : 12 septembre 2026
-Statut : inventaire versionné et rotations partielles effectives ; les webhooks, le jeton capture, LTI, VAPID, le chiffrement LRS et la pseudonymisation xAPI ont été remplacés en configuration persistante le 12 septembre 2026, puis activés par un redéploiement coordonné du runtime et du web au SHA `9a24e105e79638e46b97c6f0109c47e097ca0000`. Les clés fournisseurs restent ouvertes.
+Date : 14 septembre 2026
+Statut : inventaire versionné et rotations partielles effectives ; les webhooks, le jeton capture, LTI, VAPID, le chiffrement LRS et la pseudonymisation xAPI ont été remplacés en configuration persistante le 12 septembre 2026, puis activés par les déploiements Coolify runtime et web terminés le 14 septembre au SHA `d51d48b5fb075a61896400aa6771671f901075b8`. Les clés fournisseurs restent ouvertes.
 
 ## Méthode et limite
 
@@ -80,12 +80,12 @@ fournisseur et la recette de tous les consommateurs Qalem.
 - Le déploiement, les workers et les parcours sensibles sont sains après la
   révocation ; aucun secret n’apparaît dans les logs ou preuves.
 
-## Contrôle post-déploiement du 12 septembre 2026
+## Contrôle post-déploiement du 14 septembre 2026
 
-Les livraisons Coolify runtime et web ont terminé respectivement à 17:38:25 et
-17:51:37 sur le SHA indiqué ci-dessus. Capture-worker, worker BullMQ et web
-étaient `healthy`, avec zéro redémarrage et `OOMKilled=false`; le contrôle
-public `GET /api/health` répondait HTTP 200. Une tentative web antérieure a
+Les déploiements Coolify runtime `oe116jrccsl5er8zf74ydkgv` et web
+`vz7bcbu560g9i1pyko74os8t` ont terminé sur le SHA indiqué ci-dessus. Capture-worker,
+worker BullMQ et web sont `healthy`, avec zéro redémarrage, `OOMKilled=false` et
+un code de sortie nul ; le contrôle public `GET /api/health` répond HTTP 200. Une tentative web antérieure a
 échoué avant construction : deux configurations `SUPER_ADMIN_EMAILS` non
 secrètes avaient été historiquement persistées en clair. Leur contenu a été
 réencodé en mémoire dans le format Laravel attendu, sans lecture ni sortie de
