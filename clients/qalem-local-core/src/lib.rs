@@ -103,10 +103,13 @@ pub fn seal_package(
     let mut nonce = [0_u8; NONCE_LENGTH];
     OsRng.fill_bytes(&mut nonce);
     let ciphertext = cipher
-        .encrypt(Nonce::from_slice(&nonce), aes_gcm::aead::Payload {
-            msg: content,
-            aad: &encoded_license(&license)?,
-        })
+        .encrypt(
+            Nonce::from_slice(&nonce),
+            aes_gcm::aead::Payload {
+                msg: content,
+                aad: &encoded_license(&license)?,
+            },
+        )
         .map_err(|_| PackageError::EncryptionFailed)?;
 
     Ok(EncryptedPackage {
@@ -142,7 +145,8 @@ pub fn open_package(
     let signature = URL_SAFE_NO_PAD
         .decode(&package.license.signature)
         .map_err(|_| PackageError::InvalidEncoding)?;
-    let signature = Signature::from_slice(&signature).map_err(|_| PackageError::InvalidSignature)?;
+    let signature =
+        Signature::from_slice(&signature).map_err(|_| PackageError::InvalidSignature)?;
     verifying_key
         .verify(&encoded_claims(claims)?, &signature)
         .map_err(|_| PackageError::InvalidSignature)?;
@@ -207,7 +211,13 @@ mod tests {
         let package = seal_package(&signing_key, &content_key, claims(content), content).unwrap();
 
         assert_eq!(
-            open_package(&signing_key.verifying_key(), &content_key, &package, context()).unwrap(),
+            open_package(
+                &signing_key.verifying_key(),
+                &content_key,
+                &package,
+                context()
+            )
+            .unwrap(),
             content
         );
     }
@@ -218,10 +228,16 @@ mod tests {
         let content_key = [8_u8; 32];
         let content = b"contenu local Qalem";
 
-        let mut tampered = seal_package(&signing_key, &content_key, claims(content), content).unwrap();
+        let mut tampered =
+            seal_package(&signing_key, &content_key, claims(content), content).unwrap();
         tampered.license.claims.tenant_id = "tenant-2".to_owned();
         assert_eq!(
-            open_package(&signing_key.verifying_key(), &content_key, &tampered, context()),
+            open_package(
+                &signing_key.verifying_key(),
+                &content_key,
+                &tampered,
+                context()
+            ),
             Err(PackageError::ContextMismatch)
         );
 
@@ -229,7 +245,12 @@ mod tests {
         expired_claims.expires_at = context().now;
         let expired = seal_package(&signing_key, &content_key, expired_claims, content).unwrap();
         assert_eq!(
-            open_package(&signing_key.verifying_key(), &content_key, &expired, context()),
+            open_package(
+                &signing_key.verifying_key(),
+                &content_key,
+                &expired,
+                context()
+            ),
             Err(PackageError::Expired)
         );
 
@@ -237,7 +258,12 @@ mod tests {
         revoked_claims.revoked = true;
         let revoked = seal_package(&signing_key, &content_key, revoked_claims, content).unwrap();
         assert_eq!(
-            open_package(&signing_key.verifying_key(), &content_key, &revoked, context()),
+            open_package(
+                &signing_key.verifying_key(),
+                &content_key,
+                &revoked,
+                context()
+            ),
             Err(PackageError::Revoked)
         );
 
@@ -262,11 +288,17 @@ mod tests {
         let signing_key = SigningKey::generate(&mut OsRng);
         let content_key = [9_u8; 32];
         let content = b"contenu local Qalem";
-        let mut package = seal_package(&signing_key, &content_key, claims(content), content).unwrap();
+        let mut package =
+            seal_package(&signing_key, &content_key, claims(content), content).unwrap();
         package.ciphertext.push('A');
 
         assert_eq!(
-            open_package(&signing_key.verifying_key(), &content_key, &package, context()),
+            open_package(
+                &signing_key.verifying_key(),
+                &content_key,
+                &package,
+                context()
+            ),
             Err(PackageError::DecryptionFailed)
         );
     }
