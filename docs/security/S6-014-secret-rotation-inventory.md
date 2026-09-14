@@ -124,3 +124,13 @@ La sonde publique `GET https://qalem.ma/api/health` répond HTTP 200 et retourne
 moment du contrôle. Cette observation ne donne pas le SHA servi par le web et
 ne démontre pas une rotation fournisseur ; elle confirme seulement l’absence
 de régression opérationnelle visible après les rotations internes.
+
+## Tentative Resend annulée le 14 septembre 2026
+
+Le contrôle par broker confirme que `ai-mpower.com` est vérifié et que la clé
+existante peut gérer les clés API. Une clé d’envoi limitée à ce domaine a été
+créée, mais le presse-papiers du processus automatisé a refusé de recevoir le
+jeton retourné. Elle n’a donc été ni enregistrée dans le coffre ni injectée
+dans Coolify. La clé orpheline, identifiée uniquement par son nom de rotation,
+a été supprimée avec HTTP 200 dans la même séquence. L’ancienne clé reste seule
+active. Cette tentative est annulée ; elle ne vaut ni rotation ni révocation.
