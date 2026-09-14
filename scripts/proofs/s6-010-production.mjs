@@ -107,13 +107,6 @@ try {
   await context.addCookies([session.cookie]);
   await context.addInitScript(({ accountId }) => {
     localStorage.setItem(`qalem-notification-prefs:${accountId}`, JSON.stringify({ push: true }));
-    const original = ServiceWorkerRegistration.prototype.showNotification;
-    const calls = [];
-    Object.defineProperty(window, '__s6010NotificationCalls', { value: calls, configurable: true });
-    ServiceWorkerRegistration.prototype.showNotification = function (title, options) {
-      calls.push({ title, tag: options?.tag ?? null, target: options?.data?.url ?? null });
-      return original.call(this, title, options);
-    };
   }, { accountId: userId });
   const page = await context.newPage();
   const failures = [];
@@ -122,20 +115,37 @@ try {
     if (message.type() === 'error') failures.push(`console:${message.text().slice(0, 160)}`);
   });
   await page.goto(`${base}/review`, { waitUntil: 'networkidle', timeout: 60_000 });
-  await page.waitForFunction(() => window.__s6010NotificationCalls?.length === 1, undefined, {
-    timeout: 30_000,
-  });
-  const first = await page.evaluate(() => window.__s6010NotificationCalls);
-  assert.equal(first.length, 1, 'Expected exactly one due-card reminder');
-  assert.equal(first[0]?.tag, 'review-reminder', 'Reminder tag is not stable');
-  assert.equal(first[0]?.target, '/review', 'Reminder target is not the review surface');
+  await page.waitForFunction(
+    async ({ accountId }) => {
+      const registration = await navigator.serviceWorker.ready;
+      const notifications = await registration.getNotifications({ tag: 'review-reminder' });
+      if (notifications.length !== 1) return false;
+      window.__s6010ReminderSnapshot = {
+        count: notifications.length,
+        tag: notifications[0]?.tag ?? null,
+        target: notifications[0]?.data?.url ?? null,
+        lastCheck: localStorage.getItem(`qalem-review-reminder-last-check:${accountId}`),
+      };
+      return true;
+    },
+    { accountId: userId },
+    { timeout: 30_000 },
+  );
+  const first = await page.evaluate(() => window.__s6010ReminderSnapshot);
+  assert.equal(first?.count, 1, 'Expected exactly one due-card reminder');
+  assert.equal(first?.tag, 'review-reminder', 'Reminder tag is not stable');
+  assert.equal(first?.target, '/review', 'Reminder target is not the review surface');
+  assert.equal(typeof first?.lastCheck, 'string', 'Reminder did not persist its deduplication mark');
   await page.reload({ waitUntil: 'networkidle' });
-  const secondCount = await page.evaluate(() => window.__s6010NotificationCalls?.length ?? 0);
-  assert.equal(secondCount, 1, 'Reload created a duplicate reminder');
+  const secondLastCheck = await page.evaluate(
+    ({ accountId }) => localStorage.getItem(`qalem-review-reminder-last-check:${accountId}`),
+    { accountId: userId },
+  );
+  assert.equal(secondLastCheck, first.lastCheck, 'Reload bypassed reminder deduplication');
   assert.deepEqual(failures, [], `Browser errors: ${failures.join(' | ')}`);
   await page.screenshot({ path: `${artifactDir}/review-reminder.png`, fullPage: true });
-  await writeFile(`${artifactDir}/evidence.json`, JSON.stringify({ marker, reminderCount: secondCount, target: '/review' }, null, 2));
-  console.log(JSON.stringify({ marker, reminderCount: secondCount, target: '/review' }));
+  await writeFile(`${artifactDir}/evidence.json`, JSON.stringify({ marker, reminderCount: first.count, target: '/review' }, null, 2));
+  console.log(JSON.stringify({ marker, reminderCount: first.count, target: '/review' }));
 } finally {
   await browser?.close();
   await cleanup();
