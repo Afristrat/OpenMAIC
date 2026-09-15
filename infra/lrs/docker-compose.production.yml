@@ -1,0 +1,43 @@
+# LRS souverain Qalem — le fichier .env est créé sur ServeurIA depuis le coffre,
+# jamais versionné. L'administration reste disponible seulement sur 127.0.0.1:18080.
+services:
+  lrs:
+    image: yetanalytics/lrsql@sha256:3f566dae7f05c5f7745507436de582b4cb12e0eb93b4bc0a3d38861d0ccb9bad
+    container_name: qalem-lrs
+    restart: unless-stopped
+    init: true
+    env_file:
+      - .env
+    environment:
+      LRSQL_DB_NAME: db/lrsql.sqlite.db
+      LRSQL_AUTHORITY_URL: https://lrs.qalem.ma
+      LRSQL_HTTP_HOST: 0.0.0.0
+      LRSQL_HTTP_PORT: "8080"
+      LRSQL_ALLOW_ALL_ORIGINS: "false"
+    ports:
+      - 127.0.0.1:18080:8080
+    volumes:
+      - qalem_lrs_data:/lrsql/db
+    networks:
+      - coolify
+    mem_limit: 768m
+    pids_limit: 256
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: coolify
+      traefik.http.routers.qalem-lrs-xapi.rule: Host(`lrs.qalem.ma`) && PathPrefix(`/xapi`)
+      traefik.http.routers.qalem-lrs-xapi.entrypoints: https
+      traefik.http.routers.qalem-lrs-xapi.tls: "true"
+      traefik.http.routers.qalem-lrs-xapi.tls.certresolver: letsencrypt
+      traefik.http.routers.qalem-lrs-xapi.service: qalem-lrs
+      traefik.http.services.qalem-lrs.loadbalancer.server.port: "8080"
+
+volumes:
+  qalem_lrs_data:
+    name: qalem_lrs_data
+
+networks:
+  coolify:
+    external: true
