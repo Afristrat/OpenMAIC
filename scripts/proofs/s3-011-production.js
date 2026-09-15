@@ -273,7 +273,7 @@ async function main() {
     const cleanupRows = await Promise.all([
       countOrganization(cleanedTenantOne), countOrganization(cleanedTenantTwo),
     ]);
-    assert.deepEqual(cleanupRows, [0, 0, 0, 0]);
+    assert.deepEqual(cleanupRows, [0, 0]);
     summary.cleanupRows = cleanupRows;
     console.log(JSON.stringify(summary));
   } finally {
