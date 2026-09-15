@@ -14,6 +14,9 @@ services:
       LRSQL_HTTP_HOST: 0.0.0.0
       LRSQL_HTTP_PORT: "8080"
       LRSQL_ALLOW_ALL_ORIGINS: "false"
+      # L'API de suppression reste inaccessible depuis Internet : seul
+      # l'administrateur local, via 127.0.0.1, peut purger un acteur xAPI.
+      LRSQL_ENABLE_ADMIN_DELETE_ACTOR: "true"
     ports:
       - 127.0.0.1:18080:8080
     volumes:

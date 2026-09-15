@@ -35,3 +35,7 @@ Les valeurs de `.env` sont créées depuis le coffre ; elles ne doivent jamais
    le compte d’administration à un tenant.
 4. Vérifier une écriture, une lecture et une suppression d’acteur de recette,
    avec un acteur pseudonymisé, avant toute activation organisationnelle.
+
+La suppression physique d’un acteur est activée dans SQL LRS exclusivement pour
+ce cycle de confidentialité. Elle exige le compte d’administration local et ne
+peut pas être appelée par la surface publique `/xapi`.
