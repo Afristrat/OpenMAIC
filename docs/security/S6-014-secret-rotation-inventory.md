@@ -150,3 +150,15 @@ authentifiée Qalem et l'attribution vérifiable de tous ses autres
 consommateurs restent nécessaires avant révocation. Cette étape clôt la
 création, l'enregistrement, l'injection persistante et l'activation runtime
 de la clé Qalem, pas la rotation fournisseur complète.
+
+### Correction de frontière
+
+La première valeur déposée le 15 septembre s'est révélée être une clé
+mutualisée AI-MPower. Elle n'est ni révoquée ni considérée comme une clé
+Qalem. Une clé orpheline de remplacement, créée lors d'une revalidation de
+coffre échouée, a été supprimée immédiatement. La clé finalement conservée
+est une clé Resend `sending_access` restreinte au domaine vérifié
+`ai-mpower.com` : les tentatives de gestion des domaines et des clés répondent
+401 depuis le coffre, le web, le worker et le capture-worker. Les deux
+déploiements Coolify ont terminé et les quatre processus sont sains, sans OOM
+ni redémarrage. La valeur n’est jamais consignée.
