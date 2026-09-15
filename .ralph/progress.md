@@ -1,5 +1,9 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 15 septembre 2026 — S2-008, AudioSeal recertifié et activé
+
+Le runtime Qalem embarque désormais le sidecar AudioSeal interne, sans port public, limité à 3 Gio, 1,5 CPU et 128 PID. P2-C de production, sur la fixture officielle répétée à 50 secondes, recompose les 128 bits sur MP3 128k, OGG, normalisation et extrait décalé. Une transmission authentifiée a ensuite traversé les workers audio et visuel avec `watermarking=true`, source inchangée et dérivées audio/MP4 privées. Le faux état unhealthy pendant une inférence séquentielle a été corrigé par un healthcheck de liveness ; worker, sidecar et capture-worker sont healthy, restart=0, OOMKilled=false. Tous les artefacts et identités temporaires sont supprimés. S2-008 devient `completed/passes=true` ; AudioSeal reste une provenance, jamais un DRM. Preuve : `docs/validation/S2-008-production-recertification-2026-09-15.md`.
+
 ## 15 septembre 2026 — S2-009, filigrane visuel recertifié en production
 
 Le runtime Qalem a été réconcilié sur une unique chaîne de workers : le worker autonome Coolify redondant, sans conteneur ni volume, a été retiré ; le worker et le capture-worker du runtime sont healthy, restart=0 et OOMKilled=false. Sur ce worker, une recette isolée a créé deux comptes techniques, une organisation de deux membres, une scène et une transmission privée. Le job BullMQ `transmission-visual-watermark` a produit une dérivée MP4 `done`, 1 280 × 720 avec audio, sans altérer la source. La capture versionnée rend lisible l’identifiant 128 bits `474b7507 6bea8802 f5dcbd0e 749e0ca1`. Tous les artefacts, enregistrements, job et comptes temporaires ont ensuite été recomptés à zéro. Le SHA déployé ne contient aucun diff fonctionnel avec le SHA passé en gate complet. S2-009 devient `completed/passes=true`; le filigrane reste une traçabilité visuelle, jamais un DRM. Preuve : `docs/validation/S2-009-production-recertification-2026-09-15.md`.

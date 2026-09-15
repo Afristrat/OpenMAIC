@@ -3644,8 +3644,9 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Watermark sonore AudioSeal MIT en job BullMQ (protocole de robustesse) » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "2-VIVRE",
       "priority": "P2",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
+      "completedAt": "2026-09-15",
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S2-008",
@@ -3653,12 +3654,13 @@
       },
       "sourceDependencies": ["S0-008", "S2-010"],
       "dependencies": [],
-      "gap": "Le sidecar AudioSeal MIT, le worker BullMQ et P2-C sont désormais codés et P2-C passe sous limites bornées. Restent le déploiement sur la cible GPU retenue, le raccordement runtime persistant et une recette authentifiée de transmission ; watermarking demeure désactivé. Décision du 12 septembre : AudioSeal doit rester une preuve de provenance ; il ne peut pas empêcher à lui seul le lancement d’un fichier copié sur une autre plateforme. Toute promesse de blocage externe exige un contrôle de diffusion ou DRM distinct, à cadrer séparément.",
+      "gap": "Clôturé le 15 septembre 2026 : sidecar interne persistant, P2-C et transmission authentifiée sont prouvés. AudioSeal reste une preuve de provenance ; il ne peut pas empêcher à lui seul le lancement d’un fichier copié sur une autre plateforme. Toute promesse de blocage externe requiert le contrôle de diffusion distinct de S2-012.",
       "evidence": [
         "lib/transmissions/audio-watermark-protocol.ts",
         "services/audioseal-sidecar/app.py",
         "services/audioseal-sidecar/p2c.py",
         "docs/validation/S2-008-audioseal-p2c.md",
+        "docs/validation/S2-008-production-recertification-2026-09-15.md",
         ".ralph/prd-v2.json#S2-008"
       ],
       "acceptance": [
@@ -3670,7 +3672,8 @@
       ],
       "closureEvidence": [
         "2026-09-10 — Le SHA 5140085122cd87e7910a1fd7b3cbc8a6d6825726 ajoute un sidecar AudioSeal MIT authentifié, séquentiel, sans port public, borné à 3 Gio / 1,5 CPU / 128 PID, ainsi que le harnais P2-C. La compilation Torch à chaud est explicitement désactivée car elle demandait un compilateur C++ et augmentait le risque mémoire.",
-        "2026-09-10 — Dans un clone isolé ServeurIA, le modèle officiel audioseal_wm_16bits démarre et P2-C reconstitue exactement les 128 bits après MP3 128 kbit/s, OGG, loudnorm et un extrait décalé de 30 secondes. Rejeu sous limites : OOMKilled=false, RestartCount=0. Référence : docs/validation/S2-008-audioseal-p2c.md. Le flag reste désactivé et aucune recette de transmission déployée n’est revendiquée."
+        "2026-09-10 — Dans un clone isolé ServeurIA, le modèle officiel audioseal_wm_16bits démarre et P2-C reconstitue exactement les 128 bits après MP3 128 kbit/s, OGG, loudnorm et un extrait décalé de 30 secondes. Rejeu sous limites : OOMKilled=false, RestartCount=0. Référence : docs/validation/S2-008-audioseal-p2c.md. Le flag reste désactivé et aucune recette de transmission déployée n’est revendiquée.",
+        "2026-09-15 — Sur le sidecar de production AudioSeal, P2-C exécuté avec la fixture officielle répétée à 50 secondes recompose exactement `0123456789abcdef0123456789abcdef` sur MP3 128k, OGG, normalisation et extrait décalé de 30 secondes : 11 segments retenus dans chaque variante. Le sidecar est interne, sans port hôte, limité à 3 Gio, 1,5 CPU et 128 PID. Après correction de son liveness pour ne pas confondre une inférence séquentielle longue avec un arrêt, une transmission authentifiée à deux membres a traversé `transmission-audio-watermark` puis `transmission-visual-watermark` avec flag actif : source inchangée, audio marqué et dérivée MP4 avec audio en état `done`. Tous les comptes, tenant, scène, objets Storage et jobs de recette sont supprimés, et les trois conteneurs sont healthy, restart=0, OOMKilled=false. Preuve : docs/validation/S2-008-production-recertification-2026-09-15.md."
       ],
       "historicalEvidence": {
         "completedAt": null,
