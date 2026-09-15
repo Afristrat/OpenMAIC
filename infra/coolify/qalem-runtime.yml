@@ -92,7 +92,10 @@ services:
     cpus: 1.5
     pids_limit: 128
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=3)"]
+      # Liveness deliberately avoids the serialized HTTP inference loop: a
+      # 180-second watermark request must not make a healthy single-worker
+      # sidecar look dead to Docker.
+      test: ["CMD-SHELL", "kill -0 1"]
       interval: 30s
       timeout: 5s
       retries: 3
