@@ -280,6 +280,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error(`${stage}:${error instanceof Error ? error.name : 'PROOF_FAILURE'}`);
+  console.error(`${stage}:${error instanceof Error ? error.message : 'PROOF_FAILURE'}`);
   process.exitCode = 1;
 });
