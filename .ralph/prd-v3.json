@@ -59,7 +59,7 @@
   },
   "architectureConstraints": [
     "Qalem web/runtime : Coolify sur ServeurIA ; LiteLLM : Hostinger, sans Coolify. Vérifier les cibles avant toute commande.",
-    "La cible ASR attendue passe par le tunnel Cloudflare ; un endpoint LAN n’est pas accessible par hypothèse depuis Hostinger.",
+    "La chaîne ASR attendue est Qalem → LiteLLM Hostinger → DGX par Tailscale. Le 15 septembre 2026, Hostinger a atteint les deux pairs DGX du tailnet ; Cloudflare n’est ni requis ni retenu dans ce chemin d’exécution.",
     "proxy.ai-mpower.com est exclusivement le hub LiteLLM de clés et de clés virtuelles ; il n’est jamais une source de cours, une cible de capture ni une origine documentaire.",
     "Diwan est un service documentaire autonome consommé par contrat ; aucun partage de code ou de base.",
     "Réutiliser les moteurs, adaptateurs et tests existants avant d’ajouter un composant ; pas de réécriture du catalogue, du syllabus ou de FSRS.",
@@ -2214,14 +2214,14 @@
         "Utiliser des extraits de parole autorisés FR/AR/EN avec transcription de référence, plus silence, fichier invalide et ancien modèle client.",
         "Mesurer erreurs de transcription et latence par langue, sur extraits courts et longs ; consigner les valeurs et faire accepter les résultats sans inventer un seuil déjà approuvé.",
         "Tester microphone → envoi → texte visible → utilisation dans Qalem, ainsi que refus de permission et panne amont.",
-        "Re-prouver la route Qalem → LiteLLM Hostinger → tunnel Cloudflare → DGX et sa configuration persistante ; aucun endpoint LAN inaccessible depuis Hostinger.",
+        "Re-prouver la route Qalem → LiteLLM Hostinger → DGX par Tailscale et sa configuration persistante ; aucun endpoint LAN non routé depuis Hostinger.",
         "Ne pas confondre résultat ASR et qualité de synthèse TTS."
       ],
       "closureEvidence": [
         "2026-09-14 — Contrôle de topologie : le conteneur Qalem actif charge un endpoint ASR HTTPS à hôte non privé ; son endpoint de modèles authentifié répond 200 et présente trois modèles ASR. LiteLLM Hostinger est healthy, mais /models avec la clé virtuelle Qalem répond 200 sans modèle Whisper, ASR ou transcription. La chaîne Qalem → LiteLLM Hostinger → Cloudflare → DGX n’est donc pas prouvée et le routage doit être réconcilié avant certification. Détail : docs/validation/S6-009-asr-chain-smoke.md.",
         "2026-09-14 — Routage LiteLLM réconcilié : les 17 modèles autorisés par la clé virtuelle Qalem ont été conservés et les 3 modèles ASR ajoutés. Les variantes production et prévisualisation de Qalem Runtime pointent désormais vers LiteLLM ; le déploiement Coolify zehz6jlpuglgwlaqaxzlqbbl est terminé. Qalem, worker et capture-worker sont sains, sans OOM ni redémarrage ; les trois modèles ont accepté un WAV de silence depuis Qalem en 461 à 584 ms. Cette preuve établit Qalem → LiteLLM, non la recette humaine ni l’attestation explicite Cloudflare → DGX. Détail : docs/validation/S6-009-asr-chain-smoke.md.",
         "2026-09-14 — Attestation Cloudflare bornée : les deux jetons actifs disponibles ont été interrogés sans divulgation. Le jeton Qalem ne voit aucun compte ; le jeton du hub voit un compte mais aucun tunnel correspondant à l’UUID Qalem. La configuration référencée ne fournit aucun document structuré ni route exploitable. Cette observation ne prouve pas l’absence de tunnel : elle établit l’absence de droit de lecture permettant de certifier LiteLLM → Cloudflare → DGX. Détail : docs/validation/S6-009-asr-chain-smoke.md.",
-        "2026-09-15 — Recette authentifiée de parole humaine FLEURS dans le runtime public : `openai-whisper` répond 200 à six extraits courts et longs (6 à 16,38 secondes) en français, arabe standard et anglais. Erreurs de mots mesurées : français 0 %/0 %, arabe standard 6,25 %/14,29 %, anglais 0 %/15,15 % ; latences 1 570 à 1 797 ms. Le compte et le tenant temporaires sont supprimés ; aucun fichier audio n’est persistant. Preuve : docs/validation/S6-009-fleurs-human-speech-production.md. S6-009 reste `to_validate` : microphone réel, refus/panne et attestation LiteLLM → Cloudflare → DGX sont toujours exigés."
+        "2026-09-15 — Recette authentifiée de parole humaine FLEURS dans le runtime public : `openai-whisper` répond 200 à six extraits courts et longs (6 à 16,38 secondes) en français, arabe standard et anglais. Erreurs de mots mesurées : français 0 %/0 %, arabe standard 6,25 %/14,29 %, anglais 0 %/15,15 % ; latences 1 570 à 1 797 ms. Le compte et le tenant temporaires sont supprimés ; aucun fichier audio n’est persistant. Preuve : docs/validation/S6-009-fleurs-human-speech-production.md. Le même jour, Hostinger a atteint les deux pairs DGX par Tailscale ; Cloudflare est retiré de la topologie cible. S6-009 reste `to_validate` : microphone réel, refus/panne et attestation explicite LiteLLM → DGX par Tailscale sont toujours exigés."
       ],
       "validationDebt": {
         "recordedAt": "2026-08-27",
@@ -2237,7 +2237,7 @@
           "Exécuter les tests ciblés et la gate qualité complète sur ServeurIA au SHA exact.",
           "Mesurer erreurs et latences sur un corpus autorisé de parole réelle FR/AR/EN, court et long.",
           "Faire accepter humainement les résultats mesurés sans seuil inventé.",
-          "Re-prouver la chaîne persistante Qalem → LiteLLM Hostinger → tunnel Cloudflare → DGX, sans endpoint LAN."
+          "Re-prouver la chaîne persistante Qalem → LiteLLM Hostinger → DGX par Tailscale, sans endpoint LAN non routé."
         ],
         "certified": false
       },
