@@ -94,9 +94,11 @@ export async function POST(req: NextRequest) {
     }
 
     const packageId = randomUUID();
+    const licenseId = randomUUID();
     const payload = packagePayload(sourceResult.data);
     if (payload.byteLength > 5 * 1024 * 1024) return failure(413);
     const issued = issueLocalPackage({
+      licenseId,
       packageId,
       userId: auth.user.id,
       tenantId: input.orgId,
@@ -134,6 +136,7 @@ export async function POST(req: NextRequest) {
     }
 
     const licenceInsert = await service.from('local_content_licenses').insert({
+      id: licenseId,
       device_id: deviceResult.data.id,
       user_id: auth.user.id,
       org_id: input.orgId,

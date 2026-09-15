@@ -18,6 +18,7 @@ const BASE64URL_32_BYTES = /^[A-Za-z0-9_-]{43}$/;
 
 export type LocalLicenseClaims = {
   format_version: 1;
+  license_id: string;
   package_id: string;
   content_sha256: string;
   user_id: string;
@@ -30,6 +31,20 @@ export type LocalLicenseClaims = {
 };
 
 export type SignedLocalLicense = { claims: LocalLicenseClaims; signature: string };
+
+export type LocalLicenseStatusClaims = {
+  format_version: 1;
+  license_id: string;
+  device_id: string;
+  revoked: boolean;
+  checked_at: number;
+  valid_until: number;
+};
+
+export type SignedLocalLicenseStatus = {
+  claims: LocalLicenseStatusClaims;
+  signature: string;
+};
 
 export type LocalKeyEnvelope = {
   format_version: 1;
@@ -51,6 +66,7 @@ export type LocalPackageArtifact = {
 };
 
 export type IssueLocalPackageInput = {
+  licenseId: string;
   packageId: string;
   userId: string;
   tenantId: string;
@@ -121,6 +137,16 @@ export function localContentVerifyingKey(signingKey = localContentSigningKey()):
   return jwk.x;
 }
 
+export function signLocalLicenseStatus(
+  claims: LocalLicenseStatusClaims,
+  signingKey = localContentSigningKey(),
+): SignedLocalLicenseStatus {
+  return {
+    claims,
+    signature: base64url(sign(null, Buffer.from(JSON.stringify(claims), 'utf8'), signingKey)),
+  };
+}
+
 export function issueLocalPackage(
   input: IssueLocalPackageInput,
   signingKey = localContentSigningKey(),
@@ -140,6 +166,7 @@ export function issueLocalPackage(
   const deviceKey = Buffer.from(input.devicePublicKey, 'base64url');
   const claims: LocalLicenseClaims = {
     format_version: FORMAT_VERSION,
+    license_id: input.licenseId,
     package_id: input.packageId,
     content_sha256: sha256(input.content),
     user_id: input.userId,

@@ -3744,8 +3744,8 @@
         "decision": "A6"
       },
       "sourceDependencies": ["S2-008", "S2-010"],
-      "dependencies": ["S2-008", "S2-010"],
-      "gap": "AudioSeal établit la provenance mais ne contrôle pas un fichier copié. Décision du 12 septembre : les téléchargements doivent être réservés à un usage local, jamais via une interface web. Les transmissions Qalem sont désormais forcées en flux authentifié, y compris lorsqu’un navigateur demande `download=1`, et l’export personnel ne produit plus de lien de téléchargement pour elles. Aucun client local contrôlé, paquet chiffré, licence révocable ni recette de refus navigateur pour les paquets protégés n’existe encore dans Qalem. Cette US ne promet pas d’empêcher universellement la copie ou la lecture après extraction : elle doit borner et prouver le contrôle de diffusion que Qalem peut réellement imposer.",
+      "dependencies": ["S2-008"],
+      "gap": "AudioSeal établit la provenance mais ne contrôle pas un fichier copié. S2-010 reste une fondation historique déjà portée par S6-001 et S6-013 ; il ne doit donc pas bloquer artificiellement cette US dans le graphe courant. Les téléchargements sont réservés à un usage local, jamais à une interface web. Les transmissions Qalem restent forcées en flux authentifié, y compris lorsqu’un navigateur demande `download=1`, et l’export personnel ne produit plus de lien de téléchargement pour elles. Le restant à certifier est le parcours réellement délivré : enrôlement authentifié, émission chiffrée, lecture par le client local, révocation et nettoyage. Cette US ne promet pas d’empêcher universellement la copie ou la lecture après extraction.",
       "evidence": [
         "docs/decisions/2026-09-12-prd-arbitrages.md#A6",
         "docs/decisions/ADR-205-local-controlled-downloads.md",

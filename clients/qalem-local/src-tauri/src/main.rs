@@ -7,13 +7,15 @@ use std::{
 use keyring::Entry;
 use qalem_local_core::{
     decode_device_secret, device_public_key, encode_device_secret, generate_device_secret,
-    open_artifact_bytes, verifying_key_from_base64, AccessContext, LocalPackageArtifact,
+    open_artifact_bytes, validate_license_status, verifying_key_from_base64, AccessContext,
+    LocalPackageArtifact, SignedLicenseStatus,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 const KEYRING_SERVICE: &str = "ma.qalem.local";
 const MAX_PACKAGE_BYTES: u64 = 5 * 1024 * 1024;
+const QALEM_LICENSE_STATUS_BASE: &str = "https://qalem.ma/api/local/licenses";
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -32,6 +34,12 @@ struct OpenPackageRequest {
 #[derive(Serialize)]
 struct OpenedPackage {
     content: serde_json::Value,
+}
+
+#[derive(Deserialize)]
+struct LicenseStatusResponse {
+    success: bool,
+    status: SignedLicenseStatus,
 }
 
 fn local_error(message: &'static str) -> String {
@@ -54,6 +62,29 @@ fn unix_timestamp() -> Result<i64, String> {
         .duration_since(UNIX_EPOCH)
         .map_err(|_| local_error("Local clock unavailable"))
         .map(|duration| duration.as_secs() as i64)
+}
+
+fn fresh_license_status(license_id: &str, device_id: &str) -> Result<SignedLicenseStatus, String> {
+    let response = reqwest::blocking::Client::builder()
+        .timeout(std::time::Duration::from_secs(10))
+        .build()
+        .map_err(|_| local_error("Local licence status unavailable"))?
+        .get(format!(
+            "{}/{}/status?deviceId={}",
+            QALEM_LICENSE_STATUS_BASE, license_id, device_id
+        ))
+        .send()
+        .map_err(|_| local_error("Local licence status unavailable"))?;
+    if !response.status().is_success() {
+        return Err(local_error("Local licence status unavailable"));
+    }
+    let status: LicenseStatusResponse = response
+        .json()
+        .map_err(|_| local_error("Local licence status unavailable"))?;
+    if !status.success {
+        return Err(local_error("Local licence status unavailable"));
+    }
+    Ok(status.status)
 }
 
 #[tauri::command]
@@ -85,19 +116,31 @@ fn open_local_package(request: OpenPackageRequest) -> Result<OpenedPackage, Stri
     validate_uuid(&claims.user_id)?;
     validate_uuid(&claims.tenant_id)?;
     validate_uuid(&claims.device_id)?;
+    validate_uuid(&claims.license_id)?;
+    let verifying_key = verifying_key_from_base64(&request.public_key)
+        .map_err(|_| local_error("Invalid Qalem signing key"))?;
+    let now = unix_timestamp()?;
+    let status = fresh_license_status(&claims.license_id, &claims.device_id)?;
+    validate_license_status(
+        &verifying_key,
+        &status,
+        &manifest.package.license,
+        &claims.device_id,
+        now,
+    )
+    .map_err(|_| local_error("Package access was refused"))?;
     let secret = device_entry(&claims.device_id)?
         .get_password()
         .map_err(|_| local_error("This device is not enrolled locally"))?;
     let content = open_artifact_bytes(
-        &verifying_key_from_base64(&request.public_key)
-            .map_err(|_| local_error("Invalid Qalem signing key"))?,
+        &verifying_key,
         &decode_device_secret(&secret).map_err(|_| local_error("Invalid local device key"))?,
         &artifact,
         AccessContext {
             user_id: &claims.user_id,
             tenant_id: &claims.tenant_id,
             device_id: &claims.device_id,
-            now: unix_timestamp()?,
+            now,
         },
     )
     .map_err(|_| local_error("Package access was refused"))?;

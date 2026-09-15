@@ -24,6 +24,7 @@ const KEY_ENVELOPE_INFO: &[u8] = b"qalem-local-key-envelope-v1";
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct LicenseClaims {
     pub format_version: u8,
+    pub license_id: String,
     pub package_id: String,
     pub content_sha256: String,
     pub user_id: String,
@@ -38,6 +39,25 @@ pub struct LicenseClaims {
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct SignedLicense {
     pub claims: LicenseClaims,
+    pub signature: String,
+}
+
+/// Fresh revocation status signed by Qalem. The native client must obtain it
+/// at each opening; a package is therefore not usable after a revocation or
+/// while the status cannot be renewed.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct LicenseStatusClaims {
+    pub format_version: u8,
+    pub license_id: String,
+    pub device_id: String,
+    pub revoked: bool,
+    pub checked_at: i64,
+    pub valid_until: i64,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct SignedLicenseStatus {
+    pub claims: LicenseStatusClaims,
     pub signature: String,
 }
 
@@ -92,6 +112,10 @@ pub enum PackageError {
 }
 
 fn encoded_claims(claims: &LicenseClaims) -> Result<Vec<u8>, PackageError> {
+    serde_json::to_vec(claims).map_err(|_| PackageError::InvalidEncoding)
+}
+
+fn encoded_status_claims(claims: &LicenseStatusClaims) -> Result<Vec<u8>, PackageError> {
     serde_json::to_vec(claims).map_err(|_| PackageError::InvalidEncoding)
 }
 
@@ -253,6 +277,38 @@ fn validate_license(
         .map_err(|_| PackageError::InvalidSignature)
 }
 
+/// Validates the server-signed revocation status against the licence embedded
+/// in the package. The status itself is short-lived, so a stale successful
+/// response cannot keep a revoked package readable.
+pub fn validate_license_status(
+    verifying_key: &VerifyingKey,
+    status: &SignedLicenseStatus,
+    license: &SignedLicense,
+    device_id: &str,
+    now: i64,
+) -> Result<(), PackageError> {
+    let claims = &status.claims;
+    if claims.format_version != FORMAT_VERSION {
+        return Err(PackageError::UnsupportedFormat);
+    }
+    if claims.license_id != license.claims.license_id || claims.device_id != device_id {
+        return Err(PackageError::ContextMismatch);
+    }
+    if claims.revoked {
+        return Err(PackageError::Revoked);
+    }
+    if claims.checked_at > now || claims.valid_until <= now {
+        return Err(PackageError::Expired);
+    }
+    let signature = URL_SAFE_NO_PAD
+        .decode(&status.signature)
+        .map_err(|_| PackageError::InvalidEncoding)?;
+    let signature = Signature::from_slice(&signature).map_err(|_| PackageError::InvalidSignature)?;
+    verifying_key
+        .verify(&encoded_status_claims(claims)?, &signature)
+        .map_err(|_| PackageError::InvalidSignature)
+}
+
 pub fn open_content_key_for_device(
     verifying_key: &VerifyingKey,
     device_secret: &StaticSecret,
@@ -369,6 +425,7 @@ mod tests {
         let device_public_key = X25519PublicKey::from(&device_secret);
         LicenseClaims {
             format_version: FORMAT_VERSION,
+            license_id: "license-1".to_owned(),
             package_id: "package-1".to_owned(),
             content_sha256: sha256_hex(content),
             user_id: "user-1".to_owned(),
@@ -406,6 +463,50 @@ mod tests {
             )
             .unwrap(),
             content
+        );
+    }
+
+    #[test]
+    fn refuses_a_revoked_or_stale_server_status() {
+        let signing_key = SigningKey::generate(&mut OsRng);
+        let content = b"contenu local Qalem";
+        let licence = sign_license(&signing_key, claims(content)).unwrap();
+        let active = LicenseStatusClaims {
+            format_version: FORMAT_VERSION,
+            license_id: licence.claims.license_id.clone(),
+            device_id: licence.claims.device_id.clone(),
+            revoked: false,
+            checked_at: 1_700_000_000,
+            valid_until: 1_700_000_300,
+        };
+        let active_status = SignedLicenseStatus {
+            signature: URL_SAFE_NO_PAD.encode(signing_key.sign(&encoded_status_claims(&active).unwrap()).to_bytes()),
+            claims: active.clone(),
+        };
+        assert_eq!(
+            validate_license_status(
+                &signing_key.verifying_key(),
+                &active_status,
+                &licence,
+                &licence.claims.device_id,
+                1_700_000_001,
+            ),
+            Ok(())
+        );
+        let revoked = LicenseStatusClaims { revoked: true, ..active };
+        let revoked_status = SignedLicenseStatus {
+            signature: URL_SAFE_NO_PAD.encode(signing_key.sign(&encoded_status_claims(&revoked).unwrap()).to_bytes()),
+            claims: revoked,
+        };
+        assert_eq!(
+            validate_license_status(
+                &signing_key.verifying_key(),
+                &revoked_status,
+                &licence,
+                &licence.claims.device_id,
+                1_700_000_001,
+            ),
+            Err(PackageError::Revoked)
         );
     }
 

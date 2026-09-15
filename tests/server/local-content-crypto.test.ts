@@ -26,6 +26,7 @@ describe('local content crypto (S2-012)', () => {
       .toString('base64url');
     const issued = issueLocalPackage(
       {
+        licenseId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
         packageId: '11111111-1111-1111-1111-111111111111',
         userId: '22222222-2222-2222-2222-222222222222',
         tenantId: '33333333-3333-3333-3333-333333333333',
@@ -99,6 +100,7 @@ describe('local content crypto (S2-012)', () => {
   it('refuses an invalid device key and a non-future licence', () => {
     const signing = generateKeyPairSync('ed25519').privateKey;
     const input = {
+      licenseId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       packageId: '11111111-1111-1111-1111-111111111111',
       userId: '22222222-2222-2222-2222-222222222222',
       tenantId: '33333333-3333-3333-3333-333333333333',
