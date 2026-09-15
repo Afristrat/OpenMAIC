@@ -27,6 +27,8 @@ x-qalem-environment: &qalem-environment
   OPENAI_BASE_URL: ${OPENAI_BASE_URL}
   OPENAI_MODELS: ${OPENAI_MODELS}
   REDIS_URL: ${REDIS_URL}
+  QALEM_AUDIOSEAL_TOKEN: ${QALEM_AUDIOSEAL_TOKEN:?QALEM AudioSeal token required}
+  QALEM_AUDIOSEAL_URL: http://audioseal-sidecar:8080
   RESEND_API_KEY: ${RESEND_API_KEY:-runtime-only}
   SERPER_API_KEY: ${SERPER_API_KEY:-runtime-only}
   SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
@@ -69,6 +71,32 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+    depends_on:
+      audioseal-sidecar:
+        condition: service_healthy
+
+  # Internal-only provenance service. It never publishes a host port and is
+  # invoked solely by the durable worker once the global watermarking flag is
+  # explicitly enabled after its P2-C proof.
+  audioseal-sidecar:
+    build:
+      context: ./services/audioseal-sidecar
+      dockerfile: Dockerfile
+    environment:
+      QALEM_AUDIOSEAL_TOKEN: ${QALEM_AUDIOSEAL_TOKEN:?QALEM AudioSeal token required}
+      QALEM_AUDIOSEAL_DEVICE: cpu
+      QALEM_AUDIOSEAL_MAX_SECONDS: "180"
+    restart: unless-stopped
+    mem_limit: 3g
+    mem_reservation: 1g
+    cpus: 1.5
+    pids_limit: 128
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
 
   capture-worker:
     build:
