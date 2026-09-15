@@ -3736,7 +3736,7 @@
       "description": "En tant qu’organisation, je veux que tout contenu Qalem explicitement téléchargé ne soit lisible que par un client local contrôlé, jamais depuis une interface web, afin que la provenance AudioSeal soit complétée par une règle de diffusion réellement testable.",
       "epic": "2-VIVRE",
       "priority": "P2",
-      "status": "to_implement",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "type": "product_decision",
@@ -3750,7 +3750,9 @@
         "docs/decisions/2026-09-12-prd-arbitrages.md#A6",
         "docs/decisions/ADR-205-local-controlled-downloads.md",
         "docs/foundation/2-vivre/08-decisions-log.md#ADR-204",
-        "lib/transmissions/audio-watermark-protocol.ts"
+        "lib/transmissions/audio-watermark-protocol.ts",
+        "scripts/proofs/s2-012-production.js",
+        "docs/validation/S2-012-production-controlled-local-delivery.md"
       ],
       "acceptance": [
         "ADR de menace et de limites : distinguer provenance, chiffrement, contrôle de licence et DRM ; aucune promesse de blocage d’une copie déchiffrée ou d’enregistrement analogique",
@@ -3766,7 +3768,8 @@
         "2026-09-14 — SHA a745a6a : le registre non appliqué distingue désormais la clé publique X25519 de chiffrement de l’appareil de la signature Ed25519 Qalem. Le noyau Qalem Local chiffre la clé de contenu par ECDH X25519 éphémère, HKDF-SHA-256 et AES-256-GCM, liés au manifeste signé ; il vérifie signature, utilisateur, tenant, appareil, échéance, révocation et empreinte de clé avant le déchiffrement. ServeurIA : Prettier, test de migration 3/3, TypeScript, ESLint, rustfmt et 5/5 tests Rust verts. L’enrôlement, l’émission de licence, le client Tauri, la migration et la recette contrôlée restent ouverts.",
         "2026-09-14 — SHA 7dd96b8 : route authentifiée d’enrôlement, inventaire et révocation des appareils Qalem Local. Elle vérifie l’appartenance au tenant avant toute opération, ne laisse jamais remplacer la clé d’un appareil enregistré et révoque les licences actives avec l’appareil. ServeurIA : Prettier, 7/7 tests ciblés, TypeScript et ESLint verts. La migration est volontairement non appliquée ; aucune licence ni paquet n’est encore émis, et le client Tauri ainsi que la recette contrôlée restent ouverts.",
         "2026-09-14 — SHA 23695708cf5f594587a1134b5fbbd610725b5524 : le registre non appliqué lie désormais chaque paquet Qalem Local à une source institutionnelle prête, à son empreinte exacte et, lorsqu’il est fourni, au manifeste versionné qui contient cette source. Le paquet opaque est borné à 5 Mio et son chemin est déterministe ; son bucket privé refuse SELECT/INSERT/UPDATE/DELETE à anon et authenticated. ServeurIA : Prettier, 7/7 tests ciblés, TypeScript et ESLint verts ; migration exécutée dans PostgreSQL 17 éphémère avec contrôle positif et refus vérifié d’une empreinte de source incohérente. L’émission chiffrée, la signature serveur durable, la route de remise et le client local restent ouverts.",
-        "2026-09-14 — SHA 9c1e73ec7215692c311dfc3d148f9b2519320315 : le client natif Tauri Qalem Local conserve la clé X25519 de l’appareil dans le trousseau système, limite l’ouverture à un paquet local borné et lit utilisateur, tenant et appareil depuis le manifeste signé plutôt que de les demander à recopier. Il vérifie ensuite signature, appareil, échéance et manifeste avant déchiffrement. Sa WebView est locale, avec CSP sans connexion réseau et sans plugin d’accès générique. ServeurIA : rustfmt et cargo check --locked verts sur l’image Linux dédiée. La preuve est consignée dans .ralph/evidence/S2-012-qalem-local-client-build.md. L’enrôlement réel, l’émission, la révocation et la recette sur appareil final restent ouverts ; S2-012 reste to_implement et passes=false."
+        "2026-09-14 — SHA 9c1e73ec7215692c311dfc3d148f9b2519320315 : le client natif Tauri Qalem Local conserve la clé X25519 de l’appareil dans le trousseau système, limite l’ouverture à un paquet local borné et lit utilisateur, tenant et appareil depuis le manifeste signé plutôt que de les demander à recopier. Il vérifie ensuite signature, appareil, échéance et manifeste avant déchiffrement. Sa WebView est locale, avec CSP sans connexion réseau et sans plugin d’accès générique. ServeurIA : rustfmt et cargo check --locked verts sur l’image Linux dédiée. La preuve est consignée dans .ralph/evidence/S2-012-qalem-local-client-build.md. L’enrôlement réel, l’émission, la révocation et la recette sur appareil final restent ouverts ; S2-012 reste to_implement et passes=false.",
+        "2026-09-15 — Le SHA public 4f22afacbcb3cf48fb42ad6e8cf9db36c940c455 sert la révocation fraîche. La recette authentifiée crée temporairement un compte, un tenant, une source et un appareil X25519 ; elle obtient 201 à l’enrôlement et à l’émission, 200 au téléchargement chiffré et au statut signé actif, déchiffre le paquet après vérification Ed25519, puis révoque l’appareil (204), obtient le statut signé révoqué et un nouveau téléchargement est refusé (404). Les quatre tables de recette sont revenues à zéro. Référence : docs/validation/S2-012-production-controlled-local-delivery.md. S2-012 est `to_validate`, jamais `passes=true` : le gate complet et la validation physique du client contrôlé restent exigés."
       ],
       "historicalDependencies": ["S2-008", "S2-010"],
       "executionAllowed": true,
