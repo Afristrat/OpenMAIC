@@ -123,6 +123,7 @@ async function createFixture({ learner, orgId, suffix, courseId, sourceId, sourc
     user_id: learner.userId,
     casting_id: casting.id,
     recorded: true,
+    started_at: new Date(Date.now() - 1_000).toISOString(),
     ended_at: new Date().toISOString(),
   });
   const event = await insert('session_events', {
