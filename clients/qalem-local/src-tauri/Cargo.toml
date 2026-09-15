@@ -12,7 +12,7 @@ tauri-build = "=2.6.3"
 [dependencies]
 keyring = "=4.2.0"
 qalem-local-core = { path = "../../qalem-local-core" }
-reqwest = { version = "=0.13.5", default-features = false, features = ["blocking", "json", "rustls"] }
+reqwest = { version = "=0.13.5", default-features = false, features = ["blocking", "json", "native-tls"] }
 serde = { version = "=1.0.228", features = ["derive"] }
 serde_json = "=1.0.145"
 tauri = { version = "=2.11.5", features = [] }
