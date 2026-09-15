@@ -134,3 +134,19 @@ jeton retourné. Elle n’a donc été ni enregistrée dans le coffre ni inject�
 dans Coolify. La clé orpheline, identifiée uniquement par son nom de rotation,
 a été supprimée avec HTTP 200 dans la même séquence. L’ancienne clé reste seule
 active. Cette tentative est annulée ; elle ne vaut ni rotation ni révocation.
+
+## Rotation Resend dédiée du 15 septembre 2026
+
+Une nouvelle clé Resend dédiée à Qalem a été ajoutée au coffre DPAPI par le
+canal contrôlé, puis le presse-papiers et son historique ont été purgés. Les
+variables `RESEND_API_KEY` et `SMTP_FROM` ont été mises à jour dans Coolify,
+en production et en prévisualisation, sur `qalem-web-rolling-candidate` et
+`qalem-runtime`. Les déploiements recréent le web, le worker et le
+capture-worker ; le contrôle de leurs environnements ne produit que les noms
+des deux variables et confirme leur présence dans chaque processus actif.
+
+La clé antérieure n'est pas révoquée à ce stade : une recette d'envoi
+authentifiée Qalem et l'attribution vérifiable de tous ses autres
+consommateurs restent nécessaires avant révocation. Cette étape clôt la
+création, l'enregistrement, l'injection persistante et l'activation runtime
+de la clé Qalem, pas la rotation fournisseur complète.
