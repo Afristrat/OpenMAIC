@@ -4945,7 +4945,8 @@
       },
       "sourceDependencies": [],
       "closureEvidence": [
-        "2026-09-12 — SHA e346fd4b6d8c87335647b3987ccbbb4a26d5ed9d ; clone isolé ServeurIA /tmp/qalem-s3011-b71a021 : Prettier et TypeScript verts, 9/9 Vitest ciblés. La migration, la recette authentifiée à deux apprenants/deux tenants, le retrait de source et le gate complet restent requis ; passes=false."
+        "2026-09-12 — SHA e346fd4b6d8c87335647b3987ccbbb4a26d5ed9d ; clone isolé ServeurIA /tmp/qalem-s3011-b71a021 : Prettier et TypeScript verts, 9/9 Vitest ciblés. La migration, la recette authentifiée à deux apprenants/deux tenants, le retrait de source et le gate complet restent requis ; passes=false.",
+        "2026-09-15 — Le SHA public 4f22afacbcb3cf48fb42ad6e8cf9db36c940c455 est descendant du gate S3-011 d7e231a ; le déploiement n’est donc plus une condition ouverte. Cela ne prouve ni l’isolation à deux tenants ni le retrait de source : S3-011 reste `to_validate` et `passes=false`."
       ],
       "executionAllowed": true,
       "executionDecision": "2026-09-12 — Objectif exhaustif demandé par Amine : compléments multisources et mobiles conservés, sans clôture ni activation déduite.",
@@ -4954,7 +4955,7 @@
       "title": "Ancrer les flashbacks et questions dans le vécu de chaque apprenant",
       "description": "En tant qu’adulte en formation, je veux retrouver les moments et questions de mon propre parcours afin de réfléchir, expérimenter et transférer les acquis dans ma pratique.",
       "dependencies": ["S3-004", "S2-004"],
-      "gap": "Le code P3-B-v7 lie chaque graine à un événement immuable, à une catégorie recalculée côté serveur et à une version de source ; les réponses résolues sont bornées au rappel et à son événement. Le schéma de provenance et les policies RLS sont présents dans la base Qalem. Restent le déploiement du SHA, la preuve intégrée sur Supabase avec deux apprenants/deux tenants et le retrait de source.",
+      "gap": "Le code P3-B-v7 lie chaque graine à un événement immuable, à une catégorie recalculée côté serveur et à une version de source ; les réponses résolues sont bornées au rappel et à son événement. Le SHA public 4f22afac contient le gate S3-011 et le schéma de provenance ainsi que les policies RLS sont présents dans la base Qalem. Restent la preuve intégrée sur Supabase avec deux apprenants/deux tenants et le retrait de source.",
       "evidence": [
         "lib/anchoring/seed-stock.ts",
         "app/api/live-sessions/[id]/seeds/route.ts",
