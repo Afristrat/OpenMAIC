@@ -82,10 +82,15 @@ function wordErrorRate(reference, hypothesis, language) {
   return expected.length === 0 ? null : table[expected.length][actual.length] / expected.length;
 }
 
-async function fleur(config) {
-  const source = await fetch(
-    `https://datasets-server.huggingface.co/rows?dataset=google%2Ffleurs&config=${config}&split=validation&offset=0&length=1`,
-  );
+async function fleur(config, offset = 0) {
+  const url = `https://datasets-server.huggingface.co/rows?dataset=google%2Ffleurs&config=${config}&split=validation&offset=${offset}&length=1`;
+  let source;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    source = await fetch(url);
+    if (source.status === 200) break;
+    if (attempt === 2) break;
+    await new Promise((resolve) => setTimeout(resolve, 1_000 * (attempt + 1)));
+  }
   if (source.status !== 200) throw new Error(`Corpus metadata HTTP ${source.status}`);
   const dataset = await source.json();
   const row = dataset.rows?.[0]?.row;
@@ -97,7 +102,59 @@ async function fleur(config) {
   }
   const audio = await fetch(audioEntry.src);
   if (audio.status !== 200) throw new Error(`Corpus audio HTTP ${audio.status}`);
-  return { reference: row.transcription, type: audioEntry.type ?? 'audio/wav', bytes: await audio.arrayBuffer() };
+  const bytes = Buffer.from(await audio.arrayBuffer());
+  return {
+    reference: row.transcription,
+    type: audioEntry.type ?? 'audio/wav',
+    bytes,
+    durationSeconds: pcmWav(bytes).data.length / pcmWav(bytes).byteRate,
+  };
+}
+
+function pcmWav(bytes) {
+  if (bytes.subarray(0, 4).toString('ascii') !== 'RIFF' || bytes.subarray(8, 12).toString('ascii') !== 'WAVE') {
+    throw new Error('FLEURS audio is not a WAV container');
+  }
+  let offset = 12;
+  let format;
+  let data;
+  while (offset + 8 <= bytes.length) {
+    const id = bytes.subarray(offset, offset + 4).toString('ascii');
+    const size = bytes.readUInt32LE(offset + 4);
+    const value = bytes.subarray(offset + 8, offset + 8 + size);
+    if (id === 'fmt ') format = value;
+    if (id === 'data') data = value;
+    offset += 8 + size + (size % 2);
+  }
+  if (!format || !data || format.length < 16) {
+    throw new Error('FLEURS WAV has no usable format or data chunk');
+  }
+  return { format, data, byteRate: format.readUInt32LE(8) };
+}
+
+async function transcribe(user, language, sample, kind) {
+  const form = new FormData();
+  form.set('orgId', organizationId);
+  form.set('providerId', 'openai-whisper');
+  form.set('language', language.code);
+  form.set('audio', new Blob([sample.bytes], { type: sample.type }), `${language.code}-${kind}.wav`);
+  const started = performance.now();
+  const response = await app(user, '/api/transcription', form);
+  const body = await response.json().catch(() => undefined);
+  const latencyMs = Math.round(performance.now() - started);
+  if (response.status !== 200) throw new Error(`Transcription HTTP ${response.status}`);
+  if (typeof body?.text !== 'string' || body.text.trim().length === 0) {
+    throw new Error('Transcription without text');
+  }
+  return {
+    kind,
+    status: response.status,
+    latencyMs,
+    referenceWords: words(sample.reference, language.code).length,
+    hypothesisWords: words(body.text, language.code).length,
+    wordErrorRate: Number(wordErrorRate(sample.reference, body.text, language.code).toFixed(4)),
+    ...(sample.durationSeconds ? { durationSeconds: Number(sample.durationSeconds.toFixed(2)) } : {}),
+  };
 }
 
 async function cleanup() {
@@ -131,27 +188,14 @@ async function main() {
     assert.equal(membership.status, 201);
     for (const language of languages) {
       stage = `parole-${language.code}`;
-      const sample = await fleur(language.config);
-      const form = new FormData();
-      form.set('orgId', organizationId);
-      form.set('providerId', 'openai-whisper');
-      form.set('language', language.code);
-      form.set('audio', new Blob([sample.bytes], { type: sample.type }), `${language.code}.wav`);
-      const started = performance.now();
-      const response = await app(user, '/api/transcription', form);
-      const body = await response.json().catch(() => undefined);
-      const latencyMs = Math.round(performance.now() - started);
-      if (response.status !== 200) throw new Error(`Transcription HTTP ${response.status}`);
-      if (typeof body?.text !== 'string' || body.text.trim().length === 0) {
-        throw new Error('Transcription without text');
-      }
+      const samples = await Promise.all(
+        Array.from({ length: 2 }, (_, offset) => fleur(language.config, offset)),
+      );
+      samples.sort((left, right) => left.durationSeconds - right.durationSeconds);
       summary.languages.push({
         language: language.label,
-        status: response.status,
-        latencyMs,
-        referenceWords: words(sample.reference, language.code).length,
-        hypothesisWords: words(body.text, language.code).length,
-        wordErrorRate: Number(wordErrorRate(sample.reference, body.text, language.code).toFixed(4)),
+        short: await transcribe(user, language, samples[0], 'short'),
+        long: await transcribe(user, language, samples.at(-1), 'long'),
       });
     }
     await cleanup();
