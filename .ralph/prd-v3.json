@@ -3955,7 +3955,7 @@
       },
       "sourceDependencies": ["S3-004"],
       "dependencies": ["S3-004"],
-      "gap": "2026-09-12 — Correction poussée au SHA fd49ef57553b27bee82e62de25091c50427fb1dc : sélection déterministe de douze graines équilibrées depuis un stock de 12, 13 ou 20 ; le calendrier refuse désormais tout lot non sélectionné. La route valide les identifiants/types issus de la base, retourne les IDs sélectionnés et refuse un stock déséquilibré sans créer de plan. Clone isolé ServeurIA : Prettier, 4/4 tests ciblés, TypeScript et lint verts. Restent suite globale, build/E2E, recette Supabase de 12/13/20, déploiement contrôlé et validation mobile ; aucune activation ni incident production affirmé.",
+      "gap": "La sélection déterministe de douze graines équilibrées depuis un stock de 12, 13 ou 20 et le calendrier J+90 sont recettés en production le 15 septembre 2026. Restent uniquement la gate globale au SHA de clôture et la validation sur appareils physiques, qui ne sont pas déduites de cette recette serveur.",
       "evidence": [
         "tasks/prd-3-ancrer.md",
         "tests/anchoring/schedule.test.ts",
@@ -3969,6 +3969,7 @@
         "Un stock valide de 12, 13 ou 20 graines permet un plan borné à J+90 selon une sélection explicite et traçable ; aucune erreur non gérée ni perte silencieuse du stock. Le nombre généré ne fixe pas automatiquement le nombre de notifications."
       ],
       "closureEvidence": [
+        "2026-09-15 — La recette authentifiée exécutée dans le conteneur public crée trois stocks réels de 12, 13 et 20 graines, puis appelle l’opt-in applicatif. Chaque stock répond 201, sélectionne exactement 12 graines équilibrées, crée 14 livraisons strictement croissantes et dédupliquées, bornées à J+90 ; les excédents ne sont pas planifiés. Le flag anchoring est restauré à false et zéro organisation de recette demeure. Référence : docs/validation/S3-005-anchor-plan-web-push.md.",
         "2026-09-06 — Le runtime worker f96bdc4 reçoit désormais durablement les trois variables VAPID depuis Coolify (longueurs 87/43 et sujet valide), reste healthy, restart=0 et OOMKilled=false. Recette authentifiée sur qalem.ma : opt-in explicite, 14 livraisons strictement croissantes, 14 clés de déduplication uniques et borne J+90 ; pause et reprise effectuées par les boutons UI ; un job BullMQ arrivé à échéance reste intact pendant la pause, puis part à la reprise vers une terminaison HTTPS externe qui répond 201 avec requête chiffrée et autorisation VAPID ; le rejeu de la livraison envoyée ne produit aucun POST supplémentaire ; l’arrêt UI supprime le plan et ses livraisons. Gate exact ServeurIA au SHA f96bdc4c8d635e9855a9ef1600d9a5eaa5c095ad : Prettier, TypeScript et ESLint verts, 436/436 fichiers et 2 686/2 686 tests Vitest, build 112 routes et 111/111 Playwright sans retry. Flag anchoring restauré à false ; compte, tenant, données, abonnements, audits, terminaison et fichiers temporaires supprimés sans résidu. Référence : docs/validation/S3-005-anchor-plan-web-push.md.",
         "2026-09-04 — Les commits af8cdaa et 31d5021 livrent le calendrier borné, l’opt-in explicite, la pause/reprise, l’arrêt et les jobs BullMQ rejouables sous flag anchoring maintenu désactivé. Gate global ServeurIA vert ; l’envoi Web Push réel reste à recetter."
       ],

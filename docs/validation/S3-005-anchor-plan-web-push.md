@@ -44,3 +44,21 @@ Le gate a été exécuté sur ServeurIA dans un clone isolé au SHA exact. Le ty
 ## Nettoyage et état final
 
 Le flag `anchoring` est revenu à `false`. Le compte Auth répond 404 et les profils, cours, sessions, plans, abonnements, audits Web Push, stages et organisations de recette sont tous à zéro. L’URL Webhook.site a été supprimée avec HTTP 204. Les processus Cloudflare et récepteur locaux sont arrêtés ; leurs fichiers et les credentials temporaires ont été supprimés.
+
+## Revalidation des stocks réels du 15 septembre 2026
+
+La recette authentifiée `scripts/proofs/s3-005-seed-stock-production.js` a été
+exécutée dans le conteneur public Qalem. Elle crée un parcours enregistré,
+un événement de session avec provenance, puis des stocks de 12, 13 et 20
+graines. Pour chacun des trois stocks, l’opt-in réel répond `201`, sélectionne
+exactement 12 graines avec la répartition 4 anecdotes, 4 highlights, 2
+interventions ludiques et 2 rappels de quiz, et crée exactement 14 livraisons
+(12 graines et 2 évaluations à froid). Les échéances sont strictement
+croissantes, dédupliquées et bornées à J+90 ; les graines excédentaires des
+stocks 13 et 20 ne sont pas planifiées silencieusement.
+
+Le flag temporairement activé est revenu à `false`; une relecture serveur
+confirme zéro organisation de recette restante. Le script temporairement copié
+sur le serveur et dans le conteneur a été supprimé. Cette preuve fraîche ferme
+le sous-critère stocks 12/13/20 et calendrier ; la gate globale au SHA de
+clôture et les parcours sur appareils physiques restent des critères distincts.
