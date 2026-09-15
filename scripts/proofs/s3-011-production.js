@@ -155,6 +155,7 @@ async function createFixture({ learner, orgId, suffix, courseId, sourceId, sourc
     delivery_kind: 'seed',
     scheduled_for: optedInAt.toISOString(),
     sent_at: optedInAt.toISOString(),
+    dedupe_key: `${marker}-${suffix}`,
   });
   return { courseId: ownedCourseId, sessionId: live.id, eventId: event.id, seedId: seed.id, deliveryId: delivery.id };
 }
