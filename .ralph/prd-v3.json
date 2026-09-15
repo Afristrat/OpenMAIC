@@ -3689,8 +3689,9 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Watermark visuel indélébile » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "2-VIVRE",
       "priority": "P2",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
+      "completedAt": "2026-09-15",
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S2-009",
@@ -3698,20 +3699,23 @@
       },
       "sourceDependencies": ["S2-010"],
       "dependencies": [],
-      "gap": "Réconciliation documentaire du 12 septembre 2026 : preuves historiques conservées ci-dessous, mais statut to_validate et passes=true étaient contradictoires. passes=false jusqu’à revue critère par critère au SHA livré, incluant activation effective et dépendances pertinentes ; ceci n’infère ni perte du code ni échec des recettes historiques. La traçabilité visuelle n’est ni un DRM ni une promesse d’indélébilité.",
+      "gap": "Clôturé le 15 septembre 2026 après recette fraîche sur le worker de production aligné. La traçabilité visuelle est une incrustation FFmpeg brûlée dans la dérivée servie ; elle n’est ni un DRM ni une promesse d’impossibilité de recadrage ou de copie.",
       "evidence": [
         "tests/transmissions/visual-watermark.test.ts",
         "docs/validation/S2-009-visual-watermark-production.md",
         "docs/validation/artifacts/S2-009-capture.png",
+        "docs/validation/S2-009-production-recertification-2026-09-15.md",
+        "docs/validation/artifacts/S2-009-capture-2026-09-15.png",
         ".ralph/prd-v2.json#S2-009"
       ],
       "acceptance": [
-        "videowmark (ou incrustation périodique avec ADR) appliqué par le worker",
+        "Filigrane visuel (ou incrustation périodique avec ADR) appliqué par le worker",
         "Identifiant décodable sur capture d'écran du flux (preuve documentée)"
       ],
       "closureEvidence": [
         "2026-08-28 — Recette sur serveuria-MS-7D98 avec le worker de production f37767998c418ec4b5e3ad9cb385d946c2f47288, dont les fichiers S2-009 sont identiques au SHA de clôture : deux comptes techniques membres d’une même organisation, une scène et une transmission privée ont été créés temporairement. La file BullMQ transmission-visual-watermark a produit une dérivée MP4 done de 31 668 octets avec vidéo 1 280 × 720 et audio ; la source est restée bit à bit identique. L’identifiant a5a4b355 ec9d274b 53756b17 aae64dea correspond à la ligne de transmission et se lit intégralement sur la capture PNG, SHA-256 c03ec0c6b4a28d6dda9af4ffe504fe973dce94a7965cdf553957bde569d61ed5. Bucket, job, transmission, scène, organisation, membres et deux comptes supprimés ; recomptages ciblés à zéro. Preuve : docs/validation/S2-009-visual-watermark-production.md.",
-        "2026-08-28 — Gate du SHA 101adef0210fa31168fd436774e58ade62b511bc sur ServeurIA : Prettier, TypeScript et lint verts ; 385/385 fichiers et 2 505/2 505 tests Vitest ; build 100/100 pages. Journal jusqu’au build SHA-256 f26814b76619768425ed99b9cd12e5b699b1d0bf187897829fd45015d0b90b4c. La connexion SSH ayant été coupée après 74 tests navigateur verts, Playwright a été relancé intégralement en tâche détachée : 84/84 en 3,6 minutes, statut distant 0, journal /tmp/qalem-s2009-e2e-101adef.log, SHA-256 4fef92d205a4e38c66840a0cb6710a98ca2b31c1530361be1cef9239c65b0e64."
+        "2026-08-28 — Gate du SHA 101adef0210fa31168fd436774e58ade62b511bc sur ServeurIA : Prettier, TypeScript et lint verts ; 385/385 fichiers et 2 505/2 505 tests Vitest ; build 100/100 pages. Journal jusqu’au build SHA-256 f26814b76619768425ed99b9cd12e5b699b1d0bf187897829fd45015d0b90b4c. La connexion SSH ayant été coupée après 74 tests navigateur verts, Playwright a été relancé intégralement en tâche détachée : 84/84 en 3,6 minutes, statut distant 0, journal /tmp/qalem-s2009-e2e-101adef.log, SHA-256 4fef92d205a4e38c66840a0cb6710a98ca2b31c1530361be1cef9239c65b0e64.",
+        "2026-09-15 — Recette fraîche sur le worker de production `a14gf0n3u719hnnd2yujrtmr_qalem-workers:cf82466b08e07f61cdcf133f4c5d08715ceb1559`, sain sans OOM ni redémarrage : deux comptes techniques, une organisation de deux membres, une scène et une transmission temporaire ont traversé la file BullMQ `transmission-visual-watermark`. La dérivée `done` conserve la source bit à bit, contient une vidéo 1 280 × 720 et une piste audio. La capture versionnée rend lisible l’identifiant complet `474b7507 6bea8802 f5dcbd0e 749e0ca1`. Tous les objets Storage, job, transmission, scène, organisation, membres et comptes de recette sont recomptés à zéro. Preuve : docs/validation/S2-009-production-recertification-2026-09-15.md."
       ],
       "historicalEvidence": {
         "completedAt": null,
