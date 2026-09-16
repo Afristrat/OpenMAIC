@@ -221,7 +221,7 @@ function AgentVoicePill({
         await audio.play();
       } catch (error) {
         if (!(error instanceof DOMException && error.name === 'AbortError')) {
-          toast.error(error instanceof Error ? error.message : t('settings.ttsTestFailed'));
+          toast.error(t('settings.ttsTestFailed'));
         }
         setPreviewingId(null);
       }
@@ -507,7 +507,7 @@ function TeacherVoicePill({
         await audio.play();
       } catch (error) {
         if (!(error instanceof DOMException && error.name === 'AbortError')) {
-          toast.error(error instanceof Error ? error.message : t('settings.ttsTestFailed'));
+          toast.error(t('settings.ttsTestFailed'));
         }
         setPreviewingId(null);
       }
