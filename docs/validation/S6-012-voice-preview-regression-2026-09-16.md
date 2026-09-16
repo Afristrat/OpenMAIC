@@ -2,7 +2,7 @@
 
 Date : 16 septembre 2026
 
-Statut : correctif en attente de déploiement et d’écoute sur navigateur réel.
+Statut : correctif déployé ; écoute sur navigateur réel encore requise.
 
 ## Constat
 
@@ -42,3 +42,22 @@ déclaré disponible.
 Le build de déploiement est donc validé au SHA livré. La dernière preuve à
 recueillir reste volontairement limitée à l’écoute d’une voix depuis chacun des
 deux sélecteurs de l’accueil authentifié.
+
+## Correctif complémentaire — contexte d’organisation
+
+Une seconde cause a été isolée : l’accueil monte la barre d’agents avant la
+résolution asynchrone de l’organisation active. Les deux sélecteurs restaient
+alors cliquables avec un `orgId` absent, alors que l’API TTS refuse à juste
+titre toute génération sans organisation.
+
+Le SHA `47bb983e9d0456a2b7831be7972ce0cd96d6d1c4` rend les préécoutes muettes
+et non interactives jusqu’à cette résolution. Dès que l’organisation est
+chargée, tous les créateurs retrouvent exactement le catalogue standard
+autorisé. Il ne s’agit donc ni d’une restriction de rôle ni d’un contournement
+de l’isolation tenant.
+
+Coolify a construit ce SHA en rolling deploy : le nouveau conteneur est
+`healthy`, l’ancien a été retiré seulement après sa disponibilité et
+`GET https://qalem.ma/api/health` répond HTTP 200. L’écoute humaine des deux
+sélecteurs demeure le seul critère de cette régression qui ne peut pas être
+déduit du serveur.
