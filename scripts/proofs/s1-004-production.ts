@@ -71,8 +71,13 @@ async function main(): Promise<void> {
     evidence.publicationApiStatus = (await publicationResponse).status();
     assert.equal(evidence.publicationApiStatus, 200, 'Publication API must return HTTP 200');
 
-    const classroomLink = page.locator(`a[href="/classroom/${CLASSROOM_ID}"]`);
+    const classroomLink = page.locator(`a[href^="/classroom/${CLASSROOM_ID}?"]`);
     await classroomLink.waitFor({ state: 'visible' });
+    const href = await classroomLink.getAttribute('href');
+    assert(href, 'Catalog classroom link must have a target');
+    const target = new URL(href, BASE_URL);
+    assert.equal(target.searchParams.get('learnerCourseId'), COURSE_ID);
+    assert(target.searchParams.get('orgId'), 'Catalog classroom link must preserve organization');
     evidence.publishedVisible = true;
     await classroomLink.click();
     await page.waitForURL((url) => url.pathname === `/classroom/${CLASSROOM_ID}`);
