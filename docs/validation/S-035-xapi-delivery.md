@@ -108,3 +108,24 @@ les corps xAPI et les en-têtes Basic. Il faut créer les quatre secrets Qalem
 dédiés au coffre, initialiser l’instance, corriger l’ingress direct de
 `lrs.qalem.ma`, puis prouver écriture, lecture et effacement physique d’un
 acteur pseudonymisé avant toute activation d’organisation.
+
+## 16 septembre 2026 — Initialisation souveraine et recette locale
+
+Les trois secrets dédiés présents au coffre (clé xAPI, secret xAPI, mot de
+passe d’administration) et l’identifiant d’administration Qalem fixe ont été
+injectés uniquement dans `/srv/qalem-lrs/.env`, permissions `0600`. Le compose
+est lui aussi restreint à `0600`, relu par `docker compose config --quiet`, puis
+le conteneur a démarré sur le volume persistant existant : `OOMKilled=false`,
+zéro redémarrage et écoute locale sur `127.0.0.1:18080`.
+
+La recette authentifiée locale confirme `GET /xapi/about` HTTP 200, une
+écriture xAPI HTTP 200 et sa lecture. Aucun flag Qalem ni aucune configuration
+tenant n’a été activé. L’acteur de recette reste volontairement signalé dans le
+LRS car la route de suppression répond 400 : l’implémentation SQL LRS exige une
+forme d’actor-IFI plus précise que son exemple publié. Le volume n’a pas été
+supprimé pour masquer ce défaut.
+
+L’accès direct externe à `lrs.qalem.ma:443` demeure bloqué malgré le DNS A et
+Traefik en écoute sur ServeurIA. Corriger l’ingress réseau public, puis achever
+la purge physique de l’acteur pseudonymisé, sont les deux prérequis avant toute
+activation d’un tenant ou émission xAPI.
