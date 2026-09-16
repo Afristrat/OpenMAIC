@@ -236,12 +236,20 @@ export default function LibraryPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: inviteEmail.trim(), role: 'apprenant' }),
       });
-      const payload = (await response.json()) as { inviteUrl?: string; error?: string };
+      const payload = (await response.json()) as {
+        inviteUrl?: string;
+        emailSent?: boolean;
+        error?: string;
+      };
       if (!response.ok || !payload.inviteUrl)
         throw new Error(payload.error ?? 'Invitation unavailable');
-      await navigator.clipboard.writeText(payload.inviteUrl);
+      if (payload.emailSent) {
+        toast.success(t('org.inviteSent'));
+      } else {
+        await navigator.clipboard.writeText(payload.inviteUrl);
+        toast.warning(t('org.inviteLinkCopied'));
+      }
       setInviteEmail('');
-      toast.success(t('org.inviteLinkCopied'));
     } catch {
       toast.error(t('org.shareFailed'));
     } finally {

@@ -368,9 +368,13 @@ export default function OrgAdminPage() {
         body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
       });
       if (res.ok) {
-        const data = (await res.json()) as { inviteUrl: string };
-        await navigator.clipboard.writeText(data.inviteUrl);
-        toast.success(t('org.inviteLinkCopied'));
+        const data = (await res.json()) as { inviteUrl: string; emailSent?: boolean };
+        if (data.emailSent) {
+          toast.success(t('org.inviteSent'));
+        } else {
+          await navigator.clipboard.writeText(data.inviteUrl);
+          toast.warning(t('org.inviteLinkCopied'));
+        }
         setInviteEmail('');
       } else {
         const err = await res.json();

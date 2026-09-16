@@ -7,6 +7,10 @@
 import { NextRequest } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
+import {
+  organizationInvitationUrl,
+  sendOrganizationInvitationEmail,
+} from '@/lib/server/organization-invitation-email';
 import type { OrgMemberRole } from '@/lib/supabase/types';
 import { validateBody } from '@/lib/api/validate';
 import { orgInviteSchema } from '@/lib/api/schemas';
@@ -38,6 +42,15 @@ export async function POST(
 
     if (!membership || !['admin', 'manager'].includes(membership.role)) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Insufficient permissions');
+    }
+
+    const { data: organization, error: organizationError } = await supabase
+      .from('organizations')
+      .select('name, default_locale')
+      .eq('id', orgId)
+      .single();
+    if (organizationError || !organization) {
+      return apiError(API_ERROR_CODES.INVALID_REQUEST, 404, 'Organization not found');
     }
 
     const rawBody = await request.json();
@@ -81,10 +94,28 @@ export async function POST(
       );
     }
 
-    const origin = request.headers.get('origin') ?? request.nextUrl.origin;
-    const inviteUrl = `${origin}/auth?invite=${invitation.token}`;
+    let inviteUrl: string;
+    try {
+      inviteUrl = organizationInvitationUrl(invitation.token);
+    } catch {
+      return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Invitation origin is not configured');
+    }
+    let emailSent = true;
+    try {
+      await sendOrganizationInvitationEmail({
+        invitationId: invitation.id,
+        recipient: email,
+        organizationName: organization.name,
+        locale: organization.default_locale as 'fr-FR' | 'ar-MA' | 'en-US',
+        inviteUrl,
+      });
+    } catch {
+      // Keep the one-time invitation usable and expose the established manual
+      // fallback instead of silently reserving a seat behind a failed email.
+      emailSent = false;
+    }
 
-    return apiSuccess({ token: invitation.token, inviteUrl });
+    return apiSuccess({ token: invitation.token, inviteUrl, emailSent });
   } catch (err) {
     return apiError(
       API_ERROR_CODES.INTERNAL_ERROR,

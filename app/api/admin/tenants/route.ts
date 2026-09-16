@@ -3,6 +3,10 @@ import { requireSuperAdmin } from '@/lib/api/auth';
 import { validateBody } from '@/lib/api/validate';
 import { adminTenantCreateSchema } from '@/lib/api/schemas';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
+import {
+  organizationInvitationUrl,
+  sendOrganizationInvitationEmail,
+} from '@/lib/server/organization-invitation-email';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 
 export async function GET(request: NextRequest): Promise<Response> {
@@ -115,14 +119,36 @@ export async function POST(request: NextRequest): Promise<Response> {
     );
   }
 
-  const origin = request.headers.get('origin') ?? request.nextUrl.origin;
   const provisioned = data as {
     invitation_token: string;
+    id: string;
+    name: string;
     [key: string]: unknown;
   };
   const { invitation_token: invitationToken, ...tenant } = provisioned;
+  let administratorInvitationUrl: string;
+  try {
+    administratorInvitationUrl = organizationInvitationUrl(invitationToken);
+  } catch {
+    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Invitation origin is not configured');
+  }
+
+  let administratorInvitationEmailSent = true;
+  try {
+    await sendOrganizationInvitationEmail({
+      invitationId: `${tenant.id}:${input.administratorEmail.toLowerCase()}`,
+      recipient: input.administratorEmail.toLowerCase(),
+      organizationName: tenant.name,
+      locale: input.defaultLocale,
+      inviteUrl: administratorInvitationUrl,
+    });
+  } catch {
+    // The invitation and its seat reservation remain valid. Returning the link
+    // is an explicit, recoverable fallback when the provider is temporarily down.
+    administratorInvitationEmailSent = false;
+  }
   return apiSuccess(
-    { tenant, administratorInvitationUrl: `${origin}/auth?invite=${invitationToken}` },
+    { tenant, administratorInvitationUrl, administratorInvitationEmailSent },
     201,
   );
 }

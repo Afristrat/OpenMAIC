@@ -149,9 +149,12 @@ export function TenantsTab(): React.ReactElement {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ name, sector, defaultLocale, seatLimit, administratorEmail }),
       });
-      const body = (await response.json()) as { administratorInvitationUrl?: string };
+      const body = (await response.json()) as {
+        administratorInvitationUrl?: string;
+        administratorInvitationEmailSent?: boolean;
+      };
       if (!response.ok || !body.administratorInvitationUrl) throw new Error('tenant-create');
-      setInvitationUrl(body.administratorInvitationUrl);
+      setInvitationUrl(body.administratorInvitationEmailSent ? null : body.administratorInvitationUrl);
       setName('');
       setAdministratorEmail('');
       toast.success(t('admin.tenants.created'));

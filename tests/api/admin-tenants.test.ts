@@ -5,11 +5,16 @@ const mocks = vi.hoisted(() => ({
   requireSuperAdmin: vi.fn(),
   rpc: vi.fn(),
   single: vi.fn(),
+  sendOrganizationInvitationEmail: vi.fn(),
 }));
 
 vi.mock('@/lib/api/auth', () => ({ requireSuperAdmin: mocks.requireSuperAdmin }));
 vi.mock('@/lib/supabase/service', () => ({
   createServiceSupabaseClient: () => ({ rpc: mocks.rpc }),
+}));
+vi.mock('@/lib/server/organization-invitation-email', () => ({
+  organizationInvitationUrl: (token: string) => `https://qalem.ma/auth?invite=${token}`,
+  sendOrganizationInvitationEmail: mocks.sendOrganizationInvitationEmail,
 }));
 
 import { POST } from '@/app/api/admin/tenants/route';
@@ -24,6 +29,7 @@ describe('platform tenant administration (S6-022)', () => {
       user: { id: '00000000-0000-4000-8000-000000000001', email: 'root@qalem.ma' },
     });
     mocks.rpc.mockReturnValue({ single: mocks.single });
+    mocks.sendOrganizationInvitationEmail.mockResolvedValue('provider-message-id');
   });
 
   it('provisions a tenant with a named admin invitation and an explicit seat limit', async () => {
@@ -62,7 +68,48 @@ describe('platform tenant administration (S6-022)', () => {
       administrator_email: 'admin@atlas.ma',
     });
     expect(body.administratorInvitationUrl).toBe('https://qalem.ma/auth?invite=one-time-token');
+    expect(body.administratorInvitationEmailSent).toBe(true);
     expect(body.tenant).not.toHaveProperty('invitation_token');
+    expect(mocks.sendOrganizationInvitationEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recipient: 'admin@atlas.ma',
+        organizationName: 'Institut Atlas',
+        locale: 'fr-FR',
+        inviteUrl: 'https://qalem.ma/auth?invite=one-time-token',
+      }),
+    );
+  });
+
+  it('keeps a manual invitation fallback when the email provider is unavailable', async () => {
+    mocks.single.mockResolvedValue({
+      data: {
+        id: tenantId,
+        name: 'Institut Atlas',
+        status: 'active',
+        seat_limit: 12,
+        invitation_token: 'one-time-token',
+      },
+      error: null,
+    });
+    mocks.sendOrganizationInvitationEmail.mockRejectedValue(new Error('provider unavailable'));
+    const request = new NextRequest('https://qalem.ma/api/admin/tenants', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        name: 'Institut Atlas',
+        sector: 'education',
+        defaultLocale: 'fr-FR',
+        seatLimit: 12,
+        administratorEmail: 'admin@atlas.ma',
+      }),
+    });
+
+    const response = await POST(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.administratorInvitationEmailSent).toBe(false);
+    expect(body.administratorInvitationUrl).toBe('https://qalem.ma/auth?invite=one-time-token');
   });
 
   it('never reaches the service role client for a non-super-admin', async () => {
