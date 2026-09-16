@@ -8,12 +8,17 @@ import { toast } from 'sonner';
 
 interface XAPIStatus {
   configured: boolean;
+  emissionEnabled: boolean;
   endpoint: string | null;
 }
 
 export function XAPITab(): React.ReactElement {
   const { t } = useI18n();
-  const [status, setStatus] = useState<XAPIStatus>({ configured: false, endpoint: null });
+  const [status, setStatus] = useState<XAPIStatus>({
+    configured: false,
+    emissionEnabled: false,
+    endpoint: null,
+  });
   const [sending, setSending] = useState(false);
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
 
@@ -27,9 +32,11 @@ export function XAPITab(): React.ReactElement {
       })
       .then((data) => {
         if (!controller.signal.aborted) {
-          if (typeof data?.configured !== 'boolean') throw new Error();
+          if (typeof data?.configured !== 'boolean' || typeof data?.emissionEnabled !== 'boolean')
+            throw new Error();
           setStatus({
             configured: data.configured,
+            emissionEnabled: data.emissionEnabled,
             endpoint: null,
           });
           setLoadState('ready');
@@ -83,7 +90,7 @@ export function XAPITab(): React.ReactElement {
             <>
               <CheckCircle2 className="size-5 text-emerald-500" />
               <span className="font-medium text-emerald-700 dark:text-emerald-400">
-                {t('admin.xapi.configured')}
+                {t(status.emissionEnabled ? 'admin.xapi.configured' : 'admin.xapi.readyPaused')}
               </span>
             </>
           ) : (

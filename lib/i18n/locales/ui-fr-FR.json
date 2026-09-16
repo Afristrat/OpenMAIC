@@ -1763,6 +1763,7 @@
   "admin.xapi.configured": "Configuré",
   "admin.xapi.endpoint": "Point de terminaison LRS",
   "admin.xapi.notConfigured": "Non configuré",
+  "admin.xapi.readyPaused": "Prêt ; émission désactivée",
   "admin.xapi.sending": "Envoi…",
   "admin.xapi.sendTestStatement": "Tester la connexion",
   "admin.xapi.testFailed": "La déclaration de test n\u0027a pas pu être délivrée.",

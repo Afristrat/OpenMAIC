@@ -11,8 +11,7 @@ export async function POST(request: NextRequest) {
   )
     return NextResponse.json({ error: 'Forbidden origin' }, { status: 403, headers });
   const config = getXAPIConfig();
-  if (!config?.enabled)
-    return NextResponse.json({ error: 'LRS not configured or disabled' }, { status: 409, headers });
+  if (!config) return NextResponse.json({ error: 'LRS not configured' }, { status: 409, headers });
   try {
     // Trusted server configuration only; never accept a destination from the browser.
     const endpoint = new URL(config.endpoint);

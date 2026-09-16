@@ -1763,6 +1763,7 @@
   "admin.xapi.configured": "Configured",
   "admin.xapi.endpoint": "LRS endpoint",
   "admin.xapi.notConfigured": "Not configured",
+  "admin.xapi.readyPaused": "Ready; delivery paused",
   "admin.xapi.sending": "Sending…",
   "admin.xapi.sendTestStatement": "Test connection",
   "admin.xapi.testFailed": "The test statement could not be delivered.",

@@ -1763,6 +1763,7 @@
   "admin.xapi.configured": "مضبوط",
   "admin.xapi.endpoint": "نقطة نهاية LRS",
   "admin.xapi.notConfigured": "غير مضبوط",
+  "admin.xapi.readyPaused": "جاهز؛ الإرسال معطّل",
   "admin.xapi.sending": "جارٍ الإرسال…",
   "admin.xapi.sendTestStatement": "اختبار الاتصال",
   "admin.xapi.testFailed": "تعذر تسليم عبارة الاختبار.",

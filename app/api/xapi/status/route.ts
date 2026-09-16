@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   const config = getXAPIConfig();
   // Do not disclose endpoint URLs: configuration can contain embedded credentials.
   return NextResponse.json(
-    { configured: Boolean(config?.enabled), endpoint: null },
+    { configured: Boolean(config), emissionEnabled: Boolean(config?.enabled), endpoint: null },
     {
       headers: { 'Cache-Control': 'private, no-store' },
     },

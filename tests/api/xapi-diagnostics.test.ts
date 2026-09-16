@@ -29,15 +29,23 @@ it('keeps both routes behind super-admin access', async () => {
   expect((await POST(request())).status).toBe(403);
   expect(fetcher).not.toHaveBeenCalled();
 });
-it('does not expose configuration secrets and distinguishes disabled configuration', async () => {
+it('does not expose configuration secrets and distinguishes a paused emission from absence', async () => {
   vi.stubEnv('XAPI_ENDPOINT', 'https://embedded:secret@lrs.example/?token=private');
   const response = await GET(request());
-  expect(await response.json()).toEqual({ configured: true, endpoint: null });
+  expect(await response.json()).toEqual({
+    configured: true,
+    emissionEnabled: true,
+    endpoint: null,
+  });
   expect(response.headers.get('cache-control')).toContain('no-store');
   vi.stubEnv('XAPI_ENABLED', 'false');
-  expect((await (await GET(request())).json()).configured).toBe(false);
-  expect((await POST(request())).status).toBe(409);
+  expect(await (await GET(request())).json()).toEqual({
+    configured: true,
+    emissionEnabled: false,
+    endpoint: null,
+  });
   vi.stubEnv('XAPI_AUTH', '');
+  expect((await (await GET(request())).json()).configured).toBe(false);
   expect((await POST(request())).status).toBe(409);
 });
 it('rejects cross-origin tests and unsafe configured URLs before network access', async () => {
