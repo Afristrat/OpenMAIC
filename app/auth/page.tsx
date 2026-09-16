@@ -9,7 +9,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { resolveAuthReturnPath } from '@/lib/auth/return-path';
-import { isSupabasePasswordSetupCallback } from '@/lib/auth/invitation-callback';
+import {
+  getSupabasePasswordSetupCallback,
+  isSupabasePasswordSetupCallback,
+} from '@/lib/auth/invitation-callback';
 
 function AuthPageContent(): React.ReactElement {
   const { t, locale } = useI18n();
@@ -44,14 +47,41 @@ function AuthPageContent(): React.ReactElement {
       return;
     }
 
-    void supabase.auth.getSession().then(({ data: { session } }) => {
+    const callback = getSupabasePasswordSetupCallback(window.location.search, window.location.hash);
+    if (!callback) {
+      setAuthInviteState('invalid');
+      return;
+    }
+
+    void (async () => {
+      if (callback.accessToken && callback.refreshToken) {
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: callback.accessToken,
+          refresh_token: callback.refreshToken,
+        });
+        if (sessionError) {
+          setAuthInviteState('invalid');
+          return;
+        }
+      } else if (callback.code) {
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(callback.code);
+        if (exchangeError) {
+          setAuthInviteState('invalid');
+          return;
+        }
+      }
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session?.user.email) {
         setAuthInviteState('invalid');
         return;
       }
       setEmail(session.user.email);
+      window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
       setAuthInviteState('ready');
-    });
+    })();
   }, [authInviteState]);
 
   async function consumeInvitation(token: string): Promise<boolean> {
