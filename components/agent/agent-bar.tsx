@@ -17,7 +17,7 @@ import {
   getSelectableProvidersWithVoices,
   isVoiceGenderCompatible,
 } from '@/lib/audio/voice-resolver';
-import { playBrowserTTSPreview } from '@/lib/audio/browser-tts-preview';
+import { useTTSPreview } from '@/lib/audio/use-tts-preview';
 import { useVoxCPMVoiceProfiles } from '@/lib/audio/voxcpm-voices';
 import { resolveAgentVoiceOptions } from '@/lib/audio/agent-voice';
 import { resolveSpeechLanguage } from '@/lib/audio/tts-utils';
@@ -108,9 +108,7 @@ function AgentVoicePill({
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [voiceQuery, setVoiceQuery] = useState('');
   const [previewingId, setPreviewingId] = useState<string | null>(null);
-  const previewCancelRef = useRef<(() => void) | null>(null);
-  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
-  const previewAbortRef = useRef<AbortController | null>(null);
+  const { previewing, startPreview, stopPreview } = useTTSPreview();
   const visibleProviderGroups = availableProviders
     .map((provider) => ({
       provider,
@@ -134,19 +132,6 @@ function AgentVoicePill({
     return resolved.voiceId;
   })();
 
-  const stopPreview = useCallback(() => {
-    previewCancelRef.current?.();
-    previewCancelRef.current = null;
-    previewAbortRef.current?.abort();
-    previewAbortRef.current = null;
-    if (previewAudioRef.current) {
-      previewAudioRef.current.pause();
-      previewAudioRef.current.src = '';
-      previewAudioRef.current = null;
-    }
-    setPreviewingId(null);
-  }, []);
-
   const handlePreview = useCallback(
     async (providerId: TTSProviderId, voiceId: string, modelId?: string) => {
       const key = `${providerId}::${voiceId}`;
@@ -154,27 +139,8 @@ function AgentVoicePill({
         stopPreview();
         return;
       }
-      stopPreview();
       setPreviewingId(key);
-
-      const previewText = t('settings.ttsTestTextDefault');
-
-      if (providerId === 'browser-native-tts') {
-        const { promise, cancel } = playBrowserTTSPreview({ text: previewText, voice: voiceId });
-        previewCancelRef.current = cancel;
-        try {
-          await promise;
-        } catch {
-          // ignore abort
-        }
-        setPreviewingId(null);
-        return;
-      }
-
-      // Server TTS
       try {
-        const controller = new AbortController();
-        previewAbortRef.current = controller;
         const providerConfig = ttsProvidersConfig[providerId];
         const providerOptions = await resolveAgentVoiceOptions(agent, {
           providerId,
@@ -182,43 +148,18 @@ function AgentVoicePill({
           voiceId,
           language: locale,
         });
-        const res = await fetch('/api/generate/tts', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Idempotency-Key': crypto.randomUUID(),
-          },
-          body: JSON.stringify({
-            orgId,
-            text: previewText,
-            audioId: 'voice-preview',
-            ttsProviderId: providerId,
-            ttsModelId: modelId || providerConfig?.modelId,
-            ttsVoice: voiceId,
-            ttsSpeed: 1,
-            ttsApiKey: providerConfig?.apiKey,
-            // Managed providers resolve their base URL server-side; only send
-            // the client's own base URL (custom providers).
-            ttsBaseUrl: providerConfig?.baseUrl || providerConfig?.customDefaultBaseUrl,
-            ttsProviderOptions: providerOptions,
-            ttsLanguage: resolveSpeechLanguage(locale),
-          }),
-          signal: controller.signal,
+        await startPreview({
+          orgId,
+          text: t('settings.ttsTestTextDefault'),
+          providerId,
+          modelId: modelId || providerConfig?.modelId,
+          voice: voiceId,
+          speed: 1,
+          apiKey: providerConfig?.apiKey,
+          baseUrl: providerConfig?.baseUrl || providerConfig?.customDefaultBaseUrl,
+          providerOptions,
+          language: resolveSpeechLanguage(locale),
         });
-        if (!res.ok) {
-          const payload = await res.json().catch(() => null);
-          throw new Error(
-            typeof payload?.error === 'string' ? payload.error : 'TTS preview unavailable',
-          );
-        }
-        const data = await res.json();
-        if (!data.base64) throw new Error('No audio');
-
-        const audio = new Audio(`data:audio/${data.format || 'mp3'};base64,${data.base64}`);
-        previewAudioRef.current = audio;
-        audio.addEventListener('ended', () => setPreviewingId(null));
-        audio.addEventListener('error', () => setPreviewingId(null));
-        await audio.play();
       } catch (error) {
         if (!(error instanceof DOMException && error.name === 'AbortError')) {
           toast.error(t('settings.ttsTestFailed'));
@@ -226,11 +167,12 @@ function AgentVoicePill({
         setPreviewingId(null);
       }
     },
-    [agent, locale, orgId, previewingId, stopPreview, t, ttsProvidersConfig],
+    [agent, locale, orgId, previewingId, startPreview, stopPreview, t, ttsProvidersConfig],
   );
 
-  // Cleanup on unmount
-  useEffect(() => () => stopPreview(), [stopPreview]);
+  useEffect(() => {
+    if (!previewing) setPreviewingId(null);
+  }, [previewing]);
 
   // Disabled (TTS off) OR no enabled provider ⇒ render the same muted,
   // non-interactive pill — don't silently hide the control (#665).
@@ -399,9 +341,7 @@ function TeacherVoicePill({
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [voiceQuery, setVoiceQuery] = useState('');
   const [previewingId, setPreviewingId] = useState<string | null>(null);
-  const previewCancelRef = useRef<(() => void) | null>(null);
-  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
-  const previewAbortRef = useRef<AbortController | null>(null);
+  const { previewing, startPreview, stopPreview } = useTTSPreview();
   const visibleProviderGroups = availableProviders
     .map((provider) => ({
       provider,
@@ -422,19 +362,6 @@ function TeacherVoicePill({
     return ttsVoice || 'default';
   })();
 
-  const stopPreview = useCallback(() => {
-    previewCancelRef.current?.();
-    previewCancelRef.current = null;
-    previewAbortRef.current?.abort();
-    previewAbortRef.current = null;
-    if (previewAudioRef.current) {
-      previewAudioRef.current.pause();
-      previewAudioRef.current.src = '';
-      previewAudioRef.current = null;
-    }
-    setPreviewingId(null);
-  }, []);
-
   const handlePreview = useCallback(
     async (providerId: TTSProviderId, voiceId: string, modelId?: string) => {
       const key = `${providerId}::${voiceId}`;
@@ -442,26 +369,8 @@ function TeacherVoicePill({
         stopPreview();
         return;
       }
-      stopPreview();
       setPreviewingId(key);
-
-      const previewText = t('settings.ttsTestTextDefault');
-
-      if (providerId === 'browser-native-tts') {
-        const { promise, cancel } = playBrowserTTSPreview({ text: previewText, voice: voiceId });
-        previewCancelRef.current = cancel;
-        try {
-          await promise;
-        } catch {
-          // ignore abort
-        }
-        setPreviewingId(null);
-        return;
-      }
-
       try {
-        const controller = new AbortController();
-        previewAbortRef.current = controller;
         const providerConfig = ttsProvidersConfig[providerId];
         const providerOptions = await resolveAgentVoiceOptions(undefined, {
           providerId,
@@ -469,42 +378,18 @@ function TeacherVoicePill({
           voiceId,
           language: locale,
         });
-        const res = await fetch('/api/generate/tts', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Idempotency-Key': crypto.randomUUID(),
-          },
-          body: JSON.stringify({
-            orgId,
-            text: previewText,
-            audioId: 'voice-preview',
-            ttsProviderId: providerId,
-            ttsModelId: modelId || providerConfig?.modelId,
-            ttsVoice: voiceId,
-            ttsSpeed: 1,
-            ttsApiKey: providerConfig?.apiKey,
-            // Managed providers resolve their base URL server-side; only send
-            // the client's own base URL (custom providers).
-            ttsBaseUrl: providerConfig?.baseUrl || providerConfig?.customDefaultBaseUrl,
-            ttsProviderOptions: providerOptions,
-            ttsLanguage: resolveSpeechLanguage(locale),
-          }),
-          signal: controller.signal,
+        await startPreview({
+          orgId,
+          text: t('settings.ttsTestTextDefault'),
+          providerId,
+          modelId: modelId || providerConfig?.modelId,
+          voice: voiceId,
+          speed: 1,
+          apiKey: providerConfig?.apiKey,
+          baseUrl: providerConfig?.baseUrl || providerConfig?.customDefaultBaseUrl,
+          providerOptions,
+          language: resolveSpeechLanguage(locale),
         });
-        if (!res.ok) {
-          const payload = await res.json().catch(() => null);
-          throw new Error(
-            typeof payload?.error === 'string' ? payload.error : 'TTS preview unavailable',
-          );
-        }
-        const data = await res.json();
-        if (!data.base64) throw new Error('No audio');
-        const audio = new Audio(`data:audio/${data.format || 'mp3'};base64,${data.base64}`);
-        previewAudioRef.current = audio;
-        audio.addEventListener('ended', () => setPreviewingId(null));
-        audio.addEventListener('error', () => setPreviewingId(null));
-        await audio.play();
       } catch (error) {
         if (!(error instanceof DOMException && error.name === 'AbortError')) {
           toast.error(t('settings.ttsTestFailed'));
@@ -512,10 +397,12 @@ function TeacherVoicePill({
         setPreviewingId(null);
       }
     },
-    [locale, orgId, previewingId, stopPreview, t, ttsProvidersConfig],
+    [locale, orgId, previewingId, startPreview, stopPreview, t, ttsProvidersConfig],
   );
 
-  useEffect(() => () => stopPreview(), [stopPreview]);
+  useEffect(() => {
+    if (!previewing) setPreviewingId(null);
+  }, [previewing]);
 
   // Disabled (TTS off) OR no enabled provider ⇒ render the same muted,
   // non-interactive pill — don't silently hide the control (#665).

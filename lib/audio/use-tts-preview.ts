@@ -10,6 +10,7 @@ import type { SpeechLanguage } from '@/lib/audio/tts-utils';
 import { getCurrentOrganizationId } from '@/lib/hooks/use-organizations';
 
 export interface TTSPreviewOptions {
+  orgId?: string;
   text: string;
   providerId: string;
   modelId?: string;
@@ -32,12 +33,15 @@ export function useTTSPreview() {
   const [previewing, setPreviewing] = useState(false);
   const cancelRef = useRef<(() => void) | null>(null);
   const requestIdRef = useRef(0);
+  const requestAbortRef = useRef<AbortController | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlRef = useRef<string | null>(null);
 
   /** Cancel in-flight work and release resources (no state update). */
   const cleanup = useCallback(() => {
     requestIdRef.current += 1;
+    requestAbortRef.current?.abort();
+    requestAbortRef.current = null;
     cancelRef.current?.();
     cancelRef.current = null;
     if (audioRef.current) {
@@ -97,7 +101,7 @@ export function useTTSPreview() {
 
         // API-based TTS
         const body: Record<string, unknown> = {
-          orgId: getCurrentOrganizationId(),
+          orgId: options.orgId ?? getCurrentOrganizationId(),
           text: options.text,
           audioId: 'preview',
           ttsProviderId: options.providerId,
@@ -110,6 +114,8 @@ export function useTTSPreview() {
         if (options.providerOptions) body.ttsProviderOptions = options.providerOptions;
         if (options.language) body.ttsLanguage = options.language;
 
+        const controller = new AbortController();
+        requestAbortRef.current = controller;
         const res = await fetch('/api/generate/tts', {
           method: 'POST',
           headers: {
@@ -117,7 +123,9 @@ export function useTTSPreview() {
             'Idempotency-Key': crypto.randomUUID(),
           },
           body: JSON.stringify(body),
+          signal: controller.signal,
         });
+        if (!isStale()) requestAbortRef.current = null;
         if (isStale()) return;
 
         const data = await res.json().catch(() => ({ error: res.statusText }));

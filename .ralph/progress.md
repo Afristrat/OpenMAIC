@@ -1,5 +1,16 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 16 septembre 2026 — S6-012, préécoute vocale unifiée après régression signalée
+
+Le TTS Higgs de production retournait un WAV valide, mais les deux sélecteurs
+de voix de l’accueil authentifié contournaient le lecteur partagé et jouaient
+une URL `data:` par deux implémentations distinctes. Ils utilisent désormais
+`useTTSPreview` : Blob/URL objet nettoyée, requête annulable, contexte tenant
+explicite et erreur remontée. S6-012 est volontairement rouverte en
+`to_validate` jusqu’à l’écoute sur un navigateur réel après déploiement ; une
+réponse HTTP TTS ne vaut pas preuve d’audibilité. Référence :
+`docs/validation/S6-012-voice-preview-regression-2026-09-16.md`.
+
 ## 16 septembre 2026 — S1-008, exports SCORM 2004 et cmi5 recertifiés en production
 
 Le conteneur web healthy au SHA `b6fa15c0bfc4c89c636eea21cd0d8e5c649e70f5`
