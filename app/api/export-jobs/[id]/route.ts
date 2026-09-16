@@ -13,8 +13,10 @@ import { requireAuth } from '@/lib/api/auth';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { privateArtifactUrl } from '@/lib/server/private-artifact-url';
+import { createLogger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
+const log = createLogger('ExportJobStatusAPI');
 
 export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const auth = await requireAuth(request);
@@ -48,7 +50,8 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
         request.signal,
         download,
       );
-    } catch {
+    } catch (error) {
+      log.error('Unable to create private export download URL:', error);
       return apiError('INTERNAL_ERROR', 503, 'Export download unavailable');
     }
   }
