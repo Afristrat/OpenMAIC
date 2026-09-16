@@ -16,7 +16,7 @@ try {
   page.on('request', (request) => {
     if (request.url().includes('/mod/scorm/datamodel.php') && request.postData()?.includes('lesson_status')) completionRequest = true;
   });
-  await page.goto('https://lms-test.qalem.ma/login/index.php', { waitUntil: 'domcontentloaded' });
+  await page.goto('https://lms-test.qalem.ma/login/index.php', { waitUntil: 'commit' });
   await page.locator('#username').fill(`qalem-${marker}`);
   await page.locator('#password').fill(password);
   await Promise.all([
