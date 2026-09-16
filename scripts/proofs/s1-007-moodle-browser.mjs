@@ -16,7 +16,7 @@ try {
   page.on('request', (request) => {
     if (request.url().includes('/mod/scorm/datamodel.php') && request.postData()?.includes('lesson_status')) completionRequest = true;
   });
-  await page.goto('https://lms-test.qalem.ma/login/index.php');
+  await page.goto('https://lms-test.qalem.ma/login/index.php', { waitUntil: 'domcontentloaded' });
   await page.locator('#username').fill(`qalem-${marker}`);
   await page.locator('#password').fill(password);
   await Promise.all([
@@ -24,9 +24,11 @@ try {
     page.locator('#loginbtn').click(),
   ]);
   step = 'activity';
-  await page.goto(`https://lms-test.qalem.ma/mod/scorm/view.php?id=${courseModuleId}`);
-  const launch = page.locator('a[href*="/mod/scorm/player.php"], form[action*="/mod/scorm/player.php"] button, form[action*="/mod/scorm/player.php"] input[type="submit"]').first();
-  await launch.click();
+  await page.goto(`https://lms-test.qalem.ma/mod/scorm/view.php?id=${courseModuleId}`, { waitUntil: 'domcontentloaded' });
+  await Promise.all([
+    page.waitForURL((url) => url.pathname === '/mod/scorm/player.php'),
+    page.locator('#n').click(),
+  ]);
   step = 'player';
   const sco = page.frameLocator('#scorm_object');
   await sco.locator('#scorm-complete-btn').click();
