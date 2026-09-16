@@ -72,3 +72,17 @@ La complétion provient donc bien du JavaScript Qalem exécuté dans le navigate
 ## Gate final
 
 Dans le worktree ServeurIA isolé `/tmp/qalem-s6013-155f9b3`, au SHA `a2c034303f08e4cc494b1a33711561d817e8228d` : formatage, TypeScript et lint passent ; Vitest passe 378 fichiers et 2 484 tests ; le build produit 99 pages ; Playwright passe 82 tests sur 82 en 3,7 minutes. Journal intégral : `/tmp/qalem-s1007-artifacts/s1-007-full-gate-a2c0343.log`.
+
+## Recertification de l’export de production — 16 septembre 2026
+
+La recette autonome du runtime public au SHA
+`2716df969b5549bd9e9cf0cde0de5a46884cfd2d` crée un compte, une organisation,
+une formation et deux scènes isolés. Elle soumet l’export `scorm12` via la
+route authentifiée, attend le worker puis télécharge l’archive privée sans
+interception réseau.
+
+Résultat : job `ef0cf0a8-1bb8-433d-bb0a-de486981a3e7` terminé, deux scènes,
+archive ZIP valide de 287 969 octets et suppression Storage confirmée. Les
+objets temporaires sont supprimés dans le flux de recette. Cette preuve
+confirme Qalem jusqu’à l’archive actuelle ; elle ne remplace pas le nouvel
+import Moodle et la complétion navigateur LMS requis pour clôturer S1-007.
