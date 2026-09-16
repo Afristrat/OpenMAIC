@@ -25,6 +25,7 @@ if ($action === 'prepare') {
     if (!$archive || !is_readable($archive) || !$password || strlen($password) < 32 || $course || $user) {
         throw new RuntimeException('Préconditions de recette non satisfaites');
     }
+    try {
     \core\session\manager::set_user(get_admin());
     $course = create_course((object)[
         'fullname' => 'Qalem — SCORM ' . $marker,
@@ -69,6 +70,11 @@ if ($action === 'prepare') {
     if ($scoCount < 1) { throw new RuntimeException('Le parseur Moodle n’a trouvé aucun SCO'); }
     echo json_encode(['proof' => 'S1007_MOODLE_PREPARED', 'courseId' => $course->id, 'scormId' => $scorm->id, 'cmId' => $courseModule->id, 'scoCount' => $scoCount]) . PHP_EOL;
     exit(0);
+    } catch (Throwable $error) {
+        if ($course) { delete_course($course, false); }
+        if ($user) { delete_user($user); }
+        throw $error;
+    }
 }
 
 if ($action === 'verify') {
@@ -85,6 +91,6 @@ if ($action === 'verify') {
 
 if ($course) { delete_course($course, false); }
 if ($user) { delete_user($user); }
-$remaining = $DB->count_records_select('course', 'shortname = ?', [$courseShortname]) + $DB->count_records_select('user', 'username = ?', [$username]);
+$remaining = $DB->count_records_select('course', 'shortname = ?', [$courseShortname]) + $DB->count_records_select('user', 'username = ? AND deleted = 0', [$username]);
 if ($remaining !== 0) { throw new RuntimeException('Nettoyage Moodle incomplet'); }
 echo json_encode(['proof' => 'S1007_MOODLE_CLEANUP_OK']) . PHP_EOL;
