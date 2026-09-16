@@ -1,5 +1,17 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 16 septembre 2026 — S1-004, catalogue institutionnel recertifié
+
+La recette de production est exécutée depuis un clone ServeurIA propre contre
+le web public SHA `2716df9`. Elle crée un compte, tenant, classroom et cours
+prêt isolés, publie le cours HTTP 200, vérifie le catalogue, le lien conservant
+`orgId` et `learnerCourseId`, la classroom et la scène, puis FR→AR avec RTL.
+Aucune erreur console ni HTTP 5xx ; le nettoyage ramène compte, cours,
+classroom et tenant à zéro. Le harnais accepte maintenant un montage de
+dépendances en lecture seule, indispensable à une exécution depuis clone
+propre. S1-004 reste `to_validate` : gate complet au SHA de clôture requis.
+Preuve : `docs/validation/S1-004-course-catalog-production.md`.
+
 ## 16 septembre 2026 — U-018, diagnostic xAPI réellement raccordé au LRS
 
 Le déploiement `2716df9` conserve `XAPI_ENABLED=false`, mais configure le
