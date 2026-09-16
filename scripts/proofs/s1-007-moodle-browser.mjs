@@ -24,7 +24,7 @@ try {
     page.locator('#loginbtn').click({ noWaitAfter: true }),
   ]);
   step = 'activity';
-  await page.goto(`https://lms-test.qalem.ma/mod/scorm/view.php?id=${courseModuleId}`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`https://lms-test.qalem.ma/mod/scorm/view.php?id=${courseModuleId}`, { waitUntil: 'commit' });
   step = 'activity-launch';
   await Promise.all([
     page.waitForURL((url) => url.pathname === '/mod/scorm/player.php', { waitUntil: 'commit' }),
