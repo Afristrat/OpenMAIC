@@ -126,7 +126,22 @@ purge d’administration authentifiée a alors supprimé l’acteur pseudonymis�
 le contrôle final retourne zéro acteur de recette restant. Le volume n’a jamais
 été supprimé pour masquer une erreur.
 
-L’accès direct externe à `lrs.qalem.ma:443` demeure bloqué malgré le DNS A et
-Traefik en écoute sur ServeurIA. Corriger l’ingress réseau public reste le seul
-prérequis d’infrastructure avant une recette distante et toute activation d’un
-tenant ou émission xAPI.
+## 16 septembre 2026 — Ingress HTTPS dédié et vérifié
+
+L’accès direct externe à `lrs.qalem.ma:443` demeurait indisponible malgré le
+DNS A et Traefik en écoute sur ServeurIA. Un tunnel Cloudflare distinct,
+`qalem-lrs-20260916`, a donc été créé sans modifier les tunnels existants. Son
+DNS CNAME proxifié ne vise que ce tunnel ; sa configuration d’ingress ne vise
+que `http://127.0.0.1:18080` pour `lrs.qalem.ma`, puis un repli HTTP 404.
+
+L’unité dédiée `cloudflared-qalem-lrs.service` est active et activée au
+démarrage. Après redémarrage contrôlé du connecteur, quatre connexions QUIC
+étaient enregistrées et `https://lrs.qalem.ma/xapi/about` a répondu HTTP 200
+avec l’authentification xAPI. Le conteneur `qalem-lrs` reste sain
+(`OOMKilled=false`, zéro redémarrage). Aucun tenant, aucune configuration
+`organization_lrs_configs` et aucune émission xAPI n’ont été activés.
+
+Le jeton du tunnel n’est jamais imprimé. Il est récupérable depuis l’API
+Cloudflare avec le jeton maître déjà protégé. L’écriture d’une copie dans le
+coffre Qalem a été refusée puis automatiquement annulée par sa revalidation ;
+le défaut du coffre doit être corrigé avant d’y ajouter cette redondance.

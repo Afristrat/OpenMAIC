@@ -28,10 +28,11 @@ manquant » ; il désigne un critère restant à prouver au SHA livré.
 
 ## Vague B — infrastructure et exploitation, exécutable sans utilisateur
 
-1. **S-035** : préparer le LRS souverain jusqu’à la frontière de secrets :
-   configuration validée, ingress direct non-CDN, recette d’authentification,
-   xAPI et effacement d’acteur. Son démarrage réel exige quatre secrets
-   Qalem dédiés au coffre ; aucun secret partagé ne sera réutilisé.
+1. **S-035** : le LRS souverain est actif, protégé par ses secrets Qalem
+   dédiés et accessible par le tunnel Cloudflare dédié `lrs.qalem.ma` ;
+   l’authentification HTTPS est prouvée. Il reste la recette intégrée
+   outbox/consentement et la décision explicite d’activer un tenant. Aucun
+   secret partagé n’est réutilisé.
 2. **S6-014** : achever uniquement les rotations dont la clé est dédiée à
    Qalem, prouver les consommateurs puis la révocation. Les clés Resend
    partagées ai-mpower restent exclues : leur rotation est une opération
