@@ -39,3 +39,18 @@ Exécuté sur ServeurIA au SHA exact :
 
 Journal : `/tmp/qalem-gate-logs/s6021-d9d869c-full-gate.log`  
 SHA-256 : `cb88aafb210470d7e98f0df8f8b607c0fd4e34149a5e0eabe4245cc673a0d539`
+
+## Recertification isolée du 16 septembre 2026
+
+Le SHA `3061bc6` a été cloné dans un répertoire temporaire neuf du conteneur de
+validation ServeurIA. Après une installation verrouillée, Playwright Chromium a
+exécuté les deux scénarios permanents de `invitation-only-auth.spec.ts` :
+
+1. sans invitation, la page n’expose que la connexion d’un compte existant ;
+2. avec une invitation nominative, elle expose la création de compte.
+
+Les deux scénarios réussissent en 9,4 secondes. Le clone, les dépendances et le
+journal temporaires ont été supprimés après relevé du résultat. Cette preuve
+valide la frontière UI au SHA courant, sans réémettre d’OTP ni envoyer de
+courrier. Elle ne remplace pas la réception physique d’une invitation de tenant
+par son destinataire, qui demeure la dernière preuve S6-021.
