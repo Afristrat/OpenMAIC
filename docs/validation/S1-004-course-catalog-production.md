@@ -49,3 +49,22 @@ Le gate complet au SHA `e8de078a08e673e5a6780767b7572235c888a706`, dans `qalem-v
 - 82 tests Playwright en 3,6 minutes.
 
 Le journal final contient zéro erreur ou mismatch d’hydratation et zéro erreur WebServer inattendue. Journal : `/tmp/qalem-s1004-full-gate-e8de078.log`, SHA-256 `d2b31abf817379b9daaf03a410829139a83bc90613efef51cba4828635d7154d`.
+
+## Recertification du 16 septembre 2026
+
+Le harnais a été rendu exécutable depuis un clone ServeurIA propre, avec les
+dépendances de validation montées explicitement en lecture seule. La recette
+sur l’application publique au SHA `2716df969b5549bd9e9cf0cde0de5a46884cfd2d`
+est verte : cours prêt d’abord non publié, publication HTTP 200, visibilité
+dans le catalogue, ouverture de la classroom et première scène chargée. Le
+lien vérifie désormais explicitement `orgId` et `learnerCourseId`, avant la
+navigation : l’organisation et le parcours ne sont donc pas perdus.
+
+Le basculement réel FR → AR confirme le titre arabe et `dir="rtl"`. La preuve
+ne contient aucune erreur console ni réponse HTTP 5xx. L’audit avant nettoyage
+retrouve un compte, un cours, une classroom et une organisation ; après
+nettoyage, les quatre compteurs sont nuls. Artefact ServeurIA :
+`/tmp/qalem-s1004-artifacts/s1004-20260916T224104Z-16907/evidence.json`.
+
+Cette recette fraîche ne substitue pas le gate complet au SHA de clôture :
+S1-004 reste `to_validate`.
