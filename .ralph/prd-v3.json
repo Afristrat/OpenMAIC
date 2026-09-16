@@ -4942,19 +4942,23 @@
       },
       "sourceDependencies": ["U-002"],
       "dependencies": ["S0-011", "S-035"],
-      "gap": "2026-09-10 : routes statut/test codées, super-admin/origine/délai/redirections, aucune clé exposée. Test natif /about vérifie connexion et version 1.0.3, pas écriture ; widget FR/AR/EN distingue panne/configuration et annonce le périmètre global distinct des LRS tenant. 92691 : cinq tests et TypeScript/lint ; 74834 : trois Chromium, réseaux simulés. Restent S-035, recette LRS réelle et gate intégré/publication. Voir docs/validation/U-018-xapi-diagnostics.md ; aucune clôture.",
+      "gap": "2026-09-16 : le diagnostic est recetté authentifié contre l’ingress LRS réel, avec émission suspendue ; aucune clé ni donnée d’apprentissage n’est exposée. Restent le gate complet au SHA de clôture et la décision humaine de conservation. Voir docs/validation/U-018-xapi-diagnostics.md ; aucune clôture.",
       "evidence": [
         "components/admin/xapi-tab.tsx",
         "app/api/xapi/status/route.ts",
         "app/api/xapi/test/route.ts",
         "docs/validation/U-018-xapi-diagnostics.md",
-        "commit:5277a32"
+        "commit:5277a32",
+        "scripts/proofs/u018-xapi-diagnostic.mjs",
+        "commit:699598e"
       ],
       "acceptance": [
         "Après conservation, brancher statut/test réels avec contrôle de rôle et résultat observable.",
         "Ne pas exposer les credentials LRS ; tester erreur réseau et configuration absente."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-16 — SHA 699598e : recette authentifiée ServeurIA sur le web public : une session éphémère de super-administratrice existante obtient GET /api/xapi/status 200 (configured=true, emissionEnabled=false), puis POST /api/xapi/test 200 (connectionVerified=true, writeVerified=false) contre l’ingress LRS réel. Aucun statement, tenant ni collecte n’est créé ; la session est révoquée et son refresh token refusé. U-018 reste to_validate : gate complet et décision humaine de conservation requis. Référence : docs/validation/U-018-xapi-diagnostics.md."
+      ],
       "historicalEvidence": {
         "completedAt": "2026-03-29T23:58:12.356Z",
         "status": "legacy_claim_not_delivery_proof"

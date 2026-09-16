@@ -11,3 +11,25 @@ Widget : chargement/échec distincts de configuration absente, annulation au dé
 25183 exit 0 : TypeScript 4 Gio et lint global recontrôlés après ajout de la recette navigateur. Mnemo identify_active_project : fetch failed ; aucune mémoire distante mise à jour.
 
 Ponytail : configuration/Auth/fetch natifs réutilisés, aucune dépendance ni nouvelle table.
+
+## 16 septembre 2026 — Diagnostic authentifié sur le LRS de production
+
+Le SHA `2716df9` déployé configure le diagnostic global avec
+`https://lrs.qalem.ma/xapi`, tandis que `XAPI_ENABLED=false` maintient toute
+émission applicative suspendue. La recette versionnée
+`scripts/proofs/u018-xapi-diagnostic.mjs`, exécutée depuis le conteneur de
+validation ServeurIA, ouvre une session éphémère pour une super-administratrice
+existante, injecte le cookie SSR réel puis vérifie `GET /api/xapi/status` et
+`POST /api/xapi/test` sur `https://qalem.ma`.
+
+Résultat observé : statut HTTP 200, `configured=true`,
+`emissionEnabled=false`, puis diagnostic HTTP 200 avec
+`connectionVerified=true` et `writeVerified=false`. Le test interroge
+uniquement `xapi/about` : il ne crée aucun statement. La session de preuve est
+révoquée et son jeton de rafraîchissement est refusé avant fermeture du
+navigateur. Aucun secret, endpoint de configuration interne, tenant, collecte
+ni émission xAPI n’est exposé ou activé.
+
+U-018 reste `to_validate` : le gate complet au SHA de clôture et la décision
+humaine de conservation de cette capacité héritée ne sont pas remplacés par ce
+diagnostic ciblé.
