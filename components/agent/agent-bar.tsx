@@ -135,7 +135,7 @@ function AgentVoicePill({
   const handlePreview = useCallback(
     async (providerId: TTSProviderId, voiceId: string, modelId?: string) => {
       const key = `${providerId}::${voiceId}`;
-      if (previewingId === key) {
+      if (previewing && previewingId === key) {
         stopPreview();
         return;
       }
@@ -167,12 +167,8 @@ function AgentVoicePill({
         setPreviewingId(null);
       }
     },
-    [agent, locale, orgId, previewingId, startPreview, stopPreview, t, ttsProvidersConfig],
+    [agent, locale, orgId, previewing, previewingId, startPreview, stopPreview, t, ttsProvidersConfig],
   );
-
-  useEffect(() => {
-    if (!previewing) setPreviewingId(null);
-  }, [previewing]);
 
   // Disabled (TTS off) OR no enabled provider ⇒ render the same muted,
   // non-interactive pill — don't silently hide the control (#665).
@@ -253,7 +249,7 @@ function AgentVoicePill({
                     resolved?.voiceId === voice.id &&
                     (resolved?.modelId || '') === (group.modelId || '');
                   const previewKey = `${provider.providerId}::${voice.id}`;
-                  const isPreviewing = previewingId === previewKey;
+                  const isPreviewing = previewing && previewingId === previewKey;
                   const canPreview = !isNonPreviewableVoice(provider.providerId, voice.id);
                   return (
                     <div
@@ -365,7 +361,7 @@ function TeacherVoicePill({
   const handlePreview = useCallback(
     async (providerId: TTSProviderId, voiceId: string, modelId?: string) => {
       const key = `${providerId}::${voiceId}`;
-      if (previewingId === key) {
+      if (previewing && previewingId === key) {
         stopPreview();
         return;
       }
@@ -397,12 +393,8 @@ function TeacherVoicePill({
         setPreviewingId(null);
       }
     },
-    [locale, orgId, previewingId, startPreview, stopPreview, t, ttsProvidersConfig],
+    [locale, orgId, previewing, previewingId, startPreview, stopPreview, t, ttsProvidersConfig],
   );
-
-  useEffect(() => {
-    if (!previewing) setPreviewingId(null);
-  }, [previewing]);
 
   // Disabled (TTS off) OR no enabled provider ⇒ render the same muted,
   // non-interactive pill — don't silently hide the control (#665).
@@ -484,7 +476,7 @@ function TeacherVoicePill({
                     ttsVoice === voice.id &&
                     currentModelId === (group.modelId || '');
                   const previewKey = `${provider.providerId}::${voice.id}`;
-                  const isPreviewing = previewingId === previewKey;
+                  const isPreviewing = previewing && previewingId === previewKey;
                   const canPreview = !isNonPreviewableVoice(provider.providerId, voice.id);
                   return (
                     <div
