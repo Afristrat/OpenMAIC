@@ -103,3 +103,25 @@ Restent explicitement ouverts : le basculement vérifié des trois routes
 LiteLLM vers le backend DGX par Tailscale, une trace de dispatch non sensible,
 le microphone physique avec ses pannes réelles, et l’acceptation humaine des
 mesures de transcription. S6-009 demeure donc à valider.
+
+## Routage LiteLLM → DGX rétabli le 16 septembre 2026
+
+Le diagnostic du pair DGX a établi que le conteneur `asr` utilise le réseau de
+l’hôte et que son API FastAPI écoute sur le port `8003` : `/health` et
+`/v1/audio/transcriptions` répondent. Le port `7860` déclaré dans l’image ne
+correspondait pas au service réellement actif. Depuis Hostinger, l’état de
+santé et une transcription WAV de contrôle vers l’adresse Tailscale du DGX
+répondent tous deux HTTP 200.
+
+Les trois enregistrements LiteLLM (`qwen3-asr`, `whisper-1` et
+`whisper-large-v3`) ont ensuite été basculés vers cette racine Tailscale avec
+le préfixe `/v1`, puis LiteLLM a été redémarré et est redevenu healthy. Une
+transcription de contrôle, exécutée depuis le conteneur LiteLLM sans extraire
+de clé, répond HTTP 200 pour chacun des trois modèles. Les routes persistantes
+ne résolvent donc plus vers le DNS public constaté dans la section précédente.
+
+Cette preuve établit désormais le dispatch LiteLLM Hostinger → DGX par
+Tailscale et élimine Cloudflare du chemin ASR. Restent les critères qui ne
+peuvent pas être substitués par cette recette serveur : microphone physique,
+refus de permission, panne amont visible dans l’interface et acceptation
+humaine des mesures FR/arabe standard/EN.
