@@ -167,7 +167,17 @@ function AgentVoicePill({
         setPreviewingId(null);
       }
     },
-    [agent, locale, orgId, previewing, previewingId, startPreview, stopPreview, t, ttsProvidersConfig],
+    [
+      agent,
+      locale,
+      orgId,
+      previewing,
+      previewingId,
+      startPreview,
+      stopPreview,
+      t,
+      ttsProvidersConfig,
+    ],
   );
 
   // Disabled (TTS off) OR no enabled provider ⇒ render the same muted,
