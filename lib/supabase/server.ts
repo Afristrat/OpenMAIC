@@ -9,6 +9,9 @@ export async function createServerSupabaseClient() {
   }
   const cookieStore = await cookies();
   return createServerClient(url, key, {
+    // Browser sessions are issued against db.qalem.ma; keep their storage key
+    // stable when server-side traffic uses the private Kong endpoint.
+    cookieOptions: { name: 'sb-db-auth-token' },
     cookies: {
       getAll() {
         return cookieStore.getAll();
