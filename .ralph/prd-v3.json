@@ -1344,15 +1344,15 @@
       "description": "En tant que propriétaire de Qalem, je veux qu’aucun tiers ne puisse créer un compte ou entrer dans l’application sans invitation nominative afin que les tests restent strictement privés jusqu’à l’ouverture décidée du produit.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P0",
-      "status": "completed",
-      "passes": true,
+      "status": "to_validate",
+      "passes": false,
       "source": {
         "type": "request_and_production_incident",
         "date": "2026-09-01"
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Soldé : GoTrue refuse toute inscription publique, l’interface n’expose plus OAuth, l’inscription libre ni le mode invité, /app est protégé côté serveur et seule une invitation nominative valide crée atomiquement le compte et son adhésion au tenant.",
+      "gap": "Le refus des inscriptions publiques et la transaction invitation→adhésion sont prouvés historiquement. Le SHA 220c9dd envoie désormais les invitations nominatives via Resend sous ai-mpower.com, avec URL HTTPS canonique et repli explicite si le fournisseur échoue. Reste la recette authentifiée d’un administrateur de tenant, depuis la création jusqu’à l’e-mail reçu, l’inscription et l’adhésion effective.",
       "evidence": [
         "production:https://qalem.ma/auth",
         "production:https://qalem.ma/api/access-code/status",
@@ -1360,6 +1360,8 @@
         "app/auth/page.tsx",
         "lib/hooks/use-auth.ts",
         "app/api/organizations/[orgId]/invite/route.ts",
+        "app/api/admin/tenants/route.ts",
+        "lib/server/organization-invitation-email.ts",
         "app/api/invitations/consume/route.ts"
       ],
       "acceptance": [
@@ -1370,6 +1372,7 @@
         "L’accès direct à /app sans session est refusé côté serveur, sans flash de contenu ni repli local anonyme ; le mode E2E explicitement configuré reste isolé de la production.",
         "Les interfaces et erreurs sont localisées en français, arabe et anglais, et les parcours connexion, invitation valide et refus des inscriptions publiques sont couverts par des tests permanents.",
         "La configuration persistante du runtime de production est vérifiée après déploiement : disable_signup=true, parcours invité réel réussi puis données de recette intégralement supprimées.",
+        "Toute invitation nominative d’organisation ou de tenant est envoyée par Resend depuis le domaine vérifié ai-mpower.com, utilise une URL HTTPS canonique et expose un repli manuel explicite en cas d’indisponibilité du fournisseur.",
         "Le quality gate complet est vert au SHA exact sur ServeurIA, sans erreur ni avertissement inattendu."
       ],
       "closureEvidence": [
@@ -1382,9 +1385,9 @@
         "2026-09-01 — Gate exact au SHA d9d869c : formatage, TypeScript et lint verts ; Vitest 388/388 fichiers et 2 514/2 514 tests ; build et assertion des routes standalone verts ; Playwright 86/86 en 4,4 min. Journal /tmp/qalem-gate-logs/s6021-d9d869c-full-gate.log, SHA-256 cb88aafb210470d7e98f0df8f8b607c0fd4e34149a5e0eabe4245cc673a0d539, code 0.",
         "2026-09-01 — Détail consolidé : docs/validation/S6-021-invitation-only-access.md.",
         "2026-09-04 — Réconciliation fraîche après redéploiement : l’endpoint GoTrue a révélé disable_signup=false, contredisant la preuve antérieure. La variable persistante Coolify DISABLE_SIGNUP a été remise à true et la stack Supabase Qalem recréée. Le conteneur Auth et /auth/v1/settings confirment désormais disable_signup=true ; une tentative brute réelle répond 422 signup_disabled et zéro compte de recette n’existe.",
-        "2026-09-04 — Après recréation, Auth, DB, Storage, Kong, MinIO et imgproxy sont healthy, restart=0 et OOMKilled=false sur les composants inspectés. https://qalem.ma/auth répond 200 et /app répond 307 vers /auth?next=/app. Le web courant cea34e0084d92510b42b68f4f904069ac70b87c2 a passé le gate complet : Prettier, TypeScript, ESLint, 2 681/2 681 Vitest, build et 110/110 Playwright."
+        "2026-09-04 — Après recréation, Auth, DB, Storage, Kong, MinIO et imgproxy sont healthy, restart=0 et OOMKilled=false sur les composants inspectés. https://qalem.ma/auth répond 200 et /app répond 307 vers /auth?next=/app. Le web courant cea34e0084d92510b42b68f4f904069ac70b87c2 a passé le gate complet : Prettier, TypeScript, ESLint, 2 681/2 681 Vitest, build et 110/110 Playwright.",
+        "2026-09-16 — SHA 220c9ddd365bddeb326f48f3dc73597ab29aaf29 poussé et déployé par Coolify : les invitations d’organisation et de tenant utilisent Resend avec clé d’idempotence et URL HTTPS canonique. Le runtime contient RESEND_API_KEY et SMTP_FROM ; le conteneur est running, restart=0, OOMKilled=false et https://qalem.ma/api/health répond 200. Un message distinct à Sophia Tahiri a reçu l’événement Resend delivered après création contrôlée de son compte et attribution effective du rôle super-administrateur. Ce n’est pas une recette de tenant, qui demeure exigée avant toute clôture."
       ],
-      "completedAt": "2026-09-04",
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": [
