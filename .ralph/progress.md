@@ -1,5 +1,20 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 16 septembre 2026 — S1-007, export SCORM de production rétabli
+
+Le SHA `5930559e302a27bc2ca429476f4516bbb68516ab` corrige la cause du 503
+sur le polling et le téléchargement des exports LMS : le worker écrivait
+`<stage>/<job>.scorm12.zip`, tandis que l’API ne validait que
+`<stage>/<job>.zip`. Le chemin canonique est désormais calculé par le même
+module pour MP4, SCORM 1.2, SCORM 2004 et cmi5. Tests ciblés et TypeScript
+passent dans le conteneur de validation serveur ; Coolify a déployé ce SHA,
+dont le conteneur web est healthy. La recette authentifiée de production crée
+un tenant et une formation temporaires, produit deux scènes, obtient le job
+`done`, puis télécharge l’archive privée SCORM 1.2 : ZIP valide de 288 096
+octets. La recette nettoie ses données temporaires. S1-007 reste
+`to_validate` : l’import et la complétion Moodle doivent être rejoués au SHA
+courant avant `passes=true`.
+
 ## 15 septembre 2026 — S2-008, AudioSeal recertifié et activé
 
 Le runtime Qalem embarque désormais le sidecar AudioSeal interne, sans port public, limité à 3 Gio, 1,5 CPU et 128 PID. P2-C de production, sur la fixture officielle répétée à 50 secondes, recompose les 128 bits sur MP3 128k, OGG, normalisation et extrait décalé. Une transmission authentifiée a ensuite traversé les workers audio et visuel avec `watermarking=true`, source inchangée et dérivées audio/MP4 privées. Le faux état unhealthy pendant une inférence séquentielle a été corrigé par un healthcheck de liveness ; worker, sidecar et capture-worker sont healthy, restart=0, OOMKilled=false. Tous les artefacts et identités temporaires sont supprimés. S2-008 devient `completed/passes=true` ; AudioSeal reste une provenance, jamais un DRM. Preuve : `docs/validation/S2-008-production-recertification-2026-09-15.md`.
