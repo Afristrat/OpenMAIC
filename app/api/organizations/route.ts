@@ -7,10 +7,11 @@
 
 import { NextRequest } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 import { validateBody } from '@/lib/api/validate';
 import { organizationsCreateSchema } from '@/lib/api/schemas';
-import { requireSuperAdmin } from '@/lib/api/auth';
+import { isSuperAdminEmail, requireSuperAdmin } from '@/lib/api/auth';
 
 export async function GET(): Promise<Response> {
   const supabase = await createServerSupabaseClient();
@@ -21,6 +22,34 @@ export async function GET(): Promise<Response> {
 
   if (authError || !user) {
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 401, 'Authentication required');
+  }
+
+  // A platform super-administrator is deliberately not made a member of every
+  // tenant. It still needs an organization context to preview voices and
+  // author content, so list active tenants through the server-only client.
+  if (isSuperAdminEmail(user.email ?? '')) {
+    const adminSupabase = createServiceSupabaseClient();
+    const { data: organizations, error } = await adminSupabase
+      .from('organizations')
+      .select('*')
+      .eq('status', 'active')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      return apiError(
+        API_ERROR_CODES.INTERNAL_ERROR,
+        500,
+        'Failed to fetch organizations',
+        error.message,
+      );
+    }
+
+    return apiSuccess({
+      organizations: (organizations ?? []).map((organization) => ({
+        ...organization,
+        userRole: 'admin',
+      })),
+    });
   }
 
   // Fetch memberships with joined organization data

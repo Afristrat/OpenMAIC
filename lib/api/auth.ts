@@ -75,7 +75,7 @@ function parseSuperAdminEmails(): string[] {
     .filter(Boolean);
 }
 
-function isSuperAdminEmail(email: string): boolean {
+export function isSuperAdminEmail(email: string): boolean {
   const superAdminEmails = parseSuperAdminEmails();
   return superAdminEmails.length > 0 && superAdminEmails.includes(email.toLowerCase());
 }
