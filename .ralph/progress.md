@@ -1,5 +1,15 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 16 septembre 2026 — S1-007, export SCORM actuel recetté
+
+Le runtime public SHA `2716df9` a créé et terminé un export SCORM 1.2
+authentifié : deux scènes, archive privée ZIP valide de 287 969 octets et
+suppression Storage confirmée après téléchargement. Les objets de recette sont
+nettoyés. Cette preuve couvre Qalem jusqu’au paquet actuel, pas encore le
+lecteur Moodle : S1-007 reste `to_validate` jusqu’à l’import et la complétion
+navigateur LMS au SHA de clôture. Preuve :
+`docs/validation/S1-007-scorm12-moodle-browser.md`.
+
 ## 16 septembre 2026 — S1-004, catalogue institutionnel recertifié
 
 La recette de production est exécutée depuis un clone ServeurIA propre contre
