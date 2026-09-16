@@ -4946,8 +4946,8 @@
     {
       "epic": "3-ANCRER",
       "priority": "P1",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "type": "explicit_user_request",
         "date": "2026-09-12"
@@ -4956,7 +4956,8 @@
       "closureEvidence": [
         "2026-09-12 — SHA e346fd4b6d8c87335647b3987ccbbb4a26d5ed9d ; clone isolé ServeurIA /tmp/qalem-s3011-b71a021 : Prettier et TypeScript verts, 9/9 Vitest ciblés. La migration, la recette authentifiée à deux apprenants/deux tenants, le retrait de source et le gate complet restent requis ; passes=false.",
         "2026-09-15 — Le SHA public 4f22afacbcb3cf48fb42ad6e8cf9db36c940c455 est descendant du gate S3-011 d7e231a ; le déploiement n’est donc plus une condition ouverte. Cela ne prouve ni l’isolation à deux tenants ni le retrait de source : S3-011 reste `to_validate` et `passes=false`.",
-        "2026-09-15 — SHA 62eedcb2066b07b7db8a1203214ff69fc0130441 ; recette authentifiée sur le conteneur web public : deux apprenants d’une même formation et un troisième dans un second tenant portent des événements distincts. Réponse propre 201, doublon 409, accès par l’autre apprenant et par l’autre tenant 404, provenance étrangère 400, retrait de source 204, puis zéro tenant de recette. La gate complète sur le SHA de clôture reste requise ; passes=false. Référence : docs/validation/S3-011-production-provenance-isolation.md."
+        "2026-09-15 — SHA 62eedcb2066b07b7db8a1203214ff69fc0130441 ; recette authentifiée sur le conteneur web public : deux apprenants d’une même formation et un troisième dans un second tenant portent des événements distincts. Réponse propre 201, doublon 409, accès par l’autre apprenant et par l’autre tenant 404, provenance étrangère 400, retrait de source 204, puis zéro tenant de recette. La gate complète sur le SHA de clôture reste requise ; passes=false. Référence : docs/validation/S3-011-production-provenance-isolation.md.",
+        "2026-09-16 — Clôture recertifiée : le SHA de recette 62eedcb2066b07b7db8a1203214ff69fc0130441 est ancêtre du SHA de code ebfa8220959694b2f743397240edd97d67da5abc, sans modification des quatre artefacts S3-011 entre les deux. Le gate complet isolé ServeurIA sur ebfa822 est vert : Prettier, TypeScript, ESLint, 3 312 tests Vitest, build et 193 Playwright. Les preuves de provenance, réponse unique, isolement apprenant/tenant, refus de provenance étrangère et retrait de source demeurent donc au SHA recertifié. S3-011 devient completed/passes=true. Références : docs/validation/S3-011-production-provenance-isolation.md et docs/validation/S6-001-recertification-2026-09-03.md."
       ],
       "executionAllowed": true,
       "executionDecision": "2026-09-12 — Objectif exhaustif demandé par Amine : compléments multisources et mobiles conservés, sans clôture ni activation déduite.",
