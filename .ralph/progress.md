@@ -1,5 +1,14 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 16 septembre 2026 — S6-021, parcours d’inscription invité recertifié
+
+Une recette authentifiée de production crée un tenant et son invitation
+nominative, appelle `POST /api/invitations/signup` avec mot de passe,
+reconnecte le compte, confirme son rôle `admin` et vérifie que le tenant est
+renvoyé par `GET /api/organizations`. Le compte et le tenant temporaires sont
+supprimés. S6-021 demeure `to_validate` : seule la réception physique du
+courriel Resend par son destinataire ne peut être inférée de cette recette.
+
 ## 16 septembre 2026 — S1-007, export SCORM de production rétabli
 
 Le SHA `5930559e302a27bc2ca429476f4516bbb68516ab` corrige la cause du 503
