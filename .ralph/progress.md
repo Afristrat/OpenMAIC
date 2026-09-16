@@ -1,5 +1,14 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 16 septembre 2026 — Réconciliation PRD3 des gaps déjà soldés
+
+Le contrôle machine des statuts a identifié cinq US `completed/passes=true`
+dont le champ `gap` conservait une formulation antérieure à leurs preuves de
+clôture : S3-011 et S6-015, S6-016, S6-028, S6-029. Ces gaps sont mis à `null`
+sans supprimer leurs décisions, recettes ni limitations conservées dans les
+preuves. Les statuts et la source de vérité ne se contredisent plus sur ces
+points.
+
 ## 16 septembre 2026 — S6-012, préécoute vocale unifiée après régression signalée
 
 Le TTS Higgs de production retournait un WAV valide, mais les deux sélecteurs

@@ -3237,7 +3237,7 @@
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Résolu : cadrage confirmé, réconcilié avec le produit actuel et scindé en quatre US d'exécution bornées dans le PRD 3.",
+      "gap": null,
       "evidence": [
         "../docs/np-cadrage.md:43",
         ".ralph/prd-v2.json#S5-001",
@@ -3364,7 +3364,7 @@
       },
       "sourceDependencies": ["S6-027"],
       "dependencies": ["S6-027"],
-      "gap": "Il n'existe ni builder IA super-administrateur, ni prévisualisation d'une composition générique, ni publication sans redéploiement.",
+      "gap": null,
       "evidence": [
         "app/admin/page.tsx",
         "components/admin/widget-builder-tab.tsx",
@@ -3409,7 +3409,7 @@
       },
       "sourceDependencies": ["S6-028"],
       "dependencies": ["S6-028"],
-      "gap": "La génération ne consomme que les plugins du dépôt et l'export n'a jamais été recetté avec un template publié dynamiquement.",
+      "gap": null,
       "evidence": [
         "app/api/widget-templates/route.ts",
         "components/generation/outlines-editor.tsx",
@@ -3460,7 +3460,7 @@
       },
       "sourceDependencies": [],
       "dependencies": ["S6-016", "S6-026", "S6-027", "S6-028", "S6-029"],
-      "gap": "Cadrage confirmé et scindé : S6-026 à S6-029 doivent maintenant livrer la grammaire, la persistance, le builder super-administrateur, la consommation et l'export statique.",
+      "gap": null,
       "evidence": [
         "../docs/np-cadrage.md",
         "lib/plugins",
@@ -4974,7 +4974,7 @@
       "title": "Ancrer les flashbacks et questions dans le vécu de chaque apprenant",
       "description": "En tant qu’adulte en formation, je veux retrouver les moments et questions de mon propre parcours afin de réfléchir, expérimenter et transférer les acquis dans ma pratique.",
       "dependencies": ["S3-004", "S2-004"],
-      "gap": "Le code P3-B-v7 lie chaque graine à un événement immuable, à une catégorie recalculée côté serveur et à une version de source ; les réponses résolues sont bornées au rappel et à son événement. La recette authentifiée du 15 septembre couvre deux apprenants, deux tenants et retrait de source. Reste uniquement la gate complète au SHA de clôture.",
+      "gap": null,
       "evidence": [
         "lib/anchoring/seed-stock.ts",
         "app/api/live-sessions/[id]/seeds/route.ts",
