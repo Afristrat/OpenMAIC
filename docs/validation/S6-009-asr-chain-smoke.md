@@ -125,3 +125,19 @@ Tailscale et élimine Cloudflare du chemin ASR. Restent les critères qui ne
 peuvent pas être substitués par cette recette serveur : microphone physique,
 refus de permission, panne amont visible dans l’interface et acceptation
 humaine des mesures FR/arabe standard/EN.
+
+## Révalidation directe du 16 septembre 2026
+
+Une seconde vérification, effectuée depuis Hostinger après la remise en route,
+confirme que le service ASR du DGX reste joignable sur son adresse Tailscale :
+`/health` répond HTTP 200 et un WAV PCM mono de contrôle envoyé à
+`/v1/audio/transcriptions` répond HTTP 200. Le WAV étant silencieux, aucune
+transcription non vide n’était attendue ni interprétée comme un résultat de
+qualité. Les fichiers temporaires et la réponse ont été supprimés dans la même
+commande ; aucune clé, URL publique, texte transcrit ou donnée d’apprenant n’a
+été journalisé.
+
+Cette révalidation atteste la disponibilité présente du maillon DGX et est
+cohérente avec le dispatch LiteLLM documenté ci-dessus. Elle ne remplace pas
+les essais physiques : enregistrement navigateur, refus d’autorisation,
+fichier invalide, panne amont visible et appréciation humaine des mesures.
