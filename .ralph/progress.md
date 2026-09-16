@@ -1,5 +1,17 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 16 septembre 2026 — S1-008, exports SCORM 2004 et cmi5 recertifiés en production
+
+Le conteneur web healthy au SHA `b6fa15c0bfc4c89c636eea21cd0d8e5c649e70f5`
+a exécuté deux recettes authentifiées et jetables : SCORM 2004 (`done`, 286 596
+octets, `imsmanifest.xml`) et cmi5 (`done`, 291 442 octets, `cmi5.xml`). Les
+archives privées ont été téléchargées avec succès et la suppression Storage de
+chaque artefact a été confirmée ; le script de preuve suit désormais les
+suffixes canoniques du worker et échoue si ce nettoyage échoue. S1-008 reste
+`to_validate` : la réimportation Moodle et CATAPULT au SHA courant ne peut pas
+être déduite de ces paquets de production. Référence :
+`docs/validation/S1-008-scorm2004-cmi5.md`.
+
 ## 16 septembre 2026 — S6-021, parcours d’inscription invité recertifié
 
 Une recette authentifiée de production crée un tenant et son invitation

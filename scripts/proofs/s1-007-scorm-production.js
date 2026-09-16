@@ -7,9 +7,16 @@ const outputPath = process.env.QALEM_PROOF_OUTPUT;
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const format = process.env.QALEM_PROOF_FORMAT ?? 'scorm12';
+const artifactExtensions = {
+  scorm12: 'scorm12.zip',
+  scorm2004: 'scorm2004.zip',
+  cmi5: 'cmi5.zip',
+};
 
 assert(supabaseUrl && anonKey && serviceKey, 'Configuration runtime Supabase absente');
 assert(outputPath, 'QALEM_PROOF_OUTPUT est requis');
+assert(format in artifactExtensions, `Format LMS non pris en charge : ${format}`);
 
 const marker = `s1007-${Date.now()}-${crypto.randomBytes(5).toString('hex')}`;
 const users = [];
@@ -17,6 +24,7 @@ let organizationId;
 let stageId;
 let exportId;
 let storagePath;
+let storageDeleted = false;
 
 async function json(url, options = {}) {
   const response = await fetch(url, options);
@@ -74,9 +82,11 @@ async function app(path, cookie, options = {}) {
 
 async function cleanup() {
   if (storagePath) {
-    await service(`/storage/v1/object/exports/${encodeURIComponent(storagePath)}`, {
+    const deleted = await service(`/storage/v1/object/exports/${encodeURIComponent(storagePath)}`, {
       method: 'DELETE',
     });
+    assert([200, 204].includes(deleted.response.status), 'Suppression Storage de recette');
+    storageDeleted = true;
   }
   if (organizationId) {
     await service(`/rest/v1/organizations?id=eq.${encodeURIComponent(organizationId)}`, {
@@ -91,7 +101,7 @@ async function cleanup() {
 }
 
 async function main() {
-  const summary = { marker, format: 'scorm12' };
+  const summary = { marker, format };
   try {
     const cookie = await createSession();
     const ownerId = users[0];
@@ -174,7 +184,7 @@ async function main() {
     const created = await app('/api/export-jobs', cookie, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ stageId, format: 'scorm12' }),
+      body: JSON.stringify({ stageId, format }),
     });
     assert.equal(created.response.status, 202, 'Création du job SCORM');
     exportId = payload(created.body)?.id;
@@ -190,7 +200,7 @@ async function main() {
     }
     assert.equal(job?.status, 'done', `Job SCORM non terminé : ${job?.status ?? 'inconnu'}`);
     assert.equal(job?.sceneCount, 2, 'Nombre de scènes exportées');
-    storagePath = `${stageId}/${exportId}.zip`;
+    storagePath = `${stageId}/${exportId}.${artifactExtensions[format]}`;
 
     const download = await fetch(`${appUrl}/api/export-jobs/${exportId}?download=1`, {
       headers: { cookie },
@@ -203,9 +213,11 @@ async function main() {
     summary.exportId = exportId;
     summary.sceneCount = job.sceneCount;
     summary.bytes = archive.length;
-    console.log(JSON.stringify(summary));
   } finally {
     await cleanup();
+    if (summary.exportId) {
+      console.log(JSON.stringify({ ...summary, storageDeleted }));
+    }
   }
 }
 
