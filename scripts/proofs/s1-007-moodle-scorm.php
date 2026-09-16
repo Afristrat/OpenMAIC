@@ -66,6 +66,7 @@ if ($action === 'prepare') {
     ], $course);
     $scorm = $DB->get_record('scorm', ['id' => $module->instance], '*', MUST_EXIST);
     $courseModule = get_coursemodule_from_instance('scorm', $scorm->id, $course->id, false, MUST_EXIST);
+    rebuild_course_cache($course->id, true);
     $scoCount = $DB->count_records('scorm_scoes', ['scorm' => $scorm->id]);
     if ($scoCount < 1) { throw new RuntimeException('Le parseur Moodle n’a trouvé aucun SCO'); }
     echo json_encode(['proof' => 'S1007_MOODLE_PREPARED', 'courseId' => $course->id, 'scormId' => $scorm->id, 'cmId' => $courseModule->id, 'scoCount' => $scoCount]) . PHP_EOL;
