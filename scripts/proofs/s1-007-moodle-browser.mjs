@@ -3,10 +3,10 @@ import { chromium } from '@playwright/test';
 
 const marker = process.env.QALEM_S1007_MARKER;
 const password = process.env.QALEM_S1007_PASSWORD;
-const scormId = process.env.QALEM_S1007_SCORM_ID;
+const courseModuleId = process.env.QALEM_S1007_COURSE_MODULE_ID;
 assert.match(marker ?? '', /^s1007-[a-f0-9-]+$/);
 assert.ok(password && password.length >= 32, 'Identifiant de recette absent');
-assert.match(scormId ?? '', /^\d+$/);
+assert.match(courseModuleId ?? '', /^\d+$/);
 
 const browser = await chromium.launch({ headless: true });
 let step = 'login';
@@ -23,8 +23,11 @@ try {
     page.waitForURL((url) => url.pathname !== '/login/index.php'),
     page.locator('#loginbtn').click(),
   ]);
+  step = 'activity';
+  await page.goto(`https://lms-test.qalem.ma/mod/scorm/view.php?id=${courseModuleId}`);
+  const launch = page.locator('a[href*="/mod/scorm/player.php"], form[action*="/mod/scorm/player.php"] button, form[action*="/mod/scorm/player.php"] input[type="submit"]').first();
+  await launch.click();
   step = 'player';
-  await page.goto(`https://lms-test.qalem.ma/mod/scorm/player.php?a=${scormId}&currentorg=&scoid=0`);
   const sco = page.frameLocator('#scorm_object');
   await sco.locator('#scorm-complete-btn').click();
   await assert.doesNotReject(() => sco.getByText('Ce cours a été marqué comme terminé.').waitFor());
