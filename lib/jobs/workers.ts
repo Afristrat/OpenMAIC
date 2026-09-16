@@ -25,7 +25,8 @@ import {
 import type { HyperframesBrief } from '@/lib/video/hyperframes-types';
 import type { VideoCapsuleStatus, VideoCapsuleVariant } from '@/lib/supabase/types';
 import { buildLearningPackage } from '@/lib/export/scorm/build-scorm-package';
-import { isLearningPackageFormat, trackingAdapters } from '@/lib/export/scorm/tracking-adapters';
+import { exportJobArtifactPath } from '@/lib/export/export-job-artifact';
+import { isLearningPackageFormat } from '@/lib/export/scorm/tracking-adapters';
 import { buildClassroomVideo } from '@/lib/export/mp4/build-classroom-video';
 import { runManagedVideoJob } from '@/lib/server/managed-video-job';
 import { runClassroomGenerationJob } from '@/lib/server/classroom-job-runner';
@@ -549,12 +550,10 @@ export function startAllWorkers(): void {
           const isMp4 = exportJob.format === 'mp4';
           let file: Buffer;
           let sceneCount: number;
-          let extension: string;
           if (isMp4) {
             const result = await buildClassroomVideo(exportJob.stage_id as string);
             file = result.video;
             sceneCount = result.sceneCount;
-            extension = 'mp4';
           } else {
             const learningFormat = String(exportJob.format);
             if (!isLearningPackageFormat(learningFormat)) {
@@ -563,9 +562,12 @@ export function startAllWorkers(): void {
             const result = await buildLearningPackage(exportJob.stage_id as string, learningFormat);
             file = result.zip;
             sceneCount = result.sceneCount;
-            extension = trackingAdapters[learningFormat].archiveExtension;
           }
-          const storagePath = `${exportJob.stage_id}/${exportJobId}.${extension}`;
+          const storagePath = exportJobArtifactPath(
+            exportJob.stage_id as string,
+            exportJobId,
+            exportJob.format,
+          );
           const { error: uploadError } = await supabase.storage
             .from('exports')
             .upload(storagePath, file, {

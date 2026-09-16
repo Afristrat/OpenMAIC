@@ -27,7 +27,13 @@ for (const [name, route, row] of [
   [
     'export',
     exportFile,
-    { id: 'job', stage_id: 'stage', format: 'mp4', status: 'done', storage_path: 'stage/job.mp4' },
+    {
+      id: 'job',
+      stage_id: 'stage',
+      format: 'scorm12',
+      status: 'done',
+      storage_path: 'stage/job.scorm12.zip',
+    },
   ],
   [
     'video',

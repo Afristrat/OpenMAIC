@@ -14,6 +14,7 @@ import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { privateArtifactUrl } from '@/lib/server/private-artifact-url';
 import { createLogger } from '@/lib/logger';
+import { exportJobArtifactPath } from '@/lib/export/export-job-artifact';
 
 export const dynamic = 'force-dynamic';
 const log = createLogger('ExportJobStatusAPI');
@@ -41,8 +42,10 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
   const download = request.nextUrl.searchParams.get('download') === '1';
   if (exportJob.status === 'done' && exportJob.storage_path) {
     try {
-      const extension = exportJob.format === 'mp4' ? 'mp4' : 'zip';
-      if (exportJob.storage_path !== `${exportJob.stage_id}/${exportJob.id}.${extension}`)
+      if (
+        exportJob.storage_path !==
+        exportJobArtifactPath(exportJob.stage_id, exportJob.id, exportJob.format)
+      )
         throw new Error();
       downloadUrl = await privateArtifactUrl(
         'exports',
