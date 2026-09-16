@@ -42,8 +42,8 @@ BEGIN
     RAISE EXCEPTION 'Unchanged consent invalidated an active epoch';
   END IF;
   PERFORM public.record_consented_learning(actor,'00000000-0036-4000-8000-000000000004','s036-proof-learning-20260909',sample,epoch);
-  IF has_function_privilege('anon','public.record_consented_learning(uuid,uuid,text,jsonb,uuid)','EXECUTE')
-    OR has_function_privilege('authenticated','public.record_consented_learning(uuid,uuid,text,jsonb,uuid)','EXECUTE') THEN
+  IF has_function_privilege('anon','public.record_consented_learning(uuid,uuid,text,jsonb,uuid,uuid)','EXECUTE')
+    OR has_function_privilege('authenticated','public.record_consented_learning(uuid,uuid,text,jsonb,uuid,uuid)','EXECUTE') THEN
     RAISE EXCEPTION 'Public service RPC';
   END IF;
 END;
