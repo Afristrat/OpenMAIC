@@ -120,12 +120,13 @@ zéro redémarrage et écoute locale sur `127.0.0.1:18080`.
 
 La recette authentifiée locale confirme `GET /xapi/about` HTTP 200, une
 écriture xAPI HTTP 200 et sa lecture. Aucun flag Qalem ni aucune configuration
-tenant n’a été activé. L’acteur de recette reste volontairement signalé dans le
-LRS car la route de suppression répond 400 : l’implémentation SQL LRS exige une
-forme d’actor-IFI plus précise que son exemple publié. Le volume n’a pas été
-supprimé pour masquer ce défaut.
+tenant n’a été activé. La première tentative de suppression a révélé le format
+canonique attendu par SQL LRS : `mbox::mailto:…`, et non l’adresse seule. La
+purge d’administration authentifiée a alors supprimé l’acteur pseudonymisé ;
+le contrôle final retourne zéro acteur de recette restant. Le volume n’a jamais
+été supprimé pour masquer une erreur.
 
 L’accès direct externe à `lrs.qalem.ma:443` demeure bloqué malgré le DNS A et
-Traefik en écoute sur ServeurIA. Corriger l’ingress réseau public, puis achever
-la purge physique de l’acteur pseudonymisé, sont les deux prérequis avant toute
-activation d’un tenant ou émission xAPI.
+Traefik en écoute sur ServeurIA. Corriger l’ingress réseau public reste le seul
+prérequis d’infrastructure avant une recette distante et toute activation d’un
+tenant ou émission xAPI.
