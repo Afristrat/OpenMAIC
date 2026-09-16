@@ -28,12 +28,20 @@ Les valeurs de `.env` sont créées depuis le coffre ; elles ne doivent jamais
 
 ## Mise en service sûre
 
-1. Créer le DNS direct et vérifier l’émission TLS par Traefik.
-2. Créer le compte d’administration permanent, puis supprimer le compte seed et
-   retirer ses variables de l’environnement du conteneur.
+1. Déposer, depuis le coffre, les quatre valeurs dédiées dans `/srv/qalem-lrs/.env` :
+   `LRSQL_API_KEY_DEFAULT`, `LRSQL_API_SECRET_DEFAULT`,
+   `LRSQL_ADMIN_USER_DEFAULT` et `LRSQL_ADMIN_PASS_DEFAULT`. Le compose refuse
+   volontairement de démarrer si l’une d’elles manque.
+2. Utiliser un compte d’administration permanent dédié et un couple xAPI dédié
+   à Qalem ; les quatre valeurs restent au coffre et dans l’environnement
+   protégé du service. Aucun compte seed, partagé ou tenant n’est admis.
 3. Conserver uniquement l’identifiant xAPI minimal pour Qalem ; ne jamais donner
    le compte d’administration à un tenant.
-4. Vérifier une écriture, une lecture et une suppression d’acteur de recette,
+4. Créer le DNS direct et vérifier l’émission TLS par Traefik. Si le port direct
+   est inaccessible depuis Internet, corriger l’ingress réseau : ne pas rendre
+   l’enregistrement proxifié par défaut, car un proxy CDN recevrait les corps
+   xAPI et les en-têtes d’authentification.
+5. Vérifier une écriture, une lecture et une suppression d’acteur de recette,
    avec un acteur pseudonymisé, avant toute activation organisationnelle.
 
 La suppression physique d’un acteur est activée dans SQL LRS exclusivement pour

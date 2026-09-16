@@ -17,6 +17,15 @@ services:
       # L'API de suppression reste inaccessible depuis Internet : seul
       # l'administrateur local, via 127.0.0.1, peut purger un acteur xAPI.
       LRSQL_ENABLE_ADMIN_DELETE_ACTOR: "true"
+    entrypoint:
+      - /bin/sh
+      - -ceu
+      - |
+        : "$${LRSQL_API_KEY_DEFAULT:?LRSQL_API_KEY_DEFAULT doit être fourni}"
+        : "$${LRSQL_API_SECRET_DEFAULT:?LRSQL_API_SECRET_DEFAULT doit être fourni}"
+        : "$${LRSQL_ADMIN_USER_DEFAULT:?LRSQL_ADMIN_USER_DEFAULT doit être fourni}"
+        : "$${LRSQL_ADMIN_PASS_DEFAULT:?LRSQL_ADMIN_PASS_DEFAULT doit être fourni}"
+        exec /lrsql/bin/run_sqlite.sh
     ports:
       - 127.0.0.1:18080:8080
     volumes:
