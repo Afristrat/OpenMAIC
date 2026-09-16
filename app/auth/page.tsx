@@ -27,6 +27,7 @@ function AuthPageContent(): React.ReactElement {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>(inviteToken ? 'signup' : 'login');
 
@@ -65,6 +66,7 @@ function AuthPageContent(): React.ReactElement {
   async function handleEmailAuth(e: FormEvent): Promise<void> {
     e.preventDefault();
     setError('');
+    setNotice('');
     setIsSubmitting(true);
 
     try {
@@ -120,6 +122,35 @@ function AuthPageContent(): React.ReactElement {
       }
 
       router.push(returnPath);
+    } catch {
+      setError(t('auth.unexpectedError'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function sendPasswordSetupEmail(): Promise<void> {
+    setError('');
+    setNotice('');
+
+    if (!email.trim()) {
+      setError(t('auth.emailRequired'));
+      return;
+    }
+
+    const supabase = tryCreateClient();
+    if (!supabase) return;
+
+    setIsSubmitting(true);
+    try {
+      const { error: authError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+      if (authError) {
+        setError(authError.message);
+        return;
+      }
+      setNotice(t('auth.passwordSetupEmailSent'));
     } catch {
       setError(t('auth.unexpectedError'));
     } finally {
@@ -230,8 +261,18 @@ function AuthPageContent(): React.ReactElement {
                         />
                       </div>
                       {error && <p className="text-sm text-destructive">{error}</p>}
+                      {notice && <p className="text-sm text-muted-foreground">{notice}</p>}
                       <Button type="submit" className="w-full" disabled={isSubmitting}>
                         {isSubmitting ? t('auth.loggingIn') : t('auth.loginButton')}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="w-full"
+                        disabled={isSubmitting}
+                        onClick={() => void sendPasswordSetupEmail()}
+                      >
+                        {t('auth.passwordSetupEmail')}
                       </Button>
                     </form>
                   </TabsContent>
