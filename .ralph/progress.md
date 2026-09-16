@@ -1,5 +1,18 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 16 septembre 2026 — U-018, diagnostic xAPI réellement raccordé au LRS
+
+Le déploiement `2716df9` conserve `XAPI_ENABLED=false`, mais configure le
+diagnostic global sur l’ingress souverain `https://lrs.qalem.ma/xapi`. La recette
+authentifiée `scripts/proofs/u018-xapi-diagnostic.mjs`, exécutée depuis
+ServeurIA, a vérifié avec une session super-administratrice éphémère le statut
+HTTP 200 (`configured=true`, `emissionEnabled=false`) puis le test HTTP 200
+(`connectionVerified=true`, `writeVerified=false`). Aucun statement n’est créé
+par ce diagnostic ; le jeton de rafraîchissement de la session de preuve est
+révoqué et refusé avant fermeture. U-018 reste `to_validate` jusqu’au gate
+complet du SHA de clôture et à la décision humaine de conservation. Preuve :
+`docs/validation/U-018-xapi-diagnostics.md`.
+
 ## 16 septembre 2026 — Réconciliation PRD3 des gaps déjà soldés
 
 Le contrôle machine des statuts a identifié cinq US `completed/passes=true`
