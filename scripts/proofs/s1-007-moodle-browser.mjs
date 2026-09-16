@@ -30,7 +30,9 @@ try {
   step = 'activity';
   await page.goto(`https://lms-test.qalem.ma/mod/scorm/view.php?id=${courseModuleId}`, { waitUntil: 'commit' });
   step = 'activity-launch';
-  await page.locator('#n').click({ noWaitAfter: true });
+  await page.locator('#scormviewform').evaluate((form) => {
+    form.requestSubmit(form.querySelector('#n'));
+  });
   step = 'player';
   await page.locator('#scorm_object').waitFor({ state: 'attached' });
   const sco = page.frameLocator('#scorm_object');
