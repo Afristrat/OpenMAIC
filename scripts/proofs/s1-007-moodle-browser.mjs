@@ -9,16 +9,20 @@ assert.ok(password && password.length >= 32, 'Identifiant de recette absent');
 assert.match(courseModuleId ?? '', /^\d+$/);
 
 const browser = await chromium.launch({ headless: true });
-let step = 'login';
+let step = 'login-page';
 let completionRequest = false;
 try {
   const page = await browser.newPage();
+  page.setDefaultTimeout(90_000);
+  page.setDefaultNavigationTimeout(90_000);
   page.on('request', (request) => {
     if (request.url().includes('/mod/scorm/datamodel.php') && request.postData()?.includes('lesson_status')) completionRequest = true;
   });
   await page.goto('https://lms-test.qalem.ma/login/index.php', { waitUntil: 'commit' });
+  step = 'login-credentials';
   await page.locator('#username').fill(`qalem-${marker}`);
   await page.locator('#password').fill(password);
+  step = 'login-submit';
   await Promise.all([
     page.waitForURL((url) => url.pathname !== '/login/index.php', { waitUntil: 'commit' }),
     page.locator('#loginbtn').click({ noWaitAfter: true }),
