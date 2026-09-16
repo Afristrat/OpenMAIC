@@ -83,3 +83,28 @@ Références primaires : [ADL, PUT Statements](https://github.com/adlnet/xAPI-Sp
 73512 exit 0 : 16 tests ciblés, TypeScript 4 Gio et lint global. Premier lancement arrêté parce que le dossier tests/telemetry manquait dans le runner ; dossier créé et fichier transféré, puis validation complète réussie. 1655 exit 0 : trois Chromium diagnostic FR/AR/EN/RTL, API simulées, pas une preuve de réception des événements. SQL scripts/validation/s035-outbox-replay.sql sur PostgreSQL réel, rôle service_role et BEGIN/ROLLBACK : premier contenu/destination/timestamps/statut préservés ; zéro ligne synthétique ensuite. Identifiants explicites négatifs, aucune séquence consommée. Lecture réelle de xapi_outbox : aucune ligne à cette date. Aucune configuration, aucun flag, aucune migration durable modifiés ; aucun LRS contacté. Mnemo fetch failed.
 
 Non déployé, pas de gate/build au SHA propre (runner antérieur avec overlays). Restent événements cours quiz/slide/PBL/discussion et contexte, consentement atomique/retrait et tenant dans outbox/delivery, pseudonymisation/export/purge cohérents, recette LRS réelle et intégrée. L’absence actuelle d’historique ne dispense pas de revérifier les livraisons ambiguës lors du déploiement. S-035 reste ouverte.
+
+## 16 septembre 2026 — LRS déployé mais neutralisé avant initialisation sûre
+
+Le contrôle de production a établi que `qalem-lrs` (SQL LRS Yet Analytics) était
+en cours d’exécution sur un volume Docker persistant, mais que son fichier
+d’environnement ne déclarait aucun des quatre identifiants nécessaires à son
+initialisation : clé et secret xAPI, utilisateur et mot de passe
+d’administration. L’API répondait localement et Traefik répondait avec le SNI
+correct ; en revanche, `https://lrs.qalem.ma/xapi/about` expirait aussi depuis
+Hostinger. Aucun client Qalem n’en dépendait : `organization_lrs_configs=0`,
+`enabled=0` et `xapi_outbox=0`.
+
+Le conteneur non initialisé a donc été arrêté puis supprimé, sans toucher au
+volume `qalem_lrs_data`. Le compose versionné impose désormais ces quatre
+variables au démarrage et utilise `$${…}` afin que Docker Compose ne les
+interpole jamais dans la commande inspectable du conteneur. Une exécution
+éphémère avec les quatre variables absentes échoue explicitement ; le volume
+est confirmé conservé. Aucune donnée d’apprenant, clé ou configuration tenant
+n’a été modifiée.
+
+La prochaine étape n’est pas de rendre le DNS proxifié : le proxy CDN recevrait
+les corps xAPI et les en-têtes Basic. Il faut créer les quatre secrets Qalem
+dédiés au coffre, initialiser l’instance, corriger l’ingress direct de
+`lrs.qalem.ma`, puis prouver écriture, lecture et effacement physique d’un
+acteur pseudonymisé avant toute activation d’organisation.
