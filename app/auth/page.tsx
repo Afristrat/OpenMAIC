@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { resolveAuthReturnPath } from '@/lib/auth/return-path';
-import { isSupabaseInvitationCallback } from '@/lib/auth/invitation-callback';
+import { isSupabasePasswordSetupCallback } from '@/lib/auth/invitation-callback';
 
 function AuthPageContent(): React.ReactElement {
   const { t, locale } = useI18n();
@@ -20,7 +20,7 @@ function AuthPageContent(): React.ReactElement {
   const [authInviteState, setAuthInviteState] = useState<'none' | 'checking' | 'ready' | 'invalid'>(
     () =>
       typeof window !== 'undefined' &&
-      isSupabaseInvitationCallback(window.location.search, window.location.hash)
+      isSupabasePasswordSetupCallback(window.location.search, window.location.hash)
         ? 'checking'
         : 'none',
   );
