@@ -4811,7 +4811,8 @@
         "Tester fallback, séparation des cohortes et résultat observable sans promettre un gain non mesuré."
       ],
       "closureEvidence": [
-        "2026-09-16 — Les migrations Director ont été appliquées atomiquement après sauvegarde PostgreSQL complète et prévol ROLLBACK ; director_receipts et begin_director_receipt sont présents. Aucune cohorte, collecte ou promesse de gain n’est activée par cette opération de schéma."
+        "2026-09-16 — Les migrations Director ont été appliquées atomiquement après sauvegarde PostgreSQL complète et prévol ROLLBACK ; director_receipts et begin_director_receipt sont présents. Aucune cohorte, collecte ou promesse de gain n’est activée par cette opération de schéma.",
+        "2026-09-16 — Le registre privé qalem_ops_private.reconciled_schema_batches est appliqué et porte le lot prd3-data-director-20260916 : neuf fichiers, prévol transaction-rollback et empreinte source c86bf2b5cacaf8c361323400ca251dca98bed91c9f51f0a8f04fbca970d455ed. Il trace ce lot réellement réconcilié sans fabriquer d’historique antérieur."
       ],
       "historicalEvidence": {
         "completedAt": "2026-03-29T11:47:17.413Z",
