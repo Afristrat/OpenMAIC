@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { toast } from 'sonner';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
@@ -204,7 +205,12 @@ function AgentVoicePill({
           }),
           signal: controller.signal,
         });
-        if (!res.ok) throw new Error('TTS error');
+        if (!res.ok) {
+          const payload = await res.json().catch(() => null);
+          throw new Error(
+            typeof payload?.error === 'string' ? payload.error : 'TTS preview unavailable',
+          );
+        }
         const data = await res.json();
         if (!data.base64) throw new Error('No audio');
 
@@ -213,7 +219,10 @@ function AgentVoicePill({
         audio.addEventListener('ended', () => setPreviewingId(null));
         audio.addEventListener('error', () => setPreviewingId(null));
         await audio.play();
-      } catch {
+      } catch (error) {
+        if (!(error instanceof DOMException && error.name === 'AbortError')) {
+          toast.error(error instanceof Error ? error.message : t('settings.ttsTestFailed'));
+        }
         setPreviewingId(null);
       }
     },
@@ -483,7 +492,12 @@ function TeacherVoicePill({
           }),
           signal: controller.signal,
         });
-        if (!res.ok) throw new Error('TTS error');
+        if (!res.ok) {
+          const payload = await res.json().catch(() => null);
+          throw new Error(
+            typeof payload?.error === 'string' ? payload.error : 'TTS preview unavailable',
+          );
+        }
         const data = await res.json();
         if (!data.base64) throw new Error('No audio');
         const audio = new Audio(`data:audio/${data.format || 'mp3'};base64,${data.base64}`);
@@ -491,7 +505,10 @@ function TeacherVoicePill({
         audio.addEventListener('ended', () => setPreviewingId(null));
         audio.addEventListener('error', () => setPreviewingId(null));
         await audio.play();
-      } catch {
+      } catch (error) {
+        if (!(error instanceof DOMException && error.name === 'AbortError')) {
+          toast.error(error instanceof Error ? error.message : t('settings.ttsTestFailed'));
+        }
         setPreviewingId(null);
       }
     },
