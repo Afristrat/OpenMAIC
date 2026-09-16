@@ -47,7 +47,6 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       downloadUrl = await privateArtifactUrl(
         'exports',
         exportJob.storage_path,
-        request.signal,
         download,
       );
     } catch (error) {

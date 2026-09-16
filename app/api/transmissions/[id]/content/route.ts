@@ -41,7 +41,6 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
     const target = await privateArtifactUrl(
       'transmissions',
       transmission.visual_watermark_path,
-      request.signal,
       false,
     );
     return new NextResponse(null, {
