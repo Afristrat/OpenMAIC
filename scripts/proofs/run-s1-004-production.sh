@@ -7,6 +7,7 @@ set -Eeuo pipefail
 PROOF_BASE_URL="${PROOF_BASE_URL:-https://qalem.ma}"
 PROOF_WORKTREE="${PROOF_WORKTREE:-/tmp/qalem-s6013-155f9b3}"
 PROOF_GATE_IMAGE="${PROOF_GATE_IMAGE:-qalem-validation:playwright-1.58.2-ffmpeg}"
+PROOF_NODE_MODULES="${PROOF_NODE_MODULES:-}"
 PROOF_HARNESS_SHA="${PROOF_HARNESS_SHA:-$(git -C "$PROOF_WORKTREE" rev-parse HEAD)}"
 PROOF_MARKER="${PROOF_MARKER:-s1004-$(date -u +%Y%m%dT%H%M%SZ)-$RANDOM}"
 PROOF_ARTIFACT_DIR="${PROOF_ARTIFACT_DIR:-/tmp/qalem-s1004-artifacts/$PROOF_MARKER}"
@@ -190,8 +191,13 @@ NODE
 }
 
 set +e
+node_modules_mount=()
+if [[ -n "$PROOF_NODE_MODULES" ]]; then
+  node_modules_mount=(-v "$PROOF_NODE_MODULES:/workspace/node_modules:ro")
+fi
 docker run --rm --init --shm-size=2g \
   -v "$PROOF_WORKTREE:/workspace" \
+  "${node_modules_mount[@]}" \
   -v "$PROOF_ARTIFACT_DIR:$PROOF_ARTIFACT_DIR" \
   -w /workspace \
   -e PROOF_BASE_URL="$PROOF_BASE_URL" \
