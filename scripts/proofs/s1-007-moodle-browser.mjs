@@ -26,11 +26,9 @@ try {
   step = 'activity';
   await page.goto(`https://lms-test.qalem.ma/mod/scorm/view.php?id=${courseModuleId}`, { waitUntil: 'commit' });
   step = 'activity-launch';
-  await Promise.all([
-    page.waitForURL((url) => url.pathname === '/mod/scorm/player.php', { waitUntil: 'commit' }),
-    page.locator('#n').click({ noWaitAfter: true }),
-  ]);
+  await page.locator('#n').click({ noWaitAfter: true });
   step = 'player';
+  await page.locator('#scorm_object').waitFor({ state: 'attached' });
   const sco = page.frameLocator('#scorm_object');
   await sco.locator('#scorm-complete-btn').click();
   await assert.doesNotReject(() => sco.getByText('Ce cours a été marqué comme terminé.').waitFor());
