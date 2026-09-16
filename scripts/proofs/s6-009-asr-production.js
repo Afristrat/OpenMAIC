@@ -40,28 +40,38 @@ async function session() {
   const email = `${marker}@example.invalid`;
   const password = `${crypto.randomBytes(24).toString('base64url')}Aa1!`;
   const user = await serviceRequest('/auth/v1/admin/users', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password, email_confirm: true }),
   });
   assert.equal(user.status, 200);
   users.push(user.payload.id);
   const signed = await json(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
-    method: 'POST', headers: { apikey: anon, 'Content-Type': 'application/json' },
+    method: 'POST',
+    headers: { apikey: anon, 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
   });
   assert.equal(signed.status, 200);
   const ref = new URL(supabaseUrl).hostname.split('.')[0];
-  return { userId: user.payload.id, cookie: `sb-${ref}-auth-token=base64-${Buffer.from(JSON.stringify(signed.payload)).toString('base64url')}` };
+  return {
+    userId: user.payload.id,
+    cookie: `sb-${ref}-auth-token=base64-${Buffer.from(JSON.stringify(signed.payload)).toString('base64url')}`,
+  };
 }
 
 async function app(user, path, form) {
   return fetch(`${base}${path}`, {
-    method: 'POST', headers: { origin: base, cookie: user.cookie }, body: form,
+    method: 'POST',
+    headers: { origin: base, cookie: user.cookie },
+    body: form,
   });
 }
 
 function words(value, language) {
-  const normalized = value.normalize('NFKC').toLocaleLowerCase(language).replace(/[^\p{L}\p{N}\s]/gu, ' ');
+  const normalized = value
+    .normalize('NFKC')
+    .toLocaleLowerCase(language)
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ');
   return normalized.split(/\s+/u).filter(Boolean);
 }
 
@@ -112,7 +122,10 @@ async function fleur(config, offset = 0) {
 }
 
 function pcmWav(bytes) {
-  if (bytes.subarray(0, 4).toString('ascii') !== 'RIFF' || bytes.subarray(8, 12).toString('ascii') !== 'WAVE') {
+  if (
+    bytes.subarray(0, 4).toString('ascii') !== 'RIFF' ||
+    bytes.subarray(8, 12).toString('ascii') !== 'WAVE'
+  ) {
     throw new Error('FLEURS audio is not a WAV container');
   }
   let offset = 12;
@@ -137,7 +150,11 @@ async function transcribe(user, language, sample, kind) {
   form.set('orgId', organizationId);
   form.set('providerId', 'openai-whisper');
   form.set('language', language.code);
-  form.set('audio', new Blob([sample.bytes], { type: sample.type }), `${language.code}-${kind}.wav`);
+  form.set(
+    'audio',
+    new Blob([sample.bytes], { type: sample.type }),
+    `${language.code}-${kind}.wav`,
+  );
   const started = performance.now();
   const response = await app(user, '/api/transcription', form);
   const body = await response.json().catch(() => undefined);
@@ -153,14 +170,17 @@ async function transcribe(user, language, sample, kind) {
     referenceWords: words(sample.reference, language.code).length,
     hypothesisWords: words(body.text, language.code).length,
     wordErrorRate: Number(wordErrorRate(sample.reference, body.text, language.code).toFixed(4)),
-    ...(sample.durationSeconds ? { durationSeconds: Number(sample.durationSeconds.toFixed(2)) } : {}),
+    ...(sample.durationSeconds
+      ? { durationSeconds: Number(sample.durationSeconds.toFixed(2)) }
+      : {}),
   };
 }
 
 async function cleanup() {
   if (organizationId) {
     await serviceRequest(`/rest/v1/organizations?id=eq.${encodeURIComponent(organizationId)}`, {
-      method: 'DELETE', headers: { Prefer: 'return=minimal' },
+      method: 'DELETE',
+      headers: { Prefer: 'return=minimal' },
     });
     organizationId = undefined;
   }
@@ -175,14 +195,21 @@ async function main() {
     stage = 'compte';
     const user = await session();
     const organization = await serviceRequest('/rest/v1/organizations', {
-      method: 'POST', headers: { Prefer: 'return=representation', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: `S6-009 ${marker}`, default_locale: 'fr-FR', status: 'active', seat_limit: 1 }),
+      method: 'POST',
+      headers: { Prefer: 'return=representation', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: `S6-009 ${marker}`,
+        default_locale: 'fr-FR',
+        status: 'active',
+        seat_limit: 1,
+      }),
     });
     assert.equal(organization.status, 201);
     organizationId = organization.payload?.[0]?.id;
     assert(typeof organizationId === 'string');
     const membership = await serviceRequest('/rest/v1/org_members', {
-      method: 'POST', headers: { Prefer: 'return=minimal', 'Content-Type': 'application/json' },
+      method: 'POST',
+      headers: { Prefer: 'return=minimal', 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_id: user.userId, org_id: organizationId, role: 'admin' }),
     });
     assert.equal(membership.status, 201);

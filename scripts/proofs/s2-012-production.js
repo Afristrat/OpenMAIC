@@ -73,7 +73,9 @@ async function app(session, path, method = 'GET', body) {
 }
 
 function rawX25519PublicKey(key) {
-  return Buffer.from(key.export({ format: 'der', type: 'spki' })).subarray(-32).toString('base64url');
+  return Buffer.from(key.export({ format: 'der', type: 'spki' }))
+    .subarray(-32)
+    .toString('base64url');
 }
 
 function publicEd25519Key(x) {
@@ -82,7 +84,12 @@ function publicEd25519Key(x) {
 
 function verifySigned(value, publicKey) {
   assert.equal(
-    crypto.verify(null, Buffer.from(JSON.stringify(value.claims)), publicKey, Buffer.from(value.signature, 'base64url')),
+    crypto.verify(
+      null,
+      Buffer.from(JSON.stringify(value.claims)),
+      publicKey,
+      Buffer.from(value.signature, 'base64url'),
+    ),
     true,
   );
 }
@@ -93,7 +100,10 @@ function decryptArtifact(bytes, devicePrivateKey, publicKey) {
   const license = Buffer.from(JSON.stringify(artifact.package.license));
   const ephemeralPrefix = Buffer.from('302a300506032b656e032100', 'hex');
   const peer = crypto.createPublicKey({
-    key: Buffer.concat([ephemeralPrefix, Buffer.from(artifact.key_envelope.ephemeral_public_key, 'base64url')]),
+    key: Buffer.concat([
+      ephemeralPrefix,
+      Buffer.from(artifact.key_envelope.ephemeral_public_key, 'base64url'),
+    ]),
     format: 'der',
     type: 'spki',
   });
@@ -106,29 +116,47 @@ function decryptArtifact(bytes, devicePrivateKey, publicKey) {
   );
   const open = (ciphertext, nonce, aad, secret) => {
     const encrypted = Buffer.from(ciphertext, 'base64url');
-    const decipher = crypto.createDecipheriv('aes-256-gcm', secret, Buffer.from(nonce, 'base64url'));
+    const decipher = crypto.createDecipheriv(
+      'aes-256-gcm',
+      secret,
+      Buffer.from(nonce, 'base64url'),
+    );
     decipher.setAAD(aad);
     decipher.setAuthTag(encrypted.subarray(-16));
     return Buffer.concat([decipher.update(encrypted.subarray(0, -16)), decipher.final()]);
   };
-  const contentKey = open(artifact.key_envelope.ciphertext, artifact.key_envelope.nonce, license, key);
-  return { artifact, content: open(artifact.package.ciphertext, artifact.package.nonce, license, contentKey) };
+  const contentKey = open(
+    artifact.key_envelope.ciphertext,
+    artifact.key_envelope.nonce,
+    license,
+    key,
+  );
+  return {
+    artifact,
+    content: open(artifact.package.ciphertext, artifact.package.nonce, license, contentKey),
+  };
 }
 
 async function cleanup() {
   if (packageId && organizationId) {
-    await serviceRequest(`/storage/v1/object/local-content-packages/${organizationId}/${packageId}.qalempkg`, {
-      method: 'DELETE',
-    });
+    await serviceRequest(
+      `/storage/v1/object/local-content-packages/${organizationId}/${packageId}.qalempkg`,
+      {
+        method: 'DELETE',
+      },
+    );
   }
   if (organizationId) {
     await serviceRequest(`/rest/v1/organizations?id=eq.${encodeURIComponent(organizationId)}`, {
-      method: 'DELETE', headers: { Prefer: 'return=minimal' },
+      method: 'DELETE',
+      headers: { Prefer: 'return=minimal' },
     });
     organizationId = undefined;
   }
   for (const userId of createdUsers.splice(0)) {
-    await serviceRequest(`/auth/v1/admin/users/${encodeURIComponent(userId)}`, { method: 'DELETE' });
+    await serviceRequest(`/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
+      method: 'DELETE',
+    });
   }
 }
 
@@ -150,7 +178,12 @@ async function main() {
     const organization = await serviceRequest('/rest/v1/organizations', {
       method: 'POST',
       headers: { Prefer: 'return=representation', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: `S2-012 ${marker}`, default_locale: 'fr-FR', status: 'active', seat_limit: 1 }),
+      body: JSON.stringify({
+        name: `S2-012 ${marker}`,
+        default_locale: 'fr-FR',
+        status: 'active',
+        seat_limit: 1,
+      }),
     });
     assert.equal(organization.status, 201);
     organizationId = organization.payload?.[0]?.id;
@@ -162,10 +195,15 @@ async function main() {
     });
     assert.equal(membership.status, 201);
     stage = 'source';
-    const text = 'Preuve locale contrôlée : l’apprentissage adulte relie expérience et application professionnelle.';
+    const text =
+      'Preuve locale contrôlée : l’apprentissage adulte relie expérience et application professionnelle.';
     const source = await app(session, '/api/source-library', 'POST', {
-      orgId: organizationId, name: `${marker}.txt`, mimeType: 'text/plain', sizeBytes: Buffer.byteLength(text),
-      parserId: 's2-012-production', content: { text, images: [] },
+      orgId: organizationId,
+      name: `${marker}.txt`,
+      mimeType: 'text/plain',
+      sizeBytes: Buffer.byteLength(text),
+      parserId: 's2-012-production',
+      content: { text, images: [] },
     });
     assert.equal(source.status, 201);
     const sourceId = source.payload?.source?.id;
@@ -174,18 +212,27 @@ async function main() {
     const deviceId = crypto.randomUUID();
     const device = crypto.generateKeyPairSync('x25519');
     const enrolled = await app(session, '/api/local/devices', 'POST', {
-      orgId: organizationId, deviceId, encryptionPublicKey: rawX25519PublicKey(device.publicKey), label: 'Recette S2-012',
+      orgId: organizationId,
+      deviceId,
+      encryptionPublicKey: rawX25519PublicKey(device.publicKey),
+      label: 'Recette S2-012',
     });
     assert.equal(enrolled.status, 201);
     stage = 'emission';
     const issued = await app(session, '/api/local/packages', 'POST', {
-      orgId: organizationId, sourceId, deviceId, expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      orgId: organizationId,
+      sourceId,
+      deviceId,
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
     });
     assert.equal(issued.status, 201);
     packageId = issued.payload?.packageId;
     assert(typeof packageId === 'string');
     stage = 'telechargement';
-    const download = await app(session, `/api/local/packages/${packageId}?orgId=${organizationId}&deviceId=${deviceId}`);
+    const download = await app(
+      session,
+      `/api/local/packages/${packageId}?orgId=${organizationId}&deviceId=${deviceId}`,
+    );
     assert.equal(download.status, 200);
     const signing = await json(`${base}/api/local/public-key`);
     assert.equal(signing.status, 200);
@@ -194,20 +241,37 @@ async function main() {
     assert.equal(opened.content.toString('utf8').includes('apprentissage adulte'), true);
     const licenseId = opened.artifact.package.license.claims.license_id;
     stage = 'statut-actif';
-    const active = await json(`${base}/api/local/licenses/${licenseId}/status?deviceId=${deviceId}`);
+    const active = await json(
+      `${base}/api/local/licenses/${licenseId}/status?deviceId=${deviceId}`,
+    );
     assert.equal(active.status, 200);
     verifySigned(active.payload?.status, publicKey);
     assert.equal(active.payload.status.claims.revoked, false);
     stage = 'revocation';
-    const revoked = await app(session, '/api/local/devices', 'DELETE', { orgId: organizationId, deviceId });
+    const revoked = await app(session, '/api/local/devices', 'DELETE', {
+      orgId: organizationId,
+      deviceId,
+    });
     assert.equal(revoked.status, 204);
-    const afterRevocation = await json(`${base}/api/local/licenses/${licenseId}/status?deviceId=${deviceId}`);
+    const afterRevocation = await json(
+      `${base}/api/local/licenses/${licenseId}/status?deviceId=${deviceId}`,
+    );
     assert.equal(afterRevocation.status, 200);
     verifySigned(afterRevocation.payload?.status, publicKey);
     assert.equal(afterRevocation.payload.status.claims.revoked, true);
-    const denied = await app(session, `/api/local/packages/${packageId}?orgId=${organizationId}&deviceId=${deviceId}`);
+    const denied = await app(
+      session,
+      `/api/local/packages/${packageId}?orgId=${organizationId}&deviceId=${deviceId}`,
+    );
     assert.equal(denied.status, 404);
-    summary.statuses = { enrolled: enrolled.status, issued: issued.status, download: download.status, active: active.status, revoked: revoked.status, denied: denied.status };
+    summary.statuses = {
+      enrolled: enrolled.status,
+      issued: issued.status,
+      download: download.status,
+      active: active.status,
+      revoked: revoked.status,
+      denied: denied.status,
+    };
     const cleanedOrganizationId = organizationId;
     await cleanup();
     const counts = await Promise.all([

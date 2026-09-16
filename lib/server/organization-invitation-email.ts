@@ -70,7 +70,9 @@ export async function sendOrganizationInvitationEmail(input: {
         organization: input.organizationName,
       }),
       text: [
-        translate(input.locale, 'org.invitationEmailIntro', { organization: input.organizationName }),
+        translate(input.locale, 'org.invitationEmailIntro', {
+          organization: input.organizationName,
+        }),
         input.inviteUrl,
         translate(input.locale, 'org.invitationEmailFooter'),
       ].join('\n\n'),

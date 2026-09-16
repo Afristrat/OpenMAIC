@@ -88,44 +88,73 @@ async function createFixture(learner, stockSize) {
   organizations.push(organization.id);
   await insert('org_members', { user_id: learner.userId, org_id: organization.id, role: 'admin' });
   const stageId = `${marker}-${stockSize}`;
-  await insert('stages', { id: stageId, owner_id: learner.userId, org_id: organization.id, name: `S3-005 ${stockSize}` });
+  await insert('stages', {
+    id: stageId,
+    owner_id: learner.userId,
+    org_id: organization.id,
+    name: `S3-005 ${stockSize}`,
+  });
   const course = await insert('courses', {
-    id: crypto.randomUUID(), owner_id: learner.userId, org_id: organization.id, stage_id: stageId,
-    title: `S3-005 ${stockSize}`, language: 'fr-FR', source_kind: 'generated', status: 'ready', outline: {},
+    id: crypto.randomUUID(),
+    owner_id: learner.userId,
+    org_id: organization.id,
+    stage_id: stageId,
+    title: `S3-005 ${stockSize}`,
+    language: 'fr-FR',
+    source_kind: 'generated',
+    status: 'ready',
+    outline: {},
   });
   const casting = await insert('castings', {
-    user_id: learner.userId, course_id: course.id,
+    user_id: learner.userId,
+    course_id: course.id,
     lineup: { participants: [{ role: 'facilitateur', name: 'Hanae' }] },
     lineup_hash: crypto.createHash('sha256').update(`${marker}-${stockSize}`).digest('hex'),
   });
   const live = await insert('live_sessions', {
-    course_id: course.id, user_id: learner.userId, casting_id: casting.id, recorded: true,
-    started_at: new Date(Date.now() - 1_000).toISOString(), ended_at: new Date().toISOString(),
+    course_id: course.id,
+    user_id: learner.userId,
+    casting_id: casting.id,
+    recorded: true,
+    started_at: new Date(Date.now() - 1_000).toISOString(),
+    ended_at: new Date().toISOString(),
   });
   const event = await insert('session_events', {
-    session_id: live.id, ts_ms: 1, actor: 'user', event_type: 'learner_proposition',
+    session_id: live.id,
+    ts_ms: 1,
+    actor: 'user',
+    event_type: 'learner_proposition',
     payload: { marker, stockSize },
   });
   const kinds = [
-    ...Array(4).fill('anecdote'), ...Array(4).fill('highlight'),
-    ...Array(2).fill('joke'), ...Array(2).fill('quiz_reminder'),
+    ...Array(4).fill('anecdote'),
+    ...Array(4).fill('highlight'),
+    ...Array(2).fill('joke'),
+    ...Array(2).fill('quiz_reminder'),
   ];
   const extraCycle = ['anecdote', 'highlight', 'joke', 'quiz_reminder'];
   while (kinds.length < stockSize) kinds.push(extraCycle[(kinds.length - 12) % extraCycle.length]);
   const seeds = [];
   for (const kind of kinds) {
-    seeds.push(await insert('seeds', {
-      session_id: live.id, persona: 'Hanae', kind,
-      content: { provenance: { event_id: event.id, source_kind: 'learner_proposition' } },
-      source_event_id: event.id, source_kind: 'learner_proposition', source_version: `course:${course.id}`,
-    }));
+    seeds.push(
+      await insert('seeds', {
+        session_id: live.id,
+        persona: 'Hanae',
+        kind,
+        content: { provenance: { event_id: event.id, source_kind: 'learner_proposition' } },
+        source_event_id: event.id,
+        source_kind: 'learner_proposition',
+        source_version: `course:${course.id}`,
+      }),
+    );
   }
   return { sessionId: live.id, seeds };
 }
 
 async function setAnchoring(enabled) {
   const result = await serviceRequest('/rest/v1/feature_flags?flag_name=eq.anchoring', {
-    method: 'PATCH', headers: { Prefer: 'return=representation', 'Content-Type': 'application/json' },
+    method: 'PATCH',
+    headers: { Prefer: 'return=representation', 'Content-Type': 'application/json' },
     body: JSON.stringify({ enabled }),
   });
   assert.equal(result.status, 200, 'Cannot update anchoring flag');
@@ -133,7 +162,9 @@ async function setAnchoring(enabled) {
 }
 
 async function deliveries(planId) {
-  const result = await serviceRequest(`/rest/v1/anchor_deliveries?plan_id=eq.${encodeURIComponent(planId)}&select=seed_id,delivery_kind,scheduled_for,dedupe_key&order=scheduled_for.asc`);
+  const result = await serviceRequest(
+    `/rest/v1/anchor_deliveries?plan_id=eq.${encodeURIComponent(planId)}&select=seed_id,delivery_kind,scheduled_for,dedupe_key&order=scheduled_for.asc`,
+  );
   assert.equal(result.status, 200);
   return result.payload;
 }
@@ -144,13 +175,26 @@ function assertPlan(stockSize, fixture, response, rows) {
   assert.equal(response.payload?.selectedSeedIds?.length, 12);
   assert.equal(rows.length, 14);
   assert.equal(new Set(rows.map((row) => row.dedupe_key)).size, 14);
-  assert(rows.every((row, index) => index === 0 || row.scheduled_for > rows[index - 1].scheduled_for));
+  assert(
+    rows.every((row, index) => index === 0 || row.scheduled_for > rows[index - 1].scheduled_for),
+  );
   const selected = new Map(fixture.seeds.map((seed) => [seed.id, seed.kind]));
   const selectedKinds = response.payload.selectedSeedIds.map((id) => selected.get(id));
-  for (const [kind, expected] of Object.entries({ anecdote: 4, highlight: 4, joke: 2, quiz_reminder: 2 })) {
-    assert.equal(selectedKinds.filter((value) => value === kind).length, expected, `Bad ${kind} mix`);
+  for (const [kind, expected] of Object.entries({
+    anecdote: 4,
+    highlight: 4,
+    joke: 2,
+    quiz_reminder: 2,
+  })) {
+    assert.equal(
+      selectedKinds.filter((value) => value === kind).length,
+      expected,
+      `Bad ${kind} mix`,
+    );
   }
-  const plannedSeedIds = rows.filter((row) => row.delivery_kind !== 'cold_eval').map((row) => row.seed_id);
+  const plannedSeedIds = rows
+    .filter((row) => row.delivery_kind !== 'cold_eval')
+    .map((row) => row.seed_id);
   assert.deepEqual(new Set(plannedSeedIds), new Set(response.payload.selectedSeedIds));
   assert.equal(new Set(plannedSeedIds).size, 12);
   assert.equal(fixture.seeds.length - plannedSeedIds.length, stockSize - 12);
@@ -163,11 +207,14 @@ async function cleanup() {
   await setAnchoring(originalAnchoring).catch(() => undefined);
   for (const organizationId of organizations.splice(0)) {
     await serviceRequest(`/rest/v1/organizations?id=eq.${encodeURIComponent(organizationId)}`, {
-      method: 'DELETE', headers: { Prefer: 'return=minimal' },
+      method: 'DELETE',
+      headers: { Prefer: 'return=minimal' },
     });
   }
   for (const userId of users.splice(0)) {
-    await serviceRequest(`/auth/v1/admin/users/${encodeURIComponent(userId)}`, { method: 'DELETE' });
+    await serviceRequest(`/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
+      method: 'DELETE',
+    });
   }
 }
 
@@ -175,7 +222,9 @@ async function main() {
   const summary = {};
   try {
     stage = 'flag';
-    const flag = await serviceRequest('/rest/v1/feature_flags?flag_name=eq.anchoring&select=enabled');
+    const flag = await serviceRequest(
+      '/rest/v1/feature_flags?flag_name=eq.anchoring&select=enabled',
+    );
     assert.equal(flag.status, 200);
     assert.equal(flag.payload?.length, 1, 'Anchoring flag missing');
     originalAnchoring = flag.payload[0].enabled;
@@ -184,10 +233,16 @@ async function main() {
     const learner = await createLearner();
     for (const stockSize of [12, 13, 20]) {
       const fixture = await createFixture(learner, stockSize);
-      const response = await app(learner, `/api/live-sessions/${fixture.sessionId}/anchor-plan`, { optedIn: true });
+      const response = await app(learner, `/api/live-sessions/${fixture.sessionId}/anchor-plan`, {
+        optedIn: true,
+      });
       const rows = await deliveries(response.payload?.plan?.id);
       assertPlan(stockSize, fixture, response, rows);
-      summary[stockSize] = { status: response.status, deliveries: rows.length, selected: response.payload.selectedSeedIds.length };
+      summary[stockSize] = {
+        status: response.status,
+        deliveries: rows.length,
+        selected: response.payload.selectedSeedIds.length,
+      };
     }
     stage = 'cleanup';
     await cleanup();

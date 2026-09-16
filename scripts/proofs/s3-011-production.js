@@ -98,7 +98,12 @@ async function createFixture({ learner, orgId, suffix, courseId, sourceId, sourc
   const ownedCourseId = courseId ?? crypto.randomUUID();
   if (!courseId) {
     const stageId = `${marker}-${suffix}`;
-    await insert('stages', { id: stageId, owner_id: learner.userId, org_id: orgId, name: `S3-011 ${suffix}` });
+    await insert('stages', {
+      id: stageId,
+      owner_id: learner.userId,
+      org_id: orgId,
+      name: `S3-011 ${suffix}`,
+    });
     await insert('courses', {
       id: ownedCourseId,
       owner_id: learner.userId,
@@ -157,22 +162,33 @@ async function createFixture({ learner, orgId, suffix, courseId, sourceId, sourc
     sent_at: optedInAt.toISOString(),
     dedupe_key: `${marker}-${suffix}`,
   });
-  return { courseId: ownedCourseId, sessionId: live.id, eventId: event.id, seedId: seed.id, deliveryId: delivery.id };
+  return {
+    courseId: ownedCourseId,
+    sessionId: live.id,
+    eventId: event.id,
+    seedId: seed.id,
+    deliveryId: delivery.id,
+  };
 }
 
 async function cleanup() {
   for (const organizationId of organizations.splice(0)) {
     await serviceRequest(`/rest/v1/organizations?id=eq.${encodeURIComponent(organizationId)}`, {
-      method: 'DELETE', headers: { Prefer: 'return=minimal' },
+      method: 'DELETE',
+      headers: { Prefer: 'return=minimal' },
     });
   }
   for (const userId of users.splice(0)) {
-    await serviceRequest(`/auth/v1/admin/users/${encodeURIComponent(userId)}`, { method: 'DELETE' });
+    await serviceRequest(`/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
+      method: 'DELETE',
+    });
   }
 }
 
 async function countOrganization(orgId) {
-  const result = await serviceRequest(`/rest/v1/organizations?id=eq.${encodeURIComponent(orgId)}&select=id`);
+  const result = await serviceRequest(
+    `/rest/v1/organizations?id=eq.${encodeURIComponent(orgId)}&select=id`,
+  );
   assert.equal(result.status, 200);
   assert(Array.isArray(result.payload));
   return result.payload.length;
@@ -210,11 +226,17 @@ async function main() {
     });
     stage = 'parcours';
     const aliceFixture = await createFixture({
-      learner: alice, orgId: tenantOne, suffix: 'alice', sourceId: manifest.id,
+      learner: alice,
+      orgId: tenantOne,
+      suffix: 'alice',
+      sourceId: manifest.id,
       sourceVersion: `manifest:${manifest.id}`,
     });
     const brunoFixture = await createFixture({
-      learner: bruno, orgId: tenantOne, suffix: 'bruno', courseId: aliceFixture.courseId,
+      learner: bruno,
+      orgId: tenantOne,
+      suffix: 'bruno',
+      courseId: aliceFixture.courseId,
       sourceVersion: `manifest:${manifest.id}`,
     });
     const claraFixture = await createFixture({ learner: clara, orgId: tenantTwo, suffix: 'clara' });
@@ -223,37 +245,74 @@ async function main() {
       method: 'POST',
       headers: { Prefer: 'return=minimal', 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        session_id: aliceFixture.sessionId, persona: 'facilitateur', kind: 'highlight', content: {},
-        source_event_id: claraFixture.eventId, source_kind: 'learner_proposition', source_version: 'foreign',
+        session_id: aliceFixture.sessionId,
+        persona: 'facilitateur',
+        kind: 'highlight',
+        content: {},
+        source_event_id: claraFixture.eventId,
+        source_kind: 'learner_proposition',
+        source_version: 'foreign',
       }),
     });
     assert(foreignProvenance.status >= 400, 'Foreign provenance was accepted');
     stage = 'reflexion';
-    const own = await app(alice, `/api/anchor-deliveries/${aliceFixture.deliveryId}/reflection`, 'POST', {
-      responseKind: 'action_in_practice', responseText: 'Je teste cette pratique dans mon contexte professionnel.',
-    });
-    const duplicate = await app(alice, `/api/anchor-deliveries/${aliceFixture.deliveryId}/reflection`, 'POST', {
-      responseKind: 'active_recall', responseText: 'Tentative en double.',
-    });
-    const sameTenantForeign = await app(bruno, `/api/anchor-deliveries/${aliceFixture.deliveryId}/reflection`, 'POST', {
-      responseKind: 'active_recall', responseText: 'Tentative hors parcours.',
-    });
-    const crossTenantForeign = await app(clara, `/api/anchor-deliveries/${aliceFixture.deliveryId}/reflection`, 'POST', {
-      responseKind: 'active_recall', responseText: 'Tentative hors tenant.',
-    });
+    const own = await app(
+      alice,
+      `/api/anchor-deliveries/${aliceFixture.deliveryId}/reflection`,
+      'POST',
+      {
+        responseKind: 'action_in_practice',
+        responseText: 'Je teste cette pratique dans mon contexte professionnel.',
+      },
+    );
+    const duplicate = await app(
+      alice,
+      `/api/anchor-deliveries/${aliceFixture.deliveryId}/reflection`,
+      'POST',
+      {
+        responseKind: 'active_recall',
+        responseText: 'Tentative en double.',
+      },
+    );
+    const sameTenantForeign = await app(
+      bruno,
+      `/api/anchor-deliveries/${aliceFixture.deliveryId}/reflection`,
+      'POST',
+      {
+        responseKind: 'active_recall',
+        responseText: 'Tentative hors parcours.',
+      },
+    );
+    const crossTenantForeign = await app(
+      clara,
+      `/api/anchor-deliveries/${aliceFixture.deliveryId}/reflection`,
+      'POST',
+      {
+        responseKind: 'active_recall',
+        responseText: 'Tentative hors tenant.',
+      },
+    );
     assert.equal(own.status, 201);
     assert.equal(duplicate.status, 409);
     assert.equal(sameTenantForeign.status, 404);
     assert.equal(crossTenantForeign.status, 404);
     stage = 'retrait-source';
-    const withdrawn = await serviceRequest(`/rest/v1/organization_sources?id=eq.${encodeURIComponent(sourceId)}`, {
-      method: 'DELETE', headers: { Prefer: 'return=minimal' },
-    });
+    const withdrawn = await serviceRequest(
+      `/rest/v1/organization_sources?id=eq.${encodeURIComponent(sourceId)}`,
+      {
+        method: 'DELETE',
+        headers: { Prefer: 'return=minimal' },
+      },
+    );
     assert.equal(withdrawn.status, 204);
-    const remaining = await serviceRequest(`/rest/v1/organization_sources?id=eq.${encodeURIComponent(sourceId)}&select=id`);
+    const remaining = await serviceRequest(
+      `/rest/v1/organization_sources?id=eq.${encodeURIComponent(sourceId)}&select=id`,
+    );
     assert.equal(remaining.status, 200);
     assert.deepEqual(remaining.payload, []);
-    const reflection = await serviceRequest(`/rest/v1/anchor_reflections?delivery_id=eq.${encodeURIComponent(aliceFixture.deliveryId)}&select=source_event_id,user_id`);
+    const reflection = await serviceRequest(
+      `/rest/v1/anchor_reflections?delivery_id=eq.${encodeURIComponent(aliceFixture.deliveryId)}&select=source_event_id,user_id`,
+    );
     assert.equal(reflection.status, 200);
     assert.equal(reflection.payload?.length, 1);
     assert.equal(String(reflection.payload[0].source_event_id), String(aliceFixture.eventId));
@@ -271,7 +330,8 @@ async function main() {
     const cleanedTenantTwo = tenantTwo;
     await cleanup();
     const cleanupRows = await Promise.all([
-      countOrganization(cleanedTenantOne), countOrganization(cleanedTenantTwo),
+      countOrganization(cleanedTenantOne),
+      countOrganization(cleanedTenantTwo),
     ]);
     assert.deepEqual(cleanupRows, [0, 0]);
     summary.cleanupRows = cleanupRows;

@@ -154,7 +154,9 @@ export function TenantsTab(): React.ReactElement {
         administratorInvitationEmailSent?: boolean;
       };
       if (!response.ok || !body.administratorInvitationUrl) throw new Error('tenant-create');
-      setInvitationUrl(body.administratorInvitationEmailSent ? null : body.administratorInvitationUrl);
+      setInvitationUrl(
+        body.administratorInvitationEmailSent ? null : body.administratorInvitationUrl,
+      );
       setName('');
       setAdministratorEmail('');
       toast.success(t('admin.tenants.created'));

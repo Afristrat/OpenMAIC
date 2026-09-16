@@ -147,8 +147,5 @@ export async function POST(request: NextRequest): Promise<Response> {
     // is an explicit, recoverable fallback when the provider is temporarily down.
     administratorInvitationEmailSent = false;
   }
-  return apiSuccess(
-    { tenant, administratorInvitationUrl, administratorInvitationEmailSent },
-    201,
-  );
+  return apiSuccess({ tenant, administratorInvitationUrl, administratorInvitationEmailSent }, 201);
 }
