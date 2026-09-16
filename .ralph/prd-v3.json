@@ -4607,7 +4607,8 @@
       ],
       "closureEvidence": [
         "2026-09-15 — Le manifeste versionné `infra/lrs/docker-compose.production.yml` prépare un SQL LRS Yet Analytics immuable, sur volume persistant, limité à 768 Mio, avec TLS Traefik direct et seule la surface `/xapi` publique. L’administration est liée à 127.0.0.1:18080. La validation distante `docker compose config --quiet` et `bash -n` réussit avec des valeurs factices ; aucun secret, DNS, conteneur, LRS, consentement ou envoi n’est créé par cette préparation.",
-        "2026-09-16 — Contrôle de production : `qalem-lrs` était actif sur volume persistant mais son environnement ne contenait aucune des quatre variables d’initialisation xAPI/administration. L’API locale répondait et le SNI Traefik était correct, mais l’endpoint public expirait depuis Hostinger. Avec organization_lrs_configs=0, enabled=0 et xapi_outbox=0, le conteneur non initialisé a été arrêté puis supprimé, volume conservé. Le SHA 0959618 impose désormais un garde de démarrage qui refuse les secrets absents sans les interpoler dans la commande Docker. Détail : docs/validation/S-035-xapi-delivery.md."
+        "2026-09-16 — Contrôle de production : `qalem-lrs` était actif sur volume persistant mais son environnement ne contenait aucune des quatre variables d’initialisation xAPI/administration. L’API locale répondait et le SNI Traefik était correct, mais l’endpoint public expirait depuis Hostinger. Avec organization_lrs_configs=0, enabled=0 et xapi_outbox=0, le conteneur non initialisé a été arrêté puis supprimé, volume conservé. Le SHA 0959618 impose désormais un garde de démarrage qui refuse les secrets absents sans les interpoler dans la commande Docker. Détail : docs/validation/S-035-xapi-delivery.md.",
+        "2026-09-16 — Après transaction de prévol intégralement annulée, les migrations xAPI cours/ANCRER ont été appliquées atomiquement, avec sauvegarde PostgreSQL complète contrôlée par SHA-256. xapi_outbox.learning_observation_id est présent et xapi_emission est relu false : aucun LRS, tenant ou envoi n’est activé."
       ],
       "historicalEvidence": {
         "completedAt": "2026-03-29T11:28:49.856Z",
@@ -4668,7 +4669,9 @@
         "Avant toute activation, confirmer finalité, données et consentement avec le responsable du produit.",
         "Prouver collecte consentie, absence de collecte refusée, agrégation et suppression ; ne jamais présenter un identifiant hashé comme une anonymisation garantie."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-16 — Les migrations de collecte et projection associées au PRD3 ont été appliquées atomiquement après sauvegarde complète et prévol ROLLBACK sur le schéma réel. Le flag xapi_emission demeure false ; aucune collecte réelle n’est activée. Les recettes intégrées, purges et revalidation restent explicitement ouvertes."
+      ],
       "historicalEvidence": {
         "completedAt": "2026-03-29T11:28:49.856Z",
         "status": "legacy_claim_not_delivery_proof"
@@ -4713,7 +4716,9 @@
         "Tester zéro observation, une observation exploitable et plusieurs observations, sans seuil caché dans le calcul ou chez l’appelant.",
         "Mesurer l’effet sur un protocole d’évaluation défini avant l’expérience ; aucune amélioration pédagogique déclarée sur simple présence du module."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-16 — Les dépendances structurelles de collecte et de reçus Director ont été appliquées atomiquement après sauvegarde PostgreSQL complète et prévol ROLLBACK. Aucun flag de collecte n’est activé ; aucune amélioration n’est déclarée sans recette et protocole d’effet."
+      ],
       "historicalEvidence": {
         "completedAt": "2026-03-29T11:28:49.856Z",
         "status": "legacy_claim_not_delivery_proof"
@@ -4756,7 +4761,9 @@
         "Décider la conservation de cette collecte et ses limites avant toute donnée réelle.",
         "Après choix, vérifier événements, agrégats, absence de collecte sans opt-in et contrôle d’accès."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-16 — Les migrations discussion→quiz ont été appliquées atomiquement après prévol ROLLBACK : recorded_at et discussion_pattern_id sont présents. Les flags restent désactivés ; recette intégrée, contrôle des accès et publication demeurent ouverts."
+      ],
       "historicalEvidence": {
         "completedAt": "2026-03-29T11:47:17.413Z",
         "status": "legacy_claim_not_delivery_proof"
@@ -4803,7 +4810,9 @@
         "Élaborer et consigner avant activation le protocole A/B délégué par le feu vert du 9 septembre ; aucun minimum de sessions, cohortes stables et mesures prédéfinies.",
         "Tester fallback, séparation des cohortes et résultat observable sans promettre un gain non mesuré."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-16 — Les migrations Director ont été appliquées atomiquement après sauvegarde PostgreSQL complète et prévol ROLLBACK ; director_receipts et begin_director_receipt sont présents. Aucune cohorte, collecte ou promesse de gain n’est activée par cette opération de schéma."
+      ],
       "historicalEvidence": {
         "completedAt": "2026-03-29T11:47:17.413Z",
         "status": "legacy_claim_not_delivery_proof"
