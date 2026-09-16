@@ -20,14 +20,14 @@ try {
   await page.locator('#username').fill(`qalem-${marker}`);
   await page.locator('#password').fill(password);
   await Promise.all([
-    page.waitForURL((url) => url.pathname !== '/login/index.php'),
-    page.locator('#loginbtn').click(),
+    page.waitForURL((url) => url.pathname !== '/login/index.php', { waitUntil: 'commit' }),
+    page.locator('#loginbtn').click({ noWaitAfter: true }),
   ]);
   step = 'activity';
   await page.goto(`https://lms-test.qalem.ma/mod/scorm/view.php?id=${courseModuleId}`, { waitUntil: 'domcontentloaded' });
   await Promise.all([
-    page.waitForURL((url) => url.pathname === '/mod/scorm/player.php'),
-    page.locator('#n').click(),
+    page.waitForURL((url) => url.pathname === '/mod/scorm/player.php', { waitUntil: 'commit' }),
+    page.locator('#n').click({ noWaitAfter: true }),
   ]);
   step = 'player';
   const sco = page.frameLocator('#scorm_object');
