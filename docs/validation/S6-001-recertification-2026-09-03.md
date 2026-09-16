@@ -47,3 +47,20 @@ Le volume nommé `a14gf0n3u719hnnd2yujrtmr_capture-storage-states` est monté en
 La preuve de production S6-029, exécutée sur la même image web, ajoute une session authentifiée réelle, le catalogue publié HTTP 200, la génération tenant autorisée HTTP 200, le refus intertenant HTTP 403, le rechargement et le rendu interactif. Tous les comptes, organisations, invitations, templates, versions, publications, sessions et fichiers de preuve ont ensuite été contrôlés à zéro ou absents.
 
 Enfin, `git rev-parse HEAD` et `git ls-remote origin refs/heads/refork-v030` ont retourné le même SHA `d2797fbd2e1e50e0580595bd1879cce014816273` avant la clôture. LiteLLM, hébergé sur Hostinger, n’a pas été touché par ces déploiements Qalem sur ServeurIA.
+
+## Recertification du 16 septembre 2026
+
+SHA fonctionnel testé : `ebfa8220959694b2f743397240edd97d67da5abc`.
+
+La gate a été exécutée sur ServeurIA dans un clone neuf et isolé, avec les dépendances installées depuis le lockfile. Elle a produit le journal temporaire `qalem-gate-ebfa822.log`, dont l’empreinte SHA-256 est `7d462985d4c1fe294f7b4f17a25510f6791eec1403f752a62a4b66c29809e026`.
+
+| Contrôle | Résultat |
+|---|---|
+| Formatage global | Conforme |
+| TypeScript | Sortie 0 |
+| ESLint | Sortie 0 |
+| Vitest | 536 fichiers, 3 312 tests verts |
+| Build | Sortie 0, 126 routes, isolation des routes validée |
+| Playwright Chromium | 193 scénarios verts en 7,6 minutes |
+
+Le build a été exécuté avec un plafond V8 de 8 Gio dans le conteneur de validation. Le déploiement Coolify `aqbluv8r8hilwn2jeqe8ucdu` s’est terminé le 16 septembre 2026 à 13:27:35 ; son conteneur web porte l’image `ebfa8220959694b2f743397240edd97d67da5abc`, est healthy, sans redémarrage ni OOM, conserve l’URL Supabase interne attendue et répond HTTP 200 sur `/api/health`.
