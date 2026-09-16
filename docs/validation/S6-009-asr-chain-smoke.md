@@ -79,3 +79,27 @@ connecteurs. La preuve LiteLLM → Cloudflare → DGX reste donc indisponible ;
 elle exige un jeton Cloudflare ayant au minimum accès en lecture au compte et
 au tunnel réellement exploités, ou une preuve équivalente produite depuis
 l’administration Cloudflare. Aucune mutation Cloudflare n’a été effectuée.
+
+## Réconciliation Tailscale du 16 septembre 2026
+
+Cloudflare n’est plus un maillon retenu pour l’exécution ASR : la topologie
+cible est Qalem → LiteLLM Hostinger → DGX par Tailscale. Depuis Hostinger, le
+daemon Tailscale est `Running` et les deux pairs DGX ont répondu à trois pings
+chacun : 45 ms répétés vers le premier, puis 67 à 127 ms vers le second, via
+les relais DERP. Une connexion directe n’a pas été établie pendant cet essai,
+mais le transport chiffré Tailscale était fonctionnel.
+
+La clé virtuelle Qalem, interrogée auprès de LiteLLM, expose exactement les
+trois modèles ASR `qwen3-asr`, `whisper-1` et `whisper-large-v3`. Le conteneur
+LiteLLM Hostinger est healthy. La lecture de ses trois routes confirme une
+`api_base` configurée pour chacune ; chacune résout toutefois vers un DNS
+public, et non vers l’un des deux pairs DGX ni vers une adresse Tailscale. La
+connectivité Hostinger→DGX par Tailscale est donc prouvée, mais elle n’est pas
+encore le chemin de dispatch actif de LiteLLM. Aucune mutation n’a été faite
+sur ce routage tant que le port et le contrat HTTP du service ASR DGX ne sont
+pas établis.
+
+Restent explicitement ouverts : le basculement vérifié des trois routes
+LiteLLM vers le backend DGX par Tailscale, une trace de dispatch non sensible,
+le microphone physique avec ses pannes réelles, et l’acceptation humaine des
+mesures de transcription. S6-009 demeure donc à valider.
