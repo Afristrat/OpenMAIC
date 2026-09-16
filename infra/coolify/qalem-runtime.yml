@@ -33,6 +33,9 @@ x-qalem-environment: &qalem-environment
   SERPER_API_KEY: ${SERPER_API_KEY:-runtime-only}
   SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
   SMTP_FROM: ${SMTP_FROM:-runtime-only}
+  # Les workers n'ont pas accès au DNS public Supabase depuis leur réseau
+  # Coolify. Kong partage l'alias interne persistant sur ce même réseau.
+  SUPABASE_INTERNAL_URL: http://qalem-internal-kong:8000
   TTS_HIGGS_BASE_URL: ${TTS_HIGGS_BASE_URL}
   TTS_HIGGS_MODELS: ${TTS_HIGGS_MODELS}
   TTS_VOXCPM_API_KEY: ${TTS_VOXCPM_API_KEY}
