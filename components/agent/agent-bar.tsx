@@ -910,7 +910,12 @@ export function AgentBar({
           agentIndex={agentIndex}
           availableProviders={availableProviders}
           orgId={orgId}
-          disabled={!ttsEnabled || availableProviders.length === 0}
+          // A preview is billable and tenant-scoped. The home screen renders
+          // before useOrganizations has resolved its default tenant; leaving
+          // this interactive during that interval sent an empty orgId to the
+          // API, which it correctly rejects. Every creator regains the same
+          // standard voices as soon as their active organization is resolved.
+          disabled={!orgId || !ttsEnabled || availableProviders.length === 0}
         />
       </div>
     );
@@ -974,7 +979,7 @@ export function AgentBar({
                   <TeacherVoicePill
                     availableProviders={availableProviders}
                     orgId={orgId}
-                    disabled={!ttsEnabled || availableProviders.length === 0}
+                    disabled={!orgId || !ttsEnabled || availableProviders.length === 0}
                   />
                 </div>
               )}
