@@ -6,7 +6,9 @@ Le TTS Higgs de production retournait un WAV valide, mais les deux sélecteurs
 de voix de l’accueil authentifié contournaient le lecteur partagé et jouaient
 une URL `data:` par deux implémentations distinctes. Ils utilisent désormais
 `useTTSPreview` : Blob/URL objet nettoyée, requête annulable, contexte tenant
-explicite et erreur remontée. S6-012 est volontairement rouverte en
+explicite et erreur remontée. Coolify a construit et servi le SHA
+`d4577f1a89a4edc90c13d275a8db6ce53f2a716c` dans un conteneur healthy ; la
+sonde publique retourne 200 et TTS disponible. S6-012 est volontairement rouverte en
 `to_validate` jusqu’à l’écoute sur un navigateur réel après déploiement ; une
 réponse HTTP TTS ne vaut pas preuve d’audibilité. Référence :
 `docs/validation/S6-012-voice-preview-regression-2026-09-16.md`.
