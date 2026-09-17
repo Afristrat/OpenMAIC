@@ -13,32 +13,39 @@ export async function GET(request: NextRequest): Promise<Response> {
   const auth = await requireSuperAdmin(request);
   if (auth.response) return auth.response;
 
+  const url = new URL(request.url);
+  const limit = Math.min(Math.max(Number(url.searchParams.get('limit') ?? 20) || 20, 1), 50);
+  const offset = Math.max(Number(url.searchParams.get('offset') ?? 0) || 0, 0);
+  const query = (url.searchParams.get('query') ?? '').trim().slice(0, 100);
+  const status = url.searchParams.get('status');
+  if (status !== null && status !== 'active' && status !== 'suspended') {
+    return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid tenant status filter');
+  }
   const supabase = createServiceSupabaseClient();
-  const [
-    { data: tenants, error },
-    { data: members, error: membersError },
-    { data: invitations, error: invitationsError },
-  ] = await Promise.all([
-    supabase
-      .from('organizations')
-      .select('id, name, sector, default_locale, status, seat_limit, created_at, updated_at')
-      .order('created_at', { ascending: false }),
-    supabase.from('org_members').select('org_id'),
-    supabase
-      .from('org_invitations')
-      .select('org_id')
-      .is('used_at', null)
-      .gt('expires_at', new Date().toISOString()),
-  ]);
-
-  if (error || membersError || invitationsError) {
+  let tenantQuery = supabase.from('organizations').select(
+    'id, name, sector, default_locale, status, seat_limit, created_at, updated_at',
+    { count: 'exact' },
+  ).order('created_at', { ascending: false }).range(offset, offset + limit - 1);
+  if (query) tenantQuery = tenantQuery.ilike('name', `%${query.replaceAll('%', '\\%').replaceAll('_', '\\_')}%`);
+  if (status) tenantQuery = tenantQuery.eq('status', status);
+  const { data: tenants, error, count } = await tenantQuery;
+  if (error) {
     return apiError(
       API_ERROR_CODES.INTERNAL_ERROR,
       500,
       'Failed to list tenants',
-      error?.message ?? membersError?.message ?? invitationsError?.message,
+      error.message,
     );
   }
+
+  const tenantIds = (tenants ?? []).map((tenant) => tenant.id);
+  const [{ data: members, error: membersError }, { data: invitations, error: invitationsError }] = tenantIds.length
+    ? await Promise.all([
+        supabase.from('org_members').select('org_id').in('org_id', tenantIds),
+        supabase.from('org_invitations').select('org_id').in('org_id', tenantIds).is('used_at', null).gt('expires_at', new Date().toISOString()),
+      ])
+    : [{ data: [], error: null }, { data: [], error: null }];
+  if (membersError || invitationsError) return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to load tenant summary');
 
   // ponytail: one reconciliation RPC per tenant; replace with a set-returning
   // RPC only if measured tenant volume makes this administration view slow.
@@ -81,6 +88,7 @@ export async function GET(request: NextRequest): Promise<Response> {
       pendingInvitationCount: invitationCounts.get(tenant.id) ?? 0,
       creditBalanceMicrounits: creditBalances.get(tenant.id) ?? 0,
     })),
+    page: { offset, limit, total: count ?? 0 },
   });
 }
 

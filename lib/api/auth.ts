@@ -151,6 +151,7 @@ export async function requireOrgMember(req: NextRequest, orgId: string): Promise
 export async function requireOrgAdmin(req: NextRequest, orgId: string): Promise<AuthResult> {
   const auth = await requireAuth(req);
   if (auth.response) return auth;
+  if (isSuperAdminEmail(auth.user.email)) return auth;
 
   try {
     const supabase = await createServerSupabaseClient();

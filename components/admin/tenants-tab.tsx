@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { toast } from 'sonner';
@@ -111,6 +112,7 @@ function TenantCredits({
 
 export function TenantsTab(): React.ReactElement {
   const { t } = useI18n();
+  const router = useRouter();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -120,20 +122,29 @@ export function TenantsTab(): React.ReactElement {
   const [seatLimit, setSeatLimit] = useState(1);
   const [administratorEmail, setAdministratorEmail] = useState('');
   const [invitationUrl, setInvitationUrl] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | Tenant['status']>('all');
+  const [offset, setOffset] = useState(0);
+  const [total, setTotal] = useState(0);
+  const pageSize = 20;
 
   const loadTenants = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/admin/tenants');
+      const params = new URLSearchParams({ limit: String(pageSize), offset: String(offset) });
+      if (query.trim()) params.set('query', query.trim());
+      if (statusFilter !== 'all') params.set('status', statusFilter);
+      const response = await fetch(`/api/admin/tenants?${params}`);
       if (!response.ok) throw new Error('tenant-list');
-      const body = (await response.json()) as { tenants?: Tenant[] };
+      const body = (await response.json()) as { tenants?: Tenant[]; page?: { total?: number } };
       setTenants(body.tenants ?? []);
+      setTotal(body.page?.total ?? 0);
     } catch {
       toast.error(t('admin.tenants.loadFailed'));
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, [offset, query, statusFilter, t]);
 
   useEffect(() => {
     void loadTenants();
@@ -271,6 +282,13 @@ export function TenantsTab(): React.ReactElement {
       </form>
 
       <section className="space-y-3" aria-label={t('admin.tenants.list')}>
+        <form className="flex flex-wrap gap-3 rounded-xl border bg-card p-4" onSubmit={(event) => { event.preventDefault(); setOffset(0); void loadTenants(); }}>
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('admin.tenants.search')} className="min-w-56 flex-1 rounded-md border bg-background px-3 py-2" />
+          <select value={statusFilter} onChange={(event) => { setStatusFilter(event.target.value as 'all' | Tenant['status']); setOffset(0); }} className="rounded-md border bg-background px-3 py-2">
+            <option value="all">{t('admin.tenants.status.all')}</option><option value="active">{t('admin.tenants.status.active')}</option><option value="suspended">{t('admin.tenants.status.suspended')}</option>
+          </select>
+          <Button type="submit" variant="outline">{t('admin.tenants.searchAction')}</Button>
+        </form>
         {loading ? (
           <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
         ) : tenants.length === 0 ? (
@@ -323,6 +341,7 @@ export function TenantsTab(): React.ReactElement {
                       ? t('admin.tenants.suspend')
                       : t('admin.tenants.activate')}
                   </Button>
+                  <Button type="button" variant="outline" onClick={() => router.push(`/org/${tenant.id}/admin`)}>{t('admin.tenants.openDetail')}</Button>
                 </div>
                 <TenantCredits tenant={tenant} disabled={saving} onSaved={loadTenants} />
                 <TenantEconomics tenantId={tenant.id} />
@@ -330,6 +349,7 @@ export function TenantsTab(): React.ReactElement {
             );
           })
         )}
+        {!loading && total > pageSize && <div className="flex items-center justify-between gap-3 pt-2"><p className="text-sm text-muted-foreground">{t('admin.tenants.pagination', { from: offset + 1, to: Math.min(offset + tenants.length, total), total })}</p><div className="flex gap-2"><Button type="button" variant="outline" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - pageSize))}>{t('common.previous')}</Button><Button type="button" variant="outline" disabled={offset + pageSize >= total} onClick={() => setOffset(offset + pageSize)}>{t('common.next')}</Button></div></div>}
       </section>
     </div>
   );

@@ -13,6 +13,7 @@ import type { OrgMemberRole } from '@/lib/supabase/types';
 import { createInstitutionalReportPdf } from '@/lib/reports/pdf';
 import { readReportPages } from '@/lib/reports/read-report-pages';
 import { REPORT_COVERAGE_NOTE } from '@/lib/reports/coverage';
+import { isSuperAdminEmail } from '@/lib/api/auth';
 
 async function getUserMembership(
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
@@ -83,7 +84,9 @@ async function readReport(
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 401, 'Authentication required');
   }
 
-  const membership = await getUserMembership(supabase, orgId, user.id);
+  const membership = isSuperAdminEmail(user.email ?? '')
+    ? { role: 'admin' as OrgMemberRole }
+    : await getUserMembership(supabase, orgId, user.id);
   if (!membership) {
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Not a member of this organization');
   }
