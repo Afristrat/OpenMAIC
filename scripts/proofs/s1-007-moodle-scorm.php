@@ -72,8 +72,14 @@ if ($action === 'prepare') {
     echo json_encode(['proof' => 'S1007_MOODLE_PREPARED', 'courseId' => $course->id, 'scormId' => $scorm->id, 'cmId' => $courseModule->id, 'scoCount' => $scoCount]) . PHP_EOL;
     exit(0);
     } catch (Throwable $error) {
-        if ($course) { delete_course($course, false); }
-        if ($user) { delete_user($user); }
+        // La cause de l’échec de préparation doit survivre à un nettoyage Moodle secondaire.
+        // Sinon une transaction de suppression avortée masque le défaut initial de la recette.
+        try {
+            if ($course) { delete_course($course, false); }
+            if ($user) { delete_user($user); }
+        } catch (Throwable $cleanupError) {
+            // Le nettoyage de secours sera repris par l’action explicite cleanup.
+        }
         throw $error;
     }
 }

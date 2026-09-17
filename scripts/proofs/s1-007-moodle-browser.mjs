@@ -28,7 +28,8 @@ try {
     page.locator('#loginbtn').click({ noWaitAfter: true }),
   ]);
   step = 'activity';
-  await page.goto(`https://lms-test.qalem.ma/mod/scorm/view.php?id=${courseModuleId}`, { waitUntil: 'commit' });
+  const activityResponse = await page.goto(`https://lms-test.qalem.ma/mod/scorm/view.php?id=${courseModuleId}`, { waitUntil: 'commit' });
+  assert.equal(activityResponse?.status(), 200, `L’activité SCORM Moodle répond ${activityResponse?.status() ?? 'sans réponse'}`);
   step = 'activity-launch';
   await page.locator('#scormviewform').evaluate((form) => {
     form.requestSubmit(form.querySelector('#n'));
