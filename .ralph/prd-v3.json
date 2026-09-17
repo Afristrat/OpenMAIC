@@ -3198,7 +3198,7 @@
       },
       "sourceDependencies": ["S1-003"],
       "dependencies": [],
-      "gap": "Réconciliation documentaire du 12 septembre 2026 : preuves historiques conservées ci-dessous, mais statut to_validate et passes=true étaient contradictoires. passes=false jusqu’à revue critère par critère au SHA livré, incluant activation effective et dépendances pertinentes ; ceci n’infère ni perte du code ni échec des recettes historiques.",
+      "gap": "Le contrat d’import documentaire vers outline éditable est fraîchement recertifié au SHA courant. Reste le parcours navigateur authentifié de dépôt, validation, édition et génération au SHA de clôture ; passes=false ne l’infère pas.",
       "evidence": [
         "app/api/courses/import/route.ts",
         "app/app/page.tsx",
@@ -3218,7 +3218,8 @@
         "2026-08-28 — Au SHA d7f570ea99ade95f924dcdb28ac49e0ac16958ce, le validateur impose un H1 unique, la hiérarchie et des sections obligatoires non vides ; importCanvasToClassroomPlan transforme ensuite le canevas conforme en ClassroomPlan natif chargé dans OutlinesEditor. Les tests permanents couvrent validation, hiérarchie et mapping de toutes les sections.",
         "2026-08-28 — Le pipeline persiste le fichier privé, le verdict, la source d’organisation, le manifeste immuable et un cours imported/draft ; la génération réutilise le même courseId et le rend ready sans écraser source_kind, import_id ni source_manifest_id. Le Playwright dépôt conforme → validation → modification du titre → génération → classroom passe, et les 15 scénarios ciblés import + bibliothèque de sources passent au SHA validé.",
         "2026-08-28 — Les PDF passent par extractPdfDocumentText, extraction partagée avec /api/parse-pdf : routage du provider existant, garde SSRF et repli unpdf vers MinerU/MinerU Cloud conservés. Le test permanent vérifie explicitement la délégation de l’import PDF au provider MinerU existant.",
-        "2026-08-28 — Gate complet sur ServeurIA dans le worktree isolé /tmp/qalem-s6013-155f9b3 et l’image qalem-validation:playwright-1.58.2-ffmpeg : Prettier, TypeScript et lint passent ; 385/385 fichiers et 2 505/2 505 tests Vitest, build 100/100 pages et 83/83 Playwright en 3,6 minutes. Journal /tmp/qalem-s1005-full-gate-d7f570e.log, SHA-256 77d98a4b43dfca7335867accb4de1760c86f32a51e296476c3fee62a3591f132."
+        "2026-08-28 — Gate complet sur ServeurIA dans le worktree isolé /tmp/qalem-s6013-155f9b3 et l’image qalem-validation:playwright-1.58.2-ffmpeg : Prettier, TypeScript et lint passent ; 385/385 fichiers et 2 505/2 505 tests Vitest, build 100/100 pages et 83/83 Playwright en 3,6 minutes. Journal /tmp/qalem-s1005-full-gate-d7f570e.log, SHA-256 77d98a4b43dfca7335867accb4de1760c86f32a51e296476c3fee62a3591f132.",
+        "2026-09-17 — Un clone neuf du SHA 42b06719d3798aaa93b4f78aad736b256e162cc9 passe 20/20 tests ciblés : validation du canevas, import API, transformation en plan, pipeline documentaire et reprise. Cette preuve ne remplace pas le parcours navigateur authentifié au SHA de clôture."
       ],
       "historicalEvidence": {
         "completedAt": null,
