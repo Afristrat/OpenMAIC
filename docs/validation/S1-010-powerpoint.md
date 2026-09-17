@@ -61,3 +61,15 @@ Résultat :
 - état Git distant : uniquement `packages/omml2mathml/node_modules/`, préexistant et hors périmètre.
 
 Journal : `/tmp/qalem-s1010-full-gate-f9af878.log`, SHA-256 `c489ef0438f825852e4b57cdebcecdbbab0c5447817739a4ba6c27a5b9337473`.
+
+## Revalidation structurelle — 17 septembre 2026
+
+Au SHA de harnais `f3bb926ad179171d4b7c3e62d254e2053d1a1302`, le générateur
+actuel produit à nouveau un PPTX de 54 793 octets et deux diapositives. Un
+parseur XML indépendant relit les 24 parties XML et relations du ZIP, vérifie
+les parties OOXML indispensables et retrouve les textes français et arabe
+attendus. L’artefact temporaire est supprimé à la fin de la recette.
+
+Cette revalidation confirme la structure du fichier actuel. Elle ne remplace
+pas une ouverture fraîche par Microsoft PowerPoint et ne permet donc pas de
+clore S1-010 seule.
