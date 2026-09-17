@@ -86,3 +86,18 @@ archive ZIP valide de 287 969 octets et suppression Storage confirmée. Les
 objets temporaires sont supprimés dans le flux de recette. Cette preuve
 confirme Qalem jusqu’à l’archive actuelle ; elle ne remplace pas le nouvel
 import Moodle et la complétion navigateur LMS requis pour clôturer S1-007.
+
+## État de la réimportation — 17 septembre 2026
+
+Le paquet actuel est importé par les API natives de Moodle 4.5.13 et son
+parseur retrouve deux SCO. Le cours, le compte apprenant et le module restent
+jetables et sont purgés à chaque essai. La consultation authentifiée de
+`mod/scorm/view.php` échoue toutefois avant le lancement du SCO : Moodle répond
+HTTP 404 avec « Unable to acquire a lock for caching ». Le répertoire de verrou
+global a été créé sur le volume et l’instance Moodle de test a été redémarrée
+sans OOM ni redémarrage anormal, mais le verrou de cache applicatif persiste.
+
+Cette situation est une dette de l’infrastructure Moodle de recette, pas une
+preuve de compatibilité SCORM. S1-007 reste donc `to_validate` : aucune
+complétion ni score Moodle ne sont affirmés au SHA courant avant correction
+durable du cache ou exécution dans un Moodle isolé sain.

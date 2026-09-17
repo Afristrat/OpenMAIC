@@ -3022,7 +3022,7 @@
       },
       "sourceDependencies": ["S0-008"],
       "dependencies": [],
-      "gap": "Réconciliation documentaire du 12 septembre 2026 : preuves historiques conservées ci-dessous, mais statut to_validate et passes=true étaient contradictoires. passes=false jusqu’à revue critère par critère au SHA livré, incluant activation effective et dépendances pertinentes ; ceci n’infère ni perte du code ni échec des recettes historiques.",
+      "gap": "Le 17 septembre 2026, Qalem produit encore le ZIP SCORM 1.2 actuel et Moodle 4.5.13 importe son manifeste avec deux SCO, mais la consultation authentifiée du module échoue sur le verrou de cache Moodle (« Unable to acquire a lock for caching »), y compris après création du répertoire de verrou et redémarrage sain du seul LMS de test. S1-007 reste to_validate jusqu’à une recette navigateur Moodle complète au SHA courant ; aucune complétion historique ne vaut validation actuelle.",
       "evidence": ["lib/export/scorm/tracking-adapters.ts", ".ralph/prd-v2.json#S1-007"],
       "acceptance": [
         "export_jobs scorm12 → zip imsmanifest.xml valide",
