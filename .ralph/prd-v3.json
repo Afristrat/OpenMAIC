@@ -2697,7 +2697,7 @@
       },
       "sourceDependencies": [],
       "dependencies": ["S-025"],
-      "gap": "Réconciliation documentaire du 12 septembre 2026 : preuves historiques conservées ci-dessous, mais statut to_validate et passes=true étaient contradictoires. passes=false jusqu’à revue critère par critère au SHA livré, incluant activation effective et dépendances pertinentes ; ceci n’infère ni perte du code ni échec des recettes historiques.",
+      "gap": "Le contrat local des rappels et du cache PWA est fraîchement recertifié au SHA courant. Restent la recette navigateur authentifiée au SHA de clôture, l’installation et l’usage physiques iOS/Android, ainsi que la délivrance distante application fermée (S3-002) ; passes=false ne les infère pas.",
       "evidence": [
         "components/service-worker-registrar.tsx",
         "components/settings/notification-settings.tsx",
@@ -2724,7 +2724,8 @@
         "2026-08-27 — Gate complet frais sur ServeurIA : Prettier, TypeScript et lint sans erreur ni avertissement, 371/371 fichiers et 2 458/2 458 tests Vitest, build de 97/97 pages, puis 78/78 tests Playwright en 3,8 minutes avec le build E2E correctement paramétré. Le conteneur de validation est resté sous 12 Gio sans OOM.",
         "2026-08-27 — Coolify a déployé l’application web au SHA exact c024d067eb98154358efc9f67e04bc595ac657e7. Le conteneur est running/healthy, zéro redémarrage et OOMKilled=false ; qalem.ma et /api/health répondent 200. Le /sw.js public répond 200, contient le contrat v3 et son SHA-256 24cecb05686bf79e9ef670cbdaab0bb4ddd926ce4d72f8ab436015791d5b4bd0 correspond octet pour octet au fichier validé.",
         "2026-08-27 — Recette authentifiée en production avec Chromium normal sous Xvfb : permission granted, préférence initiale inactive, une seule invocation et un seul rappel « Reviews due: 1. » malgré deux onglets ; zéro rappel après désactivation, zéro après suppression de la carte due, puis zéro pour le compte B sur le même navigateur. La préférence A reste dans sa clé dédiée, la clé B et l’ancienne clé globale sont absentes.",
-        "2026-08-27 — Nettoyage doublement vérifié : les deux comptes Auth temporaires sont supprimés, zéro profil et zéro carte associés ; contrôle SQL global final auth=0 et cards=0 pour les marqueurs S6-010. Aucun script temporaire n’a été conservé."
+        "2026-08-27 — Nettoyage doublement vérifié : les deux comptes Auth temporaires sont supprimés, zéro profil et zéro carte associés ; contrôle SQL global final auth=0 et cards=0 pour les marqueurs S6-010. Aucun script temporaire n’a été conservé.",
+        "2026-09-17 — Un clone neuf du SHA 97b3a245f09b1ee8ff04a386efc8fd5fa29d01d6, exécuté dans l’image de validation ServeurIA, passe 11/11 tests ciblés : 10 rappels (préférences, permission, échéance, déduplication et changement de compte) et 1 cache du service worker. Cette preuve ne remplace ni la recette navigateur au SHA de clôture ni les essais physiques mobiles."
       ],
       "completedAt": "2026-08-27",
       "historicalDependencies": [],
