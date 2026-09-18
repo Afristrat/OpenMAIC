@@ -22,7 +22,10 @@ const input = { courseId, orgId: 'tenant', sourceManifestId: manifestId };
 describe('course generation access', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.getUserById.mockResolvedValue({ data: { user: { email: 'author@example.com' } }, error: null });
+    mocks.getUserById.mockResolvedValue({
+      data: { user: { email: 'author@example.com' } },
+      error: null,
+    });
     const query = {
       select: () => query,
       eq: mocks.eq,
