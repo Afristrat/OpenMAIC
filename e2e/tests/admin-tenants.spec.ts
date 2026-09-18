@@ -62,7 +62,7 @@ test.describe('Administration des tenants (S6-022)', () => {
     let creditBalanceMicrounits = 0;
 
     await page.addInitScript(() => localStorage.setItem('locale', 'fr-FR'));
-    await page.route('**/api/admin/tenants', async (route) => {
+    await page.route('**/api/admin/tenants**', async (route) => {
       if (route.request().method() === 'POST') {
         const body = route.request().postDataJSON() as Record<string, unknown>;
         expect(body).toMatchObject({
@@ -152,7 +152,7 @@ test.describe('Administration des tenants (S6-022)', () => {
 
   test('conserve la navigation et le formulaire en RTL arabe', async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem('locale', 'ar-MA'));
-    await page.route('**/api/admin/tenants', (route) =>
+    await page.route('**/api/admin/tenants**', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -171,7 +171,7 @@ test.describe('Administration des tenants (S6-022)', () => {
     page,
   }) => {
     await page.addInitScript(() => localStorage.setItem('locale', 'fr-FR'));
-    await page.route('**/api/admin/tenants', (route) =>
+    await page.route('**/api/admin/tenants**', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
