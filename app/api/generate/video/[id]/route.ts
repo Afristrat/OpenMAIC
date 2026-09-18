@@ -32,11 +32,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
         !/^(-[0-9a-f-]{36})?\.(mp4|webm)$/.test(generationJob.storage_path.slice(prefix.length))
       )
         throw new Error();
-      downloadUrl = await privateArtifactUrl(
-        'exports',
-        generationJob.storage_path,
-        download,
-      );
+      downloadUrl = await privateArtifactUrl('exports', generationJob.storage_path, download);
     } catch {
       return apiError('INTERNAL_ERROR', 503, 'Video download unavailable');
     }

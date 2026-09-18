@@ -22,30 +22,42 @@ export async function GET(request: NextRequest): Promise<Response> {
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid tenant status filter');
   }
   const supabase = createServiceSupabaseClient();
-  let tenantQuery = supabase.from('organizations').select(
-    'id, name, sector, default_locale, status, seat_limit, created_at, updated_at',
-    { count: 'exact' },
-  ).order('created_at', { ascending: false }).range(offset, offset + limit - 1);
-  if (query) tenantQuery = tenantQuery.ilike('name', `%${query.replaceAll('%', '\\%').replaceAll('_', '\\_')}%`);
+  let tenantQuery = supabase
+    .from('organizations')
+    .select('id, name, sector, default_locale, status, seat_limit, created_at, updated_at', {
+      count: 'exact',
+    })
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+  if (query)
+    tenantQuery = tenantQuery.ilike(
+      'name',
+      `%${query.replaceAll('%', '\\%').replaceAll('_', '\\_')}%`,
+    );
   if (status) tenantQuery = tenantQuery.eq('status', status);
   const { data: tenants, error, count } = await tenantQuery;
   if (error) {
-    return apiError(
-      API_ERROR_CODES.INTERNAL_ERROR,
-      500,
-      'Failed to list tenants',
-      error.message,
-    );
+    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to list tenants', error.message);
   }
 
   const tenantIds = (tenants ?? []).map((tenant) => tenant.id);
-  const [{ data: members, error: membersError }, { data: invitations, error: invitationsError }] = tenantIds.length
-    ? await Promise.all([
-        supabase.from('org_members').select('org_id').in('org_id', tenantIds),
-        supabase.from('org_invitations').select('org_id').in('org_id', tenantIds).is('used_at', null).gt('expires_at', new Date().toISOString()),
-      ])
-    : [{ data: [], error: null }, { data: [], error: null }];
-  if (membersError || invitationsError) return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to load tenant summary');
+  const [{ data: members, error: membersError }, { data: invitations, error: invitationsError }] =
+    tenantIds.length
+      ? await Promise.all([
+          supabase.from('org_members').select('org_id').in('org_id', tenantIds),
+          supabase
+            .from('org_invitations')
+            .select('org_id')
+            .in('org_id', tenantIds)
+            .is('used_at', null)
+            .gt('expires_at', new Date().toISOString()),
+        ])
+      : [
+          { data: [], error: null },
+          { data: [], error: null },
+        ];
+  if (membersError || invitationsError)
+    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to load tenant summary');
 
   // ponytail: one reconciliation RPC per tenant; replace with a set-returning
   // RPC only if measured tenant volume makes this administration view slow.

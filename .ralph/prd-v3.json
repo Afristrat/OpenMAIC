@@ -2242,10 +2242,10 @@
           "Validation des fichiers audio et conservation du modèle Whisper administré face à un ancien modèle client.",
           "Tests permanents du parcours microphone, du refus de permission et de la panne amont."
         ],
-      "stillRequired": [
-        "Exécuter les tests ciblés et la gate qualité complète sur ServeurIA au SHA exact.",
-        "Recetter sur navigateur réel microphone → texte visible → usage Qalem, avec refus d’autorisation, fichier invalide et panne amont visibles.",
-        "Faire accepter humainement les mesures FLEURS sans seuil inventé."
+        "stillRequired": [
+          "Exécuter les tests ciblés et la gate qualité complète sur ServeurIA au SHA exact.",
+          "Recetter sur navigateur réel microphone → texte visible → usage Qalem, avec refus d’autorisation, fichier invalide et panne amont visibles.",
+          "Faire accepter humainement les mesures FLEURS sans seuil inventé."
         ],
         "certified": false
       },
@@ -2372,8 +2372,8 @@
         "commit:f03381c2cea114780704159f7b953d57002873a5",
         "commit:d8c782fe4de54eb9ffa48b9a8bdc10005708fcbb",
         "commit:2ed4715ed9bd23f4ce7add2456d0f1cb26734c8d",
-    "docs/validation/S6-012-voice-catalog-human-acceptance.md",
-    "docs/validation/S6-012-voice-preview-regression-2026-09-16.md"
+        "docs/validation/S6-012-voice-catalog-human-acceptance.md",
+        "docs/validation/S6-012-voice-preview-regression-2026-09-16.md"
       ],
       "acceptance": [
         "Établir le catalogue cible de dix voix FR et dix EN, avec genre déclaré, langue, fournisseur, identifiant et aperçu réel.",
@@ -2389,11 +2389,11 @@
         "2026-08-27 — Aller-retour production éphémère : Salma reçoit Rim (higgs-tts/higgs/rim) ; le choix est identique dans le job durable, la classroom générée et après rechargement Chromium, sans changement du prénom Salma, de l’avatar /avatars/assist.png ni du genre female.",
         "2026-08-27 — Régénération TTS production HTTP 200 : huit pistes sur huit régénérées sans modifier la voix persistée. Le WAV contrôlé répond 200, mesure 559 724 octets et 11,66 s, avec volume moyen −19,5 dB et crête −4,9 dB.",
         "2026-08-27 — Nettoyage re-vérifié après la preuve : zéro job, stage, scène, cours et objet Storage résiduels. L’écoute humaine des vingt aperçus n’est pas auto-déclarée et reste le seul critère ouvert.",
-    "2026-09-06 — Amine confirme dans la session Qalem l’écoute et l’acceptation humaine des vingt aperçus. Revalidation fraîche : /health Higgs répond 200 avec 16 profils, dont 10/10 identités qualifiées présentes ; le gate du SHA 01ac44b549f14cf3221b6649abd87ede9747dc1d passe 439/439 fichiers et 2 697/2 697 tests Vitest, build 113 pages et 112/112 Playwright sans retry. Référence : docs/validation/S6-012-voice-catalog-human-acceptance.md.",
-    "2026-09-16 — À la suite d’un signalement de préécoute silencieuse sur l’accueil authentifié, les deux sélecteurs ont été raccordés au lecteur commun useTTSPreview. Il décode le base64 en Blob/URL objet, révoque les ressources, annule la requête en cours et conserve l’organisation explicitement fournie. Coolify a terminé le déploiement w6qu5p0b4xier4zll51ea7le au SHA d4577f1a89a4edc90c13d275a8db6ce53f2a716c ; web healthy et santé publique 200 avec TTS disponible. La story reste rouverte : aucune réponse TTS HTTP ne prouve l’audibilité après déploiement ; référence docs/validation/S6-012-voice-preview-regression-2026-09-16.md.",
-    "2026-09-16 — Le SHA 47bb983e9d0456a2b7831be7972ce0cd96d6d1c4 élimine la course de chargement de tenant : les contrôles de préécoute restent désactivés tant que l’organisation active n’est pas résolue, puis s’ouvrent à tout créateur autorisé. Le rolling deploy Coolify a retiré l’ancien conteneur après disponibilité du nouveau (`healthy`) ; la santé publique retourne 200. L’écoute humaine dans les deux sélecteurs reste explicitement requise."
+        "2026-09-06 — Amine confirme dans la session Qalem l’écoute et l’acceptation humaine des vingt aperçus. Revalidation fraîche : /health Higgs répond 200 avec 16 profils, dont 10/10 identités qualifiées présentes ; le gate du SHA 01ac44b549f14cf3221b6649abd87ede9747dc1d passe 439/439 fichiers et 2 697/2 697 tests Vitest, build 113 pages et 112/112 Playwright sans retry. Référence : docs/validation/S6-012-voice-catalog-human-acceptance.md.",
+        "2026-09-16 — À la suite d’un signalement de préécoute silencieuse sur l’accueil authentifié, les deux sélecteurs ont été raccordés au lecteur commun useTTSPreview. Il décode le base64 en Blob/URL objet, révoque les ressources, annule la requête en cours et conserve l’organisation explicitement fournie. Coolify a terminé le déploiement w6qu5p0b4xier4zll51ea7le au SHA d4577f1a89a4edc90c13d275a8db6ce53f2a716c ; web healthy et santé publique 200 avec TTS disponible. La story reste rouverte : aucune réponse TTS HTTP ne prouve l’audibilité après déploiement ; référence docs/validation/S6-012-voice-preview-regression-2026-09-16.md.",
+        "2026-09-16 — Le SHA 47bb983e9d0456a2b7831be7972ce0cd96d6d1c4 élimine la course de chargement de tenant : les contrôles de préécoute restent désactivés tant que l’organisation active n’est pas résolue, puis s’ouvrent à tout créateur autorisé. Le rolling deploy Coolify a retiré l’ancien conteneur après disponibilité du nouveau (`healthy`) ; la santé publique retourne 200. L’écoute humaine dans les deux sélecteurs reste explicitement requise."
       ],
-    "completedAt": null,
+      "completedAt": null,
       "validationDebt": {
         "recordedAt": "2026-08-27",
         "decision": "Réouverte le 16 septembre 2026 : l’acceptation du catalogue demeure historique, mais le parcours de préécoute de l’accueil doit être recertifié après correction.",
@@ -3130,8 +3130,8 @@
         "2026-08-28 — Au SHA f9af878774704666a055f12d91d27cbe56d47414, le générateur permanent scripts/proofs/generate-s1-010-pptx.ts produit sur ServeurIA un PPTX Qalem de 54 793 octets et deux diapositives FR/AR. Les 10 fichiers et 17 tests du round-trip passent ; journal ciblé /tmp/qalem-s1010-targeted-f9af878.log, SHA-256 b217511a8a90ebd9fcea7eb69b0404c82bbfdfe1b247c2cc08ea6fd4173a421d.",
         "2026-08-28 — Le fichier transféré conserve le SHA-256 a9bd5216d968c8e00c507eba71945f9c4a9cf13f9fcdf6e89d39acf0420b03b9. Microsoft PowerPoint 16.0 l’ouvre en lecture seule sans exception, retrouve les quatre textes visibles et les deux notes de présentation FR/AR, puis rend les deux diapositives en PNG. Les bornes Office de chaque texte restent dans le canevas ; preuve locale C:\\projets\\Qalem\\proofs\\S1-010-f9af878\\powerpoint-open-evidence.json, SHA-256 bceff58068c6f7af39cf2680e44b8b187ac176c77e1e2bd06f5537c049b93273.",
         "2026-08-28 — Un postinstall racine complet sur ServeurIA régénère mathml2omml et pptxgenjs avec des artefacts non vides et datés après le lancement. Le contrôle a découvert puis corrigé la création parasite de packages/pptxgenjs/undefined : le cache rollup-plugin-typescript2 possède désormais un chemin explicite sous node_modules. Nouvelle exécution verte et worktree propre hors packages/omml2mathml/node_modules/ préexistant ; journal /tmp/qalem-s1010-postinstall-f9af878.log, SHA-256 7851bbdee6eaa441c992efc2d12d0c6f4d6f493872ec65ab2f8f9d9c095f7ab7.",
-        "2026-08-28 — Gate complet au SHA f9af878774704666a055f12d91d27cbe56d47414 dans qalem-validation:playwright-1.58.2-ffmpeg sur ServeurIA : Prettier, TypeScript et lint passent ; 385/385 fichiers et 2 505/2 505 tests Vitest, build 100/100 pages et 83/83 Playwright en 3,7 minutes. Le dossier undefined reste absent. Journal /tmp/qalem-s1010-full-gate-f9af878.log, SHA-256 c489ef0438f825852e4b57cdebcecdbbab0c5447817739a4ba6c27a5b9337473. Preuve permanente : docs/validation/S1-010-powerpoint.md."
-        ,"2026-09-17 — SHA de harnais f3bb926ad179171d4b7c3e62d254e2053d1a1302 : le générateur PPTX actuel produit 54 793 octets et deux diapositives. Un parseur XML indépendant relit les 24 parties XML/relations, les quatre parties OOXML obligatoires et les textes français/arabe attendus. L’artefact temporaire est supprimé après contrôle. Cette preuve structurelle ne remplace pas l’ouverture PowerPoint au SHA courant."
+        "2026-08-28 — Gate complet au SHA f9af878774704666a055f12d91d27cbe56d47414 dans qalem-validation:playwright-1.58.2-ffmpeg sur ServeurIA : Prettier, TypeScript et lint passent ; 385/385 fichiers et 2 505/2 505 tests Vitest, build 100/100 pages et 83/83 Playwright en 3,7 minutes. Le dossier undefined reste absent. Journal /tmp/qalem-s1010-full-gate-f9af878.log, SHA-256 c489ef0438f825852e4b57cdebcecdbbab0c5447817739a4ba6c27a5b9337473. Preuve permanente : docs/validation/S1-010-powerpoint.md.",
+        "2026-09-17 — SHA de harnais f3bb926ad179171d4b7c3e62d254e2053d1a1302 : le générateur PPTX actuel produit 54 793 octets et deux diapositives. Un parseur XML indépendant relit les 24 parties XML/relations, les quatre parties OOXML obligatoires et les textes français/arabe attendus. L’artefact temporaire est supprimé après contrôle. Cette preuve structurelle ne remplace pas l’ouverture PowerPoint au SHA courant."
       ],
       "historicalEvidence": {
         "completedAt": "2026-07-12",
