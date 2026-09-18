@@ -57,7 +57,9 @@ describe('tenant provisioning migration (S6-022)', () => {
     expect(auditFunction).not.toMatch(/NEW\.org_id|OLD\.org_id/);
     expect(auditCorrection).toMatch(/to_jsonb\(NEW\) ->> 'org_id'/i);
     expect(auditCorrection).toMatch(/to_jsonb\(OLD\) ->> 'org_id'/i);
-    expect(deletionCorrection).toMatch(/DROP CONSTRAINT tenant_admin_audit_tenant_id_fkey/i);
+    expect(deletionCorrection).toMatch(
+      /DROP CONSTRAINT(?: IF EXISTS)? tenant_admin_audit_tenant_id_fkey/i,
+    );
     expect(tokenRedaction).toMatch(/previous_record := previous_record - 'token'/i);
     expect(tokenRedaction).toMatch(/next_record := next_record - 'token'/i);
     expect(tokenRedaction).toMatch(/UPDATE public\.tenant_admin_audit/i);
