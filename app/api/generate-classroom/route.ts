@@ -16,6 +16,7 @@ import { enqueueClassroomGeneration } from '@/lib/jobs/queue';
 import {
   assertCourseGenerationAccess,
   CourseAccessError,
+  FreeCourseLimitError,
 } from '@/lib/server/course-generation-access';
 
 const log = createLogger('GenerateClassroom API');
@@ -120,6 +121,8 @@ export async function POST(req: NextRequest) {
       202,
     );
   } catch (error) {
+    if (error instanceof FreeCourseLimitError)
+      return apiError('QUOTA_EXCEEDED', 429, error.message);
     if (error instanceof CourseAccessError) return apiError('INVALID_REQUEST', 403, error.message);
     log.error(
       `Classroom generation job creation failed [requirement="${requirementSnippet ?? 'unknown'}..."]:`,

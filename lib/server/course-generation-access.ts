@@ -19,6 +19,12 @@ export class CourseAccessError extends Error {
   }
 }
 
+export class FreeCourseLimitError extends Error {
+  constructor() {
+    super('Free course limit reached');
+  }
+}
+
 /** Rechecked by the worker as queued requests can outlive a membership or ownership change. */
 export async function loadOwnedCourseForGeneration(
   courseId: string,
@@ -61,11 +67,28 @@ async function assertGenerationAuthor(orgId: string, ownerId?: string) {
   if (!membership.data) throw new CourseAccessError();
 }
 
+async function assertFreeCourseLimit(orgId: string) {
+  const db = createServiceSupabaseClient();
+  const organization = await db.from('organizations').select('plan').eq('id', orgId).maybeSingle();
+  if (organization.error || !organization.data) throw new Error('Course authorization unavailable');
+  if (organization.data.plan !== 'free') return;
+  const courses = await db
+    .from('courses')
+    .select('id', { count: 'exact', head: true })
+    .eq('org_id', orgId);
+  if (courses.error) throw new Error('Course quota unavailable');
+  if ((courses.count ?? 0) >= 3) throw new FreeCourseLimitError();
+}
+
 export async function assertCourseGenerationAccess(
   input: { courseId?: string; orgId: string; sourceManifestId?: string },
   ownerId?: string,
 ) {
-  if (!input.courseId) return assertGenerationAuthor(input.orgId, ownerId);
+  if (!input.courseId) {
+    await assertGenerationAuthor(input.orgId, ownerId);
+    await assertFreeCourseLimit(input.orgId);
+    return;
+  }
   const course = await loadOwnedCourseForGeneration(input.courseId, input.orgId, ownerId);
   if (course.source_manifest_id !== (input.sourceManifestId ?? null)) throw new CourseAccessError();
 }

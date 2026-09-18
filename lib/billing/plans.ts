@@ -8,7 +8,7 @@ import { createClient } from '@supabase/supabase-js';
 // Types
 // ---------------------------------------------------------------------------
 
-export type PlanId = 'unlicensed' | 'pro' | 'enterprise';
+export type PlanId = 'free' | 'unlicensed' | 'pro' | 'enterprise';
 
 export type Plan = {
   id: PlanId;
@@ -30,6 +30,14 @@ export type QuotaCheck = {
 // ---------------------------------------------------------------------------
 
 export const PLANS: Record<PlanId, Plan> = {
+  free: {
+    id: 'free',
+    name: 'Découverte',
+    ttsMinutesPerMonth: 0,
+    classroomsMax: 3,
+    membersMax: Infinity,
+    price: { MAD: 0, USD: 0 },
+  },
   unlicensed: {
     id: 'unlicensed',
     name: 'Accès non activé',
