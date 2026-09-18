@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isSuperAdminEmail } from '@/lib/api/auth';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 
 const courseSchema = z.object({
@@ -44,6 +45,9 @@ export async function loadOwnedCourseForGeneration(
 async function assertGenerationAuthor(orgId: string, ownerId?: string) {
   if (!ownerId) throw new CourseAccessError();
   const db = createServiceSupabaseClient();
+  const { data: actor, error: actorError } = await db.auth.admin.getUserById(ownerId);
+  if (actorError) throw new Error('Course authorization unavailable');
+  if (isSuperAdminEmail(actor.user.email ?? '')) return;
   const membership = await db
     .from('org_members')
     .select('role, organizations!inner(status)')

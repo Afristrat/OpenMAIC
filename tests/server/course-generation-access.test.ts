@@ -1,7 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-const mocks = vi.hoisted(() => ({ from: vi.fn(), eq: vi.fn(), in: vi.fn(), result: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  from: vi.fn(),
+  eq: vi.fn(),
+  in: vi.fn(),
+  result: vi.fn(),
+  getUserById: vi.fn(),
+}));
 vi.mock('@/lib/supabase/service', () => ({
-  createServiceSupabaseClient: () => ({ from: mocks.from }),
+  createServiceSupabaseClient: () => ({
+    from: mocks.from,
+    auth: { admin: { getUserById: mocks.getUserById } },
+  }),
 }));
 import {
   assertCourseGenerationAccess,
@@ -13,6 +22,7 @@ const input = { courseId, orgId: 'tenant', sourceManifestId: manifestId };
 describe('course generation access', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.getUserById.mockResolvedValue({ data: { user: { email: 'author@example.com' } }, error: null });
     const query = {
       select: () => query,
       eq: mocks.eq,
