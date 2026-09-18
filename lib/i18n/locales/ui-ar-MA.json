@@ -2571,6 +2571,7 @@
   "admin.tenants.search": "البحث عن مستأجر",
   "admin.tenants.searchAction": "بحث",
   "admin.tenants.openDetail": "فتح التفاصيل",
+  "admin.tenants.testTenant": "اختبر في قلم",
   "admin.tenants.pagination": "{from}–{to} من {total} مستأجرين",
   "admin.tenants.suspend": "تعليق",
   "admin.tenants.activate": "إعادة التفعيل",

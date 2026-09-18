@@ -342,6 +342,7 @@ export function TenantsTab(): React.ReactElement {
                       : t('admin.tenants.activate')}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => router.push(`/org/${tenant.id}/admin`)}>{t('admin.tenants.openDetail')}</Button>
+                  <Button type="button" onClick={() => router.push(`/app?orgId=${encodeURIComponent(tenant.id)}`)}>{t('admin.tenants.testTenant')}</Button>
                 </div>
                 <TenantCredits tenant={tenant} disabled={saving} onSaved={loadTenants} />
                 <TenantEconomics tenantId={tenant.id} />

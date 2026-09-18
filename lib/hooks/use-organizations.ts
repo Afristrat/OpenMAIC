@@ -68,6 +68,19 @@ export function useOrganizations(): UseOrganizationsReturn {
       const orgs: OrganizationWithRole[] = data.organizations ?? [];
       setOrganizations(orgs);
 
+      // A super-administrator may intentionally open a tenant from the
+      // administration console. The API already limits this list to tenants
+      // the authenticated actor may administer; never trust an arbitrary id.
+      const requestedOrgId = new URLSearchParams(window.location.search).get('orgId');
+      const requestedOrganization = requestedOrgId
+        ? orgs.find((organization) => organization.id === requestedOrgId)
+        : undefined;
+      if (requestedOrganization) {
+        setCurrentOrgState(requestedOrganization);
+        localStorage.setItem(CURRENT_ORG_KEY, requestedOrganization.id);
+        return;
+      }
+
       // Restore current org from localStorage
       try {
         const savedOrgId = localStorage.getItem(CURRENT_ORG_KEY);

@@ -2571,6 +2571,7 @@
   "admin.tenants.search": "Search a tenant",
   "admin.tenants.searchAction": "Search",
   "admin.tenants.openDetail": "Open details",
+  "admin.tenants.testTenant": "Test in Qalem",
   "admin.tenants.pagination": "{from}–{to} of {total} tenants",
   "admin.tenants.suspend": "Suspend",
   "admin.tenants.activate": "Reactivate",
