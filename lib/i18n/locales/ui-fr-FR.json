@@ -2700,5 +2700,7 @@
   "anchoring.planUpdateFailed": "Impossible de modifier le plan d’ancrage.",
   "anchoring.coldEvaluationTitle": "Ce qui est resté",
   "anchoring.coldEvaluationDescription": "Évaluez l’utilité et votre capacité à appliquer les acquis aujourd’hui.",
-  "anchoring.coldEvaluationSent": "Votre évaluation a bien été enregistrée."
+  "anchoring.coldEvaluationSent": "Votre évaluation a bien été enregistrée.",
+  "common.previous": "Précédent",
+  "common.next": "Suivant"
 }

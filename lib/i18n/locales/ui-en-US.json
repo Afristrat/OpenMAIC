@@ -2700,5 +2700,7 @@
   "anchoring.planUpdateFailed": "The anchoring plan could not be updated.",
   "anchoring.coldEvaluationTitle": "What stayed with you",
   "anchoring.coldEvaluationDescription": "Rate its usefulness and your ability to apply what you learned today.",
-  "anchoring.coldEvaluationSent": "Your evaluation has been recorded."
+  "anchoring.coldEvaluationSent": "Your evaluation has been recorded.",
+  "common.previous": "Previous",
+  "common.next": "Next"
 }

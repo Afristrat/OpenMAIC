@@ -2700,5 +2700,7 @@
   "anchoring.planUpdateFailed": "تعذر تعديل خطة التثبيت.",
   "anchoring.coldEvaluationTitle": "ما الذي بقي راسخًا",
   "anchoring.coldEvaluationDescription": "قيّم الفائدة وقدرتك اليوم على تطبيق ما تعلمته.",
-  "anchoring.coldEvaluationSent": "سُجل تقييمك بنجاح."
+  "anchoring.coldEvaluationSent": "سُجل تقييمك بنجاح.",
+  "common.previous": "السابق",
+  "common.next": "التالي"
 }

@@ -24,27 +24,36 @@ describe('GET /api/admin/tenants', () => {
       if (table === 'organizations') {
         return {
           select: () => ({
-            order: async () => ({
-              data: [
-                {
-                  id: tenantId,
-                  name: 'Institut Atlas',
-                  status: 'active',
-                  seat_limit: 4,
-                },
-              ],
-              error: null,
+            order: () => ({
+              range: async () => ({
+                data: [
+                  {
+                    id: tenantId,
+                    name: 'Institut Atlas',
+                    status: 'active',
+                    seat_limit: 4,
+                  },
+                ],
+                error: null,
+                count: 1,
+              }),
             }),
           }),
         };
       }
       if (table === 'org_members') {
-        return { select: async () => ({ data: [{ org_id: tenantId }], error: null }) };
+        return {
+          select: () => ({
+            in: async () => ({ data: [{ org_id: tenantId }], error: null }),
+          }),
+        };
       }
       return {
         select: () => ({
-          is: () => ({
-            gt: async () => ({ data: [{ org_id: tenantId }], error: null }),
+          in: () => ({
+            is: () => ({
+              gt: async () => ({ data: [{ org_id: tenantId }], error: null }),
+            }),
           }),
         }),
       };
