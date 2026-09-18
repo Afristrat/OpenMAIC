@@ -31,9 +31,7 @@ export async function privateArtifactUrl(
   // The lifecycle signal of a Next.js request may be cancelled while its
   // handler is still issuing a server-side redirect. It must not cancel the
   // independent Storage signing request; retain a strict local timeout.
-  const { data, error } = await createServiceSupabaseClient(
-    AbortSignal.timeout(5000),
-  )
+  const { data, error } = await createServiceSupabaseClient(AbortSignal.timeout(5000))
     .storage.from(bucket)
     .createSignedUrl(path, 60, { download });
   if (error || !data?.signedUrl) throw new Error('Artifact signing unavailable');

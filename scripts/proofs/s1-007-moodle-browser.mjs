@@ -16,7 +16,11 @@ try {
   page.setDefaultTimeout(90_000);
   page.setDefaultNavigationTimeout(90_000);
   page.on('request', (request) => {
-    if (request.url().includes('/mod/scorm/datamodel.php') && request.postData()?.includes('lesson_status')) completionRequest = true;
+    if (
+      request.url().includes('/mod/scorm/datamodel.php') &&
+      request.postData()?.includes('lesson_status')
+    )
+      completionRequest = true;
   });
   await page.goto('https://lms-test.qalem.ma/login/index.php', { waitUntil: 'commit' });
   step = 'login-credentials';
@@ -28,8 +32,15 @@ try {
     page.locator('#loginbtn').click({ noWaitAfter: true }),
   ]);
   step = 'activity';
-  const activityResponse = await page.goto(`https://lms-test.qalem.ma/mod/scorm/view.php?id=${courseModuleId}`, { waitUntil: 'commit' });
-  assert.equal(activityResponse?.status(), 200, `L’activité SCORM Moodle répond ${activityResponse?.status() ?? 'sans réponse'}`);
+  const activityResponse = await page.goto(
+    `https://lms-test.qalem.ma/mod/scorm/view.php?id=${courseModuleId}`,
+    { waitUntil: 'commit' },
+  );
+  assert.equal(
+    activityResponse?.status(),
+    200,
+    `L’activité SCORM Moodle répond ${activityResponse?.status() ?? 'sans réponse'}`,
+  );
   step = 'activity-launch';
   await page.locator('#scormviewform').evaluate((form) => {
     form.requestSubmit(form.querySelector('#n'));
@@ -42,7 +53,13 @@ try {
   assert.equal(completionRequest, true, 'Requête de complétion Moodle absente');
   console.log(JSON.stringify({ proof: 'S1007_MOODLE_BROWSER_OK', completionRequest: true }));
 } catch (error) {
-  console.error(JSON.stringify({ proof: 'S1007_MOODLE_BROWSER_FAILED', step, type: error instanceof Error ? error.name : 'unknown' }));
+  console.error(
+    JSON.stringify({
+      proof: 'S1007_MOODLE_BROWSER_FAILED',
+      step,
+      type: error instanceof Error ? error.name : 'unknown',
+    }),
+  );
   process.exitCode = 1;
 } finally {
   await browser.close();

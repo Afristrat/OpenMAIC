@@ -23,7 +23,8 @@ describe('publicArtifactUrl', () => {
   });
 
   it('keeps an already public URL unchanged', () => {
-    const signedUrl = 'https://db.qalem.ma/storage/v1/object/sign/exports/course/file.zip?token=signed';
+    const signedUrl =
+      'https://db.qalem.ma/storage/v1/object/sign/exports/course/file.zip?token=signed';
     expect(publicArtifactUrl(signedUrl, publicUrl, internalUrl)).toBe(signedUrl);
   });
 

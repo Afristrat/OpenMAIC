@@ -153,7 +153,10 @@ async function main() {
           type: 'introduction',
           order: 0,
           title: 'Situation professionnelle',
-          content: { type: 'text', text: 'Décrivez une situation réelle avant de choisir votre prochaine action.' },
+          content: {
+            type: 'text',
+            text: 'Décrivez une situation réelle avant de choisir votre prochaine action.',
+          },
           actions: [],
         },
         {
