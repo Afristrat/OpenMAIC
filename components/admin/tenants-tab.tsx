@@ -282,12 +282,35 @@ export function TenantsTab(): React.ReactElement {
       </form>
 
       <section className="space-y-3" aria-label={t('admin.tenants.list')}>
-        <form className="flex flex-wrap gap-3 rounded-xl border bg-card p-4" onSubmit={(event) => { event.preventDefault(); setOffset(0); void loadTenants(); }}>
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('admin.tenants.search')} className="min-w-56 flex-1 rounded-md border bg-background px-3 py-2" />
-          <select value={statusFilter} onChange={(event) => { setStatusFilter(event.target.value as 'all' | Tenant['status']); setOffset(0); }} className="rounded-md border bg-background px-3 py-2">
-            <option value="all">{t('admin.tenants.status.all')}</option><option value="active">{t('admin.tenants.status.active')}</option><option value="suspended">{t('admin.tenants.status.suspended')}</option>
+        <form
+          className="flex flex-wrap gap-3 rounded-xl border bg-card p-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            setOffset(0);
+            void loadTenants();
+          }}
+        >
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t('admin.tenants.search')}
+            className="min-w-56 flex-1 rounded-md border bg-background px-3 py-2"
+          />
+          <select
+            value={statusFilter}
+            onChange={(event) => {
+              setStatusFilter(event.target.value as 'all' | Tenant['status']);
+              setOffset(0);
+            }}
+            className="rounded-md border bg-background px-3 py-2"
+          >
+            <option value="all">{t('admin.tenants.status.all')}</option>
+            <option value="active">{t('admin.tenants.status.active')}</option>
+            <option value="suspended">{t('admin.tenants.status.suspended')}</option>
           </select>
-          <Button type="submit" variant="outline">{t('admin.tenants.searchAction')}</Button>
+          <Button type="submit" variant="outline">
+            {t('admin.tenants.searchAction')}
+          </Button>
         </form>
         {loading ? (
           <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
@@ -341,8 +364,19 @@ export function TenantsTab(): React.ReactElement {
                       ? t('admin.tenants.suspend')
                       : t('admin.tenants.activate')}
                   </Button>
-                  <Button type="button" variant="outline" onClick={() => router.push(`/org/${tenant.id}/admin`)}>{t('admin.tenants.openDetail')}</Button>
-                  <Button type="button" onClick={() => router.push(`/app?orgId=${encodeURIComponent(tenant.id)}`)}>{t('admin.tenants.testTenant')}</Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => router.push(`/org/${tenant.id}/admin`)}
+                  >
+                    {t('admin.tenants.openDetail')}
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => router.push(`/app?orgId=${encodeURIComponent(tenant.id)}`)}
+                  >
+                    {t('admin.tenants.testTenant')}
+                  </Button>
                 </div>
                 <TenantCredits tenant={tenant} disabled={saving} onSaved={loadTenants} />
                 <TenantEconomics tenantId={tenant.id} />
@@ -350,7 +384,35 @@ export function TenantsTab(): React.ReactElement {
             );
           })
         )}
-        {!loading && total > pageSize && <div className="flex items-center justify-between gap-3 pt-2"><p className="text-sm text-muted-foreground">{t('admin.tenants.pagination', { from: offset + 1, to: Math.min(offset + tenants.length, total), total })}</p><div className="flex gap-2"><Button type="button" variant="outline" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - pageSize))}>{t('common.previous')}</Button><Button type="button" variant="outline" disabled={offset + pageSize >= total} onClick={() => setOffset(offset + pageSize)}>{t('common.next')}</Button></div></div>}
+        {!loading && total > pageSize && (
+          <div className="flex items-center justify-between gap-3 pt-2">
+            <p className="text-sm text-muted-foreground">
+              {t('admin.tenants.pagination', {
+                from: offset + 1,
+                to: Math.min(offset + tenants.length, total),
+                total,
+              })}
+            </p>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={offset === 0}
+                onClick={() => setOffset(Math.max(0, offset - pageSize))}
+              >
+                {t('common.previous')}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={offset + pageSize >= total}
+                onClick={() => setOffset(offset + pageSize)}
+              >
+                {t('common.next')}
+              </Button>
+            </div>
+          </div>
+        )}
       </section>
     </div>
   );
