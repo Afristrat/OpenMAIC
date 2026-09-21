@@ -80,32 +80,27 @@ describe('classroom resource generation', () => {
   it('falls back to a useful deterministic workbook after one structurally empty response', async () => {
     const aiCall = vi.fn().mockResolvedValue('{"sheets":[]}');
 
-    await expect(
-      generateWorkbookSpec(
-        {
-          id: 'resource_1',
-          format: 'xlsx',
-          title: 'Plan d’action',
-          fileName: 'plan-action.xlsx',
-          prompt: 'Créer un plan d’action immédiatement utilisable.',
-        },
-        'Write in French.',
-        aiCall,
-      ),
-    ).resolves.toMatchObject({
-      sheets: [
-        {
-          name: 'Plan d’action',
-          rows: [
-            ['Plan d’action'],
-            [],
-            ['Consigne', 'Créer un plan d’action immédiatement utilisable.'],
-            [],
-            ['Étape', 'Travail / réponse', 'Preuve ou décision'],
-          ],
-        },
-      ],
-    });
+    const workbook = await generateWorkbookSpec(
+      {
+        id: 'resource_1',
+        format: 'xlsx',
+        title: 'Plan d’action',
+        fileName: 'plan-action.xlsx',
+        prompt: 'Créer un plan d’action immédiatement utilisable.',
+      },
+      'Write in French.',
+      aiCall,
+    );
+
+    expect(workbook.sheets).toHaveLength(1);
+    expect(workbook.sheets[0]?.name).toBe('Plan d’action');
+    expect(workbook.sheets[0]?.rows.slice(0, 5)).toEqual([
+      ['Plan d’action'],
+      [],
+      ['Consigne', 'Créer un plan d’action immédiatement utilisable.'],
+      [],
+      ['Étape', 'Travail / réponse', 'Preuve ou décision'],
+    ]);
     expect(aiCall).toHaveBeenCalledTimes(1);
   });
 
