@@ -77,11 +77,8 @@ describe('classroom resource generation', () => {
     expect(assessment.findings).toContain('118 cellule(s) de saisie restent à compléter.');
   });
 
-  it('repairs one structurally empty workbook response before failing the classroom', async () => {
-    const aiCall = vi
-      .fn()
-      .mockResolvedValueOnce('{"sheets":[]}')
-      .mockResolvedValueOnce('{"sheets":[{"name":"Exercice","rows":[["Action"]]}]}');
+  it('falls back to a useful deterministic workbook after one structurally empty response', async () => {
+    const aiCall = vi.fn().mockResolvedValue('{"sheets":[]}');
 
     await expect(
       generateWorkbookSpec(
@@ -95,9 +92,44 @@ describe('classroom resource generation', () => {
         'Write in French.',
         aiCall,
       ),
-    ).resolves.toEqual({ sheets: [{ name: 'Exercice', rows: [['Action']] }] });
-    expect(aiCall).toHaveBeenCalledTimes(2);
-    expect(aiCall.mock.calls[1]?.[1]).toContain('previous response was structurally invalid');
+    ).resolves.toMatchObject({
+      sheets: [
+        {
+          name: 'Plan d’action',
+          rows: [
+            ['Plan d’action'],
+            [],
+            ['Consigne', 'Créer un plan d’action immédiatement utilisable.'],
+            [],
+            ['Étape', 'Travail / réponse', 'Preuve ou décision'],
+          ],
+        },
+      ],
+    });
+    expect(aiCall).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls back without retrying when the workbook provider call fails', async () => {
+    const aiCall = vi.fn().mockRejectedValue(new Error('provider timeout'));
+
+    const workbook = await generateWorkbookSpec(
+      {
+        id: 'resource_timeout',
+        format: 'xlsx',
+        title: 'Diagnostic terrain',
+        fileName: 'diagnostic.xlsx',
+        prompt: 'Documenter les constats et les prochaines actions.\nConserver les preuves.',
+      },
+      'Write in French.',
+      aiCall,
+    );
+
+    expect(aiCall).toHaveBeenCalledTimes(1);
+    expect(workbook.sheets[0]?.rows).toContainEqual([
+      'Consigne',
+      'Documenter les constats et les prochaines actions.\nConserver les preuves.',
+    ]);
+    expect(workbook.sheets[0]?.rows).toContainEqual(['Prochaine action', '', '']);
   });
 
   it('quotes an unquoted rate emitted by the model without launching a second generation', async () => {

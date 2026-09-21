@@ -19,6 +19,16 @@ interface WorkbookSpec {
   sheets: Array<{ name: string; rows: CellValue[][] }>;
 }
 
+interface FallbackWorkbookLabels {
+  instruction: string;
+  step: string;
+  work: string;
+  evidence: string;
+  summary: string;
+  nextAction: string;
+  worksheet: string;
+}
+
 export interface DocumentSpec {
   title: string;
   sections: Array<{ heading: string; paragraphs: string[]; bulletPoints?: string[] }>;
@@ -28,7 +38,6 @@ const MAX_SHEETS = 5;
 const MAX_ROWS = 500;
 const MAX_COLUMNS = 50;
 const MAX_CELL_LENGTH = 20_000;
-const MAX_WORKBOOK_GENERATION_ATTEMPTS = 2;
 const SHORT_CODE_ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 const randomShortCode = customAlphabet(SHORT_CODE_ALPHABET, 5);
 const MAX_SHORT_CODE_ATTEMPTS = 20;
@@ -74,6 +83,13 @@ function safeFileName(value: string, format: ResourceGenerationRequest['format']
   return `${stem || 'ressource'}.${format}`;
 }
 
+function safeWorksheetName(value: unknown, fallback: string): string {
+  return String(value || fallback)
+    .replace(/[\\/?*[\]:]/g, ' ')
+    .trim()
+    .slice(0, 31) || fallback;
+}
+
 function normalizeWorkbook(input: WorkbookSpec): WorkbookSpec {
   if (!input || !Array.isArray(input.sheets) || input.sheets.length === 0) {
     throw new Error('Resource generation returned no worksheet');
@@ -84,7 +100,7 @@ function normalizeWorkbook(input: WorkbookSpec): WorkbookSpec {
         throw new Error(`Worksheet ${sheetIndex + 1} has no rows`);
       }
       return {
-        name: String(sheet.name || `Feuille ${sheetIndex + 1}`).slice(0, 31),
+        name: safeWorksheetName(sheet.name, `Feuille ${sheetIndex + 1}`),
         rows: sheet.rows.slice(0, MAX_ROWS).map((row) =>
           (Array.isArray(row) ? row : []).slice(0, MAX_COLUMNS).map((cell) => {
             if (cell === null || typeof cell === 'number' || typeof cell === 'boolean') return cell;
@@ -93,6 +109,65 @@ function normalizeWorkbook(input: WorkbookSpec): WorkbookSpec {
         ),
       };
     }),
+  };
+}
+
+function fallbackWorkbookLabels(languageDirective: string): FallbackWorkbookLabels {
+  if (/arabic|ar[-_]|العرب/iu.test(languageDirective)) {
+    return {
+      instruction: 'التعليمات',
+      step: 'المرحلة',
+      work: 'العمل / الإجابة',
+      evidence: 'الدليل أو القرار',
+      summary: 'الخلاصة',
+      nextAction: 'الخطوة التالية',
+      worksheet: 'ورقة العمل',
+    };
+  }
+  if (/english|en[-_]/iu.test(languageDirective)) {
+    return {
+      instruction: 'Instructions',
+      step: 'Step',
+      work: 'Work / answer',
+      evidence: 'Evidence or decision',
+      summary: 'Summary',
+      nextAction: 'Next action',
+      worksheet: 'Worksheet',
+    };
+  }
+  return {
+    instruction: 'Consigne',
+    step: 'Étape',
+    work: 'Travail / réponse',
+    evidence: 'Preuve ou décision',
+    summary: 'Synthèse',
+    nextAction: 'Prochaine action',
+    worksheet: 'Feuille de travail',
+  };
+}
+
+function buildFallbackWorkbookSpec(
+  request: ResourceGenerationRequest,
+  languageDirective: string,
+): WorkbookSpec {
+  const labels = fallbackWorkbookLabels(languageDirective);
+  return {
+    sheets: [
+      {
+        name: safeWorksheetName(request.title, labels.worksheet),
+        rows: [
+          [request.title],
+          [],
+          [labels.instruction, request.prompt],
+          [],
+          [labels.step, labels.work, labels.evidence],
+          ...Array.from({ length: 10 }, (_, index) => [index + 1, '', '']),
+          [],
+          [labels.summary, '', ''],
+          [labels.nextAction, '', ''],
+        ],
+      },
+    ],
   };
 }
 
@@ -153,22 +228,14 @@ export async function generateWorkbookSpec(
 ): Promise<WorkbookSpec> {
   const system = `You generate a complete, immediately usable learning workbook as strict JSON. Return {"sheets":[{"name":"...","rows":[[...]]}]}. Use only string, finite number, boolean, or null cell values. Every unit, rate or expression such as "8000/month" MUST be a quoted JSON string; never emit arithmetic-like bare tokens. Include clear headers, all data needed for the exercise, and useful formulas as literal Excel formulas beginning with = only when the request requires them. Maximum ${MAX_SHEETS} sheets, ${MAX_ROWS} rows per sheet, and ${MAX_COLUMNS} columns. Do not return markdown or commentary.`;
   const user = `Language directive: ${languageDirective}\nResource title: ${request.title}\nCreate the workbook requested between the markers.\n<<<RESOURCE_REQUEST\n${request.prompt}\nRESOURCE_REQUEST>>>`;
-  let lastError: Error | undefined;
-  for (let attempt = 1; attempt <= MAX_WORKBOOK_GENERATION_ATTEMPTS; attempt += 1) {
-    try {
-      const retryDirective =
-        attempt === 1
-          ? ''
-          : '\nYour previous response was structurally invalid. Return at least one non-empty worksheet using exactly the required JSON shape.';
-      const response = await aiCall(system, `${user}${retryDirective}`);
-      const parsed = parseJsonResponse<WorkbookSpec>(quoteUnquotedWorkbookRates(response));
-      if (!parsed) throw new Error(`Resource generation returned invalid JSON for ${request.id}`);
-      return normalizeWorkbook(parsed);
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-    }
+  try {
+    const response = await aiCall(system, user);
+    const parsed = parseJsonResponse<WorkbookSpec>(quoteUnquotedWorkbookRates(response));
+    if (!parsed) return buildFallbackWorkbookSpec(request, languageDirective);
+    return normalizeWorkbook(parsed);
+  } catch {
+    return buildFallbackWorkbookSpec(request, languageDirective);
   }
-  throw lastError ?? new Error(`Resource generation failed for ${request.id}`);
 }
 
 async function generateDocumentSpec(

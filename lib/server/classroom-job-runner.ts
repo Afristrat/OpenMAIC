@@ -8,6 +8,7 @@ import {
   updateClassroomGenerationJobProgress,
 } from '@/lib/server/classroom-job-store';
 import { activateUsageMeteringJob } from '@/lib/billing/usage-context';
+import { formatGenerationError } from '@/lib/server/generation-error';
 
 const log = createLogger('ClassroomJob');
 const runningJobs = new Map<string, Promise<void>>();
@@ -44,7 +45,7 @@ export function runClassroomGenerationJob(
 
       await markClassroomGenerationJobSucceeded(jobId, result);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message = formatGenerationError(error);
       log.error(`Classroom generation job ${jobId} failed:`, error);
       try {
         await markClassroomGenerationJobFailed(jobId, message);
