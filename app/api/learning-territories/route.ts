@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireSuperAdminOrOrgAuthor, requireSuperAdminOrOrgMember } from '@/lib/api/auth';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { currencyForTerritory, isIso4217CurrencyCode } from '@/lib/formation-engine/learning-context';
+import { resolveCountryCurrency } from '@/lib/formation-engine/country-resolver';
 
 const bodySchema = z.object({
   orgId: z.string().uuid(),
@@ -14,22 +15,12 @@ function normalizeCountryName(value: string): string {
   return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('fr-FR');
 }
 
-async function resolveCountry(countryName: string): Promise<{ currencyCode: string; languageCode?: string }> {
+function resolveCountry(countryName: string): { currencyCode: string; languageCode?: string } {
   const knownCurrency = currencyForTerritory(countryName);
   if (knownCurrency) return { currencyCode: knownCurrency };
-  const response = await fetch(
-    `https://restcountries.com/v3.1/name/${encodeURIComponent(countryName)}?fullText=true&fields=currencies,languages`,
-    { signal: AbortSignal.timeout(5000), cache: 'no-store' },
-  );
-  if (!response.ok) throw new Error('COUNTRY_NOT_FOUND');
-  const countries = (await response.json()) as Array<{
-    currencies?: Record<string, unknown>;
-    languages?: Record<string, string>;
-  }>;
-  const country = countries[0];
-  const currencyCode = Object.keys(country?.currencies ?? {})[0];
-  if (!currencyCode || !isIso4217CurrencyCode(currencyCode)) throw new Error('CURRENCY_NOT_FOUND');
-  return { currencyCode, languageCode: Object.keys(country?.languages ?? {})[0] };
+  const country = resolveCountryCurrency(countryName);
+  if (!country) throw new Error('COUNTRY_NOT_FOUND');
+  return { currencyCode: country.currencyCode, languageCode: country.languageCode };
 }
 
 export async function GET(request: NextRequest) {
@@ -55,7 +46,7 @@ export async function POST(request: NextRequest) {
   try {
     resolved = parsed.data.currencyCode
       ? { currencyCode: parsed.data.currencyCode.toUpperCase() }
-      : await resolveCountry(parsed.data.countryName);
+      : resolveCountry(parsed.data.countryName);
   } catch {
     return NextResponse.json({ error: 'Country or currency could not be resolved' }, { status: 422 });
   }
