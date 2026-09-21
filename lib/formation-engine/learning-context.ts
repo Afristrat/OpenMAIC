@@ -22,6 +22,15 @@ export const COMMON_LEARNING_CURRENCIES = [
   'SAR',
 ] as const;
 
+export const AFRICAN_COUNTRIES = [
+  ['Algérie','DZD'],['Angola','AOA'],['Bénin','XOF'],['Botswana','BWP'],['Burkina Faso','XOF'],['Burundi','BIF'],['Cameroun','XAF'],['Cap-Vert','CVE'],['Comores','KMF'],['Congo','XAF'],['Côte d’Ivoire','XOF'],['Djibouti','DJF'],['Égypte','EGP'],['Érythrée','ERN'],['Eswatini','SZL'],['Éthiopie','ETB'],['Gabon','XAF'],['Gambie','GMD'],['Ghana','GHS'],['Guinée','GNF'],['Guinée-Bissau','XOF'],['Guinée équatoriale','XAF'],['Kenya','KES'],['Lesotho','LSL'],['Liberia','LRD'],['Libye','LYD'],['Madagascar','MGA'],['Malawi','MWK'],['Mali','XOF'],['Maroc','MAD'],['Maurice','MUR'],['Mauritanie','MRU'],['Mozambique','MZN'],['Namibie','NAD'],['Niger','XOF'],['Nigeria','NGN'],['Ouganda','UGX'],['République centrafricaine','XAF'],['République démocratique du Congo','CDF'],['Rwanda','RWF'],['Sao Tomé-et-Principe','STN'],['Sénégal','XOF'],['Seychelles','SCR'],['Sierra Leone','SLE'],['Somalie','SOS'],['Soudan','SDG'],['Soudan du Sud','SSP'],['Tanzanie','TZS'],['Tchad','XAF'],['Togo','XOF'],['Tunisie','TND'],['Zambie','ZMW'],['Zimbabwe','ZWG'],['Afrique du Sud','ZAR'],
+] as const;
+
+export function currencyForTerritory(territory: string): string | undefined {
+  const normalized = territory.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('fr-FR');
+  return AFRICAN_COUNTRIES.find(([country]) => country.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('fr-FR') === normalized)?.[1];
+}
+
 const ISO_4217_CURRENCY_CODES = new Set(Intl.supportedValuesOf('currency'));
 
 export function isIso4217CurrencyCode(value: string): boolean {

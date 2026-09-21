@@ -71,6 +71,8 @@ import type { BuiltInTTSProviderId } from '@/lib/audio/types';
 import type { LearningContext } from '@/lib/types/stage';
 import {
   COMMON_LEARNING_CURRENCIES,
+  AFRICAN_COUNTRIES,
+  currencyForTerritory,
   DEFAULT_LEARNING_CONTEXT,
   isIso4217CurrencyCode,
   normalizeLearningContext,
@@ -1568,10 +1570,17 @@ function HomePage() {
                 updateForm('learningContext', {
                   ...form.learningContext,
                   territory: event.target.value,
+                  ...(currencyForTerritory(event.target.value)
+                    ? { currencyCode: currencyForTerritory(event.target.value)! }
+                    : {}),
                 })
               }
               className="h-7 w-28 rounded-md border border-border bg-background px-2 text-foreground"
+              list="learning-territories"
             />
+            <datalist id="learning-territories">
+              {AFRICAN_COUNTRIES.map(([country]) => <option key={country} value={country} />)}
+            </datalist>
           </label>
           <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
             {t('generation.currency')}
