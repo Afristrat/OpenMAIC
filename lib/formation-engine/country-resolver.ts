@@ -29,7 +29,11 @@ export function resolveCountryCurrency(countryName: string): {
       ...(country.alias ?? []),
       ...regionNames.map((displayNames) => displayNames.of(country.iso2)).filter(Boolean),
     ];
-    if (!names.some((name) => normalizeCountryName(name ?? '') === query)) continue;
+    const matches = names.some((name) => {
+      const candidate = normalizeCountryName(name ?? '');
+      return candidate === query || candidate.endsWith(` ${query}`) || query.endsWith(` ${candidate}`);
+    });
+    if (!matches) continue;
 
     const currencyCode = country.currency[0];
     if (!currencyCode) return null;
