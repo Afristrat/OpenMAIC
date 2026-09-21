@@ -48,7 +48,9 @@ export function LearningContextPicker({
   }, [orgId]);
 
   const countries = useMemo(() => {
-    const entries = new Map(AFRICAN_COUNTRIES.map(([country, currency]) => [normalized(country), { country, currency }]));
+    const entries = new Map<string, { country: string; currency: string }>(
+      AFRICAN_COUNTRIES.map(([country, currency]) => [normalized(country), { country, currency }]),
+    );
     for (const item of stored)
       entries.set(normalized(item.country_name), { country: item.country_name, currency: item.currency_code });
     return [...entries.values()].sort((a, b) => a.country.localeCompare(b.country, locale));
