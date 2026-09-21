@@ -177,14 +177,7 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
       [selectedAgentIds, t],
     );
 
-    // Resolved AgentConfig array for hooks that need full agent objects
-    // Subscribe to the agents record so voiceConfig changes trigger re-resolution
     const agentsRecord = useAgentRegistry((s) => s.agents);
-    const selectedAgents = useMemo(
-      () =>
-        selectedAgentIds.map((id) => agentsRecord[id]).filter((a): a is AgentConfig => a != null),
-      [agentsRecord, selectedAgentIds],
-    );
     // A scene may dispatch an authorized backbone agent which is not currently
     // selected in the visible strip. Discussion TTS must retain that agent's
     // generated voice design instead of resolving VoxCPM Auto Voice without
