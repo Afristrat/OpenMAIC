@@ -33,6 +33,9 @@ x-qalem-environment: &qalem-environment
   SERPER_API_KEY: ${SERPER_API_KEY:-runtime-only}
   SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
   SMTP_FROM: ${SMTP_FROM:-runtime-only}
+  # Le worker réexécute l'autorisation avant chaque génération asynchrone.
+  # Il doit partager la liste des superadministrateurs avec le frontal web.
+  SUPER_ADMIN_EMAILS: ${SUPER_ADMIN_EMAILS}
   # Les workers n'ont pas accès au DNS public Supabase depuis leur réseau
   # Coolify. Kong partage l'alias interne persistant sur ce même réseau.
   SUPABASE_INTERNAL_URL: http://qalem-internal-kong:8000
