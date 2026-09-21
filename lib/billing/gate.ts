@@ -28,7 +28,8 @@ type QuotaGateResult = {
 // ---------------------------------------------------------------------------
 
 const PLAN_RANK: Record<PlanId, number> = {
-  unlicensed: 0,
+  unlicensed: -1,
+  free: 0,
   pro: 1,
   enterprise: 2,
 };
