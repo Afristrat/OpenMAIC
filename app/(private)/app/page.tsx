@@ -39,6 +39,7 @@ import { Textarea as UITextarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { SettingsDialog } from '@/components/settings';
 import { GenerationToolbar } from '@/components/generation/generation-toolbar';
+import { LearningContextPicker } from '@/components/generation/LearningContextPicker';
 import { OutlinesEditor, type SyllabusAssistTarget } from '@/components/generation/outlines-editor';
 import {
   SourceConflictDialog,
@@ -70,9 +71,6 @@ import { TTS_PROVIDERS } from '@/lib/audio/constants';
 import type { BuiltInTTSProviderId } from '@/lib/audio/types';
 import type { LearningContext } from '@/lib/types/stage';
 import {
-  COMMON_LEARNING_CURRENCIES,
-  AFRICAN_COUNTRIES,
-  currencyForTerritory,
   DEFAULT_LEARNING_CONTEXT,
   isIso4217CurrencyCode,
   normalizeLearningContext,
@@ -654,7 +652,6 @@ function HomePage() {
         }
 
         setIsPlanning(false);
-        clearPlanJobLocation();
         if (
           result.errorCode === 'SOURCE_MATERIAL_CONFLICT' &&
           result.sourceAlignment &&
@@ -989,7 +986,12 @@ function HomePage() {
       if (!response.ok || !result.jobId) {
         throw new Error(result.details || result.error || t('upload.generateFailed'));
       }
-      router.push(`/generation-status?jobId=${encodeURIComponent(result.jobId)}`);
+      const approvedPlanJobId = new URLSearchParams(window.location.search).get('planJobId');
+      clearPlanJobLocation();
+      const statusParams = new URLSearchParams({ jobId: result.jobId });
+      if (approvedPlanJobId) statusParams.set('planJobId', approvedPlanJobId);
+      if (currentOrg?.id) statusParams.set('orgId', currentOrg.id);
+      router.push(`/generation-status?${statusParams.toString()}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('upload.generateFailed'));
     } finally {
@@ -1561,48 +1563,16 @@ function HomePage() {
           className="mt-2 flex w-full flex-wrap items-center gap-2 px-1"
           data-testid="animation-authoring-controls"
         >
-          <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-            {t('generation.territory')}
-            <input
-              data-testid="learning-territory"
-              value={form.learningContext.territory}
-              onChange={(event) =>
-                updateForm('learningContext', {
-                  ...form.learningContext,
-                  territory: event.target.value,
-                  ...(currencyForTerritory(event.target.value)
-                    ? { currencyCode: currencyForTerritory(event.target.value)! }
-                    : {}),
-                })
-              }
-              className="h-7 w-28 rounded-md border border-border bg-background px-2 text-foreground"
-              list="learning-territories"
-            />
-            <datalist id="learning-territories">
-              {AFRICAN_COUNTRIES.map(([country]) => <option key={country} value={country} />)}
-            </datalist>
-          </label>
-          <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-            {t('generation.currency')}
-            <input
-              data-testid="learning-currency"
-              list="learning-currency-codes"
-              value={form.learningContext.currencyCode}
-              maxLength={3}
-              onChange={(event) =>
-                updateForm('learningContext', {
-                  ...form.learningContext,
-                  currencyCode: event.target.value.toUpperCase(),
-                })
-              }
-              className="h-7 w-16 rounded-md border border-border bg-background px-2 uppercase text-foreground"
-            />
-            <datalist id="learning-currency-codes">
-              {COMMON_LEARNING_CURRENCIES.map((currency) => (
-                <option key={currency} value={currency} />
-              ))}
-            </datalist>
-          </label>
+          <LearningContextPicker
+            orgId={currentOrg?.id}
+            locale={locale}
+            value={form.learningContext}
+            onChange={(learningContext) => updateForm('learningContext', learningContext)}
+            territoryLabel={t('generation.territory')}
+            currencyLabel={t('generation.currency')}
+            searchPlaceholder={t('generation.territorySearch')}
+            addCountryLabel={t('generation.territoryAdd')}
+          />
           <span className="text-xs font-medium text-muted-foreground">
             {t('animation.learningApproach')}
           </span>

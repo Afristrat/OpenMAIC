@@ -1,10 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import {
+  AFRICAN_COUNTRIES,
   buildLearningContextDirective,
+  currencyForTerritory,
   normalizeLearningContext,
 } from '@/lib/formation-engine/learning-context';
 
 describe('learning context', () => {
+  it('covers every African country and resolves its currency without accents or case sensitivity', () => {
+    expect(AFRICAN_COUNTRIES).toHaveLength(54);
+    expect(new Set(AFRICAN_COUNTRIES.map(([country]) => country)).size).toBe(54);
+    expect(currencyForTerritory('sénégal')).toBe('XOF');
+    expect(currencyForTerritory('KENYA')).toBe('KES');
+    expect(currencyForTerritory('Afrique du Sud')).toBe('ZAR');
+  });
+
   it('normalizes and grounds every monetary example in the selected currency', () => {
     const context = normalizeLearningContext({ territory: ' Maroc ', currencyCode: 'mad' });
     const directive = buildLearningContextDirective(context, 'fr-FR');

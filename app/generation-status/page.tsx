@@ -12,12 +12,16 @@ interface GenerationJob {
   progress: number;
   result?: { url: string };
   failureCode?: 'MEDIA_PROVIDER_UNAVAILABLE';
+  error?: string;
 }
 
 function GenerationStatus() {
   const { t } = useI18n();
   const router = useRouter();
-  const jobId = useSearchParams().get('jobId');
+  const searchParams = useSearchParams();
+  const jobId = searchParams.get('jobId');
+  const planJobId = searchParams.get('planJobId');
+  const orgId = searchParams.get('orgId');
   const [job, setJob] = useState<GenerationJob | null>(null);
   const [hasFailed, setHasFailed] = useState(false);
 
@@ -67,6 +71,7 @@ function GenerationStatus() {
                 : t('generation.generationFailed')
               : t('generation.aiWorking')}
           </p>
+          {hasFailed && job?.error && <p className="text-xs text-destructive">{job.error}</p>}
         </div>
         {!hasFailed && (
           <div className="h-2 overflow-hidden rounded-full bg-muted">
@@ -76,12 +81,21 @@ function GenerationStatus() {
             />
           </div>
         )}
-        {hasFailed && (
+        {hasFailed && planJobId ? (
+          <Button onClick={() => {
+            const params = new URLSearchParams({ planJobId });
+            if (orgId) params.set('orgId', orgId);
+            router.push(`/app?${params.toString()}`);
+          }}>
+            <ArrowLeft className="mr-2 size-4" />
+            {t('generation.resumeApprovedPlan')}
+          </Button>
+        ) : hasFailed ? (
           <Button onClick={() => router.push('/app')}>
             <ArrowLeft className="mr-2 size-4" />
             {t('generation.goBackAndRetry')}
           </Button>
-        )}
+        ) : null}
       </Card>
     </main>
   );
