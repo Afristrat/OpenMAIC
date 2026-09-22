@@ -1,7 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
-const mocks = vi.hoisted(() => ({ auth: vi.fn(), read: vi.fn(), collect: vi.fn() }));
-vi.mock('@/lib/api/auth', () => ({ requireAuth: mocks.auth }));
+const mocks = vi.hoisted(() => ({
+  auth: vi.fn(),
+  isSuperAdmin: vi.fn(),
+  read: vi.fn(),
+  collect: vi.fn(),
+}));
+vi.mock('@/lib/api/auth', () => ({
+  requireAuth: mocks.auth,
+  isSuperAdminEmail: mocks.isSuperAdmin,
+}));
 vi.mock('@/lib/telemetry/pedagogy-collector', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/telemetry/pedagogy-collector')>()),
   readConsent: mocks.read,
@@ -35,6 +43,7 @@ describe('learning collection boundary', () => {
     vi.clearAllMocks();
     vi.stubEnv('NEXT_PUBLIC_APP_URL', 'http://localhost');
     mocks.auth.mockResolvedValue({ user: { id: 'verified-user' } });
+    mocks.isSuperAdmin.mockReturnValue(false);
     mocks.read.mockResolvedValue(true);
     mocks.collect.mockResolvedValue(true);
   });
@@ -42,6 +51,16 @@ describe('learning collection boundary', () => {
     mocks.auth.mockResolvedValue({ response: NextResponse.json({}, { status: 401 }) });
     expect((await POST(request(sample))).status).toBe(401);
     expect(mocks.read).not.toHaveBeenCalled();
+  });
+  it('does not contaminate tenant learning measures during a super-admin test', async () => {
+    mocks.auth.mockResolvedValue({
+      user: { id: 'platform-admin', email: 'platform@example.com' },
+    });
+    mocks.isSuperAdmin.mockReturnValue(true);
+
+    expect(await (await POST(request(sample))).json()).toEqual({ recorded: false });
+    expect(mocks.read).not.toHaveBeenCalled();
+    expect(mocks.collect).not.toHaveBeenCalled();
   });
   it.each([false, null])('does not collect without opt-in (%s)', async (choice) => {
     mocks.read.mockResolvedValue(choice);

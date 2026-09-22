@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/api/auth';
+import { isSuperAdminEmail, requireAuth } from '@/lib/api/auth';
 import {
   collectPedagogyData,
   learningSessionSchema,
@@ -10,6 +10,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const auth = await requireAuth(request);
   if (auth.response) return auth.response;
   const headers = { 'Cache-Control': 'private, no-store' };
+  if (isSuperAdminEmail(auth.user.email ?? '')) {
+    return NextResponse.json({ recorded: false }, { headers });
+  }
   if (
     request.headers.get('origin') !== new URL(process.env.NEXT_PUBLIC_APP_URL || request.url).origin
   ) {
