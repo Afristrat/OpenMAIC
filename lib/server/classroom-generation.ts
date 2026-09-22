@@ -27,7 +27,10 @@ import { enrichSourcesWithCrawl4AI } from '@/lib/server/crawl4ai';
 import type { BaiduSubSources, WebSearchProviderId } from '@/lib/web-search/types';
 import { persistClassroom } from '@/lib/server/classroom-storage';
 import { persistGeneratedCourse, type CourseLocale } from '@/lib/server/course-storage';
-import { assertCourseGenerationAccess } from '@/lib/server/course-generation-access';
+import {
+  assertCourseGenerationAccess,
+  resolveGenerationResourceOwner,
+} from '@/lib/server/course-generation-access';
 import {
   generateMediaForClassroom,
   replaceMediaPlaceholders,
@@ -1083,12 +1086,17 @@ export async function generateClassroom(
       totalScenes: outlines.length,
     });
 
+    const resourceOwnerId = await resolveGenerationResourceOwner({
+      actorId: options.ownerId,
+      orgId: input.orgId,
+      courseId: input.courseId,
+    });
     const persisted = await persistClassroom(
       {
         id: stageId,
         stage,
         scenes,
-        ownerId: options.ownerId,
+        ownerId: resourceOwnerId,
         orgId: input.orgId,
         animationConstitution,
       },
@@ -1097,7 +1105,7 @@ export async function generateClassroom(
     await assertCourseGenerationAccess(input, options.ownerId);
     await persistGeneratedCourse({
       courseId: input.courseId,
-      ownerId: options.ownerId,
+      ownerId: resourceOwnerId,
       orgId: input.orgId,
       stageId,
       title: stage.name,

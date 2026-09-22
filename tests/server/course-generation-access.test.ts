@@ -1,8 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   from: vi.fn(),
   eq: vi.fn(),
   in: vi.fn(),
+  order: vi.fn(),
   result: vi.fn(),
   getUserById: vi.fn(),
 }));
@@ -15,13 +16,16 @@ vi.mock('@/lib/supabase/service', () => ({
 import {
   assertCourseGenerationAccess,
   CourseAccessError,
+  resolveGenerationResourceOwner,
 } from '@/lib/server/course-generation-access';
 const courseId = '00000000-0036-4000-8000-000000000149';
 const manifestId = '00000000-0036-4000-8000-000000000150';
+const courseOwnerId = '00000000-0036-4000-8000-000000000151';
 const input = { courseId, orgId: 'tenant', sourceManifestId: manifestId };
 describe('course generation access', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubEnv('SUPER_ADMIN_EMAILS', 'platform@example.com');
     mocks.getUserById.mockResolvedValue({
       data: { user: { email: 'author@example.com' } },
       error: null,
@@ -30,16 +34,18 @@ describe('course generation access', () => {
       select: () => query,
       eq: mocks.eq,
       in: mocks.in,
+      order: mocks.order,
       abortSignal: () => query,
       maybeSingle: mocks.result,
     };
-    for (const mock of [mocks.from, mocks.eq, mocks.in]) mock.mockReturnValue(query);
+    for (const mock of [mocks.from, mocks.eq, mocks.in, mocks.order]) mock.mockReturnValue(query);
     mocks.result
       .mockReset()
       .mockResolvedValueOnce({ data: { role: 'admin' } })
       .mockResolvedValue({
         data: {
           id: courseId,
+          owner_id: courseOwnerId,
           title: 'Saved',
           language: 'fr-FR',
           source_manifest_id: manifestId,
@@ -50,6 +56,7 @@ describe('course generation access', () => {
         },
       });
   });
+  afterEach(() => vi.unstubAllEnvs());
   it('checks membership even for a new course', async () => {
     await assertCourseGenerationAccess({ orgId: 'tenant' }, 'owner');
     expect(mocks.from).toHaveBeenCalledWith('org_members');
@@ -78,7 +85,7 @@ describe('course generation access', () => {
       ['owner_id', 'owner'],
     ])
       expect(mocks.eq).toHaveBeenCalledWith(field, value);
-    expect(mocks.in).toHaveBeenCalledWith('role', ['admin', 'manager', 'author']);
+    expect(mocks.in).toHaveBeenCalledWith('role', ['admin', 'manager', 'formateur']);
     expect(mocks.in).toHaveBeenCalledWith('status', ['draft', 'ready']);
   });
   it('refuses a changed or omitted source manifest', async () => {
@@ -101,5 +108,43 @@ describe('course generation access', () => {
       'Course authorization unavailable',
     );
     expect(mocks.from).not.toHaveBeenCalledWith('courses');
+  });
+
+  it('attributes a new super-admin generation to the tenant admin', async () => {
+    mocks.getUserById.mockResolvedValue({
+      data: { user: { email: 'platform@example.com' } },
+      error: null,
+    });
+    mocks.order.mockResolvedValue({
+      data: [
+        { user_id: 'trainer-id', role: 'formateur', created_at: '2026-01-01' },
+        { user_id: 'tenant-admin-id', role: 'admin', created_at: '2026-01-02' },
+      ],
+      error: null,
+    });
+
+    await expect(
+      resolveGenerationResourceOwner({ actorId: 'platform-id', orgId: 'tenant' }),
+    ).resolves.toBe('tenant-admin-id');
+    expect(mocks.in).toHaveBeenCalledWith('role', ['admin', 'manager', 'formateur']);
+  });
+
+  it('preserves the existing tenant owner when a super-admin regenerates a course', async () => {
+    mocks.getUserById.mockResolvedValue({
+      data: { user: { email: 'platform@example.com' } },
+      error: null,
+    });
+    mocks.result.mockReset().mockResolvedValue({
+      data: { owner_id: courseOwnerId },
+      error: null,
+    });
+
+    await expect(
+      resolveGenerationResourceOwner({
+        actorId: 'platform-id',
+        orgId: 'tenant',
+        courseId,
+      }),
+    ).resolves.toBe(courseOwnerId);
   });
 });

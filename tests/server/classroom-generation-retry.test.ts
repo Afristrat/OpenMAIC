@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => ({
 }));
 vi.mock('@/lib/server/course-generation-access', () => ({
   assertCourseGenerationAccess: mocks.authorize,
+  resolveGenerationResourceOwner: vi.fn(async ({ actorId }: { actorId: string }) => actorId),
 }));
 
 vi.mock('@/lib/server/resolve-model', () => ({

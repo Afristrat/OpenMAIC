@@ -572,4 +572,5 @@ describe('classroom generation — web capture injection', () => {
 vi.mock('@/lib/server/course-generation-access', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/server/course-generation-access')>()),
   assertCourseGenerationAccess: vi.fn().mockResolvedValue(undefined),
+  resolveGenerationResourceOwner: vi.fn(async ({ actorId }: { actorId: string }) => actorId),
 }));

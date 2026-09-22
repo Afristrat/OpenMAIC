@@ -4,6 +4,7 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service';
 
 const courseSchema = z.object({
   id: z.string().uuid(),
+  owner_id: z.string().uuid(),
   title: z.string(),
   language: z.enum(['fr-FR', 'ar-MA', 'en-US']),
   source_manifest_id: z.string().uuid().nullable(),
@@ -32,6 +33,47 @@ async function isSuperAdminUser(ownerId: string): Promise<boolean> {
   return isSuperAdminEmail(actor.user.email ?? '');
 }
 
+const AUTHORING_ROLES = ['admin', 'manager', 'formateur'] as const;
+
+export async function resolveGenerationResourceOwner(input: {
+  actorId: string;
+  orgId: string;
+  courseId?: string;
+}): Promise<string> {
+  if (!(await isSuperAdminUser(input.actorId))) return input.actorId;
+
+  const db = createServiceSupabaseClient();
+  if (input.courseId) {
+    const course = await db
+      .from('courses')
+      .select('owner_id')
+      .eq('id', input.courseId)
+      .eq('org_id', input.orgId)
+      .maybeSingle();
+    if (course.error) throw new Error('Course ownership lookup unavailable');
+    if (!course.data?.owner_id) throw new CourseAccessError();
+    return course.data.owner_id;
+  }
+
+  const memberships = await db
+    .from('org_members')
+    .select('user_id, role, created_at')
+    .eq('org_id', input.orgId)
+    .in('role', [...AUTHORING_ROLES])
+    .order('created_at', { ascending: true });
+  if (memberships.error) throw new Error('Organization ownership lookup unavailable');
+  const roleRank = new Map<string, number>([
+    ['admin', 0],
+    ['manager', 1],
+    ['formateur', 2],
+  ]);
+  const owner = memberships.data
+    ?.slice()
+    .sort((left, right) => (roleRank.get(left.role) ?? 99) - (roleRank.get(right.role) ?? 99))[0];
+  if (!owner?.user_id) throw new CourseAccessError();
+  return owner.user_id;
+}
+
 /** Rechecked by the worker as queued requests can outlive a membership or ownership change. */
 export async function loadOwnedCourseForGeneration(
   courseId: string,
@@ -44,7 +86,9 @@ export async function loadOwnedCourseForGeneration(
   const db = createServiceSupabaseClient();
   let query = db
     .from('courses')
-    .select('id, title, language, source_manifest_id, outline, status, source_kind, import_id')
+    .select(
+      'id, owner_id, title, language, source_manifest_id, outline, status, source_kind, import_id',
+    )
     .eq('id', courseId)
     .eq('org_id', orgId)
     .in('status', ['draft', 'ready']);
@@ -65,7 +109,7 @@ async function assertGenerationAuthor(orgId: string, ownerId?: string) {
     .eq('user_id', ownerId)
     .eq('org_id', orgId)
     .eq('organizations.status', 'active')
-    .in('role', ['admin', 'manager', 'author'])
+    .in('role', [...AUTHORING_ROLES])
     .abortSignal(AbortSignal.timeout(5000))
     .maybeSingle();
   if (membership.error) throw new Error('Course authorization unavailable');
