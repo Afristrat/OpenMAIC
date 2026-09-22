@@ -23,6 +23,7 @@ Une décision argumentée.`;
 const original = importCanvasToClassroomPlan(canvas, 'fr-FR');
 const course = {
   id: 'course',
+  owner_id: '00000000-0036-4000-8000-000000000152',
   title: 'Titre déjà retouché',
   language: 'fr-FR' as const,
   source_manifest_id: 'manifest',
