@@ -5,9 +5,12 @@ import { checkRateLimit } from '@/lib/rate-limit';
 describe('commercial plan catalogue', () => {
   afterEach(() => vi.unstubAllEnvs());
 
-  it('has no free or trial plan', () => {
-    expect(Object.keys(PLANS)).toEqual(['unlicensed', 'pro', 'enterprise']);
-    expect(Object.keys(PLANS)).not.toContain('free');
+  it('offers the three-course discovery plan without a trial plan', () => {
+    expect(Object.keys(PLANS)).toEqual(['free', 'unlicensed', 'pro', 'enterprise']);
+    expect(PLANS.free).toMatchObject({
+      classroomsMax: 3,
+      price: { MAD: 0, USD: 0 },
+    });
     expect(Object.keys(PLANS)).not.toContain('trial');
   });
 
@@ -22,7 +25,7 @@ describe('commercial plan catalogue', () => {
 
   it('falls back to unlicensed for an unknown database value', () => {
     expect(getPlan('unknown')).toBe(PLANS.unlicensed);
-    expect(getPlan('free')).toBe(PLANS.unlicensed);
+    expect(getPlan('free')).toBe(PLANS.free);
   });
 
   it('fails closed when quota storage is unavailable', async () => {

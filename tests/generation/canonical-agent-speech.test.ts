@@ -261,4 +261,53 @@ describe('canonical agent speech', () => {
       true,
     );
   });
+
+  test.each([
+    [
+      'Bonjour, je suis Younes, votre enseignant pour cette formation.',
+      'Bonjour, je suis Hanae, votre enseignant pour cette formation.',
+    ],
+    [
+      'Hello, I am Younes, your teacher for this course.',
+      'Hello, I am Hanae, your teacher for this course.',
+    ],
+    [
+      'مرحباً، اسمي يونس، وسأرافقكم في هذا التكوين.',
+      'مرحباً، اسمي Hanae، وسأرافقكم في هذا التكوين.',
+    ],
+  ])(
+    'keeps a teacher self-introduction aligned with the canonical cast',
+    async (generated, expected) => {
+      const actions = await generateSceneActions(
+        {
+          id: 'scene-introduction',
+          type: 'slide',
+          title: 'Bienvenue',
+          description: 'Présenter le parcours.',
+          keyPoints: ['Objectifs'],
+          order: 0,
+        },
+        { elements: [], background: undefined, remark: '' },
+        async () =>
+          JSON.stringify([
+            {
+              type: 'text',
+              content: generated,
+              agentId: 'persona-professor',
+            },
+          ]),
+        {
+          agents: [{ id: 'persona-professor', name: 'Hanae', role: 'teacher' }],
+        },
+      );
+
+      expect(actions).toEqual([
+        expect.objectContaining({
+          type: 'speech',
+          agentId: 'persona-professor',
+          text: expected,
+        }),
+      ]);
+    },
+  );
 });

@@ -2720,6 +2720,20 @@ export function stripVisualProductionDirectives(text: string): string {
     .trim();
 }
 
+const SELF_INTRODUCTION_NAME_PATTERNS = [
+  /(\b[Jj]e\s+(?:suis|m['’]appelle)\s+)([\p{Lu}][\p{L}\p{M}'’.\-]*)(?=\s*[,،])/gu,
+  /(\b(?:I\s+am|[Mm]y\s+name\s+is)\s+)([\p{Lu}][\p{L}\p{M}'’.\-]*)(?=\s*[,،])/gu,
+  /(اسمي\s+)([\p{L}\p{M}'’.\-]+)(?=\s*[,،])/gu,
+] as const;
+
+function alignSpokenSelfIntroduction(text: string, canonicalName: string): string {
+  return SELF_INTRODUCTION_NAME_PATTERNS.reduce(
+    (aligned, pattern) =>
+      aligned.replace(pattern, (_match, prefix: string) => `${prefix}${canonicalName}`),
+    text,
+  );
+}
+
 /**
  * Format question list for AI reference
  */
@@ -2767,6 +2781,13 @@ function processActions(actions: Action[], elements: PPTElement[], agents?: Agen
         processedAction.agentId = teacherAgent?.id;
         delete processedAction.interventionId;
         delete processedAction.interventionForm;
+      }
+      const canonicalSpeaker = agents.find((agent) => agent.id === processedAction.agentId);
+      if (canonicalSpeaker) {
+        processedAction.text = alignSpokenSelfIntroduction(
+          processedAction.text,
+          canonicalSpeaker.name,
+        );
       }
     }
 
