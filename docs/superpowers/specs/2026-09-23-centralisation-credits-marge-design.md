@@ -53,7 +53,7 @@ La cartographie croisée du code, de la configuration déployée, de PostgreSQL 
 
 | Capacité DGX | Câblage Qalem | Usage prouvé |
 |---|---|---|
-| Higgs Audio v3 | appel direct du web Qalem vers le DGX Studio sur le LAN | 37 appels durant la recette complète du 23 septembre ; les personnages Qalem utilisent Higgs par défaut |
+| Higgs Audio v3 | appel direct de la flotte Qalem vers le DGX Studio sur le LAN | 801 appels du 1er au 23 septembre, exclusivement depuis les composants Qalem configurés ; 37 appartiennent à la recette complète du 23 septembre |
 | Whisper ASR | Qalem → LiteLLM Hostinger → DGX Studio par Tailscale | 23 transcriptions avec la clé ASR Qalem du 1er au 23 septembre : 22 `whisper-large-v3-turbo`, 1 `whisper-large-v3` |
 | ComfyUI LTX-2 | appel direct du worker Qalem vers le DGX Studio sur le LAN | 2 travaux terminés dans l'historique, les 20 juillet et 10 août ; aucun en septembre |
 | Embeddings | aucune implémentation directe dans Qalem ; capacité déléguée à Diwan lorsqu'un tenant choisit des sources Diwan | 0 tenant Diwan configuré, 0 manifeste Diwan et 0 source d'organisation en production |
@@ -61,7 +61,7 @@ La cartographie croisée du code, de la configuration déployée, de PostgreSQL 
 
 Le service direct `Qwen/Qwen3.8-27B-FP8` du premier DGX a bien été mesuré, mais il relève du Studio et des autres consommateurs tant que Qalem ne le route pas. Son benchmark ne doit donc pas entrer dans le coût de revient de Qalem. Il reste utile au registre d'infrastructure, distinct de la politique de crédits Qalem.
 
-La synthèse vocale Higgs constitue la principale consommation DGX propre au parcours de génération mesuré. Le service Higgs totalise 801 appels depuis le 1er septembre, tous projets confondus ; faute d'étiquette consommateur dans ses journaux, seuls les 37 appels corrélés à la recette Qalem peuvent lui être attribués avec certitude. Le futur comptage doit ajouter un identifiant de consommateur et un identifiant de travail à chaque appel local.
+La synthèse vocale Higgs constitue la principale consommation DGX de Qalem. L'inventaire des environnements de tous les conteneurs actifs sur ServeurIA montre que seuls les composants Qalem sont configurés pour ce service : web, workers, capture, AudioSeal et edge public. Les 801 appels Higgs observés depuis le 1er septembre sont donc attribuables à la flotte Qalem, sous réserve de sondes manuelles hors application. Les journaux actuels ne permettent toutefois pas de les répartir entre tenants, utilisateurs, formations, préécoutes et recettes. Le futur comptage doit ajouter tenant, acteur, type d'opération et identifiant de travail à chaque appel local.
 
 Deux anomalies de catalogue restent à corriger sans les confondre avec l'usage Qalem : l'alias LiteLLM `qwen3-14b-local` ne pointe pas vers le service 27B mesuré, et `qwen2.5-14b-local` est publié dans le catalogue de la clé Qalem alors que le proxy le rejette. Le registre dynamique des modèles doit vérifier une inférence réelle et identifier le déploiement physique avant de déclarer un modèle disponible ou de lui attribuer un coût.
 
