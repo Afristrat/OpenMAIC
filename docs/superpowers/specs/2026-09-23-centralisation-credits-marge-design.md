@@ -43,19 +43,27 @@ LiteLLM attribue exactement 0,243215994 USD au parcours :
 | Kimi K2.6 | 2 | 13 556 | 0,013716950 USD |
 | **Total LiteLLM** | **22** | **108 470** | **0,243215994 USD** |
 
-La synthèse vocale a produit environ 447,08 secondes d'audio en environ 552 secondes écoulées sur le DGX. Elle est aujourd'hui comptabilisée à zéro par LiteLLM, ce qui est une absence de valorisation et non un coût nul. Au prix public de référence de 4 699 USD amorti sur trois ans, l'occupation exclusive de 9,2 minutes représente environ 0,027 USD si le DGX est utilisé en permanence, ou 0,116 USD sur une hypothèse de 2 080 heures productives par an, avant électricité. Le coût complet provisoire de ce parcours se situe donc entre 0,270 et 0,359 USD, hors stockage et infrastructure partagée. Avec l'ancrage recommandé, il consommerait provisoirement entre 27 et 36 crédits. Cette fourchette doit être remplacée par le coût mesuré au compteur électrique et par une règle d'allocation de la capacité partagée avant amorçage du barème.
+La synthèse vocale a produit environ 447,08 secondes d'audio en environ 552 secondes écoulées sur le DGX. Elle est aujourd'hui comptabilisée à zéro par LiteLLM, ce qui est une absence de valorisation et non un coût nul. Au [prix public NVIDIA de référence de 4 699 USD](https://marketplace.nvidia.com/en-us/enterprise/personal-ai-supercomputers/dgx-spark/) amorti sur trois ans, l'occupation exclusive de 9,2 minutes représente environ 0,027 USD si le DGX est utilisé en permanence, ou 0,116 USD sur une hypothèse de 2 080 heures productives par an, avant électricité. Le coût complet provisoire de ce parcours se situe donc entre 0,270 et 0,359 USD, hors stockage et infrastructure partagée. Avec l'ancrage recommandé, il consommerait provisoirement entre 27 et 36 crédits. Cette fourchette doit être remplacée par le coût mesuré au compteur électrique et par une règle d'allocation de la capacité partagée avant amorçage du barème.
 
 La cible de marge brute de 95 % donnerait un plancher économique indicatif de 5,40 à 7,18 USD pour ce parcours. Ce plancher reste une alerte de viabilité et ne devient jamais le prix proposé au tenant.
 
-### Étalonnage du modèle souverain
+### Usage réel des DGX par Qalem
 
-Le service direct `Qwen/Qwen3.8-27B-FP8` du premier DGX a été mesuré avec 240 jetons de sortie : 8,32 jetons/s sur une entrée courte, 7,87 jetons/s sur 3 904 jetons d'entrée et 6,80 jetons/s sur 14 464 jetons d'entrée. À quatre requêtes simultanées, deux réponses sortent à environ 8,3 jetons/s et deux à environ 4,15 jetons/s. Le champ de puissance NVIDIA est passé d'environ 12 W au repos à 26-28 W en charge soutenue, avec un pic à 42 W ; il ne représente pas la consommation murale complète.
+La cartographie croisée du code, de la configuration déployée, de PostgreSQL et des journaux LiteLLM établit le périmètre suivant :
 
-À débit identique de 7,87 jetons/s, un million de jetons de sortie occupe environ 35,30 heures. Les [tarifs publiés par Runpod](https://www.runpod.io/pricing) pour des cartes de 48 Gio donnent un équivalent locatif de 17,30 USD sur A40 à 38,48 USD sur L40S par million de jetons de sortie. Cette comparaison est une enveloppe de location, pas un benchmark d'égalité de performance entre architectures.
+| Capacité DGX | Câblage Qalem | Usage prouvé |
+|---|---|---|
+| Higgs Audio v3 | appel direct du web Qalem vers le DGX Studio sur le LAN | 37 appels durant la recette complète du 23 septembre ; les personnages Qalem utilisent Higgs par défaut |
+| Whisper ASR | Qalem → LiteLLM Hostinger → DGX Studio par Tailscale | 23 transcriptions avec la clé ASR Qalem du 1er au 23 septembre : 22 `whisper-large-v3-turbo`, 1 `whisper-large-v3` |
+| ComfyUI LTX-2 | appel direct du worker Qalem vers le DGX Studio sur le LAN | 2 travaux terminés dans l'historique, les 20 juillet et 10 août ; aucun en septembre |
+| Embeddings | aucune implémentation directe dans Qalem ; capacité déléguée à Diwan lorsqu'un tenant choisit des sources Diwan | 0 tenant Diwan configuré, 0 manifeste Diwan et 0 source d'organisation en production |
+| Qwen LLM local | aucun routage applicatif Qalem actif | 0 appel de production ; les 8 appels `qwen3-14b-local` du 23 septembre provenaient uniquement de la calibration technique |
 
-Avec le [prix public NVIDIA de 4 699 USD](https://marketplace.nvidia.com/en-us/enterprise/personal-ai-supercomputers/dgx-spark/) amorti sur trois ans, le même million de jetons porte environ 6,31 USD d'amortissement si le DGX est utilisé en permanence, ou 26,58 USD avec 2 080 heures productives par an, avant électricité. Au [tarif professionnel ONEE](https://www.one.org.ma/FR/pages/interne.asp?id1=2&id2=35&id3=119&t2=1&t3=1) supérieur à 500 kWh, la [borne théorique de 140 W du GB10](https://www.nvidia.com/en-us/products/workstations/dgx-spark/) représente environ 8,28 MAD d'électricité par million de jetons ; seule une prise mesurée permettra de remplacer cette borne par le coût réel.
+Le service direct `Qwen/Qwen3.8-27B-FP8` du premier DGX a bien été mesuré, mais il relève du Studio et des autres consommateurs tant que Qalem ne le route pas. Son benchmark ne doit donc pas entrer dans le coût de revient de Qalem. Il reste utile au registre d'infrastructure, distinct de la politique de crédits Qalem.
 
-Deux anomalies interdisent encore une automatisation fiable du coût local : l'alias LiteLLM `qwen3-14b-local` ne pointe pas vers ce service 27B mesuré, et `qwen2.5-14b-local` est publié dans le catalogue de la clé Qalem alors que le proxy le rejette. Le registre dynamique des modèles doit donc vérifier une inférence réelle et identifier le déploiement physique avant d'accepter un coût nul ou un modèle comme disponible.
+La synthèse vocale Higgs constitue la principale consommation DGX propre au parcours de génération mesuré. Le service Higgs totalise 801 appels depuis le 1er septembre, tous projets confondus ; faute d'étiquette consommateur dans ses journaux, seuls les 37 appels corrélés à la recette Qalem peuvent lui être attribués avec certitude. Le futur comptage doit ajouter un identifiant de consommateur et un identifiant de travail à chaque appel local.
+
+Deux anomalies de catalogue restent à corriger sans les confondre avec l'usage Qalem : l'alias LiteLLM `qwen3-14b-local` ne pointe pas vers le service 27B mesuré, et `qwen2.5-14b-local` est publié dans le catalogue de la clé Qalem alors que le proxy le rejette. Le registre dynamique des modèles doit vérifier une inférence réelle et identifier le déploiement physique avant de déclarer un modèle disponible ou de lui attribuer un coût.
 
 ### Prix à la valeur
 
