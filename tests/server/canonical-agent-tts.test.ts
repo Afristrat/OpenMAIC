@@ -309,6 +309,15 @@ describe('canonical classroom agent TTS', () => {
     ).toBe('Bienvenue aux entreprises marocaines. Je serai votre accompagnatrice.');
   });
 
+  test('retire une auto-présentation appositive sans conserver un fragment nominal', () => {
+    expect(
+      removeAgentNamesFromSpeech(
+        'Bienvenue. Je suis Hanae, votre formatrice pendant ces deux journées. Avant de commencer, établissons notre contrat.',
+        [{ id: 'teacher', name: 'Hanae' }],
+      ),
+    ).toBe('Bienvenue. Avant de commencer, établissons notre contrat.');
+  });
+
   test('retire seulement les placeholders des médias optionnels indisponibles', () => {
     const scene = {
       id: 'scene-1',

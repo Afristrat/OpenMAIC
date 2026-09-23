@@ -77,12 +77,17 @@ export function removeAgentNamesFromSpeech(
   if (names.length === 0) return text;
 
   const namesPattern = names.map(escapeRegExp).join('|');
+  const appositiveSelfIntroduction = new RegExp(
+    `\\b(?:je suis|moi[,]? c['’]est|mon nom est)\\s+(?:${namesPattern})\\s*[,;:]\\s*(?:votre|l['’])[^.!?]*[.!?]\\s*`,
+    'giu',
+  );
   const selfIntroduction = new RegExp(
     `\\b(?:je suis|moi[,]? c['’]est|mon nom est)\\s+(?:${namesPattern})(?=$|[^\\p{L}\\p{N}])[,;:]?\\s*(?:et\\s+)?`,
     'giu',
   );
   const directAddress = new RegExp(`([,;:]?\\s*)(?:${namesPattern})(?=$|[^\\p{L}\\p{N}])`, 'giu');
   const sanitized = text
+    .replace(appositiveSelfIntroduction, '')
     .replace(selfIntroduction, '')
     .replace(directAddress, '')
     .replace(/^\s*[,;:.!?]\s*/, '')
