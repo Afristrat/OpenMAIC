@@ -9,7 +9,7 @@
 
 export type OrgMemberRole = 'admin' | 'manager' | 'author' | 'formateur' | 'apprenant';
 
-export type OrgSector = 'healthcare' | 'legal' | 'tech' | 'finance' | 'education' | 'industry';
+export type OrgSector = string;
 
 export type SceneType = 'slide' | 'quiz' | 'interactive' | 'pbl' | 'plugin';
 

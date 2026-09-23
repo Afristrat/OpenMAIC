@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { supportedLocales } from '@/lib/i18n/locales';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -70,7 +71,12 @@ interface OrgWithRole extends Organization {
 
 const SECTORS: OrgSector[] = ['healthcare', 'legal', 'tech', 'finance', 'education', 'industry'];
 const ROLES: OrgMemberRole[] = ['admin', 'manager', 'author', 'formateur', 'apprenant'];
-const LOCALES = ['fr-FR', 'ar-MA', 'en-US', 'zh-CN'];
+const ORGANIZATION_LOCALES = [
+  ...supportedLocales,
+  { code: 'fr-CA', label: 'Français (Canada / Québec)', shortLabel: 'CA' },
+  { code: 'en-CA', label: 'English (Canada)', shortLabel: 'CA' },
+  { code: 'iu-Cans-CA', label: 'ᐃᓄᒃᑎᑐᑦ (Canada)', shortLabel: 'IU' },
+] as const;
 
 const ROLE_ICONS: Record<OrgMemberRole, typeof Crown> = {
   admin: Crown,
@@ -460,7 +466,11 @@ export default function OrgAdminPage() {
         <div className="flex items-center gap-3">
           <Building2 className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-bold">{org.name}</h1>
-          {org.sector && <Badge variant="secondary">{t(`org.sectors.${org.sector}`)}</Badge>}
+          {org.sector && (
+            <Badge variant="secondary">
+              {SECTORS.includes(org.sector) ? t(`org.sectors.${org.sector}`) : org.sector}
+            </Badge>
+          )}
         </div>
       </div>
 
@@ -521,33 +531,35 @@ export default function OrgAdminPage() {
             />
             <div>
               <label className="mb-1 block text-sm font-medium">{t('org.sector')}</label>
-              <Select value={editSector} onValueChange={setEditSector}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SECTORS.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {t(`org.sectors.${s}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                list="organization-sector-options"
+                value={editSector}
+                maxLength={120}
+                onChange={(event) => setEditSector(event.target.value)}
+                placeholder={t('org.sectorPlaceholder')}
+              />
+              <datalist id="organization-sector-options">
+                {SECTORS.map((sector) => (
+                  <option key={sector} value={sector} label={t(`org.sectors.${sector}`)} />
+                ))}
+              </datalist>
+              <p className="mt-1 text-xs text-muted-foreground">{t('org.sectorHint')}</p>
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium">{t('org.defaultLocale')}</label>
-              <Select value={editLocale} onValueChange={setEditLocale}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {LOCALES.map((l) => (
-                    <SelectItem key={l} value={l}>
-                      {l}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                list="organization-locale-options"
+                value={editLocale}
+                maxLength={64}
+                onChange={(event) => setEditLocale(event.target.value)}
+                placeholder="fr-CA"
+              />
+              <datalist id="organization-locale-options">
+                {ORGANIZATION_LOCALES.map((locale) => (
+                  <option key={locale.code} value={locale.code} label={locale.label} />
+                ))}
+              </datalist>
+              <p className="mt-1 text-xs text-muted-foreground">{t('org.defaultLocaleHint')}</p>
             </div>
             <div className="sm:col-span-2">
               <label className="mb-1 block text-sm font-medium">{t('org.brandWebsite')}</label>
@@ -721,7 +733,7 @@ export default function OrgAdminPage() {
                 type="url"
                 value={editLogo}
                 onChange={(event) => setEditLogo(event.target.value)}
-                placeholder="https://…/logo.svg"
+                placeholder="https://…/logo.png"
               />
               <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
                 <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted">

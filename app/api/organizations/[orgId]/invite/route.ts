@@ -106,7 +106,7 @@ export async function POST(
         invitationId: invitation.id,
         recipient: email,
         organizationName: organization.name,
-        locale: organization.default_locale as 'fr-FR' | 'ar-MA' | 'en-US',
+        locale: organization.default_locale,
         inviteUrl,
       });
     } catch {

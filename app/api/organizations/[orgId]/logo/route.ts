@@ -1,6 +1,7 @@
 import { type NextRequest } from 'next/server';
 import { requireSuperAdminOrOrgAdmin } from '@/lib/api/auth';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { buildRequestOrigin } from '@/lib/server/request-origin';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 
 const BUCKET = 'classroom-media';
@@ -51,7 +52,7 @@ export async function POST(
       upsert: true,
     });
   if (uploadError) return apiError('INTERNAL_ERROR', 500, uploadError.message);
-  const origin = new URL(request.url).origin;
+  const origin = buildRequestOrigin(request);
   const logoUrl = `${origin}/api/organizations/${orgId}/logo?v=${Date.now()}`;
   const { error: updateError } = await supabase
     .from('organizations')

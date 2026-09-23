@@ -13,17 +13,24 @@ import { isIso4217CurrencyCode } from '@/lib/formation-engine/learning-context';
 // ---------------------------------------------------------------------------
 
 const orgSectors = ['healthcare', 'legal', 'tech', 'finance', 'education', 'industry'] as const;
+const organizationSectorSchema = z.string().trim().min(1).max(120);
+const organizationLocaleSchema = z
+  .string()
+  .trim()
+  .min(2)
+  .max(64)
+  .regex(/^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})+$/, 'A valid BCP 47 locale is required');
 
 export const organizationsCreateSchema = z.object({
   name: z.string().min(1, 'Organization name is required'),
-  sector: z.enum(orgSectors).optional(),
-  default_locale: z.string().optional(),
+  sector: organizationSectorSchema.optional(),
+  default_locale: organizationLocaleSchema.optional(),
 });
 
 export const organizationPatchSchema = z.object({
   name: z.string().min(1).optional(),
-  sector: z.enum(orgSectors).nullable().optional(),
-  default_locale: z.string().optional(),
+  sector: organizationSectorSchema.nullable().optional(),
+  default_locale: organizationLocaleSchema.optional(),
   settings: z.record(z.string(), z.unknown()).optional(),
   logo: z.string().url().max(2048).nullable().optional(),
 });

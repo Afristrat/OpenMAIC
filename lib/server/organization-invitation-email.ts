@@ -44,18 +44,26 @@ function escapeHtml(value: string): string {
   });
 }
 
+function invitationUiLocale(locale: string): Locale {
+  const language = locale.trim().toLowerCase().split('-')[0];
+  if (language === 'ar') return 'ar-MA';
+  if (language === 'en') return 'en-US';
+  return 'fr-FR';
+}
+
 /** Sends the organization token only to its nominated recipient. */
 export async function sendOrganizationInvitationEmail(input: {
   invitationId: string;
   recipient: string;
   organizationName: string;
-  locale: Locale;
+  locale: string;
   inviteUrl: string;
 }): Promise<string | null> {
   const apiKey = requiredEnvironment('RESEND_API_KEY');
   const from = requiredEnvironment('SMTP_FROM');
   const organizationName = escapeHtml(input.organizationName);
   const inviteUrl = escapeHtml(input.inviteUrl);
+  const locale = invitationUiLocale(input.locale);
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -66,20 +74,20 @@ export async function sendOrganizationInvitationEmail(input: {
     body: JSON.stringify({
       from,
       to: [input.recipient],
-      subject: translate(input.locale, 'org.invitationEmailSubject', {
+      subject: translate(locale, 'org.invitationEmailSubject', {
         organization: input.organizationName,
       }),
       text: [
-        translate(input.locale, 'org.invitationEmailIntro', {
+        translate(locale, 'org.invitationEmailIntro', {
           organization: input.organizationName,
         }),
         input.inviteUrl,
-        translate(input.locale, 'org.invitationEmailFooter'),
+        translate(locale, 'org.invitationEmailFooter'),
       ].join('\n\n'),
       html: [
-        `<p>${translate(input.locale, 'org.invitationEmailIntro', { organization: organizationName })}</p>`,
-        `<p><a href="${inviteUrl}">${translate(input.locale, 'org.invitationEmailAction')}</a></p>`,
-        `<p>${translate(input.locale, 'org.invitationEmailFooter')}</p>`,
+        `<p>${translate(locale, 'org.invitationEmailIntro', { organization: organizationName })}</p>`,
+        `<p><a href="${inviteUrl}">${translate(locale, 'org.invitationEmailAction')}</a></p>`,
+        `<p>${translate(locale, 'org.invitationEmailFooter')}</p>`,
       ].join(''),
     }),
     signal: AbortSignal.timeout(15_000),
