@@ -43,6 +43,54 @@ function formatColor(_color: string) {
 
 type FormatColor = ReturnType<typeof formatColor>;
 
+const HTML_TEXT_ENTITIES: Readonly<Record<string, string>> = {
+  amp: '&',
+  apos: "'",
+  gt: '>',
+  lt: '<',
+  nbsp: ' ',
+  quot: '"',
+  Agrave: 'À',
+  Acirc: 'Â',
+  Ccedil: 'Ç',
+  Eacute: 'É',
+  Egrave: 'È',
+  Ecirc: 'Ê',
+  Icirc: 'Î',
+  Ocirc: 'Ô',
+  Ugrave: 'Ù',
+  Ucirc: 'Û',
+  agrave: 'à',
+  acirc: 'â',
+  ccedil: 'ç',
+  eacute: 'é',
+  egrave: 'è',
+  ecirc: 'ê',
+  euml: 'ë',
+  icirc: 'î',
+  iuml: 'ï',
+  ocirc: 'ô',
+  oelig: 'œ',
+  OElig: 'Œ',
+  ugrave: 'ù',
+  ucirc: 'û',
+  uuml: 'ü',
+};
+
+function normalizeExportText(value: string): string {
+  return value
+    .replace(/&#(?:x([0-9a-f]+)|(\d+));/giu, (_match, hex: string, decimal: string) => {
+      const codePoint = Number.parseInt(hex || decimal, hex ? 16 : 10);
+      return Number.isSafeInteger(codePoint) && codePoint <= 0x10ffff
+        ? String.fromCodePoint(codePoint)
+        : '';
+    })
+    .replace(/&([a-z][a-z0-9]+);/giu, (match, name: string) => HTML_TEXT_ENTITIES[name] ?? match)
+    .replace(/\r\n?/gu, '\n')
+    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/gu, '')
+    .normalize('NFC');
+}
+
 // ── HTML → pptxgenjs TextProps ──
 
 function formatHTML(html: string, ratioPx2Pt: number) {
@@ -99,12 +147,7 @@ function formatHTML(html: string, ratioPx2Pt: number) {
       if ('tagName' in item && item.tagName === 'br') {
         slices.push({ text: '', options: { breakLine: true } });
       } else if ('content' in item) {
-        const text = item.content
-          .replace(/&nbsp;/g, ' ')
-          .replace(/&gt;/g, '>')
-          .replace(/&lt;/g, '<')
-          .replace(/&amp;/g, '&')
-          .replace(/\n/g, '');
+        const text = normalizeExportText(item.content);
         const options: pptxgen.TextPropsOptions = {};
 
         if (styleObj['font-size']) {
@@ -168,7 +211,18 @@ function formatHTML(html: string, ratioPx2Pt: number) {
           indent = 0;
         }
 
-        slices.push({ text, options });
+        const lines = text.split('\n');
+        for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+          const line = lines[lineIndex];
+          if (!line && lines.length === 1) continue;
+          slices.push({
+            text: line,
+            options: {
+              ...options,
+              ...(lineIndex < lines.length - 1 ? { breakLine: true } : {}),
+            },
+          });
+        }
       } else if ('children' in item) parse(item.children, styleObj);
     }
   };

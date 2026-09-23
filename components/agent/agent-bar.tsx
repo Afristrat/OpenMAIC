@@ -565,6 +565,7 @@ export function AgentBar({
   const setSelectedAgentIds = useSettingsStore((s) => s.setSelectedAgentIds);
   const agentMode = useSettingsStore((s) => s.agentMode);
   const setAgentMode = useSettingsStore((s) => s.setAgentMode);
+  const agentSelectionIsUserSet = useSettingsStore((s) => s.agentSelectionIsUserSet);
   const setAgentSelectionIsUserSet = useSettingsStore((s) => s.setAgentSelectionIsUserSet);
   const ttsProvidersConfig = useSettingsStore((s) => s.ttsProvidersConfig);
   const ttsEnabled = useSettingsStore((s) => s.ttsEnabled);
@@ -632,9 +633,26 @@ export function AgentBar({
 
   useEffect(() => {
     if (agentMode !== 'preset') return;
-    if (selectedAgentIds.some((id) => agents.some((agent) => agent.id === id))) return;
-    setSelectedAgentIds(agents.slice(0, 4).map((agent) => agent.id));
-  }, [agentMode, agents, selectedAgentIds, setSelectedAgentIds]);
+    const completeRosterIds = baseAgents.map((agent) => agent.id);
+    if (
+      agentSelectionIsUserSet &&
+      selectedAgentIds.some((id) => agents.some((agent) => agent.id === id))
+    )
+      return;
+    if (
+      selectedAgentIds.length === completeRosterIds.length &&
+      completeRosterIds.every((id) => selectedAgentIds.includes(id))
+    )
+      return;
+    setSelectedAgentIds(completeRosterIds);
+  }, [
+    agentMode,
+    agentSelectionIsUserSet,
+    agents,
+    baseAgents,
+    selectedAgentIds,
+    setSelectedAgentIds,
+  ]);
 
   // Single source of truth for selectable provider+voice options (enabled
   // providers + opt-in browser-native), shared with discussion TTS (#665).
@@ -715,7 +733,7 @@ export function AgentBar({
         presetIds.unshift(teacherAgent.id);
       }
       setSelectedAgentIds(
-        presetIds.length > 0 ? presetIds : agents.slice(0, 4).map((agent) => agent.id),
+        presetIds.length > 0 ? presetIds : baseAgents.map((agent) => agent.id),
       );
     } else {
       // Auto mode plays the current classroom's generated agents — leaving the

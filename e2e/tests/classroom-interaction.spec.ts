@@ -632,6 +632,32 @@ test.describe('Classroom Interaction', () => {
     expect(snapshotScriptRequests).toBe(1);
   });
 
+  test('continues the MP4 export when a browser snapshot upload fails', async ({
+    page,
+    mockApi,
+  }) => {
+    await mockApi.mockMp4ExportDone('e2e-mp4-snapshot-fallback');
+    await page.unroute('**/api/export-snapshots/**');
+    await page.route('**/api/export-snapshots/**', (route) =>
+      route.fulfill({
+        status: 503,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: false, error: 'snapshot unavailable' }),
+      }),
+    );
+
+    const classroom = new ClassroomPage(page);
+    await classroom.goto(TEST_STAGE_ID);
+    await classroom.waitForLoaded();
+
+    await page.getByRole('button', { name: 'Export PPTX' }).click();
+    const downloadPromise = page.waitForEvent('download');
+    await page.getByTestId('export-mp4').click();
+    const download = await downloadPromise;
+
+    expect(download.suggestedFilename(), download.url()).toContain('.mp4');
+  });
+
   test('exports every downloadable format from the current editable classroom', async ({
     page,
     mockApi,

@@ -70,38 +70,10 @@ function scoreAgent(
   return score;
 }
 
-function ensureGenderMix(
-  selected: GeneratedAgent[],
-  candidates: GeneratedAgent[],
-  scores: Map<string, number>,
-): GeneratedAgent[] {
-  const genders = new Set(selected.flatMap((agent) => (agent.gender ? [agent.gender] : [])));
-  const missingGender = genders.has('female')
-    ? genders.has('male')
-      ? undefined
-      : 'male'
-    : 'female';
-  if (!missingGender) return selected;
-
-  const replacement = candidates
-    .filter(
-      (agent) => agent.gender === missingGender && !selected.some((item) => item.id === agent.id),
-    )
-    .sort((a, b) => (scores.get(b.id) ?? 0) - (scores.get(a.id) ?? 0))[0];
-  if (!replacement) return selected;
-
-  const replaceIndex = selected
-    .map((agent, index) => ({ agent, index }))
-    .filter(({ agent }) => agent.role !== 'teacher')
-    .sort((a, b) => (scores.get(a.agent.id) ?? 0) - (scores.get(b.agent.id) ?? 0))[0]?.index;
-  if (replaceIndex === undefined) return selected;
-
-  return selected.map((agent, index) => (index === replaceIndex ? replacement : agent));
-}
-
 /**
- * Select the agents that animate one classroom. The tenant owns personas,
- * voices and weights; learner profile and content select a balanced subset.
+ * Order the complete tenant roster for one classroom. The ten mechanisms are
+ * part of the product contract: content and learner preferences may change
+ * their priority, but must never silently remove them from the course.
  */
 export function selectTenantCast({
   design,
@@ -126,25 +98,22 @@ export function selectTenantCast({
       scoreAgent(agent, normalizedContent, profile.preferences, preferredMechanismIds),
     ]),
   );
-  const selected = candidates
-    .filter((agent) => Number.isFinite(scores.get(agent.id)))
-    .sort((a, b) => {
+  const ranked = candidates.sort((a, b) => {
       const byScore = (scores.get(b.id) ?? 0) - (scores.get(a.id) ?? 0);
       return byScore || stableRank(a.id, seed) - stableRank(b.id, seed);
-    })
-    .slice(0, 3);
+    });
 
   const cultureReference = resolveCultureReference(profile.culture).code;
-  const mixed = ensureGenderMix(teacher ? [teacher, ...selected] : selected, candidates, scores);
+  const completeRoster = teacher ? [teacher, ...ranked] : ranked;
   const approved =
     design.cultureReferenceApprovals[cultureReference]?.version === CULTURE_REFERENCE_VERSION;
   const agents = approved
-    ? mixed.map((agent) => {
+    ? completeRoster.map((agent) => {
         const names = getCultureNames(cultureReference, agent.gender ?? 'male');
         const selectedName = names[stableRank(agent.id, seed) % names.length];
         return selectedName ? { ...agent, name: selectedName.display } : agent;
       })
-    : mixed;
+    : completeRoster;
 
   return { agents, cultureReference };
 }

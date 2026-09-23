@@ -14,6 +14,7 @@ describe('selectTenantCast', () => {
         content: 'Analyse de données et décision stratégique.',
         seed: `session-${index}`,
       });
+      expect(cast.agents).toHaveLength(10);
       expect(cast.agents.filter((agent) => agent.role === 'teacher')).toHaveLength(1);
       expect(new Set(cast.agents.map((agent) => agent.gender))).toEqual(
         new Set(['female', 'male']),
@@ -31,9 +32,26 @@ describe('selectTenantCast', () => {
 
     expect(practical.cultureReference).toBe('ma-ar');
     expect(practical.agents.map((agent) => agent.mechanismId)).toContain('coach');
-    expect(practical.agents.map((agent) => agent.mechanismId)).not.toContain('joker');
+    expect(practical.agents.map((agent) => agent.mechanismId)).toContain('joker');
+    expect(practical.agents.at(-1)?.mechanismId).toBe('joker');
     expect(practical.agents.find((agent) => agent.mechanismId === 'professor')?.name).toBe(
       'Younes',
+    );
+  });
+
+  it('conserve les dix mécanismes même lorsque le directeur en privilégie trois', () => {
+    const cast = selectTenantCast({
+      design: DEFAULT_LEARNING_DESIGN,
+      profile,
+      content: 'Décision, créativité et passage à l’action.',
+      seed: 'full-roster',
+      preferredMechanismIds: ['coach', 'creative', 'analyst'],
+    });
+
+    expect(cast.agents).toHaveLength(10);
+    expect(new Set(cast.agents.map((agent) => agent.mechanismId)).size).toBe(10);
+    expect(cast.agents.slice(1, 4).map((agent) => agent.mechanismId)).toEqual(
+      expect.arrayContaining(['coach', 'creative', 'analyst']),
     );
   });
 

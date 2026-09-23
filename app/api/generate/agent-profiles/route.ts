@@ -15,6 +15,7 @@ import { AGENT_COLOR_PALETTE } from '@/lib/constants/agent-defaults';
 import { normalizeVoiceDesign } from '@/lib/audio/voice-design';
 import { requireSuperAdminOrOrgAuthor } from '@/lib/api/auth';
 import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
+import { PERSONA_CATALOG, type AgentGender } from '@/lib/agents/persona-catalog';
 
 const log = createLogger('Agent Profiles API');
 
@@ -42,6 +43,16 @@ function stripCodeFences(text: string): string {
     cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
   }
   return cleaned.trim();
+}
+
+function voiceDesignForGender(value: unknown, gender: AgentGender) {
+  const design = normalizeVoiceDesign(value);
+  if (!design) return undefined;
+  const identity = design.identity.toLocaleLowerCase();
+  const male = /\b(male|man|homme|masculin)\b/u.test(identity);
+  const female = /\b(female|woman|femme|féminin|feminin)\b/u.test(identity);
+  if (gender === 'male' ? !male || female : !female || male) return undefined;
+  return design;
 }
 
 export async function POST(req: NextRequest) {
@@ -95,7 +106,7 @@ export async function POST(req: NextRequest) {
           .join('\n')
       : null;
 
-    const systemPrompt = `You are an expert instructional designer. Generate agent profiles for a multi-agent classroom simulation. Decide the appropriate number of agents (typically 3-5) based on the course content and complexity. Return ONLY valid JSON, no markdown or explanation.`;
+    const systemPrompt = `You are an expert instructional designer. Generate exactly 10 agent profiles for a multi-agent classroom simulation, one for each supplied learning mechanism. Return ONLY valid JSON, no markdown or explanation.`;
 
     // Build voice list for prompt (if available)
     const voiceListStr =
@@ -126,7 +137,8 @@ Course name: ${stageInfo.name}
 ${stageInfo.description ? `Course description: ${stageInfo.description}` : ''}
 ${sceneSummary ? `\nScene outlines:\n${sceneSummary}\n` : ''}
 Requirements:
-- Decide the appropriate number of agents based on the course content (typically 3-5)
+- Return exactly 10 agents, one for every mechanism in this roster: ${JSON.stringify(PERSONA_CATALOG.map(({ id, label, role, persona }) => ({ id, label, role, persona })))}
+- Use each mechanismId exactly once and never invent another mechanismId
 - Exactly 1 agent must have role "teacher", the rest can be "assistant" or "student"
 - Priority values: teacher=10 (highest), assistant=7, student=4-6
 - Each agent needs: name, role, persona (2-3 sentences describing personality and teaching/learning style)
@@ -153,6 +165,7 @@ Return a JSON object with this exact structure:
 {
   "agents": [
     {
+      "mechanismId": "string (id from the supplied mechanism roster)",
       "name": "string",
       "role": "teacher" | "assistant" | "student",
       "persona": "string (2-3 sentences)",
@@ -191,6 +204,7 @@ Return a JSON object with this exact structure:
         avatar: string;
         color: string;
         priority: number;
+        mechanismId?: string;
         voice?: string;
         voiceDesign?: unknown;
       }>;
@@ -204,48 +218,53 @@ Return a JSON object with this exact structure:
     }
 
     // ── Validate parsed structure ──
-    if (!parsed.agents || !Array.isArray(parsed.agents) || parsed.agents.length < 2) {
-      log.error(`Expected at least 2 agents, got ${parsed.agents?.length ?? 0}`);
+    if (!parsed.agents || !Array.isArray(parsed.agents) || parsed.agents.length < 1) {
+      log.error(`Expected agent profiles, got ${parsed.agents?.length ?? 0}`);
       return apiError(
         'GENERATION_FAILED',
         500,
-        `Expected at least 2 agents but LLM returned ${parsed.agents?.length ?? 0}`,
+        'The provider returned no usable agent profile',
       );
     }
 
-    const teacherCount = parsed.agents.filter((a) => a.role === 'teacher').length;
-    if (teacherCount !== 1) {
-      log.error(`Expected exactly 1 teacher, got ${teacherCount}`);
-      return apiError(
-        'GENERATION_FAILED',
-        500,
-        `Expected exactly 1 teacher but LLM returned ${teacherCount}`,
-      );
-    }
-
-    // ── Build output with IDs ──
-    const agents = parsed.agents.map((agent, index) => {
-      // Parse voice "providerId::voiceId" format
-      let voiceConfig: { providerId: string; voiceId: string } | undefined;
-      if (agent.voice && agent.voice.includes('::')) {
-        const [providerId, voiceId] = agent.voice.split('::');
-        if (providerId && voiceId) {
-          voiceConfig = { providerId, voiceId };
-        }
-      }
-
-      const voiceDesign = normalizeVoiceDesign(agent.voiceDesign);
-
+    // The provider adapts each persona to the course, but the platform owns the
+    // ten identities. Reconciliation against the canonical roster prevents a
+    // partial response, invented mechanism or name/avatar/voice drift from
+    // breaking the contract exposed on the landing page.
+    const byMechanism = new Map(
+      parsed.agents
+        .filter((agent) => PERSONA_CATALOG.some((persona) => persona.id === agent.mechanismId))
+        .map((agent) => [agent.mechanismId, agent]),
+    );
+    const unmatchedTeachers = parsed.agents.filter((agent) => agent.role === 'teacher');
+    const unmatchedOthers = parsed.agents.filter((agent) => agent.role !== 'teacher');
+    let otherIndex = 0;
+    const agents = PERSONA_CATALOG.map((persona, index) => {
+      const adapted =
+        byMechanism.get(persona.id) ??
+        (persona.role === 'teacher' ? unmatchedTeachers[0] : unmatchedOthers[otherIndex++]);
+      const fallbackAvatar = availableAvatars[index % availableAvatars.length];
+      const avatar = availableAvatars.includes(persona.avatar)
+        ? persona.avatar
+        : adapted?.avatar && availableAvatars.includes(adapted.avatar)
+          ? adapted.avatar
+          : fallbackAvatar;
+      const voiceDesign = voiceDesignForGender(adapted?.voiceDesign, persona.gender);
       return {
-        id: `gen-${nanoid(8)}`,
-        name: agent.name,
-        role: agent.role,
-        persona: agent.persona,
-        avatar: agent.avatar || availableAvatars[index % availableAvatars.length],
-        color: agent.color || AGENT_COLOR_PALETTE[index % AGENT_COLOR_PALETTE.length],
-        priority:
-          agent.priority ?? (agent.role === 'teacher' ? 10 : agent.role === 'assistant' ? 7 : 5),
-        ...(voiceConfig ? { voiceConfig } : {}),
+        id: `gen-${persona.id}-${nanoid(4)}`,
+        name: persona.defaultName,
+        role: persona.role,
+        persona: adapted?.persona?.trim() || persona.persona,
+        avatar,
+        color: persona.color || AGENT_COLOR_PALETTE[index % AGENT_COLOR_PALETTE.length],
+        priority: Math.max(
+          1,
+          Math.min(10, Math.round(persona.interactionWeights.balanced / 4)),
+        ),
+        mechanismId: persona.id,
+        interactionWeight: persona.interactionWeights.balanced,
+        gender: persona.gender,
+        voiceConfig: { providerId: persona.providerId, voiceId: persona.voiceId },
         ...(voiceDesign ? { voiceDesign } : {}),
       };
     });

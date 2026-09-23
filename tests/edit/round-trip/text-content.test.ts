@@ -66,4 +66,23 @@ describe('round-trip harness (export side)', () => {
     const slideXml = await readPptxEntry(blob, 'ppt/slides/slide1.xml');
     expect(slideXml).toContain(NEEDLE);
   });
+
+  it('préserve les accents et les retours de ligne sans caractère de contrôle', async () => {
+    const { scene, content, textElementId } = makeSlideFixture();
+    const after = applySlideEditOperation(content, {
+      type: 'text.updateContent',
+      elementId: textElementId,
+      content: '<p>Éthique&nbsp;: déjà\r\ntrès utile</p><p>À suivre&nbsp;: où et pourquoi&nbsp;?</p>',
+    });
+
+    const blob = await exportSlideContent(after, scene);
+    const slideXml = await readPptxEntry(blob, 'ppt/slides/slide1.xml');
+
+    expect(slideXml).toContain('Éthique : déjà');
+    expect(slideXml).toContain('très utile');
+    expect(slideXml).toContain('À suivre : où et pourquoi ?');
+    expect(slideXml).not.toContain('&amp;nbsp;');
+    expect(slideXml).not.toContain('\r');
+    expect(slideXml).not.toContain('déjàtrès');
+  });
 });

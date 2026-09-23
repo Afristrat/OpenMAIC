@@ -1654,6 +1654,51 @@
       "priorityRank": 0.25
     },
     {
+      "id": "S6-031",
+      "title": "Rendre cohérents le casting, les exports et le contexte super-administrateur",
+      "description": "En tant que créateur ou super-administrateur, je veux que les dix mécanismes annoncés soient réellement présents, que chaque identité reste cohérente, que les exports signalent et produisent un résultat fiable et que le test d’un tenant soit réversible, afin de pouvoir créer et contrôler une formation sans impasse ni promesse non tenue.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P0",
+      "status": "in_progress",
+      "passes": false,
+      "source": {
+        "type": "production_gap",
+        "date": "2026-09-23"
+      },
+      "sourceDependencies": [],
+      "dependencies": [],
+      "gap": "Human Yo Impact expose des formations de quatre à six agents malgré la promesse de dix mécanismes, une identité Mehdi/Younes incohérente, des avatars automatiques non maîtrisables, un export MP4 perçu comme silencieux, des défauts typographiques PPTX et une navigation de test tenant sans retour visible vers l’administration.",
+      "evidence": [
+        "lib/agents/persona-catalog.ts",
+        "lib/agents/cast-selection.ts",
+        "lib/agents/content-cast-director.ts",
+        "app/api/generate/agent-profiles/route.ts",
+        "lib/export/use-export-mp4.ts",
+        "lib/export/use-export-pptx.ts",
+        "components/admin/tenants-tab.tsx"
+      ],
+      "acceptance": [
+        "Toute nouvelle formation possède les dix mécanismes actifs du référentiel tenant ; le directeur peut doser ou différer leurs interventions sans supprimer silencieusement un mécanisme du casting.",
+        "Le mode automatique et le mode manuel produisent un casting persistant et éditable ; noms, genres, avatars, voix et identifiants restent liés sans collision ni réutilisation d’une identité antérieure.",
+        "Une formation existante n’est jamais réécrite silencieusement ; la régénération ou mise à niveau de son casting est une action explicite et traçable.",
+        "L’export MP4 affiche une progression durable, un succès téléchargeable ou une erreur exploitable ; aucune erreur n’est limitée à la console et la reprise évite un double job.",
+        "L’export PPTX préserve les accents Unicode, les retours de paragraphe et les sauts de ligne utiles sans caractères de contrôle parasites.",
+        "Le mode Tester ce tenant affiche en permanence le tenant simulé et une action visible de retour à l’administration globale, sans modifier l’identité du super-administrateur ni créer de membership.",
+        "Les parcours Human Yo Impact, casting automatique, casting manuel, MP4, PPTX et retour super-administrateur sont recettés sur le SHA déployé.",
+        "Le quality gate complet est vert au SHA exact sur ServeurIA."
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "production_human_yo_impact_casting_recipe",
+        "browser_superadmin_return_recipe",
+        "export_mp4_pptx_recipe"
+      ],
+      "priorityRank": 0.2
+    },
+    {
       "id": "S6-001",
       "title": "Recertifier le SHA livré et solder le contrôle qualité global",
       "description": "En tant qu’utilisateur de Qalem, je veux recertifier le sha livré et solder le contrôle qualité global afin que le parcours promis soit réellement utilisable.",

@@ -8,9 +8,11 @@ import { slideToPng } from '@openmaic/renderer/snapshot';
 import { persistCurrentClassroomForExport } from './persist-before-server-export';
 import { addPresentationBrandToSnapshot } from './presentation-brand-snapshot';
 import { downloadExport } from './download-export';
+import { createLogger } from '@/lib/logger';
 
 const POLL_INTERVAL_MS = 5000;
 const MAX_POLLS = 360;
+const log = createLogger('ExportMP4');
 
 interface ExportJobResponse {
   success?: boolean;
@@ -35,23 +37,41 @@ export function useExportMp4() {
     const toastId = toast.loading(t('export.videoRendering'));
     try {
       await persistCurrentClassroomForExport();
+      let fallbackSnapshotCount = 0;
       for (const scene of scenes) {
         if (scene.content?.type !== 'slide') continue;
-        const snapshot = await slideToPng(scene.content.canvas, {
-          width: 1920,
-          pixelRatio: 1,
-          format: 'blob',
+        try {
+          const snapshot = await slideToPng(scene.content.canvas, {
+            width: 1920,
+            pixelRatio: 1,
+            format: 'blob',
+          });
+          if (!(snapshot instanceof Blob)) throw new Error('snapshot-not-a-blob');
+          const brandedSnapshot = await addPresentationBrandToSnapshot(
+            snapshot,
+            stage.presentationBranding,
+          );
+          const upload = await fetch(
+            `/api/export-snapshots/${encodeURIComponent(stage.id)}/${encodeURIComponent(scene.id)}`,
+            { method: 'PUT', headers: { 'Content-Type': 'image/png' }, body: brandedSnapshot },
+          );
+          if (!upload.ok) throw new Error(`snapshot-upload-${upload.status}`);
+        } catch (snapshotError) {
+          // The server renderer has a deterministic scene-card fallback. A
+          // browser-only capture problem must not prevent the MP4 job from
+          // being created, but it remains visible and diagnosable.
+          fallbackSnapshotCount += 1;
+          log.warn('Snapshot fallback used', {
+            sceneId: scene.id,
+            error: snapshotError instanceof Error ? snapshotError.message : String(snapshotError),
+          });
+        }
+      }
+      if (fallbackSnapshotCount > 0) {
+        toast.warning(t('export.videoSnapshotFallback', { count: fallbackSnapshotCount }), {
+          id: toastId,
         });
-        if (!(snapshot instanceof Blob)) throw new Error(t('export.exportFailed'));
-        const brandedSnapshot = await addPresentationBrandToSnapshot(
-          snapshot,
-          stage.presentationBranding,
-        );
-        const upload = await fetch(
-          `/api/export-snapshots/${encodeURIComponent(stage.id)}/${encodeURIComponent(scene.id)}`,
-          { method: 'PUT', headers: { 'Content-Type': 'image/png' }, body: brandedSnapshot },
-        );
-        if (!upload.ok) throw new Error(t('export.exportFailed'));
+        toast.loading(t('export.videoRendering'), { id: toastId });
       }
       const createResponse = await fetch('/api/export-jobs', {
         method: 'POST',
