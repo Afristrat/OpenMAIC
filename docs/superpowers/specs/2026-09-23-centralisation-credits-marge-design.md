@@ -20,22 +20,42 @@ Cette décision corrige l'état constaté en production le 23 septembre 2026 : H
 
 ### Politique de crédits
 
-Une politique globale versionnée définit les unités et les taux de consommation par défaut. Elle s'applique à tous les tenants. Une dérogation versionnée par tenant reste possible depuis le cockpit central.
+Une politique globale versionnée définit l'ancrage économique du crédit, les unités et les taux de consommation par défaut. Elle s'applique à tous les tenants. Une dérogation versionnée par tenant reste possible depuis le cockpit central.
 
-Barème initial recommandé, modifiable sans déploiement :
+Le barème initial arbitraire est écarté. Il aurait notamment facturé une seconde de vidéo comme un crédit sans aucune relation démontrée avec les ressources consommées. Le premier barème doit être calculé à partir de mesures réelles, puis arrondi en unités compréhensibles et gelé dans une version de politique.
 
-| Unité | Consommation |
-|---|---:|
-| 1 000 jetons LLM en entrée | 1 crédit |
-| 1 000 jetons LLM en sortie | 3 crédits |
-| 60 secondes de synthèse vocale | 1 crédit |
-| 60 secondes de transcription | 1 crédit |
-| 1 image | 5 crédits |
-| 1 seconde de vidéo | 1 crédit |
-| 1 Gio de média stocké | 1 crédit |
-| 1 opération de recherche ou outil | 1 crédit |
+L'ancrage recommandé est **1 crédit = 0,01 USD de capacité de coût interne de référence**. Il ne constitue ni une monnaie, ni une créance remboursable, ni le prix de vente d'un crédit. Il permet seulement de rendre comparables les jetons, les images, la voix, la vidéo, le stockage et les outils. Le prix commercial implicite d'un crédit reste propre au contrat du tenant : prix vendu divisé par crédits alloués.
 
-Le barème exprime la consommation du produit. Il n'est ni un prix en devise, ni un coût fournisseur, ni un calcul de marge.
+Pour les usages variables mesurables, le règlement convertit le coût complet réellement observé en microunités de crédit : fournisseur payé, amortissement et électricité des ressources souveraines, infrastructure directement attribuable et stockage. Le percentile 95 sert au plafond réservé avant l'appel et aux unités forfaitaires qui ne remontent pas de coût exact ; il n'est pas utilisé pour surfacturer silencieusement le règlement réel. Une révision planifiée recalcule les plafonds et les forfaits recommandés, mais ne modifie jamais une version active automatiquement. Une variation significative produit une proposition et une alerte soumises au super-administrateur. Chaque usage conserve la version et le snapshot économique appliqués, ce qui rend les débits historiques stables et auditables.
+
+Le barème exprime ainsi une capacité de consommation du produit adossée à une mesure économique, tandis que le prix de vente demeure fondé sur la valeur. Il ne sert pas à calculer automatiquement ce prix.
+
+### Calibration mesurée le 23 septembre 2026
+
+Une recette complète de production au SHA `89d789ebe0e7c5ff9ce2735011ac8c48e64a268e` a généré cinq scènes, 37 segments vocaux, un quiz, un classeur et un MP4 de 450,50 secondes. Elle a été exécutée sur un tenant éphémère puis intégralement nettoyée.
+
+LiteLLM attribue exactement 0,243215994 USD au parcours :
+
+| Ressource payée | Appels | Jetons | Coût |
+|---|---:|---:|---:|
+| DeepSeek V4 Pro | 19 | 93 170 | 0,160924544 USD |
+| Gemini 3.1 Flash Image | 1 | 1 744 | 0,068574500 USD |
+| Kimi K2.6 | 2 | 13 556 | 0,013716950 USD |
+| **Total LiteLLM** | **22** | **108 470** | **0,243215994 USD** |
+
+La synthèse vocale a produit environ 447,08 secondes d'audio en environ 552 secondes écoulées sur le DGX. Elle est aujourd'hui comptabilisée à zéro par LiteLLM, ce qui est une absence de valorisation et non un coût nul. Au prix public de référence de 4 699 USD amorti sur trois ans, l'occupation exclusive de 9,2 minutes représente environ 0,027 USD si le DGX est utilisé en permanence, ou 0,116 USD sur une hypothèse de 2 080 heures productives par an, avant électricité. Le coût complet provisoire de ce parcours se situe donc entre 0,270 et 0,359 USD, hors stockage et infrastructure partagée. Avec l'ancrage recommandé, il consommerait provisoirement entre 27 et 36 crédits. Cette fourchette doit être remplacée par le coût mesuré au compteur électrique et par une règle d'allocation de la capacité partagée avant amorçage du barème.
+
+La cible de marge brute de 95 % donnerait un plancher économique indicatif de 5,40 à 7,18 USD pour ce parcours. Ce plancher reste une alerte de viabilité et ne devient jamais le prix proposé au tenant.
+
+### Étalonnage du modèle souverain
+
+Le service direct `Qwen/Qwen3.8-27B-FP8` du premier DGX a été mesuré avec 240 jetons de sortie : 8,32 jetons/s sur une entrée courte, 7,87 jetons/s sur 3 904 jetons d'entrée et 6,80 jetons/s sur 14 464 jetons d'entrée. À quatre requêtes simultanées, deux réponses sortent à environ 8,3 jetons/s et deux à environ 4,15 jetons/s. Le champ de puissance NVIDIA est passé d'environ 12 W au repos à 26-28 W en charge soutenue, avec un pic à 42 W ; il ne représente pas la consommation murale complète.
+
+À débit identique de 7,87 jetons/s, un million de jetons de sortie occupe environ 35,30 heures. Les [tarifs publiés par Runpod](https://www.runpod.io/pricing) pour des cartes de 48 Gio donnent un équivalent locatif de 17,30 USD sur A40 à 38,48 USD sur L40S par million de jetons de sortie. Cette comparaison est une enveloppe de location, pas un benchmark d'égalité de performance entre architectures.
+
+Avec le [prix public NVIDIA de 4 699 USD](https://marketplace.nvidia.com/en-us/enterprise/personal-ai-supercomputers/dgx-spark/) amorti sur trois ans, le même million de jetons porte environ 6,31 USD d'amortissement si le DGX est utilisé en permanence, ou 26,58 USD avec 2 080 heures productives par an, avant électricité. Au [tarif professionnel ONEE](https://www.one.org.ma/FR/pages/interne.asp?id1=2&id2=35&id3=119&t2=1&t3=1) supérieur à 500 kWh, la [borne théorique de 140 W du GB10](https://www.nvidia.com/en-us/products/workstations/dgx-spark/) représente environ 8,28 MAD d'électricité par million de jetons ; seule une prise mesurée permettra de remplacer cette borne par le coût réel.
+
+Deux anomalies interdisent encore une automatisation fiable du coût local : l'alias LiteLLM `qwen3-14b-local` ne pointe pas vers ce service 27B mesuré, et `qwen2.5-14b-local` est publié dans le catalogue de la clé Qalem alors que le proxy le rejette. Le registre dynamique des modèles doit donc vérifier une inférence réelle et identifier le déploiement physique avant d'accepter un coût nul ou un modèle comme disponible.
 
 ### Prix à la valeur
 
@@ -55,7 +75,7 @@ Un usage débité mais non valorisable porte explicitement le statut `pending_co
 
 ### Politique globale
 
-Une table privée `platform_credit_burn_rates` conserve les versions globales : unité, crédits en microunités, base de quantité, date d'effet, justification et auteur. Les versions sont immuables et leurs périodes ne peuvent pas se chevaucher.
+Une table privée `platform_credit_policies` conserve l'ancrage d'un crédit, sa devise, sa date d'effet, sa méthode de calibration, sa justification et son auteur. Une table `platform_credit_burn_rates` conserve les règles globales liées à cette politique : unité, mode de règlement réel ou forfaitaire, plafond de réservation en microunités, base de quantité, percentile et fenêtre d'observation. Les versions sont immuables et leurs périodes ne peuvent pas se chevaucher.
 
 `tenant_credit_burn_rates` reste la table des dérogations. La résolution choisit d'abord la version active du tenant, puis la version globale active. L'absence des deux échoue fermée avant l'appel fournisseur.
 
@@ -112,20 +132,22 @@ Un membre voit le solde disponible du tenant et ses propres consommations. Il ne
 
 ## Migration et mise en service
 
-1. Créer et amorcer le barème global versionné.
-2. Découpler le débit de crédits de la valorisation économique.
-3. Initialiser les contrôles manquants de tous les tenants sans modifier leurs soldes.
-4. Ajouter l'initialisation transactionnelle aux créations futures.
-5. Déployer les vues de consommation super-administrateur, administrateur de tenant et membre.
-6. Activer Human Yo Impact, exécuter un usage réel puis vérifier le débit, l'auteur, le détail et l'éventuel statut économique.
-7. Rejouer le même usage avec la même clé d'idempotence et prouver l'absence de double débit.
-8. Simuler une panne fournisseur et prouver le remboursement intégral.
-9. Exécuter le contrôle qualité complet et la recette navigateur sur le SHA déployé.
+1. Créer le modèle de politique global versionné sans amorcer de taux non mesuré.
+2. Instrumenter et valoriser toutes les unités, y compris les DGX et l'infrastructure partagée, puis produire les plafonds de réservation et les forfaits au percentile 95 observé.
+3. Découpler le débit de crédits de la valorisation économique.
+4. Initialiser les contrôles manquants de tous les tenants sans modifier leurs soldes.
+5. Ajouter l'initialisation transactionnelle aux créations futures.
+6. Déployer les vues de consommation super-administrateur, administrateur de tenant et membre.
+7. Activer Human Yo Impact, exécuter un usage réel puis vérifier le débit, l'auteur, le détail et l'éventuel statut économique.
+8. Rejouer le même usage avec la même clé d'idempotence et prouver l'absence de double débit.
+9. Simuler une panne fournisseur et prouver le remboursement intégral.
+10. Exécuter le contrôle qualité complet et la recette navigateur sur le SHA déployé.
 
 ## Critères de clôture
 
 - Aucun tenant actif ne possède de portefeuille affiché mais inerte.
-- Toute unité facturable dispose d'un barème global actif et versionné.
+- Toute unité facturable dispose d'un barème global actif, mesuré, versionné et relié à sa politique d'ancrage.
+- Aucun coût souverain ou fournisseur absent ne peut être interprété comme nul ; les DGX disposent d'une valorisation d'amortissement, d'énergie et de capacité partagée.
 - Un membre de Human Yo Impact peut provoquer un usage réel qui minore exactement le solde une fois.
 - L'administrateur de Human Yo Impact retrouve cet usage avec son auteur et son détail.
 - Le super-administrateur retrouve le même usage, sa valorisation ou la cause explicite de sa non-valorisation.

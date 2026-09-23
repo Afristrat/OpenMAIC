@@ -1630,11 +1630,12 @@
         "components/org/tenant-credit-ledger.tsx"
       ],
       "acceptance": [
-        "Une politique globale versionnée couvre toutes les unités facturables ; une dérogation tenant explicite et versionnée peut la remplacer sans configuration utilisateur individuelle.",
+        "Une politique globale versionnée ancre un crédit sur 0,01 USD de capacité de coût interne de référence ; le coût réel mesuré règle les usages variables et le percentile 95 fixe les plafonds de réservation et forfaits ; une dérogation tenant explicite et versionnée peut remplacer la règle globale sans configuration utilisateur individuelle.",
         "Le débit de crédits est obligatoire par défaut pour les tenants actifs et reste indépendant de la présence d’un prix vendu, d’un coût fournisseur ou d’un taux de change.",
         "La réservation, le rapprochement sur la quantité réelle, le remboursement d’échec et l’idempotence restent atomiques et rapprochables avec le ledger immuable.",
         "Un usage débité mais économiquement incomplet reste visible avec le statut pending_configuration et la cause exacte ; il n’est jamais valorisé silencieusement à coût nul.",
-        "Le cockpit super-administrateur centralise barèmes de crédits, coûts fournisseurs, prix à la valeur, expositions non valorisées et marge pondérée cible de 95 % sans calculer automatiquement le prix à partir du coût.",
+        "Le cockpit super-administrateur centralise barèmes de crédits, coûts fournisseurs et souverains, prix à la valeur, expositions non valorisées et marge pondérée cible de 95 % sans calculer automatiquement le prix à partir du coût.",
+        "Les coûts DGX comprennent amortissement, énergie et allocation de capacité partagée ; une absence de mesure reste explicitement non valorisée et ne peut jamais être assimilée à un coût nul.",
         "Les administrateurs et managers du tenant voient le solde et chaque consommation avec auteur, date, catégorie, quantité, crédits et statut ; un membre voit le solde et uniquement ses propres consommations.",
         "Les nouveaux tenants sont initialisés transactionnellement et les tenants existants sont repris sans réécriture de solde ni double allocation.",
         "Une recette de production Human Yo Impact prouve un usage réel, un débit unique, sa visibilité par rôle, le rejeu idempotent et le remboursement complet d’un échec fournisseur.",
