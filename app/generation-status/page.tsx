@@ -82,11 +82,13 @@ function GenerationStatus() {
           </div>
         )}
         {hasFailed && planJobId ? (
-          <Button onClick={() => {
-            const params = new URLSearchParams({ planJobId });
-            if (orgId) params.set('orgId', orgId);
-            router.push(`/app?${params.toString()}`);
-          }}>
+          <Button
+            onClick={() => {
+              const params = new URLSearchParams({ planJobId });
+              if (orgId) params.set('orgId', orgId);
+              router.push(`/app?${params.toString()}`);
+            }}
+          >
             <ArrowLeft className="mr-2 size-4" />
             {t('generation.resumeApprovedPlan')}
           </Button>

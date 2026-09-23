@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireSuperAdminOrOrgAuthor, requireSuperAdminOrOrgMember } from '@/lib/api/auth';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
-import { currencyForTerritory, isIso4217CurrencyCode } from '@/lib/formation-engine/learning-context';
+import {
+  currencyForTerritory,
+  isIso4217CurrencyCode,
+} from '@/lib/formation-engine/learning-context';
 import { resolveCountryCurrency } from '@/lib/formation-engine/country-resolver';
 
 const bodySchema = z.object({
@@ -12,7 +15,10 @@ const bodySchema = z.object({
 });
 
 function normalizeCountryName(value: string): string {
-  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('fr-FR');
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('fr-FR');
 }
 
 function resolveCountry(countryName: string): { currencyCode: string; languageCode?: string } {
@@ -48,7 +54,10 @@ export async function POST(request: NextRequest) {
       ? { currencyCode: parsed.data.currencyCode.toUpperCase() }
       : resolveCountry(parsed.data.countryName);
   } catch {
-    return NextResponse.json({ error: 'Country or currency could not be resolved' }, { status: 422 });
+    return NextResponse.json(
+      { error: 'Country or currency could not be resolved' },
+      { status: 422 },
+    );
   }
   if (!isIso4217CurrencyCode(resolved.currencyCode))
     return NextResponse.json({ error: 'Invalid ISO 4217 currency' }, { status: 422 });

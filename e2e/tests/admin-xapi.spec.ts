@@ -34,7 +34,7 @@ for (const [locale, button, success, error] of [
     await page.route('**/api/xapi/status', (route) =>
       failed
         ? route.fulfill({ status: 503, json: { error: 'private diagnostic' } })
-        : route.fulfill({ json: { configured, endpoint: null } }),
+        : route.fulfill({ json: { configured, emissionEnabled: false, endpoint: null } }),
     );
     await page.route('**/api/xapi/test', (route) =>
       route.fulfill({ json: { success: true, connectionVerified: true, writeVerified: false } }),

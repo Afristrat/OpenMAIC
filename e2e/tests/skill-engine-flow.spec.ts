@@ -90,14 +90,14 @@ test.describe('Formation Design Pro — persistent generation path', () => {
     await expect(page.getByTestId('learning-currency')).toHaveValue('MAD');
 
     await page.getByTestId('learning-territory').fill('France');
-    await page.getByTestId('learning-currency').fill('EUR');
+    await page.getByTestId('learning-currency').selectOption('EUR');
     await page.getByRole('button', { name: 'Trames', exact: true }).click();
     await page.getByRole('button', { name: /Réussir une performance professionnelle/ }).click();
     await expect(page.getByTestId('learning-territory')).toHaveValue('Maroc');
     await expect(page.getByTestId('learning-currency')).toHaveValue('MAD');
 
     await page.getByTestId('learning-territory').fill('Sénégal');
-    await page.getByTestId('learning-currency').fill('XOF');
+    await page.getByTestId('learning-currency').selectOption('XOF');
     await page.locator('textarea').fill('Concevoir une formation aux entretiens difficiles');
     await page.getByTestId('learning-approach-andragogy').click();
     await page.getByRole('button', { name: 'Équilibré', exact: true }).click();
@@ -110,7 +110,9 @@ test.describe('Formation Design Pro — persistent generation path', () => {
     await expect(page.getByRole('heading', { name: 'Plan de formation' })).toBeVisible();
     await page.getByRole('button', { name: 'Confirmer et générer le cours' }).click();
 
-    await expect(page).toHaveURL(/\/generation-status\?jobId=skill-engine-e2e$/);
+    await expect(page).toHaveURL(
+      /\/generation-status\?jobId=skill-engine-e2e&planJobId=plan-skill-engine-e2e&orgId=00000000-0000-4000-8000-000000000002$/,
+    );
     expect(submittedBody?.activeSkillId).toBe('formation-design-pro');
     expect(submittedBody?.orgId).toBe('00000000-0000-4000-8000-000000000002');
     expect(submittedBody?.learningApproach).toBe('andragogy');

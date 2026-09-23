@@ -12,7 +12,9 @@ function normalizeCountryName(value: string): string {
     .toLocaleLowerCase('fr-FR');
 }
 
-const regionNames = REGION_LOCALES.map((locale) => new Intl.DisplayNames([locale], { type: 'region' }));
+const regionNames = REGION_LOCALES.map(
+  (locale) => new Intl.DisplayNames([locale], { type: 'region' }),
+);
 
 export function resolveCountryCurrency(countryName: string): {
   canonicalCountryName: string;
@@ -31,7 +33,9 @@ export function resolveCountryCurrency(countryName: string): {
     ];
     const matches = names.some((name) => {
       const candidate = normalizeCountryName(name ?? '');
-      return candidate === query || candidate.endsWith(` ${query}`) || query.endsWith(` ${candidate}`);
+      return (
+        candidate === query || candidate.endsWith(` ${query}`) || query.endsWith(` ${candidate}`)
+      );
     });
     if (!matches) continue;
 

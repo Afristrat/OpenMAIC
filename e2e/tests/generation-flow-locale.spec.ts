@@ -47,7 +47,9 @@ test.describe('Generation flow — locale coverage (S0-008)', () => {
       await page.getByRole('button', { name: confirmPlan }).click();
 
       await expect(page).toHaveURL(
-        new RegExp(`/generation-status\\?jobId=e2e-${locale.replace('-', '\\-')}$`),
+        new RegExp(
+          `/generation-status\\?jobId=e2e-${locale.replace('-', '\\-')}&planJobId=plan-e2e-${locale.replace('-', '\\-')}&orgId=00000000-0000-4000-8000-000000000002$`,
+        ),
       );
       await expect(page.getByRole('heading', { name: heading })).toBeVisible();
       await expect(page.locator('html')).toHaveAttribute('lang', locale);

@@ -144,6 +144,11 @@ export const test = base.extend<Fixtures>({
           body: '{"success":true,"classrooms":[]}',
         }),
       );
+      // The authoring context also loads reusable country/currency choices on mount.
+      // Keep that authenticated lookup inside the E2E boundary by default.
+      await page.route('**/api/learning-territories?*', (route) =>
+        route.fulfill({ json: { success: true, territories: [] } }),
+      );
       // Capability probes must not reach the intentionally absent test DB.
       // Recording/anchoring journeys override these defaults with their own contract.
       for (const capability of ['live-sessions', 'anchoring']) {

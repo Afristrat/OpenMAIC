@@ -69,7 +69,9 @@ test.describe('Modèles image LiteLLM administrés', () => {
     await home.submit();
     await expect(page.getByRole('heading', { name: 'Plan de formation' })).toBeVisible();
     await page.getByRole('button', { name: 'Confirmer et générer le cours' }).click();
-    await expect(page).toHaveURL(/\/generation-status\?jobId=managed-image-model-e2e$/);
+    await expect(page).toHaveURL(
+      /\/generation-status\?jobId=managed-image-model-e2e&planJobId=plan-managed-image-model-e2e&orgId=00000000-0000-4000-8000-000000000002$/,
+    );
 
     expect(generationJob.getPlanRequestBody()).toMatchObject({
       imageProviderId: 'openai-image',

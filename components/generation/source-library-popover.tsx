@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { AlertCircle, Check, FileText, LoaderCircle, Paperclip, RefreshCw, X } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
@@ -22,6 +22,7 @@ import type { DiwanReference } from '@/lib/diwan/references';
 
 const MAX_DOCUMENT_SIZE_BYTES = 50 * 1024 * 1024;
 const SUPPORTED_DOCUMENT_EXTENSIONS = new Set(['pdf', 'pptx', 'docx', 'txt', 'md']);
+const subscribeToHydration = () => () => undefined;
 
 interface LibrarySource {
   id: string;
@@ -66,6 +67,11 @@ export function SourceLibraryPopover({
   const pdfProviderId = useSettingsStore((state) => state.pdfProviderId);
   const pdfProvidersConfig = useSettingsStore((state) => state.pdfProvidersConfig);
   const setPDFProvider = useSettingsStore((state) => state.setPDFProvider);
+  const hydrated = useSyncExternalStore(
+    subscribeToHydration,
+    () => true,
+    () => false,
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previousClearToken = useRef(clearRequestToken);
   const lifecycle = useRef(0);
@@ -297,7 +303,7 @@ export function SourceLibraryPopover({
       <PopoverTrigger asChild>
         <button
           type="button"
-          disabled={!orgId}
+          disabled={!orgId || !hydrated}
           className={selectedCount > 0 ? activeTriggerClassName : triggerClassName}
           aria-label={t('sources.library')}
         >

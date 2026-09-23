@@ -29,7 +29,9 @@ test.describe('Full Happy Path', () => {
     await expect(page.getByRole('heading', { name: 'Training plan' })).toBeVisible();
     await page.getByRole('button', { name: 'Confirm and generate course' }).click();
 
-    await expect(page).toHaveURL(/\/generation-status\?jobId=e2e-generation-job$/);
+    await expect(page).toHaveURL(
+      /\/generation-status\?jobId=e2e-generation-job&planJobId=plan-e2e-generation-job&orgId=00000000-0000-4000-8000-000000000002$/,
+    );
     await expect(page.getByRole('heading', { name: /generating course/i })).toBeVisible();
   });
 

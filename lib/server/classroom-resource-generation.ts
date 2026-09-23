@@ -84,10 +84,12 @@ function safeFileName(value: string, format: ResourceGenerationRequest['format']
 }
 
 function safeWorksheetName(value: unknown, fallback: string): string {
-  return String(value || fallback)
-    .replace(/[\\/?*[\]:]/g, ' ')
-    .trim()
-    .slice(0, 31) || fallback;
+  return (
+    String(value || fallback)
+      .replace(/[\\/?*[\]:]/g, ' ')
+      .trim()
+      .slice(0, 31) || fallback
+  );
 }
 
 function normalizeWorkbook(input: WorkbookSpec): WorkbookSpec {

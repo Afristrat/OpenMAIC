@@ -3149,8 +3149,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Catalogue interne (porte 2) [UI] » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "1-CRÉER",
       "priority": "P2",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S1-004",
@@ -3158,7 +3158,7 @@
       },
       "sourceDependencies": ["S1-003"],
       "dependencies": [],
-      "gap": "Le 16 septembre 2026, le parcours de production publication→catalogue→classroom est recertifié, y compris le tenant et le parcours conservés dans le lien, ainsi que l’arabe RTL. Restent le gate complet au SHA de clôture ; passes=false ne déduit ni perte du code ni échec de la recette. Voir docs/validation/S1-004-course-catalog-production.md.",
+      "gap": "Clôturée le 23 septembre 2026 : le parcours de production publication→catalogue→classroom, le contexte tenant, l’arabe RTL et la gate complète au contenu de clôture sont tous prouvés. Voir docs/validation/S1-004-course-catalog-production.md.",
       "evidence": ["app/api/courses/catalog/route.ts", "e2e/tests/course-catalog.spec.ts"],
       "acceptance": [
         "Liste des courses ready + catalog_visible",
@@ -3171,7 +3171,8 @@
         "2026-08-28 — Recette authentifiée sans interception réseau sur https://qalem.ma avec l’application 2123640917d365c15eb9ecc51723bc43d6483e2b et le harnais 1b41590969e196f495c7613f4658c824f0638d6e : cours ready non publié visible, PATCH de publication HTTP 200, cours publié visible, navigation vers la classroom persistée et première scène chargée. Le contrôle réel FR→AR affiche دليل التكوينات et html dir=rtl ; console et HTTP 5xx restent vides. Preuve JSON SHA-256 16889b4f3983a5aa5d8f6d8414a22979f2b89348b72d213b90ee77b98e191485.",
         "2026-08-28 — Le harnais préfixe toutes les données temporaires. L’audit avant nettoyage retrouve exactement compte, cours, stage et organisation ; l’audit final retourne authExists=false, courseCount=0, stageCount=0 et organizationCount=0. Journal de production SHA-256 f31ab59615d9b645e654aeaa102f0537931b9ed8e900f50f0fe49bfbb25e5560. Preuve permanente : docs/validation/S1-004-course-catalog-production.md.",
         "2026-08-28 — Un premier gate a révélé que le fallback hors ligne servait le HTML React de / sous l’URL /review, causant une erreur d’hydratation. Le SHA e8de078a08e673e5a6780767b7572235c888a706 réserve le shell commercial à /, sert ailleurs un document hors ligne autonome et soumet le scénario PWA au contrat console global ; ciblage 1/1 Vitest et 2/2 Playwright. Gate complet final : Prettier, TypeScript et lint passent ; 379/379 fichiers et 2 491/2 491 tests Vitest, build 99/99 et 82/82 Playwright en 3,6 minutes, zéro mismatch d’hydratation et zéro erreur WebServer inattendue. Journal /tmp/qalem-s1004-full-gate-e8de078.log, SHA-256 d2b31abf817379b9daaf03a410829139a83bc90613efef51cba4828635d7154d.",
-        "2026-09-16 — Application publique SHA 2716df969b5549bd9e9cf0cde0de5a46884cfd2d, harnais SHA 721323042c6cac717b86dadab5144fabfd5b63a1 : recette Chromium sans interception depuis un clone ServeurIA propre. Cours ready non publié visible, publication HTTP 200, cours publié, lien vérifiant orgId et learnerCourseId, classroom et scène chargées, FR→AR avec dir=rtl, aucune erreur console/HTTP 5xx. L’audit de nettoyage passe de 1 compte/cours/classroom/organisation à zéro. S1-004 reste to_validate : gate complet au SHA de clôture requis. Référence : docs/validation/S1-004-course-catalog-production.md."
+        "2026-09-16 — Application publique SHA 2716df969b5549bd9e9cf0cde0de5a46884cfd2d, harnais SHA 721323042c6cac717b86dadab5144fabfd5b63a1 : recette Chromium sans interception depuis un clone ServeurIA propre. Cours ready non publié visible, publication HTTP 200, cours publié, lien vérifiant orgId et learnerCourseId, classroom et scène chargées, FR→AR avec dir=rtl, aucune erreur console/HTTP 5xx. L’audit de nettoyage passe de 1 compte/cours/classroom/organisation à zéro. Référence : docs/validation/S1-004-course-catalog-production.md.",
+        "2026-09-23 — Gate complète ServeurIA sur le contenu de clôture : Prettier, TypeScript et ESLint verts ; 541/541 fichiers et 3 338/3 338 tests Vitest ; build de production 127 pages ; 193/193 scénarios Playwright sans retry, dont catalogue publié, navigation classroom et arabe RTL. Les régressions de contrats E2E, d’hydratation des devises et de la bibliothèque de sources ont été corrigées à leur cause avant la passe verte."
       ],
       "historicalEvidence": {
         "completedAt": null,
