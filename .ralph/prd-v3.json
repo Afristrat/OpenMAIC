@@ -1608,6 +1608,51 @@
       "completedAt": "2026-09-02"
     },
     {
+      "id": "S6-030",
+      "title": "Centraliser et appliquer automatiquement les crédits, les usages et la marge",
+      "description": "En tant que propriétaire de Qalem, je veux qu’une politique globale de crédits s’applique automatiquement à tous les tenants et utilisateurs, tout en séparant le débit, le prix à la valeur et le contrôle de marge, afin que chaque portefeuille corresponde aux usages réels sans configuration individuelle.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P0",
+      "status": "ready",
+      "passes": false,
+      "source": {
+        "type": "production_gap",
+        "date": "2026-09-23"
+      },
+      "sourceDependencies": [],
+      "dependencies": ["S6-023", "S6-024", "S6-025"],
+      "gap": "La capacité technique historique n’est pas mise en service : en production, aucun tenant ne possède de contrôle de débit actif ni de barème de consommation, Human Yo Impact affiche 1 000 crédits sans aucun débit et le catalogue de coûts ne couvre que deux opérations de recherche. Le cockpit tenant ne détaille pas encore les usages par création et auteur.",
+      "evidence": [
+        "docs/superpowers/specs/2026-09-23-centralisation-credits-marge-design.md",
+        "lib/billing/usage-metering.ts",
+        "supabase/migrations/00056_real_usage_metering.sql",
+        "components/admin/economics-panel.tsx",
+        "components/org/tenant-credit-ledger.tsx"
+      ],
+      "acceptance": [
+        "Une politique globale versionnée couvre toutes les unités facturables ; une dérogation tenant explicite et versionnée peut la remplacer sans configuration utilisateur individuelle.",
+        "Le débit de crédits est obligatoire par défaut pour les tenants actifs et reste indépendant de la présence d’un prix vendu, d’un coût fournisseur ou d’un taux de change.",
+        "La réservation, le rapprochement sur la quantité réelle, le remboursement d’échec et l’idempotence restent atomiques et rapprochables avec le ledger immuable.",
+        "Un usage débité mais économiquement incomplet reste visible avec le statut pending_configuration et la cause exacte ; il n’est jamais valorisé silencieusement à coût nul.",
+        "Le cockpit super-administrateur centralise barèmes de crédits, coûts fournisseurs, prix à la valeur, expositions non valorisées et marge pondérée cible de 95 % sans calculer automatiquement le prix à partir du coût.",
+        "Les administrateurs et managers du tenant voient le solde et chaque consommation avec auteur, date, catégorie, quantité, crédits et statut ; un membre voit le solde et uniquement ses propres consommations.",
+        "Les nouveaux tenants sont initialisés transactionnellement et les tenants existants sont repris sans réécriture de solde ni double allocation.",
+        "Une recette de production Human Yo Impact prouve un usage réel, un débit unique, sa visibilité par rôle, le rejeu idempotent et le remboursement complet d’un échec fournisseur.",
+        "Les RLS, droits de fonctions, versions temporelles, concurrence, isolation inter-tenant et divergences portefeuille-ledger sont couverts par des tests permanents.",
+        "Le quality gate complet et les parcours Playwright sont verts au SHA exact déployé."
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "production_human_yo_impact_usage_smoke_test",
+        "browser_role_visibility_recipe"
+      ],
+      "priorityRank": 0.25
+    },
+    {
       "id": "S6-001",
       "title": "Recertifier le SHA livré et solder le contrôle qualité global",
       "description": "En tant qu’utilisateur de Qalem, je veux recertifier le sha livré et solder le contrôle qualité global afin que le parcours promis soit réellement utilisable.",
