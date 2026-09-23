@@ -732,9 +732,7 @@ export function AgentBar({
       if (!hasTeacher && teacherAgent) {
         presetIds.unshift(teacherAgent.id);
       }
-      setSelectedAgentIds(
-        presetIds.length > 0 ? presetIds : baseAgents.map((agent) => agent.id),
-      );
+      setSelectedAgentIds(presetIds.length > 0 ? presetIds : baseAgents.map((agent) => agent.id));
     } else {
       // Auto mode plays the current classroom's generated agents — leaving the
       // preset ids selected would desync playback from the toggle (UI says

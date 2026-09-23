@@ -220,11 +220,7 @@ Return a JSON object with this exact structure:
     // ── Validate parsed structure ──
     if (!parsed.agents || !Array.isArray(parsed.agents) || parsed.agents.length < 1) {
       log.error(`Expected agent profiles, got ${parsed.agents?.length ?? 0}`);
-      return apiError(
-        'GENERATION_FAILED',
-        500,
-        'The provider returned no usable agent profile',
-      );
+      return apiError('GENERATION_FAILED', 500, 'The provider returned no usable agent profile');
     }
 
     // The provider adapts each persona to the course, but the platform owns the
@@ -257,10 +253,7 @@ Return a JSON object with this exact structure:
         persona: adapted?.persona?.trim() || persona.persona,
         avatar,
         color: persona.color || AGENT_COLOR_PALETTE[index % AGENT_COLOR_PALETTE.length],
-        priority: Math.max(
-          1,
-          Math.min(10, Math.round(persona.interactionWeights.balanced / 4)),
-        ),
+        priority: Math.max(1, Math.min(10, Math.round(persona.interactionWeights.balanced / 4))),
         mechanismId: persona.id,
         interactionWeight: persona.interactionWeights.balanced,
         gender: persona.gender,

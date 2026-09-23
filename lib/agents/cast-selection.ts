@@ -99,9 +99,9 @@ export function selectTenantCast({
     ]),
   );
   const ranked = candidates.sort((a, b) => {
-      const byScore = (scores.get(b.id) ?? 0) - (scores.get(a.id) ?? 0);
-      return byScore || stableRank(a.id, seed) - stableRank(b.id, seed);
-    });
+    const byScore = (scores.get(b.id) ?? 0) - (scores.get(a.id) ?? 0);
+    return byScore || stableRank(a.id, seed) - stableRank(b.id, seed);
+  });
 
   const cultureReference = resolveCultureReference(profile.culture).code;
   const completeRoster = teacher ? [teacher, ...ranked] : ranked;

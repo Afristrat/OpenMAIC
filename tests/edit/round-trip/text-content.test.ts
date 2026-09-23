@@ -72,7 +72,8 @@ describe('round-trip harness (export side)', () => {
     const after = applySlideEditOperation(content, {
       type: 'text.updateContent',
       elementId: textElementId,
-      content: '<p>Éthique&nbsp;: déjà\r\ntrès utile</p><p>À suivre&nbsp;: où et pourquoi&nbsp;?</p>',
+      content:
+        '<p>Éthique&nbsp;: déjà\r\ntrès utile</p><p>À suivre&nbsp;: où et pourquoi&nbsp;?</p>',
     });
 
     const blob = await exportSlideContent(after, scene);
@@ -82,7 +83,7 @@ describe('round-trip harness (export side)', () => {
     expect(slideXml).toContain('très utile');
     expect(slideXml).toContain('À suivre : où et pourquoi ?');
     expect(slideXml).not.toContain('&amp;nbsp;');
-    expect(slideXml).not.toContain('\r');
+    expect(slideXml).not.toContain('&#13;');
     expect(slideXml).not.toContain('déjàtrès');
   });
 });

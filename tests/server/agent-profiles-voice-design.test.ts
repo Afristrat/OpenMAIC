@@ -88,9 +88,9 @@ describe('agent-profiles route — voiceDesign', () => {
 
     expect(body.success).toBe(true);
     expect(body.agents).toHaveLength(10);
-    expect(new Set(body.agents.map((agent: { mechanismId: string }) => agent.mechanismId)).size).toBe(
-      10,
-    );
+    expect(
+      new Set(body.agents.map((agent: { mechanismId: string }) => agent.mechanismId)).size,
+    ).toBe(10);
     expect(body.agents[0].voiceDesign).toEqual({
       identity: 'older male teacher',
       texture: 'warm low',
@@ -127,9 +127,13 @@ describe('agent-profiles route — voiceDesign', () => {
 
     expect(body.success).toBe(true);
     expect(body.agents).toHaveLength(10);
-    expect(body.agents.filter((agent: { role: string }) => agent.role === 'teacher')).toHaveLength(1);
-    expect(body.agents.every((agent: { name: string; avatar: string; voiceConfig: unknown }) =>
-      Boolean(agent.name && agent.avatar && agent.voiceConfig),
-    )).toBe(true);
+    expect(body.agents.filter((agent: { role: string }) => agent.role === 'teacher')).toHaveLength(
+      1,
+    );
+    expect(
+      body.agents.every((agent: { name: string; avatar: string; voiceConfig: unknown }) =>
+        Boolean(agent.name && agent.avatar && agent.voiceConfig),
+      ),
+    ).toBe(true);
   });
 });
