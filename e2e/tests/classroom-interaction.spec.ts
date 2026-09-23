@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { ClassroomPage } from '../pages/classroom.page';
 import { createSettingsStorage } from '../fixtures/test-data/settings';
 import { defaultTheme } from '../fixtures/test-data/scene-content';
+import { captureExpectedBrowserConsole } from '../fixtures/expected-console';
 
 const TEST_STAGE_ID = 'e2e-test-stage';
 const LIVE_SPEECH_TEST = 'speaks a live agent intervention after a learner message';
@@ -633,10 +634,17 @@ test.describe('Classroom Interaction', () => {
   });
 
   test('continues the MP4 export when a browser snapshot upload fails', async ({
+    browserConsoleContract,
     page,
     mockApi,
   }) => {
     await mockApi.mockMp4ExportDone('e2e-mp4-snapshot-fallback');
+    for (let index = 0; index < 3; index += 1) {
+      browserConsoleContract.expectHttpError(
+        `/api/export-snapshots/${TEST_STAGE_ID}/scene-${index}`,
+        503,
+      );
+    }
     await page.unroute('**/api/export-snapshots/**');
     await page.route('**/api/export-snapshots/**', (route) =>
       route.fulfill({
@@ -651,11 +659,19 @@ test.describe('Classroom Interaction', () => {
     await classroom.waitForLoaded();
 
     await page.getByRole('button', { name: 'Export PPTX' }).click();
+    const expectedWarnings = await captureExpectedBrowserConsole(
+      page,
+      'warn',
+      '[ExportMP4] Snapshot fallback used',
+    );
     const downloadPromise = page.waitForEvent('download');
     await page.getByTestId('export-mp4').click();
     const download = await downloadPromise;
+    await expectedWarnings.waitForCount(3);
+    const warnings = await expectedWarnings.stop();
 
     expect(download.suggestedFilename(), download.url()).toContain('.mp4');
+    expect(warnings).toHaveLength(3);
   });
 
   test('exports every downloadable format from the current editable classroom', async ({
