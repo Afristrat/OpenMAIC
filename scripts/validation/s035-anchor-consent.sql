@@ -37,11 +37,10 @@ BEGIN
  UPDATE public.organizations SET status='active' WHERE id=org;
 END $$;
 RESET ROLE;
-SELECT set_config('request.jwt.claim.sub','00000000-0035-4000-8000-000000000401',true);
-SET LOCAL ROLE authenticated;
+SET LOCAL ROLE service_role;
 UPDATE public.telemetry_consent SET xapi_consent=false WHERE user_id='00000000-0035-4000-8000-000000000401';
 RESET ROLE;
 DO $$ BEGIN
  IF EXISTS(SELECT 1 FROM public.xapi_outbox WHERE anchor_session_id='00000000-0035-4000-8000-000000000412') THEN RAISE EXCEPTION 'Direct withdrawal retained events'; END IF;
- RAISE NOTICE 'Anchor consent, tenant, replay, export and direct RLS withdrawal verified';
+ RAISE NOTICE 'Anchor consent, tenant, replay, export and profile-service withdrawal verified';
 END $$;

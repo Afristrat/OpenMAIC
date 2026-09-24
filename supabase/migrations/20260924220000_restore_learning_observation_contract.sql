@@ -135,3 +135,23 @@ REVOKE ALL ON FUNCTION public.record_consented_learning(uuid, uuid, text, jsonb,
   FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.record_consented_learning(uuid, uuid, text, jsonb, uuid, uuid)
   TO service_role;
+
+-- Preserve every export section added over time while repairing only the stale
+-- xAPI ownership predicate. A fresh database already has the current predicate;
+-- an unexpected definition fails closed instead of silently rewriting it.
+DO $repair_xapi_export$
+DECLARE
+  definition text;
+  legacy_scope text := $legacy$v_scope := '(t.statement->''actor''->>''mbox'') IN (''mailto:'' || $1::text || ''@qalem.local'',''mailto:'' || $1::text || ''@qalem.invalid'')';$legacy$;
+  current_scope text := $current$v_scope := '((t.statement->''actor''->>''mbox'') IN (''mailto:'' || $1::text || ''@qalem.local'',''mailto:'' || $1::text || ''@qalem.invalid'') OR EXISTS (SELECT 1 FROM public.pedagogy_telemetry observation JOIN qalem_telemetry_private.subjects subject ON subject.subject_hash=observation.subject_hash WHERE observation.id=t.learning_observation_id AND subject.user_id=$1) OR EXISTS(SELECT 1 FROM public.live_sessions a WHERE a.id=t.anchor_session_id AND a.user_id=$1))';$current$;
+BEGIN
+  SELECT pg_get_functiondef(
+    'public.read_account_export_page(uuid,text,text)'::regprocedure
+  ) INTO STRICT definition;
+  IF position(current_scope IN definition) > 0 THEN RETURN; END IF;
+  IF position(legacy_scope IN definition) = 0 THEN
+    RAISE EXCEPTION 'Unexpected account export definition; xAPI scope was not rewritten';
+  END IF;
+  EXECUTE replace(definition, legacy_scope, current_scope);
+END;
+$repair_xapi_export$;

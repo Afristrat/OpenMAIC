@@ -22,6 +22,12 @@ describe('learning observation contract repair migration (S-035)', () => {
     expect(migration).not.toContain('project_course_xapi');
   });
 
+  it('restores ownership of pseudonymous course and anchor exports', () => {
+    expect(migration).toContain('learning_observation_id');
+    expect(migration).toContain('anchor_session_id');
+    expect(migration).toMatch(/Unexpected account export definition/);
+  });
+
   it('keeps the collector callable only by the service role', () => {
     expect(migration).toMatch(/REVOKE ALL[\s\S]+FROM PUBLIC, anon, authenticated/);
     expect(migration).toMatch(/GRANT EXECUTE[\s\S]+TO service_role/);
