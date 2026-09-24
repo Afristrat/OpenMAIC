@@ -228,10 +228,13 @@ async function validateMp4(session, course) {
     headers: { range: 'bytes=0-1023' },
     signal: AbortSignal.timeout(120_000),
   });
-  if (download.status !== 206) {
-    throw new Error(`Téléchargement partiel MP4 : HTTP ${download.status}`);
+  if (!download.ok || !download.body) {
+    throw new Error(`Ouverture du flux MP4 : HTTP ${download.status}`);
   }
-  const bytes = new Uint8Array(await download.arrayBuffer());
+  const reader = download.body.getReader();
+  const firstChunk = await reader.read();
+  await reader.cancel();
+  const bytes = firstChunk.value?.slice(0, 1024) ?? new Uint8Array();
   const signature = new TextDecoder('latin1').decode(bytes.slice(4, 12));
   if (!signature.includes('ftyp')) throw new Error('Signature MP4 absente');
   return {
