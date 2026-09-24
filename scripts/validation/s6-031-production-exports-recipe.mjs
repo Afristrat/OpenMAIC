@@ -14,7 +14,6 @@ if (process.env.QALEM_PRODUCTION_RECIPE_CONFIRM !== 'S6-031-HUMAN-YO-IMPACT') {
 const supabaseUrl = process.env.QALEM_SUPABASE_URL ?? 'https://db.qalem.ma';
 const appUrl = process.env.QALEM_APP_URL ?? 'https://qalem.ma';
 const orgId = process.env.QALEM_RECIPE_ORG_ID ?? 'aa7870b7-3938-4f24-b8bf-4a9d73565ba7';
-const tenantAdminEmail = process.env.QALEM_RECIPE_TENANT_ADMIN ?? 'info@humanyoimpact.com';
 const anonKey = process.env.QALEM_SUPABASE_ANON_KEY;
 const serviceKey = process.env.QALEM_SUPABASE_SERVICE_ROLE_KEY;
 const serviceHeaders = {
@@ -84,12 +83,26 @@ async function latestCourse() {
   const url = new URL(`${supabaseUrl}/rest/v1/courses`);
   url.searchParams.set('org_id', `eq.${orgId}`);
   url.searchParams.set('stage_id', 'not.is.null');
-  url.searchParams.set('select', 'id,title,stage_id,status,updated_at');
+  url.searchParams.set('select', 'id,title,stage_id,owner_id,status,updated_at');
   url.searchParams.set('order', 'updated_at.desc');
   url.searchParams.set('limit', '1');
   const { body } = await jsonRequest(url, { headers: serviceHeaders }, 'Lecture du dernier cours');
   if (!body?.[0]?.stage_id) throw new Error('Aucune formation Human Yo Impact exportable');
   return body[0];
+}
+
+async function ownerEmail(ownerId) {
+  const usersUrl = new URL(`${supabaseUrl}/auth/v1/admin/users`);
+  usersUrl.searchParams.set('page', '1');
+  usersUrl.searchParams.set('per_page', '1000');
+  const { body } = await jsonRequest(
+    usersUrl,
+    { headers: serviceHeaders },
+    'Lecture du propriétaire de la formation',
+  );
+  const email = body?.users?.find((user) => user.id === ownerId)?.email;
+  if (!email) throw new Error('Adresse du propriétaire de la formation introuvable');
+  return email;
 }
 
 async function validatePptx(session, course) {
@@ -211,7 +224,9 @@ async function validateMp4(session, course) {
   };
 }
 
-const [session, course] = await Promise.all([magicLinkSession(tenantAdminEmail), latestCourse()]);
+const course = await latestCourse();
+const courseOwnerEmail = await ownerEmail(course.owner_id);
+const session = await magicLinkSession(courseOwnerEmail);
 const pptx = await validatePptx(session, course);
 const mp4 = await validateMp4(session, course);
 
@@ -220,6 +235,7 @@ console.log(
     courseId: course.id,
     stageId: course.stage_id,
     courseTitle: course.title,
+    courseOwnerEmail,
     pptx,
     mp4,
   }),
