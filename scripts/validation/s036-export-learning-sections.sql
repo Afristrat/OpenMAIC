@@ -29,9 +29,9 @@ INSERT INTO public.anchor_plans(id,session_id,user_id,opted_in_at,ends_at) VALUE
 INSERT INTO public.anchor_deliveries(plan_id,delivery_kind,scheduled_for,dedupe_key) VALUES
  ('00000000-0036-4000-8000-000000000310','cold_eval',now()+interval '30 days','export-coverage-own'),
  ('00000000-0036-4000-8000-000000000311','cold_eval',now()+interval '30 days','export-coverage-other');
-INSERT INTO public.seeds(session_id,persona,kind,content) VALUES
- ('00000000-0036-4000-8000-000000000308','coach','highlight','{"own":true}'),
- ('00000000-0036-4000-8000-000000000309','coach','highlight','{"other":true}');
+INSERT INTO public.seeds(session_id,persona,kind,content,source_event_id,source_kind,source_version) VALUES
+ ('00000000-0036-4000-8000-000000000308','coach','highlight','{"own":true}',9007199254741001,'content_presented','s036-export'),
+ ('00000000-0036-4000-8000-000000000309','coach','highlight','{"other":true}',9007199254741200,'content_presented','s036-export');
 INSERT INTO public.push_subscriptions(user_id,endpoint,p256dh,auth) VALUES
  ('00000000-0036-4000-8000-000000000301','https://example.invalid/SECRET_ENDPOINT',rpad('SECRET_PUBLIC_KEY',87,'x'),rpad('SECRET_AUTH',22,'x'));
 INSERT INTO public.xapi_outbox(id,org_id,statement,lrs_target,dedupe_key) OVERRIDING SYSTEM VALUE VALUES

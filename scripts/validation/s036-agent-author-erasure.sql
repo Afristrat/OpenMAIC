@@ -19,15 +19,18 @@ BEGIN
  ('s036-agent-never-owned',NULL,NULL,'Never owned','teacher','System profile',false),
  ('s036-agent-other',b,org,'Other owner','teacher','Other profile',false);
  INSERT INTO public.agent_reviews(agent_id,user_id,rating) VALUES('s036-agent-published',b,5);
- SELECT jsonb_agg(to_jsonb(ac)-ARRAY['owner_id','updated_at'] ORDER BY id) INTO snapshot
+ SELECT jsonb_agg(to_jsonb(ac)-ARRAY['owner_id','updated_at','tenant_reclaim_pending'] ORDER BY id) INTO snapshot
  FROM public.agent_configs ac WHERE id IN('s036-agent-published','s036-agent-tenant-private','s036-agent-global');
  SET LOCAL ROLE supabase_auth_admin;
  DELETE FROM auth.users WHERE id=a;
  RESET ROLE;
- IF (SELECT jsonb_agg(to_jsonb(ac)-ARRAY['owner_id','updated_at'] ORDER BY id)
+ IF (SELECT jsonb_agg(to_jsonb(ac)-ARRAY['owner_id','updated_at','tenant_reclaim_pending'] ORDER BY id)
    FROM public.agent_configs ac WHERE id IN('s036-agent-published','s036-agent-tenant-private','s036-agent-global')) IS DISTINCT FROM snapshot
  OR EXISTS(SELECT 1 FROM public.agent_configs WHERE id IN('s036-agent-published','s036-agent-tenant-private','s036-agent-global') AND owner_id IS NOT NULL)
  THEN RAISE EXCEPTION 'Shared agent lost or changed'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.agent_configs
+   WHERE id='s036-agent-tenant-private' AND tenant_reclaim_pending)
+ THEN RAISE EXCEPTION 'Tenant agent not queued for recovery'; END IF;
  IF NOT EXISTS(SELECT 1 FROM public.agent_configs WHERE id='s036-agent-personal'
    AND owner_id IS NULL AND personal_erasure_pending)
  THEN RAISE EXCEPTION 'Personal agent not queued'; END IF;

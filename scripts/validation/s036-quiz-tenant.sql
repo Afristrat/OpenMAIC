@@ -4,15 +4,15 @@ INSERT INTO public.organizations(id,name) VALUES
  ('00000000-0036-4000-8000-000000000223','Quiz tenant A'),
  ('00000000-0036-4000-8000-000000000224','Quiz tenant B');
 INSERT INTO public.org_members(user_id,org_id,role) VALUES
- ('00000000-0036-4000-8000-000000000221','00000000-0036-4000-8000-000000000223','apprenant'),
- ('00000000-0036-4000-8000-000000000221','00000000-0036-4000-8000-000000000224','apprenant');
+ ('00000000-0036-4000-8000-000000000221','00000000-0036-4000-8000-000000000223','formateur'),
+ ('00000000-0036-4000-8000-000000000221','00000000-0036-4000-8000-000000000224','formateur');
 INSERT INTO public.stages(id,owner_id,org_id,name) VALUES
  ('s036-quiz-tenant','00000000-0036-4000-8000-000000000221','00000000-0036-4000-8000-000000000223','Quiz tenant proof');
 INSERT INTO public.scenes(id,stage_id,type,"order") VALUES('s036-quiz-scene','s036-quiz-tenant','quiz',0);
-INSERT INTO public.shared_classrooms(stage_id,org_id,visibility) VALUES
- ('s036-quiz-tenant','00000000-0036-4000-8000-000000000224','organization');
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub','00000000-0036-4000-8000-000000000221',true);
+INSERT INTO public.shared_classrooms(stage_id,org_id,shared_by,visibility) VALUES
+ ('s036-quiz-tenant','00000000-0036-4000-8000-000000000224','00000000-0036-4000-8000-000000000221','organization');
 INSERT INTO public.quiz_results(id,user_id,stage_id,scene_id,org_id,answers,score) VALUES
  ('00000000-0036-4000-8000-000000000225','00000000-0036-4000-8000-000000000221','s036-quiz-tenant','s036-quiz-scene','00000000-0036-4000-8000-000000000223','[]',20),
  ('00000000-0036-4000-8000-000000000226','00000000-0036-4000-8000-000000000221','s036-quiz-tenant','s036-quiz-scene','00000000-0036-4000-8000-000000000224','[]',80),

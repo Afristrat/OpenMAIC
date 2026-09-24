@@ -1,11 +1,18 @@
 -- Synthetic metadata only; no real file is created/deleted. BEGIN/ROLLBACK required.
-INSERT INTO auth.users(id) VALUES ('00000000-0036-4000-8000-000000000371');
+INSERT INTO auth.users(id) VALUES
+ ('00000000-0036-4000-8000-000000000371'),
+ ('00000000-0036-4000-8000-000000000378');
+INSERT INTO public.organizations(id,name,seat_limit) VALUES
+ ('00000000-0036-4000-8000-000000000380','Import cleanup proof',2);
+INSERT INTO public.org_members(user_id,org_id,role) VALUES
+ ('00000000-0036-4000-8000-000000000371','00000000-0036-4000-8000-000000000380','formateur'),
+ ('00000000-0036-4000-8000-000000000378','00000000-0036-4000-8000-000000000380','formateur');
 INSERT INTO auth.users(id) VALUES ('00000000-0036-4000-8000-000000000379');
 SET LOCAL ROLE supabase_auth_admin;
 DELETE FROM auth.users WHERE id='00000000-0036-4000-8000-000000000379';
 RESET ROLE;
-INSERT INTO public.course_imports(id,owner_id,original_filename,storage_path) VALUES
- ('00000000-0036-4000-8000-000000000372','00000000-0036-4000-8000-000000000371','Retained.pdf','00000000-0036-4000-8000-000000000379/course-imports/00000000-0036-4000-8000-000000000372.pdf');
+INSERT INTO public.course_imports(id,owner_id,source_org_id,original_filename,storage_path) VALUES
+ ('00000000-0036-4000-8000-000000000372','00000000-0036-4000-8000-000000000371','00000000-0036-4000-8000-000000000380','Retained.pdf','00000000-0036-4000-8000-000000000379/course-imports/00000000-0036-4000-8000-000000000372.pdf');
 INSERT INTO storage.objects(id,bucket_id,name,created_at,updated_at) VALUES
  ('00000000-0036-4000-8000-000000000372','classroom-media','00000000-0036-4000-8000-000000000379/course-imports/00000000-0036-4000-8000-000000000372.pdf',now()-interval '2 hours',now()-interval '2 hours'),
  ('00000000-0036-4000-8000-000000000373','classroom-media','00000000-0036-4000-8000-000000000371/course-imports/00000000-0036-4000-8000-000000000373.pdf',now()-interval '2 hours',now()-interval '2 hours'),
@@ -32,7 +39,6 @@ END $$;
 RESET ROLE;
 -- Removing the file's original account makes its previously unreferenced file eligible.
 -- Keep the separate persisted reference under a different account for the retention proof.
-INSERT INTO auth.users(id) VALUES ('00000000-0036-4000-8000-000000000378');
 UPDATE public.course_imports SET owner_id='00000000-0036-4000-8000-000000000378' WHERE id='00000000-0036-4000-8000-000000000372';
 SET LOCAL ROLE supabase_auth_admin;
 DELETE FROM auth.users WHERE id='00000000-0036-4000-8000-000000000371';

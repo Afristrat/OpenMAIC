@@ -20,8 +20,8 @@ BEGIN
  INSERT INTO public.organizations(id,name,status,seat_limit) VALUES(org,'S036 course rollback','active',3);
  INSERT INTO public.org_members(user_id,org_id,role) VALUES(a,org,'admin'),(b,org,'admin'),(c,org,'apprenant');
  INSERT INTO public.stages(id,owner_id,org_id,name) VALUES('s036-course-reclaim',a,org,'Test');
- INSERT INTO public.course_imports(owner_id,original_filename,storage_path,validation_status)
-   VALUES(a,'canvas.md','s036-rollback/canvas.md','conform') RETURNING id INTO import_id;
+ INSERT INTO public.course_imports(owner_id,source_org_id,original_filename,storage_path,validation_status)
+   VALUES(a,org,'canvas.md','s036-rollback/canvas.md','conform') RETURNING id INTO import_id;
  INSERT INTO public.organization_sources(org_id,owner_id,name,mime_type,size_bytes,content_hash,parser_id,text_content)
    VALUES(org,a,'canvas.md','text/markdown',4,repeat('b',64),'test','Retained canvas') RETURNING id INTO source_id;
  INSERT INTO public.formation_source_manifests(owner_id,org_id,version,source_ids) VALUES(a,org,1,ARRAY[source_id]) RETURNING id INTO manifest_id;

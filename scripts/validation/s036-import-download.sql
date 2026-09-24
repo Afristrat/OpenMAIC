@@ -2,8 +2,8 @@
 INSERT INTO auth.users(id) VALUES ('00000000-0036-4000-8000-000000000351'),('00000000-0036-4000-8000-000000000352');
 INSERT INTO public.organizations(id,name,seat_limit) VALUES ('00000000-0036-4000-8000-000000000353','Import proof',10);
 INSERT INTO public.org_members(org_id,user_id,role) VALUES ('00000000-0036-4000-8000-000000000353','00000000-0036-4000-8000-000000000351','formateur');
-INSERT INTO public.course_imports(id,owner_id,original_filename,storage_path,validation_status) VALUES
- ('00000000-0036-4000-8000-000000000354','00000000-0036-4000-8000-000000000351','Proof.pdf','00000000-0036-4000-8000-000000000352/course-imports/00000000-0036-4000-8000-000000000354.pdf','conform');
+INSERT INTO public.course_imports(id,owner_id,source_org_id,original_filename,storage_path,validation_status) VALUES
+ ('00000000-0036-4000-8000-000000000354','00000000-0036-4000-8000-000000000351','00000000-0036-4000-8000-000000000353','Proof.pdf','00000000-0036-4000-8000-000000000352/course-imports/00000000-0036-4000-8000-000000000354.pdf','conform');
 INSERT INTO public.courses(id,owner_id,org_id,title,language,source_kind,import_id,status) VALUES
  ('00000000-0036-4000-8000-000000000355','00000000-0036-4000-8000-000000000351','00000000-0036-4000-8000-000000000353','Proof','fr-FR','imported','00000000-0036-4000-8000-000000000354','draft');
 SET LOCAL ROLE service_role;
