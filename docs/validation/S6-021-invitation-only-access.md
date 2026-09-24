@@ -54,3 +54,21 @@ journal temporaires ont été supprimés après relevé du résultat. Cette preu
 valide la frontière UI au SHA courant, sans réémettre d’OTP ni envoyer de
 courrier. Elle ne remplace pas la réception physique d’une invitation de tenant
 par son destinataire, qui demeure la dernière preuve S6-021.
+
+## Recette autonome de production du 24 septembre 2026
+
+Le SHA `4cb3984b06a1e04c39eafeef2ab53760f382ad18` ajoute la recette permanente `scripts/validation/s6-021-production-invitation-recipe.mjs`. Elle utilise exclusivement une adresse officielle `delivered+…@resend.dev`, jamais Sophia ni un contact réel.
+
+La recette de production confirme :
+
+- `disable_signup=true` ;
+- `/app` anonyme redirigé vers l’authentification ;
+- inscription publique refusée en HTTP 422 avec `signup_disabled`, sans compte orphelin ;
+- tenant et invitation administrateur créés, avec e-mail accepté par Resend ;
+- adresse différente refusée en HTTP 403 sans création de compte ;
+- inscription nominative réussie en HTTP 201 ;
+- connexion par mot de passe et adhésion `admin` unique visibles ;
+- rejeu du jeton refusé en HTTP 410 ;
+- tenant, invitation, adhésion et identité de recette supprimés, compteurs résiduels à zéro.
+
+La clé Resend Qalem est volontairement limitée à l’envoi : la lecture `GET /emails` répond HTTP 401. Ses droits ne sont pas élargis pour transformer une preuve fournisseur en preuve humaine. S6-021 reste donc ouverte pour la réception physique d’une invitation par son destinataire et la gate complète au SHA de clôture.
