@@ -80,6 +80,7 @@ function sessionCookieValue(session) {
       expires_at: session.expires_at,
       expires_in: session.expires_in,
       token_type: session.token_type,
+      user: session.user,
     }),
     'utf8',
   ).toString('base64url')}`;
