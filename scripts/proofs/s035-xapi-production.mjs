@@ -281,7 +281,11 @@ try {
   assert.equal(beforeCount.count, 0, 'An xAPI event was emitted before opt-in');
 
   const enabledState = await setXapiConsent(true);
-  assert.notEqual(enabledState.epoch, initial.epoch, 'xAPI opt-in must rotate the collection epoch');
+  assert.notEqual(
+    enabledState.epoch,
+    initial.epoch,
+    'xAPI opt-in must rotate the collection epoch',
+  );
   assertResult(
     await admin.from('feature_flags').update({ enabled: true }).eq('flag_name', 'xapi_emission'),
     'Unable to enable temporary xAPI delivery',
@@ -350,7 +354,11 @@ try {
     .select('id', { count: 'exact', head: true })
     .eq('org_id', orgId);
   assert.equal(internalRows.error, null);
-  assert.equal(internalRows.count, 2, 'Contractual learning analytics were removed by xAPI withdrawal');
+  assert.equal(
+    internalRows.count,
+    2,
+    'Contractual learning analytics were removed by xAPI withdrawal',
+  );
 
   completed = true;
 } finally {
