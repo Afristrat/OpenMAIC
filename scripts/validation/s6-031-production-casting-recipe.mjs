@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 const required = ['QALEM_SUPABASE_ANON_KEY', 'QALEM_SUPABASE_SERVICE_ROLE_KEY'];
 for (const name of required) {
   if (!process.env[name]) throw new Error(`Variable requise absente : ${name}`);
@@ -179,7 +181,11 @@ const { response, body } = await jsonRequest(
   `${appUrl}/api/generate/agent-profiles`,
   {
     method: 'POST',
-    headers: { cookie: sessionCookie(session), 'content-type': 'application/json' },
+    headers: {
+      cookie: sessionCookie(session),
+      'content-type': 'application/json',
+      'idempotency-key': `s6031-casting-${randomUUID()}`,
+    },
     body: JSON.stringify({
       orgId,
       stageInfo: {
