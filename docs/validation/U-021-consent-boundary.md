@@ -35,3 +35,39 @@ Recherche des appelants : `collectPedagogyData` et `collectDiscussionData` n’o
 Restent le raccordement atomique collecte/consentement et la suppression S-036/S-047, l’inventaire d’activation réelle xAPI, le gate global et la recette publiée. U-021 conserve `passes=false`.
 
 Références consultées : [changelog Supabase](https://supabase.com/changelog), [identité vérifiée getUser](https://supabase.com/docs/reference/javascript/auth-getuser), [observabilité](https://supabase.com/docs/guides/observability). Ponytail : composant, table et mécanisme d’authentification existants, aucune dépendance ajoutée.
+
+## 24 septembre 2026 — Cadrage contractuel livré
+
+La décision produit remplace le candidat du 10 septembre : l’analyse pseudonymisée
+des parcours d’apprentissage et de l’interface fait partie intégrante du service
+authentifié et des conditions d’utilisation. Elle n’est donc plus présentée comme
+un choix individuel. Le partage vers un LRS externe par xAPI reste distinct,
+désactivé par défaut et révocable depuis le profil.
+
+La migration `20260924120000_contractual_learning_analytics.sql` est appliquée en
+production après sauvegarde du schéma et prévol transactionnel. La relecture
+retrouve 17 lignes sur 17 avec `pedagogy_consent=true`, aucune autorisation xAPI,
+la contrainte `telemetry_learning_analytics_required`, le déclencheur de
+provisionnement des nouveaux profils et aucune politique permettant une
+modification directe de cette base contractuelle. Le `POST`
+`/api/telemetry-consent` n’accepte plus que `purpose=xapi`.
+
+Le SHA fonctionnel `febdd96f544c54462252f69dbad6367e0c05faf9` passe Prettier,
+TypeScript, ESLint, 546 fichiers et 3 366 tests Vitest, le build de 127 routes et
+196 scénarios Playwright sans échec. Le défaut transverse d’hydratation rencontré
+pendant la gate venait des dates de marketplace calculées avec la locale et le
+fuseau implicites du serveur et du navigateur ; elles utilisent désormais une
+date calendaire UTC déterministe. Le déploiement Coolify
+`pbzpbfhh8iuehoiyx9av3lcn` sert l’image exacte de ce SHA. Le conteneur est
+`healthy`, `restart=0`, `OOMKilled=false`, sans journal critique depuis son
+démarrage, et `https://qalem.ma/api/health` répond HTTP 200.
+
+La recette permanente
+`scripts/proofs/u021-contractual-analytics-production.mjs`, validée au SHA
+`b972f5cac3c3202afce9e927c0ea8656d7fc1d2f`, crée un compte éphémère puis prouve
+sur `https://qalem.ma` : accès anonyme refusé, analyse interne provisionnée et
+non modifiable, xAPI à `false` par défaut, contrôle limité au profil, activation
+et retrait effectifs, renouvellement de l’epoch et conservation de l’analyse
+interne. Le compte et sa ligne de télémétrie sont supprimés en fin de recette.
+U-021 est clôturée ; le transport vers un LRS et sa politique d’effacement
+restent volontairement suivis par S-035, pas par cette story.

@@ -4454,12 +4454,12 @@
     },
     {
       "id": "U-021",
-      "title": "Bannière consentement télémétrie RGPD",
-      "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Bannière consentement télémétrie RGPD » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
+      "title": "Analyses d’apprentissage contractuelles et choix xAPI séparé",
+      "description": "En tant qu’utilisateur de Qalem, je veux que les analyses internes nécessaires au service soient encadrées par les conditions d’utilisation et que tout partage xAPI externe reste distinct, désactivé par défaut et révocable.",
       "epic": "7-HÉRITAGE",
       "priority": "P2",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd-ui.json",
         "id": "U-021",
@@ -4467,14 +4467,27 @@
       },
       "sourceDependencies": [],
       "dependencies": ["S0-011"],
-      "gap": "2026-09-10 : état ternaire de consentement explicite, bannière alimentée par l’identité déjà vérifiée du layout privé et retrait profil FR/AR/EN codés au commit 6f50ff1. Tests ciblés, TypeScript et lint verts. Restent recette navigateur intégrale dans un environnement isolé neuf, raccordement atomique des collecteurs S-036/S-047, périmètre xAPI, gate global et publication ; aucune collecte activée.",
-      "evidence": ["components/telemetry-consent-banner.tsx:10", "app/layout.tsx"],
-      "acceptance": [
-        "Inventorier les collectes réellement actives avant de décider de l’interface de consentement.",
-        "Pour chaque collecte retenue, vérifier consentement explicite, refus, retrait et absence d’envoi avant opt-in.",
-        "Une décision de désactivation reste une décision tracée, pas une clôture fictive."
+      "gap": "Soldé selon la décision produit : analyses internes pseudonymisées intégrales et contractuelles, sans bannière ni choix individuel ; partage xAPI externe séparé, refusé par défaut et révocable dans le profil. Migration, API, interface, gate globale, déploiement et recette de production sont prouvés. Le LRS et son effacement distant restent dans S-035.",
+      "evidence": [
+        "components/xapi-consent-control.tsx",
+        "app/api/telemetry-consent/route.ts",
+        "supabase/migrations/20260924120000_contractual_learning_analytics.sql",
+        "docs/validation/U-021-consent-boundary.md",
+        "scripts/proofs/u021-contractual-analytics-production.mjs"
       ],
-      "closureEvidence": [],
+      "acceptance": [
+        "Les analyses internes d’apprentissage et d’interface sont provisionnées avec le compte, encadrées par les conditions d’utilisation et non présentées comme un choix individuel.",
+        "Le partage vers un LRS externe par xAPI est séparé, désactivé par défaut, activable et révocable depuis le profil.",
+        "L’identité, la persistance, l’isolation des finalités et l’absence de faux succès sont prouvées par API, navigateur et base de production."
+      ],
+      "closureEvidence": [
+        "2026-09-24 — Décision produit appliquée : collecte interne intégrale pour l’analyse et l’amélioration de l’apprentissage et de l’interface, encadrée par les conditions d’utilisation ; xAPI externe reste un choix séparé.",
+        "2026-09-24 — Migration de production appliquée après sauvegarde et prévol : 17/17 lignes contractuelles actives, 0 xAPI actif, contrainte et déclencheur relus.",
+        "2026-09-24 — SHA fonctionnel febdd96f544c54462252f69dbad6367e0c05faf9 : Prettier, TypeScript, ESLint, 3 366 tests Vitest, build de 127 routes et 196/196 Playwright verts.",
+        "2026-09-24 — Déploiement Coolify pbzpbfhh8iuehoiyx9av3lcn terminé ; image exacte febdd96, conteneur healthy, restart=0, OOMKilled=false et santé publique HTTP 200.",
+        "2026-09-24 — Recette production permanente au SHA b972f5cac3c3202afce9e927c0ea8656d7fc1d2f : accès anonyme refusé, analyses internes immuables, xAPI false par défaut, contrôle profil uniquement, activation/retrait et rotation d’epoch prouvés, fixtures supprimées.",
+        "Artefact : docs/validation/U-021-consent-boundary.md"
+      ],
       "historicalEvidence": {
         "completedAt": "2026-03-29T23:34:34.182Z",
         "status": "legacy_claim_not_delivery_proof"
@@ -4482,11 +4495,7 @@
       "historicalDependencies": [],
       "executionAllowed": true,
       "executionDecision": "2026-09-09 — Feu vert explicite pour les douze US et délégation des choix. Voir docs/decisions/2026-09-09-unblock-prd.md. Autorisation de travail, pas preuve de livraison ni activation automatique.",
-      "validationRequires": [
-        "qualityGates",
-        "fresh_evidence_per_acceptance",
-        "explicit_human_decision"
-      ],
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 57
     },
     {

@@ -147,7 +147,7 @@ Aucun gain d’apprentissage ou de marge n’est présumé ; la cible de marge m
 | 54 | S3-010 | P2 | `completed` | true | Émission xAPI via outbox (retry, acteur pseudonymisé) |
 | 55 | U-007 | P2 | `completed` | true | Bouton certificat dans classroom |
 | 56 | U-008 | P2 | `completed` | true | Page Mes certificats |
-| 57 | U-021 | P2 | `to_validate` | false | Bannière consentement télémétrie RGPD |
+| 57 | U-021 | P2 | `completed` | true | Analyses d’apprentissage contractuelles et choix xAPI séparé |
 | 58 | S-018 | P3 | `completed` | true | Implémenter le MCP Client pour serveurs externes |
 | 59 | S-019 | P3 | `blocked` | false | Connecter NotebookLM via Diwan |
 | 60 | S-020 | P3 | `blocked` | false | Connecter Notion via Diwan |
