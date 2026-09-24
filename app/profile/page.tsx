@@ -24,7 +24,7 @@ import { KeyRound, Trash2, Loader2, Mail, User, Save, Check, Download } from 'lu
 import { cn } from '@/lib/utils';
 import { RichProfileSection } from '@/components/profile/rich-profile-section';
 import { TenantCreditLedger } from '@/components/org/tenant-credit-ledger';
-import { TelemetryConsentBanner } from '@/components/telemetry-consent-banner';
+import { XapiConsentControl } from '@/components/xapi-consent-control';
 import { LearningObservationOutbox } from '@/lib/telemetry/learning-observation-outbox';
 import { useOrganizations } from '@/lib/hooks/use-organizations';
 
@@ -298,7 +298,7 @@ export default function ProfilePage(): React.ReactElement {
         {currentOrg && <TenantCreditLedger orgId={currentOrg.id} />}
 
         {/* Actions */}
-        <TelemetryConsentBanner inline />
+        <XapiConsentControl />
         <section aria-labelledby="account-export-title" className="space-y-3">
           <h2 id="account-export-title" className="text-lg font-medium">
             {t('profile.exportTitle')}

@@ -304,7 +304,7 @@ export const mcpCallSchema = z.object({
 export const telemetryConsentSchema = z
   .object({
     consent: z.boolean(),
-    purpose: z.enum(['xapi']).optional(),
+    purpose: z.literal('xapi'),
   })
   .strict();
 

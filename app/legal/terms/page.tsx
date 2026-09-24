@@ -43,7 +43,7 @@ export default function TermsPage(): React.ReactElement {
           Conditions G&eacute;n&eacute;rales d&apos;Utilisation
         </h1>
         <p className="text-slate-400 text-sm">
-          Derni&egrave;re mise &agrave; jour : 27 juillet 2026
+          Derni&egrave;re mise &agrave; jour : 24 septembre 2026
         </p>
         <div className="w-24 h-1 bg-gradient-to-r from-[#722ed1] to-emerald-400 rounded-full mt-6" />
       </div>
@@ -180,6 +180,15 @@ export default function TermsPage(): React.ReactElement {
 
       {/* 7. Donn&eacute;es personnelles */}
       <SectionTitle>7. Donn&eacute;es personnelles</SectionTitle>
+      <Paragraph>
+        Le fonctionnement du service comprend l&apos;analyse pseudonymis&eacute;e des parcours
+        d&apos;apprentissage et des interactions structur&eacute;es afin d&apos;adapter
+        l&apos;exp&eacute;rience andragogique, mesurer la progression, am&eacute;liorer la
+        r&eacute;tention et optimiser l&apos;interface. Cette analyse interne fait partie de la
+        fourniture de Qalem. Elle n&apos;inclut pas l&apos;envoi des &eacute;v&eacute;nements
+        vers un syst&egrave;me externe de suivi des apprentissages, qui reste un choix distinct
+        et d&eacute;sactiv&eacute; par d&eacute;faut.
+      </Paragraph>
       <Paragraph>
         Le traitement de vos donn&eacute;es personnelles est r&eacute;gi par notre{' '}
         <Link href="/legal/privacy" className="text-[#d5baff] hover:underline">

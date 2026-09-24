@@ -94,7 +94,7 @@ export default function PrivacyPage(): React.ReactElement {
           'Adresse IP',
           'Type de navigateur et syst\u00e8me d\u2019exploitation',
           'Pages consult\u00e9es et dur\u00e9e des sessions',
-          'Donn\u00e9es de t\u00e9l\u00e9m\u00e9trie anonymis\u00e9es (avec votre consentement)',
+          'Mesures pseudonymis\u00e9es des parcours d\u2019apprentissage et des interactions structur\u00e9es',
         ]}
       />
 
@@ -121,8 +121,8 @@ export default function PrivacyPage(): React.ReactElement {
       <Paragraph>Nos traitements reposent sur les bases l&eacute;gales suivantes :</Paragraph>
       <List
         items={[
-          'Consentement : pour la collecte de donn\u00e9es de t\u00e9l\u00e9m\u00e9trie, l\u2019utilisation de cookies non essentiels et l\u2019envoi de communications marketing',
-          'Ex\u00e9cution du contrat : pour la fourniture du service de formation, la gestion du compte et le traitement des paiements',
+          'Consentement : pour les cookies non essentiels, les communications marketing et le partage xAPI vers un syst\u00e8me externe',
+          'Ex\u00e9cution du contrat : pour la fourniture du service de formation, l\u2019analyse interne des parcours d\u2019apprentissage, la personnalisation andragogique, la gestion du compte et le traitement des paiements',
           'Int\u00e9r\u00eat l\u00e9gitime : pour l\u2019am\u00e9lioration du service, la s\u00e9curit\u00e9 de la plateforme et la pr\u00e9vention des abus',
           'Obligation l\u00e9gale : pour la conservation des donn\u00e9es de facturation et la r\u00e9ponse aux r\u00e9quisitions judiciaires',
         ]}
@@ -212,14 +212,13 @@ export default function PrivacyPage(): React.ReactElement {
       <h3 className="text-lg font-semibold text-slate-100 mb-2">Cookies optionnels</h3>
       <List
         items={[
-          'T\u00e9l\u00e9m\u00e9trie de performance (avec consentement explicite)',
           'Stockage local IndexedDB pour le mode hors-ligne (PWA)',
         ]}
       />
       <Paragraph>
         Qalem n&apos;utilise aucun cookie publicitaire ni aucun traceur tiers &agrave; des fins de
-        ciblage marketing. La banni&egrave;re de consentement aux cookies vous permet de
-        param&eacute;trer vos pr&eacute;f&eacute;rences &agrave; tout moment.
+        ciblage marketing. Le partage xAPI vers un syst&egrave;me externe reste d&eacute;sactiv&eacute;
+        par d&eacute;faut et peut &ecirc;tre param&eacute;tr&eacute; depuis le profil.
       </Paragraph>
 
       {/* 7. Transferts internationaux */}

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   readConsentState,
-  setConsent,
   readXapiConsent,
   setXapiConsent,
 } from '@/lib/telemetry/pedagogy-collector';
@@ -74,10 +73,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const validation = validateBody(telemetryConsentSchema, rawBody);
   if (!validation.success) return validation.response;
   const { consent, purpose } = validation.data;
+  if (purpose !== 'xapi') {
+    return NextResponse.json(
+      { error: 'Only external xAPI sharing is user-configurable' },
+      { status: 400, headers },
+    );
+  }
 
   try {
-    if (purpose === 'xapi') await setXapiConsent(auth.user.id, consent);
-    else await setConsent(auth.user.id, consent);
+    await setXapiConsent(auth.user.id, consent);
     return NextResponse.json({ ok: true, choice: consent }, { headers });
   } catch {
     return NextResponse.json({ error: 'Consent storage unavailable' }, { status: 503, headers });

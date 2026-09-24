@@ -107,13 +107,13 @@ export async function collectPedagogyData(
 // ---------------------------------------------------------------------------
 
 /**
- * Check whether a user has given pedagogy telemetry consent.
+ * Check whether contractual learning analytics are active for this account.
  */
 export async function hasConsent(userId: string): Promise<boolean> {
   return (await readConsent(userId)) === true;
 }
 
-/** null means no choice yet; storage errors must not masquerade as refusal. */
+/** null means the account has not been provisioned; storage errors must not masquerade as refusal. */
 export async function readConsent(userId: string): Promise<boolean | null> {
   return (await readConsentState(userId)).choice;
 }
@@ -125,7 +125,7 @@ export async function readConsentState(
 
   const { data, error } = await supabase
     .from('telemetry_consent')
-    .select('pedagogy_consent, pedagogy_consent_decided_at, collection_epoch')
+    .select('pedagogy_consent, collection_epoch')
     .eq('user_id', userId)
     .abortSignal(AbortSignal.timeout(5000))
     .maybeSingle();
@@ -134,34 +134,7 @@ export async function readConsentState(
   if (!data) return { choice: null, epoch: null };
   const epoch = z.string().uuid().safeParse(data.collection_epoch);
   if (!epoch.success) throw new Error('Consent storage unavailable');
-  if (data.pedagogy_consent_decided_at === null) {
-    return { choice: null, epoch: epoch.data };
-  }
   return { choice: data.pedagogy_consent === true, epoch: epoch.data };
-}
-
-/**
- * Set or update a user's pedagogy telemetry consent.
- */
-export async function setConsent(userId: string, consent: boolean): Promise<void> {
-  const supabase = getServiceClient();
-
-  const { error } = await supabase
-    .from('telemetry_consent')
-    .upsert(
-      {
-        user_id: userId,
-        pedagogy_consent: consent,
-        pedagogy_consent_decided_at: new Date().toISOString(),
-        consented_at: new Date().toISOString(),
-      },
-      { onConflict: 'user_id' },
-    )
-    .abortSignal(AbortSignal.timeout(5000));
-
-  if (error) {
-    throw new Error('Consent storage unavailable');
-  }
 }
 
 export async function readXapiConsent(userId: string): Promise<boolean> {
