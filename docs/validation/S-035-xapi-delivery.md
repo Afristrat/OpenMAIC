@@ -145,3 +145,57 @@ Le jeton du tunnel n’est jamais imprimé. Il est récupérable depuis l’API
 Cloudflare avec le jeton maître déjà protégé. L’écriture d’une copie dans le
 coffre Qalem a été refusée puis automatiquement annulée par sa revalidation ;
 le défaut du coffre doit être corrigé avant d’y ajouter cette redondance.
+
+## 24 septembre 2026 — Recette intégrée de production et clôture
+
+Le SHA `2637c783b456ed82a2938a62dc24994c426e7085` transmet désormais la clé de
+signature du LRS au worker sans l’exposer au navigateur. Le déploiement Coolify
+`2nkqvcbee5luqivgsvagendg` est terminé ; les workers Qalem, le sidecar
+AudioSeal et le worker de capture servent cette révision, sont sains, n’ont
+subi aucun redémarrage et portent `OOMKilled=false`.
+
+La recette de production a d’abord révélé une dérive réelle du schéma : la
+fonction installée `record_consented_learning` ne conservait ni les tentatives
+de quiz ni les messages de discussion, et l’export personnel xAPI ignorait les
+provenances cours et ANCRER. Après sauvegarde du schéma dans
+`/home/serveuria/qalem-s035-backups/pre-s035-schema-20260924.sql.gz`, la
+migration `20260924220000_restore_learning_observation_contract.sql` a restauré
+le contrat final sans réécrire les observations existantes. Les sept recettes
+SQL historiques de S-035 passent ensuite sur le schéma de production dans des
+transactions intégralement annulées.
+
+Le script permanent `scripts/proofs/s035-xapi-production.mjs` a créé un compte,
+un tenant, un cours et des scènes éphémères, puis a prouvé de bout en bout :
+
+- xAPI désactivé par défaut et zéro ligne externe avant le choix explicite ;
+- configuration LRS tenant chiffrée ;
+- livraison par le worker réel de sept statements couvrant slide, quiz, PBL et
+  discussion ;
+- acteur pseudonymisé, identifiants de statements durables et déduplication ;
+- retrait xAPI purgeant l’outbox locale sans supprimer les analyses internes
+  contractuelles ;
+- restauration du drapeau global et suppression de toutes les fixtures.
+
+Le script `scripts/proofs/s035-lrs-purge.mjs` a ensuite supprimé physiquement
+l’acteur temporaire dans l’administration locale du LRS, vérifié zéro statement
+restant et fermé la session d’administration. Le recontrôle final retrouve
+`xapi_emission=false`, zéro configuration tenant, zéro ligne d’outbox, zéro
+compte et zéro organisation de recette. Le service
+`cloudflared-qalem-lrs.service` reste actif et activé au démarrage ; le
+conteneur LRS est en cours d’exécution, sans OOM ni redémarrage. Aucun tenant
+n’est activé durablement : l’activation par organisation reste une décision de
+configuration, pas une condition manquante du produit.
+
+Au SHA de clôture `94f19e483ff30d8cb9ab0359ffcb99199aea47b4`, Prettier,
+TypeScript, ESLint, 547 fichiers et 3 370 tests Vitest, le build de 127 routes
+et 196 scénarios Playwright sans retry passent sur ServeurIA. Le port E2E par
+défaut 3002 étant légitimement occupé par Cal.com, la recette navigateur a été
+rejouée proprement sur le port 3217, sans serveur résiduel. Son journal extrait
+porte le SHA-256
+`4edcb14784abe67c51cbe8ff48a3ff928a3579aa4bf564d1bdc34d409b086c77`.
+Les avertissements préexistants de surcharge pnpm et d’absence de jeton Sentry
+restent visibles ; cette clôture ne les présente pas comme supprimés.
+
+Références d’exploitation du LRS :
+[endpoints Yet Analytics SQL LRS](https://yetanalytics.github.io/lrsql/endpoints.html)
+et [variables d’environnement](https://yetanalytics.github.io/lrsql/env_vars.html).
