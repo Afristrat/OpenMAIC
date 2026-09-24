@@ -1163,3 +1163,7 @@ La clé virtuelle cliente Qalem a été remplacée atomiquement dans LiteLLM, le
 ## 24 septembre 2026 — S1-010 Export PPTX recertifié et clôturé
 
 Un clone neuf ServeurIA au SHA `0c9d1320225533b7a44586df549282581975200c` reconstruit `mathml2omml` et `pptxgenjs` au postinstall, puis produit deux diapositives et 54 793 octets. Le fichier transféré est ouvert réellement par Microsoft PowerPoint 16.0, en lecture seule, sans exception ni réparation. Le moteur retrouve titres, corps et notes en français et en arabe et rend deux PNG ; leur inspection à la résolution originale ne montre ni coupe, ni caractère de remplacement, ni défaut RTL. Le contrôle est rendu permanent par `scripts/validation/s1-010-powerpoint-open.ps1`. S1-010 passe à `completed` et `passes=true`.
+
+## 24 septembre 2026 — S1-007 SCORM 1.2 recertifié et clôturé
+
+La production Qalem génère un paquet SCORM 1.2 frais de 287 324 octets avec deux scènes, puis supprime son fichier Storage et toutes ses fixtures. Le verrou Moodle historique venait du script d’import lancé en `root` : il créait des verrous et des répertoires du pool de fichiers que le serveur web ne pouvait pas reprendre. Le script refuse désormais tout utilisateur différent du propriétaire du dataroot. Après restitution des objets du LMS SCORM à `daemon`, Moodle importe deux SCO, Chromium s’authentifie, lance le paquet et émet la complétion ; la relecture indépendante retrouve exactement un SCO `completed` avec score 100. Le cours et le compte sont supprimés. S1-007 passe à `completed` et `passes=true`.

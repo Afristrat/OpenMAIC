@@ -3,7 +3,14 @@
 // Les données sont exclusivement préfixées par le marqueur passé par l'orchestrateur.
 if (PHP_SAPI !== 'cli') { exit(1); }
 define('CLI_SCRIPT', true);
-require '/var/www/html/config.php';
+$configPath = getenv('QALEM_S1007_MOODLE_CONFIG') ?: '/var/www/html/config.php';
+if (!in_array($configPath, ['/var/www/html/config.php', '/opt/bitnami/moodle/config.php'], true)) {
+    throw new InvalidArgumentException('Chemin Moodle de recette invalide');
+}
+require $configPath;
+if (function_exists('posix_geteuid') && posix_geteuid() !== fileowner($CFG->dataroot)) {
+    throw new RuntimeException('La recette Moodle doit utiliser le propriétaire système du dataroot');
+}
 require_once $CFG->dirroot . '/course/lib.php';
 require_once $CFG->dirroot . '/course/modlib.php';
 require_once $CFG->dirroot . '/user/lib.php';
@@ -41,6 +48,10 @@ if ($action === 'prepare') {
         'email' => $username . '@example.invalid', 'mnethostid' => $CFG->mnet_localhost_id,
     ]);
     $user = $DB->get_record('user', ['id' => $userId], '*', MUST_EXIST);
+    $authenticatedUser = authenticate_user_login($username, $password);
+    if (!$authenticatedUser || (int)$authenticatedUser->id !== (int)$user->id) {
+        throw new RuntimeException('Le compte Moodle de recette ne peut pas s’authentifier');
+    }
     $manual = enrol_get_plugin('manual');
     $instances = array_filter(enrol_get_instances($course->id, true), fn($item) => $item->enrol === 'manual');
     $instance = reset($instances);
@@ -69,7 +80,7 @@ if ($action === 'prepare') {
     rebuild_course_cache($course->id, true);
     $scoCount = $DB->count_records('scorm_scoes', ['scorm' => $scorm->id]);
     if ($scoCount < 1) { throw new RuntimeException('Le parseur Moodle n’a trouvé aucun SCO'); }
-    echo json_encode(['proof' => 'S1007_MOODLE_PREPARED', 'courseId' => $course->id, 'scormId' => $scorm->id, 'cmId' => $courseModule->id, 'scoCount' => $scoCount]) . PHP_EOL;
+    echo json_encode(['proof' => 'S1007_MOODLE_PREPARED', 'courseId' => $course->id, 'scormId' => $scorm->id, 'cmId' => $courseModule->id, 'scoCount' => $scoCount, 'loginVerified' => true]) . PHP_EOL;
     exit(0);
     } catch (Throwable $error) {
         // La cause de l’échec de préparation doit survivre à un nettoyage Moodle secondaire.
@@ -87,12 +98,18 @@ if ($action === 'prepare') {
 if ($action === 'verify') {
     if (!$course || !$user) { throw new RuntimeException('Fixture de recette absente'); }
     $scorm = $DB->get_record('scorm', ['course' => $course->id], '*', MUST_EXIST);
-    $scoId = $DB->get_field_sql('SELECT id FROM {scorm_scoes} WHERE scorm = ? ORDER BY id ASC', [$scorm->id], MUST_EXIST);
-    $tracks = scorm_get_tracks($scoId, $user->id, 1);
-    if (($tracks->status ?? null) !== 'completed' || (string)($tracks->score_raw ?? '') !== '100') {
+    $scoIds = $DB->get_fieldset_select('scorm_scoes', 'id', 'scorm = ?', [$scorm->id], 'id ASC');
+    $completed = [];
+    foreach ($scoIds as $scoId) {
+        $tracks = scorm_get_tracks($scoId, $user->id, 1);
+        if (($tracks->status ?? null) === 'completed' && (string)($tracks->score_raw ?? '') === '100') {
+            $completed[] = ['scoId' => $scoId, 'status' => $tracks->status, 'scoreRaw' => $tracks->score_raw];
+        }
+    }
+    if (count($completed) !== 1) {
         throw new RuntimeException('Suivi SCORM Moodle incomplet');
     }
-    echo json_encode(['proof' => 'S1007_MOODLE_TRACKS_OK', 'status' => $tracks->status, 'scoreRaw' => $tracks->score_raw]) . PHP_EOL;
+    echo json_encode(['proof' => 'S1007_MOODLE_TRACKS_OK'] + $completed[0]) . PHP_EOL;
     exit(0);
 }
 

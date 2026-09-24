@@ -3133,8 +3133,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Export SCORM couche 1 : package autonome importé dans Moodle » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "1-CRÉER",
       "priority": "P2",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S1-007",
@@ -3142,7 +3142,7 @@
       },
       "sourceDependencies": ["S0-008"],
       "dependencies": [],
-      "gap": "Le 17 septembre 2026, Qalem produit encore le ZIP SCORM 1.2 actuel et Moodle 4.5.13 importe son manifeste avec deux SCO, mais la consultation authentifiée du module échoue sur le verrou de cache Moodle (« Unable to acquire a lock for caching »), y compris après création du répertoire de verrou et redémarrage sain du seul LMS de test. S1-007 reste to_validate jusqu’à une recette navigateur Moodle complète au SHA courant ; aucune complétion historique ne vaut validation actuelle.",
+      "gap": "Clôturé le 24 septembre 2026 : le verrou de cache provenait du script d’import exécuté en root, qui laissait des fichiers inaccessibles au serveur web. Le script refuse désormais ce mauvais utilisateur. Un paquet SCORM 1.2 frais de Qalem production, deux scènes et 287 324 octets, est importé sous l’utilisateur Moodle réel ; Chromium déclenche la complétion et Moodle relit exactement un SCO completed avec score 100. Les fixtures Qalem et Moodle sont intégralement supprimées.",
       "evidence": ["lib/export/scorm/tracking-adapters.ts", ".ralph/prd-v2.json#S1-007"],
       "acceptance": [
         "export_jobs scorm12 → zip imsmanifest.xml valide",
@@ -3158,7 +3158,8 @@
         "2026-08-28 — Les conteneurs Moodle et MariaDB terminent running, restart=0 et OOMKilled=false, puis conteneurs, volumes anonymes et réseau qalem-s1007 sont supprimés avec contrôle CLEANUP_OK. Preuve permanente : docs/validation/S1-007-scorm12-moodle-browser.md.",
         "2026-08-28 — Gate complet ServeurIA au SHA a2c034303f08e4cc494b1a33711561d817e8228d : pnpm check, TypeScript, lint, 378/378 fichiers et 2 484/2 484 tests Vitest, build 99/99 et 82/82 Playwright en 3,7 minutes. Journal : /tmp/qalem-s1007-artifacts/s1-007-full-gate-a2c0343.log.",
         "2026-09-16 — Recette production au SHA 5930559e302a27bc2ca429476f4516bbb68516ab : création authentifiée d’un tenant, formation et deux scènes temporaires ; export SCORM 1.2 done, URL Storage privée signée et téléchargement HTTP 200 d’un ZIP valide de 288 096 octets. La divergence de suffixe .zip versus .scorm12.zip, qui retournait 503, est corrigée par un calcul de chemin commun au worker et à l’API. Les données temporaires sont supprimées par la recette. La revalidation Moodle au SHA courant reste requise avant passes=true.",
-        "2026-09-16 — Runtime public SHA 2716df969b5549bd9e9cf0cde0de5a46884cfd2d : recette authentifiée SCORM 1.2 réelle. Job ef0cf0a8-1bb8-433d-bb0a-de486981a3e7 done, deux scènes, téléchargement privé HTTP 200 d’un ZIP valide de 287 969 octets et suppression Storage confirmée. Les objets temporaires sont nettoyés. L’import Moodle et la complétion LMS au SHA courant restent requis avant passes=true. Référence : docs/validation/S1-007-scorm12-moodle-browser.md."
+        "2026-09-16 — Runtime public SHA 2716df969b5549bd9e9cf0cde0de5a46884cfd2d : recette authentifiée SCORM 1.2 réelle. Job ef0cf0a8-1bb8-433d-bb0a-de486981a3e7 done, deux scènes, téléchargement privé HTTP 200 d’un ZIP valide de 287 969 octets et suppression Storage confirmée. Les objets temporaires sont nettoyés. L’import Moodle et la complétion LMS au SHA courant restent requis avant passes=true. Référence : docs/validation/S1-007-scorm12-moodle-browser.md.",
+        "2026-09-24 — La production Qalem génère un nouveau paquet SCORM 1.2 de 287 324 octets avec deux scènes, puis supprime le fichier Storage et ses fixtures. Le Moodle SCORM dédié importe deux SCO sous l’utilisateur système du serveur web ; Chromium déclenche la requête de complétion et Moodle relit exactement un SCO completed avec scoreRaw=100. Le cours et le compte jetables sont supprimés. La cause du verrou historique était l’exécution du script en root ; scripts/proofs/s1-007-moodle-scorm.php la refuse désormais explicitement."
       ],
       "historicalEvidence": {
         "completedAt": "2026-07-11",

@@ -101,3 +101,31 @@ Cette situation est une dette de l’infrastructure Moodle de recette, pas une
 preuve de compatibilité SCORM. S1-007 reste donc `to_validate` : aucune
 complétion ni score Moodle ne sont affirmés au SHA courant avant correction
 durable du cache ou exécution dans un Moodle isolé sain.
+
+## Recertification complète — 24 septembre 2026
+
+La cause du verrou de cache n’était ni le paquet Qalem ni Moodle. Le script
+d’import était exécuté en `root` dans le conteneur Moodle. Il créait des
+verrous et des répertoires du pool de fichiers appartenant à `root`, que le
+serveur web ne pouvait ensuite ni reprendre ni retirer. Le script refuse
+désormais de s’exécuter si son utilisateur système n’est pas le propriétaire
+du dataroot. Le navigateur attend aussi la fin des requêtes de connexion avant
+d’ouvrir l’activité et produit un diagnostic borné en cas d’échec.
+
+La recette fraîche utilise le paquet SCORM 1.2 généré par la chaîne de
+production Qalem : job terminé, deux scènes, archive ZIP valide de 287 324
+octets, puis suppression confirmée du fichier Storage et de toutes les
+fixtures Qalem. Le paquet est importé dans le Moodle SCORM dédié sous son
+utilisateur web `daemon` : le parseur retrouve deux SCO et le compte de recette
+s’authentifie réellement.
+
+Chromium ouvre l’activité, lance le SCO, clique sur « Marquer comme terminé »
+et observe la requête Moodle de complétion contenant `lesson_status`. La
+relecture indépendante de Moodle retrouve exactement un SCO `completed` avec
+un score brut de 100. Le cours et le compte de recette sont supprimés et le
+contrôle final ne trouve aucun résidu.
+
+Les scripts permanents couvrent désormais Moodle Bitnami isolé et le Moodle
+LTI dédié, sans dupliquer la logique d’import. Avec la gate complète du dernier
+SHA fonctionnel ancêtre et l’export de production frais, tous les critères de
+S1-007 sont satisfaits.
