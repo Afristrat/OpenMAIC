@@ -27,16 +27,27 @@ const login = await fetch(`${adminUrl.replace(/\/$/, '')}/account/login`, {
 assert.equal(login.status, 200, `LRS admin login failed with HTTP ${login.status}`);
 const rawToken = await login.text();
 let token = rawToken;
+let responseFields = 'raw';
 try {
   const parsed = JSON.parse(rawToken);
+  responseFields =
+    parsed && typeof parsed === 'object' ? Object.keys(parsed).sort().join(',') : typeof parsed;
   token =
     typeof parsed === 'string'
       ? parsed
-      : (parsed.token ?? parsed.jwt ?? parsed.access_token ?? parsed['access-token']);
+      : (parsed.token ??
+        parsed.jwt ??
+        parsed.access_token ??
+        parsed['access-token'] ??
+        parsed['json-web-token']);
 } catch {
   // Current SQL LRS versions return the JWT as a raw response body.
 }
-assert.match(token, /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/);
+assert.match(
+  token,
+  /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/,
+  `LRS login response did not expose a JWT; fields: ${responseFields}`,
+);
 
 try {
   const removed = await fetch(`${adminUrl.replace(/\/$/, '')}/agents`, {
