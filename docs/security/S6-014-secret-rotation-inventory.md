@@ -1,7 +1,14 @@
 # S6-014 — Inventaire de rotation Qalem sans valeurs
 
-Date : 14 septembre 2026
-Statut : inventaire versionné et rotations partielles effectives ; les webhooks, le jeton capture, LTI, VAPID, le chiffrement LRS et la pseudonymisation xAPI ont été remplacés en configuration persistante le 12 septembre 2026, puis activés par les déploiements Coolify runtime et web terminés le 14 septembre au SHA `d51d48b5fb075a61896400aa6771671f901075b8`. Les clés fournisseurs restent ouvertes.
+Date : 24 septembre 2026
+Statut : inventaire versionné et rotations partielles effectives. Les webhooks,
+le jeton capture, LTI, VAPID, le chiffrement LRS et la pseudonymisation xAPI
+ont été remplacés en configuration persistante. Resend utilise désormais une
+clé Qalem d'envoi restreinte au domaine autorisé. La clé virtuelle LiteLLM
+propre à Qalem a été renouvelée le 24 septembre, propagée aux trois processus
+et l'ancienne clé a été révoquée. Deux catégories fournisseurs distinctes
+restent injectées sans preuve suffisante d'exclusivité du compte : image
+OpenAI et Evolution.
 
 ## Méthode et limite
 
@@ -75,8 +82,10 @@ fournisseur et la recette de tous les consommateurs Qalem.
   consommateurs Qalem ; les catégories inactives sont explicitement écartées
   avec preuve de non-injection.
 - Les variables publiques/configuration ne sont pas présentées comme secrets.
-- Aucune clé d’un autre projet, de Diwan, de LiteLLM Hostinger ou d’un compte
-  fournisseur non placé dans le périmètre Qalem n’est modifiée.
+- Aucune clé d’un autre projet, de Diwan, aucun secret maître ou fournisseur
+  de LiteLLM Hostinger, ni aucune clé d’un compte fournisseur non placé dans
+  le périmètre Qalem n’est modifié. La clé virtuelle cliente propre à Qalem
+  peut être renouvelée sans modifier ces secrets d’administration.
 - Le déploiement, les workers et les parcours sensibles sont sains après la
   révocation ; aucun secret n’apparaît dans les logs ou preuves.
 
@@ -162,3 +171,50 @@ est une clé Resend `sending_access` restreinte au domaine vérifié
 401 depuis le coffre, le web, le worker et le capture-worker. Les deux
 déploiements Coolify ont terminé et les quatre processus sont sains, sans OOM
 ni redémarrage. La valeur n’est jamais consignée.
+
+## Rotation de la clé virtuelle LiteLLM Qalem du 24 septembre 2026
+
+La clé virtuelle cliente propre à Qalem a été renouvelée par l’API
+d’administration LiteLLM. La nouvelle clé conserve exactement les 22 modèles
+attribués à Qalem. Elle a été enregistrée dans le coffre DPAPI, injectée en
+production et en prévisualisation dans les applications web et runtime, puis
+activée par redéploiement. Le web, le worker et le capture-worker relisent la
+même nouvelle valeur et sont `healthy`, avec `OOMKilled=false`, zéro
+redémarrage et un code de sortie nul. La santé publique répond HTTP 200.
+
+Une complétion réelle sur le modèle logique `general` répond HTTP 200 avec un
+choix. L’API d’information de clé répond HTTP 200 et expose le nouvel alias
+Qalem avec 22 modèles. L’inventaire d’administration ne contient plus l’ancien
+alias et contient une seule fois le nouveau. L’ancienne clé virtuelle est donc
+révoquée. Aucun secret maître, aucune clé de fournisseur ni aucune
+configuration Hostinger n’a été modifié.
+
+Le premier contrôle distant produit par le script de rotation avait été
+pollué par une erreur de citation shell. Il a été rejeté comme preuve. La
+commande a été corrigée, puis les trois processus ont été recontrôlés
+indépendamment avant de consigner ce résultat.
+
+## Inventaire runtime frais du 24 septembre 2026
+
+L’API Coolify renvoie les noms des variables du runtime mais répond HTTP 500
+pour ceux de l’application web. Après deux échecs identiques, la vérification
+a été faite directement dans les conteneurs actifs, en ne sortant que les noms
+de variables. Les trois processus reçoivent les mêmes catégories actives :
+LLM général, ASR, image, Evolution, Resend, Supabase, Crawler, Mishkāt, Serper,
+VoxCPM et secrets internes Qalem. Aucun secret de paiement Stripe ni variable
+générique de paiement n’est injecté.
+
+Les comparaisons effectuées dans chaque processus, sans valeur ni empreinte,
+confirment que la clé image et la clé ASR sont distinctes de la clé LiteLLM
+générale. Les contrôles de périmètre antérieurs établissent que les catégories
+ASR, Crawler, Mishkāt, Serper, Supabase et VoxCPM sont réemployées hors Qalem :
+elles restent explicitement exclues de toute révocation dans ce chantier.
+
+Deux catégories distinctes restent donc ouvertes : `IMAGE_OPENAI_API_KEY` et
+`EVOLUTION_API_KEY`. Leur nom est propre au déploiement Qalem, mais cela ne
+prouve ni l’exclusivité du compte fournisseur ni l’absence de consommateurs
+hors Coolify. Elles ne seront révoquées qu’après attribution du compte,
+création d’une valeur de remplacement, recette du parcours image ou
+notification, puis preuve de révocation de l’ancienne valeur. S6-014 reste
+ouverte pour ce résidu précis ; elle n’est plus bloquée par LiteLLM, Resend,
+les secrets internes ou un paiement non configuré.
