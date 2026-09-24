@@ -1687,6 +1687,8 @@
         "lib/export/use-export-mp4.ts",
         "lib/export/use-export-pptx.ts",
         "components/admin/tenants-tab.tsx",
+        "components/tenant-test-banner.tsx",
+        "lib/organizations/tenant-test-session.ts",
         "tests/export/download-export.test.ts",
         "e2e/classroom-interaction.spec.ts",
         "tests/agents/cast-selection.test.ts",
@@ -1712,7 +1714,8 @@
         "2026-09-24 — Le correctif déployé bff9f1d6552fa2c7f5177e1910e834ce685cd016 remplace le simple lien par une sortie atomique : le clic efface qalem-current-org-id puis atteint /admin?tab=tenants. La recette Chromium isolée au SHA 5c90cfea0c35599f476ea05e020491a94ca508d3 confirme tenantContextCleared=true et isSuperAdmin=true sans lancer de génération.",
         "2026-09-24 — Le PPTX réel contient 11 diapositives et 165 paragraphes, conserve les accents Unicode et ne contient aucun contrôle parasite. Le MP4 réel termine 17 scènes, répond video/mp4 et porte la signature ftyp ; la reprise réutilise le job 5b761c3e-685c-4000-94ec-738ac7ef5059 sans doublon.",
         "2026-09-24 — Les tests de casting contrôlent dix mécanismes uniques en automatique et en manuel ; les tests serveur imposent une parole persistée pour le roster complet et les tests d’auto-présentation couvrent ponctuation, conjonction et fin de phrase.",
-        "2026-09-24 — Au SHA de clôture, ServeurIA passe Prettier, TypeScript, ESLint, Vitest, build et Playwright ; le web et qalem-runtime servent ce même SHA, sont healthy, restart=0 et OOMKilled=false, et /health répond HTTP 200."
+        "2026-09-24 — Au SHA de clôture, ServeurIA passe Prettier, TypeScript, ESLint, Vitest, build et Playwright ; le web et qalem-runtime servent ce même SHA, sont healthy, restart=0 et OOMKilled=false, et /health répond HTTP 200.",
+        "2026-09-24 — Après constat utilisateur de la régression hors de /app, le SHA 590a223690d5166c2e6c7e1f365f4769b14bb5dc porte la session de test tenant au layout global. Chromium confirme que la sortie reste visible après navigation vers /catalog, atteint /admin?tab=tenants et efface sessionStorage et localStorage. La gate serveur est verte et le déploiement Coolify 7juhij3dllndapviymqvuhlt est terminé sur un conteneur healthy, restart=0, OOMKilled=false, avec /api/health à 200."
       ],
       "historicalDependencies": [],
       "executionAllowed": true,

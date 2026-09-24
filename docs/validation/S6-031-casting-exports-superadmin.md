@@ -28,6 +28,8 @@ Résultat final :
 
 La recette a aussi chargé `/app?orgId=aa7870b7-3938-4f24-b8bf-4a9d73565ba7` dans Chromium avec la session super-administrateur. Au SHA fonctionnel déployé `bff9f1d6552fa2c7f5177e1910e834ce685cd016`, elle a observé la bannière « Mode test du tenant : Human Yo Impact », puis cliqué sur « Quitter le mode test et revenir à mon espace super-administrateur ». Le navigateur a atteint `/admin?tab=tenants`, la clé locale `qalem-current-org-id` a été supprimée et `isAdmin=true` est resté vrai. Aucun membership n’a été créé. Le SHA `5c90cfea0c35599f476ea05e020491a94ca508d3` ajoute la recette isolée permanente sans déclencher de génération ni consommer de modèle.
 
+Cette première sortie restait cependant attachée au composant `/app` et au paramètre `?orgId=`. Une navigation vers le catalogue ou une classe conservait le tenant actif tout en faisant disparaître l’action de retour. Le SHA `590a223690d5166c2e6c7e1f365f4769b14bb5dc` remplace ce couplage par une session de test explicite au niveau du layout global. L’entrée depuis « Tester ce tenant » persiste l’identifiant dans la session de l’onglet ; le bandeau et sa sortie restent disponibles sur toutes les pages, y compris celles sans barre latérale. La sortie supprime à la fois la session de test et `qalem-current-org-id` avant de revenir à `/admin?tab=tenants`.
+
 ## Exports réels
 
 La recette `scripts/validation/s6-031-production-exports-recipe.mjs` a utilisé la formation existante `GIWp6RedxM`, sans créer de cours.
@@ -55,4 +57,4 @@ MP4 :
 
 Avant la recette, le candidat fonctionnel a passé sur ServeurIA : Prettier, TypeScript, ESLint, 544 fichiers et 3 366 tests Vitest, le build de production et 195 scénarios Playwright. Les scénarios couvrent notamment le retour du mode tenant, les exports, le casting complet persistant et les auto-présentations.
 
-Le web et `qalem-runtime` ont été redéployés ensemble sur le SHA fonctionnel `bff9f1d6552fa2c7f5177e1910e834ce685cd016`. Le web, le worker, AudioSeal et le worker de capture sont `healthy`, sans redémarrage ni OOM, et `/api/health` répond HTTP 200.
+La régression de sortie a été recettée au SHA `590a223690d5166c2e6c7e1f365f4769b14bb5dc` : Chromium entre dans le tenant, navigue vers `/catalog`, constate que le bandeau est toujours visible, revient à `/admin?tab=tenants` et relit les deux stockages vidés. La gate passe Prettier, TypeScript, ESLint, 544 fichiers et 3 366 tests Vitest, le build de production et ce parcours E2E ciblé. Le déploiement Coolify `7juhij3dllndapviymqvuhlt` est terminé ; le conteneur web sert exactement ce SHA, est `healthy`, sans redémarrage ni OOM, et `/api/health` répond HTTP 200.
