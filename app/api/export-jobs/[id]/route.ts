@@ -47,7 +47,10 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
         exportJobArtifactPath(exportJob.stage_id, exportJob.id, exportJob.format)
       )
         throw new Error();
-      downloadUrl = await privateArtifactUrl('exports', exportJob.storage_path, download);
+      // Always sign completed artifacts as attachments. The browser can then
+      // stream large MP4/LMS files directly instead of materialising a second
+      // full copy in memory merely to force a download.
+      downloadUrl = await privateArtifactUrl('exports', exportJob.storage_path, true);
     } catch (error) {
       log.error('Unable to create private export download URL:', error);
       return apiError('INTERNAL_ERROR', 503, 'Export download unavailable');

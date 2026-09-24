@@ -1,11 +1,12 @@
 'use client';
 
-import { saveAs } from 'file-saver';
-
 export async function downloadExport(url: string, filename: string): Promise<void> {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Export download failed with HTTP ${response.status}`);
-  }
-  saveAs(await response.blob(), filename);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.rel = 'noopener';
+  anchor.hidden = true;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
 }

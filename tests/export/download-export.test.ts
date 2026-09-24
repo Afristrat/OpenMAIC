@@ -1,33 +1,54 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { saveAsMock } = vi.hoisted(() => ({ saveAsMock: vi.fn() }));
-
-vi.mock('file-saver', () => ({ saveAs: saveAsMock }));
-
 import { downloadExport } from '@/lib/export/download-export';
 
 describe('downloadExport', () => {
+  let anchor: {
+    href: string;
+    download: string;
+    rel: string;
+    hidden: boolean;
+    isConnected: boolean;
+    click: ReturnType<typeof vi.fn>;
+    remove: ReturnType<typeof vi.fn>;
+  };
+
   beforeEach(() => {
     vi.restoreAllMocks();
-    saveAsMock.mockReset();
+    anchor = {
+      href: '',
+      download: '',
+      rel: '',
+      hidden: false,
+      isConnected: false,
+      click: vi.fn(),
+      remove: vi.fn(() => {
+        anchor.isConnected = false;
+      }),
+    };
+    vi.stubGlobal('document', {
+      createElement: vi.fn(() => anchor),
+      body: {
+        append: vi.fn(() => {
+          anchor.isConnected = true;
+        }),
+      },
+    });
   });
 
   it('télécharge le fichier signé sans faire naviguer la classroom', async () => {
-    const blob = new Blob(['video'], { type: 'video/mp4' });
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(blob, { status: 200 })));
-
     await downloadExport('https://storage.example/export.mp4?token=signed', 'cours.mp4');
 
-    expect(fetch).toHaveBeenCalledOnce();
-    expect(saveAsMock).toHaveBeenCalledWith(expect.any(Blob), 'cours.mp4');
+    expect(anchor.click).toHaveBeenCalledOnce();
+    expect(anchor.download).toBe('cours.mp4');
+    expect(anchor.href).toBe('https://storage.example/export.mp4?token=signed');
+    expect(anchor.isConnected).toBe(false);
   });
 
-  it('signale un téléchargement refusé', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 403 })));
+  it('ne conserve aucune ancre temporaire après le déclenchement', async () => {
+    await downloadExport('https://storage.example/export.zip?token=signed', 'cours.zip');
 
-    await expect(downloadExport('https://storage.example/export.zip', 'cours.zip')).rejects.toThrow(
-      'HTTP 403',
-    );
-    expect(saveAsMock).not.toHaveBeenCalled();
+    expect(anchor.remove).toHaveBeenCalledOnce();
+    expect(anchor.isConnected).toBe(false);
   });
 });

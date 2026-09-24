@@ -399,6 +399,8 @@ export class MockApi {
 
   /** Mock the persistent MP4 export job through creation and immediate completion. */
   async mockMp4ExportDone(id = 'e2e-mp4-export') {
+    let format: 'mp4' | 'scorm12' | 'scorm2004' | 'cmi5' = 'mp4';
+    const extension = () => (format === 'mp4' ? 'mp4' : `${format}.zip`);
     // Server exports are intentionally gated by an explicit persistence write:
     // the rendered job must consume the current editor state, never a stale
     // autosave. This mock acknowledges that write while keeping the fixture
@@ -422,6 +424,8 @@ export class MockApi {
       });
     });
     await this.page.route('**/api/export-jobs', async (route) => {
+      const body = route.request().postDataJSON() as { format?: typeof format };
+      format = body.format ?? 'mp4';
       await route.fulfill({
         status: 202,
         headers: { 'Content-Type': 'application/json' },
@@ -435,23 +439,24 @@ export class MockApi {
         body: JSON.stringify({
           success: true,
           id,
-          format: 'mp4',
+          format,
           status: 'done',
           done: true,
-          downloadUrl: `https://example.com/${id}.mp4`,
+          downloadUrl: `https://example.com/${id}.${extension()}`,
         }),
       });
     });
-    await this.page.route(`https://example.com/${id}.mp4`, (route) =>
-      route.fulfill({
+    await this.page.route(`https://example.com/${id}.*`, (route) => {
+      const suffix = extension();
+      return route.fulfill({
         status: 200,
         headers: {
-          'Content-Type': 'video/mp4',
-          'Content-Disposition': `attachment; filename="${id}.mp4"`,
+          'Content-Type': format === 'mp4' ? 'video/mp4' : 'application/zip',
+          'Content-Disposition': `attachment; filename="${id}.${suffix}"`,
         },
-        body: 'MP4',
-      }),
-    );
+        body: format === 'mp4' ? 'MP4' : 'ZIP',
+      });
+    });
   }
 
   /**
