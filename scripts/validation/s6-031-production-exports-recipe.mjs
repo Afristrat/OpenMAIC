@@ -126,7 +126,9 @@ async function validatePptx(session, course) {
       (entry) => !entry.dir && /^ppt\/slides\/slide\d+\.xml$/u.test(entry.name),
     );
     if (slideFiles.length === 0) throw new Error('Aucune diapositive dans le PPTX');
-    const slideXml = (await Promise.all(slideFiles.map((entry) => entry.async('string')))).join('\n');
+    const slideXml = (await Promise.all(slideFiles.map((entry) => entry.async('string')))).join(
+      '\n',
+    );
     if (!/[À-ÿŒœ]/u.test(slideXml)) throw new Error('Aucun accent français préservé dans le PPTX');
     if (slideXml.includes('�') || /&#x?(?:0|1[0-9a-f]);/iu.test(slideXml)) {
       throw new Error('Caractère Unicode ou contrôle parasite dans le PPTX');
@@ -176,7 +178,9 @@ async function validateMp4(session, course) {
     await new Promise((resolve) => setTimeout(resolve, status?.pollIntervalMs ?? 5000));
   }
   if (status?.status !== 'done' || !status?.downloadUrl) {
-    throw new Error(`Export MP4 non terminé : ${status?.status ?? 'timeout'} ${status?.error ?? ''}`);
+    throw new Error(
+      `Export MP4 non terminé : ${status?.status ?? 'timeout'} ${status?.error ?? ''}`,
+    );
   }
   const download = await fetch(
     `${appUrl}/api/export-jobs/${encodeURIComponent(created.id)}?download=1`,
