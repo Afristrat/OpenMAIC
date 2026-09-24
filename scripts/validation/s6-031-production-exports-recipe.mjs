@@ -128,7 +128,7 @@ async function validatePptx(session, course) {
       waitUntil: 'domcontentloaded',
       timeout: 60_000,
     });
-    const menu = page.getByLabel('Export PPTX');
+    const menu = page.getByLabel('Exporter PPTX');
     try {
       await menu.waitFor({ state: 'visible', timeout: 45_000 });
     } catch {
