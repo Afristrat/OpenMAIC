@@ -106,6 +106,22 @@ const completeRosterActions = [
   },
   { id: 'speech-joker', type: 'speech', text: 'Useful humor.', agentId: 'persona-joker' },
   { id: 'speech-curious', type: 'speech', text: 'Useful question.', agentId: 'persona-curious' },
+  {
+    id: 'speech-secretary',
+    type: 'speech',
+    text: 'Useful synthesis.',
+    agentId: 'persona-secretary',
+  },
+  { id: 'speech-thinker', type: 'speech', text: 'Useful reflection.', agentId: 'persona-thinker' },
+  { id: 'speech-analyst', type: 'speech', text: 'Useful analysis.', agentId: 'persona-analyst' },
+  { id: 'speech-coach', type: 'speech', text: 'Useful next step.', agentId: 'persona-coach' },
+  {
+    id: 'speech-devils-advocate',
+    type: 'speech',
+    text: 'Useful objection.',
+    agentId: 'persona-devils-advocate',
+  },
+  { id: 'speech-creative', type: 'speech', text: 'Useful idea.', agentId: 'persona-creative' },
 ] as const;
 
 async function generateWithProgress(input: Record<string, unknown> = {}) {
