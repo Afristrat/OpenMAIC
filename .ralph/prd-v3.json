@@ -2606,7 +2606,10 @@
       "sourceDependencies": ["S4-009"],
       "dependencies": [],
       "gap": "Soldé : devise réellement validée contre le registre ISO 4217 du runtime, contexte structuré porté par les trames et persisté dans la classroom, zone laser mesurée sur l’élément DOM positionné puis parcourue pendant la durée normalisée.",
-      "evidence": ["lib/formation-engine/learning-context.ts", ".ralph/prd-v2.json#S4-010"],
+      "evidence": [
+        "lib/formation-engine/learning-context.ts",
+        ".ralph/prd-v2.json#S4-010"
+      ],
       "acceptance": [
         "L’auteur choisit explicitement le territoire et la devise ISO 4217 avant la génération",
         "Une trame transmet son contexte structuré au formulaire au lieu de ne transmettre que son texte",
@@ -3147,7 +3150,10 @@
       "sourceDependencies": ["S0-008"],
       "dependencies": [],
       "gap": "Clôturé le 24 septembre 2026 : le verrou de cache provenait du script d’import exécuté en root, qui laissait des fichiers inaccessibles au serveur web. Le script refuse désormais ce mauvais utilisateur. Un paquet SCORM 1.2 frais de Qalem production, deux scènes et 287 324 octets, est importé sous l’utilisateur Moodle réel ; Chromium déclenche la complétion et Moodle relit exactement un SCO completed avec score 100. Les fixtures Qalem et Moodle sont intégralement supprimées.",
-      "evidence": ["lib/export/scorm/tracking-adapters.ts", ".ralph/prd-v2.json#S1-007"],
+      "evidence": [
+        "lib/export/scorm/tracking-adapters.ts",
+        ".ralph/prd-v2.json#S1-007"
+      ],
       "acceptance": [
         "export_jobs scorm12 → zip imsmanifest.xml valide",
         "Import Moodle docker réussi, completion trackée (preuve)",
@@ -3289,7 +3295,10 @@
       "sourceDependencies": ["S1-003"],
       "dependencies": [],
       "gap": "Clôturée le 23 septembre 2026 : le parcours de production publication→catalogue→classroom, le contexte tenant, l’arabe RTL et la gate complète au contenu de clôture sont tous prouvés. Voir docs/validation/S1-004-course-catalog-production.md.",
-      "evidence": ["app/api/courses/catalog/route.ts", "e2e/tests/course-catalog.spec.ts"],
+      "evidence": [
+        "app/api/courses/catalog/route.ts",
+        "e2e/tests/course-catalog.spec.ts"
+      ],
       "acceptance": [
         "Liste des courses ready + catalog_visible",
         "Rejoindre la classe → classroom (e2e)",
@@ -4075,7 +4084,10 @@
       "sourceDependencies": ["S3-001", "S2-004"],
       "dependencies": ["S3-001", "S2-004"],
       "gap": "Aucun reste propre au générateur : stock P3-B, appel unique, références de session et coût réel sont certifiés ; l’acceptation humaine du ton demeure isolée dans S3-008.",
-      "evidence": ["tasks/prd-3-ancrer.md", "docs/evidence/s3-004-seed-sample.json"],
+      "evidence": [
+        "tasks/prd-3-ancrer.md",
+        "docs/evidence/s3-004-seed-sample.json"
+      ],
       "acceptance": [
         "≥ 12 graines typées via P3-B, chacune citant scene_ref et persona de LA session",
         "UN appel LLM par session (grep : aucun dans le chemin d'envoi)",
@@ -4241,7 +4253,10 @@
       "sourceDependencies": ["S3-004"],
       "dependencies": ["S3-004"],
       "gap": "Les vingt graines réelles et le rythme produit exact sont désormais consignés. La tranche humaine reste ouverte : Amine doit accepter ou refuser le ton et la fréquence ; le flag anchoring demeure désactivé jusqu’à ce verdict.",
-      "evidence": ["tasks/prd-3-ancrer.md", "docs/evidence/s3-008-andragogical-seed-sample.json"],
+      "evidence": [
+        "tasks/prd-3-ancrer.md",
+        "docs/evidence/s3-008-andragogical-seed-sample.json"
+      ],
       "acceptance": [
         "20 graines réelles + plan de fréquence proposé (gabarit 3-ancrer/06)",
         "Validation explicite avant activation du flag anchoring en préprod"
@@ -4857,8 +4872,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Optimisation pipeline de génération par les données » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd.json",
         "id": "S-037",
@@ -4866,7 +4881,7 @@
       },
       "sourceDependencies": ["S-036"],
       "dependencies": ["S0-011", "S-036"],
-      "gap": "10 septembre 2026 : optimiseur raccordé aux prompts plan/génération directe ; contexte serveur et historique borné autorisé, subject_hash requis, aucun minimum. Restitution auteur FR/AR/EN codée : effectifs/scores/séquence/difficulté heuristique et comparaison au plan courant, sans preuve de gain. Rapport de présentation validé, jamais entrée de calcul ou d’autorisation ; révision assistée ne laisse pas le modèle réécrire les statistiques. 62700 exit 0 : onze tests/TypeScript/lint et trois Chromium RTL compris, plan simulé ; 89499 exit 0 : trois tests de révision/TypeScript/lint. Requête historique PostgREST vide déjà vérifiée. Restent recette intégrée zéro/une/plusieurs observations, application et effet réels, retrait, migrations S-036 et gate/publication. Aucun déploiement ni activation.",
+      "gap": "Clos le 24 septembre 2026 : optimiseur activé sur web et worker, recette réelle zéro/une/trois observations et retrait complet, restitution FR/AR/EN et limites visibles. Deux exécutions prouvent que le conseil peut être suivi ou non par le modèle ; aucune causalité ni amélioration d’apprentissage n’est revendiquée. Build frais, 32 tests ciblés, 3/3 Playwright et gate complète du même code fonctionnel verts ; services sains sans redémarrage ni OOM.",
       "evidence": [
         "lib/generation/data-optimizer.ts",
         "lib/server/generation-optimization.ts",
@@ -4882,7 +4897,10 @@
         "Mesurer l’effet sur un protocole d’évaluation défini avant l’expérience ; aucune amélioration pédagogique déclarée sur simple présence du module."
       ],
       "closureEvidence": [
-        "2026-09-16 — Les dépendances structurelles de collecte et de reçus Director ont été appliquées atomiquement après sauvegarde PostgreSQL complète et prévol ROLLBACK. Aucun flag de collecte n’est activé ; aucune amélioration n’est déclarée sans recette et protocole d’effet."
+        "2026-09-16 — Les dépendances structurelles de collecte et de reçus Director ont été appliquées atomiquement après sauvegarde PostgreSQL complète et prévol ROLLBACK. Aucun flag de collecte n’est activé ; aucune amélioration n’est déclarée sans recette et protocole d’effet.",
+        "2026-09-24 — QALEM_DATA_OPTIMIZATION_ENABLED=true est relu dans le web et le worker. Déploiements Coolify fs67b2dyfv3aixt1ku7vgsep et revwqcr3br5ua8oa9eksicva terminés ; deux conteneurs healthy, restart=0, OOMKilled=false, santé publique HTTP 200.",
+        "2026-09-24 — La preuve de production scripts/proofs/s037-data-optimizer-production.mjs couvre zéro, une et trois observations, première observation immédiatement exploitable, volumes et heuristique exposés, retrait et nettoyage intégral. Deux passages observent un conseil suivi puis un conseil non suivi : l’interface expose l’écart, sans promesse d’optimum ni de gain d’apprentissage.",
+        "2026-09-24 — Prettier/ESLint de la preuve, 32 tests Vitest ciblés et 3/3 Playwright FR/AR RTL/EN sur build frais passent. La gate complète du même code fonctionnel passe TypeScript, ESLint, 3 373 tests Vitest, build 127 routes et 196/196 Playwright. Voir docs/validation/S-037-data-optimizer.md."
       ],
       "historicalEvidence": {
         "completedAt": "2026-03-29T11:28:49.856Z",

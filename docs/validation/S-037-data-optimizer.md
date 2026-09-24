@@ -1,5 +1,49 @@
 # S-037 — Optimiseur, candidat sans minimum de sessions
 
+## Clôture en production du 24 septembre 2026
+
+L’optimiseur est activé sur le web et le worker par
+`QALEM_DATA_OPTIMIZATION_ENABLED=true`. Coolify a terminé les déploiements web
+`fs67b2dyfv3aixt1ku7vgsep` au SHA applicatif
+`f44d1a5e3a5ad286c1d1b034a6b2c6b1b57c4499` et runtime
+`revwqcr3br5ua8oa9eksicva` au SHA
+`2637c783b456ed82a2938a62dc24994c426e7085`. Les deux conteneurs relisent le
+drapeau à `true`, sont `healthy`, sans redémarrage ni OOM ; la santé publique
+répond HTTP 200.
+
+La recette permanente `scripts/proofs/s037-data-optimizer-production.mjs`
+exécute trois générations réelles et couvre le contrat sans seuil caché :
+
+- zéro observation : aucun rapport d’optimisation et plan `slide, quiz` ;
+- une observation exploitable : `sampleSize=1`, conseil `slide, quiz`,
+  ajustement heuristique `-0,2`, conseil suivi par le plan ;
+- trois observations, dont deux pour la séquence retenue : `sampleSize=3`,
+  `selectedSequenceSampleSize=2`, conseil `interactive, quiz`, ajustement
+  heuristique `0,05`.
+
+Deux exécutions successives montrent aussi la limite attendue du mécanisme : le
+modèle a suivi `interactive, quiz` lors de la première, puis produit
+`plugin, quiz` lors de la seconde. Le conseil influence le prompt mais ne
+contraint pas mécaniquement le modèle. L’interface indique donc si le plan
+correspond au conseil ou en diffère ; aucune amélioration andragogique ou
+pédagogique n’est revendiquée. Le protocole mesure ici l’application du conseil,
+pas un gain d’apprentissage.
+
+Le retrait du compte de recette supprime les observations et le rapport devient
+indisponible. Après chaque exécution, la relecture trouve zéro utilisateur,
+organisation, stage, cours, scène, job et ligne de télémétrie de recette.
+
+Sur ServeurIA, Prettier et ESLint passent pour la preuve, puis 32 tests Vitest
+ciblés couvrent l’optimiseur, le rapport, le contexte serveur et les deux voies
+de génération. Un build de production frais suivi de trois parcours Playwright
+valide le rapport en français, arabe RTL et anglais. Le premier rejeu avec un
+ancien build a été écarté après une erreur d’hydratation ; le rejeu qualifiant
+reconstruit l’application et passe 3/3. La gate complète déjà exécutée sur le
+même code fonctionnel passe Prettier, TypeScript, ESLint, 3 373 tests Vitest,
+le build de 127 routes et 196/196 Playwright. Les commits postérieurs au SHA
+déployé n’ajoutent que la preuve et la présente traçabilité, sans modifier le
+produit. S-037 est clôturée sans promesse de causalité ni d’optimum.
+
 ## Restitution auteur du 10 septembre 2026
 
 Le plan renvoie un rapport d’observations validé, conservé par son schéma et
