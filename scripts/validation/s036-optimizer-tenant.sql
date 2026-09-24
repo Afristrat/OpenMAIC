@@ -1,5 +1,4 @@
 -- Run after 20260909185224 inside BEGIN/ROLLBACK; no durable fixture.
-SET LOCAL ROLE service_role;
 INSERT INTO auth.users(id) VALUES
  ('00000000-0036-4000-8000-000000000206');
 INSERT INTO public.organizations(id, name) VALUES
@@ -12,6 +11,7 @@ INSERT INTO public.stages(id,owner_id,org_id,name,agent_ids) VALUES
 INSERT INTO public.courses(owner_id,org_id,stage_id,title,language,source_kind,status,outline) VALUES
  ('00000000-0036-4000-8000-000000000206','00000000-0036-4000-8000-000000000201','s036-shared-stage','Optimizer proof','fr-FR','generated','ready',
   '{"analyticsContext":{"level":"advanced","subjectTags":["SIPOC"]}}');
+SET LOCAL ROLE service_role;
 INSERT INTO public.pedagogy_telemetry(id,user_hash,org_id,stage_id,scene_sequence,quiz_scores,subject_tags,level,language) VALUES
  ('00000000-0036-4000-8000-000000000203','s036-test-a','00000000-0036-4000-8000-000000000201','s036-shared-stage',ARRAY['slide','quiz'],ARRAY[0.2],ARRAY['SIPOC'],'advanced','fr-FR'),
  ('00000000-0036-4000-8000-000000000204','s036-test-b','00000000-0036-4000-8000-000000000202','s036-shared-stage',ARRAY['quiz','slide'],ARRAY[0.9],ARRAY['SIPOC'],'advanced','fr-FR'),
