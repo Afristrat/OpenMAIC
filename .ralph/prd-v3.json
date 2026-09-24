@@ -1621,11 +1621,13 @@
       },
       "sourceDependencies": [],
       "dependencies": ["S6-023", "S6-024", "S6-025"],
-      "gap": "La capacité technique historique n’est pas mise en service : en production, aucun tenant ne possède de contrôle de débit actif ni de barème de consommation, Human Yo Impact affiche 1 000 crédits sans aucun débit et le catalogue de coûts ne couvre que deux opérations de recherche. Le cockpit tenant ne détaille pas encore les usages par création et auteur.",
+      "gap": "Le référentiel global est déployé et trois unités mesurées sur huit sont versionnées : jetons LLM d’entrée, jetons LLM de sortie et image. Aucun tenant n’est encore débité, volontairement, car TTS, ASR, vidéo, stockage et opération ne disposent pas tous d’un coût complet prouvé. Le ledger personnel doit encore être rendu accessible aux membres et la recette Human Yo Impact reste à exécuter après couverture complète.",
       "evidence": [
         "docs/superpowers/specs/2026-09-23-centralisation-credits-marge-design.md",
+        "docs/validation/S6-030-global-credit-policy-deployment.md",
         "lib/billing/usage-metering.ts",
         "supabase/migrations/00056_real_usage_metering.sql",
+        "supabase/migrations/20260923234500_global_credit_policy.sql",
         "components/admin/economics-panel.tsx",
         "components/org/tenant-credit-ledger.tsx"
       ],
