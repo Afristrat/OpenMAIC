@@ -1,12 +1,16 @@
 -- Run after 20260909185224 inside BEGIN/ROLLBACK; no durable fixture.
 SET LOCAL ROLE service_role;
+INSERT INTO auth.users(id) VALUES
+ ('00000000-0036-4000-8000-000000000206');
 INSERT INTO public.organizations(id, name) VALUES
  ('00000000-0036-4000-8000-000000000201', 'S036 optimizer tenant A'),
  ('00000000-0036-4000-8000-000000000202', 'S036 optimizer tenant B');
-INSERT INTO public.stages(id,org_id,name,agent_ids) VALUES
- ('s036-shared-stage','00000000-0036-4000-8000-000000000201','Optimizer proof',ARRAY[]::text[]);
-INSERT INTO public.courses(org_id,stage_id,title,language,source_kind,status,outline) VALUES
- ('00000000-0036-4000-8000-000000000201','s036-shared-stage','Optimizer proof','fr-FR','generated','ready',
+INSERT INTO public.org_members(user_id,org_id,role) VALUES
+ ('00000000-0036-4000-8000-000000000206','00000000-0036-4000-8000-000000000201','formateur');
+INSERT INTO public.stages(id,owner_id,org_id,name,agent_ids) VALUES
+ ('s036-shared-stage','00000000-0036-4000-8000-000000000206','00000000-0036-4000-8000-000000000201','Optimizer proof',ARRAY[]::text[]);
+INSERT INTO public.courses(owner_id,org_id,stage_id,title,language,source_kind,status,outline) VALUES
+ ('00000000-0036-4000-8000-000000000206','00000000-0036-4000-8000-000000000201','s036-shared-stage','Optimizer proof','fr-FR','generated','ready',
   '{"analyticsContext":{"level":"advanced","subjectTags":["SIPOC"]}}');
 INSERT INTO public.pedagogy_telemetry(id,user_hash,org_id,stage_id,scene_sequence,quiz_scores,subject_tags,level,language) VALUES
  ('00000000-0036-4000-8000-000000000203','s036-test-a','00000000-0036-4000-8000-000000000201','s036-shared-stage',ARRAY['slide','quiz'],ARRAY[0.2],ARRAY['SIPOC'],'advanced','fr-FR'),
