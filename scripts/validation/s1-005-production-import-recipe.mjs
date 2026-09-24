@@ -302,7 +302,8 @@ async function runBrowserRecipe(session) {
 
     const completed = await pollGeneration(page, generation.jobId);
     stageId = completed.result.classroomId;
-    await page.goto(`${appUrl}${completed.result.url}`, {
+    const classroomUrl = new URL(completed.result.url, appUrl).toString();
+    await page.goto(classroomUrl, {
       waitUntil: 'domcontentloaded',
       timeout: 60_000,
     });
