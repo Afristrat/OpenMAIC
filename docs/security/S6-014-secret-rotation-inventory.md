@@ -210,11 +210,28 @@ générale. Les contrôles de périmètre antérieurs établissent que les caté
 ASR, Crawler, Mishkāt, Serper, Supabase et VoxCPM sont réemployées hors Qalem :
 elles restent explicitement exclues de toute révocation dans ce chantier.
 
-Deux catégories distinctes restent donc ouvertes : `IMAGE_OPENAI_API_KEY` et
-`EVOLUTION_API_KEY`. Leur nom est propre au déploiement Qalem, mais cela ne
-prouve ni l’exclusivité du compte fournisseur ni l’absence de consommateurs
-hors Coolify. Elles ne seront révoquées qu’après attribution du compte,
-création d’une valeur de remplacement, recette du parcours image ou
-notification, puis preuve de révocation de l’ancienne valeur. S6-014 reste
-ouverte pour ce résidu précis ; elle n’est plus bloquée par LiteLLM, Resend,
-les secrets internes ou un paiement non configuré.
+La catégorie `EVOLUTION_API_KEY` est désormais attribuée à une pile Hostinger
+isolée de Qalem et a été renouvelée de bout en bout. Le seul résidu fournisseur
+de S6-014 est `IMAGE_OPENAI_API_KEY`. Les deux clés OpenAI disponibles refusent
+les API d’administration de l’organisation en HTTP 401 ; leur rotation exige
+donc une session OpenAI Platform authentifiée disposant du droit de créer et de
+révoquer une clé. S6-014 reste ouverte pour ce résidu précis ; elle n’est plus
+bloquée par LiteLLM, Resend, Evolution, les secrets internes ou un paiement non
+configuré.
+
+## Rotation Evolution dédiée du 24 septembre 2026
+
+L’inventaire direct établit que les seuls consommateurs de la valeur Qalem sont
+le web, le worker, AudioSeal et le worker de capture. Le fournisseur est une
+pile dédiée sur Hostinger, distincte des autres instances Evolution présentes
+sur ServeurIA. Une nouvelle clé préparée a été activée dans la pile fournisseur,
+puis l’API publique a retrouvé HTTP 200 avec exactement l’instance Qalem
+attendue. L’ancienne clé a ensuite répondu HTTP 401.
+
+Le coffre DPAPI a été mis à jour par le chemin officiel et revalidé avec 347
+variables chargées. La valeur du coffre correspond à celle du fournisseur et
+aux quatre processus Qalem, sans sortie de valeur ni d’empreinte. Les quatre
+processus sont `healthy`, `restart=0`, `OOMKilled=false`; le fournisseur est en
+exécution, sans redémarrage ni OOM, et `https://qalem.ma/api/health` répond HTTP
+200. La sauvegarde de transaction et le fichier de transit fournisseur ont été
+supprimés après vérification.
