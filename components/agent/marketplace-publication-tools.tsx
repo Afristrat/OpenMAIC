@@ -28,7 +28,10 @@ export function MarketplacePublicationTools({ onChange }: { onChange: () => void
   );
   const selectedOrg = authorized.find((org) => org.id === orgId);
   const customAgents = Object.values(agents).filter((agent) => !agent.isDefault);
-  const selectedAgent = customAgents.find((agent) => agent.id === agentId);
+  // Zustand may restore custom agents from localStorage before React hydrates.
+  // Keep the first client tree identical to the server tree, then expose them.
+  const visibleCustomAgents = hydrated ? customAgents : [];
+  const selectedAgent = visibleCustomAgents.find((agent) => agent.id === agentId);
 
   return (
     <>
@@ -65,14 +68,14 @@ export function MarketplacePublicationTools({ onChange }: { onChange: () => void
                 onChange={(event) => setAgentId(event.target.value)}
               >
                 <option value="">{t('marketplace.chooseAgent')}</option>
-                {customAgents.map((agent) => (
+                {visibleCustomAgents.map((agent) => (
                   <option key={agent.id} value={agent.id}>
                     {agent.name}
                   </option>
                 ))}
               </select>
             </label>
-            {customAgents.length === 0 && <p>{t('marketplace.noLocalAgent')}</p>}
+            {visibleCustomAgents.length === 0 && <p>{t('marketplace.noLocalAgent')}</p>}
             {selectedOrg && selectedAgent && (
               <PublishAgentDialog
                 key={`${selectedOrg.id}:${selectedAgent.id}`}
