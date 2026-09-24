@@ -26,7 +26,7 @@ Résultat final :
 - aucune formation existante réécrite ;
 - persistance confirmée par un second passage sans option de configuration.
 
-La recette a aussi chargé `/app?orgId=aa7870b7-3938-4f24-b8bf-4a9d73565ba7` dans Chromium avec la session super-administrateur. Elle a observé la bannière « Mode test du tenant : Human Yo Impact », le lien `/admin?tab=tenants` intitulé « Revenir à l’administration globale » et `isAdmin=true`. Aucun membership n’a été créé.
+La recette a aussi chargé `/app?orgId=aa7870b7-3938-4f24-b8bf-4a9d73565ba7` dans Chromium avec la session super-administrateur. Au SHA fonctionnel déployé `bff9f1d6552fa2c7f5177e1910e834ce685cd016`, elle a observé la bannière « Mode test du tenant : Human Yo Impact », puis cliqué sur « Quitter le mode test et revenir à mon espace super-administrateur ». Le navigateur a atteint `/admin?tab=tenants`, la clé locale `qalem-current-org-id` a été supprimée et `isAdmin=true` est resté vrai. Aucun membership n’a été créé. Le SHA `5c90cfea0c35599f476ea05e020491a94ca508d3` ajoute la recette isolée permanente sans déclencher de génération ni consommer de modèle.
 
 ## Exports réels
 
@@ -55,4 +55,4 @@ MP4 :
 
 Avant la recette, le candidat fonctionnel a passé sur ServeurIA : Prettier, TypeScript, ESLint, 544 fichiers et 3 366 tests Vitest, le build de production et 195 scénarios Playwright. Les scénarios couvrent notamment le retour du mode tenant, les exports, le casting complet persistant et les auto-présentations.
 
-La clôture exige en plus que le web et `qalem-runtime` servent le même SHA final, soient sains, sans redémarrage ni OOM, et que `/health` réponde 200.
+Le web et `qalem-runtime` ont été redéployés ensemble sur le SHA fonctionnel `bff9f1d6552fa2c7f5177e1910e834ce685cd016`. Le web, le worker, AudioSeal et le worker de capture sont `healthy`, sans redémarrage ni OOM, et `/api/health` répond HTTP 200.
