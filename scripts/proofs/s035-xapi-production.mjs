@@ -139,7 +139,30 @@ function observation(sessionId, epoch, durations) {
 
 async function record(payload) {
   const response = await api('/api/learning-observations', 'POST', payload);
-  assert.equal(response.status(), 200, `Learning observation failed: ${await response.text()}`);
+  if (response.status() !== 200) {
+    const body = await response.text();
+    const direct = await admin.rpc('record_consented_learning', {
+      p_actor: userId,
+      p_session: payload.sessionId,
+      p_stage: payload.stageId,
+      p_epoch: payload.consentEpoch,
+      p_org: payload.orgId,
+      p_payload: {
+        scene_sequence: payload.sceneSequence,
+        scene_durations: payload.sceneDurations,
+        quiz_scores: payload.quizScores,
+        scene_observations: payload.sceneObservations,
+        completion_rate: payload.completionRate,
+        total_duration: payload.totalDuration,
+        action_counts: payload.actionCounts,
+      },
+    });
+    throw new Error(
+      direct.error
+        ? `Learning observation failed (${response.status()} ${body}); database: ${direct.error.code} ${direct.error.message}`
+        : `Learning observation API failed (${response.status()} ${body}) although the database accepted the same observation`,
+    );
+  }
   assert.deepEqual(await response.json(), { recorded: true });
 }
 
