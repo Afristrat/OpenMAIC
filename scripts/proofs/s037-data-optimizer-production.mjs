@@ -5,9 +5,11 @@ import { chromium } from '@playwright/test';
 
 let input = '';
 for await (const chunk of process.stdin) input += chunk;
-const { supabaseUrl, serviceKey, baseUrl = 'https://qalem.ma' } = JSON.parse(
-  input.replace(/^\uFEFF/, ''),
-);
+const {
+  supabaseUrl,
+  serviceKey,
+  baseUrl = 'https://qalem.ma',
+} = JSON.parse(input.replace(/^\uFEFF/, ''));
 input = '';
 
 assert.equal(new URL(baseUrl).origin, 'https://qalem.ma');
@@ -99,7 +101,8 @@ async function createPlan(label) {
     const body = await polled.json();
     assert.equal(polled.status(), 200, `${label}: plan poll returned ${polled.status()}`);
     const payload = body.data ?? body;
-    if (payload.status === 'failed') throw new Error(`${label}: ${payload.error ?? payload.message}`);
+    if (payload.status === 'failed')
+      throw new Error(`${label}: ${payload.error ?? payload.message}`);
     if (payload.status === 'succeeded') {
       const result = payload.result;
       assert.ok(result && Array.isArray(result.outlines), `${label}: plan result missing`);
@@ -276,7 +279,8 @@ try {
         recommendation: multiple.optimization.recommendedSceneOrder,
         difficultyModifier: multiple.optimization.difficultyModifier,
         sceneTypes: multiple.sceneTypes,
-        recommendationApplied: JSON.stringify(multiple.sceneTypes) ===
+        recommendationApplied:
+          JSON.stringify(multiple.sceneTypes) ===
           JSON.stringify(multiple.optimization.recommendedSceneOrder),
       },
       withdrawalRemovedEvidence: true,
