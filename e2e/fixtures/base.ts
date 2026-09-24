@@ -149,6 +149,13 @@ export const test = base.extend<Fixtures>({
       await page.route('**/api/learning-territories?*', (route) =>
         route.fulfill({ json: { success: true, territories: [] } }),
       );
+      // The profile ledger is authenticated in production, while Playwright's
+      // global session is deliberately synthetic and has no Supabase cookie.
+      // Keep unrelated profile journeys inside that same E2E boundary. The
+      // production recipe exercises the real role-scoped ledger separately.
+      await page.route('**/api/billing/credits?*', (route) =>
+        route.fulfill({ json: { balanceCredits: 0, entries: [] } }),
+      );
       // Capability probes must not reach the intentionally absent test DB.
       // Recording/anchoring journeys override these defaults with their own contract.
       for (const capability of ['live-sessions', 'anchoring']) {

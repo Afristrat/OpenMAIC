@@ -585,21 +585,21 @@ export function TenantEconomics({ tenantId }: { tenantId: string }): React.React
       if (!economicsResponse.ok || !billingResponse.ok) throw new Error('economics');
       const body = (await economicsResponse.json()) as {
         margin: Margin;
-        breakdown: MarginBreakdown[];
-        sellPrices: SellPrice[];
+        breakdown?: MarginBreakdown[];
+        sellPrices?: SellPrice[];
       };
       const billing = (await billingResponse.json()) as {
         control: UsageBillingControl | null;
-        burnRates: CreditBurnRate[];
-        platformBurnRates: CreditBurnRate[];
+        burnRates?: CreditBurnRate[];
+        platformBurnRates?: CreditBurnRate[];
       };
       setMargin(body.margin);
-      setBreakdown(body.breakdown);
-      setPrices(body.sellPrices);
+      setBreakdown(body.breakdown ?? []);
+      setPrices(body.sellPrices ?? []);
       setBillingControl(billing.control);
-      setBurnRates(billing.burnRates);
-      setPlatformBurnRates(billing.platformBurnRates);
-      if (billing.control) setRequiredUnits(billing.control.required_units);
+      setBurnRates(billing.burnRates ?? []);
+      setPlatformBurnRates(billing.platformBurnRates ?? []);
+      if (billing.control?.required_units) setRequiredUnits(billing.control.required_units);
     } catch {
       toast.error(t('admin.economics.loadFailed'));
     }

@@ -2,13 +2,14 @@
 
 ## État certifié le 24 septembre 2026
 
-Le SHA `826018fd0ecc605f7a039971eed9160e188b7447` est poussé sur
-`origin/refork-v030` et servi par le web Qalem. Le déploiement Coolify
-`3tuiylvsl1phqf4mfgbwcqo2` est terminé. Le conteneur correspondant est sain,
-avec zéro redémarrage et `OOMKilled=false`. `https://qalem.ma/health` répond
-HTTP 200 avec `{"status":"ok"}` et les journaux du nouveau conteneur ne
-contiennent aucun `ERROR`, `Unhandled`, `FATAL` ou `OOM` dans la fenêtre de
-contrôle.
+Le socle a d’abord été déployé au SHA
+`826018fd0ecc605f7a039971eed9160e188b7447`, puis le ledger membre au SHA
+`09113647494ea54f44a23777342b42595fd1b0e9`. Le déploiement Coolify du second
+SHA, `ktwoeifk7ik6ndexwlmu7ov0`, est terminé. Le conteneur
+`bcx5pxyuc9z3lt4jtyjipcqu-014010742021` sert exactement ce SHA, est sain, n’a
+subi aucun redémarrage et porte `OOMKilled=false`. L’API publique de santé
+répond HTTP 200 et les journaux contrôlés ne contiennent aucun événement
+critique.
 
 La migration `20260923234500_global_credit_policy.sql` est appliquée à la base
 Qalem après prévol transactionnel et sauvegarde. Elle fixe l'ancrage à un crédit
@@ -123,11 +124,50 @@ Après application, `free` est la valeur par défaut et Human Yo Impact est relu
 `free`, actif, avec trois cours : son plafond gratuit est donc atteint sans
 supprimer ni réécrire aucun cours.
 
-## Restes de clôture
+## Recette réelle Human Yo Impact
 
-- déployer le ledger personnel désormais monté dans le profil accessible à tout
-  membre, puis vérifier sa portée personnelle dans le navigateur ;
-- exécuter la recette Human Yo Impact : débit unique, auteur, rejeu idempotent,
-  remboursement d'échec et visibilité super-administrateur/administrateur/membre ;
-- exécuter le gate complet et les parcours Playwright correspondants au SHA de
-  clôture.
+Le script permanent `scripts/validation/s6-030-production-recipe.mjs` exécute
+la recette uniquement après confirmation explicite de la cible production. Il
+ne contient aucun secret et crée ses sessions depuis les variables injectées
+par le coffre.
+
+La recette finale
+`s6030-1790214961228-562070e8-2b4b-48d8-9b1c-9b66e9c3f6e7` a exécuté une
+recherche Serper réelle sous Human Yo Impact : HTTP 200, huit sources et débit
+de 0,1 crédit. Le solde est passé de 999,8 à 999,7 crédits. Le règlement est
+unique ; son rejeu retourne `applied=false`. L’usage reste visible avec
+`pending_configuration` et la cause exacte `SELL_PRICE_NOT_FOUND`, car aucun
+prix à la valeur n’est inventé depuis le coût.
+
+Une réservation séparée simulant l’échec du fournisseur a été libérée : les
+100 000 microunités réservées ont été intégralement remboursées, le solde a été
+restauré et le rejeu de la libération retourne `applied=false`. Les trois
+appels Serper réels réalisés pendant la mise au point expliquent le solde final
+de 999,7 crédits ; aucune correction artificielle n’a effacé ces consommations.
+
+Les vues API et navigateur ont été vérifiées avec trois rôles :
+
+- l’administrateur Human Yo Impact voit le ledger du tenant ;
+- le super-administrateur voit le même périmètre tenant sans devenir membre ;
+- l’apprenant temporaire ne voit que son périmètre personnel, avec zéro écriture
+  appartenant à un autre acteur.
+
+Après recette, l’utilisateur et le membership temporaires sont absents, aucun
+apprenant de recette ne subsiste et le portefeuille et le ledger relisent tous
+deux 999 700 000 microunités.
+
+## Gate de clôture
+
+Sur ServeurIA, le candidat de clôture passe :
+
+- TypeScript et le build Next.js de production de 127 pages ;
+- 544 fichiers et 3 360 tests Vitest ;
+- les tests ciblés du téléchargement privé et du ledger ;
+- 194 scénarios Playwright sur un seul worker, sans échec, en 5 min 42 s.
+
+Le parcours navigateur couvre notamment la visibilité du profil dans les trois
+langues, l’administration des tenants, les exports MP4/PPTX/SCORM/cmi5, les dix
+agents canoniques, les invitations, l’isolation des observations et les
+parcours Director/xAPI. Le téléchargement MP4 est désormais diffusé directement
+depuis l’URL privée signée en pièce jointe, sans dupliquer le fichier entier en
+mémoire du navigateur.
