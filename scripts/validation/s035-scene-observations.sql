@@ -4,7 +4,7 @@ INSERT INTO public.organizations(id,name) VALUES('00000000-0035-4000-8000-000000
 INSERT INTO public.org_members(org_id,user_id,role) VALUES('00000000-0035-4000-8000-000000000302','00000000-0035-4000-8000-000000000301','apprenant');
 INSERT INTO public.stages(id,owner_id,org_id,name) VALUES('s035-scene-proof','00000000-0035-4000-8000-000000000301','00000000-0035-4000-8000-000000000302','Scene proof');
 INSERT INTO public.scenes(id,stage_id,type,"order") VALUES('s035-slide','s035-scene-proof','slide',0),('s035-quiz','s035-scene-proof','quiz',1);
-INSERT INTO public.telemetry_consent(user_id,pedagogy_consent) VALUES('00000000-0035-4000-8000-000000000301',true);
+UPDATE public.telemetry_consent SET xapi_consent=false WHERE user_id='00000000-0035-4000-8000-000000000301';
 SET LOCAL ROLE service_role;
 DO $$
 DECLARE
@@ -35,9 +35,12 @@ BEGIN
  END LOOP;
  PERFORM public.record_consented_learning(actor,'00000000-0035-4000-8000-000000000304','s035-scene-proof',payload-'scene_observations',epoch,org);
  IF (SELECT scene_observations FROM public.pedagogy_telemetry WHERE session_id='00000000-0035-4000-8000-000000000304') IS NOT NULL THEN RAISE EXCEPTION 'Historical mapping invented'; END IF;
- UPDATE public.telemetry_consent SET pedagogy_consent=false WHERE user_id=actor;
- IF EXISTS (SELECT 1 FROM public.pedagogy_telemetry WHERE session_id=session) THEN RAISE EXCEPTION 'Withdrawal retained scene data'; END IF;
- IF public.record_consented_learning(actor,session,'s035-scene-proof',payload,epoch,org) THEN RAISE EXCEPTION 'Refused consent accepted'; END IF;
- RAISE NOTICE 'Scene provenance, zero score, replay, invalid scope, legacy absence and withdrawal verified';
+ UPDATE public.telemetry_consent SET xapi_consent=true WHERE user_id=actor;
+ UPDATE public.telemetry_consent SET xapi_consent=false WHERE user_id=actor;
+ IF NOT EXISTS (SELECT 1 FROM public.pedagogy_telemetry WHERE session_id=session) THEN RAISE EXCEPTION 'xAPI withdrawal erased internal scene data'; END IF;
+ IF public.record_consented_learning(actor,gen_random_uuid(),'s035-scene-proof',payload,epoch,org) THEN RAISE EXCEPTION 'Old consent epoch survived'; END IF;
+ SELECT collection_epoch INTO epoch FROM public.telemetry_consent WHERE user_id=actor;
+ IF NOT public.record_consented_learning(actor,gen_random_uuid(),'s035-scene-proof',payload,epoch,org) THEN RAISE EXCEPTION 'Contractual analytics stopped after xAPI withdrawal'; END IF;
+ RAISE NOTICE 'Scene provenance, zero score, replay, invalid scope, legacy absence and xAPI independence verified';
 END $$;
 RESET ROLE;

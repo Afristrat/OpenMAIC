@@ -12,7 +12,7 @@ INSERT INTO public.scenes(id,stage_id,type,"order") VALUES
  ('s035-x-slide','s035-course-xapi','slide',0),('s035-x-quiz','s035-course-xapi','quiz',1),('s035-x-pbl','s035-course-xapi','pbl',2);
 INSERT INTO public.shared_classrooms(stage_id,org_id,shared_by,visibility,authorization_verified) VALUES
  ('s035-course-xapi','00000000-0035-4000-8000-000000000403','00000000-0035-4000-8000-000000000401','organization',true);
-INSERT INTO public.telemetry_consent(user_id,pedagogy_consent) VALUES('00000000-0035-4000-8000-000000000401',true);
+UPDATE public.telemetry_consent SET xapi_consent=true WHERE user_id='00000000-0035-4000-8000-000000000401';
 INSERT INTO public.organization_lrs_configs(org_id,endpoint,auth_ciphertext,auth_iv,auth_tag,enabled) VALUES
  ('00000000-0035-4000-8000-000000000402','https://source.invalid',decode('00','hex'),decode('00','hex'),decode('00','hex'),true),
  ('00000000-0035-4000-8000-000000000403','https://recipient.invalid',decode('00','hex'),decode('00','hex'),decode('00','hex'),true);
@@ -48,8 +48,9 @@ BEGIN
    EXCEPTION WHEN invalid_parameter_value THEN NULL;
    END;
  END LOOP;
- UPDATE public.telemetry_consent SET pedagogy_consent=false WHERE user_id=actor;
+ UPDATE public.telemetry_consent SET xapi_consent=false WHERE user_id=actor;
  IF EXISTS(SELECT 1 FROM public.xapi_outbox WHERE org_id=org) THEN RAISE EXCEPTION 'Withdrawal retained attempts'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.pedagogy_telemetry WHERE session_id=session) THEN RAISE EXCEPTION 'xAPI withdrawal erased internal analytics'; END IF;
  RAISE NOTICE 'Repeated quiz attempts, rejection, export, replay and withdrawal verified';
 END $$;
 RESET ROLE;
