@@ -261,7 +261,11 @@ try {
   const membership = organizations?.organizations?.find((org) => org.id === tenantId);
   assert.equal(membership?.userRole, 'admin', 'Adhésion administrateur absente');
   assert.equal(await countRows('org_members', { org_id: tenantId }), 1, 'Adhésion dupliquée');
-  assert.equal(await countRows('org_invitations', { org_id: tenantId }), 1, 'Invitation divergente');
+  assert.equal(
+    await countRows('org_invitations', { org_id: tenantId }),
+    1,
+    'Invitation divergente',
+  );
 
   console.log(
     JSON.stringify({
@@ -283,7 +287,11 @@ try {
     if (tenantId) {
       assert.equal(await countRows('organizations', { id: tenantId }), 0, 'Tenant résiduel');
       assert.equal(await countRows('org_members', { org_id: tenantId }), 0, 'Adhésion résiduelle');
-      assert.equal(await countRows('org_invitations', { org_id: tenantId }), 0, 'Invitation résiduelle');
+      assert.equal(
+        await countRows('org_invitations', { org_id: tenantId }),
+        0,
+        'Invitation résiduelle',
+      );
     }
     assert.equal(await findUserId(invitedEmail), undefined, 'Compte invité résiduel');
     assert.equal(await findUserId(blockedEmail), undefined, 'Compte public résiduel');
