@@ -56,7 +56,7 @@ COPY --from=builder --chown=nextjs:nodejs /app ./
 
 USER nextjs
 
-CMD ["pnpm", "run", "start:workers"]
+CMD ["node", "--import", "tsx", "scripts/start-workers.ts"]
 
 # ---- Stage 5: Web runner ----
 FROM node:22-alpine AS runner

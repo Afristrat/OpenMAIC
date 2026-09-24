@@ -405,7 +405,7 @@ export function startAllWorkers(): void {
           generationJob.input,
           baseUrl,
           ownerId,
-          job.attemptsMade,
+          job.attemptsStarted,
         );
         const completedJob = await readClassroomGenerationJob(jobId);
         if (completedJob?.status !== 'succeeded') {
