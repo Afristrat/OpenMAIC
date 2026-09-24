@@ -315,6 +315,8 @@ try {
   await learnerContext?.close();
   await adminContext?.close();
   await browser?.close();
+  const removedAgent = await admin.from('agent_configs').delete().eq('id', agentId);
+  assert.equal(removedAgent.error, null, 'Temporary private agent cleanup failed');
   if (organizationId) {
     const removedOrganization = await admin.from('organizations').delete().eq('id', organizationId);
     assert.equal(removedOrganization.error, null, 'Temporary organization cleanup failed');
