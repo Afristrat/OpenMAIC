@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server';
 
 const callLLM = vi.fn();
 const requireOrgAuthor = vi.fn();
+const organizationResult = vi.fn();
 
 vi.mock('@/lib/ai/llm', () => ({
   callLLM: (...args: unknown[]) => callLLM(...args),
@@ -18,6 +19,16 @@ vi.mock('@/lib/server/resolve-model', () => ({
 
 vi.mock('@/lib/api/auth', () => ({
   requireSuperAdminOrOrgAuthor: (...args: unknown[]) => requireOrgAuthor(...args),
+}));
+
+vi.mock('@/lib/supabase/service', () => ({
+  createServiceSupabaseClient: () => ({
+    from: () => ({
+      select: () => ({
+        eq: () => ({ maybeSingle: () => organizationResult() }),
+      }),
+    }),
+  }),
 }));
 
 import { POST } from '@/app/api/generate/agent-profiles/route';
@@ -66,6 +77,7 @@ describe('agent-profiles route — voiceDesign', () => {
       user: { id: 'user-1', email: 'a@example.com' },
       authoredByRole: 'author',
     });
+    organizationResult.mockReset().mockResolvedValue({ data: { settings: {} }, error: null });
   });
 
   it('rejects profile generation without a tenant before the provider call', async () => {
@@ -135,5 +147,39 @@ describe('agent-profiles route — voiceDesign', () => {
         Boolean(agent.name && agent.avatar && agent.voiceConfig),
       ),
     ).toBe(true);
+  });
+
+  it('conserve les identités configurées par le tenant en génération automatique', async () => {
+    organizationResult.mockResolvedValue({
+      data: {
+        settings: {
+          learningDesign: {
+            personas: [
+              {
+                id: 'professor',
+                defaultName: 'Hanae',
+                gender: 'female',
+                avatar: '/avatars/teacher-2.png',
+                providerId: 'higgs-tts',
+                voiceId: 'hanae',
+              },
+            ],
+          },
+        },
+      },
+      error: null,
+    });
+    callLLM.mockResolvedValue({ text: llmAgents({ mechanismId: 'professor' }) });
+
+    const res = await POST(makeRequest());
+    const body = await res.json();
+
+    expect(body.success).toBe(true);
+    expect(body.agents[0]).toMatchObject({
+      mechanismId: 'professor',
+      name: 'Hanae',
+      gender: 'female',
+      voiceConfig: { providerId: 'higgs-tts', voiceId: 'hanae' },
+    });
   });
 });

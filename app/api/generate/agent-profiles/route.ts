@@ -15,7 +15,8 @@ import { AGENT_COLOR_PALETTE } from '@/lib/constants/agent-defaults';
 import { normalizeVoiceDesign } from '@/lib/audio/voice-design';
 import { requireSuperAdminOrOrgAuthor } from '@/lib/api/auth';
 import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
-import { PERSONA_CATALOG, type AgentGender } from '@/lib/agents/persona-catalog';
+import { learningDesignFromSettings, type AgentGender } from '@/lib/agents/persona-catalog';
+import { createServiceSupabaseClient } from '@/lib/supabase/service';
 
 const log = createLogger('Agent Profiles API');
 
@@ -91,6 +92,15 @@ export async function POST(req: NextRequest) {
     const auth = await requireSuperAdminOrOrgAuthor(req, orgId);
     if (auth.response) return auth.response;
 
+    const { data: organization, error: organizationError } = await createServiceSupabaseClient()
+      .from('organizations')
+      .select('settings')
+      .eq('id', orgId)
+      .maybeSingle();
+    if (organizationError) throw new Error('Organization settings lookup failed');
+    if (!organization) return apiError('NOT_FOUND', 404, 'Organization not found');
+    const tenantPersonas = learningDesignFromSettings(organization.settings).personas;
+
     // ── Model resolution from request headers/body ──
     const {
       model: languageModel,
@@ -137,7 +147,7 @@ Course name: ${stageInfo.name}
 ${stageInfo.description ? `Course description: ${stageInfo.description}` : ''}
 ${sceneSummary ? `\nScene outlines:\n${sceneSummary}\n` : ''}
 Requirements:
-- Return exactly 10 agents, one for every mechanism in this roster: ${JSON.stringify(PERSONA_CATALOG.map(({ id, label, role, persona }) => ({ id, label, role, persona })))}
+- Return exactly 10 agents, one for every mechanism in this tenant roster: ${JSON.stringify(tenantPersonas.map(({ id, label, role, defaultName, gender, persona }) => ({ id, label, role, defaultName, gender, persona })))}
 - Use each mechanismId exactly once and never invent another mechanismId
 - Exactly 1 agent must have role "teacher", the rest can be "assistant" or "student"
 - Priority values: teacher=10 (highest), assistant=7, student=4-6
@@ -229,13 +239,13 @@ Return a JSON object with this exact structure:
     // breaking the contract exposed on the landing page.
     const byMechanism = new Map(
       parsed.agents
-        .filter((agent) => PERSONA_CATALOG.some((persona) => persona.id === agent.mechanismId))
+        .filter((agent) => tenantPersonas.some((persona) => persona.id === agent.mechanismId))
         .map((agent) => [agent.mechanismId, agent]),
     );
     const unmatchedTeachers = parsed.agents.filter((agent) => agent.role === 'teacher');
     const unmatchedOthers = parsed.agents.filter((agent) => agent.role !== 'teacher');
     let otherIndex = 0;
-    const agents = PERSONA_CATALOG.map((persona, index) => {
+    const agents = tenantPersonas.map((persona, index) => {
       const adapted =
         byMechanism.get(persona.id) ??
         (persona.role === 'teacher' ? unmatchedTeachers[0] : unmatchedOthers[otherIndex++]);
