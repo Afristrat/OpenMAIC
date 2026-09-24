@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
       .eq('id', orgId)
       .maybeSingle();
     if (organizationError) throw new Error('Organization settings lookup failed');
-    if (!organization) return apiError('NOT_FOUND', 404, 'Organization not found');
+    if (!organization) return apiError('INVALID_REQUEST', 404, 'Organization not found');
     const tenantPersonas = learningDesignFromSettings(organization.settings).personas;
 
     // ── Model resolution from request headers/body ──
