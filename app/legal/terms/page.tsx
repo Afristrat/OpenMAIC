@@ -185,9 +185,9 @@ export default function TermsPage(): React.ReactElement {
         d&apos;apprentissage et des interactions structur&eacute;es afin d&apos;adapter
         l&apos;exp&eacute;rience andragogique, mesurer la progression, am&eacute;liorer la
         r&eacute;tention et optimiser l&apos;interface. Cette analyse interne fait partie de la
-        fourniture de Qalem. Elle n&apos;inclut pas l&apos;envoi des &eacute;v&eacute;nements
-        vers un syst&egrave;me externe de suivi des apprentissages, qui reste un choix distinct
-        et d&eacute;sactiv&eacute; par d&eacute;faut.
+        fourniture de Qalem. Elle n&apos;inclut pas l&apos;envoi des &eacute;v&eacute;nements vers
+        un syst&egrave;me externe de suivi des apprentissages, qui reste un choix distinct et
+        d&eacute;sactiv&eacute; par d&eacute;faut.
       </Paragraph>
       <Paragraph>
         Le traitement de vos donn&eacute;es personnelles est r&eacute;gi par notre{' '}

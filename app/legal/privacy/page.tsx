@@ -210,15 +210,12 @@ export default function PrivacyPage(): React.ReactElement {
         ]}
       />
       <h3 className="text-lg font-semibold text-slate-100 mb-2">Cookies optionnels</h3>
-      <List
-        items={[
-          'Stockage local IndexedDB pour le mode hors-ligne (PWA)',
-        ]}
-      />
+      <List items={['Stockage local IndexedDB pour le mode hors-ligne (PWA)']} />
       <Paragraph>
         Qalem n&apos;utilise aucun cookie publicitaire ni aucun traceur tiers &agrave; des fins de
-        ciblage marketing. Le partage xAPI vers un syst&egrave;me externe reste d&eacute;sactiv&eacute;
-        par d&eacute;faut et peut &ecirc;tre param&eacute;tr&eacute; depuis le profil.
+        ciblage marketing. Le partage xAPI vers un syst&egrave;me externe reste
+        d&eacute;sactiv&eacute; par d&eacute;faut et peut &ecirc;tre param&eacute;tr&eacute; depuis le
+        profil.
       </Paragraph>
 
       {/* 7. Transferts internationaux */}

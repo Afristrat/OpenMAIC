@@ -73,9 +73,9 @@ describe('learning analytics and xAPI boundary', () => {
   });
 
   it('rejects client-supplied identity', async () => {
-    expect(
-      (await POST(request({ consent: true, purpose: 'xapi', userId: 'other' }))).status,
-    ).toBe(400);
+    expect((await POST(request({ consent: true, purpose: 'xapi', userId: 'other' }))).status).toBe(
+      400,
+    );
     expect(mocks.writeXapi).not.toHaveBeenCalled();
   });
 
