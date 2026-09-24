@@ -292,6 +292,16 @@ const before = {
   stages: await exactCount('stages'),
 };
 const superAdminReturn = await validateSuperAdminReturn(session, organization.name);
+if (process.env.QALEM_RECIPE_RETURN_ONLY === 'true') {
+  console.log(
+    JSON.stringify({
+      tenant: organization.name,
+      superAdminReturn,
+      generationSkipped: true,
+    }),
+  );
+  process.exit(0);
+}
 const { response, body } = await jsonRequest(
   `${appUrl}/api/generate/agent-profiles`,
   {
