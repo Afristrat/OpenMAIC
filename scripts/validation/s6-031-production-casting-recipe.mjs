@@ -175,6 +175,24 @@ let organization = organizations?.[0];
 if (!organization) throw new Error('Tenant Human Yo Impact introuvable');
 
 if (configureHanae) {
+  const currentLearningDesign = organization.settings?.learningDesign;
+  const configuredLearningDesign = currentLearningDesign
+    ? {
+        ...currentLearningDesign,
+        personas: currentLearningDesign.personas.map((persona) =>
+          persona.id === 'professor'
+            ? {
+                ...persona,
+                defaultName: 'Hanae',
+                gender: 'female',
+                avatar: '/avatars/teacher-2.png',
+                providerId: 'higgs-tts',
+                voiceId: 'hanae',
+              }
+            : persona,
+        ),
+      }
+    : undefined;
   const { body: update } = await jsonRequest(
     `${appUrl}/api/organizations/${encodeURIComponent(orgId)}`,
     {
@@ -182,6 +200,7 @@ if (configureHanae) {
       headers: { cookie: sessionCookie(session), 'content-type': 'application/json' },
       body: JSON.stringify({
         settings: {
+          ...(configuredLearningDesign ? { learningDesign: configuredLearningDesign } : {}),
           teachingProfile: {
             name: 'Hanae',
             avatar: '/avatars/teacher-2.png',
@@ -194,7 +213,13 @@ if (configureHanae) {
     'Configuration de la formatrice Human Yo Impact',
   );
   organization = update?.organization;
-  if (organization?.settings?.teachingProfile?.name !== 'Hanae') {
+  const configuredProfessor = organization?.settings?.learningDesign?.personas?.find(
+    (persona) => persona.id === 'professor',
+  );
+  if (
+    organization?.settings?.teachingProfile?.name !== 'Hanae' ||
+    (configuredLearningDesign && configuredProfessor?.defaultName !== 'Hanae')
+  ) {
     throw new Error('La configuration de Hanae n’est pas persistée');
   }
 }
