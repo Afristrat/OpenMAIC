@@ -63,15 +63,6 @@ function checked(error, label) {
   if (error) throw new Error(`${label}: ${error.message}`);
 }
 
-async function jsonRequest(url, init, label) {
-  const response = await fetch(url, { ...init, signal: AbortSignal.timeout(120_000) });
-  const body = await response.json().catch(() => null);
-  if (!response.ok) {
-    throw new Error(`${label}: HTTP ${response.status} (${body?.errorCode ?? 'UNKNOWN'})`);
-  }
-  return { response, body };
-}
-
 function sessionCookieValue(session) {
   return `base64-${Buffer.from(
     JSON.stringify({
