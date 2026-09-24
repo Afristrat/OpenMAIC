@@ -40,9 +40,9 @@ Les quinze générations d'image réussies ont un coût unitaire compris entre
 0,0387051 et 0,0694915 USD. Leur médiane est 0,0684565 USD et leur percentile
 95 observé est 0,0694915 USD.
 
-## Taux globaux amorcés
+## Taux globaux actifs
 
-Quatre taux sur huit sont maintenant actifs dans le référentiel global :
+Les huit taux exigés sont actifs dans le référentiel global :
 
 | Unité | Taux | Base | Justification |
 |---|---:|---:|---|
@@ -50,10 +50,16 @@ Quatre taux sur huit sont maintenant actifs dans le référentiel global :
 | Jeton LLM de sortie | 400 microunités de crédit | 1 jeton | coût unitaire maximal du catalogue Qalem actif : Kimi K2.6 à 4 USD par million |
 | Image | 6 949 150 microunités de crédit | 1 image | percentile 95 des quinze coûts réels Qalem observés |
 | TTS Higgs | 27 000 microunités de crédit | 1 seconde audio | amortissement conservateur du DGX, temps de calcul mesuré et énergie mesurée, arrondis vers le haut |
+| ASR Whisper | 7 000 microunités de crédit | 1 seconde audio | six mesures FLEURS de production recoupées avec deux transcriptions fraîches sur le DGX1 |
+| Vidéo LTX-2 | 3 000 000 microunités de crédit | 1 seconde vidéo | trois générations réelles, amortissement DGX2 et énergie mesurée, arrondis conservateurs |
+| Stockage | 27 600 microunités de crédit | 1 000 000 octets envoyés | équivalent de remplacement S3 Standard sur douze mois à 0,023 USD/Go-mois ; horizon explicite, coût MinIO réel suivi séparément |
+| Opération | 100 000 microunités de crédit | 1 opération | coût Serper observé de 0,001 USD ; les opérations Brave à coût nul ne ramènent pas le barème global à zéro |
 
-L'écriture des quatre versions a été transactionnelle. La base relit quatre taux
-globaux actifs et zéro contrôle tenant actif. Aucun solde, y compris celui de
-Human Yo Impact, n'est donc débité par un référentiel encore incomplet.
+L'écriture de chaque version est transactionnelle. L'ajout du huitième taux le
+24 septembre a activé atomiquement les quatre contrôles de tenants actifs. La
+base relit huit taux globaux actifs et quatre contrôles actifs sur quatre. Human
+Yo Impact conserve exactement son allocation de 1 000 crédits avant première
+consommation sous ce référentiel ; aucun solde existant n'a été réécrit.
 
 ## Attribution Higgs
 
@@ -72,16 +78,56 @@ est de 12,2295 W au repos et 26,721408 W en charge, soit 0,069845856 Wh nets et
 25 827 microunités de crédit par seconde avant électricité, sur la règle
 d'amortissement de 4 699 USD sur trois ans et 2 080 heures productives par an.
 Le taux est arrondi à 27 000 microunités : il couvre encore l'énergie à un prix
-théorique de 2 USD/kWh, très supérieur au besoin de la mesure. La même discipline
-reste à appliquer à l'ASR, à la vidéo, au stockage et aux opérations. L'ajout du
-huitième taux activera atomiquement les contrôles système ; aucune activation
-partielle n'est permise.
+théorique de 2 USD/kWh, très supérieur au besoin de la mesure.
+
+## ASR, vidéo, stockage et opération
+
+Whisper `large-v3-turbo` a transcrit 31,66 secondes en 1,079504 seconde puis
+6 secondes en 0,350961 seconde, avec réponses HTTP 200. Ces deux sondes
+fraîches recoupent six mesures FLEURS de production de 6 à 16,38 secondes. La
+puissance moyenne relevée passe de 16,1885 W au repos à 19,2325 W en charge.
+Le taux conservateur retenu est de 7 000 microunités de crédit par seconde audio.
+
+La vidéo Qalem échouait réellement en HTTP 401 : le sidecar ComfyUI acceptait
+uniquement le secret Tamkin alors que son code prévoyait déjà un secret Qalem
+distinct. Le fichier persistant du DGX2 conserve désormais les deux secrets ;
+leurs valeurs ne sont ni fusionnées ni exposées. Le sidecar et le conteneur web
+Qalem obtiennent tous deux HTTP 200 sur la santé LTX-2. Une génération fraîche
+a produit 49 images à 24 images par seconde, soit 2,0416667 secondes de vidéo
+et 304 844 octets, en 262,679 secondes. Deux travaux antérieurs comparables
+avaient pris 136,365273 et 133,706666 secondes. La mesure énergétique fraîche
+donne 12,201 W au repos, 39,851947 W en moyenne pendant la charge et
+2,254949045 Wh nets. Le taux de 3 000 000 microunités par seconde vidéo couvre
+amortissement et énergie avec une enveloppe conservatrice.
+
+Le stockage est réglé une fois à l'envoi, et non mensuellement. Son taux encode
+donc explicitement une conservation de douze mois : 0,023 USD par Go-mois,
+soit 0,276 USD par Go décimal-an et 27 600 microunités de crédit par million
+d'octets. Il s'agit d'un coût de remplacement documenté, pas d'une affirmation
+sur la facture du MinIO souverain. La source primaire décrit une facturation en
+fonction de la taille, de la durée mensuelle et de la classe de stockage :
+<https://aws.amazon.com/s3/pricing/>.
+
+Le taux d'opération est de 100 000 microunités, soit 0,1 crédit pour le coût
+Serper observé de 0,001 USD. Une opération fournisseur échouée libère sa
+réservation et n'est pas débitée.
+
+## Cohérence du forfait gratuit
+
+La base de production conservait encore l'ancienne contrainte qui excluait le
+forfait gratuit, bien que la migration `00075_free_plan_three_courses.sql` soit
+déjà présente dans le dépôt. Une sauvegarde complète a été créée avant son
+application, avec l'empreinte SHA-256
+`9c69ec7268674d533388a7d032566b6312e50b8ab59d4aa4b951f78ffdd50dd8`.
+Après application, `free` est la valeur par défaut et Human Yo Impact est relu
+`free`, actif, avec trois cours : son plafond gratuit est donc atteint sans
+supprimer ni réécrire aucun cours.
 
 ## Restes de clôture
 
-- mesurer et versionner ASR, vidéo, stockage et opération ;
-- rendre le ledger personnel visible dans une page accessible aux membres, pas
-  seulement dans l'administration de l'organisation ;
+- déployer le ledger personnel désormais monté dans le profil accessible à tout
+  membre, puis vérifier sa portée personnelle dans le navigateur ;
 - exécuter la recette Human Yo Impact : débit unique, auteur, rejeu idempotent,
   remboursement d'échec et visibilité super-administrateur/administrateur/membre ;
-- exécuter les parcours Playwright correspondants au SHA de clôture.
+- exécuter le gate complet et les parcours Playwright correspondants au SHA de
+  clôture.

@@ -23,12 +23,15 @@ import {
 import { KeyRound, Trash2, Loader2, Mail, User, Save, Check, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { RichProfileSection } from '@/components/profile/rich-profile-section';
+import { TenantCreditLedger } from '@/components/org/tenant-credit-ledger';
 import { TelemetryConsentBanner } from '@/components/telemetry-consent-banner';
 import { LearningObservationOutbox } from '@/lib/telemetry/learning-observation-outbox';
+import { useOrganizations } from '@/lib/hooks/use-organizations';
 
 export default function ProfilePage(): React.ReactElement {
   const { t } = useI18n();
   const { user, signOut } = useAuth();
+  const { currentOrg } = useOrganizations();
   const router = useRouter();
 
   const storeAvatar = useUserProfileStore((s) => s.avatar);
@@ -289,6 +292,10 @@ export default function ProfilePage(): React.ReactElement {
 
         {/* Rich profile (culture, langue d'interface, préférences — S2-001) */}
         <RichProfileSection />
+
+        {/* L’API limite un membre à ses propres écritures ; les administrateurs
+            et managers du tenant voient le ledger complet de l’organisation. */}
+        {currentOrg && <TenantCreditLedger orgId={currentOrg.id} />}
 
         {/* Actions */}
         <TelemetryConsentBanner inline />
