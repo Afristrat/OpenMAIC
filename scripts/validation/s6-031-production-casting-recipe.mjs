@@ -134,9 +134,7 @@ async function validateSuperAdminReturn(session, tenantName) {
     if (!bannerText.includes(`Mode test du tenant : ${tenantName}`)) {
       throw new Error(`Bannière de test divergente : ${bannerText}`);
     }
-    const cachedTenantId = await page.evaluate(() =>
-      localStorage.getItem('qalem-current-org-id'),
-    );
+    const cachedTenantId = await page.evaluate(() => localStorage.getItem('qalem-current-org-id'));
     if (cachedTenantId !== orgId) {
       throw new Error('Le tenant testé n’est pas le contexte actif du navigateur');
     }
