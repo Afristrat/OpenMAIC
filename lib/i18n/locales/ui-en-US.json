@@ -2580,7 +2580,7 @@
   "admin.tenants.openDetail": "Open details",
   "admin.tenants.testTenant": "Test in Qalem",
   "admin.tenantTest.banner": "Testing tenant: {{tenant}}",
-  "admin.tenantTest.return": "Return to platform administration",
+  "admin.tenantTest.return": "Exit test mode and return to my platform administration workspace",
   "admin.tenants.pagination": "{from}–{to} of {total} tenants",
   "admin.tenants.suspend": "Suspend",
   "admin.tenants.activate": "Reactivate",

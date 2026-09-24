@@ -231,6 +231,11 @@ function HomePage() {
   useEffect(() => {
     setTestedTenantId(new URLSearchParams(window.location.search).get('orgId'));
   }, []);
+  const leaveTenantTest = useCallback(() => {
+    setCurrentOrg(null);
+    setTestedTenantId(null);
+    router.replace('/admin?tab=tenants');
+  }, [router, setCurrentOrg]);
   const [resumeTarget, setResumeTarget] = useState<{ courseId: string; orgId: string } | null>(
     null,
   );
@@ -1149,15 +1154,16 @@ function HomePage() {
       {isSuperAdmin && testedTenantId && currentOrg?.id === testedTenantId && (
         <aside
           role="status"
-          className="fixed inset-x-0 top-0 z-[90] flex min-h-12 items-center justify-center gap-3 border-b border-violet-300 bg-violet-50 px-4 py-2 text-sm text-violet-950 shadow-sm dark:border-violet-800 dark:bg-violet-950 dark:text-violet-100"
+          className="fixed inset-x-0 top-0 z-[200] flex min-h-12 items-center justify-center gap-3 border-b border-violet-300 bg-violet-50 px-4 py-2 text-sm text-violet-950 shadow-sm dark:border-violet-800 dark:bg-violet-950 dark:text-violet-100"
         >
           <span>{t('admin.tenantTest.banner', { tenant: currentOrg.name })}</span>
-          <Link
-            href="/admin?tab=tenants"
+          <button
+            type="button"
+            onClick={leaveTenantTest}
             className="rounded-md bg-violet-700 px-3 py-1.5 font-semibold text-white hover:bg-violet-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
           >
             {t('admin.tenantTest.return')}
-          </Link>
+          </button>
         </aside>
       )}
       {draftPlan && (

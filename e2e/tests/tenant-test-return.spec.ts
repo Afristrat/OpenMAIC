@@ -6,6 +6,10 @@ test('maintient la sortie de super-administration visible pendant le test d’un
   page,
 }) => {
   await page.addInitScript(() => localStorage.setItem('locale', 'fr-FR'));
+  await page.addInitScript(
+    (organizationId) => localStorage.setItem('qalem-current-org-id', organizationId),
+    E2E_ORGANIZATION_ID,
+  );
   await page.route('**/api/account/is-admin', (route) =>
     route.fulfill({ json: { isAdmin: true } }),
   );
@@ -14,7 +18,14 @@ test('maintient la sortie de super-administration visible pendant le test d’un
 
   const banner = page.getByRole('status');
   await expect(banner).toContainText('Mode test du tenant : Qalem E2E');
-  await expect(
-    banner.getByRole('link', { name: 'Revenir à l’administration globale' }),
-  ).toHaveAttribute('href', '/admin?tab=tenants');
+  await banner
+    .getByRole('button', {
+      name: 'Quitter le mode test et revenir à mon espace super-administrateur',
+    })
+    .click();
+
+  await expect(page).toHaveURL(/\/admin\?tab=tenants$/);
+  await expect
+    .poll(() => page.evaluate(() => localStorage.getItem('qalem-current-org-id')))
+    .toBeNull();
 });

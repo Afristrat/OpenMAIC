@@ -2580,7 +2580,7 @@
   "admin.tenants.openDetail": "فتح التفاصيل",
   "admin.tenants.testTenant": "اختبر في قلم",
   "admin.tenantTest.banner": "وضع اختبار المؤسسة: {{tenant}}",
-  "admin.tenantTest.return": "العودة إلى إدارة المنصة",
+  "admin.tenantTest.return": "مغادرة وضع الاختبار والعودة إلى مساحة إدارة المنصة",
   "admin.tenants.pagination": "{from}–{to} من {total} مستأجرين",
   "admin.tenants.suspend": "تعليق",
   "admin.tenants.activate": "إعادة التفعيل",

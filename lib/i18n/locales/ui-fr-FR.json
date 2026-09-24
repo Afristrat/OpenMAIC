@@ -2580,7 +2580,7 @@
   "admin.tenants.openDetail": "Ouvrir la fiche",
   "admin.tenants.testTenant": "Tester dans Qalem",
   "admin.tenantTest.banner": "Mode test du tenant : {{tenant}}",
-  "admin.tenantTest.return": "Revenir à l’administration globale",
+  "admin.tenantTest.return": "Quitter le mode test et revenir à mon espace super-administrateur",
   "admin.tenants.pagination": "{from}–{to} sur {total} tenants",
   "admin.tenants.suspend": "Suspendre",
   "admin.tenants.activate": "Réactiver",
