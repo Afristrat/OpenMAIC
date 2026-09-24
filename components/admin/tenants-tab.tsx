@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { toast } from 'sonner';
 import { EconomicsCockpit, TenantEconomics } from '@/components/admin/economics-panel';
+import { beginTenantTest } from '@/lib/organizations/tenant-test-session';
 
 type Tenant = {
   id: string;
@@ -373,7 +374,10 @@ export function TenantsTab(): React.ReactElement {
                   </Button>
                   <Button
                     type="button"
-                    onClick={() => router.push(`/app?orgId=${encodeURIComponent(tenant.id)}`)}
+                    onClick={() => {
+                      beginTenantTest(tenant.id);
+                      router.push(`/app?orgId=${encodeURIComponent(tenant.id)}`);
+                    }}
                   >
                     {t('admin.tenants.testTenant')}
                   </Button>

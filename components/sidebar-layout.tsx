@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useState, useEffect } from 'react';
 import { NavigationSidebar } from './navigation-sidebar';
+import { TenantTestBanner } from './tenant-test-banner';
 import { cn } from '@/lib/utils';
 
 const SIDEBAR_COLLAPSED_KEY = 'qalem-sidebar-collapsed';
@@ -60,11 +61,17 @@ export function SidebarLayout({
   const hideSidebar = HIDDEN_SIDEBAR_PATTERNS.some((pattern) => pattern.test(pathname));
 
   if (hideSidebar) {
-    return <>{children}</>;
+    return (
+      <>
+        <TenantTestBanner />
+        {children}
+      </>
+    );
   }
 
   return (
     <>
+      <TenantTestBanner />
       <NavigationSidebar />
       <main
         className={cn(

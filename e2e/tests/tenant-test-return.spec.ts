@@ -18,6 +18,13 @@ test('maintient la sortie de super-administration visible pendant le test d’un
 
   const banner = page.getByRole('status');
   await expect(banner).toContainText('Mode test du tenant : Qalem E2E');
+
+  await page.goto('/catalog');
+  await expect(banner).toContainText('Mode test du tenant : Qalem E2E');
+  await expect
+    .poll(() => page.evaluate(() => sessionStorage.getItem('qalem-super-admin-tested-tenant-id')))
+    .toBe(E2E_ORGANIZATION_ID);
+
   await banner
     .getByRole('button', {
       name: 'Quitter le mode test et revenir à mon espace super-administrateur',
@@ -27,5 +34,8 @@ test('maintient la sortie de super-administration visible pendant le test d’un
   await expect(page).toHaveURL(/\/admin\?tab=tenants$/);
   await expect
     .poll(() => page.evaluate(() => localStorage.getItem('qalem-current-org-id')))
+    .toBeNull();
+  await expect
+    .poll(() => page.evaluate(() => sessionStorage.getItem('qalem-super-admin-tested-tenant-id')))
     .toBeNull();
 });
