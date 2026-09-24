@@ -13,6 +13,12 @@ test('maintient la sortie de super-administration visible pendant le test d’un
   await page.route('**/api/account/is-admin', (route) =>
     route.fulfill({ json: { isAdmin: true } }),
   );
+  await page.route('**/api/courses/catalog?**', (route) =>
+    route.fulfill({ json: { courses: [], unpublished: [] } }),
+  );
+  await page.route('**/api/courses/orphaned?**', (route) =>
+    route.fulfill({ json: { courses: [], nextCursor: null } }),
+  );
 
   await page.goto(`/app?orgId=${E2E_ORGANIZATION_ID}`);
 
