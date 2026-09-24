@@ -1,23 +1,24 @@
 -- Run after the candidate migration, within a transaction that ends in ROLLBACK.
+INSERT INTO auth.users(id) VALUES ('00000000-0036-4000-8000-000000000061');
+INSERT INTO public.organizations(id,name,status,seat_limit)
+  VALUES('00000000-0036-4000-8000-000000000062','S-036 collection proof','active',1);
+INSERT INTO public.org_members(user_id,org_id,role)
+  VALUES('00000000-0036-4000-8000-000000000061','00000000-0036-4000-8000-000000000062','apprenant');
+INSERT INTO public.stages(id,owner_id,org_id,name)
+  VALUES('s036-proof-learning-20260909','00000000-0036-4000-8000-000000000061','00000000-0036-4000-8000-000000000062','S-036 synthetic rollback proof');
 SET LOCAL ROLE service_role;
 DO $$
 DECLARE
-  actor uuid := '5b58a2ea-9ee5-41e8-ad83-b868536e23b5';
-  org uuid;
+  actor uuid := '00000000-0036-4000-8000-000000000061';
+  org uuid := '00000000-0036-4000-8000-000000000062';
   sample jsonb := '{"scene_sequence":["slide","quiz"],"scene_durations":[4,5],"quiz_scores":[0.8],"completion_rate":1,"total_duration":9,"subject_tags":[],"language":"fr-FR","level":"beginner","agent_count":1,"action_counts":{"play":1,"pause":0,"seek":0}}';
   accepted boolean;
   epoch uuid;
 BEGIN
-  SELECT m.org_id INTO STRICT org FROM public.org_members m JOIN public.organizations o ON o.id=m.org_id
-    WHERE m.user_id=actor AND o.status='active' LIMIT 1;
-  INSERT INTO public.stages(id, owner_id, org_id, name) VALUES('s036-proof-learning-20260909',actor,org,'S-036 synthetic rollback proof');
-  INSERT INTO public.telemetry_consent(user_id,pedagogy_consent) VALUES(actor,false)
-    ON CONFLICT(user_id) DO UPDATE SET pedagogy_consent=false;
   SELECT collection_epoch INTO epoch FROM public.telemetry_consent WHERE user_id=actor;
-  accepted := public.record_consented_learning(actor,'00000000-0036-4000-8000-000000000001','s036-proof-learning-20260909',sample,epoch);
-  IF accepted THEN RAISE EXCEPTION 'Refusal bypass'; END IF;
-  UPDATE public.telemetry_consent SET pedagogy_consent=true WHERE user_id=actor;
-  SELECT collection_epoch INTO epoch FROM public.telemetry_consent WHERE user_id=actor;
+  IF NOT EXISTS(SELECT 1 FROM public.telemetry_consent WHERE user_id=actor AND pedagogy_consent) THEN
+    RAISE EXCEPTION 'Contractual analytics were not provisioned';
+  END IF;
   accepted := public.record_consented_learning(actor,'00000000-0036-4000-8000-000000000001','s036-proof-learning-20260909',sample,epoch);
   IF NOT accepted THEN RAISE EXCEPTION 'Consented insert missing'; END IF;
   PERFORM public.record_consented_learning(actor,'00000000-0036-4000-8000-000000000001','s036-proof-learning-20260909',sample,epoch);
@@ -28,15 +29,6 @@ BEGIN
     PERFORM public.record_consented_learning(actor,'00000000-0036-4000-8000-000000000002','not-authorized',sample,epoch);
     RAISE EXCEPTION 'Scope bypass';
   EXCEPTION WHEN insufficient_privilege THEN NULL; END;
-  UPDATE public.telemetry_consent SET pedagogy_consent=false WHERE user_id=actor;
-  UPDATE public.telemetry_consent SET pedagogy_consent=true, collection_epoch=epoch WHERE user_id=actor;
-  IF public.record_consented_learning(actor,'00000000-0036-4000-8000-000000000003','s036-proof-learning-20260909',sample,epoch) THEN
-    RAISE EXCEPTION 'Old consent epoch replay accepted';
-  END IF;
-  IF (SELECT collection_epoch FROM public.telemetry_consent WHERE user_id=actor) = epoch THEN
-    RAISE EXCEPTION 'Client restored an old epoch';
-  END IF;
-  SELECT collection_epoch INTO epoch FROM public.telemetry_consent WHERE user_id=actor;
   UPDATE public.telemetry_consent SET pedagogy_consent=true, collection_epoch=gen_random_uuid() WHERE user_id=actor;
   IF (SELECT collection_epoch FROM public.telemetry_consent WHERE user_id=actor) <> epoch THEN
     RAISE EXCEPTION 'Unchanged consent invalidated an active epoch';
@@ -49,15 +41,3 @@ BEGIN
 END;
 $$;
 RESET ROLE;
-
--- Exercise withdrawal through the real RLS role, not only as postgres.
-SELECT set_config('request.jwt.claim.sub','5b58a2ea-9ee5-41e8-ad83-b868536e23b5',true);
-SET LOCAL ROLE authenticated;
-UPDATE public.telemetry_consent SET pedagogy_consent=false WHERE user_id=auth.uid();
-RESET ROLE;
-DO $$ BEGIN
-  IF EXISTS(SELECT 1 FROM public.pedagogy_telemetry WHERE stage_id='s036-proof-learning-20260909')
-    OR EXISTS(SELECT 1 FROM qalem_telemetry_private.subjects WHERE user_id='5b58a2ea-9ee5-41e8-ad83-b868536e23b5') THEN
-    RAISE EXCEPTION 'Withdrawal did not erase observations';
-  END IF;
-END; $$;

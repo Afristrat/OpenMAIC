@@ -1,17 +1,17 @@
 -- Run after both candidate migrations inside BEGIN ... ROLLBACK only.
+INSERT INTO auth.users(id) VALUES ('00000000-0036-4000-8000-000000000071');
+INSERT INTO public.organizations(id,name,status,seat_limit)
+  VALUES('00000000-0036-4000-8000-000000000072','S-036 retention proof','active',1);
+INSERT INTO public.org_members(user_id,org_id,role)
+  VALUES('00000000-0036-4000-8000-000000000071','00000000-0036-4000-8000-000000000072','apprenant');
 SET LOCAL ROLE service_role;
 DO $$
 DECLARE
-  actor uuid := '5b58a2ea-9ee5-41e8-ad83-b868536e23b5';
-  org uuid;
+  actor uuid := '00000000-0036-4000-8000-000000000071';
+  org uuid := '00000000-0036-4000-8000-000000000072';
   subject text;
   removed integer;
 BEGIN
-  SELECT m.org_id INTO STRICT org FROM public.org_members m
-    JOIN public.organizations o ON o.id=m.org_id
-    WHERE m.user_id=actor AND o.status='active' LIMIT 1;
-  INSERT INTO public.telemetry_consent(user_id,pedagogy_consent) VALUES(actor,true)
-    ON CONFLICT(user_id) DO UPDATE SET pedagogy_consent=true;
   INSERT INTO qalem_telemetry_private.subjects(user_id,org_id) VALUES(actor,org)
     RETURNING subject_hash INTO subject;
   INSERT INTO public.pedagogy_telemetry(user_hash,subject_hash,session_id,created_at)

@@ -17,7 +17,6 @@ BEGIN
   INSERT INTO public.org_members(user_id,org_id,role) VALUES(actor,org,'apprenant'),(other_actor,org,'apprenant');
   INSERT INTO public.stages(id,owner_id,org_id,name) VALUES('s036-export-own',actor,org,'Own'),('s036-export-other',other_actor,org,'Other');
   INSERT INTO public.scenes(id,stage_id,type,"order") VALUES('s036-scene-own','s036-export-own','slide',0),('s036-scene-other','s036-export-other','slide',0);
-  INSERT INTO public.telemetry_consent(user_id,pedagogy_consent) VALUES(actor,true),(other_actor,true);
   INSERT INTO qalem_telemetry_private.subjects(user_id,org_id) VALUES(actor,org) RETURNING subject_hash INTO own_hash;
   INSERT INTO qalem_telemetry_private.subjects(user_id,org_id) VALUES(other_actor,org) RETURNING subject_hash INTO other_hash;
   INSERT INTO public.pedagogy_telemetry(user_hash,subject_hash,session_id)

@@ -13,8 +13,6 @@ INSERT INTO public.stages(id,owner_id,org_id,name,agent_ids) VALUES
  ('s036-shared-learning-other','00000000-0036-4000-8000-000000000281','00000000-0036-4000-8000-000000000284','Other',ARRAY[]::text[]);
 INSERT INTO public.courses(id,owner_id,org_id,stage_id,title,language,source_kind,status,outline) VALUES
  ('00000000-0036-4000-8000-000000000285','00000000-0036-4000-8000-000000000281','00000000-0036-4000-8000-000000000283','s036-shared-learning','Context','ar-MA','generated','ready','{"analyticsContext":{"level":"advanced","subjectTags":["formation-design-pro"]}}');
-INSERT INTO public.telemetry_consent(user_id,pedagogy_consent) VALUES
- ('00000000-0036-4000-8000-000000000281',true),('00000000-0036-4000-8000-000000000282',true);
 INSERT INTO public.shared_classrooms(id,stage_id,org_id,shared_by,visibility) VALUES
  ('00000000-0036-4000-8000-000000000286','s036-shared-learning','00000000-0036-4000-8000-000000000284','00000000-0036-4000-8000-000000000281','organization');
 SET LOCAL ROLE service_role;
@@ -94,9 +92,8 @@ BEGIN
    PERFORM public.record_consented_learning(actor,session,'s036-shared-learning',payload,epoch,target_org);
    RAISE EXCEPTION 'Former member accepted';
  EXCEPTION WHEN insufficient_privilege THEN NULL; END;
- UPDATE public.telemetry_consent SET pedagogy_consent=false WHERE user_id=actor;
- UPDATE public.telemetry_consent SET pedagogy_consent=true WHERE user_id=actor;
- IF public.record_consented_learning(actor,session,'s036-shared-learning',payload,epoch,target_org) THEN RAISE EXCEPTION 'Stale consent accepted'; END IF;
- IF EXISTS(SELECT 1 FROM public.pedagogy_telemetry WHERE session_id=session) THEN RAISE EXCEPTION 'Withdrawal left observation'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.pedagogy_telemetry WHERE session_id=session) THEN
+   RAISE EXCEPTION 'Membership withdrawal erased contractual history';
+ END IF;
 END $$;
 RESET ROLE;

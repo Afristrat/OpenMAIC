@@ -17,7 +17,6 @@ BEGIN
     VALUES('s036-delete-stage',actor,org,'Preserved tenant asset');
   INSERT INTO public.scenes(id,stage_id,type,"order")
     VALUES('s036-delete-scene','s036-delete-stage','slide',0);
-  INSERT INTO public.telemetry_consent(user_id,pedagogy_consent) VALUES(actor,true);
   INSERT INTO qalem_telemetry_private.subjects(user_id,org_id)
     VALUES(actor,org) RETURNING subject_hash INTO subject;
   INSERT INTO public.pedagogy_telemetry(user_hash,subject_hash,session_id)
