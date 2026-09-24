@@ -54,13 +54,12 @@ function queryResult(result: { data: unknown; error?: unknown }, table?: string)
   return query;
 }
 
-function createSupabaseFixture() {
+function createSupabaseFixture(privileged = false) {
   const responseIndex = new Map<string, number>();
   const responses: Record<string, Array<{ data: unknown }>> = {
-    org_members: [
-      { data: mocks.membershipRole ? { role: mocks.membershipRole } : null },
-      { data: [{ user_id: 'learner-secret-id', role: 'apprenant' }] },
-    ],
+    org_members: privileged
+      ? [{ data: [{ user_id: 'learner-secret-id', role: 'apprenant' }] }]
+      : [{ data: mocks.membershipRole ? { role: mocks.membershipRole } : null }],
     organizations: [{ data: { name: 'Organisation A', status: mocks.organizationStatus } }],
     shared_classrooms: [{ data: [] }],
     stages: [
@@ -120,16 +119,19 @@ vi.mock('@/lib/supabase/server', () => ({
   createServerSupabaseClient: vi.fn(async () => createSupabaseFixture()),
 }));
 vi.mock('@/lib/supabase/service', () => ({
-  createServiceSupabaseClient: () => ({
-    from: (table: string) => {
-      const query = createSupabaseFixture().from(table);
+  createServiceSupabaseClient: () => {
+    const fixture = createSupabaseFixture(true);
+    return {
+      from: (table: string) => {
+        const query = fixture.from(table);
       query.eq = (...args: unknown[]) => {
         (table === 'quiz_results' ? mocks.quizFilters : mocks.telemetryFilters).push(args);
         return query;
       };
       return query;
-    },
-  }),
+      },
+    };
+  },
 }));
 vi.mock('@/lib/reports/pdf', () => ({
   createInstitutionalReportPdf: mocks.createInstitutionalReportPdf,

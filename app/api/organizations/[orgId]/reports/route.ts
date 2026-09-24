@@ -105,13 +105,18 @@ async function readReport(
   if (organization.status !== 'active')
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Organization inactive');
 
+  // Authorization is complete. Aggregate with the server client so tenant
+  // administrators see their whole organization instead of the subset exposed
+  // by member-level RLS. Every query below remains explicitly tenant-scoped.
+  const service = createServiceSupabaseClient();
+
   const url = new URL(request.url);
   const dateFrom = url.searchParams.get('dateFrom');
   const dateTo = url.searchParams.get('dateTo');
   const format = url.searchParams.get('format') ?? 'json';
   let totalLearners = 0;
   for await (const member of readReportPages((from, to) =>
-    supabase
+    service
       .from('org_members')
       .select('user_id, role', { count: 'exact' })
       .eq('org_id', orgId)
@@ -125,7 +130,7 @@ async function readReport(
   // 2. Get org stages (via shared_classrooms)
   const stageIds = new Set<string>();
   for await (const classroom of readReportPages((from, to) =>
-    supabase
+    service
       .from('shared_classrooms')
       .select('stage_id', { count: 'exact' })
       .eq('org_id', orgId)
@@ -140,7 +145,7 @@ async function readReport(
 
   // Also get stages owned by the org
   for await (const stage of readReportPages((from, to) =>
-    supabase
+    service
       .from('stages')
       .select('id', { count: 'exact' })
       .eq('org_id', orgId)
@@ -156,7 +161,7 @@ async function readReport(
   for (let index = 0; index < allStageIds.length; index += 100) {
     const ids = allStageIds.slice(index, index + 100);
     for await (const stage of readReportPages((from, to) =>
-      supabase
+      service
         .from('stages')
         .select('id, name', { count: 'exact' })
         .in('id', ids)
@@ -185,8 +190,7 @@ async function readReport(
     scoreCount = 0,
     completionSum = 0,
     completionCount = 0;
-  const service = allStageIds.length ? createServiceSupabaseClient() : null;
-  for (let index = 0; service && index < allStageIds.length; index += 100) {
+  for (let index = 0; index < allStageIds.length; index += 100) {
     const ids = allStageIds.slice(index, index + 100);
     for await (const row of readReportPages((from, to) => {
       let quizQuery = service
@@ -215,7 +219,7 @@ async function readReport(
   }
 
   // 5. Fetch telemetry data
-  for (let index = 0; service && index < allStageIds.length; index += 100) {
+  for (let index = 0; index < allStageIds.length; index += 100) {
     const ids = allStageIds.slice(index, index + 100);
     // Telemetry rows are service-only. Authorization above precedes this query;
     // the explicit tenant filter prevents shared/transferred stages leaking data.
