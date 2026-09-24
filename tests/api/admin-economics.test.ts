@@ -15,6 +15,10 @@ const mocks = vi.hoisted(() => ({
   createTenantCreditBurnRate: vi.fn(),
   configureTenantUsageBilling: vi.fn(),
   getTenantUsageBilling: vi.fn(),
+  getPlatformCreditPolicy: vi.fn(),
+  createPlatformCreditPolicy: vi.fn(),
+  createPlatformCreditBurnRate: vi.fn(),
+  inheritPlatformCreditBurnRate: vi.fn(),
 }));
 vi.mock('@/lib/api/auth', () => ({ requireSuperAdmin: mocks.requireSuperAdmin }));
 vi.mock('@/lib/billing/value-pricing', () => ({
@@ -32,6 +36,10 @@ vi.mock('@/lib/billing/usage-metering', () => ({
   createTenantCreditBurnRate: mocks.createTenantCreditBurnRate,
   configureTenantUsageBilling: mocks.configureTenantUsageBilling,
   getTenantUsageBilling: mocks.getTenantUsageBilling,
+  getPlatformCreditPolicy: mocks.getPlatformCreditPolicy,
+  createPlatformCreditPolicy: mocks.createPlatformCreditPolicy,
+  createPlatformCreditBurnRate: mocks.createPlatformCreditBurnRate,
+  inheritPlatformCreditBurnRate: mocks.inheritPlatformCreditBurnRate,
 }));
 
 import { GET as getPlatform, POST as configurePlatform } from '@/app/api/admin/economics/route';
@@ -62,6 +70,13 @@ describe('admin economics API (S6-024)', () => {
     mocks.createTenantCreditBurnRate.mockResolvedValue({ id: 'burn-version' });
     mocks.configureTenantUsageBilling.mockResolvedValue({ enforcement_enabled: true });
     mocks.getTenantUsageBilling.mockResolvedValue({ control: null, burnRates: [] });
+    mocks.getPlatformCreditPolicy.mockResolvedValue({
+      policy: { id: '11111111-1111-4111-8111-111111111111' },
+      burnRates: [],
+      coverage: { activeTenants: 1, coveredTenants: 1, pendingValuations: 0 },
+    });
+    mocks.createPlatformCreditBurnRate.mockResolvedValue({ id: 'global-burn-version' });
+    mocks.inheritPlatformCreditBurnRate.mockResolvedValue(true);
   });
 
   it('returns the weighted cockpit without changing commercial controls', async () => {
@@ -190,5 +205,50 @@ describe('admin economics API (S6-024)', () => {
     );
     expect(response.status).toBe(200);
     expect(mocks.getTenantUsageBilling).toHaveBeenCalledWith('tenant');
+  });
+
+  it('records a global versioned rate without changing tenant sell prices', async () => {
+    const request = new NextRequest('https://qalem.ma/api/admin/economics', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        action: 'globalBurnRate',
+        policyId: '11111111-1111-4111-8111-111111111111',
+        billableUnit: 'tts_second',
+        creditMicrounits: 250000,
+        quantityBasis: 60,
+        settlementMode: 'measured_actual',
+        observationWindowDays: 30,
+        provenance: 'Mesure Higgs dédiée exclusivement à Qalem',
+        validFrom: '2026-09-23T00:00:00.000Z',
+      }),
+    });
+    expect((await configurePlatform(request)).status).toBe(201);
+    expect(mocks.createPlatformCreditBurnRate).toHaveBeenCalledWith(
+      expect.objectContaining({ billableUnit: 'tts_second', settlementMode: 'measured_actual' }),
+    );
+    expect(mocks.createTenantSellPrice).not.toHaveBeenCalled();
+  });
+
+  it('closes a tenant exception to restore global inheritance', async () => {
+    const request = new NextRequest('https://qalem.ma/api/admin/tenants/tenant/usage-billing', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        action: 'inheritGlobal',
+        billableUnit: 'tts_second',
+        validFrom: '2026-09-23T00:00:00.000Z',
+      }),
+    });
+    expect(
+      (
+        await configureTenantUsageBilling(request, {
+          params: Promise.resolve({ tenantId: 'tenant' }),
+        })
+      ).status,
+    ).toBe(201);
+    expect(mocks.inheritPlatformCreditBurnRate).toHaveBeenCalledWith(
+      expect.objectContaining({ tenantId: 'tenant', billableUnit: 'tts_second' }),
+    );
   });
 });

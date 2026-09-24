@@ -1613,7 +1613,7 @@
       "description": "En tant que propriétaire de Qalem, je veux qu’une politique globale de crédits s’applique automatiquement à tous les tenants et utilisateurs, tout en séparant le débit, le prix à la valeur et le contrôle de marge, afin que chaque portefeuille corresponde aux usages réels sans configuration individuelle.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P0",
-      "status": "ready",
+      "status": "in_progress",
       "passes": false,
       "source": {
         "type": "production_gap",

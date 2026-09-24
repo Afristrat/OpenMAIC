@@ -160,6 +160,11 @@ export const adminTenantUsageBillingSchema = z.discriminatedUnion('action', [
     sellCurrency: currencyCodeSchema,
     requiredUnits: z.array(z.enum(billableUnits)).min(1).max(billableUnits.length),
   }),
+  z.object({
+    action: z.literal('inheritGlobal'),
+    billableUnit: z.enum(billableUnits),
+    validFrom: z.string().datetime({ offset: true }),
+  }),
 ]);
 
 export const adminEconomicConfigurationSchema = z.discriminatedUnion('action', [
@@ -199,6 +204,23 @@ export const adminEconomicConfigurationSchema = z.discriminatedUnion('action', [
     action: z.literal('marginTarget'),
     targetMarginBps: z.number().int().min(0).max(10_000),
     rationale: z.string().trim().min(1).max(500),
+  }),
+  z.object({
+    action: z.literal('creditPolicy'),
+    calibrationMethod: z.string().trim().min(1).max(1000),
+    rationale: z.string().trim().min(1).max(1000),
+    validFrom: z.string().datetime({ offset: true }),
+  }),
+  z.object({
+    action: z.literal('globalBurnRate'),
+    policyId: z.string().uuid(),
+    billableUnit: z.enum(billableUnits),
+    creditMicrounits: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+    quantityBasis: z.number().positive(),
+    settlementMode: z.enum(['measured_actual', 'p95_flat_rate']),
+    observationWindowDays: z.number().int().min(1).max(366),
+    provenance: z.string().trim().min(1).max(1000),
+    validFrom: z.string().datetime({ offset: true }),
   }),
 ]);
 

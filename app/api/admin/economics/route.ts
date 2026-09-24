@@ -9,6 +9,11 @@ import {
   getPlatformMargin,
   setMarginTarget,
 } from '@/lib/billing/value-pricing';
+import {
+  createPlatformCreditBurnRate,
+  createPlatformCreditPolicy,
+  getPlatformCreditPolicy,
+} from '@/lib/billing/usage-metering';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 
 function reportingPeriod(request: NextRequest): { from: string; to: string } | null {
@@ -29,11 +34,12 @@ export async function GET(request: NextRequest): Promise<Response> {
   if (!period) return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid reporting period');
 
   try {
-    const [margin, configuration] = await Promise.all([
+    const [margin, configuration, creditPolicy] = await Promise.all([
       getPlatformMargin(period.from, period.to),
       getCurrentEconomicConfiguration(),
+      getPlatformCreditPolicy(),
     ]);
-    return apiSuccess({ period, margin, ...configuration });
+    return apiSuccess({ period, margin, creditPolicy, ...configuration });
   } catch (error) {
     return apiError(
       API_ERROR_CODES.INTERNAL_ERROR,
@@ -59,12 +65,22 @@ export async function POST(request: NextRequest): Promise<Response> {
   try {
     const input = validation.data;
     let version: unknown;
-    if (input.action === 'providerCost') {
-      version = await createProviderCostRate({ actorUserId: auth.user.id, ...input });
-    } else if (input.action === 'exchangeRate') {
-      version = await createExchangeRate({ actorUserId: auth.user.id, ...input });
-    } else {
-      version = await setMarginTarget({ actorUserId: auth.user.id, ...input });
+    switch (input.action) {
+      case 'providerCost':
+        version = await createProviderCostRate({ actorUserId: auth.user.id, ...input });
+        break;
+      case 'exchangeRate':
+        version = await createExchangeRate({ actorUserId: auth.user.id, ...input });
+        break;
+      case 'marginTarget':
+        version = await setMarginTarget({ actorUserId: auth.user.id, ...input });
+        break;
+      case 'creditPolicy':
+        version = await createPlatformCreditPolicy({ actorUserId: auth.user.id, ...input });
+        break;
+      case 'globalBurnRate':
+        version = await createPlatformCreditBurnRate({ actorUserId: auth.user.id, ...input });
+        break;
     }
     return apiSuccess({ version }, 201);
   } catch (error) {

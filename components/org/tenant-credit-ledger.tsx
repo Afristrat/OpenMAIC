@@ -12,6 +12,13 @@ type CreditEntry = {
   quantity: number | string | null;
   reason: string;
   created_at: string;
+  actor_user_id: string;
+  actorNickname: string | null;
+  usageStatus: {
+    status: string;
+    valuation_status: string;
+    valuation_issue: string | null;
+  } | null;
 };
 
 export function TenantCreditLedger({ orgId }: { orgId: string }): React.ReactElement {
@@ -61,6 +68,10 @@ export function TenantCreditLedger({ orgId }: { orgId: string }): React.ReactEle
               <tr className="border-b text-start text-muted-foreground">
                 <th className="pb-2 font-medium">{t('org.credits.date')}</th>
                 <th className="pb-2 font-medium">{t('org.credits.type')}</th>
+                <th className="pb-2 font-medium">{t('org.credits.author')}</th>
+                <th className="pb-2 font-medium">{t('org.credits.category')}</th>
+                <th className="pb-2 font-medium">{t('org.credits.quantity')}</th>
+                <th className="pb-2 font-medium">{t('org.credits.status')}</th>
                 <th className="pb-2 font-medium">{t('org.credits.reason')}</th>
                 <th className="pb-2 text-end font-medium">{t('org.credits.amount')}</th>
               </tr>
@@ -70,6 +81,18 @@ export function TenantCreditLedger({ orgId }: { orgId: string }): React.ReactEle
                 <tr key={entry.id}>
                   <td className="py-3">{new Date(entry.created_at).toLocaleDateString(locale)}</td>
                   <td className="py-3">{t(`org.credits.entry.${entry.entry_type}`)}</td>
+                  <td className="py-3">{entry.actorNickname ?? entry.actor_user_id.slice(0, 8)}</td>
+                  <td className="py-3">
+                    {entry.billable_unit ? t(`admin.economics.units.${entry.billable_unit}`) : '–'}
+                  </td>
+                  <td className="py-3">
+                    {entry.quantity === null ? '–' : number.format(Number(entry.quantity))}
+                  </td>
+                  <td className="py-3">
+                    {entry.usageStatus
+                      ? t(`org.credits.status.${entry.usageStatus.valuation_status}`)
+                      : '–'}
+                  </td>
                   <td className="py-3">{entry.reason}</td>
                   <td className="py-3 text-end font-mono">
                     {number.format(Number(entry.delta_microunits) / 1_000_000)}

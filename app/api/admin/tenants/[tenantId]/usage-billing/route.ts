@@ -6,6 +6,7 @@ import {
   configureTenantUsageBilling,
   createTenantCreditBurnRate,
   getTenantUsageBilling,
+  inheritPlatformCreditBurnRate,
 } from '@/lib/billing/usage-metering';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 
@@ -42,24 +43,33 @@ export async function POST(
   try {
     const tenantId = (await params).tenantId;
     const input = validation.data;
-    const result =
-      input.action === 'burnRate'
-        ? await createTenantCreditBurnRate({
-            actorUserId: auth.user.id,
-            tenantId,
-            billableUnit: input.billableUnit,
-            creditMicrounits: input.creditMicrounits,
-            quantityBasis: input.quantityBasis,
-            validFrom: input.validFrom,
-            rationale: input.rationale,
-          })
-        : await configureTenantUsageBilling({
-            actorUserId: auth.user.id,
-            tenantId,
-            enabled: input.enabled,
-            sellCurrency: input.sellCurrency,
-            requiredUnits: input.requiredUnits,
-          });
+    let result: unknown;
+    if (input.action === 'burnRate') {
+      result = await createTenantCreditBurnRate({
+        actorUserId: auth.user.id,
+        tenantId,
+        billableUnit: input.billableUnit,
+        creditMicrounits: input.creditMicrounits,
+        quantityBasis: input.quantityBasis,
+        validFrom: input.validFrom,
+        rationale: input.rationale,
+      });
+    } else if (input.action === 'inheritGlobal') {
+      result = await inheritPlatformCreditBurnRate({
+        actorUserId: auth.user.id,
+        tenantId,
+        billableUnit: input.billableUnit,
+        validFrom: input.validFrom,
+      });
+    } else {
+      result = await configureTenantUsageBilling({
+        actorUserId: auth.user.id,
+        tenantId,
+        enabled: input.enabled,
+        sellCurrency: input.sellCurrency,
+        requiredUnits: input.requiredUnits,
+      });
+    }
     return apiSuccess({ result }, 201);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Usage billing configuration failed';

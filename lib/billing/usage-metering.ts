@@ -12,11 +12,13 @@ export type UsageReservation = {
 export type UsageSettlement = {
   reservationId: string;
   actualCreditMicrounits: number;
-  valuedUsageId: string;
-  revenueMicrounits: number;
-  costMicrounits: number;
-  marginBps: number;
-  belowTarget: boolean;
+  valuedUsageId: string | null;
+  revenueMicrounits: number | null;
+  costMicrounits: number | null;
+  marginBps: number | null;
+  belowTarget: boolean | null;
+  valuationStatus: 'valued' | 'pending_configuration';
+  valuationIssue: string | null;
   applied: boolean;
 };
 
@@ -30,11 +32,13 @@ type ReservationRpcRow = {
 type SettlementRpcRow = {
   reservation_id: string;
   actual_credit_microunits: number | string;
-  valued_usage_id: string;
-  revenue_microunits: number | string;
-  cost_microunits: number | string;
-  margin_bps: number;
-  below_target: boolean;
+  valued_usage_id: string | null;
+  revenue_microunits: number | string | null;
+  cost_microunits: number | string | null;
+  margin_bps: number | null;
+  below_target: boolean | null;
+  valuation_status: 'valued' | 'pending_configuration';
+  valuation_issue: string | null;
   applied: boolean;
 };
 
@@ -72,6 +76,129 @@ export async function createTenantCreditBurnRate(input: {
   return data;
 }
 
+export async function createPlatformCreditPolicy(input: {
+  actorUserId: string;
+  calibrationMethod: string;
+  rationale: string;
+  validFrom: string;
+}): Promise<unknown> {
+  const { data, error } = await createServiceSupabaseClient()
+    .rpc('create_platform_credit_policy', {
+      p_actor: input.actorUserId,
+      p_calibration_method: input.calibrationMethod,
+      p_rationale: input.rationale,
+      p_valid_from: input.validFrom,
+    })
+    .single();
+  if (error || !data) throw new Error(error?.message ?? 'Credit policy creation failed');
+  return data;
+}
+
+export async function createPlatformCreditBurnRate(input: {
+  actorUserId: string;
+  policyId: string;
+  billableUnit: BillableUnit;
+  creditMicrounits: number;
+  quantityBasis: number;
+  settlementMode: 'measured_actual' | 'p95_flat_rate';
+  observationWindowDays: number;
+  provenance: string;
+  validFrom: string;
+}): Promise<unknown> {
+  if (!Number.isSafeInteger(input.creditMicrounits) || input.creditMicrounits <= 0) {
+    throw new Error('Invalid platform credit burn rate');
+  }
+  assertQuantity(input.quantityBasis);
+  const { data, error } = await createServiceSupabaseClient()
+    .rpc('create_platform_credit_burn_rate', {
+      p_actor: input.actorUserId,
+      p_policy_id: input.policyId,
+      p_billable_unit: input.billableUnit,
+      p_credit_microunits: input.creditMicrounits,
+      p_quantity_basis: input.quantityBasis,
+      p_settlement_mode: input.settlementMode,
+      p_observation_window_days: input.observationWindowDays,
+      p_provenance: input.provenance,
+      p_valid_from: input.validFrom,
+    })
+    .single();
+  if (error || !data) throw new Error(error?.message ?? 'Platform burn rate creation failed');
+  return data;
+}
+
+export async function inheritPlatformCreditBurnRate(input: {
+  actorUserId: string;
+  tenantId: string;
+  billableUnit: BillableUnit;
+  validFrom: string;
+}): Promise<boolean> {
+  const { data, error } = await createServiceSupabaseClient().rpc(
+    'inherit_platform_credit_burn_rate',
+    {
+      p_actor: input.actorUserId,
+      p_org_id: input.tenantId,
+      p_billable_unit: input.billableUnit,
+      p_valid_from: input.validFrom,
+    },
+  );
+  if (error) throw new Error(error.message);
+  return Boolean(data);
+}
+
+export async function getPlatformCreditPolicy(): Promise<{
+  policy: unknown | null;
+  burnRates: unknown[];
+  coverage: { activeTenants: number; coveredTenants: number; pendingValuations: number };
+}> {
+  const supabase = createServiceSupabaseClient();
+  const [policy, burnRates, activeTenants, coveredTenants, pendingValuations] = await Promise.all([
+    supabase
+      .from('platform_credit_policies')
+      .select(
+        'id, anchor_currency, anchor_cost_microunits, calibration_method, rationale, valid_from',
+      )
+      .is('valid_to', null)
+      .maybeSingle(),
+    supabase
+      .from('platform_credit_burn_rates')
+      .select(
+        'id, policy_id, billable_unit, credit_microunits, quantity_basis, settlement_mode, reservation_percentile, observation_window_days, provenance, valid_from',
+      )
+      .is('valid_to', null)
+      .order('billable_unit'),
+    supabase
+      .from('organizations')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'active'),
+    supabase
+      .from('tenant_billing_controls')
+      .select('org_id, organizations!inner(status)', { count: 'exact', head: true })
+      .eq('enforcement_enabled', true)
+      .eq('organizations.status', 'active'),
+    supabase
+      .from('tenant_usage_reservations')
+      .select('id', { count: 'exact', head: true })
+      .eq('valuation_status', 'pending_configuration')
+      .eq('status', 'settled'),
+  ]);
+  const error =
+    policy.error ??
+    burnRates.error ??
+    activeTenants.error ??
+    coveredTenants.error ??
+    pendingValuations.error;
+  if (error) throw new Error(error.message);
+  return {
+    policy: policy.data,
+    burnRates: burnRates.data ?? [],
+    coverage: {
+      activeTenants: activeTenants.count ?? 0,
+      coveredTenants: coveredTenants.count ?? 0,
+      pendingValuations: pendingValuations.count ?? 0,
+    },
+  };
+}
+
 export async function configureTenantUsageBilling(input: {
   actorUserId: string;
   tenantId: string;
@@ -97,9 +224,10 @@ export async function configureTenantUsageBilling(input: {
 export async function getTenantUsageBilling(tenantId: string): Promise<{
   control: unknown | null;
   burnRates: unknown[];
+  platformBurnRates: unknown[];
 }> {
   const supabase = createServiceSupabaseClient();
-  const [control, burnRates] = await Promise.all([
+  const [control, burnRates, platformBurnRates] = await Promise.all([
     supabase
       .from('tenant_billing_controls')
       .select(
@@ -115,13 +243,25 @@ export async function getTenantUsageBilling(tenantId: string): Promise<{
       .eq('org_id', tenantId)
       .is('valid_to', null)
       .order('billable_unit'),
+    supabase
+      .from('platform_credit_burn_rates')
+      .select('id, billable_unit, credit_microunits, quantity_basis, settlement_mode, valid_from')
+      .is('valid_to', null)
+      .order('billable_unit'),
   ]);
-  if (control.error || burnRates.error) {
+  if (control.error || burnRates.error || platformBurnRates.error) {
     throw new Error(
-      control.error?.message ?? burnRates.error?.message ?? 'Usage billing query failed',
+      control.error?.message ??
+        burnRates.error?.message ??
+        platformBurnRates.error?.message ??
+        'Usage billing query failed',
     );
   }
-  return { control: control.data, burnRates: burnRates.data ?? [] };
+  return {
+    control: control.data,
+    burnRates: burnRates.data ?? [],
+    platformBurnRates: platformBurnRates.data ?? [],
+  };
 }
 
 export async function reserveTenantUsage(input: {
@@ -178,10 +318,12 @@ export async function settleTenantUsage(
     reservationId: row.reservation_id,
     actualCreditMicrounits: Number(row.actual_credit_microunits),
     valuedUsageId: row.valued_usage_id,
-    revenueMicrounits: Number(row.revenue_microunits),
-    costMicrounits: Number(row.cost_microunits),
+    revenueMicrounits: row.revenue_microunits === null ? null : Number(row.revenue_microunits),
+    costMicrounits: row.cost_microunits === null ? null : Number(row.cost_microunits),
     marginBps: row.margin_bps,
     belowTarget: row.below_target,
+    valuationStatus: row.valuation_status,
+    valuationIssue: row.valuation_issue,
     applied: row.applied,
   };
 }

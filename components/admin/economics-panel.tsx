@@ -55,6 +55,27 @@ type UsageBillingControl = {
   required_units: Array<(typeof UNITS)[number]>;
 };
 
+type CreditPolicy = {
+  id: string;
+  anchor_currency: 'USD';
+  anchor_cost_microunits: number;
+  calibration_method: string;
+  rationale: string;
+  valid_from: string;
+};
+
+type PlatformCreditPolicy = {
+  policy: CreditPolicy | null;
+  burnRates: Array<
+    CreditBurnRate & {
+      settlement_mode: 'measured_actual' | 'p95_flat_rate';
+      observation_window_days: number;
+      provenance: string;
+    }
+  >;
+  coverage: { activeTenants: number; coveredTenants: number; pendingValuations: number };
+};
+
 function localNow(): string {
   const date = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000);
   return date.toISOString().slice(0, 16);
@@ -112,13 +133,26 @@ export function EconomicsCockpit(): React.ReactElement {
   const [fxQuote, setFxQuote] = useState('MAD');
   const [fxRate, setFxRate] = useState('');
   const [fxProvenance, setFxProvenance] = useState('');
+  const [creditPolicy, setCreditPolicy] = useState<PlatformCreditPolicy | null>(null);
+  const [burnUnit, setBurnUnit] = useState<(typeof UNITS)[number]>('llm_input_token');
+  const [burnCredits, setBurnCredits] = useState('');
+  const [burnBasis, setBurnBasis] = useState('1000000');
+  const [settlementMode, setSettlementMode] = useState<'measured_actual' | 'p95_flat_rate'>(
+    'measured_actual',
+  );
+  const [observationWindowDays, setObservationWindowDays] = useState('30');
+  const [burnProvenance, setBurnProvenance] = useState('');
 
   const load = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/economics');
       if (!response.ok) throw new Error('economics');
-      const body = (await response.json()) as { margin: Margin };
+      const body = (await response.json()) as {
+        margin: Margin;
+        creditPolicy: PlatformCreditPolicy;
+      };
       setMargin(body.margin);
+      setCreditPolicy(body.creditPolicy);
       setTarget(String(body.margin.targetMarginBps / 100));
     } catch {
       toast.error(t('admin.economics.loadFailed'));
@@ -181,6 +215,24 @@ export function EconomicsCockpit(): React.ReactElement {
       validFrom: new Date(validFrom).toISOString(),
     });
   };
+  const saveGlobalBurnRate = (event: FormEvent) => {
+    event.preventDefault();
+    if (!creditPolicy?.policy) {
+      toast.error(t('admin.economics.policyMissing'));
+      return;
+    }
+    void save({
+      action: 'globalBurnRate',
+      policyId: creditPolicy.policy.id,
+      billableUnit: burnUnit,
+      creditMicrounits: Math.round(Number(burnCredits) * 1_000_000),
+      quantityBasis: Number(burnBasis),
+      settlementMode,
+      observationWindowDays: Number(observationWindowDays),
+      provenance: burnProvenance,
+      validFrom: new Date(validFrom).toISOString(),
+    });
+  };
 
   return (
     <section
@@ -203,6 +255,131 @@ export function EconomicsCockpit(): React.ReactElement {
             </p>
           )}
         </>
+      )}
+      {creditPolicy && (
+        <section className="space-y-3 rounded-lg border p-3">
+          <div>
+            <p className="text-sm font-medium">{t('admin.economics.globalCreditPolicy')}</p>
+            <p className="text-xs text-muted-foreground">
+              {creditPolicy.policy
+                ? t('admin.economics.creditAnchor', {
+                    amount: String(creditPolicy.policy.anchor_cost_microunits / 1_000_000),
+                    currency: creditPolicy.policy.anchor_currency,
+                  })
+                : t('admin.economics.policyMissing')}
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-lg border p-3 text-sm">
+              <span className="text-muted-foreground">{t('admin.economics.coveredTenants')}</span>
+              <p className="font-semibold">
+                {creditPolicy.coverage.coveredTenants} / {creditPolicy.coverage.activeTenants}
+              </p>
+            </div>
+            <div className="rounded-lg border p-3 text-sm">
+              <span className="text-muted-foreground">{t('admin.economics.globalRates')}</span>
+              <p className="font-semibold">
+                {creditPolicy.burnRates.length} / {UNITS.length}
+              </p>
+            </div>
+            <div className="rounded-lg border p-3 text-sm">
+              <span className="text-muted-foreground">
+                {t('admin.economics.pendingValuations')}
+              </span>
+              <p className="font-semibold">{creditPolicy.coverage.pendingValuations}</p>
+            </div>
+          </div>
+          {creditPolicy.burnRates.length > 0 && (
+            <ul className="flex flex-wrap gap-2 text-xs">
+              {creditPolicy.burnRates.map((rate) => (
+                <li key={rate.id} className="rounded-full border px-3 py-1">
+                  {t(`admin.economics.units.${rate.billable_unit}`)} ·{' '}
+                  {rate.credit_microunits / 1_000_000} / {rate.quantity_basis} ·{' '}
+                  {t(`admin.economics.settlementModes.${rate.settlement_mode}`)}
+                </li>
+              ))}
+            </ul>
+          )}
+          <form
+            onSubmit={saveGlobalBurnRate}
+            className="grid items-end gap-3 md:grid-cols-2 xl:grid-cols-6"
+          >
+            <label className="space-y-1 text-sm">
+              <span>{t('admin.economics.unit')}</span>
+              <select
+                value={burnUnit}
+                onChange={(event) => setBurnUnit(event.target.value as (typeof UNITS)[number])}
+                className="w-full rounded-md border bg-background px-3 py-2"
+              >
+                {UNITS.map((value) => (
+                  <option key={value} value={value}>
+                    {t(`admin.economics.units.${value}`)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="space-y-1 text-sm">
+              <span>{t('admin.economics.creditBurn')}</span>
+              <input
+                required
+                inputMode="decimal"
+                value={burnCredits}
+                onChange={(event) => setBurnCredits(event.target.value)}
+                className="w-full rounded-md border bg-background px-3 py-2"
+              />
+            </label>
+            <label className="space-y-1 text-sm">
+              <span>{t('admin.economics.basis')}</span>
+              <input
+                required
+                inputMode="decimal"
+                value={burnBasis}
+                onChange={(event) => setBurnBasis(event.target.value)}
+                className="w-full rounded-md border bg-background px-3 py-2"
+              />
+            </label>
+            <label className="space-y-1 text-sm">
+              <span>{t('admin.economics.settlementMode')}</span>
+              <select
+                value={settlementMode}
+                onChange={(event) => setSettlementMode(event.target.value as typeof settlementMode)}
+                className="w-full rounded-md border bg-background px-3 py-2"
+              >
+                <option value="measured_actual">
+                  {t('admin.economics.settlementModes.measured_actual')}
+                </option>
+                <option value="p95_flat_rate">
+                  {t('admin.economics.settlementModes.p95_flat_rate')}
+                </option>
+              </select>
+            </label>
+            <label className="space-y-1 text-sm">
+              <span>{t('admin.economics.observationWindow')}</span>
+              <input
+                required
+                type="number"
+                min="1"
+                max="366"
+                value={observationWindowDays}
+                onChange={(event) => setObservationWindowDays(event.target.value)}
+                className="w-full rounded-md border bg-background px-3 py-2"
+              />
+            </label>
+            <Button type="submit" variant="outline" disabled={saving || !creditPolicy.policy}>
+              {t('admin.economics.saveGlobalBurnRate')}
+            </Button>
+            <label className="space-y-1 text-sm md:col-span-2 xl:col-span-6">
+              <span>{t('admin.economics.provenance')}</span>
+              <input
+                required
+                maxLength={1000}
+                value={burnProvenance}
+                onChange={(event) => setBurnProvenance(event.target.value)}
+                className="w-full rounded-md border bg-background px-3 py-2"
+              />
+            </label>
+          </form>
+        </section>
       )}
       <form onSubmit={saveTarget} className="flex flex-wrap items-end gap-3 rounded-lg border p-3">
         <label className="space-y-1 text-sm">
@@ -390,6 +567,7 @@ export function TenantEconomics({ tenantId }: { tenantId: string }): React.React
   const [validFrom, setValidFrom] = useState(localNow);
   const [saving, setSaving] = useState(false);
   const [burnRates, setBurnRates] = useState<CreditBurnRate[]>([]);
+  const [platformBurnRates, setPlatformBurnRates] = useState<CreditBurnRate[]>([]);
   const [billingControl, setBillingControl] = useState<UsageBillingControl | null>(null);
   const [burnUnit, setBurnUnit] = useState<(typeof UNITS)[number]>('llm_input_token');
   const [burnCredits, setBurnCredits] = useState('');
@@ -413,12 +591,14 @@ export function TenantEconomics({ tenantId }: { tenantId: string }): React.React
       const billing = (await billingResponse.json()) as {
         control: UsageBillingControl | null;
         burnRates: CreditBurnRate[];
+        platformBurnRates: CreditBurnRate[];
       };
       setMargin(body.margin);
       setBreakdown(body.breakdown);
       setPrices(body.sellPrices);
       setBillingControl(billing.control);
       setBurnRates(billing.burnRates);
+      setPlatformBurnRates(billing.platformBurnRates);
       if (billing.control) setRequiredUnits(billing.control.required_units);
     } catch {
       toast.error(t('admin.economics.loadFailed'));
@@ -477,6 +657,28 @@ export function TenantEconomics({ tenantId }: { tenantId: string }): React.React
       setBurnCredits('');
       setBurnRationale('');
       toast.success(t('admin.economics.burnRateSaved'));
+      await load();
+    } catch {
+      toast.error(t('admin.economics.saveFailed'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const inheritGlobal = async (billableUnit: (typeof UNITS)[number]) => {
+    setSaving(true);
+    try {
+      const response = await fetch(`/api/admin/tenants/${tenantId}/usage-billing`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          action: 'inheritGlobal',
+          billableUnit,
+          validFrom: new Date().toISOString(),
+        }),
+      });
+      if (!response.ok) throw new Error('inherit-global');
+      toast.success(t('admin.economics.globalInheritanceRestored'));
       await load();
     } catch {
       toast.error(t('admin.economics.saveFailed'));
@@ -650,12 +852,42 @@ export function TenantEconomics({ tenantId }: { tenantId: string }): React.React
         {burnRates.length > 0 && (
           <ul className="flex flex-wrap gap-2 text-xs">
             {burnRates.map((rate) => (
-              <li key={rate.id} className="rounded-full border px-3 py-1">
+              <li key={rate.id} className="flex items-center gap-2 rounded-full border px-3 py-1">
                 {t(`admin.economics.units.${rate.billable_unit}`)} ·{' '}
                 {rate.credit_microunits / 1_000_000} / {rate.quantity_basis}
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => void inheritGlobal(rate.billable_unit)}
+                  className="underline underline-offset-2"
+                >
+                  {t('admin.economics.restoreGlobal')}
+                </button>
               </li>
             ))}
           </ul>
+        )}
+        {platformBurnRates.length > 0 && (
+          <div>
+            <p className="mb-2 text-xs text-muted-foreground">
+              {t('admin.economics.inheritedGlobalRates')}
+            </p>
+            <ul className="flex flex-wrap gap-2 text-xs">
+              {platformBurnRates
+                .filter(
+                  (platformRate) =>
+                    !burnRates.some(
+                      (tenantRate) => tenantRate.billable_unit === platformRate.billable_unit,
+                    ),
+                )
+                .map((rate) => (
+                  <li key={rate.id} className="rounded-full border border-dashed px-3 py-1">
+                    {t(`admin.economics.units.${rate.billable_unit}`)} ·{' '}
+                    {rate.credit_microunits / 1_000_000} / {rate.quantity_basis}
+                  </li>
+                ))}
+            </ul>
+          </div>
         )}
         <form
           onSubmit={submitBurnRate}
