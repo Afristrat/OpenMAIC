@@ -1,5 +1,17 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 24 septembre 2026 — S1-008, SCORM 2004 recertifié dans Moodle
+
+Une archive SCORM 2004 fraîchement générée par Qalem en production, deux
+scènes et 287 391 octets, a été importée dans le Moodle isolé de ServeurIA.
+L’authentification de l’apprenant, l’ouverture du lecteur et l’appel navigateur
+`completion_status` sont confirmés. Une relecture indépendante par l’API
+Moodle retrouve exactement un SCO `completed` et `passed`, puis la fixture est
+supprimée. Le harnais permanent suit le schéma Moodle normalisé via
+`scorm_get_tracks()` et distingue SCORM 1.2 de SCORM 2004. S1-008 reste
+`to_validate` uniquement pour la recette cmi5 au SHA courant dans ADL
+CATAPULT. Preuve : `docs/validation/S1-008-scorm2004-cmi5.md`.
+
 ## 16 septembre 2026 — S1-007, export SCORM actuel recetté
 
 Le runtime public SHA `2716df9` a créé et terminé un export SCORM 1.2

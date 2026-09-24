@@ -13,17 +13,22 @@ assert.match(moodleBase, /^(https:\/\/lms-test\.qalem\.ma|http:\/\/127\.0\.0\.1:
 const browser = await chromium.launch({ headless: true });
 let step = 'login-page';
 let completionRequest = false;
+let completionField = null;
 let page;
 try {
   page = await browser.newPage();
   page.setDefaultTimeout(90_000);
   page.setDefaultNavigationTimeout(90_000);
   page.on('request', (request) => {
-    if (
-      request.url().includes('/mod/scorm/datamodel.php') &&
-      request.postData()?.includes('lesson_status')
-    )
+    if (!request.url().includes('/mod/scorm/datamodel.php')) return;
+    const body = request.postData() ?? '';
+    if (body.includes('lesson_status')) {
       completionRequest = true;
+      completionField = 'lesson_status';
+    } else if (body.includes('completion_status')) {
+      completionRequest = true;
+      completionField = 'completion_status';
+    }
   });
   await page.goto(`${moodleBase}/login/index.php`, { waitUntil: 'commit' });
   step = 'login-credentials';
@@ -60,7 +65,9 @@ try {
   await sco.locator('#scorm-complete-btn').click();
   await assert.doesNotReject(() => sco.getByText('Ce cours a été marqué comme terminé.').waitFor());
   assert.equal(completionRequest, true, 'Requête de complétion Moodle absente');
-  console.log(JSON.stringify({ proof: 'S1007_MOODLE_BROWSER_OK', completionRequest: true }));
+  console.log(
+    JSON.stringify({ proof: 'S1007_MOODLE_BROWSER_OK', completionRequest: true, completionField }),
+  );
 } catch (error) {
   const bodyText = page
     ? await page

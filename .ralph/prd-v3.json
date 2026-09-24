@@ -3186,7 +3186,7 @@
       },
       "sourceDependencies": ["S1-007"],
       "dependencies": ["S1-007"],
-      "gap": "Le générateur unique et ses trois adaptateurs sont fraîchement recertifiés au SHA courant. Restent les recettes de lecteurs externes au SHA de clôture : SCORM 2004 dans Moodle et cmi5 dans le lecteur de référence ; passes=false ne les infère pas.",
+      "gap": "Le générateur unique et ses trois adaptateurs sont fraîchement recertifiés. SCORM 2004 est également recetté avec une archive de production dans Moodle. Reste la recette cmi5 dans ADL CATAPULT au SHA de clôture ; passes=false ne l’infère pas.",
       "evidence": [
         "lib/export/scorm/tracking-adapters.ts",
         "tests/export/learning-package-formats.test.ts"
@@ -3206,7 +3206,8 @@
         "2026-08-28 — Gate complet ServeurIA au SHA 8497b977806632161f70b930447072e9775f450d avec NODE_OPTIONS=--max-old-space-size=6144 : pnpm check, TypeScript et lint passent ; 378/378 fichiers et 2 490/2 490 tests Vitest, build 99/99 et 82/82 Playwright en 4,0 minutes. Journal SHA-256 b58710123a89c09f8b4d82c267407070ae89c21d0fbe1217fd66a42704fcc6b0 : /tmp/qalem-s1008-gate/s1-008-full-gate-8497b97-node6g.log. Le premier build avait atteint la limite heap V8 par défaut vers 2 Gio ; ce n’était pas un OOM Docker et aucun code n’a changé entre les deux exécutions.",
         "2026-08-28 — ADR-105 consigne toujours fidèlement l’absence de tranche option/cœur. Son texte précise que cette décision commerciale ne bloque aucune story S1-007/S1-008 ; aucune décision d’Amine n’est inventée. ADR-106 relie désormais les recettes SCORM 1.2, SCORM 2004 et cmi5 aux preuves permanentes.",
         "2026-09-16 — Le web production healthy au SHA b6fa15c0bfc4c89c636eea21cd0d8e5c649e70f5 a généré puis téléchargé, via deux recettes authentifiées jetables, SCORM 2004 (job 3ad8faab-95df-4d85-8bad-f9ad8cb51b21, 286 596 octets, imsmanifest.xml) et cmi5 (job eece41a1-51d1-4045-a4df-200b2627c94a, 291 442 octets, cmi5.xml). Chaque suppression Storage a été confirmée. Le script de recette emploie le suffixe canonique du worker et échoue si le nettoyage échoue. Moodle et CATAPULT au SHA courant restent à rejouer avant passes=true ; référence docs/validation/S1-008-scorm2004-cmi5.md.",
-        "2026-09-17 — Un clone neuf du SHA c8ee3aace4aac51997eb174fb4dc757933f3e0f3 passe 23/23 tests ciblés : formats déclarés, manifestes, construction de package et suivi exécutable SCORM 2004/cmi5. Cette preuve couvre le contrat Qalem, non les lecteurs externes requis avant passes=true."
+        "2026-09-17 — Un clone neuf du SHA c8ee3aace4aac51997eb174fb4dc757933f3e0f3 passe 23/23 tests ciblés : formats déclarés, manifestes, construction de package et suivi exécutable SCORM 2004/cmi5. Cette preuve couvre le contrat Qalem, non les lecteurs externes requis avant passes=true.",
+        "2026-09-24 — Qalem production génère une nouvelle archive SCORM 2004 de deux scènes, job 34ffce32-4ea6-44ac-8a7f-89f238082714, 287 391 octets ; téléchargement, suppression Storage et nettoyage des données confirmés. Moodle importe cette archive et crée deux SCO ; l’authentification de l’apprenant est vérifiée. Chromium ouvre le lecteur, déclenche completion_status, puis l’API Moodle relit exactement un SCO avec cmi.completion_status=completed et cmi.success_status=passed. La fixture est supprimée. Le harnais permanent emploie scorm_get_tracks(), compatible avec le schéma normalisé Moodle, et distingue le suivi SCORM 1.2 de SCORM 2004. Reste uniquement la recette cmi5 courante dans ADL CATAPULT avant passes=true ; référence docs/validation/S1-008-scorm2004-cmi5.md."
       ],
       "historicalEvidence": {
         "completedAt": null,

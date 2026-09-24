@@ -1,5 +1,5 @@
 <?php
-// Recette isolée d'import et de suivi SCORM 1.2 dans le Moodle Qalem existant.
+// Recette isolée d’import et de suivi SCORM 1.2/2004 dans le Moodle Qalem existant.
 // Les données sont exclusivement préfixées par le marqueur passé par l'orchestrateur.
 if (PHP_SAPI !== 'cli') { exit(1); }
 define('CLI_SCRIPT', true);
@@ -98,6 +98,33 @@ if ($action === 'prepare') {
 if ($action === 'verify') {
     if (!$course || !$user) { throw new RuntimeException('Fixture de recette absente'); }
     $scorm = $DB->get_record('scorm', ['course' => $course->id], '*', MUST_EXIST);
+    $standard = getenv('QALEM_S1007_STANDARD') ?: 'scorm12';
+    if (!in_array($standard, ['scorm12', 'scorm2004'], true)) {
+        throw new InvalidArgumentException('Norme SCORM de recette invalide');
+    }
+    if ($standard === 'scorm2004') {
+        $scoIds = $DB->get_fieldset_select('scorm_scoes', 'id', 'scorm = ?', [$scorm->id], 'id ASC');
+        $completedScoIds = [];
+        foreach ($scoIds as $scoId) {
+            $tracks = scorm_get_tracks($scoId, $user->id, 1);
+            if (
+                ($tracks->status ?? null) === 'completed'
+                && ($tracks->{'cmi.success_status'} ?? null) === 'passed'
+            ) {
+                $completedScoIds[] = $scoId;
+            }
+        }
+        if (count($completedScoIds) !== 1) {
+            throw new RuntimeException('Suivi SCORM 2004 Moodle incomplet');
+        }
+        echo json_encode([
+            'proof' => 'S1008_MOODLE_TRACKS_OK',
+            'scoId' => $completedScoIds[0],
+            'completionStatus' => 'completed',
+            'successStatus' => 'passed',
+        ]) . PHP_EOL;
+        exit(0);
+    }
     $scoIds = $DB->get_fieldset_select('scorm_scoes', 'id', 'scorm = ?', [$scorm->id], 'id ASC');
     $completed = [];
     foreach ($scoIds as $scoId) {
