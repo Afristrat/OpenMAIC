@@ -153,7 +153,9 @@ function assertAgentContract(agents, settings) {
     throw new Error(`Avatar du professeur divergent : ${professor?.avatar ?? 'absent'}`);
   }
   if (expectedVoiceId && professor?.voiceConfig?.voiceId !== expectedVoiceId) {
-    throw new Error(`Voix du professeur divergente : ${professor?.voiceConfig?.voiceId ?? 'absente'}`);
+    throw new Error(
+      `Voix du professeur divergente : ${professor?.voiceConfig?.voiceId ?? 'absente'}`,
+    );
   }
   return professor;
 }
