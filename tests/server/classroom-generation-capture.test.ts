@@ -421,7 +421,7 @@ describe('classroom generation — web capture injection', () => {
       voiceConfig: { providerId: 'higgs-tts' as const, voiceId: 'hanae' },
     };
     mocks.generateSceneActions.mockResolvedValue([
-      ...completeRosterActions.filter((action) => action.agentId !== 'persona-teaching-assistant'),
+      ...completeRosterActions,
       {
         id: 'speech-specialist',
         type: 'speech',
