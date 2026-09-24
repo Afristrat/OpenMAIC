@@ -3,9 +3,16 @@ import { measureAudioDurationSeconds } from '@/lib/audio/duration';
 import { buildPcm16Wav } from './pcm16-wav-fixture';
 
 describe('measureAudioDurationSeconds', () => {
-  it('accepts a large valid WAV when ffprobe closes its input after reading metadata', async () => {
+  it('measures a large valid WAV without depending on an ffprobe pipe', async () => {
     const wav = buildPcm16Wav(new Array(500_000).fill(12000));
-    await expect(measureAudioDurationSeconds(wav)).resolves.toBeCloseTo(500_000 / 24_000, 3);
+    const previousPath = process.env.FFPROBE_PATH;
+    process.env.FFPROBE_PATH = '/binary-that-must-not-be-called-for-wav';
+    try {
+      await expect(measureAudioDurationSeconds(wav)).resolves.toBeCloseTo(500_000 / 24_000, 3);
+    } finally {
+      if (previousPath === undefined) delete process.env.FFPROBE_PATH;
+      else process.env.FFPROBE_PATH = previousPath;
+    }
   });
 
   it('rejects a large malformed stream without an unhandled broken pipe', async () => {
