@@ -13,6 +13,12 @@ test('maintient la sortie de super-administration visible pendant le test d’un
   await page.route('**/api/account/is-admin', (route) =>
     route.fulfill({ json: { isAdmin: true } }),
   );
+  await page.route('**/api/admin/economics', (route) =>
+    route.fulfill({ json: { policies: [], coverage: [] } }),
+  );
+  await page.route('**/api/admin/tenants?**', (route) =>
+    route.fulfill({ json: { tenants: [], page: { total: 0 } } }),
+  );
   await page.route('**/api/courses/catalog?**', (route) =>
     route.fulfill({ json: { courses: [], unpublished: [] } }),
   );
@@ -22,10 +28,55 @@ test('maintient la sortie de super-administration visible pendant le test d’un
 
   await page.goto(`/app?orgId=${E2E_ORGANIZATION_ID}`);
 
-  const banner = page.getByRole('status');
+  const banner = page.locator('aside[role="status"]');
   await expect(banner).toContainText('Mode test du tenant : Qalem E2E');
 
   await page.goto('/catalog');
+  await expect(banner).toContainText('Mode test du tenant : Qalem E2E');
+  await expect
+    .poll(() => page.evaluate(() => sessionStorage.getItem('qalem-super-admin-tested-tenant-id')))
+    .toBe(E2E_ORGANIZATION_ID);
+
+  await banner
+    .getByRole('button', {
+      name: 'Quitter le mode test et revenir à mon espace super-administrateur',
+    })
+    .click();
+
+  await expect(page).toHaveURL(/\/admin\?tab=tenants$/);
+  await expect
+    .poll(() => page.evaluate(() => localStorage.getItem('qalem-current-org-id')))
+    .toBeNull();
+  await expect
+    .poll(() => page.evaluate(() => sessionStorage.getItem('qalem-super-admin-tested-tenant-id')))
+    .toBeNull();
+});
+
+test('récupère une session super-administrateur ouverte avant le correctif', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('locale', 'fr-FR'));
+  await page.addInitScript(
+    (organizationId) => localStorage.setItem('qalem-current-org-id', organizationId),
+    E2E_ORGANIZATION_ID,
+  );
+  await page.route('**/api/account/is-admin', (route) =>
+    route.fulfill({ json: { isAdmin: true } }),
+  );
+  await page.route('**/api/admin/economics', (route) =>
+    route.fulfill({ json: { policies: [], coverage: [] } }),
+  );
+  await page.route('**/api/admin/tenants?**', (route) =>
+    route.fulfill({ json: { tenants: [], page: { total: 0 } } }),
+  );
+  await page.route('**/api/courses/catalog?**', (route) =>
+    route.fulfill({ json: { courses: [], unpublished: [] } }),
+  );
+  await page.route('**/api/courses/orphaned?**', (route) =>
+    route.fulfill({ json: { courses: [], nextCursor: null } }),
+  );
+
+  await page.goto('/catalog');
+
+  const banner = page.locator('aside[role="status"]');
   await expect(banner).toContainText('Mode test du tenant : Qalem E2E');
   await expect
     .poll(() => page.evaluate(() => sessionStorage.getItem('qalem-super-admin-tested-tenant-id')))

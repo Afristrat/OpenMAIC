@@ -15,6 +15,21 @@ export function readTestedTenantId(): string | null {
   }
 }
 
+export function recoverLegacyTenantTest(): string | null {
+  if (typeof window === 'undefined') return null;
+  const testedTenantId = readTestedTenantId();
+  if (testedTenantId) return testedTenantId;
+
+  try {
+    const activeTenantId = localStorage.getItem(CURRENT_ORGANIZATION_STORAGE_KEY);
+    if (!activeTenantId) return null;
+    sessionStorage.setItem(TENANT_TEST_SESSION_KEY, activeTenantId);
+    return activeTenantId;
+  } catch {
+    return null;
+  }
+}
+
 export function beginTenantTest(organizationId: string): void {
   if (typeof window === 'undefined') return;
   try {

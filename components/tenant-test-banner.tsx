@@ -9,6 +9,7 @@ import {
   beginTenantTest,
   endTenantTest,
   readTestedTenantId,
+  recoverLegacyTenantTest,
   TENANT_TEST_SESSION_EVENT,
 } from '@/lib/organizations/tenant-test-session';
 
@@ -25,6 +26,7 @@ export function TenantTestBanner(): React.ReactElement | null {
     const requestedTenantId =
       pathname === '/app' ? new URLSearchParams(window.location.search).get('orgId') : null;
     if (requestedTenantId && isSuperAdmin) beginTenantTest(requestedTenantId);
+    if (isSuperAdmin && pathname !== '/admin') recoverLegacyTenantTest();
     synchronize();
     window.addEventListener(TENANT_TEST_SESSION_EVENT, synchronize);
     return () => window.removeEventListener(TENANT_TEST_SESSION_EVENT, synchronize);
