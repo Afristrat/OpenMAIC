@@ -1344,8 +1344,8 @@
       "description": "En tant que propriétaire de Qalem, je veux qu’aucun tiers ne puisse créer un compte ou entrer dans l’application sans invitation nominative afin que les tests restent strictement privés jusqu’à l’ouverture décidée du produit.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P0",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "type": "request_and_production_incident",
         "date": "2026-09-01"
@@ -3186,10 +3186,13 @@
       },
       "sourceDependencies": ["S1-007"],
       "dependencies": ["S1-007"],
-      "gap": "Le générateur unique et ses trois adaptateurs sont fraîchement recertifiés. SCORM 2004 est également recetté avec une archive de production dans Moodle. Reste la recette cmi5 dans ADL CATAPULT au SHA de clôture ; passes=false ne l’infère pas.",
+      "gap": "Clôturé le 24 septembre 2026 : SCORM 2004 est importé, exécuté et relu completed/passed dans Moodle. Une archive cmi5 fraîche de production est importée par ADL CATAPULT, exécutée dans Chromium et relue dans le LRS avec la séquence initialized, completed, terminated, une session unique, completion=true et progression 1. Les bancs jetables finissent sans redémarrage ni OOM puis sont supprimés.",
       "evidence": [
         "lib/export/scorm/tracking-adapters.ts",
-        "tests/export/learning-package-formats.test.ts"
+        "tests/export/learning-package-formats.test.ts",
+        "scripts/proofs/s1-008-catapult-browser.mjs",
+        "scripts/proofs/s1-008-lrs-verify.mjs",
+        "docs/validation/S1-008-scorm2004-cmi5.md"
       ],
       "acceptance": [
         "3 formats depuis UN générateur (diff limité à la couche tracking)",
@@ -3207,7 +3210,8 @@
         "2026-08-28 — ADR-105 consigne toujours fidèlement l’absence de tranche option/cœur. Son texte précise que cette décision commerciale ne bloque aucune story S1-007/S1-008 ; aucune décision d’Amine n’est inventée. ADR-106 relie désormais les recettes SCORM 1.2, SCORM 2004 et cmi5 aux preuves permanentes.",
         "2026-09-16 — Le web production healthy au SHA b6fa15c0bfc4c89c636eea21cd0d8e5c649e70f5 a généré puis téléchargé, via deux recettes authentifiées jetables, SCORM 2004 (job 3ad8faab-95df-4d85-8bad-f9ad8cb51b21, 286 596 octets, imsmanifest.xml) et cmi5 (job eece41a1-51d1-4045-a4df-200b2627c94a, 291 442 octets, cmi5.xml). Chaque suppression Storage a été confirmée. Le script de recette emploie le suffixe canonique du worker et échoue si le nettoyage échoue. Moodle et CATAPULT au SHA courant restent à rejouer avant passes=true ; référence docs/validation/S1-008-scorm2004-cmi5.md.",
         "2026-09-17 — Un clone neuf du SHA c8ee3aace4aac51997eb174fb4dc757933f3e0f3 passe 23/23 tests ciblés : formats déclarés, manifestes, construction de package et suivi exécutable SCORM 2004/cmi5. Cette preuve couvre le contrat Qalem, non les lecteurs externes requis avant passes=true.",
-        "2026-09-24 — Qalem production génère une nouvelle archive SCORM 2004 de deux scènes, job 34ffce32-4ea6-44ac-8a7f-89f238082714, 287 391 octets ; téléchargement, suppression Storage et nettoyage des données confirmés. Moodle importe cette archive et crée deux SCO ; l’authentification de l’apprenant est vérifiée. Chromium ouvre le lecteur, déclenche completion_status, puis l’API Moodle relit exactement un SCO avec cmi.completion_status=completed et cmi.success_status=passed. La fixture est supprimée. Le harnais permanent emploie scorm_get_tracks(), compatible avec le schéma normalisé Moodle, et distingue le suivi SCORM 1.2 de SCORM 2004. Reste uniquement la recette cmi5 courante dans ADL CATAPULT avant passes=true ; référence docs/validation/S1-008-scorm2004-cmi5.md."
+        "2026-09-24 — Qalem production génère une nouvelle archive SCORM 2004 de deux scènes, job 34ffce32-4ea6-44ac-8a7f-89f238082714, 287 391 octets ; téléchargement, suppression Storage et nettoyage des données confirmés. Moodle importe cette archive et crée deux SCO ; l’authentification de l’apprenant est vérifiée. Chromium ouvre le lecteur, déclenche completion_status, puis l’API Moodle relit exactement un SCO avec cmi.completion_status=completed et cmi.success_status=passed. La fixture est supprimée. Le harnais permanent emploie scorm_get_tracks(), compatible avec le schéma normalisé Moodle, et distingue le suivi SCORM 1.2 de SCORM 2004.",
+        "2026-09-24 — Qalem production génère une nouvelle archive cmi5 de deux scènes, job 943dd1e2-5413-48f8-b940-1f3caa4e9341, 291 043 octets ; téléchargement, suppression Storage et nettoyage confirmés. Les fichiers d’export ne diffèrent pas entre le SHA worker bff9f1d6552fa2c7f5177e1910e834ce685cd016 et le SHA recetté. ADL CATAPULT officiel au commit 806c0baaa0fa99c9cb4f398ad7eb21fc5461c6e4 et son image player au digest sha256:009133609e545b07e4b6a09b80000547541d643ab1297ed60a2de64fd573b75b importent la structure cmi5 1.0.0 avec un AU. Chromium exécute l’AU et observe exactement initialized, completed, terminated avec identifiants URL/corps concordants. Le LRS relit la même séquence dans une session unique, completion=true et progression 1. Player, MySQL et LRS terminent running, restart=0 et OOMKilled=false ; conteneurs, réseau et fichiers jetables sont supprimés sans résidu. Référence docs/validation/S1-008-scorm2004-cmi5.md."
       ],
       "historicalEvidence": {
         "completedAt": null,

@@ -1,5 +1,18 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 24 septembre 2026 — S1-008, cmi5 recertifié et story clôturée
+
+Une archive cmi5 fraîche de Qalem production, deux scènes et 291 043 octets,
+est importée par le lecteur officiel ADL CATAPULT. Chromium exécute l’AU et
+observe exactement `initialized`, `completed`, `terminated`, avec concordance
+des identifiants de statement. Le LRS relit la même séquence dans une session
+unique, `completion=true` et progression `1`. Les fichiers d’export ne
+diffèrent pas entre le worker déployé et le SHA recetté. Player, MySQL et LRS
+terminent sans redémarrage ni OOM ; conteneurs, réseau et fichiers jetables
+sont supprimés. Avec la recette Moodle SCORM 2004 du même jour, S1-008 passe à
+`completed/passes=true`. Preuve :
+`docs/validation/S1-008-scorm2004-cmi5.md`.
+
 ## 24 septembre 2026 — S1-008, SCORM 2004 recertifié dans Moodle
 
 Une archive SCORM 2004 fraîchement générée par Qalem en production, deux
