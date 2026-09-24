@@ -3320,8 +3320,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Import → outline éditable (porte 3) » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "1-CRÉER",
       "priority": "P2",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S1-005",
@@ -3329,7 +3329,7 @@
       },
       "sourceDependencies": ["S1-003"],
       "dependencies": [],
-      "gap": "Le contrat d’import documentaire vers outline éditable est fraîchement recertifié au SHA courant. Reste le parcours navigateur authentifié de dépôt, validation, édition et génération au SHA de clôture ; passes=false ne l’infère pas.",
+      "gap": "Clôturée le 24 septembre 2026 : dépôt authentifié, validation, édition du plan, génération réelle avec pistes Higgs, relecture de la classe, nettoyage intégral et gate complète sont prouvés. Voir docs/validation/S1-005-course-import.md.",
       "evidence": [
         "app/api/courses/import/route.ts",
         "app/app/page.tsx",
@@ -3350,7 +3350,10 @@
         "2026-08-28 — Le pipeline persiste le fichier privé, le verdict, la source d’organisation, le manifeste immuable et un cours imported/draft ; la génération réutilise le même courseId et le rend ready sans écraser source_kind, import_id ni source_manifest_id. Le Playwright dépôt conforme → validation → modification du titre → génération → classroom passe, et les 15 scénarios ciblés import + bibliothèque de sources passent au SHA validé.",
         "2026-08-28 — Les PDF passent par extractPdfDocumentText, extraction partagée avec /api/parse-pdf : routage du provider existant, garde SSRF et repli unpdf vers MinerU/MinerU Cloud conservés. Le test permanent vérifie explicitement la délégation de l’import PDF au provider MinerU existant.",
         "2026-08-28 — Gate complet sur ServeurIA dans le worktree isolé /tmp/qalem-s6013-155f9b3 et l’image qalem-validation:playwright-1.58.2-ffmpeg : Prettier, TypeScript et lint passent ; 385/385 fichiers et 2 505/2 505 tests Vitest, build 100/100 pages et 83/83 Playwright en 3,6 minutes. Journal /tmp/qalem-s1005-full-gate-d7f570e.log, SHA-256 77d98a4b43dfca7335867accb4de1760c86f32a51e296476c3fee62a3591f132.",
-        "2026-09-17 — Un clone neuf du SHA 42b06719d3798aaa93b4f78aad736b256e162cc9 passe 20/20 tests ciblés : validation du canevas, import API, transformation en plan, pipeline documentaire et reprise. Cette preuve ne remplace pas le parcours navigateur authentifié au SHA de clôture."
+        "2026-09-17 — Un clone neuf du SHA 42b06719d3798aaa93b4f78aad736b256e162cc9 passe 20/20 tests ciblés : validation du canevas, import API, transformation en plan, pipeline documentaire et reprise. Cette preuve ne remplace pas le parcours navigateur authentifié au SHA de clôture.",
+        "2026-09-24 — Recette de production authentifiée avec le runtime worker déployé 9958b960f7a7a5be839cb275bd36a7b7c80a6040 et le harnais 4255e9f524fde3aab584175b704d4fd602759b77 : import HTTP 201, verdict conform, langue fr-FR, deux sections, titre modifié persisté, approche andragogy, génération succeeded, cours ready, deux scènes relues et zéro erreur navigateur.",
+        "2026-09-24 — La cause du crash audio est supprimée : la durée des WAV RIFF est calculée depuis fmt/data sans pipe ffprobe ; la génération réelle produit ses pistes Higgs, tandis que le worker reste healthy, restart=0 et OOMKilled=false. Le drapeau import_pipeline est restauré à false et l’audit final retrouve zéro organisation, adhésion, cours, import, travail, classe ou compte temporaire.",
+        "2026-09-24 — Gate complète ServeurIA au SHA 4255e9f524fde3aab584175b704d4fd602759b77 : Prettier, TypeScript et ESLint sans avertissement ; 3 369/3 369 tests Vitest ; build Next.js et isolation des routes réussis ; 196/196 scénarios Playwright. Journal /tmp/qalem-s1005-full-gate-4255e9f.log, SHA-256 ba79c5fa982efc4c01ff679f4ff93f66a6e51031c3001d59eb1fb6acfe59501f."
       ],
       "historicalEvidence": {
         "completedAt": null,
