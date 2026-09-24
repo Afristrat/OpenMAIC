@@ -157,7 +157,7 @@ curl -fsS https://qalem.ma/api/health >/dev/null
 printf "live_key_match=true\ncontainers_healthy=true\nhealth_http=200\n"
 '@
     $remoteEncoded = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($remote))
-    $sshCommand = "bash -c `"`$(echo $remoteEncoded | base64 -d)`""
+    $sshCommand = "echo $remoteEncoded | base64 -d | bash"
     $keyEncoded = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($ExpectedKey))
     $output = $keyEncoded | & ssh -i "$HOME/.ssh/serveurai_mnemo" -o BatchMode=yes `
         "serveuria@$env:SERVER_HOST" $sshCommand
