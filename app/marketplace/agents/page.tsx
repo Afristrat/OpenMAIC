@@ -33,6 +33,7 @@ import {
 import Link from 'next/link';
 import type { RankedAgent } from '@/lib/marketplace/ranking';
 import { getSystemAgents } from '@/lib/marketplace/system-agents';
+import { formatMarketplaceDate } from '@/lib/marketplace/format-date';
 import { MarketplacePublicationTools } from '@/components/agent/marketplace-publication-tools';
 
 interface PaginationInfo {
@@ -394,7 +395,7 @@ export default function MarketplacePage() {
                 ) : (
                   <span />
                 )}
-                <span>{new Date(agent.createdAt).toLocaleDateString()}</span>
+                <time dateTime={agent.createdAt}>{formatMarketplaceDate(agent.createdAt)}</time>
               </div>
 
               {/* Actions */}

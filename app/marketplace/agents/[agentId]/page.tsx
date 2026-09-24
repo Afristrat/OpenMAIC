@@ -13,6 +13,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useI18n } from '@/lib/hooks/use-i18n';
+import { formatMarketplaceDate } from '@/lib/marketplace/format-date';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useAgentRegistry } from '@/lib/orchestration/registry/store';
 import { importMarketplaceAgent } from '@/lib/marketplace/import-agent';
@@ -302,7 +303,9 @@ export default function AgentDetailPage() {
                     <span className="text-sm font-medium">{review.authorNickname ?? '???'}</span>
                   </div>
                   <span className="text-xs text-muted-foreground">
-                    {new Date(review.createdAt).toLocaleDateString()}
+                    <time dateTime={review.createdAt}>
+                      {formatMarketplaceDate(review.createdAt)}
+                    </time>
                   </span>
                 </div>
                 {review.comment && <p className="text-sm leading-relaxed">{review.comment}</p>}
