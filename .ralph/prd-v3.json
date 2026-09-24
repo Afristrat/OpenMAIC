@@ -1675,15 +1675,19 @@
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Human Yo Impact expose des formations de quatre à six agents malgré la promesse de dix mécanismes, une identité Mehdi/Younes incohérente, des avatars automatiques non maîtrisables, un export MP4 perçu comme silencieux, des défauts typographiques PPTX et une navigation de test tenant sans retour visible vers l’administration.",
+      "gap": "Le téléchargement MP4 est corrigé et déployé : les artefacts privés sont signés en pièce jointe puis diffusés directement, sans blob intermédiaire ni double occupation mémoire. Restent à recetter ou corriger sur Human Yo Impact les dix mécanismes effectifs, l’identité Mehdi/Younes, les avatars automatiques éditables, la typographie PPTX et le retour visible du mode Tester ce tenant.",
       "evidence": [
         "lib/agents/persona-catalog.ts",
         "lib/agents/cast-selection.ts",
         "lib/agents/content-cast-director.ts",
         "app/api/generate/agent-profiles/route.ts",
+        "app/api/export-jobs/[id]/route.ts",
+        "lib/export/download-export.ts",
         "lib/export/use-export-mp4.ts",
         "lib/export/use-export-pptx.ts",
-        "components/admin/tenants-tab.tsx"
+        "components/admin/tenants-tab.tsx",
+        "tests/export/download-export.test.ts",
+        "e2e/classroom-interaction.spec.ts"
       ],
       "acceptance": [
         "Toute nouvelle formation possède les dix mécanismes actifs du référentiel tenant ; le directeur peut doser ou différer leurs interventions sans supprimer silencieusement un mécanisme du casting.",
