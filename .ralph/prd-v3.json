@@ -1344,8 +1344,8 @@
       "description": "En tant que propriétaire de Qalem, je veux qu’aucun tiers ne puisse créer un compte ou entrer dans l’application sans invitation nominative afin que les tests restent strictement privés jusqu’à l’ouverture décidée du produit.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P0",
-      "status": "completed",
-      "passes": true,
+      "status": "to_validate",
+      "passes": false,
       "source": {
         "type": "request_and_production_incident",
         "date": "2026-09-01"
@@ -3177,8 +3177,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Export couche 2 : adaptateurs scorm12/scorm2004/cmi5 interchangeables » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "1-CRÉER",
       "priority": "P2",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S1-008",
