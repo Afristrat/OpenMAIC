@@ -87,11 +87,17 @@ function sessionCookieValue(session) {
 }
 
 async function setImportFlag(enabled) {
-  const { error } = await admin
-    .from('feature_flags')
-    .update({ enabled })
-    .eq('flag_name', 'import_pipeline');
-  checked(error, `Mise à jour import_pipeline=${enabled}`);
+  let lastError;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    const { error } = await admin
+      .from('feature_flags')
+      .update({ enabled })
+      .eq('flag_name', 'import_pipeline');
+    if (!error) return;
+    lastError = error;
+    if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, attempt * 500));
+  }
+  checked(lastError, `Mise à jour import_pipeline=${enabled}`);
 }
 
 async function createFixture() {
