@@ -30,6 +30,10 @@ export async function measureAudioDurationSeconds(
     ffprobe.stderr.on('data', (chunk: Buffer) => errors.push(chunk));
     ffprobe.stdin.on('error', (error) => {
       if (settled) return;
+      // ffprobe may close stdin as soon as it has read enough container metadata
+      // to determine the duration. Large, valid WAV files can therefore produce
+      // EPIPE while ffprobe still exits successfully with a usable duration.
+      if ((error as NodeJS.ErrnoException).code === 'EPIPE') return;
       settled = true;
       clearTimeout(timeout);
       ffprobe.kill('SIGKILL');
