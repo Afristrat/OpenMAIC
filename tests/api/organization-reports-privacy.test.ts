@@ -124,11 +124,11 @@ vi.mock('@/lib/supabase/service', () => ({
     return {
       from: (table: string) => {
         const query = fixture.from(table);
-      query.eq = (...args: unknown[]) => {
-        (table === 'quiz_results' ? mocks.quizFilters : mocks.telemetryFilters).push(args);
+        query.eq = (...args: unknown[]) => {
+          (table === 'quiz_results' ? mocks.quizFilters : mocks.telemetryFilters).push(args);
+          return query;
+        };
         return query;
-      };
-      return query;
       },
     };
   },

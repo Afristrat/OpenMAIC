@@ -5,9 +5,11 @@ import { chromium } from '@playwright/test';
 
 let input = '';
 for await (const chunk of process.stdin) input += chunk;
-const { supabaseUrl, serviceKey, baseUrl = 'https://qalem.ma' } = JSON.parse(
-  input.replace(/^\uFEFF/, ''),
-);
+const {
+  supabaseUrl,
+  serviceKey,
+  baseUrl = 'https://qalem.ma',
+} = JSON.parse(input.replace(/^\uFEFF/, ''));
 input = '';
 
 assert.equal(new URL(baseUrl).origin, 'https://qalem.ma');
