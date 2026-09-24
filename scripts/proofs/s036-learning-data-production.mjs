@@ -39,7 +39,10 @@ function assertResult(result, label) {
 
 async function authenticatedContext(email) {
   const link = await admin.auth.admin.generateLink({ type: 'magiclink', email });
-  assert.ok(!link.error && link.data.properties?.hashed_token, `Login link unavailable for ${email}`);
+  assert.ok(
+    !link.error && link.data.properties?.hashed_token,
+    `Login link unavailable for ${email}`,
+  );
   const client = createClient(supabaseUrl, serviceKey, options);
   const login = await client.auth.verifyOtp({
     type: 'magiclink',
@@ -77,7 +80,10 @@ try {
     email: adminEmail,
     email_confirm: true,
   });
-  assert.ok(!createdAdmin.error && createdAdmin.data.user, 'Temporary administrator creation failed');
+  assert.ok(
+    !createdAdmin.error && createdAdmin.data.user,
+    'Temporary administrator creation failed',
+  );
   adminId = createdAdmin.data.user.id;
 
   const createdLearner = await admin.auth.admin.createUser({
@@ -186,7 +192,10 @@ try {
   assert.equal(rows[0].completion_rate, 0.75);
   assert.equal(rows[0].total_duration, 20);
   assert.match(rows[0].subject_hash, /^[0-9a-f]{64}$/);
-  assert.ok(!JSON.stringify(rows[0]).includes(learnerId), 'Raw learner identity leaked into telemetry');
+  assert.ok(
+    !JSON.stringify(rows[0]).includes(learnerId),
+    'Raw learner identity leaked into telemetry',
+  );
 
   assertResult(
     await admin.from('quiz_results').insert({
@@ -200,10 +209,7 @@ try {
     'Temporary quiz result creation failed',
   );
 
-  const learnerReport = await api(
-    learnerContext,
-    `/api/organizations/${organizationId}/reports`,
-  );
+  const learnerReport = await api(learnerContext, `/api/organizations/${organizationId}/reports`);
   assert.equal(learnerReport.status(), 403, 'Learner accessed organization aggregates');
 
   const report = await api(adminContext, `/api/organizations/${organizationId}/reports`);
@@ -242,7 +248,10 @@ try {
     ['telemetry_consent', 'user_id'],
     ['org_members', 'user_id'],
   ]) {
-    const result = await admin.from(table).select(column, { count: 'exact', head: true }).eq(column, learnerId);
+    const result = await admin
+      .from(table)
+      .select(column, { count: 'exact', head: true })
+      .eq(column, learnerId);
     assert.equal(result.error, null, `${table} cleanup lookup failed`);
     assert.equal(result.count, 0, `${table} retained deleted account data`);
   }
@@ -257,7 +266,11 @@ try {
     adminContext,
     `/api/marketplace/agents/recoverable?orgId=${organizationId}`,
   );
-  assert.equal(recoverable.status(), 200, `Recoverable agent lookup failed: ${await recoverable.text()}`);
+  assert.equal(
+    recoverable.status(),
+    200,
+    `Recoverable agent lookup failed: ${await recoverable.text()}`,
+  );
   const recoverableBody = await recoverable.json();
   assert.ok(
     recoverableBody.agents.some((agent) => agent.id === agentId),
