@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { chromium } from '@playwright/test';
 
 const required = ['QALEM_SUPABASE_ANON_KEY', 'QALEM_SUPABASE_SERVICE_ROLE_KEY'];
 for (const name of required) {
@@ -90,8 +91,8 @@ async function magicLinkSession(email) {
   return session;
 }
 
-function sessionCookie(session) {
-  const value = `base64-${Buffer.from(
+function sessionCookieValue(session) {
+  return `base64-${Buffer.from(
     JSON.stringify({
       access_token: session.access_token,
       refresh_token: session.refresh_token,
@@ -101,7 +102,53 @@ function sessionCookie(session) {
     }),
     'utf8',
   ).toString('base64url')}`;
-  return `sb-db-auth-token=${value}`;
+}
+
+function sessionCookie(session) {
+  return `sb-db-auth-token=${sessionCookieValue(session)}`;
+}
+
+async function validateSuperAdminReturn(session, tenantName) {
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const context = await browser.newContext();
+    await context.addCookies([
+      {
+        name: 'sb-db-auth-token',
+        value: sessionCookieValue(session),
+        domain: 'qalem.ma',
+        path: '/',
+        secure: true,
+        sameSite: 'Lax',
+      },
+    ]);
+    const page = await context.newPage();
+    await page.addInitScript(() => localStorage.setItem('locale', 'fr-FR'));
+    await page.goto(`${appUrl}/app?orgId=${encodeURIComponent(orgId)}`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 60_000,
+    });
+    const banner = page.getByRole('status');
+    await banner.waitFor({ state: 'visible', timeout: 30_000 });
+    const bannerText = await banner.innerText();
+    if (!bannerText.includes(`Mode test du tenant : ${tenantName}`)) {
+      throw new Error(`Bannière de test divergente : ${bannerText}`);
+    }
+    const returnLink = banner.getByRole('link', {
+      name: 'Revenir à l’administration globale',
+    });
+    if ((await returnLink.getAttribute('href')) !== '/admin?tab=tenants') {
+      throw new Error('Lien de retour super-administrateur incorrect');
+    }
+    const adminResponse = await page.request.get(`${appUrl}/api/account/is-admin`);
+    const adminBody = await adminResponse.json();
+    if (!adminResponse.ok() || adminBody?.isAdmin !== true) {
+      throw new Error('La session a perdu son rôle de super-administrateur');
+    }
+    return { bannerText, returnHref: '/admin?tab=tenants', isSuperAdmin: true };
+  } finally {
+    await browser.close();
+  }
 }
 
 async function exactCount(table) {
@@ -228,6 +275,7 @@ const before = {
   courses: await exactCount('courses'),
   stages: await exactCount('stages'),
 };
+const superAdminReturn = await validateSuperAdminReturn(session, organization.name);
 const { response, body } = await jsonRequest(
   `${appUrl}/api/generate/agent-profiles`,
   {
@@ -287,5 +335,6 @@ console.log(
     stageCountAfter: after.stages,
     existingCoursesUntouched: true,
     tenantTeacherConfigured: configureHanae,
+    superAdminReturn,
   }),
 );
