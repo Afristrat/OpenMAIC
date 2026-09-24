@@ -29,9 +29,8 @@ for (const locale of ['fr-FR', 'ar-MA', 'en-US']) {
       await route.fulfill({ json: { choice: xapiChoice, hasConsent: xapiChoice, ok: true } });
     });
 
-    await page.goto('/app');
-    await expect(page.getByRole('region', { name: /Analyses|analytics|تحليلات/ })).toHaveCount(0);
     await page.goto('/profile');
+    await expect(page.getByRole('region', { name: /Analyses|analytics|تحليلات/ })).toHaveCount(0);
     const xapi = page.getByRole('region', {
       name:
         locale === 'fr-FR' ? 'Partage xAPI' : locale === 'ar-MA' ? 'مشاركة xAPI' : 'xAPI sharing',
