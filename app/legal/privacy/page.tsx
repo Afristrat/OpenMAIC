@@ -214,8 +214,8 @@ export default function PrivacyPage(): React.ReactElement {
       <Paragraph>
         Qalem n&apos;utilise aucun cookie publicitaire ni aucun traceur tiers &agrave; des fins de
         ciblage marketing. Le partage xAPI vers un syst&egrave;me externe reste
-        d&eacute;sactiv&eacute; par d&eacute;faut et peut &ecirc;tre param&eacute;tr&eacute; depuis le
-        profil.
+        d&eacute;sactiv&eacute; par d&eacute;faut et peut &ecirc;tre param&eacute;tr&eacute; depuis
+        le profil.
       </Paragraph>
 
       {/* 7. Transferts internationaux */}
