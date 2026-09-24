@@ -41,6 +41,13 @@ ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
 RUN pnpm build
+RUN pnpm exec esbuild scripts/start-workers.ts \
+    --bundle \
+    --platform=node \
+    --format=esm \
+    --target=node22 \
+    --packages=external \
+    --outfile=worker-dist/start-workers.mjs
 
 # ---- Stage 4: Dedicated BullMQ worker ----
 FROM base AS worker
@@ -56,7 +63,7 @@ COPY --from=builder --chown=nextjs:nodejs /app ./
 
 USER nextjs
 
-CMD ["node", "--import", "tsx", "scripts/start-workers.ts"]
+CMD ["node", "worker-dist/start-workers.mjs"]
 
 # ---- Stage 5: Web runner ----
 FROM node:22-alpine AS runner
