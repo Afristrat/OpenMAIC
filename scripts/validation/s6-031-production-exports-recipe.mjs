@@ -108,7 +108,10 @@ async function ownerEmail(ownerId) {
 async function validatePptx(session, course) {
   const browser = await chromium.launch({ headless: true });
   try {
-    const context = await browser.newContext({ acceptDownloads: true });
+    const context = await browser.newContext({
+      acceptDownloads: true,
+      viewport: { width: 1920, height: 1080 },
+    });
     await context.addCookies([
       {
         name: 'sb-db-auth-token',
