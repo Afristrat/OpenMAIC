@@ -14,7 +14,7 @@ INSERT INTO public.stages(id,owner_id,org_id,name,agent_ids) VALUES
 INSERT INTO public.courses(id,owner_id,org_id,stage_id,title,language,source_kind,status,outline) VALUES
  ('00000000-0036-4000-8000-000000000285','00000000-0036-4000-8000-000000000281','00000000-0036-4000-8000-000000000283','s036-shared-learning','Context','ar-MA','generated','ready','{"analyticsContext":{"level":"advanced","subjectTags":["formation-design-pro"]}}');
 INSERT INTO public.shared_classrooms(id,stage_id,org_id,shared_by,visibility) VALUES
- ('00000000-0036-4000-8000-000000000286','s036-shared-learning','00000000-0036-4000-8000-000000000284','00000000-0036-4000-8000-000000000281','organization');
+ ('00000000-0036-4000-8000-000000000286','s036-shared-learning','00000000-0036-4000-8000-000000000284','00000000-0036-4000-8000-000000000281','private');
 SET LOCAL ROLE service_role;
 DO $$
 DECLARE
