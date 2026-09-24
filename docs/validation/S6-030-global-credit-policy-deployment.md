@@ -42,15 +42,16 @@ Les quinze générations d'image réussies ont un coût unitaire compris entre
 
 ## Taux globaux amorcés
 
-Trois taux sur huit sont maintenant actifs dans le référentiel global :
+Quatre taux sur huit sont maintenant actifs dans le référentiel global :
 
 | Unité | Taux | Base | Justification |
 |---|---:|---:|---|
 | Jeton LLM d'entrée | 95 microunités de crédit | 1 jeton | coût unitaire maximal du catalogue Qalem actif : Kimi K2.6 à 0,95 USD par million |
 | Jeton LLM de sortie | 400 microunités de crédit | 1 jeton | coût unitaire maximal du catalogue Qalem actif : Kimi K2.6 à 4 USD par million |
 | Image | 6 949 150 microunités de crédit | 1 image | percentile 95 des quinze coûts réels Qalem observés |
+| TTS Higgs | 27 000 microunités de crédit | 1 seconde audio | amortissement conservateur du DGX, temps de calcul mesuré et énergie mesurée, arrondis vers le haut |
 
-L'écriture des trois versions a été transactionnelle. La base relit trois taux
+L'écriture des quatre versions a été transactionnelle. La base relit quatre taux
 globaux actifs et zéro contrôle tenant actif. Aucun solde, y compris celui de
 Human Yo Impact, n'est donc débité par un référentiel encore incomplet.
 
@@ -63,15 +64,22 @@ attribuables à la flotte Qalem ; le détail par tenant et formation n'existe pa
 dans les anciens journaux. Le nouveau comptage Qalem transporte désormais le
 tenant, l'acteur et l'opération pour les usages futurs.
 
-Cette exclusivité ne suffit pas à inventer un coût par seconde : le taux TTS
-reste ouvert jusqu'à la mesure de l'énergie et à la fixation de la règle
-d'amortissement. La même discipline s'applique à l'ASR, à la vidéo, au stockage
-et aux opérations. L'ajout du huitième taux activera atomiquement les contrôles
-système ; aucune activation partielle n'est permise.
+Une sonde fraîche sur le DGX Higgs a produit 14,38 secondes audio en 17,350723
+secondes écoulées, avec 85,93 % d'utilisation GPU. La puissance moyenne mesurée
+est de 12,2295 W au repos et 26,721408 W en charge, soit 0,069845856 Wh nets et
+0,004857153 Wh par seconde audio. Recoupée avec la recette de production de
+37 segments, 447,08 secondes audio et 552 secondes écoulées, cette mesure donne
+25 827 microunités de crédit par seconde avant électricité, sur la règle
+d'amortissement de 4 699 USD sur trois ans et 2 080 heures productives par an.
+Le taux est arrondi à 27 000 microunités : il couvre encore l'énergie à un prix
+théorique de 2 USD/kWh, très supérieur au besoin de la mesure. La même discipline
+reste à appliquer à l'ASR, à la vidéo, au stockage et aux opérations. L'ajout du
+huitième taux activera atomiquement les contrôles système ; aucune activation
+partielle n'est permise.
 
 ## Restes de clôture
 
-- mesurer et versionner TTS, ASR, vidéo, stockage et opération ;
+- mesurer et versionner ASR, vidéo, stockage et opération ;
 - rendre le ledger personnel visible dans une page accessible aux membres, pas
   seulement dans l'administration de l'organisation ;
 - exécuter la recette Human Yo Impact : débit unique, auteur, rejeu idempotent,

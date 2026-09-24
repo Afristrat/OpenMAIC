@@ -1621,7 +1621,7 @@
       },
       "sourceDependencies": [],
       "dependencies": ["S6-023", "S6-024", "S6-025"],
-      "gap": "Le référentiel global est déployé et trois unités mesurées sur huit sont versionnées : jetons LLM d’entrée, jetons LLM de sortie et image. Aucun tenant n’est encore débité, volontairement, car TTS, ASR, vidéo, stockage et opération ne disposent pas tous d’un coût complet prouvé. Le ledger personnel doit encore être rendu accessible aux membres et la recette Human Yo Impact reste à exécuter après couverture complète.",
+      "gap": "Le référentiel global est déployé et quatre unités mesurées sur huit sont versionnées : jetons LLM d’entrée, jetons LLM de sortie, image et TTS Higgs. Aucun tenant n’est encore débité, volontairement, car ASR, vidéo, stockage et opération ne disposent pas tous d’un coût complet prouvé. Le ledger personnel doit encore être rendu accessible aux membres et la recette Human Yo Impact reste à exécuter après couverture complète.",
       "evidence": [
         "docs/superpowers/specs/2026-09-23-centralisation-credits-marge-design.md",
         "docs/validation/S6-030-global-credit-policy-deployment.md",
