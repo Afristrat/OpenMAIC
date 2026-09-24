@@ -230,6 +230,17 @@ async function computeMp3PeakDbfs(audio: Uint8Array): Promise<number> {
 
     ffmpeg.stdout.on('data', (chunk: Buffer) => chunks.push(chunk));
     ffmpeg.stderr.on('data', (chunk: Buffer) => errors.push(chunk));
+    ffmpeg.stdin.on('error', (error) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      ffmpeg.kill('SIGKILL');
+      reject(
+        new AudioGateFormatError(
+          `Piste audio rejetée : écriture vers FFmpeg interrompue (${error.message}).`,
+        ),
+      );
+    });
     ffmpeg.on('error', (error) => {
       if (settled) return;
       settled = true;

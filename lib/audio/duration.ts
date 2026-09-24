@@ -28,6 +28,13 @@ export async function measureAudioDurationSeconds(
 
     ffprobe.stdout.on('data', (chunk: Buffer) => output.push(chunk));
     ffprobe.stderr.on('data', (chunk: Buffer) => errors.push(chunk));
+    ffprobe.stdin.on('error', (error) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      ffprobe.kill('SIGKILL');
+      reject(new Error(`Audio duration probe input failed: ${error.message}`));
+    });
     ffprobe.on('error', (error) => {
       if (settled) return;
       settled = true;

@@ -128,6 +128,11 @@ describe('assertAboveNoiseFloor', () => {
     await expect(assertAboveNoiseFloor(mp3, 'mp3')).rejects.toThrow(NoiseFloorError);
   });
 
+  it('rejects a large malformed MP3 without an unhandled broken pipe', async () => {
+    const malformed = new Uint8Array(16 * 1024 * 1024);
+    await expect(assertAboveNoiseFloor(malformed, 'mp3')).rejects.toThrow(AudioGateFormatError);
+  });
+
   it('rejects an unsupported format instead of bypassing the gate', async () => {
     await expect(assertAboveNoiseFloor(new Uint8Array(100), 'opus')).rejects.toThrow(
       AudioGateFormatError,
