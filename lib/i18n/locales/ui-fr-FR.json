@@ -2579,7 +2579,7 @@
   "admin.tenants.searchAction": "Rechercher",
   "admin.tenants.openDetail": "Ouvrir la fiche",
   "admin.tenants.testTenant": "Tester dans Qalem",
-  "admin.tenantTest.banner": "Mode test du tenant : {tenant}",
+  "admin.tenantTest.banner": "Mode test du tenant : {{tenant}}",
   "admin.tenantTest.return": "Revenir à l’administration globale",
   "admin.tenants.pagination": "{from}–{to} sur {total} tenants",
   "admin.tenants.suspend": "Suspendre",
