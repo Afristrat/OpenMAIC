@@ -98,7 +98,12 @@ try {
   organizationId = assertResult(
     await admin
       .from('organizations')
-      .insert({ name: organizationName, status: 'active', default_locale: 'fr-FR' })
+      .insert({
+        name: organizationName,
+        status: 'active',
+        default_locale: 'fr-FR',
+        seat_limit: 2,
+      })
       .select('id')
       .single(),
     'Temporary organization creation failed',
