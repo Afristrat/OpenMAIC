@@ -2,14 +2,14 @@
 
 ## État certifié le 24 septembre 2026
 
-Le socle a d’abord été déployé au SHA
-`826018fd0ecc605f7a039971eed9160e188b7447`, puis le ledger membre au SHA
-`09113647494ea54f44a23777342b42595fd1b0e9`. Le déploiement Coolify du second
-SHA, `ktwoeifk7ik6ndexwlmu7ov0`, est terminé. Le conteneur
-`bcx5pxyuc9z3lt4jtyjipcqu-014010742021` sert exactement ce SHA, est sain, n’a
+Le candidat de clôture est le SHA
+`9a486f94e6d7ed90b2b5ba3f2c786e340032195a`, poussé sur
+`origin/refork-v030`. Le déploiement Coolify
+`h65r8qh88ev4syf9b7j5qbe6` est terminé. Le conteneur
+`bcx5pxyuc9z3lt4jtyjipcqu-091001989287` sert exactement ce SHA, est sain, n’a
 subi aucun redémarrage et porte `OOMKilled=false`. L’API publique de santé
-répond HTTP 200 et les journaux contrôlés ne contiennent aucun événement
-critique.
+répond HTTP 200 avec `{"status":"ok"}` et les journaux contrôlés ne
+contiennent aucun `ERROR`, `Unhandled`, `FATAL` ou `OOM`.
 
 La migration `20260923234500_global_credit_policy.sql` est appliquée à la base
 Qalem après prévol transactionnel et sauvegarde. Elle fixe l'ancrage à un crédit

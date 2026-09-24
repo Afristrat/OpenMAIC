@@ -1613,15 +1613,15 @@
       "description": "En tant que propriétaire de Qalem, je veux qu’une politique globale de crédits s’applique automatiquement à tous les tenants et utilisateurs, tout en séparant le débit, le prix à la valeur et le contrôle de marge, afin que chaque portefeuille corresponde aux usages réels sans configuration individuelle.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P0",
-      "status": "in_progress",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "type": "production_gap",
         "date": "2026-09-23"
       },
       "sourceDependencies": [],
       "dependencies": ["S6-023", "S6-024", "S6-025"],
-      "gap": "Les huit unités sont versionnées et les contrôles des quatre tenants actifs sont appliqués. La migration du forfait gratuit à trois cours est effective en production et Human Yo Impact est relu au plafond de trois cours avec 1 000 crédits inchangés. Le ledger personnel est monté dans le profil mais doit encore être déployé et recetté par rôle ; la recette Human Yo Impact doit encore prouver débit réel unique, rejeu idempotent, remboursement d’échec et isolation des vues avant le gate complet du SHA de clôture.",
+      "gap": "Aucun écart restant : les huit unités sont versionnées, les contrôles des quatre tenants actifs sont appliqués, Human Yo Impact est au plafond gratuit de trois cours, le ledger est visible selon le rôle et la recette réelle prouve débit unique, idempotence, remboursement et isolation.",
       "evidence": [
         "docs/superpowers/specs/2026-09-23-centralisation-credits-marge-design.md",
         "docs/validation/S6-030-global-credit-policy-deployment.md",
@@ -1644,7 +1644,13 @@
         "Les RLS, droits de fonctions, versions temporelles, concurrence, isolation inter-tenant et divergences portefeuille-ledger sont couverts par des tests permanents.",
         "Le quality gate complet et les parcours Playwright sont verts au SHA exact déployé."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "Le SHA 9a486f94e6d7ed90b2b5ba3f2c786e340032195a est poussé et déployé par Coolify sous h65r8qh88ev4syf9b7j5qbe6 ; le conteneur sert exactement ce SHA, est healthy, restart=0 et OOMKilled=false, et /health répond HTTP 200.",
+        "La recette Human Yo Impact s6030-1790214961228-562070e8-2b4b-48d8-9b1c-9b66e9c3f6e7 exécute une recherche Serper réelle, débite une seule fois 0,1 crédit, retourne applied=false au rejeu et conserve pending_configuration avec SELL_PRICE_NOT_FOUND.",
+        "Une réservation d’échec restitue intégralement 100 000 microunités et son rejeu retourne applied=false ; le portefeuille et le ledger relisent tous deux 999 700 000 microunités après les trois recherches réelles de mise au point.",
+        "Les recettes navigateur administrateur tenant, super-administrateur et membre prouvent respectivement les vues tenant, tenant sans membership et personnelle sans écriture étrangère ; l’utilisateur temporaire est supprimé.",
+        "Au candidat déployé, Prettier, ESLint, le build TypeScript/Next.js de 127 pages, 544 fichiers et 3 360 tests Vitest ainsi que 194 scénarios Playwright passent sans échec."
+      ],
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": [
