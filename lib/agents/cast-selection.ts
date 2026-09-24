@@ -18,6 +18,12 @@ export interface TenantCast {
   cultureReference: string;
 }
 
+type RosterAgent = {
+  id: string;
+  role: string;
+  mechanismId?: string;
+};
+
 const CONTENT_SIGNALS: Readonly<Record<string, readonly string[]>> = {
   analyst: ['analyse', 'analysis', 'donnée', 'data', 'chiffre', 'finance', 'audit', 'risque'],
   coach: ['plan', 'pratique', 'exercice', 'business', 'vente', 'action', 'workflow'],
@@ -40,6 +46,34 @@ function preferenceIsFalse(value: unknown): boolean {
 
 function preferenceText(value: unknown): string {
   return typeof value === 'string' ? value.toLowerCase() : '';
+}
+
+/**
+ * Keep the complete tenant roster while moving the author's preferred
+ * mechanisms immediately after the teacher. A manual choice is an
+ * intervention priority, never permission to remove a promised mechanism.
+ */
+export function prioritizeCompleteTenantRoster<T extends RosterAgent>(
+  roster: readonly T[],
+  preferredIds: readonly string[],
+): T[] {
+  const rank = new Map(preferredIds.map((id, index) => [id, index]));
+  return roster
+    .map((agent, index) => ({ agent, index }))
+    .sort((left, right) => {
+      const leftTeacher = left.agent.role === 'teacher';
+      const rightTeacher = right.agent.role === 'teacher';
+      if (leftTeacher !== rightTeacher) return leftTeacher ? -1 : 1;
+      const leftRank = rank.get(left.agent.mechanismId ?? left.agent.id);
+      const rightRank = rank.get(right.agent.mechanismId ?? right.agent.id);
+      if (leftRank !== undefined || rightRank !== undefined) {
+        if (leftRank === undefined) return 1;
+        if (rightRank === undefined) return -1;
+        if (leftRank !== rightRank) return leftRank - rightRank;
+      }
+      return left.index - right.index;
+    })
+    .map(({ agent }) => agent);
 }
 
 function scoreAgent(

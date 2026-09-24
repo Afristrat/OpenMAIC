@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_LEARNING_DESIGN } from '@/lib/agents/persona-catalog';
-import { selectTenantCast } from '@/lib/agents/cast-selection';
+import { prioritizeCompleteTenantRoster, selectTenantCast } from '@/lib/agents/cast-selection';
 import { CULTURE_REFERENCE_VERSION, getCultureNames } from '@/lib/agents/culture-references';
 
 const profile = { culture: 'ma-ar', preferences: {} };
@@ -81,5 +81,34 @@ describe('selectTenantCast', () => {
       expect(agent.voiceConfig).toBeDefined();
       expect(agent.avatar).toMatch(/^\/avatars\//);
     }
+  });
+});
+
+describe('prioritizeCompleteTenantRoster', () => {
+  it('conserve les dix mécanismes en mode manuel et ne fait que les prioriser', () => {
+    const roster = selectTenantCast({
+      design: DEFAULT_LEARNING_DESIGN,
+      profile,
+      content: 'Formation manuelle.',
+      seed: 'manual-full-roster',
+    }).agents;
+
+    const prioritized = prioritizeCompleteTenantRoster(roster, ['coach', 'analyst']);
+
+    expect(prioritized).toHaveLength(10);
+    expect(new Set(prioritized.map((agent) => agent.mechanismId)).size).toBe(10);
+    expect(prioritized[0]?.role).toBe('teacher');
+    expect(prioritized.slice(1, 3).map((agent) => agent.mechanismId)).toEqual(['coach', 'analyst']);
+  });
+
+  it('conserve le référentiel complet sans aucune préférence', () => {
+    const roster = selectTenantCast({
+      design: DEFAULT_LEARNING_DESIGN,
+      profile,
+      content: 'Formation sans sélection explicite.',
+      seed: 'manual-no-selection',
+    }).agents;
+
+    expect(prioritizeCompleteTenantRoster(roster, [])).toEqual(roster);
   });
 });

@@ -68,7 +68,11 @@ import {
   type LearningApproach,
   type LearningDesignSettings,
 } from '@/lib/agents/persona-catalog';
-import { selectTenantCast, type LearnerCastingProfile } from '@/lib/agents/cast-selection';
+import {
+  prioritizeCompleteTenantRoster,
+  selectTenantCast,
+  type LearnerCastingProfile,
+} from '@/lib/agents/cast-selection';
 import { deriveCourseId, reserveDistinctCasting } from '@/lib/agents/casting-variation';
 import { releaseCastingReservation, reserveCasting } from '@/lib/server/casting-storage';
 import {
@@ -701,7 +705,6 @@ export async function generateClassroom(
     }));
     log.info(`Instantiated ${agents.length} tenant pedagogical personas`);
   } else {
-    const selectedIds = new Set(input.selectedPersonaIds ?? []);
     const tenantRoster = buildTenantAgentConfigs(learningDesign);
     const contextualAgents = (input.contextualSpecialists ?? []).map((specialist) => ({
       id: specialist.id,
@@ -718,14 +721,10 @@ export async function generateClassroom(
       occupationalProfile: specialist.occupationalProfile,
     }));
     tenantRoster.push(...contextualAgents);
-    const contextualAgentIds = new Set(contextualAgents.map((agent) => agent.id));
-    const selectedRoster = tenantRoster.filter(
-      (agent) =>
-        agent.role === 'teacher' ||
-        contextualAgentIds.has(agent.id) ||
-        selectedIds.has(agent.mechanismId ?? agent.id),
+    tenantAgentConfigs = prioritizeCompleteTenantRoster(
+      tenantRoster,
+      input.selectedPersonaIds ?? [],
     );
-    tenantAgentConfigs = selectedRoster.length > 1 ? selectedRoster : tenantRoster.slice(0, 4);
     agents = tenantAgentConfigs.map(({ id, name, role, persona }) => ({ id, name, role, persona }));
   }
   tenantAgentConfigs = applyClassroomVoiceOverrides(tenantAgentConfigs, input.agentVoiceOverrides);
