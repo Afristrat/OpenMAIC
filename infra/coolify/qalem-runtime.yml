@@ -13,6 +13,10 @@ x-qalem-environment: &qalem-environment
   IMAGE_OPENAI_API_KEY: ${IMAGE_OPENAI_API_KEY}
   IMAGE_OPENAI_BASE_URL: ${IMAGE_OPENAI_BASE_URL}
   IMAGE_OPENAI_MODELS: ${IMAGE_OPENAI_MODELS}
+  # The worker decrypts each tenant-scoped LRS destination immediately before
+  # delivery. Keeping the value in Coolify is insufficient unless Compose
+  # explicitly forwards it to the worker container.
+  LRS_CONFIG_ENCRYPTION_KEY: ${LRS_CONFIG_ENCRYPTION_KEY:?LRS configuration encryption key required}
   LTI_APP_URL: ${LTI_APP_URL:?LTI app URL required}
   LTI_KEY_ID: ${LTI_KEY_ID:?LTI key ID required}
   LTI_PRIVATE_KEY: ${LTI_PRIVATE_KEY:?LTI private key required}
