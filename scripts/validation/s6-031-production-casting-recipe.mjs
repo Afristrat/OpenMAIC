@@ -14,6 +14,7 @@ const orgId = process.env.QALEM_RECIPE_ORG_ID ?? 'aa7870b7-3938-4f24-b8bf-4a9d73
 const superAdminEmail = process.env.QALEM_RECIPE_SUPER_ADMIN ?? 'Amine@qalem.ma';
 const anonKey = process.env.QALEM_SUPABASE_ANON_KEY;
 const serviceKey = process.env.QALEM_SUPABASE_SERVICE_ROLE_KEY;
+const configureHanae = process.env.QALEM_RECIPE_CONFIGURE_HANAE === 'true';
 
 const serviceHeaders = {
   apikey: serviceKey,
@@ -170,8 +171,33 @@ const [{ body: organizations }, session] = await Promise.all([
   ),
   magicLinkSession(superAdminEmail),
 ]);
-const organization = organizations?.[0];
+let organization = organizations?.[0];
 if (!organization) throw new Error('Tenant Human Yo Impact introuvable');
+
+if (configureHanae) {
+  const { body: update } = await jsonRequest(
+    `${appUrl}/api/organizations/${encodeURIComponent(orgId)}`,
+    {
+      method: 'PATCH',
+      headers: { cookie: sessionCookie(session), 'content-type': 'application/json' },
+      body: JSON.stringify({
+        settings: {
+          teachingProfile: {
+            name: 'Hanae',
+            avatar: '/avatars/teacher-2.png',
+            providerId: 'higgs-tts',
+            voiceId: 'hanae',
+          },
+        },
+      }),
+    },
+    'Configuration de la formatrice Human Yo Impact',
+  );
+  organization = update?.organization;
+  if (organization?.settings?.teachingProfile?.name !== 'Hanae') {
+    throw new Error('La configuration de Hanae n’est pas persistée');
+  }
+}
 
 const before = {
   courses: await exactCount('courses'),
@@ -235,5 +261,6 @@ console.log(
     stageCountBefore: before.stages,
     stageCountAfter: after.stages,
     existingCoursesUntouched: true,
+    tenantTeacherConfigured: configureHanae,
   }),
 );
