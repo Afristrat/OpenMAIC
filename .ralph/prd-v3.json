@@ -4789,11 +4789,11 @@
     {
       "id": "S-036",
       "title": "Collecter les données d’apprentissage et d’expérience utilisateur",
-      "description": "Collecter les événements autorisés utiles à l’apprentissage adulte et à l’expérience utilisateur, avec consentement, contrôle des accès, export et suppression vérifiables.",
+      "description": "Collecter les événements utiles à l’apprentissage adulte et à l’expérience utilisateur sous le contrat de service, avec pseudonymisation, contrôle des accès, export et suppression vérifiables ; conserver un choix distinct pour tout partage xAPI externe.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd.json",
         "id": "S-036",
@@ -4801,7 +4801,7 @@
       },
       "sourceDependencies": ["S-022"],
       "dependencies": ["S0-011", "U-021"],
-      "gap": "2026-09-10 : collecte/outbox et agrégation candidates raccordées, y compris tenant destinataire vérifié, contexte serveur et rejeu immuable ; export personnel de 53 sections avec identité Auth non secrète et lien protégé vers les fichiers importés ; suppression Auth/UI et rattrapage des imports sans référence après événement Auth candidats ; provenance organisationnelle des imports et purge après disparition auteur/tenant raccordées. Cycle de vie replay candidat : session supprimée atomiquement, accès Storage conditionné à son existence, uploads serveur et références canoniques, purge réessayable des pistes orphelines ; événements paginés avec bigint exacts et borne fixe, pistes livrées directement par Storage et liées dans l’export. Liens protégés vers exports terminés, vidéos générées et transmissions avec filigrane raccordés ; livraison directe sans buffer et Range natif prouvé sur fichier synthétique supprimé. Reprise des agents privés tenant après perte de propriétaire codée : admin actif, marqueur causal, audit et interface FR/AR/EN, sans publication automatique. Preuves détaillées dans docs/validation/S-036-learning-collection.md et S-036-account-export-inventory.md. Revalidation UI et couverture explicite des rapports codées (historique exclu, absence distincte de zéro). Les migrations requises sont désormais appliquées atomiquement et la recette consentie S-036 passe sur le schéma réel, sans activation. Restent revalidation effective des partages historiques au déploiement, autres fichiers de l’export et journaux Auth non inventoriés (inventaire public des 71 relations consigné), recette physique des purges (zéro propriété Storage individuelle constatée actuellement), autres fichiers Storage, compte chargé et concurrence réelle, accès PostgREST/Storage avec ancien JWT (hard-delete Auth réel, refus /user et refresh prouvés sur compte jetable), recette intégrée de reprise des agents privés, recette intégrée au SHA propre et publication. Aucune collecte réelle n’est activée ; pas de clôture.",
+      "gap": "Clôturé le 24 septembre 2026 : analyses internes contractuelles et pseudonymisées, collecte idempotente, isolation par rôle et tenant, agrégats administrateur, export personnel, suppression de compte, reprise auditée des agents privés, cycle Storage et migrations de production sont prouvés de bout en bout. Le partage xAPI externe reste séparé et facultatif conformément à U-021/S-035.",
       "evidence": [
         "lib/telemetry/pedagogy-collector.ts:74",
         "2026-09-10 : export candidat 20260910000245, 46 sections/colonnes explicites, bigint exacts, exclusions documentées. SQL combiné ROLLBACK : 101 événements, 1001 observations, jointures LTI et zéro fixtures. 70269 : quatre tests API/TypeScript/lint/quatre Chromium. Inventaire 71 relations : sept familles de contributions et Auth/Storage encore ouvertes, pas de prétention d’export intégral. Voir docs/validation/S-036-account-export-inventory.md.",
@@ -4823,15 +4823,17 @@
       ],
       "acceptance": [
         "lib/telemetry/pedagogy-collector.ts",
-        "Collecte opt-in : séquences scènes, scores, temps, actions, complétion",
+        "Collecte contractuelle pour le service authentifié : séquences de scènes, scores, temps, actions et complétion ; le partage xAPI externe reste opt-in",
         "Pseudonymisation des identifiants et réduction des données exposées ; les événements restent des données personnelles protégées, sans prétention d’anonymisation par simple hachage.",
         "Table pedagogy_telemetry",
-        "Consentement RGPD/CNDP",
+        "Finalité interne encadrée par les conditions d’utilisation et choix individuel distinct pour xAPI",
         "Dashboard admin données agrégées",
-        "Avant toute activation, confirmer finalité, données et consentement avec le responsable du produit.",
-        "Prouver collecte consentie, absence de collecte refusée, agrégation et suppression ; ne jamais présenter un identifiant hashé comme une anonymisation garantie."
+        "Prouver le provisionnement contractuel, l’absence d’émission xAPI sans choix, l’agrégation par rôle et la suppression ; ne jamais présenter un identifiant haché comme une anonymisation garantie."
       ],
       "closureEvidence": [
+        "2026-09-24 — Recette intégrée de production : collecte idempotente pseudonymisée, quiz, rapport tenant complet et refus membre, export personnel de 57 sections, suppression Auth/applicative, reprise auditée d’un agent privé et nettoyage intégral des fixtures. Preuve Storage : 128 octets, Range HTTP 206, suppression et zéro résidu.",
+        "2026-09-24 — Dix-sept migrations S-036 manquantes ou correctives appliquées après sauvegarde SHA-256 6129e969bbb3b6f2ae9418b8ac59d248cb5b22f40634b96e3bc4af6c79adab43. Les 29 recettes SQL passent sous transaction annulée ; journal SHA-256 fc466ef9d57ce85d1d000a425aa8f11a4223f3fa9a65d9569808f448c5c007c6.",
+        "2026-09-24 — Correctif de rapport déployé dans l’image 4abadef94e1835d932bddd7afaf67380da232be4, déploiement Coolify 9ieiameqs0utecicfmnck1zv, conteneur sain et santé HTTP 200. Gate fonctionnelle : Prettier, TypeScript, ESLint, 3 373 tests Vitest, build 127 routes et 196/196 Playwright ; avertissements pnpm.overrides et jeton Sentry explicitement conservés.",
         "2026-09-16 — Les migrations de collecte et projection associées au PRD3 ont été appliquées atomiquement après sauvegarde complète et prévol ROLLBACK sur le schéma réel. Le flag xapi_emission demeure false ; aucune collecte réelle n’est activée. Les recettes intégrées, purges et revalidation restent explicitement ouvertes.",
         "2026-09-16 — Le correctif de schéma S-036 ajoute scene_observations puis retire la surcharge obsolète à cinq arguments de record_consented_learning. Sauvegarde SHA-256 99293552fa6a9f682260370d8f24c2db89629b648deaefd9cf0e664dc551ab2c, prévol ROLLBACK et recette S-036 complète passante sur production ; le registre privé append-only consigne le lot. Aucune donnée métier ni collecte n’a été conservée ou activée."
       ],
