@@ -86,16 +86,12 @@ try {
   const page = await context.newPage();
   await page.addInitScript(() => localStorage.setItem('locale', 'fr-FR'));
   await page.goto(`${baseUrl}/app`, { timeout: 60_000 });
-  await expect(
-    page.getByRole('region', { name: labels['telemetry.xapiTitle'] }),
-  ).toHaveCount(0);
+  await expect(page.getByRole('region', { name: labels['telemetry.xapiTitle'] })).toHaveCount(0);
 
   await page.goto(`${baseUrl}/profile`, { timeout: 60_000 });
   const control = page.getByRole('region', { name: labels['telemetry.xapiTitle'] });
   await expect(control).toBeVisible();
-  await expect(
-    control.getByRole('button', { name: labels['telemetry.xapiAccept'] }),
-  ).toBeEnabled();
+  await expect(control.getByRole('button', { name: labels['telemetry.xapiAccept'] })).toBeEnabled();
 
   const enabledResponse = page.waitForResponse(
     (response) =>
