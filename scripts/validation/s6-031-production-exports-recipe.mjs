@@ -113,7 +113,12 @@ async function validatePptx(session, course) {
       timeout: 60_000,
     });
     const menu = page.getByLabel('Export PPTX');
-    await menu.waitFor({ state: 'visible', timeout: 45_000 });
+    try {
+      await menu.waitFor({ state: 'visible', timeout: 45_000 });
+    } catch {
+      const rendered = (await page.locator('body').innerText()).slice(0, 700).replaceAll('\n', ' ');
+      throw new Error(`Export PPTX absent sur ${page.url()} : ${rendered}`);
+    }
     await menu.click();
     const downloadPromise = page.waitForEvent('download', { timeout: 120_000 });
     await page.getByTestId('export-pptx').click();
