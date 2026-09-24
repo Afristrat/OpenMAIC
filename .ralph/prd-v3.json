@@ -1667,15 +1667,15 @@
       "description": "En tant que créateur ou super-administrateur, je veux que les dix mécanismes annoncés soient réellement présents, que chaque identité reste cohérente, que les exports signalent et produisent un résultat fiable et que le test d’un tenant soit réversible, afin de pouvoir créer et contrôler une formation sans impasse ni promesse non tenue.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P0",
-      "status": "in_progress",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "type": "production_gap",
         "date": "2026-09-23"
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Le téléchargement MP4 est corrigé et déployé : les artefacts privés sont signés en pièce jointe puis diffusés directement, sans blob intermédiaire ni double occupation mémoire. Restent à recetter ou corriger sur Human Yo Impact les dix mécanismes effectifs, l’identité Mehdi/Younes, les avatars automatiques éditables, la typographie PPTX et le retour visible du mode Tester ce tenant.",
+      "gap": "Soldé : les modes automatique et manuel conservent les dix mécanismes du référentiel tenant, les identités canoniques lient nom, genre, avatar et voix, les anciennes formations ne sont pas réécrites, les exports PPTX et MP4 ont été recettés sur Human Yo Impact et le mode de test super-administrateur expose un retour permanent vers l’administration globale.",
       "evidence": [
         "lib/agents/persona-catalog.ts",
         "lib/agents/cast-selection.ts",
@@ -1687,7 +1687,13 @@
         "lib/export/use-export-pptx.ts",
         "components/admin/tenants-tab.tsx",
         "tests/export/download-export.test.ts",
-        "e2e/classroom-interaction.spec.ts"
+        "e2e/classroom-interaction.spec.ts",
+        "tests/agents/cast-selection.test.ts",
+        "tests/generation/canonical-agent-speech.test.ts",
+        "tests/server/classroom-generation-capture.test.ts",
+        "scripts/validation/s6-031-production-casting-recipe.mjs",
+        "scripts/validation/s6-031-production-exports-recipe.mjs",
+        "docs/validation/S6-031-casting-exports-superadmin.md"
       ],
       "acceptance": [
         "Toute nouvelle formation possède les dix mécanismes actifs du référentiel tenant ; le directeur peut doser ou différer leurs interventions sans supprimer silencieusement un mécanisme du casting.",
@@ -1699,7 +1705,13 @@
         "Les parcours Human Yo Impact, casting automatique, casting manuel, MP4, PPTX et retour super-administrateur sont recettés sur le SHA déployé.",
         "Le quality gate complet est vert au SHA exact sur ServeurIA."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-24 — La recette Human Yo Impact obtient HTTP 200 avec 10 agents et 10 mécanismes uniques ; la formatrice canonique est Hanae, femme, avatar teacher-2, voix Higgs hanae. Les compteurs restent à 3 cours et 3 classes et aucune formation existante n’est réécrite.",
+        "2026-09-24 — La recette navigateur super-administrateur observe la bannière Human Yo Impact, le lien visible /admin?tab=tenants et isAdmin=true, sans créer de membership.",
+        "2026-09-24 — Le PPTX réel contient 11 diapositives et 165 paragraphes, conserve les accents Unicode et ne contient aucun contrôle parasite. Le MP4 réel termine 17 scènes, répond video/mp4 et porte la signature ftyp ; la reprise réutilise le job 5b761c3e-685c-4000-94ec-738ac7ef5059 sans doublon.",
+        "2026-09-24 — Les tests de casting contrôlent dix mécanismes uniques en automatique et en manuel ; les tests serveur imposent une parole persistée pour le roster complet et les tests d’auto-présentation couvrent ponctuation, conjonction et fin de phrase.",
+        "2026-09-24 — Au SHA de clôture, ServeurIA passe Prettier, TypeScript, ESLint, Vitest, build et Playwright ; le web et qalem-runtime servent ce même SHA, sont healthy, restart=0 et OOMKilled=false, et /health répond HTTP 200."
+      ],
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": [
