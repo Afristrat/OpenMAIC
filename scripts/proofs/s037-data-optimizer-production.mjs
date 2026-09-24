@@ -291,6 +291,8 @@ try {
   await browser?.close().catch(() => undefined);
   if (organizationId) {
     await admin.from('classroom_generation_jobs').delete().eq('org_id', organizationId);
+    await admin.from('courses').delete().eq('stage_id', stageId);
+    await admin.from('stages').delete().eq('id', stageId);
     await admin.from('organizations').delete().eq('id', organizationId);
   }
   if (learnerId) await admin.auth.admin.deleteUser(learnerId).catch(() => undefined);
