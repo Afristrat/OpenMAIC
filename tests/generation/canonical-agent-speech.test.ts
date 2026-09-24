@@ -275,6 +275,18 @@ describe('canonical agent speech', () => {
       'مرحباً، اسمي يونس، وسأرافقكم في هذا التكوين.',
       'مرحباً، اسمي Hanae، وسأرافقكم في هذا التكوين.',
     ],
+    [
+      'Bonjour, je suis Younes. Nous allons commencer par vos objectifs.',
+      'Bonjour, je suis Hanae. Nous allons commencer par vos objectifs.',
+    ],
+    [
+      'Je m’appelle Younes et je vous accompagnerai pendant cette formation.',
+      'Je m’appelle Hanae et je vous accompagnerai pendant cette formation.',
+    ],
+    [
+      'My name is Younes and I will guide this course.',
+      'My name is Hanae and I will guide this course.',
+    ],
   ])(
     'keeps a teacher self-introduction aligned with the canonical cast',
     async (generated, expected) => {

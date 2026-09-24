@@ -2721,9 +2721,9 @@ export function stripVisualProductionDirectives(text: string): string {
 }
 
 const SELF_INTRODUCTION_NAME_PATTERNS = [
-  /(\b[Jj]e\s+(?:suis|m['’]appelle)\s+)([\p{Lu}][\p{L}\p{M}'’.\-]*)(?=\s*[,،])/gu,
-  /(\b(?:I\s+am|[Mm]y\s+name\s+is)\s+)([\p{Lu}][\p{L}\p{M}'’.\-]*)(?=\s*[,،])/gu,
-  /(اسمي\s+)([\p{L}\p{M}'’.\-]+)(?=\s*[,،])/gu,
+  /(\b[Jj]e\s+(?:suis|m['’]appelle)\s+)([\p{Lu}][\p{L}\p{M}'’.\-]*)(?=\s*(?:[,،.!?;:]|$|\bet\b))/gu,
+  /(\b(?:I\s+am|[Mm]y\s+name\s+is)\s+)([\p{Lu}][\p{L}\p{M}'’.\-]*)(?=\s*(?:[,،.!?;:]|$|\band\b))/gu,
+  /(اسمي\s+)([\p{L}\p{M}'’.\-]+)(?=\s*(?:[,،.!?;:]|$))/gu,
 ] as const;
 
 function alignSpokenSelfIntroduction(text: string, canonicalName: string): string {
