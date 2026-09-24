@@ -18,6 +18,7 @@ export function runClassroomGenerationJob(
   input: GenerateClassroomInput,
   baseUrl: string,
   ownerId: string,
+  executionAttempt = 0,
 ): Promise<void> {
   const existing = runningJobs.get(jobId);
   if (existing) {
@@ -33,7 +34,11 @@ export function runClassroomGenerationJob(
     heartbeat.unref();
     try {
       await markClassroomGenerationJobRunning(jobId);
-      activateUsageMeteringJob(ownerId, input.orgId, `classroom-${jobId}`);
+      activateUsageMeteringJob(
+        ownerId,
+        input.orgId,
+        `classroom-${jobId}:attempt:${executionAttempt}`,
+      );
 
       const result = await generateClassroom(input, {
         baseUrl,

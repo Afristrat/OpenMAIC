@@ -34,10 +34,15 @@ describe('trusted usage metering context (S6-025)', () => {
     });
   });
 
-  it('uses a durable job id as a stable retry boundary', () => {
-    activateUsageMeteringJob('actor', 'tenant', 'classroom-job-123');
+  it('keeps keys stable within an execution attempt and isolates provider retries', () => {
+    activateUsageMeteringJob('actor', 'tenant', 'classroom-job-123:attempt:0');
     const original = nextUsageOperationContext('tts', 'tts_second');
-    activateUsageMeteringJob('actor', 'tenant', 'classroom-job-123');
+    activateUsageMeteringJob('actor', 'tenant', 'classroom-job-123:attempt:0');
     expect(nextUsageOperationContext('tts', 'tts_second')).toEqual(original);
+
+    activateUsageMeteringJob('actor', 'tenant', 'classroom-job-123:attempt:1');
+    expect(nextUsageOperationContext('tts', 'tts_second')?.operationKey).not.toBe(
+      original?.operationKey,
+    );
   });
 });

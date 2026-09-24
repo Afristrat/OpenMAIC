@@ -400,7 +400,13 @@ export function startAllWorkers(): void {
         if (!generationJob?.input) {
           throw new Error(`Classroom generation job ${jobId} has no durable input`);
         }
-        await runClassroomGenerationJob(jobId, generationJob.input, baseUrl, ownerId);
+        await runClassroomGenerationJob(
+          jobId,
+          generationJob.input,
+          baseUrl,
+          ownerId,
+          job.attemptsMade,
+        );
         const completedJob = await readClassroomGenerationJob(jobId);
         if (completedJob?.status !== 'succeeded') {
           throw new Error(completedJob?.error ?? `Classroom generation job ${jobId} failed`);
