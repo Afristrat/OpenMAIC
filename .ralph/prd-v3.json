@@ -3223,8 +3223,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Export PPTX re-vérifié sur la nouvelle base » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "1-CRÉER",
       "priority": "P2",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S1-010",
@@ -3232,7 +3232,7 @@
       },
       "sourceDependencies": ["S0-008"],
       "dependencies": [],
-      "gap": "Le 17 septembre 2026, le générateur actuel produit un PPTX de deux diapositives (54 793 octets) dont les 24 parties XML/relations sont bien formées et dont les textes FR/AR sont préservés. L’ouverture réelle dans Microsoft PowerPoint au SHA de clôture et le gate complet restent requis avant passes=true.",
+      "gap": "Clôturé le 24 septembre 2026 : le générateur au SHA 0c9d1320225533b7a44586df549282581975200c produit un PPTX de 54 793 octets après reconstruction effective de mathml2omml et pptxgenjs. Microsoft PowerPoint 16.0 l’ouvre sans exception ni réparation, en lecture seule, retrouve les titres, corps et notes FR/AR, et rend les deux diapositives sans défaut visible.",
       "evidence": [
         "tests/edit/round-trip/ooxml-validity.test.ts",
         "scripts/proofs/generate-s1-010-pptx.ts",
@@ -3250,7 +3250,8 @@
         "2026-08-28 — Le fichier transféré conserve le SHA-256 a9bd5216d968c8e00c507eba71945f9c4a9cf13f9fcdf6e89d39acf0420b03b9. Microsoft PowerPoint 16.0 l’ouvre en lecture seule sans exception, retrouve les quatre textes visibles et les deux notes de présentation FR/AR, puis rend les deux diapositives en PNG. Les bornes Office de chaque texte restent dans le canevas ; preuve locale C:\\projets\\Qalem\\proofs\\S1-010-f9af878\\powerpoint-open-evidence.json, SHA-256 bceff58068c6f7af39cf2680e44b8b187ac176c77e1e2bd06f5537c049b93273.",
         "2026-08-28 — Un postinstall racine complet sur ServeurIA régénère mathml2omml et pptxgenjs avec des artefacts non vides et datés après le lancement. Le contrôle a découvert puis corrigé la création parasite de packages/pptxgenjs/undefined : le cache rollup-plugin-typescript2 possède désormais un chemin explicite sous node_modules. Nouvelle exécution verte et worktree propre hors packages/omml2mathml/node_modules/ préexistant ; journal /tmp/qalem-s1010-postinstall-f9af878.log, SHA-256 7851bbdee6eaa441c992efc2d12d0c6f4d6f493872ec65ab2f8f9d9c095f7ab7.",
         "2026-08-28 — Gate complet au SHA f9af878774704666a055f12d91d27cbe56d47414 dans qalem-validation:playwright-1.58.2-ffmpeg sur ServeurIA : Prettier, TypeScript et lint passent ; 385/385 fichiers et 2 505/2 505 tests Vitest, build 100/100 pages et 83/83 Playwright en 3,7 minutes. Le dossier undefined reste absent. Journal /tmp/qalem-s1010-full-gate-f9af878.log, SHA-256 c489ef0438f825852e4b57cdebcecdbbab0c5447817739a4ba6c27a5b9337473. Preuve permanente : docs/validation/S1-010-powerpoint.md.",
-        "2026-09-17 — SHA de harnais f3bb926ad179171d4b7c3e62d254e2053d1a1302 : le générateur PPTX actuel produit 54 793 octets et deux diapositives. Un parseur XML indépendant relit les 24 parties XML/relations, les quatre parties OOXML obligatoires et les textes français/arabe attendus. L’artefact temporaire est supprimé après contrôle. Cette preuve structurelle ne remplace pas l’ouverture PowerPoint au SHA courant."
+        "2026-09-17 — SHA de harnais f3bb926ad179171d4b7c3e62d254e2053d1a1302 : le générateur PPTX actuel produit 54 793 octets et deux diapositives. Un parseur XML indépendant relit les 24 parties XML/relations, les quatre parties OOXML obligatoires et les textes français/arabe attendus. L’artefact temporaire est supprimé après contrôle. Cette preuve structurelle ne remplace pas l’ouverture PowerPoint au SHA courant.",
+        "2026-09-24 — Au SHA 0c9d1320225533b7a44586df549282581975200c, un clone neuf ServeurIA reconstruit mathml2omml et pptxgenjs au postinstall puis génère deux diapositives et 54 793 octets. Microsoft PowerPoint 16.0 ouvre le fichier en lecture seule sans exception ni réparation, retrouve les titres, corps et notes français et arabes, puis rend deux PNG inspectés visuellement sans coupe, remplacement de glyphes ni défaut RTL. Script permanent : scripts/validation/s1-010-powerpoint-open.ps1."
       ],
       "historicalEvidence": {
         "completedAt": "2026-07-12",

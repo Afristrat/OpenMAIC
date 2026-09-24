@@ -2,7 +2,7 @@
 
 ## Verdict
 
-S1-010 est soldée au SHA `f9af878774704666a055f12d91d27cbe56d47414`.
+S1-010 est recertifiée au SHA `0c9d1320225533b7a44586df549282581975200c`.
 
 Le fichier de preuve est produit par l’exporteur PPTX de Qalem sur ServeurIA, puis ouvert et rendu par Microsoft PowerPoint 16.0 sur Windows. Les contenus français et arabes, leurs accents, leur écriture droite-à-gauche et les notes de présentation sont conservés. Les packages `mathml2omml` et `pptxgenjs` sont régénérés par le `postinstall` racine, sans résidu Git parasite.
 
@@ -73,3 +73,25 @@ attendus. L’artefact temporaire est supprimé à la fin de la recette.
 Cette revalidation confirme la structure du fichier actuel. Elle ne remplace
 pas une ouverture fraîche par Microsoft PowerPoint et ne permet donc pas de
 clore S1-010 seule.
+
+## Recertification PowerPoint — 24 septembre 2026
+
+Un clone neuf de `origin/refork-v030` au SHA
+`0c9d1320225533b7a44586df549282581975200c` a été créé sur ServeurIA. Le
+`postinstall` racine a reconstruit avec succès `mathml2omml`, `pptxgenjs` et
+les trois packages OpenMAIC avant l'exécution du générateur permanent. Le
+fichier produit comporte deux diapositives et 54 793 octets.
+
+Le fichier a ensuite été transféré sur Windows et ouvert par le script
+permanent `scripts/validation/s1-010-powerpoint-open.ps1`. Microsoft
+PowerPoint 16.0 l'a ouvert en lecture seule, sans exception ni demande de
+réparation, puis a rendu deux PNG. L'automation retrouve les deux titres, les
+deux corps et les deux notes de présentation attendus en français et en arabe.
+L'inspection visuelle des deux rendus à leur résolution originale confirme les
+accents français, les glyphes arabes et le sens droite-à-gauche, sans coupe ni
+caractère de remplacement.
+
+Cette preuve fraîche couvre l'ouverture PowerPoint, le contenu FR/AR et le
+postinstall au SHA courant. Avec la gate complète déjà obtenue sur le dernier
+SHA fonctionnel ancêtre, S1-010 satisfait désormais tous ses critères et peut
+être clôturée.
