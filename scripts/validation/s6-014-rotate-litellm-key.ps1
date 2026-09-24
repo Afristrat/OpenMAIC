@@ -2,7 +2,9 @@
 param(
     [string]$WebApplicationUuid = 'bcx5pxyuc9z3lt4jtyjipcqu',
     [string]$RuntimeApplicationUuid = 'a14gf0n3u719hnnd2yujrtmr',
-    [string]$ExpectedCommit = 'd90e618584db3864454a609443484ca9db634a5b'
+    [Parameter(Mandatory = $true)]
+    [ValidatePattern('^[0-9a-f]{40}$')]
+    [string]$ExpectedCommit
 )
 
 $ErrorActionPreference = 'Stop'
@@ -38,6 +40,12 @@ $newAlias = 'qalem-production-rotated-' + (Get-Date -Format 'yyyyMMdd-HHmmss')
 $vaultUpdated = $false
 $coolifyUpdated = $false
 $oldRevoked = $false
+$vaultLoader = Join-Path $PSScriptRoot 's6-014-vault-loader.ps1'
+
+# Aucun fournisseur ni consommateur n’est modifié tant que la chaîne complète
+# écriture DPAPI → processus enfant → relecture n’a pas prouvé son rollback.
+& 'C:\Users\amans\.claude\scripts\add-secret.ps1' `
+    -Name QALEM_LITELLM_KEY -SelfTest -LoaderPath $vaultLoader | Out-Null
 
 function Invoke-SafeRest {
     param(
@@ -200,7 +208,7 @@ try {
     $newInfo = Test-LiteLlmKey -Key $newKey
 
     & 'C:\Users\amans\.claude\scripts\add-secret.ps1' `
-        -Name QALEM_LITELLM_KEY -Value $newKey | Out-Null
+        -Name QALEM_LITELLM_KEY -Value $newKey -LoaderPath $vaultLoader | Out-Null
     $vaultUpdated = $true
 
     $deleted = Invoke-SafeRest -Method Post -Uri "$litellmBase/key/delete" `
@@ -237,12 +245,18 @@ catch {
     $failure = $_.Exception.Message
     if (-not $oldRevoked) {
         if ($coolifyUpdated) {
-            try { Set-CoolifyKey -Value $oldKey } catch { }
+            try {
+                Set-CoolifyKey -Value $oldKey
+                $rollbackDeployments = @(Start-Deployments)
+                Wait-Deployments -DeploymentUuids $rollbackDeployments
+                Test-LiveContainers -ExpectedKey $oldKey | Out-Null
+            }
+            catch { }
         }
         if ($vaultUpdated) {
             try {
                 & 'C:\Users\amans\.claude\scripts\add-secret.ps1' `
-                    -Name QALEM_LITELLM_KEY -Value $oldKey | Out-Null
+                    -Name QALEM_LITELLM_KEY -Value $oldKey -LoaderPath $vaultLoader | Out-Null
             }
             catch { }
         }
