@@ -16,6 +16,7 @@ const appUrl = process.env.QALEM_APP_URL ?? 'https://qalem.ma';
 const orgId = process.env.QALEM_RECIPE_ORG_ID ?? 'aa7870b7-3938-4f24-b8bf-4a9d73565ba7';
 const anonKey = process.env.QALEM_SUPABASE_ANON_KEY;
 const serviceKey = process.env.QALEM_SUPABASE_SERVICE_ROLE_KEY;
+const existingMp4JobId = process.env.QALEM_RECIPE_EXPORT_JOB_ID?.trim();
 const serviceHeaders = {
   apikey: serviceKey,
   authorization: `Bearer ${serviceKey}`,
@@ -170,27 +171,35 @@ async function validatePptx(session, course) {
 
 async function validateMp4(session, course) {
   const cookie = sessionCookie(session);
-  const { response: createdResponse, body: created } = await jsonRequest(
-    `${appUrl}/api/export-jobs`,
-    {
-      method: 'POST',
-      headers: {
-        cookie,
-        'content-type': 'application/json',
-        'idempotency-key': `s6031-mp4-${randomUUID()}`,
+  let jobId = existingMp4JobId;
+  let createHttpStatus = null;
+  let initialStatus = 'existing';
+  if (!jobId) {
+    const { response, body } = await jsonRequest(
+      `${appUrl}/api/export-jobs`,
+      {
+        method: 'POST',
+        headers: {
+          cookie,
+          'content-type': 'application/json',
+          'idempotency-key': `s6031-mp4-${randomUUID()}`,
+        },
+        body: JSON.stringify({ stageId: course.stage_id, format: 'mp4' }),
       },
-      body: JSON.stringify({ stageId: course.stage_id, format: 'mp4' }),
-    },
-    'Création du MP4',
-  );
-  if (!created?.id) throw new Error('Identifiant du job MP4 absent');
-  console.log(JSON.stringify({ mp4JobId: created.id, mp4InitialStatus: created.status }));
+      'Création du MP4',
+    );
+    jobId = body?.id;
+    createHttpStatus = response.status;
+    initialStatus = body?.status;
+  }
+  if (!jobId) throw new Error('Identifiant du job MP4 absent');
+  console.log(JSON.stringify({ mp4JobId: jobId, mp4InitialStatus: initialStatus }));
 
   const deadline = Date.now() + 12 * 60_000;
   let status;
   while (Date.now() < deadline) {
     const result = await jsonRequest(
-      `${appUrl}/api/export-jobs/${encodeURIComponent(created.id)}`,
+      `${appUrl}/api/export-jobs/${encodeURIComponent(jobId)}`,
       { headers: { cookie } },
       'Lecture du statut MP4',
     );
@@ -203,21 +212,32 @@ async function validateMp4(session, course) {
       `Export MP4 non terminé : ${status?.status ?? 'timeout'} ${status?.error ?? ''}`,
     );
   }
-  const download = await fetch(
-    `${appUrl}/api/export-jobs/${encodeURIComponent(created.id)}?download=1`,
+  const redirect = await fetch(
+    `${appUrl}/api/export-jobs/${encodeURIComponent(jobId)}?download=1`,
     {
-      headers: { cookie, range: 'bytes=0-1023' },
-      redirect: 'follow',
+      headers: { cookie },
+      redirect: 'manual',
       signal: AbortSignal.timeout(120_000),
     },
   );
-  if (!download.ok) throw new Error(`Téléchargement MP4 : HTTP ${download.status}`);
+  const location = redirect.headers.get('location');
+  if (redirect.status !== 307 || !location) {
+    throw new Error(`Redirection MP4 absente : HTTP ${redirect.status}`);
+  }
+  const download = await fetch(location, {
+    headers: { range: 'bytes=0-1023' },
+    signal: AbortSignal.timeout(120_000),
+  });
+  if (download.status !== 206) {
+    throw new Error(`Téléchargement partiel MP4 : HTTP ${download.status}`);
+  }
   const bytes = new Uint8Array(await download.arrayBuffer());
   const signature = new TextDecoder('latin1').decode(bytes.slice(4, 12));
   if (!signature.includes('ftyp')) throw new Error('Signature MP4 absente');
   return {
-    jobId: created.id,
-    createHttpStatus: createdResponse.status,
+    jobId,
+    createHttpStatus,
+    reusedExistingJob: Boolean(existingMp4JobId),
     finalStatus: status.status,
     sceneCount: status.sceneCount,
     downloadHttpStatus: download.status,
