@@ -134,18 +134,34 @@ async function validateSuperAdminReturn(session, tenantName) {
     if (!bannerText.includes(`Mode test du tenant : ${tenantName}`)) {
       throw new Error(`Bannière de test divergente : ${bannerText}`);
     }
-    const returnLink = banner.getByRole('link', {
-      name: 'Revenir à l’administration globale',
+    const cachedTenantId = await page.evaluate(() =>
+      localStorage.getItem('qalem-current-org-id'),
+    );
+    if (cachedTenantId !== orgId) {
+      throw new Error('Le tenant testé n’est pas le contexte actif du navigateur');
+    }
+    const returnButton = banner.getByRole('button', {
+      name: 'Quitter le mode test et revenir à mon espace super-administrateur',
     });
-    if ((await returnLink.getAttribute('href')) !== '/admin?tab=tenants') {
-      throw new Error('Lien de retour super-administrateur incorrect');
+    await returnButton.click();
+    await page.waitForURL(`${appUrl}/admin?tab=tenants`, { timeout: 30_000 });
+    const remainingTenantId = await page.evaluate(() =>
+      localStorage.getItem('qalem-current-org-id'),
+    );
+    if (remainingTenantId !== null) {
+      throw new Error('Le contexte tenant reste mémorisé après la sortie du mode test');
     }
     const adminResponse = await page.request.get(`${appUrl}/api/account/is-admin`);
     const adminBody = await adminResponse.json();
     if (!adminResponse.ok() || adminBody?.isAdmin !== true) {
       throw new Error('La session a perdu son rôle de super-administrateur');
     }
-    return { bannerText, returnHref: '/admin?tab=tenants', isSuperAdmin: true };
+    return {
+      bannerText,
+      returnUrl: `${appUrl}/admin?tab=tenants`,
+      tenantContextCleared: true,
+      isSuperAdmin: true,
+    };
   } finally {
     await browser.close();
   }
