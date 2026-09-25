@@ -71,10 +71,10 @@ async function authenticatedContext(email) {
   return context;
 }
 
-async function api(context, path, method = 'GET', data) {
+async function api(context, path, method = 'GET', data, extraHeaders = {}) {
   return context.request.fetch(`${baseUrl}${path}`, {
     method,
-    headers: method === 'GET' ? undefined : { origin: baseUrl },
+    headers: { ...(method === 'GET' ? {} : { origin: baseUrl }), ...extraHeaders },
     ...(data === undefined ? {} : { data }),
     timeout: 120_000,
   });
@@ -132,7 +132,9 @@ async function runDirector(context, expected) {
     apiKey: '',
     model: 'general',
   };
-  const response = await api(context, '/api/chat', 'POST', body);
+  const response = await api(context, '/api/chat', 'POST', body, {
+    'idempotency-key': `s048-chat-${randomUUID()}`,
+  });
   const text = await response.text();
   assert.equal(response.status(), 200, `Director chat failed: ${text.slice(0, 1000)}`);
   const events = eventsFrom(text);
