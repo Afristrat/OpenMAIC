@@ -8,7 +8,7 @@ import {
 
 const labels = [
   'alpha',
-  'bravo',
+  'beta',
   'charlie',
   'delta',
   'echo',
