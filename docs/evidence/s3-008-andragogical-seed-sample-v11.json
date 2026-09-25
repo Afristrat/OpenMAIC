@@ -1,0 +1,369 @@
+{
+  "schemaVersion": 2,
+  "storyId": "S3-008",
+  "generatedAt": "2026-09-25T18:24:22.428Z",
+  "promptVersion": "P3-B-v11",
+  "learningApproach": "andragogy",
+  "model": "general",
+  "usage": {
+    "inputTokens": 1498,
+    "inputTokenDetails": {
+      "noCacheTokens": 1370,
+      "cacheReadTokens": 128
+    },
+    "outputTokens": 2791,
+    "outputTokenDetails": {
+      "textTokens": 2791,
+      "reasoningTokens": 0
+    },
+    "totalTokens": 4289,
+    "reasoningTokens": 0,
+    "cachedInputTokens": 128
+  },
+  "count": 20,
+  "distribution": {
+    "anecdote": 6,
+    "highlight": 6,
+    "joke": 4,
+    "quiz_reminder": 4
+  },
+  "proposedFrequency": {
+    "scheduledSeedCount": 12,
+    "coldEvaluationCount": 2,
+    "totalDeliveryCount": 14,
+    "seedDays": [
+      2,
+      5,
+      9,
+      14,
+      20,
+      27,
+      35,
+      44,
+      54,
+      65,
+      77,
+      90
+    ],
+    "coldEvaluationDays": [
+      30,
+      60
+    ],
+    "horizonDays": 90
+  },
+  "humanAcceptance": false,
+  "events": [
+    {
+      "id": "1",
+      "actor": "user",
+      "event_type": "learner_response",
+      "payload": {
+        "sceneId": "scene-budget",
+        "utterance": "Dans mes projets, je sous-estime souvent les coûts récurrents lorsque je prépare le budget."
+      },
+      "ts_ms": 1000
+    },
+    {
+      "id": "2",
+      "actor": "user",
+      "event_type": "learner_response",
+      "payload": {
+        "sceneId": "scene-risques",
+        "utterance": "Dans le scénario tendu, j’ai classé le risque de trésorerie avant les autres risques."
+      },
+      "ts_ms": 2000
+    },
+    {
+      "id": "3",
+      "actor": "user",
+      "event_type": "learner_response",
+      "payload": {
+        "sceneId": "scene-actions",
+        "utterance": "Pour mon prochain budget, je testerai chaque poste avec une hypothèse basse et une hypothèse haute."
+      },
+      "ts_ms": 3000
+    }
+  ],
+  "casting": [
+    {
+      "name": "Hanae",
+      "role": "assistant",
+      "mechanismId": "coach",
+      "persona": "Encourage avec exigence. Elle demande un prochain pas concret, donne un retour précis sur ce qui est formulé et évite l’enthousiasme creux ou infantilisant."
+    },
+    {
+      "name": "Youssef",
+      "role": "assistant",
+      "mechanismId": "analyst",
+      "persona": "Met les affirmations à l’épreuve des faits. Il compare, quantifie, recherche les causes, distingue corrélation et causalité et aide l’apprenant à décider sur des critères explicites."
+    },
+    {
+      "name": "Salma",
+      "role": "student",
+      "mechanismId": "joker",
+      "persona": "Énergise le groupe par une remarque brève, une analogie mémorable ou un décalage humoristique pertinent. Son humour ne vise jamais une personne et se retire dans les moments sensibles."
+    }
+  ],
+  "seeds": [
+    {
+      "persona": "Hanae",
+      "kind": "anecdote",
+      "content": {
+        "push_hook": "Un poste oublié dans le budget : lequel ?",
+        "body": "Tu as dit sous-estimer les coûts récurrents en préparant le budget. Prends ton dernier budget et liste les coûts qui reviennent sans être dans une ligne dédiée. Combien en trouves-tu ?",
+        "scene_ref": "scene-budget",
+        "provenance": {
+          "event_id": "1",
+          "source_kind": "learner_proposition"
+        }
+      }
+    },
+    {
+      "persona": "Youssef",
+      "kind": "anecdote",
+      "content": {
+        "push_hook": "Trésorerie classée première : sur quels faits ?",
+        "body": "Dans le scénario tendu, tu as classé le risque de trésorerie avant les autres. Quels éléments observés dans ce scénario ont motivé ce rang plutôt qu'un autre ?",
+        "scene_ref": "scene-risques",
+        "provenance": {
+          "event_id": "2",
+          "source_kind": "learner_proposition"
+        }
+      }
+    },
+    {
+      "persona": "Hanae",
+      "kind": "anecdote",
+      "content": {
+        "push_hook": "Deux hypothèses par poste : comment t'y prendre ?",
+        "body": "Tu as prévu de tester chaque poste avec une hypothèse basse et une hypothèse haute pour ton prochain budget. Choisis un poste et écris les deux montants. Quel écart apparaît ?",
+        "scene_ref": "scene-actions",
+        "provenance": {
+          "event_id": "3",
+          "source_kind": "learner_proposition"
+        }
+      }
+    },
+    {
+      "persona": "Youssef",
+      "kind": "anecdote",
+      "content": {
+        "push_hook": "Coûts récurrents sous-estimés : où les repérer ?",
+        "body": "Tu as identifié une sous-estimation des coûts récurrents dans la préparation du budget. Ouvre un budget passé et repère les lignes qui reviennent d'une période à l'autre. Lesquelles avais-tu minorées ?",
+        "scene_ref": "scene-budget",
+        "provenance": {
+          "event_id": "1",
+          "source_kind": "learner_proposition"
+        }
+      }
+    },
+    {
+      "persona": "Hanae",
+      "kind": "anecdote",
+      "content": {
+        "push_hook": "Risque de trésorerie en tête : quel critère ?",
+        "body": "Tu as placé le risque de trésorerie en premier dans le scénario tendu. Sur quel critère explicite ce classement repose-t-il : probabilité, impact, délai ?",
+        "scene_ref": "scene-risques",
+        "provenance": {
+          "event_id": "2",
+          "source_kind": "learner_proposition"
+        }
+      }
+    },
+    {
+      "persona": "Youssef",
+      "kind": "anecdote",
+      "content": {
+        "push_hook": "Hypothèse basse et haute : quel test ?",
+        "body": "Tu as annoncé tester chaque poste avec une hypothèse basse et une hypothèse haute. Prends un poste et compare les deux résultats. Lequel change ta décision ?",
+        "scene_ref": "scene-actions",
+        "provenance": {
+          "event_id": "3",
+          "source_kind": "learner_proposition"
+        }
+      }
+    },
+    {
+      "persona": "Hanae",
+      "kind": "highlight",
+      "content": {
+        "push_hook": "Un budget, des coûts récurrents : par où commencer ?",
+        "body": "Tu as nommé la sous-estimation des coûts récurrents comme point de vigilance en préparant le budget. Note un coût récurrent de ton dernier budget et vérifie s'il était présent. Que constates-tu ?",
+        "scene_ref": "scene-budget",
+        "provenance": {
+          "event_id": "1",
+          "source_kind": "learner_proposition"
+        }
+      }
+    },
+    {
+      "persona": "Youssef",
+      "kind": "highlight",
+      "content": {
+        "push_hook": "Classement des risques : trésorerie d'abord",
+        "body": "Dans le scénario tendu, le risque de trésorerie est passé avant les autres. Quels faits du scénario soutiennent ce rang ?",
+        "scene_ref": "scene-risques",
+        "provenance": {
+          "event_id": "2",
+          "source_kind": "learner_proposition"
+        }
+      }
+    },
+    {
+      "persona": "Hanae",
+      "kind": "highlight",
+      "content": {
+        "push_hook": "Tester chaque poste : hypothèse basse, hypothèse haute",
+        "body": "Tu as retenu de tester chaque poste avec une hypothèse basse et une hypothèse haute. Applique-le à un poste de ton prochain budget. Quel écart observes-tu ?",
+        "scene_ref": "scene-actions",
+        "provenance": {
+          "event_id": "3",
+          "source_kind": "learner_proposition"
+        }
+      }
+    },
+    {
+      "persona": "Youssef",
+      "kind": "highlight",
+      "content": {
+        "push_hook": "Coûts récurrents : les repérer dans un budget",
+        "body": "Tu as signalé une sous-estimation des coûts récurrents lors de la préparation du budget. Reprends un budget et isole les coûts qui reviennent. Lesquels avais-tu sous-évalués ?",
+        "scene_ref": "scene-budget",
+        "provenance": {
+          "event_id": "1",
+          "source_kind": "learner_proposition"
+        }
+      }
+    },
+    {
+      "persona": "Hanae",
+      "kind": "highlight",
+      "content": {
+        "push_hook": "Trésorerie en premier : quel impact ensuite ?",
+        "body": "Tu as classé le risque de trésorerie avant les autres dans le scénario tendu. Quel effet ce choix a-t-il sur les risques suivants ?",
+        "scene_ref": "scene-risques",
+        "provenance": {
+          "event_id": "2",
+          "source_kind": "learner_proposition"
+        }
+      }
+    },
+    {
+      "persona": "Youssef",
+      "kind": "highlight",
+      "content": {
+        "push_hook": "Deux hypothèses par poste : quel seuil décide ?",
+        "body": "Tu as prévu de tester chaque poste avec une hypothèse basse et une hypothèse haute. Sur un poste, quel écart entre les deux te ferait changer d'avis ?",
+        "scene_ref": "scene-actions",
+        "provenance": {
+          "event_id": "3",
+          "source_kind": "learner_proposition"
+        }
+      }
+    },
+    {
+      "persona": "Salma",
+      "kind": "joke",
+      "content": {
+        "push_hook": "Le budget et les coûts récurrents : même combat",
+        "body": "Un budget qui sous-estime les coûts récurrents, c'est comme un sac de courses qui oublie les pommes de terre : on les retrouve à la caisse. Où sont les tiennes ?",
+        "scene_ref": "scene-budget",
+        "provenance": {
+          "event_id": "1",
+          "source_kind": "learner_proposition"
+        }
+      }
+    },
+    {
+      "persona": "Salma",
+      "kind": "joke",
+      "content": {
+        "push_hook": "Trésorerie en tête : le risque qui mène la danse",
+        "body": "Classer le risque de trésorerie avant les autres, c'est comme mettre le dessert en entrée : ça change tout le repas. Qu'est-ce que ça change dans ton scénario ?",
+        "scene_ref": "scene-risques",
+        "provenance": {
+          "event_id": "2",
+          "source_kind": "learner_proposition"
+        }
+      }
+    },
+    {
+      "persona": "Salma",
+      "kind": "joke",
+      "content": {
+        "push_hook": "Hypothèse basse et haute : le grand écart",
+        "body": "Tester chaque poste avec une hypothèse basse et une hypothèse haute, c'est comme prévoir un pique-nique avec et sans pluie : on emporte les deux. Quel poste te fait sortir le parapluie ?",
+        "scene_ref": "scene-actions",
+        "provenance": {
+          "event_id": "3",
+          "source_kind": "learner_proposition"
+        }
+      }
+    },
+    {
+      "persona": "Salma",
+      "kind": "joke",
+      "content": {
+        "push_hook": "Coûts récurrents : les fantômes du budget",
+        "body": "Les coûts récurrents sous-estimés, ce sont les fantômes du budget : on ne les voit pas, mais ils reviennent. Lequel hante ton dernier budget ?",
+        "scene_ref": "scene-budget",
+        "provenance": {
+          "event_id": "1",
+          "source_kind": "learner_proposition"
+        }
+      }
+    },
+    {
+      "persona": "Hanae",
+      "kind": "quiz_reminder",
+      "content": {
+        "push_hook": "Coûts récurrents : un test rapide",
+        "body": "Tu as dit sous-estimer les coûts récurrents en préparant le budget. Dans ton dernier budget, combien de coûts récurrents n'étaient pas listés ?",
+        "scene_ref": "scene-budget",
+        "provenance": {
+          "event_id": "1",
+          "source_kind": "learner_proposition"
+        }
+      }
+    },
+    {
+      "persona": "Youssef",
+      "kind": "quiz_reminder",
+      "content": {
+        "push_hook": "Risque de trésorerie : premier, pourquoi ?",
+        "body": "Dans le scénario tendu, tu as classé le risque de trésorerie avant les autres. Quel critère as-tu utilisé pour ce classement ?",
+        "scene_ref": "scene-risques",
+        "provenance": {
+          "event_id": "2",
+          "source_kind": "learner_proposition"
+        }
+      }
+    },
+    {
+      "persona": "Hanae",
+      "kind": "quiz_reminder",
+      "content": {
+        "push_hook": "Hypothèse basse et haute : quel écart ?",
+        "body": "Tu as prévu de tester chaque poste avec une hypothèse basse et une hypothèse haute. Sur un poste, quel écart entre les deux obtiens-tu ?",
+        "scene_ref": "scene-actions",
+        "provenance": {
+          "event_id": "3",
+          "source_kind": "learner_proposition"
+        }
+      }
+    },
+    {
+      "persona": "Youssef",
+      "kind": "quiz_reminder",
+      "content": {
+        "push_hook": "Coûts récurrents : où les repérer ?",
+        "body": "Tu as identifié une sous-estimation des coûts récurrents dans la préparation du budget. Où les repères-tu dans un budget existant ?",
+        "scene_ref": "scene-budget",
+        "provenance": {
+          "event_id": "1",
+          "source_kind": "learner_proposition"
+        }
+      }
+    }
+  ]
+}

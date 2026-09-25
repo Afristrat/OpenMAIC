@@ -32,9 +32,9 @@ L’ancien état 83/49/34 du goal n’est donc plus représentatif du dépôt. S
 | S3-014 | Recette intégrée physique multisources → formation → notification → interaction → reprise, FR/AR/EN et RTL. |
 | S0-012 | Verdict humain du parcours guidé arabe RTL. |
 | S6-011 | Appairage QR du compte WhatsApp retenu, réception réelle, désinscription et absence de doublon. L’instance `qalem-reminders` est relue `close` le 25 septembre. |
-| S3-008 | Produire vingt graines P3-B-v10 franchissant les nouveaux gardes de provenance, puis faire accepter humainement le ton et la fréquence. L’ancien échantillon P3-B-v6 est conservé comme historique, pas comme preuve courante. |
+| S3-008 | Acceptation humaine du ton et de la fréquence de l’échantillon P3-B-v11 : 20 graines, 4 289 jetons, distribution 6/6/4/4 et plan J+2 à J+90. L’ancien P3-B-v6 reste historique. |
 
-Douze de ces stories ne cachent aucune dette de code identifiée et restent ouvertes parce que leur critère final interdit de substituer une terminaison HTTP, un émulateur ou un test automatisé à l’observation demandée. S3-008 conserve un résidu autonome explicite : obtenir un échantillon courant propre avant de le soumettre au verdict humain. Les sorties fraîches contaminées ont été refusées, pas maquillées en preuve.
+Ces stories ne cachent aucune dette de code identifiée et restent ouvertes parce que leur critère final interdit de substituer une terminaison HTTP, un émulateur ou un test automatisé à l’observation demandée. Pour S3-008, les sorties contaminées ont été refusées et l’échantillon propre P3-B-v11 est versionné sans auto-acceptation.
 
 ## Quatre dépendances Diwan
 
@@ -49,4 +49,4 @@ Qalem possède déjà le consommateur Diwan tenant-scopé. Aucun connecteur dire
 
 ## Conséquence sur l’objectif
 
-Le reliquat autonome Qalem est ramené à la production d’un échantillon S3-008 courant et propre. Les seize autres stories ouvertes sont douze checkpoints humains ou physiques et quatre dépendances Diwan. Le goal reste actif jusqu’à la réalisation ou à une décision explicite portant sur chacun de ces critères ; il ne doit pas être déclaré terminé à partir du seul état machine.
+Le reliquat autonome Qalem est épuisé au sens du registre actuel. Les dix-sept stories ouvertes sont treize checkpoints humains ou physiques et quatre dépendances Diwan. Le goal reste actif jusqu’à la réalisation ou à une décision explicite portant sur chacun de ces critères ; il ne doit pas être déclaré terminé à partir du seul état machine.

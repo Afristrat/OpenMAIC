@@ -1309,3 +1309,9 @@ Le contrôle frais de S6-011 relit l’instance Evolution dédiée `qalem-remind
 L’ancien échantillon P3-B-v6 n’est plus traité comme une preuve courante. P3-B-v10 lie maintenant chiffres, cadences et vocabulaire distinctif à l’événement exact de provenance et réserve les plaisanteries à la persona joker. Les sorties fraîches contaminées ou inventant une cadence ont été refusées ; aucune n’est présentée à Amine comme un échantillon acceptable.
 
 Prettier, TypeScript, ESLint, 3 395 Vitest, le build de 127 pages et 200/200 Playwright sont verts. Coolify reconstruisait d’abord l’ancien SHA `ca82898b` parce que l’application était épinglée ; l’épingle est corrigée vers `2ce57e1ce5e3701d0f72ff0d92666dd4169a4cd9`. Le déploiement `hl3gsjvqk2tblyzs35cnf9l0` est terminé, le nouveau conteneur est sain et la santé publique répond HTTP 200. S3-008 reste `to_validate/passes=false` avec un seul résidu autonome : produire vingt graines P3-B-v10 propres avant le verdict humain.
+
+## 25 septembre 2026 — Échantillon S3-008 P3-B-v11 produit
+
+Le contrat conserve un seul appel LLM comptabilisé par session. La température est fixée à zéro et le prompt isole explicitement le payload de chaque événement. L’appel réel produit exactement vingt graines en 4 289 jetons : six anecdotes, six highlights, quatre jokes et quatre quiz_reminder. Toutes franchissent les gardes déterministes ; le plan proposé comprend douze rappels entre J+2 et J+90 et deux évaluations à J+30/J+60.
+
+L’artefact `docs/evidence/s3-008-andragogical-seed-sample-v11.json` reste marqué `humanAcceptance=false`. La dette machine S3-008 est soldée ; son statut reste `to_validate/passes=false` jusqu’au verdict explicite d’Amine sur le ton et la pression de relance.
