@@ -412,7 +412,6 @@ describe('anchoring seed stock', () => {
             ...seed,
             content: {
               ...seed.content,
-              source_quote: 'Le délai de ce budget était de 30 jours.',
               body: 'Reprends ce délai dans ton prochain budget.',
             },
           }
@@ -424,7 +423,9 @@ describe('anchoring seed stock', () => {
         events: [
           {
             ...recordedEvents[0],
-            payload: { utterance: 'Le délai de ce budget était de 30 jours.' },
+            payload: {
+              utterance: 'Le délai observé était de 30 jours. Ce budget reste notre sujet.',
+            },
           },
           {
             id: '2',
