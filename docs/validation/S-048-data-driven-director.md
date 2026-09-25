@@ -206,3 +206,10 @@ Vitest, le build de production de 127 routes, puis 196 scénarios Playwright sur
 
 Cette clôture prouve un résultat observable et le respect du protocole ; elle
 ne transforme pas une différence descriptive en gain causal d’apprentissage.
+
+Le déploiement Coolify `0ot3s8iu2crfnqmlz6elhmgd` sert ensuite exactement ce
+SHA dans `bcx5pxyuc9z3lt4jtyjipcqu-012138537411`. Le web est `healthy`, avec
+zéro redémarrage, `OOMKilled=false`, le drapeau actif et `/api/health` en HTTP
+200. Worker, AudioSeal et capture sont eux aussi sains, sans redémarrage ni
+OOM. La preuve de production ci-dessus est rejouée après la bascule et rend le
+même résultat intégralement vert.
