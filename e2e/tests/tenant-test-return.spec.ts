@@ -7,6 +7,10 @@ test('maintient la sortie de super-administration visible pendant le test d’un
   page,
 }) => {
   await page.addInitScript(() => localStorage.setItem('locale', 'fr-FR'));
+  await page.addInitScript(() => {
+    const count = Number(sessionStorage.getItem('qalem-document-load-count') ?? '0');
+    sessionStorage.setItem('qalem-document-load-count', String(count + 1));
+  });
   await page.addInitScript(
     (organizationId) => localStorage.setItem('qalem-current-org-id', organizationId),
     ORIGIN_ORGANIZATION_ID,
@@ -37,6 +41,9 @@ test('maintient la sortie de super-administration visible pendant le test d’un
   await expect
     .poll(() => page.evaluate(() => sessionStorage.getItem('qalem-super-admin-tested-tenant-id')))
     .toBe(E2E_ORGANIZATION_ID);
+  const documentLoadCount = await page.evaluate(() =>
+    Number(sessionStorage.getItem('qalem-document-load-count') ?? '0'),
+  );
 
   await banner
     .getByRole('button', {
@@ -45,6 +52,11 @@ test('maintient la sortie de super-administration visible pendant le test d’un
     .click();
 
   await expect(page).toHaveURL(`/app?orgId=${ORIGIN_ORGANIZATION_ID}`);
+  await expect
+    .poll(() =>
+      page.evaluate(() => Number(sessionStorage.getItem('qalem-document-load-count') ?? '0')),
+    )
+    .toBe(documentLoadCount + 1);
   await expect
     .poll(() => page.evaluate(() => localStorage.getItem('qalem-current-org-id')))
     .toBe(ORIGIN_ORGANIZATION_ID);

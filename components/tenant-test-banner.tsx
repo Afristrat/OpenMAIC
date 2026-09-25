@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useOrganizations } from '@/lib/hooks/use-organizations';
 import { useIsSuperAdmin } from '@/lib/hooks/use-super-admin';
@@ -15,7 +15,6 @@ import {
 
 export function TenantTestBanner(): React.ReactElement | null {
   const { t } = useI18n();
-  const router = useRouter();
   const pathname = usePathname();
   const { isSuperAdmin } = useIsSuperAdmin();
   const { currentOrg, organizations } = useOrganizations();
@@ -39,13 +38,12 @@ export function TenantTestBanner(): React.ReactElement | null {
 
   const leaveTenantTest = useCallback(() => {
     const originOrganizationId = endTenantTest();
-    router.replace(
+    window.location.replace(
       originOrganizationId
         ? `/app?orgId=${encodeURIComponent(originOrganizationId)}`
         : '/admin?tab=tenants',
     );
-    router.refresh();
-  }, [router]);
+  }, []);
 
   if (!isSuperAdmin || !testedTenantId) return null;
 
