@@ -5,8 +5,8 @@
   "title": "Réconciliation des engagements et clôture prouvée",
   "description": "Référence active unique pour tous les restes identifiés de Qalem. Les critères v2 et les capacités v1 sont tracés sans transformer une acceptation historique en certification actuelle. Ce PRD planifie ; il n’exécute ni n’autorise automatiquement les mutations bloquées.",
   "reconciledAt": "2026-09-25",
-  "inspectedCommit": "2310db39f2aed5424c87117883010bf331623fa1",
-  "reconciliationNote": "Réconciliation fraîche du registre après clôture de S6-032 : 84 stories, 67 completed/passes=true et 17 ouvertes/passes=false. Il ne subsiste aucune story in_progress ni to_implement : treize stories to_validate exigent une observation humaine ou un appareil physique, et quatre stories blocked dépendent du contrat ou des connecteurs Diwan. Les preuves et le détail des résidus sont consignés dans docs/validation/PRD3-reconciliation-2026-09-25.md.",
+  "inspectedCommit": "2ce57e1ce5e3701d0f72ff0d92666dd4169a4cd9",
+  "reconciliationNote": "Réconciliation fraîche du registre après clôture de S6-032 : 84 stories, 67 completed/passes=true et 17 ouvertes/passes=false. Douze stories to_validate exigent uniquement une observation humaine ou un appareil physique. S3-008 exige encore un échantillon P3-B-v10 propre avant le verdict humain : les sorties contaminées sont maintenant refusées en production. Quatre stories blocked dépendent du contrat ou des connecteurs Diwan. Les preuves et le détail des résidus sont consignés dans docs/validation/PRD3-reconciliation-2026-09-25.md.",
   "supersedes": ".ralph/prd-v2.json",
   "scope": {
     "included": [
@@ -4308,8 +4308,14 @@
       },
       "sourceDependencies": ["S3-004"],
       "dependencies": ["S3-004"],
-      "gap": "Les vingt graines réelles et le rythme produit exact sont désormais consignés. La tranche humaine reste ouverte : Amine doit accepter ou refuser le ton et la fréquence ; le flag anchoring demeure désactivé jusqu’à ce verdict.",
-      "evidence": ["tasks/prd-3-ancrer.md", "docs/evidence/s3-008-andragogical-seed-sample.json"],
+      "gap": "L’ancien échantillon P3-B-v6 est obsolète. P3-B-v10 est déployé et refuse les chiffres, cadences ou contenus distinctifs absents de l’événement de provenance. Les tentatives fraîches ont été rejetées à juste titre ; il reste à produire un échantillon actuel de vingt graines qui franchit ces gardes, puis à obtenir le verdict humain sur le ton et la fréquence. Le flag anchoring demeure désactivé jusqu’à ce verdict.",
+      "evidence": [
+        "tasks/prd-3-ancrer.md",
+        "docs/evidence/s3-008-andragogical-seed-sample.json",
+        "lib/anchoring/seed-stock.ts",
+        "tests/anchoring/seed-stock.test.ts",
+        "scripts/validation/s3-008-current-seed-sample.ts"
+      ],
       "acceptance": [
         "20 graines réelles + plan de fréquence proposé (gabarit 3-ancrer/06)",
         "Validation explicite avant activation du flag anchoring en préprod"
@@ -4317,7 +4323,9 @@
       "closureEvidence": [
         "2026-09-07 — Amine autorise la production de l’échantillon et demande vingt graines le jour même. Il précise que Qalem est d’abord andragogique : les graines doivent partir de l’expérience, des problèmes réels, de l’autonomie et du transfert de l’adulte, sans confondre ce registre avec un guidage pédagogique. Cette tranche lève l’interdiction d’exécution mais ne vaut pas encore acceptation du ton ni activation du flag.",
         "2026-09-07 — Le SHA fonctionnel 88e499b09bf35ac9bcbacfea7bddcd3d6a74ad72 porte P3-B-v6 : approche andragogique transmise depuis la formation, distinction explicite avec pédagogie et hybride, refus déterministe des principales formulations évaluatives ou comparatives, transmission au modèle du rôle, du mécanisme et de la persona persistés au lieu du seul prénom, et rejet de tout nombre visible absent des paroles de session. Tests ciblés ServeurIA : 5/5 Vitest et TypeScript vert. L’appel LiteLLM réel final produit 20 graines deepseek-v4-flash, 3 443 tokens et un coût rapporté de 0,00361196 USD ; distribution 6 anecdotes, 6 highlights, 4 jokes, 4 quiz_reminder. Le rythme réel proposé est 12 graines à J+2/+5/+9/+14/+20/+27/+35/+44/+54/+65/+77/+90 et deux évaluations à J+30/J+60. Artefact : docs/evidence/s3-008-andragogical-seed-sample.json. passes reste faux en attente du verdict humain et le flag anchoring reste désactivé.",
-        "2026-09-07 — Déploiement Coolify x4he6742g0z3fnbv9916zhx6 terminé au SHA fonctionnel exact 88e499b09bf35ac9bcbacfea7bddcd3d6a74ad72. Le conteneur bcx5pxyuc9z3lt4jtyjipcqu-105714688404 est running/healthy, restart=0, OOMKilled=false ; qalem.ma/api/health répond 200. Lecture fraîche de feature_flags : anchoring=false."
+        "2026-09-07 — Déploiement Coolify x4he6742g0z3fnbv9916zhx6 terminé au SHA fonctionnel exact 88e499b09bf35ac9bcbacfea7bddcd3d6a74ad72. Le conteneur bcx5pxyuc9z3lt4jtyjipcqu-105714688404 est running/healthy, restart=0, OOMKilled=false ; qalem.ma/api/health répond 200. Lecture fraîche de feature_flags : anchoring=false.",
+        "2026-09-25 — L’audit frais invalide l’ancien échantillon P3-B-v6 comme preuve courante. P3-B-v10 impose la persona joker, interdit les fréquences déduites et compare chiffres, cadences et vocabulaire distinctif à l’événement de provenance lui-même. Les sorties contenant « coûts récurrents » depuis un autre événement, « chaque budget », « chaque mois » ou « chaque versement » sans source sont refusées au lieu d’être livrées. Douze tests ciblés, Prettier, TypeScript, ESLint, 3 395 Vitest, le build de 127 pages et 200/200 Playwright sont verts.",
+        "2026-09-25 — Coolify était épinglé sur ca82898b et reconstruisait donc l’ancien code malgré la branche à jour. L’épingle est corrigée vers 2ce57e1ce5e3701d0f72ff0d92666dd4169a4cd9. Le déploiement hl3gsjvqk2tblyzs35cnf9l0 est terminé, le conteneur bcx5pxyuc9z3lt4jtyjipcqu-181525832477 sert exactement ce SHA et est healthy ; qalem.ma/api/health répond HTTP 200. Aucun échantillon rejeté n’est présenté comme preuve acceptée."
       ],
       "historicalEvidence": {
         "completedAt": null,

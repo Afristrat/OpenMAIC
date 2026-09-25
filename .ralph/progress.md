@@ -1303,3 +1303,9 @@ La recette multi-rôle sur `qalem.ma` produit `S6032_PRODUCTION_RECIPE_OK` : dem
 Le comptage direct de `.ralph/prd-v3.json` remplace l’ancien état du goal : 84 stories au total, 67 `completed/passes=true`, 13 `to_validate/passes=false`, 4 `blocked/passes=false`, aucune `in_progress` et aucune `to_implement`. Les treize validations ouvertes exigent explicitement une observation humaine ou un appareil physique ; les quatre blocages sont S6-003 et les trois connecteurs Diwan. Le détail est versionné dans `docs/validation/PRD3-reconciliation-2026-09-25.md`.
 
 Le contrôle frais de S6-011 relit l’instance Evolution dédiée `qalem-reminders` à l’état `close`. Le code, l’e-mail et l’infrastructure restent acquis ; l’appairage QR, la réception WhatsApp réelle, la désinscription et l’absence de doublon demeurent un checkpoint physique. Aucun QR ni secret n’a été affiché.
+
+## 25 septembre 2026 — S3-008 renforcée, preuve humaine encore ouverte
+
+L’ancien échantillon P3-B-v6 n’est plus traité comme une preuve courante. P3-B-v10 lie maintenant chiffres, cadences et vocabulaire distinctif à l’événement exact de provenance et réserve les plaisanteries à la persona joker. Les sorties fraîches contaminées ou inventant une cadence ont été refusées ; aucune n’est présentée à Amine comme un échantillon acceptable.
+
+Prettier, TypeScript, ESLint, 3 395 Vitest, le build de 127 pages et 200/200 Playwright sont verts. Coolify reconstruisait d’abord l’ancien SHA `ca82898b` parce que l’application était épinglée ; l’épingle est corrigée vers `2ce57e1ce5e3701d0f72ff0d92666dd4169a4cd9`. Le déploiement `hl3gsjvqk2tblyzs35cnf9l0` est terminé, le nouveau conteneur est sain et la santé publique répond HTTP 200. S3-008 reste `to_validate/passes=false` avec un seul résidu autonome : produire vingt graines P3-B-v10 propres avant le verdict humain.
