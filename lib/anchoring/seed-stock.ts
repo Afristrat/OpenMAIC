@@ -42,7 +42,7 @@ const ANDRAGOGY_EVALUATIVE_LANGUAGE =
   /\b(bravo|bien joué|sage décision|continue sur cette lancée|mieux que (?:la plupart|les autres)|exactement (?:le bon|la bonne)|(?:bon|vrai) (?:réflexe|levier|choix|niveau d['’]engagement)|pilote aguerri|tu as su|tu as montré|c['’]est déjà|écart type)\b/iu;
 const NUMERIC_TOKEN = /\p{N}+(?:[.,]\p{N}+)?%?/gu;
 const TEMPORAL_MARKER =
-  /(?<!\p{L})(?:aujourd['’]hui|ce soir|demain|après-demain|cette semaine|la semaine prochaine|ce mois-ci|le mois prochain|today|tonight|tomorrow|this week|next week|this month|next month|اليوم|الليلة|غد[اًا]|هذا الأسبوع|الأسبوع المقبل|هذا الشهر|الشهر المقبل)(?!\p{L})/giu;
+  /(?<!\p{L})(?:aujourd['’]hui|ce soir|demain|après-demain|cette semaine|la semaine prochaine|ce mois-ci|le mois prochain|chaque jour|chaque semaine|chaque mois|chaque année|quotidien(?:ne)?|hebdomadaire|mensuel(?:le)?|annuel(?:le)?|today|tonight|tomorrow|this week|next week|this month|next month|daily|weekly|monthly|yearly|اليوم|الليلة|غد[اًا]|هذا الأسبوع|الأسبوع المقبل|هذا الشهر|الشهر المقبل|يومي(?:ة)?|أسبوعي(?:ة)?|شهري(?:ة)?|سنوي(?:ة)?)(?!\p{L})/giu;
 
 function numericTokensFromStrings(value: unknown, output = new Set<string>()): Set<string> {
   if (typeof value === 'string') {

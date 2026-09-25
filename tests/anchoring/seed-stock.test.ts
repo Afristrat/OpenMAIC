@@ -226,4 +226,20 @@ describe('anchoring seed stock', () => {
       }),
     ).toThrow('Temporal claim absent from session: ce soir');
   });
+
+  it('refuse une cadence absente de la session', () => {
+    const inventedCadence = valid.map((seed, index) =>
+      index === 0
+        ? { ...seed, content: { ...seed.content, body: 'Ce coût revient chaque mois.' } }
+        : seed,
+    );
+    expect(() =>
+      parseSeedStock(JSON.stringify(inventedCadence), {
+        learningApproach: 'andragogy',
+        events: recordedEvents,
+        personas: ['Penseur', 'Analyste'],
+        sceneRefs: ['scene-1'],
+      }),
+    ).toThrow('Temporal claim absent from session: chaque mois');
+  });
 });
