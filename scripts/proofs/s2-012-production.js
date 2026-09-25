@@ -1,11 +1,16 @@
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
+import { spawnSync } from 'node:child_process';
 
 const base = 'https://qalem.ma';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const service = process.env.SUPABASE_SERVICE_ROLE_KEY;
-assert(supabaseUrl && anon && service, 'Missing required runtime configuration');
+const controlledClient = process.env.QALEM_LOCAL_PROOF_BIN;
+assert(
+  supabaseUrl && anon && service && controlledClient,
+  'Missing required runtime configuration',
+);
 
 const marker = `s2012-${Date.now()}-${crypto.randomBytes(5).toString('hex')}`;
 const createdUsers = [];
@@ -22,7 +27,13 @@ async function json(url, options = {}) {
   } catch {
     // The proof records statuses only; no response body is exposed on failure.
   }
-  return { status: response.status, payload, bytes: Buffer.from(text) };
+  return {
+    status: response.status,
+    payload,
+    bytes: Buffer.from(text),
+    contentType: response.headers.get('content-type'),
+    contentDisposition: response.headers.get('content-disposition'),
+  };
 }
 
 async function serviceRequest(path, options = {}) {
@@ -76,6 +87,22 @@ function rawX25519PublicKey(key) {
   return Buffer.from(key.export({ format: 'der', type: 'spki' }))
     .subarray(-32)
     .toString('base64url');
+}
+
+function rawX25519PrivateKey(key) {
+  return Buffer.from(key.export({ format: 'der', type: 'pkcs8' }))
+    .subarray(-32)
+    .toString('base64url');
+}
+
+function runControlledClient(input) {
+  const result = spawnSync(controlledClient, [], {
+    input: JSON.stringify(input),
+    encoding: 'utf8',
+    maxBuffer: 1024 * 1024,
+  });
+  assert.equal(result.status, 0, 'Qalem Local controlled client refused the proof harness');
+  return JSON.parse(result.stdout);
 }
 
 function publicEd25519Key(x) {
@@ -234,6 +261,13 @@ async function main() {
       `/api/local/packages/${packageId}?orgId=${organizationId}&deviceId=${deviceId}`,
     );
     assert.equal(download.status, 200);
+    assert.equal(download.contentType, 'application/octet-stream');
+    assert.match(download.contentDisposition ?? '', /attachment; filename="[a-f0-9-]+\.qalempkg"/);
+    const browserDownload = await json(
+      `${base}/api/local/packages/${packageId}?orgId=${organizationId}&deviceId=${deviceId}`,
+      { headers: { accept: 'text/html' } },
+    );
+    assert.equal(browserDownload.status, 401);
     const signing = await json(`${base}/api/local/public-key`);
     assert.equal(signing.status, 200);
     const publicKey = publicEd25519Key(signing.payload?.publicKey);
@@ -247,6 +281,25 @@ async function main() {
     assert.equal(active.status, 200);
     verifySigned(active.payload?.status, publicKey);
     assert.equal(active.payload.status.claims.revoked, false);
+    const nativeActive = runControlledClient({
+      mode: 'active',
+      artifact: download.bytes.toString('base64url'),
+      deviceSecret: rawX25519PrivateKey(device.privateKey),
+      publicKey: signing.payload.publicKey,
+      status: active.payload.status,
+      now: Math.floor(Date.now() / 1000),
+    });
+    assert.deepEqual(nativeActive, {
+      opened: true,
+      contentBytes: opened.content.length,
+      alteredManifestRefused: true,
+      expiredRefused: true,
+      wrongUserRefused: true,
+      wrongTenantRefused: true,
+      wrongDeviceRefused: true,
+      wrongDeviceKeyRefused: true,
+      staleStatusRefused: true,
+    });
     stage = 'revocation';
     const revoked = await app(session, '/api/local/devices', 'DELETE', {
       orgId: organizationId,
@@ -259,6 +312,15 @@ async function main() {
     assert.equal(afterRevocation.status, 200);
     verifySigned(afterRevocation.payload?.status, publicKey);
     assert.equal(afterRevocation.payload.status.claims.revoked, true);
+    const nativeRevoked = runControlledClient({
+      mode: 'revoked',
+      artifact: download.bytes.toString('base64url'),
+      deviceSecret: rawX25519PrivateKey(device.privateKey),
+      publicKey: signing.payload.publicKey,
+      status: afterRevocation.payload.status,
+      now: Math.floor(Date.now() / 1000),
+    });
+    assert.deepEqual(nativeRevoked, { revokedStatusRefused: true });
     const denied = await app(
       session,
       `/api/local/packages/${packageId}?orgId=${organizationId}&deviceId=${deviceId}`,
@@ -271,7 +333,9 @@ async function main() {
       active: active.status,
       revoked: revoked.status,
       denied: denied.status,
+      browser: browserDownload.status,
     };
+    summary.controlledClient = { ...nativeActive, ...nativeRevoked };
     const cleanedOrganizationId = organizationId;
     await cleanup();
     const counts = await Promise.all([
