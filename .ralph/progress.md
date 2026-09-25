@@ -1289,3 +1289,11 @@ La recherche fraîche du checkout propriétaire Diwan au commit `d3d9103800d6a49
 ## 25 septembre 2026 — S-021 Blocage Google Drive vérifié dans Diwan
 
 La recherche fraîche du checkout propriétaire Diwan au commit `d3d9103800d6a49c4f577701b6fd2bf917f4f8f9` ne trouve aucune intégration Google Drive dans l’application, l’API, les tests ou le contrat Qalem. L’unique usage `google.oauth2` sert à tester les credentials Vertex ; il ne donne aucun accès Drive. Diwan ne fournit donc ni connexion OAuth Drive, ni recherche ou lecture de Google Docs, Slides ou PDF, ni correspondance native fichier/version vers corpus/source/version. S-021 reste `blocked` et `passes=false` ; un import manuel ne satisfait pas l’intégration demandée. Aucun fichier Diwan n’a été modifié.
+
+## 25 septembre 2026 — S6-032 Délégation temporaire de correction clôturée
+
+Un formateur actif peut désormais solliciter, depuis une formation précise, le droit de la corriger. Un administrateur ou manager actif du même tenant voit la demande, choisit 1 heure, 8 heures, 24 heures, 7 jours ou 30 jours, puis l’autorise, la refuse ou la révoque. Le serveur revalide à chaque opération le tenant, le rôle formateur, l’échéance et la formation ; une suspension, un retrait, un changement de rôle, une expiration ou une révocation coupe immédiatement l’accès. La table d’audit est protégée par RLS et inaccessible directement aux rôles navigateur.
+
+La migration et la recette SQL sont appliquées en production. Le SHA fonctionnel `ca82898b1a3c1b37f202772d7e870f9c7ecd5d35` passe Prettier, TypeScript, ESLint, 3 389 tests Vitest, le build de 127 pages et 200/200 Playwright sous serveur de production. Le déploiement Coolify `jijekgwrbnnfodwyeweivtxn` sert ce SHA dans un conteneur sain, sans redémarrage ni OOM, et la santé publique répond HTTP 200.
+
+La recette multi-rôle sur `qalem.ma` produit `S6032_PRODUCTION_RECIPE_OK` : demande du formateur dans Chromium, accord d’une heure du manager dans Chromium, correction persistée de la seule formation autorisée, refus 403 sur une autre formation, révocation dans Chromium et refus 403 immédiat après révocation. Le nettoyage retourne `0|0|0` pour tenants, formations et comptes éphémères. Les commits jusqu’à `0c69fdee5680cf866c4d766e58bee0e278e8dee1` ajoutent uniquement cette preuve de production. S6-032 passe à `completed` et `passes=true`.

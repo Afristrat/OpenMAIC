@@ -1734,21 +1734,27 @@
       "description": "En tant qu’administrateur ou manager d’un tenant, je veux pouvoir autoriser temporairement un formateur qui le sollicite à corriger une formation précise afin de déléguer la qualité éditoriale sans élargir durablement ses privilèges.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P0",
-      "status": "in_progress",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "type": "explicit_user_request",
         "date": "2026-09-25"
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Le rôle formateur peut créer une formation mais le contrôle d’édition ne reconnaît encore aucune délégation par formation ; seuls les administrateurs, managers, super-administrateurs et auteurs propriétaires peuvent corriger le contenu existant.",
+      "gap": "Soldé : un formateur actif peut demander depuis une formation une autorisation de correction strictement limitée à cette formation ; un administrateur ou manager du tenant choisit sa durée, peut la refuser ou la révoquer, et chaque frontière serveur revalide le rôle, le tenant, l’échéance et l’état de la formation.",
       "evidence": [
         "supabase/migrations/20260925120000_classroom_edit_delegations.sql",
         "app/api/classroom/[classroomId]/edit-access/route.ts",
         "components/classroom-edit-delegation.tsx",
         "lib/api/auth.ts",
-        "lib/server/classroom-edit-delegations.ts"
+        "lib/server/classroom-edit-delegations.ts",
+        "app/api/agent/edit/route.ts",
+        "e2e/tests/classroom-edit-delegation.spec.ts",
+        "scripts/validation/s6-032-classroom-edit-delegations.sql",
+        "scripts/validation/s6-032-production-recipe.mjs",
+        "git:ca82898b1a3c1b37f202772d7e870f9c7ecd5d35",
+        "git:0c69fdee5680cf866c4d766e58bee0e278e8dee1"
       ],
       "acceptance": [
         "Un formateur actif du tenant peut demander depuis une formation précise une autorisation de correction, sans obtenir de droit sur les autres formations.",
@@ -1760,7 +1766,15 @@
         "Les tests permanents couvrent l’isolation par formation et tenant, l’expiration, la concurrence, les transitions et chaque frontière d’édition.",
         "La migration, le quality gate complet, le déploiement Coolify et une recette navigateur multi-rôle sont verts au même SHA de clôture."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-25 — La migration 20260925120000 est appliquée à la base Qalem après sauvegarde de schéma. La table classroom_edit_delegations a RLS actif, refuse anon et authenticated, réserve service_role et porte le trigger validate_classroom_edit_delegation. La recette SQL transactionnelle couvre rôle formateur actif, décideur admin/manager actif, plafond de 30 jours, transitions, immutabilité et produit S6032_CLASSROOM_EDIT_DELEGATIONS_PROOF_OK.",
+        "2026-09-25 — Le SHA fonctionnel ca82898b1a3c1b37f202772d7e870f9c7ecd5d35 revalide la délégation à chaque sauvegarde, renommage, suppression, édition IA, image, vidéo, TTS et régénération TTS. Le tenant de l’éditeur IA est dérivé de la formation et non du client. Les tests ciblés IA passent 3/3 et Chromium passe les trois scénarios permanents de demande, décision, isolation et expiration.",
+        "2026-09-25 — La gate complète ServeurIA du même code fonctionnel est verte : Prettier, TypeScript, ESLint, 550 fichiers et 3 389 tests Vitest, build de 127 pages et 200/200 Playwright en serveur de production. Le premier essai sous serveur Next de développement a atteint la limite de 10 Gio du harnais ; le rejeu de production a terminé sans cascade de connexions refusées.",
+        "2026-09-25 — Le déploiement Coolify jijekgwrbnnfodwyeweivtxn sert l’image exacte ca82898b1a3c1b37f202772d7e870f9c7ecd5d35. Le conteneur est healthy, restart=0, OOMKilled=false et https://qalem.ma/api/health répond HTTP 200.",
+        "2026-09-25 — La recette multi-rôle réelle contre qalem.ma crée un formateur et un manager éphémères : le formateur demande l’accès depuis le navigateur, le manager accorde une heure depuis le navigateur, le formateur observe l’accord, corrige la seule formation autorisée, reçoit 403 sur une seconde formation, puis reçoit 403 après révocation navigateur. La correction persistée est relue en base ; la preuve S6032_PRODUCTION_RECIPE_OK est complète et le nettoyage final retourne 0 tenant, 0 formation et 0 compte de recette.",
+        "2026-09-25 — Les commits postérieurs au SHA fonctionnel jusqu’à 0c69fdee5680cf866c4d766e58bee0e278e8dee1 n’ajoutent que le harnais de preuve production et son diagnostic ; ils ne modifient pas le code exécuté par l’application. origin/refork-v030 porte ces preuves avant la clôture documentaire."
+      ],
+      "completedAt": "2026-09-25",
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": [
