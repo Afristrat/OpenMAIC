@@ -60,5 +60,19 @@ stocks 13 et 20 ne sont pas planifiées silencieusement.
 Le flag temporairement activé est revenu à `false`; une relecture serveur
 confirme zéro organisation de recette restante. Le script temporairement copié
 sur le serveur et dans le conteneur a été supprimé. Cette preuve fraîche ferme
-le sous-critère stocks 12/13/20 et calendrier ; la gate globale au SHA de
-clôture et les parcours sur appareils physiques restent des critères distincts.
+le sous-critère stocks 12/13/20 et calendrier.
+
+## Clôture fraîche — 25 septembre 2026
+
+La même recette est rejouée sur le conteneur production exact
+`4a9dfb56652323d077c3477941e493f145449bb8`. Les stocks 12, 13 et 20 répondent
+chacun HTTP 201, sélectionnent 12 graines et créent 14 livraisons. Le script
+temporaire est supprimé, zéro organisation de recette subsiste et le drapeau
+`anchoring` est relu à `false`.
+
+La gate complète du même SHA passe Prettier, TypeScript, ESLint, 3 373 tests
+Vitest, le build de 127 routes et 196/196 Playwright. Journal SHA-256 :
+`8e8b70e1feeabd3770559bf9b5c34322f5339e9efdde4b172d52744a693e4bcb`.
+La réception application fermée sur iOS/Android reste exclusivement suivie par
+S3-002, conformément au verdict initial de ce document ; elle n’est pas
+revendiquée par S3-005.

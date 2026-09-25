@@ -4103,8 +4103,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Plan d'ancrage opt-in + planification BullMQ ≤ J+90 » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "3-ANCRER",
       "priority": "P2",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S3-005",
@@ -4112,7 +4112,7 @@
       },
       "sourceDependencies": ["S3-004"],
       "dependencies": ["S3-004"],
-      "gap": "La sélection déterministe de douze graines équilibrées depuis un stock de 12, 13 ou 20 et le calendrier J+90 sont recettés en production le 15 septembre 2026. Restent uniquement la gate globale au SHA de clôture et la validation sur appareils physiques, qui ne sont pas déduites de cette recette serveur.",
+      "gap": "Clôturé le 25 septembre 2026 : opt-in, pause, reprise, arrêt, déduplication, envoi Web Push serveur, stocks de 12/13/20 graines et borne J+90 sont recettés ; la recette est rejouée sur le SHA déployé et la gate complète est verte. La réception sur appareils physiques reste exclusivement suivie par S3-002.",
       "evidence": [
         "tasks/prd-3-ancrer.md",
         "tests/anchoring/schedule.test.ts",
@@ -4128,8 +4128,10 @@
       "closureEvidence": [
         "2026-09-15 — La recette authentifiée exécutée dans le conteneur public crée trois stocks réels de 12, 13 et 20 graines, puis appelle l’opt-in applicatif. Chaque stock répond 201, sélectionne exactement 12 graines équilibrées, crée 14 livraisons strictement croissantes et dédupliquées, bornées à J+90 ; les excédents ne sont pas planifiés. Le flag anchoring est restauré à false et zéro organisation de recette demeure. Référence : docs/validation/S3-005-anchor-plan-web-push.md.",
         "2026-09-06 — Le runtime worker f96bdc4 reçoit désormais durablement les trois variables VAPID depuis Coolify (longueurs 87/43 et sujet valide), reste healthy, restart=0 et OOMKilled=false. Recette authentifiée sur qalem.ma : opt-in explicite, 14 livraisons strictement croissantes, 14 clés de déduplication uniques et borne J+90 ; pause et reprise effectuées par les boutons UI ; un job BullMQ arrivé à échéance reste intact pendant la pause, puis part à la reprise vers une terminaison HTTPS externe qui répond 201 avec requête chiffrée et autorisation VAPID ; le rejeu de la livraison envoyée ne produit aucun POST supplémentaire ; l’arrêt UI supprime le plan et ses livraisons. Gate exact ServeurIA au SHA f96bdc4c8d635e9855a9ef1600d9a5eaa5c095ad : Prettier, TypeScript et ESLint verts, 436/436 fichiers et 2 686/2 686 tests Vitest, build 112 routes et 111/111 Playwright sans retry. Flag anchoring restauré à false ; compte, tenant, données, abonnements, audits, terminaison et fichiers temporaires supprimés sans résidu. Référence : docs/validation/S3-005-anchor-plan-web-push.md.",
-        "2026-09-04 — Les commits af8cdaa et 31d5021 livrent le calendrier borné, l’opt-in explicite, la pause/reprise, l’arrêt et les jobs BullMQ rejouables sous flag anchoring maintenu désactivé. Gate global ServeurIA vert ; l’envoi Web Push réel reste à recetter."
+        "2026-09-04 — Les commits af8cdaa et 31d5021 livrent le calendrier borné, l’opt-in explicite, la pause/reprise, l’arrêt et les jobs BullMQ rejouables sous flag anchoring maintenu désactivé. Gate global ServeurIA vert ; l’envoi Web Push réel reste à recetter.",
+        "2026-09-25 — Rejeu sur le conteneur production exact 4a9dfb56652323d077c3477941e493f145449bb8 : les stocks 12, 13 et 20 répondent chacun HTTP 201, sélectionnent 12 graines et créent 14 livraisons. Le script temporaire est supprimé, zéro organisation de recette subsiste et le drapeau anchoring est relu à false. La gate complète du même SHA passe Prettier, TypeScript, ESLint, 3 373 tests Vitest, le build de 127 routes et 196/196 Playwright ; journal SHA-256 8e8b70e1feeabd3770559bf9b5c34322f5339e9efdde4b172d52744a693e4bcb. Le document de validation attribue explicitement la réception physique à S3-002, sans la revendiquer ici."
       ],
+      "completedAt": "2026-09-25T01:40:35.8484590Z",
       "historicalEvidence": {
         "completedAt": null,
         "note": null,
