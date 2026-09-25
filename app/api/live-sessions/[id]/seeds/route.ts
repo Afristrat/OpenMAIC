@@ -160,6 +160,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       events: anchorEvents,
       personas,
       sceneRefs,
+      personaMechanisms: Object.fromEntries(
+        seedCasting.map((member) => [member.name, member.mechanismId]),
+      ),
     });
     const { error: insertError } = await service.from('seeds').insert(
       seeds.map((seed) => ({

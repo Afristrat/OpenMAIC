@@ -114,6 +114,9 @@ async function main(): Promise<void> {
     events,
     personas: casting.map((member) => member.name),
     sceneRefs: ['scene-budget', 'scene-risques', 'scene-actions'],
+    personaMechanisms: Object.fromEntries(
+      casting.map((member) => [member.name, member.mechanismId]),
+    ),
   });
   assert.equal(seeds.length, 20, 'Le modèle n’a pas produit exactement vingt graines');
 

@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
 import type { LearningApproach } from '@/lib/agents/persona-catalog';
 
-export const ANCHOR_SEED_PROMPT_VERSION = 'P3-B-v7';
+export const ANCHOR_SEED_PROMPT_VERSION = 'P3-B-v8';
 
 export const anchorSeedSourceKinds = [
   'learner_proposition',
@@ -41,6 +41,8 @@ export interface AnchorSeedCastingMember {
 const ANDRAGOGY_EVALUATIVE_LANGUAGE =
   /\b(bravo|bien joué|sage décision|continue sur cette lancée|mieux que (?:la plupart|les autres)|exactement (?:le bon|la bonne)|(?:bon|vrai) (?:réflexe|levier|choix|niveau d['’]engagement)|pilote aguerri|tu as su|tu as montré|c['’]est déjà|écart type)\b/iu;
 const NUMERIC_TOKEN = /\p{N}+(?:[.,]\p{N}+)?%?/gu;
+const TEMPORAL_MARKER =
+  /(?<!\p{L})(?:aujourd['’]hui|ce soir|demain|après-demain|cette semaine|la semaine prochaine|ce mois-ci|le mois prochain|today|tonight|tomorrow|this week|next week|this month|next month|اليوم|الليلة|غد[اًا]|هذا الأسبوع|الأسبوع المقبل|هذا الشهر|الشهر المقبل)(?!\p{L})/giu;
 
 function numericTokensFromStrings(value: unknown, output = new Set<string>()): Set<string> {
   if (typeof value === 'string') {
@@ -84,6 +86,7 @@ export function parseSeedStock(
     events: AnchorSeedEvent[];
     personas: string[];
     sceneRefs: string[];
+    personaMechanisms?: Readonly<Record<string, string | undefined>>;
   },
 ): AnchorSeed[] {
   const parsed = z.array(seedSchema).min(12).parse(parseJsonResponse<unknown>(text));
@@ -91,6 +94,12 @@ export function parseSeedStock(
   const sceneRefs = new Set(context.sceneRefs);
   const eventsById = new Map(context.events.map((event) => [event.id, event]));
   const sessionNumbers = numericTokensFromStrings(context.events);
+  const sessionText = JSON.stringify(context.events).toLocaleLowerCase('und');
+  const jokerPersonas = new Set(
+    Object.entries(context.personaMechanisms ?? {}).flatMap(([persona, mechanism]) =>
+      mechanism === 'joker' ? [persona] : [],
+    ),
+  );
   const counts = { anecdote: 0, highlight: 0, joke: 0, quiz_reminder: 0 };
 
   for (const seed of parsed) {
@@ -103,6 +112,9 @@ export function parseSeedStock(
     if (seed.content.provenance.source_kind !== anchorSeedSourceKind(sourceEvent)) {
       throw new Error('Seed provenance category does not match the recorded event');
     }
+    if (seed.kind === 'joke' && jokerPersonas.size > 0 && !jokerPersonas.has(seed.persona)) {
+      throw new Error('Joke seed must use a joker persona when the casting provides one');
+    }
     if (
       context.learningApproach === 'andragogy' &&
       ANDRAGOGY_EVALUATIVE_LANGUAGE.test(`${seed.content.push_hook} ${seed.content.body}`)
@@ -114,6 +126,14 @@ export function parseSeedStock(
     ].find((token) => !sessionNumbers.has(token));
     if (inventedNumber) {
       throw new Error(`Numeric claim absent from session: ${inventedNumber}`);
+    }
+    const inventedTemporalMarker = [
+      ...`${seed.content.push_hook} ${seed.content.body}`.matchAll(TEMPORAL_MARKER),
+    ]
+      .map((match) => match[0].toLocaleLowerCase('und'))
+      .find((marker) => !sessionText.includes(marker));
+    if (inventedTemporalMarker) {
+      throw new Error(`Temporal claim absent from session: ${inventedTemporalMarker}`);
     }
     counts[seed.kind] += 1;
   }
@@ -138,7 +158,7 @@ export function buildSeedStockPrompt(input: {
 
 export const ANCHOR_SEED_SYSTEM_PROMPT = `Tu conçois les relances d'une session de formation qui vient de se terminer.
 À partir du résumé de session fourni, génère un stock de graines d'ancrage mémoriel.
-Chaque graine est signée par une personnalité du casting, respecte son rôle, son mécanisme et sa persona, et cite une scene_ref fournie. Elle doit aussi déclarer l'identifiant exact de l'événement qui fonde la relance et la catégorie fournie par le serveur. N'évoque jamais un fait, une réponse ou une question qui n'est pas dans cet événement. La catégorie indique l'origine : learner_proposition est une parole de l'apprenant ; agent_proposition est une proposition d'agent ; content_presented est un contenu affiché ; new_question est une question nouvellement proposée. Ces quatre origines ne sont jamais interchangeables.
+Chaque graine est signée par une personnalité du casting, respecte son rôle, son mécanisme et sa persona, et cite une scene_ref fournie. Elle doit aussi déclarer l'identifiant exact de l'événement qui fonde la relance et la catégorie fournie par le serveur. N'évoque jamais un fait, une réponse ou une question qui n'est pas dans cet événement, même si ce fait apparaît ailleurs dans la même session. Une graine joke est toujours signée par une persona dont mechanismId vaut joker lorsqu'elle existe dans le casting ; un coach ou un analyste ne change jamais de persona pour satisfaire la distribution. La catégorie indique l'origine : learner_proposition est une parole de l'apprenant ; agent_proposition est une proposition d'agent ; content_presented est un contenu affiché ; new_question est une question nouvellement proposée. Ces quatre origines ne sont jamais interchangeables.
 Respecte strictement learning_approach :
 - andragogy : adulte traité en pair autonome ; partir de son expérience, de ses problèmes réels et d'un transfert immédiatement applicable ; bannir tout ton scolaire, infantilisant ou toute félicitation vague ;
 - pedagogy : guidage explicite, progression structurée et étayage adapté à un apprenant qui a besoin d'être accompagné ;
@@ -147,5 +167,5 @@ Produis au minimum 4 anecdotes, 4 highlights, 2 jokes et 2 quiz_reminder.
 Accroche push de 90 caractères maximum, corps de 60 mots maximum, dans la langue fournie.
 En arabe, utilise l'arabe standard moderne. En français, emploie des accents irréprochables.
 Toute promotion commerciale, culpabilisation ou comparaison à d'autres apprenants est interdite.
-En andragogie, ne félicite et n'évalue jamais l'adulte, son choix, sa compétence ou son réflexe, même sous forme d'humour. Décris le fait observé sans le qualifier, puis pose une question ouverte ou propose une action immédiatement exécutable. Sont notamment interdits : « bravo », « bien joué », « sage décision », « bon réflexe », « vrai levier », « pilote aguerri », « tu as su », « tu as montré », « c'est déjà », « mieux que les autres ». L'humour vise uniquement la situation, jamais la personne. N'invente ni devise, ni pays, ni contexte, ni chiffre, ni durée, ni seuil absent des événements. Ne présente jamais une simple amplitude entre deux hypothèses comme un écart type.
+En andragogie, ne félicite et n'évalue jamais l'adulte, son choix, sa compétence ou son réflexe, même sous forme d'humour. Décris le fait observé sans le qualifier, puis pose une question ouverte ou propose une action immédiatement exécutable. Sont notamment interdits : « bravo », « bien joué », « sage décision », « bon réflexe », « vrai levier », « pilote aguerri », « tu as su », « tu as montré », « c'est déjà », « mieux que les autres ». L'humour vise uniquement la situation, jamais la personne. N'invente ni devise, ni pays, ni contexte, ni chiffre, ni durée, ni seuil, ni moment relatif comme « ce soir » ou « demain » absent des événements. Ne présente jamais une simple amplitude entre deux hypothèses comme un écart type. Varie réellement les accroches, les angles, les formes de rappel et les actions ; ne répète pas la même question sous plusieurs formulations.
 Retourne uniquement un tableau JSON conforme à [{"persona":"...","kind":"anecdote|highlight|joke|quiz_reminder","content":{"push_hook":"...","body":"...","scene_ref":"...","provenance":{"event_id":"...","source_kind":"learner_proposition|agent_proposition|content_presented|new_question"}}}].`;

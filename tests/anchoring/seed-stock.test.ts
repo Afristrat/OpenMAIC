@@ -195,4 +195,35 @@ describe('anchoring seed stock', () => {
       }),
     ).toThrow('Seed provenance category does not match the recorded event');
   });
+
+  it('réserve les plaisanteries à la persona joker disponible', () => {
+    const wrongJoker = valid.map((seed) =>
+      seed.kind === 'joke' ? { ...seed, persona: 'Analyste' } : seed,
+    );
+    expect(() =>
+      parseSeedStock(JSON.stringify(wrongJoker), {
+        learningApproach: 'andragogy',
+        events: recordedEvents,
+        personas: ['Penseur', 'Analyste', 'Salma'],
+        sceneRefs: ['scene-1'],
+        personaMechanisms: { Penseur: 'coach', Analyste: 'analyst', Salma: 'joker' },
+      }),
+    ).toThrow('Joke seed must use a joker persona when the casting provides one');
+  });
+
+  it('refuse un moment relatif absent de la session', () => {
+    const inventedTiming = valid.map((seed, index) =>
+      index === 0
+        ? { ...seed, content: { ...seed.content, body: 'Applique cette méthode ce soir.' } }
+        : seed,
+    );
+    expect(() =>
+      parseSeedStock(JSON.stringify(inventedTiming), {
+        learningApproach: 'andragogy',
+        events: recordedEvents,
+        personas: ['Penseur', 'Analyste'],
+        sceneRefs: ['scene-1'],
+      }),
+    ).toThrow('Temporal claim absent from session: ce soir');
+  });
 });
