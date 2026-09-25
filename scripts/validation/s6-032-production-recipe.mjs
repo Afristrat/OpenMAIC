@@ -144,11 +144,14 @@ async function cleanup() {
   }
   for (const userId of [trainerId, managerId]) {
     if (!userId) continue;
-    const response = await fetch(`${supabaseUrl}/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
-      method: 'DELETE',
-      headers: serviceHeaders,
-      signal: AbortSignal.timeout(30_000),
-    });
+    const response = await fetch(
+      `${supabaseUrl}/auth/v1/admin/users/${encodeURIComponent(userId)}`,
+      {
+        method: 'DELETE',
+        headers: serviceHeaders,
+        signal: AbortSignal.timeout(30_000),
+      },
+    );
     if (!response.ok) throw new Error(`Suppression Auth impossible : HTTP ${response.status}`);
   }
 }
