@@ -34,7 +34,7 @@ L’ancien état 83/49/34 du goal n’est donc plus représentatif du dépôt. S
 | S6-011 | Appairage QR du compte WhatsApp retenu, réception réelle, désinscription et absence de doublon. L’instance `qalem-reminders` est relue `close` le 25 septembre. |
 | S3-008 | Acceptation humaine du ton et de la fréquence de l’échantillon P3-B-v11 : 20 graines, 4 289 jetons, distribution 6/6/4/4 et plan J+2 à J+90. L’ancien P3-B-v6 reste historique. |
 
-Ces stories ne cachent aucune dette de code identifiée et restent ouvertes parce que leur critère final interdit de substituer une terminaison HTTP, un émulateur ou un test automatisé à l’observation demandée. Pour S3-008, les sorties contaminées ont été refusées et l’échantillon propre P3-B-v11 est versionné sans auto-acceptation.
+Ces stories ne cachent aucune dette de code identifiée et restent ouvertes parce que leur critère final interdit de substituer une terminaison HTTP, un émulateur ou un test automatisé à l’observation demandée. Pour S3-008, les sorties contaminées ont été refusées et l’échantillon propre P3-B-v11 est versionné sans auto-acceptation. Le SHA exact `3c2dedf0be6fc5a4f53b80b6a5d99388c7f906fa` est déployé sainement par Coolify sous `2parydmimqxbn7tkf6wztl74` ; la dette machine est donc soldée.
 
 ## Quatre dépendances Diwan
 
