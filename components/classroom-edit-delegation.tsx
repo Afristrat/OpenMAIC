@@ -24,13 +24,15 @@ const DURATION_OPTIONS = [
 
 export function ClassroomEditDelegation({
   classroomId,
+  initialState,
   onAccessChanged,
 }: {
   classroomId: string;
+  initialState: ClassroomEditDelegationState | null;
   onAccessChanged: () => void;
 }): React.ReactElement | null {
   const { t, locale } = useI18n();
-  const [state, setState] = useState<ClassroomEditDelegationState | null>(null);
+  const [state, setState] = useState<ClassroomEditDelegationState | null>(initialState);
   const [durationHours, setDurationHours] = useState(24);
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -44,9 +46,7 @@ export function ClassroomEditDelegation({
     setState(body.editAccess ?? null);
   }, [classroomId]);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  useEffect(() => setState(initialState), [initialState]);
 
   const activeRequests = useMemo(() => {
     const now = Date.now();

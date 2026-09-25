@@ -3,6 +3,7 @@
 import { Stage } from '@/components/stage';
 import { CourseNotificationPreferences } from '@/components/courses/course-notification-preferences';
 import { ClassroomEditDelegation } from '@/components/classroom-edit-delegation';
+import type { ClassroomEditDelegationState } from '@/lib/server/classroom-edit-delegations';
 import { ThemeProvider } from '@/lib/hooks/use-theme';
 import { useStageStore } from '@/lib/store';
 import { useCanvasStore } from '@/lib/store/canvas';
@@ -58,6 +59,7 @@ export default function ClassroomDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [canEdit, setCanEdit] = useState(false);
   const [canViewSources, setCanViewSources] = useState(false);
+  const [editAccess, setEditAccess] = useState<ClassroomEditDelegationState | null>(null);
   const [interactionAccessResolved, setInteractionAccessResolved] = useState(false);
   const [interactionOrganizationId, setInteractionOrganizationId] = useState<
     string | null | undefined
@@ -82,6 +84,7 @@ export default function ClassroomDetailPage() {
     controller.signal.addEventListener('abort', () => cacheController.abort(), { once: true });
     setInteractionAccessResolved(false);
     setCanViewSources(false);
+    setEditAccess(null);
     try {
       const cacheLoad = loadFromStorage(classroomId, cacheController.signal).catch((cacheError) => {
         log.warn('Initial classroom cache read failed:', cacheError);
@@ -123,6 +126,7 @@ export default function ClassroomDetailPage() {
             cacheController.abort();
             setCanEdit(Boolean(json.canEdit));
             setCanViewSources(Boolean(json.canViewSources));
+            setEditAccess(json.editAccess ?? null);
             setInteractionOrganizationId(
               json.canInteract === false || json.interactionOrganizationId === null
                 ? null
@@ -539,6 +543,7 @@ export default function ClassroomDetailPage() {
               {learnerCourseId && <CourseNotificationPreferences courseId={learnerCourseId} />}
               <ClassroomEditDelegation
                 classroomId={classroomId}
+                initialState={editAccess}
                 onAccessChanged={() => void loadClassroom()}
               />
               <Stage

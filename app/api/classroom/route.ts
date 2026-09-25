@@ -24,6 +24,7 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import type { Scene, Stage } from '@/lib/types/stage';
 import { presentationBrandingFromOrganization } from '@/lib/branding/presentation-branding';
 import { hasClassroomShareAccess } from '@/lib/server/classroom-share-access';
+import { readClassroomEditDelegationState } from '@/lib/server/classroom-edit-delegations';
 
 const log = createLogger('Classroom API');
 
@@ -233,6 +234,19 @@ export async function GET(request: NextRequest) {
     // A time-limited editor must see the grounding of this classroom to make
     // factual corrections. This does not grant source access anywhere else.
     const canViewSources = canEdit || !sourceAuth.response;
+    let editAccess = null;
+    if (!interactionAuth.response) {
+      try {
+        const state = await readClassroomEditDelegationState(
+          id,
+          ownership.orgId,
+          interactionAuth.user.id,
+        );
+        if (state.canRequest || state.canManage) editAccess = state;
+      } catch (error) {
+        log.warn(`Classroom edit delegation state unavailable for ${id}:`, error);
+      }
+    }
 
     let presentationBranding = presentationBrandingFromOrganization(undefined, undefined);
     try {
@@ -268,6 +282,7 @@ export async function GET(request: NextRequest) {
       canEdit,
       canViewSources,
       canInteract,
+      ...(editAccess ? { editAccess } : {}),
       ...(canInteract ? { interactionOrganizationId: interactionOrgId } : {}),
       classroom: {
         ...publicClassroom,

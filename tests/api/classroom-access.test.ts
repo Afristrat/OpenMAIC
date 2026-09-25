@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   requireEditor: vi.fn(),
   requireMember: vi.fn(),
   hasShareAccess: vi.fn(),
+  readEditAccess: vi.fn(),
   download: vi.fn(),
   createGenerationJob: vi.fn(),
   enqueueGeneration: vi.fn(),
@@ -45,6 +46,9 @@ vi.mock('@/lib/api/auth', () => ({
 vi.mock('@/lib/server/classroom-share-access', () => ({
   hasClassroomShareAccess: mocks.hasShareAccess,
 }));
+vi.mock('@/lib/server/classroom-edit-delegations', () => ({
+  readClassroomEditDelegationState: mocks.readEditAccess,
+}));
 
 vi.mock('@/lib/supabase/service', () => ({
   createServiceSupabaseClient: () => ({
@@ -72,6 +76,12 @@ describe('classroom tenant boundary', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.hasShareAccess.mockResolvedValue(false);
+    mocks.readEditAccess.mockResolvedValue({
+      role: 'apprenant',
+      canRequest: false,
+      canManage: false,
+      requests: [],
+    });
     mocks.requireAdmin.mockResolvedValue({
       user: { id: 'session-owner', email: 'admin@qalem.ma' },
     });
@@ -292,6 +302,12 @@ describe('classroom tenant boundary', () => {
     mocks.isClassroomPublic.mockResolvedValue(true);
     mocks.requireEditor.mockResolvedValue({ response: forbidden() });
     mocks.requireAuthor.mockResolvedValue({ response: forbidden() });
+    mocks.readEditAccess.mockResolvedValue({
+      role: 'formateur',
+      canRequest: true,
+      canManage: false,
+      requests: [],
+    });
     mocks.readClassroom.mockResolvedValue({
       id: 'member_classroom',
       stage: { id: 'member_classroom', name: 'Member classroom' },
@@ -309,6 +325,12 @@ describe('classroom tenant boundary', () => {
     expect(response.status).toBe(200);
     expect(body.canInteract).toBe(true);
     expect(body.interactionOrganizationId).toBe(ORG_ID);
+    expect(body.editAccess).toEqual({
+      role: 'formateur',
+      canRequest: true,
+      canManage: false,
+      requests: [],
+    });
     expect(body.classroom).not.toHaveProperty('orgId');
   });
 
