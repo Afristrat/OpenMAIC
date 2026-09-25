@@ -29,7 +29,7 @@ test.describe('Reporting d’ancrage agrégé (S3-009)', () => {
           },
         }),
       );
-      await page.route('**/api/organizations/org-report/anchoring-report', (route) =>
+      await page.route('**/api/organizations/org-report/anchoring-report?*', (route) =>
         route.fulfill({ json: { anchoring: null } }),
       );
       await page.goto('/org/org-report/reports');
@@ -68,7 +68,7 @@ test.describe('Reporting d’ancrage agrégé (S3-009)', () => {
             },
       }),
     );
-    await page.route('**/api/organizations/org-report/anchoring-report', (route) =>
+    await page.route('**/api/organizations/org-report/anchoring-report?*', (route) =>
       route.fulfill({ json: { anchoring: null } }),
     );
     await page.goto('/org/org-report/reports');
@@ -141,7 +141,7 @@ test.describe('Reporting d’ancrage agrégé (S3-009)', () => {
         body: JSON.stringify(reportPayload),
       }),
     );
-    await page.route('**/api/organizations/org-report/anchoring-report', (route) =>
+    await page.route('**/api/organizations/org-report/anchoring-report?*', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -153,13 +153,15 @@ test.describe('Reporting d’ancrage agrégé (S3-009)', () => {
 
     const anchoringSection = page.getByRole('region', { name: 'Ancrage dans le temps' });
     await expect(anchoringSection).toBeVisible();
-    await expect(anchoringSection).toContainText('Participation au programme');
-    await expect(anchoringSection).toContainText('50%');
+    await expect(anchoringSection).toContainText('Pertinence déclarée');
+    await expect(anchoringSection).toContainText('Souhait de revenir');
+    await expect(anchoringSection).toContainText('Application déclarée des acquis');
+    await expect(anchoringSection).toContainText('Reprise effective');
     await expect(anchoringSection).toContainText('4,5 / 5');
     await expect(anchoringSection).toContainText('4 / 5');
     await expect(anchoringSection).toContainText('3,5 / 5');
     await expect(anchoringSection).toContainText('2 / 4');
-    await expect(anchoringSection).toContainText('1 refus à chaud · 1 refus à froid');
+    await expect(anchoringSection).toContainText('Refus conservés : 1 à chaud · 1 à froid.');
     await expect(anchoringSection).toContainText('Aucun gain d’apprentissage n’est déduit');
     await expect(page.getByText('Formation agrégée')).toBeVisible();
     await expect(page.getByText('Apprenant secret')).toHaveCount(0);
