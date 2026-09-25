@@ -71,12 +71,14 @@ const PROVENANCE_STOP_WORDS = new Set([
 ]);
 
 function searchableTokens(value: unknown): string[] {
-  return JSON.stringify(value)
-    .normalize('NFKD')
-    .replace(/\p{M}/gu, '')
-    .toLocaleLowerCase('und')
-    .match(/[\p{L}\p{N}]+/gu)
-    ?.filter((token) => token.length > 1 && !PROVENANCE_STOP_WORDS.has(token)) ?? [];
+  return (
+    JSON.stringify(value)
+      .normalize('NFKD')
+      .replace(/\p{M}/gu, '')
+      .toLocaleLowerCase('und')
+      .match(/[\p{L}\p{N}]+/gu)
+      ?.filter((token) => token.length > 1 && !PROVENANCE_STOP_WORDS.has(token)) ?? []
+  );
 }
 
 function meaningfulBigrams(value: unknown): Set<string> {
