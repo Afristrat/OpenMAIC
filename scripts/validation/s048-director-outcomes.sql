@@ -12,7 +12,6 @@ INSERT INTO public.scenes(id,stage_id,type,"order",content) VALUES
  ('s048-receipt-quiz','s048-receipt-proof','quiz',1,'{"type":"quiz","questions":[{"id":"q","type":"single","question":"Choose","options":[{"label":"A","value":"a"}],"answer":["a"],"points":1}]}');
 INSERT INTO public.courses(owner_id,org_id,stage_id,title,language,source_kind,status,outline) VALUES
  ('00000000-0048-4000-8000-000000000031','00000000-0048-4000-8000-000000000032','s048-receipt-proof','Context','fr-FR','generated','ready','{"analyticsContext":{"subjectTags":["SIPOC"]}}');
-INSERT INTO public.telemetry_consent(user_id,pedagogy_consent) VALUES ('00000000-0048-4000-8000-000000000031',true),('00000000-0048-4000-8000-000000000032',true),('00000000-0048-4000-8000-000000000033',true);
 SET LOCAL ROLE service_role;
 DO $$ <<proof>>
 DECLARE actor uuid := '00000000-0048-4000-8000-000000000031'; org uuid := '00000000-0048-4000-8000-000000000032';
@@ -86,11 +85,14 @@ BEGIN
  EXCEPTION WHEN insufficient_privilege THEN NULL; END;
  IF NOT EXISTS(SELECT 1 FROM jsonb_array_elements(public.read_account_director_export_page(actor,'director_receipts')) e
    WHERE e->'value'->>'discussion_pattern_id'=d_id::text) THEN RAISE EXCEPTION 'Association absent from personal export'; END IF;
- UPDATE public.telemetry_consent SET pedagogy_consent=false WHERE user_id=actor;
+ BEGIN
+   UPDATE public.telemetry_consent SET pedagogy_consent=false WHERE user_id=actor;
+   RAISE EXCEPTION 'Contractual analytics disabled';
+ EXCEPTION WHEN check_violation THEN NULL; END;
  report := public.read_director_experiment(actor,org,'s048-receipt-proof');
  SELECT value INTO treatment FROM jsonb_array_elements(report) WHERE value->>'cohort'='data-driven';
- IF (treatment->>'assignedUnits')::integer<>1 OR (treatment->>'unitsWithQuiz')::integer<>0 THEN RAISE EXCEPTION 'Revoked cohort residue'; END IF;
- IF EXISTS(SELECT 1 FROM public.classroom_quiz_attempts WHERE user_id=actor AND discussion_pattern_id IS NOT NULL) THEN RAISE EXCEPTION 'Revoked quiz linkage'; END IF;
+ IF (treatment->>'assignedUnits')::integer<>2 OR (treatment->>'unitsWithQuiz')::integer<>1 THEN RAISE EXCEPTION 'Contractual cohort changed'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.classroom_quiz_attempts WHERE user_id=actor AND discussion_pattern_id IS NOT NULL) THEN RAISE EXCEPTION 'Contractual quiz linkage erased'; END IF;
  IF has_function_privilege('authenticated','public.read_director_experiment(uuid,uuid,text)','EXECUTE') THEN RAISE EXCEPTION 'Public report actor spoofable'; END IF;
 END $$;
 RESET ROLE;
