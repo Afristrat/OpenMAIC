@@ -35,9 +35,7 @@ export function ClassroomEditDelegation({
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const response = await fetch(
-      `/api/classroom/${encodeURIComponent(classroomId)}/edit-access`,
-    );
+    const response = await fetch(`/api/classroom/${encodeURIComponent(classroomId)}/edit-access`);
     if (!response.ok) {
       setState(null);
       return;
@@ -110,11 +108,7 @@ export function ClassroomEditDelegation({
           </span>
         </div>
         {!pending && !approved && (
-          <Button
-            size="sm"
-            onClick={() => void mutate('POST')}
-            disabled={busyId !== null}
-          >
+          <Button size="sm" onClick={() => void mutate('POST')} disabled={busyId !== null}>
             {t('classroom.editAccess.request')}
           </Button>
         )}
@@ -175,11 +169,7 @@ export function ClassroomEditDelegation({
                 size="sm"
                 variant="outline"
                 onClick={() =>
-                  void mutate(
-                    'PATCH',
-                    { action: 'reject', requestId: request.id },
-                    request.id,
-                  )
+                  void mutate('PATCH', { action: 'reject', requestId: request.id }, request.id)
                 }
                 disabled={busyId !== null}
               >

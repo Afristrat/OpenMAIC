@@ -145,7 +145,9 @@ describe('classroom RBAC', () => {
 
   it('lets a trainer edit only the classroom covered by an active delegation', async () => {
     mocks.membership = { role: 'formateur', organizations: { status: 'active' } };
-    mocks.hasDelegation.mockImplementation(async (classroomId: string) => classroomId === 'stage-A');
+    mocks.hasDelegation.mockImplementation(
+      async (classroomId: string) => classroomId === 'stage-A',
+    );
 
     const allowed = await requireSuperAdminOrOrgEditor(
       request,

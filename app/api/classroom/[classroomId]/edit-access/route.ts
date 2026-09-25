@@ -23,11 +23,7 @@ async function resolveContext(request: NextRequest, classroomId: string) {
   if (!ownership) {
     return { response: apiError(API_ERROR_CODES.INVALID_REQUEST, 404, 'Classroom introuvable') };
   }
-  const state = await readClassroomEditDelegationState(
-    classroomId,
-    ownership.orgId,
-    auth.user.id,
-  );
+  const state = await readClassroomEditDelegationState(classroomId, ownership.orgId, auth.user.id);
   if (!state.role) {
     return {
       response: apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Accès au tenant requis'),
