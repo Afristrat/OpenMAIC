@@ -96,66 +96,73 @@ const prompt = `${buildSeedStockPrompt({
 <requested_seed_count>20</requested_seed_count>
 Pour ce checkpoint humain uniquement, produis exactement vingt graines : six anecdotes, six highlights, quatre jokes et quatre quiz_reminder. Diversifie les accroches, les angles et les formes de rappel ; ne reformule pas plusieurs fois la même question.`;
 
-const result = await callLLM(
-  {
-    model,
-    system: ANCHOR_SEED_SYSTEM_PROMPT,
-    prompt,
-    maxOutputTokens: 8_192,
-  },
-  's3-008-current-seed-sample',
-  undefined,
-  { mode: 'disabled', enabled: false },
-);
-
-const seeds = parseSeedStock(result.text, {
-  learningApproach: 'andragogy',
-  events,
-  personas: casting.map((member) => member.name),
-  sceneRefs: ['scene-budget', 'scene-risques', 'scene-actions'],
-});
-assert.equal(seeds.length, 20, 'Le modèle n’a pas produit exactement vingt graines');
-
-const distribution = Object.fromEntries(
-  ['anecdote', 'highlight', 'joke', 'quiz_reminder'].map((kind) => [
-    kind,
-    seeds.filter((seed) => seed.kind === kind).length,
-  ]),
-);
-assert.deepEqual(distribution, {
-  anecdote: 6,
-  highlight: 6,
-  joke: 4,
-  quiz_reminder: 4,
-});
-assert.equal(new Set(seeds.map((seed) => seed.content.push_hook)).size, 20);
-
-process.stdout.write(
-  JSON.stringify(
+async function main(): Promise<void> {
+  const result = await callLLM(
     {
-      schemaVersion: 2,
-      storyId: 'S3-008',
-      generatedAt: new Date().toISOString(),
-      promptVersion: ANCHOR_SEED_PROMPT_VERSION,
-      learningApproach: 'andragogy',
-      model: modelId,
-      usage: result.totalUsage,
-      count: seeds.length,
-      distribution,
-      proposedFrequency: {
-        scheduledSeedCount: 12,
-        coldEvaluationCount: 2,
-        totalDeliveryCount: 14,
-        seedDays: [2, 5, 9, 14, 20, 27, 35, 44, 54, 65, 77, 90],
-        coldEvaluationDays: [30, 60],
-        horizonDays: 90,
-      },
-      humanAcceptance: false,
-      events,
-      casting,
-      seeds,
+      model,
+      system: ANCHOR_SEED_SYSTEM_PROMPT,
+      prompt,
+      maxOutputTokens: 8_192,
     },
-    null,
-    2,
-  ),
-);
+    's3-008-current-seed-sample',
+    undefined,
+    { mode: 'disabled', enabled: false },
+  );
+
+  const seeds = parseSeedStock(result.text, {
+    learningApproach: 'andragogy',
+    events,
+    personas: casting.map((member) => member.name),
+    sceneRefs: ['scene-budget', 'scene-risques', 'scene-actions'],
+  });
+  assert.equal(seeds.length, 20, 'Le modèle n’a pas produit exactement vingt graines');
+
+  const distribution = Object.fromEntries(
+    ['anecdote', 'highlight', 'joke', 'quiz_reminder'].map((kind) => [
+      kind,
+      seeds.filter((seed) => seed.kind === kind).length,
+    ]),
+  );
+  assert.deepEqual(distribution, {
+    anecdote: 6,
+    highlight: 6,
+    joke: 4,
+    quiz_reminder: 4,
+  });
+  assert.equal(new Set(seeds.map((seed) => seed.content.push_hook)).size, 20);
+
+  process.stdout.write(
+    JSON.stringify(
+      {
+        schemaVersion: 2,
+        storyId: 'S3-008',
+        generatedAt: new Date().toISOString(),
+        promptVersion: ANCHOR_SEED_PROMPT_VERSION,
+        learningApproach: 'andragogy',
+        model: modelId,
+        usage: result.totalUsage,
+        count: seeds.length,
+        distribution,
+        proposedFrequency: {
+          scheduledSeedCount: 12,
+          coldEvaluationCount: 2,
+          totalDeliveryCount: 14,
+          seedDays: [2, 5, 9, 14, 20, 27, 35, 44, 54, 65, 77, 90],
+          coldEvaluationDays: [30, 60],
+          horizonDays: 90,
+        },
+        humanAcceptance: false,
+        events,
+        casting,
+        seeds,
+      },
+      null,
+      2,
+    ),
+  );
+}
+
+main().catch((error: unknown) => {
+  console.error(error instanceof Error ? error.message : 'S3-008 proof failed');
+  process.exitCode = 1;
+});
