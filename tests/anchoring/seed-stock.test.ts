@@ -37,6 +37,7 @@ const valid = [
         : kind === 'quiz_reminder'
           ? ('retrieval' as const)
           : editorialMoves[index],
+    source_quote: 'Le délai observé était de 30 jours.',
     push_hook: `Accroche ${labels[globalIndex]}`,
     body: `Angle ${labels[globalIndex]} ancré.`,
     scene_ref: 'scene-1',
@@ -85,6 +86,7 @@ describe('anchoring seed stock', () => {
     expect(ANCHOR_SEED_SYSTEM_PROMPT).toContain(
       "N'affirme aucune conséquence, causalité, priorité relative",
     );
+    expect(ANCHOR_SEED_SYSTEM_PROMPT).toContain('le serveur la vérifiera mot pour mot');
     expect(ANCHOR_SEED_TEMPERATURE).toBe(0.8);
     expect(
       buildSeedStockPrompt({
@@ -260,6 +262,25 @@ describe('anchoring seed stock', () => {
         sceneRefs: ['scene-1'],
       }),
     ).toThrow('Seed provenance category does not match the recorded event');
+  });
+
+  it('refuse une citation source inventée', () => {
+    const inventedQuote = valid.map((seed, index) =>
+      index === 0
+        ? {
+            ...seed,
+            content: { ...seed.content, source_quote: 'Le budget était déjà déficitaire.' },
+          }
+        : seed,
+    );
+    expect(() =>
+      parseSeedStock(JSON.stringify(inventedQuote), {
+        learningApproach: 'andragogy',
+        events: recordedEvents,
+        personas: ['Penseur', 'Analyste'],
+        sceneRefs: ['scene-1'],
+      }),
+    ).toThrow('Seed source quote is absent from the recorded event');
   });
 
   it('réserve les plaisanteries à la persona joker disponible', () => {

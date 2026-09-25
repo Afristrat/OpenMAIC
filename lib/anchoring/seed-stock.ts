@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
 import type { LearningApproach } from '@/lib/agents/persona-catalog';
 
-export const ANCHOR_SEED_PROMPT_VERSION = 'P3-B-v13';
+export const ANCHOR_SEED_PROMPT_VERSION = 'P3-B-v14';
 export const ANCHOR_SEED_TEMPERATURE = 0.8;
 
 export const anchorSeedMoves = [
@@ -122,11 +122,27 @@ function numericTokensFromStrings(value: unknown, output = new Set<string>()): S
   return output;
 }
 
+function normalizedStringValues(value: unknown, output: string[] = []): string[] {
+  if (typeof value === 'string') {
+    output.push(value.normalize('NFKC').replace(/\s+/gu, ' ').trim().toLocaleLowerCase('und'));
+    return output;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) normalizedStringValues(item, output);
+    return output;
+  }
+  if (value && typeof value === 'object') {
+    for (const item of Object.values(value)) normalizedStringValues(item, output);
+  }
+  return output;
+}
+
 const seedSchema = z.object({
   persona: z.string().trim().min(1),
   kind: z.enum(['anecdote', 'highlight', 'joke', 'quiz_reminder']),
   content: z.object({
     move: z.enum(anchorSeedMoves),
+    source_quote: z.string().trim().min(8).max(280),
     push_hook: z.string().trim().min(1).max(90),
     body: z
       .string()
@@ -177,6 +193,14 @@ export function parseSeedStock(
     if (!sourceEvent) throw new Error(`Unknown session event: ${seed.content.provenance.event_id}`);
     if (seed.content.provenance.source_kind !== anchorSeedSourceKind(sourceEvent)) {
       throw new Error('Seed provenance category does not match the recorded event');
+    }
+    const normalizedQuote = seed.content.source_quote
+      .normalize('NFKC')
+      .replace(/\s+/gu, ' ')
+      .trim()
+      .toLocaleLowerCase('und');
+    if (!normalizedStringValues(sourceEvent.payload).some((value) => value.includes(normalizedQuote))) {
+      throw new Error('Seed source quote is absent from the recorded event');
     }
     if (seed.kind === 'joke' && jokerPersonas.size > 0 && !jokerPersonas.has(seed.persona)) {
       throw new Error('Joke seed must use a joker persona when the casting provides one');
@@ -292,7 +316,7 @@ export function buildSeedStockPrompt(input: {
 export const ANCHOR_SEED_SYSTEM_PROMPT = `Tu es directeur éditorial de relances post-formation. Tu écris avec du nerf, du contraste et du rythme, sans sacrifier la fidélité factuelle.
 À partir du résumé de session fourni, génère un stock de graines d'ancrage mémoriel.
 Chaque graine est signée par une personnalité du casting, respecte son rôle, son mécanisme et sa persona, et cite une scene_ref fournie. Elle doit aussi déclarer l'identifiant exact de l'événement qui fonde la relance et la catégorie fournie par le serveur. N'évoque jamais un fait, une réponse ou une question qui n'est pas dans cet événement, même si ce fait apparaît ailleurs dans la même session. Une graine joke est toujours signée par une persona dont mechanismId vaut joker lorsqu'elle existe dans le casting ; un coach ou un analyste ne change jamais de persona pour satisfaire la distribution. La catégorie indique l'origine : learner_proposition est une parole de l'apprenant ; agent_proposition est une proposition d'agent ; content_presented est un contenu affiché ; new_question est une question nouvellement proposée. Ces quatre origines ne sont jamais interchangeables.
-Avant de rédiger chaque graine, isole son événement de provenance et ignore tous les autres. Chaque groupe nominal qui affirme un fait doit être présent dans le payload de cet événement. Les marqueurs de fréquence « chaque », « quotidien », « hebdomadaire », « mensuel », « annuel », « every », « each » et « كل » sont interdits sauf s'ils figurent explicitement dans ce même payload. Une proposition d'action peut être nouvelle, mais elle ne doit introduire aucun objet, cadence, quantité, contexte ou contrainte factuelle absent de cet événement. Formule toute action nouvelle comme un test à mener ou une question à trancher, jamais comme un résultat déjà établi. N'affirme aucune conséquence, causalité, priorité relative, solidité, fragilité, diagnostic ou attribut qui ne figure pas explicitement dans l'événement source. Ainsi, « Testez X et observez ce qui change » est recevable ; « X révèle la faiblesse, décide de la marge ou mérite moins d'attention » est refusé si l'événement ne le dit pas.
+Avant de rédiger chaque graine, isole son événement de provenance et ignore tous les autres. Copie dans source_quote une citation exacte de 8 à 280 caractères tirée d'une valeur textuelle du payload de cet événement ; le serveur la vérifiera mot pour mot. Chaque groupe nominal qui affirme un fait doit être présent dans ce même payload. Les marqueurs de fréquence « chaque », « quotidien », « hebdomadaire », « mensuel », « annuel », « every », « each » et « كل » sont interdits sauf s'ils figurent explicitement dans ce même payload. Une proposition d'action peut être nouvelle, mais elle ne doit introduire aucun objet, cadence, quantité, contexte ou contrainte factuelle absent de cet événement. Formule toute action nouvelle comme un test à mener, une consigne ou une question à trancher, jamais comme un résultat déjà établi. Hors de source_quote, une anecdote, un highlight ou un quiz_reminder n'énonce aucune nouvelle phrase déclarative sur la situation : elle utilise des questions, des consignes ou une hypothèse explicitement marquée par « si » ou « et si ». N'affirme aucune conséquence, causalité, priorité relative, solidité, fragilité, diagnostic ou attribut qui ne figure pas explicitement dans l'événement source. Une joke peut employer une métaphore, mais cette métaphore ne devient jamais un fait ou un effet métier. Ainsi, « Testez X et observez ce qui change » est recevable ; « X révèle la faiblesse, décide de la marge ou mérite moins d'attention » est refusé si l'événement ne le dit pas.
 Respecte strictement learning_approach :
 - andragogy : adulte traité en pair autonome ; partir de son expérience, de ses problèmes réels et d'un transfert immédiatement applicable ; bannir tout ton scolaire, infantilisant ou toute félicitation vague ;
 - pedagogy : guidage explicite, progression structurée et étayage adapté à un apprenant qui a besoin d'être accompagné ;
@@ -318,4 +342,4 @@ Contraste de structure, sans contenu à recopier :
 - FADE ET REFUSÉ : expliquer à nouveau ce qui vient d'être appris ;
 - VIVANT ET RECEVABLE : retirer l'échafaudage et confronter l'adulte à une situation où il doit mobiliser lui-même ce qu'il retient.
 
-Retourne uniquement un tableau JSON conforme à [{"persona":"...","kind":"anecdote|highlight|joke|quiz_reminder","content":{"move":"challenge|counterfactual|evidence|decision|transfer|reframe|retrieval|wit","push_hook":"...","body":"...","scene_ref":"...","provenance":{"event_id":"...","source_kind":"learner_proposition|agent_proposition|content_presented|new_question"}}}].`;
+Retourne uniquement un tableau JSON conforme à [{"persona":"...","kind":"anecdote|highlight|joke|quiz_reminder","content":{"move":"challenge|counterfactual|evidence|decision|transfer|reframe|retrieval|wit","source_quote":"citation exacte du payload source","push_hook":"...","body":"...","scene_ref":"...","provenance":{"event_id":"...","source_kind":"learner_proposition|agent_proposition|content_presented|new_question"}}}].`;
