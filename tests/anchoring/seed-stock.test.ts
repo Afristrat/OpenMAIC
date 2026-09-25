@@ -79,7 +79,7 @@ describe('anchoring seed stock', () => {
       'Une récurrence sans cadence explicite ne devient jamais quotidienne',
     );
     expect(ANCHOR_SEED_SYSTEM_PROMPT).toContain(
-      'Chaque groupe nominal qui affirme un fait doit être présent dans le payload',
+      'Chaque groupe nominal qui affirme un fait doit être présent dans ce même payload',
     );
     expect(ANCHOR_SEED_SYSTEM_PROMPT).toContain('du nerf, du contraste et du rythme');
     expect(ANCHOR_SEED_SYSTEM_PROMPT).toContain("Une paraphrase n'est pas une variation");
@@ -410,7 +410,11 @@ describe('anchoring seed stock', () => {
       index === 0
         ? {
             ...seed,
-            content: { ...seed.content, body: 'Reprends ce délai dans ton prochain budget.' },
+            content: {
+              ...seed.content,
+              source_quote: 'Le délai de ce budget était de 30 jours.',
+              body: 'Reprends ce délai dans ton prochain budget.',
+            },
           }
         : seed,
     );
