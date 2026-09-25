@@ -56,7 +56,12 @@ export async function POST(request: NextRequest) {
     const tenantId = ownership?.orgId ?? orgId;
     if (!tenantId) return apiError('MISSING_REQUIRED_FIELD', 400, 'Organization is required');
     const auth = ownership
-      ? await requireSuperAdminOrOrgEditor(request, ownership.orgId, ownership.ownerId)
+      ? await requireSuperAdminOrOrgEditor(
+          request,
+          ownership.orgId,
+          ownership.ownerId,
+          classroomId,
+        )
       : await requireSuperAdminOrOrgAuthor(request, tenantId);
     if (auth.response) return auth.response;
 

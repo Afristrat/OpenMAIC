@@ -284,6 +284,7 @@ describe('classroom tenant boundary', () => {
       expect.any(NextRequest),
       ORG_ID,
       'session-owner',
+      'published_classroom',
     );
   });
 
@@ -378,6 +379,7 @@ describe('classroom tenant boundary', () => {
       expect.any(NextRequest),
       ORG_ID,
       'session-owner',
+      'authored_classroom',
     );
   });
 

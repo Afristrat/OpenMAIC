@@ -1729,6 +1729,48 @@
       "priorityRank": 0.2
     },
     {
+      "id": "S6-032",
+      "title": "Déléguer temporairement la correction d’une formation à un formateur",
+      "description": "En tant qu’administrateur ou manager d’un tenant, je veux pouvoir autoriser temporairement un formateur qui le sollicite à corriger une formation précise afin de déléguer la qualité éditoriale sans élargir durablement ses privilèges.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P0",
+      "status": "in_progress",
+      "passes": false,
+      "source": {
+        "type": "explicit_user_request",
+        "date": "2026-09-25"
+      },
+      "sourceDependencies": [],
+      "dependencies": [],
+      "gap": "Le rôle formateur peut créer une formation mais le contrôle d’édition ne reconnaît encore aucune délégation par formation ; seuls les administrateurs, managers, super-administrateurs et auteurs propriétaires peuvent corriger le contenu existant.",
+      "evidence": [
+        "supabase/migrations/20260925120000_classroom_edit_delegations.sql",
+        "app/api/classroom/[classroomId]/edit-access/route.ts",
+        "components/classroom-edit-delegation.tsx",
+        "lib/api/auth.ts",
+        "lib/server/classroom-edit-delegations.ts"
+      ],
+      "acceptance": [
+        "Un formateur actif du tenant peut demander depuis une formation précise une autorisation de correction, sans obtenir de droit sur les autres formations.",
+        "Un administrateur ou manager actif du même tenant voit la demande et peut l’autoriser pour 1 heure, 8 heures, 24 heures, 7 jours ou 30 jours, la refuser ou révoquer une autorisation active.",
+        "La permission est recontrôlée côté serveur à chaque lecture, sauvegarde, génération d’image ou vidéo et régénération TTS ; le client ne peut ni choisir le tenant ni prolonger lui-même l’échéance.",
+        "L’expiration est effective sans cron et tout retrait du tenant, changement du rôle formateur, suspension du tenant ou révocation coupe immédiatement l’édition.",
+        "Les demandes, décisions, échéances et révocations sont persistées et auditables ; la table est inaccessible directement aux rôles navigateur et protégée par RLS.",
+        "L’interface FR, AR et EN expose les états demande en attente, autorisation active et décision administrateur sans confondre ce droit avec l’administration du tenant.",
+        "Les tests permanents couvrent l’isolation par formation et tenant, l’expiration, la concurrence, les transitions et chaque frontière d’édition.",
+        "La migration, le quality gate complet, le déploiement Coolify et une recette navigateur multi-rôle sont verts au même SHA de clôture."
+      ],
+      "closureEvidence": [],
+      "historicalDependencies": [],
+      "executionAllowed": true,
+      "validationRequires": [
+        "qualityGates",
+        "fresh_evidence_per_acceptance",
+        "production_multi_role_browser_recipe"
+      ],
+      "priorityRank": 0.15
+    },
+    {
       "id": "S6-001",
       "title": "Recertifier le SHA livré et solder le contrôle qualité global",
       "description": "En tant qu’utilisateur de Qalem, je veux recertifier le sha livré et solder le contrôle qualité global afin que le parcours promis soit réellement utilisable.",

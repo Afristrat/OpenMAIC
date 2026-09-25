@@ -13,7 +13,12 @@ export async function assertClassroomEditAccess(
   if (!current || current.orgId !== expected.orgId || current.ownerId !== expected.ownerId) {
     throw new Error('Classroom edit access unavailable');
   }
-  const auth = await requireSuperAdminOrOrgEditor(request, current.orgId, current.ownerId);
+  const auth = await requireSuperAdminOrOrgEditor(
+    request,
+    current.orgId,
+    current.ownerId,
+    classroomId,
+  );
   if (auth.response || auth.user.id !== actorId) {
     throw new Error('Classroom edit access unavailable');
   }

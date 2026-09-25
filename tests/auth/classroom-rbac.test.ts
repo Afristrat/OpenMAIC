@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   membership: null as { role: string; organizations: { status: string } } | null,
   from: vi.fn(),
   single: vi.fn(),
+  hasDelegation: vi.fn(),
 }));
 
 vi.mock('@/lib/logger', () => ({
@@ -29,6 +30,10 @@ vi.mock('@/lib/supabase/server', () => ({
   },
 }));
 
+vi.mock('@/lib/server/classroom-edit-delegations', () => ({
+  hasActiveClassroomEditDelegation: mocks.hasDelegation,
+}));
+
 import {
   requireSuperAdminOrOrgAdmin,
   requireSuperAdminOrOrgAuthor,
@@ -44,6 +49,7 @@ describe('classroom RBAC', () => {
     vi.stubEnv('SUPER_ADMIN_EMAILS', 'root@qalem.ma');
     mocks.user = { id: 'user-1', email: 'member@qalem.ma' };
     mocks.membership = { role: 'apprenant', organizations: { status: 'active' } };
+    mocks.hasDelegation.mockResolvedValue(false);
     mocks.single.mockImplementation(async () => ({ data: mocks.membership, error: null }));
   });
 
@@ -135,6 +141,29 @@ describe('classroom RBAC', () => {
     const result = await requireSuperAdminOrOrgEditor(request, 'org-target', 'other-author');
 
     expect(result.response?.status).toBe(403);
+  });
+
+  it('lets a trainer edit only the classroom covered by an active delegation', async () => {
+    mocks.membership = { role: 'formateur', organizations: { status: 'active' } };
+    mocks.hasDelegation.mockImplementation(async (classroomId: string) => classroomId === 'stage-A');
+
+    const allowed = await requireSuperAdminOrOrgEditor(
+      request,
+      'org-target',
+      'other-author',
+      'stage-A',
+    );
+    const refused = await requireSuperAdminOrOrgEditor(
+      request,
+      'org-target',
+      'other-author',
+      'stage-B',
+    );
+
+    expect(allowed.user?.id).toBe('user-1');
+    expect(refused.response?.status).toBe(403);
+    expect(mocks.hasDelegation).toHaveBeenCalledWith('stage-A', 'org-target', 'user-1');
+    expect(mocks.hasDelegation).toHaveBeenCalledWith('stage-B', 'org-target', 'user-1');
   });
 
   it.each(['admin', 'manager'])(

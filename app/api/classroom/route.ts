@@ -83,7 +83,12 @@ export async function PUT(request: NextRequest) {
     }
     const ownership = await readClassroomOwnership(stageId);
     if (!ownership) return apiError(API_ERROR_CODES.INVALID_REQUEST, 404, 'Classroom introuvable');
-    const auth = await requireSuperAdminOrOrgEditor(request, ownership.orgId, ownership.ownerId);
+    const auth = await requireSuperAdminOrOrgEditor(
+      request,
+      ownership.orgId,
+      ownership.ownerId,
+      stageId,
+    );
     if (auth.response) return auth.response;
     await persistClassroom(
       {
@@ -121,7 +126,7 @@ async function requireClassroomEditor(request: NextRequest, id: string) {
   const ownership = await readClassroomOwnership(id);
   if (!ownership)
     return { error: apiError(API_ERROR_CODES.INVALID_REQUEST, 404, 'Classroom not found') };
-  const auth = await requireSuperAdminOrOrgEditor(request, ownership.orgId, ownership.ownerId);
+  const auth = await requireSuperAdminOrOrgEditor(request, ownership.orgId, ownership.ownerId, id);
   return auth.response ? { error: auth.response } : {};
 }
 
@@ -221,10 +226,13 @@ export async function GET(request: NextRequest) {
       request,
       ownership.orgId,
       ownership.ownerId,
+      id,
     );
     const canEdit = !editAuth.response;
     const sourceAuth = await requireSuperAdminOrOrgAuthor(request, ownership.orgId);
-    const canViewSources = !sourceAuth.response;
+    // A time-limited editor must see the grounding of this classroom to make
+    // factual corrections. This does not grant source access anywhere else.
+    const canViewSources = canEdit || !sourceAuth.response;
 
     let presentationBranding = presentationBrandingFromOrganization(undefined, undefined);
     try {

@@ -23,7 +23,12 @@ export async function POST(
     return apiError('INVALID_REQUEST', 400, 'Classroom invalide');
   const ownership = await readClassroomOwnership(classroomId);
   if (!ownership) return apiError('INVALID_REQUEST', 404, 'Classroom introuvable');
-  const auth = await requireSuperAdminOrOrgEditor(request, ownership.orgId, ownership.ownerId);
+  const auth = await requireSuperAdminOrOrgEditor(
+    request,
+    ownership.orgId,
+    ownership.ownerId,
+    classroomId,
+  );
   if (auth.response) return auth.response;
   const body = (await request.json()) as { sceneId?: string; actionId?: string; text?: string };
   if (!body.sceneId || !body.actionId || !body.text?.trim()) {

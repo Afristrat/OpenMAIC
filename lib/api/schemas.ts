@@ -56,6 +56,22 @@ export const orgMembersDeleteSchema = z.object({
   member_id: z.string().min(1, 'member_id is required'),
 });
 
+export const classroomEditDelegationDecisionSchema = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('approve'),
+    requestId: z.string().uuid(),
+    durationHours: z.number().int().min(1).max(24 * 30),
+  }),
+  z.object({
+    action: z.literal('reject'),
+    requestId: z.string().uuid(),
+  }),
+  z.object({
+    action: z.literal('revoke'),
+    requestId: z.string().uuid(),
+  }),
+]);
+
 // ---------------------------------------------------------------------------
 // Organization Invite (invitations)
 // ---------------------------------------------------------------------------

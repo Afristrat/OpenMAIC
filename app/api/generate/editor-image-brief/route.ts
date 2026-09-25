@@ -44,7 +44,12 @@ export async function POST(req: NextRequest) {
 
     const ownership = await readClassroomOwnership(classroomId);
     if (!ownership) return apiError('INVALID_REQUEST', 404, 'Classroom not found');
-    const auth = await requireSuperAdminOrOrgEditor(req, ownership.orgId, ownership.ownerId);
+    const auth = await requireSuperAdminOrOrgEditor(
+      req,
+      ownership.orgId,
+      ownership.ownerId,
+      classroomId,
+    );
     if (auth.response) return auth.response;
 
     const request = buildEditorImageBriefRequestFromSource({

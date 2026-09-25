@@ -2,6 +2,7 @@
 
 import { Stage } from '@/components/stage';
 import { CourseNotificationPreferences } from '@/components/courses/course-notification-preferences';
+import { ClassroomEditDelegation } from '@/components/classroom-edit-delegation';
 import { ThemeProvider } from '@/lib/hooks/use-theme';
 import { useStageStore } from '@/lib/store';
 import { useCanvasStore } from '@/lib/store/canvas';
@@ -536,6 +537,10 @@ export default function ClassroomDetailPage() {
           ) : (
             <>
               {learnerCourseId && <CourseNotificationPreferences courseId={learnerCourseId} />}
+              <ClassroomEditDelegation
+                classroomId={classroomId}
+                onAccessChanged={() => void loadClassroom()}
+              />
               <Stage
                 onRetryOutline={retrySingleOutline}
                 canEdit={canEdit}

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createLogger } from '@/lib/logger';
+import { hasActiveClassroomEditDelegation } from '@/lib/server/classroom-edit-delegations';
 
 const log = createLogger('Auth');
 
@@ -262,6 +263,7 @@ export async function requireSuperAdminOrOrgEditor(
   req: NextRequest,
   orgId: string,
   ownerId: string,
+  classroomId?: string,
 ): Promise<AuthResult> {
   const auth = await requireAuth(req);
   if (auth.response) return auth;
@@ -277,11 +279,16 @@ export async function requireSuperAdminOrOrgEditor(
       .eq('org_id', orgId)
       .eq('user_id', auth.user.id)
       .single();
+    const hasDelegation =
+      membership?.role === 'formateur' && classroomId
+        ? await hasActiveClassroomEditDelegation(classroomId, orgId, auth.user.id)
+        : false;
     const canEdit =
       membership &&
       hasActiveTenant(membership as MembershipWithTenant) &&
       (['admin', 'manager'].includes(membership.role) ||
-        (membership.role === 'author' && auth.user.id === ownerId));
+        (membership.role === 'author' && auth.user.id === ownerId) ||
+        hasDelegation);
     if (!canEdit) {
       return {
         response: NextResponse.json(
