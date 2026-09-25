@@ -199,7 +199,9 @@ export function parseSeedStock(
       .replace(/\s+/gu, ' ')
       .trim()
       .toLocaleLowerCase('und');
-    if (!normalizedStringValues(sourceEvent.payload).some((value) => value.includes(normalizedQuote))) {
+    if (
+      !normalizedStringValues(sourceEvent.payload).some((value) => value.includes(normalizedQuote))
+    ) {
       throw new Error('Seed source quote is absent from the recorded event');
     }
     if (seed.kind === 'joke' && jokerPersonas.size > 0 && !jokerPersonas.has(seed.persona)) {
