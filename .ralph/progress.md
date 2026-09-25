@@ -1317,3 +1317,7 @@ Le contrat conserve un seul appel LLM comptabilisé par session. La température
 L’artefact `docs/evidence/s3-008-andragogical-seed-sample-v11.json` reste marqué `humanAcceptance=false`. La dette machine S3-008 est soldée ; son statut reste `to_validate/passes=false` jusqu’au verdict explicite d’Amine sur le ton et la pression de relance.
 
 La gate complète du SHA `3c2dedf0be6fc5a4f53b80b6a5d99388c7f906fa` passe Prettier, TypeScript, ESLint, 3 395 tests Vitest, le build de 127 pages et 200/200 Playwright. Le déploiement Coolify `2parydmimqxbn7tkf6wztl74` est terminé ; le conteneur unique `bcx5pxyuc9z3lt4jtyjipcqu-183827068843` sert l’image exacte, est sain et la santé publique répond HTTP 200. Les fichiers temporaires de génération, dont l’environnement sensible, sont supprimés de ServeurIA. Le checkpoint humain reste le seul résidu de S3-008 et le drapeau `anchoring` n’est pas activé par cette preuve.
+
+## 25 septembre 2026 — Recette humaine finale regroupée
+
+Les treize validations humaines ou physiques encore ouvertes sont regroupées dans `docs/validation/PRD3-human-checkpoint-runbook-2026-09-25.md`. Le protocole couvre en quatre blocs la réception de bureau, l’invitation nominative, la chaîne PWA iOS/Android et WhatsApp, avec une feuille de verdict unique et les preuves minimales attendues. Aucun statut ni drapeau n’est changé par cette préparation ; les quatre dépendances Diwan restent séparées.

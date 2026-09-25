@@ -36,6 +36,8 @@ L’ancien état 83/49/34 du goal n’est donc plus représentatif du dépôt. S
 
 Ces stories ne cachent aucune dette de code identifiée et restent ouvertes parce que leur critère final interdit de substituer une terminaison HTTP, un émulateur ou un test automatisé à l’observation demandée. Pour S3-008, les sorties contaminées ont été refusées et l’échantillon propre P3-B-v11 est versionné sans auto-acceptation. Le SHA exact `3c2dedf0be6fc5a4f53b80b6a5d99388c7f906fa` est déployé sainement par Coolify sous `2parydmimqxbn7tkf6wztl74` ; la dette machine est donc soldée.
 
+Les treize gestes humains sont regroupés dans `docs/validation/PRD3-human-checkpoint-runbook-2026-09-25.md` : réception de bureau, invitation nominative, recette physique iOS/Android et WhatsApp. Ce protocole ne transforme pas leur préparation en validation.
+
 ## Quatre dépendances Diwan
 
 | Story | Résidu exact |
