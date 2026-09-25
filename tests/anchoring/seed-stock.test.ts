@@ -20,12 +20,7 @@ const labels = [
   'kilo',
   'lima',
 ];
-const editorialMoves = [
-  'challenge',
-  'counterfactual',
-  'evidence',
-  'decision',
-] as const;
+const editorialMoves = ['challenge', 'counterfactual', 'evidence', 'decision'] as const;
 
 const valid = [
   ...Array.from({ length: 4 }, (_, index) => ({ kind: 'anecdote', index })),
@@ -86,7 +81,7 @@ describe('anchoring seed stock', () => {
       'Chaque groupe nominal qui affirme un fait doit être présent dans le payload',
     );
     expect(ANCHOR_SEED_SYSTEM_PROMPT).toContain('du nerf, du contraste et du rythme');
-    expect(ANCHOR_SEED_SYSTEM_PROMPT).toContain('Une paraphrase n\'est pas une variation');
+    expect(ANCHOR_SEED_SYSTEM_PROMPT).toContain("Une paraphrase n'est pas une variation");
     expect(ANCHOR_SEED_TEMPERATURE).toBe(0.8);
     expect(
       buildSeedStockPrompt({
@@ -134,9 +129,7 @@ describe('anchoring seed stock', () => {
 
   it('refuse la répétition du même mouvement cognitif sur un événement', () => {
     const repeatedMove = valid.map((seed, index) =>
-      index === 1
-        ? { ...seed, content: { ...seed.content, move: 'challenge' as const } }
-        : seed,
+      index === 1 ? { ...seed, content: { ...seed.content, move: 'challenge' as const } } : seed,
     );
 
     expect(() =>
