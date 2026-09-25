@@ -104,6 +104,7 @@ async function main(): Promise<void> {
       system: ANCHOR_SEED_SYSTEM_PROMPT,
       prompt,
       maxOutputTokens: 8_192,
+      temperature: 0,
     },
     's3-008-current-seed-sample',
     undefined,

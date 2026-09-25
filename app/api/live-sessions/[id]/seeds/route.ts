@@ -149,6 +149,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             casting: seedCasting,
             events: anchorEvents,
           }),
+          temperature: 0,
         },
         'anchor-seeds',
         undefined,

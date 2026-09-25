@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
 import type { LearningApproach } from '@/lib/agents/persona-catalog';
 
-export const ANCHOR_SEED_PROMPT_VERSION = 'P3-B-v10';
+export const ANCHOR_SEED_PROMPT_VERSION = 'P3-B-v11';
 
 export const anchorSeedSourceKinds = [
   'learner_proposition',
@@ -216,6 +216,7 @@ export function buildSeedStockPrompt(input: {
 export const ANCHOR_SEED_SYSTEM_PROMPT = `Tu conçois les relances d'une session de formation qui vient de se terminer.
 À partir du résumé de session fourni, génère un stock de graines d'ancrage mémoriel.
 Chaque graine est signée par une personnalité du casting, respecte son rôle, son mécanisme et sa persona, et cite une scene_ref fournie. Elle doit aussi déclarer l'identifiant exact de l'événement qui fonde la relance et la catégorie fournie par le serveur. N'évoque jamais un fait, une réponse ou une question qui n'est pas dans cet événement, même si ce fait apparaît ailleurs dans la même session. Une graine joke est toujours signée par une persona dont mechanismId vaut joker lorsqu'elle existe dans le casting ; un coach ou un analyste ne change jamais de persona pour satisfaire la distribution. La catégorie indique l'origine : learner_proposition est une parole de l'apprenant ; agent_proposition est une proposition d'agent ; content_presented est un contenu affiché ; new_question est une question nouvellement proposée. Ces quatre origines ne sont jamais interchangeables.
+Avant de rédiger chaque graine, isole son événement de provenance et ignore tous les autres. Chaque groupe nominal qui affirme un fait doit être présent dans le payload de cet événement. Les marqueurs de fréquence « chaque », « quotidien », « hebdomadaire », « mensuel », « annuel », « every », « each » et « كل » sont interdits sauf s'ils figurent explicitement dans ce même payload. Une proposition d'action peut être nouvelle, mais elle ne doit introduire aucun objet, cadence, quantité, contexte ou contrainte factuelle absent de cet événement.
 Respecte strictement learning_approach :
 - andragogy : adulte traité en pair autonome ; partir de son expérience, de ses problèmes réels et d'un transfert immédiatement applicable ; bannir tout ton scolaire, infantilisant ou toute félicitation vague ;
 - pedagogy : guidage explicite, progression structurée et étayage adapté à un apprenant qui a besoin d'être accompagné ;

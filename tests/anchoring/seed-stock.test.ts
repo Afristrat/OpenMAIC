@@ -54,6 +54,9 @@ describe('anchoring seed stock', () => {
     expect(ANCHOR_SEED_SYSTEM_PROMPT).toContain(
       'Une récurrence sans cadence explicite ne devient jamais quotidienne',
     );
+    expect(ANCHOR_SEED_SYSTEM_PROMPT).toContain(
+      'Chaque groupe nominal qui affirme un fait doit être présent dans le payload',
+    );
     expect(
       buildSeedStockPrompt({
         language: 'fr-FR',
