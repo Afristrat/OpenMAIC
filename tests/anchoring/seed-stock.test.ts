@@ -414,4 +414,32 @@ describe('anchoring seed stock', () => {
       }),
     ).toHaveLength(12);
   });
+
+  it('ne confond pas des mots relationnels génériques avec une contamination', () => {
+    const genericRelation = valid.map((seed, index) =>
+      index === 0
+        ? {
+            ...seed,
+            content: { ...seed.content, body: 'Examine ce point avant les autres options.' },
+          }
+        : seed,
+    );
+    expect(
+      parseSeedStock(JSON.stringify(genericRelation), {
+        learningApproach: 'andragogy',
+        events: [
+          ...recordedEvents,
+          {
+            id: '2',
+            actor: 'user',
+            event_type: 'learner_response',
+            payload: { utterance: 'J’ai classé ce risque avant les autres risques.' },
+            ts_ms: 31,
+          },
+        ],
+        personas: ['Penseur', 'Analyste'],
+        sceneRefs: ['scene-1'],
+      }),
+    ).toHaveLength(12);
+  });
 });
