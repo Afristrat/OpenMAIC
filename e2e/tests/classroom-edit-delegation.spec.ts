@@ -162,11 +162,13 @@ test('a manager grants a pending request for the selected duration', async ({ pa
   await page.getByRole('option', { name: '8 hours' }).click();
   await page.getByRole('button', { name: 'Allow' }).click();
 
-  await expect.poll(() => decision).toEqual({
-    action: 'approve',
-    requestId: REQUEST_ID,
-    durationHours: 8,
-  });
+  await expect
+    .poll(() => decision)
+    .toEqual({
+      action: 'approve',
+      requestId: REQUEST_ID,
+      durationHours: 8,
+    });
 });
 
 test('a public classroom does not call the protected delegation endpoint', async ({ page }) => {
