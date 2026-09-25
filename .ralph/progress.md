@@ -1248,3 +1248,7 @@ Les fichiers fonctionnels d’invitation sont inchangés depuis la recette compl
 ## 25 septembre 2026 — S6-009 Dette machine ASR soldée
 
 La gate complète du SHA déployé `4a9dfb56652323d077c3477941e493f145449bb8` passe avec 3 373 Vitest et 196/196 Playwright. Les trois parcours microphone couvrent transcription visible et réinjectée, refus de permission sans envoi et panne amont après enregistrement. La parole réelle FR/arabe standard/EN et le chemin Hostinger → DGX par Tailscale restent les preuves de production existantes. S6-009 demeure `to_validate` uniquement pour les gestes sur microphone physique et l’acceptation humaine des mesures ; aucune qualité darija ni TTS n’est inférée.
+
+## 25 septembre 2026 — S2-012 Diffusion locale contrôlée clôturée
+
+Le SHA `7a2baf5498592f1ad11d51885dadcc9cd59cea74` raccorde la recette de production à un exécutable natif utilisant exactement le noyau Rust de Qalem Local. Sur le web déployé, le parcours obtient 201/201/200/200, ouvre 338 octets, puis refuse manifeste altéré, expiration, mauvais utilisateur, tenant, appareil, clé, statut périmé et révocation ; le navigateur anonyme reçoit 401 et un nouveau téléchargement après révocation 404. Les quatre compteurs reviennent à zéro et les artefacts temporaires sont supprimés. Huit tests Rust, le build release verrouillé, ESLint et la gate web complète sont verts. S2-012 passe à `completed` et `passes=true` par la branche autorisée « client contrôlé », sans revendiquer d’essai physique ni de DRM absolu.

@@ -27,4 +27,54 @@ Le parcours couvre l’enrôlement authentifié d’une clé X25519, l’émissi
 
 Les quatre zéros confirment, après suppression, l’absence de lignes de recette dans `organization_sources`, `local_client_devices`, `local_content_packages` et `local_content_licenses` pour l’organisation temporaire.
 
-Limites conservées explicitement : cette preuve ne prétend pas empêcher une copie après déchiffrement ni un enregistrement analogique. La validation physique du client final sur appareils contrôlés et le gate complet de la révision de livraison restent requis avant `passes=true`.
+Limites conservées explicitement : cette preuve ne prétend pas empêcher une copie après déchiffrement ni un enregistrement analogique.
+
+## Validation par client contrôlé — 25 septembre 2026
+
+Le SHA `7a2baf5498592f1ad11d51885dadcc9cd59cea74` ajoute
+`qalem-local-controlled-proof`, un exécutable natif qui appelle exactement
+`qalem-local-core`, le même noyau que le client Tauri. Il ne journalise ni clé,
+ni identifiant, ni contenu.
+
+La recette est rejouée contre le web production exact
+`4a9dfb56652323d077c3477941e493f145449bb8`. Résultat :
+
+```json
+{
+  "statuses": {
+    "enrolled": 201,
+    "issued": 201,
+    "download": 200,
+    "active": 200,
+    "revoked": 204,
+    "denied": 404,
+    "browser": 401
+  },
+  "controlledClient": {
+    "opened": true,
+    "contentBytes": 338,
+    "alteredManifestRefused": true,
+    "expiredRefused": true,
+    "wrongUserRefused": true,
+    "wrongTenantRefused": true,
+    "wrongDeviceRefused": true,
+    "wrongDeviceKeyRefused": true,
+    "staleStatusRefused": true,
+    "revokedStatusRefused": true
+  },
+  "cleanupRows": [0, 0, 0, 0]
+}
+```
+
+Le paquet autorisé est remis comme `application/octet-stream` avec une pièce
+jointe `.qalempkg`, jamais comme contenu déchiffré. Une requête navigateur
+anonyme reçoit 401. Le client natif contrôlé vérifie la signature, le statut
+frais et toutes les liaisons avant ouverture ; après révocation, il refuse le
+statut signé. Les binaires et scripts temporaires sont supprimés.
+
+Le noyau passe 8/8 tests Rust et construit le binaire release avec le lockfile.
+ESLint de la recette est vert. La gate complète du code web fonctionnel passe
+3 373 tests Vitest et 196/196 Playwright au SHA déployé ; journal SHA-256
+`8e8b70e1feeabd3770559bf9b5c34322f5339e9efdde4b172d52744a693e4bcb`.
+Cette clôture utilise explicitement la branche « client contrôlé » du critère ;
+elle ne revendique aucun essai physique ni impossibilité universelle de copie.
