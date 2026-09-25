@@ -120,7 +120,7 @@ async function runDirector(context, expected) {
       agentConfigs: agentIds.map((id, index) => ({
         id,
         name: index === 0 ? 'Mentor' : index === 1 ? 'Coach' : 'Analyste',
-        role: 'teacher',
+        role: index === 0 ? 'teacher' : index === 1 ? 'assistant' : 'student',
         persona: 'Répondre brièvement, en français, avec une question utile.',
         avatar: '',
         color: ['#2563eb', '#7c3aed', '#059669'][index],
@@ -128,7 +128,7 @@ async function runDirector(context, expected) {
         priority: 1,
       })),
     },
-    directorState: { turnCount: 1, agentResponses: [], whiteboardLedger: [] },
+    directorState: { turnCount: 0, agentResponses: [], whiteboardLedger: [] },
     apiKey: '',
     model: 'general',
   };
@@ -257,6 +257,18 @@ try {
       .insert({ org_id: organizationId, user_id: ownerId, role: 'admin' }),
     'Temporary owner membership creation failed',
   );
+  const allocation = assertResult(
+    await admin.rpc('post_tenant_credit_entry', {
+      actor_user_id: ownerId,
+      tenant_id: organizationId,
+      credit_entry_type: 'allocation',
+      credit_delta_microunits: 100_000_000,
+      credit_idempotency_key: `s048-${suffix}-allocation`,
+      credit_reason: 'Allocation jetable pour la recette S-048',
+    }),
+    'Temporary credit allocation failed',
+  );
+  assert.equal(allocation?.[0]?.applied, true, 'Temporary credits were not allocated');
   assertResult(
     await admin.from('stages').insert({
       id: stageId,
