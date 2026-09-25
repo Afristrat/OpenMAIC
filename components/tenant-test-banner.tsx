@@ -7,9 +7,9 @@ import { useOrganizations } from '@/lib/hooks/use-organizations';
 import { useIsSuperAdmin } from '@/lib/hooks/use-super-admin';
 import {
   beginTenantTest,
+  clearTenantTestSession,
   endTenantTest,
   readTestedTenantId,
-  recoverLegacyTenantTest,
   TENANT_TEST_SESSION_EVENT,
 } from '@/lib/organizations/tenant-test-session';
 
@@ -25,16 +25,25 @@ export function TenantTestBanner(): React.ReactElement | null {
     const synchronize = () => setTestedTenantId(readTestedTenantId());
     const requestedTenantId =
       pathname === '/app' ? new URLSearchParams(window.location.search).get('orgId') : null;
-    if (requestedTenantId && isSuperAdmin) beginTenantTest(requestedTenantId);
-    if (isSuperAdmin && pathname !== '/admin') recoverLegacyTenantTest();
+    const requestedOrganization = requestedTenantId
+      ? organizations.find((organization) => organization.id === requestedTenantId)
+      : undefined;
+    if (requestedOrganization && isSuperAdmin) {
+      if (requestedOrganization.isDirectMember) clearTenantTestSession();
+      else beginTenantTest(requestedOrganization.id);
+    }
     synchronize();
     window.addEventListener(TENANT_TEST_SESSION_EVENT, synchronize);
     return () => window.removeEventListener(TENANT_TEST_SESSION_EVENT, synchronize);
-  }, [isSuperAdmin, pathname]);
+  }, [isSuperAdmin, organizations, pathname]);
 
   const leaveTenantTest = useCallback(() => {
-    endTenantTest();
-    router.replace('/admin?tab=tenants');
+    const originOrganizationId = endTenantTest();
+    router.replace(
+      originOrganizationId
+        ? `/app?orgId=${encodeURIComponent(originOrganizationId)}`
+        : '/admin?tab=tenants',
+    );
     router.refresh();
   }, [router]);
 

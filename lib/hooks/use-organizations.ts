@@ -2,9 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { Organization, OrgMemberRole } from '@/lib/supabase/types';
+import { readTestedTenantId } from '@/lib/organizations/tenant-test-session';
 
 interface OrganizationWithRole extends Organization {
   userRole: OrgMemberRole;
+  isDirectMember?: boolean;
 }
 
 interface UseOrganizationsReturn {
@@ -81,22 +83,35 @@ export function useOrganizations(): UseOrganizationsReturn {
         return;
       }
 
-      // Restore current org from localStorage
+      // A platform administrator can see every tenant, but their own workspace
+      // is the organization to which they are a direct member. A tenant is
+      // restored only while an explicit test session is active.
       try {
         const savedOrgId = localStorage.getItem(CURRENT_ORG_KEY);
+        const testedTenantId = readTestedTenantId();
+        const directOrganization = orgs.find((organization) => organization.isDirectMember);
         if (savedOrgId) {
           const found = orgs.find((o) => o.id === savedOrgId);
-          if (found) {
+          if (found && (found.isDirectMember || testedTenantId === found.id)) {
             setCurrentOrgState(found);
+          } else if (directOrganization) {
+            setCurrentOrgState(directOrganization);
+            localStorage.setItem(CURRENT_ORG_KEY, directOrganization.id);
           } else if (orgs.length > 0) {
             setCurrentOrgState(orgs[0]);
+            localStorage.setItem(CURRENT_ORG_KEY, orgs[0].id);
           }
+        } else if (directOrganization) {
+          setCurrentOrgState(directOrganization);
+          localStorage.setItem(CURRENT_ORG_KEY, directOrganization.id);
         } else if (orgs.length > 0) {
           setCurrentOrgState(orgs[0]);
+          localStorage.setItem(CURRENT_ORG_KEY, orgs[0].id);
         }
       } catch {
-        if (orgs.length > 0) {
-          setCurrentOrgState(orgs[0]);
+        const fallback = orgs.find((organization) => organization.isDirectMember) ?? orgs[0];
+        if (fallback) {
+          setCurrentOrgState(fallback);
         }
       }
     } catch {

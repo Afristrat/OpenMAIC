@@ -1,6 +1,7 @@
 import { expect, test } from '../fixtures/base';
 
 const E2E_ORGANIZATION_ID = '00000000-0000-4000-8000-000000000002';
+const ORIGIN_ORGANIZATION_ID = '00000000-0000-4000-8000-000000000003';
 
 test('maintient la sortie de super-administration visible pendant le test d’un tenant', async ({
   page,
@@ -8,7 +9,7 @@ test('maintient la sortie de super-administration visible pendant le test d’un
   await page.addInitScript(() => localStorage.setItem('locale', 'fr-FR'));
   await page.addInitScript(
     (organizationId) => localStorage.setItem('qalem-current-org-id', organizationId),
-    E2E_ORGANIZATION_ID,
+    ORIGIN_ORGANIZATION_ID,
   );
   await page.route('**/api/account/is-admin', (route) =>
     route.fulfill({ json: { isAdmin: true } }),
@@ -43,16 +44,18 @@ test('maintient la sortie de super-administration visible pendant le test d’un
     })
     .click();
 
-  await expect(page).toHaveURL(/\/admin\?tab=tenants$/);
+  await expect(page).toHaveURL(`/app?orgId=${ORIGIN_ORGANIZATION_ID}`);
   await expect
     .poll(() => page.evaluate(() => localStorage.getItem('qalem-current-org-id')))
-    .toBeNull();
+    .toBe(ORIGIN_ORGANIZATION_ID);
   await expect
     .poll(() => page.evaluate(() => sessionStorage.getItem('qalem-super-admin-tested-tenant-id')))
     .toBeNull();
 });
 
-test('récupère une session super-administrateur ouverte avant le correctif', async ({ page }) => {
+test('ne transforme pas une organisation mémorisée en mode test sans action explicite', async ({
+  page,
+}) => {
   await page.addInitScript(() => localStorage.setItem('locale', 'fr-FR'));
   await page.addInitScript(
     (organizationId) => localStorage.setItem('qalem-current-org-id', organizationId),
@@ -76,22 +79,7 @@ test('récupère une session super-administrateur ouverte avant le correctif', a
 
   await page.goto('/catalog');
 
-  const banner = page.locator('aside[role="status"]');
-  await expect(banner).toContainText('Mode test du tenant : Qalem E2E');
-  await expect
-    .poll(() => page.evaluate(() => sessionStorage.getItem('qalem-super-admin-tested-tenant-id')))
-    .toBe(E2E_ORGANIZATION_ID);
-
-  await banner
-    .getByRole('button', {
-      name: 'Quitter le mode test et revenir à mon espace super-administrateur',
-    })
-    .click();
-
-  await expect(page).toHaveURL(/\/admin\?tab=tenants$/);
-  await expect
-    .poll(() => page.evaluate(() => localStorage.getItem('qalem-current-org-id')))
-    .toBeNull();
+  await expect(page.locator('aside[role="status"]')).toHaveCount(0);
   await expect
     .poll(() => page.evaluate(() => sessionStorage.getItem('qalem-super-admin-tested-tenant-id')))
     .toBeNull();

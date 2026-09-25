@@ -29,6 +29,20 @@ export async function GET(): Promise<Response> {
   // author content, so list active tenants through the server-only client.
   if (isSuperAdminEmail(user.email ?? '')) {
     const adminSupabase = createServiceSupabaseClient();
+    const { data: directMemberships, error: membershipError } = await adminSupabase
+      .from('org_members')
+      .select('org_id, role')
+      .eq('user_id', user.id);
+
+    if (membershipError) {
+      return apiError(
+        API_ERROR_CODES.INTERNAL_ERROR,
+        500,
+        'Failed to fetch organization memberships',
+        membershipError.message,
+      );
+    }
+
     const { data: organizations, error } = await adminSupabase
       .from('organizations')
       .select('*')
@@ -44,10 +58,15 @@ export async function GET(): Promise<Response> {
       );
     }
 
+    const directRoles = new Map(
+      (directMemberships ?? []).map((membership) => [membership.org_id, membership.role]),
+    );
+
     return apiSuccess({
       organizations: (organizations ?? []).map((organization) => ({
         ...organization,
-        userRole: 'admin',
+        userRole: directRoles.get(organization.id) ?? 'admin',
+        isDirectMember: directRoles.has(organization.id),
       })),
     });
   }
@@ -92,6 +111,7 @@ export async function GET(): Promise<Response> {
   const result = (organizations ?? []).map((org) => ({
     ...org,
     userRole: roleMap.get(org.id) ?? 'apprenant',
+    isDirectMember: true,
   }));
 
   return apiSuccess({ organizations: result });

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { tryCreateClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
+import { endTenantTest } from '@/lib/organizations/tenant-test-session';
 
 const E2E_TEST_MODE = process.env.NEXT_PUBLIC_E2E_TEST_MODE === 'true';
 const E2E_USER = {
@@ -81,6 +82,7 @@ export function useAuth(): AuthState {
     if (!supabase) throw new Error('Authentication unavailable');
     const { error } = await supabase.auth.signOut({ scope });
     if (error) throw error;
+    endTenantTest();
     setUser(null);
   }, []);
 

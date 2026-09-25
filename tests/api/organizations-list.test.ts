@@ -4,6 +4,15 @@ const mocks = vi.hoisted(() => ({
   createServerClient: vi.fn(),
   createServiceClient: vi.fn(),
   serviceFrom: vi.fn(),
+  membershipQuery: {
+    select: vi.fn(),
+    eq: vi.fn(),
+  },
+  organizationQuery: {
+    select: vi.fn(),
+    eq: vi.fn(),
+    order: vi.fn(),
+  },
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -27,18 +36,17 @@ describe('GET /api/organizations', () => {
         }),
       },
     });
-    const query = {
-      select: vi.fn(),
-      eq: vi.fn(),
-      order: vi.fn(),
-    };
-    query.select.mockReturnValue(query);
-    query.eq.mockReturnValue(query);
-    query.order.mockResolvedValue({
+    mocks.membershipQuery.select.mockReturnValue(mocks.membershipQuery);
+    mocks.membershipQuery.eq.mockResolvedValue({ data: [], error: null });
+    mocks.organizationQuery.select.mockReturnValue(mocks.organizationQuery);
+    mocks.organizationQuery.eq.mockReturnValue(mocks.organizationQuery);
+    mocks.organizationQuery.order.mockResolvedValue({
       data: [{ id: 'org-1', name: 'ImpactYo', status: 'active' }],
       error: null,
     });
-    mocks.serviceFrom.mockReturnValue(query);
+    mocks.serviceFrom.mockImplementation((table: string) =>
+      table === 'org_members' ? mocks.membershipQuery : mocks.organizationQuery,
+    );
     mocks.createServiceClient.mockReturnValue({ from: mocks.serviceFrom });
   });
 
@@ -50,8 +58,31 @@ describe('GET /api/organizations', () => {
 
     expect(response.status).toBe(200);
     expect(body.organizations).toEqual([
-      { id: 'org-1', name: 'ImpactYo', status: 'active', userRole: 'admin' },
+      {
+        id: 'org-1',
+        name: 'ImpactYo',
+        status: 'active',
+        userRole: 'admin',
+        isDirectMember: false,
+      },
     ]);
     expect(mocks.serviceFrom).toHaveBeenCalledWith('organizations');
+  });
+
+  it('marks the super-administrator direct workspace without hiding other tenants', async () => {
+    mocks.membershipQuery.eq.mockResolvedValue({
+      data: [{ org_id: 'org-1', role: 'manager' }],
+      error: null,
+    });
+
+    const response = await GET();
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.organizations[0]).toMatchObject({
+      id: 'org-1',
+      userRole: 'manager',
+      isDirectMember: true,
+    });
   });
 });
