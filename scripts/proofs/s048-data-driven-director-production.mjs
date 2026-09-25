@@ -5,9 +5,11 @@ import { chromium } from '@playwright/test';
 
 let input = '';
 for await (const chunk of process.stdin) input += chunk;
-const { supabaseUrl, serviceKey, baseUrl = 'https://qalem.ma' } = JSON.parse(
-  input.replace(/^\uFEFF/, ''),
-);
+const {
+  supabaseUrl,
+  serviceKey,
+  baseUrl = 'https://qalem.ma',
+} = JSON.parse(input.replace(/^\uFEFF/, ''));
 input = '';
 
 assert.equal(new URL(baseUrl).origin, 'https://qalem.ma');
@@ -38,10 +40,7 @@ function assertResult(result, label) {
 
 function isDataDriven(userId) {
   const key = JSON.stringify([userId.toLowerCase(), organizationId.toLowerCase(), stageId]);
-  return createHash('sha256')
-    .update(`qalem-director-v1:${key}`)
-    .digest()
-    .readUInt32BE(0) % 2 === 0;
+  return createHash('sha256').update(`qalem-director-v1:${key}`).digest().readUInt32BE(0) % 2 === 0;
 }
 
 async function authenticatedContext(email) {
@@ -253,7 +252,9 @@ try {
     'Temporary organization creation failed',
   ).id;
   assertResult(
-    await admin.from('org_members').insert({ org_id: organizationId, user_id: ownerId, role: 'admin' }),
+    await admin
+      .from('org_members')
+      .insert({ org_id: organizationId, user_id: ownerId, role: 'admin' }),
     'Temporary owner membership creation failed',
   );
   assertResult(
