@@ -1,5 +1,18 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 25 septembre 2026 — S1-012, capture web réutilisable clôturée
+
+La dernière dette humaine est levée. Le worker déployé a produit à HTTP 200
+une capture nettoyée de la page officielle CGEM réellement référencée par la
+formation Human Yo Impact « RSE appliquée au leasing marocain ». Cette capture
+est pertinente pour la scène « Cadre réglementaire marocain de la RSE » : elle
+documente les principes RSE, l’évaluation du label CGEM et sa validité de trois
+ans. Amine l’a vue et validée explicitement le 25 septembre 2026. Son SHA-256
+est `2070addfd7c8ea69edcb0146b0ff90674840efc2dc0da2199acfeb14544a282b`.
+Cette clôture confirme le mécanisme sans insérer ni régénérer silencieusement
+le contenu existant. Avec les preuves machine et le gate complet déjà consignés
+au SHA fonctionnel, S1-012 passe à `completed/passes=true`.
+
 ## 24 septembre 2026 — S1-008, cmi5 recertifié et story clôturée
 
 Une archive cmi5 fraîche de Qalem production, deux scènes et 291 043 octets,
