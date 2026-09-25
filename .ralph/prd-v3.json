@@ -4,9 +4,9 @@
   "branch": "refork-v030",
   "title": "Réconciliation des engagements et clôture prouvée",
   "description": "Référence active unique pour tous les restes identifiés de Qalem. Les critères v2 et les capacités v1 sont tracés sans transformer une acceptation historique en certification actuelle. Ce PRD planifie ; il n’exécute ni n’autorise automatiquement les mutations bloquées.",
-  "reconciledAt": "2026-09-12",
-  "inspectedCommit": "99631c44cc6a7b7475f465fb51307534e74da149",
-  "reconciliationNote": "Revue documentaire sur ce socle et le diff courant, pas recertification de production. Dix passes=true/to_validate remis à false en conservant les preuves historiques ; aucune fonctionnalité retirée. Les sept arbitrages du 12 septembre sont décidés et versionnés dans docs/decisions/2026-09-12-prd-arbitrages.md ; ils cadrent la livraison sans valoir preuve de production.",
+  "reconciledAt": "2026-09-25",
+  "inspectedCommit": "2310db39f2aed5424c87117883010bf331623fa1",
+  "reconciliationNote": "Réconciliation fraîche du registre après clôture de S6-032 : 84 stories, 67 completed/passes=true et 17 ouvertes/passes=false. Il ne subsiste aucune story in_progress ni to_implement : treize stories to_validate exigent une observation humaine ou un appareil physique, et quatre stories blocked dépendent du contrat ou des connecteurs Diwan. Les preuves et le détail des résidus sont consignés dans docs/validation/PRD3-reconciliation-2026-09-25.md.",
   "supersedes": ".ralph/prd-v2.json",
   "scope": {
     "included": [
@@ -3711,7 +3711,7 @@
       },
       "sourceDependencies": [],
       "dependencies": ["S6-010"],
-      "gap": "Décision du 12 septembre : Web Push est le canal prioritaire de l’ancrage personnalisé ; e-mail complète les rappels de révision ; WhatsApp est une option activable par tenant, mais toute offre de ce canal exige appairage, opt-in, désinscription et réception réelle. Code, e-mail réel et instance Evolution dédiée sont livrés. WhatsApp reste à appairer par QR avec le compte retenu, puis à recevoir réellement avant passes=true.",
+      "gap": "Décision du 12 septembre : Web Push est le canal prioritaire de l’ancrage personnalisé ; e-mail complète les rappels de révision ; WhatsApp est une option activable par tenant, mais toute offre de ce canal exige appairage, opt-in, désinscription et réception réelle. Code, e-mail réel et instance Evolution dédiée sont livrés. Le 25 septembre, l’API relit l’instance qalem-reminders à l’état close : WhatsApp reste à appairer par QR avec le compte retenu, puis à recevoir réellement avant passes=true.",
       "evidence": [
         ".ralph/prd.json#S-028",
         "tasks/prd-3-ancrer.md#Non-Goals",
@@ -3730,7 +3730,8 @@
       "closureEvidence": [
         "2026-09-04 — Le SHA cea34e0084d92510b42b68f4f904069ac70b87c2 livre opt-in et désinscription e-mail/WhatsApp, batch quotidien dédupliqué, Resend idempotent avec reprise bornée, Evolution sans rejeu automatique ambigu et erreurs expurgées. La migration 00070 est appliquée durablement ; le gate exact passe Prettier, TypeScript, ESLint, 2 681/2 681 Vitest, build et 110/110 Playwright.",
         "2026-09-04 — Web et runtime Coolify servent le SHA exact. Le déploiement runtime agigrjbydu9qdzkxew68td6m est terminé ; worker et capture-worker sont healthy, restart=0 et OOMKilled=false. RESEND_API_KEY et SMTP_FROM sont configurés au runtime et la file review-notification démarre. Evolution reste non configuré : envois réels autorisés et réception des deux canaux restent ouverts, donc passes=false. Référence : docs/validation/S6-011-review-notification-channels.md.",
-        "2026-09-06 — Le SHA 6f13b77167f6f589c1bc938f32a6439879a0e9bc versionne une stack Evolution v2.3.7 dédiée, identique au compose actif et persistant sur Hostinger. Le tunnel Cloudflare et l’API répondent 200 ; les trois variables Evolution et l’expéditeur Qalem corrigé sont injectés dans web/worker/capture-worker, tous healthy, restart=0, OOMKilled=false. La recette e-mail obtient une livraison unique, un événement Resend delivered, une désinscription, puis trois compteurs à zéro. Gate exact : 439/439 fichiers, 2 697/2 697 Vitest, build 113 pages et 112/112 Playwright. L’instance qalem-reminders reste connecting jusqu’au scan humain du QR et la réception WhatsApp ; passes demeure donc faux. Référence : docs/validation/S6-011-review-notification-channels.md."
+        "2026-09-06 — Le SHA 6f13b77167f6f589c1bc938f32a6439879a0e9bc versionne une stack Evolution v2.3.7 dédiée, identique au compose actif et persistant sur Hostinger. Le tunnel Cloudflare et l’API répondent 200 ; les trois variables Evolution et l’expéditeur Qalem corrigé sont injectés dans web/worker/capture-worker, tous healthy, restart=0, OOMKilled=false. La recette e-mail obtient une livraison unique, un événement Resend delivered, une désinscription, puis trois compteurs à zéro. Gate exact : 439/439 fichiers, 2 697/2 697 Vitest, build 113 pages et 112/112 Playwright. L’instance qalem-reminders reste connecting jusqu’au scan humain du QR et la réception WhatsApp ; passes demeure donc faux. Référence : docs/validation/S6-011-review-notification-channels.md.",
+        "2026-09-25 — Contrôle frais via l’API Evolution dédiée et les secrets Qalem limités : qalem-reminders existe mais retourne state=close. Aucun QR ni secret n’est exposé. Ce contrôle confirme que l’unique résidu est toujours l’appairage physique du compte WhatsApp retenu, suivi d’une réception réelle et d’un test de désinscription/déduplication."
       ],
       "historicalDependencies": [],
       "executionAllowed": true,

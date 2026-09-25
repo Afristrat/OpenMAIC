@@ -1297,3 +1297,9 @@ Un formateur actif peut désormais solliciter, depuis une formation précise, le
 La migration et la recette SQL sont appliquées en production. Le SHA fonctionnel `ca82898b1a3c1b37f202772d7e870f9c7ecd5d35` passe Prettier, TypeScript, ESLint, 3 389 tests Vitest, le build de 127 pages et 200/200 Playwright sous serveur de production. Le déploiement Coolify `jijekgwrbnnfodwyeweivtxn` sert ce SHA dans un conteneur sain, sans redémarrage ni OOM, et la santé publique répond HTTP 200.
 
 La recette multi-rôle sur `qalem.ma` produit `S6032_PRODUCTION_RECIPE_OK` : demande du formateur dans Chromium, accord d’une heure du manager dans Chromium, correction persistée de la seule formation autorisée, refus 403 sur une autre formation, révocation dans Chromium et refus 403 immédiat après révocation. Le nettoyage retourne `0|0|0` pour tenants, formations et comptes éphémères. Les commits jusqu’à `0c69fdee5680cf866c4d766e58bee0e278e8dee1` ajoutent uniquement cette preuve de production. S6-032 passe à `completed` et `passes=true`.
+
+## 25 septembre 2026 — PRD 3 réconcilié après S6-032
+
+Le comptage direct de `.ralph/prd-v3.json` remplace l’ancien état du goal : 84 stories au total, 67 `completed/passes=true`, 13 `to_validate/passes=false`, 4 `blocked/passes=false`, aucune `in_progress` et aucune `to_implement`. Les treize validations ouvertes exigent explicitement une observation humaine ou un appareil physique ; les quatre blocages sont S6-003 et les trois connecteurs Diwan. Le détail est versionné dans `docs/validation/PRD3-reconciliation-2026-09-25.md`.
+
+Le contrôle frais de S6-011 relit l’instance Evolution dédiée `qalem-reminders` à l’état `close`. Le code, l’e-mail et l’infrastructure restent acquis ; l’appairage QR, la réception WhatsApp réelle, la désinscription et l’absence de doublon demeurent un checkpoint physique. Aucun QR ni secret n’a été affiché.
