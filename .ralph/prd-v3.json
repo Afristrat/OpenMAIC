@@ -1976,15 +1976,16 @@
       "description": "Inventorier les secrets et consommateurs Qalem, procéder à la rotation autorisée et vérifier le fonctionnement avant révocation, sans toucher aux autres projets.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P0",
-      "status": "to_implement",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
+      "completedAt": "2026-09-25",
       "source": {
         "type": "request_or_observed_gap",
         "date": "2026-08-26"
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Les secrets internes Qalem, Resend, la clé virtuelle LiteLLM et la clé Evolution dédiée à Qalem ont été renouvelés, propagés et recettés sans exposer de valeur. Les anciennes clés LiteLLM et Evolution sont révoquées. Les quatre processus Qalem sont sains et aucun secret de paiement n’est injecté. Les catégories ASR, Crawler, Mishkāt, Serper, Supabase et VoxCPM sont mutualisées hors Qalem et sont donc exclues de toute révocation depuis ce chantier. Le seul résidu réellement injecté est IMAGE_OPENAI_API_KEY : les clés disponibles refusent les API d’administration OpenAI en HTTP 401 et la session OpenAI Platform n’est pas authentifiée. S6-014 reste ouverte exclusivement pour la création, l’injection, la recette image et la révocation contrôlée de cette clé depuis une session fournisseur autorisée.",
+      "gap": "Clôturé. Les secrets internes Qalem, Resend, les clés virtuelles LiteLLM générale et image, ainsi que la clé Evolution dédiée ont été renouvelés, propagés et recettés sans exposer de valeur. L’ancienne clé image expirée est révoquée. Le nom historique IMAGE_OPENAI_API_KEY est conservé pour compatibilité, mais la configuration prouve qu’il s’agit d’une clé virtuelle LiteLLM limitée à Gemini, pas d’une clé OpenAI. Les quatre processus Qalem sont sains et les catégories mutualisées hors Qalem sont restées intactes.",
       "evidence": [
         "AGENTS.md#Règles du projet",
         "thread:01a005ad-360e-7710-aeb5-bf5fc84c67b6",
@@ -2003,7 +2004,8 @@
         "2026-09-15 — Une clé Resend dédiée à Qalem, limitée à l’envoi depuis ai-mpower.com, est enregistrée au coffre et active dans le web, le worker et le capture-worker. Le contrôle officiel d’envoi vers le puits Resend répond 200 avec un identifiant ; une tentative depuis un domaine étranger répond 403 et les opérations de gestion répondent 401, conformément au droit sending_access.",
         "2026-09-24 — La clé virtuelle LiteLLM propre à Qalem a été renouvelée de bout en bout. La nouvelle clé conserve 22 modèles, répond 200 sur /key/info et sur une complétion réelle general ; elle est active dans le web, le worker et le capture-worker. L’ancien alias est absent de l’inventaire et le nouveau n’y figure qu’une fois. Les trois processus sont healthy, sans OOM ni redémarrage, et la santé publique répond 200. Aucun secret maître ou fournisseur Hostinger n’a été modifié.",
         "2026-09-24 — Inventaire runtime frais : aucun secret de paiement n’est injecté ; IMAGE_OPENAI_API_KEY et ASR_OPENAI_API_KEY sont distinctes de la nouvelle clé LiteLLM. Les familles mutualisées hors Qalem restent exclues. Détail : docs/security/S6-014-secret-rotation-inventory.md.",
-        "2026-09-24 — La clé Evolution dédiée à la pile Qalem Hostinger est renouvelée : la nouvelle clé répond HTTP 200 avec l’unique instance attendue, l’ancienne répond HTTP 401, le coffre et les quatre processus Qalem concordent. Web, worker, AudioSeal et capture sont healthy, restart=0, OOMKilled=false ; le fournisseur est en exécution sans OOM et /api/health répond 200. Les fichiers de transaction sont supprimés. Le seul résidu de S6-014 est désormais la clé image OpenAI, dont les API d’administration répondent 401 avec les deux clés disponibles."
+        "2026-09-24 — La clé Evolution dédiée à la pile Qalem Hostinger est renouvelée : la nouvelle clé répond HTTP 200 avec l’unique instance attendue, l’ancienne répond HTTP 401, le coffre et les quatre processus Qalem concordent. Web, worker, AudioSeal et capture sont healthy, restart=0, OOMKilled=false ; le fournisseur est en exécution sans OOM et /api/health répond 200. Les fichiers de transaction sont supprimés.",
+        "2026-09-25 — La variable image historique est réconciliée : elle cible LiteLLM et Gemini, pas OpenAI. L’ancienne clé `qalem-image-logo-20260729` reproduit HTTP 401 `expired_key`. La nouvelle clé `qalem-image-production-20260925-034546`, limitée à `gemini-3.1-flash-image` et à 10 USD, produit un artefact avant et après déploiement. Le coffre, le web, le worker et la capture relisent son alias en HTTP 200 ; web, worker, AudioSeal et capture servent le SHA 124077344522f56f2909fcc434f7788e417b634e, sont healthy, restart=0, OOMKilled=false, et /api/health répond 200. L’ancien alias est révoqué et absent de l’inventaire ; le nouveau est unique. S6-014 passe à completed et passes=true."
       ],
       "historicalDependencies": [],
       "executionAllowed": true,

@@ -1,14 +1,15 @@
 # S6-014 — Inventaire de rotation Qalem sans valeurs
 
-Date : 24 septembre 2026
-Statut : inventaire versionné et rotations partielles effectives. Les webhooks,
+Date : 25 septembre 2026
+Statut : inventaire versionné et rotations Qalem clôturées. Les webhooks,
 le jeton capture, LTI, VAPID, le chiffrement LRS et la pseudonymisation xAPI
 ont été remplacés en configuration persistante. Resend utilise désormais une
 clé Qalem d'envoi restreinte au domaine autorisé. La clé virtuelle LiteLLM
 propre à Qalem a été renouvelée le 24 septembre, propagée aux trois processus
-et l'ancienne clé a été révoquée. Deux catégories fournisseurs distinctes
-restent injectées sans preuve suffisante d'exclusivité du compte : image
-OpenAI et Evolution.
+et l'ancienne clé a été révoquée. Evolution a été isolée et renouvelée. La clé
+historiquement nommée `IMAGE_OPENAI_API_KEY` a été réconciliée le 25 septembre :
+elle cible LiteLLM et Gemini, pas OpenAI ; sa clé virtuelle expirée a été
+remplacée par une clé Qalem limitée au seul modèle image réellement configuré.
 
 ## Méthode et limite
 
@@ -211,13 +212,12 @@ ASR, Crawler, Mishkāt, Serper, Supabase et VoxCPM sont réemployées hors Qalem
 elles restent explicitement exclues de toute révocation dans ce chantier.
 
 La catégorie `EVOLUTION_API_KEY` est désormais attribuée à une pile Hostinger
-isolée de Qalem et a été renouvelée de bout en bout. Le seul résidu fournisseur
-de S6-014 est `IMAGE_OPENAI_API_KEY`. Les deux clés OpenAI disponibles refusent
-les API d’administration de l’organisation en HTTP 401 ; leur rotation exige
-donc une session OpenAI Platform authentifiée disposant du droit de créer et de
-révoquer une clé. S6-014 reste ouverte pour ce résidu précis ; elle n’est plus
-bloquée par LiteLLM, Resend, Evolution, les secrets internes ou un paiement non
-configuré.
+isolée de Qalem et a été renouvelée de bout en bout. Le diagnostic antérieur
+qualifiait à tort `IMAGE_OPENAI_API_KEY` de clé OpenAI : le runtime la combine
+avec `IMAGE_OPENAI_BASE_URL=https://proxy.ai-mpower.com/v1` et le modèle
+`gemini-3.1-flash-image`. La clé était effectivement expirée, mais sa rotation
+relevait de LiteLLM. Cette incohérence est corrigée par la rotation dédiée du
+25 septembre ci-dessous ; aucune session OpenAI Platform n’est nécessaire.
 
 ## Rotation Evolution dédiée du 24 septembre 2026
 
@@ -235,3 +235,25 @@ processus sont `healthy`, `restart=0`, `OOMKilled=false`; le fournisseur est en
 exécution, sans redémarrage ni OOM, et `https://qalem.ma/api/health` répond HTTP
 200. La sauvegarde de transaction et le fichier de transit fournisseur ont été
 supprimés après vérification.
+
+## Rotation de la clé image LiteLLM dédiée du 25 septembre 2026
+
+La sonde du runtime a d’abord reproduit l’incident réel : `/images/generations`
+répondait HTTP 401 avec `expired_key`. L’inventaire d’administration LiteLLM a
+identifié l’ancienne clé `qalem-image-logo-20260729`, expirée le 28 août, limitée
+à 10 USD et à deux modèles image. Le code de production n’en utilise plus qu’un.
+
+Une nouvelle clé `qalem-image-production-20260925-034546` a été créée sans date
+d’expiration, avec un budget maximal de 10 USD et le seul modèle
+`gemini-3.1-flash-image`. Une génération réelle a produit un artefact avant
+injection. La clé est ensuite enregistrée au coffre DPAPI et dans les variables
+production et prévisualisation du web et du runtime. Les déploiements servent le
+SHA `124077344522f56f2909fcc434f7788e417b634e`.
+
+Après bascule, le web, le worker et le worker de capture relisent tous l’alias
+exact de la nouvelle clé en HTTP 200. Web, worker, AudioSeal et capture sont
+`healthy`, `restart=0`, `OOMKilled=false`; `/api/health` répond HTTP 200. Une
+nouvelle génération depuis le web déployé répond HTTP 200 et contient un
+artefact. L’ancienne clé expirée est ensuite révoquée : son alias est absent et
+le nouvel alias est unique. Aucun secret OpenAI ni aucune clé fournisseur ou
+clé d’un autre projet n’a été modifié.
