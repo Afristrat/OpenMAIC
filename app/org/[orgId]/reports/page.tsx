@@ -36,10 +36,18 @@ interface Metrics {
 
 interface AnchoringMetrics {
   participation_rate: number | null;
-  hot_average_score: number | null;
-  cold_30_average_score: number | null;
-  cold_60_retention_delta: number | null;
+  hot_relevance_average: number | null;
+  hot_relevance_response_count: number;
+  hot_return_intent_average: number | null;
+  hot_return_intent_response_count: number;
+  cold_application_average: number | null;
+  cold_application_response_count: number;
+  resume_open_rate: number | null;
+  resume_sent_count: number;
+  resume_opened_count: number;
   delivery_open_rate: number | null;
+  hot_decline_count: number;
+  cold_decline_count: number;
 }
 
 interface FormationRow {
@@ -77,7 +85,7 @@ function getDateRange(preset: DatePreset): { from: string; to: string } {
 export default function ReportsPage() {
   const { orgId } = useParams<{ orgId: string }>();
   const router = useRouter();
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
 
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [formations, setFormations] = useState<FormationRow[]>([]);
@@ -121,9 +129,10 @@ export default function ReportsPage() {
         if (signal.aborted) return;
         setMetrics(json.metrics ?? null);
         setFormations(json.formations ?? []);
-        const anchoringRes = await fetch(`/api/organizations/${orgId}/anchoring-report`, {
-          signal,
-        });
+        const anchoringRes = await fetch(
+          `/api/organizations/${orgId}/anchoring-report?${params.toString()}`,
+          { signal },
+        );
         if (anchoringRes.ok) {
           const anchoringJson = (await anchoringRes.json()) as { anchoring?: AnchoringMetrics };
           if (!signal.aborted) setAnchoring(anchoringJson.anchoring ?? null);
@@ -305,28 +314,37 @@ export default function ReportsPage() {
           <h2 id="anchoring-report-title" className="mb-4 text-lg font-semibold">
             {t('reports.anchoringTitle')}
           </h2>
+          <p className="mb-4 rounded-md border p-3 text-sm" role="note">
+            {t('reports.journeyDisclaimer')}
+          </p>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <MetricCard
-              icon={<Users className="h-5 w-5" />}
-              label={t('reports.anchoringParticipation')}
-              value={`${anchoring.participation_rate ?? 0}%`}
+              icon={<Target className="h-5 w-5" />}
+              label={t('reports.journeyRelevance')}
+              value={formatRating(anchoring.hot_relevance_average, locale)}
             />
             <MetricCard
               icon={<Target className="h-5 w-5" />}
-              label={t('reports.anchoringHotCold30')}
-              value={`${anchoring.hot_average_score ?? 0}% → ${anchoring.cold_30_average_score ?? 0}%`}
+              label={t('reports.journeyReturnIntent')}
+              value={formatRating(anchoring.hot_return_intent_average, locale)}
             />
             <MetricCard
               icon={<Percent className="h-5 w-5" />}
-              label={t('reports.anchoringRetention60')}
-              value={`${anchoring.cold_60_retention_delta ?? 0} pts`}
+              label={t('reports.journeyApplication')}
+              value={formatRating(anchoring.cold_application_average, locale)}
             />
             <MetricCard
               icon={<BarChart3 className="h-5 w-5" />}
-              label={t('reports.anchoringOpenRate')}
-              value={`${anchoring.delivery_open_rate ?? 0}%`}
+              label={t('reports.journeyEffectiveResume')}
+              value={`${anchoring.resume_opened_count} / ${anchoring.resume_sent_count}`}
             />
           </div>
+          <p className="mt-3 text-sm text-muted-foreground">
+            {t('reports.journeyDeclines', {
+              hot: anchoring.hot_decline_count,
+              cold: anchoring.cold_decline_count,
+            })}
+          </p>
         </section>
       )}
 
@@ -392,6 +410,12 @@ export default function ReportsPage() {
       )}
     </div>
   );
+}
+
+function formatRating(value: number | null, locale: string): string {
+  return value === null
+    ? '—'
+    : `${new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(value)} / 5`;
 }
 
 // --- Sub-components ---

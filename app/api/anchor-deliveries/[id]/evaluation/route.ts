@@ -1,18 +1,17 @@
 import type { NextRequest } from 'next/server';
-import { z } from 'zod';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { enqueueAnchorEvaluationStatement } from '@/lib/anchoring/xapi-outbox';
-
-const evaluationSchema = z
-  .object({ useful: z.number().int().min(1).max(5), confidence: z.number().int().min(1).max(5) })
-  .strict();
+import {
+  coldJourneyEvaluationSchema,
+  normalizeJourneyEvaluation,
+} from '@/lib/anchoring/journey-evaluation';
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const parsed = evaluationSchema.safeParse(await request.json().catch(() => null));
+  const parsed = coldJourneyEvaluationSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
-    return apiError('INVALID_REQUEST', 400, 'Les deux réponses de 1 à 5 sont requises');
+    return apiError('INVALID_REQUEST', 400, 'Réponses invalides');
   }
   const auth = await createServerSupabaseClient();
   const {
@@ -42,14 +41,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!delivery.sent_at) {
     return apiError('INVALID_REQUEST', 409, 'Cette évaluation n’est pas encore disponible');
   }
-  const score = ((parsed.data.useful + parsed.data.confidence) / 10) * 100;
+  const { answers, score } = normalizeJourneyEvaluation(parsed.data);
   const { data: evaluation, error } = await auth
     .from('evaluations')
     .insert({
       session_id: plan.session_id,
       user_id: user.id,
       phase,
-      answers: parsed.data,
+      answers,
       score,
     })
     .select('id, phase, score')
@@ -64,11 +63,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     .update({ opened_at: new Date().toISOString() })
     .eq('id', id)
     .not('sent_at', 'is', null);
-  const xapiQueued = await enqueueAnchorEvaluationStatement({
-    sessionId: plan.session_id,
-    userId: user.id,
-    phase,
-    score,
-  }).catch(() => false);
+  const xapiQueued =
+    score === null
+      ? false
+      : await enqueueAnchorEvaluationStatement({
+          sessionId: plan.session_id,
+          userId: user.id,
+          phase,
+          score,
+        }).catch(() => false);
   return apiSuccess({ evaluation, xapiQueued }, 201);
 }

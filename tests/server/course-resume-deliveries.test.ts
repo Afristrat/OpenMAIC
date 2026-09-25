@@ -158,4 +158,31 @@ describe('course resume deliveries', () => {
     expect(mocks.claimSlot).not.toHaveBeenCalled();
     expect(mocks.push).not.toHaveBeenCalled();
   });
+
+  it('cancels a pending resume reminder when this course is disabled', async () => {
+    const lookup = query({ data: delivery, error: null });
+    const resume = query({
+      data: { ...delivery, org_id: '00000000-0000-4000-8000-000000000004' },
+      error: null,
+    });
+    const globalPreferences = query({ data: null, error: null });
+    const coursePreferences = query({ data: { disabled: true }, error: null });
+    const cancel = query({ error: null });
+    mocks.from.mockImplementation((table: string) => {
+      if (table === 'course_resume_deliveries' && mocks.from.mock.calls.length === 1) return lookup;
+      if (table === 'learner_course_resumes') return resume;
+      if (table === 'review_notification_preferences') return globalPreferences;
+      if (table === 'course_notification_preferences') return coursePreferences;
+      if (table === 'course_resume_deliveries') return cancel;
+      throw new Error(`Unexpected table ${table}`);
+    });
+
+    await deliverCourseResumeDelivery(delivery.id);
+
+    expect(cancel.update).toHaveBeenCalledWith(
+      expect.objectContaining({ cancelled_at: expect.any(String) }),
+    );
+    expect(mocks.claimSlot).not.toHaveBeenCalled();
+    expect(mocks.push).not.toHaveBeenCalled();
+  });
 });

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Bell } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useI18n } from '@/lib/hooks/use-i18n';
@@ -13,6 +14,10 @@ type Preferences = {
   dailyCap: number | null;
   nextReminderAt: string | null;
   minimumIntervalHours: 24 | 72 | 168 | null;
+  timezone: string | null;
+  quietStart: string | null;
+  quietEnd: string | null;
+  disabled: boolean;
 };
 
 function toLocalDateTime(value: string | null): string {
@@ -36,6 +41,10 @@ export function CourseNotificationPreferences({
     dailyCap: null,
     nextReminderAt: null,
     minimumIntervalHours: null,
+    timezone: null,
+    quietStart: null,
+    quietEnd: null,
+    disabled: false,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -58,6 +67,10 @@ export function CourseNotificationPreferences({
             body.minimumIntervalHours === 168
               ? body.minimumIntervalHours
               : null,
+          timezone: typeof body.timezone === 'string' ? body.timezone : null,
+          quietStart: typeof body.quietStart === 'string' ? body.quietStart.slice(0, 5) : null,
+          quietEnd: typeof body.quietEnd === 'string' ? body.quietEnd.slice(0, 5) : null,
+          disabled: body.disabled === true,
         });
       })
       .catch(() => {
@@ -77,7 +90,15 @@ export function CourseNotificationPreferences({
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(preferences),
+          body: JSON.stringify({
+            pausedUntil: preferences.pausedUntil,
+            dailyCap: preferences.dailyCap,
+            minimumIntervalHours: preferences.minimumIntervalHours,
+            timezone: preferences.timezone,
+            quietStart: preferences.quietStart,
+            quietEnd: preferences.quietEnd,
+            disabled: preferences.disabled,
+          }),
         },
       );
       if (!response.ok) throw new Error('Course preferences save failed');
@@ -93,6 +114,10 @@ export function CourseNotificationPreferences({
           body.minimumIntervalHours === 168
             ? body.minimumIntervalHours
             : null,
+        timezone: typeof body.timezone === 'string' ? body.timezone : null,
+        quietStart: typeof body.quietStart === 'string' ? body.quietStart.slice(0, 5) : null,
+        quietEnd: typeof body.quietEnd === 'string' ? body.quietEnd.slice(0, 5) : null,
+        disabled: body.disabled === true,
       }));
       toast.success(t('notifications.courseSaved'));
     } catch {
@@ -111,17 +136,83 @@ export function CourseNotificationPreferences({
       <div className="mt-3 space-y-3">
         <p className="text-xs text-muted-foreground">{t('notifications.courseDescription')}</p>
         <p className="text-xs text-muted-foreground">
-          {preferences.pausedUntil
-            ? t('notifications.coursePausedEffect')
-            : preferences.nextReminderAt
-              ? t('notifications.courseNextReminder', {
-                  date: new Intl.DateTimeFormat(locale, {
-                    dateStyle: 'medium',
-                    timeStyle: 'short',
-                  }).format(new Date(preferences.nextReminderAt)),
-                })
-              : t('notifications.courseNoReminder')}
+          {preferences.disabled
+            ? t('notifications.courseDisabledEffect')
+            : preferences.pausedUntil
+              ? t('notifications.coursePausedEffect')
+              : preferences.nextReminderAt
+                ? t('notifications.courseNextReminder', {
+                    date: new Intl.DateTimeFormat(locale, {
+                      dateStyle: 'medium',
+                      timeStyle: 'short',
+                    }).format(new Date(preferences.nextReminderAt)),
+                  })
+                : t('notifications.courseNoReminder')}
         </p>
+        <label className="flex items-center gap-2 text-xs font-medium">
+          <Checkbox
+            checked={preferences.disabled}
+            onCheckedChange={(checked) =>
+              setPreferences((current) => ({ ...current, disabled: checked === true }))
+            }
+            disabled={loading || saving}
+            aria-label={t('notifications.courseDisable')}
+          />
+          <span>{t('notifications.courseDisable')}</span>
+        </label>
+        <div className="space-y-1">
+          <Label htmlFor="course-notification-timezone" className="text-xs">
+            {t('notifications.courseTimezone')}
+          </Label>
+          <Input
+            id="course-notification-timezone"
+            value={preferences.timezone ?? ''}
+            placeholder={t('notifications.courseTimezoneInherited')}
+            onChange={(event) =>
+              setPreferences((current) => ({
+                ...current,
+                timezone: event.target.value.trim() || null,
+              }))
+            }
+            disabled={loading || saving || preferences.disabled}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <Label htmlFor="course-notification-quiet-start" className="text-xs">
+              {t('notifications.courseQuietStart')}
+            </Label>
+            <Input
+              id="course-notification-quiet-start"
+              type="time"
+              value={preferences.quietStart ?? ''}
+              onChange={(event) =>
+                setPreferences((current) => ({
+                  ...current,
+                  quietStart: event.target.value || null,
+                }))
+              }
+              disabled={loading || saving || preferences.disabled}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="course-notification-quiet-end" className="text-xs">
+              {t('notifications.courseQuietEnd')}
+            </Label>
+            <Input
+              id="course-notification-quiet-end"
+              type="time"
+              value={preferences.quietEnd ?? ''}
+              onChange={(event) =>
+                setPreferences((current) => ({
+                  ...current,
+                  quietEnd: event.target.value || null,
+                }))
+              }
+              disabled={loading || saving || preferences.disabled}
+            />
+          </div>
+        </div>
         <div className="space-y-1">
           <Label htmlFor="course-notification-interval" className="text-xs">
             {t('notifications.courseFrequency')}

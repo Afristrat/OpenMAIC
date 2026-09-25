@@ -54,30 +54,43 @@ describe('live session hot evaluation API', () => {
     mocks.queueXapi.mockResolvedValue(true);
   });
 
-  it('writes exactly two hot answers and their normalized score', async () => {
-    const response = await submit({ useful: 5, confidence: 4 });
+  it('records declared relevance and return intent without treating them as learning proof', async () => {
+    const response = await submit({ relevance: 5, returnIntent: 2 });
 
     expect(response.status).toBe(201);
     expect(mocks.insert).toHaveBeenCalledWith({
       session_id: 'session-1',
       user_id: 'user-1',
       phase: 'hot',
-      answers: { useful: 5, confidence: 4 },
-      score: 90,
+      answers: { relevance: 5, return_intent: 2 },
+      score: 70,
     });
     expect(mocks.queueXapi).toHaveBeenCalledWith({
       sessionId: 'session-1',
       userId: 'user-1',
       phase: 'hot',
-      score: 90,
+      score: 70,
+    });
+  });
+
+  it('persists a refusal instead of silently discarding it', async () => {
+    const response = await submit({ declined: true });
+
+    expect(response.status).toBe(201);
+    expect(mocks.insert).toHaveBeenCalledWith({
+      session_id: 'session-1',
+      user_id: 'user-1',
+      phase: 'hot',
+      answers: { declined: true },
+      score: null,
     });
   });
 
   it('rejects an incomplete answer, an unfinished session, and a duplicate phase', async () => {
-    expect((await submit({ useful: 5 })).status).toBe(400);
+    expect((await submit({ relevance: 5 })).status).toBe(400);
     mocks.session.mockResolvedValueOnce({ data: { id: 'session-1', ended_at: null }, error: null });
-    expect((await submit({ useful: 5, confidence: 4 })).status).toBe(409);
+    expect((await submit({ relevance: 5, returnIntent: 4 })).status).toBe(409);
     mocks.insert.mockResolvedValueOnce({ data: null, error: { code: '23505' } });
-    expect((await submit({ useful: 5, confidence: 4 })).status).toBe(409);
+    expect((await submit({ relevance: 5, returnIntent: 4 })).status).toBe(409);
   });
 });

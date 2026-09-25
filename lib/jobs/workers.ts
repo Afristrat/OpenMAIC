@@ -209,6 +209,20 @@ export function startAllWorkers(): void {
       if (preferencesError) {
         throw new Error(`Anchor delivery preferences lookup failed: ${preferencesError.message}`);
       }
+      const { data: coursePreferences, error: coursePreferencesError } = courseId
+        ? await supabase
+            .from('course_notification_preferences')
+            .select('paused_until, timezone, quiet_start, quiet_end, disabled')
+            .eq('course_id', courseId)
+            .eq('user_id', plan.user_id)
+            .maybeSingle()
+        : { data: null, error: null };
+      if (coursePreferencesError) {
+        throw new Error(
+          `Course notification preferences lookup failed: ${coursePreferencesError.message}`,
+        );
+      }
+      if (coursePreferences?.disabled) return;
       if (
         preferences &&
         shouldDeferDelivery(new Date(), {
@@ -219,6 +233,17 @@ export function startAllWorkers(): void {
         })
       ) {
         // The periodic durable scan requeues this completed no-op after the boundary ends.
+        return;
+      }
+      if (
+        coursePreferences &&
+        shouldDeferDelivery(new Date(), {
+          timezone: coursePreferences.timezone ?? preferences?.timezone ?? 'UTC',
+          quietStart: coursePreferences.quiet_start,
+          quietEnd: coursePreferences.quiet_end,
+          pausedUntil: coursePreferences.paused_until,
+        })
+      ) {
         return;
       }
       if (

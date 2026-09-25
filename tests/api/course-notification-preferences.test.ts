@@ -48,12 +48,24 @@ describe('/api/courses/[courseId]/notification-preferences', () => {
       pausedUntil: null,
       dailyCap: null,
       nextReminderAt: null,
+      timezone: null,
+      quietStart: null,
+      quietEnd: null,
+      disabled: false,
     });
   });
 
   it('uses the session identity when it stores a course cap', async () => {
     const single = vi.fn().mockResolvedValue({
-      data: { paused_until: null, daily_cap: 1 },
+      data: {
+        paused_until: null,
+        daily_cap: 1,
+        minimum_interval_hours: 24,
+        timezone: 'Africa/Casablanca',
+        quiet_start: '22:00',
+        quiet_end: '07:00',
+        disabled: true,
+      },
       error: null,
     });
     const select = vi.fn().mockReturnValue({ single });
@@ -61,7 +73,15 @@ describe('/api/courses/[courseId]/notification-preferences', () => {
     mocks.from.mockReturnValue({ upsert });
 
     const response = await PUT(
-      request('PUT', { pausedUntil: null, dailyCap: 1, minimumIntervalHours: 24 }),
+      request('PUT', {
+        pausedUntil: null,
+        dailyCap: 1,
+        minimumIntervalHours: 24,
+        timezone: 'Africa/Casablanca',
+        quietStart: '22:00',
+        quietEnd: '07:00',
+        disabled: true,
+      }),
       context,
     );
 
@@ -73,16 +93,64 @@ describe('/api/courses/[courseId]/notification-preferences', () => {
         paused_until: null,
         daily_cap: 1,
         minimum_interval_hours: 24,
+        timezone: 'Africa/Casablanca',
+        quiet_start: '22:00',
+        quiet_end: '07:00',
+        disabled: true,
       },
       { onConflict: 'course_id,user_id' },
     );
+  });
+
+  it('rejects an invalid course timezone or an incomplete quiet window', async () => {
+    expect(
+      (
+        await PUT(
+          request('PUT', {
+            pausedUntil: null,
+            dailyCap: null,
+            minimumIntervalHours: null,
+            timezone: 'Mars/Olympus',
+            quietStart: null,
+            quietEnd: null,
+            disabled: false,
+          }),
+          context,
+        )
+      ).status,
+    ).toBe(400);
+    expect(
+      (
+        await PUT(
+          request('PUT', {
+            pausedUntil: null,
+            dailyCap: null,
+            minimumIntervalHours: null,
+            timezone: null,
+            quietStart: '22:00',
+            quietEnd: null,
+            disabled: false,
+          }),
+          context,
+        )
+      ).status,
+    ).toBe(400);
+    expect(mocks.from).not.toHaveBeenCalled();
   });
 
   it('refuses a cross-site write before persistence', async () => {
     const response = await PUT(
       request(
         'PUT',
-        { pausedUntil: null, dailyCap: 1, minimumIntervalHours: null },
+        {
+          pausedUntil: null,
+          dailyCap: 1,
+          minimumIntervalHours: null,
+          timezone: null,
+          quietStart: null,
+          quietEnd: null,
+          disabled: false,
+        },
         'https://other.invalid',
       ),
       context,

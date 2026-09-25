@@ -1081,6 +1081,36 @@ export interface Database {
         Args: { target_user_id: string; target_course_id: string; target_delivery_id: string };
         Returns: boolean;
       };
+      anchor_org_report: {
+        Args: { target_org_id: string; p_from: string; p_to: string };
+        Returns: Array<{
+          session_participant_count: number;
+          opted_in_participant_count: number;
+          participation_rate: number | null;
+          hot_response_count: number;
+          cold_30_response_count: number;
+          cold_60_response_count: number;
+          hot_average_score: number | null;
+          cold_30_average_score: number | null;
+          cold_60_average_score: number | null;
+          cold_30_retention_delta: number | null;
+          cold_60_retention_delta: number | null;
+          sent_delivery_count: number;
+          opened_delivery_count: number;
+          delivery_open_rate: number | null;
+          hot_decline_count: number;
+          cold_decline_count: number;
+          hot_relevance_response_count: number;
+          hot_relevance_average: number | null;
+          hot_return_intent_response_count: number;
+          hot_return_intent_average: number | null;
+          cold_application_response_count: number;
+          cold_application_average: number | null;
+          resume_sent_count: number;
+          resume_opened_count: number;
+          resume_open_rate: number | null;
+        }>;
+      };
     };
     Enums: Record<string, never>;
   };

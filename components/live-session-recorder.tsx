@@ -30,8 +30,8 @@ export function LiveSessionRecorder() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [evaluationSessionId, setEvaluationSessionId] = useState<string | null>(null);
-  const [useful, setUseful] = useState(0);
-  const [confidence, setConfidence] = useState(0);
+  const [relevance, setRelevance] = useState(0);
+  const [returnIntent, setReturnIntent] = useState(0);
   const [evaluationBusy, setEvaluationBusy] = useState(false);
   const [evaluationError, setEvaluationError] = useState<string | null>(null);
   const [anchoringEnabled, setAnchoringEnabled] = useState(false);
@@ -97,7 +97,7 @@ export function LiveSessionRecorder() {
   };
 
   const submitEvaluation = async () => {
-    if (!evaluationSessionId || !useful || !confidence) return;
+    if (!evaluationSessionId || !relevance || !returnIntent) return;
     setEvaluationBusy(true);
     setEvaluationError(null);
     try {
@@ -106,14 +106,14 @@ export function LiveSessionRecorder() {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ useful, confidence }),
+          body: JSON.stringify({ relevance, returnIntent }),
         },
       );
       if (!response.ok) throw new Error(t('anchoring.hotEvaluationFailed'));
       const completedSessionId = evaluationSessionId;
       setEvaluationSessionId(null);
-      setUseful(0);
-      setConfidence(0);
+      setRelevance(0);
+      setReturnIntent(0);
       if (anchoringEnabled) setAnchoringSessionId(completedSessionId);
     } catch (cause) {
       setEvaluationError(
@@ -124,12 +124,32 @@ export function LiveSessionRecorder() {
     }
   };
 
-  const skipEvaluation = () => {
-    const completedSessionId = evaluationSessionId;
-    setEvaluationSessionId(null);
-    setUseful(0);
-    setConfidence(0);
-    if (anchoringEnabled && completedSessionId) setAnchoringSessionId(completedSessionId);
+  const skipEvaluation = async () => {
+    if (!evaluationSessionId) return;
+    setEvaluationBusy(true);
+    setEvaluationError(null);
+    try {
+      const response = await fetch(
+        `/api/live-sessions/${encodeURIComponent(evaluationSessionId)}/evaluations`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ declined: true }),
+        },
+      );
+      if (!response.ok) throw new Error(t('anchoring.hotEvaluationFailed'));
+      const completedSessionId = evaluationSessionId;
+      setEvaluationSessionId(null);
+      setRelevance(0);
+      setReturnIntent(0);
+      if (anchoringEnabled) setAnchoringSessionId(completedSessionId);
+    } catch (cause) {
+      setEvaluationError(
+        cause instanceof Error ? cause.message : t('anchoring.hotEvaluationFailed'),
+      );
+    } finally {
+      setEvaluationBusy(false);
+    }
   };
 
   const activateAnchoring = async () => {
@@ -163,7 +183,7 @@ export function LiveSessionRecorder() {
     <Dialog
       open={evaluationSessionId !== null}
       onOpenChange={(next) => {
-        if (!next) skipEvaluation();
+        if (!next) void skipEvaluation();
       }}
     >
       <DialogContent>
@@ -172,8 +192,8 @@ export function LiveSessionRecorder() {
           <DialogDescription>{t('anchoring.hotEvaluationDescription')}</DialogDescription>
         </DialogHeader>
         {[
-          ['useful', t('anchoring.hotEvaluationUseful'), useful, setUseful],
-          ['confidence', t('anchoring.hotEvaluationConfidence'), confidence, setConfidence],
+          ['relevance', t('anchoring.evaluationRelevance'), relevance, setRelevance],
+          ['returnIntent', t('anchoring.evaluationReturnIntent'), returnIntent, setReturnIntent],
         ].map(([name, label, value, setter]) => (
           <label key={String(name)} className="grid gap-2 text-sm font-medium">
             <span>{String(label)}</span>
@@ -196,7 +216,8 @@ export function LiveSessionRecorder() {
         <DialogFooter>
           <button
             type="button"
-            onClick={skipEvaluation}
+            onClick={() => void skipEvaluation()}
+            disabled={evaluationBusy}
             className="inline-flex h-10 items-center justify-center rounded-md border px-4 text-sm font-medium"
           >
             {t('anchoring.hotEvaluationSkip')}
@@ -204,7 +225,7 @@ export function LiveSessionRecorder() {
           <button
             type="button"
             onClick={() => void submitEvaluation()}
-            disabled={!useful || !confidence || evaluationBusy}
+            disabled={!relevance || !returnIntent || evaluationBusy}
             className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50"
           >
             {evaluationBusy && <Loader2 className="me-2 size-4 animate-spin" />}

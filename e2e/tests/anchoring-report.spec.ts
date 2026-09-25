@@ -109,10 +109,28 @@ test.describe('Reporting d’ancrage agrégé (S3-009)', () => {
       success: true,
       anchoring: {
         participation_rate: 50,
-        hot_average_score: 80,
-        cold_30_average_score: 70,
-        cold_60_retention_delta: -20,
+        hot_relevance_average: 4.5,
+        hot_relevance_response_count: 2,
+        hot_return_intent_average: 4,
+        hot_return_intent_response_count: 2,
+        cold_application_average: 3.5,
+        cold_application_response_count: 2,
+        resume_open_rate: 50,
+        resume_sent_count: 4,
+        resume_opened_count: 2,
         delivery_open_rate: 50,
+        hot_decline_count: 1,
+        cold_decline_count: 1,
+      },
+      window: {
+        from: '2026-08-01T00:00:00.000Z',
+        to: '2026-09-01T00:00:00.000Z',
+      },
+      definitions: {
+        relevance: 'Moyenne déclarée ; dénominateur : 2 réponses à chaud.',
+        returnIntent: 'Moyenne déclarée ; dénominateur : 2 réponses à chaud.',
+        application: 'Moyenne déclarée ; dénominateur : 2 réponses à froid.',
+        effectiveResume: '2 ouvertures authentifiées / 4 relances de reprise acceptées.',
       },
     };
 
@@ -137,8 +155,12 @@ test.describe('Reporting d’ancrage agrégé (S3-009)', () => {
     await expect(anchoringSection).toBeVisible();
     await expect(anchoringSection).toContainText('Participation au programme');
     await expect(anchoringSection).toContainText('50%');
-    await expect(anchoringSection).toContainText('80% → 70%');
-    await expect(anchoringSection).toContainText('-20 pts');
+    await expect(anchoringSection).toContainText('4,5 / 5');
+    await expect(anchoringSection).toContainText('4 / 5');
+    await expect(anchoringSection).toContainText('3,5 / 5');
+    await expect(anchoringSection).toContainText('2 / 4');
+    await expect(anchoringSection).toContainText('1 refus à chaud · 1 refus à froid');
+    await expect(anchoringSection).toContainText('Aucun gain d’apprentissage n’est déduit');
     await expect(page.getByText('Formation agrégée')).toBeVisible();
     await expect(page.getByText('Apprenant secret')).toHaveCount(0);
     await expect(page.locator('a[href*="learner"], a[href*="user"]')).toHaveCount(0);

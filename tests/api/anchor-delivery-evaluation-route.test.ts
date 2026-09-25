@@ -47,13 +47,13 @@ vi.mock('@/lib/anchoring/xapi-outbox', () => ({
   enqueueAnchorEvaluationStatement: mocks.queueXapi,
 }));
 
-async function submit() {
+async function submit(body: unknown = { relevance: 5, returnIntent: 4, application: 2 }) {
   const { POST } = await import('@/app/api/anchor-deliveries/[id]/evaluation/route');
   return POST(
     new Request('https://qalem.ma/api/anchor-deliveries/delivery-1/evaluation', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ useful: 5, confidence: 4 }),
+      body: JSON.stringify(body),
     }) as NextRequest,
     { params: Promise.resolve({ id: 'delivery-1' }) },
   );
@@ -102,12 +102,26 @@ describe('cold evaluation delivery API', () => {
       session_id: 'session-1',
       user_id: 'user-1',
       phase: 'cold_30',
-      answers: { useful: 5, confidence: 4 },
-      score: 90,
+      answers: { relevance: 5, return_intent: 4, application: 2 },
+      score: 73.33,
     });
     expect(mocks.markOpened).toHaveBeenCalled();
 
     mocks.evaluation.mockResolvedValueOnce({ data: null, error: { code: '23505' } });
     expect((await submit()).status).toBe(409);
+  });
+
+  it('persists a cold-evaluation refusal and still attests the authenticated opening', async () => {
+    const response = await submit({ declined: true });
+
+    expect(response.status).toBe(201);
+    expect(mocks.evaluationInsert).toHaveBeenCalledWith({
+      session_id: 'session-1',
+      user_id: 'user-1',
+      phase: 'cold_30',
+      answers: { declined: true },
+      score: null,
+    });
+    expect(mocks.markOpened).toHaveBeenCalled();
   });
 });

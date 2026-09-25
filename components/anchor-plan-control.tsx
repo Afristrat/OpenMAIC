@@ -25,8 +25,9 @@ export function AnchorPlanControl({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   const [stopped, setStopped] = useState(false);
-  const [useful, setUseful] = useState(0);
-  const [confidence, setConfidence] = useState(0);
+  const [relevance, setRelevance] = useState(0);
+  const [returnIntent, setReturnIntent] = useState(0);
+  const [application, setApplication] = useState(0);
   const [evaluationSent, setEvaluationSent] = useState(false);
 
   useEffect(() => {
@@ -40,7 +41,7 @@ export function AnchorPlanControl({
   }, [planId]);
 
   const submitEvaluation = async () => {
-    if (!deliveryId || !evaluationPhase || !useful || !confidence) return;
+    if (!deliveryId || !evaluationPhase || !relevance || !returnIntent || !application) return;
     setBusy(true);
     setError(false);
     try {
@@ -49,7 +50,29 @@ export function AnchorPlanControl({
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ useful, confidence }),
+          body: JSON.stringify({ relevance, returnIntent, application }),
+        },
+      );
+      if (!response.ok) throw new Error();
+      setEvaluationSent(true);
+    } catch {
+      setError(true);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const declineEvaluation = async () => {
+    if (!deliveryId || !evaluationPhase) return;
+    setBusy(true);
+    setError(false);
+    try {
+      const response = await fetch(
+        `/api/anchor-deliveries/${encodeURIComponent(deliveryId)}/evaluation`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ declined: true }),
         },
       );
       if (!response.ok) throw new Error();
@@ -123,8 +146,9 @@ export function AnchorPlanControl({
             </p>
           </div>
           {[
-            ['useful', t('anchoring.hotEvaluationUseful'), useful, setUseful],
-            ['confidence', t('anchoring.hotEvaluationConfidence'), confidence, setConfidence],
+            ['relevance', t('anchoring.evaluationRelevance'), relevance, setRelevance],
+            ['returnIntent', t('anchoring.evaluationReturnIntent'), returnIntent, setReturnIntent],
+            ['application', t('anchoring.evaluationApplication'), application, setApplication],
           ].map(([name, label, value, setter]) => (
             <label key={String(name)} className="grid gap-2 text-sm font-medium">
               <span>{String(label)}</span>
@@ -143,15 +167,25 @@ export function AnchorPlanControl({
               </select>
             </label>
           ))}
-          <button
-            type="button"
-            disabled={busy || !useful || !confidence}
-            onClick={() => void submitEvaluation()}
-            className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50"
-          >
-            {busy && <Loader2 className="me-2 size-4 animate-spin" />}
-            {t('anchoring.hotEvaluationSubmit')}
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void declineEvaluation()}
+              className="inline-flex h-10 items-center justify-center rounded-md border px-4 text-sm font-medium disabled:opacity-50"
+            >
+              {t('anchoring.hotEvaluationSkip')}
+            </button>
+            <button
+              type="button"
+              disabled={busy || !relevance || !returnIntent || !application}
+              onClick={() => void submitEvaluation()}
+              className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50"
+            >
+              {busy && <Loader2 className="me-2 size-4 animate-spin" />}
+              {t('anchoring.hotEvaluationSubmit')}
+            </button>
+          </div>
         </section>
       )}
       {evaluationSent && <p role="status">{t('anchoring.coldEvaluationSent')}</p>}

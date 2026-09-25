@@ -1,13 +1,11 @@
 import type { NextRequest } from 'next/server';
-import { z } from 'zod';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { enqueueAnchorEvaluationStatement } from '@/lib/anchoring/xapi-outbox';
+import {
+  hotJourneyEvaluationSchema,
+  normalizeJourneyEvaluation,
+} from '@/lib/anchoring/journey-evaluation';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-
-const hotEvaluationSchema = z.object({
-  useful: z.number().int().min(1).max(5),
-  confidence: z.number().int().min(1).max(5),
-});
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const supabase = await createServerSupabaseClient();
@@ -16,9 +14,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   } = await supabase.auth.getUser();
   if (!user) return apiError('UNAUTHORIZED', 401, 'Authentification requise');
 
-  const parsed = hotEvaluationSchema.safeParse(await request.json().catch(() => null));
+  const parsed = hotJourneyEvaluationSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
-    return apiError('INVALID_REQUEST', 400, 'Les deux réponses de 1 à 5 sont requises');
+    return apiError('INVALID_REQUEST', 400, 'Réponses invalides');
   }
 
   const { id } = await params;
@@ -33,14 +31,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return apiError('INVALID_REQUEST', 409, 'La session doit être terminée avant son évaluation');
   }
 
-  const score = ((parsed.data.useful + parsed.data.confidence) / 10) * 100;
+  const { answers, score } = normalizeJourneyEvaluation(parsed.data);
   const { data, error } = await supabase
     .from('evaluations')
     .insert({
       session_id: id,
       user_id: user.id,
       phase: 'hot',
-      answers: parsed.data,
+      answers,
       score,
     })
     .select('id, phase, score')
@@ -49,11 +47,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return apiError('INVALID_REQUEST', 409, 'Cette évaluation a déjà été envoyée');
   }
   if (error || !data) return apiError('INTERNAL_ERROR', 500, 'Échec de l’évaluation');
-  const xapiQueued = await enqueueAnchorEvaluationStatement({
-    sessionId: id,
-    userId: user.id,
-    phase: 'hot',
-    score,
-  }).catch(() => false);
+  const xapiQueued =
+    score === null
+      ? false
+      : await enqueueAnchorEvaluationStatement({
+          sessionId: id,
+          userId: user.id,
+          phase: 'hot',
+          score,
+        }).catch(() => false);
   return apiSuccess({ evaluation: data, xapiQueued }, 201);
 }

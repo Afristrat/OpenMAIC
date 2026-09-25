@@ -256,16 +256,18 @@ test('exige une case de consentement non précochée avant tout enregistrement',
   const submit = page.getByRole('button', { name: 'Envoyer' });
   await expect(submit).toBeDisabled();
   await page
-    .getByRole('combobox', { name: 'Cette session vous a-t-elle été utile ?' })
+    .getByRole('combobox', {
+      name: 'Dans quelle mesure cette session est-elle pertinente pour vous ?',
+    })
     .selectOption('5');
   await page
     .getByRole('combobox', {
-      name: 'Vous sentez-vous capable d’appliquer ce que vous avez appris ?',
+      name: 'Souhaitez-vous revenir poursuivre cette formation ?',
     })
     .selectOption('4');
   await submit.click();
   await expect(page.getByRole('heading', { name: 'Votre ressenti à chaud' })).toBeHidden();
-  expect(evaluationBody).toEqual({ useful: 5, confidence: 4 });
+  expect(evaluationBody).toEqual({ relevance: 5, returnIntent: 4 });
 
   await page.addInitScript(() => localStorage.setItem('locale', 'ar-MA'));
   await page.reload();

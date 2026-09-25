@@ -14,7 +14,7 @@ INSERT INTO public.org_members (user_id, org_id, role)
 VALUES (
   '31300000-0000-4000-8000-000000000001',
   '31300000-0000-4000-8000-000000000010',
-  'apprenant'
+  'admin'
 );
 
 INSERT INTO public.stages (id, owner_id, org_id, name)
@@ -162,6 +162,52 @@ BEGIN
   UPDATE public.review_notification_preferences
   SET quiet_start = NULL, quiet_end = NULL
   WHERE user_id = '31300000-0000-4000-8000-000000000001';
+  INSERT INTO public.course_notification_preferences (
+    course_id, user_id, timezone, quiet_start, quiet_end, disabled
+  ) VALUES (
+    '31300000-0000-4000-8000-000000000002',
+    '31300000-0000-4000-8000-000000000001',
+    'America/Toronto',
+    '18:00',
+    '19:00',
+    false
+  );
+  IF public.claim_course_notification_delivery_slot(
+    '31300000-0000-4000-8000-000000000001',
+    '31300000-0000-4000-8000-000000000002',
+    'course_resume_delivery',
+    resume_delivery_id,
+    '2026-09-25T22:30:00Z'
+  ) THEN
+    RAISE EXCEPTION 'a course reminder ignored its course-specific timezone and quiet window';
+  END IF;
+  UPDATE public.course_notification_preferences
+  SET quiet_start = NULL, quiet_end = NULL, disabled = true
+  WHERE course_id = '31300000-0000-4000-8000-000000000002'
+    AND user_id = '31300000-0000-4000-8000-000000000001';
+  IF public.claim_course_notification_delivery_slot(
+    '31300000-0000-4000-8000-000000000001',
+    '31300000-0000-4000-8000-000000000002',
+    'course_resume_delivery',
+    resume_delivery_id,
+    '2026-09-25T12:00:00Z'
+  ) THEN
+    RAISE EXCEPTION 'a disabled course reserved a notification slot';
+  END IF;
+  IF (
+    SELECT next_reminder_at IS NOT NULL
+    FROM public.get_course_notification_preview(
+      '31300000-0000-4000-8000-000000000001',
+      '31300000-0000-4000-8000-000000000002',
+      '2026-09-25T00:00:00Z'
+    )
+  ) THEN
+    RAISE EXCEPTION 'a disabled course still exposed a next reminder';
+  END IF;
+  UPDATE public.course_notification_preferences
+  SET disabled = false
+  WHERE course_id = '31300000-0000-4000-8000-000000000002'
+    AND user_id = '31300000-0000-4000-8000-000000000001';
   UPDATE public.course_resume_deliveries
   SET scheduled_for = '2026-09-25T12:00:00Z'
   WHERE id = resume_delivery_id;
@@ -206,6 +252,57 @@ BEGIN
   IF (SELECT opened_at FROM public.course_resume_deliveries WHERE id = resume_delivery_id)
      IS DISTINCT FROM first_opened_at THEN
     RAISE EXCEPTION 'a repeated opening replaced the first attested timestamp';
+  END IF;
+END
+$$;
+
+UPDATE public.anchor_deliveries
+SET sent_at = '2026-09-25T12:05:00Z', opened_at = '2026-09-25T12:06:00Z'
+WHERE id = '31300000-0000-4000-8000-000000000014';
+
+INSERT INTO public.evaluations (session_id, user_id, phase, answers, score)
+VALUES
+  (
+    '31300000-0000-4000-8000-000000000012',
+    '31300000-0000-4000-8000-000000000001',
+    'hot',
+    '{"relevance":5,"return_intent":1}',
+    60
+  ),
+  (
+    '31300000-0000-4000-8000-000000000012',
+    '31300000-0000-4000-8000-000000000001',
+    'cold_30',
+    '{"relevance":4,"return_intent":2,"application":2}',
+    53.33
+  );
+
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', '31300000-0000-4000-8000-000000000001', true);
+SELECT set_config('request.jwt.claim.role', 'authenticated', true);
+
+DO $$
+DECLARE
+  metrics record;
+BEGIN
+  SELECT * INTO metrics
+  FROM public.anchor_org_report(
+    '31300000-0000-4000-8000-000000000010',
+    '2026-09-01T00:00:00Z',
+    '2026-10-01T00:00:00Z'
+  );
+  IF metrics.hot_relevance_response_count <> 1 OR metrics.hot_relevance_average <> 5 THEN
+    RAISE EXCEPTION 'declared relevance lost its response denominator';
+  END IF;
+  IF metrics.hot_return_intent_response_count <> 1 OR metrics.hot_return_intent_average <> 1 THEN
+    RAISE EXCEPTION 'negative return intent was not retained';
+  END IF;
+  IF metrics.cold_application_response_count <> 1 OR metrics.cold_application_average <> 2 THEN
+    RAISE EXCEPTION 'declared application lost its cold-response denominator';
+  END IF;
+  IF metrics.resume_sent_count <> 1 OR metrics.resume_opened_count <> 1
+    OR metrics.resume_open_rate <> 100 THEN
+    RAISE EXCEPTION 'effective authenticated resumption has an invalid denominator';
   END IF;
 END
 $$;

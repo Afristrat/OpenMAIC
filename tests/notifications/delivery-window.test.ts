@@ -24,4 +24,17 @@ describe('delivery quiet window', () => {
       }),
     ).toBe(true);
   });
+
+  it('uses the selected timezone and survives a daylight-saving transition', () => {
+    const parisWindow = { timezone: 'Europe/Paris', quietStart: '01:00', quietEnd: '04:00' };
+    expect(isWithinQuietWindow(new Date('2026-03-29T00:30:00Z'), parisWindow)).toBe(true);
+    expect(isWithinQuietWindow(new Date('2026-03-29T01:30:00Z'), parisWindow)).toBe(true);
+    expect(
+      isWithinQuietWindow(new Date('2026-03-29T03:30:00Z'), {
+        ...parisWindow,
+        timezone: 'UTC',
+      }),
+    ).toBe(true);
+    expect(isWithinQuietWindow(new Date('2026-03-29T03:30:00Z'), parisWindow)).toBe(false);
+  });
 });

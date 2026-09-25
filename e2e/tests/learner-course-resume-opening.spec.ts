@@ -47,16 +47,26 @@ test('atteste l’ouverture du rappel avant de reprendre la formation ciblée', 
       },
     }),
   );
-  await page.route(`**/api/courses/${courseId}/notification-preferences`, (route) =>
-    route.fulfill({
+  let savedPreferences: Record<string, unknown> | null = null;
+  await page.route(`**/api/courses/${courseId}/notification-preferences`, async (route) => {
+    if (route.request().method() === 'PUT') {
+      savedPreferences = route.request().postDataJSON() as Record<string, unknown>;
+      await route.fulfill({ json: { ...savedPreferences, nextReminderAt: null } });
+      return;
+    }
+    await route.fulfill({
       json: {
         pausedUntil: null,
         dailyCap: null,
         minimumIntervalHours: null,
+        timezone: null,
+        quietStart: null,
+        quietEnd: null,
+        disabled: false,
         nextReminderAt: null,
       },
-    }),
-  );
+    });
+  });
 
   await page.goto(
     `/app?learnerResumeCourseId=${courseId}` +
@@ -66,4 +76,18 @@ test('atteste l’ouverture du rappel avant de reprendre la formation ciblée', 
 
   await expect.poll(() => openingCount).toBe(1);
   await expect(page).toHaveURL(/\/classroom\/resume-stage\?/);
+  await page.getByText('Rappels de cette formation', { exact: true }).click();
+  await page.getByLabel('Fuseau horaire propre à cette formation').fill('America/Toronto');
+  await page.getByLabel('Début des heures calmes').fill('22:00');
+  await page.getByLabel('Fin des heures calmes').fill('07:00');
+  await page.getByLabel('Désactiver tous les rappels de cette formation').check();
+  await page.getByRole('button', { name: 'Enregistrer les préférences' }).click();
+  await expect
+    .poll(() => savedPreferences)
+    .toMatchObject({
+      timezone: 'America/Toronto',
+      quietStart: '22:00',
+      quietEnd: '07:00',
+      disabled: true,
+    });
 });
