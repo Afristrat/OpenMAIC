@@ -180,6 +180,29 @@ nettoyés. Ponytail : outbox/reprise natives réemployées, aucune dépendance.
 parcours de collecte/reprise/retrait existants. API simulée, pas de preuve de
 persistance Supabase bout en bout. Aucun processus actif ou déploiement.
 
-Restent recette intégrée S-047/S-048 sur données serveur, gate complet au SHA
-propre et activation contrôlée. Runner antérieur avec superposition, aucune publication.
-S-048 reste ouverte, passes=false. Aucun gain mesuré.
+## Clôture de production — 25 septembre 2026
+
+Le drapeau `QALEM_DATA_DIRECTOR_ENABLED=true` est actif et relu dans le web et
+le runtime. La preuve permanente
+`scripts/proofs/s048-data-driven-director-production.mjs` exécute, au SHA
+fonctionnel `4a9dfb56652323d077c3477941e493f145449bb8`, quatre requêtes réelles vers
+`/api/chat` avec génération LLM, authentification et réservation de crédits.
+Elle obtient exactement :
+
+```json
+{"stableCohorts":["classic","data-driven"],"realChatGenerations":4,"zeroObservationFallback":true,"firstObservationUsed":true,"multipleObservationsUsed":3,"observableOutcome":true,"causalGainClaimed":false,"temporaryFixturesDeleted":true}
+```
+
+Les deux recettes `scripts/validation/s048-director-receipts.sql` et
+`scripts/validation/s048-director-outcomes.sql` passent sur la base de
+production dans `BEGIN`/`ROLLBACK`. Elles utilisent les analyses internes
+contractuelles provisionnées par U-021 ; aucune donnée synthétique ne demeure.
+Quatre fichiers ciblés totalisent 27 tests verts.
+
+La gate complète passe Prettier, TypeScript, ESLint, 548 fichiers et 3 373 tests
+Vitest, le build de production de 127 routes, puis 196 scénarios Playwright sur
+196. Journal ServeurIA : `/tmp/qalem-s048-full-gate-4a9dfb5.log`, SHA-256
+`8e8b70e1feeabd3770559bf9b5c34322f5339e9efdde4b172d52744a693e4bcb`.
+
+Cette clôture prouve un résultat observable et le respect du protocole ; elle
+ne transforme pas une différence descriptive en gain causal d’apprentissage.

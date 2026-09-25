@@ -4958,8 +4958,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Director data-driven » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd.json",
         "id": "S-048",
@@ -4967,7 +4967,7 @@
       },
       "sourceDependencies": ["S-047"],
       "dependencies": ["S0-011", "S-047"],
-      "gap": "10 septembre : 38 migrations candidates appliquées dans l’ordre sur copie de structure neuve, advisor sécurité zéro constat. 62503, 21413 puis 34676 exit 0 : Auth GoTrue/cookies SSR/Chromium/Next dev puis standalone production/PostgREST/SQL ; accord, collecte/discussion, quiz zéro/rejeu/acteur, rapport non vide, retrait/réaccord/ancien epoch et refus anonyme/apprenant/hors tenant. Page rapport réelle ouverte/rafraîchie FR/EN/AR RTL, aucune interception. Reçu de génération synthétique, pas de LLM prouvé. 35758 TypeScript/lint verts ; 22220 3 252 tests/520 fichiers et build/isolation standalone verts. Neuf compteurs de recette nuls. Preuves S-048-auth-next-integration.md et PRD-v3-ordered-migrations-2026-09-10.md. Restent validation humaine UI, précontrôles des données et réconciliation du suivi de migrations production absent, publication coordonnée. Aucun déploiement, activation ou gain mesuré ; passes=false.",
+      "gap": "Clôturé le 25 septembre 2026 : Director activé dans les runtimes web et worker, recette de production authentifiée avec quatre générations LLM réelles, cohortes stables classique/data-driven, fallback à zéro observation, exploitation dès la première observation, trois observations agrégées et résultat observable sans affirmation de causalité. Les fixtures sont supprimées, les recettes SQL passent sous ROLLBACK et la gate complète est verte.",
       "evidence": [
         "lib/orchestration/data-driven-director.ts",
         "docs/validation/S-048-real-http-integration.md",
@@ -4987,8 +4987,11 @@
       "closureEvidence": [
         "2026-09-16 — Les migrations Director ont été appliquées atomiquement après sauvegarde PostgreSQL complète et prévol ROLLBACK ; director_receipts et begin_director_receipt sont présents. Aucune cohorte, collecte ou promesse de gain n’est activée par cette opération de schéma.",
         "2026-09-16 — Le registre privé qalem_ops_private.reconciled_schema_batches est appliqué et porte le lot prd3-data-director-20260916 : neuf fichiers, prévol transaction-rollback et empreinte source c86bf2b5cacaf8c361323400ca251dca98bed91c9f51f0a8f04fbca970d455ed. Il trace ce lot réellement réconcilié sans fabriquer d’historique antérieur.",
-        "2026-09-16 — Les recettes S-048 de reçus et d’issues Director s’exécutent sur la base de production dans BEGIN/ROLLBACK sans erreur : consentement, cohortes, immutabilité, retrait, export et refus d’accès public sont contrôlés. Aucun reçu Director, discussion, tentative ou scène de fixture ne subsiste après rollback."
+        "2026-09-16 — Les recettes S-048 de reçus et d’issues Director s’exécutent sur la base de production dans BEGIN/ROLLBACK sans erreur : consentement, cohortes, immutabilité, retrait, export et refus d’accès public sont contrôlés. Aucun reçu Director, discussion, tentative ou scène de fixture ne subsiste après rollback.",
+        "2026-09-25 — Le drapeau QALEM_DATA_DIRECTOR_ENABLED=true est relu dans les conteneurs web et runtime. La preuve de production au SHA fonctionnel 4a9dfb56652323d077c3477941e493f145449bb8 exécute quatre générations LLM réelles et prouve les cohortes stables classique/data-driven, le fallback sans observation, l’utilisation immédiate d’une première observation, l’agrégation de trois observations, un résultat observable sans gain causal revendiqué et la suppression de toutes les fixtures.",
+        "2026-09-25 — Les deux recettes SQL S-048 passent sur la base de production sous BEGIN/ROLLBACK, 27 tests ciblés passent et la gate complète passe Prettier, TypeScript, ESLint, 3 373 tests Vitest, le build de 127 routes et 196/196 scénarios Playwright. Journal /tmp/qalem-s048-full-gate-4a9dfb5.log, SHA-256 8e8b70e1feeabd3770559bf9b5c34322f5339e9efdde4b172d52744a693e4bcb."
       ],
+      "completedAt": "2026-09-25T01:19:24.5269349Z",
       "historicalEvidence": {
         "completedAt": "2026-03-29T11:47:17.413Z",
         "status": "legacy_claim_not_delivery_proof"
