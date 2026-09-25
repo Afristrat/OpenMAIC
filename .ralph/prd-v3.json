@@ -2606,10 +2606,7 @@
       "sourceDependencies": ["S4-009"],
       "dependencies": [],
       "gap": "Soldé : devise réellement validée contre le registre ISO 4217 du runtime, contexte structuré porté par les trames et persisté dans la classroom, zone laser mesurée sur l’élément DOM positionné puis parcourue pendant la durée normalisée.",
-      "evidence": [
-        "lib/formation-engine/learning-context.ts",
-        ".ralph/prd-v2.json#S4-010"
-      ],
+      "evidence": ["lib/formation-engine/learning-context.ts", ".ralph/prd-v2.json#S4-010"],
       "acceptance": [
         "L’auteur choisit explicitement le territoire et la devise ISO 4217 avant la génération",
         "Une trame transmet son contexte structuré au formulaire au lieu de ne transmettre que son texte",
@@ -3150,10 +3147,7 @@
       "sourceDependencies": ["S0-008"],
       "dependencies": [],
       "gap": "Clôturé le 24 septembre 2026 : le verrou de cache provenait du script d’import exécuté en root, qui laissait des fichiers inaccessibles au serveur web. Le script refuse désormais ce mauvais utilisateur. Un paquet SCORM 1.2 frais de Qalem production, deux scènes et 287 324 octets, est importé sous l’utilisateur Moodle réel ; Chromium déclenche la complétion et Moodle relit exactement un SCO completed avec score 100. Les fixtures Qalem et Moodle sont intégralement supprimées.",
-      "evidence": [
-        "lib/export/scorm/tracking-adapters.ts",
-        ".ralph/prd-v2.json#S1-007"
-      ],
+      "evidence": ["lib/export/scorm/tracking-adapters.ts", ".ralph/prd-v2.json#S1-007"],
       "acceptance": [
         "export_jobs scorm12 → zip imsmanifest.xml valide",
         "Import Moodle docker réussi, completion trackée (preuve)",
@@ -3295,10 +3289,7 @@
       "sourceDependencies": ["S1-003"],
       "dependencies": [],
       "gap": "Clôturée le 23 septembre 2026 : le parcours de production publication→catalogue→classroom, le contexte tenant, l’arabe RTL et la gate complète au contenu de clôture sont tous prouvés. Voir docs/validation/S1-004-course-catalog-production.md.",
-      "evidence": [
-        "app/api/courses/catalog/route.ts",
-        "e2e/tests/course-catalog.spec.ts"
-      ],
+      "evidence": ["app/api/courses/catalog/route.ts", "e2e/tests/course-catalog.spec.ts"],
       "acceptance": [
         "Liste des courses ready + catalog_visible",
         "Rejoindre la classe → classroom (e2e)",
@@ -4084,10 +4075,7 @@
       "sourceDependencies": ["S3-001", "S2-004"],
       "dependencies": ["S3-001", "S2-004"],
       "gap": "Aucun reste propre au générateur : stock P3-B, appel unique, références de session et coût réel sont certifiés ; l’acceptation humaine du ton demeure isolée dans S3-008.",
-      "evidence": [
-        "tasks/prd-3-ancrer.md",
-        "docs/evidence/s3-004-seed-sample.json"
-      ],
+      "evidence": ["tasks/prd-3-ancrer.md", "docs/evidence/s3-004-seed-sample.json"],
       "acceptance": [
         "≥ 12 graines typées via P3-B, chacune citant scene_ref et persona de LA session",
         "UN appel LLM par session (grep : aucun dans le chemin d'envoi)",
@@ -4253,10 +4241,7 @@
       "sourceDependencies": ["S3-004"],
       "dependencies": ["S3-004"],
       "gap": "Les vingt graines réelles et le rythme produit exact sont désormais consignés. La tranche humaine reste ouverte : Amine doit accepter ou refuser le ton et la fréquence ; le flag anchoring demeure désactivé jusqu’à ce verdict.",
-      "evidence": [
-        "tasks/prd-3-ancrer.md",
-        "docs/evidence/s3-008-andragogical-seed-sample.json"
-      ],
+      "evidence": ["tasks/prd-3-ancrer.md", "docs/evidence/s3-008-andragogical-seed-sample.json"],
       "acceptance": [
         "20 graines réelles + plan de fréquence proposé (gabarit 3-ancrer/06)",
         "Validation explicite avant activation du flag anchoring en préprod"
