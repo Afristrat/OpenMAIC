@@ -1,5 +1,49 @@
 # S-047 — Mesures de discussion structurées
 
+## Clôture en production du 25 septembre 2026
+
+La recette permanente
+`scripts/proofs/s047-discussion-patterns-production.mjs` traverse le service
+public avec une session Auth réelle et des données éphémères. Elle prouve la
+collecte contractuelle interne, le rejeu idempotent, deux agents dans l’ordre,
+les types d’intervention et durées exactes, la pseudonymisation, puis un quiz
+natif noté à 100 % par le serveur. La première tentative postérieure est liée à
+la discussion ; l’agrégat autorisé restitue une ligne et une identité étrangère
+est refusée. L’export personnel contient la discussion et le reçu du quiz.
+
+La première traversée a découvert un défaut réel : la suppression Auth échouait
+en HTTP 503, car le déclencheur de nettoyage du quiz s’exécutait avec le rôle
+`supabase_auth_admin`, sans droit direct sur `discussion_patterns`. La migration
+`20260924235900_allow_discussion_cleanup_on_account_deletion.sql` élève seulement
+le corps fixe de ce déclencheur ; la table demeure inaccessible aux rôles
+navigateur. Le prévol sous le rôle Auth réel a supprimé compte, pseudonyme,
+discussion et tentative tout en conservant le cours du tenant, puis a été annulé.
+
+Avant application, une sauvegarde PostgreSQL de 13 890 237 octets a été créée,
+SHA-256 `b0f63820f89197ec667e45f5098e1a32b55e4c6d341ae88ec0b9c47640b9bb0f`.
+Après migration, les quatre recettes SQL S-047 passent sous `ROLLBACK` :
+collecte et frontières, autorité du quiz, liaison/export et suppression Auth.
+La recette HTTP complète passe ensuite et ne laisse aucun compte, tenant, cours,
+classe, scène, observation, discussion ou reçu de quiz synthétique.
+
+Le contrat est aligné sur U-021 : les analyses internes nécessaires au service
+sont provisionnées par les conditions d’utilisation et ne sont pas un choix
+xAPI. L’écriture exige néanmoins un compte authentifié, un tenant actif, une
+adhésion valide, une époque courante et une scène autorisée. Le partage xAPI
+externe demeure séparé, désactivé par défaut et révocable.
+
+Les validations ciblées comptent 42 tests Vitest et 14 parcours Playwright.
+Au SHA `f0656de10a5730b50a6dd32d599e29c04ce3afb0`, la gate complète passe
+Prettier, TypeScript, ESLint, 548 fichiers et 3 373 tests Vitest, le build de
+production et 196/196 Playwright. Journal :
+`/tmp/qalem-s047-full-gate-f0656de.log`, SHA-256
+`41ad7944b2379c723cddcce8e6c31b33e41534a5f3f9bdb03698b70953cfbec1`.
+Le déploiement web qualifiant `so83xz33dsaeizbcl3tpcohy` publie ce SHA exact.
+Web et worker sont `healthy`, sans redémarrage ni OOM, et la santé publique
+répond HTTP 200 ; les deux conservent l’optimiseur S-037 actif.
+Aucune causalité entre discussion et performance, aucune mesure d’attention et
+aucune amélioration d’apprentissage ne sont revendiquées.
+
 ## Candidat du 10 septembre 2026
 
 `discussion-observation.ts` fournit un schéma strict et un buffer local sans

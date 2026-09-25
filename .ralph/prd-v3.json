@@ -4907,8 +4907,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux que la capacité héritée « Collecte des patterns de discussion multi-agent » soit soit livrée et prouvée, soit explicitement retirée du périmètre.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd.json",
         "id": "S-047",
@@ -4916,10 +4916,12 @@
       },
       "sourceDependencies": ["S-036"],
       "dependencies": ["S0-011", "U-021"],
-      "gap": "10 septembre 2026 : chat consenti et quiz natif raccordés ; candidate 20260910042141 relie la première tentative à la dernière discussion reçue auparavant, publie sa note serveur et efface la liaison au retrait. Export personnel paginé et agrégats tenant depuis reçus vérifiés ajoutés, aucun minimum. SQL réel BEGIN/ROLLBACK vert (chronologie, zéro, non-substitution, droits, export/retrait), zéro fixture. 58 tests et TypeScript/lint verts ; preuves navigateur dans docs/validation/S-047-discussion-observations.md. Restent recette intégrée/gate au SHA propre et publication ; lecteur pas encore appelé par le Director actif (S-048). Historique non requalifié, aucune causalité revendiquée. Aucune migration durable ni activation ; S-047 ouverte.",
+      "gap": "Clos le 25 septembre 2026 : collecte contractuelle interne, séquence/types/durées, pseudonymisation, quiz serveur, liaison, agrégat, export, isolation et suppression Auth prouvés de bout en bout en production. Le défaut de suppression des comptes ayant une discussion liée est corrigé sans élargir les droits de table. Quatre recettes SQL passent sous ROLLBACK, 42 tests ciblés, 14 parcours navigateur et gate complète 3 373 Vitest/196 Playwright verts. Aucune causalité ni amélioration d’apprentissage revendiquée ; l’exploitation par le Director reste suivie séparément par S-048.",
       "evidence": [
         "lib/telemetry/discussion-collector.ts",
-        "docs/validation/S-047-discussion-observations.md"
+        "docs/validation/S-047-discussion-observations.md",
+        "scripts/proofs/s047-discussion-patterns-production.mjs",
+        "supabase/migrations/20260924235900_allow_discussion_cleanup_on_account_deletion.sql"
       ],
       "acceptance": [
         "lib/telemetry/discussion-collector.ts",
@@ -4927,11 +4929,14 @@
         "Stockage pseudonymisé dans Supabase avec isolation, accès contrôlé et suppression ; aucun anonymat garanti par un identifiant hashé.",
         "Pipeline agrégation séquence ↔ performance",
         "Décider la conservation de cette collecte et ses limites avant toute donnée réelle.",
-        "Après choix, vérifier événements, agrégats, absence de collecte sans opt-in et contrôle d’accès."
+        "Après choix, vérifier événements, agrégats, admission contractuelle réservée aux comptes authentifiés et autorisés, séparation du choix xAPI externe et contrôle d’accès."
       ],
       "closureEvidence": [
         "2026-09-16 — Les migrations discussion→quiz ont été appliquées atomiquement après prévol ROLLBACK : recorded_at et discussion_pattern_id sont présents. Les flags restent désactivés ; recette intégrée, contrôle des accès et publication demeurent ouverts.",
-        "2026-09-16 — La recette S-047 discussion→quiz s’exécute sur la base de production dans BEGIN/ROLLBACK sans erreur : consentement, liaison à la première tentative, retrait, export personnel et agrégat autorisé sont contrôlés. Les compteurs post-recette discussion_patterns, classroom_quiz_attempts et stages de fixture sont tous nuls."
+        "2026-09-16 — La recette S-047 discussion→quiz s’exécute sur la base de production dans BEGIN/ROLLBACK sans erreur : consentement, liaison à la première tentative, retrait, export personnel et agrégat autorisé sont contrôlés. Les compteurs post-recette discussion_patterns, classroom_quiz_attempts et stages de fixture sont tous nuls.",
+        "2026-09-25 — La preuve HTTP/Auth/SQL de production vérifie collecte idempotente, deux agents ordonnés, types et durées exactes, pseudonymisation, score natif 100 %, liaison à la première tentative, agrégat autorisé, refus étranger, export et suppression intégrale ; zéro fixture résiduelle.",
+        "2026-09-25 — Le HTTP 503 à la suppression d’un compte instrumenté est corrigé par 20260924235900 : le trigger de nettoyage seul devient SECURITY DEFINER. Sauvegarde préalable SHA-256 b0f63820f89197ec667e45f5098e1a32b55e4c6d341ae88ec0b9c47640b9bb0f ; prévol et quatre recettes S-047 sous ROLLBACK verts.",
+        "2026-09-25 — Au SHA f0656de10a5730b50a6dd32d599e29c04ce3afb0, Prettier, TypeScript, ESLint, 3 373 tests Vitest, build de production et 196/196 Playwright passent. Journal SHA-256 41ad7944b2379c723cddcce8e6c31b33e41534a5f3f9bdb03698b70953cfbec1 ; déploiement qualifiant so83xz33dsaeizbcl3tpcohy, web et worker sains sans redémarrage ni OOM, santé HTTP 200."
       ],
       "historicalEvidence": {
         "completedAt": "2026-03-29T11:47:17.413Z",
