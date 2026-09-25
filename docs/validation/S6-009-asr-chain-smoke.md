@@ -141,3 +141,17 @@ Cette révalidation atteste la disponibilité présente du maillon DGX et est
 cohérente avec le dispatch LiteLLM documenté ci-dessus. Elle ne remplace pas
 les essais physiques : enregistrement navigateur, refus d’autorisation,
 fichier invalide, panne amont visible et appréciation humaine des mesures.
+
+## Gate fraîche du 25 septembre 2026
+
+La gate complète du SHA déployé
+`4a9dfb56652323d077c3477941e493f145449bb8` passe Prettier, TypeScript,
+ESLint, 3 373 tests Vitest, le build de 127 routes et 196/196 Playwright. Les
+trois parcours microphone permanents passent : transcription visible et
+réinjectée dans Qalem, refus de permission sans envoi, puis panne amont visible
+après enregistrement. Journal SHA-256 :
+`8e8b70e1feeabd3770559bf9b5c34322f5339e9efdde4b172d52744a693e4bcb`.
+
+La dette machine de S6-009 est donc soldée. La story reste `to_validate` pour
+les gestes sur un microphone physique et l’acceptation humaine des mesures
+FLEURS, sans inventer de seuil ni revendiquer le darija marocain.

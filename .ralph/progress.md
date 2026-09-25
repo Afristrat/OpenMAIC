@@ -1244,3 +1244,7 @@ La recette est rejouée sur le conteneur production exact `4a9dfb56652323d077c34
 ## 25 septembre 2026 — S6-021 Dette machine soldée
 
 Les fichiers fonctionnels d’invitation sont inchangés depuis la recette complète du 24 septembre. La gate du SHA déployé `4a9dfb56652323d077c3477941e493f145449bb8` passe avec 3 373 Vitest et 196/196 Playwright, dont les deux parcours invitation-only ; le déploiement est sain sans redémarrage ni OOM. S6-021 reste `to_validate` exclusivement pour la réception physique d’une invitation par son destinataire ; aucune dette machine distincte ne subsiste.
+
+## 25 septembre 2026 — S6-009 Dette machine ASR soldée
+
+La gate complète du SHA déployé `4a9dfb56652323d077c3477941e493f145449bb8` passe avec 3 373 Vitest et 196/196 Playwright. Les trois parcours microphone couvrent transcription visible et réinjectée, refus de permission sans envoi et panne amont après enregistrement. La parole réelle FR/arabe standard/EN et le chemin Hostinger → DGX par Tailscale restent les preuves de production existantes. S6-009 demeure `to_validate` uniquement pour les gestes sur microphone physique et l’acceptation humaine des mesures ; aucune qualité darija ni TTS n’est inférée.
