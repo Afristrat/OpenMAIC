@@ -72,6 +72,51 @@ VALUES (
   0
 );
 
+INSERT INTO public.castings (id, user_id, course_id, lineup, lineup_hash)
+VALUES (
+  '31300000-0000-4000-8000-000000000011',
+  '31300000-0000-4000-8000-000000000001',
+  '31300000-0000-4000-8000-000000000002',
+  '[]',
+  repeat('a', 64)
+);
+
+INSERT INTO public.live_sessions (id, course_id, user_id, casting_id, recorded, ended_at)
+VALUES (
+  '31300000-0000-4000-8000-000000000012',
+  '31300000-0000-4000-8000-000000000002',
+  '31300000-0000-4000-8000-000000000001',
+  '31300000-0000-4000-8000-000000000011',
+  true,
+  now()
+);
+
+INSERT INTO public.anchor_plans (id, session_id, user_id, opted_in_at, ends_at)
+VALUES (
+  '31300000-0000-4000-8000-000000000013',
+  '31300000-0000-4000-8000-000000000012',
+  '31300000-0000-4000-8000-000000000001',
+  '2026-09-01T12:00:00Z',
+  '2026-11-29T12:00:00Z'
+);
+
+INSERT INTO public.anchor_deliveries (
+  id,
+  plan_id,
+  delivery_kind,
+  scheduled_for,
+  dedupe_key,
+  payload
+)
+VALUES (
+  '31300000-0000-4000-8000-000000000014',
+  '31300000-0000-4000-8000-000000000013',
+  'cold_eval',
+  '2026-09-25T12:00:00Z',
+  'cold_eval:cold_30',
+  '{"phase":"cold_30"}'
+);
+
 INSERT INTO public.review_notification_preferences (
   user_id,
   timezone,
@@ -114,6 +159,31 @@ BEGIN
   FROM public.course_resume_deliveries
   WHERE course_id = '31300000-0000-4000-8000-000000000002'
     AND user_id = '31300000-0000-4000-8000-000000000001';
+  UPDATE public.review_notification_preferences
+  SET quiet_start = NULL, quiet_end = NULL
+  WHERE user_id = '31300000-0000-4000-8000-000000000001';
+  UPDATE public.course_resume_deliveries
+  SET scheduled_for = '2026-09-25T12:00:00Z'
+  WHERE id = resume_delivery_id;
+
+  IF public.claim_course_notification_delivery_slot(
+    '31300000-0000-4000-8000-000000000001',
+    '31300000-0000-4000-8000-000000000002',
+    'anchor_delivery',
+    '31300000-0000-4000-8000-000000000014',
+    '2026-09-25T12:00:00Z'
+  ) THEN
+    RAISE EXCEPTION 'a cold evaluation overtook a due course resume reminder';
+  END IF;
+  IF NOT public.claim_course_notification_delivery_slot(
+    '31300000-0000-4000-8000-000000000001',
+    '31300000-0000-4000-8000-000000000002',
+    'course_resume_delivery',
+    resume_delivery_id,
+    '2026-09-25T12:00:00Z'
+  ) THEN
+    RAISE EXCEPTION 'the highest-priority due reminder did not reserve its slot';
+  END IF;
   UPDATE public.course_resume_deliveries
   SET sent_at = '2026-09-25T12:00:00Z'
   WHERE id = resume_delivery_id;
