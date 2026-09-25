@@ -200,7 +200,7 @@ try {
     'Demande du formateur',
     [201],
   );
-  const requestId = requested?.data?.requestId;
+  const requestId = requested?.requestId;
   assert.equal(typeof requestId, 'string', 'Identifiant de demande absent');
 
   const { body: managerView } = await classroomAccess(
@@ -209,8 +209,8 @@ try {
     { method: 'GET' },
     'Lecture manager',
   );
-  assert.equal(managerView?.data?.editAccess?.canManage, true);
-  assert.equal(managerView?.data?.editAccess?.requests?.[0]?.status, 'pending');
+  assert.equal(managerView?.editAccess?.canManage, true);
+  assert.equal(managerView?.editAccess?.requests?.[0]?.status, 'pending');
 
   const approvedAt = Date.now();
   const { body: approved } = await classroomAccess(
@@ -222,7 +222,7 @@ try {
     },
     'Approbation manager',
   );
-  const expiresAt = Date.parse(approved?.data?.delegation?.expires_at);
+  const expiresAt = Date.parse(approved?.delegation?.expires_at);
   assert.ok(Number.isFinite(expiresAt), 'Expiration absente');
   assert.ok(expiresAt - approvedAt >= 59 * 60 * 1000, 'Durée accordée inférieure à une heure');
   assert.ok(expiresAt - approvedAt <= 61 * 60 * 1000, 'Durée accordée supérieure à une heure');
@@ -237,11 +237,8 @@ try {
     { method: 'GET' },
     'Lecture de la délégation active',
   );
-  assert.equal(active?.data?.editAccess?.requests?.[0]?.status, 'approved');
-  assert.equal(
-    active?.data?.editAccess?.requests?.[0]?.expiresAt,
-    approved.data.delegation.expires_at,
-  );
+  assert.equal(active?.editAccess?.requests?.[0]?.status, 'approved');
+  assert.equal(active?.editAccess?.requests?.[0]?.expiresAt, approved.delegation.expires_at);
 
   await classroomAccess(
     editableStageId,
