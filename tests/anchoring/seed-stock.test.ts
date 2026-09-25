@@ -360,7 +360,7 @@ describe('anchoring seed stock', () => {
             ...seed,
             content: {
               ...seed.content,
-              body: 'Confronte maintenant ton hypothèse au scénario le plus haut.',
+              body: 'Une hypothèse mérite-t-elle une borne basse et une borne haute ?',
             },
           }
         : seed,
