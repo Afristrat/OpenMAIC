@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { writeFileSync } from 'node:fs';
 import { callLLM } from '@/lib/ai/llm';
 import { getModel } from '@/lib/ai/providers';
 import {
@@ -112,6 +113,8 @@ async function main(): Promise<void> {
     undefined,
     { mode: 'disabled', enabled: false },
   );
+  const rawOutputPath = process.env.S3_008_RAW_OUTPUT_PATH?.trim();
+  if (rawOutputPath) writeFileSync(rawOutputPath, result.text, 'utf8');
 
   const seeds = parseSeedStock(result.text, {
     learningApproach: 'andragogy',
