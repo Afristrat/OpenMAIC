@@ -71,4 +71,16 @@ La recette de production confirme :
 - rejeu du jeton refusé en HTTP 410 ;
 - tenant, invitation, adhésion et identité de recette supprimés, compteurs résiduels à zéro.
 
-La clé Resend Qalem est volontairement limitée à l’envoi : la lecture `GET /emails` répond HTTP 401. Ses droits ne sont pas élargis pour transformer une preuve fournisseur en preuve humaine. S6-021 reste donc ouverte pour la réception physique d’une invitation par son destinataire et la gate complète au SHA de clôture.
+La clé Resend Qalem est volontairement limitée à l’envoi : la lecture `GET /emails` répond HTTP 401. Ses droits ne sont pas élargis pour transformer une preuve fournisseur en preuve humaine.
+
+## Gate fraîche du 25 septembre 2026
+
+Aucun fichier fonctionnel du parcours d’invitation n’a changé entre la recette
+`4cb3984b06a1e04c39eafeef2ab53760f382ad18` et le SHA déployé
+`4a9dfb56652323d077c3477941e493f145449bb8`. La gate complète de ce dernier
+passe Prettier, TypeScript, ESLint, 3 373 tests Vitest, le build de 127 routes
+et 196/196 Playwright, dont les deux parcours `invitation-only-auth`. Journal
+SHA-256 :
+`8e8b70e1feeabd3770559bf9b5c34322f5339e9efdde4b172d52744a693e4bcb`.
+Le déploiement est sain, sans redémarrage ni OOM. S6-021 reste ouverte
+exclusivement pour la réception physique d’une invitation par son destinataire.

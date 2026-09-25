@@ -1240,3 +1240,7 @@ Les fichiers fonctionnels des rappels locaux et du service worker sont inchangé
 ## 25 septembre 2026 — S3-005 Plan d’ancrage clôturé
 
 La recette est rejouée sur le conteneur production exact `4a9dfb56652323d077c3477941e493f145449bb8` : les stocks 12, 13 et 20 répondent HTTP 201, sélectionnent douze graines et créent quatorze livraisons chacun. Après nettoyage, zéro organisation de recette subsiste et `anchoring=false`. La gate complète du même SHA passe avec 3 373 Vitest et 196/196 Playwright. La réception application fermée sur appareils physiques demeure suivie exclusivement par S3-002 et n’est pas revendiquée ici. S3-005 passe à `completed` et `passes=true`.
+
+## 25 septembre 2026 — S6-021 Dette machine soldée
+
+Les fichiers fonctionnels d’invitation sont inchangés depuis la recette complète du 24 septembre. La gate du SHA déployé `4a9dfb56652323d077c3477941e493f145449bb8` passe avec 3 373 Vitest et 196/196 Playwright, dont les deux parcours invitation-only ; le déploiement est sain sans redémarrage ni OOM. S6-021 reste `to_validate` exclusivement pour la réception physique d’une invitation par son destinataire ; aucune dette machine distincte ne subsiste.
