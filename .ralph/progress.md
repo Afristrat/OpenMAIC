@@ -1268,3 +1268,7 @@ Le code, la migration, les gates machine et la publication Qalem ne sont plus de
 ## 25 septembre 2026 — S-019 Blocage NotebookLM vérifié dans Diwan
 
 Le checkout propriétaire Diwan est toujours sur `feat/qalem-document-provider-v1` au commit `d3d9103800d6a49c4f577701b6fd2bf917f4f8f9`. Une recherche fraîche trouve zéro occurrence NotebookLM dans l’application, l’API et les tests ; les seules mentions du dépôt sont éditoriales. Le routeur consommateur Qalem expose uniquement ingestion, statut, sources, manifeste, recherche, alignement, conflits et révocation. Le contrat reste inchangé et l’API déployée ne publie pas d’OpenAPI public permettant de contredire ce constat. S-019 reste `blocked` et `passes=false` : la partie Qalem générique est livrée, mais Diwan ne fournit ni authentification NotebookLM, ni recherche de notebook, ni correspondance native vers corpus/source/version. Aucun fichier Diwan n’a été modifié.
+
+## 25 septembre 2026 — S-020 Blocage Notion vérifié dans Diwan
+
+La recherche fraîche du checkout propriétaire Diwan au commit `d3d9103800d6a49c4f577701b6fd2bf917f4f8f9` trouve zéro occurrence Notion dans l’application, l’API, les tests et le contrat Qalem. Diwan ne fournit donc ni connexion OAuth Notion, ni recherche ou lecture de page, ni correspondance native page/version vers corpus/source/version. S-020 reste `blocked` et `passes=false` ; le consommateur générique Qalem est livré, mais un import manuel d’URL ou de fichier ne satisfait pas l’intégration demandée. Aucun fichier Diwan n’a été modifié.
