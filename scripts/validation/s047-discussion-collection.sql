@@ -11,7 +11,6 @@ INSERT INTO public.stages(id,owner_id,org_id,name,agent_ids) VALUES
 INSERT INTO public.scenes(id,stage_id,type,"order") VALUES ('s047-scene','s047-proof','slide',0);
 INSERT INTO public.courses(owner_id,org_id,stage_id,title,language,source_kind,status,outline) VALUES
  ('00000000-0047-4000-8000-000000000001','00000000-0047-4000-8000-000000000002','s047-proof','Context','ar-MA','generated','ready','{"analyticsContext":{"subjectTags":["formation-design-pro"]}}');
-INSERT INTO public.telemetry_consent(user_id,pedagogy_consent) VALUES ('00000000-0047-4000-8000-000000000001',false);
 INSERT INTO public.shared_classrooms(id,stage_id,org_id,shared_by,visibility) VALUES
  ('00000000-0047-4000-8000-000000000005','s047-proof','00000000-0047-4000-8000-000000000003','00000000-0047-4000-8000-000000000001','organization');
 SET LOCAL ROLE service_role;
@@ -23,10 +22,8 @@ DECLARE
  epoch uuid; old_epoch uuid; row public.discussion_patterns; invalid jsonb;
  payload jsonb := '{"discussionId":"00000000-0047-4000-8000-000000000004","sceneId":"s047-scene","durationBasis":"client-monotonic-elapsed","classificationMethod":"text-heuristic-v1","turns":[{"id":"one","agentId":"a","interventionType":"question","durationMs":1450,"outcome":"completed"},{"id":"two","agentId":"b","interventionType":"unknown","durationMs":250,"outcome":"interrupted"}],"postDiscussionQuiz":null}';
 BEGIN
- SELECT collection_epoch INTO old_epoch FROM public.telemetry_consent WHERE user_id=actor;
- IF public.record_consented_discussion(actor,'s047-proof',org,old_epoch,payload) THEN RAISE EXCEPTION 'Refusal bypass'; END IF;
- UPDATE public.telemetry_consent SET pedagogy_consent=true WHERE user_id=actor;
  SELECT collection_epoch INTO epoch FROM public.telemetry_consent WHERE user_id=actor;
+ old_epoch := gen_random_uuid();
  IF public.record_consented_discussion(actor,'s047-proof',org,old_epoch,payload) THEN RAISE EXCEPTION 'Old epoch accepted'; END IF;
  IF NOT public.record_consented_discussion(actor,'s047-proof',org,epoch,payload) THEN RAISE EXCEPTION 'Missing insertion'; END IF;
  PERFORM public.record_consented_discussion(actor,'s047-proof',org,epoch,payload);
@@ -103,11 +100,20 @@ BEGIN
 END $$;
 RESET ROLE;
 SET LOCAL ROLE authenticated;
-UPDATE public.telemetry_consent SET pedagogy_consent=false WHERE user_id=auth.uid();
+DO $$
+DECLARE affected integer;
+BEGIN
+  UPDATE public.telemetry_consent SET pedagogy_consent=false WHERE user_id=auth.uid();
+  GET DIAGNOSTICS affected = ROW_COUNT;
+  IF affected<>0 THEN RAISE EXCEPTION 'Contractual analytics mutation exposed'; END IF;
+END;
+$$;
 RESET ROLE;
 DO $$ BEGIN
- IF EXISTS(SELECT 1 FROM public.discussion_patterns WHERE stage_id='s047-proof')
-   OR EXISTS(SELECT 1 FROM qalem_telemetry_private.subjects WHERE user_id='00000000-0047-4000-8000-000000000001') THEN
-   RAISE EXCEPTION 'RLS withdrawal failed to erase discussions';
+ IF (SELECT pedagogy_consent FROM public.telemetry_consent
+     WHERE user_id='00000000-0047-4000-8000-000000000001') IS DISTINCT FROM true
+   OR NOT EXISTS(SELECT 1 FROM public.discussion_patterns WHERE stage_id='s047-proof')
+   OR NOT EXISTS(SELECT 1 FROM qalem_telemetry_private.subjects WHERE user_id='00000000-0047-4000-8000-000000000001') THEN
+   RAISE EXCEPTION 'Contractual discussion data disappeared';
  END IF;
 END $$;
