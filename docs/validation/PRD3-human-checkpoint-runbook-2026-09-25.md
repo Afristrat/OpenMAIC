@@ -29,7 +29,7 @@ Point de départ : [Qalem pour Human Yo Impact](https://qalem.ma/app?orgId=aa787
 
 ### A1 — S3-008 : ton et pression des graines
 
-Lire les [vingt graines P3-B-v11](../evidence/s3-008-andragogical-seed-sample-v11.json), puis rendre deux verdicts distincts :
+Lire la [fiche de réception des vingt graines P3-B-v11](../evidence/s3-008-human-review-v11.md), puis rendre deux verdicts distincts :
 
 - ton andragogique : accepté ou refusé, avec les numéros à corriger ;
 - cadence : acceptée ou refusée pour J+2, J+5, J+9, J+14, J+20, J+27, J+35, J+44, J+54, J+65, J+77 et J+90, plus les évaluations J+30 et J+60.

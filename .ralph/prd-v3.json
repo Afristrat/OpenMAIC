@@ -4313,6 +4313,7 @@
         "tasks/prd-3-ancrer.md",
         "docs/evidence/s3-008-andragogical-seed-sample.json",
         "docs/evidence/s3-008-andragogical-seed-sample-v11.json",
+        "docs/evidence/s3-008-human-review-v11.md",
         "lib/anchoring/seed-stock.ts",
         "tests/anchoring/seed-stock.test.ts",
         "scripts/validation/s3-008-current-seed-sample.ts"

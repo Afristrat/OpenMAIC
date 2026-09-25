@@ -1321,3 +1321,5 @@ La gate complète du SHA `3c2dedf0be6fc5a4f53b80b6a5d99388c7f906fa` passe Pretti
 ## 25 septembre 2026 — Recette humaine finale regroupée
 
 Les treize validations humaines ou physiques encore ouvertes sont regroupées dans `docs/validation/PRD3-human-checkpoint-runbook-2026-09-25.md`. Le protocole couvre en quatre blocs la réception de bureau, l’invitation nominative, la chaîne PWA iOS/Android et WhatsApp, avec une feuille de verdict unique et les preuves minimales attendues. Aucun statut ni drapeau n’est changé par cette préparation ; les quatre dépendances Diwan restent séparées.
+
+La réception S3-008 dispose également d’une fiche lisible, `docs/evidence/s3-008-human-review-v11.md`, qui restitue les vingt graines, leur persona et leur événement source, sépare le verdict de ton du verdict de cadence et signale trois risques à juger : répétition, humour potentiellement infantilisant et pression des quatorze sollicitations.
