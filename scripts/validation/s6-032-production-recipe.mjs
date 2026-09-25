@@ -59,6 +59,7 @@ function sessionCookie(session) {
 
 async function authenticatedPage(browser, session) {
   const context = await browser.newContext();
+  await context.addInitScript(() => window.localStorage.setItem('locale', 'fr-FR'));
   await context.addCookies([
     {
       name: 'sb-db-auth-token',
