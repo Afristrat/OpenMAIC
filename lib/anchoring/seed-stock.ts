@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
 import type { LearningApproach } from '@/lib/agents/persona-catalog';
 
-export const ANCHOR_SEED_PROMPT_VERSION = 'P3-B-v9';
+export const ANCHOR_SEED_PROMPT_VERSION = 'P3-B-v10';
 
 export const anchorSeedSourceKinds = [
   'learner_proposition',
@@ -42,7 +42,47 @@ const ANDRAGOGY_EVALUATIVE_LANGUAGE =
   /\b(bravo|bien joué|sage décision|continue sur cette lancée|mieux que (?:la plupart|les autres)|exactement (?:le bon|la bonne)|(?:bon|vrai) (?:réflexe|levier|choix|niveau d['’]engagement)|pilote aguerri|tu as su|tu as montré|c['’]est déjà|écart type)\b/iu;
 const NUMERIC_TOKEN = /\p{N}+(?:[.,]\p{N}+)?%?/gu;
 const TEMPORAL_MARKER =
-  /(?<!\p{L})(?:aujourd['’]hui|ce soir|demain|après-demain|cette semaine|la semaine prochaine|ce mois-ci|le mois prochain|chaque jour|chaque semaine|chaque mois|chaque année|quotidien(?:ne)?|hebdomadaire|mensuel(?:le)?|annuel(?:le)?|today|tonight|tomorrow|this week|next week|this month|next month|daily|weekly|monthly|yearly|اليوم|الليلة|غد[اًا]|هذا الأسبوع|الأسبوع المقبل|هذا الشهر|الشهر المقبل|يومي(?:ة)?|أسبوعي(?:ة)?|شهري(?:ة)?|سنوي(?:ة)?)(?!\p{L})/giu;
+  /(?<!\p{L})(?:aujourd['’]hui|ce soir|demain|après-demain|cette semaine|la semaine prochaine|ce mois-ci|le mois prochain|chaque\s+\p{L}+(?:\s+\p{L}+)?|quotidien(?:ne)?|hebdomadaire|mensuel(?:le)?|annuel(?:le)?|today|tonight|tomorrow|this week|next week|this month|next month|(?:every|each)\s+\p{L}+(?:\s+\p{L}+)?|daily|weekly|monthly|yearly|اليوم|الليلة|غد[اًا]|هذا الأسبوع|الأسبوع المقبل|هذا الشهر|الشهر المقبل|كل\s+[\p{Script=Arabic}]+(?:\s+[\p{Script=Arabic}]+)?|يومي(?:ة)?|أسبوعي(?:ة)?|شهري(?:ة)?|سنوي(?:ة)?)(?!\p{L})/giu;
+const PROVENANCE_STOP_WORDS = new Set([
+  'a',
+  'au',
+  'aux',
+  'avec',
+  'ce',
+  'ces',
+  'dans',
+  'de',
+  'des',
+  'du',
+  'et',
+  'je',
+  'la',
+  'le',
+  'les',
+  'mon',
+  'mes',
+  'pour',
+  'que',
+  'qui',
+  'sur',
+  'the',
+  'to',
+  'with',
+]);
+
+function searchableTokens(value: unknown): string[] {
+  return JSON.stringify(value)
+    .normalize('NFKD')
+    .replace(/\p{M}/gu, '')
+    .toLocaleLowerCase('und')
+    .match(/[\p{L}\p{N}]+/gu)
+    ?.filter((token) => token.length > 1 && !PROVENANCE_STOP_WORDS.has(token)) ?? [];
+}
+
+function meaningfulBigrams(value: unknown): Set<string> {
+  const tokens = searchableTokens(value);
+  return new Set(tokens.slice(0, -1).map((token, index) => `${token} ${tokens[index + 1]}`));
+}
 
 function numericTokensFromStrings(value: unknown, output = new Set<string>()): Set<string> {
   if (typeof value === 'string') {
@@ -93,8 +133,6 @@ export function parseSeedStock(
   const personas = new Set(context.personas);
   const sceneRefs = new Set(context.sceneRefs);
   const eventsById = new Map(context.events.map((event) => [event.id, event]));
-  const sessionNumbers = numericTokensFromStrings(context.events);
-  const sessionText = JSON.stringify(context.events).toLocaleLowerCase('und');
   const jokerPersonas = new Set(
     Object.entries(context.personaMechanisms ?? {}).flatMap(([persona, mechanism]) =>
       mechanism === 'joker' ? [persona] : [],
@@ -121,19 +159,30 @@ export function parseSeedStock(
     ) {
       throw new Error('Evaluative or comparative language is forbidden in andragogy');
     }
+    const sourceNumbers = numericTokensFromStrings(sourceEvent.payload);
     const inventedNumber = [
       ...numericTokensFromStrings([seed.content.push_hook, seed.content.body]),
-    ].find((token) => !sessionNumbers.has(token));
+    ].find((token) => !sourceNumbers.has(token));
     if (inventedNumber) {
       throw new Error(`Numeric claim absent from session: ${inventedNumber}`);
     }
+    const sourceText = JSON.stringify(sourceEvent.payload).toLocaleLowerCase('und');
     const inventedTemporalMarker = [
       ...`${seed.content.push_hook} ${seed.content.body}`.matchAll(TEMPORAL_MARKER),
     ]
       .map((match) => match[0].toLocaleLowerCase('und'))
-      .find((marker) => !sessionText.includes(marker));
+      .find((marker) => !sourceText.includes(marker));
     if (inventedTemporalMarker) {
       throw new Error(`Temporal claim absent from session: ${inventedTemporalMarker}`);
+    }
+    const sourceBigrams = meaningfulBigrams(sourceEvent.payload);
+    const seedBigrams = meaningfulBigrams([seed.content.push_hook, seed.content.body]);
+    const contaminatedBigram = context.events
+      .filter((event) => event.id !== sourceEvent.id)
+      .flatMap((event) => [...meaningfulBigrams(event.payload)])
+      .find((bigram) => !sourceBigrams.has(bigram) && seedBigrams.has(bigram));
+    if (contaminatedBigram) {
+      throw new Error(`Seed content leaks another event: ${contaminatedBigram}`);
     }
     counts[seed.kind] += 1;
   }

@@ -245,4 +245,48 @@ describe('anchoring seed stock', () => {
       }),
     ).toThrow('Temporal claim absent from session: chaque mois');
   });
+
+  it('refuse une cadence reformulée absente de l’événement source', () => {
+    const inventedCadence = valid.map((seed, index) =>
+      index === 0
+        ? { ...seed, content: { ...seed.content, body: 'Ce délai revient à chaque budget.' } }
+        : seed,
+    );
+    expect(() =>
+      parseSeedStock(JSON.stringify(inventedCadence), {
+        learningApproach: 'andragogy',
+        events: recordedEvents,
+        personas: ['Penseur', 'Analyste'],
+        sceneRefs: ['scene-1'],
+      }),
+    ).toThrow('Temporal claim absent from session: chaque budget');
+  });
+
+  it('refuse le contenu distinctif provenant d’un autre événement', () => {
+    const contaminated = valid.map((seed, index) =>
+      index === 0
+        ? {
+            ...seed,
+            content: { ...seed.content, body: 'Reprends maintenant les coûts récurrents.' },
+          }
+        : seed,
+    );
+    expect(() =>
+      parseSeedStock(JSON.stringify(contaminated), {
+        learningApproach: 'andragogy',
+        events: [
+          ...recordedEvents,
+          {
+            id: '2',
+            actor: 'user',
+            event_type: 'learner_response',
+            payload: { utterance: 'Je sous-estime les coûts récurrents.' },
+            ts_ms: 31,
+          },
+        ],
+        personas: ['Penseur', 'Analyste'],
+        sceneRefs: ['scene-1'],
+      }),
+    ).toThrow('Seed content leaks another event: couts recurrents');
+  });
 });
