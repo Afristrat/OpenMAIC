@@ -30,6 +30,25 @@ révoquée et son jeton de rafraîchissement est refusé avant fermeture du
 navigateur. Aucun secret, endpoint de configuration interne, tenant, collecte
 ni émission xAPI n’est exposé ou activé.
 
-U-018 reste `to_validate` : le gate complet au SHA de clôture et la décision
-humaine de conservation de cette capacité héritée ne sont pas remplacés par ce
-diagnostic ciblé.
+## Clôture — 25 septembre 2026
+
+La décision de conservation n’est plus ouverte :
+`docs/decisions/2026-09-09-unblock-prd.md` conserve explicitement S-035 et
+U-018 avec un statut/test administrateur sans identifiants LRS. S-035 est
+désormais clôturée.
+
+La recette authentifiée est rejouée contre `qalem.ma` et le LRS réel. Elle
+retrouve `configured=true`, `emissionEnabled=false`,
+`connectionVerified=true` et `writeVerified=false`, puis révoque la session de
+preuve et refuse son jeton de rafraîchissement. Aucun statement n’est écrit.
+Le SHA `554d70c1bf9bc6715be44ef50171a412c37bd64b` rend aussi le transport JSON de
+la preuve robuste au BOM UTF-8 produit par PowerShell.
+
+Les cinq tests API et les trois parcours Chromium FR/AR/EN, dont RTL, passent.
+La gate complète du SHA fonctionnel déployé
+`4a9dfb56652323d077c3477941e493f145449bb8` passe Prettier, TypeScript,
+ESLint, 3 373 tests Vitest, le build de 127 routes et 196/196 Playwright.
+Journal SHA-256 :
+`8e8b70e1feeabd3770559bf9b5c34322f5339e9efdde4b172d52744a693e4bcb`.
+Le déploiement Coolify `0ot3s8iu2crfnqmlz6elhmgd` est sain, sans redémarrage ni
+OOM, et `/api/health` répond 200. U-018 est clôturée.
