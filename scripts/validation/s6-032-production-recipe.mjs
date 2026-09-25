@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { randomBytes, randomUUID } from 'node:crypto';
+import { chromium } from '@playwright/test';
 
 const required = ['NEXT_PUBLIC_SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY'];
 for (const name of required) {
@@ -39,8 +40,8 @@ async function request(url, init, label, expectedStatuses = [200]) {
   return { response, body };
 }
 
-function sessionCookie(session) {
-  const value = Buffer.from(
+function sessionCookieValue(session) {
+  return `base64-${Buffer.from(
     JSON.stringify({
       access_token: session.access_token,
       refresh_token: session.refresh_token,
@@ -49,8 +50,26 @@ function sessionCookie(session) {
       token_type: session.token_type,
     }),
     'utf8',
-  ).toString('base64url');
-  return `sb-db-auth-token=base64-${value}`;
+  ).toString('base64url')}`;
+}
+
+function sessionCookie(session) {
+  return `sb-db-auth-token=${sessionCookieValue(session)}`;
+}
+
+async function authenticatedPage(browser, session) {
+  const context = await browser.newContext();
+  await context.addCookies([
+    {
+      name: 'sb-db-auth-token',
+      value: sessionCookieValue(session),
+      domain: 'qalem.ma',
+      path: '/',
+      secure: true,
+      sameSite: 'Lax',
+    },
+  ]);
+  return { context, page: await context.newPage() };
 }
 
 async function createUser(email, nickname) {
@@ -205,76 +224,95 @@ try {
   const trainerCookie = sessionCookie(trainerSession);
 
   await renameClassroom(editableStageId, trainerCookie, 'Modification prématurée', 403);
-  const { body: requested } = await classroomAccess(
-    editableStageId,
-    trainerCookie,
-    { method: 'POST' },
-    'Demande du formateur',
-    [201],
-  );
-  const requestId = requested?.requestId;
-  assert.equal(typeof requestId, 'string', 'Identifiant de demande absent');
+  const browser = await chromium.launch({ headless: true });
+  let requestId;
+  let approvedExpiresAt;
+  try {
+    const trainerBrowser = await authenticatedPage(browser, trainerSession);
+    const managerBrowser = await authenticatedPage(browser, managerSession);
+    try {
+      await trainerBrowser.page.goto(`${appUrl}/classroom/${editableStageId}`, {
+        waitUntil: 'domcontentloaded',
+      });
+      await trainerBrowser.page.getByRole('button', { name: 'Demander l’accès' }).click();
+      await trainerBrowser.page
+        .getByText('Votre demande de correction attend la décision d’un administrateur ou manager.')
+        .waitFor();
 
-  const { body: managerView } = await classroomAccess(
-    editableStageId,
-    managerCookie,
-    { method: 'GET' },
-    'Lecture manager',
-  );
-  assert.equal(managerView?.editAccess?.canManage, true);
-  assert.equal(managerView?.editAccess?.requests?.[0]?.status, 'pending');
+      const { body: managerView } = await classroomAccess(
+        editableStageId,
+        managerCookie,
+        { method: 'GET' },
+        'Lecture manager',
+      );
+      assert.equal(managerView?.editAccess?.canManage, true);
+      assert.equal(managerView?.editAccess?.requests?.[0]?.status, 'pending');
+      requestId = managerView?.editAccess?.requests?.[0]?.id;
+      assert.equal(typeof requestId, 'string', 'Identifiant de demande absent');
 
-  const approvedAt = Date.now();
-  const { body: approved } = await classroomAccess(
-    editableStageId,
-    managerCookie,
-    {
-      method: 'PATCH',
-      body: JSON.stringify({ action: 'approve', requestId, durationHours: 1 }),
-    },
-    'Approbation manager',
-  );
-  const expiresAt = Date.parse(approved?.delegation?.expires_at);
-  assert.ok(Number.isFinite(expiresAt), 'Expiration absente');
-  assert.ok(expiresAt - approvedAt >= 59 * 60 * 1000, 'Durée accordée inférieure à une heure');
-  assert.ok(expiresAt - approvedAt <= 61 * 60 * 1000, 'Durée accordée supérieure à une heure');
+      const approvedAt = Date.now();
+      await managerBrowser.page.goto(`${appUrl}/classroom/${editableStageId}`, {
+        waitUntil: 'domcontentloaded',
+      });
+      await managerBrowser.page.getByRole('combobox').click();
+      await managerBrowser.page.getByRole('option', { name: '1 heure' }).click();
+      await managerBrowser.page.getByRole('button', { name: 'Autoriser' }).click();
+      await managerBrowser.page.getByText(/peut corriger cette formation jusqu’au/).waitFor();
 
-  const delegatedName = 'Formation corrigée par délégation S6-032';
-  await renameClassroom(editableStageId, trainerCookie, delegatedName, 200);
-  await renameClassroom(isolatedStageId, trainerCookie, 'Violation d’isolation', 403);
+      await trainerBrowser.page.reload({ waitUntil: 'domcontentloaded' });
+      await trainerBrowser.page.getByText(/Correction autorisée jusqu’au/).waitFor();
+      const { body: active } = await classroomAccess(
+        editableStageId,
+        trainerCookie,
+        { method: 'GET' },
+        'Lecture de la délégation active',
+      );
+      assert.equal(active?.editAccess?.requests?.[0]?.status, 'approved');
+      approvedExpiresAt = active?.editAccess?.requests?.[0]?.expiresAt;
+      const expiresAt = Date.parse(approvedExpiresAt);
+      assert.ok(Number.isFinite(expiresAt), 'Expiration absente');
+      assert.ok(expiresAt - approvedAt >= 59 * 60 * 1000, 'Durée accordée inférieure à une heure');
+      assert.ok(expiresAt - approvedAt <= 61 * 60 * 1000, 'Durée accordée supérieure à une heure');
 
-  const { body: active } = await classroomAccess(
-    editableStageId,
-    trainerCookie,
-    { method: 'GET' },
-    'Lecture de la délégation active',
-  );
-  assert.equal(active?.editAccess?.requests?.[0]?.status, 'approved');
-  assert.equal(active?.editAccess?.requests?.[0]?.expiresAt, approved.delegation.expires_at);
+      const delegatedName = 'Formation corrigée par délégation S6-032';
+      await renameClassroom(editableStageId, trainerCookie, delegatedName, 200);
+      await renameClassroom(isolatedStageId, trainerCookie, 'Violation d’isolation', 403);
 
-  await classroomAccess(
-    editableStageId,
-    managerCookie,
-    { method: 'PATCH', body: JSON.stringify({ action: 'revoke', requestId }) },
-    'Révocation manager',
-  );
-  await renameClassroom(editableStageId, trainerCookie, 'Modification après révocation', 403);
+      await managerBrowser.page.reload({ waitUntil: 'domcontentloaded' });
+      await managerBrowser.page.getByRole('button', { name: 'Révoquer' }).click();
+      await managerBrowser.page.getByText(/peut corriger cette formation jusqu’au/).waitFor({
+        state: 'hidden',
+      });
+      await renameClassroom(editableStageId, trainerCookie, 'Modification après révocation', 403);
 
-  const { body: stored } = await request(
-    `${supabaseUrl}/rest/v1/stages?id=eq.${encodeURIComponent(editableStageId)}&select=name`,
-    { headers: serviceHeaders },
-    'Relecture de la correction persistée',
-  );
-  assert.equal(stored?.[0]?.name, delegatedName);
+      const { body: stored } = await request(
+        `${supabaseUrl}/rest/v1/stages?id=eq.${encodeURIComponent(editableStageId)}&select=name`,
+        { headers: serviceHeaders },
+        'Relecture de la correction persistée',
+      );
+      assert.equal(stored?.[0]?.name, delegatedName);
+    } finally {
+      await trainerBrowser.context.close();
+      await managerBrowser.context.close();
+    }
+  } finally {
+    await browser.close();
+  }
+
+  assert.equal(typeof requestId, 'string');
+  assert.equal(typeof approvedExpiresAt, 'string');
 
   console.log(
     JSON.stringify({
       proof: 'S6032_PRODUCTION_RECIPE_OK',
       requestCreated: true,
+      managerApprovedFromBrowser: true,
+      trainerObservedGrantFromBrowser: true,
       managerApprovedOneHour: true,
       delegatedClassroomEdited: true,
       secondClassroomIsolated: true,
       revokedAccessRejected: true,
+      managerRevokedFromBrowser: true,
       persistedCorrectionReadBack: true,
     }),
   );
