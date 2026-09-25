@@ -4,6 +4,7 @@ import { chromium } from '@playwright/test';
 
 let input = '';
 for await (const chunk of process.stdin) input += chunk;
+input = input.replace(/^\uFEFF/, '');
 const { supabaseUrl, serviceKey, adminEmail, baseUrl = 'https://qalem.ma' } = JSON.parse(input);
 input = '';
 assert.equal(new URL(baseUrl).hostname, 'qalem.ma', 'Unexpected proof target');
