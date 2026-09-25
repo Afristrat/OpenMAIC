@@ -60,7 +60,11 @@ export const classroomEditDelegationDecisionSchema = z.discriminatedUnion('actio
   z.object({
     action: z.literal('approve'),
     requestId: z.string().uuid(),
-    durationHours: z.number().int().min(1).max(24 * 30),
+    durationHours: z
+      .number()
+      .int()
+      .min(1)
+      .max(24 * 30),
   }),
   z.object({
     action: z.literal('reject'),
