@@ -4,6 +4,7 @@ import { getModel } from '@/lib/ai/providers';
 import {
   ANCHOR_SEED_PROMPT_VERSION,
   ANCHOR_SEED_SYSTEM_PROMPT,
+  ANCHOR_SEED_TEMPERATURE,
   buildSeedStockPrompt,
   parseSeedStock,
   type AnchorSeedEvent,
@@ -95,6 +96,7 @@ const prompt = `${buildSeedStockPrompt({
 })}
 <requested_seed_count>20</requested_seed_count>
 Pour ce checkpoint humain uniquement, produis exactement vingt graines : six anecdotes, six highlights, quatre jokes et quatre quiz_reminder. Diversifie les accroches, les angles et les formes de rappel ; ne reformule pas plusieurs fois la même question.
+Le précédent échantillon a été refusé parce que son ton était fade, plat et insuffisamment dynamique. Chaque voix doit maintenant créer une énergie reconnaissable : tension utile, contraste, surprise professionnelle ou mise en mouvement immédiate. Une simple reformulation correcte ne suffit pas.
 Pour l’événement 1, le mot « récurrents » ne donne aucune cadence. N’écris ni « mensuel », ni « chaque mois », ni aucune fréquence absente des événements.`;
 
 async function main(): Promise<void> {
@@ -104,7 +106,7 @@ async function main(): Promise<void> {
       system: ANCHOR_SEED_SYSTEM_PROMPT,
       prompt,
       maxOutputTokens: 8_192,
-      temperature: 0,
+      temperature: ANCHOR_SEED_TEMPERATURE,
     },
     's3-008-current-seed-sample',
     undefined,
@@ -139,7 +141,7 @@ async function main(): Promise<void> {
   process.stdout.write(
     JSON.stringify(
       {
-        schemaVersion: 2,
+        schemaVersion: 3,
         storyId: 'S3-008',
         generatedAt: new Date().toISOString(),
         promptVersion: ANCHOR_SEED_PROMPT_VERSION,
@@ -157,6 +159,7 @@ async function main(): Promise<void> {
           horizonDays: 90,
         },
         humanAcceptance: false,
+        previousHumanFeedback: 'Ton refusé : fade, trop plat et insuffisamment dynamique.',
         events,
         casting,
         seeds,

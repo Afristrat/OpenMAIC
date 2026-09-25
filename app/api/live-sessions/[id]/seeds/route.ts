@@ -3,6 +3,7 @@ import { callLLM } from '@/lib/ai/llm';
 import {
   ANCHOR_SEED_PROMPT_VERSION,
   ANCHOR_SEED_SYSTEM_PROMPT,
+  ANCHOR_SEED_TEMPERATURE,
   buildSeedStockPrompt,
   parseSeedStock,
 } from '@/lib/anchoring/seed-stock';
@@ -149,7 +150,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             casting: seedCasting,
             events: anchorEvents,
           }),
-          temperature: 0,
+          temperature: ANCHOR_SEED_TEMPERATURE,
         },
         'anchor-seeds',
         undefined,

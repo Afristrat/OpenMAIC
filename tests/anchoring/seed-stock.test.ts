@@ -1,21 +1,49 @@
 import { describe, expect, it } from 'vitest';
 import {
   ANCHOR_SEED_SYSTEM_PROMPT,
+  ANCHOR_SEED_TEMPERATURE,
   buildSeedStockPrompt,
   parseSeedStock,
 } from '@/lib/anchoring/seed-stock';
+
+const labels = [
+  'alpha',
+  'bravo',
+  'charlie',
+  'delta',
+  'echo',
+  'foxtrot',
+  'golf',
+  'hotel',
+  'india',
+  'juliett',
+  'kilo',
+  'lima',
+];
+const editorialMoves = [
+  'challenge',
+  'counterfactual',
+  'evidence',
+  'decision',
+] as const;
 
 const valid = [
   ...Array.from({ length: 4 }, (_, index) => ({ kind: 'anecdote', index })),
   ...Array.from({ length: 4 }, (_, index) => ({ kind: 'highlight', index })),
   ...Array.from({ length: 2 }, (_, index) => ({ kind: 'joke', index })),
   ...Array.from({ length: 2 }, (_, index) => ({ kind: 'quiz_reminder', index })),
-].map(({ kind, index }) => ({
+].map(({ kind, index }, globalIndex) => ({
   persona: index % 2 ? 'Analyste' : 'Penseur',
   kind,
   content: {
-    push_hook: `Accroche ${kind}`,
-    body: 'Corps ancré.',
+    move:
+      kind === 'joke'
+        ? ('wit' as const)
+        : kind === 'quiz_reminder'
+          ? ('retrieval' as const)
+          : editorialMoves[index],
+    push_hook: `Accroche ${labels[globalIndex]}`,
+    body: `Angle ${labels[globalIndex]} ancré.`,
     scene_ref: 'scene-1',
     provenance: { event_id: '1', source_kind: 'learner_proposition' },
   },
@@ -57,6 +85,9 @@ describe('anchoring seed stock', () => {
     expect(ANCHOR_SEED_SYSTEM_PROMPT).toContain(
       'Chaque groupe nominal qui affirme un fait doit être présent dans le payload',
     );
+    expect(ANCHOR_SEED_SYSTEM_PROMPT).toContain('du nerf, du contraste et du rythme');
+    expect(ANCHOR_SEED_SYSTEM_PROMPT).toContain('Une paraphrase n\'est pas une variation');
+    expect(ANCHOR_SEED_TEMPERATURE).toBe(0.8);
     expect(
       buildSeedStockPrompt({
         language: 'fr-FR',
@@ -83,6 +114,39 @@ describe('anchoring seed stock', () => {
         sceneRefs: ['scene-1'],
       }),
     ).toHaveLength(12);
+  });
+
+  it('refuse un stock au démarrage répétitif et sans rythme', () => {
+    const flat = valid.map((seed) => ({
+      ...seed,
+      content: { ...seed.content, body: 'Tu as rappelé le délai observé.' },
+    }));
+
+    expect(() =>
+      parseSeedStock(JSON.stringify(flat), {
+        learningApproach: 'andragogy',
+        events: recordedEvents,
+        personas: ['Penseur', 'Analyste'],
+        sceneRefs: ['scene-1'],
+      }),
+    ).toThrow('Seed stock repeats the same opening too often');
+  });
+
+  it('refuse la répétition du même mouvement cognitif sur un événement', () => {
+    const repeatedMove = valid.map((seed, index) =>
+      index === 1
+        ? { ...seed, content: { ...seed.content, move: 'challenge' as const } }
+        : seed,
+    );
+
+    expect(() =>
+      parseSeedStock(JSON.stringify(repeatedMove), {
+        learningApproach: 'andragogy',
+        events: recordedEvents,
+        personas: ['Penseur', 'Analyste'],
+        sceneRefs: ['scene-1'],
+      }),
+    ).toThrow('Repeated cognitive move for the same event and seed kind');
   });
 
   it('rejects an incomplete stock and any invented persona or scene', () => {
