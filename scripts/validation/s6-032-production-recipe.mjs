@@ -129,10 +129,11 @@ async function renameClassroom(stageId, cookie, name, expectedStatus) {
 }
 
 async function cleanup() {
-  await fetch(
-    `${supabaseUrl}/rest/v1/organizations?id=eq.${encodeURIComponent(organizationId)}`,
-    { method: 'DELETE', headers: serviceHeaders, signal: AbortSignal.timeout(30_000) },
-  ).catch(() => undefined);
+  await fetch(`${supabaseUrl}/rest/v1/organizations?id=eq.${encodeURIComponent(organizationId)}`, {
+    method: 'DELETE',
+    headers: serviceHeaders,
+    signal: AbortSignal.timeout(30_000),
+  }).catch(() => undefined);
   for (const userId of [trainerId, managerId]) {
     if (!userId) continue;
     await fetch(`${supabaseUrl}/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
@@ -237,7 +238,10 @@ try {
     'Lecture de la délégation active',
   );
   assert.equal(active?.data?.editAccess?.requests?.[0]?.status, 'approved');
-  assert.equal(active?.data?.editAccess?.requests?.[0]?.expiresAt, approved.data.delegation.expires_at);
+  assert.equal(
+    active?.data?.editAccess?.requests?.[0]?.expiresAt,
+    approved.data.delegation.expires_at,
+  );
 
   await classroomAccess(
     editableStageId,
