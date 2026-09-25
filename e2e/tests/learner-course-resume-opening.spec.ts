@@ -34,7 +34,28 @@ test('atteste l’ouverture du rappel avant de reprendre la formation ciblée', 
     },
   );
   await page.route('**/api/classroom?id=resume-stage*', (route) =>
-    route.fulfill({ status: 404, json: { error: 'fixture terminée après la navigation' } }),
+    route.fulfill({
+      json: {
+        success: true,
+        stage: {
+          id: 'resume-stage',
+          name: 'Formation reprise',
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        },
+        scenes: [],
+      },
+    }),
+  );
+  await page.route(`**/api/courses/${courseId}/notification-preferences`, (route) =>
+    route.fulfill({
+      json: {
+        pausedUntil: null,
+        dailyCap: null,
+        minimumIntervalHours: null,
+        nextReminderAt: null,
+      },
+    }),
   );
 
   await page.goto(
