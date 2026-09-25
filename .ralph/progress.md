@@ -1232,3 +1232,7 @@ Le drapeau Director est actif dans le web et le runtime. La preuve de production
 ## 25 septembre 2026 — U-018 Diagnostic xAPI clôturé
 
 Le registre du 9 septembre conserve explicitement le diagnostic xAPI administrateur sans identifiants LRS et S-035 est clôturée. La recette authentifiée repasse contre `qalem.ma` et le LRS réel avec émission suspendue et aucune écriture de statement ; la session temporaire est ensuite révoquée. Le SHA `554d70c1bf9bc6715be44ef50171a412c37bd64b` tolère le BOM UTF-8 du transport de preuve. Cinq tests API et trois Chromium FR/AR/EN, dont RTL, passent. La gate complète du SHA fonctionnel déployé `4a9dfb56652323d077c3477941e493f145449bb8` compte 3 373 Vitest et 196/196 Playwright ; le déploiement est sain, sans redémarrage ni OOM. U-018 passe à `completed` et `passes=true`.
+
+## 25 septembre 2026 — S6-010 Dette machine soldée
+
+Les fichiers fonctionnels des rappels locaux et du service worker sont inchangés depuis la recette authentifiée de production ; seule l’attente d’activation du scénario E2E a été durcie. La gate complète du SHA déployé `4a9dfb56652323d077c3477941e493f145449bb8` passe avec 3 373 Vitest et 196/196 Playwright, dont les deux parcours PWA. Le web est sain, sans redémarrage ni OOM. S6-010 reste `to_validate` exclusivement pour les essais physiques iOS/Android et la délivrance application fermée regroupés avec S3-002 ; aucune dette machine distincte ne subsiste.
