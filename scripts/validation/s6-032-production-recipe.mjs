@@ -234,7 +234,18 @@ try {
       await trainerBrowser.page.goto(`${appUrl}/classroom/${editableStageId}`, {
         waitUntil: 'domcontentloaded',
       });
-      await trainerBrowser.page.getByRole('button', { name: 'Demander l’accès' }).click();
+      const requestButton = trainerBrowser.page.getByRole('button', { name: 'Demander l’accès' });
+      try {
+        await requestButton.waitFor({ state: 'visible', timeout: 30_000 });
+      } catch (error) {
+        const body = (await trainerBrowser.page.locator('body').innerText()).slice(0, 1_000);
+        const cookieNames = (await trainerBrowser.context.cookies()).map((cookie) => cookie.name);
+        throw new Error(
+          `Bouton de demande absent sur ${trainerBrowser.page.url()} (cookies : ${cookieNames.join(', ') || 'aucun'}). Contenu : ${body}`,
+          { cause: error },
+        );
+      }
+      await requestButton.click();
       await trainerBrowser.page
         .getByText('Votre demande de correction attend la décision d’un administrateur ou manager.')
         .waitFor();
