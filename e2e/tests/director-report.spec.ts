@@ -66,7 +66,7 @@ for (const [locale, open, title, assigned, missing, score] of [
         },
       }),
     );
-    await page.route('**/api/organizations/org-report/anchoring-report', (route) =>
+    await page.route('**/api/organizations/org-report/anchoring-report?*', (route) =>
       route.fulfill({ json: { anchoring: null } }),
     );
     let mode = 'data';
