@@ -1,10 +1,10 @@
 # S6-003 — Adaptateur documentaire Diwan
 
-## État au 9 septembre 2026
+## État réconcilié au 25 septembre 2026
 
-Code candidat, pas une clôture. Le mandat « Go alors pour les 21US » permet
-l’implémentation côté Qalem. Il n’autorise ni la modification du projet Diwan,
-ni une rotation, ni la certification des checkpoints humains.
+L’adaptateur est désormais publié côté Qalem, mais la story n’est pas close.
+Le mandat permet l’implémentation côté Qalem. Il n’autorise ni la modification
+du projet Diwan, ni une rotation, ni la certification des checkpoints humains.
 
 ## Contrat vérifié
 
@@ -64,17 +64,26 @@ fournisseur, rejet des mutations inter-origines et fichier multipart natif.
 ## Conditions de clôture encore ouvertes
 
 1. Fournir un jeton de service Qalem dédié et son organisation Diwan associée.
-   L’index `C:\Users\amans\.claude\secrets.index` consulté ne contient pas
-   cette entrée ; ni la clé LiteLLM Diwan ni sa clé de chiffrement ne la remplacent.
+   Le 25 septembre, l’index `C:\Users\amans\.claude\secrets.index` ne contient
+   toujours que `DIWAN_ENCRYPTION_KEY` et `DIWAN_LITELLM_KEY` ; aucune des deux
+   ne remplace un jeton consommateur Qalem.
 2. Configurer le mapping persistant côté Qalem après confirmation de cette liaison.
-   Aucun credential créé, remplacé ou injecté par ce lot.
+   Le conteneur web de production au SHA
+   `124077344522f56f2909fcc434f7788e417b634e` ne contient pas
+   `QALEM_DIWAN_TENANT_TOKENS`.
 3. Recette authentifiée réelle, incluant import, suivi, provenance, refus croisé,
    indisponibilité et révocation d’un corpus de recette autorisé.
-4. Gate complet du lot, build et navigateur ; publication vérifiée ensuite.
-   Aucun déploiement ni nouveau gate global annoncé pour ce candidat.
-5. Le sélecteur, l’import et le suivi Diwan sont maintenant raccordés côté Qalem
-   (complément ci-dessous). Leur recette authentifiée reste ouverte et la
-   migration des manifestes n’est pas encore appliquée durablement.
+4. Rejouer la gate intégrée après injection du mapping et publier cette
+   configuration. La migration des manifestes, le build, les gates machine et
+   la publication du code Qalem sont déjà acquis ; ils ne constituent plus le
+   verrou de la story.
+
+Le 25 septembre, la route Qalem publiée refuse correctement une requête anonyme
+avec HTTP 401. Depuis ServeurIA, l’origine Diwan répond elle aussi HTTP 401 en
+0,397 seconde, avec vérification TLS réussie. Le contrat local est inchangé :
+commit `d3d9103800d6a49c4f577701b6fd2bf917f4f8f9`, SHA-256
+`559952437d0802ae2150b3add557250c7aba5701aa245e05a525e0e1fdf952c2`.
+Ces refus prouvent l’exposition et la fermeture anonyme, pas l’accès autorisé.
 
 ## Complément — Alignement et contradictions
 

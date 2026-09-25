@@ -2394,7 +2394,7 @@
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Adaptateur Qalem, références versionnées, résolution serveur et sélecteur/import/suivi Diwan FR/AR/EN codés. Session finale ServeurIA 13788 exit 0 : TypeScript, lint, 53 tests ciblés et 4 parcours Diwan ; 18 parcours Diwan/sources locales verts dans 58387. Tests avec API simulées, pas une recette authentifiée. Jeton interservice dédié et mapping tenant non retrouvés dans l’index consulté ; migration uniquement testée avec ROLLBACK. Recette réelle, gate global et publication restent ouverts. Le mandat n’autorise pas une mutation de Diwan.",
+      "gap": "Adaptateur Qalem, références versionnées, résolution serveur et sélecteur/import/suivi Diwan FR/AR/EN codés, migrés, qualifiés et publiés. Au 25 septembre, le conteneur web de production au SHA 124077344522f56f2909fcc434f7788e417b634e ne contient aucun QALEM_DIWAN_TENANT_TOKENS ; l’index du coffre ne contient aucun jeton consommateur Qalem dédié. Les routes Qalem et Diwan refusent correctement l’anonyme en HTTP 401, mais aucune recette authentifiée réelle n’est possible. Restent le jeton interservice dédié, son mapping tenant, la recette réelle import/suivi/provenance/refus croisé/indisponibilité/révocation et le rejeu intégré après configuration. Le mandat n’autorise pas une mutation de Diwan.",
       "evidence": [
         "thread:019f6d49-52ed-7ee2-aca0-466c8b675d00/019ffc8f-65d2-77d0-90bf-f0f4315d4fd1",
         "app/api/parse-document/route.ts",
