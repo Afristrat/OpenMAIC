@@ -2,7 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { Organization, OrgMemberRole } from '@/lib/supabase/types';
-import { readTestedTenantId } from '@/lib/organizations/tenant-test-session';
+import {
+  beginTenantTest,
+  clearTenantTestSession,
+  readTestedTenantId,
+} from '@/lib/organizations/tenant-test-session';
 
 interface OrganizationWithRole extends Organization {
   userRole: OrgMemberRole;
@@ -78,6 +82,11 @@ export function useOrganizations(): UseOrganizationsReturn {
         ? orgs.find((organization) => organization.id === requestedOrgId)
         : undefined;
       if (requestedOrganization) {
+        if (requestedOrganization.isDirectMember) {
+          clearTenantTestSession();
+        } else {
+          beginTenantTest(requestedOrganization.id);
+        }
         setCurrentOrgState(requestedOrganization);
         localStorage.setItem(CURRENT_ORG_KEY, requestedOrganization.id);
         return;
