@@ -16,8 +16,9 @@ import { buildToolset } from '@/lib/agent/tools/registry';
 import { callLLM } from '@/lib/ai/llm';
 import { createLogger } from '@/lib/logger';
 import type { SceneContextMap } from '@/lib/agent/scene-context-map';
-import { requireSuperAdminOrOrgAuthor } from '@/lib/api/auth';
+import { requireSuperAdminOrOrgEditor } from '@/lib/api/auth';
 import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
+import { readClassroomOwnership } from '@/lib/server/classroom-storage';
 
 const log = createLogger('MAIC Agent');
 
@@ -33,7 +34,7 @@ export const maxDuration = 300;
  * server never has to access a (non-existent) server-side scene store.
  */
 interface AgentEditBody {
-  orgId?: string;
+  classroomId?: string;
   message: string;
   scene?: { id: string; title: string };
   /**
@@ -87,9 +88,16 @@ export async function POST(req: NextRequest) {
   if (!message) {
     return new Response('message is required', { status: 400 });
   }
-  const orgId = typeof body.orgId === 'string' ? body.orgId.trim() : '';
-  if (!orgId) return new Response('Organization is required', { status: 400 });
-  const auth = await requireSuperAdminOrOrgAuthor(req, orgId);
+  const classroomId = typeof body.classroomId === 'string' ? body.classroomId.trim() : '';
+  if (!classroomId) return new Response('Classroom is required', { status: 400 });
+  const ownership = await readClassroomOwnership(classroomId);
+  if (!ownership) return new Response('Classroom not found', { status: 404 });
+  const auth = await requireSuperAdminOrOrgEditor(
+    req,
+    ownership.orgId,
+    ownership.ownerId,
+    classroomId,
+  );
   if (auth.response) return auth.response;
 
   // Resolve via the 'maic-agent' stage so operators can route the editor agent
@@ -168,13 +176,15 @@ export async function POST(req: NextRequest) {
     tools,
     history: toHistoryMessages(body.history),
   });
-  log.info(`agent edit turn [model=${modelString}] scene=${body.scene?.id ?? 'none'}`);
+  log.info(
+    `agent edit turn [model=${modelString}] classroom=${classroomId} scene=${body.scene?.id ?? 'none'}`,
+  );
 
   const encoder = new TextEncoder();
   const stream = runWithUsageMeteringContext(
     req.headers,
     auth.user.id,
-    orgId,
+    ownership.orgId,
     () =>
       new ReadableStream({
         async start(controller) {
