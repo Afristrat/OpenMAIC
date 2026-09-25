@@ -1272,3 +1272,7 @@ Le checkout propriétaire Diwan est toujours sur `feat/qalem-document-provider-v
 ## 25 septembre 2026 — S-020 Blocage Notion vérifié dans Diwan
 
 La recherche fraîche du checkout propriétaire Diwan au commit `d3d9103800d6a49c4f577701b6fd2bf917f4f8f9` trouve zéro occurrence Notion dans l’application, l’API, les tests et le contrat Qalem. Diwan ne fournit donc ni connexion OAuth Notion, ni recherche ou lecture de page, ni correspondance native page/version vers corpus/source/version. S-020 reste `blocked` et `passes=false` ; le consommateur générique Qalem est livré, mais un import manuel d’URL ou de fichier ne satisfait pas l’intégration demandée. Aucun fichier Diwan n’a été modifié.
+
+## 25 septembre 2026 — S-021 Blocage Google Drive vérifié dans Diwan
+
+La recherche fraîche du checkout propriétaire Diwan au commit `d3d9103800d6a49c4f577701b6fd2bf917f4f8f9` ne trouve aucune intégration Google Drive dans l’application, l’API, les tests ou le contrat Qalem. L’unique usage `google.oauth2` sert à tester les credentials Vertex ; il ne donne aucun accès Drive. Diwan ne fournit donc ni connexion OAuth Drive, ni recherche ou lecture de Google Docs, Slides ou PDF, ni correspondance native fichier/version vers corpus/source/version. S-021 reste `blocked` et `passes=false` ; un import manuel ne satisfait pas l’intégration demandée. Aucun fichier Diwan n’a été modifié.
