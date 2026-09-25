@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
 import type { LearningApproach } from '@/lib/agents/persona-catalog';
 
-export const ANCHOR_SEED_PROMPT_VERSION = 'P3-B-v12';
+export const ANCHOR_SEED_PROMPT_VERSION = 'P3-B-v13';
 export const ANCHOR_SEED_TEMPERATURE = 0.8;
 
 export const anchorSeedMoves = [
@@ -98,6 +98,10 @@ function searchableTokens(value: unknown): string[] {
 function meaningfulBigrams(value: unknown): Set<string> {
   const tokens = searchableTokens(value);
   return new Set(tokens.slice(0, -1).map((token, index) => `${token} ${tokens[index + 1]}`));
+}
+
+function distinctiveEventTokens(value: unknown, sourceTokens: ReadonlySet<string>): Set<string> {
+  return new Set(searchableTokens(value).filter((token) => !sourceTokens.has(token)));
 }
 
 function numericTokensFromStrings(value: unknown, output = new Set<string>()): Set<string> {
@@ -223,6 +227,20 @@ export function parseSeedStock(
     if (contaminatedBigram) {
       throw new Error(`Seed content leaks another event: ${contaminatedBigram}`);
     }
+    const seedTokens = new Set(searchableTokens([seed.content.push_hook, seed.content.body]));
+    const contaminatedEvent = context.events
+      .filter((event) => event.id !== sourceEvent.id)
+      .map((event) => ({
+        overlap: [...distinctiveEventTokens(event.payload, sourceTokens)].filter((token) =>
+          seedTokens.has(token),
+        ),
+      }))
+      .find(({ overlap }) => overlap.length >= 2);
+    if (contaminatedEvent) {
+      throw new Error(
+        `Seed content leaks another event: ${contaminatedEvent.overlap.slice(0, 2).join(' ')}`,
+      );
+    }
     const hookSignature = searchableTokens(seed.content.push_hook).join(' ');
     if (hookSignatures.has(hookSignature)) throw new Error('Duplicate seed hook');
     hookSignatures.add(hookSignature);
@@ -271,7 +289,7 @@ export function buildSeedStockPrompt(input: {
 export const ANCHOR_SEED_SYSTEM_PROMPT = `Tu es directeur éditorial de relances post-formation. Tu écris avec du nerf, du contraste et du rythme, sans sacrifier la fidélité factuelle.
 À partir du résumé de session fourni, génère un stock de graines d'ancrage mémoriel.
 Chaque graine est signée par une personnalité du casting, respecte son rôle, son mécanisme et sa persona, et cite une scene_ref fournie. Elle doit aussi déclarer l'identifiant exact de l'événement qui fonde la relance et la catégorie fournie par le serveur. N'évoque jamais un fait, une réponse ou une question qui n'est pas dans cet événement, même si ce fait apparaît ailleurs dans la même session. Une graine joke est toujours signée par une persona dont mechanismId vaut joker lorsqu'elle existe dans le casting ; un coach ou un analyste ne change jamais de persona pour satisfaire la distribution. La catégorie indique l'origine : learner_proposition est une parole de l'apprenant ; agent_proposition est une proposition d'agent ; content_presented est un contenu affiché ; new_question est une question nouvellement proposée. Ces quatre origines ne sont jamais interchangeables.
-Avant de rédiger chaque graine, isole son événement de provenance et ignore tous les autres. Chaque groupe nominal qui affirme un fait doit être présent dans le payload de cet événement. Les marqueurs de fréquence « chaque », « quotidien », « hebdomadaire », « mensuel », « annuel », « every », « each » et « كل » sont interdits sauf s'ils figurent explicitement dans ce même payload. Une proposition d'action peut être nouvelle, mais elle ne doit introduire aucun objet, cadence, quantité, contexte ou contrainte factuelle absent de cet événement.
+Avant de rédiger chaque graine, isole son événement de provenance et ignore tous les autres. Chaque groupe nominal qui affirme un fait doit être présent dans le payload de cet événement. Les marqueurs de fréquence « chaque », « quotidien », « hebdomadaire », « mensuel », « annuel », « every », « each » et « كل » sont interdits sauf s'ils figurent explicitement dans ce même payload. Une proposition d'action peut être nouvelle, mais elle ne doit introduire aucun objet, cadence, quantité, contexte ou contrainte factuelle absent de cet événement. Formule toute action nouvelle comme un test à mener ou une question à trancher, jamais comme un résultat déjà établi. N'affirme aucune conséquence, causalité, priorité relative, solidité, fragilité, diagnostic ou attribut qui ne figure pas explicitement dans l'événement source. Ainsi, « Testez X et observez ce qui change » est recevable ; « X révèle la faiblesse, décide de la marge ou mérite moins d'attention » est refusé si l'événement ne le dit pas.
 Respecte strictement learning_approach :
 - andragogy : adulte traité en pair autonome ; partir de son expérience, de ses problèmes réels et d'un transfert immédiatement applicable ; bannir tout ton scolaire, infantilisant ou toute félicitation vague ;
 - pedagogy : guidage explicite, progression structurée et étayage adapté à un apprenant qui a besoin d'être accompagné ;

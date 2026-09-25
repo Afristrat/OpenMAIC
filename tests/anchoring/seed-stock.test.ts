@@ -82,6 +82,9 @@ describe('anchoring seed stock', () => {
     );
     expect(ANCHOR_SEED_SYSTEM_PROMPT).toContain('du nerf, du contraste et du rythme');
     expect(ANCHOR_SEED_SYSTEM_PROMPT).toContain("Une paraphrase n'est pas une variation");
+    expect(ANCHOR_SEED_SYSTEM_PROMPT).toContain(
+      "N'affirme aucune conséquence, causalité, priorité relative",
+    );
     expect(ANCHOR_SEED_TEMPERATURE).toBe(0.8);
     expect(
       buildSeedStockPrompt({
@@ -348,6 +351,37 @@ describe('anchoring seed stock', () => {
         sceneRefs: ['scene-1'],
       }),
     ).toThrow('Seed content leaks another event: couts recurrents');
+  });
+
+  it('refuse deux concepts non adjacents provenant d’un autre événement', () => {
+    const contaminated = valid.map((seed, index) =>
+      index === 0
+        ? {
+            ...seed,
+            content: {
+              ...seed.content,
+              body: 'Confronte maintenant ton hypothèse au scénario le plus haut.',
+            },
+          }
+        : seed,
+    );
+    expect(() =>
+      parseSeedStock(JSON.stringify(contaminated), {
+        learningApproach: 'andragogy',
+        events: [
+          ...recordedEvents,
+          {
+            id: '2',
+            actor: 'user',
+            event_type: 'learner_response',
+            payload: { utterance: 'Je compare une hypothèse basse avec une hypothèse haute.' },
+            ts_ms: 31,
+          },
+        ],
+        personas: ['Penseur', 'Analyste'],
+        sceneRefs: ['scene-1'],
+      }),
+    ).toThrow('Seed content leaks another event');
   });
 
   it('accepte une expression d’action qui partage le sujet de l’événement source', () => {
