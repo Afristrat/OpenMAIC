@@ -178,11 +178,17 @@ export function parseSeedStock(
       throw new Error(`Temporal claim absent from session: ${inventedTemporalMarker}`);
     }
     const sourceBigrams = meaningfulBigrams(sourceEvent.payload);
+    const sourceTokens = new Set(searchableTokens(sourceEvent.payload));
     const seedBigrams = meaningfulBigrams([seed.content.push_hook, seed.content.body]);
     const contaminatedBigram = context.events
       .filter((event) => event.id !== sourceEvent.id)
       .flatMap((event) => [...meaningfulBigrams(event.payload)])
-      .find((bigram) => !sourceBigrams.has(bigram) && seedBigrams.has(bigram));
+      .find(
+        (bigram) =>
+          !sourceBigrams.has(bigram) &&
+          bigram.split(' ').every((token) => !sourceTokens.has(token)) &&
+          seedBigrams.has(bigram),
+      );
     if (contaminatedBigram) {
       throw new Error(`Seed content leaks another event: ${contaminatedBigram}`);
     }

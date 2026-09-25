@@ -289,4 +289,32 @@ describe('anchoring seed stock', () => {
       }),
     ).toThrow('Seed content leaks another event: couts recurrents');
   });
+
+  it('accepte une expression d’action qui partage le sujet de l’événement source', () => {
+    const nextBudgetAction = valid.map((seed, index) =>
+      index === 0
+        ? { ...seed, content: { ...seed.content, body: 'Reprends ce délai dans ton prochain budget.' } }
+        : seed,
+    );
+    expect(
+      parseSeedStock(JSON.stringify(nextBudgetAction), {
+        learningApproach: 'andragogy',
+        events: [
+          {
+            ...recordedEvents[0],
+            payload: { utterance: 'Le délai de ce budget était de 30 jours.' },
+          },
+          {
+            id: '2',
+            actor: 'user',
+            event_type: 'learner_response',
+            payload: { utterance: 'Pour mon prochain budget, je testerai les hypothèses.' },
+            ts_ms: 31,
+          },
+        ],
+        personas: ['Penseur', 'Analyste'],
+        sceneRefs: ['scene-1'],
+      }),
+    ).toHaveLength(12);
+  });
 });
