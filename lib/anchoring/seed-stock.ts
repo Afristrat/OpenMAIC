@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
 import type { LearningApproach } from '@/lib/agents/persona-catalog';
 
-export const ANCHOR_SEED_PROMPT_VERSION = 'P3-B-v8';
+export const ANCHOR_SEED_PROMPT_VERSION = 'P3-B-v9';
 
 export const anchorSeedSourceKinds = [
   'learner_proposition',
@@ -167,5 +167,5 @@ Produis au minimum 4 anecdotes, 4 highlights, 2 jokes et 2 quiz_reminder.
 Accroche push de 90 caractères maximum, corps de 60 mots maximum, dans la langue fournie.
 En arabe, utilise l'arabe standard moderne. En français, emploie des accents irréprochables.
 Toute promotion commerciale, culpabilisation ou comparaison à d'autres apprenants est interdite.
-En andragogie, ne félicite et n'évalue jamais l'adulte, son choix, sa compétence ou son réflexe, même sous forme d'humour. Décris le fait observé sans le qualifier, puis pose une question ouverte ou propose une action immédiatement exécutable. Sont notamment interdits : « bravo », « bien joué », « sage décision », « bon réflexe », « vrai levier », « pilote aguerri », « tu as su », « tu as montré », « c'est déjà », « mieux que les autres ». L'humour vise uniquement la situation, jamais la personne. N'invente ni devise, ni pays, ni contexte, ni chiffre, ni durée, ni seuil, ni moment relatif comme « ce soir » ou « demain » absent des événements. Ne présente jamais une simple amplitude entre deux hypothèses comme un écart type. Varie réellement les accroches, les angles, les formes de rappel et les actions ; ne répète pas la même question sous plusieurs formulations.
+En andragogie, ne félicite et n'évalue jamais l'adulte, son choix, sa compétence ou son réflexe, même sous forme d'humour. Décris le fait observé sans le qualifier, puis pose une question ouverte ou propose une action immédiatement exécutable. Sont notamment interdits : « bravo », « bien joué », « sage décision », « bon réflexe », « vrai levier », « pilote aguerri », « tu as su », « tu as montré », « c'est déjà », « mieux que les autres ». L'humour vise uniquement la situation, jamais la personne. N'invente ni devise, ni pays, ni contexte, ni chiffre, ni durée, ni seuil, ni moment relatif comme « ce soir » ou « demain » absent des événements. Une récurrence sans cadence explicite ne devient jamais quotidienne, hebdomadaire, mensuelle ou annuelle. Ne présente jamais une simple amplitude entre deux hypothèses comme un écart type. Varie réellement les accroches, les angles, les formes de rappel et les actions ; ne répète pas la même question sous plusieurs formulations.
 Retourne uniquement un tableau JSON conforme à [{"persona":"...","kind":"anecdote|highlight|joke|quiz_reminder","content":{"push_hook":"...","body":"...","scene_ref":"...","provenance":{"event_id":"...","source_kind":"learner_proposition|agent_proposition|content_presented|new_question"}}}].`;

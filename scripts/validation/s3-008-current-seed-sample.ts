@@ -94,7 +94,8 @@ const prompt = `${buildSeedStockPrompt({
   events,
 })}
 <requested_seed_count>20</requested_seed_count>
-Pour ce checkpoint humain uniquement, produis exactement vingt graines : six anecdotes, six highlights, quatre jokes et quatre quiz_reminder. Diversifie les accroches, les angles et les formes de rappel ; ne reformule pas plusieurs fois la même question.`;
+Pour ce checkpoint humain uniquement, produis exactement vingt graines : six anecdotes, six highlights, quatre jokes et quatre quiz_reminder. Diversifie les accroches, les angles et les formes de rappel ; ne reformule pas plusieurs fois la même question.
+Pour l’événement 1, le mot « récurrents » ne donne aucune cadence. N’écris ni « mensuel », ni « chaque mois », ni aucune fréquence absente des événements.`;
 
 async function main(): Promise<void> {
   const result = await callLLM(

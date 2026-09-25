@@ -51,6 +51,9 @@ describe('anchoring seed stock', () => {
     expect(ANCHOR_SEED_SYSTEM_PROMPT).toContain('adulte traité en pair autonome');
     expect(ANCHOR_SEED_SYSTEM_PROMPT).toContain('pedagogy : guidage explicite');
     expect(ANCHOR_SEED_SYSTEM_PROMPT).toContain('respecte son rôle, son mécanisme et sa persona');
+    expect(ANCHOR_SEED_SYSTEM_PROMPT).toContain(
+      'Une récurrence sans cadence explicite ne devient jamais quotidienne',
+    );
     expect(
       buildSeedStockPrompt({
         language: 'fr-FR',
