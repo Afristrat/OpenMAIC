@@ -127,7 +127,8 @@ describe('course resume deliveries', () => {
         body: 'Une activité vous attend.',
         targetUrl:
           `/app?learnerResumeCourseId=${delivery.course_id}` +
-          '&learnerResumeOrgId=00000000-0000-4000-8000-000000000004',
+          '&learnerResumeOrgId=00000000-0000-4000-8000-000000000004' +
+          `&learnerResumeDeliveryId=${delivery.id}`,
       }),
     );
     expect(complete.update).toHaveBeenCalledWith({ sent_at: expect.any(String) });

@@ -231,6 +231,7 @@ function HomePage() {
   const [learnerResumeTarget, setLearnerResumeTarget] = useState<{
     courseId: string;
     orgId: string;
+    deliveryId: string;
   } | null>(null);
   const [resuming, setResuming] = useState(false);
   const [resumePlanRecovered, setResumePlanRecovered] = useState(false);
@@ -244,9 +245,10 @@ function HomePage() {
       orgId: params.get('resumeOrgId'),
     });
     if (authorTarget.success) setResumeTarget(authorTarget.data);
-    const learnerTarget = targetSchema.safeParse({
+    const learnerTarget = targetSchema.extend({ deliveryId: z.string().uuid() }).safeParse({
       courseId: params.get('learnerResumeCourseId'),
       orgId: params.get('learnerResumeOrgId'),
+      deliveryId: params.get('learnerResumeDeliveryId'),
     });
     if (learnerTarget.success) setLearnerResumeTarget(learnerTarget.data);
   }, []);
@@ -281,6 +283,12 @@ function HomePage() {
             }),
           })
           .parse(await response.json());
+        const openingResponse = await fetch(
+          `/api/learner-courses/${encodeURIComponent(learnerResumeTarget.courseId)}` +
+            `/resume-deliveries/${encodeURIComponent(learnerResumeTarget.deliveryId)}/open`,
+          { method: 'POST', signal: controller.signal },
+        );
+        if (!openingResponse.ok) throw new Error('Learner resume opening could not be recorded');
         sessionStorage.setItem(
           `learner-course-resume:${learnerResumeTarget.courseId}:${payload.target.sceneId}`,
           JSON.stringify({

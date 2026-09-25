@@ -12,6 +12,11 @@ const recordSchema = z.object({
   positionMs: z.number().int().min(0),
 });
 const lookupSchema = recordSchema.pick({ actorId: true, courseId: true, orgId: true });
+const deliverySchema = z.object({
+  actorId: z.string().uuid(),
+  courseId: z.string().uuid(),
+  deliveryId: z.string().uuid(),
+});
 
 export class LearnerCourseResumeAccessError extends Error {
   constructor() {
@@ -64,4 +69,18 @@ export async function completeLearnerCourseResume(input: z.input<typeof lookupSc
   if (result.error?.code === '42501') throw new LearnerCourseResumeAccessError();
   if (result.error || !result.data) throw new Error('Learner resume could not be completed');
   return result.data;
+}
+
+export async function markLearnerCourseResumeDeliveryOpened(
+  input: z.input<typeof deliverySchema>,
+): Promise<void> {
+  const value = deliverySchema.parse(input);
+  const result = await createServiceSupabaseClient()
+    .rpc('mark_course_resume_delivery_opened', {
+      target_user_id: value.actorId,
+      target_course_id: value.courseId,
+      target_delivery_id: value.deliveryId,
+    })
+    .abortSignal(AbortSignal.timeout(5000));
+  if (result.error || result.data !== true) throw new LearnerCourseResumeAccessError();
 }

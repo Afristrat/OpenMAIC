@@ -9,6 +9,7 @@ vi.mock('@/lib/supabase/service', () => ({
 import {
   LearnerCourseResumeAccessError,
   completeLearnerCourseResume,
+  markLearnerCourseResumeDeliveryOpened,
   resolveLearnerCourseResume,
   saveLearnerCourseResume,
 } from '@/lib/server/learner-course-resume';
@@ -86,6 +87,24 @@ describe('learner course resume boundary', () => {
       p_actor: input.actorId,
       p_course: input.courseId,
       p_org: input.orgId,
+    });
+  });
+
+  it('records an opening only for the authenticated learner delivery', async () => {
+    const deliveryId = '00000000-0000-4000-8000-000000000004';
+    mocks.abortSignal.mockResolvedValueOnce({ data: true, error: null });
+
+    await expect(
+      markLearnerCourseResumeDeliveryOpened({
+        actorId: input.actorId,
+        courseId: input.courseId,
+        deliveryId,
+      }),
+    ).resolves.toBeUndefined();
+    expect(mocks.rpc).toHaveBeenCalledWith('mark_course_resume_delivery_opened', {
+      target_user_id: input.actorId,
+      target_course_id: input.courseId,
+      target_delivery_id: deliveryId,
     });
   });
 });

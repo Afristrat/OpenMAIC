@@ -111,7 +111,8 @@ export async function deliverCourseResumeDelivery(deliveryId: string): Promise<v
     body: 'Une activité vous attend.',
     targetUrl:
       `/app?learnerResumeCourseId=${encodeURIComponent(delivery.course_id)}` +
-      `&learnerResumeOrgId=${encodeURIComponent(resume.org_id)}`,
+      `&learnerResumeOrgId=${encodeURIComponent(resume.org_id)}` +
+      `&learnerResumeDeliveryId=${encodeURIComponent(delivery.id)}`,
     tag: `course-resume-delivery-${delivery.id}`,
   });
   if (!results.some((result) => result.status === 'accepted')) {

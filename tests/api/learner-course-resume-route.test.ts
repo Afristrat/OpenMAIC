@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   save: vi.fn(),
   resolve: vi.fn(),
   complete: vi.fn(),
+  markOpened: vi.fn(),
 }));
 
 vi.mock('@/lib/api/auth', () => ({ requireAuth: mocks.requireAuth }));
@@ -14,6 +15,7 @@ vi.mock('@/lib/server/learner-course-resume', async () => {
   return {
     LearnerCourseResumeAccessError,
     completeLearnerCourseResume: mocks.complete,
+    markLearnerCourseResumeDeliveryOpened: mocks.markOpened,
     saveLearnerCourseResume: mocks.save,
     resolveLearnerCourseResume: mocks.resolve,
   };
@@ -22,10 +24,12 @@ vi.mock('@/lib/server/learner-course-resume', async () => {
 import { POST } from '@/app/api/learner-courses/[courseId]/resume/route';
 import { GET } from '@/app/api/learner-courses/[courseId]/resume-target/route';
 import { POST as complete } from '@/app/api/learner-courses/[courseId]/complete/route';
+import { POST as markOpened } from '@/app/api/learner-courses/[courseId]/resume-deliveries/[deliveryId]/open/route';
 
 const courseId = '00000000-0000-4000-8000-000000000001';
 const orgId = '00000000-0000-4000-8000-000000000002';
 const userId = '00000000-0000-4000-8000-000000000003';
+const deliveryId = '00000000-0000-4000-8000-000000000004';
 
 describe('learner course resume API', () => {
   beforeEach(() => {
@@ -43,6 +47,7 @@ describe('learner course resume API', () => {
       course_id: courseId,
       completed_at: '2026-09-13T22:00:00.000Z',
     });
+    mocks.markOpened.mockResolvedValue(undefined);
   });
 
   it('records only an authenticated, same-origin learner position', async () => {
@@ -96,5 +101,18 @@ describe('learner course resume API', () => {
     );
     expect(response.status).toBe(200);
     expect(mocks.complete).toHaveBeenCalledWith({ actorId: userId, courseId, orgId });
+  });
+
+  it('records the authenticated opening of the exact delivered reminder', async () => {
+    const response = await markOpened(
+      new NextRequest(
+        `https://qalem.ma/api/learner-courses/${courseId}/resume-deliveries/${deliveryId}/open`,
+        { method: 'POST', headers: { origin: 'https://qalem.ma' } },
+      ),
+      { params: Promise.resolve({ courseId, deliveryId }) },
+    );
+
+    expect(response.status).toBe(204);
+    expect(mocks.markOpened).toHaveBeenCalledWith({ actorId: userId, courseId, deliveryId });
   });
 });

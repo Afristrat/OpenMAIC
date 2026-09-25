@@ -1077,6 +1077,10 @@ export interface Database {
         Args: { p_actor: string; p_course: string; p_org: string };
         Returns: LearnerCourseResume;
       };
+      mark_course_resume_delivery_opened: {
+        Args: { target_user_id: string; target_course_id: string; target_delivery_id: string };
+        Returns: boolean;
+      };
     };
     Enums: Record<string, never>;
   };
