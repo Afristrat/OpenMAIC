@@ -293,7 +293,10 @@ describe('anchoring seed stock', () => {
   it('accepte une expression d’action qui partage le sujet de l’événement source', () => {
     const nextBudgetAction = valid.map((seed, index) =>
       index === 0
-        ? { ...seed, content: { ...seed.content, body: 'Reprends ce délai dans ton prochain budget.' } }
+        ? {
+            ...seed,
+            content: { ...seed.content, body: 'Reprends ce délai dans ton prochain budget.' },
+          }
         : seed,
     );
     expect(
