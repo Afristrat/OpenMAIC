@@ -1,7 +1,7 @@
 # PRD 3 — Réconciliation actuelle
 
-Date de mise à jour : 26 septembre 2026  
-Branche : `refork-v030`  
+Date de mise à jour : 26 septembre 2026
+Branche : `refork-v030`
 Commit fonctionnel déployé : `0a15d648fcb20061ccfa79059d0d68cdec6e7bfb`
 
 ## État réel
