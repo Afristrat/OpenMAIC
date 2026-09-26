@@ -41,6 +41,21 @@ async function installMicrophone(page: HomePage['page'], permissionGranted = tru
         },
       });
 
+      class FakeAudioContext {
+        async decodeAudioData() {
+          return {
+            sampleRate: 16000,
+            length: 2,
+            numberOfChannels: 1,
+            getChannelData: () => new Float32Array([0.25, -0.25]),
+          } as AudioBuffer;
+        }
+
+        async close() {}
+      }
+
+      window.AudioContext = FakeAudioContext as unknown as typeof AudioContext;
+
       class FakeMediaRecorder {
         static isTypeSupported(type: string) {
           return type === 'audio/webm;codecs=opus';
