@@ -6,7 +6,7 @@
   "description": "Référence active unique pour tous les restes identifiés de Qalem. Les critères v2 et les capacités v1 sont tracés sans transformer une acceptation historique en certification actuelle. Ce PRD planifie ; il n’exécute ni n’autorise automatiquement les mutations bloquées.",
   "reconciledAt": "2026-09-25",
   "inspectedCommit": "3c2dedf0be6fc5a4f53b80b6a5d99388c7f906fa",
-  "reconciliationNote": "Réconciliation fraîche du registre après certification de S6-009 : 84 stories, 71 completed/passes=true et 13 ouvertes/passes=false. Les neuf stories to_validate exigent désormais uniquement une observation humaine, un destinataire réel ou un appareil physique. Quatre stories blocked dépendent du contrat ou des connecteurs Diwan. Les preuves et le détail des résidus sont consignés dans docs/validation/PRD3-reconciliation-2026-09-25.md.",
+  "reconciliationNote": "Réconciliation fraîche du registre après validation RTL S0-012 : 84 stories, 72 completed/passes=true et 12 ouvertes/passes=false. Les huit stories to_validate exigent désormais uniquement un destinataire réel ou un appareil physique. Quatre stories blocked dépendent du contrat ou des connecteurs Diwan. Les preuves et le détail des résidus sont consignés dans docs/validation/PRD3-reconciliation-2026-09-25.md.",
   "supersedes": ".ralph/prd-v2.json",
   "scope": {
     "included": [
@@ -3082,8 +3082,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « [CHECKPOINT AMINE] Parcours guidé passe RTL ar-MA [UI] » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "0-SOCLE",
       "priority": "P1",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S0-012",
@@ -3091,7 +3091,7 @@
       },
       "sourceDependencies": ["S0-008"],
       "dependencies": [],
-      "gap": "Checklist présente ; ne pas substituer une suite automatique au verdict RTL humain requis.",
+      "gap": "Soldé le 26 septembre 2026 : checklist livrée, quatre surfaces prioritaires recettées en production et verdict RTL explicite d’Amine consigné.",
       "evidence": ["docs/foundation/0-socle/checklist-rtl.md"],
       "acceptance": [
         "checklist-rtl.md livré (écrans, points de contrôle)",
@@ -3099,7 +3099,8 @@
       ],
       "closureEvidence": [
         "2026-09-26 — Préparation machine élargie au SHA 0a15d648fcb20061ccfa79059d0d68cdec6e7bfb : /app, /settings, /admin et l’administration Human Yo Impact répondent 200 en ar-MA, exposent dir=rtl et lang=ar-MA, sans débordement horizontal (1585/1585 px). La flèche de retour du tenant a été corrigée pour pointer vers la droite en RTL ; quatre captures et leurs SHA-256 sont consignés dans docs/validation/S0-012-rtl-production-preparation-2026-09-26.md.",
-        "2026-09-26 — Gate exact avant déploiement : Prettier, TypeScript, ESLint, 3 402 tests Vitest, build Next.js et 200/200 Playwright. Déploiement Coolify knjgq73sc0fl6yrdarsfsbg3 terminé ; conteneur bcx5pxyuc9z3lt4jtyjipcqu-014702271694 healthy, restart=0, OOMKilled=false et /api/health HTTP 200. Le verdict humain de la checklist RTL reste volontairement requis ; passes demeure false."
+        "2026-09-26 — Gate exact avant déploiement : Prettier, TypeScript, ESLint, 3 402 tests Vitest, build Next.js et 200/200 Playwright. Déploiement Coolify knjgq73sc0fl6yrdarsfsbg3 terminé ; conteneur bcx5pxyuc9z3lt4jtyjipcqu-014702271694 healthy, restart=0, OOMKilled=false et /api/health HTTP 200. Le verdict humain de la checklist RTL reste volontairement requis ; passes demeure false.",
+        "2026-09-26 — Après affichage direct des captures /app, /settings, /admin et administration Human Yo Impact, Amine répond explicitement « je valide ». Aucun fichier fonctionnel de ces surfaces n’a changé entre le SHA des captures 0a15d648fcb20061ccfa79059d0d68cdec6e7bfb et le SHA fonctionnel courant 38e5bc87567f8f96f4fba8521d60ad02c498a7a1 ; seuls les artefacts de preuve et le parcours ASR ont évolué. La production répond HTTP 200 et le conteneur courant est running/healthy, restart=0, OOMKilled=false. S0-012 est certifiée."
       ],
       "historicalEvidence": {
         "completedAt": null,
@@ -3107,6 +3108,7 @@
         "status": "historical_not_recertified"
       },
       "historicalDependencies": ["S0-008"],
+      "completedAt": "2026-09-26",
       "executionAllowed": true,
       "validationRequires": [
         "qualityGates",

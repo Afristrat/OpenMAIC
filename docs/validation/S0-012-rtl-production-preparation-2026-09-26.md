@@ -35,3 +35,17 @@ Le déploiement Coolify `knjgq73sc0fl6yrdarsfsbg3` a terminé sur le SHA exact. 
 ## Limite de la preuve
 
 Ces quatre captures couvrent les surfaces prioritaires et corrigent le défaut objectif trouvé pendant la recette. Elles ne remplacent pas le verdict humain obligatoire sur la checklist complète de `docs/foundation/0-socle/checklist-rtl.md`. `S0-012` reste donc `to_validate/passes=false`.
+
+## Verdict humain du 26 septembre 2026
+
+Les quatre captures ont été affichées directement à Amine, avec une demande
+explicite de jugement sur le sens, l’alignement, la navigation à droite et la
+flèche de retour. Amine répond : « je valide ».
+
+Aucun fichier fonctionnel des quatre surfaces n’a changé entre le SHA des
+captures `0a15d648fcb20061ccfa79059d0d68cdec6e7bfb` et le SHA fonctionnel courant
+`38e5bc87567f8f96f4fba8521d60ad02c498a7a1` ; seuls les artefacts de preuve et
+le parcours ASR ont évolué. La production répond HTTP 200 et son conteneur est
+`running/healthy`, sans redémarrage ni OOM.
+
+S0-012 est certifiée `completed/passes=true`.
