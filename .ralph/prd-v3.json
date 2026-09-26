@@ -2468,7 +2468,9 @@
         "Recetter un appel réel autorisé et conserver des métadonnées de preuve non sensibles.",
         "Ne pas attendre Diwan pour corriger les sources déjà disponibles dans le flux Qalem."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-26 — Préparation du checkpoint sur la production fonctionnelle f896272b165ef531231dc6c7fd2b6f93dc107f27 : Chromium ouvre /app avec locale=ar-MA ; html expose dir=rtl et lang=ar-MA, sans débordement horizontal (1585/1585 px). La navigation est à droite et le formulaire principal est réordonné en RTL. Capture docs/evidence/s0-012-rtl-app-production-2026-09-26.png, SHA-256 36613b2f5d1c3beb9aaa3feb9eadb5f4c5fcbeef0f43c549e6821695706e4aed. Cette preuve ne remplace pas le verdict humain sur les trente écrans de la checklist."
+      ],
       "historicalDependencies": [],
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],

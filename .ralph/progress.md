@@ -1339,3 +1339,7 @@ Deux recettes authentifiées éphémères ont ensuite exercé le même endpoint 
 ## 26 septembre 2026 — S0-017 sélecteur image recertifié en production
 
 Une session temporaire du super-administrateur existant a ouvert `qalem.ma/app` dans Chromium, sans création de compte ni mutation de tenant. Le menu Médias a activé la génération d’images puis affiché le sélecteur ouvert avec l’option cochée « Gemini 3.1 Flash Image (rapide) ». La capture `docs/evidence/s0-017-production-selector-2026-09-26.png` porte le SHA-256 `dcc97632a96779cb77c1c867878c8f6a054d27afa40b6119a76d1a6ad71e4c5f`. La production fonctionnelle reste `f896272b165ef531231dc6c7fd2b6f93dc107f27`, le conteneur est sain sans redémarrage et `/api/health` répond HTTP 200 avec `imageGeneration=true`. S0-017 reste `to_validate/passes=false` uniquement jusqu’au verdict visuel explicite d’Amine.
+
+## 26 septembre 2026 — S0-012 premier écran RTL préparé
+
+La recette Chromium authentifiée ouvre `/app` en `ar-MA` sur la production fonctionnelle `f896272b165ef531231dc6c7fd2b6f93dc107f27`. Le document expose `dir=rtl` et `lang=ar-MA`, la navigation est à droite, le formulaire principal est réordonné et aucune largeur horizontale excédentaire n’est mesurée (`1585/1585 px`). La capture `docs/evidence/s0-012-rtl-app-production-2026-09-26.png` porte le SHA-256 `36613b2f5d1c3beb9aaa3feb9eadb5f4c5fcbeef0f43c549e6821695706e4aed`. Il s’agit d’une préparation du premier écran P0 : le verdict humain sur la checklist complète reste obligatoire, donc S0-012 demeure `to_validate/passes=false`.
