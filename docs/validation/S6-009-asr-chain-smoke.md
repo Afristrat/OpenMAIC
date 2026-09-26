@@ -155,3 +155,30 @@ après enregistrement. Journal SHA-256 :
 La dette machine de S6-009 est donc soldée. La story reste `to_validate` pour
 les gestes sur un microphone physique et l’acceptation humaine des mesures
 FLEURS, sans inventer de seuil ni revendiquer le darija marocain.
+
+## Échec physique, cause racine et correction du 26 septembre 2026
+
+Le premier essai sur microphone physique a échoué. Les journaux du runtime
+Qalem horodatent trois réponses 500 de LiteLLM. Au même instant, le conteneur
+ASR du DGX consigne `soundfile.LibsndfileError: Format not recognised` dans
+`server_asr.py` : le navigateur envoyait un enregistrement WebM/Opus, alors
+que le serveur tentait de le lire directement avec SoundFile. Les conteneurs
+étaient sains, sans redémarrage ni OOM. Envoyé séparément aux trois modèles
+LiteLLM, un WAV réel a reçu HTTP 200 et la transcription française attendue.
+
+La frontière client normalise désormais les enregistrements destinés à
+`openai-whisper` en WAV mono avant l’envoi. Le test de régression a d’abord
+échoué parce que le WebM était transmis intact, puis les 30 tests ASR ciblés
+et les trois parcours microphone Playwright ont réussi après correction.
+
+La gate complète du SHA
+`38e5bc87567f8f96f4fba8521d60ad02c498a7a1` passe Prettier, TypeScript,
+ESLint, 3 403 tests Vitest, le build de 127 routes et 200 parcours Playwright.
+Le déploiement Coolify `e8wahh4zcblarcwh105x5hwq` est terminé. Le conteneur
+`bcx5pxyuc9z3lt4jtyjipcqu-100015285293` sert exactement ce SHA, est
+`healthy`, compte zéro redémarrage, porte `OOMKilled=false` et
+`/api/health` répond HTTP 200.
+
+Cette correction solde le défaut de format observé. S6-009 reste
+`to_validate/passes=false` jusqu’au nouvel essai physique et aux autres gestes
+humains explicitement prévus par la story.

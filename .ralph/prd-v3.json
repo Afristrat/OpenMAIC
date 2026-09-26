@@ -2393,13 +2393,15 @@
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "La parole humaine FLEURS FR/arabe standard/EN est mesurée dans le runtime public sur extraits courts et longs ; la route Qalem → LiteLLM Hostinger → DGX par Tailscale est attestée et le DGX répond encore HTTP 200 depuis Hostinger le 16 septembre. Restent les essais physiques non substituables : microphone navigateur, refus d’autorisation, fichier invalide, panne amont visible et acceptation humaine des résultats. Aucun verdict n’est inféré pour le darija marocain ni pour le TTS.",
+      "gap": "La parole humaine FLEURS FR/arabe standard/EN est mesurée dans le runtime public sur extraits courts et longs ; la route Qalem → LiteLLM Hostinger → DGX par Tailscale est attestée. L’échec physique du 26 septembre a révélé que le navigateur envoyait du WebM/Opus au serveur DGX, dont le décodeur SoundFile n’acceptait pas ce conteneur. Qalem normalise désormais les enregistrements openai-whisper en WAV avant l’envoi ; le correctif est déployé et les parcours machine passent. Restent le nouvel essai physique microphone, le refus d’autorisation, le fichier invalide, la panne amont visible et l’acceptation humaine des résultats. Aucun verdict n’est inféré pour le darija marocain ni pour le TTS.",
       "evidence": [
         "app/api/transcription/route.ts",
         "lib/audio/asr-providers.ts",
         "lib/audio/asr-utils.ts",
+        "lib/audio/wav-utils.ts",
         "lib/hooks/use-audio-recorder.ts",
         "e2e/tests/asr-microphone-flow.spec.ts",
+        "tests/audio/wav-utils.test.ts",
         "tests/audio/openai-whisper-asr.test.ts",
         "commit:f124ac7602d02c9a964fdac9a106f44bb1193735",
         "thread:01a005ad-360e-7710-aeb5-bf5fc84c67b6/2026-08-20",
@@ -2419,7 +2421,8 @@
         "2026-09-15 — Recette authentifiée de parole humaine FLEURS dans le runtime public : `openai-whisper` répond 200 à six extraits courts et longs (6 à 16,38 secondes) en français, arabe standard et anglais. Erreurs de mots mesurées : français 0 %/0 %, arabe standard 6,25 %/14,29 %, anglais 0 %/15,15 % ; latences 1 570 à 1 797 ms. Le compte et le tenant temporaires sont supprimés ; aucun fichier audio n’est persistant. Preuve : docs/validation/S6-009-fleurs-human-speech-production.md. Le même jour, Hostinger a atteint les deux pairs DGX par Tailscale ; Cloudflare est retiré de la topologie cible. S6-009 reste `to_validate` : microphone réel, refus/panne et attestation explicite LiteLLM → DGX par Tailscale sont toujours exigés.",
         "2026-09-16 — Contrôle direct depuis Hostinger : Tailscale Running, trois pings réussis vers chacun des deux pairs DGX (45 ms répétés vers le premier ; 67 à 127 ms vers le second) via DERP. LiteLLM est healthy et la clé virtuelle Qalem expose qwen3-asr, whisper-1 et whisper-large-v3. Le diagnostic a trouvé l’API ASR FastAPI du DGX sur le port 8003, accessible par Tailscale ; les trois api_base LiteLLM persistantes ont été basculées vers sa racine /v1 puis recettées HTTP 200, chacune, depuis LiteLLM sans extraction de clé. Cloudflare est retiré du chemin ASR ; S6-009 demeure to_validate pour le microphone réel, le refus/panne et l’acceptation humaine. Détail : docs/validation/S6-009-asr-chain-smoke.md.",
         "2026-09-16 — Révalidation après remise en route : depuis Hostinger, le service ASR du DGX répond HTTP 200 à /health et à /v1/audio/transcriptions pour un WAV PCM temporaire. Le silence n’est pas interprété comme une mesure de qualité ; fichiers et réponse sont supprimés dans la même commande. Cette preuve fraîche confirme le maillon Tailscale sans exposer de secret ni de contenu apprenant. Détail : docs/validation/S6-009-asr-chain-smoke.md.",
-        "2026-09-25 — La gate complète du SHA déployé 4a9dfb56652323d077c3477941e493f145449bb8 passe Prettier, TypeScript, ESLint, 3 373 tests Vitest, le build de 127 routes et 196/196 Playwright. Les trois parcours microphone permanents passent : transcription visible et réinjectée, refus de permission sans envoi et panne amont après enregistrement. Journal SHA-256 8e8b70e1feeabd3770559bf9b5c34322f5339e9efdde4b172d52744a693e4bcb. La dette machine est soldée ; les gestes physiques et l’acceptation humaine restent ouverts."
+        "2026-09-25 — La gate complète du SHA déployé 4a9dfb56652323d077c3477941e493f145449bb8 passe Prettier, TypeScript, ESLint, 3 373 tests Vitest, le build de 127 routes et 196/196 Playwright. Les trois parcours microphone permanents passent : transcription visible et réinjectée, refus de permission sans envoi et panne amont après enregistrement. Journal SHA-256 8e8b70e1feeabd3770559bf9b5c34322f5339e9efdde4b172d52744a693e4bcb. La dette machine est soldée ; les gestes physiques et l’acceptation humaine restent ouverts.",
+        "2026-09-26 — Le premier essai physique a échoué. Les journaux Qalem et DGX excluent un OOM et isolent la cause : le navigateur envoyait du WebM/Opus, puis server_asr.py tentait de le décoder directement avec SoundFile et répondait 500 « Format not recognised ». Les trois modèles LiteLLM ont simultanément accepté le même WAV réel en HTTP 200. Qalem convertit désormais les enregistrements openai-whisper en WAV avant l’envoi. La gate exacte du SHA 38e5bc87567f8f96f4fba8521d60ad02c498a7a1 passe Prettier, TypeScript, ESLint, 3 403/3 403 Vitest, le build de 127 routes et 200/200 Playwright. Le déploiement Coolify e8wahh4zcblarcwh105x5hwq est terminé ; le conteneur bcx5pxyuc9z3lt4jtyjipcqu-100015285293 sert ce SHA, est healthy, restart=0, OOMKilled=false et /api/health répond HTTP 200. Le nouvel essai physique reste requis avant certification."
       ],
       "validationDebt": {
         "recordedAt": "2026-08-27",
@@ -2429,7 +2432,8 @@
           "Normalisation des locales FR/AR/EN pour les fournisseurs ASR serveur.",
           "Sélection du format MediaRecorder réellement supporté et libération des pistes en erreur.",
           "Validation des fichiers audio et conservation du modèle Whisper administré face à un ancien modèle client.",
-          "Tests permanents du parcours microphone, du refus de permission et de la panne amont."
+          "Tests permanents du parcours microphone, du refus de permission et de la panne amont.",
+          "Normalisation des enregistrements navigateur WebM/Opus en WAV avant l’envoi au fournisseur openai-whisper."
         ],
         "stillRequired": [
           "Recetter sur navigateur réel microphone → texte visible → usage Qalem, avec refus d’autorisation, fichier invalide et panne amont visibles.",
