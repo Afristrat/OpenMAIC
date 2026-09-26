@@ -1373,3 +1373,7 @@ Amine confirme explicitement « Audible les deux » après écoute réelle depui
 ## 26 septembre 2026 — S0-017 lisibilité du modèle image acceptée
 
 La capture authentifiée de production montre le sélecteur Médias ouvert et l’option active « Gemini 3.1 Flash Image (rapide) ». Après affichage direct de cette preuve, Amine répond explicitement « Oui » à la question de lisibilité et de clarté du libellé. La production sert toujours `0a15d648fcb20061ccfa79059d0d68cdec6e7bfb`, `/api/health` répond HTTP 200 et le conteneur est healthy, restart=0, OOMKilled=false. S0-017 passe à `completed/passes=true`. Le registre contient désormais 84 stories : 69 clôturées, 11 à valider et 4 bloquées par Diwan.
+
+## 26 septembre 2026 — S3-008 ton et cadence acceptés
+
+Après réception séparée des vingt graines P3-B-v11 et du calendrier proposé, Amine répond explicitement « Ok pour les deux ». Le ton andragogique est accepté, ainsi que la cadence de douze graines entre J+2 et J+90 et des deux évaluations à J+30/J+60. La production répond fraîchement HTTP 200 ; le conteneur `bcx5pxyuc9z3lt4jtyjipcqu-014702271694` sert l’image fonctionnelle `0a15d648fcb20061ccfa79059d0d68cdec6e7bfb`, est running/healthy, restart=0 et OOMKilled=false. S3-008 passe à `completed/passes=true`. Le registre contient désormais 84 stories : 70 clôturées, 10 à valider et 4 bloquées par Diwan.

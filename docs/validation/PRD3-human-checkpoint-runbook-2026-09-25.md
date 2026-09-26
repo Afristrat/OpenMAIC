@@ -7,7 +7,7 @@
 
 ## Objet
 
-Cette recette regroupait treize stories dont la dette machine était soldée mais dont la clôture exigeait une perception humaine, un destinataire réel ou un appareil physique. S6-012 et S0-017 sont acceptées depuis le 26 septembre 2026 ; onze checkpoints restent ouverts. Elle ne remplace aucun verdict humain par un test automatisé. Les quatre dépendances Diwan ne font pas partie de cette recette.
+Cette recette regroupait treize stories dont la dette machine était soldée mais dont la clôture exigeait une perception humaine, un destinataire réel ou un appareil physique. S3-008, S6-012 et S0-017 sont acceptées depuis le 26 septembre 2026 ; dix checkpoints restent ouverts. Elle ne remplace aucun verdict humain par un test automatisé. Les quatre dépendances Diwan ne font pas partie de cette recette.
 
 ## Matériel et preuves à préparer
 
@@ -28,6 +28,8 @@ Immédiatement avant la session, l’agent doit vérifier le SHA de production, 
 Point de départ : [Qalem pour Human Yo Impact](https://qalem.ma/app?orgId=aa7870b7-3938-4f24-b8bf-4a9d73565ba7).
 
 ### A1 — S3-008 : ton et pression des graines
+
+**Verdict acquis le 26 septembre 2026 : accepté sur les deux dimensions.** Après lecture des vingt graines P3-B-v11 et de la cadence proposée, Amine confirme « Ok pour les deux ». Le ton andragogique et la cadence sont acceptés ; S3-008 est clôturée. Le protocole ci-dessous est conservé comme référence de non-régression.
 
 Lire la [fiche de réception des vingt graines P3-B-v11](../evidence/s3-008-human-review-v11.md), puis rendre deux verdicts distincts :
 
@@ -129,7 +131,7 @@ Succès : réception réelle, opt-in, désinscription et absence de doublon. Le 
 
 | Story | Verdict | Preuve humaine minimale |
 |---|---|---|
-| S3-008 | accepté / refusé | ton + cadence |
+| S3-008 | **accepté le 26/09/2026** | « Ok pour les deux » : ton + cadence |
 | S6-012 | **accepté le 26/09/2026** | « Audible les deux » dans les deux sélecteurs |
 | S0-017 | **accepté le 26/09/2026** | libellé « Gemini 3.1 Flash Image (rapide) » lisible et clair |
 | S6-009 | accepté / refusé | microphone et verdict FR/arabe/EN |

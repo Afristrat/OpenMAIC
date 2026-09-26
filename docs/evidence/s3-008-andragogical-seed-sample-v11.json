@@ -51,7 +51,13 @@
     ],
     "horizonDays": 90
   },
-  "humanAcceptance": false,
+  "humanAcceptance": true,
+  "humanReview": {
+    "acceptedAt": "2026-09-26T08:46:05Z",
+    "verdict": "Ok pour les deux",
+    "tone": "accepted",
+    "cadence": "accepted"
+  },
   "events": [
     {
       "id": "1",

@@ -5,7 +5,10 @@
 - Génération : un appel LLM, température zéro
 - Volume : 20 graines, 4 289 jetons
 - Distribution : 6 anecdotes, 6 moments clés, 4 traits d’humour, 4 rappels de quiz
-- Statut : non accepté humainement
+- Statut : accepté humainement le 26 septembre 2026
+- Verdict d’Amine : « Ok pour les deux »
+- Ton andragogique : accepté
+- Cadence : acceptée
 
 ## Expérience source
 
@@ -191,9 +194,9 @@ Verdict : [ ] accepter [ ] corriger [ ] rejeter
 - Évaluations à froid : J+30 et J+60.
 - Plafonds, plages silencieuses, pause et désactivation restent configurables par le tenant et par formation.
 
-Verdict sur le ton : [ ] accepter [ ] corriger [ ] rejeter
+Verdict sur le ton : [x] accepter [ ] corriger [ ] rejeter
 
-Verdict sur la cadence : [ ] accepter [ ] corriger [ ] rejeter
+Verdict sur la cadence : [x] accepter [ ] corriger [ ] rejeter
 
 Commentaires ou numéros à reprendre :
 
