@@ -182,3 +182,15 @@ Le déploiement Coolify `e8wahh4zcblarcwh105x5hwq` est terminé. Le conteneur
 Cette correction solde le défaut de format observé. S6-009 reste
 `to_validate/passes=false` jusqu’au nouvel essai physique et aux autres gestes
 humains explicitement prévus par la story.
+
+## Validation physique française du 26 septembre 2026
+
+Après déploiement, Amine rejoue le parcours sur son microphone et confirme :
+« ça marche 10/10 entre ce que j’ai dit et ce qui a été écrit ». Cette preuve
+valide humainement le parcours français microphone → envoi → texte visible sur
+le SHA fonctionnel
+`38e5bc87567f8f96f4fba8521d60ad02c498a7a1`.
+
+La certification complète reste ouverte pour l’arabe standard, l’anglais et
+les états d’échec physiques prévus par le contrat. Ce verdict ne porte ni sur
+le darija marocain ni sur la synthèse vocale.
