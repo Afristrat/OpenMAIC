@@ -1651,7 +1651,9 @@
         "La recette Human Yo Impact s6030-1790214961228-562070e8-2b4b-48d8-9b1c-9b66e9c3f6e7 exécute une recherche Serper réelle, débite une seule fois 0,1 crédit, retourne applied=false au rejeu et conserve pending_configuration avec SELL_PRICE_NOT_FOUND.",
         "Une réservation d’échec restitue intégralement 100 000 microunités et son rejeu retourne applied=false ; le portefeuille et le ledger relisent tous deux 999 700 000 microunités après les trois recherches réelles de mise au point.",
         "Les recettes navigateur administrateur tenant, super-administrateur et membre prouvent respectivement les vues tenant, tenant sans membership et personnelle sans écriture étrangère ; l’utilisateur temporaire est supprimé.",
-        "Au candidat déployé, Prettier, ESLint, le build TypeScript/Next.js de 127 pages, 544 fichiers et 3 360 tests Vitest ainsi que 194 scénarios Playwright passent sans échec."
+        "Au candidat déployé, Prettier, ESLint, le build TypeScript/Next.js de 127 pages, 544 fichiers et 3 360 tests Vitest ainsi que 194 scénarios Playwright passent sans échec.",
+        "2026-09-26 — Recertification Human Yo Impact au SHA de production 0a15d648fcb20061ccfa79059d0d68cdec6e7bfb : la recette s6030-1790388062361-0180e911-c2ef-4d65-af11-d19b7f28ac12 exécute une recherche Serper HTTP 200 avec huit sources, débite une fois 0,1 crédit, refuse le rejeu, conserve pending_configuration/SELL_PRICE_NOT_FOUND et rembourse intégralement 100 000 microunités lors de l’échec contrôlé.",
+        "2026-09-26 — Les navigateurs administrateur Human Yo Impact, super-administrateur et membre prouvent les périmètres tenant, tenant et personal ; le membre voit zéro écriture étrangère. Le compte temporaire est supprimé et une lecture filtrée confirme zéro résidu. Le même SHA passe Prettier, TypeScript, ESLint, 3 402 Vitest, le build et 200/200 Playwright ; le déploiement Coolify est sain, restart=0 et OOMKilled=false."
       ],
       "historicalDependencies": [],
       "executionAllowed": true,

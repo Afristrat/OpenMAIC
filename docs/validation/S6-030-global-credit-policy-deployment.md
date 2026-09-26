@@ -171,3 +171,28 @@ agents canoniques, les invitations, l’isolation des observations et les
 parcours Director/xAPI. Le téléchargement MP4 est désormais diffusé directement
 depuis l’URL privée signée en pièce jointe, sans dupliquer le fichier entier en
 mémoire du navigateur.
+
+## Recertification au SHA déployé du 26 septembre 2026
+
+Le script permanent a été rejoué contre la production servant le SHA
+`0a15d648fcb20061ccfa79059d0d68cdec6e7bfb`. La recette
+`s6030-1790388062361-0180e911-c2ef-4d65-af11-d19b7f28ac12` obtient HTTP 200
+et huit sources pour une recherche Serper réelle. Le solde Human Yo Impact
+passe de 996,1763 à 996,0763 crédits, soit le débit unique attendu de 0,1
+crédit. Le règlement rejoué retourne `applied=false`. L'usage reste
+explicitement `pending_configuration` avec `SELL_PRICE_NOT_FOUND` : aucun prix
+de vente n'est déduit silencieusement du coût.
+
+La réservation d'échec séparée restitue les 100 000 microunités, restaure le
+solde et refuse le second remboursement. Dans le navigateur de production,
+l'administrateur Human Yo Impact et le super-administrateur voient le ledger du
+tenant ; le membre temporaire obtient le périmètre `personal`, zéro écriture
+étrangère et la section de crédits visible. Le compte et son adhésion sont
+supprimés en fin de recette ; une lecture administrative filtrée confirme zéro
+identité résiduelle.
+
+Ce même SHA a passé Prettier, TypeScript, ESLint, 3 402 tests Vitest, le build
+Next.js et 200 scénarios Playwright. Le déploiement Coolify
+`knjgq73sc0fl6yrdarsfsbg3` est terminé ; le conteneur
+`bcx5pxyuc9z3lt4jtyjipcqu-014702271694` est sain, sans redémarrage ni OOM, et
+`/api/health` répond HTTP 200.
