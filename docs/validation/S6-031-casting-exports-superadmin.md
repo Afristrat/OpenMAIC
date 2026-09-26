@@ -118,3 +118,26 @@ build Next.js et 200 scénarios Playwright. Le déploiement Coolify
 `knjgq73sc0fl6yrdarsfsbg3` est terminé ; le conteneur
 `bcx5pxyuc9z3lt4jtyjipcqu-014702271694` est sain, sans redémarrage ni OOM, et
 `/api/health` répond HTTP 200.
+
+## Recette intégrée par rôle au SHA déployé
+
+Le parcours Human Yo Impact a ensuite été rejoué sur la même production avec
+trois frontières d'autorisation distinctes, sans créer de cours ni lancer de
+génération payante :
+
+- le superadministrateur ouvre la classe réelle `GIWp6RedxM` sous la bannière
+  Human Yo Impact et voit la première scène « Introduction et enjeux RSE pour le
+  leasing » ; la recette de retour permanente reste celle décrite ci-dessus ;
+- `info@humanyoimpact.com`, administrateur du tenant, reçoit HTTP 200, voit les
+  dix-sept scènes et possède `canInteract=true`, `canEdit=true` et
+  `canViewSources=true` ;
+- un apprenant éphémère du tenant reçoit HTTP 200 et voit la même première scène,
+  avec `canInteract=true`, `canEdit=false` et `canViewSources=false` ;
+- ce même apprenant reçoit HTTP 403 sur la génération de profils d'agents et sur
+  la demande du catalogue non publié ; aucun appel de modèle n'est donc lancé ;
+- le compte et l'adhésion éphémères sont supprimés et la lecture filtrée finale
+  retourne zéro adhésion résiduelle.
+
+La formation utilisée est restée `ready` et non publiée dans le catalogue. La
+recette prouve donc l'accès direct d'un membre autorisé sans lui divulguer le
+catalogue privé ni lui accorder un droit d'auteur.
