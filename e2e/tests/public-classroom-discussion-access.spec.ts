@@ -233,5 +233,6 @@ for (const recipient of [false, true]) {
     await progress.fill('1');
     await expect(page.getByText('Second lesson', { exact: true }).first()).toBeVisible();
     await expect(page.locator('img[src="/avatars/teacher-2.png"]').first()).toBeVisible();
+    await expect(page.getByText('Hanae', { exact: true }).first()).toBeVisible();
   });
 }

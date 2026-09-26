@@ -183,20 +183,6 @@ export default function ClassroomDetailPage() {
             // conveniences and must not hold the learner on the loading screen.
             setInteractionAccessResolved(true);
             setLoading(false);
-
-            // Hydrate server-generated agents into IndexedDB + registry.
-            // Don't set selectedAgentIds here — the general agent
-            // restoration logic below (Path 2) handles it uniformly.
-            if (stage.generatedAgentConfigs?.length) {
-              void import('@/lib/orchestration/registry/store')
-                .then(({ saveGeneratedAgents }) =>
-                  saveGeneratedAgents(stage.id, stage.generatedAgentConfigs!),
-                )
-                .then(() => log.info('Hydrated server-generated agents for stage:', stage.id))
-                .catch((agentCacheError) => {
-                  log.warn('Authoritative generated-agent cache write failed:', agentCacheError);
-                });
-            }
           }
         } else {
           const hasLocalClassroom = Boolean(useStageStore.getState().stage);
@@ -222,9 +208,10 @@ export default function ClassroomDetailPage() {
         // Restore completed media generation tasks from IndexedDB
         await useMediaGenerationStore.getState().restoreFromDB(classroomId);
         // Restore agents for this stage
-        const { loadGeneratedAgentsForStage, useAgentRegistry } =
+        const { loadGeneratedAgentsForStage, saveGeneratedAgents, useAgentRegistry } =
           await import('@/lib/orchestration/registry/store');
-        const teacherProfile = useStageStore.getState().stage?.teacherProfile;
+        const authoritativeStage = useStageStore.getState().stage;
+        const teacherProfile = authoritativeStage?.teacherProfile;
         if (teacherProfile) {
           useAgentRegistry.getState().updateAgent('default-1', {
             name: teacherProfile.name,
@@ -235,7 +222,13 @@ export default function ClassroomDetailPage() {
             },
           });
         }
-        const generatedAgentIds = await loadGeneratedAgentsForStage(classroomId);
+        // Persist and register the authoritative server cast before restoring
+        // the visible selection. Running these two operations concurrently let
+        // the IndexedDB read win with an empty result on a fresh device, which
+        // left the default "AI teacher" visible despite Hanae being persisted.
+        const generatedAgentIds = authoritativeStage?.generatedAgentConfigs?.length
+          ? await saveGeneratedAgents(classroomId, authoritativeStage.generatedAgentConfigs)
+          : await loadGeneratedAgentsForStage(classroomId);
         const { useSettingsStore } = await import('@/lib/store/settings');
         const { restoreAgentSelection } =
           await import('@/lib/orchestration/registry/agent-selection');
