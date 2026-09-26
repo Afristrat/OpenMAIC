@@ -2894,7 +2894,7 @@
       },
       "sourceDependencies": [],
       "dependencies": ["S-025"],
-      "gap": "La recette navigateur authentifiée reste valable sur le code fonctionnel inchangé et la gate complète repasse au SHA déployé courant. Le seul résidu est désormais regroupé avec S3-002 : installation et usage physiques iOS/Android, puis délivrance distante application fermée ; passes=false ne les infère pas.",
+      "gap": "La recette navigateur authentifiée reste valable sur le code fonctionnel inchangé et la gate complète repasse au SHA déployé courant. Installation, usage et délivrance distante application fermée sont acquis sur Android physique. Le seul résidu est désormais la même recette sur iOS, regroupée avec S3-002 ; passes=false ne l’infère pas.",
       "evidence": [
         "components/service-worker-registrar.tsx",
         "components/settings/notification-settings.tsx",
@@ -2923,7 +2923,8 @@
         "2026-08-27 — Recette authentifiée en production avec Chromium normal sous Xvfb : permission granted, préférence initiale inactive, une seule invocation et un seul rappel « Reviews due: 1. » malgré deux onglets ; zéro rappel après désactivation, zéro après suppression de la carte due, puis zéro pour le compte B sur le même navigateur. La préférence A reste dans sa clé dédiée, la clé B et l’ancienne clé globale sont absentes.",
         "2026-08-27 — Nettoyage doublement vérifié : les deux comptes Auth temporaires sont supprimés, zéro profil et zéro carte associés ; contrôle SQL global final auth=0 et cards=0 pour les marqueurs S6-010. Aucun script temporaire n’a été conservé.",
         "2026-09-17 — Un clone neuf du SHA 97b3a245f09b1ee8ff04a386efc8fd5fa29d01d6, exécuté dans l’image de validation ServeurIA, passe 11/11 tests ciblés : 10 rappels (préférences, permission, échéance, déduplication et changement de compte) et 1 cache du service worker. Cette preuve ne remplace ni la recette navigateur au SHA de clôture ni les essais physiques mobiles.",
-        "2026-09-25 — Les fichiers fonctionnels ServiceWorkerRegistrar, notifications et sw.js n’ont pas changé depuis la recette authentifiée de production ; seule l’attente d’activation du test E2E a été renforcée. La gate complète du SHA déployé 4a9dfb56652323d077c3477941e493f145449bb8 repasse Prettier, TypeScript, ESLint, 3 373 tests Vitest, le build de 127 routes et 196/196 Playwright, dont les deux parcours PWA ; journal SHA-256 8e8b70e1feeabd3770559bf9b5c34322f5339e9efdde4b172d52744a693e4bcb. Le web est sain, sans redémarrage ni OOM, et /api/health répond 200. Le seul résidu est la recette physique regroupée avec S3-002."
+        "2026-09-25 — Les fichiers fonctionnels ServiceWorkerRegistrar, notifications et sw.js n’ont pas changé depuis la recette authentifiée de production ; seule l’attente d’activation du test E2E a été renforcée. La gate complète du SHA déployé 4a9dfb56652323d077c3477941e493f145449bb8 repasse Prettier, TypeScript, ESLint, 3 373 tests Vitest, le build de 127 routes et 196/196 Playwright, dont les deux parcours PWA ; journal SHA-256 8e8b70e1feeabd3770559bf9b5c34322f5339e9efdde4b172d52744a693e4bcb. Le web est sain, sans redémarrage ni OOM, et /api/health répond 200. Le seul résidu est la recette physique regroupée avec S3-002.",
+        "2026-09-26 — Android physique : Amine confirme que la PWA installée s’ouvre, reçoit une notification native application fermée et ouvre la carte ciblée. La preuve serveur relue le même jour montre un abonnement actif, aucun échec et quatre acceptations fournisseur HTTP 201 vers /review?card=e2a1e073-49a1-4ec7-b16b-6802c3e40b57. Les fichiers fonctionnels PWA sont identiques dans le SHA courant déployé 2084f50bbbb738b8383e35055cbe9bab9c8ced36. Le volet Android est acquis ; iOS reste obligatoire avant clôture."
       ],
       "completedAt": "2026-08-27",
       "historicalDependencies": [],
@@ -2946,7 +2947,7 @@
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Implémentation, gate machine et déploiement production soldés au SHA 3b209d9ff6f921fef3d58c0031a33f933432807a. Reste exclusivement la vérification sur iOS et Android physiques, menée conjointement avec S3-002 ; passes demeure donc false.",
+      "gap": "Implémentation, gate machine et déploiement production sont soldés, et l’installation Android physique est acceptée. Reste exclusivement le geste d’installation sur iOS physique, mené conjointement avec S3-002 ; passes demeure donc false.",
       "evidence": [
         "components/pwa-install-banner.tsx",
         "app/layout.tsx",
@@ -2966,11 +2967,12 @@
         "2026-08-27 — Le même SHA ajoute le parcours manuel iOS localisé en fr-FR, ar-MA et en-US ainsi que de vraies icônes PNG 192 × 192 et 512 × 512 déclarées dans le manifeste. Deux tests Vitest contrôlent la détection de plateforme et les dimensions binaires des icônes ; quatre E2E couvrent applicabilité, refus, installation externe, mode autonome et instructions iOS.",
         "2026-08-27 — Gate complet dans un clone isolé monté directement à /workspace sur ServeurIA : pnpm check, TypeScript et lint zéro avertissement ; 372/372 fichiers et 2 460/2 460 tests Vitest ; build 97/97 ; 82/82 tests Playwright sans retry. Le conteneur de validation était borné à 12 Gio, avec zéro redémarrage et OOMKilled=false.",
         "2026-08-27 — Déploiement Coolify di0v5dtumayvdhageudcr6wa terminé sur Qalem web au commit exact. Le conteneur bcx5pxyuc9z3lt4jtyjipcqu-153258966984 est healthy, restartCount=0 et OOMKilled=false ; qalem.ma, /api/health, /manifest.json et les deux icônes répondent 200. Les SHA-256 servis pour le manifeste et les deux PNG correspondent octet pour octet aux fichiers du commit.",
-        "2026-08-27 — Preuve Chromium sur qalem.ma : bannière française réellement montée, prompt synthétique appelé exactement une fois et bannière masquée après acceptation. Preuve profil iPhone : instructions « Partager » puis « Sur l’écran d’accueil » visibles et aucun faux bouton Installer. Ces preuves navigateur ne remplacent pas les gestes sur appareils physiques exigés par le second critère."
+        "2026-08-27 — Preuve Chromium sur qalem.ma : bannière française réellement montée, prompt synthétique appelé exactement une fois et bannière masquée après acceptation. Preuve profil iPhone : instructions « Partager » puis « Sur l’écran d’accueil » visibles et aucun faux bouton Installer. Ces preuves navigateur ne remplacent pas les gestes sur appareils physiques exigés par le second critère.",
+        "2026-09-26 — Android physique : Amine confirme l’installation, la connexion puis l’ouverture autonome de Qalem avec le même contenu que sur ordinateur. Une préférence d’affichage « site pour ordinateur » a d’abord miniaturisé l’interface ; sa désactivation a rétabli la vue mobile, sans changement de code. Le parcours Android est acquis sur le SHA fonctionnel dont les fichiers PWA restent identiques dans le SHA courant déployé 2084f50bbbb738b8383e35055cbe9bab9c8ced36. Le geste iOS réel reste requis."
       ],
       "validationDebt": {
         "recordedAt": "2026-08-27",
-        "decision": "Implémentation et preuves machine intégralement certifiées ; story non certifiée tant que les parcours d’installation sur appareils iOS et Android physiques ne sont pas consignés avec S3-002.",
+        "decision": "Implémentation et preuves machine intégralement certifiées ; installation Android physique consignée le 26 septembre 2026 ; story non certifiée tant que le parcours iOS physique n’est pas consigné avec S3-002.",
         "implementedButUncertified": [
           "Proposition Chromium déclenchée uniquement par le signal natif d’installabilité et prompt appelé depuis un geste utilisateur.",
           "Instructions manuelles iOS localisées, masquage en mode autonome et respect persistant du refus.",
@@ -2986,8 +2988,7 @@
         },
         "stillRequired": [
           "Installer Qalem et vérifier les instructions sur un iPhone ou iPad physique compatible.",
-          "Installer Qalem et vérifier le prompt natif sur un appareil Android physique.",
-          "Consigner les deux résultats conjointement avec la recette push S3-002."
+          "Consigner le résultat iOS et le verdict bi-plateforme conjointement avec la recette push S3-002."
         ]
       },
       "historicalEvidence": {
@@ -3014,7 +3015,7 @@
       },
       "sourceDependencies": ["S0-008"],
       "dependencies": ["S6-010", "U-020"],
-      "gap": "Implémentation Web Push, gate machine, migration et déploiement production soldés au SHA b9c4ad59eb54383ccd3a970bd1707b6ffc009b25. Restent exclusivement la réception application fermée et le tap vers la carte cible sur appareils iOS et Android physiques, puis la consignation du taux ; passes demeure donc false.",
+      "gap": "Implémentation Web Push, gate machine, migration et déploiement production sont soldés. Réception application fermée et tap vers la carte cible sont acquis sur Android physique. Restent exclusivement le même parcours sur iOS physique et la consignation du taux bi-plateforme ; passes demeure donc false.",
       "evidence": [
         "app/api/push-subscriptions/route.ts",
         "app/api/push-test/route.ts",
@@ -3042,11 +3043,12 @@
         "2026-08-27 — La migration 00042 a été appliquée en production dans une transaction unique sous verrou consultatif. Les tables push_subscriptions et web_push_deliveries existent avec RLS actif, 4 politiques chacune, trigger updated_at et contraintes ; elles étaient vides au contrôle post-commit.",
         "2026-08-27 — Une paire VAPID P-256 neuve est conservée dans le coffre DPAPI sous QALEM_WEB_PUSH_VAPID_PUBLIC_KEY, QALEM_WEB_PUSH_VAPID_PRIVATE_KEY et QALEM_WEB_PUSH_VAPID_SUBJECT. Coolify expose les trois variables runtime sans préfixe ; le conteneur prouve les longueurs 87/43, le sujet mailto et la cohérence cryptographique public↔privé sans afficher les valeurs.",
         "2026-08-27 — Déploiement Coolify t8grd99yyyz6cb38dksqbs1o terminé sur le commit exact. Le conteneur bcx5pxyuc9z3lt4jtyjipcqu-163133456391 est running/healthy, restartCount=0 et OOMKilled=false ; qalem.ma/api/health répond 200 ok, /sw.js répond 200 avec les écouteurs push et notificationclick, et les deux routes Web Push refusent l’anonyme en 401.",
-        "2026-08-27 — Recette authentifiée sur qalem.ma : le panneau Notifications est réellement visible et GET /api/push-subscriptions renvoie success=true avec une clé publique de 87 caractères. Le navigateur de recette a cependant sa permission de notification déjà bloquée ; l’interface désactive correctement l’interrupteur et aucun abonnement ni envoi distant n’a été simulé pour masquer cette frontière."
+        "2026-08-27 — Recette authentifiée sur qalem.ma : le panneau Notifications est réellement visible et GET /api/push-subscriptions renvoie success=true avec une clé publique de 87 caractères. Le navigateur de recette a cependant sa permission de notification déjà bloquée ; l’interface désactive correctement l’interrupteur et aucun abonnement ni envoi distant n’a été simulé pour masquer cette frontière.",
+        "2026-09-26 — Android physique : PWA installée, notification native reçue application fermée, puis tap confirmé vers la carte exacte e2a1e073-49a1-4ec7-b16b-6802c3e40b57. Le message verrouillé reste générique (« Votre carte de révision Qalem est prête. »), sans contenu d’apprentissage ni donnée privée. Le serveur relit un abonnement actif, last_success_at=2026-09-26T16:19:54.946Z, quatre livraisons acceptées HTTP 201, zéro last_failure_at. Cette preuve humaine distingue l’acceptation fournisseur de la réception physique. Le volet iOS et le taux final bi-plateforme restent requis."
       ],
       "validationDebt": {
         "recordedAt": "2026-08-27",
-        "decision": "Implémentation, infrastructure, gate et production certifiées ; story non certifiée tant que la réception application fermée et le tap vers la carte cible ne sont pas consignés sur iOS et Android physiques.",
+        "decision": "Implémentation, infrastructure, gate et production certifiées ; réception application fermée et tap Android consignés le 26 septembre 2026 ; story non certifiée tant que le même parcours n’est pas consigné sur iOS physique.",
         "implementedButUncertified": [
           "Abonnement Web Push explicite et isolé par compte, persistance RLS et révocation locale/serveur.",
           "Envoi VAPID serveur vers tous les abonnements du compte, audit et purge des endpoints expirés.",
@@ -3063,8 +3065,7 @@
         "stillRequired": [
           "Autoriser les notifications, installer Qalem et recevoir un push application fermée sur un iPhone ou iPad physique avec Safari ≥ 16.4.",
           "Toucher la notification iOS et confirmer l’ouverture de la PWA sur la carte de révision ciblée.",
-          "Répéter réception et tap sur un appareil Android physique installé.",
-          "Consigner les deux résultats et le taux de délivrance ; en cas d’échec iOS, réouvrir ADR-303 avec Amine."
+          "Consigner le résultat iOS et le taux de délivrance bi-plateforme ; en cas d’échec iOS, réouvrir ADR-303 avec Amine."
         ]
       },
       "historicalEvidence": {
@@ -5362,7 +5363,8 @@
         "2026-09-14 — SHA ac91111a572c0066625ebf590b91afd5c5df0de3 : après sauvegarde de schéma vérifiée, les migrations S3-012/S3-013 ont passé sous transaction annulée puis ont été appliquées atomiquement à PostgreSQL Qalem. Les cinq tables concernées ont RLS actif ; les fonctions de réservation et d’aperçu sont présentes.",
         "2026-09-14 — SHA d51d48b5fb075a61896400aa6771671f901075b8 : gate complet ServeurIA vert (formatage, TypeScript, lint, 3 287 Vitest, build 123 pages et 193 Playwright). Coolify a terminé le déploiement runtime puis web ; les deux images servent ce SHA, sont healthy, exit 0, OOMKilled=false et restart=0 ; `https://qalem.ma/api/health` répond 200. S3-013 reste ouverte : recettes inter-formations/canaux et concurrentes, validation mobile et réception attestée.",
         "2026-09-25 — SHAs 42b2d8a, d22e3b4, 7ba5b59 et 44976ff : fenêtre silencieuse par formation, ouverture authentifiée distincte de l’acceptation fournisseur et priorité déterministe sont appliquées en production. Sauvegarde préalable `/home/serveuria/backups/qalem/s3-013-before-20260925-journey-controls.sql.gz`, SHA-256 `835eac419aba6a42ca25559c6fabf82b232bbc0a6f0b0fbb72145fa40059a13e`.",
-        "2026-09-25 — SHAs 4137783fc20e7a6f2507469275b1fe92d0498718, ffc96e12f59d6e51850fa091d80a9baa9c9c7140 et 0dda3300a595c5a3ab019518ca195d4b96907ca3 : contrôles complets par formation, arbitrage atomique, changement d’heure légale, refus et retours négatifs, rapport par fenêtre et dénominateurs documentés. La recette PostgreSQL de production passe sous transaction annulée ; 21/21 tests ciblés passent. La gate fonctionnelle passe Prettier, TypeScript, ESLint, 549 fichiers et 3 382 Vitest, build de 127 pages ; le SHA final passe 197/197 Playwright. Seules la réception physique mobile et l’acceptation humaine restent à prouver."
+        "2026-09-25 — SHAs 4137783fc20e7a6f2507469275b1fe92d0498718, ffc96e12f59d6e51850fa091d80a9baa9c9c7140 et 0dda3300a595c5a3ab019518ca195d4b96907ca3 : contrôles complets par formation, arbitrage atomique, changement d’heure légale, refus et retours négatifs, rapport par fenêtre et dénominateurs documentés. La recette PostgreSQL de production passe sous transaction annulée ; 21/21 tests ciblés passent. La gate fonctionnelle passe Prettier, TypeScript, ESLint, 549 fichiers et 3 382 Vitest, build de 127 pages ; le SHA final passe 197/197 Playwright. Seules la réception physique mobile et l’acceptation humaine restent à prouver.",
+        "2026-09-26 — Android physique : Amine observe une notification native application fermée dont le texte reste générique, puis son ouverture vers la carte ciblée. Cette observation prouve le comportement de confidentialité sur l’appareil testé, mais ne prouve ni la réponse à la carte, ni la pression sur la durée, ni iOS ; ces résidus restent explicitement ouverts."
       ],
       "executionAllowed": true,
       "executionDecision": "2026-09-12 — Objectif exhaustif demandé par Amine : compléments multisources et mobiles conservés, sans clôture ni activation déduite.",
@@ -5371,7 +5373,7 @@
       "title": "Maîtriser la pression et la confidentialité des relances mobiles",
       "description": "En tant qu’apprenant suivant plusieurs formations, je veux contrôler les sollicitations de Qalem afin de recevoir des rappels utiles au moment choisi sans exposition de mes échanges privés.",
       "dependencies": ["S3-005", "S6-010"],
-      "gap": "Toute la dette autonome est soldée : contrôles globaux et par formation, arbitrage atomique inter-files, concurrence, fuseaux et heure légale, confidentialité, séparation des états de livraison et mesure descriptive du parcours sont couverts par le code, PostgreSQL et les recettes. Restent uniquement la réception physique sur mobile, la confidentialité réellement observée sur écran verrouillé et l’acceptation humaine du ton et de la pression, partagées avec S3-012/S3-014.",
+      "gap": "Toute la dette autonome est soldée : contrôles globaux et par formation, arbitrage atomique inter-files, concurrence, fuseaux et heure légale, confidentialité, séparation des états de livraison et mesure descriptive du parcours sont couverts par le code, PostgreSQL et les recettes. Réception physique et confidentialité sur écran verrouillé sont observées sur Android. Restent iOS, la réponse à la carte et l’acceptation humaine de la pression dans la durée, partagées avec S3-012/S3-014.",
       "evidence": [
         "app/api/notification-preferences/route.ts",
         "lib/anchoring/schedule.ts",
@@ -5425,7 +5427,9 @@
         "date": "2026-09-12"
       },
       "sourceDependencies": [],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-26 — Première tranche Android physique : PWA installée et ouverte, abonnement push actif, notification native reçue application fermée, texte générique et tap vers la carte exacte. Les fichiers fonctionnels PWA et push n’ont pas changé jusqu’au SHA courant déployé 2084f50bbbb738b8383e35055cbe9bab9c8ced36, dont la gate complète passe 3 404 tests Vitest et 200/200 Playwright. Cette preuve ne couvre pas encore la formation multisource, l’interaction, l’interruption/reprise, les scénarios négatifs, les trois locales, le second tenant ni iOS."
+      ],
       "executionAllowed": true,
       "executionDecision": "2026-09-12 — Objectif exhaustif demandé par Amine : compléments multisources et mobiles conservés, sans clôture ni activation déduite.",
       "validationRequires": [
@@ -5447,7 +5451,7 @@
         "S6-004",
         "S6-013"
       ],
-      "gap": "Les validations d’installation et de réception physiques existantes sont conservées dans U-020/S3-002. Aucune preuve actuelle ne clôt la chaîne multisources→formation→push contextualisé→interaction→reprise synchronisée demandée ; cette US porte la recette intégrée, pas un second moteur mobile.",
+      "gap": "L’installation Android, la réception application fermée et l’ouverture de la carte ciblée sont acquises et conservées dans U-020/S3-002. La chaîne multisources→formation→interaction→interruption→reprise synchronisée, ses scénarios négatifs, le second tenant, les trois locales et l’intégralité du parcours iOS restent à recetter ; cette US porte la recette intégrée, pas un second moteur mobile.",
       "evidence": ["public/sw.js", "tasks/prd-v3.md"],
       "acceptance": [
         "Sur iOS et Android physiques, PWA installée : suivre une formation multisource, écouter, naviguer, discuter, répondre au quiz, interrompre et reprendre avec progression persistante ; consigner appareil, OS, navigateur, SHA, date et résultats.",
