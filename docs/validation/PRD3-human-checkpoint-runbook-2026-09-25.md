@@ -7,7 +7,7 @@
 
 ## Objet
 
-Cette recette regroupait treize stories dont la dette machine était soldée mais dont la clôture exigeait une perception humaine, un destinataire réel ou un appareil physique. S6-012 est acceptée depuis le 26 septembre 2026 ; douze checkpoints restent ouverts. Elle ne remplace aucun verdict humain par un test automatisé. Les quatre dépendances Diwan ne font pas partie de cette recette.
+Cette recette regroupait treize stories dont la dette machine était soldée mais dont la clôture exigeait une perception humaine, un destinataire réel ou un appareil physique. S6-012 et S0-017 sont acceptées depuis le 26 septembre 2026 ; onze checkpoints restent ouverts. Elle ne remplace aucun verdict humain par un test automatisé. Les quatre dépendances Diwan ne font pas partie de cette recette.
 
 ## Matériel et preuves à préparer
 
@@ -54,6 +54,10 @@ Dans **Configuration du rôle en classe**, ouvrir successivement le sélecteur d
 Succès : le son démarre dans les deux sélecteurs, l’annulation fonctionne et aucune identité ne change silencieusement.
 
 ### A3 — S0-017 : modèles d’image administrés
+
+**Verdict acquis le 26 septembre 2026 : accepté.** Après affichage direct de la
+capture de production, Amine confirme que le libellé « Gemini 3.1 Flash Image
+(rapide) » est lisible et clair. S0-017 est clôturée.
 
 La [capture fraîche du sélecteur de production](../evidence/s0-017-production-selector-2026-09-26.png) montre déjà l’option cochée **Gemini 3.1 Flash Image (rapide)**. Le verdict peut être rendu directement sur cette preuve ; il n’est pas nécessaire de reconstruire le parcours.
 
@@ -127,7 +131,7 @@ Succès : réception réelle, opt-in, désinscription et absence de doublon. Le 
 |---|---|---|
 | S3-008 | accepté / refusé | ton + cadence |
 | S6-012 | **accepté le 26/09/2026** | « Audible les deux » dans les deux sélecteurs |
-| S0-017 | accepté / refusé | lisibilité des modèles image |
+| S0-017 | **accepté le 26/09/2026** | libellé « Gemini 3.1 Flash Image (rapide) » lisible et clair |
 | S6-009 | accepté / refusé | microphone et verdict FR/arabe/EN |
 | S0-012 | accepté / refusé | parcours arabe RTL |
 | S6-021 | accepté / refusé | e-mail reçu et compte créé |

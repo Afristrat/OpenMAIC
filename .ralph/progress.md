@@ -1369,3 +1369,7 @@ La classe réelle `GIWp6RedxM` est ouverte sans nouvelle génération sur la pro
 ## 26 septembre 2026 — S6-012 préécoute vocale clôturée
 
 Amine confirme explicitement « Audible les deux » après écoute réelle depuis le sélecteur de la formatrice puis celui d’un agent sur l’accueil authentifié. La preuve porte donc sur les deux lecteurs corrigés, pas sur un WAV séparé. Au moment de la consignation, la production sert toujours `0a15d648fcb20061ccfa79059d0d68cdec6e7bfb`, `/api/health` répond HTTP 200 et le conteneur est healthy, restart=0, OOMKilled=false. S6-012 passe à `completed/passes=true`. Le registre contient désormais 84 stories : 68 clôturées, 12 à valider et 4 bloquées par Diwan.
+
+## 26 septembre 2026 — S0-017 lisibilité du modèle image acceptée
+
+La capture authentifiée de production montre le sélecteur Médias ouvert et l’option active « Gemini 3.1 Flash Image (rapide) ». Après affichage direct de cette preuve, Amine répond explicitement « Oui » à la question de lisibilité et de clarté du libellé. La production sert toujours `0a15d648fcb20061ccfa79059d0d68cdec6e7bfb`, `/api/health` répond HTTP 200 et le conteneur est healthy, restart=0, OOMKilled=false. S0-017 passe à `completed/passes=true`. Le registre contient désormais 84 stories : 69 clôturées, 11 à valider et 4 bloquées par Diwan.

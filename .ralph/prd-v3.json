@@ -2707,8 +2707,8 @@
       "description": "En tant qu’utilisateur de Qalem, je veux satisfaire le contrat « Modèles image LiteLLM administrés : libellés, sélection et preuve UI [UI] » afin de disposer d’une livraison prouvée de bout en bout.",
       "epic": "0-SOCLE",
       "priority": "P1",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "file": ".ralph/prd-v2.json",
         "id": "S0-017",
@@ -2716,7 +2716,7 @@
       },
       "sourceDependencies": ["S0-007"],
       "dependencies": [],
-      "gap": "Implémentation, gate et exposition publique prouvées ; seule la confirmation humaine de lisibilité dans le sélecteur de production reste ouverte.",
+      "gap": "Soldé : implémentation, gate et exposition publique prouvées ; Amine confirme la lisibilité du libellé dans le sélecteur de production.",
       "evidence": [
         ".ralph/prd-v2.json#S0-017",
         "lib/media/image-providers.ts",
@@ -2737,11 +2737,13 @@
         "2026-08-27 — Le dialogue avancé réaligne à son ouverture son fournisseur local sur le fournisseur réellement actif après synchronisation serveur. Le parcours Chromium sélectionne future-image-model, vérifie son affichage de repli et celui de Gemini 3.1 Flash Image, puis prouve imageProviderId=openai-image et imageModelId=future-image-model dans les requêtes de planification et de génération finale.",
         "2026-08-27 — Gate ServeurIA au SHA exact 122066878de8a827e4aa7b55addfa7e8279bba57 dans /tmp/qalem-s0017-27e9dd9 : Prettier, TypeScript et lint verts ; 365/365 fichiers et 2 425/2 425 tests Vitest ; build Next.js réussi avec 95/95 pages ; 71/71 tests Playwright. Les trois conteneurs dédiés terminent exit=0 et OOMKilled=false.",
         "2026-08-27 — Production re-vérifiée après l’indisponibilité 502 : /, /app, /api/health et /api/server-providers répondent HTTP 200 ; le web sain exécute 122066878de8a827e4aa7b55addfa7e8279bba57 et l’API publique expose openai-image avec gemini-3.1-flash-image.",
-        "2026-09-26 — Recette Chromium authentifiée sur la production fonctionnelle f896272b165ef531231dc6c7fd2b6f93dc107f27 : le popover Médias active la génération d’images et le sélecteur ouvert affiche l’option cochée « Gemini 3.1 Flash Image (rapide) ». La capture docs/evidence/s0-017-production-selector-2026-09-26.png a pour SHA-256 dcc97632a96779cb77c1c867878c8f6a054d27afa40b6119a76d1a6ad71e4c5f ; /api/health répond HTTP 200 avec imageGeneration=true et le conteneur reste sain, restart=0. Aucun compte ni donnée de tenant n’a été créé. Le checkpoint humain de lisibilité reste volontairement ouvert."
+        "2026-09-26 — Recette Chromium authentifiée sur la production fonctionnelle f896272b165ef531231dc6c7fd2b6f93dc107f27 : le popover Médias active la génération d’images et le sélecteur ouvert affiche l’option cochée « Gemini 3.1 Flash Image (rapide) ». La capture docs/evidence/s0-017-production-selector-2026-09-26.png a pour SHA-256 dcc97632a96779cb77c1c867878c8f6a054d27afa40b6119a76d1a6ad71e4c5f ; /api/health répond HTTP 200 avec imageGeneration=true et le conteneur reste sain, restart=0. Aucun compte ni donnée de tenant n’a été créé.",
+        "2026-09-26 — Après affichage direct de la capture de production, Amine répond explicitement « Oui » à la question de lisibilité et de clarté du libellé « Gemini 3.1 Flash Image (rapide) ». La production sert toujours le SHA fonctionnel 0a15d648fcb20061ccfa79059d0d68cdec6e7bfb ; /api/health répond HTTP 200 et le conteneur est healthy, restart=0, OOMKilled=false. Le checkpoint visuel est levé."
       ],
+      "completedAt": "2026-09-26T08:31:45Z",
       "validationDebt": {
         "recordedAt": "2026-08-27",
-        "decision": "Code, gate et production prouvés ; maintenir passes=false jusqu’au verdict visuel explicite d’Amine dans le sélecteur live.",
+        "decision": "Dette résolue le 26 septembre 2026 : code, gate et production prouvés, puis lisibilité du sélecteur confirmée explicitement par Amine sur la capture de production.",
         "implementedButUncertified": [
           "Libellés humains partagés pour les modèles Gemini connus dans le popover et les paramètres.",
           "Repli sans liste blanche : un identifiant administré inconnu reste affiché et sélectionnable.",
@@ -2754,10 +2756,9 @@
           "production": "Quatre routes publiques HTTP 200 ; web sain sur le SHA exact ; openai-image publie gemini-3.1-flash-image.",
           "oom": "OOMKilled=false pour les conteneurs qualité, build et E2E ; le build de validation nécessite une enveloppe V8 explicite de 4 Gio, tandis que le Dockerfile de production fournit sa propre enveloppe et a construit le SHA déployé."
         },
-        "stillRequired": [
-          "Amine ouvre le sélecteur Médias de https://qalem.ma/app et confirme explicitement que « Gemini 3.1 Flash Image (rapide) » est lisible et non ambigu dans le popover et les paramètres."
-        ],
-        "certified": false
+        "stillRequired": [],
+        "certified": true,
+        "resolvedAt": "2026-09-26T08:31:45Z"
       },
       "historicalEvidence": {
         "completedAt": null,
