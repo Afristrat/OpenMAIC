@@ -2595,11 +2595,11 @@
           "unitSuite": "2441/2441 tests Vitest au SHA 2ed4715ed9bd23f4ce7add2456d0f1cb26734c8d.",
           "build": "Build Next.js réussi, 95/95 pages générées.",
           "e2e": "74/74 parcours Playwright réussis, dont la réhydratation et la transmission des choix vocaux vers le plan et la génération.",
-        "production": "Correctif du lecteur partagé déployé ; 20/20 aperçus historiques, génération et rechargement conservés, 8/8 pistes régénérées. Le 26 septembre, les endpoints des deux sélecteurs produisent encore des WAV RIFF FR/Hanae et EN/Mehdi avec débit réel ; nettoyage à zéro.",
+          "production": "Correctif du lecteur partagé déployé ; 20/20 aperçus historiques, génération et rechargement conservés, 8/8 pistes régénérées. Le 26 septembre, les endpoints des deux sélecteurs produisent encore des WAV RIFF FR/Hanae et EN/Mehdi avec débit réel ; nettoyage à zéro.",
           "oom": "OOMKilled=false et zéro redémarrage sur web, worker de génération et capture-worker après la charge réelle."
         },
         "stillRequired": [
-        "Écouter au moins une préécoute depuis les deux sélecteurs de l’accueil authentifié sur navigateur réel."
+          "Écouter au moins une préécoute depuis les deux sélecteurs de l’accueil authentifié sur navigateur réel."
         ]
       },
       "historicalDependencies": [],
