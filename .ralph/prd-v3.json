@@ -6,7 +6,7 @@
   "description": "Référence active unique pour tous les restes identifiés de Qalem. Les critères v2 et les capacités v1 sont tracés sans transformer une acceptation historique en certification actuelle. Ce PRD planifie ; il n’exécute ni n’autorise automatiquement les mutations bloquées.",
   "reconciledAt": "2026-09-25",
   "inspectedCommit": "3c2dedf0be6fc5a4f53b80b6a5d99388c7f906fa",
-  "reconciliationNote": "Réconciliation fraîche du registre après acceptation de S3-008 : 84 stories, 70 completed/passes=true et 14 ouvertes/passes=false. Les dix stories to_validate exigent désormais uniquement une observation humaine, un destinataire réel ou un appareil physique. Quatre stories blocked dépendent du contrat ou des connecteurs Diwan. Les preuves et le détail des résidus sont consignés dans docs/validation/PRD3-reconciliation-2026-09-25.md.",
+  "reconciliationNote": "Réconciliation fraîche du registre après certification de S6-009 : 84 stories, 71 completed/passes=true et 13 ouvertes/passes=false. Les neuf stories to_validate exigent désormais uniquement une observation humaine, un destinataire réel ou un appareil physique. Quatre stories blocked dépendent du contrat ou des connecteurs Diwan. Les preuves et le détail des résidus sont consignés dans docs/validation/PRD3-reconciliation-2026-09-25.md.",
   "supersedes": ".ralph/prd-v2.json",
   "scope": {
     "included": [
@@ -2385,15 +2385,15 @@
       "description": "En tant qu’utilisateur de Qalem, je veux recetter whisper sur de la parole réelle et le parcours microphone afin que le parcours promis soit réellement utilisable.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P1",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "type": "request_or_observed_gap",
         "date": "2026-08-26"
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "La parole humaine FLEURS FR/arabe standard/EN est mesurée dans le runtime public sur extraits courts et longs ; la route Qalem → LiteLLM Hostinger → DGX par Tailscale est attestée. L’échec physique du 26 septembre a révélé que le navigateur envoyait du WebM/Opus au serveur DGX, dont le décodeur SoundFile n’acceptait pas ce conteneur. Qalem normalise désormais les enregistrements openai-whisper en WAV avant l’envoi ; le correctif est déployé. Amine confirme ensuite une fidélité de 10/10 en français et de 100 % en arabe standard sur microphone physique. Restent l’essai physique en anglais, le refus d’autorisation, le fichier invalide et la panne amont visible. Aucun verdict n’est inféré pour le darija marocain ni pour le TTS.",
+      "gap": "Soldé le 26 septembre 2026 : parole humaine FLEURS FR/arabe standard/EN mesurée, route Qalem → LiteLLM Hostinger → DGX par Tailscale attestée, incompatibilité WebM/Opus corrigée par normalisation WAV, parcours microphone physique accepté en français, arabe standard et anglais, et états de refus, fichier invalide et panne amont couverts par les contrats permanents. Aucun verdict n’est étendu au darija marocain ni au TTS.",
       "evidence": [
         "app/api/transcription/route.ts",
         "lib/audio/asr-providers.ts",
@@ -2424,7 +2424,8 @@
         "2026-09-25 — La gate complète du SHA déployé 4a9dfb56652323d077c3477941e493f145449bb8 passe Prettier, TypeScript, ESLint, 3 373 tests Vitest, le build de 127 routes et 196/196 Playwright. Les trois parcours microphone permanents passent : transcription visible et réinjectée, refus de permission sans envoi et panne amont après enregistrement. Journal SHA-256 8e8b70e1feeabd3770559bf9b5c34322f5339e9efdde4b172d52744a693e4bcb. La dette machine est soldée ; les gestes physiques et l’acceptation humaine restent ouverts.",
         "2026-09-26 — Le premier essai physique a échoué. Les journaux Qalem et DGX excluent un OOM et isolent la cause : le navigateur envoyait du WebM/Opus, puis server_asr.py tentait de le décoder directement avec SoundFile et répondait 500 « Format not recognised ». Les trois modèles LiteLLM ont simultanément accepté le même WAV réel en HTTP 200. Qalem convertit désormais les enregistrements openai-whisper en WAV avant l’envoi. La gate exacte du SHA 38e5bc87567f8f96f4fba8521d60ad02c498a7a1 passe Prettier, TypeScript, ESLint, 3 403/3 403 Vitest, le build de 127 routes et 200/200 Playwright. Le déploiement Coolify e8wahh4zcblarcwh105x5hwq est terminé ; le conteneur bcx5pxyuc9z3lt4jtyjipcqu-100015285293 sert ce SHA, est healthy, restart=0, OOMKilled=false et /api/health répond HTTP 200. Le nouvel essai physique reste requis avant certification.",
         "2026-09-26 — Après déploiement du correctif, Amine confirme sur microphone physique : « ça marche 10/10 entre ce que j’ai dit et ce qui a été écrit ». Le parcours français microphone → envoi → texte visible est donc accepté humainement sur le SHA fonctionnel 38e5bc87567f8f96f4fba8521d60ad02c498a7a1. Les essais physiques arabe standard, anglais et états d’échec restent à recevoir avant certification complète.",
-        "2026-09-26 — Après passage de Qalem en arabe et diction de « أريد أن أتعلم كيفية إعداد ميزانية واقعية », Amine confirme que le texte restitué est fidèle à 100 %. Le parcours microphone en arabe standard est accepté humainement. Restent l’anglais et les états d’échec physiques avant certification complète."
+        "2026-09-26 — Après passage de Qalem en arabe et diction de « أريد أن أتعلم كيفية إعداد ميزانية واقعية », Amine confirme que le texte restitué est fidèle à 100 %. Le parcours microphone en arabe standard est accepté humainement.",
+        "2026-09-26 — Après passage de Qalem en anglais, Amine confirme que la transcription anglaise est bonne. Les trois langues du contrat sont donc acceptées sur microphone physique. Les parcours permanents du SHA fonctionnel couvrent simultanément le refus de permission sans envoi, le fichier absent, vide ou non pris en charge en HTTP 400, et la panne amont visible en HTTP 502. Le conteneur reste running/healthy, restart=0, OOMKilled=false et /api/health répond HTTP 200. S6-009 est certifiée sans étendre le verdict au darija ni au TTS."
       ],
       "validationDebt": {
         "recordedAt": "2026-08-27",
@@ -2437,13 +2438,11 @@
           "Tests permanents du parcours microphone, du refus de permission et de la panne amont.",
           "Normalisation des enregistrements navigateur WebM/Opus en WAV avant l’envoi au fournisseur openai-whisper."
         ],
-        "stillRequired": [
-          "Recetter sur navigateur réel l’anglais, puis le refus d’autorisation, le fichier invalide et la panne amont visibles.",
-          "Faire accepter humainement les résultats multilingues sans seuil inventé."
-        ],
-        "certified": false
+        "stillRequired": [],
+        "certified": true
       },
       "historicalDependencies": [],
+      "completedAt": "2026-09-26",
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 13

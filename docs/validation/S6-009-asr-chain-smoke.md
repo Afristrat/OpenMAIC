@@ -204,3 +204,19 @@ parcours microphone en arabe standard est donc accepté humainement.
 La certification complète reste ouverte pour l’anglais et les états d’échec
 physiques prévus par le contrat. Aucun verdict n’est étendu au darija marocain
 ni à la synthèse vocale.
+
+## Validation physique anglaise et certification du 26 septembre 2026
+
+Après passage de Qalem en anglais et essai sur son microphone, Amine confirme
+que l’anglais est bon. Les trois langues prévues par le contrat sont donc
+acceptées sur microphone physique : français 10/10, arabe standard fidèle à
+100 %, anglais bon.
+
+Les preuves permanentes du même SHA fonctionnel complètent les états d’échec :
+refus de permission sans envoi, fichier absent, vide ou non pris en charge
+refusé en HTTP 400, et panne amont rendue visible après une réponse HTTP 502.
+La production répond toujours HTTP 200 sur `/api/health` ; le conteneur est
+`running/healthy`, compte zéro redémarrage et porte `OOMKilled=false`.
+
+S6-009 est certifiée. Cette certification ne porte ni sur le darija marocain
+ni sur la synthèse vocale.

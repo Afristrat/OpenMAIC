@@ -1391,3 +1391,7 @@ Après déploiement du correctif, Amine rejoue le parcours sur son microphone et
 ## 26 septembre 2026 — S6-009 microphone arabe standard accepté
 
 Après passage de Qalem en arabe et diction de « أريد أن أتعلم كيفية إعداد ميزانية واقعية », Amine confirme que le texte restitué est fidèle à 100 %. Le parcours microphone en arabe standard est accepté humainement. S6-009 reste `to_validate/passes=false` pour l’anglais et les états d’échec physiques exigés ; aucun verdict n’est étendu au darija ni au TTS.
+
+## 26 septembre 2026 — S6-009 certifiée
+
+Après passage de Qalem en anglais et essai sur son microphone, Amine confirme que l’anglais est bon. Les trois langues du contrat sont acceptées sur microphone physique : français 10/10, arabe standard fidèle à 100 %, anglais bon. Les parcours permanents du SHA fonctionnel `38e5bc87567f8f96f4fba8521d60ad02c498a7a1` couvrent le refus de permission sans envoi, le fichier absent, vide ou non pris en charge en HTTP 400, et la panne amont visible en HTTP 502. La production répond fraîchement HTTP 200 ; le conteneur `bcx5pxyuc9z3lt4jtyjipcqu-100015285293` reste running/healthy, restart=0 et OOMKilled=false. S6-009 passe à `completed/passes=true`. Le registre contient désormais 84 stories : 71 clôturées, 9 à valider et 4 bloquées par Diwan. Aucun verdict n’est étendu au darija ni au TTS.
