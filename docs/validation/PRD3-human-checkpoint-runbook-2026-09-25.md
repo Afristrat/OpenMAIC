@@ -2,7 +2,7 @@
 
 - Date de préparation : 26 septembre 2026
 - Production à recevoir : `https://qalem.ma`
-- SHA fonctionnel déployé : `f896272b165ef531231dc6c7fd2b6f93dc107f27`
+- SHA fonctionnel déployé : `0a15d648fcb20061ccfa79059d0d68cdec6e7bfb`
 - Tenant de démonstration : Human Yo Impact, `aa7870b7-3938-4f24-b8bf-4a9d73565ba7`
 
 ## Objet
@@ -65,7 +65,7 @@ Succès : accepter ou refuser séparément les résultats FR, arabe standard et 
 
 ### A5 — S0-012 : parcours arabe RTL
 
-La [capture fraîche de l’accueil authentifié en ar-MA](../evidence/s0-012-rtl-app-production-2026-09-26.png) prouve déjà `dir=rtl`, `lang=ar-MA`, la navigation à droite et l’absence de débordement horizontal sur ce premier écran. Basculer Qalem en arabe et poursuivre la checklist [RTL ar-MA](../foundation/0-socle/checklist-rtl.md) sur la génération, la salle de cours, le quiz et les réglages ; ne pas refaire l’accueil sauf si la capture révèle déjà un défaut à signaler.
+Les captures fraîches de [l’accueil authentifié](../evidence/s0-012-rtl-app-production-2026-09-26.png), des [réglages](../evidence/s0-012-rtl-settings-production-0a15d648.png), de la [super-administration](../evidence/s0-012-rtl-super-admin-production-0a15d648.png) et de [l’administration Human Yo Impact](../evidence/s0-012-rtl-org-admin-production-0a15d648.png) prouvent déjà `dir=rtl`, `lang=ar-MA`, la navigation à droite et l’absence de débordement horizontal. La flèche de retour du tenant pointe désormais vers la droite. Basculer Qalem en arabe et poursuivre la checklist [RTL ar-MA](../foundation/0-socle/checklist-rtl.md) sur la génération, la salle de cours et le quiz ; ne refaire les quatre surfaces prouvées que si une capture révèle déjà un défaut à signaler.
 
 Succès : verdict humain explicite ; chaque défaut observé doit indiquer l’écran, le sens attendu et le sens obtenu.
 

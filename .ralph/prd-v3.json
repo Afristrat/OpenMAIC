@@ -3087,7 +3087,10 @@
         "checklist-rtl.md livré (écrans, points de contrôle)",
         "Verdict d'Amine consigné, défauts → stories de pioche"
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-26 — Préparation machine élargie au SHA 0a15d648fcb20061ccfa79059d0d68cdec6e7bfb : /app, /settings, /admin et l’administration Human Yo Impact répondent 200 en ar-MA, exposent dir=rtl et lang=ar-MA, sans débordement horizontal (1585/1585 px). La flèche de retour du tenant a été corrigée pour pointer vers la droite en RTL ; quatre captures et leurs SHA-256 sont consignés dans docs/validation/S0-012-rtl-production-preparation-2026-09-26.md.",
+        "2026-09-26 — Gate exact avant déploiement : Prettier, TypeScript, ESLint, 3 402 tests Vitest, build Next.js et 200/200 Playwright. Déploiement Coolify knjgq73sc0fl6yrdarsfsbg3 terminé ; conteneur bcx5pxyuc9z3lt4jtyjipcqu-014702271694 healthy, restart=0, OOMKilled=false et /api/health HTTP 200. Le verdict humain de la checklist RTL reste volontairement requis ; passes demeure false."
+      ],
       "historicalEvidence": {
         "completedAt": null,
         "note": null,
