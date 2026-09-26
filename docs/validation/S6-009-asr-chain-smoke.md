@@ -194,3 +194,13 @@ le SHA fonctionnel
 La certification complète reste ouverte pour l’arabe standard, l’anglais et
 les états d’échec physiques prévus par le contrat. Ce verdict ne porte ni sur
 le darija marocain ni sur la synthèse vocale.
+
+## Validation physique en arabe standard du 26 septembre 2026
+
+Après passage de Qalem en arabe, Amine prononce « أريد أن أتعلم كيفية إعداد
+ميزانية واقعية » et confirme que le texte restitué est fidèle à 100 %. Le
+parcours microphone en arabe standard est donc accepté humainement.
+
+La certification complète reste ouverte pour l’anglais et les états d’échec
+physiques prévus par le contrat. Aucun verdict n’est étendu au darija marocain
+ni à la synthèse vocale.

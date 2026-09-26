@@ -1387,3 +1387,7 @@ Qalem convertit désormais les enregistrements `openai-whisper` en WAV avant l�
 ## 26 septembre 2026 — S6-009 microphone français accepté
 
 Après déploiement du correctif, Amine rejoue le parcours sur son microphone et confirme : « ça marche 10/10 entre ce que j’ai dit et ce qui a été écrit ». Le parcours français microphone → envoi → texte visible est donc accepté humainement sur le SHA fonctionnel `38e5bc87567f8f96f4fba8521d60ad02c498a7a1`. S6-009 reste `to_validate/passes=false` pour les essais physiques en arabe standard et en anglais, puis les états d’échec exigés ; aucun verdict n’est étendu au darija ni au TTS.
+
+## 26 septembre 2026 — S6-009 microphone arabe standard accepté
+
+Après passage de Qalem en arabe et diction de « أريد أن أتعلم كيفية إعداد ميزانية واقعية », Amine confirme que le texte restitué est fidèle à 100 %. Le parcours microphone en arabe standard est accepté humainement. S6-009 reste `to_validate/passes=false` pour l’anglais et les états d’échec physiques exigés ; aucun verdict n’est étendu au darija ni au TTS.

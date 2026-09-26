@@ -2393,7 +2393,7 @@
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "La parole humaine FLEURS FR/arabe standard/EN est mesurée dans le runtime public sur extraits courts et longs ; la route Qalem → LiteLLM Hostinger → DGX par Tailscale est attestée. L’échec physique du 26 septembre a révélé que le navigateur envoyait du WebM/Opus au serveur DGX, dont le décodeur SoundFile n’acceptait pas ce conteneur. Qalem normalise désormais les enregistrements openai-whisper en WAV avant l’envoi ; le correctif est déployé. Amine confirme ensuite que le parcours microphone français fonctionne et note 10/10 la fidélité entre la parole et le texte. Restent les essais physiques en arabe standard et en anglais, le refus d’autorisation, le fichier invalide et la panne amont visible. Aucun verdict n’est inféré pour le darija marocain ni pour le TTS.",
+      "gap": "La parole humaine FLEURS FR/arabe standard/EN est mesurée dans le runtime public sur extraits courts et longs ; la route Qalem → LiteLLM Hostinger → DGX par Tailscale est attestée. L’échec physique du 26 septembre a révélé que le navigateur envoyait du WebM/Opus au serveur DGX, dont le décodeur SoundFile n’acceptait pas ce conteneur. Qalem normalise désormais les enregistrements openai-whisper en WAV avant l’envoi ; le correctif est déployé. Amine confirme ensuite une fidélité de 10/10 en français et de 100 % en arabe standard sur microphone physique. Restent l’essai physique en anglais, le refus d’autorisation, le fichier invalide et la panne amont visible. Aucun verdict n’est inféré pour le darija marocain ni pour le TTS.",
       "evidence": [
         "app/api/transcription/route.ts",
         "lib/audio/asr-providers.ts",
@@ -2423,7 +2423,8 @@
         "2026-09-16 — Révalidation après remise en route : depuis Hostinger, le service ASR du DGX répond HTTP 200 à /health et à /v1/audio/transcriptions pour un WAV PCM temporaire. Le silence n’est pas interprété comme une mesure de qualité ; fichiers et réponse sont supprimés dans la même commande. Cette preuve fraîche confirme le maillon Tailscale sans exposer de secret ni de contenu apprenant. Détail : docs/validation/S6-009-asr-chain-smoke.md.",
         "2026-09-25 — La gate complète du SHA déployé 4a9dfb56652323d077c3477941e493f145449bb8 passe Prettier, TypeScript, ESLint, 3 373 tests Vitest, le build de 127 routes et 196/196 Playwright. Les trois parcours microphone permanents passent : transcription visible et réinjectée, refus de permission sans envoi et panne amont après enregistrement. Journal SHA-256 8e8b70e1feeabd3770559bf9b5c34322f5339e9efdde4b172d52744a693e4bcb. La dette machine est soldée ; les gestes physiques et l’acceptation humaine restent ouverts.",
         "2026-09-26 — Le premier essai physique a échoué. Les journaux Qalem et DGX excluent un OOM et isolent la cause : le navigateur envoyait du WebM/Opus, puis server_asr.py tentait de le décoder directement avec SoundFile et répondait 500 « Format not recognised ». Les trois modèles LiteLLM ont simultanément accepté le même WAV réel en HTTP 200. Qalem convertit désormais les enregistrements openai-whisper en WAV avant l’envoi. La gate exacte du SHA 38e5bc87567f8f96f4fba8521d60ad02c498a7a1 passe Prettier, TypeScript, ESLint, 3 403/3 403 Vitest, le build de 127 routes et 200/200 Playwright. Le déploiement Coolify e8wahh4zcblarcwh105x5hwq est terminé ; le conteneur bcx5pxyuc9z3lt4jtyjipcqu-100015285293 sert ce SHA, est healthy, restart=0, OOMKilled=false et /api/health répond HTTP 200. Le nouvel essai physique reste requis avant certification.",
-        "2026-09-26 — Après déploiement du correctif, Amine confirme sur microphone physique : « ça marche 10/10 entre ce que j’ai dit et ce qui a été écrit ». Le parcours français microphone → envoi → texte visible est donc accepté humainement sur le SHA fonctionnel 38e5bc87567f8f96f4fba8521d60ad02c498a7a1. Les essais physiques arabe standard, anglais et états d’échec restent à recevoir avant certification complète."
+        "2026-09-26 — Après déploiement du correctif, Amine confirme sur microphone physique : « ça marche 10/10 entre ce que j’ai dit et ce qui a été écrit ». Le parcours français microphone → envoi → texte visible est donc accepté humainement sur le SHA fonctionnel 38e5bc87567f8f96f4fba8521d60ad02c498a7a1. Les essais physiques arabe standard, anglais et états d’échec restent à recevoir avant certification complète.",
+        "2026-09-26 — Après passage de Qalem en arabe et diction de « أريد أن أتعلم كيفية إعداد ميزانية واقعية », Amine confirme que le texte restitué est fidèle à 100 %. Le parcours microphone en arabe standard est accepté humainement. Restent l’anglais et les états d’échec physiques avant certification complète."
       ],
       "validationDebt": {
         "recordedAt": "2026-08-27",
@@ -2437,7 +2438,7 @@
           "Normalisation des enregistrements navigateur WebM/Opus en WAV avant l’envoi au fournisseur openai-whisper."
         ],
         "stillRequired": [
-          "Recetter sur navigateur réel l’arabe standard et l’anglais, puis le refus d’autorisation, le fichier invalide et la panne amont visibles.",
+          "Recetter sur navigateur réel l’anglais, puis le refus d’autorisation, le fichier invalide et la panne amont visibles.",
           "Faire accepter humainement les résultats multilingues sans seuil inventé."
         ],
         "certified": false
