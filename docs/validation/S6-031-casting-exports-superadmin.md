@@ -91,3 +91,30 @@ le build de 127 routes et 200/200 Playwright. Le déploiement Coolify
 `vb3zo2b3s93ga4gfztec9kuu` sert l’image exacte
 `f896272b165ef531231dc6c7fd2b6f93dc107f27` ; le conteneur est `healthy`,
 `restart=0`, `OOMKilled=false` et `/api/health` répond HTTP 200.
+
+## Recertification au SHA déployé du 26 septembre 2026
+
+Les deux recettes permanentes sont rejouées contre la production servant
+`0a15d648fcb20061ccfa79059d0d68cdec6e7bfb`, sans créer de quatrième
+formation.
+
+La génération isolée du casting répond HTTP 200 avec dix agents, dix mécanismes
+et dix identités distinctes. La formatrice reste Hanae, femme, avatar
+`/avatars/teacher-2.png`, fournisseur `higgs-tts`, voix `hanae`. Les compteurs
+restent à trois cours et trois classes avant et après ; aucune formation
+existante n'est modifiée. Dans Chromium, la bannière nomme Human Yo Impact, la
+sortie atteint `/admin?tab=tenants`, efface le contexte tenant et conserve
+`isAdmin=true`.
+
+La formation réelle « RSE appliquée au leasing marocain » reste exportable. Le
+PPTX téléchargé contient onze diapositives et 165 paragraphes, préserve les
+accents Unicode et ne contient aucun contrôle parasite. Le job MP4
+`5b761c3e-685c-4000-94ec-738ac7ef5059` est réutilisé sans nouveau rendu : état
+`done`, dix-sept scènes, réponse HTTP 200 `video/mp4` et signature `ftyp`
+présente.
+
+Le gate du même SHA passe Prettier, TypeScript, ESLint, 3 402 tests Vitest, le
+build Next.js et 200 scénarios Playwright. Le déploiement Coolify
+`knjgq73sc0fl6yrdarsfsbg3` est terminé ; le conteneur
+`bcx5pxyuc9z3lt4jtyjipcqu-014702271694` est sain, sans redémarrage ni OOM, et
+`/api/health` répond HTTP 200.
