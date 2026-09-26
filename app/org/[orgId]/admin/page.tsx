@@ -461,7 +461,7 @@ export default function OrgAdminPage() {
       {/* Header */}
       <div className="mb-8 flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => router.push('/app')}>
-          <ArrowLeft className="h-5 w-5" />
+          <ArrowLeft className="h-5 w-5 rtl-flip" />
         </Button>
         <div className="flex items-center gap-3">
           <Building2 className="h-6 w-6 text-primary" />
