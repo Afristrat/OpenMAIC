@@ -1,9 +1,13 @@
 # S0-017 — Sélecteur de modèle image en production
 
-Date : 26 septembre 2026  
-Production fonctionnelle : `f896272b165ef531231dc6c7fd2b6f93dc107f27`  
-URL : `https://qalem.ma/app`  
-Preuve : `docs/evidence/s0-017-production-selector-2026-09-26.png`  
+Date : 26 septembre 2026
+
+Production fonctionnelle : `f896272b165ef531231dc6c7fd2b6f93dc107f27`
+
+URL : `https://qalem.ma/app`
+
+Preuve : `docs/evidence/s0-017-production-selector-2026-09-26.png`
+
 SHA-256 : `dcc97632a96779cb77c1c867878c8f6a054d27afa40b6119a76d1a6ad71e4c5f`
 
 ## Parcours rejoué
