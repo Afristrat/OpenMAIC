@@ -1,28 +1,27 @@
 # PRD 3 — Réconciliation actuelle
 
-Date : 25 septembre 2026  
+Date de mise à jour : 26 septembre 2026  
 Branche : `refork-v030`  
-Commit inspecté : `2ce57e1ce5e3701d0f72ff0d92666dd4169a4cd9`
+Commit fonctionnel déployé : `0a15d648fcb20061ccfa79059d0d68cdec6e7bfb`
 
 ## État réel
 
 Le registre contient désormais **84 stories** :
 
-- **67** sont `completed` avec `passes=true` ;
-- **13** sont `to_validate` avec `passes=false` ;
+- **68** sont `completed` avec `passes=true` ;
+- **12** sont `to_validate` avec `passes=false` ;
 - **4** sont `blocked` avec `passes=false` ;
 - **0** reste `in_progress` ;
 - **0** reste `to_implement`.
 
 L’ancien état 83/49/34 du goal n’est donc plus représentatif du dépôt. S6-032 a ajouté une story au registre et a été clôturée ; les travaux autonomes S6-030, S6-031, Human Yo Impact, invitations, sécurité, exports LMS, import, données, Director et xAPI/LRS sont soldés par leurs preuves propres.
 
-## Treize validations humaines ou physiques
+## Douze validations humaines ou physiques
 
 | Story | Résidu exact |
 |---|---|
 | S6-021 | Réception physique d’une invitation nominative par son destinataire. Le parcours machine complet et la fermeture de l’inscription publique sont prouvés. |
 | S6-009 | Microphone navigateur physique, refus de permission, panne visible et acceptation humaine des mesures ASR ; aucun verdict darija n’est inféré. |
-| S6-012 | Écoute réelle depuis les deux sélecteurs vocaux de l’accueil authentifié. |
 | S0-017 | Confirmation humaine de lisibilité des libellés de modèles image dans le sélecteur de production. |
 | S6-010 | Installation et usage physiques PWA iOS/Android, regroupés avec S3-002. |
 | U-020 | Vérification physique de la bannière d’installation PWA sur iOS et Android. |
@@ -36,7 +35,7 @@ L’ancien état 83/49/34 du goal n’est donc plus représentatif du dépôt. S
 
 Ces stories ne cachent aucune dette de code identifiée et restent ouvertes parce que leur critère final interdit de substituer une terminaison HTTP, un émulateur ou un test automatisé à l’observation demandée. Pour S3-008, les sorties contaminées ont été refusées et l’échantillon propre P3-B-v11 est versionné sans auto-acceptation. Le SHA exact `3c2dedf0be6fc5a4f53b80b6a5d99388c7f906fa` est déployé sainement par Coolify sous `2parydmimqxbn7tkf6wztl74` ; la dette machine est donc soldée.
 
-Les treize gestes humains sont regroupés dans `docs/validation/PRD3-human-checkpoint-runbook-2026-09-25.md` : réception de bureau, invitation nominative, recette physique iOS/Android et WhatsApp. Ce protocole ne transforme pas leur préparation en validation.
+Les douze gestes humains encore ouverts sont regroupés dans `docs/validation/PRD3-human-checkpoint-runbook-2026-09-25.md` : réception de bureau, invitation nominative, recette physique iOS/Android et WhatsApp. S6-012 y est conservée comme verdict acquis. Ce protocole ne transforme pas leur préparation en validation.
 
 ## Quatre dépendances Diwan
 
@@ -51,4 +50,4 @@ Qalem possède déjà le consommateur Diwan tenant-scopé. Aucun connecteur dire
 
 ## Conséquence sur l’objectif
 
-Le reliquat autonome Qalem est épuisé au sens du registre actuel. Les dix-sept stories ouvertes sont treize checkpoints humains ou physiques et quatre dépendances Diwan. Le goal reste actif jusqu’à la réalisation ou à une décision explicite portant sur chacun de ces critères ; il ne doit pas être déclaré terminé à partir du seul état machine.
+Le reliquat autonome Qalem est épuisé au sens du registre actuel. Les seize stories ouvertes sont douze checkpoints humains ou physiques et quatre dépendances Diwan. S6-012 est désormais clôturée après le verdict « Audible les deux ». Le goal reste actif jusqu’à la réalisation ou à une décision explicite portant sur chacun des autres critères ; il ne doit pas être déclaré terminé à partir du seul état machine.

@@ -7,7 +7,7 @@
 
 ## Objet
 
-Cette recette regroupe les treize stories dont la dette machine est soldée mais dont la clôture exige une perception humaine, un destinataire réel ou un appareil physique. Elle ne remplace aucun verdict humain par un test automatisé. Les quatre dépendances Diwan ne font pas partie de cette recette.
+Cette recette regroupait treize stories dont la dette machine était soldée mais dont la clôture exigeait une perception humaine, un destinataire réel ou un appareil physique. S6-012 est acceptée depuis le 26 septembre 2026 ; douze checkpoints restent ouverts. Elle ne remplace aucun verdict humain par un test automatisé. Les quatre dépendances Diwan ne font pas partie de cette recette.
 
 ## Matériel et preuves à préparer
 
@@ -37,6 +37,11 @@ Lire la [fiche de réception des vingt graines P3-B-v11](../evidence/s3-008-huma
 Succès : un verdict explicite sur les deux dimensions. Le drapeau `anchoring` ne doit pas être activé avant ce verdict.
 
 ### A2 — S6-012 : lecture des voix
+
+**Verdict acquis le 26 septembre 2026 : accepté.** Amine confirme « Audible les
+deux » après écoute depuis le sélecteur de la formatrice puis celui d’un agent.
+S6-012 est clôturée ; les étapes ci-dessous sont conservées comme protocole de
+non-régression.
 
 La génération réelle et le débit des crédits sont déjà prouvés en français/Hanae et en anglais/Mehdi. Il ne faut vérifier ici que l’audibilité et les gestes du lecteur.
 
@@ -121,7 +126,7 @@ Succès : réception réelle, opt-in, désinscription et absence de doublon. Le 
 | Story | Verdict | Preuve humaine minimale |
 |---|---|---|
 | S3-008 | accepté / refusé | ton + cadence |
-| S6-012 | accepté / refusé | écoute dans les deux sélecteurs |
+| S6-012 | **accepté le 26/09/2026** | « Audible les deux » dans les deux sélecteurs |
 | S0-017 | accepté / refusé | lisibilité des modèles image |
 | S6-009 | accepté / refusé | microphone et verdict FR/arabe/EN |
 | S0-012 | accepté / refusé | parcours arabe RTL |

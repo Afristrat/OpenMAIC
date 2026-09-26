@@ -2542,15 +2542,15 @@
       "description": "En tant qu’utilisateur de Qalem, je veux qualifier le catalogue vocal français et anglais afin que le parcours promis soit réellement utilisable.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P1",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "type": "request_or_observed_gap",
         "date": "2026-08-26"
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Le correctif du lecteur partagé est déployé et les préécoutes FR/EN produisent des WAV valides avec décompte réel. Une première écoute dans Qalem Démo a aussi permis de corriger son portefeuille absent. Seule l’écoute physique non substituable depuis les deux sélecteurs de l’accueil authentifié demeure requise avant clôture.",
+      "gap": "Soldé : le correctif du lecteur partagé est déployé, les préécoutes FR/EN produisent des WAV valides avec décompte réel et Amine confirme l’audibilité depuis les deux sélecteurs de l’accueil authentifié.",
       "evidence": [
         ".ralph/progress.md:18",
         "lib/audio/constants.ts",
@@ -2582,13 +2582,14 @@
         "2026-09-06 — Amine confirme dans la session Qalem l’écoute et l’acceptation humaine des vingt aperçus. Revalidation fraîche : /health Higgs répond 200 avec 16 profils, dont 10/10 identités qualifiées présentes ; le gate du SHA 01ac44b549f14cf3221b6649abd87ede9747dc1d passe 439/439 fichiers et 2 697/2 697 tests Vitest, build 113 pages et 112/112 Playwright sans retry. Référence : docs/validation/S6-012-voice-catalog-human-acceptance.md.",
         "2026-09-16 — À la suite d’un signalement de préécoute silencieuse sur l’accueil authentifié, les deux sélecteurs ont été raccordés au lecteur commun useTTSPreview. Il décode le base64 en Blob/URL objet, révoque les ressources, annule la requête en cours et conserve l’organisation explicitement fournie. Coolify a terminé le déploiement w6qu5p0b4xier4zll51ea7le au SHA d4577f1a89a4edc90c13d275a8db6ce53f2a716c ; web healthy et santé publique 200 avec TTS disponible. La story reste rouverte : aucune réponse TTS HTTP ne prouve l’audibilité après déploiement ; référence docs/validation/S6-012-voice-preview-regression-2026-09-16.md.",
         "2026-09-16 — Le SHA 47bb983e9d0456a2b7831be7972ce0cd96d6d1c4 élimine la course de chargement de tenant : les contrôles de préécoute restent désactivés tant que l’organisation active n’est pas résolue, puis s’ouvrent à tout créateur autorisé. Le rolling deploy Coolify a retiré l’ancien conteneur après disponibilité du nouveau (`healthy`) ; la santé publique retourne 200. L’écoute humaine dans les deux sélecteurs reste explicitement requise.",
-        "2026-09-26 — Une préécoute sur Qalem Démo a révélé un refus réel INSUFFICIENT_TENANT_CREDITS : le tenant Pro actif n’avait ni portefeuille ni allocation. Une allocation auditable de 1 000 crédits a été rapprochée à consistent=true. Deux recettes authentifiées éphémères sur Human Yo Impact ont ensuite produit HTTP 200 et des WAV RIFF valides en français/Hanae (140 204 octets, débit 78 840 microunités) et en anglais/Mehdi (126 764 octets, débit 71 280 microunités), puis supprimé les comptes et adhésions temporaires sans résidu. L’écoute humaine dans les deux sélecteurs reste ouverte."
+        "2026-09-26 — Une préécoute sur Qalem Démo a révélé un refus réel INSUFFICIENT_TENANT_CREDITS : le tenant Pro actif n’avait ni portefeuille ni allocation. Une allocation auditable de 1 000 crédits a été rapprochée à consistent=true. Deux recettes authentifiées éphémères sur Human Yo Impact ont ensuite produit HTTP 200 et des WAV RIFF valides en français/Hanae (140 204 octets, débit 78 840 microunités) et en anglais/Mehdi (126 764 octets, débit 71 280 microunités), puis supprimé les comptes et adhésions temporaires sans résidu.",
+        "2026-09-26 — Amine confirme explicitement « Audible les deux » après écoute sur navigateur réel depuis le sélecteur de la formatrice puis celui d’un agent de l’accueil authentifié. La production sert toujours le SHA fonctionnel 0a15d648fcb20061ccfa79059d0d68cdec6e7bfb ; /api/health répond HTTP 200 et le conteneur est healthy, restart=0, OOMKilled=false. Le résidu humain de la régression de préécoute est levé."
       ],
-      "completedAt": null,
+      "completedAt": "2026-09-26T08:10:24Z",
       "validationDebt": {
         "recordedAt": "2026-08-27",
         "decision": "Réouverte le 16 septembre 2026 : l’acceptation du catalogue demeure historique, mais le parcours de préécoute de l’accueil doit être recertifié après correction.",
-        "resolvedAt": null,
+        "resolvedAt": "2026-09-26T08:10:24Z",
         "implementedButUncertified": [
           "Catalogue de dix identités Higgs utilisables en français et en anglais, avec fournisseur, identifiant, genre déclaré et textes d’aperçu.",
           "Vingt WAV réels régénérés via Qalem au SHA déployé, tous non vides et consignés avec taille et SHA-256 dans le manifeste de preuve.",
@@ -2603,9 +2604,7 @@
           "production": "Correctif du lecteur partagé déployé ; 20/20 aperçus historiques, génération et rechargement conservés, 8/8 pistes régénérées. Le 26 septembre, les endpoints des deux sélecteurs produisent encore des WAV RIFF FR/Hanae et EN/Mehdi avec débit réel ; nettoyage à zéro.",
           "oom": "OOMKilled=false et zéro redémarrage sur web, worker de génération et capture-worker après la charge réelle."
         },
-        "stillRequired": [
-          "Écouter au moins une préécoute depuis les deux sélecteurs de l’accueil authentifié sur navigateur réel."
-        ]
+        "stillRequired": []
       },
       "historicalDependencies": [],
       "executionAllowed": true,

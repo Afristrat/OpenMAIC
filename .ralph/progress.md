@@ -1365,3 +1365,7 @@ La formation réelle « RSE appliquée au leasing marocain » produit encore un 
 ## 26 septembre 2026 — Human Yo Impact recetté selon les trois rôles
 
 La classe réelle `GIWp6RedxM` est ouverte sans nouvelle génération sur la production servant `0a15d648fcb20061ccfa79059d0d68cdec6e7bfb`. Le superadministrateur voit la bannière Human Yo Impact et la première scène. `info@humanyoimpact.com` reçoit HTTP 200, voit les dix-sept scènes et possède interaction, édition et accès aux sources. L'apprenant éphémère reçoit HTTP 200 et voit la même scène avec interaction autorisée, mais édition et sources refusées. Ses tentatives de génération et de lecture du catalogue non publié reçoivent HTTP 403 avant tout appel de modèle. Le compte et l'adhésion temporaires sont supprimés ; la lecture filtrée finale retourne zéro résidu. Cette preuve complète la recette intégrée demandée sans créer de quatrième cours ni consommer de crédit.
+
+## 26 septembre 2026 — S6-012 préécoute vocale clôturée
+
+Amine confirme explicitement « Audible les deux » après écoute réelle depuis le sélecteur de la formatrice puis celui d’un agent sur l’accueil authentifié. La preuve porte donc sur les deux lecteurs corrigés, pas sur un WAV séparé. Au moment de la consignation, la production sert toujours `0a15d648fcb20061ccfa79059d0d68cdec6e7bfb`, `/api/health` répond HTTP 200 et le conteneur est healthy, restart=0, OOMKilled=false. S6-012 passe à `completed/passes=true`. Le registre contient désormais 84 stories : 68 clôturées, 12 à valider et 4 bloquées par Diwan.

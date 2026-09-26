@@ -2,7 +2,7 @@
 
 Date : 16 septembre 2026
 
-Statut : correctif déployé ; écoute sur navigateur réel encore requise.
+Statut : clôturé ; correctif déployé et audibilité confirmée sur navigateur réel.
 
 ## Constat
 
@@ -39,9 +39,9 @@ remplacé le conteneur public. Le conteneur web finalement servi porte ce SHA,
 est `healthy` et `GET https://qalem.ma/api/health` retourne HTTP 200 avec TTS
 déclaré disponible.
 
-Le build de déploiement est donc validé au SHA livré. La dernière preuve à
-recueillir reste volontairement limitée à l’écoute d’une voix depuis chacun des
-deux sélecteurs de l’accueil authentifié.
+Le build de déploiement était donc validé au SHA livré. À ce stade, la dernière
+preuve à recueillir était volontairement limitée à l’écoute d’une voix depuis
+chacun des deux sélecteurs de l’accueil authentifié.
 
 ## Correctif complémentaire — contexte d’organisation
 
@@ -56,11 +56,11 @@ chargée, tous les créateurs retrouvent exactement le catalogue standard
 autorisé. Il ne s’agit donc ni d’une restriction de rôle ni d’un contournement
 de l’isolation tenant.
 
-Coolify a construit ce SHA en rolling deploy : le nouveau conteneur est
+Coolify a construit ce SHA en rolling deploy : le nouveau conteneur était
 `healthy`, l’ancien a été retiré seulement après sa disponibilité et
-`GET https://qalem.ma/api/health` répond HTTP 200. L’écoute humaine des deux
-sélecteurs demeure le seul critère de cette régression qui ne peut pas être
-déduit du serveur.
+`GET https://qalem.ma/api/health` répondait HTTP 200. L’écoute humaine des deux
+sélecteurs restait alors le seul critère de cette régression qui ne pouvait pas
+être déduit du serveur.
 
 ## Recertification du 26 septembre 2026
 
@@ -84,8 +84,20 @@ Une recette authentifiée éphémère a ensuite exercé le même endpoint
 - pour chaque appel, le compte et l’adhésion temporaires ont été supprimés ;
   la lecture finale retourne zéro adhésion résiduelle.
 
-La génération, l’isolation tenant et le débit réel FR/EN sont donc de nouveau
-prouvés sur le SHA de production courant. S6-012 reste néanmoins ouverte : le
-contrôle du navigateur authentifié a été interrompu avant l’écoute physique et
-aucune preuve serveur ne peut remplacer le verdict humain dans chacun des deux
-sélecteurs de l’accueil.
+La génération, l’isolation tenant et le débit réel FR/EN étaient donc de nouveau
+prouvés sur le SHA de production courant. S6-012 restait néanmoins ouverte à ce
+stade : le contrôle du navigateur authentifié avait été interrompu avant
+l’écoute physique et aucune preuve serveur ne pouvait remplacer le verdict
+humain dans chacun des deux sélecteurs de l’accueil.
+
+## Verdict humain final du 26 septembre 2026
+
+Amine a ouvert successivement le sélecteur de la formatrice puis celui d’un
+agent sur l’accueil authentifié et confirme explicitement : « Audible les deux ».
+Cette observation porte sur le lecteur réel des deux composants corrigés, et non
+sur un fichier WAV téléchargé séparément.
+
+Au moment de la consignation, la production sert toujours le SHA fonctionnel
+`0a15d648fcb20061ccfa79059d0d68cdec6e7bfb`, `/api/health` répond HTTP 200 et
+le conteneur est `healthy`, `restart=0`, `OOMKilled=false`. La régression de
+préécoute est donc clôturée.
