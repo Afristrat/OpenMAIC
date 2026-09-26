@@ -2543,7 +2543,7 @@
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Régression signalée le 16 septembre 2026 : le catalogue qualifié restait valide côté serveur, mais les sélecteurs de voix de l’accueil contournaient le lecteur TTS partagé. Le correctif unifie leur lecture Blob/URL objet, leur annulation et leur contexte organisationnel. L’écoute dans un navigateur réel au SHA déployé demeure requise avant toute nouvelle clôture.",
+      "gap": "Le correctif du lecteur partagé est déployé et les préécoutes FR/EN produisent des WAV valides avec décompte réel. Une première écoute dans Qalem Démo a aussi permis de corriger son portefeuille absent. Seule l’écoute physique non substituable depuis les deux sélecteurs de l’accueil authentifié demeure requise avant clôture.",
       "evidence": [
         ".ralph/progress.md:18",
         "lib/audio/constants.ts",
@@ -2593,12 +2593,11 @@
           "unitSuite": "2441/2441 tests Vitest au SHA 2ed4715ed9bd23f4ce7add2456d0f1cb26734c8d.",
           "build": "Build Next.js réussi, 95/95 pages générées.",
           "e2e": "74/74 parcours Playwright réussis, dont la réhydratation et la transmission des choix vocaux vers le plan et la génération.",
-          "production": "20/20 aperçus réels, génération réussie, rechargement conservé et 8/8 pistes régénérées ; nettoyage à zéro.",
+        "production": "Correctif du lecteur partagé déployé ; 20/20 aperçus historiques, génération et rechargement conservés, 8/8 pistes régénérées. Le 26 septembre, les endpoints des deux sélecteurs produisent encore des WAV RIFF FR/Hanae et EN/Mehdi avec débit réel ; nettoyage à zéro.",
           "oom": "OOMKilled=false et zéro redémarrage sur web, worker de génération et capture-worker après la charge réelle."
         },
         "stillRequired": [
-          "Déployer le correctif de lecteur partagé.",
-          "Écouter au moins une préécoute depuis les deux sélecteurs de l’accueil authentifié sur navigateur réel."
+        "Écouter au moins une préécoute depuis les deux sélecteurs de l’accueil authentifié sur navigateur réel."
         ]
       },
       "historicalDependencies": [],
