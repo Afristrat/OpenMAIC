@@ -33,11 +33,24 @@ ADR-008 conserve l’e-mail et WhatsApp uniquement pour les cartes de révision 
 
 Ces éléments empêchent encore `passes=true`. Il ne reste ni code ni infrastructure à construire : seulement l’appairage et la réception WhatsApp humaine.
 
-## Prévol d’appairage du 26 septembre 2026
+## Incident d’appairage et correction du 26 septembre 2026
 
-Une lecture fraîche de l’API Evolution dédiée retourne HTTP 200 pour
-`qalem-reminders` avec l’état `close`. L’endpoint d’appairage répond HTTP 200 et
-génère un data URL `image/png` de 9 965 octets ; la signature PNG est valide.
-Le QR éphémère n’a été ni affiché ni persisté puisque le téléphone n’était pas
-encore confirmé prêt à scanner. Le prochain appel peut donc présenter le QR au
-dernier moment, sans nouvelle opération d’infrastructure.
+Une lecture initiale de l’API Evolution dédiée retournait HTTP 200 pour
+`qalem-reminders` et l’endpoint d’appairage générait un PNG valide. Ce prévol
+était insuffisant : le premier scan physique a échoué, tandis que les journaux
+répétaient `redis disconnected`.
+
+Redis lui-même était sain (`PONG`), résolu sur le réseau Docker et joignable en
+TCP depuis Evolution. La cause se trouvait dans la composition : elle passait
+`REDIS_URI`, variable ignorée par Evolution v2.3.7. L’image appliquait donc son
+défaut `CACHE_REDIS_URI=redis://localhost:6379/6` et cherchait Redis dans son
+propre conteneur.
+
+La composition versionnée et active déclare désormais le cache avec
+`CACHE_REDIS_URI=redis://redis:6379/6`, un préfixe propre à Qalem et le cache
+local désactivé. Le déploiement n’a recréé que `qalem-evolution-api`, sans
+toucher aux volumes ni aux conteneurs PostgreSQL et Redis. Après redémarrage,
+le runtime relit l’hôte `redis`, l’API locale et l’URL publique répondent HTTP
+200, le conteneur affiche `restart=0` et `OOMKilled=false`, et aucune nouvelle
+déconnexion Redis n’apparaît. Un nouveau QR valide est généré pour la reprise du
+test humain.

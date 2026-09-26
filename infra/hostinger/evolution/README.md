@@ -31,6 +31,8 @@ Copier `docker-compose.yml` dans `/opt/qalem-evolution`, créer `.env` depuis `.
 Avant toute validation :
 
 1. vérifier les trois états `healthy` avec `docker compose ps` ;
-2. vérifier un HTTP 200 sur l’API locale et l’URL publique ;
-3. vérifier que l’instance `qalem-reminders` est `open` après appairage WhatsApp ;
-4. ne jamais afficher la clé API, le QR d’appairage ni le contenu de `.env`.
+2. vérifier que le runtime lit `CACHE_REDIS_URI` avec l’hôte réseau `redis`,
+   jamais l’ancien `REDIS_URI` ni `localhost` depuis le conteneur Evolution ;
+3. vérifier un HTTP 200 sur l’API locale et l’URL publique ;
+4. vérifier que l’instance `qalem-reminders` est `open` après appairage WhatsApp ;
+5. ne jamais afficher la clé API, le QR d’appairage ni le contenu de `.env`.

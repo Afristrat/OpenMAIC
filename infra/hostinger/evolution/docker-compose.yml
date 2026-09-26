@@ -42,7 +42,11 @@ services:
       AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES: "false"
       DATABASE_PROVIDER: postgresql
       DATABASE_CONNECTION_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
-      REDIS_URI: redis://redis:6379/6
+      CACHE_REDIS_ENABLED: "true"
+      CACHE_REDIS_URI: redis://redis:6379/6
+      CACHE_REDIS_PREFIX_KEY: qalem-evolution
+      CACHE_REDIS_SAVE_INSTANCES: "false"
+      CACHE_LOCAL_ENABLED: "false"
       TZ: Africa/Casablanca
     depends_on:
       postgres:

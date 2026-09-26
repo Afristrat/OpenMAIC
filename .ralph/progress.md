@@ -1,14 +1,18 @@
 # Progress — Qalem (fork OpenMAIC)
 
-## 26 septembre 2026 — S6-011, QR WhatsApp prêt sans exposition anticipée
+## 26 septembre 2026 — S6-011, défaut Redis d’appairage corrigé
 
-L’API Evolution dédiée répond HTTP 200 pour l’instance `qalem-reminders`,
-toujours à l’état `close`. L’appel d’appairage produit à la demande une image
-PNG valide de 9 965 octets ; sa signature binaire a été contrôlée sans afficher,
-journaliser ni conserver le QR éphémère. La dette machine préalable au scan est
-donc nulle. S6-011 reste `to_validate/passes=false` jusqu’au scan par le compte
-WhatsApp retenu, puis à la réception réelle, la désinscription et la vérification
-humaine d’absence de doublon.
+Le premier QR valide a échoué au scan. Les journaux Evolution ont révélé une
+boucle `redis disconnected` : la composition utilisait l’ancien `REDIS_URI`,
+ignoré par Evolution v2.3.7, dont l’image conservait alors
+`CACHE_REDIS_URI=redis://localhost:6379/6`. La composition versionnée et celle
+de `/opt/qalem-evolution` utilisent maintenant le nom réseau `redis` via la
+variable attendue. Seul le conteneur API a été recréé ; PostgreSQL et Redis
+restent sains. Le runtime relit `redis:6379/6`, l’API locale et publique répond
+HTTP 200, le conteneur est sans redémarrage ni OOM et les nouveaux journaux ne
+contiennent aucune déconnexion Redis. S6-011 reste `to_validate/passes=false`
+jusqu’au nouveau scan, puis à la réception réelle, la désinscription et la
+vérification humaine d’absence de doublon.
 
 ## 26 septembre 2026 — S6-021, réception humaine certifiée et story clôturée
 
