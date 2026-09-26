@@ -5,6 +5,10 @@ const LOCALES_DIR = path.join(process.cwd(), 'lib', 'i18n', 'locales');
 const SOURCE_LOCALE = 'en-US.json';
 const UI_LOCALES = ['ui-en-US.json', 'ui-fr-FR.json', 'ui-ar-MA.json'];
 
+function placeholders(value) {
+  return [...value.matchAll(/{{\s*([A-Za-z0-9_]+)\s*}}/g)].map((match) => match[1]).sort();
+}
+
 function isPlainObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
@@ -55,6 +59,63 @@ function readLocaleKeys(filePath) {
   }
 
   return [...collectLeafKeys(parsed, fileName)].sort();
+}
+
+function readUiCatalog(filePath) {
+  const raw = fs.readFileSync(filePath, 'utf8');
+  const parsed = JSON.parse(raw);
+  const fileName = path.basename(filePath);
+
+  if (!isPlainObject(parsed)) {
+    throw new Error(`${fileName} must contain a JSON object at the root.`);
+  }
+
+  const rawKeys = [...raw.matchAll(/^\s*"((?:\\.|[^"\\])*)"\s*:/gm)].map((match) =>
+    JSON.parse(`"${match[1]}"`),
+  );
+  const uniqueRawKeys = new Set(rawKeys);
+  if (rawKeys.length !== uniqueRawKeys.size) {
+    const duplicates = [...uniqueRawKeys]
+      .filter((key) => rawKeys.filter((candidate) => candidate === key).length > 1)
+      .sort();
+    throw new Error(`${fileName} has duplicate keys: ${duplicates.join(', ')}`);
+  }
+
+  for (const [key, value] of Object.entries(parsed)) {
+    if (typeof value !== 'string') {
+      throw new Error(`${fileName} has a non-string value at "${key}".`);
+    }
+    if (value.trim() === '') throw new Error(`${fileName} has an empty value at "${key}".`);
+    if (value === key) throw new Error(`${fileName} echoes its key at "${key}".`);
+  }
+
+  return parsed;
+}
+
+function validateUiCatalogs() {
+  const catalogs = Object.fromEntries(
+    UI_LOCALES.map((fileName) => [fileName, readUiCatalog(path.join(LOCALES_DIR, fileName))]),
+  );
+  const source = catalogs['ui-en-US.json'];
+
+  for (const fileName of UI_LOCALES.filter((name) => name !== 'ui-en-US.json')) {
+    const catalog = catalogs[fileName];
+    for (const key of Object.keys(source)) {
+      const sourcePlaceholders = placeholders(source[key]);
+      const localePlaceholders = placeholders(catalog[key]);
+      if (JSON.stringify(localePlaceholders) !== JSON.stringify(sourcePlaceholders)) {
+        throw new Error(
+          `${fileName} has mismatched placeholders at "${key}": ` +
+            `${localePlaceholders.join(', ')} instead of ${sourcePlaceholders.join(', ')}`,
+        );
+      }
+    }
+  }
+
+  console.log(
+    `Qalem UI value audit passed (${Object.keys(source).length} keys per locale): ` +
+      'no duplicates, empty values, unresolved values, or placeholder mismatches.',
+  );
 }
 
 function compareGroup(sourceFile, localeFiles, label) {
@@ -122,6 +183,7 @@ function main() {
     'Upstream locale',
   );
   compareGroup('ui-en-US.json', UI_LOCALES, 'Qalem UI locale');
+  validateUiCatalogs();
 }
 
 main();

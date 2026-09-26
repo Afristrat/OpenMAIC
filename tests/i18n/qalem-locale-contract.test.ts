@@ -105,4 +105,12 @@ describe('Qalem clean-room locale contract', () => {
       expect(placeholders(catalog['stage.deepenScenePrompt']), locale).toEqual(['title']);
     }
   });
+
+  it('uses consistent French navigation vocabulary for the review journey', () => {
+    expect(catalogs['fr-FR']['nav.review']).toBe('Révisions');
+    expect(catalogs['fr-FR']['review.complete']).toBe('Révision terminée');
+    expect(catalogs['fr-FR']['generation.backToHome']).toBe('Retour à l’accueil');
+    expect(catalogs['fr-FR']['payment.backToHome']).toBe('Retour à l’accueil');
+    expect(catalogs['fr-FR']['review.backToHome']).toBe('Retour à l’accueil');
+  });
 });
