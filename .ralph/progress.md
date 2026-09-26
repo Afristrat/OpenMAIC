@@ -1,5 +1,23 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 26 septembre 2026 — S6-011 WhatsApp certifiée de bout en bout
+
+Après correction du cache Redis, l’instance `qalem-reminders` est passée à
+`open`. Un premier message fournisseur puis une vraie livraison du pipeline
+Qalem ont été reçus sur le téléphone d’Amine. Celui-ci confirme la réception et
+le lien du rappel a ouvert la file d’attente des notifications, puis la carte du
+programme. La livraison Qalem est `sent`, sans tentative d’échec ni code
+d’erreur ; son rejeu le même jour crée zéro doublon.
+
+La désinscription a été exercée séparément : e-mail et WhatsApp désactivés,
+numéro supprimé, puis claim au jour suivant, avec zéro livraison. Les
+préférences initiales ont été restaurées exactement. La carte, la livraison et
+le job BullMQ temporaires ont été supprimés ; les contrôles finaux trouvent zéro
+résidu. Les six QR expirés et la sauvegarde de composition obsolète ont aussi été
+supprimés après vérification du manifeste actif. S6-011 passe à
+`completed/passes=true`. Le registre contient désormais 84 stories : 74
+clôturées, 6 à valider sur appareil physique et 4 bloquées par Diwan.
+
 ## 26 septembre 2026 — S6-011, défaut Redis d’appairage corrigé
 
 Le premier QR valide a échoué au scan. Les journaux Evolution ont révélé une

@@ -5,8 +5,8 @@
   "title": "Réconciliation des engagements et clôture prouvée",
   "description": "Référence active unique pour tous les restes identifiés de Qalem. Les critères v2 et les capacités v1 sont tracés sans transformer une acceptation historique en certification actuelle. Ce PRD planifie ; il n’exécute ni n’autorise automatiquement les mutations bloquées.",
   "reconciledAt": "2026-09-25",
-  "inspectedCommit": "3c2dedf0be6fc5a4f53b80b6a5d99388c7f906fa",
-  "reconciliationNote": "Réconciliation fraîche du registre après validation RTL S0-012 : 84 stories, 72 completed/passes=true et 12 ouvertes/passes=false. Les huit stories to_validate exigent désormais uniquement un destinataire réel ou un appareil physique. Quatre stories blocked dépendent du contrat ou des connecteurs Diwan. Les preuves et le détail des résidus sont consignés dans docs/validation/PRD3-reconciliation-2026-09-25.md.",
+  "inspectedCommit": "ff337723b4b46a4811a1c1b4674e67f1ca93d22c",
+  "reconciliationNote": "Réconciliation fraîche du registre après validation WhatsApp S6-011 : 84 stories, 74 completed/passes=true, 6 to_validate/passes=false nécessitant un appareil physique et 4 blocked/passes=false dépendant de Diwan. Les preuves et le détail historique des résidus sont consignés dans docs/validation/PRD3-reconciliation-2026-09-25.md.",
   "supersedes": ".ralph/prd-v2.json",
   "scope": {
     "included": [
@@ -3723,15 +3723,15 @@
       "description": "En tant qu’utilisateur de Qalem, je veux réconcilier puis livrer les canaux de rappel e-mail et whatsapp retenus afin que le parcours promis soit réellement utilisable.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P2",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "type": "request_or_observed_gap",
         "date": "2026-08-26"
       },
       "sourceDependencies": [],
       "dependencies": ["S6-010"],
-      "gap": "Décision du 12 septembre : Web Push est le canal prioritaire de l’ancrage personnalisé ; e-mail complète les rappels de révision ; WhatsApp est une option activable par tenant, mais toute offre de ce canal exige appairage, opt-in, désinscription et réception réelle. Le premier scan du 26 septembre a révélé une variable Redis obsolète : Evolution utilisait son défaut localhost et rejetait l’appairage. La cause est corrigée et déployée ; le runtime lit désormais redis:6379/6 et ne journalise plus de déconnexion. Restent le nouveau scan, la réception réelle, la désinscription et l’absence de doublon constatées humainement avant passes=true.",
+      "gap": "Soldé le 26 septembre 2026 : l’instance WhatsApp Qalem est appairée, le pipeline réel a été reçu et son lien a ouvert la file de notifications puis la carte du programme. La déduplication quotidienne et la désinscription ont produit zéro nouvelle livraison ; les préférences initiales et les données de recette ont été restaurées sans résidu.",
       "evidence": [
         ".ralph/prd.json#S-028",
         "tasks/prd-3-ancrer.md#Non-Goals",
@@ -3753,7 +3753,9 @@
         "2026-09-06 — Le SHA 6f13b77167f6f589c1bc938f32a6439879a0e9bc versionne une stack Evolution v2.3.7 dédiée, identique au compose actif et persistant sur Hostinger. Le tunnel Cloudflare et l’API répondent 200 ; les trois variables Evolution et l’expéditeur Qalem corrigé sont injectés dans web/worker/capture-worker, tous healthy, restart=0, OOMKilled=false. La recette e-mail obtient une livraison unique, un événement Resend delivered, une désinscription, puis trois compteurs à zéro. Gate exact : 439/439 fichiers, 2 697/2 697 Vitest, build 113 pages et 112/112 Playwright. L’instance qalem-reminders reste connecting jusqu’au scan humain du QR et la réception WhatsApp ; passes demeure donc faux. Référence : docs/validation/S6-011-review-notification-channels.md.",
         "2026-09-25 — Contrôle frais via l’API Evolution dédiée et les secrets Qalem limités : qalem-reminders existe mais retourne state=close. Aucun QR ni secret n’est exposé. Ce contrôle confirme que l’unique résidu est toujours l’appairage physique du compte WhatsApp retenu, suivi d’une réception réelle et d’un test de désinscription/déduplication.",
         "2026-09-26 — Prévol incomplet : l’endpoint connectionState répondait HTTP 200 et l’endpoint connect produisait un PNG valide, mais cela ne prouvait pas la dépendance Redis pendant le scan. La première tentative humaine a échoué ; les journaux ont révélé une boucle redis disconnected.",
-        "2026-09-26 — Cause racine corrigée : la composition déclarait REDIS_URI, ignorée par Evolution v2.3.7, tandis que l’image conservait CACHE_REDIS_URI=redis://localhost:6379/6. La composition versionnée et active utilise désormais CACHE_REDIS_URI=redis://redis:6379/6 avec cache activé et préfixe Qalem. Seul le conteneur API a été recréé ; PostgreSQL et Redis sont restés sains. Le runtime relit host=redis, l’API locale et publique répond 200, restart=0, OOMKilled=false et zéro nouvelle déconnexion Redis est journalisée."
+        "2026-09-26 — Cause racine corrigée : la composition déclarait REDIS_URI, ignorée par Evolution v2.3.7, tandis que l’image conservait CACHE_REDIS_URI=redis://localhost:6379/6. La composition versionnée et active utilise désormais CACHE_REDIS_URI=redis://redis:6379/6 avec cache activé et préfixe Qalem. Seul le conteneur API a été recréé ; PostgreSQL et Redis sont restés sains. Le runtime relit host=redis, l’API locale et publique répond 200, restart=0, OOMKilled=false et zéro nouvelle déconnexion Redis est journalisée.",
+        "2026-09-26 — Appairage et réception réels : Evolution retourne state=open. Un envoi fournisseur contrôlé puis une livraison issue du pipeline Qalem ont été reçus sur le téléphone d’Amine. La livraison Qalem est sent, sans tentative d’échec ni code d’erreur, et possède un identifiant fournisseur ; Amine confirme la réception puis l’ouverture du lien vers la file des notifications et la carte du programme.",
+        "2026-09-26 — Déduplication, désinscription et nettoyage : le rejeu du claim le même jour retourne zéro nouvelle livraison. Après désactivation des deux canaux et suppression du numéro WhatsApp, un claim au jour suivant retourne également zéro livraison. Les préférences initiales sont restaurées exactement ; carte, livraison et job BullMQ temporaires sont supprimés, avec zéro résidu. Les six PNG de QR expirés et la sauvegarde de composition obsolète sont supprimés après vérification du SHA-256 actif. Référence : docs/validation/S6-011-review-notification-channels.md."
       ],
       "historicalDependencies": [],
       "executionAllowed": true,

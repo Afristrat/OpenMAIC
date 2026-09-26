@@ -25,13 +25,30 @@ ADR-008 conserve l’e-mail et WhatsApp uniquement pour les cartes de révision 
 - La recette e-mail de production utilise l’adresse contrôlée `delivered+…@resend.dev` documentée par Resend. Elle obtient une seule livraison après rejeu du claim, `status=sent`, zéro tentative d’échec, l’événement fournisseur `delivered`, puis une désinscription effective. Préférences, livraison, carte et compte temporaires sont supprimés avec trois compteurs à zéro.
 - Le gate exact du nouveau SHA est vert avec `NODE_OPTIONS=--max-old-space-size=4096` : Prettier, TypeScript, ESLint, 439/439 fichiers et 2 697/2 697 tests Vitest, build de 113 pages, puis 112/112 tests Playwright. La première exécution sans ce plafond avait atteint uniquement la limite V8 de 2 Gio ; le conteneur de validation n’a subi ni OOM noyau ni redémarrage.
 
-## Validation encore ouverte
+## Validation finale du 26 septembre 2026
 
-- Effectuer un envoi WhatsApp autorisé vers un numéro de recette ayant explicitement accepté ce canal et en constater la réception.
-- L’instance logique `qalem-reminders` est créée mais reste `connecting` tant que le QR n’a pas été scanné depuis le compte WhatsApp retenu.
-- Après appairage, vérifier sur WhatsApp la désinscription et l’absence de second envoi dans la même journée, déjà couvertes au niveau code mais pas encore par une réception réelle.
+- L’instance logique `qalem-reminders` est appairée et l’API Evolution retourne
+  `state=open`.
+- Un envoi fournisseur contrôlé a été reçu sur le téléphone d’Amine.
+- Une carte de révision temporaire due a ensuite traversé le pipeline Qalem réel :
+  claim Supabase, file BullMQ, worker, Evolution et téléphone. La livraison porte
+  `status=sent`, zéro tentative d’échec, aucun code d’erreur et un identifiant
+  fournisseur.
+- Amine a confirmé la réception du second message. Son lien a ouvert la file
+  d’attente des notifications puis la carte du programme.
+- Le rejeu du claim le même jour a retourné zéro nouvelle livraison.
+- Après désactivation de l’e-mail et de WhatsApp et suppression du numéro, un
+  claim au jour suivant a retourné zéro livraison. Cette preuve exerce la
+  désinscription indépendamment de l’unicité du lot du jour courant.
+- Les préférences initiales ont été restaurées exactement : e-mail actif,
+  WhatsApp inactif, aucun numéro, locale `fr-FR`, fuseau `UTC`, plafond quotidien
+  de trois et aucun silence ni report programmé.
+- La carte, la livraison et le job BullMQ temporaires ont été supprimés. Les
+  contrôles finaux retournent zéro carte et zéro livraison de recette.
 
-Ces éléments empêchent encore `passes=true`. Il ne reste ni code ni infrastructure à construire : seulement l’appairage et la réception WhatsApp humaine.
+S6-011 satisfait désormais l’appairage, l’opt-in, la réception réelle, la
+navigation du lien, la déduplication, la désinscription et le nettoyage ; elle
+passe à `completed/passes=true`.
 
 ## Incident d’appairage et correction du 26 septembre 2026
 
@@ -54,3 +71,8 @@ le runtime relit l’hôte `redis`, l’API locale et l’URL publique réponden
 200, le conteneur affiche `restart=0` et `OOMKilled=false`, et aucune nouvelle
 déconnexion Redis n’apparaît. Un nouveau QR valide est généré pour la reprise du
 test humain.
+
+Après la recette finale, les six images QR expirées ont été supprimées. La
+sauvegarde de composition antérieure a également été supprimée uniquement après
+égalité du SHA-256 entre le manifeste actif Hostinger et le manifeste versionné
+`ff337723b4b46a4811a1c1b4674e67f1ca93d22c`.
