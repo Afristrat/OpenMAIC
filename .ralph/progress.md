@@ -1,5 +1,15 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 26 septembre 2026 — S6-011, QR WhatsApp prêt sans exposition anticipée
+
+L’API Evolution dédiée répond HTTP 200 pour l’instance `qalem-reminders`,
+toujours à l’état `close`. L’appel d’appairage produit à la demande une image
+PNG valide de 9 965 octets ; sa signature binaire a été contrôlée sans afficher,
+journaliser ni conserver le QR éphémère. La dette machine préalable au scan est
+donc nulle. S6-011 reste `to_validate/passes=false` jusqu’au scan par le compte
+WhatsApp retenu, puis à la réception réelle, la désinscription et la vérification
+humaine d’absence de doublon.
+
 ## 26 septembre 2026 — S6-021, réception humaine certifiée et story clôturée
 
 Une invitation nominative administrateur pour le tenant temporaire
