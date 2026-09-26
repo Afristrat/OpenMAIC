@@ -1,5 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { isWavBlob, normalizeASRUploadAudio } from '@/lib/audio/wav-utils';
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe('isWavBlob', () => {
   it('detects audio/wav MIME type', () => {
@@ -26,17 +30,40 @@ describe('isWavBlob', () => {
 });
 
 describe('normalizeASRUploadAudio', () => {
-  it('passes through non-lemonade providers unchanged', async () => {
+  it('passes through providers whose upstream accepts the browser recording format', async () => {
     const input = new Blob([new Uint8Array([1, 2, 3])], { type: 'audio/webm' });
-    const result = await normalizeASRUploadAudio('openai-whisper', input);
+    const result = await normalizeASRUploadAudio('qwen-asr', input);
     expect(result.blob).toBe(input);
     expect(result.fileName).toBe('recording.webm');
   });
 
   it('keeps the filename consistent with the format recorded by the browser', async () => {
     const input = new Blob([new Uint8Array([1, 2, 3])], { type: 'audio/mp4' });
-    const result = await normalizeASRUploadAudio('openai-whisper', input);
+    const result = await normalizeASRUploadAudio('qwen-asr', input);
     expect(result.fileName).toBe('recording.m4a');
+  });
+
+  it('normalizes browser recordings to WAV for the managed Whisper-compatible upstream', async () => {
+    const close = vi.fn().mockResolvedValue(undefined);
+    class FakeAudioContext {
+      decodeAudioData = vi.fn().mockResolvedValue({
+        sampleRate: 16000,
+        length: 2,
+        numberOfChannels: 1,
+        getChannelData: () => new Float32Array([0.25, -0.25]),
+      });
+
+      close = close;
+    }
+    vi.stubGlobal('window', { AudioContext: FakeAudioContext });
+    const input = new Blob([new Uint8Array([1, 2, 3])], { type: 'audio/webm' });
+
+    const result = await normalizeASRUploadAudio('openai-whisper', input);
+
+    expect(result.blob).not.toBe(input);
+    expect(result.blob.type).toBe('audio/wav');
+    expect(result.fileName).toBe('recording.wav');
+    expect(close).toHaveBeenCalledOnce();
   });
 
   it('keeps WAV blobs unchanged for lemonade-asr', async () => {
