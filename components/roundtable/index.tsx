@@ -1094,7 +1094,7 @@ export function Roundtable({
         {/* Left: Teacher identity */}
         <div
           className={cn(
-            'w-[90px] shrink-0 flex flex-col border-r border-gray-100/50 dark:border-gray-700/50 bg-white/40 dark:bg-gray-900/40 overflow-visible relative transition-opacity duration-300',
+            'w-[52px] sm:w-[90px] shrink-0 flex flex-col border-r border-gray-100/50 dark:border-gray-700/50 bg-white/40 dark:bg-gray-900/40 overflow-visible relative transition-opacity duration-300',
             isPresenting && !controlsVisible && 'opacity-0 pointer-events-none',
           )}
         >
@@ -1106,7 +1106,7 @@ export function Roundtable({
           </div>
 
           {/* Main Content */}
-          <div className="flex-1 flex items-center justify-center gap-3 px-2 min-h-0 pb-1 pt-8">
+          <div className="flex-1 flex items-center justify-center gap-3 px-1 sm:px-2 min-h-0 pb-1 pt-8">
             {/* Avatar Group (Left) */}
             <div
               ref={teacherAvatarRef}
@@ -1117,7 +1117,7 @@ export function Roundtable({
                   <div className="flex flex-col items-center gap-1">
                     <div
                       className={cn(
-                        'relative w-12 h-12 rounded-full transition-all duration-500 flex items-center justify-center',
+                        'relative w-10 h-10 sm:w-12 sm:h-12 rounded-full transition-all duration-500 flex items-center justify-center',
                         activeRole === 'teacher' ? 'scale-105' : 'opacity-90 scale-95',
                       )}
                     >
@@ -1130,7 +1130,7 @@ export function Roundtable({
                         )}
                       />
 
-                      <div className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 overflow-hidden relative z-10 shadow-sm border border-gray-50 dark:border-gray-700">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white dark:bg-gray-800 overflow-hidden relative z-10 shadow-sm border border-gray-50 dark:border-gray-700">
                         <img
                           src={teacherAvatar}
                           alt={teacherName}
@@ -1147,7 +1147,7 @@ export function Roundtable({
 
                     <span
                       className={cn(
-                        'max-w-[80px] truncate px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase border shadow-sm transition-all duration-300 bg-white/90 dark:bg-gray-800/90',
+                        'max-w-[48px] sm:max-w-[80px] truncate px-1 sm:px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase border shadow-sm transition-all duration-300 bg-white/90 dark:bg-gray-800/90',
                         activeRole === 'teacher' && !speakingStudent
                           ? 'text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-700'
                           : 'text-gray-400 dark:text-gray-500 border-gray-100 dark:border-gray-700 group-hover:text-purple-500 dark:group-hover:text-purple-400 group-hover:border-purple-200 dark:group-hover:border-purple-600',
@@ -1219,7 +1219,7 @@ export function Roundtable({
         </div>
 
         {/* Center: Interaction stage */}
-        <div className="flex-1 relative mx-3 mb-2">
+        <div className="flex-1 relative mx-1 sm:mx-3 mb-2">
           {/* End flash banner (Issue 3) */}
           <AnimatePresence>
             {endFlashVisible && (
@@ -1585,7 +1585,7 @@ export function Roundtable({
                         onPlayPause?.();
                       }}
                       className={cn(
-                        'relative px-4 pt-2 pb-3 rounded-2xl text-[15px] leading-relaxed transition-all border w-[min(420px,calc(100%-3rem))] group/bubble flex flex-col max-h-[110px]',
+                        'relative px-4 pt-2 pb-3 rounded-2xl text-[15px] leading-relaxed transition-all border w-full sm:w-[min(420px,calc(100%_-_3rem))] group/bubble flex flex-col max-h-[110px]',
                         bubbleRole === 'teacher' ? 'pl-4 pr-10' : 'pl-4 pr-10',
                         bubbleRole === 'user'
                           ? 'bg-purple-600/95 dark:bg-purple-500/95 backdrop-blur-sm border-purple-400/40 dark:border-purple-300/40 text-white rounded-br-sm shadow-md shadow-purple-300/30 dark:shadow-purple-800/30'
@@ -1788,7 +1788,7 @@ export function Roundtable({
         {/* Right: Participants area */}
         <div
           className={cn(
-            'w-[140px] shrink-0 flex flex-col py-3 border-l border-gray-100/50 dark:border-gray-700/50 bg-gray-50/30 dark:bg-gray-900/30 overflow-visible transition-opacity duration-300',
+            'w-[40px] sm:w-[140px] shrink-0 flex flex-col py-3 border-l border-gray-100/50 dark:border-gray-700/50 bg-gray-50/30 dark:bg-gray-900/30 overflow-visible transition-opacity duration-300',
             isPresenting && !controlsVisible && 'opacity-0 pointer-events-none',
           )}
         >
@@ -1809,7 +1809,7 @@ export function Roundtable({
 
             <div
               ref={agentScrollRef}
-              className="overflow-x-auto overflow-y-hidden px-2 scrollbar-hide"
+              className="overflow-x-auto overflow-y-hidden px-0.5 sm:px-2 scrollbar-hide"
               onWheel={(e) => {
                 if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
                   e.currentTarget.scrollLeft += e.deltaY;
@@ -1870,7 +1870,7 @@ export function Roundtable({
                         <HoverCardTrigger asChild>
                           <div
                             className={cn(
-                              'relative w-9 h-9 rounded-full transition-all duration-300 cursor-pointer',
+                              'relative w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all duration-300 cursor-pointer',
                               isSpeaking
                                 ? 'opacity-100 grayscale-0 scale-110'
                                 : 'opacity-50 grayscale-[0.2] scale-95 hover:opacity-100 hover:grayscale-0 hover:scale-100',

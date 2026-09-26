@@ -7,6 +7,7 @@ const STAGE_ID = 'e2e-authoritative-audio';
 test('privilégie la classroom serveur et sa narration sur le cache local périmé', async ({
   page,
 }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.addInitScript((settings) => {
     localStorage.setItem('settings-storage', settings);
   }, createSettingsStorage());
@@ -158,7 +159,7 @@ test('privilégie la classroom serveur et sa narration sur le cache local périm
   await page.route(`**/api/classroom-media/${STAGE_ID}/audio/server-speech.wav`, (route) =>
     route.fulfill({
       contentType: 'audio/wav',
-      body: Buffer.from(buildPcm16Wav(new Array(12_000).fill(0))),
+      body: Buffer.from(buildPcm16Wav(new Array(48_000).fill(0))),
     }),
   );
 
@@ -174,6 +175,14 @@ test('privilégie la classroom serveur et sa narration sur le cache local périm
   await expect(serverSceneItems.nth(1)).toContainText('Quiz depuis le serveur');
 
   await page.getByRole('button', { name: 'Play', exact: true }).click();
+  const narration = page
+    .locator('p.whitespace-pre-wrap.break-words')
+    .filter({ hasText: 'Cette narration provient de la classroom persistée.' });
+  await expect(narration).toBeVisible();
+  const bubble = narration.locator('xpath=../..');
+  await expect
+    .poll(async () => (await bubble.boundingBox())?.width ?? 0)
+    .toBeGreaterThanOrEqual(220);
   await expect(page.locator('[data-scene-completion-gate="true"]')).toBeVisible({
     timeout: 10_000,
   });
