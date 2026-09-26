@@ -1,8 +1,8 @@
 # Recette humaine consolidée du PRD 3
 
-- Date de préparation : 25 septembre 2026
+- Date de préparation : 26 septembre 2026
 - Production à recevoir : `https://qalem.ma`
-- SHA fonctionnel déployé : `3c2dedf0be6fc5a4f53b80b6a5d99388c7f906fa`
+- SHA fonctionnel déployé : `f896272b165ef531231dc6c7fd2b6f93dc107f27`
 - Tenant de démonstration : Human Yo Impact, `aa7870b7-3938-4f24-b8bf-4a9d73565ba7`
 
 ## Objet
@@ -38,7 +38,9 @@ Succès : un verdict explicite sur les deux dimensions. Le drapeau `anchoring` n
 
 ### A2 — S6-012 : lecture des voix
 
-Dans les deux sélecteurs de voix de l’accueil authentifié :
+La génération réelle et le débit des crédits sont déjà prouvés en français/Hanae et en anglais/Mehdi. Il ne faut vérifier ici que l’audibilité et les gestes du lecteur.
+
+Dans **Configuration du rôle en classe**, ouvrir successivement le sélecteur de la formatrice puis celui d’un autre agent. Cliquer sur la petite icône haut-parleur à droite de la voix, pas seulement sur son nom.
 
 1. écouter au moins une voix française et une voix anglaise ;
 2. changer de voix, relancer l’écoute, puis interrompre une lecture en cours ;
@@ -48,7 +50,7 @@ Succès : le son démarre dans les deux sélecteurs, l’annulation fonctionne e
 
 ### A3 — S0-017 : modèles d’image administrés
 
-Ouvrir **Médias**, puis le choix du modèle d’image. Vérifier que les libellés sont compréhensibles et que l’identifiant technique reste discernable lorsqu’il est nécessaire de différencier deux modèles.
+La [capture fraîche du sélecteur de production](../evidence/s0-017-production-selector-2026-09-26.png) montre déjà l’option cochée **Gemini 3.1 Flash Image (rapide)**. Le verdict peut être rendu directement sur cette preuve ; il n’est pas nécessaire de reconstruire le parcours.
 
 Succès : aucun libellé tronqué, ambigu ou illisible. Noter textuellement tout libellé refusé.
 
@@ -63,7 +65,7 @@ Succès : accepter ou refuser séparément les résultats FR, arabe standard et 
 
 ### A5 — S0-012 : parcours arabe RTL
 
-Basculer Qalem en arabe et exécuter la checklist [RTL ar-MA](../foundation/0-socle/checklist-rtl.md) sur l’accueil, la génération, la salle de cours, le quiz et les réglages.
+La [capture fraîche de l’accueil authentifié en ar-MA](../evidence/s0-012-rtl-app-production-2026-09-26.png) prouve déjà `dir=rtl`, `lang=ar-MA`, la navigation à droite et l’absence de débordement horizontal sur ce premier écran. Basculer Qalem en arabe et poursuivre la checklist [RTL ar-MA](../foundation/0-socle/checklist-rtl.md) sur la génération, la salle de cours, le quiz et les réglages ; ne pas refaire l’accueil sauf si la capture révèle déjà un défaut à signaler.
 
 Succès : verdict humain explicite ; chaque défaut observé doit indiquer l’écran, le sens attendu et le sens obtenu.
 
