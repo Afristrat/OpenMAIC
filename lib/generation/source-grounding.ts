@@ -135,6 +135,34 @@ function hasNegativePolarity(value: string): boolean {
   return /\b(?:ne|n['’]|not|never|without|aucun|interdit)\b|(?:لا|ليس|بدون)/iu.test(value);
 }
 
+function claimSentences(value: string): string[] {
+  return value
+    .split(/(?<=[.!?؟])\s+|\n+/u)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+}
+
+function hasComparableContext(left: string, right: string): boolean {
+  const leftTokens = normalizedTokens(left);
+  const rightTokens = normalizedTokens(right);
+  const smallestContextSize = Math.min(leftTokens.size, rightTokens.size);
+  if (smallestContextSize === 0) return false;
+  const sharedCount = [...leftTokens].filter((token) => rightTokens.has(token)).length;
+  return sharedCount >= 3 && sharedCount / smallestContextSize >= 0.5;
+}
+
+function claimsContradict(left: string, right: string): boolean {
+  if (!hasComparableContext(left, right)) return false;
+  const leftNumbers = numericClaims(left);
+  const rightNumbers = numericClaims(right);
+  const numbersConflict =
+    leftNumbers.size > 0 &&
+    rightNumbers.size > 0 &&
+    [...leftNumbers].every((claim) => !rightNumbers.has(claim));
+  const polarityConflict = hasNegativePolarity(left) !== hasNegativePolarity(right);
+  return numbersConflict || polarityConflict;
+}
+
 function findContradictions(passages: SourcePassage[]): SourceGroundingIssue[] {
   for (let leftIndex = 0; leftIndex < passages.length; leftIndex += 1) {
     for (let rightIndex = leftIndex + 1; rightIndex < passages.length; rightIndex += 1) {
@@ -142,19 +170,10 @@ function findContradictions(passages: SourcePassage[]): SourceGroundingIssue[] {
       const right = passages[rightIndex];
       if (left.sourceId === right.sourceId && left.sourceVersion === right.sourceVersion) continue;
 
-      const leftTokens = normalizedTokens(left.text);
-      const rightTokens = normalizedTokens(right.text);
-      const shared = [...leftTokens].filter((token) => rightTokens.has(token));
-      if (shared.length < 3) continue;
-
-      const leftNumbers = numericClaims(left.text);
-      const rightNumbers = numericClaims(right.text);
-      const numbersConflict =
-        leftNumbers.size > 0 &&
-        rightNumbers.size > 0 &&
-        [...leftNumbers].every((claim) => !rightNumbers.has(claim));
-      const polarityConflict = hasNegativePolarity(left.text) !== hasNegativePolarity(right.text);
-      if (!numbersConflict && !polarityConflict) continue;
+      const contradictoryClaims = claimSentences(left.text).some((leftClaim) =>
+        claimSentences(right.text).some((rightClaim) => claimsContradict(leftClaim, rightClaim)),
+      );
+      if (!contradictoryClaims) continue;
 
       return [
         {

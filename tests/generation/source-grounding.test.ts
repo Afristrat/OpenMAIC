@@ -72,6 +72,37 @@ describe('scene source grounding', () => {
     });
   });
 
+  it('keeps a method and its numeric case study complementary', () => {
+    const grounding = buildSceneSourceGrounding(
+      outline({
+        title: 'Décider avec une prévision glissante',
+        description: 'Appliquer la méthode à Atlas Services.',
+        keyPoints: ['prévision glissante', 'seuil de sécurité', 'décision'],
+      }),
+      [
+        source(
+          'method',
+          [
+            'Chaque semaine, mettre à jour les encaissements confirmés, les décaissements engagés et le solde disponible.',
+            'Le point bas est le solde de clôture le plus faible de l’horizon. Il doit être comparé au seuil de sécurité défini par l’entreprise.',
+            'Le suivi hebdomadaire sert à décider tôt ; il ne transforme jamais une prévision en certitude.',
+          ].join(' '),
+        ),
+        source(
+          'case-study',
+          [
+            'Atlas Services dispose d’un solde initial de 180 000 dirhams et d’un seuil de sécurité de 70 000 dirhams.',
+            'En semaine 2, les encaissements sont de 60 000 dirhams et les décaissements de 142 000 dirhams.',
+            'Une dépense marketing de 30 000 dirhams peut être décalée sans pénalité.',
+          ].join(' '),
+        ),
+      ],
+    );
+
+    expect(grounding?.status).toBe('grounded');
+    expect(grounding?.issues).toEqual([]);
+  });
+
   it('versions the same uploaded source again when its content changes', () => {
     const first = uploadedSourceDocument({ name: 'guide.pdf', text: 'Version une', images: [] });
     const second = uploadedSourceDocument({ name: 'guide.pdf', text: 'Version deux', images: [] });
