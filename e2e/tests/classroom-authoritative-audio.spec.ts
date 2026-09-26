@@ -186,4 +186,12 @@ test('privilégie la classroom serveur et sa narration sur le cache local périm
   await expect(page.locator('[data-scene-completion-gate="true"]')).toBeVisible({
     timeout: 10_000,
   });
+  const unnamedButtons = await page
+    .locator('button:not([aria-label])')
+    .evaluateAll((buttons) =>
+      buttons
+        .filter((button) => !(button.textContent ?? '').trim() && !button.getAttribute('title'))
+        .map((button) => button.outerHTML),
+    );
+  expect(unnamedButtons).toEqual([]);
 });
