@@ -58,3 +58,36 @@ MP4 :
 Avant la recette, le candidat fonctionnel a passé sur ServeurIA : Prettier, TypeScript, ESLint, 544 fichiers et 3 366 tests Vitest, le build de production et 195 scénarios Playwright. Les scénarios couvrent notamment le retour du mode tenant, les exports, le casting complet persistant et les auto-présentations.
 
 La régression de sortie a été recettée au SHA `590a223690d5166c2e6c7e1f365f4769b14bb5dc` : Chromium entre dans le tenant, navigue vers `/catalog`, constate que le bandeau est toujours visible, revient à `/admin?tab=tenants` et relit les deux stockages vidés. La gate passe Prettier, TypeScript, ESLint, 544 fichiers et 3 366 tests Vitest, le build de production et ce parcours E2E ciblé. Le déploiement Coolify `7juhij3dllndapviymqvuhlt` est terminé ; le conteneur web sert exactement ce SHA, est `healthy`, sans redémarrage ni OOM, et `/api/health` répond HTTP 200.
+
+## Recertification du workspace super-administrateur
+
+Le 26 septembre 2026, la session réelle d’Amine a révélé que le retour vers
+`/admin?tab=tenants` ne restaurait pas son propre workspace et qu’une navigation
+interne pouvait conserver en mémoire les trois formations du tenant testé. Les
+SHA successifs `81ce43183160fdd1c78e397663aaae1af8a1ac35`,
+`51f5c125bdd84d503b374e6b494210f4c2bac45e` puis
+`f896272b165ef531231dc6c7fd2b6f93dc107f27` corrigent la cause complète :
+
+- l’API distingue une adhésion directe de l’accès global du superadministrateur ;
+- le workspace direct est choisi par défaut à la place du tenant actif le plus récent ;
+- l’organisation d’origine est enregistrée avant le changement de tenant ;
+- une organisation simplement mémorisée ne devient plus un mode test implicite ;
+- la sortie recharge intégralement le workspace d’origine afin de purger les données
+  React du tenant testé.
+
+La recette Chromium sur `qalem.ma` observe successivement :
+
+1. Qalem Démo, identifiant `432f141e-f1d3-4ed9-bad3-6768100802a4`, avec 26
+   formations et aucune bannière de test ;
+2. Human Yo Impact, identifiant `aa7870b7-3938-4f24-b8bf-4a9d73565ba7`, avec
+   3 formations et la bannière de test ;
+3. après clic sur la sortie, Qalem Démo avec 26 formations, aucune bannière et
+   le lien Administration toujours présent.
+
+Les sept fichiers modifiés depuis `7acbd03e` ont des empreintes SHA-256
+identiques dans le dépôt et l’arbre exécuté sur ServeurIA. La gate complète de
+ce code passe Prettier, TypeScript, ESLint, 550 fichiers et 3 401 tests Vitest,
+le build de 127 routes et 200/200 Playwright. Le déploiement Coolify
+`vb3zo2b3s93ga4gfztec9kuu` sert l’image exacte
+`f896272b165ef531231dc6c7fd2b6f93dc107f27` ; le conteneur est `healthy`,
+`restart=0`, `OOMKilled=false` et `/api/health` répond HTTP 200.
