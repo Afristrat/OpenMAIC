@@ -61,3 +61,31 @@ Coolify a construit ce SHA en rolling deploy : le nouveau conteneur est
 `GET https://qalem.ma/api/health` répond HTTP 200. L’écoute humaine des deux
 sélecteurs demeure le seul critère de cette régression qui ne peut pas être
 déduit du serveur.
+
+## Recertification du 26 septembre 2026
+
+La préécoute lancée depuis le sélecteur de la formatrice sur le workspace
+`Qalem Démo` a produit le toast localisé « Le test TTS a échoué ». Le journal
+du conteneur a identifié la cause exacte : `INSUFFICIENT_TENANT_CREDITS`. Ce
+tenant Pro actif possédait 26 cours et un contrôle de facturation actif, mais
+aucun portefeuille ni aucune écriture de crédit. Une allocation administrative
+auditable de 1 000 crédits a créé le portefeuille ; le rapprochement relit
+ensuite exactement 1 000 000 000 microunités dans le portefeuille et dans le
+ledger, avec `consistent=true`.
+
+Une recette authentifiée éphémère a ensuite exercé le même endpoint
+`POST /api/generate/tts` sur `Human Yo Impact`, sans contourner le décompte :
+
+- aperçu français, voix `hanae` : HTTP 200, WAV RIFF de 140 204 octets,
+  débit réel de 78 840 microunités ;
+- aperçu anglais, voix `mehdi` : HTTP 200, WAV RIFF de 126 764 octets,
+  débit réel de 71 280 microunités ;
+- solde tenant : 996 326 420 → 996 176 300 microunités ;
+- pour chaque appel, le compte et l’adhésion temporaires ont été supprimés ;
+  la lecture finale retourne zéro adhésion résiduelle.
+
+La génération, l’isolation tenant et le débit réel FR/EN sont donc de nouveau
+prouvés sur le SHA de production courant. S6-012 reste néanmoins ouverte : le
+contrôle du navigateur authentifié a été interrompu avant l’écoute physique et
+aucune preuve serveur ne peut remplacer le verdict humain dans chacun des deux
+sélecteurs de l’accueil.
