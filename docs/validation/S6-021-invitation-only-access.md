@@ -82,5 +82,19 @@ passe Prettier, TypeScript, ESLint, 3 373 tests Vitest, le build de 127 routes
 et 196/196 Playwright, dont les deux parcours `invitation-only-auth`. Journal
 SHA-256 :
 `8e8b70e1feeabd3770559bf9b5c34322f5339e9efdde4b172d52744a693e4bcb`.
-Le déploiement est sain, sans redémarrage ni OOM. S6-021 reste ouverte
-exclusivement pour la réception physique d’une invitation par son destinataire.
+Le déploiement est sain, sans redémarrage ni OOM.
+
+## Réception humaine du 26 septembre 2026
+
+Une invitation nominative administrateur a été envoyée à une adresse alias du
+compte Google Workspace d’Amine pour un tenant de validation distinct. Resend
+l’a acceptée à 12 h 43 min 02 s UTC. La lecture en-têtes uniquement de la boîte
+Workspace a retrouvé le message à 12 h 43 min 03 s UTC, avec l’adresse
+nominative exacte, l’objet attendu et l’expéditeur
+`Qalem <notifications@ai-mpower.com>`. Aucun corps, lien ni jeton n’a été lu ou
+consigné. Amine a validé explicitement la réception.
+
+Cette preuve humaine complète la recette autonome du 24 septembre, qui couvre
+déjà la consommation, l’adhésion atomique et le refus du rejeu. Le tenant et
+l’invitation non consommée créés pour la réception ont ensuite été supprimés ;
+les deux requêtes de contrôle retournent zéro résidu. S6-021 est clôturée.

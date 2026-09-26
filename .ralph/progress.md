@@ -1,5 +1,18 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 26 septembre 2026 — S6-021, réception humaine certifiée et story clôturée
+
+Une invitation nominative administrateur pour le tenant temporaire
+`S6-021 Validation humaine` a été acceptée par Resend à 12 h 43 min 02 s UTC,
+puis retrouvée dans la boîte Google Workspace du destinataire à
+12 h 43 min 03 s UTC. Les en-têtes confirment l’adresse nominative exacte,
+l’objet Qalem et l’expéditeur `notifications@ai-mpower.com`, sans lecture ni
+exposition du jeton. Amine a validé cette réception humaine. La recette de
+production du 24 septembre couvre déjà l’inscription nominative, l’adhésion
+atomique et le refus du rejeu ; elle n’est pas remplacée par cette preuve.
+Le tenant et l’invitation de validation ont ensuite été supprimés, avec zéro
+résidu vérifié. S6-021 passe à `completed/passes=true`.
+
 ## 25 septembre 2026 — S1-012, capture web réutilisable clôturée
 
 La dernière dette humaine est levée. Le worker déployé a produit à HTTP 200

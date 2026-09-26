@@ -1344,15 +1344,15 @@
       "description": "En tant que propriétaire de Qalem, je veux qu’aucun tiers ne puisse créer un compte ou entrer dans l’application sans invitation nominative afin que les tests restent strictement privés jusqu’à l’ouverture décidée du produit.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P0",
-      "status": "to_validate",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "type": "request_and_production_incident",
         "date": "2026-09-01"
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "La recette fraîche du 24 septembre prouve en production le refus de l’inscription publique, la redirection anonyme, l’acceptation de l’e-mail par Resend, le refus d’une adresse divergente, l’inscription nominative, l’adhésion administrateur et le refus du rejeu, avec nettoyage intégral. Les fichiers du parcours sont inchangés depuis cette recette et la gate complète repasse au SHA déployé. Seule la réception physique non substituable par un destinataire humain reste ouverte.",
+      "gap": "Soldé : la recette de production prouve la frontière d’invitation complète et la gate du SHA déployé est verte. Une invitation nominative distincte a ensuite été reçue dans la boîte Workspace de son destinataire humain, qui l’a validée ; le tenant et l’invitation de validation ont été supprimés sans résidu.",
       "evidence": [
         "production:https://qalem.ma/auth",
         "production:https://qalem.ma/api/access-code/status",
@@ -1391,7 +1391,8 @@
         "2026-09-16 — Recette production fraîche : tenant temporaire, invitation nominative administrateur, création de mot de passe par POST /api/invitations/signup, connexion par mot de passe, adhésion admin atomique et présence du tenant dans GET /api/organizations. Chaque assertion répond positivement ; identité et tenant de recette sont ensuite supprimés. La seule preuve non substituable restante est la réception physique d’un e-mail Resend par le destinataire.",
         "2026-09-16 — Recertification isolée au SHA 3061bc6 : installation verrouillée puis 2/2 scénarios Chromium `invitation-only-auth.spec.ts` verts en 9,4 s. Sans invitation, seul l’accès d’un compte existant est visible ; avec invitation nominative, la création de compte est visible. Aucun OTP ni e-mail réel n’a été émis ; le clone et ses journaux temporaires sont supprimés. Détail : docs/validation/S6-021-invitation-only-access.md.",
         "2026-09-24 — La recette permanente 4cb3984b06a1e04c39eafeef2ab53760f382ad18 crée un tenant éphémère avec une adresse officielle delivered+…@resend.dev. Production : disable_signup=true, /app anonyme redirigé, signup public 422 signup_disabled sans compte orphelin, e-mail accepté par Resend, adresse divergente 403, inscription 201, adhésion admin unique, rejeu 410 et nettoyage final vérifié. La clé Qalem d’envoi refuse GET /emails en HTTP 401 ; aucune extension de droit n’est effectuée.",
-        "2026-09-25 — Aucun fichier fonctionnel du parcours d’invitation n’a changé entre la recette 4cb3984b et le SHA déployé 4a9dfb56652323d077c3477941e493f145449bb8. La gate complète de ce dernier passe Prettier, TypeScript, ESLint, 3 373 tests Vitest, le build de 127 routes et 196/196 Playwright, dont les deux parcours permanents invitation-only ; journal SHA-256 8e8b70e1feeabd3770559bf9b5c34322f5339e9efdde4b172d52744a693e4bcb. Le déploiement est sain, sans redémarrage ni OOM. La dette machine est soldée ; seule la réception humaine reste ouverte."
+        "2026-09-25 — Aucun fichier fonctionnel du parcours d’invitation n’a changé entre la recette 4cb3984b et le SHA déployé 4a9dfb56652323d077c3477941e493f145449bb8. La gate complète de ce dernier passe Prettier, TypeScript, ESLint, 3 373 tests Vitest, le build de 127 routes et 196/196 Playwright, dont les deux parcours permanents invitation-only ; journal SHA-256 8e8b70e1feeabd3770559bf9b5c34322f5339e9efdde4b172d52744a693e4bcb. Le déploiement est sain, sans redémarrage ni OOM. La dette machine est soldée ; seule la réception humaine reste ouverte.",
+        "2026-09-26 — Une invitation nominative administrateur pour le tenant temporaire S6-021 Validation humaine a été acceptée par Resend à 12:43:02 UTC puis retrouvée dans la boîte Google Workspace du destinataire à 12:43:03 UTC, avec l’expéditeur Qalem <notifications@ai-mpower.com> et l’adresse nominative exacte. Amine a validé la réception humaine. La consommation, l’adhésion atomique et le refus du rejeu restent couverts par la recette de production du 24 septembre ; aucune seconde inscription artificielle n’est requise. Le tenant et son invitation non consommée ont été supprimés exactement, puis leur résidu a été vérifié nul."
       ],
       "historicalDependencies": [],
       "executionAllowed": true,
