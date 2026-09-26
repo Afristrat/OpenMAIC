@@ -5451,14 +5451,18 @@
         "S6-004",
         "S6-013"
       ],
-      "gap": "L’installation Android, la réception application fermée et l’ouverture de la carte ciblée sont acquises et conservées dans U-020/S3-002. Le 26 septembre, la préparation de la recette intégrée a établi qu’aucune formation de production ne conservait encore de source_manifest_id ; un manifeste réel à deux sources a donc été créé pour Qalem Demo. Après correction de la parole manquante de persona-creative et déploiement du SHA ba13548ceb0081bcf8d360eb31e6192c78945afc, le rejeu a réutilisé les sources, le manifeste et le plan existants : le cours RU8XvYDe3Y est ready avec cinq scènes, quiz, PBL, interactivité, dix agents parlants, 43 prises de parole, 43 WAV, Hanae/femme/hanae et cinq scènes ancrées aux sources. La recette Chromium mobile a ensuite révélé que l’UI affichait encore Formateur IA : une course entre la lecture IndexedDB et l’hydratation du casting serveur en était la cause. La correction sérialise désormais le casting autoritatif avant la sélection ; le test a été vu rouge 2/2 puis vert 2/2 et la gate complète repasse 3 406 tests Vitest et 200/200 Playwright. Ce second correctif doit encore être déployé et vérifié sur la classe réelle. Restent ensuite interaction→interruption→reprise synchronisée sur appareils physiques, scénarios négatifs, second tenant, trois locales et parcours iOS ; cette US porte la recette intégrée, pas un second moteur mobile.",
+      "gap": "L’installation Android, la réception application fermée et l’ouverture de la carte ciblée sont acquises et conservées dans U-020/S3-002. Le 26 septembre, la préparation de la recette intégrée a établi qu’aucune formation de production ne conservait encore de source_manifest_id ; un manifeste réel à deux sources a donc été créé pour Qalem Demo. Après correction de la parole manquante de persona-creative et déploiement du SHA ba13548ceb0081bcf8d360eb31e6192c78945afc, le rejeu a réutilisé les sources, le manifeste et le plan existants : le cours RU8XvYDe3Y est ready avec cinq scènes, quiz, PBL, interactivité, dix agents parlants, 43 prises de parole, 43 WAV, Hanae/femme/hanae et cinq scènes ancrées aux sources. La recette Chromium mobile a ensuite révélé deux défauts client : le casting serveur perdait sa course contre IndexedDB et la grille fixe comprimait la parole à 84 px. Les corrections sérialisent désormais le casting autoritatif et rendent les trois colonnes responsives. Le SHA d4834a6c08b40acf7c1aeed89d7cb95df8e56ed2 est déployé : conteneur healthy, restart=0, OOMKilled=false et santé HTTP 200. La classe réelle affiche Hanae, le quiz, aucune largeur horizontale excédentaire et une bulle mesurée à 238 px sur Chromium tactile 390×844. La gate passe Prettier, TypeScript, ESLint, 3 406 tests Vitest, le build de 127 routes et les 200 parcours Playwright répartis 100+50+50 pour contenir l’OOM du harnais de test. Restent interaction→interruption→reprise synchronisée sur appareils physiques, scénarios négatifs, second tenant, trois locales et parcours iOS ; cette US porte la recette intégrée, pas un second moteur mobile.",
       "evidence": [
         "public/sw.js",
         "tasks/prd-v3.md",
         "lib/agents/speech-coverage.ts",
         "tests/agents/speech-coverage.test.ts",
         "app/classroom/[id]/page.tsx",
-        "e2e/tests/public-classroom-discussion-access.spec.ts"
+        "e2e/tests/public-classroom-discussion-access.spec.ts",
+        "components/roundtable/index.tsx",
+        "e2e/tests/classroom-authoritative-audio.spec.ts",
+        "docs/evidence/s3-014-mobile-course-production-2026-09-26.png",
+        "docs/evidence/s3-014-mobile-course-quiz-production-2026-09-26.png"
       ],
       "acceptance": [
         "Sur iOS et Android physiques, PWA installée : suivre une formation multisource, écouter, naviguer, discuter, répondre au quiz, interrompre et reprendre avec progression persistante ; consigner appareil, OS, navigateur, SHA, date et résultats.",
