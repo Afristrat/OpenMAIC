@@ -5451,8 +5451,13 @@
         "S6-004",
         "S6-013"
       ],
-      "gap": "L’installation Android, la réception application fermée et l’ouverture de la carte ciblée sont acquises et conservées dans U-020/S3-002. La chaîne multisources→formation→interaction→interruption→reprise synchronisée, ses scénarios négatifs, le second tenant, les trois locales et l’intégralité du parcours iOS restent à recetter ; cette US porte la recette intégrée, pas un second moteur mobile.",
-      "evidence": ["public/sw.js", "tasks/prd-v3.md"],
+      "gap": "L’installation Android, la réception application fermée et l’ouverture de la carte ciblée sont acquises et conservées dans U-020/S3-002. Le 26 septembre, la préparation de la recette intégrée a établi qu’aucune formation de production ne conservait encore de source_manifest_id ; un manifeste réel à deux sources a donc été créé pour Qalem Demo. Sa génération a atteint cinq scènes puis l’invariant a refusé la publication, car persona-creative était actif sans parole persistée. La cause racine est corrigée avant TTS et persistance par une intervention localisée, déterministe et propre au mécanisme de tout agent actif resté silencieux ; l’invariant strict reste exécuté ensuite. La gate ServeurIA passe 3 406 tests Vitest et 200/200 Playwright. Le déploiement, le rejeu réel de cette génération puis la chaîne interaction→interruption→reprise synchronisée, ses scénarios négatifs, le second tenant, les trois locales et l’intégralité du parcours iOS restent à recetter ; cette US porte la recette intégrée, pas un second moteur mobile.",
+      "evidence": [
+        "public/sw.js",
+        "tasks/prd-v3.md",
+        "lib/agents/speech-coverage.ts",
+        "tests/agents/speech-coverage.test.ts"
+      ],
       "acceptance": [
         "Sur iOS et Android physiques, PWA installée : suivre une formation multisource, écouter, naviguer, discuter, répondre au quiz, interrompre et reprendre avec progression persistante ; consigner appareil, OS, navigateur, SHA, date et résultats.",
         "Prouver génération de relance→planification→réception application fermée→ouverture exacte→réponse ou reprise ; réutiliser les preuves physiques de S3-002 uniquement si le parcours et le SHA correspondent.",

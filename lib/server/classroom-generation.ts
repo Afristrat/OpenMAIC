@@ -106,6 +106,7 @@ import { shouldRunClassroomWebSearch } from '@/lib/server/web-search-policy';
 import { buildSceneSourceGrounding } from '@/lib/generation/source-grounding';
 import { resolveFormationSources } from '@/lib/server/formation-source-library';
 import { optimizationReportSchema } from '@/lib/generation/optimization-report';
+import { ensurePersistedSpeechCoverage } from '@/lib/agents/speech-coverage';
 import {
   loadGenerationOptimization,
   generationOptimizationDirective,
@@ -943,14 +944,27 @@ export async function generateClassroom(
       });
     }
 
-    const scenes = store.getState().scenes;
-    log.info(`Pipeline complete: ${scenes.length} scenes generated`);
+    const generatedSceneSnapshot = store.getState().scenes;
+    log.info(`Pipeline complete: ${generatedSceneSnapshot.length} scenes generated`);
 
-    if (generatedScenes !== outlines.length || scenes.length !== outlines.length) {
+    if (generatedScenes !== outlines.length || generatedSceneSnapshot.length !== outlines.length) {
       throw new Error(
-        `Scene persistence incomplete: ${scenes.length}/${outlines.length} required scenes generated`,
+        `Scene persistence incomplete: ${generatedSceneSnapshot.length}/${outlines.length} required scenes generated`,
       );
     }
+
+    const speechCoverage = ensurePersistedSpeechCoverage(
+      generatedSceneSnapshot,
+      tenantAgentConfigs,
+      input.language ?? 'fr-FR',
+    );
+    if (speechCoverage.insertedAgentIds.length > 0) {
+      store.setState({ scenes: [...speechCoverage.scenes] });
+      log.warn(
+        `Inserted deterministic persisted interventions for silent active agents: ${speechCoverage.insertedAgentIds.join(', ')}`,
+      );
+    }
+    const scenes = [...speechCoverage.scenes];
 
     const speakingAgentIds = new Set(
       scenes.flatMap((scene) =>
