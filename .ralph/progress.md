@@ -1498,3 +1498,13 @@ Le déploiement Coolify `9fbeassdjitxq3qfc0rnexdn` est terminé. Le conteneur `c
 ## 26 septembre 2026 — chemin iOS préparé sans déduire la recette physique
 
 Le diff autoritatif ne trouve aucune modification des quinze artefacts fonctionnels PWA, rappels et Web Push de S6-010, U-020 et S3-002 entre le SHA Android accepté `2084f50bbbb738b8383e35055cbe9bab9c8ced36` et le SHA fonctionnel déployé `d1febcdade06852b5323b89ce9857bbc3349ebc7`. Sur `qalem.ma`, le service worker, le manifeste et les icônes 192/512 répondent HTTP 200 et correspondent octet pour octet au dépôt : SHA-256 `4b897ae986f128ff41f746aae6dd6224dbe3c2ef27c910401c57cf5a85ecc3ab`, `0af82fa94e52f15f035c9c3ad91de8d98a6129af0e9664e2f4e6546e24314030`, `fbfbaa8fe1355e5ddd91b9bffb893ca840d83227995d10cbc8b805b8f40a3370` et `04fd335af7ab01399feaaa2f2428f388c20d5f242425a85f4d8ae535023ee4fb`. La préparation technique est donc fraîche ; elle ne remplace ni l’installation, ni la réception, ni le tap sur iOS physique.
+
+## 27 septembre 2026 — dette physique reportée au lot final
+
+À la demande explicite d’Amine, les résidus physiques et humains de S6-010, U-020, S3-002, S3-012, S3-013 et S3-014 sont regroupés dans le lot final de livraison. Aucune exigence n’est retirée et aucune story n’est fermée par ce report : elles restent `to_validate/passes=false` jusqu’aux gestes iOS/Android, au lecteur d’écran physique, aux scénarios de permissions et de reprise sur appareil, puis aux verdicts humains attendus. L’exécution reprend sur les dépendances non physiques restantes.
+
+## 27 septembre 2026 — dépendances Diwan revalidées et preuve mal classée corrigée
+
+Le seul élément de clôture auparavant rattaché à S6-003 était en réalité une capture RTL de S0-012, déjà couverte par la preuve complète de cette dernière. Ce rattachement erroné est supprimé. La revalidation fraîche établit que le web Qalem `c200dfa0885c` sert le SHA `d1febcdade06852b5323b89ce9857bbc3349ebc7`, est sain, sans redémarrage ni OOM, répond HTTP 200 et ne charge aucun `QALEM_DIWAN_TENANT_TOKENS`. L’index du coffre ne contient toujours que `DIWAN_ENCRYPTION_KEY` et `DIWAN_LITELLM_KEY`, qui ne sont pas des jetons consommateurs Qalem.
+
+Le checkout propriétaire Diwan est propre sur `feat/qalem-document-provider-v1` au commit `d3d9103800d6a49c4f577701b6fd2bf917f4f8f9`. Le contrat conserve le SHA-256 `559952437d0802ae2150b3add557250c7aba5701aa245e05a525e0e1fdf952c2`. La recherche dans l’application, l’API, les tests et ce contrat ne trouve toujours aucune intégration fonctionnelle NotebookLM, Notion ou Google Drive ; seule une mention éditoriale de Notion apparaît dans `VISION.md`. S6-003, S-019, S-020 et S-021 restent donc `blocked/passes=false`. Aucun fichier Diwan n’a été modifié.

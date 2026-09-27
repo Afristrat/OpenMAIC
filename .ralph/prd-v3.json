@@ -55,7 +55,8 @@
     "completion": "passes=true uniquement avec chaque critère satisfait et closureEvidence non vide : date, SHA, environnement, commande/parcours, résultat et référence d’artefact ; confirmation humaine si requise.",
     "withdrawal": "Une capacité refusée devient explicitement retired avec décision datée, pas passes=true. Aucun retrait automatique.",
     "externalPrerequisites": "historicalDependencies désigne un prérequis précédemment déclaré acquis : le vérifier avant usage, sans créer d’US dupliquée.",
-    "secrets": "Métadonnées seulement ; aucune valeur ni dump de configuration. Rotation Qalem autorisée par docs/decisions/2026-09-09-unblock-prd.md ; inventaire, sauvegarde et validation des consommateurs avant révocation."
+    "secrets": "Métadonnées seulement ; aucune valeur ni dump de configuration. Rotation Qalem autorisée par docs/decisions/2026-09-09-unblock-prd.md ; inventaire, sauvegarde et validation des consommateurs avant révocation.",
+    "deferredPhysicalValidation": "Décision d’Amine du 27 septembre 2026 : reporter au lot final de livraison les résidus physiques et humains de S6-010, U-020, S3-002, S3-012, S3-013 et S3-014. Ce report ne vaut ni retrait de critère, ni passes=true ; ces six stories restent to_validate jusqu’aux gestes et verdicts réels."
   },
   "architectureConstraints": [
     "Qalem web/runtime : Coolify sur ServeurIA ; LiteLLM : Hostinger, sans Coolify. Vérifier les cibles avant toute commande.",
@@ -2462,7 +2463,7 @@
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Adaptateur Qalem, références versionnées, résolution serveur et sélecteur/import/suivi Diwan FR/AR/EN codés, migrés, qualifiés et publiés. Au 25 septembre, le conteneur web de production au SHA 124077344522f56f2909fcc434f7788e417b634e ne contient aucun QALEM_DIWAN_TENANT_TOKENS ; l’index du coffre ne contient aucun jeton consommateur Qalem dédié. Les routes Qalem et Diwan refusent correctement l’anonyme en HTTP 401, mais aucune recette authentifiée réelle n’est possible. Restent le jeton interservice dédié, son mapping tenant, la recette réelle import/suivi/provenance/refus croisé/indisponibilité/révocation et le rejeu intégré après configuration. Le mandat n’autorise pas une mutation de Diwan.",
+      "gap": "Adaptateur Qalem, références versionnées, résolution serveur et sélecteur/import/suivi Diwan FR/AR/EN codés, migrés, qualifiés et publiés. Au 27 septembre, le conteneur web de production au SHA d1febcdade06852b5323b89ce9857bbc3349ebc7 ne contient aucun QALEM_DIWAN_TENANT_TOKENS ; l’index du coffre ne contient toujours aucun jeton consommateur Qalem dédié. Les routes Qalem et Diwan refusent correctement l’anonyme en HTTP 401, mais aucune recette authentifiée réelle n’est possible. Restent le jeton interservice dédié, son mapping tenant, la recette réelle import/suivi/provenance/refus croisé/indisponibilité/révocation et le rejeu intégré après configuration. Le mandat n’autorise pas une mutation de Diwan.",
       "evidence": [
         "thread:019f6d49-52ed-7ee2-aca0-466c8b675d00/019ffc8f-65d2-77d0-90bf-f0f4315d4fd1",
         "app/api/parse-document/route.ts",
@@ -2480,7 +2481,7 @@
         "Ne pas attendre Diwan pour corriger les sources déjà disponibles dans le flux Qalem."
       ],
       "closureEvidence": [
-        "2026-09-26 — Préparation du checkpoint sur la production fonctionnelle f896272b165ef531231dc6c7fd2b6f93dc107f27 : Chromium ouvre /app avec locale=ar-MA ; html expose dir=rtl et lang=ar-MA, sans débordement horizontal (1585/1585 px). La navigation est à droite et le formulaire principal est réordonné en RTL. Capture docs/evidence/s0-012-rtl-app-production-2026-09-26.png, SHA-256 36613b2f5d1c3beb9aaa3feb9eadb5f4c5fcbeef0f43c549e6821695706e4aed. Cette preuve ne remplace pas le verdict humain sur les trente écrans de la checklist."
+        "2026-09-27 — Revalidation sans secret divulgué : l’index du coffre ne contient que DIWAN_ENCRYPTION_KEY et DIWAN_LITELLM_KEY, aucun jeton consommateur Qalem. Le conteneur web c200dfa0885c sert le SHA d1febcdade06852b5323b89ce9857bbc3349ebc7, est healthy, restart=0, OOMKilled=false, répond HTTP 200 et ne charge aucune variable QALEM_DIWAN_TENANT_TOKENS. Le checkout propriétaire Diwan reste propre sur feat/qalem-document-provider-v1 au commit d3d9103800d6a49c4f577701b6fd2bf917f4f8f9 ; le contrat Qalem conserve le SHA-256 559952437d0802ae2150b3add557250c7aba5701aa245e05a525e0e1fdf952c2. S6-003 reste bloquée sans mutation Diwan."
       ],
       "historicalDependencies": [],
       "executionAllowed": true,
@@ -4669,7 +4670,7 @@
       },
       "sourceDependencies": ["S-018"],
       "dependencies": ["S0-011", "S6-003"],
-      "gap": "25 septembre 2026 : choix via Diwan confirmé, sans connecteur direct Qalem. Le consommateur Qalem est déjà raccordé au plan et à la génération : sélection épinglée, version et empreinte contrôlées, récupération de passages bornée et échec fermé. Le checkout propriétaire Diwan est toujours au commit d3d9103800d6a49c4f577701b6fd2bf917f4f8f9 ; une recherche fraîche trouve zéro occurrence NotebookLM dans ses répertoires applicatifs, API et tests. Son routeur Qalem n’expose que les opérations génériques ingestion, statut, sources, manifeste, recherche, alignement, conflits et révocation. Le contrat v1 ne définit toujours aucune connexion/authentification NotebookLM, recherche de notebook ni résolution d’identifiant natif. Restent un contrat fournisseur, la correspondance notebook/source → corpus/source/version, un jeton dédié par tenant, une recette réelle avec refus hors droits/retrait, le gate intégré et la publication. Le mapping QALEM_DIWAN_TENANT_TOKENS est absent de la production Qalem. Aucune intégration NotebookLM n’est déclarée livrée et un import manuel ne la remplace pas.",
+      "gap": "27 septembre 2026 : choix via Diwan confirmé, sans connecteur direct Qalem. Le consommateur Qalem est déjà raccordé au plan et à la génération : sélection épinglée, version et empreinte contrôlées, récupération de passages bornée et échec fermé. Le checkout propriétaire Diwan est toujours au commit d3d9103800d6a49c4f577701b6fd2bf917f4f8f9 ; une recherche fraîche trouve zéro occurrence fonctionnelle NotebookLM. Son routeur Qalem n’expose que les opérations génériques ingestion, statut, sources, manifeste, recherche, alignement, conflits et révocation. Le contrat v1 ne définit toujours aucune connexion/authentification NotebookLM, recherche de notebook ni résolution d’identifiant natif. Restent un contrat fournisseur, la correspondance notebook/source → corpus/source/version, un jeton dédié par tenant, une recette réelle avec refus hors droits/retrait, le gate intégré et la publication. Le mapping QALEM_DIWAN_TENANT_TOKENS est absent de la production Qalem. Aucune intégration NotebookLM n’est déclarée livrée et un import manuel ne la remplace pas.",
       "evidence": [
         "docs/guides/notebooklm-via-diwan.md",
         "docs/decisions/2026-09-09-unblock-prd.md",
@@ -4684,7 +4685,9 @@
         "Documenter connexion, recherche, retrait et limites ; un import manuel n’est pas une intégration NotebookLM.",
         "Recetter recherche, lecture, génération référencée, refus hors droits et révocation auprès du fournisseur réel."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-27 — Le checkout Diwan reste propre sur feat/qalem-document-provider-v1 au commit d3d9103800d6a49c4f577701b6fd2bf917f4f8f9. La recherche dans l’application, l’API, les tests et le contrat ne trouve aucune intégration fonctionnelle NotebookLM ; le seul dépôt Qalem disponible ne possède par ailleurs aucun jeton consommateur Diwan. Aucun fichier Diwan n’a été modifié."
+      ],
       "historicalEvidence": {
         "completedAt": "2026-03-29T09:23:59.947Z",
         "status": "legacy_claim_not_delivery_proof"
@@ -4714,7 +4717,7 @@
       },
       "sourceDependencies": ["S-018"],
       "dependencies": ["S0-011", "S6-003"],
-      "gap": "25 septembre 2026 : le choix via Diwan impose un seul accès documentaire côté Qalem. Qalem dispose déjà du consommateur Diwan tenant-scopé, avec sélection épinglée, version/empreinte et résolution bornée dans le plan et la génération. Le checkout propriétaire Diwan est toujours au commit d3d9103800d6a49c4f577701b6fd2bf917f4f8f9 ; une recherche fraîche trouve zéro occurrence Notion dans ses répertoires applicatifs, API, tests et contrat Qalem. Il n’existe donc ni connexion OAuth Notion, ni recherche/lecture de page, ni mapping page/version → corpus/source Diwan. Restent ce contrat fournisseur, le jeton dédié par tenant, une recette autorisée avec refus hors droits et retrait, le gate intégré et la publication. Le mapping QALEM_DIWAN_TENANT_TOKENS est absent de la production Qalem. La story est bloquée côté fournisseur, non par un second connecteur Qalem manquant ; un import manuel d’URL ou de fichier ne constitue pas l’intégration demandée.",
+      "gap": "27 septembre 2026 : le choix via Diwan impose un seul accès documentaire côté Qalem. Qalem dispose déjà du consommateur Diwan tenant-scopé, avec sélection épinglée, version/empreinte et résolution bornée dans le plan et la génération. Le checkout propriétaire Diwan est toujours au commit d3d9103800d6a49c4f577701b6fd2bf917f4f8f9 ; une recherche fraîche trouve zéro occurrence fonctionnelle Notion dans l’application, l’API, les tests et le contrat Qalem. Il n’existe donc ni connexion OAuth Notion, ni recherche/lecture de page, ni mapping page/version → corpus/source Diwan. Restent ce contrat fournisseur, le jeton dédié par tenant, une recette autorisée avec refus hors droits et retrait, le gate intégré et la publication. Le mapping QALEM_DIWAN_TENANT_TOKENS est absent de la production Qalem. La story est bloquée côté fournisseur, non par un second connecteur Qalem manquant ; un import manuel d’URL ou de fichier ne constitue pas l’intégration demandée.",
       "evidence": [
         "lib/diwan/client.ts",
         "lib/diwan/references.ts",
@@ -4728,7 +4731,9 @@
         "Produire une formation utilisant effectivement les passages de la page, avec références vérifiables et sans substitution silencieuse.",
         "Recetter accès autorisé, refus hors droits, indisponibilité et révocation ; documenter le parcours réel."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-27 — Le checkout Diwan reste propre sur feat/qalem-document-provider-v1 au commit d3d9103800d6a49c4f577701b6fd2bf917f4f8f9. La recherche dans l’application, l’API, les tests et le contrat ne trouve aucune intégration fonctionnelle Notion ; l’unique mention fraîche est éditoriale dans VISION.md. Aucun fichier Diwan n’a été modifié."
+      ],
       "historicalEvidence": {
         "completedAt": "2026-03-29T09:23:59.947Z",
         "status": "legacy_claim_not_delivery_proof"
@@ -4758,7 +4763,7 @@
       },
       "sourceDependencies": ["S-018"],
       "dependencies": ["S0-011", "S6-003"],
-      "gap": "25 septembre 2026 : le choix via Diwan impose un seul accès documentaire côté Qalem. Le consommateur Diwan tenant-scopé existant épingle version et empreinte puis résout des passages bornés dans le plan et la génération. Le checkout propriétaire Diwan est toujours au commit d3d9103800d6a49c4f577701b6fd2bf917f4f8f9 ; une recherche fraîche ne trouve aucune intégration Google Drive dans l’application, l’API, les tests ou le contrat Qalem. L’unique usage google.oauth2 concerne les credentials Vertex et n’implémente pas Drive. Il n’existe donc ni connexion OAuth Drive, ni recherche/lecture Docs, Slides ou PDF, ni mapping fichier/version → corpus/source Diwan. Restent ce contrat fournisseur, le jeton dédié par tenant, une recette autorisée par format avec refus hors droits et retrait, le gate intégré et la publication. Le mapping QALEM_DIWAN_TENANT_TOKENS est absent de la production Qalem. La story est bloquée côté fournisseur, non par un connecteur Qalem direct manquant ; un import manuel ne constitue pas l’intégration demandée.",
+      "gap": "27 septembre 2026 : le choix via Diwan impose un seul accès documentaire côté Qalem. Le consommateur Diwan tenant-scopé existant épingle version et empreinte puis résout des passages bornés dans le plan et la génération. Le checkout propriétaire Diwan est toujours au commit d3d9103800d6a49c4f577701b6fd2bf917f4f8f9 ; une recherche fraîche ne trouve aucune intégration Google Drive dans l’application, l’API, les tests ou le contrat Qalem. L’unique usage google.oauth2 concerne les credentials Vertex et n’implémente pas Drive. Il n’existe donc ni connexion OAuth Drive, ni recherche/lecture Docs, Slides ou PDF, ni mapping fichier/version → corpus/source/version. Restent ce contrat fournisseur, le jeton dédié par tenant, une recette autorisée par format avec refus hors droits et retrait, le gate intégré et la publication. Le mapping QALEM_DIWAN_TENANT_TOKENS est absent de la production Qalem. La story est bloquée côté fournisseur, non par un connecteur Qalem direct manquant ; un import manuel ne constitue pas l’intégration demandée.",
       "evidence": [
         "lib/diwan/client.ts",
         "lib/diwan/references.ts",
@@ -4772,7 +4777,9 @@
         "Utiliser les passages autorisés dans la formation et préserver les références et droits du tenant.",
         "Recetter chaque format, un document interdit, une indisponibilité et la révocation ; documenter le parcours réel, distinct d’un import manuel."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-09-27 — Le checkout Diwan reste propre sur feat/qalem-document-provider-v1 au commit d3d9103800d6a49c4f577701b6fd2bf917f4f8f9. La recherche dans l’application, l’API, les tests et le contrat ne trouve aucune intégration Google Drive ; aucune lecture Docs, Slides ou PDF n’est exposée. Aucun fichier Diwan n’a été modifié."
+      ],
       "historicalEvidence": {
         "completedAt": "2026-03-29T09:23:59.947Z",
         "status": "legacy_claim_not_delivery_proof"
