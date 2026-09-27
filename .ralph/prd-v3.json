@@ -5,8 +5,8 @@
   "title": "Réconciliation des engagements et clôture prouvée",
   "description": "Référence active unique pour tous les restes identifiés de Qalem. Les critères v2 et les capacités v1 sont tracés sans transformer une acceptation historique en certification actuelle. Ce PRD planifie ; il n’exécute ni n’autorise automatiquement les mutations bloquées.",
   "reconciledAt": "2026-09-27",
-  "inspectedCommit": "329fb9ab57a299bf2072793eb0000c19fb3b0c84",
-  "reconciliationNote": "Réconciliation fraîche après livraison technique du connecteur Google Drive S-021 : 84 stories, 75 completed/passes=true, 7 to_validate/passes=false, dont Google Drive en attente de sa recette OAuth réelle, et 2 blocked/passes=false correspondant aux connecteurs NotebookLM et Notion dans Diwan. Les preuves et le détail historique sont consignés dans .ralph/progress.md et les documents de validation cités par chaque story.",
+  "inspectedCommit": "3f96a572f5a7a24d6f766bc51853340a2d683ced",
+  "reconciliationNote": "Réconciliation fraîche après livraison technique des connecteurs Google Drive S-021 et Notion S-020 : 84 stories, 75 completed/passes=true, 8 to_validate/passes=false, dont ces deux connecteurs en attente de leur recette OAuth réelle, et 1 blocked/passes=false correspondant à NotebookLM dans Diwan. Les preuves et le détail historique sont consignés dans .ralph/progress.md et les documents de validation cités par chaque story.",
   "supersedes": ".ralph/prd-v2.json",
   "scope": {
     "included": [
@@ -4670,7 +4670,7 @@
       "description": "En tant qu’auteur, je veux utiliser mes sources NotebookLM autorisées via Diwan pour produire une formation traçable sans multiplier les connecteurs documentaires Qalem.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "blocked",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "file": ".ralph/prd.json",
@@ -4727,7 +4727,7 @@
       },
       "sourceDependencies": ["S-018"],
       "dependencies": ["S0-011", "S6-003"],
-      "gap": "27 septembre 2026 : le choix via Diwan impose un seul accès documentaire côté Qalem. Qalem dispose déjà du consommateur Diwan tenant-scopé, avec sélection épinglée, version/empreinte et résolution bornée dans le plan et la génération. Le checkout propriétaire Diwan est toujours au commit d3d9103800d6a49c4f577701b6fd2bf917f4f8f9 ; une recherche fraîche trouve zéro occurrence fonctionnelle Notion dans l’application, l’API, les tests et le contrat Qalem. Il n’existe donc ni connexion OAuth Notion, ni recherche/lecture de page, ni mapping page/version → corpus/source Diwan. Restent ce contrat fournisseur, le jeton dédié par tenant, une recette autorisée avec refus hors droits et retrait, le gate intégré et la publication. Le mapping QALEM_DIWAN_TENANT_TOKENS est absent de la production Qalem. La story est bloquée côté fournisseur, non par un second connecteur Qalem manquant ; un import manuel d’URL ou de fichier ne constitue pas l’intégration demandée.",
+      "gap": "27 septembre 2026 : le connecteur Notion est livré des deux côtés. Diwan fff6df1 expose OAuth public par tenant, recherche des pages explicitement partagées, lecture récursive bornée des blocs, renouvellement et révocation, puis épingle page/version → corpus/source/version. Qalem 3f96a572 expose connexion, état, recherche, sélection, import et révocation dans le sélecteur Diwan, avec filtrage des hôtes d’autorisation et locales fr-FR/ar-MA/en-US. Les deux SHA exacts sont déployés et sains ; les gates sont vertes. La story reste à valider : aucune identité Notion ni clé publique Notion n’est disponible dans le coffre. Il faut encore créer la connexion publique avec le rappel documenté, autoriser un espace réel, observer une page autorisée et une page interdite, révoquer, puis générer une formation qui cite effectivement un passage épinglé.",
       "evidence": [
         "lib/diwan/client.ts",
         "lib/diwan/references.ts",
@@ -4743,7 +4743,8 @@
         "Recetter accès autorisé, refus hors droits, indisponibilité et révocation ; documenter le parcours réel."
       ],
       "closureEvidence": [
-        "2026-09-27 — Le checkout Diwan reste propre sur feat/qalem-document-provider-v1 au commit d3d9103800d6a49c4f577701b6fd2bf917f4f8f9. La recherche dans l’application, l’API, les tests et le contrat ne trouve aucune intégration fonctionnelle Notion ; l’unique mention fraîche est éditoriale dans VISION.md. Aucun fichier Diwan n’a été modifié."
+        "2026-09-27 — Diwan fff6df1ec156d0fb8a3dbfc9c222673e2d3147fa est poussé sur feat/qalem-document-provider-v1 et deploy-coolify, déployé par Coolify z0z7wh5trrcb4owtbyodwfih ; conteneur actif sur l’image exacte, restart=0, OOMKilled=false et santé interne HTTP 200. Ruff, mypy, OpenAPI et 691 tests passent sans avertissement.",
+        "2026-09-27 — Qalem 3f96a572f5a7a24d6f766bc51853340a2d683ced est poussé et déployé par Coolify dmifnmzcg5rqqlv3sbmtqqdl ; image exacte active, restart=0, OOMKilled=false, santé Docker healthy et santé publique HTTP 200. TypeScript, lint, 3 412 tests unitaires et 201 parcours Playwright passent, dont le parcours Notion tenant-scopé. La recette OAuth réelle reste requise avant passes=true."
       ],
       "historicalEvidence": {
         "completedAt": "2026-03-29T09:23:59.947Z",
