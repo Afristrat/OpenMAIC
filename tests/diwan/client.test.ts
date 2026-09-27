@@ -183,6 +183,91 @@ describe('Diwan v1 tenant-scoped adapter', () => {
     );
     await expect(ingestDiwanSources(org, form)).resolves.toMatchObject({ status: 'ready' });
   });
+  it('keeps Google authorization on the fixed provider origin', async () => {
+    fetchMock.mockResolvedValue(
+      reply({
+        ...envelope,
+        provider: 'google-drive',
+        authorizationUrl: 'https://accounts.google.com/o/oauth2/v2/auth?state=opaque',
+        expiresInSeconds: 600,
+      }),
+    );
+    await expect(
+      executeDiwanCommand(org, { operation: 'connector-authorize' }),
+    ).resolves.toMatchObject({ provider: 'google-drive' });
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      'https://diwan.ai-mpower.com/api/v1/consumers/qalem/connectors/google-drive/authorize',
+    );
+    fetchMock.mockResolvedValue(
+      reply({
+        ...envelope,
+        provider: 'google-drive',
+        authorizationUrl: 'https://malicious.example/steal',
+        expiresInSeconds: 600,
+      }),
+    );
+    await expect(
+      executeDiwanCommand(org, { operation: 'connector-authorize' }),
+    ).rejects.toMatchObject({ status: 502 });
+  });
+  it('validates Drive search provenance and imports a unique selection', async () => {
+    fetchMock.mockResolvedValueOnce(
+      reply({
+        ...envelope,
+        provider: 'google-drive',
+        items: [
+          {
+            externalId: 'drive:1',
+            title: 'SIPOC',
+            mediaType: 'application/pdf',
+            modifiedAt: null,
+            providerVersion: '12',
+            sourceUrl: 'https://drive.google.com/file/d/drive:1/view',
+            downloadAllowed: true,
+            size: 1024,
+          },
+        ],
+        nextPageToken: null,
+      }),
+    );
+    await expect(
+      executeDiwanCommand(org, {
+        operation: 'connector-search',
+        query: 'SIPOC',
+        pageSize: 20,
+      }),
+    ).resolves.toMatchObject({ items: [{ externalId: 'drive:1' }] });
+    expect(fetchMock.mock.calls[0][0]).toContain(
+      '/connectors/google-drive/search?query=SIPOC&pageSize=20',
+    );
+    fetchMock.mockResolvedValueOnce(
+      reply({
+        ...envelope,
+        jobId: 'job:drive',
+        corpusId: 'corpus:drive',
+        status: 'queued',
+        submittedSources: 1,
+        pollAfterSeconds: 30,
+      }),
+    );
+    await expect(
+      executeDiwanCommand(org, {
+        operation: 'connector-import',
+        externalIds: ['drive:1'],
+        corpusName: 'Google Drive',
+        idempotencyKey: 'import-drive-1',
+      }),
+    ).resolves.toMatchObject({ jobId: 'job:drive' });
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).not.toHaveProperty('operation');
+    await expect(
+      executeDiwanCommand(org, {
+        operation: 'connector-import',
+        externalIds: ['drive:1', 'drive:1'],
+        idempotencyKey: 'duplicate-selection',
+      }),
+    ).rejects.toBeDefined();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
   it('rejects invalid JSON, oversized responses, HTML and transport failures without leaking detail', async () => {
     for (const response of [
       new Response(token, { headers: { 'content-type': 'application/json' } }),

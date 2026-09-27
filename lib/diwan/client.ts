@@ -33,6 +33,7 @@ const evidence = z.object({
   sourceChecksumSha256: z.string().nullable(),
 });
 const sourceIds = z.array(id).min(1).max(100);
+const externalIds = z.array(id).min(1).max(20).refine((items) => new Set(items).size === items.length);
 const conflict = z
   .object({
     topic: z.string().trim().min(1).max(300),
@@ -48,6 +49,26 @@ const conflict = z
       new Set(value.positions.flatMap((position) => position.chunkIds)).size >= 2,
   );
 export const diwanCommand = z.discriminatedUnion('operation', [
+  z.object({ operation: z.literal('connector-list') }).strict(),
+  z.object({ operation: z.literal('connector-authorize') }).strict(),
+  z
+    .object({
+      operation: z.literal('connector-search'),
+      query: z.string().trim().max(300).default(''),
+      pageSize: z.number().int().min(1).max(100).default(20),
+      pageToken: id.optional(),
+    })
+    .strict(),
+  z
+    .object({
+      operation: z.literal('connector-import'),
+      externalIds,
+      corpusId: id.optional(),
+      corpusName: z.string().trim().min(1).max(300).optional(),
+      idempotencyKey: id,
+    })
+    .strict(),
+  z.object({ operation: z.literal('connector-revoke') }).strict(),
   z.object({ operation: z.literal('status'), jobId: id }).strict(),
   z.object({ operation: z.literal('manifest'), sourceIds }).strict(),
   z
@@ -232,6 +253,96 @@ export function listDiwanSources(organizationId: string, input: unknown) {
 
 export async function executeDiwanCommand(organizationId: string, input: unknown) {
   const command = diwanCommand.parse(input);
+  if (command.operation === 'connector-list')
+    return request(
+      organizationId,
+      '/connectors',
+      envelope.extend({
+        connections: z
+          .array(
+            z.object({
+              connectionId: id,
+              provider: z.literal('google-drive'),
+              accountLabel: z.string().nullable(),
+              scopes: z.array(z.string()).max(20),
+              createdAt: z.string(),
+              updatedAt: z.string(),
+            }),
+          )
+          .max(10),
+      }),
+    );
+  if (command.operation === 'connector-authorize') {
+    const result = await request(
+      organizationId,
+      '/connectors/google-drive/authorize',
+      envelope.extend({
+        provider: z.literal('google-drive'),
+        authorizationUrl: z.url(),
+        expiresInSeconds: count,
+      }),
+      'POST',
+    );
+    const authorization = new URL(result.authorizationUrl);
+    if (authorization.protocol !== 'https:' || authorization.hostname !== 'accounts.google.com')
+      throw new DiwanError(502, 'DIWAN_INVALID_RESPONSE');
+    return result;
+  }
+  if (command.operation === 'connector-search') {
+    const params = new URLSearchParams({
+      query: command.query,
+      pageSize: String(command.pageSize),
+      ...(command.pageToken ? { pageToken: command.pageToken } : {}),
+    });
+    return request(
+      organizationId,
+      `/connectors/google-drive/search?${params}`,
+      envelope.extend({
+        provider: z.literal('google-drive'),
+        items: z
+          .array(
+            z.object({
+              externalId: id,
+              title: z.string().min(1).max(1000),
+              mediaType: z.string().min(1).max(300),
+              modifiedAt: z.string().nullable(),
+              providerVersion: z.string().max(512),
+              sourceUrl: z.url().nullable(),
+              downloadAllowed: z.boolean(),
+              size: count.nullable(),
+            }),
+          )
+          .max(command.pageSize),
+        nextPageToken: z.string().nullable().optional(),
+      }),
+    );
+  }
+  if (command.operation === 'connector-import') {
+    const { operation: _operation, ...body } = command;
+    return request(
+      organizationId,
+      '/connectors/google-drive/imports',
+      envelope.extend({
+        jobId: id,
+        corpusId: id,
+        status: ingestionStatus,
+        submittedSources: count.min(1),
+        pollAfterSeconds: count,
+      }),
+      'POST',
+      body,
+    );
+  }
+  if (command.operation === 'connector-revoke')
+    return request(
+      organizationId,
+      '/connectors/google-drive',
+      envelope.extend({
+        provider: z.literal('google-drive'),
+        status: z.literal('revoked'),
+      }),
+      'DELETE',
+    );
   if (command.operation === 'status')
     return request(
       organizationId,

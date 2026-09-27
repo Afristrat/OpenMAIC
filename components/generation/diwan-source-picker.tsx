@@ -29,6 +29,25 @@ const jobSchema = z.object({
   ]),
   progress: z.number().min(0).max(100).optional(),
 });
+const connectorSchema = z.object({
+  connections: z.array(
+    z.object({
+      provider: z.literal('google-drive'),
+      accountLabel: z.string().nullable(),
+    }),
+  ),
+});
+const driveSearchSchema = z.object({
+  items: z.array(
+    z.object({
+      externalId: z.string().min(1),
+      title: z.string().min(1),
+      mediaType: z.string().min(1),
+      modifiedAt: z.string().nullable(),
+      downloadAllowed: z.boolean(),
+    }),
+  ),
+});
 type Selection = Pick<DiwanReference, 'corpusId' | 'sourceId'>;
 
 export function DiwanSourcePicker({
@@ -53,6 +72,11 @@ export function DiwanSourcePicker({
   const [error, setError] = useState<string | null>(null);
   const [job, setJob] = useState<z.infer<typeof jobSchema> | null>(null);
   const [resumeId, setResumeId] = useState('');
+  const [driveConnected, setDriveConnected] = useState(false);
+  const [driveAccount, setDriveAccount] = useState<string | null>(null);
+  const [driveQuery, setDriveQuery] = useState('');
+  const [driveItems, setDriveItems] = useState<z.infer<typeof driveSearchSchema>['items']>([]);
+  const [driveSelection, setDriveSelection] = useState<string[]>([]);
   const fileInput = useRef<HTMLInputElement>(null);
   const active = useRef(false);
   const lock = useRef(false);
@@ -152,6 +176,7 @@ export function DiwanSourcePicker({
     });
   }
   async function refreshJob() {
+    let refreshLibrary = false;
     await run(async () => {
       const result = jobSchema.parse(
         await read(
@@ -163,7 +188,124 @@ export function DiwanSourcePicker({
           }),
         ),
       );
-      if (active.current) setJob(result);
+      if (active.current) {
+        setJob(result);
+        refreshLibrary = result.status === 'ready' || result.status === 'partially_failed';
+      }
+    });
+    if (refreshLibrary) await load(1);
+  }
+  async function loadConnectors() {
+    await run(async () => {
+      const result = connectorSchema.parse(
+        await read(
+          await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ operation: 'connector-list' }),
+            signal: AbortSignal.timeout(45000),
+          }),
+        ),
+      );
+      if (!active.current) return;
+      const connection = result.connections.find(
+        (candidate) => candidate.provider === 'google-drive',
+      );
+      setDriveConnected(!!connection);
+      setDriveAccount(connection?.accountLabel ?? null);
+    });
+  }
+  async function authorizeGoogleDrive() {
+    await run(async () => {
+      const result = z
+        .object({ authorizationUrl: z.url() })
+        .parse(
+          await read(
+            await fetch(endpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ operation: 'connector-authorize' }),
+              signal: AbortSignal.timeout(45000),
+            }),
+          ),
+        );
+      const target = new URL(result.authorizationUrl);
+      if (target.protocol !== 'https:' || target.hostname !== 'accounts.google.com')
+        throw new Error(t('sources.diwanFailed'));
+      window.location.assign(target);
+    });
+  }
+  async function searchGoogleDrive() {
+    await run(async () => {
+      const result = driveSearchSchema.parse(
+        await read(
+          await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              operation: 'connector-search',
+              query: driveQuery.trim(),
+              pageSize: 20,
+            }),
+            signal: AbortSignal.timeout(45000),
+          }),
+        ),
+      );
+      if (active.current) {
+        setDriveItems(result.items);
+        setDriveSelection((current) =>
+          current.filter((externalId) =>
+            result.items.some((item) => item.externalId === externalId),
+          ),
+        );
+      }
+    });
+  }
+  async function importGoogleDriveSelection() {
+    if (driveSelection.length === 0) return;
+    await run(async () => {
+      const result = jobSchema.parse(
+        await read(
+          await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              operation: 'connector-import',
+              externalIds: driveSelection,
+              corpusName: t('sources.diwanGoogleCorpus'),
+              idempotencyKey: crypto.randomUUID(),
+            }),
+            signal: AbortSignal.timeout(45000),
+          }),
+        ),
+      );
+      try {
+        sessionStorage.setItem(storageKey, result.jobId);
+      } catch {
+        if (active.current) setError(t('sources.diwanSaveJob'));
+      }
+      if (!active.current) return;
+      setJob(result);
+      setResumeId(result.jobId);
+      setDriveSelection([]);
+    });
+  }
+  async function disconnectGoogleDrive() {
+    if (!window.confirm(t('sources.diwanGoogleDisconnectConfirm'))) return;
+    await run(async () => {
+      await read(
+        await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ operation: 'connector-revoke' }),
+          signal: AbortSignal.timeout(45000),
+        }),
+      );
+      if (!active.current) return;
+      setDriveConnected(false);
+      setDriveAccount(null);
+      setDriveItems([]);
+      setDriveSelection([]);
     });
   }
   const chosen = new Set(selected.map((source) => source.sourceId));
@@ -210,6 +352,111 @@ export function DiwanSourcePicker({
       >
         {t('sources.diwanUpload')}
       </button>
+      <div className="space-y-2 rounded border p-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <p className="font-medium">{t('sources.diwanGoogleTitle')}</p>
+            <p className="truncate text-[10px] text-muted-foreground">
+              {driveConnected
+                ? driveAccount || t('sources.diwanGoogleConnected')
+                : t('sources.diwanGoogleDisconnected')}
+            </p>
+          </div>
+          <div className="flex shrink-0 gap-1">
+            <button
+              type="button"
+              disabled={locked}
+              onClick={() => void loadConnectors()}
+              className="rounded border px-2 py-1 disabled:opacity-50"
+            >
+              {t('sources.diwanGoogleCheck')}
+            </button>
+            {driveConnected ? (
+              <button
+                type="button"
+                disabled={locked}
+                onClick={() => void disconnectGoogleDrive()}
+                className="rounded border px-2 py-1 disabled:opacity-50"
+              >
+                {t('sources.diwanGoogleDisconnect')}
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled={locked}
+                onClick={() => void authorizeGoogleDrive()}
+                className="rounded border px-2 py-1 disabled:opacity-50"
+              >
+                {t('sources.diwanGoogleConnect')}
+              </button>
+            )}
+          </div>
+        </div>
+        {driveConnected && (
+          <>
+            <div className="flex gap-1">
+              <label className="min-w-0 flex-1">
+                <span className="sr-only">{t('sources.diwanGoogleSearch')}</span>
+                <input
+                  value={driveQuery}
+                  maxLength={300}
+                  onChange={(event) => setDriveQuery(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault();
+                      void searchGoogleDrive();
+                    }
+                  }}
+                  placeholder={t('sources.diwanGoogleSearch')}
+                  className="w-full rounded border bg-background p-1"
+                />
+              </label>
+              <button
+                type="button"
+                disabled={locked}
+                onClick={() => void searchGoogleDrive()}
+                className="rounded border px-2 py-1 disabled:opacity-50"
+              >
+                {t('sources.diwanGoogleSearchAction')}
+              </button>
+            </div>
+            <div className="max-h-36 space-y-1 overflow-y-auto">
+              {driveItems.map((item) => {
+                const selectedOnDrive = driveSelection.includes(item.externalId);
+                return (
+                  <label
+                    key={item.externalId}
+                    className="flex items-center gap-2 rounded p-1 hover:bg-muted"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedOnDrive}
+                      disabled={locked || !item.downloadAllowed}
+                      onChange={() =>
+                        setDriveSelection((current) =>
+                          selectedOnDrive
+                            ? current.filter((externalId) => externalId !== item.externalId)
+                            : [...current, item.externalId].slice(0, 20),
+                        )
+                      }
+                    />
+                    <span className="min-w-0 flex-1 truncate">{item.title}</span>
+                    {!item.downloadAllowed && <span>{t('sources.diwanGoogleUnavailable')}</span>}
+                  </label>
+                );
+              })}
+            </div>
+            <button
+              type="button"
+              disabled={locked || driveSelection.length === 0}
+              onClick={() => void importGoogleDriveSelection()}
+              className="rounded border px-2 py-1 disabled:opacity-50"
+            >
+              {t('sources.diwanGoogleImport', { count: driveSelection.length })}
+            </button>
+          </>
+        )}
+      </div>
       <div className="flex items-end gap-2">
         <label className="min-w-0 flex-1">
           {t('sources.diwanJob')}
