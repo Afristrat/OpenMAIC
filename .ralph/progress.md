@@ -1512,3 +1512,11 @@ Le checkout propriétaire Diwan est propre sur `feat/qalem-document-provider-v1`
 ## 27 septembre 2026 — ordre d’exécution Diwan prêt
 
 Le document `docs/decisions/2026-09-27-diwan-execution-order.md` consolide la frontière d’architecture, le jeton consommateur tenant-scopé, les contrats NotebookLM/Notion/Google Drive, la recette à deux tenants, les preuves transférables sans secret et les conditions de clôture des quatre US. Il est directement exploitable par la session propriétaire Diwan, mais n’accorde aucun droit d’écriture et ne remplace aucune implémentation ou recette réelle.
+
+## 27 septembre 2026 — S6-003, contrat Diwan recetté et clôturé
+
+Le mandat Diwan a été exécuté sur `feat/qalem-document-provider-v1` au SHA `a955878d863fc822570a0d59dd37fe22ef75c479`. Le contrat propriétaire conserve le SHA-256 `559952437d0802ae2150b3add557250c7aba5701aa245e05a525e0e1fdf952c2`. Le credential Qalem est stocké dans le coffre, Qalem reçoit le jeton par tenant et Diwan uniquement son empreinte ; aucune valeur n’est versionnée ou affichée.
+
+La recette réelle a redéployé Diwan et Qalem, puis prouvé refus anonyme, contrat 1.0, isolement de deux tenants, idempotence, ingestion `ready`, un bloc vectorisé, manifeste, une preuve de recherche, révocation du corpus, révocation du credential secondaire et maintien du credential Human Yo Impact. Les déploiements Coolify `tmhhhmxi2zxc3kqttm8caynj`, `tazmk48ip4scrlzypozjyntu` et `svdduviijbxwhhlavavcwkg7` se sont terminés sans conserver la source, le corpus ou l’accès secondaire de recette.
+
+Le rejeu intégré dans le nouveau conteneur Qalem `bcx5pxyuc9z3lt4jtyjipcqu-011347630796`, image exacte `d1febcdade06852b5323b89ce9857bbc3349ebc7`, utilise le compte existant `info@humanyoimpact.com` sans en créer un autre : la route Qalem refuse l’anonyme en HTTP 401 puis répond HTTP 200 sous cette session avec `organizationScoped=true` et `contractVersion=1.0`. Le résultat liste zéro source, conformément au nettoyage de la recette. S6-003 passe à `completed/passes=true`. Le registre compte 84 stories : 75 clôturées, 6 validations physiques reportées au lot final et 3 connecteurs Diwan encore bloqués.

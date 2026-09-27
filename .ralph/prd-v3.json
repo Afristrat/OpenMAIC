@@ -4,9 +4,9 @@
   "branch": "refork-v030",
   "title": "Réconciliation des engagements et clôture prouvée",
   "description": "Référence active unique pour tous les restes identifiés de Qalem. Les critères v2 et les capacités v1 sont tracés sans transformer une acceptation historique en certification actuelle. Ce PRD planifie ; il n’exécute ni n’autorise automatiquement les mutations bloquées.",
-  "reconciledAt": "2026-09-25",
-  "inspectedCommit": "ff337723b4b46a4811a1c1b4674e67f1ca93d22c",
-  "reconciliationNote": "Réconciliation fraîche du registre après validation WhatsApp S6-011 : 84 stories, 74 completed/passes=true, 6 to_validate/passes=false nécessitant un appareil physique et 4 blocked/passes=false dépendant de Diwan. Les preuves et le détail historique des résidus sont consignés dans docs/validation/PRD3-reconciliation-2026-09-25.md.",
+  "reconciledAt": "2026-09-27",
+  "inspectedCommit": "d1febcdade06852b5323b89ce9857bbc3349ebc7",
+  "reconciliationNote": "Réconciliation fraîche après clôture de l’intégration documentaire Diwan S6-003 : 84 stories, 75 completed/passes=true, 6 to_validate/passes=false nécessitant un appareil physique et 3 blocked/passes=false correspondant aux connecteurs NotebookLM, Notion et Google Drive dans Diwan. Les preuves et le détail historique sont consignés dans .ralph/progress.md et les documents de validation cités par chaque story.",
   "supersedes": ".ralph/prd-v2.json",
   "scope": {
     "included": [
@@ -19,7 +19,7 @@
     ],
     "notIncluded": [
       "Aucune livraison applicative déduite de la seule réconciliation documentaire",
-      "Mutation de Diwan, Saqr ou d’un autre projet",
+      "Mutation de Saqr ou d’un autre projet sans mandat explicite ; le mandat Diwan du 27 septembre 2026 couvre S6-003 et les trois connecteurs documentaires encore ouverts",
       "Modification de main ou des fichiers utilisateur non suivis",
       "Rotation hors du mandat Qalem explicite du 9 septembre 2026",
       "Activation d’un enregistrement, d’une collecte ou d’un canal avant son gate"
@@ -33,7 +33,7 @@
     ]
   },
   "priorityPolicy": {
-    "P0": "Preuves d’exploitation, isolation et qualité ; sécurité Qalem autorisée le 9 septembre 2026 selon la décision versionnée, sans autorisation transfrontalière.",
+    "P0": "Preuves d’exploitation, isolation et qualité ; sécurité Qalem autorisée le 9 septembre 2026 et mandat Diwan autorisé le 27 septembre 2026, selon les décisions et preuves versionnées.",
     "P1": "Demandes explicites non soldées et défauts du parcours auteur/apprenant.",
     "P2": "Achèvement des capacités de création, diffusion, replay et ancrage ; décisions préalables respectées.",
     "P3": "Capacités héritées à conserver ou retirer explicitement avant intégration.",
@@ -2452,18 +2452,18 @@
     {
       "id": "S6-003",
       "title": "Consommer Diwan par un contrat documentaire autonome",
-      "description": "En tant qu’utilisateur de Qalem, je veux consommer diwan par un contrat documentaire autonome afin que le parcours promis soit réellement utilisable.",
+      "description": "En tant qu’utilisateur de Qalem, je veux consommer Diwan par un contrat documentaire autonome afin que le parcours promis soit réellement utilisable.",
       "epic": "6-RÉCONCILIATION",
       "priority": "P1",
-      "status": "blocked",
-      "passes": false,
+      "status": "completed",
+      "passes": true,
       "source": {
         "type": "request_or_observed_gap",
         "date": "2026-08-26"
       },
       "sourceDependencies": [],
       "dependencies": [],
-      "gap": "Adaptateur Qalem, références versionnées, résolution serveur et sélecteur/import/suivi Diwan FR/AR/EN codés, migrés, qualifiés et publiés. Au 27 septembre, le conteneur web de production au SHA d1febcdade06852b5323b89ce9857bbc3349ebc7 ne contient aucun QALEM_DIWAN_TENANT_TOKENS ; l’index du coffre ne contient toujours aucun jeton consommateur Qalem dédié. Les routes Qalem et Diwan refusent correctement l’anonyme en HTTP 401, mais aucune recette authentifiée réelle n’est possible. Restent le jeton interservice dédié, son mapping tenant, la recette réelle import/suivi/provenance/refus croisé/indisponibilité/révocation et le rejeu intégré après configuration. Le mandat n’autorise pas une mutation de Diwan.",
+      "gap": null,
       "evidence": [
         "thread:019f6d49-52ed-7ee2-aca0-466c8b675d00/019ffc8f-65d2-77d0-90bf-f0f4315d4fd1",
         "app/api/parse-document/route.ts",
@@ -2472,7 +2472,10 @@
         "components/generation/diwan-source-picker.tsx",
         "docs/validation/S6-003-diwan-adapter.md",
         "docs/decisions/2026-09-27-diwan-execution-order.md",
-        "app/api/documents/diwan/[organizationId]/route.ts"
+        "app/api/documents/diwan/[organizationId]/route.ts",
+        "scripts/validation/s6-003-diwan-production-recipe.mjs",
+        "diwan:docs/contracts/qalem-document-provider-v1.md@a955878d863fc822570a0d59dd37fe22ef75c479",
+        "diwan:scripts/provision-qalem-consumer.ps1@a955878d863fc822570a0d59dd37fe22ef75c479"
       ],
       "acceptance": [
         "Obtenir le contrat versionné auprès du service propriétaire : ingestion, statut, recherche, provenance et effacement ; aucun endpoint inventé.",
@@ -2482,9 +2485,14 @@
         "Ne pas attendre Diwan pour corriger les sources déjà disponibles dans le flux Qalem."
       ],
       "closureEvidence": [
-        "2026-09-27 — Revalidation sans secret divulgué : l’index du coffre ne contient que DIWAN_ENCRYPTION_KEY et DIWAN_LITELLM_KEY, aucun jeton consommateur Qalem. Le conteneur web c200dfa0885c sert le SHA d1febcdade06852b5323b89ce9857bbc3349ebc7, est healthy, restart=0, OOMKilled=false, répond HTTP 200 et ne charge aucune variable QALEM_DIWAN_TENANT_TOKENS. Le checkout propriétaire Diwan reste propre sur feat/qalem-document-provider-v1 au commit d3d9103800d6a49c4f577701b6fd2bf917f4f8f9 ; le contrat Qalem conserve le SHA-256 559952437d0802ae2150b3add557250c7aba5701aa245e05a525e0e1fdf952c2. S6-003 reste bloquée sans mutation Diwan."
+        "2026-09-27 — Historique du verrou avant mandat : le web Qalem au SHA d1febcdade06852b5323b89ce9857bbc3349ebc7 refusait l’anonyme mais ne possédait encore aucun mapping consommateur ; cette situation est remplacée par la preuve de clôture ci-dessous.",
+        "2026-09-27 — Mandat Diwan exécuté au commit a955878d863fc822570a0d59dd37fe22ef75c479. Contrat propriétaire ingestion/statut/sources/manifeste/recherche/révocation inchangé, SHA-256 559952437d0802ae2150b3add557250c7aba5701aa245e05a525e0e1fdf952c2. Le coffre contient le jeton Qalem et Diwan uniquement sous forme attendue ; aucune valeur n’est consignée dans la preuve.",
+        "2026-09-27 — Recette réelle scripts/provision-qalem-consumer.ps1 : anonyme refusé, contrat 1.0, isolement de deux tenants, rejeu d’import idempotent, ingestion ready avec un bloc vectorisé, manifeste validé, une preuve de recherche, corpus révoqué, credential secondaire révoqué et credential Human Yo Impact encore actif. Déploiements Coolify tmhhhmxi2zxc3kqttm8caynj, tazmk48ip4scrlzypozjyntu et svdduviijbxwhhlavavcwkg7 terminés ; les données et accès secondaires sont supprimés dans le flux.",
+        "2026-09-27 — Recette intégrée depuis le nouveau conteneur Qalem bcx5pxyuc9z3lt4jtyjipcqu-011347630796 : scripts/validation/s6-003-diwan-production-recipe.mjs vérifie que info@humanyoimpact.com existe avant toute génération de session, que la route Qalem refuse l’anonyme en HTTP 401, puis répond HTTP 200 sous la session de l’administrateur Human Yo Impact avec organizationScoped=true et contractVersion=1.0. Aucune création de compte, aucune source ni donnée de recette persistante.",
+        "2026-09-27 — Les refus inter-organisations, l’indisponibilité, le délai dépassé, les réponses invalides, la provenance et les limites de flux restent couverts par les tests permanents de l’adaptateur ; la recette externe complète ajoute les frontières réseau, credential, déploiement, stockage et révocation. S6-003 est clôturée sans accès direct de Qalem à la base Diwan ni import de code Diwan."
       ],
       "historicalDependencies": [],
+      "completedAt": "2026-09-27",
       "executionAllowed": true,
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 14
@@ -5441,9 +5449,9 @@
         "date": "2026-09-12"
       },
       "sourceDependencies": [],
-  "closureEvidence": [
-    "2026-09-26 — Première tranche Android physique : PWA installée et ouverte, abonnement push actif, notification native reçue application fermée, texte générique et tap vers la carte exacte. La réponse est persistée côté serveur avec reps=1, lapses=0 et une nouvelle échéance ; la catégorie exacte n’est pas déduite. Les fichiers fonctionnels PWA et push n’ont pas changé jusqu’au SHA courant déployé 2084f50bbbb738b8383e35055cbe9bab9c8ced36, dont la gate complète passe 3 404 tests Vitest et 200/200 Playwright. Cette preuve ne couvre pas encore la formation multisource, l’interruption/reprise, les scénarios négatifs, les trois locales, le second tenant ni iOS.",
-    "2026-09-26 — Le SHA d1febcdade06852b5323b89ce9857bbc3349ebc7 nomme dans les trois locales les quatre commandes uniquement iconographiques révélées par la recette clavier : réduction de la navigation des scènes, réduction du panneau d’apprentissage et défilement précédent/suivant des participants. La gate complète passe Prettier, TypeScript, ESLint, 3 407/3 407 tests Vitest, le build de 127 routes et 200/200 parcours Playwright. Le déploiement Coolify 9fbeassdjitxq3qfc0rnexdn est terminé ; le conteneur c200dfa0885c sert l’image exacte, est healthy, restart=0, OOMKilled=false et /api/health répond HTTP 200. La recette authentifiée sur qalem.ma atteint le curseur de progression en dix tabulations, le commande avec les flèches, trouve une région aria-live et zéro bouton iconographique sans nom. La session éphémère a été révoquée et tous ses fichiers supprimés. Cette preuve automatisée ne remplace pas un essai sur lecteur d’écran physique."
+      "closureEvidence": [
+        "2026-09-26 — Première tranche Android physique : PWA installée et ouverte, abonnement push actif, notification native reçue application fermée, texte générique et tap vers la carte exacte. La réponse est persistée côté serveur avec reps=1, lapses=0 et une nouvelle échéance ; la catégorie exacte n’est pas déduite. Les fichiers fonctionnels PWA et push n’ont pas changé jusqu’au SHA courant déployé 2084f50bbbb738b8383e35055cbe9bab9c8ced36, dont la gate complète passe 3 404 tests Vitest et 200/200 Playwright. Cette preuve ne couvre pas encore la formation multisource, l’interruption/reprise, les scénarios négatifs, les trois locales, le second tenant ni iOS.",
+        "2026-09-26 — Le SHA d1febcdade06852b5323b89ce9857bbc3349ebc7 nomme dans les trois locales les quatre commandes uniquement iconographiques révélées par la recette clavier : réduction de la navigation des scènes, réduction du panneau d’apprentissage et défilement précédent/suivant des participants. La gate complète passe Prettier, TypeScript, ESLint, 3 407/3 407 tests Vitest, le build de 127 routes et 200/200 parcours Playwright. Le déploiement Coolify 9fbeassdjitxq3qfc0rnexdn est terminé ; le conteneur c200dfa0885c sert l’image exacte, est healthy, restart=0, OOMKilled=false et /api/health répond HTTP 200. La recette authentifiée sur qalem.ma atteint le curseur de progression en dix tabulations, le commande avec les flèches, trouve une région aria-live et zéro bouton iconographique sans nom. La session éphémère a été révoquée et tous ses fichiers supprimés. Cette preuve automatisée ne remplace pas un essai sur lecteur d’écran physique."
       ],
       "executionAllowed": true,
       "executionDecision": "2026-09-12 — Objectif exhaustif demandé par Amine : compléments multisources et mobiles conservés, sans clôture ni activation déduite.",
@@ -5466,7 +5474,7 @@
         "S6-004",
         "S6-013"
       ],
-  "gap": "L’installation Android, la réception application fermée et l’ouverture de la carte ciblée sont acquises et conservées dans U-020/S3-002. Le 26 septembre, la préparation de la recette intégrée a établi qu’aucune formation de production ne conservait encore de source_manifest_id ; un manifeste réel à deux sources a donc été créé pour Qalem Demo. Après correction de la parole manquante de persona-creative et déploiement du SHA ba13548ceb0081bcf8d360eb31e6192c78945afc, le rejeu a réutilisé les sources, le manifeste et le plan existants : le cours RU8XvYDe3Y est ready avec cinq scènes, quiz, PBL, interactivité, dix agents parlants, 43 prises de parole, 43 WAV, Hanae/femme/hanae et cinq scènes ancrées aux sources. La recette Chromium mobile a ensuite révélé trois défauts : le casting serveur perdait sa course contre IndexedDB, la grille fixe comprimait la parole à 84 px et le détecteur comparait des passages entiers, qualifiant à tort de contradictoires une méthode et son cas d’application. Les corrections sérialisent le casting autoritatif, rendent les trois colonnes responsives et comparent désormais des affirmations portant sur un contexte réellement commun. Le SHA 1d7e0937e5efb2c28f2ef1f8c7189ccd5f87fbcf est déployé sur le web et le worker : les deux conteneurs sont healthy, restart=0, OOMKilled=false et la santé publique répond HTTP 200. Les cinq scènes existantes ont été réparées sans régénérer le cours : deux éléments de contenu trompeurs ont été retirés, neuf narrations ont été corrigées et régénérées hors facturation du tenant, les 43 prises de parole restent sonorisées. La classe réelle affiche Hanae, le quiz, aucune largeur horizontale excédentaire, une bulle mesurée à 238 px sur Chromium tactile 390×844 et aucun faux conflit ; les cinq scènes servies par l’API sont grounded. La gate passe Prettier, TypeScript, ESLint, 3 407 tests Vitest, le build de 127 routes et 200/200 parcours Playwright répartis en quatre lots de 50 pour contenir l’OOM du harnais de test. La même classe partagée temporairement avec Human Yo Impact passe en FR, EN et AR RTL : accès apprenant tenant-scopé, quiz, perte puis retour réseau, rechargement et refus anonyme HTTP 401 ; le compte, la session et le partage de recette sont supprimés. Le SHA d1febcdade06852b5323b89ce9857bbc3349ebc7 nomme les quatre commandes iconographiques manquantes ; la recette publique authentifiée prouve le curseur atteignable et pilotable au clavier, une région aria-live et zéro bouton iconographique sans nom. Restent interaction→interruption→reprise synchronisée sur appareils physiques, scénarios négatifs de permissions et service worker sur appareils, lecteur d’écran physique et parcours iOS ; cette US porte la recette intégrée, pas un second moteur mobile.",
+      "gap": "L’installation Android, la réception application fermée et l’ouverture de la carte ciblée sont acquises et conservées dans U-020/S3-002. Le 26 septembre, la préparation de la recette intégrée a établi qu’aucune formation de production ne conservait encore de source_manifest_id ; un manifeste réel à deux sources a donc été créé pour Qalem Demo. Après correction de la parole manquante de persona-creative et déploiement du SHA ba13548ceb0081bcf8d360eb31e6192c78945afc, le rejeu a réutilisé les sources, le manifeste et le plan existants : le cours RU8XvYDe3Y est ready avec cinq scènes, quiz, PBL, interactivité, dix agents parlants, 43 prises de parole, 43 WAV, Hanae/femme/hanae et cinq scènes ancrées aux sources. La recette Chromium mobile a ensuite révélé trois défauts : le casting serveur perdait sa course contre IndexedDB, la grille fixe comprimait la parole à 84 px et le détecteur comparait des passages entiers, qualifiant à tort de contradictoires une méthode et son cas d’application. Les corrections sérialisent le casting autoritatif, rendent les trois colonnes responsives et comparent désormais des affirmations portant sur un contexte réellement commun. Le SHA 1d7e0937e5efb2c28f2ef1f8c7189ccd5f87fbcf est déployé sur le web et le worker : les deux conteneurs sont healthy, restart=0, OOMKilled=false et la santé publique répond HTTP 200. Les cinq scènes existantes ont été réparées sans régénérer le cours : deux éléments de contenu trompeurs ont été retirés, neuf narrations ont été corrigées et régénérées hors facturation du tenant, les 43 prises de parole restent sonorisées. La classe réelle affiche Hanae, le quiz, aucune largeur horizontale excédentaire, une bulle mesurée à 238 px sur Chromium tactile 390×844 et aucun faux conflit ; les cinq scènes servies par l’API sont grounded. La gate passe Prettier, TypeScript, ESLint, 3 407 tests Vitest, le build de 127 routes et 200/200 parcours Playwright répartis en quatre lots de 50 pour contenir l’OOM du harnais de test. La même classe partagée temporairement avec Human Yo Impact passe en FR, EN et AR RTL : accès apprenant tenant-scopé, quiz, perte puis retour réseau, rechargement et refus anonyme HTTP 401 ; le compte, la session et le partage de recette sont supprimés. Le SHA d1febcdade06852b5323b89ce9857bbc3349ebc7 nomme les quatre commandes iconographiques manquantes ; la recette publique authentifiée prouve le curseur atteignable et pilotable au clavier, une région aria-live et zéro bouton iconographique sans nom. Restent interaction→interruption→reprise synchronisée sur appareils physiques, scénarios négatifs de permissions et service worker sur appareils, lecteur d’écran physique et parcours iOS ; cette US porte la recette intégrée, pas un second moteur mobile.",
       "evidence": [
         "public/sw.js",
         "tasks/prd-v3.md",
