@@ -38,6 +38,8 @@ const externalIds = z
   .min(1)
   .max(20)
   .refine((items) => new Set(items).size === items.length);
+const connectorProvider = z.enum(['google-drive', 'notion']);
+const connectorProviderWithDefault = connectorProvider.default('google-drive');
 const conflict = z
   .object({
     topic: z.string().trim().min(1).max(300),
@@ -54,10 +56,16 @@ const conflict = z
   );
 export const diwanCommand = z.discriminatedUnion('operation', [
   z.object({ operation: z.literal('connector-list') }).strict(),
-  z.object({ operation: z.literal('connector-authorize') }).strict(),
+  z
+    .object({
+      operation: z.literal('connector-authorize'),
+      provider: connectorProviderWithDefault,
+    })
+    .strict(),
   z
     .object({
       operation: z.literal('connector-search'),
+      provider: connectorProviderWithDefault,
       query: z.string().trim().max(300).default(''),
       pageSize: z.number().int().min(1).max(100).default(20),
       pageToken: id.optional(),
@@ -66,13 +74,19 @@ export const diwanCommand = z.discriminatedUnion('operation', [
   z
     .object({
       operation: z.literal('connector-import'),
+      provider: connectorProviderWithDefault,
       externalIds,
       corpusId: id.optional(),
       corpusName: z.string().trim().min(1).max(300).optional(),
       idempotencyKey: id,
     })
     .strict(),
-  z.object({ operation: z.literal('connector-revoke') }).strict(),
+  z
+    .object({
+      operation: z.literal('connector-revoke'),
+      provider: connectorProviderWithDefault,
+    })
+    .strict(),
   z.object({ operation: z.literal('status'), jobId: id }).strict(),
   z.object({ operation: z.literal('manifest'), sourceIds }).strict(),
   z
@@ -266,7 +280,7 @@ export async function executeDiwanCommand(organizationId: string, input: unknown
           .array(
             z.object({
               connectionId: id,
-              provider: z.literal('google-drive'),
+              provider: connectorProvider,
               accountLabel: z.string().nullable(),
               scopes: z.array(z.string()).max(20),
               createdAt: z.string(),
@@ -279,16 +293,22 @@ export async function executeDiwanCommand(organizationId: string, input: unknown
   if (command.operation === 'connector-authorize') {
     const result = await request(
       organizationId,
-      '/connectors/google-drive/authorize',
+      `/connectors/${command.provider}/authorize`,
       envelope.extend({
-        provider: z.literal('google-drive'),
+        provider: connectorProvider,
         authorizationUrl: z.url(),
         expiresInSeconds: count,
       }),
       'POST',
     );
     const authorization = new URL(result.authorizationUrl);
-    if (authorization.protocol !== 'https:' || authorization.hostname !== 'accounts.google.com')
+    const expectedHost =
+      command.provider === 'google-drive' ? 'accounts.google.com' : 'api.notion.com';
+    if (
+      result.provider !== command.provider ||
+      authorization.protocol !== 'https:' ||
+      authorization.hostname !== expectedHost
+    )
       throw new DiwanError(502, 'DIWAN_INVALID_RESPONSE');
     return result;
   }
@@ -298,11 +318,11 @@ export async function executeDiwanCommand(organizationId: string, input: unknown
       pageSize: String(command.pageSize),
       ...(command.pageToken ? { pageToken: command.pageToken } : {}),
     });
-    return request(
+    const result = await request(
       organizationId,
-      `/connectors/google-drive/search?${params}`,
+      `/connectors/${command.provider}/search?${params}`,
       envelope.extend({
-        provider: z.literal('google-drive'),
+        provider: connectorProvider,
         items: z
           .array(
             z.object({
@@ -320,12 +340,14 @@ export async function executeDiwanCommand(organizationId: string, input: unknown
         nextPageToken: z.string().nullable().optional(),
       }),
     );
+    if (result.provider !== command.provider) throw new DiwanError(502, 'DIWAN_INVALID_RESPONSE');
+    return result;
   }
   if (command.operation === 'connector-import') {
-    const { operation: _operation, ...body } = command;
+    const { operation: _operation, provider, ...body } = command;
     return request(
       organizationId,
-      '/connectors/google-drive/imports',
+      `/connectors/${provider}/imports`,
       envelope.extend({
         jobId: id,
         corpusId: id,
@@ -337,16 +359,19 @@ export async function executeDiwanCommand(organizationId: string, input: unknown
       body,
     );
   }
-  if (command.operation === 'connector-revoke')
-    return request(
+  if (command.operation === 'connector-revoke') {
+    const result = await request(
       organizationId,
-      '/connectors/google-drive',
+      `/connectors/${command.provider}`,
       envelope.extend({
-        provider: z.literal('google-drive'),
+        provider: connectorProvider,
         status: z.literal('revoked'),
       }),
       'DELETE',
     );
+    if (result.provider !== command.provider) throw new DiwanError(502, 'DIWAN_INVALID_RESPONSE');
+    return result;
+  }
   if (command.operation === 'status')
     return request(
       organizationId,

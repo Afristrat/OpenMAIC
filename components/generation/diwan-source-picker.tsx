@@ -32,12 +32,12 @@ const jobSchema = z.object({
 const connectorSchema = z.object({
   connections: z.array(
     z.object({
-      provider: z.literal('google-drive'),
+      provider: z.enum(['google-drive', 'notion']),
       accountLabel: z.string().nullable(),
     }),
   ),
 });
-const driveSearchSchema = z.object({
+const connectorSearchSchema = z.object({
   items: z.array(
     z.object({
       externalId: z.string().min(1),
@@ -48,6 +48,13 @@ const driveSearchSchema = z.object({
     }),
   ),
 });
+type ConnectorProvider = z.infer<typeof connectorSchema>['connections'][number]['provider'];
+type ConnectorItem = z.infer<typeof connectorSearchSchema>['items'][number];
+const connectorProviders = ['google-drive', 'notion'] as const satisfies ConnectorProvider[];
+const connectorTranslation = {
+  'google-drive': 'Google',
+  notion: 'Notion',
+} as const;
 type Selection = Pick<DiwanReference, 'corpusId' | 'sourceId'>;
 
 export function DiwanSourcePicker({
@@ -72,11 +79,20 @@ export function DiwanSourcePicker({
   const [error, setError] = useState<string | null>(null);
   const [job, setJob] = useState<z.infer<typeof jobSchema> | null>(null);
   const [resumeId, setResumeId] = useState('');
-  const [driveConnected, setDriveConnected] = useState(false);
-  const [driveAccount, setDriveAccount] = useState<string | null>(null);
-  const [driveQuery, setDriveQuery] = useState('');
-  const [driveItems, setDriveItems] = useState<z.infer<typeof driveSearchSchema>['items']>([]);
-  const [driveSelection, setDriveSelection] = useState<string[]>([]);
+  const [connectorAccounts, setConnectorAccounts] = useState<
+    Partial<Record<ConnectorProvider, string | null>>
+  >({});
+  const [connectorQueries, setConnectorQueries] = useState<Record<ConnectorProvider, string>>({
+    'google-drive': '',
+    notion: '',
+  });
+  const [connectorItems, setConnectorItems] = useState<Record<ConnectorProvider, ConnectorItem[]>>({
+    'google-drive': [],
+    notion: [],
+  });
+  const [connectorSelections, setConnectorSelections] = useState<
+    Record<ConnectorProvider, string[]>
+  >({ 'google-drive': [], notion: [] });
   const fileInput = useRef<HTMLInputElement>(null);
   const active = useRef(false);
   const lock = useRef(false);
@@ -208,41 +224,43 @@ export function DiwanSourcePicker({
         ),
       );
       if (!active.current) return;
-      const connection = result.connections.find(
-        (candidate) => candidate.provider === 'google-drive',
+      setConnectorAccounts(
+        Object.fromEntries(
+          result.connections.map((connection) => [connection.provider, connection.accountLabel]),
+        ),
       );
-      setDriveConnected(!!connection);
-      setDriveAccount(connection?.accountLabel ?? null);
     });
   }
-  async function authorizeGoogleDrive() {
+  async function authorizeConnector(provider: ConnectorProvider) {
     await run(async () => {
       const result = z.object({ authorizationUrl: z.url() }).parse(
         await read(
           await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ operation: 'connector-authorize' }),
+            body: JSON.stringify({ operation: 'connector-authorize', provider }),
             signal: AbortSignal.timeout(45000),
           }),
         ),
       );
       const target = new URL(result.authorizationUrl);
-      if (target.protocol !== 'https:' || target.hostname !== 'accounts.google.com')
+      const expectedHost = provider === 'google-drive' ? 'accounts.google.com' : 'api.notion.com';
+      if (target.protocol !== 'https:' || target.hostname !== expectedHost)
         throw new Error(t('sources.diwanFailed'));
       window.location.assign(target);
     });
   }
-  async function searchGoogleDrive() {
+  async function searchConnector(provider: ConnectorProvider) {
     await run(async () => {
-      const result = driveSearchSchema.parse(
+      const result = connectorSearchSchema.parse(
         await read(
           await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               operation: 'connector-search',
-              query: driveQuery.trim(),
+              provider,
+              query: connectorQueries[provider].trim(),
               pageSize: 20,
             }),
             signal: AbortSignal.timeout(45000),
@@ -250,17 +268,19 @@ export function DiwanSourcePicker({
         ),
       );
       if (active.current) {
-        setDriveItems(result.items);
-        setDriveSelection((current) =>
-          current.filter((externalId) =>
+        setConnectorItems((current) => ({ ...current, [provider]: result.items }));
+        setConnectorSelections((current) => ({
+          ...current,
+          [provider]: current[provider].filter((externalId) =>
             result.items.some((item) => item.externalId === externalId),
           ),
-        );
+        }));
       }
     });
   }
-  async function importGoogleDriveSelection() {
-    if (driveSelection.length === 0) return;
+  async function importConnectorSelection(provider: ConnectorProvider) {
+    const selection = connectorSelections[provider];
+    if (selection.length === 0) return;
     await run(async () => {
       const result = jobSchema.parse(
         await read(
@@ -269,8 +289,9 @@ export function DiwanSourcePicker({
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               operation: 'connector-import',
-              externalIds: driveSelection,
-              corpusName: t('sources.diwanGoogleCorpus'),
+              provider,
+              externalIds: selection,
+              corpusName: t(`sources.diwan${connectorTranslation[provider]}Corpus`),
               idempotencyKey: crypto.randomUUID(),
             }),
             signal: AbortSignal.timeout(45000),
@@ -285,25 +306,29 @@ export function DiwanSourcePicker({
       if (!active.current) return;
       setJob(result);
       setResumeId(result.jobId);
-      setDriveSelection([]);
+      setConnectorSelections((current) => ({ ...current, [provider]: [] }));
     });
   }
-  async function disconnectGoogleDrive() {
-    if (!window.confirm(t('sources.diwanGoogleDisconnectConfirm'))) return;
+  async function disconnectConnector(provider: ConnectorProvider) {
+    if (!window.confirm(t(`sources.diwan${connectorTranslation[provider]}DisconnectConfirm`)))
+      return;
     await run(async () => {
       await read(
         await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ operation: 'connector-revoke' }),
+          body: JSON.stringify({ operation: 'connector-revoke', provider }),
           signal: AbortSignal.timeout(45000),
         }),
       );
       if (!active.current) return;
-      setDriveConnected(false);
-      setDriveAccount(null);
-      setDriveItems([]);
-      setDriveSelection([]);
+      setConnectorAccounts((current) => {
+        const next = { ...current };
+        delete next[provider];
+        return next;
+      });
+      setConnectorItems((current) => ({ ...current, [provider]: [] }));
+      setConnectorSelections((current) => ({ ...current, [provider]: [] }));
     });
   }
   const chosen = new Set(selected.map((source) => source.sourceId));
@@ -350,110 +375,132 @@ export function DiwanSourcePicker({
       >
         {t('sources.diwanUpload')}
       </button>
-      <div className="space-y-2 rounded border p-2">
-        <div className="flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <p className="font-medium">{t('sources.diwanGoogleTitle')}</p>
-            <p className="truncate text-[10px] text-muted-foreground">
-              {driveConnected
-                ? driveAccount || t('sources.diwanGoogleConnected')
-                : t('sources.diwanGoogleDisconnected')}
-            </p>
-          </div>
-          <div className="flex shrink-0 gap-1">
-            <button
-              type="button"
-              disabled={locked}
-              onClick={() => void loadConnectors()}
-              className="rounded border px-2 py-1 disabled:opacity-50"
+      <div className="space-y-2">
+        <button
+          type="button"
+          disabled={locked}
+          onClick={() => void loadConnectors()}
+          className="rounded border px-2 py-1 disabled:opacity-50"
+        >
+          {t('sources.diwanConnectorCheck')}
+        </button>
+        {connectorProviders.map((provider) => {
+          const key = connectorTranslation[provider];
+          const connected = Object.prototype.hasOwnProperty.call(connectorAccounts, provider);
+          const items = connectorItems[provider];
+          const selection = connectorSelections[provider];
+          return (
+            <section
+              key={provider}
+              aria-label={t(`sources.diwan${key}Title`)}
+              className="space-y-2 rounded border p-2"
             >
-              {t('sources.diwanGoogleCheck')}
-            </button>
-            {driveConnected ? (
-              <button
-                type="button"
-                disabled={locked}
-                onClick={() => void disconnectGoogleDrive()}
-                className="rounded border px-2 py-1 disabled:opacity-50"
-              >
-                {t('sources.diwanGoogleDisconnect')}
-              </button>
-            ) : (
-              <button
-                type="button"
-                disabled={locked}
-                onClick={() => void authorizeGoogleDrive()}
-                className="rounded border px-2 py-1 disabled:opacity-50"
-              >
-                {t('sources.diwanGoogleConnect')}
-              </button>
-            )}
-          </div>
-        </div>
-        {driveConnected && (
-          <>
-            <div className="flex gap-1">
-              <label className="min-w-0 flex-1">
-                <span className="sr-only">{t('sources.diwanGoogleSearch')}</span>
-                <input
-                  value={driveQuery}
-                  maxLength={300}
-                  onChange={(event) => setDriveQuery(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                      event.preventDefault();
-                      void searchGoogleDrive();
-                    }
-                  }}
-                  placeholder={t('sources.diwanGoogleSearch')}
-                  className="w-full rounded border bg-background p-1"
-                />
-              </label>
-              <button
-                type="button"
-                disabled={locked}
-                onClick={() => void searchGoogleDrive()}
-                className="rounded border px-2 py-1 disabled:opacity-50"
-              >
-                {t('sources.diwanGoogleSearchAction')}
-              </button>
-            </div>
-            <div className="max-h-36 space-y-1 overflow-y-auto">
-              {driveItems.map((item) => {
-                const selectedOnDrive = driveSelection.includes(item.externalId);
-                return (
-                  <label
-                    key={item.externalId}
-                    className="flex items-center gap-2 rounded p-1 hover:bg-muted"
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-medium">{t(`sources.diwan${key}Title`)}</p>
+                  <p className="truncate text-[10px] text-muted-foreground">
+                    {connected
+                      ? connectorAccounts[provider] || t(`sources.diwan${key}Connected`)
+                      : t(`sources.diwan${key}Disconnected`)}
+                  </p>
+                </div>
+                {connected ? (
+                  <button
+                    type="button"
+                    disabled={locked}
+                    onClick={() => void disconnectConnector(provider)}
+                    className="rounded border px-2 py-1 disabled:opacity-50"
                   >
-                    <input
-                      type="checkbox"
-                      checked={selectedOnDrive}
-                      disabled={locked || !item.downloadAllowed}
-                      onChange={() =>
-                        setDriveSelection((current) =>
-                          selectedOnDrive
-                            ? current.filter((externalId) => externalId !== item.externalId)
-                            : [...current, item.externalId].slice(0, 20),
-                        )
-                      }
-                    />
-                    <span className="min-w-0 flex-1 truncate">{item.title}</span>
-                    {!item.downloadAllowed && <span>{t('sources.diwanGoogleUnavailable')}</span>}
-                  </label>
-                );
-              })}
-            </div>
-            <button
-              type="button"
-              disabled={locked || driveSelection.length === 0}
-              onClick={() => void importGoogleDriveSelection()}
-              className="rounded border px-2 py-1 disabled:opacity-50"
-            >
-              {t('sources.diwanGoogleImport', { count: driveSelection.length })}
-            </button>
-          </>
-        )}
+                    {t('sources.diwanConnectorDisconnect')}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={locked}
+                    onClick={() => void authorizeConnector(provider)}
+                    className="rounded border px-2 py-1 disabled:opacity-50"
+                  >
+                    {t('sources.diwanConnectorConnect')}
+                  </button>
+                )}
+              </div>
+              {connected && (
+                <>
+                  <div className="flex gap-1">
+                    <label className="min-w-0 flex-1">
+                      <span className="sr-only">{t(`sources.diwan${key}Search`)}</span>
+                      <input
+                        value={connectorQueries[provider]}
+                        maxLength={300}
+                        onChange={(event) =>
+                          setConnectorQueries((current) => ({
+                            ...current,
+                            [provider]: event.target.value,
+                          }))
+                        }
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') {
+                            event.preventDefault();
+                            void searchConnector(provider);
+                          }
+                        }}
+                        placeholder={t(`sources.diwan${key}Search`)}
+                        className="w-full rounded border bg-background p-1"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      disabled={locked}
+                      onClick={() => void searchConnector(provider)}
+                      className="rounded border px-2 py-1 disabled:opacity-50"
+                    >
+                      {t('sources.diwanConnectorSearch')}
+                    </button>
+                  </div>
+                  <div className="max-h-36 space-y-1 overflow-y-auto">
+                    {items.map((item) => {
+                      const isSelected = selection.includes(item.externalId);
+                      return (
+                        <label
+                          key={item.externalId}
+                          className="flex items-center gap-2 rounded p-1 hover:bg-muted"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            disabled={locked || !item.downloadAllowed}
+                            onChange={() =>
+                              setConnectorSelections((current) => ({
+                                ...current,
+                                [provider]: isSelected
+                                  ? current[provider].filter(
+                                      (externalId) => externalId !== item.externalId,
+                                    )
+                                  : [...current[provider], item.externalId].slice(0, 20),
+                              }))
+                            }
+                          />
+                          <span className="min-w-0 flex-1 truncate">{item.title}</span>
+                          {!item.downloadAllowed && (
+                            <span>{t('sources.diwanConnectorUnavailable')}</span>
+                          )}
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <button
+                    type="button"
+                    disabled={locked || selection.length === 0}
+                    onClick={() => void importConnectorSelection(provider)}
+                    className="rounded border px-2 py-1 disabled:opacity-50"
+                  >
+                    {t('sources.diwanConnectorImport', { count: selection.length })}
+                  </button>
+                </>
+              )}
+            </section>
+          );
+        })}
       </div>
       <div className="flex items-end gap-2">
         <label className="min-w-0 flex-1">

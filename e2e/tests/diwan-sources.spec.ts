@@ -142,3 +142,66 @@ test('Diwan distinguishes missing configuration and resumes an accepted import a
   await picker.getByRole('button', { name: 'Check import status' }).click();
   await expect(picker.getByRole('status')).toContainText('Sources ready');
 });
+
+test('Notion connects, searches and imports only through the active organization', async ({
+  page,
+}) => {
+  await page.addInitScript((settings) => {
+    localStorage.setItem('settings-storage', settings);
+    localStorage.setItem('locale', 'fr-FR');
+  }, createSettingsStorage());
+  const requests: unknown[] = [];
+  await page.route('**/api/documents/diwan/**', async (route) => {
+    if (route.request().method() !== 'POST') {
+      await route.fulfill({ json: { items: [], pagination: { total: 0 } } });
+      return;
+    }
+    const body = route.request().postDataJSON();
+    requests.push(body);
+    if (body.operation === 'connector-list') {
+      await route.fulfill({
+        json: { connections: [{ provider: 'notion', accountLabel: 'Espace Human yo impact' }] },
+      });
+      return;
+    }
+    if (body.operation === 'connector-search') {
+      expect(body).toMatchObject({ provider: 'notion', query: 'SIPOC', pageSize: 20 });
+      await route.fulfill({
+        json: {
+          items: [
+            {
+              externalId: 'notion-page:1',
+              title: 'Référentiel SIPOC',
+              mediaType: 'text/plain',
+              modifiedAt: '2026-09-27T10:00:00Z',
+              downloadAllowed: true,
+            },
+          ],
+        },
+      });
+      return;
+    }
+    expect(body).toMatchObject({
+      operation: 'connector-import',
+      provider: 'notion',
+      externalIds: ['notion-page:1'],
+      corpusName: 'Sources Notion',
+    });
+    await route.fulfill({
+      json: { jobId: 'job:notion:1', status: 'queued', progress: 0 },
+    });
+  });
+  const home = new HomePage(page);
+  await home.goto();
+  await page.getByRole('button', { name: 'Bibliothèque de sources' }).click();
+  const picker = page.getByRole('region', { name: 'Sources Diwan' });
+  await picker.getByRole('button', { name: 'Vérifier les connexions' }).click();
+  const notion = picker.getByRole('region', { name: 'Notion' });
+  await expect(notion).toContainText('Espace Human yo impact');
+  await notion.getByRole('textbox', { name: 'Rechercher une page Notion partagée' }).fill('SIPOC');
+  await notion.getByRole('button', { name: 'Rechercher' }).click();
+  await notion.getByRole('checkbox', { name: 'Référentiel SIPOC' }).click();
+  await notion.getByRole('button', { name: 'Importer la sélection (1)' }).click();
+  await expect(picker.getByRole('status')).toContainText('Import en attente');
+  expect(requests).toHaveLength(3);
+});

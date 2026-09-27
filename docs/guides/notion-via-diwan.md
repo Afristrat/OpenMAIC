@@ -1,40 +1,29 @@
-# Sources Notion — accès par Diwan
+# Utiliser Notion comme source via Diwan
 
-## État vérifié le 10 septembre 2026
+Qalem ne reçoit jamais de jeton Notion. Chaque organisation autorise son propre espace depuis la bibliothèque de sources ; Diwan conserve la connexion chiffrée, limite les lectures aux pages explicitement partagées et renvoie à Qalem des versions documentaires traçables.
 
-L’intégration Notion n’est pas encore livrée. La décision du 9 septembre fixe
-une seule frontière documentaire : Qalem consomme des références fournies par
-Diwan et ne démarre pas un second connecteur MCP direct vers Notion.
+## Parcours auteur
 
-Qalem permet déjà à un auteur de sélectionner des sources Diwan pour son
-organisation. La sélection est épinglée avec sa version et son empreinte ; au
-moment de la génération, Qalem demande des passages limités à ces sources. Une
-source modifiée, indisponible ou insuffisamment étayée bloque la génération au
-lieu de basculer silencieusement vers le Web.
+1. Ouvrir **Bibliothèque de sources**, puis **Vérifier les connexions**.
+2. Dans la carte **Notion**, choisir **Connecter**.
+3. Dans Notion, sélectionner l’espace et les pages à partager avec Diwan.
+4. Revenir dans Qalem, vérifier les connexions, rechercher une page et l’importer.
+5. Suivre l’import jusqu’à l’état prêt, actualiser la bibliothèque, puis sélectionner la source avant de générer la formation.
 
-## Parcours attendu
+La déconnexion empêche toute nouvelle lecture depuis Notion. Elle ne supprime pas les versions déjà importées et citées dans une formation, afin de préserver la traçabilité ; leur retrait se fait avec les fonctions de révocation documentaire de Diwan.
 
-Une intégration Notion utilisable doit d’abord être établie côté Diwan. Celui-ci
-doit associer une page autorisée à un corpus, une source, une version et une
-empreinte accessibles au seul tenant concerné. Qalem sélectionne ensuite cette
-référence Diwan et l’emploie dans le plan puis dans la formation générée.
+## Configuration opérateur
 
-Un export manuel de page Notion importé comme fichier reste un import
-documentaire. Il ne constitue pas une connexion Notion, ni une preuve de droits
-sur une page distante.
+Diwan exige `DIWAN_NOTION_CLIENT_ID` et `DIWAN_NOTION_CLIENT_SECRET`. La connexion publique Notion doit déclarer exactement ce rappel :
 
-## Conditions restantes
+`https://diwan.ai-mpower.com/api/v1/consumers/qalem/connectors/notion/callback`
 
-Le contrat Diwan v1 actuellement disponible ne décrit pas la connexion Notion,
-la recherche de pages, la lecture de leur contenu ni la révocation d’un droit
-Notion. Il faut donc, dans le projet propriétaire Diwan :
+Qalem n’exige aucune clé Notion supplémentaire. Il utilise uniquement son jeton consommateur Diwan propre au tenant dans `QALEM_DIWAN_TENANT_TOKENS`.
 
-- un contrat fournisseur vérifiable pour les pages et bases de données Notion ;
-- un mapping page/version vers corpus/source/version Diwan ;
-- la gestion de perte de droits et de révocation ;
-- un jeton interservice distinct par tenant.
+## Limites et sécurité
 
-Avant clôture, une recette doit prouver une page autorisée, le refus hors
-droits, les passages réellement utilisés dans une formation, puis le retrait.
-Les modifications Diwan et les identifiants fournisseurs ne relèvent pas du
-répertoire Qalem.
+- Une page non partagée avec la connexion Notion n’est ni recherchable ni importable.
+- La recherche est bornée à 100 résultats par page ; un import accepte au plus 20 pages distinctes.
+- Une version est épinglée avec son identifiant externe et sa date de dernière modification. Une modification ultérieure de la page ne réécrit pas silencieusement la version déjà utilisée.
+- Qalem refuse toute URL d’autorisation qui ne cible pas `api.notion.com` et ne transmet jamais un identifiant d’organisation fourni par le navigateur.
+- Le fonctionnement réel doit être validé avec une page autorisée, une page interdite, une révocation et une formation dont les passages cités proviennent de la version importée.

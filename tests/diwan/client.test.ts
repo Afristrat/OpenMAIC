@@ -268,6 +268,75 @@ describe('Diwan v1 tenant-scoped adapter', () => {
     ).rejects.toBeDefined();
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
+  it('routes Notion authorization, search, import and revocation to the same tenant contract', async () => {
+    fetchMock.mockResolvedValueOnce(
+      reply({
+        ...envelope,
+        provider: 'notion',
+        authorizationUrl: 'https://api.notion.com/v1/oauth/authorize?state=opaque',
+        expiresInSeconds: 600,
+      }),
+    );
+    await expect(
+      executeDiwanCommand(org, { operation: 'connector-authorize', provider: 'notion' }),
+    ).resolves.toMatchObject({ provider: 'notion' });
+    expect(fetchMock.mock.calls[0][0]).toContain('/connectors/notion/authorize');
+
+    fetchMock.mockResolvedValueOnce(
+      reply({
+        ...envelope,
+        provider: 'notion',
+        items: [
+          {
+            externalId: 'page-1',
+            title: 'SIPOC',
+            mediaType: 'text/plain',
+            modifiedAt: '2026-09-27T10:00:00Z',
+            providerVersion: '2026-09-27T10:00:00Z',
+            sourceUrl: 'https://notion.so/page-1',
+            downloadAllowed: true,
+            size: null,
+          },
+        ],
+        nextPageToken: null,
+      }),
+    );
+    await expect(
+      executeDiwanCommand(org, {
+        operation: 'connector-search',
+        provider: 'notion',
+        query: 'SIPOC',
+        pageSize: 20,
+      }),
+    ).resolves.toMatchObject({ provider: 'notion', items: [{ externalId: 'page-1' }] });
+    expect(fetchMock.mock.calls[1][0]).toContain('/connectors/notion/search?');
+
+    fetchMock.mockResolvedValueOnce(
+      reply({
+        ...envelope,
+        jobId: 'job:notion',
+        corpusId: 'corpus:notion',
+        status: 'queued',
+        submittedSources: 1,
+        pollAfterSeconds: 30,
+      }),
+    );
+    await executeDiwanCommand(org, {
+      operation: 'connector-import',
+      provider: 'notion',
+      externalIds: ['page-1'],
+      corpusName: 'Notion',
+      idempotencyKey: 'import-notion-1',
+    });
+    expect(fetchMock.mock.calls[2][0]).toContain('/connectors/notion/imports');
+    expect(JSON.parse(fetchMock.mock.calls[2][1].body)).not.toHaveProperty('provider');
+
+    fetchMock.mockResolvedValueOnce(reply({ ...envelope, provider: 'notion', status: 'revoked' }));
+    await expect(
+      executeDiwanCommand(org, { operation: 'connector-revoke', provider: 'notion' }),
+    ).resolves.toMatchObject({ provider: 'notion', status: 'revoked' });
+    expect(fetchMock.mock.calls[3][0]).toContain('/connectors/notion');
+  });
   it('rejects invalid JSON, oversized responses, HTML and transport failures without leaking detail', async () => {
     for (const response of [
       new Response(token, { headers: { 'content-type': 'application/json' } }),

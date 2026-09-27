@@ -69,24 +69,31 @@ describe('Diwan author API boundary', () => {
     expect((await POST(request(command), context)).status).toBe(200);
     expect(mocks.execute).toHaveBeenCalledWith(org, command);
   });
-  it('forwards only validated Google Drive connector operations', async () => {
-    const command = {
-      operation: 'connector-import',
-      externalIds: ['drive:1'],
-      corpusName: 'Google Drive',
-      idempotencyKey: 'drive-import-1',
-    };
-    expect((await POST(request(command), context)).status).toBe(200);
-    expect(mocks.execute).toHaveBeenCalledWith(org, command);
-    expect(
-      (
-        await POST(
-          request({ ...command, organizationId: '00000000-0000-4000-8000-000000000099' }),
-          context,
-        )
-      ).status,
-    ).toBe(400);
-  });
+  it.each([
+    ['google-drive', 'drive:1', 'Google Drive'],
+    ['notion', 'page:1', 'Notion'],
+  ])(
+    'forwards only validated %s connector operations',
+    async (provider, externalId, corpusName) => {
+      const command = {
+        operation: 'connector-import',
+        provider,
+        externalIds: [externalId],
+        corpusName,
+        idempotencyKey: `${provider}-import-1`,
+      };
+      expect((await POST(request(command), context)).status).toBe(200);
+      expect(mocks.execute).toHaveBeenCalledWith(org, command);
+      expect(
+        (
+          await POST(
+            request({ ...command, organizationId: '00000000-0000-4000-8000-000000000099' }),
+            context,
+          )
+        ).status,
+      ).toBe(400);
+    },
+  );
   it('accepts a native multipart file without accepting a tenant override', async () => {
     const form = new FormData();
     form.set('files', new File(['Document autorisé'], 'source.txt', { type: 'text/plain' }));
