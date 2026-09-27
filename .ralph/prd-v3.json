@@ -2471,6 +2471,7 @@
         "lib/diwan/client.ts",
         "components/generation/diwan-source-picker.tsx",
         "docs/validation/S6-003-diwan-adapter.md",
+        "docs/decisions/2026-09-27-diwan-execution-order.md",
         "app/api/documents/diwan/[organizationId]/route.ts"
       ],
       "acceptance": [
@@ -4674,6 +4675,7 @@
       "evidence": [
         "docs/guides/notebooklm-via-diwan.md",
         "docs/decisions/2026-09-09-unblock-prd.md",
+        "docs/decisions/2026-09-27-diwan-execution-order.md",
         "lib/diwan/references.ts",
         "lib/server/formation-source-library.ts",
         "mcp-servers.yml.example"
@@ -4723,6 +4725,7 @@
         "lib/diwan/references.ts",
         "lib/server/formation-source-library.ts",
         "docs/guides/notion-via-diwan.md",
+        "docs/decisions/2026-09-27-diwan-execution-order.md",
         "mcp-servers.yml.example"
       ],
       "acceptance": [
@@ -4769,6 +4772,7 @@
         "lib/diwan/references.ts",
         "lib/server/formation-source-library.ts",
         "docs/guides/google-drive-via-diwan.md",
+        "docs/decisions/2026-09-27-diwan-execution-order.md",
         "mcp-servers.yml.example"
       ],
       "acceptance": [
