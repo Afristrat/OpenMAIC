@@ -1,66 +1,34 @@
-# Sources NotebookLM — accès par Diwan
+# Sources Gemini Notebook Enterprise via Diwan
 
-## État vérifié le 10 septembre 2026
+## État vérifié le 27 septembre 2026
 
-**L’intégration NotebookLM n’est pas livrée.** Le choix d’architecture est déjà
-consigné dans [la décision du 9 septembre](../decisions/2026-09-09-unblock-prd.md) :
-Qalem utilise son adaptateur documentaire Diwan, sans second connecteur direct.
-Le titre historique « via MCP » de S-019 ne prescrit donc plus l’installation
-d’un serveur NotebookLM dans `mcp-servers.yml`.
+L’intégration n’est pas livrée. Qalem possède le consommateur Diwan tenant-scopé et la production dispose du mapping de jetons nécessaire, mais Diwan n’expose pas encore Gemini Notebook Enterprise.
 
-Le code Qalem dispose d’un sélecteur Diwan et d’une résolution des références
-dans le plan et la génération de formation. Ce code générique ne prouve pas
-qu’un compte ou une source NotebookLM est connecté. Un fichier exporté puis
-importé manuellement reste un import documentaire, pas cette intégration.
+Le produit personnel NotebookLM n’est pas une base d’intégration acceptable : sa session utilisateur ne doit jamais devenir un credential global pour les tenants Qalem. Le contrat officiel programmable appartient à **Gemini Notebook Enterprise**, anciennement NotebookLM Enterprise.
 
-## Parcours prévu
+## Contrat officiel disponible
 
-L’auteur choisit son organisation, ouvre les sources de sa formation et
-sélectionne une source disponible dans la bibliothèque Diwan. Qalem conserve
-sa version et son empreinte, puis demande les passages pertinents au moment
-de la génération. Une source inaccessible, modifiée ou sans passage probant
-fait échouer la résolution : aucune substitution silencieuse par le Web.
+Google publie désormais, en préversion, des méthodes REST `v1alpha` pour créer, récupérer, lister, partager et supprimer les notebooks, ainsi que pour ajouter, récupérer et retirer leurs sources :
 
-Ce parcours n’est utilisable pour NotebookLM qu’après disponibilité réelle des
-sources autorisées chez Diwan et configuration du jeton dédié à l’organisation.
-Ne pas utiliser la session NotebookLM personnelle du poste comme credential
-global de tous les tenants Qalem.
+- [Créer et gérer les notebooks](https://docs.cloud.google.com/gemini/enterprise/notebooklm-enterprise/docs/api-notebooks) ;
+- [Ajouter et gérer les sources](https://docs.cloud.google.com/gemini/enterprise/notebooklm-enterprise/docs/api-notebooks-sources) ;
+- [Configurer Gemini Notebook Enterprise](https://docs.cloud.google.com/gemini/enterprise/notebooklm-enterprise/docs/set-up-notebooklm) ;
+- [Licences Gemini Notebook Enterprise](https://docs.cloud.google.com/gemini/enterprise/notebooklm-enterprise/docs/set-up-licensing).
 
-## Prérequis restant au service propriétaire
+Ce contrat exige un projet Google Cloud avec facturation, l’API Discovery Engine, un fournisseur d’identité, les rôles Cloud NotebookLM et une licence spécifique à la multirégion. L’abonnement contient au minimum quinze licences ; un essai de quatorze jours est documenté. Ces prérequis constituent une décision d’achat et de résidence des données, pas une simple variable technique.
 
-Le contrat documentaire Diwan v1 relu intégralement expose import, bibliothèque,
-manifeste et recherche de passages. Il ne définit ni connexion NotebookLM,
-ni authentification auprès de ce fournisseur, ni recherche de notebooks ou
-résolution de leurs identifiants natifs. L’adaptateur Qalem n’invente pas ces
-opérations.
+## État du projet accessible
 
-Il reste à disposer d’un contrat fournisseur vérifiable couvrant :
+Le profil `gcloud` local nomme le projet `mcp-personal-assistant-481414` et le compte `a.mansouri@afriquestrategie.com`. Le 27 septembre, la lecture du numéro de projet, des API activées et de `notebooks:listRecentlyViewed` n’a pas pu être certifiée : les credentials exigent une réauthentification interactive. La réponse REST sans jeton valide est `401 UNAUTHENTICATED`. Il est donc interdit d’en déduire que l’API, la facturation ou une licence sont actives.
 
-- l’autorisation du compte et des sources pour l’organisation concernée ;
-- la correspondance notebook/source → corpus/source/version Diwan ;
-- la mise à jour, la perte de droits et la révocation de cet accès ;
-- le jeton interservice dédié, distinct des clés de chiffrement et de LiteLLM.
+## Conditions exactes de déblocage
 
-Les modifications de Diwan appartiennent à sa session propriétaire. Aucun
-endpoint, OAuth ou droit fournisseur supplémentaire n’est supposé disponible.
+1. Réauthentifier l’identité Google Cloud propriétaire.
+2. Confirmer le projet et choisir la multirégion `eu`, `us` ou `global` selon la résidence voulue.
+3. Vérifier ou activer la facturation et `discoveryengine.googleapis.com`.
+4. Attribuer les rôles Cloud NotebookLM Admin/User et souscrire ou démarrer l’essai de licence.
+5. Définir une identité de service ou une délégation par tenant compatible avec les droits réels des notebooks ; ne jamais réutiliser un jeton utilisateur global.
+6. Implémenter dans Diwan la liste des notebooks, la liste et la lecture autorisée des sources, leur versionnement vers corpus/source/version, la perte de droits et la révocation.
+7. Recetter une source autorisée, une source interdite, la génération d’une formation citant un passage épinglé et le retrait d’accès.
 
-## Preuves et limite de certification
-
-Contrat propriétaire consulté en lecture seule :
-`C:/Users/amans/OneDrive/Projets/Diwan/open-notebook/docs/contracts/qalem-document-provider-v1.md`.
-SHA-256 frais : `559952437d0802ae2150b3add557250c7aba5701aa245e05a525e0e1fdf952c2`.
-
-Le GET anonyme de `/api/v1/consumers/qalem/sources`, exécuté depuis ServeurIA,
-répond 401. Il prouve un refus anonyme, pas un accès autorisé.
-L’index de noms du coffre Claude existe ; la recherche DIWAN/NOTEBOOK/LRS/XAPI
-n’y trouve que `DIWAN_ENCRYPTION_KEY` et `DIWAN_LITELLM_KEY`, pas le mapping
-`QALEM_DIWAN_TENANT_TOKENS`. Aucune valeur n’a été consultée ; ce constat sur
-l’index ne certifie pas l’absence universelle d’un credential.
-
-Avant clôture : accès réel autorisé, refus d’une source hors droits, recherche
-de passages, formation citant cette source, vérification du retrait, puis gate
-intégré et publication du SHA validé. S-019 reste ouverte.
-
-Références de code : `lib/diwan/client.ts`, `lib/diwan/references.ts`,
-`lib/server/formation-source-library.ts`, `lib/server/classroom-plan-generation.ts`
-et `lib/server/classroom-generation.ts`.
+Les étapes 2 à 4 engagent résidence, facturation et licences et restent donc une décision d’Amine. Tant qu’elles ne sont pas prises et observées, S-019 reste `blocked` et `passes=false`. Un export manuel d’un notebook ne satisfait pas cette US.

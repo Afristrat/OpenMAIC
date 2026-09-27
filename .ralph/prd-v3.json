@@ -4679,7 +4679,7 @@
       },
       "sourceDependencies": ["S-018"],
       "dependencies": ["S0-011", "S6-003"],
-      "gap": "27 septembre 2026 : choix via Diwan confirmé, sans connecteur direct Qalem. Le consommateur Qalem est déjà raccordé au plan et à la génération : sélection épinglée, version et empreinte contrôlées, récupération de passages bornée et échec fermé. Le checkout propriétaire Diwan est toujours au commit d3d9103800d6a49c4f577701b6fd2bf917f4f8f9 ; une recherche fraîche trouve zéro occurrence fonctionnelle NotebookLM. Son routeur Qalem n’expose que les opérations génériques ingestion, statut, sources, manifeste, recherche, alignement, conflits et révocation. Le contrat v1 ne définit toujours aucune connexion/authentification NotebookLM, recherche de notebook ni résolution d’identifiant natif. Restent un contrat fournisseur, la correspondance notebook/source → corpus/source/version, un jeton dédié par tenant, une recette réelle avec refus hors droits/retrait, le gate intégré et la publication. Le mapping QALEM_DIWAN_TENANT_TOKENS est absent de la production Qalem. Aucune intégration NotebookLM n’est déclarée livrée et un import manuel ne la remplace pas.",
+      "gap": "27 septembre 2026 : le contrat fournisseur existe désormais, mais uniquement pour Gemini Notebook Enterprise en API v1alpha. Les documents officiels exigent un projet Google Cloud facturé, Discovery Engine, un fournisseur d’identité, les rôles Cloud NotebookLM et une licence spécifique à la multirégion. Le profil local nomme le projet mcp-personal-assistant-481414 et le compte a.mansouri@afriquestrategie.com, mais la réauthentification interactive a expiré : numéro de projet, API activée et licence n’ont pas pu être lus ; l’appel sans jeton valide répond 401 UNAUTHENTICATED. Diwan fff6df1 ne possède donc toujours ni authentification Gemini Notebook Enterprise, ni liste des notebooks/sources, ni résolution notebook/source → corpus/source/version. Qalem et son jeton Diwan tenant-scopé sont prêts. Restent une décision d’Amine sur projet, multirégion, facturation et minimum de quinze licences ou essai, puis l’implémentation Diwan et la recette réelle. Un import manuel ou une session NotebookLM personnelle ne satisfait pas l’intégration.",
       "evidence": [
         "docs/guides/notebooklm-via-diwan.md",
         "docs/decisions/2026-09-09-unblock-prd.md",
@@ -4696,7 +4696,7 @@
         "Recetter recherche, lecture, génération référencée, refus hors droits et révocation auprès du fournisseur réel."
       ],
       "closureEvidence": [
-        "2026-09-27 — Le checkout Diwan reste propre sur feat/qalem-document-provider-v1 au commit d3d9103800d6a49c4f577701b6fd2bf917f4f8f9. La recherche dans l’application, l’API, les tests et le contrat ne trouve aucune intégration fonctionnelle NotebookLM ; le seul dépôt Qalem disponible ne possède par ailleurs aucun jeton consommateur Diwan. Aucun fichier Diwan n’a été modifié."
+        "2026-09-27 — Documentation officielle Google Cloud relue : API Gemini Notebook Enterprise v1alpha en préversion, configuration Discovery Engine/IAM/IdP requise et abonnement régional d’au moins quinze licences ou essai de quatorze jours. Le profil gcloud local identifie le projet mcp-personal-assistant-481414 et le compte a.mansouri@afriquestrategie.com, mais la réauthentification non interactive échoue ; l’appel de lecture REST répond 401 UNAUTHENTICATED. Aucun achat, essai, choix de région ou activation n’a été supposé."
       ],
       "historicalEvidence": {
         "completedAt": "2026-03-29T09:23:59.947Z",
