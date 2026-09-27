@@ -5,8 +5,8 @@
   "title": "Réconciliation des engagements et clôture prouvée",
   "description": "Référence active unique pour tous les restes identifiés de Qalem. Les critères v2 et les capacités v1 sont tracés sans transformer une acceptation historique en certification actuelle. Ce PRD planifie ; il n’exécute ni n’autorise automatiquement les mutations bloquées.",
   "reconciledAt": "2026-09-27",
-  "inspectedCommit": "d1febcdade06852b5323b89ce9857bbc3349ebc7",
-  "reconciliationNote": "Réconciliation fraîche après clôture de l’intégration documentaire Diwan S6-003 : 84 stories, 75 completed/passes=true, 6 to_validate/passes=false nécessitant un appareil physique et 3 blocked/passes=false correspondant aux connecteurs NotebookLM, Notion et Google Drive dans Diwan. Les preuves et le détail historique sont consignés dans .ralph/progress.md et les documents de validation cités par chaque story.",
+  "inspectedCommit": "329fb9ab57a299bf2072793eb0000c19fb3b0c84",
+  "reconciliationNote": "Réconciliation fraîche après livraison technique du connecteur Google Drive S-021 : 84 stories, 75 completed/passes=true, 7 to_validate/passes=false, dont Google Drive en attente de sa recette OAuth réelle, et 2 blocked/passes=false correspondant aux connecteurs NotebookLM et Notion dans Diwan. Les preuves et le détail historique sont consignés dans .ralph/progress.md et les documents de validation cités par chaque story.",
   "supersedes": ".ralph/prd-v2.json",
   "scope": {
     "included": [
@@ -4765,7 +4765,7 @@
       "description": "En tant qu’auteur, je veux utiliser mes sources Google Drive autorisées via Diwan pour produire une formation traçable sans multiplier les connecteurs documentaires Qalem.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "blocked",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "file": ".ralph/prd.json",
@@ -4774,13 +4774,14 @@
       },
       "sourceDependencies": ["S-018"],
       "dependencies": ["S0-011", "S6-003"],
-      "gap": "27 septembre 2026 : le choix via Diwan impose un seul accès documentaire côté Qalem. Le consommateur Diwan tenant-scopé existant épingle version et empreinte puis résout des passages bornés dans le plan et la génération. Le checkout propriétaire Diwan est toujours au commit d3d9103800d6a49c4f577701b6fd2bf917f4f8f9 ; une recherche fraîche ne trouve aucune intégration Google Drive dans l’application, l’API, les tests ou le contrat Qalem. L’unique usage google.oauth2 concerne les credentials Vertex et n’implémente pas Drive. Il n’existe donc ni connexion OAuth Drive, ni recherche/lecture Docs, Slides ou PDF, ni mapping fichier/version → corpus/source/version. Restent ce contrat fournisseur, le jeton dédié par tenant, une recette autorisée par format avec refus hors droits et retrait, le gate intégré et la publication. Le mapping QALEM_DIWAN_TENANT_TOKENS est absent de la production Qalem. La story est bloquée côté fournisseur, non par un connecteur Qalem direct manquant ; un import manuel ne constitue pas l’intégration demandée.",
+      "gap": "27 septembre 2026 : le connecteur est livré des deux côtés. Diwan expose OAuth 2.0 avec PKCE et état borné, recherche et lecture Google Docs, Slides et PDF, révocation, renouvellement et mapping idempotent fichier/version → corpus/source/version ; Qalem expose ces opérations dans le sélecteur de sources en préservant les droits du tenant. Les deux services servent leurs SHA exacts en production, les variables OAuth sont présentes sans exposition de leur valeur et la gate Qalem est verte. La story reste à valider, et non close : le consentement Google d’une identité réelle, les trois formats, le refus hors droits, le retrait puis l’utilisation d’un passage dans une formation doivent encore être observés de bout en bout. Le périmètre drive.file limite volontairement la recherche aux fichiers accordés à cette application.",
       "evidence": [
         "lib/diwan/client.ts",
         "lib/diwan/references.ts",
         "lib/server/formation-source-library.ts",
         "docs/guides/google-drive-via-diwan.md",
         "docs/decisions/2026-09-27-diwan-execution-order.md",
+        "scripts/validation/s021-google-drive-production-recipe.mjs",
         "mcp-servers.yml.example"
       ],
       "acceptance": [
@@ -4790,7 +4791,10 @@
         "Recetter chaque format, un document interdit, une indisponibilité et la révocation ; documenter le parcours réel, distinct d’un import manuel."
       ],
       "closureEvidence": [
-        "2026-09-27 — Le checkout Diwan reste propre sur feat/qalem-document-provider-v1 au commit d3d9103800d6a49c4f577701b6fd2bf917f4f8f9. La recherche dans l’application, l’API, les tests et le contrat ne trouve aucune intégration Google Drive ; aucune lecture Docs, Slides ou PDF n’est exposée. Aucun fichier Diwan n’a été modifié."
+        "2026-09-27 — Diwan 2510a6aeac984ea9e9466f7c6646e657362433ea ajoute le contrat Google Drive tenant-scopé, OAuth PKCE, le chiffrement des credentials, Docs/Slides/PDF, l’import idempotent, les versions et la révocation. Les six tests Google Drive, Ruff et mypy ciblés sont verts ; la suite Diwan précédente compte 686 tests verts.",
+        "2026-09-27 — Qalem 329fb9ab57a299bf2072793eb0000c19fb3b0c84 ajoute la façade serveur et l’interface Google Drive en FR/AR/EN. Prettier, TypeScript, ESLint, Vitest, le build et 200/200 Playwright sont verts ; le rejeu Playwright isolé se termine avec le code 0.",
+        "2026-09-27 — Déploiement Qalem xy6zf5tq5myabjdjdtpms3yr terminé au SHA exact : conteneur healthy, restart=0, OOMKilled=false, santé publique HTTP 200 et route Diwan anonyme HTTP 401. Les variables OAuth Diwan sont présentes, sa santé interne répond HTTP 200 et son callback public répond en JSON plutôt que par la façade web.",
+        "2026-09-27 — La validation réelle Google reste explicitement ouverte : aucune autorisation d’une identité Google, aucun document réel et aucune formation fondée sur ces passages ne sont encore revendiqués comme preuve."
       ],
       "historicalEvidence": {
         "completedAt": "2026-03-29T09:23:59.947Z",

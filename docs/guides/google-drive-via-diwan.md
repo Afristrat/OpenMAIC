@@ -1,39 +1,77 @@
-# Sources Google Drive — accès par Diwan
+# Sources Google Drive : accès par Diwan
 
-## État vérifié le 10 septembre 2026
+## Architecture livrée le 27 septembre 2026
 
-Google Drive suit la même décision d’architecture que NotebookLM et Notion :
-Qalem utilise Diwan comme unique frontière documentaire. Il n’installe ni
-n’active de serveur MCP Google Drive direct.
+Qalem utilise Diwan comme frontière documentaire unique et n’installe aucun
+connecteur Google Drive direct. Le navigateur appelle l’API Qalem, qui transmet
+la commande au contrat consommateur Diwan tenant-scopé. Les jetons OAuth Google
+restent chiffrés dans Diwan et ne sont jamais renvoyés à Qalem.
 
-Le consommateur Diwan de Qalem est déjà tenant-scopé. Il conserve la sélection
-d’une source avec corpus, version et empreinte, puis ne récupère que des
-passages bornés lors de la génération. Une version différente, une source
-inaccessible ou une preuve insuffisante interrompt le parcours de génération.
+Le contrat `qalem-document-provider-v1` couvre désormais :
 
-## Portée attendue
+- l’autorisation OAuth 2.0 Google Drive par organisation avec PKCE, état expirant
+  et utilisable une seule fois ;
+- la recherche des Google Docs, Google Slides et fichiers PDF autorisés ;
+- l’import idempotent dans un corpus et une source Diwan ;
+- l’épinglage de la version, de l’empreinte et de la provenance du fichier ;
+- la révocation de la connexion et le renouvellement du jeton fournisseur ;
+- des erreurs distinctes pour une connexion absente, un état OAuth invalide, une
+  source inaccessible et une indisponibilité du fournisseur.
 
-Pour une source Google Drive, Diwan doit fournir au minimum l’identifiant
-interne de corpus et de source, la version, l’empreinte et les passages
-autorisés. Cette représentation couvre le contenu approuvé, sans exposer dans
-Qalem des jetons OAuth Google ni les identifiants bruts des documents.
+Le périmètre OAuth est volontairement limité à `drive.file`. Il ne donne pas à
+Qalem un accès général au Drive d’un utilisateur : seuls les fichiers autorisés
+pour l’application sont recherchables et importables.
 
-Qalem ne doit pas prétendre prendre en charge Google Docs, Slides ou PDF tant
-que Diwan ne garantit pas cette correspondance et les droits associés pour le
-tenant. L’import manuel d’un export Drive reste un import documentaire local.
+## Parcours auteur
 
-## Conditions restantes
+Dans le sélecteur de sources de la page de génération :
 
-Le contrat Diwan v1 disponible ne couvre pas encore la connexion Google Drive,
-la recherche de fichiers, la lecture des formats Docs, Slides ou PDF, ni la
-révocation d’un droit fournisseur. Le projet Diwan doit donc livrer :
+1. l’auteur choisit « Connecter Google Drive » ;
+2. Google recueille son autorisation puis le renvoie vers Qalem ;
+3. l’auteur recherche un document autorisé et sélectionne jusqu’à vingt sources
+   distinctes ;
+4. Qalem demande à Diwan de les importer ;
+5. une fois l’indexation terminée, les sources apparaissent dans la bibliothèque
+   Diwan existante et peuvent être ajoutées au plan de formation ;
+6. la génération utilise uniquement les passages bornés de la version épinglée,
+   avec ses références et les droits de l’organisation.
 
-- le contrat de ces formats et des droits par organisation ;
-- le mapping fichier/version vers corpus/source/version Diwan ;
-- le traitement de la révocation et de la perte de droits ;
-- un jeton interservice dédié à chaque tenant.
+Une source devenue inaccessible, révoquée ou différente de la version approuvée
+ne doit pas être remplacée silencieusement. Le parcours de génération s’arrête
+avec une erreur explicite. L’import manuel reste disponible, mais il ne constitue
+pas une connexion Google Drive.
 
-La recette de clôture exigera une source autorisée de chaque format supporté,
-puis le refus d’un document hors droits, l’utilisation traçable dans une
-formation et la vérification du retrait. Ces prérequis ne peuvent pas être
-créés depuis le dépôt Qalem.
+## Configuration de production
+
+Diwan attend les variables suivantes :
+
+- `DIWAN_PUBLIC_URL=https://diwan.ai-mpower.com` ;
+- `DIWAN_QALEM_RETURN_URL=https://qalem.ma/app` ;
+- `DIWAN_GOOGLE_DRIVE_CLIENT_ID` ;
+- `DIWAN_GOOGLE_DRIVE_CLIENT_SECRET`.
+
+L’URI de redirection à déclarer dans le client OAuth Google est :
+
+```text
+https://diwan.ai-mpower.com/api/v1/consumers/qalem/connectors/google-drive/callback
+```
+
+Les deux secrets Google ne doivent être présents que dans le coffre et dans
+l’environnement chiffré du service Diwan. Leur valeur ne doit apparaître ni dans
+Qalem, ni dans les journaux, ni dans ce document.
+
+## Recette de clôture
+
+La story ne peut être déclarée close qu’après une recette de production prouvant
+les quatre formats et états attendus :
+
+- import et résolution d’un Google Docs autorisé ;
+- import et résolution d’un Google Slides autorisé ;
+- import et résolution d’un PDF autorisé ;
+- refus d’un document hors droits ;
+- erreur récupérable lorsque Google Drive est indisponible ;
+- révocation effective de la connexion ;
+- utilisation traçable d’au moins un passage importé dans une formation Qalem.
+
+Les tests automatisés, la migration et le déploiement du contrat sont nécessaires
+mais ne remplacent pas cette recette réelle.
