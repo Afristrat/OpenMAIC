@@ -33,7 +33,11 @@ const evidence = z.object({
   sourceChecksumSha256: z.string().nullable(),
 });
 const sourceIds = z.array(id).min(1).max(100);
-const externalIds = z.array(id).min(1).max(20).refine((items) => new Set(items).size === items.length);
+const externalIds = z
+  .array(id)
+  .min(1)
+  .max(20)
+  .refine((items) => new Set(items).size === items.length);
 const conflict = z
   .object({
     topic: z.string().trim().min(1).max(300),

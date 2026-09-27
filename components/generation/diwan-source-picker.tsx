@@ -217,18 +217,16 @@ export function DiwanSourcePicker({
   }
   async function authorizeGoogleDrive() {
     await run(async () => {
-      const result = z
-        .object({ authorizationUrl: z.url() })
-        .parse(
-          await read(
-            await fetch(endpoint, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ operation: 'connector-authorize' }),
-              signal: AbortSignal.timeout(45000),
-            }),
-          ),
-        );
+      const result = z.object({ authorizationUrl: z.url() }).parse(
+        await read(
+          await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ operation: 'connector-authorize' }),
+            signal: AbortSignal.timeout(45000),
+          }),
+        ),
+      );
       const target = new URL(result.authorizationUrl);
       if (target.protocol !== 'https:' || target.hostname !== 'accounts.google.com')
         throw new Error(t('sources.diwanFailed'));
