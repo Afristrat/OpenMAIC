@@ -4670,7 +4670,7 @@
       "description": "En tant qu’auteur, je veux utiliser mes sources NotebookLM autorisées via Diwan pour produire une formation traçable sans multiplier les connecteurs documentaires Qalem.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "to_validate",
+      "status": "blocked",
       "passes": false,
       "source": {
         "file": ".ralph/prd.json",
@@ -4718,7 +4718,7 @@
       "description": "En tant qu’auteur, je veux utiliser mes sources Notion autorisées via Diwan pour produire une formation traçable sans multiplier les connecteurs documentaires Qalem.",
       "epic": "7-HÉRITAGE",
       "priority": "P3",
-      "status": "blocked",
+      "status": "to_validate",
       "passes": false,
       "source": {
         "file": ".ralph/prd.json",
