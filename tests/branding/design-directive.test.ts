@@ -51,10 +51,12 @@ describe('course design directive', () => {
   it('accepts a bounded directive and rejects model-authored hex palettes', () => {
     const parsed = designDirectiveSchema.safeParse(DEFAULT_DESIGN_DIRECTIVE);
     expect(parsed.success).toBe(true);
-    expect(designDirectiveSchema.safeParse({
-      ...DEFAULT_DESIGN_DIRECTIVE,
-      palette: { 'surface.base': '#FFFFFF' },
-    }).success).toBe(false);
+    expect(
+      designDirectiveSchema.safeParse({
+        ...DEFAULT_DESIGN_DIRECTIVE,
+        palette: { 'surface.base': '#FFFFFF' },
+      }).success,
+    ).toBe(false);
   });
 
   it('replaces invalid output with the safe default and reports the issue', () => {
@@ -94,10 +96,12 @@ describe('course design directive', () => {
       }
     }
 
-    expect(tinycolor.readability(palette['text.onDark'], palette['surface.dark']))
-      .toBeGreaterThanOrEqual(4.5);
-    expect(tinycolor.readability(palette['accent.onDark'], palette['surface.dark']))
-      .toBeGreaterThanOrEqual(4.5);
+    expect(
+      tinycolor.readability(palette['text.onDark'], palette['surface.dark']),
+    ).toBeGreaterThanOrEqual(4.5);
+    expect(
+      tinycolor.readability(palette['accent.onDark'], palette['surface.dark']),
+    ).toBeGreaterThanOrEqual(4.5);
   });
 
   it('keeps every derived hue family accessible on both light surfaces', () => {
@@ -122,10 +126,12 @@ describe('course design directive', () => {
             expect(tinycolor.readability(foreground, background)).toBeGreaterThanOrEqual(4.5);
           }
         }
-        expect(tinycolor.readability(palette['text.onDark'], palette['surface.dark']))
-          .toBeGreaterThanOrEqual(4.5);
-        expect(tinycolor.readability(palette['accent.onDark'], palette['surface.dark']))
-          .toBeGreaterThanOrEqual(4.5);
+        expect(
+          tinycolor.readability(palette['text.onDark'], palette['surface.dark']),
+        ).toBeGreaterThanOrEqual(4.5);
+        expect(
+          tinycolor.readability(palette['accent.onDark'], palette['surface.dark']),
+        ).toBeGreaterThanOrEqual(4.5);
       }
     }
   });
@@ -142,9 +148,11 @@ describe('course design directive', () => {
       buildPalette(DEFAULT_DESIGN_DIRECTIVE)['functional.incorrect'],
     ]);
 
-    expect(buildSlideTheme({
-      ...DEFAULT_DESIGN_DIRECTIVE,
-      typography: { ...DEFAULT_DESIGN_DIRECTIVE.typography, heading: 'Merriweather' },
-    }).fontName).toBe('Merriweather');
+    expect(
+      buildSlideTheme({
+        ...DEFAULT_DESIGN_DIRECTIVE,
+        typography: { ...DEFAULT_DESIGN_DIRECTIVE.typography, heading: 'Merriweather' },
+      }).fontName,
+    ).toBe('Merriweather');
   });
 });

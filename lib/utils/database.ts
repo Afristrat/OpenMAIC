@@ -6,6 +6,7 @@ import type {
   Whiteboard,
   VideoManifest,
   SkillPromptContext,
+  Stage,
 } from '@/lib/types/stage';
 import type { DesignDirective } from '@openmaic/dsl';
 import type { Action } from '@/lib/types/action';

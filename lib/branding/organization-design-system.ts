@@ -81,15 +81,21 @@ function readableForeground(
     for (const adjusted of [original.clone().darken(step), original.clone().lighten(step)]) {
       const candidate = `#${adjusted.toHex().toUpperCase()}`;
       if (backgrounds.every((background) => tinycolor.readability(candidate, background) >= 4.5)) {
-        warnings.push(`Charte : contraste insuffisant pour ${role} ; luminosité ajustée (${foreground} → ${candidate}).`);
+        warnings.push(
+          `Charte : contraste insuffisant pour ${role} ; luminosité ajustée (${foreground} → ${candidate}).`,
+        );
         return candidate;
       }
     }
   }
-  const fallback = backgrounds.every((background) => tinycolor.readability('#000000', background) >= 4.5)
+  const fallback = backgrounds.every(
+    (background) => tinycolor.readability('#000000', background) >= 4.5,
+  )
     ? '#000000'
     : '#FFFFFF';
-  warnings.push(`Charte : contraste de ${role} impossible à préserver ; couleur sûre ${fallback} appliquée.`);
+  warnings.push(
+    `Charte : contraste de ${role} impossible à préserver ; couleur sûre ${fallback} appliquée.`,
+  );
   return fallback;
 }
 
@@ -124,7 +130,10 @@ export function serializeBrandSnapshot(brand: OrganizationDesignSystem): Seriali
   const fields = [
     `colors: ${colors.join(' ')}`,
     `fonts: display=${display}; body=${body}; utility=${utility}`,
-    `avoid: ${(Array.isArray(brand.never) ? brand.never : []).map((item) => cleanText(item, 100)).filter(Boolean).join('; ')}`,
+    `avoid: ${(Array.isArray(brand.never) ? brand.never : [])
+      .map((item) => cleanText(item, 100))
+      .filter(Boolean)
+      .join('; ')}`,
     `layout: ${cleanText(brand.layoutLogic)}`,
     `signature: ${cleanText(brand.signatureElement)}`,
     `shape: radius=${cleanText(brand.cornerRadius, 40)}; borders/shadows=${cleanText(brand.borderAndShadow)}`,
@@ -135,7 +144,10 @@ export function serializeBrandSnapshot(brand: OrganizationDesignSystem): Seriali
   for (const index of priorities) {
     if (fields.join('\n').length <= MAX_BRAND_SNAPSHOT_LENGTH) break;
     const line = fields[index];
-    const available = Math.max(0, MAX_BRAND_SNAPSHOT_LENGTH - (fields.join('\n').length - line.length));
+    const available = Math.max(
+      0,
+      MAX_BRAND_SNAPSHOT_LENGTH - (fields.join('\n').length - line.length),
+    );
     fields[index] = line.slice(0, available);
   }
   const text = fields.filter(Boolean).join('\n').slice(0, MAX_BRAND_SNAPSHOT_LENGTH);

@@ -22,7 +22,10 @@ import { uniquifyMediaElementIds } from './scene-builder';
 import type { AICallFn, GenerationResult, GenerationCallbacks } from './pipeline-types';
 import { createLogger } from '@/lib/logger';
 import { selectSourceContext } from './source-context';
-import { DEFAULT_DESIGN_DIRECTIVE, normalizeDesignDirective } from '@/lib/branding/design-directive';
+import {
+  DEFAULT_DESIGN_DIRECTIVE,
+  normalizeDesignDirective,
+} from '@/lib/branding/design-directive';
 const log = createLogger('Generation');
 
 function syllabusPlaceholder(languageDirective: string): string {

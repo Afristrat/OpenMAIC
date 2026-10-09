@@ -18,26 +18,34 @@ export const designDirectiveSchema = z
     source: z.enum(['charter', 'derived']),
     tone: z.enum(DESIGN_TONES),
     density: z.enum(DESIGN_DENSITIES),
-    seed: z.object({
-      hueFamily: z.enum(DESIGN_HUE_FAMILIES),
-      chromaLevel: z.enum(['low', 'mid']),
-    }).strict(),
+    seed: z
+      .object({
+        hueFamily: z.enum(DESIGN_HUE_FAMILIES),
+        chromaLevel: z.enum(['low', 'mid']),
+      })
+      .strict(),
     palette: z.null(),
-    typography: z.object({
-      heading: z.enum(DESIGN_FONTS),
-      body: z.enum(DESIGN_FONTS),
-      scaleShift: z.union([z.literal(-1), z.literal(0), z.literal(1)]),
-    }).strict(),
+    typography: z
+      .object({
+        heading: z.enum(DESIGN_FONTS),
+        body: z.enum(DESIGN_FONTS),
+        scaleShift: z.union([z.literal(-1), z.literal(0), z.literal(1)]),
+      })
+      .strict(),
     grid: z.object({ margin: z.number().int().min(64).max(80) }).strict(),
-    shapes: z.object({
-      radius: z.number().int().min(0).max(24),
-      stroke: z.enum(['none', 'hairline']),
-    }).strict(),
-    surfacePlan: z.object({
-      content: z.enum(['base', 'tint']),
-      engagement: z.enum(['dark', 'tint']),
-      punchline: z.enum(['gradient', 'solid', 'none']),
-    }).strict(),
+    shapes: z
+      .object({
+        radius: z.number().int().min(0).max(24),
+        stroke: z.enum(['none', 'hairline']),
+      })
+      .strict(),
+    surfacePlan: z
+      .object({
+        content: z.enum(['base', 'tint']),
+        engagement: z.enum(['dark', 'tint']),
+        punchline: z.enum(['gradient', 'solid', 'none']),
+      })
+      .strict(),
     accentSequence: z.enum(['primary-then-achievement', 'primary-only']),
     forbidden: z.array(z.string().trim().min(1).max(60)).max(3),
     notes: z.string().trim().max(100),
@@ -105,7 +113,10 @@ export function normalizeDesignDirective(value: unknown): DesignDirectiveNormali
   if (JSON.stringify(bounded).length <= MAX_SERIALIZED_DIRECTIVE_LENGTH) {
     return { directive: bounded, warnings: ['designDirective was truncated to 1,000 characters'] };
   }
-  return { directive: DEFAULT_DESIGN_DIRECTIVE, warnings: ['designDirective exceeded 1,000 characters'] };
+  return {
+    directive: DEFAULT_DESIGN_DIRECTIVE,
+    warnings: ['designDirective exceeded 1,000 characters'],
+  };
 }
 
 export type DesignPalette = Record<

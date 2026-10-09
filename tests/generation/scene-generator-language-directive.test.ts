@@ -81,10 +81,12 @@ describe('scene-generator language directive threading (issue #472)', () => {
       });
 
       expect(lastUser()).toContain('COURSE DESIGN DIRECTION');
-      expect(lastUser()).toContain(JSON.stringify({
-        directive: DEFAULT_DESIGN_DIRECTIVE,
-        palette: buildPalette(DEFAULT_DESIGN_DIRECTIVE),
-      }));
+      expect(lastUser()).toContain(
+        JSON.stringify({
+          directive: DEFAULT_DESIGN_DIRECTIVE,
+          palette: buildPalette(DEFAULT_DESIGN_DIRECTIVE),
+        }),
+      );
     });
 
     it('threads languageDirective into quiz content prompt', async () => {

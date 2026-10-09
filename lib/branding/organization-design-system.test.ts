@@ -35,7 +35,11 @@ describe('serializeBrandSnapshot', () => {
   it('is deterministic, compact, and excludes extraction metadata', () => {
     const input = charter();
     const first = serializeBrandSnapshot(input);
-    const second = serializeBrandSnapshot({ ...input, sourceUrl: 'https://other.example', extractedAt: 'later' });
+    const second = serializeBrandSnapshot({
+      ...input,
+      sourceUrl: 'https://other.example',
+      extractedAt: 'later',
+    });
     expect(first.text).toBe(second.text);
     expect(first.text.length).toBeLessThanOrEqual(1200);
     expect(first.text).not.toContain('private.example');
@@ -80,7 +84,10 @@ describe('serializeBrandSnapshot', () => {
     const long = (value: string) => value.repeat(200);
     const fixtures = Array.from({ length: 5 }, (_, index) =>
       charter({
-        palette: charter().palette.map((token) => ({ ...token, purpose: long(`tenant-${index}-`) })),
+        palette: charter().palette.map((token) => ({
+          ...token,
+          purpose: long(`tenant-${index}-`),
+        })),
         spacingRhythm: long('8px '),
         cornerRadius: long('12px '),
         borderAndShadow: long('soft '),

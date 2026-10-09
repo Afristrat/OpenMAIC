@@ -599,14 +599,19 @@ export async function generateClassroom(
   const courseDesignDirective = designSystemEnabled
     ? outlinesResult.data.designDirective
     : undefined;
-  const brandSnapshotContent = designSystemEnabled && organizationDesignSystem
-    ? serializeBrandSnapshot(organizationDesignSystem)
-    : undefined;
+  const brandSnapshotContent =
+    designSystemEnabled && organizationDesignSystem
+      ? serializeBrandSnapshot(organizationDesignSystem)
+      : undefined;
   if (brandSnapshotContent?.warnings.length) {
     for (const warning of brandSnapshotContent.warnings) log.warn(warning);
   }
   const brandSnapshot = brandSnapshotContent
-    ? { version: 1 as const, createdAt: new Date().toISOString(), content: brandSnapshotContent.text }
+    ? {
+        version: 1 as const,
+        createdAt: new Date().toISOString(),
+        content: brandSnapshotContent.text,
+      }
     : undefined;
 
   if (expectedSceneCount && outlinesResult.data.outlines.length !== expectedSceneCount) {
@@ -768,9 +773,7 @@ export async function generateClassroom(
       name: courseTitle || outlines[0]?.title || requirement.slice(0, 50),
       description: undefined,
       languageDirective,
-      ...(courseDesignDirective
-        ? { designDirective: courseDesignDirective }
-        : {}),
+      ...(courseDesignDirective ? { designDirective: courseDesignDirective } : {}),
       ...(brandSnapshot ? { brandSnapshot } : {}),
       learningContext,
       skillPromptContext: {
@@ -912,9 +915,7 @@ export async function generateClassroom(
             allowProceduralSkill: vocationalActive,
             skillEngineEnabled,
             activeSkillId: requirements.activeSkillId,
-            ...(courseDesignDirective
-              ? { designDirective: courseDesignDirective }
-              : {}),
+            ...(courseDesignDirective ? { designDirective: courseDesignDirective } : {}),
             ...(brandSnapshot ? { brandSnapshot } : {}),
             sourceGrounding,
             assignedImages,
