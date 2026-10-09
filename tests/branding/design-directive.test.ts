@@ -3,6 +3,7 @@ import tinycolor from 'tinycolor2';
 import { approvedClassroomPlanSchema } from '@/lib/api/schemas';
 import {
   DEFAULT_DESIGN_DIRECTIVE,
+  DESIGN_HUE_FAMILIES,
   buildPalette,
   designDirectiveSchema,
   isDesignSystemV1Enabled,
@@ -96,5 +97,35 @@ describe('course design directive', () => {
       .toBeGreaterThanOrEqual(4.5);
     expect(tinycolor.readability(palette['accent.onDark'], palette['surface.dark']))
       .toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('keeps every derived hue family accessible on both light surfaces', () => {
+    for (const hueFamily of DESIGN_HUE_FAMILIES) {
+      for (const chromaLevel of ['low', 'mid'] as const) {
+        const palette = buildPalette({
+          seed: { hueFamily, chromaLevel },
+          tone: 'sober',
+        });
+        for (const background of [palette['surface.base'], palette['surface.tint']]) {
+          for (const foreground of [
+            palette['text.primary'],
+            palette['text.secondary'],
+            palette['accent.primary'],
+            palette['accent.secondary'],
+            palette['accent.achievement'],
+            palette['functional.correct'],
+            palette['functional.incorrect'],
+            palette['functional.warning'],
+            palette['functional.info'],
+          ]) {
+            expect(tinycolor.readability(foreground, background)).toBeGreaterThanOrEqual(4.5);
+          }
+        }
+        expect(tinycolor.readability(palette['text.onDark'], palette['surface.dark']))
+          .toBeGreaterThanOrEqual(4.5);
+        expect(tinycolor.readability(palette['accent.onDark'], palette['surface.dark']))
+          .toBeGreaterThanOrEqual(4.5);
+      }
+    }
   });
 });
