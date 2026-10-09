@@ -2264,6 +2264,7 @@
   "generation.currency": "Devise",
   "generation.resumeApprovedPlan": "Reprendre le syllabus déjà validé",
   "generation.improveRequest": "Améliorer ma demande",
+  "generation.refineSourcesUnavailable": "La sélection de ressources n’est plus disponible. Rechargez-la avant d’améliorer la demande.",
   "generation.requirementAssistantHint": "L’assistant transforme votre idée en cahier des charges de formation sans inventer les informations manquantes.",
   "agentBar.suggestSpecialists": "Proposer des spécialistes du sujet",
   "agentBar.specialistGenerationFailed": "Impossible de proposer les spécialistes.",

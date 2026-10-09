@@ -262,6 +262,15 @@ test.describe('Home → Generation', () => {
     page,
     mockApi,
   }) => {
+    let selectionWasReset = false;
+    page.on('request', (request) => {
+      if (request.url().includes('/api/source-manifests') && request.method() === 'PUT') {
+        const body = request.postDataJSON() as { sourceIds?: string[]; diwanSources?: unknown[] };
+        if (body.sourceIds?.length === 0 && body.diwanSources?.length === 0) {
+          selectionWasReset = true;
+        }
+      }
+    });
     browserConsoleContract.expectHttpError('/api/parse-pdf', 422);
     await page.route('**/api/parse-pdf', async (route) => {
       const multipart = route.request().postDataBuffer()?.toString('utf8') ?? '';
@@ -328,6 +337,78 @@ test.describe('Home → Generation', () => {
     expect(generationJob.getPlanRequestBody()).toMatchObject({
       sourceManifestId: expect.stringMatching(/^20000000-/),
     });
+    const sourceManifestId = (generationJob.getPlanRequestBody() as { sourceManifestId: string })
+      .sourceManifestId;
+    await page.getByRole('button', { name: 'Confirm and generate course' }).click();
+    await expect(page).toHaveURL(/\/generation-status\?/);
+    await expect.poll(() => selectionWasReset).toBe(true);
+    expect(generationJob.getSubmittedBody()).toMatchObject({ sourceManifestId });
+
+    await home.goto();
+    const sourceLibraryButton = page.getByRole('button', { name: 'Source library' });
+    await expect(sourceLibraryButton).toBeVisible();
+    await expect(sourceLibraryButton).not.toContainText('3');
+    await sourceLibraryButton.click();
+    await expect(page.getByRole('button', { name: /source-a\.pdf/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /source-b\.pdf/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /source-c\.pdf/ })).toBeVisible();
+  });
+
+  test('keeps the next course selection empty when clearing the server manifest fails', async ({
+    browserConsoleContract,
+    page,
+    mockApi,
+  }) => {
+    browserConsoleContract.expectHttpError('/api/source-manifests', 409);
+    await page.route('**/api/parse-pdf', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: { text: 'Course source contents', images: [] } }),
+      });
+    });
+    const generationJob = await mockApi.mockClassroomGenerationJob('e2e-manifest-clear-conflict');
+    const home = new HomePage(page);
+    await home.goto();
+    await home.fillRequirement('Build a course from one resource.');
+    await home.configureAnimation();
+    await page.getByRole('button', { name: 'Source library' }).click();
+    await page.locator('input[type="file"][accept*=".pdf"]').setInputFiles({
+      name: 'course-source.pdf',
+      mimeType: 'application/pdf',
+      buffer: Buffer.from('%PDF-1.4 e2e'),
+    });
+    await expect(page.getByRole('button', { name: 'Source library' })).toContainText('1');
+    await home.submit();
+    await expect(page.getByRole('heading', { name: 'Training plan' })).toBeVisible();
+
+    let resetAttempted = false;
+    await page.route('**/api/source-manifests', async (route) => {
+      const body = route.request().postDataJSON() as { sourceIds?: string[]; diwanSources?: unknown[] };
+      if (route.request().method() === 'PUT' && body.sourceIds?.length === 0) {
+        resetAttempted = true;
+        await route.fulfill({
+          status: 409,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: false, error: 'Manifest version conflict' }),
+        });
+        return;
+      }
+      await route.fallback();
+    });
+
+    await page.getByRole('button', { name: 'Confirm and generate course' }).click();
+    await expect(page).toHaveURL(/\/generation-status\?/);
+    await expect.poll(() => resetAttempted).toBe(true);
+    expect(generationJob.getSubmittedBody()).toMatchObject({
+      sourceManifestId: expect.stringMatching(/^20000000-/),
+    });
+
+    await home.goto();
+    const sourceLibraryButton = page.getByRole('button', { name: 'Source library' });
+    await expect(sourceLibraryButton).not.toContainText('1');
+    await sourceLibraryButton.click();
+    await expect(page.getByRole('button', { name: /course-source\.pdf/ })).toBeVisible();
   });
 
   for (const localized of PDF_OCR_GUIDANCE_LOCALES) {

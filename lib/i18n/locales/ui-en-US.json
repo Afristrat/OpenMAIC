@@ -2264,6 +2264,7 @@
   "generation.currency": "Currency",
   "generation.resumeApprovedPlan": "Resume the approved syllabus",
   "generation.improveRequest": "Improve my request",
+  "generation.refineSourcesUnavailable": "The selected resources are no longer available. Reload the selection before improving the request.",
   "generation.requirementAssistantHint": "The assistant turns your idea into a course brief without inventing missing information.",
   "agentBar.suggestSpecialists": "Suggest topic specialists",
   "agentBar.specialistGenerationFailed": "Unable to suggest specialists.",

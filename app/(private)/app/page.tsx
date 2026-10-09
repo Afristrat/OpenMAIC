@@ -982,6 +982,10 @@ function HomePage() {
 
   const clearCurrentSourceSelection = async (): Promise<boolean> => {
     if (!currentOrg || !user) return false;
+    const manifestVersionToClear = sourceManifestVersion;
+    clearPersistedSourceSelection(currentOrg.id, user.id);
+    setSourceManifestId(undefined);
+    setSelectedSourceCount(0);
     try {
       const response = await fetch('/api/source-manifests', {
         method: 'PUT',
@@ -989,20 +993,18 @@ function HomePage() {
         body: JSON.stringify({
           orgId: currentOrg.id,
           sourceIds: [],
-          expectedVersion: sourceManifestVersion,
+          expectedVersion: manifestVersionToClear,
           diwanSources: [],
         }),
       });
       const result = await response.json();
       if (!response.ok || !result.manifest) return false;
-      clearPersistedSourceSelection(currentOrg.id, user.id);
-      setSourceManifestId(undefined);
       setSourceManifestVersion(result.manifest.version);
-      setSelectedSourceCount(0);
-      setSourceClearRequestToken((token) => token + 1);
       return true;
     } catch {
       return false;
+    } finally {
+      setSourceClearRequestToken((token) => token + 1);
     }
   };
 
@@ -1093,6 +1095,10 @@ function HomePage() {
   const handleImproveRequirement = async () => {
     const requirement = form.requirement.trim();
     if (!requirement || !currentOrg || !canAuthor || isImprovingRequirement) return;
+    if (selectedSourceCount > 0 && !sourceManifestId) {
+      setError(t('generation.refineSourcesUnavailable'));
+      return;
+    }
     setIsImprovingRequirement(true);
     setError(null);
     try {
@@ -1107,8 +1113,7 @@ function HomePage() {
           requirement,
           locale,
           mode: requirement.length < REQUIREMENT_EXPANSION_THRESHOLD ? 'expand' : 'improve',
-          sourceFileName:
-            selectedSourceCount > 0 ? `${selectedSourceCount} selected sources` : undefined,
+          ...(sourceManifestId ? { sourceManifestId } : {}),
         }),
       });
       const result = await response.json();

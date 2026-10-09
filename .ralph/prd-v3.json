@@ -5502,6 +5502,42 @@
         "La cible est la PWA existante ; publication native dans les stores non demandée. Aucun retrait d’une exigence conservée ni remplacement de la réception réelle par une terminaison HTTPS de recette."
       ],
       "priorityRank": 24.4
+    },
+    {
+      "id": "S6-033",
+      "title": "Fonder l’amélioration du brief sur les ressources et repartir d’une sélection vide",
+      "description": "En tant que créateur de formation, je veux que l’amélioration de ma demande exploite le contenu réel des ressources sélectionnées et que la sélection soit remise à zéro après le démarrage de chaque formation afin d’obtenir un brief fidèle et de ne pas réutiliser involontairement les sources précédentes.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P0",
+      "status": "in_progress",
+      "passes": false,
+      "source": {
+        "type": "explicit_user_request",
+        "date": "2026-10-09"
+      },
+      "sourceDependencies": [],
+      "dependencies": ["S6-004", "S6-005", "S6-006"],
+      "gap": "L’amélioration de demande n’envoie qu’un libellé de comptage des sources au modèle, qui ne peut donc pas s’en servir. La sélection n’est pas toujours remise à zéro côté auteur lorsque l’effacement du manifeste échoue après le lancement du cours.",
+      "evidence": [
+        "app/(private)/app/page.tsx",
+        "app/api/generate/refine-requirement/route.ts",
+        "lib/server/formation-source-library.ts",
+        "components/generation/source-library-popover.tsx",
+        "tests/api/refine-requirement.test.ts",
+        "e2e/tests/home-to-generation.spec.ts"
+      ],
+      "acceptance": [
+        "Transmettre au serveur l’identifiant du manifeste sélectionné, puis résoudre son contenu réel côté serveur après contrôle de l’organisation et de l’auteur ; inclure les ressources importées et les références Diwan autorisées sans faire confiance au client.",
+        "Produire une reformulation concrète qui exploite les faits, exemples, contraintes et titres réellement présents dans les ressources, sans inventer leur contenu ni produire un gabarit générique ; borner le contexte et neutraliser le contenu fourni comme donnée non fiable.",
+        "Préserver les parcours sans ressource, les trois langues de l’interface et les refus d’un manifeste absent ou invalide ; couvrir les contenus sources dans les tests permanents.",
+        "Après le démarrage confirmé d’une formation, effacer la sélection courante pour la création suivante, y compris si l’effacement serveur échoue ; le manifeste immuable déjà transmis continue d’alimenter la formation en cours, tandis que les fichiers restent dans la bibliothèque et peuvent être resélectionnés.",
+        "Recetter sur ServeurIA le parcours navigateur amélioration→plan→confirmation→nouvelle formation, vérifier la sélection vide et les ressources encore disponibles, puis déployer le SHA validé et prouver le comportement sur l’instance candidate sans modifier main ni la production par supposition."
+      ],
+      "closureEvidence": [],
+      "executionAllowed": true,
+      "executionDecision": "2026-10-09 — Mandat explicite d’Amine : corriger urgemment l’amélioration de demande qui ignore les ressources et garantir une nouvelle sélection vide par formation.",
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
+      "priorityRank": 0
     }
   ]
 }

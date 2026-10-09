@@ -2264,6 +2264,7 @@
   "generation.currency": "العملة",
   "generation.resumeApprovedPlan": "استئناف المنهاج المصادق عليه",
   "generation.improveRequest": "تحسين طلبي",
+  "generation.refineSourcesUnavailable": "لم يعد اختيار الموارد متاحًا. أعد تحميله قبل تحسين الطلب.",
   "generation.requirementAssistantHint": "يحوّل المساعد فكرتك إلى موجز تكوين من دون اختلاق المعلومات الناقصة.",
   "agentBar.suggestSpecialists": "اقتراح خبراء في الموضوع",
   "agentBar.specialistGenerationFailed": "تعذر اقتراح الخبراء.",
