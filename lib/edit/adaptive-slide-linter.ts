@@ -284,7 +284,9 @@ function parseBackgrounds(slide: Slide): string[] {
 function opaqueBackingShapes(elements: PPTElement[]) {
   return elements.filter(
     (element): element is Extract<PPTElement, { type: 'shape' }> =>
-      element.type === 'shape' && normalizeColor(element.fill) !== null && (element.opacity ?? 1) >= 0.85,
+      element.type === 'shape' &&
+      normalizeColor(element.fill) !== null &&
+      (element.opacity ?? 1) >= 0.85,
   );
 }
 
@@ -372,6 +374,24 @@ function estimateTextLines(text: string, width: number, fontSize: number): numbe
   return lines;
 }
 
+function estimatedTextHeight(blocks: ReturnType<typeof textBlocks>, width: number, fontSize: number, lineHeight: number): number {
+  const lines = blocks.reduce((sum, block) => sum + estimateTextLines(block.text, width, fontSize), 0);
+  return lines * lineHeight * fontSize * 1.15;
+}
+
+function resizeTextBoxSafely(slide: Slide, index: number, element: Extract<PPTElement, { type: 'text' }>, height: number, safeBottom: number) {
+  if (element.top + height > safeBottom) return null;
+  const resized = { ...element, height };
+  const candidateSlide = {
+    ...slide,
+    elements: slide.elements.map((candidate, candidateIndex) => candidateIndex === index ? resized : candidate),
+  };
+  const createsOverlap = auditSlideLayout(candidateSlide).some(
+    (issue) => issue.type === 'overlap' && issue.elementIds.includes(element.id),
+  );
+  return createsOverlap ? null : resized;
+}
+
 export function lintAndRepairAdaptiveSlide(
   slide: Slide,
   options: AdaptiveSlideLintOptions,
@@ -393,6 +413,7 @@ export function lintAndRepairAdaptiveSlide(
       font.toLowerCase(),
     ),
   );
+  const slideFonts = new Set<string>();
 
   for (let index = 0; index < repairedSlide.elements.length; index += 1) {
     let element = repairedSlide.elements[index]!;
@@ -446,6 +467,7 @@ export function lintAndRepairAdaptiveSlide(
         });
     }
     for (const font of elementFonts(element)) {
+      slideFonts.add(font.toLowerCase());
       if (!usableFonts.has(font.toLowerCase()))
         issues.push({
           ruleId: 'R-FONT',
@@ -546,18 +568,33 @@ export function lintAndRepairAdaptiveSlide(
     if (blocks.length > 0) {
       if (element.type === 'text') {
         const size = textSizes[0] ?? 18;
-        const lines = blocks.reduce(
-          (sum, block) => sum + estimateTextLines(block.text, element.width, size),
-          0,
-        );
         const lineHeight = element.lineHeight ?? 1.2;
-        if (lines * lineHeight * size * 1.15 > element.height)
-          issues.push({
-            ruleId: 'R-CAPACITY',
-            severity: 'error',
-            elementId: element.id,
-            message: `Capacité estimée insuffisante : ${lines} lignes × ${lineHeight} × ${size} × 1,15 > hauteur ${element.height}.`,
-          });
+        const requiredHeight = estimatedTextHeight(blocks, element.width, size, lineHeight);
+        if (requiredHeight > element.height) {
+          const safeBottom = repairedSlide.viewportSize * repairedSlide.viewportRatio - 32;
+          const resized = resizeTextBoxSafely(repairedSlide, index, element, requiredHeight, safeBottom);
+          if (resized) {
+            element = resized;
+            issues.push({
+              ruleId: 'R-CAPACITY', severity: 'warning', elementId: element.id,
+              message: `Boîte agrandie sans débordement à ${Math.ceil(requiredHeight)} unités.`, repaired: true,
+            });
+          } else {
+            const sizesAboveFloor = textSizes.length > 0 && textSizes.every((value) => value - 2 >= minSize);
+            const smallerSize = size - 2;
+            const smallerHeight = estimatedTextHeight(blocks, element.width, smallerSize, lineHeight);
+            if (sizesAboveFloor && smallerHeight <= element.height) {
+              const content = element.content.replace(/(font-size\s*:\s*)(\d+(?:\.\d+)?)(px)/giu, (_match, prefix: string, value: string, unit: string) => `${prefix}${Math.max(minSize, Number(value) - 2)}${unit}`);
+              element = { ...element, content };
+              issues.push({ ruleId: 'R-CAPACITY', severity: 'warning', elementId: element.id, message: `Corps réduit d’un cran pour tenir dans la boîte.`, repaired: true });
+            } else {
+              issues.push({
+                ruleId: 'R-CAPACITY', severity: 'error', elementId: element.id,
+                message: `Capacité estimée insuffisante : ${Math.ceil(requiredHeight)} unités requises, hauteur ${element.height}.`,
+              });
+            }
+          }
+        }
       }
     }
 
@@ -641,6 +678,9 @@ export function lintAndRepairAdaptiveSlide(
       severity: 'warning',
       message: `${titleCount} éléments sont marqués comme titre.`,
     });
+  if (slideFonts.size > 2) {
+    issues.push({ ruleId: 'R-FONT', severity: 'error', message: `${slideFonts.size} familles de police détectées sur une slide ; seuil maximal 2.` });
+  }
   const textPositions = repairedSlide.elements
     .map((element, index) => ({ element, index }))
     .filter(

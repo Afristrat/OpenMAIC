@@ -142,7 +142,9 @@ describe('adaptive slide linter', () => {
       createdAt: '2026-10-09T00:00:00.000Z',
       content: 'colors: background=#000000; surface=#FFFFFF; accent=#808080',
     };
-    expect(lintAndRepairAdaptiveSlide(gradientSlide, { ...options, brandSnapshot }).issues).toContainEqual(
+    expect(
+      lintAndRepairAdaptiveSlide(gradientSlide, { ...options, brandSnapshot }).issues,
+    ).toContainEqual(
       expect.objectContaining({ ruleId: 'R-BG-GRADIENT', severity: 'error', elementId: 'body' }),
     );
   });
@@ -167,6 +169,23 @@ describe('adaptive slide linter', () => {
     expect(issues.map((issue) => issue.ruleId)).toEqual(
       expect.arrayContaining(['R-MINSIZE', 'R-SAFE-AREA', 'R-FONT']),
     );
+  });
+
+  test('enlarges a text box when the safe area has room and no overlap is introduced', () => {
+    const cramped = structuredClone(slide);
+    cramped.elements[1] = {
+      ...textElementAt(cramped, 1),
+      width: 120,
+      height: 20,
+      content: '<p style="font-size:18px">A long line of content needs a larger box to remain readable.</p>',
+    };
+    const result = lintAndRepairAdaptiveSlide(cramped, options);
+    const body = textElementAt(result.slide, 1);
+    expect(result.issues).toContainEqual(
+      expect.objectContaining({ ruleId: 'R-CAPACITY', repaired: true, severity: 'warning' }),
+    );
+    expect(body.height).toBeGreaterThan(20);
+    expect(result.issues.some((issue) => issue.ruleId === 'R-CAPACITY' && issue.severity === 'error')).toBe(false);
   });
 
   test('preserves the legacy layout audit for overlaps and rejects shape gradients', () => {
