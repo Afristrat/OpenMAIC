@@ -171,8 +171,16 @@ export function makeRegenerateSceneTool(
         };
       }
 
-      const { outline, allOutlines, content, stageId, agents, languageDirective, sourceGrounding } =
-        ctxData;
+      const {
+        outline,
+        allOutlines,
+        content,
+        stageId,
+        agents,
+        languageDirective,
+        designDirective,
+        sourceGrounding,
+      } = ctxData;
       void stageId;
 
       // slide-only this release — refuse non-slide outlines AND any scene whose
@@ -245,6 +253,7 @@ export function makeRegenerateSceneTool(
       const newContent = await generateSceneContent(outline, contentAiCall, {
         agents,
         languageDirective,
+        designDirective,
         sourceGrounding,
         editDirective: instruction,
         baselineContent: editBaseline,

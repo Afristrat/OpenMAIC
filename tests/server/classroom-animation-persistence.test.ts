@@ -7,6 +7,7 @@ import {
 } from '@/lib/server/classroom-storage';
 import type { AnimationConstitution } from '@/lib/formation-engine/animation-constitution';
 import type { GeneratedAgentConfig, Scene, Stage } from '@/lib/types/stage';
+import { DEFAULT_DESIGN_DIRECTIVE } from '@/lib/branding/design-directive';
 
 describe('classroom animation persistence', () => {
   it('preserves the server-owned constitution when a caller omits it', () => {
@@ -54,6 +55,7 @@ describe('classroom animation persistence', () => {
       researchSources: [
         { title: 'Source fiable', url: 'https://example.com/source', excerpt: 'Extrait.' },
       ],
+      designDirective: DEFAULT_DESIGN_DIRECTIVE,
     } as Stage;
 
     const extra = buildStageExtra(stage, constitution);
@@ -62,6 +64,7 @@ describe('classroom animation persistence', () => {
     expect(restored.context).toEqual(stage.skillPromptContext);
     expect(extra.learningContext).toEqual(stage.learningContext);
     expect(extra.researchSources).toEqual(stage.researchSources);
+    expect(extra.designDirective).toEqual(DEFAULT_DESIGN_DIRECTIVE);
     expect(restored.animationConstitution).toEqual(constitution);
     expect(restored.animationConstitution?.authoredBy).toMatchObject({
       role: 'author',

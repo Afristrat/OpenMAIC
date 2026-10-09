@@ -20,4 +20,5 @@
 export * from './slides.js';
 export * from './guards.js';
 export * from './stage.js';
+export * from './design.js';
 export * from './version.js';

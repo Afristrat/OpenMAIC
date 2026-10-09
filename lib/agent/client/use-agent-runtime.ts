@@ -335,6 +335,7 @@ export function useAgentRuntime(opts: UseAgentRuntimeOptions) {
             content: scene.content,
             stageId: scene.stageId,
             languageDirective: stage?.languageDirective,
+            designDirective: stage?.designDirective,
             sourceGrounding: scene.sourceGrounding,
             // Runtime errors the interactive iframe reported, so read_scene_content
             // can show the agent why a page is blank instead of it guessing.

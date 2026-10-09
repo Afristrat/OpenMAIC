@@ -22,6 +22,7 @@ import { uniquifyMediaElementIds } from './scene-builder';
 import type { AICallFn, GenerationResult, GenerationCallbacks } from './pipeline-types';
 import { createLogger } from '@/lib/logger';
 import { selectSourceContext } from './source-context';
+import { normalizeDesignDirective } from '@/lib/branding/design-directive';
 const log = createLogger('Generation');
 
 function syllabusPlaceholder(languageDirective: string): string {
@@ -226,6 +227,7 @@ export async function generateSceneOutlinesFromRequirements(
     teacherContext?: string;
     skillEngineEnabled?: boolean;
     expectedSceneCount?: number;
+    designSystemEnabled?: boolean;
   },
 ): Promise<GenerationResult<ClassroomPlan>> {
   // Build available images description for the prompt
@@ -286,6 +288,8 @@ export async function generateSceneOutlinesFromRequirements(
       researchContext: options?.researchContext || 'None',
       availablePlugins: formatPluginsForPrompt(),
       hasPlugins: loadPlugins().length > 0,
+      designSystemEnabled: options?.designSystemEnabled === true,
+      designSystemDisabled: options?.designSystemEnabled !== true,
       // Server-side generation populates this via options; client-side populates via formatTeacherPersonaForPrompt
       teacherContext: options?.teacherContext || '',
     },
@@ -314,6 +318,7 @@ export async function generateSceneOutlinesFromRequirements(
       | {
           languageDirective: string;
           courseTitle?: string;
+          designDirective?: unknown;
           syllabus?: unknown;
           outlines: SceneOutline[];
         }
@@ -322,6 +327,7 @@ export async function generateSceneOutlinesFromRequirements(
 
     let languageDirective: string;
     let courseTitle: string | undefined;
+    let designDirective: ClassroomPlan['designDirective'];
     let rawSyllabus: unknown;
     let rawOutlines: SceneOutline[];
 
@@ -331,6 +337,11 @@ export async function generateSceneOutlinesFromRequirements(
       rawOutlines = parsed;
     } else if (parsed && parsed.outlines) {
       languageDirective = parsed.languageDirective || DEFAULT_LANGUAGE_DIRECTIVE;
+      if (options?.designSystemEnabled) {
+        const normalized = normalizeDesignDirective(parsed.designDirective);
+        designDirective = normalized.directive;
+        for (const warning of normalized.warnings) log.warn(warning);
+      }
       // courseTitle is optional — only honor a non-empty string, and cap its
       // length defensively (the prompt asks for ≤30 chars, but older/hallucinating
       // models may return far more). The downstream Stage.name column is bounded too.
@@ -387,6 +398,7 @@ export async function generateSceneOutlinesFromRequirements(
       data: {
         languageDirective,
         courseTitle: courseTitle || syllabusPlaceholder(languageDirective),
+        ...(designDirective ? { designDirective } : {}),
         syllabus,
         outlines: normalizedOutlines,
       },

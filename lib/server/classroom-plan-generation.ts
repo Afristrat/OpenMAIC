@@ -24,6 +24,7 @@ import { normalizePdfImages } from '@/lib/server/pdf-source';
 import { resolveFormationSources } from '@/lib/server/formation-source-library';
 import { assertCourseGenerationAccess } from '@/lib/server/course-generation-access';
 import { optimizationReportSchema } from '@/lib/generation/optimization-report';
+import { isDesignSystemV1Enabled } from '@/lib/branding/design-directive';
 import {
   loadGenerationOptimization,
   generationOptimizationDirective,
@@ -43,6 +44,7 @@ export async function generateClassroomPlan(input: GenerateClassroomInput, owner
   if (activeSkillId) activeSkillId = await resolveOrganizationSkillId(input.orgId, activeSkillId);
 
   let learningDesign = DEFAULT_LEARNING_DESIGN;
+  let designSystemEnabled = false;
   try {
     const supabase = createServiceSupabaseClient();
     const { data: organization } = await supabase
@@ -54,6 +56,7 @@ export async function generateClassroomPlan(input: GenerateClassroomInput, owner
       ...learningDesignFromSettings(organization?.settings),
       interactionLevel: input.interactionLevel,
     };
+    designSystemEnabled = isDesignSystemV1Enabled(organization?.settings);
   } catch {
     // The explicit author choices remain sufficient when tenant defaults are unavailable.
   }
@@ -130,6 +133,7 @@ export async function generateClassroomPlan(input: GenerateClassroomInput, owner
     imageGenerationEnabled: input.enableImageGeneration,
     videoGenerationEnabled: input.enableVideoGeneration,
     skillEngineEnabled,
+    designSystemEnabled,
     expectedSceneCount,
   };
   const generatePlan = (nextRequirements: typeof requirements) =>

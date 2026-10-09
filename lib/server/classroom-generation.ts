@@ -96,6 +96,7 @@ import {
   organizationDesignSystemFromSettings,
   type OrganizationDesignSystem,
 } from '@/lib/branding/organization-design-system';
+import { isDesignSystemV1Enabled } from '@/lib/branding/design-directive';
 import { normalizePdfImages, uploadedPdfSource } from '@/lib/server/pdf-source';
 import {
   applyClassroomVoiceOverrides,
@@ -288,6 +289,7 @@ export async function generateClassroom(
   let learningDesign: LearningDesignSettings = DEFAULT_LEARNING_DESIGN;
   let learnerCastingProfile: LearnerCastingProfile = { culture: 'ma-fr', preferences: {} };
   let organizationDesignSystem: OrganizationDesignSystem | undefined;
+  let designSystemEnabled = false;
   try {
     const supabase = createServiceSupabaseClient();
     const [{ data: organization }, { data: profile }] = await Promise.all([
@@ -300,6 +302,7 @@ export async function generateClassroom(
     ]);
     teachingProfile = teachingProfileFromSettings(organization?.settings);
     organizationDesignSystem = organizationDesignSystemFromSettings(organization?.settings);
+    designSystemEnabled = isDesignSystemV1Enabled(organization?.settings);
     learningDesign = {
       ...learningDesignFromSettings(organization?.settings),
       interactionLevel: input.interactionLevel,
@@ -537,7 +540,12 @@ export async function generateClassroom(
 
   const expectedSceneCount = extractRequestedSceneCount(input.requirement);
   let outlinesResult = input.approvedPlan
-    ? { success: true as const, data: input.approvedPlan }
+    ? {
+        success: true as const,
+        data: designSystemEnabled
+          ? input.approvedPlan
+          : { ...input.approvedPlan, designDirective: undefined },
+      }
     : await generateSceneOutlinesFromRequirements(
         requirements,
         pdfText,
@@ -550,6 +558,7 @@ export async function generateClassroom(
           researchContext,
           skillEngineEnabled,
           expectedSceneCount,
+          designSystemEnabled,
           // NO teacherContext — agents haven't been generated yet
         },
       );
@@ -570,6 +579,7 @@ export async function generateClassroom(
         researchContext,
         skillEngineEnabled,
         expectedSceneCount,
+        designSystemEnabled,
       },
     );
   }
@@ -738,6 +748,9 @@ export async function generateClassroom(
       name: courseTitle || outlines[0]?.title || requirement.slice(0, 50),
       description: undefined,
       languageDirective,
+      ...(designSystemEnabled && outlinesResult.data.designDirective
+        ? { designDirective: outlinesResult.data.designDirective }
+        : {}),
       learningContext,
       skillPromptContext: {
         enabled: skillEngineEnabled,
@@ -878,6 +891,9 @@ export async function generateClassroom(
             allowProceduralSkill: vocationalActive,
             skillEngineEnabled,
             activeSkillId: requirements.activeSkillId,
+            ...(designSystemEnabled && outlinesResult.data.designDirective
+              ? { designDirective: outlinesResult.data.designDirective }
+              : {}),
             sourceGrounding,
             assignedImages,
             imageMapping,

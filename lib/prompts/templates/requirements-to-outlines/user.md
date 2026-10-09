@@ -71,6 +71,23 @@ Then output your response as a single JSON object.
 {
   "languageDirective": "2-5 sentence instruction describing the course language behavior",
   "courseTitle": "concise course name, ≤30 chars, in the teaching language",
+{{#if designSystemEnabled}}
+  "designDirective": {
+    "version": 1,
+    "source": "derived",
+    "tone": "sober",
+    "density": "balanced",
+    "seed": { "hueFamily": "blue", "chromaLevel": "low" },
+    "palette": null,
+    "typography": { "heading": "Inter", "body": "Open Sans", "scaleShift": 0 },
+    "grid": { "margin": 72 },
+    "shapes": { "radius": 12, "stroke": "none" },
+    "surfacePlan": { "content": "base", "engagement": "tint", "punchline": "none" },
+    "accentSequence": "primary-then-achievement | primary-only",
+    "forbidden": [],
+    "notes": ""
+  },
+{{/if}}
   "syllabus": {
     "audience": "target participants",
     "prerequisites": "verified prerequisites or an explicit author-confirmation placeholder",
@@ -86,6 +103,9 @@ Then output your response as a single JSON object.
 ```
 
 Never return a bare array. Never omit `languageDirective`, `courseTitle`, or `syllabus`. All four keys are required. Do not invent missing audience or prerequisites: write an explicit author-confirmation placeholder in the teaching language.
+{{#if designSystemEnabled}}
+The design-system flag is enabled: include `designDirective` as a fifth top-level key between `courseTitle` and `syllabus`, following the schema above.
+{{/if}}
 
 **Each scene inside the `outlines` array has this minimum shape:**
 
@@ -121,4 +141,22 @@ Never return a bare array. Never omit `languageDirective`, `courseTitle`, or `sy
 - **Language**: Infer from the user's requirement text and context, then output all content in the inferred language
 - **If web search results are provided**, reference specific findings and sources in scene descriptions and keyPoints. The search results provide up-to-date information — incorporate it to make the course content current and accurate.
 
+{{#if designSystemEnabled}}
+### Design direction
+
+Choose `designDirective` once for the whole course from these closed enums: tone = `sober`, `warm`, `energetic`, `technical` or `editorial`; density = `compact`, `balanced` or `airy`; hue family = `red`, `orange`, `yellow`, `green`, `teal`, `blue`, `indigo`, `violet`, `magenta` or `neutral`; chroma = `low` or `mid`; font = `Inter`, `Roboto`, `Open Sans`, `Montserrat`, `Source Sans 3`, `Merriweather`, `Literata`, `Source Serif 4` or `JetBrains Mono`; content surface = `base` or `tint`; engagement surface = `dark` or `tint`; punchline = `gradient`, `solid` or `none`; accent sequence = `primary-then-achievement` or `primary-only`; stroke = `none` or `hairline`. `grid.margin` is an integer from 64 to 80; `shapes.radius` is an integer from 0 to 24; `typography.scaleShift` is -1, 0 or 1; `forbidden` has at most three entries, each no longer than 60 characters; `notes` is no longer than 100 characters. Adapt tone, density, hue family, typography, margin and surfaces to the subject, adult audience, risk level and teaching language. Never output hex colors or add pedagogical content to this object. `palette` must be `null`.
+
+Use these deliberately distinct starting points, not fixed templates:
+- Industrial safety: sober, compact, blue, indigo or neutral hue, strong structure, no decorative gradients.
+- Finance for executives: editorial, balanced, neutral or indigo hue, restrained accents and generous evidence space.
+- Relational skills: warm, airy, teal or violet hue, human tone without childish decoration.
+
+At this planning stage no tenant charter is supplied to the model, so set `source` to `derived`. Do not claim charter-derived values. Do not copy a single example's colors or composition into unrelated courses.
+{{/if}}
+
+{{#if designSystemDisabled}}
 **Final reminder**: your entire response must be a JSON **object** with exactly four top-level keys: `languageDirective`, `courseTitle`, `syllabus`, and `outlines`. Do not return a bare array. Do not wrap in prose or code fences.
+{{/if}}
+{{#if designSystemEnabled}}
+**Final reminder**: your entire response must be a JSON **object** with exactly five top-level keys: `languageDirective`, `courseTitle`, `designDirective`, `syllabus`, and `outlines`. Do not return a bare array. Do not wrap in prose or code fences.
+{{/if}}

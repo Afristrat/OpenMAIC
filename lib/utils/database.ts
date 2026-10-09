@@ -7,6 +7,7 @@ import type {
   VideoManifest,
   SkillPromptContext,
 } from '@/lib/types/stage';
+import type { DesignDirective } from '@openmaic/dsl';
 import type { Action } from '@/lib/types/action';
 import type {
   SessionType,
@@ -59,6 +60,7 @@ export interface StageRecord {
   // pipeline — the two serve different consumers and are not interchangeable.
   language?: string;
   languageDirective?: string;
+  designDirective?: DesignDirective;
   skillPromptContext?: SkillPromptContext;
   style?: string;
   currentSceneId?: string;

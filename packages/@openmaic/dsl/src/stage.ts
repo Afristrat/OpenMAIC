@@ -14,6 +14,7 @@
  * No runtime dependencies. Pure types + pure discriminant guards only.
  */
 import type { Slide } from './slides.js';
+import type { DesignDirective } from './design.js';
 
 /** All scene kinds the contract is aware of. Feature kinds (interactive/pbl/plugin) are still valid `type` values — their *content* shapes live in the app and are composed in via {@link Scene}'s `TContent` parameter. */
 export type SceneType = 'slide' | 'quiz' | 'interactive' | 'pbl' | 'plugin';
@@ -126,6 +127,8 @@ export interface Stage {
   updatedAt: number;
   // Stage metadata
   languageDirective?: string;
+  /** Immutable course-level visual direction selected during outline planning. */
+  designDirective?: DesignDirective;
   skillPromptContext?: SkillPromptContext;
   learningContext?: LearningContext;
   /** Sources consulted for this classroom when web research was enabled. */

@@ -52,6 +52,8 @@ export interface SceneContext {
   agents?: AgentInfo[];
   /** Optional language directive forwarded to the generator. */
   languageDirective?: string;
+  /** The immutable course visual direction, replayed for whole-slide regeneration. */
+  designDirective?: import('@openmaic/dsl').DesignDirective;
   /** Persisted source contract for this scene; never reconstructed from the edit instruction. */
   sourceGrounding?: SceneSourceGrounding;
   /**

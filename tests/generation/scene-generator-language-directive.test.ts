@@ -14,6 +14,7 @@ import { expectConsoleMessages } from '@/tests/helpers/expected-console';
 import { generateSceneContent, generateSceneActions } from '@/lib/generation/scene-generator';
 import { buildSceneFromOutline } from '@/lib/generation/scene-builder';
 import type { AICallFn } from '@/lib/generation/pipeline-types';
+import { DEFAULT_DESIGN_DIRECTIVE, buildPalette } from '@/lib/branding/design-directive';
 import type {
   SceneOutline,
   GeneratedSlideContent,
@@ -68,6 +69,22 @@ describe('scene-generator language directive threading (issue #472)', () => {
 
       expect(lastUser()).toContain(DIRECTIVE);
       expect(lastUser()).not.toContain('{{languageDirective}}');
+    });
+
+    it('threads the persisted course design directive into slide generation', async () => {
+      const { aiCall, lastUser } = makeCapturingAiCall(
+        JSON.stringify({ elements: [], background: null, remark: '' }),
+      );
+
+      await generateSceneContent(baseOutline({ type: 'slide' }), aiCall, {
+        designDirective: DEFAULT_DESIGN_DIRECTIVE,
+      });
+
+      expect(lastUser()).toContain('COURSE DESIGN DIRECTION');
+      expect(lastUser()).toContain(JSON.stringify({
+        directive: DEFAULT_DESIGN_DIRECTIVE,
+        palette: buildPalette(DEFAULT_DESIGN_DIRECTIVE),
+      }));
     });
 
     it('threads languageDirective into quiz content prompt', async () => {

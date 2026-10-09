@@ -1,5 +1,18 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 octobre 2026 — WP0, audit du design system adaptatif
+
+Travail sur la branche dédiée `feature/adaptive-design-system`, créée depuis
+`refork-v030` au SHA `b416c7f162457fe8938c8deebf25882924746621`. L’audit statique
+partiel est consigné dans `docs/foundation/4-moteur/design-system-wp0-audit.md` : champs DSL,
+comportement des gabarits conditionnels et tailles statiques des cinq fichiers
+de prompt. WP0 reste ouvert : les tokens des trois prompts assemblés, le modèle
+et le cache runtime, cinq chartes anonymisées ainsi que la matrice de rendu des
+exports ne sont pas encore mesurés. Aucune génération réelle n’a été lancée et
+aucune modification du PRD n’est conservée. Le brief v1.1 couvre bien WP0 à
+WP10 ; le constat initial d’un WP5 manquant était erroné et a été corrigé dans
+le rapport.
+
 ## 26 septembre 2026 — S6-011 WhatsApp certifiée de bout en bout
 
 Après correction du cache Redis, l’instance `qalem-reminders` est passée à

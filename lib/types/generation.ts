@@ -176,6 +176,8 @@ export interface ClassroomSyllabus {
 export interface ClassroomPlan {
   /** Display-only observational advice, never an authorization or a measured gain. */
   optimization?: import('@/lib/generation/optimization-report').OptimizationReport;
+  /** Optional visual direction selected once during course planning. */
+  designDirective?: import('@openmaic/dsl').DesignDirective;
   courseTitle: string;
   languageDirective: string;
   syllabus: ClassroomSyllabus;
