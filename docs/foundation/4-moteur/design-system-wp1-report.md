@@ -1,8 +1,8 @@
 # Rapport WP1 — Directive de design au plan
 
-Date : 2026-10-09  
-Branche : `feature/adaptive-design-system`  
-Base : `refork-v030` à `b416c7f162457fe8938c8deebf25882924746621`  
+Date : 2026-10-09
+Branche : `feature/adaptive-design-system`
+Base : `refork-v030` à `b416c7f162457fe8938c8deebf25882924746621`
 SHA validé et poussé : `2be4324ad500b383906e7b307d680b275e51badf`
 
 ## Résultat
