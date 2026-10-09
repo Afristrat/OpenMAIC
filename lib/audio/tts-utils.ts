@@ -39,11 +39,14 @@ export function prepareTextForTTS(text: string, language?: string): string {
     .replace(/\bdirhams\b/giu, singularizeFrenchDirhams)
     // « Flux » ends in a silent x in French; the TTS-only phonetic spelling
     // avoids changing learner-visible copy, exports, or non-French speech.
-    .replace(/\bflux\b/giu, (match) => {
-      if (match === match.toLocaleUpperCase('fr-FR')) return 'FLU';
-      if (match[0] === match[0]?.toLocaleUpperCase('fr-FR')) return 'Flu';
-      return 'flu';
-    });
+    .replace(
+      /\bflux\b/giu,
+      (match) => {
+        if (match === match.toLocaleUpperCase('fr-FR')) return 'FLU';
+        if (match[0] === match[0]?.toLocaleUpperCase('fr-FR')) return 'Flu';
+        return 'flu';
+      },
+    );
 }
 
 /** Provider-specific max text length limits. */
