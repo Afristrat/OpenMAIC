@@ -380,7 +380,7 @@ export async function generateClassroom(
     return result.text;
   };
 
-  const sceneAiCall: AICallFn = async (systemPrompt, userPrompt, _images, context) => {
+  const sceneAiCall: AICallFn = async (systemPrompt, userPrompt, _images) => {
     await assertCourseGenerationAccess(input, options.ownerId);
     const startedAt = Date.now();
     const result = await callLLM(
@@ -403,7 +403,7 @@ export async function generateClassroom(
                 await recordDesignSystemGenerationEvent({
                   org_id: input.orgId,
                   stage_id: generatedStageId,
-                  scene_id: context?.sceneId ?? null,
+                  scene_id: sceneAiCall.sceneId ?? null,
                   event_type: 'llm_call',
                   provider_id: providerId,
                   model_id: modelId,
@@ -909,6 +909,8 @@ export async function generateClassroom(
           totalScenes: outlines.length,
         });
       };
+
+      sceneAiCall.sceneId = safeOutline.id;
 
       // Web capture: decide + fetch an illustrative capture for this scene, if
       // any. Never blocks: any failure at any point here falls through with no

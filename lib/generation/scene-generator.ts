@@ -381,11 +381,10 @@ export async function generateSceneContent(
     activeSkillId,
     sourceGrounding,
   } = options;
-  const sceneAiCall: AICallFn = (systemPrompt, userPrompt, images, context) =>
-    aiCall(systemPrompt, userPrompt, images, {
-      ...context,
-      sceneId: context?.sceneId ?? outline.id,
-    });
+  const sceneAiCall: AICallFn = async (systemPrompt, userPrompt, images) => {
+    aiCall.sceneId = outline.id;
+    return aiCall(systemPrompt, userPrompt, images);
+  };
   sceneAiCall.recordDesignEvent = aiCall.recordDesignEvent;
 
   // Unified path for interactive scenes (both normal and ultra mode)
@@ -1325,7 +1324,7 @@ async function generateSlideContent(
 
   userPrompt = withSourceGrounding(userPrompt, sourceGrounding);
 
-  const response = await aiCall(prompts.system, userPrompt, visionImages, { sceneId: outline.id });
+  const response = await aiCall(prompts.system, userPrompt, visionImages);
   const generatedData = parseJsonResponse<GeneratedSlideData>(response);
 
   if (!generatedData || !generatedData.elements || !Array.isArray(generatedData.elements)) {
@@ -2388,11 +2387,10 @@ export async function generateSceneActions(
 ): Promise<Action[]> {
   const { ctx, agents, requiredAgentIds, userProfile, languageDirective, sourceGrounding } =
     options;
-  const sceneAiCall: AICallFn = (systemPrompt, userPrompt, images, context) =>
-    aiCall(systemPrompt, userPrompt, images, {
-      ...context,
-      sceneId: context?.sceneId ?? outline.id,
-    });
+  const sceneAiCall: AICallFn = async (systemPrompt, userPrompt, images) => {
+    aiCall.sceneId = outline.id;
+    return aiCall(systemPrompt, userPrompt, images);
+  };
   sceneAiCall.recordDesignEvent = aiCall.recordDesignEvent;
   const requiredAgents =
     agents?.filter((agent) => requiredAgentIds?.includes(agent.id)).map((agent) => agent.id) ?? [];

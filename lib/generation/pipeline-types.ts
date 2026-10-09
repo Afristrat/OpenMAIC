@@ -69,8 +69,8 @@ export type AICallFn = ((
   systemPrompt: string,
   userPrompt: string,
   images?: Array<{ id: string; src: string }>,
-  context?: { sceneId?: string },
 ) => Promise<string>) & {
+  sceneId?: string;
   recordDesignEvent?: (event: {
     sceneId: string;
     eventType: 'lint_issue' | 'layout_fallback';
