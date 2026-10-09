@@ -80,7 +80,7 @@ describe('scene-generator language directive threading (issue #472)', () => {
         designDirective: DEFAULT_DESIGN_DIRECTIVE,
       });
 
-      expect(lastUser()).toContain('COURSE DESIGN DIRECTION');
+      expect(lastUser()).toContain('Course design direction and resolved palette (JSON):');
       expect(lastUser()).toContain(
         JSON.stringify({
           directive: DEFAULT_DESIGN_DIRECTIVE,
