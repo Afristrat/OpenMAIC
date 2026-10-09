@@ -197,7 +197,7 @@ export function buildPalette(directive: Pick<DesignDirective, 'seed' | 'tone'>):
     'text.primary': textColorOnLight(tinycolor('#252A31'), lightSurfaces),
     'text.secondary': textColorOnLight(tinycolor('#4B5563'), lightSurfaces),
     'text.onDark': '#FFFFFF',
-    'text.onDark.secondary': hex(textColorOnDark(onDark, dark)),
+    'text.onDark.secondary': textColorOnDark(onDark, dark),
     'accent.primary': textColorOnLight(primaryCandidate, lightSurfaces),
     'accent.secondary': textColorOnLight(secondaryCandidate, lightSurfaces),
     'accent.achievement': textColorOnLight(achievementCandidate, lightSurfaces),
