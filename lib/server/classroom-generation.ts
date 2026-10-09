@@ -397,9 +397,18 @@ export async function generateClassroom(
       maxOutputTokens: modelInfo?.outputWindow,
       maxRetries: 0,
     };
-    const recordUsage = async ({ usage, cost, providerId, modelId }: {
+    const recordUsage = async ({
+      usage,
+      cost,
+      providerId,
+      modelId,
+    }: {
       usage: { inputTokens?: number; outputTokens?: number };
-      cost: { amountMicrounits: number | null; currency: string | null; status: 'valued' | 'pending_configuration' | 'unmetered' };
+      cost: {
+        amountMicrounits: number | null;
+        currency: string | null;
+        status: 'valued' | 'pending_configuration' | 'unmetered';
+      };
       providerId: string;
       modelId: string;
     }) => {
