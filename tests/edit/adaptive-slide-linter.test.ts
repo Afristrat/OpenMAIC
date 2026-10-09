@@ -1,7 +1,11 @@
 import { describe, expect, test } from 'vitest';
 import type { Slide, Stage } from '@openmaic/dsl';
 import { DEFAULT_DESIGN_DIRECTIVE, buildPalette } from '@/lib/branding/design-directive';
-import { getCiede2000, getWcagContrast, lintAndRepairAdaptiveSlide } from '@/lib/edit/adaptive-slide-linter';
+import {
+  getCiede2000,
+  getWcagContrast,
+  lintAndRepairAdaptiveSlide,
+} from '@/lib/edit/adaptive-slide-linter';
 
 const palette = buildPalette(DEFAULT_DESIGN_DIRECTIVE);
 const slide: Slide = {
@@ -9,15 +13,53 @@ const slide: Slide = {
   type: 'content',
   viewportSize: 1000,
   viewportRatio: 0.5625,
-  theme: { backgroundColor: palette['surface.base'], themeColors: [], fontColor: palette['text.primary'], fontName: 'Inter' },
+  theme: {
+    backgroundColor: palette['surface.base'],
+    themeColors: [],
+    fontColor: palette['text.primary'],
+    fontName: 'Inter',
+  },
   background: { type: 'solid', color: palette['surface.base'] },
   elements: [
-    { id: 'title', type: 'text', name: 'title', textType: 'title', left: 80, top: 72, width: 840, height: 48, rotate: 0, content: '<p style="font-size:28px">A concise title</p>', defaultFontName: 'Inter', defaultColor: palette['text.primary'] },
-    { id: 'body', type: 'text', name: 'body', textType: 'content', left: 80, top: 150, width: 840, height: 90, rotate: 0, content: '<p style="font-size:18px">A short explanation with enough space for comfortable reading.</p>', defaultFontName: 'Inter', defaultColor: palette['text.primary'] },
+    {
+      id: 'title',
+      type: 'text',
+      name: 'title',
+      textType: 'title',
+      left: 80,
+      top: 72,
+      width: 840,
+      height: 48,
+      rotate: 0,
+      content: '<p style="font-size:28px">A concise title</p>',
+      defaultFontName: 'Inter',
+      defaultColor: palette['text.primary'],
+    },
+    {
+      id: 'body',
+      type: 'text',
+      name: 'body',
+      textType: 'content',
+      left: 80,
+      top: 150,
+      width: 840,
+      height: 90,
+      rotate: 0,
+      content:
+        '<p style="font-size:18px">A short explanation with enough space for comfortable reading.</p>',
+      defaultFontName: 'Inter',
+      defaultColor: palette['text.primary'],
+    },
   ],
 };
 
 const options = { directive: DEFAULT_DESIGN_DIRECTIVE };
+
+function textElementAt(target: Slide, index: number) {
+  const element = target.elements[index];
+  if (element?.type !== 'text') throw new Error(`Expected text element at index ${index}`);
+  return element;
+}
 
 describe('adaptive slide linter', () => {
   test('computes WCAG contrast and CIEDE2000 deterministically', () => {
@@ -38,14 +80,16 @@ describe('adaptive slide linter', () => {
     };
     const lowContrast = structuredClone(slide);
     lowContrast.elements[1] = {
-      ...lowContrast.elements[1]!,
+      ...textElementAt(lowContrast, 1),
       content: '<p style="font-size:12px;color:#1A8FC2">Label</p>',
       defaultColor: '#1A8FC2',
       name: 'label',
     };
     const result = lintAndRepairAdaptiveSlide(lowContrast, { ...options, brandSnapshot });
     const repaired = result.slide.elements[1];
-    expect(result.issues).toContainEqual(expect.objectContaining({ ruleId: 'R-CONTRAST-TEXT', repaired: true }));
+    expect(result.issues).toContainEqual(
+      expect.objectContaining({ ruleId: 'R-CONTRAST-TEXT', repaired: true }),
+    );
     expect(repaired?.type).toBe('text');
     if (repaired?.type === 'text') {
       expect(getWcagContrast(repaired.defaultColor, '#F6F9F7')).toBeGreaterThanOrEqual(4.5);
@@ -55,15 +99,21 @@ describe('adaptive slide linter', () => {
 
   test('maps a near-palette value and rejects a distant value', () => {
     const near = structuredClone(slide);
-    near.elements[1] = { ...near.elements[1]!, defaultColor: '#262A31', content: '<p style="font-size:18px;color:#262A31">Near palette</p>' };
+    near.elements[1] = {
+      ...textElementAt(near, 1),
+      defaultColor: '#262A31',
+      content: '<p style="font-size:18px;color:#262A31">Near palette</p>',
+    };
     const nearResult = lintAndRepairAdaptiveSlide(near, options);
     const repaired = nearResult.slide.elements[1];
-    expect(nearResult.issues).toContainEqual(expect.objectContaining({ ruleId: 'R-PALETTE', repaired: true }));
+    expect(nearResult.issues).toContainEqual(
+      expect.objectContaining({ ruleId: 'R-PALETTE', repaired: true }),
+    );
     expect(repaired?.type).toBe('text');
     if (repaired?.type === 'text') expect(repaired.content).not.toContain('#262A31');
 
     const distant = structuredClone(slide);
-    distant.elements[1] = { ...distant.elements[1]!, defaultColor: '#FF0000' };
+    distant.elements[1] = { ...textElementAt(distant, 1), defaultColor: '#FF0000' };
     expect(lintAndRepairAdaptiveSlide(distant, options).issues).toContainEqual(
       expect.objectContaining({ ruleId: 'R-PALETTE', severity: 'error' }),
     );
@@ -73,9 +123,19 @@ describe('adaptive slide linter', () => {
     const gradientSlide = structuredClone(slide);
     gradientSlide.background = {
       type: 'gradient',
-      gradient: { type: 'linear', rotate: 0, colors: [{ pos: 0, color: '#FFFFFF' }, { pos: 100, color: '#FAFBFC' }] },
+      gradient: {
+        type: 'linear',
+        rotate: 0,
+        colors: [
+          { pos: 0, color: '#FFFFFF' },
+          { pos: 100, color: '#FAFBFC' },
+        ],
+      },
     };
-    gradientSlide.elements[1] = { ...gradientSlide.elements[1]!, type: 'text', defaultColor: '#FFFFFF' };
+    gradientSlide.elements[1] = {
+      ...textElementAt(gradientSlide, 1),
+      defaultColor: '#FFFFFF',
+    };
     expect(lintAndRepairAdaptiveSlide(gradientSlide, options).issues).toContainEqual(
       expect.objectContaining({ ruleId: 'R-BG-GRADIENT', severity: 'error', elementId: 'body' }),
     );
@@ -92,25 +152,45 @@ describe('adaptive slide linter', () => {
   test('flags undersized text, unsafe geometry, and unsupported fonts', () => {
     const invalid = structuredClone(slide);
     invalid.elements[1] = {
-      ...invalid.elements[1]!,
+      ...textElementAt(invalid, 1),
       left: 20,
       defaultFontName: 'Comic Sans',
       content: '<p style="font-size:10px">Text trop petit</p>',
     };
     const issues = lintAndRepairAdaptiveSlide(invalid, options).issues;
-    expect(issues.map((issue) => issue.ruleId)).toEqual(expect.arrayContaining(['R-MINSIZE', 'R-SAFE-AREA', 'R-FONT']));
+    expect(issues.map((issue) => issue.ruleId)).toEqual(
+      expect.arrayContaining(['R-MINSIZE', 'R-SAFE-AREA', 'R-FONT']),
+    );
   });
 
   test('preserves the legacy layout audit for overlaps and rejects shape gradients', () => {
     const invalid = structuredClone(slide);
     invalid.elements.push({
-      id: 'gradient-shape', type: 'shape', left: 80, top: 300, width: 200, height: 80, rotate: 0,
-      viewBox: [1, 1], path: 'M 0 0 L 1 0 L 1 1 Z', fixedRatio: false, fill: '#FFFFFF',
-      gradient: { type: 'linear', rotate: 0, colors: [{ pos: 0, color: '#FFFFFF' }, { pos: 100, color: '#000000' }] },
+      id: 'gradient-shape',
+      type: 'shape',
+      left: 80,
+      top: 300,
+      width: 200,
+      height: 80,
+      rotate: 0,
+      viewBox: [1, 1],
+      path: 'M 0 0 L 1 0 L 1 1 Z',
+      fixedRatio: false,
+      fill: '#FFFFFF',
+      gradient: {
+        type: 'linear',
+        rotate: 0,
+        colors: [
+          { pos: 0, color: '#FFFFFF' },
+          { pos: 100, color: '#000000' },
+        ],
+      },
     });
     invalid.elements[2]!.name = 'decor';
     const issues = lintAndRepairAdaptiveSlide(invalid, options).issues;
-    expect(issues).toContainEqual(expect.objectContaining({ ruleId: 'R-GRADIENT-ONLY-BG', severity: 'error' }));
+    expect(issues).toContainEqual(
+      expect.objectContaining({ ruleId: 'R-GRADIENT-ONLY-BG', severity: 'error' }),
+    );
     expect(issues.some((issue) => issue.ruleId === 'R-OVERLAP')).toBe(false);
   });
 });
