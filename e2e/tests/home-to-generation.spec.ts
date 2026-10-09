@@ -364,7 +364,10 @@ test.describe('Home → Generation', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: { text: 'Course source contents', images: [] } }),
+        body: JSON.stringify({
+          success: true,
+          data: { text: 'Course source contents', images: [] },
+        }),
       });
     });
     const generationJob = await mockApi.mockClassroomGenerationJob('e2e-manifest-clear-conflict');
@@ -384,7 +387,10 @@ test.describe('Home → Generation', () => {
 
     let resetAttempted = false;
     await page.route('**/api/source-manifests', async (route) => {
-      const body = route.request().postDataJSON() as { sourceIds?: string[]; diwanSources?: unknown[] };
+      const body = route.request().postDataJSON() as {
+        sourceIds?: string[];
+        diwanSources?: unknown[];
+      };
       if (route.request().method() === 'PUT' && body.sourceIds?.length === 0) {
         resetAttempted = true;
         await route.fulfill({

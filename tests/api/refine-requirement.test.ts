@@ -86,7 +86,9 @@ describe('POST /api/generate/refine-requirement', () => {
     expect(params.system).toContain('The editable syllabus shown immediately after this step');
     expect(params.system).toContain('Never ask again for a decision already supplied');
     expect(params.system).toContain('use their actual content');
-    expect(params.prompt).toContain('<selected_source index="1" title="Sécurité psychologique.pdf">');
+    expect(params.prompt).toContain(
+      '<selected_source index="1" title="Sécurité psychologique.pdf">',
+    );
     expect(params.prompt).toContain('51 équipes');
     expect(params.prompt).toContain('prédit les comportements d’apprentissage');
     expect(params.prompt).toContain(

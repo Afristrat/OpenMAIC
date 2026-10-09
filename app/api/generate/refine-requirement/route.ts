@@ -12,19 +12,41 @@ import type { SourceDocument } from '@/lib/generation/source-grounding';
 const log = createLogger('RefineRequirement');
 const MAX_SOURCE_CONTEXT_CHARS = 60_000;
 const SOURCE_STOP_WORDS = new Set([
-  'avec', 'dans', 'des', 'pour', 'sur', 'une', 'the', 'and', 'for', 'from', 'that', 'this', 'with',
+  'avec',
+  'dans',
+  'des',
+  'pour',
+  'sur',
+  'une',
+  'the',
+  'and',
+  'for',
+  'from',
+  'that',
+  'this',
+  'with',
 ]);
-const SOURCE_EXCERPT_NOTICE = '\n[Extraits sélectionnés ; le contenu non reproduit n’est pas présumé.]';
+const SOURCE_EXCERPT_NOTICE =
+  '\n[Extraits sélectionnés ; le contenu non reproduit n’est pas présumé.]';
 
 function sourceTerms(value: string): Set<string> {
   return new Set(
-    (value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase().match(/[\p{L}\p{N}]{3,}/gu) ?? [])
-      .filter((term) => !SOURCE_STOP_WORDS.has(term)),
+    (
+      value
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLocaleLowerCase()
+        .match(/[\p{L}\p{N}]{3,}/gu) ?? []
+    ).filter((term) => !SOURCE_STOP_WORDS.has(term)),
   );
 }
 
 function escapeSourceMarkup(value: string): string {
-  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 function selectSourceExcerpt(text: string, requirement: string, limit: number): string {
@@ -67,7 +89,9 @@ function formatSourceContext(documents: SourceDocument[], requirement: string): 
   const perSourceLimit = Math.floor(MAX_SOURCE_CONTEXT_CHARS / usableDocuments.length);
   const material = usableDocuments.map((document, index) => {
     const title = escapeSourceMarkup(document.title || `Source ${index + 1}`);
-    const content = escapeSourceMarkup(selectSourceExcerpt(document.text, requirement, perSourceLimit));
+    const content = escapeSourceMarkup(
+      selectSourceExcerpt(document.text, requirement, perSourceLimit),
+    );
     return `<selected_source index="${index + 1}" title="${title}">\n${content}\n</selected_source>`;
   });
   return [
@@ -142,7 +166,10 @@ export async function POST(req: NextRequest) {
       mode === 'expand'
         ? 'Turn the short idea into a complete course creation brief without inventing facts about the audience.'
         : 'Improve the existing course creation brief while preserving every explicit intent and constraint.';
-    const input = [sourceContext, `<author_request>${escapeSourceMarkup(requirement)}</author_request>`]
+    const input = [
+      sourceContext,
+      `<author_request>${escapeSourceMarkup(requirement)}</author_request>`,
+    ]
       .filter(Boolean)
       .join('\n\n');
 
