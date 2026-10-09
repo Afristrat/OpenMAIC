@@ -223,20 +223,40 @@ export function buildPalette(directive: Pick<DesignDirective, 'seed' | 'tone'>):
 }
 
 /** Neutral Qalem theme for opted-in courses that have no tenant charter. */
-export function buildSlideTheme(directive?: DesignDirective): SlideTheme {
+function snapshotDesignTokens(
+  snapshot: import('@openmaic/dsl').Stage['brandSnapshot'] | undefined,
+): { colors: Record<string, string>; fontName?: string } {
+  if (snapshot?.version !== 1 || !snapshot.content) return { colors: {} };
+  const colorLine = snapshot.content.match(/(?:^|\n)colors:\s*([^\n]*)/u)?.[1] ?? '';
+  const colors: Record<string, string> = {};
+  for (const match of colorLine.matchAll(/\b(background|surface|ink|accent|muted|secondary)=(#[\da-fA-F]{6})\b/gu)) {
+    colors[match[1]] = match[2].toUpperCase();
+  }
+  const requestedFont = snapshot.content.match(/(?:^|\n)fonts:\s*display=([^;\n]+)/u)?.[1]?.trim();
+  const fontName = DESIGN_FONTS.find((font) => font.toLowerCase() === requestedFont?.toLowerCase());
+  return { colors, ...(fontName ? { fontName } : {}) };
+}
+
+export function buildSlideTheme(
+  directive?: DesignDirective,
+  brandSnapshot?: import('@openmaic/dsl').Stage['brandSnapshot'],
+): SlideTheme {
   const selected = directive ?? DEFAULT_DESIGN_DIRECTIVE;
   const palette = buildPalette(selected);
+  const brand = snapshotDesignTokens(brandSnapshot);
+  const colors = brand.colors ?? {};
+  const themeColors = [
+    colors.accent ?? palette['accent.primary'],
+    colors.secondary ?? palette['accent.secondary'],
+    palette['accent.achievement'],
+    palette['functional.correct'],
+    palette['functional.incorrect'],
+  ];
   return {
-    backgroundColor: palette['surface.base'],
-    themeColors: [
-      palette['accent.primary'],
-      palette['accent.secondary'],
-      palette['accent.achievement'],
-      palette['functional.correct'],
-      palette['functional.incorrect'],
-    ],
-    fontColor: palette['text.primary'],
-    fontName: selected.typography.heading,
+    backgroundColor: colors.background ?? colors.surface ?? palette['surface.base'],
+    themeColors: [...new Set(themeColors)],
+    fontColor: colors.ink ?? palette['text.primary'],
+    fontName: brand.fontName ?? selected.typography.heading,
     outline: { color: palette['border.hairline'], width: 1, style: 'solid' },
     shadow: { h: 0, v: 0, blur: 0, color: '#000000' },
   };

@@ -3,6 +3,7 @@ import type { Slide } from '@openmaic/dsl';
 
 import { auditSlideLayout } from '@/lib/edit/slide-layout-audit';
 import { generateSceneContent } from '@/lib/generation/scene-generator';
+import { DEFAULT_DESIGN_DIRECTIVE } from '@/lib/branding/design-directive';
 import type { SceneOutline } from '@/lib/types/generation';
 
 const outline: SceneOutline = {
@@ -46,5 +47,48 @@ describe('slide layout fallback', () => {
         viewportRatio: 0.5625,
       } as Slide),
     ).toEqual([]);
+  });
+
+  it('keeps tenant typography, palette and safe margins in the deterministic fallback', async () => {
+    const content = await generateSceneContent(
+      outline,
+      async () =>
+        JSON.stringify({
+          elements: [
+            {
+              id: 'outside-canvas',
+              type: 'text',
+              left: 1500,
+              top: 800,
+              width: 640,
+              height: 200,
+              content: '<p>Contenu pédagogique valide</p>',
+              defaultFontName: '',
+              defaultColor: '#333333',
+            },
+          ],
+        }),
+      {
+        designDirective: DEFAULT_DESIGN_DIRECTIVE,
+        brandSnapshot: {
+          version: 1,
+          createdAt: '2026-10-09T00:00:00.000Z',
+          content:
+            'colors: background=#F7F8FA ink=#202A35 accent=#7A2E8E\nfonts: display=Merriweather; body=Inter; utility=Inter',
+        },
+      },
+    );
+
+    expect(content).not.toBeNull();
+    if (!content || !('elements' in content)) return;
+    expect(content.background).toEqual({ type: 'solid', color: '#F7F8FA' });
+    const title = content.elements.find((element) => element.name === 'title');
+    expect(title).toMatchObject({
+      left: 72,
+      width: 856,
+      defaultFontName: 'Merriweather',
+      defaultColor: '#202A35',
+      textType: 'title',
+    });
   });
 });

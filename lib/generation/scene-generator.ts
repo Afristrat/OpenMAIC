@@ -34,6 +34,7 @@ import type { PBLPlannerV2Input, PBLProjectV2 } from '@/lib/pbl/v2/types';
 import { buildPrompt, PROMPT_IDS } from '@/lib/prompts';
 import { buildPromptWithSkill } from '@/lib/skills/prompt-overrides';
 import { buildSlideDesignPromptContext } from '@/lib/branding/slide-design-prompt';
+import { buildSlideTheme, normalizeDesignDirective } from '@/lib/branding/design-directive';
 import { DEFAULT_LANGUAGE_DIRECTIVE } from './outline-generator';
 import { postProcessInteractiveHtml } from './interactive-post-processor';
 import { parseActionsFromStructuredOutput } from './action-parser';
@@ -768,6 +769,7 @@ function normalizeGeneratedVideoRefs(
 function fixElementDefaults(
   elements: GeneratedSlideData['elements'],
   assignedImages?: PdfImage[],
+  theme?: SlideTheme,
 ): GeneratedSlideData['elements'] {
   return elements.map((el) => {
     // Fix line elements
@@ -795,7 +797,7 @@ function fixElementDefaults(
 
       // Ensure color exists
       if (!lineEl.color) {
-        lineEl.color = '#333333';
+        lineEl.color = theme?.themeColors[0] ?? '#333333';
       }
 
       return lineEl as typeof el;
@@ -806,10 +808,10 @@ function fixElementDefaults(
       const textEl = el as Record<string, unknown>;
 
       if (!textEl.defaultFontName) {
-        textEl.defaultFontName = 'Microsoft YaHei';
+        textEl.defaultFontName = theme?.fontName ?? 'Microsoft YaHei';
       }
       if (!textEl.defaultColor) {
-        textEl.defaultColor = '#333333';
+        textEl.defaultColor = theme?.fontColor ?? '#333333';
       }
       if (!textEl.content) {
         textEl.content = '';
@@ -1058,7 +1060,13 @@ function placeRequiredImages(
  * would make the content unreadable and an otherwise valid course would fail
  * solely because a provider ignored the 1000×562.5 coordinate contract.
  */
-function buildSafeSlideFallback(outline: SceneOutline, images: PPTElement[]): PPTElement[] {
+function buildSafeSlideFallback(
+  outline: SceneOutline,
+  images: PPTElement[],
+  theme?: SlideTheme,
+  margin = 60,
+): PPTElement[] {
+  const width = 1000 - margin * 2;
   const learningContent = [
     `<p style="font-size:19px;line-height:1.35;margin:0 0 18px">${escapeResourceHtml(outline.description)}</p>`,
     outline.keyPoints.length > 0
@@ -1076,25 +1084,29 @@ function buildSafeSlideFallback(outline: SceneOutline, images: PPTElement[]): PP
     {
       id: `fallback_title_${outline.id}`,
       type: 'text',
-      left: 60,
-      top: 42,
-      width: 880,
+      left: margin,
+      top: 48,
+      width,
       height: 72,
       content: `<p style="font-size:32px;font-weight:700;line-height:1.15">${escapeResourceHtml(outline.title)}</p>`,
-      defaultFontName: '',
-      defaultColor: '#17122B',
+      defaultFontName: theme?.fontName ?? '',
+      defaultColor: theme?.fontColor ?? '#17122B',
+      name: 'title',
+      textType: 'title',
       rotate: 0,
     },
     {
       id: `fallback_content_${outline.id}`,
       type: 'text',
-      left: 60,
+      left: margin,
       top: 145,
-      width: 440,
+      width: Math.min(440, width),
       height: 365,
       content: learningContent,
-      defaultFontName: '',
-      defaultColor: '#342D4E',
+      defaultFontName: theme?.fontName ?? '',
+      defaultColor: theme?.fontColor ?? '#342D4E',
+      name: 'body',
+      textType: 'content',
       rotate: 0,
     },
     ...images,
@@ -1210,6 +1222,8 @@ async function generateSlideContent(
     designDirective,
     brandSnapshot,
   });
+  const slideTheme =
+    designDirective || brandSnapshot ? buildSlideTheme(designDirective, brandSnapshot) : undefined;
   for (const warning of designContext.warnings) log.warn(warning);
 
   const prompts = buildPromptWithSkill(
@@ -1325,7 +1339,7 @@ async function generateSlideContent(
   }
 
   // Fix elements with missing required fields + aspect ratio correction (while src is still img_id)
-  const fixedElements = fixElementDefaults(generatedData.elements, assignedImages);
+  const fixedElements = fixElementDefaults(generatedData.elements, assignedImages, slideTheme);
   const requiredImages = requiredSlideImages(
     outline.mediaGenerations,
     generatedMediaMapping,
@@ -1478,6 +1492,8 @@ async function generateSlideContent(
       const fallbackElements = buildSafeSlideFallback(
         outline,
         processedElements.filter((element) => element.type === 'image'),
+        slideTheme,
+        designDirective ? normalizeDesignDirective(designDirective).directive.grid.margin : 60,
       ).map((element) => ({ ...element, id: `${element.type}_${nanoid(8)}`, rotate: 0 }));
       const fallbackIssues = auditSlideLayout({
         id: outline.id,
@@ -1491,7 +1507,9 @@ async function generateSlideContent(
         );
         return {
           elements: fallbackElements,
-          background,
+          background: designDirective || brandSnapshot
+            ? { type: 'solid', color: slideTheme?.backgroundColor ?? '#FAFBFC' }
+            : background,
           remark: generatedData.remark || outline.description,
         };
       }

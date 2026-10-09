@@ -155,4 +155,32 @@ describe('course design directive', () => {
       }).fontName,
     ).toBe('Merriweather');
   });
+
+  it('resolves safe tenant palette and font tokens ahead of course defaults', () => {
+    const brandSnapshot = {
+      version: 1 as const,
+      createdAt: '2026-10-09T00:00:00.000Z',
+      content:
+        'colors: background=#F7F8FA surface=#FFFFFF ink=#202A35 accent=#7A2E8E secondary=#145A67\nfonts: display=Merriweather; body=Inter; utility=Inter',
+    };
+
+    const theme = buildSlideTheme(DEFAULT_DESIGN_DIRECTIVE, brandSnapshot);
+    expect(theme.backgroundColor).toBe('#F7F8FA');
+    expect(theme.fontColor).toBe('#202A35');
+    expect(theme.themeColors.slice(0, 2)).toEqual(['#7A2E8E', '#145A67']);
+    expect(theme.fontName).toBe('Merriweather');
+  });
+
+  it('ignores malformed brand color and unauthorized font values', () => {
+    const brandSnapshot = {
+      version: 1 as const,
+      createdAt: '2026-10-09T00:00:00.000Z',
+      content: 'colors: background=red ink=#FFF\nfonts: display=Comic Sans',
+    };
+
+    const theme = buildSlideTheme(DEFAULT_DESIGN_DIRECTIVE, brandSnapshot);
+    expect(theme.backgroundColor).toBe(buildPalette(DEFAULT_DESIGN_DIRECTIVE)['surface.base']);
+    expect(theme.fontColor).toBe(buildPalette(DEFAULT_DESIGN_DIRECTIVE)['text.primary']);
+    expect(theme.fontName).toBe('Inter');
+  });
 });

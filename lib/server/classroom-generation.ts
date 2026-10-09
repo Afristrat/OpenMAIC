@@ -973,7 +973,7 @@ export async function generateClassroom(
         actions,
         api,
         sourceGrounding,
-        designSystemEnabled ? buildSlideTheme(courseDesignDirective) : undefined,
+        designSystemEnabled ? buildSlideTheme(courseDesignDirective, brandSnapshot) : undefined,
       );
       if (!sceneId) {
         throw new Error(`Required scene creation failed: ${safeOutline.title}`);
