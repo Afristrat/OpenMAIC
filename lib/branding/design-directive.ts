@@ -193,7 +193,7 @@ export function buildPalette(directive: Pick<DesignDirective, 'seed' | 'tone'>):
     'surface.dark': hex(dark),
     'surface.card.onBase': '#FFFFFF',
     'surface.card.onTint': '#FFFFFF',
-    'surface.card.onDark': tinycolor(tinycolor.mix(dark, '#FFFFFF', 6)).toHexString().toUpperCase(),
+    'surface.card.onDark': hex(tinycolor({ h: hue, s: Math.max(chroma, 28), l: 31 })),
     'text.primary': textColorOnLight(tinycolor('#252A31'), lightSurfaces),
     'text.secondary': textColorOnLight(tinycolor('#4B5563'), lightSurfaces),
     'text.onDark': '#FFFFFF',
