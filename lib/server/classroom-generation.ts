@@ -388,45 +388,46 @@ export async function generateClassroom(
   const sceneAiCall: AICallFn = async (systemPrompt, userPrompt, _images) => {
     await assertCourseGenerationAccess(input, options.ownerId);
     const startedAt = Date.now();
-    const result = await callLLM(
-      {
-        model: languageModel,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        maxOutputTokens: modelInfo?.outputWindow,
-        maxRetries: 0,
-      },
-      'generate-classroom-scene',
-      undefined,
-      classroomThinking,
-      designSystemEnabled
-        ? {
-            onUsage: async ({ usage, cost, providerId, modelId }) => {
-              try {
-                await recordDesignSystemGenerationEvent({
-                  org_id: input.orgId,
-                  stage_id: generatedStageId,
-                  scene_id: getAICallSceneId(sceneAiCall) ?? null,
-                  event_type: 'llm_call',
-                  provider_id: providerId,
-                  model_id: modelId,
-                  prompt_chars: systemPrompt.length + userPrompt.length,
-                  latency_ms: Date.now() - startedAt,
-                  input_tokens: usage.inputTokens ?? null,
-                  output_tokens: usage.outputTokens ?? null,
-                  provider_cost_microunits: cost.amountMicrounits,
-                  provider_cost_currency: cost.currency,
-                  valuation_status: cost.status,
-                });
-              } catch (error) {
-                log.warn('Design-system usage telemetry was not persisted', error);
-              }
-            },
-          }
-        : undefined,
-    );
+    const llmParams = {
+      model: languageModel,
+      messages: [
+        { role: 'system' as const, content: systemPrompt },
+        { role: 'user' as const, content: userPrompt },
+      ],
+      maxOutputTokens: modelInfo?.outputWindow,
+      maxRetries: 0,
+    };
+    const recordUsage = async ({ usage, cost, providerId, modelId }: {
+      usage: { inputTokens?: number; outputTokens?: number };
+      cost: { amountMicrounits: number | null; currency: string | null; status: 'valued' | 'pending_configuration' | 'unmetered' };
+      providerId: string;
+      modelId: string;
+    }) => {
+      try {
+        await recordDesignSystemGenerationEvent({
+          org_id: input.orgId,
+          stage_id: generatedStageId,
+          scene_id: getAICallSceneId(sceneAiCall) ?? null,
+          event_type: 'llm_call',
+          provider_id: providerId,
+          model_id: modelId,
+          prompt_chars: systemPrompt.length + userPrompt.length,
+          latency_ms: Date.now() - startedAt,
+          input_tokens: usage.inputTokens ?? null,
+          output_tokens: usage.outputTokens ?? null,
+          provider_cost_microunits: cost.amountMicrounits,
+          provider_cost_currency: cost.currency,
+          valuation_status: cost.status,
+        });
+      } catch (error) {
+        log.warn('Design-system usage telemetry was not persisted', error);
+      }
+    };
+    const result = designSystemEnabled
+      ? await callLLM(llmParams, 'generate-classroom-scene', undefined, classroomThinking, {
+          onUsage: recordUsage,
+        })
+      : await callLLM(llmParams, 'generate-classroom-scene', undefined, classroomThinking);
     await assertCourseGenerationAccess(input, options.ownerId);
     return result.text;
   };
