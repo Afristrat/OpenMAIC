@@ -52,6 +52,21 @@ describe('splitSpeechActionsByAnglicisms', () => {
     expect(result).toEqual([action]);
   });
 
+  it('routes the complete Plan-do-check-act framework phrase to English', () => {
+    const action: SpeechAction = {
+      id: 'action_pdca',
+      type: 'speech',
+      text: 'Nous allons appliquer Plan-do-check-act à ce processus.',
+    };
+
+    expect(splitSpeechActionsByAnglicisms([action], 'higgs-tts')).toMatchObject([
+      { text: 'Nous allons appliquer', ttsLanguageOverride: 'fr' },
+      { text: 'Plan-do-check-act', ttsLanguageOverride: 'en' },
+      { text: 'à ce processus.', ttsLanguageOverride: 'fr' },
+    ]);
+    expect(action.text).toBe('Nous allons appliquer Plan-do-check-act à ce processus.');
+  });
+
   it('keeps sentence punctuation on a spoken segment instead of synthesizing punctuation alone', () => {
     const action: SpeechAction = {
       id: 'action_4',
@@ -98,5 +113,16 @@ describe('French dirham speech preparation', () => {
     expect(resolveSpeechLanguage('fr-FR')).toBe('fr');
     expect(resolveSpeechLanguage('Teach in English.')).toBe('en');
     expect(resolveSpeechLanguage('العربية')).toBeUndefined();
+  });
+});
+
+describe('French pronunciation preparation', () => {
+  it('silences the final x in Flux only in the French provider copy', () => {
+    const displayed = 'Le flux Flux et FLUX traversent Fluxion.';
+
+    expect(prepareTextForTTS(displayed, 'fr-FR')).toBe('Le flu Flu et FLU traversent Fluxion.');
+    expect(displayed).toBe('Le flux Flux et FLUX traversent Fluxion.');
+    expect(prepareTextForTTS(displayed, 'en-US')).toBe(displayed);
+    expect(prepareTextForTTS(displayed, 'ar-MA')).toBe(displayed);
   });
 });

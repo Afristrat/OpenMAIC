@@ -25,6 +25,18 @@ describe('splitTextIntoLanguageSegments', () => {
     ]);
   });
 
+  it('matches the complete hyphenated framework name without treating French « plan » as English', () => {
+    expect(
+      splitTextIntoLanguageSegments(
+        'Le plan de formation utilise Plan-do-check-act.',
+        ANGLICISM_TERMS,
+      ),
+    ).toEqual([
+      { text: 'Le plan de formation utilise', language: 'fr' },
+      { text: 'Plan-do-check-act.', language: 'en' },
+    ]);
+  });
+
   it('keeps a French connector between two anglicisms as its own fr segment (never mispronounce "et chez" in English)', () => {
     const segments = splitTextIntoLanguageSegments(
       "C'est le standard utilisé au MIT et chez LiteLLM aujourd'hui.",

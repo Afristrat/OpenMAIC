@@ -554,6 +554,13 @@ function SyllabusFields({
       'learningObjectives',
       syllabus.learningObjectives.filter((_, objectiveIndex) => objectiveIndex !== index),
     );
+  const moveLearningObjective = (index: number, offset: -1 | 1) => {
+    const destination = index + offset;
+    if (destination < 0 || destination >= syllabus.learningObjectives.length) return;
+    const next = [...syllabus.learningObjectives];
+    [next[index], next[destination]] = [next[destination], next[index]];
+    update('learningObjectives', next);
+  };
 
   return (
     <section
@@ -636,6 +643,26 @@ function SyllabusFields({
                   aria-label={`${t('generation.syllabusLearningObjectives')} ${index + 1}`}
                   rows={2}
                 />
+                <div className="mt-1 flex shrink-0 flex-col gap-1">
+                  <button
+                    type="button"
+                    onClick={() => moveLearningObjective(index, -1)}
+                    disabled={disabled || index === 0}
+                    aria-label={t('generation.moveObjectiveUp', { index: index + 1 })}
+                    className="rounded-lg p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-30"
+                  >
+                    <ArrowUp className="size-4" aria-hidden />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveLearningObjective(index, 1)}
+                    disabled={disabled || index === syllabus.learningObjectives.length - 1}
+                    aria-label={t('generation.moveObjectiveDown', { index: index + 1 })}
+                    className="rounded-lg p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-30"
+                  >
+                    <ArrowDown className="size-4" aria-hidden />
+                  </button>
+                </div>
                 <button
                   type="button"
                   onClick={() => removeLearningObjective(index)}

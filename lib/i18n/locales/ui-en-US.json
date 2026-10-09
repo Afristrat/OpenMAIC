@@ -1002,6 +1002,8 @@
   "generation.syllabusJourneyDescription": "{{count}} sequences to review, reorder, or enrich before production.",
   "generation.syllabusAddObjective": "Add an objective",
   "generation.syllabusDeleteObjective": "Delete this objective",
+  "generation.moveObjectiveUp": "Move objective {{index}} up",
+  "generation.moveObjectiveDown": "Move objective {{index}} down",
   "generation.courseTitle": "Course title",
   "generation.syllabusAudience": "Audience",
   "generation.syllabusPrerequisites": "Prerequisites",

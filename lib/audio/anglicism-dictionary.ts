@@ -28,6 +28,8 @@ export const ANGLICISM_TERMS: readonly string[] = [
   'React',
   'GitHub',
   'BullMQ',
+  // Named management frameworks are pronounced in English as complete phrases.
+  'Plan-do-check-act',
   // Sigles et protocoles
   'API',
   'LLM',

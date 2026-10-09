@@ -1002,6 +1002,8 @@
   "generation.syllabusJourneyDescription": "{{count}} مقاطع لمراجعتها أو إعادة ترتيبها أو إثرائها قبل الإنتاج.",
   "generation.syllabusAddObjective": "إضافة هدف",
   "generation.syllabusDeleteObjective": "حذف هذا الهدف",
+  "generation.moveObjectiveUp": "نقل الهدف {{index}} إلى الأعلى",
+  "generation.moveObjectiveDown": "نقل الهدف {{index}} إلى الأسفل",
   "generation.courseTitle": "عنوان التكوين",
   "generation.syllabusAudience": "الفئة المستهدفة",
   "generation.syllabusPrerequisites": "المتطلبات الأساسية",
