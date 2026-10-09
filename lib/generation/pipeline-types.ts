@@ -65,15 +65,37 @@ export interface GenerationCallbacks {
   onError?: (error: string) => void;
 }
 
-export type AICallFn = ((
+export type AICallFn = (
   systemPrompt: string,
   userPrompt: string,
   images?: Array<{ id: string; src: string }>,
-) => Promise<string>) & {
-  sceneId?: string;
-  recordDesignEvent?: (event: {
-    sceneId: string;
-    eventType: 'lint_issue' | 'layout_fallback';
-    ruleId?: string;
-  }) => Promise<void>;
-};
+) => Promise<string>;
+
+export type DesignEventRecorder = (event: {
+  sceneId: string;
+  eventType: 'lint_issue' | 'layout_fallback';
+  ruleId?: string;
+}) => Promise<void>;
+
+const aiCallSceneIds = new WeakMap<AICallFn, string>();
+const aiCallDesignEventRecorders = new WeakMap<AICallFn, DesignEventRecorder>();
+
+export function setAICallSceneId(aiCall: AICallFn, sceneId: string): void {
+  aiCallSceneIds.set(aiCall, sceneId);
+}
+
+export function getAICallSceneId(aiCall: AICallFn): string | undefined {
+  return aiCallSceneIds.get(aiCall);
+}
+
+export function setAICallDesignEventRecorder(
+  aiCall: AICallFn,
+  recorder: DesignEventRecorder | undefined,
+): void {
+  if (recorder) aiCallDesignEventRecorders.set(aiCall, recorder);
+  else aiCallDesignEventRecorders.delete(aiCall);
+}
+
+export function getAICallDesignEventRecorder(aiCall: AICallFn): DesignEventRecorder | undefined {
+  return aiCallDesignEventRecorders.get(aiCall);
+}

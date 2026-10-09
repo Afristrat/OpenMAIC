@@ -13,8 +13,13 @@ import {
   generateSceneActions,
   generateSceneContent,
 } from '@/lib/generation/scene-generator';
-import type { AICallFn } from '@/lib/generation/pipeline-types';
-import type { AgentInfo } from '@/lib/generation/pipeline-types';
+import {
+  getAICallSceneId,
+  setAICallDesignEventRecorder,
+  setAICallSceneId,
+  type AICallFn,
+  type AgentInfo,
+} from '@/lib/generation/pipeline-types';
 import { createLogger } from '@/lib/logger';
 import { isProviderKeyRequired } from '@/lib/ai/providers';
 import { resolveClassroomWebSearchConfig } from '@/lib/server/web-search-config';
@@ -403,7 +408,7 @@ export async function generateClassroom(
                 await recordDesignSystemGenerationEvent({
                   org_id: input.orgId,
                   stage_id: generatedStageId,
-                  scene_id: sceneAiCall.sceneId ?? null,
+                  scene_id: getAICallSceneId(sceneAiCall) ?? null,
                   event_type: 'llm_call',
                   provider_id: providerId,
                   model_id: modelId,
@@ -425,7 +430,7 @@ export async function generateClassroom(
     await assertCourseGenerationAccess(input, options.ownerId);
     return result.text;
   };
-  sceneAiCall.recordDesignEvent = async ({ sceneId, eventType, ruleId }) => {
+  setAICallDesignEventRecorder(sceneAiCall, async ({ sceneId, eventType, ruleId }) => {
     if (!designSystemEnabled) return;
     try {
       await recordDesignSystemGenerationEvent({
@@ -438,7 +443,7 @@ export async function generateClassroom(
     } catch (error) {
       log.warn('Design-system compliance telemetry was not persisted', error);
     }
-  };
+  });
 
   const searchQueryAiCall: AICallFn = async (systemPrompt, userPrompt, _images) => {
     await assertCourseGenerationAccess(input, options.ownerId);
@@ -910,7 +915,7 @@ export async function generateClassroom(
         });
       };
 
-      sceneAiCall.sceneId = safeOutline.id;
+      setAICallSceneId(sceneAiCall, safeOutline.id);
 
       // Web capture: decide + fetch an illustrative capture for this scene, if
       // any. Never blocks: any failure at any point here falls through with no

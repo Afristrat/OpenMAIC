@@ -1,11 +1,12 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { Slide } from '@openmaic/dsl';
 
 import { auditSlideLayout } from '@/lib/edit/slide-layout-audit';
 import { generateSceneContent } from '@/lib/generation/scene-generator';
 import { DEFAULT_DESIGN_DIRECTIVE } from '@/lib/branding/design-directive';
 import type { SceneOutline } from '@/lib/types/generation';
-import type { AICallFn } from '@/lib/generation/pipeline-types';
+import type { AICallFn, DesignEventRecorder } from '@/lib/generation/pipeline-types';
+import { setAICallDesignEventRecorder } from '@/lib/generation/pipeline-types';
 
 const outline: SceneOutline = {
   id: 'cash-flow-calculation',
@@ -51,7 +52,10 @@ describe('slide layout fallback', () => {
   });
 
   it('keeps tenant typography, palette and safe margins in the deterministic fallback', async () => {
-    const recordDesignEvent = vi.fn();
+    const recordedEvents: Parameters<DesignEventRecorder>[0][] = [];
+    const recordDesignEvent: DesignEventRecorder = async (event) => {
+      recordedEvents.push(event);
+    };
     const aiCall: AICallFn = async () =>
       JSON.stringify({
         elements: [
@@ -68,7 +72,7 @@ describe('slide layout fallback', () => {
           },
         ],
       });
-    aiCall.recordDesignEvent = recordDesignEvent;
+    setAICallDesignEventRecorder(aiCall, recordDesignEvent);
     const content = await generateSceneContent(outline, aiCall, {
       designDirective: DEFAULT_DESIGN_DIRECTIVE,
       brandSnapshot: {
@@ -90,7 +94,7 @@ describe('slide layout fallback', () => {
       defaultColor: '#202A35',
       textType: 'title',
     });
-    expect(recordDesignEvent).toHaveBeenCalledWith({
+    expect(recordedEvents).toContainEqual({
       sceneId: outline.id,
       eventType: 'layout_fallback',
     });

@@ -65,6 +65,11 @@ import type {
   GenerationResult,
   GenerationCallbacks,
 } from './pipeline-types';
+import {
+  getAICallDesignEventRecorder,
+  setAICallDesignEventRecorder,
+  setAICallSceneId,
+} from './pipeline-types';
 import type { ThinkingConfig } from '@/lib/types/provider';
 import { auditSlideLayout } from '@/lib/edit/slide-layout-audit';
 import { lintAndRepairAdaptiveSlide } from '@/lib/edit/adaptive-slide-linter';
@@ -382,10 +387,10 @@ export async function generateSceneContent(
     sourceGrounding,
   } = options;
   const sceneAiCall: AICallFn = async (systemPrompt, userPrompt, images) => {
-    aiCall.sceneId = outline.id;
+    setAICallSceneId(aiCall, outline.id);
     return aiCall(systemPrompt, userPrompt, images);
   };
-  sceneAiCall.recordDesignEvent = aiCall.recordDesignEvent;
+  setAICallDesignEventRecorder(sceneAiCall, getAICallDesignEventRecorder(aiCall));
 
   // Unified path for interactive scenes (both normal and ultra mode)
   if (outline.type === 'interactive') {
@@ -1509,7 +1514,7 @@ async function generateSlideContent(
       log[issue.severity === 'error' ? 'warn' : 'info'](
         `[${issue.ruleId}] slide=${outline.id} element=${issue.elementId ?? 'n/a'} repaired=${issue.repaired === true}: ${issue.message}`,
       );
-      await aiCall.recordDesignEvent?.({
+      await getAICallDesignEventRecorder(aiCall)?.({
         sceneId: outline.id,
         eventType: 'lint_issue',
         ruleId: issue.ruleId,
@@ -1560,7 +1565,7 @@ async function generateSlideContent(
             : background;
         const lintedFallback = await lintAdaptiveElements(fallbackElements, fallbackBackground);
         if (!lintedFallback) return null;
-        await aiCall.recordDesignEvent?.({
+        await getAICallDesignEventRecorder(aiCall)?.({
           sceneId: outline.id,
           eventType: 'layout_fallback',
         });
@@ -2388,10 +2393,10 @@ export async function generateSceneActions(
   const { ctx, agents, requiredAgentIds, userProfile, languageDirective, sourceGrounding } =
     options;
   const sceneAiCall: AICallFn = async (systemPrompt, userPrompt, images) => {
-    aiCall.sceneId = outline.id;
+    setAICallSceneId(aiCall, outline.id);
     return aiCall(systemPrompt, userPrompt, images);
   };
-  sceneAiCall.recordDesignEvent = aiCall.recordDesignEvent;
+  setAICallDesignEventRecorder(sceneAiCall, getAICallDesignEventRecorder(aiCall));
   const requiredAgents =
     agents?.filter((agent) => requiredAgentIds?.includes(agent.id)).map((agent) => agent.id) ?? [];
   const agentsText = [
