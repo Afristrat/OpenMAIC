@@ -33,7 +33,7 @@ import { projectV2ToLegacyProjectConfig } from '@/lib/pbl/v2/compat';
 import type { PBLPlannerV2Input, PBLProjectV2 } from '@/lib/pbl/v2/types';
 import { buildPrompt, PROMPT_IDS } from '@/lib/prompts';
 import { buildPromptWithSkill } from '@/lib/skills/prompt-overrides';
-import { buildPalette, normalizeDesignDirective } from '@/lib/branding/design-directive';
+import { buildSlideDesignPromptContext } from '@/lib/branding/slide-design-prompt';
 import { DEFAULT_LANGUAGE_DIRECTIVE } from './outline-generator';
 import { postProcessInteractiveHtml } from './interactive-post-processor';
 import { parseActionsFromStructuredOutput } from './action-parser';
@@ -425,6 +425,7 @@ export async function generateSceneContent(
         sourceGrounding,
         designDirective,
         brandSnapshot,
+        courseOutlines,
       );
     case 'quiz':
       return generateQuizContent(
@@ -1119,6 +1120,7 @@ async function generateSlideContent(
   sourceGrounding?: SceneSourceGrounding,
   designDirective?: import('@openmaic/dsl').DesignDirective,
   brandSnapshot?: import('@openmaic/dsl').Stage['brandSnapshot'],
+  courseOutlines?: SceneOutline[],
 ): Promise<GeneratedSlideContent | null> {
   if (outline.generatedResources?.length) {
     return buildLearningResourceSlide(outline, outline.generatedResources);
@@ -1202,6 +1204,13 @@ async function generateSlideContent(
   const canvasHeight = 562.5;
 
   const teacherContext = formatTeacherPersonaForPrompt(agents);
+  const designContext = buildSlideDesignPromptContext({
+    outline,
+    courseOutlines,
+    designDirective,
+    brandSnapshot,
+  });
+  for (const warning of designContext.warnings) log.warn(warning);
 
   const prompts = buildPromptWithSkill(
     PROMPT_IDS.SLIDE_CONTENT,
@@ -1221,6 +1230,7 @@ async function generateSlideContent(
       mediaElementEnabled,
       hasLearningResources: generatedResources.length > 0,
       learningResources,
+      ...designContext,
     },
     { enabled: skillEngineEnabled, activeSkillId },
   );
@@ -1242,16 +1252,6 @@ async function generateSlideContent(
   // the existing slide rather than generating from scratch. Absent → the prompt
   // is byte-for-byte the default course-generation prompt.
   let userPrompt = prompts.user;
-  if (designDirective) {
-    const { directive, warnings } = normalizeDesignDirective(designDirective);
-    for (const warning of warnings) log.warn(warning);
-    const palette = buildPalette(directive);
-    userPrompt +=
-      `\n\n## COURSE DESIGN DIRECTION\n` +
-      `Apply these course-wide visual preferences consistently. Use only the supplied palette values for colors. They never override technical schema, source integrity, accessibility, or explicit author instructions. Do not repeat these objects in the slide output.\n` +
-      `${JSON.stringify({ directive, palette })}`;
-  }
-  userPrompt = withBrandSnapshot(userPrompt, brandSnapshot);
   if (editDirective || baselineContent) {
     // The baseline handed here for whole-slide regeneration already carries small
     // image-ID references (`img_N`) instead of base64 payloads — the caller lifts
