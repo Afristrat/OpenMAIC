@@ -6,9 +6,10 @@ WP9 expose l’activation du design system par tenant, une télémétrie minimis
 la consultation agrégée et les coûts valorisés dans la devise de facturation du
 tenant. Le rapport est `docs/foundation/4-moteur/design-system-wp9-report.md`.
 La validation documentée au SHA `2850bfac` comprend 3 462 tests Vitest, le
-build, les contrôles TypeScript/ESLint/Prettier ; Playwright a passé 201/202 au
-premier passage, puis le test isolé a passé 1/1. La gate E2E globale n’est pas
-verte. WP10 reste non certifié : aucune génération réelle, aucun tenant activé,
+build, les contrôles TypeScript/ESLint/Prettier ; après un premier passage à
+201/202, une exécution en quatre shards a passé les 202 tests avec code 0 par
+shard (51 + 51 + 50 + 50), y compris le widget français précédemment signalé.
+WP10 reste non certifié : aucune génération réelle, aucun tenant activé,
 aucune migration de production ni déploiement. Le rapport
 `docs/foundation/4-moteur/design-system-wp10-report.md` distingue les preuves
 automatisées de la recette terrain requise. Celle-ci nécessite un tenant de

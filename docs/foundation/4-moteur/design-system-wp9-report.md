@@ -41,10 +41,13 @@ Branche : `feature/adaptive-design-system`
 
 ServeurIA au SHA `2850bfac` : Prettier, TypeScript et ESLint passent ; 30 tests
 ciblés passent. La suite complète passe avec 559 fichiers et 3 462 tests. Le
-build de production passe. Les E2E passent à 201/202 au premier parcours : le
-scénario du widget publié en français a reçu un conflit IndexedDB ; rejoué seul
-en 1/1 worker il passe. Ce scénario est donc intermittent dans la suite complète,
-et la gate Playwright globale n’est pas déclarée verte.
+build de production passe. La première exécution E2E s’est terminée à 201/202 :
+le scénario du widget publié en français a échoué sur un conflit IndexedDB, puis
+a passé seul. Une nouvelle exécution de la suite en quatre shards a ensuite
+passé les 202 tests avec codes de sortie 0 : 51 + 51 + 50 + 50 ; le scénario
+français inclus dans le troisième shard passe. Le défaut intermittent n’a pas
+été reproduit. Une tentative monolithique ultérieure a affiché 202 réussites,
+mais le broker a coupé le processus à 300 secondes ; elle n’est pas retenue.
 
 Aucun tenant n’a été activé, aucune migration n’a été appliquée en production,
 aucune génération réelle n’a été lancée et aucun redéploiement n’a été demandé.

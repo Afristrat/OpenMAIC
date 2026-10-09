@@ -21,10 +21,12 @@ modèle, ni le rendu obtenu. Aucun cours de production ni quota fournisseur n’
 - WP9 expose le réglage par tenant, les métriques agrégées et les règles du
   linter. Le flag est désactivé par défaut ; aucun tenant n’a été activé.
 - Au SHA `2850bfac`, la suite complète a passé 559 fichiers et 3 462 tests, le
-  build de production a passé, et le parcours Playwright s’est terminé à
-  201/202 lors du premier passage. Le cas restant, widget publié en français,
-  échouait sur un conflit IndexedDB dans la suite complète, puis a passé seul
-  en 1/1. La suite E2E complète n’est donc pas déclarée verte.
+  build de production a passé. La première suite Playwright s’est terminée à
+  201/202 ; le widget français en échec a passé seul. Une nouvelle exécution
+  complète en quatre shards a passé 202/202 avec codes de sortie 0 (51 + 51 +
+  50 + 50), dont le même widget français. Le défaut intermittent n’a pas été
+  reproduit. Une exécution monolithique ultérieure a affiché 202 réussites, mais
+  le broker l’a interrompue à 300 secondes ; son code final n’est pas retenu.
 - Aucun contrôle visuel côte à côte du lecteur, du PPTX, du MP4 et du SCORM à
   partir des mêmes cinq formations n’a été exécuté.
 
