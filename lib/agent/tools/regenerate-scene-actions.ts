@@ -54,6 +54,7 @@ export interface SceneContext {
   languageDirective?: string;
   /** The immutable course visual direction, replayed for whole-slide regeneration. */
   designDirective?: import('@openmaic/dsl').DesignDirective;
+  brandSnapshot?: import('@openmaic/dsl').Stage['brandSnapshot'];
   /** Persisted source contract for this scene; never reconstructed from the edit instruction. */
   sourceGrounding?: SceneSourceGrounding;
   /**

@@ -179,6 +179,7 @@ export function makeRegenerateSceneTool(
         agents,
         languageDirective,
         designDirective,
+        brandSnapshot,
         sourceGrounding,
       } = ctxData;
       void stageId;
@@ -254,6 +255,7 @@ export function makeRegenerateSceneTool(
         agents,
         languageDirective,
         designDirective,
+        brandSnapshot,
         sourceGrounding,
         editDirective: instruction,
         baselineContent: editBaseline,

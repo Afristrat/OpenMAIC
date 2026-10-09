@@ -61,6 +61,7 @@ export interface StageRecord {
   language?: string;
   languageDirective?: string;
   designDirective?: DesignDirective;
+  brandSnapshot?: Stage['brandSnapshot'];
   skillPromptContext?: SkillPromptContext;
   style?: string;
   currentSceneId?: string;

@@ -94,6 +94,7 @@ import {
 } from '@/lib/formation-engine/learning-context';
 import {
   organizationDesignSystemFromSettings,
+  serializeBrandSnapshot,
   type OrganizationDesignSystem,
 } from '@/lib/branding/organization-design-system';
 import {
@@ -598,6 +599,15 @@ export async function generateClassroom(
   const courseDesignDirective = designSystemEnabled
     ? outlinesResult.data.designDirective
     : undefined;
+  const brandSnapshotContent = designSystemEnabled && organizationDesignSystem
+    ? serializeBrandSnapshot(organizationDesignSystem)
+    : undefined;
+  if (brandSnapshotContent?.warnings.length) {
+    for (const warning of brandSnapshotContent.warnings) log.warn(warning);
+  }
+  const brandSnapshot = brandSnapshotContent
+    ? { version: 1 as const, createdAt: new Date().toISOString(), content: brandSnapshotContent.text }
+    : undefined;
 
   if (expectedSceneCount && outlinesResult.data.outlines.length !== expectedSceneCount) {
     const actualSceneLabel = outlinesResult.data.outlines.length === 1 ? 'scene' : 'scenes';
@@ -761,6 +771,7 @@ export async function generateClassroom(
       ...(courseDesignDirective
         ? { designDirective: courseDesignDirective }
         : {}),
+      ...(brandSnapshot ? { brandSnapshot } : {}),
       learningContext,
       skillPromptContext: {
         enabled: skillEngineEnabled,
@@ -904,6 +915,7 @@ export async function generateClassroom(
             ...(courseDesignDirective
               ? { designDirective: courseDesignDirective }
               : {}),
+            ...(brandSnapshot ? { brandSnapshot } : {}),
             sourceGrounding,
             assignedImages,
             imageMapping,

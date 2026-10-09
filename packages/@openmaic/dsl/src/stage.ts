@@ -129,6 +129,8 @@ export interface Stage {
   languageDirective?: string;
   /** Immutable course-level visual direction selected during outline planning. */
   designDirective?: DesignDirective;
+  /** Compact tenant charter frozen when the course is created. */
+  brandSnapshot?: { version: 1; createdAt: string; content: string };
   skillPromptContext?: SkillPromptContext;
   learningContext?: LearningContext;
   /** Sources consulted for this classroom when web research was enabled. */
