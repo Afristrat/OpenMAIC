@@ -339,9 +339,13 @@ export async function generateSceneOutlinesFromRequirements(
     } else if (parsed && parsed.outlines) {
       languageDirective = parsed.languageDirective || DEFAULT_LANGUAGE_DIRECTIVE;
       if (options?.designSystemEnabled) {
-        const normalized = normalizeDesignDirective(parsed.designDirective);
-        designDirective = normalized.directive;
-        for (const warning of normalized.warnings) log.warn(warning);
+        if (parsed.designDirective === undefined) {
+          designDirective = DEFAULT_DESIGN_DIRECTIVE;
+        } else {
+          const normalized = normalizeDesignDirective(parsed.designDirective);
+          designDirective = normalized.directive;
+          for (const warning of normalized.warnings) log.warn(warning);
+        }
       }
       // courseTitle is optional — only honor a non-empty string, and cap its
       // length defensively (the prompt asks for ≤30 chars, but older/hallucinating
