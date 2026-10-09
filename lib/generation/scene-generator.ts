@@ -382,7 +382,10 @@ export async function generateSceneContent(
     sourceGrounding,
   } = options;
   const sceneAiCall: AICallFn = (systemPrompt, userPrompt, images, context) =>
-    aiCall(systemPrompt, userPrompt, images, { ...context, sceneId: context?.sceneId ?? outline.id });
+    aiCall(systemPrompt, userPrompt, images, {
+      ...context,
+      sceneId: context?.sceneId ?? outline.id,
+    });
   sceneAiCall.recordDesignEvent = aiCall.recordDesignEvent;
 
   // Unified path for interactive scenes (both normal and ultra mode)
@@ -2386,7 +2389,10 @@ export async function generateSceneActions(
   const { ctx, agents, requiredAgentIds, userProfile, languageDirective, sourceGrounding } =
     options;
   const sceneAiCall: AICallFn = (systemPrompt, userPrompt, images, context) =>
-    aiCall(systemPrompt, userPrompt, images, { ...context, sceneId: context?.sceneId ?? outline.id });
+    aiCall(systemPrompt, userPrompt, images, {
+      ...context,
+      sceneId: context?.sceneId ?? outline.id,
+    });
   sceneAiCall.recordDesignEvent = aiCall.recordDesignEvent;
   const requiredAgents =
     agents?.filter((agent) => requiredAgentIds?.includes(agent.id)).map((agent) => agent.id) ?? [];

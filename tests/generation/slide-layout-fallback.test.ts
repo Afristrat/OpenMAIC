@@ -69,19 +69,15 @@ describe('slide layout fallback', () => {
         ],
       });
     aiCall.recordDesignEvent = recordDesignEvent;
-    const content = await generateSceneContent(
-      outline,
-      aiCall,
-      {
-        designDirective: DEFAULT_DESIGN_DIRECTIVE,
-        brandSnapshot: {
-          version: 1,
-          createdAt: '2026-10-09T00:00:00.000Z',
-          content:
-            'colors: background=#F7F8FA ink=#202A35 accent=#7A2E8E\nfonts: display=Merriweather; body=Inter; utility=Inter',
-        },
+    const content = await generateSceneContent(outline, aiCall, {
+      designDirective: DEFAULT_DESIGN_DIRECTIVE,
+      brandSnapshot: {
+        version: 1,
+        createdAt: '2026-10-09T00:00:00.000Z',
+        content:
+          'colors: background=#F7F8FA ink=#202A35 accent=#7A2E8E\nfonts: display=Merriweather; body=Inter; utility=Inter',
       },
-    );
+    });
 
     expect(content).not.toBeNull();
     if (!content || !('elements' in content)) return;

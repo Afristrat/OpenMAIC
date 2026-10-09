@@ -3,9 +3,9 @@ import { designSystemWarningRuleId } from '@/lib/branding/design-system-telemetr
 
 describe('design system telemetry classification', () => {
   it('classifies font mapping, contrast correction, and invalid colors without storing warning text', () => {
-    expect(designSystemWarningRuleId('Charte : police display « Arial » remplacée par Inter.')).toBe(
-      'charter_font_mapped',
-    );
+    expect(
+      designSystemWarningRuleId('Charte : police display « Arial » remplacée par Inter.'),
+    ).toBe('charter_font_mapped');
     expect(
       designSystemWarningRuleId(
         'Charte : contraste insuffisant pour accent ; luminosité ajustée (#FFFFFF → #111111).',

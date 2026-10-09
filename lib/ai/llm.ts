@@ -235,9 +235,7 @@ async function finalizeLLMUsage(
   ]);
 }
 
-async function readLLMUsageCost(
-  reservations: LLMUsageReservations | null,
-): Promise<{
+async function readLLMUsageCost(reservations: LLMUsageReservations | null): Promise<{
   amountMicrounits: number | null;
   currency: string | null;
   status: 'valued' | 'pending_configuration' | 'unmetered';
@@ -471,9 +469,7 @@ export async function callLLM<T extends GenerateTextParams>(
             cost: await readLLMUsageCost(metered.reservations),
             providerId: getModelProviderId(metered.params) ?? 'unknown',
             modelId: getModelId(metered.params),
-            currency: resolveProviderCostCurrency(
-              getModelProviderId(metered.params) ?? 'unknown',
-            ),
+            currency: resolveProviderCostCurrency(getModelProviderId(metered.params) ?? 'unknown'),
           });
         } catch (error) {
           log.warn(`[${source}] Usage telemetry unavailable`, error);

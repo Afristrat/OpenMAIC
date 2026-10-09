@@ -120,7 +120,10 @@ export default function OrgAdminPage() {
     lintIssuesByRule: Record<string, number>;
     providerCost: {
       byCurrencyMicrounits: Record<string, number>;
-      averagePerSceneByCurrency: Record<string, { averageMicrounits: number; measuredScenes: number }>;
+      averagePerSceneByCurrency: Record<
+        string,
+        { averageMicrounits: number; measuredScenes: number }
+      >;
       pendingConfigurationCalls: number;
     };
   }>();
@@ -166,9 +169,9 @@ export default function OrgAdminPage() {
       setEditLogo(orgData.logo ?? '');
       const savedDesignSystem = organizationDesignSystemFromSettings(orgData.settings);
       setBrandDesignSystem(savedDesignSystem);
-      const organizationSettings = orgData.settings as
-        | { features?: { design_system_v1?: unknown } }
-        | null;
+      const organizationSettings = orgData.settings as {
+        features?: { design_system_v1?: unknown };
+      } | null;
       setDesignSystemEnabled(organizationSettings?.features?.design_system_v1 === true);
       setBrandWebsiteUrl(savedDesignSystem?.sourceUrl ?? '');
       setPresentationBrandMode(
@@ -248,7 +251,10 @@ export default function OrgAdminPage() {
         if (!current) return current;
         const settings = (current.settings as Record<string, unknown> | null) ?? {};
         const features = (settings.features as Record<string, unknown> | null) ?? {};
-        return { ...current, settings: { ...settings, features: { ...features, design_system_v1: enabled } } };
+        return {
+          ...current,
+          settings: { ...settings, features: { ...features, design_system_v1: enabled } },
+        };
       });
       toast.success(t(enabled ? 'org.designSystemEnabled' : 'org.designSystemDisabled'));
     } catch {
@@ -568,7 +574,10 @@ export default function OrgAdminPage() {
       </section>
 
       {isAdmin && (
-        <section className="mb-10 rounded-lg border bg-card p-6" aria-labelledby="design-system-title">
+        <section
+          className="mb-10 rounded-lg border bg-card p-6"
+          aria-labelledby="design-system-title"
+        >
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <h2 id="design-system-title" className="text-lg font-semibold">
@@ -596,7 +605,9 @@ export default function OrgAdminPage() {
                 <p className="text-xl font-semibold">{designMetrics.calls}</p>
               </div>
               <div className="rounded-md border p-3">
-                <p className="text-xs text-muted-foreground">{t('org.designSystemAveragePrompt')}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t('org.designSystemAveragePrompt')}
+                </p>
                 <p className="text-xl font-semibold">
                   {designMetrics.averagePromptChars === null
                     ? '—'
@@ -604,7 +615,9 @@ export default function OrgAdminPage() {
                 </p>
               </div>
               <div className="rounded-md border p-3">
-                <p className="text-xs text-muted-foreground">{t('org.designSystemAverageLatency')}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t('org.designSystemAverageLatency')}
+                </p>
                 <p className="text-xl font-semibold">
                   {designMetrics.averageLatencyMs === null
                     ? '—'
@@ -620,25 +633,34 @@ export default function OrgAdminPage() {
                 {Object.keys(designMetrics.lintIssuesByRule).length ? (
                   <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
                     {Object.entries(designMetrics.lintIssuesByRule).map(([rule, count]) => (
-                      <li key={rule}>{rule}: {count}</li>
+                      <li key={rule}>
+                        {rule}: {count}
+                      </li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="mt-1 text-sm text-muted-foreground">{t('org.designSystemNoLintIssues')}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {t('org.designSystemNoLintIssues')}
+                  </p>
                 )}
                 <p className="mt-2 text-xs text-muted-foreground">
                   {t('org.designSystemCostStatus', {
                     pending: designMetrics.providerCost.pendingConfigurationCalls,
-                    amount: Object.entries(designMetrics.providerCost.byCurrencyMicrounits)
-                      .map(([currency, amount]) => `${currency} ${amount}`)
-                      .join(', ') || '—',
+                    amount:
+                      Object.entries(designMetrics.providerCost.byCurrencyMicrounits)
+                        .map(([currency, amount]) => `${currency} ${amount}`)
+                        .join(', ') || '—',
                   })}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {t('org.designSystemCostPerScene', {
-                    value: Object.entries(designMetrics.providerCost.averagePerSceneByCurrency)
-                      .map(([currency, details]) => `${currency} ${Math.round(details.averageMicrounits)} (${details.measuredScenes})`)
-                      .join(', ') || '—',
+                    value:
+                      Object.entries(designMetrics.providerCost.averagePerSceneByCurrency)
+                        .map(
+                          ([currency, details]) =>
+                            `${currency} ${Math.round(details.averageMicrounits)} (${details.measuredScenes})`,
+                        )
+                        .join(', ') || '—',
                   })}
                 </p>
               </div>
