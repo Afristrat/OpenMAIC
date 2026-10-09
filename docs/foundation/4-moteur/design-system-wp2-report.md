@@ -3,7 +3,7 @@
 Date : 2026-10-09  
 Branche : `feature/adaptive-design-system`  
 Base : `refork-v030` à `b416c7f162457fe8938c8deebf25882924746621`  
-SHA validé et poussé : `d449c48af2d2133c2145bfa592f15e7e287a491e`
+Dernier SHA de la branche validé par le gate complet : `82708646`
 
 ## Résultat
 
@@ -37,7 +37,8 @@ Sur ServeurIA, dans le clone temporaire isolé de la branche, au SHA indiqué :
 - tests ciblés de sérialisation : 5/5 réussis, couvrant déterminisme, exclusion
   des métadonnées, polices, contraste, cinq chartes volumineuses et couleurs
   invalides ;
-- suite Vitest complète et build de production : code de sortie 0 ;
+- contrôle complet au SHA `82708646` : formatage, TypeScript, ESLint, suite
+  Vitest et build de production, tous avec code de sortie 0 ;
 - Playwright : quatre shards, 51 + 51 + 50 + 50, soit 202 tests réussis.
 
 La première exécution Playwright monolithique a affiché 202 réussites, mais le
@@ -45,15 +46,18 @@ broker a interrompu la fermeture du processus à sa limite de 300 secondes. Le
 résultat n’a pas été compté comme une preuve. Les quatre shards rejoués ensuite
 ont chacun rendu un code de sortie 0.
 
-## Limites de cette livraison
+## Portée et contrôles manquants
 
 Aucune génération réelle, consommation de quota, modification de tenant,
 activation de flag ou mise en production n’a été effectuée. La charte n’est
 appliquée qu’aux organisations dont
-`settings.features.design_system_v1 === true`. L’action d’administration
-« resynchroniser la charte » n’est pas présente ; la resynchronisation manuelle
-d’un cours existant reste une suite documentée, afin de ne pas écraser son
-identité figée sans action explicite de l’auteur.
+`settings.features.design_system_v1 === true`. L’action explicite de
+resynchronisation est implémentée : elle ne remplace que l’instantané de charte
+du cours, contrôle les droits, vérifie l’écriture par une nouvelle lecture et
+ne modifie ni les scènes ni les slides. Elle est accessible dans la bibliothèque
+de l’organisation aux rôles autorisés. L’endpoint refuse un identifiant mal
+formé avant tout accès à la base. Son test ciblé est vert (1/1) au commit
+`fb6705df`.
 
 Les contrôles de contraste couvrent les rôles de premier plan contre les
 surfaces de fond déclarées usuelles ; ils ne constituent pas encore un audit
