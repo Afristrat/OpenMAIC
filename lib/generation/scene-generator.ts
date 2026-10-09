@@ -1507,9 +1507,10 @@ async function generateSlideContent(
         );
         return {
           elements: fallbackElements,
-          background: designDirective || brandSnapshot
-            ? { type: 'solid', color: slideTheme?.backgroundColor ?? '#FAFBFC' }
-            : background,
+          background:
+            designDirective || brandSnapshot
+              ? { type: 'solid', color: slideTheme?.backgroundColor ?? '#FAFBFC' }
+              : background,
           remark: generatedData.remark || outline.description,
         };
       }

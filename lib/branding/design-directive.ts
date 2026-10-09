@@ -229,7 +229,9 @@ function snapshotDesignTokens(
   if (snapshot?.version !== 1 || !snapshot.content) return { colors: {} };
   const colorLine = snapshot.content.match(/(?:^|\n)colors:\s*([^\n]*)/u)?.[1] ?? '';
   const colors: Record<string, string> = {};
-  for (const match of colorLine.matchAll(/\b(background|surface|ink|accent|muted|secondary)=(#[\da-fA-F]{6})\b/gu)) {
+  for (const match of colorLine.matchAll(
+    /\b(background|surface|ink|accent|muted|secondary)=(#[\da-fA-F]{6})\b/gu,
+  )) {
     colors[match[1]] = match[2].toUpperCase();
   }
   const requestedFont = snapshot.content.match(/(?:^|\n)fonts:\s*display=([^;\n]+)/u)?.[1]?.trim();
