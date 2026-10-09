@@ -59,7 +59,44 @@ export async function PATCH(
   const auth = await requireSuperAdminOrOrgAdmin(request, orgId);
   if (auth.response) return auth.response;
   try {
-    const body = (await request.json()) as { designSystem?: unknown; logoUrl?: unknown };
+    const body = (await request.json()) as {
+      designSystem?: unknown;
+      logoUrl?: unknown;
+      designSystemEnabled?: unknown;
+    };
+    if (typeof body.designSystemEnabled === 'boolean') {
+      const supabase = createServiceSupabaseClient();
+      const { data: organization, error: readError } = await supabase
+        .from('organizations')
+        .select('settings')
+        .eq('id', orgId)
+        .single();
+      if (readError || !organization) {
+        return apiError('INVALID_REQUEST', 404, 'Organization not found');
+      }
+      const currentSettings =
+        organization.settings &&
+        typeof organization.settings === 'object' &&
+        !Array.isArray(organization.settings)
+          ? (organization.settings as Record<string, unknown>)
+          : {};
+      const currentFeatures =
+        currentSettings.features &&
+        typeof currentSettings.features === 'object' &&
+        !Array.isArray(currentSettings.features)
+          ? (currentSettings.features as Record<string, unknown>)
+          : {};
+      const settings = {
+        ...currentSettings,
+        features: { ...currentFeatures, design_system_v1: body.designSystemEnabled },
+      };
+      const { error: updateError } = await supabase
+        .from('organizations')
+        .update({ settings })
+        .eq('id', orgId);
+      if (updateError) return apiError('INTERNAL_ERROR', 500, updateError.message);
+      return apiSuccess({ designSystemEnabled: body.designSystemEnabled });
+    }
     const designSystem = organizationDesignSystemFromSettings({
       brandDesignSystem: body.designSystem,
     });

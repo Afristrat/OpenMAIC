@@ -111,6 +111,20 @@ export default function OrgAdminPage() {
   const [editLogo, setEditLogo] = useState('');
   const [brandWebsiteUrl, setBrandWebsiteUrl] = useState('');
   const [brandDesignSystem, setBrandDesignSystem] = useState<OrganizationDesignSystem>();
+  const [designSystemEnabled, setDesignSystemEnabled] = useState(false);
+  const [designMetrics, setDesignMetrics] = useState<{
+    calls: number;
+    layoutFallbacks: number;
+    averagePromptChars: number | null;
+    averageLatencyMs: number | null;
+    lintIssuesByRule: Record<string, number>;
+    providerCost: {
+      byCurrencyMicrounits: Record<string, number>;
+      averagePerSceneByCurrency: Record<string, { averageMicrounits: number; measuredScenes: number }>;
+      pendingConfigurationCalls: number;
+    };
+  }>();
+  const [savingDesignSystemFlag, setSavingDesignSystemFlag] = useState(false);
   const [extractingBrand, setExtractingBrand] = useState(false);
   const [savingBrand, setSavingBrand] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -152,6 +166,10 @@ export default function OrgAdminPage() {
       setEditLogo(orgData.logo ?? '');
       const savedDesignSystem = organizationDesignSystemFromSettings(orgData.settings);
       setBrandDesignSystem(savedDesignSystem);
+      const organizationSettings = orgData.settings as
+        | { features?: { design_system_v1?: unknown } }
+        | null;
+      setDesignSystemEnabled(organizationSettings?.features?.design_system_v1 === true);
       setBrandWebsiteUrl(savedDesignSystem?.sourceUrl ?? '');
       setPresentationBrandMode(
         presentationBrandingFromOrganization(orgData.logo, orgData.settings).mode,
@@ -203,9 +221,48 @@ export default function OrgAdminPage() {
     }
   }, [orgId]);
 
+  const fetchDesignMetrics = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/organizations/${orgId}/design-system-metrics`);
+      if (!response.ok) return;
+      const payload = await response.json();
+      setDesignMetrics(payload.data ?? payload);
+    } catch {
+      setDesignMetrics(undefined);
+    }
+  }, [orgId]);
+
+  const handleDesignSystemToggle = async () => {
+    if (!isAdmin) return;
+    setSavingDesignSystemFlag(true);
+    try {
+      const response = await fetch(`/api/organizations/${orgId}/brand-system`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ designSystemEnabled: !designSystemEnabled }),
+      });
+      if (!response.ok) throw new Error(t('org.designSystemSaveFailed'));
+      const enabled = !designSystemEnabled;
+      setDesignSystemEnabled(enabled);
+      setOrg((current) => {
+        if (!current) return current;
+        const settings = (current.settings as Record<string, unknown> | null) ?? {};
+        const features = (settings.features as Record<string, unknown> | null) ?? {};
+        return { ...current, settings: { ...settings, features: { ...features, design_system_v1: enabled } } };
+      });
+      toast.success(t(enabled ? 'org.designSystemEnabled' : 'org.designSystemDisabled'));
+    } catch {
+      toast.error(t('org.designSystemSaveFailed'));
+    } finally {
+      setSavingDesignSystemFlag(false);
+    }
+  };
+
   useEffect(() => {
-    Promise.all([fetchOrg(), fetchMembers(), fetchMetrics()]).then(() => setIsLoading(false));
-  }, [fetchOrg, fetchMembers, fetchMetrics]);
+    Promise.all([fetchOrg(), fetchMembers(), fetchMetrics(), fetchDesignMetrics()]).then(() =>
+      setIsLoading(false),
+    );
+  }, [fetchOrg, fetchMembers, fetchMetrics, fetchDesignMetrics]);
 
   const handleSaveSettings = async () => {
     if (!isAdmin) return;
@@ -509,6 +566,86 @@ export default function OrgAdminPage() {
           <p className="text-xs text-muted-foreground">{t('org.dashboardCompletion')}</p>
         </div>
       </section>
+
+      {isAdmin && (
+        <section className="mb-10 rounded-lg border bg-card p-6" aria-labelledby="design-system-title">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h2 id="design-system-title" className="text-lg font-semibold">
+                {t('org.designSystemTitle')}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {t('org.designSystemDescription')}
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant={designSystemEnabled ? 'default' : 'outline'}
+              disabled={savingDesignSystemFlag}
+              onClick={() => void handleDesignSystemToggle()}
+            >
+              {savingDesignSystemFlag
+                ? t('common.loading')
+                : t(designSystemEnabled ? 'org.designSystemTurnOff' : 'org.designSystemTurnOn')}
+            </Button>
+          </div>
+          {designMetrics && (
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-md border p-3">
+                <p className="text-xs text-muted-foreground">{t('org.designSystemCalls')}</p>
+                <p className="text-xl font-semibold">{designMetrics.calls}</p>
+              </div>
+              <div className="rounded-md border p-3">
+                <p className="text-xs text-muted-foreground">{t('org.designSystemAveragePrompt')}</p>
+                <p className="text-xl font-semibold">
+                  {designMetrics.averagePromptChars === null
+                    ? '—'
+                    : `${Math.round(designMetrics.averagePromptChars)} ${t('org.designSystemCharacters')}`}
+                </p>
+              </div>
+              <div className="rounded-md border p-3">
+                <p className="text-xs text-muted-foreground">{t('org.designSystemAverageLatency')}</p>
+                <p className="text-xl font-semibold">
+                  {designMetrics.averageLatencyMs === null
+                    ? '—'
+                    : `${Math.round(designMetrics.averageLatencyMs)} ms`}
+                </p>
+              </div>
+              <div className="rounded-md border p-3">
+                <p className="text-xs text-muted-foreground">{t('org.designSystemFallbacks')}</p>
+                <p className="text-xl font-semibold">{designMetrics.layoutFallbacks}</p>
+              </div>
+              <div className="sm:col-span-2 lg:col-span-4">
+                <p className="text-sm font-medium">{t('org.designSystemLintTitle')}</p>
+                {Object.keys(designMetrics.lintIssuesByRule).length ? (
+                  <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                    {Object.entries(designMetrics.lintIssuesByRule).map(([rule, count]) => (
+                      <li key={rule}>{rule}: {count}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-1 text-sm text-muted-foreground">{t('org.designSystemNoLintIssues')}</p>
+                )}
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {t('org.designSystemCostStatus', {
+                    pending: designMetrics.providerCost.pendingConfigurationCalls,
+                    amount: Object.entries(designMetrics.providerCost.byCurrencyMicrounits)
+                      .map(([currency, amount]) => `${currency} ${amount}`)
+                      .join(', ') || '—',
+                  })}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t('org.designSystemCostPerScene', {
+                    value: Object.entries(designMetrics.providerCost.averagePerSceneByCurrency)
+                      .map(([currency, details]) => `${currency} ${Math.round(details.averageMicrounits)} (${details.measuredScenes})`)
+                      .join(', ') || '—',
+                  })}
+                </p>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Settings Section */}
       {isAdmin && (

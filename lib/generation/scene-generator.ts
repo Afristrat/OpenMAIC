@@ -381,6 +381,9 @@ export async function generateSceneContent(
     activeSkillId,
     sourceGrounding,
   } = options;
+  const sceneAiCall: AICallFn = (systemPrompt, userPrompt, images, context) =>
+    aiCall(systemPrompt, userPrompt, images, { ...context, sceneId: context?.sceneId ?? outline.id });
+  sceneAiCall.recordDesignEvent = aiCall.recordDesignEvent;
 
   // Unified path for interactive scenes (both normal and ultra mode)
   if (outline.type === 'interactive') {
@@ -403,7 +406,7 @@ export async function generateSceneContent(
     }
 
     // Route to widget generation (handles all 5 types)
-    return generateWidgetContent(outline, aiCall, languageDirective, {
+    return generateWidgetContent(outline, sceneAiCall, languageDirective, {
       allowProceduralSkill,
       sourceGrounding,
       brandSnapshot,
@@ -415,7 +418,7 @@ export async function generateSceneContent(
     case 'slide':
       return generateSlideContent(
         outline,
-        aiCall,
+        sceneAiCall,
         assignedImages,
         imageMapping,
         requiredSourceImageIds,
@@ -437,7 +440,7 @@ export async function generateSceneContent(
     case 'quiz':
       return generateQuizContent(
         outline,
-        aiCall,
+        sceneAiCall,
         languageDirective,
         userRequirements,
         courseOutlines,
@@ -459,7 +462,7 @@ export async function generateSceneContent(
         sourceGrounding,
       );
     case 'plugin':
-      return generatePluginContent(outline, aiCall, languageDirective, sourceGrounding);
+      return generatePluginContent(outline, sceneAiCall, languageDirective, sourceGrounding);
     default:
       return null;
   }
@@ -1319,7 +1322,7 @@ async function generateSlideContent(
 
   userPrompt = withSourceGrounding(userPrompt, sourceGrounding);
 
-  const response = await aiCall(prompts.system, userPrompt, visionImages);
+  const response = await aiCall(prompts.system, userPrompt, visionImages, { sceneId: outline.id });
   const generatedData = parseJsonResponse<GeneratedSlideData>(response);
 
   if (!generatedData || !generatedData.elements || !Array.isArray(generatedData.elements)) {
@@ -1481,10 +1484,10 @@ async function generateSlideContent(
     }
   }
 
-  const lintAdaptiveElements = (
+  const lintAdaptiveElements = async (
     elements: PPTElement[],
     slideBackground?: SlideBackground,
-  ): PPTElement[] | null => {
+  ): Promise<PPTElement[] | null> => {
     if (!slideTheme || (!designDirective && !brandSnapshot)) return elements;
     const result = lintAndRepairAdaptiveSlide(
       {
@@ -1504,6 +1507,11 @@ async function generateSlideContent(
       log[issue.severity === 'error' ? 'warn' : 'info'](
         `[${issue.ruleId}] slide=${outline.id} element=${issue.elementId ?? 'n/a'} repaired=${issue.repaired === true}: ${issue.message}`,
       );
+      await aiCall.recordDesignEvent?.({
+        sceneId: outline.id,
+        eventType: 'lint_issue',
+        ruleId: issue.ruleId,
+      });
     }
     const errors = result.issues.filter((issue) => issue.severity === 'error');
     if (errors.length > 0) {
@@ -1548,8 +1556,12 @@ async function generateSlideContent(
           designDirective || brandSnapshot
             ? { type: 'solid' as const, color: slideTheme?.backgroundColor ?? '#FAFBFC' }
             : background;
-        const lintedFallback = lintAdaptiveElements(fallbackElements, fallbackBackground);
+        const lintedFallback = await lintAdaptiveElements(fallbackElements, fallbackBackground);
         if (!lintedFallback) return null;
+        await aiCall.recordDesignEvent?.({
+          sceneId: outline.id,
+          eventType: 'layout_fallback',
+        });
         log.warn(
           `Replaced invalid model geometry with deterministic safe layout for ${outline.id}`,
         );
@@ -1567,7 +1579,7 @@ async function generateSlideContent(
     return null;
   }
 
-  const lintedElements = lintAdaptiveElements(processedElements, background);
+  const lintedElements = await lintAdaptiveElements(processedElements, background);
   if (!lintedElements) return null;
 
   return {
@@ -2373,6 +2385,9 @@ export async function generateSceneActions(
 ): Promise<Action[]> {
   const { ctx, agents, requiredAgentIds, userProfile, languageDirective, sourceGrounding } =
     options;
+  const sceneAiCall: AICallFn = (systemPrompt, userPrompt, images, context) =>
+    aiCall(systemPrompt, userPrompt, images, { ...context, sceneId: context?.sceneId ?? outline.id });
+  sceneAiCall.recordDesignEvent = aiCall.recordDesignEvent;
   const requiredAgents =
     agents?.filter((agent) => requiredAgentIds?.includes(agent.id)).map((agent) => agent.id) ?? [];
   const agentsText = [
@@ -2430,7 +2445,7 @@ export async function generateSceneActions(
           .filter(Boolean)
           .join('\n\n');
         const actions = parseActionsFromStructuredOutput(
-          await aiCall(systemPrompt, withSourceGrounding(prompts.user, sourceGrounding)),
+          await sceneAiCall(systemPrompt, withSourceGrounding(prompts.user, sourceGrounding)),
           outline.type,
         );
         processed = processActions(actions, content.elements, agents);
@@ -2455,7 +2470,7 @@ export async function generateSceneActions(
       outline,
       agents,
       requiredAgentIds,
-      aiCall,
+      sceneAiCall,
       languageDirective,
       sourceGrounding,
     );
@@ -2483,7 +2498,7 @@ export async function generateSceneActions(
 
     const actions = prompts
       ? parseActionsFromStructuredOutput(
-          await aiCall(prompts.system, withSourceGrounding(prompts.user, sourceGrounding)),
+          await sceneAiCall(prompts.system, withSourceGrounding(prompts.user, sourceGrounding)),
           outline.type,
         )
       : [];
@@ -2497,7 +2512,7 @@ export async function generateSceneActions(
       outline,
       agents,
       requiredAgentIds,
-      aiCall,
+      sceneAiCall,
       languageDirective,
       sourceGrounding,
     );
@@ -2521,7 +2536,7 @@ export async function generateSceneActions(
 
     const actions = prompts
       ? parseActionsFromStructuredOutput(
-          await aiCall(prompts.system, withSourceGrounding(prompts.user, sourceGrounding)),
+          await sceneAiCall(prompts.system, withSourceGrounding(prompts.user, sourceGrounding)),
           outline.type,
           INTERACTIVE_WIDGET_ACTIONS,
         )
@@ -2536,7 +2551,7 @@ export async function generateSceneActions(
       outline,
       agents,
       requiredAgentIds,
-      aiCall,
+      sceneAiCall,
       languageDirective,
       sourceGrounding,
     );
@@ -2558,7 +2573,7 @@ export async function generateSceneActions(
 
     const actions = prompts
       ? parseActionsFromStructuredOutput(
-          await aiCall(prompts.system, withSourceGrounding(prompts.user, sourceGrounding)),
+          await sceneAiCall(prompts.system, withSourceGrounding(prompts.user, sourceGrounding)),
           outline.type,
         )
       : [];
@@ -2572,7 +2587,7 @@ export async function generateSceneActions(
       outline,
       agents,
       requiredAgentIds,
-      aiCall,
+      sceneAiCall,
       languageDirective,
       sourceGrounding,
     );

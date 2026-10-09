@@ -24,6 +24,7 @@ import {
   resolveProviderCostCurrency,
   reserveTenantUsage,
 } from '@/lib/billing/usage-metering';
+import { createServiceSupabaseClient } from '@/lib/supabase/service';
 const log = createLogger('LLM');
 
 // Re-export for external use
@@ -234,6 +235,45 @@ async function finalizeLLMUsage(
   ]);
 }
 
+async function readLLMUsageCost(
+  reservations: LLMUsageReservations | null,
+): Promise<{
+  amountMicrounits: number | null;
+  currency: string | null;
+  status: 'valued' | 'pending_configuration' | 'unmetered';
+}> {
+  if (!reservations) return { amountMicrounits: null, currency: null, status: 'unmetered' };
+  const supabase = createServiceSupabaseClient();
+  const { data: reservationRows, error: reservationError } = await supabase
+    .from('tenant_usage_reservations')
+    .select('valued_usage_id')
+    .in('id', reservations.reservationIds);
+  if (reservationError) throw new Error('LLM usage valuation lookup failed');
+  const usageIds = (reservationRows ?? [])
+    .map((row) => row.valued_usage_id)
+    .filter((id): id is string => typeof id === 'string');
+  if (usageIds.length !== reservations.reservationIds.length) {
+    return { amountMicrounits: null, currency: null, status: 'pending_configuration' };
+  }
+  const { data: values, error: valueError } = await supabase
+    .from('valued_billable_usage')
+    .select('cost_microunits, sell_currency')
+    .in('id', usageIds);
+  if (valueError) throw new Error('LLM provider cost lookup failed');
+  if (!values || values.length !== usageIds.length) {
+    return { amountMicrounits: null, currency: null, status: 'pending_configuration' };
+  }
+  const currencies = new Set(values.map((value) => value.sell_currency));
+  if (currencies.size !== 1) {
+    return { amountMicrounits: null, currency: null, status: 'pending_configuration' };
+  }
+  return {
+    amountMicrounits: values.reduce((sum, value) => sum + Number(value.cost_microunits), 0),
+    currency: values[0].sell_currency,
+    status: 'valued',
+  };
+}
+
 async function releaseLLMUsage(
   reservations: LLMUsageReservations | null,
   reason: string,
@@ -391,6 +431,15 @@ export async function callLLM<T extends GenerateTextParams>(
   source: string,
   retryOptions?: LLMRetryOptions,
   thinking?: ThinkingConfig,
+  telemetry?: {
+    onUsage?: (details: {
+      usage: LanguageModelUsage;
+      cost: Awaited<ReturnType<typeof readLLMUsageCost>>;
+      providerId: string;
+      modelId: string;
+      currency: string;
+    }) => void | Promise<void>;
+  },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<GenerateTextResult<any, any>> {
   const maxAttempts = (retryOptions?.retries ?? 0) + 1;
@@ -415,6 +464,21 @@ export async function callLLM<T extends GenerateTextParams>(
       );
       await finalizeLLMUsage(metered.reservations, result.totalUsage);
       usageFinalized = true;
+      if (telemetry?.onUsage) {
+        try {
+          await telemetry.onUsage({
+            usage: result.totalUsage,
+            cost: await readLLMUsageCost(metered.reservations),
+            providerId: getModelProviderId(metered.params) ?? 'unknown',
+            modelId: getModelId(metered.params),
+            currency: resolveProviderCostCurrency(
+              getModelProviderId(metered.params) ?? 'unknown',
+            ),
+          });
+        } catch (error) {
+          log.warn(`[${source}] Usage telemetry unavailable`, error);
+        }
+      }
 
       // Validate result (only when retries are configured)
       if (validate && !validate(result.text)) {

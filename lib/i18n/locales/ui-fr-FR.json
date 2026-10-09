@@ -2786,5 +2786,21 @@
   "anchoring.coldEvaluationDescription": "Évaluez l’utilité et votre capacité à appliquer les acquis aujourd’hui.",
   "anchoring.coldEvaluationSent": "Votre évaluation a bien été enregistrée.",
   "common.previous": "Précédent",
-  "common.next": "Suivant"
+  "common.next": "Suivant",
+  "org.designSystemTitle": "Design system adaptatif",
+  "org.designSystemDescription": "Activez le thème adaptatif pour les nouvelles formations et consultez ses mesures sur les 30 derniers jours.",
+  "org.designSystemTurnOn": "Activer pour ce tenant",
+  "org.designSystemTurnOff": "Désactiver pour ce tenant",
+  "org.designSystemEnabled": "Le design system adaptatif est activé pour les prochaines générations.",
+  "org.designSystemDisabled": "Le design system adaptatif est désactivé ; le comportement historique est conservé.",
+  "org.designSystemSaveFailed": "Impossible d’enregistrer ce réglage.",
+  "org.designSystemCalls": "Appels de génération mesurés",
+  "org.designSystemAveragePrompt": "Longueur moyenne du prompt",
+  "org.designSystemCharacters": "caractères",
+  "org.designSystemAverageLatency": "Latence moyenne",
+  "org.designSystemFallbacks": "Replis de mise en page",
+  "org.designSystemLintTitle": "Corrections de conformité",
+  "org.designSystemNoLintIssues": "Aucune correction enregistrée sur la période.",
+  "org.designSystemCostStatus": "Coût fournisseur : {amount} micro-unités. Appels sans tarif configuré : {pending} ; leur coût reste non mesuré.",
+  "org.designSystemCostPerScene": "Coût moyen par scène générée, micro-unités (nombre de scènes) : {value}."
 }

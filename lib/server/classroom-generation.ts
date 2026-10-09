@@ -102,6 +102,10 @@ import {
   buildSlideTheme,
   isDesignSystemV1Enabled,
 } from '@/lib/branding/design-directive';
+import {
+  designSystemWarningRuleId,
+  recordDesignSystemGenerationEvent,
+} from '@/lib/branding/design-system-telemetry';
 import { normalizePdfImages, uploadedPdfSource } from '@/lib/server/pdf-source';
 import {
   applyClassroomVoiceOverrides,
@@ -355,6 +359,7 @@ export async function generateClassroom(
   // classroom generation, and skips the extra resolution when web search is off.
   let searchQueryModel = languageModel;
   let searchQueryThinking = classroomThinking;
+  let generatedStageId: string | null = null;
 
   const aiCall: AICallFn = async (systemPrompt, userPrompt, _images) => {
     await assertCourseGenerationAccess(input, options.ownerId);
@@ -375,8 +380,9 @@ export async function generateClassroom(
     return result.text;
   };
 
-  const sceneAiCall: AICallFn = async (systemPrompt, userPrompt, _images) => {
+  const sceneAiCall: AICallFn = async (systemPrompt, userPrompt, _images, context) => {
     await assertCourseGenerationAccess(input, options.ownerId);
+    const startedAt = Date.now();
     const result = await callLLM(
       {
         model: languageModel,
@@ -390,9 +396,48 @@ export async function generateClassroom(
       'generate-classroom-scene',
       undefined,
       classroomThinking,
+      designSystemEnabled
+        ? {
+            onUsage: async ({ usage, cost, providerId, modelId }) => {
+              try {
+                await recordDesignSystemGenerationEvent({
+                  org_id: input.orgId,
+                  stage_id: generatedStageId,
+                  scene_id: context?.sceneId ?? null,
+                  event_type: 'llm_call',
+                  provider_id: providerId,
+                  model_id: modelId,
+                  prompt_chars: systemPrompt.length + userPrompt.length,
+                  latency_ms: Date.now() - startedAt,
+                  input_tokens: usage.inputTokens ?? null,
+                  output_tokens: usage.outputTokens ?? null,
+                  provider_cost_microunits: cost.amountMicrounits,
+                  provider_cost_currency: cost.currency,
+                  valuation_status: cost.status,
+                });
+              } catch (error) {
+                log.warn('Design-system usage telemetry was not persisted', error);
+              }
+            },
+          }
+        : undefined,
     );
     await assertCourseGenerationAccess(input, options.ownerId);
     return result.text;
+  };
+  sceneAiCall.recordDesignEvent = async ({ sceneId, eventType, ruleId }) => {
+    if (!designSystemEnabled) return;
+    try {
+      await recordDesignSystemGenerationEvent({
+        org_id: input.orgId,
+        stage_id: generatedStageId,
+        scene_id: sceneId,
+        event_type: eventType,
+        rule_id: ruleId ?? null,
+      });
+    } catch (error) {
+      log.warn('Design-system compliance telemetry was not persisted', error);
+    }
   };
 
   const searchQueryAiCall: AICallFn = async (systemPrompt, userPrompt, _images) => {
@@ -604,7 +649,21 @@ export async function generateClassroom(
       ? serializeBrandSnapshot(organizationDesignSystem)
       : undefined;
   if (brandSnapshotContent?.warnings.length) {
-    for (const warning of brandSnapshotContent.warnings) log.warn(warning);
+    for (const warning of brandSnapshotContent.warnings) {
+      log.warn(warning);
+      const ruleId = designSystemWarningRuleId(warning);
+      if (ruleId) {
+        try {
+          await recordDesignSystemGenerationEvent({
+            org_id: input.orgId,
+            event_type: 'lint_issue',
+            rule_id: ruleId,
+          });
+        } catch (error) {
+          log.warn('Design-system charter telemetry was not persisted', error);
+        }
+      }
+    }
   }
   const brandSnapshot = brandSnapshotContent
     ? {
@@ -768,6 +827,7 @@ export async function generateClassroom(
   teachingProfile = teacherProfileFromClassroomCast(tenantAgentConfigs);
   try {
     const stageId = nanoid(10);
+    generatedStageId = stageId;
     const stage: Stage = {
       id: stageId,
       name: courseTitle || outlines[0]?.title || requirement.slice(0, 50),

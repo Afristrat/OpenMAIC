@@ -2786,5 +2786,21 @@
   "anchoring.coldEvaluationDescription": "Rate its usefulness and your ability to apply what you learned today.",
   "anchoring.coldEvaluationSent": "Your evaluation has been recorded.",
   "common.previous": "Previous",
-  "common.next": "Next"
+  "common.next": "Next",
+  "org.designSystemTitle": "Adaptive design system",
+  "org.designSystemDescription": "Enable the adaptive theme for new courses and review its metrics for the last 30 days.",
+  "org.designSystemTurnOn": "Enable for this tenant",
+  "org.designSystemTurnOff": "Disable for this tenant",
+  "org.designSystemEnabled": "The adaptive design system is enabled for future generations.",
+  "org.designSystemDisabled": "The adaptive design system is disabled; legacy behavior is preserved.",
+  "org.designSystemSaveFailed": "Could not save this setting.",
+  "org.designSystemCalls": "Measured generation calls",
+  "org.designSystemAveragePrompt": "Average prompt length",
+  "org.designSystemCharacters": "characters",
+  "org.designSystemAverageLatency": "Average latency",
+  "org.designSystemFallbacks": "Layout fallbacks",
+  "org.designSystemLintTitle": "Conformance corrections",
+  "org.designSystemNoLintIssues": "No corrections recorded in this period.",
+  "org.designSystemCostStatus": "Provider cost: {amount} micro-units. Calls without configured rates: {pending}; their cost remains unmeasured.",
+  "org.designSystemCostPerScene": "Average cost per generated scene, micro-units (scene count): {value}."
 }

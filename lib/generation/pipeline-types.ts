@@ -65,8 +65,15 @@ export interface GenerationCallbacks {
   onError?: (error: string) => void;
 }
 
-export type AICallFn = (
+export type AICallFn = ((
   systemPrompt: string,
   userPrompt: string,
   images?: Array<{ id: string; src: string }>,
-) => Promise<string>;
+  context?: { sceneId?: string },
+) => Promise<string>) & {
+  recordDesignEvent?: (event: {
+    sceneId: string;
+    eventType: 'lint_issue' | 'layout_fallback';
+    ruleId?: string;
+  }) => Promise<void>;
+};

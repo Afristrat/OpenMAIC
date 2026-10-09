@@ -1,10 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { Slide } from '@openmaic/dsl';
 
 import { auditSlideLayout } from '@/lib/edit/slide-layout-audit';
 import { generateSceneContent } from '@/lib/generation/scene-generator';
 import { DEFAULT_DESIGN_DIRECTIVE } from '@/lib/branding/design-directive';
 import type { SceneOutline } from '@/lib/types/generation';
+import type { AICallFn } from '@/lib/generation/pipeline-types';
 
 const outline: SceneOutline = {
   id: 'cash-flow-calculation',
@@ -50,24 +51,27 @@ describe('slide layout fallback', () => {
   });
 
   it('keeps tenant typography, palette and safe margins in the deterministic fallback', async () => {
+    const recordDesignEvent = vi.fn();
+    const aiCall: AICallFn = async () =>
+      JSON.stringify({
+        elements: [
+          {
+            id: 'outside-canvas',
+            type: 'text',
+            left: 1500,
+            top: 800,
+            width: 640,
+            height: 200,
+            content: '<p>Contenu pédagogique valide</p>',
+            defaultFontName: '',
+            defaultColor: '#333333',
+          },
+        ],
+      });
+    aiCall.recordDesignEvent = recordDesignEvent;
     const content = await generateSceneContent(
       outline,
-      async () =>
-        JSON.stringify({
-          elements: [
-            {
-              id: 'outside-canvas',
-              type: 'text',
-              left: 1500,
-              top: 800,
-              width: 640,
-              height: 200,
-              content: '<p>Contenu pédagogique valide</p>',
-              defaultFontName: '',
-              defaultColor: '#333333',
-            },
-          ],
-        }),
+      aiCall,
       {
         designDirective: DEFAULT_DESIGN_DIRECTIVE,
         brandSnapshot: {
@@ -89,6 +93,10 @@ describe('slide layout fallback', () => {
       defaultFontName: 'Merriweather',
       defaultColor: '#202A35',
       textType: 'title',
+    });
+    expect(recordDesignEvent).toHaveBeenCalledWith({
+      sceneId: outline.id,
+      eventType: 'layout_fallback',
     });
   });
 });

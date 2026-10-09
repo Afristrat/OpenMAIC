@@ -2786,5 +2786,21 @@
   "anchoring.coldEvaluationDescription": "قيّم الفائدة وقدرتك اليوم على تطبيق ما تعلمته.",
   "anchoring.coldEvaluationSent": "سُجل تقييمك بنجاح.",
   "common.previous": "السابق",
-  "common.next": "التالي"
+  "common.next": "التالي",
+  "org.designSystemTitle": "نظام التصميم التكيفي",
+  "org.designSystemDescription": "فعّل السمة التكيفية للدورات الجديدة واطّلع على مؤشرات آخر 30 يومًا.",
+  "org.designSystemTurnOn": "تفعيل لهذه المؤسسة",
+  "org.designSystemTurnOff": "إيقاف لهذه المؤسسة",
+  "org.designSystemEnabled": "تم تفعيل نظام التصميم التكيفي للتوليدات القادمة.",
+  "org.designSystemDisabled": "تم إيقاف نظام التصميم التكيفي؛ سيستمر السلوك السابق.",
+  "org.designSystemSaveFailed": "تعذر حفظ هذا الإعداد.",
+  "org.designSystemCalls": "طلبات التوليد المقاسة",
+  "org.designSystemAveragePrompt": "متوسط طول التعليمات",
+  "org.designSystemCharacters": "حرفًا",
+  "org.designSystemAverageLatency": "متوسط زمن الاستجابة",
+  "org.designSystemFallbacks": "حالات التخطيط الاحتياطي",
+  "org.designSystemLintTitle": "تصحيحات المطابقة",
+  "org.designSystemNoLintIssues": "لم تُسجل أي تصحيحات خلال هذه الفترة.",
+  "org.designSystemCostStatus": "تكلفة المزوّد: {amount} ميكرو-وحدة. الطلبات دون تسعيرة مضبوطة: {pending}؛ تكلفتها غير مقاسة.",
+  "org.designSystemCostPerScene": "متوسط تكلفة كل مشهد مولّد، بالميكرو-وحدة (عدد المشاهد): {value}."
 }
