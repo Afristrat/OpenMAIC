@@ -45,7 +45,8 @@ export async function POST(
       .select('settings')
       .eq('id', ownership.orgId)
       .maybeSingle();
-    if (organizationError) throw new Error(`Failed to read tenant settings: ${organizationError.message}`);
+    if (organizationError)
+      throw new Error(`Failed to read tenant settings: ${organizationError.message}`);
     if (!organization || !isDesignSystemV1Enabled(organization.settings)) {
       return apiError(
         API_ERROR_CODES.INVALID_REQUEST,

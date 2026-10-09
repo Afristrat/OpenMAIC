@@ -88,8 +88,7 @@ export default function LibraryPage() {
   const canShare = userRole === 'admin' || userRole === 'manager' || userRole === 'formateur';
   const canInvite = userRole === 'admin' || userRole === 'manager';
   const canResynchronizeBrand =
-    hasTenantBrandSystem &&
-    ['admin', 'manager', 'author', 'formateur'].includes(userRole ?? '');
+    hasTenantBrandSystem && ['admin', 'manager', 'author', 'formateur'].includes(userRole ?? '');
 
   const fetchLibrary = useCallback(async () => {
     const supabase = createClient();
@@ -99,9 +98,10 @@ export default function LibraryPage() {
       .select('settings')
       .eq('id', orgId)
       .maybeSingle();
-    const settings = organization?.settings as
-      | { brandDesignSystem?: unknown; features?: { design_system_v1?: unknown } }
-      | null;
+    const settings = organization?.settings as {
+      brandDesignSystem?: unknown;
+      features?: { design_system_v1?: unknown };
+    } | null;
     setHasTenantBrandSystem(
       settings?.features?.design_system_v1 === true && Boolean(settings.brandDesignSystem),
     );
