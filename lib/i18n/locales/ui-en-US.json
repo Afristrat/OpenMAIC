@@ -2801,6 +2801,6 @@
   "org.designSystemFallbacks": "Layout fallbacks",
   "org.designSystemLintTitle": "Conformance corrections",
   "org.designSystemNoLintIssues": "No corrections recorded in this period.",
-  "org.designSystemCostStatus": "Provider cost: {amount} micro-units. Calls without configured rates: {pending}; their cost remains unmeasured.",
+  "org.designSystemCostStatus": "Valued provider cost, converted to the tenant billing currency: {amount} micro-units. Calls without configured rates: {pending}; their cost remains unmeasured.",
   "org.designSystemCostPerScene": "Average cost per generated scene, micro-units (scene count): {value}."
 }

@@ -1,5 +1,19 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 octobre 2026 — WP9 livré dans le code ; WP10 non certifié
+
+WP9 expose l’activation du design system par tenant, une télémétrie minimisée,
+la consultation agrégée et les coûts valorisés dans la devise de facturation du
+tenant. Le rapport est `docs/foundation/4-moteur/design-system-wp9-report.md`.
+La validation documentée au SHA `2850bfac` comprend 3 462 tests Vitest, le
+build, les contrôles TypeScript/ESLint/Prettier ; Playwright a passé 201/202 au
+premier passage, puis le test isolé a passé 1/1. La gate E2E globale n’est pas
+verte. WP10 reste non certifié : aucune génération réelle, aucun tenant activé,
+aucune migration de production ni déploiement. Le rapport
+`docs/foundation/4-moteur/design-system-wp10-report.md` distingue les preuves
+automatisées de la recette terrain requise. Celle-ci nécessite un tenant de
+recette isolé et un budget de quotas explicitement autorisé.
+
 ## 9 octobre 2026 — WP1, directive de design au plan
 
 WP1 est implémenté et validé au SHA `2be4324ad500b383906e7b307d680b275e51badf`

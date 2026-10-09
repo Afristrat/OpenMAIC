@@ -2801,6 +2801,6 @@
   "org.designSystemFallbacks": "Replis de mise en page",
   "org.designSystemLintTitle": "Corrections de conformité",
   "org.designSystemNoLintIssues": "Aucune correction enregistrée sur la période.",
-  "org.designSystemCostStatus": "Coût fournisseur : {amount} micro-unités. Appels sans tarif configuré : {pending} ; leur coût reste non mesuré.",
+  "org.designSystemCostStatus": "Coût fournisseur valorisé, converti en devise de facturation : {amount} micro-unités. Appels sans tarif configuré : {pending} ; leur coût reste non mesuré.",
   "org.designSystemCostPerScene": "Coût moyen par scène générée, micro-unités (nombre de scènes) : {value}."
 }

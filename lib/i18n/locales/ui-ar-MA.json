@@ -2801,6 +2801,6 @@
   "org.designSystemFallbacks": "حالات التخطيط الاحتياطي",
   "org.designSystemLintTitle": "تصحيحات المطابقة",
   "org.designSystemNoLintIssues": "لم تُسجل أي تصحيحات خلال هذه الفترة.",
-  "org.designSystemCostStatus": "تكلفة المزوّد: {amount} ميكرو-وحدة. الطلبات دون تسعيرة مضبوطة: {pending}؛ تكلفتها غير مقاسة.",
+  "org.designSystemCostStatus": "تكلفة المزوّد المحسوبة بعد تحويلها إلى عملة فوترة المؤسسة: {amount} ميكرو-وحدة. الطلبات دون تسعيرة مضبوطة: {pending}؛ تكلفتها غير مقاسة.",
   "org.designSystemCostPerScene": "متوسط تكلفة كل مشهد مولّد، بالميكرو-وحدة (عدد المشاهد): {value}."
 }
