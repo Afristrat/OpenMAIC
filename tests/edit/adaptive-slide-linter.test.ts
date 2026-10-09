@@ -177,7 +177,8 @@ describe('adaptive slide linter', () => {
       ...textElementAt(cramped, 1),
       width: 120,
       height: 20,
-      content: '<p style="font-size:18px">A long line of content needs a larger box to remain readable.</p>',
+      content:
+        '<p style="font-size:18px">A long line of content needs a larger box to remain readable.</p>',
     };
     const result = lintAndRepairAdaptiveSlide(cramped, options);
     const body = textElementAt(result.slide, 1);
@@ -185,7 +186,9 @@ describe('adaptive slide linter', () => {
       expect.objectContaining({ ruleId: 'R-CAPACITY', repaired: true, severity: 'warning' }),
     );
     expect(body.height).toBeGreaterThan(20);
-    expect(result.issues.some((issue) => issue.ruleId === 'R-CAPACITY' && issue.severity === 'error')).toBe(false);
+    expect(
+      result.issues.some((issue) => issue.ruleId === 'R-CAPACITY' && issue.severity === 'error'),
+    ).toBe(false);
   });
 
   test('preserves the legacy layout audit for overlaps and rejects shape gradients', () => {
