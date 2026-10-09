@@ -385,7 +385,7 @@ export function lintAndRepairAdaptiveSlide(
     ...options.thresholds,
   };
   const palette = paletteColors(options.directive, options.brandSnapshot);
-  let repairedSlide = structuredClone(slide);
+  const repairedSlide = structuredClone(slide);
   const issues: AdaptiveSlideLintIssue[] = [];
   const backgrounds = parseBackgrounds(repairedSlide);
   const usableFonts = new Set(
@@ -469,14 +469,14 @@ export function lintAndRepairAdaptiveSlide(
     const foreground = readingColors
       .map(normalizeColor)
       .filter((color): color is string => color !== null);
+    const elementRange = getElementListRange([element]);
     if (repairedSlide.background?.type === 'image' && foreground.length) {
-      const range = getElementListRange([element]);
       const hasOpaqueBacking = opaqueBackingShapes(repairedSlide.elements).some(
         (candidate) =>
-          candidate.left <= range.minX &&
-          candidate.top <= range.minY &&
-          candidate.left + candidate.width >= range.maxX &&
-          candidate.top + candidate.height >= range.maxY,
+          candidate.left <= elementRange.minX &&
+          candidate.top <= elementRange.minY &&
+          candidate.left + candidate.width >= elementRange.maxX &&
+          candidate.top + candidate.height >= elementRange.maxY,
       );
       if (!hasOpaqueBacking)
         issues.push({
@@ -496,10 +496,10 @@ export function lintAndRepairAdaptiveSlide(
               ? opaqueBackingShapes(repairedSlide.elements)
                   .filter(
                     (candidate) =>
-                      candidate.left <= element.left &&
-                      candidate.top <= element.top &&
-                      candidate.left + candidate.width >= element.left + element.width &&
-                      candidate.top + candidate.height >= element.top + element.height,
+                      candidate.left <= elementRange.minX &&
+                      candidate.top <= elementRange.minY &&
+                      candidate.left + candidate.width >= elementRange.maxX &&
+                      candidate.top + candidate.height >= elementRange.maxY,
                   )
                   .map((candidate) => normalizeColor(candidate.fill)!)
               : backgrounds;

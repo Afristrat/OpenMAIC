@@ -1476,7 +1476,10 @@ async function generateSlideContent(
     }
   }
 
-  const lintAdaptiveElements = (elements: PPTElement[], slideBackground?: SlideBackground): PPTElement[] | null => {
+  const lintAdaptiveElements = (
+    elements: PPTElement[],
+    slideBackground?: SlideBackground,
+  ): PPTElement[] | null => {
     if (!slideTheme || (!designDirective && !brandSnapshot)) return elements;
     const result = lintAndRepairAdaptiveSlide(
       {
@@ -1487,7 +1490,10 @@ async function generateSlideContent(
         elements,
         ...(slideBackground ? { background: slideBackground } : {}),
       },
-      { directive: designDirective ?? normalizeDesignDirective(undefined).directive, brandSnapshot },
+      {
+        directive: designDirective ?? normalizeDesignDirective(undefined).directive,
+        brandSnapshot,
+      },
     );
     for (const issue of result.issues) {
       log[issue.severity === 'error' ? 'warn' : 'info'](
@@ -1522,7 +1528,9 @@ async function generateSlideContent(
         outline,
         processedElements.filter((element) => element.type === 'image'),
         slideTheme,
-        designDirective || brandSnapshot ? normalizeDesignDirective(designDirective).directive.grid.margin : 60,
+        designDirective || brandSnapshot
+          ? normalizeDesignDirective(designDirective).directive.grid.margin
+          : 60,
       ).map((element) => ({ ...element, id: `${element.type}_${nanoid(8)}`, rotate: 0 }));
       const fallbackIssues = auditSlideLayout({
         id: outline.id,

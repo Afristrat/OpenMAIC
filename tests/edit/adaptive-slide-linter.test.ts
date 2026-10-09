@@ -79,6 +79,7 @@ describe('adaptive slide linter', () => {
       content: 'colors: background=#F6F9F7; accent=#1A8FC2',
     };
     const lowContrast = structuredClone(slide);
+    lowContrast.background = { type: 'solid', color: '#F6F9F7' };
     lowContrast.elements[1] = {
       ...textElementAt(lowContrast, 1),
       content: '<p style="font-size:12px;color:#1A8FC2">Label</p>',
@@ -119,7 +120,7 @@ describe('adaptive slide linter', () => {
     );
   });
 
-  test('reports a gradient that fails text contrast at a sampled stop', () => {
+  test('reports a gradient whose stops and midpoint cannot all meet text contrast', () => {
     const gradientSlide = structuredClone(slide);
     gradientSlide.background = {
       type: 'gradient',
@@ -127,16 +128,21 @@ describe('adaptive slide linter', () => {
         type: 'linear',
         rotate: 0,
         colors: [
-          { pos: 0, color: '#FFFFFF' },
-          { pos: 100, color: '#FAFBFC' },
+          { pos: 0, color: '#000000' },
+          { pos: 100, color: '#FFFFFF' },
         ],
       },
     };
     gradientSlide.elements[1] = {
       ...textElementAt(gradientSlide, 1),
-      defaultColor: '#FFFFFF',
+      defaultColor: '#808080',
     };
-    expect(lintAndRepairAdaptiveSlide(gradientSlide, options).issues).toContainEqual(
+    const brandSnapshot: Stage['brandSnapshot'] = {
+      version: 1,
+      createdAt: '2026-10-09T00:00:00.000Z',
+      content: 'colors: background=#000000; surface=#FFFFFF; accent=#808080',
+    };
+    expect(lintAndRepairAdaptiveSlide(gradientSlide, { ...options, brandSnapshot }).issues).toContainEqual(
       expect.objectContaining({ ruleId: 'R-BG-GRADIENT', severity: 'error', elementId: 'body' }),
     );
   });
