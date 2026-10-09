@@ -1,6 +1,6 @@
 # WP9 — Activation par tenant et télémétrie
 
-Date : 2026-10-09  
+Date : 2026-10-09
 Branche : `feature/adaptive-design-system`
 
 ## Comportement livré dans le code
