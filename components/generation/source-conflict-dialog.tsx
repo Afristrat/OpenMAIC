@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { FileWarning } from 'lucide-react';
+import { ArrowDown, FileWarning } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -69,11 +69,15 @@ function SourceConflictContent({
         <AlertDialogDescription>
           {t('generation.sourceConflict.description')}
         </AlertDialogDescription>
+        <p className="flex items-center gap-1 text-xs text-muted-foreground">
+          <ArrowDown aria-hidden="true" className="size-3.5 shrink-0" />
+          {t('generation.sourceConflict.scrollHint')}
+        </p>
       </AlertDialogHeader>
 
       <div
         data-slot="source-conflict-scroll-region"
-        className="min-h-0 space-y-3 overflow-y-auto overscroll-contain pe-1 text-sm [scrollbar-gutter:stable]"
+        className="source-conflict-scrollbar min-h-0 space-y-3 overflow-y-auto overscroll-contain pe-1 text-sm [scrollbar-gutter:stable]"
       >
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="rounded-xl border bg-muted/40 p-3">

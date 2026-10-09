@@ -939,6 +939,7 @@
   "generation.planGatewayTimeout": "La préparation du plan prend plus de temps que prévu. Votre demande et votre document sont conservés ; veuillez réessayer.",
   "generation.sourceConflict.title": "La demande et le document se contredisent",
   "generation.sourceConflict.description": "Aucun syllabus n’a été créé. Choisissez la source qui doit guider la formation.",
+  "generation.sourceConflict.scrollHint": "Faites défiler cette zone pour lire toute l’analyse, puis choisissez une action ci-dessous.",
   "generation.sourceConflict.requestTopic": "Sujet demandé",
   "generation.sourceConflict.sourceTopic": "Sujet du document",
   "generation.sourceConflict.references": "Passages de référence",

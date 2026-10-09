@@ -939,6 +939,7 @@
   "generation.planGatewayTimeout": "The training plan is taking longer than expected. Your request and document are still available; please try again.",
   "generation.sourceConflict.title": "The request and document conflict",
   "generation.sourceConflict.description": "No syllabus was created. Choose which source should guide the training.",
+  "generation.sourceConflict.scrollHint": "Scroll this panel to read the full analysis, then choose an action below.",
   "generation.sourceConflict.requestTopic": "Requested topic",
   "generation.sourceConflict.sourceTopic": "Document topic",
   "generation.sourceConflict.references": "Supporting excerpts",

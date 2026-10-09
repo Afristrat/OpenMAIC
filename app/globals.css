@@ -349,6 +349,26 @@ body[data-maic-editor='true'] .editable-element-text li,
   color: rgb(51 65 85);
 }
 
+.source-conflict-scrollbar {
+  scrollbar-color: rgb(148 163 184 / 0.75) transparent;
+  scrollbar-width: thin;
+}
+
+.source-conflict-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.source-conflict-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.source-conflict-scrollbar::-webkit-scrollbar-thumb {
+  background: rgb(148 163 184 / 0.75);
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+}
+
 [data-pbl-workspace='true'] .pbl-v2-light-card-markdown :where(p, li, blockquote) {
   color: rgb(51 65 85);
 }

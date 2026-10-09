@@ -939,6 +939,7 @@
   "generation.planGatewayTimeout": "يستغرق إعداد مخطط التكوين وقتًا أطول من المتوقع. لا يزال طلبك ووثيقتك محفوظين؛ يُرجى إعادة المحاولة.",
   "generation.sourceConflict.title": "يوجد تعارض بين الطلب والمستند",
   "generation.sourceConflict.description": "لم يتم إنشاء أي مخطط. اختر المصدر الذي يجب أن يوجّه التكوين.",
+  "generation.sourceConflict.scrollHint": "مرّر داخل هذه النافذة لقراءة التحليل كاملاً، ثم اختر إجراءً أدناه.",
   "generation.sourceConflict.requestTopic": "الموضوع المطلوب",
   "generation.sourceConflict.sourceTopic": "موضوع المستند",
   "generation.sourceConflict.references": "المقاطع المرجعية",

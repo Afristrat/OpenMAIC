@@ -23,6 +23,7 @@ const SOURCE_CONFLICT_LOCALES = [
     locale: 'fr-FR',
     dir: 'ltr',
     suggestion: 'Reformulation proposée',
+    scrollHint: 'Faites défiler cette zone pour lire toute l’analyse',
     sourceLibrary: 'Bibliothèque de sources',
     accept: 'Utiliser cette reformulation',
     review: 'Refuser et revoir ma demande',
@@ -31,6 +32,7 @@ const SOURCE_CONFLICT_LOCALES = [
     locale: 'ar-MA',
     dir: 'rtl',
     suggestion: 'إعادة الصياغة المقترحة',
+    scrollHint: 'مرّر داخل هذه النافذة لقراءة التحليل كاملاً',
     sourceLibrary: 'مكتبة المصادر',
     accept: 'استخدام إعادة الصياغة هذه',
     review: 'رفض الاقتراح ومراجعة طلبي',
@@ -39,6 +41,7 @@ const SOURCE_CONFLICT_LOCALES = [
     locale: 'en-US',
     dir: 'ltr',
     suggestion: 'Suggested reformulation',
+    scrollHint: 'Scroll this panel to read the full analysis',
     sourceLibrary: 'Source library',
     accept: 'Use this reformulation',
     review: 'Reject and review my request',
@@ -539,6 +542,7 @@ test.describe('Home → Generation', () => {
       await expect(page.locator('html')).toHaveAttribute('dir', localized.dir);
       await expect(page.getByLabel(localized.suggestion)).toBeVisible();
       const dialog = page.getByRole('alertdialog');
+      await expect(dialog).toContainText(localized.scrollHint);
       const scrollRegion = dialog.locator('[data-slot="source-conflict-scroll-region"]');
       await expect
         .poll(() => scrollRegion.evaluate((element) => element.scrollHeight > element.clientHeight))
