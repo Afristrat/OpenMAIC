@@ -25,7 +25,7 @@ export const designDirectiveSchema = z
     typography: z.object({
       heading: z.enum(DESIGN_FONTS),
       body: z.enum(DESIGN_FONTS),
-      scaleShift: z.number().int().min(-1).max(1),
+      scaleShift: z.union([z.literal(-1), z.literal(0), z.literal(1)]),
     }).strict(),
     grid: z.object({ margin: z.number().int().min(64).max(80) }).strict(),
     shapes: z.object({
@@ -193,7 +193,7 @@ export function buildPalette(directive: Pick<DesignDirective, 'seed' | 'tone'>):
     'surface.dark': hex(dark),
     'surface.card.onBase': '#FFFFFF',
     'surface.card.onTint': '#FFFFFF',
-    'surface.card.onDark': hex(tinycolor.mix(dark, '#FFFFFF', 6)),
+    'surface.card.onDark': tinycolor(tinycolor.mix(dark, '#FFFFFF', 6)).toHexString().toUpperCase(),
     'text.primary': textColorOnLight(tinycolor('#252A31'), lightSurfaces),
     'text.secondary': textColorOnLight(tinycolor('#4B5563'), lightSurfaces),
     'text.onDark': '#FFFFFF',

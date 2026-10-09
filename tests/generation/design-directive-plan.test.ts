@@ -47,7 +47,7 @@ describe('design directive in course planning', () => {
     );
 
     expect(result.success).toBe(true);
-    if (!result.success) return;
+    if (!result.success || !result.data) return;
     expect(result.data.designDirective).toEqual(DEFAULT_DESIGN_DIRECTIVE);
     expect(userPrompt).toContain('designDirective');
     expect(userPrompt).toContain('Industrial safety');
@@ -70,7 +70,7 @@ describe('design directive in course planning', () => {
     );
 
     expect(result.success).toBe(true);
-    if (!result.success) return;
+    if (!result.success || !result.data) return;
     expect(result.data.designDirective).toEqual(DEFAULT_DESIGN_DIRECTIVE);
   });
 
@@ -95,7 +95,7 @@ describe('design directive in course planning', () => {
     );
 
     expect(result.success).toBe(true);
-    if (!result.success) return;
+    if (!result.success || !result.data) return;
     expect(result.data.designDirective).toBeUndefined();
   });
 
@@ -114,7 +114,7 @@ describe('design directive in course planning', () => {
     );
 
     expect(result.success).toBe(true);
-    if (!result.success) return;
+    if (!result.success || !result.data) return;
     expect(result.data.designDirective).toBeUndefined();
     expect(userPrompt).not.toContain('### Design direction');
     expect(userPrompt).not.toContain('"designDirective"');

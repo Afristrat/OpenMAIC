@@ -588,6 +588,9 @@ export async function generateClassroom(
     log.error('Failed to generate outlines:', outlinesResult.error);
     throw new Error(outlinesResult.error || 'Failed to generate scene outlines');
   }
+  const courseDesignDirective = designSystemEnabled
+    ? outlinesResult.data.designDirective
+    : undefined;
 
   if (expectedSceneCount && outlinesResult.data.outlines.length !== expectedSceneCount) {
     const actualSceneLabel = outlinesResult.data.outlines.length === 1 ? 'scene' : 'scenes';
@@ -748,8 +751,8 @@ export async function generateClassroom(
       name: courseTitle || outlines[0]?.title || requirement.slice(0, 50),
       description: undefined,
       languageDirective,
-      ...(designSystemEnabled && outlinesResult.data.designDirective
-        ? { designDirective: outlinesResult.data.designDirective }
+      ...(courseDesignDirective
+        ? { designDirective: courseDesignDirective }
         : {}),
       learningContext,
       skillPromptContext: {
@@ -891,8 +894,8 @@ export async function generateClassroom(
             allowProceduralSkill: vocationalActive,
             skillEngineEnabled,
             activeSkillId: requirements.activeSkillId,
-            ...(designSystemEnabled && outlinesResult.data.designDirective
-              ? { designDirective: outlinesResult.data.designDirective }
+            ...(courseDesignDirective
+              ? { designDirective: courseDesignDirective }
               : {}),
             sourceGrounding,
             assignedImages,
