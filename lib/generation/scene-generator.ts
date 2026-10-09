@@ -37,6 +37,10 @@ import { buildSlideDesignPromptContext } from '@/lib/branding/slide-design-promp
 import { buildSlideTheme, normalizeDesignDirective } from '@/lib/branding/design-directive';
 import { DEFAULT_LANGUAGE_DIRECTIVE } from './outline-generator';
 import { postProcessInteractiveHtml } from './interactive-post-processor';
+import {
+  applyInteractiveDesignSystem,
+  INTERACTIVE_DESIGN_PROMPT_MODULE,
+} from '@/lib/branding/interactive-design-system';
 import { parseActionsFromStructuredOutput } from './action-parser';
 import { parseJsonResponse } from './json-repair';
 import { loadPlugins } from '@/lib/plugins/loader';
@@ -403,6 +407,7 @@ export async function generateSceneContent(
       allowProceduralSkill,
       sourceGrounding,
       brandSnapshot,
+      designDirective,
     });
   }
 
@@ -2143,6 +2148,7 @@ export async function generateWidgetContent(
     allowProceduralSkill?: boolean;
     sourceGrounding?: SceneSourceGrounding;
     brandSnapshot?: import('@openmaic/dsl').Stage['brandSnapshot'];
+    designDirective?: import('@openmaic/dsl').Stage['designDirective'];
   } = {},
 ): Promise<GeneratedInteractiveContent | null> {
   const widgetType = outline.widgetType;
@@ -2252,8 +2258,14 @@ export async function generateWidgetContent(
   }
 
   log.info(`Generating ${widgetType} widget for: ${outline.title}`);
+  const designEnabled =
+    Boolean(options.designDirective) ||
+    (options.brandSnapshot?.version === 1 && Boolean(options.brandSnapshot.content));
+  const systemPrompt = designEnabled
+    ? `${prompts.system}\n\n${INTERACTIVE_DESIGN_PROMPT_MODULE}`
+    : prompts.system;
   const response = await aiCall(
-    prompts.system,
+    systemPrompt,
     withBrandSnapshot(
       withSourceGrounding(prompts.user, options.sourceGrounding),
       options.brandSnapshot,
@@ -2270,7 +2282,11 @@ export async function generateWidgetContent(
   const widgetConfig = extractWidgetConfig(html);
 
   return {
-    html: postProcessInteractiveHtml(html),
+    html: applyInteractiveDesignSystem(
+      postProcessInteractiveHtml(html),
+      options.designDirective,
+      options.brandSnapshot,
+    ),
     widgetType,
     widgetConfig,
   };

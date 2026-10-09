@@ -38,6 +38,75 @@ describe('widget actions direct pipeline', () => {
     expect(content && 'teacherActions' in content).toBe(false);
   });
 
+  it('adds design tokens and the bounded design module to opted-in interactive scenes', async () => {
+    let capturedSystem = '';
+    const aiCall: AICallFn = async (system) => {
+      capturedSystem = system;
+      return '<!DOCTYPE html><html><head></head><body><button>Explore</button></body></html>';
+    };
+
+    const content = await generateSceneContent(baseInteractiveOutline(), aiCall, {
+      designDirective: {
+        version: 1,
+        source: 'derived',
+        tone: 'sober',
+        density: 'balanced',
+        seed: { hueFamily: 'blue', chromaLevel: 'low' },
+        palette: null,
+        typography: { heading: 'Inter', body: 'Open Sans', scaleShift: 0 },
+        grid: { margin: 72 },
+        shapes: { radius: 8, stroke: 'hairline' },
+        surfacePlan: { content: 'base', engagement: 'tint', punchline: 'none' },
+        accentSequence: 'primary-only',
+        forbidden: [],
+        notes: '',
+      },
+    });
+
+    expect(capturedSystem).toContain('DESIGN SYSTEM QALEM');
+    expect(content && 'html' in content ? content.html : '').toContain('id="qalem-design-tokens"');
+    expect(content && 'html' in content ? content.html : '').toContain('--q-font-body');
+  });
+
+  it.each(['simulation', 'diagram', 'game', 'code', 'visualization3d'] as const)(
+    'applies the design system to the %s generator only when enabled',
+    async (widgetType) => {
+      let capturedSystem = '';
+      const aiCall: AICallFn = async (system) => {
+        capturedSystem = system;
+        return '<!DOCTYPE html><html><body><main>Static state</main></body></html>';
+      };
+      const outline = baseInteractiveOutline({
+        widgetType,
+        widgetOutline: { concept: 'Learning concept' },
+      });
+
+      const legacy = await generateSceneContent(outline, aiCall);
+      expect(capturedSystem).not.toContain('DESIGN SYSTEM QALEM');
+      expect(legacy && 'html' in legacy ? legacy.html : '').not.toContain('qalem-design-tokens');
+
+      const themed = await generateSceneContent(outline, aiCall, {
+        designDirective: {
+          version: 1,
+          source: 'derived',
+          tone: 'sober',
+          density: 'balanced',
+          seed: { hueFamily: 'blue', chromaLevel: 'low' },
+          palette: null,
+          typography: { heading: 'Inter', body: 'Open Sans', scaleShift: 0 },
+          grid: { margin: 72 },
+          shapes: { radius: 8, stroke: 'hairline' },
+          surfacePlan: { content: 'base', engagement: 'tint', punchline: 'none' },
+          accentSequence: 'primary-only',
+          forbidden: [],
+          notes: '',
+        },
+      });
+      expect(capturedSystem).toContain('DESIGN SYSTEM QALEM');
+      expect(themed && 'html' in themed ? themed.html : '').toContain('id="qalem-design-tokens"');
+    },
+  );
+
   it('uses interactive action generation directly and preserves all four widget action types', async () => {
     const capturedUsers: string[] = [];
     const aiCall: AICallFn = async (_system, user) => {
