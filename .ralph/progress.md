@@ -1,5 +1,20 @@
 # Progress — Qalem (fork OpenMAIC)
 
+## 9 octobre 2026 — WP1, directive de design au plan
+
+WP1 est implémenté et validé au SHA `2be4324ad500b383906e7b307d680b275e51badf`
+sur `feature/adaptive-design-system`, créée depuis `refork-v030` au SHA
+`b416c7f162457fe8938c8deebf25882924746621`. Le flag par tenant reste désactivé
+par défaut ; les anciens plans restent compatibles. La directive est bornée,
+persistée dans le stage et rejouée lors d’une régénération. La palette est
+calculée en code et le thème Inter n’est appliqué qu’aux tenants opt-in. TypeScript,
+lint, 3 431 tests unitaires, 202 tests Playwright et build passent sur ServeurIA.
+Aucune génération réelle, consommation de quota, activation tenant, modification
+du PRD ou déploiement Coolify n’a eu lieu. Rapport :
+`docs/foundation/4-moteur/design-system-wp1-report.md`. Écart à garder visible :
+la dérivation actuelle est HSL, pas OKLCH ; WP2 est la suite technique, WP0 reste
+ouvert sur les mesures runtime et exports.
+
 ## 9 octobre 2026 — WP0, audit du design system adaptatif
 
 Travail sur la branche dédiée `feature/adaptive-design-system`, créée depuis
