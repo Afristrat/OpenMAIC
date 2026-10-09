@@ -44,6 +44,9 @@ for (const scenario of cases) {
       authorization_verified: verified,
       created_at: '2026-09-01T00:00:00Z',
     });
+    await context.route(/\/rest\/v1\/organizations(?:\?.*)?$/, (route) =>
+      route.fulfill({ json: { settings: {} } }),
+    );
     await context.route(/\/rest\/v1\/org_members(?:\?.*)?$/, (route) =>
       route.fulfill({ json: { role: 'admin' } }),
     );
