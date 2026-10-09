@@ -48,8 +48,13 @@ export interface GenerationToolbarProps {
   onWebSearchChange: (v: boolean) => void;
   onSettingsOpen: (section?: SettingsSection) => void;
   orgId?: string;
+  ownerId?: string;
   sourceClearRequestToken: number;
-  onSourceManifestChange: (manifestId: string | undefined, selectedCount: number) => void;
+  onSourceManifestChange: (
+    manifestId: string | undefined,
+    selectedCount: number,
+    manifestVersion?: number,
+  ) => void;
   onSourceIngestionBlockChange: (blocked: boolean) => void;
   onSourceError: (error: string | null) => void;
 }
@@ -62,6 +67,7 @@ export function GenerationToolbar({
   onWebSearchChange,
   onSettingsOpen,
   orgId,
+  ownerId,
   sourceClearRequestToken,
   onSourceManifestChange,
   onSourceIngestionBlockChange,
@@ -160,9 +166,9 @@ export function GenerationToolbar({
         <div className="w-px h-4 bg-border/60 mx-1" />
 
         <SourceLibraryPopover
-          key={orgId ?? 'no-organization'}
+          key={`${orgId ?? 'no-organization'}:${ownerId ?? 'anonymous'}:${sourceClearRequestToken}`}
           orgId={orgId}
-          clearRequestToken={sourceClearRequestToken}
+          ownerId={ownerId}
           onManifestChange={onSourceManifestChange}
           onIngestionBlockChange={onSourceIngestionBlockChange}
           onError={onSourceError}

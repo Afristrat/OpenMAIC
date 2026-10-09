@@ -479,6 +479,7 @@ test.describe('Home → Generation', () => {
 
   for (const localized of SOURCE_CONFLICT_LOCALES) {
     test(`localizes the source-conflict decision in ${localized.locale}`, async ({ page }) => {
+      await page.setViewportSize({ width: 390, height: 740 });
       await page.addInitScript(
         (locale) => localStorage.setItem('locale', locale),
         localized.locale,
@@ -513,9 +514,9 @@ test.describe('Home → Generation', () => {
               status: 'conflicting',
               requestTopic: 'Time management',
               sourceTopic: 'Process improvement',
-              explanation: 'The request and source cover different primary topics.',
-              suggestedRequirement: 'Create a course about Lean Six Sigma.',
-              references: ['Lean Six Sigma and continuous improvement.'],
+              explanation: 'The request and source cover different primary topics. '.repeat(20),
+              suggestedRequirement: 'Create a course about Lean Six Sigma. '.repeat(20),
+              references: ['Lean Six Sigma and continuous improvement. '.repeat(20)],
             },
           }),
         });
@@ -537,7 +538,17 @@ test.describe('Home → Generation', () => {
       await expect(page.locator('html')).toHaveAttribute('lang', localized.locale);
       await expect(page.locator('html')).toHaveAttribute('dir', localized.dir);
       await expect(page.getByLabel(localized.suggestion)).toBeVisible();
-      await expect(page.getByRole('button', { name: localized.accept })).toBeVisible();
+      const dialog = page.getByRole('alertdialog');
+      const scrollRegion = dialog.locator('[data-slot="source-conflict-scroll-region"]');
+      await expect
+        .poll(() => scrollRegion.evaluate((element) => element.scrollHeight > element.clientHeight))
+        .toBe(true);
+      const acceptButton = page.getByRole('button', { name: localized.accept });
+      await expect(acceptButton).toBeInViewport();
+      await scrollRegion.evaluate((element) => {
+        element.scrollTop = element.scrollHeight;
+      });
+      await expect(acceptButton).toBeInViewport();
       await page.getByRole('button', { name: localized.review }).click();
       await expect(page.getByRole('alertdialog')).not.toBeVisible();
     });

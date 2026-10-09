@@ -18,7 +18,7 @@ import { useSettingsStore } from '@/lib/store/settings';
 import type { PdfImage } from '@/lib/types/generation';
 import { cn } from '@/lib/utils';
 import { DiwanSourcePicker } from './diwan-source-picker';
-import type { DiwanReference } from '@/lib/diwan/references';
+import { diwanReferences, type DiwanReference } from '@/lib/diwan/references';
 
 const MAX_DOCUMENT_SIZE_BYTES = 50 * 1024 * 1024;
 const SUPPORTED_DOCUMENT_EXTENSIONS = new Set(['pdf', 'pptx', 'docx', 'txt', 'md']);
@@ -46,9 +46,56 @@ interface IngestionEntry {
   message?: string;
 }
 
+interface DraftSelection {
+  manifestId: string;
+  version: number;
+  sourceIds: string[];
+  diwanReferences: DiwanReference[];
+}
+
+function draftSelectionStorageKey(orgId: string, ownerId: string): string {
+  return `qalem:source-selection:${orgId}:${ownerId}`;
+}
+
+export function clearPersistedSourceSelection(orgId?: string, ownerId?: string): void {
+  if (!orgId || !ownerId || typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.removeItem(draftSelectionStorageKey(orgId, ownerId));
+  } catch {
+    // Storage can be unavailable in hardened browsing contexts.
+  }
+}
+
+function readDraftSelection(orgId?: string, ownerId?: string): DraftSelection | null {
+  if (!orgId || !ownerId || typeof window === 'undefined') return null;
+  try {
+    const raw = window.sessionStorage.getItem(draftSelectionStorageKey(orgId, ownerId));
+    if (!raw) return null;
+    const value: unknown = JSON.parse(raw);
+    if (!value || typeof value !== 'object') return null;
+    const candidate = value as Partial<DraftSelection>;
+    if (
+      typeof candidate.manifestId !== 'string' ||
+      typeof candidate.version !== 'number' ||
+      !Number.isSafeInteger(candidate.version) ||
+      candidate.version < 1 ||
+      !Array.isArray(candidate.sourceIds) ||
+      !candidate.sourceIds.every((id) => typeof id === 'string') ||
+      !Array.isArray(candidate.diwanReferences)
+    ) {
+      return null;
+    }
+    const parsedDiwanReferences = diwanReferences.safeParse(candidate.diwanReferences);
+    if (!parsedDiwanReferences.success) return null;
+    return { ...candidate, diwanReferences: parsedDiwanReferences.data } as DraftSelection;
+  } catch {
+    return null;
+  }
+}
+
 export function SourceLibraryPopover({
   orgId,
-  clearRequestToken,
+  ownerId,
   onManifestChange,
   onIngestionBlockChange,
   onError,
@@ -56,8 +103,12 @@ export function SourceLibraryPopover({
   activeTriggerClassName,
 }: {
   orgId?: string;
-  clearRequestToken: number;
-  onManifestChange: (manifestId: string | undefined, selectedCount: number) => void;
+  ownerId?: string;
+  onManifestChange: (
+    manifestId: string | undefined,
+    selectedCount: number,
+    manifestVersion?: number,
+  ) => void;
   onIngestionBlockChange: (blocked: boolean) => void;
   onError: (error: string | null) => void;
   triggerClassName: string;
@@ -73,7 +124,7 @@ export function SourceLibraryPopover({
     () => false,
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const previousClearToken = useRef(clearRequestToken);
+  const selectionInitialized = useRef(false);
   const lifecycle = useRef(0);
   const saving = useRef(false);
   useEffect(
@@ -84,6 +135,9 @@ export function SourceLibraryPopover({
   );
   const [sources, setSources] = useState<LibrarySource[]>([]);
   const [manifest, setManifest] = useState<Manifest | null>(null);
+  const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([]);
+  const [selectedDiwanSources, setSelectedDiwanSources] = useState<DiwanReference[]>([]);
+  const [search, setSearch] = useState('');
   const [ingestions, setIngestions] = useState<IngestionEntry[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -115,10 +169,25 @@ export function SourceLibraryPopover({
       const nextManifest = manifestResult.manifest ?? null;
       setSources(nextSources);
       setManifest(nextManifest);
-      onManifestChange(
-        nextManifest?.id,
-        (nextManifest?.sourceIds?.length ?? 0) + (nextManifest?.diwanReferences?.length ?? 0),
-      );
+      if (!selectionInitialized.current) {
+        // A library manifest is the last immutable selection, not a default for
+        // every new course. Restore only the current tab's in-progress draft.
+        const draft = readDraftSelection(orgId, ownerId);
+        const availableIds = new Set(nextSources.map((source: LibrarySource) => source.id));
+        const canRestoreDraft = (draft?.sourceIds ?? []).every((id) => availableIds.has(id));
+        const restoredSourceIds = canRestoreDraft ? (draft?.sourceIds ?? []) : [];
+        const restoredDiwanReferences = canRestoreDraft ? (draft?.diwanReferences ?? []) : [];
+        if (!canRestoreDraft) clearPersistedSourceSelection(orgId, ownerId);
+        setSelectedSourceIds(restoredSourceIds);
+        setSelectedDiwanSources(restoredDiwanReferences);
+        const restoredCount = restoredSourceIds.length + restoredDiwanReferences.length;
+        onManifestChange(
+          restoredCount > 0 ? draft?.manifestId : undefined,
+          restoredCount,
+          restoredCount > 0 ? draft?.version : nextManifest?.version,
+        );
+        selectionInitialized.current = true;
+      }
       onError(null);
     } catch (error) {
       if (ticket !== lifecycle.current) return;
@@ -126,7 +195,7 @@ export function SourceLibraryPopover({
     } finally {
       if (ticket === lifecycle.current) setIsLoading(false);
     }
-  }, [onError, onManifestChange, orgId, t]);
+  }, [onError, onManifestChange, orgId, ownerId, t]);
 
   useEffect(() => {
     void loadLibrary();
@@ -136,7 +205,7 @@ export function SourceLibraryPopover({
     async (
       sourceIds: string[],
       expectedVersion = manifest?.version ?? 0,
-      diwanSources?: Array<Pick<DiwanReference, 'corpusId' | 'sourceId'>>,
+      diwanSources: Array<Pick<DiwanReference, 'corpusId' | 'sourceId'>> = selectedDiwanSources,
     ) => {
       if (!orgId || saving.current) return null;
       const ticket = lifecycle.current;
@@ -154,9 +223,31 @@ export function SourceLibraryPopover({
           throw new Error(result.error || t('sources.saveFailed'));
         }
         setManifest(result.manifest);
+        setSelectedSourceIds(sourceIds);
+        setSelectedDiwanSources(result.manifest.diwanReferences ?? []);
+        const count =
+          result.manifest.sourceIds.length + (result.manifest.diwanReferences?.length ?? 0);
+        if (count > 0 && orgId && ownerId && typeof window !== 'undefined') {
+          try {
+            window.sessionStorage.setItem(
+              draftSelectionStorageKey(orgId, ownerId),
+              JSON.stringify({
+                manifestId: result.manifest.id,
+                version: result.manifest.version,
+                sourceIds: result.manifest.sourceIds,
+                diwanReferences: result.manifest.diwanReferences ?? [],
+              } satisfies DraftSelection),
+            );
+          } catch {
+            // The server manifest remains usable for this page if storage is blocked.
+          }
+        } else {
+          clearPersistedSourceSelection(orgId, ownerId);
+        }
         onManifestChange(
-          result.manifest.id,
-          result.manifest.sourceIds.length + (result.manifest.diwanReferences?.length ?? 0),
+          count > 0 ? result.manifest.id : undefined,
+          count,
+          result.manifest.version,
         );
         onError(null);
         return result.manifest as Manifest;
@@ -170,15 +261,17 @@ export function SourceLibraryPopover({
         if (ticket === lifecycle.current) setIsSaving(false);
       }
     },
-    [loadLibrary, manifest?.version, onError, onManifestChange, orgId, t],
+    [
+      loadLibrary,
+      manifest?.version,
+      onError,
+      onManifestChange,
+      orgId,
+      ownerId,
+      selectedDiwanSources,
+      t,
+    ],
   );
-
-  useEffect(() => {
-    if (previousClearToken.current === clearRequestToken) return;
-    previousClearToken.current = clearRequestToken;
-    setIngestions([]);
-    void persistSelection([], undefined, []);
-  }, [clearRequestToken, persistSelection]);
 
   const ingestFiles = async (files: File[]) => {
     const ticket = lifecycle.current;
@@ -282,14 +375,18 @@ export function SourceLibraryPopover({
     if (ticket !== lifecycle.current) return;
     if (accepted.length === 0) return;
     const nextSourceIds = [
-      ...new Set([...(manifest?.sourceIds ?? []), ...accepted.map((source) => source.id)]),
+      ...new Set([...selectedSourceIds, ...accepted.map((source) => source.id)]),
     ];
     const nextManifest = await persistSelection(nextSourceIds);
     if (nextManifest) await loadLibrary();
   };
 
-  const selectedIds = new Set(manifest?.sourceIds ?? []);
-  const selectedCount = selectedIds.size + (manifest?.diwanReferences?.length ?? 0);
+  const selectedIds = new Set(selectedSourceIds);
+  const normalizedSearch = search.trim().toLocaleLowerCase();
+  const visibleSources = normalizedSearch
+    ? sources.filter((source) => source.name.toLocaleLowerCase().includes(normalizedSearch))
+    : sources;
+  const selectedCount = selectedIds.size + selectedDiwanSources.length;
 
   useEffect(() => {
     onIngestionBlockChange(
@@ -314,7 +411,7 @@ export function SourceLibraryPopover({
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="max-h-[80dvh] w-96 max-w-[calc(100vw-2rem)] overflow-y-auto p-0"
+        className="max-h-[85dvh] w-[min(30rem,calc(100vw-2rem))] overflow-y-auto p-0"
       >
         <div className="flex items-center gap-2 border-b px-3 py-2">
           <span className="min-w-0 flex-1 text-sm font-semibold">{t('sources.library')}</span>
@@ -326,6 +423,16 @@ export function SourceLibraryPopover({
           >
             <RefreshCw className="size-3.5" />
           </button>
+          {selectedCount > 0 && (
+            <button
+              type="button"
+              disabled={isSaving}
+              className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted disabled:opacity-50"
+              onClick={() => void persistSelection([], undefined, [])}
+            >
+              {t('sources.clearSelection')}
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-2 px-3 pb-2 pt-3">
@@ -429,58 +536,75 @@ export function SourceLibraryPopover({
           </div>
         )}
 
-        <div className="max-h-56 overflow-y-auto border-t px-2 py-2">
-          {sources.length === 0 ? (
-            <p className="px-2 py-3 text-center text-xs text-muted-foreground">
-              {t('sources.empty')}
-            </p>
-          ) : (
-            sources.map((source) => {
-              const selected = selectedIds.has(source.id);
-              return (
-                <button
-                  type="button"
-                  key={source.id}
-                  disabled={isSaving || (!selected && selectedCount >= 20)}
-                  className={cn(
-                    'mb-1 flex w-full items-center gap-2 rounded-md px-2 py-2 text-start text-xs hover:bg-muted',
-                    selected && 'bg-violet-50 dark:bg-violet-950/25',
-                  )}
-                  onClick={() =>
-                    void persistSelection(
-                      selected
-                        ? (manifest?.sourceIds ?? []).filter((id) => id !== source.id)
-                        : [...(manifest?.sourceIds ?? []), source.id],
-                    )
-                  }
-                >
-                  <FileText className="size-4 shrink-0 text-violet-500" />
-                  <span className="min-w-0 flex-1 truncate">{source.name}</span>
-                  <span className="text-[10px] text-muted-foreground">
-                    {(source.sizeBytes / 1024 / 1024).toFixed(1)} MB
-                  </span>
-                  <span
+        <div className="space-y-2 border-t px-2 py-2">
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={t('sources.search')}
+            aria-label={t('sources.search')}
+            className="h-8 w-full rounded-md border border-border bg-background px-2 text-xs text-foreground"
+          />
+          <p className="px-1 text-[10px] text-muted-foreground" role="status">
+            {t('sources.showingCount', { count: visibleSources.length, total: sources.length })}
+          </p>
+          <div className="max-h-[min(45dvh,30rem)] overflow-y-auto">
+            {sources.length === 0 ? (
+              <p className="px-2 py-3 text-center text-xs text-muted-foreground">
+                {t('sources.empty')}
+              </p>
+            ) : visibleSources.length === 0 ? (
+              <p className="px-2 py-3 text-center text-xs text-muted-foreground">
+                {t('sources.noSearchResults')}
+              </p>
+            ) : (
+              visibleSources.map((source) => {
+                const selected = selectedIds.has(source.id);
+                return (
+                  <button
+                    type="button"
+                    key={source.id}
+                    disabled={isSaving || (!selected && selectedCount >= 20)}
                     className={cn(
-                      'grid size-4 place-items-center rounded border',
-                      selected && 'border-violet-600 bg-violet-600 text-white',
+                      'mb-1 flex w-full items-center gap-2 rounded-md px-2 py-2 text-start text-xs hover:bg-muted',
+                      selected && 'bg-violet-50 dark:bg-violet-950/25',
                     )}
+                    onClick={() =>
+                      void persistSelection(
+                        selected
+                          ? selectedSourceIds.filter((id) => id !== source.id)
+                          : [...selectedSourceIds, source.id],
+                      )
+                    }
                   >
-                    {selected && <Check className="size-3" />}
-                  </span>
-                </button>
-              );
-            })
-          )}
+                    <FileText className="size-4 shrink-0 text-violet-500" />
+                    <span className="min-w-0 flex-1 truncate">{source.name}</span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {(source.sizeBytes / 1024 / 1024).toFixed(1)} MB
+                    </span>
+                    <span
+                      className={cn(
+                        'grid size-4 place-items-center rounded border',
+                        selected && 'border-violet-600 bg-violet-600 text-white',
+                      )}
+                    >
+                      {selected && <Check className="size-3" />}
+                    </span>
+                  </button>
+                );
+              })
+            )}
+          </div>
         </div>
         {orgId && (
           <DiwanSourcePicker
             key={orgId}
             orgId={orgId}
-            selected={manifest?.diwanReferences ?? []}
+            selected={selectedDiwanSources}
             disabled={isSaving || isLoading}
             remaining={20 - selectedCount}
             onSelectionChange={async (selection) =>
-              !!(await persistSelection(manifest?.sourceIds ?? [], undefined, selection))
+              !!(await persistSelection(selectedSourceIds, undefined, selection))
             }
           />
         )}

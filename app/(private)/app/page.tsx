@@ -39,6 +39,7 @@ import { Textarea as UITextarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { SettingsDialog } from '@/components/settings';
 import { GenerationToolbar } from '@/components/generation/generation-toolbar';
+import { clearPersistedSourceSelection } from '@/components/generation/source-library-popover';
 import { LearningContextPicker } from '@/components/generation/LearningContextPicker';
 import { OutlinesEditor, type SyllabusAssistTarget } from '@/components/generation/outlines-editor';
 import {
@@ -311,12 +312,14 @@ function HomePage() {
   }, [currentOrg?.id, learnerResumeTarget, router, user]);
   const [dueReviewCount, setDueReviewCount] = useState(0);
   const [sourceManifestId, setSourceManifestId] = useState<string>();
+  const [sourceManifestVersion, setSourceManifestVersion] = useState<number>();
   const [selectedSourceCount, setSelectedSourceCount] = useState(0);
   const [sourceIngestionBlocked, setSourceIngestionBlocked] = useState(false);
   const [sourceClearRequestToken, setSourceClearRequestToken] = useState(0);
   const handleSourceManifestChange = useCallback(
-    (manifestId: string | undefined, selectedCount: number) => {
+    (manifestId: string | undefined, selectedCount: number, manifestVersion?: number) => {
       setSourceManifestId(selectedCount > 0 ? manifestId : undefined);
+      setSourceManifestVersion(manifestVersion);
       setSelectedSourceCount(selectedCount);
     },
     [],
@@ -977,6 +980,32 @@ function HomePage() {
     }
   };
 
+  const clearCurrentSourceSelection = async (): Promise<boolean> => {
+    if (!currentOrg || !user) return false;
+    try {
+      const response = await fetch('/api/source-manifests', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orgId: currentOrg.id,
+          sourceIds: [],
+          expectedVersion: sourceManifestVersion,
+          diwanSources: [],
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.manifest) return false;
+      clearPersistedSourceSelection(currentOrg.id, user.id);
+      setSourceManifestId(undefined);
+      setSourceManifestVersion(result.manifest.version);
+      setSelectedSourceCount(0);
+      setSourceClearRequestToken((token) => token + 1);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   const handleConfirmPlan = async () => {
     if (!draftPlan || !pendingGenerationRequest || isStartingGeneration) return;
     setIsStartingGeneration(true);
@@ -993,6 +1022,10 @@ function HomePage() {
       const result = await response.json();
       if (!response.ok || !result.jobId) {
         throw new Error(result.details || result.error || t('upload.generateFailed'));
+      }
+      if (typeof pendingGenerationRequest.sourceManifestId === 'string') {
+        const cleared = await clearCurrentSourceSelection();
+        if (!cleared) toast.error(t('sources.clearAfterGenerationFailed'));
       }
       const approvedPlanJobId = new URLSearchParams(window.location.search).get('planJobId');
       clearPlanJobLocation();
@@ -1136,11 +1169,9 @@ function HomePage() {
       <SourceConflictDialog
         conflict={sourceConflict}
         onReview={() => setSourceConflict(null)}
-        onRemoveSource={() => {
-          setSourceManifestId(undefined);
-          setSelectedSourceCount(0);
-          setSourceClearRequestToken((token) => token + 1);
-          setSourceConflict(null);
+        onRemoveSource={async () => {
+          if (await clearCurrentSourceSelection()) setSourceConflict(null);
+          else setError(t('sources.saveFailed'));
         }}
         onUseSuggestion={(requirement) => {
           setForm((previous) => ({ ...previous, requirement }));
@@ -1459,6 +1490,7 @@ function HomePage() {
                     setSettingsOpen(true);
                   }}
                   orgId={currentOrg?.id}
+                  ownerId={user?.id}
                   sourceClearRequestToken={sourceClearRequestToken}
                   onSourceManifestChange={handleSourceManifestChange}
                   onSourceIngestionBlockChange={setSourceIngestionBlocked}

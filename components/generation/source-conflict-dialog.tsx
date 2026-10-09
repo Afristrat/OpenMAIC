@@ -60,7 +60,7 @@ function SourceConflictContent({
   const [suggestion, setSuggestion] = useState(conflict.suggestedRequirement ?? '');
 
   return (
-    <AlertDialogContent className="max-w-xl">
+    <AlertDialogContent className="grid-rows-[auto_minmax(0,1fr)_auto] max-h-[calc(100dvh-2rem)] max-w-xl overflow-hidden">
       <AlertDialogHeader>
         <div className="mb-2 flex size-12 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300">
           <FileWarning aria-hidden="true" className="size-6" />
@@ -71,7 +71,10 @@ function SourceConflictContent({
         </AlertDialogDescription>
       </AlertDialogHeader>
 
-      <div className="space-y-3 text-sm">
+      <div
+        data-slot="source-conflict-scroll-region"
+        className="min-h-0 space-y-3 overflow-y-auto overscroll-contain pe-1 text-sm [scrollbar-gutter:stable]"
+      >
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="rounded-xl border bg-muted/40 p-3">
             <p className="mb-1 font-medium text-muted-foreground">
