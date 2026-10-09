@@ -2,8 +2,7 @@ import type { Stage } from '@openmaic/dsl';
 import type { SceneOutline } from '@/lib/types/generation';
 import { buildPalette, normalizeDesignDirective } from './design-directive';
 
-const SLIDE_TYPES = ['cover', 'contents', 'transition', 'content', 'end'] as const;
-export type AdaptiveSlideType = (typeof SLIDE_TYPES)[number];
+export type AdaptiveSlideType = 'cover' | 'contents' | 'transition' | 'content' | 'end';
 
 function inferSlideType(
   outline: SceneOutline,
@@ -17,7 +16,11 @@ function inferSlideType(
   if (slideIndex >= 0 && slideIndex === orderedSlides.length - 1) return 'end';
 
   const normalizedText = `${outline.title} ${outline.description}`.toLowerCase();
-  if (/\b(agenda|contents|objectives|objectifs|programme|program|sommaire|plan)\b/u.test(normalizedText)) {
+  if (
+    /\b(agenda|contents|objectives|objectifs|programme|program|sommaire|plan)\b/u.test(
+      normalizedText,
+    )
+  ) {
     return 'contents';
   }
   if (/\b(chapter|section|module|partie|chapitre|transition)\b/u.test(normalizedText)) {
@@ -40,11 +43,12 @@ export function buildSlideDesignPromptContext(input: {
 } {
   const hasSnapshot = input.brandSnapshot?.version === 1 && Boolean(input.brandSnapshot.content);
   const hasDirective = Boolean(input.designDirective);
-  const normalized = hasDirective
-    ? normalizeDesignDirective(input.designDirective)
-    : undefined;
+  const normalized = hasDirective ? normalizeDesignDirective(input.designDirective) : undefined;
   const directiveContext = normalized
-    ? JSON.stringify({ directive: normalized.directive, palette: buildPalette(normalized.directive) })
+    ? JSON.stringify({
+        directive: normalized.directive,
+        palette: buildPalette(normalized.directive),
+      })
     : 'No course directive supplied.';
 
   return {

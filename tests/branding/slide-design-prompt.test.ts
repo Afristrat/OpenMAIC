@@ -60,7 +60,9 @@ describe('adaptive slide design prompt context', () => {
   });
 
   it('keeps the slide response contract as JSON and activates only for opted-in courses', () => {
-    const disabledContext = buildSlideDesignPromptContext({ outline: slide('legacy', 1, 'Legacy') });
+    const disabledContext = buildSlideDesignPromptContext({
+      outline: slide('legacy', 1, 'Legacy'),
+    });
     const enabledContext = buildSlideDesignPromptContext({
       outline: slide('new', 1, 'Opening'),
       designDirective: DEFAULT_DESIGN_DIRECTIVE,
@@ -78,7 +80,9 @@ describe('adaptive slide design prompt context', () => {
 
     expect(disabled?.system).not.toContain('Adaptive Visual Design Contract');
     expect(enabled?.system).toContain('Adaptive Visual Design Contract');
-    expect(enabled?.system).not.toMatch(/\{\{(?:designSystemEnabled|slideType|designDirectiveContext|brandSnapshotContext)/u);
+    expect(enabled?.system).not.toMatch(
+      /\{\{(?:designSystemEnabled|slideType|designDirectiveContext|brandSnapshotContext)/u,
+    );
     expect(enabled?.system.length).toBeLessThan(disabled!.system.length + 3000);
     expect(enabled?.user).toContain('Output pure JSON directly');
   });
