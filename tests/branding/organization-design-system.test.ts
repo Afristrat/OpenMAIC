@@ -1,98 +1,112 @@
-import sharp from 'sharp';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import tinycolor from 'tinycolor2';
+import { DESIGN_FONTS } from '@openmaic/dsl';
 import {
-  buildOrganizationImagePrompt,
-  organizationDesignSystemFromSettings,
+  serializeBrandSnapshot,
   type OrganizationDesignSystem,
-} from '@/lib/branding/organization-design-system';
+} from '../../lib/branding/organization-design-system';
 
-vi.mock('@/lib/server/ssrf-guard', () => ({
-  validateUrlForSSRF: vi.fn().mockResolvedValue(null),
-}));
+function charter(overrides: Partial<OrganizationDesignSystem> = {}): OrganizationDesignSystem {
+  return {
+    version: 1,
+    sourceUrl: 'https://private.example/brand.pdf',
+    extractedAt: '2026-01-02T03:04:05.000Z',
+    palette: [
+      { name: 'background', hex: '#FFFFFF', purpose: 'fond principal' },
+      { name: 'surface', hex: '#F4F5F7', purpose: 'cartes' },
+      { name: 'ink', hex: '#777777', purpose: 'texte courant' },
+      { name: 'accent', hex: '#F0AA00', purpose: 'accent' },
+      { name: 'muted', hex: '#777777', purpose: 'secondaire' },
+    ],
+    typography: { display: 'Brand Display Pro', body: 'Arial', utility: 'Roboto Mono' },
+    spacingRhythm: '8 px multiples',
+    cornerRadius: '12 px',
+    borderAndShadow: 'soft border, no shadow',
+    density: 'balanced',
+    layoutLogic: 'one clear reading path',
+    signatureElement: 'thin amber rule',
+    never: ['No decorative gradients'],
+    inferred: ['must not appear in snapshot'],
+    ...overrides,
+  };
+}
 
-afterEach(() => {
-  vi.unstubAllGlobals();
-  vi.unstubAllEnvs();
-});
-
-const designSystem: OrganizationDesignSystem = {
-  version: 1,
-  sourceUrl: 'https://example.com/',
-  extractedAt: '2026-08-05T00:00:00.000Z',
-  palette: [
-    { name: 'background', hex: '#f8f5ee', purpose: 'page background' },
-    { name: 'surface', hex: '#ffffff', purpose: 'cards' },
-    { name: 'ink', hex: '#151515', purpose: 'text' },
-    { name: 'accent', hex: '#3157d5', purpose: 'emphasis' },
-  ],
-  typography: { display: 'Manrope', body: 'Inter', utility: 'Inter' },
-  spacingRhythm: 'regular modular spacing',
-  cornerRadius: '12px',
-  borderAndShadow: 'subtle borders',
-  density: 'moderately spacious',
-  layoutLogic: 'responsive grid with a clear reading path',
-  signatureElement: 'blue focus accents',
-  never: ['clutter', 'overlapping content'],
-  inferred: [],
-};
-
-describe('organization design system', () => {
-  it('reads only a complete persisted design system', () => {
-    expect(organizationDesignSystemFromSettings({ brandDesignSystem: designSystem })).toEqual(
-      designSystem,
-    );
-    expect(
-      organizationDesignSystemFromSettings({ brandDesignSystem: { version: 1 } }),
-    ).toBeUndefined();
-  });
-
-  it('augments infographic prompts with the organization system and layout safeguards', () => {
-    const prompt = buildOrganizationImagePrompt(
-      'Infographie sur les flux de trésorerie',
-      designSystem,
-    );
-    expect(prompt).toContain('Fidelity to the organization design system');
-    expect(prompt).toContain('#3157d5');
-    expect(prompt).toContain('Never print color codes');
-    expect(prompt).toContain('no overlap');
-    expect(prompt).toContain('10% safe margin');
-  });
-
-  it('extracts the rendered palette, logo and typography from Crawl4AI evidence', async () => {
-    vi.stubEnv('CRAWL4AI_BASE_URL', 'http://crawl4ai:11235');
-    vi.stubEnv('CRAWL4AI_API_TOKEN', 'test-token');
-    const screenshot = (
-      await sharp({
-        create: { width: 4, height: 4, channels: 3, background: '#f00030' },
-      })
-        .png()
-        .toBuffer()
-    ).toString('base64');
-    const fetchMock = vi.fn(async (input: string | URL | Request) => {
-      const url = String(input);
-      if (url.endsWith('/html')) {
-        return new Response(
-          JSON.stringify({
-            html: '<style>:root{color:#151515;background:#f8f5ee;font-family:Manrope,sans-serif;border-radius:12px}</style><img class="brand-logo" src="/logo.svg">',
-          }),
-          { status: 200, headers: { 'Content-Type': 'application/json' } },
-        );
-      }
-      return new Response(JSON.stringify({ screenshot }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
+describe('serializeBrandSnapshot', () => {
+  it('is deterministic, compact, and excludes extraction metadata', () => {
+    const input = charter();
+    const first = serializeBrandSnapshot(input);
+    const second = serializeBrandSnapshot({
+      ...input,
+      sourceUrl: 'https://other.example',
+      extractedAt: 'later',
     });
-    vi.stubGlobal('fetch', fetchMock);
+    expect(first.text).toBe(second.text);
+    expect(first.text.length).toBeLessThanOrEqual(1200);
+    expect(first.text).not.toContain('private.example');
+    expect(first.text).not.toContain('2026-01-02');
+    expect(first.text).not.toContain('must not appear');
+  });
 
-    const { extractOrganizationDesignSystem } =
-      await import('@/lib/server/organization-brand-extractor');
-    const extracted = await extractOrganizationDesignSystem('https://example.com/');
+  it('maps requested fonts to the allowed list and logs deviations', () => {
+    const result = serializeBrandSnapshot(charter());
+    const fontLine = result.text.match(/fonts: (.+)/)?.[1] ?? '';
+    for (const role of ['display', 'body', 'utility']) {
+      const font = fontLine.match(new RegExp(`${role}=([^;]+)`))?.[1];
+      expect(font).toBeTruthy();
+      expect(DESIGN_FONTS).toContain(font);
+    }
+    expect(result.warnings).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('Brand Display Pro'),
+        expect.stringContaining('Arial'),
+        expect.stringContaining('Roboto Mono'),
+      ]),
+    );
+  });
 
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(extracted.logoUrl).toBe('https://example.com/logo.svg');
-    expect(extracted.typography.display).toBe('Manrope,sans-serif');
-    expect(extracted.palette.some((token) => token.hex === '#f00030')).toBe(true);
-    expect(extracted.cornerRadius).toContain('12px');
+  it('adjusts every foreground role to at least 4.5:1 against common surfaces', () => {
+    const result = serializeBrandSnapshot(charter());
+    const values = Object.fromEntries(
+      result.text
+        .split('\n')[0]
+        .replace('colors: ', '')
+        .split(' ')
+        .map((entry) => entry.split('=')),
+    );
+    for (const role of ['ink', 'accent', 'muted']) {
+      expect(tinycolor.readability(values[role], '#FFFFFF')).toBeGreaterThanOrEqual(4.5);
+      expect(tinycolor.readability(values[role], '#F4F5F7')).toBeGreaterThanOrEqual(4.5);
+    }
+    expect(result.warnings).toContainEqual(expect.stringContaining('contraste insuffisant'));
+  });
+
+  it('stays within the limit for five long tenant charters', () => {
+    const long = (value: string) => value.repeat(200);
+    const fixtures = Array.from({ length: 5 }, (_, index) =>
+      charter({
+        palette: charter().palette.map((token) => ({
+          ...token,
+          purpose: long(`tenant-${index}-`),
+        })),
+        spacingRhythm: long('8px '),
+        cornerRadius: long('12px '),
+        borderAndShadow: long('soft '),
+        density: long('balanced '),
+        layoutLogic: long('layout '),
+        signatureElement: long('signature '),
+        never: Array.from({ length: 10 }, () => long('avoid ')),
+      }),
+    );
+    for (const fixture of fixtures) {
+      expect(serializeBrandSnapshot(fixture).text.length).toBeLessThanOrEqual(1200);
+    }
+  });
+
+  it('warns and omits malformed colors instead of inventing a tenant palette', () => {
+    const result = serializeBrandSnapshot(
+      charter({ palette: [{ name: 'ink', hex: 'not-a-color', purpose: 'bad' }] }),
+    );
+    expect(result.text).not.toContain('ink=');
+    expect(result.warnings).toContainEqual(expect.stringContaining('couleur invalide'));
   });
 });
