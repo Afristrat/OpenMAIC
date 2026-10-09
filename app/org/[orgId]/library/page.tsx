@@ -23,7 +23,17 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { ArrowLeft, BookOpen, Copy, Eye, Library, Search, Share2, User } from 'lucide-react';
+import {
+  ArrowLeft,
+  BookOpen,
+  Copy,
+  Eye,
+  Library,
+  RefreshCw,
+  Search,
+  Share2,
+  User,
+} from 'lucide-react';
 import type { OrgMemberRole } from '@/lib/supabase/types';
 
 interface SharedClassroom {
@@ -65,6 +75,8 @@ export default function LibraryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [updatingShare, setUpdatingShare] = useState<string | null>(null);
+  const [resynchronizingStageId, setResynchronizingStageId] = useState<string | null>(null);
+  const [hasTenantBrandSystem, setHasTenantBrandSystem] = useState(false);
   const [userRole, setUserRole] = useState<OrgMemberRole | null>(null);
   const [shareTarget, setShareTarget] = useState<SharedClassroom | null>(null);
   const [members, setMembers] = useState<OrganizationMember[]>([]);
@@ -75,9 +87,24 @@ export default function LibraryPage() {
 
   const canShare = userRole === 'admin' || userRole === 'manager' || userRole === 'formateur';
   const canInvite = userRole === 'admin' || userRole === 'manager';
+  const canResynchronizeBrand =
+    hasTenantBrandSystem &&
+    ['admin', 'manager', 'author', 'formateur'].includes(userRole ?? '');
 
   const fetchLibrary = useCallback(async () => {
     const supabase = createClient();
+
+    const { data: organization } = await supabase
+      .from('organizations')
+      .select('settings')
+      .eq('id', orgId)
+      .maybeSingle();
+    const settings = organization?.settings as
+      | { brandDesignSystem?: unknown; features?: { design_system_v1?: unknown } }
+      | null;
+    setHasTenantBrandSystem(
+      settings?.features?.design_system_v1 === true && Boolean(settings.brandDesignSystem),
+    );
 
     // Check membership and role
     if (user) {
@@ -294,6 +321,26 @@ export default function LibraryPage() {
     }
   };
 
+  const resynchronizeBrandSnapshot = async (classroom: SharedClassroom) => {
+    if (resynchronizingStageId) return;
+    setResynchronizingStageId(classroom.stage_id);
+    try {
+      const response = await fetch(
+        `/api/classroom/${encodeURIComponent(classroom.stage_id)}/brand-snapshot`,
+        { method: 'POST' },
+      );
+      const payload = (await response.json()) as { success?: boolean; error?: string };
+      if (!response.ok || !payload.success) {
+        throw new Error(payload.error ?? 'Brand snapshot synchronization failed');
+      }
+      toast.success(t('org.brandSnapshotResynced'));
+    } catch {
+      toast.error(t('org.brandSnapshotResyncFailed'));
+    } finally {
+      setResynchronizingStageId(null);
+    }
+  };
+
   const handleClone = async (stageId: string) => {
     // Clone by navigating to the classroom — the user will have a copy in their personal space
     router.push(`/classroom/${stageId}?clone=true`);
@@ -386,6 +433,21 @@ export default function LibraryPage() {
               )}
 
               <div className="flex flex-wrap items-center gap-2">
+                {canResynchronizeBrand && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 gap-1 text-xs"
+                    disabled={resynchronizingStageId !== null}
+                    onClick={() => void resynchronizeBrandSnapshot(classroom)}
+                    title={t('org.brandSnapshotResyncHint')}
+                  >
+                    <RefreshCw
+                      className={`h-3 w-3 ${resynchronizingStageId === classroom.stage_id ? 'animate-spin' : ''}`}
+                    />
+                    {t('org.resynchronizeBrand')}
+                  </Button>
+                )}
                 {classroom.authorization_verified && classroom.visibility !== 'private' && (
                   <Button variant="outline" size="sm" asChild>
                     <a

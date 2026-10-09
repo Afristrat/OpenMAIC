@@ -295,6 +295,45 @@ export async function readClassroom(id: string): Promise<PersistedClassroomData 
   };
 }
 
+/** Replace only the frozen brand snapshot, preserving all other stage metadata. */
+export async function updateClassroomBrandSnapshot(
+  id: string,
+  brandSnapshot: NonNullable<Stage['brandSnapshot']>,
+): Promise<void> {
+  const supabase = createServiceSupabaseClient();
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const { data: current, error: readError } = await supabase
+      .from('stages')
+      .select('extra, updated_at')
+      .eq('id', id)
+      .maybeSingle();
+    if (readError) throw new Error(`Failed to read stage ${id}: ${readError.message}`);
+    if (!current) throw new Error(`Stage ${id} was not found`);
+
+    const existingExtra = current.extra;
+    const extra =
+      existingExtra && typeof existingExtra === 'object' && !Array.isArray(existingExtra)
+        ? (existingExtra as StageExtra)
+        : {};
+    const { data: updated, error: updateError } = await supabase
+      .from('stages')
+      .update({
+        extra: { ...extra, brandSnapshot, updatedAt: Date.now() },
+      })
+      .eq('id', id)
+      .eq('updated_at', current.updated_at)
+      .select('id')
+      .maybeSingle();
+    if (updateError) {
+      throw new Error(`Failed to update brand snapshot for ${id}: ${updateError.message}`);
+    }
+    if (updated?.id === id) return;
+  }
+
+  throw new Error(`Stage ${id} changed concurrently; retry the charter synchronization`);
+}
+
 /** Read the server-owned live prompt context without reconstructing all scenes. */
 export async function readClassroomSkillPromptContext(id: string): Promise<{
   orgId: string;
