@@ -63,6 +63,7 @@ import type {
 } from './pipeline-types';
 import type { ThinkingConfig } from '@/lib/types/provider';
 import { auditSlideLayout } from '@/lib/edit/slide-layout-audit';
+import { lintAndRepairAdaptiveSlide } from '@/lib/edit/adaptive-slide-linter';
 import { createLogger } from '@/lib/logger';
 import { formatSourceGroundingForPrompt, type SceneSourceGrounding } from './source-grounding';
 const log = createLogger('Generation');
@@ -1475,6 +1476,34 @@ async function generateSlideContent(
     }
   }
 
+  const lintAdaptiveElements = (elements: PPTElement[], slideBackground?: SlideBackground): PPTElement[] | null => {
+    if (!slideTheme || (!designDirective && !brandSnapshot)) return elements;
+    const result = lintAndRepairAdaptiveSlide(
+      {
+        id: outline.id,
+        viewportSize: canvasWidth,
+        viewportRatio: canvasHeight / canvasWidth,
+        theme: slideTheme,
+        elements,
+        ...(slideBackground ? { background: slideBackground } : {}),
+      },
+      { directive: designDirective ?? normalizeDesignDirective(undefined).directive, brandSnapshot },
+    );
+    for (const issue of result.issues) {
+      log[issue.severity === 'error' ? 'warn' : 'info'](
+        `[${issue.ruleId}] slide=${outline.id} element=${issue.elementId ?? 'n/a'} repaired=${issue.repaired === true}: ${issue.message}`,
+      );
+    }
+    const errors = result.issues.filter((issue) => issue.severity === 'error');
+    if (errors.length > 0) {
+      onValidationFailure?.(
+        `Resolve adaptive design-system violations before returning the slide: ${JSON.stringify(errors.map(({ ruleId, elementId, message }) => ({ ruleId, elementId, message })))}`,
+      );
+      return null;
+    }
+    return result.slide.elements;
+  };
+
   const layoutIssues = auditSlideLayout({
     id: outline.id,
     elements: processedElements,
@@ -1493,7 +1522,7 @@ async function generateSlideContent(
         outline,
         processedElements.filter((element) => element.type === 'image'),
         slideTheme,
-        designDirective ? normalizeDesignDirective(designDirective).directive.grid.margin : 60,
+        designDirective || brandSnapshot ? normalizeDesignDirective(designDirective).directive.grid.margin : 60,
       ).map((element) => ({ ...element, id: `${element.type}_${nanoid(8)}`, rotate: 0 }));
       const fallbackIssues = auditSlideLayout({
         id: outline.id,
@@ -1502,15 +1531,18 @@ async function generateSlideContent(
         viewportRatio: canvasHeight / canvasWidth,
       } as Slide);
       if (fallbackIssues.length === 0) {
+        const fallbackBackground =
+          designDirective || brandSnapshot
+            ? { type: 'solid' as const, color: slideTheme?.backgroundColor ?? '#FAFBFC' }
+            : background;
+        const lintedFallback = lintAdaptiveElements(fallbackElements, fallbackBackground);
+        if (!lintedFallback) return null;
         log.warn(
           `Replaced invalid model geometry with deterministic safe layout for ${outline.id}`,
         );
         return {
-          elements: fallbackElements,
-          background:
-            designDirective || brandSnapshot
-              ? { type: 'solid', color: slideTheme?.backgroundColor ?? '#FAFBFC' }
-              : background,
+          elements: lintedFallback,
+          background: fallbackBackground,
           remark: generatedData.remark || outline.description,
         };
       }
@@ -1522,8 +1554,11 @@ async function generateSlideContent(
     return null;
   }
 
+  const lintedElements = lintAdaptiveElements(processedElements, background);
+  if (!lintedElements) return null;
+
   return {
-    elements: processedElements,
+    elements: lintedElements,
     background,
     remark: generatedData.remark || outline.description,
   };
