@@ -2922,6 +2922,7 @@ export function createSceneWithActions(
   actions: Action[],
   api: ReturnType<typeof createStageAPI>,
   sourceGrounding?: SceneSourceGrounding,
+  slideTheme?: SlideTheme,
 ): string | null {
   if (outline.type === 'slide' && 'elements' in content) {
     // Build complete Slide object
@@ -2938,7 +2939,7 @@ export function createSceneWithActions(
       id: nanoid(),
       viewportSize: 1000,
       viewportRatio: 0.5625,
-      theme: defaultTheme,
+      theme: slideTheme ?? defaultTheme,
       elements: content.elements,
       background: content.background,
     };

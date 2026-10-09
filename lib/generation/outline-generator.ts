@@ -22,7 +22,7 @@ import { uniquifyMediaElementIds } from './scene-builder';
 import type { AICallFn, GenerationResult, GenerationCallbacks } from './pipeline-types';
 import { createLogger } from '@/lib/logger';
 import { selectSourceContext } from './source-context';
-import { normalizeDesignDirective } from '@/lib/branding/design-directive';
+import { DEFAULT_DESIGN_DIRECTIVE, normalizeDesignDirective } from '@/lib/branding/design-directive';
 const log = createLogger('Generation');
 
 function syllabusPlaceholder(languageDirective: string): string {
@@ -334,6 +334,7 @@ export async function generateSceneOutlinesFromRequirements(
     if (Array.isArray(parsed)) {
       // Fallback: LLM returned old flat array format
       languageDirective = DEFAULT_LANGUAGE_DIRECTIVE;
+      if (options?.designSystemEnabled) designDirective = DEFAULT_DESIGN_DIRECTIVE;
       rawOutlines = parsed;
     } else if (parsed && parsed.outlines) {
       languageDirective = parsed.languageDirective || DEFAULT_LANGUAGE_DIRECTIVE;

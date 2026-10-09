@@ -6,6 +6,7 @@ import {
   DESIGN_HUE_FAMILIES,
   DESIGN_TONES,
   type DesignDirective,
+  type SlideTheme,
 } from '@openmaic/dsl';
 
 export { DESIGN_DENSITIES, DESIGN_FONTS, DESIGN_HUE_FAMILIES, DESIGN_TONES };
@@ -207,5 +208,25 @@ export function buildPalette(directive: Pick<DesignDirective, 'seed' | 'tone'>):
     'functional.incorrect': textColorOnLight(tinycolor('#A12828'), lightSurfaces),
     'functional.warning': textColorOnLight(tinycolor('#805000'), lightSurfaces),
     'functional.info': textColorOnLight(tinycolor('#155B8A'), lightSurfaces),
+  };
+}
+
+/** Neutral Qalem theme for opted-in courses that have no tenant charter. */
+export function buildSlideTheme(directive?: DesignDirective): SlideTheme {
+  const selected = directive ?? DEFAULT_DESIGN_DIRECTIVE;
+  const palette = buildPalette(selected);
+  return {
+    backgroundColor: palette['surface.base'],
+    themeColors: [
+      palette['accent.primary'],
+      palette['accent.secondary'],
+      palette['accent.achievement'],
+      palette['functional.correct'],
+      palette['functional.incorrect'],
+    ],
+    fontColor: palette['text.primary'],
+    fontName: selected.typography.heading,
+    outline: { color: palette['border.hairline'], width: 1, style: 'solid' },
+    shadow: { h: 0, v: 0, blur: 0, color: '#000000' },
   };
 }

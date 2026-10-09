@@ -5,6 +5,7 @@ import {
   DEFAULT_DESIGN_DIRECTIVE,
   DESIGN_HUE_FAMILIES,
   buildPalette,
+  buildSlideTheme,
   designDirectiveSchema,
   isDesignSystemV1Enabled,
   normalizeDesignDirective,
@@ -127,5 +128,23 @@ describe('course design directive', () => {
           .toBeGreaterThanOrEqual(4.5);
       }
     }
+  });
+
+  it('uses a neutral Inter theme by default and a directive-selected font when present', () => {
+    const defaultTheme = buildSlideTheme();
+    expect(defaultTheme.backgroundColor).toBe('#FAFBFC');
+    expect(defaultTheme.fontName).toBe('Inter');
+    expect(defaultTheme.themeColors).toEqual([
+      buildPalette(DEFAULT_DESIGN_DIRECTIVE)['accent.primary'],
+      buildPalette(DEFAULT_DESIGN_DIRECTIVE)['accent.secondary'],
+      buildPalette(DEFAULT_DESIGN_DIRECTIVE)['accent.achievement'],
+      buildPalette(DEFAULT_DESIGN_DIRECTIVE)['functional.correct'],
+      buildPalette(DEFAULT_DESIGN_DIRECTIVE)['functional.incorrect'],
+    ]);
+
+    expect(buildSlideTheme({
+      ...DEFAULT_DESIGN_DIRECTIVE,
+      typography: { ...DEFAULT_DESIGN_DIRECTIVE.typography, heading: 'Merriweather' },
+    }).fontName).toBe('Merriweather');
   });
 });

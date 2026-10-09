@@ -96,7 +96,11 @@ import {
   organizationDesignSystemFromSettings,
   type OrganizationDesignSystem,
 } from '@/lib/branding/organization-design-system';
-import { isDesignSystemV1Enabled } from '@/lib/branding/design-directive';
+import {
+  DEFAULT_DESIGN_DIRECTIVE,
+  buildSlideTheme,
+  isDesignSystemV1Enabled,
+} from '@/lib/branding/design-directive';
 import { normalizePdfImages, uploadedPdfSource } from '@/lib/server/pdf-source';
 import {
   applyClassroomVoiceOverrides,
@@ -543,7 +547,10 @@ export async function generateClassroom(
     ? {
         success: true as const,
         data: designSystemEnabled
-          ? input.approvedPlan
+          ? {
+              ...input.approvedPlan,
+              designDirective: input.approvedPlan.designDirective ?? DEFAULT_DESIGN_DIRECTIVE,
+            }
           : { ...input.approvedPlan, designDirective: undefined },
       }
     : await generateSceneOutlinesFromRequirements(
@@ -947,7 +954,14 @@ export async function generateClassroom(
         action.type === 'speech' ? [action.text] : [],
       );
 
-      const sceneId = createSceneWithActions(safeOutline, content, actions, api, sourceGrounding);
+      const sceneId = createSceneWithActions(
+        safeOutline,
+        content,
+        actions,
+        api,
+        sourceGrounding,
+        designSystemEnabled ? buildSlideTheme(courseDesignDirective) : undefined,
+      );
       if (!sceneId) {
         throw new Error(`Required scene creation failed: ${safeOutline.title}`);
       }
