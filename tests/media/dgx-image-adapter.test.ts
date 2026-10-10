@@ -67,9 +67,22 @@ describe('dgx-image-adapter', () => {
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
+  it('reports a missing sidecar URL without attempting a request', async () => {
+    await expect(
+      testImageConnectivity({ providerId: 'dgx', apiKey: 'secret' }),
+    ).resolves.toMatchObject({ success: false, message: expect.stringContaining('URL is not configured') });
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
   it('rejects unauthorized responses without leaking the configured secret', async () => {
-    mockFetch.mockResolvedValueOnce(jsonResponse({ status: 'healthy' })).mockResolvedValueOnce({ status: 401 });
-    const result = await testImageConnectivity({ providerId: 'dgx', apiKey: 'private' });
+    mockFetch
+      .mockResolvedValueOnce(jsonResponse({ status: 'healthy' }))
+      .mockResolvedValueOnce({ status: 401 });
+    const result = await testImageConnectivity({
+      providerId: 'dgx',
+      apiKey: 'private',
+      baseUrl: 'http://dgx',
+    });
     expect(result).toEqual({
       success: false,
       message: 'DGX image sidecar rejected its configured secret',
@@ -82,7 +95,10 @@ describe('dgx-image-adapter', () => {
       .mockResolvedValueOnce(jsonResponse({ jobId: '123e4567-e89b-42d3-a456-426614174000' }, 202))
       .mockResolvedValueOnce(jsonResponse({ status: 'failed' }));
     await expect(
-      generateImage({ providerId: 'dgx', apiKey: 'secret' }, { prompt: 'test' }),
+      generateImage(
+        { providerId: 'dgx', apiKey: 'secret', baseUrl: 'http://dgx' },
+        { prompt: 'test' },
+      ),
     ).rejects.toThrow('DGX image job failed');
   });
 
@@ -91,14 +107,20 @@ describe('dgx-image-adapter', () => {
       .mockResolvedValueOnce(jsonResponse({ jobId: '123e4567-e89b-42d3-a456-426614174000' }, 202))
       .mockResolvedValueOnce(jsonResponse({ status: 'expired' }));
     await expect(
-      generateImage({ providerId: 'dgx', apiKey: 'secret' }, { prompt: 'test' }),
+      generateImage(
+        { providerId: 'dgx', apiKey: 'secret', baseUrl: 'http://dgx' },
+        { prompt: 'test' },
+      ),
     ).rejects.toThrow('DGX image job expired');
   });
 
   it('rejects malformed job identifiers and non-PNG results', async () => {
     mockFetch.mockResolvedValueOnce(jsonResponse({ jobId: '../other-route' }, 202));
     await expect(
-      generateImage({ providerId: 'dgx', apiKey: 'secret' }, { prompt: 'test' }),
+      generateImage(
+        { providerId: 'dgx', apiKey: 'secret', baseUrl: 'http://dgx' },
+        { prompt: 'test' },
+      ),
     ).rejects.toThrow('invalid job identifier');
 
     mockFetch
@@ -106,7 +128,10 @@ describe('dgx-image-adapter', () => {
       .mockResolvedValueOnce(jsonResponse({ status: 'completed' }))
       .mockResolvedValueOnce(jsonResponse({ data: [{ b64_json: Buffer.from('not-png').toString('base64') }] }));
     await expect(
-      generateImage({ providerId: 'dgx', apiKey: 'secret' }, { prompt: 'test' }),
+      generateImage(
+        { providerId: 'dgx', apiKey: 'secret', baseUrl: 'http://dgx' },
+        { prompt: 'test' },
+      ),
     ).rejects.toThrow('not a valid PNG');
   });
 

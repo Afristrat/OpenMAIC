@@ -82,8 +82,8 @@ export async function testDgxImageConnectivity(
     return { success: false, message: 'DGX image sidecar secret is not configured' };
   }
 
-  const baseUrl = normalizeBaseUrl(config.baseUrl);
   try {
+    const baseUrl = normalizeBaseUrl(config.baseUrl);
     const healthResponse = await fetch(`${baseUrl}/health`, {
       headers: { Accept: 'application/json' },
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
