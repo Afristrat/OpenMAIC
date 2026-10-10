@@ -4,9 +4,9 @@
   "branch": "refork-v030",
   "title": "Réconciliation des engagements et clôture prouvée",
   "description": "Référence active unique pour tous les restes identifiés de Qalem. Les critères v2 et les capacités v1 sont tracés sans transformer une acceptation historique en certification actuelle. Ce PRD planifie ; il n’exécute ni n’autorise automatiquement les mutations bloquées.",
-  "reconciledAt": "2026-09-27",
-  "inspectedCommit": "3f96a572f5a7a24d6f766bc51853340a2d683ced",
-  "reconciliationNote": "Réconciliation fraîche après livraison technique des connecteurs Google Drive S-021 et Notion S-020 : 84 stories, 75 completed/passes=true, 8 to_validate/passes=false, dont ces deux connecteurs en attente de leur recette OAuth réelle, et 1 blocked/passes=false correspondant à NotebookLM dans Diwan. Les preuves et le détail historique sont consignés dans .ralph/progress.md et les documents de validation cités par chaque story.",
+  "reconciledAt": "2026-10-10",
+  "inspectedCommit": "774ddaae78b5d1f58e7b7815aea70475396f0ddd",
+  "reconciliationNote": "Réconciliation après intégration fast-forward de feature/adaptive-design-system dans refork-v030 : 86 stories, 75 completed/passes=true, 9 to_validate/passes=false, 1 in_progress/passes=false et 1 blocked/passes=false. Les WP1 à WP9 du design adaptatif sont présents et leurs contrôles de code sont documentés ; WP10 reste à valider sur cinq générations réelles et leurs rendus, sans activation par défaut ni quota consommé. S6-033 reste en cours. Les preuves et le détail historique sont consignés dans .ralph/progress.md et les rapports WP.",
   "supersedes": ".ralph/prd-v2.json",
   "scope": {
     "included": [
@@ -5538,6 +5538,47 @@
       "executionDecision": "2026-10-09 — Mandat explicite d’Amine : corriger urgemment l’amélioration de demande qui ignore les ressources et garantir une nouvelle sélection vide par formation.",
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance"],
       "priorityRank": 0
+    },
+    {
+      "id": "S6-034",
+      "title": "Recetter le design system adaptatif sur des formations réelles",
+      "description": "En tant que créateur de formation, je veux que le système de design adaptatif soit vérifié sur des contenus, langues et exports réellement représentatifs afin que la personnalisation améliore la lisibilité sans dégrader le fond ni l’accessibilité.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P1",
+      "status": "to_validate",
+      "passes": false,
+      "source": {
+        "type": "explicit_user_request",
+        "date": "2026-10-10"
+      },
+      "sourceDependencies": [],
+      "dependencies": ["S6-013"],
+      "gap": "WP1 à WP9 sont intégrés dans le code et leurs contrôles déterministes sont documentés. WP10 n’est pas certifié : aucune série de cinq formations réelles, comparaison visuelle complète ni activation limitée à un tenant de recette n’est prouvée. Le réglage reste désactivé par défaut.",
+      "evidence": [
+        "docs/foundation/4-moteur/design-system-wp0-audit.md",
+        "docs/foundation/4-moteur/design-system-wp1-report.md",
+        "docs/foundation/4-moteur/design-system-wp2-report.md",
+        "docs/foundation/4-moteur/design-system-wp3-report.md",
+        "docs/foundation/4-moteur/design-system-wp4-report.md",
+        "docs/foundation/4-moteur/design-system-wp5-report.md",
+        "docs/foundation/4-moteur/design-system-wp6-report.md",
+        "docs/foundation/4-moteur/design-system-wp7-report.md",
+        "docs/foundation/4-moteur/design-system-wp8-report.md",
+        "docs/foundation/4-moteur/design-system-wp9-report.md",
+        "docs/foundation/4-moteur/design-system-wp10-report.md"
+      ],
+      "acceptance": [
+        "Sur un tenant isolé autorisé, activer le réglage uniquement pour ce tenant et produire cinq formations représentatives : sécurité/procédure métier, contenu technique, finance/données chiffrées, management/compétences relationnelles, sujet sensible ou à risque de stéréotype.",
+        "Pour chaque formation, conserver le SHA, l’identifiant du cours, le modèle réellement résolu et les sources effectivement utilisées ; vérifier le syllabus, les scènes, les citations, les replis, les métriques de coût et les règles du linter sans présenter une donnée manquante comme zéro.",
+        "Comparer le rendu réel dans le lecteur et les exports requis (PPTX, vidéo et SCORM selon les capacités effectivement disponibles), en FR, EN et AR/RTL ; relever chaque défaut, le corriger puis rejouer les cas concernés.",
+        "Vérifier l’isolation des métriques par tenant, l’absence de contenu sensible dans la télémétrie, le fonctionnement du retour arrière et le maintien du parcours historique lorsque le réglage est désactivé.",
+        "Ne consommer aucun quota de production ni activer le réglage pour un tenant réel sans budget et autorisation explicites ; ne déclarer passes=true qu’après preuves datées au SHA final et revue visuelle des cinq formations."
+      ],
+      "closureEvidence": [],
+      "executionAllowed": false,
+      "executionDecision": "2026-10-10 — Le code est intégré ; les cinq générations réelles et l’activation d’un tenant restent suspendues à un tenant de recette isolé et à un budget explicitement autorisé.",
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance", "explicit_human_decision"],
+      "priorityRank": 1.5
     }
   ]
 }
