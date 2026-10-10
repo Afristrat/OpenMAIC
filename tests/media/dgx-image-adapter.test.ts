@@ -36,7 +36,11 @@ describe('dgx-image-adapter', () => {
       'http://dgx.internal:8189/jobs/123e4567-e89b-42d3-a456-426614174000',
       'http://dgx.internal:8189/jobs/123e4567-e89b-42d3-a456-426614174000/result',
     ]);
-    expect(mockFetch.mock.calls.every(([, init]) => init.headers['X-Tamkin-Studio-Secret'] === 'sidecar-secret')).toBe(true);
+    expect(
+      mockFetch.mock.calls.every(
+        ([, init]) => init.headers['X-Tamkin-Studio-Secret'] === 'sidecar-secret',
+      ),
+    ).toBe(true);
     expect(JSON.parse(mockFetch.mock.calls[0][1].body)).toEqual({
       prompt: 'A learning illustration',
       size: '768x432',
@@ -70,7 +74,10 @@ describe('dgx-image-adapter', () => {
   it('reports a missing sidecar URL without attempting a request', async () => {
     await expect(
       testImageConnectivity({ providerId: 'dgx', apiKey: 'secret' }),
-    ).resolves.toMatchObject({ success: false, message: expect.stringContaining('URL is not configured') });
+    ).resolves.toMatchObject({
+      success: false,
+      message: expect.stringContaining('URL is not configured'),
+    });
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
@@ -126,7 +133,9 @@ describe('dgx-image-adapter', () => {
     mockFetch
       .mockResolvedValueOnce(jsonResponse({ jobId: '123e4567-e89b-42d3-a456-426614174000' }, 202))
       .mockResolvedValueOnce(jsonResponse({ status: 'completed' }))
-      .mockResolvedValueOnce(jsonResponse({ data: [{ b64_json: Buffer.from('not-png').toString('base64') }] }));
+      .mockResolvedValueOnce(
+        jsonResponse({ data: [{ b64_json: Buffer.from('not-png').toString('base64') }] }),
+      );
     await expect(
       generateImage(
         { providerId: 'dgx', apiKey: 'secret', baseUrl: 'http://dgx' },

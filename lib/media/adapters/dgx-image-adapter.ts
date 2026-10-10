@@ -66,7 +66,10 @@ async function responseError(response: Response, operation: string): Promise<Err
   return new Error(`DGX image ${operation} failed (${response.status}): ${detail}`);
 }
 
-async function jsonResponse(response: Response, operation: string): Promise<Record<string, unknown>> {
+async function jsonResponse(
+  response: Response,
+  operation: string,
+): Promise<Record<string, unknown>> {
   if (!response.ok) throw await responseError(response, operation);
   const payload: unknown = await response.json();
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
@@ -115,7 +118,10 @@ export async function testDgxImageConnectivity(
       !('error' in authPayload) ||
       authPayload.error !== 'job not found'
     ) {
-      return { success: false, message: 'DGX image sidecar returned an invalid authentication probe' };
+      return {
+        success: false,
+        message: 'DGX image sidecar returned an invalid authentication probe',
+      };
     }
     return { success: true, message: 'DGX image sidecar and authentication are available' };
   } catch (error) {
