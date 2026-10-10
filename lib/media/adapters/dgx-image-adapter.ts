@@ -5,7 +5,6 @@
  * retrieve the completed PNG. The sidecar credential is server-only.
  */
 
-import { randomUUID } from 'node:crypto';
 import type {
   ImageGenerationConfig,
   ImageGenerationOptions,
@@ -18,7 +17,7 @@ const REQUEST_TIMEOUT_MS = 10_000;
 const JOB_TIMEOUT_MS = 55_000;
 const INITIAL_POLL_INTERVAL_MS = 500;
 const MAX_POLL_INTERVAL_MS = 2_000;
-const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 
 function normalizeBaseUrl(baseUrl?: string): string {
   if (!baseUrl?.trim()) throw new Error('DGX image sidecar URL is not configured');
@@ -98,7 +97,7 @@ export async function testDgxImageConnectivity(
 
     // A random missing job must return 404 only after the sidecar accepts the
     // credential. This verifies authentication without waking the GPU.
-    const authResponse = await fetch(`${baseUrl}/jobs/${randomUUID()}`, {
+    const authResponse = await fetch(`${baseUrl}/jobs/${globalThis.crypto.randomUUID()}`, {
       headers: headers(config.apiKey),
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
@@ -194,8 +193,16 @@ export async function generateWithDgxImage(
   if (typeof encoded !== 'string' || !/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) {
     throw new Error('DGX image result did not contain valid base64 image data');
   }
-  const image = Buffer.from(encoded, 'base64');
-  if (image.length <= PNG_SIGNATURE.length || !image.subarray(0, 8).equals(PNG_SIGNATURE)) {
+  let imageBytes: string;
+  try {
+    imageBytes = atob(encoded);
+  } catch {
+    throw new Error('DGX image result did not contain valid base64 image data');
+  }
+  if (
+    imageBytes.length <= PNG_SIGNATURE.length ||
+    !PNG_SIGNATURE.every((byte, index) => imageBytes.charCodeAt(index) === byte)
+  ) {
     throw new Error('DGX image result is not a valid PNG');
   }
 
