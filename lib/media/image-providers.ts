@@ -25,6 +25,7 @@ import {
   generateWithLemonadeImage,
   testLemonadeImageConnectivity,
 } from './adapters/lemonade-image-adapter';
+import { generateWithDgxImage, testDgxImageConnectivity } from './adapters/dgx-image-adapter';
 
 /**
  * Translation keys for server-managed image models. Model IDs remain the
@@ -150,6 +151,14 @@ export const IMAGE_PROVIDERS: Record<ImageProviderId, ImageProviderConfig> = {
     supportedAspectRatios: ['16:9', '4:3', '1:1', '9:16'],
     maxResolution: { width: 1024, height: 1024 },
   },
+  dgx: {
+    id: 'dgx',
+    name: 'DGX Studio',
+    requiresApiKey: true,
+    models: [{ id: 'flux-schnell', name: 'FLUX.1 Schnell' }],
+    supportedAspectRatios: ['16:9', '4:3', '1:1', '9:16'],
+    maxResolution: { width: 768, height: 768 },
+  },
 };
 
 export async function testImageConnectivity(
@@ -170,6 +179,8 @@ export async function testImageConnectivity(
       return testGrokImageConnectivity(config);
     case 'lemonade':
       return testLemonadeImageConnectivity(config);
+    case 'dgx':
+      return testDgxImageConnectivity(config);
     default:
       return {
         success: false,
@@ -197,6 +208,8 @@ export async function generateImage(
       return generateWithGrokImage(config, options);
     case 'lemonade':
       return generateWithLemonadeImage(config, options);
+    case 'dgx':
+      return generateWithDgxImage(config, options);
     default:
       throw new Error(`Unsupported image provider: ${config.providerId}`);
   }

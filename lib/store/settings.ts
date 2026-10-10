@@ -474,6 +474,7 @@ const getDefaultImageConfig = () => ({
     'minimax-image': { apiKey: '', baseUrl: '', enabled: false },
     'grok-image': { apiKey: '', baseUrl: '', enabled: false },
     lemonade: { apiKey: '', baseUrl: '', enabled: false },
+    dgx: { apiKey: '', baseUrl: '', enabled: false },
   } as Record<ImageProviderId, { apiKey: string; baseUrl: string; enabled: boolean }>,
 });
 

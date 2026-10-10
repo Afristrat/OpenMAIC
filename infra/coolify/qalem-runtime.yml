@@ -13,6 +13,9 @@ x-qalem-environment: &qalem-environment
   IMAGE_OPENAI_API_KEY: ${IMAGE_OPENAI_API_KEY}
   IMAGE_OPENAI_BASE_URL: ${IMAGE_OPENAI_BASE_URL}
   IMAGE_OPENAI_MODELS: ${IMAGE_OPENAI_MODELS}
+  IMAGE_DGX_API_KEY: ${IMAGE_DGX_API_KEY}
+  IMAGE_DGX_BASE_URL: ${IMAGE_DGX_BASE_URL}
+  IMAGE_DGX_MODELS: ${IMAGE_DGX_MODELS}
   # The worker decrypts each tenant-scoped LRS destination immediately before
   # delivery. Keeping the value in Coolify is insufficient unless Compose
   # explicitly forwards it to the worker container.

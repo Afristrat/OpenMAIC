@@ -1615,6 +1615,7 @@
   "settings.providerMiniMaxImage": "MiniMax Image",
   "settings.providerGrokImage": "Grok Image (xAI)",
   "settings.providerLemonadeImage": "Lemonade Image (محلي)",
+  "settings.providerDgxImage": "استوديو DGX (FLUX.1 Schnell)",
   "settings.testImageGeneration": "اختبار توليد الصور",
   "settings.testImageConnectivity": "اختبار الاتصال",
   "settings.imageConnectivitySuccess": "تم الاتصال بخدمة الصور بنجاح",

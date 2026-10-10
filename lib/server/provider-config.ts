@@ -113,6 +113,7 @@ const IMAGE_ENV_MAP: Record<string, string> = {
   IMAGE_MINIMAX: 'minimax-image',
   IMAGE_GROK: 'grok-image',
   IMAGE_LEMONADE: 'lemonade',
+  IMAGE_DGX: 'dgx',
 };
 
 const VIDEO_ENV_MAP: Record<string, string> = {
@@ -303,6 +304,8 @@ function buildConfig(yamlData: YamlData): ServerConfig {
     }),
     yamlData.image,
   );
+  // DGX credentials alone must never activate an endpoint-less provider.
+  if (image.dgx && !image.dgx.baseUrl) delete image.dgx;
 
   return {
     providers: loadEnvSection(LLM_ENV_MAP, yamlData.providers, {

@@ -7,6 +7,9 @@ describe('Qalem runtime environment contract', () => {
     const compose = readFileSync(resolve('infra/coolify/qalem-runtime.yml'), 'utf8');
 
     expect(compose).toContain('IMAGE_OPENAI_API_KEY: ${IMAGE_OPENAI_API_KEY}');
+    expect(compose).toContain('IMAGE_DGX_API_KEY: ${IMAGE_DGX_API_KEY}');
+    expect(compose).toContain('IMAGE_DGX_BASE_URL: ${IMAGE_DGX_BASE_URL}');
+    expect(compose).toContain('IMAGE_DGX_MODELS: ${IMAGE_DGX_MODELS}');
     expect(compose).toContain(
       'LRS_CONFIG_ENCRYPTION_KEY: ${LRS_CONFIG_ENCRYPTION_KEY:?LRS configuration encryption key required}',
     );

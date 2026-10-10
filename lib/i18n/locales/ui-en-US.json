@@ -1615,6 +1615,7 @@
   "settings.providerMiniMaxImage": "MiniMax Image",
   "settings.providerGrokImage": "Grok Image (xAI)",
   "settings.providerLemonadeImage": "Lemonade Image (Local)",
+  "settings.providerDgxImage": "DGX Studio (FLUX.1 Schnell)",
   "settings.testImageGeneration": "Test Image Generation",
   "settings.testImageConnectivity": "Test Connection",
   "settings.imageConnectivitySuccess": "Image service connected successfully",

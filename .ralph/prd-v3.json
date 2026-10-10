@@ -5579,6 +5579,43 @@
       "executionDecision": "2026-10-10 — Le code est intégré ; les cinq générations réelles et l’activation d’un tenant restent suspendues à un tenant de recette isolé et à un budget explicitement autorisé.",
       "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance", "explicit_human_decision"],
       "priorityRank": 1.5
+    },
+    {
+      "id": "S6-035",
+      "title": "Câbler le fournisseur d’images DGX via son sidecar asynchrone",
+      "description": "En tant que créateur Qalem, je veux pouvoir produire les visuels de mes formations avec le workflow FLUX.1 Schnell exposé par le sidecar DGX, avec authentification, suivi de job et consommation mesurée, afin de disposer d’une alternative locale au fournisseur d’images cloud.",
+      "epic": "6-RÉCONCILIATION",
+      "priority": "P0",
+      "status": "in_progress",
+      "passes": false,
+      "source": {
+        "type": "explicit_user_request",
+        "date": "2026-10-10"
+      },
+      "sourceDependencies": [],
+      "dependencies": ["S6-025"],
+      "gap": "Le sidecar DGX était utilisé hors de Qalem par Tamkīn, sans fournisseur Qalem dédié. La connectivité et l’authentification ont été vérifiées, mais un essai récent de génération a échoué par manque de mémoire GPU ; le fournisseur ne doit pas être activé en production avant une génération réelle réussie.",
+      "evidence": [
+        "lib/media/adapters/dgx-image-adapter.ts",
+        "lib/media/image-providers.ts",
+        "lib/server/provider-config.ts",
+        "tests/media/dgx-image-adapter.test.ts",
+        "tests/server/provider-config.test.ts",
+        "tests/infra/runtime-image-config.test.ts"
+      ],
+      "acceptance": [
+        "Le provider DGX apparaît dans le registre et dans l’administration en français, arabe et anglais ; les identifiants de modèle autorisés sont déterministes et le secret comme l’URL du sidecar restent côté serveur.",
+        "L’adaptateur utilise exclusivement les routes authentifiées du sidecar : health et contrôle d’authentification sans calcul GPU, soumission asynchrone du workflow autorisé, polling borné, traitement des états failed/expired/timeout et récupération/validation de l’image PNG.",
+        "Une erreur DGX reste explicite et ne provoque aucun basculement silencieux vers Gemini ou un autre fournisseur ; le comptage existant d’une image réelle, la réservation, la compensation et l’idempotence de S6-025 restent actifs.",
+        "Les variables d’environnement du fournisseur sont documentées et transmises aux services Qalem concernés sans secret en dur ni réutilisation implicite d’une clé appartenant à Tamkīn.",
+        "Les tests couvrent succès asynchrone, authentification refusée, job échoué/expiré, réponse invalide, identifiant hostile, image invalide et résolution de configuration ; les quality gates complets passent sur ServeurIA.",
+        "Une génération image réelle réussit via Qalem avec le modèle et le SHA enregistrés ; aucun changement de charge GPU partagée n’est fait pour forcer le test. Le fournisseur n’est activé qu’après cette preuve et la confirmation de l’administrateur du sidecar."
+      ],
+      "closureEvidence": [],
+      "executionAllowed": true,
+      "executionDecision": "2026-10-10 — Mandat explicite d’Amine : câbler l’adaptateur d’images au parc DGX.",
+      "validationRequires": ["qualityGates", "fresh_evidence_per_acceptance", "successful_real_dgx_generation"],
+      "priorityRank": 0.05
     }
   ]
 }

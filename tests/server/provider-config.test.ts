@@ -45,6 +45,7 @@ const ENV_PREFIXES_TO_CLEAR = [
   'IMAGE_NANO_BANANA',
   'IMAGE_MINIMAX',
   'IMAGE_GROK',
+  'IMAGE_DGX',
   'VIDEO_COMFYUI',
   'VIDEO_SEEDANCE',
   'VIDEO_KLING',
@@ -441,6 +442,27 @@ pdf:
       const providers = getServerImageProviders();
       expect(providers['openai-image']).toEqual({});
       expect(resolveImageBaseUrl('openai-image')).toBe('https://proxy.example.com/v1');
+    });
+
+    it('loads the DGX image sidecar as a managed provider without exposing its secret', async () => {
+      vi.stubEnv('IMAGE_DGX_API_KEY', 'private-sidecar-secret');
+      vi.stubEnv('IMAGE_DGX_BASE_URL', 'http://100.85.125.95:8189');
+      vi.stubEnv('IMAGE_DGX_MODELS', 'flux-schnell');
+      const { getServerImageProviders, resolveImageApiKey, resolveImageBaseUrl } =
+        await import('@/lib/server/provider-config');
+
+      expect(getServerImageProviders().dgx).toEqual({ models: ['flux-schnell'] });
+      expect(resolveImageApiKey('dgx')).toBe('private-sidecar-secret');
+      expect(resolveImageBaseUrl('dgx')).toBe('http://100.85.125.95:8189');
+    });
+
+    it('does not activate DGX from a secret alone when its private URL is absent', async () => {
+      vi.stubEnv('IMAGE_DGX_API_KEY', 'private-sidecar-secret');
+      const { getServerImageProviders, resolveImageApiKey } =
+        await import('@/lib/server/provider-config');
+
+      expect(getServerImageProviders().dgx).toBeUndefined();
+      expect(resolveImageApiKey('dgx')).toBe('');
     });
 
     it('exposes video provider baseUrl', async () => {

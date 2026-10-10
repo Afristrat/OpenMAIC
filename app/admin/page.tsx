@@ -192,6 +192,7 @@ const IMAGE_PROVIDER_NAMES: Record<ImageProviderId, string> = {
   'openai-image': 'providerOpenAIImage',
   'minimax-image': 'providerMinimaxImage',
   lemonade: 'providerLemonadeImage',
+  dgx: 'providerDgxImage',
 };
 
 const IMAGE_PROVIDER_ICONS: Record<ImageProviderId, string> = {
@@ -202,6 +203,7 @@ const IMAGE_PROVIDER_ICONS: Record<ImageProviderId, string> = {
   'openai-image': '/logos/openai.svg',
   'minimax-image': '/logos/doubao.svg',
   lemonade: '/logos/doubao.svg',
+  dgx: '',
 };
 
 const VIDEO_PROVIDER_NAMES: Record<VideoProviderId, string> = {
