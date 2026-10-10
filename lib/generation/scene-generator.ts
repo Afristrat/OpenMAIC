@@ -1076,7 +1076,43 @@ function placeRequiredImages(
  * would make the content unreadable and an otherwise valid course would fail
  * solely because a provider ignored the 1000×562.5 coordinate contract.
  */
-function buildSafeSlideFallback(
+/**
+ * Stacks the images in a reserved column to the right of the text. The model's own
+ * geometry is deliberately discarded: keeping it made the fallback fail the layout audit
+ * whenever an image overlapped the fallback text, which turned a recoverable slide into
+ * six lost attempts and a failed course.
+ */
+function placeFallbackImages(
+  images: PPTElement[],
+  margin: number,
+  textWidth: number,
+): PPTElement[] {
+  const column = {
+    left: margin + textWidth + 20,
+    top: 145,
+    width: 1000 - margin - (margin + textWidth + 20),
+    height: 365,
+  };
+  const gap = 16;
+  const slotHeight = (column.height - gap * (images.length - 1)) / Math.max(images.length, 1);
+  return images.map((element, index) => {
+    // Only image elements reach this function; the union also holds shapes without a height.
+    const image = element as Extract<PPTElement, { type: 'image' }>;
+    const scale = Math.min(column.width / (image.width || 1), slotHeight / (image.height || 1));
+    const width = (image.width || column.width) * scale;
+    const height = (image.height || slotHeight) * scale;
+    return {
+      ...image,
+      left: column.left + (column.width - width) / 2,
+      top: column.top + index * (slotHeight + gap) + (slotHeight - height) / 2,
+      width,
+      height,
+      rotate: 0,
+    } as PPTElement;
+  });
+}
+
+export function buildSafeSlideFallback(
   outline: SceneOutline,
   images: PPTElement[],
   theme?: SlideTheme,
@@ -1125,7 +1161,7 @@ function buildSafeSlideFallback(
       textType: 'content',
       rotate: 0,
     },
-    ...images,
+    ...placeFallbackImages(images, margin, Math.min(440, width)),
   ];
 }
 
@@ -1578,6 +1614,9 @@ async function generateSlideContent(
           remark: generatedData.remark || outline.description,
         };
       }
+      log.warn(
+        `Deterministic safe layout for ${outline.id} also failed the audit: ${JSON.stringify(fallbackIssues)}`,
+      );
     }
     log.warn(`Slide layout invalid for ${outline.id}: ${JSON.stringify(layoutIssues)}; retrying`);
     onValidationFailure?.(
