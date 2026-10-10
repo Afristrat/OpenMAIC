@@ -30,7 +30,7 @@ export interface ClassroomGenerationJob {
   };
   scenesGenerated: number;
   totalScenes?: number;
-  result?: { classroomId: string; url: string; scenesCount: number };
+  result?: { classroomId: string; url: string; scenesCount: number; warnings?: string[] };
   error?: string;
 }
 
@@ -191,10 +191,17 @@ export async function markClassroomGenerationJobSucceeded(
     status: 'succeeded',
     step: 'completed',
     progress: 100,
-    message: 'Classroom generation completed',
+    message: result.warnings?.length
+      ? `Classroom generation completed with warnings: ${result.warnings.join(' | ')}`
+      : 'Classroom generation completed',
     completedAt: new Date().toISOString(),
     scenesGenerated: result.scenesCount,
-    result: { classroomId: result.id, url: result.url, scenesCount: result.scenesCount },
+    result: {
+      classroomId: result.id,
+      url: result.url,
+      scenesCount: result.scenesCount,
+      ...(result.warnings?.length ? { warnings: result.warnings } : {}),
+    },
     error: undefined,
     input: undefined,
   });

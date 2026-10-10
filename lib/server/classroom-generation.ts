@@ -38,9 +38,15 @@ import {
 } from '@/lib/server/course-generation-access';
 import {
   generateMediaForClassroom,
+  removeUnresolvedMediaPlaceholders,
   replaceMediaPlaceholders,
   generateTTSForClassroom,
 } from '@/lib/server/classroom-media-generation';
+import {
+  asPartialMediaFailure,
+  describeMediaWarning,
+  isMediaDegradeMode,
+} from '@/lib/server/media-failure-policy';
 import { withGenerationRetry } from '@/lib/generation/generation-retry';
 import { buildVideoManifestFromOutlines } from '@/lib/media/video-manifest';
 import { placeGeneratedMediaOnSlides } from '@/lib/generation/media-placement';
@@ -227,6 +233,8 @@ export interface GenerateClassroomResult {
   scenes: Scene[];
   scenesCount: number;
   createdAt: string;
+  /** Visible, non fatal anomalies (e.g. illustrations missing in degraded media mode). */
+  warnings?: string[];
 }
 
 function createInMemoryStore(stage: Stage): StageStore {
@@ -282,6 +290,7 @@ export async function generateClassroom(
   },
 ): Promise<GenerateClassroomResult> {
   await assertCourseGenerationAccess(input, options.ownerId);
+  const generationWarnings: string[] = [];
   const reportProgress = async (progress: ClassroomGenerationProgress) => {
     await assertCourseGenerationAccess(input, options.ownerId);
     await options.onProgress?.(progress);
@@ -1127,16 +1136,28 @@ export async function generateClassroom(
         totalScenes: outlines.length,
       });
 
-      const mediaMap = await generateMediaForClassroom(
-        outlines,
-        stageId,
-        () => assertCourseGenerationAccess(input, options.ownerId),
-        organizationDesignSystem,
-        {
-          ...(input.imageProviderId ? { providerId: input.imageProviderId } : {}),
-          ...(input.imageModelId ? { modelId: input.imageModelId } : {}),
-        },
-      );
+      let mediaMap: Record<string, string>;
+      let degradedMediaIds: ReadonlySet<string> = new Set();
+      try {
+        mediaMap = await generateMediaForClassroom(
+          outlines,
+          stageId,
+          () => assertCourseGenerationAccess(input, options.ownerId),
+          organizationDesignSystem,
+          {
+            ...(input.imageProviderId ? { providerId: input.imageProviderId } : {}),
+            ...(input.imageModelId ? { modelId: input.imageModelId } : {}),
+          },
+        );
+      } catch (mediaError) {
+        const partial = asPartialMediaFailure(mediaError);
+        if (!partial || !isMediaDegradeMode()) throw mediaError;
+        mediaMap = partial.mediaMap;
+        degradedMediaIds = new Set(partial.failures.map((failure) => failure.elementId));
+        const warning = describeMediaWarning(partial.failures);
+        generationWarnings.push(warning);
+        log.warn(`Degraded media mode: ${warning}`);
+      }
       const requestedMediaIds = new Set(
         outlines.flatMap((outline) =>
           (outline.mediaGenerations ?? [])
@@ -1149,7 +1170,7 @@ export async function generateClassroom(
         ),
       );
       const generatedMediaCount = [...requestedMediaIds].filter((id) => mediaMap[id]).length;
-      if (generatedMediaCount !== requestedMediaIds.size) {
+      if (generatedMediaCount !== requestedMediaIds.size && degradedMediaIds.size === 0) {
         throw new Error(
           `Enabled media generation produced ${generatedMediaCount}/${requestedMediaIds.size} requested files. Disable the failing media capability or ask its administrator to restore provider capacity.`,
         );
@@ -1169,6 +1190,7 @@ export async function generateClassroom(
         );
       }
       replaceMediaPlaceholders(scenes, mediaMap);
+      removeUnresolvedMediaPlaceholders(scenes, degradedMediaIds);
       const serializedScenes = JSON.stringify(scenes);
       const unreferencedMediaIds = [...requestedMediaIds].filter(
         (id) => mediaMap[id] && !serializedScenes.includes(mediaMap[id]),
@@ -1262,7 +1284,10 @@ export async function generateClassroom(
     await reportProgress({
       step: 'completed',
       progress: 100,
-      message: 'Classroom generation completed',
+      message:
+        generationWarnings.length > 0
+          ? `Classroom generation completed with warnings: ${generationWarnings.join(' | ')}`
+          : 'Classroom generation completed',
       scenesGenerated: scenes.length,
       totalScenes: outlines.length,
     });
@@ -1274,6 +1299,7 @@ export async function generateClassroom(
       scenes,
       scenesCount: scenes.length,
       createdAt: persisted.createdAt,
+      ...(generationWarnings.length > 0 ? { warnings: generationWarnings } : {}),
     };
   } catch (error) {
     if (castingReservationId) {

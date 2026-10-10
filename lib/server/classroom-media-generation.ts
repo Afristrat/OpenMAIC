@@ -235,6 +235,26 @@ function mediaServingUrl(classroomId: string, subPath: string): string {
 // Image / Video generation
 // ---------------------------------------------------------------------------
 
+/**
+ * Raised when some requested media failed. It carries what was generated, so a caller that
+ * opted into degraded delivery (see media-failure-policy) can keep the classroom and drop only
+ * the missing illustrations. The message is unchanged for strict callers.
+ */
+export class MediaGenerationPartialError extends Error {
+  constructor(
+    message: string,
+    readonly mediaMap: Record<string, string>,
+    readonly failures: ReadonlyArray<{
+      type: 'image' | 'video';
+      elementId: string;
+      reason: string;
+    }>,
+  ) {
+    super(message);
+    this.name = 'MediaGenerationPartialError';
+  }
+}
+
 export async function generateMediaForClassroom(
   outlines: SceneOutline[],
   classroomId: string,
@@ -373,8 +393,10 @@ export async function generateMediaForClassroom(
     const summary = failures
       .map((failure) => `${failure.type}:${failure.elementId} (${failure.reason})`)
       .join(', ');
-    throw new Error(
+    throw new MediaGenerationPartialError(
       `Enabled media generation failed for ${failures.length}/${requests.length} requested files: ${summary}. Disable the failing media capability or ask its administrator to restore provider capacity.`,
+      mediaMap,
+      failures,
     );
   }
 

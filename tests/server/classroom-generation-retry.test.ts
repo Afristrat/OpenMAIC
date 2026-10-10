@@ -436,6 +436,87 @@ describe('classroom scene generation retries', () => {
     expect(mocks.persistClassroom).not.toHaveBeenCalled();
   });
 
+  describe('when enabled media generation partially fails', () => {
+    const imageOutline = {
+      ...outline,
+      mediaGenerations: [
+        {
+          type: 'image' as const,
+          prompt: 'A clear visual explanation of retry backoff',
+          elementId: 'gen_img_quota',
+          aspectRatio: '16:9',
+        },
+      ],
+    };
+    const quotaError = () =>
+      Object.assign(
+        new Error(
+          'Enabled media generation failed for 1/1 requested files: image:gen_img_quota (provider budget exceeded)',
+        ),
+        {
+          mediaMap: {},
+          failures: [
+            {
+              type: 'image',
+              elementId: 'gen_img_quota',
+              reason: 'provider budget exceeded',
+            },
+          ],
+        },
+      );
+
+    beforeEach(() => {
+      mocks.generateSceneOutlinesFromRequirements.mockResolvedValue({
+        success: true,
+        data: { languageDirective: 'Use English.', outlines: [imageOutline] },
+      });
+      mocks.generateSceneContent.mockResolvedValue({
+        elements: [{ id: 'image-1', type: 'image', src: 'gen_img_quota' }],
+        remark: 'Retry transient failures',
+      });
+      mocks.generateMediaForClassroom.mockRejectedValue(quotaError());
+    });
+
+    it('stays strict by default and persists nothing', async () => {
+      await expect(generateWithProgress({ enableImageGeneration: true })).rejects.toThrow(
+        'Enabled media generation failed for 1/1 requested files',
+      );
+      expect(mocks.persistClassroom).not.toHaveBeenCalled();
+    });
+
+    it('delivers every scene with a visible warning when degraded mode is enabled', async () => {
+      vi.stubEnv('QALEM_MEDIA_FAILURE_MODE', 'degrade');
+      try {
+        const { result, progress } = await generateWithProgress({ enableImageGeneration: true });
+
+        expect(mocks.persistClassroom).toHaveBeenCalled();
+        expect(result.scenesCount).toBe(1);
+        expect(result.warnings?.[0]).toContain('Cours livré sans 1 image');
+        expect(result.warnings?.[0]).toContain('provider budget exceeded');
+        expect(mocks.removeUnresolvedMediaPlaceholders).toHaveBeenCalledWith(
+          expect.any(Array),
+          new Set(['gen_img_quota']),
+        );
+        expect(progress.at(-1)?.message).toContain('completed with warnings');
+      } finally {
+        vi.unstubAllEnvs();
+      }
+    });
+
+    it('still fails in degraded mode when the error is not a partial media failure', async () => {
+      vi.stubEnv('QALEM_MEDIA_FAILURE_MODE', 'degrade');
+      mocks.generateMediaForClassroom.mockRejectedValue(new Error('Storage unavailable'));
+      try {
+        await expect(generateWithProgress({ enableImageGeneration: true })).rejects.toThrow(
+          'Storage unavailable',
+        );
+        expect(mocks.persistClassroom).not.toHaveBeenCalled();
+      } finally {
+        vi.unstubAllEnvs();
+      }
+    });
+  });
+
   it('fails when a generated image file is not integrated into any scene', async () => {
     const imageOutline = {
       ...outline,
