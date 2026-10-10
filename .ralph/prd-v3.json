@@ -5615,7 +5615,9 @@
         "Les tests couvrent succès asynchrone, authentification refusée, job échoué/expiré, réponse invalide, identifiant hostile, image invalide et résolution de configuration ; les quality gates complets passent sur ServeurIA.",
         "Une génération image réelle réussit via Qalem avec le modèle et le SHA enregistrés ; aucun changement de charge GPU partagée n’est fait pour forcer le test. Le fournisseur n’est activé qu’après cette preuve et la confirmation de l’administrateur du sidecar."
       ],
-      "closureEvidence": [],
+      "closureEvidence": [
+        "2026-10-10 — Au SHA code 7df434611d0c0e7c8ddffb395cdaa96e0467b484, Prettier, TypeScript, ESLint, Vitest complet et build Next.js passent sur ServeurIA. Les 202 tests Playwright passent en quatre shards (51 + 51 + 50 + 50) ; le build compile et génère 127 pages. Aucune génération DGX réelle ni activation/déploiement de production n’a été effectuée : la preuve OOM antérieure et l’absence de secret Qalem dédié maintiennent S6-035 ouverte."
+      ],
       "executionAllowed": true,
       "executionDecision": "2026-10-10 — Mandat explicite d’Amine : câbler l’adaptateur d’images au parc DGX.",
       "validationRequires": [
