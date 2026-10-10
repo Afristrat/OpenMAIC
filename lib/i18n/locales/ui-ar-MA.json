@@ -1010,6 +1010,7 @@
   "generation.syllabusOverallObjective": "الهدف العام",
   "generation.syllabusLearningObjectives": "الأهداف الإجرائية، هدف في كل سطر",
   "generation.syllabusTotalDuration": "المدة الإجمالية بالدقائق",
+  "generation.syllabusDurationGap": "مجموع مدة المقاطع {{sequences}} دقيقة مقابل {{total}} دقيقة معلنة: عدّلوا المقاطع أو المدة الإجمالية.",
   "generation.syllabusDeliveryMode": "نمط التكوين",
   "generation.syllabusAssessment": "استراتيجية التقييم",
   "generation.syllabusDeliverable": "المخرج المنتظر",

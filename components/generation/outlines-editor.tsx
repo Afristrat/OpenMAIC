@@ -38,7 +38,11 @@ import type { ClassroomSyllabus, SceneOutline } from '@/lib/types/generation';
 import type { WidgetType } from '@/lib/types/widgets';
 import { changeOutlineType } from '@/lib/generation/outline-type';
 import type { InteractionLevel, LearningApproach } from '@/lib/agents/persona-catalog';
-import { getSyllabusValidationIssues } from '@/lib/generation/syllabus-validation';
+import {
+  getSyllabusDurationGap,
+  getSyllabusValidationIssues,
+  type SyllabusDurationGap,
+} from '@/lib/generation/syllabus-validation';
 import { OptimizationAdvice } from './optimization-advice';
 
 type SceneType = SceneOutline['type'];
@@ -170,6 +174,8 @@ export function OutlinesEditor({
     onSyllabusChange !== undefined;
   const validationIssues =
     hasSyllabusWorkspace && syllabus ? getSyllabusValidationIssues(syllabus, outlines) : [];
+  const durationGap =
+    hasSyllabusWorkspace && syllabus ? getSyllabusDurationGap(syllabus, outlines) : null;
   const isPlanComplete = validationIssues.length === 0;
   const syllabusNeedsGeneration = validationIssues.some((issue) => !('sceneIndex' in issue));
 
@@ -427,6 +433,7 @@ export function OutlinesEditor({
             onAssist={onAssist ? () => onAssist({ kind: 'syllabus' }) : undefined}
             isAssisting={assistingTarget === 'syllabus'}
             needsGeneration={syllabusNeedsGeneration}
+            durationGap={durationGap}
           />
           <section
             data-testid="syllabus-sequence-panel"
@@ -529,6 +536,7 @@ function SyllabusFields({
   onAssist,
   isAssisting,
   needsGeneration,
+  durationGap,
 }: {
   courseTitle: string;
   syllabus: ClassroomSyllabus;
@@ -538,6 +546,7 @@ function SyllabusFields({
   onAssist?: () => void;
   isAssisting: boolean;
   needsGeneration: boolean;
+  durationGap: SyllabusDurationGap | null;
 }) {
   const { t } = useI18n();
   const update = <K extends keyof ClassroomSyllabus>(key: K, value: ClassroomSyllabus[K]) =>
@@ -734,6 +743,14 @@ function SyllabusFields({
                 disabled={disabled}
                 aria-label={t('generation.syllabusTotalDuration')}
               />
+              {durationGap && (
+                <span role="status" className="block text-xs text-amber-600 dark:text-amber-400">
+                  {t('generation.syllabusDurationGap', {
+                    sequences: durationGap.sequencesMinutes,
+                    total: durationGap.totalMinutes,
+                  })}
+                </span>
+              )}
             </label>
             <SyllabusTextField
               label={t('generation.syllabusDeliveryMode')}

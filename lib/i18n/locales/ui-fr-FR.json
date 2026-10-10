@@ -1010,6 +1010,7 @@
   "generation.syllabusOverallObjective": "Objectif général",
   "generation.syllabusLearningObjectives": "Objectifs opérationnels, un par ligne",
   "generation.syllabusTotalDuration": "Durée totale en minutes",
+  "generation.syllabusDurationGap": "Les séquences totalisent {{sequences}} min pour {{total}} min annoncées : ajustez les séquences ou la durée totale.",
   "generation.syllabusDeliveryMode": "Modalité",
   "generation.syllabusAssessment": "Stratégie d’évaluation",
   "generation.syllabusDeliverable": "Livrable attendu",

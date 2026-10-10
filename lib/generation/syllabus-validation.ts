@@ -42,3 +42,25 @@ export function getSyllabusValidationIssues(
 
   return issues;
 }
+
+export interface SyllabusDurationGap {
+  sequencesMinutes: number;
+  totalMinutes: number;
+}
+
+/**
+ * Gap between the announced total duration and the sum of the sequences, or null when they
+ * agree within the tolerance. Informative only: it never blocks the author's validation.
+ */
+export function getSyllabusDurationGap(
+  syllabus: ClassroomSyllabus,
+  outlines: SceneOutline[],
+  tolerance = 0.1,
+): SyllabusDurationGap | null {
+  const totalMinutes = syllabus.totalDurationMinutes;
+  if (!Number.isFinite(totalMinutes) || totalMinutes <= 0 || outlines.length === 0) return null;
+  const seconds = outlines.reduce((sum, outline) => sum + (outline.estimatedDuration ?? 0), 0);
+  const sequencesMinutes = Math.round(seconds / 60);
+  if (Math.abs(sequencesMinutes - totalMinutes) <= totalMinutes * tolerance) return null;
+  return { sequencesMinutes, totalMinutes };
+}
