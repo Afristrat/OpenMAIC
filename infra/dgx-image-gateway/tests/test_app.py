@@ -14,6 +14,8 @@ PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 32
 PNG_B64 = base64.b64encode(PNG).decode()
 JOB = str(uuid.uuid4())
 AUTH = {"Authorization": "Bearer cle-passerelle"}
+# Valeurs réelles, relevées avant que la fixture n'accélère l'interrogation.
+REAL_POLL = (gateway.INITIAL_POLL_S, gateway.MAX_POLL_S, gateway.JOB_TIMEOUT_S)
 
 
 @pytest.fixture(autouse=True)
@@ -119,3 +121,17 @@ def test_taille_ramenee_a_768_et_proportions_conservees():
     assert gateway.output_size("1024x1024") == "768x768"
     assert gateway.output_size("1920x1080") == "768x432"
     assert gateway.output_size("512x256") == "512x256"
+
+def test_depasse_le_delai_total_en_504(monkeypatch):
+    monkeypatch.setattr(gateway, "JOB_TIMEOUT_S", 0.0)
+    handler, _ = sidecar(states=("running",))
+    response = client_with(handler).post("/v1/images/generations", headers=AUTH, json={"prompt": "x"})
+    assert response.status_code == 504
+    assert response.json()["error"]["code"] == "job_timeout"
+
+
+def test_constantes_alignees_sur_le_contrat_mesure():
+    # Contrat Tamkin du 2026-10-10 : interrogation toutes les 5 s, délai total sous les 300 s du client.
+    initial, maximum, total = REAL_POLL
+    assert initial == 5.0 and maximum == 5.0
+    assert 240.0 <= total < 300.0

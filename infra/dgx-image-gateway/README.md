@@ -65,6 +65,15 @@ cd infra/dgx-image-gateway && python -m pytest -q tests
 
 - Une image par requête (`n=1`), `response_format=b64_json` seulement, modèle `flux-schnell` seulement.
 - Taille ramenée à 768 px sur le grand côté, comme l'adaptateur DGX de Qalem (S6-035).
-- Limite de 55 secondes par génération, alignée sur l'adaptateur.
+- Interrogation du job toutes les 5 s et délai total de 270 s : une image prend 20 à 32 s mesurées sur un GPU partagé à file unique, et le client HTTP de Qalem coupe à 300 s.
 - L'activation en production exige une génération réelle réussie et la confirmation de
   l'administrateur du sidecar (critères de la story S6-035).
+
+## Contrat du sidecar (mesuré le 2026-10-10 par la session Tamkīn, PNG de 1,1 Mo obtenu)
+
+- Adresse `http://100.85.125.95:8189` par Tailscale (le serveur de Qalem est sur le tailnet) ; `GET /health` rend 200.
+- Authentification : l'en-tête `X-Tamkin-Studio-Secret` suffit, sans lui 401. Le secret n'est pas fourni par Tamkīn : il se demande à la session DGX-Spark. Ne jamais l'écrire dans le dépôt ni dans un journal.
+- `POST /workflow/flux-schnell/txt2img/async` avec `{"prompt":"...","size":"1024x1024"}` rend 202 `{"jobId":"..."}`, puis `GET /jobs/<id>` rend `running`, `completed` ou `failed` (aucune cause d'échec dans la réponse), puis `GET /jobs/<id>/result` rend `{"data":[{"b64_json":"..."}]}`.
+- Ne pas passer par `proxy.ai-mpower.com` pour appeler le sidecar : le passthrough ne transmettait pas l'en-tête au 2026-08-20. Cette passerelle appelle le sidecar en direct ; c'est elle, et non le passthrough, que LiteLLM déclare.
+- Le GPU est partagé avec des services de voix, la file est unique et aucun test de concurrence n'a été fait : la charge de Qalem ralentira Tamkīn. D'où `GATEWAY_MAX_PARALLEL=1` et l'interrogation espacée de 5 s.
+- La route d'édition `/workflow/kontext/edit` ne vérifie pas le secret (faille connue côté DGX) : cette passerelle ne l'utilise pas et rien de sensible ne doit en dépendre.

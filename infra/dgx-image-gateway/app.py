@@ -31,9 +31,12 @@ from pydantic import BaseModel, Field
 WORKFLOW = "flux-schnell"
 MAX_EDGE = 768
 REQUEST_TIMEOUT_S = 10.0
-JOB_TIMEOUT_S = 55.0
-INITIAL_POLL_S = 0.5
-MAX_POLL_S = 2.0
+# Mesuré par Tamkin le 2026-10-10 : une image prend 20 à 32 s sur un GPU partagé, à file unique.
+# Interrogation toutes les 5 s, jamais en boucle serrée. Le délai total reste sous les 300 s du
+# client HTTP de Qalem (undici) pour que la passerelle réponde avant lui.
+JOB_TIMEOUT_S = 270.0
+INITIAL_POLL_S = 5.0
+MAX_POLL_S = 5.0
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 JOB_ID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$", re.I)
 SIZE = re.compile(r"^(\d{1,5})x(\d{1,5})$")
@@ -139,7 +142,7 @@ def create_app(client_factory: Any = None) -> FastAPI:
                         raise _openai_error(502, "État de job inconnu")
                     remaining = deadline - time.monotonic()
                     if remaining <= 0:
-                        raise _openai_error(504, "La génération dépasse la limite de 55 secondes", "job_timeout")
+                        raise _openai_error(504, "La génération dépasse la limite de 270 secondes", "job_timeout")
                     await asyncio.sleep(min(interval, remaining))
                     interval = min(interval * 2, MAX_POLL_S)
 
