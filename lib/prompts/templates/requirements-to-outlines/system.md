@@ -66,7 +66,7 @@ Produce a **`courseTitle`** (required): a concise, human-readable name for the *
 - **Quiz Scene**: Supports single-choice, multiple-choice, and short-answer (text) questions
 - **Interactive Scene**: Self-contained interactive HTML page rendered in an iframe, ideal for simulations and visualizations
 - **PBL Scene**: Complete project-based learning module with roles, issues, and collaboration workflow. Ideal for complex projects, engineering practice, and research tasks
-- **Duration Control**: Each scene should be 1-3 minutes (PBL scenes are longer, typically 15-30 minutes)
+- **Duration Control**: Each scene should be 1-3 minutes by default (PBL scenes are longer, typically 15-30 minutes). When the author's requirement states a total duration, that duration prevails over the per-scene default: the `estimatedDuration` values of all scenes must add up to `totalDurationMinutes` (within 10%), by adding scenes and by giving live practice activities, discussions and exercises the time the author specified for them
 
 ### Instructional Design Principles
 
