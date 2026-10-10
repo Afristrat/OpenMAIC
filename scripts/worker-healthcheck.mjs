@@ -5,7 +5,7 @@ const workerIsRunning = readdirSync('/proc', { withFileTypes: true })
   .some((entry) => {
     try {
       const command = readFileSync(`/proc/${entry.name}/cmdline`, 'utf8').replaceAll('\0', ' ');
-      return command.includes('scripts/start-workers.ts');
+      return command.includes('scripts/start-workers.mts');
     } catch {
       return false;
     }
