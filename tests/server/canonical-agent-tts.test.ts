@@ -64,6 +64,46 @@ describe('canonical classroom agent TTS', () => {
     expect(mocks.upload).not.toHaveBeenCalled();
   });
 
+  test('retries a transient voice server error before counting the line as failed', async () => {
+    const scene = {
+      order: 1,
+      actions: [{ id: 'one', type: 'speech', text: 'Première phrase.' }],
+    } as unknown as Scene;
+    mocks.generateTTS
+      .mockRejectedValueOnce(
+        Object.assign(new Error('OpenAI TTS API error: Internal Server Error'), { status: 500 }),
+      )
+      .mockResolvedValueOnce({ audio: Buffer.from('wav'), format: 'wav' });
+
+    const report = await generateTTSForClassroom(
+      [scene],
+      'classroom-1',
+      vi.fn().mockResolvedValue(undefined),
+    );
+
+    expect(report).toEqual({ requested: 1, generated: 1 });
+    expect(mocks.generateTTS).toHaveBeenCalledTimes(2);
+  });
+
+  test('does not retry a permanent voice error', async () => {
+    const scene = {
+      order: 1,
+      actions: [{ id: 'one', type: 'speech', text: 'Première phrase.' }],
+    } as unknown as Scene;
+    mocks.generateTTS.mockRejectedValue(
+      Object.assign(new Error('OpenAI TTS API error: invalid voice'), { status: 400 }),
+    );
+
+    const report = await generateTTSForClassroom(
+      [scene],
+      'classroom-1',
+      vi.fn().mockResolvedValue(undefined),
+    );
+
+    expect(report).toEqual({ requested: 1, generated: 0 });
+    expect(mocks.generateTTS).toHaveBeenCalledTimes(1);
+  });
+
   test('discards an image received after revocation and does not request the next image', async () => {
     const check = vi.fn().mockResolvedValue(undefined);
     mocks.generateImage.mockImplementationOnce(async () => {

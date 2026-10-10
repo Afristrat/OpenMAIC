@@ -275,7 +275,10 @@ async function generateOpenAITTS(
   if (!response.ok) {
     throwIfTtsRateLimited('OpenAI', response.status);
     const error = await response.json().catch(() => ({ error: response.statusText }));
-    throw new Error(`OpenAI TTS API error: ${error.error?.message || response.statusText}`);
+    throw ttsApiError(
+      `OpenAI TTS API error: ${error.error?.message || response.statusText}`,
+      response.status,
+    );
   }
 
   const arrayBuffer = await response.arrayBuffer();
@@ -318,7 +321,10 @@ async function generateLemonadeTTS(
 
   if (!response.ok) {
     throwIfTtsRateLimited('Lemonade', response.status);
-    throw new Error(`Lemonade TTS API error: ${await readTTSApiError(response)}`);
+    throw ttsApiError(
+      `Lemonade TTS API error: ${await readTTSApiError(response)}`,
+      response.status,
+    );
   }
 
   const arrayBuffer = await response.arrayBuffer();
@@ -389,7 +395,7 @@ async function generateVoxCPMTTS(
 
   if (!response.ok) {
     throwIfTtsRateLimited('VoxCPM', response.status);
-    throw new Error(`VoxCPM TTS API error: ${await readTTSApiError(response)}`);
+    throw ttsApiError(`VoxCPM TTS API error: ${await readTTSApiError(response)}`, response.status);
   }
 
   const arrayBuffer = await response.arrayBuffer();
@@ -594,6 +600,14 @@ async function postVoxCPMNanoVLLM(
     },
     body: JSON.stringify(payload),
   });
+}
+
+/**
+ * Keeps the HTTP status on the error: without it a transient 5xx cannot be told apart from a
+ * permanent failure, so the generation retry policy never retries a flaky voice server.
+ */
+function ttsApiError(message: string, status: number): Error {
+  return Object.assign(new Error(message), { status });
 }
 
 async function readTTSApiError(response: Response): Promise<string> {

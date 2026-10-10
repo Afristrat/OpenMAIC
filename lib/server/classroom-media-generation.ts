@@ -564,20 +564,34 @@ export async function generateTTSForClassroom(
             ? requestedVoice.voiceId
             : DEFAULT_TTS_VOICES[actionProviderId as keyof typeof DEFAULT_TTS_VOICES] || 'default';
         const format = actionProvider?.supportedFormats?.[0] || 'mp3';
-        const result = await generateTTS(
+        // A flaky voice server must not cost the whole classroom: each line is retried on
+        // transient errors (5xx, timeouts, rate limits) before it counts as failed.
+        const result = await withGenerationRetry(
+          () =>
+            generateTTS(
+              {
+                providerId: actionProviderId,
+                modelId:
+                  agents.find((agent) => agent.id === speechAction.agentId)?.voiceConfig?.modelId ||
+                  DEFAULT_TTS_MODELS[actionProviderId as keyof typeof DEFAULT_TTS_MODELS] ||
+                  '',
+                apiKey,
+                baseUrl: ttsBaseUrl,
+                voice,
+                speed: speechAction.speed,
+                language: speechAction.ttsLanguageOverride ?? resolveSpeechLanguage(language),
+              },
+              speechAction.text,
+            ),
           {
-            providerId: actionProviderId,
-            modelId:
-              agents.find((agent) => agent.id === speechAction.agentId)?.voiceConfig?.modelId ||
-              DEFAULT_TTS_MODELS[actionProviderId as keyof typeof DEFAULT_TTS_MODELS] ||
-              '',
-            apiKey,
-            baseUrl: ttsBaseUrl,
-            voice,
-            speed: speechAction.speed,
-            language: speechAction.ttsLanguageOverride ?? resolveSpeechLanguage(language),
+            label: `classroom TTS ${audioId}`,
+            maxRetries: 3,
+            baseDelayMs: 1_000,
+            maxDelayMs: 8_000,
+            onRetry: ({ attempt, maxAttempts, reason }) => {
+              log.warn(`Retrying TTS ${audioId} (${attempt + 1}/${maxAttempts}): ${reason}`);
+            },
           },
-          speechAction.text,
         );
 
         const filename = `${audioId}.${result.format || format}`;
