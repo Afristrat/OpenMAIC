@@ -9,6 +9,7 @@ import {
   getServerWebSearchProviders,
   getParallelSceneConcurrency,
 } from '@/lib/server/provider-config';
+import { getDgxWorkflowLabels } from '@/lib/server/dgx-workflow-labels';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
 
@@ -21,12 +22,24 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
+    const image = getServerImageProviders();
+    const dgx = image.dgx;
+    if (dgx) {
+      const reported = await getDgxWorkflowLabels();
+      const labels = Object.fromEntries(
+        (dgx.models ?? []).filter((id) => reported[id]).map((id) => [id, reported[id]]),
+      );
+      // The sidecar's own model names win over any operator-typed label.
+      if (Object.keys(labels).length > 0) {
+        image.dgx = { ...dgx, modelLabels: { ...dgx.modelLabels, ...labels } };
+      }
+    }
     return apiSuccess({
       providers: getServerProviders(),
       tts: getServerTTSProviders(),
       asr: getServerASRProviders(),
       pdf: getServerPDFProviders(),
-      image: getServerImageProviders(),
+      image,
       imageDefaultProviderId: getServerImageDefaultProviderId(),
       video: getServerVideoProviders(),
       webSearch: getServerWebSearchProviders(),

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { IMAGE_PROVIDERS, generateImage, testImageConnectivity } from '@/lib/media/image-providers';
+import { listDgxTxt2ImgModelLabels } from '@/lib/media/adapters/dgx-image-adapter';
 
 const mockFetch = vi.fn() as Mock;
 vi.stubGlobal('fetch', mockFetch);
@@ -19,6 +20,53 @@ function jsonResponse(body: unknown, status = 200) {
 
 describe('dgx-image-adapter', () => {
   beforeEach(() => mockFetch.mockReset());
+
+  it('reads model names from the sidecar catalogue and keeps only async txt2img workflows', async () => {
+    mockFetch.mockResolvedValueOnce(
+      jsonResponse({
+        workflows: [
+          {
+            alias: 'default',
+            model: 'FLUX.2 Klein 9B',
+            route: '/workflow/default/txt2img/async',
+            mode: 'async',
+            availability: 'available',
+          },
+          {
+            alias: 'kontext/edit',
+            model: 'FLUX.1 Kontext dev',
+            route: '/workflow/kontext/edit',
+            mode: 'sync',
+            availability: 'available',
+          },
+          {
+            alias: 'offline',
+            model: 'Unavailable model',
+            route: '/workflow/offline/txt2img/async',
+            mode: 'async',
+            availability: 'unavailable',
+          },
+        ],
+      }),
+    );
+
+    await expect(
+      listDgxTxt2ImgModelLabels({ apiKey: 'sidecar-secret', baseUrl: 'http://dgx.internal:8189/' }),
+    ).resolves.toEqual({ default: 'FLUX.2 Klein 9B' });
+    expect(mockFetch.mock.calls[0][0]).toBe('http://dgx.internal:8189/workflows');
+    expect(mockFetch.mock.calls[0][1].headers['X-Qalem-Studio-Secret']).toBe('sidecar-secret');
+  });
+
+  it('rejects a failing or malformed catalogue instead of inventing names', async () => {
+    mockFetch.mockResolvedValueOnce(jsonResponse({ error: 'forbidden' }, 403));
+    await expect(
+      listDgxTxt2ImgModelLabels({ apiKey: 'k', baseUrl: 'http://dgx.internal:8189' }),
+    ).rejects.toThrow('403');
+    mockFetch.mockResolvedValueOnce(jsonResponse({ workflows: 'nope' }));
+    await expect(
+      listDgxTxt2ImgModelLabels({ apiKey: 'k', baseUrl: 'http://dgx.internal:8189' }),
+    ).rejects.toThrow('malformed');
+  });
 
   it('submits, polls and retrieves an authenticated PNG without invoking ComfyUI directly', async () => {
     mockFetch

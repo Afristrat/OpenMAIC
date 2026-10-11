@@ -220,3 +220,36 @@ export async function generateWithDgxImage(
 
   return { base64: encoded, width, height };
 }
+
+const TXT2IMG_ROUTE_PATTERN = /^\/workflow\/([^/]+)\/txt2img\/async$/;
+
+/**
+ * Reads the sidecar's own catalogue (`GET /workflows`) and returns, for every
+ * asynchronous text-to-image workflow, its alias mapped to the model name the
+ * sidecar reports. Edit/other workflows are ignored: only txt2img is ever used.
+ */
+export async function listDgxTxt2ImgModelLabels(
+  config: Pick<ImageGenerationConfig, 'apiKey' | 'baseUrl'>,
+): Promise<Record<string, string>> {
+  const response = await fetch(`${normalizeBaseUrl(config.baseUrl)}/workflows`, {
+    headers: headers(config.apiKey),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+  });
+  if (!response.ok) throw new Error(`DGX workflow catalogue failed (${response.status})`);
+
+  const body: unknown = await response.json();
+  const workflows =
+    body && typeof body === 'object' ? (body as { workflows?: unknown }).workflows : undefined;
+  if (!Array.isArray(workflows)) throw new Error('DGX workflow catalogue is malformed');
+
+  const labels: Record<string, string> = {};
+  for (const entry of workflows) {
+    if (!entry || typeof entry !== 'object') continue;
+    const { alias, model, route, mode, availability } = entry as Record<string, unknown>;
+    if (typeof alias !== 'string' || typeof model !== 'string' || !model.trim()) continue;
+    if (mode !== 'async' || availability !== 'available') continue;
+    if (typeof route !== 'string' || TXT2IMG_ROUTE_PATTERN.exec(route)?.[1] !== alias) continue;
+    labels[alias] = model.trim();
+  }
+  return labels;
+}
