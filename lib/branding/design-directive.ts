@@ -85,6 +85,16 @@ export function isDesignSystemV1Enabled(settings: unknown): boolean {
 
 const MAX_SERIALIZED_DIRECTIVE_LENGTH = 1_000;
 
+/** Cuts at a word boundary (never mid-word) and ends with an ellipsis; a text with no usable space is hard-cut. */
+export function clampAtWord(text: string, max: number): string {
+  const trimmed = text.trim();
+  if (trimmed.length <= max) return trimmed;
+  const head = trimmed.slice(0, max - 1);
+  const boundary = /\s/.test(trimmed.charAt(max - 1)) ? head.length : head.search(/\s\S*$/);
+  if (boundary < max / 2) return trimmed.slice(0, max);
+  return `${head.slice(0, boundary).replace(/[\s,;:.-]+$/, '')}…`;
+}
+
 /**
  * `notes` and `forbidden` are advisory free text: a model that is merely too
  * wordy there must not cost the whole directive (it used to fall back to the
@@ -93,11 +103,11 @@ const MAX_SERIALIZED_DIRECTIVE_LENGTH = 1_000;
 function boundAdvisoryText(value: unknown): unknown {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
   const candidate = { ...(value as Record<string, unknown>) };
-  if (typeof candidate.notes === 'string') candidate.notes = candidate.notes.trim().slice(0, 100);
+  if (typeof candidate.notes === 'string') candidate.notes = clampAtWord(candidate.notes, 100);
   if (Array.isArray(candidate.forbidden)) {
     candidate.forbidden = candidate.forbidden
       .filter((entry): entry is string => typeof entry === 'string')
-      .map((entry) => entry.trim().slice(0, 60))
+      .map((entry) => clampAtWord(entry, 60))
       .filter((entry) => entry.length > 0)
       .slice(0, 3);
   }
@@ -126,8 +136,8 @@ export function normalizeDesignDirective(value: unknown): DesignDirectiveNormali
 
   const bounded: DesignDirective = {
     ...directive,
-    forbidden: directive.forbidden.slice(0, 2).map((entry) => entry.slice(0, 36)),
-    notes: directive.notes.slice(0, 48),
+    forbidden: directive.forbidden.slice(0, 2).map((entry) => clampAtWord(entry, 36)),
+    notes: clampAtWord(directive.notes, 48),
   };
   if (JSON.stringify(bounded).length <= MAX_SERIALIZED_DIRECTIVE_LENGTH) {
     return { directive: bounded, warnings: ['designDirective was truncated to 1,000 characters'] };

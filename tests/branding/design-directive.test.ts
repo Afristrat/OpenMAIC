@@ -6,6 +6,7 @@ import {
   DESIGN_HUE_FAMILIES,
   buildPalette,
   buildSlideTheme,
+  clampAtWord,
   designDirectiveSchema,
   isDesignSystemV1Enabled,
   normalizeDesignDirective,
@@ -79,6 +80,17 @@ describe('course design directive', () => {
     expect(result.directive.seed).toEqual({ hueFamily: 'blue', chromaLevel: 'mid' });
     expect(result.directive.notes).toHaveLength(100);
     expect(result.directive.forbidden).toEqual(['a'.repeat(60), 'b', 'c']);
+  });
+
+  it('cuts advisory text at a word boundary, never mid-word', () => {
+    const notes =
+      'Design sobre et structuré pour un public technique sceptique, avec hiérarchie visuelle claire et espaces aérés';
+    const cut = clampAtWord(notes, 100);
+    expect(cut.length).toBeLessThanOrEqual(100);
+    expect(cut.endsWith('…')).toBe(true);
+    expect(notes.startsWith(cut.slice(0, -1))).toBe(true);
+    expect(notes.charAt(cut.length - 1)).toMatch(/\s/);
+    expect(clampAtWord('court', 100)).toBe('court');
   });
 
   it('keeps the maximum valid serialized directive within the 1,000-character contract', () => {
