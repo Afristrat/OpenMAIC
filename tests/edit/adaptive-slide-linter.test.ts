@@ -171,6 +171,75 @@ describe('adaptive slide linter', () => {
     );
   });
 
+  test('repairs undersized text and out-of-margin geometry instead of rejecting the slide', () => {
+    const drifting = structuredClone(slide);
+    drifting.elements[1] = {
+      ...textElementAt(drifting, 1),
+      left: 20,
+      width: 700,
+      content: '<p style="font-size:14px">Texte légèrement trop petit</p>',
+    };
+    const result = lintAndRepairAdaptiveSlide(drifting, options);
+    const body = textElementAt(result.slide, 1);
+    const margin = DEFAULT_DESIGN_DIRECTIVE.grid.margin;
+    expect(body.left).toBe(margin);
+    expect(body.content).toContain('font-size:16px');
+    expect(result.issues).toContainEqual(
+      expect.objectContaining({ ruleId: 'R-MINSIZE', severity: 'warning', repaired: true }),
+    );
+    expect(result.issues).toContainEqual(
+      expect.objectContaining({ ruleId: 'R-SAFE-AREA', severity: 'warning', repaired: true }),
+    );
+    expect(result.issues.filter((issue) => issue.severity === 'error')).toEqual([]);
+  });
+
+  test('shrinks a box wider than the safe area and keeps a fixed-ratio image proportional', () => {
+    const oversized = structuredClone(slide);
+    oversized.elements.push({
+      id: 'picture',
+      type: 'image',
+      name: 'media',
+      left: 0,
+      top: 300,
+      width: 1000,
+      height: 200,
+      rotate: 0,
+      fixedRatio: true,
+      src: 'https://example.test/picture.png',
+    } as Slide['elements'][number]);
+    const result = lintAndRepairAdaptiveSlide(oversized, options);
+    const picture = result.slide.elements.find((element) => element.id === 'picture');
+    const margin = DEFAULT_DESIGN_DIRECTIVE.grid.margin;
+    if (!picture || picture.type !== 'image') throw new Error('Expected the image to survive');
+    expect(picture.left).toBeGreaterThanOrEqual(margin);
+    expect(picture.left + picture.width).toBeLessThanOrEqual(1000 - margin);
+    expect(picture.width / picture.height).toBeCloseTo(5, 5);
+  });
+
+  test('leaves a safe-area violation reported when moving the box would create an overlap', () => {
+    const crowded = structuredClone(slide);
+    crowded.elements[1] = {
+      ...textElementAt(crowded, 1),
+      left: 20,
+      top: 150,
+      width: 400,
+      height: 90,
+    };
+    crowded.elements.push({
+      ...textElementAt(crowded, 1),
+      id: 'neighbour',
+      left: 72,
+      top: 150,
+      width: 400,
+      height: 90,
+    });
+    const result = lintAndRepairAdaptiveSlide(crowded, options);
+    expect(textElementAt(result.slide, 1).left).toBe(20);
+    expect(result.issues).toContainEqual(
+      expect.objectContaining({ ruleId: 'R-SAFE-AREA', severity: 'error', elementId: 'body' }),
+    );
+  });
+
   test('enlarges a text box when the safe area has room and no overlap is introduced', () => {
     const cramped = structuredClone(slide);
     cramped.elements[1] = {

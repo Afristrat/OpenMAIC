@@ -387,6 +387,76 @@ function estimatedTextHeight(
   return lines * lineHeight * fontSize * 1.15;
 }
 
+function elementHtml(element: PPTElement): string {
+  if (element.type === 'text') return element.content;
+  return element.type === 'shape' ? (element.text?.content ?? '') : '';
+}
+
+const FONT_SIZE_PX = /(font-size\s*:\s*)(\d+(?:\.\d+)?)(px)/giu;
+
+/** Raises every px font size below `minSize` to the floor; null when nothing changes. */
+function raiseSmallFonts(element: PPTElement, minSize: number): PPTElement | null {
+  const raise = (html: string) =>
+    html.replace(FONT_SIZE_PX, (match, prefix: string, value: string, unit: string) =>
+      Number(value) < minSize ? `${prefix}${minSize}${unit}` : match,
+    );
+  if (element.type === 'text') {
+    const content = raise(element.content);
+    return content === element.content ? null : { ...element, content };
+  }
+  if (element.type === 'shape' && element.text) {
+    const content = raise(element.text.content);
+    return content === element.text.content
+      ? null
+      : { ...element, text: { ...element.text, content } };
+  }
+  return null;
+}
+
+type SafeBounds = { minX: number; maxX: number; minY: number; maxY: number };
+
+/**
+ * Moves, then shrinks if needed, an unrotated box into the safe area. Null when
+ * it already fits, cannot be handled (lines, rotated boxes) or the move would
+ * create an overlap the model's layout did not have.
+ */
+function fitInsideSafeArea(
+  slide: Slide,
+  index: number,
+  element: PPTElement,
+  bounds: SafeBounds,
+): PPTElement | null {
+  if (element.type === 'line' || (element.rotate ?? 0) !== 0) return null;
+  const availableWidth = bounds.maxX - bounds.minX;
+  const availableHeight = bounds.maxY - bounds.minY;
+  const fixedRatio = 'fixedRatio' in element && element.fixedRatio === true;
+  const scale = fixedRatio
+    ? Math.min(1, availableWidth / element.width, availableHeight / element.height)
+    : 1;
+  const width = fixedRatio ? element.width * scale : Math.min(element.width, availableWidth);
+  const height = fixedRatio ? element.height * scale : Math.min(element.height, availableHeight);
+  const left = Math.min(Math.max(element.left, bounds.minX), bounds.maxX - width);
+  const top = Math.min(Math.max(element.top, bounds.minY), bounds.maxY - height);
+  if (
+    left === element.left &&
+    top === element.top &&
+    width === element.width &&
+    height === element.height
+  )
+    return null;
+  const fitted = { ...element, left, top, width, height };
+  const candidateSlide = {
+    ...slide,
+    elements: slide.elements.map((candidate, candidateIndex) =>
+      candidateIndex === index ? fitted : candidate,
+    ),
+  };
+  const createsOverlap = auditSlideLayout(candidateSlide).some(
+    (issue) => issue.type === 'overlap' && issue.elementIds.includes(element.id),
+  );
+  return createsOverlap ? null : fitted;
+}
+
 function resizeTextBoxSafely(
   slide: Slide,
   index: number,
@@ -467,12 +537,26 @@ export function lintAndRepairAdaptiveSlide(
     }
 
     const blocks = textBlocks(element);
-    const textSizes = readFontSize(html);
+    let textSizes = readFontSize(html);
     const minSize =
       element.name === 'label' ||
       (element.type === 'text' && ['partNumber', 'itemNumber'].includes(element.textType ?? ''))
         ? 12
         : 16;
+    if (textSizes.some((size) => size < minSize)) {
+      const raised = raiseSmallFonts(element, minSize);
+      if (raised) {
+        element = raised;
+        textSizes = readFontSize(elementHtml(element));
+        issues.push({
+          ruleId: 'R-MINSIZE',
+          severity: 'warning',
+          elementId: element.id,
+          message: `Taille de texte relevée au plancher ${minSize}.`,
+          repaired: true,
+        });
+      }
+    }
     for (const size of textSizes) {
       if (size < minSize)
         issues.push({
@@ -491,6 +575,27 @@ export function lintAndRepairAdaptiveSlide(
           elementId: element.id,
           message: `Police non autorisée ou non chargée : ${font}.`,
         });
+    }
+
+    if (element.name !== 'decor' && element.name !== 'card-bg') {
+      const margin = options.directive.grid.margin;
+      const slideWidth = repairedSlide.viewportSize;
+      const fitted = fitInsideSafeArea(repairedSlide, index, element, {
+        minX: margin,
+        maxX: slideWidth - margin,
+        minY: 48,
+        maxY: slideWidth * repairedSlide.viewportRatio - 32,
+      });
+      if (fitted) {
+        element = fitted;
+        issues.push({
+          ruleId: 'R-SAFE-AREA',
+          severity: 'warning',
+          elementId: element.id,
+          message: `Élément ramené dans la zone de sécurité (marge ${margin}).`,
+          repaired: true,
+        });
+      }
     }
 
     const readingColors =

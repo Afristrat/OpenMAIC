@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   resolveModel: vi.fn(),
@@ -183,6 +183,11 @@ async function generateWithProgress(input: Record<string, unknown> = {}) {
 }
 
 describe('classroom generation — web capture injection', () => {
+  // The server module graph is large: load it outside any test's timeout.
+  beforeAll(async () => {
+    await import('@/lib/server/classroom-generation');
+  }, 120_000);
+
   beforeEach(() => {
     for (const mock of Object.values(mocks)) {
       mock.mockReset();

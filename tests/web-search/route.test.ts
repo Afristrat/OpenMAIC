@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NextRequest } from 'next/server';
 
 const mocks = vi.hoisted(() => ({
@@ -49,6 +49,11 @@ async function postWebSearch(body: Record<string, unknown>, includeOrgId = true)
 }
 
 describe('POST /api/web-search', () => {
+  // The route's module graph is large: load it outside any test's timeout.
+  beforeAll(async () => {
+    await import('@/app/api/web-search/route');
+  }, 120_000);
+
   beforeEach(() => {
     vi.resetModules();
     vi.unstubAllEnvs();

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { NextConfig } from 'next';
 
 async function loadConfig(): Promise<NextConfig> {
@@ -8,6 +8,11 @@ async function loadConfig(): Promise<NextConfig> {
 }
 
 describe('Security response headers', () => {
+  // Warm the transform cache: next.config pulls a large module graph on first import.
+  beforeAll(async () => {
+    await loadConfig();
+  }, 180_000);
+
   afterEach(() => {
     delete process.env.ALLOWED_FRAME_ANCESTORS;
   });
