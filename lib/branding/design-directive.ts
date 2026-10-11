@@ -288,6 +288,77 @@ export function buildSoftBackground(
   };
 }
 
+export type SlideSurfaceRole = 'base' | 'tint' | 'dark';
+export type SlideFunction = 'cover' | 'contents' | 'transition' | 'content' | 'end';
+
+export interface SlideSurface {
+  role: SlideSurfaceRole;
+  /** Solid colour of the surface; light roles are softened into a gradient by the platform. */
+  color: string;
+  text: string;
+  textSecondary: string;
+  accent: string;
+  card: string;
+}
+
+/**
+ * Brief §3.6: the platform, not the model, decides which surface a slide sits on, from its
+ * function and the course `surfacePlan`. A model otherwise answers every slide with plain white.
+ * The tenant background wins for the base role; tint and dark are derived for the roles the
+ * charter does not define.
+ */
+export function resolveSlideSurface(
+  slideFunction: SlideFunction,
+  directive: DesignDirective,
+  brandSnapshot?: import('@openmaic/dsl').Stage['brandSnapshot'],
+): SlideSurface {
+  const palette = buildPalette(directive);
+  const brand = snapshotDesignTokens(brandSnapshot).colors;
+  const plan = directive.surfacePlan;
+  const role: SlideSurfaceRole =
+    slideFunction === 'cover'
+      ? 'tint'
+      : slideFunction === 'contents'
+        ? 'base'
+        : slideFunction === 'content'
+          ? plan.content
+          : plan.engagement;
+  if (role === 'dark') {
+    return {
+      role,
+      color: palette['surface.dark'],
+      text: palette['text.onDark'],
+      textSecondary: palette['text.onDark.secondary'],
+      accent: palette['accent.onDark'],
+      card: palette['surface.card.onDark'],
+    };
+  }
+  return {
+    role,
+    color:
+      role === 'tint' ? palette['surface.tint'] : (brand.background ?? palette['surface.base']),
+    text: brand.ink ?? palette['text.primary'],
+    textSecondary: palette['text.secondary'],
+    accent: brand.accent ?? palette['accent.primary'],
+    card: role === 'tint' ? palette['surface.card.onTint'] : palette['surface.card.onBase'],
+  };
+}
+
+/** Background the platform imposes for a surface: dark stays solid, light roles get the soft gradient. */
+export function buildSurfaceBackground(
+  surface: SlideSurface,
+  theme: Pick<SlideTheme, 'backgroundColor' | 'themeColors'> | undefined,
+): SlideBackground {
+  const solid: SlideBackground = { type: 'solid', color: surface.color };
+  if (surface.role === 'dark') return solid;
+  return (
+    buildSoftBackground(solid, {
+      backgroundColor: surface.color,
+      themeColors: theme?.themeColors ?? [surface.accent],
+    }) ?? solid
+  );
+}
+
 /** Neutral Qalem theme for opted-in courses that have no tenant charter. */
 function snapshotDesignTokens(
   snapshot: import('@openmaic/dsl').Stage['brandSnapshot'] | undefined,

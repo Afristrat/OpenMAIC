@@ -10,10 +10,12 @@ import {
   buildPalette,
   buildSlideTheme,
   buildSoftBackground,
+  buildSurfaceBackground,
   clampAtWord,
   designDirectiveSchema,
   isDesignSystemV1Enabled,
   normalizeDesignDirective,
+  resolveSlideSurface,
 } from '@/lib/branding/design-directive';
 
 const validPlan = {
@@ -250,5 +252,40 @@ describe('buildSoftBackground', () => {
         theme,
       ),
     ).toBeUndefined();
+  });
+});
+
+describe('resolveSlideSurface', () => {
+  const directive = normalizeDesignDirective({
+    ...DEFAULT_DESIGN_DIRECTIVE,
+    seed: { hueFamily: 'teal', chromaLevel: 'low' },
+    surfacePlan: { content: 'base', engagement: 'dark', punchline: 'none' },
+  }).directive;
+
+  it('gives each slide function its surface from the course plan', () => {
+    expect(resolveSlideSurface('cover', directive).role).toBe('tint');
+    expect(resolveSlideSurface('contents', directive).role).toBe('base');
+    expect(resolveSlideSurface('content', directive).role).toBe('base');
+    expect(resolveSlideSurface('transition', directive).role).toBe('dark');
+    expect(resolveSlideSurface('end', directive).role).toBe('dark');
+  });
+
+  it('keeps the tenant background for the base role and derives tint and dark', () => {
+    const brand = {
+      version: 1 as const,
+      createdAt: '2026-10-12T00:00:00.000Z',
+      content: 'colors: background=#FFFFFF surface=#F0F0F0 ink=#111827 accent=#0A72A1',
+    };
+    expect(resolveSlideSurface('content', directive, brand).color).toBe('#FFFFFF');
+    expect(resolveSlideSurface('cover', directive, brand).color).not.toBe('#FFFFFF');
+    expect(resolveSlideSurface('end', directive, brand).color).not.toBe('#FFFFFF');
+  });
+
+  it('imposes a solid dark background and a gradient on light surfaces', () => {
+    const dark = buildSurfaceBackground(resolveSlideSurface('end', directive), undefined);
+    expect(dark).toEqual({ type: 'solid', color: resolveSlideSurface('end', directive).color });
+    expect(buildSurfaceBackground(resolveSlideSurface('cover', directive), undefined).type).toBe(
+      'gradient',
+    );
   });
 });

@@ -14,6 +14,7 @@
 
 Course design direction and resolved palette (JSON): {{designDirectiveContext}}
 Tenant brand snapshot (JSON): {{brandSnapshotContext}}
+{{surfaceContext}}
 {{/if}}
 
 ## Available Resources

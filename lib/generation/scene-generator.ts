@@ -37,6 +37,7 @@ import { buildSlideDesignPromptContext } from '@/lib/branding/slide-design-promp
 import {
   buildSlideTheme,
   buildSoftBackground,
+  buildSurfaceBackground,
   normalizeDesignDirective,
 } from '@/lib/branding/design-directive';
 import { DEFAULT_LANGUAGE_DIRECTIVE } from './outline-generator';
@@ -1539,8 +1540,10 @@ async function generateSlideContent(
       };
     }
   }
-  // A model returns a plain white slide by default: the platform owns the soft gradient.
-  background = buildSoftBackground(background, slideTheme) ?? background;
+  // A model returns a plain white slide by default: the platform owns the surface and its gradient.
+  background = designContext.surface
+    ? buildSurfaceBackground(designContext.surface, slideTheme)
+    : (buildSoftBackground(background, slideTheme) ?? background);
 
   const lintAdaptiveElements = async (
     elements: PPTElement[],
@@ -1612,7 +1615,9 @@ async function generateSlideContent(
     };
     const fallbackBackground =
       designDirective || brandSnapshot
-        ? (buildSoftBackground(solidFallback, slideTheme) ?? solidFallback)
+        ? designContext.surface
+          ? buildSurfaceBackground(designContext.surface, slideTheme)
+          : (buildSoftBackground(solidFallback, slideTheme) ?? solidFallback)
         : background;
     const lintedFallback = await lintAdaptiveElements(fallbackElements, fallbackBackground);
     if (!lintedFallback) return null;

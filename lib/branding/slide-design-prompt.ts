@@ -1,6 +1,11 @@
 import type { Stage } from '@openmaic/dsl';
 import type { SceneOutline } from '@/lib/types/generation';
-import { buildPalette, normalizeDesignDirective } from './design-directive';
+import {
+  buildPalette,
+  normalizeDesignDirective,
+  resolveSlideSurface,
+  type SlideSurface,
+} from './design-directive';
 
 export type AdaptiveSlideType = 'cover' | 'contents' | 'transition' | 'content' | 'end';
 
@@ -39,6 +44,9 @@ export function buildSlideDesignPromptContext(input: {
   slideType: AdaptiveSlideType;
   designDirectiveContext: string;
   brandSnapshotContext: string;
+  /** Surface the platform imposes for this slide (brief §3.6); undefined without a design system. */
+  surface: SlideSurface | undefined;
+  surfaceContext: string;
   /** Horizontal safe margin enforced by the adaptive linter (R-SAFE-AREA). */
   safeMargin: number;
   warnings: string[];
@@ -55,9 +63,23 @@ export function buildSlideDesignPromptContext(input: {
       })
     : 'No course directive supplied.';
 
+  const slideType = inferSlideType(input.outline, input.courseOutlines);
+  const surface =
+    hasSnapshot || hasDirective
+      ? resolveSlideSurface(
+          slideType,
+          (normalized ?? normalizeDesignDirective(undefined)).directive,
+          input.brandSnapshot,
+        )
+      : undefined;
+
   return {
     designSystemEnabled: hasSnapshot || hasDirective,
-    slideType: inferSlideType(input.outline, input.courseOutlines),
+    slideType,
+    surface,
+    surfaceContext: surface
+      ? `Slide surface fixed by the platform (do not change it): ${surface.role} ${surface.color}. On it use text ${surface.text}, secondary text ${surface.textSecondary}, accent ${surface.accent}, cards ${surface.card}. The platform renders the background: set \`background\` to this solid colour.`
+      : '',
     designDirectiveContext: directiveContext,
     brandSnapshotContext: hasSnapshot
       ? JSON.stringify({ version: 1, content: input.brandSnapshot?.content.slice(0, 1200) })
