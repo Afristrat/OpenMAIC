@@ -65,6 +65,22 @@ describe('course design directive', () => {
     expect(result.warnings.length).toBeGreaterThan(0);
   });
 
+  it('keeps the designed directive when only the advisory free text is too long', () => {
+    const designed = {
+      ...DEFAULT_DESIGN_DIRECTIVE,
+      tone: 'warm',
+      seed: { hueFamily: 'blue', chromaLevel: 'mid' },
+      notes: 'n'.repeat(240),
+      forbidden: ['a'.repeat(90), 'b', ' ', 'c', 'd'],
+    };
+    const result = normalizeDesignDirective(designed);
+    expect(result.warnings).toEqual([]);
+    expect(result.directive.tone).toBe('warm');
+    expect(result.directive.seed).toEqual({ hueFamily: 'blue', chromaLevel: 'mid' });
+    expect(result.directive.notes).toHaveLength(100);
+    expect(result.directive.forbidden).toEqual(['a'.repeat(60), 'b', 'c']);
+  });
+
   it('keeps the maximum valid serialized directive within the 1,000-character contract', () => {
     const result = normalizeDesignDirective({
       ...DEFAULT_DESIGN_DIRECTIVE,

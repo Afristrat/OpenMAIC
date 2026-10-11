@@ -85,8 +85,27 @@ export function isDesignSystemV1Enabled(settings: unknown): boolean {
 
 const MAX_SERIALIZED_DIRECTIVE_LENGTH = 1_000;
 
+/**
+ * `notes` and `forbidden` are advisory free text: a model that is merely too
+ * wordy there must not cost the whole directive (it used to fall back to the
+ * neutral default). Bound them first; structural fields stay strictly validated.
+ */
+function boundAdvisoryText(value: unknown): unknown {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
+  const candidate = { ...(value as Record<string, unknown>) };
+  if (typeof candidate.notes === 'string') candidate.notes = candidate.notes.trim().slice(0, 100);
+  if (Array.isArray(candidate.forbidden)) {
+    candidate.forbidden = candidate.forbidden
+      .filter((entry): entry is string => typeof entry === 'string')
+      .map((entry) => entry.trim().slice(0, 60))
+      .filter((entry) => entry.length > 0)
+      .slice(0, 3);
+  }
+  return candidate;
+}
+
 export function normalizeDesignDirective(value: unknown): DesignDirectiveNormalization {
-  const parsed = designDirectiveSchema.safeParse(value);
+  const parsed = designDirectiveSchema.safeParse(boundAdvisoryText(value));
   if (!parsed.success) {
     return {
       directive: DEFAULT_DESIGN_DIRECTIVE,
