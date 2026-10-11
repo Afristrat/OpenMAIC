@@ -1,5 +1,6 @@
 'use client';
 
+import { DEFAULT_DESIGN_DIRECTIVE } from '@/lib/branding/design-directive';
 import {
   GenerationTracker,
   type GenerationTrackerProps,
@@ -115,6 +116,7 @@ type ClassroomPlanJobStatusResponse = {
   serverNow?: string;
   typicalDuration?: { lowMs: number; highMs: number };
   failure?: GenerationFailure;
+  designSystemEnabled?: boolean;
 };
 
 type CourseImportResponse = {
@@ -450,6 +452,7 @@ function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [isPlanning, setIsPlanning] = useState(false);
   const [planTracking, setPlanTracking] = useState<GenerationTrackerProps | null>(null);
+  const [designSystemEnabled, setDesignSystemEnabled] = useState<boolean | undefined>(undefined);
   const [isStartingGeneration, setIsStartingGeneration] = useState(false);
   const [draftPlan, setDraftPlan] = useState<ClassroomPlan | null>(null);
   const [assistingTarget, setAssistingTarget] = useState<string | null>(null);
@@ -715,6 +718,7 @@ function HomePage() {
           interactionLevel:
             (request.interactionLevel as InteractionLevel | undefined) ?? previous.interactionLevel,
         }));
+        setDesignSystemEnabled(result.designSystemEnabled);
         setDraftPlan(result.result);
       } catch (pollError) {
         log.warn('Unable to read classroom plan job:', pollError);
@@ -1227,7 +1231,8 @@ function HomePage() {
               optimization={draftPlan.optimization}
               courseTitle={draftPlan.courseTitle}
               syllabus={draftPlan.syllabus}
-              designDirective={draftPlan.designDirective}
+              designDirective={draftPlan.designDirective ?? DEFAULT_DESIGN_DIRECTIVE}
+              designSystemEnabled={designSystemEnabled}
               outlines={draftPlan.outlines}
               onCourseTitleChange={(courseTitle) =>
                 setDraftPlan((plan) => (plan ? { ...plan, courseTitle } : plan))

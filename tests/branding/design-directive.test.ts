@@ -3,6 +3,9 @@ import tinycolor from 'tinycolor2';
 import { approvedClassroomPlanSchema } from '@/lib/api/schemas';
 import {
   DEFAULT_DESIGN_DIRECTIVE,
+  DESIGN_FORBIDDEN_MAX_ENTRIES,
+  DESIGN_FORBIDDEN_MAX_LENGTH,
+  DESIGN_NOTES_MAX_LENGTH,
   DESIGN_HUE_FAMILIES,
   buildPalette,
   buildSlideTheme,
@@ -71,15 +74,19 @@ describe('course design directive', () => {
       ...DEFAULT_DESIGN_DIRECTIVE,
       tone: 'warm',
       seed: { hueFamily: 'blue', chromaLevel: 'mid' },
-      notes: 'n'.repeat(240),
-      forbidden: ['a'.repeat(90), 'b', ' ', 'c', 'd'],
+      notes: 'n'.repeat(DESIGN_NOTES_MAX_LENGTH * 2),
+      forbidden: ['a'.repeat(300), 'b', ' ', 'c', 'd', 'e', 'f', 'g', 'h', 'i'],
     };
     const result = normalizeDesignDirective(designed);
     expect(result.warnings).toEqual([]);
     expect(result.directive.tone).toBe('warm');
     expect(result.directive.seed).toEqual({ hueFamily: 'blue', chromaLevel: 'mid' });
-    expect(result.directive.notes).toHaveLength(100);
-    expect(result.directive.forbidden).toEqual(['a'.repeat(60), 'b', 'c']);
+    expect(result.directive.notes).toHaveLength(DESIGN_NOTES_MAX_LENGTH);
+    expect(result.directive.forbidden).toEqual([
+      'a'.repeat(DESIGN_FORBIDDEN_MAX_LENGTH),
+      ...['b', 'c', 'd', 'e', 'f', 'g', 'h'],
+    ]);
+    expect(result.directive.forbidden).toHaveLength(DESIGN_FORBIDDEN_MAX_ENTRIES);
   });
 
   it('cuts advisory text at a word boundary, never mid-word', () => {
@@ -96,12 +103,15 @@ describe('course design directive', () => {
   it('keeps the maximum valid serialized directive within the 1,000-character contract', () => {
     const result = normalizeDesignDirective({
       ...DEFAULT_DESIGN_DIRECTIVE,
-      forbidden: ['x'.repeat(60), 'y'.repeat(60), 'z'.repeat(60)],
-      notes: 'n'.repeat(100),
+      forbidden: Array.from({ length: DESIGN_FORBIDDEN_MAX_ENTRIES }, () =>
+        'x'.repeat(DESIGN_FORBIDDEN_MAX_LENGTH),
+      ),
+      notes: 'n'.repeat(DESIGN_NOTES_MAX_LENGTH),
     });
-    expect(JSON.stringify(result.directive).length).toBeLessThanOrEqual(1_000);
-    expect(result.directive.forbidden.length).toBeLessThanOrEqual(3);
-    expect(result.directive.notes.length).toBeLessThanOrEqual(100);
+    expect(JSON.stringify(result.directive).length).toBeLessThanOrEqual(3_500);
+    expect(result.directive.forbidden.length).toBeLessThanOrEqual(DESIGN_FORBIDDEN_MAX_ENTRIES);
+    expect(result.directive.notes.length).toBeLessThanOrEqual(DESIGN_NOTES_MAX_LENGTH);
+    expect(result.warnings).toEqual([]);
   });
 
   it('derives a deterministic palette whose text roles meet 4.5:1 contrast', () => {

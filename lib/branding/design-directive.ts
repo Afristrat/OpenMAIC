@@ -10,6 +10,11 @@ import {
 } from '@openmaic/dsl';
 
 export { DESIGN_DENSITIES, DESIGN_FONTS, DESIGN_HUE_FAMILIES, DESIGN_TONES };
+
+/** Free-text guidance given to the slide engine: long enough to be a real brief. */
+export const DESIGN_NOTES_MAX_LENGTH = 1200;
+export const DESIGN_FORBIDDEN_MAX_ENTRIES = 8;
+export const DESIGN_FORBIDDEN_MAX_LENGTH = 140;
 export type { DesignDirective };
 
 export const designDirectiveSchema = z
@@ -47,8 +52,10 @@ export const designDirectiveSchema = z
       })
       .strict(),
     accentSequence: z.enum(['primary-then-achievement', 'primary-only']),
-    forbidden: z.array(z.string().trim().min(1).max(60)).max(3),
-    notes: z.string().trim().max(100),
+    forbidden: z
+      .array(z.string().trim().min(1).max(DESIGN_FORBIDDEN_MAX_LENGTH))
+      .max(DESIGN_FORBIDDEN_MAX_ENTRIES),
+    notes: z.string().trim().max(DESIGN_NOTES_MAX_LENGTH),
   })
   .strict();
 
@@ -83,7 +90,7 @@ export function isDesignSystemV1Enabled(settings: unknown): boolean {
   return (featureSettings as Record<string, unknown>).design_system_v1 === true;
 }
 
-const MAX_SERIALIZED_DIRECTIVE_LENGTH = 1_000;
+const MAX_SERIALIZED_DIRECTIVE_LENGTH = 3_500;
 
 /** Cuts at a word boundary (never mid-word) and ends with an ellipsis; a text with no usable space is hard-cut. */
 export function clampAtWord(text: string, max: number): string {
@@ -103,13 +110,14 @@ export function clampAtWord(text: string, max: number): string {
 function boundAdvisoryText(value: unknown): unknown {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
   const candidate = { ...(value as Record<string, unknown>) };
-  if (typeof candidate.notes === 'string') candidate.notes = clampAtWord(candidate.notes, 100);
+  if (typeof candidate.notes === 'string')
+    candidate.notes = clampAtWord(candidate.notes, DESIGN_NOTES_MAX_LENGTH);
   if (Array.isArray(candidate.forbidden)) {
     candidate.forbidden = candidate.forbidden
       .filter((entry): entry is string => typeof entry === 'string')
-      .map((entry) => clampAtWord(entry, 60))
+      .map((entry) => clampAtWord(entry, DESIGN_FORBIDDEN_MAX_LENGTH))
       .filter((entry) => entry.length > 0)
-      .slice(0, 3);
+      .slice(0, DESIGN_FORBIDDEN_MAX_ENTRIES);
   }
   return candidate;
 }
@@ -136,15 +144,15 @@ export function normalizeDesignDirective(value: unknown): DesignDirectiveNormali
 
   const bounded: DesignDirective = {
     ...directive,
-    forbidden: directive.forbidden.slice(0, 2).map((entry) => clampAtWord(entry, 36)),
-    notes: clampAtWord(directive.notes, 48),
+    forbidden: directive.forbidden.slice(0, 4).map((entry) => clampAtWord(entry, 80)),
+    notes: clampAtWord(directive.notes, 600),
   };
   if (JSON.stringify(bounded).length <= MAX_SERIALIZED_DIRECTIVE_LENGTH) {
-    return { directive: bounded, warnings: ['designDirective was truncated to 1,000 characters'] };
+    return { directive: bounded, warnings: ['designDirective was truncated to 3,500 characters'] };
   }
   return {
     directive: DEFAULT_DESIGN_DIRECTIVE,
-    warnings: ['designDirective exceeded 1,000 characters'],
+    warnings: ['designDirective exceeded 3,500 characters'],
   };
 }
 

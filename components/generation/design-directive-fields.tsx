@@ -10,10 +10,12 @@ import {
   type DesignDirective,
 } from '@openmaic/dsl';
 import { useI18n } from '@/lib/hooks/use-i18n';
-
-const FORBIDDEN_MAX_ENTRIES = 3;
-const FORBIDDEN_MAX_LENGTH = 60;
-const NOTES_MAX_LENGTH = 100;
+import {
+  DESIGN_FORBIDDEN_MAX_ENTRIES as FORBIDDEN_MAX_ENTRIES,
+  DESIGN_FORBIDDEN_MAX_LENGTH as FORBIDDEN_MAX_LENGTH,
+  DESIGN_NOTES_MAX_LENGTH as NOTES_MAX_LENGTH,
+} from '@/lib/branding/design-directive';
+import { DesignPreview } from './design-preview';
 
 const fieldClass =
   'w-full rounded-xl border border-border/60 bg-background px-3 py-2.5 text-sm leading-relaxed outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-500/15 disabled:cursor-not-allowed disabled:opacity-60';
@@ -66,10 +68,19 @@ export function DesignDirectiveFields({
   directive,
   onChange,
   disabled,
+  designSystemEnabled,
+  courseTitle,
+  sampleTitle,
+  samplePoints,
 }: {
   directive: DesignDirective;
   onChange: (directive: DesignDirective) => void;
   disabled: boolean;
+  /** False when the organization has not enabled the design system: edits would be ignored. */
+  designSystemEnabled?: boolean;
+  courseTitle: string;
+  sampleTitle: string;
+  samplePoints: string[];
 }) {
   const { t } = useI18n();
   const [forbiddenText, setForbiddenText] = useState(directive.forbidden.join('\n'));
@@ -82,7 +93,21 @@ export function DesignDirectiveFields({
           {t('generation.designTitle')}
         </div>
         <p className="text-xs text-muted-foreground">{t('generation.designDescription')}</p>
+        {designSystemEnabled === false && (
+          <p
+            role="status"
+            className="rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300"
+          >
+            {t('generation.designDisabledNotice')}
+          </p>
+        )}
       </div>
+      <DesignPreview
+        directive={directive}
+        courseTitle={courseTitle}
+        sampleTitle={sampleTitle}
+        samplePoints={samplePoints}
+      />
       <div className="grid gap-4 sm:grid-cols-2">
         <SelectField
           label={t('generation.designTone')}
@@ -140,34 +165,34 @@ export function DesignDirectiveFields({
           }
           disabled={disabled}
         />
-        <label className="block space-y-1.5">
+        <label className="block space-y-1.5 sm:col-span-2">
           <span className="text-xs font-medium text-muted-foreground">
-            {t('generation.designNotes')}
+            {t('generation.designNotes', { max: NOTES_MAX_LENGTH })}
           </span>
           <textarea
             className={fieldClass}
             value={directive.notes}
             maxLength={NOTES_MAX_LENGTH}
-            rows={3}
+            rows={7}
             onChange={(event) => onChange({ ...directive, notes: event.target.value })}
             disabled={disabled}
-            aria-label={t('generation.designNotes')}
+            aria-label={t('generation.designNotes', { max: NOTES_MAX_LENGTH })}
           />
         </label>
-        <label className="block space-y-1.5">
+        <label className="block space-y-1.5 sm:col-span-2">
           <span className="text-xs font-medium text-muted-foreground">
-            {t('generation.designForbidden')}
+            {t('generation.designForbidden', { max: FORBIDDEN_MAX_ENTRIES })}
           </span>
           <textarea
             className={fieldClass}
             value={forbiddenText}
-            rows={3}
+            rows={7}
             onChange={(event) => {
               setForbiddenText(event.target.value);
               onChange({ ...directive, forbidden: parseForbidden(event.target.value) });
             }}
             disabled={disabled}
-            aria-label={t('generation.designForbidden')}
+            aria-label={t('generation.designForbidden', { max: FORBIDDEN_MAX_ENTRIES })}
           />
         </label>
       </div>

@@ -114,3 +114,9 @@ export function formatDuration(ms: number, labels: DurationLabels): string {
   if (seconds < 90) return labels.seconds(seconds);
   return labels.minutes(Math.round(seconds / 60));
 }
+
+/** The later of two ISO timestamps: the worker heartbeat lives in a column, not in the payload. */
+export function laterTimestamp(first: string, second: string | undefined): string {
+  if (!second) return first;
+  return Date.parse(second) > Date.parse(first) ? second : first;
+}

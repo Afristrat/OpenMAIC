@@ -42,6 +42,7 @@ import {
   getSyllabusDurationGap,
   getSyllabusValidationIssues,
   type SyllabusDurationGap,
+  redistributeSceneDurations,
 } from '@/lib/generation/syllabus-validation';
 import { OptimizationAdvice } from './optimization-advice';
 import { DesignDirectiveFields } from './design-directive-fields';
@@ -59,6 +60,8 @@ interface OutlinesEditorProps {
   onCourseTitleChange?: (courseTitle: string) => void;
   onSyllabusChange?: (syllabus: ClassroomSyllabus) => void;
   onDesignDirectiveChange?: (directive: DesignDirective) => void;
+  /** False when the organization has not enabled the design system. */
+  designSystemEnabled?: boolean;
   onChange: (outlines: SceneOutline[]) => void;
   onConfirm: () => void;
   onBack: () => void;
@@ -153,6 +156,7 @@ export function OutlinesEditor({
   onCourseTitleChange,
   onSyllabusChange,
   onDesignDirectiveChange,
+  designSystemEnabled,
   onChange,
   onConfirm,
   onBack,
@@ -172,6 +176,11 @@ export function OutlinesEditor({
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const lastScrollTargetRef = useRef<string | null>(null);
   const editingDisabled = isLoading || isStreaming;
+  const handleTotalDurationChange = (minutes: number) => {
+    if (!syllabus) return;
+    onSyllabusChange?.({ ...syllabus, totalDurationMinutes: minutes });
+    onChange(redistributeSceneDurations(outlines, minutes));
+  };
   const lastOutlineId = outlines.length > 0 ? outlines[outlines.length - 1].id : null;
   const hasSyllabusWorkspace =
     courseTitle !== undefined &&
@@ -437,6 +446,9 @@ export function OutlinesEditor({
             onSyllabusChange={onSyllabusChange}
             designDirective={designDirective}
             onDesignDirectiveChange={onDesignDirectiveChange}
+            designSystemEnabled={designSystemEnabled}
+            previewOutlines={outlines}
+            onTotalDurationChange={handleTotalDurationChange}
             disabled={editingDisabled}
             onAssist={onAssist ? () => onAssist({ kind: 'syllabus' }) : undefined}
             isAssisting={assistingTarget === 'syllabus'}
@@ -542,6 +554,9 @@ function SyllabusFields({
   onSyllabusChange,
   designDirective,
   onDesignDirectiveChange,
+  designSystemEnabled,
+  previewOutlines,
+  onTotalDurationChange,
   disabled,
   onAssist,
   isAssisting,
@@ -554,6 +569,9 @@ function SyllabusFields({
   onSyllabusChange: (syllabus: ClassroomSyllabus) => void;
   designDirective?: DesignDirective;
   onDesignDirectiveChange?: (directive: DesignDirective) => void;
+  designSystemEnabled?: boolean;
+  previewOutlines: SceneOutline[];
+  onTotalDurationChange: (minutes: number) => void;
   disabled: boolean;
   onAssist?: () => void;
   isAssisting: boolean;
@@ -561,6 +579,13 @@ function SyllabusFields({
   durationGap: SyllabusDurationGap | null;
 }) {
   const { t } = useI18n();
+  const [durationDraft, setDurationDraft] = useState<string | null>(null);
+  const commitDuration = () => {
+    if (durationDraft === null) return;
+    const minutes = Math.min(10080, Math.max(1, Math.round(Number(durationDraft)) || 1));
+    setDurationDraft(null);
+    if (minutes !== syllabus.totalDurationMinutes) onTotalDurationChange(minutes);
+  };
   const update = <K extends keyof ClassroomSyllabus>(key: K, value: ClassroomSyllabus[K]) =>
     onSyllabusChange({ ...syllabus, [key]: value });
   const fieldClass =
@@ -748,10 +773,12 @@ function SyllabusFields({
                 min={1}
                 max={10080}
                 className={fieldClass}
-                value={syllabus.totalDurationMinutes}
-                onChange={(event) =>
-                  update('totalDurationMinutes', Math.max(1, Number(event.target.value) || 1))
-                }
+                value={durationDraft ?? syllabus.totalDurationMinutes}
+                onChange={(event) => setDurationDraft(event.target.value)}
+                onBlur={commitDuration}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') commitDuration();
+                }}
                 disabled={disabled}
                 aria-label={t('generation.syllabusTotalDuration')}
               />
@@ -760,7 +787,15 @@ function SyllabusFields({
                   {t('generation.syllabusDurationGap', {
                     sequences: durationGap.sequencesMinutes,
                     total: durationGap.totalMinutes,
-                  })}
+                  })}{' '}
+                  <button
+                    type="button"
+                    className="font-medium underline underline-offset-2"
+                    disabled={disabled}
+                    onClick={() => onTotalDurationChange(syllabus.totalDurationMinutes)}
+                  >
+                    {t('generation.syllabusDurationRedistribute')}
+                  </button>
                 </span>
               )}
             </label>
@@ -796,6 +831,10 @@ function SyllabusFields({
             directive={designDirective}
             onChange={onDesignDirectiveChange}
             disabled={disabled}
+            designSystemEnabled={designSystemEnabled}
+            courseTitle={courseTitle}
+            sampleTitle={previewOutlines[1]?.title ?? previewOutlines[0]?.title ?? courseTitle}
+            samplePoints={previewOutlines[1]?.keyPoints ?? previewOutlines[0]?.keyPoints ?? []}
           />
         )}
       </div>

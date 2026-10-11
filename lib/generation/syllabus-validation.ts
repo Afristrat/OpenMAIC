@@ -52,6 +52,31 @@ export interface SyllabusDurationGap {
  * Gap between the announced total duration and the sum of the sequences, or null when they
  * agree within the tolerance. Informative only: it never blocks the author's validation.
  */
+/**
+ * Rescales every sequence so that together they last exactly `totalMinutes`,
+ * keeping their relative weights. A sequence without a duration gets an average one.
+ */
+export function redistributeSceneDurations(
+  outlines: SceneOutline[],
+  totalMinutes: number,
+): SceneOutline[] {
+  if (outlines.length === 0 || !Number.isFinite(totalMinutes) || totalMinutes <= 0) return outlines;
+  const targetSeconds = Math.round(totalMinutes * 60);
+  const known = outlines.map((outline) => outline.estimatedDuration ?? 0);
+  const knownTotal = known.reduce((sum, value) => sum + value, 0);
+  const knownCount = known.filter((value) => value > 0).length;
+  const average = knownCount > 0 ? knownTotal / knownCount : 1;
+  const weights = known.map((value) => (value > 0 ? value : average));
+  const weightTotal = weights.reduce((sum, value) => sum + value, 0);
+  const scaled = weights.map((weight) =>
+    Math.min(7200, Math.max(1, Math.round((weight * targetSeconds) / weightTotal))),
+  );
+  const drift = targetSeconds - scaled.reduce((sum, value) => sum + value, 0);
+  const longest = scaled.indexOf(Math.max(...scaled));
+  scaled[longest] = Math.min(7200, Math.max(1, scaled[longest] + drift));
+  return outlines.map((outline, index) => ({ ...outline, estimatedDuration: scaled[index] }));
+}
+
 export function getSyllabusDurationGap(
   syllabus: ClassroomSyllabus,
   outlines: SceneOutline[],

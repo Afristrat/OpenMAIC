@@ -3,6 +3,8 @@ import { requireSuperAdminOrOrgAuthor } from '@/lib/api/auth';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { describeGenerationFailure } from '@/lib/generation/generation-tracking';
 import { getTypicalDuration } from '@/lib/server/generation-duration-stats';
+import { isDesignSystemV1Enabled } from '@/lib/branding/design-directive';
+import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import {
   isValidClassroomPlanJobId,
   readClassroomPlanJob,
@@ -22,6 +24,11 @@ export async function GET(request: NextRequest, context: { params: Promise<{ job
     if (auth.response) return auth.response;
 
     const done = job.status === 'succeeded' || job.status === 'failed';
+    const { data: organization } = await createServiceSupabaseClient()
+      .from('organizations')
+      .select('settings')
+      .eq('id', job.orgId)
+      .maybeSingle();
     return apiSuccess({
       jobId: job.id,
       status: job.status,
@@ -33,6 +40,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ job
       serverNow: new Date().toISOString(),
       typicalDuration: done ? undefined : await getTypicalDuration('plan'),
       failure: describeGenerationFailure(job.error),
+      designSystemEnabled: isDesignSystemV1Enabled(organization?.settings),
       done,
       result: job.result,
       generationRequest: job.status === 'succeeded' ? job.input : undefined,

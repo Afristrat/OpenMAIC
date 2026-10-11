@@ -71,6 +71,14 @@ export function GenerationTracker({
   const liveness = status === 'queued' ? 'active' : getLiveness(silentMs);
   const ago = formatDuration(silentMs, labels);
   const stepLabel = (name: string) => t(`generation.step.${kind}.${name}`);
+  const typicalLow = typicalDuration && formatDuration(typicalDuration.lowMs, labels);
+  const typicalHigh = typicalDuration && formatDuration(typicalDuration.highMs, labels);
+  const typicalLabel =
+    typicalLow && typicalHigh
+      ? typicalLow === typicalHigh
+        ? t('generation.tracker.typicalAbout', { duration: typicalLow })
+        : t('generation.tracker.typical', { low: typicalLow, high: typicalHigh })
+      : undefined;
 
   return (
     <div className="space-y-4 text-start" data-testid="generation-tracker">
@@ -137,11 +145,7 @@ export function GenerationTracker({
       {elapsed && (
         <p className="text-xs text-muted-foreground">
           {t('generation.tracker.elapsed', { duration: elapsed })}
-          {typicalDuration &&
-            ` · ${t('generation.tracker.typical', {
-              low: formatDuration(typicalDuration.lowMs, labels),
-              high: formatDuration(typicalDuration.highMs, labels),
-            })}`}
+          {typicalLabel && ` · ${typicalLabel}`}
         </p>
       )}
 

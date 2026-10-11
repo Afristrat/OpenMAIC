@@ -4,6 +4,7 @@ import type {
   GenerateClassroomInput,
   GenerateClassroomResult,
 } from '@/lib/server/classroom-generation';
+import { laterTimestamp } from '@/lib/generation/generation-tracking';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 
 export type ClassroomGenerationJobStatus = 'queued' | 'running' | 'succeeded' | 'failed';
@@ -122,7 +123,7 @@ export async function readClassroomGenerationJob(
     job.updatedAt !== (data.payload as ClassroomGenerationJob).updatedAt
   )
     await persistJob(job);
-  return job;
+  return { ...job, updatedAt: laterTimestamp(job.updatedAt, data.updated_at as string) };
 }
 
 export async function touchClassroomGenerationJob(jobId: string): Promise<void> {

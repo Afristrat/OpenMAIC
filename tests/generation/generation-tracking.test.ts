@@ -6,6 +6,7 @@ import {
   describeGenerationFailure,
   formatDuration,
   getLiveness,
+  laterTimestamp,
   planStepPosition,
   summarizeTypicalDuration,
 } from '@/lib/generation/generation-tracking';
@@ -70,5 +71,17 @@ describe('durations', () => {
       60_000, 120_000, 180_000, 240_000, 300_000, 360_000, 420_000, 480_000,
     ]);
     expect(summary).toEqual({ lowMs: 180_000, highMs: 420_000, sampleSize: 8 });
+  });
+});
+
+describe('laterTimestamp', () => {
+  it('keeps the freshest sign of life between payload and heartbeat column', () => {
+    expect(laterTimestamp('2026-10-11T17:00:00.000Z', '2026-10-11T17:00:40.000Z')).toBe(
+      '2026-10-11T17:00:40.000Z',
+    );
+    expect(laterTimestamp('2026-10-11T17:00:40.000Z', '2026-10-11T17:00:00.000Z')).toBe(
+      '2026-10-11T17:00:40.000Z',
+    );
+    expect(laterTimestamp('2026-10-11T17:00:00.000Z', undefined)).toBe('2026-10-11T17:00:00.000Z');
   });
 });

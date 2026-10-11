@@ -1,7 +1,7 @@
 import type { ClassroomPlan } from '@/lib/types/generation';
 import type { GenerateClassroomInput } from '@/lib/server/classroom-generation';
 import type { SourceAlignmentVerdict } from '@/lib/server/source-material-alignment';
-import type { PlanStep } from '@/lib/generation/generation-tracking';
+import { laterTimestamp, type PlanStep } from '@/lib/generation/generation-tracking';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 
 export type ClassroomPlanJobStatus = 'queued' | 'running' | 'succeeded' | 'failed';
@@ -92,7 +92,7 @@ export async function readClassroomPlanJob(jobId: string): Promise<ClassroomPlan
     }
     return interrupted;
   }
-  return job;
+  return { ...job, updatedAt: laterTimestamp(job.updatedAt, data.updated_at as string) };
 }
 
 async function updateClassroomPlanJob(
