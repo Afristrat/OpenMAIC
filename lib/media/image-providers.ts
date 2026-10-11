@@ -155,7 +155,7 @@ export const IMAGE_PROVIDERS: Record<ImageProviderId, ImageProviderConfig> = {
     id: 'dgx',
     name: 'DGX Studio',
     requiresApiKey: true,
-    models: [{ id: 'flux-schnell', name: 'FLUX.2 Klein 9B' }],
+    models: [],
     supportedAspectRatios: ['16:9', '4:3', '1:1', '9:16'],
     maxResolution: { width: 768, height: 768 },
   },

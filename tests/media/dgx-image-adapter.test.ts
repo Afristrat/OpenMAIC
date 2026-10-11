@@ -31,13 +31,13 @@ describe('dgx-image-adapter', () => {
         providerId: 'dgx',
         apiKey: 'sidecar-secret',
         baseUrl: 'http://dgx.internal:8189/',
-        model: 'flux-schnell',
+        model: 'studio-workflow',
       },
       { prompt: 'A learning illustration', aspectRatio: '16:9' },
     );
 
     expect(mockFetch.mock.calls.map(([url]) => url)).toEqual([
-      'http://dgx.internal:8189/workflow/default/txt2img/async',
+      'http://dgx.internal:8189/workflow/studio-workflow/txt2img/async',
       'http://dgx.internal:8189/jobs/123e4567-e89b-42d3-a456-426614174000',
       'http://dgx.internal:8189/jobs/123e4567-e89b-42d3-a456-426614174000/result',
     ]);
@@ -105,6 +105,22 @@ describe('dgx-image-adapter', () => {
     expect(result.message).not.toContain('private');
   });
 
+  it('requires an administered workflow and rejects unsafe identifiers without any request', async () => {
+    await expect(
+      generateImage(
+        { providerId: 'dgx', apiKey: 'secret', baseUrl: 'http://dgx' },
+        { prompt: 'test' },
+      ),
+    ).rejects.toThrow('workflow is not configured');
+    await expect(
+      generateImage(
+        { providerId: 'dgx', apiKey: 'secret', baseUrl: 'http://dgx', model: '../kontext/edit' },
+        { prompt: 'test' },
+      ),
+    ).rejects.toThrow('workflow identifier is invalid');
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
   it('waits and resubmits when the shared GPU queue answers 429, then gives up after three attempts', async () => {
     vi.useFakeTimers();
     try {
@@ -114,7 +130,7 @@ describe('dgx-image-adapter', () => {
         .mockResolvedValueOnce(jsonResponse({ status: 'completed' }))
         .mockResolvedValueOnce(jsonResponse({ data: [{ b64_json: png }] }));
       const recovered = generateImage(
-        { providerId: 'dgx', apiKey: 'secret', baseUrl: 'http://dgx' },
+        { providerId: 'dgx', apiKey: 'secret', baseUrl: 'http://dgx', model: 'studio-workflow' },
         { prompt: 'test' },
       );
       await vi.advanceTimersByTimeAsync(15_000);
@@ -124,7 +140,7 @@ describe('dgx-image-adapter', () => {
       mockFetch.mockReset();
       mockFetch.mockResolvedValue(jsonResponse({ error: 'queue full' }, 429));
       const saturated = generateImage(
-        { providerId: 'dgx', apiKey: 'secret', baseUrl: 'http://dgx' },
+        { providerId: 'dgx', apiKey: 'secret', baseUrl: 'http://dgx', model: 'studio-workflow' },
         { prompt: 'test' },
       );
       const assertion = expect(saturated).rejects.toThrow('submission failed (429)');
@@ -146,7 +162,7 @@ describe('dgx-image-adapter', () => {
         .mockResolvedValueOnce(jsonResponse({ status: 'completed' }))
         .mockResolvedValueOnce(jsonResponse({ data: [{ b64_json: png }] }));
       const pending = generateImage(
-        { providerId: 'dgx', apiKey: 'secret', baseUrl: 'http://dgx' },
+        { providerId: 'dgx', apiKey: 'secret', baseUrl: 'http://dgx', model: 'studio-workflow' },
         { prompt: 'test' },
       );
       await vi.advanceTimersByTimeAsync(4_999);
@@ -166,7 +182,7 @@ describe('dgx-image-adapter', () => {
       .mockResolvedValueOnce(jsonResponse({ status: 'failed' }));
     await expect(
       generateImage(
-        { providerId: 'dgx', apiKey: 'secret', baseUrl: 'http://dgx' },
+        { providerId: 'dgx', apiKey: 'secret', baseUrl: 'http://dgx', model: 'studio-workflow' },
         { prompt: 'test' },
       ),
     ).rejects.toThrow('DGX image job failed');
@@ -178,7 +194,7 @@ describe('dgx-image-adapter', () => {
       .mockResolvedValueOnce(jsonResponse({ status: 'expired' }));
     await expect(
       generateImage(
-        { providerId: 'dgx', apiKey: 'secret', baseUrl: 'http://dgx' },
+        { providerId: 'dgx', apiKey: 'secret', baseUrl: 'http://dgx', model: 'studio-workflow' },
         { prompt: 'test' },
       ),
     ).rejects.toThrow('DGX image job expired');
@@ -188,7 +204,7 @@ describe('dgx-image-adapter', () => {
     mockFetch.mockResolvedValueOnce(jsonResponse({ jobId: '../other-route' }, 202));
     await expect(
       generateImage(
-        { providerId: 'dgx', apiKey: 'secret', baseUrl: 'http://dgx' },
+        { providerId: 'dgx', apiKey: 'secret', baseUrl: 'http://dgx', model: 'studio-workflow' },
         { prompt: 'test' },
       ),
     ).rejects.toThrow('invalid job identifier');
@@ -201,7 +217,7 @@ describe('dgx-image-adapter', () => {
       );
     await expect(
       generateImage(
-        { providerId: 'dgx', apiKey: 'secret', baseUrl: 'http://dgx' },
+        { providerId: 'dgx', apiKey: 'secret', baseUrl: 'http://dgx', model: 'studio-workflow' },
         { prompt: 'test' },
       ),
     ).rejects.toThrow('not a valid PNG');
@@ -211,7 +227,7 @@ describe('dgx-image-adapter', () => {
     expect(IMAGE_PROVIDERS.dgx).toMatchObject({
       id: 'dgx',
       requiresApiKey: true,
-      models: [{ id: 'flux-schnell' }],
+      models: [],
       maxResolution: { width: 768, height: 768 },
     });
   });

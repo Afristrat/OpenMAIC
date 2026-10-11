@@ -11,9 +11,9 @@ import type {
   ImageGenerationResult,
 } from '../types';
 
-const DEFAULT_MODEL = 'flux-schnell';
-// Studio route serving FLUX.2 Klein 9B; the Qalem-facing model label stays DEFAULT_MODEL.
-const STUDIO_WORKFLOW = 'default';
+// The Studio workflow id is the model selected in the platform settings
+// (IMAGE_DGX_MODELS / provider models); nothing is baked in here.
+const WORKFLOW_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/;
 const MAX_EDGE = 768;
 const REQUEST_TIMEOUT_MS = 10_000;
 const JOB_TIMEOUT_MS = 300_000;
@@ -141,15 +141,18 @@ export async function generateWithDgxImage(
   const apiKey = config.apiKey.trim();
   if (!apiKey) throw new Error('DGX image sidecar secret is not configured');
   if (!options.prompt.trim()) throw new Error('DGX image prompt must not be empty');
-  const model = config.model || DEFAULT_MODEL;
-  if (model !== DEFAULT_MODEL) throw new Error(`Unsupported DGX image workflow: ${model}`);
+  const workflow = config.model?.trim();
+  if (!workflow) throw new Error('DGX image workflow is not configured');
+  if (!WORKFLOW_ID_PATTERN.test(workflow)) {
+    throw new Error('DGX image workflow identifier is invalid');
+  }
 
   const baseUrl = normalizeBaseUrl(config.baseUrl);
   const { width, height } = outputSize(options);
   const submitBody = JSON.stringify({ prompt: options.prompt, size: `${width}x${height}` });
   let submitResponse: Response | undefined;
   for (let attempt = 1; attempt <= MAX_SUBMIT_ATTEMPTS; attempt++) {
-    submitResponse = await fetch(`${baseUrl}/workflow/${STUDIO_WORKFLOW}/txt2img/async`, {
+    submitResponse = await fetch(`${baseUrl}/workflow/${workflow}/txt2img/async`, {
       method: 'POST',
       headers: headers(apiKey, true),
       body: submitBody,
