@@ -12,11 +12,14 @@ import type {
 } from '../types';
 
 const DEFAULT_MODEL = 'flux-schnell';
+// Studio route serving FLUX.2 Klein 9B; the Qalem-facing model label stays DEFAULT_MODEL.
+const STUDIO_WORKFLOW = 'default';
 const MAX_EDGE = 768;
 const REQUEST_TIMEOUT_MS = 10_000;
-const JOB_TIMEOUT_MS = 55_000;
-const INITIAL_POLL_INTERVAL_MS = 500;
-const MAX_POLL_INTERVAL_MS = 2_000;
+const JOB_TIMEOUT_MS = 300_000;
+const POLL_INTERVAL_MS = 5_000;
+const MAX_SUBMIT_ATTEMPTS = 3;
+const QUEUE_FULL_BACKOFF_MS = 15_000;
 const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 
 function normalizeBaseUrl(baseUrl?: string): string {
@@ -27,7 +30,7 @@ function normalizeBaseUrl(baseUrl?: string): string {
 function headers(apiKey: string, json = false): HeadersInit {
   return {
     Accept: 'application/json',
-    'X-Tamkin-Studio-Secret': apiKey,
+    'X-Qalem-Studio-Secret': apiKey,
     ...(json ? { 'Content-Type': 'application/json' } : {}),
   };
 }
@@ -143,12 +146,20 @@ export async function generateWithDgxImage(
 
   const baseUrl = normalizeBaseUrl(config.baseUrl);
   const { width, height } = outputSize(options);
-  const submitResponse = await fetch(`${baseUrl}/workflow/${DEFAULT_MODEL}/txt2img/async`, {
-    method: 'POST',
-    headers: headers(apiKey, true),
-    body: JSON.stringify({ prompt: options.prompt, size: `${width}x${height}` }),
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-  });
+  const submitBody = JSON.stringify({ prompt: options.prompt, size: `${width}x${height}` });
+  let submitResponse: Response | undefined;
+  for (let attempt = 1; attempt <= MAX_SUBMIT_ATTEMPTS; attempt++) {
+    submitResponse = await fetch(`${baseUrl}/workflow/${STUDIO_WORKFLOW}/txt2img/async`, {
+      method: 'POST',
+      headers: headers(apiKey, true),
+      body: submitBody,
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+    // 429 = shared GPU queue is full (4 active jobs, 2 per client): wait, never spin.
+    if (submitResponse.status !== 429 || attempt === MAX_SUBMIT_ATTEMPTS) break;
+    await new Promise((resolve) => setTimeout(resolve, QUEUE_FULL_BACKOFF_MS * attempt));
+  }
+  if (!submitResponse) throw new Error('DGX image submission was not attempted');
   const submitted = await jsonResponse(submitResponse, 'submission');
   if (submitResponse.status !== 202 || typeof submitted.jobId !== 'string') {
     throw new Error('DGX image submission returned no asynchronous job identifier');
@@ -159,7 +170,6 @@ export async function generateWithDgxImage(
   }
 
   const deadline = Date.now() + JOB_TIMEOUT_MS;
-  let interval = INITIAL_POLL_INTERVAL_MS;
   while (true) {
     const jobResponse = await fetch(`${baseUrl}/jobs/${jobId}`, {
       headers: headers(apiKey),
@@ -175,9 +185,8 @@ export async function generateWithDgxImage(
     }
 
     const remaining = deadline - Date.now();
-    if (remaining <= 0) throw new Error('DGX image job exceeded the 55-second generation limit');
-    await new Promise((resolve) => setTimeout(resolve, Math.min(interval, remaining)));
-    interval = Math.min(interval * 2, MAX_POLL_INTERVAL_MS);
+    if (remaining <= 0) throw new Error('DGX image job exceeded the 300-second generation limit');
+    await new Promise((resolve) => setTimeout(resolve, Math.min(POLL_INTERVAL_MS, remaining)));
   }
 
   const resultResponse = await fetch(`${baseUrl}/jobs/${jobId}/result`, {

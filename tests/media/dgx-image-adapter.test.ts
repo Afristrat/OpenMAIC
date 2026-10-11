@@ -9,7 +9,12 @@ const png = Buffer.concat([
 ]).toString('base64');
 
 function jsonResponse(body: unknown, status = 200) {
-  return { ok: status >= 200 && status < 300, status, json: async () => body };
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    json: async () => body,
+    text: async () => JSON.stringify(body),
+  };
 }
 
 describe('dgx-image-adapter', () => {
@@ -32,15 +37,18 @@ describe('dgx-image-adapter', () => {
     );
 
     expect(mockFetch.mock.calls.map(([url]) => url)).toEqual([
-      'http://dgx.internal:8189/workflow/flux-schnell/txt2img/async',
+      'http://dgx.internal:8189/workflow/default/txt2img/async',
       'http://dgx.internal:8189/jobs/123e4567-e89b-42d3-a456-426614174000',
       'http://dgx.internal:8189/jobs/123e4567-e89b-42d3-a456-426614174000/result',
     ]);
     expect(
       mockFetch.mock.calls.every(
-        ([, init]) => init.headers['X-Tamkin-Studio-Secret'] === 'sidecar-secret',
+        ([, init]) => init.headers['X-Qalem-Studio-Secret'] === 'sidecar-secret',
       ),
     ).toBe(true);
+    expect(mockFetch.mock.calls.some(([, init]) => 'X-Tamkin-Studio-Secret' in init.headers)).toBe(
+      false,
+    );
     expect(JSON.parse(mockFetch.mock.calls[0][1].body)).toEqual({
       prompt: 'A learning illustration',
       size: '768x432',
@@ -95,6 +103,61 @@ describe('dgx-image-adapter', () => {
       message: 'DGX image sidecar rejected its configured secret',
     });
     expect(result.message).not.toContain('private');
+  });
+
+  it('waits and resubmits when the shared GPU queue answers 429, then gives up after three attempts', async () => {
+    vi.useFakeTimers();
+    try {
+      mockFetch
+        .mockResolvedValueOnce(jsonResponse({ error: 'queue full' }, 429))
+        .mockResolvedValueOnce(jsonResponse({ jobId: '123e4567-e89b-42d3-a456-426614174000' }, 202))
+        .mockResolvedValueOnce(jsonResponse({ status: 'completed' }))
+        .mockResolvedValueOnce(jsonResponse({ data: [{ b64_json: png }] }));
+      const recovered = generateImage(
+        { providerId: 'dgx', apiKey: 'secret', baseUrl: 'http://dgx' },
+        { prompt: 'test' },
+      );
+      await vi.advanceTimersByTimeAsync(15_000);
+      await expect(recovered).resolves.toMatchObject({ base64: png });
+      expect(mockFetch).toHaveBeenCalledTimes(4);
+
+      mockFetch.mockReset();
+      mockFetch.mockResolvedValue(jsonResponse({ error: 'queue full' }, 429));
+      const saturated = generateImage(
+        { providerId: 'dgx', apiKey: 'secret', baseUrl: 'http://dgx' },
+        { prompt: 'test' },
+      );
+      const assertion = expect(saturated).rejects.toThrow('submission failed (429)');
+      await vi.advanceTimersByTimeAsync(15_000 + 30_000);
+      await assertion;
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('polls a running job every 5 seconds instead of spinning', async () => {
+    vi.useFakeTimers();
+    try {
+      mockFetch
+        .mockResolvedValueOnce(jsonResponse({ jobId: '123e4567-e89b-42d3-a456-426614174000' }, 202))
+        .mockResolvedValueOnce(jsonResponse({ status: 'running' }))
+        .mockResolvedValueOnce(jsonResponse({ status: 'running' }))
+        .mockResolvedValueOnce(jsonResponse({ status: 'completed' }))
+        .mockResolvedValueOnce(jsonResponse({ data: [{ b64_json: png }] }));
+      const pending = generateImage(
+        { providerId: 'dgx', apiKey: 'secret', baseUrl: 'http://dgx' },
+        { prompt: 'test' },
+      );
+      await vi.advanceTimersByTimeAsync(4_999);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+      await vi.advanceTimersByTimeAsync(5_000);
+      await expect(pending).resolves.toMatchObject({ base64: png });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('fails explicitly when a job fails', async () => {
