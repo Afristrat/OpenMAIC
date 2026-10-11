@@ -19,6 +19,7 @@ import { VIDEO_PROVIDERS } from '@/lib/media/video-providers';
 import { isMediaPlaceholder } from '@/lib/store/media-generation';
 import {
   getServerImageProviders,
+  getServerImageDefaultProviderId,
   getServerVideoProviders,
   getServerTTSProviders,
   resolveImageApiKey,
@@ -140,9 +141,13 @@ export function selectClassroomImageModel(
 export function selectClassroomImageProvider(
   serverProviders: Record<string, { models?: string[] }>,
   requestedProviderId?: string,
+  defaultProviderId?: string,
 ): ImageProviderId | undefined {
   if (requestedProviderId && requestedProviderId in serverProviders) {
     return requestedProviderId as ImageProviderId;
+  }
+  if (defaultProviderId && defaultProviderId in serverProviders) {
+    return defaultProviderId as ImageProviderId;
   }
   return Object.keys(serverProviders)[0] as ImageProviderId | undefined;
 }
@@ -253,6 +258,7 @@ export async function generateMediaForClassroom(
   const imageProviderId = selectClassroomImageProvider(
     serverImageProviders,
     imageSelection?.providerId,
+    getServerImageDefaultProviderId(),
   );
   const videoProviderIds = Object.keys(getServerVideoProviders());
 

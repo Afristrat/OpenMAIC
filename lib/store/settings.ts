@@ -141,6 +141,7 @@ export interface SettingsState {
       enabled: boolean;
       isServerConfigured?: boolean;
       serverModels?: string[];
+      serverModelLabels?: Record<string, string>;
       customModels?: Array<{ id: string; name: string }>;
     }
   >;
@@ -188,6 +189,8 @@ export interface SettingsState {
 
   // Auto-config lifecycle flag (persisted)
   autoConfigApplied: boolean;
+  /** Last operator-declared default image provider already applied to this browser. */
+  appliedImageDefaultProviderId: string;
 
   // Playback controls
   ttsMuted: boolean;
@@ -529,6 +532,14 @@ const getDefaultWebSearchConfig = () => ({
 /**
  * Check whether a provider ID exists in the given provider registry.
  */
+function firstImageModelId(
+  config: SettingsState['imageProvidersConfig'],
+  providerId: ImageProviderId,
+): string | undefined {
+  const serverModels = config[providerId]?.serverModels;
+  return serverModels?.length ? serverModels[0] : IMAGE_PROVIDERS[providerId]?.models[0]?.id;
+}
+
 function hasProviderId(providerMap: Record<string, unknown>, providerId?: string): boolean {
   return typeof providerId === 'string' && providerId in providerMap;
 }
@@ -890,6 +901,7 @@ export const useSettingsStore = create<SettingsState>()(
         parallelSceneConcurrency: 0,
 
         autoConfigApplied: false,
+        appliedImageDefaultProviderId: '',
 
         // Web Search settings (use defaults)
         ...defaultWebSearchConfig,
@@ -1263,7 +1275,8 @@ export const useSettingsStore = create<SettingsState>()(
               tts: Record<string, { disabled?: boolean }>;
               asr: Record<string, Record<string, never>>;
               pdf: Record<string, Record<string, never>>;
-              image: Record<string, { models?: string[] }>;
+              image: Record<string, { models?: string[]; modelLabels?: Record<string, string> }>;
+              imageDefaultProviderId?: string;
               video: Record<string, { models?: string[] }>;
               webSearch: Record<string, Record<string, never>>;
               generation?: { parallelSceneConcurrency?: number };
@@ -1379,6 +1392,7 @@ export const useSettingsStore = create<SettingsState>()(
                     ...newImageConfig[key],
                     isServerConfigured: false,
                     serverModels: undefined,
+                    serverModelLabels: undefined,
                   };
                 }
               }
@@ -1389,6 +1403,7 @@ export const useSettingsStore = create<SettingsState>()(
                     ...newImageConfig[key],
                     isServerConfigured: true,
                     serverModels: info.models,
+                    serverModelLabels: info.modelLabels,
                   };
                 }
               }
@@ -1618,11 +1633,7 @@ export const useSettingsStore = create<SettingsState>()(
                   !newImageConfig[state.imageProviderId]?.isServerConfigured
                 ) {
                   autoImageProvider = serverImageIds[0];
-                  const serverModels = newImageConfig[autoImageProvider]?.serverModels;
-                  const models = serverModels?.length
-                    ? serverModels.map((id) => ({ id, name: id }))
-                    : IMAGE_PROVIDERS[autoImageProvider]?.models;
-                  if (models?.length) autoImageModel = models[0].id;
+                  autoImageModel = firstImageModelId(newImageConfig, autoImageProvider);
                 }
                 if (serverImageIds.length > 0 && !state.imageGenerationEnabled) {
                   autoImageEnabled = true;
@@ -1644,6 +1655,20 @@ export const useSettingsStore = create<SettingsState>()(
                 if (serverVideoIds.length > 0 && !state.videoGenerationEnabled) {
                   autoVideoEnabled = true;
                 }
+              }
+
+              // Operator-declared default image provider: applied once per declared
+              // value, so a later manual choice in this browser is never overwritten.
+              const declaredImageDefault = data.imageDefaultProviderId as
+                | ImageProviderId
+                | undefined;
+              if (
+                declaredImageDefault &&
+                declaredImageDefault !== state.appliedImageDefaultProviderId &&
+                newImageConfig[declaredImageDefault]?.isServerConfigured
+              ) {
+                autoImageProvider = declaredImageDefault;
+                autoImageModel = firstImageModelId(newImageConfig, declaredImageDefault);
               }
 
               const selectedASRProvider = autoAsrProvider ?? validASRProvider;
@@ -1676,6 +1701,7 @@ export const useSettingsStore = create<SettingsState>()(
                   Math.floor(data.generation?.parallelSceneConcurrency ?? 0),
                 ),
                 autoConfigApplied: true,
+                appliedImageDefaultProviderId: data.imageDefaultProviderId ?? '',
                 // Validated selections
                 ...(validLLMProvider !== state.providerId && {
                   providerId: validLLMProvider as ProviderId,

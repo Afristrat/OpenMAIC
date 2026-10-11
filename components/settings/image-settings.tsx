@@ -57,7 +57,10 @@ export function ImageSettings({ selectedProviderId }: ImageSettingsProps) {
   const isServerConfigured = !!currentConfig?.isServerConfigured;
   const builtInModels =
     isServerConfigured && currentConfig?.serverModels?.length
-      ? currentConfig.serverModels.map((id) => ({ id, name: getImageModelDisplayName(id, t) }))
+      ? currentConfig.serverModels.map((id) => ({
+          id,
+          name: getImageModelDisplayName(id, t, currentConfig.serverModelLabels),
+        }))
       : currentProvider?.models || [];
   const customModels = useMemo(
     () => currentConfig?.customModels || [],

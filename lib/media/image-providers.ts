@@ -39,7 +39,10 @@ const IMAGE_MODEL_DISPLAY_NAME_KEYS: Readonly<Record<string, string>> = {
 export function getImageModelDisplayName(
   modelId: string,
   translate: (key: string) => string,
+  operatorLabels?: Record<string, string>,
 ): string {
+  const operatorLabel = operatorLabels?.[modelId];
+  if (operatorLabel) return operatorLabel;
   const translationKey = IMAGE_MODEL_DISPLAY_NAME_KEYS[modelId];
   return translationKey ? translate(translationKey) : modelId;
 }

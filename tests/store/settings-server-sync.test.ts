@@ -193,7 +193,11 @@ interface MockServerResponse {
   tts?: Record<string, { baseUrl?: string; disabled?: boolean }>;
   asr?: Record<string, { baseUrl?: string }>;
   pdf?: Record<string, { baseUrl?: string }>;
-  image?: Record<string, { baseUrl?: string; models?: string[] }>;
+  image?: Record<
+    string,
+    { baseUrl?: string; models?: string[]; modelLabels?: Record<string, string> }
+  >;
+  imageDefaultProviderId?: string;
   video?: Record<string, { baseUrl?: string; models?: string[] }>;
   webSearch?: Record<string, { baseUrl?: string }>;
 }
@@ -860,6 +864,27 @@ describe('fetchServerProviders — Image stale selection', () => {
 
     expect(store.getState().imageProviderId).toBe('');
     expect(store.getState().imageModelId).toBe('');
+  });
+
+  it('applies the operator default image provider once, then respects a manual choice', async () => {
+    const store = await getStore();
+    const image = { seedream: {}, 'qwen-image': { modelLabels: { 'qwen-image-max': 'Qwen Max' } } };
+
+    mockServerResponse({ image, imageDefaultProviderId: 'qwen-image' });
+    await store.getState().fetchServerProviders();
+    expect(store.getState().imageProviderId).toBe('qwen-image');
+    expect(store.getState().imageProvidersConfig['qwen-image'].serverModelLabels).toEqual({
+      'qwen-image-max': 'Qwen Max',
+    });
+
+    store.getState().setImageProvider('seedream');
+    mockServerResponse({ image, imageDefaultProviderId: 'qwen-image' });
+    await store.getState().fetchServerProviders();
+    expect(store.getState().imageProviderId).toBe('seedream');
+
+    mockServerResponse({ image, imageDefaultProviderId: 'seedream' });
+    await store.getState().fetchServerProviders();
+    expect(store.getState().imageProviderId).toBe('seedream');
   });
 
   it('disables imageGenerationEnabled when no image provider is usable', async () => {

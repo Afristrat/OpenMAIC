@@ -4,6 +4,7 @@ import {
   getServerASRProviders,
   getServerPDFProviders,
   getServerImageProviders,
+  getServerImageDefaultProviderId,
   getServerVideoProviders,
   getServerWebSearchProviders,
   getParallelSceneConcurrency,
@@ -26,6 +27,7 @@ export async function GET() {
       asr: getServerASRProviders(),
       pdf: getServerPDFProviders(),
       image: getServerImageProviders(),
+      imageDefaultProviderId: getServerImageDefaultProviderId(),
       video: getServerVideoProviders(),
       webSearch: getServerWebSearchProviders(),
       generation: {

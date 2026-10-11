@@ -18,6 +18,7 @@ vi.mock('@/lib/audio/tts-providers', () => ({
 
 vi.mock('@/lib/server/provider-config', () => ({
   getServerImageProviders: vi.fn(() => ({ 'openai-image': { models: ['gpt-image-1'] } })),
+  getServerImageDefaultProviderId: vi.fn(() => undefined),
   getServerVideoProviders: vi.fn(() => ({})),
   getServerTTSProviders: vi.fn(() => ({ 'higgs-tts': { disabled: false } })),
   resolveImageApiKey: vi.fn(() => 'test-key'),

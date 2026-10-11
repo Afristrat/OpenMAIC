@@ -151,6 +151,16 @@ describe('classroom image model selection', () => {
       ),
     ).toBe('qwen-image');
   });
+
+  test('falls back to the operator default provider before the first listed one', () => {
+    const providers = {
+      'openai-image': { models: ['gemini-3.1-flash-image'] },
+      dgx: { models: ['default'] },
+    };
+    expect(selectClassroomImageProvider(providers, undefined, 'dgx')).toBe('dgx');
+    expect(selectClassroomImageProvider(providers, 'openai-image', 'dgx')).toBe('openai-image');
+    expect(selectClassroomImageProvider(providers, undefined, 'absent')).toBe('openai-image');
+  });
 });
 
 describe('classroom media failure reporting', () => {

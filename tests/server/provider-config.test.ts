@@ -433,6 +433,30 @@ pdf:
       expect(resolveImageBaseUrl('openai-image')).toBe('https://proxy.example.com/v1');
     });
 
+    it('exposes operator model labels and the configured default image provider', async () => {
+      vi.stubEnv('IMAGE_DGX_API_KEY', 'studio-secret');
+      vi.stubEnv('IMAGE_DGX_BASE_URL', 'http://studio.example.com:8189');
+      vi.stubEnv('IMAGE_DGX_MODELS', 'default=FLUX.2 Klein, fast');
+      vi.stubEnv('IMAGE_OPENAI_API_KEY', 'sk-openai-image');
+      vi.stubEnv('IMAGE_DEFAULT_PROVIDER', 'dgx');
+      const { getServerImageProviders, getServerImageDefaultProviderId } =
+        await import('@/lib/server/provider-config');
+
+      expect(getServerImageProviders().dgx).toEqual({
+        models: ['default', 'fast'],
+        modelLabels: { default: 'FLUX.2 Klein' },
+      });
+      expect(getServerImageDefaultProviderId()).toBe('dgx');
+    });
+
+    it('ignores a default image provider that is not configured on the server', async () => {
+      vi.stubEnv('IMAGE_OPENAI_API_KEY', 'sk-openai-image');
+      vi.stubEnv('IMAGE_DEFAULT_PROVIDER', 'dgx');
+      const { getServerImageDefaultProviderId } = await import('@/lib/server/provider-config');
+
+      expect(getServerImageDefaultProviderId()).toBeUndefined();
+    });
+
     it('maps IMAGE_OPENAI and exposes image baseUrl', async () => {
       vi.stubEnv('IMAGE_OPENAI_API_KEY', 'sk-openai-image');
       vi.stubEnv('IMAGE_OPENAI_BASE_URL', 'https://proxy.example.com/v1');

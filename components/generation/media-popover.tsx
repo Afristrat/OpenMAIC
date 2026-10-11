@@ -128,7 +128,10 @@ export function MediaPopover({ onSettingsOpen }: MediaPopoverProps) {
           const config = imageProvidersConfig[p.id];
           const models =
             config?.isServerConfigured && config.serverModels?.length
-              ? config.serverModels.map((id) => ({ id, name: getImageModelDisplayName(id, t) }))
+              ? config.serverModels.map((id) => ({
+                  id,
+                  name: getImageModelDisplayName(id, t, config.serverModelLabels),
+                }))
               : [...p.models, ...(config?.customModels || [])];
           return {
             groupId: p.id,

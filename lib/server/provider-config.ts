@@ -12,6 +12,29 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('ServerProviderConfig');
 
+/**
+ * Parses a `${PREFIX}_MODELS` list. An entry is `id` or `id=Label`: the id is
+ * what is sent to the provider, the optional label is only what the UI shows.
+ */
+function parseModelList(raw: string | undefined): {
+  models: string[];
+  labels?: Record<string, string>;
+} {
+  const models: string[] = [];
+  const labels: Record<string, string> = {};
+  for (const item of (raw ?? '').split(',')) {
+    const entry = item.trim();
+    if (!entry) continue;
+    const separator = entry.indexOf('=');
+    const id = (separator > 0 ? entry.slice(0, separator) : entry).trim();
+    const label = separator > 0 ? entry.slice(separator + 1).trim() : '';
+    if (!id) continue;
+    models.push(id);
+    if (label) labels[id] = label;
+  }
+  return { models, labels: Object.keys(labels).length > 0 ? labels : undefined };
+}
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -20,6 +43,8 @@ interface ServerProviderEntry {
   apiKey: string;
   baseUrl?: string;
   models?: string[];
+  /** Operator-chosen display names for `models` (`id=Label` in `${PREFIX}_MODELS`). */
+  modelLabels?: Record<string, string>;
   proxy?: string;
   /**
    * Admin/operator force-off switch. `false` disables the provider for ALL
@@ -201,18 +226,16 @@ function loadEnvSection(
     const envApiKey = process.env[`${prefix}_API_KEY`] || undefined;
     const envBaseUrl = process.env[`${prefix}_BASE_URL`] || undefined;
     const envModelsStr = process.env[`${prefix}_MODELS`];
-    const envModels = envModelsStr
-      ? envModelsStr
-          .split(',')
-          .map((m) => m.trim())
-          .filter(Boolean)
-      : undefined;
+    const parsedModels = parseModelList(envModelsStr);
+    const envModels = envModelsStr ? parsedModels.models : undefined;
+    const envModelLabels = parsedModels.labels;
 
     if (result[providerId]) {
       // YAML entry exists — env vars override individual fields
       if (envApiKey) result[providerId].apiKey = envApiKey;
       if (envBaseUrl) result[providerId].baseUrl = envBaseUrl;
       if (envModels) result[providerId].models = envModels;
+      if (envModelLabels) result[providerId].modelLabels = envModelLabels;
       continue;
     }
 
@@ -227,6 +250,7 @@ function loadEnvSection(
       apiKey: envApiKey || '',
       baseUrl: envBaseUrl,
       models: envModels,
+      modelLabels: envModelLabels,
     };
   }
 
@@ -284,14 +308,14 @@ function applyOpenAIImageFallback(
   if (!apiKey) return imageConfig;
 
   const yamlOpenAIImage = yamlImageSection?.[OPENAI_IMAGE_PROVIDER_ID];
-  const envModels = process.env.IMAGE_OPENAI_MODELS?.split(',')
-    .map((model) => model.trim())
-    .filter(Boolean);
+  const parsedModels = parseModelList(process.env.IMAGE_OPENAI_MODELS);
+  const envModels = parsedModels.models;
   imageConfig[OPENAI_IMAGE_PROVIDER_ID] = {
     apiKey,
     baseUrl:
       yamlOpenAIImage?.baseUrl || process.env.IMAGE_OPENAI_BASE_URL || process.env.OPENAI_BASE_URL,
-    models: envModels?.length ? envModels : yamlOpenAIImage?.models,
+    models: envModels.length ? envModels : yamlOpenAIImage?.models,
+    modelLabels: parsedModels.labels,
     proxy: yamlOpenAIImage?.proxy,
   };
   return imageConfig;
@@ -527,14 +551,27 @@ export function resolvePDFBaseUrl(providerId: string, clientBaseUrl?: string): s
 // ---------------------------------------------------------------------------
 
 /** Returns server-configured image providers (allowed models only, no base URLs). */
-export function getServerImageProviders(): Record<string, { models?: string[] }> {
+export function getServerImageProviders(): Record<
+  string,
+  { models?: string[]; modelLabels?: Record<string, string> }
+> {
   const cfg = getConfig();
-  const result: Record<string, { models?: string[] }> = {};
+  const result: Record<string, { models?: string[]; modelLabels?: Record<string, string> }> = {};
   for (const [id, entry] of Object.entries(cfg.image)) {
     result[id] = {};
     if (entry.models && entry.models.length > 0) result[id].models = entry.models;
+    if (entry.modelLabels) result[id].modelLabels = entry.modelLabels;
   }
   return result;
+}
+
+/**
+ * The image provider the operator wants used by default (`IMAGE_DEFAULT_PROVIDER`).
+ * Ignored unless that provider is actually configured on this server.
+ */
+export function getServerImageDefaultProviderId(): string | undefined {
+  const requested = process.env.IMAGE_DEFAULT_PROVIDER?.trim();
+  return requested && requested in getConfig().image ? requested : undefined;
 }
 
 export function resolveImageApiKey(providerId: string, clientKey?: string): string {
