@@ -1,3 +1,4 @@
+import type { PlanStep } from '@/lib/generation/generation-tracking';
 import { callLLM } from '@/lib/ai/llm';
 import { isProviderKeyRequired } from '@/lib/ai/providers';
 import { isFeatureEnabled } from '@/lib/flags';
@@ -30,7 +31,23 @@ import {
   generationOptimizationDirective,
 } from './generation-optimization';
 
-export async function generateClassroomPlan(input: GenerateClassroomInput, ownerId?: string) {
+export interface ClassroomPlanHooks {
+  /** Reports the step now running; a failing observer never interrupts the plan. */
+  onStep?: (step: PlanStep) => void | Promise<void>;
+}
+
+export async function generateClassroomPlan(
+  input: GenerateClassroomInput,
+  ownerId?: string,
+  hooks?: ClassroomPlanHooks,
+) {
+  const notifyStep = async (step: PlanStep) => {
+    try {
+      await hooks?.onStep?.(step);
+    } catch {
+      // Progress reporting is informational only.
+    }
+  };
   await assertCourseGenerationAccess(input, ownerId);
   const learningContext = normalizeLearningContext(
     input.learningContext ?? DEFAULT_LEARNING_CONTEXT,
@@ -120,6 +137,7 @@ export async function generateClassroomPlan(input: GenerateClassroomInput, owner
   const combinedSource = resolvedSources.combinedContent;
 
   if (combinedSource) {
+    await notifyStep('checking_sources');
     await assertSourceMaterialAlignment(
       input.requirement,
       combinedSource.text,
@@ -146,8 +164,10 @@ export async function generateClassroomPlan(input: GenerateClassroomInput, owner
       generationOptions,
     );
 
+  await notifyStep('designing_plan');
   let result = await generatePlan(requirements);
   if (expectedSceneCount && isSceneCountMismatch(result.error)) {
+    await notifyStep('correcting_plan');
     result = await generatePlan({
       ...requirements,
       requirement: `${requirements.requirement}\n\nAUTHORITATIVE CORRECTION: Return exactly ${expectedSceneCount} complete, semantically coherent scene outlines. Redesign the plan as needed. Do not truncate an existing plan.`,
@@ -157,6 +177,7 @@ export async function generateClassroomPlan(input: GenerateClassroomInput, owner
     throw new Error(result.error || 'Failed to generate classroom plan');
   }
   await assertCourseGenerationAccess(input, ownerId);
+  await notifyStep('finalizing');
   const plan = enforceExecutableObligations(result.data, input.requirement);
   const report = optimizationReportSchema.safeParse(optimization);
   return report.success ? { ...plan, optimization: report.data } : plan;

@@ -1,6 +1,8 @@
 import { type NextRequest } from 'next/server';
 import { requireSuperAdminOrOrgAuthor } from '@/lib/api/auth';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { describeGenerationFailure } from '@/lib/generation/generation-tracking';
+import { getTypicalDuration } from '@/lib/server/generation-duration-stats';
 import {
   isValidClassroomPlanJobId,
   readClassroomPlanJob,
@@ -19,12 +21,19 @@ export async function GET(request: NextRequest, context: { params: Promise<{ job
     const auth = await requireSuperAdminOrOrgAuthor(request, job.orgId);
     if (auth.response) return auth.response;
 
+    const done = job.status === 'succeeded' || job.status === 'failed';
     return apiSuccess({
       jobId: job.id,
       status: job.status,
       message: job.message,
-      pollIntervalMs: 30_000,
-      done: job.status === 'succeeded' || job.status === 'failed',
+      pollIntervalMs: 5_000,
+      step: job.step,
+      startedAt: job.startedAt ?? job.createdAt,
+      updatedAt: job.updatedAt,
+      serverNow: new Date().toISOString(),
+      typicalDuration: done ? undefined : await getTypicalDuration('plan'),
+      failure: describeGenerationFailure(job.error),
+      done,
       result: job.result,
       generationRequest: job.status === 'succeeded' ? job.input : undefined,
       error: job.error,

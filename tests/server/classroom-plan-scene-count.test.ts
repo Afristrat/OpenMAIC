@@ -81,6 +81,11 @@ describe('explicit classroom scene count invariant', () => {
     ['12 séquences cohérentes', 12],
     ['أنشئ ١٢ شريحة مترابطة', 12],
     ['session de 10 à 15 minutes', undefined],
+    ["Une séquence d'accueil puis un quiz", undefined],
+    ['Prévoir une séquence de synthèse en fin de session', undefined],
+    ['1 séquence', 1],
+    ['exactement une séquence', 1],
+    ['trois séquences', 3],
   ])('extracts an explicit count from %s', (requirement, expected) => {
     expect(extractRequestedSceneCount(requirement)).toBe(expected);
   });

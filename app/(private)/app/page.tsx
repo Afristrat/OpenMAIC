@@ -1,5 +1,10 @@
 'use client';
 
+import {
+  GenerationTracker,
+  type GenerationTrackerProps,
+} from '@/components/generation/generation-tracker';
+import type { GenerationFailure } from '@/lib/generation/generation-tracking';
 import { useState, useEffect, useMemo, useRef, useDeferredValue, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
@@ -86,7 +91,7 @@ const WEB_SEARCH_STORAGE_KEY = 'webSearchEnabled.v2';
 const RECENT_OPEN_STORAGE_KEY = 'recentClassroomsOpen';
 const INTERACTIVE_MODE_STORAGE_KEY = 'interactiveModeEnabled';
 const REQUIREMENT_EXPANSION_THRESHOLD = 120;
-const MIN_PLAN_POLL_MS = process.env.NEXT_PUBLIC_E2E_TEST_MODE === 'true' ? 10 : 30_000;
+const MIN_PLAN_POLL_MS = process.env.NEXT_PUBLIC_E2E_TEST_MODE === 'true' ? 10 : 5_000;
 
 type ClassroomPlanJobCreationResponse = {
   jobId?: string;
@@ -104,6 +109,12 @@ type ClassroomPlanJobStatusResponse = {
   error?: string;
   errorCode?: string;
   sourceAlignment?: SourceConflict;
+  step?: string;
+  startedAt?: string;
+  updatedAt?: string;
+  serverNow?: string;
+  typicalDuration?: { lowMs: number; highMs: number };
+  failure?: GenerationFailure;
 };
 
 type CourseImportResponse = {
@@ -438,6 +449,7 @@ function HomePage() {
   const [themeOpen, setThemeOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPlanning, setIsPlanning] = useState(false);
+  const [planTracking, setPlanTracking] = useState<GenerationTrackerProps | null>(null);
   const [isStartingGeneration, setIsStartingGeneration] = useState(false);
   const [draftPlan, setDraftPlan] = useState<ClassroomPlan | null>(null);
   const [assistingTarget, setAssistingTarget] = useState<string | null>(null);
@@ -658,11 +670,21 @@ function HomePage() {
           throw new Error(result.error || t('generation.planGenerationFailed'));
         }
         if (!result.done) {
-          schedulePlanPoll(jobId, result.pollIntervalMs ?? 30_000);
+          setPlanTracking({
+            kind: 'plan',
+            status: result.status === 'queued' ? 'queued' : 'running',
+            step: result.step,
+            startedAt: result.startedAt,
+            updatedAt: result.updatedAt,
+            serverNow: result.serverNow,
+            typicalDuration: result.typicalDuration,
+          });
+          schedulePlanPoll(jobId, result.pollIntervalMs ?? 5_000);
           return;
         }
 
         setIsPlanning(false);
+        setPlanTracking(null);
         if (
           result.errorCode === 'SOURCE_MATERIAL_CONFLICT' &&
           result.sourceAlignment &&
@@ -673,7 +695,11 @@ function HomePage() {
           return;
         }
         if (!result.result?.syllabus || !result.result.outlines?.length) {
-          setError(result.error || t('generation.planGenerationFailed'));
+          setError(
+            result.failure
+              ? t(`generation.failure.${result.failure.code}`, result.failure.params)
+              : result.error || t('generation.planGenerationFailed'),
+          );
           return;
         }
         if (!result.generationRequest) {
@@ -1732,9 +1758,10 @@ function HomePage() {
           </section>
         )}
         {isPlanning && (
-          <p className="mt-3 w-full text-sm text-muted-foreground" role="status">
-            {t('generation.planAsyncHint')}
-          </p>
+          <div className="mt-3 w-full space-y-3 rounded-xl border border-border/60 bg-card/60 p-4">
+            <p className="text-sm text-muted-foreground">{t('generation.planAsyncHint')}</p>
+            {planTracking && <GenerationTracker {...planTracking} />}
+          </div>
         )}
         <AnimatePresence>
           {error && (

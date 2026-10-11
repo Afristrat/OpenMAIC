@@ -5,14 +5,24 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { AlertCircle, ArrowLeft, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { GenerationTracker } from '@/components/generation/generation-tracker';
 import { useI18n } from '@/lib/hooks/use-i18n';
+import type { GenerationFailure } from '@/lib/generation/generation-tracking';
 
 interface GenerationJob {
   status: 'queued' | 'running' | 'succeeded' | 'failed';
+  step?: string;
   progress: number;
+  scenesGenerated?: number;
+  totalScenes?: number;
   result?: { url: string };
   failureCode?: 'MEDIA_PROVIDER_UNAVAILABLE';
+  failure?: GenerationFailure;
   error?: string;
+  startedAt?: string;
+  updatedAt?: string;
+  serverNow?: string;
+  typicalDuration?: { lowMs: number; highMs: number };
 }
 
 function GenerationStatus() {
@@ -52,6 +62,12 @@ function GenerationStatus() {
     };
   }, [jobId, router]);
 
+  const failureText = job?.failure
+    ? t(`generation.failure.${job.failure.code}`, job.failure.params)
+    : job?.failureCode === 'MEDIA_PROVIDER_UNAVAILABLE'
+      ? t('generation.mediaProviderUnavailable')
+      : t('generation.generationFailed');
+
   return (
     <main className="min-h-[100dvh] flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950">
       <Card className="w-full max-w-md p-8 text-center space-y-6">
@@ -65,21 +81,24 @@ function GenerationStatus() {
             {hasFailed ? t('generation.generationFailed') : t('generation.generatingCourse')}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {hasFailed
-              ? job?.failureCode === 'MEDIA_PROVIDER_UNAVAILABLE'
-                ? t('generation.mediaProviderUnavailable')
-                : t('generation.generationFailed')
-              : t('generation.aiWorking')}
+            {hasFailed ? failureText : t('generation.aiWorking')}
           </p>
-          {hasFailed && job?.error && <p className="text-xs text-destructive">{job.error}</p>}
+          {hasFailed && job?.error && !job.failure && (
+            <p className="text-xs text-destructive">{job.error}</p>
+          )}
         </div>
-        {!hasFailed && (
-          <div className="h-2 overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full bg-primary transition-all"
-              style={{ width: `${job?.progress ?? 0}%` }}
-            />
-          </div>
+        {!hasFailed && job && (job.status === 'queued' || job.status === 'running') && (
+          <GenerationTracker
+            kind="course"
+            status={job.status}
+            step={job.step}
+            startedAt={job.startedAt}
+            updatedAt={job.updatedAt}
+            serverNow={job.serverNow}
+            typicalDuration={job.typicalDuration}
+            scenes={{ done: job.scenesGenerated ?? 0, total: job.totalScenes }}
+            progress={job.progress}
+          />
         )}
         {hasFailed && planJobId ? (
           <Button

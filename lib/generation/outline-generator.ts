@@ -198,11 +198,15 @@ export function extractRequestedSceneCount(requirement: string): number | undefi
     new RegExp(`(${numberToken})\\s+${unit}`, 'iu'),
   ];
 
-  for (const pattern of patterns) {
+  for (const [index, pattern] of patterns.entries()) {
     const match = requirement.match(pattern);
     if (!match?.[1]) continue;
     const count = parseSceneCountToken(match[1]);
-    if (count && count <= 100) return count;
+    if (!count || count > 100) continue;
+    // "une séquence d'accueil" uses an article, not a count: a requested count
+    // of one is only trusted when written as a digit or after "exactement".
+    if (count === 1 && index > 0 && !/^[1١]$/.test(match[1])) continue;
+    return count;
   }
   return undefined;
 }

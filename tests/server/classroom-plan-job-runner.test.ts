@@ -6,6 +6,8 @@ const mocks = vi.hoisted(() => ({
   succeeded: vi.fn(),
   conflict: vi.fn(),
   failed: vi.fn(),
+  step: vi.fn(),
+  touch: vi.fn(),
 }));
 
 vi.mock('@/lib/server/classroom-plan-generation', () => ({
@@ -16,6 +18,8 @@ vi.mock('@/lib/server/classroom-plan-job-store', () => ({
   markClassroomPlanJobSucceeded: mocks.succeeded,
   markClassroomPlanJobConflict: mocks.conflict,
   markClassroomPlanJobFailed: mocks.failed,
+  reportClassroomPlanStep: mocks.step,
+  touchClassroomPlanJob: mocks.touch,
 }));
 
 import { runClassroomPlanJob } from '@/lib/server/classroom-plan-job-runner';
@@ -30,7 +34,11 @@ const input = {
 };
 
 describe('classroom plan worker', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.step.mockResolvedValue(undefined);
+    mocks.touch.mockResolvedValue(undefined);
+  });
 
   it('persists a structured source conflict without publishing a syllabus', async () => {
     const alignment = {
@@ -49,5 +57,33 @@ describe('classroom plan worker', () => {
     expect(mocks.conflict).toHaveBeenCalledWith('plan-conflict', alignment);
     expect(mocks.succeeded).not.toHaveBeenCalled();
     expect(mocks.failed).not.toHaveBeenCalled();
+  });
+
+  it('reports each plan step to the job and keeps the job alive while it runs', async () => {
+    vi.useFakeTimers();
+    try {
+      mocks.generate.mockImplementation(
+        async (
+          _input: unknown,
+          _owner: unknown,
+          hooks: { onStep: (step: string) => Promise<void> },
+        ) => {
+          await hooks.onStep('designing_plan');
+          await vi.advanceTimersByTimeAsync(45_000);
+          return { courseTitle: 'Plan', outlines: [] };
+        },
+      );
+
+      await runClassroomPlanJob('plan-steps', input);
+
+      expect(mocks.step).toHaveBeenCalledWith('plan-steps', 'designing_plan');
+      expect(mocks.touch).toHaveBeenCalledTimes(2);
+      expect(mocks.succeeded).toHaveBeenCalledTimes(1);
+
+      await vi.advanceTimersByTimeAsync(60_000);
+      expect(mocks.touch).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

@@ -1,6 +1,7 @@
 import type { ClassroomPlan } from '@/lib/types/generation';
 import type { GenerateClassroomInput } from '@/lib/server/classroom-generation';
 import type { SourceAlignmentVerdict } from '@/lib/server/source-material-alignment';
+import type { PlanStep } from '@/lib/generation/generation-tracking';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 
 export type ClassroomPlanJobStatus = 'queued' | 'running' | 'succeeded' | 'failed';
@@ -10,6 +11,8 @@ export interface ClassroomPlanJob {
   kind: 'classroom-plan';
   status: ClassroomPlanJobStatus;
   message: string;
+  step?: PlanStep;
+  startedAt?: string;
   createdAt: string;
   updatedAt: string;
   ownerId: string;
@@ -110,6 +113,8 @@ async function updateClassroomPlanJob(
 export function markClassroomPlanJobRunning(jobId: string): Promise<ClassroomPlanJob> {
   return updateClassroomPlanJob(jobId, {
     status: 'running',
+    step: 'reading_sources',
+    startedAt: new Date().toISOString(),
     message: 'Classroom plan preparation started',
     error: undefined,
     errorCode: undefined,
@@ -153,4 +158,17 @@ export function markClassroomPlanJobFailed(
     message: 'Classroom plan preparation failed',
     error,
   });
+}
+
+export function reportClassroomPlanStep(jobId: string, step: PlanStep): Promise<ClassroomPlanJob> {
+  return updateClassroomPlanJob(jobId, { step, message: `Classroom plan step: ${step}` });
+}
+
+/** Keeps `updated_at` fresh so the interface can tell a long step from a dead worker. */
+export async function touchClassroomPlanJob(jobId: string): Promise<void> {
+  const { error } = await createServiceSupabaseClient()
+    .from('classroom_generation_jobs')
+    .update({ updated_at: new Date().toISOString() })
+    .eq('id', jobId);
+  if (error) throw new Error(`Failed to heartbeat classroom plan job: ${error.message}`);
 }

@@ -7,6 +7,8 @@ import {
 import { buildRequestOrigin } from '@/lib/server/classroom-storage';
 import { getPublicGenerationFailureCode } from '@/lib/server/classroom-job-public-error';
 import { requireSuperAdminOrOrgMember } from '@/lib/api/auth';
+import { describeGenerationFailure } from '@/lib/generation/generation-tracking';
+import { getTypicalDuration } from '@/lib/server/generation-duration-stats';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,6 +27,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ jobId: 
     const auth = await requireSuperAdminOrOrgMember(req, job.orgId);
     if (auth.response) return auth.response;
 
+    const done = job.status === 'succeeded' || job.status === 'failed';
     return apiSuccess({
       jobId: job.id,
       status: job.status,
@@ -38,7 +41,12 @@ export async function GET(req: NextRequest, context: { params: Promise<{ jobId: 
       result: job.result,
       error: job.error,
       failureCode: getPublicGenerationFailureCode(job.error),
-      done: job.status === 'succeeded' || job.status === 'failed',
+      failure: describeGenerationFailure(job.error),
+      startedAt: job.startedAt ?? job.createdAt,
+      updatedAt: job.updatedAt,
+      serverNow: new Date().toISOString(),
+      typicalDuration: done ? undefined : await getTypicalDuration('course'),
+      done,
     });
   } catch (error) {
     return apiError(
