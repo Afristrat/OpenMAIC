@@ -10,5 +10,7 @@ export default defineConfig({
   test: {
     include: ['tests/**/*.test.ts'],
     setupFiles: ['tests/setup-env.ts'],
+    // Cold imports of the server graph exceed the 5 s default when the whole suite runs in parallel.
+    testTimeout: 20_000,
   },
 });

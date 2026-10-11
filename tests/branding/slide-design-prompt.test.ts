@@ -86,4 +86,20 @@ describe('adaptive slide design prompt context', () => {
     expect(enabled?.system.length).toBeLessThan(disabled!.system.length + 3000);
     expect(enabled?.user).toContain('Output pure JSON directly');
   });
+
+  it('tells the model the exact safe margin the adaptive linter enforces', () => {
+    const context = buildSlideDesignPromptContext({
+      outline: slide('new', 1, 'Opening'),
+      designDirective: DEFAULT_DESIGN_DIRECTIVE,
+    });
+    const prompt = buildPrompt(PROMPT_IDS.SLIDE_CONTENT, {
+      canvas_width: 1000,
+      canvas_height: 562.5,
+      ...context,
+    });
+
+    expect(context.safeMargin).toBe(DEFAULT_DESIGN_DIRECTIVE.grid.margin);
+    expect(prompt?.system).toContain(`left ≥ ${context.safeMargin}`);
+    expect(prompt?.system).toContain(`right ≤ 1000 - ${context.safeMargin}`);
+  });
 });

@@ -71,8 +71,10 @@ describe('Qalem clean-room locale contract', () => {
   });
 
   it('resolves every literal translation key used by the application', () => {
+    // One scan of the source tree, shared by the three catalogs.
+    const literalKeys = literalTranslationKeys();
     for (const [locale, catalog] of Object.entries(catalogs)) {
-      for (const key of literalTranslationKeys()) {
+      for (const key of literalKeys) {
         expect(catalog, `${locale} is missing literal key ${key}`).toHaveProperty(key);
       }
     }

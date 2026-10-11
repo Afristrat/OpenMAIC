@@ -99,4 +99,52 @@ describe('slide layout fallback', () => {
       eventType: 'layout_fallback',
     });
   });
+
+  describe('unrepairable design-lint errors', () => {
+    const directiveOptions: NonNullable<Parameters<typeof generateSceneContent>[2]> = {
+      designDirective: DEFAULT_DESIGN_DIRECTIVE,
+      brandSnapshot: {
+        version: 1,
+        createdAt: '2026-10-09T00:00:00.000Z',
+        content:
+          'colors: background=#F7F8FA ink=#202A35 accent=#7A2E8E\nfonts: display=Merriweather; body=Inter; utility=Inter',
+      },
+    };
+    // Geometry is valid, but the text sits outside the design system's safe margin.
+    const marginViolatingResponse = async (): Promise<string> =>
+      JSON.stringify({
+        elements: [
+          {
+            id: 'edge-text',
+            type: 'text',
+            left: 10,
+            top: 10,
+            width: 400,
+            height: 80,
+            content: '<p style="font-size:14px">Contenu pédagogique valide</p>',
+            defaultFontName: '',
+            defaultColor: '#333333',
+          },
+        ],
+      });
+
+    it('retries (null) before the final attempt', async () => {
+      const content = await generateSceneContent(
+        outline,
+        marginViolatingResponse,
+        directiveOptions,
+      );
+      expect(content).toBeNull();
+    });
+
+    it('falls back to the deterministic safe layout on the final attempt', async () => {
+      const content = await generateSceneContent(outline, marginViolatingResponse, {
+        ...directiveOptions,
+        lastAttempt: true,
+      });
+      expect(content).not.toBeNull();
+      if (!content || !('elements' in content)) return;
+      expect(JSON.stringify(content.elements)).toContain(outline.title);
+    });
+  });
 });

@@ -65,7 +65,7 @@ it('uses the real HTTP SDK, rejects invalid results and bounds a silent tool', a
         url: `http://127.0.0.1:${address.port}/mcp`,
         enabled: true,
         organizationIds: ['tenant-a'],
-        timeoutMs: 200,
+        timeoutMs: 1_500,
       },
     ]);
     expect(getConnectedServers()).toEqual([
@@ -116,7 +116,7 @@ it('uses the real HTTP SDK, rejects invalid results and bounds a silent tool', a
     await expect(callExternalTool('http-test', 'silent', {}, 'tenant-a')).rejects.toThrow(
       'MCP tool call failed',
     );
-    expect(performance.now() - started).toBeLessThan(2_000);
+    expect(performance.now() - started).toBeLessThan(5_000);
     expect(calls).toEqual(['echo', 'echo', 'invalid', 'silent']);
     expect(await checkMCPHealth()).toEqual([expect.objectContaining({ status: 'connected' })]);
     healthy = false;

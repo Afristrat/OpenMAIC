@@ -35,6 +35,8 @@ Respect the existing JSON schema, canvas, geometry, element-height table, suppor
 
 Slide function: {{slideType}}
 
+**Checker limits (they override any other margin or size in this prompt, including the 50px margins and 14px captions):** keep every non-decor element within left ≥ {{safeMargin}}, right ≤ {{canvas_width}} - {{safeMargin}}, top ≥ 48, bottom ≤ {{canvas_height}} - 32; text ≥ 16px (12px for `label`); at most 2 font families; about 6 blocks and 50 words outside titles.
+
 Final check: valid JSON; one clear message; correct function and hierarchy; palette and brand respected; contrast and reading order; no invented content or unsupported element fields.
 {{/if}}
 

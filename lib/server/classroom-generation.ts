@@ -41,7 +41,7 @@ import {
   replaceMediaPlaceholders,
   generateTTSForClassroom,
 } from '@/lib/server/classroom-media-generation';
-import { withGenerationRetry } from '@/lib/generation/generation-retry';
+import { GENERATION_MAX_ATTEMPTS, withGenerationRetry } from '@/lib/generation/generation-retry';
 import { buildVideoManifestFromOutlines } from '@/lib/media/video-manifest';
 import { placeGeneratedMediaOnSlides } from '@/lib/generation/media-placement';
 import {
@@ -981,8 +981,9 @@ export async function generateClassroom(
 
       let sceneValidationDirective: string | undefined;
       const content = await withGenerationRetry(
-        () =>
+        (attempt) =>
           generateSceneContent(safeOutline, sceneAiCall, {
+            lastAttempt: attempt >= GENERATION_MAX_ATTEMPTS,
             agents,
             languageDirective,
             languageModel,

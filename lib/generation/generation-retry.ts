@@ -19,6 +19,8 @@ export interface GenerationRetryOptions<T> {
 }
 
 const DEFAULT_MAX_RETRIES = 5;
+/** Attempts made by `withGenerationRetry` when `maxRetries` is not overridden. */
+export const GENERATION_MAX_ATTEMPTS = DEFAULT_MAX_RETRIES + 1;
 const DEFAULT_BASE_DELAY_MS = 1000;
 const DEFAULT_MAX_DELAY_MS = 16000;
 const RETRYABLE_STATUS_CODES = new Set([408, 409, 425, 429]);

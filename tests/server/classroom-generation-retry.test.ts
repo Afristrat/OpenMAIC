@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   authorize: vi.fn(),
@@ -64,6 +64,20 @@ vi.mock('@/lib/server/classroom-media-generation', () => ({
   generateTTSForClassroom: mocks.generateTTSForClassroom,
 }));
 
+// Ces dépendances touchent le réseau (Supabase du tenant, casting, capture web) :
+// non simulées, elles bloquent dès qu'un .env.local réel est présent.
+vi.mock('@/lib/supabase/service', () => ({
+  createServiceSupabaseClient: () => {
+    throw new Error('Supabase indisponible dans ce test');
+  },
+}));
+vi.mock('@/lib/server/casting-storage', () => ({
+  reserveCasting: vi.fn().mockResolvedValue(null),
+  releaseCastingReservation: vi.fn().mockResolvedValue(undefined),
+}));
+vi.mock('@/lib/server/capture-client', () => ({
+  requestWebCapture: vi.fn().mockResolvedValue(null),
+}));
 vi.mock('@/lib/flags', () => ({
   isFeatureEnabled: vi.fn().mockResolvedValue(false),
 }));
@@ -148,6 +162,11 @@ async function generateWithProgress(input: Record<string, unknown> = {}) {
 }
 
 describe('classroom scene generation retries', () => {
+  // The server module graph is large: load it outside any test's timeout.
+  beforeAll(async () => {
+    await import('@/lib/server/classroom-generation');
+  }, 120_000);
+
   beforeEach(() => {
     for (const mock of Object.values(mocks)) {
       mock.mockReset();

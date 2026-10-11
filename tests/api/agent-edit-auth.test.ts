@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import type { NextRequest } from 'next/server';
 
 const mocks = vi.hoisted(() => ({
@@ -19,6 +19,11 @@ vi.mock('@/lib/server/resolve-model', () => ({
 }));
 
 describe('POST /api/agent/edit tenant boundary', () => {
+  // The route's module graph is large: load it outside any test's timeout.
+  beforeAll(async () => {
+    await import('@/app/api/agent/edit/route');
+  }, 120_000);
+
   it('rejects an unscoped editor agent turn before model resolution', async () => {
     const { POST } = await import('@/app/api/agent/edit/route');
     const request = new Request('http://localhost/api/agent/edit', {

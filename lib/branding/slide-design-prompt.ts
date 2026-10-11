@@ -39,11 +39,15 @@ export function buildSlideDesignPromptContext(input: {
   slideType: AdaptiveSlideType;
   designDirectiveContext: string;
   brandSnapshotContext: string;
+  /** Horizontal safe margin enforced by the adaptive linter (R-SAFE-AREA). */
+  safeMargin: number;
   warnings: string[];
 } {
   const hasSnapshot = input.brandSnapshot?.version === 1 && Boolean(input.brandSnapshot.content);
   const hasDirective = Boolean(input.designDirective);
   const normalized = hasDirective ? normalizeDesignDirective(input.designDirective) : undefined;
+  // Same fallback as the linter, which normalizes an absent directive to the default.
+  const safeMargin = (normalized ?? normalizeDesignDirective(undefined)).directive.grid.margin;
   const directiveContext = normalized
     ? JSON.stringify({
         directive: normalized.directive,
@@ -58,6 +62,7 @@ export function buildSlideDesignPromptContext(input: {
     brandSnapshotContext: hasSnapshot
       ? JSON.stringify({ version: 1, content: input.brandSnapshot?.content.slice(0, 1200) })
       : 'No tenant brand snapshot supplied.',
+    safeMargin,
     warnings: normalized?.warnings ?? [],
   };
 }

@@ -141,6 +141,12 @@ export interface SceneContentOptions {
   validationDirective?: string;
   /** Reports a retryable validation failure to the orchestration retry loop. */
   onValidationFailure?: (directive: string) => void;
+  /**
+   * Set on the orchestration loop's final attempt: a slide the design linter
+   * still rejects is then replaced by the deterministic safe layout instead of
+   * failing the whole course.
+   */
+  lastAttempt?: boolean;
   skillEngineEnabled?: boolean;
   activeSkillId?: string;
   /** Bounded, versioned passages selected for this scene from the supplied documents. */
@@ -382,6 +388,7 @@ export async function generateSceneContent(
     baselineContent,
     validationDirective,
     onValidationFailure,
+    lastAttempt,
     skillEngineEnabled,
     activeSkillId,
     sourceGrounding,
@@ -443,6 +450,7 @@ export async function generateSceneContent(
         designDirective,
         brandSnapshot,
         courseOutlines,
+        lastAttempt,
       );
     case 'quiz':
       return generateQuizContent(
@@ -1185,6 +1193,7 @@ async function generateSlideContent(
   designDirective?: import('@openmaic/dsl').DesignDirective,
   brandSnapshot?: import('@openmaic/dsl').Stage['brandSnapshot'],
   courseOutlines?: SceneOutline[],
+  lastAttempt?: boolean,
 ): Promise<GeneratedSlideContent | null> {
   if (outline.generatedResources?.length) {
     return buildLearningResourceSlide(outline, outline.generatedResources);
@@ -1566,6 +1575,49 @@ async function generateSlideContent(
     return result.slide.elements;
   };
 
+  // Video scenes keep the retry path: a generic fallback cannot truthfully
+  // preserve a required video element and its media reference.
+  const requiresVideo = outline.mediaGenerations?.some((request) => request.type === 'video');
+  const buildDeterministicFallback = async (): Promise<GeneratedSlideContent | null> => {
+    if (requiresVideo) return null;
+    const fallbackElements = buildSafeSlideFallback(
+      outline,
+      processedElements.filter((element) => element.type === 'image'),
+      slideTheme,
+      designDirective || brandSnapshot
+        ? normalizeDesignDirective(designDirective).directive.grid.margin
+        : 60,
+    ).map((element) => ({ ...element, id: `${element.type}_${nanoid(8)}`, rotate: 0 }));
+    const fallbackIssues = auditSlideLayout({
+      id: outline.id,
+      elements: fallbackElements,
+      viewportSize: canvasWidth,
+      viewportRatio: canvasHeight / canvasWidth,
+    } as Slide);
+    if (fallbackIssues.length > 0) {
+      log.warn(
+        `Deterministic safe layout for ${outline.id} also failed the audit: ${JSON.stringify(fallbackIssues)}`,
+      );
+      return null;
+    }
+    const fallbackBackground =
+      designDirective || brandSnapshot
+        ? { type: 'solid' as const, color: slideTheme?.backgroundColor ?? '#FAFBFC' }
+        : background;
+    const lintedFallback = await lintAdaptiveElements(fallbackElements, fallbackBackground);
+    if (!lintedFallback) return null;
+    await getAICallDesignEventRecorder(aiCall)?.({
+      sceneId: outline.id,
+      eventType: 'layout_fallback',
+    });
+    log.warn(`Replaced invalid model geometry with deterministic safe layout for ${outline.id}`);
+    return {
+      elements: lintedFallback,
+      background: fallbackBackground,
+      remark: generatedData.remark || outline.description,
+    };
+  };
+
   const layoutIssues = auditSlideLayout({
     id: outline.id,
     elements: processedElements,
@@ -1573,51 +1625,10 @@ async function generateSlideContent(
     viewportRatio: canvasHeight / canvasWidth,
   } as Slide);
   if (layoutIssues.length > 0) {
-    // A parsed response has already supplied the pedagogical content. For an
-    // ordinary slide, or one with required still images, replace only invalid
-    // model geometry with the deterministic layout. Video scenes keep the
-    // retry path: a generic fallback cannot truthfully preserve a required
-    // video element and its media reference.
-    const requiresVideo = outline.mediaGenerations?.some((request) => request.type === 'video');
-    if (!requiresVideo) {
-      const fallbackElements = buildSafeSlideFallback(
-        outline,
-        processedElements.filter((element) => element.type === 'image'),
-        slideTheme,
-        designDirective || brandSnapshot
-          ? normalizeDesignDirective(designDirective).directive.grid.margin
-          : 60,
-      ).map((element) => ({ ...element, id: `${element.type}_${nanoid(8)}`, rotate: 0 }));
-      const fallbackIssues = auditSlideLayout({
-        id: outline.id,
-        elements: fallbackElements,
-        viewportSize: canvasWidth,
-        viewportRatio: canvasHeight / canvasWidth,
-      } as Slide);
-      if (fallbackIssues.length === 0) {
-        const fallbackBackground =
-          designDirective || brandSnapshot
-            ? { type: 'solid' as const, color: slideTheme?.backgroundColor ?? '#FAFBFC' }
-            : background;
-        const lintedFallback = await lintAdaptiveElements(fallbackElements, fallbackBackground);
-        if (!lintedFallback) return null;
-        await getAICallDesignEventRecorder(aiCall)?.({
-          sceneId: outline.id,
-          eventType: 'layout_fallback',
-        });
-        log.warn(
-          `Replaced invalid model geometry with deterministic safe layout for ${outline.id}`,
-        );
-        return {
-          elements: lintedFallback,
-          background: fallbackBackground,
-          remark: generatedData.remark || outline.description,
-        };
-      }
-      log.warn(
-        `Deterministic safe layout for ${outline.id} also failed the audit: ${JSON.stringify(fallbackIssues)}`,
-      );
-    }
+    // A parsed response has already supplied the pedagogical content: replace
+    // only the invalid model geometry with the deterministic layout.
+    const fallback = await buildDeterministicFallback();
+    if (fallback) return fallback;
     log.warn(`Slide layout invalid for ${outline.id}: ${JSON.stringify(layoutIssues)}; retrying`);
     onValidationFailure?.(
       `Correct these layout defects exactly: ${JSON.stringify(layoutIssues)}. Keep every element fully inside the slide and remove unintended overlaps while preserving a coherent alignment.`,
@@ -1626,7 +1637,10 @@ async function generateSlideContent(
   }
 
   const lintedElements = await lintAdaptiveElements(processedElements, background);
-  if (!lintedElements) return null;
+  if (!lintedElements) {
+    // Out of retries: a degraded but valid slide beats failing the whole course.
+    return lastAttempt ? buildDeterministicFallback() : null;
+  }
 
   return {
     elements: lintedElements,
