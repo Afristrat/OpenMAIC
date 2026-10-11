@@ -34,7 +34,11 @@ import type { PBLPlannerV2Input, PBLProjectV2 } from '@/lib/pbl/v2/types';
 import { buildPrompt, PROMPT_IDS } from '@/lib/prompts';
 import { buildPromptWithSkill } from '@/lib/skills/prompt-overrides';
 import { buildSlideDesignPromptContext } from '@/lib/branding/slide-design-prompt';
-import { buildSlideTheme, normalizeDesignDirective } from '@/lib/branding/design-directive';
+import {
+  buildSlideTheme,
+  buildSoftBackground,
+  normalizeDesignDirective,
+} from '@/lib/branding/design-directive';
 import { DEFAULT_LANGUAGE_DIRECTIVE } from './outline-generator';
 import { postProcessInteractiveHtml } from './interactive-post-processor';
 import {
@@ -1535,6 +1539,8 @@ async function generateSlideContent(
       };
     }
   }
+  // A model returns a plain white slide by default: the platform owns the soft gradient.
+  background = buildSoftBackground(background, slideTheme) ?? background;
 
   const lintAdaptiveElements = async (
     elements: PPTElement[],
@@ -1600,9 +1606,13 @@ async function generateSlideContent(
       );
       return null;
     }
+    const solidFallback = {
+      type: 'solid' as const,
+      color: slideTheme?.backgroundColor ?? '#FAFBFC',
+    };
     const fallbackBackground =
       designDirective || brandSnapshot
-        ? { type: 'solid' as const, color: slideTheme?.backgroundColor ?? '#FAFBFC' }
+        ? (buildSoftBackground(solidFallback, slideTheme) ?? solidFallback)
         : background;
     const lintedFallback = await lintAdaptiveElements(fallbackElements, fallbackBackground);
     if (!lintedFallback) return null;

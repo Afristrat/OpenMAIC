@@ -9,6 +9,7 @@ import {
   DESIGN_HUE_FAMILIES,
   buildPalette,
   buildSlideTheme,
+  buildSoftBackground,
   clampAtWord,
   designDirectiveSchema,
   isDesignSystemV1Enabled,
@@ -220,5 +221,34 @@ describe('course design directive', () => {
     expect(theme.backgroundColor).toBe(buildPalette(DEFAULT_DESIGN_DIRECTIVE)['surface.base']);
     expect(theme.fontColor).toBe(buildPalette(DEFAULT_DESIGN_DIRECTIVE)['text.primary']);
     expect(theme.fontName).toBe('Inter');
+  });
+});
+
+describe('buildSoftBackground', () => {
+  const theme = buildSlideTheme(DEFAULT_DESIGN_DIRECTIVE);
+
+  it('turns a missing or light solid background into a two-stop gradient', () => {
+    for (const current of [undefined, { type: 'solid' as const, color: '#FFFFFF' }]) {
+      const result = buildSoftBackground(current, theme);
+      expect(result?.type).toBe('gradient');
+      expect(result?.gradient?.colors).toHaveLength(2);
+      expect(result?.gradient?.colors[0].color).not.toBe(result?.gradient?.colors[1].color);
+    }
+  });
+
+  it('keeps dark, image and gradient backgrounds untouched', () => {
+    expect(buildSoftBackground({ type: 'solid', color: '#1F2A44' }, theme)).toBeUndefined();
+    expect(
+      buildSoftBackground({ type: 'image', image: { src: 'x.png', size: 'cover' } }, theme),
+    ).toBeUndefined();
+    expect(
+      buildSoftBackground(
+        {
+          type: 'gradient',
+          gradient: { type: 'linear', rotate: 0, colors: [{ pos: 0, color: '#FFF' }] },
+        },
+        theme,
+      ),
+    ).toBeUndefined();
   });
 });

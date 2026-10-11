@@ -6,6 +6,7 @@ import {
   DESIGN_HUE_FAMILIES,
   DESIGN_TONES,
   type DesignDirective,
+  type SlideBackground,
   type SlideTheme,
 } from '@openmaic/dsl';
 
@@ -256,6 +257,34 @@ export function buildPalette(directive: Pick<DesignDirective, 'seed' | 'tone'>):
     'functional.incorrect': textColorOnLight(tinycolor('#A12828'), lightSurfaces),
     'functional.warning': textColorOnLight(tinycolor('#805000'), lightSurfaces),
     'functional.info': textColorOnLight(tinycolor('#155B8A'), lightSurfaces),
+  };
+}
+
+/**
+ * Soft diagonal gradient from a light surface towards a tint of the accent.
+ * Applied by the platform, never left to the model: a plain solid white slide
+ * is what a model returns by default, and the brand tint is a rendering choice.
+ * Returns undefined for dark, image or already-gradient backgrounds.
+ */
+export function buildSoftBackground(
+  current: SlideBackground | undefined,
+  theme: Pick<SlideTheme, 'backgroundColor' | 'themeColors'> | undefined,
+): SlideBackground | undefined {
+  if (current && current.type !== 'solid') return undefined;
+  const base = tinycolor(current?.color ?? theme?.backgroundColor ?? '#FFFFFF');
+  if (!base.isValid() || base.getBrightness() < 200) return undefined;
+  const accent = theme?.themeColors[0] ?? '#5B9BD5';
+  const end = tinycolor.mix(base, accent, 16);
+  return {
+    type: 'gradient',
+    gradient: {
+      type: 'linear',
+      rotate: 135,
+      colors: [
+        { pos: 0, color: hex(base) },
+        { pos: 100, color: hex(end) },
+      ],
+    },
   };
 }
 
