@@ -1201,12 +1201,16 @@ function HomePage() {
               optimization={draftPlan.optimization}
               courseTitle={draftPlan.courseTitle}
               syllabus={draftPlan.syllabus}
+              designDirective={draftPlan.designDirective}
               outlines={draftPlan.outlines}
               onCourseTitleChange={(courseTitle) =>
                 setDraftPlan((plan) => (plan ? { ...plan, courseTitle } : plan))
               }
               onSyllabusChange={(syllabus) =>
                 setDraftPlan((plan) => (plan ? { ...plan, syllabus } : plan))
+              }
+              onDesignDirectiveChange={(designDirective) =>
+                setDraftPlan((plan) => (plan ? { ...plan, designDirective } : plan))
               }
               onChange={(outlines) => setDraftPlan((plan) => (plan ? { ...plan, outlines } : plan))}
               onConfirm={handleConfirmPlan}

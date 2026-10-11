@@ -44,6 +44,8 @@ import {
   type SyllabusDurationGap,
 } from '@/lib/generation/syllabus-validation';
 import { OptimizationAdvice } from './optimization-advice';
+import { DesignDirectiveFields } from './design-directive-fields';
+import type { DesignDirective } from '@openmaic/dsl';
 
 type SceneType = SceneOutline['type'];
 export type SyllabusAssistTarget = { kind: 'syllabus' } | { kind: 'scene'; sceneIndex: number };
@@ -52,9 +54,11 @@ interface OutlinesEditorProps {
   optimization?: import('@/lib/generation/optimization-report').OptimizationReport;
   courseTitle?: string;
   syllabus?: ClassroomSyllabus;
+  designDirective?: DesignDirective;
   outlines: SceneOutline[];
   onCourseTitleChange?: (courseTitle: string) => void;
   onSyllabusChange?: (syllabus: ClassroomSyllabus) => void;
+  onDesignDirectiveChange?: (directive: DesignDirective) => void;
   onChange: (outlines: SceneOutline[]) => void;
   onConfirm: () => void;
   onBack: () => void;
@@ -144,9 +148,11 @@ export function OutlinesEditor({
   optimization,
   courseTitle,
   syllabus,
+  designDirective,
   outlines,
   onCourseTitleChange,
   onSyllabusChange,
+  onDesignDirectiveChange,
   onChange,
   onConfirm,
   onBack,
@@ -429,6 +435,8 @@ export function OutlinesEditor({
             syllabus={syllabus}
             onCourseTitleChange={onCourseTitleChange}
             onSyllabusChange={onSyllabusChange}
+            designDirective={designDirective}
+            onDesignDirectiveChange={onDesignDirectiveChange}
             disabled={editingDisabled}
             onAssist={onAssist ? () => onAssist({ kind: 'syllabus' }) : undefined}
             isAssisting={assistingTarget === 'syllabus'}
@@ -532,6 +540,8 @@ function SyllabusFields({
   syllabus,
   onCourseTitleChange,
   onSyllabusChange,
+  designDirective,
+  onDesignDirectiveChange,
   disabled,
   onAssist,
   isAssisting,
@@ -542,6 +552,8 @@ function SyllabusFields({
   syllabus: ClassroomSyllabus;
   onCourseTitleChange: (courseTitle: string) => void;
   onSyllabusChange: (syllabus: ClassroomSyllabus) => void;
+  designDirective?: DesignDirective;
+  onDesignDirectiveChange?: (directive: DesignDirective) => void;
   disabled: boolean;
   onAssist?: () => void;
   isAssisting: boolean;
@@ -778,6 +790,14 @@ function SyllabusFields({
             </div>
           </div>
         </div>
+
+        {designDirective && onDesignDirectiveChange && (
+          <DesignDirectiveFields
+            directive={designDirective}
+            onChange={onDesignDirectiveChange}
+            disabled={disabled}
+          />
+        )}
       </div>
     </section>
   );
