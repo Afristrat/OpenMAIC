@@ -149,10 +149,7 @@ export function serializeBrandSnapshot(
   for (const index of priorities) {
     if (fields.join('\n').length <= maxFieldsLength) break;
     const line = fields[index];
-    const available = Math.max(
-      0,
-      maxFieldsLength - (fields.join('\n').length - line.length),
-    );
+    const available = Math.max(0, maxFieldsLength - (fields.join('\n').length - line.length));
     fields[index] = line.slice(0, available);
   }
   const text = `${fields.filter(Boolean).join('\n').slice(0, maxFieldsLength)}\n${tuningLine}`;
