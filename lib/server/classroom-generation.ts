@@ -41,6 +41,7 @@ import {
   replaceMediaPlaceholders,
   generateTTSForClassroom,
 } from '@/lib/server/classroom-media-generation';
+import { summarizeSpeechAudio } from '@/lib/audio/speech-audio-report';
 import { GENERATION_MAX_ATTEMPTS, withGenerationRetry } from '@/lib/generation/generation-retry';
 import { buildVideoManifestFromOutlines } from '@/lib/media/video-manifest';
 import { placeGeneratedMediaOnSlides } from '@/lib/generation/media-placement';
@@ -1214,6 +1215,12 @@ export async function generateClassroom(
         throw new Error(
           `TTS persistence incomplete: ${ttsReport.generated}/${ttsReport.requested} speech actions generated`,
         );
+      }
+      // A skipped generation (no server voice provider) reports 0 requested: only the lines left
+      // without audio tell the truth, and a course asked to be voiced must never leave silent.
+      const silentLines = summarizeSpeechAudio(scenes).missing;
+      if (silentLines > 0) {
+        throw new Error(`TTS incomplete: ${silentLines} speech lines have no audio`);
       }
       log.info(`TTS generation complete: ${ttsReport.generated}/${ttsReport.requested} files`);
     }

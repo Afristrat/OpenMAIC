@@ -60,7 +60,8 @@ async function requestSpeechAudio(
   }
   const response = await fetch(`/api/classroom/${encodeURIComponent(stageId)}/tts`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    // The usage reservation refuses a request without a stable idempotency key.
+    headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() },
     body: JSON.stringify({ sceneId, actionId: action.id, text: action.text.trim() }),
     signal,
   });

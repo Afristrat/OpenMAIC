@@ -13,7 +13,7 @@ import {
 import { ClassroomCastingError, normalizeClassroomCasting } from '@/lib/agents/classroom-casting';
 import type { Action } from '@/lib/types/action';
 import type { Scene } from '@/lib/types/stage';
-import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
+import { runWithUsageMeteringContext, withStableIdempotencyKey } from '@/lib/billing/usage-context';
 
 function countSpeechAudio(scenes: Scene[]): number {
   return scenes.reduce(
@@ -80,7 +80,7 @@ export async function POST(
 
   const regeneratedScenes = structuredClone(selectedScenes);
   const report = await runWithUsageMeteringContext(
-    request.headers,
+    withStableIdempotencyKey(request.headers),
     auth.user.id,
     ownership.orgId,
     () =>

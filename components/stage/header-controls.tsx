@@ -45,6 +45,7 @@ import { cn } from '@/lib/utils';
 import type { StageMode } from '@/lib/types/stage';
 import type { ResearchSource } from '@openmaic/dsl';
 import { LiveSessionRecorder } from '@/components/live-session-recorder';
+import { MissingVoicesNotice } from './missing-voices-notice';
 
 // Zustand selectors must return the same reference when the selected value has
 // not changed. An inline `?? []` allocates on every store read and causes React
@@ -298,6 +299,7 @@ export function HeaderControls({
             <DialogTitle>{t('export.dialogTitle')}</DialogTitle>
             <DialogDescription>{t('export.dialogDescription')}</DialogDescription>
           </DialogHeader>
+          <MissingVoicesNotice />
           <div className="grid gap-1">
             <button
               data-testid="export-mp4"

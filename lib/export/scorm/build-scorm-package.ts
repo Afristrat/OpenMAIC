@@ -14,6 +14,7 @@ import {
   type TrackingAdapter,
 } from './tracking-adapters';
 import { createLogger } from '@/lib/logger';
+import { missingSpeechAudioMessage, summarizeSpeechAudio } from '@/lib/audio/speech-audio-report';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import {
   assertExportAudioAboveNoiseFloor,
@@ -317,6 +318,11 @@ async function loadPersistentMedia(
   stageId: string,
   scenes: SceneRow[],
 ): Promise<LearningPackageMedia> {
+  // Refused before any download, for the whole course, with the way to fix it.
+  const voices = summarizeSpeechAudio(
+    scenes as unknown as Parameters<typeof summarizeSpeechAudio>[0],
+  );
+  if (voices.missing > 0) throw new Error(missingSpeechAudioMessage(voices, 'LMS'));
   const storage = createServiceSupabaseClient().storage.from('classroom-media');
   const snapshots = new Map<string, Uint8Array>();
   const audio = new Map<string, LearningPackageAudioAsset[]>();
@@ -326,13 +332,6 @@ async function loadPersistentMedia(
     if (snapshot) snapshots.set(scene.id, new Uint8Array(await snapshot.arrayBuffer()));
 
     const speechActions = collectSceneSpeechActions(scene.actions);
-    const missingAudio = speechActions.filter((action) => action.text && !action.audioUrl);
-    if (missingAudio.length > 0) {
-      throw new Error(
-        `Export LMS refusé : ${missingAudio.length} prise(s) de parole sans audio dans la scène ${sceneIndex + 1}`,
-      );
-    }
-
     const sceneAudio: LearningPackageAudioAsset[] = [];
     for (const action of speechActions) {
       if (!action.audioUrl) continue;

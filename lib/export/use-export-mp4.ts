@@ -4,6 +4,8 @@ import { useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useStageStore } from '@/lib/store/stage';
+import { useMissingVoices } from '@/lib/hooks/use-missing-voices';
+import { guardSpeechAudio } from './speech-audio-guard';
 import { slideToPng } from '@openmaic/renderer/snapshot';
 import { persistCurrentClassroomForExport } from './persist-before-server-export';
 import { addPresentationBrandToSnapshot } from './presentation-brand-snapshot';
@@ -27,6 +29,7 @@ export function useExportMp4() {
   const [exporting, setExporting] = useState(false);
   const activeRef = useRef(false);
   const { t } = useI18n();
+  const { complete: completeMissingVoices } = useMissingVoices();
 
   const exportMp4 = useCallback(async () => {
     const { stage, scenes } = useStageStore.getState();
@@ -36,6 +39,7 @@ export function useExportMp4() {
     setExporting(true);
     const toastId = toast.loading(t('export.videoRendering'));
     try {
+      if (!guardSpeechAudio(scenes, t, toastId, completeMissingVoices)) return;
       await persistCurrentClassroomForExport();
       let fallbackSnapshotCount = 0;
       for (const scene of scenes) {
@@ -108,7 +112,7 @@ export function useExportMp4() {
       activeRef.current = false;
       setExporting(false);
     }
-  }, [t]);
+  }, [t, completeMissingVoices]);
 
   return { exporting, exportMp4 };
 }

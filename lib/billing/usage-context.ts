@@ -60,6 +60,19 @@ export function runWithUsageMeteringContext<T>(
   return usageContext.run(createRequestContext(headers, actorUserId, tenantId), callback);
 }
 
+/**
+ * Headers that always carry a stable idempotency key. A route that bills voice generation for an
+ * authenticated editor must not refuse the work because a client forgot the header: the
+ * reservation rejects an unstable key, and the editor would only see a generic failure.
+ */
+export function withStableIdempotencyKey(headers: Headers): Headers {
+  const supplied = headers.get('idempotency-key')?.trim();
+  if (supplied !== undefined && IDEMPOTENCY_KEY.test(supplied)) return headers;
+  const stable = new Headers(headers);
+  stable.set('idempotency-key', randomUUID());
+  return stable;
+}
+
 export function activateUsageMeteringJob(
   actorUserId: string,
   tenantId: string,

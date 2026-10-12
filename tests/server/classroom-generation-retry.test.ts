@@ -161,6 +161,18 @@ async function generateWithProgress(input: Record<string, unknown> = {}) {
   return { result, progress };
 }
 
+/**
+ * What a real voice generation leaves behind: an audio file on every speech line. The lines are
+ * copied, never mutated: the fixtures are shared by every test of the file.
+ */
+function voiceEverySpeechLine(scenes: Array<{ actions?: Array<Record<string, unknown>> }>): void {
+  for (const scene of scenes) {
+    scene.actions = scene.actions?.map((action) =>
+      action.type === 'speech' ? { ...action, audioUrl: '/api/classroom-media/voice.mp3' } : action,
+    );
+  }
+}
+
 describe('classroom scene generation retries', () => {
   // The server module graph is large: load it outside any test's timeout.
   beforeAll(async () => {
@@ -254,13 +266,27 @@ describe('classroom scene generation retries', () => {
 
   it('does not persist after authorization is revoked during TTS', async () => {
     mocks.generateSceneContent.mockResolvedValue(slideContent);
-    mocks.generateTTSForClassroom.mockImplementationOnce(async () => {
-      mocks.authorize.mockRejectedValue(new Error('Access revoked'));
-      return { requested: 4, generated: 4 };
-    });
+    mocks.generateTTSForClassroom.mockImplementationOnce(
+      async (scenes: Array<{ actions?: Array<Record<string, unknown>> }>) => {
+        voiceEverySpeechLine(scenes);
+        mocks.authorize.mockRejectedValue(new Error('Access revoked'));
+        return { requested: 4, generated: 4 };
+      },
+    );
     await expect(generateWithProgress({ enableTTS: true })).rejects.toThrow('Access revoked');
     expect(mocks.persistClassroom).not.toHaveBeenCalled();
     expect(mocks.persistGeneratedCourse).not.toHaveBeenCalled();
+  });
+
+  it('fails loudly when voices were requested but no speech line got audio', async () => {
+    mocks.generateSceneContent.mockResolvedValue(slideContent);
+    mocks.authorize.mockResolvedValue(undefined);
+    // No server voice provider: the generator skips and reports nothing requested.
+    mocks.generateTTSForClassroom.mockResolvedValue({ requested: 0, generated: 0 });
+    await expect(generateWithProgress({ enableTTS: true })).rejects.toThrow(
+      /TTS incomplete: \d+ speech lines have no audio/,
+    );
+    expect(mocks.persistClassroom).not.toHaveBeenCalled();
   });
 
   it('rejects an approved plan that violates the explicit author scene count', async () => {

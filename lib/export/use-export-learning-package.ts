@@ -4,9 +4,11 @@ import { useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useStageStore } from '@/lib/store/stage';
+import { useMissingVoices } from '@/lib/hooks/use-missing-voices';
 import type { ExportJobFormat } from '@/lib/supabase/types';
 import { persistCurrentClassroomForExport } from './persist-before-server-export';
 import { downloadExport } from './download-export';
+import { guardSpeechAudio } from './speech-audio-guard';
 
 const POLL_INTERVAL_MS = 5000;
 const MAX_POLLS = 360;
@@ -37,10 +39,11 @@ export function useExportLearningPackage() {
   const [exporting, setExporting] = useState(false);
   const activeRef = useRef(false);
   const { t } = useI18n();
+  const { complete: completeMissingVoices } = useMissingVoices();
 
   const exportLearningPackage = useCallback(
     async (format: LearningPackageFormat) => {
-      const { stage } = useStageStore.getState();
+      const { stage, scenes } = useStageStore.getState();
       if (!stage?.id || activeRef.current) return;
 
       activeRef.current = true;
@@ -48,6 +51,7 @@ export function useExportLearningPackage() {
       const toastId = toast.loading(t('export.learningPackagePreparing'));
 
       try {
+        if (!guardSpeechAudio(scenes, t, toastId, completeMissingVoices)) return;
         await persistCurrentClassroomForExport();
         const createResponse = await fetch('/api/export-jobs', {
           method: 'POST',
@@ -88,7 +92,7 @@ export function useExportLearningPackage() {
         setExporting(false);
       }
     },
-    [t],
+    [t, completeMissingVoices],
   );
 
   return { exporting, exportLearningPackage };

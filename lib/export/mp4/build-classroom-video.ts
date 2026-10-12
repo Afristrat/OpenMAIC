@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { promisify } from 'node:util';
 import sharp from 'sharp';
 import { assertAboveNoiseFloor } from '@/lib/audio/audio-gate';
+import { missingSpeechAudioMessage, summarizeSpeechAudio } from '@/lib/audio/speech-audio-report';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { buildSceneCardSvg } from './scene-card';
 import type { SpeechAction } from '@/lib/types/action';
@@ -60,14 +61,6 @@ async function downloadSceneAudio(
 ): Promise<string[]> {
   const supabase = createServiceSupabaseClient();
   const speechActions = collectSceneSpeechActions(actions);
-  const missingAudioCount = speechActions.filter(
-    (action) => action.text && !action.audioUrl,
-  ).length;
-  if (missingAudioCount > 0) {
-    throw new Error(
-      `Export MP4 refusé : ${missingAudioCount} prise(s) de parole sans audio dans la scène ${sceneIndex + 1}`,
-    );
-  }
   const paths: string[] = [];
 
   for (const [audioIndex, action] of speechActions.filter((item) => item.audioUrl).entries()) {
@@ -222,6 +215,11 @@ export async function buildClassroomVideo(
   if (stageError || !stage) throw new Error(`Cours introuvable pour l'export MP4: ${stageId}`);
   if (scenesError || !scenes?.length)
     throw new Error(`Aucune scène exportable pour le cours ${stageId}`);
+  // Refused before any rendering work, for the whole course, with the way to fix it.
+  const voices = summarizeSpeechAudio(
+    scenes as unknown as Parameters<typeof summarizeSpeechAudio>[0],
+  );
+  if (voices.missing > 0) throw new Error(missingSpeechAudioMessage(voices, 'MP4'));
 
   const directory = await mkdtemp(join(tmpdir(), 'qalem-mp4-'));
   try {

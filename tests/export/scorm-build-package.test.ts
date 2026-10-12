@@ -261,7 +261,9 @@ describe('buildScormPackage', () => {
       error: null,
     });
 
-    await expect(buildScormPackage('stage-1')).rejects.toThrow(/prise.*parole sans audio/i);
+    await expect(buildScormPackage('stage-1')).rejects.toThrow(
+      /prise.*parole sans voix.*Générer les voix manquantes/is,
+    );
   });
 
   it('downloads persistent narration and embeds it with the static scene capture', async () => {

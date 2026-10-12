@@ -14,6 +14,7 @@ import { PENDING_SCENE_ID } from '@/lib/store/stage';
 import { useCanvasStore } from '@/lib/store/canvas';
 import { useSettingsStore } from '@/lib/store/settings';
 import { useI18n } from '@/lib/hooks/use-i18n';
+import { useMissingVoices } from '@/lib/hooks/use-missing-voices';
 import { SceneSidebar } from '@/components/stage/scene-sidebar';
 import { Header } from '@/components/header';
 import { CanvasArea } from '@/components/canvas/canvas-area';
@@ -92,6 +93,7 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
     ref,
   ) {
     const { t } = useI18n();
+    const { complete: completeMissingVoices } = useMissingVoices();
     const {
       mode,
       getCurrentScene,
@@ -821,7 +823,14 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
               }
             } catch {
               autoStartRef.current = false;
-              toast.error(t('edit.tts.regenerationFailed', { count: missingCount }));
+              // The failure is never a dead end: the same message offers the voices to be completed.
+              toast.error(t('edit.tts.regenerationFailed', { count: missingCount }), {
+                duration: 15_000,
+                action: {
+                  label: t('edit.tts.generateMissing'),
+                  onClick: () => void completeMissingVoices(),
+                },
+              });
               return;
             }
           }
@@ -845,7 +854,7 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
           playPreflightRef.current = false;
         }
       }
-    }, [playbackCompleted, currentScene, t]);
+    }, [playbackCompleted, currentScene, t, completeMissingVoices]);
 
     // get scene information
     const isPendingScene = currentSceneId === PENDING_SCENE_ID;

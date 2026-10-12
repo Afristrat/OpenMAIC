@@ -71,6 +71,27 @@ describe('managed speech preflight', () => {
     vi.unstubAllGlobals();
   });
 
+  it('sends a stable idempotency key: the usage reservation refuses a request without one', async () => {
+    const keys: Array<string | undefined> = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url: string, init?: RequestInit) => {
+        keys.push((init?.headers as Record<string, string> | undefined)?.['Idempotency-Key']);
+        return new Response(JSON.stringify({ success: true, actions: [] }), { status: 200 });
+      }),
+    );
+
+    await preflightMissingSpeechAudio(scene());
+
+    expect(keys).toHaveLength(2);
+    expect(
+      keys.every(
+        (key) => typeof key === 'string' && /^[A-Za-z0-9][A-Za-z0-9._:-]{7,95}$/.test(key),
+      ),
+    ).toBe(true);
+    expect(new Set(keys).size).toBe(2);
+  });
+
   it('requests only missing non-empty lines, sequentially, and returns the final actions', async () => {
     const calls: string[] = [];
     let active = 0;
