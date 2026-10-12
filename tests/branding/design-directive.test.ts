@@ -242,18 +242,54 @@ describe('resolveSlideSurface', () => {
     expect(resolveSlideSurface('end', directive).role).toBe('dark');
   });
 
-  it('replaces a white tenant background by the pastel wash and keeps a coloured one', () => {
+  it('follows the tenant charter: a white background stays white, the tint takes the accent hue', () => {
     const white = {
       version: 1 as const,
       createdAt: '2026-10-12T00:00:00.000Z',
       content: 'colors: background=#FFFFFF surface=#F0F0F0 ink=#111827 accent=#0A72A1',
     };
-    const wash = buildPalette(directive)['surface.base'];
-    expect(resolveSlideSurface('content', directive, white).color).toBe(wash);
-    expect(resolveSlideSurface('cover', directive, white).color).not.toBe('#FFFFFF');
-    expect(resolveSlideSurface('end', directive, white).color).not.toBe('#FFFFFF');
+    const accentHue = tinycolor('#0A72A1').toHsl().h;
+    expect(resolveSlideSurface('content', directive, white).color).toBe('#FFFFFF');
+    const tint = resolveSlideSurface('cover', directive, white).color;
+    expect(tint).not.toBe('#FFFFFF');
+    const gap = Math.abs(tinycolor(tint).toHsl().h - accentHue);
+    expect(Math.min(gap, 360 - gap)).toBeLessThan(10);
+    expect(
+      tinycolor(resolveSlideSurface('end', directive, white).color).getLuminance(),
+    ).toBeLessThan(0.12);
     const cream = { ...white, content: 'colors: background=#F3EEE2 ink=#111827 accent=#0A72A1' };
     expect(resolveSlideSurface('content', directive, cream).color).toBe('#F3EEE2');
+  });
+
+  it('builds the whole palette from the charter colours, never from the directive hue family', () => {
+    const charter = {
+      accent: '#0B8F8A',
+      background: '#F3EFE4',
+      ink: '#102A43',
+      secondary: '#9F3D29',
+    };
+    const violetDirective = {
+      ...directive,
+      seed: { hueFamily: 'violet' as const, chromaLevel: 'mid' as const },
+    };
+    const palette = buildPalette(violetDirective, undefined, charter);
+    expect(palette['surface.base']).toBe('#F3EFE4');
+    const accentGap = Math.abs(
+      tinycolor(palette['accent.primary']).toHsl().h - tinycolor('#0B8F8A').toHsl().h,
+    );
+    expect(Math.min(accentGap, 360 - accentGap)).toBeLessThan(10);
+    expect(
+      tinycolor.readability(palette['text.primary'], palette['surface.tint']),
+    ).toBeGreaterThanOrEqual(7);
+    expect(tinycolor.readability('#FFFFFF', palette['surface.dark'])).toBeGreaterThanOrEqual(4.5);
+    // The same directive without charter keeps the pastel wash of its hue family.
+    expect(buildPalette(violetDirective)).not.toEqual(palette);
+  });
+
+  it('keeps the pastel wash of the directive for a tenant without charter', () => {
+    expect(resolveSlideSurface('content', directive).color).toBe(
+      buildPalette(directive)['surface.base'],
+    );
   });
 
   it('announces cards that let the pastel show through and a banner with its own text', () => {

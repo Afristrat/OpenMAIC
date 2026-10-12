@@ -1,12 +1,15 @@
 import sharp from 'sharp';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
-import type {
-  BrandColorToken,
-  OrganizationDesignSystem,
-} from '@/lib/branding/organization-design-system';
+import { extractBrandFromSources } from '@/lib/branding/brand-extraction';
+import type { OrganizationDesignSystem } from '@/lib/branding/organization-design-system';
 
 const CRAWL_TIMEOUT_MS = 30_000;
-const HEX = /^#[0-9a-f]{6}$/i;
+const STYLESHEET_TIMEOUT_MS = 10_000;
+const STYLESHEET_MAX_CHARS = 1_500_000;
+const STYLESHEET_MAX_COUNT = 8;
+/** Framework and vendor sheets carry their own palette, never the tenant's. */
+const VENDOR_STYLESHEET =
+  /bootstrap|fontawesome|font-awesome|animate|swiper|slick|owl\.|normalize|dashicons|wp-includes|magnific|fancybox|\baos\b|jquery/iu;
 
 interface CrawlHtmlResponse {
   html?: string;
@@ -65,18 +68,6 @@ function rgbToHex(red: number, green: number, blue: number): string {
   return `#${[red, green, blue].map((value) => value.toString(16).padStart(2, '0')).join('')}`;
 }
 
-function luminance(hex: string): number {
-  const [red, green, blue] = [1, 3, 5].map((index) =>
-    Number.parseInt(hex.slice(index, index + 2), 16),
-  );
-  return red * 0.2126 + green * 0.7152 + blue * 0.0722;
-}
-
-function saturation(hex: string): number {
-  const channels = [1, 3, 5].map((index) => Number.parseInt(hex.slice(index, index + 2), 16));
-  return Math.max(...channels) - Math.min(...channels);
-}
-
 async function screenshotColors(base64: string): Promise<string[]> {
   const payload = base64.replace(/^data:image\/\w+;base64,/, '');
   const { data, info } = await sharp(Buffer.from(payload, 'base64'))
@@ -99,53 +90,34 @@ async function screenshotColors(base64: string): Promise<string[]> {
     .slice(0, 20);
 }
 
-function htmlColors(html: string): string[] {
-  const counts = new Map<string, number>();
-  for (const match of html.match(/#[0-9a-f]{6}\b/gi) ?? []) {
-    const color = match.toLowerCase();
-    if (!HEX.test(color)) continue;
-    counts.set(color, (counts.get(color) ?? 0) + 1);
+function sameSite(candidate: URL, site: URL): boolean {
+  const strip = (host: string) => host.replace(/^www\./u, '');
+  const base = strip(site.hostname);
+  const host = strip(candidate.hostname);
+  return host === base || host.endsWith(`.${base}`);
+}
+
+/** The site's own stylesheets, fetched through the same SSRF guard as the page itself. */
+async function ownStylesheets(html: string, pageUrl: string): Promise<string[]> {
+  const site = new URL(pageUrl);
+  const hrefs: string[] = [];
+  for (const tag of html.match(/<link\b[^>]*>/giu) ?? []) {
+    if (!/rel=["']?stylesheet/iu.test(tag)) continue;
+    const href = tag.match(/\bhref=["']([^"']+)["']/iu)?.[1];
+    const url = absoluteUrl(href?.replace(/&amp;/gu, '&'), pageUrl);
+    if (!url || VENDOR_STYLESHEET.test(url) || !sameSite(new URL(url), site)) continue;
+    if (!hrefs.includes(url)) hrefs.push(url);
   }
-  return [...counts.entries()]
-    .sort((left, right) => right[1] - left[1])
-    .map(([color]) => color)
-    .slice(0, 20);
-}
-
-function selectPalette(colors: string[]): BrandColorToken[] {
-  const unique = [...new Set(colors.filter((color) => HEX.test(color)))];
-  const fallback = ['#f8fafc', '#ffffff', '#111827', '#4f46e5', '#64748b', '#0ea5e9'];
-  for (const color of fallback) if (!unique.includes(color)) unique.push(color);
-  const background = [...unique].sort((a, b) => luminance(b) - luminance(a))[0];
-  const ink = [...unique].sort((a, b) => luminance(a) - luminance(b))[0];
-  const accent = [...unique]
-    .filter((color) => color !== background && color !== ink)
-    .sort((a, b) => saturation(b) - saturation(a))[0];
-  const remaining = unique.filter((color) => ![background, ink, accent].includes(color));
-  const surface = remaining[0] ?? fallback[1];
-  const secondary = remaining.sort((a, b) => saturation(b) - saturation(a))[0] ?? fallback[5];
-  const muted = remaining.sort((a, b) => saturation(a) - saturation(b))[0] ?? fallback[4];
-  return [
-    { name: 'background', hex: background, purpose: 'page background and breathing room' },
-    { name: 'surface', hex: surface, purpose: 'cards and content surfaces' },
-    { name: 'ink', hex: ink, purpose: 'high-contrast text and structure' },
-    { name: 'accent', hex: accent, purpose: 'primary emphasis and calls to action' },
-    { name: 'muted', hex: muted, purpose: 'secondary information' },
-    { name: 'secondary', hex: secondary, purpose: 'supporting emphasis' },
-  ];
-}
-
-function extractFontFamilies(html: string): string[] {
-  return [
-    ...new Set(
-      (html.match(/font-family\s*:\s*([^;}]+)/gi) ?? []).map((entry) =>
-        entry
-          .replace(/^font-family\s*:\s*/i, '')
-          .replace(/["']/g, '')
-          .trim(),
-      ),
-    ),
-  ].filter(Boolean);
+  const sheets = await Promise.allSettled(
+    hrefs.slice(0, STYLESHEET_MAX_COUNT).map(async (url) => {
+      const ssrfError = await validateUrlForSSRF(url);
+      if (ssrfError) throw new Error(ssrfError);
+      const response = await fetch(url, { signal: AbortSignal.timeout(STYLESHEET_TIMEOUT_MS) });
+      if (!response.ok) throw new Error(`Stylesheet ${url} returned ${response.status}`);
+      return (await response.text()).slice(0, STYLESHEET_MAX_CHARS);
+    }),
+  );
+  return sheets.flatMap((sheet) => (sheet.status === 'fulfilled' ? [sheet.value] : []));
 }
 
 export async function extractOrganizationDesignSystem(
@@ -156,48 +128,55 @@ export async function extractOrganizationDesignSystem(
   if (ssrfError) throw new Error(ssrfError);
   const [htmlResult, screenshotResult] = await Promise.all([
     crawlJson<CrawlHtmlResponse>('/html', { url: normalizedUrl }),
+    // The screenshot only helps to find a background the CSS does not declare: never fatal.
     crawlJson<CrawlScreenshotResponse>('/screenshot', {
       url: normalizedUrl,
       screenshot_wait_for: 2,
       wait_for_images: true,
-    }),
+    }).catch((): CrawlScreenshotResponse => ({})),
   ]);
   const html = htmlResult.html ?? '';
   if (!html) throw new Error('Crawl4AI returned no HTML');
-  const renderedColors = screenshotResult.screenshot
-    ? await screenshotColors(screenshotResult.screenshot)
-    : [];
-  const fonts = extractFontFamilies(html);
-  const radii = html.match(/border-radius\s*:\s*([^;}]+)/gi) ?? [];
-  const hasShadows = /box-shadow\s*:/i.test(html);
-  const hasGrid = /display\s*:\s*grid|grid-template|\bgrid\b/i.test(html);
-  const inferred: string[] = [];
-  if (fonts.length === 0) inferred.push('Typography inferred from generic web defaults');
+  const [css, renderedColors] = await Promise.all([
+    ownStylesheets(html, normalizedUrl),
+    screenshotResult.screenshot ? screenshotColors(screenshotResult.screenshot) : [],
+  ]);
+  const brand = extractBrandFromSources({ html, css, screenshotColors: renderedColors });
+  const allCss = [html, ...css].join('\n');
+  const radii = allCss.match(/border-radius\s*:\s*([^;}]+)/gi) ?? [];
+  const hasShadows = /box-shadow\s*:/i.test(allCss);
+  const hasGrid = /display\s*:\s*grid|grid-template|\bgrid\b/i.test(allCss);
+  const inferred = [...brand.inferred];
+  if (css.length === 0) inferred.push('Feuilles de style du site illisibles : HTML seul analysé');
   if (radii.length === 0) inferred.push('Corner treatment inferred from rendered composition');
+  const accent = brand.palette.find((token) => token.name === 'accent')?.hex;
+  const fallbackFont = 'Inter, sans-serif';
 
   return {
     version: 1,
     sourceUrl: normalizedUrl,
     extractedAt: new Date().toISOString(),
     logoUrl: extractLogoUrl(html, normalizedUrl),
-    palette: selectPalette([...renderedColors, ...htmlColors(html)]),
+    palette: brand.palette,
     typography: {
-      display: fonts[0] ?? 'Inter, sans-serif',
-      body: fonts[1] ?? fonts[0] ?? 'Inter, sans-serif',
-      utility: fonts[2] ?? fonts[0] ?? 'Inter, sans-serif',
+      display: brand.fonts.display ?? fallbackFont,
+      body: brand.fonts.body ?? brand.fonts.display ?? fallbackFont,
+      utility: brand.fonts.utility ?? brand.fonts.body ?? fallbackFont,
     },
-    spacingRhythm: /\b(?:gap|padding|margin)-(?:2|4|6|8|10|12)\b/i.test(html)
+    spacingRhythm: /\b(?:gap|padding|margin)-(?:2|4|6|8|10|12)\b/i.test(allCss)
       ? 'regular modular spacing with clear section breaks'
       : 'measured spacing inferred from the rendered page',
     cornerRadius: radii.slice(0, 3).join(', ') || 'restrained rounded corners',
     borderAndShadow: hasShadows
       ? 'subtle borders with selective depth shadows'
       : 'flat surfaces separated by contrast and light borders',
-    density: /max-width|container/i.test(html) ? 'focused and moderately spacious' : 'balanced',
+    density: /max-width|container/i.test(allCss) ? 'focused and moderately spacious' : 'balanced',
     layoutLogic: hasGrid
       ? 'responsive grid, strong alignment and one dominant message per section'
       : 'single reading axis with grouped content and generous separation',
-    signatureElement: `controlled use of the ${selectPalette([...renderedColors, ...htmlColors(html)])[3].hex} accent for recognition`,
+    signatureElement: accent
+      ? `controlled use of the ${accent} accent for recognition`
+      : 'recognition carried by the typography and the paper colour of the site',
     never: [
       'decorative clutter without a learning purpose',
       'low-contrast text',

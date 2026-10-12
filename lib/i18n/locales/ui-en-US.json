@@ -1043,6 +1043,7 @@
   "generation.designPreviewThanks": "Thank you",
   "generation.designPreviewAchievement": "Goal reached",
   "generation.designDisabledNotice": "The design system is not enabled for your organization: these settings will not be applied to the course. Ask your administrator to enable it.",
+  "generation.designCharterLocked": "Your organization’s charter applies ({{site}}): colours and fonts come from its website and cannot be changed here.",
   "generation.syllabusDurationRedistribute": "Distribute automatically",
   "generation.designDescription": "The style applied to the course backgrounds, colors and typefaces. You can adjust it before validating the plan.",
   "generation.designTone": "Tone",

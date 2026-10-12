@@ -1043,6 +1043,7 @@
   "generation.designPreviewThanks": "Merci",
   "generation.designPreviewAchievement": "Objectif atteint",
   "generation.designDisabledNotice": "Le système de design n’est pas activé pour votre organisation : ces réglages ne seront pas appliqués au cours. Demandez son activation à l’administrateur.",
+  "generation.designCharterLocked": "La charte de votre organisation s’applique ({{site}}) : les couleurs et les polices viennent de son site et ne se modifient pas ici.",
   "generation.syllabusDurationRedistribute": "Répartir automatiquement",
   "generation.designDescription": "Le style appliqué aux fonds, couleurs et typographies du cours. Vous pouvez l’ajuster avant de valider le plan.",
   "generation.designTone": "Ton",

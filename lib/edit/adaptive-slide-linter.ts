@@ -1,7 +1,6 @@
 import tinycolor from 'tinycolor2';
 import { DESIGN_FONTS, type PPTElement, type Slide, type Stage } from '@openmaic/dsl';
-import { buildPalette, type DesignDirective } from '@/lib/branding/design-directive';
-import { parseDesignTuning } from '@/lib/branding/design-tuning';
+import { buildSnapshotPalette, type DesignDirective } from '@/lib/branding/design-directive';
 import { auditSlideLayout } from '@/lib/edit/slide-layout-audit';
 import { getElementListRange } from '@/lib/utils/element';
 
@@ -195,7 +194,7 @@ export function getCiede2000(firstHex: string, secondHex: string): number {
 }
 
 function paletteColors(directive: DesignDirective, snapshot: Stage['brandSnapshot']): string[] {
-  const colors = Object.values(buildPalette(directive, parseDesignTuning(snapshot?.content)));
+  const colors = Object.values(buildSnapshotPalette(directive, snapshot));
   if (snapshot?.version === 1) {
     const colorLine = snapshot.content.match(/(?:^|\n)colors:\s*([^\n]*)/u)?.[1] ?? '';
     for (const match of colorLine.matchAll(

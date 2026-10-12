@@ -1,11 +1,10 @@
 import type { Stage } from '@openmaic/dsl';
-import { DESIGN_FONTS } from '@openmaic/dsl';
 import tinycolor from 'tinycolor2';
-import { parseDesignTuning } from './design-tuning';
 import {
-  buildPalette,
+  buildSnapshotPalette,
   DEFAULT_DESIGN_DIRECTIVE,
   normalizeDesignDirective,
+  snapshotDesignTokens,
 } from './design-directive';
 
 export const INTERACTIVE_DESIGN_PROMPT_MODULE = `DESIGN SYSTEM QALEM (priorité sur les exemples visuels antérieurs)
@@ -38,24 +37,6 @@ export const INTERACTIVE_DESIGN_CSS_VARIABLES = [
 
 type InteractiveTokens = Record<(typeof INTERACTIVE_DESIGN_CSS_VARIABLES)[number], string>;
 
-function snapshotColors(snapshot: Stage['brandSnapshot']): Record<string, string> {
-  if (snapshot?.version !== 1 || !snapshot.content) return {};
-  const colorLine = snapshot.content.match(/(?:^|\n)colors:\s*([^\n]*)/u)?.[1] ?? '';
-  const colors: Record<string, string> = {};
-  for (const match of colorLine.matchAll(
-    /\b(background|surface|ink|accent|muted|secondary)=(#[\da-fA-F]{6})\b/gu,
-  )) {
-    colors[match[1]] = match[2].toUpperCase();
-  }
-  return colors;
-}
-
-function snapshotFont(snapshot: Stage['brandSnapshot']): string | undefined {
-  if (snapshot?.version !== 1 || !snapshot.content) return undefined;
-  const requested = snapshot.content.match(/(?:^|\n)fonts:\s*display=([^;\n]+)/u)?.[1]?.trim();
-  return DESIGN_FONTS.find((font) => font.toLowerCase() === requested?.toLowerCase());
-}
-
 function foregroundOn(background: string): string {
   const black = '#111827';
   const white = '#FFFFFF';
@@ -71,12 +52,12 @@ export function buildInteractiveDesignTokens(
   const directive = directiveInput
     ? normalizeDesignDirective(directiveInput).directive
     : DEFAULT_DESIGN_DIRECTIVE;
-  const palette = buildPalette(directive, parseDesignTuning(snapshot?.content));
-  const brand = snapshotColors(snapshot);
-  const headingFont = snapshotFont(snapshot) ?? directive.typography.heading;
-  const bodyFont = directive.typography.body;
-  const accent = brand.accent ?? palette['accent.primary'];
-  const accentAlt = brand.secondary ?? palette['accent.secondary'];
+  const palette = buildSnapshotPalette(directive, snapshot);
+  const brand = snapshotDesignTokens(snapshot);
+  const headingFont = brand.fontName ?? directive.typography.heading;
+  const bodyFont = brand.bodyFontName ?? directive.typography.body;
+  const accent = palette['accent.primary'];
+  const accentAlt = palette['accent.secondary'];
   const functional = {
     ok: palette['functional.correct'],
     error: palette['functional.incorrect'],
@@ -84,10 +65,10 @@ export function buildInteractiveDesignTokens(
     info: palette['functional.info'],
   };
   const colors: InteractiveTokens = {
-    '--q-bg': brand.background ?? brand.surface ?? palette['surface.base'],
+    '--q-bg': palette['surface.base'],
     '--q-surface': palette['surface.card.onBase'],
-    '--q-surface-alt': brand.muted ?? palette['surface.tint'],
-    '--q-text': brand.ink ?? palette['text.primary'],
+    '--q-surface-alt': palette['surface.tint'],
+    '--q-text': palette['text.primary'],
     '--q-text-muted': palette['text.secondary'],
     '--q-accent': accent,
     '--q-accent-contrast': foregroundOn(accent),

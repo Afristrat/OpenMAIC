@@ -46,6 +46,7 @@ import {
 } from '@/lib/generation/syllabus-validation';
 import { OptimizationAdvice } from './optimization-advice';
 import { DesignDirectiveFields } from './design-directive-fields';
+import type { BrandCharter } from '@/lib/branding/brand-charter';
 import type { DesignDirective } from '@openmaic/dsl';
 
 type SceneType = SceneOutline['type'];
@@ -62,6 +63,8 @@ interface OutlinesEditorProps {
   onDesignDirectiveChange?: (directive: DesignDirective) => void;
   /** False when the organization has not enabled the design system. */
   designSystemEnabled?: boolean;
+  /** The charter the tenant imposes: shown in the design fields, never editable there. */
+  brandCharter?: BrandCharter | null;
   onChange: (outlines: SceneOutline[]) => void;
   onConfirm: () => void;
   onBack: () => void;
@@ -157,6 +160,7 @@ export function OutlinesEditor({
   onSyllabusChange,
   onDesignDirectiveChange,
   designSystemEnabled,
+  brandCharter,
   onChange,
   onConfirm,
   onBack,
@@ -447,6 +451,7 @@ export function OutlinesEditor({
             designDirective={designDirective}
             onDesignDirectiveChange={onDesignDirectiveChange}
             designSystemEnabled={designSystemEnabled}
+            brandCharter={brandCharter}
             previewOutlines={outlines}
             onTotalDurationChange={handleTotalDurationChange}
             disabled={editingDisabled}
@@ -555,6 +560,7 @@ function SyllabusFields({
   designDirective,
   onDesignDirectiveChange,
   designSystemEnabled,
+  brandCharter,
   previewOutlines,
   onTotalDurationChange,
   disabled,
@@ -570,6 +576,7 @@ function SyllabusFields({
   designDirective?: DesignDirective;
   onDesignDirectiveChange?: (directive: DesignDirective) => void;
   designSystemEnabled?: boolean;
+  brandCharter?: BrandCharter | null;
   previewOutlines: SceneOutline[];
   onTotalDurationChange: (minutes: number) => void;
   disabled: boolean;
@@ -832,6 +839,7 @@ function SyllabusFields({
             onChange={onDesignDirectiveChange}
             disabled={disabled}
             designSystemEnabled={designSystemEnabled}
+            brandCharter={brandCharter}
             courseTitle={courseTitle}
             sampleTitle={previewOutlines[1]?.title ?? previewOutlines[0]?.title ?? courseTitle}
             samplePoints={previewOutlines[1]?.keyPoints ?? previewOutlines[0]?.keyPoints ?? []}

@@ -35,3 +35,6 @@ out/
 
 # SVG arc helper (vendored declaration)
 lib/export/svg-arc-to-cubic-bezier.d.ts
+
+# Reduced copies of real third-party sites, kept byte for byte
+tests/branding/fixtures/

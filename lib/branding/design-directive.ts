@@ -225,24 +225,72 @@ function textColorOnDark(seed: tinycolor.Instance, background: tinycolor.Instanc
 /** The base wash keeps this share of the tint strength, so one setting drives both surfaces. */
 const BASE_TO_TINT_RATIO = 0.14 / 0.27;
 
-function wash(accent: tinycolor.Instance, alpha: number): tinycolor.Instance {
-  return tinycolor.mix('#FFFFFF', accent, alpha * 100);
+/** A paper lighter than this keeps dark text readable; a darker brand background is a dark surface. */
+const LIGHT_PAPER_LUMINANCE = 0.5;
+/** A brand colour darker than this can carry white text and serves as the dark surface. */
+const DARK_SURFACE_LUMINANCE = 0.12;
+
+/** Colours of the tenant charter (the frozen brand snapshot): when present, they decide the palette. */
+export type BrandColors = Partial<
+  Record<'background' | 'surface' | 'ink' | 'accent' | 'muted' | 'secondary', string>
+>;
+
+function wash(
+  accent: tinycolor.Instance,
+  alpha: number,
+  paper: tinycolor.Instance = tinycolor('#FFFFFF'),
+): tinycolor.Instance {
+  return tinycolor.mix(paper, accent, alpha * 100);
 }
 
+/** White text must stay readable on the dark surface, whatever the charter provides. */
+function readableDark(candidate: tinycolor.Instance): tinycolor.Instance {
+  let color = candidate;
+  for (let step = 0; step < 50 && tinycolor.readability('#FFFFFF', color) < 4.5; step += 1) {
+    color = color.darken(2);
+  }
+  return color;
+}
+
+/**
+ * The tenant charter decides the palette: the accent gives the hue, the charter background is the
+ * paper (white stays white), the dark surface comes from the charter ink or background. Only a
+ * tenant without charter falls back to the pastel wash of the directive hue family.
+ */
 export function buildPalette(
   directive: Pick<DesignDirective, 'seed' | 'tone'>,
   tuning: DesignTuning = DEFAULT_DESIGN_TUNING,
+  brand: BrandColors = {},
 ): DesignPalette {
-  const hue = HUE_DEGREES[directive.seed.hueFamily];
+  const brandAccent = brand.accent ? tinycolor(brand.accent) : undefined;
+  const brandPaper = brand.background ? tinycolor(brand.background) : undefined;
+  const charter = Boolean(brandAccent || brandPaper);
+  const accentHsl = brandAccent?.toHsl();
+  const hue = accentHsl ? accentHsl.h : HUE_DEGREES[directive.seed.hueFamily];
   const mid = directive.seed.chromaLevel === 'mid';
-  const washSeed = tinycolor({ h: hue, s: mid ? 70 : 48, l: 50 });
-  const base = wash(washSeed, tuning.tintStrength * BASE_TO_TINT_RATIO);
-  const tint = wash(washSeed, tuning.tintStrength);
-  const dark = tinycolor({ h: hue, s: mid ? 48 : 38, l: 20 });
+  const washSeed = brandAccent ?? tinycolor({ h: hue, s: mid ? 70 : 48, l: 50 });
+  const paper =
+    brandPaper && brandPaper.getLuminance() >= LIGHT_PAPER_LUMINANCE
+      ? brandPaper
+      : tinycolor('#FFFFFF');
+  const base = charter ? paper : wash(washSeed, tuning.tintStrength * BASE_TO_TINT_RATIO);
+  const tint = wash(washSeed, tuning.tintStrength, charter ? paper : undefined);
+  const brandDark = [brandPaper, brand.ink ? tinycolor(brand.ink) : undefined].find(
+    (color) => color && color.getLuminance() < DARK_SURFACE_LUMINANCE,
+  );
+  const derivedDark = tinycolor({
+    h: hue,
+    s: accentHsl ? Math.min(60, Math.max(20, Math.round(accentHsl.s * 60))) : mid ? 48 : 38,
+    l: 20,
+  });
+  const dark = readableDark(brandDark ?? derivedDark);
   const lightSurfaces = [base, tint];
-  const primaryCandidate = tinycolor({ h: hue, s: mid ? 66 : 52, l: 34 });
-  const secondaryCandidate = tinycolor({ h: (hue + 27) % 360, s: mid ? 58 : 46, l: 36 });
+  const primaryCandidate = brandAccent ?? tinycolor({ h: hue, s: mid ? 66 : 52, l: 34 });
+  const secondaryCandidate = brand.secondary
+    ? tinycolor(brand.secondary)
+    : tinycolor({ h: (hue + 27) % 360, s: mid ? 58 : 46, l: 36 });
   const achievementCandidate = tinycolor({ h: (hue + 324) % 360, s: mid ? 56 : 44, l: 32 });
+  const inkCandidate = brand.ink ? tinycolor(brand.ink) : tinycolor({ h: hue, s: 38, l: 13 });
   const onDark = wash(washSeed, 0.1);
 
   return {
@@ -251,8 +299,10 @@ export function buildPalette(
     'surface.dark': hex(dark),
     'surface.card.onBase': '#FFFFFF',
     'surface.card.onTint': '#FFFFFF',
-    'surface.card.onDark': hex(tinycolor({ h: hue, s: mid ? 44 : 36, l: 28 })),
-    'text.primary': textColorOnLight(tinycolor({ h: hue, s: 38, l: 13 }), lightSurfaces, 7),
+    'surface.card.onDark': hex(
+      charter ? dark.clone().lighten(8) : tinycolor({ h: hue, s: mid ? 44 : 36, l: 28 }),
+    ),
+    'text.primary': textColorOnLight(inkCandidate, lightSurfaces, 7),
     'text.secondary': textColorOnLight(tinycolor({ h: hue, s: 24, l: 30 }), lightSurfaces, 5.5),
     'text.onDark': '#FFFFFF',
     'text.onDark.secondary': textColorOnDark(onDark, dark),
@@ -260,7 +310,7 @@ export function buildPalette(
     'accent.secondary': textColorOnLight(secondaryCandidate, lightSurfaces),
     'accent.achievement': textColorOnLight(achievementCandidate, lightSurfaces),
     'accent.onDark': textColorOnDark(wash(washSeed, 0.55), dark),
-    'border.hairline': hex(wash(washSeed, 0.4)),
+    'border.hairline': hex(wash(washSeed, 0.4, charter ? paper : undefined)),
     'functional.correct': textColorOnLight(tinycolor('#176B3A'), lightSurfaces),
     'functional.incorrect': textColorOnLight(tinycolor('#A12828'), lightSurfaces),
     'functional.warning': textColorOnLight(tinycolor('#805000'), lightSurfaces),
@@ -289,8 +339,8 @@ export interface SlideSurface {
 /**
  * Brief §3.6: the platform, not the model, decides which surface a slide sits on, from its
  * function and the course `surfacePlan`. A model otherwise answers every slide with plain white.
- * The tenant background wins for the base role; tint and dark are derived for the roles the
- * charter does not define.
+ * Every surface follows the tenant charter (paper, accent, ink); tint and dark are derived from
+ * it for the roles the charter does not define.
  */
 export function resolveSlideSurface(
   slideFunction: SlideFunction,
@@ -298,8 +348,7 @@ export function resolveSlideSurface(
   brandSnapshot?: import('@openmaic/dsl').Stage['brandSnapshot'],
 ): SlideSurface {
   const tuning = parseDesignTuning(brandSnapshot?.content);
-  const palette = buildPalette(directive, tuning);
-  const brand = snapshotDesignTokens(brandSnapshot).colors;
+  const palette = buildSnapshotPalette(directive, brandSnapshot);
   const plan = directive.surfacePlan;
   const role: SlideSurfaceRole =
     slideFunction === 'cover'
@@ -322,11 +371,10 @@ export function resolveSlideSurface(
   }
   return {
     role,
-    color:
-      role === 'tint' ? palette['surface.tint'] : (brandPaper(brand) ?? palette['surface.base']),
-    text: brand.ink ?? palette['text.primary'],
+    color: role === 'tint' ? palette['surface.tint'] : palette['surface.base'],
+    text: palette['text.primary'],
     textSecondary: palette['text.secondary'],
-    accent: brand.accent ?? palette['accent.primary'],
+    accent: palette['accent.primary'],
     card: role === 'tint' ? palette['surface.card.onTint'] : palette['surface.card.onBase'],
     cardOpacity: tuning.cardOpacity,
     band: palette['surface.dark'],
@@ -339,33 +387,43 @@ export function buildSurfaceBackground(surface: SlideSurface): SlideBackground {
   return { type: 'solid', color: surface.color };
 }
 
-/** Neutral Qalem theme for opted-in courses that have no tenant charter. */
-function snapshotDesignTokens(
+/** Colours and fonts of the frozen tenant charter; empty for a course without charter. */
+export function snapshotDesignTokens(
   snapshot: import('@openmaic/dsl').Stage['brandSnapshot'] | undefined,
-): { colors: Record<string, string>; fontName?: string } {
+): { colors: BrandColors; fontName?: string; bodyFontName?: string } {
   if (snapshot?.version !== 1 || !snapshot.content) return { colors: {} };
   const colorLine = snapshot.content.match(/(?:^|\n)colors:\s*([^\n]*)/u)?.[1] ?? '';
-  const colors: Record<string, string> = {};
+  const colors: BrandColors = {};
   for (const match of colorLine.matchAll(
     /\b(background|surface|ink|accent|muted|secondary)=(#[\da-fA-F]{6})\b/gu,
   )) {
-    colors[match[1]] = match[2].toUpperCase();
+    colors[match[1] as keyof BrandColors] = match[2].toUpperCase();
   }
-  const requestedFont = snapshot.content.match(/(?:^|\n)fonts:\s*display=([^;\n]+)/u)?.[1]?.trim();
-  const fontName = DESIGN_FONTS.find((font) => font.toLowerCase() === requestedFont?.toLowerCase());
-  return { colors, ...(fontName ? { fontName } : {}) };
+  const findFont = (role: 'display' | 'body') => {
+    const requested = snapshot.content
+      .match(new RegExp(`(?:^|\\n)fonts:[^\\n]*?\\b${role}=([^;\\n]+)`, 'u'))?.[1]
+      ?.trim();
+    return DESIGN_FONTS.find((font) => font.toLowerCase() === requested?.toLowerCase());
+  };
+  const fontName = findFont('display');
+  const bodyFontName = findFont('body');
+  return {
+    colors,
+    ...(fontName ? { fontName } : {}),
+    ...(bodyFontName ? { bodyFontName } : {}),
+  };
 }
 
-/**
- * A (near-)white or grey brand background carries no colour decision, typically a site
- * extracted by default: the pastel wash of the palette replaces it. A coloured brand
- * background is a deliberate choice and always wins.
- */
-function brandPaper(colors: Record<string, string>): string | undefined {
-  const candidate = colors.background ?? colors.surface;
-  if (!candidate) return undefined;
-  const { s, l } = tinycolor(candidate).toHsl();
-  return s < 0.12 && l > 0.9 ? undefined : candidate;
+/** Palette of a course: tuning and tenant colours come from the frozen brand snapshot. */
+export function buildSnapshotPalette(
+  directive: Pick<DesignDirective, 'seed' | 'tone'>,
+  brandSnapshot?: import('@openmaic/dsl').Stage['brandSnapshot'],
+): DesignPalette {
+  return buildPalette(
+    directive,
+    parseDesignTuning(brandSnapshot?.content),
+    snapshotDesignTokens(brandSnapshot).colors,
+  );
 }
 
 export function buildSlideTheme(
@@ -373,20 +431,19 @@ export function buildSlideTheme(
   brandSnapshot?: import('@openmaic/dsl').Stage['brandSnapshot'],
 ): SlideTheme {
   const selected = directive ?? DEFAULT_DESIGN_DIRECTIVE;
-  const palette = buildPalette(selected, parseDesignTuning(brandSnapshot?.content));
+  const palette = buildSnapshotPalette(selected, brandSnapshot);
   const brand = snapshotDesignTokens(brandSnapshot);
-  const colors = brand.colors ?? {};
   const themeColors = [
-    colors.accent ?? palette['accent.primary'],
-    colors.secondary ?? palette['accent.secondary'],
+    palette['accent.primary'],
+    palette['accent.secondary'],
     palette['accent.achievement'],
     palette['functional.correct'],
     palette['functional.incorrect'],
   ];
   return {
-    backgroundColor: brandPaper(colors) ?? palette['surface.base'],
+    backgroundColor: palette['surface.base'],
     themeColors: [...new Set(themeColors)],
-    fontColor: colors.ink ?? palette['text.primary'],
+    fontColor: palette['text.primary'],
     fontName: brand.fontName ?? selected.typography.heading,
     outline: { color: palette['border.hairline'], width: 1, style: 'solid' },
     shadow: { h: 0, v: 0, blur: 0, color: '#000000' },

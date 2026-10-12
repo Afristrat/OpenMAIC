@@ -1043,6 +1043,7 @@
   "generation.designPreviewThanks": "شكرا",
   "generation.designPreviewAchievement": "تم بلوغ الهدف",
   "generation.designDisabledNotice": "نظام التصميم غير مفعّل لمؤسستك: لن تُطبَّق هذه الإعدادات على الدورة. اطلب من المسؤول تفعيله.",
+  "generation.designCharterLocked": "تُطبَّق هوية مؤسستك البصرية ({{site}}): الألوان والخطوط مأخوذة من موقعها ولا تُعدَّل هنا.",
   "generation.syllabusDurationRedistribute": "التوزيع تلقائيا",
   "generation.designDescription": "الأسلوب المطبق على خلفيات الدورة وألوانها وخطوطها. يمكنك تعديله قبل اعتماد الخطة.",
   "generation.designTone": "النبرة",

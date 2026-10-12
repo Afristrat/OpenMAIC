@@ -2,7 +2,11 @@
 
 import type { CSSProperties } from 'react';
 import { useI18n } from '@/lib/hooks/use-i18n';
-import { buildPalette, type DesignDirective } from '@/lib/branding/design-directive';
+import {
+  buildPalette,
+  type BrandColors,
+  type DesignDirective,
+} from '@/lib/branding/design-directive';
 
 const SERIF_FONTS = new Set(['Merriweather', 'Literata', 'Source Serif 4']);
 
@@ -19,6 +23,8 @@ const PADDING: Record<DesignDirective['density'], number> = { compact: 8, balanc
 
 interface DesignPreviewProps {
   directive: DesignDirective;
+  /** The tenant charter colours: when present they decide the palette, as in the generation. */
+  brandColors?: BrandColors;
   courseTitle: string;
   sampleTitle: string;
   samplePoints: string[];
@@ -30,12 +36,13 @@ interface DesignPreviewProps {
  */
 export function DesignPreview({
   directive,
+  brandColors,
   courseTitle,
   sampleTitle,
   samplePoints,
 }: DesignPreviewProps) {
   const { t } = useI18n();
-  const palette = buildPalette(directive);
+  const palette = buildPalette(directive, undefined, brandColors);
   const padding = PADDING[directive.density];
   const radius = directive.shapes.radius;
   const border =

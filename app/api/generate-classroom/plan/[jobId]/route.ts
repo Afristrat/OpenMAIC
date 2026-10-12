@@ -4,6 +4,7 @@ import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { describeGenerationFailure } from '@/lib/generation/generation-tracking';
 import { getTypicalDuration } from '@/lib/server/generation-duration-stats';
 import { isDesignSystemV1Enabled } from '@/lib/branding/design-directive';
+import { brandCharterFromSettings } from '@/lib/branding/brand-charter';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import {
   isValidClassroomPlanJobId,
@@ -41,6 +42,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ job
       typicalDuration: done ? undefined : await getTypicalDuration('plan'),
       failure: describeGenerationFailure(job.error),
       designSystemEnabled: isDesignSystemV1Enabled(organization?.settings),
+      brandCharter: brandCharterFromSettings(organization?.settings),
       done,
       result: job.result,
       generationRequest: job.status === 'succeeded' ? job.input : undefined,

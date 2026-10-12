@@ -3,7 +3,7 @@ import type { Slide } from '@openmaic/dsl';
 
 import { auditSlideLayout } from '@/lib/edit/slide-layout-audit';
 import { generateSceneContent } from '@/lib/generation/scene-generator';
-import { DEFAULT_DESIGN_DIRECTIVE, buildPalette } from '@/lib/branding/design-directive';
+import { DEFAULT_DESIGN_DIRECTIVE, buildSnapshotPalette } from '@/lib/branding/design-directive';
 import type { SceneOutline } from '@/lib/types/generation';
 import type { AICallFn, DesignEventRecorder } from '@/lib/generation/pipeline-types';
 import { setAICallDesignEventRecorder } from '@/lib/generation/pipeline-types';
@@ -72,22 +72,23 @@ describe('slide layout fallback', () => {
           },
         ],
       });
+    const brandSnapshot = {
+      version: 1 as const,
+      createdAt: '2026-10-09T00:00:00.000Z',
+      content:
+        'colors: background=#F7F8FA ink=#202A35 accent=#7A2E8E\nfonts: display=Merriweather; body=Inter; utility=Inter',
+    };
     setAICallDesignEventRecorder(aiCall, recordDesignEvent);
     const content = await generateSceneContent(outline, aiCall, {
       designDirective: DEFAULT_DESIGN_DIRECTIVE,
-      brandSnapshot: {
-        version: 1,
-        createdAt: '2026-10-09T00:00:00.000Z',
-        content:
-          'colors: background=#F7F8FA ink=#202A35 accent=#7A2E8E\nfonts: display=Merriweather; body=Inter; utility=Inter',
-      },
+      brandSnapshot,
     });
 
     expect(content).not.toBeNull();
     if (!content || !('elements' in content)) return;
     expect(content.background).toEqual({
       type: 'solid',
-      color: buildPalette(DEFAULT_DESIGN_DIRECTIVE)['surface.tint'],
+      color: buildSnapshotPalette(DEFAULT_DESIGN_DIRECTIVE, brandSnapshot)['surface.tint'],
     });
     const title = content.elements.find((element) => element.name === 'title');
     expect(title).toMatchObject({

@@ -1,8 +1,7 @@
 import type { Stage } from '@openmaic/dsl';
 import type { SceneOutline } from '@/lib/types/generation';
-import { parseDesignTuning } from './design-tuning';
 import {
-  buildPalette,
+  buildSnapshotPalette,
   normalizeDesignDirective,
   resolveSlideSurface,
   type SlideSurface,
@@ -60,10 +59,7 @@ export function buildSlideDesignPromptContext(input: {
   const directiveContext = normalized
     ? JSON.stringify({
         directive: normalized.directive,
-        palette: buildPalette(
-          normalized.directive,
-          parseDesignTuning(input.brandSnapshot?.content),
-        ),
+        palette: buildSnapshotPalette(normalized.directive, input.brandSnapshot),
       })
     : 'No course directive supplied.';
 

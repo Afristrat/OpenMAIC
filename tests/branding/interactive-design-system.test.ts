@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Stage } from '@openmaic/dsl';
+import tinycolor from 'tinycolor2';
+import { buildSnapshotPalette, DEFAULT_DESIGN_DIRECTIVE } from '@/lib/branding/design-directive';
 import {
   applyInteractiveDesignSystem,
   buildInteractiveDesignTokens,
@@ -23,7 +25,14 @@ describe('interactive design system', () => {
     const tokens = buildInteractiveDesignTokens(undefined, snapshot);
     expect(Object.keys(tokens).sort()).toEqual([...INTERACTIVE_DESIGN_CSS_VARIABLES].sort());
     expect(tokens['--q-bg']).toBe('#F6F9F7');
-    expect(tokens['--q-accent']).toBe('#1A8FC2');
+    // The accent follows the charter hue and stays readable on the light surfaces.
+    expect(tokens['--q-accent']).toBe(
+      buildSnapshotPalette(DEFAULT_DESIGN_DIRECTIVE, snapshot)['accent.primary'],
+    );
+    const gap = Math.abs(
+      tinycolor(tokens['--q-accent']).toHsl().h - tinycolor('#1A8FC2').toHsl().h,
+    );
+    expect(Math.min(gap, 360 - gap)).toBeLessThan(12);
     expect(tokens['--q-font-heading']).toContain('Inter');
     expect(tokens['--q-font-body']).toContain('system-ui');
     expect(tokens['--q-on-ok']).toMatch(/^#[\da-f]{6}$/iu);

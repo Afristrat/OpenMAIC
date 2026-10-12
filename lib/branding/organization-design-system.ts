@@ -44,18 +44,36 @@ function cleanText(value: unknown, maxLength = 240): string {
     .slice(0, maxLength);
 }
 
-function mapFont(requested: unknown, role: string, warnings: string[]): string {
-  const original = cleanText(requested, 80);
-  const exact = DESIGN_FONTS.find((font) => font.toLowerCase() === original.toLowerCase());
-  if (exact) return exact;
+const SERIF_FAMILY =
+  /\b(?:georgia|palatino|iowan|times|garamond|baskerville|cambria|book antiqua|merriweather|literata|playfair|lora|source serif|didot|bodoni)\b/i;
+const MONO_FAMILY = /mono|consol|courier|menlo|monaco/i;
 
-  const normalized = original.toLowerCase();
-  const mapped = /mono|code|console/.test(normalized)
+/**
+ * Maps the font stack of a tenant site to the closest font the platform can render: the first
+ * family that is available wins, otherwise the character of the stack (monospace, serif) decides.
+ * `sans-serif` is a sans family, never a serif one.
+ */
+function mapFont(requested: unknown, role: string, warnings: string[]): string {
+  const original = cleanText(requested, 200);
+  const families = original
+    .split(',')
+    .map((family) => family.replace(/["']/g, '').trim())
+    .filter(Boolean);
+  const available = families
+    .map((family) => DESIGN_FONTS.find((font) => font.toLowerCase() === family.toLowerCase()))
+    .find((font): font is (typeof DESIGN_FONTS)[number] => Boolean(font));
+  if (available) return available;
+
+  const mapped = families.some((family) => MONO_FAMILY.test(family))
     ? 'JetBrains Mono'
-    : /serif|times|georgia|garamond|book/.test(normalized)
+    : families.some((family) => SERIF_FAMILY.test(family) || /^serif$/i.test(family))
       ? 'Merriweather'
       : 'Inter';
-  if (original) warnings.push(`Charte : police ${role} « ${original} » remplacée par ${mapped}.`);
+  if (original) {
+    warnings.push(
+      `Charte : police ${role} « ${families[0] ?? original} » remplacée par ${mapped}.`,
+    );
+  }
   return mapped;
 }
 
