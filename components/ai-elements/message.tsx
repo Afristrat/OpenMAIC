@@ -8,7 +8,12 @@ import type { FileUIPart, UIMessage } from 'ai';
 import { ChevronLeftIcon, ChevronRightIcon, PaperclipIcon, XIcon } from 'lucide-react';
 import type { ComponentProps, HTMLAttributes, ReactElement } from 'react';
 import { createContext, memo, useContext, useEffect, useMemo, useState } from 'react';
-import { Streamdown } from 'streamdown';
+import dynamic from 'next/dynamic';
+
+// Markdown, code highlighting and diagrams weigh about 900 KB: load them when a message renders.
+const Streamdown = dynamic(() => import('streamdown').then((module) => module.Streamdown), {
+  ssr: false,
+});
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {
   from: UIMessage['role'];

@@ -2,7 +2,9 @@
 
 import type { PPTChartElement } from '@openmaic/dsl';
 import { ElementOutline } from '../ElementOutline';
-import { Chart } from './Chart';
+import dynamic from 'next/dynamic';
+
+const Chart = dynamic(() => import('./Chart').then((module) => module.Chart), { ssr: false });
 
 export { BaseChartElement } from './BaseChartElement';
 

@@ -2,7 +2,10 @@
 
 import type { PPTChartElement } from '@openmaic/dsl';
 import { ElementOutline } from '../ElementOutline';
-import { Chart } from './Chart';
+import dynamic from 'next/dynamic';
+
+// echarts weighs about 550 KB: load it only for slides that carry a chart.
+const Chart = dynamic(() => import('./Chart').then((module) => module.Chart), { ssr: false });
 
 export interface BaseChartElementProps {
   elementInfo: PPTChartElement;
