@@ -14,6 +14,7 @@
     "start": "node scripts/start-production.mjs",
     "start:web": "next start",
     "start:workers": "tsx scripts/start-workers.ts",
+    "audit:design": "tsx scripts/design-audit.ts",
     "lint": "eslint",
     "typecheck": "node --max-old-space-size=4096 node_modules/typescript/bin/tsc --noEmit",
     "check:i18n-keys": "node scripts/check-i18n-keys.mjs",
