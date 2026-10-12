@@ -9,7 +9,6 @@ import {
   DESIGN_HUE_FAMILIES,
   buildPalette,
   buildSlideTheme,
-  buildSoftBackground,
   buildSurfaceBackground,
   clampAtWord,
   designDirectiveSchema,
@@ -226,35 +225,6 @@ describe('course design directive', () => {
   });
 });
 
-describe('buildSoftBackground', () => {
-  const theme = buildSlideTheme(DEFAULT_DESIGN_DIRECTIVE);
-
-  it('turns a missing or light solid background into a two-stop gradient', () => {
-    for (const current of [undefined, { type: 'solid' as const, color: '#FFFFFF' }]) {
-      const result = buildSoftBackground(current, theme);
-      expect(result?.type).toBe('gradient');
-      expect(result?.gradient?.colors).toHaveLength(2);
-      expect(result?.gradient?.colors[0].color).not.toBe(result?.gradient?.colors[1].color);
-    }
-  });
-
-  it('keeps dark, image and gradient backgrounds untouched', () => {
-    expect(buildSoftBackground({ type: 'solid', color: '#1F2A44' }, theme)).toBeUndefined();
-    expect(
-      buildSoftBackground({ type: 'image', image: { src: 'x.png', size: 'cover' } }, theme),
-    ).toBeUndefined();
-    expect(
-      buildSoftBackground(
-        {
-          type: 'gradient',
-          gradient: { type: 'linear', rotate: 0, colors: [{ pos: 0, color: '#FFF' }] },
-        },
-        theme,
-      ),
-    ).toBeUndefined();
-  });
-});
-
 describe('resolveSlideSurface', () => {
   const directive = normalizeDesignDirective({
     ...DEFAULT_DESIGN_DIRECTIVE,
@@ -281,11 +251,10 @@ describe('resolveSlideSurface', () => {
     expect(resolveSlideSurface('end', directive, brand).color).not.toBe('#FFFFFF');
   });
 
-  it('imposes a solid dark background and a gradient on light surfaces', () => {
-    const dark = buildSurfaceBackground(resolveSlideSurface('end', directive), undefined);
-    expect(dark).toEqual({ type: 'solid', color: resolveSlideSurface('end', directive).color });
-    expect(buildSurfaceBackground(resolveSlideSurface('cover', directive), undefined).type).toBe(
-      'gradient',
-    );
+  it('imposes a solid background on every surface, gradients being reserved to one punchline', () => {
+    for (const slideFunction of ['cover', 'contents', 'content', 'end'] as const) {
+      const surface = resolveSlideSurface(slideFunction, directive);
+      expect(buildSurfaceBackground(surface)).toEqual({ type: 'solid', color: surface.color });
+    }
   });
 });

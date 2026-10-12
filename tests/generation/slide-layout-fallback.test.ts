@@ -85,10 +85,7 @@ describe('slide layout fallback', () => {
 
     expect(content).not.toBeNull();
     if (!content || !('elements' in content)) return;
-    expect(content.background).toMatchObject({
-      type: 'gradient',
-      gradient: { colors: [{ pos: 0, color: '#F7F8FA' }, { pos: 100 }] },
-    });
+    expect(content.background).toEqual({ type: 'solid', color: '#F7F8FA' });
     const title = content.elements.find((element) => element.name === 'title');
     expect(title).toMatchObject({
       left: 72,

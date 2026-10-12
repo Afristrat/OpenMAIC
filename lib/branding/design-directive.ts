@@ -260,40 +260,12 @@ export function buildPalette(directive: Pick<DesignDirective, 'seed' | 'tone'>):
   };
 }
 
-/**
- * Soft diagonal gradient from a light surface towards a tint of the accent.
- * Applied by the platform, never left to the model: a plain solid white slide
- * is what a model returns by default, and the brand tint is a rendering choice.
- * Returns undefined for dark, image or already-gradient backgrounds.
- */
-export function buildSoftBackground(
-  current: SlideBackground | undefined,
-  theme: Pick<SlideTheme, 'backgroundColor' | 'themeColors'> | undefined,
-): SlideBackground | undefined {
-  if (current && current.type !== 'solid') return undefined;
-  const base = tinycolor(current?.color ?? theme?.backgroundColor ?? '#FFFFFF');
-  if (!base.isValid() || base.getBrightness() < 200) return undefined;
-  const accent = theme?.themeColors[0] ?? '#5B9BD5';
-  const end = tinycolor.mix(base, accent, 16);
-  return {
-    type: 'gradient',
-    gradient: {
-      type: 'linear',
-      rotate: 135,
-      colors: [
-        { pos: 0, color: hex(base) },
-        { pos: 100, color: hex(end) },
-      ],
-    },
-  };
-}
-
 export type SlideSurfaceRole = 'base' | 'tint' | 'dark';
 export type SlideFunction = 'cover' | 'contents' | 'transition' | 'content' | 'end';
 
 export interface SlideSurface {
   role: SlideSurfaceRole;
-  /** Solid colour of the surface; light roles are softened into a gradient by the platform. */
+  /** Solid colour of the surface, applied as is by the platform. */
   color: string;
   text: string;
   textSecondary: string;
@@ -344,19 +316,9 @@ export function resolveSlideSurface(
   };
 }
 
-/** Background the platform imposes for a surface: dark stays solid, light roles get the soft gradient. */
-export function buildSurfaceBackground(
-  surface: SlideSurface,
-  theme: Pick<SlideTheme, 'backgroundColor' | 'themeColors'> | undefined,
-): SlideBackground {
-  const solid: SlideBackground = { type: 'solid', color: surface.color };
-  if (surface.role === 'dark') return solid;
-  return (
-    buildSoftBackground(solid, {
-      backgroundColor: surface.color,
-      themeColors: theme?.themeColors ?? [surface.accent],
-    }) ?? solid
-  );
+/** Background the platform imposes for a surface: always solid (brief §3.8, a gradient is reserved to one punchline per deck). */
+export function buildSurfaceBackground(surface: SlideSurface): SlideBackground {
+  return { type: 'solid', color: surface.color };
 }
 
 /** Neutral Qalem theme for opted-in courses that have no tenant charter. */
