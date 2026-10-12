@@ -7,6 +7,8 @@ const CRAWL_TIMEOUT_MS = 30_000;
 const STYLESHEET_TIMEOUT_MS = 10_000;
 const STYLESHEET_MAX_CHARS = 1_500_000;
 const STYLESHEET_MAX_COUNT = 8;
+const PAGE_MAX_CHARS = 3_000_000;
+const MAX_REDIRECTS = 3;
 /** Framework and vendor sheets carry their own palette, never the tenant's. */
 const VENDOR_STYLESHEET =
   /bootstrap|fontawesome|font-awesome|animate|swiper|slick|owl\.|normalize|dashicons|wp-includes|magnific|fancybox|\baos\b|jquery/iu;
@@ -78,9 +80,9 @@ async function screenshotColors(base64: string): Promise<string[]> {
   const counts = new Map<string, number>();
   for (let index = 0; index < data.length; index += info.channels) {
     const color = rgbToHex(
-      Math.min(255, Math.round(data[index] / 24) * 24),
-      Math.min(255, Math.round(data[index + 1] / 24) * 24),
-      Math.min(255, Math.round(data[index + 2] / 24) * 24),
+      Math.min(255, Math.round(data[index] / 8) * 8),
+      Math.min(255, Math.round(data[index + 1] / 8) * 8),
+      Math.min(255, Math.round(data[index + 2] / 8) * 8),
     );
     counts.set(color, (counts.get(color) ?? 0) + 1);
   }
@@ -97,6 +99,35 @@ function sameSite(candidate: URL, site: URL): boolean {
   return host === base || host.endsWith(`.${base}`);
 }
 
+/**
+ * Fetches a public page or stylesheet, checking the SSRF guard on the URL and on every redirect:
+ * the guard is never skipped because a server answered with a 3xx.
+ */
+async function fetchGuarded(
+  url: string,
+  timeoutMs: number,
+  maxChars: number,
+): Promise<{ text: string; url: string }> {
+  let current = url;
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
+    const ssrfError = await validateUrlForSSRF(current);
+    if (ssrfError) throw new Error(ssrfError);
+    const response = await fetch(current, {
+      redirect: 'manual',
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; QalemBrandReader/1.0)' },
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    const location = response.headers.get('location');
+    if (response.status >= 300 && response.status < 400 && location) {
+      current = new URL(location, current).toString();
+      continue;
+    }
+    if (!response.ok) throw new Error(`${current} returned ${response.status}`);
+    return { text: (await response.text()).slice(0, maxChars), url: current };
+  }
+  throw new Error(`Too many redirects for ${url}`);
+}
+
 /** The site's own stylesheets, fetched through the same SSRF guard as the page itself. */
 async function ownStylesheets(html: string, pageUrl: string): Promise<string[]> {
   const site = new URL(pageUrl);
@@ -109,13 +140,11 @@ async function ownStylesheets(html: string, pageUrl: string): Promise<string[]> 
     if (!hrefs.includes(url)) hrefs.push(url);
   }
   const sheets = await Promise.allSettled(
-    hrefs.slice(0, STYLESHEET_MAX_COUNT).map(async (url) => {
-      const ssrfError = await validateUrlForSSRF(url);
-      if (ssrfError) throw new Error(ssrfError);
-      const response = await fetch(url, { signal: AbortSignal.timeout(STYLESHEET_TIMEOUT_MS) });
-      if (!response.ok) throw new Error(`Stylesheet ${url} returned ${response.status}`);
-      return (await response.text()).slice(0, STYLESHEET_MAX_CHARS);
-    }),
+    hrefs
+      .slice(0, STYLESHEET_MAX_COUNT)
+      .map(
+        async (url) => (await fetchGuarded(url, STYLESHEET_TIMEOUT_MS, STYLESHEET_MAX_CHARS)).text,
+      ),
   );
   return sheets.flatMap((sheet) => (sheet.status === 'fulfilled' ? [sheet.value] : []));
 }
@@ -137,12 +166,16 @@ export async function extractOrganizationDesignSystem(
   ]);
   const html = htmlResult.html ?? '';
   if (!html) throw new Error('Crawl4AI returned no HTML');
+  // The crawler answers a cleaned page without <link> or <style>: the design decisions of the
+  // site (stylesheets, theme colour, font links) live in its raw markup, read separately.
+  const raw = await fetchGuarded(normalizedUrl, CRAWL_TIMEOUT_MS, PAGE_MAX_CHARS).catch(() => null);
+  const markup = raw?.text ?? html;
   const [css, renderedColors] = await Promise.all([
-    ownStylesheets(html, normalizedUrl),
+    ownStylesheets(markup, raw?.url ?? normalizedUrl),
     screenshotResult.screenshot ? screenshotColors(screenshotResult.screenshot) : [],
   ]);
-  const brand = extractBrandFromSources({ html, css, screenshotColors: renderedColors });
-  const allCss = [html, ...css].join('\n');
+  const brand = extractBrandFromSources({ html: markup, css, screenshotColors: renderedColors });
+  const allCss = [markup, ...css].join('\n');
   const radii = allCss.match(/border-radius\s*:\s*([^;}]+)/gi) ?? [];
   const hasShadows = /box-shadow\s*:/i.test(allCss);
   const hasGrid = /display\s*:\s*grid|grid-template|\bgrid\b/i.test(allCss);
