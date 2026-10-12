@@ -78,7 +78,7 @@ export function buildSlideDesignPromptContext(input: {
     slideType,
     surface,
     surfaceContext: surface
-      ? `Slide surface fixed by the platform (do not change it): ${surface.role} ${surface.color}. On it use text ${surface.text}, secondary text ${surface.textSecondary}, accent ${surface.accent}, cards ${surface.card}. The platform renders the background: set \`background\` to this solid colour.`
+      ? `Slide surface fixed by the platform (do not change it): ${surface.role} ${surface.color}. On it use text ${surface.text}, secondary text ${surface.textSecondary}, accent ${surface.accent}. Cards: fill ${surface.card} with opacity ${surface.cardOpacity}. Banners: fill ${surface.band} with text ${surface.bandText} only. The platform renders the background: set \`background\` to this solid colour.`
       : '',
     designDirectiveContext: directiveContext,
     brandSnapshotContext: hasSnapshot

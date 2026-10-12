@@ -4,6 +4,7 @@ import { useRef, useState, useLayoutEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSceneSelector } from '@/lib/contexts/scene-context';
 import { useCanvasStore } from '@/lib/store/canvas';
+import { SPOTLIGHT_DEFAULT_DIMNESS } from '@/lib/action/spotlight-defaults';
 import type { SlideContent } from '@/lib/types/stage';
 import type { PPTElement } from '@openmaic/dsl';
 
@@ -80,7 +81,7 @@ export function SpotlightOverlay({ domIdPrefix = 'screen-element-' }: SpotlightO
   }, [measure, elements]);
 
   const active = !!spotlightElementId && !!spotlightOptions && !!rect;
-  const dimness = spotlightOptions?.dimness ?? 0.7;
+  const dimness = spotlightOptions?.dimness ?? SPOTLIGHT_DEFAULT_DIMNESS;
 
   return (
     <div
@@ -111,11 +112,11 @@ export function SpotlightOverlay({ domIdPrefix = 'screen-element-' }: SpotlightO
                   <motion.rect
                     fill="black"
                     initial={{
-                      x: rect.x - 8,
-                      y: rect.y - 8,
-                      width: rect.w + 16,
-                      height: rect.h + 16,
-                      rx: 4,
+                      x: rect.x - 2,
+                      y: rect.y - 2,
+                      width: rect.w + 4,
+                      height: rect.h + 4,
+                      rx: 2,
                     }}
                     animate={{
                       x: rect.x - 0.4,
@@ -125,7 +126,7 @@ export function SpotlightOverlay({ domIdPrefix = 'screen-element-' }: SpotlightO
                       rx: 1,
                     }}
                     transition={{
-                      duration: 0.6,
+                      duration: 0.35,
                       ease: [0.16, 1, 0.3, 1],
                     }}
                   />
@@ -148,10 +149,10 @@ export function SpotlightOverlay({ domIdPrefix = 'screen-element-' }: SpotlightO
               {/* THE ONE BORDER - white border */}
               <motion.rect
                 initial={{
-                  x: rect.x - 4,
-                  y: rect.y - 4,
-                  width: rect.w + 8,
-                  height: rect.h + 8,
+                  x: rect.x - 1.5,
+                  y: rect.y - 1.5,
+                  width: rect.w + 3,
+                  height: rect.h + 3,
                   opacity: 0,
                   rx: 2,
                 }}
@@ -168,7 +169,7 @@ export function SpotlightOverlay({ domIdPrefix = 'screen-element-' }: SpotlightO
                 strokeWidth="1.2"
                 style={{ vectorEffect: 'non-scaling-stroke' } as React.CSSProperties}
                 transition={{
-                  duration: 0.5,
+                  duration: 0.3,
                   delay: 0.05,
                   ease: [0.16, 1, 0.3, 1],
                 }}

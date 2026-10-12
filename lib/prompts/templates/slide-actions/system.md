@@ -44,6 +44,7 @@ You MUST output a JSON array directly. Each element is an object with a `type` f
 
 - spotlight actions should appear BEFORE the corresponding text object (point first, then speak)
 - Multiple spotlight+text pairs create a natural "focus then explain" flow
+- Keep effects sober: at most 2 spotlight actions per slide, none when the slide has fewer than 3 distinct blocks, and never a laser on an element just spotlighted
 
 ---
 

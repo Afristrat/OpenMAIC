@@ -290,6 +290,41 @@ function opaqueBackingShapes(elements: PPTElement[]) {
   );
 }
 
+/**
+ * Colours a text really sits on: the slide background, then every filled shape drawn under
+ * it that covers most of the text (cards, banners). A translucent shape is blended over
+ * what lies beneath, an opaque one replaces it.
+ */
+function backdropSamples(
+  elements: PPTElement[],
+  range: { minX: number; maxX: number; minY: number; maxY: number },
+  slideSamples: string[],
+): string[] {
+  let samples = slideSamples;
+  if (!samples.length) return samples;
+  const area = Math.max(1, (range.maxX - range.minX) * (range.maxY - range.minY));
+  for (const candidate of elements) {
+    if (candidate.type !== 'shape') continue;
+    const fill = normalizeColor(candidate.fill);
+    if (!fill) continue;
+    const overlapWidth =
+      Math.min(range.maxX, candidate.left + candidate.width) - Math.max(range.minX, candidate.left);
+    const overlapHeight =
+      Math.min(range.maxY, candidate.top + candidate.height) - Math.max(range.minY, candidate.top);
+    if (overlapWidth <= 0 || overlapHeight <= 0 || (overlapWidth * overlapHeight) / area < 0.6) {
+      continue;
+    }
+    const alpha = candidate.opacity ?? 1;
+    samples =
+      alpha >= 1
+        ? [fill]
+        : [
+            ...new Set(samples.map((sample) => tinycolor.mix(sample, fill, alpha * 100).toHex())),
+          ].map((hexValue) => `#${hexValue.toUpperCase()}`);
+  }
+  return samples;
+}
+
 function bestPaletteColor(color: string, palette: string[]) {
   return palette
     .map((candidate) => ({ color: candidate, distance: getCiede2000(color, candidate) }))
@@ -484,7 +519,7 @@ export function lintAndRepairAdaptiveSlide(
 ): AdaptiveSlideLintResult {
   const thresholds = {
     textContrast: 4.5,
-    largeTextContrast: 3,
+    largeTextContrast: 4.5,
     uiContrast: 3,
     maxBlocks: 6,
     maxWords: 50,
@@ -645,7 +680,7 @@ export function lintAndRepairAdaptiveSlide(
                       candidate.top + candidate.height >= elementRange.maxY,
                   )
                   .map((candidate) => normalizeColor(candidate.fill)!)
-              : backgrounds;
+              : backdropSamples(repairedSlide.elements.slice(0, index), elementRange, backgrounds);
       if (
         effectiveBackgrounds.length &&
         effectiveBackgrounds.some(

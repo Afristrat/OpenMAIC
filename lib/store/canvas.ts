@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { SPOTLIGHT_DEFAULT_DIMNESS } from '@/lib/action/spotlight-defaults';
 import { createSelectors } from '@/lib/utils/create-selectors';
 import type { TextAttrs } from '@/lib/prosemirror/utils';
 import { defaultRichTextAttrs } from '@/lib/prosemirror/utils';
@@ -381,7 +382,7 @@ const useCanvasStoreBase = create<CanvasState>((set, get) => ({
       spotlightMode: 'pixel',
       spotlightOptions: {
         radius: 200,
-        dimness: 0.7,
+        dimness: SPOTLIGHT_DEFAULT_DIMNESS,
         transition: 300,
         ...options,
       },
@@ -395,7 +396,7 @@ const useCanvasStoreBase = create<CanvasState>((set, get) => ({
       spotlightMode: 'percentage',
       spotlightPercentageGeometry: geometry,
       spotlightOptions: {
-        dimness: 0.7,
+        dimness: SPOTLIGHT_DEFAULT_DIMNESS,
         transition: 300,
         ...options,
       },

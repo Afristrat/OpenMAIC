@@ -178,7 +178,9 @@ describe('course design directive', () => {
 
   it('uses a neutral Inter theme by default and a directive-selected font when present', () => {
     const defaultTheme = buildSlideTheme();
-    expect(defaultTheme.backgroundColor).toBe('#FAFBFC');
+    expect(defaultTheme.backgroundColor).toBe(
+      buildPalette(DEFAULT_DESIGN_DIRECTIVE)['surface.base'],
+    );
     expect(defaultTheme.fontName).toBe('Inter');
     expect(defaultTheme.themeColors).toEqual([
       buildPalette(DEFAULT_DESIGN_DIRECTIVE)['accent.primary'],
@@ -240,15 +242,25 @@ describe('resolveSlideSurface', () => {
     expect(resolveSlideSurface('end', directive).role).toBe('dark');
   });
 
-  it('keeps the tenant background for the base role and derives tint and dark', () => {
-    const brand = {
+  it('replaces a white tenant background by the pastel wash and keeps a coloured one', () => {
+    const white = {
       version: 1 as const,
       createdAt: '2026-10-12T00:00:00.000Z',
       content: 'colors: background=#FFFFFF surface=#F0F0F0 ink=#111827 accent=#0A72A1',
     };
-    expect(resolveSlideSurface('content', directive, brand).color).toBe('#FFFFFF');
-    expect(resolveSlideSurface('cover', directive, brand).color).not.toBe('#FFFFFF');
-    expect(resolveSlideSurface('end', directive, brand).color).not.toBe('#FFFFFF');
+    const wash = buildPalette(directive)['surface.base'];
+    expect(resolveSlideSurface('content', directive, white).color).toBe(wash);
+    expect(resolveSlideSurface('cover', directive, white).color).not.toBe('#FFFFFF');
+    expect(resolveSlideSurface('end', directive, white).color).not.toBe('#FFFFFF');
+    const cream = { ...white, content: 'colors: background=#F3EEE2 ink=#111827 accent=#0A72A1' };
+    expect(resolveSlideSurface('content', directive, cream).color).toBe('#F3EEE2');
+  });
+
+  it('announces cards that let the pastel show through and a banner with its own text', () => {
+    const light = resolveSlideSurface('content', directive);
+    expect(light.cardOpacity).toBeLessThan(1);
+    expect(light.band).not.toBe(light.bandText);
+    expect(resolveSlideSurface('end', directive).cardOpacity).toBe(1);
   });
 
   it('imposes a solid background on every surface, gradients being reserved to one punchline', () => {

@@ -3,7 +3,7 @@ import type { Slide } from '@openmaic/dsl';
 
 import { auditSlideLayout } from '@/lib/edit/slide-layout-audit';
 import { generateSceneContent } from '@/lib/generation/scene-generator';
-import { DEFAULT_DESIGN_DIRECTIVE } from '@/lib/branding/design-directive';
+import { DEFAULT_DESIGN_DIRECTIVE, buildPalette } from '@/lib/branding/design-directive';
 import type { SceneOutline } from '@/lib/types/generation';
 import type { AICallFn, DesignEventRecorder } from '@/lib/generation/pipeline-types';
 import { setAICallDesignEventRecorder } from '@/lib/generation/pipeline-types';
@@ -85,7 +85,10 @@ describe('slide layout fallback', () => {
 
     expect(content).not.toBeNull();
     if (!content || !('elements' in content)) return;
-    expect(content.background).toEqual({ type: 'solid', color: '#F7F8FA' });
+    expect(content.background).toEqual({
+      type: 'solid',
+      color: buildPalette(DEFAULT_DESIGN_DIRECTIVE)['surface.tint'],
+    });
     const title = content.elements.find((element) => element.name === 'title');
     expect(title).toMatchObject({
       left: 72,

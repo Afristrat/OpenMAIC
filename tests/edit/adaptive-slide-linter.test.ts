@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import tinycolor from 'tinycolor2';
 import type { Slide, Stage } from '@openmaic/dsl';
 import { DEFAULT_DESIGN_DIRECTIVE, buildPalette } from '@/lib/branding/design-directive';
 import {
@@ -100,10 +101,11 @@ describe('adaptive slide linter', () => {
 
   test('maps a near-palette value and rejects a distant value', () => {
     const near = structuredClone(slide);
+    const nearColor = tinycolor(palette['text.primary']).lighten(1).toHexString().toUpperCase();
     near.elements[1] = {
       ...textElementAt(near, 1),
-      defaultColor: '#262A31',
-      content: '<p style="font-size:18px;color:#262A31">Near palette</p>',
+      defaultColor: nearColor,
+      content: `<p style="font-size:18px;color:${nearColor}">Near palette</p>`,
     };
     const nearResult = lintAndRepairAdaptiveSlide(near, options);
     const repaired = nearResult.slide.elements[1];
@@ -111,7 +113,7 @@ describe('adaptive slide linter', () => {
       expect.objectContaining({ ruleId: 'R-PALETTE', repaired: true }),
     );
     expect(repaired?.type).toBe('text');
-    if (repaired?.type === 'text') expect(repaired.content).not.toContain('#262A31');
+    if (repaired?.type === 'text') expect(repaired.content).not.toContain(nearColor);
 
     const distant = structuredClone(slide);
     distant.elements[1] = { ...textElementAt(distant, 1), defaultColor: '#FF0000' };
@@ -289,5 +291,53 @@ describe('adaptive slide linter', () => {
       expect.objectContaining({ ruleId: 'R-GRADIENT-ONLY-BG', severity: 'error' }),
     );
     expect(issues.some((issue) => issue.ruleId === 'R-OVERLAP')).toBe(false);
+  });
+  test('measures the contrast of a text against the card or banner it sits on', () => {
+    const banner = structuredClone(slide);
+    banner.elements = [
+      {
+        id: 'banner',
+        type: 'shape',
+        name: 'card-bg',
+        left: 80,
+        top: 300,
+        width: 840,
+        height: 120,
+        rotate: 0,
+        viewBox: [200, 200],
+        path: 'M 0 0 L 200 0 L 200 200 L 0 200 Z',
+        fill: palette['surface.dark'],
+        fixedRatio: false,
+      },
+      {
+        ...textElementAt(slide, 1),
+        id: 'on-banner',
+        top: 320,
+        height: 60,
+        defaultColor: '#666666',
+        content: '<p style="font-size:18px;color:#666666">Grey text on a dark banner</p>',
+      },
+    ];
+    const result = lintAndRepairAdaptiveSlide(banner, options);
+    const repaired = result.slide.elements.find((element) => element.id === 'on-banner');
+    expect(repaired?.type === 'text' ? repaired.defaultColor : '').not.toBe('#666666');
+    if (repaired?.type === 'text') {
+      expect(
+        getWcagContrast(repaired.defaultColor, palette['surface.dark']),
+      ).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  test('requires the same contrast for large text as for body text', () => {
+    const large = structuredClone(slide);
+    large.elements[0] = {
+      ...textElementAt(large, 0),
+      defaultColor: '#8A9A98',
+      content: '<p style="font-size:36px;color:#8A9A98">Pale large title</p>',
+    };
+    expect(getWcagContrast('#8A9A98', palette['surface.base'])).toBeLessThan(4.5);
+    expect(lintAndRepairAdaptiveSlide(large, options).issues).toContainEqual(
+      expect.objectContaining({ ruleId: 'R-CONTRAST-TEXT' }),
+    );
   });
 });

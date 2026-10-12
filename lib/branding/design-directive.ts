@@ -70,12 +70,12 @@ export const DEFAULT_DESIGN_DIRECTIVE: DesignDirective = {
   source: 'derived',
   tone: 'sober',
   density: 'balanced',
-  seed: { hueFamily: 'neutral', chromaLevel: 'low' },
+  seed: { hueFamily: 'teal', chromaLevel: 'low' },
   palette: null,
   typography: { heading: 'Inter', body: 'Inter', scaleShift: 0 },
   grid: { margin: 72 },
   shapes: { radius: 0, stroke: 'none' },
-  surfacePlan: { content: 'base', engagement: 'tint', punchline: 'none' },
+  surfacePlan: { content: 'tint', engagement: 'dark', punchline: 'none' },
   accentSequence: 'primary-only',
   forbidden: [],
   notes: '',
@@ -197,10 +197,14 @@ function hex(color: tinycolor.Instance): string {
   return color.toHexString().toUpperCase();
 }
 
-function textColorOnLight(seed: tinycolor.Instance, backgrounds: tinycolor.Instance[]): string {
+function textColorOnLight(
+  seed: tinycolor.Instance,
+  backgrounds: tinycolor.Instance[],
+  target = 4.5,
+): string {
   let candidate = seed;
   for (let step = 0; step < 50; step += 1) {
-    if (backgrounds.every((background) => tinycolor.readability(candidate, background) >= 4.5)) {
+    if (backgrounds.every((background) => tinycolor.readability(candidate, background) >= target)) {
       return hex(candidate);
     }
     candidate = candidate.darken(2);
@@ -217,25 +221,31 @@ function textColorOnDark(seed: tinycolor.Instance, background: tinycolor.Instanc
   return '#FFFFFF';
 }
 
+/**
+ * Share of the accent colour kept when it is laid over white: the transparency rate of the
+ * pastel surfaces. The base wash is barely tinted, the tint is visibly turquoise or sky blue.
+ */
+export const SURFACE_WASH_ALPHA = { base: 0.09, tint: 0.25 } as const;
+
+/** Opacity of the white cards laid on a light surface, so the pastel shows through. */
+export const LIGHT_CARD_OPACITY = 0.72;
+
+function wash(accent: tinycolor.Instance, alpha: number): tinycolor.Instance {
+  return tinycolor.mix('#FFFFFF', accent, alpha * 100);
+}
+
 export function buildPalette(directive: Pick<DesignDirective, 'seed' | 'tone'>): DesignPalette {
   const hue = HUE_DEGREES[directive.seed.hueFamily];
-  const chroma = directive.seed.chromaLevel === 'mid' ? 24 : 12;
-  const base = tinycolor('#FAFBFC');
-  const tint = tinycolor({ h: hue, s: chroma, l: 96 });
-  const dark = tinycolor({ h: hue, s: Math.max(chroma, 28), l: 25 });
+  const mid = directive.seed.chromaLevel === 'mid';
+  const washSeed = tinycolor({ h: hue, s: mid ? 70 : 48, l: 50 });
+  const base = wash(washSeed, SURFACE_WASH_ALPHA.base);
+  const tint = wash(washSeed, SURFACE_WASH_ALPHA.tint);
+  const dark = tinycolor({ h: hue, s: mid ? 48 : 38, l: 20 });
   const lightSurfaces = [base, tint];
-  const primaryCandidate = tinycolor({ h: hue, s: Math.max(chroma + 30, 48), l: 47 });
-  const secondaryCandidate = tinycolor({
-    h: (hue + 28) % 360,
-    s: Math.max(chroma + 22, 42),
-    l: 43,
-  });
-  const achievementCandidate = tinycolor({
-    h: (hue + 132) % 360,
-    s: Math.max(chroma + 20, 40),
-    l: 39,
-  });
-  const onDark = tinycolor('#E4E8F0');
+  const primaryCandidate = tinycolor({ h: hue, s: mid ? 66 : 52, l: 34 });
+  const secondaryCandidate = tinycolor({ h: (hue + 27) % 360, s: mid ? 58 : 46, l: 36 });
+  const achievementCandidate = tinycolor({ h: (hue + 324) % 360, s: mid ? 56 : 44, l: 32 });
+  const onDark = wash(washSeed, 0.1);
 
   return {
     'surface.base': hex(base),
@@ -243,16 +253,16 @@ export function buildPalette(directive: Pick<DesignDirective, 'seed' | 'tone'>):
     'surface.dark': hex(dark),
     'surface.card.onBase': '#FFFFFF',
     'surface.card.onTint': '#FFFFFF',
-    'surface.card.onDark': hex(tinycolor({ h: hue, s: Math.max(chroma, 28), l: 31 })),
-    'text.primary': textColorOnLight(tinycolor('#252A31'), lightSurfaces),
-    'text.secondary': textColorOnLight(tinycolor('#4B5563'), lightSurfaces),
+    'surface.card.onDark': hex(tinycolor({ h: hue, s: mid ? 44 : 36, l: 28 })),
+    'text.primary': textColorOnLight(tinycolor({ h: hue, s: 38, l: 13 }), lightSurfaces, 7),
+    'text.secondary': textColorOnLight(tinycolor({ h: hue, s: 24, l: 30 }), lightSurfaces, 5.5),
     'text.onDark': '#FFFFFF',
     'text.onDark.secondary': textColorOnDark(onDark, dark),
     'accent.primary': textColorOnLight(primaryCandidate, lightSurfaces),
     'accent.secondary': textColorOnLight(secondaryCandidate, lightSurfaces),
     'accent.achievement': textColorOnLight(achievementCandidate, lightSurfaces),
-    'accent.onDark': textColorOnDark(primaryCandidate, dark),
-    'border.hairline': '#D7DDE5',
+    'accent.onDark': textColorOnDark(wash(washSeed, 0.55), dark),
+    'border.hairline': hex(wash(washSeed, 0.4)),
     'functional.correct': textColorOnLight(tinycolor('#176B3A'), lightSurfaces),
     'functional.incorrect': textColorOnLight(tinycolor('#A12828'), lightSurfaces),
     'functional.warning': textColorOnLight(tinycolor('#805000'), lightSurfaces),
@@ -271,6 +281,11 @@ export interface SlideSurface {
   textSecondary: string;
   accent: string;
   card: string;
+  /** Opacity of the cards on this surface: the pastel shows through on light surfaces. */
+  cardOpacity: number;
+  /** Fill of the banners (bandeaux) and the colour of the text laid on them. */
+  band: string;
+  bandText: string;
 }
 
 /**
@@ -290,11 +305,9 @@ export function resolveSlideSurface(
   const role: SlideSurfaceRole =
     slideFunction === 'cover'
       ? 'tint'
-      : slideFunction === 'contents'
-        ? 'base'
-        : slideFunction === 'content'
-          ? plan.content
-          : plan.engagement;
+      : slideFunction === 'contents' || slideFunction === 'content'
+        ? plan.content
+        : plan.engagement;
   if (role === 'dark') {
     return {
       role,
@@ -303,16 +316,22 @@ export function resolveSlideSurface(
       textSecondary: palette['text.onDark.secondary'],
       accent: palette['accent.onDark'],
       card: palette['surface.card.onDark'],
+      cardOpacity: 1,
+      band: palette['surface.card.onDark'],
+      bandText: palette['text.onDark'],
     };
   }
   return {
     role,
     color:
-      role === 'tint' ? palette['surface.tint'] : (brand.background ?? palette['surface.base']),
+      role === 'tint' ? palette['surface.tint'] : (brandPaper(brand) ?? palette['surface.base']),
     text: brand.ink ?? palette['text.primary'],
     textSecondary: palette['text.secondary'],
     accent: brand.accent ?? palette['accent.primary'],
     card: role === 'tint' ? palette['surface.card.onTint'] : palette['surface.card.onBase'],
+    cardOpacity: LIGHT_CARD_OPACITY,
+    band: palette['surface.dark'],
+    bandText: palette['text.onDark'],
   };
 }
 
@@ -338,6 +357,18 @@ function snapshotDesignTokens(
   return { colors, ...(fontName ? { fontName } : {}) };
 }
 
+/**
+ * A (near-)white or grey brand background carries no colour decision, typically a site
+ * extracted by default: the pastel wash of the palette replaces it. A coloured brand
+ * background is a deliberate choice and always wins.
+ */
+function brandPaper(colors: Record<string, string>): string | undefined {
+  const candidate = colors.background ?? colors.surface;
+  if (!candidate) return undefined;
+  const { s, l } = tinycolor(candidate).toHsl();
+  return s < 0.12 && l > 0.9 ? undefined : candidate;
+}
+
 export function buildSlideTheme(
   directive?: DesignDirective,
   brandSnapshot?: import('@openmaic/dsl').Stage['brandSnapshot'],
@@ -354,7 +385,7 @@ export function buildSlideTheme(
     palette['functional.incorrect'],
   ];
   return {
-    backgroundColor: colors.background ?? colors.surface ?? palette['surface.base'],
+    backgroundColor: brandPaper(colors) ?? palette['surface.base'],
     themeColors: [...new Set(themeColors)],
     fontColor: colors.ink ?? palette['text.primary'],
     fontName: brand.fontName ?? selected.typography.heading,

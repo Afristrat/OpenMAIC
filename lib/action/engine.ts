@@ -10,6 +10,7 @@
  */
 
 import type { StageStore } from '@/lib/api/stage-api';
+import { SPOTLIGHT_DEFAULT_DIMNESS } from '@/lib/action/spotlight-defaults';
 import { createStageAPI } from '@/lib/api/stage-api';
 import { useCanvasStore } from '@/lib/store/canvas';
 import { useWhiteboardHistoryStore } from '@/lib/store/whiteboard-history';
@@ -208,7 +209,7 @@ export class ActionEngine {
 
   private executeSpotlight(action: SpotlightAction): void {
     useCanvasStore.getState().setSpotlight(action.elementId, {
-      dimness: action.dimOpacity ?? 0.5,
+      dimness: action.dimOpacity ?? SPOTLIGHT_DEFAULT_DIMNESS,
     });
     this.scheduleEffectClear();
   }
