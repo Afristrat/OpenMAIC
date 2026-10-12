@@ -1,3 +1,4 @@
+import { normalizeDesignTuning } from '@/lib/branding/design-tuning';
 import { type NextRequest } from 'next/server';
 import { requireSuperAdminOrOrgAdmin } from '@/lib/api/auth';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
@@ -63,7 +64,30 @@ export async function PATCH(
       designSystem?: unknown;
       logoUrl?: unknown;
       designSystemEnabled?: unknown;
+      designTuning?: unknown;
     };
+    if (body.designTuning && typeof body.designTuning === 'object') {
+      const supabase = createServiceSupabaseClient();
+      const { data: organization, error: readError } = await supabase
+        .from('organizations')
+        .select('settings')
+        .eq('id', orgId)
+        .single();
+      if (readError || !organization) {
+        return apiError('INVALID_REQUEST', 404, 'Organization not found');
+      }
+      const designTuning = normalizeDesignTuning(body.designTuning);
+      const settings = {
+        ...((organization.settings as Record<string, unknown> | null) ?? {}),
+        designTuning,
+      };
+      const { error: updateError } = await supabase
+        .from('organizations')
+        .update({ settings })
+        .eq('id', orgId);
+      if (updateError) return apiError('INTERNAL_ERROR', 500, updateError.message);
+      return apiSuccess({ designTuning });
+    }
     if (typeof body.designSystemEnabled === 'boolean') {
       const supabase = createServiceSupabaseClient();
       const { data: organization, error: readError } = await supabase

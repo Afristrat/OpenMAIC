@@ -1,6 +1,7 @@
 import type { Stage } from '@openmaic/dsl';
 import { DESIGN_FONTS } from '@openmaic/dsl';
 import tinycolor from 'tinycolor2';
+import { parseDesignTuning } from './design-tuning';
 import {
   buildPalette,
   DEFAULT_DESIGN_DIRECTIVE,
@@ -70,7 +71,7 @@ export function buildInteractiveDesignTokens(
   const directive = directiveInput
     ? normalizeDesignDirective(directiveInput).directive
     : DEFAULT_DESIGN_DIRECTIVE;
-  const palette = buildPalette(directive);
+  const palette = buildPalette(directive, parseDesignTuning(snapshot?.content));
   const brand = snapshotColors(snapshot);
   const headingFont = snapshotFont(snapshot) ?? directive.typography.heading;
   const bodyFont = directive.typography.body;

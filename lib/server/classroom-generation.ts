@@ -97,6 +97,7 @@ import {
   DEFAULT_LEARNING_CONTEXT,
   normalizeLearningContext,
 } from '@/lib/formation-engine/learning-context';
+import { DEFAULT_DESIGN_TUNING, designTuningFromSettings } from '@/lib/branding/design-tuning';
 import {
   organizationDesignSystemFromSettings,
   serializeBrandSnapshot,
@@ -304,6 +305,7 @@ export async function generateClassroom(
   let learnerCastingProfile: LearnerCastingProfile = { culture: 'ma-fr', preferences: {} };
   let organizationDesignSystem: OrganizationDesignSystem | undefined;
   let designSystemEnabled = false;
+  let designTuning = DEFAULT_DESIGN_TUNING;
   try {
     const supabase = createServiceSupabaseClient();
     const [{ data: organization }, { data: profile }] = await Promise.all([
@@ -317,6 +319,7 @@ export async function generateClassroom(
     teachingProfile = teachingProfileFromSettings(organization?.settings);
     organizationDesignSystem = organizationDesignSystemFromSettings(organization?.settings);
     designSystemEnabled = isDesignSystemV1Enabled(organization?.settings);
+    designTuning = designTuningFromSettings(organization?.settings);
     learningDesign = {
       ...learningDesignFromSettings(organization?.settings),
       interactionLevel: input.interactionLevel,
@@ -661,7 +664,7 @@ export async function generateClassroom(
     : undefined;
   const brandSnapshotContent =
     designSystemEnabled && organizationDesignSystem
-      ? serializeBrandSnapshot(organizationDesignSystem)
+      ? serializeBrandSnapshot(organizationDesignSystem, designTuning)
       : undefined;
   if (brandSnapshotContent?.warnings.length) {
     for (const warning of brandSnapshotContent.warnings) {

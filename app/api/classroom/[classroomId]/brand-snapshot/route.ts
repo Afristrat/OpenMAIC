@@ -3,6 +3,7 @@ import { requireSuperAdminOrOrgEditor } from '@/lib/api/auth';
 import { API_ERROR_CODES, apiError, apiSuccess } from '@/lib/server/api-response';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { isDesignSystemV1Enabled } from '@/lib/branding/design-directive';
+import { designTuningFromSettings } from '@/lib/branding/design-tuning';
 import {
   organizationDesignSystemFromSettings,
   serializeBrandSnapshot,
@@ -64,7 +65,10 @@ export async function POST(
       );
     }
 
-    const serialized = serializeBrandSnapshot(designSystem);
+    const serialized = serializeBrandSnapshot(
+      designSystem,
+      designTuningFromSettings(organization.settings),
+    );
     const brandSnapshot = {
       version: 1 as const,
       createdAt: new Date().toISOString(),

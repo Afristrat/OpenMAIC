@@ -49,6 +49,12 @@ import {
   type PresentationBrandMode,
 } from '@/lib/branding/presentation-branding';
 import {
+  DEFAULT_DESIGN_TUNING,
+  DESIGN_TUNING_LIMITS,
+  designTuningFromSettings,
+  type DesignTuning,
+} from '@/lib/branding/design-tuning';
+import {
   organizationDesignSystemFromSettings,
   type OrganizationDesignSystem,
 } from '@/lib/branding/organization-design-system';
@@ -112,6 +118,8 @@ export default function OrgAdminPage() {
   const [brandWebsiteUrl, setBrandWebsiteUrl] = useState('');
   const [brandDesignSystem, setBrandDesignSystem] = useState<OrganizationDesignSystem>();
   const [designSystemEnabled, setDesignSystemEnabled] = useState(false);
+  const [designTuning, setDesignTuning] = useState<DesignTuning>(DEFAULT_DESIGN_TUNING);
+  const [savingDesignTuning, setSavingDesignTuning] = useState(false);
   const [designMetrics, setDesignMetrics] = useState<{
     calls: number;
     layoutFallbacks: number;
@@ -173,6 +181,7 @@ export default function OrgAdminPage() {
         features?: { design_system_v1?: unknown };
       } | null;
       setDesignSystemEnabled(organizationSettings?.features?.design_system_v1 === true);
+      setDesignTuning(designTuningFromSettings(orgData.settings));
       setBrandWebsiteUrl(savedDesignSystem?.sourceUrl ?? '');
       setPresentationBrandMode(
         presentationBrandingFromOrganization(orgData.logo, orgData.settings).mode,
@@ -234,6 +243,24 @@ export default function OrgAdminPage() {
       setDesignMetrics(undefined);
     }
   }, [orgId]);
+
+  const handleDesignTuningSave = async () => {
+    if (!isAdmin) return;
+    setSavingDesignTuning(true);
+    try {
+      const response = await fetch(`/api/organizations/${orgId}/brand-system`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ designTuning }),
+      });
+      if (!response.ok) throw new Error(t('org.designSystemSaveFailed'));
+      toast.success(t('org.designTuningSaved'));
+    } catch {
+      toast.error(t('org.designSystemSaveFailed'));
+    } finally {
+      setSavingDesignTuning(false);
+    }
+  };
 
   const handleDesignSystemToggle = async () => {
     if (!isAdmin) return;
@@ -597,6 +624,60 @@ export default function OrgAdminPage() {
                 ? t('common.loading')
                 : t(designSystemEnabled ? 'org.designSystemTurnOff' : 'org.designSystemTurnOn')}
             </Button>
+          </div>
+          <div className="mt-5 rounded-md border p-4" aria-labelledby="design-tuning-title">
+            <h3 id="design-tuning-title" className="text-sm font-medium">
+              {t('org.designTuningTitle')}
+            </h3>
+            <p className="mt-1 text-xs text-muted-foreground">{t('org.designTuningDescription')}</p>
+            <div className="mt-3 grid gap-4 sm:grid-cols-3">
+              {(
+                [
+                  ['tintStrength', 'org.designTuningTint'],
+                  ['cardOpacity', 'org.designTuningCards'],
+                  ['spotlightDimness', 'org.designTuningSpotlight'],
+                ] as const
+              ).map(([key, label]) => (
+                <label key={key} className="flex flex-col gap-1 text-sm">
+                  <span className="flex items-center justify-between">
+                    {t(label)}
+                    <span className="tabular-nums text-muted-foreground">
+                      {designTuning[key].toFixed(2)}
+                    </span>
+                  </span>
+                  <input
+                    type="range"
+                    min={DESIGN_TUNING_LIMITS[key][0]}
+                    max={DESIGN_TUNING_LIMITS[key][1]}
+                    step={0.01}
+                    value={designTuning[key]}
+                    onChange={(event) =>
+                      setDesignTuning((current) => ({
+                        ...current,
+                        [key]: Number(event.target.value),
+                      }))
+                    }
+                  />
+                </label>
+              ))}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                type="button"
+                disabled={savingDesignTuning}
+                onClick={() => void handleDesignTuningSave()}
+              >
+                {savingDesignTuning ? t('common.loading') : t('org.designTuningSave')}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={savingDesignTuning}
+                onClick={() => setDesignTuning(DEFAULT_DESIGN_TUNING)}
+              >
+                {t('org.designTuningReset')}
+              </Button>
+            </div>
           </div>
           {designMetrics && (
             <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

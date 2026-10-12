@@ -10,7 +10,7 @@
  */
 
 import type { StageStore } from '@/lib/api/stage-api';
-import { SPOTLIGHT_DEFAULT_DIMNESS } from '@/lib/action/spotlight-defaults';
+import { parseDesignTuning } from '@/lib/branding/design-tuning';
 import { createStageAPI } from '@/lib/api/stage-api';
 import { useCanvasStore } from '@/lib/store/canvas';
 import { useWhiteboardHistoryStore } from '@/lib/store/whiteboard-history';
@@ -209,7 +209,10 @@ export class ActionEngine {
 
   private executeSpotlight(action: SpotlightAction): void {
     useCanvasStore.getState().setSpotlight(action.elementId, {
-      dimness: action.dimOpacity ?? SPOTLIGHT_DEFAULT_DIMNESS,
+      dimness:
+        action.dimOpacity ??
+        parseDesignTuning(this.stageStore.getState().stage?.brandSnapshot?.content)
+          .spotlightDimness,
     });
     this.scheduleEffectClear();
   }

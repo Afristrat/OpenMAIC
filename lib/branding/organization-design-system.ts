@@ -100,7 +100,10 @@ function readableForeground(
 }
 
 /** Deterministic compact serialization of tenant branding for a frozen course snapshot. */
-export function serializeBrandSnapshot(brand: OrganizationDesignSystem): SerializedBrandSnapshot {
+export function serializeBrandSnapshot(
+  brand: OrganizationDesignSystem,
+  tuning: DesignTuning = DEFAULT_DESIGN_TUNING,
+): SerializedBrandSnapshot {
   const warnings: string[] = [];
   const rawColors = new Map<string, string>();
   for (const token of brand.palette) {
@@ -140,17 +143,19 @@ export function serializeBrandSnapshot(brand: OrganizationDesignSystem): Seriali
     `spacing: ${cleanText(brand.spacingRhythm, 120)}; density=${cleanText(brand.density, 80)}`,
   ];
   // Truncate lower-priority fields first, preserving avoid → colors → fonts.
+  const tuningLine = serializeDesignTuning(tuning);
+  const maxFieldsLength = MAX_BRAND_SNAPSHOT_LENGTH - tuningLine.length - 1;
   const priorities = [3, 4, 5, 6, 1, 0, 2];
   for (const index of priorities) {
-    if (fields.join('\n').length <= MAX_BRAND_SNAPSHOT_LENGTH) break;
+    if (fields.join('\n').length <= maxFieldsLength) break;
     const line = fields[index];
     const available = Math.max(
       0,
-      MAX_BRAND_SNAPSHOT_LENGTH - (fields.join('\n').length - line.length),
+      maxFieldsLength - (fields.join('\n').length - line.length),
     );
     fields[index] = line.slice(0, available);
   }
-  const text = fields.filter(Boolean).join('\n').slice(0, MAX_BRAND_SNAPSHOT_LENGTH);
+  const text = `${fields.filter(Boolean).join('\n').slice(0, maxFieldsLength)}\n${tuningLine}`;
   return { text, warnings };
 }
 
@@ -191,5 +196,6 @@ export function buildOrganizationImagePrompt(
     .join('; ');
   return `${contentPrompt}\n\nORGANIZATION DESIGN SYSTEM\nYou are the design lead for this visual. Fidelity to the organization design system takes priority over your own stylistic preferences. Apply the colors; never display their hex codes as text.\nPalette: ${palette}.\nTypography character: display ${design.typography.display}; body ${design.typography.body}; labels ${design.typography.utility}.\nSpacing and density: ${design.spacingRhythm}; ${design.density}.\nShapes: ${design.cornerRadius}. Borders and shadows: ${design.borderAndShadow}.\nLayout logic: ${design.layoutLogic}.\nSignature element: ${design.signatureElement}.\nThis design never does: ${design.never.join('; ')}.\n${safetyRules}`;
 }
+import { DEFAULT_DESIGN_TUNING, serializeDesignTuning, type DesignTuning } from './design-tuning';
 import tinycolor from 'tinycolor2';
 import { DESIGN_FONTS } from '@openmaic/dsl';

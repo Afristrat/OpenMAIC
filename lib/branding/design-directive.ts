@@ -1,4 +1,5 @@
 import { z } from 'zod/v4';
+import { DEFAULT_DESIGN_TUNING, parseDesignTuning, type DesignTuning } from './design-tuning';
 import tinycolor from 'tinycolor2';
 import {
   DESIGN_DENSITIES,
@@ -221,25 +222,22 @@ function textColorOnDark(seed: tinycolor.Instance, background: tinycolor.Instanc
   return '#FFFFFF';
 }
 
-/**
- * Share of the accent colour kept when it is laid over white: the transparency rate of the
- * pastel surfaces. The base wash is barely tinted, the tint is visibly turquoise or sky blue.
- */
-export const SURFACE_WASH_ALPHA = { base: 0.14, tint: 0.27 } as const;
-
-/** Opacity of the white cards laid on a light surface, so the pastel shows through. */
-export const LIGHT_CARD_OPACITY = 0.72;
+/** The base wash keeps this share of the tint strength, so one setting drives both surfaces. */
+const BASE_TO_TINT_RATIO = 0.14 / 0.27;
 
 function wash(accent: tinycolor.Instance, alpha: number): tinycolor.Instance {
   return tinycolor.mix('#FFFFFF', accent, alpha * 100);
 }
 
-export function buildPalette(directive: Pick<DesignDirective, 'seed' | 'tone'>): DesignPalette {
+export function buildPalette(
+  directive: Pick<DesignDirective, 'seed' | 'tone'>,
+  tuning: DesignTuning = DEFAULT_DESIGN_TUNING,
+): DesignPalette {
   const hue = HUE_DEGREES[directive.seed.hueFamily];
   const mid = directive.seed.chromaLevel === 'mid';
   const washSeed = tinycolor({ h: hue, s: mid ? 70 : 48, l: 50 });
-  const base = wash(washSeed, SURFACE_WASH_ALPHA.base);
-  const tint = wash(washSeed, SURFACE_WASH_ALPHA.tint);
+  const base = wash(washSeed, tuning.tintStrength * BASE_TO_TINT_RATIO);
+  const tint = wash(washSeed, tuning.tintStrength);
   const dark = tinycolor({ h: hue, s: mid ? 48 : 38, l: 20 });
   const lightSurfaces = [base, tint];
   const primaryCandidate = tinycolor({ h: hue, s: mid ? 66 : 52, l: 34 });
@@ -299,7 +297,8 @@ export function resolveSlideSurface(
   directive: DesignDirective,
   brandSnapshot?: import('@openmaic/dsl').Stage['brandSnapshot'],
 ): SlideSurface {
-  const palette = buildPalette(directive);
+  const tuning = parseDesignTuning(brandSnapshot?.content);
+  const palette = buildPalette(directive, tuning);
   const brand = snapshotDesignTokens(brandSnapshot).colors;
   const plan = directive.surfacePlan;
   const role: SlideSurfaceRole =
@@ -329,7 +328,7 @@ export function resolveSlideSurface(
     textSecondary: palette['text.secondary'],
     accent: brand.accent ?? palette['accent.primary'],
     card: role === 'tint' ? palette['surface.card.onTint'] : palette['surface.card.onBase'],
-    cardOpacity: LIGHT_CARD_OPACITY,
+    cardOpacity: tuning.cardOpacity,
     band: palette['surface.dark'],
     bandText: palette['text.onDark'],
   };
@@ -374,7 +373,7 @@ export function buildSlideTheme(
   brandSnapshot?: import('@openmaic/dsl').Stage['brandSnapshot'],
 ): SlideTheme {
   const selected = directive ?? DEFAULT_DESIGN_DIRECTIVE;
-  const palette = buildPalette(selected);
+  const palette = buildPalette(selected, parseDesignTuning(brandSnapshot?.content));
   const brand = snapshotDesignTokens(brandSnapshot);
   const colors = brand.colors ?? {};
   const themeColors = [
