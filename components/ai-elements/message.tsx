@@ -11,7 +11,7 @@ import { createContext, memo, useContext, useEffect, useMemo, useState } from 'r
 import dynamic from 'next/dynamic';
 
 // Markdown, code highlighting and diagrams weigh about 900 KB: load them when a message renders.
-const Streamdown = dynamic(() => import('streamdown').then((module) => module.Streamdown), {
+const Streamdown = dynamic(() => import('./streamdown-impl'), {
   ssr: false,
 });
 

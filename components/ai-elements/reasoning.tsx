@@ -8,7 +8,7 @@ import type { ComponentProps, ReactNode } from 'react';
 import { createContext, memo, useContext, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 
-const Streamdown = dynamic(() => import('streamdown').then((module) => module.Streamdown), {
+const Streamdown = dynamic(() => import('./streamdown-impl'), {
   ssr: false,
 });
 import { Shimmer } from './shimmer';
