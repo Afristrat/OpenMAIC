@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useStageStore } from '@/lib/store';
-import { useDesignFonts } from '@/lib/hooks/use-design-fonts';
 import { isCurrentSceneEditable } from '@/lib/edit/stage-mode';
 import { isMaicEditorEnabled } from '@/lib/config/feature-flags';
 import { EditChromeRoot } from '@/components/edit/EditChromeRoot';
@@ -45,7 +44,6 @@ export function Stage({
 }) {
   const { mode, setMode, scenes, currentSceneId, generatingOutlines, stage } = useStageStore();
   const currentScene = useStageStore((s) => s.getCurrentScene());
-  useDesignFonts();
 
   // Predicate for "can the user enter Pro mode for the current scene?".
   // Single source of truth feeds the Header's Pro Switch state and the
