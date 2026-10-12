@@ -225,7 +225,7 @@ function textColorOnDark(seed: tinycolor.Instance, background: tinycolor.Instanc
  * Share of the accent colour kept when it is laid over white: the transparency rate of the
  * pastel surfaces. The base wash is barely tinted, the tint is visibly turquoise or sky blue.
  */
-export const SURFACE_WASH_ALPHA = { base: 0.09, tint: 0.25 } as const;
+export const SURFACE_WASH_ALPHA = { base: 0.14, tint: 0.27 } as const;
 
 /** Opacity of the white cards laid on a light surface, so the pastel shows through. */
 export const LIGHT_CARD_OPACITY = 0.72;
