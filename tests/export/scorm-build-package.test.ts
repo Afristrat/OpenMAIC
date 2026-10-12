@@ -262,7 +262,7 @@ describe('buildScormPackage', () => {
     });
 
     await expect(buildScormPackage('stage-1')).rejects.toThrow(
-      /prise.*parole sans voix.*Générer les voix manquantes/is,
+      /prise.*parole sans voix[\s\S]*Générer les voix manquantes/i,
     );
   });
 
