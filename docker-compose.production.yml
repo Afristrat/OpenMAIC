@@ -223,13 +223,19 @@ services:
       KONG_NGINX_PROXY_PROXY_BUFFERS: 64 160k
     # Kong n'interpole pas les variables dans sa config déclarative : le modèle est rendu
     # dans /tmp/kong.yml au démarrage (clés issues de l'environnement, jamais en dur).
+    # Le démarrage échoue (code 1, message sur stderr) si une clé est vide ou si un marqueur
+    # __…_KEY__ subsiste après le rendu.
     entrypoint:
       - /bin/sh
       - -c
       - >-
+        if [ -z "$${ANON_KEY}" ] || [ -z "$${SERVICE_ROLE_KEY}" ];
+        then echo "ANON_KEY et SERVICE_ROLE_KEY requis pour rendre kong.yml" >&2; exit 1; fi;
         sed -e "s|__ANON_KEY__|$${ANON_KEY}|" -e "s|__SERVICE_ROLE_KEY__|$${SERVICE_ROLE_KEY}|"
-        /var/lib/kong/kong.template.yml > /tmp/kong.yml
-        && exec /docker-entrypoint.sh kong docker-start
+        /var/lib/kong/kong.template.yml > /tmp/kong.yml || exit 1;
+        if grep -q "__[A-Z_]*_KEY__" /tmp/kong.yml;
+        then echo "marqueur __…_KEY__ non substitué dans kong.yml" >&2; exit 1; fi;
+        exec /docker-entrypoint.sh kong docker-start
     volumes:
       - ./docker/kong.yml:/var/lib/kong/kong.template.yml:ro
     networks:

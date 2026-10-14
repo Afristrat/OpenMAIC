@@ -1,7 +1,7 @@
 # =============================================================================
 # Kong Declarative Configuration for Supabase API Gateway
 # Routes requests to GoTrue (auth) and PostgREST (rest) services.
-# Les clés consommateur sont des marqueurs (__ANON_KEY__, __SERVICE_ROLE_KEY__) substitués
+# Les clés consommateur sont des marqueurs (ANON_KEY et SERVICE_ROLE_KEY entourés de doubles tirets bas) substitués
 # au démarrage par l'entrypoint de supabase-kong (docker-compose.production.yml) : Kong
 # n'interpole pas les variables d'environnement dans la config déclarative, et aucune clé
 # de repli n'est admise.

@@ -5,6 +5,12 @@ global:
 scrape_configs:
   - job_name: 'qalem-app'
     metrics_path: '/api/metrics'
+    # /api/metrics exige « Authorization: Bearer <MCP_API_KEY> » (503 en production si la clé est
+    # absente). Le jeton est lu dans un secret Docker monté en lecture seule (METRICS_TOKEN_FILE,
+    # voir docker-compose.observability.yml) : jamais écrit dans ce fichier.
+    authorization:
+      type: Bearer
+      credentials_file: /run/secrets/metrics_token
     static_configs:
       - targets: ['qalem:3000']
 

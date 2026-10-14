@@ -2,8 +2,15 @@ services:
   prometheus:
     image: prom/prometheus:v2.53.0
     volumes:
-      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
+    # Jeton Bearer de /api/metrics (= MCP_API_KEY), monté en lecture seule sur /run/secrets/metrics_token.
+    secrets:
+      - metrics_token
+    # qalem-net : atteindre le service « qalem » (cible de scrape qalem:3000) ; default : Grafana.
+    networks:
+      - default
+      - qalem-net
     ports:
       - "${PROMETHEUS_PORT:-9090}:9090"
     restart: unless-stopped
@@ -36,7 +43,11 @@ services:
       SECRET_KEY: ${GLITCHTIP_SECRET_KEY:?GLITCHTIP_SECRET_KEY doit être défini}
       PORT: "8080"
       GLITCHTIP_MAX_EVENT_LIFE_DAYS: 90
-      REDIS_URL: redis://redis:6379/1
+      REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD doit être défini}@redis:6379/1
+    # qalem-net : atteindre le service « redis » (protégé par mot de passe) ; default : glitchtip-db.
+    networks:
+      - default
+      - qalem-net
     ports:
       - "${GLITCHTIP_PORT:-8080}:8080"
     restart: unless-stopped
@@ -50,6 +61,17 @@ services:
     volumes:
       - glitchtip-db-data:/var/lib/postgresql/data
     restart: unless-stopped
+
+# Ce fichier se combine avec docker-compose.production.yml (« -f » deux fois) : même projet,
+# donc même réseau qalem-net (déclaration identique, fusionnée par Compose).
+networks:
+  qalem-net:
+    driver: bridge
+
+secrets:
+  metrics_token:
+    # Chemin ABSOLU d'un fichier hors dépôt contenant la valeur de MCP_API_KEY (sans guillemets).
+    file: ${METRICS_TOKEN_FILE:?METRICS_TOKEN_FILE doit pointer vers un fichier contenant MCP_API_KEY}
 
 volumes:
   prometheus-data:
