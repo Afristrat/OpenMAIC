@@ -1,7 +1,13 @@
 import { NextRequest } from 'next/server';
+import { requireAuth } from '@/lib/api/auth';
 import type { PDFProviderId } from '@/lib/pdf/types';
 import { createLogger } from '@/lib/logger';
-import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
+import {
+  apiError,
+  apiSuccess,
+  API_ERROR_CODES,
+  publicErrorMessage,
+} from '@/lib/server/api-response';
 import {
   extractReadablePdf,
   InvalidPdfProviderUrlError,
@@ -10,6 +16,9 @@ import {
 const log = createLogger('Parse PDF');
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (auth.response) return auth.response;
+
   let pdfFileName: string | undefined;
   let resolvedProviderId: string | undefined;
   try {
@@ -62,7 +71,7 @@ export async function POST(req: NextRequest) {
     return apiError(
       API_ERROR_CODES.PARSE_FAILED,
       500,
-      error instanceof Error ? error.message : 'Unknown error',
+      publicErrorMessage(error, 'PDF parsing failed'),
     );
   }
 }

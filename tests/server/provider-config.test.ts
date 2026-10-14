@@ -329,6 +329,27 @@ providers:
     expect(resolveBaseUrl('vllm')).toBe('http://192.168.100.7:8000/v1');
   });
 
+  describe('resolveVideoApiKey (comfyui-video)', () => {
+    it('renvoie le secret du sidecar quand le fournisseur est configuré côté serveur', async () => {
+      vi.stubEnv('VIDEO_COMFYUI_BASE_URL', 'http://comfyui.internal:8188');
+      vi.stubEnv('QALEM_VIDEO_SIDECAR_SECRET', 'sidecar-secret');
+      const { resolveVideoApiKey, resolveVideoBaseUrl } =
+        await import('@/lib/server/provider-config');
+      expect(resolveVideoApiKey('comfyui-video', 'client-key')).toBe('sidecar-secret');
+      // L'URL de base est alors imposée par le serveur : le client ne la contrôle pas.
+      expect(resolveVideoBaseUrl('comfyui-video', 'http://attacker.example')).toBe(
+        'http://comfyui.internal:8188',
+      );
+    });
+
+    it('ne divulgue jamais le secret quand le fournisseur est absent de la configuration serveur', async () => {
+      vi.stubEnv('QALEM_VIDEO_SIDECAR_SECRET', 'sidecar-secret');
+      const { resolveVideoApiKey } = await import('@/lib/server/provider-config');
+      expect(resolveVideoApiKey('comfyui-video')).toBe('');
+      expect(resolveVideoApiKey('comfyui-video', 'client-key')).toBe('client-key');
+    });
+  });
+
   describe('resolveWebSearchApiKey', () => {
     it('returns client key first', async () => {
       const { resolveWebSearchApiKey } = await import('@/lib/server/provider-config');

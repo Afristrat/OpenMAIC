@@ -32,16 +32,45 @@ function workbookScriptPath(): string {
   return path.join(process.cwd(), 'scripts', 'workbooks', 'qalem_workbook.py');
 }
 
+/** Variables transmises à l'interpréteur : jamais les secrets du serveur (clés API, jetons). */
+const PYTHON_ENV_ALLOWLIST = [
+  'PATH',
+  'Path',
+  'SYSTEMROOT',
+  'SystemRoot',
+  'WINDIR',
+  'TEMP',
+  'TMP',
+  'TMPDIR',
+  'PYTHONPATH',
+  'PYTHONHOME',
+  'LANG',
+  'LC_ALL',
+] as const;
+
+export function buildPythonEnv(
+  source: Record<string, string | undefined> = process.env,
+): Record<string, string> {
+  const env: Record<string, string> = {};
+  const seen = new Set<string>();
+  for (const key of PYTHON_ENV_ALLOWLIST) {
+    // Windows : les noms de variables ne sont pas sensibles à la casse (Path / PATH).
+    const folded = key.toUpperCase();
+    const value = source[key];
+    if (value === undefined || seen.has(folded)) continue;
+    seen.add(folded);
+    env[key] = value;
+  }
+  return { ...env, PYTHONUTF8: '1', PYTHONIOENCODING: 'utf-8' };
+}
+
 async function runPython(args: string[], stdin?: Buffer): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const child = spawn(pythonExecutable(), [workbookScriptPath(), ...args], {
       stdio: ['pipe', 'pipe', 'pipe'],
       windowsHide: true,
-      env: {
-        ...process.env,
-        PYTHONUTF8: '1',
-        PYTHONIOENCODING: 'utf-8',
-      },
+      // L'augmentation de type du projet rend NODE_ENV obligatoire dans ProcessEnv ; l'interpréteur n'en a pas besoin.
+      env: buildPythonEnv() as NodeJS.ProcessEnv,
     });
     const stdout: Buffer[] = [];
     const stderr: Buffer[] = [];

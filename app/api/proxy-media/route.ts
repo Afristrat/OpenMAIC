@@ -7,13 +7,15 @@
  * for IndexedDB persistence.
  *
  * POST /api/proxy-media
- * Body: { url: string }
- * Response: Binary blob with appropriate Content-Type
+ * Body: { url: string } (Content-Type: application/json), utilisateur connecté requis
+ * Response: Binary blob with a whitelisted Content-Type, served in a CSP sandbox
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
-import { apiError } from '@/lib/server/api-response';
+import { requireAuth } from '@/lib/api/auth';
+import { apiError, publicErrorMessage } from '@/lib/server/api-response';
+import { resolveProxyContentType } from '@/lib/server/proxy-media-content-type';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('ProxyMedia');
@@ -23,6 +25,14 @@ export const maxDuration = 60;
 export async function POST(request: NextRequest) {
   let url: string | undefined;
   try {
+    const auth = await requireAuth(request);
+    if (auth.response) return auth.response;
+
+    // Un corps JSON exige un en-tête explicite : une requête inter-sites en formulaire est refusée.
+    if (!request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) {
+      return apiError('INVALID_REQUEST', 415, 'Content-Type must be application/json');
+    }
+
     ({ url } = await request.json());
 
     if (!url || typeof url !== 'string') {
@@ -69,21 +79,29 @@ export async function POST(request: NextRequest) {
     if (Number.isFinite(contentLength) && contentLength > MAX_PROXY_BYTES) {
       return apiError('UPSTREAM_ERROR', 502, `Upstream asset too large (${contentLength} bytes)`);
     }
+    // Seuls les types de la liste blanche sont relayés (jamais text/html : XSS réfléchi).
+    const contentType = resolveProxyContentType(response!.headers.get('content-type'), currentUrl);
+    if (!contentType) {
+      return apiError('INVALID_REQUEST', 415, 'Unsupported upstream content type');
+    }
     const blob = await response!.blob();
     if (blob.size > MAX_PROXY_BYTES) {
       return apiError('UPSTREAM_ERROR', 502, `Upstream asset too large (${blob.size} bytes)`);
     }
-    const contentType = response!.headers.get('content-type') || 'application/octet-stream';
 
     return new NextResponse(blob, {
       headers: {
         'Content-Type': contentType,
         'Content-Length': String(blob.size),
         'Cache-Control': 'private, max-age=3600',
+        // Neutralise tout script embarqué (SVG) si la réponse est ouverte directement.
+        'Content-Security-Policy': "sandbox; default-src 'none'",
+        'Content-Disposition': 'inline',
+        'X-Content-Type-Options': 'nosniff',
       },
     });
   } catch (error) {
     log.error(`Proxy media failed [url="${url?.substring(0, 100) ?? 'unknown'}"]:`, error);
-    return apiError('INTERNAL_ERROR', 500, error instanceof Error ? error.message : String(error));
+    return apiError('INTERNAL_ERROR', 500, publicErrorMessage(error));
   }
 }

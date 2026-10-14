@@ -13,6 +13,10 @@ vi.mock('@/lib/document', async (importOriginal) => ({
   extractDocument: mocks.extractDocument,
 }));
 
+vi.mock('@/lib/api/auth', () => ({
+  requireAuth: vi.fn(async () => ({ user: { id: 'u1', email: 'u1@example.com' } })),
+}));
+
 vi.mock('@/lib/server/provider-config', () => ({
   isServerConfiguredProvider: mocks.isServerConfiguredProvider,
   resolvePDFApiKey: mocks.resolvePDFApiKey,

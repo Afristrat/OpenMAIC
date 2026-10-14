@@ -13,7 +13,7 @@ services:
     ports:
       - "${GRAFANA_PORT:-3001}:3000"
     environment:
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD doit être défini}
       GF_INSTALL_PLUGINS: grafana-clock-panel
     volumes:
       - grafana-data:/var/lib/grafana
@@ -32,8 +32,8 @@ services:
     image: glitchtip/glitchtip:latest
     depends_on: [glitchtip-db, redis]
     environment:
-      DATABASE_URL: postgres://glitchtip:glitchtip@glitchtip-db:5432/glitchtip
-      SECRET_KEY: ${GLITCHTIP_SECRET_KEY:-change-me-in-production}
+      DATABASE_URL: postgres://glitchtip:${GLITCHTIP_DB_PASSWORD:?GLITCHTIP_DB_PASSWORD doit être défini}@glitchtip-db:5432/glitchtip
+      SECRET_KEY: ${GLITCHTIP_SECRET_KEY:?GLITCHTIP_SECRET_KEY doit être défini}
       PORT: "8080"
       GLITCHTIP_MAX_EVENT_LIFE_DAYS: 90
       REDIS_URL: redis://redis:6379/1
@@ -46,7 +46,7 @@ services:
     environment:
       POSTGRES_DB: glitchtip
       POSTGRES_USER: glitchtip
-      POSTGRES_PASSWORD: glitchtip
+      POSTGRES_PASSWORD: ${GLITCHTIP_DB_PASSWORD:?GLITCHTIP_DB_PASSWORD doit être défini}
     volumes:
       - glitchtip-db-data:/var/lib/postgresql/data
     restart: unless-stopped

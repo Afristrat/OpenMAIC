@@ -15,6 +15,7 @@
  */
 
 import { NextRequest } from 'next/server';
+import { requireAuth } from '@/lib/api/auth';
 import {
   isServerConfiguredProvider,
   isServerTTSProviderDisabled,
@@ -23,7 +24,7 @@ import {
   resolveTTSModel,
 } from '@/lib/server/provider-config';
 import { createLogger } from '@/lib/logger';
-import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { apiError, apiSuccess, publicErrorMessage } from '@/lib/server/api-response';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { normalizeVoiceDesign } from '@/lib/audio/voice-design';
 import {
@@ -36,6 +37,9 @@ const log = createLogger('Voice Registration API');
 export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (auth.response) return auth.response;
+
   let providerId: string | undefined;
   let voiceId: string | undefined;
   try {
@@ -147,7 +151,7 @@ export async function POST(req: NextRequest) {
     return apiError(
       'GENERATION_FAILED',
       500,
-      error instanceof Error ? error.message : String(error),
+      publicErrorMessage(error, 'Voice registration failed'),
     );
   }
 }

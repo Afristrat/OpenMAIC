@@ -151,6 +151,14 @@ export function buildSceneExtra(scene: Scene): SceneExtra {
   };
 }
 
+/** Un identifiant de scène soumis appartient déjà à une autre classroom. */
+export class ClassroomSceneConflictError extends Error {
+  constructor(stageId: string) {
+    super(`Scene ids of stage ${stageId} collide with scenes owned by another classroom`);
+    this.name = 'ClassroomSceneConflictError';
+  }
+}
+
 export async function persistClassroom(
   data: {
     id: string;
@@ -174,6 +182,27 @@ export async function persistClassroom(
     data.animationConstitution,
     existingLiveContext?.animationConstitution,
   );
+
+  // L'upsert des scènes écrase par id : refuser, avant toute écriture, un id de scène qui
+  // appartient déjà à une autre classroom (sinon on réécrirait le contenu d'autrui).
+  if (scenes.length > 0) {
+    const { data: foreignScenes, error: conflictError } = await supabase
+      .from('scenes')
+      .select('id')
+      .in(
+        'id',
+        scenes.map((scene) => scene.id),
+      )
+      .neq('stage_id', data.id);
+    if (conflictError) {
+      throw new Error(
+        `Failed to check scene ownership for stage ${data.id}: ${conflictError.message}`,
+      );
+    }
+    if (foreignScenes && foreignScenes.length > 0) {
+      throw new ClassroomSceneConflictError(data.id);
+    }
+  }
 
   const { error: stageError } = await supabase.from('stages').upsert({
     id: data.id,

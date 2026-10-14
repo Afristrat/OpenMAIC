@@ -14,6 +14,7 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 import { getJobQueues } from '@/lib/jobs/queue';
+import { secretsMatch } from '@/lib/server/api-key-compare';
 
 // ---------------------------------------------------------------------------
 // Auth — reuse MCP_API_KEY as the admin secret
@@ -34,7 +35,7 @@ function authenticate(req: NextRequest): Response | null {
   const authHeader = req.headers.get('authorization');
   const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
-  if (token !== apiKey) {
+  if (!secretsMatch(token, apiKey)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   return null;

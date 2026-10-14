@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 
+import { requireAuth } from '@/lib/api/auth';
 import { evaluateWorkbookWithPython } from '@/lib/server/workbook-python';
 
 export const runtime = 'nodejs';
@@ -7,7 +8,10 @@ export const runtime = 'nodejs';
 const MAX_WORKBOOK_BYTES = 5 * 1024 * 1024;
 const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const auth = await requireAuth(request);
+  if (auth.response) return auth.response;
+
   const formData = await request.formData();
   const workbook = formData.get('workbook');
   if (!(workbook instanceof File)) {

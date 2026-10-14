@@ -15,6 +15,7 @@
  */
 
 import { NextRequest } from 'next/server';
+import { requireAuth } from '@/lib/api/auth';
 import { VIDEO_PROVIDERS, testVideoConnectivity } from '@/lib/media/video-providers';
 import {
   isServerConfiguredProvider,
@@ -22,13 +23,16 @@ import {
   resolveVideoBaseUrl,
 } from '@/lib/server/provider-config';
 import type { VideoProviderId } from '@/lib/media/types';
-import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { apiError, apiSuccess, publicErrorMessage } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 
 const log = createLogger('VerifyVideoProvider');
 
 export async function POST(request: NextRequest) {
+  const auth = await requireAuth(request);
+  if (auth.response) return auth.response;
+
   try {
     const providerId = (request.headers.get('x-video-provider') || 'seedance') as VideoProviderId;
     const model = request.headers.get('x-video-model') || undefined;
@@ -69,6 +73,6 @@ export async function POST(request: NextRequest) {
       `Video provider verification failed [provider=${request.headers.get('x-video-provider') ?? 'seedance'}]:`,
       err,
     );
-    return apiError('INTERNAL_ERROR', 500, `Connectivity test error: ${err}`);
+    return apiError('INTERNAL_ERROR', 500, publicErrorMessage(err, 'Connectivity test error'));
   }
 }

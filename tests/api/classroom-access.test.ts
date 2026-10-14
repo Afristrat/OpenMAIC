@@ -25,6 +25,7 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 vi.mock('@/lib/server/classroom-storage', () => ({
+  ClassroomSceneConflictError: class ClassroomSceneConflictError extends Error {},
   buildRequestOrigin: () => 'https://qalem.ma',
   classroomMediaContentType: () => 'audio/wav',
   isValidClassroomId: (id: string) => /^[a-zA-Z0-9_-]+$/.test(id),
@@ -139,6 +140,75 @@ describe('classroom tenant boundary', () => {
       }),
       'https://qalem.ma',
     );
+  });
+
+  it('refuses to overwrite a classroom id owned by another author with 409', async () => {
+    mocks.readClassroomOwnership.mockResolvedValue({ ownerId: 'someone-else', orgId: ORG_ID });
+
+    const response = await postClassroom(
+      new NextRequest('https://qalem.ma/api/classroom', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          orgId: ORG_ID,
+          stage: { id: 'classroom_15', name: 'Takeover attempt' },
+          scenes: [],
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(409);
+    expect(mocks.persistClassroom).not.toHaveBeenCalled();
+  });
+
+  it('refuses a classroom id that exists in another organization with 409', async () => {
+    mocks.readClassroomOwnership.mockResolvedValue({
+      ownerId: 'session-owner',
+      orgId: '00000000-0000-4000-8000-000000000099',
+    });
+
+    const response = await postClassroom(
+      new NextRequest('https://qalem.ma/api/classroom', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          orgId: ORG_ID,
+          stage: { id: 'classroom_15', name: 'Cross-org' },
+          scenes: [],
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(409);
+    expect(mocks.persistClassroom).not.toHaveBeenCalled();
+  });
+
+  it('maps a scene id collision raised by persistence to 409', async () => {
+    const { ClassroomSceneConflictError } = await import('@/lib/server/classroom-storage');
+    mocks.persistClassroom.mockRejectedValue(new ClassroomSceneConflictError('collision'));
+
+    const response = await postClassroom(
+      new NextRequest('https://qalem.ma/api/classroom', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          orgId: ORG_ID,
+          stage: { id: 'classroom_15', name: 'Mine' },
+          scenes: [
+            {
+              id: 'scene_of_other',
+              stageId: 'classroom_15',
+              type: 'slide',
+              title: 'x',
+              order: 1,
+              content: {},
+            },
+          ],
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(409);
   });
 
   it('rejects malformed generation input as a client error before authorization', async () => {

@@ -1,6 +1,10 @@
 # =============================================================================
 # Kong Declarative Configuration for Supabase API Gateway
 # Routes requests to GoTrue (auth) and PostgREST (rest) services.
+# Les clés consommateur sont des marqueurs (__ANON_KEY__, __SERVICE_ROLE_KEY__) substitués
+# au démarrage par l'entrypoint de supabase-kong (docker-compose.production.yml) : Kong
+# n'interpole pas les variables d'environnement dans la config déclarative, et aucune clé
+# de repli n'est admise.
 # =============================================================================
 
 _format_version: "2.1"
@@ -9,12 +13,12 @@ _transform: true
 consumers:
   - username: ANON
     keyauth_credentials:
-      - key: ${ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0}
+      - key: __ANON_KEY__
     acls:
       - group: anon
   - username: SERVICE_ROLE
     keyauth_credentials:
-      - key: ${SERVICE_ROLE_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU}
+      - key: __SERVICE_ROLE_KEY__
     acls:
       - group: admin
 

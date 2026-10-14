@@ -52,3 +52,12 @@ export function apiError(
 export function apiSuccess<T extends object>(data: T, status = 200): NextResponse {
   return NextResponse.json({ success: true, ...data }, { status });
 }
+
+/**
+ * Message d'erreur sûr à renvoyer au client : générique en production (le détail
+ * reste dans le journal serveur), complet en développement et en test.
+ */
+export function publicErrorMessage(error: unknown, generic = 'Internal server error'): string {
+  if (process.env.NODE_ENV === 'production') return generic;
+  return error instanceof Error ? error.message : String(error);
+}

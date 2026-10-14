@@ -8,6 +8,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { handlePaymentWebhook } from '@/lib/payments';
 import type { PaymentProvider } from '@/lib/payments';
 import { createClient } from '@supabase/supabase-js';
+import { verifyPaymentWebhookSignature } from '@/lib/payments/webhook-signature';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('PaymentWebhook');
@@ -25,23 +26,6 @@ function getSupabaseAdmin(): ReturnType<typeof createClient> | null {
 
 const VALID_PROVIDERS = new Set<string>(['cinetpay', 'orange-money', 'wave', 'paypal']);
 
-/**
- * TODO: Implement per-provider signature verification.
- * Each provider has its own way of signing webhooks:
- * - CinetPay: verify `cpm_site_id` matches + optional HMAC
- * - Orange Money: verify Authorization header / token
- * - Wave: verify `Wave-Signature` header with HMAC-SHA256
- */
-function verifyWebhookSignature(
-  _provider: PaymentProvider,
-  _headers: Headers,
-  _body: string,
-): boolean {
-  // Skeleton — always returns true. MUST be implemented before production.
-  log.warn('Signature verification not yet implemented');
-  return true;
-}
-
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     // Provider is passed as a query parameter: /api/payments/webhook?provider=cinetpay
@@ -53,8 +37,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const rawBody = await request.text();
 
-    // --- Signature verification (skeleton) ---
-    const signatureValid = verifyWebhookSignature(
+    // --- Signature verification (HMAC du corps brut, refus par défaut) ---
+    const signatureValid = verifyPaymentWebhookSignature(
       provider as PaymentProvider,
       request.headers,
       rawBody,
@@ -96,9 +80,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Return 200 to acknowledge receipt (providers expect this)
     return NextResponse.json({ received: true, status: result.status });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    log.error(message);
-    // Still return 200 to avoid retries from most providers
-    return NextResponse.json({ received: true, error: message }, { status: 200 });
+    log.error('Payment webhook processing failed:', error);
+    // Still return 200 to avoid retries from most providers ; aucun détail interne au client.
+    return NextResponse.json(
+      { received: true, error: 'Webhook processing failed' },
+      { status: 200 },
+    );
   }
 }

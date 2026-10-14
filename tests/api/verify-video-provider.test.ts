@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
-const { testVideoConnectivity } = vi.hoisted(() => ({ testVideoConnectivity: vi.fn() }));
+const { testVideoConnectivity, requireAuth } = vi.hoisted(() => ({
+  testVideoConnectivity: vi.fn(),
+  requireAuth: vi.fn(),
+}));
+
+vi.mock('@/lib/api/auth', () => ({ requireAuth }));
 
 vi.mock('@/lib/media/video-providers', async (importOriginal) => {
   const original = await importOriginal<typeof import('@/lib/media/video-providers')>();
@@ -28,6 +33,8 @@ function request(providerId: string): NextRequest {
 describe('verify-video-provider route', () => {
   beforeEach(() => {
     testVideoConnectivity.mockReset();
+    requireAuth.mockReset();
+    requireAuth.mockResolvedValue({ user: { id: 'u1', email: 'u1@example.com' } });
     testVideoConnectivity.mockResolvedValue({ success: true, message: 'Connected' });
   });
 
@@ -41,6 +48,15 @@ describe('verify-video-provider route', () => {
       baseUrl: 'http://comfyui.test',
       model: undefined,
     });
+  });
+
+  it('rejects an anonymous caller with 401 before any connectivity test', async () => {
+    requireAuth.mockResolvedValue({ response: new Response('{}', { status: 401 }) });
+
+    const response = await POST(request('comfyui-video'));
+
+    expect(response.status).toBe(401);
+    expect(testVideoConnectivity).not.toHaveBeenCalled();
   });
 
   it('still rejects a provider that requires an API key', async () => {

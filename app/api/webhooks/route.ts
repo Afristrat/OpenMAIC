@@ -11,6 +11,7 @@ import { requireAuth } from '@/lib/api/auth';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { apiError, API_ERROR_CODES } from '@/lib/server/api-response';
 import { WEBHOOK_EVENTS, type WebhookEvent } from '@/lib/webhooks/types';
+import { validateWebhookUrl } from '@/lib/webhooks/url-guard';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('WebhooksAPI');
@@ -89,11 +90,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // Validate URL
+  // Validate URL (format, https en production, garde SSRF)
   try {
     new URL(body.url);
   } catch {
     return apiError(API_ERROR_CODES.INVALID_URL, 400, 'Invalid webhook URL');
+  }
+  const urlError = await validateWebhookUrl(body.url);
+  if (urlError) {
+    return apiError(API_ERROR_CODES.INVALID_URL, 400, urlError);
   }
 
   // Validate events

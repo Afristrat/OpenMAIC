@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
+import { requireAuth } from '@/lib/api/auth';
 import JSZip from 'jszip';
-import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { apiError, apiSuccess, publicErrorMessage } from '@/lib/server/api-response';
 import { decodeOfficeXml } from '@/lib/document/decode-office-xml';
 
 const MAX_DOCUMENT_BYTES = 50 * 1024 * 1024;
@@ -24,6 +25,9 @@ async function extractOfficeText(buffer: Buffer, extension: string): Promise<str
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (auth.response) return auth.response;
+
   const contentType = req.headers.get('content-type') ?? '';
   if (!contentType.includes('multipart/form-data')) {
     return apiError('INVALID_REQUEST', 400, 'Expected multipart/form-data');
@@ -55,6 +59,6 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    return apiError('PARSE_FAILED', 422, error instanceof Error ? error.message : 'Parse failed');
+    return apiError('PARSE_FAILED', 422, publicErrorMessage(error, 'Parse failed'));
   }
 }

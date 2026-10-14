@@ -11,6 +11,11 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { TOOLS, callTool } from '@/lib/mcp/server';
 import { validateBody } from '@/lib/api/validate';
 import { mcpCallSchema } from '@/lib/api/schemas';
+import { secretsMatch } from '@/lib/server/api-key-compare';
+import { publicErrorMessage } from '@/lib/server/api-response';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('MCP');
 
 export const maxDuration = 300;
 
@@ -30,7 +35,7 @@ function authenticate(req: NextRequest): Response | null {
   }
 
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
-  if (token !== apiKey) {
+  if (!secretsMatch(token, apiKey)) {
     return NextResponse.json({ error: 'Invalid API key' }, { status: 403 });
   }
 
@@ -61,7 +66,8 @@ export async function POST(req: NextRequest): Promise<Response> {
       { status: 400 },
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    log.error('MCP call failed:', error);
+    const message = publicErrorMessage(error);
     return NextResponse.json({ jsonrpc: '2.0', error: { code: -32603, message } }, { status: 500 });
   }
 }

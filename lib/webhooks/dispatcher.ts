@@ -3,6 +3,7 @@
  *
  * Features:
  * - HMAC-SHA256 payload signing
+ * - SSRF guard revalidated before every delivery, redirects never followed
  * - CloudEvents-style headers
  * - Exponential backoff retry (3 attempts: 1 s, 4 s, 16 s)
  * - Delivery logging to Supabase
@@ -11,6 +12,7 @@
 import { createHmac, randomUUID } from 'crypto';
 import { createLogger } from '@/lib/logger';
 import type { WebhookEvent } from './types';
+import { validateWebhookUrl } from './url-guard';
 
 const log = createLogger('WebhookDispatcher');
 
@@ -44,8 +46,16 @@ async function attemptDelivery(
   const timeout = setTimeout(() => controller.abort(), 10_000);
 
   try {
+    // Revalidation à chaque livraison : la résolution DNS a pu changer depuis la création.
+    const urlError = await validateWebhookUrl(url);
+    if (urlError) {
+      return { statusCode: null, responseBody: urlError, success: false };
+    }
+
     const res = await fetch(url, {
       method: 'POST',
+      // Pas de suivi de redirection : une redirection vers une cible interne contournerait la garde.
+      redirect: 'manual',
       headers: {
         'Content-Type': 'application/json',
         'X-Webhook-Signature': signature,

@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NextRequest } from 'next/server';
 
-const mocks = vi.hoisted(() => ({ validateUrlForSSRF: vi.fn() }));
+const mocks = vi.hoisted(() => ({ validateUrlForSSRF: vi.fn(), requireAuth: vi.fn() }));
 vi.mock('@/lib/server/ssrf-guard', () => ({ validateUrlForSSRF: mocks.validateUrlForSSRF }));
+vi.mock('@/lib/api/auth', () => ({ requireAuth: mocks.requireAuth }));
 vi.mock('@/lib/logger', () => ({
   createLogger: () => ({
     info: vi.fn(),
@@ -12,11 +13,14 @@ vi.mock('@/lib/logger', () => ({
   }),
 }));
 
-async function postProxy(body: Record<string, unknown>) {
+async function postProxy(
+  body: Record<string, unknown>,
+  headers: Record<string, string> = { 'Content-Type': 'application/json' },
+) {
   const { POST } = await import('@/app/api/proxy-media/route');
   const req = new Request('http://localhost/api/proxy-media', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(body),
   });
   return POST(req as unknown as NextRequest);
@@ -27,6 +31,8 @@ describe('POST /api/proxy-media', () => {
     vi.resetModules();
     vi.restoreAllMocks();
     mocks.validateUrlForSSRF.mockReset();
+    mocks.requireAuth.mockReset();
+    mocks.requireAuth.mockResolvedValue({ user: { id: 'u1', email: 'u1@example.com' } });
   });
 
   it('1. direct 200: returns blob with forwarded content-type', async () => {
@@ -198,5 +204,90 @@ describe('POST /api/proxy-media', () => {
 
     expect(res.status).toBe(502);
     expect(json).toMatchObject({ errorCode: 'UPSTREAM_ERROR' });
+  });
+
+  it('10. anonymous caller is rejected with 401 before any fetch', async () => {
+    mocks.requireAuth.mockResolvedValue({
+      response: new Response(JSON.stringify({ code: 'UNAUTHORIZED' }), { status: 401 }),
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const res = await postProxy({ url: 'https://example.com/image.png' });
+
+    expect(res.status).toBe(401);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('11. non-JSON request Content-Type is rejected with 415', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const res = await postProxy(
+      { url: 'https://example.com/image.png' },
+      { 'Content-Type': 'text/plain' },
+    );
+
+    expect(res.status).toBe(415);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('12. upstream text/html is refused with 415 (reflected XSS)', async () => {
+    mocks.validateUrlForSSRF.mockResolvedValue(null);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response('<script>alert(1)</script>', {
+          status: 200,
+          headers: { 'Content-Type': 'text/html; charset=utf-8' },
+        }),
+      ),
+    );
+
+    const res = await postProxy({ url: 'https://example.com/page' });
+
+    expect(res.status).toBe(415);
+  });
+
+  it('13. octet-stream upstream is typed from the URL suffix, unknown suffix is refused', async () => {
+    mocks.validateUrlForSSRF.mockResolvedValue(null);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation(
+        async () =>
+          new Response(new Uint8Array([1]), {
+            status: 200,
+            headers: { 'Content-Type': 'application/octet-stream' },
+          }),
+      ),
+    );
+
+    const ok = await postProxy({ url: 'https://example.com/clip.mp4?sig=1' });
+    expect(ok.status).toBe(200);
+    expect(ok.headers.get('Content-Type')).toBe('video/mp4');
+
+    const refused = await postProxy({ url: 'https://example.com/download' });
+    expect(refused.status).toBe(415);
+  });
+
+  it('14. response carries a sanitized type and the sandbox headers', async () => {
+    mocks.validateUrlForSSRF.mockResolvedValue(null);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(new Uint8Array([1, 2]), {
+          status: 200,
+          headers: { 'Content-Type': 'image/svg+xml; charset=utf-8' },
+        }),
+      ),
+    );
+
+    const res = await postProxy({ url: 'https://example.com/logo.svg' });
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toBe('image/svg+xml');
+    expect(res.headers.get('Content-Security-Policy')).toBe("sandbox; default-src 'none'");
+    expect(res.headers.get('Content-Disposition')).toBe('inline');
+    expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff');
   });
 });

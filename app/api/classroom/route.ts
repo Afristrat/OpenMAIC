@@ -1,6 +1,11 @@
 import { type NextRequest } from 'next/server';
 import { randomUUID } from 'crypto';
-import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
+import {
+  apiSuccess,
+  apiError,
+  API_ERROR_CODES,
+  publicErrorMessage,
+} from '@/lib/server/api-response';
 import {
   buildRequestOrigin,
   isValidClassroomId,
@@ -11,6 +16,7 @@ import {
   readClassroom,
   readClassroomOwnership,
   isClassroomPublic,
+  ClassroomSceneConflictError,
 } from '@/lib/server/classroom-storage';
 import {
   requireSuperAdminOrOrgAuthor,
@@ -44,6 +50,15 @@ export async function POST(request: NextRequest) {
     if (auth.response) return auth.response;
 
     const id = stageId || randomUUID();
+
+    // POST crée : l'identifiant fourni ne doit pas désigner la classroom d'un autre propriétaire
+    // ou d'une autre organisation (le client met à jour par PUT, jamais par POST).
+    if (stageId) {
+      const existing = await readClassroomOwnership(id);
+      if (existing && (existing.ownerId !== auth.user.id || existing.orgId !== orgId)) {
+        return apiError(API_ERROR_CODES.INVALID_REQUEST, 409, 'Classroom id already in use');
+      }
+    }
     const baseUrl = buildRequestOrigin(request);
 
     // classroomPersistSchema only validates "some record" shape for stage/scenes
@@ -62,6 +77,9 @@ export async function POST(request: NextRequest) {
 
     return apiSuccess({ id: persisted.id, url: persisted.url }, 201);
   } catch (error) {
+    if (error instanceof ClassroomSceneConflictError) {
+      return apiError(API_ERROR_CODES.INVALID_REQUEST, 409, 'Scene id already in use');
+    }
     log.error(
       `Classroom storage failed [stageId=${stageId ?? 'unknown'}, scenes=${sceneCount ?? 0}]:`,
       error,
@@ -70,7 +88,7 @@ export async function POST(request: NextRequest) {
       API_ERROR_CODES.INTERNAL_ERROR,
       500,
       'Failed to store classroom',
-      error instanceof Error ? error.message : String(error),
+      publicErrorMessage(error, 'Internal error'),
     );
   }
 }
@@ -118,6 +136,9 @@ export async function PUT(request: NextRequest) {
     }
     return apiSuccess({ id: stageId });
   } catch (error) {
+    if (error instanceof ClassroomSceneConflictError) {
+      return apiError(API_ERROR_CODES.INVALID_REQUEST, 409, 'Scene id already in use');
+    }
     log.error('Classroom update failed:', error);
     return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Échec de la sauvegarde de la classroom');
   }
@@ -151,7 +172,7 @@ export async function PATCH(request: NextRequest) {
       API_ERROR_CODES.INTERNAL_ERROR,
       500,
       'Failed to rename classroom',
-      error instanceof Error ? error.message : String(error),
+      publicErrorMessage(error, 'Internal error'),
     );
   }
 }
@@ -171,7 +192,7 @@ export async function DELETE(request: NextRequest) {
       API_ERROR_CODES.INTERNAL_ERROR,
       500,
       'Failed to delete classroom',
-      error instanceof Error ? error.message : String(error),
+      publicErrorMessage(error, 'Internal error'),
     );
   }
 }
@@ -303,7 +324,7 @@ export async function GET(request: NextRequest) {
       API_ERROR_CODES.INTERNAL_ERROR,
       500,
       'Failed to retrieve classroom',
-      error instanceof Error ? error.message : String(error),
+      publicErrorMessage(error, 'Internal error'),
     );
   }
 }
