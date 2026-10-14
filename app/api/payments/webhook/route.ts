@@ -35,17 +35,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'Missing or invalid provider' }, { status: 400 });
     }
 
-    const rawBody = await request.text();
+    // Octets exacts reçus : la signature porte sur le corps brut (request.text() retire un BOM).
+    const rawBytes = new Uint8Array(await request.arrayBuffer());
 
     // --- Signature verification (HMAC du corps brut, refus par défaut) ---
     const signatureValid = verifyPaymentWebhookSignature(
       provider as PaymentProvider,
       request.headers,
-      rawBody,
+      rawBytes,
     );
     if (!signatureValid) {
       return NextResponse.json({ error: 'Invalid signature' }, { status: 403 });
     }
+
+    const rawBody = new TextDecoder().decode(rawBytes);
 
     // Parse the body
     let payload: unknown;

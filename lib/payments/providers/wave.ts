@@ -119,11 +119,20 @@ export const waveAdapter: PaymentProviderAdapter = {
   },
 
   /**
-   * Process webhook callback from Wave.
-   * Wave sends a POST with a JSON body containing checkout session data.
+   * Traite un webhook Wave. Wave envoie un objet Événement `{ id, type, data }` (voir
+   * https://docs.wave.com/webhook, « Event Types ») : la session de paiement est dans `data`.
+   * Seuls les événements `checkout.session.*` sont rattachés à une transaction ; les échecs de
+   * tentative (`checkout.session.payment_failed`) laissent la session en attente, Wave
+   * documentant plusieurs échecs possibles avant un succès.
    */
   async handleWebhook(payload: unknown): Promise<PaymentResult> {
-    const data = payload as Record<string, unknown>;
+    const event = (payload ?? {}) as Record<string, unknown>;
+    const session = event['data'];
+    if (typeof session !== 'object' || session === null) {
+      throw new Error('Wave webhook: objet `data` manquant');
+    }
+    const data = session as Record<string, unknown>;
+    const isCheckoutEvent = String(event['type'] ?? '').startsWith('checkout.session.');
     const rawStatus = String(data['checkout_status'] ?? '');
 
     const status =
@@ -139,7 +148,7 @@ export const waveAdapter: PaymentProviderAdapter = {
       status,
       amount: Number(data['amount'] ?? 0),
       currency: String(data['currency'] ?? 'XOF') as PaymentResult['currency'],
-      transactionId: String(data['id'] ?? ''),
+      transactionId: isCheckoutEvent ? String(data['id'] ?? '') : '',
       createdAt: new Date(),
     };
   },
