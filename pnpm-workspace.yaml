@@ -2,3 +2,6 @@ packages:
   - "packages/*"
   - "packages/@openmaic/*"
   - "!packages/docs" # standalone docs sub-app: own lockfile, build, deploy
+
+# Ne résout que des versions publiées depuis au moins 24 h (minutes ; pnpm >= 10.16)
+minimumReleaseAge: 1440
