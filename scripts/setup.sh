@@ -14,7 +14,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 ENV_FILE="$PROJECT_DIR/.env.local"
+# .env.docker.example n'est pas versionné (.gitignore) : repli sur .env.example, présent dans tout clone.
 ENV_EXAMPLE="$PROJECT_DIR/.env.docker.example"
+[[ -f "$ENV_EXAMPLE" ]] || ENV_EXAMPLE="$PROJECT_DIR/.env.example"
 COMPOSE_FILE="$PROJECT_DIR/docker-compose.production.yml"
 
 # Compose interpole ${VAR:?...} depuis .env, --env-file ou le shell (pas depuis l'env_file des
@@ -172,10 +174,10 @@ setup_env() {
   fi
 
   if [[ ! -f "$ENV_EXAMPLE" ]]; then
-    error ".env.docker.example not found at $ENV_EXAMPLE"
+    error "No environment template found (.env.docker.example or .env.example)."
   fi
 
-  info "Creating .env.local from .env.docker.example..."
+  info "Creating .env.local from $(basename "$ENV_EXAMPLE")..."
   cp "$ENV_EXAMPLE" "$ENV_FILE"
 
   # Generate every secret and variable required by the Compose files (values are never printed)
