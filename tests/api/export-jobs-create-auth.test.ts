@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const mocks = vi.hoisted(() => ({
   requireAuth: vi.fn(),
-  requireEditor: vi.fn(),
+  requireExporter: vi.fn(),
   isSuperAdminEmail: vi.fn(),
   readOwnership: vi.fn(),
   enqueue: vi.fn(),
@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@/lib/api/auth', () => ({
   requireAuth: mocks.requireAuth,
-  requireSuperAdminOrOrgEditor: mocks.requireEditor,
+  requireSuperAdminOrOrgExporter: mocks.requireExporter,
   isSuperAdminEmail: mocks.isSuperAdminEmail,
 }));
 vi.mock('@/lib/server/classroom-storage', () => ({
@@ -63,7 +63,7 @@ describe('POST /api/export-jobs access control', () => {
     mocks.requireAuth.mockResolvedValue({ user: { id: 'actor', email: 'actor@example.test' } });
     mocks.isSuperAdminEmail.mockReturnValue(false);
     mocks.readOwnership.mockResolvedValue({ ownerId: OWNER, orgId: ORG });
-    mocks.requireEditor.mockResolvedValue({ user: { id: 'actor', email: 'actor@example.test' } });
+    mocks.requireExporter.mockResolvedValue({ user: { id: 'actor', email: 'actor@example.test' } });
   });
 
   it('refuses an unauthenticated request before touching any data', async () => {
@@ -83,19 +83,19 @@ describe('POST /api/export-jobs access control', () => {
   });
 
   it.each(['scorm12', 'scorm2004', 'cmi5', 'mp4'])(
-    'refuses a %s export to a member who cannot edit the classroom (viewer, learner)',
+    'refuses a %s export to a member who may not export (learner)',
     async (format) => {
-      mocks.requireEditor.mockResolvedValue(forbidden());
+      mocks.requireExporter.mockResolvedValue(forbidden());
       const res = await POST(post(format));
       expect(res.status).toBe(403);
-      expect(mocks.requireEditor).toHaveBeenCalledWith(expect.anything(), ORG, OWNER, STAGE);
+      expect(mocks.requireExporter).toHaveBeenCalledWith(expect.anything(), ORG);
       expect(mocks.insert).not.toHaveBeenCalled();
       expect(mocks.enqueue).not.toHaveBeenCalled();
     },
   );
 
   it.each(['scorm12', 'scorm2004', 'cmi5', 'mp4'])(
-    'lets an editor create a %s export job owned by the actor',
+    'lets an organization role above learner create a %s export job owned by the actor',
     async (format) => {
       const res = await POST(post(format));
       expect(res.status).toBe(202);
@@ -114,7 +114,7 @@ describe('POST /api/export-jobs access control', () => {
     it('lets the owner export', async () => {
       mocks.requireAuth.mockResolvedValue({ user: { id: OWNER, email: 'o@example.test' } });
       expect((await POST(post())).status).toBe(202);
-      expect(mocks.requireEditor).not.toHaveBeenCalled();
+      expect(mocks.requireExporter).not.toHaveBeenCalled();
     });
 
     it('lets the configured super admin export', async () => {

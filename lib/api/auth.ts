@@ -309,6 +309,54 @@ export async function requireSuperAdminOrOrgEditor(
   }
 }
 
+/**
+ * Export permission for an existing classroom (SCORM, cmi5, MP4).
+ * Every organization role above the learner may export: admin, manager, author and
+ * formateur, without any delegation; a learner (apprenant) never may. The configured
+ * super-admin may export all.
+ */
+export async function requireSuperAdminOrOrgExporter(
+  req: NextRequest,
+  orgId: string,
+): Promise<AuthResult> {
+  const auth = await requireAuth(req);
+  if (auth.response) return auth;
+  if (isSuperAdminEmail(auth.user.email)) {
+    return auth;
+  }
+
+  try {
+    const supabase = await createServerSupabaseClient();
+    const { data: membership } = await supabase
+      .from('org_members')
+      .select('role, organizations!inner(status)')
+      .eq('org_id', orgId)
+      .eq('user_id', auth.user.id)
+      .single();
+    const canExport =
+      membership &&
+      hasActiveTenant(membership as MembershipWithTenant) &&
+      ['admin', 'manager', 'author', 'formateur'].includes(membership.role);
+    if (!canExport) {
+      return {
+        response: NextResponse.json(
+          { error: 'Classroom export access required', code: 'FORBIDDEN', status: 403 },
+          { status: 403 },
+        ),
+      };
+    }
+    return auth;
+  } catch (err) {
+    log.error('Classroom export check error:', err instanceof Error ? err.message : String(err));
+    return {
+      response: NextResponse.json(
+        { error: 'Failed to verify classroom export role', code: 'INTERNAL_ERROR', status: 500 },
+        { status: 500 },
+      ),
+    };
+  }
+}
+
 // ---------------------------------------------------------------------------
 // requireSuperAdminOrOrgMember — auth + (super admin OR member of orgId)
 // Used for classroom reads: any member of the owning org (trainer or

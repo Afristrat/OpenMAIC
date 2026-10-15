@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # =============================================================================
 # Qalem — Docker Setup Script
-# Initializes environment, generates secrets, creates MinIO buckets,
+# Initializes environment, generates secrets, creates S3 buckets,
 # and runs Supabase migrations.
 #
 # Usage:
@@ -126,8 +126,8 @@ ensure_compose_env() {
   ensure_var POSTGRES_PASSWORD "$(generate_secret 32)"
   ensure_var JWT_SECRET "$(generate_jwt_secret)"
   ensure_var REDIS_PASSWORD "$(openssl rand -hex 32)"
-  ensure_var MINIO_ROOT_USER "qalem$(openssl rand -hex 6)"
-  ensure_var MINIO_ROOT_PASSWORD "$(generate_secret 24)"
+  ensure_var RUSTFS_ACCESS_KEY "qalem$(openssl rand -hex 6)"
+  ensure_var RUSTFS_SECRET_KEY "$(generate_secret 24)"
   ensure_var QALEM_AUDIOSEAL_TOKEN "$(openssl rand -hex 32)"
   ensure_var CAPTURE_WORKER_TOKEN "$(openssl rand -hex 32)"
   ensure_var GRAFANA_ADMIN_PASSWORD "$(openssl rand -hex 32)"
@@ -190,8 +190,8 @@ setup_env() {
 
 # ── Start infrastructure ─────────────────────────────────────────────────────
 start_infrastructure() {
-  info "Starting infrastructure services (DB, Redis, MinIO)..."
-  dc up -d supabase-db redis minio
+  info "Starting infrastructure services (DB, Redis, RustFS)..."
+  dc up -d supabase-db redis rustfs
 
   info "Waiting for services to be healthy..."
   local max_wait=60
@@ -212,11 +212,11 @@ start_infrastructure() {
   fi
 }
 
-# ── MinIO bucket creation ────────────────────────────────────────────────────
-create_minio_buckets() {
-  info "Creating MinIO buckets via init container..."
-  dc up minio-init
-  ok "MinIO buckets created (audio, images, exports, uploads)."
+# ── S3 bucket creation ───────────────────────────────────────────────────────
+create_s3_buckets() {
+  info "Creating S3 buckets via init container..."
+  dc up rustfs-init
+  ok "S3 buckets created (audio, images, exports, uploads)."
 }
 
 # ── Run Supabase migrations ─────────────────────────────────────────────────
@@ -290,7 +290,7 @@ main() {
     read -rp "$(echo -e "${BLUE}Start services now? [y/N]${NC} ")" start_now
     if [[ "$start_now" =~ ^[Yy]$ ]]; then
       start_infrastructure
-      create_minio_buckets
+      create_s3_buckets
       run_migrations
 
       info "Starting remaining services..."
@@ -300,7 +300,7 @@ main() {
       ok "Qalem is starting up!"
       echo -e "  App:           ${GREEN}http://localhost:${QALEM_PORT:-3000}${NC}"
       echo -e "  Supabase API:  ${GREEN}http://localhost:${KONG_PORT:-8000}${NC}"
-      echo -e "  MinIO Console: ${GREEN}http://localhost:${MINIO_CONSOLE_PORT:-9001}${NC}"
+      echo -e "  RustFS Console: ${GREEN}http://localhost:${RUSTFS_CONSOLE_PORT:-9001}${NC}"
       echo ""
     fi
   fi

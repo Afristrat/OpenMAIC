@@ -6,14 +6,14 @@
  * lib/jobs/workers.ts et lib/export/scorm/build-scorm-package.ts).
  *
  * Body: { stageId, format }.
- * Accès : réservé à qui peut modifier le cours (admin/manager de l'organisation, auteur
- * propriétaire, formateur délégué, super-admin) ; voir requireSuperAdminOrOrgEditor. Un simple
- * membre qui voit le cours (apprenant, formateur sans délégation) ne peut pas l'exporter.
+ * Accès : tous les rôles de l'organisation au-dessus de l'apprenant (admin, manager, author,
+ * formateur) et le super-admin ; voir requireSuperAdminOrOrgExporter. Un apprenant ne peut pas
+ * exporter. Un cours sans organisation n'est exportable que par son propriétaire.
  * Response: { success: boolean, id?: string, status?: string, error?: string }
  */
 
 import { NextRequest } from 'next/server';
-import { isSuperAdminEmail, requireAuth, requireSuperAdminOrOrgEditor } from '@/lib/api/auth';
+import { isSuperAdminEmail, requireAuth, requireSuperAdminOrOrgExporter } from '@/lib/api/auth';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { readClassroomOwnership } from '@/lib/server/classroom-storage';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
@@ -55,13 +55,8 @@ export async function POST(request: NextRequest) {
       return apiError('INVALID_REQUEST', 404, 'Cours introuvable');
     }
     if (ownership.orgId) {
-      const editor = await requireSuperAdminOrOrgEditor(
-        request,
-        ownership.orgId,
-        ownership.ownerId,
-        stageId,
-      );
-      if (editor.response) return editor.response;
+      const exporter = await requireSuperAdminOrOrgExporter(request, ownership.orgId);
+      if (exporter.response) return exporter.response;
     } else if (auth.user.id !== ownership.ownerId && !isSuperAdminEmail(auth.user.email)) {
       // Cours sans organisation : seul son propriétaire (ou le super-admin) l'exporte.
       return apiError(

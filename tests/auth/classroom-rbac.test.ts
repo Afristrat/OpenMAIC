@@ -38,6 +38,7 @@ import {
   requireSuperAdminOrOrgAdmin,
   requireSuperAdminOrOrgAuthor,
   requireSuperAdminOrOrgEditor,
+  requireSuperAdminOrOrgExporter,
   requireSuperAdminOrOrgMember,
 } from '@/lib/api/auth';
 
@@ -133,6 +134,42 @@ describe('classroom RBAC', () => {
       (await requireSuperAdminOrOrgAuthor(request, 'org-target', { requireMembership: true }))
         .response?.status,
     ).toBe(403);
+  });
+
+  it.each(['admin', 'manager', 'author', 'formateur'])(
+    'lets the %s role export any classroom of its organization without delegation',
+    async (role) => {
+      mocks.membership = { role, organizations: { status: 'active' } };
+
+      const result = await requireSuperAdminOrOrgExporter(request, 'org-target');
+
+      expect(result.user?.id).toBe('user-1');
+      expect(mocks.hasDelegation).not.toHaveBeenCalled();
+    },
+  );
+
+  it('refuses an export to a learner, to a non-member and to a suspended tenant', async () => {
+    mocks.membership = { role: 'apprenant', organizations: { status: 'active' } };
+    expect((await requireSuperAdminOrOrgExporter(request, 'org-target')).response?.status).toBe(
+      403,
+    );
+    mocks.membership = null;
+    expect((await requireSuperAdminOrOrgExporter(request, 'org-target')).response?.status).toBe(
+      403,
+    );
+    mocks.membership = { role: 'admin', organizations: { status: 'suspended' } };
+    expect((await requireSuperAdminOrOrgExporter(request, 'org-target')).response?.status).toBe(
+      403,
+    );
+  });
+
+  it('lets the configured super-admin export without a membership lookup', async () => {
+    mocks.user = { id: 'root-1', email: 'ROOT@qalem.ma' };
+
+    const result = await requireSuperAdminOrOrgExporter(request, 'org-target');
+
+    expect(result.user?.id).toBe('root-1');
+    expect(mocks.from).not.toHaveBeenCalled();
   });
 
   it('refuses an author access to another author’s classroom', async () => {
