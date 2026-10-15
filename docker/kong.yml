@@ -54,6 +54,25 @@ services:
     plugins:
       - name: cors
 
+  # API d'administration GoTrue : réservée au rôle service_role (groupe admin).
+  # Le chemin plus long l'emporte sur /auth/v1/ ; GoTrue exige en plus un JWT admin.
+  - name: auth-v1-admin
+    url: http://supabase-auth:9999/admin
+    routes:
+      - name: auth-v1-admin
+        strip_path: true
+        paths:
+          - /auth/v1/admin
+    plugins:
+      - name: key-auth
+        config:
+          hide_credentials: false
+      - name: acl
+        config:
+          hide_groups_header: true
+          allow:
+            - admin
+
   - name: auth-v1
     url: http://supabase-auth:9999
     routes:

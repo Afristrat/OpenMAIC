@@ -2,8 +2,10 @@
 # This target is deliberately independent from the Node build stages. Coolify can
 # deploy it once as the public Qalem entrypoint while the application target is
 # replaced behind it without changing the public router.
-FROM nginx:1.27-alpine AS edge
+FROM nginxinc/nginx-unprivileged:1.27-alpine AS edge
 
+# Image sans privilèges (utilisateur nginx, UID 101) : écoute sur 3000 (> 1024),
+# pid et fichiers temporaires dans /tmp (voir qalem-edge.nginx.conf).
 COPY infra/coolify/qalem-edge.nginx.conf /etc/nginx/nginx.conf
 
 EXPOSE 3000
