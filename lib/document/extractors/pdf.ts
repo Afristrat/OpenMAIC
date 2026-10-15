@@ -40,6 +40,7 @@ function createPdfBackedDocumentExtractor(id: PDFProviderId): DocumentExtractorP
           providerId: id,
           apiKey: input.config.apiKey,
           baseUrl: input.config.baseUrl,
+          fetch: input.config.fetch,
         },
         input.buffer,
       );

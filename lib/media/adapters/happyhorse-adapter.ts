@@ -97,25 +97,28 @@ export async function submitHappyHorseTask(
   options: VideoGenerationOptions,
 ): Promise<string> {
   const baseUrl = normalizeBaseUrl(config.baseUrl);
-  const response = await fetch(`${baseUrl}/api/v1/services/aigc/video-generation/video-synthesis`, {
-    method: 'POST',
-    headers: {
-      ...jsonHeaders(config.apiKey),
-      'X-DashScope-Async': 'enable',
+  const response = await (config.fetch ?? fetch)(
+    `${baseUrl}/api/v1/services/aigc/video-generation/video-synthesis`,
+    {
+      method: 'POST',
+      headers: {
+        ...jsonHeaders(config.apiKey),
+        'X-DashScope-Async': 'enable',
+      },
+      body: JSON.stringify({
+        model: config.model || DEFAULT_MODEL,
+        input: {
+          prompt: options.prompt,
+        },
+        parameters: {
+          resolution: toHappyHorseResolution(options.resolution),
+          ratio: options.aspectRatio || '16:9',
+          duration: options.duration || 5,
+          watermark: false,
+        },
+      }),
     },
-    body: JSON.stringify({
-      model: config.model || DEFAULT_MODEL,
-      input: {
-        prompt: options.prompt,
-      },
-      parameters: {
-        resolution: toHappyHorseResolution(options.resolution),
-        ratio: options.aspectRatio || '16:9',
-        duration: options.duration || 5,
-        watermark: false,
-      },
-    }),
-  });
+  );
 
   if (!response.ok) {
     const text = await response.text();
@@ -138,10 +141,13 @@ export async function pollHappyHorseTask(
   taskId: string,
 ): Promise<VideoGenerationResult | null> {
   const baseUrl = normalizeBaseUrl(config.baseUrl);
-  const response = await fetch(`${baseUrl}/api/v1/tasks/${encodeURIComponent(taskId)}`, {
-    method: 'GET',
-    headers: authHeaders(config.apiKey),
-  });
+  const response = await (config.fetch ?? fetch)(
+    `${baseUrl}/api/v1/tasks/${encodeURIComponent(taskId)}`,
+    {
+      method: 'GET',
+      headers: authHeaders(config.apiKey),
+    },
+  );
 
   if (!response.ok) {
     const text = await response.text();
@@ -193,10 +199,13 @@ export async function testHappyHorseConnectivity(
 ): Promise<{ success: boolean; message: string }> {
   try {
     const baseUrl = normalizeBaseUrl(config.baseUrl);
-    const response = await fetch(`${baseUrl}/api/v1/tasks/connectivity-test-nonexistent`, {
-      method: 'GET',
-      headers: authHeaders(config.apiKey),
-    });
+    const response = await (config.fetch ?? fetch)(
+      `${baseUrl}/api/v1/tasks/connectivity-test-nonexistent`,
+      {
+        method: 'GET',
+        headers: authHeaders(config.apiKey),
+      },
+    );
 
     if (response.status === 401 || response.status === 403) {
       const text = await response.text();

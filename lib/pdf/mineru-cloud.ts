@@ -111,11 +111,14 @@ interface BatchExtractRow {
   err_msg?: string;
 }
 
-async function parseMinerUZip(zipUrl: string): Promise<ParsedPdfContent> {
+async function parseMinerUZip(
+  zipUrl: string,
+  doFetch: typeof fetch = fetch,
+): Promise<ParsedPdfContent> {
   log.info('[MinerU Cloud] Downloading result ZIP...');
 
   const zipRes = await fetchWithRetry(
-    () => fetch(zipUrl, { signal: AbortSignal.timeout(TIMEOUTS.zip) }),
+    () => doFetch(zipUrl, { signal: AbortSignal.timeout(TIMEOUTS.zip) }),
     'ZIP download',
   );
   if (!zipRes.ok) {
@@ -225,13 +228,15 @@ export async function parseWithMinerUCloud(
   }
 
   const apiRoot = (config.baseUrl || MINERU_CLOUD_DEFAULT_BASE).replace(/\/+$/, '');
+  // `fetch` gardé (SSRF) quand la base est saisie par un utilisateur ; natif sinon.
+  const doFetch = config.fetch ?? fetch;
   const uploadFileName = sanitizeFileName(sourceFileName);
 
   log.info(`[MinerU Cloud] Starting parse: ${uploadFileName} (${pdfBuffer.byteLength} bytes)`);
 
   // Step 1: Create batch — request presigned upload URL
   const batchData = await fetchWithRetry(async () => {
-    const res = await fetch(`${apiRoot}/file-urls/batch`, {
+    const res = await doFetch(`${apiRoot}/file-urls/batch`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -262,7 +267,7 @@ export async function parseWithMinerUCloud(
   // Step 2: Upload PDF to presigned URL
   const putRes = await fetchWithRetry(
     () =>
-      fetch(uploadUrls[0], {
+      doFetch(uploadUrls[0], {
         method: 'PUT',
         body: new Blob([
           pdfBuffer.buffer.slice(
@@ -292,7 +297,7 @@ export async function parseWithMinerUCloud(
   while (Date.now() < deadline) {
     const statusData = await fetchWithRetry(
       async () => {
-        const res = await fetch(`${apiRoot}/extract-results/batch/${batchData.batch_id}`, {
+        const res = await doFetch(`${apiRoot}/extract-results/batch/${batchData.batch_id}`, {
           headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
           signal: AbortSignal.timeout(TIMEOUTS.poll),
         });
@@ -327,7 +332,7 @@ export async function parseWithMinerUCloud(
     }
 
     if (row.state === 'done' && row.full_zip_url) {
-      return parseMinerUZip(row.full_zip_url);
+      return parseMinerUZip(row.full_zip_url, doFetch);
     }
 
     await sleep(POLL_INTERVAL_MS);

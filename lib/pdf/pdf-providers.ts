@@ -324,7 +324,7 @@ async function parseWithMinerU(
   }
 
   // POST /file_parse
-  const response = await fetch(`${config.baseUrl}/file_parse`, {
+  const response = await (config.fetch ?? fetch)(`${config.baseUrl}/file_parse`, {
     method: 'POST',
     headers,
     body: formData,

@@ -48,7 +48,7 @@ export async function testComfyUIVideoConnectivity(
   const baseUrl = config.baseUrl?.replace(/\/$/, '');
   if (!baseUrl) return { success: false, message: 'ComfyUI sidecar base URL is required' };
   try {
-    const response = await fetch(`${baseUrl}${HEALTH_PATH}`, {
+    const response = await (config.fetch ?? fetch)(`${baseUrl}${HEALTH_PATH}`, {
       headers: authHeaders(config.apiKey),
       signal: AbortSignal.timeout(10_000),
     });
@@ -72,7 +72,7 @@ export async function generateWithComfyUIVideo(
   const duration = options.duration ?? 2;
   const fps = 24;
   const numFrames = Math.max(49, Math.min(257, Math.round((duration * fps - 1) / 8) * 8 + 1));
-  const response = await fetch(`${baseUrl}${WORKFLOW_PATH}`, {
+  const response = await (config.fetch ?? fetch)(`${baseUrl}${WORKFLOW_PATH}`, {
     method: 'POST',
     headers: { ...headers, 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -101,7 +101,7 @@ export async function generateWithComfyUIVideo(
   const jobId = encodeURIComponent(payload.jobId);
   const deadline = Date.now() + GENERATION_TIMEOUT_MS;
   while (Date.now() < deadline) {
-    const statusResponse = await fetch(`${baseUrl}/video-jobs/${jobId}`, {
+    const statusResponse = await (config.fetch ?? fetch)(`${baseUrl}/video-jobs/${jobId}`, {
       headers,
       signal: AbortSignal.timeout(10_000),
     });
@@ -113,10 +113,13 @@ export async function generateWithComfyUIVideo(
       throw new Error(status.error || `LTX-2 job ${status.status}`);
     }
     if (status.status === 'completed') {
-      const resultResponse = await fetch(`${baseUrl}/video-jobs/${jobId}/result`, {
-        headers,
-        signal: AbortSignal.timeout(120_000),
-      });
+      const resultResponse = await (config.fetch ?? fetch)(
+        `${baseUrl}/video-jobs/${jobId}/result`,
+        {
+          headers,
+          signal: AbortSignal.timeout(120_000),
+        },
+      );
       if (!resultResponse.ok) {
         throw new Error(`LTX-2 result download failed with HTTP ${resultResponse.status}`);
       }

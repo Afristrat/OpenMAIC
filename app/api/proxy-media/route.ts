@@ -21,11 +21,15 @@ import {
 import { requireAuth } from '@/lib/api/auth';
 import { apiError, publicErrorMessage } from '@/lib/server/api-response';
 import { resolveProxyContentType } from '@/lib/server/proxy-media-content-type';
+import { readLimitedBody, ResponseTooLargeError } from '@/lib/server/read-limited-body';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('ProxyMedia');
 
 export const maxDuration = 60;
+
+const MAX_PROXY_BYTES = 25 * 1024 * 1024; // 25 MiB
+const UPSTREAM_TIMEOUT_MS = 20_000;
 
 export async function POST(request: NextRequest) {
   let url: string | undefined;
@@ -48,7 +52,8 @@ export async function POST(request: NextRequest) {
     // validée (anti DNS rebinding, anti redirection vers le réseau interne).
     let fetched: SafeFetchResult;
     try {
-      fetched = await safeFetch(url);
+      // Le signal couvre aussi la lecture du corps : un hôte qui goutte à goutte est coupé.
+      fetched = await safeFetch(url, { signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS) });
     } catch (error) {
       if (error instanceof SsrfBlockedError) return apiError('INVALID_URL', 403, error.message);
       if (error instanceof SafeFetchRedirectError) {
@@ -78,7 +83,6 @@ async function relayUpstream(response: SafeFetchResult['response'], currentUrl: 
     return apiError('UPSTREAM_ERROR', status, `Upstream returned ${response.status}`);
   }
 
-  const MAX_PROXY_BYTES = 25 * 1024 * 1024; // 25 MiB
   const contentLength = Number(response.headers.get('content-length') ?? '');
   if (Number.isFinite(contentLength) && contentLength > MAX_PROXY_BYTES) {
     return apiError('UPSTREAM_ERROR', 502, `Upstream asset too large (${contentLength} bytes)`);
@@ -88,9 +92,22 @@ async function relayUpstream(response: SafeFetchResult['response'], currentUrl: 
   if (!contentType) {
     return apiError('INVALID_REQUEST', 415, 'Unsupported upstream content type');
   }
-  const bytes = await response.arrayBuffer();
-  if (bytes.byteLength > MAX_PROXY_BYTES) {
-    return apiError('UPSTREAM_ERROR', 502, `Upstream asset too large (${bytes.byteLength} bytes)`);
+  // Lecture en flux : sans Content-Length (chunked), un flux sans fin est interrompu au plafond.
+  let bytes: Uint8Array<ArrayBuffer>;
+  try {
+    ({ bytes } = await readLimitedBody(
+      response.body as ReadableStream<Uint8Array> | null,
+      MAX_PROXY_BYTES,
+    ));
+  } catch (error) {
+    if (error instanceof ResponseTooLargeError) {
+      return apiError(
+        'UPSTREAM_ERROR',
+        502,
+        `Upstream asset too large (over ${MAX_PROXY_BYTES} bytes)`,
+      );
+    }
+    throw error;
   }
 
   return new NextResponse(bytes, {

@@ -86,6 +86,8 @@ describe('POST /api/parse-pdf', () => {
           providerId: 'mineru',
           apiKey: 'client-key',
           baseUrl: 'https://mineru.example.test/v1',
+          // URL saisie par l'utilisateur : fetch gardé (connexion épinglée, redirections revalidées)
+          fetch: expect.any(Function),
         },
       }),
     );

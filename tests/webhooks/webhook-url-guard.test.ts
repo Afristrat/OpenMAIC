@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mocks = vi.hoisted(() => ({ validateUrlForSSRF: vi.fn() }));
-vi.mock('@/lib/server/ssrf-guard', () => ({ validateUrlForSSRF: mocks.validateUrlForSSRF }));
+const mocks = vi.hoisted(() => ({ validateUrlForSSRF: vi.fn(), safeFetch: vi.fn() }));
+vi.mock('@/lib/server/ssrf-guard', () => ({
+  validateUrlForSSRF: mocks.validateUrlForSSRF,
+  safeFetch: mocks.safeFetch,
+}));
 vi.mock('@/lib/logger', () => ({
   createLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }),
 }));
@@ -45,7 +48,7 @@ describe('dispatchWebhook revalide avant livraison', () => {
     vi.resetModules();
   });
 
-  it('ne fait aucun fetch quand la garde refuse et utilise redirect manual sinon', async () => {
+  it('ne livre rien quand la garde refuse et livre via safeFetch sans redirection sinon', async () => {
     vi.resetModules();
     vi.useFakeTimers();
     const insert = vi.fn().mockResolvedValue({});
@@ -64,8 +67,13 @@ describe('dispatchWebhook revalide avant livraison', () => {
             : { insert },
       }),
     }));
-    const fetchMock = vi.fn().mockResolvedValue(new Response('ok', { status: 200 }));
+    const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
+    mocks.safeFetch.mockReset().mockResolvedValue({
+      response: new Response('ok', { status: 200 }),
+      finalUrl: 'https://hooks.example.com/x',
+      dispose: vi.fn().mockResolvedValue(undefined),
+    });
     mocks.validateUrlForSSRF.mockReset();
 
     const { dispatchWebhook } = await import('@/lib/webhooks/dispatcher');
@@ -73,14 +81,16 @@ describe('dispatchWebhook revalide avant livraison', () => {
 
     mocks.validateUrlForSSRF.mockResolvedValue(null);
     await dispatchWebhook(event, { a: 1 });
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0][1]).toMatchObject({ redirect: 'manual' });
+    expect(mocks.safeFetch).toHaveBeenCalledTimes(1);
+    expect(mocks.safeFetch.mock.calls[0][2]).toMatchObject({ maxRedirects: 0 });
+    expect(fetchMock).not.toHaveBeenCalled();
 
-    fetchMock.mockClear();
+    mocks.safeFetch.mockClear();
     mocks.validateUrlForSSRF.mockResolvedValue('Local/private network URLs are not allowed');
     const pending = dispatchWebhook(event, { a: 1 });
     await vi.runAllTimersAsync();
     await pending;
+    expect(mocks.safeFetch).not.toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalled();
     vi.useRealTimers();
   });

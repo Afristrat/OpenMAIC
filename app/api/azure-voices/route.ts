@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { createLogger } from '@/lib/logger';
-import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
+import { guardedFetch } from '@/lib/server/guarded-fetch';
+import { SsrfBlockedError, validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { requireAuth } from '@/lib/api/auth';
 const log = createLogger('Azure Voices');
@@ -35,18 +36,14 @@ export async function POST(req: NextRequest) {
       return apiError('INVALID_URL', 403, ssrfError);
     }
 
-    // Call Azure voices list endpoint; disable redirect following to prevent SSRF via redirect
-    const response = await fetch(`${baseUrl}/cognitiveservices/voices/list`, {
+    // Call Azure voices list endpoint through the guarded fetch: pinned connection (no DNS
+    // rebinding) and every redirect hop revalidated.
+    const response = await guardedFetch(`${baseUrl}/cognitiveservices/voices/list`, {
       method: 'GET',
       headers: {
         'Ocp-Apim-Subscription-Key': apiKey,
       },
-      redirect: 'manual',
     });
-
-    if (response.status >= 300 && response.status < 400) {
-      return apiError('REDIRECT_NOT_ALLOWED', 403, 'Redirects are not allowed');
-    }
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -63,6 +60,9 @@ export async function POST(req: NextRequest) {
     return apiSuccess({ voices });
   } catch (error) {
     log.error(`Azure voices fetch failed [baseUrl="${baseUrl ?? 'unknown'}"]:`, error);
+    if (error instanceof SsrfBlockedError) {
+      return apiError('INVALID_URL', 403, error.message);
+    }
     return apiError(
       'INTERNAL_ERROR',
       500,

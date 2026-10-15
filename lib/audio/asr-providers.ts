@@ -247,7 +247,7 @@ async function transcribeLemonadeASR(
     formData.set('language', config.language);
   }
 
-  const response = await fetch(`${baseUrl}/audio/transcriptions`, {
+  const response = await (config.fetch ?? fetch)(`${baseUrl}/audio/transcriptions`, {
     method: 'POST',
     headers: getOptionalBearerAuthHeaders(config.apiKey),
     body: formData,
@@ -333,7 +333,7 @@ async function transcribeOpenAIWhisper(
     formData.set('language', config.language);
   }
 
-  const response = await fetch(`${baseUrl}/audio/transcriptions`, {
+  const response = await (config.fetch ?? fetch)(`${baseUrl}/audio/transcriptions`, {
     method: 'POST',
     headers: getOptionalBearerAuthHeaders(config.apiKey),
     body: formData,
@@ -414,15 +414,18 @@ async function transcribeQwenASR(
     };
   }
 
-  const response = await fetch(`${baseUrl}/services/aigc/multimodal-generation/generation`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${config.apiKey}`,
-      'Content-Type': 'application/json; charset=utf-8',
-      'X-DashScope-Audio-Format': 'wav',
+  const response = await (config.fetch ?? fetch)(
+    `${baseUrl}/services/aigc/multimodal-generation/generation`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${config.apiKey}`,
+        'Content-Type': 'application/json; charset=utf-8',
+        'X-DashScope-Audio-Format': 'wav',
+      },
+      body: JSON.stringify(requestBody),
     },
-    body: JSON.stringify(requestBody),
-  });
+  );
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => response.statusText);
@@ -515,7 +518,7 @@ async function transcribeAzureASR(
     formData.append('definition', JSON.stringify({ locales: [locale] }));
   }
 
-  const response = await fetch(url.toString(), {
+  const response = await (config.fetch ?? fetch)(url.toString(), {
     method: 'POST',
     headers: { 'Ocp-Apim-Subscription-Key': config.apiKey! },
     body: formData,

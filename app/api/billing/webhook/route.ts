@@ -23,9 +23,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Webhook processing error';
-    log.error('Stripe webhook error:', message);
+    // La cause (signature, base, Stripe) reste dans le journal : le corps de la réponse est
+    // lisible par quiconque sonde l'endpoint public.
+    log.error('Stripe webhook error:', error instanceof Error ? error.message : String(error));
     // Return 400 so Stripe retries
-    return NextResponse.json({ error: message }, { status: 400 });
+    return NextResponse.json({ error: 'Webhook processing error' }, { status: 400 });
   }
 }

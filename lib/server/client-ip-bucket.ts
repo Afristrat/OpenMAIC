@@ -57,3 +57,17 @@ export function rateLimitBucketForIp(ip: string): string {
     .map((group) => group.toString(16))
     .join(':')}::/64`;
 }
+
+/**
+ * Trusted client address. The edge (infra/coolify/qalem-edge.nginx.conf) overwrites
+ * X-Real-IP with the address it resolved itself, so that header is the only value a
+ * client cannot choose. Without it (edge bypassed), the LAST X-Forwarded-For element
+ * is the one appended by the nearest proxy; the first one is client-supplied.
+ * Anything that is not a valid IP collapses into one shared bucket, never a new one.
+ */
+export function trustedClientIp(headers: Headers): string {
+  const realIp = headers.get('x-real-ip')?.trim();
+  const forwardedLast = headers.get('x-forwarded-for')?.split(',').pop()?.trim();
+  const candidate = realIp || forwardedLast;
+  return candidate && isIP(candidate) !== 0 ? candidate : '0.0.0.0';
+}

@@ -9,6 +9,7 @@ import {
 import type { ASRProviderId } from '@/lib/audio/types';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { fetchForBaseUrl } from '@/lib/server/guarded-fetch';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { isSupportedASRAudioUpload, normalizeASRLanguage } from '@/lib/audio/asr-utils';
 import { requireSuperAdminOrOrgMember } from '@/lib/api/auth';
@@ -68,6 +69,7 @@ export async function POST(req: NextRequest) {
       language: normalizeASRLanguage(language),
       apiKey: resolveASRApiKey(effectiveProviderId, managed ? undefined : apiKey || undefined),
       baseUrl: resolveASRBaseUrl(effectiveProviderId, clientBaseUrl),
+      fetch: fetchForBaseUrl(clientBaseUrl),
     };
 
     // Transcribe using the provider system

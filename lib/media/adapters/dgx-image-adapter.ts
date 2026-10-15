@@ -89,7 +89,7 @@ export async function testDgxImageConnectivity(
 
   try {
     const baseUrl = normalizeBaseUrl(config.baseUrl);
-    const healthResponse = await fetch(`${baseUrl}/health`, {
+    const healthResponse = await (config.fetch ?? fetch)(`${baseUrl}/health`, {
       headers: { Accept: 'application/json' },
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
@@ -100,10 +100,13 @@ export async function testDgxImageConnectivity(
 
     // A random missing job must return 404 only after the sidecar accepts the
     // credential. This verifies authentication without waking the GPU.
-    const authResponse = await fetch(`${baseUrl}/jobs/${globalThis.crypto.randomUUID()}`, {
-      headers: headers(config.apiKey),
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    });
+    const authResponse = await (config.fetch ?? fetch)(
+      `${baseUrl}/jobs/${globalThis.crypto.randomUUID()}`,
+      {
+        headers: headers(config.apiKey),
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      },
+    );
     if (authResponse.status !== 404) {
       if (authResponse.status === 401 || authResponse.status === 403) {
         return { success: false, message: 'DGX image sidecar rejected its configured secret' };
@@ -152,12 +155,15 @@ export async function generateWithDgxImage(
   const submitBody = JSON.stringify({ prompt: options.prompt, size: `${width}x${height}` });
   let submitResponse: Response | undefined;
   for (let attempt = 1; attempt <= MAX_SUBMIT_ATTEMPTS; attempt++) {
-    submitResponse = await fetch(`${baseUrl}/workflow/${workflow}/txt2img/async`, {
-      method: 'POST',
-      headers: headers(apiKey, true),
-      body: submitBody,
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    });
+    submitResponse = await (config.fetch ?? fetch)(
+      `${baseUrl}/workflow/${workflow}/txt2img/async`,
+      {
+        method: 'POST',
+        headers: headers(apiKey, true),
+        body: submitBody,
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      },
+    );
     // 429 = shared GPU queue is full (4 active jobs, 2 per client): wait, never spin.
     if (submitResponse.status !== 429 || attempt === MAX_SUBMIT_ATTEMPTS) break;
     await new Promise((resolve) => setTimeout(resolve, QUEUE_FULL_BACKOFF_MS * attempt));
@@ -174,7 +180,7 @@ export async function generateWithDgxImage(
 
   const deadline = Date.now() + JOB_TIMEOUT_MS;
   while (true) {
-    const jobResponse = await fetch(`${baseUrl}/jobs/${jobId}`, {
+    const jobResponse = await (config.fetch ?? fetch)(`${baseUrl}/jobs/${jobId}`, {
       headers: headers(apiKey),
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
@@ -192,7 +198,7 @@ export async function generateWithDgxImage(
     await new Promise((resolve) => setTimeout(resolve, Math.min(POLL_INTERVAL_MS, remaining)));
   }
 
-  const resultResponse = await fetch(`${baseUrl}/jobs/${jobId}/result`, {
+  const resultResponse = await (config.fetch ?? fetch)(`${baseUrl}/jobs/${jobId}/result`, {
     headers: headers(apiKey),
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
@@ -229,9 +235,9 @@ const TXT2IMG_ROUTE_PATTERN = /^\/workflow\/([^/]+)\/txt2img\/async$/;
  * sidecar reports. Edit/other workflows are ignored: only txt2img is ever used.
  */
 export async function listDgxTxt2ImgModelLabels(
-  config: Pick<ImageGenerationConfig, 'apiKey' | 'baseUrl'>,
+  config: Pick<ImageGenerationConfig, 'apiKey' | 'baseUrl' | 'fetch'>,
 ): Promise<Record<string, string>> {
-  const response = await fetch(`${normalizeBaseUrl(config.baseUrl)}/workflows`, {
+  const response = await (config.fetch ?? fetch)(`${normalizeBaseUrl(config.baseUrl)}/workflows`, {
     headers: headers(config.apiKey),
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });

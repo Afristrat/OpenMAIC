@@ -151,6 +151,8 @@ export interface TTSModelConfig {
   providerOptions?: Record<string, unknown>;
   /** Per-call language used by speech normalization and honored by higgs-tts. */
   language?: string;
+  /** `fetch` gardé contre le SSRF, fourni uniquement pour une baseUrl saisie par un utilisateur (voir lib/server/guarded-fetch.ts). */
+  fetch?: typeof globalThis.fetch;
 }
 
 // ============================================================================
@@ -196,6 +198,8 @@ export interface ASRModelConfig {
   apiKey?: string;
   baseUrl?: string;
   language?: string;
+  /** `fetch` gardé contre le SSRF, fourni uniquement pour une baseUrl saisie par un utilisateur (voir lib/server/guarded-fetch.ts). */
+  fetch?: typeof globalThis.fetch;
 }
 
 /** Returns true if the provider ID is a user-defined custom TTS provider. */

@@ -25,6 +25,7 @@ import {
 } from '@/lib/server/provider-config';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess, publicErrorMessage } from '@/lib/server/api-response';
+import { fetchForBaseUrl } from '@/lib/server/guarded-fetch';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { normalizeVoiceDesign } from '@/lib/audio/voice-design';
 import {
@@ -106,6 +107,7 @@ export async function POST(req: NextRequest) {
       baseUrl,
       apiKey,
       model: resolveTTSModel(providerId, body.ttsModelId),
+      fetch: fetchForBaseUrl(clientBaseUrl),
     };
 
     // Already registered → no-op (also avoids a redundant re-register when the

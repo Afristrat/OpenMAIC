@@ -178,4 +178,6 @@ export interface ModelConfig {
   baseUrl?: string;
   proxy?: string; // Optional: HTTP proxy URL for this provider
   providerType?: ProviderType; // Optional: for custom providers on server-side
+  /** `fetch` gardé contre le SSRF : uniquement pour une baseUrl saisie par un utilisateur (jamais un fournisseur serveur). */
+  fetch?: typeof globalThis.fetch;
 }

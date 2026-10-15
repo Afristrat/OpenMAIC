@@ -4,7 +4,7 @@ services:
     volumes:
       - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
-    # Jeton Bearer de /api/metrics (= MCP_API_KEY), monté en lecture seule sur /run/secrets/metrics_token.
+    # Jeton Bearer de /api/metrics (= METRICS_TOKEN, ou MCP_API_KEY s'il n'est pas défini), monté en lecture seule sur /run/secrets/metrics_token.
     secrets:
       - metrics_token
     # qalem-net : atteindre le service « qalem » (cible de scrape qalem:3000) ; default : Grafana.
@@ -70,8 +70,8 @@ networks:
 
 secrets:
   metrics_token:
-    # Chemin ABSOLU d'un fichier hors dépôt contenant la valeur de MCP_API_KEY (sans guillemets).
-    file: ${METRICS_TOKEN_FILE:?METRICS_TOKEN_FILE doit pointer vers un fichier contenant MCP_API_KEY}
+    # Chemin ABSOLU d'un fichier hors dépôt contenant la valeur de METRICS_TOKEN, ou de MCP_API_KEY s'il n'est pas défini (sans guillemets).
+    file: ${METRICS_TOKEN_FILE:?METRICS_TOKEN_FILE doit pointer vers un fichier contenant METRICS_TOKEN (ou MCP_API_KEY)}
 
 volumes:
   prometheus-data:

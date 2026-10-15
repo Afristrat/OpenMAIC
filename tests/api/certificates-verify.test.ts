@@ -66,4 +66,19 @@ describe('GET /api/certificates/verify/[code]', () => {
       },
     });
   });
+
+  it('n’expose jamais le message d’une erreur interne dans une réponse 500', async () => {
+    mocks.createServiceSupabaseClient.mockImplementation(() => {
+      throw new Error('connect ECONNREFUSED 10.0.0.12:5432 (password=hunter2)');
+    });
+    const response = await GET(
+      new NextRequest('https://qalem.ma/api/certificates/verify/QAL-2026-PERSIST1'),
+      { params: Promise.resolve({ code: 'QAL-2026-PERSIST1' }) },
+    );
+    expect(response.status).toBe(500);
+    const text = await response.text();
+    expect(text).not.toContain('ECONNREFUSED');
+    expect(text).not.toContain('hunter2');
+    expect(JSON.parse(text)).toEqual({ success: false, error: 'Internal error' });
+  });
 });

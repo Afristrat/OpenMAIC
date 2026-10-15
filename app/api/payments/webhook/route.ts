@@ -8,6 +8,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { handlePaymentWebhook } from '@/lib/payments';
 import type { PaymentProvider } from '@/lib/payments';
 import { createClient } from '@supabase/supabase-js';
+import { statusesProtectedFrom } from '@/lib/payments/status-order';
 import { verifyPaymentWebhookSignature } from '@/lib/payments/webhook-signature';
 import { createLogger } from '@/lib/logger';
 
@@ -67,13 +68,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const supabase = getSupabaseAdmin();
     if (supabase && result.transactionId) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Untyped service-role client for payments table
-      const { error: updateError } = await (supabase as any)
+      let update = (supabase as any)
         .from('payments')
         .update({
           status: result.status,
           updated_at: new Date().toISOString(),
         })
         .eq('transaction_id', result.transactionId);
+      // Statut monotone : un événement rejoué ou tardif ne régresse pas un paiement plus avancé.
+      const protectedStatuses = statusesProtectedFrom(result.status);
+      if (protectedStatuses.length > 0) {
+        update = update.not('status', 'in', `(${protectedStatuses.join(',')})`);
+      }
+      const { error: updateError } = await update;
 
       if (updateError) {
         log.error('Supabase update error:', updateError.message);

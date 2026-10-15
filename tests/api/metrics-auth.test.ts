@@ -33,4 +33,40 @@ describe('GET /api/metrics', () => {
     expect(GET(req('Bearer mauvais')).status).toBe(401);
     expect(GET(req('Bearer secret-key')).status).toBe(200);
   });
+
+  describe('METRICS_TOKEN distinct de MCP_API_KEY', () => {
+    it('exige METRICS_TOKEN quand il est défini et refuse alors MCP_API_KEY', () => {
+      vi.stubEnv('NODE_ENV', 'production');
+      vi.stubEnv('MCP_API_KEY', 'mcp-secret');
+      vi.stubEnv('METRICS_TOKEN', 'metrics-secret');
+      expect(GET(req()).status).toBe(401);
+      expect(GET(req('Bearer mcp-secret')).status).toBe(401);
+      expect(GET(req('Bearer metrics-secret')).status).toBe(200);
+    });
+
+    it('sert avec METRICS_TOKEN seul, sans MCP_API_KEY', () => {
+      vi.stubEnv('NODE_ENV', 'production');
+      vi.stubEnv('MCP_API_KEY', '');
+      vi.stubEnv('METRICS_TOKEN', 'metrics-secret');
+      expect(GET(req('Bearer metrics-secret')).status).toBe(200);
+      expect(GET(req()).status).toBe(401);
+    });
+
+    it('retombe sur MCP_API_KEY quand METRICS_TOKEN est absent ou vide (compatibilité)', () => {
+      vi.stubEnv('NODE_ENV', 'production');
+      vi.stubEnv('MCP_API_KEY', 'mcp-secret');
+      vi.stubEnv('METRICS_TOKEN', '');
+      expect(GET(req('Bearer mcp-secret')).status).toBe(200);
+      vi.stubEnv('METRICS_TOKEN', '   ');
+      expect(GET(req('Bearer mcp-secret')).status).toBe(200);
+      expect(GET(req('Bearer autre')).status).toBe(401);
+    });
+
+    it('refuse en production quand ni METRICS_TOKEN ni MCP_API_KEY ne sont définis (503)', () => {
+      vi.stubEnv('NODE_ENV', 'production');
+      vi.stubEnv('MCP_API_KEY', '');
+      vi.stubEnv('METRICS_TOKEN', '');
+      expect(GET(req()).status).toBe(503);
+    });
+  });
 });

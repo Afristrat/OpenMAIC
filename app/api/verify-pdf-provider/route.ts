@@ -7,6 +7,7 @@ import {
   resolvePDFApiKey,
   resolvePDFBaseUrl,
 } from '@/lib/server/provider-config';
+import { fetchForBaseUrl } from '@/lib/server/guarded-fetch';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { MINERU_CLOUD_DEFAULT_BASE } from '@/lib/pdf/constants';
 
@@ -49,13 +50,16 @@ export async function POST(req: NextRequest) {
       ).replace(/\/+$/, '');
 
       // Probe the batch endpoint with an empty body to verify auth
-      const response = await fetch(`${cloudBase}/extract-results/batch/test-connection`, {
-        headers: {
-          Authorization: `Bearer ${resolvedApiKey}`,
-          Accept: 'application/json',
+      const response = await (fetchForBaseUrl(clientCloudBase) ?? fetch)(
+        `${cloudBase}/extract-results/batch/test-connection`,
+        {
+          headers: {
+            Authorization: `Bearer ${resolvedApiKey}`,
+            Accept: 'application/json',
+          },
+          signal: AbortSignal.timeout(10000),
         },
-        signal: AbortSignal.timeout(10000),
-      });
+      );
 
       // Any response (including 4xx for "batch not found") means auth + connectivity works
       // Only network errors or 401/403 indicate a problem
@@ -95,7 +99,7 @@ export async function POST(req: NextRequest) {
       headers['Authorization'] = `Bearer ${resolvedApiKey}`;
     }
 
-    const response = await fetch(resolvedBaseUrl, {
+    const response = await (fetchForBaseUrl(clientBaseUrl) ?? fetch)(resolvedBaseUrl, {
       headers,
       signal: AbortSignal.timeout(10000),
       redirect: 'manual',

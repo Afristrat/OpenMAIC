@@ -84,6 +84,7 @@ interface VeoOperation {
 // ---------------------------------------------------------------------------
 
 async function submitVideoGeneration(
+  config: VideoGenerationConfig,
   baseUrl: string,
   apiKey: string,
   model: string,
@@ -103,7 +104,7 @@ async function submitVideoGeneration(
     body.parameters = parameters;
   }
 
-  const response = await fetch(url, {
+  const response = await (config.fetch ?? fetch)(url, {
     method: 'POST',
     headers: apiHeaders(apiKey),
     body: JSON.stringify(body),
@@ -122,6 +123,7 @@ async function submitVideoGeneration(
 // ---------------------------------------------------------------------------
 
 async function pollOperation(
+  config: VideoGenerationConfig,
   baseUrl: string,
   apiKey: string,
   model: string,
@@ -129,7 +131,7 @@ async function pollOperation(
 ): Promise<VeoOperation> {
   const url = `${baseUrl}/v1beta/models/${model}:fetchPredictOperation`;
 
-  const response = await fetch(url, {
+  const response = await (config.fetch ?? fetch)(url, {
     method: 'POST',
     headers: apiHeaders(apiKey),
     body: JSON.stringify({ operationName }),
@@ -158,25 +160,19 @@ export async function testVeoConnectivity(
   const baseUrl = config.baseUrl || DEFAULT_BASE_URL;
   const url = `${baseUrl}/v1beta/models`;
 
-  // Try ?key= query param first (direct Google API), fall back to x-goog-api-key header (proxy)
-  let response: Response | null = null;
+  // La clé voyage dans l'en-tête x-goog-api-key (documenté par Google), jamais dans l'URL :
+  // une URL finit dans les journaux de proxy et peut être renvoyée à un hôte tiers.
+  let response: Response;
   try {
-    response = await fetch(`${url}?key=${config.apiKey}`, { method: 'GET' });
-  } catch {
-    // Direct API unreachable, try header auth
-  }
-  if (!response || !response.ok) {
-    try {
-      response = await fetch(url, {
-        method: 'GET',
-        headers: { 'x-goog-api-key': config.apiKey },
-      });
-    } catch (_err) {
-      return {
-        success: false,
-        message: `Network error: unable to reach ${baseUrl}. Check your Base URL and network connection.`,
-      };
-    }
+    response = await (config.fetch ?? fetch)(url, {
+      method: 'GET',
+      headers: { 'x-goog-api-key': config.apiKey },
+    });
+  } catch (_err) {
+    return {
+      success: false,
+      message: `Network error: unable to reach ${baseUrl}. Check your Base URL and network connection.`,
+    };
   }
 
   if (response.ok) {
@@ -205,7 +201,7 @@ export async function generateWithVeo(
   const baseUrl = config.baseUrl || DEFAULT_BASE_URL;
 
   // 1. Submit
-  const operation = await submitVideoGeneration(baseUrl, config.apiKey, model, options);
+  const operation = await submitVideoGeneration(config, baseUrl, config.apiKey, model, options);
 
   if (!operation.name) {
     throw new Error('Veo returned operation without name');
@@ -219,7 +215,7 @@ export async function generateWithVeo(
       throw new Error('Veo video generation timed out after 10 minutes');
     }
     await delay(POLL_INTERVAL_MS);
-    current = await pollOperation(baseUrl, config.apiKey, model, current.name);
+    current = await pollOperation(config, baseUrl, config.apiKey, model, current.name);
     pollCount++;
   }
 

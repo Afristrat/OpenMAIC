@@ -138,6 +138,8 @@ export interface ImageGenerationConfig {
   baseUrl?: string;
   /** Optional model ID override (uses provider default if omitted) */
   model?: string;
+  /** `fetch` gardé contre le SSRF, fourni uniquement pour une baseUrl saisie par un utilisateur (voir lib/server/guarded-fetch.ts). */
+  fetch?: typeof globalThis.fetch;
 }
 
 /**
@@ -248,6 +250,8 @@ export interface VideoGenerationConfig {
   baseUrl?: string;
   /** Optional model ID override (uses provider default if omitted) */
   model?: string;
+  /** `fetch` gardé contre le SSRF, fourni uniquement pour une baseUrl saisie par un utilisateur (voir lib/server/guarded-fetch.ts). */
+  fetch?: typeof globalThis.fetch;
 }
 
 /**

@@ -1,8 +1,7 @@
-import { isIP } from 'node:net';
 import { NextResponse, type NextRequest } from 'next/server';
 import { checkRateLimit, type RequestRateLimitTier } from '@/lib/rate-limit';
 import { isAccessCodeRequired } from '@/lib/server/access-gate';
-import { rateLimitBucketForIp } from '@/lib/server/client-ip-bucket';
+import { rateLimitBucketForIp, trustedClientIp } from '@/lib/server/client-ip-bucket';
 import { isCrossOriginUnsafeRequest } from '@/lib/server/csrf-origin';
 
 // ---------------------------------------------------------------------------
@@ -96,22 +95,8 @@ export function extractAuthenticatedUserIdFromCookies(
   }
 }
 
-/**
- * Trusted client address. The edge (infra/coolify/qalem-edge.nginx.conf) overwrites
- * X-Real-IP with the address it resolved itself, so that header is the only value a
- * client cannot choose. Without it (edge bypassed), the LAST X-Forwarded-For element
- * is the one appended by the nearest proxy; the first one is client-supplied.
- * Anything that is not a valid IP collapses into one shared bucket, never a new one.
- */
-function getTrustedClientIp(request: NextRequest): string {
-  const realIp = request.headers.get('x-real-ip')?.trim();
-  const forwardedLast = request.headers.get('x-forwarded-for')?.split(',').pop()?.trim();
-  const candidate = realIp || forwardedLast;
-  return candidate && isIP(candidate) !== 0 ? candidate : '0.0.0.0';
-}
-
 function getClientKey(request: NextRequest): { key: string; tier: RequestRateLimitTier } {
-  const ip = rateLimitBucketForIp(getTrustedClientIp(request));
+  const ip = rateLimitBucketForIp(trustedClientIp(request.headers));
 
   // The session cookie is NOT verified here (signature checking would need the project
   // JWT secret/JWKS on every request), so it never names a bucket: a forged `sub` would

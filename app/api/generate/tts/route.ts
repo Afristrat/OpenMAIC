@@ -19,6 +19,7 @@ import {
 import type { TTSProviderId } from '@/lib/audio/types';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { fetchForBaseUrl } from '@/lib/server/guarded-fetch';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { VOXCPM_AUTO_VOICE_ID, VOXCPM_TTS_PROVIDER_ID } from '@/lib/audio/voxcpm';
 import { generateTTSSchema } from '@/lib/api/schemas';
@@ -111,6 +112,8 @@ export async function POST(req: NextRequest) {
       baseUrl,
       providerOptions: ttsProviderOptions,
       language: ttsLanguageOverride ?? ttsLanguage,
+      // URL saisie par l'utilisateur : connexion épinglée + redirections revalidées.
+      fetch: fetchForBaseUrl(clientBaseUrl),
     };
 
     log.info(

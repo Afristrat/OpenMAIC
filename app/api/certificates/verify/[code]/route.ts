@@ -1,5 +1,8 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { createLogger } from '@/lib/logger';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
+
+const log = createLogger('CertificateVerify');
 
 /**
  * GET /api/certificates/verify/[code]
@@ -56,13 +59,8 @@ export async function GET(
       },
     });
   } catch (error) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Internal error',
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 },
-    );
+    // Le détail reste dans le journal : cet endpoint est public et anonyme.
+    log.error('Certificate verification failed:', error);
+    return NextResponse.json({ success: false, error: 'Internal error' }, { status: 500 });
   }
 }

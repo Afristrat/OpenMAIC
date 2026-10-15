@@ -14,6 +14,8 @@ export interface DocumentExtractorConfig {
   providerId: DocumentExtractorProviderId;
   apiKey?: string;
   baseUrl?: string;
+  /** `fetch` gardé contre le SSRF, uniquement pour une baseUrl saisie par un utilisateur. */
+  fetch?: typeof globalThis.fetch;
 }
 
 export interface DocumentExtractorInput {

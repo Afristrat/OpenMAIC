@@ -14,6 +14,7 @@ import {
   resolveBaseUrl,
   resolveProxy,
 } from '@/lib/server/provider-config';
+import { fetchForBaseUrl } from '@/lib/server/guarded-fetch';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { getStageRoute, type LlmStage } from '@/lib/server/model-routes';
 
@@ -102,6 +103,9 @@ export async function resolveModel(params: {
     baseUrl,
     proxy,
     providerType: clientProviderType as 'openai' | 'anthropic' | 'google' | undefined,
+    // URL saisie par un utilisateur : connexion épinglée et redirections revalidées (anti DNS
+    // rebinding). Les fournisseurs serveur (managed) gardent le fetch natif.
+    fetch: fetchForBaseUrl(clientBaseUrl),
   });
 
   // Thinking arbitration mirrors model routing — the route carries a full

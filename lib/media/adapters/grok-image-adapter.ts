@@ -31,7 +31,7 @@ export async function testGrokImageConnectivity(
 ): Promise<{ success: boolean; message: string }> {
   const baseUrl = config.baseUrl || DEFAULT_BASE_URL;
   try {
-    const response = await fetch(`${baseUrl}/images/generations`, {
+    const response = await (config.fetch ?? fetch)(`${baseUrl}/images/generations`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -62,7 +62,7 @@ export async function generateWithGrokImage(
 ): Promise<ImageGenerationResult> {
   const baseUrl = config.baseUrl || DEFAULT_BASE_URL;
 
-  const response = await fetch(`${baseUrl}/images/generations`, {
+  const response = await (config.fetch ?? fetch)(`${baseUrl}/images/generations`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

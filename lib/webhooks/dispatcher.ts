@@ -3,7 +3,9 @@
  *
  * Features:
  * - HMAC-SHA256 payload signing
- * - SSRF guard revalidated before every delivery, redirects never followed
+ * - SSRF guard revalidated before every delivery; connection pinned to the validated address
+ *   (no DNS rebinding) and redirects never followed
+ * - Response body read as a stream and capped (64 KiB) before being stored
  * - CloudEvents-style headers
  * - Exponential backoff retry (3 attempts: 1 s, 4 s, 16 s)
  * - Delivery logging to Supabase
@@ -11,6 +13,8 @@
 
 import { createHmac, randomUUID } from 'crypto';
 import { createLogger } from '@/lib/logger';
+import { readLimitedBody } from '@/lib/server/read-limited-body';
+import { safeFetch } from '@/lib/server/ssrf-guard';
 import type { WebhookEvent } from './types';
 import { validateWebhookUrl } from './url-guard';
 
@@ -25,6 +29,9 @@ function signPayload(payload: string, secret: string): string {
 }
 
 const RETRY_DELAYS_MS = [1_000, 4_000, 16_000] as const;
+
+/** Plafond du corps de réponse conservé dans `webhook_deliveries.response_body`. */
+const MAX_RESPONSE_BODY_BYTES = 64 * 1024;
 
 // ---------------------------------------------------------------------------
 // Internal: single delivery attempt
@@ -44,6 +51,7 @@ async function attemptDelivery(
 ): Promise<DeliveryResult> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10_000);
+  let dispose: (() => Promise<void>) | undefined;
 
   try {
     // Revalidation à chaque livraison : la résolution DNS a pu changer depuis la création.
@@ -52,29 +60,43 @@ async function attemptDelivery(
       return { statusCode: null, responseBody: urlError, success: false };
     }
 
-    const res = await fetch(url, {
-      method: 'POST',
-      // Pas de suivi de redirection : une redirection vers une cible interne contournerait la garde.
-      redirect: 'manual',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Webhook-Signature': signature,
-        'Ce-Type': `qalem.${event}`,
-        'Ce-Source': 'qalem-api',
-        'Ce-Id': randomUUID(),
-        'Ce-Specversion': '1.0',
+    // safeFetch : connexion épinglée sur l'adresse validée (anti DNS rebinding). Aucune redirection
+    // suivie (maxRedirects: 0) : le corps signé ne doit pas être rejoué vers une autre cible.
+    const delivery = await safeFetch(
+      url,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Webhook-Signature': signature,
+          'Ce-Type': `qalem.${event}`,
+          'Ce-Source': 'qalem-api',
+          'Ce-Id': randomUUID(),
+          'Ce-Specversion': '1.0',
+        },
+        body,
+        signal: controller.signal,
       },
-      body,
-      signal: controller.signal,
-    });
+      { maxRedirects: 0 },
+    );
+    dispose = delivery.dispose;
+    const res = delivery.response;
 
-    const responseBody = await res.text().catch(() => '');
+    const limited = await readLimitedBody(
+      res.body as ReadableStream<Uint8Array> | null,
+      MAX_RESPONSE_BODY_BYTES,
+      {
+        onExceed: 'truncate',
+      },
+    ).catch(() => null);
+    const responseBody = limited ? new TextDecoder().decode(limited.bytes) : '';
     return { statusCode: res.status, responseBody, success: res.ok };
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     return { statusCode: null, responseBody: message, success: false };
   } finally {
     clearTimeout(timeout);
+    await dispose?.().catch(() => undefined);
   }
 }
 

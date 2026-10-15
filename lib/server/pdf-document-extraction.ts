@@ -1,12 +1,13 @@
 import { documentArtifactToParsedPdfContent, extractDocument } from '@/lib/document';
 import { shouldUseOcrFallback } from '@/lib/document/pdf-text-quality';
 import { createLogger } from '@/lib/logger';
-import type { PDFProviderId } from '@/lib/pdf/types';
+import type { PDFParserConfig, PDFProviderId } from '@/lib/pdf/types';
 import {
   isServerConfiguredProvider,
   resolvePDFApiKey,
   resolvePDFBaseUrl,
 } from '@/lib/server/provider-config';
+import { fetchForBaseUrl } from '@/lib/server/guarded-fetch';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import type { ParsedPdfContent } from '@/lib/types/pdf';
 
@@ -45,8 +46,9 @@ export async function extractReadablePdf(input: {
     providerId,
     apiKey: resolvePDFApiKey(providerId, managed ? undefined : input.apiKey),
     baseUrl: resolvePDFBaseUrl(providerId, clientBaseUrl),
+    fetch: fetchForBaseUrl(clientBaseUrl),
   };
-  const extract = async (parserConfig: typeof config) =>
+  const extract = async (parserConfig: PDFParserConfig) =>
     documentArtifactToParsedPdfContent(
       await extractDocument({
         buffer: input.buffer,

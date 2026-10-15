@@ -26,6 +26,8 @@ export interface PDFParserConfig {
   providerId: PDFProviderId;
   apiKey?: string;
   baseUrl?: string;
+  /** `fetch` gardé contre le SSRF, fourni uniquement pour une baseUrl saisie par un utilisateur (voir lib/server/guarded-fetch.ts). */
+  fetch?: typeof globalThis.fetch;
 }
 
 // Note: ParsedPdfContent is imported from @/lib/types/pdf to avoid duplication

@@ -2,8 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { serializeMetrics } from '@/lib/metrics';
 import { secretsMatch } from '@/lib/server/api-key-compare';
 
+/**
+ * Jeton attendu : METRICS_TOKEN (secret dédié à Prometheus, sans pouvoir sur /api/mcp) ; à défaut
+ * MCP_API_KEY, pour les déploiements existants dont le secret Docker `metrics_token` contient encore
+ * cette clé.
+ */
+function expectedToken(): string | undefined {
+  return process.env.METRICS_TOKEN?.trim() || process.env.MCP_API_KEY || undefined;
+}
+
 export function GET(req: NextRequest): NextResponse {
-  const apiKey = process.env.MCP_API_KEY;
+  const apiKey = expectedToken();
   if (!apiKey) {
     // Même règle que /api/mcp : en production, refuser de servir sans authentification configurée.
     if (process.env.NODE_ENV === 'production') {

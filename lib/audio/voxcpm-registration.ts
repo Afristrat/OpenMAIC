@@ -60,7 +60,7 @@ export async function voxCPMVoiceExists(
   cfg: VoiceRegistrationConfig,
   voiceId: string,
 ): Promise<boolean> {
-  const res = await fetch(`${v1(cfg.baseUrl)}/audio/voices`, {
+  const res = await (cfg.fetch ?? fetch)(`${v1(cfg.baseUrl)}/audio/voices`, {
     method: 'GET',
     headers: authHeaders(cfg.apiKey),
   });
@@ -83,7 +83,7 @@ export async function registerVoxCPMVoice(
     `${params.voiceId}.wav`,
   );
 
-  const res = await fetch(`${v1(cfg.baseUrl)}/audio/voices`, {
+  const res = await (cfg.fetch ?? fetch)(`${v1(cfg.baseUrl)}/audio/voices`, {
     method: 'POST',
     headers: authHeaders(cfg.apiKey),
     body: form,
@@ -102,7 +102,7 @@ export async function bootstrapVoxCPMReferenceClip(
 ): Promise<{ referenceAudioBase64: string; mimeType: string }> {
   const prompt = buildVoiceDesignPrompt(params.design);
   const sample = bootstrapSentence(params.language);
-  const res = await fetch(`${v1(cfg.baseUrl)}/audio/speech`, {
+  const res = await (cfg.fetch ?? fetch)(`${v1(cfg.baseUrl)}/audio/speech`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json; charset=utf-8', ...authHeaders(cfg.apiKey) },
     body: JSON.stringify({

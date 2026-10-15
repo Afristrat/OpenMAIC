@@ -64,7 +64,10 @@ describe('POST /api/proxy-media', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('Content-Type')).toBe('image/png');
     expect(new Uint8Array(await res.arrayBuffer())).toEqual(bodyBytes);
-    expect(mocks.safeFetch).toHaveBeenCalledWith('https://example.com/image.png');
+    expect(mocks.safeFetch).toHaveBeenCalledWith(
+      'https://example.com/image.png',
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
     expect(dispose).toHaveBeenCalledTimes(1);
   });
 
@@ -216,5 +219,46 @@ describe('POST /api/proxy-media', () => {
     expect(res.headers.get('Content-Security-Policy')).toBe("sandbox; default-src 'none'");
     expect(res.headers.get('Content-Disposition')).toBe('inline');
     expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff');
+  });
+
+  it('13. flux chunked sans fin (pas de Content-Length) : interrompu à 25 Mio, 502, connexion libérée', async () => {
+    const cancel = vi.fn();
+    const chunk = new Uint8Array(1024 * 1024).fill(7);
+    let sent = 0;
+    upstream(
+      () =>
+        new Response(
+          new ReadableStream({
+            pull(controller) {
+              sent += chunk.byteLength;
+              controller.enqueue(chunk);
+            },
+            cancel,
+          }),
+          { status: 200, headers: { 'Content-Type': 'image/png' } },
+        ),
+    );
+
+    const res = await postProxy({ url: 'https://example.com/endless.png' });
+
+    expect(res.status).toBe(502);
+    expect(cancel).toHaveBeenCalledTimes(1);
+    // Lecture bornée : on ne lit jamais beaucoup plus que le plafond.
+    expect(sent).toBeLessThanOrEqual(30 * 1024 * 1024);
+    expect(dispose).toHaveBeenCalledTimes(1);
+  });
+
+  it('14. impose un délai global à la requête amont', async () => {
+    upstream(
+      () =>
+        new Response(new Uint8Array([1]), {
+          status: 200,
+          headers: { 'Content-Type': 'image/png' },
+        }),
+    );
+    await postProxy({ url: 'https://example.com/a.png' });
+    const init = mocks.safeFetch.mock.calls[0][1] as { signal: AbortSignal };
+    expect(init.signal).toBeInstanceOf(AbortSignal);
+    expect(init.signal.aborted).toBe(false);
   });
 });

@@ -110,7 +110,7 @@ export async function testSeedanceConnectivity(
 ): Promise<{ success: boolean; message: string }> {
   const baseUrl = config.baseUrl || DEFAULT_BASE_URL;
   try {
-    const response = await fetch(
+    const response = await (config.fetch ?? fetch)(
       `${baseUrl}/api/v3/contents/generations/tasks/connectivity-test-nonexistent`,
       {
         method: 'GET',
@@ -156,7 +156,7 @@ export async function submitSeedanceTask(
   const resolution = toSeedanceResolution(options.resolution);
   if (resolution) body.resolution = resolution;
 
-  const response = await fetch(`${baseUrl}/api/v3/contents/generations/tasks`, {
+  const response = await (config.fetch ?? fetch)(`${baseUrl}/api/v3/contents/generations/tasks`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -189,12 +189,15 @@ export async function pollSeedanceTask(
 ): Promise<VideoGenerationResult | null> {
   const baseUrl = config.baseUrl || DEFAULT_BASE_URL;
 
-  const response = await fetch(`${baseUrl}/api/v3/contents/generations/tasks/${taskId}`, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${config.apiKey}`,
+  const response = await (config.fetch ?? fetch)(
+    `${baseUrl}/api/v3/contents/generations/tasks/${taskId}`,
+    {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${config.apiKey}`,
+      },
     },
-  });
+  );
 
   if (!response.ok) {
     const text = await response.text();

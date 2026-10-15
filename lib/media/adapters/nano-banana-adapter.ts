@@ -59,7 +59,7 @@ export async function testNanoBananaConnectivity(
   // une URL finit dans les journaux de proxy et peut être renvoyée à un hôte tiers.
   let response: Response;
   try {
-    response = await fetch(url, {
+    response = await (config.fetch ?? fetch)(url, {
       method: 'GET',
       headers: { 'x-goog-api-key': config.apiKey },
     });
@@ -95,23 +95,26 @@ export async function generateWithNanoBanana(
   const baseUrl = config.baseUrl || DEFAULT_BASE_URL;
   const model = config.model || DEFAULT_MODEL;
 
-  const response = await fetch(`${baseUrl}/v1beta/models/${model}:generateContent`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-goog-api-key': config.apiKey,
-    },
-    body: JSON.stringify({
-      contents: [
-        {
-          parts: [{ text: options.prompt }],
-        },
-      ],
-      generationConfig: {
-        responseModalities: ['IMAGE'],
+  const response = await (config.fetch ?? fetch)(
+    `${baseUrl}/v1beta/models/${model}:generateContent`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': config.apiKey,
       },
-    }),
-  });
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [{ text: options.prompt }],
+          },
+        ],
+        generationConfig: {
+          responseModalities: ['IMAGE'],
+        },
+      }),
+    },
+  );
 
   if (!response.ok) {
     const text = await response.text();

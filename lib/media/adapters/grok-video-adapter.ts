@@ -87,7 +87,7 @@ export async function testGrokVideoConnectivity(
 ): Promise<{ success: boolean; message: string }> {
   const baseUrl = config.baseUrl || DEFAULT_BASE_URL;
   try {
-    const response = await fetch(`${baseUrl}/videos/generations`, {
+    const response = await (config.fetch ?? fetch)(`${baseUrl}/videos/generations`, {
       method: 'POST',
       headers: apiHeaders(config.apiKey),
       body: JSON.stringify({
@@ -113,6 +113,7 @@ export async function testGrokVideoConnectivity(
 // ---------------------------------------------------------------------------
 
 async function submitVideoGeneration(
+  config: VideoGenerationConfig,
   baseUrl: string,
   apiKey: string,
   model: string,
@@ -125,7 +126,7 @@ async function submitVideoGeneration(
 
   if (options.duration) body.duration = options.duration;
 
-  const response = await fetch(`${baseUrl}/videos/generations`, {
+  const response = await (config.fetch ?? fetch)(`${baseUrl}/videos/generations`, {
     method: 'POST',
     headers: apiHeaders(apiKey),
     body: JSON.stringify(body),
@@ -149,11 +150,12 @@ async function submitVideoGeneration(
 // ---------------------------------------------------------------------------
 
 async function pollVideoStatus(
+  config: VideoGenerationConfig,
   baseUrl: string,
   apiKey: string,
   requestId: string,
 ): Promise<GrokVideoPollResponse> {
-  const response = await fetch(`${baseUrl}/videos/${requestId}`, {
+  const response = await (config.fetch ?? fetch)(`${baseUrl}/videos/${requestId}`, {
     method: 'GET',
     headers: apiHeaders(apiKey),
   });
@@ -178,12 +180,12 @@ export async function generateWithGrokVideo(
   const baseUrl = config.baseUrl || DEFAULT_BASE_URL;
 
   // 1. Submit
-  const requestId = await submitVideoGeneration(baseUrl, config.apiKey, model, options);
+  const requestId = await submitVideoGeneration(config, baseUrl, config.apiKey, model, options);
 
   // 2. Poll until done
   for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
     await delay(POLL_INTERVAL_MS);
-    const result = await pollVideoStatus(baseUrl, config.apiKey, requestId);
+    const result = await pollVideoStatus(config, baseUrl, config.apiKey, requestId);
 
     if (result.status === 'done') {
       if (!result.video?.url) {

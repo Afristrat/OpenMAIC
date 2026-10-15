@@ -53,7 +53,7 @@ export async function testSeedreamConnectivity(
   try {
     // Send a request with empty prompt — auth failure (401/403) means bad key,
     // any other error (400) means key is valid but request is intentionally bad
-    const response = await fetch(`${baseUrl}/api/v3/images/generations`, {
+    const response = await (config.fetch ?? fetch)(`${baseUrl}/api/v3/images/generations`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -84,7 +84,7 @@ export async function generateWithSeedream(
 ): Promise<ImageGenerationResult> {
   const baseUrl = config.baseUrl || DEFAULT_BASE_URL;
 
-  const response = await fetch(`${baseUrl}/api/v3/images/generations`, {
+  const response = await (config.fetch ?? fetch)(`${baseUrl}/api/v3/images/generations`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

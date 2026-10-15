@@ -1495,7 +1495,7 @@ export function getModel(config: ModelConfig): ModelWithInfo {
               }
             }
           }
-          const response = await globalThis.fetch(url, init);
+          const response = await (config.fetch ?? globalThis.fetch)(url, init);
 
           // Recover reasoning that @ai-sdk/openai's chat schema drops: rewrite
           // streamed `reasoning_content` deltas into an inline <think> block
@@ -1551,6 +1551,8 @@ export function getModel(config: ModelConfig): ModelWithInfo {
           return response;
         };
         openaiOptions.fetch = compatFetch as typeof globalThis.fetch;
+      } else if (config.fetch) {
+        openaiOptions.fetch = config.fetch;
       }
 
       const openai = createOpenAI(openaiOptions);
@@ -1605,8 +1607,10 @@ export function getModel(config: ModelConfig): ModelWithInfo {
             }
           }
 
-          return globalThis.fetch(url, init);
+          return (config.fetch ?? globalThis.fetch)(url, init);
         }) as typeof globalThis.fetch;
+      } else if (config.fetch) {
+        anthropicOptions.fetch = config.fetch;
       }
 
       const anthropic = createAnthropic(anthropicOptions);
@@ -1619,7 +1623,9 @@ export function getModel(config: ModelConfig): ModelWithInfo {
         apiKey: effectiveApiKey,
         baseURL: effectiveBaseUrl,
       };
-      if (config.proxy) {
+      if (config.fetch) {
+        googleOptions.fetch = config.fetch;
+      } else if (config.proxy) {
         const proxy = config.proxy;
         let agent: unknown;
         googleOptions.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {

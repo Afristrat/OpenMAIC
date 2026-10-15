@@ -2,6 +2,7 @@
 // Qalem — Lightweight xAPI Client (zero external dependencies)
 // =============================================================================
 
+import { safeFetch } from '@/lib/server/ssrf-guard';
 import type { XAPIConfig } from './config';
 
 // ---------------------------------------------------------------------------
@@ -114,6 +115,7 @@ export async function sendStatement(
 ): Promise<boolean> {
   if (!config.enabled) return false;
 
+  let dispose: (() => Promise<void>) | undefined;
   try {
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(statementId))
       return false;
@@ -128,21 +130,31 @@ export async function sendStatement(
       return false;
     endpoint.pathname = `${endpoint.pathname.replace(/\/$/, '')}/statements`;
     endpoint.searchParams.set('statementId', statementId);
-    const response = await fetch(endpoint, {
-      method: 'PUT',
-      redirect: 'error',
-      signal: AbortSignal.timeout(10000),
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Experience-API-Version': '1.0.3',
-        Authorization: config.auth,
+    // L'endpoint LRS est saisi par l'organisation : safeFetch (garde SSRF, connexion épinglée sur
+    // l'adresse validée) et aucune redirection suivie, pour ne jamais rejouer l'en-tête
+    // Authorization vers une autre cible.
+    const delivery = await safeFetch(
+      endpoint.toString(),
+      {
+        method: 'PUT',
+        signal: AbortSignal.timeout(10000),
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Experience-API-Version': '1.0.3',
+          Authorization: config.auth,
+        },
+        body: JSON.stringify({ ...statement, id: statementId }),
       },
-      body: JSON.stringify({ ...statement, id: statementId }),
-    });
-    return response.status === 204;
+      { maxRedirects: 0 },
+    );
+    dispose = delivery.dispose;
+    await delivery.response.body?.cancel().catch(() => undefined);
+    return delivery.response.status === 204;
   } catch {
     // Telemetry must never crash the application
     return false;
+  } finally {
+    await dispose?.().catch(() => undefined);
   }
 }
 

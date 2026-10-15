@@ -1,7 +1,11 @@
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
-import { saveOrganizationLrsConfig, validateLrsEndpoint } from '@/lib/server/org-lrs-config';
+import {
+  LrsEndpointBlockedError,
+  saveOrganizationLrsConfig,
+  validateLrsEndpoint,
+} from '@/lib/server/org-lrs-config';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
@@ -60,6 +64,14 @@ export async function PUT(
     await saveOrganizationLrsConfig({ orgId, ...parsed.data });
     return apiSuccess({ saved: true });
   } catch (error) {
+    if (error instanceof LrsEndpointBlockedError) {
+      return apiError(
+        'INVALID_URL',
+        422,
+        'Endpoint LRS refusé : adresse non autorisée',
+        error.message,
+      );
+    }
     return apiError(
       'INVALID_REQUEST',
       400,

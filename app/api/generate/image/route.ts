@@ -26,6 +26,7 @@ import {
 import type { ImageProviderId, ImageGenerationOptions } from '@/lib/media/types';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { fetchForBaseUrl } from '@/lib/server/guarded-fetch';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { randomUUID } from 'node:crypto';
 import { requireSuperAdminOrOrgAuthor, requireSuperAdminOrOrgEditor } from '@/lib/api/auth';
@@ -88,6 +89,8 @@ export async function POST(request: NextRequest) {
     }
 
     const baseUrl = resolveImageBaseUrl(providerId, clientBaseUrl);
+    // URL saisie par l'utilisateur : connexion épinglée + redirections revalidées (anti DNS rebinding).
+    const guardedFetchImpl = fetchForBaseUrl(clientBaseUrl);
 
     // Resolve dimensions from aspect ratio if not explicitly set
     if (!body.width && !body.height && body.aspectRatio) {
@@ -102,7 +105,10 @@ export async function POST(request: NextRequest) {
     );
 
     const result = await runWithUsageMeteringContext(request.headers, auth.user.id, tenantId, () =>
-      generateMeteredImage({ providerId, apiKey, baseUrl, model: clientModel }, body),
+      generateMeteredImage(
+        { providerId, apiKey, baseUrl, model: clientModel, fetch: guardedFetchImpl },
+        body,
+      ),
     );
 
     if (classroomId) {
@@ -111,7 +117,9 @@ export async function POST(request: NextRequest) {
         : result.url
           ? Buffer.from(
               await (
-                await fetch(result.url, { signal: AbortSignal.timeout(60_000) })
+                await (guardedFetchImpl ?? fetch)(result.url, {
+                  signal: AbortSignal.timeout(60_000),
+                })
               ).arrayBuffer(),
             )
           : null;

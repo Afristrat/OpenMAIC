@@ -25,6 +25,7 @@ import {
 import type { VideoProviderId } from '@/lib/media/types';
 import { apiError, apiSuccess, publicErrorMessage } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
+import { fetchForBaseUrl } from '@/lib/server/guarded-fetch';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 
 const log = createLogger('VerifyVideoProvider');
@@ -61,6 +62,7 @@ export async function POST(request: NextRequest) {
       apiKey,
       baseUrl,
       model,
+      fetch: fetchForBaseUrl(clientBaseUrl),
     });
 
     if (!result.success) {

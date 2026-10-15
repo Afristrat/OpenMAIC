@@ -27,6 +27,7 @@ import {
 import type { VideoProviderId, VideoGenerationOptions } from '@/lib/media/types';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { fetchForBaseUrl } from '@/lib/server/guarded-fetch';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { requireSuperAdminOrOrgAuthor, requireSuperAdminOrOrgEditor } from '@/lib/api/auth';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
@@ -121,7 +122,10 @@ export async function POST(request: NextRequest) {
     );
 
     const result = await runWithUsageMeteringContext(request.headers, auth.user.id, tenantId, () =>
-      generateMeteredVideo({ providerId, apiKey, baseUrl, model: clientModel }, options),
+      generateMeteredVideo(
+        { providerId, apiKey, baseUrl, model: clientModel, fetch: fetchForBaseUrl(clientBaseUrl) },
+        options,
+      ),
     );
 
     log.info(

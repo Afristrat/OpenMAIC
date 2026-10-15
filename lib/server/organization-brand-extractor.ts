@@ -1,4 +1,5 @@
 import sharp from 'sharp';
+import { readLimitedBody } from '@/lib/server/read-limited-body';
 import { safeFetch, validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { extractBrandFromSources } from '@/lib/branding/brand-extraction';
 import type { OrganizationDesignSystem } from '@/lib/branding/organization-design-system';
@@ -118,7 +119,14 @@ async function fetchGuarded(
   );
   try {
     if (!response.ok) throw new Error(`${finalUrl} returned ${response.status}`);
-    return { text: (await response.text()).slice(0, maxChars), url: finalUrl };
+    // Lecture en flux : une réponse chunked sans fin est coupée au plafond (1 caractère = au moins
+    // 1 octet UTF-8) au lieu d'être entièrement chargée en mémoire.
+    const { bytes } = await readLimitedBody(
+      response.body as ReadableStream<Uint8Array> | null,
+      maxChars,
+      { onExceed: 'truncate' },
+    );
+    return { text: new TextDecoder().decode(bytes).slice(0, maxChars), url: finalUrl };
   } finally {
     await dispose();
   }

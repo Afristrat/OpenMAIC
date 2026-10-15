@@ -1,4 +1,5 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
+import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 
 const ALGORITHM = 'aes-256-gcm';
@@ -23,6 +24,14 @@ export function validateLrsEndpoint(value: string): string {
   return endpoint.toString().replace(/\/$/, '');
 }
 
+/** Endpoint LRS refusé par la garde SSRF (réseau privé, métadonnées cloud, hôte non résoluble…). */
+export class LrsEndpointBlockedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'LrsEndpointBlockedError';
+  }
+}
+
 export async function saveOrganizationLrsConfig(input: {
   orgId: string;
   endpoint: string;
@@ -31,6 +40,9 @@ export async function saveOrganizationLrsConfig(input: {
 }): Promise<void> {
   if (!input.auth.trim() || input.auth.length > 4096) throw new Error('Invalid LRS authorization');
   const endpoint = validateLrsEndpoint(input.endpoint);
+  // Refus à l'enregistrement ; l'envoi (safeFetch) revalide et épingle la connexion à chaque livraison.
+  const ssrfError = await validateUrlForSSRF(endpoint);
+  if (ssrfError) throw new LrsEndpointBlockedError(ssrfError);
   const iv = randomBytes(12);
   const cipher = createCipheriv(ALGORITHM, encryptionKey(), iv);
   const ciphertext = Buffer.concat([cipher.update(input.auth, 'utf8'), cipher.final()]);
