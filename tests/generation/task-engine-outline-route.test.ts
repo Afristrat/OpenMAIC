@@ -9,6 +9,10 @@ vi.mock('@/lib/ai/llm', () => ({
   streamLLM: streamLLMMock,
 }));
 
+vi.mock('@/lib/api/auth', () => ({
+  requireAuth: vi.fn().mockResolvedValue({ user: { id: 'user-1', email: 'user@example.com' } }),
+}));
+
 vi.mock('@/lib/server/resolve-model', () => ({
   resolveModelFromRequest: resolveModelFromRequestMock,
 }));

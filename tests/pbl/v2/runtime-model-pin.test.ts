@@ -11,6 +11,10 @@ const mocks = vi.hoisted(() => ({
   resolveModelFromRequest: vi.fn(),
 }));
 
+vi.mock('@/lib/api/auth', () => ({
+  requireAuth: vi.fn().mockResolvedValue({ user: { id: 'user-1', email: 'user@example.com' } }),
+}));
+
 vi.mock('@/lib/server/resolve-model', () => ({
   resolveModelFromRequest: mocks.resolveModelFromRequest,
 }));
