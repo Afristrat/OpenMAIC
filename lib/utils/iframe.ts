@@ -173,22 +173,16 @@ export function patchHtmlForIframe(html: string): string {
   const injection =
     '\n' + CSP_META + '\n' + ERROR_CAPTURE_SHIM + '\n' + STORAGE_SHIM + '\n' + iframeCss;
 
-  // Insert right after <head> or at the start of the document
-  const headIdx = html.indexOf('<head>');
-  if (headIdx !== -1) {
-    const insertPos = headIdx + 6; // after <head>
-    return html.substring(0, insertPos) + injection + html.substring(insertPos);
+  // La CSP et les shims passent TOUJOURS avant tout contenu du document : chercher un `<head>` par
+  // indexOf se laisse tromper par un commentaire ou une chaîne JS qui en contient un, et la CSP
+  // se retrouverait après le script hostile (ou dans un commentaire). Le navigateur range les
+  // éléments de tête rencontrés avant `<html>` dans le <head> implicite.
+  // Seul un doctype situé tout au début (précédé au plus d'espaces et de commentaires) reste
+  // en tête : du contenu avant lui ferait basculer la page en mode quirks.
+  const leadingDoctype = /^\s*(?:<!--[\s\S]*?-->\s*)*<!doctype[^>]*>/i.exec(html);
+  if (leadingDoctype) {
+    const end = leadingDoctype[0].length;
+    return html.substring(0, end) + injection + html.substring(end);
   }
-
-  const headWithAttrs = html.indexOf('<head ');
-  if (headWithAttrs !== -1) {
-    const closeAngle = html.indexOf('>', headWithAttrs);
-    if (closeAngle !== -1) {
-      const insertPos = closeAngle + 1;
-      return html.substring(0, insertPos) + injection + html.substring(insertPos);
-    }
-  }
-
-  // Fallback: prepend
   return injection + html;
 }

@@ -51,9 +51,16 @@ export function getRateLimitStoreSize(): number {
   return windowStore.size;
 }
 
+/** The full-store prune walks every key: run it at most once per second, evict FIFO otherwise. */
+const MIN_PRUNE_GAP_MS = 1_000;
+let lastPrune = 0;
+
 function makeRoomForNewKey(now: number): void {
   if (windowStore.size < RATE_LIMIT_MAX_KEYS) return;
-  pruneExpiredEntries(now);
+  if (now - lastPrune > MIN_PRUNE_GAP_MS) {
+    pruneExpiredEntries(now);
+    lastPrune = now;
+  }
   // Map iterates in insertion order: drop the oldest keys first.
   for (const key of windowStore.keys()) {
     if (windowStore.size < RATE_LIMIT_MAX_KEYS) return;

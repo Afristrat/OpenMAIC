@@ -77,6 +77,9 @@ describe('proxy ACCESS_CODE server-side gate', () => {
       ['/api/mcp', 'POST'],
       ['/api/health', 'GET'],
       ['/api/metrics', 'GET'],
+      ['/api/local/public-key', 'GET'],
+      ['/api/local/licenses/lic_123/status', 'GET'],
+      ['/api/certificates/verify/ABC-123', 'GET'],
     ])('never gates %s (%s)', async (path, method) => {
       const res = await proxy(request(path, { method }));
       expect(res.status).toBe(200);
@@ -89,6 +92,14 @@ describe('proxy ACCESS_CODE server-side gate', () => {
         '/api/lti/quiz',
         '/api/mcp/other',
         '/api/webhooks',
+        '/api/local/public-keys',
+        '/api/local/devices',
+        '/api/local/packages',
+        '/api/local/licensesx/a/status',
+        '/api/certificates',
+        '/api/certificates/generate',
+        '/api/certificates/verifyx/a',
+        '/api/invitations/signup',
       ]) {
         expect((await proxy(request(path, { method: 'POST' }))).status).toBe(401);
       }

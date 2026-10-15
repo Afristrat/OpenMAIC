@@ -24,7 +24,7 @@ import {
   requireSuperAdminOrOrgMember,
 } from '@/lib/api/auth';
 import { validateBody } from '@/lib/api/validate';
-import { classroomPersistSchema } from '@/lib/api/schemas';
+import { classroomPersistSchema, classroomStageSchema } from '@/lib/api/schemas';
 import { createLogger } from '@/lib/logger';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import type { Scene, Stage } from '@/lib/types/stage';
@@ -100,6 +100,8 @@ export async function PUT(request: NextRequest) {
     if (!stageId || !isValidClassroomId(stageId) || !Array.isArray(rawBody?.scenes)) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Classroom invalide');
     }
+    const stageValidation = validateBody(classroomStageSchema, rawBody.stage);
+    if (!stageValidation.success) return stageValidation.response;
     const ownership = await readClassroomOwnership(stageId);
     if (!ownership) return apiError(API_ERROR_CODES.INVALID_REQUEST, 404, 'Classroom introuvable');
     const auth = await requireSuperAdminOrOrgEditor(
@@ -112,7 +114,7 @@ export async function PUT(request: NextRequest) {
     await persistClassroom(
       {
         id: stageId,
-        stage: rawBody.stage as Stage,
+        stage: stageValidation.data as unknown as Stage,
         scenes: rawBody.scenes as Scene[],
         ownerId: ownership.ownerId,
         orgId: ownership.orgId,

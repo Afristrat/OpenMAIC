@@ -11,9 +11,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 COPY --from=build /app/dist ./dist
-# Non-root : pwuser est créé par l'image Playwright (utils/docker/Dockerfile.noble).
-# Le répertoire du volume nommé est créé et attribué avant USER : Docker recopie
-# propriétaire et droits de l'image dans un volume nommé vide au premier montage.
+# Non-root : pwuser est crÃ©Ã© par l'image Playwright (utils/docker/Dockerfile.noble).
+# Le rÃ©pertoire du volume nommÃ© est crÃ©Ã© et attribuÃ© avant USER : Docker recopie
+# propriÃ©taire et droits de l'image dans un volume nommÃ© vide au premier montage.
 RUN mkdir -p /data/storage-states && chown -R pwuser:pwuser /data/storage-states
 USER pwuser
 EXPOSE 8090

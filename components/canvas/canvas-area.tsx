@@ -13,6 +13,7 @@ import type { Scene, StageMode } from '@/lib/types/stage';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { ClassroomCompletePageConnected } from '@/components/scene-renderers/classroom-complete';
 import { PresentationBrandMark } from '@/components/branding/presentation-brand-mark';
+import { safeHttpUrl } from '@/lib/utils/safe-url';
 
 interface CanvasAreaProps extends CanvasToolbarProps {
   readonly currentScene: Scene | null;
@@ -129,7 +130,7 @@ export function CanvasArea({
             <div className="absolute inset-x-4 bottom-4 z-[104] flex justify-center pointer-events-none">
               <div className="pointer-events-auto flex max-w-[92%] items-center gap-3 rounded-xl border border-violet-200 bg-white/95 px-4 py-3 shadow-xl backdrop-blur dark:border-violet-500/40 dark:bg-slate-900/95">
                 <a
-                  href={resourcePause.downloadUrl}
+                  href={safeHttpUrl(resourcePause.downloadUrl)}
                   download
                   onClick={(event) => event.stopPropagation()}
                   className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-700"

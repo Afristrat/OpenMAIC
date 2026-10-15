@@ -1,4 +1,5 @@
 import { chromium } from 'playwright';
+import { validateUrlForSSRF } from './ssrf-guard.js';
 import { resolveStorageStatePath } from './storage-state-registry.js';
 
 export interface CaptureInteractionStep {
@@ -39,6 +40,26 @@ async function runInteractionSteps(
   }
 }
 
+// Schémas locaux au navigateur, sans accès réseau : légitimes dans une page.
+const LOCAL_SCHEMES = /^(?:data|blob|about):/i;
+
+type RoutableContext = Pick<import('playwright').BrowserContext, 'route'>;
+
+/**
+ * Applique la garde SSRF à CHAQUE requête du contexte (navigation initiale, redirections,
+ * iframes, sous-ressources, fetch/XHR), pas seulement à l'URL soumise. Le nom est résolu au
+ * moment du contrôle ; le navigateur le re-résout ensuite, d'où une fenêtre de DNS rebinding
+ * résiduelle (non épinglable ici). Les WebSockets ne passent pas par `route`.
+ */
+export async function blockUnsafeRequests(context: RoutableContext): Promise<void> {
+  await context.route('**/*', async (route) => {
+    const url = route.request().url();
+    if (LOCAL_SCHEMES.test(url)) return route.continue();
+    const error = await validateUrlForSSRF(url);
+    return error ? route.abort('blockedbyclient') : route.continue();
+  });
+}
+
 export async function runCapture(request: CaptureRequest): Promise<CaptureResult> {
   const browser = await chromium.launch();
   const deadline = setTimeout(
@@ -55,6 +76,7 @@ export async function runCapture(request: CaptureRequest): Promise<CaptureResult
         ? { recordVideo: { dir: '/tmp/capture-videos', size: { width: 1440, height: 900 } } }
         : {}),
     });
+    await blockUnsafeRequests(context);
     const page = await context.newPage();
 
     try {

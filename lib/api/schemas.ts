@@ -8,6 +8,7 @@ import { z } from 'zod/v4';
 import { optimizationReportSchema } from '@/lib/generation/optimization-report';
 import { isIso4217CurrencyCode } from '@/lib/formation-engine/learning-context';
 import { designDirectiveSchema } from '@/lib/branding/design-directive';
+import { safeHttpUrl } from '@/lib/utils/safe-url';
 
 // ---------------------------------------------------------------------------
 // Organizations
@@ -698,9 +699,30 @@ export const pblChatSchema = z.object({
 // Classroom (persist)
 // ---------------------------------------------------------------------------
 
+/**
+ * Sources de recherche d'un stage : l'URL est rendue en lien cliquable, donc uniquement http(s)
+ * (jamais `javascript:` ni `data:`). Les sources téléversées n'ont pas d'URL.
+ */
+export const researchSourcesSchema = z.array(
+  z.looseObject({
+    title: z.string(),
+    url: z
+      .string()
+      .refine((value) => safeHttpUrl(value) !== undefined, 'url must be an http(s) URL')
+      .optional(),
+    excerpt: z.string().optional(),
+    kind: z.enum(['web', 'uploaded']).optional(),
+  }),
+);
+
+/** Stage persisté : forme libre (le contrat DSL complet n'est pas revalidé), sauf researchSources. */
+export const classroomStageSchema = z.looseObject({
+  researchSources: researchSourcesSchema.optional(),
+});
+
 export const classroomPersistSchema = z.object({
   orgId: z.string().uuid('orgId must be a valid UUID'),
-  stage: z.record(z.string(), z.unknown()),
+  stage: classroomStageSchema,
   scenes: z.array(z.record(z.string(), z.unknown())),
 });
 

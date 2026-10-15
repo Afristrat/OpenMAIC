@@ -23,8 +23,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    # Lié à 127.0.0.1 par défaut : le proxy ne fait confiance à X-Real-IP que s'il est posé par le
+    # reverse proxy local (docs/self-hosted.md). Port ouvert au réseau = en-tête usurpable par
+    # n'importe quel client, donc limitation de débit contournable. QALEM_BIND_ADDRESS=0.0.0.0 pour
+    # l'exposer volontairement (alors, placer un proxy qui réécrit X-Real-IP).
     ports:
-      - "${QALEM_PORT:-3000}:3000"
+      - "${QALEM_BIND_ADDRESS:-127.0.0.1}:${QALEM_PORT:-3000}:3000"
     env_file:
       - path: .env.local
         required: false

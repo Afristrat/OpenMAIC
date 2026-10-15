@@ -58,6 +58,48 @@ describe('patchHtmlForIframe', () => {
     expect(out.endsWith('<div>no head</div>')).toBe(true);
   });
 
+  describe('contournements de l’injection de la CSP', () => {
+    const cspIdx = (out: string) => out.indexOf('http-equiv="Content-Security-Policy"');
+
+    it('injecte la CSP avant un script malgré un <head> placé dans un commentaire', () => {
+      const out = patchHtmlForIframe('<!-- <head> --><script>evil()</script><head></head>');
+      expect(cspIdx(out)).toBeGreaterThan(-1);
+      expect(cspIdx(out)).toBeLessThan(out.indexOf('evil()'));
+      // Hors du commentaire : rien du document d'origine ne précède la CSP.
+      expect(out.slice(0, cspIdx(out))).not.toContain('<!--');
+    });
+
+    it('injecte la CSP avant un script malgré un <head> dans une chaîne JavaScript', () => {
+      const out = patchHtmlForIframe('<script>evil(); var s = "<head>";</script><body></body>');
+      expect(cspIdx(out)).toBeLessThan(out.indexOf('evil()'));
+    });
+
+    it('injecte la CSP avant un script malgré un <head ...> factice dans un commentaire', () => {
+      const out = patchHtmlForIframe('<!-- <head class="x"> --><script>evil()</script>');
+      expect(cspIdx(out)).toBeLessThan(out.indexOf('evil()'));
+      expect(out.slice(0, cspIdx(out))).not.toContain('<!--');
+    });
+
+    it('garde le doctype en tête (mode standard) et injecte juste après', () => {
+      const out = patchHtmlForIframe('<!DOCTYPE html><html><head></head><body>x</body></html>');
+      expect(out.startsWith('<!DOCTYPE html>')).toBe(true);
+      expect(cspIdx(out)).toBeGreaterThan(out.indexOf('<!DOCTYPE html>'));
+      expect(out.indexOf('<html>')).toBeGreaterThan(cspIdx(out));
+    });
+
+    it('ne prend pas un faux doctype dans un commentaire pour le vrai', () => {
+      const out = patchHtmlForIframe('<!-- <!DOCTYPE html> --><script>evil()</script>');
+      expect(cspIdx(out)).toBeLessThan(out.indexOf('evil()'));
+    });
+
+    it('conserve la totalité du document d’origine', () => {
+      const html =
+        '<!doctype html><html lang="fr"><head><title>t</title></head><body>é</body></html>';
+      const out = patchHtmlForIframe(html);
+      expect(out.replace(/\n<meta[\s\S]*?<\/style>/, '')).toBe(html);
+    });
+  });
+
   describe('Content-Security-Policy', () => {
     const directives = (csp: string): Record<string, string[]> =>
       Object.fromEntries(
@@ -82,9 +124,10 @@ describe('patchHtmlForIframe', () => {
       expect(metaIdx).toBeLessThan(out.indexOf('boom()'));
     });
 
-    it('injects the CSP after <head> with attributes too', () => {
+    it('injects the CSP before the document, keeping <head> attributes intact', () => {
       const out = patchHtmlForIframe('<html><head lang="fr"><title>t</title></head></html>');
-      expect(out.indexOf('<head lang="fr">')).toBeLessThan(out.indexOf('Security-Policy'));
+      expect(out.indexOf('Security-Policy')).toBeLessThan(out.indexOf('<head lang="fr">'));
+      expect(out).toContain('<head lang="fr"><title>t</title></head>');
     });
 
     it('is a single well-formed meta tag whose content has no double quote', () => {

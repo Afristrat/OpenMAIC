@@ -2,18 +2,20 @@ import { isIP } from 'node:net';
 import { NextResponse, type NextRequest } from 'next/server';
 import { checkRateLimit, type RequestRateLimitTier } from '@/lib/rate-limit';
 import { isAccessCodeRequired } from '@/lib/server/access-gate';
+import { rateLimitBucketForIp } from '@/lib/server/client-ip-bucket';
 import { isCrossOriginUnsafeRequest } from '@/lib/server/csrf-origin';
 
 // ---------------------------------------------------------------------------
 // Routes that bypass rate limiting
 // ---------------------------------------------------------------------------
 
-const SKIP_RATE_LIMIT_PREFIXES = ['/api/health', '/api/metrics', '/_next/', '/favicon.ico'];
+const SKIP_RATE_LIMIT_PATHS = ['/api/health', '/api/metrics'];
 
 function shouldSkipRateLimit(pathname: string): boolean {
-  // Only rate-limit /api/ routes (except health & metrics)
+  // Only rate-limit /api/ routes (except health & metrics). Whole path segments only:
+  // '/api/healthx' or '/api/metrics-export' must not inherit the exemption.
   if (!pathname.startsWith('/api/')) return true;
-  return SKIP_RATE_LIMIT_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+  return SKIP_RATE_LIMIT_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 }
 
 // ---------------------------------------------------------------------------
@@ -109,7 +111,7 @@ function getTrustedClientIp(request: NextRequest): string {
 }
 
 function getClientKey(request: NextRequest): { key: string; tier: RequestRateLimitTier } {
-  const ip = getTrustedClientIp(request);
+  const ip = rateLimitBucketForIp(getTrustedClientIp(request));
 
   // The session cookie is NOT verified here (signature checking would need the project
   // JWT secret/JWKS on every request), so it never names a bucket: a forged `sub` would

@@ -44,6 +44,7 @@ import {
 import { cn } from '@/lib/utils';
 import type { StageMode } from '@/lib/types/stage';
 import type { ResearchSource } from '@openmaic/dsl';
+import { safeHttpUrl } from '@/lib/utils/safe-url';
 import { LiveSessionRecorder } from '@/components/live-session-recorder';
 import { MissingVoicesNotice } from './missing-voices-notice';
 
@@ -459,9 +460,9 @@ export function HeaderControls({
                     key={`${source.kind ?? 'web'}-${source.url ?? source.title}-${index}`}
                     className="rounded-lg border border-border/70 p-3"
                   >
-                    {source.url ? (
+                    {safeHttpUrl(source.url) ? (
                       <a
-                        href={source.url}
+                        href={safeHttpUrl(source.url)}
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline"
