@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { timingSafeEqual } from 'crypto';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
-import { createAccessToken } from '@/lib/server/access-token';
+import { ACCESS_TOKEN_MAX_AGE_SECONDS, createAccessToken } from '@/lib/server/access-token';
 
 export async function POST(request: Request) {
   const accessCode = process.env.ACCESS_CODE;
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     httpOnly: true,
     sameSite: 'lax',
     path: '/',
-    maxAge: 60 * 60 * 24 * 7, // 7 days
+    maxAge: ACCESS_TOKEN_MAX_AGE_SECONDS,
     secure: process.env.NODE_ENV === 'production',
   });
 

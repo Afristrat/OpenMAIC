@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { patchHtmlForIframe } from '@/lib/utils/iframe';
+import { IFRAME_CSP, patchHtmlForIframe } from '@/lib/utils/iframe';
 
 describe('patchHtmlForIframe', () => {
   it('injects the storage shim and sizing CSS after <head>', () => {
@@ -52,8 +52,91 @@ describe('patchHtmlForIframe', () => {
 
   it('falls back to prepending when there is no <head>', () => {
     const out = patchHtmlForIframe('<div>no head</div>');
-    // The error-capture shim is injected first, so it leads the prepended block.
-    expect(out.startsWith('\n<script data-iframe-error-shim>')).toBe(true);
+    // The CSP leads the prepended block, then the error-capture shim.
+    expect(out.startsWith('\n<meta http-equiv="Content-Security-Policy"')).toBe(true);
+    expect(out.indexOf('data-iframe-error-shim')).toBeGreaterThan(out.indexOf('Security-Policy'));
+    expect(out.endsWith('<div>no head</div>')).toBe(true);
+  });
+
+  describe('Content-Security-Policy', () => {
+    const directives = (csp: string): Record<string, string[]> =>
+      Object.fromEntries(
+        csp
+          .split(';')
+          .map((d) => d.trim())
+          .filter(Boolean)
+          .map((d) => {
+            const [name, ...values] = d.split(/\s+/);
+            return [name, values];
+          }),
+      );
+
+    it('injects a CSP meta before every script (shims and page scripts)', () => {
+      const out = patchHtmlForIframe(
+        '<!DOCTYPE html><html><head><script>boom()</script></head><body></body></html>',
+      );
+      const metaIdx = out.indexOf('http-equiv="Content-Security-Policy"');
+      expect(metaIdx).toBeGreaterThan(-1);
+      expect(metaIdx).toBeLessThan(out.indexOf('data-iframe-error-shim'));
+      expect(metaIdx).toBeLessThan(out.indexOf('data-iframe-storage-shim'));
+      expect(metaIdx).toBeLessThan(out.indexOf('boom()'));
+    });
+
+    it('injects the CSP after <head> with attributes too', () => {
+      const out = patchHtmlForIframe('<html><head lang="fr"><title>t</title></head></html>');
+      expect(out.indexOf('<head lang="fr">')).toBeLessThan(out.indexOf('Security-Policy'));
+    });
+
+    it('is a single well-formed meta tag whose content has no double quote', () => {
+      expect(IFRAME_CSP).not.toContain('"');
+      const out = patchHtmlForIframe('<html><head></head></html>');
+      expect(out).toContain(`<meta http-equiv="Content-Security-Policy" content="${IFRAME_CSP}">`);
+      expect(out.match(/http-equiv="Content-Security-Policy"/g)).toHaveLength(1);
+    });
+
+    it('denies by default and blocks forms, frames, base and plugins', () => {
+      const d = directives(IFRAME_CSP);
+      expect(d['default-src']).toEqual(["'none'"]);
+      expect(d['form-action']).toEqual(["'none'"]);
+      expect(d['frame-src']).toEqual(["'none'"]);
+      expect(d['base-uri']).toEqual(["'none'"]);
+      expect(d['object-src']).toEqual(["'none'"]);
+    });
+
+    it('limits network access (connect-src) to the Pyodide CDN, no wildcard', () => {
+      const d = directives(IFRAME_CSP);
+      expect(d['connect-src']).toEqual(['https://cdn.jsdelivr.net']);
+    });
+
+    it('allows only the CDNs used by the generation prompts for scripts', () => {
+      const d = directives(IFRAME_CSP);
+      for (const host of [
+        'https://cdn.jsdelivr.net',
+        'https://unpkg.com',
+        'https://cdnjs.cloudflare.com',
+        'https://cdn.tailwindcss.com',
+      ]) {
+        expect(d['script-src']).toContain(host);
+      }
+      expect(d['script-src']).toContain("'unsafe-inline'");
+      for (const name of ['script-src', 'style-src', 'font-src', 'img-src', 'connect-src']) {
+        expect(d[name]).not.toContain('*');
+        expect(d[name]).not.toContain('https:');
+        expect(d[name]).not.toContain('http:');
+      }
+    });
+
+    it('does not allow remote images (no GET-beacon exfiltration channel)', () => {
+      const d = directives(IFRAME_CSP);
+      expect(d['img-src']).toEqual(['data:', 'blob:']);
+    });
+
+    it('lets the KaTeX stylesheet and fonts load from the jsdelivr CDN', () => {
+      const d = directives(IFRAME_CSP);
+      expect(d['style-src']).toContain('https://cdn.jsdelivr.net');
+      expect(d['style-src']).toContain("'unsafe-inline'");
+      expect(d['font-src']).toContain('https://cdn.jsdelivr.net');
+    });
   });
 
   it('injects the error-capture shim before the storage shim and page scripts', () => {

@@ -99,9 +99,57 @@ const ERROR_CAPTURE_SHIM = `<script data-iframe-error-shim>
 </script>`;
 
 /**
+ * Content-Security-Policy applied (as a leading `<meta http-equiv>`) to every
+ * LLM-authored interactive document, on top of the null-origin sandbox. It does
+ * not stop scripts from running (the widgets are scripts), it closes the
+ * channels a hostile or hallucinated page could use to leak data or pivot:
+ *
+ * - `default-src 'none'` + explicit allow-lists: nothing loads unless listed.
+ * - Scripts/styles/fonts: only the CDNs the generation prompts instruct
+ *   (jsdelivr: KaTeX, Pyodide, Monaco; unpkg: Three.js; cdnjs: Three.js, Babel,
+ *   CodeMirror; cdn.tailwindcss.com: the Tailwind Play CDN). `unsafe-inline` is
+ *   required by the inline widget code and by the shims above; `unsafe-eval` and
+ *   `wasm-unsafe-eval` by Pyodide, Babel standalone and the Tailwind Play CDN.
+ * - `connect-src` is narrowed to the jsdelivr CDN (Pyodide fetches its wasm,
+ *   stdlib and packages there). No fetch/XHR/WebSocket/EventSource to any other
+ *   host, so no exfiltration by request body.
+ * - `img-src data: blob:` only: no remote image, hence no GET-beacon channel.
+ *   The prompts ask for procedural/canvas textures and "no external image".
+ * - `form-action`, `frame-src`, `base-uri`, `object-src` are `'none'`.
+ *
+ * Known limit: navigations (`allow-popups`, `<a href>`) are not governed by CSP
+ * (`navigate-to` was never shipped), and an iframe loaded through `src` (no
+ * `srcDoc`) cannot be patched.
+ */
+const SCRIPT_CDNS = [
+  'https://cdn.jsdelivr.net',
+  'https://unpkg.com',
+  'https://cdnjs.cloudflare.com',
+  'https://cdn.tailwindcss.com',
+].join(' ');
+
+export const IFRAME_CSP = [
+  "default-src 'none'",
+  `script-src 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: ${SCRIPT_CDNS}`,
+  `style-src 'unsafe-inline' ${SCRIPT_CDNS}`,
+  'font-src data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com',
+  'img-src data: blob:',
+  'media-src data: blob:',
+  'worker-src blob:',
+  'connect-src https://cdn.jsdelivr.net',
+  "form-action 'none'",
+  "frame-src 'none'",
+  "base-uri 'none'",
+  "object-src 'none'",
+].join('; ');
+
+const CSP_META = `<meta http-equiv="Content-Security-Policy" content="${IFRAME_CSP}">`;
+
+/**
  * Patch embedded HTML to display correctly inside an iframe.
  *
- * Injects a runtime-error capture shim + a storage shim (so sandboxed pages that
+ * Injects a restrictive CSP meta (first, so it governs every script that follows),
+ * a runtime-error capture shim + a storage shim (so sandboxed pages that
  * use localStorage don't crash) plus CSS that ensures proper sizing and scrolling
  * behavior when HTML content is rendered via srcDoc in an iframe. The shims are
  * placed first so they run before the page's own scripts (error capture first, so
@@ -122,7 +170,8 @@ export function patchHtmlForIframe(html: string): string {
   body { min-height: 100vh; }
 </style>`;
 
-  const injection = '\n' + ERROR_CAPTURE_SHIM + '\n' + STORAGE_SHIM + '\n' + iframeCss;
+  const injection =
+    '\n' + CSP_META + '\n' + ERROR_CAPTURE_SHIM + '\n' + STORAGE_SHIM + '\n' + iframeCss;
 
   // Insert right after <head> or at the start of the document
   const headIdx = html.indexOf('<head>');

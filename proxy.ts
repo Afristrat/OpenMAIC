@@ -1,6 +1,8 @@
 import { isIP } from 'node:net';
 import { NextResponse, type NextRequest } from 'next/server';
 import { checkRateLimit, type RequestRateLimitTier } from '@/lib/rate-limit';
+import { isAccessCodeRequired } from '@/lib/server/access-gate';
+import { isCrossOriginUnsafeRequest } from '@/lib/server/csrf-origin';
 
 // ---------------------------------------------------------------------------
 // Routes that bypass rate limiting
@@ -129,6 +131,23 @@ export default async function proxy(request: NextRequest): Promise<NextResponse>
 
   if (shouldSkipRateLimit(pathname)) {
     return NextResponse.next();
+  }
+
+  if (isCrossOriginUnsafeRequest(request)) {
+    return new NextResponse(
+      JSON.stringify({
+        error: 'Forbidden',
+        message: 'Cross-origin request rejected.',
+      }),
+      { status: 403, headers: { 'Content-Type': 'application/json' } },
+    );
+  }
+
+  if (isAccessCodeRequired(request)) {
+    return new NextResponse(
+      JSON.stringify({ error: 'Unauthorized', message: 'Access code required.' }),
+      { status: 401, headers: { 'Content-Type': 'application/json' } },
+    );
   }
 
   const { key, tier } = getClientKey(request);
