@@ -2,6 +2,7 @@ import type { Certificate, CertificateRow } from './types';
 import { CERTIFICATE_SCORE_THRESHOLD } from './types';
 import { translate } from '@/lib/i18n';
 import type { Locale } from '@/lib/i18n';
+import { renderQrSvgDataUri } from './qr';
 
 // ---------------------------------------------------------------------------
 // Verification code generation
@@ -73,16 +74,29 @@ function isRtl(locale: Locale): boolean {
   return locale === 'ar-MA';
 }
 
+const CERTIFICATE_CSP = [
+  "default-src 'none'",
+  "style-src 'unsafe-inline' https://fonts.googleapis.com",
+  'font-src https://fonts.gstatic.com',
+  'img-src data:',
+  "form-action 'none'",
+  "base-uri 'none'",
+  "frame-src 'none'",
+].join('; ');
+
 /**
  * Generate a self-contained HTML certificate suitable for rendering or PDF export.
  *
- * The QR code is produced via a public API (api.qrserver.com) to avoid
- * pulling in a heavy client-side QR library.
+ * The QR code is generated locally (inline SVG data URI): the verification URL never
+ * leaves the browser/server for a third-party service. Every dynamic value, including
+ * translated labels, is HTML-escaped, and a restrictive CSP forbids scripts, frames, forms
+ * and network connections in the standalone document (only the Google Fonts stylesheet the
+ * design imports is allowed).
  */
 export function renderCertificateHTML(cert: Certificate, locale: Locale): string {
-  const t = (key: string) => translate(locale, key);
+  const t = (key: string) => escapeHtml(translate(locale, key));
   const dir = isRtl(locale) ? 'rtl' : 'ltr';
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(cert.verificationUrl)}`;
+  const qrUrl = renderQrSvgDataUri(cert.verificationUrl);
   const formattedDate = formatDate(cert.completionDate, locale);
   const scorePercent = Math.round(cert.score);
   const skillsList =
@@ -95,6 +109,7 @@ export function renderCertificateHTML(cert: Certificate, locale: Locale): string
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="${CERTIFICATE_CSP}"/>
 <title>${t('certificate.title')} — ${escapeHtml(cert.learnerName)}</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Kufi+Arabic:wght@400;600;700&display=swap');

@@ -7,6 +7,8 @@ import { useAuth } from '@/lib/hooks/use-auth';
 import { useClassroomOrganizationId } from '@/lib/contexts/classroom-organization';
 import { cn } from '@/lib/utils';
 import type { Certificate } from '@/lib/certificates/types';
+import { renderCertificateHTML } from '@/lib/certificates/generator';
+import type { Locale } from '@/lib/i18n';
 
 // ---------------------------------------------------------------------------
 // Local storage helpers for guest certificates
@@ -14,9 +16,13 @@ import type { Certificate } from '@/lib/certificates/types';
 
 const GUEST_CERTS_KEY = 'qalem-guest-certificates';
 
+/**
+ * Seules les données du certificat sont persistées : le HTML est toujours régénéré (et ses
+ * valeurs échappées) à l'affichage, jamais relu depuis le stockage local, que n'importe quel
+ * script de l'origine peut modifier.
+ */
 interface GuestCertificateData {
   certificate: Certificate & { completionDate: string };
-  html: string;
 }
 
 function loadGuestCertificates(): GuestCertificateData[] {
@@ -43,7 +49,15 @@ function findGuestCertificate(stageId: string): GuestCertificateData | undefined
   return loadGuestCertificates().find((c) => c.certificate.stageId === stageId);
 }
 
-export { loadGuestCertificates, type GuestCertificateData };
+function rehydrateGuestCertificate(data: GuestCertificateData): Certificate {
+  return { ...data.certificate, completionDate: new Date(data.certificate.completionDate) };
+}
+
+function guestCertificateHtml(data: GuestCertificateData, locale: Locale): string {
+  return renderCertificateHTML(rehydrateGuestCertificate(data), locale);
+}
+
+export { loadGuestCertificates, guestCertificateHtml, type GuestCertificateData };
 
 // ---------------------------------------------------------------------------
 // Certificate Modal
@@ -64,15 +78,19 @@ function CertificateModal({
   const [linkCopied, setLinkCopied] = useState(false);
 
   const handleDownload = useCallback(() => {
-    // Open certificate HTML in a new window for printing
-    const win = window.open('', '_blank');
+    // Open the certificate as a Blob document (no document.write) and print it once loaded.
+    const url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
+    const win = window.open(url, '_blank');
     if (win) {
-      win.document.write(html);
-      win.document.close();
       // Wait for fonts/images to load before triggering print
-      win.onload = () => {
-        setTimeout(() => win.print(), 500);
-      };
+      win.addEventListener('load', () => {
+        setTimeout(() => {
+          win.print();
+          URL.revokeObjectURL(url);
+        }, 500);
+      });
+    } else {
+      URL.revokeObjectURL(url);
     }
   }, [html]);
 
@@ -206,14 +224,11 @@ export function CertificatePrompt({
       const existing = findGuestCertificate(stageId);
       if (existing) {
         setHasExisting(true);
-        setCertHtml(existing.html);
-        setCertData({
-          ...existing.certificate,
-          completionDate: new Date(existing.certificate.completionDate),
-        });
+        setCertHtml(guestCertificateHtml(existing, locale));
+        setCertData(rehydrateGuestCertificate(existing));
       }
     }
-  }, [isGuest, stageId]);
+  }, [isGuest, stageId, locale]);
 
   const handleGenerate = useCallback(async () => {
     setLoading(true);
@@ -233,7 +248,6 @@ export function CertificatePrompt({
         setHasExisting(true);
 
         // Render the certificate HTML client-side
-        const { renderCertificateHTML } = await import('@/lib/certificates/generator');
         const html = renderCertificateHTML(cert, locale);
         setCertHtml(html);
 
@@ -244,7 +258,6 @@ export function CertificatePrompt({
               ...cert,
               completionDate: cert.completionDate.toISOString(),
             } as Certificate & { completionDate: string },
-            html,
           });
         }
 

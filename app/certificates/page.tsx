@@ -8,6 +8,7 @@ import { renderCertificateHTML } from '@/lib/certificates/generator';
 import { cn } from '@/lib/utils';
 import {
   CertificateModal,
+  guestCertificateHtml,
   loadGuestCertificates,
   type GuestCertificateData,
 } from '@/components/certificate-prompt';
@@ -57,7 +58,7 @@ export default function CertificatesPage(): React.ReactElement {
           score: gc.certificate.score,
           verificationCode: gc.certificate.verificationCode,
           verificationUrl: gc.certificate.verificationUrl,
-          html: gc.html,
+          html: guestCertificateHtml(gc, locale as Locale),
         }));
         setCertificates(cards);
       } else {

@@ -11,6 +11,7 @@ import { validateBody } from '@/lib/api/validate';
 import { certificateGenerateSchema } from '@/lib/api/schemas';
 import { readReportPages } from '@/lib/reports/read-report-pages';
 import { LtiAccessDenied, resolveLtiContext } from '@/lib/lti/context';
+import { buildRequestOrigin } from '@/lib/server/request-origin';
 
 /**
  * POST /api/certificates/generate
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest) {
     if (lookupError) throw new Error('Certificate lookup unavailable');
 
     if (existing) {
-      const baseUrl = buildBaseUrl(request);
+      const baseUrl = buildRequestOrigin(request);
       return apiSuccess({
         certificate: certificateFromRow(existing as CertificateRow, baseUrl),
         alreadyExisted: true,
@@ -253,7 +254,7 @@ export async function POST(request: NextRequest) {
       if (concurrentError) throw new Error('Certificate lookup unavailable');
 
       if (concurrent) {
-        const baseUrl = buildBaseUrl(request);
+        const baseUrl = buildRequestOrigin(request);
         return apiSuccess({
           certificate: certificateFromRow(concurrent as CertificateRow, baseUrl),
           alreadyExisted: true,
@@ -265,7 +266,7 @@ export async function POST(request: NextRequest) {
       return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to create certificate');
     }
 
-    const baseUrl = buildBaseUrl(request);
+    const baseUrl = buildRequestOrigin(request);
     return apiSuccess(
       { certificate: certificateFromRow(inserted as CertificateRow, baseUrl) },
       201,
@@ -275,14 +276,4 @@ export async function POST(request: NextRequest) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'LTI launch denied');
     return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to generate certificate');
   }
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function buildBaseUrl(request: NextRequest): string {
-  const proto = request.headers.get('x-forwarded-proto') ?? 'https';
-  const host = request.headers.get('host') ?? 'qalem.example';
-  return `${proto}://${host}`;
 }

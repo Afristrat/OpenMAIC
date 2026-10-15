@@ -134,6 +134,51 @@ describe('POST /api/certificates/generate', () => {
     },
   );
 
+  describe('verification URL origin', () => {
+    const forgedHeaders = {
+      'content-type': 'application/json',
+      host: 'evil.example',
+      'x-forwarded-host': 'evil.example',
+      'x-forwarded-proto': 'http',
+    };
+
+    async function issue(): Promise<{ certificate: { verificationUrl: string } }> {
+      mocks.createServerSupabaseClient.mockResolvedValue(certificateRaceClient());
+      const response = await POST(
+        new NextRequest('https://qalem.ma/api/certificates/generate', {
+          method: 'POST',
+          headers: forgedHeaders,
+          body: JSON.stringify({ stageId: STAGE_ID, orgId: ORG_ID }),
+        }),
+      );
+      expect(response.status).toBe(200);
+      return response.json();
+    }
+
+    it('builds the persisted link from the configured public origin, not the client Host', async () => {
+      vi.stubEnv('NEXT_PUBLIC_APP_URL', 'https://app.qalem.ma');
+      try {
+        const body = await issue();
+        expect(body.certificate.verificationUrl).toBe(
+          'https://app.qalem.ma/verify/QAL-2026-TEST0001',
+        );
+      } finally {
+        vi.unstubAllEnvs();
+      }
+    });
+
+    it('ignores forged X-Forwarded-* headers when no public origin is configured', async () => {
+      vi.stubEnv('NEXT_PUBLIC_APP_URL', '');
+      vi.stubEnv('TRUST_PROXY_HEADERS', '');
+      try {
+        const body = await issue();
+        expect(body.certificate.verificationUrl).toBe('https://qalem.ma/verify/QAL-2026-TEST0001');
+      } finally {
+        vi.unstubAllEnvs();
+      }
+    });
+  });
+
   it('uses the verified LMS tenant instead of the browser selection', async () => {
     mocks.createServerSupabaseClient.mockResolvedValue(certificateRaceClient());
     mocks.resolveLtiContext.mockResolvedValue({ orgId: ORG_ID });
