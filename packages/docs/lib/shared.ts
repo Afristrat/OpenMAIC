@@ -1,4 +1,4 @@
-export const appName = 'OpenMAIC';
+export const appName = 'Qalem';
 
 // Docs are served under basePath '/docs'; routes are root-relative within the app.
 export const docsRoute = '/';

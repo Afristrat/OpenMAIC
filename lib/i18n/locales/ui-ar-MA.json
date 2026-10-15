@@ -1798,6 +1798,7 @@
   "media.imageModelGeminiPro": "Gemini 3 Pro Image (جودة)",
   "accessCode.title": "أدخل رمز الوصول",
   "accessCode.placeholder": "رمز الوصول",
+  "accessCode.brand": "Qalem",
   "accessCode.error": "رمز الوصول غير صالح. يرجى المحاولة مرة أخرى.",
   "account.dataExported": "ملف تصدير بياناتك جاهز.",
   "account.deleteAccount": "حذف الحساب",

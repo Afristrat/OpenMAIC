@@ -1,9 +1,9 @@
 ---
 title: デプロイ
-description: OpenMAIC を Vercel、Docker、または自分のホストにデプロイします。
+description: Qalem を Vercel、Docker、または自分のホストにデプロイします。
 ---
 
-OpenMAIC は標準的な Next.js アプリです。Next.js が動作する場所ならどこにでもデプロイできます。
+Qalem は標準的な Next.js アプリです。Next.js が動作する場所ならどこにでもデプロイできます。
 
 ## Vercel（ワンクリック）
 
@@ -16,19 +16,19 @@ Vercel は各コミットでビルドし、静的アセットを自動的にエ�
 本番向けの `Dockerfile` が含まれています。ビルドして実行します。
 
 ```bash
-docker build -t openmaic .
+docker build -t qalem .
 
 docker run -p 3000:3000 \
   -e OPENAI_API_KEY=sk-... \
-  openmaic
+  qalem
 ```
 
 リバースプロキシや他サービスを含むマルチコンテナ構成では `docker-compose` を使います。
 
 ```yaml title="docker-compose.yml"
 services:
-  openmaic:
-    image: openmaic:latest
+  qalem:
+    image: qalem:latest
     ports:
       - '3000:3000'
     env_file:
@@ -46,7 +46,7 @@ pnpm build
 pnpm start      # 既定では port 3000 で待ち受けます
 ```
 
-TLS 終端には前段に nginx または Caddy を置いてください。トラフィックの多い授業では、ロードバランサー配下で複数のアプリインスタンスを動かす構成を検討できます。OpenMAIC は既定でステートレスです（状態はブラウザーの IndexedDB に保存されます）。
+TLS 終端には前段に nginx または Caddy を置いてください。トラフィックの多い授業では、ロードバランサー配下で複数のアプリインスタンスを動かす構成を検討できます。Qalem は既定でステートレスです（状態はブラウザーの IndexedDB に保存されます）。
 
 ## 環境変数
 

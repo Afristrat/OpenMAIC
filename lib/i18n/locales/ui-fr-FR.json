@@ -1798,6 +1798,7 @@
   "media.imageModelGeminiPro": "Gemini 3 Pro Image (qualité)",
   "accessCode.title": "Entrez le code d\u0027accès",
   "accessCode.placeholder": "Code d\u0027accès",
+  "accessCode.brand": "Qalem",
   "accessCode.error": "Code d\u0027accès invalide. Veuillez réessayer.",
   "account.dataExported": "Votre export de données est prêt.",
   "account.deleteAccount": "Supprimer le compte",
