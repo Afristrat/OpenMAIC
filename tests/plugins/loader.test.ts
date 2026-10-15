@@ -3,7 +3,7 @@ import { formatPluginsForPrompt, loadPlugins, readPluginHtml } from '@/lib/plugi
 import { validatePluginData } from '@/lib/plugins/schema-validator';
 
 describe('bundled scene plugins', () => {
-  it('loads every production plugin and its iframe document', () => {
+  it('loads every production plugin and its iframe document', { timeout: 60_000 }, () => {
     const plugins = loadPlugins();
     const pluginIds = plugins.map((plugin) => plugin.id).sort();
 

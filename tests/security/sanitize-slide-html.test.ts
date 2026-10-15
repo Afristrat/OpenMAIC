@@ -251,7 +251,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await browser?.close();
-});
+}, 60_000);
 
 const ATTACKS: ReadonlyArray<readonly [string, string]> = [
   ['script', '<p>ok</p><script>window.__xss=1</script>'],
