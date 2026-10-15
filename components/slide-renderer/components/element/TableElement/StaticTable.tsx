@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import type { PPTTableElement } from '@openmaic/dsl';
 import { getTableSubThemeColor } from '@/lib/utils/element';
+import { sanitizeSlideHtml } from '@/lib/sanitize-slide-html';
 import { getTextStyle, formatText, getHiddenCells } from './tableUtils';
 
 interface StaticTableProps {
@@ -118,7 +119,7 @@ export function StaticTable({ elementInfo }: StaticTableProps) {
                     wordBreak: 'break-word',
                     ...textStyle,
                   }}
-                  dangerouslySetInnerHTML={{ __html: formatText(cell.text) }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeSlideHtml(formatText(cell.text)) }}
                 />
               );
             })}

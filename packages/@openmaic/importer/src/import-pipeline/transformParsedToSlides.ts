@@ -1026,12 +1026,18 @@ export async function transformParsedToSlides(
             color: theme.fontColor,
           };
           const data: TableCell[][] = [];
+          // 文档由 DOMParser 创建、无浏览上下文：其中的元素设置 innerHTML 不会加载图片、
+          // 不会触发 onerror 等事件（PPTX 单元格 HTML 不可信，不能用 document.createElement）。
+          const inertDoc = new DOMParser().parseFromString(
+            '<!DOCTYPE html><body></body>',
+            'text/html',
+          );
           for (let i = 0; i < row; i++) {
             const rowCells: TableCell[] = [];
             for (let j = 0; j < col; j++) {
               const cellData = el.data[i][j];
 
-              let textDiv: HTMLDivElement | null = document.createElement('div');
+              let textDiv: HTMLDivElement | null = inertDoc.createElement('div');
               textDiv.innerHTML = cellData.text;
               const ps = Array.from(textDiv.querySelectorAll('p'));
               const align = ps[0]?.style.textAlign || 'left';
@@ -1068,7 +1074,7 @@ export async function transformParsedToSlides(
               // 让空白间隔段塌成默认行高，正文与标题间距变大（slide 5 正文偏靠下）。
               const paraStyle = (p: HTMLElement): string => {
                 const s = p.getAttribute('style');
-                return s ? ` style="${s}"` : '';
+                return s ? ` style="${s.replace(/"/g, '&quot;')}"` : '';
               };
               // 段内 <span> 只保留 **run 强调**（color/font-weight/font-style/
               // text-decoration）——正文"维护、改善和营造"等关键词是上色的，全部塌成

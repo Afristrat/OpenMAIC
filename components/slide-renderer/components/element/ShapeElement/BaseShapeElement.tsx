@@ -1,6 +1,8 @@
 'use client';
 
+import { useMemo } from 'react';
 import type { PPTShapeElement, ShapeText } from '@openmaic/dsl';
+import { sanitizeSlideHtml } from '@/lib/sanitize-slide-html';
 import { useElementOutline } from '../hooks/useElementOutline';
 import { useElementShadow } from '../hooks/useElementShadow';
 import { useElementFlip } from '../hooks/useElementFlip';
@@ -27,6 +29,7 @@ export function BaseShapeElement({ elementInfo }: BaseShapeElementProps) {
     defaultFontName: 'Microsoft YaHei',
     defaultColor: '#333333',
   };
+  const safeTextContent = useMemo(() => sanitizeSlideHtml(text.content), [text.content]);
 
   return (
     <div
@@ -108,7 +111,7 @@ export function BaseShapeElement({ elementInfo }: BaseShapeElementProps) {
                 // @ts-expect-error CSS custom properties
                 '--paragraphSpace': `${text.paragraphSpace === undefined ? 5 : text.paragraphSpace}px`,
               }}
-              dangerouslySetInnerHTML={{ __html: text.content }}
+              dangerouslySetInnerHTML={{ __html: safeTextContent }}
             />
           </div>
         </div>

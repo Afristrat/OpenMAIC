@@ -1,7 +1,8 @@
 'use client';
 
-import { useRef, useState, useLayoutEffect } from 'react';
+import { useMemo, useRef, useState, useLayoutEffect } from 'react';
 import type { PPTLatexElement } from '@openmaic/dsl';
+import { sanitizeSlideHtml } from '@/lib/sanitize-slide-html';
 
 export interface BaseLatexElementProps {
   elementInfo: PPTLatexElement;
@@ -79,6 +80,7 @@ function KatexContent({
   align?: 'left' | 'center' | 'right';
 }) {
   const innerRef = useRef<HTMLDivElement>(null);
+  const safeHtml = useMemo(() => sanitizeSlideHtml(html, 'katex'), [html]);
   const [scale, setScale] = useState(1);
 
   useLayoutEffect(() => {
@@ -113,7 +115,7 @@ function KatexContent({
           transform: `scale(${scale})`,
           whiteSpace: 'nowrap',
         }}
-        dangerouslySetInnerHTML={{ __html: html }}
+        dangerouslySetInnerHTML={{ __html: safeHtml }}
       />
     </div>
   );

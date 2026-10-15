@@ -1,9 +1,10 @@
 'use client';
 
-import type { CSSProperties } from 'react';
+import { useMemo, type CSSProperties } from 'react';
 import type { PPTTextElement } from '@openmaic/dsl';
 import { useElementShadow } from '../shared/useElementShadow';
 import { ElementOutline } from '../shared/ElementOutline';
+import { sanitizeSlideHtml } from '../../utils/sanitize-slide-html';
 
 export interface BaseTextElementProps {
   elementInfo: PPTTextElement;
@@ -12,6 +13,7 @@ export interface BaseTextElementProps {
 
 export function BaseTextElement({ elementInfo, target }: BaseTextElementProps) {
   const { shadowStyle } = useElementShadow(elementInfo.shadow);
+  const safeContent = useMemo(() => sanitizeSlideHtml(elementInfo.content), [elementInfo.content]);
 
   const vAlign = elementInfo.vAlign ?? 'top';
   const justifyContent =
@@ -78,7 +80,7 @@ export function BaseTextElement({ elementInfo, target }: BaseTextElementProps) {
               position: 'relative',
               pointerEvents: target === 'thumbnail' ? 'none' : undefined,
             }}
-            dangerouslySetInnerHTML={{ __html: elementInfo.content }}
+            dangerouslySetInnerHTML={{ __html: safeContent }}
           />
         </div>
       </div>
