@@ -145,10 +145,10 @@ services:
     environment:
       GOTRUE_API_HOST: "0.0.0.0"
       GOTRUE_API_PORT: "9999"
-      API_EXTERNAL_URL: ${API_EXTERNAL_URL:-http://localhost:8000}
+      API_EXTERNAL_URL: ${API_EXTERNAL_URL:?API_EXTERNAL_URL requis (URL publique de Kong)}
       GOTRUE_DB_DRIVER: postgres
       GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:${POSTGRES_PASSWORD}@supabase-db:5432/postgres?sslmode=disable
-      GOTRUE_SITE_URL: ${SITE_URL:-http://localhost:3000}
+      GOTRUE_SITE_URL: ${SITE_URL:?SITE_URL requis (URL publique de l'application)}
       GOTRUE_URI_ALLOW_LIST: ${ADDITIONAL_REDIRECT_URLS:-}
       GOTRUE_DISABLE_SIGNUP: ${DISABLE_SIGNUP:-true}
       GOTRUE_JWT_SECRET: ${JWT_SECRET}
@@ -167,11 +167,11 @@ services:
       GOTRUE_EXTERNAL_GOOGLE_ENABLED: ${GOOGLE_AUTH_ENABLED:-false}
       GOTRUE_EXTERNAL_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOTRUE_EXTERNAL_GOOGLE_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI: ${API_EXTERNAL_URL:-http://localhost:8000}/auth/v1/callback
+      GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI: ${API_EXTERNAL_URL:?API_EXTERNAL_URL requis (URL publique de Kong)}/auth/v1/callback
       GOTRUE_EXTERNAL_GITHUB_ENABLED: ${GITHUB_AUTH_ENABLED:-false}
       GOTRUE_EXTERNAL_GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
       GOTRUE_EXTERNAL_GITHUB_SECRET: ${GITHUB_CLIENT_SECRET:-}
-      GOTRUE_EXTERNAL_GITHUB_REDIRECT_URI: ${API_EXTERNAL_URL:-http://localhost:8000}/auth/v1/callback
+      GOTRUE_EXTERNAL_GITHUB_REDIRECT_URI: ${API_EXTERNAL_URL:?API_EXTERNAL_URL requis (URL publique de Kong)}/auth/v1/callback
     networks:
       - qalem-net
     restart: unless-stopped
