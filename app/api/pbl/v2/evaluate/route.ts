@@ -26,6 +26,7 @@
  * string, which is cheap and obvious.
  */
 
+import { requireAuth } from '@/lib/api/auth';
 import type { NextRequest } from 'next/server';
 
 import { createLogger } from '@/lib/logger';
@@ -55,6 +56,9 @@ interface EvaluateRequest {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (auth.response) return auth.response;
+
   let body: EvaluateRequest;
   try {
     body = (await req.json()) as EvaluateRequest;

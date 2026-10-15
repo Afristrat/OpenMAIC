@@ -13,6 +13,7 @@
  * milestone; `runSimulatorTurn` gates this and errors out otherwise.
  */
 
+import { requireAuth } from '@/lib/api/auth';
 import type { NextRequest } from 'next/server';
 
 import { createLogger } from '@/lib/logger';
@@ -37,6 +38,9 @@ interface SimulatorRequest {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (auth.response) return auth.response;
+
   let body: SimulatorRequest;
   try {
     body = (await req.json()) as SimulatorRequest;

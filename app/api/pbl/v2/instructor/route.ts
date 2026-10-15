@@ -13,6 +13,7 @@
  * `scene.content.projectV2`.
  */
 
+import { requireAuth } from '@/lib/api/auth';
 import type { NextRequest } from 'next/server';
 
 import { createLogger } from '@/lib/logger';
@@ -36,6 +37,9 @@ interface InstructorRequest {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (auth.response) return auth.response;
+
   let body: InstructorRequest;
   try {
     body = (await req.json()) as InstructorRequest;

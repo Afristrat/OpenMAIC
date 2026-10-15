@@ -13,6 +13,7 @@
  *   { type: 'error', error: string }
  */
 
+import { requireAuth } from '@/lib/api/auth';
 import { NextRequest } from 'next/server';
 import { streamLLM } from '@/lib/ai/llm';
 import { buildPrompt, PROMPT_IDS } from '@/lib/prompts';
@@ -284,6 +285,9 @@ function ensureUniqueOutlineId(outline: SceneOutline, usedIds: Set<string>): Sce
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (auth.response) return auth.response;
+
   let requirementSnippet: string | undefined;
   let resolvedModelString: string | undefined;
   try {

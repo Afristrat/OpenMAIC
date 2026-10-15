@@ -19,6 +19,7 @@
 
 export const maxDuration = 60;
 
+import { requireAuth } from '@/lib/api/auth';
 import type { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/server/api-response';
@@ -46,6 +47,9 @@ interface UpdateRequest {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (auth.response) return auth.response;
+
   let body: UpdateRequest;
   try {
     body = (await req.json()) as UpdateRequest;
