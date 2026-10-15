@@ -1,3 +1,4 @@
+import { isIP } from 'node:net';
 import { NextResponse, type NextRequest } from 'next/server';
 import { checkRateLimit, type RequestRateLimitTier } from '@/lib/rate-limit';
 
@@ -91,17 +92,31 @@ export function extractAuthenticatedUserIdFromCookies(
   }
 }
 
-function getClientKey(request: NextRequest): { key: string; tier: RequestRateLimitTier } {
-  // Identity only partitions rate-limit buckets. API authorization verifies the JWT separately.
-  const userId = extractAuthenticatedUserIdFromCookies(request.cookies);
+/**
+ * Trusted client address. The edge (infra/coolify/qalem-edge.nginx.conf) overwrites
+ * X-Real-IP with the address it resolved itself, so that header is the only value a
+ * client cannot choose. Without it (edge bypassed), the LAST X-Forwarded-For element
+ * is the one appended by the nearest proxy; the first one is client-supplied.
+ * Anything that is not a valid IP collapses into one shared bucket, never a new one.
+ */
+function getTrustedClientIp(request: NextRequest): string {
+  const realIp = request.headers.get('x-real-ip')?.trim();
+  const forwardedLast = request.headers.get('x-forwarded-for')?.split(',').pop()?.trim();
+  const candidate = realIp || forwardedLast;
+  return candidate && isIP(candidate) !== 0 ? candidate : '0.0.0.0';
+}
 
-  if (userId) {
-    return { key: `user:${userId}`, tier: 'authenticated' };
+function getClientKey(request: NextRequest): { key: string; tier: RequestRateLimitTier } {
+  const ip = getTrustedClientIp(request);
+
+  // The session cookie is NOT verified here (signature checking would need the project
+  // JWT secret/JWKS on every request), so it never names a bucket: a forged `sub` would
+  // mint a fresh bucket per request. It only selects the higher per-IP ceiling, which
+  // stays bounded by the address. API authorization verifies the JWT separately.
+  if (extractAuthenticatedUserIdFromCookies(request.cookies)) {
+    return { key: `ip-session:${ip}`, tier: 'authenticated' };
   }
 
-  // Fall back to IP-based rate limiting
-  const forwarded = request.headers.get('x-forwarded-for');
-  const ip = forwarded?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? '0.0.0.0';
   return { key: `ip:${ip}`, tier: 'anonymous' };
 }
 

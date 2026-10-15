@@ -39,8 +39,29 @@ const windowStore = new Map<string, WindowEntry>();
 /** Periodically prune expired entries to avoid memory leaks */
 const PRUNE_INTERVAL_MS = 60_000;
 
-function pruneExpiredEntries(): void {
-  const now = Date.now();
+/**
+ * Hard ceiling on tracked keys. Keys derive from client-controlled input (IPv6
+ * rotation, spoofable headers on a misconfigured edge), so the store must not
+ * grow with the attacker's imagination.
+ * ponytail: FIFO eviction past this ceiling, switch to Redis with the replica count.
+ */
+export const RATE_LIMIT_MAX_KEYS = 20_000;
+
+export function getRateLimitStoreSize(): number {
+  return windowStore.size;
+}
+
+function makeRoomForNewKey(now: number): void {
+  if (windowStore.size < RATE_LIMIT_MAX_KEYS) return;
+  pruneExpiredEntries(now);
+  // Map iterates in insertion order: drop the oldest keys first.
+  for (const key of windowStore.keys()) {
+    if (windowStore.size < RATE_LIMIT_MAX_KEYS) return;
+    windowStore.delete(key);
+  }
+}
+
+function pruneExpiredEntries(now: number = Date.now()): void {
   for (const [key, entry] of windowStore) {
     // Keep only timestamps within the largest possible window (enterprise = 60s)
     const cutoff = now - 60_000;
@@ -54,7 +75,7 @@ function pruneExpiredEntries(): void {
 // Start the pruning interval (only in non-test environments)
 // Note: .unref() is not available in Edge Runtime (middleware), so we skip it
 if (typeof globalThis !== 'undefined' && process.env.NODE_ENV !== 'test') {
-  const timer = setInterval(pruneExpiredEntries, PRUNE_INTERVAL_MS);
+  const timer = setInterval(() => pruneExpiredEntries(), PRUNE_INTERVAL_MS);
   if (typeof timer === 'object' && 'unref' in timer) {
     timer.unref();
   }
@@ -87,6 +108,7 @@ export async function checkRateLimit(
 
   let entry = windowStore.get(key);
   if (!entry) {
+    makeRoomForNewKey(now);
     entry = { timestamps: [] };
     windowStore.set(key, entry);
   }
