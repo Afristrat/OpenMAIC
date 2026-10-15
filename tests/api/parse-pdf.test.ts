@@ -23,6 +23,10 @@ vi.mock('@/lib/server/provider-config', () => ({
   resolvePDFBaseUrl: mocks.resolvePDFBaseUrl,
 }));
 
+// La politique SSRF est testée dans tests/server/ssrf-guard*.test.ts ; ici l'hôte factice
+// (.test) ne se résout pas et la garde, désormais active hors production, le refuserait.
+vi.mock('@/lib/server/ssrf-guard', () => ({ validateUrlForSSRF: vi.fn(async () => null) }));
+
 vi.mock('@/lib/logger', () => ({
   createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
 }));

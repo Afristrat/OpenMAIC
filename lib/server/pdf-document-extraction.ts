@@ -37,7 +37,7 @@ export async function extractReadablePdf(input: {
   const providerId = input.providerId ?? 'unpdf';
   const managed = isServerConfiguredProvider('pdf', providerId);
   const clientBaseUrl = managed ? undefined : input.baseUrl;
-  if (clientBaseUrl && process.env.NODE_ENV === 'production') {
+  if (clientBaseUrl) {
     const ssrfError = await validateUrlForSSRF(clientBaseUrl);
     if (ssrfError) throw new InvalidPdfProviderUrlError(ssrfError);
   }

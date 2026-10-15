@@ -12,7 +12,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
+import {
+  SafeFetchRedirectError,
+  SsrfBlockedError,
+  safeFetch,
+  type SafeFetchResult,
+} from '@/lib/server/ssrf-guard';
 import { requireAuth } from '@/lib/api/auth';
 import { apiError, publicErrorMessage } from '@/lib/server/api-response';
 import { resolveProxyContentType } from '@/lib/server/proxy-media-content-type';
@@ -39,69 +44,64 @@ export async function POST(request: NextRequest) {
       return apiError('MISSING_REQUIRED_FIELD', 400, 'Missing or invalid url');
     }
 
-    // Initial SSRF validation
-    const ssrfError = await validateUrlForSSRF(url);
-    if (ssrfError) {
-      return apiError('INVALID_URL', 403, ssrfError);
-    }
-
-    const MAX_REDIRECTS = 5;
-    let currentUrl = url;
-    let response: Response;
-    for (let hop = 0; ; hop++) {
-      response = await fetch(currentUrl, { redirect: 'manual' });
-      if (response.status < 300 || response.status >= 400) break; // not a redirect
-      const location = response.headers.get('location');
-      if (!location)
-        return apiError('UPSTREAM_ERROR', 502, 'Redirect response without Location header');
-      if (hop >= MAX_REDIRECTS) return apiError('TOO_MANY_REDIRECTS', 502, 'Too many redirects');
-      let nextUrl: string;
-      try {
-        nextUrl = new URL(location, currentUrl).href; // resolve relative redirects
-      } catch {
-        return apiError('INVALID_URL', 502, 'Invalid redirect Location');
+    // Chaque saut est validé, résolu une seule fois et la connexion est épinglée sur l'adresse
+    // validée (anti DNS rebinding, anti redirection vers le réseau interne).
+    let fetched: SafeFetchResult;
+    try {
+      fetched = await safeFetch(url);
+    } catch (error) {
+      if (error instanceof SsrfBlockedError) return apiError('INVALID_URL', 403, error.message);
+      if (error instanceof SafeFetchRedirectError) {
+        return error.code === 'TOO_MANY_REDIRECTS'
+          ? apiError('TOO_MANY_REDIRECTS', 502, error.message)
+          : apiError('UPSTREAM_ERROR', 502, error.message);
       }
-      // Re-validate each redirect hop to prevent redirect-to-internal SSRF (#398)
-      const hopError = await validateUrlForSSRF(nextUrl);
-      if (hopError) return apiError('INVALID_URL', 403, hopError);
-      currentUrl = nextUrl;
+      throw error;
     }
-
-    if (!response!.ok) {
-      // Forward client (4xx) errors as-is so the caller treats them as permanent
-      // (no retry); collapse upstream server (5xx) errors to 502.
-      const status = response!.status >= 400 && response!.status < 500 ? response!.status : 502;
-      return apiError('UPSTREAM_ERROR', status, `Upstream returned ${response!.status}`);
+    const { response, finalUrl: currentUrl, dispose } = fetched;
+    try {
+      return await relayUpstream(response, currentUrl);
+    } finally {
+      await dispose();
     }
-
-    const MAX_PROXY_BYTES = 25 * 1024 * 1024; // 25 MiB
-    const contentLength = Number(response!.headers.get('content-length') ?? '');
-    if (Number.isFinite(contentLength) && contentLength > MAX_PROXY_BYTES) {
-      return apiError('UPSTREAM_ERROR', 502, `Upstream asset too large (${contentLength} bytes)`);
-    }
-    // Seuls les types de la liste blanche sont relayés (jamais text/html : XSS réfléchi).
-    const contentType = resolveProxyContentType(response!.headers.get('content-type'), currentUrl);
-    if (!contentType) {
-      return apiError('INVALID_REQUEST', 415, 'Unsupported upstream content type');
-    }
-    const blob = await response!.blob();
-    if (blob.size > MAX_PROXY_BYTES) {
-      return apiError('UPSTREAM_ERROR', 502, `Upstream asset too large (${blob.size} bytes)`);
-    }
-
-    return new NextResponse(blob, {
-      headers: {
-        'Content-Type': contentType,
-        'Content-Length': String(blob.size),
-        'Cache-Control': 'private, max-age=3600',
-        // Neutralise tout script embarqué (SVG) si la réponse est ouverte directement.
-        'Content-Security-Policy': "sandbox; default-src 'none'",
-        'Content-Disposition': 'inline',
-        'X-Content-Type-Options': 'nosniff',
-      },
-    });
   } catch (error) {
     log.error(`Proxy media failed [url="${url?.substring(0, 100) ?? 'unknown'}"]:`, error);
     return apiError('INTERNAL_ERROR', 500, publicErrorMessage(error));
   }
+}
+
+async function relayUpstream(response: SafeFetchResult['response'], currentUrl: string) {
+  if (!response.ok) {
+    // Forward client (4xx) errors as-is so the caller treats them as permanent
+    // (no retry); collapse upstream server (5xx) errors to 502.
+    const status = response.status >= 400 && response.status < 500 ? response.status : 502;
+    return apiError('UPSTREAM_ERROR', status, `Upstream returned ${response.status}`);
+  }
+
+  const MAX_PROXY_BYTES = 25 * 1024 * 1024; // 25 MiB
+  const contentLength = Number(response.headers.get('content-length') ?? '');
+  if (Number.isFinite(contentLength) && contentLength > MAX_PROXY_BYTES) {
+    return apiError('UPSTREAM_ERROR', 502, `Upstream asset too large (${contentLength} bytes)`);
+  }
+  // Seuls les types de la liste blanche sont relayés (jamais text/html : XSS réfléchi).
+  const contentType = resolveProxyContentType(response.headers.get('content-type'), currentUrl);
+  if (!contentType) {
+    return apiError('INVALID_REQUEST', 415, 'Unsupported upstream content type');
+  }
+  const bytes = await response.arrayBuffer();
+  if (bytes.byteLength > MAX_PROXY_BYTES) {
+    return apiError('UPSTREAM_ERROR', 502, `Upstream asset too large (${bytes.byteLength} bytes)`);
+  }
+
+  return new NextResponse(bytes, {
+    headers: {
+      'Content-Type': contentType,
+      'Content-Length': String(bytes.byteLength),
+      'Cache-Control': 'private, max-age=3600',
+      // Neutralise tout script embarqué (SVG) si la réponse est ouverte directement.
+      'Content-Security-Policy': "sandbox; default-src 'none'",
+      'Content-Disposition': 'inline',
+      'X-Content-Type-Options': 'nosniff',
+    },
+  });
 }

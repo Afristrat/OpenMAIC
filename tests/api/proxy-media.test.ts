@@ -1,8 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NextRequest } from 'next/server';
 
-const mocks = vi.hoisted(() => ({ validateUrlForSSRF: vi.fn(), requireAuth: vi.fn() }));
-vi.mock('@/lib/server/ssrf-guard', () => ({ validateUrlForSSRF: mocks.validateUrlForSSRF }));
+const mocks = vi.hoisted(() => ({ safeFetch: vi.fn(), requireAuth: vi.fn() }));
+// Les classes d'erreur restent les vraies ; seule la connexion réseau (épinglée) est simulée.
+// La validation des sauts, le rebinding et les redirections sont couverts par
+// tests/server/ssrf-guard-hardening.test.ts.
+vi.mock('@/lib/server/ssrf-guard', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/server/ssrf-guard')>()),
+  safeFetch: mocks.safeFetch,
+}));
 vi.mock('@/lib/api/auth', () => ({ requireAuth: mocks.requireAuth }));
 vi.mock('@/lib/logger', () => ({
   createLogger: () => ({
@@ -12,6 +18,17 @@ vi.mock('@/lib/logger', () => ({
     debug: vi.fn(),
   }),
 }));
+
+const dispose = vi.fn().mockResolvedValue(undefined);
+
+/** safeFetch answers with `make()` for the requested URL (no redirect). */
+function upstream(make: () => Response) {
+  mocks.safeFetch.mockImplementation(async (url: string) => ({
+    response: make(),
+    finalUrl: url,
+    dispose,
+  }));
+}
 
 async function postProxy(
   body: Record<string, unknown>,
@@ -30,97 +47,44 @@ describe('POST /api/proxy-media', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.restoreAllMocks();
-    mocks.validateUrlForSSRF.mockReset();
+    mocks.safeFetch.mockReset();
+    dispose.mockClear();
     mocks.requireAuth.mockReset();
     mocks.requireAuth.mockResolvedValue({ user: { id: 'u1', email: 'u1@example.com' } });
   });
 
-  it('1. direct 200: returns blob with forwarded content-type', async () => {
-    mocks.validateUrlForSSRF.mockResolvedValue(null);
+  it('1. direct 200: returns blob with forwarded content-type and releases the connection', async () => {
     const bodyBytes = new Uint8Array([1, 2, 3, 4]);
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(
-        new Response(bodyBytes, {
-          status: 200,
-          headers: { 'Content-Type': 'image/png' },
-        }),
-      ),
+    upstream(
+      () => new Response(bodyBytes, { status: 200, headers: { 'Content-Type': 'image/png' } }),
     );
 
     const res = await postProxy({ url: 'https://example.com/image.png' });
 
     expect(res.status).toBe(200);
     expect(res.headers.get('Content-Type')).toBe('image/png');
-    const buf = await res.arrayBuffer();
-    expect(new Uint8Array(buf)).toEqual(bodyBytes);
+    expect(new Uint8Array(await res.arrayBuffer())).toEqual(bodyBytes);
+    expect(mocks.safeFetch).toHaveBeenCalledWith('https://example.com/image.png');
+    expect(dispose).toHaveBeenCalledTimes(1);
   });
 
-  it('2. single redirect followed: validates both initial and redirect target', async () => {
-    mocks.validateUrlForSSRF.mockResolvedValue(null);
-    const finalBytes = new Uint8Array([10, 20]);
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(
-        new Response(null, {
-          status: 302,
-          headers: { location: 'https://cdn.example.com/final.png' },
-        }),
-      )
-      .mockResolvedValueOnce(
-        new Response(finalBytes, {
-          status: 200,
-          headers: { 'Content-Type': 'image/png' },
-        }),
-      );
-    vi.stubGlobal('fetch', fetchMock);
-
-    const res = await postProxy({ url: 'https://example.com/redirect' });
-
-    expect(res.status).toBe(200);
-    // validateUrlForSSRF called for both initial URL and redirect target
-    expect(mocks.validateUrlForSSRF).toHaveBeenCalledTimes(2);
-    expect(mocks.validateUrlForSSRF).toHaveBeenNthCalledWith(1, 'https://example.com/redirect');
-    expect(mocks.validateUrlForSSRF).toHaveBeenNthCalledWith(
-      2,
-      'https://cdn.example.com/final.png',
-    );
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-  });
-
-  it('3. redirect to private/blocked URL is rejected (SSRF guard)', async () => {
-    // Initial URL passes; redirect target is blocked
-    mocks.validateUrlForSSRF
-      .mockResolvedValueOnce(null) // initial URL: ok
-      .mockResolvedValueOnce('Local/private network URLs are not allowed'); // redirect target: blocked
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValueOnce(
-        new Response(null, {
-          status: 302,
-          headers: { location: 'http://192.168.1.1/secret' },
-        }),
-      ),
+  it('2. blocked target (initial URL or redirect hop): 403 INVALID_URL', async () => {
+    const { SsrfBlockedError } = await import('@/lib/server/ssrf-guard');
+    mocks.safeFetch.mockRejectedValue(
+      new SsrfBlockedError('Local/private network URLs are not allowed'),
     );
 
-    const res = await postProxy({ url: 'https://example.com/harmless' });
+    const res = await postProxy({ url: 'http://169.254.169.254/metadata' });
     const json = await res.json();
 
     expect(res.status).toBe(403);
     expect(json).toMatchObject({ errorCode: 'INVALID_URL' });
   });
 
-  it('4. too many redirects returns 502 TOO_MANY_REDIRECTS', async () => {
-    mocks.validateUrlForSSRF.mockResolvedValue(null);
-    // Every fetch returns 302 → infinite loop hits MAX_REDIRECTS (5)
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(
-        new Response(null, {
-          status: 302,
-          headers: { location: 'https://example.com/loop' },
-        }),
-      ),
+  it('3. too many redirects returns 502 TOO_MANY_REDIRECTS', async () => {
+    const { SafeFetchRedirectError } = await import('@/lib/server/ssrf-guard');
+    mocks.safeFetch.mockRejectedValue(
+      new SafeFetchRedirectError('TOO_MANY_REDIRECTS', 'Too many redirects'),
     );
 
     const res = await postProxy({ url: 'https://example.com/loop' });
@@ -130,29 +94,10 @@ describe('POST /api/proxy-media', () => {
     expect(json).toMatchObject({ errorCode: 'TOO_MANY_REDIRECTS' });
   });
 
-  it('5. initial URL blocked: 403 returned, no fetch attempted', async () => {
-    mocks.validateUrlForSSRF.mockResolvedValue('Local/private network URLs are not allowed');
-    const fetchMock = vi.fn();
-    vi.stubGlobal('fetch', fetchMock);
-
-    const res = await postProxy({ url: 'http://169.254.169.254/metadata' });
-    const json = await res.json();
-
-    expect(res.status).toBe(403);
-    expect(json).toMatchObject({ errorCode: 'INVALID_URL' });
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
-  it('6. redirect without Location header returns 502', async () => {
-    mocks.validateUrlForSSRF.mockResolvedValue(null);
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(
-        new Response(null, {
-          status: 302,
-          // no location header
-        }),
-      ),
+  it('4. redirect without Location returns 502 UPSTREAM_ERROR', async () => {
+    const { SafeFetchRedirectError } = await import('@/lib/server/ssrf-guard');
+    mocks.safeFetch.mockRejectedValue(
+      new SafeFetchRedirectError('BAD_REDIRECT', 'Redirect response without Location header'),
     );
 
     const res = await postProxy({ url: 'https://example.com/bad-redirect' });
@@ -162,20 +107,19 @@ describe('POST /api/proxy-media', () => {
     expect(json).toMatchObject({ errorCode: 'UPSTREAM_ERROR' });
   });
 
-  it('7. upstream 404 returns 404 UPSTREAM_ERROR (forwarded, not 502)', async () => {
-    mocks.validateUrlForSSRF.mockResolvedValue(null);
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 404 })));
+  it('5. upstream 404 returns 404 UPSTREAM_ERROR (forwarded, not 502)', async () => {
+    upstream(() => new Response(null, { status: 404 }));
 
     const res = await postProxy({ url: 'https://example.com/not-found' });
     const json = await res.json();
 
     expect(res.status).toBe(404);
     expect(json).toMatchObject({ errorCode: 'UPSTREAM_ERROR' });
+    expect(dispose).toHaveBeenCalledTimes(1);
   });
 
-  it('8. upstream 503 is collapsed to 502', async () => {
-    mocks.validateUrlForSSRF.mockResolvedValue(null);
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 503 })));
+  it('6. upstream 503 is collapsed to 502', async () => {
+    upstream(() => new Response(null, { status: 503 }));
 
     const res = await postProxy({ url: 'https://example.com/server-error' });
     const json = await res.json();
@@ -184,11 +128,9 @@ describe('POST /api/proxy-media', () => {
     expect(json).toMatchObject({ errorCode: 'UPSTREAM_ERROR' });
   });
 
-  it('9. upstream Content-Length exceeding cap returns 502', async () => {
-    mocks.validateUrlForSSRF.mockResolvedValue(null);
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(
+  it('7. upstream Content-Length exceeding cap returns 502', async () => {
+    upstream(
+      () =>
         new Response(null, {
           status: 200,
           headers: {
@@ -196,7 +138,6 @@ describe('POST /api/proxy-media', () => {
             'Content-Length': String(26 * 1024 * 1024), // 26 MiB > 25 MiB cap
           },
         }),
-      ),
     );
 
     const res = await postProxy({ url: 'https://example.com/huge-asset' });
@@ -204,44 +145,37 @@ describe('POST /api/proxy-media', () => {
 
     expect(res.status).toBe(502);
     expect(json).toMatchObject({ errorCode: 'UPSTREAM_ERROR' });
+    expect(dispose).toHaveBeenCalledTimes(1);
   });
 
-  it('10. anonymous caller is rejected with 401 before any fetch', async () => {
+  it('8. anonymous caller is rejected with 401 before any fetch', async () => {
     mocks.requireAuth.mockResolvedValue({
       response: new Response(JSON.stringify({ code: 'UNAUTHORIZED' }), { status: 401 }),
     });
-    const fetchMock = vi.fn();
-    vi.stubGlobal('fetch', fetchMock);
 
     const res = await postProxy({ url: 'https://example.com/image.png' });
 
     expect(res.status).toBe(401);
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(mocks.safeFetch).not.toHaveBeenCalled();
   });
 
-  it('11. non-JSON request Content-Type is rejected with 415', async () => {
-    const fetchMock = vi.fn();
-    vi.stubGlobal('fetch', fetchMock);
-
+  it('9. non-JSON request Content-Type is rejected with 415', async () => {
     const res = await postProxy(
       { url: 'https://example.com/image.png' },
       { 'Content-Type': 'text/plain' },
     );
 
     expect(res.status).toBe(415);
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(mocks.safeFetch).not.toHaveBeenCalled();
   });
 
-  it('12. upstream text/html is refused with 415 (reflected XSS)', async () => {
-    mocks.validateUrlForSSRF.mockResolvedValue(null);
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(
+  it('10. upstream text/html is refused with 415 (reflected XSS)', async () => {
+    upstream(
+      () =>
         new Response('<script>alert(1)</script>', {
           status: 200,
           headers: { 'Content-Type': 'text/html; charset=utf-8' },
         }),
-      ),
     );
 
     const res = await postProxy({ url: 'https://example.com/page' });
@@ -249,17 +183,13 @@ describe('POST /api/proxy-media', () => {
     expect(res.status).toBe(415);
   });
 
-  it('13. octet-stream upstream is typed from the URL suffix, unknown suffix is refused', async () => {
-    mocks.validateUrlForSSRF.mockResolvedValue(null);
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockImplementation(
-        async () =>
-          new Response(new Uint8Array([1]), {
-            status: 200,
-            headers: { 'Content-Type': 'application/octet-stream' },
-          }),
-      ),
+  it('11. octet-stream upstream is typed from the URL suffix, unknown suffix is refused', async () => {
+    upstream(
+      () =>
+        new Response(new Uint8Array([1]), {
+          status: 200,
+          headers: { 'Content-Type': 'application/octet-stream' },
+        }),
     );
 
     const ok = await postProxy({ url: 'https://example.com/clip.mp4?sig=1' });
@@ -270,16 +200,13 @@ describe('POST /api/proxy-media', () => {
     expect(refused.status).toBe(415);
   });
 
-  it('14. response carries a sanitized type and the sandbox headers', async () => {
-    mocks.validateUrlForSSRF.mockResolvedValue(null);
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(
+  it('12. response carries a sanitized type and the sandbox headers', async () => {
+    upstream(
+      () =>
         new Response(new Uint8Array([1, 2]), {
           status: 200,
           headers: { 'Content-Type': 'image/svg+xml; charset=utf-8' },
         }),
-      ),
     );
 
     const res = await postProxy({ url: 'https://example.com/logo.svg' });

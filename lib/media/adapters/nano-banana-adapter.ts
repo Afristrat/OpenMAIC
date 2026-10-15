@@ -55,25 +55,19 @@ export async function testNanoBananaConnectivity(
   const model = config.model || DEFAULT_MODEL;
   const url = `${baseUrl}/v1beta/models`;
 
-  // Try ?key= query param first (direct Google API), fall back to x-goog-api-key header (proxy)
-  let response: Response | null = null;
+  // La clé voyage dans l'en-tête x-goog-api-key (documenté par Google), jamais dans l'URL :
+  // une URL finit dans les journaux de proxy et peut être renvoyée à un hôte tiers.
+  let response: Response;
   try {
-    response = await fetch(`${url}?key=${config.apiKey}`, { method: 'GET' });
-  } catch {
-    // Direct API unreachable, try header auth
-  }
-  if (!response || !response.ok) {
-    try {
-      response = await fetch(url, {
-        method: 'GET',
-        headers: { 'x-goog-api-key': config.apiKey },
-      });
-    } catch (_err) {
-      return {
-        success: false,
-        message: `Network error: unable to reach ${baseUrl}. Check your Base URL and network connection.`,
-      };
-    }
+    response = await fetch(url, {
+      method: 'GET',
+      headers: { 'x-goog-api-key': config.apiKey },
+    });
+  } catch (_err) {
+    return {
+      success: false,
+      message: `Network error: unable to reach ${baseUrl}. Check your Base URL and network connection.`,
+    };
   }
 
   if (response.ok) {

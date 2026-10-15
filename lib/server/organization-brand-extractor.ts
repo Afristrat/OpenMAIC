@@ -1,5 +1,5 @@
 import sharp from 'sharp';
-import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
+import { safeFetch, validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { extractBrandFromSources } from '@/lib/branding/brand-extraction';
 import type { OrganizationDesignSystem } from '@/lib/branding/organization-design-system';
 
@@ -100,32 +100,28 @@ function sameSite(candidate: URL, site: URL): boolean {
 }
 
 /**
- * Fetches a public page or stylesheet, checking the SSRF guard on the URL and on every redirect:
- * the guard is never skipped because a server answered with a 3xx.
+ * Fetches a public page or stylesheet through the SSRF guard: every hop (redirects included) is
+ * validated and the connection is pinned to the validated address (no DNS rebinding window).
  */
 async function fetchGuarded(
   url: string,
   timeoutMs: number,
   maxChars: number,
 ): Promise<{ text: string; url: string }> {
-  let current = url;
-  for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
-    const ssrfError = await validateUrlForSSRF(current);
-    if (ssrfError) throw new Error(ssrfError);
-    const response = await fetch(current, {
-      redirect: 'manual',
+  const { response, finalUrl, dispose } = await safeFetch(
+    url,
+    {
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; QalemBrandReader/1.0)' },
       signal: AbortSignal.timeout(timeoutMs),
-    });
-    const location = response.headers.get('location');
-    if (response.status >= 300 && response.status < 400 && location) {
-      current = new URL(location, current).toString();
-      continue;
-    }
-    if (!response.ok) throw new Error(`${current} returned ${response.status}`);
-    return { text: (await response.text()).slice(0, maxChars), url: current };
+    },
+    { maxRedirects: MAX_REDIRECTS },
+  );
+  try {
+    if (!response.ok) throw new Error(`${finalUrl} returned ${response.status}`);
+    return { text: (await response.text()).slice(0, maxChars), url: finalUrl };
+  } finally {
+    await dispose();
   }
-  throw new Error(`Too many redirects for ${url}`);
 }
 
 /** The site's own stylesheets, fetched through the same SSRF guard as the page itself. */
