@@ -6,13 +6,16 @@
  * lib/jobs/workers.ts et lib/export/scorm/build-scorm-package.ts).
  *
  * Body: { stageId, format }.
+ * Accès : réservé à qui peut modifier le cours (admin/manager de l'organisation, auteur
+ * propriétaire, formateur délégué, super-admin) ; voir requireSuperAdminOrOrgEditor. Un simple
+ * membre qui voit le cours (apprenant, formateur sans délégation) ne peut pas l'exporter.
  * Response: { success: boolean, id?: string, status?: string, error?: string }
  */
 
 import { NextRequest } from 'next/server';
-import { requireAuth } from '@/lib/api/auth';
+import { isSuperAdminEmail, requireAuth, requireSuperAdminOrOrgEditor } from '@/lib/api/auth';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { readClassroomOwnership } from '@/lib/server/classroom-storage';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { enqueueExportJob } from '@/lib/jobs/queue';
 import { missingSpeechAudioMessage, summarizeSpeechAudio } from '@/lib/audio/speech-audio-report';
@@ -47,14 +50,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = await createServerSupabaseClient();
-    const { data: stage, error: stageError } = await supabase
-      .from('stages')
-      .select('id')
-      .eq('id', stageId)
-      .single();
-    if (stageError || !stage) {
+    const ownership = await readClassroomOwnership(stageId);
+    if (!ownership) {
       return apiError('INVALID_REQUEST', 404, 'Cours introuvable');
+    }
+    if (ownership.orgId) {
+      const editor = await requireSuperAdminOrOrgEditor(
+        request,
+        ownership.orgId,
+        ownership.ownerId,
+        stageId,
+      );
+      if (editor.response) return editor.response;
+    } else if (auth.user.id !== ownership.ownerId && !isSuperAdminEmail(auth.user.email)) {
+      // Cours sans organisation : seul son propriétaire (ou le super-admin) l'exporte.
+      return apiError(
+        'INVALID_REQUEST',
+        403,
+        'Droit de modification requis pour exporter ce cours',
+      );
     }
 
     const serviceSupabase = createServiceSupabaseClient();
