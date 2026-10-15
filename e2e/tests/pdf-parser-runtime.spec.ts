@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { e2eSessionCookie, startE2eAuthServer } from '../fixtures/server-auth';
 
 function buildTextPdf(text: string): Buffer {
   const escapedText = text.replaceAll('\\', '\\\\').replaceAll('(', '\\(').replaceAll(')', '\\)');
@@ -29,8 +30,19 @@ function buildTextPdf(text: string): Buffer {
   return Buffer.from(pdf);
 }
 
+let stopAuthServer: (() => Promise<void>) | undefined;
+
+test.beforeAll(async () => {
+  stopAuthServer = await startE2eAuthServer();
+});
+
+test.afterAll(async () => {
+  await stopAuthServer?.();
+});
+
 test('parses a PDF through the production Next.js runtime', async ({ request }) => {
   const response = await request.post('/api/parse-pdf', {
+    headers: { Cookie: e2eSessionCookie() },
     multipart: {
       pdf: {
         name: 'qalem-runtime-smoke.pdf',

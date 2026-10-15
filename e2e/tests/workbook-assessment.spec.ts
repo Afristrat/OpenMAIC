@@ -1,4 +1,5 @@
 import { expect, test } from '../fixtures/base';
+import { e2eSessionCookie, startE2eAuthServer } from '../fixtures/server-auth';
 import type { APIRequestContext } from '@playwright/test';
 import JSZip from 'jszip';
 import { generateWorkbookWithPython } from '../../lib/server/workbook-python';
@@ -43,8 +44,19 @@ async function completeCashFlowWorkbook(workbook: Buffer): Promise<Buffer> {
   return zip.generateAsync({ type: 'nodebuffer' });
 }
 
+let stopAuthServer: (() => Promise<void>) | undefined;
+
+test.beforeAll(async () => {
+  stopAuthServer = await startE2eAuthServer();
+});
+
+test.afterAll(async () => {
+  await stopAuthServer?.();
+});
+
 async function assessWorkbook(request: APIRequestContext, workbook: Buffer) {
   return request.post('/api/pbl/v2/evaluate-workbook', {
+    headers: { Cookie: e2eSessionCookie() },
     multipart: {
       workbook: {
         name: 'tresorerie-13-semaines.xlsx',
