@@ -99,6 +99,20 @@ services:
       QALEM_AUDIOSEAL_TOKEN: ${QALEM_AUDIOSEAL_TOKEN:?QALEM AudioSeal token required}
       QALEM_AUDIOSEAL_DEVICE: cpu
       QALEM_AUDIOSEAL_MAX_SECONDS: "180"
+    # Coolify forwards every application variable to every service. This process
+    # only needs the four it reads: start it with exactly those (see the
+    # runtime-image-config test), so no other secret reaches its address space.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - >-
+        exec env -i PATH="$$PATH" HOME="$$HOME" LANG="$$LANG"
+        PYTHONDONTWRITEBYTECODE="$$PYTHONDONTWRITEBYTECODE" PYTHONUNBUFFERED="$$PYTHONUNBUFFERED"
+        NO_TORCH_COMPILE="$$NO_TORCH_COMPILE" QALEM_AUDIOSEAL_TOKEN="$$QALEM_AUDIOSEAL_TOKEN"
+        QALEM_AUDIOSEAL_DEVICE="$$QALEM_AUDIOSEAL_DEVICE"
+        QALEM_AUDIOSEAL_MAX_SECONDS="$$QALEM_AUDIOSEAL_MAX_SECONDS" "$$@"
+      - isolated-env
+    command: ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "1", "--no-access-log"]
     restart: unless-stopped
     mem_limit: 3g
     mem_reservation: 1g
@@ -125,6 +139,20 @@ services:
       CAPTURE_WORKER_TOKEN: ${CAPTURE_WORKER_TOKEN:-runtime-only}
       NODE_OPTIONS: --max-old-space-size=256
       PORT: "8090"
+    # Same isolation as the AudioSeal sidecar: this service renders untrusted
+    # pages in Chromium and must not inherit the platform secrets Coolify injects.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - >-
+        exec env -i PATH="$$PATH" HOME="$$HOME" LANG="$$LANG" LC_ALL="$$LC_ALL"
+        PLAYWRIGHT_BROWSERS_PATH="$$PLAYWRIGHT_BROWSERS_PATH"
+        CAPTURE_STORAGE_STATE_DIR="$$CAPTURE_STORAGE_STATE_DIR"
+        CAPTURE_MAX_CONCURRENCY="$$CAPTURE_MAX_CONCURRENCY" CAPTURE_TIMEOUT_MS="$$CAPTURE_TIMEOUT_MS"
+        CAPTURE_WORKER_TOKEN="$$CAPTURE_WORKER_TOKEN" NODE_OPTIONS="$$NODE_OPTIONS"
+        PORT="$$PORT" "$$@"
+      - isolated-env
+    command: ["node", "dist/server.js"]
     expose:
       - "8090"
     volumes:
