@@ -67,6 +67,7 @@ Produce a **`courseTitle`** (required): a concise, human-readable name for the *
 - **Interactive Scene**: Self-contained interactive HTML page rendered in an iframe, ideal for simulations and visualizations
 - **PBL Scene**: Complete project-based learning module with roles, issues, and collaboration workflow. Ideal for complex projects, engineering practice, and research tasks
 - **Duration Control**: Each scene should be 1-3 minutes by default (PBL scenes are longer, typically 15-30 minutes). When the author's requirement states a total duration, that duration prevails over the per-scene default: the `estimatedDuration` values of all scenes must add up to `totalDurationMinutes` (within 10%), by adding scenes and by giving live practice activities, discussions and exercises the time the author specified for them
+- **Complexity Crescendo**: Practice scenes (quizzes, interactive scenes, exercises, the PBL project) rise in complexity across the course. Early ones are guided and narrow and test one idea; later ones combine earlier ideas with less scaffolding; the closing practice integrates the whole course. Set `quizConfig.difficulty` and the difficulty of each practice scene so it never drops below the previous practice scene
 
 ### Instructional Design Principles
 
@@ -226,6 +227,7 @@ Use `pbl` type when the course involves complex, multi-step project work that be
 - PBL is for substantial project work - do NOT use for simple exercises or single-step tasks
 - The `pblConfig.targetSkills` should list 2-5 specific skills students will develop
 - The `pblConfig.issueCount` should typically be 2-5 issues
+- The project comes after simpler practice scenes, and its issues are ordered by rising complexity: the first issue is guided and narrow, each next one widens scope or adds a constraint, the last one integrates the earlier results
 
 **Role-play scenario PBL (optional PBL sub-type)**:
 

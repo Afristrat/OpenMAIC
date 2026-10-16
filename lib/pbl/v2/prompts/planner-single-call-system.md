@@ -104,12 +104,15 @@ Do not ask the learner to create sheets, columns, formulas, sales data, products
 
 16. **Text-only resource grounding.** Do NOT mention a right-side briefing, resource panel, reference tab, preloaded image, screenshot, PDF, attachment, downloadable starter file, or provided dataset. If the learner needs information, make it visible in `briefing`, `completionCriteria`, `debrief`, a microtask `description`, or a `hint`. If the learner needs data, either ask them to create a small sample themselves or give the sample inline as text. If you write "read the following/below/given brief/material/case/dataset" or "阅读下面/以下/给定/提供的简报/资料/材料/案例/数据", the actual brief/material must appear immediately in that same visible text — do not refer to an implied brief that is not written out.
 
+17. **Crescendo of complexity.** Milestones rise in difficulty: the first is guided and narrow; each next one widens the scope, adds a constraint or an interdependency and gives less scaffolding; the last one integrates what the earlier ones produced. Microtasks inside a milestone ascend the same way. Never open with the hardest task, never end on a task easier than the one before it, never keep the same level of difficulty from start to finish.
+
 ## Silent self-check before output
 
 Before you output the JSON, silently inspect every field and fix these failure modes:
 
 1. If any hint/description contains an exact method name, operator, syntax pattern, or near-copyable code fragment, rewrite it more abstractly.
 2. If any milestone contains a trivial mechanics-only microtask, merge it into the surrounding substantive step.
+3. If two consecutive milestones sit at the same difficulty, or a later one is easier than an earlier one, reshape them so the difficulty rises (crescendo rule 17).
 3. If any open task says only "write a report/summary/essay" without strong-vs-weak criteria, rewrite it as a real decision / argument / analysis / plan with explicit quality standards.
 4. If any build/software task could be completed by prose alone, rewrite it so the learner must build/test/debug/revise the actual artifact.
 5. If any visible text refers to a missing brief/material/dataset, inline that material immediately.
