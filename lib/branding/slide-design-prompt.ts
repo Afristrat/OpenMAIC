@@ -59,7 +59,12 @@ export function buildSlideDesignPromptContext(input: {
   const directiveContext = normalized
     ? JSON.stringify({
         directive: normalized.directive,
-        palette: buildSnapshotPalette(normalized.directive, input.brandSnapshot),
+        // The far gradient stops are announced with the slide surface; the model never needs them.
+        palette: Object.fromEntries(
+          Object.entries(buildSnapshotPalette(normalized.directive, input.brandSnapshot)).filter(
+            ([key]) => !key.endsWith('.end'),
+          ),
+        ),
       })
     : 'No course directive supplied.';
 
@@ -78,7 +83,7 @@ export function buildSlideDesignPromptContext(input: {
     slideType,
     surface,
     surfaceContext: surface
-      ? `Slide surface fixed by the platform (do not change it): ${surface.role} ${surface.color}. On it use text ${surface.text}, secondary text ${surface.textSecondary}, accent ${surface.accent}. Cards: fill ${surface.card} with opacity ${surface.cardOpacity}. Banners: fill ${surface.band} with text ${surface.bandText} only. The platform renders the background: set \`background\` to this solid colour.`
+      ? `Slide surface fixed by the platform (do not change it): ${surface.role} ${surface.color}. On it use text ${surface.text}, secondary text ${surface.textSecondary}, accent ${surface.accent}. Cards: fill ${surface.card} with opacity ${surface.cardOpacity}. Banners: fill ${surface.band} with text ${surface.bandText} only. The platform renders the background${surface.color === surface.colorEnd ? '' : ` as a soft gradient to ${surface.colorEnd}`}: set \`background\` to ${surface.color}.`
       : '',
     designDirectiveContext: directiveContext,
     brandSnapshotContext: hasSnapshot

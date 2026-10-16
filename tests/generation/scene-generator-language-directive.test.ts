@@ -84,7 +84,12 @@ describe('scene-generator language directive threading (issue #472)', () => {
       expect(lastUser()).toContain(
         JSON.stringify({
           directive: DEFAULT_DESIGN_DIRECTIVE,
-          palette: buildPalette(DEFAULT_DESIGN_DIRECTIVE),
+          // The far gradient stops are announced with the slide surface, not in the palette.
+          palette: Object.fromEntries(
+            Object.entries(buildPalette(DEFAULT_DESIGN_DIRECTIVE)).filter(
+              ([key]) => !key.endsWith('.end'),
+            ),
+          ),
         }),
       );
     });

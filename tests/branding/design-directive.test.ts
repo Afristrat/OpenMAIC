@@ -242,7 +242,7 @@ describe('resolveSlideSurface', () => {
     expect(resolveSlideSurface('end', directive).role).toBe('dark');
   });
 
-  it('follows the tenant charter: a white background stays white, the tint takes the accent hue', () => {
+  it('follows the tenant charter: a white background stays white, the charter surface is the tint', () => {
     const white = {
       version: 1 as const,
       createdAt: '2026-10-12T00:00:00.000Z',
@@ -250,9 +250,9 @@ describe('resolveSlideSurface', () => {
     };
     const accentHue = tinycolor('#0A72A1').toHsl().h;
     expect(resolveSlideSurface('content', directive, white).color).toBe('#FFFFFF');
-    const tint = resolveSlideSurface('cover', directive, white).color;
-    expect(tint).not.toBe('#FFFFFF');
-    const gap = Math.abs(tinycolor(tint).toHsl().h - accentHue);
+    const cover = resolveSlideSurface('cover', directive, white);
+    expect(cover.color).toBe('#F0F0F0');
+    const gap = Math.abs(tinycolor(cover.colorEnd).toHsl().h - accentHue);
     expect(Math.min(gap, 360 - gap)).toBeLessThan(10);
     expect(
       tinycolor(resolveSlideSurface('end', directive, white).color).getLuminance(),
@@ -299,10 +299,97 @@ describe('resolveSlideSurface', () => {
     expect(resolveSlideSurface('end', directive).cardOpacity).toBe(1);
   });
 
-  it('imposes a solid background on every surface, gradients being reserved to one punchline', () => {
+  it('imposes a solid background on every surface of a tenant without charter', () => {
     for (const slideFunction of ['cover', 'contents', 'content', 'end'] as const) {
       const surface = resolveSlideSurface(slideFunction, directive);
+      expect(surface.colorEnd).toBe(surface.color);
       expect(buildSurfaceBackground(surface)).toEqual({ type: 'solid', color: surface.color });
     }
+  });
+});
+
+describe('charter surfaces and background gradients', () => {
+  const directive = normalizeDesignDirective({
+    ...DEFAULT_DESIGN_DIRECTIVE,
+    surfacePlan: { content: 'base', engagement: 'dark', punchline: 'none' },
+  }).directive;
+  const charter = {
+    background: '#F3EFE4',
+    surface: '#E9E1D1',
+    ink: '#102A43',
+    accent: '#0B8F8A',
+    secondary: '#9F3D29',
+  };
+  const snapshot = {
+    version: 1 as const,
+    createdAt: '2026-10-16T00:00:00.000Z',
+    content:
+      'colors: background=#F3EFE4 surface=#E9E1D1 ink=#102A43 accent=#0B8F8A muted=#5D6670 secondary=#9F3D29',
+  };
+
+  it('uses the charter surface instead of a wash of the accent', () => {
+    const palette = buildPalette(directive, undefined, charter);
+    expect(palette['surface.base']).toBe('#F3EFE4');
+    expect(palette['surface.tint']).toBe('#E9E1D1');
+    expect(palette['surface.base.end']).toBe('#E9E1D1');
+  });
+
+  it('keeps every text, accent and border colour readable on every stop of every light gradient', () => {
+    const palette = buildPalette(directive, undefined, charter);
+    const stops = ['surface.base', 'surface.base.end', 'surface.tint', 'surface.tint.end'] as const;
+    for (const stop of stops) {
+      expect(tinycolor.readability(palette['text.primary'], palette[stop])).toBeGreaterThanOrEqual(
+        7,
+      );
+      expect(
+        tinycolor.readability(palette['text.secondary'], palette[stop]),
+      ).toBeGreaterThanOrEqual(5.5);
+      for (const accent of ['accent.primary', 'accent.secondary', 'accent.achievement'] as const) {
+        expect(tinycolor.readability(palette[accent], palette[stop])).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+  });
+
+  it('keeps light text readable on both stops of the dark gradient', () => {
+    const palette = buildPalette(directive, undefined, charter);
+    for (const stop of ['surface.dark', 'surface.dark.end'] as const) {
+      expect(tinycolor.readability(palette['text.onDark'], palette[stop])).toBeGreaterThanOrEqual(
+        4.5,
+      );
+      expect(
+        tinycolor.readability(palette['text.onDark.secondary'], palette[stop]),
+      ).toBeGreaterThanOrEqual(4.5);
+      expect(tinycolor.readability(palette['accent.onDark'], palette[stop])).toBeGreaterThanOrEqual(
+        4.5,
+      );
+    }
+  });
+
+  it('imposes a soft diagonal gradient between the two stops of each surface', () => {
+    for (const slideFunction of ['cover', 'content', 'end'] as const) {
+      const surface = resolveSlideSurface(slideFunction, directive, snapshot);
+      expect(surface.colorEnd).not.toBe(surface.color);
+      expect(buildSurfaceBackground(surface)).toEqual({
+        type: 'gradient',
+        gradient: {
+          type: 'linear',
+          rotate: 135,
+          colors: [
+            { pos: 0, color: surface.color },
+            { pos: 100, color: surface.colorEnd },
+          ],
+        },
+      });
+    }
+  });
+
+  it('stays solid when the charter defines no surface', () => {
+    const noSurface = {
+      ...snapshot,
+      content: 'colors: background=#F3EFE4 ink=#102A43 accent=#0B8F8A',
+    };
+    const surface = resolveSlideSurface('content', directive, noSurface);
+    expect(surface.colorEnd).toBe(surface.color);
+    expect(buildSurfaceBackground(surface).type).toBe('solid');
   });
 });

@@ -29,7 +29,7 @@ Rule priority: technical schema and source integrity; accessibility; approved te
 
 Use semantic color roles, at most three active hues plus neutrals. Never signal status by color alone; functional states need a word, symbol or icon. Use only palette values from the visual design data (schema-example colors are placeholders); never invent hex colors. At most two authorized font families, one consistent hierarchy, the course grid margin (keep any stricter canvas, geometry or text-height constraint).
 
-Composition by function: cover = hero and context; contents = short ordered route; transition = section marker; content = evidence, concept, comparison, process or worked case; ending = synthesis and next action. The platform fixes each slide's surface; design for the announced surface and return `background` as that solid colour. No gradient on shapes.
+Composition by function: cover = hero and context; contents = short ordered route; transition = section marker; content = evidence, concept, comparison, process or worked case; ending = synthesis and next action. The platform fixes each slide's surface; design for the announced surface and return `background` as that surface colour. No gradient on shapes.
 
 Visual signature: calm pastel surfaces, deep-ink titles and body text, accent only for key figures and short emphasis. Cards use the announced fill and opacity so the pastel shows through; a banner uses its announced fill with its own text colour; never grey text on a coloured shape. Take each text colour from the roles announced for its surface.
 

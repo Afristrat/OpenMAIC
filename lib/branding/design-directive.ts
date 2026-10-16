@@ -160,8 +160,11 @@ export function normalizeDesignDirective(value: unknown): DesignDirectiveNormali
 
 export type DesignPalette = Record<
   | 'surface.base'
+  | 'surface.base.end'
   | 'surface.tint'
+  | 'surface.tint.end'
   | 'surface.dark'
+  | 'surface.dark.end'
   | 'surface.card.onBase'
   | 'surface.card.onTint'
   | 'surface.card.onDark'
@@ -227,6 +230,10 @@ const BASE_TO_TINT_RATIO = 0.14 / 0.27;
 
 /** A paper lighter than this keeps dark text readable; a darker brand background is a dark surface. */
 const LIGHT_PAPER_LUMINANCE = 0.5;
+/** Share of the accent mixed into the charter surface for the far stop of the cover gradient. */
+const GRADIENT_ACCENT_SHARE = 14;
+/** Lightness added to the dark surface for the far stop of its gradient. */
+const GRADIENT_DARK_LIFT = 5;
 /** A brand colour darker than this can carry white text and serves as the dark surface. */
 const DARK_SURFACE_LUMINANCE = 0.12;
 
@@ -273,8 +280,20 @@ export function buildPalette(
     brandPaper && brandPaper.getLuminance() >= LIGHT_PAPER_LUMINANCE
       ? brandPaper
       : tinycolor('#FFFFFF');
+  // A light charter surface (cards, panels) is the charter's own second tone: it becomes the tint,
+  // and the end stop of the soft gradient the light slides sit on.
+  const brandSurface = brand.surface ? tinycolor(brand.surface) : undefined;
+  const charterSurface =
+    charter && brandSurface && brandSurface.getLuminance() >= LIGHT_PAPER_LUMINANCE
+      ? brandSurface
+      : undefined;
   const base = charter ? paper : wash(washSeed, tuning.tintStrength * BASE_TO_TINT_RATIO);
-  const tint = wash(washSeed, tuning.tintStrength, charter ? paper : undefined);
+  const tint = charterSurface ?? wash(washSeed, tuning.tintStrength, charter ? paper : undefined);
+  // Without a charter surface every end stop equals its start: the background stays solid.
+  const baseEnd = charterSurface ?? base;
+  const tintEnd = charterSurface
+    ? tinycolor.mix(charterSurface, washSeed, GRADIENT_ACCENT_SHARE)
+    : tint;
   const brandDark = [brandPaper, brand.ink ? tinycolor(brand.ink) : undefined].find(
     (color) => color && color.getLuminance() < DARK_SURFACE_LUMINANCE,
   );
@@ -284,7 +303,12 @@ export function buildPalette(
     l: 20,
   });
   const dark = readableDark(brandDark ?? derivedDark);
-  const lightSurfaces = [base, tint];
+  // Light text must stay readable on the lightest dark stop, so it is checked against that one.
+  const lighterDark = dark.clone().lighten(GRADIENT_DARK_LIFT);
+  const darkEnd =
+    charter && tinycolor.readability('#FFFFFF', lighterDark) >= 4.5 ? lighterDark : dark;
+  // Text, accents and borders must hold on every stop of every light gradient.
+  const lightSurfaces = [base, tint, baseEnd, tintEnd];
   const primaryCandidate = brandAccent ?? tinycolor({ h: hue, s: mid ? 66 : 52, l: 34 });
   const secondaryCandidate = brand.secondary
     ? tinycolor(brand.secondary)
@@ -295,8 +319,11 @@ export function buildPalette(
 
   return {
     'surface.base': hex(base),
+    'surface.base.end': hex(baseEnd),
     'surface.tint': hex(tint),
+    'surface.tint.end': hex(tintEnd),
     'surface.dark': hex(dark),
+    'surface.dark.end': hex(darkEnd),
     'surface.card.onBase': '#FFFFFF',
     'surface.card.onTint': '#FFFFFF',
     'surface.card.onDark': hex(
@@ -305,11 +332,11 @@ export function buildPalette(
     'text.primary': textColorOnLight(inkCandidate, lightSurfaces, 7),
     'text.secondary': textColorOnLight(tinycolor({ h: hue, s: 24, l: 30 }), lightSurfaces, 5.5),
     'text.onDark': '#FFFFFF',
-    'text.onDark.secondary': textColorOnDark(onDark, dark),
+    'text.onDark.secondary': textColorOnDark(onDark, darkEnd),
     'accent.primary': textColorOnLight(primaryCandidate, lightSurfaces),
     'accent.secondary': textColorOnLight(secondaryCandidate, lightSurfaces),
     'accent.achievement': textColorOnLight(achievementCandidate, lightSurfaces),
-    'accent.onDark': textColorOnDark(wash(washSeed, 0.55), dark),
+    'accent.onDark': textColorOnDark(wash(washSeed, 0.55), darkEnd),
     'border.hairline': hex(wash(washSeed, 0.4, charter ? paper : undefined)),
     'functional.correct': textColorOnLight(tinycolor('#176B3A'), lightSurfaces),
     'functional.incorrect': textColorOnLight(tinycolor('#A12828'), lightSurfaces),
@@ -323,8 +350,10 @@ export type SlideFunction = 'cover' | 'contents' | 'transition' | 'content' | 'e
 
 export interface SlideSurface {
   role: SlideSurfaceRole;
-  /** Solid colour of the surface, applied as is by the platform. */
+  /** First stop of the surface, applied as is by the platform. */
   color: string;
+  /** Far stop of the soft gradient; equal to `color` when the surface stays solid. */
+  colorEnd: string;
   text: string;
   textSecondary: string;
   accent: string;
@@ -360,6 +389,7 @@ export function resolveSlideSurface(
     return {
       role,
       color: palette['surface.dark'],
+      colorEnd: palette['surface.dark.end'],
       text: palette['text.onDark'],
       textSecondary: palette['text.onDark.secondary'],
       accent: palette['accent.onDark'],
@@ -372,6 +402,7 @@ export function resolveSlideSurface(
   return {
     role,
     color: role === 'tint' ? palette['surface.tint'] : palette['surface.base'],
+    colorEnd: role === 'tint' ? palette['surface.tint.end'] : palette['surface.base.end'],
     text: palette['text.primary'],
     textSecondary: palette['text.secondary'],
     accent: palette['accent.primary'],
@@ -382,9 +413,27 @@ export function resolveSlideSurface(
   };
 }
 
-/** Background the platform imposes for a surface: always solid (brief §3.8, a gradient is reserved to one punchline per deck). */
+/**
+ * Background the platform imposes for a surface: a soft diagonal gradient between the two stops of
+ * the charter, solid when the surface has no distinct second stop. Every text colour of the palette
+ * is checked against both stops, and the PPTX export flattens the gradient to the mix of its stops
+ * (brief §3.8), which stays readable because the stops are close.
+ */
 export function buildSurfaceBackground(surface: SlideSurface): SlideBackground {
-  return { type: 'solid', color: surface.color };
+  if (surface.colorEnd.toUpperCase() === surface.color.toUpperCase()) {
+    return { type: 'solid', color: surface.color };
+  }
+  return {
+    type: 'gradient',
+    gradient: {
+      type: 'linear',
+      rotate: 135,
+      colors: [
+        { pos: 0, color: surface.color },
+        { pos: 100, color: surface.colorEnd },
+      ],
+    },
+  };
 }
 
 /** Colours and fonts of the frozen tenant charter; empty for a course without charter. */
