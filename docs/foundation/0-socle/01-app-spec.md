@@ -34,7 +34,7 @@ La **nouvelle base de code Qalem** : upstream OpenMAIC **v0.3.0** (MIT, THU-MAIC
 |---|---|---|
 | Les 264 OURS_ONLY se copient sans conflit d'import sur v0.3.0 | Script de portage + `npx tsc --noEmit` | > 20 % des fichiers copiés cassent le typecheck → la frontière OURS_ONLY/BOTH_DIFFER de l'inventaire est fausse, re-mesurer |
 | Le socle identitaire tient dans ~40 fichiers BOTH_DIFFER | S0-004 à S0-007 (backlog) | Découverte de dépendances i18n/RTL éparpillées hors inventaire → élargir le palier, consigner en ADR |
-| Higgs TTS reste joignable et compatible (`.7:7861`, API OpenAI) | Story S0-006 : appel de vérification réel | HTTP ≠ 200 ou format incompatible → provider à re-vérifier avec Amine (AR non tranché de toute façon) |
+| Higgs TTS reste joignable et compatible (`.20:7861`, API OpenAI) | Story S0-006 : appel de vérification réel | HTTP ≠ 200 ou format incompatible → provider à re-vérifier avec Amine (AR non tranché de toute façon) |
 
 ## Traçabilité verdict
 
