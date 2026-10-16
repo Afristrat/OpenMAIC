@@ -40,6 +40,17 @@ function mediaTaskKeyFor(el: PPTElement): string | undefined {
   return undefined;
 }
 
+/** Blank image `src` values that are still `gen_img_*` placeholders; other slides are returned as-is. */
+export function blankImagePlaceholders(slide: Slide): Slide {
+  const isPlaceholderImage = (el: PPTElement): boolean =>
+    el.type === 'image' && !!el.src && isMediaPlaceholder(el.src);
+  if (!slide.elements.some(isPlaceholderImage)) return slide;
+  return {
+    ...slide,
+    elements: slide.elements.map((el) => (isPlaceholderImage(el) ? { ...el, src: '' } : el)),
+  };
+}
+
 /**
  * Resolve a slide's generated-media refs against the media-generation store so
  * the thumbnail stays in sync as generation (and retries) complete.
@@ -55,8 +66,8 @@ function mediaTaskKeyFor(el: PPTElement): string | undefined {
  * - Pending/failed with a placeholder src → blank the `src` so the package
  *   renders nothing instead of a broken `<img>`/`<video>` for the raw ref.
  *   (A mediaRef-keyed video whose src is a real URL keeps it.)
- * - No stage context (e.g. home recent-course cards) → render raw, matching
- *   the legacy thumbnail's "skip the store off-classroom" behavior.
+ * - No stage context (e.g. home recent-course cards) → skip the store, but still
+ *   blank unresolved image placeholders so no relative `gen_img_*` URL is requested.
  */
 function useResolvedSlide(slide: Slide): Slide {
   const stageId = useMediaStageId();
@@ -83,7 +94,10 @@ function useResolvedSlide(slide: Slide): Slide {
   });
 
   return useMemo(() => {
-    if (!stageId || !signature) return slide;
+    // Off-classroom (home cards): no task to resolve against, but a raw `gen_*`
+    // placeholder would be requested as a relative URL (404 on the card).
+    if (!stageId) return blankImagePlaceholders(slide);
+    if (!signature) return slide;
     const { tasks } = useMediaGenerationStore.getState();
     const elements = slide.elements.map((el) => {
       const key = mediaTaskKeyFor(el);
