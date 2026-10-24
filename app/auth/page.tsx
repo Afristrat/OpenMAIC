@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { tryCreateClient } from '@/lib/supabase/client';
+import { tryCreateClient, tryCreateRecoveryClient } from '@/lib/supabase/client';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -178,7 +178,7 @@ function AuthPageContent(): React.ReactElement {
       return;
     }
 
-    const supabase = tryCreateClient();
+    const supabase = tryCreateRecoveryClient();
     if (!supabase) return;
 
     setIsSubmitting(true);
