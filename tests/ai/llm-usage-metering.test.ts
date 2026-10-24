@@ -5,11 +5,16 @@ const mocks = vi.hoisted(() => ({
   reserveTenantUsage: vi.fn(),
   finalizeTenantUsages: vi.fn(),
   releaseTenantUsages: vi.fn(),
+  recordOverrun: vi.fn(),
 }));
 
 vi.mock('ai', () => ({
   generateText: vi.fn(),
   streamText: mocks.streamText,
+}));
+
+vi.mock('@/lib/billing/reservation-overruns', () => ({
+  recordReservationOverrun: mocks.recordOverrun,
 }));
 
 vi.mock('@/lib/billing/usage-metering', () => ({
@@ -92,5 +97,58 @@ describe('streamed LLM usage metering (S6-025)', () => {
       reason,
     );
     expect(input[callback]).toHaveBeenCalledOnce();
+  });
+
+  it('plafonne le règlement à la quantité réservée et compte le dépassement du tenant', async () => {
+    activate();
+    await streamLLM(params() as never, 'stream-test');
+    const reservedInput = mocks.reserveTenantUsage.mock.calls[0][0].maxQuantity as number;
+    const callbacks = mocks.streamText.mock.calls[0][0];
+
+    await callbacks.onFinish({
+      totalUsage: { inputTokens: reservedInput + 500, outputTokens: 7, totalTokens: 0 },
+    });
+
+    expect(mocks.finalizeTenantUsages).toHaveBeenCalledWith('actor', [
+      { reservationId: 'input-reservation', actualQuantity: reservedInput },
+      { reservationId: 'output-reservation', actualQuantity: 7 },
+    ]);
+    expect(mocks.recordOverrun).toHaveBeenCalledWith(
+      'tenant',
+      'llm_input_token',
+      reservedInput + 500,
+      reservedInput,
+    );
+  });
+
+  it('réserve davantage d’entrée quand la requête porte des outils et des pièces jointes', async () => {
+    activate();
+    await streamLLM(params() as never, 'stream-test');
+    const plain = mocks.reserveTenantUsage.mock.calls[0][0].maxQuantity as number;
+    vi.clearAllMocks();
+    mocks.reserveTenantUsage
+      .mockResolvedValueOnce({ enforcementEnabled: true, reservationId: 'i2' })
+      .mockResolvedValueOnce({ enforcementEnabled: true, reservationId: 'o2' });
+    mocks.streamText.mockReturnValue({ stream: true });
+    activate();
+    await streamLLM(
+      {
+        ...params(),
+        prompt: undefined,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: 'Bonjour' },
+              { type: 'image', image: 'https://exemple.test/a.png' },
+            ],
+          },
+        ],
+        tools: { lookup: { description: 'Cherche', inputSchema: { not: 'serialisable' } } },
+      } as never,
+      'stream-test',
+    );
+    const withExtras = mocks.reserveTenantUsage.mock.calls[0][0].maxQuantity as number;
+    expect(withExtras).toBeGreaterThan(plain + 8192);
   });
 });

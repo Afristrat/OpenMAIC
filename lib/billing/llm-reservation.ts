@@ -23,9 +23,27 @@ export const DEFAULT_METERED_MAX_OUTPUT_TOKENS: number = readConfiguredMaxOutput
 /** Marge fixe pour les définitions d'outils et l'enveloppe du protocole, absentes du texte sérialisé. */
 export const INPUT_TOKEN_ESTIMATE_SLACK = 8192;
 
-/** Un jeton couvre au moins un octet : les octets sérialisés bornent l'entrée sans les doubler. */
-export function estimateMaxInputTokens(serializedByteLength: number): number {
-  return serializedByteLength + INPUT_TOKEN_ESTIMATE_SLACK;
+/** Forfait de jetons d'entrée par partie multimodale (image, fichier, audio), au-delà des octets sérialisés. */
+export const MULTIMODAL_PART_TOKEN_ALLOWANCE = 8192;
+
+/** Octets comptés pour un outil dont le schéma ne se sérialise pas : borne prudente, jamais zéro. */
+export const TOOL_SCHEMA_FALLBACK_BYTES = 4096;
+
+/**
+ * Borne supérieure prudente de l'entrée : un jeton couvre au moins un octet, donc les octets du
+ * prompt système, de l'historique et des schémas d'outils sérialisés bornent leurs jetons, et
+ * chaque partie multimodale reçoit un forfait documenté.
+ */
+export function estimateMaxInputTokens(
+  serializedByteLength: number,
+  extras: { toolSchemaBytes?: number; multimodalParts?: number } = {},
+): number {
+  return (
+    serializedByteLength +
+    (extras.toolSchemaBytes ?? 0) +
+    (extras.multimodalParts ?? 0) * MULTIMODAL_PART_TOKEN_ALLOWANCE +
+    INPUT_TOKEN_ESTIMATE_SLACK
+  );
 }
 
 /**
@@ -40,7 +58,15 @@ export function resolveMeteredMaxOutputTokens(requested: number | undefined): nu
     : DEFAULT_METERED_MAX_OUTPUT_TOKENS;
 }
 
-/** Une génération déjà payée au fournisseur ne doit pas échouer parce que la mesure dépasse l'estimation. */
+/**
+ * DÉCISION D'AMINE (2026-10-24, SOP-015) : le règlement est plafonné à la quantité réservée, sans
+ * débit complémentaire. Risque accepté : si l'estimation d'entrée est inférieure à la facturation
+ * réelle du fournisseur, la différence n'est pas débitée. Raison : une formation déjà générée peut
+ * voir son accès bloqué, car les usages (chat, voix, médias) consomment aussi des crédits et
+ * s'arrêtent quand le solde est épuisé. Chaque dépassement est compté par tenant
+ * (reservation-overruns.ts). Déclencheur de réexamen : dépassements fréquents d'un même tenant.
+ * Une génération déjà payée au fournisseur ne doit pas échouer parce que la mesure dépasse l'estimation.
+ */
 export function clampToReservedQuantity(
   actual: number,
   reserved: number,

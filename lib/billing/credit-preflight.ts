@@ -20,7 +20,7 @@ export type CreditStatus = {
 };
 
 function cost(rate: Rate, quantity: number): number {
-  return Math.ceil((quantity / rate.quantity_basis) * rate.credit_microunits);
+  return Math.ceil((quantity * rate.credit_microunits) / rate.quantity_basis);
 }
 
 /**
@@ -87,13 +87,13 @@ export async function fetchCreditStatus(orgId: string): Promise<CreditStatus> {
       .from('tenant_credit_burn_rates')
       .select('billable_unit, credit_microunits, quantity_basis')
       .eq('org_id', orgId)
-      .is('valid_to', null)
+      .or(`valid_to.is.null,valid_to.gt.${now}`)
       .lte('valid_from', now)
       .order('valid_from', { ascending: true }),
     supabase
       .from('platform_credit_burn_rates')
       .select('billable_unit, credit_microunits, quantity_basis')
-      .is('valid_to', null)
+      .or(`valid_to.is.null,valid_to.gt.${now}`)
       .lte('valid_from', now)
       .order('valid_from', { ascending: true }),
     supabase.rpc('reconcile_tenant_credit_wallet', { tenant_id: orgId }).single(),

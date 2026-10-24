@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  MULTIMODAL_PART_TOKEN_ALLOWANCE,
+  TOOL_SCHEMA_FALLBACK_BYTES,
   DEFAULT_METERED_MAX_OUTPUT_TOKENS,
   INPUT_TOKEN_ESTIMATE_SLACK,
   clampToReservedQuantity,
@@ -52,5 +54,14 @@ describe('réservation LLM réaliste', () => {
   it('plafonne le règlement à la quantité réservée sans jamais la dépasser', () => {
     expect(clampToReservedQuantity(100, 500)).toEqual({ quantity: 100, clamped: false });
     expect(clampToReservedQuantity(900, 500)).toEqual({ quantity: 500, clamped: true });
+  });
+
+  it('ajoute les schémas d’outils et un forfait par partie multimodale à la borne d’entrée', () => {
+    const base = estimateMaxInputTokens(10_000);
+    expect(estimateMaxInputTokens(10_000, { toolSchemaBytes: 3_000 })).toBe(base + 3_000);
+    expect(estimateMaxInputTokens(10_000, { multimodalParts: 2 })).toBe(
+      base + 2 * MULTIMODAL_PART_TOKEN_ALLOWANCE,
+    );
+    expect(TOOL_SCHEMA_FALLBACK_BYTES).toBeGreaterThan(0);
   });
 });

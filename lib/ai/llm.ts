@@ -4,7 +4,7 @@
  * All LLM interactions should go through callLLM / streamLLM.
  */
 
-import { generateText, streamText } from 'ai';
+import { asSchema, generateText, streamText } from 'ai';
 import type { GenerateTextResult, JSONValue, LanguageModel, LanguageModelUsage } from 'ai';
 import { createLogger } from '@/lib/logger';
 import { PROVIDERS } from './providers';
@@ -28,7 +28,9 @@ import {
   clampToReservedQuantity,
   estimateMaxInputTokens,
   resolveMeteredMaxOutputTokens,
+  TOOL_SCHEMA_FALLBACK_BYTES,
 } from '@/lib/billing/llm-reservation';
+import { recordReservationOverrun } from '@/lib/billing/reservation-overruns';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 const log = createLogger('LLM');
 
@@ -150,13 +152,59 @@ function getModelProviderId(params: GenerateTextParams | StreamTextParams): stri
 
 type LLMUsageReservations = {
   actorUserId: string;
+  tenantId: string;
   reservationIds: [string, string];
   maxQuantities: [number, number];
 };
 
+function toolSchemaBytes(params: GenerateTextParams | StreamTextParams): number {
+  const tools = params.tools as Record<string, unknown> | undefined;
+  if (!tools) return 0;
+  const encoder = new TextEncoder();
+  return Object.entries(tools).reduce((total, [name, definition]) => {
+    try {
+      const { description, inputSchema } = definition as {
+        description?: string;
+        inputSchema?: Parameters<typeof asSchema>[0];
+      };
+      const jsonSchema = inputSchema ? asSchema(inputSchema).jsonSchema : undefined;
+      // Un schéma asynchrone ou non sérialisable retombe sur le forfait prudent.
+      if (
+        jsonSchema === undefined ||
+        typeof (jsonSchema as { then?: unknown }).then === 'function'
+      ) {
+        return (
+          total + encoder.encode(name + (description ?? '')).byteLength + TOOL_SCHEMA_FALLBACK_BYTES
+        );
+      }
+      return total + encoder.encode(JSON.stringify({ name, description, jsonSchema })).byteLength;
+    } catch {
+      return total + encoder.encode(name).byteLength + TOOL_SCHEMA_FALLBACK_BYTES;
+    }
+  }, 0);
+}
+
+function multimodalPartCount(params: GenerateTextParams | StreamTextParams): number {
+  const messages = (params as { messages?: unknown }).messages;
+  if (!Array.isArray(messages)) return 0;
+  let count = 0;
+  for (const message of messages) {
+    const content = (message as { content?: unknown } | null)?.content;
+    if (!Array.isArray(content)) continue;
+    for (const part of content) {
+      const type = (part as { type?: unknown } | null)?.type;
+      if (type !== undefined && type !== 'text' && type !== 'reasoning') count += 1;
+    }
+  }
+  return count;
+}
+
 function maxInputTokens(params: GenerateTextParams | StreamTextParams): number {
   const serialized = JSON.stringify(_extractRequestInfo(params));
-  return estimateMaxInputTokens(new TextEncoder().encode(serialized).byteLength);
+  return estimateMaxInputTokens(new TextEncoder().encode(serialized).byteLength, {
+    toolSchemaBytes: toolSchemaBytes(params),
+    multimodalParts: multimodalPartCount(params),
+  });
 }
 
 async function prepareLLMUsage<T extends GenerateTextParams | StreamTextParams>(
@@ -205,6 +253,7 @@ async function prepareLLMUsage<T extends GenerateTextParams | StreamTextParams>(
       params: boundedParams,
       reservations: {
         actorUserId: inputContext.actorUserId,
+        tenantId: inputContext.tenantId,
         reservationIds: [inputReservation.reservationId, outputReservation.reservationId],
         maxQuantities: [maxInput, maxOutput],
       },
@@ -234,9 +283,20 @@ async function finalizeLLMUsage(
   }
   const input = clampToReservedQuantity(usage.inputTokens, reservations.maxQuantities[0]);
   const output = clampToReservedQuantity(usage.outputTokens ?? 0, reservations.maxQuantities[1]);
-  if (input.clamped || output.clamped) {
-    log.warn(
-      `Mesure LLM supérieure à la réservation, règlement plafonné : entrée ${usage.inputTokens}/${reservations.maxQuantities[0]}, sortie ${usage.outputTokens ?? 0}/${reservations.maxQuantities[1]}`,
+  if (input.clamped) {
+    recordReservationOverrun(
+      reservations.tenantId,
+      'llm_input_token',
+      usage.inputTokens,
+      reservations.maxQuantities[0],
+    );
+  }
+  if (output.clamped) {
+    recordReservationOverrun(
+      reservations.tenantId,
+      'llm_output_token',
+      usage.outputTokens ?? 0,
+      reservations.maxQuantities[1],
     );
   } else if ((usage.outputTokens ?? 0) >= reservations.maxQuantities[1]) {
     log.warn(

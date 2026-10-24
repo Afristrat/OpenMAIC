@@ -41,6 +41,7 @@ vi.mock('@/lib/supabase/service', () => ({
       chain.eq = () => chain;
       chain.is = () => chain;
       chain.lte = () => chain;
+      chain.or = () => chain;
       chain.order = () => chain;
       chain.maybeSingle = () => Promise.resolve(rows());
       chain.then = (resolve: (value: unknown) => unknown) => Promise.resolve(rows()).then(resolve);
