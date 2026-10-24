@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { Organization, OrgMemberRole } from '@/lib/supabase/types';
+import { pickDefaultOrganization } from '@/lib/organizations/default-organization';
 import {
   beginTenantTest,
   clearTenantTestSession,
@@ -96,29 +97,20 @@ export function useOrganizations(): UseOrganizationsReturn {
       // is the organization to which they are a direct member. A tenant is
       // restored only while an explicit test session is active.
       try {
-        const savedOrgId = localStorage.getItem(CURRENT_ORG_KEY);
-        const testedTenantId = readTestedTenantId();
-        const directOrganization = orgs.find((organization) => organization.isDirectMember);
-        if (savedOrgId) {
-          const found = orgs.find((o) => o.id === savedOrgId);
-          if (found && (found.isDirectMember || testedTenantId === found.id)) {
-            setCurrentOrgState(found);
-          } else if (directOrganization) {
-            setCurrentOrgState(directOrganization);
-            localStorage.setItem(CURRENT_ORG_KEY, directOrganization.id);
-          } else if (orgs.length > 0) {
-            setCurrentOrgState(orgs[0]);
-            localStorage.setItem(CURRENT_ORG_KEY, orgs[0].id);
-          }
-        } else if (directOrganization) {
-          setCurrentOrgState(directOrganization);
-          localStorage.setItem(CURRENT_ORG_KEY, directOrganization.id);
-        } else if (orgs.length > 0) {
-          setCurrentOrgState(orgs[0]);
-          localStorage.setItem(CURRENT_ORG_KEY, orgs[0].id);
+        const chosen = pickDefaultOrganization(orgs, {
+          savedOrganizationId: localStorage.getItem(CURRENT_ORG_KEY),
+          testedTenantId: readTestedTenantId(),
+        });
+        if (chosen) {
+          setCurrentOrgState(chosen);
+          localStorage.setItem(CURRENT_ORG_KEY, chosen.id);
         }
       } catch {
-        const fallback = orgs.find((organization) => organization.isDirectMember) ?? orgs[0];
+        // Storage can be unavailable: the same rule still applies without a saved choice.
+        const fallback = pickDefaultOrganization(orgs, {
+          savedOrganizationId: null,
+          testedTenantId: null,
+        });
         if (fallback) {
           setCurrentOrgState(fallback);
         }
