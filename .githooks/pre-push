@@ -1,0 +1,4 @@
+#!/bin/sh
+# Garde pre-push : rejoue la CI localement (sans build). CI_LOCAL_SKIP=1 pour passer outre.
+[ "$CI_LOCAL_SKIP" = 1 ] && exit 0
+exec node scripts/ci-local.mjs --skip-build

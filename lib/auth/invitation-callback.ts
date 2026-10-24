@@ -24,12 +24,16 @@ export function getSupabasePasswordSetupCallback(
   hash: string,
 ): SupabasePasswordSetupCallback | null {
   const parameters = new URLSearchParams(`${search.replace(/^\?/, '')}&${hash.replace(/^#/, '')}`);
-  const type = parameters.get('type');
+  const code = parameters.get('code');
+  // The browser client uses PKCE: GoTrue then redirects with a bare `?code=`
+  // and drops `type`. This app has no OAuth sign-in, so a code on /auth can
+  // only come from an invitation or a password recovery link.
+  const type = parameters.get('type') ?? (code ? 'recovery' : null);
   if (type !== 'invite' && type !== 'recovery') return null;
   return {
     type,
     accessToken: parameters.get('access_token'),
     refreshToken: parameters.get('refresh_token'),
-    code: parameters.get('code'),
+    code,
   };
 }

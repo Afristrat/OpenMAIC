@@ -32,6 +32,11 @@ describe('isSupabasePasswordSetupCallback', () => {
     });
   });
 
+  it('treats a bare PKCE code as a recovery callback, since GoTrue drops the type', () => {
+    expect(isSupabasePasswordSetupCallback('?code=pkce-code', '')).toBe(true);
+    expect(getSupabasePasswordSetupCallback('?code=pkce-code', '')?.type).toBe('recovery');
+  });
+
   it('extracts a PKCE code callback without confusing it with an implicit token', () => {
     expect(getSupabasePasswordSetupCallback('?code=pkce-code&type=invite', '')).toEqual({
       type: 'invite',

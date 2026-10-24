@@ -32,6 +32,8 @@ function AuthPageContent(): React.ReactElement {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [recoveryCodeSent, setRecoveryCodeSent] = useState(false);
+  const [recoveryCode, setRecoveryCode] = useState('');
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>(inviteToken ? 'signup' : 'login');
 
   const isRTL = locale === 'ar-MA';
@@ -181,6 +183,39 @@ function AuthPageContent(): React.ReactElement {
         return;
       }
       setNotice(t('auth.passwordSetupEmailSent'));
+      setRecoveryCodeSent(true);
+    } catch {
+      setError(t('auth.unexpectedError'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function handleRecoveryCode(e: FormEvent): Promise<void> {
+    e.preventDefault();
+    setError('');
+    setNotice('');
+
+    const supabase = tryCreateClient();
+    if (!supabase) return;
+
+    setIsSubmitting(true);
+    try {
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        email: email.trim(),
+        token: recoveryCode.trim(),
+        type: 'recovery',
+      });
+      if (verifyError) {
+        setError(t('auth.recoveryCodeInvalid'));
+        return;
+      }
+      const { error: updateError } = await supabase.auth.updateUser({ password });
+      if (updateError) {
+        setError(updateError.message);
+        return;
+      }
+      router.push(returnPath);
     } catch {
       setError(t('auth.unexpectedError'));
     } finally {
@@ -236,6 +271,59 @@ function AuthPageContent(): React.ReactElement {
                 {error && <p className="text-sm text-destructive">{error}</p>}
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
                   {isSubmitting ? t('auth.signingUp') : t('auth.signupButton')}
+                </Button>
+              </form>
+            ) : authInviteState === 'none' && recoveryCodeSent ? (
+              <form onSubmit={handleRecoveryCode} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="recovery-email">{t('auth.email')}</Label>
+                  <Input id="recovery-email" type="email" value={email} disabled dir="ltr" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="recovery-code">{t('auth.recoveryCode')}</Label>
+                  <Input
+                    id="recovery-code"
+                    value={recoveryCode}
+                    onChange={(e) => setRecoveryCode(e.target.value)}
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    pattern="[0-9]{6,10}"
+                    required
+                    dir="ltr"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="recovery-password">{t('auth.newPassword')}</Label>
+                  <Input
+                    id="recovery-password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    autoComplete="new-password"
+                    minLength={6}
+                    dir="ltr"
+                  />
+                </div>
+                {notice && <p className="text-sm text-muted-foreground">{notice}</p>}
+                {error && <p className="text-sm text-destructive">{error}</p>}
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {t('auth.recoveryCodeSubmit')}
+                </Button>
+                <Button
+                  type="button"
+                  variant="link"
+                  className="w-full"
+                  disabled={isSubmitting}
+                  onClick={() => {
+                    setRecoveryCodeSent(false);
+                    setRecoveryCode('');
+                    setError('');
+                    setNotice('');
+                  }}
+                >
+                  {t('auth.recoveryBack')}
                 </Button>
               </form>
             ) : authInviteState === 'invalid' ? (
