@@ -48,7 +48,7 @@
       "outputs": [
         {
           "path": "lib/agent/runtime/stream-fn.ts",
-          "sha256": "038a7dea6a4fb2cd2e9f083e5e9cb61f8ee542c78d49bcc5db01185afda2b780"
+          "sha256": "ff3535b5232d65515a73704829de590305bc51ad710be751f358940487327e0c"
         },
         {
           "path": "lib/hooks/use-streaming-text.ts",
@@ -82,7 +82,7 @@
         },
         {
           "path": "components/settings/asr-settings.tsx",
-          "sha256": "ddae8ece3e0c5ad26cc4d67027431f5656d8ecfea840c165902311b5d73c77f1"
+          "sha256": "14ad35657d373566a3318f0fe79ac68bf99ec07a2bec586a243effc93177e0aa"
         },
         {
           "path": "components/settings/provider-list.tsx",
