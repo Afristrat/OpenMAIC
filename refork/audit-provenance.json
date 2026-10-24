@@ -108,7 +108,7 @@
       "outputs": [
         {
           "path": "components/ai-elements/model-selector.tsx",
-          "sha256": "3e8fc07bc6ced4b88480c6d904facaa88e6c4b80a1d92d08346966e50edbed2e"
+          "sha256": "36a07e25730bb285725fd66a62dbc13a28cbe635034fef7b3a1db5a5a395feb3"
         },
         {
           "path": "components/settings/model-edit-dialog.tsx",

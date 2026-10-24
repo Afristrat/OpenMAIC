@@ -15,6 +15,7 @@ packages/mathml2omml/
 # @openmaic workspace packages: the source is formatted to the root style, but skip
 # generated build output and the vendored legacy reference under the importer.
 packages/@openmaic/*/dist/
+packages/@openmaic/*/dist-cjs/
 packages/@openmaic/importer/src1/
 
 # Docs site (separate Fumadocs app with its own toolchain)

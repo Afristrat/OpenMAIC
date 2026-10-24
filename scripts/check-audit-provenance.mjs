@@ -213,15 +213,22 @@ function blobAt(commit, file) {
   return git('rev-parse', `${commit}:${file}`);
 }
 
+// Le dépôt est stocké en LF ; un poste Windows (core.autocrlf) extrait en CRLF.
+// Les empreintes se calculent donc sur le contenu normalisé en LF, pour qu'elles
+// soient identiques sur tous les postes et sur le runner CI. Les binaires
+// (présence d'un octet nul) sont laissés intacts.
+function readNormalized(file) {
+  const bytes = fs.readFileSync(path.join(root, file));
+  if (bytes.includes(0)) return bytes;
+  return Buffer.from(bytes.toString('latin1').replace(/\r\n/g, '\n'), 'latin1');
+}
+
 function sha256(file) {
-  return crypto
-    .createHash('sha256')
-    .update(fs.readFileSync(path.join(root, file)))
-    .digest('hex');
+  return crypto.createHash('sha256').update(readNormalized(file)).digest('hex');
 }
 
 function gitBlob(file) {
-  const content = fs.readFileSync(path.join(root, file));
+  const content = readNormalized(file);
   return crypto.createHash('sha1').update(`blob ${content.length}\0`).update(content).digest('hex');
 }
 
@@ -322,7 +329,9 @@ function verifyWorkingTree(expectedPaths) {
   );
   const candidates = git('ls-files', '--cached', '--others', '--exclude-standard')
     .split('\n')
-    .filter((file) => file && fs.existsSync(path.join(root, file)));
+    .filter(
+      (file) => file && fs.statSync(path.join(root, file), { throwIfNoEntry: false })?.isFile(),
+    );
   for (const file of candidates) {
     assert(!forbiddenBlobs.has(gitBlob(file)), `A forbidden v0.1 blob survives at ${file}`);
   }
