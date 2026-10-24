@@ -278,7 +278,7 @@ function AuthPageContent(): React.ReactElement {
                 </div>
                 {error && <p className="text-sm text-destructive">{error}</p>}
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? t('auth.signingUp') : t('auth.signupButton')}
+                  {isSubmitting ? t('auth.signingUp') : t('auth.recoveryCodeSubmit')}
                 </Button>
               </form>
             ) : authInviteState === 'none' && recoveryCodeSent ? (
