@@ -22,7 +22,12 @@ function base64Url(value: string): string {
 }
 
 function fakeJwt(expiresAt: number): string {
-  const payload = { sub: TEST_USER.id, role: 'authenticated', aud: 'authenticated', exp: expiresAt };
+  const payload = {
+    sub: TEST_USER.id,
+    role: 'authenticated',
+    aud: 'authenticated',
+    exp: expiresAt,
+  };
   return `${base64Url('{"alg":"HS256","typ":"JWT"}')}.${base64Url(JSON.stringify(payload))}.e2e`;
 }
 
