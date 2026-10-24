@@ -3,6 +3,7 @@ import { nanoid } from 'nanoid';
 import { requireSuperAdminOrOrgAuthor } from '@/lib/api/auth';
 import { generateClassroomSchema } from '@/lib/api/schemas';
 import { validateBody } from '@/lib/api/validate';
+import { rejectIfInsufficientCredits } from '@/lib/server/credit-gate-response';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import type { GenerateClassroomInput } from '@/lib/server/classroom-generation';
 import {
@@ -30,6 +31,8 @@ export async function POST(request: NextRequest) {
     const auth = await requireSuperAdminOrOrgAuthor(request, parsed.orgId);
     if (auth.response) return auth.response;
     await assertCourseGenerationAccess(parsed, auth.user.id);
+    const creditRejection = await rejectIfInsufficientCredits(parsed.orgId);
+    if (creditRejection) return creditRejection;
 
     const input: GenerateClassroomInput = {
       orgId: parsed.orgId,

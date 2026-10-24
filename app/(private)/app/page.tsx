@@ -69,6 +69,9 @@ import { SpeechButton } from '@/components/audio/speech-button';
 import { shouldShowVocationalTestUi } from '@/lib/config/feature-flags';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useOrganizations } from '@/lib/hooks/use-organizations';
+import { useCreditStatus } from '@/lib/hooks/use-credit-status';
+import { CreditStatusNotice } from '@/components/billing/credit-status-notice';
+import { formatCredits, readInsufficientCredits } from '@/lib/billing/credit-status-view';
 import { TemplateSelector } from '@/components/org/template-selector';
 import { tryCreateClient } from '@/lib/supabase/client';
 import { db } from '@/lib/utils/database';
@@ -241,6 +244,11 @@ function HomePage() {
   // Auth + due review count
   const { user } = useAuth();
   const { currentOrg, canAuthor, organizations, setCurrentOrg } = useOrganizations();
+  const {
+    status: creditStatus,
+    refreshing: creditRefreshing,
+    refresh: refreshCredits,
+  } = useCreditStatus(currentOrg?.id);
   const [resumeTarget, setResumeTarget] = useState<{ courseId: string; orgId: string } | null>(
     null,
   );
@@ -935,6 +943,17 @@ function HomePage() {
     }
   };
 
+  const insufficientCreditsMessage = (body: unknown): string => {
+    const amounts = readInsufficientCredits(body);
+    return t('billing.credits.insufficient', {
+      balance: formatCredits(amounts?.balanceCredits ?? creditStatus?.balanceCredits ?? 0, locale),
+      required: formatCredits(
+        amounts?.requiredCredits ?? creditStatus?.minimumRequiredCredits ?? 0,
+        locale,
+      ),
+    });
+  };
+
   const handleGenerate = async () => {
     // No model/provider guard here: generation is gated by `canGenerate`
     // (requires a usable provider), and under the #580 invariant a usable
@@ -959,6 +978,14 @@ function HomePage() {
 
     setError(null);
     setSourceConflict(null);
+    // Pré-contrôle : un solde sous la réservation d'un seul appel mène à un échec certain.
+    // isPlanning est posé avant l'attente pour qu'un second clic ne lance pas deux contrôles.
+    setIsPlanning(true);
+    if ((await refreshCredits())?.blocked) {
+      setIsPlanning(false);
+      setError(insufficientCreditsMessage(null));
+      return;
+    }
 
     try {
       const userProfile = useUserProfileStore.getState();
@@ -996,6 +1023,10 @@ function HomePage() {
           ? t('generation.planGatewayTimeout')
           : t('generation.planGenerationFailed'),
       );
+      if (response.status === 402) {
+        void refreshCredits();
+        throw new Error(insufficientCreditsMessage(result));
+      }
       if (!response.ok || !result.jobId) {
         throw new Error(result.details || result.error || t('generation.planGenerationFailed'));
       }
@@ -1047,6 +1078,10 @@ function HomePage() {
     setIsStartingGeneration(true);
     setError(null);
     try {
+      if ((await refreshCredits())?.blocked) {
+        toast.error(insufficientCreditsMessage(null));
+        return;
+      }
       const response = await fetch('/api/generate-classroom', {
         method: 'POST',
         headers: {
@@ -1056,6 +1091,10 @@ function HomePage() {
         body: JSON.stringify({ ...pendingGenerationRequest, approvedPlan: draftPlan }),
       });
       const result = await response.json();
+      if (response.status === 402) {
+        void refreshCredits();
+        throw new Error(insufficientCreditsMessage(result));
+      }
       if (!response.ok || !result.jobId) {
         throw new Error(result.details || result.error || t('upload.generateFailed'));
       }
@@ -1185,7 +1224,8 @@ function HomePage() {
     canAuthor;
   const requiresAuthentication = !user;
   const missingAuthoringSelections = !form.learningApproach || !form.interactionLevel;
-  const generateDisabled = !requiresAuthentication && (!canGenerate || isPlanning);
+  const creditBlocked = creditStatus?.blocked === true;
+  const generateDisabled = !requiresAuthentication && (!canGenerate || isPlanning || creditBlocked);
 
   const handleGenerateAction = () => {
     if (requiresAuthentication) {
@@ -1199,7 +1239,7 @@ function HomePage() {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       e.preventDefault();
-      if (canGenerate && !isPlanning) handleGenerate();
+      if (canGenerate && !isPlanning && !creditBlocked) handleGenerate();
     }
   };
 
@@ -1231,6 +1271,13 @@ function HomePage() {
                 {t('catalog.planRecovered')}
               </p>
             )}
+            <div className="px-4 pt-4 md:px-8">
+              <CreditStatusNotice
+                status={creditStatus}
+                rechecking={creditRefreshing}
+                onRecheck={() => void refreshCredits()}
+              />
+            </div>
             <OutlinesEditor
               optimization={draftPlan.optimization}
               courseTitle={draftPlan.courseTitle}
@@ -1620,9 +1667,15 @@ function HomePage() {
               {/* Send button */}
               <button
                 onClick={handleGenerateAction}
-                disabled={generateDisabled}
+                disabled={generateDisabled && !creditBlocked}
+                aria-disabled={creditBlocked || undefined}
                 aria-describedby={
-                  missingAuthoringSelections ? 'generation-selection-requirement' : undefined
+                  [
+                    missingAuthoringSelections && 'generation-selection-requirement',
+                    creditBlocked && 'credit-status-notice',
+                  ]
+                    .filter(Boolean)
+                    .join(' ') || undefined
                 }
                 className={cn(
                   'shrink-0 h-8 rounded-lg flex items-center justify-center gap-1.5 transition-all px-3',
@@ -1766,6 +1819,15 @@ function HomePage() {
               {resuming ? t('common.loading') : t('catalog.resume')}
             </Button>
           </section>
+        )}
+        {(creditStatus?.blocked || creditStatus?.lowBalance) && (
+          <div className="mt-3 w-full">
+            <CreditStatusNotice
+              status={creditStatus}
+              rechecking={creditRefreshing}
+              onRecheck={() => void refreshCredits()}
+            />
+          </div>
         )}
         {isPlanning && (
           <div className="mt-3 w-full space-y-3 rounded-xl border border-border/60 bg-card/60 p-4">

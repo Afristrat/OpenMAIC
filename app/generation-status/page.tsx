@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { GenerationTracker } from '@/components/generation/generation-tracker';
 import { useI18n } from '@/lib/hooks/use-i18n';
+import { CreditStatusNotice } from '@/components/billing/credit-status-notice';
+import { useCreditStatus } from '@/lib/hooks/use-credit-status';
 import type { GenerationFailure } from '@/lib/generation/generation-tracking';
 
 interface GenerationJob {
@@ -34,6 +36,12 @@ function GenerationStatus() {
   const orgId = searchParams.get('orgId');
   const [job, setJob] = useState<GenerationJob | null>(null);
   const [hasFailed, setHasFailed] = useState(false);
+  const {
+    status: creditStatus,
+    refreshing: creditRefreshing,
+    refresh: refreshCredits,
+  } = useCreditStatus(orgId ?? undefined);
+  const failedForCredits = job?.failure?.code === 'INSUFFICIENT_CREDITS';
 
   useEffect(() => {
     if (!jobId) {
@@ -87,6 +95,13 @@ function GenerationStatus() {
             <p className="text-xs text-destructive">{job.error}</p>
           )}
         </div>
+        {hasFailed && failedForCredits && (
+          <CreditStatusNotice
+            status={creditStatus}
+            rechecking={creditRefreshing}
+            onRecheck={() => void refreshCredits()}
+          />
+        )}
         {!hasFailed && job && (job.status === 'queued' || job.status === 'running') && (
           <GenerationTracker
             kind="course"
@@ -108,12 +123,14 @@ function GenerationStatus() {
               router.push(`/app?${params.toString()}`);
             }}
           >
-            <ArrowLeft className="mr-2 size-4" />
-            {t('generation.resumeApprovedPlan')}
+            <ArrowLeft className="me-2 size-4 rtl-flip" />
+            {failedForCredits
+              ? t('generation.resumeAfterRecharge')
+              : t('generation.resumeApprovedPlan')}
           </Button>
         ) : hasFailed ? (
           <Button onClick={() => router.push('/app')}>
-            <ArrowLeft className="mr-2 size-4" />
+            <ArrowLeft className="me-2 size-4 rtl-flip" />
             {t('generation.goBackAndRetry')}
           </Button>
         ) : null}

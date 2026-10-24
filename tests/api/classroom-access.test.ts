@@ -62,6 +62,10 @@ vi.mock('@/lib/server/classroom-job-store', () => ({
   markClassroomGenerationJobFailed: vi.fn(),
 }));
 
+vi.mock('@/lib/billing/credit-preflight', () => ({
+  assertCreditsAvailable: async () => ({ blocked: false }),
+}));
+
 vi.mock('@/lib/jobs/queue', () => ({ enqueueClassroomGeneration: mocks.enqueueGeneration }));
 
 import { GET as getClassroom, POST as postClassroom } from '@/app/api/classroom/route';

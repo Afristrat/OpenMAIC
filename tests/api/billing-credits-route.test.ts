@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   serverFrom: vi.fn(),
   membership: vi.fn(),
   ledgerRows: vi.fn(),
+  creditStatus: vi.fn(),
 }));
 
 vi.mock('@/lib/api/auth', () => ({
@@ -21,6 +22,8 @@ vi.mock('@/lib/supabase/service', () => ({
 vi.mock('@/lib/supabase/server', () => ({
   createServerSupabaseClient: async () => ({ from: mocks.serverFrom }),
 }));
+
+vi.mock('@/lib/billing/credit-preflight', () => ({ fetchCreditStatus: mocks.creditStatus }));
 
 import { GET } from '@/app/api/billing/credits/route';
 
@@ -43,6 +46,15 @@ describe('GET /api/billing/credits', () => {
       user: { id: 'user-id', email: 'admin@tenant.test' },
     });
     mocks.isSuperAdminEmail.mockReturnValue(false);
+    mocks.creditStatus.mockResolvedValue({
+      balanceMicrounits: 2_500_000,
+      enforcementEnabled: true,
+      recordingOnly: false,
+      minimumRequiredMicrounits: 7_000_000,
+      lowBalanceThresholdMicrounits: 14_000_000,
+      blocked: true,
+      lowBalance: true,
+    });
     mocks.membership.mockResolvedValue({
       data: { role: 'admin', organizations: { status: 'active' } },
       error: null,
@@ -118,6 +130,13 @@ describe('GET /api/billing/credits', () => {
     expect(response.status).toBe(200);
     expect(body.balanceCredits).toBe(2.5);
     expect(body.scope).toBe('tenant');
+    expect(body.status).toEqual({
+      enforcementEnabled: true,
+      blocked: true,
+      lowBalance: true,
+      minimumRequiredCredits: 7,
+      lowBalanceThresholdCredits: 14,
+    });
     expect(body.entries[0]).toMatchObject({
       actorNickname: 'Sophia',
       usageStatus: {
@@ -125,6 +144,28 @@ describe('GET /api/billing/credits', () => {
         valuation_issue: 'PROVIDER_COST_NOT_FOUND',
       },
     });
+  });
+
+  it('keeps the balance readable when the status cannot be computed', async () => {
+    mocks.creditStatus.mockRejectedValue(new Error('Credit status read failed'));
+    const response = await GET(
+      new NextRequest(`https://qalem.ma/api/billing/credits?orgId=${orgId}`),
+    );
+    const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body.status).toBeNull();
+  });
+
+  it('serves a light status view without reading the ledger entries', async () => {
+    const response = await GET(
+      new NextRequest(`https://qalem.ma/api/billing/credits?orgId=${orgId}&view=status`),
+    );
+    const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body.balanceCredits).toBe(2.5);
+    expect(body.status.blocked).toBe(true);
+    expect(body.entries).toBeUndefined();
+    expect(mocks.rpc).not.toHaveBeenCalled();
   });
 
   it('limits a regular member to personal entries while preserving the tenant balance', async () => {

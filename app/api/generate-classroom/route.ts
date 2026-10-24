@@ -1,5 +1,6 @@
 import { type NextRequest } from 'next/server';
 import { nanoid } from 'nanoid';
+import { rejectIfInsufficientCredits } from '@/lib/server/credit-gate-response';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { type GenerateClassroomInput } from '@/lib/server/classroom-generation';
 import {
@@ -36,6 +37,8 @@ export async function POST(req: NextRequest) {
     const auth = await requireSuperAdminOrOrgAuthor(req, parsed.orgId);
     if (auth.response) return auth.response;
     await assertCourseGenerationAccess(parsed, auth.user.id);
+    const creditRejection = await rejectIfInsufficientCredits(parsed.orgId);
+    if (creditRejection) return creditRejection;
 
     const body: GenerateClassroomInput = {
       orgId: parsed.orgId,

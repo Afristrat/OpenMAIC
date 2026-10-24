@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { isSuperAdminEmail, requireAuth } from '@/lib/api/auth';
 import { microunitsToCredits } from '@/lib/billing/credits';
+import { fetchCreditStatus, type CreditStatus } from '@/lib/billing/credit-preflight';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
@@ -10,6 +11,22 @@ type ReconciliationRow = {
   ledger_balance_microunits: number | string;
   consistent: boolean;
 };
+
+function toPublicStatus(status: CreditStatus) {
+  return {
+    enforcementEnabled: status.enforcementEnabled,
+    blocked: status.blocked,
+    lowBalance: status.lowBalance,
+    minimumRequiredCredits:
+      status.minimumRequiredMicrounits === null
+        ? null
+        : microunitsToCredits(status.minimumRequiredMicrounits),
+    lowBalanceThresholdCredits:
+      status.lowBalanceThresholdMicrounits === null
+        ? null
+        : microunitsToCredits(status.lowBalanceThresholdMicrounits),
+  };
+}
 
 export async function GET(request: NextRequest): Promise<Response> {
   const orgId = request.nextUrl.searchParams.get('orgId');
@@ -35,6 +52,20 @@ export async function GET(request: NextRequest): Promise<Response> {
       return apiError(API_ERROR_CODES.UNAUTHORIZED, 403, 'Organization membership required');
     }
     canReadTenantEntries = ['admin', 'manager'].includes(membership.role);
+  }
+
+  if (request.nextUrl.searchParams.get('view') === 'status') {
+    const status = await fetchCreditStatus(orgId).catch((statusError: unknown) => {
+      console.error('Credit status unavailable', statusError);
+      return null;
+    });
+    if (!status)
+      return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to read tenant credits');
+    return apiSuccess({
+      balanceMicrounits: status.balanceMicrounits,
+      balanceCredits: microunitsToCredits(status.balanceMicrounits),
+      status: toPublicStatus(status),
+    });
   }
 
   const supabase = createServiceSupabaseClient();
@@ -105,7 +136,13 @@ export async function GET(request: NextRequest): Promise<Response> {
     if (reservation.actual_debit_id) reservationByLedger.set(reservation.actual_debit_id, value);
   }
 
+  const creditStatus = await fetchCreditStatus(orgId).catch((statusError: unknown) => {
+    console.error('Credit status unavailable', statusError);
+    return null;
+  });
+
   return apiSuccess({
+    status: creditStatus && toPublicStatus(creditStatus),
     balanceMicrounits: Number(state.balance_microunits),
     balanceCredits: microunitsToCredits(state.balance_microunits),
     scope: canReadTenantEntries ? 'tenant' : 'personal',
