@@ -1215,6 +1215,7 @@ export async function generateClassroom(
           });
         },
         languageDirective,
+        { secondPass: true },
       );
       const speechAudio = summarizeSpeechAudio(scenes);
       const ttsOutcome = evaluateTtsOutcome(ttsReport, speechAudio);

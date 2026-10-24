@@ -37,9 +37,11 @@ vi.mock('@/lib/supabase/service', () => ({
   })),
 }));
 
+import { InsufficientCreditsError } from '@/lib/billing/insufficient-credits';
 import {
   generateMediaForClassroom,
   generateTTSForClassroom,
+  type CanonicalSpeechAgentVoice,
   removeAgentNamesFromSpeech,
   removeUnresolvedMediaPlaceholders,
 } from '@/lib/server/classroom-media-generation';
@@ -122,6 +124,11 @@ describe('canonical classroom agent TTS', () => {
           [oneLine()],
           'classroom-1',
           vi.fn().mockResolvedValue(undefined),
+          undefined,
+          [],
+          undefined,
+          undefined,
+          { secondPass: true },
         );
         await vi.runAllTimersAsync();
         expect(await pending).toEqual({ requested: 1, generated: 1 });
@@ -141,10 +148,205 @@ describe('canonical classroom agent TTS', () => {
       const config = mocks.generateTTS.mock.calls[0][0] as { fetch?: typeof fetch };
       expect(config.fetch).toBeTypeOf('function');
       const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('ok'));
-      await config.fetch?.('http://tts.test/audio/speech', {});
-      const init = spy.mock.calls[0][1] as RequestInit;
-      expect(init.signal).toBeInstanceOf(AbortSignal);
-      spy.mockRestore();
+      try {
+        await config.fetch?.('http://tts.test/audio/speech', {});
+        const init = spy.mock.calls[0][1] as RequestInit;
+        expect(init.signal).toBeInstanceOf(AbortSignal);
+      } finally {
+        spy.mockRestore();
+      }
+    });
+
+    test('keeps the caller abort signal alongside the request timeout', async () => {
+      mocks.generateTTS.mockResolvedValueOnce({ audio: Buffer.from('wav'), format: 'wav' });
+      await generateTTSForClassroom(
+        [oneLine()],
+        'classroom-1',
+        vi.fn().mockResolvedValue(undefined),
+      );
+      const config = mocks.generateTTS.mock.calls[0][0] as { fetch?: typeof fetch };
+      const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('ok'));
+      try {
+        const caller = new AbortController();
+        await config.fetch?.('http://tts.test/audio/speech', { signal: caller.signal });
+        const init = spy.mock.calls[0][1] as RequestInit;
+        expect(init.signal?.aborted).toBe(false);
+        caller.abort();
+        expect(init.signal?.aborted).toBe(true);
+      } finally {
+        spy.mockRestore();
+      }
+    });
+
+    const withSecondPass: [
+      undefined,
+      CanonicalSpeechAgentVoice[],
+      undefined,
+      undefined,
+      { secondPass: true },
+    ] = [undefined, [], undefined, undefined, { secondPass: true }];
+    const manyLines = (count: number) =>
+      ({
+        order: 1,
+        actions: Array.from({ length: count }, (_, i) => ({
+          id: `l${i}`,
+          type: 'speech',
+          text: `Phrase ${i}.`,
+        })),
+      }) as unknown as Scene;
+    const access = () => vi.fn().mockResolvedValue(undefined);
+
+    test('does not run a second pass unless asked (line-by-line callers stay fast)', async () => {
+      vi.useFakeTimers();
+      try {
+        mocks.generateTTS.mockRejectedValue(outage());
+        const pending = generateTTSForClassroom([oneLine()], 'classroom-1', access());
+        await vi.runAllTimersAsync();
+        expect(await pending).toEqual({ requested: 1, generated: 0 });
+        expect(mocks.generateTTS).toHaveBeenCalledTimes(6);
+      } finally {
+        mocks.generateTTS.mockReset();
+        vi.useRealTimers();
+      }
+    });
+
+    test('stops the batch after consecutive lines exhausted their retries (circuit breaker)', async () => {
+      vi.useFakeTimers();
+      try {
+        mocks.generateTTS.mockRejectedValue(outage());
+        const pending = generateTTSForClassroom(
+          [manyLines(9)],
+          'classroom-1',
+          access(),
+          ...withSecondPass,
+        );
+        await vi.runAllTimersAsync();
+        expect(await pending).toEqual({ requested: 9, generated: 0 });
+        // 5 lines x 6 attempts, then the batch stops: no second pass on a dead server.
+        expect(mocks.generateTTS).toHaveBeenCalledTimes(30);
+      } finally {
+        mocks.generateTTS.mockReset();
+        vi.useRealTimers();
+      }
+    });
+
+    test('a success resets the breaker count', async () => {
+      vi.useFakeTimers();
+      try {
+        const failLine = () => {
+          for (let i = 0; i < 6; i++) mocks.generateTTS.mockRejectedValueOnce(outage());
+        };
+        for (let i = 0; i < 4; i++) failLine();
+        mocks.generateTTS.mockResolvedValueOnce({ audio: Buffer.from('wav'), format: 'wav' });
+        for (let i = 0; i < 4; i++) failLine();
+        const pending = generateTTSForClassroom([manyLines(9)], 'classroom-1', access());
+        await vi.runAllTimersAsync();
+        expect(await pending).toEqual({ requested: 9, generated: 1 });
+        expect(mocks.generateTTS).toHaveBeenCalledTimes(8 * 6 + 1);
+      } finally {
+        mocks.generateTTS.mockReset();
+        vi.useRealTimers();
+      }
+    });
+
+    test('stops starting new lines once the batch time budget is spent', async () => {
+      vi.useFakeTimers();
+      try {
+        mocks.generateTTS.mockImplementation(async () => {
+          vi.advanceTimersByTime(15 * 60_000);
+          return { audio: Buffer.from('wav'), format: 'wav' };
+        });
+        const pending = generateTTSForClassroom([manyLines(4)], 'classroom-1', access());
+        await vi.runAllTimersAsync();
+        // 40 min budget: lines start at 0, 15 and 30 min; the fourth would start at 45 min.
+        expect(await pending).toEqual({ requested: 4, generated: 3 });
+        expect(mocks.generateTTS).toHaveBeenCalledTimes(3);
+      } finally {
+        mocks.generateTTS.mockReset();
+        vi.useRealTimers();
+      }
+    });
+
+    test('a failing progress report never requalifies a line that already has its audio', async () => {
+      vi.useFakeTimers();
+      try {
+        mocks.generateTTS.mockResolvedValue({ audio: Buffer.from('wav'), format: 'wav' });
+        const pending = generateTTSForClassroom(
+          [oneLine()],
+          'classroom-1',
+          access(),
+          undefined,
+          [],
+          () => Promise.reject(Object.assign(new Error('db down'), { status: 503 })),
+          undefined,
+          { secondPass: true },
+        );
+        await vi.runAllTimersAsync();
+        expect(await pending).toEqual({ requested: 1, generated: 1 });
+        expect(mocks.generateTTS).toHaveBeenCalledTimes(1);
+      } finally {
+        mocks.generateTTS.mockReset();
+        vi.useRealTimers();
+      }
+    });
+
+    test('sees a revocation between two retries', async () => {
+      vi.useFakeTimers();
+      try {
+        const check = access();
+        mocks.generateTTS.mockImplementationOnce(async () => {
+          check.mockRejectedValueOnce(new Error('revoked')).mockResolvedValue(undefined);
+          throw outage();
+        });
+        const pending = generateTTSForClassroom([oneLine()], 'classroom-1', check);
+        const assertion = expect(pending).rejects.toThrow('Media generation access unavailable');
+        await vi.runAllTimersAsync();
+        await assertion;
+        expect(mocks.generateTTS).toHaveBeenCalledTimes(1);
+      } finally {
+        mocks.generateTTS.mockReset();
+        vi.useRealTimers();
+      }
+    });
+
+    test('a blocked balance during the second pass stops it and is reported', async () => {
+      vi.useFakeTimers();
+      try {
+        for (let i = 0; i < 6; i++) mocks.generateTTS.mockRejectedValueOnce(outage());
+        mocks.generateTTS.mockRejectedValueOnce(new InsufficientCreditsError());
+        const pending = generateTTSForClassroom(
+          [oneLine()],
+          'classroom-1',
+          access(),
+          ...withSecondPass,
+        );
+        await vi.runAllTimersAsync();
+        expect(await pending).toMatchObject({ requested: 1, generated: 0, creditsBlocked: true });
+      } finally {
+        mocks.generateTTS.mockReset();
+        vi.useRealTimers();
+      }
+    });
+
+    test('a permanent error is not given a second pass', async () => {
+      vi.useFakeTimers();
+      try {
+        mocks.generateTTS.mockRejectedValue(
+          Object.assign(new Error('key_model_access_denied'), { status: 403 }),
+        );
+        const pending = generateTTSForClassroom(
+          [oneLine()],
+          'classroom-1',
+          access(),
+          ...withSecondPass,
+        );
+        await vi.runAllTimersAsync();
+        expect(await pending).toEqual({ requested: 1, generated: 0 });
+        expect(mocks.generateTTS).toHaveBeenCalledTimes(1);
+      } finally {
+        mocks.generateTTS.mockReset();
+        vi.useRealTimers();
+      }
     });
   });
 

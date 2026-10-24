@@ -468,13 +468,43 @@ export function removeUnresolvedMediaPlaceholders(
 const TTS_LINE_MAX_RETRIES = 5;
 /** Pause before the second pass over the lines left silent, so a congested server can drain. */
 const TTS_SECOND_PASS_PAUSE_MS = 30_000;
-/** Upper bound of one synthesis request: Higgs serialises, a long line can legitimately take minutes. */
-const TTS_REQUEST_TIMEOUT_MS = 180_000;
+/**
+ * Upper bound of one synthesis request. Higgs serialises (≈12 s per line, measured), so 120 s
+ * leaves a wide margin for a long line while a frozen server costs minutes, not hours.
+ */
+const TTS_REQUEST_TIMEOUT_MS = 120_000;
+/**
+ * Time budget of one batch, checked before each line. A course of 150 lines normally takes
+ * ≈ 30 min; past 40 min the voice server is in trouble, so the remaining lines stay silent
+ * (the course is saved with a warning and "Générer les voix manquantes" completes it).
+ * A line already started may exceed it by its own retries (≈ 13 min at most).
+ */
+const TTS_BATCH_BUDGET_MS = 40 * 60_000;
+/**
+ * Consecutive lines that exhausted every retry before the batch stops: the server is down,
+ * further lines would only burn ≈ 13 min each.
+ */
+const TTS_CIRCUIT_BREAKER_LINES = 5;
 
 const sleepMs = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
-const fetchWithTimeout: typeof fetch = (input, init) =>
-  fetch(input, { ...init, signal: AbortSignal.timeout(TTS_REQUEST_TIMEOUT_MS) });
+// The base URL comes from the server environment (never from a user), so the plain global fetch
+// is safe here; a caller-provided signal is kept next to the timeout.
+const fetchWithTimeout: typeof fetch = (input, init) => {
+  const timeout = AbortSignal.timeout(TTS_REQUEST_TIMEOUT_MS);
+  return fetch(input, {
+    ...init,
+    signal: init?.signal ? AbortSignal.any([init.signal, timeout]) : timeout,
+  });
+};
+
+export interface GenerateTTSOptions {
+  /**
+   * Retry once, after a pause, the lines left silent by a transient error. Meant for the
+   * generation batch only: line-by-line callers would pay the pause on every failing line.
+   */
+  secondPass?: boolean;
+}
 
 export async function generateTTSForClassroom(
   scenes: Scene[],
@@ -484,6 +514,7 @@ export async function generateTTSForClassroom(
   agents: CanonicalSpeechAgentVoice[] = [],
   onProgress?: (progress: { completed: number; total: number }) => Promise<void> | void,
   language?: string,
+  options: GenerateTTSOptions = {},
 ): Promise<ClassroomTTSGenerationReport> {
   const checkAccess = latchMediaAccess(assertAccess);
   await checkAccess();
@@ -615,7 +646,9 @@ export async function generateTTSForClassroom(
           maxRetries: TTS_LINE_MAX_RETRIES,
           baseDelayMs: 2_000,
           maxDelayMs: 30_000,
-          onRetry: ({ attempt, maxAttempts, reason }) => {
+          onRetry: async ({ attempt, maxAttempts, reason }) => {
+            // A revocation must be seen between two attempts, not only at the next line.
+            await checkAccess();
             log.warn(
               `Retrying TTS ${audioId} (${attempt + 1}/${maxAttempts}) via ${actionProviderId}/${modelId}, ${speechAction.text.length} chars: ${reason}`,
             );
@@ -632,8 +665,6 @@ export async function generateTTSForClassroom(
       speechAction.audioUrl = `${mediaServingUrl(classroomId, `audio/${filename}`)}?v=${audioVersion}`;
       report.generated += 1;
       log.info(`Generated TTS: ${filename} (${result.audio.length} bytes)`);
-      await onProgress?.({ completed: report.generated, total: totalSpeechActions });
-      return 'done';
     } catch (err) {
       await checkAccess();
       log.warn(
@@ -645,25 +676,51 @@ export async function generateTTSForClassroom(
       // A permanent error (bad voice, refused key) would fail the same way after a pause.
       return isRetryableGenerationError(err) ? 'retryable' : 'permanent';
     }
+    // Outside the try: a failing progress write must never requalify a line that has its audio.
+    try {
+      await onProgress?.({ completed: report.generated, total: totalSpeechActions });
+    } catch (err) {
+      log.warn(`TTS progress report failed for action ${speechAction.id}:`, err);
+    }
+    return 'done';
   };
 
+  report.requested = lines.length;
+  const startedAt = Date.now();
+  const overBudget = () => Date.now() - startedAt > TTS_BATCH_BUDGET_MS;
   const silent: typeof lines = [];
+  let exhaustedInARow = 0;
   for (const line of lines) {
-    report.requested += 1;
+    if (overBudget()) {
+      log.warn(`TTS batch budget spent: ${lines.length - report.generated} lines left silent`);
+      return report;
+    }
     const outcome = await synthesizeLine(line);
     if (outcome === 'creditsBlocked') {
       report.creditsBlocked = true;
       return report;
     }
-    if (outcome === 'retryable') silent.push(line);
+    if (outcome === 'retryable') {
+      silent.push(line);
+      exhaustedInARow += 1;
+      if (exhaustedInARow >= TTS_CIRCUIT_BREAKER_LINES) {
+        log.warn(
+          `TTS circuit open after ${exhaustedInARow} lines that exhausted their retries: batch stopped`,
+        );
+        return report;
+      }
+    } else {
+      exhaustedInARow = 0;
+    }
   }
 
-  if (silent.length > 0) {
+  if (options.secondPass && silent.length > 0 && !overBudget()) {
     log.warn(
       `TTS second pass: ${silent.length}/${lines.length} lines silent, retrying after a pause`,
     );
     await sleepMs(TTS_SECOND_PASS_PAUSE_MS);
     for (const line of silent) {
+      if (overBudget()) break;
       if ((await synthesizeLine(line)) === 'creditsBlocked') {
         report.creditsBlocked = true;
         return report;
