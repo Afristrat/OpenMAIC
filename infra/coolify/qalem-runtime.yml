@@ -19,7 +19,7 @@ x-qalem-environment: &qalem-environment
   # The worker decrypts each tenant-scoped LRS destination immediately before
   # delivery. Keeping the value in Coolify is insufficient unless Compose
   # explicitly forwards it to the worker container.
-  LRS_CONFIG_ENCRYPTION_KEY: ${LRS_CONFIG_ENCRYPTION_KEY:?LRS configuration encryption key required}
+  LRS_CONFIG_ENCRYPTION_KEY: ${LRS_CONFIG_ENCRYPTION_KEY:-}
   # Variables runtime uniquement (is_buildtime=false dans Coolify) : jamais exigées à la
   # construction, sinon la clé privée serait injectée en argument de build. Le code lève
   # lui-même en production si les clés manquent (lib/lti/index.ts).
@@ -37,7 +37,7 @@ x-qalem-environment: &qalem-environment
   OPENAI_BASE_URL: ${OPENAI_BASE_URL}
   OPENAI_MODELS: ${OPENAI_MODELS}
   REDIS_URL: ${REDIS_URL}
-  QALEM_AUDIOSEAL_TOKEN: ${QALEM_AUDIOSEAL_TOKEN:?QALEM AudioSeal token required}
+  QALEM_AUDIOSEAL_TOKEN: ${QALEM_AUDIOSEAL_TOKEN:-}
   QALEM_AUDIOSEAL_URL: http://audioseal-sidecar:8080
   RESEND_API_KEY: ${RESEND_API_KEY:-runtime-only}
   SERPER_API_KEY: ${SERPER_API_KEY:-runtime-only}
@@ -99,7 +99,7 @@ services:
       context: ./services/audioseal-sidecar
       dockerfile: Dockerfile
     environment:
-      QALEM_AUDIOSEAL_TOKEN: ${QALEM_AUDIOSEAL_TOKEN:?QALEM AudioSeal token required}
+      QALEM_AUDIOSEAL_TOKEN: ${QALEM_AUDIOSEAL_TOKEN:-}
       QALEM_AUDIOSEAL_DEVICE: cpu
       QALEM_AUDIOSEAL_MAX_SECONDS: "180"
     # Coolify forwards every application variable to every service. This process

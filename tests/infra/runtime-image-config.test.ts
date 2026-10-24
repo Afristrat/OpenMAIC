@@ -11,9 +11,7 @@ describe('Qalem runtime environment contract', () => {
     expect(compose).toContain('IMAGE_DGX_API_KEY: ${IMAGE_DGX_API_KEY}');
     expect(compose).toContain('IMAGE_DGX_BASE_URL: ${IMAGE_DGX_BASE_URL}');
     expect(compose).toContain('IMAGE_DGX_MODELS: ${IMAGE_DGX_MODELS}');
-    expect(compose).toContain(
-      'LRS_CONFIG_ENCRYPTION_KEY: ${LRS_CONFIG_ENCRYPTION_KEY:?LRS configuration encryption key required}',
-    );
+    expect(compose).toContain('LRS_CONFIG_ENCRYPTION_KEY: ${LRS_CONFIG_ENCRYPTION_KEY:-}');
   });
 });
 
@@ -82,11 +80,15 @@ describe('Qalem build-time secret exposure', () => {
 
   // Coolify only feeds build-time variables to `docker compose build`. A `${VAR:?}` forces the
   // variable to be flagged is_buildtime, which injects the secret as a build argument.
-  it.each(['LTI_APP_URL', 'LTI_KEY_ID', 'LTI_PRIVATE_KEY', 'LTI_PUBLIC_KEY'])(
-    'does not require %s at build time',
-    (name) => {
-      expect(compose).toContain(`${name}: \${${name}:-}`);
-      expect(compose).not.toContain(`\${${name}:?`);
-    },
-  );
+  it.each([
+    'LTI_APP_URL',
+    'LTI_KEY_ID',
+    'LTI_PRIVATE_KEY',
+    'LTI_PUBLIC_KEY',
+    'LRS_CONFIG_ENCRYPTION_KEY',
+    'QALEM_AUDIOSEAL_TOKEN',
+  ])('does not require %s at build time', (name) => {
+    expect(compose).toContain(`${name}: \${${name}:-}`);
+    expect(compose).not.toContain(`\${${name}:?`);
+  });
 });
