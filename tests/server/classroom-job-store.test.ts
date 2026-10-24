@@ -56,6 +56,7 @@ import {
   createClassroomGenerationJob,
   markClassroomGenerationJobFailed,
   markClassroomGenerationJobRunning,
+  markClassroomGenerationJobSucceeded,
   readClassroomGenerationJob,
   touchClassroomGenerationJob,
   updateClassroomGenerationJobProgress,
@@ -106,6 +107,37 @@ describe('persistent classroom generation jobs', () => {
       totalScenes: 8,
     });
     expect(database.rows.get('job-1')?.status).toBe('running');
+  });
+
+  it('keeps the generation warnings on a succeeded job and clears them on a new run', async () => {
+    await createClassroomGenerationJob(
+      'job-warn',
+      {
+        orgId: 'org-1',
+        authorRole: 'author',
+        learningApproach: 'andragogy',
+        interactionLevel: 'balanced',
+        requirement: 'Build a voiced course',
+      },
+      'owner-1',
+    );
+    await markClassroomGenerationJobRunning('job-warn');
+    await markClassroomGenerationJobSucceeded('job-warn', {
+      id: 'class-1',
+      url: 'http://localhost/classroom/class-1',
+      stage: {} as never, // Le store ne lit que le résumé du résultat, pas le Stage
+      scenes: [],
+      scenesCount: 19,
+      createdAt: '2026-10-24T00:00:00.000Z',
+      warnings: { ttsMissing: 27, ttsRequested: 150 },
+    });
+
+    const succeeded = await readClassroomGenerationJob('job-warn');
+    expect(succeeded?.status).toBe('succeeded');
+    expect(succeeded?.warnings).toEqual({ ttsMissing: 27, ttsRequested: 150 });
+
+    await markClassroomGenerationJobRunning('job-warn');
+    expect((await readClassroomGenerationJob('job-warn'))?.warnings).toBeUndefined();
   });
 
   it('persists durable input without persisting a client API key', async () => {

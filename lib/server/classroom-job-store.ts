@@ -4,6 +4,7 @@ import type {
   GenerateClassroomInput,
   GenerateClassroomResult,
 } from '@/lib/server/classroom-generation';
+import type { ClassroomGenerationWarnings } from '@/lib/server/tts-outcome';
 import { laterTimestamp } from '@/lib/generation/generation-tracking';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 
@@ -32,6 +33,8 @@ export interface ClassroomGenerationJob {
   scenesGenerated: number;
   totalScenes?: number;
   result?: { classroomId: string; url: string; scenesCount: number };
+  /** Present when the course was kept although incomplete (e.g. speech lines without voice). */
+  warnings?: ClassroomGenerationWarnings;
   error?: string;
 }
 
@@ -168,6 +171,7 @@ export async function markClassroomGenerationJobRunning(
     scenesGenerated: 0,
     totalScenes: undefined,
     result: undefined,
+    warnings: undefined,
     error: undefined,
   });
 }
@@ -196,6 +200,7 @@ export async function markClassroomGenerationJobSucceeded(
     completedAt: new Date().toISOString(),
     scenesGenerated: result.scenesCount,
     result: { classroomId: result.id, url: result.url, scenesCount: result.scenesCount },
+    warnings: result.warnings,
     error: undefined,
     input: undefined,
   });

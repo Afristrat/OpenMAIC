@@ -39,6 +39,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ jobId: 
       scenesGenerated: job.scenesGenerated,
       totalScenes: job.totalScenes,
       result: job.result,
+      warnings: job.warnings,
       error: job.error,
       failureCode: getPublicGenerationFailureCode(job.error),
       failure: describeGenerationFailure(job.error),

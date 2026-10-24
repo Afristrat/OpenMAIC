@@ -15,6 +15,7 @@ import { useCanvasStore } from '@/lib/store/canvas';
 import { useSettingsStore } from '@/lib/store/settings';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useMissingVoices } from '@/lib/hooks/use-missing-voices';
+import { MissingVoicesBanner } from '@/components/stage/missing-voices-banner';
 import { SceneSidebar } from '@/components/stage/scene-sidebar';
 import { Header } from '@/components/header';
 import { CanvasArea } from '@/components/canvas/canvas-area';
@@ -1196,6 +1197,7 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
               generatedAgents={stage?.generatedAgentConfigs}
             />
           )}
+          {!isPresenting && <MissingVoicesBanner canComplete={!!canEnterProMode} />}
 
           {/* Canvas Area — playback-only renderer. The parent Stage swaps
             this whole PlaybackChromeRoot out when entering edit mode, so

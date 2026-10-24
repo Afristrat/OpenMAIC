@@ -21,7 +21,8 @@ export function useMissingVoices() {
   const [completing, setCompleting] = useState(false);
   const [progress, setProgress] = useState<MissingVoicesProgress | null>(null);
   const activeRef = useRef(false);
-  const missing = useMemo(() => summarizeSpeechAudio(scenes).missing, [scenes]);
+  const report = useMemo(() => summarizeSpeechAudio(scenes), [scenes]);
+  const { missing, speech: total } = report;
 
   const complete = useCallback(async (): Promise<boolean> => {
     if (activeRef.current) return false;
@@ -64,5 +65,5 @@ export function useMissingVoices() {
     }
   }, [missing, t]);
 
-  return { missing, completing, progress, complete };
+  return { missing, total, completing, progress, complete };
 }

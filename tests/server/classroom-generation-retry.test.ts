@@ -1,4 +1,5 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { containsInsufficientCredits } from '@/lib/billing/insufficient-credits';
 
 const mocks = vi.hoisted(() => ({
   authorize: vi.fn(),
@@ -441,6 +442,64 @@ describe('classroom scene generation retries', () => {
     await expect(generateWithProgress({ enableTTS: true })).rejects.toThrow(
       'TTS persistence incomplete: 0/1 speech actions generated',
     );
+    expect(mocks.persistClassroom).not.toHaveBeenCalled();
+  });
+
+  it('persists the course and reports a warning when only some voices failed', async () => {
+    mocks.generateSceneContent.mockResolvedValue(slideContent);
+    mocks.generateSceneActions.mockResolvedValue([...completeRosterActions]);
+    mocks.generateTTSForClassroom.mockImplementationOnce(
+      async (scenes: Array<{ actions?: Array<Record<string, unknown>> }>) => {
+        // Six lines of ten get a voice; the four last stay silent.
+        let voiced = 0;
+        for (const scene of scenes) {
+          scene.actions = scene.actions?.map((action) =>
+            action.type === 'speech' && voiced++ < 6
+              ? { ...action, audioUrl: '/api/classroom-media/voice.mp3' }
+              : action,
+          );
+        }
+        return { requested: 10, generated: 6 };
+      },
+    );
+
+    const { result, progress } = await generateWithProgress({ enableTTS: true });
+
+    expect(mocks.persistClassroom).toHaveBeenCalledTimes(1);
+    expect(mocks.persistGeneratedCourse).toHaveBeenCalledTimes(1);
+    expect(result.warnings).toEqual({ ttsMissing: 4, ttsRequested: 10 });
+    expect(progress.some((event) => event.message === 'Persisting classroom data')).toBe(true);
+  });
+
+  it('reports no warning when every voice was generated', async () => {
+    mocks.generateSceneContent.mockResolvedValue(slideContent);
+    mocks.generateSceneActions.mockResolvedValue([...completeRosterActions]);
+    mocks.generateTTSForClassroom.mockImplementationOnce(
+      async (scenes: Array<{ actions?: Array<Record<string, unknown>> }>) => {
+        voiceEverySpeechLine(scenes);
+        return { requested: 10, generated: 10 };
+      },
+    );
+
+    const { result } = await generateWithProgress({ enableTTS: true });
+
+    expect(result.warnings).toBeUndefined();
+  });
+
+  it('fails with a credits error when the balance blocked every voice', async () => {
+    mocks.generateSceneContent.mockResolvedValue(slideContent);
+    mocks.generateSceneActions.mockResolvedValue([...completeRosterActions]);
+    mocks.generateTTSForClassroom.mockResolvedValue({
+      requested: 10,
+      generated: 0,
+      creditsBlocked: true,
+    });
+
+    const failure = await generateWithProgress({ enableTTS: true }).catch(
+      (error: unknown) => error,
+    );
+
+    expect(containsInsufficientCredits(failure)).toBe(true);
     expect(mocks.persistClassroom).not.toHaveBeenCalled();
   });
 

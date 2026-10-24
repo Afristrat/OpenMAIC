@@ -2,10 +2,12 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { AlertCircle, ArrowLeft, Sparkles } from 'lucide-react';
+import { AlertCircle, ArrowLeft, CheckCircle2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { GenerationTracker } from '@/components/generation/generation-tracker';
+import { VoiceWarningNotice } from '@/components/generation/voice-warning-notice';
+import { readVoiceWarning, shouldAutoOpenCourse } from '@/lib/generation/voice-warning';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { CreditStatusNotice } from '@/components/billing/credit-status-notice';
 import { useCreditStatus } from '@/lib/hooks/use-credit-status';
@@ -18,6 +20,7 @@ interface GenerationJob {
   scenesGenerated?: number;
   totalScenes?: number;
   result?: { url: string };
+  warnings?: unknown;
   failureCode?: 'MEDIA_PROVIDER_UNAVAILABLE';
   failure?: GenerationFailure;
   error?: string;
@@ -42,6 +45,7 @@ function GenerationStatus() {
     refresh: refreshCredits,
   } = useCreditStatus(orgId ?? undefined);
   const failedForCredits = job?.failure?.code === 'INSUFFICIENT_CREDITS';
+  const voiceWarning = job?.status === 'succeeded' ? readVoiceWarning(job.warnings) : null;
 
   useEffect(() => {
     if (!jobId) {
@@ -56,7 +60,7 @@ function GenerationStatus() {
         if (!response.ok || !data.success) throw new Error('Generation status unavailable');
         if (cancelled) return;
         setJob(data);
-        if (data.status === 'succeeded' && data.result?.url) router.replace(data.result.url);
+        if (shouldAutoOpenCourse(data)) router.replace(data.result.url);
         if (data.status === 'failed') setHasFailed(true);
       } catch {
         if (!cancelled) setHasFailed(true);
@@ -81,20 +85,42 @@ function GenerationStatus() {
       <Card className="w-full max-w-md p-8 text-center space-y-6">
         {hasFailed ? (
           <AlertCircle className="mx-auto size-12 text-destructive" />
+        ) : voiceWarning ? (
+          <CheckCircle2 className="mx-auto size-12 text-primary" />
         ) : (
           <Sparkles className="mx-auto size-12 text-primary animate-pulse" />
         )}
         <div className="space-y-2">
           <h1 className="text-xl font-semibold">
-            {hasFailed ? t('generation.generationFailed') : t('generation.generatingCourse')}
+            {hasFailed
+              ? t('generation.generationFailed')
+              : voiceWarning
+                ? t('generation.courseReadyWithWarnings')
+                : t('generation.generatingCourse')}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {hasFailed ? failureText : t('generation.aiWorking')}
+            {hasFailed
+              ? failureText
+              : voiceWarning
+                ? t('generation.courseReadyWithWarningsDesc')
+                : t('generation.aiWorking')}
           </p>
           {hasFailed && job?.error && !job.failure && (
             <p className="text-xs text-destructive">{job.error}</p>
           )}
         </div>
+        {voiceWarning && job?.result?.url && (
+          <>
+            <VoiceWarningNotice
+              missing={voiceWarning.missing}
+              total={voiceWarning.total}
+              showHint
+            />
+            <Button onClick={() => router.push(job.result?.url ?? '/app')}>
+              {t('generation.openCourse')}
+            </Button>
+          </>
+        )}
         {hasFailed && failedForCredits && (
           <CreditStatusNotice
             status={creditStatus}

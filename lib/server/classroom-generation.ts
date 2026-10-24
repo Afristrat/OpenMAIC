@@ -42,6 +42,8 @@ import {
   generateTTSForClassroom,
 } from '@/lib/server/classroom-media-generation';
 import { summarizeSpeechAudio } from '@/lib/audio/speech-audio-report';
+import { InsufficientCreditsError } from '@/lib/billing/insufficient-credits';
+import { evaluateTtsOutcome, type ClassroomGenerationWarnings } from '@/lib/server/tts-outcome';
 import { GENERATION_MAX_ATTEMPTS, withGenerationRetry } from '@/lib/generation/generation-retry';
 import { buildVideoManifestFromOutlines } from '@/lib/media/video-manifest';
 import { placeGeneratedMediaOnSlides } from '@/lib/generation/media-placement';
@@ -229,6 +231,8 @@ export interface GenerateClassroomResult {
   scenes: Scene[];
   scenesCount: number;
   createdAt: string;
+  /** Present when the course was kept although part of it is incomplete (silent speech lines). */
+  warnings?: ClassroomGenerationWarnings;
 }
 
 function createInMemoryStore(stage: Stage): StageStore {
@@ -1185,6 +1189,7 @@ export async function generateClassroom(
     }
 
     // Phase: TTS generation
+    let warnings: ClassroomGenerationWarnings | undefined;
     if (input.enableTTS) {
       await reportProgress({
         step: 'generating_tts',
@@ -1211,18 +1216,26 @@ export async function generateClassroom(
         },
         languageDirective,
       );
-      if (ttsReport.generated !== ttsReport.requested) {
-        throw new Error(
-          `TTS persistence incomplete: ${ttsReport.generated}/${ttsReport.requested} speech actions generated`,
+      const speechAudio = summarizeSpeechAudio(scenes);
+      const ttsOutcome = evaluateTtsOutcome(ttsReport, speechAudio);
+      if (ttsOutcome.kind === 'total_failure') {
+        throw ttsOutcome.creditsBlocked
+          ? new InsufficientCreditsError(ttsOutcome.message)
+          : new Error(ttsOutcome.message);
+      }
+      if (ttsOutcome.kind === 'partial') {
+        // The course is kept: the missing voices are completed afterwards by the author.
+        warnings = {
+          ttsMissing: ttsOutcome.missing,
+          ttsRequested: ttsOutcome.total,
+          ...(ttsOutcome.creditsBlocked ? { ttsCreditsBlocked: true } : {}),
+        };
+        log.warn(
+          `TTS partial: ${ttsOutcome.missing}/${ttsOutcome.total} speech lines have no audio, course kept`,
         );
+      } else {
+        log.info(`TTS generation complete: ${ttsReport.generated}/${ttsReport.requested} files`);
       }
-      // A skipped generation (no server voice provider) reports 0 requested: only the lines left
-      // without audio tell the truth, and a course asked to be voiced must never leave silent.
-      const silentLines = summarizeSpeechAudio(scenes).missing;
-      if (silentLines > 0) {
-        throw new Error(`TTS incomplete: ${silentLines} speech lines have no audio`);
-      }
-      log.info(`TTS generation complete: ${ttsReport.generated}/${ttsReport.requested} files`);
     }
 
     await reportProgress({
@@ -1285,6 +1298,7 @@ export async function generateClassroom(
       scenes,
       scenesCount: scenes.length,
       createdAt: persisted.createdAt,
+      ...(warnings ? { warnings } : {}),
     };
   } catch (error) {
     if (castingReservationId) {
