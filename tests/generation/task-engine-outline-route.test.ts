@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { POST } from '@/app/api/generate/scene-outlines-stream/route';
 
 const streamLLMMock = vi.hoisted(() => vi.fn());
 const resolveModelFromRequestMock = vi.hoisted(() => vi.fn());
@@ -69,7 +70,6 @@ describe('task-engine outline route', () => {
   });
 
   test('uses the task-engine prompt and preserves allowed mixed task-engine scene types', async () => {
-    vi.resetModules();
     streamLLMMock.mockReset();
     resolveModelFromRequestMock.mockReset();
     process.env[VOCATIONAL_FLAG] = 'true';
@@ -186,7 +186,6 @@ describe('task-engine outline route', () => {
       })(),
     });
 
-    const { POST } = await import('@/app/api/generate/scene-outlines-stream/route');
     const response = await POST(
       mockRequest({
         requirement: 'NEV-A12 新能源车动力电池包更换前安全确认',
@@ -269,7 +268,6 @@ describe('task-engine outline route', () => {
   });
 
   test('silently falls back to the existing interactive prompt when the server flag is off', async () => {
-    vi.resetModules();
     streamLLMMock.mockReset();
     resolveModelFromRequestMock.mockReset();
 
@@ -302,7 +300,6 @@ describe('task-engine outline route', () => {
       })(),
     });
 
-    const { POST } = await import('@/app/api/generate/scene-outlines-stream/route');
     const response = await POST(
       mockRequest({
         requirement: 'Teach motion with interaction',
@@ -322,7 +319,6 @@ describe('task-engine outline route', () => {
   });
 
   test('sanitizes procedural-skill outlines when taskEngineMode is disabled', async () => {
-    vi.resetModules();
     streamLLMMock.mockReset();
     resolveModelFromRequestMock.mockReset();
 
@@ -361,7 +357,6 @@ describe('task-engine outline route', () => {
       })(),
     });
 
-    const { POST } = await import('@/app/api/generate/scene-outlines-stream/route');
     const response = await POST(
       mockRequest({
         requirement: 'Teach a process interactively',
@@ -387,7 +382,6 @@ describe('task-engine outline route', () => {
   });
 
   test('preserves model-authored scenario PBL subtype through streamed outlines', async () => {
-    vi.resetModules();
     streamLLMMock.mockReset();
     resolveModelFromRequestMock.mockReset();
 
@@ -426,7 +420,6 @@ describe('task-engine outline route', () => {
       })(),
     });
 
-    const { POST } = await import('@/app/api/generate/scene-outlines-stream/route');
     const response = await POST(
       mockRequest({
         requirement: '生成一个情景模拟 PBL，练习安慰压力很大的朋友',
@@ -445,7 +438,6 @@ describe('task-engine outline route', () => {
   });
 
   test('ensures streamed outline ids are unique', async () => {
-    vi.resetModules();
     streamLLMMock.mockReset();
     resolveModelFromRequestMock.mockReset();
 
@@ -484,7 +476,6 @@ describe('task-engine outline route', () => {
       })(),
     });
 
-    const { POST } = await import('@/app/api/generate/scene-outlines-stream/route');
     const response = await POST(
       mockRequest({
         requirement: 'Teach a topic',
@@ -501,7 +492,6 @@ describe('task-engine outline route', () => {
   });
 
   test('falls back to a slide for invalid task-engine outlines without regex promotion', async () => {
-    vi.resetModules();
     streamLLMMock.mockReset();
     resolveModelFromRequestMock.mockReset();
     process.env[VOCATIONAL_FLAG] = 'true';
@@ -533,7 +523,6 @@ describe('task-engine outline route', () => {
       })(),
     });
 
-    const { POST } = await import('@/app/api/generate/scene-outlines-stream/route');
     const response = await POST(
       mockRequest({
         requirement: 'Explain the Pythagorean theorem',

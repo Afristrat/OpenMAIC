@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { POST } from '@/app/api/generate/scene-content/route';
 import { expectConsoleMessages } from '@/tests/helpers/expected-console';
 
 import type { SceneOutline } from '@/lib/types/generation';
@@ -57,13 +58,11 @@ describe('scene-content vocational gate', () => {
         '[WARN] [Generation] Procedural-skill outline "Device Calibration Practice" is not enabled, falling back to diagram',
       ],
     });
-    vi.resetModules();
     process.env[VOCATIONAL_FLAG] = 'false';
     callLLMMock.mockResolvedValueOnce({
       text: htmlForWidget('diagram'),
     });
 
-    const { POST } = await import('@/app/api/generate/scene-content/route');
     const response = await POST(
       mockRequest(createProceduralSkillOutline(), { taskEngineMode: true }),
     );
@@ -84,12 +83,10 @@ describe('scene-content vocational gate', () => {
         '[WARN] [Generation] Procedural-skill outline "Device Calibration Practice" is not enabled, falling back to diagram',
       ],
     });
-    vi.resetModules();
     callLLMMock.mockResolvedValueOnce({
       text: htmlForWidget('diagram'),
     });
 
-    const { POST } = await import('@/app/api/generate/scene-content/route');
     const response = await POST(mockRequest(createProceduralSkillOutline()));
     const body = await response.json();
 
@@ -99,13 +96,11 @@ describe('scene-content vocational gate', () => {
   });
 
   test('flag on with effective taskEngineMode allows procedural-skill content generation', async () => {
-    vi.resetModules();
     process.env[VOCATIONAL_FLAG] = '1';
     callLLMMock.mockResolvedValueOnce({
       text: htmlForWidget('procedural-skill'),
     });
 
-    const { POST } = await import('@/app/api/generate/scene-content/route');
     const response = await POST(
       mockRequest(createProceduralSkillOutline(), { taskEngineMode: true }),
     );

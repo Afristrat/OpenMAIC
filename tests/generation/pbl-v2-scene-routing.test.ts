@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { generateSceneContent } from '@/lib/generation/scene-generator';
 
 import type { GeneratedPBLContent, SceneOutline } from '@/lib/types/generation';
 
@@ -80,7 +81,6 @@ describe('generateSceneContent — PBL v2 planner routing', () => {
   const originalSingleCall = process.env.PBL_V2_SINGLE_CALL;
 
   beforeEach(() => {
-    vi.resetModules();
     generatePBLV2ProjectSingleCallMock.mockReset();
     generatePBLV2ProjectMock.mockReset();
     projectV2ToLegacyProjectConfigMock.mockReset();
@@ -119,7 +119,6 @@ describe('generateSceneContent — PBL v2 planner routing', () => {
     generatePBLV2ProjectSingleCallMock.mockResolvedValue(projectV2);
     projectV2ToLegacyProjectConfigMock.mockReturnValue(legacyConfig);
 
-    const { generateSceneContent } = await import('@/lib/generation/scene-generator');
     const priorOutline: SceneOutline = {
       id: 'scene-before',
       type: 'slide',
@@ -160,7 +159,6 @@ describe('generateSceneContent — PBL v2 planner routing', () => {
     generatePBLV2ProjectMock.mockResolvedValue(projectV2);
     projectV2ToLegacyProjectConfigMock.mockReturnValue(legacyConfig);
 
-    const { generateSceneContent } = await import('@/lib/generation/scene-generator');
     const content = (await generateSceneContent(pblOutline(), vi.fn(), {
       languageModel: mockModel(),
       languageDirective: 'Reply in English.',
@@ -182,7 +180,6 @@ describe('generateSceneContent — PBL v2 planner routing', () => {
     generatePBLV2ProjectMock.mockRejectedValueOnce(new Error('loop failed'));
     generatePBLContentMock.mockResolvedValue(legacyConfig);
 
-    const { generateSceneContent } = await import('@/lib/generation/scene-generator');
     const content = (await generateSceneContent(pblOutline(), vi.fn(), {
       languageModel: mockModel(),
       languageDirective: 'Reply in English.',
@@ -227,7 +224,6 @@ describe('generateSceneContent — PBL v2 planner routing', () => {
       ],
     };
     const activeOutline = pblOutline();
-    const { generateSceneContent } = await import('@/lib/generation/scene-generator');
     const content = await generateSceneContent(activeOutline, vi.fn(), {
       languageModel: mockModel(),
       languageDirective: 'Reply in English.',
@@ -246,7 +242,6 @@ describe('generateSceneContent — PBL v2 planner routing', () => {
     generatePBLV2ProjectMock.mockRejectedValueOnce(new Error('loop failed'));
     generatePBLContentMock.mockResolvedValue({ agents: [], issueboard: { issues: [] } });
 
-    const { generateSceneContent } = await import('@/lib/generation/scene-generator');
     const content = (await generateSceneContent(scenarioPblOutline(), vi.fn(), {
       languageModel: mockModel(),
       languageDirective: 'Reply in English.',
@@ -262,7 +257,6 @@ describe('generateSceneContent — PBL v2 planner routing', () => {
     process.env.PBL_V2_DISABLED = 'true';
     generatePBLContentMock.mockResolvedValue({ agents: [], issueboard: { issues: [] } });
 
-    const { generateSceneContent } = await import('@/lib/generation/scene-generator');
     const content = (await generateSceneContent(scenarioPblOutline(), vi.fn(), {
       languageModel: mockModel(),
       languageDirective: 'Reply in English.',
