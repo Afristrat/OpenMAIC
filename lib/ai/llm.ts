@@ -24,6 +24,11 @@ import {
   resolveProviderCostCurrency,
   reserveTenantUsage,
 } from '@/lib/billing/usage-metering';
+import {
+  clampToReservedQuantity,
+  estimateMaxInputTokens,
+  resolveMeteredMaxOutputTokens,
+} from '@/lib/billing/llm-reservation';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 const log = createLogger('LLM');
 
@@ -146,13 +151,12 @@ function getModelProviderId(params: GenerateTextParams | StreamTextParams): stri
 type LLMUsageReservations = {
   actorUserId: string;
   reservationIds: [string, string];
+  maxQuantities: [number, number];
 };
-
-const DEFAULT_METERED_MAX_OUTPUT_TOKENS = 32_768;
 
 function maxInputTokens(params: GenerateTextParams | StreamTextParams): number {
   const serialized = JSON.stringify(_extractRequestInfo(params));
-  return new TextEncoder().encode(serialized).byteLength * 2 + 8192;
+  return estimateMaxInputTokens(new TextEncoder().encode(serialized).byteLength);
 }
 
 async function prepareLLMUsage<T extends GenerateTextParams | StreamTextParams>(
@@ -164,11 +168,9 @@ async function prepareLLMUsage<T extends GenerateTextParams | StreamTextParams>(
   const outputContext = nextUsageOperationContext(source, 'llm_output_token');
   if (!outputContext) throw new Error('Incomplete LLM usage context');
 
-  const boundedParams = (
-    params.maxOutputTokens === undefined
-      ? { ...params, maxOutputTokens: DEFAULT_METERED_MAX_OUTPUT_TOKENS }
-      : params
-  ) as T;
+  const maxOutput = resolveMeteredMaxOutputTokens(params.maxOutputTokens);
+  const boundedParams = { ...params, maxOutputTokens: maxOutput } as T;
+  const maxInput = maxInputTokens(boundedParams);
   const providerId = getModelProviderId(boundedParams) ?? 'unknown';
   const modelId = getModelId(boundedParams);
   const currency = resolveProviderCostCurrency(providerId);
@@ -177,7 +179,7 @@ async function prepareLLMUsage<T extends GenerateTextParams | StreamTextParams>(
     tenantId: inputContext.tenantId,
     operationKey: inputContext.operationKey,
     billableUnit: 'llm_input_token',
-    maxQuantity: maxInputTokens(boundedParams),
+    maxQuantity: maxInput,
     providerId,
     modelId,
     providerCostCurrency: currency,
@@ -192,7 +194,7 @@ async function prepareLLMUsage<T extends GenerateTextParams | StreamTextParams>(
       tenantId: outputContext.tenantId,
       operationKey: outputContext.operationKey,
       billableUnit: 'llm_output_token',
-      maxQuantity: boundedParams.maxOutputTokens ?? DEFAULT_METERED_MAX_OUTPUT_TOKENS,
+      maxQuantity: maxOutput,
       providerId,
       modelId,
       providerCostCurrency: currency,
@@ -204,6 +206,7 @@ async function prepareLLMUsage<T extends GenerateTextParams | StreamTextParams>(
       reservations: {
         actorUserId: inputContext.actorUserId,
         reservationIds: [inputReservation.reservationId, outputReservation.reservationId],
+        maxQuantities: [maxInput, maxOutput],
       },
     };
   } catch (error) {
@@ -229,9 +232,20 @@ async function finalizeLLMUsage(
     );
     throw new Error('Provider returned no input-token usage');
   }
+  const input = clampToReservedQuantity(usage.inputTokens, reservations.maxQuantities[0]);
+  const output = clampToReservedQuantity(usage.outputTokens ?? 0, reservations.maxQuantities[1]);
+  if (input.clamped || output.clamped) {
+    log.warn(
+      `Mesure LLM supérieure à la réservation, règlement plafonné : entrée ${usage.inputTokens}/${reservations.maxQuantities[0]}, sortie ${usage.outputTokens ?? 0}/${reservations.maxQuantities[1]}`,
+    );
+  } else if ((usage.outputTokens ?? 0) >= reservations.maxQuantities[1]) {
+    log.warn(
+      `Sortie LLM arrêtée au plafond de ${reservations.maxQuantities[1]} jetons : la réponse peut être tronquée`,
+    );
+  }
   await finalizeTenantUsages(reservations.actorUserId, [
-    { reservationId: reservations.reservationIds[0], actualQuantity: usage.inputTokens },
-    { reservationId: reservations.reservationIds[1], actualQuantity: usage.outputTokens ?? 0 },
+    { reservationId: reservations.reservationIds[0], actualQuantity: input.quantity },
+    { reservationId: reservations.reservationIds[1], actualQuantity: output.quantity },
   ]);
 }
 
