@@ -65,17 +65,25 @@ function AuthPageContent(): React.ReactElement {
           setAuthInviteState('invalid');
           return;
         }
-      } else if (callback.code) {
+      }
+
+      // The browser client exchanges a PKCE `code` found in the URL while it
+      // initialises, and getSession() waits for that exchange. Exchanging the same
+      // code again fails because it is already consumed, so only fall back to an
+      // explicit exchange when no session came out of the automatic one.
+      let {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session && callback.code) {
         const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(callback.code);
         if (exchangeError) {
           setAuthInviteState('invalid');
           return;
         }
+        ({
+          data: { session },
+        } = await supabase.auth.getSession());
       }
-
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
       if (!session?.user.email) {
         setAuthInviteState('invalid');
         return;
