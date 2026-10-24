@@ -1,5 +1,7 @@
 'use client';
 
+import { resolveErrorMessage } from '@/lib/billing/credit-error-message';
+import { getClientTranslation } from '@/lib/i18n';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import {
   ensureVoicesLoaded,
@@ -132,7 +134,7 @@ export function useTTSPreview() {
         if (isStale()) return;
 
         if (!res.ok || !data.base64) {
-          throw new Error(data.error || 'TTS preview failed');
+          throw new Error(resolveErrorMessage(data, getClientTranslation, 'TTS preview failed'));
         }
 
         // Decode base64 → Blob → Object URL

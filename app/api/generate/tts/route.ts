@@ -19,6 +19,7 @@ import {
 import type { TTSProviderId } from '@/lib/audio/types';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { creditsErrorResponse } from '@/lib/server/credit-error-response';
 import { fetchForBaseUrl } from '@/lib/server/guarded-fetch';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { VOXCPM_AUTO_VOICE_ID, VOXCPM_TTS_PROVIDER_ID } from '@/lib/audio/voxcpm';
@@ -134,6 +135,8 @@ export async function POST(req: NextRequest) {
 
     return apiSuccess({ audioId, base64, format });
   } catch (error) {
+    const creditsResponse = creditsErrorResponse(error);
+    if (creditsResponse) return creditsResponse;
     log.error(
       `TTS generation failed [provider=${ttsProviderId ?? 'unknown'}, voice=${ttsVoice ?? 'unknown'}, audioId=${audioId ?? 'unknown'}]:`,
       error,

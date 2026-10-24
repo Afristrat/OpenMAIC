@@ -6,6 +6,7 @@ import { parseJsonResponse } from '@/lib/generation/json-repair';
 import { getSyllabusValidationIssues } from '@/lib/generation/syllabus-validation';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { creditsErrorResponse } from '@/lib/server/credit-error-response';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
 import type { ClassroomPlan } from '@/lib/types/generation';
 import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
@@ -91,6 +92,8 @@ Return only the complete plan as one valid JSON object with courseTitle, languag
     if (planValidation.data.optimization) plan.optimization = planValidation.data.optimization;
     return apiSuccess({ plan });
   } catch (error) {
+    const creditsResponse = creditsErrorResponse(error);
+    if (creditsResponse) return creditsResponse;
     log.error('Syllabus assistance failed:', error);
     return apiError(
       'INTERNAL_ERROR',

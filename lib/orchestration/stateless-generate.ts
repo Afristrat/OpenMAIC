@@ -26,6 +26,7 @@ import { createOrchestrationGraph, buildInitialState } from './director-graph';
 import { parse as parsePartialJson, Allow } from 'partial-json';
 import { jsonrepair } from 'jsonrepair';
 import { createLogger } from '@/lib/logger';
+import { streamErrorData } from '@/lib/billing/credit-error-message';
 import type { InterventionDecision } from '@/lib/formation-engine/animation-constitution';
 
 const log = createLogger('StatelessGenerate');
@@ -433,12 +434,7 @@ export async function* statelessGenerate(
       yield { type: 'error', data: { message: 'Request interrupted' } };
     } else {
       log.error('[StatelessGenerate] Error:', error);
-      yield {
-        type: 'error',
-        data: {
-          message: error instanceof Error ? error.message : String(error),
-        },
-      };
+      yield { type: 'error', data: streamErrorData(error) };
     }
   }
 }

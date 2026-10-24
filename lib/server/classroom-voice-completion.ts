@@ -22,6 +22,8 @@ export interface VoiceCompletionReport {
   failed: VoiceCompletionFailure[];
   /** Actions of every scene that received audio, so a client can refresh without a reload. */
   updatedScenes: Array<{ id: string; actions: Action[] }>;
+  /** Vrai quand le solde de crédits est épuisé : les lignes restantes n'ont pas été tentées. */
+  creditsBlocked?: boolean;
 }
 
 export class VoiceCompletionError extends Error {
@@ -85,18 +87,22 @@ export async function completeMissingSpeechAudio(input: {
       report.requested += 1;
       // The generator splits long lines and writes the audio on the scene it receives.
       const single: Scene = { ...scene, actions: [{ ...action }] };
-      try {
-        await generateTTSForClassroom(
-          [single],
-          input.classroomId,
-          input.assertAccess,
-          casting.teacherProfile,
-          casting.agents,
-          undefined,
-          casting.stage.languageDirective,
-        );
-      } catch (error) {
-        log.warn(`Voice generation failed for ${action.id}`, error);
+      // Un solde épuisé refuserait chaque ligne suivante : on ne les tente plus.
+      if (!report.creditsBlocked) {
+        try {
+          const generation = await generateTTSForClassroom(
+            [single],
+            input.classroomId,
+            input.assertAccess,
+            casting.teacherProfile,
+            casting.agents,
+            undefined,
+            casting.stage.languageDirective,
+          );
+          if (generation.creditsBlocked) report.creditsBlocked = true;
+        } catch (error) {
+          log.warn(`Voice generation failed for ${action.id}`, error);
+        }
       }
       const produced = single.actions ?? [];
       if (produced.length > 0 && !produced.some(isSilentSpeech)) {

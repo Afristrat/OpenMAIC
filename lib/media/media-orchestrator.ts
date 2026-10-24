@@ -6,6 +6,7 @@
  * fetches result blobs, stores in IndexedDB, and updates the Zustand store.
  */
 
+import { INSUFFICIENT_CREDITS_CODE } from '@/lib/billing/insufficient-credits';
 import { useMediaGenerationStore } from '@/lib/store/media-generation';
 import { useSettingsStore } from '@/lib/store/settings';
 import { db, mediaFileKey } from '@/lib/utils/database';
@@ -160,8 +161,9 @@ async function generateSingleMedia(
     log.error(`Failed ${req.elementId}:`, message);
     useMediaGenerationStore.getState().markFailed(req.elementId, message, errorCode);
 
-    // Persist non-retryable failures to IndexedDB so they survive page refresh
-    if (errorCode) {
+    // Persist non-retryable failures to IndexedDB so they survive page refresh. Un solde épuisé
+    // ne l'est pas : après une recharge, la relance doit repartir de zéro.
+    if (errorCode && errorCode !== INSUFFICIENT_CREDITS_CODE) {
       await db.mediaFiles
         .put({
           id: mediaFileKey(stageId, req.elementId),

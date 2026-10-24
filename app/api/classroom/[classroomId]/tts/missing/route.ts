@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { assertClassroomEditAccess } from '@/lib/server/classroom-edit-access';
 import { requireSuperAdminOrOrgEditor } from '@/lib/api/auth';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { insufficientCreditsResponse } from '@/lib/server/credit-error-response';
 import {
   completeMissingSpeechAudio,
   VoiceCompletionError,
@@ -54,7 +55,10 @@ export async function POST(
             assertClassroomEditAccess(request, classroomId, ownership, auth.user.id),
         }),
     );
+    // Rien n'a pu être généré faute de solde : une réponse 402 explicite, pas un 200 « tout a échoué ».
+    if (report.creditsBlocked && report.generated === 0) return insufficientCreditsResponse();
     return apiSuccess({
+      creditsBlocked: report.creditsBlocked === true,
       requested: report.requested,
       generated: report.generated,
       failed: report.failed,

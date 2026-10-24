@@ -48,12 +48,15 @@ import {
 import { withGenerationRetry } from '@/lib/generation/generation-retry';
 import { ClassroomCastingError } from '@/lib/agents/classroom-casting';
 import { runMeteredTenantUsage } from '@/lib/billing/usage-metering';
+import { containsInsufficientCredits } from '@/lib/billing/insufficient-credits';
 
 const log = createLogger('ClassroomMedia');
 
 export interface ClassroomTTSGenerationReport {
   requested: number;
   generated: number;
+  /** Vrai quand la génération s'est arrêtée parce que le solde de crédits du tenant est épuisé. */
+  creditsBlocked?: boolean;
 }
 
 export interface CanonicalSpeechAgentVoice {
@@ -613,6 +616,11 @@ export async function generateTTSForClassroom(
       } catch (err) {
         await checkAccess();
         log.warn(`TTS generation failed for action ${action.id}:`, err);
+        if (containsInsufficientCredits(err)) {
+          // Chaque ligne suivante serait refusée de la même façon : on s'arrête et on le dit.
+          report.creditsBlocked = true;
+          return report;
+        }
       }
     }
   }

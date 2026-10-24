@@ -1,5 +1,7 @@
 'use client';
 
+import { CREDITS_BLOCKED_I18N_KEY } from '@/lib/billing/credit-error-message';
+import { INSUFFICIENT_CREDITS_CODE } from '@/lib/billing/insufficient-credits';
 import { useCallback, useEffect, useRef } from 'react';
 import { Mic, Loader2 } from 'lucide-react';
 import { useAudioRecorder } from '@/lib/hooks/use-audio-recorder';
@@ -56,6 +58,7 @@ export function SpeechButton({
         'transcription-failed': t('settings.asrTestFailed'),
         'speech-recognition-failed': t('settings.asrTestFailed'),
         network: t('settings.asrTestFailed'),
+        [INSUFFICIENT_CREDITS_CODE]: t(CREDITS_BLOCKED_I18N_KEY),
       };
       toast.error(translatedErrors[error] ?? t('settings.microphoneAccessFailed'));
     },

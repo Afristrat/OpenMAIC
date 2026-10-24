@@ -1,3 +1,4 @@
+import { throwIfCreditsBlocked } from '@/lib/billing/credit-error-message';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { ASR_PROVIDERS } from '@/lib/audio/constants';
 import { normalizeASRUploadAudio } from '@/lib/audio/wav-utils';
@@ -88,6 +89,8 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
         });
 
         if (!response.ok) {
+          // Solde épuisé : CreditsBlockedError porte le code stable que le bouton traduit.
+          await throwIfCreditsBlocked(response);
           throw new Error('upstream-failed');
         }
 

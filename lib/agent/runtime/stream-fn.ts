@@ -32,6 +32,10 @@ import {
   type ToolSet,
 } from 'ai';
 import { streamLLM } from '@/lib/ai/llm';
+import {
+  containsInsufficientCredits,
+  INSUFFICIENT_CREDITS_CODE,
+} from '@/lib/billing/insufficient-credits';
 import type { ThinkingConfig } from '@/lib/types/provider';
 import {
   captureToolCallMetadata,
@@ -260,7 +264,12 @@ async function pump(
     stream.push({ type: 'done', reason: hasToolCall ? 'toolUse' : 'stop', message: partial });
   } catch (err) {
     partial.stopReason = 'error';
-    partial.errorMessage = err instanceof Error ? err.message : String(err);
+    // Un solde épuisé voyage sous son code stable : le client l'affiche traduit.
+    partial.errorMessage = containsInsufficientCredits(err)
+      ? INSUFFICIENT_CREDITS_CODE
+      : err instanceof Error
+        ? err.message
+        : String(err);
     stream.push({ type: 'error', reason: 'error', error: partial });
   }
 }

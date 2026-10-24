@@ -2805,6 +2805,7 @@
   "billing.credits.insufficient": "Insufficient credit balance. Available balance: {{balance}}, minimum needed to start a generation: {{required}}. Top up the organization’s credits or contact its administrator.",
   "billing.credits.low": "Low credit balance (available balance: {{balance}}). Warn the organization administrator before a generation is refused.",
   "billing.credits.recheck": "Check again",
+  "billing.credits.consumptionBlocked": "The organization’s credit balance is exhausted: this action is suspended. Contact the organization administrator to top up the credits.",
   "org.credits.empty": "No credit entry.",
   "org.credits.date": "Date",
   "org.credits.type": "Type",

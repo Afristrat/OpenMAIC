@@ -4,6 +4,7 @@ import type { LanguageModel } from 'ai';
 import { callLLM } from '@/lib/ai/llm';
 import { requireSuperAdminOrOrgAuthor } from '@/lib/api/auth';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { creditsErrorResponse } from '@/lib/server/credit-error-response';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
 import { createLogger } from '@/lib/logger';
 import type { ContextualSpecialist } from '@/lib/agents/contextual-specialist';
@@ -286,6 +287,8 @@ export async function POST(req: NextRequest) {
     );
     return apiSuccess({ specialists, reference: `ISCO-08 via ESCO ${ESCO_SOURCE_VERSION}` });
   } catch (error) {
+    const creditsResponse = creditsErrorResponse(error);
+    if (creditsResponse) return creditsResponse;
     log.error('Contextual specialist generation failed:', error);
     return apiError(
       'INTERNAL_ERROR',

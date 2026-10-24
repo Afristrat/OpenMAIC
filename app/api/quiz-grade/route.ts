@@ -9,6 +9,7 @@ import { NextRequest } from 'next/server';
 import { callLLM } from '@/lib/ai/llm';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { creditsErrorResponse } from '@/lib/server/credit-error-response';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
 import { buildQuizGradePrompts, type GradeRequest } from '@/lib/server/quiz-grade-prompts';
 import { requireOrgMember } from '@/lib/api/auth';
@@ -91,6 +92,8 @@ export async function POST(req: NextRequest) {
 
     return apiSuccess({ ...gradeResult });
   } catch (error) {
+    const creditsResponse = creditsErrorResponse(error);
+    if (creditsResponse) return creditsResponse;
     log.error(
       `Quiz grading failed [question="${questionSnippet ?? 'unknown'}...", points=${resolvedPoints ?? 'unknown'}]:`,
       error,

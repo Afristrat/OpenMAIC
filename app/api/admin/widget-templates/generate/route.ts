@@ -10,6 +10,7 @@ import {
   type WidgetComposition,
 } from '@/lib/plugins/widget-composition';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
+import { creditsErrorResponse } from '@/lib/server/credit-error-response';
 import { resolveModel } from '@/lib/server/resolve-model';
 import { createLogger } from '@/lib/logger';
 
@@ -155,6 +156,8 @@ You are repairing a rejected composition. The invalid composition and validation
       }
     }
   } catch (error) {
+    const creditsResponse = creditsErrorResponse(error);
+    if (creditsResponse) return creditsResponse;
     log.error('Widget generation failed', error);
     return apiError(API_ERROR_CODES.GENERATION_FAILED, 502, 'Widget generation failed');
   }

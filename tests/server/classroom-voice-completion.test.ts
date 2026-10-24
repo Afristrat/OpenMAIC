@@ -60,6 +60,7 @@ describe('completeMissingSpeechAudio', () => {
     mocks.generateTTS.mockImplementation(async (list: Scene[]) => {
       const action = list[0].actions?.[0] as Action & { audioUrl?: string };
       action.audioUrl = `/${action.id}.mp3`;
+      return { requested: 1, generated: 1 };
     });
 
     const report = await completeMissingSpeechAudio(input);
@@ -73,11 +74,23 @@ describe('completeMissingSpeechAudio', () => {
     ).toBe(true);
   });
 
+  test('un solde épuisé arrête les tentatives et le dit dans le rapport', async () => {
+    mocks.generateTTS.mockResolvedValue({ requested: 1, generated: 0, creditsBlocked: true });
+
+    const report = await completeMissingSpeechAudio(input);
+
+    expect(report).toMatchObject({ requested: 3, generated: 0, creditsBlocked: true });
+    expect(report.failed).toHaveLength(3);
+    expect(mocks.generateTTS).toHaveBeenCalledTimes(1);
+    expect(mocks.persistClassroom).not.toHaveBeenCalled();
+  });
+
   test('a failing line stays silent, is reported, and does not cost the others', async () => {
     mocks.generateTTS.mockImplementation(async (list: Scene[]) => {
       const action = list[0].actions?.[0] as Action & { audioUrl?: string };
       if (action.id === 'c') throw new Error('INVALID_USAGE_RESERVATION');
       action.audioUrl = `/${action.id}.mp3`;
+      return { requested: 1, generated: 1 };
     });
 
     const report = await completeMissingSpeechAudio(input);
@@ -91,6 +104,7 @@ describe('completeMissingSpeechAudio', () => {
   test('limits the completion to one scene', async () => {
     mocks.generateTTS.mockImplementation(async (list: Scene[]) => {
       (list[0].actions?.[0] as Action & { audioUrl?: string }).audioUrl = '/x.mp3';
+      return { requested: 1, generated: 1 };
     });
 
     const report = await completeMissingSpeechAudio({ ...input, sceneId: 'sc2' });

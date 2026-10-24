@@ -1,5 +1,9 @@
 'use client';
 
+import {
+  CREDITS_BLOCKED_I18N_KEY,
+  isInsufficientCreditsPayload,
+} from '@/lib/billing/credit-error-message';
 import { useState, useRef } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -186,7 +190,11 @@ export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {
                 const errorData = await response
                   .json()
                   .catch(() => ({ error: response.statusText }));
-                setTestMessage(errorData.details || errorData.error || t('settings.asrTestFailed'));
+                setTestMessage(
+                  isInsufficientCreditsPayload(errorData)
+                    ? t(CREDITS_BLOCKED_I18N_KEY)
+                    : errorData.details || errorData.error || t('settings.asrTestFailed'),
+                );
               }
             } catch (error) {
               log.error('ASR test failed:', error);

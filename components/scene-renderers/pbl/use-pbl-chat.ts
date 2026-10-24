@@ -5,6 +5,11 @@
  */
 
 import { useState, useCallback } from 'react';
+import { toast } from 'sonner';
+import {
+  CREDITS_BLOCKED_I18N_KEY,
+  isInsufficientCreditsPayload,
+} from '@/lib/billing/credit-error-message';
 import type { PBLProjectConfig, PBLChatMessage, PBLAgent, PBLIssue } from '@/lib/pbl/types';
 import { getCurrentModelConfig } from '@/lib/utils/model-config';
 import { useI18n } from '@/lib/hooks/use-i18n';
@@ -92,6 +97,11 @@ export function usePBLChat({ projectConfig, userRole, onConfigUpdate }: UsePBLCh
         });
 
         const data = await response.json();
+
+        if (isInsufficientCreditsPayload(data)) {
+          toast.error(t(CREDITS_BLOCKED_I18N_KEY));
+          return;
+        }
 
         if (data.success) {
           const agentMsg: PBLChatMessage = {

@@ -1,5 +1,6 @@
 'use client';
 
+import { resolveErrorMessage } from '@/lib/billing/credit-error-message';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Loader2, Sparkles } from 'lucide-react';
@@ -82,7 +83,7 @@ export function AiImageDialog() {
         });
         const payload = await response.json().catch(() => ({}));
         if (!response.ok || !payload.success || typeof payload.prompt !== 'string') {
-          throw new Error(payload.error || t('edit.image.aiFailed'));
+          throw new Error(resolveErrorMessage(payload, t, t('edit.image.aiFailed')));
         }
         setPrompt(payload.prompt);
         setNegativePrompt(typeof payload.negativePrompt === 'string' ? payload.negativePrompt : '');

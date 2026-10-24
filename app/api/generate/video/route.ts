@@ -27,6 +27,7 @@ import {
 import type { VideoProviderId, VideoGenerationOptions } from '@/lib/media/types';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { creditsErrorResponse } from '@/lib/server/credit-error-response';
 import { fetchForBaseUrl } from '@/lib/server/guarded-fetch';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { requireSuperAdminOrOrgAuthor, requireSuperAdminOrOrgEditor } from '@/lib/api/auth';
@@ -134,6 +135,8 @@ export async function POST(request: NextRequest) {
 
     return apiSuccess({ result });
   } catch (error) {
+    const creditsResponse = creditsErrorResponse(error);
+    if (creditsResponse) return creditsResponse;
     const message = error instanceof Error ? error.message : String(error);
     // Detect content safety filter rejections (e.g. Seedance SensitiveContent errors)
     if (message.includes('SensitiveContent') || message.includes('sensitive information')) {

@@ -41,6 +41,11 @@ import { type GenerationSessionState, ALL_STEPS, getActiveSteps } from './types'
 import { StepVisualizer } from './components/visualizers';
 import { resolveTaskEngineModeFromOutlineDoneEvent } from './vocational-mode';
 import { getCurrentOrganizationId } from '@/lib/hooks/use-organizations';
+import {
+  CREDITS_BLOCKED_I18N_KEY,
+  isInsufficientCreditsPayload,
+  resolveErrorMessage,
+} from '@/lib/billing/credit-error-message';
 
 const log = createLogger('GenerationPreview');
 const OUTLINE_REVIEW_AUTO_CONTINUE_MS = 2500;
@@ -418,7 +423,7 @@ function GenerationPreviewContent() {
 
         if (!res.ok) {
           const data = await res.json().catch(() => ({ error: 'Web search failed' }));
-          throw new Error(data.error || t('generation.webSearchFailed'));
+          throw new Error(resolveErrorMessage(data, t, t('generation.webSearchFailed')));
         }
 
         const searchData = await res.json();
@@ -504,7 +509,9 @@ function GenerationPreviewContent() {
             .then((res) => {
               if (!res.ok) {
                 return res.json().then((d) => {
-                  reject(new Error(d.error || t('generation.outlineGenerateFailed')));
+                  reject(
+                    new Error(resolveErrorMessage(d, t, t('generation.outlineGenerateFailed'))),
+                  );
                 });
               }
 
@@ -557,7 +564,7 @@ function GenerationPreviewContent() {
                           });
                           return;
                         } else if (evt.type === 'error') {
-                          reject(new Error(evt.error));
+                          reject(new Error(resolveErrorMessage(evt, t, evt.error)));
                           return;
                         }
                       } catch (e) {
@@ -754,7 +761,14 @@ function GenerationPreviewContent() {
             signal,
           });
 
-          if (!agentResp.ok) throw new Error('Agent generation failed');
+          if (!agentResp.ok) {
+            const failure: unknown = await agentResp.json().catch(() => null);
+            throw new Error(
+              isInsufficientCreditsPayload(failure)
+                ? t(CREDITS_BLOCKED_I18N_KEY)
+                : 'Agent generation failed',
+            );
+          }
           const agentData = await agentResp.json();
           if (!agentData.success) throw new Error(agentData.error || 'Agent generation failed');
 

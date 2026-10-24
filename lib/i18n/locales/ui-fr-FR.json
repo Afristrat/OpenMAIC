@@ -2805,6 +2805,7 @@
   "billing.credits.insufficient": "Solde de crédits insuffisant. Solde disponible : {{balance}}, minimum requis pour lancer une génération : {{required}}. Rechargez les crédits de l’organisation ou contactez son administrateur.",
   "billing.credits.low": "Solde de crédits bas (solde disponible : {{balance}}). Prévenez l’administrateur de l’organisation avant qu’une génération ne soit refusée.",
   "billing.credits.recheck": "Vérifier de nouveau",
+  "billing.credits.consumptionBlocked": "Le solde de crédits de l’organisation est épuisé : cette action est suspendue. Contactez l’administrateur de l’organisation pour recharger les crédits.",
   "org.credits.empty": "Aucune écriture de crédit.",
   "org.credits.date": "Date",
   "org.credits.type": "Type",

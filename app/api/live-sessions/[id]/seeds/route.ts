@@ -10,6 +10,7 @@ import {
 import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
 import { isFeatureEnabled } from '@/lib/flags';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { creditsErrorResponse } from '@/lib/server/credit-error-response';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
@@ -192,6 +193,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (completeError) throw new Error(completeError.message);
     return apiSuccess({ seeds, promptVersion: ANCHOR_SEED_PROMPT_VERSION }, 201);
   } catch (error) {
+    const creditsResponse = creditsErrorResponse(error);
+    if (creditsResponse) return creditsResponse;
     await service
       .from('seed_generation_runs')
       .update({ status: 'failed', error: error instanceof Error ? error.message : String(error) })

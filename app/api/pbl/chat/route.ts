@@ -10,6 +10,7 @@ import { callLLM } from '@/lib/ai/llm';
 import type { PBLAgent, PBLIssue } from '@/lib/pbl/types';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { creditsErrorResponse } from '@/lib/server/credit-error-response';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
 import { requireOrgMember } from '@/lib/api/auth';
 import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
@@ -85,6 +86,8 @@ export async function POST(req: NextRequest) {
 
     return apiSuccess({ message: result.text, agentName: agent.name });
   } catch (error) {
+    const creditsResponse = creditsErrorResponse(error);
+    if (creditsResponse) return creditsResponse;
     log.error(
       `PBL chat failed [agent="${agentName ?? 'unknown'}", type=${resolvedAgentType ?? 'question'}]:`,
       error,

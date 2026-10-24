@@ -14,6 +14,7 @@
 import type { StatelessEvent, DirectorState } from '@/lib/types/chat';
 import type { ThinkingConfig } from '@/lib/types/provider';
 import { createLogger } from '@/lib/logger';
+import { throwIfCreditsBlocked } from '@/lib/billing/credit-error-message';
 
 const log = createLogger('AgentLoop');
 
@@ -143,6 +144,7 @@ export async function runAgentLoop(
     const response = await callbacks.fetchChat(body, signal);
 
     if (!response.ok) {
+      await throwIfCreditsBlocked(response);
       const errorText = await response.text();
       throw new Error(`API error: ${response.status} - ${errorText}`);
     }

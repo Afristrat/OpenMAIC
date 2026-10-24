@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { assertClassroomEditAccess } from '@/lib/server/classroom-edit-access';
 import { requireSuperAdminOrOrgEditor } from '@/lib/api/auth';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { insufficientCreditsResponse } from '@/lib/server/credit-error-response';
 import { generateTTSForClassroom } from '@/lib/server/classroom-media-generation';
 import {
   buildRequestOrigin,
@@ -57,7 +58,7 @@ export async function POST(
     ...scene,
     actions: [{ ...action, text: body.text.trim(), audioId: undefined, audioUrl: undefined }],
   };
-  await runWithUsageMeteringContext(
+  const report = await runWithUsageMeteringContext(
     withStableIdempotencyKey(request.headers),
     auth.user.id,
     ownership.orgId,
@@ -72,6 +73,7 @@ export async function POST(
         casting.stage.languageDirective,
       ),
   );
+  if (report.creditsBlocked) return insufficientCreditsResponse();
   if (!generatedScene.actions?.every((item: Action) => item.type !== 'speech' || item.audioUrl)) {
     return apiError('INTERNAL_ERROR', 502, 'La synthèse vocale a échoué');
   }

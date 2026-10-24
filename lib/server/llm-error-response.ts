@@ -1,5 +1,6 @@
 import { APICallError, RetryError } from 'ai';
 import { apiError } from '@/lib/server/api-response';
+import { creditsErrorResponse } from '@/lib/server/credit-error-response';
 
 const HTTP_ERROR_MIN = 400;
 const HTTP_ERROR_MAX = 599;
@@ -59,8 +60,13 @@ function messageForStatus(status: number): string {
 /**
  * Preserve a provider's HTTP semantics for client retry classification without
  * exposing provider response bodies, URLs, or credential-adjacent details.
+ * A depleted tenant balance is answered first, with the stable 402 INSUFFICIENT_CREDITS.
  */
-export function llmApiError(error: unknown) {
+export function llmApiError(error: unknown): Response {
+  // Un solde épuisé prime sur tout statut amont : l'enveloppe du SDK peut porter un 500 trompeur.
+  const creditsResponse = creditsErrorResponse(error);
+  if (creditsResponse) return creditsResponse;
+
   const status = statusFromError(error);
   if (status === undefined) {
     return apiError('INTERNAL_ERROR', 500, 'Scene generation failed. Please try again.');

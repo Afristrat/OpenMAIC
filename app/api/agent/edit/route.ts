@@ -14,6 +14,10 @@ import { createCallLlmStreamFn } from '@/lib/agent/runtime/stream-fn';
 import { buildAgent, buildSystemPrompt } from '@/lib/agent/runtime/build-agent';
 import { buildToolset } from '@/lib/agent/tools/registry';
 import { callLLM } from '@/lib/ai/llm';
+import {
+  containsInsufficientCredits,
+  INSUFFICIENT_CREDITS_CODE,
+} from '@/lib/billing/insufficient-credits';
 import { createLogger } from '@/lib/logger';
 import type { SceneContextMap } from '@/lib/agent/scene-context-map';
 import { requireSuperAdminOrOrgEditor } from '@/lib/api/auth';
@@ -203,6 +207,17 @@ export async function POST(req: NextRequest) {
             await agent.waitForIdle();
           } catch (err) {
             log.error(`agent run failed: ${err instanceof Error ? err.message : String(err)}`);
+            if (containsInsufficientCredits(err)) {
+              // Même forme que l'échec d'un tour LLM : le client affiche l'explication traduite.
+              send({
+                type: 'message_end',
+                message: {
+                  role: 'assistant',
+                  content: [],
+                  errorMessage: INSUFFICIENT_CREDITS_CODE,
+                },
+              } as unknown as AgentEvent);
+            }
           } finally {
             unsubscribe();
             try {

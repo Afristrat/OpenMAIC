@@ -11,6 +11,7 @@ import { formatSearchResultsAsContext, searchWeb } from '@/lib/web-search';
 import { isServerConfiguredProvider, resolveWebSearchApiKey } from '@/lib/server/provider-config';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { creditsErrorResponse } from '@/lib/server/credit-error-response';
 import {
   buildSearchQuery,
   SEARCH_QUERY_REWRITE_EXCERPT_LENGTH,
@@ -144,6 +145,8 @@ export async function POST(req: NextRequest) {
       });
     });
   } catch (err) {
+    const creditsResponse = creditsErrorResponse(err);
+    if (creditsResponse) return creditsResponse;
     log.error(`Web search failed [query="${query?.substring(0, 60) ?? 'unknown'}"]:`, err);
     const message = err instanceof Error ? err.message : 'Web search failed';
     return apiError('INTERNAL_ERROR', 500, message);

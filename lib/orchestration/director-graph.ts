@@ -47,6 +47,8 @@ import { getEffectiveActions } from './tool-schemas';
 import type { AgentTurnSummary, WhiteboardActionRecord } from './types';
 import { parseStructuredChunk, createParserState, finalizeParser } from './stateless-generate';
 import { createLogger } from '@/lib/logger';
+import { streamErrorData } from '@/lib/billing/credit-error-message';
+import { containsInsufficientCredits } from '@/lib/billing/insufficient-credits';
 import {
   validateInterventionDecision,
   type InterventionDecision,
@@ -356,6 +358,8 @@ export async function directorNode(
     };
   } catch (error) {
     log.error('[Director] Error:', error);
+    // Un solde épuisé doit se voir : sans évènement, le tour se terminerait sans un mot.
+    if (containsInsufficientCredits(error)) write({ type: 'error', data: streamErrorData(error) });
     return { shouldEnd: true };
   }
 }
@@ -558,10 +562,7 @@ async function runAgentGeneration(
     }
     generationFailed = true;
     log.error(`[AgentGenerate] Error for ${agentConfig.name}:`, error);
-    write({
-      type: 'error',
-      data: { message: error instanceof Error ? error.message : String(error) },
-    });
+    write({ type: 'error', data: streamErrorData(error) });
   }
 
   await finishDirectorReceipt(

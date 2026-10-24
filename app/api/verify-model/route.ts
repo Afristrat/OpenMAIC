@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { creditsErrorResponse } from '@/lib/server/credit-error-response';
 import { resolveModel } from '@/lib/server/resolve-model';
 import { callLLM } from '@/lib/ai/llm';
 import { requireOrgMember } from '@/lib/api/auth';
@@ -62,6 +63,8 @@ export async function POST(req: NextRequest) {
       response: text,
     });
   } catch (error) {
+    const creditsResponse = creditsErrorResponse(error);
+    if (creditsResponse) return creditsResponse;
     log.error(`Model verification failed [model="${model ?? 'unknown'}"]:`, error);
 
     let errorMessage = 'Connection failed';

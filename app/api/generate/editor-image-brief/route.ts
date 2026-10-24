@@ -7,6 +7,7 @@ import {
 } from '@/lib/edit/editor-image-prompt';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { creditsErrorResponse } from '@/lib/server/credit-error-response';
 import { isValidClassroomId, readClassroomOwnership } from '@/lib/server/classroom-storage';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
 import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
@@ -79,6 +80,8 @@ export async function POST(req: NextRequest) {
     if (!brief) return apiError('PARSE_FAILED', 502, 'Image brief was invalid');
     return apiSuccess(brief);
   } catch (error) {
+    const creditsResponse = creditsErrorResponse(error);
+    if (creditsResponse) return creditsResponse;
     log.error('Editor image brief generation failed:', error);
     return apiError(
       'INTERNAL_ERROR',

@@ -17,6 +17,7 @@ import { statelessGenerate } from '@/lib/orchestration/stateless-generate';
 import { isProviderKeyRequired } from '@/lib/ai/providers';
 import type { StatelessChatRequest, StatelessEvent } from '@/lib/types/chat';
 import { apiError } from '@/lib/server/api-response';
+import { creditsErrorResponse } from '@/lib/server/credit-error-response';
 import { createLogger } from '@/lib/logger';
 import { resolveModel } from '@/lib/server/resolve-model';
 import type { ThinkingConfig } from '@/lib/types/provider';
@@ -32,6 +33,7 @@ import { latestExplicitLearnerMessage } from '@/lib/webhooks/classroom-interacti
 import { enqueueClassroomInteraction } from '@/lib/jobs/queue';
 import { getActionsForRole } from '@/lib/orchestration/registry/types';
 import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
+import { streamErrorData } from '@/lib/billing/credit-error-message';
 import { hasClassroomShareAccess } from '@/lib/server/classroom-share-access';
 const log = createLogger('Chat API');
 
@@ -307,9 +309,7 @@ export async function POST(req: NextRequest) {
         try {
           const errorEvent: StatelessEvent = {
             type: 'error',
-            data: {
-              message: error instanceof Error ? error.message : String(error),
-            },
+            data: streamErrorData(error),
           };
           await writer.write(encoder.encode(`data: ${JSON.stringify(errorEvent)}\n\n`));
           await writer.close();
@@ -327,6 +327,8 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
+    const creditsResponse = creditsErrorResponse(error);
+    if (creditsResponse) return creditsResponse;
     log.error(
       `Chat request failed [model=${chatModel ?? 'unknown'}, messages=${chatMessageCount ?? 0}]:`,
       error,

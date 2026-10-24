@@ -34,6 +34,13 @@ import { serializeThread, deserializeThread } from './serialize-thread';
 export type { AssistantPart, PiPart } from './merge-assistant-parts';
 import { toPiParts, type PiAssistantContent } from './to-pi-parts';
 import { useThinkingTimers } from './thinking-timers';
+import { useI18n } from '@/lib/hooks/use-i18n';
+import {
+  CREDITS_BLOCKED_I18N_KEY,
+  creditsAwareMessage,
+  throwIfCreditsBlocked,
+} from '@/lib/billing/credit-error-message';
+import { INSUFFICIENT_CREDITS_CODE } from '@/lib/billing/insufficient-credits';
 import { useSceneRuntimeErrors } from '@/lib/store/scene-runtime-errors';
 
 export interface UseAgentRuntimeOptions {
@@ -140,6 +147,7 @@ export function useAgentRuntime(opts: UseAgentRuntimeOptions) {
     }
   }, [messages, isRunning]);
 
+  const { t } = useI18n();
   // Per-run accumulated state: chronological turns + tool results.
   const turnsRef = useRef<PiPart[][]>([]);
   const toolResultsRef = useRef<Map<string, { result: unknown; isError: boolean }>>(new Map());
@@ -181,88 +189,96 @@ export function useAgentRuntime(opts: UseAgentRuntimeOptions) {
     return { role: 'assistant', id, content: parts as ThreadMessageLike['content'], status };
   }, []);
 
-  const handleEvent = useCallback((event: AgentEvent, refresh: () => void, assistantId: string) => {
-    switch (event.type) {
-      case 'message_start': {
-        const msg = (event as { message?: { role?: string } }).message;
-        if (msg?.role === 'assistant') {
-          turnsRef.current.push([]); // a new assistant turn begins
+  const handleEvent = useCallback(
+    (event: AgentEvent, refresh: () => void, assistantId: string) => {
+      switch (event.type) {
+        case 'message_start': {
+          const msg = (event as { message?: { role?: string } }).message;
+          if (msg?.role === 'assistant') {
+            turnsRef.current.push([]); // a new assistant turn begins
+            refresh();
+          }
+          break;
+        }
+        case 'message_update':
+        case 'message_end': {
+          const msg = (
+            event as {
+              message?: { role?: string; content?: PiAssistantContent[]; errorMessage?: string };
+            }
+          ).message;
+          if (msg?.role !== 'assistant') break;
+          if (msg.errorMessage) {
+            errorRef.current =
+              msg.errorMessage === INSUFFICIENT_CREDITS_CODE
+                ? t(CREDITS_BLOCKED_I18N_KEY)
+                : msg.errorMessage;
+          }
+          if (Array.isArray(msg.content)) {
+            if (turnsRef.current.length === 0) turnsRef.current.push([]);
+            // Replace the CURRENT turn's content wholesale (pi re-emits the full
+            // accumulated turn on each update) — order within the turn is kept.
+            turnsRef.current[turnsRef.current.length - 1] = toPiParts(msg.content);
+          }
+          // Per-block reasoning timing for the thinking panels' durations. Compute
+          // over the SAME merged view the UI renders so block ordinals align: each
+          // reasoning block ends (freezes) once a later part follows it; the last
+          // one stays open and ticks live until something follows or the run ends.
+          const merged = mergeAssistantParts({
+            turns: turnsRef.current,
+            toolResults: toolResultsRef.current,
+            error: errorRef.current,
+          });
+          const nowTs = Date.now();
+          let ord = 0;
+          for (let i = 0; i < merged.length; i++) {
+            if (merged[i].type === 'reasoning') {
+              useThinkingTimers
+                .getState()
+                .observe(`${assistantId}:${ord}`, { end: i < merged.length - 1, now: nowTs });
+              ord++;
+            }
+          }
           refresh();
+          break;
         }
-        break;
-      }
-      case 'message_update':
-      case 'message_end': {
-        const msg = (
-          event as {
-            message?: { role?: string; content?: PiAssistantContent[]; errorMessage?: string };
-          }
-        ).message;
-        if (msg?.role !== 'assistant') break;
-        if (msg.errorMessage) errorRef.current = msg.errorMessage;
-        if (Array.isArray(msg.content)) {
-          if (turnsRef.current.length === 0) turnsRef.current.push([]);
-          // Replace the CURRENT turn's content wholesale (pi re-emits the full
-          // accumulated turn on each update) — order within the turn is kept.
-          turnsRef.current[turnsRef.current.length - 1] = toPiParts(msg.content);
-        }
-        // Per-block reasoning timing for the thinking panels' durations. Compute
-        // over the SAME merged view the UI renders so block ordinals align: each
-        // reasoning block ends (freezes) once a later part follows it; the last
-        // one stays open and ticks live until something follows or the run ends.
-        const merged = mergeAssistantParts({
-          turns: turnsRef.current,
-          toolResults: toolResultsRef.current,
-          error: errorRef.current,
-        });
-        const nowTs = Date.now();
-        let ord = 0;
-        for (let i = 0; i < merged.length; i++) {
-          if (merged[i].type === 'reasoning') {
-            useThinkingTimers
+        case 'tool_execution_end': {
+          const e = event as {
+            toolCallId: string;
+            toolName?: string;
+            result?: { details?: unknown };
+            isError?: boolean;
+          };
+          toolResultsRef.current.set(e.toolCallId, { result: e.result, isError: !!e.isError });
+          const details = (e.result?.details ?? {}) as RegenerateDetails;
+          // Decide what to apply: regenerate_scene applies content (+actions) and
+          // snapshots the pre-state for restore; regenerate_scene_actions applies
+          // actions only. Empty actions are never applied (would wipe narration).
+          const scene = details.sceneId
+            ? useStageStore.getState().getSceneById(details.sceneId)
+            : null;
+          const { snapshot, patch } = planRegenerateApply(details, scene, e.toolName);
+          // Capture the applied patch as the snapshot's `redo` so an undo can be
+          // resumed (the Restore button toggles undo ↔ resume).
+          if (snapshot)
+            useRegenSnapshots
               .getState()
-              .observe(`${assistantId}:${ord}`, { end: i < merged.length - 1, now: nowTs });
-            ord++;
+              .setSnapshot(e.toolCallId, patch ? { ...snapshot, redo: patch } : snapshot);
+          if (patch && details.sceneId) {
+            // Apply to the stage store and keep the OPEN slide edit session in
+            // lockstep — else the canvas keeps rendering its stale history.present
+            // and the next edit clobbers the regen.
+            applyScenePatchInSync(details.sceneId, patch);
           }
+          refresh();
+          break;
         }
-        refresh();
-        break;
+        default:
+          break;
       }
-      case 'tool_execution_end': {
-        const e = event as {
-          toolCallId: string;
-          toolName?: string;
-          result?: { details?: unknown };
-          isError?: boolean;
-        };
-        toolResultsRef.current.set(e.toolCallId, { result: e.result, isError: !!e.isError });
-        const details = (e.result?.details ?? {}) as RegenerateDetails;
-        // Decide what to apply: regenerate_scene applies content (+actions) and
-        // snapshots the pre-state for restore; regenerate_scene_actions applies
-        // actions only. Empty actions are never applied (would wipe narration).
-        const scene = details.sceneId
-          ? useStageStore.getState().getSceneById(details.sceneId)
-          : null;
-        const { snapshot, patch } = planRegenerateApply(details, scene, e.toolName);
-        // Capture the applied patch as the snapshot's `redo` so an undo can be
-        // resumed (the Restore button toggles undo ↔ resume).
-        if (snapshot)
-          useRegenSnapshots
-            .getState()
-            .setSnapshot(e.toolCallId, patch ? { ...snapshot, redo: patch } : snapshot);
-        if (patch && details.sceneId) {
-          // Apply to the stage store and keep the OPEN slide edit session in
-          // lockstep — else the canvas keeps rendering its stale history.present
-          // and the next edit clobbers the regen.
-          applyScenePatchInSync(details.sceneId, patch);
-        }
-        refresh();
-        break;
-      }
-      default:
-        break;
-    }
-  }, []);
+    },
+    [t],
+  );
 
   const onNew = useCallback(
     async (message: AppendMessage) => {
@@ -371,6 +387,7 @@ export function useAgentRuntime(opts: UseAgentRuntimeOptions) {
           }),
           signal: abort.signal,
         });
+        await throwIfCreditsBlocked(res);
         if (!res.ok || !res.body) throw new Error(`agent request failed: ${res.status}`);
 
         const reader = res.body.getReader();
@@ -416,7 +433,11 @@ export function useAgentRuntime(opts: UseAgentRuntimeOptions) {
             phaseRef.current = 'cancelled';
           }
         } else {
-          errorRef.current = `⚠️ ${err instanceof Error ? err.message : String(err)}`;
+          errorRef.current = creditsAwareMessage(
+            err,
+            t,
+            `⚠️ ${err instanceof Error ? err.message : String(err)}`,
+          );
           phaseRef.current = 'error';
         }
       } finally {
@@ -442,7 +463,7 @@ export function useAgentRuntime(opts: UseAgentRuntimeOptions) {
         }
       }
     },
-    [buildAssistant, handleEvent, opts.scene],
+    [buildAssistant, handleEvent, opts.scene, t],
   );
 
   // Stop the current response: abort the fetch (cancels the server stream) and

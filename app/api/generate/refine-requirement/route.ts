@@ -2,6 +2,7 @@ import { type NextRequest } from 'next/server';
 import { callLLM } from '@/lib/ai/llm';
 import { requireSuperAdminOrOrgAuthor } from '@/lib/api/auth';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { creditsErrorResponse } from '@/lib/server/credit-error-response';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
 import { parseRefinedRequirement } from '@/lib/server/refined-requirement';
 import { createLogger } from '@/lib/logger';
@@ -195,6 +196,8 @@ The transport layer requires one JSON object with one string field named "requir
     if (!refined) return apiError('PARSE_FAILED', 502, 'The improvement response was invalid');
     return apiSuccess({ requirement: refined, mode });
   } catch (error) {
+    const creditsResponse = creditsErrorResponse(error);
+    if (creditsResponse) return creditsResponse;
     log.error(`Requirement refinement failed [mode=${mode ?? 'unknown'}]:`, error);
     return apiError(
       'INTERNAL_ERROR',

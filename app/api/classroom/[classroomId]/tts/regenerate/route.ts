@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { assertClassroomEditAccess } from '@/lib/server/classroom-edit-access';
 import { requireSuperAdminOrOrgEditor } from '@/lib/api/auth';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { insufficientCreditsResponse } from '@/lib/server/credit-error-response';
 import { generateTTSForClassroom } from '@/lib/server/classroom-media-generation';
 import {
   buildRequestOrigin,
@@ -94,6 +95,7 @@ export async function POST(
         casting.stage.languageDirective,
       ),
   );
+  if (report.creditsBlocked) return insufficientCreditsResponse();
   const generatedAudioCount = countSpeechAudio(regeneratedScenes);
   if (
     report.requested === 0 ||

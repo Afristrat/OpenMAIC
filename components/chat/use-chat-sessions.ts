@@ -38,6 +38,12 @@ import type {
 } from '@/lib/buffer/stream-buffer';
 import { runAgentLoop, type AgentLoopStoreState } from '@/lib/chat/agent-loop';
 import { ActionEngine } from '@/lib/action/engine';
+import {
+  CreditsBlockedError,
+  creditsAwareMessage,
+  CREDITS_BLOCKED_I18N_KEY,
+} from '@/lib/billing/credit-error-message';
+import { INSUFFICIENT_CREDITS_CODE } from '@/lib/billing/insufficient-credits';
 import { toast } from 'sonner';
 import { createLogger } from '@/lib/logger';
 
@@ -742,6 +748,10 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
               case 'error':
                 // Surface the error to the buffer (for UI), then throw so the
                 // shared agent loop breaks out instead of silently continuing.
+                if (event.data.code === INSUFFICIENT_CREDITS_CODE) {
+                  currentBuffer.pushError(t(CREDITS_BLOCKED_I18N_KEY));
+                  throw new CreditsBlockedError();
+                }
                 currentBuffer.pushError(event.data.message);
                 throw new Error(event.data.message);
             }
@@ -1096,7 +1106,11 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
         log.error('[ChatArea] Resume error:', error);
         clearLiveSessionAfterError(
           sessionId,
-          `Error: ${error instanceof Error ? error.message : String(error)}`,
+          creditsAwareMessage(
+            error,
+            t,
+            `Error: ${error instanceof Error ? error.message : String(error)}`,
+          ),
         );
       } finally {
         if (abortControllerRef.current === controller) {
@@ -1106,7 +1120,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
         }
       }
     },
-    [clearLiveSessionAfterError, runAgentLoopFn],
+    [clearLiveSessionAfterError, runAgentLoopFn, t],
   );
 
   /**
@@ -1313,7 +1327,11 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
         log.error('[ChatArea] Error:', error);
         clearLiveSessionAfterError(
           sessionId!,
-          `Error: ${error instanceof Error ? error.message : String(error)}`,
+          creditsAwareMessage(
+            error,
+            t,
+            `Error: ${error instanceof Error ? error.message : String(error)}`,
+          ),
         );
       } finally {
         // Only clean up if this is still the active controller (avoid race with interrupt)
@@ -1462,7 +1480,11 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
         log.error('[ChatArea] Discussion error:', error);
         clearLiveSessionAfterError(
           sessionId,
-          `Error starting discussion: ${error instanceof Error ? error.message : String(error)}`,
+          creditsAwareMessage(
+            error,
+            t,
+            `Error starting discussion: ${error instanceof Error ? error.message : String(error)}`,
+          ),
         );
       } finally {
         // Only clean up if this is still the active controller (avoid race with interrupt)

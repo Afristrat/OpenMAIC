@@ -13,6 +13,8 @@ import { retryMediaTask } from '@/lib/media/media-orchestrator';
 import { getVideoMediaRefForElement } from '@/lib/media/video-manifest';
 import { RotateCcw, Film, ShieldAlert, VideoOff } from 'lucide-react';
 import { useI18n } from '@/lib/hooks/use-i18n';
+import { CREDITS_BLOCKED_I18N_KEY } from '@/lib/billing/credit-error-message';
+import { INSUFFICIENT_CREDITS_CODE } from '@/lib/billing/insufficient-credits';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('BaseVideoElement');
@@ -202,17 +204,25 @@ export function BaseVideoElement({ elementInfo }: BaseVideoElementProps) {
                 <span>{t('settings.mediaGenerationDisabled')}</span>
               </div>
             ) : (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (mediaRef) retryMediaTask(mediaRef);
-                }}
-                onPointerDown={(e) => e.stopPropagation()}
-                className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/40 rounded hover:bg-red-200 dark:hover:bg-red-900/60 transition-colors"
-              >
-                <RotateCcw className="w-3 h-3" />
-                {t('settings.mediaRetry')}
-              </button>
+              <>
+                {task?.errorCode === INSUFFICIENT_CREDITS_CODE && (
+                  <div className="flex items-center gap-1 px-2 py-1 text-center text-[10px] font-medium text-amber-600 dark:text-amber-400">
+                    <ShieldAlert className="w-3 h-3 shrink-0" />
+                    <span>{t(CREDITS_BLOCKED_I18N_KEY)}</span>
+                  </div>
+                )}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (mediaRef) retryMediaTask(mediaRef);
+                  }}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/40 rounded hover:bg-red-200 dark:hover:bg-red-900/60 transition-colors"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  {t('settings.mediaRetry')}
+                </button>
+              </>
             )}
           </div>
         ) : isReady && resolvedSrc ? (

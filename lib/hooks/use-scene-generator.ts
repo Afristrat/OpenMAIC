@@ -1,6 +1,11 @@
 'use client';
 
 import { useCallback, useRef } from 'react';
+import {
+  CREDITS_BLOCKED_I18N_KEY,
+  isInsufficientCreditsPayload,
+} from '@/lib/billing/credit-error-message';
+import { getClientTranslation } from '@/lib/i18n';
 import { useStageStore } from '@/lib/store/stage';
 import { isSceneEditLocked } from '@/lib/edit/regen-lock';
 import { getCurrentModelConfig } from '@/lib/utils/model-config';
@@ -98,8 +103,9 @@ function createHttpError(
   data: { details?: unknown; error?: unknown },
   fallback: string,
 ): Error & { statusCode?: number } {
-  const message =
-    typeof data.details === 'string'
+  const message = isInsufficientCreditsPayload(data)
+    ? getClientTranslation(CREDITS_BLOCKED_I18N_KEY)
+    : typeof data.details === 'string'
       ? data.details
       : typeof data.error === 'string'
         ? data.error

@@ -149,6 +149,36 @@ describe('régénération TTS et casting persistant', () => {
     });
   });
 
+  it('répond 402 INSUFFICIENT_CREDITS quand le solde est épuisé, pour une ligne comme pour tout le cours', async () => {
+    mocks.generateTTS.mockResolvedValue({ requested: 1, generated: 0, creditsBlocked: true });
+    const params = { params: Promise.resolve({ classroomId: 'classroom-1' }) };
+
+    const single = await regenerateOneSpeech(
+      new NextRequest('https://qalem.ma/api/classroom/classroom-1/tts', {
+        method: 'POST',
+        body: JSON.stringify({
+          sceneId: 'scene-1',
+          actionId: 'speech-1',
+          text: 'Bienvenue dans cette formation.',
+        }),
+      }),
+      params,
+    );
+    const all = await regenerateClassroomSpeech(
+      new NextRequest('https://qalem.ma/api/classroom/classroom-1/tts/regenerate', {
+        method: 'POST',
+        body: JSON.stringify({}),
+      }),
+      params,
+    );
+
+    for (const response of [single, all]) {
+      expect(response.status).toBe(402);
+      expect(await response.json()).toMatchObject({ errorCode: 'INSUFFICIENT_CREDITS' });
+    }
+    expect(mocks.persistClassroom).not.toHaveBeenCalled();
+  });
+
   it('conserve la voix de la professeure pour une seule prise de parole', async () => {
     const response = await regenerateOneSpeech(
       new NextRequest('https://qalem.ma/api/classroom/classroom-1/tts', {

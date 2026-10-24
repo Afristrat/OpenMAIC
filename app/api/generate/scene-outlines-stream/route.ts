@@ -36,6 +36,11 @@ import type {
   ImageMapping,
 } from '@/lib/types/generation';
 import { apiError } from '@/lib/server/api-response';
+import {
+  containsInsufficientCredits,
+  INSUFFICIENT_CREDITS_CODE,
+} from '@/lib/billing/insufficient-credits';
+import { creditsErrorResponse } from '@/lib/server/credit-error-response';
 import { createLogger } from '@/lib/logger';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
 import { resolveVocationalActive } from '@/lib/config/feature-flags';
@@ -577,6 +582,16 @@ export async function POST(req: NextRequest) {
                 return;
               }
               lastError = error instanceof Error ? error.message : String(error);
+              if (containsInsufficientCredits(error)) {
+                // Relancer ne ferait que reproduire le refus : on le signale tout de suite.
+                const creditsEvent = JSON.stringify({
+                  type: 'error',
+                  error: lastError,
+                  code: INSUFFICIENT_CREDITS_CODE,
+                });
+                controller.enqueue(encoder.encode(`data: ${creditsEvent}\n\n`));
+                return;
+              }
               log.warn(
                 `Outlines stream error detail (attempt ${attempt}/${MAX_STREAM_RETRIES + 1}): ${lastError}`,
               );
@@ -624,6 +639,7 @@ export async function POST(req: NextRequest) {
           const errorEvent = JSON.stringify({
             type: 'error',
             error: error instanceof Error ? error.message : String(error),
+            ...(containsInsufficientCredits(error) ? { code: INSUFFICIENT_CREDITS_CODE } : {}),
           });
           controller.enqueue(encoder.encode(`data: ${errorEvent}\n\n`));
         } finally {
@@ -646,6 +662,8 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
+    const creditsResponse = creditsErrorResponse(error);
+    if (creditsResponse) return creditsResponse;
     log.error(
       `Outline streaming failed [requirement="${requirementSnippet ?? 'unknown'}...", model=${resolvedModelString ?? 'unknown'}]:`,
       error,
