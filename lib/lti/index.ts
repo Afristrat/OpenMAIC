@@ -164,7 +164,7 @@ export async function getKeyPair(): Promise<{
   // Check for environment-provided keys first
   const privateKeyPem = process.env.LTI_PRIVATE_KEY;
   const publicKeyPem = process.env.LTI_PUBLIC_KEY;
-  const kid = process.env.LTI_KEY_ID ?? 'qalem-lti-key-1';
+  const kid = process.env.LTI_KEY_ID || 'qalem-lti-key-1';
 
   if (privateKeyPem && publicKeyPem) {
     const privateKey = await jose.importPKCS8(privateKeyPem, 'RS256');

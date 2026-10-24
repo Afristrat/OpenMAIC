@@ -20,10 +20,13 @@ x-qalem-environment: &qalem-environment
   # delivery. Keeping the value in Coolify is insufficient unless Compose
   # explicitly forwards it to the worker container.
   LRS_CONFIG_ENCRYPTION_KEY: ${LRS_CONFIG_ENCRYPTION_KEY:?LRS configuration encryption key required}
-  LTI_APP_URL: ${LTI_APP_URL:?LTI app URL required}
-  LTI_KEY_ID: ${LTI_KEY_ID:?LTI key ID required}
-  LTI_PRIVATE_KEY: ${LTI_PRIVATE_KEY:?LTI private key required}
-  LTI_PUBLIC_KEY: ${LTI_PUBLIC_KEY:?LTI public key required}
+  # Variables runtime uniquement (is_buildtime=false dans Coolify) : jamais exigées à la
+  # construction, sinon la clé privée serait injectée en argument de build. Le code lève
+  # lui-même en production si les clés manquent (lib/lti/index.ts).
+  LTI_APP_URL: ${LTI_APP_URL:-}
+  LTI_KEY_ID: ${LTI_KEY_ID:-}
+  LTI_PRIVATE_KEY: ${LTI_PRIVATE_KEY:-}
+  LTI_PUBLIC_KEY: ${LTI_PUBLIC_KEY:-}
   MISHKAT_API_KEY: ${MISHKAT_API_KEY}
   MISHKAT_API_URL: ${MISHKAT_API_URL}
   MISHKAT_BRAND_ID: ${MISHKAT_BRAND_ID}

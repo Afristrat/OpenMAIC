@@ -76,3 +76,17 @@ describe('Qalem runtime secret isolation', () => {
     }
   });
 });
+
+describe('Qalem build-time secret exposure', () => {
+  const compose = readFileSync(resolve('infra/coolify/qalem-runtime.yml'), 'utf8');
+
+  // Coolify only feeds build-time variables to `docker compose build`. A `${VAR:?}` forces the
+  // variable to be flagged is_buildtime, which injects the secret as a build argument.
+  it.each(['LTI_APP_URL', 'LTI_KEY_ID', 'LTI_PRIVATE_KEY', 'LTI_PUBLIC_KEY'])(
+    'does not require %s at build time',
+    (name) => {
+      expect(compose).toContain(`${name}: \${${name}:-}`);
+      expect(compose).not.toContain(`\${${name}:?`);
+    },
+  );
+});
