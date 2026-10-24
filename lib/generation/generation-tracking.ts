@@ -39,6 +39,7 @@ export function courseStepPosition(step: string | undefined): number {
 
 export type GenerationFailureCode =
   | 'SCENE_COUNT_MISMATCH'
+  | 'INSUFFICIENT_CREDITS'
   | 'PROVIDER_QUOTA'
   | 'PROVIDER_AUTH'
   | 'PROVIDER_TIMEOUT'
@@ -62,6 +63,8 @@ export function describeGenerationFailure(raw: string | undefined): GenerationFa
       params: { requested: Number(mismatch[1]), received: Number(mismatch[2]) },
     };
   }
+  if (/INSUFFICIENT_(TENANT_)?CREDITS/.test(raw))
+    return { code: 'INSUFFICIENT_CREDITS', params: {} };
   if (/\b429\b|budget|quota|rate.?limit/i.test(raw)) return { code: 'PROVIDER_QUOTA', params: {} };
   if (/\b401\b|\b403\b|unauthori[sz]ed|forbidden/i.test(raw)) {
     return { code: 'PROVIDER_AUTH', params: {} };

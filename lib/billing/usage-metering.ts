@@ -1,6 +1,10 @@
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import type { BillableUnit } from '@/lib/billing/credits';
 import { nextUsageOperationContext } from '@/lib/billing/usage-context';
+import {
+  InsufficientCreditsError,
+  isInsufficientCreditsMessage,
+} from '@/lib/billing/insufficient-credits';
 
 export type UsageReservation = {
   enforcementEnabled: boolean;
@@ -289,6 +293,7 @@ export async function reserveTenantUsage(input: {
       p_idempotency_stable: input.idempotencyStable,
     })
     .single();
+  if (isInsufficientCreditsMessage(error?.message)) throw new InsufficientCreditsError();
   if (error || !data) throw new Error(error?.message ?? 'Usage reservation failed');
   const row = data as ReservationRpcRow;
   return {
@@ -312,6 +317,7 @@ export async function settleTenantUsage(
       p_actual_quantity: actualQuantity,
     })
     .single();
+  if (isInsufficientCreditsMessage(error?.message)) throw new InsufficientCreditsError();
   if (error || !data) throw new Error(error?.message ?? 'Usage settlement failed');
   const row = data as SettlementRpcRow;
   return {

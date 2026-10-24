@@ -1,3 +1,8 @@
+import {
+  INSUFFICIENT_CREDITS_CODE,
+  containsInsufficientCredits,
+} from '@/lib/billing/insufficient-credits';
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
@@ -10,6 +15,13 @@ function meaningfulMessage(value: unknown): string | undefined {
 }
 
 export function formatGenerationError(error: unknown): string {
+  const formatted = formatRawGenerationError(error);
+  return containsInsufficientCredits(error) && !formatted.startsWith(INSUFFICIENT_CREDITS_CODE)
+    ? `${INSUFFICIENT_CREDITS_CODE} · ${formatted}`
+    : formatted;
+}
+
+function formatRawGenerationError(error: unknown): string {
   if (!isRecord(error)) return meaningfulMessage(String(error)) ?? 'Unknown generation error';
 
   const details: string[] = [];
