@@ -86,6 +86,68 @@ describe('canonical classroom agent TTS', () => {
     expect(mocks.generateTTS).toHaveBeenCalledTimes(2);
   });
 
+  describe('congested voice server', () => {
+    const outage = () =>
+      Object.assign(new Error('OpenAI TTS API error: Service Unavailable'), { status: 503 });
+    const oneLine = () =>
+      ({
+        order: 1,
+        actions: [{ id: 'one', type: 'speech', text: 'Première phrase.' }],
+      }) as unknown as Scene;
+
+    test('keeps retrying through an outage longer than a few seconds', async () => {
+      vi.useFakeTimers();
+      try {
+        for (let i = 0; i < 5; i++) mocks.generateTTS.mockRejectedValueOnce(outage());
+        mocks.generateTTS.mockResolvedValueOnce({ audio: Buffer.from('wav'), format: 'wav' });
+        const pending = generateTTSForClassroom(
+          [oneLine()],
+          'classroom-1',
+          vi.fn().mockResolvedValue(undefined),
+        );
+        await vi.runAllTimersAsync();
+        expect(await pending).toEqual({ requested: 1, generated: 1 });
+        expect(mocks.generateTTS).toHaveBeenCalledTimes(6);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    test('retries once more, after a pause, the lines left silent by the first pass', async () => {
+      vi.useFakeTimers();
+      try {
+        for (let i = 0; i < 6; i++) mocks.generateTTS.mockRejectedValueOnce(outage());
+        mocks.generateTTS.mockResolvedValueOnce({ audio: Buffer.from('wav'), format: 'wav' });
+        const pending = generateTTSForClassroom(
+          [oneLine()],
+          'classroom-1',
+          vi.fn().mockResolvedValue(undefined),
+        );
+        await vi.runAllTimersAsync();
+        expect(await pending).toEqual({ requested: 1, generated: 1 });
+        expect(mocks.generateTTS).toHaveBeenCalledTimes(7);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    test('bounds every synthesis request with a timeout', async () => {
+      mocks.generateTTS.mockResolvedValueOnce({ audio: Buffer.from('wav'), format: 'wav' });
+      await generateTTSForClassroom(
+        [oneLine()],
+        'classroom-1',
+        vi.fn().mockResolvedValue(undefined),
+      );
+      const config = mocks.generateTTS.mock.calls[0][0] as { fetch?: typeof fetch };
+      expect(config.fetch).toBeTypeOf('function');
+      const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('ok'));
+      await config.fetch?.('http://tts.test/audio/speech', {});
+      const init = spy.mock.calls[0][1] as RequestInit;
+      expect(init.signal).toBeInstanceOf(AbortSignal);
+      spy.mockRestore();
+    });
+  });
+
   test('does not retry a permanent voice error', async () => {
     const scene = {
       order: 1,

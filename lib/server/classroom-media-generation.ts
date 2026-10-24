@@ -45,7 +45,7 @@ import {
   buildOrganizationImagePrompt,
   type OrganizationDesignSystem,
 } from '@/lib/branding/organization-design-system';
-import { withGenerationRetry } from '@/lib/generation/generation-retry';
+import { isRetryableGenerationError, withGenerationRetry } from '@/lib/generation/generation-retry';
 import { ClassroomCastingError } from '@/lib/agents/classroom-casting';
 import { runMeteredTenantUsage } from '@/lib/billing/usage-metering';
 import { containsInsufficientCredits } from '@/lib/billing/insufficient-credits';
@@ -464,6 +464,18 @@ export function removeUnresolvedMediaPlaceholders(
 // TTS generation
 // ---------------------------------------------------------------------------
 
+/** Retries after the first attempt, for one speech line (≈ 2 + 4 + 8 + 16 + 30 s of waiting). */
+const TTS_LINE_MAX_RETRIES = 5;
+/** Pause before the second pass over the lines left silent, so a congested server can drain. */
+const TTS_SECOND_PASS_PAUSE_MS = 30_000;
+/** Upper bound of one synthesis request: Higgs serialises, a long line can legitimately take minutes. */
+const TTS_REQUEST_TIMEOUT_MS = 180_000;
+
+const sleepMs = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
+const fetchWithTimeout: typeof fetch = (input, init) =>
+  fetch(input, { ...init, signal: AbortSignal.timeout(TTS_REQUEST_TIMEOUT_MS) });
+
 export async function generateTTSForClassroom(
   scenes: Scene[],
   classroomId: string,
@@ -541,86 +553,120 @@ export async function generateTTSForClassroom(
     0,
   );
 
-  for (const scene of scenes) {
-    if (!scene.actions) continue;
+  // Higgs serialises requests (≈12 s per line), so a long course keeps the voice server busy for
+  // minutes and it can stay unavailable longer than a few seconds: retry patiently, bound every
+  // request, and give the lines left silent a second pass after a pause.
+  const lines = scenes.flatMap((scene) =>
+    (scene.actions ?? [])
+      .filter((action) => action.type === 'speech' && Boolean((action as SpeechAction).text))
+      .map((action) => ({ sceneOrder: scene.order, speechAction: action as SpeechAction })),
+  );
 
-    // Use scene order to make audio IDs unique across scenes
-    const sceneOrder = scene.order;
-
-    for (const action of scene.actions) {
-      if (action.type !== 'speech' || !(action as SpeechAction).text) continue;
-      const speechAction = action as SpeechAction;
-      await checkAccess();
-      report.requested += 1;
-      // Include scene order in audioId to prevent collision across scenes
-      const audioId = `tts_s${sceneOrder}_${action.id}`;
-
-      try {
-        const requestedVoice = resolveCanonicalSpeechVoice(speechAction, preferredVoice, agents);
-        const actionProviderId = (
-          requestedVoice && ttsProviderIds.includes(requestedVoice.providerId)
-            ? requestedVoice.providerId
-            : providerId
-        ) as TTSProviderId;
-        const actionProvider = TTS_PROVIDERS[actionProviderId as keyof typeof TTS_PROVIDERS];
-        const apiKey = resolveTTSApiKey(actionProviderId);
-        if (actionProvider?.requiresApiKey && !apiKey) {
-          throw new Error(`No API key configured for TTS provider "${actionProviderId}"`);
-        }
-        const ttsBaseUrl = resolveTTSBaseUrl(actionProviderId) || actionProvider?.defaultBaseUrl;
-        const voice =
-          requestedVoice?.providerId === actionProviderId
-            ? requestedVoice.voiceId
-            : DEFAULT_TTS_VOICES[actionProviderId as keyof typeof DEFAULT_TTS_VOICES] || 'default';
-        const format = actionProvider?.supportedFormats?.[0] || 'mp3';
-        // A flaky voice server must not cost the whole classroom: each line is retried on
-        // transient errors (5xx, timeouts, rate limits) before it counts as failed.
-        const result = await withGenerationRetry(
-          () =>
-            generateTTS(
-              {
-                providerId: actionProviderId,
-                modelId:
-                  agents.find((agent) => agent.id === speechAction.agentId)?.voiceConfig?.modelId ||
-                  DEFAULT_TTS_MODELS[actionProviderId as keyof typeof DEFAULT_TTS_MODELS] ||
-                  '',
-                apiKey,
-                baseUrl: ttsBaseUrl,
-                voice,
-                speed: speechAction.speed,
-                language: speechAction.ttsLanguageOverride ?? resolveSpeechLanguage(language),
-              },
-              speechAction.text,
-            ),
-          {
-            label: `classroom TTS ${audioId}`,
-            maxRetries: 3,
-            baseDelayMs: 1_000,
-            maxDelayMs: 8_000,
-            onRetry: ({ attempt, maxAttempts, reason }) => {
-              log.warn(`Retrying TTS ${audioId} (${attempt + 1}/${maxAttempts}): ${reason}`);
+  const synthesizeLine = async ({
+    sceneOrder,
+    speechAction,
+  }: (typeof lines)[number]): Promise<'done' | 'retryable' | 'permanent' | 'creditsBlocked'> => {
+    await checkAccess();
+    // Include scene order in audioId to prevent collision across scenes
+    const audioId = `tts_s${sceneOrder}_${speechAction.id}`;
+    let diagnostic = { providerId: '', modelId: '' };
+    try {
+      const requestedVoice = resolveCanonicalSpeechVoice(speechAction, preferredVoice, agents);
+      const actionProviderId = (
+        requestedVoice && ttsProviderIds.includes(requestedVoice.providerId)
+          ? requestedVoice.providerId
+          : providerId
+      ) as TTSProviderId;
+      const actionProvider = TTS_PROVIDERS[actionProviderId as keyof typeof TTS_PROVIDERS];
+      const apiKey = resolveTTSApiKey(actionProviderId);
+      if (actionProvider?.requiresApiKey && !apiKey) {
+        throw new Error(`No API key configured for TTS provider "${actionProviderId}"`);
+      }
+      const ttsBaseUrl = resolveTTSBaseUrl(actionProviderId) || actionProvider?.defaultBaseUrl;
+      const voice =
+        requestedVoice?.providerId === actionProviderId
+          ? requestedVoice.voiceId
+          : DEFAULT_TTS_VOICES[actionProviderId as keyof typeof DEFAULT_TTS_VOICES] || 'default';
+      const format = actionProvider?.supportedFormats?.[0] || 'mp3';
+      const modelId =
+        agents.find((agent) => agent.id === speechAction.agentId)?.voiceConfig?.modelId ||
+        DEFAULT_TTS_MODELS[actionProviderId as keyof typeof DEFAULT_TTS_MODELS] ||
+        '';
+      diagnostic = { providerId: actionProviderId, modelId };
+      // A flaky voice server must not cost the whole classroom: each line is retried on
+      // transient errors (5xx, timeouts, rate limits) before it counts as failed.
+      const result = await withGenerationRetry(
+        () =>
+          generateTTS(
+            {
+              providerId: actionProviderId,
+              modelId,
+              apiKey,
+              baseUrl: ttsBaseUrl,
+              voice,
+              speed: speechAction.speed,
+              language: speechAction.ttsLanguageOverride ?? resolveSpeechLanguage(language),
+              fetch: fetchWithTimeout,
             },
+            speechAction.text,
+          ),
+        {
+          label: `classroom TTS ${audioId}`,
+          maxRetries: TTS_LINE_MAX_RETRIES,
+          baseDelayMs: 2_000,
+          maxDelayMs: 30_000,
+          onRetry: ({ attempt, maxAttempts, reason }) => {
+            log.warn(
+              `Retrying TTS ${audioId} (${attempt + 1}/${maxAttempts}) via ${actionProviderId}/${modelId}, ${speechAction.text.length} chars: ${reason}`,
+            );
           },
-        );
+        },
+      );
 
-        const filename = `${audioId}.${result.format || format}`;
-        await uploadClassroomMedia(classroomId, `audio/${filename}`, result.audio, checkAccess);
-        await checkAccess();
-        const audioVersion = createHash('sha256').update(result.audio).digest('hex').slice(0, 12);
+      const filename = `${audioId}.${result.format || format}`;
+      await uploadClassroomMedia(classroomId, `audio/${filename}`, result.audio, checkAccess);
+      await checkAccess();
+      const audioVersion = createHash('sha256').update(result.audio).digest('hex').slice(0, 12);
 
-        speechAction.audioId = audioId;
-        speechAction.audioUrl = `${mediaServingUrl(classroomId, `audio/${filename}`)}?v=${audioVersion}`;
-        report.generated += 1;
-        log.info(`Generated TTS: ${filename} (${result.audio.length} bytes)`);
-        await onProgress?.({ completed: report.generated, total: totalSpeechActions });
-      } catch (err) {
-        await checkAccess();
-        log.warn(`TTS generation failed for action ${action.id}:`, err);
-        if (containsInsufficientCredits(err)) {
-          // Chaque ligne suivante serait refusée de la même façon : on s'arrête et on le dit.
-          report.creditsBlocked = true;
-          return report;
-        }
+      speechAction.audioId = audioId;
+      speechAction.audioUrl = `${mediaServingUrl(classroomId, `audio/${filename}`)}?v=${audioVersion}`;
+      report.generated += 1;
+      log.info(`Generated TTS: ${filename} (${result.audio.length} bytes)`);
+      await onProgress?.({ completed: report.generated, total: totalSpeechActions });
+      return 'done';
+    } catch (err) {
+      await checkAccess();
+      log.warn(
+        `TTS generation failed for action ${speechAction.id} via ${diagnostic.providerId}/${diagnostic.modelId}, ${speechAction.text.length} chars:`,
+        err,
+      );
+      // Chaque ligne suivante serait refusée de la même façon : on s'arrête et on le dit.
+      if (containsInsufficientCredits(err)) return 'creditsBlocked';
+      // A permanent error (bad voice, refused key) would fail the same way after a pause.
+      return isRetryableGenerationError(err) ? 'retryable' : 'permanent';
+    }
+  };
+
+  const silent: typeof lines = [];
+  for (const line of lines) {
+    report.requested += 1;
+    const outcome = await synthesizeLine(line);
+    if (outcome === 'creditsBlocked') {
+      report.creditsBlocked = true;
+      return report;
+    }
+    if (outcome === 'retryable') silent.push(line);
+  }
+
+  if (silent.length > 0) {
+    log.warn(
+      `TTS second pass: ${silent.length}/${lines.length} lines silent, retrying after a pause`,
+    );
+    await sleepMs(TTS_SECOND_PASS_PAUSE_MS);
+    for (const line of silent) {
+      if ((await synthesizeLine(line)) === 'creditsBlocked') {
+        report.creditsBlocked = true;
+        return report;
       }
     }
   }
