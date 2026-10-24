@@ -8,9 +8,13 @@
 import { existsSync } from 'node:fs';
 import { mkdir, writeFile, stat, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { DEFAULT_LANGUAGE, LANGUAGES, DOCS_BASE_PATH } from '../lib/locales.mjs';
 
-const OUT = new URL('../out/', import.meta.url).pathname;
+// fileURLToPath, not URL#pathname: pathname keeps a leading slash before the
+// Windows drive letter (/C:/...) and percent-encodes spaces and non-ASCII
+// characters, so existsSync() would miss a real out/ directory.
+const OUT = fileURLToPath(new URL('../out/', import.meta.url));
 const INDEX_SLUG = 'getting-started';
 const DEFAULT_LANG = DEFAULT_LANGUAGE;
 const LANGS = LANGUAGES;
@@ -49,12 +53,11 @@ async function main() {
   await mkdir(enDir, { recursive: true });
   await writeFile(join(enDir, 'index.html'), redirectHtml(`${DOCS_BASE_PATH}/`));
   for (const slug of enSlugs) {
-    await writeFile(
-      join(enDir, `${slug}.html`),
-      redirectHtml(`${DOCS_BASE_PATH}/${slug}`),
-    );
+    await writeFile(join(enDir, `${slug}.html`), redirectHtml(`${DOCS_BASE_PATH}/${slug}`));
   }
-  console.log(`[postexport] wrote out/${DEFAULT_LANG}/{index,${enSlugs.join(',')}}.html -> unprefixed`);
+  console.log(
+    `[postexport] wrote out/${DEFAULT_LANG}/{index,${enSlugs.join(',')}}.html -> unprefixed`,
+  );
 
   // Sanity report. Derived from the locale source so it can't drift.
   const expect = [
