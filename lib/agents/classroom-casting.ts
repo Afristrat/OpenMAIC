@@ -1,6 +1,7 @@
 import { TTS_PROVIDERS } from '@/lib/audio/constants';
 import type { TTSProviderId } from '@/lib/audio/types';
 import { PERSONA_CATALOG } from '@/lib/agents/persona-catalog';
+import { HIGGS_QUALIFIED_VOICE_CATALOG } from '@/lib/audio/qualified-voice-catalog';
 import type { GeneratedAgentConfig, Scene, Stage } from '@/lib/types/stage';
 
 type TeacherProfile = NonNullable<Stage['teacherProfile']>;
@@ -125,6 +126,121 @@ export function applyClassroomVoiceOverrides<T extends GeneratedAgentConfig>(
     normalizedAgent(candidate);
     return candidate;
   });
+}
+
+export interface TeacherVoiceConfig {
+  providerId: string;
+  modelId?: string;
+  voiceId: string;
+  voiceName?: string;
+  gender?: 'female' | 'male' | 'neutral';
+}
+
+/** The author's teacher choice (voice, first name, gender) applied to the roster's teacher. */
+export function applyTeacherVoiceConfig<T extends GeneratedAgentConfig>(
+  agents: T[],
+  config?: TeacherVoiceConfig,
+): T[] {
+  if (!config) return agents;
+  return agents.map((agent) => {
+    if (agent.role !== 'teacher') return agent;
+    const gender =
+      config.gender === 'female' || config.gender === 'male' ? config.gender : agent.gender;
+    return {
+      ...agent,
+      ...(config.voiceName ? { name: config.voiceName } : {}),
+      gender,
+      avatar:
+        gender === 'female'
+          ? '/avatars/teacher-2.png'
+          : gender === 'male'
+            ? '/avatars/teacher.png'
+            : agent.avatar,
+      voiceConfig: {
+        providerId: config.providerId as TTSProviderId,
+        ...(config.modelId ? { modelId: config.modelId } : {}),
+        voiceId: config.voiceId,
+      },
+    };
+  });
+}
+
+const sameName = (left: string, right: string): boolean =>
+  left.trim().toLocaleLowerCase('fr') === right.trim().toLocaleLowerCase('fr');
+
+/**
+ * No two agents of a casting share a first name or a voice. The teacher chosen by the author wins:
+ * an agent that collides with it moves to a free qualified voice of the SAME gender, takes that
+ * voice's first name and, when a free one exists, an avatar of that gender. Without any free voice
+ * the casting fails loudly rather than shipping a silent duplicate.
+ */
+export function ensureDistinctCasting<T extends GeneratedAgentConfig>(agents: T[]): T[] {
+  const teacher = agents.find((agent) => agent.role === 'teacher');
+  if (!teacher?.voiceConfig) return agents;
+  const voiceKey = (agent: T) =>
+    agent.voiceConfig ? `${agent.voiceConfig.providerId}:${agent.voiceConfig.voiceId}` : '';
+  const collides = (agent: T) =>
+    agent !== teacher &&
+    (sameName(agent.name, teacher.name) || voiceKey(agent) === voiceKey(teacher));
+  if (!agents.some(collides)) return agents;
+
+  const taken = new Set(agents.filter((agent) => !collides(agent)).map(voiceKey));
+  const takenNames = agents.filter((agent) => !collides(agent)).map((agent) => agent.name);
+  const takenAvatars = new Set(agents.filter((agent) => !collides(agent)).map((a) => a.avatar));
+  const result = [...agents];
+  for (const [index, agent] of agents.entries()) {
+    if (!collides(agent)) continue;
+    const gender =
+      agent.gender ??
+      (agent.voiceConfig &&
+        knownVoiceGender(agent.voiceConfig.providerId, agent.voiceConfig.voiceId)) ??
+      knownAvatarGender(agent.avatar);
+    const free = HIGGS_QUALIFIED_VOICE_CATALOG.find(
+      (voice) =>
+        voice.gender === gender &&
+        !taken.has(`${voice.providerId}:${voice.id}`) &&
+        !takenNames.some((name) => sameName(name, voice.name)),
+    );
+    if (!gender || !free) {
+      throw new ClassroomCastingError(
+        `Aucune voix libre de même genre pour l’agent ${agent.id} : le professeur « ${teacher.name} » occupe déjà son nom ou sa voix.`,
+      );
+    }
+    const avatar =
+      PERSONA_CATALOG.find(
+        (persona) => persona.gender === gender && !takenAvatars.has(persona.avatar),
+      )?.avatar ?? agent.avatar;
+    taken.add(`${free.providerId}:${free.id}`);
+    takenNames.push(free.name);
+    takenAvatars.add(avatar);
+    result[index] = {
+      ...agent,
+      name: free.name,
+      gender,
+      avatar,
+      voiceConfig: { providerId: free.providerId, voiceId: free.id },
+    };
+  }
+  return result;
+}
+
+/**
+ * Names of the catalogue personas that a line speaks although no agent of the casting bears them:
+ * the sign of a prompt written with a roster different from the persisted one.
+ */
+export function findForeignPersonaNames(
+  text: string,
+  agents: readonly Pick<GeneratedAgentConfig, 'name'>[],
+): string[] {
+  const known = new Set([
+    ...PERSONA_CATALOG.map((persona) => persona.defaultName),
+    ...HIGGS_QUALIFIED_VOICE_CATALOG.map((voice) => voice.name),
+  ]);
+  return [...known].filter(
+    (name) =>
+      !agents.some((agent) => sameName(agent.name, name)) &&
+      new RegExp(`(?<![\p{L}])${name}(?![\p{L}])`, 'u').test(text),
+  );
 }
 
 function legacyTeacher(profile: TeacherProfile): GeneratedAgentConfig {

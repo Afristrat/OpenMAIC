@@ -92,7 +92,6 @@ import { buildLiveInstructionalDirective } from '@/lib/formation-engine/downstre
 import { toPersistedResearchSources } from '@/lib/server/research-sources';
 import { createAnimationConstitution } from '@/lib/formation-engine/animation-constitution';
 import { generateResourcesForClassroom } from '@/lib/server/classroom-resource-generation';
-import type { TTSProviderId } from '@/lib/audio/types';
 import type { ContextualSpecialist } from '@/lib/agents/contextual-specialist';
 import type { LearningContext } from '@/lib/types/stage';
 import {
@@ -118,6 +117,9 @@ import {
 import { normalizePdfImages, uploadedPdfSource } from '@/lib/server/pdf-source';
 import {
   applyClassroomVoiceOverrides,
+  applyTeacherVoiceConfig,
+  ensureDistinctCasting,
+  findForeignPersonaNames,
   teacherProfileFromClassroomCast,
   type ClassroomVoiceOverrides,
 } from '@/lib/agents/classroom-casting';
@@ -171,39 +173,6 @@ export interface GenerateClassroomInput {
   agentVoiceOverrides?: ClassroomVoiceOverrides;
   activeSkillId?: string;
   approvedPlan?: ClassroomPlan;
-}
-
-function applyTeacherVoiceConfig<
-  T extends {
-    name: string;
-    role: string;
-    avatar: string;
-    gender?: 'female' | 'male';
-    voiceConfig?: { providerId: TTSProviderId; modelId?: string; voiceId: string };
-  },
->(agents: T[], config: GenerateClassroomInput['teacherVoiceConfig']): T[] {
-  if (!config) return agents;
-  return agents.map((agent) => {
-    if (agent.role !== 'teacher') return agent;
-    const gender =
-      config.gender === 'female' || config.gender === 'male' ? config.gender : agent.gender;
-    return {
-      ...agent,
-      ...(config.voiceName ? { name: config.voiceName } : {}),
-      gender,
-      avatar:
-        gender === 'female'
-          ? '/avatars/teacher-2.png'
-          : gender === 'male'
-            ? '/avatars/teacher.png'
-            : agent.avatar,
-      voiceConfig: {
-        providerId: config.providerId as TTSProviderId,
-        ...(config.modelId ? { modelId: config.modelId } : {}),
-        voiceId: config.voiceId,
-      },
-    };
-  });
 }
 
 export type ClassroomGenerationStep =
@@ -727,7 +696,6 @@ export async function generateClassroom(
   });
 
   // Resolve agents based on agentMode — now AFTER outlines so we can use languageDirective
-  let agents: AgentInfo[];
   const agentMode = input.agentMode || 'default';
   let preferredMechanismIds: string[] = [];
   if (agentMode === 'generate') {
@@ -814,15 +782,7 @@ export async function generateClassroom(
       })),
     ];
   }
-  if (agentMode === 'generate') {
-    agents = tenantAgentConfigs.map(({ id, name, role, persona }) => ({
-      id,
-      name,
-      role,
-      persona,
-    }));
-    log.info(`Instantiated ${agents.length} tenant pedagogical personas`);
-  } else {
+  if (agentMode !== 'generate') {
     const tenantRoster = buildTenantAgentConfigs(learningDesign);
     const contextualAgents = (input.contextualSpecialists ?? []).map((specialist) => ({
       id: specialist.id,
@@ -843,10 +803,19 @@ export async function generateClassroom(
       tenantRoster,
       input.selectedPersonaIds ?? [],
     );
-    agents = tenantAgentConfigs.map(({ id, name, role, persona }) => ({ id, name, role, persona }));
   }
+  // The author's choices and the distinct-casting rule come BEFORE the agents are derived: the
+  // scene and action prompts must name the very people the persisted casting and the voices carry.
   tenantAgentConfigs = applyClassroomVoiceOverrides(tenantAgentConfigs, input.agentVoiceOverrides);
   tenantAgentConfigs = applyTeacherVoiceConfig(tenantAgentConfigs, input.teacherVoiceConfig);
+  tenantAgentConfigs = ensureDistinctCasting(tenantAgentConfigs);
+  const agents: AgentInfo[] = tenantAgentConfigs.map(({ id, name, role, persona }) => ({
+    id,
+    name,
+    role,
+    persona,
+  }));
+  log.info(`Instantiated ${agents.length} tenant pedagogical personas`);
   teachingProfile = teacherProfileFromClassroomCast(tenantAgentConfigs);
   try {
     const stageId = nanoid(10);
@@ -1186,6 +1155,18 @@ export async function generateClassroom(
         throw new Error(`Media integration incomplete: ${unreferencedMediaIds.join(', ')}`);
       }
       log.info(`Media generation complete: ${generatedMediaCount} files`);
+    }
+
+    for (const scene of scenes) {
+      for (const action of scene.actions ?? []) {
+        if (action.type !== 'speech') continue;
+        const foreign = findForeignPersonaNames(action.text, tenantAgentConfigs);
+        if (foreign.length > 0) {
+          log.warn(
+            `Scene "${scene.title}": a line of ${action.agentId ?? 'unknown agent'} names ${foreign.join(', ')}, absent from the casting (${tenantAgentConfigs.map((agent) => agent.name).join(', ')})`,
+          );
+        }
+      }
     }
 
     // Phase: TTS generation
