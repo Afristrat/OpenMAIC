@@ -30,7 +30,7 @@ export function Header({
 
   return (
     <>
-      <header className="h-20 px-8 flex items-center justify-between z-10 bg-transparent gap-4">
+      <header className="h-20 px-3 sm:px-8 flex items-center justify-between z-10 bg-transparent gap-2 sm:gap-4">
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <button
             onClick={() => router.push('/app')}
@@ -63,7 +63,7 @@ export function Header({
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <TeamOfTheDay agents={generatedAgents} />
           <HeaderControls
             mode={mode}

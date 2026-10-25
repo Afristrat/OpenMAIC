@@ -131,7 +131,7 @@ export function HeaderControls({
   // the cluster pixel-stable; both hosts pad to `px-8`, so the right edge
   // anchors identically too.
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-2 sm:gap-4">
       {mode !== 'edit' && <LiveSessionRecorder />}
       <div
         className={cn(
@@ -237,7 +237,7 @@ export function HeaderControls({
         >
           <span
             className={cn(
-              'text-[11px] font-bold uppercase tracking-[0.14em] tabular-nums select-none transition-colors duration-200',
+              'hidden sm:inline text-[11px] font-bold uppercase tracking-[0.14em] tabular-nums select-none transition-colors duration-200',
               mode === 'edit'
                 ? 'text-violet-600 dark:text-violet-300'
                 : 'text-gray-500 dark:text-gray-400',
