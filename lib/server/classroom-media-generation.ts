@@ -485,6 +485,13 @@ const TTS_BATCH_BUDGET_MS = 40 * 60_000;
  * further lines would only burn ≈ 13 min each.
  */
 const TTS_CIRCUIT_BREAKER_LINES = 5;
+/**
+ * Lines of one voice that exhausted every retry, with none ever synthesised, before that voice is
+ * left alone for the rest of the batch. The voice server can list a voice and still answer 500 on
+ * it (measured: broken reference audio): each of its lines would burn ≈ 1 min of retries and the
+ * time budget of the voices that work.
+ */
+const TTS_VOICE_BREAKER_LINES = 2;
 
 const sleepMs = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -593,14 +600,24 @@ export async function generateTTSForClassroom(
       .map((action) => ({ sceneOrder: scene.order, speechAction: action as SpeechAction })),
   );
 
+  const voiceHealth = new Map<string, { spoken: number; exhausted: number }>();
+  const markVoice = (key: string, field: 'spoken' | 'exhausted'): void => {
+    const health = voiceHealth.get(key) ?? { spoken: 0, exhausted: 0 };
+    health[field] += 1;
+    voiceHealth.set(key, health);
+  };
+
   const synthesizeLine = async ({
     sceneOrder,
     speechAction,
-  }: (typeof lines)[number]): Promise<'done' | 'retryable' | 'permanent' | 'creditsBlocked'> => {
+  }: (typeof lines)[number]): Promise<
+    'done' | 'retryable' | 'permanent' | 'creditsBlocked' | 'skipped'
+  > => {
     await checkAccess();
     // Include scene order in audioId to prevent collision across scenes
     const audioId = `tts_s${sceneOrder}_${speechAction.id}`;
     let diagnostic = { providerId: '', modelId: '' };
+    let voiceKey = '';
     try {
       const requestedVoice = resolveCanonicalSpeechVoice(speechAction, preferredVoice, agents);
       const actionProviderId = (
@@ -624,6 +641,12 @@ export async function generateTTSForClassroom(
         DEFAULT_TTS_MODELS[actionProviderId as keyof typeof DEFAULT_TTS_MODELS] ||
         '';
       diagnostic = { providerId: actionProviderId, modelId };
+      voiceKey = `${actionProviderId}/${voice}`;
+      const health = voiceHealth.get(voiceKey);
+      if (health && health.spoken === 0 && health.exhausted >= TTS_VOICE_BREAKER_LINES) {
+        log.warn(`TTS ${audioId} skipped: voice ${voiceKey} failed on every line of this batch`);
+        return 'skipped';
+      }
       // A flaky voice server must not cost the whole classroom: each line is retried on
       // transient errors (5xx, timeouts, rate limits) before it counts as failed.
       const result = await withGenerationRetry(
@@ -674,8 +697,11 @@ export async function generateTTSForClassroom(
       // Chaque ligne suivante serait refusée de la même façon : on s'arrête et on le dit.
       if (containsInsufficientCredits(err)) return 'creditsBlocked';
       // A permanent error (bad voice, refused key) would fail the same way after a pause.
-      return isRetryableGenerationError(err) ? 'retryable' : 'permanent';
+      if (!isRetryableGenerationError(err)) return 'permanent';
+      if (voiceKey) markVoice(voiceKey, 'exhausted');
+      return 'retryable';
     }
+    markVoice(voiceKey, 'spoken');
     // Outside the try: a failing progress write must never requalify a line that has its audio.
     try {
       await onProgress?.({ completed: report.generated, total: totalSpeechActions });

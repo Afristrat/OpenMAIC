@@ -191,10 +191,17 @@ describe('canonical classroom agent TTS', () => {
         actions: Array.from({ length: count }, (_, i) => ({
           id: `l${i}`,
           type: 'speech',
+          agentId: `a${i}`,
           text: `Phrase ${i}.`,
         })),
       }) as unknown as Scene;
     const access = () => vi.fn().mockResolvedValue(undefined);
+    /** One distinct voice per line, so the per-voice breaker never interferes. */
+    const ownVoices = (count: number) =>
+      Array.from({ length: count }, (_, i) => ({
+        id: `a${i}`,
+        voiceConfig: { providerId: 'higgs-tts', voiceId: `voice-${i}` },
+      }));
 
     test('does not run a second pass unless asked (line-by-line callers stay fast)', async () => {
       vi.useFakeTimers();
@@ -218,12 +225,75 @@ describe('canonical classroom agent TTS', () => {
           [manyLines(9)],
           'classroom-1',
           access(),
-          ...withSecondPass,
+          undefined,
+          ownVoices(9),
+          undefined,
+          undefined,
+          { secondPass: true },
         );
         await vi.runAllTimersAsync();
         expect(await pending).toEqual({ requested: 9, generated: 0 });
         // 5 lines x 6 attempts, then the batch stops: no second pass on a dead server.
         expect(mocks.generateTTS).toHaveBeenCalledTimes(30);
+      } finally {
+        mocks.generateTTS.mockReset();
+        vi.useRealTimers();
+      }
+    });
+
+    const twoVoices = [
+      { id: 'a-bad', voiceConfig: { providerId: 'higgs-tts', voiceId: 'bad-voice' } },
+      { id: 'a-good', voiceConfig: { providerId: 'higgs-tts', voiceId: 'good-voice' } },
+    ];
+    const interleaved = (count: number) =>
+      ({
+        order: 1,
+        actions: Array.from({ length: count }, (_, i) => ({
+          id: `l${i}`,
+          type: 'speech',
+          agentId: i % 2 === 0 ? 'a-bad' : 'a-good',
+          text: `Phrase ${i}.`,
+        })),
+      }) as unknown as Scene;
+
+    test('stops trying a voice the server refuses on every line, the other voices go on', async () => {
+      vi.useFakeTimers();
+      try {
+        mocks.generateTTS.mockImplementation(async (config: { voice: string }) => {
+          if (config.voice === 'bad-voice') throw outage();
+          return { audio: Buffer.from('wav'), format: 'wav' };
+        });
+        const pending = generateTTSForClassroom(
+          [interleaved(8)],
+          'classroom-1',
+          access(),
+          undefined,
+          twoVoices,
+        );
+        await vi.runAllTimersAsync();
+        expect(await pending).toEqual({ requested: 8, generated: 4 });
+        const calls = mocks.generateTTS.mock.calls.map((c) => (c[0] as { voice: string }).voice);
+        // two lines of the refused voice use their 6 attempts, the next two are skipped
+        expect(calls.filter((v) => v === 'bad-voice')).toHaveLength(12);
+        expect(calls.filter((v) => v === 'good-voice')).toHaveLength(4);
+      } finally {
+        mocks.generateTTS.mockReset();
+        vi.useRealTimers();
+      }
+    });
+
+    test('a voice that already spoke is never disabled by later failures', async () => {
+      vi.useFakeTimers();
+      try {
+        let spoken = 0;
+        mocks.generateTTS.mockImplementation(async () => {
+          if (spoken++ === 0) return { audio: Buffer.from('wav'), format: 'wav' };
+          throw outage();
+        });
+        const pending = generateTTSForClassroom([manyLines(4)], 'classroom-1', access());
+        await vi.runAllTimersAsync();
+        expect(await pending).toEqual({ requested: 4, generated: 1 });
+        expect(mocks.generateTTS).toHaveBeenCalledTimes(1 + 3 * 6);
       } finally {
         mocks.generateTTS.mockReset();
         vi.useRealTimers();
@@ -239,7 +309,13 @@ describe('canonical classroom agent TTS', () => {
         for (let i = 0; i < 4; i++) failLine();
         mocks.generateTTS.mockResolvedValueOnce({ audio: Buffer.from('wav'), format: 'wav' });
         for (let i = 0; i < 4; i++) failLine();
-        const pending = generateTTSForClassroom([manyLines(9)], 'classroom-1', access());
+        const pending = generateTTSForClassroom(
+          [manyLines(9)],
+          'classroom-1',
+          access(),
+          undefined,
+          ownVoices(9),
+        );
         await vi.runAllTimersAsync();
         expect(await pending).toEqual({ requested: 9, generated: 1 });
         expect(mocks.generateTTS).toHaveBeenCalledTimes(8 * 6 + 1);
