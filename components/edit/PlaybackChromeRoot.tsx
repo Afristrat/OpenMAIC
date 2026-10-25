@@ -987,6 +987,9 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
     const currentSceneIndex = isPendingScene
       ? scenes.length
       : scenes.findIndex((s) => s.id === currentSceneId);
+    // The counter is deliberately one above the number of saved scenes (19 scenes read "1 / 20"):
+    // the last slot is the completion page (or the pending slot while scenes are still generating),
+    // reachable with the next button and the progress slider. It is not an off-by-one.
     const totalScenesCount = scenes.length + (canAdvanceToPendingSlot ? 1 : 0);
 
     // get action information
