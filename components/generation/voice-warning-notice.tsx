@@ -9,13 +9,16 @@ import { useI18n } from '@/lib/hooks/use-i18n';
  * open course; the text carries the information, the amber colour only reinforces it.
  */
 export function VoiceWarningNotice({
-  missing,
-  total,
+  missing = 0,
+  total = 0,
+  message,
   showHint,
   children,
 }: {
-  missing: number;
-  total: number;
+  missing?: number;
+  total?: number;
+  /** A text without figure, when the counts are not known. */
+  message?: string;
   /** Tells where to regenerate the voices: only for readers who can do it. */
   showHint: boolean;
   /** The action, when the reader may use it. */
@@ -31,7 +34,9 @@ export function VoiceWarningNotice({
       <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
       <div className="flex-1 space-y-2">
         <p>
-          <span className="font-medium">{t('edit.tts.partialNotice', { missing, total })}</span>
+          <span className="font-medium">
+            {message ?? t('edit.tts.partialNotice', { missing, total })}
+          </span>
           {showHint && <> {t('edit.tts.partialHint')}</>}
         </p>
         {children}

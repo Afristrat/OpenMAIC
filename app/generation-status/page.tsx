@@ -6,9 +6,10 @@ import { AlertCircle, ArrowLeft, CheckCircle2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { GenerationTracker } from '@/components/generation/generation-tracker';
-import { VoiceWarningNotice } from '@/components/generation/voice-warning-notice';
+import { GenerationVoiceNotice } from '@/components/generation/generation-voice-notice';
 import { readVoiceWarning, shouldAutoOpenCourse } from '@/lib/generation/voice-warning';
 import { useI18n } from '@/lib/hooks/use-i18n';
+import { useLiveVoiceState } from '@/lib/hooks/use-live-voice-state';
 import { CreditStatusNotice } from '@/components/billing/credit-status-notice';
 import { useCreditStatus } from '@/lib/hooks/use-credit-status';
 import type { GenerationFailure } from '@/lib/generation/generation-tracking';
@@ -19,7 +20,7 @@ interface GenerationJob {
   progress: number;
   scenesGenerated?: number;
   totalScenes?: number;
-  result?: { url: string };
+  result?: { url: string; classroomId?: string };
   warnings?: unknown;
   failureCode?: 'MEDIA_PROVIDER_UNAVAILABLE';
   failure?: GenerationFailure;
@@ -46,6 +47,8 @@ function GenerationStatus() {
   } = useCreditStatus(orgId ?? undefined);
   const failedForCredits = job?.failure?.code === 'INSUFFICIENT_CREDITS';
   const voiceWarning = job?.status === 'succeeded' ? readVoiceWarning(job.warnings) : null;
+  // The warning is a snapshot of the generation: the saved course tells what is silent now.
+  const liveVoice = useLiveVoiceState(job?.result?.classroomId, Boolean(voiceWarning));
 
   useEffect(() => {
     if (!jobId) {
@@ -102,7 +105,9 @@ function GenerationStatus() {
             {hasFailed
               ? failureText
               : voiceWarning
-                ? t('generation.courseReadyWithWarningsDesc')
+                ? liveVoice.kind === 'voiced'
+                  ? t('generation.courseReadyAllVoices')
+                  : t('generation.courseReadyWithWarningsDesc')
                 : t('generation.aiWorking')}
           </p>
           {hasFailed && job?.error && !job.failure && (
@@ -111,11 +116,7 @@ function GenerationStatus() {
         </div>
         {voiceWarning && job?.result?.url && (
           <>
-            <VoiceWarningNotice
-              missing={voiceWarning.missing}
-              total={voiceWarning.total}
-              showHint
-            />
+            <GenerationVoiceNotice state={liveVoice} />
             <Button onClick={() => router.push(job.result?.url ?? '/app')}>
               {t('generation.openCourse')}
             </Button>

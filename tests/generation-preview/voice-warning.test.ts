@@ -1,6 +1,6 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Locale } from '@/lib/i18n';
 
 const state = vi.hoisted(() => ({ locale: 'fr-FR' as string, scenes: [] as unknown[] }));
@@ -30,7 +30,12 @@ vi.mock('sonner', () => ({
   toast: { loading: vi.fn(), warning: vi.fn(), success: vi.fn(), error: vi.fn() },
 }));
 
-import { readVoiceWarning, shouldAutoOpenCourse } from '@/lib/generation/voice-warning';
+import {
+  readLiveVoiceState,
+  readVoiceWarning,
+  shouldAutoOpenCourse,
+} from '@/lib/generation/voice-warning';
+import { GenerationVoiceNotice } from '@/components/generation/generation-voice-notice';
 import { VoiceWarningNotice } from '@/components/generation/voice-warning-notice';
 import { MissingVoicesBanner } from '@/components/stage/missing-voices-banner';
 
@@ -157,5 +162,80 @@ describe('MissingVoicesBanner', () => {
     expect(renderToStaticMarkup(createElement(MissingVoicesBanner, { canComplete: true }))).toBe(
       '',
     );
+  });
+});
+
+describe('readLiveVoiceState', () => {
+  const answer = (body: unknown, ok = true) =>
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok, json: async () => body })),
+    );
+  const course = (actions: unknown[]) => ({
+    classroom: { scenes: [{ id: 's', order: 1, actions }] },
+  });
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('is voiced when the saved course has no silent line, whatever the stale snapshot said', () => {
+    answer(course([speech('a', '/a.mp3'), speech('b', '/b.mp3')]));
+    return expect(readLiveVoiceState('c1')).resolves.toEqual({ kind: 'voiced' });
+  });
+
+  it('reports the real counts when lines are still silent', () => {
+    answer(course([speech('a'), speech('b', '/b.mp3'), speech('c', '/c.mp3')]));
+    return expect(readLiveVoiceState('c1')).resolves.toEqual({
+      kind: 'missing',
+      missing: 1,
+      total: 3,
+    });
+  });
+
+  it.each([
+    ['an HTTP error', () => answer({ success: false }, false)],
+    ['an unexpected payload', () => answer({ classroom: {} })],
+    ['a network failure', () => vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('x')))],
+  ])('is unknown on %s', (_name, arrange) => {
+    arrange();
+    return expect(readLiveVoiceState('c1')).resolves.toEqual({ kind: 'unknown' });
+  });
+});
+
+describe('GenerationVoiceNotice', () => {
+  const render = (state: Parameters<typeof GenerationVoiceNotice>[0]['state']) =>
+    renderToStaticMarkup(createElement(GenerationVoiceNotice, { state }));
+
+  beforeEach(() => {
+    state.locale = 'fr-FR';
+  });
+
+  it('shows nothing when every line is voiced or while reading', () => {
+    expect(render({ kind: 'voiced' })).toBe('');
+    expect(render({ kind: 'pending' })).toBe('');
+  });
+
+  it('shows the real figure and no longer points to a button the screen lacks', () => {
+    const html = render({ kind: 'missing', missing: 3, total: 10 });
+    expect(html).toContain('Pistes vocales non générées : 3 sur 10.');
+    expect(html).toContain('se régénèrent depuis le cours');
+    expect(html).not.toContain('Générer les voix manquantes');
+  });
+
+  it('falls back to a neutral text without figure when the course cannot be read', () => {
+    const html = render({ kind: 'unknown' });
+    expect(html).toContain('n’a pas pu être vérifié');
+    expect(html).not.toMatch(/\d+ sur \d+/);
+  });
+
+  it.each(['en-US', 'ar-MA'])('renders in %s without placeholder or physical spacing', (locale) => {
+    state.locale = locale;
+    for (const html of [
+      render({ kind: 'missing', missing: 3, total: 10 }),
+      render({ kind: 'unknown' }),
+    ]) {
+      expect(html).not.toContain('{{');
+      expect(html).not.toMatch(/(?:ml|mr|pl|pr|text-left|text-right)-/);
+      expect(html).not.toContain('generation.');
+    }
   });
 });
