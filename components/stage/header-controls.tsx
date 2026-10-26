@@ -229,7 +229,7 @@ export function HeaderControls({
           // "Edit course" label they can't act on.
           title={
             !canEdit && mode !== 'edit'
-              ? t('stage.proModeDisabledHint')
+              ? t('stage.editUnavailableHint')
               : mode === 'edit'
                 ? t('stage.doneEditing')
                 : t('stage.editCourse')
@@ -237,19 +237,19 @@ export function HeaderControls({
         >
           <span
             className={cn(
-              'hidden sm:inline text-[11px] font-bold uppercase tracking-[0.14em] tabular-nums select-none transition-colors duration-200',
+              'hidden sm:inline text-xs font-semibold select-none transition-colors duration-200',
               mode === 'edit'
                 ? 'text-violet-600 dark:text-violet-300'
                 : 'text-gray-500 dark:text-gray-400',
             )}
           >
-            {t('edit.proMode')}
+            {t('stage.editCourse')}
           </span>
           <Switch
             checked={mode === 'edit'}
             onCheckedChange={onToggleEditMode}
             disabled={!canEdit && mode !== 'edit'}
-            aria-label={mode === 'edit' ? t('stage.doneEditing') : t('stage.editCourse')}
+            aria-label={t('stage.editCourse')}
             className="data-[state=checked]:bg-violet-600 dark:data-[state=checked]:bg-violet-500"
           />
         </label>

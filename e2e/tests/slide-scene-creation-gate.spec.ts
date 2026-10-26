@@ -55,6 +55,8 @@ test.describe('Slide editor — scene creation (enabled)', () => {
     // The slide nav rail replaces the playback sidebar in Pro mode.
     const rail = page.getByTestId('slide-nav-rail');
     await expect(rail).toBeVisible({ timeout: 10_000 });
+    // The rail is collapsed by default: expand it to reach the insertion zones.
+    await rail.getByRole('button', { expanded: false }).first().click();
 
     // Insertion zones are present between thumbs.
     await expect(page.getByTestId('slide-nav-insert')).not.toHaveCount(0);

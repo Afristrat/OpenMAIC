@@ -15,7 +15,12 @@
  * Wiring (ExternalStore over the pi AgentEvent SSE stream) lives in
  * use-agent-runtime.
  */
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  EDIT_AGENT_COLLAPSED_KEY,
+  shouldAutoExpandAgent,
+  usePanelCollapsed,
+} from '@/lib/edit/panel-collapse';
 import {
   AssistantRuntimeProvider,
   ComposerPrimitive,
@@ -194,6 +199,7 @@ interface AgentPanelProps {
   readonly runtime: AssistantRuntime;
   readonly clearThread: () => void;
   readonly hasMessages: boolean;
+  readonly isRunning?: boolean;
   readonly canSend: boolean;
   readonly mobileMode?: boolean;
   readonly mobileOpen?: boolean;
@@ -205,6 +211,7 @@ export function AgentPanel({
   runtime,
   clearThread,
   hasMessages,
+  isRunning = false,
   canSend,
   mobileMode = false,
   mobileOpen = false,
@@ -256,7 +263,12 @@ export function AgentPanel({
   const onResizeMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     const d = dragRef.current;
     if (!d || e.pointerId !== d.pointerId) return;
-    const next = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, d.startW + (d.startX - e.clientX)));
+    // Le panneau est du côté fin de ligne : en RTL (à gauche) tirer vers la droite l'élargit.
+    const sign = getComputedStyle(e.currentTarget).direction === 'rtl' ? -1 : 1;
+    const next = Math.min(
+      MAX_WIDTH,
+      Math.max(MIN_WIDTH, d.startW + (d.startX - e.clientX) * sign),
+    );
     d.lastW = next;
     if (railRef.current) railRef.current.style.width = `${next}px`;
   }, []);
@@ -273,8 +285,17 @@ export function AgentPanel({
     document.body.style.cursor = '';
   }, []);
 
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = usePanelCollapsed(EDIT_AGENT_COLLAPSED_KEY);
   const effectiveCollapsed = mobileMode ? !mobileOpen : collapsed;
+  // Réduit par défaut, mais l'assistant se rouvre seul dès qu'une action IA
+  // démarre ou qu'un message arrive. Ouverture non mémorisée : elle ne change
+  // pas la préférence de l'utilisateur.
+  const prevActivity = useRef({ isRunning: false, hasMessages: false });
+  useEffect(() => {
+    const next = { isRunning, hasMessages };
+    if (shouldAutoExpandAgent(prevActivity.current, next, mobileMode)) setCollapsed(false, false);
+    prevActivity.current = next;
+  }, [isRunning, hasMessages, mobileMode, setCollapsed]);
   const setEffectiveCollapsed = (next: boolean) => {
     if (mobileMode) onMobileOpenChange?.(!next);
     else setCollapsed(next);
@@ -294,13 +315,15 @@ export function AgentPanel({
         }}
         role="button"
         tabIndex={0}
+        aria-expanded={false}
+        aria-label={t('edit.agent.expand')}
         data-testid="agent-panel"
         data-mobile-open={mobileOpen}
         title={t('edit.agent.expand')}
-        className="group/rail relative flex h-full w-11 shrink-0 cursor-pointer flex-col items-center gap-3 border-l border-gray-100 bg-white/80 pt-3 backdrop-blur-xl transition-colors hover:bg-violet-50/40 dark:border-gray-800 dark:bg-slate-900/80 dark:hover:bg-violet-500/5 shadow-[-2px_0_24px_rgba(0,0,0,0.02)]"
+        className="group/rail relative flex h-full w-11 shrink-0 cursor-pointer flex-col items-center gap-3 border-s border-gray-100 bg-white/80 pt-3 backdrop-blur-xl transition-colors hover:bg-violet-50/40 dark:border-gray-800 dark:bg-slate-900/80 dark:hover:bg-violet-500/5 shadow-[-2px_0_24px_rgba(0,0,0,0.02)]"
       >
         <span className="grid size-8 place-items-center rounded-lg text-[#5b1fa8] transition-colors group-hover/rail:bg-violet-100/70 dark:text-violet-300 dark:group-hover/rail:bg-violet-500/15">
-          <PanelRightOpen className="size-4" />
+          <PanelRightOpen className="size-4 rtl-flip" />
         </span>
         <Sparkles className="size-4 text-[#5b1fa8]/80 dark:text-violet-300/80" />
         <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5b1fa8]/70 [writing-mode:vertical-rl] dark:text-violet-300/70">
@@ -318,7 +341,7 @@ export function AgentPanel({
       style={{ width: mobileMode ? 'min(82vw, 320px)' : width }}
       // Mirrors SlideNavRail's surface (white/translucent glass, soft hairline,
       // faint side shadow) so the two rails read as one chrome family.
-      className="relative flex h-full shrink-0 flex-col border-l border-gray-100 bg-white/80 backdrop-blur-xl dark:border-gray-800 dark:bg-slate-900/80 shadow-[-2px_0_24px_rgba(0,0,0,0.02)]"
+      className="relative flex h-full shrink-0 flex-col border-s border-gray-100 bg-white/80 backdrop-blur-xl dark:border-gray-800 dark:bg-slate-900/80 shadow-[-2px_0_24px_rgba(0,0,0,0.02)]"
     >
       {!mobileMode && (
         <div
@@ -326,14 +349,14 @@ export function AgentPanel({
           onPointerMove={onResizeMove}
           onPointerUp={onResizeEnd}
           onPointerCancel={onResizeEnd}
-          className="group absolute left-0 top-0 bottom-0 z-10 w-1.5 cursor-col-resize touch-none transition-colors hover:bg-violet-400/30 active:bg-violet-500/50 dark:hover:bg-violet-500/30"
+          className="group absolute start-0 top-0 bottom-0 z-10 w-1.5 cursor-col-resize touch-none transition-colors hover:bg-violet-400/30 active:bg-violet-500/50 dark:hover:bg-violet-500/30"
         >
-          <div className="absolute left-0.5 top-1/2 h-8 w-0.5 -translate-y-1/2 rounded-full bg-gray-300 transition-colors group-hover:bg-violet-400 dark:bg-gray-600 dark:group-hover:bg-violet-500" />
+          <div className="absolute start-0.5 top-1/2 h-8 w-0.5 -translate-y-1/2 rounded-full bg-gray-300 transition-colors group-hover:bg-violet-400 dark:bg-gray-600 dark:group-hover:bg-violet-500" />
         </div>
       )}
 
       {/* Localized editor-assistant header. */}
-      <header className="flex h-10 shrink-0 items-center gap-2 border-b border-gray-100 px-4 pl-5 dark:border-gray-800">
+      <header className="flex h-10 shrink-0 items-center gap-2 border-b border-gray-100 pe-4 ps-5 dark:border-gray-800">
         <Sparkles className="size-3.5 text-[#5b1fa8] dark:text-violet-300" />
         <span className="text-[13px] font-semibold text-[#5b1fa8] dark:text-violet-300">
           {t('edit.agent.title')}
@@ -352,6 +375,7 @@ export function AgentPanel({
         <button
           type="button"
           onClick={() => setEffectiveCollapsed(true)}
+          aria-expanded
           title={t('edit.agent.collapse')}
           aria-label={t('edit.agent.collapse')}
           className={cn(
@@ -359,7 +383,7 @@ export function AgentPanel({
             hasMessages ? '' : 'ml-auto',
           )}
         >
-          <PanelRightClose className="size-4" />
+          <PanelRightClose className="size-4 rtl-flip" />
         </button>
       </header>
 

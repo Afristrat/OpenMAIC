@@ -221,7 +221,6 @@ export interface SettingsState {
   sidebarCollapsed: boolean;
   chatAreaCollapsed: boolean;
   chatAreaWidth: number;
-  editRailCollapsed: boolean;
   editRailWidth: number;
   editInsertToolbarCollapsed: boolean;
 
@@ -251,7 +250,6 @@ export interface SettingsState {
   setSidebarCollapsed: (collapsed: boolean) => void;
   setChatAreaCollapsed: (collapsed: boolean) => void;
   setChatAreaWidth: (width: number) => void;
-  setEditRailCollapsed: (collapsed: boolean) => void;
   setEditInsertToolbarCollapsed: (collapsed: boolean) => void;
   setEditRailWidth: (width: number) => void;
 
@@ -870,7 +868,6 @@ export const useSettingsStore = create<SettingsState>()(
         sidebarCollapsed: true,
         chatAreaCollapsed: true,
         chatAreaWidth: 320,
-        editRailCollapsed: false,
         editRailWidth: 220,
         editInsertToolbarCollapsed: false,
 
@@ -997,7 +994,6 @@ export const useSettingsStore = create<SettingsState>()(
         // Layout actions
         setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
         setChatAreaCollapsed: (collapsed) => set({ chatAreaCollapsed: collapsed }),
-        setEditRailCollapsed: (collapsed) => set({ editRailCollapsed: collapsed }),
         setEditRailWidth: (width) => set({ editRailWidth: width }),
         setEditInsertToolbarCollapsed: (collapsed) =>
           set({ editInsertToolbarCollapsed: collapsed }),
