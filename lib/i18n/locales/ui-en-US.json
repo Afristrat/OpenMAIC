@@ -566,6 +566,7 @@
   "edit.tts.completionFailed": "Generating the missing voices failed.",
   "edit.tts.partialNotice": "Voice tracks not generated: {{missing}} of {{total}}.",
   "edit.tts.partialHint": "You can regenerate them with the “Generate missing voices” button.",
+  "edit.tts.noCastingNotice": "Course created before voice casting: {{missing}} of {{total}} voice tracks are missing and cannot be generated automatically. Choose the trainer’s voice first.",
   "export.missingVoices": "Export impossible: {{count}} speech line(s) have no voice. Generate the missing voices first.",
   "edit.tts.statusReady": "Voiced",
   "edit.tts.statusNone": "Not voiced",

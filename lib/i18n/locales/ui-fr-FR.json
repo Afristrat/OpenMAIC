@@ -566,6 +566,7 @@
   "edit.tts.completionFailed": "La génération des voix manquantes a échoué.",
   "edit.tts.partialNotice": "Pistes vocales non générées : {{missing}} sur {{total}}.",
   "edit.tts.partialHint": "Vous pouvez les régénérer avec le bouton « Générer les voix manquantes ».",
+  "edit.tts.noCastingNotice": "Cours créé avant le casting vocal : {{missing}} pistes vocales sur {{total}} manquent et ne peuvent pas être générées automatiquement. Choisissez d’abord la voix du formateur.",
   "export.missingVoices": "Export impossible : {{count}} prise(s) de parole n’ont pas de voix. Générez d’abord les voix manquantes.",
   "edit.tts.statusReady": "Exprimé",
   "edit.tts.statusNone": "Non exprimé",
