@@ -3,7 +3,14 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Locale } from '@/lib/i18n';
 
-const state = vi.hoisted(() => ({ locale: 'fr-FR' as string, scenes: [] as unknown[] }));
+const castStage = {
+  teacherProfile: { name: 'Hanae', avatar: 'a.png', providerId: 'p', voiceId: 'v' },
+};
+const state = vi.hoisted(() => ({
+  locale: 'fr-FR' as string,
+  scenes: [] as unknown[],
+  stage: null as unknown,
+}));
 
 vi.mock('@/lib/hooks/use-i18n', async () => {
   const { translate } = await import('@/lib/i18n');
@@ -18,8 +25,9 @@ vi.mock('@/lib/hooks/use-i18n', async () => {
 // zustand renders its initial state on the server: the open course is injected instead.
 vi.mock('@/lib/store/stage', () => ({
   useStageStore: Object.assign(
-    (select: (value: { scenes: unknown[] }) => unknown) => select({ scenes: state.scenes }),
-    { getState: () => ({ stage: null, scenes: state.scenes }) },
+    (select: (value: { scenes: unknown[]; stage: unknown }) => unknown) =>
+      select({ scenes: state.scenes, stage: state.stage }),
+    { getState: () => ({ stage: state.stage, scenes: state.scenes }) },
   ),
 }));
 vi.mock('@/lib/audio/complete-missing-voices', () => ({ completeMissingVoices: vi.fn() }));
@@ -140,6 +148,16 @@ describe('VoiceWarningNotice', () => {
 describe('MissingVoicesBanner', () => {
   beforeEach(() => {
     state.locale = 'fr-FR';
+    state.stage = castStage;
+  });
+
+  it('explains instead of offering a button the server would refuse on a course without casting', () => {
+    state.stage = {};
+    setScenes([speech('a'), speech('b', '/b.mp3')]);
+    const html = renderToStaticMarkup(createElement(MissingVoicesBanner, { canComplete: true }));
+    expect(html).toContain('Cours créé avant le casting vocal');
+    expect(html).toContain('1 pistes vocales sur 2');
+    expect(html).not.toContain('generate-missing-voices');
   });
 
   it('shows the real counts of the open course and the button for an editor', () => {
