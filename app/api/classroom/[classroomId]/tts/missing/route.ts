@@ -49,7 +49,8 @@ export async function POST(
         baseUrl,
         sceneId,
         onProgress,
-        assertAccess: () => assertClassroomEditAccess(request, classroomId, ownership, auth.user.id),
+        assertAccess: () =>
+          assertClassroomEditAccess(request, classroomId, ownership, auth.user.id),
       }),
     ),
   );

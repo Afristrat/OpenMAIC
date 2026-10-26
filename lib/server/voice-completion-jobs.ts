@@ -8,7 +8,7 @@ import type {
 
 const log = createLogger('VoiceCompletionJobs');
 
-export type VoiceCompletionJobStatus ='running' | 'succeeded' | 'failed';
+export type VoiceCompletionJobStatus = 'running' | 'succeeded' | 'failed';
 
 export interface VoiceCompletionJob {
   id: string;

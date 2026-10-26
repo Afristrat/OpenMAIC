@@ -49,7 +49,9 @@ export async function completeMissingSpeechAudio(input: {
   /** Limits the completion to one scene: a long course is completed scene by scene. */
   sceneId?: string;
   /** Called after every line, so a background job can report its progress. */
-  onProgress?: (progress: Pick<VoiceCompletionReport, 'requested' | 'generated' | 'failed'>) => void;
+  onProgress?: (
+    progress: Pick<VoiceCompletionReport, 'requested' | 'generated' | 'failed'>,
+  ) => void;
 }): Promise<VoiceCompletionReport> {
   const classroom = await readClassroom(input.classroomId);
   if (!classroom) throw new VoiceCompletionError('NOT_FOUND', 'Classroom introuvable');
