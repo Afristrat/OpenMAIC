@@ -265,10 +265,7 @@ export function AgentPanel({
     if (!d || e.pointerId !== d.pointerId) return;
     // Le panneau est du côté fin de ligne : en RTL (à gauche) tirer vers la droite l'élargit.
     const sign = getComputedStyle(e.currentTarget).direction === 'rtl' ? -1 : 1;
-    const next = Math.min(
-      MAX_WIDTH,
-      Math.max(MIN_WIDTH, d.startW + (d.startX - e.clientX) * sign),
-    );
+    const next = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, d.startW + (d.startX - e.clientX) * sign));
     d.lastW = next;
     if (railRef.current) railRef.current.style.width = `${next}px`;
   }, []);
