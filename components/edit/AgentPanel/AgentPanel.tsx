@@ -52,7 +52,7 @@ import { ReadSceneContentUI } from './read-tool-ui';
 
 const MIN_WIDTH = 320;
 const MAX_WIDTH = 640;
-const DEFAULT_WIDTH = 384;
+const DEFAULT_WIDTH = 320;
 
 /** Contextual prompt starters. A click fills the composer but never submits,
  *  so the author reviews every AI instruction before it can mutate a scene. */
