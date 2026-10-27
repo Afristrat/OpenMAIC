@@ -92,6 +92,11 @@ export interface ReconciledScenes {
   pending: SceneOutline[];
   /** Entrées inchangées dont la scène a déjà été supprimée à la main : ignorées, jamais régénérées sans demande. */
   orphaned: SceneOutline[];
+  /**
+   * Anciennes scènes des entrées modifiées, renumérotées selon `outlines` : retirées de la salle pendant la
+   * régénération, elles sont remises en place si celle-ci échoue, pour ne jamais perdre un contenu sans remplaçant.
+   */
+  replaced: Scene[];
 }
 
 /**
@@ -114,10 +119,15 @@ export function reconcileScenes(input: {
 
   const included: SceneOutline[] = [];
   const keptByOutlineId = new Map<string, Scene>();
+  const replacedByOutlineId = new Map<string, Scene>();
+  const modifiedIds = new Set(diff.modified.map((outline) => outline.id));
   const orphaned: SceneOutline[] = [];
   for (const outline of sortByOrder(next)) {
     if (regenerateIds.has(outline.id)) {
       included.push(outline);
+      const old = modifiedIds.has(outline.id) ? previousById.get(outline.id) : undefined;
+      const previousScene = old ? sceneByOrder.get(sceneOrderOf(old)) : undefined;
+      if (previousScene) replacedByOutlineId.set(outline.id, previousScene);
       continue;
     }
     const old = previousById.get(outline.id);
@@ -135,8 +145,12 @@ export function reconcileScenes(input: {
     const scene = keptByOutlineId.get(outline.id);
     return scene ? [{ ...scene, order: outline.order }] : [];
   });
+  const replaced = outlines.flatMap((outline) => {
+    const scene = replacedByOutlineId.get(outline.id);
+    return scene ? [{ ...scene, order: outline.order }] : [];
+  });
   const pending = outlines.filter((outline) => regenerateIds.has(outline.id));
-  return { outlines, keptScenes, pending, orphaned };
+  return { outlines, keptScenes, pending, orphaned, replaced };
 }
 
 /**

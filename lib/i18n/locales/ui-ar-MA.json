@@ -2938,6 +2938,7 @@
   "programme.reviewMoved": "مشاهد منقولة ومحفوظة: {{count}}",
   "programme.reviewUnchanged": "مشاهد دون تغيير: {{count}}",
   "programme.reviewOrphaned": "عناصر في البرنامج بلا مشهد (حُذفت يدويًا): {{count}}، تم تجاهلها",
+  "programme.keptPrevious": "فشلت إعادة التوليد لـ {{count}} مشهد: تم الاحتفاظ بالنسخة السابقة. عدّل عنصر البرنامج مجددًا لإعادة المحاولة.",
   "programme.reviewWarning": "ستُستبدل التعديلات اليدوية في المشاهد التي ستُعاد صياغتها، بما فيها التعليق الصوتي.",
   "programme.reviewTextOnly": "لن يتغير أي مشهد: سيُحدَّث نص البرنامج فقط.",
   "programme.reviewNoChange": "لا توجد تعديلات لتطبيقها.",

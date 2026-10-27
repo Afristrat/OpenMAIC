@@ -2938,6 +2938,7 @@
   "programme.reviewMoved": "Scènes déplacées et conservées : {{count}}",
   "programme.reviewUnchanged": "Scènes inchangées : {{count}}",
   "programme.reviewOrphaned": "Entrées du programme sans scène (supprimées à la main) : {{count}}, ignorées",
+  "programme.keptPrevious": "La régénération a échoué pour {{count}} scène(s) : l'ancienne version est conservée. Modifiez à nouveau l'entrée du programme pour réessayer.",
   "programme.reviewWarning": "Les retouches faites à la main dans les scènes à régénérer, voix off comprises, seront remplacées.",
   "programme.reviewTextOnly": "Aucune scène ne change : seul le texte du programme sera mis à jour.",
   "programme.reviewNoChange": "Aucune modification à appliquer.",
