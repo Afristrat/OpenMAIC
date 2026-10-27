@@ -1,6 +1,12 @@
+import { completeMissingVoices } from '@/lib/audio/complete-missing-voices';
+import { summarizeSpeechAudio } from '@/lib/audio/speech-audio-report';
+import { persistCurrentClassroomForExport } from '@/lib/export/persist-before-server-export';
+import { createLogger } from '@/lib/logger';
 import { useStageStore } from '@/lib/store/stage';
 import type { ClassroomPlan } from '@/lib/types/generation';
 import { reconcileScenes, type ReconciledScenes } from '@/lib/syllabus/plan-diff';
+
+const log = createLogger('ProgrammeEdit');
 
 export class PlanSaveError extends Error {
   constructor() {
@@ -19,9 +25,27 @@ export async function savePlan(stageId: string, plan: ClassroomPlan): Promise<vo
 }
 
 /**
+ * Donne une voix aux répliques des scènes qui viennent d'être régénérées. Un échec n'est pas bloquant : le bandeau
+ * « voix manquantes » de la salle de cours reste disponible pour les compléter.
+ */
+async function completeVoices(stageId: string): Promise<void> {
+  if (summarizeSpeechAudio(useStageStore.getState().scenes).missing === 0) return;
+  await persistCurrentClassroomForExport();
+  const result = await completeMissingVoices(
+    stageId,
+    useStageStore.getState().scenes,
+    () => undefined,
+  );
+  for (const updated of result.updatedScenes) {
+    useStageStore.getState().updateScene(updated.id, { actions: updated.actions });
+  }
+}
+
+/**
  * Met la salle de cours en accord avec le plan modifié : les scènes inchangées ou seulement déplacées sont
  * conservées et renumérotées, celles des entrées supprimées ou modifiées sont retirées. Les entrées ajoutées
- * ou modifiées restent sans scène : `regenerate` les génère, une à une, avec les reprises sur échec habituelles.
+ * ou modifiées restent sans scène : `regenerate` les génère, une à une, avec les reprises sur échec habituelles,
+ * puis leurs voix sont complétées. La génération se poursuit après le retour de la fonction : l'écran n'attend pas.
  */
 export async function applyPlanEdit(input: {
   stageId: string;
@@ -54,6 +78,10 @@ export async function applyPlanEdit(input: {
   }
   store.setGenerationComplete(result.pending.length === 0);
 
-  if (result.pending.length > 0) await regenerate?.();
+  if (result.pending.length > 0 && regenerate) {
+    void regenerate()
+      .then(() => completeVoices(stageId))
+      .catch((error: unknown) => log.warn('Regeneration after a syllabus edit failed', error));
+  }
   return result;
 }
