@@ -23,7 +23,11 @@ import {
   getHyperframesProduction,
 } from '@/lib/video/hyperframes-client';
 import type { HyperframesBrief } from '@/lib/video/hyperframes-types';
-import type { VideoCapsuleStatus, VideoCapsuleVariant } from '@/lib/supabase/types';
+import type {
+  ExportJobUpdate,
+  VideoCapsuleStatus,
+  VideoCapsuleVariant,
+} from '@/lib/supabase/types';
 import { buildLearningPackage } from '@/lib/export/scorm/build-scorm-package';
 import { exportJobArtifactPath } from '@/lib/export/export-job-artifact';
 import { isLearningPackageFormat } from '@/lib/export/scorm/tracking-adapters';
@@ -114,6 +118,19 @@ function boundedInteger(name: string, fallback: number, maximum: number): number
 }
 
 const heavyTasks = new PermitPool(boundedInteger('WORKER_HEAVY_CONCURRENCY', 1, 2));
+
+/**
+ * Enregistre l'avancement d'un export pour l'écran de l'auteur. Un échec d'écriture est consigné mais ne doit jamais
+ * interrompre le rendu : l'avancement est une information, pas une condition du travail.
+ */
+async function reportExportProgress(
+  supabase: ReturnType<typeof createServiceSupabaseClient>,
+  exportJobId: string,
+  update: ExportJobUpdate,
+): Promise<void> {
+  const { error } = await supabase.from('export_jobs').update(update).eq('id', exportJobId);
+  if (error) log.warn(`Export progress not recorded for ${exportJobId}: ${error.message}`);
+}
 
 function workerOptions() {
   return { connection, concurrency: 1 };
@@ -582,7 +599,14 @@ export function startAllWorkers(): void {
           let file: Buffer;
           let sceneCount: number;
           if (isMp4) {
-            const result = await buildClassroomVideo(exportJob.stage_id as string);
+            // L'avancement alimente l'écran de l'auteur ; son échec ne doit jamais interrompre le rendu.
+            const result = await buildClassroomVideo(exportJob.stage_id as string, (progress) =>
+              reportExportProgress(supabase, exportJobId, {
+                phase: progress.phase,
+                progress_done: progress.done,
+                progress_total: progress.total,
+              }),
+            );
             file = result.video;
             sceneCount = result.sceneCount;
           } else {
@@ -599,6 +623,7 @@ export function startAllWorkers(): void {
             exportJobId,
             exportJob.format,
           );
+          await reportExportProgress(supabase, exportJobId, { phase: 'uploading' });
           const { error: uploadError } = await supabase.storage
             .from('exports')
             .upload(storagePath, file, {

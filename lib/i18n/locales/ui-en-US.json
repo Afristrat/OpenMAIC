@@ -2949,5 +2949,12 @@
   "programme.applied": "Syllabus saved. The affected scenes are being regenerated.",
   "programme.appliedTextOnly": "Syllabus saved.",
   "programme.locked": "Wait for the current generation to finish before editing the syllabus.",
-  "programme.editSummary": "{{count}} scenes. Edit, add, remove or reorder them: only the affected scenes will be regenerated."
+  "programme.editSummary": "{{count}} scenes. Edit, add, remove or reorder them: only the affected scenes will be regenerated.",
+  "export.videoPreparing": "Preparing the slides: {{done}} / {{total}}",
+  "export.videoQueued": "Render queued behind another job. Elapsed: {{elapsed}}",
+  "export.videoStarting": "Starting the render… Elapsed: {{elapsed}}",
+  "export.videoProgress": "Rendering the video: scene {{done}} / {{total}} ({{percent}}%). Elapsed: {{elapsed}}",
+  "export.videoAssembling": "Assembling the video… Elapsed: {{elapsed}}",
+  "export.videoUploading": "Uploading the video… Elapsed: {{elapsed}}",
+  "export.videoResumed": "A render is already running for this course: following it."
 }

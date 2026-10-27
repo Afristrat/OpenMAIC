@@ -2949,5 +2949,12 @@
   "programme.applied": "تم حفظ البرنامج. جارٍ إعادة صياغة المشاهد المتأثرة.",
   "programme.appliedTextOnly": "تم حفظ البرنامج.",
   "programme.locked": "انتظر انتهاء التوليد الجاري قبل تعديل البرنامج.",
-  "programme.editSummary": "{{count}} مشاهد. عدّلها أو أضفها أو احذفها أو أعد ترتيبها: ستُعاد صياغة المشاهد المتأثرة فقط."
+  "programme.editSummary": "{{count}} مشاهد. عدّلها أو أضفها أو احذفها أو أعد ترتيبها: ستُعاد صياغة المشاهد المتأثرة فقط.",
+  "export.videoPreparing": "تحضير الشرائح: {{done}} / {{total}}",
+  "export.videoQueued": "التصيير في قائمة الانتظار، هناك عمل آخر قبله. الوقت المنقضي: {{elapsed}}",
+  "export.videoStarting": "بدء التصيير… الوقت المنقضي: {{elapsed}}",
+  "export.videoProgress": "تصيير الفيديو: المشهد {{done}} / {{total}} ({{percent}}%). الوقت المنقضي: {{elapsed}}",
+  "export.videoAssembling": "تجميع الفيديو… الوقت المنقضي: {{elapsed}}",
+  "export.videoUploading": "رفع الفيديو… الوقت المنقضي: {{elapsed}}",
+  "export.videoResumed": "هناك تصيير جارٍ لهذا التكوين: تمت متابعته."
 }

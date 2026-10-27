@@ -11,9 +11,13 @@ import { persistCurrentClassroomForExport } from './persist-before-server-export
 import { addPresentationBrandToSnapshot } from './presentation-brand-snapshot';
 import { downloadExport } from './download-export';
 import { createLogger } from '@/lib/logger';
+import { describeExportStatus, type ExportJobProgress } from './export-progress';
 
 const POLL_INTERVAL_MS = 5000;
-const MAX_POLLS = 360;
+/** Un rendu de plusieurs dizaines de scènes dure près d'une heure : l'attente va jusqu'à trois heures. */
+const MAX_WAIT_MS = 3 * 60 * 60 * 1000;
+/** Des échecs réseau passagers n'interrompent pas le suivi d'un rendu qui, lui, continue côté serveur. */
+const MAX_CONSECUTIVE_POLL_FAILURES = 5;
 const log = createLogger('ExportMP4');
 
 interface ExportJobResponse {
@@ -23,6 +27,8 @@ interface ExportJobResponse {
   done?: boolean;
   downloadUrl?: string | null;
   error?: string | null;
+  progress?: ExportJobProgress;
+  reused?: boolean;
 }
 
 export function useExportMp4() {
@@ -42,8 +48,14 @@ export function useExportMp4() {
       if (!guardSpeechAudio(scenes, t, toastId, completeMissingVoices)) return;
       await persistCurrentClassroomForExport();
       let fallbackSnapshotCount = 0;
+      const slideCount = scenes.filter((scene) => scene.content?.type === 'slide').length;
+      let preparedSlides = 0;
       for (const scene of scenes) {
         if (scene.content?.type !== 'slide') continue;
+        toast.loading(t('export.videoPreparing', { done: preparedSlides, total: slideCount }), {
+          id: toastId,
+        });
+        preparedSlides += 1;
         try {
           const snapshot = await slideToPng(scene.content.canvas, {
             width: 1920,
@@ -87,11 +99,25 @@ export function useExportMp4() {
         throw new Error(created.error || t('export.exportFailed'));
       }
 
-      for (let poll = 0; poll < MAX_POLLS; poll++) {
-        const statusResponse = await fetch(`/api/export-jobs/${created.id}`);
-        const status = (await statusResponse.json()) as ExportJobResponse;
-        if (!statusResponse.ok || !status.success) {
-          throw new Error(status.error || t('export.exportFailed'));
+      if (created.reused) toast.loading(t('export.videoResumed'), { id: toastId });
+      const startedAt = Date.now();
+      let failures = 0;
+      while (Date.now() - startedAt < MAX_WAIT_MS) {
+        let status: ExportJobResponse | null = null;
+        try {
+          const statusResponse = await fetch(`/api/export-jobs/${created.id}`);
+          status = (await statusResponse.json()) as ExportJobResponse;
+          if (!statusResponse.ok || !status.success) {
+            throw new Error(status.error || t('export.exportFailed'));
+          }
+          failures = 0;
+        } catch (pollError) {
+          failures += 1;
+          // Une erreur annoncée par le serveur (échec du rendu) s'arrête tout de suite ; une panne réseau se retente.
+          if (status && !status.success) throw pollError;
+          if (failures >= MAX_CONSECUTIVE_POLL_FAILURES) throw pollError;
+          await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+          continue;
         }
         if (status.done) {
           if (status.status !== 'done' || !status.downloadUrl) {
@@ -101,6 +127,12 @@ export function useExportMp4() {
           toast.success(t('export.videoReady'), { id: toastId });
           return;
         }
+        const message = describeExportStatus({
+          status: status.status,
+          progress: status.progress,
+          elapsedMs: Date.now() - startedAt,
+        });
+        toast.loading(t(message.key, message.values), { id: toastId });
         await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
       }
       throw new Error(t('export.videoTimeout'));

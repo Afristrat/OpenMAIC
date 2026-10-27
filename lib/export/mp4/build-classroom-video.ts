@@ -199,8 +199,15 @@ async function renderSceneSegment(params: {
   return segmentPath;
 }
 
+export interface ClassroomVideoProgress {
+  phase: 'rendering' | 'assembling';
+  done: number;
+  total: number;
+}
+
 export async function buildClassroomVideo(
   stageId: string,
+  onProgress?: (progress: ClassroomVideoProgress) => void | Promise<void>,
 ): Promise<{ video: Buffer; sceneCount: number }> {
   const supabase = createServiceSupabaseClient();
   const [{ data: stage, error: stageError }, { data: scenes, error: scenesError }] =
@@ -224,6 +231,7 @@ export async function buildClassroomVideo(
   const directory = await mkdtemp(join(tmpdir(), 'qalem-mp4-'));
   try {
     const segments: string[] = [];
+    await onProgress?.({ phase: 'rendering', done: 0, total: scenes.length });
     for (const [sceneIndex, scene] of scenes.entries()) {
       segments.push(
         await renderSceneSegment({
@@ -241,7 +249,9 @@ export async function buildClassroomVideo(
           sceneIndex,
         }),
       );
+      await onProgress?.({ phase: 'rendering', done: sceneIndex + 1, total: scenes.length });
     }
+    await onProgress?.({ phase: 'assembling', done: scenes.length, total: scenes.length });
 
     const concatFile = join(directory, 'segments.txt');
     await writeFile(

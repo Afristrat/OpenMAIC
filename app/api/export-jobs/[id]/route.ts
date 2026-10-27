@@ -29,7 +29,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
   const { data: exportJob, error } = await supabase
     .from('export_jobs')
     .select(
-      'id, stage_id, format, status, storage_path, scene_count, error, created_at, updated_at',
+      'id, stage_id, format, status, storage_path, scene_count, phase, progress_done, progress_total, error, created_at, updated_at',
     )
     .eq('id', id)
     .single();
@@ -72,6 +72,13 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
     format: exportJob.format,
     status: exportJob.status,
     sceneCount: exportJob.scene_count,
+    progress: {
+      phase: exportJob.phase,
+      done: exportJob.progress_done,
+      total: exportJob.progress_total,
+    },
+    createdAt: exportJob.created_at,
+    updatedAt: exportJob.updated_at,
     error: exportJob.error,
     downloadUrl,
     done: exportJob.status === 'done' || exportJob.status === 'error',

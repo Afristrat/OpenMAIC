@@ -2949,5 +2949,12 @@
   "programme.applied": "Programme enregistré. Les scènes touchées sont en cours de régénération.",
   "programme.appliedTextOnly": "Programme enregistré.",
   "programme.locked": "Terminez la génération en cours avant de modifier le programme.",
-  "programme.editSummary": "{{count}} scènes. Modifiez, ajoutez, supprimez ou réorganisez-les : seules les scènes touchées seront régénérées."
+  "programme.editSummary": "{{count}} scènes. Modifiez, ajoutez, supprimez ou réorganisez-les : seules les scènes touchées seront régénérées.",
+  "export.videoPreparing": "Préparation des diapositives : {{done}} / {{total}}",
+  "export.videoQueued": "Rendu en file d’attente, un autre travail passe avant. Temps écoulé : {{elapsed}}",
+  "export.videoStarting": "Démarrage du rendu… Temps écoulé : {{elapsed}}",
+  "export.videoProgress": "Rendu de la vidéo : scène {{done}} / {{total}} ({{percent}} %). Temps écoulé : {{elapsed}}",
+  "export.videoAssembling": "Assemblage de la vidéo… Temps écoulé : {{elapsed}}",
+  "export.videoUploading": "Dépôt de la vidéo… Temps écoulé : {{elapsed}}",
+  "export.videoResumed": "Un rendu est déjà en cours pour ce cours : suivi repris."
 }
