@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { VOICE_COMPLETION_FAILED_CODE } from '@/lib/audio/complete-missing-voices';
 import { createLogger } from '@/lib/logger';
 import type { Action } from '@/lib/types/action';
 import type {
@@ -7,6 +8,15 @@ import type {
 } from '@/lib/server/classroom-voice-completion';
 
 const log = createLogger('VoiceCompletionJobs');
+
+/** Code d'une erreur de complétion connue du serveur (`VoiceCompletionError`), sinon le code générique. */
+function voiceCompletionErrorCode(error: unknown): string {
+  if (error instanceof Error && error.name === 'VoiceCompletionError') {
+    const code = (error as Error & { code?: unknown }).code;
+    if (typeof code === 'string' && code) return code;
+  }
+  return VOICE_COMPLETION_FAILED_CODE;
+}
 
 export type VoiceCompletionJobStatus = 'running' | 'succeeded' | 'failed';
 
@@ -99,10 +109,8 @@ export function startVoiceCompletionJob(
     (error: unknown) => {
       log.error(`Voice completion job ${job.id} failed for ${job.classroomId}`, error);
       job.status = 'failed';
-      job.error =
-        error instanceof Error && error.name === 'VoiceCompletionError'
-          ? error.message
-          : 'La génération des voix manquantes a échoué.';
+      // Un code stable, traduit côté client : jamais un message en français vu par un apprenant arabophone.
+      job.error = voiceCompletionErrorCode(error);
       job.updatedAt = Date.now();
     },
   );
