@@ -610,6 +610,8 @@ export type ExportJobFormat = 'scorm12' | 'scorm2004' | 'cmi5' | 'mp4';
 
 export type ExportJobStatus = 'queued' | 'generating' | 'done' | 'error';
 
+export type ExportJobPhase = 'rendering' | 'assembling' | 'uploading';
+
 export interface ExportJobRow {
   id: string; // UUID
   stage_id: string;
@@ -618,6 +620,10 @@ export interface ExportJobRow {
   status: ExportJobStatus;
   storage_path: string | null;
   scene_count: number | null;
+  /** Étape en cours du rendu (null tant que le job n'a pas démarré ou pour un format sans avancement). */
+  phase: ExportJobPhase | null;
+  progress_done: number | null;
+  progress_total: number | null;
   error: string | null;
   created_at: string; // ISO 8601
   updated_at: string; // ISO 8601
@@ -627,7 +633,16 @@ export type ExportJobInsert = Pick<ExportJobRow, 'stage_id' | 'format'> &
   Partial<Pick<ExportJobRow, 'owner_id' | 'status'>>;
 
 export type ExportJobUpdate = Partial<
-  Pick<ExportJobRow, 'status' | 'storage_path' | 'scene_count' | 'error'>
+  Pick<
+    ExportJobRow,
+    | 'status'
+    | 'storage_path'
+    | 'scene_count'
+    | 'error'
+    | 'phase'
+    | 'progress_done'
+    | 'progress_total'
+  >
 >;
 
 export type VideoGenerationJobStatus = 'queued' | 'generating' | 'done' | 'error';

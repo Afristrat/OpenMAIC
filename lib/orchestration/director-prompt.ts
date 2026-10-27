@@ -240,6 +240,23 @@ Contributors: ${contributors.length > 0 ? contributors.join(', ') : 'none'}${cro
  * @param content - Raw LLM response content
  * @returns Parsed decision with nextAgentId and shouldEnd flag
  */
+/**
+ * The model sometimes joins two forms ("clarification/question") or adds spaces and capitals.
+ * An exact match alone then discards the whole decision and the learner gets no answer, so the
+ * first listed form that is valid is kept.
+ */
+export function normalizeInterventionForm(
+  value: unknown,
+): (typeof INTERVENTION_FORMS)[number] | undefined {
+  if (typeof value !== 'string') return undefined;
+  const isForm = (candidate: string): candidate is (typeof INTERVENTION_FORMS)[number] =>
+    (INTERVENTION_FORMS as readonly string[]).includes(candidate);
+  return value
+    .split(/[/,;|]|\s+(?:et|ou|and|or)\s+/i)
+    .map((part) => part.trim().toLowerCase())
+    .find(isForm);
+}
+
 export function parseDirectorDecision(content: string): {
   nextAgentId: string | null;
   shouldEnd: boolean;
@@ -261,7 +278,7 @@ export function parseDirectorDecision(content: string): {
       const trigger = [...ADAPTIVE_TRIGGERS, 'play'].includes(parsed.trigger)
         ? parsed.trigger
         : undefined;
-      const form = INTERVENTION_FORMS.includes(parsed.form) ? parsed.form : undefined;
+      const form = normalizeInterventionForm(parsed.form);
       const reason = typeof parsed.reason === 'string' ? parsed.reason.trim() : undefined;
       return { nextAgentId: nextAgent, shouldEnd: false, trigger, form, reason };
     }

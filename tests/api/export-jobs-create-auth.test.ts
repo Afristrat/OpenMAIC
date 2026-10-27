@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   readOwnership: vi.fn(),
   enqueue: vi.fn(),
   insert: vi.fn(),
+  running: vi.fn(),
 }));
 
 vi.mock('@/lib/api/auth', () => ({
@@ -28,6 +29,17 @@ vi.mock('@/lib/supabase/service', () => ({
         return chain;
       }
       return {
+        // Recherche d'un rendu déjà en cours pour ce cours et cette personne.
+        select: () => {
+          const chain = {
+            eq: () => chain,
+            or: () => chain,
+            order: () => chain,
+            limit: () => chain,
+            maybeSingle: async () => ({ data: mocks.running(), error: null }),
+          };
+          return chain;
+        },
         insert: (row: unknown) => {
           mocks.insert(row);
           return {
@@ -60,6 +72,7 @@ const forbidden = () => ({ response: NextResponse.json({ error: 'nope' }, { stat
 describe('POST /api/export-jobs access control', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.running.mockReturnValue(null);
     mocks.requireAuth.mockResolvedValue({ user: { id: 'actor', email: 'actor@example.test' } });
     mocks.isSuperAdminEmail.mockReturnValue(false);
     mocks.readOwnership.mockResolvedValue({ ownerId: OWNER, orgId: ORG });
@@ -139,5 +152,18 @@ describe('POST /api/export-jobs access control', () => {
       }),
     );
     expect(res.status).toBe(400);
+  });
+
+  it('reprend un rendu déjà en cours du même cours au lieu de lancer un second rendu lourd', async () => {
+    mocks.running.mockReturnValue({ id: 'job-0', status: 'generating' });
+    const res = await POST(post('mp4'));
+    expect(res.status).toBe(202);
+    await expect(res.json()).resolves.toMatchObject({
+      id: 'job-0',
+      status: 'generating',
+      reused: true,
+    });
+    expect(mocks.insert).not.toHaveBeenCalled();
+    expect(mocks.enqueue).not.toHaveBeenCalled();
   });
 });

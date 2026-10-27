@@ -125,6 +125,7 @@ export function EditChromeRoot({
             runtime={agentRuntime.runtime}
             clearThread={agentRuntime.clearThread}
             hasMessages={agentRuntime.hasMessages}
+            isRunning={agentRuntime.isRunning}
             canSend={agentEnabled}
             mobileMode={isMobile}
             mobileOpen={mobileDrawer === 'agent'}

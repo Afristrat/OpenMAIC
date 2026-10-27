@@ -16,6 +16,7 @@ import { db } from '@/lib/utils/database';
 import type { StageRecord, SceneRecord } from '@/lib/utils/database';
 import type { Stage, Scene, StageInsert, SceneInsert } from '@/lib/supabase/types';
 import { createLogger } from '@/lib/logger';
+import { planSceneSync } from '@/lib/storage/plan-scene-sync';
 
 const log = createLogger('SupabaseSync');
 
@@ -297,8 +298,9 @@ export class SupabaseSyncProvider implements SyncableStorageProvider {
         }
         // Equal timestamps → no-op
 
-        // Sync scenes for this stage regardless
-        await this.syncScenes(stageId, remoteSceneMap);
+        // Le serveur plus récent est l'autorité sur les scènes de la salle : une scène locale absente du serveur y a été
+        // supprimée ou remplacée, elle ne doit pas être renvoyée.
+        await this.syncScenes(stageId, remoteSceneMap, remoteTs > local.updatedAt);
         synced++;
       }
     }
@@ -311,7 +313,11 @@ export class SupabaseSyncProvider implements SyncableStorageProvider {
   // Internal: merge scenes for a given stage
   // ------------------------------------------------------------------
 
-  private async syncScenes(stageId: string, remoteSceneMap: Map<string, Scene>): Promise<void> {
+  private async syncScenes(
+    stageId: string,
+    remoteSceneMap: Map<string, Scene>,
+    remoteStageIsNewer: boolean,
+  ): Promise<void> {
     if (!this.userId) return;
 
     const supabase = tryCreateClient();
@@ -323,34 +329,30 @@ export class SupabaseSyncProvider implements SyncableStorageProvider {
       localMap.set(ls.id, ls);
     }
 
-    const remoteForStage = [...remoteSceneMap.values()].filter((s) => s.stage_id === stageId);
     const remoteMap = new Map<string, Scene>();
-    for (const rs of remoteForStage) {
-      remoteMap.set(rs.id, rs);
+    for (const rs of remoteSceneMap.values()) {
+      if (rs.stage_id === stageId) remoteMap.set(rs.id, rs);
     }
 
-    const allSceneIds = new Set([...localMap.keys(), ...remoteMap.keys()]);
+    const plan = planSceneSync({
+      local: new Map([...localMap].map(([id, scene]) => [id, { updatedAt: scene.updatedAt }])),
+      remote: new Map(
+        [...remoteMap].map(([id, scene]) => [
+          id,
+          { updatedAt: new Date(scene.updated_at ?? scene.created_at).getTime() },
+        ]),
+      ),
+      remoteStageIsNewer,
+    });
 
-    const toUpsertRemote: SceneInsert[] = [];
-    const toPutLocal: SceneRecord[] = [];
-
-    for (const sceneId of allSceneIds) {
-      const local = localMap.get(sceneId);
-      const remote = remoteMap.get(sceneId);
-
-      if (local && !remote) {
-        toUpsertRemote.push(sceneRecordToRow(local));
-      } else if (!local && remote) {
-        toPutLocal.push(sceneRowToRecord(remote));
-      } else if (local && remote) {
-        const remoteTs = new Date(remote.updated_at ?? remote.created_at).getTime();
-        if (local.updatedAt > remoteTs) {
-          toUpsertRemote.push(sceneRecordToRow(local));
-        } else if (remoteTs > local.updatedAt) {
-          toPutLocal.push(sceneRowToRecord(remote));
-        }
-      }
-    }
+    const toUpsertRemote: SceneInsert[] = plan.pushToRemote.flatMap((id) => {
+      const local = localMap.get(id);
+      return local ? [sceneRecordToRow(local)] : [];
+    });
+    const toPutLocal: SceneRecord[] = plan.pullToLocal.flatMap((id) => {
+      const remote = remoteMap.get(id);
+      return remote ? [sceneRowToRecord(remote)] : [];
+    });
 
     // Batch upsert to Supabase
     if (toUpsertRemote.length > 0) {
@@ -363,6 +365,9 @@ export class SupabaseSyncProvider implements SyncableStorageProvider {
     // Batch put to IndexedDB
     if (toPutLocal.length > 0) {
       await db.scenes.bulkPut(toPutLocal);
+    }
+    if (plan.deleteFromLocal.length > 0) {
+      await db.scenes.bulkDelete(plan.deleteFromLocal);
     }
   }
 }

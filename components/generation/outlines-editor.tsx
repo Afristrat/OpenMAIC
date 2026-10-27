@@ -79,6 +79,14 @@ interface OutlinesEditorProps {
   assistingTarget?: string | null;
   /** Collapse the editor back to the preview surface (small streaming card / outline-ready). */
   onCollapse?: () => void;
+  /** Libellé du bouton de validation, quand l'éditeur sert à modifier un programme déjà généré. */
+  confirmLabel?: string;
+  /** Libellé du bouton de retour. */
+  backLabel?: string;
+  /** Masque la case « toujours relire le plan », propre au parcours de création. */
+  hideAlwaysReview?: boolean;
+  /** Modification d'un programme déjà généré : ni mention de proposition à valider, ni de génération à venir. */
+  editingExisting?: boolean;
 }
 
 const SCENE_TYPES: SceneType[] = ['slide', 'quiz', 'interactive', 'pbl', 'plugin'];
@@ -173,6 +181,10 @@ export function OutlinesEditor({
   onAssist,
   assistingTarget,
   onCollapse,
+  confirmLabel,
+  backLabel,
+  hideAlwaysReview = false,
+  editingExisting = false,
 }: OutlinesEditorProps) {
   const { t } = useI18n();
   const sceneTypeLabel = useSceneTypeLabel();
@@ -281,8 +293,10 @@ export function OutlinesEditor({
         ? t('generation.outlineEditorStreamingProgress', { count: outlines.length })
         : t('generation.outlineEditorStreamingWaiting');
     }
-    return t('generation.outlineEditorSummary', { count: outlines.length });
-  }, [isStreaming, outlines.length, t]);
+    return t(editingExisting ? 'programme.editSummary' : 'generation.outlineEditorSummary', {
+      count: outlines.length,
+    });
+  }, [editingExisting, isStreaming, outlines.length, t]);
 
   const sceneList =
     outlines.length === 0 ? (
@@ -383,10 +397,12 @@ export function OutlinesEditor({
         )}
       >
         <div className="min-w-0 flex-1 space-y-1.5">
-          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground/70">
-            <Sparkles className="size-3 text-blue-500" />
-            {t('generation.outlineEditorEyebrow')}
-          </div>
+          {!editingExisting && (
+            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground/70">
+              <Sparkles className="size-3 text-blue-500" />
+              {t('generation.outlineEditorEyebrow')}
+            </div>
+          )}
           <h2 className="text-2xl font-semibold tracking-tight md:text-[28px]">
             {t('generation.outlineEditorTitle')}
           </h2>
@@ -492,21 +508,25 @@ export function OutlinesEditor({
 
       {/* Footer */}
       <div className="sticky bottom-0 z-20 flex flex-col gap-3 border-t border-border/40 bg-background/95 px-6 py-4 shadow-[0_-12px_30px_-24px_rgba(15,23,42,0.45)] backdrop-blur md:flex-row md:items-center md:justify-between md:px-10 md:py-5">
-        <label
-          className={cn(
-            'flex cursor-pointer items-center gap-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground',
-            isLoading && 'cursor-not-allowed opacity-60',
-          )}
-        >
-          <Checkbox
-            checked={alwaysReview}
-            onCheckedChange={(checked) => onAlwaysReviewChange?.(checked === true)}
-            disabled={isLoading}
-            aria-label={t('generation.alwaysReviewOutlines')}
-            className="size-4"
-          />
-          <span>{t('generation.alwaysReviewOutlines')}</span>
-        </label>
+        {hideAlwaysReview ? (
+          <span />
+        ) : (
+          <label
+            className={cn(
+              'flex cursor-pointer items-center gap-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground',
+              isLoading && 'cursor-not-allowed opacity-60',
+            )}
+          >
+            <Checkbox
+              checked={alwaysReview}
+              onCheckedChange={(checked) => onAlwaysReviewChange?.(checked === true)}
+              disabled={isLoading}
+              aria-label={t('generation.alwaysReviewOutlines')}
+              className="size-4"
+            />
+            <span>{t('generation.alwaysReviewOutlines')}</span>
+          </label>
+        )}
 
         <div className="flex flex-col-reverse gap-2 md:flex-row md:items-center md:gap-2">
           {hasSyllabusWorkspace && !isPlanComplete && (
@@ -520,7 +540,7 @@ export function OutlinesEditor({
             disabled={isLoading}
             className="rounded-full px-4 text-muted-foreground hover:text-foreground"
           >
-            {t('generation.backToRequirements')}
+            {backLabel ?? t('generation.backToRequirements')}
           </Button>
           <Button
             onClick={() => {
@@ -542,7 +562,7 @@ export function OutlinesEditor({
             ) : (
               <>
                 <Check className="size-4" />
-                {t('generation.confirmAndGenerateCourse')}
+                {confirmLabel ?? t('generation.confirmAndGenerateCourse')}
               </>
             )}
           </Button>

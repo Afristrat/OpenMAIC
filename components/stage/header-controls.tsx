@@ -47,6 +47,7 @@ import type { ResearchSource } from '@openmaic/dsl';
 import { safeHttpUrl } from '@/lib/utils/safe-url';
 import { LiveSessionRecorder } from '@/components/live-session-recorder';
 import { MissingVoicesNotice } from './missing-voices-notice';
+import { ProgrammeButton } from '@/components/syllabus/programme-dialog';
 
 // Zustand selectors must return the same reference when the selected value has
 // not changed. An inline `?? []` allocates on every store read and causes React
@@ -229,7 +230,7 @@ export function HeaderControls({
           // "Edit course" label they can't act on.
           title={
             !canEdit && mode !== 'edit'
-              ? t('stage.proModeDisabledHint')
+              ? t('stage.editUnavailableHint')
               : mode === 'edit'
                 ? t('stage.doneEditing')
                 : t('stage.editCourse')
@@ -237,23 +238,25 @@ export function HeaderControls({
         >
           <span
             className={cn(
-              'hidden sm:inline text-[11px] font-bold uppercase tracking-[0.14em] tabular-nums select-none transition-colors duration-200',
+              'hidden sm:inline text-xs font-semibold select-none transition-colors duration-200',
               mode === 'edit'
                 ? 'text-violet-600 dark:text-violet-300'
                 : 'text-gray-500 dark:text-gray-400',
             )}
           >
-            {t('edit.proMode')}
+            {t('stage.editCourse')}
           </span>
           <Switch
             checked={mode === 'edit'}
             onCheckedChange={onToggleEditMode}
             disabled={!canEdit && mode !== 'edit'}
-            aria-label={mode === 'edit' ? t('stage.doneEditing') : t('stage.editCourse')}
+            aria-label={t('stage.editCourse')}
             className="data-[state=checked]:bg-violet-600 dark:data-[state=checked]:bg-violet-500"
           />
         </label>
       )}
+
+      <ProgrammeButton />
 
       {/* Export / Download — lives to the right of the Pro Switch.
           Not a settings function so it does not belong inside the

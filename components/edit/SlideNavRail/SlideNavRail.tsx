@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useStageStore } from '@/lib/store';
 import { useSettingsStore } from '@/lib/store/settings';
+import { EDIT_RAIL_COLLAPSED_KEY, usePanelCollapsed } from '@/lib/edit/panel-collapse';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useDeletedSceneRecycle } from '@/lib/edit/deleted-scene-recycle';
 import { createBlankSlideScene, duplicateSlideScene } from '@/lib/edit/slide-defaults';
@@ -56,8 +57,7 @@ export function SlideNavRail({
   const insertSceneAfter = useStageStore.use.insertSceneAfter();
   const deleteScene = useStageStore.use.deleteScene();
   const stage = useStageStore.use.stage();
-  const collapsed = useSettingsStore((s) => s.editRailCollapsed);
-  const setCollapsed = useSettingsStore((s) => s.setEditRailCollapsed);
+  const [collapsed, setCollapsed] = usePanelCollapsed(EDIT_RAIL_COLLAPSED_KEY);
   const persistedWidth = useSettingsStore((s) => s.editRailWidth);
   const setPersistedWidth = useSettingsStore((s) => s.setEditRailWidth);
   const prefersReducedMotion = useReducedMotion();
@@ -140,7 +140,9 @@ export function SlideNavRail({
   const handleResizeMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     const drag = dragStateRef.current;
     if (!drag || e.pointerId !== drag.pointerId) return;
-    const delta = e.clientX - drag.startX;
+    // En RTL le rail est à droite : tirer vers la gauche l'élargit.
+    const sign = getComputedStyle(e.currentTarget).direction === 'rtl' ? -1 : 1;
+    const delta = (e.clientX - drag.startX) * sign;
     const next = Math.min(RAIL_MAX_PX, Math.max(RAIL_MIN_PX, drag.startWidth + delta));
     drag.lastWidth = next;
     if (railRef.current) railRef.current.style.width = `${next}px`;
@@ -357,7 +359,7 @@ export function SlideNavRail({
       // arrive too late.
       className={cn(
         'relative flex h-full shrink-0 flex-col overflow-hidden',
-        'border-r border-gray-100 dark:border-gray-800',
+        'border-e border-gray-100 dark:border-gray-800',
         'bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl',
         'shadow-[2px_0_24px_rgba(0,0,0,0.02)]',
       )}
@@ -384,9 +386,9 @@ export function SlideNavRail({
           onPointerMove={handleResizeMove}
           onPointerUp={handleResizeEnd}
           onPointerCancel={handleResizeEnd}
-          className="group absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize touch-none hover:bg-violet-400/30 dark:hover:bg-violet-500/30 active:bg-violet-500/50 transition-colors"
+          className="group absolute end-0 top-0 bottom-0 w-1.5 cursor-col-resize touch-none hover:bg-violet-400/30 dark:hover:bg-violet-500/30 active:bg-violet-500/50 transition-colors"
         >
-          <div className="absolute right-0.5 top-1/2 -translate-y-1/2 w-0.5 h-8 rounded-full bg-gray-300 dark:bg-gray-600 group-hover:bg-violet-400 dark:group-hover:bg-violet-500 transition-colors" />
+          <div className="absolute end-0.5 top-1/2 -translate-y-1/2 w-0.5 h-8 rounded-full bg-gray-300 dark:bg-gray-600 group-hover:bg-violet-400 dark:group-hover:bg-violet-500 transition-colors" />
         </div>
       )}
       {/* Header band — mirrors playback `SceneSidebar`: OpenMAIC logo
@@ -418,6 +420,7 @@ export function SlideNavRail({
           <button
             type="button"
             onClick={toggleCollapsed}
+            aria-expanded={!effectiveCollapsed}
             aria-label={effectiveCollapsed ? t('edit.nav.expand') : t('edit.nav.collapse')}
             title={effectiveCollapsed ? t('edit.nav.expand') : t('edit.nav.collapse')}
             className={cn(
@@ -430,9 +433,9 @@ export function SlideNavRail({
             )}
           >
             {effectiveCollapsed ? (
-              <PanelLeftOpen className="h-4 w-4" />
+              <PanelLeftOpen className="h-4 w-4 rtl-flip" />
             ) : (
-              <PanelLeftClose className="h-4 w-4" />
+              <PanelLeftClose className="h-4 w-4 rtl-flip" />
             )}
           </button>
           {effectiveCollapsed && mobileMode ? (

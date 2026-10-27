@@ -24,6 +24,11 @@ import type { ExportJobFormat } from '@/lib/supabase/types';
 
 const log = createLogger('ExportJobsAPI');
 
+/** Un job en file n'est repris que s'il est récent : au-delà, son worker est probablement perdu. */
+const QUEUED_REUSE_WINDOW_MS = 30 * 60 * 1000;
+/** Un job en cours n'est repris que s'il a donné signe de vie récemment (chaque scène rendue le met à jour). */
+const ACTIVE_REUSE_WINDOW_MS = 20 * 60 * 1000;
+
 const SUPPORTED_FORMATS: ExportJobFormat[] = ['scorm12', 'scorm2004', 'cmi5', 'mp4'];
 
 interface CreateExportJobBody {
@@ -84,6 +89,25 @@ export async function POST(request: NextRequest) {
         missingSpeechAudioMessage(voices, format === 'mp4' ? 'MP4' : 'LMS'),
       );
     }
+
+    // Un rendu déjà en cours pour ce cours, lancé par la même personne, est repris et non doublé : le rendu est long et lourd.
+    // (Le suivi d'un job n'est lisible que par son propriétaire : on ne reprend pas celui d'un autre.)
+    const now = Date.now();
+    const queuedSince = new Date(now - QUEUED_REUSE_WINDOW_MS).toISOString();
+    const activeSince = new Date(now - ACTIVE_REUSE_WINDOW_MS).toISOString();
+    const { data: running } = await serviceSupabase
+      .from('export_jobs')
+      .select('id, status')
+      .eq('stage_id', stageId)
+      .eq('format', format)
+      .eq('owner_id', auth.user.id)
+      .or(
+        `and(status.eq.queued,created_at.gt.${queuedSince}),and(status.eq.generating,updated_at.gt.${activeSince})`,
+      )
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (running) return apiSuccess({ id: running.id, status: running.status, reused: true }, 202);
 
     const { data: exportJob, error: insertError } = await serviceSupabase
       .from('export_jobs')
