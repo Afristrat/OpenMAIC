@@ -2938,6 +2938,7 @@
   "programme.reviewMoved": "Scenes moved and kept: {{count}}",
   "programme.reviewUnchanged": "Scenes unchanged: {{count}}",
   "programme.reviewOrphaned": "Syllabus entries without a scene (removed by hand): {{count}}, ignored",
+  "programme.keptPrevious": "Regeneration failed for {{count}} scene(s): the previous version was kept. Edit the syllabus entry again to retry.",
   "programme.reviewWarning": "Manual changes made to the scenes to regenerate, voice-over included, will be replaced.",
   "programme.reviewTextOnly": "No scene changes: only the syllabus text will be updated.",
   "programme.reviewNoChange": "No changes to apply.",

@@ -88,6 +88,12 @@ describe('reconcileScenes', () => {
     expect(result.orphaned).toEqual([]);
   });
 
+  it("garde de côté l'ancienne scène d'une entrée modifiée, renumérotée, mais pas celle d'une entrée ajoutée", () => {
+    const next = [outline('c', 1), outline('a', 2, { title: 'Titre modifié' }), outline('d', 3)];
+    const result = reconcileScenes({ previous: base, next, scenes });
+    expect(result.replaced.map((s) => [s.id, s.order])).toEqual([['scene-1', 2]]);
+  });
+
   it('ne régénère jamais une entrée inchangée dont la scène a été supprimée à la main', () => {
     const result = reconcileScenes({
       previous: base,

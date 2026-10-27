@@ -111,7 +111,13 @@ export function ProgrammeButton({ className }: { className?: string }) {
     if (!stageId || !plan || !draft || !review) return;
     setSaving(true);
     try {
-      await applyPlanEdit({ stageId, previous: plan, next: draft, regenerate });
+      await applyPlanEdit({
+        stageId,
+        previous: plan,
+        next: draft,
+        regenerate,
+        onKeptPrevious: (count) => toast.warning(t('programme.keptPrevious', { count })),
+      });
       toast.success(t(review.textOnly ? 'programme.appliedTextOnly' : 'programme.applied'));
       setOpen(false);
     } catch {

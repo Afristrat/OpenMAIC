@@ -4,6 +4,7 @@ import { persistCurrentClassroomForExport } from '@/lib/export/persist-before-se
 import { createLogger } from '@/lib/logger';
 import { useStageStore } from '@/lib/store/stage';
 import type { ClassroomPlan } from '@/lib/types/generation';
+import type { Scene } from '@/lib/types/stage';
 import { reconcileScenes, type ReconciledScenes } from '@/lib/syllabus/plan-diff';
 
 const log = createLogger('ProgrammeEdit');
@@ -42,6 +43,28 @@ async function completeVoices(stageId: string): Promise<void> {
 }
 
 /**
+ * Remet en place l'ancienne scène de chaque entrée modifiée dont la régénération n'a pas abouti (aucune scène à son
+ * rang), et la retire de la liste des échecs : elle n'a plus à être regénérée seule, ce qui créerait un doublon.
+ * Retourne le nombre de scènes remises en place.
+ */
+function restorePreviousScenes(stageId: string, replaced: Scene[]): number {
+  let restored = 0;
+  for (const scene of replaced) {
+    const state = useStageStore.getState();
+    if (state.stage?.id !== stageId) return restored;
+    if (state.scenes.some((existing) => existing.order === scene.order)) continue;
+    // Une génération encore en cours pour ce rang (autre passe déjà lancée) livrera sa propre scène.
+    if (state.generatingOutlines.some((outline) => outline.order === scene.order)) continue;
+    state.addScene(scene);
+    const failed = state.outlines.find((outline) => outline.order === scene.order);
+    if (failed) state.retryFailedOutline(failed.id);
+    restored += 1;
+  }
+  if (restored > 0) useStageStore.getState().markGenerationCompleteIfDone();
+  return restored;
+}
+
+/**
  * Met la salle de cours en accord avec le plan modifié : les scènes inchangées ou seulement déplacées sont
  * conservées et renumérotées, celles des entrées supprimées ou modifiées sont retirées. Les entrées ajoutées
  * ou modifiées restent sans scène : `regenerate` les génère, une à une, avec les reprises sur échec habituelles,
@@ -52,8 +75,10 @@ export async function applyPlanEdit(input: {
   previous: ClassroomPlan;
   next: ClassroomPlan;
   regenerate: (() => Promise<void>) | null;
+  /** Appelé quand une régénération a échoué et que l'ancienne version de `count` scènes a été remise en place. */
+  onKeptPrevious?: (count: number) => void;
 }): Promise<ReconciledScenes> {
-  const { stageId, previous, next, regenerate } = input;
+  const { stageId, previous, next, regenerate, onKeptPrevious } = input;
   await savePlan(stageId, next);
 
   const store = useStageStore.getState();
@@ -80,8 +105,13 @@ export async function applyPlanEdit(input: {
 
   if (result.pending.length > 0 && regenerate) {
     void regenerate()
+      .catch((error: unknown) => log.warn('Regeneration after a syllabus edit failed', error))
+      .then(() => {
+        const kept = restorePreviousScenes(stageId, result.replaced);
+        if (kept > 0) onKeptPrevious?.(kept);
+      })
       .then(() => completeVoices(stageId))
-      .catch((error: unknown) => log.warn('Regeneration after a syllabus edit failed', error));
+      .catch((error: unknown) => log.warn('Voice completion after a syllabus edit failed', error));
   }
   return result;
 }
