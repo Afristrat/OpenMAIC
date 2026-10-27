@@ -78,21 +78,19 @@ describe('voice completion jobs', () => {
     expect(done?.failed).toEqual([{ sceneId: 'sc1', actionId: 'c' }]);
   });
 
-  test('an unexpected error becomes a generic message, a completion error keeps its own', async () => {
+  test('an unexpected error becomes the generic code, a completion error keeps its own code', async () => {
     const unexpected = startVoiceCompletionJob({ classroomId: 'room-boom' }, async () => {
       throw new Error('detail interne');
     });
     const known = startVoiceCompletionJob({ classroomId: 'room-known' }, async () => {
-      const error = new Error('Cette classroom ne possède aucun casting vocal.');
+      const error = Object.assign(new Error('Cette classroom ne possède aucun casting vocal.'), {
+        code: 'NO_CASTING',
+      });
       error.name = 'VoiceCompletionError';
       throw error;
     });
     await settle();
-    expect(readVoiceCompletionJob(unexpected.id)?.error).toBe(
-      'La génération des voix manquantes a échoué.',
-    );
-    expect(readVoiceCompletionJob(known.id)?.error).toBe(
-      'Cette classroom ne possède aucun casting vocal.',
-    );
+    expect(readVoiceCompletionJob(unexpected.id)?.error).toBe('VOICE_COMPLETION_FAILED');
+    expect(readVoiceCompletionJob(known.id)?.error).toBe('NO_CASTING');
   });
 });

@@ -6,6 +6,7 @@ import { useI18n } from '@/lib/hooks/use-i18n';
 import { useStageStore } from '@/lib/store/stage';
 import {
   completeMissingVoices,
+  voiceCompletionErrorKey,
   type MissingVoicesProgress,
 } from '@/lib/audio/complete-missing-voices';
 import { summarizeSpeechAudio } from '@/lib/audio/speech-audio-report';
@@ -53,7 +54,7 @@ export function useMissingVoices() {
       toast.success(t('edit.tts.completed', { count: result.generated }), { id: toastId });
       return true;
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('edit.tts.completionFailed'), {
+      toast.error(t(voiceCompletionErrorKey(error instanceof Error ? error.message : '')), {
         id: toastId,
         duration: 12_000,
       });

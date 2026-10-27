@@ -29,7 +29,24 @@ interface MissingVoicesPayload {
 const POLL_INTERVAL_MS = 3_000;
 /** Consecutive failed polls before giving up: a network blip must not abandon a running job. */
 const MAX_POLL_FAILURES = 5;
-const FAILURE_MESSAGE = 'La génération des voix manquantes a échoué.';
+export const VOICE_COMPLETION_FAILED_CODE = 'VOICE_COMPLETION_FAILED';
+const FAILURE_MESSAGE = VOICE_COMPLETION_FAILED_CODE;
+
+/** Clé i18n du message à montrer pour le code d'erreur d'un job de voix (inconnu : message générique). */
+export function voiceCompletionErrorKey(code: string): string {
+  switch (code) {
+    case 'INSUFFICIENT_CREDITS':
+      return 'billing.credits.consumptionBlocked';
+    case 'NO_CASTING':
+      return 'edit.tts.noCasting';
+    case 'INVALID_CASTING':
+      return 'edit.tts.invalidCasting';
+    case 'NOT_FOUND':
+      return 'edit.tts.notFound';
+    default:
+      return 'edit.tts.completionFailed';
+  }
+}
 
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
