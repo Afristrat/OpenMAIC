@@ -15,6 +15,7 @@ import { requireSuperAdminOrOrgEditor, requireSuperAdminOrOrgMember } from '@/li
 import { approvedClassroomPlanSchema } from '@/lib/api/schemas';
 import { hasClassroomShareAccess } from '@/lib/server/classroom-share-access';
 import { readClassroomPlan, saveClassroomPlan } from '@/lib/server/classroom-plan';
+import { toLearnerPlan } from '@/lib/syllabus/plan-diff';
 import { createLogger } from '@/lib/logger';
 import type { ClassroomPlan } from '@/lib/types/generation';
 
@@ -54,7 +55,8 @@ export async function GET(request: NextRequest) {
     return apiSuccess({
       courseId: record.courseId,
       language: record.language,
-      plan: record.plan,
+      // Le plan complet (directives, champs de génération des scènes) sert à l'édition : lui seul le reçoit.
+      plan: editor.response ? toLearnerPlan(record.plan) : record.plan,
       canEdit: !editor.response,
     });
   } catch (error) {

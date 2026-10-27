@@ -5,8 +5,9 @@ import {
   outlineSignature,
   reconcileScenes,
   regenerationCount,
+  toLearnerPlan,
 } from '@/lib/syllabus/plan-diff';
-import type { SceneOutline } from '@/lib/types/generation';
+import type { ClassroomPlan, SceneOutline } from '@/lib/types/generation';
 import type { Scene } from '@/lib/types/stage';
 
 const outline = (id: string, order: number, extra: Partial<SceneOutline> = {}): SceneOutline => ({
@@ -117,5 +118,35 @@ describe('reconcileScenes', () => {
       ['scene-20', 2],
       ['scene-30', 3],
     ]);
+  });
+});
+
+describe('toLearnerPlan', () => {
+  it('ne garde que le programme et le déroulé', () => {
+    const plan = {
+      courseTitle: 'Titre',
+      languageDirective: 'Français',
+      optimization: { secret: true },
+      designDirective: { secret: true },
+      syllabus: {
+        audience: 'a',
+        prerequisites: 'b',
+        overallObjective: 'c',
+        learningObjectives: ['d'],
+        totalDurationMinutes: 10,
+        deliveryMode: 'e',
+        assessmentStrategy: 'f',
+        expectedDeliverable: 'g',
+      },
+      outlines: [
+        outline('b', 2, { mediaGenerations: [{ type: 'image', prompt: 'p', elementId: 'x' }] }),
+        outline('a', 1, {
+          quizConfig: { questionCount: 3, difficulty: 'easy', questionTypes: ['single'] },
+        }),
+      ],
+    } as unknown as ClassroomPlan;
+    const view = toLearnerPlan(plan);
+    expect(view.outlines.map((o) => o.id)).toEqual(['a', 'b']);
+    expect(JSON.stringify(view)).not.toMatch(/secret|mediaGenerations|quizConfig|Français/);
   });
 });

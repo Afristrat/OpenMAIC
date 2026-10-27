@@ -1,4 +1,4 @@
-import type { ClassroomSyllabus, SceneOutline } from '@/lib/types/generation';
+import type { ClassroomPlan, ClassroomSyllabus, SceneOutline } from '@/lib/types/generation';
 import type { Scene } from '@/lib/types/stage';
 
 /** Champs d'une entrée du plan qui ne décrivent pas son contenu pédagogique : jamais une raison de régénérer. */
@@ -137,4 +137,26 @@ export function reconcileScenes(input: {
   });
   const pending = outlines.filter((outline) => regenerateIds.has(outline.id));
   return { outlines, keptScenes, pending, orphaned };
+}
+
+/**
+ * Vue d'un plan destinée à un apprenant ou à un visiteur : le programme et le déroulé, sans les directives de
+ * conception, les rapports d'optimisation, ni les champs de génération des scènes (médias, ressources, configurations).
+ */
+export function toLearnerPlan(plan: ClassroomPlan): ClassroomPlan {
+  return {
+    courseTitle: plan.courseTitle,
+    languageDirective: '',
+    syllabus: plan.syllabus,
+    outlines: sortByOrder(plan.outlines).map((outline) => ({
+      id: outline.id,
+      type: outline.type,
+      title: outline.title,
+      description: outline.description,
+      keyPoints: outline.keyPoints,
+      teachingObjective: outline.teachingObjective,
+      estimatedDuration: outline.estimatedDuration,
+      order: outline.order,
+    })),
+  };
 }
