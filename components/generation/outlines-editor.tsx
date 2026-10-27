@@ -85,6 +85,8 @@ interface OutlinesEditorProps {
   backLabel?: string;
   /** Masque la case « toujours relire le plan », propre au parcours de création. */
   hideAlwaysReview?: boolean;
+  /** Modification d'un programme déjà généré : ni mention de proposition à valider, ni de génération à venir. */
+  editingExisting?: boolean;
 }
 
 const SCENE_TYPES: SceneType[] = ['slide', 'quiz', 'interactive', 'pbl', 'plugin'];
@@ -182,6 +184,7 @@ export function OutlinesEditor({
   confirmLabel,
   backLabel,
   hideAlwaysReview = false,
+  editingExisting = false,
 }: OutlinesEditorProps) {
   const { t } = useI18n();
   const sceneTypeLabel = useSceneTypeLabel();
@@ -290,8 +293,10 @@ export function OutlinesEditor({
         ? t('generation.outlineEditorStreamingProgress', { count: outlines.length })
         : t('generation.outlineEditorStreamingWaiting');
     }
-    return t('generation.outlineEditorSummary', { count: outlines.length });
-  }, [isStreaming, outlines.length, t]);
+    return t(editingExisting ? 'programme.editSummary' : 'generation.outlineEditorSummary', {
+      count: outlines.length,
+    });
+  }, [editingExisting, isStreaming, outlines.length, t]);
 
   const sceneList =
     outlines.length === 0 ? (
@@ -392,10 +397,12 @@ export function OutlinesEditor({
         )}
       >
         <div className="min-w-0 flex-1 space-y-1.5">
-          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground/70">
-            <Sparkles className="size-3 text-blue-500" />
-            {t('generation.outlineEditorEyebrow')}
-          </div>
+          {!editingExisting && (
+            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground/70">
+              <Sparkles className="size-3 text-blue-500" />
+              {t('generation.outlineEditorEyebrow')}
+            </div>
+          )}
           <h2 className="text-2xl font-semibold tracking-tight md:text-[28px]">
             {t('generation.outlineEditorTitle')}
           </h2>

@@ -145,7 +145,7 @@ export function ProgrammeButton({ className }: { className?: string }) {
           if (step !== 'view') event.preventDefault();
         }}
       >
-        <DialogHeader>
+        <DialogHeader className="pr-8">
           <DialogTitle>
             {step === 'view' ? t('programme.title') : t('programme.editTitle')}
           </DialogTitle>
@@ -211,6 +211,7 @@ export function ProgrammeButton({ className }: { className?: string }) {
             onConfirm={() => setStep('review')}
             onBack={() => setStep('view')}
             hideAlwaysReview
+            editingExisting
             backLabel={t('programme.cancel')}
             confirmLabel={t('programme.apply')}
           />

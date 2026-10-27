@@ -2948,5 +2948,6 @@
   "programme.saveFailed": "Le programme n’a pas pu être enregistré. Aucune scène n’a été modifiée.",
   "programme.applied": "Programme enregistré. Les scènes touchées sont en cours de régénération.",
   "programme.appliedTextOnly": "Programme enregistré.",
-  "programme.locked": "Terminez la génération en cours avant de modifier le programme."
+  "programme.locked": "Terminez la génération en cours avant de modifier le programme.",
+  "programme.editSummary": "{{count}} scènes. Modifiez, ajoutez, supprimez ou réorganisez-les : seules les scènes touchées seront régénérées."
 }

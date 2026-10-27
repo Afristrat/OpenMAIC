@@ -2948,5 +2948,6 @@
   "programme.saveFailed": "The syllabus could not be saved. No scene was changed.",
   "programme.applied": "Syllabus saved. The affected scenes are being regenerated.",
   "programme.appliedTextOnly": "Syllabus saved.",
-  "programme.locked": "Wait for the current generation to finish before editing the syllabus."
+  "programme.locked": "Wait for the current generation to finish before editing the syllabus.",
+  "programme.editSummary": "{{count}} scenes. Edit, add, remove or reorder them: only the affected scenes will be regenerated."
 }
