@@ -868,7 +868,7 @@ export const useSettingsStore = create<SettingsState>()(
         sidebarCollapsed: true,
         chatAreaCollapsed: true,
         chatAreaWidth: 320,
-        editRailWidth: 220,
+        editRailWidth: 190,
         editInsertToolbarCollapsed: false,
 
         // Audio settings (use defaults)
