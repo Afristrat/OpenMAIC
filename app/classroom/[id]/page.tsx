@@ -12,6 +12,8 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useSceneGenerator } from '@/lib/hooks/use-scene-generator';
+import { useAgentRegistry } from '@/lib/orchestration/registry/store';
+import { SceneRegenerationProvider } from '@/components/syllabus/regeneration-context';
 import { useMediaGenerationStore } from '@/lib/store/media-generation';
 import { useWhiteboardHistoryStore } from '@/lib/store/whiteboard-history';
 import { createLogger } from '@/lib/logger';
@@ -75,6 +77,24 @@ export default function ClassroomDetailPage() {
       log.info('[Classroom] All scenes generated');
     },
   });
+
+  // Génère les scènes du plan restées sans scène après une modification du programme.
+  const regeneratePending = useCallback(async () => {
+    const stage = useStageStore.getState().stage;
+    if (!stage) return;
+    const registry = useAgentRegistry.getState();
+    const agents = (stage.agentIds ?? []).flatMap((agentId) => {
+      const agent = registry.getAgent(agentId);
+      return agent
+        ? [{ id: agent.id, name: agent.name, role: agent.role, persona: agent.persona }]
+        : [];
+    });
+    await generateRemaining({
+      stageInfo: { name: stage.name || '', description: stage.description, style: stage.style },
+      agents: agents.length > 0 ? agents : undefined,
+      languageDirective: stage.languageDirective,
+    });
+  }, [generateRemaining]);
 
   const loadClassroom = useCallback(async () => {
     loadAbortRef.current?.abort();
@@ -539,12 +559,14 @@ export default function ClassroomDetailPage() {
                 initialState={editAccess}
                 onAccessChanged={() => void loadClassroom()}
               />
-              <Stage
-                onRetryOutline={retrySingleOutline}
-                canEdit={canEdit}
-                canViewSources={canViewSources}
-                interactionOrganizationId={interactionOrganizationId}
-              />
+              <SceneRegenerationProvider value={canEdit ? regeneratePending : null}>
+                <Stage
+                  onRetryOutline={retrySingleOutline}
+                  canEdit={canEdit}
+                  canViewSources={canViewSources}
+                  interactionOrganizationId={interactionOrganizationId}
+                />
+              </SceneRegenerationProvider>
             </>
           )}
         </div>

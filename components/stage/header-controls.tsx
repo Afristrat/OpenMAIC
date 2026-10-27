@@ -47,6 +47,7 @@ import type { ResearchSource } from '@openmaic/dsl';
 import { safeHttpUrl } from '@/lib/utils/safe-url';
 import { LiveSessionRecorder } from '@/components/live-session-recorder';
 import { MissingVoicesNotice } from './missing-voices-notice';
+import { ProgrammeButton } from '@/components/syllabus/programme-dialog';
 
 // Zustand selectors must return the same reference when the selected value has
 // not changed. An inline `?? []` allocates on every store read and causes React
@@ -254,6 +255,8 @@ export function HeaderControls({
           />
         </label>
       )}
+
+      <ProgrammeButton />
 
       {/* Export / Download — lives to the right of the Pro Switch.
           Not a settings function so it does not belong inside the
