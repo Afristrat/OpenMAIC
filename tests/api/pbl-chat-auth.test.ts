@@ -16,7 +16,7 @@ vi.mock('@/lib/logger', () => ({
   createLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }),
 }));
 
-function request(orgId?: string) {
+function request(orgId?: string, locale?: string) {
   return new Request('http://localhost/api/pbl/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -27,6 +27,7 @@ function request(orgId?: string) {
       currentIssue: null,
       recentMessages: [],
       userRole: 'learner',
+      ...(locale ? { locale } : {}),
     }),
   }) as unknown as NextRequest;
 }
@@ -62,5 +63,25 @@ describe('POST /api/pbl/chat tenant boundary', () => {
 
     expect(response.status).toBe(200);
     expect(providerContext).toMatchObject({ actorUserId: 'user-1', tenantId: 'org-1' });
+  });
+  it.each([
+    ['fr-FR', 'French'],
+    ['ar-MA', 'Modern Standard Arabic'],
+    ['en-US', 'English'],
+  ])("demande au tuteur de répondre dans la langue de l'interface (%s)", async (locale, language) => {
+    const { POST } = await import('@/app/api/pbl/chat/route');
+    await POST(request('org-1', locale));
+
+    expect(mocks.callLLM.mock.calls[0][0].system).toContain(`Always answer in ${language}`);
+  });
+
+  it("n'ajoute aucune consigne de langue pour une locale inconnue ou absente", async () => {
+    const { POST } = await import('@/app/api/pbl/chat/route');
+    await POST(request('org-1', 'xx-XX'));
+    await POST(request('org-1'));
+
+    for (const call of mocks.callLLM.mock.calls) {
+      expect(call[0].system).not.toContain('Always answer in');
+    }
   });
 });

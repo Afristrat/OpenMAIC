@@ -23,8 +23,17 @@ interface PBLChatRequest {
   currentIssue: PBLIssue | null;
   recentMessages: { agent_name: string; message: string }[];
   userRole: string;
+  /** Langue de l'interface de l'apprenant : le tuteur lui répond dans cette langue. */
+  locale?: string;
   agentType?: 'question' | 'judge';
 }
+
+/** Langue de réponse du tuteur selon la locale de l'interface ; une locale inconnue ne change rien. */
+const PBL_ANSWER_LANGUAGES: Record<string, string> = {
+  'fr-FR': 'French',
+  'en-US': 'English',
+  'ar-MA': 'Modern Standard Arabic',
+};
 
 export async function POST(req: NextRequest) {
   let agentName: string | undefined;
@@ -32,6 +41,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as PBLChatRequest;
     const { message, agent, currentIssue, recentMessages, userRole, agentType } = body;
+    const answerLanguage = PBL_ANSWER_LANGUAGES[body.locale ?? ''];
     const orgId = body.orgId?.trim();
     agentName = agent?.name;
     resolvedAgentType = agentType;
@@ -69,7 +79,10 @@ export async function POST(req: NextRequest) {
             .join('\n')}`
         : '';
 
-    const systemPrompt = `${agent.system_prompt}${issueContext}${recentContext}${userRole ? `\n\nThe student's role is: ${userRole}` : ''}`;
+    const languageContext = answerLanguage
+      ? `\n\n## Language\nAlways answer in ${answerLanguage}, whatever the language of the context above.`
+      : '';
+    const systemPrompt = `${agent.system_prompt}${issueContext}${recentContext}${userRole ? `\n\nThe student's role is: ${userRole}` : ''}${languageContext}`;
 
     const result = await runWithUsageMeteringContext(req.headers, auth.user.id, orgId, () =>
       callLLM(
