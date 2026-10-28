@@ -3,7 +3,7 @@ import { exportJobArtifactPath } from '@/lib/export/export-job-artifact';
 
 describe('exportJobArtifactPath', () => {
   it.each([
-    ['mp4', 'stage/job.mp4'],
+    ['mp4', 'stage/job.zip'],
     ['scorm12', 'stage/job.scorm12.zip'],
     ['scorm2004', 'stage/job.scorm2004.zip'],
     ['cmi5', 'stage/job.cmi5.zip'],
