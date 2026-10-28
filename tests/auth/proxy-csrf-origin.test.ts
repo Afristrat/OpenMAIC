@@ -113,6 +113,30 @@ describe('proxy CSRF Origin check', () => {
       }
     });
 
+    it('lets the capture extension call the Bearer ingest routes with its extension Origin', async () => {
+      for (const path of [
+        '/api/capture/ingest/pair',
+        '/api/capture/ingest/sessions',
+        '/api/capture/ingest/sessions/abc/steps',
+      ]) {
+        const res = await proxy(request(path, { origin: 'chrome-extension://abcdefghijklmnop' }));
+        expect(res.status).toBe(200);
+      }
+    });
+
+    it('does not extend the capture exception to cookie-authenticated or look-alike routes', async () => {
+      for (const path of [
+        '/api/capture/pairing-codes',
+        '/api/capture/ingest',
+        '/api/capture/ingest-evil/pair',
+        '/api/capture',
+      ]) {
+        expect(
+          await isBlocked(request(path, { origin: 'chrome-extension://abcdefghijklmnop' })),
+        ).toBe(true);
+      }
+    });
+
     it('keeps the exempt list to exactly the documented routes', () => {
       expect([...CSRF_EXEMPT_PATHS].sort()).toEqual([
         '/api/billing/webhook',

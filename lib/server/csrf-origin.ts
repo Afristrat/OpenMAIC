@@ -33,6 +33,14 @@ export const CSRF_EXEMPT_PATHS: ReadonlySet<string> = new Set([
   '/api/mcp',
 ]);
 
+/**
+ * Préfixes de routes réservées à un client non navigateur Qalem, qui s'authentifie par jeton
+ * Bearer et jamais par cookie : l'extension de capture envoie un `Origin` `chrome-extension://…`
+ * ou `moz-extension://…` qui n'est pas celui de l'application. Sans cookie de session, il n'y a
+ * rien à forger côté CSRF. Le préfixe se termine par `/` pour ne pas couvrir un chemin voisin.
+ */
+export const CSRF_EXEMPT_PREFIXES: readonly string[] = ['/api/capture/ingest/'];
+
 function normalizePath(pathname: string): string {
   return pathname.length > 1 && pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
 }
@@ -63,7 +71,9 @@ function isOwnOrigin(req: NextRequest, origin: string): boolean {
 /** Vrai si la requête est une requête non sûre portant un `Origin` étranger à l'application. */
 export function isCrossOriginUnsafeRequest(req: NextRequest): boolean {
   if (SAFE_METHODS.has(req.method.toUpperCase())) return false;
-  if (CSRF_EXEMPT_PATHS.has(normalizePath(req.nextUrl.pathname))) return false;
+  const pathname = normalizePath(req.nextUrl.pathname);
+  if (CSRF_EXEMPT_PATHS.has(pathname)) return false;
+  if (CSRF_EXEMPT_PREFIXES.some((prefix) => pathname.startsWith(prefix))) return false;
 
   const origin = req.headers.get('origin');
   if (origin === null) return false;
