@@ -624,17 +624,20 @@ export interface ExportJobRow {
   phase: ExportJobPhase | null;
   progress_done: number | null;
   progress_total: number | null;
+  /** Vrai si l'auteur a demandé un courriel quand l'export est prêt. */
+  notify_email: boolean;
   error: string | null;
   created_at: string; // ISO 8601
   updated_at: string; // ISO 8601
 }
 
 export type ExportJobInsert = Pick<ExportJobRow, 'stage_id' | 'format'> &
-  Partial<Pick<ExportJobRow, 'owner_id' | 'status'>>;
+  Partial<Pick<ExportJobRow, 'owner_id' | 'status' | 'notify_email'>>;
 
 export type ExportJobUpdate = Partial<
   Pick<
     ExportJobRow,
+    | 'notify_email'
     | 'status'
     | 'storage_path'
     | 'scene_count'

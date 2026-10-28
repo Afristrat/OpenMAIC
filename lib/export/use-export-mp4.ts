@@ -37,7 +37,7 @@ export function useExportMp4() {
   const { t } = useI18n();
   const { complete: completeMissingVoices } = useMissingVoices();
 
-  const exportMp4 = useCallback(async () => {
+  const exportMp4 = useCallback(async (options: { notifyByEmail?: boolean } = {}) => {
     const { stage, scenes } = useStageStore.getState();
     if (!stage?.id || activeRef.current) return;
 
@@ -92,7 +92,11 @@ export function useExportMp4() {
       const createResponse = await fetch('/api/export-jobs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stageId: stage.id, format: 'mp4' }),
+        body: JSON.stringify({
+          stageId: stage.id,
+          format: 'mp4',
+          notifyByEmail: options.notifyByEmail === true,
+        }),
       });
       const created = (await createResponse.json()) as ExportJobResponse;
       if (!createResponse.ok || !created.success || !created.id) {

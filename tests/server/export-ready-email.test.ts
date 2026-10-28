@@ -107,7 +107,13 @@ describe('export ready email', () => {
     vi.stubGlobal('fetch', fetchMock);
     serviceMock.client.mockReturnValue(
       fakeService({
-        job: { id: 'job-3', stage_id: 'stage-1', owner_id: 'user-1', format: 'mp4' },
+        job: {
+          id: 'job-3',
+          stage_id: 'stage-1',
+          owner_id: 'user-1',
+          format: 'mp4',
+          notify_email: true,
+        },
         stage: { name: 'Sales onboarding' },
         preferences: { locale: 'en-US' },
         email: 'author@example.com',
@@ -125,7 +131,13 @@ describe('export ready email', () => {
     vi.stubGlobal('fetch', fetchMock);
     serviceMock.client.mockReturnValue(
       fakeService({
-        job: { id: 'job-4', stage_id: 'stage-1', owner_id: 'user-1', format: 'cmi5' },
+        job: {
+          id: 'job-4',
+          stage_id: 'stage-1',
+          owner_id: 'user-1',
+          format: 'cmi5',
+          notify_email: true,
+        },
         stage: null,
         preferences: null,
         email: 'author@example.com',
@@ -143,7 +155,13 @@ describe('export ready email', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500 }));
     serviceMock.client.mockReturnValue(
       fakeService({
-        job: { id: 'job-5', stage_id: 'stage-1', owner_id: 'user-1', format: 'mp4' },
+        job: {
+          id: 'job-5',
+          stage_id: 'stage-1',
+          owner_id: 'user-1',
+          format: 'mp4',
+          notify_email: true,
+        },
         stage: { name: 'Cours' },
         preferences: null,
         email: 'author@example.com',
@@ -168,13 +186,42 @@ describe('export ready email', () => {
 
     serviceMock.client.mockReturnValue(
       fakeService({
-        job: { id: 'job-7', stage_id: 'stage-1', owner_id: 'user-1', format: 'mp4' },
+        job: {
+          id: 'job-7',
+          stage_id: 'stage-1',
+          owner_id: 'user-1',
+          format: 'mp4',
+          notify_email: true,
+        },
         stage: { name: 'Cours' },
         preferences: null,
         email: null,
       }),
     );
     await notifyExportReady('job-7');
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('sends nothing when the author did not ask for an email at launch', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    serviceMock.client.mockReturnValue(
+      fakeService({
+        job: {
+          id: 'job-8',
+          stage_id: 'stage-1',
+          owner_id: 'user-1',
+          format: 'mp4',
+          notify_email: false,
+        },
+        stage: { name: 'Cours' },
+        preferences: null,
+        email: 'author@example.com',
+      }),
+    );
+
+    await notifyExportReady('job-8');
 
     expect(fetchMock).not.toHaveBeenCalled();
   });

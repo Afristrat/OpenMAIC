@@ -100,8 +100,9 @@ export async function sendExportReadyEmail(input: {
 }
 
 /**
- * Prévient le propriétaire d'un export terminé. Le courriel est transactionnel (il répond à
- * une action de la personne) : il ne passe pas par le budget des rappels de révision.
+ * Prévient le propriétaire d'un export terminé, s'il l'a demandé au lancement (`notify_email`).
+ * Le courriel est transactionnel (il répond à une action de la personne) : il ne passe pas
+ * par le budget des rappels de révision.
  * Un échec d'envoi ne remet jamais en cause l'export, déjà déposé : il est journalisé.
  */
 export async function notifyExportReady(exportJobId: string): Promise<void> {
@@ -109,10 +110,11 @@ export async function notifyExportReady(exportJobId: string): Promise<void> {
     const service = createServiceSupabaseClient();
     const { data: job } = await service
       .from('export_jobs')
-      .select('id, stage_id, owner_id, format')
+      .select('id, stage_id, owner_id, format, notify_email')
       .eq('id', exportJobId)
       .maybeSingle();
-    if (!job?.owner_id) return;
+    // Le courriel n'existe que sur demande de l'auteur, faite au lancement de l'export.
+    if (!job?.owner_id || job.notify_email !== true) return;
 
     const [{ data: owner }, { data: stage }, { data: preferences }] = await Promise.all([
       service.auth.admin.getUserById(job.owner_id as string),

@@ -111,6 +111,8 @@ export function HeaderControls({
   const { exporting: isExportingLearningPackage, exportLearningPackage } =
     useExportLearningPackage();
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  // Courriel de fin d'export : uniquement si la personne le demande, à chaque lancement.
+  const [notifyByEmail, setNotifyByEmail] = useState(false);
   const launchExport = (action: () => void) => {
     setExportMenuOpen(false);
     setTimeout(action, 0);
@@ -304,10 +306,20 @@ export function HeaderControls({
             <DialogDescription>{t('export.dialogDescription')}</DialogDescription>
           </DialogHeader>
           <MissingVoicesNotice />
+          <label className="flex items-center gap-2 px-4 text-sm text-gray-600 dark:text-gray-300">
+            <input
+              type="checkbox"
+              data-testid="export-notify-email"
+              checked={notifyByEmail}
+              onChange={(event) => setNotifyByEmail(event.target.checked)}
+              className="size-4 rounded border-gray-300 accent-purple-600"
+            />
+            {t('export.notifyByEmail')}
+          </label>
           <div className="grid gap-1">
             <button
               data-testid="export-mp4"
-              onClick={() => launchExport(() => void exportMp4())}
+              onClick={() => launchExport(() => void exportMp4({ notifyByEmail }))}
               disabled={isExportingMp4}
               className="flex w-full items-center gap-2.5 rounded-md px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
             >
@@ -324,7 +336,9 @@ export function HeaderControls({
             </div>
             <button
               data-testid="export-scorm12"
-              onClick={() => launchExport(() => void exportLearningPackage('scorm12'))}
+              onClick={() =>
+                launchExport(() => void exportLearningPackage('scorm12', { notifyByEmail }))
+              }
               disabled={isExportingLearningPackage}
               className="flex w-full items-center gap-2.5 rounded-md px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
             >
@@ -338,7 +352,9 @@ export function HeaderControls({
             </button>
             <button
               data-testid="export-scorm2004"
-              onClick={() => launchExport(() => void exportLearningPackage('scorm2004'))}
+              onClick={() =>
+                launchExport(() => void exportLearningPackage('scorm2004', { notifyByEmail }))
+              }
               disabled={isExportingLearningPackage}
               className="flex w-full items-center gap-2.5 rounded-md px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
             >
@@ -352,7 +368,9 @@ export function HeaderControls({
             </button>
             <button
               data-testid="export-cmi5"
-              onClick={() => launchExport(() => void exportLearningPackage('cmi5'))}
+              onClick={() =>
+                launchExport(() => void exportLearningPackage('cmi5', { notifyByEmail }))
+              }
               disabled={isExportingLearningPackage}
               className="flex w-full items-center gap-2.5 rounded-md px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
             >

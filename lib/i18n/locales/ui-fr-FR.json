@@ -1989,6 +1989,7 @@
   "export.videoReady": "Votre vidéo est prête.",
   "export.videoRendering": "Rendu vidéo…",
   "export.videoTimeout": "Le rendu vidéo prend plus de temps que prévu. Vérifiez à nouveau sous peu.",
+  "export.notifyByEmail": "Me prévenir par courriel quand l’export est prêt",
   "exports.title": "Mes exports",
   "exports.empty": "Aucun export pour le moment. Lancez-en un depuis un cours.",
   "exports.loadError": "Impossible de charger vos exports.",

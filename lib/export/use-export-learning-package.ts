@@ -42,7 +42,7 @@ export function useExportLearningPackage() {
   const { complete: completeMissingVoices } = useMissingVoices();
 
   const exportLearningPackage = useCallback(
-    async (format: LearningPackageFormat) => {
+    async (format: LearningPackageFormat, options: { notifyByEmail?: boolean } = {}) => {
       const { stage, scenes } = useStageStore.getState();
       if (!stage?.id || activeRef.current) return;
 
@@ -56,7 +56,11 @@ export function useExportLearningPackage() {
         const createResponse = await fetch('/api/export-jobs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ stageId: stage.id, format: format as ExportJobFormat }),
+          body: JSON.stringify({
+            stageId: stage.id,
+            format: format as ExportJobFormat,
+            notifyByEmail: options.notifyByEmail === true,
+          }),
         });
         const created = (await createResponse.json()) as ExportJobResponse;
         if (!createResponse.ok || !created.success || !created.id) {

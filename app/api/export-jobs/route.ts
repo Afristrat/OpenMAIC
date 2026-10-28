@@ -34,6 +34,8 @@ const SUPPORTED_FORMATS: ExportJobFormat[] = ['scorm12', 'scorm2004', 'cmi5', 'm
 interface CreateExportJobBody {
   stageId?: string;
   format?: string;
+  /** La personne demande un courriel quand l'export est prêt (jamais envoyé sans cette demande). */
+  notifyByEmail?: boolean;
 }
 
 /**
@@ -80,6 +82,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as CreateExportJobBody;
     const { stageId, format } = body;
+    const notifyEmail = body.notifyByEmail === true;
 
     if (!stageId || !format) {
       return apiError('MISSING_REQUIRED_FIELD', 400, 'stageId et format sont requis');
@@ -144,7 +147,16 @@ export async function POST(request: NextRequest) {
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (running) return apiSuccess({ id: running.id, status: running.status, reused: true }, 202);
+    if (running) {
+      // Reprendre un rendu en cours n'efface pas une demande de courriel faite en le relançant.
+      if (notifyEmail) {
+        await serviceSupabase
+          .from('export_jobs')
+          .update({ notify_email: true })
+          .eq('id', running.id);
+      }
+      return apiSuccess({ id: running.id, status: running.status, reused: true }, 202);
+    }
 
     const { data: exportJob, error: insertError } = await serviceSupabase
       .from('export_jobs')
@@ -153,6 +165,7 @@ export async function POST(request: NextRequest) {
         owner_id: auth.user.id,
         format: format as ExportJobFormat,
         status: 'queued',
+        notify_email: notifyEmail,
       })
       .select('id, status')
       .single();
