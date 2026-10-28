@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Home,
+  Download,
   History,
   BookOpen,
   Brain,
@@ -111,6 +112,12 @@ export function NavigationSidebar(): React.ReactElement {
       href: '/replays',
       labelKey: 'nav.replays',
       icon: <History className="size-5" />,
+      show: isAuthenticated,
+    },
+    {
+      href: '/exports',
+      labelKey: 'exports.title',
+      icon: <Download className="size-5" />,
       show: isAuthenticated,
     },
     {

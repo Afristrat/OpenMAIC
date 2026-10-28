@@ -36,6 +36,43 @@ interface CreateExportJobBody {
   format?: string;
 }
 
+/**
+ * GET /api/export-jobs — les exports de la personne connectée, du plus récent au plus ancien.
+ * Alimente la page « Mes exports » ; le téléchargement passe par GET /api/export-jobs/[id]?download=1,
+ * qui signe une URL fraîche à chaque clic.
+ */
+export async function GET(request: NextRequest) {
+  const auth = await requireAuth(request);
+  if (auth.response) return auth.response;
+
+  const { data, error } = await createServiceSupabaseClient()
+    .from('export_jobs')
+    .select('id, stage_id, format, status, created_at, stages(name)')
+    .eq('owner_id', auth.user.id)
+    .order('created_at', { ascending: false })
+    .limit(50);
+  if (error) {
+    log.error('Failed to list export jobs', error.message);
+    return apiError('INTERNAL_ERROR', 500, 'Échec de la lecture des exports');
+  }
+
+  const exports = (data ?? []).map((row) => {
+    const stage = row.stages as { name?: string } | { name?: string }[] | null;
+    const courseName = Array.isArray(stage) ? stage[0]?.name : stage?.name;
+    return {
+      id: row.id as string,
+      stageId: row.stage_id as string,
+      courseName: courseName?.trim() || null,
+      format: row.format as string,
+      status: row.status as string,
+      createdAt: row.created_at as string,
+    };
+  });
+  const response = apiSuccess({ exports });
+  response.headers.set('Cache-Control', 'private, no-store');
+  return response;
+}
+
 export async function POST(request: NextRequest) {
   const auth = await requireAuth(request);
   if (auth.response) return auth.response;
