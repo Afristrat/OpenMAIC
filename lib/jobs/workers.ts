@@ -32,6 +32,7 @@ import { buildLearningPackage } from '@/lib/export/scorm/build-scorm-package';
 import { exportJobArtifactPath } from '@/lib/export/export-job-artifact';
 import { isLearningPackageFormat } from '@/lib/export/scorm/tracking-adapters';
 import { buildClassroomVideo } from '@/lib/export/mp4/build-classroom-video';
+import { notifyExportReady } from '@/lib/server/export-ready-email';
 import { runManagedVideoJob } from '@/lib/server/managed-video-job';
 import { runClassroomGenerationJob } from '@/lib/server/classroom-job-runner';
 import { runClassroomPlanJob } from '@/lib/server/classroom-plan-job-runner';
@@ -640,6 +641,9 @@ export function startAllWorkers(): void {
             .from('export_jobs')
             .update({ status: 'done', storage_path: storagePath, scene_count: sceneCount })
             .eq('id', exportJobId);
+
+          // L'export est déposé : on prévient son auteur, sans que l'envoi puisse le remettre en cause.
+          await notifyExportReady(exportJobId);
 
           incrementCounter('qalem_jobs_processed_total', { queue: 'export-job' });
         } catch (err) {

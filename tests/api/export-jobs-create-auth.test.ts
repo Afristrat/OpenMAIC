@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   readOwnership: vi.fn(),
   enqueue: vi.fn(),
   insert: vi.fn(),
+  update: vi.fn(),
   running: vi.fn(),
 }));
 
@@ -40,6 +41,10 @@ vi.mock('@/lib/supabase/service', () => ({
           };
           return chain;
         },
+        update: (row: unknown) => {
+          mocks.update(row);
+          return { eq: async () => ({ error: null }) };
+        },
         insert: (row: unknown) => {
           mocks.insert(row);
           return {
@@ -59,11 +64,11 @@ const STAGE = 'stage-1';
 const ORG = '00000000-0000-4000-8000-000000000001';
 const OWNER = 'owner-1';
 
-function post(format = 'scorm12'): NextRequest {
+function post(format = 'scorm12', notifyByEmail?: boolean): NextRequest {
   return new NextRequest('https://qalem.ma/api/export-jobs', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ stageId: STAGE, format }),
+    body: JSON.stringify({ stageId: STAGE, format, notifyByEmail }),
   });
 }
 
@@ -152,6 +157,24 @@ describe('POST /api/export-jobs access control', () => {
       }),
     );
     expect(res.status).toBe(400);
+  });
+
+  it('records the email request only when the author made it', async () => {
+    await POST(post('mp4', true));
+    expect(mocks.insert).toHaveBeenLastCalledWith(expect.objectContaining({ notify_email: true }));
+    await POST(post('mp4'));
+    expect(mocks.insert).toHaveBeenLastCalledWith(expect.objectContaining({ notify_email: false }));
+    await POST(post('mp4', 'oui' as unknown as boolean));
+    expect(mocks.insert).toHaveBeenLastCalledWith(expect.objectContaining({ notify_email: false }));
+  });
+
+  it('keeps an email request made while resuming a render already in progress', async () => {
+    mocks.running.mockReturnValue({ id: 'job-0', status: 'generating' });
+    await POST(post('mp4', true));
+    expect(mocks.update).toHaveBeenCalledWith({ notify_email: true });
+    mocks.update.mockClear();
+    await POST(post('mp4'));
+    expect(mocks.update).not.toHaveBeenCalled();
   });
 
   it('reprend un rendu déjà en cours du même cours au lieu de lancer un second rendu lourd', async () => {
