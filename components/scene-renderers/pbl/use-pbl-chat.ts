@@ -25,7 +25,7 @@ interface UsePBLChatOptions {
 }
 
 export function usePBLChat({ projectConfig, userRole, onConfigUpdate }: UsePBLChatOptions) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const orgId = useClassroomOrganizationId();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -92,6 +92,7 @@ export function usePBLChat({ projectConfig, userRole, onConfigUpdate }: UsePBLCh
               message: m.message,
             })),
             userRole,
+            locale,
             agentType: isJudgeAgent ? 'judge' : 'question',
           }),
         });
@@ -125,7 +126,7 @@ export function usePBLChat({ projectConfig, userRole, onConfigUpdate }: UsePBLCh
             msgUpper.includes('COMPLETE') &&
             !msgUpper.includes('NEEDS_REVISION')
           ) {
-            await handleIssueComplete(afterConfig, currentIssue, headers, orgId, t);
+            await handleIssueComplete(afterConfig, currentIssue, headers, orgId, t, locale);
           }
 
           onConfigUpdate(afterConfig);
@@ -136,7 +137,7 @@ export function usePBLChat({ projectConfig, userRole, onConfigUpdate }: UsePBLCh
         setIsLoading(false);
       }
     },
-    [projectConfig, userRole, currentIssue, isLoading, onConfigUpdate, t, orgId],
+    [projectConfig, userRole, currentIssue, isLoading, onConfigUpdate, t, locale, orgId],
   );
 
   return { messages, isLoading, sendMessage, currentIssue };
@@ -181,6 +182,7 @@ async function handleIssueComplete(
   headers: Record<string, string>,
   orgId: string,
   t: (key: string, options?: Record<string, unknown>) => string,
+  locale: string,
 ) {
   // Mark current issue as done
   const issue = config.issueboard.issues.find((i) => i.id === completedIssue.id);
@@ -231,6 +233,7 @@ async function handleIssueComplete(
             currentIssue: nextIssue,
             recentMessages: [],
             userRole: '',
+            locale,
           }),
         });
 

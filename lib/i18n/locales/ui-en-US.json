@@ -93,7 +93,7 @@
   "toolbar.pdfUpload": "Upload PDF",
   "toolbar.removePdf": "Remove file",
   "sources.library": "Source library",
-  "sources.search": "Search resources",
+  "sources.search": "Search sources",
   "sources.showingCount": "Showing {{count}} of {{total}} resource(s)",
   "sources.noSearchResults": "No resources match this search.",
   "sources.clearSelection": "Clear selection",
