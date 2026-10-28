@@ -1983,10 +1983,10 @@
   "errorBoundary.message": "Something unexpected interrupted this view.",
   "errorBoundary.retry": "Try again",
   "errorBoundary.title": "This view could not load",
-  "export.mp4": "MP4 video",
-  "export.mp4Desc": "Render the full learning experience as a shareable video.",
+  "export.mp4": "MP4 videos by chapter",
+  "export.mp4Desc": "One MP4 video per chapter, bundled in a ZIP archive, ready to share separately.",
   "export.videoSnapshotFallback": "{{count}} slide(s) will use the fallback rendering in the video.",
-  "export.videoReady": "Your video is ready.",
+  "export.videoReady": "Your videos are ready: one MP4 file per chapter, in a ZIP archive.",
   "export.videoRendering": "Rendering video…",
   "export.videoTimeout": "Video rendering is taking longer than expected. Check again shortly.",
   "export.notifyByEmail": "Email me when the export is ready",
@@ -2973,7 +2973,7 @@
   "export.videoQueued": "Render queued behind another job. Elapsed: {{elapsed}}",
   "export.videoStarting": "Starting the render… Elapsed: {{elapsed}}",
   "export.videoProgress": "Rendering the video: scene {{done}} / {{total}} ({{percent}}%). Elapsed: {{elapsed}}",
-  "export.videoAssembling": "Assembling the video… Elapsed: {{elapsed}}",
-  "export.videoUploading": "Uploading the video… Elapsed: {{elapsed}}",
+  "export.videoAssembling": "Assembling the archive… Elapsed: {{elapsed}}",
+  "export.videoUploading": "Uploading the videos… Elapsed: {{elapsed}}",
   "export.videoResumed": "A render is already running for this course: following it."
 }

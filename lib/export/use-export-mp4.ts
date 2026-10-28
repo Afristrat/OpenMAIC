@@ -128,7 +128,7 @@ export function useExportMp4() {
             if (status.status !== 'done' || !status.downloadUrl) {
               throw new Error(status.error || t('export.exportFailed'));
             }
-            await downloadExport(status.downloadUrl, `${stage.name || 'qalem-classroom'}.mp4`);
+            await downloadExport(status.downloadUrl, `${stage.name || 'qalem-classroom'}.zip`);
             toast.success(t('export.videoReady'), { id: toastId });
             return;
           }

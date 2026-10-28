@@ -1,12 +1,14 @@
 import { execFile } from 'node:child_process';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
+import JSZip from 'jszip';
 import sharp from 'sharp';
 import { assertAboveNoiseFloor } from '@/lib/audio/audio-gate';
 import { missingSpeechAudioMessage, summarizeSpeechAudio } from '@/lib/audio/speech-audio-report';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
+import { chapterFileName } from './chapter-file-name';
 import { buildSceneCardSvg } from './scene-card';
 import type { SpeechAction } from '@/lib/types/action';
 
@@ -205,10 +207,23 @@ export interface ClassroomVideoProgress {
   total: number;
 }
 
-export async function buildClassroomVideo(
+type ProgressListener = (progress: ClassroomVideoProgress) => void | Promise<void>;
+
+interface RenderedScene {
+  title: string | null;
+  path: string;
+}
+
+/**
+ * Rend chaque scène du cours en un MP4 distinct, le temps de `assemble`, puis
+ * supprime le dossier de travail. Les deux exports (fichier unique, un fichier
+ * par chapitre) partagent ce rendu : seul l'assemblage final diffère.
+ */
+async function withRenderedScenes<T>(
   stageId: string,
-  onProgress?: (progress: ClassroomVideoProgress) => void | Promise<void>,
-): Promise<{ video: Buffer; sceneCount: number }> {
+  onProgress: ProgressListener | undefined,
+  assemble: (scenes: RenderedScene[], directory: string) => Promise<T>,
+): Promise<T> {
   const supabase = createServiceSupabaseClient();
   const [{ data: stage, error: stageError }, { data: scenes, error: scenesError }] =
     await Promise.all([
@@ -230,11 +245,12 @@ export async function buildClassroomVideo(
 
   const directory = await mkdtemp(join(tmpdir(), 'qalem-mp4-'));
   try {
-    const segments: string[] = [];
+    const rendered: RenderedScene[] = [];
     await onProgress?.({ phase: 'rendering', done: 0, total: scenes.length });
     for (const [sceneIndex, scene] of scenes.entries()) {
-      segments.push(
-        await renderSceneSegment({
+      rendered.push({
+        title: typeof scene.title === 'string' ? scene.title : null,
+        path: await renderSceneSegment({
           directory,
           stageId,
           classroomName: stage.name,
@@ -248,15 +264,26 @@ export async function buildClassroomVideo(
           },
           sceneIndex,
         }),
-      );
+      });
       await onProgress?.({ phase: 'rendering', done: sceneIndex + 1, total: scenes.length });
     }
     await onProgress?.({ phase: 'assembling', done: scenes.length, total: scenes.length });
+    return await assemble(rendered, directory);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+}
 
+/** Tout le cours en un seul MP4 : la source des transmissions filigranées. */
+export async function buildClassroomVideo(
+  stageId: string,
+  onProgress?: ProgressListener,
+): Promise<{ video: Buffer; sceneCount: number }> {
+  return withRenderedScenes(stageId, onProgress, async (scenes, directory) => {
     const concatFile = join(directory, 'segments.txt');
     await writeFile(
       concatFile,
-      segments.map((path) => `file '${path.replaceAll("'", "'\\''")}'`).join('\n'),
+      scenes.map(({ path }) => `file '${path.replaceAll("'", "'\\''")}'`).join('\n'),
     );
     const outputPath = join(directory, 'classroom.mp4');
     await runFfmpeg([
@@ -272,9 +299,26 @@ export async function buildClassroomVideo(
       '+faststart',
       outputPath,
     ]);
-    const video = await import('node:fs/promises').then((fs) => fs.readFile(outputPath));
-    return { video, sceneCount: scenes.length };
-  } finally {
-    await rm(directory, { recursive: true, force: true });
-  }
+    return { video: await readFile(outputPath), sceneCount: scenes.length };
+  });
+}
+
+/** Un MP4 par scène (chapitre), réunis dans une archive ZIP numérotée dans l'ordre du cours. */
+export async function buildClassroomChapterVideos(
+  stageId: string,
+  onProgress?: ProgressListener,
+): Promise<{ zip: Buffer; sceneCount: number }> {
+  return withRenderedScenes(stageId, onProgress, async (scenes) => {
+    const archive = new JSZip();
+    for (const [index, scene] of scenes.entries()) {
+      // Les MP4 sont déjà compressés : on stocke sans recompresser.
+      archive.file(chapterFileName(index, scenes.length, scene.title), await readFile(scene.path), {
+        compression: 'STORE',
+      });
+    }
+    return {
+      zip: await archive.generateAsync({ type: 'nodebuffer', compression: 'STORE' }),
+      sceneCount: scenes.length,
+    };
+  });
 }

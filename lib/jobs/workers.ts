@@ -31,7 +31,10 @@ import type {
 import { buildLearningPackage } from '@/lib/export/scorm/build-scorm-package';
 import { exportJobArtifactPath } from '@/lib/export/export-job-artifact';
 import { isLearningPackageFormat } from '@/lib/export/scorm/tracking-adapters';
-import { buildClassroomVideo } from '@/lib/export/mp4/build-classroom-video';
+import {
+  buildClassroomChapterVideos,
+  buildClassroomVideo,
+} from '@/lib/export/mp4/build-classroom-video';
 import { notifyExportReady } from '@/lib/server/export-ready-email';
 import { runManagedVideoJob } from '@/lib/server/managed-video-job';
 import { runClassroomGenerationJob } from '@/lib/server/classroom-job-runner';
@@ -601,14 +604,16 @@ export function startAllWorkers(): void {
           let sceneCount: number;
           if (isMp4) {
             // L'avancement alimente l'écran de l'auteur ; son échec ne doit jamais interrompre le rendu.
-            const result = await buildClassroomVideo(exportJob.stage_id as string, (progress) =>
-              reportExportProgress(supabase, exportJobId, {
-                phase: progress.phase,
-                progress_done: progress.done,
-                progress_total: progress.total,
-              }),
+            const result = await buildClassroomChapterVideos(
+              exportJob.stage_id as string,
+              (progress) =>
+                reportExportProgress(supabase, exportJobId, {
+                  phase: progress.phase,
+                  progress_done: progress.done,
+                  progress_total: progress.total,
+                }),
             );
-            file = result.video;
+            file = result.zip;
             sceneCount = result.sceneCount;
           } else {
             const learningFormat = String(exportJob.format);
@@ -628,7 +633,7 @@ export function startAllWorkers(): void {
           const { error: uploadError } = await supabase.storage
             .from('exports')
             .upload(storagePath, file, {
-              contentType: isMp4 ? 'video/mp4' : 'application/zip',
+              contentType: 'application/zip',
               upsert: true,
             });
           if (uploadError) {

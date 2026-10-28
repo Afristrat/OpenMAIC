@@ -1983,10 +1983,10 @@
   "errorBoundary.message": "Quelque chose d\u0027inattendu interrompit cette vue.",
   "errorBoundary.retry": "Réessayez",
   "errorBoundary.title": "Cette vue n\u0027a pas pu se charger",
-  "export.mp4": "Vidéo MP4",
-  "export.mp4Desc": "Restituez l’expérience d’apprentissage complète sous forme de vidéo partageable.",
+  "export.mp4": "Vidéos MP4 par chapitre",
+  "export.mp4Desc": "Une vidéo MP4 par chapitre, réunies dans une archive ZIP, prêtes à être partagées séparément.",
   "export.videoSnapshotFallback": "{{count}} diapositive(s) utiliseront le rendu de secours dans la vidéo.",
-  "export.videoReady": "Votre vidéo est prête.",
+  "export.videoReady": "Vos vidéos sont prêtes : un fichier MP4 par chapitre, dans une archive ZIP.",
   "export.videoRendering": "Rendu vidéo…",
   "export.videoTimeout": "Le rendu vidéo prend plus de temps que prévu. Vérifiez à nouveau sous peu.",
   "export.notifyByEmail": "Me prévenir par courriel quand l’export est prêt",
@@ -2973,7 +2973,7 @@
   "export.videoQueued": "Rendu en file d’attente, un autre travail passe avant. Temps écoulé : {{elapsed}}",
   "export.videoStarting": "Démarrage du rendu… Temps écoulé : {{elapsed}}",
   "export.videoProgress": "Rendu de la vidéo : scène {{done}} / {{total}} ({{percent}} %). Temps écoulé : {{elapsed}}",
-  "export.videoAssembling": "Assemblage de la vidéo… Temps écoulé : {{elapsed}}",
-  "export.videoUploading": "Dépôt de la vidéo… Temps écoulé : {{elapsed}}",
+  "export.videoAssembling": "Assemblage de l’archive… Temps écoulé : {{elapsed}}",
+  "export.videoUploading": "Dépôt des vidéos… Temps écoulé : {{elapsed}}",
   "export.videoResumed": "Un rendu est déjà en cours pour ce cours : suivi repris."
 }
