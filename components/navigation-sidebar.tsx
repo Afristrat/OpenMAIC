@@ -6,6 +6,7 @@ import Link from 'next/link';
 import {
   Home,
   Download,
+  Camera,
   History,
   BookOpen,
   Brain,
@@ -112,6 +113,12 @@ export function NavigationSidebar(): React.ReactElement {
       href: '/replays',
       labelKey: 'nav.replays',
       icon: <History className="size-5" />,
+      show: isAuthenticated,
+    },
+    {
+      href: '/app/captures',
+      labelKey: 'nav.captures',
+      icon: <Camera className="size-5" />,
       show: isAuthenticated,
     },
     {

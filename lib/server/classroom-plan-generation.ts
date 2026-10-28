@@ -24,6 +24,7 @@ import type { GenerateClassroomInput } from '@/lib/server/classroom-generation';
 import { normalizePdfImages } from '@/lib/server/pdf-source';
 import { resolveFormationSources } from '@/lib/server/formation-source-library';
 import { assertCourseGenerationAccess } from '@/lib/server/course-generation-access';
+import { loadCaptureDirective } from '@/lib/server/capture-directive';
 import { optimizationReportSchema } from '@/lib/generation/optimization-report';
 import { isDesignSystemV1Enabled } from '@/lib/branding/design-directive';
 import {
@@ -97,6 +98,8 @@ export async function generateClassroomPlan(
   });
   const optimizationDirective = generationOptimizationDirective(optimization);
   if (optimizationDirective) requirements.requirement += `\n\n${optimizationDirective}`;
+  const captureDirective = await loadCaptureDirective(input);
+  if (captureDirective) requirements.requirement += `\n\n${captureDirective}`;
   const resolved = await resolveModel(
     input.modelString ? { modelString: input.modelString } : { stage: 'generate-classroom' },
   );

@@ -259,6 +259,7 @@ function HomePage() {
   } | null>(null);
   const [resuming, setResuming] = useState(false);
   const [resumePlanRecovered, setResumePlanRecovered] = useState(false);
+  const [captureCourseId, setCaptureCourseId] = useState<string | null>(null);
   const resumeOrgRef = useRef(currentOrg?.id);
   resumeOrgRef.current = currentOrg?.id;
   useEffect(() => {
@@ -269,6 +270,8 @@ function HomePage() {
       orgId: params.get('resumeOrgId'),
     });
     if (authorTarget.success) setResumeTarget(authorTarget.data);
+    const captureCourse = z.string().uuid().safeParse(params.get('captureCourseId'));
+    if (captureCourse.success) setCaptureCourseId(captureCourse.data);
     const learnerTarget = targetSchema.extend({ deliveryId: z.string().uuid() }).safeParse({
       courseId: params.get('learnerResumeCourseId'),
       orgId: params.get('learnerResumeOrgId'),
@@ -1007,6 +1010,7 @@ function HomePage() {
       setIsPlanning(true);
       const generationRequest = buildGenerationRequest({
         requirement: requirements.requirement,
+        ...(captureCourseId ? { courseId: captureCourseId } : {}),
         sourceManifestId,
       });
       const response = await fetch('/api/generate-classroom/plan', {

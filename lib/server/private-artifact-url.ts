@@ -24,7 +24,7 @@ export function publicArtifactUrl(
 
 /** Call only after row authorization and canonical artifact-path validation. */
 export async function privateArtifactUrl(
-  bucket: 'exports' | 'transmissions',
+  bucket: 'exports' | 'transmissions' | 'capture-screenshots',
   path: string,
   download: boolean,
 ): Promise<string> {
