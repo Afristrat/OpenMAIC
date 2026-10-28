@@ -68,12 +68,15 @@ describe('POST /api/pbl/chat tenant boundary', () => {
     ['fr-FR', 'French'],
     ['ar-MA', 'Modern Standard Arabic'],
     ['en-US', 'English'],
-  ])("demande au tuteur de répondre dans la langue de l'interface (%s)", async (locale, language) => {
-    const { POST } = await import('@/app/api/pbl/chat/route');
-    await POST(request('org-1', locale));
+  ])(
+    "demande au tuteur de répondre dans la langue de l'interface (%s)",
+    async (locale, language) => {
+      const { POST } = await import('@/app/api/pbl/chat/route');
+      await POST(request('org-1', locale));
 
-    expect(mocks.callLLM.mock.calls[0][0].system).toContain(`Always answer in ${language}`);
-  });
+      expect(mocks.callLLM.mock.calls[0][0].system).toContain(`Always answer in ${language}`);
+    },
+  );
 
   it("n'ajoute aucune consigne de langue pour une locale inconnue ou absente", async () => {
     const { POST } = await import('@/app/api/pbl/chat/route');
