@@ -93,7 +93,7 @@
   "toolbar.pdfUpload": "Importer un PDF",
   "toolbar.removePdf": "Supprimer le fichier",
   "sources.library": "Bibliothèque de sources",
-  "sources.search": "Rechercher dans les ressources",
+  "sources.search": "Rechercher dans les sources",
   "sources.showingCount": "{{count}} affichée(s) sur {{total}} ressource(s)",
   "sources.noSearchResults": "Aucune ressource ne correspond à cette recherche.",
   "sources.clearSelection": "Tout désélectionner",
