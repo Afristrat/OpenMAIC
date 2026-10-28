@@ -20,6 +20,8 @@
     "typecheck": "node --max-old-space-size=4096 node_modules/typescript/bin/tsc --noEmit",
     "check:i18n-keys": "node scripts/check-i18n-keys.mjs",
     "check:provenance": "node scripts/check-audit-provenance.mjs",
+    "ci:local": "node scripts/ci-local.mjs",
+    "check:deploy-sync": "node scripts/check-deploy-sync.mjs",
     "check": "prettier . --check",
     "format": "prettier . --write",
     "test": "vitest run",
