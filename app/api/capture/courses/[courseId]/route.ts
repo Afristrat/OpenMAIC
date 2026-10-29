@@ -60,7 +60,9 @@ export async function GET(request: NextRequest, ctx: { params: Promise<{ courseI
   }
 
   const rows = (sessions ?? []) as SessionRow[];
-  const replaced = new Set(rows.flatMap((s) => (s.supersedes_capture_id ? [s.supersedes_capture_id] : [])));
+  const replaced = new Set(
+    rows.flatMap((s) => (s.supersedes_capture_id ? [s.supersedes_capture_id] : [])),
+  );
   const result = [];
   for (const session of rows) {
     const { data: steps, error: stepsError } = await supabase

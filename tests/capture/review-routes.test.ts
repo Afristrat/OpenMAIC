@@ -3,12 +3,19 @@ import { NextRequest } from 'next/server';
 import { createFakeSupabase, type FakeSupabase } from './fake-supabase';
 
 const mocks = vi.hoisted(() => ({
+  author: vi.fn(),
+  limit: vi.fn(),
   db: null as unknown,
   user: null as { id: string } | null,
   signed: vi.fn(),
 }));
 
 vi.mock('@/lib/supabase/service', () => ({ createServiceSupabaseClient: () => mocks.db }));
+vi.mock('@/lib/server/course-generation-access', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/server/course-generation-access')>()),
+  assertGenerationAuthor: mocks.author,
+  assertFreeCourseLimit: mocks.limit,
+}));
 vi.mock('@/lib/server/private-artifact-url', () => ({ privateArtifactUrl: mocks.signed }));
 vi.mock('@/lib/logger', () => ({
   createLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }),
@@ -23,6 +30,7 @@ vi.mock('@/lib/api/auth', async () => {
   };
 });
 
+import { CourseAccessError, FreeCourseLimitError } from '@/lib/server/course-generation-access';
 import { GET as listCourses } from '@/app/api/capture/courses/route';
 import { GET as readCourse } from '@/app/api/capture/courses/[courseId]/route';
 import { POST as attach } from '@/app/api/capture/courses/[courseId]/attach/route';
@@ -66,13 +74,14 @@ const stepRow = {
 beforeEach(() => {
   mocks.user = { id: OWNER };
   mocks.signed.mockReset();
+  mocks.author.mockReset().mockResolvedValue(undefined);
+  mocks.limit.mockReset().mockResolvedValue(undefined);
   mocks.signed.mockResolvedValue('https://storage.exemple.com/signed/abc');
   mocks.db = createFakeSupabase({
     courses: [
       { id: COURSE, owner_id: OWNER, org_id: null, title: 'Mon projet', status: 'draft' },
       { id: OTHER_COURSE, owner_id: OTHER, org_id: null, title: 'Autre', status: 'draft' },
     ],
-    org_members: [{ org_id: ORG, user_id: OWNER }],
     capture_sessions: [
       {
         id: OLD_SESSION,
@@ -107,7 +116,13 @@ beforeEach(() => {
     ],
     capture_steps: [
       { ...stepRow, id: STEP, session_id: NEW_SESSION, position: 0, screenshot_path: 'o/s/0.jpg' },
-      { ...stepRow, id: STEP_NO_IMAGE, session_id: NEW_SESSION, position: 1, screenshot_path: null },
+      {
+        ...stepRow,
+        id: STEP_NO_IMAGE,
+        session_id: NEW_SESSION,
+        position: 1,
+        screenshot_path: null,
+      },
       {
         ...stepRow,
         id: FOREIGN_STEP,
@@ -161,7 +176,10 @@ describe('validation d’une étape', () => {
   const ctx = (stepId: string) => ({ params: Promise.resolve({ stepId }) });
   const patch = (stepId: string, body: unknown) =>
     reviewStep(request(`/api/capture/steps/${stepId}`, 'PATCH', body), ctx(stepId));
-  const row = (id: string) => db().table('capture_steps').find((r) => r.id === id);
+  const row = (id: string) =>
+    db()
+      .table('capture_steps')
+      .find((r) => r.id === id);
 
   it('valide puis remet en attente, la date de relecture suivant l’état', async () => {
     expect((await patch(STEP, { review: 'approved' })).status).toBe(200);
@@ -213,22 +231,37 @@ describe('rattachement à l’organisation', () => {
   const ctx = (courseId: string) => ({ params: Promise.resolve({ courseId }) });
   const post = (courseId: string, body: unknown) =>
     attach(request(`/api/capture/courses/${courseId}/attach`, 'POST', body), ctx(courseId));
-  const course = (id: string) => db().table('courses').find((r) => r.id === id);
+  const course = (id: string) =>
+    db()
+      .table('courses')
+      .find((r) => r.id === id);
 
-  it('rattache un projet sans organisation, puis répond OK une seconde fois', async () => {
+  it('rattache un projet sans organisation après les contrôles de la génération, puis répond OK', async () => {
     expect((await post(COURSE, { orgId: ORG })).status).toBe(200);
     expect(course(COURSE)?.org_id).toBe(ORG);
+    expect(mocks.author).toHaveBeenCalledWith(ORG, OWNER);
+    expect(mocks.limit).toHaveBeenCalledWith(ORG);
     expect((await post(COURSE, { orgId: ORG })).status).toBe(200);
   });
 
-  it('refuse sans appartenance à l’organisation ou pour le projet d’un autre', async () => {
-    expect((await post(COURSE, { orgId: OTHER_ORG })).status).toBe(404);
-    expect((await post(OTHER_COURSE, { orgId: ORG })).status).toBe(404);
+  it('refuse sans rôle d’auteur dans l’organisation, sans rien écrire', async () => {
+    mocks.author.mockRejectedValue(new CourseAccessError());
+    expect((await post(COURSE, { orgId: OTHER_ORG })).status).toBe(403);
     expect(course(COURSE)?.org_id).toBeNull();
   });
 
+  it('refuse au-delà de la limite du plan gratuit, sans rien écrire', async () => {
+    mocks.limit.mockRejectedValue(new FreeCourseLimitError());
+    expect((await post(COURSE, { orgId: ORG })).status).toBe(429);
+    expect(course(COURSE)?.org_id).toBeNull();
+  });
+
+  it('refuse le projet d’un autre auteur', async () => {
+    expect((await post(OTHER_COURSE, { orgId: ORG })).status).toBe(404);
+    expect(mocks.author).not.toHaveBeenCalled();
+  });
+
   it('refuse un projet déjà rattaché à une autre organisation', async () => {
-    db().table('org_members').push({ org_id: OTHER_ORG, user_id: OWNER });
     await post(COURSE, { orgId: ORG });
     expect((await post(COURSE, { orgId: OTHER_ORG })).status).toBe(409);
     expect(course(COURSE)?.org_id).toBe(ORG);

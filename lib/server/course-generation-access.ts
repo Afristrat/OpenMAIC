@@ -99,7 +99,7 @@ export async function loadOwnedCourseForGeneration(
   return courseSchema.parse(result.data);
 }
 
-async function assertGenerationAuthor(orgId: string, ownerId?: string) {
+export async function assertGenerationAuthor(orgId: string, ownerId?: string) {
   if (!ownerId) throw new CourseAccessError();
   if (await isSuperAdminUser(ownerId)) return;
   const db = createServiceSupabaseClient();
@@ -116,7 +116,7 @@ async function assertGenerationAuthor(orgId: string, ownerId?: string) {
   if (!membership.data) throw new CourseAccessError();
 }
 
-async function assertFreeCourseLimit(orgId: string) {
+export async function assertFreeCourseLimit(orgId: string) {
   const db = createServiceSupabaseClient();
   const organization = await db.from('organizations').select('plan').eq('id', orgId).maybeSingle();
   if (organization.error || !organization.data) throw new Error('Course authorization unavailable');
