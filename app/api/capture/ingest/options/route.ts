@@ -8,9 +8,11 @@ import { microunitsToCredits } from '@/lib/billing/credits';
 import { fetchCreditStatus } from '@/lib/billing/credit-preflight';
 import { resolveBillingOrganization } from '@/lib/capture/billing-organization';
 import { readCapturePreferences } from '@/lib/capture/preferences';
+import { pickCaptureSpeechProvider } from '@/lib/capture/speech-provider';
 import { requireCaptureToken } from '@/lib/capture/token-auth';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
+import { isServerConfiguredProvider } from '@/lib/server/provider-config';
 
 const log = createLogger('CaptureOptionsAPI');
 
@@ -30,6 +32,9 @@ export async function GET(request: NextRequest) {
       writingLanguage: preferences.writingLanguage,
       // Le nom du modèle n'est jamais renvoyé : l'extension sait seulement s'il est reconnu.
       modelReady: preferences.accountModel !== null,
+      // Fournisseurs gérés par la plateforme : jamais leur nom, seulement s'ils répondent.
+      narrationAvailable: isServerConfiguredProvider('asr', 'openai-whisper'),
+      voiceoverAvailable: pickCaptureSpeechProvider() !== null,
       hasOrganization: orgId !== null,
       balanceCredits: status ? microunitsToCredits(status.balanceMicrounits) : null,
       blocked: status?.blocked ?? null,

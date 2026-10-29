@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { createFakeSupabase, type FakeSupabase } from './fake-supabase';
 import { generateCaptureToken } from '@/lib/capture/credentials';
-import { resetDescribeQuota } from '@/lib/capture/describe-limit';
+import { resetDescribeQuota, resetMediaQuota } from '@/lib/capture/describe-limit';
 
 const OWNER = '11111111-1111-4111-8111-111111111111';
 const COURSE = '33333333-3333-4333-8333-333333333333';
@@ -23,6 +23,8 @@ import { GET as listSessions, POST as openSession } from '@/app/api/capture/inge
 import { GET as readOptions } from '@/app/api/capture/ingest/options/route';
 import { PUT as savePreferences } from '@/app/api/capture/ingest/preferences/route';
 import { POST as describe_ } from '@/app/api/capture/ingest/describe/route';
+import { POST as transcribe } from '@/app/api/capture/ingest/transcribe/route';
+import { POST as speak } from '@/app/api/capture/ingest/speak/route';
 
 let token: string;
 
@@ -69,10 +71,13 @@ const routes: Array<[string, (bearer?: string) => Promise<Response>]> = [
     (b) =>
       describe_(call('POST', '/api/capture/ingest/describe', b, { task: 'step', prompt: 'x' })),
   ],
+  ['narration', (b) => transcribe(call('POST', '/api/capture/ingest/transcribe', b))],
+  ['voix off', (b) => speak(call('POST', '/api/capture/ingest/speak', b, { text: 'Bonjour' }))],
 ];
 
 beforeEach(() => {
   resetDescribeQuota();
+  resetMediaQuota();
   mocks.call.mockReset();
   const issued = generateCaptureToken();
   token = issued.token;
