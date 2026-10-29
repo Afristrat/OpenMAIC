@@ -18,10 +18,7 @@ import {
   isVoiceGenderCompatible,
 } from '@/lib/audio/voice-resolver';
 import { useTTSPreview } from '@/lib/audio/use-tts-preview';
-import { useVoxCPMVoiceProfiles } from '@/lib/audio/voxcpm-voices';
-import { resolveAgentVoiceOptions } from '@/lib/audio/agent-voice';
 import { resolveSpeechLanguage } from '@/lib/audio/tts-utils';
-import { VOXCPM_AUTO_VOICE_ID, VOXCPM_TTS_PROVIDER_ID } from '@/lib/audio/voxcpm';
 import {
   Sparkles,
   ChevronDown,
@@ -46,7 +43,6 @@ function matchesVoiceQuery(value: string | undefined, query: string): boolean {
 function getFilteredModelGroups(
   provider: ProviderWithVoices,
   query: string,
-  autoVoiceLabel?: string,
   agentGender?: AgentConfig['gender'],
 ) {
   const normalizedQuery = query.trim().toLowerCase();
@@ -67,18 +63,11 @@ function getFilteredModelGroups(
             matchesVoiceQuery(voice.name, normalizedQuery) ||
             matchesVoiceQuery(voice.id, normalizedQuery) ||
             matchesVoiceQuery(voice.language, normalizedQuery) ||
-            voice.languages?.some((language) => matchesVoiceQuery(language, normalizedQuery)) ||
-            // Auto Voice is shown by its localized label, not voice.name — match it too.
-            (voice.id === VOXCPM_AUTO_VOICE_ID &&
-              matchesVoiceQuery(autoVoiceLabel, normalizedQuery))),
+            voice.languages?.some((language) => matchesVoiceQuery(language, normalizedQuery))),
       );
       return { ...group, voices };
     })
     .filter((group) => group.voices.length > 0);
-}
-
-function isNonPreviewableVoice(providerId: TTSProviderId, voiceId: string): boolean {
-  return providerId === VOXCPM_TTS_PROVIDER_ID && voiceId === VOXCPM_AUTO_VOICE_ID;
 }
 
 function AgentVoicePill({
@@ -112,12 +101,7 @@ function AgentVoicePill({
   const visibleProviderGroups = availableProviders
     .map((provider) => ({
       provider,
-      groups: getFilteredModelGroups(
-        provider,
-        voiceQuery,
-        t('settings.voxcpmAutoVoice'),
-        agent.gender,
-      ),
+      groups: getFilteredModelGroups(provider, voiceQuery, agent.gender),
     }))
     .filter(({ groups }) => groups.length > 0);
 
@@ -126,7 +110,7 @@ function AgentVoicePill({
     for (const p of availableProviders) {
       if (p.providerId === resolved.providerId) {
         const v = p.voices.find((voice) => voice.id === resolved.voiceId);
-        if (v) return v.id === VOXCPM_AUTO_VOICE_ID ? t('settings.voxcpmAutoVoice') : v.name;
+        if (v) return v.name;
       }
     }
     return resolved.voiceId;
@@ -142,12 +126,6 @@ function AgentVoicePill({
       setPreviewingId(key);
       try {
         const providerConfig = ttsProvidersConfig[providerId];
-        const providerOptions = await resolveAgentVoiceOptions(agent, {
-          providerId,
-          providerConfig: { ...providerConfig, modelId: modelId || providerConfig?.modelId },
-          voiceId,
-          language: locale,
-        });
         await startPreview({
           orgId,
           text: t('settings.ttsTestTextDefault'),
@@ -157,7 +135,6 @@ function AgentVoicePill({
           speed: 1,
           apiKey: providerConfig?.apiKey,
           baseUrl: providerConfig?.baseUrl || providerConfig?.customDefaultBaseUrl,
-          providerOptions,
           language: resolveSpeechLanguage(locale),
         });
       } catch (error) {
@@ -167,17 +144,7 @@ function AgentVoicePill({
         setPreviewingId(null);
       }
     },
-    [
-      agent,
-      locale,
-      orgId,
-      previewing,
-      previewingId,
-      startPreview,
-      stopPreview,
-      t,
-      ttsProvidersConfig,
-    ],
+    [locale, orgId, previewing, previewingId, startPreview, stopPreview, t, ttsProvidersConfig],
   );
 
   // Disabled (TTS off) OR no enabled provider ⇒ render the same muted,
@@ -260,7 +227,6 @@ function AgentVoicePill({
                     (resolved?.modelId || '') === (group.modelId || '');
                   const previewKey = `${provider.providerId}::${voice.id}`;
                   const isPreviewing = previewing && previewingId === previewKey;
-                  const canPreview = !isNonPreviewableVoice(provider.providerId, voice.id);
                   return (
                     <div
                       key={previewKey}
@@ -287,31 +253,27 @@ function AgentVoicePill({
                           isActive ? 'text-primary font-medium' : 'text-foreground',
                         )}
                       >
-                        {voice.id === VOXCPM_AUTO_VOICE_ID
-                          ? t('settings.voxcpmAutoVoice')
-                          : voice.name}
+                        {voice.name}
                       </button>
-                      {canPreview && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handlePreview(provider.providerId, voice.id, group.modelId);
-                          }}
-                          className={cn(
-                            'flex size-6 shrink-0 items-center justify-center rounded-sm transition-colors',
-                            isPreviewing
-                              ? 'text-primary'
-                              : 'text-muted-foreground/40 hover:text-muted-foreground',
-                          )}
-                        >
-                          {isPreviewing ? (
-                            <Loader2 className="size-3.5 animate-spin" />
-                          ) : (
-                            <Volume2 className="size-3.5" />
-                          )}
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePreview(provider.providerId, voice.id, group.modelId);
+                        }}
+                        className={cn(
+                          'flex size-6 shrink-0 items-center justify-center rounded-sm transition-colors',
+                          isPreviewing
+                            ? 'text-primary'
+                            : 'text-muted-foreground/40 hover:text-muted-foreground',
+                        )}
+                      >
+                        {isPreviewing ? (
+                          <Loader2 className="size-3.5 animate-spin" />
+                        ) : (
+                          <Volume2 className="size-3.5" />
+                        )}
+                      </button>
                     </div>
                   );
                 })}
@@ -351,7 +313,7 @@ function TeacherVoicePill({
   const visibleProviderGroups = availableProviders
     .map((provider) => ({
       provider,
-      groups: getFilteredModelGroups(provider, voiceQuery, t('settings.voxcpmAutoVoice')),
+      groups: getFilteredModelGroups(provider, voiceQuery),
     }))
     .filter(({ groups }) => groups.length > 0);
 
@@ -362,7 +324,7 @@ function TeacherVoicePill({
     for (const p of availableProviders) {
       if (p.providerId === ttsProviderId) {
         const v = p.voices.find((voice) => voice.id === ttsVoice);
-        if (v) return v.id === VOXCPM_AUTO_VOICE_ID ? t('settings.voxcpmAutoVoice') : v.name;
+        if (v) return v.name;
       }
     }
     return ttsVoice || 'default';
@@ -378,12 +340,6 @@ function TeacherVoicePill({
       setPreviewingId(key);
       try {
         const providerConfig = ttsProvidersConfig[providerId];
-        const providerOptions = await resolveAgentVoiceOptions(undefined, {
-          providerId,
-          providerConfig: { ...providerConfig, modelId: modelId || providerConfig?.modelId },
-          voiceId,
-          language: locale,
-        });
         await startPreview({
           orgId,
           text: t('settings.ttsTestTextDefault'),
@@ -393,7 +349,6 @@ function TeacherVoicePill({
           speed: 1,
           apiKey: providerConfig?.apiKey,
           baseUrl: providerConfig?.baseUrl || providerConfig?.customDefaultBaseUrl,
-          providerOptions,
           language: resolveSpeechLanguage(locale),
         });
       } catch (error) {
@@ -487,7 +442,6 @@ function TeacherVoicePill({
                     currentModelId === (group.modelId || '');
                   const previewKey = `${provider.providerId}::${voice.id}`;
                   const isPreviewing = previewing && previewingId === previewKey;
-                  const canPreview = !isNonPreviewableVoice(provider.providerId, voice.id);
                   return (
                     <div
                       key={previewKey}
@@ -511,31 +465,27 @@ function TeacherVoicePill({
                           isActive ? 'text-primary font-medium' : 'text-foreground',
                         )}
                       >
-                        {voice.id === VOXCPM_AUTO_VOICE_ID
-                          ? t('settings.voxcpmAutoVoice')
-                          : voice.name}
+                        {voice.name}
                       </button>
-                      {canPreview && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handlePreview(provider.providerId, voice.id, group.modelId);
-                          }}
-                          className={cn(
-                            'flex size-6 shrink-0 items-center justify-center rounded-sm transition-colors',
-                            isPreviewing
-                              ? 'text-primary'
-                              : 'text-muted-foreground/40 hover:text-muted-foreground',
-                          )}
-                        >
-                          {isPreviewing ? (
-                            <Loader2 className="size-3.5 animate-spin" />
-                          ) : (
-                            <Volume2 className="size-3.5" />
-                          )}
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePreview(provider.providerId, voice.id, group.modelId);
+                        }}
+                        className={cn(
+                          'flex size-6 shrink-0 items-center justify-center rounded-sm transition-colors',
+                          isPreviewing
+                            ? 'text-primary'
+                            : 'text-muted-foreground/40 hover:text-muted-foreground',
+                        )}
+                      >
+                        {isPreviewing ? (
+                          <Loader2 className="size-3.5 animate-spin" />
+                        ) : (
+                          <Volume2 className="size-3.5" />
+                        )}
+                      </button>
                     </div>
                   );
                 })}
@@ -579,7 +529,6 @@ export function AgentBar({
   const [browserVoices, setBrowserVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [isSuggestingSpecialists, setIsSuggestingSpecialists] = useState(false);
   const [specialistError, setSpecialistError] = useState('');
-  const { profiles: voxcpmProfiles } = useVoxCPMVoiceProfiles();
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Load browser native TTS voices
@@ -656,11 +605,7 @@ export function AgentBar({
 
   // Single source of truth for selectable provider+voice options (enabled
   // providers + opt-in browser-native), shared with discussion TTS (#665).
-  const availableProviders = getSelectableProvidersWithVoices(
-    ttsProvidersConfig,
-    voxcpmProfiles,
-    browserVoices,
-  );
+  const availableProviders = getSelectableProvidersWithVoices(ttsProvidersConfig, browserVoices);
   const teacherVoice = availableProviders
     .find((provider) => provider.providerId === ttsProviderId)
     ?.voices.find((voice) => voice.id === ttsVoice);

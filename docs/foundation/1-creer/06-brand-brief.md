@@ -18,7 +18,7 @@ Le rejet d'un import est un DIAGNOSTIC utile, jamais une sanction : chaque écar
 
 ## Qualité audio = attribut de marque
 
-La promesse « supérieure aux attentes » s'entend : arabe vocalisé (tachkil) avant synthèse, aucune piste sous le plancher de bruit (-50 dB) ne sort — le gate technique (S1-009) EST une règle de marque, pas une option d'ingénierie. Leçon fondatrice : VoxCPM déprovisionné pour bruit de fond (Amine, 2026-07-09).
+La promesse « supérieure aux attentes » s'entend : arabe vocalisé (tachkil) avant synthèse, aucune piste sous le plancher de bruit (-50 dB) ne sort — le gate technique (S1-009) EST une règle de marque, pas une option d'ingénierie. Leçon fondatrice : un fournisseur vocal auto-hébergé a été déprovisionné pour bruit de fond (Amine, 2026-07-09).
 
 ## Capsules vidéo
 

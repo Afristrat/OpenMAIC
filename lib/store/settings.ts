@@ -15,7 +15,6 @@ import type { AgentVoiceOverride } from '@/lib/audio/voice-resolver';
 import { isCustomTTSProvider, isCustomASRProvider } from '@/lib/audio/types';
 import { ASR_PROVIDERS, DEFAULT_TTS_VOICES, TTS_PROVIDERS } from '@/lib/audio/constants';
 import { resolveASRLanguageSelection } from '@/lib/audio/asr-utils';
-import { DEFAULT_VOXCPM_BACKEND, VOXCPM_MODEL_ID, VOXCPM_VLLM_MODEL_ID } from '@/lib/audio/voxcpm';
 import { PDF_PROVIDERS } from '@/lib/pdf/constants';
 import type { PDFProviderId } from '@/lib/pdf/types';
 import type { ImageProviderId, VideoProviderId } from '@/lib/media/types';
@@ -85,7 +84,6 @@ export interface SettingsState {
       enabled: boolean;
       modelId?: string;
       customModels?: Array<{ id: string; name: string }>;
-      providerOptions?: Record<string, unknown>;
       isServerConfigured?: boolean;
       /** Admin/server-level force-off (server-providers.yml / env). Overrides `enabled`. */
       serverDisabled?: boolean;
@@ -268,7 +266,6 @@ export interface SettingsState {
       modelId: string;
       customModels: Array<{ id: string; name: string }>;
       customVoices: Array<{ id: string; name: string }>;
-      providerOptions: Record<string, unknown>;
     }>,
   ) => void;
   setASRProviderConfig: (
@@ -417,13 +414,6 @@ const getDefaultAudioConfig = () => ({
     'azure-tts': { apiKey: '', baseUrl: '', enabled: true },
     'glm-tts': { apiKey: '', baseUrl: '', enabled: true },
     'qwen-tts': { apiKey: '', baseUrl: '', enabled: true },
-    'voxcpm-tts': {
-      apiKey: '',
-      baseUrl: '',
-      modelId: VOXCPM_VLLM_MODEL_ID,
-      enabled: true,
-      providerOptions: { backend: DEFAULT_VOXCPM_BACKEND },
-    },
     'higgs-tts': { apiKey: '', baseUrl: '', modelId: 'higgs', enabled: true },
     'doubao-tts': { apiKey: '', baseUrl: '', enabled: true },
     'elevenlabs-tts': { apiKey: '', baseUrl: '', enabled: true },
@@ -581,6 +571,19 @@ function ensureValidProviderSelections(state: Partial<SettingsState>): void {
     )
   ) {
     state.ttsProviderId = defaultAudioConfig.ttsProviderId;
+    state.ttsVoice = defaultAudioConfig.ttsVoice;
+  }
+
+  // Per-agent voice picks naming a provider that no longer exists are dropped, so
+  // the agent falls back to the platform's automatic voice assignment.
+  if (state.agentVoiceOverrides) {
+    for (const [agentId, voice] of Object.entries(state.agentVoiceOverrides)) {
+      const known =
+        hasProviderId(TTS_PROVIDERS, voice.providerId) ||
+        (isCustomTTSProvider(voice.providerId) &&
+          Boolean(state.ttsProvidersConfig && voice.providerId in state.ttsProvidersConfig));
+      if (!known) delete state.agentVoiceOverrides[agentId];
+    }
   }
 
   if (
@@ -605,15 +608,12 @@ function ensureBuiltInAudioProviders(state: Partial<SettingsState>): void {
         state.ttsProvidersConfig[providerId] = defaultAudioConfig.ttsProvidersConfig[providerId];
       }
     }
-    const voxcpmConfig = state.ttsProvidersConfig['voxcpm-tts'];
-    if (voxcpmConfig) {
-      if (!voxcpmConfig.modelId || voxcpmConfig.modelId === VOXCPM_MODEL_ID) {
-        voxcpmConfig.modelId = VOXCPM_VLLM_MODEL_ID;
+    // Drop the settings of providers retired from the platform (neither built in
+    // nor user-defined), so they never resurface in the provider lists.
+    for (const providerId of Object.keys(state.ttsProvidersConfig)) {
+      if (!hasProviderId(TTS_PROVIDERS, providerId) && !isCustomTTSProvider(providerId)) {
+        delete state.ttsProvidersConfig[providerId as TTSProviderId];
       }
-      voxcpmConfig.providerOptions = {
-        backend: DEFAULT_VOXCPM_BACKEND,
-        ...(voxcpmConfig.providerOptions || {}),
-      };
     }
   }
 

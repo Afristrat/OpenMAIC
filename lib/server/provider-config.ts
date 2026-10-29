@@ -97,7 +97,6 @@ const TTS_ENV_MAP: Record<string, string> = {
   TTS_AZURE: 'azure-tts',
   TTS_GLM: 'glm-tts',
   TTS_QWEN: 'qwen-tts',
-  TTS_VOXCPM: 'voxcpm-tts',
   TTS_HIGGS: 'higgs-tts',
   TTS_DOUBAO: 'doubao-tts',
   TTS_ELEVENLABS: 'elevenlabs-tts',
@@ -336,7 +335,7 @@ function buildConfig(yamlData: YamlData): ServerConfig {
       keylessProviders: new Set(['vllm', 'ollama', 'lemonade']),
     }),
     tts: loadEnvSection(TTS_ENV_MAP, yamlData.tts, {
-      keylessProviders: new Set(['voxcpm-tts', 'lemonade-tts', 'higgs-tts']),
+      keylessProviders: new Set(['lemonade-tts', 'higgs-tts']),
     }),
     asr: loadEnvSection(ASR_ENV_MAP, yamlData.asr, {
       keylessProviders: new Set(['lemonade-asr']),

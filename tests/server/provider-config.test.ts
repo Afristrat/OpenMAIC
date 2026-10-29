@@ -577,9 +577,9 @@ pdf:
     });
 
     it('force-disables a provider via YAML tts.<id>.enabled: false', async () => {
-      yamlOverride = 'tts:\n  voxcpm-tts:\n    enabled: false\n';
+      yamlOverride = 'tts:\n  higgs-tts:\n    enabled: false\n';
       const { getServerTTSProviders } = await import('@/lib/server/provider-config');
-      expect(getServerTTSProviders()['voxcpm-tts']).toEqual({ disabled: true });
+      expect(getServerTTSProviders()['higgs-tts']).toEqual({ disabled: true });
     });
 
     it('env ENABLED=true overrides a YAML disable', async () => {

@@ -134,9 +134,9 @@ describe('POST /api/capture/ingest/speak', () => {
     expect(mocks.synthesize).not.toHaveBeenCalled();
   });
 
-  it("n'utilise jamais VoxCPM ni un fournisseur désactivé, et répond clairement sans fournisseur", async () => {
+  it("n'utilise jamais un fournisseur inconnu du catalogue ni un fournisseur désactivé, et répond clairement sans fournisseur", async () => {
     mocks.servers = {
-      'voxcpm-tts': {},
+      'retired-tts': {},
       'openai-tts': { disabled: true },
       'browser-native-tts': {},
     };
@@ -145,7 +145,7 @@ describe('POST /api/capture/ingest/speak', () => {
     expect(response.status).toBe(503);
     expect(mocks.synthesize).not.toHaveBeenCalled();
 
-    mocks.servers = { 'voxcpm-tts': {}, 'higgs-tts': {} };
+    mocks.servers = { 'retired-tts': {}, 'higgs-tts': {} };
     expect(pickCaptureSpeechProvider(mocks.servers)?.providerId).toBe('higgs-tts');
   });
 

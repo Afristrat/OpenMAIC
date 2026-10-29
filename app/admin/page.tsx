@@ -164,7 +164,6 @@ function getTTSProviderName(providerId: TTSProviderId, t: (key: string) => strin
     cartesia: t('settings.providerCartesiaTTS'),
     'edge-tts': t('settings.providerEdgeTTS'),
     'browser-native-tts': t('settings.providerBrowserNativeTTS'),
-    'voxcpm-tts': t('settings.providerVoxcpmTTS'),
     'higgs-tts': t('settings.providerHiggsTTS'),
     'minimax-tts': t('settings.providerMinimaxTTS'),
     'lemonade-tts': t('settings.providerLemonadeTTS'),

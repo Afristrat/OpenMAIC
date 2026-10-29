@@ -559,7 +559,6 @@
     "settings.providerMinimaxImage",
     "settings.providerMinimaxTTS",
     "settings.providerMinimaxVideo",
-    "settings.providerVoxcpmTTS",
     "settings.selectModel",
     "skills.add",
     "skills.agents",

@@ -16,7 +16,6 @@ export const agentProfileExtensionsSchema = z.object({
   interactionWeight: z.number().min(0).max(100).optional(),
   mechanismId: z.string().min(1).max(200).optional(),
   gender: z.enum(['female', 'male']).optional(),
-  voiceDesign: z.object({ identity: text, texture: text, delivery: text }).strict().optional(),
   occupationalProfile: z
     .object({
       standard: z.literal('ISCO-08'),

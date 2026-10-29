@@ -32,12 +32,12 @@ describe('generateTTS — audio gate wiring (S1-009)', () => {
     expect(f).not.toHaveBeenCalled();
   });
 
-  it('allows undiacritized Arabic text on the tachkil-aware VoxCPM provider', async () => {
+  it('allows undiacritized Arabic text on the tachkil-aware Higgs provider', async () => {
     stubWavResponse([16000, -16000, 12000]);
     const config: TTSModelConfig = {
-      providerId: 'voxcpm-tts',
+      providerId: 'higgs-tts',
       voice: 'default',
-      baseUrl: 'https://voxcpm.test/v1',
+      baseUrl: 'https://higgs.test/v1',
     };
 
     const result = await generateTTS(config, 'السلام عليكم');
@@ -47,9 +47,9 @@ describe('generateTTS — audio gate wiring (S1-009)', () => {
   it('rejects a near-silent WAV track (below the -50 dB noise floor) even for non-Arabic text', async () => {
     stubWavResponse([50, -50, 30]); // ≈ -56 dB peak
     const config: TTSModelConfig = {
-      providerId: 'voxcpm-tts',
+      providerId: 'higgs-tts',
       voice: 'default',
-      baseUrl: 'https://voxcpm.test/v1',
+      baseUrl: 'https://higgs.test/v1',
     };
 
     await expect(generateTTS(config, 'Bonjour tout le monde')).rejects.toThrow(NoiseFloorError);
@@ -58,9 +58,9 @@ describe('generateTTS — audio gate wiring (S1-009)', () => {
   it('accepts a normal-level WAV track', async () => {
     stubWavResponse([16000, -16000, 18000]);
     const config: TTSModelConfig = {
-      providerId: 'voxcpm-tts',
+      providerId: 'higgs-tts',
       voice: 'default',
-      baseUrl: 'https://voxcpm.test/v1',
+      baseUrl: 'https://higgs.test/v1',
     };
 
     const result = await generateTTS(config, 'Bonjour tout le monde');

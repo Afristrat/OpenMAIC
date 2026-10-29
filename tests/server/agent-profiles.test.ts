@@ -70,7 +70,7 @@ function llmAgents(extra: Record<string, unknown>) {
   });
 }
 
-describe('agent-profiles route — voiceDesign', () => {
+describe('agent-profiles route', () => {
   beforeEach(() => {
     callLLM.mockReset();
     requireOrgAuthor.mockReset().mockResolvedValue({
@@ -88,7 +88,7 @@ describe('agent-profiles route — voiceDesign', () => {
     expect(callLLM).not.toHaveBeenCalled();
   });
 
-  it('attaches a normalized voiceDesign when the LLM emits one', async () => {
+  it('does not ask the provider for a vocal descriptor nor attach one', async () => {
     callLLM.mockResolvedValue({
       text: llmAgents({
         voiceDesign: { identity: 'older male teacher', texture: 'warm low', delivery: 'calm' },
@@ -98,37 +98,15 @@ describe('agent-profiles route — voiceDesign', () => {
     const res = await POST(makeRequest());
     const body = await res.json();
 
+    const prompt = callLLM.mock.calls[0][0].prompt as string;
+    expect(prompt).toContain('exactly 10');
+    expect(prompt).not.toContain('voiceDesign');
     expect(body.success).toBe(true);
     expect(body.agents).toHaveLength(10);
     expect(
       new Set(body.agents.map((agent: { mechanismId: string }) => agent.mechanismId)).size,
     ).toBe(10);
-    expect(body.agents[0].voiceDesign).toEqual({
-      identity: 'older male teacher',
-      texture: 'warm low',
-      delivery: 'calm',
-    });
-  });
-
-  it('omits voiceDesign when the LLM does not emit one', async () => {
-    callLLM.mockResolvedValue({ text: llmAgents({}) });
-
-    const res = await POST(makeRequest());
-    const body = await res.json();
-
-    expect(body.success).toBe(true);
     expect(body.agents[0]).not.toHaveProperty('voiceDesign');
-  });
-
-  it('instructs the LLM to keep voiceDesign gender consistent with the agent name', async () => {
-    callLLM.mockResolvedValue({ text: llmAgents({}) });
-
-    await POST(makeRequest());
-
-    const prompt = callLLM.mock.calls[0][0].prompt as string;
-    expect(prompt.toLowerCase()).toContain('gender');
-    expect(prompt.toLowerCase()).toContain('name');
-    expect(prompt).toContain('exactly 10');
   });
 
   it('complète sans collision les mécanismes omis par le fournisseur', async () => {

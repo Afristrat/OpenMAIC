@@ -1,12 +1,10 @@
 /**
  * Choix du fournisseur de voix off de l'extension : toujours côté serveur, jamais côté client.
  *
- * Premier fournisseur géré par la plateforme qui sait parler sans contexte. VoxCPM est exclu : sa
- * voix automatique exige un contexte d'agent et il n'est plus utilisé.
+ * Premier fournisseur géré par la plateforme connu du catalogue de synthèse vocale.
  */
 
-import { DEFAULT_TTS_MODELS, DEFAULT_TTS_VOICES } from '@/lib/audio/constants';
-import { VOXCPM_TTS_PROVIDER_ID } from '@/lib/audio/voxcpm';
+import { DEFAULT_TTS_MODELS, DEFAULT_TTS_VOICES, TTS_PROVIDERS } from '@/lib/audio/constants';
 import type { TTSProviderId } from '@/lib/audio/types';
 import { getServerTTSProviders } from '@/lib/server/provider-config';
 
@@ -23,7 +21,7 @@ export function pickCaptureSpeechProvider(
     .filter(
       ([providerId, info]) =>
         providerId !== 'browser-native-tts' &&
-        providerId !== VOXCPM_TTS_PROVIDER_ID &&
+        Object.hasOwn(TTS_PROVIDERS, providerId) &&
         !info.disabled,
     )
     .map(([providerId]) => providerId)[0];

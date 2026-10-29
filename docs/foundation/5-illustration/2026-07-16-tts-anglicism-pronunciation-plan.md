@@ -13,7 +13,7 @@
 - Ne s'applique qu'au provider `higgs-tts` — comportement empiriquement vérifié UNIQUEMENT sur ce provider (`SpeechReq.language` dans le schéma OpenAPI natif du service DGX-2). Ne pas envoyer `language` aux autres providers.
 - Zéro nouvel appel réseau/LLM pour la segmentation — dictionnaire statique + regex, déterministe, testable sans mock réseau.
 - Aucune concaténation de buffers audio — réutiliser le pattern "un audio par sous-action" déjà établi par `splitLongSpeechActions` (`lib/audio/tts-utils.ts:82-106`).
-- Le champ `language` déjà utilisé dans `AgentVoiceResolveOptions`/`resolveAgentVoiceOptions` (`lib/audio/agent-voice.ts:37`) est un concept DIFFÉRENT (langue/locale du cours entier, pour VoxCPM uniquement) — ne pas réutiliser ce nom, le nouveau champ s'appelle `ttsLanguageOverride` pour éviter toute confusion.
+- Le nouveau champ s'appelle `ttsLanguageOverride`, distinct du champ `ttsLanguage` (langue de normalisation du texte), pour éviter toute confusion.
 
 ---
 

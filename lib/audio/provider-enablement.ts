@@ -76,7 +76,7 @@ export function isTTSProviderConfigured(
   const def = TTS_PROVIDERS[providerId as keyof typeof TTS_PROVIDERS];
   if (!def) return false;
   if (def.requiresApiKey) return hasText(config.apiKey);
-  // Keyless built-in (VoxCPM, Lemonade): require an EXPLICIT base URL.
+  // Keyless built-in (Lemonade): require an EXPLICIT base URL.
   return hasText(config.serverBaseUrl) || hasText(config.baseUrl);
 }
 

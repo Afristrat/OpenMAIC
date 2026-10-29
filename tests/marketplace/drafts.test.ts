@@ -84,7 +84,6 @@ it('preserves advanced profiles and refuses nested secrets or unsafe source URLs
     interactionWeight: 25,
     mechanismId: 'reflection',
     gender: 'female',
-    voiceDesign: { identity: 'Analyste', texture: 'Claire', delivery: 'Posée' },
     occupationalProfile: {
       standard: 'ISCO-08',
       unitGroupCode: '2421',

@@ -9,8 +9,6 @@ import {
   type ResolvedVoice,
 } from '@/lib/audio/voice-resolver';
 import { isTTSProviderEnabled } from '@/lib/audio/provider-enablement';
-import { useVoxCPMVoiceProfiles } from '@/lib/audio/voxcpm-voices';
-import { resolveAgentVoiceOptions } from '@/lib/audio/agent-voice';
 import type { AgentConfig } from '@/lib/orchestration/registry/types';
 import type { TTSProviderId } from '@/lib/audio/types';
 import type { AudioIndicatorState } from '@/components/roundtable/audio-indicator';
@@ -44,7 +42,6 @@ export function useDiscussionTTS({ enabled, agents, onAudioStateChange }: Discus
   const globalTtsProviderId = useSettingsStore((s) => s.ttsProviderId);
   const globalTtsVoice = useSettingsStore((s) => s.ttsVoice);
   const agentVoiceOverrides = useSettingsStore((s) => s.agentVoiceOverrides);
-  const { profiles: voxcpmProfiles } = useVoxCPMVoiceProfiles();
 
   const queueRef = useRef<QueueItem[]>([]);
   const isPlayingRef = useRef(false);
@@ -109,11 +106,7 @@ export function useDiscussionTTS({ enabled, agents, onAudioStateChange }: Discus
       // server/custom providers + opt-in browser-native. Students resolve against
       // it (fixes the #665 student-silence bug); the teacher uses the global
       // lecture voice (below).
-      const providers = getSelectableProvidersWithVoices(
-        ttsProvidersConfig,
-        voxcpmProfiles,
-        browserVoices,
-      );
+      const providers = getSelectableProvidersWithVoices(ttsProvidersConfig, browserVoices);
       const firstVoice = (): ResolvedVoice | null =>
         providers.length > 0
           ? {
@@ -148,7 +141,6 @@ export function useDiscussionTTS({ enabled, agents, onAudioStateChange }: Discus
     [
       agents,
       ttsProvidersConfig,
-      voxcpmProfiles,
       browserVoices,
       globalTtsProviderId,
       globalTtsVoice,
@@ -184,13 +176,6 @@ export function useDiscussionTTS({ enabled, agents, onAudioStateChange }: Discus
 
     try {
       const providerConfig = ttsProvidersConfig[item.providerId];
-      const agent = item.agentId ? agents.find((a) => a.id === item.agentId) : undefined;
-      const providerOptions = await resolveAgentVoiceOptions(agent, {
-        providerId: item.providerId,
-        providerConfig: { ...providerConfig, modelId: item.modelId || providerConfig?.modelId },
-        voiceId: item.voiceId,
-        language: locale,
-      });
       const res = await fetch('/api/generate/tts', {
         method: 'POST',
         headers: {
@@ -209,7 +194,6 @@ export function useDiscussionTTS({ enabled, agents, onAudioStateChange }: Discus
           // Managed providers resolve their base URL server-side; only send the
           // client's own base URL (custom providers).
           ttsBaseUrl: providerConfig?.baseUrl || providerConfig?.customDefaultBaseUrl,
-          ttsProviderOptions: providerOptions,
         }),
         signal: controller.signal,
       });
@@ -264,7 +248,7 @@ export function useDiscussionTTS({ enabled, agents, onAudioStateChange }: Discus
         queueMicrotask(() => processQueueRef.current());
       }
     }
-  }, [agents, enabled, locale, ttsMuted, ttsVolume, ttsProvidersConfig, ttsSpeed, playbackSpeed]);
+  }, [enabled, ttsMuted, ttsVolume, ttsProvidersConfig, ttsSpeed, playbackSpeed]);
 
   processQueueRef.current = processQueue;
 

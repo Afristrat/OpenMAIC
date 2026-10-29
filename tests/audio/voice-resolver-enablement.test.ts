@@ -114,13 +114,13 @@ describe('getSelectableProvidersWithVoices (unified picker + discussion source)'
   const bn = [{ voiceURI: 'os-zh', name: 'OS Chinese' }];
 
   it('= enabled providers + browser-native when enabled AND browser exposes voices', () => {
-    const ids = getSelectableProvidersWithVoices(cfg, [], bn).map((p) => p.providerId);
+    const ids = getSelectableProvidersWithVoices(cfg, bn).map((p) => p.providerId);
     expect(ids).toContain('qwen-tts');
     expect(ids).toContain('browser-native-tts');
   });
 
   it('omits browser-native when the browser exposes no voices (e.g. headless)', () => {
-    const ids = getSelectableProvidersWithVoices(cfg, [], []).map((p) => p.providerId);
+    const ids = getSelectableProvidersWithVoices(cfg, []).map((p) => p.providerId);
     expect(ids).toContain('qwen-tts');
     expect(ids).not.toContain('browser-native-tts');
   });
@@ -128,14 +128,13 @@ describe('getSelectableProvidersWithVoices (unified picker + discussion source)'
   it('omits browser-native when the user has not enabled it', () => {
     const ids = getSelectableProvidersWithVoices(
       { 'qwen-tts': { apiKey: 'k', enabled: true }, 'browser-native-tts': { enabled: false } },
-      [],
       bn,
     ).map((p) => p.providerId);
     expect(ids).not.toContain('browser-native-tts');
   });
 
   it('lets the teacher path (global voice as synthetic voiceConfig) and a student resolve through the SAME list — both audible when a provider is selectable', () => {
-    const providers = getSelectableProvidersWithVoices(cfg, [], bn);
+    const providers = getSelectableProvidersWithVoices(cfg, bn);
     // teacher: global selection = browser-native (only client-dynamic provider)
     const teacher = {
       role: 'teacher',

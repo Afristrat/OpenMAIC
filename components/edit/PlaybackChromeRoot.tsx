@@ -182,9 +182,8 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
 
     const agentsRecord = useAgentRegistry((s) => s.agents);
     // A scene may dispatch an authorized backbone agent which is not currently
-    // selected in the visible strip. Discussion TTS must retain that agent's
-    // generated voice design instead of resolving VoxCPM Auto Voice without
-    // its required context.
+    // selected in the visible strip. Discussion TTS must still be able to resolve
+    // that agent's voice.
     const discussionAgents = useMemo(() => Object.values(agentsRecord), [agentsRecord]);
 
     // Discussion TTS: audio indicator state

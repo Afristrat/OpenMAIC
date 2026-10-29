@@ -8,7 +8,7 @@ SHA certifié : `df6023a879d76eb6468ff317b1cff26027702b93`
 
 ## Contrat recertifié
 
-Le point commun `generateTTS()` refuse avant tout appel réseau un texte arabe non vocalisé destiné à un fournisseur qui ne garantit pas le tachkil. Les fournisseurs Higgs et VoxCPM peuvent recevoir le texte arabe brut parce que leur backend applique le tachkil ; le service Higgs actif confirme `tachkil=true` et `tachkil_engine=jais2`.
+Le point commun `generateTTS()` refuse avant tout appel réseau un texte arabe non vocalisé destiné à un fournisseur qui ne garantit pas le tachkil. Le fournisseur Higgs peut recevoir le texte arabe brut parce que son backend applique le tachkil ; le service Higgs actif confirme `tachkil=true` et `tachkil_engine=jais2`.
 
 Toute piste retournée par le point commun est ensuite mesurée. Le WAV PCM16 est décodé nativement, le MP3 par le FFmpeg déjà requis par l’export vidéo, et tout format non contrôlable est refusé. Le live et la narration persistée convergent vers ce point commun. Une capsule Mishkāt n’est publiée que si chacune de ses variantes porte `gatePassed=true`. L’export MP4 retélécharge enfin les pistes persistées et rejoue la gate avant assemblage.
 

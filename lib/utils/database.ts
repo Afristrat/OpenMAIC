@@ -19,7 +19,6 @@ import type {
 } from '@/lib/types/chat';
 import type { SceneOutline } from '@/lib/types/generation';
 import { buildLanguageDirective } from '@/lib/constants/generation';
-import type { VoiceDesign } from '@/lib/audio/voice-design';
 import type { UIMessage } from 'ai';
 import { createLogger } from '@/lib/logger';
 
@@ -194,37 +193,7 @@ export interface GeneratedAgentRecord {
   mechanismId?: string;
   gender?: 'female' | 'male';
   voiceConfig?: { providerId: string; voiceId: string };
-  voiceDesign?: VoiceDesign; // 3-layer vocal descriptor for auto voice
   createdAt: number;
-}
-
-/**
- * VoiceProfile table - Browser-local TTS voice profiles
- */
-export interface VoiceProfileRecord {
-  id: string;
-  providerId: string;
-  kind: 'prompt' | 'clone';
-  name: string;
-  voicePrompt?: string;
-  promptText?: string;
-  referenceAudio?: Blob;
-  referenceAudioName?: string;
-  referenceAudioMimeType?: string;
-  createdAt: number;
-  updatedAt: number;
-}
-
-/**
- * Cached reference clip for a registered auto voice (any TTS provider). The
- * clip is the source of truth; the deterministic `voiceId` is its key, enabling
- * register-on-invalid re-registration after backend GC/restart.
- */
-export interface AutoVoiceCacheRecord {
-  voiceId: string;
-  referenceAudio: Blob;
-  mimeType: string;
-  updatedAt: number;
 }
 
 /** ReviewCard table - Spaced repetition review cards (guest / offline mode) */
@@ -273,8 +242,6 @@ class MAICDatabase extends Dexie {
   stageOutlines!: EntityTable<StageOutlinesRecord, 'stageId'>;
   mediaFiles!: EntityTable<MediaFileRecord, 'id'>;
   generatedAgents!: EntityTable<GeneratedAgentRecord, 'id'>;
-  voiceProfiles!: EntityTable<VoiceProfileRecord, 'id'>;
-  autoVoiceCache!: EntityTable<AutoVoiceCacheRecord, 'voiceId'>;
   reviewCards!: EntityTable<ReviewCardRecord, 'id'>;
 
   constructor() {
@@ -494,6 +461,25 @@ class MAICDatabase extends Dexie {
       autoVoiceCache: 'voiceId, updatedAt',
       reviewCards: 'id, dueDate, sourceStageId',
       syncQueue: null,
+    });
+
+    // Version 14: Drop the browser-local voice profiles and the auto-voice
+    // reference-clip cache. Both only served a text-to-speech provider that no
+    // longer exists on the platform; the other tables are carried over unchanged.
+    this.version(14).stores({
+      stages: 'id, updatedAt',
+      scenes: 'id, stageId, order, [stageId+order]',
+      audioFiles: 'id, createdAt',
+      imageFiles: 'id, createdAt',
+      snapshots: '++id',
+      chatSessions: 'id, stageId, [stageId+createdAt]',
+      playbackState: 'stageId',
+      stageOutlines: 'stageId',
+      mediaFiles: 'id, stageId, [stageId+type]',
+      generatedAgents: 'id, stageId',
+      voiceProfiles: null,
+      autoVoiceCache: null,
+      reviewCards: 'id, dueDate, sourceStageId',
     });
   }
 }

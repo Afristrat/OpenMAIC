@@ -36,12 +36,6 @@ import type {
   ASRProviderId,
   ASRProviderConfig,
 } from './types';
-import {
-  VOXCPM_AUTO_VOICE,
-  VOXCPM_AUTO_VOICE_ID,
-  VOXCPM_TTS_PROVIDER_ID,
-  VOXCPM_VLLM_MODEL_ID,
-} from './voxcpm';
 import { HIGGS_QUALIFIED_VOICE_CATALOG } from './qualified-voice-catalog';
 
 /**
@@ -763,23 +757,6 @@ export const TTS_PROVIDERS: Record<BuiltInTTSProviderId, TTSProviderConfig> = {
       },
     ],
     supportedFormats: ['mp3', 'wav', 'flac', 'pcm'],
-    speedRange: {
-      min: 0.5,
-      max: 2.0,
-      default: 1.0,
-    },
-  },
-
-  'voxcpm-tts': {
-    id: VOXCPM_TTS_PROVIDER_ID,
-    name: 'VoxCPM2',
-    requiresApiKey: false,
-    defaultBaseUrl: 'http://127.0.0.1:8000',
-    icon: '/logos/voxcpm-icon.png',
-    models: [{ id: VOXCPM_VLLM_MODEL_ID, name: 'VoxCPM2' }],
-    defaultModelId: VOXCPM_VLLM_MODEL_ID,
-    voices: [VOXCPM_AUTO_VOICE],
-    supportedFormats: ['mp3', 'wav'],
     speedRange: {
       min: 0.5,
       max: 2.0,
@@ -1576,7 +1553,6 @@ export const DEFAULT_TTS_VOICES: Record<BuiltInTTSProviderId, string> = {
   'azure-tts': 'zh-CN-XiaoxiaoNeural',
   'glm-tts': 'tongtong',
   'qwen-tts': 'Cherry',
-  'voxcpm-tts': VOXCPM_AUTO_VOICE_ID,
   'higgs-tts': 'hanae',
   'doubao-tts': 'zh_female_vv_uranus_bigtts',
   'elevenlabs-tts': 'EXAVITQu4vr4xnSDxMaL',
@@ -1593,7 +1569,6 @@ export const DEFAULT_TTS_MODELS: Record<BuiltInTTSProviderId, string> = {
   'azure-tts': '',
   'glm-tts': 'glm-tts',
   'qwen-tts': 'qwen3-tts-flash',
-  'voxcpm-tts': VOXCPM_VLLM_MODEL_ID,
   'higgs-tts': 'higgs',
   'doubao-tts': '',
   'elevenlabs-tts': 'eleven_multilingual_v2',

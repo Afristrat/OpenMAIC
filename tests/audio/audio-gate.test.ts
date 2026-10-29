@@ -68,8 +68,8 @@ describe('assertArabicTachkilReady', () => {
     );
   });
 
-  it('allows undiacritized Arabic text on the tachkil-aware VoxCPM provider', () => {
-    expect(() => assertArabicTachkilReady('السلام عليكم', 'voxcpm-tts')).not.toThrow();
+  it('allows undiacritized Arabic text on the tachkil-aware Higgs provider', () => {
+    expect(() => assertArabicTachkilReady('السلام عليكم', 'higgs-tts')).not.toThrow();
   });
 
   it('allows already-diacritized Arabic text on any provider', () => {

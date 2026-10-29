@@ -98,12 +98,6 @@
 import type { TTSModelConfig } from './types';
 import { isCustomTTSProvider } from './types';
 import { TTS_PROVIDERS } from './constants';
-import {
-  VOXCPM_VLLM_MODEL_ID,
-  VOXCPM_AUTO_VOICE_ID,
-  normalizeVoxCPMBackend,
-  type VoxCPMProviderOptions,
-} from './voxcpm';
 import { assertAboveNoiseFloor, assertArabicTachkilReady } from './audio-gate';
 import { prepareTextForTTS } from './tts-utils';
 import { measureAudioDurationSeconds } from './duration';
@@ -206,9 +200,6 @@ async function dispatchTTSProvider(
 
     case 'qwen-tts':
       return await generateQwenTTS(config, text);
-
-    case 'voxcpm-tts':
-      return await generateVoxCPMTTS(config, text);
 
     case 'higgs-tts':
       return await generateOpenAITTS(config, text);
@@ -335,85 +326,8 @@ async function generateLemonadeTTS(
   };
 }
 
-/**
- * VoxCPM2 TTS implementation.
- *
- * OpenMAIC keeps one internal VoxCPM request shape, then adapts it to the
- * selected official backend protocol.
- */
-async function generateVoxCPMTTS(
-  config: TTSModelConfig,
-  text: string,
-): Promise<TTSGenerationResult> {
-  const baseUrl = (config.baseUrl || TTS_PROVIDERS['voxcpm-tts'].defaultBaseUrl || '').replace(
-    /\/$/,
-    '',
-  );
-  if (!baseUrl) {
-    throw new Error('VoxCPM base URL is required');
-  }
-
-  const options = (config.providerOptions || {}) as VoxCPMProviderOptions;
-  const backend = normalizeVoxCPMBackend(options.backend);
-  const voicePrompt =
-    options.voicePrompt ||
-    (config.voice && config.voice !== 'default' && config.voice !== VOXCPM_AUTO_VOICE_ID
-      ? config.voice
-      : undefined);
-  // A registered voice carries timbre by id, so no voice prompt is required.
-  const registeredVoiceId = options.registeredVoiceId?.trim() || undefined;
-  if (config.voice === VOXCPM_AUTO_VOICE_ID && !voicePrompt && !registeredVoiceId) {
-    throw new Error('VoxCPM Auto Voice requires agent context');
-  }
-  const cfgValue = options.cfgValue ?? 2.0;
-  const inferenceTimesteps = options.inferenceTimesteps ?? 10;
-  const normalize = options.normalize ?? false;
-  const denoise = options.denoise ?? false;
-  const usePromptContinuation = Boolean(options.promptText?.trim() && options.referenceAudioBase64);
-
-  const request = {
-    targetText: usePromptContinuation ? text : buildVoxCPMTargetText(text, voicePrompt),
-    rawText: text,
-    registeredVoiceId,
-    voicePrompt,
-    promptText: options.promptText,
-    cfgValue,
-    inferenceTimesteps,
-    normalize,
-    denoise,
-    referenceAudioBase64: options.referenceAudioBase64,
-    referenceAudioMimeType: options.referenceAudioMimeType,
-    referenceAudioName: options.referenceAudioName,
-  };
-
-  const response =
-    backend === 'nano-vllm'
-      ? await postVoxCPMNanoVLLM(baseUrl, request, config.apiKey, config.fetch)
-      : backend === 'python-api'
-        ? await postVoxCPMPythonAPI(baseUrl, request, config.apiKey, config.fetch)
-        : await postVoxCPMVLLMOmni(baseUrl, request, config);
-
-  if (!response.ok) {
-    throwIfTtsRateLimited('VoxCPM', response.status);
-    throw ttsApiError(`VoxCPM TTS API error: ${await readTTSApiError(response)}`, response.status);
-  }
-
-  const arrayBuffer = await response.arrayBuffer();
-  const contentType = response.headers.get('content-type') || '';
-  const format = getAudioResponseFormat(contentType);
-  return {
-    audio: new Uint8Array(arrayBuffer),
-    format,
-  };
-}
-
-function buildVoxCPMTargetText(text: string, voicePrompt?: string): string {
-  const prompt = voicePrompt
-    ?.replace(/[\p{C}]+/gu, ' ')
-    .replace(/[()（）]/gu, '')
-    .replace(/\s+/gu, ' ')
-    .trim();
-  return prompt ? `(${prompt})${text}` : text;
+function getBackendAuthHeaders(apiKey?: string): Record<string, string> {
+  return apiKey?.trim() ? { Authorization: `Bearer ${apiKey.trim()}` } : {};
 }
 
 function getAudioResponseFormat(contentType: string): string {
@@ -423,185 +337,6 @@ function getAudioResponseFormat(contentType: string): string {
   if (contentType.includes('audio/ogg')) return 'ogg';
   if (contentType.includes('audio/webm')) return 'webm';
   return 'mp3';
-}
-
-function getVoxCPMAudioFormat(mimeType?: string, fileName?: string): string {
-  const lowerName = fileName?.toLowerCase() || '';
-  if (mimeType?.includes('wav') || lowerName.endsWith('.wav')) return 'wav';
-  if (mimeType?.includes('mpeg') || mimeType?.includes('mp3') || lowerName.endsWith('.mp3')) {
-    return 'mp3';
-  }
-  if (mimeType?.includes('flac') || lowerName.endsWith('.flac')) return 'flac';
-  if (mimeType?.includes('ogg') || lowerName.endsWith('.ogg')) return 'ogg';
-  if (mimeType?.includes('webm') || lowerName.endsWith('.webm')) return 'webm';
-  return 'wav';
-}
-
-function getVLLMOmniSpeechUrl(baseUrl: string): string {
-  return baseUrl.endsWith('/v1') ? `${baseUrl}/audio/speech` : `${baseUrl}/v1/audio/speech`;
-}
-
-function getVLLMOmniModelId(config: TTSModelConfig): string {
-  const modelId = config.modelId?.trim();
-  if (!modelId || modelId === 'VoxCPM2') return VOXCPM_VLLM_MODEL_ID;
-  return modelId;
-}
-
-function getBackendAuthHeaders(apiKey?: string): Record<string, string> {
-  return apiKey?.trim() ? { Authorization: `Bearer ${apiKey.trim()}` } : {};
-}
-
-async function postVoxCPMVLLMOmni(
-  baseUrl: string,
-  params: {
-    targetText: string;
-    rawText?: string;
-    registeredVoiceId?: string;
-    promptText?: string;
-    referenceAudioBase64?: string;
-    referenceAudioMimeType?: string;
-    referenceAudioName?: string;
-  },
-  config: TTSModelConfig,
-): Promise<Response> {
-  const payload: Record<string, unknown> = {
-    model: getVLLMOmniModelId(config),
-    input: params.targetText,
-    voice: 'default',
-    response_format: 'wav',
-    stream: false,
-  };
-
-  if (params.registeredVoiceId) {
-    // A registered voice carries timbre by id (pre-encoded latents): reference it
-    // directly and send the raw text — no inline voice-design prompt or ref_audio.
-    payload.voice = params.registeredVoiceId;
-    payload.input = params.rawText ?? params.targetText;
-  } else if (params.referenceAudioBase64) {
-    const referenceAudio = getVoxCPMDataAudioUrl(
-      params.referenceAudioBase64,
-      params.referenceAudioMimeType,
-      params.referenceAudioName,
-    );
-    payload.ref_audio = referenceAudio;
-    if (params.promptText?.trim()) {
-      payload.prompt_audio = referenceAudio;
-      payload.prompt_text = params.promptText.trim();
-    }
-  }
-
-  return (config.fetch ?? fetch)(getVLLMOmniSpeechUrl(baseUrl), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      ...getBackendAuthHeaders(config.apiKey),
-    },
-    body: JSON.stringify(payload),
-  });
-}
-
-function getVoxCPMDataAudioUrl(base64: string, mimeType?: string, fileName?: string): string {
-  const format = getVoxCPMAudioFormat(mimeType, fileName);
-  const mediaType =
-    mimeType?.trim() ||
-    (format === 'mp3'
-      ? 'audio/mpeg'
-      : format === 'flac'
-        ? 'audio/flac'
-        : format === 'ogg'
-          ? 'audio/ogg'
-          : format === 'webm'
-            ? 'audio/webm'
-            : 'audio/wav');
-  return `data:${mediaType};base64,${base64}`;
-}
-
-function base64ToBlob(base64: string, mimeType?: string): Blob {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let index = 0; index < binary.length; index++) {
-    bytes[index] = binary.charCodeAt(index);
-  }
-  return new Blob([bytes], { type: mimeType || 'audio/wav' });
-}
-
-async function postVoxCPMPythonAPI(
-  baseUrl: string,
-  params: {
-    targetText: string;
-    promptText?: string;
-    cfgValue: number;
-    inferenceTimesteps: number;
-    normalize: boolean;
-    denoise: boolean;
-    referenceAudioBase64?: string;
-    referenceAudioMimeType?: string;
-    referenceAudioName?: string;
-  },
-  apiKey?: string,
-  fetchImpl: typeof fetch = fetch,
-): Promise<Response> {
-  const formData = new FormData();
-  formData.set('text', params.targetText);
-  formData.set('cfg_value', String(params.cfgValue));
-  formData.set('inference_timesteps', String(params.inferenceTimesteps));
-  formData.set('normalize', String(params.normalize));
-  formData.set('denoise', String(params.denoise));
-
-  if (params.referenceAudioBase64) {
-    const audioBlob = base64ToBlob(params.referenceAudioBase64, params.referenceAudioMimeType);
-    const audioName = params.referenceAudioName || 'reference.wav';
-    formData.set('reference_audio', audioBlob, audioName);
-    if (params.promptText?.trim()) {
-      formData.set('prompt_audio', audioBlob, audioName);
-      formData.set('prompt_text', params.promptText.trim());
-    }
-  }
-
-  return fetchImpl(`${baseUrl}/tts/upload`, {
-    method: 'POST',
-    headers: getBackendAuthHeaders(apiKey),
-    body: formData,
-  });
-}
-
-async function postVoxCPMNanoVLLM(
-  baseUrl: string,
-  params: {
-    targetText: string;
-    promptText?: string;
-    cfgValue: number;
-    referenceAudioBase64?: string;
-    referenceAudioMimeType?: string;
-    referenceAudioName?: string;
-  },
-  apiKey?: string,
-  fetchImpl: typeof fetch = fetch,
-): Promise<Response> {
-  const payload: Record<string, unknown> = {
-    target_text: params.targetText,
-    cfg_value: params.cfgValue,
-  };
-
-  if (params.referenceAudioBase64) {
-    const format = getVoxCPMAudioFormat(params.referenceAudioMimeType, params.referenceAudioName);
-    payload.ref_audio_wav_base64 = params.referenceAudioBase64;
-    payload.ref_audio_wav_format = format;
-    if (params.promptText?.trim()) {
-      payload.prompt_wav_base64 = params.referenceAudioBase64;
-      payload.prompt_wav_format = format;
-      payload.prompt_text = params.promptText.trim();
-    }
-  }
-
-  return fetchImpl(`${baseUrl}/generate`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      ...getBackendAuthHeaders(apiKey),
-    },
-    body: JSON.stringify(payload),
-  });
 }
 
 /**

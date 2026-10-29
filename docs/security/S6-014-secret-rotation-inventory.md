@@ -67,7 +67,7 @@ hors des trois applications Qalem, puis seul le nombre de correspondances a
 conservé.
 
 Des réemplois hors Qalem ont été constatés pour les catégories ASR, Crawler,
-Mishkāt, Redis, Resend, Serper, rôle de service Supabase et TTS VoxCPM. Elles
+Mishkāt, Redis, Resend, Serper, rôle de service Supabase et TTS auto-hébergé (retiré depuis). Elles
 ne peuvent donc pas être révoquées depuis ce chantier.
 
 Aucun réemploi sous le même nom de variable n’a été constaté dans Coolify pour
@@ -202,13 +202,13 @@ pour ceux de l’application web. Après deux échecs identiques, la vérificati
 a été faite directement dans les conteneurs actifs, en ne sortant que les noms
 de variables. Les trois processus reçoivent les mêmes catégories actives :
 LLM général, ASR, image, Evolution, Resend, Supabase, Crawler, Mishkāt, Serper,
-VoxCPM et secrets internes Qalem. Aucun secret de paiement Stripe ni variable
+TTS auto-hébergé (retiré depuis) et secrets internes Qalem. Aucun secret de paiement Stripe ni variable
 générique de paiement n’est injecté.
 
 Les comparaisons effectuées dans chaque processus, sans valeur ni empreinte,
 confirment que la clé image et la clé ASR sont distinctes de la clé LiteLLM
 générale. Les contrôles de périmètre antérieurs établissent que les catégories
-ASR, Crawler, Mishkāt, Serper, Supabase et VoxCPM sont réemployées hors Qalem :
+ASR, Crawler, Mishkāt, Serper, Supabase et TTS auto-hébergé sont réemployées hors Qalem :
 elles restent explicitement exclues de toute révocation dans ce chantier.
 
 La catégorie `EVOLUTION_API_KEY` est désormais attribuée à une pile Hostinger

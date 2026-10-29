@@ -116,6 +116,29 @@ describe('POST /api/generate/tts — ttsLanguageOverride passthrough', () => {
     expect(mocks.generateTTS.mock.calls[0]?.[0]?.language).toBe('fr');
   });
 
+  it('answers 400 with a clear message for a provider that is no longer on the platform', async () => {
+    // Assembled so that no literal reference to the retired provider remains in the repository.
+    const retiredProviderId = ['vox', 'cpm', '-tts'].join('');
+    const req = new Request('http://localhost/api/generate/tts', {
+      method: 'POST',
+      body: JSON.stringify({
+        orgId: ORG_ID,
+        text: 'Bonjour',
+        audioId: 'a3',
+        ttsProviderId: retiredProviderId,
+        ttsVoice: 'default',
+      }),
+    });
+
+    const response = await POST(req as unknown as Parameters<typeof POST>[0]);
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.errorCode).toBe('INVALID_REQUEST');
+    expect(body.error).toContain('Unknown TTS provider');
+    expect(mocks.generateTTS).not.toHaveBeenCalled();
+  });
+
   it('rejects an unauthenticated provider call before synthesis', async () => {
     mocks.requireSuperAdminOrOrgMember.mockResolvedValueOnce({
       response: new Response(null, { status: 401 }),

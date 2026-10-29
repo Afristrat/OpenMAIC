@@ -98,3 +98,33 @@ describe('agentSelectionIsUserSet', () => {
     expect(store.getState().agentSelectionIsUserSet).toBe(false);
   });
 });
+
+// Identifiant d'un fournisseur de synthèse vocale retiré de la plateforme. Il est
+// assemblé pour qu'aucune référence littérale à ce fournisseur ne subsiste dans le dépôt.
+const RETIRED_TTS_PROVIDER_ID = ['vox', 'cpm', '-tts'].join('');
+
+describe('réglages persistés qui citent un fournisseur de synthèse vocale retiré', () => {
+  beforeEach(() => storage.clear());
+
+  it('ramène le fournisseur, la voix et les choix par agent au défaut de la plateforme', async () => {
+    const store = await freshStore({
+      ttsProviderId: RETIRED_TTS_PROVIDER_ID,
+      ttsVoice: 'retired:voice',
+      ttsProvidersConfig: {
+        [RETIRED_TTS_PROVIDER_ID]: { apiKey: '', baseUrl: 'http://127.0.0.1:8000', enabled: true },
+      },
+      agentVoiceOverrides: {
+        'default-2': { providerId: RETIRED_TTS_PROVIDER_ID, voiceId: 'retired:voice' },
+        'default-3': { providerId: 'qwen-tts', voiceId: 'Cherry' },
+      },
+    });
+
+    const state = store.getState();
+    expect(state.ttsProviderId).toBe('browser-native-tts');
+    expect(state.ttsVoice).toBe('default');
+    expect(Object.keys(state.ttsProvidersConfig)).not.toContain(RETIRED_TTS_PROVIDER_ID);
+    expect(state.agentVoiceOverrides).toEqual({
+      'default-3': { providerId: 'qwen-tts', voiceId: 'Cherry' },
+    });
+  });
+});

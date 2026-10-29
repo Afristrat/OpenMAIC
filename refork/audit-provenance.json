@@ -78,7 +78,7 @@
       "outputs": [
         {
           "path": "components/settings/tts-settings.tsx",
-          "sha256": "89e75e0b9194ae01d282036d12372e19c9262eb08cd3241c58e81e96ba6c7acb"
+          "sha256": "fb6b78b624857218118c1da358a4872eb51386f2f6c42002c2fa8541a8b5f60d"
         },
         {
           "path": "components/settings/asr-settings.tsx",
@@ -650,19 +650,19 @@
         },
         {
           "path": "lib/i18n/locales/ui-en-US.json",
-          "sha256": "31314dfc613223e368eb261855163605938f2d0f4f07aad6d581e09b9b930d55"
+          "sha256": "7eb672038944776ef34694e0b24e291a401c6baa552386876955c02d44e8ce04"
         },
         {
           "path": "lib/i18n/locales/ui-fr-FR.json",
-          "sha256": "a8b0dd4afa325aaf44dd24a99e6597be23c18a9929643472936d44c876b45265"
+          "sha256": "7dcefc5fb65d37141e5998b130c4dfa691eb6b25041204858d226e2525183d4f"
         },
         {
           "path": "lib/i18n/locales/ui-ar-MA.json",
-          "sha256": "ff714fb4ff7e37c4d3402386d8be8f7602d1ac308d86c5fa7b3369df670b36c3"
+          "sha256": "421bfe78fe0f38bfbd225c175f6ddeb1eb4a6c0d3b408703397bee0094fae7d4"
         },
         {
           "path": "refork/i18n-cleanroom-contract.json",
-          "sha256": "c43a7f642d81dce6d7d6643afcca8568fede223dc0c68216721b7c9d91e60469"
+          "sha256": "ee57cd44c48095f81c5a641ba6a62996cddbf5f129ecd18149797eeb6de19bef"
         },
         {
           "path": "refork/i18n-dynamic-keys.json",
@@ -708,19 +708,19 @@
         },
         {
           "path": "lib/i18n/locales/ui-en-US.json",
-          "sha256": "31314dfc613223e368eb261855163605938f2d0f4f07aad6d581e09b9b930d55"
+          "sha256": "7eb672038944776ef34694e0b24e291a401c6baa552386876955c02d44e8ce04"
         },
         {
           "path": "lib/i18n/locales/ui-fr-FR.json",
-          "sha256": "a8b0dd4afa325aaf44dd24a99e6597be23c18a9929643472936d44c876b45265"
+          "sha256": "7dcefc5fb65d37141e5998b130c4dfa691eb6b25041204858d226e2525183d4f"
         },
         {
           "path": "lib/i18n/locales/ui-ar-MA.json",
-          "sha256": "ff714fb4ff7e37c4d3402386d8be8f7602d1ac308d86c5fa7b3369df670b36c3"
+          "sha256": "421bfe78fe0f38bfbd225c175f6ddeb1eb4a6c0d3b408703397bee0094fae7d4"
         },
         {
           "path": "refork/i18n-cleanroom-contract.json",
-          "sha256": "c43a7f642d81dce6d7d6643afcca8568fede223dc0c68216721b7c9d91e60469"
+          "sha256": "ee57cd44c48095f81c5a641ba6a62996cddbf5f129ecd18149797eeb6de19bef"
         },
         {
           "path": "refork/i18n-dynamic-keys.json",
@@ -766,19 +766,19 @@
         },
         {
           "path": "lib/i18n/locales/ui-en-US.json",
-          "sha256": "31314dfc613223e368eb261855163605938f2d0f4f07aad6d581e09b9b930d55"
+          "sha256": "7eb672038944776ef34694e0b24e291a401c6baa552386876955c02d44e8ce04"
         },
         {
           "path": "lib/i18n/locales/ui-fr-FR.json",
-          "sha256": "a8b0dd4afa325aaf44dd24a99e6597be23c18a9929643472936d44c876b45265"
+          "sha256": "7dcefc5fb65d37141e5998b130c4dfa691eb6b25041204858d226e2525183d4f"
         },
         {
           "path": "lib/i18n/locales/ui-ar-MA.json",
-          "sha256": "ff714fb4ff7e37c4d3402386d8be8f7602d1ac308d86c5fa7b3369df670b36c3"
+          "sha256": "421bfe78fe0f38bfbd225c175f6ddeb1eb4a6c0d3b408703397bee0094fae7d4"
         },
         {
           "path": "refork/i18n-cleanroom-contract.json",
-          "sha256": "c43a7f642d81dce6d7d6643afcca8568fede223dc0c68216721b7c9d91e60469"
+          "sha256": "ee57cd44c48095f81c5a641ba6a62996cddbf5f129ecd18149797eeb6de19bef"
         },
         {
           "path": "refork/i18n-dynamic-keys.json",
@@ -824,19 +824,19 @@
         },
         {
           "path": "lib/i18n/locales/ui-en-US.json",
-          "sha256": "31314dfc613223e368eb261855163605938f2d0f4f07aad6d581e09b9b930d55"
+          "sha256": "7eb672038944776ef34694e0b24e291a401c6baa552386876955c02d44e8ce04"
         },
         {
           "path": "lib/i18n/locales/ui-fr-FR.json",
-          "sha256": "a8b0dd4afa325aaf44dd24a99e6597be23c18a9929643472936d44c876b45265"
+          "sha256": "7dcefc5fb65d37141e5998b130c4dfa691eb6b25041204858d226e2525183d4f"
         },
         {
           "path": "lib/i18n/locales/ui-ar-MA.json",
-          "sha256": "ff714fb4ff7e37c4d3402386d8be8f7602d1ac308d86c5fa7b3369df670b36c3"
+          "sha256": "421bfe78fe0f38bfbd225c175f6ddeb1eb4a6c0d3b408703397bee0094fae7d4"
         },
         {
           "path": "refork/i18n-cleanroom-contract.json",
-          "sha256": "c43a7f642d81dce6d7d6643afcca8568fede223dc0c68216721b7c9d91e60469"
+          "sha256": "ee57cd44c48095f81c5a641ba6a62996cddbf5f129ecd18149797eeb6de19bef"
         },
         {
           "path": "refork/i18n-dynamic-keys.json",
@@ -882,19 +882,19 @@
         },
         {
           "path": "lib/i18n/locales/ui-en-US.json",
-          "sha256": "31314dfc613223e368eb261855163605938f2d0f4f07aad6d581e09b9b930d55"
+          "sha256": "7eb672038944776ef34694e0b24e291a401c6baa552386876955c02d44e8ce04"
         },
         {
           "path": "lib/i18n/locales/ui-fr-FR.json",
-          "sha256": "a8b0dd4afa325aaf44dd24a99e6597be23c18a9929643472936d44c876b45265"
+          "sha256": "7dcefc5fb65d37141e5998b130c4dfa691eb6b25041204858d226e2525183d4f"
         },
         {
           "path": "lib/i18n/locales/ui-ar-MA.json",
-          "sha256": "ff714fb4ff7e37c4d3402386d8be8f7602d1ac308d86c5fa7b3369df670b36c3"
+          "sha256": "421bfe78fe0f38bfbd225c175f6ddeb1eb4a6c0d3b408703397bee0094fae7d4"
         },
         {
           "path": "refork/i18n-cleanroom-contract.json",
-          "sha256": "c43a7f642d81dce6d7d6643afcca8568fede223dc0c68216721b7c9d91e60469"
+          "sha256": "ee57cd44c48095f81c5a641ba6a62996cddbf5f129ecd18149797eeb6de19bef"
         },
         {
           "path": "refork/i18n-dynamic-keys.json",

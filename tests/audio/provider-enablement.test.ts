@@ -37,11 +37,6 @@ describe('isTTSProviderConfigured', () => {
     expect(isTTSProviderConfigured('lemonade-tts', { isServerConfigured: true })).toBe(true);
   });
 
-  it('VoxCPM requires an explicit base URL (or server config)', () => {
-    expect(isTTSProviderConfigured('voxcpm-tts', {})).toBe(false);
-    expect(isTTSProviderConfigured('voxcpm-tts', { baseUrl: 'http://127.0.0.1:8000' })).toBe(true);
-  });
-
   it('browser-native is always configured (runs in-browser)', () => {
     expect(isTTSProviderConfigured('browser-native-tts', undefined)).toBe(true);
     expect(isTTSProviderConfigured('browser-native-tts', {})).toBe(true);
@@ -90,7 +85,7 @@ describe('listEnabledTTSProviderIds / hasAnyEnabledTTSProvider', () => {
     'openai-tts': { apiKey: 'k', enabled: true },
     'qwen-tts': { apiKey: 'k', enabled: false }, // configured but user-disabled
     'lemonade-tts': {}, // unconfigured (no explicit baseUrl)
-    'voxcpm-tts': { baseUrl: 'http://127.0.0.1:8000', serverDisabled: true }, // server off
+    'higgs-tts': { baseUrl: 'http://127.0.0.1:8000', serverDisabled: true }, // server off
     'browser-native-tts': { enabled: false }, // opt-in, off
     'custom-tts-foo': { customVoices: [{ id: 'v', name: 'V' }] },
   };

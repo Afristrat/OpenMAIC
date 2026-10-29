@@ -20,7 +20,6 @@ it('round-trips a stored publication through the details route and shared import
       gender: 'female',
       interactionWeight: 37,
       mechanismId: 'reflection',
-      voiceDesign: { identity: 'Analyste', texture: 'Claire', delivery: 'Posée' },
     },
     is_published: true,
     owner_id: null,

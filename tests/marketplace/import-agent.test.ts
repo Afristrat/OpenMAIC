@@ -13,7 +13,6 @@ it('imports the entire published configuration without resetting actions, voice 
     priority: 9,
     interactionWeight: 37,
     gender: 'female',
-    voiceDesign: { identity: 'Analyste', texture: 'Claire', delivery: 'Posée' },
   };
   expect(importMarketplaceAgent(configuration, 'copy')).toMatchObject(configuration);
 });

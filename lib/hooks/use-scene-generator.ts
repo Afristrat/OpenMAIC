@@ -26,8 +26,6 @@ import {
   splitSpeechActionsByAnglicisms,
 } from '@/lib/audio/tts-utils';
 import { isTTSProviderEnabled } from '@/lib/audio/provider-enablement';
-import { resolveAgentVoiceOptions, pickNarratorAgent } from '@/lib/audio/agent-voice';
-import { useAgentRegistry } from '@/lib/orchestration/registry/store';
 import { generateMediaForOutlines } from '@/lib/media/media-orchestrator';
 import { lazyBoundedMap } from '@/lib/utils/concurrency';
 import { createLogger } from '@/lib/logger';
@@ -248,15 +246,6 @@ export async function generateAndStoreTTS(
     return;
 
   const ttsProviderConfig = settings.ttsProvidersConfig?.[settings.ttsProviderId];
-  // Narration is the teacher's voice — resolve it from the teacher agent profile
-  // through the single resolver (registers + references by id for stable timbre).
-  const teacher = pickNarratorAgent(useAgentRegistry.getState().listAgents());
-  const providerOptions = await resolveAgentVoiceOptions(teacher, {
-    providerId: settings.ttsProviderId,
-    providerConfig: ttsProviderConfig,
-    voiceId: settings.ttsVoice,
-    language,
-  });
   const data = await withGenerationRetry(
     async () => {
       const response = await fetch('/api/generate/tts', {
@@ -278,7 +267,6 @@ export async function generateAndStoreTTS(
           // client's own base URL (custom providers).
           ttsBaseUrl:
             ttsProviderConfig?.baseUrl || ttsProviderConfig?.customDefaultBaseUrl || undefined,
-          ttsProviderOptions: providerOptions,
           ttsLanguage: resolveSpeechLanguage(language),
           ttsLanguageOverride,
         }),

@@ -4,7 +4,6 @@
  */
 
 import type { TTSProviderId } from '@/lib/audio/types';
-import type { VoiceDesign } from '@/lib/audio/voice-design';
 import type { OccupationalProfile } from '@/lib/agents/contextual-specialist';
 
 export interface AgentConfig {
@@ -20,7 +19,6 @@ export interface AgentConfig {
   mechanismId?: string; // Stable pedagogical mechanism id
   gender?: 'female' | 'male';
   voiceConfig?: { providerId: TTSProviderId; modelId?: string; voiceId: string }; // Per-agent TTS voice selection
-  voiceDesign?: VoiceDesign; // 3-layer vocal descriptor for auto voice (provider-neutral)
   occupationalProfile?: OccupationalProfile;
 
   // Metadata
@@ -46,7 +44,6 @@ export interface AgentTemplate {
   mechanismId?: string;
   gender?: 'female' | 'male';
   voiceConfig?: { providerId: TTSProviderId; modelId?: string; voiceId: string }; // Per-agent TTS voice selection
-  voiceDesign?: VoiceDesign; // 3-layer vocal descriptor for auto voice (provider-neutral)
   occupationalProfile?: OccupationalProfile;
 
   // LLM-generated agent fields

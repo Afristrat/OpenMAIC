@@ -85,7 +85,6 @@ export type BuiltInTTSProviderId =
   | 'azure-tts'
   | 'glm-tts'
   | 'qwen-tts'
-  | 'voxcpm-tts'
   | 'higgs-tts'
   | 'doubao-tts'
   | 'elevenlabs-tts'
@@ -148,7 +147,6 @@ export interface TTSModelConfig {
   voice: string;
   speed?: number;
   format?: string;
-  providerOptions?: Record<string, unknown>;
   /** Per-call language used by speech normalization and honored by higgs-tts. */
   language?: string;
   /** `fetch` gardé contre le SSRF, fourni uniquement pour une baseUrl saisie par un utilisateur (voir lib/server/guarded-fetch.ts). */

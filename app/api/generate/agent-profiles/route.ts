@@ -13,10 +13,9 @@ import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { creditsErrorResponse } from '@/lib/server/credit-error-response';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
 import { AGENT_COLOR_PALETTE } from '@/lib/constants/agent-defaults';
-import { normalizeVoiceDesign } from '@/lib/audio/voice-design';
 import { requireSuperAdminOrOrgAuthor } from '@/lib/api/auth';
 import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
-import { learningDesignFromSettings, type AgentGender } from '@/lib/agents/persona-catalog';
+import { learningDesignFromSettings } from '@/lib/agents/persona-catalog';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 
 const log = createLogger('Agent Profiles API');
@@ -45,16 +44,6 @@ function stripCodeFences(text: string): string {
     cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
   }
   return cleaned.trim();
-}
-
-function voiceDesignForGender(value: unknown, gender: AgentGender) {
-  const design = normalizeVoiceDesign(value);
-  if (!design) return undefined;
-  const identity = design.identity.toLocaleLowerCase();
-  const male = /\b(male|man|homme|masculin)\b/u.test(identity);
-  const female = /\b(female|woman|femme|féminin|feminin)\b/u.test(identity);
-  if (gender === 'male' ? !male || female : !female || male) return undefined;
-  return design;
 }
 
 export async function POST(req: NextRequest) {
@@ -161,11 +150,6 @@ Requirements:
   - Use the "path" value as the avatar field in the output
 - Each agent must be assigned one color from this list: ${JSON.stringify(AGENT_COLOR_PALETTE)}
   - Each agent must have a different color
-- Each agent needs a "voiceDesign" object describing their VOCAL identity (not personality), written following the language directive and consistent with the persona, as three short comma-free phrases:
-  - "identity": gender + age + role (e.g. "middle-aged male teacher")
-  - "texture": pitch + vocal quality (e.g. "warm low-pitched slightly husky")
-  - "delivery": emotion + pace (e.g. "calm measured encouraging")
-  - CRITICAL: the gender stated in "identity" MUST match the gender the agent's "name" reads as (e.g. a name that reads male, such as "Thomas" or "Ahmed", must get a male "identity"; a name that reads female, such as "Sophie" or "Amina", must get a female "identity"). A mismatch between name and voice gender is a serious quality bug — double-check every agent's name against its voiceDesign before returning the JSON.
 ${voicePrompt}${
       voicePrompt
         ? '\n  - CRITICAL: the picked voice\'s gender must also match the gender the agent\'s "name" reads as.'
@@ -180,7 +164,6 @@ Return a JSON object with this exact structure:
       "name": "string",
       "role": "teacher" | "assistant" | "student",
       "persona": "string (2-3 sentences)",
-      "voiceDesign": { "identity": "string", "texture": "string", "delivery": "string" },
       "avatar": "string (from available list)",
       "color": "string (hex color from palette)",
       "priority": number (10 for teacher, 7 for assistant, 4-6 for student)${voiceJsonField}
@@ -217,7 +200,6 @@ Return a JSON object with this exact structure:
         priority: number;
         mechanismId?: string;
         voice?: string;
-        voiceDesign?: unknown;
       }>;
     };
 
@@ -256,7 +238,6 @@ Return a JSON object with this exact structure:
         : adapted?.avatar && availableAvatars.includes(adapted.avatar)
           ? adapted.avatar
           : fallbackAvatar;
-      const voiceDesign = voiceDesignForGender(adapted?.voiceDesign, persona.gender);
       return {
         id: `gen-${persona.id}-${nanoid(4)}`,
         name: persona.defaultName,
@@ -269,7 +250,6 @@ Return a JSON object with this exact structure:
         interactionWeight: persona.interactionWeights.balanced,
         gender: persona.gender,
         voiceConfig: { providerId: persona.providerId, voiceId: persona.voiceId },
-        ...(voiceDesign ? { voiceDesign } : {}),
       };
     });
 

@@ -40,7 +40,6 @@ import {
   splitLongSpeechActions,
   splitSpeechActionsByAnglicisms,
 } from '@/lib/audio/tts-utils';
-import { VOXCPM_AUTO_VOICE_ID, VOXCPM_TTS_PROVIDER_ID } from '@/lib/audio/voxcpm';
 import {
   buildOrganizationImagePrompt,
   type OrganizationDesignSystem,
@@ -529,31 +528,23 @@ export async function generateTTSForClassroom(
   // Resolve TTS provider (exclude browser-native-tts and operator force-disabled
   // providers — server precedence, #665).
   const ttsProviderIds = Object.entries(getServerTTSProviders())
-    .filter(([id, info]) => id !== 'browser-native-tts' && !info.disabled)
+    .filter(
+      ([id, info]) =>
+        id !== 'browser-native-tts' && !info.disabled && Object.hasOwn(TTS_PROVIDERS, id),
+    )
     .map(([id]) => id);
   if (ttsProviderIds.length === 0) {
     log.warn('No server TTS provider configured, skipping TTS generation');
     return report;
   }
 
-  // VoxCPM's automatic voice needs per-agent reference audio, which this
-  // batch pipeline does not receive. Prefer the first server provider that
-  // can synthesize autonomously instead of selecting VoxCPM and abandoning
-  // the whole classroom while another configured provider is available.
+  // The preferred voice's provider when the server still offers it, otherwise the
+  // first server provider (a provider retired from the platform falls back here).
   const preferredProvider =
     preferredVoice && ttsProviderIds.includes(preferredVoice.providerId)
       ? preferredVoice.providerId
       : undefined;
-  const providerId = (preferredProvider ??
-    ttsProviderIds.find(
-      (id) =>
-        id !== VOXCPM_TTS_PROVIDER_ID ||
-        DEFAULT_TTS_VOICES[id as keyof typeof DEFAULT_TTS_VOICES] !== VOXCPM_AUTO_VOICE_ID,
-    )) as TTSProviderId | undefined;
-  if (!providerId) {
-    log.warn('No server TTS provider supports context-free classroom generation');
-    return report;
-  }
+  const providerId = (preferredProvider ?? ttsProviderIds[0]) as TTSProviderId;
   for (const scene of scenes) {
     if (!scene.actions) continue;
 

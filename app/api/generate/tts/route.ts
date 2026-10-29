@@ -16,13 +16,13 @@ import {
   resolveTTSBaseUrl,
   resolveTTSModel,
 } from '@/lib/server/provider-config';
-import type { TTSProviderId } from '@/lib/audio/types';
+import { isCustomTTSProvider, type TTSProviderId } from '@/lib/audio/types';
+import { TTS_PROVIDERS } from '@/lib/audio/constants';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { creditsErrorResponse } from '@/lib/server/credit-error-response';
 import { fetchForBaseUrl } from '@/lib/server/guarded-fetch';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
-import { VOXCPM_AUTO_VOICE_ID, VOXCPM_TTS_PROVIDER_ID } from '@/lib/audio/voxcpm';
 import { generateTTSSchema } from '@/lib/api/schemas';
 import { validateBody } from '@/lib/api/validate';
 import { requireSuperAdminOrOrgMember } from '@/lib/api/auth';
@@ -42,16 +42,8 @@ export async function POST(req: NextRequest) {
     const body = validation.data;
     const auth = await requireSuperAdminOrOrgMember(req, body.orgId);
     if (auth.response) return auth.response;
-    const {
-      text,
-      ttsModelId,
-      ttsSpeed,
-      ttsApiKey,
-      ttsBaseUrl,
-      ttsProviderOptions,
-      ttsLanguage,
-      ttsLanguageOverride,
-    } = body;
+    const { text, ttsModelId, ttsSpeed, ttsApiKey, ttsBaseUrl, ttsLanguage, ttsLanguageOverride } =
+      body;
     ttsProviderId = body.ttsProviderId;
     ttsVoice = body.ttsVoice;
     audioId = body.audioId;
@@ -65,29 +57,17 @@ export async function POST(req: NextRequest) {
       return apiError('INVALID_REQUEST', 400, 'browser-native-tts must be handled client-side');
     }
 
+    // A provider id that is neither built in nor custom (for example one retired
+    // from the platform but still held by an old client or an old classroom) is a
+    // client error with a clear message, not a server failure.
+    if (!Object.hasOwn(TTS_PROVIDERS, ttsProviderId) && !isCustomTTSProvider(ttsProviderId)) {
+      return apiError('INVALID_REQUEST', 400, `Unknown TTS provider: ${ttsProviderId}`);
+    }
+
     // Enforce server precedence: a force-disabled provider is off for everyone,
     // regardless of any client key/selection (#665).
     if (isServerTTSProviderDisabled(ttsProviderId)) {
       return apiError('PROVIDER_DISABLED', 403, 'This TTS provider is disabled by the server');
-    }
-
-    const voxcpmVoicePrompt =
-      typeof ttsProviderOptions?.voicePrompt === 'string' ? ttsProviderOptions.voicePrompt : '';
-    const voxcpmRegisteredVoiceId =
-      typeof ttsProviderOptions?.registeredVoiceId === 'string'
-        ? ttsProviderOptions.registeredVoiceId
-        : '';
-    if (
-      ttsProviderId === VOXCPM_TTS_PROVIDER_ID &&
-      ttsVoice === VOXCPM_AUTO_VOICE_ID &&
-      !voxcpmVoicePrompt.trim() &&
-      !voxcpmRegisteredVoiceId.trim()
-    ) {
-      return apiError(
-        'VOXCPM_AUTO_VOICE_REQUIRES_CONTEXT',
-        400,
-        'VoxCPM Auto Voice requires agent context',
-      );
     }
 
     // Managed providers are admin-owned: ignore any client-sent key/baseUrl.
@@ -111,7 +91,6 @@ export async function POST(req: NextRequest) {
       speed: ttsSpeed ?? 1.0,
       apiKey,
       baseUrl,
-      providerOptions: ttsProviderOptions,
       language: ttsLanguageOverride ?? ttsLanguage,
       // URL saisie par l'utilisateur : connexion épinglée + redirections revalidées.
       fetch: fetchForBaseUrl(clientBaseUrl),
@@ -119,7 +98,7 @@ export async function POST(req: NextRequest) {
 
     log.info(
       `Generating TTS: provider=${ttsProviderId}, model=${config.modelId || 'default'}, voice=${ttsVoice}, ` +
-        `registeredVoiceId=${voxcpmRegisteredVoiceId || 'none'}, audioId=${audioId}, textLen=${text.length}`,
+        `audioId=${audioId}, textLen=${text.length}`,
     );
 
     // Generate audio
