@@ -8,6 +8,7 @@ import { useI18n } from '@/lib/hooks/use-i18n';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useOrganizations } from '@/lib/hooks/use-organizations';
 import { detectExtension, pairExtension, type ExtensionStatus } from '@/lib/capture/bridge-client';
+import { ExtensionInstall } from '@/components/captures/extension-install';
 import { cn } from '@/lib/utils';
 
 const reviewSchema = z.enum(['pending', 'approved', 'rejected']);
@@ -245,6 +246,8 @@ export default function CapturesPage(): React.ReactElement {
             </div>
           )}
         </section>
+
+        <ExtensionInstall status={extension} />
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
