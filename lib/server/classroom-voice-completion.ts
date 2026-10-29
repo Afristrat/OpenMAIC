@@ -1,7 +1,10 @@
 import { ClassroomCastingError, normalizeClassroomCasting } from '@/lib/agents/classroom-casting';
 import { isSilentSpeech, summarizeSpeechAudio } from '@/lib/audio/speech-audio-report';
 import { createLogger } from '@/lib/logger';
-import { generateTTSForClassroom } from '@/lib/server/classroom-media-generation';
+import {
+  generateTTSForClassroom,
+  type VoiceHealthMap,
+} from '@/lib/server/classroom-media-generation';
 import { persistClassroom, readClassroom } from '@/lib/server/classroom-storage';
 import type { Action } from '@/lib/types/action';
 import type { Scene } from '@/lib/types/stage';
@@ -76,6 +79,8 @@ export async function completeMissingSpeechAudio(input: {
     updatedScenes: [],
   };
   const scenes: Scene[] = [];
+  // Shared across the line-by-line calls so a voice the server refuses is recognised once.
+  const voiceHealth: VoiceHealthMap = new Map();
   if (input.sceneId && !casting.scenes.some((scene) => scene.id === input.sceneId)) {
     throw new VoiceCompletionError('NOT_FOUND', 'Scène introuvable');
   }
@@ -102,6 +107,7 @@ export async function completeMissingSpeechAudio(input: {
             casting.agents,
             undefined,
             casting.stage.languageDirective,
+            { voiceHealth },
           );
           if (generation.creditsBlocked) report.creditsBlocked = true;
         } catch (error) {

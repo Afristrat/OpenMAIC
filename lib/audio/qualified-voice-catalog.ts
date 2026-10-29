@@ -50,6 +50,30 @@ export const HIGGS_QUALIFIED_VOICE_CATALOG = [
   qualifiedVoice('sana', 'Sana', 'female'),
 ] satisfies QualifiedVoiceCatalogEntry[];
 
+/**
+ * Ordered fallback voices per gender, used when the Higgs server refuses the requested voice
+ * (HTTP 5xx on every line, measured: broken reference audio).
+ * Higgs voices verified to answer 200 on 2026-10-25: men younes, mehdi, tariq, amine; women
+ * salma, rim, hanae. Re-verify against the live server before editing; a voice that starts
+ * failing must leave this list.
+ */
+export const HIGGS_FALLBACK_VOICES_BY_GENDER = {
+  male: ['younes', 'mehdi', 'tariq', 'amine'],
+  female: ['salma', 'rim', 'hanae'],
+} as const satisfies Record<'male' | 'female', readonly string[]>;
+
+/** Gender of a Higgs voice from the qualified catalog, undefined when the voice is unknown. */
+export function getQualifiedVoiceGender(voiceId: string): 'male' | 'female' | undefined {
+  const gender = HIGGS_QUALIFIED_VOICE_CATALOG.find((voice) => voice.id === voiceId)?.gender;
+  if (gender === 'male' || gender === 'female') return gender;
+  // tariq and amine are verified fallback voices without a catalog profile yet
+  const fallbackVoices: Record<'male' | 'female', readonly string[]> =
+    HIGGS_FALLBACK_VOICES_BY_GENDER;
+  if (fallbackVoices.male.includes(voiceId)) return 'male';
+  if (fallbackVoices.female.includes(voiceId)) return 'female';
+  return undefined;
+}
+
 export function getQualifiedVoicesForLanguage(
   language: QualifiedVoiceLanguage,
 ): QualifiedVoiceCatalogEntry[] {

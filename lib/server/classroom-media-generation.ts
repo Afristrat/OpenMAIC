@@ -40,6 +40,10 @@ import {
   splitLongSpeechActions,
   splitSpeechActionsByAnglicisms,
 } from '@/lib/audio/tts-utils';
+import {
+  HIGGS_FALLBACK_VOICES_BY_GENDER,
+  getQualifiedVoiceGender,
+} from '@/lib/audio/qualified-voice-catalog';
 import { VOXCPM_AUTO_VOICE_ID, VOXCPM_TTS_PROVIDER_ID } from '@/lib/audio/voxcpm';
 import {
   buildOrganizationImagePrompt,
@@ -57,11 +61,26 @@ export interface ClassroomTTSGenerationReport {
   generated: number;
   /** Vrai quand la génération s'est arrêtée parce que le solde de crédits du tenant est épuisé. */
   creditsBlocked?: boolean;
+  /**
+   * Lines spoken with a fallback voice because the server refused the requested one.
+   * Absent when no substitution happened.
+   */
+  voiceSubstitutions?: VoiceSubstitution[];
+}
+
+export interface VoiceSubstitution {
+  requestedVoice: string;
+  fallbackVoice: string;
+  agentId?: string;
+  /** Lines of this batch spoken with the fallback voice. */
+  lines: number;
 }
 
 export interface CanonicalSpeechAgentVoice {
   id: string;
   name?: string;
+  /** Used to pick a same-gender fallback voice when the catalog does not know the voice. */
+  gender?: 'male' | 'female';
   voiceConfig?: { providerId: string; modelId?: string; voiceId: string };
 }
 
@@ -493,6 +512,8 @@ const TTS_CIRCUIT_BREAKER_LINES = 5;
  */
 const TTS_VOICE_BREAKER_LINES = 2;
 
+const HIGGS_TTS_PROVIDER_ID = 'higgs-tts';
+
 const sleepMs = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 // The base URL comes from the server environment (never from a user), so the plain global fetch
@@ -511,7 +532,14 @@ export interface GenerateTTSOptions {
    * generation batch only: line-by-line callers would pay the pause on every failing line.
    */
   secondPass?: boolean;
+  /**
+   * Per-voice outcome counters. Line-by-line callers share one map across their calls so the
+   * voice breaker (and the fallback voice it enables) sees the whole run, not a single line.
+   */
+  voiceHealth?: VoiceHealthMap;
 }
+
+export type VoiceHealthMap = Map<string, { spoken: number; exhausted: number }>;
 
 export async function generateTTSForClassroom(
   scenes: Scene[],
@@ -600,7 +628,7 @@ export async function generateTTSForClassroom(
       .map((action) => ({ sceneOrder: scene.order, speechAction: action as SpeechAction })),
   );
 
-  const voiceHealth = new Map<string, { spoken: number; exhausted: number }>();
+  const voiceHealth: VoiceHealthMap = options.voiceHealth ?? new Map();
   const markVoice = (key: string, field: 'spoken' | 'exhausted'): void => {
     const health = voiceHealth.get(key) ?? { spoken: 0, exhausted: 0 };
     health[field] += 1;
@@ -642,42 +670,97 @@ export async function generateTTSForClassroom(
         '';
       diagnostic = { providerId: actionProviderId, modelId };
       voiceKey = `${actionProviderId}/${voice}`;
-      const health = voiceHealth.get(voiceKey);
-      if (health && health.spoken === 0 && health.exhausted >= TTS_VOICE_BREAKER_LINES) {
-        log.warn(`TTS ${audioId} skipped: voice ${voiceKey} failed on every line of this batch`);
-        return 'skipped';
-      }
+      const requestedVoiceKey = voiceKey;
       // A flaky voice server must not cost the whole classroom: each line is retried on
       // transient errors (5xx, timeouts, rate limits) before it counts as failed.
-      const result = await withGenerationRetry(
-        () =>
-          generateTTS(
-            {
-              providerId: actionProviderId,
-              modelId,
-              apiKey,
-              baseUrl: ttsBaseUrl,
-              voice,
-              speed: speechAction.speed,
-              language: speechAction.ttsLanguageOverride ?? resolveSpeechLanguage(language),
-              fetch: fetchWithTimeout,
+      const synthesizeWith = (voiceId: string) =>
+        withGenerationRetry(
+          () =>
+            generateTTS(
+              {
+                providerId: actionProviderId,
+                modelId,
+                apiKey,
+                baseUrl: ttsBaseUrl,
+                voice: voiceId,
+                speed: speechAction.speed,
+                language: speechAction.ttsLanguageOverride ?? resolveSpeechLanguage(language),
+                fetch: fetchWithTimeout,
+              },
+              speechAction.text,
+            ),
+          {
+            label: `classroom TTS ${audioId}`,
+            maxRetries: TTS_LINE_MAX_RETRIES,
+            baseDelayMs: 2_000,
+            maxDelayMs: 30_000,
+            onRetry: async ({ attempt, maxAttempts, reason }) => {
+              // A revocation must be seen between two attempts, not only at the next line.
+              await checkAccess();
+              log.warn(
+                `Retrying TTS ${audioId} (${attempt + 1}/${maxAttempts}) via ${actionProviderId}/${modelId}/${voiceId}, ${speechAction.text.length} chars: ${reason}`,
+              );
             },
-            speechAction.text,
-          ),
-        {
-          label: `classroom TTS ${audioId}`,
-          maxRetries: TTS_LINE_MAX_RETRIES,
-          baseDelayMs: 2_000,
-          maxDelayMs: 30_000,
-          onRetry: async ({ attempt, maxAttempts, reason }) => {
-            // A revocation must be seen between two attempts, not only at the next line.
-            await checkAccess();
-            log.warn(
-              `Retrying TTS ${audioId} (${attempt + 1}/${maxAttempts}) via ${actionProviderId}/${modelId}, ${speechAction.text.length} chars: ${reason}`,
-            );
           },
-        },
-      );
+        );
+      const isRefusedVoice = (key: string): boolean => {
+        const health = voiceHealth.get(key);
+        return Boolean(
+          health && health.spoken === 0 && health.exhausted >= TTS_VOICE_BREAKER_LINES,
+        );
+      };
+      // Same-gender fallback, only for Higgs and only when the gender is known.
+      const pickFallbackVoice = (): string | undefined => {
+        if (actionProviderId !== HIGGS_TTS_PROVIDER_ID) return undefined;
+        const gender =
+          getQualifiedVoiceGender(voice) ??
+          agents.find((agent) => agent.id === speechAction.agentId)?.gender;
+        if (!gender) return undefined;
+        return HIGGS_FALLBACK_VOICES_BY_GENDER[gender].find(
+          (candidate) => candidate !== voice && !isRefusedVoice(`${actionProviderId}/${candidate}`),
+        );
+      };
+      const adoptFallback = (fallbackVoice: string): string => {
+        voiceKey = `${actionProviderId}/${fallbackVoice}`;
+        return fallbackVoice;
+      };
+
+      let spokenVoice = voice;
+      let result: Awaited<ReturnType<typeof synthesizeWith>>;
+      if (isRefusedVoice(requestedVoiceKey)) {
+        const fallbackVoice = pickFallbackVoice();
+        if (!fallbackVoice) {
+          log.warn(`TTS ${audioId} skipped: voice ${voiceKey} failed on every line of this batch`);
+          return 'skipped';
+        }
+        spokenVoice = adoptFallback(fallbackVoice);
+        result = await synthesizeWith(spokenVoice);
+      } else {
+        try {
+          result = await synthesizeWith(voice);
+        } catch (err) {
+          // Only a transient refusal that makes the voice reach the breaker (never spoke, this
+          // failure being its second) is rescued: a single exhausted line may be a server hiccup,
+          // a permanent 4xx or a credits refusal fails the same way with any voice, and a voice
+          // that works is kept.
+          const health = voiceHealth.get(requestedVoiceKey);
+          const fallbackVoice =
+            !containsInsufficientCredits(err) &&
+            isRetryableGenerationError(err) &&
+            !health?.spoken &&
+            (health?.exhausted ?? 0) + 1 >= TTS_VOICE_BREAKER_LINES
+              ? pickFallbackVoice()
+              : undefined;
+          if (!fallbackVoice) throw err;
+          log.warn(
+            `TTS ${audioId} refused on voice ${requestedVoiceKey}, trying ${fallbackVoice}:`,
+            err,
+          );
+          markVoice(requestedVoiceKey, 'exhausted');
+          spokenVoice = adoptFallback(fallbackVoice);
+          result = await synthesizeWith(spokenVoice);
+        }
+      }
 
       const filename = `${audioId}.${result.format || format}`;
       await uploadClassroomMedia(classroomId, `audio/${filename}`, result.audio, checkAccess);
@@ -687,6 +770,26 @@ export async function generateTTSForClassroom(
       speechAction.audioId = audioId;
       speechAction.audioUrl = `${mediaServingUrl(classroomId, `audio/${filename}`)}?v=${audioVersion}`;
       report.generated += 1;
+      if (spokenVoice !== voice) {
+        log.warn(
+          `TTS ${audioId} spoken with fallback voice ${spokenVoice} instead of ${voice} (agent ${speechAction.agentId ?? 'none'})`,
+        );
+        const substitutions = (report.voiceSubstitutions ??= []);
+        const known = substitutions.find(
+          (item) =>
+            item.requestedVoice === voice &&
+            item.fallbackVoice === spokenVoice &&
+            item.agentId === speechAction.agentId,
+        );
+        if (known) known.lines += 1;
+        else
+          substitutions.push({
+            requestedVoice: voice,
+            fallbackVoice: spokenVoice,
+            agentId: speechAction.agentId,
+            lines: 1,
+          });
+      }
       log.info(`Generated TTS: ${filename} (${result.audio.length} bytes)`);
     } catch (err) {
       await checkAccess();
