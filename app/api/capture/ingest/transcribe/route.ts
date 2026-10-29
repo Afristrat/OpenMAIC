@@ -28,6 +28,7 @@ import {
   isServerConfiguredProvider,
   resolveASRApiKey,
   resolveASRBaseUrl,
+  resolveASRModel,
 } from '@/lib/server/provider-config';
 import { readLimitedBody, ResponseTooLargeError } from '@/lib/server/read-limited-body';
 
@@ -102,7 +103,8 @@ export async function POST(request: NextRequest) {
       transcribeVerbose(
         {
           providerId: ASR_PROVIDER_ID,
-          modelId: TRANSCRIBE_MODEL_ID,
+          // Le modèle est celui que la plateforme épingle pour ce fournisseur ; Whisper à défaut.
+          modelId: resolveASRModel(ASR_PROVIDER_ID, TRANSCRIBE_MODEL_ID),
           apiKey: resolveASRApiKey(ASR_PROVIDER_ID),
           baseUrl: resolveASRBaseUrl(ASR_PROVIDER_ID),
           ...(language ? { language } : {}),

@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   authorized: true,
   orgId: null as string | null,
   configured: true,
+  pinnedModel: null as string | null,
   usage: null as { actor: string; org: string } | null,
   idempotencyKeys: [] as string[],
   metered: [] as Array<{ source: string; billableUnit: string; maxQuantity: number }>,
@@ -32,6 +33,7 @@ vi.mock('@/lib/server/provider-config', () => ({
   isServerConfiguredProvider: () => mocks.configured,
   resolveASRApiKey: () => 'cle-serveur',
   resolveASRBaseUrl: () => 'https://asr.example/v1',
+  resolveASRModel: (_provider: string, fallback?: string) => mocks.pinnedModel ?? fallback,
 }));
 vi.mock('@/lib/billing/usage-context', () => ({
   runWithUsageMeteringContext: (
@@ -125,6 +127,7 @@ beforeEach(() => {
   mocks.authorized = true;
   mocks.orgId = ORG;
   mocks.configured = true;
+  mocks.pinnedModel = null;
   mocks.usage = null;
   mocks.idempotencyKeys = [];
   mocks.metered = [];
@@ -179,6 +182,13 @@ describe('POST /api/capture/ingest/transcribe', () => {
     expect(form.get('model')).toBe('whisper-1');
     expect(form.get('response_format')).toBe('verbose_json');
     expect(form.get('language')).toBe('fr');
+  });
+
+  it('utilise le modèle épinglé par la plateforme pour ce fournisseur', async () => {
+    mocks.pinnedModel = 'whisper-large-v3';
+    await POST(request(wav(1)));
+    const [, init] = mocks.providerFetch.mock.calls[0] as [string, RequestInit];
+    expect((init.body as FormData).get('model')).toBe('whisper-large-v3');
   });
 
   it("ignore la clé d'idempotence du client : chaque appel reçoit sa propre clé serveur", async () => {
