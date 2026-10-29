@@ -49,13 +49,14 @@ vi.mock('@/lib/billing/usage-metering', () => ({
   runMeteredTenantUsage: async (input: {
     source: string;
     billableUnit: string;
-    maxQuantity: () => Promise<number>;
+    maxQuantity: number | (() => Promise<number>);
     execute: () => Promise<unknown>;
   }) => {
     mocks.metered.push({
       source: input.source,
       billableUnit: input.billableUnit,
-      maxQuantity: await input.maxQuantity(),
+      maxQuantity:
+        typeof input.maxQuantity === 'function' ? await input.maxQuantity() : input.maxQuantity,
     });
     return input.execute();
   },
@@ -195,6 +196,34 @@ describe('POST /api/capture/ingest/transcribe', () => {
     expect((await POST(request(null))).status).toBe(400);
     expect((await POST(request(new Uint8Array(8 * 1024 * 1024 + 1)))).status).toBe(413);
     expect(mocks.providerFetch).not.toHaveBeenCalled();
+  });
+
+  it('calcule la durée sur le contenu reçu : un débit ou une taille menteurs sont refusés, sans rien débiter', async () => {
+    const forged: Array<(bytes: Uint8Array<ArrayBuffer>) => void> = [
+      // débit annoncé trop bas : la durée lue serait gonflée ou faussée
+      (bytes) => new DataView(bytes.buffer).setUint32(28, 1, true),
+      // taille des données annoncée plus petite que le contenu réel
+      (bytes) => new DataView(bytes.buffer).setUint32(40, 100, true),
+      // taille RIFF qui ne correspond pas au fichier
+      (bytes) => new DataView(bytes.buffer).setUint32(4, 36, true),
+      // format qui n'est pas du PCM
+      (bytes) => new DataView(bytes.buffer).setUint16(20, 3, true),
+      // taux d'échantillonnage hors plage
+      (bytes) => new DataView(bytes.buffer).setUint32(24, 1_000_000, true),
+    ];
+    for (const forge of forged) {
+      const bytes = wav(2);
+      forge(bytes);
+      expect((await POST(request(bytes))).status).toBe(400);
+    }
+    expect(mocks.providerFetch).not.toHaveBeenCalled();
+    expect(mocks.metered).toEqual([]);
+  });
+
+  it("débite la durée réelle du contenu, pas celle d'un en-tête allégé", async () => {
+    // 4 secondes de contenu, en-tête cohérent : la durée débitée est bien 4.
+    await POST(request(wav(4)));
+    expect(mocks.metered).toEqual([{ source: 'asr', billableUnit: 'asr_second', maxQuantity: 4 }]);
   });
 
   it('refuse un enregistrement plus long que le plafond avant toute réservation', async () => {

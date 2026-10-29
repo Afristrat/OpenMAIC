@@ -9,16 +9,16 @@
 
 import { randomUUID } from 'node:crypto';
 import { NextRequest } from 'next/server';
-import { AudioTooLongError, transcribeVerbose } from '@/lib/audio/asr-verbose';
+import { transcribeVerbose } from '@/lib/audio/asr-verbose';
 import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
 import { resolveBillingOrganization } from '@/lib/capture/billing-organization';
 import { consumeMediaQuota } from '@/lib/capture/describe-limit';
 import {
-  isWavBytes,
   MAX_TRANSCRIBE_BYTES,
   MAX_TRANSCRIBE_SECONDS,
   TRANSCRIBE_MODEL_ID,
   transcribeLanguage,
+  wavDurationSeconds,
 } from '@/lib/capture/media';
 import { requireCaptureToken } from '@/lib/capture/token-auth';
 import { createLogger } from '@/lib/logger';
@@ -65,8 +65,17 @@ export async function POST(request: NextRequest) {
     }
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Enregistrement illisible');
   }
-  if (!isWavBytes(bytes)) {
-    return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Un fichier WAV est attendu');
+  // Durée mesurée sur le contenu reçu, jamais lue dans un débit déclaré : c'est elle qu'on plafonne et qu'on débite.
+  const seconds = wavDurationSeconds(bytes);
+  if (seconds === null) {
+    return apiError(
+      API_ERROR_CODES.INVALID_REQUEST,
+      400,
+      'Un fichier WAV (PCM 16 bits) est attendu',
+    );
+  }
+  if (seconds > MAX_TRANSCRIBE_SECONDS) {
+    return apiError(API_ERROR_CODES.INVALID_REQUEST, 413, 'Enregistrement trop long');
   }
 
   try {
@@ -99,16 +108,13 @@ export async function POST(request: NextRequest) {
           ...(language ? { language } : {}),
         },
         new Blob([bytes], { type: 'audio/wav' }),
-        MAX_TRANSCRIBE_SECONDS,
+        seconds,
       ),
     );
     const response = apiSuccess(transcript);
     response.headers.set('Cache-Control', 'private, no-store');
     return response;
   } catch (error) {
-    if (error instanceof AudioTooLongError) {
-      return apiError(API_ERROR_CODES.INVALID_REQUEST, 413, 'Enregistrement trop long');
-    }
     const credits = creditsErrorResponse(error);
     if (credits) return credits;
     log.error('Capture transcription failed', error instanceof Error ? error.name : 'unknown');

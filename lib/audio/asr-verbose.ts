@@ -7,7 +7,6 @@
  */
 
 import { runMeteredTenantUsage } from '@/lib/billing/usage-metering';
-import { measureAudioDurationSeconds } from './duration';
 import type { ASRModelConfig } from './types';
 
 export type VerboseTranscript = {
@@ -24,13 +23,6 @@ export type VerboseTranscript = {
 };
 
 const ERROR_BODY_LIMIT = 200;
-
-export class AudioTooLongError extends Error {
-  constructor(readonly maxSeconds: number) {
-    super(`Audio longer than ${maxSeconds} seconds`);
-    this.name = 'AudioTooLongError';
-  }
-}
 
 function finite(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
@@ -69,32 +61,25 @@ export function parseVerboseTranscript(body: unknown): VerboseTranscript {
   return { text: typeof source.text === 'string' ? source.text : '', segments, words };
 }
 
+/**
+ * `seconds` est la durée du WAV mesurée par l'appelant sur le contenu reçu (voir
+ * `wavDurationSeconds`) : c'est elle qui est réservée puis réglée, jamais une durée déclarée.
+ */
 export async function transcribeVerbose(
   config: ASRModelConfig,
   wav: Blob,
-  maxSeconds: number,
+  seconds: number,
 ): Promise<VerboseTranscript> {
   const baseUrl = (config.baseUrl ?? '').replace(/\/$/, '');
   if (!baseUrl) throw new Error('ASR base URL is not configured');
 
-  let durationSeconds: number | undefined;
-  const duration = async (): Promise<number> => {
-    durationSeconds ??= await measureAudioDurationSeconds(wav);
-    return durationSeconds;
-  };
-
   return runMeteredTenantUsage({
     source: 'asr',
     billableUnit: 'asr_second',
-    maxQuantity: async () => {
-      const seconds = await duration();
-      // Refusé avant toute réservation : une durée hors plafond ne coûte rien et n'est pas envoyée.
-      if (seconds > maxSeconds) throw new AudioTooLongError(maxSeconds);
-      return seconds;
-    },
+    maxQuantity: seconds,
     providerId: config.providerId,
     modelId: config.modelId || 'default',
-    measureActualQuantity: duration,
+    measureActualQuantity: () => seconds,
     execute: async () => {
       const form = new FormData();
       form.set('file', wav, 'audio.wav');
