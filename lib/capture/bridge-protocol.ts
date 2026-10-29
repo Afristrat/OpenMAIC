@@ -15,7 +15,7 @@ import { z } from 'zod';
 export const BRIDGE_CHANNEL = 'qalem-capture';
 export const BRIDGE_VERSION = 1;
 /** Première version de l'extension qui embarque le pont. En dessous : « extension trop ancienne ». */
-export const MIN_EXTENSION_VERSION = '1.4.0';
+export const MIN_EXTENSION_VERSION = '1.5.0';
 
 const envelope = {
   channel: z.literal(BRIDGE_CHANNEL),

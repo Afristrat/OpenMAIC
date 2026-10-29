@@ -688,3 +688,9 @@ body[data-maic-editor='true'] .editable-element-text li,
 [dir='rtl'] .rtl-flip {
   transform: scaleX(-1);
 }
+
+/* Barres de défilement fines et discrètes, au lieu des barres natives claires sur fond sombre. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, currentColor 25%, transparent) transparent;
+}

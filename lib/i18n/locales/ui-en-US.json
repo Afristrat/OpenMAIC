@@ -3031,8 +3031,7 @@
   "captures.install.step.load.body": "Click “Load unpacked” and select the unzipped folder.",
   "captures.install.step.back.title": "Come back to this page",
   "captures.install.step.back.body": "Reload it: the status changes to “Extension detected”. Then click “Pair the extension”.",
-  "captures.install.compat": "Works with Chrome and Chromium browsers, version {{minChrome}} or later. The extension is not yet published on the Chrome Web Store: installation goes through developer mode, and Chrome may remind you of it when it opens. Its interface is available in French, English, German, Spanish, Portuguese, Russian and Chinese, not yet in Arabic.",
-  "captures.install.sending": "In this version, sending captures to a Qalem project is not active yet: you can record, edit and export your guides, and pair the extension with your account right now. Sending will be enabled in a later version of the extension.",
+  "captures.install.compat": "Works with Chrome and Chromium browsers, version {{minChrome}} or later. The extension is not yet published on the Chrome Web Store: installation goes through developer mode, and Chrome may remind you of it when it opens. Its interface is available in French, English, German, Spanish, Portuguese, Russian, Chinese and Arabic.",
   "captures.install.checksum": "SHA-256 fingerprint of the file, to verify it:",
   "captures.install.reinstall": "Reinstall or update the extension"
 }

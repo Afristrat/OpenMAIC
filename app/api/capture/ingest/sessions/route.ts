@@ -26,6 +26,52 @@ const bodySchema = z.strictObject({
   supersedesCaptureId: z.uuid().optional(),
 });
 
+/**
+ * GET /api/capture/ingest/sessions?courseId=… : sessions terminées d'un projet que plus aucune
+ * recapture ne remplace, pour proposer « Recapturer » dans l'extension.
+ */
+export async function GET(request: NextRequest) {
+  const auth = await requireCaptureToken(request);
+  if (auth.response) return auth.response;
+
+  const courseId = z.uuid().safeParse(request.nextUrl.searchParams.get('courseId'));
+  if (!courseId.success) return apiError('INVALID_REQUEST', 400, 'Projet invalide');
+
+  const { data, error } = await createServiceSupabaseClient()
+    .from('capture_sessions')
+    .select('id, domain, captured_at, step_count, status, supersedes_capture_id')
+    .eq('course_id', courseId.data)
+    .eq('owner_id', auth.ownerId)
+    .order('captured_at', { ascending: false });
+  if (error) {
+    log.error('Failed to list capture sessions', error.message);
+    return apiError('INTERNAL_ERROR', 500, 'Échec de la lecture des sessions');
+  }
+  const rows = (data ?? []) as Array<{
+    id: string;
+    domain: string;
+    captured_at: string;
+    step_count: number;
+    status: string;
+    supersedes_capture_id: string | null;
+  }>;
+  const replaced = new Set(
+    rows.flatMap((r) => (r.supersedes_capture_id ? [r.supersedes_capture_id] : [])),
+  );
+  const response = apiSuccess({
+    sessions: rows
+      .filter((r) => r.status === 'complete' && !replaced.has(r.id))
+      .map((r) => ({
+        id: r.id,
+        domain: r.domain,
+        capturedAt: r.captured_at,
+        stepCount: r.step_count,
+      })),
+  });
+  response.headers.set('Cache-Control', 'private, no-store');
+  return response;
+}
+
 export async function POST(request: NextRequest) {
   const auth = await requireCaptureToken(request);
   if (auth.response) return auth.response;

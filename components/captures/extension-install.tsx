@@ -101,7 +101,6 @@ export function ExtensionInstall({
 
       <div className="space-y-2 rounded-lg bg-gray-50 p-4 text-xs text-gray-600 dark:bg-gray-950 dark:text-gray-300">
         <p>{t('captures.install.compat', vars)}</p>
-        <p>{t('captures.install.sending')}</p>
         <p>
           {t('captures.install.checksum')}{' '}
           <code dir="ltr" className="break-all font-mono">

@@ -26,7 +26,7 @@ import {
   GET as listProjects,
   POST as createProject,
 } from '@/app/api/capture/ingest/projects/route';
-import { POST as openSession } from '@/app/api/capture/ingest/sessions/route';
+import { GET as listSessions, POST as openSession } from '@/app/api/capture/ingest/sessions/route';
 import { POST as addStep } from '@/app/api/capture/ingest/sessions/[id]/steps/route';
 import { POST as completeSession } from '@/app/api/capture/ingest/sessions/[id]/complete/route';
 
@@ -228,6 +228,53 @@ describe('sessions et étapes', () => {
     expect(res.status).toBe(201);
     return ((await res.json()) as { id: string }).id;
   }
+
+  it('liste les sessions terminées du projet, sans celles qu’une recapture remplace ni celles d’un autre', async () => {
+    const first = await newSession('app.exemple.com');
+    const second = await newSession('autre.exemple.com');
+    for (const id of [first, second])
+      db()
+        .table('capture_sessions')
+        .find((r) => r.id === id)!.status = 'complete';
+    const replacement = await openSession(
+      post(
+        '/api/capture/ingest/sessions',
+        {
+          courseId: COURSE,
+          domain: 'app.exemple.com',
+          toolVersion: '1.5.0',
+          rightsAttested: true,
+          supersedesCaptureId: first,
+        },
+        token,
+      ),
+    );
+    const replacementId = ((await replacement.json()) as { id: string }).id;
+    db()
+      .table('capture_sessions')
+      .find((r) => r.id === replacementId)!.status = 'complete';
+    db().table('capture_sessions').push({
+      id: 'foreign',
+      course_id: COURSE,
+      owner_id: OTHER,
+      domain: 'prive.exemple.com',
+      captured_at: new Date().toISOString(),
+      status: 'complete',
+      step_count: 1,
+      supersedes_capture_id: null,
+    });
+
+    const res = await listSessions(get(`/api/capture/ingest/sessions?courseId=${COURSE}`, token));
+    const body = (await res.json()) as { sessions: Array<{ id: string; domain: string }> };
+    expect(body.sessions.map((s) => s.id).sort()).toEqual([second, replacementId].sort());
+    expect(JSON.stringify(body)).not.toContain('prive.exemple.com');
+    expect((await listSessions(get('/api/capture/ingest/sessions?courseId=x', token))).status).toBe(
+      400,
+    );
+    expect(
+      (await listSessions(get(`/api/capture/ingest/sessions?courseId=${COURSE}`))).status,
+    ).toBe(401);
+  });
 
   it('refuse une session sans attestation de droit, ou dans le projet d’un autre', async () => {
     const base = { courseId: COURSE, domain: 'app.exemple.com', toolVersion: '1.3.0' };

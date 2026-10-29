@@ -3031,8 +3031,7 @@
   "captures.install.step.load.body": "Cliquez sur « Charger l’extension non empaquetée » et sélectionnez le dossier décompressé.",
   "captures.install.step.back.title": "Revenez sur cette page",
   "captures.install.step.back.body": "Rechargez-la : le statut passe à « Extension détectée ». Cliquez alors sur « Appairer l’extension ».",
-  "captures.install.compat": "Compatible avec Chrome et les navigateurs Chromium, version {{minChrome}} ou plus récente. L’extension n’est pas encore publiée sur le Chrome Web Store : l’installation passe par le mode développeur, et Chrome peut vous le rappeler à l’ouverture. Son interface existe en français, anglais, allemand, espagnol, portugais, russe et chinois, pas encore en arabe.",
-  "captures.install.sending": "Dans cette version, l’envoi des captures vers un projet Qalem n’est pas encore actif : vous pouvez enregistrer, éditer et exporter vos guides, et appairer l’extension à votre compte dès maintenant. L’envoi sera activé dans une prochaine version de l’extension.",
+  "captures.install.compat": "Compatible avec Chrome et les navigateurs Chromium, version {{minChrome}} ou plus récente. L’extension n’est pas encore publiée sur le Chrome Web Store : l’installation passe par le mode développeur, et Chrome peut vous le rappeler à l’ouverture. Son interface existe en français, anglais, allemand, espagnol, portugais, russe, chinois et arabe.",
   "captures.install.checksum": "Empreinte SHA-256 du fichier, pour le vérifier :",
   "captures.install.reinstall": "Réinstaller ou mettre à jour l’extension"
 }
