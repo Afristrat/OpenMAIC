@@ -12,6 +12,8 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 vi.mock('next/navigation', () => ({ redirect: mocks.redirect }));
 
+import { isValidElement, type ReactElement } from 'react';
+import { AccountModelSync } from '@/components/account-model-sync';
 import PrivateApplicationLayout, { dynamic } from '@/app/(private)/layout';
 
 describe('private application layout', () => {
@@ -31,7 +33,13 @@ describe('private application layout', () => {
   it('returns authenticated application content', async () => {
     mocks.getUser.mockResolvedValue({ data: { user: { id: 'member-1' } } });
 
-    await expect(PrivateApplicationLayout({ children: 'private' })).resolves.toBe('private');
+    const layout = await PrivateApplicationLayout({ children: 'private' });
+
+    // Le contenu est rendu tel quel, accompagné de la recopie du modèle du compte pour l'extension.
+    expect(isValidElement(layout)).toBe(true);
+    const parts = (layout as ReactElement<{ children: unknown[] }>).props.children;
+    expect(parts[0]).toBe('private');
+    expect((parts[1] as ReactElement).type).toBe(AccountModelSync);
     expect(mocks.redirect).not.toHaveBeenCalled();
   });
 
