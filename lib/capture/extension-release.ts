@@ -7,10 +7,10 @@
  */
 
 export const EXTENSION_RELEASE = {
-  version: '1.5.0',
-  file: 'qalem-capture-1.5.0-chrome.zip',
-  sizeBytes: 1_883_780,
-  sha256: 'f4e072e921d3d1988dd72facefd65c44c8154d2188710e4493b6d6e29c75339b',
+  version: '1.6.0',
+  file: 'qalem-capture-1.6.0-chrome.zip',
+  sizeBytes: 1_991_478,
+  sha256: '36ea6191c312c823e1d2ebb37b0bdda62e8a4551f8594d5c2f6d3bae34ee50aa',
   minChrome: 118,
 } as const;
 
