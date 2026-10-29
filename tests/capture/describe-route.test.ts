@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   orgId: null as string | null,
   accountModel: null as string | null,
   usage: null as { actor: string; org: string } | null,
+  idempotencyKeys: [] as string[],
   call: vi.fn(),
   resolveModel: vi.fn(),
 }));
@@ -38,14 +39,14 @@ vi.mock('@/lib/capture/preferences', () => ({
 vi.mock('@/lib/server/resolve-model', () => ({ resolveModel: mocks.resolveModel }));
 vi.mock('@/lib/ai/llm', () => ({ callLLM: mocks.call }));
 vi.mock('@/lib/billing/usage-context', () => ({
-  withStableIdempotencyKey: (headers: Headers) => headers,
   runWithUsageMeteringContext: (
-    _headers: Headers,
+    headers: Headers,
     actor: string,
     org: string,
     run: () => unknown,
   ) => {
     mocks.usage = { actor, org };
+    mocks.idempotencyKeys.push(headers.get('idempotency-key') ?? '');
     return run();
   },
 }));
@@ -68,6 +69,7 @@ beforeEach(() => {
   mocks.orgId = ORG;
   mocks.accountModel = 'openai:gpt-test';
   mocks.usage = null;
+  mocks.idempotencyKeys = [];
   mocks.call.mockReset().mockResolvedValue({ text: ' Cliquer sur « Créer une facture » ' });
   mocks.resolveModel
     .mockReset()
@@ -102,6 +104,14 @@ describe('POST /api/capture/ingest/describe', () => {
     expect(response.status).toBe(200);
     expect(mocks.resolveModel).toHaveBeenCalledTimes(1);
     expect(mocks.resolveModel.mock.calls[0]?.[0]).toEqual({ modelString: 'openai:gpt-test' });
+  });
+
+  it("ignore la clé d'idempotence du client : chaque appel reçoit sa propre clé serveur", async () => {
+    await POST(request(valid, { 'idempotency-key': 'rejeu-0000000000000000' }));
+    await POST(request(valid, { 'idempotency-key': 'rejeu-0000000000000000' }));
+    expect(mocks.idempotencyKeys).toHaveLength(2);
+    expect(mocks.idempotencyKeys).not.toContain('rejeu-0000000000000000');
+    expect(mocks.idempotencyKeys[0]).not.toBe(mocks.idempotencyKeys[1]);
   });
 
   it('refuse un modèle, une clé ou un champ inconnu dans le corps', async () => {
@@ -147,7 +157,7 @@ describe('POST /api/capture/ingest/describe', () => {
     expect((await POST(request({ task: 'step', prompt: 'x'.repeat(4001) }))).status).toBe(400);
     expect((await POST(request({ task: 'step', prompt: '   ' }))).status).toBe(400);
     expect((await POST(request('pas du json'))).status).toBe(400);
-    expect((await POST(request(valid, { 'content-length': '999999' }))).status).toBe(413);
+    expect((await POST(request({ task: 'step', prompt: 'x'.repeat(41_000) }))).status).toBe(413);
 
     mocks.call.mockResolvedValue({ text: 'y'.repeat(5000) });
     const long = await (await POST(request(valid))).json();

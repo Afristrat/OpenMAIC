@@ -6,9 +6,10 @@
  * en-tête de modèle ni de fournisseur du client n'est lu. Entrée bornée, sans image.
  */
 
+import { randomUUID } from 'node:crypto';
 import { NextRequest } from 'next/server';
 import { callLLM } from '@/lib/ai/llm';
-import { runWithUsageMeteringContext, withStableIdempotencyKey } from '@/lib/billing/usage-context';
+import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
 import { resolveBillingOrganization } from '@/lib/capture/billing-organization';
 import {
   cleanDescribeOutput,
@@ -23,6 +24,7 @@ import { requireCaptureToken } from '@/lib/capture/token-auth';
 import { createLogger } from '@/lib/logger';
 import { apiError, API_ERROR_CODES, apiSuccess } from '@/lib/server/api-response';
 import { creditsErrorResponse } from '@/lib/server/credit-error-response';
+import { readLimitedBody, ResponseTooLargeError } from '@/lib/server/read-limited-body';
 import { resolveModel } from '@/lib/server/resolve-model';
 
 const log = createLogger('CaptureDescribeAPI');
@@ -41,13 +43,16 @@ export async function POST(request: NextRequest) {
     return limited;
   }
 
-  const declared = Number(request.headers.get('content-length') ?? 0);
-  if (declared > MAX_DESCRIBE_BODY_BYTES) {
-    return apiError(API_ERROR_CODES.INVALID_REQUEST, 413, 'Demande trop volumineuse');
-  }
-  const raw = await request.text();
-  if (raw.length > MAX_DESCRIBE_BODY_BYTES) {
-    return apiError(API_ERROR_CODES.INVALID_REQUEST, 413, 'Demande trop volumineuse');
+  // Lecture en flux, coupée dès le plafond : jamais le corps entier en mémoire avant de le juger.
+  let raw: string;
+  try {
+    const limited = await readLimitedBody(request.body, MAX_DESCRIBE_BODY_BYTES);
+    raw = new TextDecoder().decode(limited.bytes);
+  } catch (error) {
+    if (error instanceof ResponseTooLargeError) {
+      return apiError(API_ERROR_CODES.INVALID_REQUEST, 413, 'Demande trop volumineuse');
+    }
+    return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Demande illisible');
   }
   let body: unknown = null;
   try {
@@ -92,7 +97,9 @@ export async function POST(request: NextRequest) {
     }
 
     const limits = DESCRIBE_TASKS[task];
-    const headers = withStableIdempotencyKey(request.headers);
+    // Clé d'idempotence toujours tirée par le serveur : celle du client ne doit pas pouvoir
+    // rejouer une réservation déjà réglée pour obtenir du texte sans débit.
+    const headers = new Headers({ 'idempotency-key': randomUUID() });
     const result = await runWithUsageMeteringContext(headers, auth.ownerId, orgId, () =>
       callLLM(
         {
