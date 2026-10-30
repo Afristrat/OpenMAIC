@@ -504,7 +504,7 @@
       "outputs": [
         {
           "path": "lib/prompts/templates/requirements-to-outlines/system.md",
-          "sha256": "79cdd4b94777a0bb433d6c55f4fba0196f20591c0a684a927eb48eff67561f3f"
+          "sha256": "045e03f676b808606d1b04b828f124877f32a2fef8b5b0ca74e19bc1c573453f"
         }
       ]
     },
@@ -540,7 +540,7 @@
       "outputs": [
         {
           "path": "lib/prompts/templates/slide-actions/system.md",
-          "sha256": "14b698f1fc1bfc4a70a6cc7755ce369663032d8385803d29541675628fe91687"
+          "sha256": "fd3c8d208d1b88bdcafb538119070feb8dab5d0dfc1cf98ad054cf8913c8240e"
         }
       ]
     },
