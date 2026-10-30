@@ -50,7 +50,7 @@ export function sceneReadableText(content: unknown): string {
   return [...new Set(strings)].join(' ').slice(0, 1400);
 }
 
-function escapeXml(value: string): string {
+export function escapeXml(value: string): string {
   return value
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
@@ -59,7 +59,7 @@ function escapeXml(value: string): string {
     .replaceAll("'", '&apos;');
 }
 
-function wrapText(value: string, maxCharacters: number, maxLines: number): string[] {
+export function wrapText(value: string, maxCharacters: number, maxLines: number): string[] {
   const words = value.split(/\s+/).filter(Boolean);
   const lines: string[] = [];
   let line = '';
