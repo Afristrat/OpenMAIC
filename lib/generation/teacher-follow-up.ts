@@ -61,7 +61,7 @@ export async function ensureTeacherTakesUpInterventions(
         'For each prepared intervention below, write ONE spoken reply of the teacher, 1 to 3 short sentences, that directly takes it up:',
         '- name the speaker, then answer the question, accept or refute the objection, confirm or nuance the example, or build on the synthesis;',
         '- be specific to what was said, never a generic "good point";',
-        '- do not repeat what the teacher says in the line that follows (given for context);',
+        '- when the teacher\'s next line (given for context) already answers or takes up this exact intervention, return an empty "content" for it: the teacher must never say the same thing twice;',
         '- never invent a learner response; never prefix with a speaker label; no markdown; spoken language only.',
         languageDirective ? `Language directive: ${languageDirective}.` : '',
         'Return only a JSON array of objects {"interventionId": string, "content": string}, one per intervention, in the same order.',
@@ -83,11 +83,10 @@ export async function ensureTeacherTakesUpInterventions(
     );
     const parsed =
       parseJsonResponse<Array<{ interventionId?: unknown; content?: unknown }>>(response);
+    // Une réponse vide est un verdict du modèle : la ligne suivante du professeur reprend déjà l'intervention.
     replies = new Map(
       (Array.isArray(parsed) ? parsed : []).flatMap((item) =>
-        typeof item.interventionId === 'string' &&
-        typeof item.content === 'string' &&
-        item.content.trim()
+        typeof item.interventionId === 'string' && typeof item.content === 'string'
           ? [[item.interventionId, item.content.trim()] as const]
           : [],
       ),
@@ -103,6 +102,7 @@ export async function ensureTeacherTakesUpInterventions(
     const text =
       replies.get(intervention.interventionId ?? '') ??
       neutralAcknowledgement(language, speaker?.name ?? '');
+    if (!text) continue;
     inserted.set(index, {
       id: `${FOLLOW_UP_ID_PREFIX}${nanoid(8)}`,
       type: 'speech',

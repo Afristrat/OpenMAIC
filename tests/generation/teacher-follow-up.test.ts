@@ -92,6 +92,20 @@ describe('ensureTeacherTakesUpInterventions', () => {
     expect(calls).toBe(0);
   });
 
+  test('adds nothing when the model says the next teacher line already takes the intervention up', async () => {
+    const actions = [
+      speech('a2', 'curious', 'Pourquoi ?', 'i-1'),
+      speech('a3', 'prof', 'Très bonne question, Karim : parce que.'),
+    ];
+    const result = await ensureTeacherTakesUpInterventions(
+      actions,
+      agents,
+      async () => JSON.stringify([{ interventionId: 'i-1', content: '' }]),
+      'Français',
+    );
+    expect(result).toEqual(actions);
+  });
+
   test('does nothing without a teacher or without interventions', async () => {
     const plain = [speech('a1', 'prof', 'Bonjour.')];
     expect(await ensureTeacherTakesUpInterventions(plain, agents, async () => '[]')).toEqual(plain);
