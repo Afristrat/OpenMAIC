@@ -10,6 +10,7 @@ import {
   DEFAULT_BILLBOARD_PALETTE,
 } from '@/lib/export/mp4/billboard-card';
 import {
+  fetchLogoDataUri,
   renderOrganizationBillboards,
   type OrganizationBillboardBrand,
 } from '@/lib/export/mp4/organization-billboards';
@@ -153,5 +154,18 @@ describe('renderOrganizationBillboards', () => {
       },
     });
     expect(result).toEqual({});
+  });
+});
+
+describe('fetchLogoDataUri', () => {
+  test('refuses an oversized data URI before decoding it', async () => {
+    const huge = `data:image/png;base64,${'A'.repeat(5 * 1024 * 1024)}`;
+    expect(await fetchLogoDataUri(huge)).toBeUndefined();
+  });
+
+  test('rasterizes a small inline logo to a bounded PNG', async () => {
+    const tiny =
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+    expect(await fetchLogoDataUri(tiny)).toMatch(/^data:image\/png;base64,/);
   });
 });

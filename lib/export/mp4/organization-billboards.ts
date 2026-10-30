@@ -74,10 +74,13 @@ export async function loadOrganizationBillboardBrand(
 export async function fetchLogoDataUri(logoUrl: string): Promise<string | undefined> {
   if (logoUrl.startsWith('data:image/')) {
     try {
+      // Le texte d'un data URI est borné avant tout décodage : jamais de grosse allocation sur une valeur saisie.
+      if (logoUrl.length > LOGO_MAX_BYTES * 2) return undefined;
       const encoded = logoUrl.slice(logoUrl.indexOf(',') + 1);
       const bytes = logoUrl.includes(';base64,')
         ? Buffer.from(encoded, 'base64')
         : Buffer.from(decodeURIComponent(encoded));
+      if (bytes.byteLength > LOGO_MAX_BYTES) return undefined;
       return await rasterizeLogo(bytes);
     } catch {
       return undefined;
@@ -90,8 +93,10 @@ export async function fetchLogoDataUri(logoUrl: string): Promise<string | undefi
     if (!result.response.ok) return undefined;
     const type = result.response.headers.get('content-type') ?? '';
     if (!type.startsWith('image/')) return undefined;
-    const bytes = Buffer.from(await result.response.arrayBuffer());
-    if (bytes.byteLength > LOGO_MAX_BYTES) return undefined;
+    const declared = Number(result.response.headers.get('content-length') ?? 0);
+    if (declared > LOGO_MAX_BYTES) return undefined;
+    const bytes = await readBounded(result.response.body, LOGO_MAX_BYTES);
+    if (!bytes) return undefined;
     return await rasterizeLogo(bytes);
   } catch (error) {
     log.warn('Logo d’organisation indisponible pour les cartons vidéo:', error);
@@ -101,8 +106,36 @@ export async function fetchLogoDataUri(logoUrl: string): Promise<string | undefi
   }
 }
 
+/** Lit le corps par morceaux et abandonne dès que la limite est franchie : le fichier n'est jamais mis en mémoire en entier. */
+interface ChunkReader {
+  read(): Promise<{ done: boolean; value?: Uint8Array }>;
+  cancel(): Promise<void>;
+}
+
+async function readBounded(
+  body: { getReader(): ChunkReader } | null,
+  maxBytes: number,
+): Promise<Buffer | null> {
+  if (!body) return null;
+  const reader = body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done || !value) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel().catch(() => undefined);
+      return null;
+    }
+    chunks.push(value);
+  }
+  return Buffer.concat(chunks);
+}
+
 async function rasterizeLogo(bytes: Buffer): Promise<string> {
-  const png = await sharp(bytes)
+  // limitInputPixels : une image très petite en octets mais énorme en pixels ne sature pas la mémoire.
+  const png = await sharp(bytes, { limitInputPixels: 25_000_000 })
     .resize({ width: 1200, height: 600, fit: 'inside', withoutEnlargement: true })
     .png()
     .toBuffer();
