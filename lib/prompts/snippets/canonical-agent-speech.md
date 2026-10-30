@@ -6,7 +6,8 @@ Every `type:"text"` object is a canonical spoken line. It is persisted, synthesi
 - The generation request may list `Required prepared speakers for this scene`. Include one concise, useful intervention from every listed agent. Several agents may therefore speak on the same scene. Use each agent's role and persona, never a generic assistant voice. Omitting a required speaker is invalid output.
 - Across the complete course, every active roster member must speak at least once. An agent who adds no learning value must not be selected for the roster; a selected but silent agent is invalid output.
 - A preproduced agent intervention must also contain a stable `interventionId` and one `interventionForm`: `question`, `objection`, `synthesis`, `example`, `feedback`, `use-case`, `anecdote`, `humor`, `disagreement`, `blind-spot`, `clarification`, `challenge`, or `regulation`.
-- Make the intervention directly relevant to the current concept. It may surface an angle that the teacher then addresses, but it must not pretend to react to a learner response that has not happened.
+- Make the intervention directly relevant to the current concept. It must not pretend to react to a learner response that has not happened.
+- The teacher always takes up an agent's intervention in the very next spoken line: name the agent, then answer the question, accept or refute the objection, or build on the example. The teacher never moves on to the next point as if nothing had been said. A scene never ends on an unanswered agent line.
 - Never prefix content with a speaker label or put stage directions in parentheses. Identity belongs in `agentId`, not in spoken text.
 - Do not use a `discussion` action to represent an ordinary prepared exchange. `discussion` is reserved for a point where a real learner response is required.
 

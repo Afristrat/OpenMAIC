@@ -67,7 +67,8 @@ describe('canonical agent speech', () => {
       outline,
       content,
       async (system) => {
-        renderedSystem = system;
+        // Seul le premier appel est celui de la génération ; les suivants reprennent les interventions.
+        renderedSystem ||= system;
         return JSON.stringify([
           {
             type: 'text',
@@ -174,7 +175,8 @@ describe('canonical agent speech', () => {
       },
     );
 
-    expect(callCount).toBe(2);
+    // génération, réparation de l'intervention manquante, reprise de l'intervention par le professeur
+    expect(callCount).toBe(3);
     expect(actions).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -236,7 +238,8 @@ describe('canonical agent speech', () => {
     expect(renderedPrompts[0]).toContain(
       'Required prepared speakers for this scene: curious, joker',
     );
-    expect(callCount).toBe(3);
+    // génération, deux réparations, puis une seule reprise groupée des deux interventions
+    expect(callCount).toBe(4);
     expect(
       actions.filter((action) => action.type === 'speech').map((action) => action.agentId),
     ).toEqual(expect.arrayContaining(['teacher', 'curious', 'joker']));
