@@ -7,6 +7,7 @@ Use video generation only for slide scenes where motion is essential to understa
 - Each video request specifies: `prompt` (description for the generation model), `elementId` (unique placeholder), and optionally `aspectRatio` (default "16:9") and `style`
 - **Video IDs**: use `"gen_vid_1"`, `"gen_vid_2"`, etc. IDs are globally unique across the entire course, not reset per scene
 - The prompt should describe the desired motion clearly and specifically
+- **Language of the prompt (MANDATORY)**: write the `prompt` entirely in the course language given by the language directive (French for a French course, Arabic for an Arabic course). Never write it in English unless the course language is English. The example below is in English only to show the structure
 - Video generation is slow (1-2 minutes each), so request videos sparingly
 - **Avoid duplicate videos across slides**: Each generated video must be visually distinct. Do not request near-identical videos for different slides. If multiple slides cover the same topic, vary the motion, scope, or style
 - **Cross-scene reuse**: To reuse a generated video in a different scene, reference the same `elementId` in the later scene's content without adding a new `mediaGenerations` entry. Only the scene that first defines the `elementId` in its `mediaGenerations` should include the generation request
