@@ -2619,6 +2619,8 @@
   "catalog.emptyTitle": "Aucune formation n’est encore publiée",
   "catalog.emptyDescription": "Les formations publiées apparaîtront ici lorsqu’elles seront prêtes à rejoindre.",
   "catalog.openClassroom": "Rejoindre la classe",
+  "catalog.watchVideo": "Regarder la vidéo",
+  "catalog.videoLabel": "Vidéo de la formation : {{title}}",
   "catalog.noOrganization": "Choisissez une organisation pour consulter ses formations.",
   "catalog.publishReadyTitle": "Formations prêtes à publier",
   "catalog.publishReadyDescription": "Publiez une formation pour la rendre accessible aux membres de votre organisation.",

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ArrowRight, BookOpen, CalendarDays, Languages } from 'lucide-react';
+import { ArrowRight, BookOpen, CalendarDays, Languages, PlayCircle } from 'lucide-react';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useOrganizations } from '@/lib/hooks/use-organizations';
 import { buttonVariants } from '@/components/ui/button';
@@ -14,6 +14,8 @@ interface CatalogCourse {
   language: string;
   classroomId: string;
   createdAt: string;
+  /** Dernier export MP4 terminé de la formation, ou null quand elle n'a pas de vidéo. */
+  videoExportId?: string | null;
 }
 
 export default function CatalogPage() {
@@ -25,6 +27,7 @@ export default function CatalogPage() {
   const [unavailable, setUnavailable] = useState(false);
   const [publishingCourseId, setPublishingCourseId] = useState<string | null>(null);
   const [publicationError, setPublicationError] = useState(false);
+  const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
 
   useEffect(() => {
     if (organizationsLoading) return;
@@ -137,6 +140,33 @@ export default function CatalogPage() {
                   )}
                 </div>
               </dl>
+              {course.videoExportId && (
+                <div className="mb-3">
+                  {playingVideoId === course.id ? (
+                    <video
+                      controls
+                      autoPlay
+                      preload="metadata"
+                      className="aspect-video w-full rounded-xl bg-black"
+                      aria-label={t('catalog.videoLabel', { title: course.title })}
+                      src={
+                        `/api/courses/catalog/video/${encodeURIComponent(course.videoExportId)}` +
+                        `?orgId=${encodeURIComponent(currentOrg.id)}`
+                      }
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      className={cn(buttonVariants({ variant: 'outline' }), 'w-full')}
+                      data-testid="catalog-watch-video"
+                      onClick={() => setPlayingVideoId(course.id)}
+                    >
+                      <PlayCircle className="me-2 size-4" />
+                      {t('catalog.watchVideo')}
+                    </button>
+                  )}
+                </div>
+              )}
               <a
                 href={
                   `/classroom/${encodeURIComponent(course.classroomId)}` +

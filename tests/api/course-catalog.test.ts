@@ -11,12 +11,23 @@ const mocks = vi.hoisted(() => ({
   eq: vi.fn(),
   select: vi.fn(),
   from: vi.fn(),
+  exportRows: vi.fn(),
 }));
 
 vi.mock('@/lib/flags', () => ({ isFeatureEnabled: mocks.isFeatureEnabled }));
 vi.mock('@/lib/api/auth', () => ({ requireSuperAdminOrOrgMember: mocks.requireMember }));
 vi.mock('@/lib/supabase/server', () => ({
   createServerSupabaseClient: async () => ({ from: mocks.from }),
+}));
+
+vi.mock('@/lib/supabase/service', () => ({
+  createServiceSupabaseClient: () => ({
+    from: () => ({
+      select: () => ({
+        in: () => ({ eq: () => ({ eq: () => mocks.exportRows() }) }),
+      }),
+    }),
+  }),
 }));
 
 import { GET } from '@/app/api/courses/catalog/route';
@@ -30,6 +41,13 @@ describe('GET /api/courses/catalog', () => {
     vi.clearAllMocks();
     mocks.requireMember.mockResolvedValue({ user: { id: 'member-id', email: 'member@qalem.ma' } });
     mocks.isFeatureEnabled.mockResolvedValue(true);
+    mocks.exportRows.mockResolvedValue({
+      data: [
+        { id: 'export-old', stage_id: 'classroom_catalog_1', created_at: '2026-10-01T00:00:00Z' },
+        { id: 'export-new', stage_id: 'classroom_catalog_1', created_at: '2026-10-20T00:00:00Z' },
+      ],
+      error: null,
+    });
     mocks.order.mockResolvedValue({
       data: [
         {
@@ -90,7 +108,16 @@ describe('GET /api/courses/catalog', () => {
         language: 'fr-FR',
         classroomId: 'classroom_catalog_1',
         createdAt: '2026-08-01T00:00:00.000Z',
+        videoExportId: 'export-new',
       },
     ]);
+  });
+
+  it('marks a course without any finished MP4 export as having no video', async () => {
+    mocks.exportRows.mockResolvedValue({ data: [], error: null });
+
+    const body = await (await GET(request())).json();
+
+    expect(body.courses[0].videoExportId).toBeNull();
   });
 });
