@@ -35,6 +35,7 @@ import {
   X,
   Presentation,
   WandSparkles,
+  Share2,
 } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { useI18n } from '@/lib/hooks/use-i18n';
@@ -74,6 +75,8 @@ import { CreditStatusNotice } from '@/components/billing/credit-status-notice';
 import { formatCredits, readInsufficientCredits } from '@/lib/billing/credit-status-view';
 import { TemplateSelector } from '@/components/org/template-selector';
 import { tryCreateClient } from '@/lib/supabase/client';
+import { publishStagesToLibrary, summarizePublication } from '@/lib/org/publish-to-library';
+import { supabaseShareRepository } from '@/lib/org/supabase-share-repository';
 import { db } from '@/lib/utils/database';
 import { isDemoStage } from '@/lib/demo/use-demo-seed';
 import { useSettingsStore } from '@/lib/store/settings';
@@ -619,6 +622,57 @@ function HomePage() {
     } catch (err) {
       log.error('Failed to rename classroom:', err);
       toast.error(t('classroom.renameFailed'));
+    }
+  };
+
+  // Publication groupée dans la bibliothèque : mêmes rôles que la base (admin, manager, formateur).
+  const canPublishToLibrary =
+    currentOrg != null && ['admin', 'manager', 'formateur'].includes(currentOrg.userRole);
+  const [publishMode, setPublishMode] = useState(false);
+  const [selectedForLibrary, setSelectedForLibrary] = useState<ReadonlySet<string>>(new Set());
+  const [publishing, setPublishing] = useState(false);
+
+  const toggleLibrarySelection = (id: string) => {
+    setSelectedForLibrary((previous) => {
+      const next = new Set(previous);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const leavePublishMode = () => {
+    setPublishMode(false);
+    setSelectedForLibrary(new Set());
+  };
+
+  const publishSelectedToLibrary = async () => {
+    const client = tryCreateClient();
+    if (!client || !currentOrg || selectedForLibrary.size === 0 || publishing) return;
+    setPublishing(true);
+    try {
+      const results = await publishStagesToLibrary(supabaseShareRepository(client), currentOrg.id, [
+        ...selectedForLibrary,
+      ]);
+      const { published, already, denied, failed } = summarizePublication(results);
+      if (denied === 0 && failed === 0) {
+        toast.success(t('org.publish.done', { count: published + already }));
+        leavePublishMode();
+      } else {
+        toast.error(t('org.publish.partial', { published: published + already, denied, failed }));
+        // On garde seules les formations restées en échec pour que le geste puisse être repris.
+        const stillSelected = new Set(
+          results
+            .filter((r) => r.outcome === 'denied' || r.outcome === 'failed')
+            .map((r) => r.stageId),
+        );
+        setSelectedForLibrary(stillSelected);
+      }
+    } catch (err) {
+      log.error('Failed to publish classrooms to the library:', err);
+      toast.error(t('org.publish.failed'));
+    } finally {
+      setPublishing(false);
     }
   };
 
@@ -2013,6 +2067,20 @@ function HomePage() {
                 )}
               </AnimatePresence>
 
+              {canPublishToLibrary && classrooms.length > 0 && !publishMode && (
+                <button
+                  type="button"
+                  onClick={() => setPublishMode(true)}
+                  data-testid="library-publish-start"
+                  className="group/publish grid grid-cols-[auto_0fr] hover:grid-cols-[auto_1fr] focus-visible:grid-cols-[auto_1fr] items-center gap-1 rounded-full px-1.5 py-0.5 text-[12px] text-muted-foreground/35 hover:text-muted-foreground/70 hover:bg-muted/50 transition-all duration-200 cursor-pointer"
+                >
+                  <Share2 className="size-3" />
+                  <span className="overflow-hidden opacity-0 group-hover/publish:opacity-100 group-focus-visible/publish:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+                    {t('org.publish.start')}
+                  </span>
+                </button>
+              )}
+
               {importEnabled && (
                 <button
                   type="button"
@@ -2053,6 +2121,46 @@ function HomePage() {
                 transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
                 className="w-full overflow-hidden"
               >
+                {publishMode && (
+                  <div
+                    role="region"
+                    aria-label={t('org.publish.barLabel')}
+                    data-testid="library-publish-bar"
+                    className="mt-6 flex flex-wrap items-center gap-3 rounded-xl border border-border/60 bg-muted/40 px-4 py-2.5 text-[13px]"
+                  >
+                    <span className="font-medium">
+                      {t('org.publish.selected', { count: selectedForLibrary.size })}
+                    </span>
+                    <button
+                      type="button"
+                      className="text-muted-foreground underline-offset-2 hover:underline"
+                      onClick={() =>
+                        setSelectedForLibrary(new Set(filteredClassrooms.map((c) => c.id)))
+                      }
+                    >
+                      {t('org.publish.selectAll')}
+                    </button>
+                    <span className="flex-1" />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={leavePublishMode}
+                      disabled={publishing}
+                    >
+                      {t('common.cancel')}
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={publishSelectedToLibrary}
+                      disabled={publishing || selectedForLibrary.size === 0}
+                      data-testid="library-publish-confirm"
+                    >
+                      {publishing
+                        ? t('org.publish.publishing')
+                        : t('org.publish.confirm', { count: selectedForLibrary.size })}
+                    </Button>
+                  </div>
+                )}
                 {searchQuery.trim() && filteredClassrooms.length === 0 ? (
                   <div className="pt-8 pb-2 text-center text-[13px] text-muted-foreground/60">
                     {t('classroom.searchEmpty')}
@@ -2073,6 +2181,9 @@ function HomePage() {
                         <ClassroomCard
                           classroom={classroom}
                           isDemo={isDemoStage(classroom.id)}
+                          selectable={publishMode}
+                          selected={selectedForLibrary.has(classroom.id)}
+                          onToggleSelect={() => toggleLibrarySelection(classroom.id)}
                           slide={thumbnails[classroom.id]}
                           formatDate={formatDate}
                           onDelete={handleDelete}
@@ -2395,9 +2506,15 @@ function ClassroomCard({
   onConfirmDelete,
   onCancelDelete,
   onClick,
+  selectable = false,
+  selected = false,
+  onToggleSelect,
 }: {
   classroom: StageListItem;
   isDemo?: boolean;
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelect?: () => void;
   slide?: Slide;
   formatDate: (ts: number) => string;
   onDelete: (id: string, e: React.MouseEvent) => void;
@@ -2449,7 +2566,10 @@ function ClassroomCard({
   };
 
   return (
-    <div className="group cursor-pointer" onClick={confirmingDelete ? undefined : onClick}>
+    <div
+      className="group cursor-pointer"
+      onClick={confirmingDelete ? undefined : selectable ? onToggleSelect : onClick}
+    >
       {/* Thumbnail — large radius, no border, subtle bg */}
       <div
         ref={thumbRef}
@@ -2469,6 +2589,30 @@ function ClassroomCard({
             </div>
           </div>
         ) : null}
+
+        {selectable && (
+          <span
+            role="checkbox"
+            aria-checked={selected}
+            aria-label={classroom.name}
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                onToggleSelect?.();
+              }
+            }}
+            className={cn(
+              'absolute top-2 left-2 z-10 inline-flex size-6 items-center justify-center rounded-md border-2 shadow-sm backdrop-blur-sm transition-colors',
+              selected
+                ? 'border-violet-600 bg-violet-600 text-white'
+                : 'border-white/90 bg-black/30 text-transparent',
+            )}
+          >
+            <Check className="size-4" />
+          </span>
+        )}
 
         {showModeBadge && (
           <Tooltip>
