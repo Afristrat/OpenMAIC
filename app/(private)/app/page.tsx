@@ -42,6 +42,8 @@ import { useI18n } from '@/lib/hooks/use-i18n';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { createLogger } from '@/lib/logger';
 import { Button } from '@/components/ui/button';
+import { TransferClassroomDialog } from '@/components/admin/transfer-classroom-dialog';
+import { useIsSuperAdmin } from '@/lib/hooks/use-super-admin';
 import { InputGroup, InputGroupInput, InputGroupButton } from '@/components/ui/input-group';
 import { Textarea as UITextarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -631,6 +633,8 @@ function HomePage() {
   const [publishMode, setPublishMode] = useState(false);
   const [selectedForLibrary, setSelectedForLibrary] = useState<ReadonlySet<string>>(new Set());
   const [publishing, setPublishing] = useState(false);
+  const { isSuperAdmin } = useIsSuperAdmin();
+  const [transferStageId, setTransferStageId] = useState<string | null>(null);
 
   const toggleLibrarySelection = (id: string) => {
     setSelectedForLibrary((previous) => {
@@ -2149,6 +2153,17 @@ function HomePage() {
                     >
                       {t('common.cancel')}
                     </Button>
+                    {isSuperAdmin && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setTransferStageId([...selectedForLibrary][0] ?? null)}
+                        disabled={publishing || selectedForLibrary.size !== 1}
+                        data-testid="classroom-transfer-start"
+                      >
+                        {t('admin.transfer.start')}
+                      </Button>
+                    )}
                     <Button
                       size="sm"
                       onClick={publishSelectedToLibrary}
@@ -2161,6 +2176,17 @@ function HomePage() {
                     </Button>
                   </div>
                 )}
+                <TransferClassroomDialog
+                  stageId={transferStageId}
+                  stageName={classrooms.find((c) => c.id === transferStageId)?.name ?? ''}
+                  currentOrgId={currentOrg?.id ?? null}
+                  onClose={() => setTransferStageId(null)}
+                  onTransferred={() => {
+                    setTransferStageId(null);
+                    leavePublishMode();
+                    void loadClassrooms();
+                  }}
+                />
                 {searchQuery.trim() && filteredClassrooms.length === 0 ? (
                   <div className="pt-8 pb-2 text-center text-[13px] text-muted-foreground/60">
                     {t('classroom.searchEmpty')}
