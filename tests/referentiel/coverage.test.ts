@@ -13,6 +13,7 @@ const CASE_C = 'https://referentiel.ai-mpower.com/ims/case/v1p0/CFItems/c';
 const occupation: OccupationCompetencies = {
   occupation: {
     title: 'Développeur web',
+    titles: { fr: 'Développeur web', ar: null, en: null },
     escoUri: 'http://data.europa.eu/esco/occupation/00000000-0000-4000-8000-000000000001',
     iscoCode: '2513',
     referentielVersion: 'doc@2026-10-31',

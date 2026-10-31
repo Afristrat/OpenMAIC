@@ -61,6 +61,7 @@ export type Competence = {
 export type OccupationCompetencies = {
   occupation: {
     title: string;
+    titles: Titles;
     escoUri: string;
     /** Groupe de base ISCO-08, quatre chiffres. */
     iscoCode: string | null;
@@ -101,6 +102,14 @@ function toCompetence(item: CaseItem): Competence {
   };
 }
 
+/** URI ESCO de chaque métier d'un document (les compétences portent `/esco/skill/`). */
+export function listOccupationUris(source: CasePackage): string[] {
+  return source.CFItems.flatMap((item) => {
+    const uri = readNotes(item).uri;
+    return uri?.includes('/esco/occupation/') ? [uri] : [];
+  });
+}
+
 /** Compétences essentielles et optionnelles d'un métier, ou null si le document ne le contient pas. */
 export function competenciesOfOccupation(
   source: CasePackage,
@@ -120,10 +129,16 @@ export function competenciesOfOccupation(
     if (grouping === ESSENTIAL) essential.push(toCompetence(target));
     else if (grouping === OPTIONAL) optional.push(toCompetence(target));
   }
-  const iscoCode = readNotes(occupation).isco ?? null;
+  const occupationNotes = readNotes(occupation);
+  const iscoCode = occupationNotes.isco ?? null;
   return {
     occupation: {
       title: occupation.fullStatement,
+      titles: {
+        fr: occupation.fullStatement,
+        ar: occupationNotes.ar ?? null,
+        en: occupationNotes.en ?? null,
+      },
       escoUri: occupationEscoUri,
       iscoCode: iscoCode && /^\d{1,4}$/.test(iscoCode) ? iscoCode : null,
       referentielVersion: `${source.CFDocument.identifier}@${source.CFDocument.version ?? ''}`,
